@@ -38,7 +38,8 @@ products:['Products','Shop the design, three price tiers per item'],present:['Pr
 team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations'],
 account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
-tutorials:['Tutorials','Short walkthroughs, five minutes or less']};
+tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
+notifications:['Notifications','Activity, mentions and alerts']};
 function go(v){
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
@@ -477,6 +478,60 @@ document.getElementById('tourNext').addEventListener('click',()=>showStep(ti+1))
 document.getElementById('tourSkip').addEventListener('click',endTour);
 veil.addEventListener('click',endTour);
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ endTour(); closeFb(); } });
+
+/* ---------- notifications ---------- */
+const NOTIFS=[
+ {id:1,ic:'check-circle-2',cat:'approvals',t:'Living Room v5 approved',b:'Keisha Cross approved the design for 206 N MacDill Ave.',tm:'2m',unread:true},
+ {id:2,ic:'message-square',cat:'approvals',t:'Client comment on Kitchen v7',b:'"Can we see the same layout with lighter cabinets?"',tm:'18m',unread:true},
+ {id:3,ic:'wand-sparkles',cat:'designs',t:'Batch render finished',b:'8 rooms staged in Warm Minimal for 1420 Bayshore Blvd.',tm:'1h',unread:true},
+ {id:4,ic:'calculator',cat:'designs',t:'Scope updated',b:'Bathroom 2 estimate moved to $18,400 after tier change.',tm:'3h',unread:false},
+ {id:5,ic:'user-plus',cat:'team',t:'Marcus Tate joined your workspace',b:'Invitation accepted, seat assigned as Member.',tm:'Yesterday',unread:false},
+ {id:6,ic:'credit-card',cat:'billing',t:'Invoice #4192 paid',b:'Pro Plan monthly, $249.00 charged to Visa ending 4242.',tm:'2d',unread:false},
+ {id:7,ic:'share-2',cat:'approvals',t:'Presentation link opened',b:'Bayshore package viewed 4 times by the client.',tm:'3d',unread:false},
+ {id:8,ic:'triangle-alert',cat:'billing',t:'Design credits at 81%',b:'1,214 of 1,500 designs used this cycle.',tm:'4d',unread:false}
+];
+function notifFilter(tab){ return NOTIFS.filter(n=> tab==='all'?true: tab==='unread'?n.unread: n.cat===tab); }
+function notifRow(n){ return `<button class="notif-i${n.unread?' unread':''}" data-nid="${n.id}">
+ <span class="notif-ic"><i data-lucide="${n.ic}"></i></span>
+ <span class="tx"><b>${n.t}</b><span>${n.b}</span></span>
+ <span class="tm">${n.tm}</span>${n.unread?'<span class="dot"></span>':''}</button>`; }
+function renderNotifs(){
+  const unread=NOTIFS.filter(n=>n.unread).length;
+  const dot=document.getElementById('notifDot'); if(dot) dot.style.display=unread?'block':'none';
+  const list=document.getElementById('notifList');
+  if(list){ const t=document.querySelector('#notifTabs .notif-tab.on')?.dataset.t||'all'; const r=notifFilter(t);
+    list.innerHTML=r.length?r.map(notifRow).join(''):'<div class="notif-empty">Nothing here right now.</div>'; }
+  const page=document.getElementById('notifPage');
+  if(page){ const t2=document.querySelector('#notifTabs2 .notif-tab.on')?.dataset.t||'all'; const r2=notifFilter(t2);
+    page.innerHTML=r2.length?r2.map(notifRow).join(''):'<div class="notif-empty">Nothing here right now.</div>'; }
+  const cnt=document.getElementById('notifCount');
+  if(cnt) cnt.textContent=unread?unread+' unread of '+NOTIFS.length+' notifications':'All caught up, '+NOTIFS.length+' notifications';
+  lucide.createIcons();
+}
+const notifBtn=document.getElementById('notifBtn'),notifMenu=document.getElementById('notifMenu');
+function closeNotif(){ if(notifMenu){notifMenu.classList.remove('on');notifBtn.setAttribute('aria-expanded','false');} }
+if(notifBtn&&notifMenu){
+  notifBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();closeHelp();
+    const open=!notifMenu.classList.contains('on');notifMenu.classList.toggle('on',open);
+    notifBtn.setAttribute('aria-expanded',String(open)); if(open) renderNotifs();});
+  document.addEventListener('click',e=>{ if(!e.target.closest('.notif-wrap')) closeNotif(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeNotif(); });
+}
+document.querySelectorAll('#notifTabs .notif-tab,#notifTabs2 .notif-tab').forEach(b=>b.addEventListener('click',()=>{
+  b.parentElement.querySelectorAll('.notif-tab').forEach(x=>x.classList.toggle('on',x===b)); renderNotifs();
+}));
+document.addEventListener('click',e=>{
+  const row=e.target.closest('.notif-i'); if(!row) return;
+  const n=NOTIFS.find(x=>String(x.id)===row.dataset.nid); if(n){ n.unread=false; renderNotifs(); }
+  if(row.closest('#notifList')){ closeNotif(); go('notifications'); }
+});
+['notifRead','notifReadAll'].forEach(id=>{ const b=document.getElementById(id);
+  if(b) b.addEventListener('click',e=>{e.stopPropagation();NOTIFS.forEach(n=>n.unread=false);renderNotifs();}); });
+const prefsEl=document.getElementById('notifPrefs');
+if(prefsEl) prefsEl.innerHTML=[['Design approvals','Email + In app'],['Client comments','Email + In app'],['Batch renders','In app'],
+ ['Scope changes','In app'],['Team activity','Weekly digest'],['Billing and invoices','Email']]
+ .map(([t,v])=>`<div class="seat"><div class="rowt"><b>${t}</b><span>${v}</span></div><span class="pill">On</span></div>`).join('');
+renderNotifs();
 
 lucide.createIcons();
 
