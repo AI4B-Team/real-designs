@@ -13,12 +13,12 @@ export function initSite(): () => void {
   try {
 
 /* ---------- room art ---------- */
-const PHOTO={before:roomBefore,after:roomAfter};
-function room(mode,pal){
-  const src = mode==='after'?PHOTO.after:PHOTO.before;
-  const f = pal?`filter:${pal};`:'';
-  return `<img src="${src}" alt="${mode==='after'?'Redesigned living room after AI render':'Original living room before redesign'}" style="width:100%;height:100%;object-fit:cover;display:block;${f}">`;
+const PHOTO=PHOTOS;
+function room(mode,src){
+  const s = src || (mode==='after'?PHOTO.after:PHOTO.before);
+  return photo(s, mode==='after'?'Redesigned living room after AI render':'Original living room before redesign');
 }
+
 function wire(){return `<svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
   <g fill="none" stroke="#CC0000" stroke-width="2.5" stroke-dasharray="7 5" opacity=".95">
     <polyline points="0,34 190,72 800,66"/><polyline points="0,430 190,375 800,368"/>
