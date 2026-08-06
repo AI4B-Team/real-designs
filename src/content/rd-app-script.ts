@@ -60,6 +60,28 @@ acctMenu.addEventListener('click',e=>{ if(e.target.closest('.acct-i,[data-goto]'
 document.addEventListener('click',e=>{ if(!e.target.closest('.acct-wrap')) closeAcct(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAcct(); });
 
+/* ---------- search scope menu ---------- */
+const schBtn=document.getElementById('schBtn'),schMenu=document.getElementById('schMenu');
+const schInput=document.querySelector('.search input');
+function closeSch(){ if(schMenu){schMenu.classList.remove('on'); schBtn.setAttribute('aria-expanded','false');} }
+if(schBtn&&schMenu){
+  schBtn.addEventListener('click',e=>{
+    e.stopPropagation(); closeAcct();
+    const open=!schMenu.classList.contains('on');
+    schMenu.classList.toggle('on',open); schBtn.setAttribute('aria-expanded',String(open));
+  });
+  schMenu.addEventListener('click',e=>{
+    const it=e.target.closest('.acct-i'); if(!it) return;
+    const sc=it.dataset.scope;
+    if(sc&&schInput) schInput.setAttribute('placeholder', sc==='All'?'Search properties, rooms, designs':'Search '+sc.toLowerCase());
+    closeSch();
+  });
+  document.addEventListener('click',e=>{ if(!e.target.closest('.search-wrap')) closeSch(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSch(); });
+}
+
+
+
 /* ---------- account page ---------- */
 const notifs=[['Client Opens A Presentation Link','Email and in app','On'],
 ['Design Finishes Rendering','In app only','On'],
