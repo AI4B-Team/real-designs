@@ -305,6 +305,6 @@ document.getElementById('usageRows').innerHTML=[['Dolmar Cross','Owner',412,28,'
 
 lucide.createIcons();
 
-  } catch (err) { console.error(err); }
+  } catch (e) { console.error(e); }
   return () => { timers.forEach((t) => { window.clearInterval(t); window.clearTimeout(t); }); };
 }
