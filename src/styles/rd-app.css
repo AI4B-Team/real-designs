@@ -528,3 +528,26 @@
 .rd-app .tour-pop b{display:block;margin:4px 0 4px;font-size:.94rem}
 .rd-app .tour-pop p{font-size:.8rem;color:var(--mute);margin-bottom:11px}
 .rd-app .tour-btns{display:flex;justify-content:space-between;gap:8px}
+
+/* ---------- notifications ---------- */
+.rd-app .notif-wrap{position:relative}
+.rd-app .notif-menu{position:absolute;top:calc(100% + 10px);right:0;width:340px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 44px rgba(20,18,15,.16);z-index:80;display:none;overflow:hidden}
+.rd-app .notif-menu.on{display:block}
+.rd-app .notif-head{display:flex;align-items:center;justify-content:space-between;padding:12px 14px 8px}
+.rd-app .notif-head b{font-size:.92rem}
+.rd-app .notif-tabs{display:flex;gap:6px;padding:0 14px 10px;flex-wrap:wrap}
+.rd-app .notif-tab{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:.72rem;color:var(--mute);cursor:pointer}
+.rd-app .notif-tab.on{border-color:var(--ink);color:var(--ink);background:var(--paper)}
+.rd-app .notif-list{max-height:400px;overflow:auto;border-top:1px solid var(--line)}
+.rd-app .notif-i{display:flex;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);cursor:pointer;text-align:left;width:100%;position:relative}
+.rd-app .notif-i:hover{background:var(--paper)}
+.rd-app .notif-i.unread{background:rgba(204,0,0,.03)}
+.rd-app .notif-ic{width:28px;height:28px;border-radius:8px;background:var(--paper);display:grid;place-items:center;flex:none}
+.rd-app .notif-ic svg{width:14px;height:14px;color:var(--ink)}
+.rd-app .notif-i .tx{min-width:0;flex:1}
+.rd-app .notif-i .tx b{display:block;font-size:.83rem;font-weight:600}
+.rd-app .notif-i .tx span{display:block;font-size:.76rem;color:var(--mute-2)}
+.rd-app .notif-i .tm{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--mute-2);flex:none}
+.rd-app .notif-i .dot{width:6px;height:6px;border-radius:50%;background:var(--red);position:absolute;right:10px;bottom:12px}
+.rd-app .notif-foot{padding:8px}
+.rd-app .notif-empty{padding:26px 14px;text-align:center;font-size:.82rem;color:var(--mute-2)}
