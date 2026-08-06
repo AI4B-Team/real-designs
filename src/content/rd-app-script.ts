@@ -2,6 +2,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { PHOTOS, photo } from "@/content/rd-photos";
 
 export function initApp(): () => void {
   const timers: number[] = [];
