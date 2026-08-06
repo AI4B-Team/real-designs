@@ -40,8 +40,9 @@ account:['Account','Profile, security, subscription and billing']};
 function go(v){
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
-  document.getElementById('pgTitle').innerHTML=titles[v][0];
-  document.getElementById('pgCrumb').innerHTML=titles[v][1];
+  const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
+  const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
+
   window.scrollTo({top:0});
 }
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
@@ -58,6 +59,28 @@ acctBtn.addEventListener('click',e=>{
 acctMenu.addEventListener('click',e=>{ if(e.target.closest('.acct-i,[data-goto]')) closeAcct(); });
 document.addEventListener('click',e=>{ if(!e.target.closest('.acct-wrap')) closeAcct(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAcct(); });
+
+/* ---------- search scope menu ---------- */
+const schBtn=document.getElementById('schBtn'),schMenu=document.getElementById('schMenu');
+const schInput=document.querySelector('.search input');
+function closeSch(){ if(schMenu){schMenu.classList.remove('on'); schBtn.setAttribute('aria-expanded','false');} }
+if(schBtn&&schMenu){
+  schBtn.addEventListener('click',e=>{
+    e.stopPropagation(); closeAcct();
+    const open=!schMenu.classList.contains('on');
+    schMenu.classList.toggle('on',open); schBtn.setAttribute('aria-expanded',String(open));
+  });
+  schMenu.addEventListener('click',e=>{
+    const it=e.target.closest('.acct-i'); if(!it) return;
+    const sc=it.dataset.scope;
+    if(sc&&schInput) schInput.setAttribute('placeholder', sc==='All'?'Search properties, rooms, designs':'Search '+sc.toLowerCase());
+    closeSch();
+  });
+  document.addEventListener('click',e=>{ if(!e.target.closest('.search-wrap')) closeSch(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSch(); });
+}
+
+
 
 /* ---------- account page ---------- */
 const notifs=[['Client Opens A Presentation Link','Email and in app','On'],
