@@ -11,6 +11,7 @@ export function initApp(): () => void {
   const lucide = { createIcons: (o: any = {}) => createIcons({ icons, ...o }) };
   try {
 
+/* ---------- room svg ---------- */
 /* ---------- room photos ---------- */
 function room(mode,pal){
   const src = mode==='after' ? (pal || PHOTOS.after) : PHOTOS.before;
@@ -28,7 +29,6 @@ const PALS={
   craftsman:PHOTOS.craftsman,
   ranch:PHOTOS.ranch
 };
-
 
 /* ---------- nav ---------- */
 const titles={dash:['Dashboard','Real Advisors &middot; 6 active properties'],props:['Properties','Property, project, room, version'],
@@ -49,9 +49,9 @@ document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',(
 /* ---------- dashboard ---------- */
 const recent=[['Living Room v4','206 N MacDill &middot; Warm Minimal','after','warm','p-ok','Approved'],
 ['Kitchen v7','206 N MacDill &middot; Warm Minimal','after','kitchen','p-ok','Approved'],
-['Primary Bath v2','206 N MacDill &middot; Warm Minimal','after','bath','p-amb','In Review'],
-['Backyard v1','1412 E Idlewild &middot; Resort','after','yard','p-blue','New'],
-['Front Elevation v3','8809 N Ola Ave &middot; Painted Brick','after','exterior','p-gray','Draft']];
+['Primary Bath v2','206 N MacDill &middot; Warm Minimal','after','coastal','p-amb','In Review'],
+['Backyard v1','1412 E Idlewild &middot; Resort','after','green','p-blue','New'],
+['Front Elevation v3','8809 N Ola Ave &middot; Painted Brick','before','warm','p-gray','Draft']];
 document.getElementById('recentList').innerHTML=recent.map(([t,s,m,p,cls,lab])=>`
 <div class="rowi"><div class="thumb">${room(m,PALS[p])}</div>
 <div class="rowt"><b>${t}</b><span>${s}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('');
@@ -83,9 +83,9 @@ document.getElementById('tree').innerHTML=tree.map(([l,ic,n,m,on])=>`
 <div class="tr l${l} ${on?'on':''}"><i data-lucide="${ic}"></i>${n}<span class="meta">${m}</span></div>`).join('');
 
 const rooms=[['Living Room','v4 Approved','after','warm','p-ok','$11.4K to $14.9K'],
-['Kitchen','v7 Approved','after','kitchen','p-ok','$26.2K to $34.1K'],
-['Primary Bath','v2 In Review','after','bath','p-amb','$8.9K to $12.4K'],
-['Front Elevation','v1 Approved','after','exterior','p-ok','$11.9K to $16.8K']];
+['Kitchen','v7 Approved','after','farm','p-ok','$26.2K to $34.1K'],
+['Primary Bath','v2 In Review','after','coastal','p-amb','$8.9K to $12.4K'],
+['Front Elevation','v1 Approved','before','warm','p-ok','$11.9K to $16.8K']];
 document.getElementById('roomCards').innerHTML=rooms.map(([n,v,m,p,cls,cost])=>`
 <div class="card"><div style="aspect-ratio:8/5;background:#EFEDE8;border-radius:7px 7px 0 0;overflow:hidden">${room(m,PALS[p])}</div>
 <div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
@@ -198,9 +198,9 @@ document.querySelectorAll('#designTabs button').forEach(b=>b.addEventListener('c
 }));
 
 /* ---------- batch ---------- */
-const batch=[['Kitchen','IMG_0412.jpg','after','farm','p-ok','Staged'],['Living Room','IMG_0418.jpg','after','warm','p-ok','Staged'],
+const batch=[['Kitchen','IMG_0412.jpg','after','kitchen','p-ok','Staged'],['Living Room','IMG_0418.jpg','after','warm','p-ok','Staged'],
 ['Dining Room','IMG_0422.jpg','after','warm','p-ok','Staged'],['Primary Bedroom','IMG_0427.jpg','after','coastal','p-red','Rendering'],
-['Bathroom 2','IMG_0431.jpg','before','warm','p-gray','Queued'],['Backyard','IMG_0440.jpg','before','green','p-gray','Queued']];
+['Bathroom 2','IMG_0431.jpg','after','bath','p-gray','Queued'],['Backyard','IMG_0440.jpg','after','yard','p-gray','Queued']];
 document.getElementById('batchList').innerHTML=batch.map(([r,f,mo,p,cls,lab])=>`
 <div class="rowi"><div class="thumb">${room(mo,PALS[p])}</div><div class="rowt"><b>${r}</b><span>${f}</span></div>
 <span class="pill ${cls}">${lab}</span></div>`).join('');
