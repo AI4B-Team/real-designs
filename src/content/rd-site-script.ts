@@ -4,7 +4,6 @@
 import { createIcons, icons } from "lucide";
 import { PHOTOS, photo } from "@/content/rd-photos";
 
-
 export function initSite(): () => void {
   const timers: number[] = [];
   const setInterval = (fn: any, ms?: number) => { const id = window.setInterval(fn, ms); timers.push(id); return id; };
@@ -12,13 +11,11 @@ export function initSite(): () => void {
   const lucide = { createIcons: (o: any = {}) => createIcons({ icons, ...o }) };
   try {
 
-/* ---------- room art ---------- */
-const PHOTO=PHOTOS;
-function room(mode,src){
-  const s = src || (mode==='after'?PHOTO.after:PHOTO.before);
-  return photo(s, mode==='after'?'Redesigned living room after AI render':'Original living room before redesign');
+/* ---------- room photos ---------- */
+function room(mode,pal){
+  const src = mode==='after' ? (pal || PHOTOS.after) : PHOTOS.before;
+  return photo(src, mode==='after' ? 'Redesigned space, AI render' : 'Original space before redesign');
 }
-
 function wire(){return `<svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
   <g fill="none" stroke="#CC0000" stroke-width="2.5" stroke-dasharray="7 5" opacity=".95">
     <polyline points="0,34 190,72 800,66"/><polyline points="0,430 190,375 800,368"/>
@@ -32,12 +29,28 @@ function wire(){return `<svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid
 document.getElementById('lBefore').innerHTML=room('before');
 document.getElementById('lAfter').innerHTML=room('after');
 document.getElementById('lWire').innerHTML=wire();
+const PALS={
+  warm:PHOTOS.after,
+  coastal:PHOTOS.coastal,
+  farm:PHOTOS.farmhouse,
+  green:PHOTOS.japandi,
+  kitchen:PHOTOS.kitchen,
+  bath:PHOTOS.bath,
+  yard:PHOTOS.resortYard,
+  exterior:PHOTOS.paintedBrick,
+  craftsman:PHOTOS.craftsman,
+  ranch:PHOTOS.ranch
+};
 document.querySelectorAll('.samp').forEach((s,i)=>{
-  const srcs=[PHOTO.before,PHOTO.after,PHOTO.kitchen,PHOTO.paintedBrick];
-  const alts=['Dated living room sample photo','Warm minimal living room sample','Renovated kitchen sample','Painted brick exterior sample'];
-  s.innerHTML=photo(srcs[i],alts[i]);
+  const pals=[PHOTOS.before,PALS.coastal,PALS.farm,PALS.green];
+  s.innerHTML=room(i===0?'before':'after',pals[i]);
 });
 
+/* ---------- proof strip ---------- */
+const PROOF=[['Kitchen','kitchen','$26.2K to $34.1K'],['Primary Bath','bath','$8.9K to $12.4K'],['Front Elevation','exterior','$11.9K to $16.8K']];
+document.getElementById('proofStrip').innerHTML=PROOF.map(([n,p,c])=>`
+  <div class="proof"><div class="im">${room('after',PALS[p])}</div>
+  <div class="tx"><b>${n}</b><span>${c}</span></div></div>`).join('');
 
 /* ---------- comparator ---------- */
 const rng=document.getElementById('rng'),lAfter=document.getElementById('lAfter'),hnd=document.getElementById('hnd');
@@ -97,22 +110,21 @@ document.querySelectorAll('.samp').forEach(s=>s.addEventListener('click',()=>{
 }));
 
 const steps=['Reading room geometry','Locking walls and windows','Fitting the design to your budget','Selecting materials and finishes','Rendering at full resolution','Pricing the scope'];
+const OUTPAL=['warm','coastal','farm','green'];
 let busy=false;
 document.getElementById('genBtn').addEventListener('click',()=>{
-  if(busy)return;busy=true;auto=false;
-  const ov=document.getElementById('genOv'),bar=document.getElementById('barFill'),gs=document.getElementById('genStep');
-  ov.classList.add('on');bar.style.width='0%';gs.textContent=steps[0];
+  if(busy)return;busy=true;unlock();
+  const out=document.getElementById('out'),ov=document.getElementById('genOv'),
+        bar=document.getElementById('barFill'),gs=document.getElementById('genStep');
+  const si=+(document.querySelector('.samp.on')||{dataset:{s:0}}).dataset.s;
+  document.getElementById('outImg').innerHTML=room('after',PALS[OUTPAL[si]]);
+  out.classList.add('on');ov.classList.add('on');
+  bar.style.width='0%';gs.textContent=steps[0];
+  out.scrollIntoView({block:'center',behavior:'smooth'});
   let p=0,i=0;
   const t=setInterval(()=>{
     p+=Math.random()*12+5;
-    if(p>=100){p=100;clearInterval(t);
-      setTimeout(()=>{
-        ov.classList.remove('on');busy=false;
-        document.getElementById('wm').classList.add('on');
-        document.getElementById('mStyle').textContent=st==='Surprise Me'?'Warm Minimal':st;
-        rng.value=100;setC(100);
-        setTimeout(()=>{let v=100;const back=setInterval(()=>{v-=2.4;rng.value=v;setC(v);if(v<=42)clearInterval(back)},22)},700);
-      },380);}
+    if(p>=100){p=100;clearInterval(t);setTimeout(()=>{ov.classList.remove('on');busy=false},380)}
     bar.style.width=Math.min(p,100)+'%';
     if(p>(i+1)*(100/steps.length)&&i<steps.length-1){i++;gs.textContent=steps[i]}
   },220);
@@ -154,14 +166,12 @@ document.getElementById('featGrid').innerHTML=F.map(([i,t,d,g])=>`
   <div class="ic"><i data-lucide="${i}"></i></div><h3>${t}</h3><p>${d}</p></div>`).join('');
 
 /* ---------- styles grid ---------- */
-const SL=[['Warm Minimal',PHOTO.after],['Modern Farmhouse',PHOTO.farmhouse],['Coastal',PHOTO.coastal],
-['Japandi',PHOTO.japandi],['Mid Century',PHOTO.midcentury],['Industrial',PHOTO.industrial],
-['Quiet Luxury',PHOTO.luxury],['Investor Neutral',PHOTO.neutral],['Florida Ranch',PHOTO.ranch],
-['Painted Brick',PHOTO.paintedBrick],['Resort Yard',PHOTO.resortYard],['Craftsman',PHOTO.craftsman]];
+const SL=[['Warm Minimal',PHOTOS.after],['Modern Farmhouse',PHOTOS.farmhouse],['Coastal',PHOTOS.coastal],
+['Japandi',PHOTOS.japandi],['Mid Century',PHOTOS.midcentury],['Industrial',PHOTOS.industrial],
+['Quiet Luxury',PHOTOS.luxury],['Investor Neutral',PHOTOS.neutral],['Florida Ranch',PHOTOS.ranch],
+['Painted Brick',PHOTOS.paintedBrick],['Resort Yard',PHOTOS.resortYard],['Craftsman',PHOTOS.craftsman]];
 document.getElementById('styleGrid').innerHTML=SL.map(([n,src],i)=>`
-  <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' design direction example')}
-  </div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')} / 180</span></div></div>`).join('');
-
+  <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' interior design style')}</div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')} / 180</span></div></div>`).join('');
 
 /* ---------- quotes ---------- */
 const Q=[
