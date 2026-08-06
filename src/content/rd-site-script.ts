@@ -154,16 +154,14 @@ document.getElementById('featGrid').innerHTML=F.map(([i,t,d,g])=>`
   <div class="ic"><i data-lucide="${i}"></i></div><h3>${t}</h3><p>${d}</p></div>`).join('');
 
 /* ---------- styles grid ---------- */
-const SL=[['Warm Minimal','#E8E2D6','#3D4A45'],['Modern Farmhouse','#F2EFE9','#4A4239'],['Coastal','#E4EDF0','#2F5A6B'],
-['Japandi','#EAE4D9','#5A4A3A'],['Mid Century','#E9DCC9','#A0522D'],['Industrial','#DCD9D4','#41403E'],
-['Quiet Luxury','#E7E2DA','#7A6A54'],['Investor Neutral','#F0EEEA','#8C8C88'],['Florida Ranch','#EFE7D8','#B07A4B'],
-['Painted Brick','#EDEAE4','#5E5A54'],['Resort Yard','#DFE9DB','#3F6B44'],['Craftsman','#E6DED0','#6B4A2F']];
-document.getElementById('styleGrid').innerHTML=SL.map(([n,bg,ac],i)=>`
-  <div class="st"><div class="sw2" style="background:${bg}">
-    <div style="position:absolute;left:12px;bottom:0;width:46%;height:38%;background:${ac};border-radius:5px 5px 0 0"></div>
-    <div style="position:absolute;right:14px;top:14px;width:26%;height:34%;background:${ac};opacity:.3;border-radius:4px"></div>
-    <div style="position:absolute;right:18px;bottom:0;width:12%;height:24%;background:${ac};opacity:.6;border-radius:50% 50% 3px 3px"></div>
+const SL=[['Warm Minimal',PHOTO.after],['Modern Farmhouse',PHOTO.farmhouse],['Coastal',PHOTO.coastal],
+['Japandi',PHOTO.japandi],['Mid Century',PHOTO.midcentury],['Industrial',PHOTO.industrial],
+['Quiet Luxury',PHOTO.luxury],['Investor Neutral',PHOTO.neutral],['Florida Ranch',PHOTO.ranch],
+['Painted Brick',PHOTO.paintedBrick],['Resort Yard',PHOTO.resortYard],['Craftsman',PHOTO.craftsman]];
+document.getElementById('styleGrid').innerHTML=SL.map(([n,src],i)=>`
+  <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' design direction example')}
   </div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')} / 180</span></div></div>`).join('');
+
 
 /* ---------- quotes ---------- */
 const Q=[
