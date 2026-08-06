@@ -36,10 +36,13 @@ studio:['Studio','206 N MacDill Ave &middot; Living Room &middot; v5 draft'],des
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations'],
-account:['Account','Profile, security, subscription and billing']};
+account:['Account','Profile, security, subscription and billing'],
+help:['Help Center','Guides, answers and support'],
+tutorials:['Tutorials','Short walkthroughs, five minutes or less']};
 function go(v){
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  if(!titles[v]) return;
   const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
   const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
 
@@ -330,6 +333,152 @@ document.getElementById('usageRows').innerHTML=[['Dolmar Cross','Owner',412,28,'
 ['Marcus Tate','Member',201,11,'Yesterday'],['Ray Gutierrez','Member',144,22,'Yesterday'],
 ['Priya Nair','Member',69,3,'3 days ago'],['Alex Boone','Viewer',0,0,'2 weeks ago']]
 .map(([n,r,d,s,l])=>`<tr><td><b>${n}</b></td><td>${r}</td><td class="n">${d}</td><td class="n">${s}</td><td class="n">${l}</td></tr>`).join('');
+
+/* ---------- help menu ---------- */
+const helpBtn=document.getElementById('helpBtn'),helpMenu=document.getElementById('helpMenu');
+function closeHelp(){ if(helpMenu){helpMenu.classList.remove('on');helpBtn.setAttribute('aria-expanded','false');} }
+if(helpBtn&&helpMenu){
+  helpBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();
+    const open=!helpMenu.classList.contains('on');helpMenu.classList.toggle('on',open);helpBtn.setAttribute('aria-expanded',String(open));});
+  helpMenu.addEventListener('click',e=>{ if(e.target.closest('.acct-i')) closeHelp(); });
+  document.addEventListener('click',e=>{ if(!e.target.closest('.help-wrap')) closeHelp(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeHelp(); });
+}
+
+/* ---------- help center ---------- */
+const HELP_POP=['Getting Started','Uploading Photos','Structure Lock','Scope Accuracy','Client Links','Billing'];
+document.getElementById('helpPop').innerHTML=HELP_POP.map(t=>`<span class="chip">${t}</span>`).join('');
+document.getElementById('helpQuick').innerHTML=[
+ ['1','Add Your First Property','Drop in an address, upload room photos, and we build the room list for you.'],
+ ['2','Design A Room','Pick a direction, lock the structure, and generate versions until one lands.'],
+ ['3','Send A Client Link','Package approved rooms with the scope and share one link for approval.']]
+ .map(([n,t,b])=>`<div class="qs-card"><span class="n">STEP ${n}</span><b>${t}</b><span>${b}</span></div>`).join('');
+
+const HELP_CATS=[
+ ['rocket','Getting Started',[['image-up','Upload Room Photos'],['map-pin','Add A Property'],['wand-sparkles','Your First Design'],['list-checks','Room Checklist']]],
+ ['palette','Designing',[['lock','Structure Lock Explained'],['layers','Style Directions'],['history','Version History'],['images','Listing Batch Mode']]],
+ ['calculator','Scope & Budget',[['dollar-sign','How Pricing Is Built'],['sliders-horizontal','Budget Bands'],['shopping-bag','Product Tiers'],['map','Market Labor Rates']]],
+ ['share-2','Client Delivery',[['presentation','Building Presentations'],['link','Client Approval Links'],['bell','Open And View Alerts'],['download','Exports And Watermarks']]],
+ ['users','Team & Workspace',[['user-plus','Inviting Members'],['shield','Roles And Permissions'],['building','Brand Kit'],['plug','Integrations']]],
+ ['credit-card','Billing',[['gauge','Design Credits'],['credit-card','Plans And Pricing'],['receipt','Invoices And Receipts'],['refresh-ccw','Upgrades And Downgrades']]]];
+const helpCatsEl=document.getElementById('helpCats');
+function renderCats(q){
+  const s=(q||'').trim().toLowerCase();
+  const list=HELP_CATS.map(([ic,name,arts])=>[ic,name,arts.filter(a=>!s||a[1].toLowerCase().includes(s)||name.toLowerCase().includes(s))]).filter(c=>c[2].length);
+  helpCatsEl.innerHTML=list.length?list.map(([ic,name,arts])=>`<div class="card"><div class="card-b">
+    <div class="help-cat"><i data-lucide="${ic}"></i>${name}</div>
+    ${arts.map(([ai,label])=>`<button class="help-a"><i data-lucide="${ai}"></i>${label}</button>`).join('')}
+  </div></div>`).join(''):`<div class="card"><div class="card-b sub">No articles match that search.</div></div>`;
+  lucide.createIcons();
+}
+const HELP_FAQ=[
+ ['Do The Designs Change The Structure Of The Room?','No. Structure lock holds walls, windows, ceiling lines and floor plane in place, so every version is buildable in the same space.'],
+ ['How Accurate Is The Scope?','Scopes are built from approved designs using current market labor rates and real product pricing, and land inside the stated band on most projects.'],
+ ['Can I Upload My Own Photos?','Yes. Any straight-on room photo works. Better light and a wider angle produce better versions.'],
+ ['Can Clients Comment Instead Of Approving?','Yes. Client links accept comments per room, and you get notified the moment a link is opened.'],
+ ['What Happens When I Hit My Design Limit?','Nothing is deleted. New generations pause until the cycle resets or you upgrade, and existing work stays available.'],
+ ['Can I Remove The Watermark?','Paid plans export without a watermark, or you can swap it for your own logo in Settings.']];
+const helpFaqEl=document.getElementById('helpFaq');
+function renderFaq(q){
+  const s=(q||'').trim().toLowerCase();
+  const list=HELP_FAQ.filter(f=>!s||(f[0]+f[1]).toLowerCase().includes(s));
+  helpFaqEl.innerHTML=list.length?list.map(([q2,a],i)=>`<button class="help-q" data-f="${i}">${q2}<i data-lucide="chevron-down"></i></button><div class="help-ans" data-a="${i}">${a}</div>`).join(''):`<div class="sub">Nothing matches that search.</div>`;
+  lucide.createIcons();
+}
+helpFaqEl.addEventListener('click',e=>{
+  const b=e.target.closest('.help-q'); if(!b) return;
+  const a=helpFaqEl.querySelector(`[data-a="${b.dataset.f}"]`);
+  b.classList.toggle('on'); a.classList.toggle('on');
+});
+renderCats(''); renderFaq('');
+const helpQ=document.getElementById('helpQ');
+helpQ.addEventListener('input',()=>{renderCats(helpQ.value);renderFaq(helpQ.value)});
+document.getElementById('helpPop').addEventListener('click',e=>{
+  const c=e.target.closest('.chip'); if(!c) return; helpQ.value=c.textContent; renderCats(helpQ.value); renderFaq(helpQ.value);
+});
+
+/* ---------- tutorials ---------- */
+const TUTS=[['Add Your First Property','2 Minutes',PHOTOS.craftsman,'Getting Started'],
+['Upload Photos That Render Well','3 Minutes',PHOTOS.before,'Getting Started'],
+['Structure Lock In Practice','4 Minutes',PHOTOS.after,'Designing'],
+['Choosing A Style Direction','3 Minutes',PHOTOS.japandi,'Designing'],
+['Staging A Whole Listing','5 Minutes',PHOTOS.neutral,'Listing Batch'],
+['Building A Scope And Budget','4 Minutes',PHOTOS.kitchen,'Scope'],
+['Swapping Product Tiers','2 Minutes',PHOTOS.luxury,'Products'],
+['Sending A Client Link','3 Minutes',PHOTOS.coastal,'Delivery'],
+['Reading Approval Analytics','90 Seconds',PHOTOS.midcentury,'Delivery']];
+document.getElementById('tutGrid').innerHTML=TUTS.map(([t,len,img,tag])=>`<div class="tut-card">
+  <div class="tut-thumb">${photo(img,t)}<div class="tut-play"><span><i data-lucide="play"></i></span></div><div class="tut-len">${len}</div></div>
+  <div class="tut-b"><b>${t}</b><span>${tag}</span></div></div>`).join('');
+document.getElementById('tutPaths').innerHTML=[['Agent Fast Track','4 videos &middot; 11 minutes'],['Investor Scope Deep Dive','5 videos &middot; 18 minutes'],
+['Team Lead Setup','3 videos &middot; 9 minutes']].map(([n,m])=>`<div class="rowi"><div class="rowt"><b>${n}</b><span>${m}</span></div>
+<button class="btn btn-ghost btn-xs"><i data-lucide="play"></i>Start</button></div>`).join('');
+
+/* ---------- feedback modal ---------- */
+const FB_CATS=['Bug','Design Quality','Scope Accuracy','Feature Request','Billing','Something Else'];
+const fbModal=document.getElementById('fbModal');
+document.getElementById('fbCats').innerHTML=FB_CATS.map(c=>`<span class="fb-cat">${c}</span>`).join('');
+document.getElementById('fbCats').addEventListener('click',e=>{
+  const c=e.target.closest('.fb-cat'); if(!c) return;
+  const on=c.classList.contains('on');
+  document.querySelectorAll('#fbCats .fb-cat').forEach(x=>x.classList.remove('on'));
+  if(!on) c.classList.add('on');
+});
+function openFb(){ document.getElementById('fbForm').hidden=false; document.getElementById('fbDone').hidden=true;
+  document.getElementById('fbBody').value=''; document.getElementById('fbFile').hidden=true;
+  document.querySelectorAll('#fbCats .fb-cat').forEach(x=>x.classList.remove('on'));
+  fbModal.classList.add('on'); lucide.createIcons(); }
+function closeFb(){ fbModal.classList.remove('on'); }
+document.getElementById('fbBtn').addEventListener('click',()=>{closeHelp();openFb()});
+document.getElementById('helpFbBtn').addEventListener('click',openFb);
+document.getElementById('fbClose').addEventListener('click',closeFb);
+document.getElementById('fbDoneClose').addEventListener('click',closeFb);
+fbModal.addEventListener('click',e=>{ if(e.target===fbModal) closeFb(); });
+document.getElementById('fbAttach').addEventListener('click',()=>{
+  const f=document.getElementById('fbFile'); f.hidden=false; f.textContent='screenshot-2026-08-06.png';
+});
+document.getElementById('fbSend').addEventListener('click',()=>{
+  const b=document.getElementById('fbBody');
+  if(b.value.trim().length<3){ b.focus(); b.style.borderColor='var(--red)'; return; }
+  b.style.borderColor=''; document.getElementById('fbForm').hidden=true; document.getElementById('fbDone').hidden=false; lucide.createIcons();
+});
+
+/* ---------- product tour ---------- */
+const TOUR=[['.sidebar .nav-i','Navigation','Every part of the workspace lives here, from properties through client presentations.'],
+['.search-wrap','Search Anything','Find a property, room, design or scope. The caret narrows the search or filters it.'],
+['#helpBtn','Help Is Here','Help center, tutorials and feedback, always one click away.'],
+['.acct-wrap','Your Account','Profile, team, billing and preferences moved into this menu.'],
+['.topbar .btn-primary','Start Designing','New Design takes a room from photo to buildable version in a couple of minutes.']];
+let ti=-1, tEl=null;
+const veil=document.getElementById('tourVeil'),pop=document.getElementById('tourPop');
+function clearHi(){ if(tEl){tEl.classList.remove('tour-hi');tEl=null;} }
+function endTour(){ clearHi(); veil.classList.remove('on'); pop.classList.remove('on'); ti=-1; }
+function showStep(i){
+  clearHi();
+  if(i>=TOUR.length){ endTour(); return; }
+  ti=i; const [sel,title,body]=TOUR[i];
+  const el=document.querySelector(sel);
+  document.getElementById('tourStep').textContent=`STEP ${i+1} OF ${TOUR.length}`;
+  document.getElementById('tourTitle').textContent=title;
+  document.getElementById('tourBody').textContent=body;
+  document.getElementById('tourNext').textContent=i===TOUR.length-1?'Done':'Next';
+  veil.classList.add('on'); pop.classList.add('on');
+  if(el){ el.classList.add('tour-hi'); tEl=el;
+    const r=el.getBoundingClientRect();
+    let top=r.bottom+12, left=r.left;
+    if(top+180>window.innerHeight) top=Math.max(12,r.top-180);
+    left=Math.min(Math.max(12,left),window.innerWidth-274);
+    pop.style.top=top+'px'; pop.style.left=left+'px';
+  } else { pop.style.top='50%'; pop.style.left='50%'; }
+}
+function startTour(){ closeHelp(); showStep(0); }
+document.getElementById('tourBtn').addEventListener('click',startTour);
+document.getElementById('tourNext').addEventListener('click',()=>showStep(ti+1));
+document.getElementById('tourSkip').addEventListener('click',endTour);
+veil.addEventListener('click',endTour);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ endTour(); closeFb(); } });
+
+lucide.createIcons();
 
 lucide.createIcons();
 
