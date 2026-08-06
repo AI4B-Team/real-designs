@@ -33,9 +33,11 @@ document.getElementById('lBefore').innerHTML=room('before');
 document.getElementById('lAfter').innerHTML=room('after');
 document.getElementById('lWire').innerHTML=wire();
 document.querySelectorAll('.samp').forEach((s,i)=>{
-  const pals=[null,'saturate(.75) hue-rotate(180deg)','sepia(.35) saturate(1.2)','saturate(1.15) hue-rotate(-18deg)'];
-  s.innerHTML=room(i===0?'before':'after',pals[i]);
+  const srcs=[PHOTO.before,PHOTO.after,PHOTO.kitchen,PHOTO.paintedBrick];
+  const alts=['Dated living room sample photo','Warm minimal living room sample','Renovated kitchen sample','Painted brick exterior sample'];
+  s.innerHTML=photo(srcs[i],alts[i]);
 });
+
 
 /* ---------- comparator ---------- */
 const rng=document.getElementById('rng'),lAfter=document.getElementById('lAfter'),hnd=document.getElementById('hnd');
