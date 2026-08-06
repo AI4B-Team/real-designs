@@ -436,3 +436,23 @@
 .rd-app, .rd-app *{transition-duration:.001ms!important;animation-duration:.001ms!important}
 }
 
+
+/* ---------- account dropdown ---------- */
+.rd-app .acct-wrap{position:relative}
+.rd-app .acct-btn{display:flex;align-items:center;gap:6px;padding:3px 7px 3px 3px;border-radius:999px;border:1px solid var(--line);background:#fff}
+.rd-app .acct-btn:hover{background:var(--paper)}
+.rd-app .acct-btn svg{width:14px;height:14px;color:var(--mute-2)}
+.rd-app .av.lg{width:42px;height:42px;font-size:.9rem}
+.rd-app .acct-menu{position:absolute;top:calc(100% + 10px);right:0;width:288px;max-height:78vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 44px rgba(20,18,15,.16);padding:12px;z-index:80;display:none}
+.rd-app .acct-menu.on{display:block}
+.rd-app .acct-head{display:flex;gap:11px;align-items:center;margin-bottom:12px}
+.rd-app .acct-head b{display:block;font-size:.92rem}
+.rd-app .acct-head span{display:block;font-size:.72rem;color:var(--mute-2);overflow:hidden;text-overflow:ellipsis}
+.rd-app .acct-plan{display:flex;align-items:center;gap:8px;justify-content:space-between;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--paper);margin-bottom:10px}
+.rd-app .acct-sep{height:1px;background:var(--line);margin:10px 0}
+.rd-app .acct-group{font-size:.64rem;letter-spacing:.09em;text-transform:uppercase;color:var(--mute-2);font-family:'DM Mono',monospace;margin:0 0 4px 6px}
+.rd-app .acct-i{display:flex;align-items:center;gap:10px;width:100%;padding:8px 9px;border-radius:7px;font-size:.83rem;color:var(--ink);text-align:left}
+.rd-app .acct-i:hover{background:var(--paper)}
+.rd-app .acct-i svg{width:16px;height:16px;color:var(--mute-2);flex:none}
+.rd-app .acct-i .mv{margin-left:auto;font-size:.72rem;color:var(--mute-2);font-family:'DM Mono',monospace}
+.rd-app .acct-i.danger,.rd-app .acct-i.danger svg{color:var(--red)}
