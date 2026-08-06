@@ -40,8 +40,9 @@ account:['Account','Profile, security, subscription and billing']};
 function go(v){
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
-  document.getElementById('pgTitle').innerHTML=titles[v][0];
-  document.getElementById('pgCrumb').innerHTML=titles[v][1];
+  const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
+  const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
+
   window.scrollTo({top:0});
 }
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
