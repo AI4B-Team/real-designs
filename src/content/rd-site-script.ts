@@ -12,11 +12,11 @@ export function initSite(): () => void {
   const lucide = { createIcons: (o: any = {}) => createIcons({ icons, ...o }) };
   try {
 
-/* ---------- room photos ---------- */
+/* ---------- room art ---------- */
 const PHOTO={before:roomBefore,after:roomAfter};
-function room(mode,tone){
+function room(mode,pal){
   const src = mode==='after'?PHOTO.after:PHOTO.before;
-  const f = tone?`filter:${tone};`:'';
+  const f = pal?`filter:${pal};`:'';
   return `<img src="${src}" alt="${mode==='after'?'Redesigned living room after AI render':'Original living room before redesign'}" style="width:100%;height:100%;object-fit:cover;display:block;${f}">`;
 }
 function wire(){return `<svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
@@ -33,8 +33,8 @@ document.getElementById('lBefore').innerHTML=room('before');
 document.getElementById('lAfter').innerHTML=room('after');
 document.getElementById('lWire').innerHTML=wire();
 document.querySelectorAll('.samp').forEach((s,i)=>{
-  const tones=[null,'saturate(.75) hue-rotate(180deg)','sepia(.35) saturate(1.2)','saturate(1.15) hue-rotate(-18deg)'];
-  s.innerHTML=room(i===0?'before':'after',tones[i]);
+  const pals=[null,'saturate(.75) hue-rotate(180deg)','sepia(.35) saturate(1.2)','saturate(1.15) hue-rotate(-18deg)'];
+  s.innerHTML=room(i===0?'before':'after',pals[i]);
 });
 
 /* ---------- comparator ---------- */
@@ -86,8 +86,12 @@ document.querySelectorAll('#budgetChips .chip').forEach(c=>c.addEventListener('c
   document.querySelectorAll('#budgetChips .chip').forEach(x=>x.classList.remove('on'));
   c.classList.add('on');setBudget(+c.dataset.b);
 }));
+function unlock(){
+  document.getElementById('more').classList.add('open');
+  document.getElementById('hint').classList.add('gone');
+}
 document.querySelectorAll('.samp').forEach(s=>s.addEventListener('click',()=>{
-  document.querySelectorAll('.samp').forEach(x=>x.classList.remove('on'));s.classList.add('on');
+  document.querySelectorAll('.samp').forEach(x=>x.classList.remove('on'));s.classList.add('on');unlock();
 }));
 
 const steps=['Reading room geometry','Locking walls and windows','Fitting the design to your budget','Selecting materials and finishes','Rendering at full resolution','Pricing the scope'];
@@ -111,7 +115,8 @@ document.getElementById('genBtn').addEventListener('click',()=>{
     if(p>(i+1)*(100/steps.length)&&i<steps.length-1){i++;gs.textContent=steps[i]}
   },220);
 });
-document.getElementById('drop').addEventListener('click',()=>document.getElementById('genBtn').scrollIntoView({block:'center'}));
+document.getElementById('drop').addEventListener('click',unlock);
+document.getElementById('genBtn').addEventListener('click',unlock);
 
 /* ---------- marquee ---------- */
 const mqI=[['sofa','Interior Redesign'],['home','Exterior Redesign'],['trees','Landscape Design'],['bed-double','Virtual Staging'],
@@ -222,6 +227,6 @@ document.querySelectorAll('[data-c]').forEach(el=>co.observe(el));
 addEventListener('scroll',()=>document.getElementById('hdr').classList.toggle('scrolled',scrollY>12),{passive:true});
 lucide.createIcons();
 
-  } catch (err) { console.error(err); }
+  } catch (e) { console.error(e); }
   return () => { timers.forEach((t) => { window.clearInterval(t); window.clearTimeout(t); }); };
 }

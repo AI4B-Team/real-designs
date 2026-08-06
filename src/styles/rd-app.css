@@ -1,10 +1,8 @@
-.rd-app{
-  --ink:#111113;--ink-2:#2A2A2E;--paper:#FAFAFA;--white:#FFF;
+.rd-app{--ink:#111113;--ink-2:#2A2A2E;--paper:#FAFAFA;--white:#FFF;
   --line:#E5E5E5;--line-2:#D6D6D6;--red:#CC0000;--red-dk:#A30000;--red-tint:#FDECEC;
   --mute:#6B6B6B;--mute-2:#8E8E8E;--ok:#0F7B4F;--ok-tint:#E8F4EE;
   --amber:#9A5B00;--amber-tint:#FBF0E2;--blue:#1F5FA8;--blue-tint:#E9F0F9;
-  --sh:0 1px 2px rgba(17,17,19,.05),0 8px 24px rgba(17,17,19,.06);
-}
+  --sh:0 1px 2px rgba(17,17,19,.05),0 8px 24px rgba(17,17,19,.06);}
 .rd-app, .rd-app *{box-sizing:border-box;margin:0;padding:0}
 .rd-app{font-family:'DM Sans',system-ui,sans-serif;background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5;font-size:14px}
 .rd-app img, .rd-app svg{display:block;max-width:100%}
@@ -15,10 +13,8 @@
 .rd-app h1, .rd-app h2, .rd-app h3, .rd-app h4{letter-spacing:-.02em;font-weight:700;line-height:1.2}
 .rd-app /* layout */
 .app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
-@media(max-width:900px){
-.rd-app .app{grid-template-columns:1fr}
-.rd-app .side{display:none}
-}
+@media(max-width:900px){.rd-app .app{grid-template-columns:1fr}
+.rd-app .side{display:none}}
 .rd-app /* sidebar */
 .side{background:var(--white);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
 .rd-app .side-top{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
@@ -103,13 +99,9 @@
 .rd-app .tabs button.on{color:var(--ink);font-weight:700;border-bottom-color:var(--red)}
 .rd-app /* studio */
 .studio{display:grid;grid-template-columns:272px 1fr 292px;gap:16px;align-items:start}
-@media(max-width:1240px){
-.rd-app .studio{grid-template-columns:262px 1fr}
-.rd-app .studio .right{grid-column:1/-1}
-}
-@media(max-width:860px){
-.rd-app .studio{grid-template-columns:1fr}
-}
+@media(max-width:1240px){.rd-app .studio{grid-template-columns:262px 1fr}
+.rd-app .studio .right{grid-column:1/-1}}
+@media(max-width:860px){.rd-app .studio{grid-template-columns:1fr}}
 .rd-app .field{margin-bottom:15px}
 .rd-app .field label{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mute-2);margin-bottom:6px}
 .rd-app .field select, .rd-app .field input[type=text], .rd-app .field textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:.84rem;background:var(--white);color:var(--ink)}
@@ -223,6 +215,4 @@ table{width:100%;border-collapse:collapse}
 .rd-app .empty p{font-size:.85rem;color:var(--mute);max-width:44ch;margin:0 auto 16px}
 .rd-app .view{display:none}
 .rd-app .view.on{display:block}
-@media(prefers-reduced-motion:reduce){
-.rd-app, .rd-app *{transition-duration:.001ms!important;animation-duration:.001ms!important}
-}
+@media(prefers-reduced-motion:reduce){.rd-app, .rd-app *{transition-duration:.001ms!important;animation-duration:.001ms!important}}
