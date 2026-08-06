@@ -2,8 +2,8 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import roomBefore from "@/assets/room-before.jpg";
-import roomAfter from "@/assets/room-after.jpg";
+import { PHOTOS, photo } from "@/content/rd-photos";
+
 
 export function initSite(): () => void {
   const timers: number[] = [];
