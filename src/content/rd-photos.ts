@@ -1,0 +1,40 @@
+// Shared realistic photography used by both the marketing site and the back office.
+import roomBefore from "@/assets/room-before.jpg";
+import roomAfter from "@/assets/room-after.jpg";
+import roomKitchen from "@/assets/room-kitchen.jpg";
+import roomBath from "@/assets/room-bath.jpg";
+import exteriorBefore from "@/assets/exterior-before.jpg";
+import styleCoastal from "@/assets/style-coastal.jpg";
+import styleFarmhouse from "@/assets/style-farmhouse.jpg";
+import styleJapandi from "@/assets/style-japandi.jpg";
+import styleMidcentury from "@/assets/style-midcentury.jpg";
+import styleIndustrial from "@/assets/style-industrial.jpg";
+import styleLuxury from "@/assets/style-luxury.jpg";
+import styleNeutral from "@/assets/style-neutral.jpg";
+import styleRanch from "@/assets/style-ranch.jpg";
+import stylePaintedBrick from "@/assets/style-paintedbrick.jpg";
+import styleResortYard from "@/assets/style-resortyard.jpg";
+import styleCraftsman from "@/assets/style-craftsman.jpg";
+
+export const PHOTOS = {
+  before: roomBefore,
+  after: roomAfter,
+  kitchen: roomKitchen,
+  bath: roomBath,
+  exteriorBefore,
+  coastal: styleCoastal,
+  farmhouse: styleFarmhouse,
+  japandi: styleJapandi,
+  midcentury: styleMidcentury,
+  industrial: styleIndustrial,
+  luxury: styleLuxury,
+  neutral: styleNeutral,
+  ranch: styleRanch,
+  paintedBrick: stylePaintedBrick,
+  resortYard: styleResortYard,
+  craftsman: styleCraftsman,
+} as const;
+
+export function photo(src: string, alt: string) {
+  return `<img src="${src}" alt="${alt}" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">`;
+}
