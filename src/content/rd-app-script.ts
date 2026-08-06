@@ -35,7 +35,8 @@ const titles={dash:['Dashboard','Real Advisors &middot; 6 active properties'],pr
 studio:['Studio','206 N MacDill Ave &middot; Living Room &middot; v5 draft'],designs:['Designs','248 designs across 6 properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
-team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations']};
+team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations'],
+account:['Account','Profile, security, subscription and billing']};
 function go(v){
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
@@ -45,6 +46,37 @@ function go(v){
 }
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+
+/* ---------- account menu ---------- */
+const acctBtn=document.getElementById('acctBtn'),acctMenu=document.getElementById('acctMenu');
+function closeAcct(){acctMenu.classList.remove('on');acctBtn.setAttribute('aria-expanded','false')}
+acctBtn.addEventListener('click',e=>{
+  e.stopPropagation();
+  const open=!acctMenu.classList.contains('on');
+  acctMenu.classList.toggle('on',open);acctBtn.setAttribute('aria-expanded',String(open));
+});
+acctMenu.addEventListener('click',e=>{ if(e.target.closest('.acct-i,[data-goto]')) closeAcct(); });
+document.addEventListener('click',e=>{ if(!e.target.closest('.acct-wrap')) closeAcct(); });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAcct(); });
+
+/* ---------- account page ---------- */
+const notifs=[['Client Opens A Presentation Link','Email and in app','On'],
+['Design Finishes Rendering','In app only','On'],
+['Scope Exceeds The Target Band','Email and in app','On'],
+['Teammate Comments On A Design','Email','On'],
+['Monthly Usage Report','Email, first of the month','On'],
+['Product And Feature Updates','Email','Off']];
+document.getElementById('notifRows').innerHTML=notifs.map(([n,d,st])=>`
+<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div>
+<span class="pill ${st==='On'?'p-ok':'p-gray'}">${st}</span></div>`).join('');
+
+const invoices=[['Jul 28, 2026','Pro Monthly','$199.00'],['Jun 28, 2026','Pro Monthly','$199.00'],
+['May 28, 2026','Pro Monthly','$199.00'],['Apr 28, 2026','Pro Monthly','$199.00'],
+['Mar 28, 2026','Starter Monthly','$79.00'],['Feb 28, 2026','Starter Monthly','$79.00']];
+document.getElementById('invRows').innerHTML=invoices.map(([d,p,a])=>`
+<tr><td><b>${d}</b></td><td>${p}</td><td class="n">${a}</td>
+<td style="text-align:right"><button class="btn btn-ghost btn-xs">PDF</button></td></tr>`).join('');
+
 
 /* ---------- dashboard ---------- */
 const recent=[['Living Room v4','206 N MacDill &middot; Warm Minimal','after','warm','p-ok','Approved'],
