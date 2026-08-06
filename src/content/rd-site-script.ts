@@ -2,8 +2,8 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import roomBefore from "@/assets/room-before.jpg";
-import roomAfter from "@/assets/room-after.jpg";
+import { PHOTOS, photo } from "@/content/rd-photos";
+
 
 export function initSite(): () => void {
   const timers: number[] = [];
@@ -13,12 +13,12 @@ export function initSite(): () => void {
   try {
 
 /* ---------- room art ---------- */
-const PHOTO={before:roomBefore,after:roomAfter};
-function room(mode,pal){
-  const src = mode==='after'?PHOTO.after:PHOTO.before;
-  const f = pal?`filter:${pal};`:'';
-  return `<img src="${src}" alt="${mode==='after'?'Redesigned living room after AI render':'Original living room before redesign'}" style="width:100%;height:100%;object-fit:cover;display:block;${f}">`;
+const PHOTO=PHOTOS;
+function room(mode,src){
+  const s = src || (mode==='after'?PHOTO.after:PHOTO.before);
+  return photo(s, mode==='after'?'Redesigned living room after AI render':'Original living room before redesign');
 }
+
 function wire(){return `<svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
   <g fill="none" stroke="#CC0000" stroke-width="2.5" stroke-dasharray="7 5" opacity=".95">
     <polyline points="0,34 190,72 800,66"/><polyline points="0,430 190,375 800,368"/>
@@ -33,9 +33,11 @@ document.getElementById('lBefore').innerHTML=room('before');
 document.getElementById('lAfter').innerHTML=room('after');
 document.getElementById('lWire').innerHTML=wire();
 document.querySelectorAll('.samp').forEach((s,i)=>{
-  const pals=[null,'saturate(.75) hue-rotate(180deg)','sepia(.35) saturate(1.2)','saturate(1.15) hue-rotate(-18deg)'];
-  s.innerHTML=room(i===0?'before':'after',pals[i]);
+  const srcs=[PHOTO.before,PHOTO.after,PHOTO.kitchen,PHOTO.paintedBrick];
+  const alts=['Dated living room sample photo','Warm minimal living room sample','Renovated kitchen sample','Painted brick exterior sample'];
+  s.innerHTML=photo(srcs[i],alts[i]);
 });
+
 
 /* ---------- comparator ---------- */
 const rng=document.getElementById('rng'),lAfter=document.getElementById('lAfter'),hnd=document.getElementById('hnd');
@@ -152,16 +154,14 @@ document.getElementById('featGrid').innerHTML=F.map(([i,t,d,g])=>`
   <div class="ic"><i data-lucide="${i}"></i></div><h3>${t}</h3><p>${d}</p></div>`).join('');
 
 /* ---------- styles grid ---------- */
-const SL=[['Warm Minimal','#E8E2D6','#3D4A45'],['Modern Farmhouse','#F2EFE9','#4A4239'],['Coastal','#E4EDF0','#2F5A6B'],
-['Japandi','#EAE4D9','#5A4A3A'],['Mid Century','#E9DCC9','#A0522D'],['Industrial','#DCD9D4','#41403E'],
-['Quiet Luxury','#E7E2DA','#7A6A54'],['Investor Neutral','#F0EEEA','#8C8C88'],['Florida Ranch','#EFE7D8','#B07A4B'],
-['Painted Brick','#EDEAE4','#5E5A54'],['Resort Yard','#DFE9DB','#3F6B44'],['Craftsman','#E6DED0','#6B4A2F']];
-document.getElementById('styleGrid').innerHTML=SL.map(([n,bg,ac],i)=>`
-  <div class="st"><div class="sw2" style="background:${bg}">
-    <div style="position:absolute;left:12px;bottom:0;width:46%;height:38%;background:${ac};border-radius:5px 5px 0 0"></div>
-    <div style="position:absolute;right:14px;top:14px;width:26%;height:34%;background:${ac};opacity:.3;border-radius:4px"></div>
-    <div style="position:absolute;right:18px;bottom:0;width:12%;height:24%;background:${ac};opacity:.6;border-radius:50% 50% 3px 3px"></div>
+const SL=[['Warm Minimal',PHOTO.after],['Modern Farmhouse',PHOTO.farmhouse],['Coastal',PHOTO.coastal],
+['Japandi',PHOTO.japandi],['Mid Century',PHOTO.midcentury],['Industrial',PHOTO.industrial],
+['Quiet Luxury',PHOTO.luxury],['Investor Neutral',PHOTO.neutral],['Florida Ranch',PHOTO.ranch],
+['Painted Brick',PHOTO.paintedBrick],['Resort Yard',PHOTO.resortYard],['Craftsman',PHOTO.craftsman]];
+document.getElementById('styleGrid').innerHTML=SL.map(([n,src],i)=>`
+  <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' design direction example')}
   </div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')} / 180</span></div></div>`).join('');
+
 
 /* ---------- quotes ---------- */
 const Q=[

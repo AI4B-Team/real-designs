@@ -2,6 +2,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { PHOTOS, photo } from "@/content/rd-photos";
 
 export function initApp(): () => void {
   const timers: number[] = [];
@@ -10,52 +11,24 @@ export function initApp(): () => void {
   const lucide = { createIcons: (o: any = {}) => createIcons({ icons, ...o }) };
   try {
 
-/* ---------- room svg ---------- */
+/* ---------- room photos ---------- */
 function room(mode,pal){
-  const A={ceil:'#F7F5F1',back:'#EFECE6',side:'#E5E1D9',floor:'#C6AF8F',plank:'#B99F7C',sofa:'#3D4A45',sofa2:'#33403C',
-    pil1:'#D9C7A8',pil2:'#B9C4BC',rug:'#EAE5DB',rug2:'#DCD5C7',tbl:'#8A6A47',art:'#D8D2C6',plant:'#4F6B4A',pot:'#C9B99F',lamp:'#2A2A2E',win:'#DCE7EC',frame:'#FFF'};
-  const B={ceil:'#E7E1D4',back:'#D9CFBB',side:'#CDC2AC',floor:'#A98F6F',plank:'#98805F',sofa:'#9C8B76',sofa2:'#8C7C69',
-    pil1:'#B7A78F',pil2:'#A2917A',rug:'#8E7B60',rug2:'#83704F',tbl:'#6E5638',art:'#C6BBA4',plant:'#6E7A56',pot:'#A08D70',lamp:'#5A5346',win:'#CBD5D9',frame:'#EDE7DA'};
-  let P=mode==='after'?{...A}:{...B};
-  if(pal){P.sofa=pal[0];P.sofa2=pal[1];P.back=pal[2];P.floor=pal[3];P.rug=pal[4]}
-  const a=mode==='after';
-  return `<svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
-  <rect width="800" height="500" fill="${P.back}"/><polygon points="0,0 800,0 800,88 0,60" fill="${P.ceil}"/>
-  <polygon points="0,60 90,88 90,410 0,455" fill="${P.side}"/><polygon points="0,455 90,410 800,410 800,500 0,500" fill="${P.floor}"/>
-  <g stroke="${P.plank}" stroke-width="2" opacity=".5"><line x1="120" y1="440" x2="800" y2="440"/><line x1="150" y1="470" x2="800" y2="470"/>
-  <line x1="300" y1="410" x2="300" y2="500"/><line x1="520" y1="410" x2="520" y2="500"/></g>
-  <rect x="520" y="120" width="220" height="185" fill="${P.win}"/>
-  <rect x="520" y="120" width="220" height="185" fill="none" stroke="${P.frame}" stroke-width="10"/>
-  <line x1="630" y1="120" x2="630" y2="305" stroke="${P.frame}" stroke-width="8"/>
-  <line x1="520" y1="212" x2="740" y2="212" stroke="${P.frame}" stroke-width="8"/>
-  ${a?`<rect x="500" y="108" width="24" height="210" fill="#E8E2D6"/><rect x="736" y="108" width="24" height="210" fill="#E8E2D6"/>`:''}
-  <rect x="180" y="${a?130:150}" width="${a?170:96}" height="${a?118:74}" fill="${P.art}" stroke="${a?'#B9B0A0':'#B0A48C'}" stroke-width="4"/>
-  ${a?`<rect x="196" y="146" width="138" height="86" fill="#C4B7A2"/><circle cx="252" cy="182" r="22" fill="#8A9B8C"/>`:''}
-  <ellipse cx="420" cy="452" rx="${a?250:150}" ry="${a?48:32}" fill="${P.rug}"/>
-  <ellipse cx="420" cy="452" rx="${a?214:120}" ry="${a?36:23}" fill="${P.rug2}" opacity=".7"/>
-  <rect x="230" y="${a?318:305}" width="300" height="${a?70:92}" rx="${a?10:4}" fill="${P.sofa}"/>
-  <rect x="230" y="${a?300:288}" width="300" height="${a?28:34}" rx="${a?10:4}" fill="${P.sofa2}"/>
-  <rect x="252" y="${a?306:296}" width="52" height="${a?30:34}" rx="6" fill="${P.pil1}"/>
-  <rect x="452" y="${a?306:296}" width="52" height="${a?30:34}" rx="6" fill="${P.pil2}"/>
-  <rect x="250" y="${a?388:397}" width="10" height="${a?20:8}" fill="${P.tbl}"/><rect x="500" y="${a?388:397}" width="10" height="${a?20:8}" fill="${P.tbl}"/>
-  <rect x="330" y="${a?404:408}" width="${a?170:110}" height="12" rx="4" fill="${P.tbl}"/>
-  <rect x="345" y="416" width="8" height="26" fill="${P.tbl}"/><rect x="${a?480:430}" y="416" width="8" height="26" fill="${P.tbl}"/>
-  <rect x="640" y="378" width="46" height="52" rx="${a?6:2}" fill="${P.pot}"/>
-  <path d="M663 378 C 630 340, 636 300, 662 286 C 690 300, 694 340, 663 378 Z" fill="${P.plant}"/>
-  ${a?`<path d="M663 378 C 700 350, 716 318, 706 300 C 682 302, 664 340, 663 378 Z" fill="#5E7C57"/>
-      <path d="M150 400 L150 250 Q150 200 210 198" stroke="${P.lamp}" stroke-width="6" fill="none"/>
-      <ellipse cx="214" cy="206" rx="26" ry="16" fill="${P.lamp}"/><ellipse cx="150" cy="402" rx="26" ry="8" fill="${P.lamp}"/>
-      <rect x="556" y="360" width="120" height="10" rx="3" fill="#8A6A47"/>`
-    :`<rect x="140" y="330" width="20" height="76" fill="${P.lamp}"/><polygon points="126,330 174,330 182,290 118,290" fill="#C4B79E"/>
-      <rect x="560" y="352" width="86" height="58" fill="#8A7256"/><rect x="572" y="336" width="62" height="18" fill="#7A6248"/>
-      <rect x="600" y="330" width="52" height="34" fill="#6B5B47"/>`}</svg>`;
+  const src = mode==='after' ? (pal || PHOTOS.after) : PHOTOS.before;
+  return photo(src, mode==='after' ? 'Redesigned space, AI render' : 'Original space before redesign');
 }
 const PALS={
-  warm:null,
-  coastal:['#5A6B7A','#4A5A68','#EDEAE4','#C9BBA6','#E3E0D8'],
-  farm:['#7A5C46','#6A4E3B','#F0EBE1','#BFA482','#E8E0D2'],
-  green:['#4F6B4A','#41573D','#EDEFE8','#C2B296','#E4E7DE']
+  warm:PHOTOS.after,
+  coastal:PHOTOS.coastal,
+  farm:PHOTOS.farmhouse,
+  green:PHOTOS.japandi,
+  kitchen:PHOTOS.kitchen,
+  bath:PHOTOS.bath,
+  yard:PHOTOS.resortYard,
+  exterior:PHOTOS.paintedBrick,
+  craftsman:PHOTOS.craftsman,
+  ranch:PHOTOS.ranch
 };
+
 
 /* ---------- nav ---------- */
 const titles={dash:['Dashboard','Real Advisors &middot; 6 active properties'],props:['Properties','Property, project, room, version'],
@@ -75,10 +48,10 @@ document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',(
 
 /* ---------- dashboard ---------- */
 const recent=[['Living Room v4','206 N MacDill &middot; Warm Minimal','after','warm','p-ok','Approved'],
-['Kitchen v7','206 N MacDill &middot; Warm Minimal','after','farm','p-ok','Approved'],
-['Primary Bath v2','206 N MacDill &middot; Warm Minimal','after','coastal','p-amb','In Review'],
-['Backyard v1','1412 E Idlewild &middot; Resort','after','green','p-blue','New'],
-['Front Elevation v3','8809 N Ola Ave &middot; Painted Brick','before','warm','p-gray','Draft']];
+['Kitchen v7','206 N MacDill &middot; Warm Minimal','after','kitchen','p-ok','Approved'],
+['Primary Bath v2','206 N MacDill &middot; Warm Minimal','after','bath','p-amb','In Review'],
+['Backyard v1','1412 E Idlewild &middot; Resort','after','yard','p-blue','New'],
+['Front Elevation v3','8809 N Ola Ave &middot; Painted Brick','after','exterior','p-gray','Draft']];
 document.getElementById('recentList').innerHTML=recent.map(([t,s,m,p,cls,lab])=>`
 <div class="rowi"><div class="thumb">${room(m,PALS[p])}</div>
 <div class="rowt"><b>${t}</b><span>${s}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('');
@@ -110,9 +83,9 @@ document.getElementById('tree').innerHTML=tree.map(([l,ic,n,m,on])=>`
 <div class="tr l${l} ${on?'on':''}"><i data-lucide="${ic}"></i>${n}<span class="meta">${m}</span></div>`).join('');
 
 const rooms=[['Living Room','v4 Approved','after','warm','p-ok','$11.4K to $14.9K'],
-['Kitchen','v7 Approved','after','farm','p-ok','$26.2K to $34.1K'],
-['Primary Bath','v2 In Review','after','coastal','p-amb','$8.9K to $12.4K'],
-['Front Elevation','v1 Approved','before','warm','p-ok','$11.9K to $16.8K']];
+['Kitchen','v7 Approved','after','kitchen','p-ok','$26.2K to $34.1K'],
+['Primary Bath','v2 In Review','after','bath','p-amb','$8.9K to $12.4K'],
+['Front Elevation','v1 Approved','after','exterior','p-ok','$11.9K to $16.8K']];
 document.getElementById('roomCards').innerHTML=rooms.map(([n,v,m,p,cls,cost])=>`
 <div class="card"><div style="aspect-ratio:8/5;background:#EFEDE8;border-radius:7px 7px 0 0;overflow:hidden">${room(m,PALS[p])}</div>
 <div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
