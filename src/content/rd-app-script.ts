@@ -522,8 +522,10 @@ document.querySelectorAll('#notifTabs .notif-tab,#notifTabs2 .notif-tab').forEac
 }));
 document.addEventListener('click',e=>{
   const row=e.target.closest('.notif-i'); if(!row) return;
-  const n=NOTIFS.find(x=>String(x.id)===row.dataset.nid); if(n){ n.unread=false; renderNotifs(); }
-  if(row.closest('#notifList')){ closeNotif(); go('notifications'); }
+  const inMenu=!!row.closest('#notifList');
+  const n=NOTIFS.find(x=>String(x.id)===row.dataset.nid); if(n) n.unread=false;
+  if(inMenu){ closeNotif(); go('notifications'); }
+  renderNotifs();
 });
 ['notifRead','notifReadAll'].forEach(id=>{ const b=document.getElementById(id);
   if(b) b.addEventListener('click',e=>{e.stopPropagation();NOTIFS.forEach(n=>n.unread=false);renderNotifs();}); });
