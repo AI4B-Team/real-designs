@@ -154,7 +154,7 @@ function paint(i){
       b.mets.forEach((m,i)=>{
         const l=document.getElementById(ids[i][0]),v=document.getElementById(ids[i][1]);
         if(l)l.textContent=m[0];
-        if(v){v.textContent=i===0?b.fit:m[1];v.className=(i===0&&b.summary?m[2]+' big':m[2])}
+        if(v){v.textContent=m[1];v.className=(i===0&&b.summary?m[2]+' big':m[2])}
       });
     }
   }
