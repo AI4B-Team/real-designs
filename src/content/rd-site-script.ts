@@ -51,15 +51,20 @@ document.getElementById('proofStrip').innerHTML=PROOF.map(([n,p,c])=>`
   <div class="tx"><b>${n}</b><span>${c}</span></div></div>`).join('');
 
 /* ---------- hero showcase ---------- */
+let budgetTouched=false;
 const cursorSVG=`<svg class="cursor" width="22" height="24" viewBox="0 0 22 24" fill="none"><path d="M2 1.5 L2 19 L6.6 14.8 L9.6 21.6 L12.9 20.1 L9.9 13.5 L16 13.2 Z" fill="#fff" stroke="#111113" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
 const SCENES=[
- {tab:'Redesign',name:'Interior',lock:'Reality Lock On',
+ {tab:'Redesign',name:'Interior',lock:'Reality Lock On',est:'$11,400 to $14,900',fit:'Within Target',
   build:()=>`<div class="art">${photo(PHOTOS.before,'Living room before')}</div>
     <div class="wipe">${photo(PHOTOS.after,'Living room after')}</div><div class="wipe-edge"></div>`},
  {tab:'Empty & Stage',name:'Interior &middot; Declutter To Staged',lock:'Declutter On',
-  build:()=>`<div class="art">${photo(PHOTOS.empty,'Room emptied')}</div>
-    <div class="art fade-out">${photo(PHOTOS.clutter,'Room with clutter')}</div>`},
+  est:'$11,400 to $14,900',fit:'Within Target',
+  build:()=>`<div class="art">${photo(PHOTOS.after,'Room restaged')}</div>
+    <div class="art fade-out-2">${photo(PHOTOS.empty,'Room emptied')}</div>
+    <div class="art fade-out">${photo(PHOTOS.clutter,'Room with clutter')}</div>
+    <span class="beat b1">Cluttered</span><span class="beat b2">Emptied</span><span class="beat b3">Restaged</span>`},
  {tab:'Shop',name:'Interior &middot; Shop The Design',lock:'Reality Lock On',toast:'Added To Project',toastAt:2700,
+  estLab:'Project Cart, 14 Items',est:'$3,284',fit:'Fits The Room',
   build:()=>`<div class="art">${photo(PHOTOS.after,'Staged living room')}</div>
     <span class="spot pulse" style="left:29%;top:63%;animation-delay:.2s"></span>
     <span class="spot" style="left:51%;top:80%;animation-delay:.35s"></span>
@@ -71,10 +76,11 @@ const SCENES=[
       <span class="tierrow"><i>Premium Pick</i><em>$2,480</em></span>
       <span class="pb2">Add To Project</span></div>
     ${cursorSVG.replace('class="cursor"','class="cursor" style="left:44%;top:56%"')}`},
- {tab:'Exterior',name:'Exterior',lock:'Reality Lock On',
+ {tab:'Exterior',name:'Exterior',lock:'Reality Lock On',est:'$11,900 to $16,800',fit:'Within Target',
   build:()=>`<div class="art">${photo(PHOTOS.exteriorBefore,'Exterior before')}</div>
     <div class="wipe">${photo(PHOTOS.paintedBrick,'Exterior after')}</div><div class="wipe-edge"></div>`},
  {tab:'Plan',name:'Garden &middot; Scope And Budget',lock:'Budget Mode On',toast:'Scope Sent',toastAt:3100,
+  est:'$26,100 to $31,500',fit:'Within Target',
   build:()=>`<div class="art">${photo(PHOTOS.resortYard,'Backyard redesign')}</div>
     <div class="scope-card"><h4>Backyard Redesign</h4><div class="sub2">Planning range &middot; Tampa FL labor</div>
       <div class="li"><span>In Ground Pool And Install</span><span>$18,500</span></div>
@@ -85,6 +91,7 @@ const SCENES=[
       <span class="act">Send Scope To Contractor</span></div>
     ${cursorSVG.replace('class="cursor"','class="cursor" style="left:55%;top:77%"')}`},
  {tab:'Video',name:'Exterior &middot; Walkthrough',lock:'Recording',rec:true,
+  estLab:'Clip Length',est:'20 Seconds',fit:'Ready To Post',
   build:()=>`<div class="ken">${photo(PHOTOS.paintedBrick,'Exterior walkthrough')}</div>`}
 ];
 const showStage=document.getElementById('showStage'),lockPill=document.getElementById('lockPill'),
@@ -99,6 +106,13 @@ function playScene(i){
   lockPill.className='lock-pill'+(s.rec?' rec':'');
   lockPill.innerHTML=`<i></i>${s.lock}`;
   modePill.innerHTML=s.name;
+  if(!budgetTouched){
+    const he=document.getElementById('heroEst'),hf=document.getElementById('heroFit'),
+          hl=document.getElementById('heroEstLab');
+    if(he&&s.est)he.textContent=s.est;
+    if(hf&&s.fit){hf.textContent=s.fit;hf.className='conf-hi'}
+    if(hl)hl.textContent=s.estLab||'Estimated Project Range';
+  }
   if(s.toast)setTimeout(()=>{toastEl.querySelector('b').textContent=s.toast;toastEl.classList.add('on');
     setTimeout(()=>toastEl.classList.remove('on'),2200)},s.toastAt);
   showNav.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
@@ -151,7 +165,9 @@ function setBudget(i){
 }
 document.querySelectorAll('#budgetChips .chip').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('#budgetChips .chip').forEach(x=>x.classList.remove('on'));
-  c.classList.add('on');setBudget(+c.dataset.b);
+  c.classList.add('on');budgetTouched=true;
+  const hl=document.getElementById('heroEstLab');if(hl)hl.textContent='Estimated Project Range';
+  setBudget(+c.dataset.b);
 }));
 function unlock(){
   document.getElementById('more').classList.add('open');
