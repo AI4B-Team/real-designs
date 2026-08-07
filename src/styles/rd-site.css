@@ -1361,3 +1361,26 @@
   .rd-site .dev-laptop .dev-base{width:min(640px,94vw)}
   .rd-site .dev-floor{display:none}
 }
+
+/* budget bands + quote card */
+.rd-site .band-scope tbody tr{cursor:pointer;transition:background .15s}
+.rd-site .band-scope tbody tr:hover{background:rgba(204,0,0,.035)}
+.rd-site .band-scope tbody tr.on{background:rgba(204,0,0,.06);box-shadow:inset 3px 0 0 var(--red,#CC0000)}
+.rd-site .band-scope tbody tr.on td:first-child{font-weight:700}
+.rd-site .sel-pill{display:inline-block;font-family:'DM Mono',monospace;font-size:.66rem;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--red,#CC0000);background:rgba(204,0,0,.09);border-radius:999px;padding:3px 9px}
+.rd-site .band-note{display:flex;align-items:center;gap:7px;padding:10px 20px;border-top:1px solid var(--line);
+  font-size:.7rem;color:var(--mute-2)}
+.rd-site .band-note svg{width:13px;height:13px}
+.rd-site .scope-acts{padding:13px 20px;border-top:1px solid var(--line);display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.rd-site .aud-toggle{margin-left:auto;display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.rd-site .aud-toggle button{font:inherit;font-size:.7rem;letter-spacing:.04em;padding:5px 11px;border:0;background:transparent;
+  color:var(--mute-2);cursor:pointer}
+.rd-site .aud-toggle button.on{background:var(--ink);color:#fff}
+.rd-site .quote-card .qmetrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.rd-site .quote-card .qmetrics>div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.rd-site .quote-card .qmetrics b{display:block;font-family:'DM Mono',monospace;font-size:1.05rem}
+.rd-site .quote-card .qmetrics span{font-size:.68rem;color:var(--mute-2);letter-spacing:.04em;text-transform:uppercase}
+.rd-site .quote-card .qmetrics .wb{grid-column:1/-1;background:rgba(204,0,0,.05);border-color:rgba(204,0,0,.18)}
+.rd-site .quote-card .qmetrics .wb b{color:var(--red,#CC0000)}
+@media(max-width:560px){.rd-site .quote-card .qmetrics{grid-template-columns:1fr 1fr}}
