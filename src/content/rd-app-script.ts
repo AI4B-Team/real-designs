@@ -382,10 +382,17 @@ function allowanceCsv(){
   a.download='real-designs-materials-allowance.csv'; a.click(); URL.revokeObjectURL(a.href);
 }
 
+let scopeBusy=false;
 async function runScope(){
+  if(scopeBusy) return;
+  scopeBusy=true;
   const sel=document.getElementById('scMarket');
+  const runBtn=document.getElementById('scRun');
   const val=(id,d)=>{const v=parseFloat((document.getElementById(id)||{}).value);return Number.isFinite(v)&&v>0?v:d;};
-  scopeRowsEl.innerHTML='<tr><td colspan="5">Pricing…</td></tr>';
+  runBtn.disabled=true; runBtn.classList.add('is-busy');
+  document.getElementById('estSum').classList.add('is-loading');
+  scopeRowsEl.innerHTML=Array.from({length:5}).map(()=>
+    '<tr class="sk"><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>').join('');
   try{
     const r=await priceScopePreview({data:{
       market_id: sel && sel.value ? sel.value : undefined,
@@ -401,9 +408,14 @@ async function runScope(){
     }
     renderScope(r);
   }catch(e){
-    scopeRowsEl.innerHTML=`<tr><td colspan="5">Could not price this scope. ${(e&&e.message)||''}</td></tr>`;
+    scopeRowsEl.innerHTML='<tr><td colspan="5">No priced lines.</td></tr>';
+    showAlert('Could not price this scope. '+((e&&e.message)||'Try again in a moment.'));
+  }finally{
+    scopeBusy=false; runBtn.disabled=false; runBtn.classList.remove('is-busy');
+    document.getElementById('estSum').classList.remove('is-loading');
   }
 }
+
 
 let scopeItems=SCOPE_ITEMS.slice();
 
