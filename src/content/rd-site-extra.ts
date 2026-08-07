@@ -83,38 +83,148 @@ export function initExtra(timers: number[], lucide: any) {
   }
 
   /* ---------- gallery tabs ---------- */
-  const GAL = [
-    ["Interior", PHOTOS.before, PHOTOS.after, "Living Room · Warm Minimal · $11.4K to $14.9K"],
-    ["Exterior", PHOTOS.exteriorBefore, PHOTOS.paintedBrick, "Front Elevation · Painted Brick · $11.9K to $16.8K"],
-    ["Landscape", PHOTOS.yardBefore, PHOTOS.resortYard, "Backyard · Resort · $18.4K to $24.2K"],
-    ["Virtual Staging", PHOTOS.empty, PHOTOS.japandi, "Vacant Listing · Japandi · Staged in 40 seconds"],
-    ["Kitchen", PHOTOS.kitchenBefore, PHOTOS.kitchen, "Kitchen · Renovation Band · $26.2K to $34.1K"],
-    ["Bath", PHOTOS.clutter, PHOTOS.bath, "Primary Bath · Quiet Luxury · $8.9K to $12.4K"],
+  type GView = {
+    name: string; before: string; after: string; cap: string;
+    bl: string; al: string; stamp: string; chips: string[]; strength: [string, string, string][];
+  };
+  const V = (
+    name: string, before: string, after: string, cap: string,
+    bl: string, al: string, stamp: string, chips: string[],
+    strength: [string, string, string][]
+  ): GView => ({ name, before, after, cap, bl, al, stamp, chips, strength });
+
+  const INTERIOR_SUBS: [string, GView][] = [
+    ["Living Room", V("Living Room", PHOTOS.wfOriginal, PHOTOS.wfDesigned,
+      "Living Room · Warm Minimal · $11.4K to $14.9K", "Before", "After", "Reality Preserved",
+      ["Reality Lock On", "Makeover · Under $15K", "Design DNA · Warm Minimal"],
+      [["ruler", "Architecture Held", "Windows, ceiling and camera unchanged"],
+       ["paintbrush", "Finishes Changed", "Flooring, paint, furniture, drapes, lighting"],
+       ["wallet", "Planning Range", "$11,400 to $14,900 · within target"]])],
+    ["Kitchen", V("Kitchen", PHOTOS.kitchenBefore, PHOTOS.kitchenAfter,
+      "Kitchen · Warm Shaker · $26.2K to $34.1K", "Before", "After", "Reality Preserved",
+      ["Reality Lock On", "Renovation · Under $35K", "Design DNA · Warm Shaker"],
+      [["ruler", "Layout Held", "Same footprint, same appliance and window locations"],
+       ["paintbrush", "Finishes Changed", "Cabinet fronts, counters, backsplash, floors"],
+       ["wallet", "Planning Range", "$26,200 to $34,100 · cabinetry led"]])],
+    ["Bathroom", V("Bathroom", PHOTOS.bathBefore, PHOTOS.bath,
+      "Primary Bath · Quiet Luxury · $8.9K to $12.4K", "Before", "After", "Reality Preserved",
+      ["Reality Lock On", "Renovation · Under $15K", "Design DNA · Quiet Luxury"],
+      [["ruler", "Plumbing Held", "Tub, toilet and vanity stay exactly where they are"],
+       ["paintbrush", "Finishes Changed", "Tile, vanity, mirror, lighting, flooring"],
+       ["wallet", "Planning Range", "$8,900 to $12,400 · no wall moves"]])],
+    ["Bedroom", V("Bedroom", PHOTOS.bedroomBefore, PHOTOS.bedroomAfter,
+      "Bedroom · Warm Minimal · $7.8K to $10.6K", "Before", "After", "Reality Preserved",
+      ["Reality Lock On", "Makeover · Under $15K", "Design DNA · Warm Minimal"],
+      [["ruler", "Architecture Held", "Window, closet doors and ceiling untouched"],
+       ["paintbrush", "Finishes Changed", "Carpet to oak, paint, bed, case goods, drapes"],
+       ["wallet", "Planning Range", "$7,800 to $10,600 · furniture led"]])],
+    ["Office", V("Office", PHOTOS.officeBefore, PHOTOS.officeAfter,
+      "Home Office · Quiet Modern · $5.2K to $7.4K", "Before", "After", "Reality Preserved",
+      ["Reality Lock On", "Refresh · Under $8K", "Design DNA · Quiet Modern"],
+      [["ruler", "Architecture Held", "Window, door and outlet positions preserved"],
+       ["paintbrush", "Finishes Changed", "Flooring, paint, desk, seating, shelving"],
+       ["wallet", "Planning Range", "$5,200 to $7,400 · light scope"]])],
   ];
-  const gt = $("galTabs");
-  function setGal(i: number) {
-    const [n, b, a, cap] = GAL[i] as any;
+
+  const GAL: [string, GView | null][] = [
+    ["Interior", null],
+    ["Exterior", V("Exterior", PHOTOS.exteriorBefore, PHOTOS.exteriorAfter,
+      "Front Elevation · Modern Classic · $11.9K to $16.8K", "Before", "After", "Reality Preserved",
+      ["Reality Lock On", "Makeover · Under $20K", "Design DNA · Modern Classic"],
+      [["layers", "Siding", "Repaint existing lap siding · warm white, black trim"],
+       ["home", "Roofing", "Architectural shingle, charcoal · same pitch and roofline"],
+       ["paintbrush", "Paint & Trim", "Deep green door, new porch light · $2.1K of the range"]])],
+    ["Landscape", V("Landscape", PHOTOS.yardBefore, PHOTOS.yardAfter,
+      "Backyard · Layered Modern · $18.4K to $24.2K", "Before", "After", "Reality Preserved",
+      ["Reality Lock On", "Renovation · Under $25K", "Design DNA · Layered Modern"],
+      [["sprout", "Planting", "Ornamental grasses, boxwood, lawn repair · $4.6K"],
+       ["squircle", "Hardscape", "Concrete paver patio and path · $9.8K"],
+       ["wallet", "Cost Breakdown", "Pergola $3.2K · lighting $1.4K · furniture excluded"]])],
+    ["Virtual Staging", V("Virtual Staging", PHOTOS.wfEmpty, PHOTOS.wfDesigned,
+      "Vacant Listing · Japandi · Staged in 40 seconds", "Empty", "Staged", "Design Complete",
+      ["Reality Lock On", "Listing Ready · MLS Safe", "Design DNA · Japandi"],
+      [["sofa", "Empty To Furnished", "Furniture added, nothing structural altered"],
+       ["camera", "Same Frame", "Identical camera, walls, windows and light"],
+       ["badge-info", "Disclosure Ready", "Virtually staged label and clean export included"]])],
+    ["Floor Plan", V("Floor Plan", PHOTOS.plan2d, PHOTOS.plan3d,
+      "2D Plan · 3D Visualization · 28' x 24' footprint", "2D Plan", "3D View", "Design Complete",
+      ["Reality Lock On", "Plan Accurate · To Scale", "Design DNA · Warm Minimal"],
+      [["ruler", "Dimensions Held", "Every wall, opening and room size matches the plan"],
+       ["box", "Consistent 3D", "Same layout rendered room by room, not reinvented"],
+       ["list-checks", "Plan To Scope", "Room areas feed material takeoffs and quantities"]])],
+    ["Sketch to Render", V("Sketch to Render", PHOTOS.sketchHand, PHOTOS.sketchRender,
+      "Hand Sketch · Photoreal Concept · Warm Minimal", "Sketch", "Render", "Design Complete",
+      ["Reality Lock On", "Concept · Under $15K", "Design DNA · Warm Minimal"],
+      [["pencil", "Sketch Read", "Perspective, window and furniture placement interpreted"],
+       ["image", "Photoreal Concept", "Materials and daylight applied to your own drawing"],
+       ["wallet", "Costed Concept", "Concept carries straight into a planning range"]])],
+  ];
+
+  const gt = $("galTabs"), gsub = $("galSubs");
+  let gTab = 0, gSub = 0;
+
+  function view(): GView {
+    return (GAL[gTab][1] ?? INTERIOR_SUBS[gSub][1]) as GView;
+  }
+  function paint() {
+    const v = view();
     const gb = $("gsBefore"), ga = $("gsAfter"), gc = $("galCap");
-    if (gb) gb.innerHTML = photo(b, n + " before");
-    if (ga) ga.innerHTML = photo(a, n + " after, AI render");
-    if (gc) gc.innerHTML = `<b>${n}</b><span class="mono">${cap}</span>`;
+    if (gb) gb.innerHTML = photo(v.before, v.name + " before");
+    if (ga) ga.innerHTML = photo(v.after, v.name + " after, AI render");
+    if (gc) gc.innerHTML = `<b>${v.name}</b><span class="mono">${v.cap}</span>`;
+    const tl = $("galTagL"), tr = $("galTagR"), st = $("galStamp");
+    if (tl) tl.textContent = v.bl;
+    if (tr) tr.textContent = v.al;
+    if (st) st.textContent = v.stamp;
+    const ch = $("galChips");
+    if (ch) ch.innerHTML = v.chips.map((c, i) =>
+      `<span class="gc${i === 0 ? " lock" : ""}">${i === 0 ? '<i data-lucide="lock"></i>' : ""}${c}</span>`).join("");
+    const sr = $("galStrength");
+    if (sr) sr.innerHTML = v.strength.map(([ic, t, d]) =>
+      `<div class="gstr"><i data-lucide="${ic}"></i><div><b>${t}</b><span>${d}</span></div></div>`).join("");
+    lucide?.createIcons?.();
+  }
+  function paintSubs() {
+    if (!gsub) return;
+    const on = gTab === 0;
+    gsub.classList.toggle("on", on);
+    gsub.innerHTML = !on ? "" : INTERIOR_SUBS.map(([n], i) =>
+      `<button class="gsub ${i === gSub ? "on" : ""}" data-s="${i}">${n}</button>`).join("");
+    gsub.querySelectorAll(".gsub").forEach((b: any) =>
+      b.addEventListener("click", () => { gSub = +b.dataset.s; paintSubs(); paint(); }));
   }
   if (gt) {
     gt.innerHTML = GAL.map(([n], i) => `<button class="gtab ${i === 0 ? "on" : ""}" data-g="${i}">${n}</button>`).join("");
     gt.querySelectorAll(".gtab").forEach((b: any) =>
       b.addEventListener("click", () => {
         gt.querySelectorAll(".gtab").forEach((x: any) => x.classList.remove("on"));
-        b.classList.add("on"); setGal(+b.dataset.g);
+        b.classList.add("on"); gTab = +b.dataset.g; paintSubs(); paint();
       })
     );
-    setGal(0);
+    paintSubs(); paint();
   }
-  const grng = $("galRng") as any, gaf = $("gsAfter"), ghn = $("galHnd");
+  const grng = $("galRng") as any, gaf = $("gsAfter"), ghn = $("galHnd"), gstage = $("galStage");
   function setGC(v: number) {
     if (gaf) (gaf as any).style.clipPath = `inset(0 0 0 ${v}%)`;
     if (ghn) (ghn as any).style.left = v + "%";
   }
-  if (grng) { grng.addEventListener("input", (e: any) => setGC(e.target.value)); setGC(50); }
+  if (grng) {
+    let t = 0;
+    const drag = (on: boolean) => {
+      const v = view();
+      gstage?.classList.toggle("dragging", on);
+      const tl = $("galTagL"), tr = $("galTagR");
+      if (tl) tl.textContent = on ? "Original Photo" : v.bl;
+      if (tr) tr.textContent = on ? "Reality Lock On" : v.al;
+    };
+    grng.addEventListener("input", (e: any) => {
+      setGC(e.target.value); drag(true);
+      window.clearTimeout(t); t = window.setTimeout(() => drag(false), 420); timers.push(t);
+    });
+    ["pointerup", "pointercancel", "blur"].forEach((ev) => grng.addEventListener(ev, () => drag(false)));
+    setGC(50);
+  }
+
 
   /* ---------- workflow ---------- */
   const FLOW = [
