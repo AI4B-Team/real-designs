@@ -19,6 +19,9 @@ import roomClutter from "@/assets/room-clutter.jpg";
 import roomEmpty from "@/assets/room-empty.jpg";
 import kitchenBefore from "@/assets/kitchen-before.jpg";
 import yardBefore from "@/assets/yard-before.jpg";
+import wfOriginal from "@/assets/wf-original.jpg";
+import wfEmpty from "@/assets/wf-empty.jpg";
+import wfDesigned from "@/assets/wf-designed.jpg";
 
 export const PHOTOS = {
   before: roomBefore,
@@ -41,6 +44,9 @@ export const PHOTOS = {
   empty: roomEmpty,
   kitchenBefore,
   yardBefore,
+  wfOriginal,
+  wfEmpty,
+  wfDesigned,
 } as const;
 
 export function photo(src: string, alt: string) {
