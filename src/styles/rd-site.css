@@ -94,7 +94,7 @@
 
 .rd-site .logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.03em;font-size:1.06rem}
 
-.rd-site .logo .dot{width:11px;height:11px;border-radius:50%;background:var(--red);flex:none}
+.rd-site .logo .dot{width:22px;height:22px;flex:none;object-fit:contain;display:block}
 
 .rd-site .logo small{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.18em;color:var(--mute-2);font-weight:400;border:1px solid var(--line);padding:2px 5px;border-radius:3px}
 
