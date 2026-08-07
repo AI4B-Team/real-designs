@@ -9,7 +9,7 @@ const title = "Back Office | REAL DESIGNS";
 const description =
   "Manage properties, projects, renders, budgets and client approvals inside the REAL DESIGNS back office.";
 
-export const Route = createFileRoute("/app")({
+export const Route = createFileRoute("/_authenticated/app")({
   head: () => ({
     meta: [
       { title },
