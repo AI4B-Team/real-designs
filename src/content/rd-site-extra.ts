@@ -118,26 +118,75 @@ export function initExtra(timers: number[], lucide: any) {
 
   /* ---------- workflow ---------- */
   const FLOW = [
-    ["image-up", "Upload", "One photo, a listing shot, a plan or a sketch."],
-    ["wand-2", "Redesign", "Budget-guided generation on your real walls."],
+    ["image-up", "Upload", "Start with a room photo, listing image, floor plan or sketch."],
+    ["wand-2", "Redesign", "Explore budget-guided designs while preserving the real space."],
     ["sliders-horizontal", "Refine", "Keep, replace, remove and lock any object."],
-    ["calculator", "Estimate", "Line items, quantities, trades, local rates."],
-    ["shopping-bag", "Shop", "Real products at three price points."],
-    ["hammer", "Build", "Contractor brief, approvals, task list."],
+    ["calculator", "Estimate", "See line items, quantities, trades and location-based planning ranges."],
+    ["shopping-bag", "Shop", "Match real products at the best-price, closest-match and premium levels."],
+    ["send", "Execute", "Generate the contractor brief, approvals and project checklist."],
   ];
   const fr = $("flowRow");
   if (fr) fr.innerHTML = FLOW.map(([i, t, d], n) =>
-    `<div class="fstep"><span class="fnum mono">${String(n + 1).padStart(2, "0")}</span>
+    `<div class="fstep" data-step="${n}"><span class="fdot" aria-hidden="true"></span>
+     <span class="fnum mono">${String(n + 1).padStart(2, "0")}</span>
      <div class="fic"><i data-lucide="${i}"></i></div><b>${t}</b><p>${d}</p></div>`).join("");
 
+  // Same room, same camera across every stage. 04-06 reuse the designed frame
+  // and only layer project information on top.
   const PROG = [
-    ["Original", PHOTOS.clutter], ["Empty", PHOTOS.empty], ["Designed", PHOTOS.after],
-    ["Budgeted", PHOTOS.neutral], ["Shopped", PHOTOS.luxury], ["Approved", PHOTOS.japandi],
+    { n: "Original", src: PHOTOS.wfOriginal, d: "Uploaded Aug 7", ov: "" },
+    { n: "Empty", src: PHOTOS.wfEmpty, d: "14 objects removed", ov: "" },
+    { n: "Designed", src: PHOTOS.wfDesigned, d: "Organic Modern &middot; Reality Lock On", ov: `<span class="pov lock"><i data-lucide="lock"></i>Reality Lock On</span>` },
+    {
+      n: "Budgeted", src: PHOTOS.wfDesigned, d: "$11.4K&ndash;$14.9K &middot; Within Target",
+      ov: `<span class="pov cost"><b>$11,400&ndash;$14,900</b><i>Within Target</i></span>`,
+    },
+    {
+      n: "Shopped", src: PHOTOS.wfDesigned, d: "8 products matched &middot; $3,284 selected",
+      ov: `<span class="pshop" style="left:24%;top:62%"></span><span class="pshop" style="left:56%;top:70%"></span>
+           <span class="pshop" style="left:76%;top:52%"></span><span class="pov shop">8 of 11 products matched</span>`,
+    },
+    {
+      n: "Approved", src: PHOTOS.wfDesigned, d: "Approved by Keisha &middot; Version 4",
+      ov: `<span class="pov appr"><i data-lucide="check"></i>Approved</span><span class="pav">K</span>`,
+    },
   ];
   const ps = $("progStrip");
-  if (ps) ps.innerHTML = PROG.map(([n, src], i) =>
-    `<div class="pnode"><div class="pim">${photo(src, n + " stage")}</div><span class="mono">${String(i + 1).padStart(2, "0")} ${n}</span></div>`
-  ).join('<span class="parrow"><i data-lucide="chevron-right"></i></span>');
+  if (ps) {
+    ps.innerHTML = PROG.map((s, i) =>
+      `<div class="pnode" data-step="${i}" tabindex="0"><div class="pim">${photo(s.src, s.n + " stage")}${s.ov}</div>
+       <span class="mono">${String(i + 1).padStart(2, "0")} ${s.n}</span>
+       <span class="pdet mono">${s.d}</span></div>`
+    ).join('<span class="parrow"><i data-lucide="chevron-right"></i></span>');
+  }
+
+  /* activation: hover/click a card or node lights up the matching pair */
+  const steps = () => Array.from(document.querySelectorAll(".rd-site .fstep, .rd-site .pnode"));
+  function activate(n: number) {
+    steps().forEach((el: any) => el.classList.toggle("on", +el.dataset.step === n));
+    const fill = $("flowFill");
+    if (fill) (fill as any).style.width = ((n + 1) / FLOW.length) * 100 + "%";
+  }
+  steps().forEach((el: any) => {
+    el.addEventListener("mouseenter", () => activate(+el.dataset.step));
+    el.addEventListener("focus", () => activate(+el.dataset.step));
+    el.addEventListener("click", () => activate(+el.dataset.step));
+  });
+
+  /* scroll-triggered walkthrough */
+  const wf = document.getElementById("workflow");
+  if (wf && "IntersectionObserver" in window) {
+    let played = false;
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => {
+        if (!e.isIntersecting || played) return;
+        played = true; io.disconnect();
+        FLOW.forEach((_, i) => after(() => activate(i), 420 * i + 300));
+      });
+    }, { threshold: 0.28 });
+    io.observe(wf);
+  }
+
 
   /* ---------- precision control hotspots ---------- */
   const hi = $("hotImg");
