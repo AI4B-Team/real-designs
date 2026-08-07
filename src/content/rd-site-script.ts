@@ -53,13 +53,13 @@ const cursorSVG=`<svg class="cursor" width="22" height="24" viewBox="0 0 22 24" 
 // running total accumulates so the tour ends on a whole-property number.
 const TOUR=[
  {ch:'Exterior',dur:1800,img:PHOTOS.exteriorBefore,style:'As Found',lock:'Reality Lock On',
-  lab:'Front Elevation',est:'Scanning',fit:'Reading Geometry',mets:[['Budget Fit','Reading Geometry','conf-md'],['Layout Confidence','Measuring','conf-md'],['Structural Changes Detected','None','conf-hi']]},
+  lab:'Front Elevation',est:'Scanning',fit:'Reading Geometry',mets:[['Budget Fit','Reading Geometry','conf-md'],['Layout Confidence','Measuring','conf-md'],['Structural Changes','None Detected','conf-hi']]},
  {ch:'Exterior',dur:1800,img:PHOTOS.paintedBrick,style:'Painted Brick',lock:'Reality Lock On',
-  lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes Detected','None','conf-hi']]},
+  lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes','None Detected','conf-hi']]},
  {ch:'Exterior',dur:1800,img:PHOTOS.craftsman,style:'Craftsman',lock:'Reality Lock On',
-  lab:'Front Elevation',est:'$14,200 to $19,400',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes Detected','None','conf-hi']]},
+  lab:'Front Elevation',est:'$14,200 to $19,400',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes','None Detected','conf-hi']]},
  {ch:'Exterior',dur:1600,img:PHOTOS.ranch,style:'Florida Ranch',lock:'Reality Lock On',zoom:'in',
-  lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Approved',mets:[['Budget Fit','Approved','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes Detected','None','conf-hi']],note:'Stepping Inside'},
+  lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Approved',mets:[['Budget Fit','Approved','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes','None Detected','conf-hi']],note:'Stepping Inside'},
 
  {ch:'Declutter',dur:1900,img:PHOTOS.clutter,style:'As Found',lock:'Declutter On',
   lab:'Living Room',est:'Detecting Contents',fit:'14 Objects Found',mets:[['Objects Detected','14','conf-md'],['Reality Lock','On','conf-hi'],['Disclosure Ready','Yes','conf-hi']]},
