@@ -879,6 +879,13 @@ document.querySelectorAll('.btn-logout').forEach(b=>b.addEventListener('click',a
   window.location.href='/auth';
 }));
 
+// Wrap every table so wide tables scroll horizontally instead of stretching the page.
+document.querySelectorAll('.rd-app table, .app table').forEach(t=>{
+  if(t.parentElement && t.parentElement.classList.contains('tscroll')) return;
+  const w=document.createElement('div'); w.className='tscroll';
+  t.parentNode.insertBefore(w,t); w.appendChild(t);
+});
+
 // Mobile drawer: hamburger in the topbar toggles the sidebar off-canvas.
 (function mobileNav(){
   const bar=document.querySelector('.topbar');
