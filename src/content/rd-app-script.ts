@@ -539,6 +539,7 @@ function exportBrief(){
   setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} },600);
 }
 document.getElementById('scBrief').addEventListener('click',exportBrief);
+document.getElementById('scBrief').disabled=true;
 document.getElementById('allowBuild').addEventListener('click',()=>{ lastScope?renderAllowance(lastScope):runScope(); });
 document.getElementById('allowCsv').addEventListener('click',allowanceCsv);
 renderAllowance(null);
@@ -551,17 +552,41 @@ document.getElementById('scDimsOk').addEventListener('click',async()=>{ dimsConf
 document.getElementById('scDetect').addEventListener('click',detectScopeChanges);
 document.getElementById('scRun').addEventListener('click',runScope);
 ['scGrade','scMarket'].forEach(id=>document.getElementById(id).addEventListener('change',runScope));
+let bTimer=null;
+document.getElementById('scBudget').addEventListener('input',()=>{ clearTimeout(bTimer); bTimer=setTimeout(runScope,500); });
 runScope();
 
 
-const bands=[['Refresh','Paint, hardware, lighting','$3.2K to $5K','p-ok'],
-['Makeover','Adds flooring, casing, furnishings','$11.4K to $14.9K','p-ink'],
-['Renovation','Adds built ins, ceiling detail','$26K to $35K','p-gray'],
-['Full Remodel','Adds wall removal, structural','$41K to $62K','p-gray']];
-document.getElementById('bandList').innerHTML=bands.map(([n,d,r,cls])=>`
-<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div>
-<div style="text-align:right"><div class="mono" style="font-size:.75rem">${r}</div>
-${cls==='p-ink'?'<span class="pill p-ink" style="margin-top:4px">Selected</span>':''}</div></div>`).join('');
+/* ---------- budget bands: each one reprices the same room ---------- */
+const BAND_ITEMS={
+  refresh:[{label:'wall_paint',material:'paint'},{label:'light_fixture',qty:2}],
+  makeover:SCOPE_ITEMS.slice(),
+  renovation:SCOPE_ITEMS.concat([{label:'base_cabinet'},{label:'countertop',material:'quartz'}]),
+  remodel:SCOPE_ITEMS.concat([{label:'base_cabinet'},{label:'countertop',material:'quartz'},
+    {label:'wall_tile',material:'ceramic'},{label:'vanity',qty:1},{label:'sink_faucet',qty:1}])
+};
+const bands=[['refresh','Refresh','Paint And Lighting Only','rental',5000],
+['makeover','Makeover','Adds Flooring, Casing, Doors','retail',15000],
+['renovation','Renovation','Adds Cabinetry And Countertops','retail',35000],
+['remodel','Full Remodel','Adds Tile, Vanity, Plumbing Fixtures','premium',62000]];
+let bandOn='makeover';
+function paintBands(){
+  document.getElementById('bandList').innerHTML=bands.map(([k,n,d])=>`
+<button class="rowi band-row${k===bandOn?' on':''}" data-band="${k}"><div class="rowt"><b>${n}</b><span>${d}</span></div>
+<div style="text-align:right">${k===bandOn?'<span class="pill p-ink">Selected</span>':'<span class="pill p-gray">Price It</span>'}</div></button>`).join('');
+  document.querySelectorAll('#bandList .band-row').forEach(b=>b.addEventListener('click',async()=>{
+    const k=b.getAttribute('data-band'); if(k===bandOn||scopeBusy) return;
+    bandOn=k; paintBands();
+    const row=bands.find(x=>x[0]===k);
+    scopeItems=BAND_ITEMS[k].slice();
+    document.getElementById('scGrade').value=row[3];
+    document.getElementById('scBudget').value=row[4];
+    document.getElementById('bandSub').textContent='Same Room, Same Photo · '+row[1]+' Priced';
+    await runScope();
+  }));
+}
+paintBands();
+
 
 /* ---------- products ---------- */
 const prods=[['Low Profile Sofa, 88in','Seating','sofa','#3D4A45',['$690','$1,240','$2,480']],
