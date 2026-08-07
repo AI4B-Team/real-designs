@@ -6,6 +6,8 @@ import { PHOTOS, photo } from "@/content/rd-photos";
 import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
+import { saveEstimate, listSavedEstimates, deleteSavedEstimate } from "@/lib/workspace.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export function initApp(): () => void {
   const timers: number[] = [];
@@ -427,7 +429,7 @@ function briefHtml(r){
     const g=divs[d];
     const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
     return `<h3>${esc(d)} &middot; ${esc(g.trade)}</h3>
-<table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Material</th><th class="n">Labor</th><th class="n">Low</th><th class="n">High</th></tr></thead><tbody>
+<table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Material</th><th class="n">Labor</th><th style="text-align:right">Low</th><th style="text-align:right">High</th></tr></thead><tbody>
 ${g.lines.map(l=>`<tr><td>${esc(l.description)}${l.is_fallback?' <em>(fallback cost record)</em>':''}<br><span class="src">${esc(l.price_source)}</span></td>
 <td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${money(l.material_low)}&ndash;${money(l.material_high)}</td>
 <td class="n">${money(l.labor_low)}&ndash;${money(l.labor_high)}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')}
@@ -782,6 +784,94 @@ if (canvasCard && canvasThemeBtn) {
     const dark = canvasCard.classList.toggle('dark');
     canvasThemeBtn.setAttribute('aria-pressed', String(dark));
     canvasThemeBtn.querySelector('b').textContent = dark ? 'Dark' : 'Light';
+  });
+}
+
+/* ---------- accounts: signed-in identity + saved projects ---------- */
+const initials=(s)=>s.split(/[.@\s_-]+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('')||'RD';
+supabase.auth.getUser().then(({data})=>{
+  const u=data&&data.user; if(!u) return;
+  const name=(u.user_metadata&&(u.user_metadata.full_name||u.user_metadata.name))||u.email.split('@')[0];
+  const av=initials(name);
+  document.querySelectorAll('.acct-btn .av,.acct-head .av').forEach(e=>e.textContent=av);
+  const head=document.querySelector('.acct-head b'); if(head) head.textContent=name;
+  const mail=document.querySelector('.acct-head div span'); if(mail) mail.textContent=u.email;
+}).catch(()=>{});
+document.querySelectorAll('.btn-logout').forEach(b=>b.addEventListener('click',async()=>{
+  await supabase.auth.signOut();
+  window.location.href='/auth';
+}));
+
+const scopeGrid=document.getElementById('scopeGrid');
+let savedCard=null;
+if(scopeGrid){
+  const briefBtn=document.getElementById('scBrief');
+  const saveBtn=document.createElement('button');
+  saveBtn.className='btn btn-ghost btn-xs'; saveBtn.id='scSave';
+  saveBtn.innerHTML='<i data-lucide="save"></i>Save To My Projects';
+  briefBtn.parentNode.insertBefore(saveBtn,briefBtn);
+
+  savedCard=document.createElement('div');
+  savedCard.className='card'; savedCard.style.gridColumn='1 / -1';
+  savedCard.innerHTML='<div class="card-h"><div><h3>Saved Estimates</h3><div class="sub" id="savedSub">Your saved rooms and priced scopes</div></div>'
+    +'<button class="btn btn-ghost btn-xs" id="savedRefresh"><i data-lucide="refresh-cw"></i>Refresh</button></div>'
+    +'<div class="card-b"><table><thead><tr><th>Property</th><th>Room</th><th>Grade</th><th style="text-align:right">Low</th><th style="text-align:right">High</th><th></th></tr></thead>'
+    +'<tbody id="savedRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>';
+  scopeGrid.appendChild(savedCard);
+
+  async function loadSaved(){
+    const rows=document.getElementById('savedRows');
+    try{
+      const list=await listSavedEstimates();
+      if(!list.length){ rows.innerHTML='<tr><td colspan="6">Nothing saved yet. Price a scope, then use Save To My Projects.</td></tr>'; return; }
+      rows.innerHTML=list.map(v=>`<tr><td><b>${v.address}</b><div class="sub">${v.project_name}</div></td><td>${v.room_name}</td>
+<td>${v.grade[0].toUpperCase()+v.grade.slice(1)}</td>
+<td class="n">${v.total_low==null?'—':money(v.total_low)}</td>
+<td class="n">${v.total_high==null?'—':money(v.total_high)}</td>
+<td class="n"><button class="btn btn-ghost btn-xs" data-del="${v.version_id}">Delete</button></td></tr>`).join('');
+      document.getElementById('savedSub').textContent=list.length+' saved '+(list.length===1?'room':'rooms');
+      rows.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',async()=>{
+        b.disabled=true;
+        try{ await deleteSavedEstimate({data:{version_id:b.getAttribute('data-del')}}); await loadSaved(); }
+        catch(e){ b.disabled=false; }
+      }));
+      lucide.createIcons();
+    }catch(e){
+      rows.innerHTML='<tr><td colspan="6">Could not load saved estimates. '+((e&&e.message)||'')+'</td></tr>';
+    }
+  }
+  document.getElementById('savedRefresh').addEventListener('click',loadSaved);
+  loadSaved();
+
+  saveBtn.addEventListener('click',async()=>{
+    const note=document.getElementById('scopeNote');
+    if(!lastScope){ note.textContent='Price the scope first, then save it.'; return; }
+    const num=(id,d)=>{const v=parseFloat((document.getElementById(id)||{}).value);return Number.isFinite(v)&&v>0?v:d;};
+    saveBtn.disabled=true; const lab=saveBtn.innerHTML; saveBtn.textContent='Saving…';
+    try{
+      await saveEstimate({data:{
+        address:'206 N MacDill Ave, Tampa FL',
+        project_name:'Retail Flip',
+        room_name:'Living Room',
+        room_type:'living room',
+        grade:document.getElementById('scGrade').value,
+        market_id:lastScope.market.id,
+        budget_target:num('scBudget',null),
+        floor_area_sf:num('scFloor',340),
+        wall_area_sf:num('scWall',780),
+        perimeter_lf:num('scPerim',76),
+        ceiling_ht_in:dimsProposal?dimsProposal.ceiling_ht_in:96,
+        dims_source:dimsProposal?(dimsConfirmed?'user':'depth_estimate'):'user',
+        dims_confirmed:!dimsProposal||dimsConfirmed,
+        before_path:PHOTOS.before,
+        after_path:PHOTOS.after,
+        items:scopeItems,
+      }});
+      note.textContent='Saved to your projects.';
+      await loadSaved();
+    }catch(e){
+      note.textContent='Could not save this estimate. '+((e&&e.message)||'');
+    }finally{ saveBtn.disabled=false; saveBtn.innerHTML=lab; lucide.createIcons(); }
   });
 }
 
