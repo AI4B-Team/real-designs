@@ -952,10 +952,6 @@
 .rd-site .pro-tx h3{font-size:1.3rem;letter-spacing:-.02em;margin-bottom:6px}
 
 /* --- feature explorer tabs --- */
-.rd-site .fx-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
-.rd-site .fxtab{font-size:.8rem;font-weight:600;padding:9px 18px;border:1px solid var(--line);border-radius:99px;background:var(--paper);color:var(--mute)}
-.rd-site .fxtab.on{background:var(--ink);border-color:var(--ink);color:#fff}
-
 @media (max-width:960px){
   .rd-site .flow{grid-template-columns:repeat(2,1fr)}
   .rd-site .ctrl-split,.rd-site .dna-wrap,.rd-site .shop-split,.rd-site .pro-panel{grid-template-columns:1fr}
