@@ -1173,3 +1173,4 @@
   .rd-site .cmp-table tbody th[scope="row"]{min-width:200px}
   .rd-site .cmp-table th,.rd-site .cmp-table td{padding:11px 10px}
 }
+.rd-site .cm.ok.us svg{stroke:var(--red,#c8342b);color:var(--red,#c8342b)}
