@@ -68,13 +68,13 @@ export const showcaseHtml = `
     </div>
     <div class="sc-grid" id="scGrid">
 
-      ${wipeCard(1, "Interior Redesign", "Restyle Any Room",
-        "Dated room to designer finish in seconds. Furniture, lighting and decor, fully redone.",
-        PHOTOS.before, PHOTOS.after, "Before", "After")}
-
       ${wipeCard(2, "Exterior Redesign", "Redesign The Outside",
         "Test siding, paint, roofing and curb appeal before a contractor quotes a square foot.",
         PHOTOS.exteriorBefore, PHOTOS.exteriorAfter, "Before", "After")}
+
+      ${wipeCard(1, "Interior Redesign", "Restyle Any Room",
+        "Dated room to designer finish in seconds. Furniture, lighting and decor, fully redone.",
+        PHOTOS.before, PHOTOS.after, "Before", "After")}
 
       ${wipeCard(3, "Landscape Design", "Reimagine Outdoor Spaces",
         "Add a patio, fire pit or fresh planting. See it standing in the dirt before you dig.",
