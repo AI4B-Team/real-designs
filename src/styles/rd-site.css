@@ -127,7 +127,7 @@
 
 .rd-site .hero-head h1{white-space:nowrap;font-size:min(4.5vw,3.3rem);margin-bottom:13px}
 
-.rd-site .hero-head h1 em{font-style:normal;color:var(--red)}
+.rd-site .hero-head h1 em{font-style:normal;color:inherit}
 
 .rd-site .hero-head .lede{font-size:1.02rem;max-width:64ch;margin:0 auto}
 
