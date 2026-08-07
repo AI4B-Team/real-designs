@@ -300,7 +300,9 @@ let lastScope=null;
 
 
 function renderScope(r){
+  lastScope=r;
   scopeRowsEl.innerHTML=r.lines.map(l=>`
+
 <tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}</td>
 <td>${l.trade}</td><td class="n">${l.qty} ${l.uom}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')
   +`<tr><td><b>Contingency At ${r.contingency_pct}%</b></td><td>General</td><td class="n">1 ls</td>
