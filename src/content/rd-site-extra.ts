@@ -317,7 +317,7 @@ export function initExtra(timers: number[], lucide: any) {
   const ps = $("progStrip");
   if (ps) {
     ps.innerHTML = PROG.map((s, i) =>
-      `<div class="pnode" data-step="${i}" tabindex="0"><div class="pim">${photo(s.src, s.n + " stage")}${s.ov}</div>
+      `<div class="pnode" data-n="${i}" data-step="${i}" tabindex="0"><div class="pim">${photo(s.src, s.n + " stage")}${s.ov}</div>
        <span class="mono">${String(i + 1).padStart(2, "0")} ${s.n}</span>
        <span class="pdet mono">${s.d}</span></div>`
     ).join('<span class="parrow"><i data-lucide="chevron-right"></i></span>');
