@@ -14,7 +14,483 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      change_items: {
+        Row: {
+          action: string
+          created_at: string
+          csi_division: string | null
+          grade: string | null
+          id: string
+          label: string
+          material: string | null
+          qty: number | null
+          qty_source: string | null
+          uom: string | null
+          version_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          csi_division?: string | null
+          grade?: string | null
+          id?: string
+          label: string
+          material?: string | null
+          qty?: number | null
+          qty_source?: string | null
+          uom?: string | null
+          version_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          csi_division?: string | null
+          grade?: string | null
+          id?: string
+          label?: string
+          material?: string | null
+          qty?: number | null
+          qty_source?: string | null
+          uom?: string | null
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_items_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      cost_mappings: {
+        Row: {
+          grade: string
+          id: string
+          label: string
+          material: string | null
+          qty_formula: string
+          unit_cost_id: string
+        }
+        Insert: {
+          grade: string
+          id?: string
+          label: string
+          material?: string | null
+          qty_formula: string
+          unit_cost_id: string
+        }
+        Update: {
+          grade?: string
+          id?: string
+          label?: string
+          material?: string | null
+          qty_formula?: string
+          unit_cost_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cost_mappings_unit_cost_id_fkey"
+            columns: ["unit_cost_id"]
+            isOneToOne: false
+            referencedRelation: "unit_costs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      markets: {
+        Row: {
+          cbsa_code: string | null
+          id: string
+          labor_factor: number
+          material_factor: number
+          name: string
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          cbsa_code?: string | null
+          id?: string
+          labor_factor?: number
+          material_factor?: number
+          name: string
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cbsa_code?: string | null
+          id?: string
+          labor_factor?: number
+          material_factor?: number
+          name?: string
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      projects: {
+        Row: {
+          budget_band: string
+          budget_target: number | null
+          created_at: string
+          finish_grade: string
+          id: string
+          name: string
+          property_id: string
+        }
+        Insert: {
+          budget_band?: string
+          budget_target?: number | null
+          created_at?: string
+          finish_grade?: string
+          id?: string
+          name: string
+          property_id: string
+        }
+        Update: {
+          budget_band?: string
+          budget_target?: number | null
+          created_at?: string
+          finish_grade?: string
+          id?: string
+          name?: string
+          property_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      properties: {
+        Row: {
+          address: string
+          city: string | null
+          created_at: string
+          design_dna: Json
+          id: string
+          market_id: string | null
+          owner_id: string
+          postal_code: string | null
+          state: string | null
+        }
+        Insert: {
+          address: string
+          city?: string | null
+          created_at?: string
+          design_dna?: Json
+          id?: string
+          market_id?: string | null
+          owner_id?: string
+          postal_code?: string | null
+          state?: string | null
+        }
+        Update: {
+          address?: string
+          city?: string | null
+          created_at?: string
+          design_dna?: Json
+          id?: string
+          market_id?: string | null
+          owner_id?: string
+          postal_code?: string | null
+          state?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "properties_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          ceiling_ht_in: number | null
+          created_at: string
+          dims_confirmed_at: string | null
+          dims_source: string | null
+          floor_area_sf: number | null
+          id: string
+          name: string
+          perimeter_lf: number | null
+          project_id: string
+          room_type: string
+          wall_area_sf: number | null
+        }
+        Insert: {
+          ceiling_ht_in?: number | null
+          created_at?: string
+          dims_confirmed_at?: string | null
+          dims_source?: string | null
+          floor_area_sf?: number | null
+          id?: string
+          name: string
+          perimeter_lf?: number | null
+          project_id: string
+          room_type: string
+          wall_area_sf?: number | null
+        }
+        Update: {
+          ceiling_ht_in?: number | null
+          created_at?: string
+          dims_confirmed_at?: string | null
+          dims_source?: string | null
+          floor_area_sf?: number | null
+          id?: string
+          name?: string
+          perimeter_lf?: number | null
+          project_id?: string
+          room_type?: string
+          wall_area_sf?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rooms_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scope_lines: {
+        Row: {
+          change_item_id: string | null
+          csi_division: string | null
+          description: string
+          id: string
+          is_fallback: boolean
+          labor_high: number | null
+          labor_low: number | null
+          line_high: number
+          line_low: number
+          material_high: number | null
+          material_low: number | null
+          price_source: string
+          qty: number
+          scope_id: string
+          trade: string | null
+          uom: string
+        }
+        Insert: {
+          change_item_id?: string | null
+          csi_division?: string | null
+          description: string
+          id?: string
+          is_fallback?: boolean
+          labor_high?: number | null
+          labor_low?: number | null
+          line_high: number
+          line_low: number
+          material_high?: number | null
+          material_low?: number | null
+          price_source: string
+          qty: number
+          scope_id: string
+          trade?: string | null
+          uom: string
+        }
+        Update: {
+          change_item_id?: string | null
+          csi_division?: string | null
+          description?: string
+          id?: string
+          is_fallback?: boolean
+          labor_high?: number | null
+          labor_low?: number | null
+          line_high?: number
+          line_low?: number
+          material_high?: number | null
+          material_low?: number | null
+          price_source?: string
+          qty?: number
+          scope_id?: string
+          trade?: string | null
+          uom?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scope_lines_change_item_id_fkey"
+            columns: ["change_item_id"]
+            isOneToOne: false
+            referencedRelation: "change_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scope_lines_scope_id_fkey"
+            columns: ["scope_id"]
+            isOneToOne: false
+            referencedRelation: "scopes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scopes: {
+        Row: {
+          budget_fit: string | null
+          computed_at: string
+          contingency_pct: number
+          id: string
+          layout_conf: string
+          market_id: string
+          matched_pct: number | null
+          pricing_conf: string
+          total_high: number
+          total_low: number
+          version_id: string
+        }
+        Insert: {
+          budget_fit?: string | null
+          computed_at?: string
+          contingency_pct?: number
+          id?: string
+          layout_conf: string
+          market_id: string
+          matched_pct?: number | null
+          pricing_conf: string
+          total_high: number
+          total_low: number
+          version_id: string
+        }
+        Update: {
+          budget_fit?: string | null
+          computed_at?: string
+          contingency_pct?: number
+          id?: string
+          layout_conf?: string
+          market_id?: string
+          matched_pct?: number | null
+          pricing_conf?: string
+          total_high?: number
+          total_low?: number
+          version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scopes_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scopes_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      unit_costs: {
+        Row: {
+          csi_division: string
+          description: string
+          effective_on: string
+          grade: string
+          id: string
+          item_code: string
+          labor_high: number | null
+          labor_low: number | null
+          material_high: number | null
+          material_low: number | null
+          n_samples: number | null
+          source: string
+          source_ref: string | null
+          uom: string
+        }
+        Insert: {
+          csi_division: string
+          description: string
+          effective_on?: string
+          grade?: string
+          id?: string
+          item_code: string
+          labor_high?: number | null
+          labor_low?: number | null
+          material_high?: number | null
+          material_low?: number | null
+          n_samples?: number | null
+          source: string
+          source_ref?: string | null
+          uom: string
+        }
+        Update: {
+          csi_division?: string
+          description?: string
+          effective_on?: string
+          grade?: string
+          id?: string
+          item_code?: string
+          labor_high?: number | null
+          labor_low?: number | null
+          material_high?: number | null
+          material_low?: number | null
+          n_samples?: number | null
+          source?: string
+          source_ref?: string | null
+          uom?: string
+        }
+        Relationships: []
+      }
+      versions: {
+        Row: {
+          after_path: string | null
+          before_path: string
+          created_at: string
+          created_by: string | null
+          gen_model: string | null
+          gen_params: Json | null
+          id: string
+          room_id: string
+          status: string
+          style: string | null
+          version_no: number
+        }
+        Insert: {
+          after_path?: string | null
+          before_path: string
+          created_at?: string
+          created_by?: string | null
+          gen_model?: string | null
+          gen_params?: Json | null
+          id?: string
+          room_id: string
+          status?: string
+          style?: string | null
+          version_no: number
+        }
+        Update: {
+          after_path?: string | null
+          before_path?: string
+          created_at?: string
+          created_by?: string | null
+          gen_model?: string | null
+          gen_params?: Json | null
+          id?: string
+          room_id?: string
+          status?: string
+          style?: string | null
+          version_no?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "versions_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
