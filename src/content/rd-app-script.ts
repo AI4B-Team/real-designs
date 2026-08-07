@@ -40,7 +40,9 @@ account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
+const ACCT_ALIAS={team:'team',settings:'brand',billing:'billing',invoices:'invoices'};
 function go(v){
+  if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
   if(!titles[v]) return;
@@ -103,6 +105,27 @@ const invoices=[['Jul 28, 2026','Pro Monthly','$199.00'],['Jun 28, 2026','Pro Mo
 document.getElementById('invRows').innerHTML=invoices.map(([d,p,a])=>`
 <tr><td><b>${d}</b></td><td>${p}</td><td class="n">${a}</td>
 <td style="text-align:right"><button class="btn btn-ghost btn-xs">PDF</button></td></tr>`).join('');
+
+const PANE_META={profile:['Profile','How you appear to teammates and clients'],
+security:['Security','Password, two factor and active sessions'],
+notifs:['Notifications','What we email and push to you'],
+billing:['Subscription','Plan, usage and payment method'],
+invoices:['Invoices','Receipts for the last six months'],
+team:['Team','Members, roles and seat usage'],
+brand:['Brand Kit','Applied to exports, decks and client links'],
+defaults:['Defaults','Applied to every new design'],
+api:['API & White Label','Business plan feature'],
+danger:['Data & Privacy','Export or permanently remove your data']};
+function acctPane(k){
+  if(!PANE_META[k]) k='profile';
+  document.querySelectorAll('.arail-i').forEach(b=>b.classList.toggle('on',b.dataset.pane===k));
+  document.querySelectorAll('.apane').forEach(x=>x.classList.toggle('on',x.id==='p-'+k));
+  const t=document.getElementById('acctPaneTitle'),su=document.getElementById('acctPaneSub');
+  if(t) t.textContent=PANE_META[k][0];
+  if(su) su.textContent=PANE_META[k][1];
+}
+document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>acctPane(b.dataset.pane)));
+
 
 
 /* ---------- dashboard ---------- */
