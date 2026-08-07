@@ -335,6 +335,8 @@ export function initExtra(timers: number[], lucide: any) {
     el.addEventListener("focus", () => activate(+el.dataset.step));
     el.addEventListener("click", () => activate(+el.dataset.step));
   });
+  activate(0);
+
 
   /* scroll-triggered walkthrough */
   const wf = document.getElementById("workflow");
