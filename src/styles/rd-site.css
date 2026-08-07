@@ -754,7 +754,7 @@
 .rd-site .fstep p{font-size:.79rem;line-height:1.5}
 .rd-site .prog{margin-top:34px;border-top:1px dashed var(--line-2);padding-top:26px}
 .rd-site .prog-lab{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mute-2);margin-bottom:14px}
-.rd-site .prog-strip{display:flex;align-items:flex-start;gap:8px;overflow-x:auto;overflow-y:visible;padding-bottom:12px}
+.rd-site .prog-strip{display:flex;align-items:flex-start;gap:8px;overflow-x:auto;overflow-y:visible;padding:6px 2px 52px}
 .rd-site .pnode{flex:1 0 140px;min-width:140px}
 .rd-site .pim{aspect-ratio:4/3;border-radius:var(--ri);overflow:hidden;border:1px solid var(--line);background:#EEE}
 .rd-site .pnode span{display:block;font-size:.66rem;color:var(--mute);margin-top:7px;letter-spacing:.05em}
@@ -781,7 +781,7 @@
 .rd-site .pnode .pim{position:relative;transition:box-shadow .25s ease,border-color .25s ease}
 .rd-site .pnode.on{transform:translateY(-4px) scale(1.03)}
 .rd-site .pnode.on .pim{border-color:var(--red);box-shadow:0 16px 32px -20px rgba(0,0,0,.55)}
-.rd-site .pdet{display:block;min-height:2.7em;font-size:.62rem;white-space:normal;color:var(--red);margin-top:3px;opacity:0;transform:translateY(-3px);
+.rd-site .pdet{display:block;min-height:3.6em;font-size:.62rem;white-space:normal;color:var(--red);margin-top:3px;opacity:0;transform:translateY(-3px);
   transition:opacity .25s ease,transform .25s ease;line-height:1.35}
 .rd-site .pnode.on .pdet{opacity:1;transform:none}
 .rd-site .pnode .pim .pov{position:absolute;z-index:2;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
