@@ -715,7 +715,7 @@
 
 /* --- trust ribbon --- */
 .rd-site .ribbon{padding:22px 0;background:var(--white);border-bottom:1px solid var(--line);overflow-x:auto}
-.rd-site .ribbon .wrap{display:flex;align-items:center;gap:22px;max-width:none;white-space:nowrap;padding:0 28px}
+.rd-site .ribbon .wrap{display:flex;align-items:center;justify-content:center;gap:22px;max-width:none;white-space:nowrap;padding:0 28px}
 .rd-site .ribbon-lab{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mute-2);flex:none}
 .rd-site .ribbon-row{display:flex;gap:9px;flex-wrap:nowrap;flex:none}
 .rd-site .rb{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:500;color:var(--ink-2);
