@@ -83,8 +83,8 @@ export const showcaseHtml = `
       ${card(5, "Declutter", "Empty A Room In One Click",
         "Strip out furniture and clutter instantly. See the bare space, then rebuild it your way.", `
         <div class="sc-fade sc-declut">
-          <div class="sc-lyr">${im(PHOTOS.clutter, "Furnished room")}</div>
-          <div class="sc-lyr sc-f2">${im(PHOTOS.empty, "Emptied room")}</div>
+          <div class="sc-lyr">${im(PHOTOS.stageClutter, "Furnished room")}</div>
+          <div class="sc-lyr sc-f2">${im(PHOTOS.stageEmpty, "Emptied room")}</div>
           <button class="sc-btn-pill">Empty Room</button>
           ${cursor}
           <span class="sc-lab l">Interior</span>
@@ -93,8 +93,8 @@ export const showcaseHtml = `
       ${card(4, "Virtual Staging", "Stage Empty Rooms",
         "Furnish a bare listing in seconds. No rented furniture, no photographer reshoot.", `
         <div class="sc-fade">
-          <div class="sc-lyr">${im(PHOTOS.empty, "Empty room")}</div>
-          <div class="sc-lyr sc-f2">${im(PHOTOS.after, "Staged room")}</div>
+          <div class="sc-lyr">${im(PHOTOS.stageEmpty, "Empty room")}</div>
+          <div class="sc-lyr sc-f2">${im(PHOTOS.stageStaged, "Staged room")}</div>
           <span class="sc-lab l">Empty</span><span class="sc-lab r">Staged</span>
         </div>`)}
 

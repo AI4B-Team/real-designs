@@ -34,6 +34,9 @@ import plan2d from "@/assets/rd-plan-02-2d.jpg";
 import plan3d from "@/assets/rd-plan-03-3d.jpg";
 import sketchHand from "@/assets/rd-plan-01-napkin.jpg";
 import sketchRender from "@/assets/rd-plan-04-photo.jpg";
+import stageEmpty from "@/assets/stage-empty.jpg";
+import stageStaged from "@/assets/stage-staged.jpg";
+import stageClutter from "@/assets/stage-clutter.jpg";
 
 export const PHOTOS = {
   before: roomBefore,
@@ -54,6 +57,9 @@ export const PHOTOS = {
   craftsman: styleCraftsman,
   clutter: roomClutter,
   empty: roomEmpty,
+  stageEmpty,
+  stageStaged,
+  stageClutter,
   kitchenBefore,
   yardBefore,
   wfOriginal,
