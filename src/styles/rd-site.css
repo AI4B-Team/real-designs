@@ -1254,13 +1254,29 @@
 .rd-site .pnode.on{opacity:1;transform:scale(1.16)}
 
 /* ============ DEVICE SHOWCASE ============ */
-.rd-site #devices .dev-group{position:relative;display:flex;align-items:flex-end;justify-content:center;
-  gap:0;margin:38px 0 0;min-height:420px}
-.rd-site .dev-floor{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);
-  width:78%;height:26px;border-radius:50%;background:rgba(17,17,19,.16);filter:blur(16px);z-index:0}
+
+/* dark studio canvas the devices sit on */
+.rd-site .dev-stage{position:relative;margin:38px 0 0;border-radius:20px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 0%,#26262B 0%,#141417 58%,#0E0E10 100%);
+  border:1px solid #232327;padding:52px 28px 34px;
+  box-shadow:0 40px 90px -50px rgba(17,17,19,.85)}
+.rd-site .dev-grid{position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px);
+  background-size:44px 44px;
+  -webkit-mask-image:radial-gradient(80% 70% at 50% 40%,#000 0%,transparent 100%);
+  mask-image:radial-gradient(80% 70% at 50% 40%,#000 0%,transparent 100%)}
+.rd-site .dev-stage .dev-cap{color:#F3F1EC;position:relative}
+.rd-site .dev-stage .dev-pills{position:relative}
+.rd-site .dev-stage .pb{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14);color:#D7D5CF}
+.rd-site .dev-stage .pb svg{color:var(--red)}
+.rd-site #devices .dev-group{position:relative;z-index:1;display:flex;align-items:flex-end;justify-content:center;
+  gap:0;margin:0;min-height:440px}
+.rd-site .dev-floor{position:absolute;left:50%;bottom:-14px;transform:translateX(-50%);
+  width:74%;height:30px;border-radius:50%;background:rgba(0,0,0,.6);filter:blur(22px);z-index:0}
 .rd-site .dev{position:relative;z-index:1}
 .rd-site .dev .dev-screen{background:#fff;border:1px solid #2E2E33;overflow:hidden;
-  box-shadow:0 22px 44px -20px rgba(17,17,19,.42)}
+  box-shadow:0 30px 60px -22px rgba(0,0,0,.75)}
 
 /* laptop */
 .rd-site .dev-laptop{margin-right:-58px;margin-bottom:14px}
