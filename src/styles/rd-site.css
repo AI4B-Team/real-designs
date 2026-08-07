@@ -1262,3 +1262,10 @@
 .rd-site .p3-est b{font-size:1.05rem;letter-spacing:-.02em}
 @media(max-width:640px){.rd-site .p3-est{text-align:left}}
 @media(prefers-reduced-motion:reduce){.rd-site .p3layer{animation:none}}
+
+/* workflow: cards and strip act as one control */
+.rd-site .fstep{font:inherit;color:inherit;text-align:left;cursor:pointer;
+  border-top:3px solid transparent;display:block;width:100%}
+.rd-site .fstep.on{border-top-color:var(--red);background:rgba(204,0,0,.05)}
+.rd-site .pnode{opacity:.5;transition:transform .25s ease,opacity .25s ease}
+.rd-site .pnode.on{opacity:1;transform:scale(1.16)}
