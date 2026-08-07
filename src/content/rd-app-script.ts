@@ -296,6 +296,8 @@ const SCOPE_ITEMS=[{label:'demolition'},{label:'flooring',material:'lvp'},{label
 const money=(n)=>'$'+Math.round(n).toLocaleString('en-US');
 const scopeRowsEl=document.getElementById('scopeRows');
 let scopeMarkets=[];
+let lastScope=null;
+
 
 function renderScope(r){
   scopeRowsEl.innerHTML=r.lines.map(l=>`
