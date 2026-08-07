@@ -773,9 +773,9 @@
 .rd-site .hot-room .tag{position:absolute;top:12px;z-index:5;font-family:'DM Mono',monospace;font-size:.62rem;
   letter-spacing:.08em;background:rgba(17,17,19,.82);color:#fff;padding:4px 9px;border-radius:99px}
 .rd-site .hot-room .tag.l{left:12px}
-.rd-site .hot-room .tag.r{left:12px;right:auto;opacity:0;transition:.4s}
+.rd-site .hot-room .tag.ta-after{left:12px;right:auto;width:-moz-fit-content;width:fit-content;opacity:0;transition:.4s}
 .rd-site .hot-room.show-after .tag.l{opacity:0}
-.rd-site .hot-room.show-after .tag.r{opacity:1;background:var(--red)}
+.rd-site .hot-room.show-after .tag.ta-after{opacity:1;background:var(--red)}
 .rd-site .hot-dots{position:absolute;inset:0;z-index:6}
 .rd-site .hdot{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;
   display:grid;place-items:center;background:rgba(255,255,255,.94);border:1.5px solid var(--mute);
