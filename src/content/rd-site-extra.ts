@@ -290,9 +290,9 @@ export function initExtra(timers: number[], lucide: any) {
   ];
   const fr = $("flowRow");
   if (fr) fr.innerHTML = FLOW.map(([i, t, d], n) =>
-    `<div class="fstep" data-step="${n}"><span class="fdot" aria-hidden="true"></span>
+    `<button type="button" class="fstep" data-n="${n}" data-step="${n}"><span class="fdot" aria-hidden="true"></span>
      <span class="fnum mono">${String(n + 1).padStart(2, "0")}</span>
-     <div class="fic"><i data-lucide="${i}"></i></div><b>${t}</b><p>${d}</p></div>`).join("");
+     <div class="fic"><i data-lucide="${i}"></i></div><b>${t}</b><p>${d}</p></button>`).join("");
 
   // Same room, same camera across every stage. 04-06 reuse the designed frame
   // and only layer project information on top.
