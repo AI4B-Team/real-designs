@@ -1059,3 +1059,28 @@
   .rd-site .spot,.rd-site .pcard,.rd-site .scope-card{opacity:1;transform:none}
   .rd-site .sc .fade-out{opacity:0}
 }
+
+/* ---------- gallery showcase: taxonomy, proof chips, per-tab strengths ---------- */
+.rd-site .gal-subs{display:none;gap:6px;flex-wrap:wrap;margin:-6px 0 14px}
+.rd-site .gal-subs.on{display:flex}
+.rd-site .gsub{font-size:.74rem;font-weight:500;padding:5px 11px;border-radius:99px;cursor:pointer;
+  border:1px solid var(--line);background:transparent;color:var(--mute)}
+.rd-site .gsub.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.rd-site .gal-stage .gal-chips{position:absolute;left:13px;bottom:13px;z-index:5;display:flex;gap:7px;flex-wrap:wrap;
+  transition:opacity .28s ease}
+.rd-site .gal-stage.dragging .gal-chips{opacity:0}
+.rd-site .gal-chips .gc{display:inline-flex;align-items:center;gap:6px;font-family:'DM Mono',monospace;
+  font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;background:rgba(255,255,255,.94);color:var(--ink);
+  border:1px solid rgba(17,17,19,.1);padding:5px 10px;border-radius:999px;box-shadow:0 4px 14px rgba(0,0,0,.14)}
+.rd-site .gal-chips .gc.lock{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rd-site .gal-chips .gc i{width:12px;height:12px}
+.rd-site .gal-foot{transition:opacity .28s ease}
+.rd-site .gal-strength{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:0;border-top:1px solid var(--line)}
+.rd-site .gal-strength .gstr{display:flex;gap:10px;padding:14px 18px;border-left:1px solid var(--line);min-width:0}
+.rd-site .gal-strength .gstr:first-child{border-left:0}
+.rd-site .gal-strength .gstr i{width:16px;height:16px;flex:none;color:var(--red);margin-top:2px}
+.rd-site .gal-strength .gstr b{display:block;font-size:.82rem;letter-spacing:-.01em}
+.rd-site .gal-strength .gstr span{display:block;font-size:.74rem;color:var(--mute);line-height:1.45;margin-top:2px}
+@media(max-width:760px){.rd-site .gal-strength{grid-template-columns:1fr}
+  .rd-site .gal-strength .gstr{border-left:0;border-top:1px solid var(--line)}
+  .rd-site .gal-strength .gstr:first-child{border-top:0}}

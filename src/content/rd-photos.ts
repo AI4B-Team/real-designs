@@ -22,6 +22,18 @@ import yardBefore from "@/assets/yard-before.jpg";
 import wfOriginal from "@/assets/wf-original.jpg";
 import wfEmpty from "@/assets/wf-empty.jpg";
 import wfDesigned from "@/assets/wf-designed.jpg";
+import kitchenAfter from "@/assets/kitchen-after.jpg";
+import bathBefore from "@/assets/bath-before.jpg";
+import bedroomBefore from "@/assets/bedroom-before.jpg";
+import bedroomAfter from "@/assets/bedroom-after.jpg";
+import officeBefore from "@/assets/office-before.jpg";
+import officeAfter from "@/assets/office-after.jpg";
+import exteriorAfter from "@/assets/exterior-after.jpg";
+import yardAfter from "@/assets/yard-after.jpg";
+import plan2d from "@/assets/plan-2d.jpg";
+import plan3d from "@/assets/plan-3d.jpg";
+import sketchHand from "@/assets/sketch-hand.jpg";
+import sketchRender from "@/assets/sketch-render.jpg";
 
 export const PHOTOS = {
   before: roomBefore,
@@ -47,6 +59,18 @@ export const PHOTOS = {
   wfOriginal,
   wfEmpty,
   wfDesigned,
+  kitchenAfter,
+  bathBefore,
+  bedroomBefore,
+  bedroomAfter,
+  officeBefore,
+  officeAfter,
+  exteriorAfter,
+  yardAfter,
+  plan2d,
+  plan3d,
+  sketchHand,
+  sketchRender,
 } as const;
 
 export function photo(src: string, alt: string) {
