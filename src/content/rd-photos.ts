@@ -15,6 +15,10 @@ import styleRanch from "@/assets/style-ranch.jpg";
 import stylePaintedBrick from "@/assets/style-paintedbrick.jpg";
 import styleResortYard from "@/assets/style-resortyard.jpg";
 import styleCraftsman from "@/assets/style-craftsman.jpg";
+import roomClutter from "@/assets/room-clutter.jpg";
+import roomEmpty from "@/assets/room-empty.jpg";
+import kitchenBefore from "@/assets/kitchen-before.jpg";
+import yardBefore from "@/assets/yard-before.jpg";
 
 export const PHOTOS = {
   before: roomBefore,
@@ -33,6 +37,10 @@ export const PHOTOS = {
   paintedBrick: stylePaintedBrick,
   resortYard: styleResortYard,
   craftsman: styleCraftsman,
+  clutter: roomClutter,
+  empty: roomEmpty,
+  kitchenBefore,
+  yardBefore,
 } as const;
 
 export function photo(src: string, alt: string) {
