@@ -1425,3 +1425,12 @@
 @media(max-width:640px){
   .rd-site .nowrap-line,.rd-site .no-wrap{white-space:normal !important}
 }
+
+@media(max-width:900px){
+  .rd-site .ribbon-row{flex:1 1 auto;max-width:100%;flex-wrap:wrap}
+  .rd-site .ribbon-row .rb{white-space:normal}
+  .rd-site [style*="nowrap"]{white-space:normal !important}
+  .rd-site .grid>*,.rd-site .cols>*,.rd-site .split>*{min-width:0}
+  .rd-site .rv{min-width:0;max-width:100%}
+  .rd-site .mq{overflow:hidden}
+}
