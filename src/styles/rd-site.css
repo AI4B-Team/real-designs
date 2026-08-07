@@ -52,13 +52,13 @@
 
 .rd-site .dark .eyebrow{color:#FF7070}
 
-.rd-site .sec-head{max-width:730px;margin-bottom:44px}
+.rd-site .sec-head{max-width:730px;margin:0 auto 44px;text-align:center}
 
 .rd-site .sec-head.center{margin:0 auto 44px;text-align:center}
 
 .rd-site .sec-head h2+p{margin-top:15px}
 
-.rd-site .sec-head.center p{margin-left:auto;margin-right:auto}
+.rd-site .sec-head p, .rd-site .sec-head .lede{margin-left:auto;margin-right:auto}
 
 
 /* buttons */
