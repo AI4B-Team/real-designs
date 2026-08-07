@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
-import { Route as ShotcapRouteImport } from './routes/shotcap'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 
 const IndexRoute = IndexRouteImport.update({
@@ -29,11 +28,6 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ShotcapRoute = ShotcapRouteImport.update({
-  id: '/shotcap',
-  path: '/shotcap',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -43,13 +37,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/shotcap': typeof ShotcapRoute
   '/app': typeof AuthenticatedAppRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
-  '/shotcap': typeof ShotcapRoute
   '/app': typeof AuthenticatedAppRoute
 }
 export interface FileRoutesById {
@@ -57,28 +49,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
-  '/shotcap': typeof ShotcapRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/shotcap' | '/app'
+  fullPaths: '/' | '/auth' | '/app'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/shotcap' | '/app'
-  id:
-    | '__root__'
-    | '/'
-    | '/_authenticated'
-    | '/auth'
-    | '/shotcap'
-    | '/_authenticated/app'
+  to: '/' | '/auth' | '/app'
+  id: '__root__' | '/' | '/_authenticated' | '/auth' | '/_authenticated/app'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
-  ShotcapRoute: typeof ShotcapRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -102,13 +86,6 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/shotcap': {
-      id: '/shotcap'
-      path: '/shotcap'
-      fullPath: '/shotcap'
-      preLoaderRoute: typeof ShotcapRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -136,7 +113,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
-  ShotcapRoute: ShotcapRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
