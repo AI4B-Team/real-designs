@@ -334,10 +334,10 @@ const pkg=[['Before And After Slider','Interactive, embeds anywhere','p-ok','Rea
 ['Color And Material Palette','One page, with product codes','p-ok','Ready'],
 ['Product Board','Every item with price and link','p-ok','Ready'],
 ['Scope Of Work And Budget','Contractor brief with signature line','p-ok','Ready'],
-['Social Reel, 9x16','Cross fade before to after, 12 seconds','p-amb','Rendering'],
-['Walkthrough Video','Dolly in, 20 seconds','p-gray','Studio Plan']];
+['Social Reel, 9x16','Cross fade before to after, 12 seconds','plan-pill lvl-pro','PRO'],
+['Walkthrough Video','Dolly in, 20 seconds','plan-pill lvl-studio','STUDIO']];
 document.getElementById('pkgList').innerHTML=pkg.map(([n,d,cls,lab])=>`
-<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('');
+<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="${cls.startsWith('plan-pill')?cls:'pill '+cls}">${lab}</span></div>`).join('');
 
 const links=[['206 N MacDill, Full Package','Sent to Keisha C. &middot; opened 6 times','p-ok','2 Approved'],
 ['1412 E Idlewild, Living Room','Sent to J. Alvarez &middot; opened 3 times','p-amb','No Decision'],
@@ -558,7 +558,33 @@ if(prefsEl) prefsEl.innerHTML=[['Design approvals','Email + In app'],['Client co
  .map(([t,v])=>`<div class="seat"><div class="rowt"><b>${t}</b><span>${v}</span></div><span class="pill">On</span></div>`).join('');
 renderNotifs();
 
-lucide.createIcons();
+/* ---------- studio: tool rows with plan badges ---------- */
+const toolRows = Array.from(document.querySelectorAll('.toolrow'));
+const toolInfo = document.getElementById('toolInfo');
+toolRows.forEach((r) => r.addEventListener('click', () => {
+  toolRows.forEach((x) => x.classList.remove('on'));
+  r.classList.add('on');
+  const plan = r.getAttribute('data-plan');
+  if (plan && toolInfo) {
+    document.getElementById('toolInfoName').textContent =
+      r.getAttribute('data-tool') + ' is on the ' + (plan === 'pro' ? 'Pro' : 'Studio') + ' plan';
+    document.getElementById('toolInfoDesc').textContent = r.getAttribute('data-desc');
+    toolInfo.hidden = false;
+  } else if (toolInfo) {
+    toolInfo.hidden = true;
+  }
+}));
+
+/* ---------- studio: canvas dark / light surround ---------- */
+const canvasCard = document.getElementById('canvasCard');
+const canvasThemeBtn = document.getElementById('canvasTheme');
+if (canvasCard && canvasThemeBtn) {
+  canvasThemeBtn.addEventListener('click', () => {
+    const dark = canvasCard.classList.toggle('dark');
+    canvasThemeBtn.setAttribute('aria-pressed', String(dark));
+    canvasThemeBtn.querySelector('b').textContent = dark ? 'Dark' : 'Light';
+  });
+}
 
 lucide.createIcons();
 

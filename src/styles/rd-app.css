@@ -595,3 +595,40 @@
 .rd-app .acct-side{position:sticky;top:78px}
 @media(max-width:1180px){.rd-app .acct-page{grid-template-columns:200px minmax(0,1fr)}.rd-app .acct-side{grid-column:1/-1;position:static}}
 @media(max-width:820px){.rd-app .acct-page{grid-template-columns:1fr}.rd-app .acct-rail{position:static;display:flex;flex-wrap:wrap;gap:6px}.rd-app .acct-rail .acct-group,.rd-app .acct-rail-h{display:none}.rd-app .arail-i{width:auto;border:1px solid var(--line)}}
+
+/* ---------- tool rows with plan badges ---------- */
+.rd-app .toollist{display:flex;flex-direction:column;gap:2px}
+.rd-app .toolrow{display:flex;align-items:center;gap:8px;width:100%;padding:7px 9px;border-radius:6px;
+  border:1px solid transparent;background:none;cursor:pointer;font:inherit;color:var(--ink);text-align:left}
+.rd-app .toolrow:hover{background:#F7F6F3}
+.rd-app .toolrow.on{border-color:var(--red);background:rgba(204,0,0,.05)}
+.rd-app .toolrow i{width:15px;height:15px;color:var(--mute);flex:none}
+.rd-app .toolrow b{font-size:.82rem;font-weight:500;flex:1}
+.rd-app .plan-pill{font-family:'DM Mono',ui-monospace,monospace;font-size:.56rem;letter-spacing:.1em;
+  padding:2px 7px;border-radius:99px;flex:none}
+.rd-app .plan-pill.lvl-pro{color:#CC0000;background:rgba(204,0,0,.1)}
+.rd-app .plan-pill.lvl-studio{color:#A66A00;background:rgba(214,148,0,.14)}
+.rd-app .toolinfo{margin-top:8px;border:1px solid var(--line);border-radius:7px;padding:10px 11px;
+  background:#F7F6F3}
+.rd-app .toolinfo b{display:block;font-size:.8rem;margin-bottom:3px}
+.rd-app .toolinfo p{font-size:.75rem;color:var(--mute);margin-bottom:8px}
+.rd-app .toolinfo-link{display:inline-flex;align-items:center;gap:5px;font-size:.75rem;color:var(--red);
+  font-weight:500}
+.rd-app .toolinfo-link i{width:13px;height:13px}
+
+/* ---------- dark studio canvas (studio view only) ---------- */
+.rd-app .canvas-card.dark{background:#1A1A1D;border-color:#2E2E33}
+.rd-app .canvas-card.dark .card-h{border-bottom-color:#2E2E33}
+.rd-app .canvas-card.dark .card-h h3{color:#fff}
+.rd-app .canvas-card.dark .card-h .sub{color:#8E8E96}
+.rd-app .canvas-card.dark .card-b{background:#232327;border-radius:0 0 9px 9px}
+.rd-app .canvas-card.dark .canvas{border-color:#2E2E33;margin:24px 24px 0;border-radius:8px 8px 0 0}
+.rd-app .canvas-card.dark .numbar{margin-top:0;border-radius:0 0 8px 8px;margin-left:24px;margin-right:24px}
+.rd-app .canvas-card.dark .vars{margin:12px 24px 0}
+.rd-app .canvas-card.dark .card-b > div[style*="margin-top:12px"]{margin-left:24px;margin-right:24px}
+.rd-app .canvas-theme{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:.7rem;
+  color:var(--mute);background:none;border:1px solid var(--line);border-radius:99px;padding:4px 10px;
+  cursor:pointer}
+.rd-app .canvas-theme i{width:13px;height:13px}
+.rd-app .canvas-card.dark .canvas-theme{color:#C9C9D1;border-color:#3A3A41}
+.rd-app .canvas-card.dark .canvas-theme b{color:#fff;font-weight:500}
