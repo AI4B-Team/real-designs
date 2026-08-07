@@ -773,14 +773,15 @@
 .rd-site .pnode .pim{position:relative;transition:box-shadow .25s ease,border-color .25s ease}
 .rd-site .pnode.on{transform:translateY(-4px) scale(1.03)}
 .rd-site .pnode.on .pim{border-color:var(--red);box-shadow:0 16px 32px -20px rgba(0,0,0,.55)}
-.rd-site .pdet{display:block;font-size:.63rem;color:var(--red);margin-top:3px;opacity:0;transform:translateY(-3px);
-  transition:opacity .25s ease,transform .25s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rd-site .pdet{display:block;font-size:.62rem;white-space:normal;color:var(--red);margin-top:3px;opacity:0;transform:translateY(-3px);
+  transition:opacity .25s ease,transform .25s ease;line-height:1.35}
 .rd-site .pnode.on .pdet{opacity:1;transform:none}
 .rd-site .pnode .pim .pov{position:absolute;z-index:2;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
   font-size:8px;line-height:1.25;letter-spacing:.02em;max-width:86%;
   display:inline-flex;align-items:center;gap:3px;padding:3px 5px;border-radius:5px;background:rgba(255,255,255,.95);
   color:#111;box-shadow:0 3px 10px -6px rgba(0,0,0,.5)}
 .rd-site .pnode .pim .pov i{width:8px;height:8px;font-style:normal;flex:none}
+.rd-site .pnode .pim .pov svg{width:9px;height:9px;flex:none;stroke-width:2.4}
 .rd-site .pnode .pim .pov.lock{left:5px;top:5px}
 .rd-site .pnode .pim .pov.cost{left:5px;bottom:5px;display:block;padding:4px 6px}
 .rd-site .pnode .pim .pov.cost b{display:block;font-size:8px;font-weight:600}
