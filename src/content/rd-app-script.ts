@@ -881,7 +881,7 @@ document.querySelectorAll('.btn-logout').forEach(b=>b.addEventListener('click',a
 
 const scopeGrid=document.getElementById('scopeGrid');
 let savedCard=null;
-if(scopeGrid){
+if(scopeGrid && !document.getElementById('scSave')){
   const briefBtn=document.getElementById('scBrief');
   const saveBtn=document.createElement('button');
   saveBtn.className='btn btn-ghost btn-xs'; saveBtn.id='scSave';
