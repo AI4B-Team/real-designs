@@ -5,6 +5,7 @@ import { createIcons, icons } from "lucide";
 import { PHOTOS, photo } from "@/content/rd-photos";
 import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
+import { estimateDimensions } from "@/lib/dimensions.functions";
 
 export function initApp(): () => void {
   const timers: number[] = [];
@@ -318,7 +319,7 @@ async function runScope(){
       market_id: sel && sel.value ? sel.value : undefined,
       grade: document.getElementById('scGrade').value,
       floor_area_sf: val('scFloor',340), wall_area_sf: val('scWall',780), perimeter_lf: val('scPerim',76),
-      dims_source:'user',
+      dims_source: dimsProposal ? (dimsConfirmed?'user':'depth_estimate') : 'user',
       budget_target: val('scBudget',null),
       items: scopeItems,
     }});
@@ -358,6 +359,39 @@ async function detectScopeChanges(){
     note.textContent='Could not read the photos. '+((e&&e.message)||'');
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
+
+/* ---------- phase 3: dimensions proposed by AI, confirmed by a person ---------- */
+let dimsConfirmed=false, dimsProposal=null;
+function setDimsSource(){
+  const b=document.getElementById('scDimsBadge');
+  if(!dimsProposal){ b.style.display='none'; return; }
+  b.style.display='';
+  b.className='pill '+(dimsConfirmed?'p-ok':'p-amb');
+  b.textContent=(dimsConfirmed?'Dimensions Confirmed':'Proposed \u00b7 '+dimsProposal.confidence[0].toUpperCase()+dimsProposal.confidence.slice(1)+' Confidence');
+  document.getElementById('scDimsOk').style.display=dimsConfirmed?'none':'';
+}
+async function runDims(){
+  const btn=document.getElementById('scDims'); const note=document.getElementById('scopeNote');
+  btn.disabled=true; const lab=btn.innerHTML; btn.textContent='Measuring\u2026';
+  try{
+    const image=await toDataUrl(PHOTOS.before,900);
+    const r=await estimateDimensions({data:{image,room_type:'living room'}});
+    dimsProposal=r; dimsConfirmed=false;
+    document.getElementById('scFloor').value=r.floor_area_sf;
+    document.getElementById('scWall').value=r.wall_area_sf;
+    document.getElementById('scPerim').value=r.perimeter_lf;
+    setDimsSource();
+    await runScope();
+    note.textContent=r.basis+' '+r.disclaimer+' '+note.textContent;
+  }catch(e){
+    note.textContent='Could not measure this photo. '+((e&&e.message)||'');
+  }finally{ btn.disabled=false; btn.innerHTML=lab; }
+}
+document.getElementById('scDims').addEventListener('click',runDims);
+document.getElementById('scDimsOk').addEventListener('click',async()=>{ dimsConfirmed=true; setDimsSource(); await runScope(); });
+['scFloor','scWall','scPerim'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
+  if(dimsProposal){ dimsConfirmed=false; setDimsSource(); }
+}));
 document.getElementById('scDetect').addEventListener('click',detectScopeChanges);
 document.getElementById('scRun').addEventListener('click',runScope);
 ['scGrade','scMarket'].forEach(id=>document.getElementById(id).addEventListener('change',runScope));
