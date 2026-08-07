@@ -27,9 +27,6 @@ function wire(){return `<svg viewBox="0 0 800 500" preserveAspectRatio="xMidYMid
     <rect x="576" y="344" width="126" height="20" rx="10" fill="#CC0000"/><text x="586" y="358" fill="#fff">WINDOW FIXED</text>
     <rect x="200" y="350" width="106" height="20" rx="10" fill="#CC0000"/><text x="210" y="364" fill="#fff">WALL BASE</text></g></svg>`;}
 
-document.getElementById('lBefore').innerHTML=room('before');
-document.getElementById('lAfter').innerHTML=room('after');
-document.getElementById('lWire').innerHTML=wire();
 const PALS={
   warm:PHOTOS.after,
   coastal:PHOTOS.coastal,
@@ -53,16 +50,65 @@ document.getElementById('proofStrip').innerHTML=PROOF.map(([n,p,c])=>`
   <div class="proof"><div class="im">${room('after',PALS[p])}</div>
   <div class="tx"><b>${n}</b><span>${c}</span></div></div>`).join('');
 
-/* ---------- comparator ---------- */
-const rng=document.getElementById('rng'),lAfter=document.getElementById('lAfter'),hnd=document.getElementById('hnd');
-function setC(v){lAfter.style.clipPath=`inset(0 0 0 ${v}%)`;hnd.style.left=v+'%';}
-rng.addEventListener('input',e=>setC(e.target.value));setC(50);
-let auto=true,dir=1,pos=50;
-const drift=setInterval(()=>{if(!auto)return clearInterval(drift);pos+=dir*.5;if(pos>65||pos<35)dir*=-1;rng.value=pos;setC(pos);},42);
-rng.addEventListener('pointerdown',()=>auto=false);
-const wb=document.getElementById('wireBtn'),panel=document.getElementById('panel');
-wb.addEventListener('click',()=>{const on=panel.classList.toggle('wire-on');wb.classList.toggle('on',on);
-  wb.setAttribute('aria-pressed',on);document.getElementById('wireTxt').textContent=on?'Hide Reality Lock':'Show Reality Lock';});
+/* ---------- hero showcase ---------- */
+const cursorSVG=`<svg class="cursor" width="22" height="24" viewBox="0 0 22 24" fill="none"><path d="M2 1.5 L2 19 L6.6 14.8 L9.6 21.6 L12.9 20.1 L9.9 13.5 L16 13.2 Z" fill="#fff" stroke="#111113" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
+const SCENES=[
+ {tab:'Redesign',name:'Interior',lock:'Reality Lock On',
+  build:()=>`<div class="art">${photo(PHOTOS.before,'Living room before')}</div>
+    <div class="wipe">${photo(PHOTOS.after,'Living room after')}</div><div class="wipe-edge"></div>`},
+ {tab:'Empty & Stage',name:'Interior &middot; Declutter To Staged',lock:'Declutter On',
+  build:()=>`<div class="art">${photo(PHOTOS.empty,'Room emptied')}</div>
+    <div class="art fade-out">${photo(PHOTOS.clutter,'Room with clutter')}</div>`},
+ {tab:'Shop',name:'Interior &middot; Shop The Design',lock:'Reality Lock On',toast:'Added To Project',toastAt:2700,
+  build:()=>`<div class="art">${photo(PHOTOS.after,'Staged living room')}</div>
+    <span class="spot pulse" style="left:29%;top:63%;animation-delay:.2s"></span>
+    <span class="spot" style="left:51%;top:80%;animation-delay:.35s"></span>
+    <span class="spot" style="left:80%;top:74%;animation-delay:.5s"></span>
+    <span class="spot" style="left:24%;top:38%;animation-delay:.65s"></span>
+    <div class="pcard" style="left:34%;top:30%"><b>Low Profile Sofa</b>
+      <span class="tierrow"><i>Best Price</i><em>$690</em></span>
+      <span class="tierrow on"><i>Closest Match</i><em>$1,240</em></span>
+      <span class="tierrow"><i>Premium Pick</i><em>$2,480</em></span>
+      <span class="pb2">Add To Project</span></div>
+    ${cursorSVG.replace('class="cursor"','class="cursor" style="left:44%;top:56%"')}`},
+ {tab:'Exterior',name:'Exterior',lock:'Reality Lock On',
+  build:()=>`<div class="art">${photo(PHOTOS.exteriorBefore,'Exterior before')}</div>
+    <div class="wipe">${photo(PHOTOS.paintedBrick,'Exterior after')}</div><div class="wipe-edge"></div>`},
+ {tab:'Plan',name:'Garden &middot; Scope And Budget',lock:'Budget Mode On',toast:'Scope Sent',toastAt:3100,
+  build:()=>`<div class="art">${photo(PHOTOS.resortYard,'Backyard redesign')}</div>
+    <div class="scope-card"><h4>Backyard Redesign</h4><div class="sub2">Planning range &middot; Tampa FL labor</div>
+      <div class="li"><span>In Ground Pool And Install</span><span>$18,500</span></div>
+      <div class="li"><span>Concrete Deck And Coping</span><span>$5,200</span></div>
+      <div class="li"><span>Planting And Landscaping</span><span>$2,600</span></div>
+      <div class="li"><span>Outdoor Lighting</span><span>$690</span></div>
+      <div class="tot"><span>Planning Range</span><span>$26.1K to $31.5K</span></div>
+      <span class="act">Send Scope To Contractor</span></div>
+    ${cursorSVG.replace('class="cursor"','class="cursor" style="left:55%;top:77%"')}`},
+ {tab:'Video',name:'Exterior &middot; Walkthrough',lock:'Recording',rec:true,
+  build:()=>`<div class="ken">${photo(PHOTOS.paintedBrick,'Exterior walkthrough')}</div>`}
+];
+const showStage=document.getElementById('showStage'),lockPill=document.getElementById('lockPill'),
+      modePill=document.getElementById('modePill'),toastEl=document.getElementById('toast'),
+      showNav=document.getElementById('showNav');
+let sIdx=0,sTimer=null;
+showNav.innerHTML=SCENES.map((s,i)=>`<button data-i="${i}"${i===0?' class="on"':''}>${s.tab}</button>`).join('');
+function playScene(i){
+  toastEl.classList.remove('on');
+  const s=SCENES[i];
+  showStage.innerHTML=`<div class="sc on">${s.build()}</div>`;
+  lockPill.className='lock-pill'+(s.rec?' rec':'');
+  lockPill.innerHTML=`<i></i>${s.lock}`;
+  modePill.innerHTML=s.name;
+  if(s.toast)setTimeout(()=>{toastEl.querySelector('b').textContent=s.toast;toastEl.classList.add('on');
+    setTimeout(()=>toastEl.classList.remove('on'),2200)},s.toastAt);
+  showNav.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
+  lucide.createIcons();
+}
+function startShow(){if(sTimer)clearInterval(sTimer);sTimer=setInterval(()=>{sIdx=(sIdx+1)%SCENES.length;playScene(sIdx)},5400)}
+showNav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  sIdx=+b.dataset.i;playScene(sIdx);startShow();
+}));
+playScene(0);startShow();
 
 /* ---------- builder ---------- */
 const styleSets={
@@ -94,9 +140,14 @@ document.querySelectorAll('#spaceChips .chip').forEach(c=>c.addEventListener('cl
 function money(n){return '$'+n.toLocaleString()}
 function setBudget(i){
   bi=i;const b=budgets[i];
-  document.getElementById('estVal').textContent=`${money(b.lo)} to ${money(b.hi)}`;
+  const txt=`${money(b.lo)} to ${money(b.hi)}`;
+  document.getElementById('estVal').textContent=txt;
   const f=document.getElementById('fitVal');f.textContent=b.fit;
   f.className=i===3?'conf-md':'conf-hi';
+  // hero number bar mirrors the builder so the two never disagree
+  const he=document.getElementById('heroEst'),hf=document.getElementById('heroFit');
+  if(he)he.textContent=txt;
+  if(hf){hf.textContent=b.fit;hf.className=i===3?'conf-md':'conf-hi';}
 }
 document.querySelectorAll('#budgetChips .chip').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('#budgetChips .chip').forEach(x=>x.classList.remove('on'));
@@ -235,10 +286,6 @@ const co=new IntersectionObserver(e=>e.forEach(x=>{
   const t=setInterval(()=>{c+=inc;if(c>=end){c=end;clearInterval(t)}el.textContent=Math.round(c)+s},26);co.unobserve(el);
 }),{threshold:.5});
 document.querySelectorAll('[data-c]').forEach(el=>co.observe(el));
-document.querySelectorAll('#intensityChips .chip').forEach(c=>c.addEventListener('click',()=>{
-  document.querySelectorAll('#intensityChips .chip').forEach(x=>x.classList.remove('on'));
-  c.classList.add('on');
-}));
 initExtra(timers, lucide);
 addEventListener('scroll',()=>document.getElementById('hdr').classList.toggle('scrolled',scrollY>12),{passive:true});
 lucide.createIcons();
