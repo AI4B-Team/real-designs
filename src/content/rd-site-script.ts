@@ -44,11 +44,6 @@ document.querySelectorAll('.samp').forEach((s,i)=>{
   s.innerHTML=room(i===0?'before':'after',pals[i]);
 });
 
-/* ---------- proof strip ---------- */
-const PROOF=[['Kitchen','kitchen','$26.2K to $34.1K'],['Primary Bath','bath','$8.9K to $12.4K'],['Front Elevation','exterior','$11.9K to $16.8K']];
-document.getElementById('proofStrip').innerHTML=PROOF.map(([n,p,c])=>`
-  <div class="proof"><div class="im">${room('after',PALS[p])}</div>
-  <div class="tx"><b>${n}</b><span>${c}</span></div></div>`).join('');
 
 /* ---------- hero: one continuous property tour ---------- */
 let budgetTouched=false;
