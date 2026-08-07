@@ -1598,3 +1598,9 @@
   .rd-site .sc-scope .sc-lyr{right:0}
   .rd-site .sc-panel{inset:auto 0 0 0;height:64%}
 }
+
+/* Density: render the marketing site at 80% scale (matches LEAD TRACE site
+   density) so full sections fit on screen. The top nav is counter-scaled so
+   its links/buttons stay exactly the size they are today. */
+.rd-site{zoom:.8}
+.rd-site header{zoom:1.25}
