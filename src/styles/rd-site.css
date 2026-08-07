@@ -1299,4 +1299,11 @@
   .rd-site .builder-foot{margin-top:13px}
   .rd-site .samples{margin-top:8px}
   .rd-site .samp{height:30px}
+  .rd-site .step-lab{margin-bottom:5px;font-size:.68rem}
+  .rd-site .step-lab i{width:20px;height:20px;font-size:.68rem}
+  .rd-site .chip{padding:6px 13px}
+  .rd-site .chip.budget{padding:6px 13px;line-height:1.2}
+  .rd-site .builder-title h3{font-size:1rem;margin-bottom:6px}
+  .rd-site .builder-title p{font-size:.76rem;line-height:1.35}
+  .rd-site .no-card{margin-top:8px}
 }
