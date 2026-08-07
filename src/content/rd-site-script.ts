@@ -264,32 +264,6 @@ const mqI=[['sofa','Interior Redesign'],['home','Exterior Redesign'],['trees','L
 ['copy','Style Transfer'],['shield-check','MLS Disclosure'],['trending-up','ARV Impact']];
 document.getElementById('mq').innerHTML=[...mqI,...mqI].map(([i,t])=>`<span class="mq-item"><i data-lucide="${i}"></i>${t}</span>`).join('');
 
-/* ---------- features ---------- */
-const F=[
-['wallet','Budget Mode','Set the number before you generate. The AI proposes only what plausibly fits it.','Only Here'],
-['sliders-horizontal','Keep, Replace, Remove','Tap any object or surface and tell the AI what it may touch. No reprompting from scratch.','Only Here'],
-['dna','Design DNA','One palette, flooring, metal and cabinet style locked across every room in the property.','Only Here'],
-['calculator','Scope & Budget','Itemized line items with quantities, priced to your local labor market.','Only Here'],
-['trending-up','ARV Impact Range','What the finished look supports against recent comps in your market.','Only Here'],
-['sofa','Interior Redesign','Dated room to designer finish in one pass, built on your real walls.',''],
-['home','Exterior Redesign','Test siding, paint, roofing and curb appeal before a contractor quotes it.',''],
-['trees','Landscape Design','Patio, pool, fire pit or fresh planting. See it before you dig.',''],
-['bed-double','Virtual Staging','Furnish a vacant listing in seconds. No rental furniture, no reshoot.',''],
-['eraser','Declutter & Empty','Strip furniture, clutter and people out of an occupied photo.',''],
-['pen-tool','Sketch To Render','Napkin drawing, blueprint or CAD export in. Client ready render out.',''],
-['paintbrush','Material Swap','Change flooring, counters, cabinets, tile or paint on real surfaces.',''],
-['copy','Style Transfer','Drop in a photo you love and your space gets that exact look.',''],
-['shopping-bag','Shop The Design','Every item matched to real products. Closest match, lowest price or premium.',''],
-['shield-check','Disclosure Engine','Auto label staged photos to MLS and state rules, with an audit trail.','Only Here'],
-['users','Client Approval Links','Share a branded link. Clients favorite, comment and approve.',''],
-['video','Walkthrough Video','Turn any still into a cinematic camera move in one click.','Phase 2'],
-['box','2D To 3D Floor Plan','Flat plan in, furnished 3D walkthrough out. Sell before framing.','Phase 2'],
-['scan','Multi Angle Consistency','Four views of one room, same sofa and layout in all four.','Phase 2'],
-['plug','API & White Label','Drop the whole engine into your site with your logo on it.','Phase 2']];
-document.getElementById('featGrid').innerHTML=F.map(([i,t,d,g])=>`
-  <div class="feat">${g?`<span class="tg ${g==='Phase 2'?'soon':''}">${g}</span>`:''}
-  <div class="ic"><i data-lucide="${i}"></i></div><h3>${t}</h3><p>${d}</p></div>`).join('');
-
 /* ---------- styles grid ---------- */
 const SL=[['Warm Minimal',PHOTOS.after],['Modern Farmhouse',PHOTOS.farmhouse],['Coastal',PHOTOS.coastal],
 ['Japandi',PHOTOS.japandi],['Mid Century',PHOTOS.midcentury],['Industrial',PHOTOS.industrial],
