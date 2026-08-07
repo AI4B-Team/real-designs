@@ -93,78 +93,130 @@ export function initExtra(timers: number[], lucide: any) {
     strength: [string, string, string][]
   ): GView => ({ name, before, after, cap, bl, al, stamp, chips, strength });
 
+  const ARCH: [string,string,string] = ["ruler","Architecture Preserved","Windows, ceiling and perspective unchanged"];
+
   const INTERIOR_SUBS: [string, GView][] = [
     ["Living Room", V("Living Room", PHOTOS.wfOriginal, PHOTOS.wfDesigned,
-      "Warm Minimal · $11.4K to $14.9K", "Before", "After", "Reality Preserved",
-      ["Reality Lock On", "Makeover · Under $15K", "Design DNA · Warm Minimal"],
-      [["ruler", "Architecture Held", "Windows, ceiling and camera unchanged"],
-       ["paintbrush", "Finishes Changed", "Flooring, paint, furniture, drapes, lighting"],
-       ["wallet", "Planning Range", "$11,400 to $14,900 · within target"]])],
+      "Warm Minimal \u00b7 $11.4K to $14.9K", "Before", "After", "Within Target",
+      ["Reality Lock On", "Makeover \u00b7 Under $15K", "Design DNA \u00b7 Warm Minimal"],
+      [ARCH,
+       ["paintbrush", "Finishes Updated", "Flooring, paint, furniture, drapery and lighting"],
+       ["wallet", "Planning Range", "$11,400 to $14,900 \u00b7 within target"]])],
     ["Kitchen", V("Kitchen", PHOTOS.kitchenBefore, PHOTOS.kitchenAfter,
-      "Warm Shaker · $26.2K to $34.1K", "Before", "After", "Reality Preserved",
-      ["Reality Lock On", "Renovation · Under $35K", "Design DNA · Warm Shaker"],
-      [["ruler", "Layout Held", "Same footprint, same appliance and window locations"],
-       ["paintbrush", "Finishes Changed", "Cabinet fronts, counters, backsplash, floors"],
-       ["wallet", "Planning Range", "$26,200 to $34,100 · cabinetry led"]])],
+      "Warm Shaker \u00b7 $26.2K to $34.1K", "Before", "After", "Within Target",
+      ["Reality Lock On", "Renovation \u00b7 Under $35K", "Design DNA \u00b7 Warm Shaker"],
+      [["ruler", "Architecture Preserved", "Same footprint, appliance and window locations"],
+       ["paintbrush", "Finishes Updated", "Cabinet fronts, counters, backsplash, flooring"],
+       ["wallet", "Planning Range", "$26,200 to $34,100 \u00b7 cabinetry led"]])],
     ["Bathroom", V("Bathroom", PHOTOS.bathBefore, PHOTOS.bath,
-      "Quiet Luxury · $8.9K to $12.4K", "Before", "After", "Reality Preserved",
-      ["Reality Lock On", "Renovation · Under $15K", "Design DNA · Quiet Luxury"],
-      [["ruler", "Plumbing Held", "Tub, toilet and vanity stay exactly where they are"],
-       ["paintbrush", "Finishes Changed", "Tile, vanity, mirror, lighting, flooring"],
-       ["wallet", "Planning Range", "$8,900 to $12,400 · no wall moves"]])],
+      "Quiet Luxury \u00b7 $8.9K to $12.4K", "Before", "After", "Within Target",
+      ["Reality Lock On", "Renovation \u00b7 Under $15K", "Design DNA \u00b7 Quiet Luxury"],
+      [["ruler", "Architecture Preserved", "Tub, toilet and vanity stay exactly where they are"],
+       ["paintbrush", "Finishes Updated", "Tile, vanity, mirror, lighting and flooring"],
+       ["wallet", "Planning Range", "$8,900 to $12,400 \u00b7 no wall moves"]])],
     ["Bedroom", V("Bedroom", PHOTOS.bedroomBefore, PHOTOS.bedroomAfter,
-      "Warm Minimal · $7.8K to $10.6K", "Before", "After", "Reality Preserved",
-      ["Reality Lock On", "Makeover · Under $15K", "Design DNA · Warm Minimal"],
-      [["ruler", "Architecture Held", "Window, closet doors and ceiling untouched"],
-       ["paintbrush", "Finishes Changed", "Carpet to oak, paint, bed, case goods, drapes"],
-       ["wallet", "Planning Range", "$7,800 to $10,600 · furniture led"]])],
+      "Warm Minimal \u00b7 $7.8K to $10.6K", "Before", "After", "Within Target",
+      ["Reality Lock On", "Makeover \u00b7 Under $15K", "Design DNA \u00b7 Warm Minimal"],
+      [["ruler", "Architecture Preserved", "Window, closet doors and ceiling unchanged"],
+       ["paintbrush", "Finishes Updated", "Carpet to oak, paint, bed, case goods, drapery"],
+       ["wallet", "Planning Range", "$7,800 to $10,600 \u00b7 furniture led"]])],
     ["Office", V("Office", PHOTOS.officeBefore, PHOTOS.officeAfter,
-      "Quiet Modern · $5.2K to $7.4K", "Before", "After", "Reality Preserved",
-      ["Reality Lock On", "Refresh · Under $8K", "Design DNA · Quiet Modern"],
-      [["ruler", "Architecture Held", "Window, door and outlet positions preserved"],
-       ["paintbrush", "Finishes Changed", "Flooring, paint, desk, seating, shelving"],
-       ["wallet", "Planning Range", "$5,200 to $7,400 · light scope"]])],
+      "Quiet Modern \u00b7 $5.2K to $7.4K", "Before", "After", "Within Target",
+      ["Reality Lock On", "Refresh \u00b7 Under $8K", "Design DNA \u00b7 Quiet Modern"],
+      [["ruler", "Architecture Preserved", "Window, door and outlet positions unchanged"],
+       ["paintbrush", "Finishes Updated", "Flooring, paint, desk, seating and shelving"],
+       ["wallet", "Planning Range", "$5,200 to $7,400 \u00b7 light scope"]])],
+  ];
+
+  const EXT = (name: string, cap: string, budget: string, strength: [string,string,string][]): [string, GView] =>
+    [name, V(name, PHOTOS.exteriorBefore, PHOTOS.exteriorAfter, cap, "Before", "After", "Within Target",
+      ["Reality Lock On", budget, "Design DNA \u00b7 Modern Classic"], strength)];
+
+  const EXTERIOR_SUBS: [string, GView][] = [
+    EXT("Front Elevation", "Front Elevation \u00b7 Modern Classic \u00b7 $11.9K to $16.8K", "Makeover \u00b7 Under $20K",
+      [["ruler", "Architecture Preserved", "Rooflines, windows and perspective unchanged"],
+       ["paintbrush", "Finishes Updated", "Siding color, trim, door, porch light"],
+       ["wallet", "Planning Range", "$11,900 to $16,800 \u00b7 within target"]]),
+    EXT("Rear Elevation", "Rear Elevation \u00b7 Modern Classic \u00b7 $9.4K to $13.2K", "Makeover \u00b7 Under $15K",
+      [["ruler", "Architecture Preserved", "Door and window openings stay exactly as built"],
+       ["paintbrush", "Finishes Updated", "Paint, deck stain, railings and rear lighting"],
+       ["wallet", "Planning Range", "$9,400 to $13,200 \u00b7 within target"]]),
+    EXT("Siding", "Siding \u00b7 Warm White Lap \u00b7 $7.6K to $10.9K", "Refresh \u00b7 Under $12K",
+      [["ruler", "Architecture Preserved", "Same lap profile, same wall planes"],
+       ["layers", "Finishes Updated", "Repaint in warm white with black trim"],
+       ["wallet", "Planning Range", "$7,600 to $10,900 \u00b7 paint led"]]),
+    EXT("Roofing", "Roofing \u00b7 Charcoal Architectural \u00b7 $14.2K to $19.5K", "Renovation \u00b7 Under $20K",
+      [["ruler", "Architecture Preserved", "Same pitch, ridge height and roofline"],
+       ["home", "Finishes Updated", "Architectural shingle in charcoal, new drip edge"],
+       ["wallet", "Planning Range", "$14,200 to $19,500 \u00b7 tear-off included"]]),
+    EXT("Curb Appeal", "Curb Appeal \u00b7 Modern Classic \u00b7 $5.8K to $8.3K", "Refresh \u00b7 Under $9K",
+      [["ruler", "Architecture Preserved", "House footprint and driveway untouched"],
+       ["sprout", "Finishes Updated", "Front beds, walkway, house numbers and lighting"],
+       ["wallet", "Planning Range", "$5,800 to $8,300 \u00b7 highest resale return"]]),
+  ];
+
+  const LND = (name: string, cap: string, budget: string, strength: [string,string,string][]): [string, GView] =>
+    [name, V(name, PHOTOS.yardBefore, PHOTOS.yardAfter, cap, "Before", "After", "Within Target",
+      ["Reality Lock On", budget, "Design DNA \u00b7 Layered Modern"], strength)];
+
+  const LANDSCAPE_SUBS: [string, GView][] = [
+    LND("Front Yard", "Front Yard \u00b7 Layered Modern \u00b7 $8.9K to $12.6K", "Makeover \u00b7 Under $15K",
+      [["ruler", "Architecture Preserved", "Property lines, walkway and grade unchanged"],
+       ["sprout", "Planting Updated", "Ornamental grasses, boxwood and lawn repair"],
+       ["wallet", "Planning Range", "$8,900 to $12,600 \u00b7 within target"]]),
+    LND("Backyard", "Backyard \u00b7 Layered Modern \u00b7 $18.4K to $24.2K", "Renovation \u00b7 Under $25K",
+      [["ruler", "Architecture Preserved", "House, fence line and grade unchanged"],
+       ["squircle", "Hardscape Updated", "Concrete paver patio and connecting path"],
+       ["wallet", "Planning Range", "$18,400 to $24,200 \u00b7 pergola included"]]),
+    LND("Pool Area", "Pool Area \u00b7 Resort Calm \u00b7 $22.8K to $31.4K", "Renovation \u00b7 Under $35K",
+      [["ruler", "Architecture Preserved", "Pool shell, coping line and setbacks unchanged"],
+       ["squircle", "Hardscape Updated", "Deck resurfacing, planters and shade structure"],
+       ["wallet", "Planning Range", "$22,800 to $31,400 \u00b7 surround only"]]),
+    LND("Patio", "Patio \u00b7 Layered Modern \u00b7 $11.2K to $15.7K", "Makeover \u00b7 Under $16K",
+      [["ruler", "Architecture Preserved", "Rear wall openings and grade unchanged"],
+       ["squircle", "Hardscape Updated", "Paver terrace, edging, low seat wall"],
+       ["wallet", "Planning Range", "$11,200 to $15,700 \u00b7 furniture excluded"]]),
+    LND("Garden", "Garden \u00b7 Layered Modern \u00b7 $6.4K to $9.1K", "Refresh \u00b7 Under $10K",
+      [["ruler", "Architecture Preserved", "Bed locations and mature trees retained"],
+       ["sprout", "Planting Updated", "Perennial layers, mulch, drip irrigation"],
+       ["wallet", "Planning Range", "$6,400 to $9,100 \u00b7 planting led"]]),
   ];
 
   const GAL: [string, GView | null][] = [
     ["Interior", null],
-    ["Exterior", V("Exterior", PHOTOS.exteriorBefore, PHOTOS.exteriorAfter,
-      "Front Elevation · Modern Classic · $11.9K to $16.8K", "Before", "After", "Reality Preserved",
-      ["Reality Lock On", "Makeover · Under $20K", "Design DNA · Modern Classic"],
-      [["layers", "Siding", "Repaint existing lap siding · warm white, black trim"],
-       ["home", "Roofing", "Architectural shingle, charcoal · same pitch and roofline"],
-       ["paintbrush", "Paint & Trim", "Deep green door, new porch light · $2.1K of the range"]])],
-    ["Landscape", V("Landscape", PHOTOS.yardBefore, PHOTOS.yardAfter,
-      "Backyard · Layered Modern · $18.4K to $24.2K", "Before", "After", "Reality Preserved",
-      ["Reality Lock On", "Renovation · Under $25K", "Design DNA · Layered Modern"],
-      [["sprout", "Planting", "Ornamental grasses, boxwood, lawn repair · $4.6K"],
-       ["squircle", "Hardscape", "Concrete paver patio and path · $9.8K"],
-       ["wallet", "Cost Breakdown", "Pergola $3.2K · lighting $1.4K · furniture excluded"]])],
+    ["Exterior", null],
+    ["Landscape", null],
     ["Virtual Staging", V("Virtual Staging", PHOTOS.wfEmpty, PHOTOS.wfDesigned,
-      "Vacant Listing · Japandi · Staged in 40 seconds", "Empty", "Staged", "Design Complete",
-      ["Reality Lock On", "Listing Ready · MLS Safe", "Design DNA · Japandi"],
+      "Vacant Listing \u00b7 Japandi \u00b7 Staged in 40 seconds", "Empty", "Staged", "Design Complete",
+      ["Reality Lock On", "Listing Ready \u00b7 MLS Safe", "Design DNA \u00b7 Japandi"],
       [["sofa", "Empty To Furnished", "Furniture added, nothing structural altered"],
-       ["camera", "Same Frame", "Identical camera, walls, windows and light"],
+       ["camera", "Same Frame", "Identical perspective, walls, windows and light"],
        ["badge-info", "Disclosure Ready", "Virtually staged label and clean export included"]])],
     ["Floor Plan", V("Floor Plan", PHOTOS.plan2d, PHOTOS.plan3d,
-      "2D Plan to 3D Visualization · 28' x 24' footprint", "2D Plan", "3D View", "Design Complete",
-      ["Reality Lock On", "Plan Accurate · To Scale", "Design DNA · Warm Minimal"],
+      "2D Plan to 3D Visualization \u00b7 28' x 24' footprint", "2D Plan", "3D View", "Design Complete",
+      ["Reality Lock On", "Plan Accurate \u00b7 To Scale", "Design DNA \u00b7 Warm Minimal"],
       [["ruler", "Dimensions Held", "Every wall, opening and room size matches the plan"],
        ["box", "Consistent 3D", "Same layout rendered room by room, not reinvented"],
        ["list-checks", "Plan To Scope", "Room areas feed material takeoffs and quantities"]])],
     ["Sketch to Render", V("Sketch to Render", PHOTOS.sketchHand, PHOTOS.sketchRender,
-      "Hand Sketch · Photoreal Concept · Warm Minimal", "Sketch", "Render", "Design Complete",
-      ["Reality Lock On", "Concept · Under $15K", "Design DNA · Warm Minimal"],
+      "Hand Sketch \u00b7 Photoreal Concept \u00b7 Warm Minimal", "Sketch", "Render", "Design Complete",
+      ["Reality Lock On", "Concept \u00b7 Under $15K", "Design DNA \u00b7 Warm Minimal"],
       [["pencil", "Sketch Read", "Perspective, window and furniture placement interpreted"],
        ["image", "Photoreal Concept", "Materials and daylight applied to your own drawing"],
        ["wallet", "Costed Concept", "Concept carries straight into a planning range"]])],
   ];
 
-  const gt = $("galTabs"), gsub = $("galSubs");
-  let gTab = 0, gSub = 0;
+  const SUBS: Record<number, [string, GView][]> = {
+    0: INTERIOR_SUBS, 1: EXTERIOR_SUBS, 2: LANDSCAPE_SUBS,
+  };
+
+  const gt = $("galTabs"), gsub = $("galSubs"), gtax = $("galTax");
+  let gTab = 0;
+  const gSubs: Record<number, number> = { 0: 0, 1: 0, 2: 0 };
 
   function galView(): GView {
-    return (GAL[gTab][1] ?? INTERIOR_SUBS[gSub][1]) as GView;
+    const subs = SUBS[gTab];
+    return (subs ? subs[gSubs[gTab]][1] : GAL[gTab][1]) as GView;
   }
   function galPaint() {
     const v = galView();
@@ -186,12 +238,13 @@ export function initExtra(timers: number[], lucide: any) {
   }
   function galPaintSubs() {
     if (!gsub) return;
-    const on = gTab === 0;
-    gsub.classList.toggle("on", on);
-    gsub.innerHTML = !on ? "" : INTERIOR_SUBS.map(([n], i) =>
-      `<button class="gsub ${i === gSub ? "on" : ""}" data-s="${i}">${n}</button>`).join("");
+    const subs = SUBS[gTab];
+    gsub.classList.toggle("on", !!subs);
+    gtax?.classList.toggle("nosubs", !subs);
+    gsub.innerHTML = !subs ? "" : subs.map(([n], i) =>
+      `<button class="gsub ${i === gSubs[gTab] ? "on" : ""}" data-s="${i}">${n}</button>`).join("");
     gsub.querySelectorAll(".gsub").forEach((b: any) =>
-      b.addEventListener("click", () => { gSub = +b.dataset.s; galPaintSubs(); galPaint(); }));
+      b.addEventListener("click", () => { gSubs[gTab] = +b.dataset.s; galPaintSubs(); galPaint(); }));
   }
   if (gt) {
     gt.innerHTML = GAL.map(([n], i) => `<button class="gtab ${i === 0 ? "on" : ""}" data-g="${i}">${n}</button>`).join("");
