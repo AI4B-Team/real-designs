@@ -4,6 +4,7 @@
 import { createIcons, icons } from "lucide";
 import { PHOTOS, photo } from "@/content/rd-photos";
 import { priceScopePreview } from "@/lib/estimator-preview.functions";
+import { detectChanges } from "@/lib/change-detect.functions";
 
 export function initApp(): () => void {
   const timers: number[] = [];
@@ -319,7 +320,7 @@ async function runScope(){
       floor_area_sf: val('scFloor',340), wall_area_sf: val('scWall',780), perimeter_lf: val('scPerim',76),
       dims_source:'user',
       budget_target: val('scBudget',null),
-      items: SCOPE_ITEMS,
+      items: scopeItems,
     }});
     if(scopeMarkets.length!==r.markets.length){
       scopeMarkets=r.markets;
@@ -330,6 +331,34 @@ async function runScope(){
     scopeRowsEl.innerHTML=`<tr><td colspan="5">Could not price this scope. ${(e&&e.message)||''}</td></tr>`;
   }
 }
+
+let scopeItems=SCOPE_ITEMS.slice();
+
+async function toDataUrl(src,max){
+  const img=new Image(); img.crossOrigin='anonymous'; img.src=src;
+  await img.decode();
+  const sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
+  const c=document.createElement('canvas');
+  c.width=Math.round(img.naturalWidth*sc); c.height=Math.round(img.naturalHeight*sc);
+  c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+  return c.toDataURL('image/jpeg',0.72);
+}
+
+async function detectScopeChanges(){
+  const btn=document.getElementById('scDetect');
+  const note=document.getElementById('scopeNote');
+  btn.disabled=true; const lab=btn.innerHTML; btn.textContent='Reading Photos\u2026';
+  try{
+    const [before,after]=await Promise.all([toDataUrl(PHOTOS.before,900),toDataUrl(PHOTOS.after,900)]);
+    const r=await detectChanges({data:{before,after,grade:document.getElementById('scGrade').value}});
+    if(r.priceable.length){ scopeItems=r.priceable; }
+    await runScope();
+    if(r.summary) note.textContent=r.summary+' '+note.textContent;
+  }catch(e){
+    note.textContent='Could not read the photos. '+((e&&e.message)||'');
+  }finally{ btn.disabled=false; btn.innerHTML=lab; }
+}
+document.getElementById('scDetect').addEventListener('click',detectScopeChanges);
 document.getElementById('scRun').addEventListener('click',runScope);
 ['scGrade','scMarket'].forEach(id=>document.getElementById(id).addEventListener('change',runScope));
 runScope();
