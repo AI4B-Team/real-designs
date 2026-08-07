@@ -3,6 +3,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { PHOTOS, photo } from "@/content/rd-photos";
+import { initExtra } from "@/content/rd-site-extra";
 
 export function initSite(): () => void {
   const timers: number[] = [];
@@ -61,7 +62,7 @@ const drift=setInterval(()=>{if(!auto)return clearInterval(drift);pos+=dir*.5;if
 rng.addEventListener('pointerdown',()=>auto=false);
 const wb=document.getElementById('wireBtn'),panel=document.getElementById('panel');
 wb.addEventListener('click',()=>{const on=panel.classList.toggle('wire-on');wb.classList.toggle('on',on);
-  wb.setAttribute('aria-pressed',on);document.getElementById('wireTxt').textContent=on?'Hide Structure Lock':'Show Structure Lock';});
+  wb.setAttribute('aria-pressed',on);document.getElementById('wireTxt').textContent=on?'Hide Reality Lock':'Show Reality Lock';});
 
 /* ---------- builder ---------- */
 const styleSets={
@@ -234,6 +235,11 @@ const co=new IntersectionObserver(e=>e.forEach(x=>{
   const t=setInterval(()=>{c+=inc;if(c>=end){c=end;clearInterval(t)}el.textContent=Math.round(c)+s},26);co.unobserve(el);
 }),{threshold:.5});
 document.querySelectorAll('[data-c]').forEach(el=>co.observe(el));
+document.querySelectorAll('#intensityChips .chip').forEach(c=>c.addEventListener('click',()=>{
+  document.querySelectorAll('#intensityChips .chip').forEach(x=>x.classList.remove('on'));
+  c.classList.add('on');
+}));
+initExtra(timers, lucide);
 addEventListener('scroll',()=>document.getElementById('hdr').classList.toggle('scrolled',scrollY>12),{passive:true});
 lucide.createIcons();
 
