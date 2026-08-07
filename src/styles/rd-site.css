@@ -752,7 +752,7 @@
 .rd-site .fstep.on .fic{background:rgba(204,0,0,.10)}
 .rd-site .fstep.on .fic i{color:var(--red)}
 
-.rd-site .fstep.on .fic i{color:#fff}
+.rd-site .fstep.on .fic i{color:var(--red)}
 
 /* progression strip */
 .rd-site .prog-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap}
