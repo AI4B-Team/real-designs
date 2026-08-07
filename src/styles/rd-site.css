@@ -815,6 +815,7 @@
 .rd-site #control .sec-head{position:relative}
 .rd-site .doodle-note{display:inline-block;margin-top:12px;font-family:'Caveat','Segoe Script',cursive;
   font-size:1.05rem;color:var(--red);transform:rotate(-1.6deg)}
+.rd-site .lock-col>.doodle-note{margin:0 0 10px;align-self:flex-end;text-align:right;width:100%;font-size:1.2rem}
 .rd-site .ctrl-split{display:grid;grid-template-columns:1.35fr 1fr;gap:20px;align-items:start}
 .rd-site .hot-wrap{position:relative}
 .rd-site .plan-lines{position:absolute;inset:-16px -16px 24px -16px;z-index:0;opacity:.5;pointer-events:none;
