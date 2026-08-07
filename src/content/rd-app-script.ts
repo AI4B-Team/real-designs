@@ -440,7 +440,7 @@ async function detectScopeChanges(){
     await runScope();
     if(r.summary) note.textContent=r.summary+' '+note.textContent;
   }catch(e){
-    note.textContent='Could not read the photos. '+((e&&e.message)||'');
+    showAlert('Could not read the photos. '+((e&&e.message)||''));
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
 
@@ -468,7 +468,7 @@ async function runDims(){
     await runScope();
     note.textContent=r.basis+' '+r.disclaimer+' '+note.textContent;
   }catch(e){
-    note.textContent='Could not measure this photo. '+((e&&e.message)||'');
+    showAlert('Could not measure this photo. '+((e&&e.message)||''));
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
 
@@ -533,7 +533,7 @@ tr.sub td{font-weight:700;background:#fafafa}
 function exportBrief(){
   if(!lastScope){ return; }
   const w=window.open('','_blank');
-  if(!w){ document.getElementById('scopeNote').textContent='Allow pop-ups to open the contractor brief.'; return; }
+  if(!w){ showAlert('Allow pop-ups to open the contractor brief.'); return; }
   w.document.write(briefHtml(lastScope));
   w.document.close();
   setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} },600);
