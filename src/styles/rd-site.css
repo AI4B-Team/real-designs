@@ -680,8 +680,9 @@
 
 /* ================= v4: editorial annotations + new sections ================= */
 .rd-site h1 em, .rd-site h2 em{font-style:normal;position:relative;z-index:0;display:inline-block}
-.rd-site .ann-underline::after{content:"";position:absolute;left:-.12em;right:-.12em;top:.04em;bottom:.02em;height:auto;
-  background:rgba(204,0,0,.14);border-radius:4px;z-index:-1;transform:none;opacity:1}
+.rd-site .ann-underline::after{content:"";position:absolute;left:-.03em;right:-.03em;top:auto;bottom:.04em;height:.22em;
+  background:rgba(204,0,0,.13);border-radius:2px;z-index:-1;transform:skewY(-.5deg);opacity:1}
+
 
 .rd-site .ann-circle{position:relative;display:inline-block;padding:2px 8px}
 .rd-site .ann-circle::before{content:"";position:absolute;inset:-5px -10px;border:1.6px solid rgba(204,0,0,.55);
@@ -1200,10 +1201,19 @@
     linear-gradient(to right,rgba(255,255,255,.035) 1px,transparent 1px),
     linear-gradient(to bottom,rgba(255,255,255,.035) 1px,transparent 1px);
 }
-.rd-site .arch-mark{position:absolute;pointer-events:none;z-index:-1;color:var(--red);opacity:.2}
-.rd-site .arch-mark svg{width:100%;height:100%;overflow:visible}
-.rd-site .arch-mark path,.rd-site .arch-mark line{stroke:currentColor;fill:none;stroke-width:1.4}
-.rd-site .arch-mark text{fill:currentColor;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em}
+.rd-site .hero.arch::before{opacity:.3}
+
+/* ============ PROOF CARDS (replaces testimonials) ============ */
+.rd-site .proofs{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media(max-width:980px){.rd-site .proofs{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.rd-site .proofs{grid-template-columns:1fr}}
+.rd-site .proof-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px}
+.rd-site .proof-card .pic{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;
+  background:rgba(204,0,0,.08);color:var(--red);margin-bottom:12px}
+.rd-site .proof-card .pic i,.rd-site .proof-card .pic svg{width:19px;height:19px}
+.rd-site .proof-card b{display:block;font-size:1rem;letter-spacing:-.01em;margin-bottom:6px}
+.rd-site .proof-card p{font-size:.9rem;color:var(--mute);line-height:1.55;margin:0}
+
 
 .rd-site .breadth{margin-top:12px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
   color:var(--mute-2);text-align:center}
@@ -1252,3 +1262,10 @@
 .rd-site .p3-est b{font-size:1.05rem;letter-spacing:-.02em}
 @media(max-width:640px){.rd-site .p3-est{text-align:left}}
 @media(prefers-reduced-motion:reduce){.rd-site .p3layer{animation:none}}
+
+/* workflow: cards and strip act as one control */
+.rd-site .fstep{font:inherit;color:inherit;text-align:left;cursor:pointer;
+  border-top:3px solid transparent;display:block;width:100%}
+.rd-site .fstep.on{border-top-color:var(--red);background:rgba(204,0,0,.05)}
+.rd-site .pnode{opacity:.5;transition:transform .25s ease,opacity .25s ease}
+.rd-site .pnode.on{opacity:1;transform:scale(1.16)}

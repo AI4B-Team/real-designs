@@ -290,9 +290,9 @@ export function initExtra(timers: number[], lucide: any) {
   ];
   const fr = $("flowRow");
   if (fr) fr.innerHTML = FLOW.map(([i, t, d], n) =>
-    `<div class="fstep" data-step="${n}"><span class="fdot" aria-hidden="true"></span>
+    `<button type="button" class="fstep" data-n="${n}" data-step="${n}"><span class="fdot" aria-hidden="true"></span>
      <span class="fnum mono">${String(n + 1).padStart(2, "0")}</span>
-     <div class="fic"><i data-lucide="${i}"></i></div><b>${t}</b><p>${d}</p></div>`).join("");
+     <div class="fic"><i data-lucide="${i}"></i></div><b>${t}</b><p>${d}</p></button>`).join("");
 
   // Same room, same camera across every stage. 04-06 reuse the designed frame
   // and only layer project information on top.
@@ -317,7 +317,7 @@ export function initExtra(timers: number[], lucide: any) {
   const ps = $("progStrip");
   if (ps) {
     ps.innerHTML = PROG.map((s, i) =>
-      `<div class="pnode" data-step="${i}" tabindex="0"><div class="pim">${photo(s.src, s.n + " stage")}${s.ov}</div>
+      `<div class="pnode" data-n="${i}" data-step="${i}" tabindex="0"><div class="pim">${photo(s.src, s.n + " stage")}${s.ov}</div>
        <span class="mono">${String(i + 1).padStart(2, "0")} ${s.n}</span>
        <span class="pdet mono">${s.d}</span></div>`
     ).join('<span class="parrow"><i data-lucide="chevron-right"></i></span>');
@@ -335,6 +335,8 @@ export function initExtra(timers: number[], lucide: any) {
     el.addEventListener("focus", () => activate(+el.dataset.step));
     el.addEventListener("click", () => activate(+el.dataset.step));
   });
+  activate(0);
+
 
   /* scroll-triggered walkthrough */
   const wf = document.getElementById("workflow");
