@@ -303,17 +303,20 @@ const SL=[['Warm Minimal',PHOTOS.after],['Modern Farmhouse',PHOTOS.farmhouse],['
 document.getElementById('styleGrid').innerHTML=SL.map(([n,src],i)=>`
   <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' interior design style')}</div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')} / 180</span></div></div>`).join('');
 
-/* ---------- quotes ---------- */
+/* ---------- proof cards ---------- */
+/* NOTE: These are verifiable product claims, not testimonials. Replace with real
+   customer quotes ONLY when they are genuine, attributable and permissioned in
+   writing. Fabricated endorsements with attributed names are deceptive advertising. */
 const Q=[
-['I set the budget to $18,000 and it actually designed to it. Every other tool was showing me a kitchen I would have had to sell a car for.','Marcus T.','Flipper, 14 Doors A Year'],
-['I show the homeowner the finished exterior on my tablet in the driveway, swap the siding color while we talk, and print the scope before I leave. I close on the spot now.','Ray G.','Exterior Contractor'],
-['Design DNA is the whole thing for me. My photo sets used to look like five different houses. One direction across the property and the listing finally reads as one home.','Priya N.','Team Lead, 40 Listings A Year'],
-['Being able to lock the floors we were not replacing saved me three days of arguing with an AI that kept ripping them out.','Danielle R.','Listing Agent, Tampa FL'],
-['We run the rental scenario and the retail scenario on the same property and compare the numbers before we commit. That is underwriting, not decorating.','Chris B.','Multifamily PM'],
-['The free version told me what my living room would cost before I called a single contractor. That alone was worth the signup.','Alanna W.','Homeowner']];
-document.getElementById('quotes').innerHTML=Q.map(([q,n,r])=>`
-  <div class="quote"><div class="stars">${'<i data-lucide="star"></i>'.repeat(5)}</div><p>${q}</p>
-  <footer><span class="av">${n.split(' ').map(x=>x[0]).join('')}</span><div><b>${n}</b><span>${r}</span></div></footer></div>`).join('');
+['lock','Reality Lock On Every Render','Your walls, windows and layout are preserved on every generation. Not a style preset, a constraint.'],
+['wallet','Budget Before The Design','Set the number first and the AI only proposes work that plausibly fits it. Nobody else does this.'],
+['calculator','Line Items, Not A Ballpark','Quantities, trades and location-adjusted ranges with a stated confidence level, never a single fake number.'],
+['hard-hat','Built From Real Rehab Work','The cost logic comes out of two decades of buying, gutting and reselling distressed property.'],
+['gift','Free Preview, No Card, No Account','Generate before you decide. The watermark comes off when you do.'],
+['scale','Commercial License Available','Paid plans include commercial use, and your images stay yours if you cancel.']];
+document.getElementById('quotes').innerHTML=Q.map(([ic,t,d])=>`
+  <div class="proof-card"><div class="pic"><i data-lucide="${ic}"></i></div><b>${t}</b><p>${d}</p></div>`).join('');
+
 
 /* ---------- pricing ---------- */
 const P=[
