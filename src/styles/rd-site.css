@@ -1181,3 +1181,30 @@
   .rd-site .cmp-table th,.rd-site .cmp-table td{padding:11px 10px}
 }
 .rd-site .cm.ok.us svg{stroke:var(--red,#c8342b);color:var(--red,#c8342b)}
+
+/* ============ ARCHITECTURAL TEXTURE ============ */
+.rd-site .arch{position:relative;isolation:isolate}
+.rd-site .arch::before{
+  content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.5;
+  background-image:
+    linear-gradient(to right,rgba(17,17,19,.045) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(17,17,19,.045) 1px,transparent 1px),
+    linear-gradient(to right,rgba(17,17,19,.028) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(17,17,19,.028) 1px,transparent 1px);
+  background-size:160px 160px,160px 160px,32px 32px,32px 32px;
+}
+.rd-site .arch.dark::before{
+  background-image:
+    linear-gradient(to right,rgba(255,255,255,.06) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(255,255,255,.06) 1px,transparent 1px),
+    linear-gradient(to right,rgba(255,255,255,.035) 1px,transparent 1px),
+    linear-gradient(to bottom,rgba(255,255,255,.035) 1px,transparent 1px);
+}
+.rd-site .arch-mark{position:absolute;pointer-events:none;z-index:-1;color:var(--red);opacity:.2}
+.rd-site .arch-mark svg{width:100%;height:100%;overflow:visible}
+.rd-site .arch-mark path,.rd-site .arch-mark line{stroke:currentColor;fill:none;stroke-width:1.4}
+.rd-site .arch-mark text{fill:currentColor;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em}
+
+.rd-site .breadth{margin-top:12px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--mute-2);text-align:center}
+@media(max-width:780px){.rd-site .breadth{text-align:left}}
