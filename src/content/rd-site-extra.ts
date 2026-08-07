@@ -141,40 +141,131 @@ export function initExtra(timers: number[], lucide: any) {
 
   /* ---------- precision control hotspots ---------- */
   const hi = $("hotImg");
-  if (hi) hi.innerHTML = photo(PHOTOS.before, "Living room with selectable objects");
+  if (hi) hi.innerHTML = photo(PHOTOS.before, "Living room before redesign");
+  const ha = $("hotAfter");
+  if (ha) ha.innerHTML = photo(PHOTOS.after, "Living room after redesign with windows preserved");
+
   const HOTS = [
-    ["32%", "64%", "Sofa", "Remove", "rm"],
-    ["70%", "34%", "Windows", "Locked", "lock"],
-    ["50%", "86%", "Flooring", "Keep", "keep"],
-    ["84%", "52%", "Lighting", "Replace", "rep"],
-    ["12%", "44%", "Wall Color", "Replace", "rep"],
+    { l: "32%", t: "64%", n: "Sofa", s: "" },
+    { l: "70%", t: "34%", n: "Windows", s: "" },
+    { l: "50%", t: "86%", n: "Flooring", s: "" },
+    { l: "84%", t: "52%", n: "Lighting", s: "" },
+    { l: "12%", t: "44%", n: "Wall Color", s: "" },
   ];
-  const hd = $("hotDots");
-  if (hd) {
-    hd.innerHTML = HOTS.map(([l, t, n, a, k], i) =>
-      `<button class="hdot ${k}" data-h="${i}" style="left:${l};top:${t}" aria-label="${n}"><i></i></button>`).join("");
-    hd.querySelectorAll(".hdot").forEach((b: any) => {
-      const show = () => {
-        const [, , n, a] = HOTS[+b.dataset.h] as any;
-        hd.querySelectorAll(".hdot").forEach((x: any) => x.classList.remove("sel"));
-        b.classList.add("sel");
-        const hr = $("hotRead");
-        if (hr) hr.innerHTML = `<b>${n}</b><span>${a}</span>`;
-      };
-      b.addEventListener("click", show);
-      b.addEventListener("mouseenter", show);
-    });
+  const ICO: any = { keep: "lock", rep: "refresh-cw", rm: "x" };
+  const VERB: any = { keep: "Keep", rep: "Replace", rm: "Remove" };
+  const hd = $("hotDots"), hp = $("hotPop"), hpn = $("hotPopName");
+  const hprompt = $("hotPrompt"), hmem = $("hotMem"), hroom = $("hotRoom");
+  let active = -1;
+
+  function decided() { return HOTS.filter((h) => h.s); }
+  function syncMem() {
+    const d = decided();
+    if (hmem) {
+      hmem.classList.toggle("on", d.length > 0);
+      const b = hmem.querySelector("b");
+      if (b) b.textContent = d.length + (d.length === 1 ? " decision remembered" : " decisions remembered");
+    }
+    if (hprompt) {
+      const sp = hprompt.querySelector("span");
+      if (sp) {
+        const parts = d.map((h) => (h.s === "keep" ? "Do not change the " + h.n.toLowerCase() : VERB[h.s] + " the " + h.n.toLowerCase()));
+        sp.textContent = parts.length ? parts.join(". ") + "." : "Tap any object to set what the AI may touch";
+      }
+      hprompt.classList.toggle("on", d.length > 0);
+    }
+    hroom?.classList.toggle("show-after", d.length >= 2);
+    const ps = $("presStamp");
+    ps?.classList.toggle("on", HOTS.some((h) => h.n === "Windows" && h.s === "keep"));
   }
+  function paint() {
+    hd?.querySelectorAll(".hdot").forEach((b: any, i: number) => {
+      const st = HOTS[i].s;
+      b.className = "hdot" + (st ? " " + st : "") + (i === active ? " sel" : "");
+      b.innerHTML = st ? `<i data-lucide="${ICO[st]}"></i>` : "<i></i>";
+    });
+    lucide?.createIcons?.();
+  }
+  function openPop(i: number) {
+    active = i;
+    if (hp) {
+      const h = HOTS[i];
+      if (hpn) hpn.textContent = h.n;
+      hp.style.left = h.l; hp.style.top = h.t;
+      hp.classList.add("on");
+      hp.querySelectorAll("button").forEach((x: any) => x.classList.toggle("on", x.dataset.a === h.s));
+    }
+    paint();
+  }
+  function choose(a: string) {
+    if (active < 0) return;
+    HOTS[active].s = a;
+    hp?.classList.remove("on");
+    paint(); syncMem();
+  }
+  if (hd) {
+    hd.innerHTML = HOTS.map((h, i) =>
+      `<button class="hdot" data-h="${i}" style="left:${h.l};top:${h.t}" aria-label="${h.n}"><i></i></button>`).join("");
+    hd.querySelectorAll(".hdot").forEach((b: any) =>
+      b.addEventListener("click", (e: any) => { e.stopPropagation(); openPop(+b.dataset.h); }));
+  }
+  hp?.querySelectorAll("button").forEach((b: any) =>
+    b.addEventListener("click", (e: any) => { e.stopPropagation(); choose(b.dataset.a); }));
+  hroom?.addEventListener("click", () => { hp?.classList.remove("on"); active = -1; paint(); });
+  syncMem(); paint();
+
+  /* scroll-triggered demo: cursor picks Replace on sofa, Keep on windows */
+  if (hroom && hd) {
+    const cur = document.createElement("span");
+    cur.className = "hot-cursor";
+    hroom.appendChild(cur);
+    const moveTo = (i: number) => { cur.style.left = HOTS[i].l; cur.style.top = HOTS[i].t; cur.classList.add("on"); };
+    let played = false;
+    const play = () => {
+      if (played) return; played = true;
+      after(() => moveTo(0), 400);
+      after(() => { cur.classList.add("tap"); openPop(0); }, 1300);
+      after(() => cur.classList.remove("tap"), 1600);
+      after(() => choose("rep"), 2100);
+      after(() => moveTo(1), 2600);
+      after(() => { cur.classList.add("tap"); openPop(1); }, 3400);
+      after(() => cur.classList.remove("tap"), 3700);
+      after(() => choose("keep"), 4200);
+      after(() => cur.classList.remove("on"), 4700);
+    };
+    if ("IntersectionObserver" in window) {
+      const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { play(); io.disconnect(); } }), { threshold: 0.4 });
+      io.observe(hroom);
+    } else play();
+  }
+
+  /* ---------- reality lock rows ---------- */
   const LOCKS = [
-    ["Preserve Space", "Camera angle, ceiling height and proportions", true],
-    ["Structure Locked", "Walls, load bearing elements and openings", true],
-    ["Layout Locked", "Room geometry and circulation paths", true],
-    ["Selected Objects Locked", "Anything you tapped Keep on", true],
-    ["Allow Layout Changes", "Only in Reimagine intensity", false],
+    ["arch", "Architecture", "Walls, windows, doors and fixed openings", true],
+    ["layout", "Layout", "Room geometry and camera perspective", true],
+    ["objects", "Selected Objects", 'Anything marked "Keep"', true],
   ];
   const lr = $("lockRows");
-  if (lr) lr.innerHTML = LOCKS.map(([n, d, on]) =>
-    `<div class="lrow"><div><b>${n}</b><span>${d}</span></div><span class="lsw ${on ? "on" : ""}"></span></div>`).join("");
+  if (lr) lr.innerHTML = LOCKS.map(([k, n, d, on]) =>
+    `<div class="lrow" data-k="${k}"><div><b>${n}</b><span>${d}</span></div><span class="lsw ${on ? "on" : ""}" role="switch" aria-label="${n}"></span></div>`).join("");
+  const master = $("lockMaster"), explore = $("exploreSw");
+  const rowSw = (k: string) => lr?.querySelector(`.lrow[data-k="${k}"] .lsw`) as any;
+  function syncLocks() {
+    const off = !master?.classList.contains("on");
+    lr?.querySelectorAll(".lrow").forEach((r: any) => r.classList.toggle("dim", off));
+    const ex = explore?.classList.contains("on");
+    const ls = rowSw("layout");
+    if (ls) { ls.classList.toggle("on", !off && !ex); ls.classList.toggle("locked-off", !!ex); }
+    lr?.querySelector('.lrow[data-k="layout"]')?.classList.toggle("overridden", !!ex);
+  }
+  lr?.querySelectorAll(".lrow .lsw").forEach((sw: any) =>
+    sw.addEventListener("click", () => {
+      if (sw.classList.contains("locked-off")) return;
+      sw.classList.toggle("on");
+    }));
+  master?.addEventListener("click", () => { master.classList.toggle("on"); syncLocks(); });
+  explore?.addEventListener("click", () => { explore.classList.toggle("on"); syncLocks(); });
+  syncLocks();
 
   /* ---------- empty room workflow ---------- */
   const ES = [
