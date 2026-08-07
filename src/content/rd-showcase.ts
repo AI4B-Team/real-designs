@@ -80,14 +80,6 @@ export const showcaseHtml = `
         "Add a patio, fire pit or fresh planting. See it standing in the dirt before you dig.",
         PHOTOS.yardBefore, PHOTOS.yardAfter, "Before", "After")}
 
-      ${card(4, "Virtual Staging", "Stage Empty Rooms",
-        "Furnish a bare listing in seconds. No rented furniture, no photographer reshoot.", `
-        <div class="sc-fade">
-          <div class="sc-lyr">${im(PHOTOS.empty, "Empty room")}</div>
-          <div class="sc-lyr sc-f2">${im(PHOTOS.after, "Staged room")}</div>
-          <span class="sc-lab l">Empty</span><span class="sc-lab r">Staged</span>
-        </div>`)}
-
       ${card(5, "Declutter", "Empty A Room In One Click",
         "Strip out furniture and clutter instantly. See the bare space, then rebuild it your way.", `
         <div class="sc-fade sc-declut">
@@ -96,6 +88,14 @@ export const showcaseHtml = `
           <button class="sc-btn-pill">Empty Room</button>
           ${cursor}
           <span class="sc-lab l">Interior</span>
+        </div>`)}
+
+      ${card(4, "Virtual Staging", "Stage Empty Rooms",
+        "Furnish a bare listing in seconds. No rented furniture, no photographer reshoot.", `
+        <div class="sc-fade">
+          <div class="sc-lyr">${im(PHOTOS.empty, "Empty room")}</div>
+          <div class="sc-lyr sc-f2">${im(PHOTOS.after, "Staged room")}</div>
+          <span class="sc-lab l">Empty</span><span class="sc-lab r">Staged</span>
         </div>`)}
 
       ${card(6, "Reality Lock", "Edit Anything In Your Photo",
