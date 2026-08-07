@@ -742,7 +742,7 @@
 /* workflow progress line + activation */
 .rd-site .flow-wrap{position:relative}
 .rd-site .flow-line{position:absolute;left:6%;right:6%;top:0;height:2px;background:var(--line);border-radius:2px;overflow:hidden}
-.rd-site .flow-line i{display:block;height:100%;width:0;background:var(--red);transition:width .5s ease}
+.rd-site .flow-line i{display:block;height:100%;width:0;background:rgba(204,0,0,.45);transition:width .5s ease}
 .rd-site .flow-wrap .flow{margin-top:22px}
 .rd-site .fstep{transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease}
 .rd-site .fstep .fdot{position:absolute;top:-27px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;
