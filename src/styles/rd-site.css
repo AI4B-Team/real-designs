@@ -880,7 +880,8 @@
 .rd-site .explore-card b{display:block;font-size:.86rem}
 .rd-site .explore-card span{font-size:.75rem;color:var(--mute)}
 .rd-site .explore-card .lsw{margin-left:auto}
-@media(max-width:900px){.rd-site .ctrl-split{grid-template-columns:1fr}.rd-site .hot-legend{display:none}}
+@media(max-width:900px){.rd-site .ctrl-split{grid-template-columns:1fr}.rd-site .hot-legend{display:none}
+  .rd-site .lock-col>.doodle-note{position:static;margin:0 0 4px;white-space:normal}}
 
 /* --- empty room --- */
 .rd-site .estep-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px}
