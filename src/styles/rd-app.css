@@ -706,3 +706,8 @@
   .rd-app .grid{grid-template-columns:1fr !important}
   .rd-app .acct-menu,.rd-app .help-menu,.rd-app .notif-menu,.rd-app .search-menu{max-width:calc(100vw - 24px)}
 }
+
+@media(max-width:560px){
+  .rd-app .search-wrap{display:none}
+  .rd-app .topbar-right{margin-left:auto;gap:8px}
+}
