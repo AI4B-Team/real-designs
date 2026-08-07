@@ -738,11 +738,12 @@ export function initExtra(timers: number[], lucide: any) {
       <text x="360" y="404" text-anchor="middle">DESIGN DNA APPLIED &middot; WARM MINIMAL</text></g></svg>`;
 
   const P3 = [
-    ["Napkin Sketch", "Drawn on the hood of a truck. Good enough.", () => planSketch()],
-    ["Clean 2D Plan", "Walls squared, openings found, dimensions proposed for you to confirm.", () => planClean()],
-    ["Furnished 3D Plan", "Laid out and furnished in your property's Design DNA.", () => plan3d()],
-    ["Photoreal Room", "Rendered at eye level, ready to price, shop and present.", () => photo(PHOTOS.after, "Photoreal room from plan")],
+    ["Napkin Sketch", "Drawn on the hood of a truck. Good enough.", () => photo(PHOTOS.sketchHand, "Napkin sketch floor plan")],
+    ["Clean 2D Plan", "Walls squared, openings found, dimensions proposed for you to confirm.", () => photo(PHOTOS.plan2d, "Clean 2D floor plan")],
+    ["Furnished 3D Plan", "Laid out and furnished in your property's Design DNA.", () => photo(PHOTOS.plan3d, "Furnished 3D plan")],
+    ["Photoreal Room", "Rendered at eye level, ready to price, shop and present.", () => photo(PHOTOS.sketchRender, "Photoreal room from plan")],
   ];
+
   const p3n = $("p3Nav"), p3s = $("p3Stage"), p3c = $("p3Cap");
   if (p3n && p3s) {
     p3n.innerHTML = P3.map(([t], i) =>
