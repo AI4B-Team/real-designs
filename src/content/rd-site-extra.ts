@@ -163,11 +163,11 @@ export function initExtra(timers: number[], lucide: any) {
   const gt = $("galTabs"), gsub = $("galSubs");
   let gTab = 0, gSub = 0;
 
-  function view(): GView {
+  function galView(): GView {
     return (GAL[gTab][1] ?? INTERIOR_SUBS[gSub][1]) as GView;
   }
-  function paint() {
-    const v = view();
+  function galPaint() {
+    const v = galView();
     const gb = $("gsBefore"), ga = $("gsAfter"), gc = $("galCap");
     if (gb) gb.innerHTML = photo(v.before, v.name + " before");
     if (ga) ga.innerHTML = photo(v.after, v.name + " after, AI render");
@@ -184,24 +184,24 @@ export function initExtra(timers: number[], lucide: any) {
       `<div class="gstr"><i data-lucide="${ic}"></i><div><b>${t}</b><span>${d}</span></div></div>`).join("");
     lucide?.createIcons?.();
   }
-  function paintSubs() {
+  function galPaintSubs() {
     if (!gsub) return;
     const on = gTab === 0;
     gsub.classList.toggle("on", on);
     gsub.innerHTML = !on ? "" : INTERIOR_SUBS.map(([n], i) =>
       `<button class="gsub ${i === gSub ? "on" : ""}" data-s="${i}">${n}</button>`).join("");
     gsub.querySelectorAll(".gsub").forEach((b: any) =>
-      b.addEventListener("click", () => { gSub = +b.dataset.s; paintSubs(); paint(); }));
+      b.addEventListener("click", () => { gSub = +b.dataset.s; galPaintSubs(); galPaint(); }));
   }
   if (gt) {
     gt.innerHTML = GAL.map(([n], i) => `<button class="gtab ${i === 0 ? "on" : ""}" data-g="${i}">${n}</button>`).join("");
     gt.querySelectorAll(".gtab").forEach((b: any) =>
       b.addEventListener("click", () => {
         gt.querySelectorAll(".gtab").forEach((x: any) => x.classList.remove("on"));
-        b.classList.add("on"); gTab = +b.dataset.g; paintSubs(); paint();
+        b.classList.add("on"); gTab = +b.dataset.g; galPaintSubs(); galPaint();
       })
     );
-    paintSubs(); paint();
+    galPaintSubs(); galPaint();
   }
   const grng = $("galRng") as any, gaf = $("gsAfter"), ghn = $("galHnd"), gstage = $("galStage");
   function setGC(v: number) {
@@ -211,7 +211,7 @@ export function initExtra(timers: number[], lucide: any) {
   if (grng) {
     let t = 0;
     const drag = (on: boolean) => {
-      const v = view();
+      const v = galView();
       gstage?.classList.toggle("dragging", on);
       const tl = $("galTagL"), tr = $("galTagR");
       if (tl) tl.textContent = on ? "Original Photo" : v.bl;
