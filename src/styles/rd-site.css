@@ -1208,3 +1208,5 @@
 .rd-site .breadth{margin-top:12px;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;
   color:var(--mute-2);text-align:center}
 @media(max-width:780px){.rd-site .breadth{text-align:left}}
+
+.rd-site #workflow .sec-head .lede{max-width:none;width:100%}
