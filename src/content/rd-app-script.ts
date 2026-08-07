@@ -879,6 +879,37 @@ document.querySelectorAll('.btn-logout').forEach(b=>b.addEventListener('click',a
   window.location.href='/auth';
 }));
 
+// Wrap every table so wide tables scroll horizontally instead of stretching the page.
+document.querySelectorAll('.rd-app table, .app table').forEach(t=>{
+  if(t.parentElement && t.parentElement.classList.contains('tscroll')) return;
+  const w=document.createElement('div'); w.className='tscroll';
+  t.parentNode.insertBefore(w,t); w.appendChild(t);
+});
+
+// Mobile drawer: hamburger in the topbar toggles the sidebar off-canvas.
+(function mobileNav(){
+  const bar=document.querySelector('.topbar');
+  const side=document.querySelector('.side');
+  if(!bar||!side||document.getElementById('navBurger')) return;
+  const burger=document.createElement('button');
+  burger.className='nav-burger'; burger.id='navBurger';
+  burger.setAttribute('aria-label','Open navigation');
+  burger.innerHTML='<i data-lucide="menu"></i>';
+  bar.insertBefore(burger,bar.firstChild);
+  const scrim=document.createElement('div');
+  scrim.className='side-scrim';
+  (document.querySelector('.rd-app')||document.body).appendChild(scrim);
+  const close=()=>{side.classList.remove('open');scrim.classList.remove('on');burger.setAttribute('aria-expanded','false');};
+  burger.addEventListener('click',()=>{
+    const open=!side.classList.contains('open');
+    side.classList.toggle('open',open); scrim.classList.toggle('on',open);
+    burger.setAttribute('aria-expanded',String(open));
+  });
+  scrim.addEventListener('click',close);
+  side.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',close));
+  window.addEventListener('resize',()=>{ if(window.innerWidth>900) close(); });
+})();
+
 const scopeGrid=document.getElementById('scopeGrid');
 let savedCard=null;
 if(scopeGrid && !document.getElementById('scSave')){
