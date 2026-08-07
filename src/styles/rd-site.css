@@ -860,7 +860,7 @@
 .rd-site .ver-trail span{border:1px solid var(--line);border-radius:99px;padding:3px 9px;background:var(--white)}
 .rd-site .ver-trail span.cur{border-color:var(--ok);color:var(--ok)}
 .rd-site .ver-trail i{width:14px;border-top:1px dashed var(--line-2)}
-.rd-site .lock-col{display:grid;gap:12px}
+.rd-site .lock-col{display:grid;gap:12px;position:relative}
 .rd-site .lock-card{border:1px solid var(--line);border-radius:var(--r);background:var(--white);box-shadow:var(--sh)}
 .rd-site .lock-head{display:flex;align-items:center;gap:11px;padding:16px 18px;border-bottom:1px solid var(--line)}
 .rd-site .lock-head>i{width:18px;height:18px;color:var(--red);flex:0 0 auto}
