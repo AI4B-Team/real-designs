@@ -891,7 +891,7 @@ document.querySelectorAll('.btn-logout').forEach(b=>b.addEventListener('click',a
   bar.insertBefore(burger,bar.firstChild);
   const scrim=document.createElement('div');
   scrim.className='side-scrim';
-  document.body.appendChild(scrim);
+  (document.querySelector('.rd-app')||document.body).appendChild(scrim);
   const close=()=>{side.classList.remove('open');scrim.classList.remove('on');burger.setAttribute('aria-expanded','false');};
   burger.addEventListener('click',()=>{
     const open=!side.classList.contains('open');
