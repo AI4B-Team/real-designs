@@ -593,56 +593,6 @@ export function initExtra(timers: number[], lucide: any) {
     setPro(0);
   }
 
-  /* ---------- categorized feature explorer ---------- */
-  const FEATS: any = {
-    Create: [
-      ["sofa", "Interior Redesign", "Dated room to designer finish in one pass, built on your real walls.", ""],
-      ["home", "Exterior Redesign", "Test siding, paint, roofing and curb appeal before a contractor quotes it.", ""],
-      ["trees", "Landscape Design", "Patio, pool, fire pit or fresh planting. See it before you dig.", ""],
-      ["bed-double", "Virtual Staging", "Furnish a vacant listing in seconds. No rental furniture, no reshoot.", ""],
-      ["pen-tool", "Sketch To Render", "Napkin drawing, blueprint or CAD export in. Client ready render out.", ""],
-      ["box", "Floor Plan To 3D", "Flat plan in, furnished 3D visualization out, tied to rooms and budget.", "Phase 2"],
-    ],
-    Refine: [
-      ["lock", "Reality Lock", "Preserve space, structure, layout or just the objects you picked.", "Only Here"],
-      ["sliders-horizontal", "Keep, Replace, Remove", "Tap any object or surface and tell the AI what it may touch.", "Only Here"],
-      ["paintbrush", "Material Swap", "Flooring, counters, cabinets, tile, roofing, siding and hardscape.", ""],
-      ["eraser", "Declutter & Empty", "Strip furniture, clutter and people out of an occupied photo.", ""],
-      ["copy", "Inspiration Match", "Drop in a photo you love and transfer the palette, materials or one item.", "Only Here"],
-      ["wand-2", "Smart Enhancement", "Sky replacement, day to dusk, straighten verticals, remove bins and debris.", ""],
-    ],
-    Plan: [
-      ["wallet", "Budget Bands", "Set the number before you generate. The AI proposes what fits it.", "Only Here"],
-      ["calculator", "Scope Of Work", "Line items, quantities and trades priced to your local labor market.", "Only Here"],
-      ["scale", "Cost Comparison", "The same room at three budgets, with what the jump actually buys.", "Only Here"],
-      ["file-signature", "Contractor Brief", "Before, after, scope and price on one branded, signable PDF.", ""],
-      ["git-branch", "Project Versions", "Every generation is a version on the room, with change tracking.", ""],
-      ["dna", "Design DNA", "One palette, flooring, metal and cabinet style across the property.", "Only Here"],
-    ],
-    Present: [
-      ["git-compare", "Before / After", "The reveal wipe, branded or clean, in every aspect ratio.", ""],
-      ["video", "Walkthrough Video", "Turn any still into a cinematic camera move in one click.", "Phase 2"],
-      ["clapperboard", "Social Reel", "Transformation, product highlights and project range in one cut.", "Phase 2"],
-      ["shopping-bag", "Product Board", "Best price, closest match or premium pick with fit checks.", ""],
-      ["users", "Client Approval", "Share a branded link. Clients favorite, comment and approve.", ""],
-      ["shield-check", "Listing Disclosure", "Auto label staged photos to MLS and state rules, with an audit trail.", "Only Here"],
-    ],
-  };
-  const fxt = $("fxTabs"), fg = $("featGrid");
-  function setFx(k: string) {
-    fxt?.querySelectorAll(".fxtab").forEach((x: any) => x.classList.toggle("on", x.dataset.k === k));
-    if (fg) fg.innerHTML = FEATS[k].map(([i, t, d, g]: any) => `
-      <div class="feat">${g ? `<span class="tg ${g === "Phase 2" ? "soon" : ""}">${g}</span>` : ""}
-      <div class="ic"><i data-lucide="${i}"></i></div><h3>${t}</h3><p>${d}</p></div>`).join("");
-    lucide.createIcons();
-  }
-  if (fxt) {
-    const keys = Object.keys(FEATS);
-    fxt.innerHTML = keys.map((k, i) => `<button class="fxtab ${i === 0 ? "on" : ""}" data-k="${k}">${k}</button>`).join("");
-    fxt.querySelectorAll(".fxtab").forEach((b: any) => b.addEventListener("click", () => setFx(b.dataset.k)));
-    setFx(keys[0]);
-  }
-
   /* ---------- comparison table ---------- */
   const CMP: [string, string, string, string, string][] = [
     ["Redesign interiors, exteriors and landscapes", "yes", "Varies", "Limited", "yes"],
