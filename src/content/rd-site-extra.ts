@@ -588,6 +588,42 @@ export function initExtra(timers: number[], lucide: any) {
     setFx(keys[0]);
   }
 
+  /* ---------- comparison table ---------- */
+  const CMP: [string, string, string, string, string][] = [
+    ["Redesign real interiors, exteriors and landscapes", "yes", "Varies", "Limited", "yes"],
+    ["Preserve walls, windows and selected objects", "yes", "Varies", "Usually", "yes"],
+    ["Keep, replace, remove and lock individual items", "yes", "Limited", "Limited", "yes"],
+    ["Apply one Design DNA across an entire property", "yes", "no", "no", "Manual"],
+    ["Design around a target budget", "yes", "no", "no", "yes"],
+    ["Generate line item planning ranges", "yes", "Limited", "no", "Varies"],
+    ["Create a scope of work and contractor brief", "yes", "no", "no", "Varies"],
+    ["Match real products at multiple price levels", "yes", "Limited", "Limited", "yes"],
+    ["Track rooms, versions and approvals", "yes", "no", "no", "Varies"],
+    ["Create listing ready staging in batches", "yes", "Limited", "yes", "Manual"],
+    ["Generate presentations and approval links", "yes", "Limited", "Limited", "yes"],
+    ["Results in minutes", "yes", "yes", "yes", "no"],
+  ];
+  const cell = (v: string, us = false) =>
+    v === "yes"
+      ? `<span class="cm ok${us ? " us" : ""}"><i data-lucide="check"></i></span>`
+      : v === "no"
+        ? `<span class="cm none">&mdash;</span>`
+        : `<span class="cm soft">${v}</span>`;
+  const cmpBody = $("cmpBody"), cmpMore = $("cmpMore");
+  if (cmpBody) {
+    cmpBody.innerHTML = CMP.map(([cap, a, b, c, d], i) => `
+      <tr class="${i >= 6 ? "cmp-extra" : ""}">
+        <th scope="row">${cap}</th>
+        <td class="cmp-us">${cell(a, true)}</td>
+        <td>${cell(b)}</td><td>${cell(c)}</td><td>${cell(d)}</td>
+      </tr>`).join("");
+    cmpMore?.addEventListener("click", () => {
+      const open = document.getElementById("cmpTable")?.classList.toggle("all");
+      cmpMore.textContent = open ? "Show Fewer Rows" : "View Full Comparison";
+    });
+    lucide.createIcons();
+  }
+
   /* ---------- reveal + icons for everything above ---------- */
   const io = new IntersectionObserver(
     (e) => e.forEach((x) => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }),
