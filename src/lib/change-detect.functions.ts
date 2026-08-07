@@ -75,7 +75,7 @@ export const detectChanges = createServerFn({ method: "POST" })
               "You compare a BEFORE and AFTER photo of the same room and list only the construction/finish work implied by the difference. " +
               "You must never state or imply a cost. Use ONLY labels from the provided catalog. " +
               "If a finish looks unchanged, use action \"keep\". Give qty only for countable items (fixtures, doors); leave qty null for area-driven work so the estimator derives it from room dimensions.\n\n" +
-              "CATALOG:\n" +
+              "Use these exact label strings only: " + [...allowed].join(", ") + "\n\nCATALOG:\n" +
               catalogText,
           },
           {
@@ -138,9 +138,39 @@ export const detectChanges = createServerFn({ method: "POST" })
       throw new Error("Change detection returned an unreadable result.");
     }
 
+    const SYNONYMS: Record<string, string> = {
+      paint: "wall_paint",
+      wall_painting: "wall_paint",
+      walls: "wall_paint",
+      floor: "flooring",
+      floors: "flooring",
+      floor_covering: "flooring",
+      baseboards: "baseboard",
+      trim: "baseboard",
+      door: "interior_door",
+      doors: "interior_door",
+      lighting: "light_fixture",
+      light: "light_fixture",
+      ceiling_light: "light_fixture",
+      can_light: "recessed_light",
+      recessed_lighting: "recessed_light",
+      demo: "demolition",
+      cabinets: "base_cabinet",
+      cabinetry: "base_cabinet",
+      counter: "countertop",
+      counters: "countertop",
+      faucet: "sink_faucet",
+      backsplash: "wall_tile",
+      tile: "wall_tile",
+    };
+    const normalize = (l: string) => {
+      const k = l.trim().toLowerCase().replace(/[\s-]+/g, "_");
+      return allowed.has(k) ? k : (SYNONYMS[k] ?? k);
+    };
+
     const items = (parsed.items ?? [])
       .map((i) => ItemSchema.safeParse(i))
-      .flatMap((r) => (r.success ? [r.data] : []))
+      .flatMap((r) => (r.success ? [{ ...r.data, label: normalize(r.data.label) }] : []))
       .filter((i) => allowed.has(i.label));
 
     const priceable = items.filter((i) => i.action !== "keep");
