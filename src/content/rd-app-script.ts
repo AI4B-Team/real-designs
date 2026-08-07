@@ -301,21 +301,61 @@ let scopeMarkets=[];
 let lastScope=null;
 
 
+const K=(n)=>'$'+(n>=1000?(n/1000).toFixed(n>=10000?0:1)+'K':Math.round(n));
+function fitClass(f){ if(!f) return 'p-gray'; const s=f.toLowerCase();
+  return s.indexOf('within')>=0?'p-ok':(s.indexOf('over')>=0?'p-red':'p-amb'); }
+
 function renderScope(r){
   lastScope=r;
-  scopeRowsEl.innerHTML=r.lines.map(l=>`
-
-<tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}</td>
-<td>${l.trade}</td><td class="n">${l.qty} ${l.uom}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')
+  showAlert('');
+  /* group priced lines by trade, with a subtotal per trade */
+  const groups=[]; const idx={};
+  r.lines.forEach(l=>{ if(idx[l.trade]===undefined){ idx[l.trade]=groups.length; groups.push({trade:l.trade,lines:[]}); }
+    groups[idx[l.trade]].lines.push(l); });
+  scopeRowsEl.innerHTML=groups.map(g=>{
+    const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
+    return `<tr class="trade-h"><td colspan="3">${g.trade}</td><td class="n">${money(low)}</td><td class="n">${money(high)}</td></tr>`
+    +g.lines.map(l=>`<tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}<span class="src">${l.price_source}</span></td>
+<td>${l.trade}</td><td class="n">${l.qty} ${l.uom}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('');
+  }).join('')
   +`<tr><td><b>Contingency At ${r.contingency_pct}%</b></td><td>General</td><td class="n">1 ls</td>
 <td class="n">${money(r.contingency_low)}</td><td class="n">${money(r.contingency_high)}</td></tr>`;
   document.getElementById('scopeTotLow').textContent=money(r.total_low);
   document.getElementById('scopeTotHigh').textContent=money(r.total_high);
   document.getElementById('scopeTotLab').textContent='Estimated Total'+(r.budget_fit?' · '+r.budget_fit:'');
   document.getElementById('scopeSub').textContent=`206 N MacDill · Living Room v4 · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
-  document.getElementById('scopeNote').textContent=`${r.disclaimer} Layout confidence ${r.layout_conf}, pricing confidence ${r.pricing_conf} (${r.matched_pct}% of lines matched an exact cost record).`;
+  document.getElementById('scopeNote').textContent=`${r.disclaimer} Quantities are derived from the measurements above and should be field verified.`;
+
+  /* summary header */
+  document.getElementById('esRange').textContent=money(r.total_low)+' to '+money(r.total_high);
+  const fit=document.getElementById('esFit');
+  fit.className='pill '+fitClass(r.budget_fit); fit.textContent=r.budget_fit||'No Target Set';
+  const target=parseFloat(document.getElementById('scBudget').value);
+  const wrap=document.getElementById('esMeterWrap');
+  if(Number.isFinite(target)&&target>0){
+    wrap.style.display='';
+    const pct=Math.max(4,Math.min(100,(r.total_high/target)*100));
+    const bar=document.getElementById('esMeter');
+    bar.style.width=pct+'%';
+    bar.className=r.total_high<=target?'ok':(r.total_low>target?'over':'near');
+    document.getElementById('esTarget').textContent='Target '+K(target);
+  } else { wrap.style.display='none'; }
+  const dims=dimsProposal?(dimsConfirmed?'Dimensions Confirmed':'Dimensions Proposed, Not Confirmed'):'Dimensions Entered By You';
+  document.getElementById('esChips').innerHTML=[
+    ['Layout Confidence',r.layout_conf],['Pricing Confidence',r.pricing_conf],
+    ['Cost Records Matched',r.matched_pct+'%'],['Material',money(r.material_low)+' to '+money(r.material_high)],
+    ['Labor',money(r.labor_low)+' to '+money(r.labor_high)],['Measurements',dims]
+  ].map(([k,v])=>`<span class="es-chip"><span>${k}</span><b>${v}</b></span>`).join('');
+  const dm=document.getElementById('dmRehab'); if(dm) dm.textContent=K(r.total_low)+' to '+K(r.total_high);
+  const brief=document.getElementById('scBrief'); if(brief) brief.disabled=false;
   renderAllowance(r);
 }
+
+function showAlert(msg){
+  const a=document.getElementById('estAlert'); if(!a) return;
+  a.style.display=msg?'':'none'; a.textContent=msg||'';
+}
+
 
 /* ---------- phase 5: materials allowance list, derived from the priced scope ---------- */
 function renderAllowance(r){
