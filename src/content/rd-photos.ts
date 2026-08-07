@@ -30,10 +30,10 @@ import officeBefore from "@/assets/office-before.jpg";
 import officeAfter from "@/assets/office-after.jpg";
 import exteriorAfter from "@/assets/exterior-after.jpg";
 import yardAfter from "@/assets/yard-after.jpg";
-import plan2d from "@/assets/plan-2d.jpg";
-import plan3d from "@/assets/plan-3d.jpg";
-import sketchHand from "@/assets/sketch-hand.jpg";
-import sketchRender from "@/assets/sketch-render.jpg";
+import plan2d from "@/assets/rd-plan-02-2d.jpg";
+import plan3d from "@/assets/rd-plan-03-3d.jpg";
+import sketchHand from "@/assets/rd-plan-01-napkin.jpg";
+import sketchRender from "@/assets/rd-plan-04-photo.jpg";
 
 export const PHOTOS = {
   before: roomBefore,

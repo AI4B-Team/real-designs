@@ -689,60 +689,13 @@ export function initExtra(timers: number[], lucide: any) {
   lucide.createIcons();
 
   /* ---------- sketch to plan to 3D ---------- */
-  const planSketch = () => `<svg viewBox="0 0 720 420" class="p3svg" xmlns="http://www.w3.org/2000/svg">
-    <g class="ink sketchy" fill="none" stroke-linecap="round">
-      <path d="M62 60 C 250 54, 470 64, 662 58"/><path d="M660 60 C 668 170, 664 290, 658 362"/>
-      <path d="M656 360 C 460 368, 250 356, 66 364"/><path d="M64 362 C 58 250, 62 150, 62 62"/>
-      <path d="M392 62 C 388 160, 396 250, 390 362"/>
-      <path d="M64 210 C 150 206, 250 214, 390 208"/>
-      <path d="M250 60 C 252 74, 250 88, 250 100"/><path d="M310 58 C 312 72, 310 86, 310 100"/>
-      <path d="M660 150 C 646 152, 632 150, 620 152"/>
-    </g>
-    <g class="pen" font-family="DM Mono, monospace" font-size="15" letter-spacing="2">
-      <text x="140" y="150" transform="rotate(-2 140 150)">LIVING</text>
-      <text x="150" y="300" transform="rotate(-1 150 300)">KITCHEN</text>
-      <text x="470" y="220" transform="rotate(1 470 220)">BEDROOM</text>
-      <text x="96" y="392" font-size="12" class="dim">~24 ft?</text>
-    </g></svg>`;
-
-  const planClean = () => `<svg viewBox="0 0 720 420" class="p3svg" xmlns="http://www.w3.org/2000/svg">
-    <g class="wall"><rect x="62" y="58" width="600" height="306" fill="none" stroke-width="9"/>
-      <line x1="390" y1="58" x2="390" y2="364" stroke-width="9"/>
-      <line x1="62" y1="210" x2="390" y2="210" stroke-width="9"/></g>
-    <g class="gap"><line x1="250" y1="58" x2="330" y2="58" stroke-width="11"/>
-      <line x1="662" y1="140" x2="662" y2="215" stroke-width="11"/>
-      <line x1="390" y1="252" x2="390" y2="316" stroke-width="11"/></g>
-    <g class="swing" fill="none"><path d="M390 316 A 64 64 0 0 1 326 252"/><path d="M62 300 A 56 56 0 0 0 118 356"/></g>
-    <g class="dimline"><line x1="62" y1="392" x2="662" y2="392"/>
-      <path d="M62 392 L74 386 M62 392 L74 398 M662 392 L650 386 M662 392 L650 398"/>
-      <line x1="30" y1="58" x2="30" y2="364"/>
-      <path d="M30 58 L24 70 M30 58 L36 70 M30 364 L24 352 M30 364 L36 352"/></g>
-    <g class="dim" font-family="DM Mono, monospace" font-size="12" letter-spacing="1">
-      <text x="330" y="388" text-anchor="middle">24&apos;-0&quot;</text>
-      <text x="26" y="215" transform="rotate(-90 26 215)" text-anchor="middle">12&apos;-6&quot;</text>
-      <text x="150" y="140">LIVING 14x12</text><text x="150" y="292">KITCHEN 12x10</text>
-      <text x="452" y="216">BEDROOM 13x12</text></g></svg>`;
-
-  const plan3d = () => `<svg viewBox="0 0 720 420" class="p3svg" xmlns="http://www.w3.org/2000/svg">
-    <g transform="translate(360 226) scale(1 .56) rotate(-45) translate(-360 -226)">
-      <rect x="150" y="60" width="420" height="330" class="floor3"/>
-      <g class="wall3"><rect x="150" y="60" width="420" height="330" fill="none" stroke-width="8"/>
-        <line x1="360" y1="60" x2="360" y2="390" stroke-width="8"/>
-        <line x1="150" y1="230" x2="360" y2="230" stroke-width="8"/></g>
-      <g class="furn"><rect x="176" y="86" width="120" height="46" rx="6"/>
-        <rect x="176" y="146" width="54" height="54" rx="6"/><rect x="252" y="150" width="44" height="44" rx="14"/>
-        <rect x="176" y="256" width="150" height="34" rx="4"/><rect x="176" y="330" width="60" height="40" rx="4"/>
-        <rect x="392" y="120" width="140" height="96" rx="8"/><rect x="392" y="240" width="70" height="34" rx="4"/></g>
-    </g>
-    <g class="dim" font-family="DM Mono, monospace" font-size="12" letter-spacing="1">
-      <text x="360" y="404" text-anchor="middle">DESIGN DNA APPLIED &middot; WARM MINIMAL</text></g></svg>`;
-
   const P3 = [
-    ["Napkin Sketch", "Drawn on the hood of a truck. Good enough.", () => planSketch()],
-    ["Clean 2D Plan", "Walls squared, openings found, dimensions proposed for you to confirm.", () => planClean()],
-    ["Furnished 3D Plan", "Laid out and furnished in your property's Design DNA.", () => plan3d()],
-    ["Photoreal Room", "Rendered at eye level, ready to price, shop and present.", () => photo(PHOTOS.after, "Photoreal room from plan")],
+    ["Napkin Sketch", "Drawn on the hood of a truck. Good enough.", () => photo(PHOTOS.sketchHand, "Napkin sketch floor plan")],
+    ["Clean 2D Plan", "Walls squared, openings found, dimensions proposed for you to confirm.", () => photo(PHOTOS.plan2d, "Clean 2D floor plan")],
+    ["Furnished 3D Plan", "Laid out and furnished in your property's Design DNA.", () => photo(PHOTOS.plan3d, "Furnished 3D plan")],
+    ["Photoreal Room", "Rendered at eye level, ready to price, shop and present.", () => photo(PHOTOS.sketchRender, "Photoreal room from plan")],
   ];
+
   const p3n = $("p3Nav"), p3s = $("p3Stage"), p3c = $("p3Cap");
   if (p3n && p3s) {
     p3n.innerHTML = P3.map(([t], i) =>
