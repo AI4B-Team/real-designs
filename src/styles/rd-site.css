@@ -157,7 +157,7 @@
 
 .rd-site .gal-head h3{font-size:1rem}
 
-.rd-site .gal-head .mono{font-size:.7rem;color:var(--mute-2)}
+.rd-site .gal-head .mono{font-family:'Caveat',cursive;font-size:1.15rem;font-weight:600;color:var(--red,#CC0000);letter-spacing:.01em;transform:rotate(-1.5deg);transform-origin:right bottom}
 
 .rd-site .proof-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
 
