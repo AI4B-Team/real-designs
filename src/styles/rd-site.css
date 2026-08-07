@@ -680,8 +680,9 @@
 
 /* ================= v4: editorial annotations + new sections ================= */
 .rd-site h1 em, .rd-site h2 em{font-style:normal;position:relative;z-index:0;display:inline-block}
-.rd-site .ann-underline::after{content:"";position:absolute;left:-.12em;right:-.12em;top:.04em;bottom:.02em;height:auto;
-  background:rgba(204,0,0,.14);border-radius:4px;z-index:-1;transform:none;opacity:1}
+.rd-site .ann-underline::after{content:"";position:absolute;left:-.03em;right:-.03em;top:auto;bottom:.04em;height:.22em;
+  background:rgba(204,0,0,.13);border-radius:2px;z-index:-1;transform:skewY(-.5deg);opacity:1}
+
 
 .rd-site .ann-circle{position:relative;display:inline-block;padding:2px 8px}
 .rd-site .ann-circle::before{content:"";position:absolute;inset:-5px -10px;border:1.6px solid rgba(204,0,0,.55);
