@@ -3,6 +3,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { PHOTOS, photo } from "@/content/rd-photos";
+import { priceScopePreview } from "@/lib/estimator-preview.functions";
 
 export function initApp(): () => void {
   const timers: number[] = [];
