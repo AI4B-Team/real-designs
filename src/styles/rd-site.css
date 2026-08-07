@@ -792,7 +792,6 @@
   display:grid;place-items:center;font-size:8px;font-weight:600;border:2px solid #fff}
 .rd-site .pnode .pim .pshop{position:absolute;z-index:2;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--red);
   box-shadow:0 0 0 2px rgba(255,255,255,.5);transform:translate(-50%,-50%)}
-  box-shadow:0 0 0 3px rgba(255,255,255,.45);transform:translate(-50%,-50%)}
 
 
 /* --- precision control --- */
