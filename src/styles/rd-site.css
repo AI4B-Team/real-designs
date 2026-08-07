@@ -1146,3 +1146,30 @@
   .rd-site .tour-note,.rd-site .tour-sum{animation:none;opacity:1}
   .rd-site .spot,.rd-site .pcard{animation:none;opacity:1;transform:none}
 }
+
+
+/* ============ COMPARISON ============ */
+.rd-site .cmp{max-width:1080px;margin:0 auto;border:1px solid var(--line);border-radius:18px;background:var(--card,#fff);overflow:hidden}
+.rd-site .cmp-scroll{overflow-x:auto}
+.rd-site .cmp-table{width:100%;border-collapse:collapse;font-size:.9rem}
+.rd-site .cmp-table th,.rd-site .cmp-table td{padding:14px 16px;text-align:center;border-bottom:1px solid var(--line);vertical-align:middle}
+.rd-site .cmp-table thead th{font-family:var(--mono-font,ui-monospace,monospace);font-size:.68rem;letter-spacing:.09em;text-transform:uppercase;color:var(--mute);font-weight:500;position:relative;padding-top:26px}
+.rd-site .cmp-table tbody th[scope="row"]{text-align:left;font-weight:500;color:var(--ink);min-width:280px;position:sticky;left:0;background:var(--card,#fff);z-index:1}
+.rd-site .cmp-table th.cmp-cap{text-align:left;position:sticky;left:0;background:var(--card,#fff);z-index:2}
+.rd-site .cmp-table .cmp-us{background:color-mix(in oklab,var(--red,#c8342b) 7%,transparent)}
+.rd-site .cmp-table thead th.cmp-us{color:var(--ink);font-weight:600}
+.rd-site .cmp-badge{position:absolute;top:6px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:.58rem;letter-spacing:.08em;padding:3px 8px;border-radius:99px;background:var(--red,#c8342b);color:#fff}
+.rd-site .cm{display:inline-flex;align-items:center;justify-content:center}
+.rd-site .cm.ok i{width:18px;height:18px;color:var(--ink)}
+.rd-site .cm.ok.us i{color:var(--red,#c8342b);width:20px;height:20px}
+.rd-site .cm.none{color:var(--mute-2);font-size:1rem}
+.rd-site .cm.soft{font-size:.78rem;color:var(--mute)}
+.rd-site .cmp-table tr.cmp-extra{display:none}
+.rd-site .cmp-table.all tr.cmp-extra{display:table-row}
+.rd-site .cmp-foot{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 16px 26px;text-align:center}
+.rd-site .cmp-note{font-size:.68rem;color:var(--mute-2);margin:0}
+@media(max-width:760px){
+  .rd-site .cmp-table{font-size:.8rem}
+  .rd-site .cmp-table tbody th[scope="row"]{min-width:200px}
+  .rd-site .cmp-table th,.rd-site .cmp-table td{padding:11px 10px}
+}
