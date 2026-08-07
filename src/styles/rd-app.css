@@ -713,3 +713,8 @@
   .rd-app .search-wrap{display:none}
   .rd-app .topbar-right{margin-left:auto;gap:8px}
 }
+
+@media(max-width:640px){
+  .rd-app .card-h,.rd-app .card-h>div{flex-wrap:wrap;min-width:0}
+  .rd-app .card-h>div{row-gap:8px}
+}
