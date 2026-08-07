@@ -223,7 +223,7 @@ function setBudget(i){
 document.querySelectorAll('#budgetChips .chip').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('#budgetChips .chip').forEach(x=>x.classList.remove('on'));
   c.classList.add('on');budgetTouched=true;
-  const hl=document.getElementById('heroEstLab');if(hl)hl.textContent='Estimated Project Range';
+  const hl=document.getElementById('heroEstLab');if(hl)hl.textContent='Estimated Planning Range';
   setBudget(+c.dataset.b);
 }));
 function unlock(){
