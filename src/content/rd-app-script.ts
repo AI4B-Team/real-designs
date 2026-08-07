@@ -3,6 +3,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { PHOTOS, photo } from "@/content/rd-photos";
+import { priceScopePreview } from "@/lib/estimator-preview.functions";
 
 export function initApp(): () => void {
   const timers: number[] = [];
@@ -287,19 +288,52 @@ document.getElementById('batchList').innerHTML=batch.map(([r,f,mo,p,cls,lab])=>`
 <div class="rowi"><div class="thumb">${room(mo,PALS[p])}</div><div class="rowt"><b>${r}</b><span>${f}</span></div>
 <span class="pill ${cls}">${lab}</span></div>`).join('');
 
-/* ---------- scope ---------- */
-const scope=[['LVP Flooring, Installed','Flooring','340 sf','$1,700','$2,100'],
-['Paint, Walls And Ceiling','Paint','1 rm','$580','$760'],
-['Recessed Lighting, 6 Cans','Electrical','6 ea','$1,020','$1,380'],
-['Baseboard And Casing','Carpentry','76 lf','$430','$620'],
-['Drywall Repair And Texture','Drywall','1 rm','$340','$520'],
-['Ceiling Fan, Replace','Electrical','1 ea','$260','$380'],
-['Window Casing And Sill','Carpentry','2 ea','$310','$460'],
-['Furnishing Package','Furnishings','1 set','$2,900','$3,800'],
-['Debris Haul And Final Clean','General','1 ls','$310','$440'],
-['Contingency At 10%','General','1 ls','$1,040','$1,360']];
-document.getElementById('scopeRows').innerHTML=scope.map(([i,t,q,l,h])=>`
-<tr><td><b>${i}</b></td><td>${t}</td><td class="n">${q}</td><td class="n">${l}</td><td class="n">${h}</td></tr>`).join('');
+/* ---------- scope: live pricing from the cost database ---------- */
+const SCOPE_ITEMS=[{label:'demolition'},{label:'flooring',material:'lvp'},{label:'wall_paint',material:'paint'},
+{label:'baseboard'},{label:'recessed_light',qty:6},{label:'light_fixture',qty:2},{label:'interior_door',qty:2}];
+const money=(n)=>'$'+Math.round(n).toLocaleString('en-US');
+const scopeRowsEl=document.getElementById('scopeRows');
+let scopeMarkets=[];
+
+function renderScope(r){
+  scopeRowsEl.innerHTML=r.lines.map(l=>`
+<tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}</td>
+<td>${l.trade}</td><td class="n">${l.qty} ${l.uom}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')
+  +`<tr><td><b>Contingency At ${r.contingency_pct}%</b></td><td>General</td><td class="n">1 ls</td>
+<td class="n">${money(r.contingency_low)}</td><td class="n">${money(r.contingency_high)}</td></tr>`;
+  document.getElementById('scopeTotLow').textContent=money(r.total_low);
+  document.getElementById('scopeTotHigh').textContent=money(r.total_high);
+  document.getElementById('scopeTotLab').textContent='Estimated Total'+(r.budget_fit?' · '+r.budget_fit:'');
+  document.getElementById('scopeSub').textContent=`206 N MacDill · Living Room v4 · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
+  document.getElementById('scopeNote').textContent=`${r.disclaimer} Layout confidence ${r.layout_conf}, pricing confidence ${r.pricing_conf} (${r.matched_pct}% of lines matched an exact cost record).`;
+}
+
+async function runScope(){
+  const sel=document.getElementById('scMarket');
+  const val=(id,d)=>{const v=parseFloat((document.getElementById(id)||{}).value);return Number.isFinite(v)&&v>0?v:d;};
+  scopeRowsEl.innerHTML='<tr><td colspan="5">Pricing…</td></tr>';
+  try{
+    const r=await priceScopePreview({data:{
+      market_id: sel && sel.value ? sel.value : undefined,
+      grade: document.getElementById('scGrade').value,
+      floor_area_sf: val('scFloor',340), wall_area_sf: val('scWall',780), perimeter_lf: val('scPerim',76),
+      dims_source:'user',
+      budget_target: val('scBudget',null),
+      items: SCOPE_ITEMS,
+    }});
+    if(scopeMarkets.length!==r.markets.length){
+      scopeMarkets=r.markets;
+      sel.innerHTML=r.markets.map(m=>`<option value="${m.id}"${m.id===r.market.id?' selected':''}>${m.name}</option>`).join('');
+    }
+    renderScope(r);
+  }catch(e){
+    scopeRowsEl.innerHTML=`<tr><td colspan="5">Could not price this scope. ${(e&&e.message)||''}</td></tr>`;
+  }
+}
+document.getElementById('scRun').addEventListener('click',runScope);
+['scGrade','scMarket'].forEach(id=>document.getElementById(id).addEventListener('change',runScope));
+runScope();
+
 
 const bands=[['Refresh','Paint, hardware, lighting','$3.2K to $5K','p-ok'],
 ['Makeover','Adds flooring, casing, furnishings','$11.4K to $14.9K','p-ink'],

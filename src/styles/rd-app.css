@@ -632,3 +632,11 @@
 .rd-app .canvas-theme i{width:13px;height:13px}
 .rd-app .canvas-card.dark .canvas-theme{color:#C9C9D1;border-color:#3A3A41}
 .rd-app .canvas-card.dark .canvas-theme b{color:#fff;font-weight:500}
+
+/* live scope estimator controls */
+.rd-app .scope-ctl{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line)}
+.rd-app .scope-ctl .field{margin:0;min-width:96px}
+.rd-app .scope-ctl .field label{display:block;font-size:.68rem;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin-bottom:4px}
+.rd-app .scope-ctl .field select,.rd-app .scope-ctl .field input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:.8rem;background:#fff}
+.rd-app .scope-ctl #scMarket{min-width:230px}
+.rd-app .scope-ctl #scRun{margin-left:auto}
