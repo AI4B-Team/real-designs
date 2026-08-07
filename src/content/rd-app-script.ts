@@ -312,6 +312,32 @@ function renderScope(r){
   document.getElementById('scopeTotLab').textContent='Estimated Total'+(r.budget_fit?' · '+r.budget_fit:'');
   document.getElementById('scopeSub').textContent=`206 N MacDill · Living Room v4 · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
   document.getElementById('scopeNote').textContent=`${r.disclaimer} Layout confidence ${r.layout_conf}, pricing confidence ${r.pricing_conf} (${r.matched_pct}% of lines matched an exact cost record).`;
+  renderAllowance(r);
+}
+
+/* ---------- phase 5: materials allowance list, derived from the priced scope ---------- */
+function renderAllowance(r){
+  const rows=document.getElementById('allowRows'); if(!rows) return;
+  const note=document.getElementById('allowNote'), sub=document.getElementById('allowSub');
+  if(!r){ rows.innerHTML='<tr><td colspan="5">No priced scope yet.</td></tr>';
+    note.textContent='Open Scope & Budget and price a scope to build the allowance list.'; return; }
+  const mat=r.lines.filter(l=>l.material_high>0);
+  if(!mat.length){ rows.innerHTML='<tr><td colspan="5">This scope is labor only, so there is no material allowance.</td></tr>';
+    note.textContent='No material lines in the current scope.'; return; }
+  rows.innerHTML=mat.map(l=>`<tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}<div class="sub">${l.price_source}</div></td>
+<td>${l.trade}</td><td class="n">${l.qty} ${l.uom}</td><td class="n">${money(l.material_low)}</td><td class="n">${money(l.material_high)}</td></tr>`).join('')
+  +`<tr><td colspan="3"><b>Material Allowance Total</b></td><td class="n"><b>${money(r.material_low)}</b></td><td class="n"><b>${money(r.material_high)}</b></td></tr>`;
+  sub.textContent=`${mat.length} material lines · ${r.market.name} · ${r.grade[0].toUpperCase()+r.grade.slice(1)} grade`;
+  note.textContent='Planning allowances per line, not product prices. Fit to your space is not asserted until dimensions are confirmed.';
+}
+function allowanceCsv(){
+  const r=lastScope; if(!r) return;
+  const rows=[['Material Line','Trade','Qty','UOM','Allowance Low','Allowance High','Price Source']]
+    .concat(r.lines.filter(l=>l.material_high>0).map(l=>[l.description,l.trade,l.qty,l.uom,l.material_low,l.material_high,l.price_source]));
+  const csv=rows.map(r2=>r2.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='real-designs-materials-allowance.csv'; a.click(); URL.revokeObjectURL(a.href);
 }
 
 async function runScope(){
@@ -459,6 +485,9 @@ function exportBrief(){
   setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} },600);
 }
 document.getElementById('scBrief').addEventListener('click',exportBrief);
+document.getElementById('allowBuild').addEventListener('click',()=>{ lastScope?renderAllowance(lastScope):runScope(); });
+document.getElementById('allowCsv').addEventListener('click',allowanceCsv);
+renderAllowance(null);
 document.getElementById('scDims').addEventListener('click',runDims);
 
 document.getElementById('scDimsOk').addEventListener('click',async()=>{ dimsConfirmed=true; setDimsSource(); await runScope(); });
