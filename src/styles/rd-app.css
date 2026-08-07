@@ -688,10 +688,10 @@
   .rd-app .topbar{padding:0 14px;gap:10px}
   .rd-app .topbar-right{gap:10px}
   .rd-app .search-wrap{max-width:none}
-  .rd-app .view{padding:16px 14px}
+  .rd-app .content{padding:16px 14px}
   .rd-app .studio{grid-template-columns:1fr}
-  .rd-app .card-b{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .rd-app .card-b table{min-width:560px}
+  .rd-app .card{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .rd-app .card table{min-width:560px}
   .rd-app .vars{grid-template-columns:repeat(2,1fr)}
 }
 
@@ -699,9 +699,9 @@
   .rd-app .g4{grid-template-columns:1fr}
   .rd-app .topbar h1{display:none}
   .rd-app .search-wrap{flex:1;min-width:0}
-  .rd-app .topbar .btn span,.rd-app .topbar .btn-primary i+span{white-space:nowrap}
   .rd-app .card-h{flex-wrap:wrap;gap:8px}
-  .rd-app .est-sum-top{flex-wrap:wrap;gap:10px}
-  .rd-app .est-chips{grid-template-columns:1fr 1fr}
-  .rd-app .sc-form{grid-template-columns:1fr}
+  .rd-app .est-sum .es-top{flex-wrap:wrap;gap:10px}
+  .rd-app .es-chip{flex:1 1 44%}
+  .rd-app .grid{grid-template-columns:1fr !important}
+  .rd-app .acct-menu,.rd-app .help-menu,.rd-app .notif-menu,.rd-app .search-menu{max-width:calc(100vw - 24px)}
 }
