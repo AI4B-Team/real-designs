@@ -101,7 +101,18 @@ export const priceScopePreview = createServerFn({ method: "POST" })
       }
     };
 
-    const lines: Array<Record<string, unknown>> = [];
+    type Line = {
+      description: string;
+      trade: string;
+      csi_division: string;
+      qty: number;
+      uom: string;
+      line_low: number;
+      line_high: number;
+      price_source: string;
+      is_fallback: boolean;
+    };
+    const lines: Line[] = [];
     let totalLow = 0;
     let totalHigh = 0;
     let matched = 0;
