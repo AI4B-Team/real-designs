@@ -97,7 +97,7 @@ const showStage=document.getElementById('showStage'),lockPill=document.getElemen
       toastEl=document.getElementById('toast'),showNav=document.getElementById('showNav'),
       tourProg=document.getElementById('tourProg');
 
-showNav.innerHTML=CHAPTERS.map((c,i)=>`<button data-c="${c}"${i===0?' class="on"':''}>${c}</button>`).join('');
+showNav.innerHTML=CHAPTERS.map((c,i)=>`<button data-ch="${c}"${i===0?' class="on"':''}>${c}</button>`).join('');
 
 const shopOverlay=()=>`
   <span class="spot pulse" style="left:29%;top:63%;animation-delay:.2s"></span>
@@ -158,7 +158,7 @@ function paint(i){
     setTimeout(()=>toastEl.classList.remove('on'),1900);
   },b.toastAt);
 
-  showNav.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.c===b.ch));
+  showNav.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.ch===b.ch));
   const pct=((i+1)/TOUR.length)*100;
   if(tourProg)tourProg.firstElementChild.style.width=pct+'%';
 
@@ -171,7 +171,7 @@ function advance(){
   tTimer=setTimeout(advance,d);
 }
 showNav.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
-  const first=TOUR.findIndex(b=>b.ch===btn.dataset.c);
+  const first=TOUR.findIndex(b=>b.ch===btn.dataset.ch);
   if(first<0)return;
   if(tTimer)clearTimeout(tTimer);
   tIdx=first;advance();
