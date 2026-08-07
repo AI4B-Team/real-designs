@@ -747,9 +747,11 @@
 .rd-site .fstep{transition:border-color .25s ease,box-shadow .25s ease,transform .25s ease}
 .rd-site .fstep .fdot{position:absolute;top:-27px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;
   background:var(--paper);border:2px solid var(--line-2);transition:all .25s ease}
-.rd-site .fstep.on{border-color:var(--red);box-shadow:0 10px 26px -18px rgba(0,0,0,.4);transform:translateY(-2px)}
-.rd-site .fstep.on .fdot{background:var(--red);border-color:var(--red);box-shadow:0 0 0 4px var(--red-tint)}
-.rd-site .fstep.on .fic{background:var(--red);}
+.rd-site .fstep.on{border-color:rgba(204,0,0,.32);background:rgba(204,0,0,.03);box-shadow:0 10px 26px -20px rgba(0,0,0,.32);transform:translateY(-2px)}
+.rd-site .fstep.on .fdot{background:rgba(204,0,0,.55);border-color:rgba(204,0,0,.55);box-shadow:0 0 0 4px rgba(204,0,0,.08)}
+.rd-site .fstep.on .fic{background:rgba(204,0,0,.10)}
+.rd-site .fstep.on .fic i{color:var(--red)}
+
 .rd-site .fstep.on .fic i{color:#fff}
 
 /* progression strip */
