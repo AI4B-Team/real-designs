@@ -671,14 +671,14 @@ export function initExtra(timers: number[], lucide: any) {
   const cmpBody = $("cmpBody"), cmpMore = $("cmpMore");
   if (cmpBody) {
     cmpBody.innerHTML = CMP.map(([cap, a, b, c, d], i) => `
-      <tr class="${i >= 6 ? "cmp-extra" : ""}">
+      <tr class="${i >= 7 ? "cmp-extra" : ""}">
         <th scope="row">${cap}</th>
         <td class="cmp-us">${cell(a, true)}</td>
         <td>${cell(b)}</td><td>${cell(c)}</td><td>${cell(d)}</td>
       </tr>`).join("");
     cmpMore?.addEventListener("click", () => {
       const open = document.getElementById("cmpTable")?.classList.toggle("all");
-      cmpMore.textContent = open ? "Show Fewer Rows" : "View Full Comparison";
+      cmpMore.innerHTML = open ? "Show Fewer Rows" : "View The Full Comparison &rarr;";
     });
     lucide.createIcons();
   }
