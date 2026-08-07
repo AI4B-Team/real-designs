@@ -107,6 +107,10 @@ export const priceScopePreview = createServerFn({ method: "POST" })
       csi_division: string;
       qty: number;
       uom: string;
+      material_low: number;
+      material_high: number;
+      labor_low: number;
+      labor_high: number;
       line_low: number;
       line_high: number;
       price_source: string;
@@ -116,6 +120,10 @@ export const priceScopePreview = createServerFn({ method: "POST" })
     let totalLow = 0;
     let totalHigh = 0;
     let matched = 0;
+    let matTotLow = 0;
+    let matTotHigh = 0;
+    let labTotLow = 0;
+    let labTotHigh = 0;
 
     for (const item of data.items) {
       const all = mappings ?? [];
@@ -143,6 +151,10 @@ export const priceScopePreview = createServerFn({ method: "POST" })
 
       totalLow += lineLow;
       totalHigh += lineHigh;
+      matTotLow += matLow;
+      matTotHigh += matHigh;
+      labTotLow += labLow;
+      labTotHigh += labHigh;
       if (!isFallback) matched += 1;
 
       lines.push({
@@ -151,6 +163,10 @@ export const priceScopePreview = createServerFn({ method: "POST" })
         csi_division: uc.csi_division,
         qty: Number(qty.toFixed(2)),
         uom: uc.uom,
+        material_low: Number(matLow.toFixed(2)),
+        material_high: Number(matHigh.toFixed(2)),
+        labor_low: Number(labLow.toFixed(2)),
+        labor_high: Number(labHigh.toFixed(2)),
         line_low: Number(lineLow.toFixed(2)),
         line_high: Number(lineHigh.toFixed(2)),
         price_source: `${uc.source}:${uc.item_code}`,
@@ -192,6 +208,10 @@ export const priceScopePreview = createServerFn({ method: "POST" })
       lines,
       subtotal_low: Number(subtotalLow.toFixed(2)),
       subtotal_high: Number(subtotalHigh.toFixed(2)),
+      material_low: Number(matTotLow.toFixed(2)),
+      material_high: Number(matTotHigh.toFixed(2)),
+      labor_low: Number(labTotLow.toFixed(2)),
+      labor_high: Number(labTotHigh.toFixed(2)),
       contingency_pct: CONTINGENCY_PCT,
       contingency_low: Number(contLow.toFixed(2)),
       contingency_high: Number(contHigh.toFixed(2)),

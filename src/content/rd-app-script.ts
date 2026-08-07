@@ -296,9 +296,13 @@ const SCOPE_ITEMS=[{label:'demolition'},{label:'flooring',material:'lvp'},{label
 const money=(n)=>'$'+Math.round(n).toLocaleString('en-US');
 const scopeRowsEl=document.getElementById('scopeRows');
 let scopeMarkets=[];
+let lastScope=null;
+
 
 function renderScope(r){
+  lastScope=r;
   scopeRowsEl.innerHTML=r.lines.map(l=>`
+
 <tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}</td>
 <td>${l.trade}</td><td class="n">${l.qty} ${l.uom}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')
   +`<tr><td><b>Contingency At ${r.contingency_pct}%</b></td><td>General</td><td class="n">1 ls</td>
@@ -387,7 +391,76 @@ async function runDims(){
     note.textContent='Could not measure this photo. '+((e&&e.message)||'');
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
+
+/* ---------- phase 4: contractor brief, rendered from the priced scope ---------- */
+function briefHtml(r){
+  const esc=(s)=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  const divs={};
+  r.lines.forEach(l=>{ (divs[l.csi_division]=divs[l.csi_division]||{trade:l.trade,lines:[]}).lines.push(l); });
+  const groups=Object.keys(divs).sort().map(d=>{
+    const g=divs[d];
+    const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
+    return `<h3>${esc(d)} &middot; ${esc(g.trade)}</h3>
+<table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Material</th><th class="n">Labor</th><th class="n">Low</th><th class="n">High</th></tr></thead><tbody>
+${g.lines.map(l=>`<tr><td>${esc(l.description)}${l.is_fallback?' <em>(fallback cost record)</em>':''}<br><span class="src">${esc(l.price_source)}</span></td>
+<td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${money(l.material_low)}&ndash;${money(l.material_high)}</td>
+<td class="n">${money(l.labor_low)}&ndash;${money(l.labor_high)}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')}
+<tr class="sub"><td colspan="4">Division Subtotal</td><td class="n">${money(low)}</td><td class="n">${money(high)}</td></tr>
+</tbody></table>`;
+  }).join('');
+  const dimLine=`${document.getElementById('scFloor').value} SF floor &middot; ${document.getElementById('scWall').value} SF wall &middot; ${document.getElementById('scPerim').value} LF perimeter`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Contractor Brief &middot; REAL DESIGNS</title>
+<style>
+*{box-sizing:border-box}body{font:13px/1.5 'DM Sans',system-ui,sans-serif;color:#141414;margin:0;padding:36px 44px;background:#fff}
+h1{font-size:22px;margin:0 0 2px}h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a;margin:26px 0 8px}
+h3{font-size:13px;margin:18px 0 6px;border-bottom:1px solid #e6e6e6;padding-bottom:5px}
+.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #CC0000;padding-bottom:12px}
+.meta{color:#6b6b6b;font-size:12px}
+.photos{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.photos figure{margin:0}.photos img{width:100%;border:1px solid #e0e0e0;display:block}
+figcaption{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8a8a8a;margin-top:5px}
+table{width:100%;border-collapse:collapse}th,td{padding:6px 8px;text-align:left;vertical-align:top;border-bottom:1px solid #efefef}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8a8a8a}
+.n{text-align:right;font-family:'DM Mono',ui-monospace,monospace;white-space:nowrap}
+.src{font-size:10px;color:#a0a0a0;font-family:ui-monospace,monospace}
+tr.sub td{font-weight:700;background:#fafafa}
+.totals{margin-top:18px;border:1px solid #e0e0e0;padding:14px}
+.totals .row{display:flex;justify-content:space-between;padding:4px 0}
+.totals .grand{border-top:1px solid #e0e0e0;margin-top:6px;padding-top:10px;font-size:16px;font-weight:700}
+.note{margin-top:18px;font-size:11.5px;color:#5c5c5c;border-left:3px solid #CC0000;padding-left:12px}
+.sig{margin-top:34px;display:grid;grid-template-columns:1fr 1fr;gap:34px}
+.sig div{border-top:1px solid #141414;padding-top:6px;font-size:11px;color:#6b6b6b}
+@media print{body{padding:0}}
+</style></head><body>
+<div class="head"><div><h1>Contractor Brief</h1><div class="meta">206 N MacDill Ave &middot; Living Room v4 &middot; ${esc(r.grade[0].toUpperCase()+r.grade.slice(1))} Grade</div></div>
+<div class="meta" style="text-align:right">REAL DESIGNS<br>${esc(r.market.name)}<br>${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>
+<div class="photos"><figure><img src="${PHOTOS.before}"><figcaption>Existing Condition</figcaption></figure>
+<figure><img src="${PHOTOS.after}"><figcaption>Proposed Design</figcaption></figure></div>
+<h2>Room Measurements</h2><div class="meta">${esc(dimLine)} &middot; Layout confidence ${esc(r.layout_conf)}${dimsProposal&&!dimsConfirmed?' &middot; dimensions proposed from a photo and not yet confirmed':''}</div>
+<h2>Scope Of Work By Trade</h2>${groups}
+<div class="totals">
+<div class="row"><span>Material</span><b class="n">${money(r.material_low)} &ndash; ${money(r.material_high)}</b></div>
+<div class="row"><span>Labor</span><b class="n">${money(r.labor_low)} &ndash; ${money(r.labor_high)}</b></div>
+<div class="row"><span>Subtotal</span><b class="n">${money(r.subtotal_low)} &ndash; ${money(r.subtotal_high)}</b></div>
+<div class="row"><span>Contingency At ${r.contingency_pct}%</span><b class="n">${money(r.contingency_low)} &ndash; ${money(r.contingency_high)}</b></div>
+<div class="row grand"><span>Estimated Planning Range${r.budget_fit?' &middot; '+esc(r.budget_fit):''}</span><span class="n">${money(r.total_low)} &ndash; ${money(r.total_high)}</span></div>
+</div>
+<div class="note"><b>Confidence Statement.</b> Layout confidence ${esc(r.layout_conf)}. Pricing confidence ${esc(r.pricing_conf)}, with ${r.matched_pct}% of lines matched to an exact cost record for this market and finish grade. Costs are adjusted to ${esc(r.market.name)} labor and material factors.<br><br>
+<b>Disclosure.</b> ${esc(r.disclaimer)} Quantities derive from the measurements above; verify in the field before ordering material or committing to a schedule. Line items exclude permits, structural work, abatement, and any condition not visible in the photographs.</div>
+<div class="sig"><div>Contractor Signature &amp; Date</div><div>Owner Signature &amp; Date</div></div>
+</body></html>`;
+}
+function exportBrief(){
+  if(!lastScope){ return; }
+  const w=window.open('','_blank');
+  if(!w){ document.getElementById('scopeNote').textContent='Allow pop-ups to open the contractor brief.'; return; }
+  w.document.write(briefHtml(lastScope));
+  w.document.close();
+  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} },600);
+}
+document.getElementById('scBrief').addEventListener('click',exportBrief);
 document.getElementById('scDims').addEventListener('click',runDims);
+
 document.getElementById('scDimsOk').addEventListener('click',async()=>{ dimsConfirmed=true; setDimsSource(); await runScope(); });
 ['scFloor','scWall','scPerim'].forEach(id=>document.getElementById(id).addEventListener('input',()=>{
   if(dimsProposal){ dimsConfirmed=false; setDimsSource(); }
