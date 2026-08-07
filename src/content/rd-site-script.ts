@@ -133,14 +133,10 @@ function paint(i){
     while(showStage.children.length>1)showStage.removeChild(showStage.firstChild);
   },700);
 
-  // keep the labels in step with the picture: swap them as the new layer lands,
-  // otherwise the pill describes a photo that is still fading in
-  setTimeout(()=>{
-    lockPill.innerHTML=`<i></i>${b.lock}`;
-    lockPill.className='lock-pill'+(b.lock==='Recording'?' rec':'');
-    modePill.innerHTML=b.ch==='Declutter'?'Interior &middot; Declutter':b.ch==='Stage'?'Interior &middot; Staging':b.ch==='Exterior'?'Exterior &middot; Elevation':b.ch==='Garden'?'Exterior &middot; Landscape':b.ch==='Shop'?'Interior &middot; Shopping':b.ch;
-    styleChip.textContent=b.style;
-  },340);
+  lockPill.innerHTML=`<i></i>${b.lock}`;
+  lockPill.className='lock-pill'+(b.lock==='Recording'?' rec':'');
+  modePill.innerHTML=b.ch==='Declutter'?'Interior &middot; Declutter':b.ch==='Stage'?'Interior &middot; Staging':b.ch;
+  styleChip.textContent=b.style;
 
   if(!budgetTouched){
     const he=document.getElementById('heroEst'),hf=document.getElementById('heroFit'),
