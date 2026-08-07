@@ -315,16 +315,16 @@ document.getElementById('quotes').innerHTML=Q.map(([ic,t,d])=>`
 
 /* ---------- pricing ---------- */
 const P=[
-{n:'Free',mo:0,yr:0,who:'Anyone. No card, no account to start.',cta:'Start Free',pop:false,
- f:['Generous daily renders','All spaces and full style library','Structure Lock and object controls','Budget Mode with cost range','Watermarked, standard resolution']},
-{n:'Home',mo:19,yr:13,who:'One property, personal projects.',cta:'Choose Home',pop:false,
- f:['Clean HD, no watermark','Personal use license','Design DNA on one property','Shopping list with live pricing','Presentation package and before/after']},
-{n:'Pro',mo:59,yr:41,who:'Investors, flippers, contractors and agents.',cta:'Choose Pro',pop:true,
- f:['Everything in Home','Commercial license','Itemized scope and contractor brief','ARV impact range','Rental grade vs retail grade','Batch listing staging and disclosure','Unlimited team seats']},
-{n:'Studio',mo:119,yr:83,who:'Design teams and brokerage offices.',cta:'Choose Studio',pop:false,
- f:['Everything in Pro','Client approval portal','Brand presets and white label decks','Multi angle consistency','Video walkthroughs and 3D plans','Priority render queue']},
-{n:'Business',mo:null,yr:null,who:'Builders, brokerages and platforms.',cta:'Talk To Us',pop:false,
- f:['Everything in Studio','API access and webhooks','White label widget on your site','Org wide locked brand kit','Usage reporting by seat','Dedicated onboarding']}];
+{n:'Free',mo:0,yr:0,who:'Anyone. Try it on your own space before you decide.',cta:'Start Free',pop:false,note:'No card · No account to start',
+ f:['<b>30 designs a day</b>','All spaces and full style library','Reality Lock and object controls','Budget Mode with cost range','Watermarked at standard resolution'],
+ x:['Clean HD, no watermark','Itemized scope and contractor brief','Commercial license']},
+{n:'Pro',mo:59,yr:41,who:'Investors, flippers, contractors and agents.',cta:'Choose Pro',pop:true,note:'30 day money back · Cancel anytime',
+ f:['<b>1,500 designs a month</b>','Clean HD, no watermark','Commercial license','Itemized scope and contractor brief','Presentation package and before/after','ARV impact range and rental vs retail','Batch listing staging and disclosure','Unlimited team seats'],
+ x:['Client approval portal','Video walkthroughs and 3D plans']},
+{n:'Studio',mo:119,yr:83,who:'Design teams and brokerage offices.',cta:'Choose Studio',pop:false,note:'30 day money back · Cancel anytime',
+ f:['<b>5,000 designs a month</b>','Everything in Pro','Client approval portal','Brand presets and white label decks','Multi angle consistency','Video walkthroughs and 3D plans','Priority render queue'],x:[]},
+{n:'Business',mo:null,yr:null,who:'Builders, brokerages and platforms.',cta:'Talk To Us',pop:false,note:'30 day money back · Cancel anytime',
+ f:['<b>Volume, negotiated</b>','Everything in Studio','API access and webhooks','White label widget on your site','Org wide locked brand kit','Usage reporting by seat','Dedicated onboarding'],x:[]}];
 let bill='mo';
 function drawPlans(){
   document.getElementById('plans').innerHTML=P.map(p=>`
@@ -333,9 +333,12 @@ function drawPlans(){
     <div class="who">${p[bill]===null?'Volume pricing':bill==='yr'&&p.yr>0?'Billed yearly':p.mo===0?'Free forever':'Billed monthly'}</div>
     <p style="font-size:.84rem">${p.who}</p>
     <a href="#" class="btn ${p.pop?'btn-primary':'btn-ghost'} btn-block">${p.cta}</a>
-    <ul>${p.f.map(x=>`<li><i data-lucide="check"></i>${x}</li>`).join('')}</ul></div>`).join('');
+    <p class="plan-note">${p.note}</p>
+    <ul>${p.f.map(x=>`<li><i data-lucide="check"></i><span>${x}</span></li>`).join('')}${
+      (p.x||[]).map(x=>`<li class="no"><i data-lucide="x"></i><span>${x}</span></li>`).join('')}</ul></div>`).join('');
   lucide.createIcons();
 }
+
 document.querySelectorAll('#billSeg button').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('#billSeg button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');bill=b.dataset.b;drawPlans();
