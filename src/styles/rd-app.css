@@ -640,3 +640,30 @@
 .rd-app .scope-ctl .field select,.rd-app .scope-ctl .field input{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:7px;font:inherit;font-size:.8rem;background:#fff}
 .rd-app .scope-ctl #scMarket{min-width:230px}
 .rd-app .scope-ctl #scRun{margin-left:auto}
+
+/* ---------- estimator: summary header, skeletons, bands ---------- */
+.rd-app .est-sum{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:0 18px 12px;background:#FBFBFA}
+.rd-app .est-sum.is-loading{opacity:.55}
+.rd-app .est-sum .es-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.rd-app .est-sum .es-main span{display:block;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.rd-app .est-sum .es-main b{font-family:'DM Mono',ui-monospace,monospace;font-size:1.32rem;letter-spacing:-.01em}
+.rd-app .es-meter{position:relative;height:6px;border-radius:99px;background:#EDEDEA;margin:10px 0 4px;overflow:hidden}
+.rd-app .es-meter i{position:absolute;inset:0 auto 0 0;border-radius:99px;background:var(--ok);transition:width .4s ease}
+.rd-app .es-meter i.near{background:#E0A32E}
+.rd-app .es-meter i.over{background:var(--red)}
+.rd-app .es-meter em{position:absolute;right:0;top:10px;font-style:normal;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute)}
+.rd-app .es-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+.rd-app .es-chip{display:inline-flex;flex-direction:column;gap:1px;border:1px solid var(--line);border-radius:6px;padding:5px 9px;background:#fff}
+.rd-app .es-chip span{font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+.rd-app .es-chip b{font-family:'DM Mono',ui-monospace,monospace;font-size:.72rem;text-transform:capitalize}
+.rd-app .est-alert{margin:0 18px 12px;border-left:3px solid var(--red);background:#FFF5F5;padding:9px 12px;font-size:.76rem;color:#7A1C1C;border-radius:0 6px 6px 0}
+.rd-app #scopeRows tr.trade-h td{background:#F6F6F4;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:600}
+.rd-app #scopeRows .src{display:block;font-family:ui-monospace,monospace;font-size:.6rem;color:var(--mute-2)}
+.rd-app #scopeRows tr.sk i{display:block;height:9px;border-radius:4px;background:linear-gradient(90deg,#EEE,#F7F7F5,#EEE);background-size:200% 100%;animation:rdsk 1.1s linear infinite}
+@keyframes rdsk{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.rd-app .btn.is-busy{opacity:.6;pointer-events:none}
+.rd-app .btn:disabled{opacity:.45;pointer-events:none}
+.rd-app .band-row{width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rd-app .band-row:last-child{border-bottom:0}
+.rd-app .band-row:hover{background:#FAFAF8}
+.rd-app .band-row.on{background:#FBF7F7}
