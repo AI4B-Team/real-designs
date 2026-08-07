@@ -761,4 +761,17 @@ export function initExtra(timers: number[], lucide: any) {
     showP3(0); loop();
   }
 
+  /* ---------- device showcase screens ---------- */
+  const devShots: [string, string][] = [
+    ["devShotA", PHOTOS.after],
+    ["devShotB", PHOTOS.before],
+    ["devShotC", PHOTOS.kitchenAfter],
+    ["devShotD", PHOTOS.before],
+    ["devShotE", PHOTOS.after],
+  ];
+  devShots.forEach(([id, src]) => {
+    const el = $(id);
+    if (el) el.style.backgroundImage = `url(${src})`;
+  });
+
 }
