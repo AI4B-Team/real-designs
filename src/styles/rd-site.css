@@ -776,20 +776,22 @@
 .rd-site .pdet{display:block;font-size:.63rem;color:var(--red);margin-top:3px;opacity:0;transform:translateY(-3px);
   transition:opacity .25s ease,transform .25s ease;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rd-site .pnode.on .pdet{opacity:1;transform:none}
-.rd-site .pov{position:absolute;font-family:var(--mono,ui-monospace,monospace);font-size:.52rem;letter-spacing:.04em;
-  display:inline-flex;align-items:center;gap:4px;padding:4px 7px;border-radius:6px;background:rgba(255,255,255,.94);
-  color:#111;box-shadow:0 4px 12px -6px rgba(0,0,0,.4)}
-.rd-site .pov i{width:9px;height:9px;font-style:normal}
-.rd-site .pov.lock{left:6px;top:6px}
-.rd-site .pov.cost{left:6px;bottom:6px;flex-direction:column;align-items:flex-start;gap:1px}
-.rd-site .pov.cost b{font-size:.6rem}
-.rd-site .pov.cost i{font-style:normal;width:auto;height:auto;color:#1B7F4B;font-size:.5rem}
-.rd-site .pov.shop{left:6px;bottom:6px}
-.rd-site .pov.appr{left:6px;top:6px;background:#1B7F4B;color:#fff}
-.rd-site .pov.appr i{color:#fff}
-.rd-site .pav{position:absolute;right:6px;bottom:6px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;
-  display:grid;place-items:center;font-size:.6rem;font-weight:600;border:2px solid #fff}
-.rd-site .pshop{position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;border:2px solid var(--red);
+.rd-site .pnode .pim .pov{position:absolute;z-index:2;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:8px;line-height:1.25;letter-spacing:.02em;max-width:86%;
+  display:inline-flex;align-items:center;gap:3px;padding:3px 5px;border-radius:5px;background:rgba(255,255,255,.95);
+  color:#111;box-shadow:0 3px 10px -6px rgba(0,0,0,.5)}
+.rd-site .pnode .pim .pov i{width:8px;height:8px;font-style:normal;flex:none}
+.rd-site .pnode .pim .pov.lock{left:5px;top:5px}
+.rd-site .pnode .pim .pov.cost{left:5px;bottom:5px;display:block;padding:4px 6px}
+.rd-site .pnode .pim .pov.cost b{display:block;font-size:8px;font-weight:600}
+.rd-site .pnode .pim .pov.cost i{display:block;width:auto;height:auto;color:#1B7F4B;font-size:7px}
+.rd-site .pnode .pim .pov.shop{left:5px;bottom:5px}
+.rd-site .pnode .pim .pov.appr{left:5px;top:5px;background:#1B7F4B;color:#fff}
+.rd-site .pnode .pim .pov.appr i{color:#fff}
+.rd-site .pnode .pim .pav{position:absolute;z-index:2;right:5px;bottom:5px;width:17px;height:17px;border-radius:50%;background:var(--red);color:#fff;
+  display:grid;place-items:center;font-size:8px;font-weight:600;border:2px solid #fff}
+.rd-site .pnode .pim .pshop{position:absolute;z-index:2;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--red);
+  box-shadow:0 0 0 2px rgba(255,255,255,.5);transform:translate(-50%,-50%)}
   box-shadow:0 0 0 3px rgba(255,255,255,.45);transform:translate(-50%,-50%)}
 
 
