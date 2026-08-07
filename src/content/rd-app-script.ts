@@ -301,21 +301,61 @@ let scopeMarkets=[];
 let lastScope=null;
 
 
+const K=(n)=>'$'+(n>=1000?(n/1000).toFixed(n>=10000?0:1)+'K':Math.round(n));
+function fitClass(f){ if(!f) return 'p-gray'; const s=f.toLowerCase();
+  return s.indexOf('within')>=0?'p-ok':(s.indexOf('over')>=0?'p-red':'p-amb'); }
+
 function renderScope(r){
   lastScope=r;
-  scopeRowsEl.innerHTML=r.lines.map(l=>`
-
-<tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}</td>
-<td>${l.trade}</td><td class="n">${l.qty} ${l.uom}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')
+  showAlert('');
+  /* group priced lines by trade, with a subtotal per trade */
+  const groups=[]; const idx={};
+  r.lines.forEach(l=>{ if(idx[l.trade]===undefined){ idx[l.trade]=groups.length; groups.push({trade:l.trade,lines:[]}); }
+    groups[idx[l.trade]].lines.push(l); });
+  scopeRowsEl.innerHTML=groups.map(g=>{
+    const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
+    return `<tr class="trade-h"><td colspan="3">${g.trade}</td><td class="n">${money(low)}</td><td class="n">${money(high)}</td></tr>`
+    +g.lines.map(l=>`<tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}<span class="src">${l.price_source}</span></td>
+<td>${l.trade}</td><td class="n">${l.qty} ${l.uom}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('');
+  }).join('')
   +`<tr><td><b>Contingency At ${r.contingency_pct}%</b></td><td>General</td><td class="n">1 ls</td>
 <td class="n">${money(r.contingency_low)}</td><td class="n">${money(r.contingency_high)}</td></tr>`;
   document.getElementById('scopeTotLow').textContent=money(r.total_low);
   document.getElementById('scopeTotHigh').textContent=money(r.total_high);
   document.getElementById('scopeTotLab').textContent='Estimated Total'+(r.budget_fit?' · '+r.budget_fit:'');
   document.getElementById('scopeSub').textContent=`206 N MacDill · Living Room v4 · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
-  document.getElementById('scopeNote').textContent=`${r.disclaimer} Layout confidence ${r.layout_conf}, pricing confidence ${r.pricing_conf} (${r.matched_pct}% of lines matched an exact cost record).`;
+  document.getElementById('scopeNote').textContent=`${r.disclaimer} Quantities are derived from the measurements above and should be field verified.`;
+
+  /* summary header */
+  document.getElementById('esRange').textContent=money(r.total_low)+' to '+money(r.total_high);
+  const fit=document.getElementById('esFit');
+  fit.className='pill '+fitClass(r.budget_fit); fit.textContent=r.budget_fit||'No Target Set';
+  const target=parseFloat(document.getElementById('scBudget').value);
+  const wrap=document.getElementById('esMeterWrap');
+  if(Number.isFinite(target)&&target>0){
+    wrap.style.display='';
+    const pct=Math.max(4,Math.min(100,(r.total_high/target)*100));
+    const bar=document.getElementById('esMeter');
+    bar.style.width=pct+'%';
+    bar.className=r.total_high<=target?'ok':(r.total_low>target?'over':'near');
+    document.getElementById('esTarget').textContent='Target '+K(target);
+  } else { wrap.style.display='none'; }
+  const dims=dimsProposal?(dimsConfirmed?'Dimensions Confirmed':'Dimensions Proposed, Not Confirmed'):'Dimensions Entered By You';
+  document.getElementById('esChips').innerHTML=[
+    ['Layout Confidence',r.layout_conf],['Pricing Confidence',r.pricing_conf],
+    ['Cost Records Matched',r.matched_pct+'%'],['Material',money(r.material_low)+' to '+money(r.material_high)],
+    ['Labor',money(r.labor_low)+' to '+money(r.labor_high)],['Measurements',dims]
+  ].map(([k,v])=>`<span class="es-chip"><span>${k}</span><b>${v}</b></span>`).join('');
+  const dm=document.getElementById('dmRehab'); if(dm) dm.textContent=K(r.total_low)+' to '+K(r.total_high);
+  const brief=document.getElementById('scBrief'); if(brief) brief.disabled=false;
   renderAllowance(r);
 }
+
+function showAlert(msg){
+  const a=document.getElementById('estAlert'); if(!a) return;
+  a.style.display=msg?'':'none'; a.textContent=msg||'';
+}
+
 
 /* ---------- phase 5: materials allowance list, derived from the priced scope ---------- */
 function renderAllowance(r){
@@ -342,10 +382,17 @@ function allowanceCsv(){
   a.download='real-designs-materials-allowance.csv'; a.click(); URL.revokeObjectURL(a.href);
 }
 
+let scopeBusy=false;
 async function runScope(){
+  if(scopeBusy) return;
+  scopeBusy=true;
   const sel=document.getElementById('scMarket');
+  const runBtn=document.getElementById('scRun');
   const val=(id,d)=>{const v=parseFloat((document.getElementById(id)||{}).value);return Number.isFinite(v)&&v>0?v:d;};
-  scopeRowsEl.innerHTML='<tr><td colspan="5">Pricing…</td></tr>';
+  runBtn.disabled=true; runBtn.classList.add('is-busy');
+  document.getElementById('estSum').classList.add('is-loading');
+  scopeRowsEl.innerHTML=Array.from({length:5}).map(()=>
+    '<tr class="sk"><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td><td><i></i></td></tr>').join('');
   try{
     const r=await priceScopePreview({data:{
       market_id: sel && sel.value ? sel.value : undefined,
@@ -361,9 +408,14 @@ async function runScope(){
     }
     renderScope(r);
   }catch(e){
-    scopeRowsEl.innerHTML=`<tr><td colspan="5">Could not price this scope. ${(e&&e.message)||''}</td></tr>`;
+    scopeRowsEl.innerHTML='<tr><td colspan="5">No priced lines.</td></tr>';
+    showAlert('Could not price this scope. '+((e&&e.message)||'Try again in a moment.'));
+  }finally{
+    scopeBusy=false; runBtn.disabled=false; runBtn.classList.remove('is-busy');
+    document.getElementById('estSum').classList.remove('is-loading');
   }
 }
+
 
 let scopeItems=SCOPE_ITEMS.slice();
 
@@ -388,7 +440,7 @@ async function detectScopeChanges(){
     await runScope();
     if(r.summary) note.textContent=r.summary+' '+note.textContent;
   }catch(e){
-    note.textContent='Could not read the photos. '+((e&&e.message)||'');
+    showAlert('Could not read the photos. '+((e&&e.message)||''));
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
 
@@ -416,7 +468,7 @@ async function runDims(){
     await runScope();
     note.textContent=r.basis+' '+r.disclaimer+' '+note.textContent;
   }catch(e){
-    note.textContent='Could not measure this photo. '+((e&&e.message)||'');
+    showAlert('Could not measure this photo. '+((e&&e.message)||''));
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
 
@@ -481,12 +533,13 @@ tr.sub td{font-weight:700;background:#fafafa}
 function exportBrief(){
   if(!lastScope){ return; }
   const w=window.open('','_blank');
-  if(!w){ document.getElementById('scopeNote').textContent='Allow pop-ups to open the contractor brief.'; return; }
+  if(!w){ showAlert('Allow pop-ups to open the contractor brief.'); return; }
   w.document.write(briefHtml(lastScope));
   w.document.close();
   setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} },600);
 }
 document.getElementById('scBrief').addEventListener('click',exportBrief);
+document.getElementById('scBrief').disabled=true;
 document.getElementById('allowBuild').addEventListener('click',()=>{ lastScope?renderAllowance(lastScope):runScope(); });
 document.getElementById('allowCsv').addEventListener('click',allowanceCsv);
 renderAllowance(null);
@@ -499,17 +552,41 @@ document.getElementById('scDimsOk').addEventListener('click',async()=>{ dimsConf
 document.getElementById('scDetect').addEventListener('click',detectScopeChanges);
 document.getElementById('scRun').addEventListener('click',runScope);
 ['scGrade','scMarket'].forEach(id=>document.getElementById(id).addEventListener('change',runScope));
+let bTimer=null;
+document.getElementById('scBudget').addEventListener('input',()=>{ clearTimeout(bTimer); bTimer=setTimeout(runScope,500); });
 runScope();
 
 
-const bands=[['Refresh','Paint, hardware, lighting','$3.2K to $5K','p-ok'],
-['Makeover','Adds flooring, casing, furnishings','$11.4K to $14.9K','p-ink'],
-['Renovation','Adds built ins, ceiling detail','$26K to $35K','p-gray'],
-['Full Remodel','Adds wall removal, structural','$41K to $62K','p-gray']];
-document.getElementById('bandList').innerHTML=bands.map(([n,d,r,cls])=>`
-<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div>
-<div style="text-align:right"><div class="mono" style="font-size:.75rem">${r}</div>
-${cls==='p-ink'?'<span class="pill p-ink" style="margin-top:4px">Selected</span>':''}</div></div>`).join('');
+/* ---------- budget bands: each one reprices the same room ---------- */
+const BAND_ITEMS={
+  refresh:[{label:'wall_paint',material:'paint'},{label:'light_fixture',qty:2}],
+  makeover:SCOPE_ITEMS.slice(),
+  renovation:SCOPE_ITEMS.concat([{label:'base_cabinet'},{label:'countertop',material:'quartz'}]),
+  remodel:SCOPE_ITEMS.concat([{label:'base_cabinet'},{label:'countertop',material:'quartz'},
+    {label:'wall_tile',material:'ceramic'},{label:'vanity',qty:1},{label:'sink_faucet',qty:1}])
+};
+const bands=[['refresh','Refresh','Paint And Lighting Only','rental',5000],
+['makeover','Makeover','Adds Flooring, Casing, Doors','retail',15000],
+['renovation','Renovation','Adds Cabinetry And Countertops','retail',35000],
+['remodel','Full Remodel','Adds Tile, Vanity, Plumbing Fixtures','premium',62000]];
+let bandOn='makeover';
+function paintBands(){
+  document.getElementById('bandList').innerHTML=bands.map(([k,n,d])=>`
+<button class="rowi band-row${k===bandOn?' on':''}" data-band="${k}"><div class="rowt"><b>${n}</b><span>${d}</span></div>
+<div style="text-align:right">${k===bandOn?'<span class="pill p-ink">Selected</span>':'<span class="pill p-gray">Price It</span>'}</div></button>`).join('');
+  document.querySelectorAll('#bandList .band-row').forEach(b=>b.addEventListener('click',async()=>{
+    const k=b.getAttribute('data-band'); if(k===bandOn||scopeBusy) return;
+    bandOn=k; paintBands();
+    const row=bands.find(x=>x[0]===k);
+    scopeItems=BAND_ITEMS[k].slice();
+    document.getElementById('scGrade').value=row[3];
+    document.getElementById('scBudget').value=row[4];
+    document.getElementById('bandSub').textContent='Same Room, Same Photo · '+row[1]+' Priced';
+    await runScope();
+  }));
+}
+paintBands();
+
 
 /* ---------- products ---------- */
 const prods=[['Low Profile Sofa, 88in','Seating','sofa','#3D4A45',['$690','$1,240','$2,480']],
