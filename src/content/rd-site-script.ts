@@ -4,6 +4,7 @@
 import { createIcons, icons } from "lucide";
 import { PHOTOS, photo } from "@/content/rd-photos";
 import { initExtra } from "@/content/rd-site-extra";
+import { initShowcase } from "@/content/rd-showcase";
 
 export function initSite(): () => void {
   const timers: number[] = [];
@@ -340,6 +341,7 @@ const co=new IntersectionObserver(e=>e.forEach(x=>{
 }),{threshold:.5});
 document.querySelectorAll('[data-c]').forEach(el=>co.observe(el));
 initExtra(timers, lucide);
+initShowcase(timers);
 addEventListener('scroll',()=>document.getElementById('hdr').classList.toggle('scrolled',scrollY>12),{passive:true});
 lucide.createIcons();
 
