@@ -429,7 +429,7 @@ function briefHtml(r){
     const g=divs[d];
     const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
     return `<h3>${esc(d)} &middot; ${esc(g.trade)}</h3>
-<table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Material</th><th class="n">Labor</th><th class="n">Low</th><th class="n">High</th></tr></thead><tbody>
+<table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Material</th><th class="n">Labor</th><th style="text-align:right">Low</th><th style="text-align:right">High</th></tr></thead><tbody>
 ${g.lines.map(l=>`<tr><td>${esc(l.description)}${l.is_fallback?' <em>(fallback cost record)</em>':''}<br><span class="src">${esc(l.price_source)}</span></td>
 <td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${money(l.material_low)}&ndash;${money(l.material_high)}</td>
 <td class="n">${money(l.labor_low)}&ndash;${money(l.labor_high)}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')}
@@ -815,7 +815,7 @@ if(scopeGrid){
   savedCard.className='card'; savedCard.style.gridColumn='1 / -1';
   savedCard.innerHTML='<div class="card-h"><div><h3>Saved Estimates</h3><div class="sub" id="savedSub">Your saved rooms and priced scopes</div></div>'
     +'<button class="btn btn-ghost btn-xs" id="savedRefresh"><i data-lucide="refresh-cw"></i>Refresh</button></div>'
-    +'<div class="card-b"><table class="tbl"><thead><tr><th>Property</th><th>Room</th><th>Grade</th><th class="n">Low</th><th class="n">High</th><th></th></tr></thead>'
+    +'<div class="card-b"><table><thead><tr><th>Property</th><th>Room</th><th>Grade</th><th style="text-align:right">Low</th><th style="text-align:right">High</th><th></th></tr></thead>'
     +'<tbody id="savedRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>';
   scopeGrid.appendChild(savedCard);
 
