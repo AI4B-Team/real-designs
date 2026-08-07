@@ -50,79 +50,133 @@ document.getElementById('proofStrip').innerHTML=PROOF.map(([n,p,c])=>`
   <div class="proof"><div class="im">${room('after',PALS[p])}</div>
   <div class="tx"><b>${n}</b><span>${c}</span></div></div>`).join('');
 
-/* ---------- hero showcase ---------- */
+/* ---------- hero: one continuous property tour ---------- */
 let budgetTouched=false;
 const cursorSVG=`<svg class="cursor" width="22" height="24" viewBox="0 0 22 24" fill="none"><path d="M2 1.5 L2 19 L6.6 14.8 L9.6 21.6 L12.9 20.1 L9.9 13.5 L16 13.2 Z" fill="#fff" stroke="#111113" stroke-width="1.6" stroke-linejoin="round"/></svg>`;
-const SCENES=[
- {tab:'Redesign',name:'Interior',lock:'Reality Lock On',est:'$11,400 to $14,900',fit:'Within Target',
-  build:()=>`<div class="art">${photo(PHOTOS.before,'Living room before')}</div>
-    <div class="wipe">${photo(PHOTOS.after,'Living room after')}</div><div class="wipe-edge"></div>`},
- {tab:'Empty & Stage',name:'Interior &middot; Declutter To Staged',lock:'Declutter On',
-  est:'$11,400 to $14,900',fit:'Within Target',
-  build:()=>`<div class="art">${photo(PHOTOS.after,'Room restaged')}</div>
-    <div class="art fade-out-2">${photo(PHOTOS.empty,'Room emptied')}</div>
-    <div class="art fade-out">${photo(PHOTOS.clutter,'Room with clutter')}</div>
-    <span class="beat b1">Cluttered</span><span class="beat b2">Emptied</span><span class="beat b3">Restaged</span>`},
- {tab:'Shop',name:'Interior &middot; Shop The Design',lock:'Reality Lock On',toast:'Added To Project',toastAt:2700,
-  estLab:'Project Cart, 14 Items',est:'$3,284',fit:'Fits The Room',
-  build:()=>`<div class="art">${photo(PHOTOS.after,'Staged living room')}</div>
-    <span class="spot pulse" style="left:29%;top:63%;animation-delay:.2s"></span>
-    <span class="spot" style="left:51%;top:80%;animation-delay:.35s"></span>
-    <span class="spot" style="left:80%;top:74%;animation-delay:.5s"></span>
-    <span class="spot" style="left:24%;top:38%;animation-delay:.65s"></span>
-    <div class="pcard" style="left:34%;top:30%"><b>Low Profile Sofa</b>
-      <span class="tierrow"><i>Best Price</i><em>$690</em></span>
-      <span class="tierrow on"><i>Closest Match</i><em>$1,240</em></span>
-      <span class="tierrow"><i>Premium Pick</i><em>$2,480</em></span>
-      <span class="pb2">Add To Project</span></div>
-    ${cursorSVG.replace('class="cursor"','class="cursor" style="left:44%;top:56%"')}`},
- {tab:'Exterior',name:'Exterior',lock:'Reality Lock On',est:'$11,900 to $16,800',fit:'Within Target',
-  build:()=>`<div class="art">${photo(PHOTOS.exteriorBefore,'Exterior before')}</div>
-    <div class="wipe">${photo(PHOTOS.paintedBrick,'Exterior after')}</div><div class="wipe-edge"></div>`},
- {tab:'Plan',name:'Garden &middot; Scope And Budget',lock:'Budget Mode On',toast:'Scope Sent',toastAt:3100,
-  est:'$26,100 to $31,500',fit:'Within Target',
-  build:()=>`<div class="art">${photo(PHOTOS.resortYard,'Backyard redesign')}</div>
-    <div class="scope-card"><h4>Backyard Redesign</h4><div class="sub2">Planning range &middot; Tampa FL labor</div>
-      <div class="li"><span>In Ground Pool And Install</span><span>$18,500</span></div>
-      <div class="li"><span>Concrete Deck And Coping</span><span>$5,200</span></div>
-      <div class="li"><span>Planting And Landscaping</span><span>$2,600</span></div>
-      <div class="li"><span>Outdoor Lighting</span><span>$690</span></div>
-      <div class="tot"><span>Planning Range</span><span>$26.1K to $31.5K</span></div>
-      <span class="act">Send Scope To Contractor</span></div>
-    ${cursorSVG.replace('class="cursor"','class="cursor" style="left:55%;top:77%"')}`},
- {tab:'Video',name:'Exterior &middot; Walkthrough',lock:'Recording',rec:true,
-  estLab:'Clip Length',est:'20 Seconds',fit:'Ready To Post',
-  build:()=>`<div class="ken">${photo(PHOTOS.paintedBrick,'Exterior walkthrough')}</div>`}
+
+// One property, walked end to end. Each beat crossfades into the next; the
+// running total accumulates so the tour ends on a whole-property number.
+const TOUR=[
+ {ch:'Exterior',dur:1800,img:PHOTOS.exteriorBefore,style:'As Found',lock:'Reality Lock On',
+  lab:'Front Elevation',est:'Scanning',fit:'Reading Geometry'},
+ {ch:'Exterior',dur:1800,img:PHOTOS.paintedBrick,style:'Painted Brick',lock:'Reality Lock On',
+  lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Within Target'},
+ {ch:'Exterior',dur:1800,img:PHOTOS.craftsman,style:'Craftsman',lock:'Reality Lock On',
+  lab:'Front Elevation',est:'$14,200 to $19,400',fit:'Within Target'},
+ {ch:'Exterior',dur:1600,img:PHOTOS.ranch,style:'Florida Ranch',lock:'Reality Lock On',zoom:'in',
+  lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Approved',note:'Stepping Inside'},
+
+ {ch:'Declutter',dur:1900,img:PHOTOS.clutter,style:'As Found',lock:'Declutter On',
+  lab:'Living Room',est:'Detecting Contents',fit:'14 Objects Found'},
+ {ch:'Declutter',dur:1900,img:PHOTOS.empty,style:'Emptied',lock:'Declutter On',
+  lab:'Living Room',est:'Architecture Preserved',fit:'Walls, Windows, Floor'},
+
+ {ch:'Stage',dur:1750,img:PHOTOS.after,style:'Warm Minimal',lock:'Reality Lock On',
+  lab:'Living Room',est:'$11,400 to $14,900',fit:'Within Target'},
+ {ch:'Stage',dur:1750,img:PHOTOS.coastal,style:'Coastal',lock:'Reality Lock On',
+  lab:'Living Room',est:'$13,800 to $17,600',fit:'Within Target'},
+ {ch:'Stage',dur:1750,img:PHOTOS.japandi,style:'Japandi',lock:'Reality Lock On',
+  lab:'Living Room',est:'$12,600 to $16,100',fit:'Design DNA Applied'},
+
+ {ch:'Shop',dur:4200,img:PHOTOS.japandi,style:'Japandi',lock:'Reality Lock On',shop:true,
+  lab:'Project Cart, 14 Items',est:'$3,284',fit:'Fits The Room',
+  toast:'Added To Project',toastAt:2600},
+
+ {ch:'Garden',dur:1600,img:PHOTOS.yardBefore,style:'As Found',lock:'Reality Lock On',zoom:'out',
+  lab:'Backyard',est:'Scanning',fit:'Reading Site',note:'Heading Out Back'},
+ {ch:'Garden',dur:2500,img:PHOTOS.resortYard,style:'Resort',lock:'Budget Mode On',
+  lab:'Backyard',est:'$26,100 to $31,500',fit:'Within Target'},
+
+ {ch:'Garden',dur:3200,img:PHOTOS.resortYard,style:'Design DNA Applied',lock:'Budget Mode On',summary:true,
+  lab:'Whole Property Planning Range',est:'$49,400 to $63,200',fit:'4 Rooms Approved'}
 ];
+const CHAPTERS=['Exterior','Declutter','Stage','Shop','Garden'];
+
 const showStage=document.getElementById('showStage'),lockPill=document.getElementById('lockPill'),
-      modePill=document.getElementById('modePill'),toastEl=document.getElementById('toast'),
-      showNav=document.getElementById('showNav');
-let sIdx=0,sTimer=null;
-showNav.innerHTML=SCENES.map((s,i)=>`<button data-i="${i}"${i===0?' class="on"':''}>${s.tab}</button>`).join('');
-function playScene(i){
-  toastEl.classList.remove('on');
-  const s=SCENES[i];
-  showStage.innerHTML=`<div class="sc on">${s.build()}</div>`;
-  lockPill.className='lock-pill'+(s.rec?' rec':'');
-  lockPill.innerHTML=`<i></i>${s.lock}`;
-  modePill.innerHTML=s.name;
+      modePill=document.getElementById('modePill'),styleChip=document.getElementById('styleChip'),
+      toastEl=document.getElementById('toast'),showNav=document.getElementById('showNav'),
+      tourProg=document.getElementById('tourProg');
+
+showNav.innerHTML=CHAPTERS.map((c,i)=>`<button data-c="${c}"${i===0?' class="on"':''}>${c}</button>`).join('');
+
+const shopOverlay=()=>`
+  <span class="spot pulse" style="left:29%;top:63%;animation-delay:.2s"></span>
+  <span class="spot" style="left:51%;top:80%;animation-delay:.35s"></span>
+  <span class="spot" style="left:80%;top:74%;animation-delay:.5s"></span>
+  <span class="spot" style="left:24%;top:38%;animation-delay:.65s"></span>
+  <div class="pcard" style="left:33%;top:27%"><b>Low Profile Sofa</b>
+    <span class="tierrow"><i>Best Price</i><em>$690</em></span>
+    <span class="tierrow on"><i>Closest Match</i><em>$1,240</em></span>
+    <span class="tierrow"><i>Premium Pick</i><em>$2,480</em></span>
+    <span class="pb2">Add To Project</span></div>
+  ${cursorSVG.replace('class="cursor"','class="cursor" style="left:43%;top:55%"')}`;
+
+const summaryOverlay=()=>`
+  <div class="tour-sum">
+    <div class="ts-lab mono">One Property, One Design DNA</div>
+    <div class="ts-rows">
+      <div><span>Front Elevation</span><em>$11.9K to $16.8K</em></div>
+      <div><span>Living Room</span><em>$12.6K to $16.1K</em></div>
+      <div><span>Furnishings</span><em>$3.3K</em></div>
+      <div><span>Backyard</span><em>$26.1K to $31.5K</em></div>
+    </div>
+    <div class="ts-tot"><span>Planning Range</span><em>$49.4K to $63.2K</em></div>
+  </div>`;
+
+let tIdx=0,tTimer=null,tToast=null;
+function paint(i){
+  const b=TOUR[i];
+  // crossfade: new layer on top, old ones removed once faded
+  const layer=document.createElement('div');
+  layer.className='tlayer'+(b.zoom==='in'?' zoom-in':b.zoom==='out'?' zoom-out':'');
+  layer.innerHTML=photo(b.img,b.ch+' '+b.style)
+    +(b.shop?shopOverlay():'')+(b.summary?summaryOverlay():'')
+    +(b.note?`<span class="tour-note">${b.note}</span>`:'');
+  showStage.appendChild(layer);
+  requestAnimationFrame(()=>layer.classList.add('in'));
+  setTimeout(()=>{
+    while(showStage.children.length>1)showStage.removeChild(showStage.firstChild);
+  },700);
+
+  lockPill.innerHTML=`<i></i>${b.lock}`;
+  lockPill.className='lock-pill'+(b.lock==='Recording'?' rec':'');
+  modePill.innerHTML=b.ch==='Declutter'?'Interior &middot; Declutter':b.ch==='Stage'?'Interior &middot; Staging':b.ch;
+  styleChip.textContent=b.style;
+
   if(!budgetTouched){
     const he=document.getElementById('heroEst'),hf=document.getElementById('heroFit'),
           hl=document.getElementById('heroEstLab');
-    if(he&&s.est)he.textContent=s.est;
-    if(hf&&s.fit){hf.textContent=s.fit;hf.className='conf-hi'}
-    if(hl)hl.textContent=s.estLab||'Estimated Project Range';
+    if(hl)hl.textContent=b.lab;
+    if(he){he.textContent=b.est;he.classList.toggle('soft',!/\$/.test(b.est))}
+    if(hf){hf.textContent=b.fit;hf.className=b.summary?'conf-hi big':'conf-hi'}
   }
-  if(s.toast)setTimeout(()=>{toastEl.querySelector('b').textContent=s.toast;toastEl.classList.add('on');
-    setTimeout(()=>toastEl.classList.remove('on'),2200)},s.toastAt);
-  showNav.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===i));
+
+  toastEl.classList.remove('on');
+  if(tToast)clearTimeout(tToast);
+  if(b.toast)tToast=setTimeout(()=>{
+    toastEl.querySelector('b').textContent=b.toast;toastEl.classList.add('on');
+    setTimeout(()=>toastEl.classList.remove('on'),1900);
+  },b.toastAt);
+
+  showNav.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x.dataset.c===b.ch));
+  const pct=((i+1)/TOUR.length)*100;
+  if(tourProg)tourProg.firstElementChild.style.width=pct+'%';
+
   lucide.createIcons();
 }
-function startShow(){if(sTimer)clearInterval(sTimer);sTimer=setInterval(()=>{sIdx=(sIdx+1)%SCENES.length;playScene(sIdx)},5400)}
-showNav.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
-  sIdx=+b.dataset.i;playScene(sIdx);startShow();
+function advance(){
+  paint(tIdx);
+  const d=TOUR[tIdx].dur;
+  tIdx=(tIdx+1)%TOUR.length;
+  tTimer=setTimeout(advance,d);
+}
+showNav.querySelectorAll('button').forEach(btn=>btn.addEventListener('click',()=>{
+  const first=TOUR.findIndex(b=>b.ch===btn.dataset.c);
+  if(first<0)return;
+  if(tTimer)clearTimeout(tTimer);
+  tIdx=first;advance();
 }));
-playScene(0);startShow();
+advance();
 
 /* ---------- builder ---------- */
 const styleSets={
