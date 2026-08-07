@@ -673,7 +673,7 @@
 
 
 /* ================= v4: editorial annotations + new sections ================= */
-.rd-site h1 em, .rd-site h2 em{font-style:normal;position:relative;display:inline-block}
+.rd-site h1 em, .rd-site h2 em{font-style:normal;position:relative;z-index:0;display:inline-block}
 .rd-site .ann-underline::after{content:"";position:absolute;left:-.06em;right:-.06em;bottom:-.08em;height:.34em;
   background:linear-gradient(to right,rgba(204,0,0,.16),rgba(204,0,0,.26));border-radius:3px;z-index:-1;transform:skewY(-.6deg)}
 .rd-site .ann-circle{position:relative;display:inline-block;padding:2px 8px}
