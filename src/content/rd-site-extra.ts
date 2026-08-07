@@ -645,19 +645,23 @@ export function initExtra(timers: number[], lucide: any) {
 
   /* ---------- comparison table ---------- */
   const CMP: [string, string, string, string, string][] = [
-    ["Redesign real interiors, exteriors and landscapes", "yes", "Varies", "Limited", "yes"],
-    ["Preserve walls, windows and selected objects", "yes", "Varies", "Usually", "yes"],
-    ["Keep, replace, remove and lock individual items", "yes", "Limited", "Limited", "yes"],
+    ["Redesign interiors, exteriors and landscapes", "yes", "Varies", "Limited", "yes"],
+    ["Preserve architecture and control individual objects", "yes", "Limited", "Usually", "yes"],
     ["Apply one Design DNA across an entire property", "yes", "no", "no", "Manual"],
     ["Design around a target budget", "yes", "no", "no", "yes"],
-    ["Generate line item planning ranges", "yes", "Limited", "no", "Varies"],
-    ["Create a scope of work and contractor brief", "yes", "no", "no", "Varies"],
-    ["Match real products at multiple price levels", "yes", "Limited", "Limited", "yes"],
-    ["Track rooms, versions and approvals", "yes", "no", "no", "Varies"],
+    ["Generate line item scope and planning ranges", "yes", "Limited", "no", "Varies"],
+    ["Track rooms, versions and approvals", "yes", "Limited", "Limited", "Manual"],
+    ["Typical first concepts", "Minutes", "Minutes", "Minutes", "Days to weeks"],
+    ["Create a contractor ready scope and brief", "yes", "no", "no", "Varies"],
+    ["Match real products at three price levels", "yes", "Limited", "Limited", "yes"],
     ["Create listing ready staging in batches", "yes", "Limited", "yes", "Manual"],
-    ["Generate presentations and approval links", "yes", "Limited", "Limited", "yes"],
-    ["Results in minutes", "yes", "yes", "yes", "no"],
+    ["Client approval links", "yes", "no", "Limited", "yes"],
+    ["Walkthrough videos", "yes", "Limited", "Limited", "Varies"],
+    ["Social presentation packages", "yes", "no", "Limited", "Varies"],
+    ["Team collaboration", "yes", "Limited", "Limited", "yes"],
+    ["Commercial use exports", "yes", "Varies", "yes", "yes"],
   ];
+
   const cell = (v: string, us = false) =>
     v === "yes"
       ? `<span class="cm ok${us ? " us" : ""}"><i data-lucide="check"></i></span>`
