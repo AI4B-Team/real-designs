@@ -553,7 +553,15 @@
 
 .rd-site .vs-card.win li svg{color:var(--ok)}
 
-.rd-site .vs-mid{display:grid;place-items:center;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--mute-2)}
+.rd-site .vs-mid{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:0 6px}
+.rd-site .vs-line{flex:1;width:1px;min-height:24px;background:linear-gradient(var(--line),rgba(0,0,0,0))}
+.rd-site .vs-line:last-child{background:linear-gradient(rgba(0,0,0,0),var(--line))}
+.rd-site .vs-badge{position:relative;flex:none;width:46px;height:46px;border-radius:999px;display:grid;place-items:center;background:var(--white);border:1px solid var(--line);box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.rd-site .vs-badge::before{content:'';position:absolute;inset:-6px;border-radius:999px;border:1px dashed rgba(204,0,0,.28)}
+.rd-site .vs-badge b{font-family:'DM Mono',monospace;font-weight:500;font-size:.72rem;letter-spacing:.1em;color:var(--red)}
+@media(max-width:860px){.rd-site .vs-mid{flex-direction:row;padding:6px 0}
+.rd-site .vs-line{width:auto;height:1px;min-height:0;min-width:24px;background:linear-gradient(90deg,var(--line),rgba(0,0,0,0))}
+.rd-site .vs-line:last-child{background:linear-gradient(90deg,rgba(0,0,0,0),var(--line))}}
 
 
 /* quotes */
