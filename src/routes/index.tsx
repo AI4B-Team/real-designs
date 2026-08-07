@@ -5,9 +5,10 @@ import { html } from "@/content/rd-site-html";
 import { initSite } from "@/content/rd-site-script";
 import "@/styles/rd-site.css";
 
-const title = "AI Home Design From a Photo | REAL DESIGNS";
+const title = "AI Home Design and Renovation Planning | REAL DESIGNS";
 const description =
-  "Upload a photo and redesign interiors, exteriors and landscapes with AI. Refine every detail, estimate costs and turn your favorite design into a real plan.";
+  "Other tools help you picture it. REAL DESIGNS plans it: budget-guided AI redesign on your real walls, a line-item scope, a shopping list and a contractor-ready brief.";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
