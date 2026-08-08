@@ -62,26 +62,26 @@ export const showcaseHtml = `
 <section class="alt" id="showcase">
   <div class="wrap sc-wrap">
     <div class="sec-head rv">
-      <span class="eyebrow">Every Tool, One Login</span>
-      <h2>One Tool. Every Job. <em class="ann-underline">Always Your Real Space.</em></h2>
-      <p class="lede">Restyle, stage, price, shop, film and plan. All of it runs on your actual photo, and all of it feeds one project budget.</p>
+      <span class="eyebrow">Twelve Tools, One Running Total</span>
+      <h2>Every Tool Feeds <em class="ann-underline">The Same Number.</em></h2>
+      <p class="lede">Restyle, stage, price, shop, film and plan. Each one runs on the photo you uploaded, and each one adds to a single project budget you can hand a contractor.</p>
     </div>
     <div class="sc-grid" id="scGrid">
 
-      ${wipeCard(2, "Exterior Redesign", "Redesign The Outside",
+      ${wipeCard(2, "Exterior Redesign", "Price The Curb Appeal First",
         "Test siding, paint, roofing and curb appeal before a contractor quotes a square foot.",
         PHOTOS.exteriorBefore, PHOTOS.exteriorAfter, "Before", "After")}
 
-      ${wipeCard(1, "Interior Redesign", "Restyle Any Room",
+      ${wipeCard(1, "Interior Redesign", "Restyle A Room You Actually Own",
         "Dated room to designer finish in seconds. Furniture, lighting and decor, fully redone.",
         PHOTOS.before, PHOTOS.after, "Before", "After")}
 
-      ${wipeCard(3, "Landscape Design", "Reimagine Outdoor Spaces",
+      ${wipeCard(3, "Landscape Design", "See The Yard Before You Break Ground",
         "Add a patio, fire pit or fresh planting. See it standing in the dirt before you dig.",
         PHOTOS.yardBefore, PHOTOS.yardAfter, "Before", "After")}
 
-      ${card(5, "Declutter", "Empty A Room In One Click",
-        "Strip out furniture and clutter instantly. See the bare space, then rebuild it your way.", `
+      ${card(5, "Declutter", "Clear The Room, Keep The Architecture",
+        "Pull every piece of furniture out and keep the walls, windows and floor exactly where they are. Restage from a clean slate.", `
         <div class="sc-fade sc-declut">
           <div class="sc-lyr">${im(PHOTOS.stageClutter, "Furnished room")}</div>
           <div class="sc-lyr sc-f2">${im(PHOTOS.stageEmpty, "Emptied room")}</div>
@@ -90,7 +90,7 @@ export const showcaseHtml = `
           <span class="sc-lab l">Interior</span>
         </div>`)}
 
-      ${card(4, "Virtual Staging", "Stage Empty Rooms",
+      ${card(4, "Virtual Staging", "Furnish A Vacant Listing By Lunch",
         "Furnish a bare listing in seconds. No rented furniture, no photographer reshoot.", `
         <div class="sc-fade">
           <div class="sc-lyr">${im(PHOTOS.stageEmpty, "Empty room")}</div>
@@ -98,8 +98,8 @@ export const showcaseHtml = `
           <span class="sc-lab l">Empty</span><span class="sc-lab r">Staged</span>
         </div>`)}
 
-      ${card(6, "Reality Lock", "Edit Anything In Your Photo",
-        "AI finds every object in the frame, so you can keep, replace or remove one at a time.", `
+      ${card(6, "Reality Lock", "Lock What Stays, Change What Does Not",
+        "Tag the sofa you already bought and the floor you already paid for. They survive every regeneration untouched, and every locked decision carries into the next version.", `
         <div class="sc-detect">
           <div class="sc-lyr">${im(PHOTOS.after, "Detected objects in a living room")}</div>
           ${BOXES.map(([n, pos], i) => `<span class="sc-box" style="${pos};--d:${i * 0.18}s"><b>${n}</b></span>`).join("")}
@@ -127,8 +127,8 @@ export const showcaseHtml = `
           <div class="sc-range mono">${BUDGETS.map(([, r], i) => `<b class="sc-r${i}">${r}</b>`).join("")}</div>
         </div>`)}
 
-      ${card(9, "Shop The Design", "Find And Buy The Real Pieces",
-        "Every item matched to a real product at three price points, with a fit check for your space.", `
+      ${card(9, "Shop The Design", "Every Piece Priced Three Ways",
+        "Each item matched to something you can actually order, at a best price, a closest match and a premium pick, with a check that it physically fits.", `
         <div class="sc-shop">
           <div class="sc-lyr">${im(PHOTOS.after, "Shoppable render")}</div>
           ${[["30%", "62%"], ["68%", "48%"], ["18%", "78%"], ["82%", "72%"]].map(([l, t], i) =>
@@ -143,21 +143,22 @@ export const showcaseHtml = `
           ${cursor}
         </div>`)}
 
-      ${card(10, "Sketch To Plan", "Rough Idea To Real Direction",
-        "Napkin sketch or flat floor plan in. Furnished 3D and a photoreal room out.", `
-        <div class="sc-stages">
-          ${STAGES.map(([n, src], i) => `<div class="sc-lyr sc-s${i}">${im(src, n)}</div>`).join("")}
-          <span class="sc-lab l">Sketch</span><span class="sc-lab r">Render</span>
+      ${card(10, "Commercial License", "Own Everything You Make",
+        "Full commercial rights on every paid plan. Your renders stay yours if you cancel, downgrade or ask for a refund.", `
+        <div class="sc-lic">
+          <div class="sc-lyr">${im(PHOTOS.after, "Licensed commercial render")}</div>
+          <span class="sc-wm">REAL DESIGNS</span>
+          <span class="sc-licchip mono">Licensed &middot; Commercial Use</span>
         </div>`)}
 
-      ${card(11, "Walkthrough Video", "Turn A Still Into A Walkthrough",
+      ${card(11, "Walkthrough Video", "Post It Before The Listing Goes Live",
         "One click, no editing. Horizontal, square or vertical, branded or clean.", `
         <div class="sc-video">
           <div class="sc-lyr sc-ken">${im(PHOTOS.luxury, "Walkthrough video frame")}</div>
           <span class="sc-rec mono"><i></i>Rec <b class="sc-clock">00:14</b></span>
         </div>`, true)}
 
-      ${card(12, "MLS Disclosure", "Compliance Handled For You",
+      ${card(12, "MLS Disclosure", "The Disclosure Nobody Else Automates",
         "Staged photos labelled automatically to your MLS and state rules, with an audit trail.", `
         <div class="sc-mls">
           <div class="sc-lyr">${im(PHOTOS.coastal, "Virtually staged listing photo")}</div>
