@@ -1552,8 +1552,8 @@
 .rd-site .sc-toast{position:absolute;left:9px;bottom:9px;z-index:7;font-size:.58rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
   color:#fff;background:#0a7b3e;border:1px solid #0a7b3e;border-radius:999px;padding:5px 10px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
 .rd-site .sc-card.play .sc-toast{opacity:0;animation:scRow 6s ease-out infinite;animation-delay:4.2s}
-.rd-site .sc-shop .sc-cur{left:57%;top:47%;margin:-2px 0 0 -2px}
-.rd-site .sc-click{position:absolute;left:57%;top:47%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:999px;
+.rd-site .sc-shop .sc-cur{left:52%;top:58%;margin:-2px 0 0 -2px}
+.rd-site .sc-click{position:absolute;left:52%;top:58%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:999px;
   border:2px solid var(--red);z-index:6;opacity:0}
 .rd-site .sc-card.play .sc-prod{animation:scPop 6s ease-out infinite}
 .rd-site .sc-card.play .sc-shop .sc-cur{animation:scShopCur 6s ease-in-out infinite}
