@@ -127,8 +127,8 @@ export const showcaseHtml = `
         "Each item matched to something you can actually order, at a best price, a closest match and a premium pick, with a check that it physically fits.", `
         <div class="sc-shop">
           <div class="sc-lyr">${im(PHOTOS.after, "Shoppable render")}</div>
-          ${[["30%", "62%"], ["68%", "48%"], ["18%", "78%"], ["82%", "72%"]].map(([l, t], i) =>
-            `<span class="sc-hot" style="left:${l};top:${t};--d:${i * 0.22}s"></span>`).join("")}
+          ${[["19%", "29%"], ["34%", "34%"], ["57%", "47%"], ["52%", "58%"], ["40%", "71%"], ["69%", "47%"], ["88%", "40%"]].map(([l, t], i) =>
+            `<span class="sc-hot" style="left:${l};top:${t};--d:${i * 0.16}s"></span>`).join("")}
           <div class="sc-prod">
             <b>Low Profile Sofa</b>
             <span><i>Best Price</i><em class="mono">$690</em></span>
