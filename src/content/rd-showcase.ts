@@ -69,7 +69,7 @@ export const showcaseHtml = `
         PHOTOS.exteriorBefore, PHOTOS.exteriorAfter, "Before", "After")}
 
       ${wipeCard(1, "Interior Redesign", "Restyle A Room You Actually Own",
-        "Dated room to designer finish in seconds. Furniture, lighting and decor, fully redone.",
+        "Take a dated room to a finished design on the same walls. Furniture, lighting and decor, fully redone.",
         PHOTOS.before, PHOTOS.after, "Before", "After")}
 
       ${wipeCard(3, "Landscape Design", "See The Yard Before You Break Ground",
@@ -87,7 +87,7 @@ export const showcaseHtml = `
         </div>`)}
 
       ${card(4, "Virtual Staging", "Furnish A Vacant Listing By Lunch",
-        "Furnish a bare listing in seconds. No rented furniture, no photographer reshoot.", `
+        "Furnish a bare listing before the photographer books a reshoot. No rented furniture, no delivery window.", `
         <div class="sc-fade">
           <div class="sc-lyr">${im(PHOTOS.stageEmpty, "Empty room")}</div>
           <div class="sc-lyr sc-f2">${im(PHOTOS.stageStaged, "Staged room")}</div>

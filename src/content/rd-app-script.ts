@@ -648,7 +648,7 @@ if(helpBtn&&helpMenu){
 }
 
 /* ---------- help center ---------- */
-const HELP_POP=['Getting Started','Uploading Photos','Structure Lock','Scope Accuracy','Client Links','Billing'];
+const HELP_POP=['Getting Started','Uploading Photos','Reality Lock','Scope Accuracy','Client Links','Billing'];
 document.getElementById('helpPop').innerHTML=HELP_POP.map(t=>`<span class="chip">${t}</span>`).join('');
 document.getElementById('helpQuick').innerHTML=[
  ['1','Add Your First Property','Drop in an address, upload room photos, and we build the room list for you.'],
@@ -658,7 +658,7 @@ document.getElementById('helpQuick').innerHTML=[
 
 const HELP_CATS=[
  ['rocket','Getting Started',[['image-up','Upload Room Photos'],['map-pin','Add A Property'],['wand-sparkles','Your First Design'],['list-checks','Room Checklist']]],
- ['palette','Designing',[['lock','Structure Lock Explained'],['layers','Style Directions'],['history','Version History'],['images','Listing Batch Mode']]],
+ ['palette','Designing',[['lock','Reality Lock Explained'],['layers','Style Directions'],['history','Version History'],['images','Listing Batch Mode']]],
  ['calculator','Scope & Budget',[['dollar-sign','How Pricing Is Built'],['sliders-horizontal','Budget Bands'],['shopping-bag','Product Tiers'],['map','Market Labor Rates']]],
  ['share-2','Client Delivery',[['presentation','Building Presentations'],['link','Client Approval Links'],['bell','Open And View Alerts'],['download','Exports And Watermarks']]],
  ['users','Team & Workspace',[['user-plus','Inviting Members'],['shield','Roles And Permissions'],['building','Brand Kit'],['plug','Integrations']]],
@@ -674,7 +674,7 @@ function renderCats(q){
   lucide.createIcons();
 }
 const HELP_FAQ=[
- ['Do The Designs Change The Structure Of The Room?','No. Structure lock holds walls, windows, ceiling lines and floor plane in place, so every version is buildable in the same space.'],
+ ['Do The Designs Change The Structure Of The Room?','No. Reality Lock holds walls, windows, ceiling lines and floor plane in place, so every version is buildable in the same space.'],
  ['How Accurate Is The Scope?','Scopes are built from approved designs using current market labor rates and real product pricing, and land inside the stated band on most projects.'],
  ['Can I Upload My Own Photos?','Yes. Any straight-on room photo works. Better light and a wider angle produce better versions.'],
  ['Can Clients Comment Instead Of Approving?','Yes. Client links accept comments per room, and you get notified the moment a link is opened.'],
@@ -702,7 +702,7 @@ document.getElementById('helpPop').addEventListener('click',e=>{
 /* ---------- tutorials ---------- */
 const TUTS=[['Add Your First Property','2 Minutes',PHOTOS.craftsman,'Getting Started'],
 ['Upload Photos That Render Well','3 Minutes',PHOTOS.before,'Getting Started'],
-['Structure Lock In Practice','4 Minutes',PHOTOS.after,'Designing'],
+['Reality Lock In Practice','4 Minutes',PHOTOS.after,'Designing'],
 ['Choosing A Style Direction','3 Minutes',PHOTOS.japandi,'Designing'],
 ['Staging A Whole Listing','5 Minutes',PHOTOS.neutral,'Listing Batch'],
 ['Building A Scope And Budget','4 Minutes',PHOTOS.kitchen,'Scope'],
