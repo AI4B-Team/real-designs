@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
+import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-staging'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 
 const IndexRoute = IndexRouteImport.update({
@@ -46,6 +47,11 @@ const FreeAiInteriorDesignRoute = FreeAiInteriorDesignRouteImport.update({
   path: '/free/ai-interior-design',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FreeVirtualStagingRoute = FreeVirtualStagingRouteImport.update({
+  id: '/free/virtual-staging',
+  path: '/free/virtual-staging',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
   id: '/api/public/founding',
   path: '/api/public/founding',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesByTo {
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesById {
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRouteTypes {
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app'
     | '/free/ai-interior-design'
+    | '/free/virtual-staging'
     | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app'
     | '/free/ai-interior-design'
+    | '/free/virtual-staging'
     | '/api/public/founding'
   id:
     | '__root__'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/app'
     | '/free/ai-interior-design'
+    | '/free/virtual-staging'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
 }
@@ -112,6 +124,7 @@ export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   FreeAiInteriorDesignRoute: typeof FreeAiInteriorDesignRoute
+  FreeVirtualStagingRoute: typeof FreeVirtualStagingRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
 
@@ -159,6 +172,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FreeAiInteriorDesignRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/free/virtual-staging': {
+      id: '/free/virtual-staging'
+      path: '/free/virtual-staging'
+      fullPath: '/free/virtual-staging'
+      preLoaderRoute: typeof FreeVirtualStagingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/founding': {
       id: '/api/public/founding'
       path: '/api/public/founding'
@@ -186,6 +206,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   FreeAiInteriorDesignRoute: FreeAiInteriorDesignRoute,
+  FreeVirtualStagingRoute: FreeVirtualStagingRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }
 export const routeTree = rootRouteImport
