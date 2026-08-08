@@ -1012,6 +1012,9 @@
   font-size:.79rem;padding:9px 0;border-radius:999px;margin-top:10px}
 
 .rd-site .show-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+@media(max-width:760px){.rd-site .show-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+  .rd-site .show-nav::-webkit-scrollbar{display:none}
+  .rd-site .show-nav button{flex:0 0 auto;white-space:nowrap}}
 .rd-site .show-nav button{font-size:.75rem;font-weight:500;color:var(--mute);border:1px solid var(--line);
   background:var(--white);border-radius:999px;padding:6px 13px;transition:.15s}
 .rd-site .show-nav button:hover{border-color:var(--ink);color:var(--ink)}
@@ -1081,6 +1084,14 @@
 .rd-site .tlayer.zoom-out.in{animation:rdPullOut 1.6s cubic-bezier(.42,0,.3,1) forwards}
 @keyframes rdPushIn{from{transform:scale(1)}to{transform:scale(1.55) translateY(4%)}}
 @keyframes rdPullOut{from{transform:scale(1.35)}to{transform:scale(1)}}
+.rd-site .tlayer.zoom-ken.in{animation:rdKen 2.6s linear forwards}
+.rd-site .tlayer.zoom-aerial.in{animation:rdAerial 2.8s cubic-bezier(.3,0,.3,1) forwards}
+@keyframes rdKen{from{transform:scale(1)}to{transform:scale(1.14)}}
+@keyframes rdAerial{from{transform:scale(1.06)}to{transform:scale(1)}}
+.rd-site .rec-timer{position:absolute;top:13px;right:13px;z-index:9;display:inline-flex;align-items:center;gap:7px;
+  background:rgba(17,17,19,.78);color:#fff;font-size:.66rem;letter-spacing:.12em;padding:5px 11px;border-radius:999px}
+.rd-site .rec-timer i{width:7px;height:7px;border-radius:50%;background:var(--red);animation:rdRec 1s steps(1,end) infinite}
+@keyframes rdRec{0%,50%{opacity:1}51%,100%{opacity:.15}}
 
 .rd-site .tour-prog{position:absolute;top:0;left:0;right:0;height:3px;background:rgba(255,255,255,.28);z-index:9}
 .rd-site .tour-prog i{display:block;height:100%;width:0;background:var(--red);transition:width .5s linear}
@@ -1113,7 +1124,7 @@
 
 @media(prefers-reduced-motion:reduce){
   .rd-site .tlayer{transition:none}
-  .rd-site .tlayer.zoom-in.in,.rd-site .tlayer.zoom-out.in{animation:none}
+  .rd-site .tlayer.zoom-in.in,.rd-site .tlayer.zoom-out.in,.rd-site .tlayer.zoom-ken.in,.rd-site .tlayer.zoom-aerial.in{animation:none}
   .rd-site .tour-note,.rd-site .tour-sum{animation:none;opacity:1}
   .rd-site .spot,.rd-site .pcard{animation:none;opacity:1;transform:none}
 }
