@@ -10,14 +10,25 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
+import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calculator'
+import { Route as FreeRehabCostCalculatorRouteImport } from './routes/free/rehab-cost-calculator'
+import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-staging'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlugRoute = SlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -29,10 +40,35 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   id: '/app',
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const FreeAiInteriorDesignRoute = FreeAiInteriorDesignRouteImport.update({
+  id: '/free/ai-interior-design',
+  path: '/free/ai-interior-design',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreeArvCalculatorRoute = FreeArvCalculatorRouteImport.update({
+  id: '/free/arv-calculator',
+  path: '/free/arv-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreeRehabCostCalculatorRoute = FreeRehabCostCalculatorRouteImport.update({
+  id: '/free/rehab-cost-calculator',
+  path: '/free/rehab-cost-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FreeVirtualStagingRoute = FreeVirtualStagingRouteImport.update({
+  id: '/free/virtual-staging',
+  path: '/free/virtual-staging',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
   id: '/api/public/founding',
@@ -42,42 +78,92 @@ const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app': typeof AuthenticatedAppRoute
+  '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/arv-calculator': typeof FreeArvCalculatorRoute
+  '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
+  '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app': typeof AuthenticatedAppRoute
+  '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/arv-calculator': typeof FreeArvCalculatorRoute
+  '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
+  '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/arv-calculator': typeof FreeArvCalculatorRoute
+  '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
+  '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/app' | '/api/public/founding'
+  fullPaths:
+    | '/'
+    | '/$slug'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/app'
+    | '/free/ai-interior-design'
+    | '/free/arv-calculator'
+    | '/free/rehab-cost-calculator'
+    | '/free/virtual-staging'
+    | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/app' | '/api/public/founding'
+  to:
+    | '/'
+    | '/$slug'
+    | '/auth'
+    | '/sitemap.xml'
+    | '/app'
+    | '/free/ai-interior-design'
+    | '/free/arv-calculator'
+    | '/free/rehab-cost-calculator'
+    | '/free/virtual-staging'
+    | '/api/public/founding'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
+    | '/$slug'
     | '/auth'
+    | '/sitemap.xml'
     | '/_authenticated/app'
+    | '/free/ai-interior-design'
+    | '/free/arv-calculator'
+    | '/free/rehab-cost-calculator'
+    | '/free/virtual-staging'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  FreeAiInteriorDesignRoute: typeof FreeAiInteriorDesignRoute
+  FreeArvCalculatorRoute: typeof FreeArvCalculatorRoute
+  FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
+  FreeVirtualStagingRoute: typeof FreeVirtualStagingRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
 
@@ -88,6 +174,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug': {
+      id: '/$slug'
+      path: '/$slug'
+      fullPath: '/$slug'
+      preLoaderRoute: typeof SlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -104,12 +197,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app': {
       id: '/_authenticated/app'
       path: '/app'
       fullPath: '/app'
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/free/ai-interior-design': {
+      id: '/free/ai-interior-design'
+      path: '/free/ai-interior-design'
+      fullPath: '/free/ai-interior-design'
+      preLoaderRoute: typeof FreeAiInteriorDesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/free/arv-calculator': {
+      id: '/free/arv-calculator'
+      path: '/free/arv-calculator'
+      fullPath: '/free/arv-calculator'
+      preLoaderRoute: typeof FreeArvCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/free/rehab-cost-calculator': {
+      id: '/free/rehab-cost-calculator'
+      path: '/free/rehab-cost-calculator'
+      fullPath: '/free/rehab-cost-calculator'
+      preLoaderRoute: typeof FreeRehabCostCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/free/virtual-staging': {
+      id: '/free/virtual-staging'
+      path: '/free/virtual-staging'
+      fullPath: '/free/virtual-staging'
+      preLoaderRoute: typeof FreeVirtualStagingRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/founding': {
       id: '/api/public/founding'
@@ -135,7 +263,13 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
+  FreeAiInteriorDesignRoute: FreeAiInteriorDesignRoute,
+  FreeArvCalculatorRoute: FreeArvCalculatorRoute,
+  FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
+  FreeVirtualStagingRoute: FreeVirtualStagingRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }
 export const routeTree = rootRouteImport
