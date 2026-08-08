@@ -37,12 +37,12 @@ const SCOPE_ROWS: [string, string, string][] = [
 ];
 
 const BOXES: [string, string][] = [
-  ["Sofa", "left:26%;top:52%;width:40%;height:26%"],
-  ["Rug", "left:22%;top:74%;width:52%;height:18%"],
-  ["Wall Art", "left:40%;top:16%;width:20%;height:22%"],
-  ["Floor Lamp", "left:76%;top:34%;width:14%;height:38%"],
-  ["Coffee Table", "left:38%;top:70%;width:24%;height:14%"],
-  ["Armchair", "left:6%;top:50%;width:18%;height:28%"],
+  ["Sofa", "left:33%;top:53%;width:37%;height:20%"],
+  ["Rug", "left:31%;top:70%;width:41%;height:21%"],
+  ["Wall Art", "left:14%;top:21%;width:11%;height:41%"],
+  ["Floor Lamp", "left:29%;top:37%;width:12%;height:44%"],
+  ["Coffee Table", "left:39%;top:67%;width:26%;height:15%"],
+  ["Potted Tree", "left:66%;top:38%;width:12%;height:39%"],
 ];
 
 const BUDGETS: [string, string, string][] = [
