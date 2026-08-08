@@ -271,7 +271,7 @@ const SL=[['Warm Minimal',PHOTOS.after],['Modern Farmhouse',PHOTOS.farmhouse],['
 ['Quiet Luxury',PHOTOS.luxury],['Investor Neutral',PHOTOS.neutral],['Florida Ranch',PHOTOS.ranch],
 ['Painted Brick',PHOTOS.paintedBrick],['Resort Yard',PHOTOS.resortYard],['Craftsman',PHOTOS.craftsman]];
 document.getElementById('styleGrid').innerHTML=SL.map(([n,src],i)=>`
-  <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' interior design style')}</div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')} / 180</span></div></div>`).join('');
+  <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' interior design style')}</div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')}</span></div></div>`).join('');
 
 /* ---------- proof cards ---------- */
 /* NOTE: These are verifiable product claims, not testimonials. Replace with real
