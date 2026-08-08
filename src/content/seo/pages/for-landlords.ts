@@ -106,7 +106,7 @@ export const page: LandingPage = {
     },
     {
       q: "How does this help me avoid a bad contractor quote?",
-      a: "The scoped planning range gives you a reasonable ballpark drawn from national averages for the specific work in your turn, so if a quote comes back well above or suspiciously below that range, you know to ask questions before agreeing. It is a sanity check for a conversation, not a substitute for getting your own local quotes.",
+      a: "The scoped planning range gives you a reasonable planning range drawn from national averages for the specific work in your turn, so if a quote comes back well above or suspiciously below that range, you know to ask questions before agreeing. It is a sanity check for a conversation, not a substitute for getting your own local quotes.",
     },
     {
       q: "Can I use the same finish choice across all my units?",
