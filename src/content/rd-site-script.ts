@@ -131,9 +131,9 @@ function paint(i){
   const b=TOUR[i];
   // crossfade: new layer on top, old ones removed once faded
   const layer=document.createElement('div');
-  layer.className='tlayer'+(b.zoom==='in'?' zoom-in':b.zoom==='out'?' zoom-out':'');
+  layer.className='tlayer'+(b.zoom==='in'?' zoom-in':b.zoom==='out'?' zoom-out':b.zoom==='ken'?' zoom-ken':b.zoom==='aerial'?' zoom-aerial':'');
   layer.innerHTML=photo(b.img,b.ch+' '+b.style)
-    +(b.shop?shopOverlay():'')+(b.summary?summaryOverlay():'')
+    +(b.shop?shopOverlay():'')+(b.rec?recOverlay():'')+(b.summary?summaryOverlay():'')
     +(b.note?`<span class="tour-note">${b.note}</span>`:'');
   showStage.appendChild(layer);
   requestAnimationFrame(()=>layer.classList.add('in'));
@@ -150,7 +150,7 @@ function paint(i){
     const he=document.getElementById('heroEst'),hf=document.getElementById('heroFit'),
           hl=document.getElementById('heroEstLab');
     if(hl)hl.textContent=b.lab;
-    if(he){he.textContent=b.est;he.classList.toggle('soft',!/\$/.test(b.est))}
+    if(he){const money=/\$/.test(b.est);he.textContent=b.est;he.classList.toggle('soft',!money);he.classList.toggle('ann-circle',money)}
     if(hf){hf.textContent=b.fit;hf.className=b.summary?'conf-hi big':'conf-hi'}
     if(b.mets){
       const ids=[['heroM1Lab','heroFit'],['heroM2Lab','heroM2'],['heroM3Lab','heroM3']];
