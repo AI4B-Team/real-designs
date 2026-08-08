@@ -240,8 +240,9 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
             <span className="eyebrow">Pricing</span>
             <h2>Pick The Plan. Keep The Number.</h2>
             <p className="lede">
-              Annual pricing shown. Every plan meters designs and scopes, not people.
+              Annual pricing shown. One credit balance across every tool, and we meter credits, not people.
             </p>
+
           </div>
           <div className="lp-plans">
             {PLANS.map((p) => (
