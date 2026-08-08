@@ -99,6 +99,27 @@ export type Database = {
           },
         ]
       }
+      founding_members: {
+        Row: {
+          claimed_at: string
+          id: string
+          plan: string
+          user_id: string
+        }
+        Insert: {
+          claimed_at?: string
+          id?: string
+          plan?: string
+          user_id: string
+        }
+        Update: {
+          claimed_at?: string
+          id?: string
+          plan?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       markets: {
         Row: {
           cbsa_code: string | null
