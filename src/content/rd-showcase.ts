@@ -52,10 +52,6 @@ const BUDGETS: [string, string, string][] = [
   ["Reimagine", "$41K to $62K", PHOTOS.midcentury],
 ];
 
-const STAGES: [string, string][] = [
-  ["Sketch", PHOTOS.sketchHand], ["2D Plan", PHOTOS.plan2d],
-  ["3D Plan", PHOTOS.plan3d], ["Render", PHOTOS.sketchRender],
-];
 
 export const showcaseHtml = `
 <!-- ============ SHOWCASE GRID ============ -->
