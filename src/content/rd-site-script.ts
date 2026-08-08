@@ -330,11 +330,18 @@ const coMask=document.getElementById('coMask');
 function coRender(name){
   const p=P.find(x=>x.n===name);if(!p)return;
   const base=p[bill];
-  const bump=document.getElementById('coBump').checked?9:0;
+  /* the bump is offered on Starter and Pro only, never on Studio */
+  const eligible=p.n==='Starter'||p.n==='Pro';
+  const wrap=document.getElementById('coBumpWrap');
+  const box=document.getElementById('coBump');
+  if(wrap)wrap.hidden=!eligible;
+  if(!eligible&&box)box.checked=false;
+  const bump=eligible&&box.checked?7:0;
   document.getElementById('coTitle').textContent=`${p.n}, Billed ${bill==='yr'?'Yearly':'Monthly'}`;
   document.getElementById('coPrice').textContent=`$${base}/mo`;
   document.getElementById('coTotal').textContent=`$${base+bump}/mo`;
 }
+
 let coPlan='Pro';
 function openCheckout(name){
   coPlan=name;coRender(coPlan);coMask.hidden=false;
