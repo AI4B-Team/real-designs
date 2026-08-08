@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
+import { Route as FreeRehabCostCalculatorRouteImport } from './routes/free/rehab-cost-calculator'
 import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-staging'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 
@@ -47,6 +48,11 @@ const FreeAiInteriorDesignRoute = FreeAiInteriorDesignRouteImport.update({
   path: '/free/ai-interior-design',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FreeRehabCostCalculatorRoute = FreeRehabCostCalculatorRouteImport.update({
+  id: '/free/rehab-cost-calculator',
+  path: '/free/rehab-cost-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FreeVirtualStagingRoute = FreeVirtualStagingRouteImport.update({
   id: '/free/virtual-staging',
   path: '/free/virtual-staging',
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app'
     | '/free/ai-interior-design'
+    | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
@@ -104,6 +114,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app'
     | '/free/ai-interior-design'
+    | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/api/public/founding'
   id:
@@ -114,6 +125,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/app'
     | '/free/ai-interior-design'
+    | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
@@ -124,6 +136,7 @@ export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   FreeAiInteriorDesignRoute: typeof FreeAiInteriorDesignRoute
+  FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
   FreeVirtualStagingRoute: typeof FreeVirtualStagingRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FreeAiInteriorDesignRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/free/rehab-cost-calculator': {
+      id: '/free/rehab-cost-calculator'
+      path: '/free/rehab-cost-calculator'
+      fullPath: '/free/rehab-cost-calculator'
+      preLoaderRoute: typeof FreeRehabCostCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/free/virtual-staging': {
       id: '/free/virtual-staging'
       path: '/free/virtual-staging'
@@ -206,6 +226,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   FreeAiInteriorDesignRoute: FreeAiInteriorDesignRoute,
+  FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
   FreeVirtualStagingRoute: FreeVirtualStagingRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }
