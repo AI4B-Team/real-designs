@@ -1011,12 +1011,12 @@
 .rd-site .scope-card .act{display:block;background:var(--ink);color:#fff;text-align:center;font-weight:700;
   font-size:.79rem;padding:9px 0;border-radius:999px;margin-top:10px}
 
-.rd-site .show-nav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
-@media(max-width:760px){.rd-site .show-nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
-  .rd-site .show-nav::-webkit-scrollbar{display:none}
-  .rd-site .show-nav button{flex:0 0 auto;white-space:nowrap}}
-.rd-site .show-nav button{font-size:.75rem;font-weight:500;color:var(--mute);border:1px solid var(--line);
-  background:var(--white);border-radius:999px;padding:6px 13px;transition:.15s}
+.rd-site .show-nav{display:flex;gap:5px;flex-wrap:nowrap;margin-bottom:10px;
+  overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.rd-site .show-nav::-webkit-scrollbar{display:none}
+.rd-site .show-nav button{flex:0 0 auto;white-space:nowrap}
+.rd-site .show-nav button{font-size:.72rem;font-weight:500;color:var(--mute);border:1px solid var(--line);
+  background:var(--white);border-radius:999px;padding:6px 11px;transition:.15s}
 .rd-site .show-nav button:hover{border-color:var(--ink);color:var(--ink)}
 .rd-site .show-nav button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
 

@@ -62,6 +62,11 @@ const TOUR=[
  {ch:'Exterior',dur:1600,img:PHOTOS.ranch,style:'Florida Ranch',lock:'Reality Lock On',zoom:'in',
   lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Approved',mets:[['Budget Fit','Approved','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes','None Detected','conf-hi']],note:'Stepping Inside'},
 
+ {ch:'Interior',dur:1800,img:PHOTOS.before,style:'As Found',lock:'Reality Lock On',
+  lab:'Living Room',est:'Scanning',fit:'Reading Room',mets:[['Budget Fit','Reading Room','conf-md'],['Layout Confidence','Measuring','conf-md'],['Structural Changes','None Detected','conf-hi']]},
+ {ch:'Interior',dur:1900,img:PHOTOS.after,style:'Warm Minimal',lock:'Reality Lock On',
+  lab:'Living Room',est:'$11,400 to $14,900',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes','None Detected','conf-hi']]},
+
  {ch:'Declutter',dur:1900,img:PHOTOS.clutter,style:'As Found',lock:'Declutter On',
   lab:'Living Room',est:'Detecting Contents',fit:'14 Objects Found',mets:[['Objects Detected','14','conf-md'],['Reality Lock','On','conf-hi'],['Disclosure Ready','Yes','conf-hi']]},
  {ch:'Declutter',dur:1900,img:PHOTOS.empty,style:'Emptied',lock:'Declutter On',
@@ -91,7 +96,7 @@ const TOUR=[
  {ch:'3D Plan',dur:3200,img:PHOTOS.resortYard,style:'Design DNA Applied',lock:'Budget Mode On',summary:true,
   lab:'Whole Property Planning Range',est:'$49,400 to $63,200',fit:'4 Rooms Approved',mets:[['Rooms Approved','4 of 4','conf-hi'],['Line Items','62','conf-hi'],['Pricing Confidence','High','conf-hi']]}
 ];
-const CHAPTERS=['Exterior','Declutter','Stage','Shop','Garden','Video','3D Plan'];
+const CHAPTERS=['Exterior','Interior','Declutter','Stage','Shop','Garden','Video','3D Plan'];
 
 const showStage=document.getElementById('showStage'),lockPill=document.getElementById('lockPill'),
       modePill=document.getElementById('modePill'),styleChip=document.getElementById('styleChip'),
