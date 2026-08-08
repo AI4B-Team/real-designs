@@ -1561,9 +1561,21 @@
 .rd-site .sc-prod i{font-style:normal}
 .rd-site .sc-toast{position:absolute;left:9px;bottom:9px;z-index:7;font-size:.58rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
   color:#fff;background:#0a7b3e;border:1px solid #0a7b3e;border-radius:999px;padding:5px 10px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.rd-site .sc-shop .sc-cur{left:57%;top:47%;margin:-2px 0 0 -2px}
+.rd-site .sc-click{position:absolute;left:57%;top:47%;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:999px;
+  border:2px solid var(--red);z-index:6;opacity:0}
 .rd-site .sc-card.play .sc-prod{animation:scPop 6s ease-out infinite}
-.rd-site .sc-card.play .sc-toast{opacity:0;animation:scRow 6s ease-out infinite;animation-delay:4.2s}
-.rd-site .sc-card.play .sc-shop .sc-cur{animation:scCur6 6s ease-in-out infinite}
+.rd-site .sc-card.play .sc-shop .sc-cur{animation:scShopCur 6s ease-in-out infinite}
+.rd-site .sc-card.play .sc-click{animation:scClick 6s ease-out infinite}
+.rd-site .sc-card.play .sc-hot-main{animation:scHotMain 6s ease-out infinite}
+@keyframes scShopCur{0%,18%{opacity:0;transform:translate(46px,52px) scale(1)}
+  28%{opacity:1;transform:translate(46px,52px) scale(1)}
+  48%{opacity:1;transform:translate(0,0) scale(1)}
+  52%{opacity:1;transform:translate(0,0) scale(.82)}
+  56%,88%{opacity:1;transform:translate(0,0) scale(1)}
+  96%,100%{opacity:0;transform:translate(0,0) scale(1)}}
+@keyframes scClick{0%,50%{opacity:0;transform:scale(.6)}56%{opacity:.9;transform:scale(1.6)}68%,100%{opacity:0;transform:scale(2.4)}}
+@keyframes scHotMain{0%,50%{transform:scale(1)}56%{transform:scale(1.45)}70%,100%{transform:scale(1.15)}}
 
 /* 10 commercial license */
 .rd-site .sc-wm{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
