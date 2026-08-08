@@ -1804,3 +1804,6 @@
 .rd-site .pcmp-t td{padding:9px 10px;font-size:.82rem;color:var(--ink-2);border-top:1px solid var(--line)}
 .rd-site .pcmp-t td:nth-child(2){background:var(--red-tint,rgba(204,0,0,.04));color:var(--ink);font-weight:500}
 .rd-site .pcmp small{display:block;margin-top:11px;font-size:.68rem;color:var(--mute-2)}
+
+.rd-site .lede-wide{max-width:none;width:100%;white-space:nowrap}
+@media(max-width:900px){.rd-site .lede-wide{white-space:normal;font-size:.86rem}}
