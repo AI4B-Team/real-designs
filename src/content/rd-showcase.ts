@@ -128,7 +128,8 @@ export const showcaseHtml = `
         <div class="sc-shop">
           <div class="sc-lyr">${im(PHOTOS.after, "Shoppable render")}</div>
           ${[["19%", "29%"], ["34%", "34%"], ["57%", "47%"], ["52%", "58%"], ["40%", "71%"], ["69%", "47%"], ["88%", "40%"]].map(([l, t], i) =>
-            `<span class="sc-hot" style="left:${l};top:${t};--d:${i * 0.16}s"></span>`).join("")}
+            `<span class="sc-hot${i === 2 ? " sc-hot-main" : ""}" style="left:${l};top:${t};--d:${i * 0.16}s"></span>`).join("")}
+          <span class="sc-click"></span>
           <div class="sc-prod">
             <b>Low Profile Sofa</b>
             <span><i>Best Price</i><em class="mono">$690</em></span>
