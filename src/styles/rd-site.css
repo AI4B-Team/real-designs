@@ -1770,3 +1770,10 @@
 .rd-site .calc .calc-range{width:100%;margin-top:12px;accent-color:var(--red)}
 .rd-site .calc-table{margin-top:6px;font-size:.84rem}
 .rd-site .calc-table .calc-sub td{color:var(--mute)}
+
+/* ---- Landing page: HowTo step list ---- */
+.rd-site .lp-howto{list-style:none;counter-reset:ht;display:grid;gap:14px;max-width:900px;margin:0 auto;padding:0}
+.rd-site .lp-howto li{counter-increment:ht;position:relative;padding:18px 20px 18px 62px;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+.rd-site .lp-howto li::before{content:counter(ht,decimal-leading-zero);position:absolute;left:20px;top:18px;font-family:var(--mono,ui-monospace,monospace);font-size:.78rem;color:var(--red);font-weight:600}
+.rd-site .lp-howto h3{font-size:1rem;margin:0 0 6px;letter-spacing:-.02em}
+.rd-site .lp-howto p{margin:0;color:var(--mute);font-size:.9rem;line-height:1.6}
