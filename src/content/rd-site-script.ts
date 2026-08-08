@@ -83,10 +83,15 @@ const TOUR=[
  {ch:'Garden',dur:2500,img:PHOTOS.resortYard,style:'Resort',lock:'Budget Mode On',
   lab:'Backyard',est:'$26,100 to $31,500',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Trades','3','conf-hi'],['Pricing Confidence','High','conf-hi']]},
 
- {ch:'Garden',dur:3200,img:PHOTOS.resortYard,style:'Design DNA Applied',lock:'Budget Mode On',summary:true,
+ {ch:'Video',dur:2600,img:PHOTOS.resortYard,style:'Cinematic Push',lock:'Recording',zoom:'ken',rec:true,
+  lab:'Clip Length',est:'20 Seconds',fit:'Ready To Post',mets:[['Clip Length','20 Seconds','conf-hi'],['Resolution','1080p','conf-hi'],['Ready To Post','Yes','conf-hi']]},
+ {ch:'3D Plan',dur:2800,img:PHOTOS.plan3d,style:'Furnished 3D',lock:'Design DNA Applied',zoom:'aerial',
+  lab:'Whole Property',est:'4 Rooms Planned',fit:'Design DNA Applied',mets:[['Rooms Planned','4','conf-hi'],['Plan Type','Furnished 3D','conf-hi'],['Design DNA','Applied','conf-hi']]},
+
+ {ch:'3D Plan',dur:3200,img:PHOTOS.resortYard,style:'Design DNA Applied',lock:'Budget Mode On',summary:true,
   lab:'Whole Property Planning Range',est:'$49,400 to $63,200',fit:'4 Rooms Approved',mets:[['Rooms Approved','4 of 4','conf-hi'],['Line Items','62','conf-hi'],['Pricing Confidence','High','conf-hi']]}
 ];
-const CHAPTERS=['Exterior','Declutter','Stage','Shop','Garden'];
+const CHAPTERS=['Exterior','Declutter','Stage','Shop','Garden','Video','3D Plan'];
 
 const showStage=document.getElementById('showStage'),lockPill=document.getElementById('lockPill'),
       modePill=document.getElementById('modePill'),styleChip=document.getElementById('styleChip'),
