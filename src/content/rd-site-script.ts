@@ -291,16 +291,17 @@ document.getElementById('quotes').innerHTML=Q.map(([ic,t,d])=>`
 /* ---------- pricing ---------- */
 const P=[
 {n:'Free',mo:0,yr:0,who:'Anyone. No card, no account to start.',cta:'Start Free',pop:false,note:'No card · No account to start',
- f:['<b>5 designs per day</b>','Every space, full style library','Reality Lock and object controls','Budget Mode with a planning range','Watermarked, standard resolution'],
- x:['Itemized scope','Clean HD download']},
-{n:'Starter',mo:17,yr:7,who:'One property. Personal projects.',cta:'Choose Starter',pop:false,note:'30 day money back · Cancel anytime',
- f:['<b>200 designs a month</b>','<b>10 scopes a month</b>','Clean HD, no watermark','Personal use license','Design DNA on one property','Shopping list with live pricing'],
- x:['Commercial license','ARV impact range']},
-{n:'Pro',mo:27,yr:11,who:'Investors, flippers, contractors and agents.',cta:'Choose Pro',pop:true,note:'30 day money back · Cancel anytime',
- f:['<b>1,000 designs a month</b>','<b>50 scopes a month</b>','Everything in Starter','Commercial license','Contractor brief PDF','ARV impact range','Rental grade vs retail grade','Batch listing staging with disclosure','5 team seats'],
- x:['Video walkthroughs and 3D plans']},
-{n:'Studio',mo:37,yr:15,who:'Design teams and brokerage offices.',cta:'Choose Studio',pop:false,note:'30 day money back · Cancel anytime',
- f:['<b>2,500 designs a month</b>','<b>200 scopes a month</b>','Everything in Pro','20 video walkthroughs a month','20 3D floor plans a month','Client approval portal','Brand presets and white label decks','Multi angle consistency','<b>Unlimited team seats</b>','Priority render queue'],x:[]}];
+ f:['<b>5 credits a day</b>','First design needs no account at all','Interiors, exteriors and landscapes','Full style library, Reality Lock, keep/replace/remove controls','Virtual staging, declutter, material swap, style transfer','Typical budget range by room type and finish level','Watermarked, standard resolution'],
+ x:['Clean HD download','Scope and budget from YOUR photo','Commercial license']},
+{n:'Starter',mo:15,yr:7,who:'One property. Personal projects.',cta:'Choose Starter',pop:false,note:'30 day money back · Cancel anytime',
+ f:['<b>200 credits a month</b>','Clean HD, no watermark','Personal use license','Scope and budget from your photo','Design DNA on one property','Shopping list with live pricing','Before and after presentation'],
+ x:['Commercial license','ARV impact range','Batch listing staging']},
+{n:'Pro',mo:25,yr:10,who:'Investors, flippers, contractors and agents.',cta:'Choose Pro',pop:true,note:'30 day money back · Cancel anytime',
+ f:['<b>2,000 credits a month</b>','Everything in Starter','Commercial license','Contractor brief PDF','ARV impact range','Rental grade vs retail grade','Batch listing staging with MLS disclosure','Design DNA across unlimited properties','5 team seats'],
+ x:['Video walkthroughs and 3D plans','Client approval portal']},
+{n:'Studio',mo:35,yr:13,who:'Design teams and brokerage offices.',cta:'Choose Studio',pop:false,note:'30 day money back · Cancel anytime',
+ f:['<b>4,000 credits a month</b>','Everything in Pro','Video walkthroughs','2D to 3D floor plans','Client approval portal','Brand presets and white label decks','Multi angle consistency','Priority render queue','<b>Unlimited team seats</b>'],x:[]}];
+
 let bill='yr';
 function drawPlans(){
   document.getElementById('plans').innerHTML=P.map(p=>`
@@ -329,11 +330,18 @@ const coMask=document.getElementById('coMask');
 function coRender(name){
   const p=P.find(x=>x.n===name);if(!p)return;
   const base=p[bill];
-  const bump=document.getElementById('coBump').checked?9:0;
+  /* the bump is offered on Starter and Pro only, never on Studio */
+  const eligible=p.n==='Starter'||p.n==='Pro';
+  const wrap=document.getElementById('coBumpWrap');
+  const box=document.getElementById('coBump');
+  if(wrap)wrap.hidden=!eligible;
+  if(!eligible&&box)box.checked=false;
+  const bump=eligible&&box.checked?7:0;
   document.getElementById('coTitle').textContent=`${p.n}, Billed ${bill==='yr'?'Yearly':'Monthly'}`;
   document.getElementById('coPrice').textContent=`$${base}/mo`;
   document.getElementById('coTotal').textContent=`$${base+bump}/mo`;
 }
+
 let coPlan='Pro';
 function openCheckout(name){
   coPlan=name;coRender(coPlan);coMask.hidden=false;
@@ -366,12 +374,13 @@ document.getElementById('coBump').addEventListener('change',()=>coRender(coPlan)
 
 /* ---------- faq ---------- */
 const FAQ=[
+['What Is A Credit?','One credit runs a design, restyle, virtual stage, declutter, material swap, sky swap or style transfer. A scope and budget from your photo is 3 credits, a 2D to 3D floor plan is 6 and a video walkthrough is 40. One balance, no second number to track. Credits reset monthly and never expire while your subscription is active.'],
 ['How Accurate Is The Cost Estimate?','It is a planning estimate, not a construction bid. The engine reads the design it produced, converts it into line items with quantities, and prices those against labor and material rates for your market. We show it as a range with a confidence level rather than a single fake number, because anything more precise than that would be dishonest. Investors use it to underwrite and contractors use it as a starting proposal. Your subcontractor pricing is still the final word.'],
 ['Will It Look Like My Actual Room?','Yes. Every render is built on the photo you upload, so the walls, windows, ceiling height and camera angle stay exactly where they are. Only furniture, finishes, color and lighting change. That is the difference between this and a general purpose image generator, which will happily invent a room that does not exist.'],
 ['What Does Budget Mode Actually Do?','It constrains the generation. Set a Refresh budget and the AI reaches for paint, hardware, lighting and refaced doors. Set a Renovation budget and new cabinets, an island and appliances come into scope. Same photo, same style, genuinely different design, because the money is different. You can also generate the same room at three budget bands and compare what the jump buys.'],
-['Is The Free Plan Really Usable?','Yes. Your first design needs no account at all, then a free account gives you 5 designs a day. Free includes every space type, the full style library, Reality Lock, the object controls and Budget Mode with a planning range. Output is watermarked at standard resolution. We charge when you need clean files, the itemized scope, the ARV number, batch staging or team tools.'],
-['What Is The Fair Use Policy?','All plans include a fair use policy. Sustained usage far beyond the typical pattern for your plan may pause new generations for 24 hours. We will always contact you first.'],
-['Do You Charge Per Seat?','Pro includes 5 team seats and Studio includes unlimited seats at $37 a month. Add your photographer, assistant, project manager and GC without paying by the head. We meter designs and scopes, not people.'],
+['Is The Free Plan Really Usable?','Yes. Your first design needs no account at all, then a free account gives you 5 credits a day. Free includes every space type, the full style library, Reality Lock, the object controls and a typical budget range looked up by room type, finish level and market. That typical range is honest about what it is, since it is not computed from your photo. Output is watermarked at standard resolution. We charge when you need clean files, the scope computed from your own room, the ARV number, batch staging or team tools.'],
+['What Is The Fair Use Policy?','All plans, add-ons and top-ups include a fair use policy. Sustained usage far beyond the typical pattern for your plan may pause new generations for 24 hours. We will always contact you first.'],
+['Do You Charge Per Seat?','Pro includes 5 team seats and Studio includes unlimited seats at $35 a month. Add your photographer, assistant, project manager and GC without paying by the head. We meter credits, not people.'],
 ['What Is Founding Member Pricing?','The first 500 accounts lock their rate permanently, including through plan changes, and receive a Renovation Planning Pack worth $49. The counter on the pricing page is an exact count of claimed accounts, not a timer and not a per visitor reset. When it reaches zero the price rises and does not come back down.'],
 ['Can I Use These Images On The MLS?','Yes, on any paid plan, and the disclosure engine handles the compliance side. Most MLSs and several states require virtually staged or digitally altered photos to be labeled. Pick your market once and every export gets the correct label plus a disclosure sheet for your transaction file. Confirm your local rule, since they do change.'],
 ['I Only Have One Kitchen To Do. Do I Need A Subscription?','No. Buy a Single Room Pack at $12 or a Renovation Planning Pack at $49, keep everything you generate, and walk away. A homeowner doing one project should not end up with a monthly bill following them around.'],
