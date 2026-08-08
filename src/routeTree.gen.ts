@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
 import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calculator'
@@ -37,6 +38,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -74,6 +80,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
@@ -98,6 +106,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
@@ -111,6 +120,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$slug'
     | '/auth'
+    | '/sitemap.xml'
     | '/app'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
@@ -122,6 +132,7 @@ export interface FileRouteTypes {
     | '/'
     | '/$slug'
     | '/auth'
+    | '/sitemap.xml'
     | '/app'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
@@ -134,6 +145,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/$slug'
     | '/auth'
+    | '/sitemap.xml'
     | '/_authenticated/app'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
@@ -147,6 +159,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   FreeAiInteriorDesignRoute: typeof FreeAiInteriorDesignRoute
   FreeArvCalculatorRoute: typeof FreeArvCalculatorRoute
   FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
@@ -182,6 +195,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -245,6 +265,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   FreeAiInteriorDesignRoute: FreeAiInteriorDesignRoute,
   FreeArvCalculatorRoute: FreeArvCalculatorRoute,
   FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
