@@ -1548,19 +1548,19 @@
 .rd-site .sc-card.play .sc-budget .sc-cur{animation:none}
 
 /* 9 shop */
-.rd-site .sc-hot{position:absolute;width:14px;height:14px;border-radius:999px;background:var(--red);z-index:4;
-  box-shadow:0 0 0 4px rgba(204,0,0,.28)}
+.rd-site .sc-hot{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:999px;background:var(--red);z-index:4;
+  border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 0 3px rgba(204,0,0,.22)}
 .rd-site .sc-card.play .sc-hot{animation:scHot 2s ease-out infinite;animation-delay:var(--d)}
-@keyframes scHot{0%{box-shadow:0 0 0 0 rgba(204,0,0,.45)}70%{box-shadow:0 0 0 10px rgba(204,0,0,0)}100%{box-shadow:0 0 0 0 rgba(204,0,0,0)}}
-.rd-site .sc-prod{position:absolute;left:36%;top:22%;z-index:7;background:#fff;border:1px solid var(--line);border-radius:9px;
+@keyframes scHot{0%{box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 0 0 rgba(204,0,0,.5)}70%{box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 0 11px rgba(204,0,0,0)}100%{box-shadow:0 2px 8px rgba(0,0,0,.35),0 0 0 0 rgba(204,0,0,0)}}
+.rd-site .sc-prod{position:absolute;left:36%;top:16%;z-index:7;background:#fff;border:1px solid var(--line);border-radius:9px;
   padding:8px 10px;box-shadow:0 12px 28px rgba(0,0,0,.2);min-width:150px}
 .rd-site .sc-prod b{display:block;font-size:.72rem;margin-bottom:5px}
 .rd-site .sc-prod span{display:flex;justify-content:space-between;gap:10px;font-size:.62rem;color:var(--mute);padding:2px 0}
 .rd-site .sc-prod span.on{color:#111;font-weight:700}
 .rd-site .sc-prod span.on em{color:var(--red);font-style:normal}
 .rd-site .sc-prod i{font-style:normal}
-.rd-site .sc-toast{position:absolute;left:9px;bottom:9px;z-index:7;font-size:.58rem;letter-spacing:.07em;text-transform:uppercase;
-  color:#0a7b3e;background:rgba(16,185,129,.16);border:1px solid rgba(16,185,129,.4);border-radius:999px;padding:4px 9px}
+.rd-site .sc-toast{position:absolute;left:9px;bottom:9px;z-index:7;font-size:.58rem;font-weight:700;letter-spacing:.07em;text-transform:uppercase;
+  color:#fff;background:#0a7b3e;border:1px solid #0a7b3e;border-radius:999px;padding:5px 10px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
 .rd-site .sc-card.play .sc-prod{animation:scPop 6s ease-out infinite}
 .rd-site .sc-card.play .sc-toast{opacity:0;animation:scRow 6s ease-out infinite;animation-delay:4.2s}
 .rd-site .sc-card.play .sc-shop .sc-cur{animation:scCur6 6s ease-in-out infinite}
