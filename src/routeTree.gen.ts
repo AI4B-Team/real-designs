@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
+import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calculator'
 import { Route as FreeRehabCostCalculatorRouteImport } from './routes/free/rehab-cost-calculator'
 import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-staging'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
@@ -48,6 +49,11 @@ const FreeAiInteriorDesignRoute = FreeAiInteriorDesignRouteImport.update({
   path: '/free/ai-interior-design',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FreeArvCalculatorRoute = FreeArvCalculatorRouteImport.update({
+  id: '/free/arv-calculator',
+  path: '/free/arv-calculator',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FreeRehabCostCalculatorRoute = FreeRehabCostCalculatorRouteImport.update({
   id: '/free/rehab-cost-calculator',
   path: '/free/rehab-cost-calculator',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
+  '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app'
     | '/free/ai-interior-design'
+    | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/api/public/founding'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/app'
     | '/free/ai-interior-design'
+    | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/api/public/founding'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/app'
     | '/free/ai-interior-design'
+    | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/api/public/founding'
@@ -136,6 +148,7 @@ export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   FreeAiInteriorDesignRoute: typeof FreeAiInteriorDesignRoute
+  FreeArvCalculatorRoute: typeof FreeArvCalculatorRoute
   FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
   FreeVirtualStagingRoute: typeof FreeVirtualStagingRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FreeAiInteriorDesignRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/free/arv-calculator': {
+      id: '/free/arv-calculator'
+      path: '/free/arv-calculator'
+      fullPath: '/free/arv-calculator'
+      preLoaderRoute: typeof FreeArvCalculatorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/free/rehab-cost-calculator': {
       id: '/free/rehab-cost-calculator'
       path: '/free/rehab-cost-calculator'
@@ -226,6 +246,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   FreeAiInteriorDesignRoute: FreeAiInteriorDesignRoute,
+  FreeArvCalculatorRoute: FreeArvCalculatorRoute,
   FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
   FreeVirtualStagingRoute: FreeVirtualStagingRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
