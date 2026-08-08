@@ -291,16 +291,17 @@ document.getElementById('quotes').innerHTML=Q.map(([ic,t,d])=>`
 /* ---------- pricing ---------- */
 const P=[
 {n:'Free',mo:0,yr:0,who:'Anyone. No card, no account to start.',cta:'Start Free',pop:false,note:'No card · No account to start',
- f:['<b>5 designs per day</b>','Every space, full style library','Reality Lock and object controls','Budget Mode with a planning range','Watermarked, standard resolution'],
- x:['Itemized scope','Clean HD download']},
-{n:'Starter',mo:17,yr:7,who:'One property. Personal projects.',cta:'Choose Starter',pop:false,note:'30 day money back · Cancel anytime',
- f:['<b>200 designs a month</b>','<b>10 scopes a month</b>','Clean HD, no watermark','Personal use license','Design DNA on one property','Shopping list with live pricing'],
- x:['Commercial license','ARV impact range']},
-{n:'Pro',mo:27,yr:11,who:'Investors, flippers, contractors and agents.',cta:'Choose Pro',pop:true,note:'30 day money back · Cancel anytime',
- f:['<b>1,000 designs a month</b>','<b>50 scopes a month</b>','Everything in Starter','Commercial license','Contractor brief PDF','ARV impact range','Rental grade vs retail grade','Batch listing staging with disclosure','5 team seats'],
- x:['Video walkthroughs and 3D plans']},
-{n:'Studio',mo:37,yr:15,who:'Design teams and brokerage offices.',cta:'Choose Studio',pop:false,note:'30 day money back · Cancel anytime',
- f:['<b>2,500 designs a month</b>','<b>200 scopes a month</b>','Everything in Pro','20 video walkthroughs a month','20 3D floor plans a month','Client approval portal','Brand presets and white label decks','Multi angle consistency','<b>Unlimited team seats</b>','Priority render queue'],x:[]}];
+ f:['<b>5 credits a day</b>','First design needs no account at all','Interiors, exteriors and landscapes','Full style library, Reality Lock, keep/replace/remove controls','Virtual staging, declutter, material swap, style transfer','Typical budget range by room type and finish level','Watermarked, standard resolution'],
+ x:['Clean HD download','Scope and budget from YOUR photo','Commercial license']},
+{n:'Starter',mo:15,yr:7,who:'One property. Personal projects.',cta:'Choose Starter',pop:false,note:'30 day money back · Cancel anytime',
+ f:['<b>200 credits a month</b>','Clean HD, no watermark','Personal use license','Scope and budget from your photo','Design DNA on one property','Shopping list with live pricing','Before and after presentation'],
+ x:['Commercial license','ARV impact range','Batch listing staging']},
+{n:'Pro',mo:25,yr:10,who:'Investors, flippers, contractors and agents.',cta:'Choose Pro',pop:true,note:'30 day money back · Cancel anytime',
+ f:['<b>2,000 credits a month</b>','Everything in Starter','Commercial license','Contractor brief PDF','ARV impact range','Rental grade vs retail grade','Batch listing staging with MLS disclosure','Design DNA across unlimited properties','5 team seats'],
+ x:['Video walkthroughs and 3D plans','Client approval portal']},
+{n:'Studio',mo:35,yr:13,who:'Design teams and brokerage offices.',cta:'Choose Studio',pop:false,note:'30 day money back · Cancel anytime',
+ f:['<b>4,000 credits a month</b>','Everything in Pro','Video walkthroughs','2D to 3D floor plans','Client approval portal','Brand presets and white label decks','Multi angle consistency','Priority render queue','<b>Unlimited team seats</b>'],x:[]}];
+
 let bill='yr';
 function drawPlans(){
   document.getElementById('plans').innerHTML=P.map(p=>`
