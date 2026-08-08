@@ -1565,13 +1565,21 @@
 .rd-site .sc-card.play .sc-toast{opacity:0;animation:scRow 6s ease-out infinite;animation-delay:4.2s}
 .rd-site .sc-card.play .sc-shop .sc-cur{animation:scCur6 6s ease-in-out infinite}
 
-/* 10 stages */
-.rd-site .sc-stages .sc-lyr img{object-fit:contain;background:#fff}
-.rd-site .sc-stages .sc-s0,.rd-site .sc-stages .sc-s1,.rd-site .sc-stages .sc-s2{opacity:0}
-.rd-site .sc-card.play .sc-s0{animation:scB0 6s linear infinite}
-.rd-site .sc-card.play .sc-s1{animation:scB1 6s linear infinite}
-.rd-site .sc-card.play .sc-s2{animation:scB2 6s linear infinite}
-.rd-site .sc-card.play .sc-s3{animation:scB3 6s linear infinite}
+/* 10 commercial license */
+.rd-site .sc-wm{position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;
+  font-size:1.15rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.62);
+  transform:rotate(-16deg);text-shadow:0 1px 6px rgba(0,0,0,.35)}
+.rd-site .sc-card.play .sc-wm{animation:scWm 6s ease-in-out infinite}
+@keyframes scWm{0%,35%{opacity:1}55%,100%{opacity:0}}
+.rd-site .sc-licchip{position:absolute;left:9px;bottom:9px;z-index:6;font-size:.55rem;letter-spacing:.07em;text-transform:uppercase;
+  color:#0a7b3e;background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.4);border-radius:999px;padding:4px 9px;opacity:0}
+.rd-site .sc-card.play .sc-licchip{animation:scRow 6s ease-out infinite;animation-delay:3.2s}
+
+/* Direction Library strip inside Design DNA */
+.rd-site .dirlib{margin-top:26px}
+.rd-site .dirlib-lab{display:block;text-align:center;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--mute-2);margin-bottom:12px}
+
 
 /* 11 video */
 .rd-site .sc-card.play .sc-ken{animation:scKen 8s ease-in-out infinite alternate}
@@ -1604,3 +1612,6 @@
    its links/buttons stay exactly the size they are today. */
 .rd-site{zoom:.8}
 .rd-site header{zoom:1.25}
+
+.rd-site .dirlib .styles{display:flex;gap:12px;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin}
+.rd-site .dirlib .styles .st{flex:0 0 150px}
