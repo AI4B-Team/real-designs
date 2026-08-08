@@ -112,6 +112,8 @@ const shopOverlay=()=>`
     <span class="pb2">Add To Project</span></div>
   ${cursorSVG.replace('class="cursor"','class="cursor" style="left:43%;top:55%"')}`;
 
+const recOverlay=()=>`<span class="rec-timer mono"><i></i>REC 00:12</span>`;
+
 const summaryOverlay=()=>`
   <div class="tour-sum">
     <div class="ts-lab mono">One Property, One Design DNA</div>
