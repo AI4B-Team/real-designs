@@ -14,6 +14,7 @@ import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,6 +41,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const FreeAiInteriorDesignRoute = FreeAiInteriorDesignRouteImport.update({
+  id: '/free/ai-interior-design',
+  path: '/free/ai-interior-design',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
   id: '/api/public/founding',
   path: '/api/public/founding',
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
+  '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/app': typeof AuthenticatedAppRoute
+  '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesById {
@@ -67,13 +75,26 @@ export interface FileRoutesById {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/$slug' | '/auth' | '/app' | '/api/public/founding'
+  fullPaths:
+    | '/'
+    | '/$slug'
+    | '/auth'
+    | '/app'
+    | '/free/ai-interior-design'
+    | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/$slug' | '/auth' | '/app' | '/api/public/founding'
+  to:
+    | '/'
+    | '/$slug'
+    | '/auth'
+    | '/app'
+    | '/free/ai-interior-design'
+    | '/api/public/founding'
   id:
     | '__root__'
     | '/'
@@ -81,6 +102,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/auth'
     | '/_authenticated/app'
+    | '/free/ai-interior-design'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
 }
@@ -89,6 +111,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
+  FreeAiInteriorDesignRoute: typeof FreeAiInteriorDesignRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
 
@@ -129,6 +152,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/free/ai-interior-design': {
+      id: '/free/ai-interior-design'
+      path: '/free/ai-interior-design'
+      fullPath: '/free/ai-interior-design'
+      preLoaderRoute: typeof FreeAiInteriorDesignRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/founding': {
       id: '/api/public/founding'
       path: '/api/public/founding'
@@ -155,6 +185,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
+  FreeAiInteriorDesignRoute: FreeAiInteriorDesignRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }
 export const routeTree = rootRouteImport
