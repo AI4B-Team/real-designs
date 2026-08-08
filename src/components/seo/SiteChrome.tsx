@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router";
 
 import { FOOTER_GROUPS } from "@/content/seo/nav";
-import logo from "@/assets/rd-logo-icon.png";
+
+const logo =
+  "/__l5e/assets-v1/c5d9393c-b749-4c1a-81d3-2af5cbe5c8c3/rd-logo-icon.png";
 
 export function SiteHeader() {
   return (
