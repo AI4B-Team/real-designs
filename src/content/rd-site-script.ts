@@ -96,7 +96,7 @@ const TOUR=[
  {ch:'3D Plan',dur:3200,img:PHOTOS.resortYard,style:'Design DNA Applied',lock:'Budget Mode On',summary:true,
   lab:'Whole Property Planning Range',est:'$49,400 to $63,200',fit:'4 Rooms Approved',mets:[['Rooms Approved','4 of 4','conf-hi'],['Line Items','62','conf-hi'],['Pricing Confidence','High','conf-hi']]}
 ];
-const CHAPTERS=['Exterior','Declutter','Stage','Shop','Garden','Video','3D Plan'];
+const CHAPTERS=['Exterior','Interior','Declutter','Stage','Shop','Garden','Video','3D Plan'];
 
 const showStage=document.getElementById('showStage'),lockPill=document.getElementById('lockPill'),
       modePill=document.getElementById('modePill'),styleChip=document.getElementById('styleChip'),
