@@ -98,6 +98,28 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
         </div>
       </section>
 
+      {/* 3b. HOW TO */}
+      {page.howTo && (
+        <section id="howto">
+          <div className="wrap">
+            <div className="sec-head">
+              <span className="eyebrow">Step By Step</span>
+              <h2>{page.howTo.name}</h2>
+            </div>
+            <ol className="lp-howto">
+              {page.howTo.steps.map((s) => (
+                <li key={s.name}>
+                  <h3>{s.name}</h3>
+                  <p>{s.text}</p>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+      )}
+
+
+
       {/* 4. SHOWCASE */}
       <section className="alt">
         <div className="wrap">
