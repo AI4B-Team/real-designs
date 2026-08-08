@@ -37,7 +37,7 @@ export const Route = createFileRoute("/$slug")({
             "@type": "Offer",
             price: "0",
             priceCurrency: "USD",
-            description: "Free plan with five designs a day.",
+            description: "Free plan with five credits a day.",
           },
         }),
       },
