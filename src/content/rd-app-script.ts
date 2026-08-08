@@ -104,8 +104,8 @@ document.getElementById('notifRows').innerHTML=notifs.map(([n,d,st])=>`
 <div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div>
 <span class="pill ${st==='On'?'p-ok':'p-gray'}">${st}</span></div>`).join('');
 
-const invoices=[['Jul 28, 2026','Pro Monthly','$199.00'],['Jun 28, 2026','Pro Monthly','$199.00'],
-['May 28, 2026','Pro Monthly','$199.00'],['Apr 28, 2026','Pro Monthly','$199.00'],
+const invoices=[['Jul 28, 2026','Pro Monthly','$25.00'],['Jun 28, 2026','Pro Monthly','$25.00'],
+['May 28, 2026','Pro Monthly','$25.00'],['Apr 28, 2026','Pro Monthly','$25.00'],
 ['Mar 28, 2026','Starter Monthly','$79.00'],['Feb 28, 2026','Starter Monthly','$79.00']];
 document.getElementById('invRows').innerHTML=invoices.map(([d,p,a])=>`
 <tr><td><b>${d}</b></td><td>${p}</td><td class="n">${a}</td>
@@ -789,7 +789,7 @@ const NOTIFS=[
  {id:5,ic:'user-plus',cat:'team',t:'Marcus Tate joined your workspace',b:'Invitation accepted, seat assigned as Member.',tm:'Yesterday',unread:false},
  {id:6,ic:'credit-card',cat:'billing',t:'Invoice #4192 paid',b:'Pro Plan monthly, $249.00 charged to Visa ending 4242.',tm:'2d',unread:false},
  {id:7,ic:'share-2',cat:'approvals',t:'Presentation link opened',b:'Bayshore package viewed 4 times by the client.',tm:'3d',unread:false},
- {id:8,ic:'triangle-alert',cat:'billing',t:'Design credits at 81%',b:'1,214 of 1,500 designs used this cycle.',tm:'4d',unread:false}
+ {id:8,ic:'triangle-alert',cat:'billing',t:'Credits at 61%',b:'1,214 of 2,000 credits used this cycle.',tm:'4d',unread:false}
 ];
 function notifFilter(tab){ return NOTIFS.filter(n=> tab==='all'?true: tab==='unread'?n.unread: n.cat===tab); }
 function notifRow(n){ return `<button class="notif-i${n.unread?' unread':''}" data-nid="${n.id}">
