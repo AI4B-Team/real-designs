@@ -7,11 +7,12 @@ import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
 import { fmt } from "@/lib/planning-range";
 
 const PLANS = [
-  { name: "Free", price: "$0", note: "5 designs a day", cta: "Start Free" },
-  { name: "Starter", price: "$7", note: "200 designs, 10 scopes a month", cta: "Choose Starter" },
-  { name: "Pro", price: "$11", note: "1,000 designs, 50 scopes, commercial license", cta: "Choose Pro", pop: true },
-  { name: "Studio", price: "$15", note: "2,500 designs, unlimited seats", cta: "Choose Studio" },
+  { name: "Free", price: "$0", note: "5 credits a day, typical budget range", cta: "Start Free" },
+  { name: "Starter", price: "$7", note: "200 credits a month, clean HD", cta: "Choose Starter" },
+  { name: "Pro", price: "$10", note: "2,000 credits a month, commercial license", cta: "Choose Pro", pop: true },
+  { name: "Studio", price: "$13", note: "4,000 credits a month, unlimited seats", cta: "Choose Studio" },
 ];
+
 
 export function LandingTemplate({ page }: { page: LandingPage }) {
   const before = PHOTOS[page.beforePhoto];
