@@ -57,7 +57,7 @@ function FreeInteriorTool() {
           spaceType="interior"
           roomType="living room"
           budgetBand={1}
-          afterPhoto={PHOTOS.interiorAfter}
+          afterPhoto={PHOTOS.after}
           title="Redesign Your Room, Free"
           variant="free"
         />
