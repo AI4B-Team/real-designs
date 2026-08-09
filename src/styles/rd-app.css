@@ -62,7 +62,7 @@
 
 .rd-app .nav-i .dotn{margin-left:auto;width:6px;height:6px;border-radius:50%;background:var(--red)}
 
-.rd-app .side-foot{padding:12px;border-top:1px solid var(--line)}
+.rd-app .side-foot{margin-top:auto;padding:12px;border-top:1px solid var(--line);background:var(--white)}
 
 .rd-app .credit-box{background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px}
 
