@@ -291,6 +291,8 @@ export type Database = {
           id: string
           last_viewed_at: string | null
           line_notes: Json
+          reminded_at: string | null
+          reminder_count: number
           status: string
           title: string
           token: string
@@ -309,6 +311,8 @@ export type Database = {
           id?: string
           last_viewed_at?: string | null
           line_notes?: Json
+          reminded_at?: string | null
+          reminder_count?: number
           status?: string
           title: string
           token?: string
@@ -327,6 +331,8 @@ export type Database = {
           id?: string
           last_viewed_at?: string | null
           line_notes?: Json
+          reminded_at?: string | null
+          reminder_count?: number
           status?: string
           title?: string
           token?: string
@@ -777,6 +783,10 @@ export type Database = {
         Returns: Json
       }
       has_workspace_access: { Args: { _owner: string }; Returns: boolean }
+      record_presentation_reminder: {
+        Args: { _id: string }
+        Returns: undefined
+      }
       record_presentation_view: { Args: { _token: string }; Returns: undefined }
       respond_to_presentation: {
         Args: {

@@ -16,10 +16,12 @@ export const listPresentations = createServerFn({ method: "GET" })
       .select(
         `id, title, client_name, client_email, token, status, view_count, last_viewed_at,
          decision_note, excluded_lines, line_notes, decided_at, created_at,
+         reminded_at, reminder_count,
          versions!inner ( version_no,
            rooms!inner ( name,
              projects!inner ( name, properties!inner ( address ) ) ) )`,
       )
+
       .order("created_at", { ascending: false })
       .limit(40);
     if (error) throw new Error(error.message);
@@ -38,12 +40,25 @@ export const listPresentations = createServerFn({ method: "GET" })
       line_notes: (p.line_notes && typeof p.line_notes === "object" ? p.line_notes : {}) as Record<string, string>,
       note_count: p.line_notes && typeof p.line_notes === "object" ? Object.keys(p.line_notes).length : 0,
       created_at: p.created_at as string,
+      reminded_at: (p.reminded_at ?? null) as string | null,
+      reminder_count: (p.reminder_count ?? 0) as number,
       address: p.versions.rooms.projects.properties.address as string,
       project_name: p.versions.rooms.projects.name as string,
       room_name: p.versions.rooms.name as string,
       version_no: (p.versions.version_no ?? 1) as number,
     }));
   });
+
+/** Owner: record that a follow-up reminder went out for one share link. */
+export const markPresentationReminded = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => presentationIdSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.rpc("record_presentation_reminder", { _id: data.id });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 
 export const createPresentation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
