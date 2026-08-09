@@ -1676,7 +1676,8 @@ async function paintTeam(){
       <button class="btn btn-g" data-revoke="${i.id}" style="margin-left:8px">Remove</button></div>`).join('');
   const inbound=(team.received||[]).map(i=>`<div class="seat"><span class="av">IN</span>
       <div class="rowt"><b>You Were Invited To Another Workspace</b><span>Role: ${esc(i.role)}</span></div>
-      <button class="btn btn-p" data-accept="${i.id}">Accept</button></div>`).join('');
+      <button class="btn btn-g" data-decline="${i.id}">Decline</button>
+      <button class="btn btn-p" data-accept="${i.id}" style="margin-left:8px">Accept</button></div>`).join('');
   list.innerHTML=`<div class="seat"><span class="av">${av}</span><div class="rowt"><b>${name}</b><span>${mail||'Signed in'}</span></div>
     <span class="pill p-ink">Owner</span></div>${invites}${inbound}
     ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No teammates yet. Invite one below. They sign in with that email, accept the invite, and then share this workspace with you.</p>'}`;
