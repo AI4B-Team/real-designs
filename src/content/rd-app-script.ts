@@ -328,9 +328,9 @@ async function loadDashboard(){
     pres.forEach(p=>{
       const who=p.client_name||p.client_email||'Client';
       const where=(p.address?p.address+' &middot; ':'')+p.room_name;
-      if(p.status==='changes') attn.unshift([who+' requested changes on '+p.title, where,'p-red','Review','present']);
-      else if(p.status==='viewed'&&hrs(p.last_viewed_at)>48) attn.push([who+' viewed but has not decided', where+' &middot; '+Math.round(hrs(p.last_viewed_at)/24)+' days ago','p-amb','Follow Up','present']);
-      else if(p.status==='sent'&&hrs(p.created_at)>72) attn.push([p.title+' has not been opened', where+' &middot; sent '+Math.round(hrs(p.created_at)/24)+' days ago','p-amb','Resend','present']);
+      if(p.status==='changes') attn.unshift([who+' requested changes on '+p.title, where,'p-red','Review','present',p.id]);
+      else if(p.status==='viewed'&&hrs(p.last_viewed_at)>48) attn.push([who+' viewed but has not decided', where+' &middot; '+Math.round(hrs(p.last_viewed_at)/24)+' days ago','p-amb','Follow Up','present',p.id]);
+      else if(p.status==='sent'&&hrs(p.created_at)>72) attn.push([p.title+' has not been opened', where+' &middot; sent '+Math.round(hrs(p.created_at)/24)+' days ago','p-amb','Resend','present',p.id]);
     });
   }catch(e){}
 
@@ -338,8 +338,8 @@ async function loadDashboard(){
   paintOnboarding(s,pres);
 
 
-  al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab,dest])=>`
-<div class="rowi"${dest?` data-goto="${dest}" role="button" tabindex="0" style="cursor:pointer"`:''}><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
+  al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab,dest,pid])=>`
+<div class="rowi"${dest?` data-goto="${dest}"${pid?` data-focus-pres="${pid}"`:''} role="button" tabindex="0" style="cursor:pointer"`:''}><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
     :empty('Nothing Needs Your Attention','Priced rooms inside target will stay quiet here');
 
   /* budget vs scope */
@@ -353,7 +353,10 @@ async function loadDashboard(){
     :'<tr><td colspan="6">No saved projects yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
 }
 document.getElementById('attnList')?.addEventListener('click',(e)=>{
-  const r=e.target.closest('[data-goto]'); if(r) go(r.dataset.goto);
+  const r=e.target.closest('[data-goto]'); if(!r) return;
+  go(r.dataset.goto);
+  const pid=r.dataset.focusPres;
+  if(pid) setTimeout(()=>{ try{ focusPresentation(pid); }catch(_){} },60);
 });
 loadDashboard();
 window.addEventListener('rd:saved', loadDashboard);
@@ -1493,6 +1496,18 @@ async function paintPresentations(){
   renderPresRows();
 }
 
+/* jump to one client link from the dashboard attention list */
+async function focusPresentation(pid){
+  if(!PRES_ROWS.length) await paintPresentations();
+  if(PRES_FILTER!=='all'){ PRES_FILTER='all'; renderPresRows(); }
+  const row=document.querySelector('#linkList [data-pid="'+pid+'"]');
+  if(!row) return;
+  row.scrollIntoView({block:'center',behavior:'smooth'});
+  row.classList.remove('rd-flash'); void row.offsetWidth; row.classList.add('rd-flash');
+  setTimeout(()=>row.classList.remove('rd-flash'),2400);
+}
+
+
 
 const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const presMoney=(n)=>'$'+Math.round(n||0).toLocaleString('en-US');
@@ -1867,7 +1882,7 @@ const HELP_CATS=[
  ['user-round','Account & Workspace',[
   ['bell','Notifications','Notifications are in-app. The three toggles in Account, Notifications control which categories reach your feed. We do not send marketing email.','notifications'],
   ['sliders-horizontal','Defaults','Market, finish grade, budget band and disclosure ruleset set the starting point for every new scope. They are saved to your account.','account'],
-  ['users','Seats','REAL DESIGNS is a single seat workspace today. Multi-user teams are not available yet.','account'],
+  ['users','Team Seats','Invite teammates from Account, Team. They accept the invite with their own login and then share your properties, designs, scopes and presentations. You can copy an invite link to send it yourself, and revoke access at any time.','team'],
   ['download','Export And Delete','You can download a JSON of every property, room, version, scope and credit entry, or delete the account and all of its data, from Account, Data And Privacy.','account']]]];
 
 const helpCatsEl=document.getElementById('helpCats');
