@@ -74,6 +74,27 @@ export const deletePresentation = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Owner: the full activity timeline for one of their share links. */
+export const listPresentationActivity = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => presentationIdSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("presentation_events")
+      .select("id, kind, detail, meta, created_at")
+      .eq("presentation_id", data.id)
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((e: any) => ({
+      id: e.id as string,
+      kind: (e.kind ?? "viewed") as string,
+      detail: (e.detail ?? "") as string,
+      meta: (e.meta && typeof e.meta === "object" ? e.meta : {}) as Record<string, unknown>,
+      created_at: e.created_at as string,
+    }));
+  });
+
 /* ---------------- public share link ---------------- */
 
 /** Public: read one presentation by its share token and register the view. */
