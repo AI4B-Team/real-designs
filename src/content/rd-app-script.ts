@@ -1855,6 +1855,10 @@ if(linkList) linkList.addEventListener('click',async e=>{
   const tab=e.target.closest('[data-pf]');
   if(tab){ PRES_FILTER=tab.getAttribute('data-pf'); renderPresRows(); return; }
   const row=e.target.closest('[data-pid]'); if(!row) return;
+  if(e.target.closest('[data-hist]')){
+    togglePresHistory(row.dataset.pid);
+    return;
+  }
   if(e.target.closest('[data-send]')){
     presSendModal(PRES_ROWS.find(x=>x.id===row.dataset.pid));
     return;
