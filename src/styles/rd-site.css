@@ -1862,3 +1862,9 @@
 @media(max-width:520px){
   .rd-site .feat-grid{grid-template-columns:minmax(0,1fr)}
 }
+@media(max-width:780px){
+  .rd-site section{padding-top:56px!important;padding-bottom:56px!important}
+  .rd-site .hero{padding-top:20px!important;padding-bottom:18px!important}
+  .rd-site .ribbon,.rd-site .marquee{padding-top:16px!important;padding-bottom:16px!important}
+  .rd-site .sec-head{margin-bottom:28px}
+}
