@@ -116,7 +116,7 @@ function searchIndex(){
   });
   (typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).forEach(pr=>{
     out.push({kind:'Presentations',ic:'presentation',t:pr.title||'Client link',
-      s:(pr.status==='approved'?'Approved':pr.status==='viewed'?'Opened':pr.status==='changes'?'Changes requested':'Sent'),view:'present'});
+      s:(pr.status==='approved'?'Approved':pr.status==='viewed'?'Opened':pr.status==='changes'?'Changes requested':'Sent'),view:'present',pres:pr.id});
   });
   SAVED_EST.forEach(e=>{
     out.push({kind:'Scopes',ic:'calculator',t:(e.name||'Saved room')+' scope',
@@ -141,6 +141,7 @@ function runSearch(){
     if(r.pi!=null) SEL={p:r.pi,pr:r.pri};
     closeSchRes(); if(schInput) schInput.value='';
     go(r.view||(r.design?'designs':'props')); paintTree();
+    if(r.pres) setTimeout(()=>{ try{ focusPresentation(r.pres); }catch(_){} },60);
   }));
 }
 function updateSearchMeta(){
