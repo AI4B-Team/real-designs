@@ -61,7 +61,7 @@ account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
-const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices'};
+const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security'};
 function go(v){
   if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
@@ -2120,13 +2120,22 @@ if (canvasCard && canvasThemeBtn) {
 
 /* ---------- accounts: signed-in identity + saved projects ---------- */
 const initials=(s)=>s.split(/[.@\s_-]+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('')||'RD';
+const AV_TONES=['#2563eb','#059669','#7c3aed','#64748b','#e11d48','#0d9488'];
+function avTone(seed){ let h=0; for(let i=0;i<(seed||'').length;i++) h=(h*31+seed.charCodeAt(i))%9973; return AV_TONES[h%AV_TONES.length]; }
+function paintAvatars(av,seed){
+  const tone=avTone(seed||av);
+  document.querySelectorAll('.acct-btn .av,.acct-head .av,.apane .av').forEach(e=>{
+    e.textContent=av;
+    if(!e.style.backgroundImage) e.style.background=tone;
+  });
+}
 const $id=(x)=>document.getElementById(x);
 supabase.auth.getUser().then(({data})=>{
   const u=data&&data.user; if(!u) return;
   const m=u.user_metadata||{};
   const name=m.full_name||m.name||u.email.split('@')[0];
   const av=initials(name);
-  document.querySelectorAll('.acct-btn .av,.acct-head .av,.apane .av').forEach(e=>e.textContent=av);
+  paintAvatars(av,u.email||name);
   const head=document.querySelector('.acct-head b'); if(head) head.textContent=name;
   const mail=document.querySelector('.acct-head div span'); if(mail) mail.textContent=u.email;
   const n=$id('pfName'); if(n) n.value=name;
@@ -2214,7 +2223,7 @@ if(pfSave) pfSave.addEventListener('click',async()=>{
   if(msg){ msg.textContent=error?('Could not save: '+error.message):'Saved'; msg.style.color=error?'var(--red)':'var(--ok)'; }
   if(!error){
     const av=initials(name);
-    document.querySelectorAll('.acct-btn .av,.acct-head .av,.apane .av').forEach(e=>e.textContent=av);
+    paintAvatars(av,u.email||name);
     const head=document.querySelector('.acct-head b'); if(head) head.textContent=name;
     paintAcctSide();
     setTimeout(()=>{ if(msg) msg.textContent=''; },2500);

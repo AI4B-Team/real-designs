@@ -454,7 +454,7 @@
 
 /* ---------- account dropdown ---------- */
 .rd-app .acct-wrap{position:relative}
-.rd-app .acct-btn{display:flex;align-items:center;gap:6px;padding:3px 7px 3px 3px;border-radius:999px;border:1px solid var(--line);background:#fff}
+.rd-app .acct-btn{display:flex;align-items:center;gap:6px;padding:3px 7px 3px 3px;border-radius:999px;border:2px solid var(--red);background:#fff}
 .rd-app .acct-btn:hover{background:var(--paper)}
 .rd-app .acct-btn svg{width:14px;height:14px;color:var(--mute-2)}
 .rd-app .av.lg{width:42px;height:42px;font-size:.9rem}
