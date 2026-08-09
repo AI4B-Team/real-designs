@@ -7,7 +7,7 @@ import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
-import { saveEstimate, listSavedEstimates, deleteSavedEstimate } from "@/lib/workspace.functions";
+import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto } from "@/lib/room-photos";
 
@@ -135,32 +135,68 @@ document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>
 
 
 
-/* ---------- dashboard ---------- */
-const recent=[['Living Room v4','206 N MacDill &middot; Warm Minimal','after','warm','p-ok','Approved'],
-['Kitchen v7','206 N MacDill &middot; Warm Minimal','after','kitchen','p-ok','Approved'],
-['Primary Bath v2','206 N MacDill &middot; Warm Minimal','after','coastal','p-amb','In Review'],
-['Backyard v1','1412 E Idlewild &middot; Resort','after','green','p-blue','New'],
-['Front Elevation v3','8809 N Ola Ave &middot; Painted Brick','before','warm','p-gray','Draft']];
-document.getElementById('recentList').innerHTML=recent.map(([t,s,m,p,cls,lab])=>`
-<div class="rowi"><div class="thumb">${room(m,PALS[p])}</div>
-<div class="rowt"><b>${t}</b><span>${s}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('');
+/* ---------- dashboard: real data for the signed-in account ---------- */
+const kfmt=(n)=>n>=1000?'$'+(Math.round(n/100)/10)+'K':'$'+Math.round(n).toLocaleString('en-US');
+const empty=(t,s)=>'<div class="rowi"><div class="rowt"><b>'+t+'</b><span>'+s+'</span></div></div>';
 
-const attn=[['Client Link Opened 3 Times, No Decision','Keisha C. &middot; 1412 E Idlewild &middot; 2 days','p-amb','Follow Up'],
-['Kitchen v7 Scope Exceeds Target By $4.2K','206 N MacDill &middot; Renovation band','p-red','Review'],
-['4 Photos Missing Disclosure Label','8809 N Ola Ave &middot; batch paused','p-red','Fix'],
-['Comp Set Is 94 Days Old','1412 E Idlewild &middot; ARV confidence dropped','p-amb','Refresh'],
-['Primary Bath v2 Awaiting Your Approval','206 N MacDill &middot; 5 hours','p-blue','Open']];
-document.getElementById('attnList').innerHTML=attn.map(([t,s,cls,lab])=>`
-<div class="rowi"><div class="rowt"><b>${t}</b><span>${s}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('');
+async function loadDashboard(){
+  const rl=document.getElementById('recentList'), al=document.getElementById('attnList'), bt=document.getElementById('budgetTable');
+  if(!rl||!al||!bt) return;
+  let s;
+  try{ s=await getWorkspaceSummary(); }
+  catch(e){
+    rl.innerHTML=empty('Could not load your workspace','Sign in again, then refresh this page');
+    al.innerHTML=''; bt.innerHTML='';
+    return;
+  }
 
-const budgets=[['206 N MacDill Ave','Retail Flip',4,'$62,000','$58.4K to $71.2K','p-amb','Tight'],
-['206 N MacDill Ave','Rental Scenario',4,'$38,000','$29.1K to $34.8K','p-ok','Within'],
-['1412 E Idlewild Ave','Retail Flip',6,'$104,000','$96.2K to $118.4K','p-amb','Tight'],
-['8809 N Ola Ave','Wholetail',3,'$21,000','$14.8K to $19.6K','p-ok','Within'],
-['3320 W Cypress St','Retail Flip',5,'$88,000','$102.4K to $126.9K','p-red','Over']];
-document.getElementById('budgetTable').innerHTML=budgets.map(([p,s,r,t,rg,cls,lab])=>`
-<tr><td><b>${p}</b></td><td>${s}</td><td>${r}</td><td class="n">${t}</td><td class="n">${rg}</td>
-<td style="text-align:right"><span class="pill ${cls}">${lab}</span></td></tr>`).join('');
+  const kpis=document.querySelectorAll('#v-dash .grid.g4 .kpi');
+  const setKpi=(i,val,note)=>{ const k=kpis[i]; if(!k) return;
+    const b=k.querySelector('b'); if(b) b.textContent=val;
+    const d=k.querySelector('.d'); if(d){ d.textContent=note; d.classList.remove('up'); } };
+  setKpi(0,String(s.counts.designs),s.counts.designs?s.counts.priced+' priced with a scope':'Save a room to get started');
+  setKpi(1,String(s.counts.properties),s.counts.properties?'Saved to your account':'No properties yet');
+  setKpi(2,s.counts.scopedTotal?kfmt(s.counts.scopedTotal):'—',s.counts.priced+' priced '+(s.counts.priced===1?'room':'rooms'));
+  setKpi(3,String(s.counts.drafts),s.counts.drafts?'Rooms not approved yet':'Nothing pending');
+
+  /* recent rooms */
+  if(!s.recent.length){
+    rl.innerHTML=empty('No designs yet','Upload a photo in Studio, price it, then save it');
+  }else{
+    rl.innerHTML=s.recent.map(r=>`
+<div class="rowi"><div class="thumb"><img data-photo="${r.before_path||''}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px" hidden></div>
+<div class="rowt"><b>${r.room_name}</b><span>${r.address} &middot; ${r.project_name}</span></div>
+<span class="pill ${r.total_low!=null?'p-ok':'p-gray'}">${r.total_low!=null?'Priced':'Draft'}</span></div>`).join('');
+    rl.querySelectorAll('[data-photo]').forEach(async(img)=>{
+      const p=img.getAttribute('data-photo'); if(!p) return;
+      const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+      if(url){ img.src=url; img.hidden=false; }
+    });
+  }
+
+  /* needs attention */
+  const attn=[];
+  s.projects.forEach(p=>{
+    if(p.priced<p.rooms) attn.push([p.rooms-p.priced+' '+(p.rooms-p.priced===1?'room needs':'rooms need')+' pricing',p.address+' &middot; '+p.project_name,'p-amb','Price It']);
+    if(p.budget_target&&p.high>p.budget_target) attn.push(['Scope exceeds target by '+kfmt(p.high-p.budget_target),p.address+' &middot; '+p.project_name,'p-red','Review']);
+  });
+  al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab])=>`
+<div class="rowi"><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
+    :empty('Nothing needs your attention','Priced rooms inside target will stay quiet here');
+
+  /* budget vs scope */
+  bt.innerHTML=s.projects.length?s.projects.map(p=>{
+    const t=p.budget_target;
+    const fit=!p.priced?['p-gray','Not Priced']:!t?['p-ink','No Target']:p.high<=t?['p-ok','Within']:p.low<=t?['p-amb','Tight']:['p-red','Over'];
+    return `<tr><td><b>${p.address}</b></td><td>${p.project_name}</td><td>${p.rooms}</td>
+<td class="n">${t?kfmt(t):'—'}</td><td class="n">${p.priced?kfmt(p.low)+' to '+kfmt(p.high):'—'}</td>
+<td style="text-align:right"><span class="pill ${fit[0]}">${fit[1]}</span></td></tr>`;
+  }).join('')
+    :'<tr><td colspan="6">No saved projects yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
+}
+loadDashboard();
+window.addEventListener('rd:saved', loadDashboard);
+
 
 /* ---------- properties ---------- */
 const tree=[[1,'map-pin','206 N MacDill Ave','DNA Locked',true],[2,'folder','Retail Flip, Q3','4 rooms',false],
