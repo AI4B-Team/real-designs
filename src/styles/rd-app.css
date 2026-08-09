@@ -735,3 +735,14 @@
 .up-costs div{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:.84rem;border-bottom:1px solid var(--line,#efeeeb)}
 .up-costs div:last-child{border-bottom:0}
 .cred-up{cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+
+/* ---------- saved projects: photo upload + property thumbnails ---------- */
+.rd-app .save-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.rd-app .save-form label{display:flex;flex-direction:column;gap:6px;font-size:.78rem;color:var(--mute,#6b6b6b);min-width:0}
+.rd-app .save-form input{border:1px solid var(--line,#e6e4e0);border-radius:10px;padding:9px 11px;font:inherit;font-size:.86rem;color:var(--ink,#111113);background:var(--card,#fff);min-width:0}
+.rd-app .save-form input:focus{outline:2px solid var(--accent,#CC0000);outline-offset:1px}
+.rd-app .save-photo{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px}
+.rd-app .save-photo img{width:82px;height:60px;object-fit:cover;border-radius:10px;border:1px solid var(--line,#e6e4e0)}
+.rd-app .saved-prop{display:flex;align-items:center;gap:10px;min-width:0}
+.rd-app .saved-thumb{width:44px;height:34px;object-fit:cover;border-radius:8px;border:1px solid var(--line,#e6e4e0);flex:0 0 auto}
+@media(max-width:640px){.rd-app .save-form{grid-template-columns:1fr}}
