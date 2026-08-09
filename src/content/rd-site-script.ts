@@ -418,8 +418,8 @@ if(navUp) navUp.addEventListener('click',(e)=>{e.preventDefault();openUpload()})
 
 /* ---------- marquee ---------- */
 const mqI=[['sofa','Interior Redesign'],['home','Exterior Redesign'],['trees','Landscape Design'],['bed-double','Virtual Staging'],
-['eraser','Declutter & Empty'],['pen-tool','Sketch To Render'],['paintbrush','Material Swap'],['wallet','Budget Mode'],
-['calculator','Scope & Budget'],['shopping-bag','Shop The Design'],['video','Walkthrough Video'],['box','2D To 3D Plan'],
+['eraser','Declutter Rooms'],['pen-tool','Sketch to Design'],['paintbrush','Material Swap'],['wallet','Budget Mode'],
+['calculator','Project Scope'],['shopping-bag','Shop The Design'],['video','Walkthrough Video'],['box','2D to 3D Plans'],
 ['copy','Style Transfer'],['shield-check','MLS Disclosure'],['trending-up','ARV Impact']];
 document.getElementById('mq').innerHTML=[...mqI,...mqI].map(([i,t])=>`<span class="mq-item"><i data-lucide="${i}"></i>${t}</span>`).join('');
 
