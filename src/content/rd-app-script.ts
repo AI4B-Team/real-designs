@@ -1954,13 +1954,23 @@ if(linkList) linkList.addEventListener('click',async e=>{
    No mail server is wired up, so we hand the pro a finished message they can
    send from their own inbox. Wording changes with the status of the link so a
    follow up never reads like the first email. */
-function presMessage(r){
+function presMessage(r,reminder){
   const url=presLink(r.token);
   const who=r.client_name||'there';
   const what=r.title||'your design';
   const place=[r.address,r.room_name].filter(Boolean).join(', ');
   const st=r.status||'sent';
   const opened=(r.view_count||0)>0;
+  if(reminder&&st!=='approved'){
+    const n=(r.reminder_count||0);
+    const lead=n>=1
+      ? 'I know things get busy, so this is my last nudge on '+(place||what)+'.'
+      : (opened
+        ? 'You had a look at the design for '+(place||what)+', so I wanted to check where you landed.'
+        : 'Circling back on the design I sent for '+(place||what)+'.');
+    return {subject:(n>=1?'Last Check On ':'Quick Reminder: ')+what,
+      body:'Hi '+who+',\n\n'+lead+'\n\nEverything sits on one page, the before and after, the scope and the budget range:\n\n'+url+'\n\nApprove it there when you are ready, or leave a note on any line you want changed and I will rework it.\n\nThank you'};
+  }
   if(st==='changes'){
     return {subject:'Updated: '+what,
       body:'Hi '+who+',\n\nI made the changes you asked for on '+(place||what)+'. Same link, updated design and budget range:\n\n'+url+'\n\nTake a look and approve it there, or tell me what to adjust next.\n\nThank you'};
@@ -1976,6 +1986,7 @@ function presMessage(r){
   return {subject:'Your Design Is Ready: '+what,
     body:'Hi '+who+',\n\nHere is the design for '+(place||what)+'. One page, no login. You will see the before and after photo, what is being changed and a planning budget range:\n\n'+url+'\n\nApprove it right on the page, or leave a note with anything you want changed.\n\nThank you'};
 }
+
 
 function presSendModal(r){
   if(!r) return;
