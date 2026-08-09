@@ -1178,6 +1178,32 @@ async function exportPresentationPdf(id,btn){
   }
 }
 
+async function exportSocialReel(id,btn){
+  const old=btn?btn.innerHTML:null;
+  const setLab=(t)=>{ if(btn) btn.innerHTML='<span style="font-size:.66rem;font-weight:700">'+t+'</span>'; };
+  if(btn) btn.disabled=true;
+  setLab('0%');
+  try{
+    const p=await getPresentationPackage({data:{id}});
+    if(!p.before_url||!p.after_url) throw new Error('This version needs both a before photo and a finished render.');
+    const range=p.total_low!=null?(presMoney(p.total_low)+' \u2013 '+presMoney(p.total_high)):null;
+    const {blob,ext}=await buildSocialReel(p.before_url,p.after_url,{
+      room:p.room_name, address:p.address,
+      style:p.style?(p.style+' \u00b7 '+(p.grade||'retail')+' grade'):null, range
+    },(pct)=>setLab(Math.round(pct*100)+'%'));
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=String(p.room_name||'real-designs').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-reel.'+ext;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+  }catch(e){
+    showAlert('Could not build that reel. '+((e&&e.message)||''));
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=old; lucide.createIcons(); }
+  }
+}
+
 const linkList=document.getElementById('linkList');
 if(linkList) linkList.addEventListener('click',async e=>{
   const row=e.target.closest('[data-pid]'); if(!row) return;
