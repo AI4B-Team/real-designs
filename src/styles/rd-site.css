@@ -2483,3 +2483,56 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .bfd-act .bfc-btns{grid-template-columns:repeat(3,1fr);margin-top:16px}
 @media(max-width:900px){.rd-site .bfd{grid-template-columns:1fr;gap:32px}
   .rd-site .bfd-act{margin-top:24px}}
+
+/* ============ pricing page refresh ============ */
+.rd-site.rd-pricing .wrap{max-width:1280px}
+.rd-site.rd-pricing section{padding:54px 0}
+.rd-site.rd-pricing .sec-head{margin-bottom:26px}
+.rd-site.rd-pricing p,.rd-site.rd-pricing li{font-size:1rem}
+.rd-site.rd-pricing .lede{font-size:1.05rem;color:var(--ink-2)}
+.rd-site.rd-pricing .bill{margin-bottom:24px}
+/* plan cards */
+.rd-site .plans.plans-tidy{gap:18px}
+.rd-site .plans.plans-tidy .plan{padding:30px 26px;gap:12px}
+.rd-site .plans.plans-tidy .plan h3{font-size:1.22rem;letter-spacing:-.02em}
+.rd-site .plans.plans-tidy .plan .who{font-family:'DM Mono',monospace;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);margin:0;min-height:2.1em}
+.rd-site .plans.plans-tidy .plan .pr{margin-top:2px}
+.rd-site .plans.plans-tidy .plan .pr b{font-size:2.5rem}
+.rd-site .plans.plans-tidy .plan .pr span{font-size:.9rem;color:var(--mute)}
+.rd-site .plans.plans-tidy .plan .bill-exp{font-size:.9rem;color:var(--ink-2);min-height:2.6em}
+.rd-site .plans.plans-tidy .plan .btn{margin-top:2px}
+.rd-site .plans.plans-tidy .plan ul{gap:10px;font-size:.95rem;color:var(--ink-2);padding-top:14px;border-top:1px solid var(--line)}
+.rd-site .plans.plans-tidy .plan li svg{width:16px;height:16px;color:var(--red)}
+/* plan chooser */
+.rd-site .chooser{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+@media(max-width:860px){.rd-site .chooser{grid-template-columns:1fr}}
+.rd-site .chooser .ch{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:26px 24px;display:flex;flex-direction:column;gap:10px}
+.rd-site .chooser .ch b{font-size:1.15rem;letter-spacing:-.02em}
+.rd-site .chooser .ch span{font-size:1rem;color:var(--ink-2)}
+.rd-site .chooser .ch em{margin-top:6px;font-style:normal;font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+/* credit explainer + one-off */
+.rd-site .credit-note{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:30px 28px;max-width:860px;margin:0 auto;text-align:center}
+.rd-site .credit-note h3{font-size:1.3rem;letter-spacing:-.02em;margin-bottom:10px}
+.rd-site .credit-note p{color:var(--ink-2);max-width:620px;margin:0 auto}
+.rd-site .credit-note .lnk,.rd-site .price-more a{display:inline-flex;align-items:center;gap:7px;margin-top:14px;font-weight:700;color:var(--red);font-size:.98rem}
+.rd-site .oneoff{max-width:860px;margin:20px auto 0;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;background:var(--white);border:1px solid var(--line);border-radius:14px;padding:22px 26px}
+.rd-site .oneoff h4{font-size:1.05rem;margin-bottom:4px}
+.rd-site .oneoff p{color:var(--ink-2);font-size:.98rem}
+.rd-site.rd-pricing .price-trust{text-align:center;margin-top:12px;font-size:.92rem;color:var(--mute)}
+.rd-site.rd-pricing .price-more{text-align:center;margin-top:18px}
+/* final cta */
+.rd-site .final-cta{text-align:center;max-width:720px;margin:0 auto}
+.rd-site .final-cta p{color:var(--ink-2);margin-top:10px}
+.rd-site .final-cta .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+/* compare table */
+.rd-site .cmp-wrap{overflow-x:auto;background:var(--white);border:1px solid var(--line);border-radius:14px}
+.rd-site .cmp-t{width:100%;border-collapse:collapse;min-width:720px;font-size:.96rem}
+.rd-site .cmp-t th{text-align:center;padding:16px 12px;font-size:1rem;border-bottom:1px solid var(--line)}
+.rd-site .cmp-t th:first-child{width:38%}
+.rd-site .cmp-t td{padding:13px 12px;text-align:center;border-bottom:1px solid var(--line);color:var(--ink-2)}
+.rd-site .cmp-t td:first-child{text-align:left}
+.rd-site .cmp-t tr.grp td{background:var(--bg-2,#faf9f7);font-weight:700;color:var(--ink);font-family:'DM Mono',monospace;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;text-align:left}
+.rd-site .cmp-t svg.ok{color:var(--red)}
+.rd-site .cmp-t svg.nope{color:#c9c6c1}
+.rd-site.rd-pricing .cred-note{font-size:.95rem;color:var(--mute);margin-top:14px}
+.rd-site.rd-pricing .cred-note.center{text-align:center}
