@@ -693,34 +693,48 @@ export function initExtra(timers: number[], lucide: any) {
   };
   type Stage = {
     short: string; icon: string; title: string; copy: string;
-    src: string; outLabel: string; outValue: string; split?: boolean;
+    src: string; outLabel: string; outValue: string;
+    /* provenance: every stage declares the geometry it was produced from, and
+       the camera it was rendered with. A stage may only claim "Layout
+       Preserved" when its geometryId matches the project geometry AND it
+       carries a camera derived from that same model. */
+    geometryId: string | null; cameraId: string | null;
   };
+  const CAMERA_ID = "CAM-102-A";
   const P3: Stage[] = [
     {
       short: "Source", icon: "file-pen", title: "Source Sketch",
       copy: "Hand-drawn walls, doors, windows and room placement.",
       src: PHOTOS.sketchHand, outLabel: "Stage Output", outValue: "Input Recognized",
+      geometryId: PROJECT.geometryId, cameraId: null,
     },
     {
       short: "Clean Plan", icon: "ruler", title: "Clean Plan",
       copy: "The source geometry converted into a clean, measurable plan.",
       src: PHOTOS.plan2d, outLabel: "Stage Output", outValue: "Geometry Preserved",
+      geometryId: PROJECT.geometryId, cameraId: null,
     },
     {
       short: "Furnished Plan", icon: "sofa", title: "Furnished Plan",
       copy: "The same geometry furnished in your selected Design DNA.",
       src: PHOTOS.plan3d, outLabel: "Stage Output", outValue: "Design DNA Applied",
+      geometryId: PROJECT.geometryId, cameraId: null,
     },
     {
-      short: "Photoreal", icon: "camera", title: "Photoreal View",
-      copy: "Eye-level visualization from the marked camera position.",
+      /* This asset was not exported from the furnished plan model, so it does
+         not carry the project geometry or the stored camera. It is presented
+         as an unverified concept view until a real render exists. */
+      short: "Concept View", icon: "image", title: "Concept View",
+      copy: "Illustrative interior concept in the same Design DNA. It is not rendered from the plan geometry.",
       src: PHOTOS.sketchRender, outLabel: "Planning Range", outValue: "$49.4K\u2013$63.2K",
-      split: true,
+      geometryId: null, cameraId: null,
     },
   ];
-  // The camera sits in the circulation area outside the bathroom door and looks
-  // diagonally back across the kitchen and living room. Same marker on the
-  // furnished plan and on the photoreal thumbnail, so the two agree.
+  // A stage is geometry-verified only when it comes from the project geometry
+  // and was rendered with the stored camera for that model.
+  const verified = (s: Stage) =>
+    s.geometryId === PROJECT.geometryId && (s.cameraId === null || s.cameraId === CAMERA_ID);
+  const isRender = (s: Stage) => s.cameraId === CAMERA_ID;
   const camMark = `<span class="p3cam"><span class="p3cone"></span><i data-lucide="camera"></i></span>`;
 
   const p3n = $("p3Nav"), p3s = $("p3Stage"), p3c = $("p3Cap"), p3o = $("p3Out");
@@ -735,14 +749,14 @@ export function initExtra(timers: number[], lucide: any) {
       p3i = i;
       const s = P3[i];
       const layer = document.createElement("div");
-      layer.className = "p3layer fit" + (s.split ? " p3split" : "");
-      layer.innerHTML = s.split
+      layer.className = "p3layer fit" + (isRender(s) ? " p3split" : "");
+      layer.innerHTML = isRender(s)
         ? `<div class="p3-thumb">
              <div class="p3-thumb-inner">${photo(PHOTOS.plan3d, "Furnished plan with the camera position marked")}${camMark}</div>
              <span class="p3-thumb-lab mono">Camera Position</span>
            </div>
            <div class="p3-shot">${photo(s.src, s.title)}</div>`
-        : photo(s.src, s.title) + (i === 2 ? camMark : "");
+        : photo(s.src, s.title);
       p3s.appendChild(layer);
       requestAnimationFrame(() => layer.classList.add("on"));
       Array.from(p3s.children).forEach((c: any) => { if (c !== layer) setTimeout(() => c.remove(), 500); });
