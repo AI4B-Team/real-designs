@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { estimateArv, fmt } from "@/lib/planning-range";
+import { DesignResultSummary } from "@/components/DesignResultSummary";
 
 const CONDITIONS = [
   { key: "dated" as const, label: "Dated", note: "Sound but old finishes" },
@@ -112,20 +113,18 @@ export function ArvCalculator() {
       </div>
 
       <div className="out on" style={{ display: "block" }}>
-        <div className="out-num">
-          <div>
-            <span>ARV Impact Range</span>
-            <b>
-              {fmt(r.arvLow)} to {fmt(r.arvHigh)}
-            </b>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <span>Recoup On Rehab</span>
-            <b className="conf-hi">
-              {r.recoupLow} to {r.recoupHigh} percent
-            </b>
-          </div>
-        </div>
+        <DesignResultSummary
+          contextLabel="ARV Impact Range"
+          primaryValue={`${fmt(r.arvLow)} to ${fmt(r.arvHigh)}`}
+          compact
+          metrics={[
+            {
+              label: "Recoup On Rehab",
+              value: `${r.recoupLow} to ${r.recoupHigh} percent`,
+              tone: "positive" as const,
+            },
+          ]}
+        />
 
         <table className="lp-table calc-table">
           <tbody>

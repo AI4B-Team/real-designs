@@ -5,6 +5,8 @@ import type { LandingPage } from "@/content/seo/types";
 import { Builder } from "@/components/seo/Builder";
 import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
 import { fmt } from "@/lib/planning-range";
+import { DesignResultSummary } from "@/components/DesignResultSummary";
+import { metric } from "@/lib/design-result-summary";
 
 const PLANS = [
   { name: "Free", price: "$0", note: "5 credits a day, typical budget range", cta: "Start Free" },
@@ -151,20 +153,12 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
             <p className="lede">{page.scopeIntro}</p>
           </div>
           <div className="lp-scope card">
-            <div className="lp-scope-head">
-              <div>
-                <span className="mono">Estimated Planning Range</span>
-                <b>
-                  {fmt(scopeLow)} to {fmt(scopeHigh)}
-                </b>
-              </div>
-              <div>
-                <span className="mono">Pricing Confidence</span>
-                <b className={page.confidence === "High" ? "conf-hi" : "conf-md"}>
-                  {page.confidence}
-                </b>
-              </div>
-            </div>
+            <DesignResultSummary
+              contextLabel="Estimated Planning Range"
+              primaryValue={`${fmt(scopeLow)} to ${fmt(scopeHigh)}`}
+              metrics={[metric("Pricing Confidence", page.confidence)]}
+            />
+
             <table className="lp-table">
               <thead>
                 <tr>

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { PHOTOS } from "@/content/rd-photos";
 import { estimate, fmt, type FinishGrade, type RoomKey } from "@/lib/planning-range";
+import { DesignResultSummary } from "@/components/DesignResultSummary";
+import { metric } from "@/lib/design-result-summary";
 
 const BANDS = [
   { label: "Refresh", note: "Finishes and decor · under $5K", grade: "rental" as FinishGrade },
@@ -190,18 +192,12 @@ export function Builder({
           )}
         </div>
 
-        <div className="out-num">
-          <div>
-            <span>Estimated Planning Range</span>
-            <b>
-              {fmt(result.totalLow)} to {fmt(result.totalHigh)}
-            </b>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <span>Pricing Confidence</span>
-            <b className="conf-hi">{result.confidence}</b>
-          </div>
-        </div>
+        <DesignResultSummary
+          contextLabel="Estimated Planning Range"
+          primaryValue={`${fmt(result.totalLow)} to ${fmt(result.totalHigh)}`}
+          compact
+          metrics={[metric("Pricing Confidence", result.confidence)]}
+        />
 
         {phase === "done" && (
           <div className="scope-wall">
