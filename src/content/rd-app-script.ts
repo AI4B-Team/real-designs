@@ -1725,10 +1725,9 @@ buildNotifs();
 window.addEventListener('rd:saved', buildNotifs);
 window.addEventListener('rd:credits-changed', buildNotifs);
 
-const prefsEl=document.getElementById('notifPrefs');
-if(prefsEl) prefsEl.innerHTML=[['Design approvals','Email + In app'],['Client comments','Email + In app'],['Batch renders','In app'],
- ['Scope changes','In app'],['Team activity','Weekly digest'],['Billing and invoices','Email']]
- .map(([t,v])=>`<div class="seat"><div class="rowt"><b>${t}</b><span>${v}</span></div><span class="pill">On</span></div>`).join('');
+window.addEventListener('rd:prefs',()=>{ try{ buildNotifs(); }catch(_){} });
+try{ paintNotifPrefs(); }catch(_){}
+
 renderNotifs();
 
 /* ---------- studio: tool rows with plan badges ---------- */
