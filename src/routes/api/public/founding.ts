@@ -1,6 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
 
 /**
  * Real founding member seat count.
@@ -15,22 +13,10 @@ export const Route = createFileRoute("/api/public/founding")({
   server: {
     handlers: {
       GET: async () => {
-        const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-        const supabase = createClient<Database>(process.env["SUPABASE_URL"]!, key, {
-          auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-          global: {
-            fetch: (input, init) => {
-              const h = new Headers(init?.headers);
-              if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
-                h.delete("Authorization");
-              }
-              h.set("apikey", key);
-              return fetch(input, { ...init, headers: h });
-            },
-          },
-        });
+        // Count-only RPC is service-role gated; never called from the browser.
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-        const { data, error } = await supabase.rpc("founding_members_claimed");
+        const { data, error } = await supabaseAdmin.rpc("founding_members_claimed");
 
         if (error) {
           return Response.json({ error: "count_unavailable" }, { status: 503 });
