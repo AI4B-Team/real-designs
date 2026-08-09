@@ -39,7 +39,7 @@
 .rd-app .side-top{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
 
 .rd-app .side-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.rd-app .side-top .logo{order:1;min-width:0;overflow:hidden;white-space:nowrap}
+.rd-app .side-top .logo{order:1;min-width:0;overflow:hidden;white-space:nowrap;flex:1;display:flex;align-items:center;justify-content:center;padding-left:36px}
 .rd-app .side-toggle{order:2;flex:none;width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--white);color:var(--ink-2);transition:.14s}
 .rd-app .side-toggle:hover{background:var(--paper);color:var(--ink)}
 .rd-app .side-toggle svg{width:15px;height:15px}
