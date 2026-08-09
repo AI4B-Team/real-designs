@@ -927,11 +927,32 @@
 .rd-site .pro-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:16px}
 .rd-site .ptab{font-size:.8rem;font-weight:500;padding:8px 15px;border:1px solid var(--line);border-radius:99px;background:var(--paper);color:var(--mute)}
 .rd-site .ptab.on{background:var(--red);border-color:var(--red);color:#fff}
-.rd-site .pro-panel{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;align-items:center;
+.rd-site .pro-panel{display:grid;grid-template-columns:1.1fr 1fr;gap:22px;align-items:start;
   border:1px solid var(--line);border-radius:var(--r);background:var(--white);padding:18px;box-shadow:var(--sh)}
 .rd-site .pro-im{position:relative;aspect-ratio:16/10;border-radius:var(--ri);overflow:hidden;background:#EEE}
 .rd-site .pro-im .stamp{position:absolute;left:12px;top:12px}
 .rd-site .pro-tx h3{font-size:1.3rem;letter-spacing:-.02em;margin-bottom:6px}
+.rd-site .pro-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.rd-site .pro-stat{border:1px solid var(--line);border-radius:var(--ri);padding:9px 10px;background:var(--paper)}
+.rd-site .pro-stat span{display:block;font-size:.63rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute-2)}
+.rd-site .pro-stat b{display:block;font-size:.83rem;margin-top:3px;letter-spacing:-.01em}
+.rd-site .pro-foot{grid-column:1/-1;display:grid;grid-template-columns:1.4fr 1fr;gap:22px;
+  border-top:1px solid var(--line);padding-top:16px}
+.rd-site .pro-lab{display:block;font-size:.63rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute-2);margin-bottom:10px}
+.rd-site .pro-flow ol{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;list-style:none;margin:0;padding:0}
+.rd-site .pro-flow li{position:relative;border:1px solid var(--line);border-radius:var(--ri);padding:10px;background:var(--paper)}
+.rd-site .pro-flow li i{display:block;font-style:normal;font-size:.66rem;color:var(--red);margin-bottom:5px}
+.rd-site .pro-flow li span{display:block;font-size:.78rem;line-height:1.35;color:var(--ink)}
+.rd-site .pro-outs>div{display:flex;flex-wrap:wrap;gap:7px}
+@media (max-width:960px){
+  .rd-site .pro-foot{grid-template-columns:1fr}
+  .rd-site .pro-flow ol{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:560px){
+  .rd-site .pro-stats{grid-template-columns:1fr}
+  .rd-site .pro-flow ol{grid-template-columns:1fr}
+}
+
 
 /* --- feature explorer tabs --- */
 @media (max-width:960px){
