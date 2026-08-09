@@ -40,29 +40,10 @@ export function SiteFooter() {
       <div className="wrap">
         <div className="foot lp-foot">
           <div>
-            <div
-              style={{
-                color: "#fff",
-                fontWeight: 700,
-                letterSpacing: "-.03em",
-                fontSize: "1.08rem",
-                display: "flex",
-                alignItems: "center",
-                gap: 9,
-                marginBottom: 11,
-              }}
-            >
-              <span
-                style={{
-                  width: 11,
-                  height: 11,
-                  borderRadius: "50%",
-                  background: "var(--red)",
-                  display: "block",
-                }}
-              />
-              REAL DESIGNS
+            <div style={{ marginBottom: 13 }}>
+              <BrandMark />
             </div>
+
             <p style={{ maxWidth: "33ch", fontSize: ".84rem" }}>
               AI home design, virtual staging and renovation planning for people who actually own
               the property.
