@@ -18,6 +18,7 @@ import { listPresentations, createPresentation, deletePresentation, getPresentat
 import { buildSocialReel } from "@/lib/social-reel";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
+import { listTeam, inviteMember, revokeInvite, acceptInvite } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 
@@ -1665,9 +1666,29 @@ async function paintTeam(){
       av=name.split(/[\s._-]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('')||'YOU';
     }
   }catch(_){}
+  let team={sent:[],received:[]};
+  try{ team=await listTeam(); }catch(_){}
+  const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+  const invites=(team.sent||[]).map(i=>`<div class="seat"><span class="av">${esc((i.email||'?')[0].toUpperCase())}</span>
+      <div class="rowt"><b>${esc(i.email)}</b><span>${i.status==='accepted'?'Accepted':'Invite pending'} \u00b7 ${esc(i.role)}</span></div>
+      <span class="pill ${i.status==='accepted'?'p-green':'p-gray'}">${i.status==='accepted'?'Active':'Pending'}</span>
+      <button class="btn btn-g" data-revoke="${i.id}" style="margin-left:8px">Remove</button></div>`).join('');
+  const inbound=(team.received||[]).map(i=>`<div class="seat"><span class="av">IN</span>
+      <div class="rowt"><b>You were invited to another workspace</b><span>Role: ${esc(i.role)}</span></div>
+      <button class="btn btn-p" data-accept="${i.id}">Accept</button></div>`).join('');
   list.innerHTML=`<div class="seat"><span class="av">${av}</span><div class="rowt"><b>${name}</b><span>${mail||'Signed in'}</span></div>
-    <span class="pill p-ink">Owner</span></div>
-    <p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">Extra seats and invitations are in development. Everything in this workspace belongs to your account today.</p>`;
+    <span class="pill p-ink">Owner</span></div>${invites}${inbound}
+    ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No teammates yet. Invite one below and they join this workspace when they sign in with that email.</p>'}`;
+  const seatEl=document.getElementById('seatCount');
+  if(seatEl){ const n=1+(team.sent||[]).length; seatEl.textContent=n+(n===1?' Seat':' Seats'); }
+  list.querySelectorAll('[data-revoke]').forEach(b=>b.addEventListener('click',async()=>{
+    b.disabled=true; try{ await revokeInvite({data:{id:b.dataset.revoke}}); }catch(_){}
+    paintTeam();
+  }));
+  list.querySelectorAll('[data-accept]').forEach(b=>b.addEventListener('click',async()=>{
+    b.disabled=true; try{ await acceptInvite({data:{id:b.dataset.accept}}); }catch(_){}
+    paintTeam();
+  }));
 
   const rows=document.getElementById('usageRows');
   if(rows){
@@ -1676,12 +1697,28 @@ async function paintTeam(){
       const hist=await listCreditHistory();
       hist.forEach(h=>{ if(h.action==='design') designs++; if(h.action==='scope') scopes++; });
     }catch(_){}
-    rows.innerHTML=`<tr><td><b>${name}</b></td><td>Owner</td><td class="n">${designs}</td><td class="n">${scopes}</td><td class="n">Now</td></tr>`;
+    rows.innerHTML=`<tr><td><b>${name}</b></td><td>Owner</td><td class="n">${designs}</td><td class="n">${scopes}</td><td class="n">Now</td></tr>`
+      +(team.sent||[]).map(i=>`<tr><td><b>${esc(i.email)}</b></td><td>${esc(i.role)}</td><td class="n">0</td><td class="n">0</td><td class="n">${i.status==='accepted'?'Joined':'Pending'}</td></tr>`).join('');
   }
   lucide.createIcons();
 }
 paintTeam();
 window.addEventListener('rd:credits-changed',()=>paintTeam());
+
+const tmSend=document.getElementById('tmSend');
+if(tmSend) tmSend.addEventListener('click',async()=>{
+  const em=document.getElementById('tmEmail'), rl=document.getElementById('tmRole'), msg=document.getElementById('tmMsg');
+  const email=(em&&em.value||'').trim();
+  if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){ if(msg){ msg.textContent='Enter a valid email address.'; msg.style.color='var(--red)'; } return; }
+  tmSend.disabled=true; if(msg){ msg.textContent='Sending'; msg.style.color='var(--mute)'; }
+  try{
+    const r=await inviteMember({data:{email,role:(rl&&rl.value)||'member'}});
+    if(r&&r.ok){ if(msg){ msg.textContent='Invite added. They join when they sign in with '+email+'.'; msg.style.color='var(--mute-2)'; } if(em) em.value=''; paintTeam(); }
+    else if(msg){ msg.textContent=(r&&r.error)||'Could not send that invite.'; msg.style.color='var(--red)'; }
+  }catch(e){ if(msg){ msg.textContent='Could not send that invite.'; msg.style.color='var(--red)'; } }
+  tmSend.disabled=false;
+});
+
 
 /* ---------- workspace preferences ---------- */
 function pfSet(id,v){ const el=document.getElementById(id); if(el&&v!=null) el.value=v; }
