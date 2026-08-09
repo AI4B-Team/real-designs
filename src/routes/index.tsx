@@ -8,7 +8,7 @@ import { absoluteUrl } from "@/lib/site";
 
 const title = "AI Home Design and Renovation Planning | REAL DESIGNS";
 const description =
-  "Other tools help you picture it. REAL DESIGNS plans it: budget-guided AI redesign on your real walls, a line-item scope, a shopping list and a contractor-ready brief.";
+  "Turn one photo into a photoreal redesign of your real space, plus a planning budget range, shopping list and contractor-ready scope.";
 
 
 export const Route = createFileRoute("/")({
