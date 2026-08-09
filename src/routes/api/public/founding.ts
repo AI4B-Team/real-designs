@@ -30,15 +30,13 @@ export const Route = createFileRoute("/api/public/founding")({
           },
         });
 
-        const { count, error } = await supabase
-          .from("founding_members")
-          .select("id", { count: "exact", head: true });
+        const { data, error } = await supabase.rpc("founding_members_claimed");
 
         if (error) {
           return Response.json({ error: "count_unavailable" }, { status: 503 });
         }
 
-        const claimed = count ?? 0;
+        const claimed = (data as number | null) ?? 0;
         const remaining = Math.max(FOUNDING_LIMIT - claimed, 0);
 
         return Response.json(
