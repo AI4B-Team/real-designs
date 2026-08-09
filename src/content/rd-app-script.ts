@@ -2149,7 +2149,6 @@ if(scopeGrid && !document.getElementById('scSave')){
     {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent colour on every export.',i:'palette',cta:'Set Brand'},
     {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
   ];
-  console.log('ONBSTEPS',STEPS.length);
   /* insert synchronously so a double init cannot duplicate the card */
   const card=document.createElement('div');
   card.className='card onb'; card.id='onbCard'; card.style.marginBottom='16px'; card.hidden=true;
