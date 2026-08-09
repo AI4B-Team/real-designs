@@ -771,3 +771,15 @@
 .up-card .field label{display:block;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute-2);margin-bottom:5px}
 .up-card .field input,.up-card .field select{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;font-size:.84rem;background:#fff;color:var(--ink)}
 .up-card .field input:focus,.up-card .field select:focus{outline:none;border-color:var(--ink)}
+
+.rd-app .ob{margin-bottom:16px}
+.rd-app .ob-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding-top:6px}
+.rd-app .ob-s{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line);border-radius:12px;padding:11px 12px;background:var(--card,transparent);text-align:left;cursor:pointer}
+.rd-app .ob-s:hover{border-color:var(--mute-2)}
+.rd-app .ob-s .tick{width:20px;height:20px;flex:0 0 20px;border-radius:50%;border:1.5px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:.62rem;font-family:'DM Mono',monospace;color:var(--mute-2)}
+.rd-app .ob-s.done .tick{background:#0a7b3e;border-color:#0a7b3e;color:#fff}
+.rd-app .ob-s b{display:block;font-size:.83rem;line-height:1.25}
+.rd-app .ob-s span{display:block;font-size:.72rem;color:var(--mute-2);margin-top:3px;line-height:1.35}
+.rd-app .ob-s.done b{color:var(--mute-2)}
+@media(max-width:900px){.rd-app .ob-steps{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.rd-app .ob-steps{grid-template-columns:1fr}}
