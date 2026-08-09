@@ -7,7 +7,7 @@ import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
-import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary } from "@/lib/workspace.functions";
+import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto } from "@/lib/room-photos";
 
@@ -214,6 +214,12 @@ async function paintRooms(){
     ? proj.name+' \u00b7 '+proj.rooms.length+(proj.rooms.length===1?' room':' rooms')+' \u00b7 '+proj.rooms.reduce((n,r)=>n+r.versions,0)+' versions'
     : 'Save a room in Studio to build your property tree';
   if(rs) rs.textContent=proj?('Rooms saved under '+proj.name):'Rooms saved under the selected project';
+  const dna=document.getElementById('dnaRow');
+  if(dna){
+    if(dna.dataset.orig===undefined) dna.dataset.orig=dna.innerHTML;
+    dna.innerHTML=(prop&&prop.has_dna)?dna.dataset.orig
+      :'<span style="font-size:.79rem;color:var(--mute-2)">No Design DNA locked for this property yet.</span>';
+  }
 
   const rooms=proj?proj.rooms:[];
   if(!rooms.length){
