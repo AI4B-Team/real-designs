@@ -821,3 +821,5 @@
   70%{ box-shadow: 0 0 0 2px var(--red, #CC0000) inset; background: rgba(204,0,0,.06); }
   100%{ box-shadow: 0 0 0 0 transparent inset; background: transparent; }
 }
+
+.rd-app .search-menu [data-r].sel{background:rgba(204,0,0,.08);outline:1px solid rgba(204,0,0,.35)}
