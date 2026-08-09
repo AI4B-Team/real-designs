@@ -316,7 +316,8 @@ async function paintOnboarding(s){
   card.hidden=false;
   const sub=document.getElementById('obSub');
   if(sub) sub.textContent=done+' of '+steps.length+' done \u00b7 four steps to your first client-ready package';
-  box.innerHTML=steps.map(([t,d,ok,go],i)=>'<button class="ob-s'+(ok?' done':'')+'" data-goto="'+go+'"><span class="tick">'+(ok?'\u2713':(i+1))+'</span><span><b>'+t+'</b><span>'+d+'</span></span></button>').join('');
+  box.innerHTML=steps.map(([t,d,ok,dest],i)=>'<button class="ob-s'+(ok?' done':'')+'" data-goto="'+dest+'"><span class="tick">'+(ok?'\u2713':(i+1))+'</span><span><b>'+t+'</b><span>'+d+'</span></span></button>').join('');
+  box.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
 }
 document.getElementById('obHide')?.addEventListener('click',()=>{
   localStorage.setItem('rd_ob_hidden','1');
