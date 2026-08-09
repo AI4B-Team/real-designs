@@ -2,17 +2,25 @@ import { Link } from "@tanstack/react-router";
 
 import { FOOTER_GROUPS } from "@/content/seo/nav";
 
-const logo =
-  "/__l5e/assets-v1/c5d9393c-b749-4c1a-81d3-2af5cbe5c8c3/rd-logo-icon.png";
+export function BrandMark() {
+  return (
+    <span className="rd-mark" aria-label="REAL DESIGNS">
+      <i>
+        <b>REAL</b>
+        <em>Designs</em>
+      </i>
+    </span>
+  );
+}
 
 export function SiteHeader() {
   return (
     <header id="hdr">
       <div className="wrap nav">
         <a href="/" className="logo">
-          <img src={logo} alt="REAL DESIGNS" className="dot" />
-          REAL DESIGNS <small>.AI</small>
+          <BrandMark />
         </a>
+
         <div className="nav-cta">
           <Link to="/auth" className="btn btn-ghost btn-sm">
             Log In
@@ -32,29 +40,10 @@ export function SiteFooter() {
       <div className="wrap">
         <div className="foot lp-foot">
           <div>
-            <div
-              style={{
-                color: "#fff",
-                fontWeight: 700,
-                letterSpacing: "-.03em",
-                fontSize: "1.08rem",
-                display: "flex",
-                alignItems: "center",
-                gap: 9,
-                marginBottom: 11,
-              }}
-            >
-              <span
-                style={{
-                  width: 11,
-                  height: 11,
-                  borderRadius: "50%",
-                  background: "var(--red)",
-                  display: "block",
-                }}
-              />
-              REAL DESIGNS
+            <div style={{ marginBottom: 13 }}>
+              <BrandMark />
             </div>
+
             <p style={{ maxWidth: "33ch", fontSize: ".84rem" }}>
               AI home design, virtual staging and renovation planning for people who actually own
               the property.
