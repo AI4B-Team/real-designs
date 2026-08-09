@@ -735,6 +735,7 @@ export type Database = {
         }
         Returns: Json
       }
+      has_workspace_access: { Args: { _owner: string }; Returns: boolean }
       record_presentation_view: { Args: { _token: string }; Returns: undefined }
       respond_to_presentation: {
         Args: { _decision: string; _note?: string; _token: string }
