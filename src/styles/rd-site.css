@@ -1911,6 +1911,12 @@
 .pp-table th,.pp-table td{text-align:left;padding:8px 10px;border-bottom:1px solid #EFEDE8}
 .pp-table th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:#6b6b6b}
 .pp-table .n{text-align:right;font-family:'DM Mono',ui-monospace,monospace}
+.pp-table .c{text-align:center;width:56px}
+.pp-check{width:16px;height:16px;accent-color:var(--pp-accent,#CC0000);cursor:pointer}
+.pp-table tr.is-out td{color:#a3a3a3;text-decoration:line-through}
+.pp-table tr.is-out td.c{text-decoration:none}
+.pp-hint-left{text-align:left;margin:0 0 10px}
+.pp-range-box.is-trimmed b s{color:#a3a3a3;font-size:.92rem;margin-right:6px}
 .pp-note{font-size:.75rem;color:#6b6b6b;margin:12px 0 0}
 .pp-note-in{width:100%;border:1px solid #E4E1DA;border-radius:9px;padding:10px 12px;font:inherit;font-size:.85rem;resize:vertical}
 .pp-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
