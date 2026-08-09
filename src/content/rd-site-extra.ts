@@ -512,9 +512,9 @@ export function initExtra(timers: number[], lucide: any) {
     ["Kitchen", PHOTOS.kitchen], ["Living Room", PHOTOS.after], ["Primary Bath", PHOTOS.bath],
     ["Front Elevation", PHOTOS.paintedBrick], ["Backyard", PHOTOS.resortYard], ["Guest Room", PHOTOS.japandi],
   ];
-  const dr = $("dnaRing");
+  const dr = $("dnaGrid");
   if (dr) dr.innerHTML = DNA.map(([n, src]) =>
-    `<div class="dnode"><div class="dim">${photo(src, n + " in the property Design DNA")}</div><span>${n}</span></div>`).join("");
+    `<figure class="dcell">${photo(src, n + " in the property Design DNA")}<figcaption>${n}</figcaption></figure>`).join("");
 
   /* ---------- shop ---------- */
   const si = $("shopImg");

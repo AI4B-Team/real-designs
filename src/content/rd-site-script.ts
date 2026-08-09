@@ -432,7 +432,7 @@ const SL=[['Warm Minimal',PHOTOS.after],['Modern Farmhouse',PHOTOS.farmhouse],['
 ['Japandi',PHOTOS.japandi],['Mid Century',PHOTOS.midcentury],['Industrial',PHOTOS.industrial],
 ['Quiet Luxury',PHOTOS.luxury],['Investor Neutral',PHOTOS.neutral],['Florida Ranch',PHOTOS.ranch],
 ['Painted Brick',PHOTOS.paintedBrick],['Resort Yard',PHOTOS.resortYard],['Craftsman',PHOTOS.craftsman]];
-document.getElementById('styleGrid').innerHTML=SL.map(([n,src],i)=>`
+document.getElementById('styleGrid').innerHTML=SL.slice(0,4).map(([n,src],i)=>`
   <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' interior design style')}</div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')}</span></div></div>`).join('');
 
 /* ---------- proof cards ---------- */
