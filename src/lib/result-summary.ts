@@ -117,7 +117,9 @@ export function summaryHTML(m: SummaryModel): string {
     .slice(0, 3)
     .map((x) => {
       const tone = x.tone ?? toneFor(x.value);
-      const dot = showsDot(tone, x.plain) ? `<i class="rsp-dot is-${tone}"></i>` : "";
+      const dot = showsDot(tone, x.plain)
+        ? `<i class="rsp-dot is-${tone}${tone === "processing" ? " rsp-live" : ""}"></i>`
+        : "";
       return `<div class="rsp-col"><span class="rsp-label">${esc(x.label)}</span><span class="rsp-value is-${x.plain ? "neutral" : tone}">${dot}${esc(x.value)}</span></div>`;
     })
     .join("");

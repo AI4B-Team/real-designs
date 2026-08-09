@@ -34,7 +34,7 @@ export function ResultSummaryPanel(model: SummaryModel) {
           <div className="rsp-col" key={m.label}>
             <span className="rsp-label">{m.label}</span>
             <span className={`rsp-value is-${m.plain ? "neutral" : tone}`}>
-              {showsDot(tone, m.plain) ? <i className={`rsp-dot is-${tone}`} /> : null}
+              {showsDot(tone, m.plain) ? <i className={`rsp-dot is-${tone}${tone === "processing" ? " rsp-live" : ""}`} /> : null}
               {m.value}
             </span>
           </div>

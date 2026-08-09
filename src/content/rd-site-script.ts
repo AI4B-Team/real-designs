@@ -161,10 +161,8 @@ function paint(i){
   if(!budgetTouched){
     const hs=document.getElementById('heroSummary');
     if(hs){
-      const mets=(b.mets||[]).map(m=>metric(m[0],m[1]));
-      hs.innerHTML=b.proc
-        ? summaryHTML({primaryLabel:b.lab,state:'processing',progressMessage:b.est,metrics:mets})
-        : summaryHTML({primaryLabel:b.lab,primaryValue:b.est,metrics:mets});
+      const mets=(b.mets||[]).map((m,ix)=>metric(m[0],m[1],b.proc&&ix===0?'processing':undefined));
+      hs.innerHTML=summaryHTML({primaryLabel:b.lab,primaryValue:b.est,metrics:mets});
     }
   }
 
