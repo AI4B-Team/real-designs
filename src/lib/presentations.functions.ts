@@ -95,6 +95,7 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
       status: (p.status ?? "sent") as string,
       decision_note: (p.decision_note ?? null) as string | null,
       excluded_lines: ((p.excluded_lines ?? []) as any[]).map(String),
+      line_notes: (p.line_notes ?? {}) as Record<string, string>,
       brand_name: (p.brand_name ?? null) as string | null,
       brand_accent: (p.brand_accent ?? null) as string | null,
       address: p.address as string,
@@ -131,6 +132,7 @@ export const respondToPresentation = createServerFn({ method: "POST" })
       _token: data.token,
       _decision: data.decision,
       _excluded: data.excluded ?? [],
+      _line_notes: data.line_notes ?? {},
       ...(data.note ? { _note: data.note } : {}),
     } as never);
     if (error) throw new Error(error.message);
