@@ -1529,7 +1529,9 @@ function renderCats(q){
   lucide.createIcons();
 }
 document.addEventListener('click',e=>{
+  if(e.__rdHelpHandled) return; // init can run twice (StrictMode); handle each click once
   if(!e.target.closest||!e.target.closest('#helpCats,#tutGrid,#tutPaths')) return;
+  e.__rdHelpHandled=true;
   const open=e.target.closest('[data-open]');
   if(open){ go(open.dataset.open); return; }
   const b=e.target.closest('.help-a'); if(!b) return;
