@@ -1046,7 +1046,8 @@ if(scopeGrid && !document.getElementById('scSave')){
 /* ---------- first run onboarding ---------- */
 (async function onboarding(){
   const dash=document.getElementById('v-dash');
-  if(!dash||document.getElementById('onbCard')) return;
+  if(!dash) return;
+  document.querySelectorAll('#onbCard,#onbModal').forEach(n=>n.remove());
 
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
@@ -1110,6 +1111,7 @@ if(scopeGrid && !document.getElementById('scSave')){
   /* welcome once per account */
   if(!state.welcomed){
     state.welcomed=true; save();
+    document.querySelectorAll('#onbModal').forEach(n=>n.remove());
     const m=document.createElement('div'); m.className='up-modal on'; m.id='onbModal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
       +'<h3>Welcome To REAL DESIGNS</h3>'
