@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import {
 import { DesignResultSummary } from "@/components/DesignResultSummary";
 import { metric } from "@/lib/design-result-summary";
+import {
   estimate,
   fmt,
   GRADES,
@@ -10,6 +10,7 @@ import { metric } from "@/lib/design-result-summary";
   type FinishGrade,
   type RoomKey,
 } from "@/lib/planning-range";
+
 
 /**
  * Works with no image, no account and no server call: typed dimensions times
