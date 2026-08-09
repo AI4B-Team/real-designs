@@ -1677,8 +1677,10 @@ const HIST_META={
   viewed:['eye','Opened'],
   approved:['check-circle-2','Approved'],
   changes:['refresh-cw','Changes Requested'],
+  reminded:['bell-ring','Reminder Sent'],
   comments:['message-square','Line Comments']
 };
+
 
 function presHistWhen(iso){
   try{ return new Date(iso).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
