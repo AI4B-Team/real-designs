@@ -55,6 +55,7 @@ function SharedPresentation() {
   const [busy, setBusy] = useState(false);
   const [split, setSplit] = useState(50);
   const [dragging, setDragging] = useState(false);
+  const [excluded, setExcluded] = useState<string[]>(deck?.excluded_lines ?? []);
 
   useEffect(() => {
     if (deck) document.title = `${deck.title} | REAL DESIGNS`;
@@ -64,6 +65,13 @@ function SharedPresentation() {
 
   const decided = status === "approved" || status === "changes";
   const hasCompare = Boolean(deck.after_url && deck.before_url);
+  const isOut = (id: string) => excluded.includes(id);
+  const toggleLine = (id: string) =>
+    setExcluded((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+  const kept = (deck.lines as any[]).filter((l) => !isOut(l.id));
+  const keptLow = kept.reduce((s, l) => s + Number(l.low || 0), 0);
+  const keptHigh = kept.reduce((s, l) => s + Number(l.high || 0), 0);
+  const trimmed = excluded.length > 0 && deck.lines.length > 0;
 
   function moveSplit(clientX: number, el: HTMLElement) {
     const r = el.getBoundingClientRect();
@@ -74,7 +82,9 @@ function SharedPresentation() {
   async function decide(decision: "approved" | "changes") {
     setBusy(true);
     try {
-      const res = await respondToPresentation({ data: { token, decision, note: note || undefined } });
+      const res = await respondToPresentation({
+        data: { token, decision, note: note || undefined, excluded },
+      });
       if (res?.ok) {
         setStatus(decision);
         setSavedNote(note);
