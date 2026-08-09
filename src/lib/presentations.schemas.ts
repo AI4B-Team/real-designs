@@ -8,6 +8,7 @@ export const presentationRespondSchema = presentationTokenSchema.extend({
   decision: z.enum(["approved", "changes"]),
   note: z.string().trim().max(1000).optional(),
   excluded: z.array(z.string().uuid()).max(200).optional(),
+  line_notes: z.record(z.string().uuid(), z.string().trim().max(400)).optional(),
 });
 
 export const presentationCreateSchema = z.object({
