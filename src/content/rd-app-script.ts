@@ -2088,7 +2088,7 @@ async function buildNotifs(){
     const vers=await listSavedEstimates();
     (vers||[]).slice(0,10).forEach(v=>{
       out.push({id:'v:'+v.version_id, ic:v.status==='approved'?'check-circle-2':'wand-sparkles', cat:v.status==='approved'?'approvals':'designs',
-        t:v.room_name+' v'+(v.version_no||1)+(v.status==='approved'?' approved':' saved'),
+        t:v.room_name+' v'+(v.version_no||1)+(v.status==='approved'?' Approved':' Saved'),
         b:(v.address?v.address+' \u00b7 ':'')+(v.project_name||'Project'),
         at:v.created_at, tm:nAgo(v.created_at)});
     });
@@ -2109,16 +2109,16 @@ async function buildNotifs(){
       const who=p.client_name||p.client_email||'Your client';
       const where=(p.address?p.address+' \u00b7 ':'')+p.room_name+' v'+(p.version_no||1);
       if(p.status==='approved'){
-        out.push({id:'pa:'+p.id, ic:'badge-check', cat:'approvals', go:'present', t:who+' approved '+p.title,
+        out.push({id:'pa:'+p.id, ic:'badge-check', cat:'approvals', go:'present', pres:p.id, t:who+' Approved '+p.title,
           b:(p.decision_note?'\u201c'+p.decision_note+'\u201d \u00b7 ':'')+where,
           at:p.decided_at||p.last_viewed_at||p.created_at, tm:nAgo(p.decided_at||p.created_at)});
       }else if(p.status==='changes'){
-        out.push({id:'pc:'+p.id, ic:'message-square-warning', cat:'approvals', go:'present', t:who+' requested changes on '+p.title,
+        out.push({id:'pc:'+p.id, ic:'message-square-warning', cat:'approvals', go:'present', pres:p.id, t:who+' Requested Changes On '+p.title,
           b:(p.decision_note?'\u201c'+p.decision_note+'\u201d \u00b7 ':'')+where,
           at:p.decided_at||p.created_at, tm:nAgo(p.decided_at||p.created_at)});
       }else if(p.status==='viewed'&&p.last_viewed_at){
-        out.push({id:'pv:'+p.id+':'+p.view_count, ic:'eye', cat:'approvals', go:'present',
-          t:who+' opened '+p.title,
+        out.push({id:'pv:'+p.id+':'+p.view_count, ic:'eye', cat:'approvals', go:'present', pres:p.id,
+          t:who+' Opened '+p.title,
           b:p.view_count+(p.view_count===1?' view':' views')+' \u00b7 no decision yet \u00b7 '+where,
           at:p.last_viewed_at, tm:nAgo(p.last_viewed_at)});
       }
@@ -2127,7 +2127,7 @@ async function buildNotifs(){
   try{
     const c=await getMyCredits(); CREDITS=c;
     if(c&&c.plan!=='free'&&c.balance<=20)
-      out.push({id:'low:'+c.balance, ic:'triangle-alert', cat:'billing', t:'Credits running low',
+      out.push({id:'low:'+c.balance, ic:'triangle-alert', cat:'billing', t:'Credits Running Low',
         b:c.balance+' credits left on your '+c.plan+' plan.', at:new Date().toISOString(), tm:'now'});
   }catch(e){}
   try{
@@ -2140,7 +2140,7 @@ async function buildNotifs(){
     });
     (tm.sent||[]).filter(i=>i.status==='accepted').slice(0,8).forEach(i=>{
       out.push({id:'tj:'+i.id, ic:'users', cat:'team', go:'account',
-        t:i.email+' joined your workspace',
+        t:i.email+' Joined Your Workspace',
         b:'Role: '+String(i.role||'member')+' \u00b7 they can now see shared properties and designs.',
         at:i.accepted_at||i.created_at, tm:nAgo(i.accepted_at||i.created_at)});
     });
@@ -2152,7 +2152,7 @@ async function buildNotifs(){
   renderNotifs();
 }
 function notifFilter(tab){ return NOTIFS.filter(n=> tab==='all'?true: tab==='unread'?n.unread: n.cat===tab); }
-function notifRow(n){ return `<button class="notif-i${n.unread?' unread':''}" data-nid="${n.id}"${n.go?` data-ngo="${n.go}"`:''}>
+function notifRow(n){ return `<button class="notif-i${n.unread?' unread':''}" data-nid="${n.id}"${n.go?` data-ngo="${n.go}"`:''}${n.pres?` data-npres="${n.pres}"`:''}>
  <span class="notif-ic"><i data-lucide="${n.ic}"></i></span>
  <span class="tx"><b>${n.t}</b><span>${n.b}</span></span>
  <span class="tm">${n.tm}</span>${n.unread?'<span class="dot"></span>':''}</button>`; }
@@ -2189,6 +2189,8 @@ document.addEventListener('click',e=>{
   const dest=row.dataset.ngo;
   if(inMenu) closeNotif();
   if(dest) go(dest); else if(inMenu) go('notifications');
+  const pid=row.dataset.npres;
+  if(pid) setTimeout(()=>{ try{ focusPresentation(pid); }catch(_){} },60);
   renderNotifs();
 });
 ['notifRead','notifReadAll'].forEach(id=>{ const b=document.getElementById(id);
