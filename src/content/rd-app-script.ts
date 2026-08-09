@@ -13,7 +13,7 @@ import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
-import { listPresentations, createPresentation, deletePresentation } from "@/lib/presentations.functions";
+import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
 
 export function initApp(): () => void {
   const timers: number[] = [];
