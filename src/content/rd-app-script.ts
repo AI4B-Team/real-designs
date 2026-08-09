@@ -1043,6 +1043,86 @@ if(scopeGrid && !document.getElementById('scSave')){
   });
 }
 
+/* ---------- first run onboarding ---------- */
+(async function onboarding(){
+  const dash=document.getElementById('v-dash');
+  if(!dash||document.getElementById('onbCard')) return;
+  let uid='anon';
+  try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) uid=data.user.id; }catch(e){}
+  const KEY='rd.onb.'+uid;
+  const state=(()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ return {}; } })();
+  const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} };
+  if(state.done) return;
+
+  /* already worked in this account? then there is nothing to onboard */
+  try{
+    const list=await listSavedEstimates();
+    if(list&&list.length){ state.done=true; save(); return; }
+  }catch(e){}
+
+  const STEPS=[
+    {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
+    {k:'priced',t:'Price The Scope',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Scope'},
+    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'}
+  ];
+  const card=document.createElement('div');
+  card.className='card onb'; card.id='onbCard'; card.style.marginBottom='16px';
+  card.innerHTML='<div class="card-h"><div><h3>Get Started</h3><div class="sub" id="onbSub"></div></div>'
+    +'<button class="btn btn-ghost btn-xs" id="onbHide"><i data-lucide="x"></i>Dismiss</button></div>'
+    +'<div class="card-b"><div class="onb-bar"><i id="onbFill"></i></div><div class="onb-steps" id="onbSteps"></div></div>';
+  dash.insertBefore(card,dash.firstChild);
+
+  function act(k){
+    go('scope');
+    setTimeout(()=>{
+      if(k==='photo'){ const l=document.querySelector('label[for="svPhoto"]'); if(l){ l.scrollIntoView({behavior:'smooth',block:'center'}); l.click(); } }
+      else if(k==='priced'){ const b=document.getElementById('scRun'); if(b){ b.scrollIntoView({behavior:'smooth',block:'center'}); b.click(); } }
+      else { const a=document.getElementById('svAddress'); if(a){ a.scrollIntoView({behavior:'smooth',block:'center'}); a.focus(); } }
+    },80);
+  }
+
+  function render(){
+    const done=STEPS.filter(s=>state[s.k]).length;
+    document.getElementById('onbSub').textContent=done+' of '+STEPS.length+' complete';
+    document.getElementById('onbFill').style.width=Math.round(done/STEPS.length*100)+'%';
+    document.getElementById('onbSteps').innerHTML=STEPS.map((s,n)=>
+      '<div class="onb-step'+(state[s.k]?' on':'')+'">'
+      +'<span class="onb-ic"><i data-lucide="'+(state[s.k]?'check':s.i)+'"></i></span>'
+      +'<div class="onb-tx"><b>'+(n+1)+'. '+s.t+'</b><span>'+s.b+'</span></div>'
+      +(state[s.k]?'<span class="pill p-ok">Done</span>':'<button class="btn btn-ghost btn-xs" data-onb="'+s.k+'">'+s.cta+'</button>')
+      +'</div>').join('');
+    document.querySelectorAll('[data-onb]').forEach(b=>b.addEventListener('click',()=>act(b.getAttribute('data-onb'))));
+    lucide.createIcons();
+    if(done===STEPS.length){
+      state.done=true; save();
+      setTimeout(()=>{ card.remove(); },2400);
+    }
+  }
+  render();
+
+  document.getElementById('onbHide').addEventListener('click',()=>{ state.done=true; save(); card.remove(); });
+  ['photo','priced','saved'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
+
+  /* welcome once per account */
+  if(!state.welcomed){
+    state.welcomed=true; save();
+    const m=document.createElement('div'); m.className='up-modal on'; m.id='onbModal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
+      +'<h3>Welcome To REAL DESIGNS</h3>'
+      +'<p>Three steps take you from a room photo to a priced, contractor ready scope. Your checklist is on the dashboard.</p>'
+      +'<div class="up-costs">'+STEPS.map((s,n)=>'<div class="up-cost"><b>'+(n+1)+'. '+s.t+'</b><span>'+s.b+'</span></div>').join('')+'</div>'
+      +'<div class="up-act"><button class="btn btn-primary" id="onbStart">Start With A Photo</button>'
+      +'<button class="btn btn-ghost" data-close>Look Around First</button></div></div>';
+    document.body.appendChild(m);
+    const close=()=>m.remove();
+    m.addEventListener('click',e=>{ if(e.target.closest('[data-close]')) close(); });
+    m.querySelector('#onbStart').addEventListener('click',()=>{ close(); act('photo'); });
+    lucide.createIcons();
+  }
+})();
+
+
+
 
 lucide.createIcons();
 
