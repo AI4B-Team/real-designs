@@ -364,10 +364,26 @@ document.getElementById('genBtn').addEventListener('click',()=>{
   },210);
 });
 
-const vers=[['v5','Draft &middot; just now','p-gray'],['v4','Approved &middot; 2 days ago','p-ok'],
-['v3','Superseded &middot; 3 days ago','p-gray'],['v2','Rejected by client &middot; 5 days','p-red'],['v1','Superseded &middot; 6 days','p-gray']];
-document.getElementById('verList').innerHTML=vers.map(([v,s,cls])=>`
-<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v}</b><span>${s}</span></div><span class="pill ${cls}">${cls==='p-ok'?'Live':'Past'}</span></div>`).join('');
+async function paintVersions(){
+  const el=document.getElementById('verList'); if(!el) return;
+  let list=[];
+  try{ list=await listSavedEstimates(); }catch(e){ list=[]; }
+  list=list.slice(0,6);
+  if(!list.length){
+    el.innerHTML='<p style="font-size:.78rem;color:var(--mute-2);padding:6px 0">No versions yet. Save a design to start the history.</p>';
+    return;
+  }
+  const ago=(iso)=>{const s=(Date.now()-new Date(iso).getTime())/1000;
+    if(s<90)return'just now';if(s<5400)return Math.round(s/60)+'m ago';
+    if(s<172800)return Math.round(s/3600)+'h ago';return Math.round(s/86400)+'d ago';};
+  el.innerHTML=list.map((v,i)=>{
+    const st=v.status==='approved'?['p-ok','Live']:v.status==='review'?['p-amb','Review']:['p-gray',i===0?'Latest':'Past'];
+    const lab=(v.status||'draft').charAt(0).toUpperCase()+(v.status||'draft').slice(1);
+    return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v.room_name} v${v.version_no||1}</b><span>${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
+  }).join('');
+}
+paintVersions();
+window.addEventListener('rd:saved', paintVersions);
 
 /* ---------- designs: real saved versions ---------- */
 let DESIGN_FILTER='all';

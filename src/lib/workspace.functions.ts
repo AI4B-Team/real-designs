@@ -116,7 +116,7 @@ export const listSavedEstimates = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("versions")
       .select(
-        `id, created_at, before_path,
+        `id, created_at, before_path, version_no, status,
          rooms!inner ( id, name, room_type,
            projects!inner ( id, name, finish_grade,
              properties!inner ( id, address ) ) ),
@@ -132,6 +132,8 @@ export const listSavedEstimates = createServerFn({ method: "GET" })
         version_id: v.id as string,
         created_at: v.created_at as string,
         before_path: (v.before_path ?? null) as string | null,
+        version_no: (v.version_no ?? 1) as number,
+        status: (v.status ?? "draft") as string,
         address: v.rooms.projects.properties.address as string,
         project_name: v.rooms.projects.name as string,
         room_name: v.rooms.name as string,
