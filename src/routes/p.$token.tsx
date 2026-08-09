@@ -186,7 +186,10 @@ function SharedPresentation() {
               ? excluded.length
                 ? `You removed ${excluded.length} ${excluded.length === 1 ? "item" : "items"} from this scope.`
                 : "You kept every line in this scope."
-              : "Uncheck any line you do not want. The range updates as you go."}
+              : "Uncheck any line you do not want, or add a comment on a line. The range updates as you go."}
+            {decided && noteCount
+              ? ` You left ${noteCount} ${noteCount === 1 ? "comment" : "comments"} for the sender.`
+              : ""}
           </p>
           <table className="pp-table">
             <thead>
@@ -197,11 +200,17 @@ function SharedPresentation() {
                 <th className="n">Qty</th>
                 <th className="n">Low</th>
                 <th className="n">High</th>
+                {!decided ? <th className="c">Note</th> : null}
               </tr>
             </thead>
             <tbody>
-              {deck.lines.map((l: { id: string; description: string; trade: string; qty: number; uom: string; low: number; high: number }, i: number) => (
-                <tr key={l.id || i} className={isOut(l.id) ? "is-out" : ""}>
+              {deck.lines.map((l: { id: string; description: string; trade: string; qty: number; uom: string; low: number; high: number }, i: number) => {
+                const saved = (lineNotes[l.id] || "").trim();
+                const open = openNote === l.id;
+                const cols = (decided ? 5 : 7);
+                return (
+                <React.Fragment key={l.id || i}>
+                <tr className={isOut(l.id) ? "is-out" : ""}>
                   {!decided ? (
                     <td className="c" data-l="Keep">
                       <input
@@ -220,8 +229,48 @@ function SharedPresentation() {
                   </td>
                   <td className="n" data-l="Low">{money(l.low)}</td>
                   <td className="n" data-l="High">{money(l.high)}</td>
+                  {!decided ? (
+                    <td className="c" data-l="Note">
+                      <button
+                        type="button"
+                        className={"pp-note-btn" + (saved ? " has-note" : "")}
+                        aria-expanded={open}
+                        aria-label={`${saved ? "Edit" : "Add"} A Comment On ${l.description}`}
+                        onClick={() => setOpenNote(open ? null : l.id)}
+                      >
+                        {saved ? "Edit Note" : "Add Note"}
+                      </button>
+                    </td>
+                  ) : null}
                 </tr>
-              ))}
+                {!decided && open ? (
+                  <tr className="pp-note-row">
+                    <td colSpan={cols}>
+                      <textarea
+                        className="pp-note-in pp-note-line"
+                        rows={2}
+                        maxLength={400}
+                        autoFocus
+                        placeholder={`Comment on ${l.description}`}
+                        value={lineNotes[l.id] || ""}
+                        onChange={(e) => setLineNote(l.id, e.target.value)}
+                      />
+                    </td>
+                  </tr>
+                ) : null}
+                {!decided && !open && saved ? (
+                  <tr className="pp-note-row">
+                    <td colSpan={cols}><span className="pp-line-note">“{saved}”</span></td>
+                  </tr>
+                ) : null}
+                {decided && saved ? (
+                  <tr className="pp-note-row">
+                    <td colSpan={cols}><span className="pp-line-note">“{saved}”</span></td>
+                  </tr>
+                ) : null}
+                </React.Fragment>
+                );
+              })}
             </tbody>
           </table>
           <p className="pp-note">
