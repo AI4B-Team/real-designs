@@ -57,6 +57,7 @@ const titles={dash:['Dashboard','Your workspace at a glance'],props:['Properties
 studio:['Studio','Price a room and save it to a project'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
+reports:['Reports','Portfolio rollup, budget fit and credit spend'],
 team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations'],
 account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
