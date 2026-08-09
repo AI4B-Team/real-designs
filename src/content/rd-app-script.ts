@@ -437,6 +437,7 @@ async function detectScopeChanges(){
   try{
     const [before,after]=await Promise.all([toDataUrl(PHOTOS.before,900),toDataUrl(PHOTOS.after,900)]);
     const r=await detectChanges({data:{before,after,grade:document.getElementById('scGrade').value}});
+    window.dispatchEvent(new Event('rd:credits-changed'));
     if(r.priceable.length){ scopeItems=r.priceable; }
     await runScope();
     if(r.summary) note.textContent=r.summary+' '+note.textContent;
