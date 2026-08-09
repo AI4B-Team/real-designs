@@ -4,6 +4,7 @@ import { Builder } from "@/components/seo/Builder";
 import { FreeToolTemplate } from "@/components/seo/FreeToolTemplate";
 import { PHOTOS } from "@/content/rd-photos";
 import "@/styles/rd-site.css";
+import { absoluteUrl } from "@/lib/site";
 
 const TITLE = "Free Virtual Staging From A Photo | REAL DESIGNS";
 const DESC =
@@ -17,10 +18,10 @@ export const Route = createFileRoute("/free/virtual-staging")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/free/virtual-staging" },
+      { property: "og:url", content: absoluteUrl("/free/virtual-staging") },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "/free/virtual-staging" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/free/virtual-staging") }],
     scripts: [
       {
         type: "application/ld+json",

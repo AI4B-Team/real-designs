@@ -4,6 +4,7 @@ import { PrototypeSurface } from "@/components/PrototypeSurface";
 import { html } from "@/content/rd-site-html";
 import { initSite } from "@/content/rd-site-script";
 import "@/styles/rd-site.css";
+import { absoluteUrl } from "@/lib/site";
 
 const title = "AI Home Design and Renovation Planning | REAL DESIGNS";
 const description =
@@ -18,10 +19,10 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/" },
+      { property: "og:url", content: absoluteUrl("/") },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "/" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/") }],
   }),
   component: SitePage,
 });
