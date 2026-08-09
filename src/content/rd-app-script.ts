@@ -22,6 +22,9 @@ import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 
 
 export function initApp(): () => void {
+  const root = document.querySelector('.rd-app') as HTMLElement | null;
+  if (root && root.dataset['rdInit'] === '1') return () => {};
+  if (root) root.dataset['rdInit'] = '1';
   const timers: number[] = [];
   const setInterval = (fn: any, ms?: number) => { const id = window.setInterval(fn, ms); timers.push(id); return id; };
   const setTimeout = (fn: any, ms?: number) => { const id = window.setTimeout(fn, ms); timers.push(id); return id; };
