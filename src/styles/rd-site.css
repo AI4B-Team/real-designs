@@ -1957,4 +1957,6 @@
     scrollbar-width:none;
   }
   .rd-site .cmp-scroll::-webkit-scrollbar{display:none}
+  .rd-site .cmp-badge{display:none}
+  .rd-site .cmp-table thead th{padding-top:14px}
 }
