@@ -127,6 +127,8 @@
 .rd-site .hero-head .eyebrow{margin-bottom:11px}
 
 .rd-site .hero-head h1{white-space:nowrap;font-size:min(4.5vw,3.3rem);margin-bottom:13px}
+.rd-site .hero-head h1.h1-one{font-size:min(3.05vw,2.75rem);letter-spacing:-.015em}
+.rd-site .hero-head:has(h1.h1-one){max-width:1440px}
 
 .rd-site .hero-head h1 em{font-style:normal;color:inherit}
 
