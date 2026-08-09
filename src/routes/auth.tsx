@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
+import { track } from "@/lib/analytics";
 
 const title = "Sign In | REAL DESIGNS";
 const description =
@@ -55,6 +56,7 @@ function AuthPage() {
           options: { emailRedirectTo: window.location.origin + "/app" },
         });
         if (error) throw error;
+        track("signed_up", { method: "email" });
         if (!data.session) {
           setMsg("Check your email to confirm the address, then sign in.");
           setMode("signin");
@@ -62,6 +64,7 @@ function AuthPage() {
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
+        track("signed_in", { method: "email" });
       }
     } catch (err) {
       setMsg(err instanceof Error ? err.message : "Something went wrong.");
@@ -73,6 +76,7 @@ function AuthPage() {
   async function google() {
     setBusy(true);
     setMsg(null);
+    track("sign_in_started", { method: "google" });
     const result = await lovable.auth.signInWithOAuth("google", {
       redirect_uri: window.location.origin + "/auth",
     });

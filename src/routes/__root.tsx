@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { initAnalytics, trackPageview } from "../lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -118,6 +119,18 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const router = useRouter();
+
+  useEffect(() => {
+    let unsub: (() => void) | undefined;
+    void initAnalytics().then(() => {
+      trackPageview(window.location.pathname + window.location.search);
+      unsub = router.subscribe("onResolved", () => {
+        trackPageview(window.location.pathname + window.location.search);
+      });
+    });
+    return () => unsub?.();
+  }, [router]);
 
   return (
     <QueryClientProvider client={queryClient}>
