@@ -1674,6 +1674,9 @@ function showStep(i){
 }
 function startTour(){ closeHelp(); showStep(0); }
 document.getElementById('tourBtn').addEventListener('click',startTour);
+document.getElementById('helpTourBtn').addEventListener('click',startTour);
+document.getElementById('apiFbBtn').addEventListener('click',openFb);
+document.querySelectorAll('[data-pane-go]').forEach(b=>b.addEventListener('click',()=>acctPane(b.dataset.paneGo)));
 document.getElementById('tourNext').addEventListener('click',()=>showStep(ti+1));
 document.getElementById('tourSkip').addEventListener('click',endTour);
 veil.addEventListener('click',endTour);
