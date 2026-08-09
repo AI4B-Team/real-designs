@@ -959,6 +959,7 @@ if(scopeGrid && !document.getElementById('scSave')){
       const thumb=$('svThumb');
       if(url){ thumb.src=url; thumb.hidden=false; }
       note.textContent='Photo stored on your account.';
+      try{ window.dispatchEvent(new CustomEvent('rd:photo')); }catch(e2){}
     }catch(err){
       uploadPath=null;
       note.textContent=(err&&err.message)||'Could not upload that photo.';
@@ -1034,6 +1035,7 @@ if(scopeGrid && !document.getElementById('scSave')){
       }});
       try{ localStorage.setItem(LS,JSON.stringify({address,project,room,type})); }catch(e){}
       note.textContent='Saved to your projects.';
+      try{ window.dispatchEvent(new CustomEvent('rd:saved')); }catch(e2){}
       await loadSaved();
     }catch(e){
       note.textContent='Could not save this estimate. '+((e&&e.message)||'');
