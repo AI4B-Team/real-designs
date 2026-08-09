@@ -77,8 +77,8 @@ export const deletePresentation = createServerFn({ method: "POST" })
 export const getSharedPresentation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => presentationTokenSchema.parse(input))
   .handler(async ({ data }) => {
-    const { publicShareClient } = await import("@/lib/presentations.server");
-    const client = publicShareClient();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const client = supabaseAdmin;
     const { data: payload, error } = await client.rpc("get_shared_presentation", { _token: data.token });
     if (error) throw new Error(error.message);
     if (!payload) return null;
@@ -122,12 +122,12 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
 export const respondToPresentation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => presentationRespondSchema.parse(input))
   .handler(async ({ data }) => {
-    const { publicShareClient } = await import("@/lib/presentations.server");
-    const client = publicShareClient();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const client = supabaseAdmin;
     const { data: res, error } = await client.rpc("respond_to_presentation", {
       _token: data.token,
       _decision: data.decision,
-      _note: data.note ?? null,
+      ...(data.note ? { _note: data.note } : {}),
     });
     if (error) throw new Error(error.message);
     return res as { ok: boolean; status?: string; reason?: string };
@@ -150,7 +150,8 @@ export const getPresentationPackage = createServerFn({ method: "POST" })
     if (ownErr) throw new Error(ownErr.message);
     if (!own) throw new Error("That presentation is not available.");
 
-    const { data: payload, error } = await context.supabase.rpc("get_shared_presentation", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: payload, error } = await supabaseAdmin.rpc("get_shared_presentation", {
       _token: own.token as string,
     });
     if (error) throw new Error(error.message);
