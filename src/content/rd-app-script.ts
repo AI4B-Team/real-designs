@@ -275,8 +275,7 @@ function paintOnboarding(s,pres){
   ];
   const left=done.filter(d=>!d[2]).length;
   /* the first run Get Started card covers the same ground, never show both */
-  const firstRun=document.getElementById('onbCard');
-  if(!left||localStorage.getItem('rd.obDone')==='1'||(firstRun&&!firstRun.hidden)){ if(card) card.remove(); return; }
+  if(!left||localStorage.getItem('rd.obDone')==='1'||document.getElementById('onbCard')){ if(card) card.remove(); return; }
   if(!card){
     card=document.createElement('div');
     card.id='obCard'; card.className='card ob-card';
@@ -2612,6 +2611,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     if(list&&list.length){ state.done=true; save(); card.remove(); return; }
   }catch(e){}
   card.hidden=false;
+  const dup=document.getElementById('obCard'); if(dup) dup.remove();
 
 
   function act(k){
