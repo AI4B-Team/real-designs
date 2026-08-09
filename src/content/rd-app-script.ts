@@ -1528,7 +1528,8 @@ function renderCats(q){
   </div></div>`).join(''):`<div class="card"><div class="card-b sub">No articles match that search.</div></div>`;
   lucide.createIcons();
 }
-helpCatsEl.addEventListener('click',e=>{
+document.addEventListener('click',e=>{
+  if(!e.target.closest||!e.target.closest('#helpCats,#tutGrid,#tutPaths')) return;
   const open=e.target.closest('[data-open]');
   if(open){ go(open.dataset.open); return; }
   const b=e.target.closest('.help-a'); if(!b) return;
