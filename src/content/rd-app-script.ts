@@ -986,34 +986,6 @@ async function paintTeam(){
 paintTeam();
 window.addEventListener('rd:credits-changed',()=>paintTeam());
 
-/* ---------- recent searches ---------- */
-const RECENT_KEY='rd_recent_searches';
-function getRecent(){ try{ return JSON.parse(localStorage.getItem(RECENT_KEY)||'[]'); }catch(_){ return []; } }
-function paintRecent(){
-  const box=document.getElementById('schRecent'); if(!box) return;
-  const r=getRecent();
-  box.innerHTML=r.length
-    ? r.map(q=>`<button class="acct-i" data-recent="${q.replace(/"/g,'&quot;')}"><i data-lucide="history"></i>${q}</button>`).join('')
-    : '<div style="padding:6px 11px 8px;font-size:.76rem;color:var(--mute-2)">Nothing searched yet</div>';
-  box.querySelectorAll('[data-recent]').forEach(b=>b.addEventListener('click',()=>{
-    const inp=document.querySelector('.search input');
-    if(inp){ inp.value=b.getAttribute('data-recent'); inp.dispatchEvent(new Event('input',{bubbles:true})); inp.focus(); }
-  }));
-  lucide.createIcons();
-}
-function pushRecent(q){
-  q=(q||'').trim(); if(q.length<2) return;
-  const r=getRecent().filter(x=>x.toLowerCase()!==q.toLowerCase());
-  r.unshift(q);
-  try{ localStorage.setItem(RECENT_KEY, JSON.stringify(r.slice(0,5))); }catch(_){}
-  paintRecent();
-}
-paintRecent();
-(function(){
-  const inp=document.querySelector('.search input'); if(!inp) return;
-  let t; inp.addEventListener('input',()=>{ clearTimeout(t); t=setTimeout(()=>pushRecent(inp.value),1400); });
-})();
-
 /* ---------- help menu ---------- */
 const helpBtn=document.getElementById('helpBtn'),helpMenu=document.getElementById('helpMenu');
 function closeHelp(){ if(helpMenu){helpMenu.classList.remove('on');helpBtn.setAttribute('aria-expanded','false');} }
