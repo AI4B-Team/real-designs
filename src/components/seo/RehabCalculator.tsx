@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-import { DesignResultSummary } from "@/components/DesignResultSummary";
-import { metric } from "@/lib/design-result-summary";
+import { ResultSummaryPanel } from "@/components/ResultSummaryPanel";
+import { metric } from "@/lib/result-summary";
 import {
   estimate,
   fmt,
@@ -98,8 +98,8 @@ export function RehabCalculator({ defaultRoom = "kitchen" as RoomKey }) {
       </div>
 
       <div className="out on" style={{ display: "block" }}>
-        <DesignResultSummary
-          contextLabel="Estimated Planning Range"
+        <ResultSummaryPanel
+          primaryLabel="Estimated Planning Range"
           primaryValue={`${fmt(result.totalLow)} to ${fmt(result.totalHigh)}`}
           compact
           metrics={[metric("Pricing Confidence", result.confidence)]}

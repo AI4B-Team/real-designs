@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { estimateArv, fmt } from "@/lib/planning-range";
-import { DesignResultSummary } from "@/components/DesignResultSummary";
+import { ResultSummaryPanel } from "@/components/ResultSummaryPanel";
 
 const CONDITIONS = [
   { key: "dated" as const, label: "Dated", note: "Sound but old finishes" },
@@ -113,8 +113,8 @@ export function ArvCalculator() {
       </div>
 
       <div className="out on" style={{ display: "block" }}>
-        <DesignResultSummary
-          contextLabel="ARV Impact Range"
+        <ResultSummaryPanel
+          primaryLabel="ARV Impact Range"
           primaryValue={`${fmt(r.arvLow)} to ${fmt(r.arvHigh)}`}
           compact
           metrics={[
