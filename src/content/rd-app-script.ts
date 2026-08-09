@@ -104,7 +104,7 @@ document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',(
   const tick=()=>{
     const target=document.getElementById(want);
     if(target && !target.classList.contains('on')) go(v,true);
-    if(++tries<40) setTimeout(tick,75);
+    if(++tries<110) setTimeout(tick,75);
   };
   tick();
 })();
