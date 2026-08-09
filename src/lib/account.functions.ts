@@ -110,7 +110,14 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
     await supabaseAdmin.from("feedback").delete().eq("user_id", userId);
     await supabaseAdmin.from("credit_ledger").delete().eq("user_id", userId);
     await supabaseAdmin.from("credit_accounts").delete().eq("user_id", userId);
-    await supabaseAdmin.storage.from("room-photos").remove([`${userId}/`]).catch?.(() => {});
+    try {
+      const { data: files } = await supabaseAdmin.storage.from("room-photos").list(userId, { limit: 1000 });
+      if (files?.length) {
+        await supabaseAdmin.storage.from("room-photos").remove(files.map((f) => `${userId}/${f.name}`));
+      }
+    } catch {
+      // storage cleanup is best effort
+    }
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (error) throw new Error(error.message);
