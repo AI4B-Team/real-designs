@@ -2453,24 +2453,26 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .bfd-proof li b{display:block;font-size:.98rem;font-weight:600;line-height:1.3}
 .rd-site .bfd-proof li span{display:block;margin-top:3px;font-size:.86rem;color:var(--mute)}
 
-/* budget progression graphic */
-.rd-site .bfd-scale{margin-top:22px;padding:16px 16px 14px;border:1px solid var(--line);border-radius:14px;background:var(--white)}
-.rd-site .bfd-scale-lab{display:block;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute-2)}
-.rd-site .bfd-track{position:relative;display:grid;grid-template-columns:repeat(3,1fr);margin-top:16px}
-.rd-site .bfd-track::before{content:'';position:absolute;left:8%;right:8%;top:6px;height:2px;
-  background:linear-gradient(to right,color-mix(in oklab,var(--red) 18%,transparent),var(--red))}
-.rd-site .bfd-step{position:relative;text-align:center}
-.rd-site .bfd-step i{display:block;width:14px;height:14px;margin:0 auto;border-radius:999px;
-  background:var(--white);border:2px solid color-mix(in oklab,var(--red) 35%,transparent);position:relative;z-index:1}
-.rd-site .bfd-step.on i{background:var(--red);border-color:var(--red);
-  box-shadow:0 0 0 4px color-mix(in oklab,var(--red) 14%,transparent)}
-.rd-site .bfd-step b{display:block;margin-top:9px;font-family:'DM Mono',monospace;font-size:1rem;font-weight:500;color:var(--ink)}
-.rd-site .bfd-step span{display:block;margin-top:2px;font-size:.76rem;color:var(--mute-2)}
-.rd-site .bfd-step.on span{color:var(--red);font-weight:600}
+/* three budget outcomes */
+.rd-site .bfd-out{margin-top:22px;padding:14px 15px 15px;border:1px solid var(--line);border-radius:14px;background:var(--white)}
+.rd-site .bfd-out-lab{display:block;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute-2)}
+.rd-site .bfd-outs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.rd-site .bfd-outc{display:block;width:100%;padding:0;border:0;background:none;cursor:pointer;text-align:center}
+.rd-site .bfd-outc-img{display:block;border-radius:10px;overflow:hidden;border:2px solid transparent;
+  aspect-ratio:4/3;background:#EFEDE9}
+.rd-site .bfd-outc-img img{width:100%;height:100%;object-fit:cover;display:block}
+.rd-site .bfd-outc.on .bfd-outc-img{border-color:var(--red)}
+.rd-site .bfd-outc b{display:block;margin-top:7px;font-size:.82rem;font-weight:600;color:var(--ink)}
+.rd-site .bfd-outc em{display:block;font-style:normal;font-size:.74rem;color:var(--mute-2)}
+.rd-site .bfd-outc.on em{color:var(--red);font-weight:600}
 
 /* right card slimmed, image larger */
 .rd-site .bfd-demo .bfc{padding:14px}
 .rd-site .bfd-demo .bfc-img{aspect-ratio:16/9.4}
+/* center the copy against the image, not the whole tall card */
+@media(min-width:901px){.rd-site .bfd{align-items:start}
+  .rd-site .bfd-copy{align-self:start;margin-top:24px}}
+
 
 /* full-width action bar under both columns */
 .rd-site .bfd-act{grid-column:1/-1;margin-top:34px;padding:18px 20px;border:1px solid var(--line);
