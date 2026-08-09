@@ -847,19 +847,20 @@ export function initExtra(timers: number[], lucide: any) {
     ]},
   ];
   const BFC = [
-    { range: "$3.2K&ndash;$5K", items: "5", status: "Within Target", img: PHOTOS.neutral,
+    { range: "$3.2K&ndash;$5K", items: "5", status: "At Or Under Target", img: PHOTOS.bfdRefresh,
       scope: [["Paint", "1 room"], ["Cabinet Refacing", "18 doors"], ["Lighting Swap", "4 fixtures"]] },
-    { range: "$11.4K&ndash;$14.9K", items: "6", status: "Within Target", img: PHOTOS.after,
+    { range: "$11.4K&ndash;$14.9K", items: "6", status: "At Or Under Target", img: PHOTOS.bfdMakeover,
       scope: [["Flooring", "340 sf"], ["Paint", "1 room"], ["Lighting", "6 cans"]] },
-    { range: "$26K&ndash;$35K", items: "6", status: "Within Target", img: PHOTOS.luxury,
+    { range: "$26K&ndash;$35K", items: "6", status: "At Or Under Target", img: PHOTOS.bfdRenovation,
       scope: [["Cabinetry", "24 lf"], ["Built-Ins", "1 wall"], ["Flooring", "340 sf"]] },
-    { range: "Your Number", items: "&mdash;", status: "Priced To Fit", img: PHOTOS.japandi,
+    { range: "Your Number", items: "&mdash;", status: "Priced To Fit", img: PHOTOS.bfdMakeover,
       scope: [["Flooring", "Optional"], ["Paint", "Optional"], ["Lighting", "Optional"]] },
   ];
-  const OUT_LABS = [["Refresh", "$5K"], ["Makeover", "$15K"], ["Renovation", "$35K"]];
+  const OUT_LABS = [["Refresh", "Target $5K"], ["Makeover", "Target $15K"], ["Renovation", "Target $35K"]];
   const bfSeg = $("bfSeg"), bfImg = $("bfImg"), bfScope = $("bfScope");
   if (bfSeg && bfImg && bfScope) {
     const bfOuts = $("bfOuts");
+    const bfOutCard = document.querySelector<HTMLElement>(".bfd-out-wrap");
     if (bfOuts)
       bfOuts.innerHTML = OUT_LABS.map(([lab, cost], i) =>
         `<button class="bfd-outc${i === 1 ? " on" : ""}" data-b="${i}">
@@ -880,6 +881,7 @@ export function initExtra(timers: number[], lucide: any) {
         o.classList.toggle("on", Number(o.dataset.b) === n));
       bfOuts?.querySelectorAll("button").forEach((o: any) =>
         o.classList.toggle("on", Number(o.dataset.b) === n));
+      if (bfOutCard) bfOutCard.style.display = n === 3 ? "none" : "";
       lucide?.createIcons?.();
     };
     bfSeg.querySelectorAll("button").forEach((b: any) =>
@@ -887,6 +889,7 @@ export function initExtra(timers: number[], lucide: any) {
     bfOuts?.querySelectorAll("button").forEach((b: any) =>
       b.addEventListener("click", () => paintBFC(Number(b.dataset.b))));
     paintBFC(1);
+
 
 
     /* ----- action footer: outputs + simulated previews ----- */
