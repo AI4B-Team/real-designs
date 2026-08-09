@@ -1520,8 +1520,9 @@ td .s{color:#8a8a8a;font-size:10px}a{color:#CC0000}
 .note{margin-top:16px;font-size:10.5px;color:#6b6b6b;border-top:1px solid #ececec;padding-top:10px}
 </style></head><body><div class="mast"><div><div class="brand">REAL<b>&nbsp;DESIGNS</b></div><h1>${esc(title)}</h1>
 <div class="sub">${esc(sub)}</div></div><div class="sub" style="text-align:right">Product Board<br>${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div>
-<table><thead><tr><th>Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Allowance</th><th>Where To Buy</th></tr></thead><tbody>${rows}</tbody>
-${totals?`<tfoot><tr><td colspan="3"><b>Material Allowance Total</b></td><td class="n"><b>${presMoney(totals[0])} &ndash; ${presMoney(totals[1])}</b></td><td></td></tr></tfoot>`:''}</table>
+<table><thead><tr><th>Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Allowance</th><th>Status</th><th>Where To Buy</th></tr></thead><tbody>${rows}</tbody>
+${totals?`<tfoot><tr><td colspan="3"><b>Material Allowance Total</b></td><td class="n"><b>${presMoney(totals[0])} &ndash; ${presMoney(totals[1])}</b></td><td></td><td></td></tr></tfoot>`:''}</table>
+
 <div class="note">Allowances are planning figures per line at the selected finish grade, not quoted product prices. Retailer links are searches, not endorsements or reserved stock.</div>
 </body></html>`;
 }
