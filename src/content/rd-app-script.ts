@@ -2003,6 +2003,33 @@ wireSave('bkSave','bkMsg',()=>({company:val('bkCompany'),color:val('bkColor'),wa
 wireSave('dfSave','dfMsg',()=>({market:val('dfMarket'),grade:val('dfGrade'),band:val('dfBand'),disclosure:val('dfDisc')}),'defaults');
 loadPrefs();
 
+
+/* ---------- collapse the left menu ----------
+   The rail keeps the icons visible and only then shows tooltips, since the
+   labels are already on screen when the menu is open. */
+(function(){
+  const shell=document.querySelector('.rd-app .app');
+  const tog=document.getElementById('sideToggle');
+  if(!shell||!tog) return;
+  const KEY='rd.sidemin';
+  function apply(min){
+    shell.classList.toggle('sidemin',min);
+    tog.setAttribute('aria-label',min?'Expand menu':'Collapse menu');
+    tog.title=min?'':'Collapse menu';
+    tog.innerHTML='<i data-lucide="'+(min?'chevrons-right':'chevrons-left')+'"></i>';
+    try{ lucide.createIcons(); }catch(_){}
+  }
+  let min=false;
+  try{ min=localStorage.getItem(KEY)==='1'; }catch(_){}
+  apply(min);
+  tog.addEventListener('click',()=>{
+    min=!min;
+    try{ localStorage.setItem(KEY,min?'1':'0'); }catch(_){}
+    apply(min);
+  });
+})();
+
+
 /* ---------- help menu ---------- */
 const helpBtn=document.getElementById('helpBtn'),helpMenu=document.getElementById('helpMenu');
 function closeHelp(){ if(helpMenu){helpMenu.classList.remove('on');helpBtn.setAttribute('aria-expanded','false');} }
