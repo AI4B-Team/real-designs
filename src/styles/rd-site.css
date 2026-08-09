@@ -1045,7 +1045,7 @@
 .rd-site .show-nav button{font-size:.72rem;font-weight:500;color:var(--mute);border:1px solid var(--line);
   background:var(--white);border-radius:999px;padding:6px 11px;transition:.15s}
 .rd-site .show-nav button:hover{border-color:var(--ink);color:var(--ink)}
-.rd-site .show-nav button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.rd-site .show-nav button.on{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:500;text-shadow:0 0 .5px currentColor,0 0 .5px currentColor}
 
 @media(prefers-reduced-motion:reduce){
   .rd-site .sc .wipe,.rd-site .sc .wipe-edge,.rd-site .sc .ken,.rd-site .sc .fade-out,
