@@ -253,7 +253,7 @@ async function loadDashboard(){
   let s;
   try{ s=await getWorkspaceSummary(); }
   catch(e){
-    rl.innerHTML=empty('Could not load your workspace','Sign in again, then refresh this page');
+    rl.innerHTML=empty('Could Not Load Your Workspace','Sign in again, then refresh this page');
     al.innerHTML=''; bt.innerHTML='';
     return;
   }
@@ -269,7 +269,7 @@ async function loadDashboard(){
 
   /* recent rooms */
   if(!s.recent.length){
-    rl.innerHTML=empty('No designs yet','Upload a photo in Studio, price it, then save it');
+    rl.innerHTML=empty('No Designs Yet','Upload a photo in Studio, price it, then save it');
   }else{
     rl.innerHTML=s.recent.map(r=>`
 <div class="rowi"><div class="thumb"><img data-photo="${r.before_path||''}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:8px" hidden></div>
@@ -302,7 +302,7 @@ async function loadDashboard(){
 
   al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab,dest])=>`
 <div class="rowi"${dest?` data-goto="${dest}" role="button" tabindex="0" style="cursor:pointer"`:''}><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
-    :empty('Nothing needs your attention','Priced rooms inside target will stay quiet here');
+    :empty('Nothing Needs Your Attention','Priced rooms inside target will stay quiet here');
 
   /* budget vs scope */
   bt.innerHTML=s.projects.length?s.projects.map(p=>{
@@ -744,7 +744,7 @@ function paintDesigns(){
     return s==='archived';
   });
   if(!list.length){
-    g.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">'+(all.length?'No designs in this tab yet.':'No designs yet. Upload a photo in Studio, price it, then save it.')+'</p>';
+    g.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">'+(all.length?'No Designs In This Tab Yet.':'No Designs Yet. Upload a photo in Studio, price it, then save it.')+'</p>';
     return;
   }
   g.innerHTML=list.map(r=>{
@@ -1674,7 +1674,7 @@ async function paintTeam(){
       <span class="pill ${i.status==='accepted'?'p-green':'p-gray'}">${i.status==='accepted'?'Active':'Pending'}</span>
       <button class="btn btn-g" data-revoke="${i.id}" style="margin-left:8px">Remove</button></div>`).join('');
   const inbound=(team.received||[]).map(i=>`<div class="seat"><span class="av">IN</span>
-      <div class="rowt"><b>You were invited to another workspace</b><span>Role: ${esc(i.role)}</span></div>
+      <div class="rowt"><b>You Were Invited To Another Workspace</b><span>Role: ${esc(i.role)}</span></div>
       <button class="btn btn-p" data-accept="${i.id}">Accept</button></div>`).join('');
   list.innerHTML=`<div class="seat"><span class="av">${av}</span><div class="rowt"><b>${name}</b><span>${mail||'Signed in'}</span></div>
     <span class="pill p-ink">Owner</span></div>${invites}${inbound}
@@ -1715,7 +1715,7 @@ async function paintInviteBanner(){
   if(!inv.length){ if(bar) bar.remove(); return; }
   if(!bar){ bar=document.createElement('div'); bar.id='inviteBar'; bar.className='invite-bar'; host.prepend(bar); }
   const i=inv[0];
-  bar.innerHTML='<i data-lucide="user-plus"></i><div class="ib-t"><b>You have been invited to join a workspace</b>'
+  bar.innerHTML='<i data-lucide="user-plus"></i><div class="ib-t"><b>You Have Been Invited To Join A Workspace</b>'
     +'<span>Accept to share their properties, designs, scopes and presentations. Role: '+String(i.role||'member')+'</span></div>'
     +'<button class="btn btn-ghost btn-xs" id="ibNo">Decline</button>'
     +'<button class="btn btn-primary btn-xs" id="ibYes">Accept Invite</button>';
