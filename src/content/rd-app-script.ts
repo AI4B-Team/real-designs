@@ -1278,8 +1278,8 @@ tr.sub td{font-weight:700;background:#fafafa}
 </style></head><body>
 <div class="head"><div><h1>Contractor Brief</h1><div class="meta">${esc(scopeContext())} &middot; ${esc(r.grade[0].toUpperCase()+r.grade.slice(1))} Grade</div></div>
 <div class="meta" style="text-align:right">REAL DESIGNS<br>${esc(r.market.name)}<br>${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>
-<div class="photos"><figure><img src="${PHOTOS.before}"><figcaption>Existing Condition</figcaption></figure>
-<figure><img src="${PHOTOS.after}"><figcaption>Proposed Design</figcaption></figure></div>
+<div class="photos"><figure><img src="${PHOTOS.before}" alt="Existing condition of the space"><figcaption>Existing Condition</figcaption></figure>
+<figure><img src="${PHOTOS.after}" alt="Proposed design for the space"><figcaption>Proposed Design</figcaption></figure></div>
 <h2>Room Measurements</h2><div class="meta">${esc(dimLine)} &middot; Layout confidence ${esc(r.layout_conf)}${dimsProposal&&!dimsConfirmed?' &middot; dimensions proposed from a photo and not yet confirmed':''}</div>
 <h2>Scope Of Work By Trade</h2>${groups}
 <div class="totals">
