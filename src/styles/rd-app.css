@@ -47,8 +47,8 @@
 /* collapsed rail */
 .rd-app .app.sidemin{grid-template-columns:64px 1fr}
 .rd-app .app.sidemin .side-top{flex-direction:column;padding:14px 8px 12px;gap:10px}
-.rd-app .app.sidemin .side-top .logo{order:2;font-size:0;gap:0;justify-content:center}
-.rd-app .app.sidemin .side-toggle{order:1}
+.rd-app .app.sidemin .side-top .logo{order:1;font-size:0;gap:0;justify-content:center;cursor:pointer;position:relative}
+.rd-app .app.sidemin .side-toggle{display:none}
 .rd-app .app.sidemin .side-nav{padding:12px 8px;overflow:visible}
 .rd-app .app.sidemin .nav-group{font-size:0;padding:10px 0 4px;height:1px;background:var(--line);margin:8px 6px}
 .rd-app .app.sidemin .nav-group:first-child{margin-top:0;padding-top:0}
@@ -59,13 +59,12 @@
 .rd-app .app.sidemin .credit-box{display:none}
 
 /* tooltips, only on the collapsed rail */
-.rd-app .app.sidemin .nav-i[data-tip]:hover::after,.rd-app .app.sidemin .side-toggle:hover::after{
+.rd-app .app.sidemin .nav-i[data-tip]:hover::after,.rd-app .app.sidemin .side-top .logo:hover::after{
   content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
   background:var(--white);color:var(--ink);border:1px solid var(--line);
   font-size:.74rem;font-weight:600;letter-spacing:-.01em;white-space:nowrap;
   padding:5px 9px;border-radius:6px;z-index:90;pointer-events:none;box-shadow:0 8px 22px rgba(20,18,15,.14)}
-.rd-app .app.sidemin .side-toggle{position:relative}
-.rd-app .app.sidemin .side-toggle:hover::after{content:'Expand Menu'}
+.rd-app .app.sidemin .side-top .logo:hover::after{content:'Expand Menu'}
 
 .rd-app .logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.03em;font-size:.98rem}
 
@@ -870,7 +869,9 @@
 .rd-app .rd-mark i{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #fff;font-style:normal;padding:4px 12px}
 .rd-app .rd-mark b{color:#fff;font-weight:900;font-size:15px;line-height:1;letter-spacing:.04em}
 .rd-app .rd-mark em{color:#fff;font-style:normal;text-transform:uppercase;font-weight:700;font-size:6px;line-height:1;letter-spacing:.3em;margin:3px 0 0 .3em}
-.rd-app .app.sidemin .rd-mark{padding:3px}
-.rd-app .app.sidemin .rd-mark i{padding:3px 5px}
-.rd-app .app.sidemin .rd-mark b{font-size:12px}
+/* collapsed rail: red R badge only */
+.rd-app .app.sidemin .rd-mark{padding:0;border-radius:9px;width:34px;height:34px}
+.rd-app .app.sidemin .rd-mark i{border:0;padding:0;width:100%;height:100%}
+.rd-app .app.sidemin .rd-mark b{font-size:0;line-height:1}
+.rd-app .app.sidemin .rd-mark b::before{content:'R';font-size:18px;font-weight:900;letter-spacing:0}
 .rd-app .app.sidemin .rd-mark em{display:none}

@@ -2157,11 +2157,20 @@ loadPrefs();
   function applyForView(v){ apply(FORCED.indexOf(v||currentView())>=0 ? true : min); }
   window.__rdRailForView=applyForView;
   applyForView('');
-  tog.addEventListener('click',()=>{
+  function toggle(){
     min=!shell.classList.contains('sidemin');
     try{ localStorage.setItem(KEY,min?'1':'0'); }catch(_){}
     apply(min);
-  });
+  }
+  tog.addEventListener('click',toggle);
+  const brand=document.querySelector('.rd-app .side-top .logo');
+  if(brand){
+    brand.setAttribute('role','button');
+    brand.setAttribute('tabindex','0');
+    brand.setAttribute('aria-label','Expand menu');
+    brand.addEventListener('click',()=>{ if(shell.classList.contains('sidemin')) toggle(); });
+    brand.addEventListener('keydown',(e)=>{ if((e.key==='Enter'||e.key===' ')&&shell.classList.contains('sidemin')){ e.preventDefault(); toggle(); } });
+  }
 })();
 
 
