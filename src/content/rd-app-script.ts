@@ -870,18 +870,63 @@ if (canvasCard && canvasThemeBtn) {
 
 /* ---------- accounts: signed-in identity + saved projects ---------- */
 const initials=(s)=>s.split(/[.@\s_-]+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('')||'RD';
+const $id=(x)=>document.getElementById(x);
 supabase.auth.getUser().then(({data})=>{
   const u=data&&data.user; if(!u) return;
-  const name=(u.user_metadata&&(u.user_metadata.full_name||u.user_metadata.name))||u.email.split('@')[0];
+  const m=u.user_metadata||{};
+  const name=m.full_name||m.name||u.email.split('@')[0];
   const av=initials(name);
-  document.querySelectorAll('.acct-btn .av,.acct-head .av').forEach(e=>e.textContent=av);
+  document.querySelectorAll('.acct-btn .av,.acct-head .av,.apane .av').forEach(e=>e.textContent=av);
   const head=document.querySelector('.acct-head b'); if(head) head.textContent=name;
   const mail=document.querySelector('.acct-head div span'); if(mail) mail.textContent=u.email;
+  const n=$id('pfName'); if(n) n.value=name;
+  const ph=$id('pfPhone'); if(ph) ph.value=m.phone||'';
+  const em=$id('pfEmail'); if(em) em.value=u.email;
+  const co=$id('pfCompany'); if(co) co.value=m.company||'';
+  const ro=$id('pfRole'); if(ro&&m.role) ro.value=m.role;
+  const se=$id('secEmail'); if(se) se.textContent=u.email;
 }).catch(()=>{});
+
+const pfSave=$id('pfSave');
+if(pfSave) pfSave.addEventListener('click',async()=>{
+  const msg=$id('pfMsg'); const name=($id('pfName').value||'').trim();
+  if(!name){ if(msg){msg.textContent='Add your name first';msg.style.color='var(--red)';} return; }
+  pfSave.disabled=true; if(msg){msg.textContent='Saving';msg.style.color='var(--mute)';}
+  const { error } = await supabase.auth.updateUser({ data:{
+    full_name:name,
+    phone:($id('pfPhone').value||'').trim(),
+    company:($id('pfCompany').value||'').trim(),
+    role:$id('pfRole')?$id('pfRole').value:'Owner'
+  }});
+  pfSave.disabled=false;
+  if(msg){ msg.textContent=error?('Could not save: '+error.message):'Saved'; msg.style.color=error?'var(--red)':'var(--ok)'; }
+  if(!error){
+    const av=initials(name);
+    document.querySelectorAll('.acct-btn .av,.acct-head .av,.apane .av').forEach(e=>e.textContent=av);
+    const head=document.querySelector('.acct-head b'); if(head) head.textContent=name;
+    setTimeout(()=>{ if(msg) msg.textContent=''; },2500);
+  }
+});
+
+const pwSave=$id('pwSave');
+if(pwSave) pwSave.addEventListener('click',async()=>{
+  const msg=$id('pwMsg'), a=$id('pwNew').value, b=$id('pwConfirm').value;
+  const set=(t,ok)=>{ if(msg){ msg.textContent=t; msg.style.color=ok?'var(--ok)':'var(--red)'; } };
+  if(a.length<10) return set('Use at least 10 characters',false);
+  if(a!==b) return set('Passwords do not match',false);
+  pwSave.disabled=true; if(msg){msg.textContent='Updating';msg.style.color='var(--mute)';}
+  const { error } = await supabase.auth.updateUser({ password:a });
+  pwSave.disabled=false;
+  if(error) return set('Could not update: '+error.message,false);
+  $id('pwNew').value=''; $id('pwConfirm').value=''; set('Password updated',true);
+  setTimeout(()=>{ if(msg) msg.textContent=''; },2500);
+});
+
 document.querySelectorAll('.btn-logout').forEach(b=>b.addEventListener('click',async()=>{
   await supabase.auth.signOut();
   window.location.href='/auth';
 }));
+
 
 // Wrap every table so wide tables scroll horizontally instead of stretching the page.
 document.querySelectorAll('.rd-app table, .app table').forEach(t=>{
