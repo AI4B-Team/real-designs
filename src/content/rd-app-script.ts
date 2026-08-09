@@ -348,6 +348,7 @@ async function loadProperties(){
   paintTree();
   paintDesigns();
   updateSearchMeta();
+  try{ paintBatch(); }catch(_){}
 
 }
 loadProperties();
@@ -501,12 +502,35 @@ document.querySelectorAll('#designTabs button').forEach((b,i)=>b.addEventListene
 
 
 /* ---------- batch ---------- */
-const batch=[['Kitchen','IMG_0412.jpg','after','kitchen','p-ok','Staged'],['Living Room','IMG_0418.jpg','after','warm','p-ok','Staged'],
-['Dining Room','IMG_0422.jpg','after','warm','p-ok','Staged'],['Primary Bedroom','IMG_0427.jpg','after','coastal','p-red','Rendering'],
-['Bathroom 2','IMG_0431.jpg','after','bath','p-gray','Queued'],['Backyard','IMG_0440.jpg','after','yard','p-gray','Queued']];
-document.getElementById('batchList').innerHTML=batch.map(([r,f,mo,p,cls,lab])=>`
-<div class="rowi"><div class="thumb">${room(mo,PALS[p])}</div><div class="rowt"><b>${r}</b><span>${f}</span></div>
-<span class="pill ${cls}">${lab}</span></div>`).join('');
+function paintBatch(){
+  const sel=document.getElementById('batchProp'), list=document.getElementById('batchList');
+  if(!sel||!list) return;
+  if(!PROP_TREE.length){
+    sel.innerHTML='<option value="">No properties yet</option>';
+    list.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Add a property and upload room photos to build a batch.</p>';
+    return;
+  }
+  const keep=sel.value;
+  sel.innerHTML=PROP_TREE.map(p=>`<option value="${p.id}">${p.address}</option>`).join('');
+  if(keep) sel.value=keep;
+  const prop=PROP_TREE.find(p=>p.id===sel.value)||PROP_TREE[0];
+  sel.value=prop.id;
+  const rooms=[]; prop.projects.forEach(pr=>pr.rooms.forEach(r=>rooms.push(r)));
+  const sub=document.getElementById('batchSub');
+  if(sub) sub.textContent=rooms.length?(rooms.length+(rooms.length===1?' room':' rooms')+' on file'):'No rooms on this property yet';
+  list.innerHTML=rooms.length
+    ? rooms.map(r=>{
+        const done=(r.versions||0)>0;
+        return `<div class="rowi"><div class="rowt"><b>${r.name}</b><span>${done?('v'+(r.version_no||1)+' saved'):'no design yet'}</span></div>
+          <span class="pill ${done?'p-ok':'p-gray'}">${done?'Designed':'Not Started'}</span></div>`;
+      }).join('')
+    : '<p style="font-size:.79rem;color:var(--mute-2)">No rooms on this property yet.</p>';
+}
+const batchProp=document.getElementById('batchProp');
+if(batchProp) batchProp.addEventListener('change',paintBatch);
+const batchRun=document.getElementById('batchRun');
+if(batchRun) batchRun.addEventListener('click',()=>upgradeModal('Batch Runs Are Not Live Yet',
+  'Batch staging runs every room of a property through one locked direction. It is in development. For now, design rooms one at a time in Studio.'));
 
 /* ---------- scope: live pricing from the cost database ---------- */
 const SCOPE_ITEMS=[{label:'demolition'},{label:'flooring',material:'lvp'},{label:'wall_paint',material:'paint'},
@@ -809,29 +833,18 @@ paintBands();
 
 
 /* ---------- products ---------- */
-const prods=[['Low Profile Sofa, 88in','Seating','sofa','#3D4A45',['$690','$1,240','$2,480']],
-['Wool Blend Area Rug, 8x10','Rugs','grip','#EAE5DB',['$210','$430','$980']],
-['White Oak Coffee Table','Tables','table-2','#8A6A47',['$180','$340','$720']],
-['Arc Floor Lamp, Matte Black','Lighting','lamp','#2A2A2E',['$95','$185','$420']],
-['Framed Abstract, 40x30','Wall Art','frame','#C4B7A2',['$70','$145','$390']],
-['Fiddle Leaf Fig, 6ft','Greenery','leaf','#4F6B4A',['$45','$110','$260']]];
-document.getElementById('prodGrid').innerHTML=prods.map(([n,c,ic,bg,t])=>`
-<div class="prod"><div class="im" style="background:${bg}22"><i data-lucide="${ic}"></i></div>
-<div class="bd"><b>${n}</b><div class="cat">${c}</div></div>
-<div class="tiers">
-<button class="tier"><small>Lowest</small><b>${t[0]}</b></button>
-<button class="tier on"><small>Closest</small><b>${t[1]}</b></button>
-<button class="tier"><small>Premium</small><b>${t[2]}</b></button></div></div>`).join('');
-document.querySelectorAll('.tier').forEach(t=>t.addEventListener('click',()=>{
-  t.parentElement.querySelectorAll('.tier').forEach(x=>x.classList.remove('on'));t.classList.add('on');
-}));
+const prodGridEl=document.getElementById('prodGrid');
+if(prodGridEl) prodGridEl.innerHTML='<div class="card" style="grid-column:1/-1"><div class="card-b">'+
+  '<b style="display:block;margin-bottom:5px">Item Level Product Matching Is In Development</b>'+
+  '<span style="font-size:.8rem;color:var(--mute-2)">Until it ships, the materials allowance above is built from your priced scope, so the money side stays real. Shoppable furniture and fixture matches will land here.</span>'+
+  '</div></div>';
 
 /* ---------- presentations ---------- */
-const pkg=[['Before And After Slider','Interactive, embeds anywhere','p-ok','Ready'],
-['Side By Side Comparison','PNG and PDF, branded','p-ok','Ready'],
-['Color And Material Palette','One page, with product codes','p-ok','Ready'],
-['Product Board','Every item with price and link','p-ok','Ready'],
-['Scope Of Work And Budget','Contractor brief with signature line','p-ok','Ready'],
+const pkg=[['Before And After Slider','In the client approval link','p-ok','Live'],
+['Scope Of Work And Budget','Line items and range in the link','p-ok','Live'],
+['Client Decision Capture','Approve or request changes, tracked','p-ok','Live'],
+['Product Board','Every item with price and link','p-gray','Planned'],
+['Branded PDF Export','Print ready package','p-gray','Planned'],
 ['Social Reel, 9x16','Cross fade before to after, 12 seconds','plan-pill lvl-pro','PRO'],
 ['Walkthrough Video','Dolly in, 20 seconds','plan-pill lvl-studio','STUDIO']];
 document.getElementById('pkgList').innerHTML=pkg.map(([n,d,cls,lab])=>`
@@ -944,16 +957,34 @@ paintPresentations();
 window.addEventListener('rd:saved',()=>paintPresentations());
 
 /* ---------- team ---------- */
-const team=[['Dolmar Cross','Owner','DC','p-ink','Owner'],['Keisha Cross','Project Manager','KC','p-blue','Admin'],
-['Marcus Tate','Acquisitions','MT','p-gray','Member'],['Ray Gutierrez','General Contractor','RG','p-gray','Member'],
-['Priya Nair','Listing Agent','PN','p-gray','Member'],['Alex Boone','Photographer','AB','p-amb','Viewer']];
-document.getElementById('teamList').innerHTML=team.map(([n,r,i,cls,role])=>`
-<div class="seat"><span class="av">${i}</span><div class="rowt"><b>${n}</b><span>${r}</span></div>
-<span class="pill ${cls}">${role}</span><button class="icon-btn"><i data-lucide="ellipsis"></i></button></div>`).join('');
-document.getElementById('usageRows').innerHTML=[['Dolmar Cross','Owner',412,28,'2 min ago'],['Keisha Cross','Admin',388,19,'1 hour ago'],
-['Marcus Tate','Member',201,11,'Yesterday'],['Ray Gutierrez','Member',144,22,'Yesterday'],
-['Priya Nair','Member',69,3,'3 days ago'],['Alex Boone','Viewer',0,0,'2 weeks ago']]
-.map(([n,r,d,s,l])=>`<tr><td><b>${n}</b></td><td>${r}</td><td class="n">${d}</td><td class="n">${s}</td><td class="n">${l}</td></tr>`).join('');
+async function paintTeam(){
+  const list=document.getElementById('teamList'); if(!list) return;
+  let name='You', mail='', av='YOU';
+  try{
+    const { data:{ user } }=await supabase.auth.getUser();
+    if(user){
+      mail=user.email||'';
+      name=(user.user_metadata&&(user.user_metadata.full_name||user.user_metadata.name))||mail.split('@')[0]||'You';
+      av=name.split(/[\s._-]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('')||'YOU';
+    }
+  }catch(_){}
+  list.innerHTML=`<div class="seat"><span class="av">${av}</span><div class="rowt"><b>${name}</b><span>${mail||'Signed in'}</span></div>
+    <span class="pill p-ink">Owner</span></div>
+    <p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">Extra seats and invitations are in development. Everything in this workspace belongs to your account today.</p>`;
+
+  const rows=document.getElementById('usageRows');
+  if(rows){
+    let designs=0, scopes=0;
+    try{
+      const hist=await listCreditHistory();
+      hist.forEach(h=>{ if(h.action==='design') designs++; if(h.action==='scope') scopes++; });
+    }catch(_){}
+    rows.innerHTML=`<tr><td><b>${name}</b></td><td>Owner</td><td class="n">${designs}</td><td class="n">${scopes}</td><td class="n">Now</td></tr>`;
+  }
+  lucide.createIcons();
+}
+paintTeam();
+window.addEventListener('rd:credits-changed',()=>paintTeam());
 
 /* ---------- help menu ---------- */
 const helpBtn=document.getElementById('helpBtn'),helpMenu=document.getElementById('helpMenu');
