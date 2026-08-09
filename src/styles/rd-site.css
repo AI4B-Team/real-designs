@@ -361,7 +361,7 @@
 
 
 /* generic */
-.rd-site .split{display:grid;grid-template-columns:1fr 1fr;gap:54px;align-items:center}
+.rd-site .split{display:grid;grid-template-columns:1fr 1fr;gap:54px;align-items:start}
 
 @media(max-width:920px){
 .rd-site .split{grid-template-columns:1fr;gap:34px}
