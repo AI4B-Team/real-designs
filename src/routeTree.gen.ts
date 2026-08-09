@@ -26,6 +26,7 @@ import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calcula
 import { Route as FreeRehabCostCalculatorRouteImport } from './routes/free/rehab-cost-calculator'
 import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-staging'
 import { Route as PTokenRouteImport } from './routes/p.$token'
+import { Route as PricingCreditsRouteImport } from './routes/pricing_.credits'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 
 const IndexRoute = IndexRouteImport.update({
@@ -112,6 +113,11 @@ const PTokenRoute = PTokenRouteImport.update({
   path: '/p/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingCreditsRoute = PricingCreditsRouteImport.update({
+  id: '/pricing_/credits',
+  path: '/pricing/credits',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
   id: '/api/public/founding',
   path: '/api/public/founding',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pricing/credits': typeof PricingCreditsRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesByTo {
@@ -154,6 +161,7 @@ export interface FileRoutesByTo {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pricing/credits': typeof PricingCreditsRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesById {
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pricing_/credits': typeof PricingCreditsRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRouteTypes {
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pricing/credits'
     | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -215,6 +225,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pricing/credits'
     | '/api/public/founding'
   id:
     | '__root__'
@@ -235,6 +246,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pricing_/credits'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
 }
@@ -255,6 +267,7 @@ export interface RootRouteChildren {
   FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
   FreeVirtualStagingRoute: typeof FreeVirtualStagingRoute
   PTokenRoute: typeof PTokenRoute
+  PricingCreditsRoute: typeof PricingCreditsRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
 
@@ -379,6 +392,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing_/credits': {
+      id: '/pricing_/credits'
+      path: '/pricing/credits'
+      fullPath: '/pricing/credits'
+      preLoaderRoute: typeof PricingCreditsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/founding': {
       id: '/api/public/founding'
       path: '/api/public/founding'
@@ -417,18 +437,9 @@ const rootRouteChildren: RootRouteChildren = {
   FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
   FreeVirtualStagingRoute: FreeVirtualStagingRoute,
   PTokenRoute: PTokenRoute,
+  PricingCreditsRoute: PricingCreditsRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
