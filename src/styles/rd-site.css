@@ -2081,3 +2081,69 @@
 .rd-site .hub-go{font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--red)}
 @media(max-width:980px){.rd-site .hub-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:640px){.rd-site .hub-grid{grid-template-columns:1fr}}
+
+/* ============ BUDGET-FIRST DESIGN (redesigned) ============ */
+.rd-site .bfd{display:grid;grid-template-columns:45fr 55fr;gap:72px;align-items:start;max-width:1240px}
+.rd-site .bfd-copy h2{margin-top:10px}
+.rd-site .bfd-copy .lede{margin-top:14px;font-size:1.02rem}
+.rd-site .bfd-points{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:14px}
+.rd-site .bfd-points li{display:flex;gap:12px;align-items:flex-start;font-size:1rem;line-height:1.5}
+.rd-site .bfd-points svg{width:18px;height:18px;flex:0 0 18px;margin-top:3px;color:#16A34A}
+.rd-site .bfc{border:1px solid var(--line);border-radius:16px;background:var(--white);
+  box-shadow:0 12px 34px -22px rgba(0,0,0,.22);padding:16px}
+.rd-site .bfc-seg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:5px;
+  border:1px solid var(--line);border-radius:12px;background:var(--alt,#FAF8F5)}
+.rd-site .bfc-seg button{border:0;background:transparent;border-radius:9px;padding:9px 6px;cursor:pointer;
+  display:grid;gap:2px;text-align:center;font:inherit;color:var(--mute)}
+.rd-site .bfc-seg button b{font-size:.92rem;font-weight:600;color:var(--ink)}
+.rd-site .bfc-seg button span{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--mute-2)}
+.rd-site .bfc-seg button.on{background:var(--red,#CC0000)}
+.rd-site .bfc-seg button.on b,.rd-site .bfc-seg button.on span{color:#fff}
+.rd-site .bfc-img{margin-top:14px;border-radius:12px;overflow:hidden;aspect-ratio:16/10;background:var(--alt,#FAF8F5)}
+.rd-site .bfc-img img{width:100%;height:100%;object-fit:cover;display:block}
+.rd-site .bfc-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px;
+  border:1px solid var(--line);border-radius:12px;padding:14px}
+.rd-site .bfc-strip span{display:block;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute-2)}
+.rd-site .bfc-strip b{display:block;margin-top:5px;font-size:1.02rem;font-weight:600}
+.rd-site .bfc-strip b.ok{color:#16A34A}
+.rd-site .bfc-scope{list-style:none;margin:14px 0 0;padding:0}
+.rd-site .bfc-scope li{display:flex;justify-content:space-between;align-items:center;
+  padding:12px 2px;border-bottom:1px solid var(--line);font-size:1rem}
+.rd-site .bfc-scope li:last-child{border-bottom:0}
+.rd-site .bfc-scope em{font-style:normal;font-size:.78rem;color:var(--mute-2)}
+.rd-site .bfc-link{display:inline-flex;align-items:center;gap:6px;margin-top:12px;
+  font-size:.92rem;font-weight:600;color:var(--red,#CC0000);text-decoration:none}
+.rd-site .bfc-link svg{width:15px;height:15px}
+@media(max-width:900px){.rd-site .bfd{grid-template-columns:1fr;gap:34px}
+  .rd-site .bfc-seg{grid-template-columns:repeat(2,1fr)}}
+
+/* ============ DESIGN DNA (redesigned) ============ */
+.rd-site .dnax{display:grid;grid-template-columns:250px 1fr;gap:64px;align-items:start;
+  max-width:1240px;margin:0 auto;position:relative}
+.rd-site .dnax-rail{position:relative;border:1px solid var(--line);border-radius:16px;background:var(--white);
+  padding:20px;box-shadow:0 12px 34px -24px rgba(0,0,0,.2)}
+.rd-site .dnax-rail>span.mono{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute-2)}
+.rd-site .dnax-rail>b{display:block;margin-top:6px;font-size:1.2rem;font-weight:700}
+.rd-site .dnax-sw{display:flex;gap:8px;margin-top:14px}
+.rd-site .dnax-sw i{width:34px;height:34px;border-radius:8px;border:1px solid var(--line)}
+.rd-site .dnax-mat{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:12px}
+.rd-site .dnax-mat li{display:flex;align-items:center;gap:10px;font-size:1rem}
+.rd-site .dnax-mat .dot{width:12px;height:12px;border-radius:50%;border:1px solid var(--line)}
+.rd-site .dnax-pulse{position:absolute;top:50%;left:100%;width:64px;height:2px;background:rgba(204,0,0,.16);overflow:hidden}
+.rd-site .dnax-pulse i{position:absolute;inset:0;background:var(--red,#CC0000);transform-origin:left;
+  animation:dnaPulse 2.4s ease-in-out infinite}
+@keyframes dnaPulse{0%{transform:scaleX(0);opacity:0}30%{opacity:1}100%{transform:scaleX(1);opacity:0}}
+.rd-site .dnax-grid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:18px;row-gap:30px}
+.rd-site .dnax-grid .dcell{margin:0;display:flex;flex-direction:column}
+.rd-site .dnax-grid .dcell img{width:100%!important;height:auto!important;aspect-ratio:4/3;object-fit:cover;display:block;
+  border-radius:12px;border:1px solid var(--line)}
+.rd-site .dnax-grid figcaption{margin-top:8px;font-family:'DM Mono',monospace;font-size:.72rem;
+  letter-spacing:.06em;color:var(--mute-2)}
+.rd-site .dnax-cards{margin-top:44px}
+.rd-site .dirlib.tight{margin-top:34px}
+.rd-site .dirlib.tight .styles{overflow:visible;display:grid;grid-template-columns:repeat(4,1fr)}
+.rd-site .dirlib.tight .styles .st{flex:none}
+@media(max-width:900px){.rd-site .dnax{grid-template-columns:1fr;gap:26px}
+  .rd-site .dnax-pulse{display:none}
+  .rd-site .dnax-grid{grid-template-columns:repeat(2,1fr)}
+  .rd-site .dirlib.tight .styles{grid-template-columns:repeat(2,1fr)}}

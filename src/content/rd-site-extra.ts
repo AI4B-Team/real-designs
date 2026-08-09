@@ -512,9 +512,9 @@ export function initExtra(timers: number[], lucide: any) {
     ["Kitchen", PHOTOS.kitchen], ["Living Room", PHOTOS.after], ["Primary Bath", PHOTOS.bath],
     ["Front Elevation", PHOTOS.paintedBrick], ["Backyard", PHOTOS.resortYard], ["Guest Room", PHOTOS.japandi],
   ];
-  const dr = $("dnaRing");
+  const dr = $("dnaGrid");
   if (dr) dr.innerHTML = DNA.map(([n, src]) =>
-    `<div class="dnode"><div class="dim">${photo(src, n + " in the property Design DNA")}</div><span>${n}</span></div>`).join("");
+    `<figure class="dcell">${photo(src, n + " in the property Design DNA")}<figcaption>${n}</figcaption></figure>`).join("");
 
   /* ---------- shop ---------- */
   const si = $("shopImg");
@@ -741,52 +741,38 @@ export function initExtra(timers: number[], lucide: any) {
       ["Flooring And Trim", "Flooring", "340 sf", "$2,600 to $3,400"],
     ]},
   ];
-  const scopeRows = $("scopeRows"), scopeSub = $("scopeSub"), scopeTotal = $("scopeTotal");
-  const paintBand = (n: number) => {
-    const b = BANDS[n]; if (!b || !scopeRows) return;
-    scopeRows.innerHTML = b.rows.map((r: any) =>
-      `<tr><td>${r[0]}</td><td class="n">${r[1]}</td><td class="n">${r[2]}</td><td class="n">${r[3]}</td></tr>`).join("");
-    if (scopeSub) scopeSub.innerHTML = b.sub;
-    if (scopeTotal) scopeTotal.textContent = b.total;
-  };
-  const bandRows = $("bandRows");
-  if (bandRows) {
-    bandRows.querySelectorAll("tr").forEach((tr: any) => {
-      tr.addEventListener("click", () => {
-        bandRows.querySelectorAll("tr").forEach((o: any) => {
-          o.classList.remove("on");
-          const c = o.querySelector(".diff");
-          if (c && c.dataset.orig) c.innerHTML = c.dataset.orig;
-        });
-        tr.classList.add("on");
-        const cell = tr.querySelector(".diff");
-        if (cell) {
-          if (!cell.dataset.orig) cell.dataset.orig = cell.innerHTML;
-          cell.innerHTML = '<span class="sel-pill">Selected</span>';
-        }
-        paintBand(Number(tr.dataset.band));
-        lucide?.createIcons?.();
-      });
-    });
-    bandRows.querySelectorAll(".diff").forEach((c: any) => { c.dataset.orig = c.innerHTML; });
-    const sel: any = bandRows.querySelector("tr.on");
-    if (sel) sel.querySelector(".diff").innerHTML = '<span class="sel-pill">Selected</span>';
-    paintBand(1);
+  const BFC = [
+    { range: "$3.2K&ndash;$5K", items: "5", status: "Within Target", img: PHOTOS.neutral,
+      scope: [["Paint", "1 room"], ["Cabinet Refacing", "18 doors"], ["Lighting Swap", "4 fixtures"]] },
+    { range: "$11.4K&ndash;$14.9K", items: "6", status: "Within Target", img: PHOTOS.after,
+      scope: [["Flooring", "340 sf"], ["Paint", "1 room"], ["Lighting", "6 cans"]] },
+    { range: "$26K&ndash;$35K", items: "6", status: "Within Target", img: PHOTOS.kitchen,
+      scope: [["Cabinetry", "24 lf"], ["Appliances", "4 units"], ["Flooring", "340 sf"]] },
+    { range: "Your Number", items: "&mdash;", status: "Priced To Fit", img: PHOTOS.luxury,
+      scope: [["Flooring", "Optional"], ["Paint", "Optional"], ["Lighting", "Optional"]] },
+  ];
+  const bfSeg = $("bfSeg"), bfImg = $("bfImg"), bfScope = $("bfScope");
+  if (bfSeg && bfImg && bfScope) {
+    const paintBFC = (n: number) => {
+      const b = BFC[n]; if (!b) return;
+      bfImg.innerHTML = photo(b.img, "Room designed to a target budget");
+      const r = $("bfRange"), it = $("bfItems"), st = $("bfStatus");
+      if (r) r.innerHTML = b.range;
+      if (it) it.innerHTML = b.items;
+      if (st) st.innerHTML = b.status;
+      bfScope.innerHTML = b.scope.map(([n2, q]) =>
+        `<li><span>${n2}</span><em class="mono">${q}</em></li>`).join("");
+      lucide?.createIcons?.();
+    };
+    bfSeg.querySelectorAll("button").forEach((b: any) =>
+      b.addEventListener("click", () => {
+        bfSeg.querySelectorAll("button").forEach((o: any) => o.classList.remove("on"));
+        b.classList.add("on");
+        paintBFC(Number(b.dataset.b));
+      }));
+    paintBFC(1);
   }
 
-  /* ---------- audience toggle for the share action ---------- */
-  const audToggle = $("audToggle"), shareBtn = $("shareBtn");
-  if (audToggle && shareBtn) {
-    audToggle.querySelectorAll("button").forEach((b: any) =>
-      b.addEventListener("click", () => {
-        audToggle.querySelectorAll("button").forEach((o: any) => o.classList.remove("on"));
-        b.classList.add("on");
-        shareBtn.innerHTML = b.dataset.aud === "home"
-          ? '<i data-lucide="share-2"></i>Share Project'
-          : '<i data-lucide="send"></i>Send To Client';
-        lucide?.createIcons?.();
-      }));
-  }
 
 
 }
