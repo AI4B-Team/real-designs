@@ -130,9 +130,15 @@ export const detectChanges = createServerFn({ method: "POST" })
       }),
     });
 
-    if (res.status === 429) throw new Error("Rate limit reached, try again shortly.");
-    if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
-    if (!res.ok) throw new Error(`Change detection failed (${res.status}).`);
+    if (!res.ok) {
+      // The model never ran usefully, so give the credit back.
+      const { refund } = await import("@/lib/credits.server");
+      await refund(context.userId, billing.charged, "change detection failed");
+      if (res.status === 429) throw new Error("Rate limit reached, try again shortly.");
+      if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
+      throw new Error(`Change detection failed (${res.status}).`);
+    }
+
 
     const payload = (await res.json()) as any;
     const call = payload?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
