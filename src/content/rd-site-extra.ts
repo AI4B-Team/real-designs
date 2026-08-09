@@ -303,32 +303,29 @@ export function initExtra(timers: number[], lucide: any) {
   // Same room, same camera across every stage. 04-06 reuse the designed frame
   // and only layer project information on top.
   const PROG = [
-    { n: "Original", src: PHOTOS.wfOriginal, d: "Uploaded Aug 7", out: "Source Received", ov: "" },
-    { n: "Empty", src: PHOTOS.wfEmpty, d: "14 objects removed", out: "Room Cleared", ov: "" },
-    { n: "Designed", src: PHOTOS.wfDesigned, d: "Organic Modern &middot; Reality Lock On", out: "Reality Lock On", ov: `<span class="pov lock"><i data-lucide="lock"></i>Reality Lock On</span>` },
+    { n: "Original", src: PHOTOS.wfOriginal, d: "Uploaded Aug 7", ov: "" },
+    { n: "Empty", src: PHOTOS.wfEmpty, d: "Clean slate for staging", ov: `<span class="pbadge">14 objects removed</span>` },
+    { n: "Designed", src: PHOTOS.wfDesigned, d: "Organic Modern direction", ov: `<span class="pbadge"><i data-lucide="lock"></i>Reality Lock On</span>` },
+    { n: "Budgeted", src: PHOTOS.wfDesigned, d: "Within target", ov: `<span class="pbadge">$11.4K&ndash;$14.9K</span>` },
     {
-      n: "Budgeted", src: PHOTOS.wfDesigned, d: "$11.4K&ndash;$14.9K &middot; Within Target", out: "$11.4K&ndash;$14.9K",
-      ov: `<span class="pov cost"><b>$11,400&ndash;$14,900</b><i>Within Target</i></span>`,
-    },
-    {
-      n: "Shopped", src: PHOTOS.wfDesigned, d: "8 products matched &middot; $3,284 selected", out: "8 Of 11 Matched",
+      n: "Shopped", src: PHOTOS.wfDesigned, d: "$3,284 selected",
       ov: `<span class="pshop" style="left:24%;top:62%"></span><span class="pshop" style="left:56%;top:70%"></span>
-           <span class="pshop" style="left:76%;top:52%"></span><span class="pov shop">8 of 11 products matched</span>`,
+           <span class="pshop" style="left:76%;top:52%"></span><span class="pbadge">8 of 11 matched</span>`,
     },
     {
-      n: "Delivered", src: PHOTOS.wfDesigned, d: "Final &middot; Version 4", out: "Client Approved",
-      ov: `<span class="pov appr"><i data-lucide="check"></i>Client Approved</span>`,
+      n: "Delivered", src: PHOTOS.wfDesigned, d: "Final &middot; Version 4",
+      ov: `<span class="pbadge ok top"><i data-lucide="check"></i>Client Approved</span>`,
     },
   ];
   const ps = $("progStrip");
   if (ps) {
     ps.innerHTML = PROG.map((s, i) =>
       `<div class="pnode" data-n="${i}" data-step="${i}" tabindex="0"><div class="pim">${photo(s.src, s.n + " stage")}${s.ov}</div>
-       <span class="pout mono">${(s as any).out}</span>
        <span class="plab mono">${String(i + 1).padStart(2, "0")} ${s.n}</span>
        <span class="pdet mono">${s.d}</span></div>`
-    ).join('<span class="parrow"><i data-lucide="chevron-right"></i></span>');
+    ).join("");
   }
+
 
   /* activation: hover/click a card or node lights up the matching pair */
   const steps = () => Array.from(document.querySelectorAll(".rd-site .fstep, .rd-site .pnode"));
