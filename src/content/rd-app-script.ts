@@ -286,8 +286,6 @@ async function loadDashboard(){
 <div class="rowi"><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
     :empty('Nothing needs your attention','Priced rooms inside target will stay quiet here');
 
-  paintOnboarding(s);
-
   /* budget vs scope */
   bt.innerHTML=s.projects.length?s.projects.map(p=>{
     const t=p.budget_target;
@@ -298,35 +296,6 @@ async function loadDashboard(){
   }).join('')
     :'<tr><td colspan="6">No saved projects yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
 }
-/* ---------- first-run checklist, driven by real workspace state ---------- */
-async function paintOnboarding(s){
-  const card=document.getElementById('obCard'), box=document.getElementById('obSteps');
-  if(!card||!box) return;
-  if(localStorage.getItem('rd_ob_hidden')==='1'){ card.hidden=true; return; }
-  let pres=0; try{ pres=(await listPresentations()).length; }catch(_){}
-  let brand=''; try{ brand=(await getPrefs()).brand.company.trim(); }catch(_){}
-  const steps=[
-    ['Save Your First Design','Upload a room photo in Studio and save it.', s.counts.designs>0,'studio'],
-    ['Price A Scope','Turn a saved room into line items and a range.', s.counts.priced>0,'scope'],
-    ['Add Your Brand Kit','Your company name and accent on every export.', !!brand,'branding'],
-    ['Share A Presentation','Send a client a link they can approve.', pres>0,'present']
-  ];
-  const done=steps.filter(x=>x[2]).length;
-  if(done===steps.length){ card.hidden=true; return; }
-  card.hidden=false;
-  const sub=document.getElementById('obSub');
-  if(sub) sub.textContent=done+' of '+steps.length+' done \u00b7 four steps to your first client-ready package';
-  box.innerHTML=steps.map(([t,d,ok,dest],i)=>'<button class="ob-s'+(ok?' done':'')+'" data-goto="'+dest+'"><span class="tick">'+(ok?'\u2713':(i+1))+'</span><span><b>'+t+'</b><span>'+d+'</span></span></button>').join('');
-
-}
-document.getElementById('obSteps')?.addEventListener('click',(e)=>{
-  const b=e.target.closest('[data-goto]'); console.log('OBCLICK',b&&b.dataset.goto); if(b) go(b.dataset.goto);
-});
-document.getElementById('obHide')?.addEventListener('click',()=>{
-  localStorage.setItem('rd_ob_hidden','1');
-  const c=document.getElementById('obCard'); if(c) c.hidden=true;
-});
-
 loadDashboard();
 window.addEventListener('rd:saved', loadDashboard);
 
@@ -2176,7 +2145,9 @@ if(scopeGrid && !document.getElementById('scSave')){
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
     {k:'priced',t:'Price The Scope',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Scope'},
-    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'}
+    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'},
+    {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent colour on every export.',i:'palette',cta:'Set Brand'},
+    {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
   ];
   /* insert synchronously so a double init cannot duplicate the card */
   const card=document.createElement('div');
@@ -2202,6 +2173,8 @@ if(scopeGrid && !document.getElementById('scSave')){
 
 
   function act(k){
+    if(k==='brand'){ go('branding'); return; }
+    if(k==='shared'){ go('present'); return; }
     go('scope');
     setTimeout(()=>{
       if(k==='photo'){ const l=document.querySelector('label[for="svPhoto"]'); if(l){ l.scrollIntoView({behavior:'smooth',block:'center'}); l.click(); } }
@@ -2229,8 +2202,16 @@ if(scopeGrid && !document.getElementById('scSave')){
   }
   render();
 
+  /* reflect real account state for the two account-level steps */
+  (async()=>{
+    let changed=false;
+    try{ if((await getPrefs()).brand.company.trim() && !state.brand){ state.brand=true; changed=true; } }catch(e){}
+    try{ if((await listPresentations()).length && !state.shared){ state.shared=true; changed=true; } }catch(e){}
+    if(changed){ save(); render(); }
+  })();
+
   document.getElementById('onbHide').addEventListener('click',()=>{ state.done=true; save(); card.remove(); });
-  ['photo','priced','saved'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
+  ['photo','priced','saved','brand','shared'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
 
   /* welcome once per account */
   if(!state.welcomed){
