@@ -94,15 +94,17 @@ window.addEventListener('hashchange',()=>{ const v=viewFromHash(); if(v) go(v,tr
 
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
-/* the app shell mounts after this module runs, so retry until the views exist */
+/* the app shell mounts after this module runs, and can remount once,
+   so keep re-asserting the deep linked view for a short window */
 (function applyHash(){
   const v=viewFromHash();
   if(!v) return;
+  const want='v-'+(ACCT_ALIAS[v]?'account':v);
   let tries=0;
   const tick=()=>{
-    const target=document.getElementById('v-'+(ACCT_ALIAS[v]?'account':v));
-    if(target){ go(v,true); return; }
-    if(++tries<60) setTimeout(tick,50);
+    const target=document.getElementById(want);
+    if(target && !target.classList.contains('on')) go(v,true);
+    if(++tries<40) setTimeout(tick,75);
   };
   tick();
 })();
