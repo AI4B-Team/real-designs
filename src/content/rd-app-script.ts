@@ -1580,18 +1580,12 @@ document.getElementById('tutGrid').innerHTML=TUTS.map(([t,tag,view,steps],i)=>`<
   <ol style="margin:0 0 10px 16px;padding:0;font-size:.83rem;color:var(--mute);line-height:1.55">${steps.map(s=>`<li style="margin-bottom:4px">${s}</li>`).join('')}</ol>
   <button class="btn btn-ghost btn-xs" data-open="${view}"><i data-lucide="arrow-right"></i>Open ${tag==='Getting Started'?'Studio':''}</button>
 </div></div>`).join('');
-document.getElementById('tutGrid').addEventListener('click',e=>{
-  const b=e.target.closest('[data-open]'); if(b) go(b.dataset.open);
-});
 document.getElementById('tutPaths').innerHTML=[
  ['Agent Fast Track','Photo to client link for one listing','studio'],
  ['Investor Scope Deep Dive','Version to priced scope to product board','scope'],
  ['Delivery And Approvals','Presentations, PDF export and approval tracking','present']]
  .map(([n,m,v])=>`<div class="rowi"><div class="rowt"><b>${n}</b><span>${m}</span></div>
 <button class="btn btn-ghost btn-xs" data-open="${v}"><i data-lucide="arrow-right"></i>Start</button></div>`).join('');
-document.getElementById('tutPaths').addEventListener('click',e=>{
-  const b=e.target.closest('[data-open]'); if(b) go(b.dataset.open);
-});
 
 
 /* ---------- feedback modal ---------- */
