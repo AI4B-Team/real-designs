@@ -93,6 +93,7 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
       client_name: (p.client_name ?? null) as string | null,
       status: (p.status ?? "sent") as string,
       decision_note: (p.decision_note ?? null) as string | null,
+      excluded_lines: ((p.excluded_lines ?? []) as any[]).map(String),
       brand_name: (p.brand_name ?? null) as string | null,
       brand_accent: (p.brand_accent ?? null) as string | null,
       address: p.address as string,
@@ -106,6 +107,7 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
       total_low: p.total_low == null ? null : Number(p.total_low),
       total_high: p.total_high == null ? null : Number(p.total_high),
       lines: ((p.lines ?? []) as any[]).map((l) => ({
+        id: String(l.id ?? ""),
         description: String(l.description),
         trade: String(l.trade ?? ""),
         qty: Number(l.qty ?? 0),
