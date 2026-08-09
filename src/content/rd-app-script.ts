@@ -417,23 +417,63 @@ document.querySelectorAll('#gradeChips .chip, #spChips .chip').forEach(c=>c.addE
   c.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
 }));
 
-const gsteps=['Reading room geometry','Applying object locks','Fitting design to budget band','Selecting retail grade finishes','Rendering variants','Pricing the scope'];
-let busy=false;
-document.getElementById('genBtn').addEventListener('click',()=>{
+const gsteps=['Reading room geometry','Applying object locks','Fitting design to budget band','Selecting retail grade finishes','Rendering the space','Finishing the image'];
+let busy=false, lastRender=null;
+document.getElementById('genBtn').addEventListener('click',async ()=>{
   if(busy)return;busy=true;
+  const btn=document.getElementById('genBtn'); btn.disabled=true;
   const ov=document.getElementById('cGen'),bar=document.getElementById('cBar'),st=document.getElementById('cStep');
   ov.classList.add('on');bar.style.width='0%';st.textContent=gsteps[0];
   let p=0,i=0;
   const t=setInterval(()=>{
-    p+=Math.random()*12+6;
-    if(p>=100){p=100;clearInterval(t);setTimeout(()=>{ov.classList.remove('on');busy=false;
-      cRng.value=100;setC(100);
-      setTimeout(()=>{let v=100;const b2=setInterval(()=>{v-=2.6;cRng.value=v;setC(v);if(v<=44)clearInterval(b2)},20)},600);
-    },340)}
-    bar.style.width=Math.min(p,100)+'%';
-    if(p>(i+1)*(100/gsteps.length)&&i<gsteps.length-1){i++;st.textContent=gsteps[i]}
-  },210);
+    p=Math.min(p+Math.random()*7+2,94);
+    bar.style.width=p+'%';
+    if(p>(i+1)*(94/gsteps.length)&&i<gsteps.length-1){i++;st.textContent=gsteps[i]}
+  },240);
+  const finish=()=>{ clearInterval(t); bar.style.width='100%';
+    setTimeout(()=>{ov.classList.remove('on');busy=false;btn.disabled=false;},320); };
+  try{
+    const srcImg=document.querySelector('#cBefore img');
+    const image=await toDataUrl(srcImg?srcImg.src:PHOTOS.before,1100);
+    const band=document.querySelector('.bchip.on'), grade=document.querySelector('#gradeChips .chip.on');
+    const groups={keep:[],replace:[],remove:[]};
+    Object.keys(locks).forEach(o=>{ (groups[locks[o]]||groups.keep).push(o); });
+    const r=await renderDesign({data:{
+      image,
+      room_type:'living room',
+      direction:(document.getElementById('fStyle')||{}).value||'Warm Minimal',
+      intensity:band?band.querySelector('b').textContent:'Makeover',
+      grade:grade?grade.textContent:'Retail Grade',
+      notes:(document.getElementById('agentNote')||{}).value||null,
+      keep:groups.keep, replace:groups.replace, remove:groups.remove
+    }});
+    lastRender=r.image;
+    cAfter.innerHTML=photo(r.image,'Redesigned space, AI render');
+    addRenderVariant(r.image,(document.getElementById('fStyle')||{}).value||'Your Render');
+    window.dispatchEvent(new Event('rd:credits-changed'));
+    window.dispatchEvent(new Event('rd:photo'));
+    finish();
+    cRng.value=100;setC(100);
+    setTimeout(()=>{let v=100;const b2=setInterval(()=>{v-=2.6;cRng.value=v;setC(v);if(v<=44)clearInterval(b2)},20)},600);
+  }catch(e){
+    finish();
+    if(!creditGate(e)) showAlert('Could not render this design. '+((e&&e.message)||'Try again in a moment.'));
+  }
 });
+
+function addRenderVariant(src,label){
+  const wrap=document.getElementById('vars'); if(!wrap) return;
+  const d=document.createElement('div');
+  d.className='var on'; d.dataset.src=src;
+  d.innerHTML=`<div style="aspect-ratio:8/5">${photo(src,label+' render')}</div><div class="vl">${label}</div>`;
+  wrap.querySelectorAll('.var').forEach(x=>x.classList.remove('on'));
+  wrap.prepend(d);
+  d.addEventListener('click',()=>{
+    wrap.querySelectorAll('.var').forEach(x=>x.classList.remove('on'));d.classList.add('on');
+    cAfter.innerHTML=photo(src,label+' render');
+  });
+}
+
 
 async function paintVersions(){
   const el=document.getElementById('verList'); if(!el) return;
