@@ -128,8 +128,11 @@ function ResourcesPage() {
 
       <section className="alt">
         <div className="wrap">
-          <h2 className="sec-t">Free Tools</h2>
-          <p className="sec-s">Run the numbers or a first render without an account.</p>
+          <div className="sec-head">
+            <span className="eyebrow">No Account Needed</span>
+            <h2>Free Tools</h2>
+            <p className="lede">Run the numbers or a first render without an account.</p>
+          </div>
           <div className="hub-grid">
             {FREE_TOOL_LINKS.map((l) => (
               <a className="hub-card" href={l.href} key={l.href}>
@@ -145,8 +148,11 @@ function ResourcesPage() {
       {groups.map((g, i) => (
         <section key={g.heading} className={i % 2 === 0 ? "" : "alt"}>
           <div className="wrap">
-            <h2 className="sec-t">{g.heading}</h2>
-            <p className="sec-s">{g.blurb}</p>
+            <div className="sec-head">
+              <span className="eyebrow">Guides</span>
+              <h2>{g.heading}</h2>
+              <p className="lede">{g.blurb}</p>
+            </div>
             <div className="hub-grid">
               {g.pages.map((p) => (
                 <a className="hub-card" href={p.slug} key={p.slug}>
@@ -161,15 +167,17 @@ function ResourcesPage() {
       ))}
 
       <section className="alt">
-        <div className="wrap cta-band">
-          <h2>Start With Your Own Photo</h2>
-          <p>
+        <div className="wrap">
+          <div className="sec-head">
+            <h2>Start With Your Own Photo</h2>
+            <p className="lede">
             Upload a room, set a budget band and get a design plus a contractor-ready scope in the
             same session.
-          </p>
-          <a className="btn btn-primary" href="/#builder">
-            Upload Your Space
-          </a>
+            </p>
+            <a className="btn btn-primary" href="/#builder">
+              Upload Your Space
+            </a>
+          </div>
         </div>
       </section>
 
