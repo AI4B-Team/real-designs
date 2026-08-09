@@ -623,7 +623,7 @@ function videoModal(url){
       '<video id="vidPlayer" controls playsinline style="width:100%;border-radius:12px;background:#111"></video>'+
       '<a class="btn btn-primary btn-block" id="vidDl" style="margin-top:12px" download="walkthrough.mp4"><i data-lucide="download"></i>Download MP4</a>'+
       '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
-    document.body.appendChild(m);
+    (document.querySelector(".rd-app")||document.body).appendChild(m);
     m.addEventListener('click',(e)=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')){ m.classList.remove('on'); m.querySelector('#vidPlayer').pause(); } });
   }
   m.querySelector('#vidPlayer').src=url;
@@ -1448,7 +1448,7 @@ function presModal(){
       '<div id="plOut" style="display:none;margin-bottom:10px"><div class="rowi"><div class="rowt"><b>Link Ready</b><span id="plUrl" style="word-break:break-all"></span></div></div></div>'+
       '<button class="btn btn-primary btn-block" id="plGo"><i data-lucide="link"></i>Create Link</button>'+
       '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
-    document.body.appendChild(m);
+    (document.querySelector(".rd-app")||document.body).appendChild(m);
     m.addEventListener('click',e=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
     m.querySelector('#plGo').addEventListener('click',async ()=>{
       const err=m.querySelector('#plErr'), out=m.querySelector('#plOut'), go=m.querySelector('#plGo');
@@ -2285,7 +2285,7 @@ if(scopeGrid && !document.getElementById('scSave')){
       +'<div class="up-costs">'+STEPS.map((s,n)=>'<div class="up-cost"><b>'+(n+1)+'. '+s.t+'</b><span>'+s.b+'</span></div>').join('')+'</div>'
       +'<div class="up-act"><button class="btn btn-primary" id="onbStart">Start With A Photo</button>'
       +'<button class="btn btn-ghost" data-close>Look Around First</button></div></div>';
-    document.body.appendChild(m);
+    (document.querySelector(".rd-app")||document.body).appendChild(m);
     const close=()=>m.remove();
     m.addEventListener('click',e=>{ if(e.target.closest('[data-close]')) close(); });
     m.querySelector('#onbStart').addEventListener('click',()=>{ close(); act('photo'); });
@@ -2315,7 +2315,7 @@ function upgradeModal(title,body){
       '<div id="upCosts" class="up-costs"></div>'+
       '<button class="btn btn-primary btn-block" id="upGo"><i data-lucide="zap"></i>See Plans And Credits</button>'+
       '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Not Now</button></div>';
-    document.body.appendChild(m);
+    (document.querySelector(".rd-app")||document.body).appendChild(m);
     m.addEventListener('click',(e)=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
     m.querySelector('#upGo').addEventListener('click',()=>{
       m.classList.remove('on');
@@ -2423,7 +2423,7 @@ function miniModal(title,intro,bodyHtml,onGo,goLabel){
       +'<div id="mmErr" style="display:none;font-size:.78rem;color:var(--red);margin-bottom:8px"></div>'
       +'<button class="btn btn-primary btn-block" id="mmGo"></button>'
       +'<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
-    document.body.appendChild(m);
+    (document.querySelector(".rd-app")||document.body).appendChild(m);
     m.addEventListener('click',e=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
   }
   m.querySelector('#mmTitle').textContent=title;
