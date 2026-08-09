@@ -1496,6 +1496,18 @@ async function paintPresentations(){
   renderPresRows();
 }
 
+/* jump to one client link from the dashboard attention list */
+async function focusPresentation(pid){
+  if(!PRES_ROWS.length) await paintPresentations();
+  if(PRES_FILTER!=='all'){ PRES_FILTER='all'; renderPresRows(); }
+  const row=document.querySelector('#linkList [data-pid="'+pid+'"]');
+  if(!row) return;
+  row.scrollIntoView({block:'center',behavior:'smooth'});
+  row.classList.remove('rd-flash'); void row.offsetWidth; row.classList.add('rd-flash');
+  setTimeout(()=>row.classList.remove('rd-flash'),2400);
+}
+
+
 
 const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const presMoney=(n)=>'$'+Math.round(n||0).toLocaleString('en-US');
