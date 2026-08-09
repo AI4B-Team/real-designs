@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { getSharedPresentation, respondToPresentation } from "@/lib/presentations.functions";
 import "@/styles/rd-site.css";
