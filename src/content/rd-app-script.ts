@@ -1405,6 +1405,8 @@ async function exportSocialReel(id,btn){
 
 const linkList=document.getElementById('linkList');
 if(linkList) linkList.addEventListener('click',async e=>{
+  const tab=e.target.closest('[data-pf]');
+  if(tab){ PRES_FILTER=tab.getAttribute('data-pf'); renderPresRows(); return; }
   const row=e.target.closest('[data-pid]'); if(!row) return;
   if(e.target.closest('[data-copy]')){
     const url=presLink(row.dataset.tok);
