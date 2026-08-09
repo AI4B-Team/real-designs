@@ -77,8 +77,8 @@ export const deletePresentation = createServerFn({ method: "POST" })
 export const getSharedPresentation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => presentationTokenSchema.parse(input))
   .handler(async ({ data }) => {
-    const { publicShareClient } = await import("@/lib/presentations.server");
-    const client = publicShareClient();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const client = supabaseAdmin;
     const { data: payload, error } = await client.rpc("get_shared_presentation", { _token: data.token });
     if (error) throw new Error(error.message);
     if (!payload) return null;
