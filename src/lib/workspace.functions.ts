@@ -151,3 +151,86 @@ export const deleteSavedEstimate = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+
+/** Dashboard rollup for the signed-in owner: counts, recent rooms, budget by property. */
+export const getWorkspaceSummary = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+
+    const [{ data: props, error: pErr }, { data: versions, error: vErr }] = await Promise.all([
+      supabase.from("properties").select("id, address, created_at").order("created_at", { ascending: false }),
+      supabase
+        .from("versions")
+        .select(
+          `id, created_at, status, before_path,
+           rooms!inner ( id, name, room_type,
+             projects!inner ( id, name, finish_grade, budget_target,
+               properties!inner ( id, address ) ) ),
+           scopes ( total_low, total_high, budget_fit )`,
+        )
+        .order("created_at", { ascending: false }),
+    ]);
+    if (pErr) throw new Error(pErr.message);
+    if (vErr) throw new Error(vErr.message);
+
+    const rows = (versions ?? []) as any[];
+    const flat = rows.map((v) => {
+      const scope = (v.scopes ?? [])[0] ?? null;
+      return {
+        version_id: v.id as string,
+        created_at: v.created_at as string,
+        status: (v.status ?? "draft") as string,
+        before_path: (v.before_path ?? null) as string | null,
+        room_name: v.rooms.name as string,
+        room_type: v.rooms.room_type as string,
+        project_id: v.rooms.projects.id as string,
+        project_name: v.rooms.projects.name as string,
+        grade: v.rooms.projects.finish_grade as string,
+        budget_target: v.rooms.projects.budget_target == null ? null : Number(v.rooms.projects.budget_target),
+        property_id: v.rooms.projects.properties.id as string,
+        address: v.rooms.projects.properties.address as string,
+        total_low: scope ? Number(scope.total_low) : null,
+        total_high: scope ? Number(scope.total_high) : null,
+      };
+    });
+
+    const byProject = new Map<string, any>();
+    for (const r of flat) {
+      const k = r.project_id;
+      const cur = byProject.get(k) ?? {
+        project_id: k,
+        project_name: r.project_name,
+        address: r.address,
+        grade: r.grade,
+        budget_target: r.budget_target,
+        rooms: 0,
+        low: 0,
+        high: 0,
+        priced: 0,
+      };
+      cur.rooms += 1;
+      if (r.total_low != null) {
+        cur.low += r.total_low;
+        cur.high += r.total_high ?? r.total_low;
+        cur.priced += 1;
+      }
+      byProject.set(k, cur);
+    }
+
+    const scopedTotal = flat.reduce((s, r) => s + (r.total_high ?? 0), 0);
+
+    return {
+      counts: {
+        properties: (props ?? []).length,
+        designs: flat.length,
+        priced: flat.filter((r) => r.total_low != null).length,
+        drafts: flat.filter((r) => r.status !== "approved").length,
+        scopedTotal,
+      },
+      recent: flat.slice(0, 5),
+      projects: Array.from(byProject.values()),
+      properties: (props ?? []).map((p: any) => ({ id: p.id, address: p.address })),
+    };
+  });
