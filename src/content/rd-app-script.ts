@@ -61,7 +61,7 @@ function go(v){
   if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
-  if(v==='studio'){ try{ paintStudioSub(); }catch(_){} }
+  if(v==='studio'){ try{ paintStudioSub(); }catch(e){ console.error('studioSub',e); } }
   if(!titles[v]) return;
   const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
   const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
