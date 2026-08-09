@@ -441,7 +441,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
     Object.keys(locks).forEach(o=>{ (groups[locks[o]]||groups.keep).push(o); });
     const r=await renderDesign({data:{
       image,
-      room_type:'living room',
+      room_type:currentRoomType(),
       direction:(document.getElementById('fStyle')||{}).value||'Warm Minimal',
       intensity:band?band.querySelector('b').textContent:'Makeover',
       grade:grade?grade.textContent:'Retail Grade',
@@ -724,6 +724,18 @@ async function runScope(){
 
 let scopeItems=SCOPE_ITEMS.slice();
 
+function currentRoomType(){
+  const el=document.getElementById('svType');
+  const v=el&&el.value?el.value.trim():'';
+  return v||'living room';
+}
+
+function studioSrc(which){
+  const el=document.querySelector(which==='after'?'#cAfter img':'#cBefore img');
+  if(el&&el.src) return el.src;
+  return which==='after'?(lastRender||PHOTOS.after):PHOTOS.before;
+}
+
 async function toDataUrl(src,max){
   const img=new Image(); img.crossOrigin='anonymous'; img.src=src;
   await img.decode();
@@ -739,7 +751,7 @@ async function detectScopeChanges(){
   const note=document.getElementById('scopeNote');
   btn.disabled=true; const lab=btn.innerHTML; btn.textContent='Reading Photos\u2026';
   try{
-    const [before,after]=await Promise.all([toDataUrl(PHOTOS.before,900),toDataUrl(lastRender||PHOTOS.after,900)]);
+    const [before,after]=await Promise.all([toDataUrl(studioSrc('before'),900),toDataUrl(lastRender||studioSrc('after'),900)]);
     const r=await detectChanges({data:{before,after,grade:document.getElementById('scGrade').value}});
     window.dispatchEvent(new Event('rd:credits-changed'));
     if(r.priceable.length){ scopeItems=r.priceable; }
@@ -764,8 +776,8 @@ async function runDims(){
   const btn=document.getElementById('scDims'); const note=document.getElementById('scopeNote');
   btn.disabled=true; const lab=btn.innerHTML; btn.textContent='Measuring\u2026';
   try{
-    const image=await toDataUrl(PHOTOS.before,900);
-    const r=await estimateDimensions({data:{image,room_type:'living room'}});
+    const image=await toDataUrl(studioSrc('before'),900);
+    const r=await estimateDimensions({data:{image,room_type:currentRoomType()}});
     dimsProposal=r; dimsConfirmed=false;
     document.getElementById('scFloor').value=r.floor_area_sf;
     document.getElementById('scWall').value=r.wall_area_sf;
