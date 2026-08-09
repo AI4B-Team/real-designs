@@ -267,19 +267,89 @@ document.getElementById('genBtn').addEventListener('click',()=>{
     if(p>(i+1)*(100/steps.length)&&i<steps.length-1){i++;gs.textContent=steps[i]}
   },220);
 });
-document.getElementById('drop').addEventListener('click',unlock);
-/* header CTA: scroll to the builder and open the uploader */
-const navUp=document.getElementById('navUpload');
-if(navUp) navUp.addEventListener('click',(e)=>{
-  e.preventDefault();
-  const drop=document.getElementById('drop');
-  if(!drop) return;
-  drop.scrollIntoView({block:'center',behavior:'smooth'});
-  unlock();
-  drop.classList.add('pulse');
-  setTimeout(()=>drop.classList.remove('pulse'),1400);
+document.getElementById('drop').addEventListener('click',()=>openUpload());
+
+/* ---------- upload modal ---------- */
+const rootEl=document.querySelector('.rd-site')||document.body;
+const modal=document.createElement('div');
+modal.className='umodal';
+modal.innerHTML=`
+  <div class="umodal-scrim" data-close></div>
+  <div class="umodal-card" role="dialog" aria-modal="true" aria-label="Upload your space">
+    <button class="umodal-x" type="button" data-close aria-label="Close"><i data-lucide="x"></i></button>
+    <div class="umodal-head">
+      <h3>Upload Your Space</h3>
+      <p>One photo is enough. Reality Lock keeps your walls, windows and layout exactly as they are.</p>
+    </div>
+    <label class="umodal-drop" id="uDrop">
+      <i data-lucide="image-up"></i>
+      <b>Drag A Photo Or Browse</b>
+      <span>JPG, PNG, HEIC &middot; A phone shot works fine</span>
+      <input type="file" id="uFile" accept="image/*" hidden>
+    </label>
+    <div class="umodal-prev" id="uPrev"><div class="umodal-thumb" id="uThumb"></div><div><b id="uName">photo.jpg</b><span class="mono">Ready to redesign</span></div></div>
+    <div class="umodal-samples">
+      <span>No Photo Handy?</span>
+      <div class="usamp on" data-s="0"></div><div class="usamp" data-s="1"></div>
+      <div class="usamp" data-s="2"></div><div class="usamp" data-s="3"></div>
+    </div>
+    <button class="btn btn-primary btn-lg btn-block" id="uGo"><i data-lucide="sparkles"></i>Continue To The Builder</button>
+    <p class="no-card">1 Free Design &middot; <b>No Credit Card</b> &middot; <b>No Account</b></p>
+  </div>`;
+rootEl.appendChild(modal);
+
+const uPals=[PHOTOS.before,PALS.coastal,PALS.farm,PALS.green];
+modal.querySelectorAll('.usamp').forEach((s,i)=>{s.innerHTML=room(i===0?'before':'after',uPals[i])});
+
+function openUpload(){
+  modal.classList.add('on');
+  document.body.style.overflow='hidden';
+  if(window.lucide) window.lucide.createIcons();
+}
+function closeUpload(){
+  modal.classList.remove('on');
+  document.body.style.overflow='';
+}
+modal.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click',closeUpload));
+document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&modal.classList.contains('on'))closeUpload()});
+
+const uFile=modal.querySelector('#uFile');
+uFile.addEventListener('change',()=>{
+  const f=uFile.files&&uFile.files[0];
+  if(!f)return;
+  modal.querySelector('#uName').textContent=f.name;
+  const url=URL.createObjectURL(f);
+  modal.querySelector('#uThumb').style.backgroundImage=`url(${url})`;
+  modal.classList.add('has-file');
 });
-document.getElementById('genBtn').addEventListener('click',unlock);
+const uDrop=modal.querySelector('#uDrop');
+['dragenter','dragover'].forEach(ev=>uDrop.addEventListener(ev,(e)=>{e.preventDefault();uDrop.classList.add('over')}));
+['dragleave','drop'].forEach(ev=>uDrop.addEventListener(ev,(e)=>{e.preventDefault();uDrop.classList.remove('over')}));
+uDrop.addEventListener('drop',(e)=>{
+  const f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+  if(!f)return;
+  uFile.files=e.dataTransfer.files;
+  uFile.dispatchEvent(new Event('change'));
+});
+let uSel=0;
+modal.querySelectorAll('.usamp').forEach(s=>s.addEventListener('click',()=>{
+  modal.querySelectorAll('.usamp').forEach(x=>x.classList.remove('on'));
+  s.classList.add('on');uSel=+s.dataset.s;
+}));
+modal.querySelector('#uGo').addEventListener('click',()=>{
+  const samps=document.querySelectorAll('.samp');
+  samps.forEach(x=>x.classList.remove('on'));
+  if(samps[uSel])samps[uSel].classList.add('on');
+  closeUpload();
+  unlock();
+  const b=document.querySelector('.hero-right .builder');
+  if(b)b.scrollIntoView({block:'center',behavior:'smooth'});
+});
+
+/* header CTA opens the modal */
+const navUp=document.getElementById('navUpload');
+if(navUp) navUp.addEventListener('click',(e)=>{e.preventDefault();openUpload()});
+
 
 /* ---------- marquee ---------- */
 const mqI=[['sofa','Interior Redesign'],['home','Exterior Redesign'],['trees','Landscape Design'],['bed-double','Virtual Staging'],
