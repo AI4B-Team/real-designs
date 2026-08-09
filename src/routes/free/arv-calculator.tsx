@@ -19,6 +19,8 @@ export const Route = createFileRoute("/free/arv-calculator")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/free/arv-calculator") },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: absoluteUrl("/og-cover.jpg") },
+      { name: "twitter:image", content: absoluteUrl("/og-cover.jpg") },
     ],
     links: [{ rel: "canonical", href: absoluteUrl("/free/arv-calculator") }],
     scripts: [

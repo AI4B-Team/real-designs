@@ -18,6 +18,8 @@ export const Route = createFileRoute("/privacy")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/privacy") },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: absoluteUrl("/og-cover.jpg") },
+      { name: "twitter:image", content: absoluteUrl("/og-cover.jpg") },
     ],
     links: [{ rel: "canonical", href: absoluteUrl("/privacy") }],
   }),

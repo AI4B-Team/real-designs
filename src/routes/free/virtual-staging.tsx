@@ -20,6 +20,8 @@ export const Route = createFileRoute("/free/virtual-staging")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/free/virtual-staging") },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: absoluteUrl("/og-cover.jpg") },
+      { name: "twitter:image", content: absoluteUrl("/og-cover.jpg") },
     ],
     links: [{ rel: "canonical", href: absoluteUrl("/free/virtual-staging") }],
     scripts: [
