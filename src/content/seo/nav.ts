@@ -13,6 +13,8 @@ export const DESIGN_LINKS: NavLink[] = [
   { href: "/sketch-to-render", label: "Sketch To Render" },
   { href: "/2d-to-3d-floor-plan", label: "2D Plan To Furnished 3D" },
   { href: "/declutter-photo", label: "Remove Furniture And Clutter" },
+  { href: "/airbnb-interior-design", label: "Airbnb Interior Design" },
+  { href: "/curb-appeal-ideas", label: "Curb Appeal Ideas" },
 ];
 
 export const PLAN_LINKS: NavLink[] = [
@@ -25,6 +27,10 @@ export const PLAN_LINKS: NavLink[] = [
   { href: "/rental-grade-vs-retail-grade", label: "Rental Grade vs Retail Grade" },
   { href: "/virtual-staging-disclosure-rules", label: "Staging Disclosure Rules" },
   { href: "/mls-photo-rules", label: "MLS Photo Rules" },
+  { href: "/whole-house-renovation-cost", label: "Whole House Renovation Cost" },
+  { href: "/flooring-installation-cost", label: "Flooring Installation Cost" },
+  { href: "/home-staging-cost", label: "Home Staging Cost" },
+  { href: "/brrrr-calculator", label: "BRRRR Calculator" },
 ];
 
 export const AUDIENCE_LINKS: NavLink[] = [
