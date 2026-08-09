@@ -279,6 +279,7 @@ export const getPropertyTree = createServerFn({ method: "GET" })
               return {
                 id: r.id as string,
                 name: r.name as string,
+                version_id: (latest?.id ?? null) as string | null,
                 room_type: r.room_type as string,
                 versions: versions.length,
                 version_no: latest?.version_no ?? null,

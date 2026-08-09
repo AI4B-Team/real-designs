@@ -210,6 +210,59 @@ export type Database = {
         }
         Relationships: []
       }
+      presentations: {
+        Row: {
+          client_email: string | null
+          client_name: string | null
+          created_at: string
+          decided_at: string | null
+          decision_note: string | null
+          id: string
+          last_viewed_at: string | null
+          status: string
+          title: string
+          token: string
+          version_id: string
+          view_count: number
+        }
+        Insert: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision_note?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          status?: string
+          title: string
+          token?: string
+          version_id: string
+          view_count?: number
+        }
+        Update: {
+          client_email?: string | null
+          client_name?: string | null
+          created_at?: string
+          decided_at?: string | null
+          decision_note?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          status?: string
+          title?: string
+          token?: string
+          version_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentations_version_id_fkey"
+            columns: ["version_id"]
+            isOneToOne: false
+            referencedRelation: "versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           budget_band: string
@@ -600,6 +653,7 @@ export type Database = {
         }
       }
       founding_members_claimed: { Args: never; Returns: number }
+      get_shared_presentation: { Args: { _token: string }; Returns: Json }
       grant_credits: {
         Args: {
           _action?: Database["public"]["Enums"]["credit_action"]
@@ -607,6 +661,11 @@ export type Database = {
           _note?: string
           _user_id: string
         }
+        Returns: Json
+      }
+      record_presentation_view: { Args: { _token: string }; Returns: undefined }
+      respond_to_presentation: {
+        Args: { _decision: string; _note?: string; _token: string }
         Returns: Json
       }
       spend_credits: {

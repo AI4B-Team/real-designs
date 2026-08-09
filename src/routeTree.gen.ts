@@ -19,6 +19,7 @@ import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-inter
 import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calculator'
 import { Route as FreeRehabCostCalculatorRouteImport } from './routes/free/rehab-cost-calculator'
 import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-staging'
+import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 
 const IndexRoute = IndexRouteImport.update({
@@ -70,6 +71,11 @@ const FreeVirtualStagingRoute = FreeVirtualStagingRouteImport.update({
   path: '/free/virtual-staging',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PTokenRoute = PTokenRouteImport.update({
+  id: '/p/$token',
+  path: '/p/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
   id: '/api/public/founding',
   path: '/api/public/founding',
@@ -86,6 +92,7 @@ export interface FileRoutesByFullPath {
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
+  '/p/$token': typeof PTokenRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesByTo {
@@ -98,6 +105,7 @@ export interface FileRoutesByTo {
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
+  '/p/$token': typeof PTokenRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesById {
@@ -112,6 +120,7 @@ export interface FileRoutesById {
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
+  '/p/$token': typeof PTokenRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRouteTypes {
@@ -126,6 +135,7 @@ export interface FileRouteTypes {
     | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
+    | '/p/$token'
     | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -138,6 +148,7 @@ export interface FileRouteTypes {
     | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
+    | '/p/$token'
     | '/api/public/founding'
   id:
     | '__root__'
@@ -151,6 +162,7 @@ export interface FileRouteTypes {
     | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
+    | '/p/$token'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
 }
@@ -164,6 +176,7 @@ export interface RootRouteChildren {
   FreeArvCalculatorRoute: typeof FreeArvCalculatorRoute
   FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
   FreeVirtualStagingRoute: typeof FreeVirtualStagingRoute
+  PTokenRoute: typeof PTokenRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
 
@@ -239,6 +252,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FreeVirtualStagingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/p/$token': {
+      id: '/p/$token'
+      path: '/p/$token'
+      fullPath: '/p/$token'
+      preLoaderRoute: typeof PTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/founding': {
       id: '/api/public/founding'
       path: '/api/public/founding'
@@ -270,6 +290,7 @@ const rootRouteChildren: RootRouteChildren = {
   FreeArvCalculatorRoute: FreeArvCalculatorRoute,
   FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
   FreeVirtualStagingRoute: FreeVirtualStagingRoute,
+  PTokenRoute: PTokenRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }
 export const routeTree = rootRouteImport
