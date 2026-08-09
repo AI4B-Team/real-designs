@@ -2018,11 +2018,24 @@ toolRows.forEach((r) => r.addEventListener('click', () => {
 const canvasCard = document.getElementById('canvasCard');
 const canvasThemeBtn = document.getElementById('canvasTheme');
 if (canvasCard && canvasThemeBtn) {
-  canvasThemeBtn.addEventListener('click', () => {
-    const dark = canvasCard.classList.toggle('dark');
-    canvasThemeBtn.setAttribute('aria-pressed', String(dark));
-    canvasThemeBtn.querySelector('b').textContent = dark ? 'Dark' : 'Light';
-  });
+  const CT_KEY='rd.canvasTheme';
+  const applyCanvasTheme=(mode)=>{
+    const dark = mode !== 'light';
+    canvasCard.classList.toggle('dark', dark);
+    canvasThemeBtn.querySelectorAll('[data-ctheme]').forEach(b=>{
+      const on = b.getAttribute('data-ctheme') === (dark?'dark':'light');
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', String(on));
+    });
+    try{ localStorage.setItem(CT_KEY, dark?'dark':'light'); }catch(e){}
+  };
+  canvasThemeBtn.querySelectorAll('[data-ctheme]').forEach(b=>b.addEventListener('click',()=>{
+    applyCanvasTheme(b.getAttribute('data-ctheme'));
+    lucide.createIcons();
+  }));
+  let saved='dark';
+  try{ saved = localStorage.getItem(CT_KEY) || 'dark'; }catch(e){}
+  applyCanvasTheme(saved);
 }
 
 /* ---------- accounts: signed-in identity + saved projects ---------- */

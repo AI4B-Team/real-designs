@@ -626,12 +626,15 @@
 .rd-app .canvas-card.dark .numbar{margin-top:0;border-radius:0 0 8px 8px;margin-left:24px;margin-right:24px}
 .rd-app .canvas-card.dark .vars{margin:12px 24px 0}
 .rd-app .canvas-card.dark .card-b > div[style*="margin-top:12px"]{margin-left:24px;margin-right:24px}
-.rd-app .canvas-theme{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:.7rem;
-  color:var(--mute);background:none;border:1px solid var(--line);border-radius:99px;padding:4px 10px;
-  cursor:pointer}
-.rd-app .canvas-theme i{width:13px;height:13px}
-.rd-app .canvas-card.dark .canvas-theme{color:#C9C9D1;border-color:#3A3A41}
-.rd-app .canvas-card.dark .canvas-theme b{color:#fff;font-weight:500}
+.rd-app .canvas-theme{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--line);
+  border-radius:99px;padding:2px;background:none}
+.rd-app .canvas-theme button{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:.7rem;
+  color:var(--mute);background:none;border:0;border-radius:99px;padding:4px 10px;cursor:pointer}
+.rd-app .canvas-theme button i{width:13px;height:13px}
+.rd-app .canvas-theme button.on{background:var(--ink);color:#fff}
+.rd-app .canvas-card.dark .canvas-theme{border-color:#3A3A41}
+.rd-app .canvas-card.dark .canvas-theme button{color:#C9C9D1}
+.rd-app .canvas-card.dark .canvas-theme button.on{background:#3A3A41;color:#fff}
 
 /* live scope estimator controls */
 .rd-app .scope-ctl{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line)}
