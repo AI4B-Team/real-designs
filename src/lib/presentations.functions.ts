@@ -150,7 +150,8 @@ export const getPresentationPackage = createServerFn({ method: "POST" })
     if (ownErr) throw new Error(ownErr.message);
     if (!own) throw new Error("That presentation is not available.");
 
-    const { data: payload, error } = await context.supabase.rpc("get_shared_presentation", {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: payload, error } = await supabaseAdmin.rpc("get_shared_presentation", {
       _token: own.token as string,
     });
     if (error) throw new Error(error.message);
