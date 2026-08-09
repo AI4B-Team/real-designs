@@ -107,6 +107,16 @@ function searchIndex(){
       });
     });
   });
+  (typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).forEach(pr=>{
+    out.push({kind:'Presentations',ic:'presentation',t:pr.title||'Client link',
+      s:(pr.status==='approved'?'Approved':pr.status==='viewed'?'Opened':pr.status==='changes'?'Changes requested':'Sent'),view:'present'});
+  });
+  SAVED_EST.forEach(e=>{
+    out.push({kind:'Scopes',ic:'calculator',t:(e.name||'Saved room')+' scope',
+      s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Scope')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
+    out.push({kind:'Products',ic:'shopping-bag',t:(e.name||'Saved room')+' product board',
+      s:'Allowances from the saved scope',view:'products'});
+  });
   return out;
 }
 function runSearch(){
@@ -121,9 +131,9 @@ function runSearch(){
   lucide.createIcons();
   schRes.querySelectorAll('[data-r]').forEach(btn=>btn.addEventListener('click',()=>{
     const r=rows[+btn.dataset.r]; if(!r) return;
-    SEL={p:r.pi,pr:r.pri};
+    if(r.pi!=null) SEL={p:r.pi,pr:r.pri};
     closeSchRes(); if(schInput) schInput.value='';
-    go(r.design?'designs':'props'); paintTree();
+    go(r.view||(r.design?'designs':'props')); paintTree();
   }));
 }
 function updateSearchMeta(){
@@ -132,6 +142,8 @@ function updateSearchMeta(){
   const designs=PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0);
   const set=(sc,v)=>{const b=schMenu.querySelector('[data-scope="'+sc+'"] .mv'); if(b) b.textContent=String(v);};
   set('Properties',PROP_TREE.length); set('Rooms',rooms); set('Designs',designs);
+  set('Presentations',(typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).length);
+  set('Scopes',SAVED_EST.length); set('Products',SAVED_EST.length);
   const recents=searchIndex().filter(r=>r.kind==='Designs').slice(0,3);
   const groups=schMenu.querySelectorAll('.acct-group');
   const recHead=groups[groups.length-1];
@@ -293,6 +305,7 @@ const RT_ICON=(t)=>{const s=String(t||'').toLowerCase();
   if(s.includes('bed'))return 'bed'; if(s.includes('exterior')||s.includes('elevation')||s.includes('yard'))return 'home';
   if(s.includes('office'))return 'lamp-desk'; return 'sofa';};
 let PROP_TREE=[], SEL={p:0,pr:0};
+let SAVED_EST=[];
 
 async function paintRooms(){
   const rc=document.getElementById('roomCards'); if(!rc) return;
@@ -628,6 +641,7 @@ async function paintVersions(){
   const el=document.getElementById('verList'); if(!el) return;
   let list=[];
   try{ list=await listSavedEstimates(); }catch(e){ list=[]; }
+  SAVED_EST=list; updateSearchMeta();
   list=list.slice(0,6);
   if(!list.length){
     el.innerHTML='<p style="font-size:.78rem;color:var(--mute-2);padding:6px 0">No versions yet. Save a design to start the history.</p>';
