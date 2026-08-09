@@ -194,6 +194,7 @@ if(schInput){
 /* ---------- account page ---------- */
 const NOTIF_PREFS=[['designs','Saved And Approved Designs','Shows in your in app notification feed'],
 ['approvals','Client Approvals','When a client approves a presentation link'],
+['team','Team And Invites','Invites you receive and teammates who join your workspace'],
 ['billing','Credits And Billing','Credit spend, refunds and low balance warnings']];
 let PREFS=null;
 function paintNotifPrefs(){
