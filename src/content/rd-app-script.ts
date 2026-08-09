@@ -328,9 +328,9 @@ async function loadDashboard(){
     pres.forEach(p=>{
       const who=p.client_name||p.client_email||'Client';
       const where=(p.address?p.address+' &middot; ':'')+p.room_name;
-      if(p.status==='changes') attn.unshift([who+' requested changes on '+p.title, where,'p-red','Review','present']);
-      else if(p.status==='viewed'&&hrs(p.last_viewed_at)>48) attn.push([who+' viewed but has not decided', where+' &middot; '+Math.round(hrs(p.last_viewed_at)/24)+' days ago','p-amb','Follow Up','present']);
-      else if(p.status==='sent'&&hrs(p.created_at)>72) attn.push([p.title+' has not been opened', where+' &middot; sent '+Math.round(hrs(p.created_at)/24)+' days ago','p-amb','Resend','present']);
+      if(p.status==='changes') attn.unshift([who+' requested changes on '+p.title, where,'p-red','Review','present',p.id]);
+      else if(p.status==='viewed'&&hrs(p.last_viewed_at)>48) attn.push([who+' viewed but has not decided', where+' &middot; '+Math.round(hrs(p.last_viewed_at)/24)+' days ago','p-amb','Follow Up','present',p.id]);
+      else if(p.status==='sent'&&hrs(p.created_at)>72) attn.push([p.title+' has not been opened', where+' &middot; sent '+Math.round(hrs(p.created_at)/24)+' days ago','p-amb','Resend','present',p.id]);
     });
   }catch(e){}
 
