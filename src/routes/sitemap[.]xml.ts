@@ -23,23 +23,22 @@ export const Route = createFileRoute("/sitemap.xml")({
             changefreq: "monthly" as const,
             priority: path.startsWith("/free/") ? "0.9" : "0.8",
           })),
+          { path: "/resources", changefreq: "weekly", priority: "0.7" },
           { path: "/terms", changefreq: "yearly", priority: "0.3" },
           { path: "/privacy", changefreq: "yearly", priority: "0.3" },
           { path: "/refund-policy", changefreq: "yearly", priority: "0.3" },
         ];
 
 
-        const lastmod = new Date().toISOString().slice(0, 10);
-
         const urls = entries.map((e) =>
           [
             `  <url>`,
             `    <loc>${BASE_URL}${e.path}</loc>`,
             e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
-            `    <lastmod>${lastmod}</lastmod>`,
             e.priority ? `    <priority>${e.priority}</priority>` : null,
             `  </url>`,
           ]
+
             .filter(Boolean)
             .join("\n"),
         );
