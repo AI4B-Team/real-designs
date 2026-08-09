@@ -6,6 +6,7 @@ import { PHOTOS, photo } from "@/content/rd-photos";
 import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
+import { renderDesign } from "@/lib/design-render.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
@@ -717,7 +718,7 @@ async function detectScopeChanges(){
   const note=document.getElementById('scopeNote');
   btn.disabled=true; const lab=btn.innerHTML; btn.textContent='Reading Photos\u2026';
   try{
-    const [before,after]=await Promise.all([toDataUrl(PHOTOS.before,900),toDataUrl(PHOTOS.after,900)]);
+    const [before,after]=await Promise.all([toDataUrl(PHOTOS.before,900),toDataUrl(lastRender||PHOTOS.after,900)]);
     const r=await detectChanges({data:{before,after,grade:document.getElementById('scGrade').value}});
     window.dispatchEvent(new Event('rd:credits-changed'));
     if(r.priceable.length){ scopeItems=r.priceable; }
