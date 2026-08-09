@@ -2,17 +2,25 @@ import { Link } from "@tanstack/react-router";
 
 import { FOOTER_GROUPS } from "@/content/seo/nav";
 
-const logo =
-  "/__l5e/assets-v1/c5d9393c-b749-4c1a-81d3-2af5cbe5c8c3/rd-logo-icon.png";
+export function BrandMark() {
+  return (
+    <span className="rd-mark" aria-label="REAL DESIGNS">
+      <i>
+        <b>REAL</b>
+        <em>Designs</em>
+      </i>
+    </span>
+  );
+}
 
 export function SiteHeader() {
   return (
     <header id="hdr">
       <div className="wrap nav">
         <a href="/" className="logo">
-          <img src={logo} alt="REAL DESIGNS" className="dot" />
-          REAL DESIGNS <small>.AI</small>
+          <BrandMark />
         </a>
+
         <div className="nav-cta">
           <Link to="/auth" className="btn btn-ghost btn-sm">
             Log In
