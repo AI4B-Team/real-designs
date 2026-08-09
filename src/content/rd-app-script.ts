@@ -309,6 +309,7 @@ function fitClass(f){ if(!f) return 'p-gray'; const s=f.toLowerCase();
 
 function renderScope(r){
   lastScope=r;
+  try{ window.dispatchEvent(new CustomEvent('rd:priced')); }catch(e){}
   showAlert('');
   /* group priced lines by trade, with a subtotal per trade */
   const groups=[]; const idx={};
