@@ -1310,13 +1310,13 @@
   background:transparent;border:0;padding:0 6px;text-align:center;color:var(--mute)}
 .rd-site .p3dot{display:grid;place-items:center;width:38px;height:38px;border-radius:50%;
   border:1px solid var(--line);background:var(--white);transition:.2s}
-.rd-site .p3dot i{width:16px;height:16px;color:var(--mute)}
+.rd-site .p3dot i,.rd-site .p3dot svg{width:16px;height:16px;color:var(--mute);stroke:currentColor}
 .rd-site .p3step .mono{font-size:.6rem;letter-spacing:.14em;color:var(--mute-2)}
 .rd-site .p3step b{font-size:.92rem;font-weight:600;letter-spacing:-.01em;color:var(--ink)}
 .rd-site .p3step.done .p3dot{border-color:var(--red);background:var(--white)}
-.rd-site .p3step.done .p3dot i{color:var(--red)}
+.rd-site .p3step.done .p3dot i,.rd-site .p3step.done .p3dot svg{color:var(--red)}
 .rd-site .p3step.on .p3dot{background:var(--red);border-color:var(--red);box-shadow:0 0 0 5px color-mix(in oklab,var(--red) 12%,transparent)}
-.rd-site .p3step.on .p3dot i{color:#fff}
+.rd-site .p3step.on .p3dot i,.rd-site .p3step.on .p3dot svg{color:#fff;stroke:#fff;stroke-width:2.2}
 .rd-site .p3step.on .mono{color:var(--red)}
 
 .rd-site .p3{background:var(--white);border:1px solid var(--line);border-radius:12px;
