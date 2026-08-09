@@ -775,8 +775,9 @@
 /* modal form fields (client approval link) */
 .up-card .field{display:block;text-align:left;margin-bottom:11px}
 .up-card .field label{display:block;font-size:.72rem;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--mute-2);margin-bottom:5px}
-.up-card .field input,.up-card .field select{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;font-size:.84rem;background:#fff;color:var(--ink)}
-.up-card .field input:focus,.up-card .field select:focus{outline:none;border-color:var(--ink)}
+.up-card .field input,.up-card .field select,.up-card .field textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font:inherit;font-size:.84rem;background:#fff;color:var(--ink)}
+.up-card .field textarea{resize:vertical;min-height:120px;line-height:1.5}
+.up-card .field input:focus,.up-card .field select:focus,.up-card .field textarea:focus{outline:none;border-color:var(--ink)}
 
 
 /* Native dropdowns: always light/white popup */
