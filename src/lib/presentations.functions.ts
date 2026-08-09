@@ -122,8 +122,8 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
 export const respondToPresentation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => presentationRespondSchema.parse(input))
   .handler(async ({ data }) => {
-    const { publicShareClient } = await import("@/lib/presentations.server");
-    const client = publicShareClient();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const client = supabaseAdmin;
     const { data: res, error } = await client.rpc("respond_to_presentation", {
       _token: data.token,
       _decision: data.decision,
