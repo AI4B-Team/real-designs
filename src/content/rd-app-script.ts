@@ -1923,10 +1923,15 @@ if(linkList) linkList.addEventListener('click',async e=>{
     togglePresHistory(row.dataset.pid);
     return;
   }
+  if(e.target.closest('[data-remind]')){
+    presSendModal(PRES_ROWS.find(x=>x.id===row.dataset.pid),true);
+    return;
+  }
   if(e.target.closest('[data-send]')){
     presSendModal(PRES_ROWS.find(x=>x.id===row.dataset.pid));
     return;
   }
+
   if(e.target.closest('[data-copy]')){
     const url=presLink(row.dataset.tok);
     try{ await navigator.clipboard.writeText(url); }catch(_){}
