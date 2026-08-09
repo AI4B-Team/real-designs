@@ -2646,7 +2646,7 @@ if(scopeGrid && !document.getElementById('scSave')){
         ceiling_ht_in:dimsProposal?dimsProposal.ceiling_ht_in:96,
         dims_source:dimsProposal?(dimsConfirmed?'user':'depth_estimate'):'user',
         dims_confirmed:!dimsProposal||dimsConfirmed,
-        before_path:uploadPath||PHOTOS.before,
+        before_path:uploadPath||window.rdPendingPhotoPath||PHOTOS.before,
         after_path:lastRenderPath||(uploadPath?null:PHOTOS.after),
         items:scopeItems,
       }});
@@ -2738,8 +2738,9 @@ if(scopeGrid && !document.getElementById('scSave')){
   document.getElementById('onbHide').addEventListener('click',()=>{ state.done=true; save(); card.remove(); });
   ['photo','priced','saved','brand','shared'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
 
-  /* welcome once per account */
-  if(!state.welcomed){
+  /* welcome once per account, but never over a photo handed off from the site */
+  const pendingHandoff=(()=>{ try{ return !!window.rdHandoffPending||!!localStorage.getItem('rd.handoff'); }catch(e){ return false; } })();
+  if(!state.welcomed && !pendingHandoff){
     state.welcomed=true; save();
     document.querySelectorAll('#onbModal').forEach(n=>n.remove());
     const m=document.createElement('div'); m.className='up-modal on'; m.id='onbModal';
@@ -3033,6 +3034,45 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   }catch(err){ showAlert((err&&err.message)||'Could not save that photo.'); }
 });
 
+/* ---------- website handoff ----------
+   A visitor who uploaded a photo on the marketing site and then signed up
+   lands here with their photo and builder choices waiting in localStorage.
+   Load it straight into Studio so nothing has to be entered twice. */
+(async function pickUpHandoff(){
+  const KEY='rd.handoff';
+  let h=null;
+  try{ h=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ h=null; }
+  try{ localStorage.removeItem(KEY); }catch(e){}
+  if(!h||!h.photo) return;
+  window.rdHandoffPending=true;
+  if(Date.now()-(h.ts||0)>1000*60*60*24*7) return;   // stale, ignore
+
+  try{ go('studio'); }catch(e){}
+  const before=document.getElementById('cBefore');
+  if(before) before.innerHTML='<img src="'+h.photo+'" alt="The space you uploaded" style="width:100%;height:100%;object-fit:cover;display:block">';
+
+  const sp=document.querySelector('#spChips .chip[data-sp="'+(h.space||'interior')+'"]');
+  if(sp){ document.querySelectorAll('#spChips .chip').forEach(x=>x.classList.remove('on')); sp.classList.add('on'); }
+  const b=document.querySelector('.bchip[data-b="'+(h.budget??1)+'"]');
+  if(b){ document.querySelectorAll('.bchip').forEach(x=>x.classList.remove('on')); b.classList.add('on'); }
+  const sel=document.getElementById('fStyle');
+  if(sel&&h.style){ const opt=[...sel.options].find(o=>o.text.toLowerCase()===String(h.style).toLowerCase()); if(opt) sel.value=opt.value; }
+  const note=document.getElementById('agentNote');
+  if(note&&h.notes) note.value=h.notes;
+
+  const card=document.getElementById('canvasCard');
+  if(card&&!document.getElementById('hoBanner')){
+    const bn=document.createElement('div');
+    bn.id='hoBanner'; bn.className='note';
+    bn.innerHTML='<i data-lucide="image-up"></i><span>Loaded from the website: <b>'+esc(h.name||'your photo')+'</b>, '+
+      esc(h.budgetName||'Makeover')+' intensity'+(h.style?', '+esc(h.style):'')+'. Generate when you are ready.</span>';
+    card.appendChild(bn);
+    lucide.createIcons();
+  }
+
+  /* Store it on the account so Save To My Projects keeps the real photo. */
+  try{ window.rdPendingPhotoPath=await uploadRenderDataUrl(h.photo); }catch(e){}
+})();
 
 
   } catch (e) { console.error(e); }

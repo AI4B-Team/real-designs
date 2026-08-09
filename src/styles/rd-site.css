@@ -1960,3 +1960,14 @@
   .rd-site .cmp-badge{display:none}
   .rd-site .cmp-table thead th{padding-top:14px}
 }
+
+/* Account gate shown over the hero output once a visitor's own photo is staged. */
+.rd-site .gen-gate{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:20px 22px;max-width:34ch;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.18);color:var(--ink)}
+.rd-site .gen-gate i{width:20px;height:20px;color:var(--red)}
+.rd-site .gen-gate b{font-size:.98rem;letter-spacing:-.02em;color:var(--ink)}
+.rd-site .gen-gate span{font-size:.79rem;line-height:1.5;color:var(--mute)}
+.rd-site .gen-gate em{font-style:normal;font-size:.68rem;color:var(--mute-2)}
+
+/* Hero generation overlay (progress + account gate) */
+.rd-site .genov{position:absolute;inset:0;background:rgba(255,255,255,.96);display:none;place-items:center;text-align:center;z-index:9;padding:18px}
+.rd-site .genov.on{display:grid}
