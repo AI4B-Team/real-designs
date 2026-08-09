@@ -10,7 +10,7 @@ import { renderDesign } from "@/lib/design-render.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto } from "@/lib/room-photos";
+import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPresentations, createPresentation, deletePresentation } from "@/lib/presentations.functions";
 
 export function initApp(): () => void {
@@ -419,7 +419,7 @@ document.querySelectorAll('#gradeChips .chip, #spChips .chip').forEach(c=>c.addE
 }));
 
 const gsteps=['Reading room geometry','Applying object locks','Fitting design to budget band','Selecting retail grade finishes','Rendering the space','Finishing the image'];
-let busy=false, lastRender=null;
+let busy=false, lastRender=null, lastRenderPath=null;
 document.getElementById('genBtn').addEventListener('click',async ()=>{
   if(busy)return;busy=true;
   const btn=document.getElementById('genBtn'); btn.disabled=true;
@@ -448,7 +448,8 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
       notes:(document.getElementById('agentNote')||{}).value||null,
       keep:groups.keep, replace:groups.replace, remove:groups.remove
     }});
-    lastRender=r.image;
+    lastRender=r.image; lastRenderPath=null;
+    try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,'Redesigned space, AI render');
     addRenderVariant(r.image,(document.getElementById('fStyle')||{}).value||'Your Render');
     window.dispatchEvent(new Event('rd:credits-changed'));
@@ -1502,7 +1503,7 @@ if(scopeGrid && !document.getElementById('scSave')){
         dims_source:dimsProposal?(dimsConfirmed?'user':'depth_estimate'):'user',
         dims_confirmed:!dimsProposal||dimsConfirmed,
         before_path:uploadPath||PHOTOS.before,
-        after_path:uploadPath?null:PHOTOS.after,
+        after_path:lastRenderPath||(uploadPath?null:PHOTOS.after),
         items:scopeItems,
       }});
       try{ localStorage.setItem(LS,JSON.stringify({address,project,room,type})); }catch(e){}

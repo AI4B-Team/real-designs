@@ -42,3 +42,22 @@ export async function deleteRoomPhoto(path: string): Promise<void> {
   if (!isStoredPhoto(path)) return;
   await supabase.storage.from(BUCKET).remove([path]);
 }
+
+/** Persist a generated render (data URL) into the user's private bucket. */
+export async function uploadRenderDataUrl(dataUrl: string): Promise<string> {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) throw new Error("Sign in to save renders.");
+  if (!/^data:image\//.test(dataUrl)) throw new Error("That render is not an image.");
+
+  const blob = await (await fetch(dataUrl)).blob();
+  const ext = (blob.type.split("/")[1] || "png").replace(/[^a-z0-9]/g, "") || "png";
+  const path = `${uid}/renders/${crypto.randomUUID()}.${ext}`;
+
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(path, blob, { cacheControl: "3600", upsert: false, contentType: blob.type || "image/png" });
+  if (error) throw new Error(error.message);
+
+  return path;
+}
