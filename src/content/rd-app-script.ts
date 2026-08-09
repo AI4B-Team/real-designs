@@ -2161,9 +2161,18 @@ const AV_TONES=['#2563eb','#059669','#7c3aed','#64748b','#e11d48','#0d9488'];
 function avTone(seed){ let h=0; for(let i=0;i<(seed||'').length;i++) h=(h*31+seed.charCodeAt(i))%9973; return AV_TONES[h%AV_TONES.length]; }
 function paintAvatars(av,seed){
   const tone=avTone(seed||av);
-  document.querySelectorAll('.acct-btn .av,.acct-head .av,.apane .av').forEach(e=>{
-    e.textContent=av;
-    if(!e.style.backgroundImage) e.style.background=tone;
+  window.__rdAv={av:av,tone:tone};
+  if(!window.__rdAvObs){
+    window.__rdAvObs=new MutationObserver(()=>{ const a=window.__rdAv; if(!a) return;
+      document.querySelectorAll('.av').forEach(e=>{ if(e.dataset.avDone) return; e.dataset.avDone='1';
+        if(!e.style.backgroundImage){ e.textContent=a.av; e.style.background=a.tone; } e.style.color='#fff'; });
+    });
+    window.__rdAvObs.observe(document.body,{childList:true,subtree:true});
+  }
+  document.querySelectorAll('.av').forEach(e=>{
+    e.dataset.avDone='1';
+    if(!e.style.backgroundImage){ e.textContent=av; e.style.background=tone; }
+    e.style.color='#fff';
   });
 }
 const $id=(x)=>document.getElementById(x);
