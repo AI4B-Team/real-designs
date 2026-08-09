@@ -1812,3 +1812,32 @@
 /* header upload CTA target highlight */
 @keyframes dropPulse{0%,100%{box-shadow:0 0 0 0 rgba(204,0,0,0)}35%{box-shadow:0 0 0 6px rgba(204,0,0,.18)}}
 .drop.pulse{border-color:var(--red);animation:dropPulse 1.4s ease}
+
+/* ---------- upload modal ---------- */
+.rd-site .umodal{position:fixed;inset:0;z-index:120;display:none}
+.rd-site .umodal.on{display:block}
+.rd-site .umodal-scrim{position:absolute;inset:0;background:rgba(17,17,19,.62);backdrop-filter:blur(3px);animation:umFade .18s ease}
+.rd-site .umodal-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(520px,calc(100vw - 32px));max-height:calc(100vh - 48px);overflow:auto;background:var(--card,#fff);border:1px solid var(--line,#e6e4e0);border-radius:20px;padding:26px 24px 22px;box-shadow:0 30px 80px rgba(17,17,19,.28);animation:umPop .22s cubic-bezier(.2,.8,.3,1)}
+@keyframes umFade{from{opacity:0}to{opacity:1}}
+@keyframes umPop{from{opacity:0;transform:translate(-50%,-46%) scale(.97)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.rd-site .umodal-x{position:absolute;top:14px;right:14px;width:32px;height:32px;border-radius:999px;border:1px solid var(--line,#e6e4e0);background:transparent;display:grid;place-items:center;cursor:pointer;color:var(--mute,#6b6a66)}
+.rd-site .umodal-x:hover{background:var(--alt,#f5f3f0)}
+.rd-site .umodal-x i{width:16px;height:16px}
+.rd-site .umodal-head h3{margin:0 0 6px;font-size:1.25rem}
+.rd-site .umodal-head p{margin:0 0 18px;font-size:.85rem;color:var(--mute,#6b6a66);line-height:1.5}
+.rd-site .umodal-drop{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;padding:30px 18px;border:1.5px dashed var(--line-2,#d6d3ce);border-radius:16px;background:var(--alt,#faf9f7);cursor:pointer;transition:border-color .18s,background .18s}
+.rd-site .umodal-drop:hover,.rd-site .umodal-drop.over{border-color:var(--red,#c00);background:rgba(204,0,0,.04)}
+.rd-site .umodal-drop i{width:26px;height:26px;color:var(--red,#c00)}
+.rd-site .umodal-drop b{font-size:.95rem}
+.rd-site .umodal-drop span{font-size:.76rem;color:var(--mute,#6b6a66)}
+.rd-site .umodal-prev{display:none;align-items:center;gap:12px;margin-top:12px;padding:10px;border:1px solid var(--line,#e6e4e0);border-radius:14px}
+.rd-site .umodal.has-file .umodal-prev{display:flex}
+.rd-site .umodal.has-file .umodal-drop{padding:18px}
+.rd-site .umodal-thumb{width:52px;height:52px;border-radius:10px;background:var(--alt,#f5f3f0) center/cover no-repeat;flex:0 0 auto}
+.rd-site .umodal-prev b{display:block;font-size:.85rem}
+.rd-site .umodal-prev span{font-size:.7rem;color:var(--mute,#6b6a66)}
+.rd-site .umodal-samples{display:flex;align-items:center;gap:8px;margin:16px 0 18px}
+.rd-site .umodal-samples>span{font-size:.74rem;color:var(--mute,#6b6a66);margin-right:2px}
+.rd-site .usamp{width:46px;height:34px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:var(--alt,#f5f3f0)}
+.rd-site .usamp.on{border-color:var(--red,#c00)}
+.rd-site .umodal .no-card{margin:10px 0 0;text-align:center}
