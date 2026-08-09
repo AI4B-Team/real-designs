@@ -3068,6 +3068,10 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
     lucide.createIcons();
   }
 
+  /* The welcome modal would cover the photo they came here to render. */
+  const dropModal=()=>document.querySelectorAll('#onbModal').forEach(n=>n.remove());
+  dropModal(); setTimeout(dropModal,400); setTimeout(dropModal,1200);
+
   /* Store it on the account so Save To My Projects keeps the real photo. */
   try{ window.rdPendingPhotoPath=await uploadRenderDataUrl(h.photo); }catch(e){}
 })();
