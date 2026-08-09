@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ArvCalculator } from "@/components/seo/ArvCalculator";
 import { FreeToolTemplate } from "@/components/seo/FreeToolTemplate";
 import "@/styles/rd-site.css";
+import { absoluteUrl } from "@/lib/site";
 
 const TITLE = "Free ARV Calculator With 70 Percent Rule | REAL DESIGNS";
 const DESC =
@@ -16,10 +17,10 @@ export const Route = createFileRoute("/free/arv-calculator")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/free/arv-calculator" },
+      { property: "og:url", content: absoluteUrl("/free/arv-calculator") },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "/free/arv-calculator" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/free/arv-calculator") }],
     scripts: [
       {
         type: "application/ld+json",

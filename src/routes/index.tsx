@@ -4,6 +4,7 @@ import { PrototypeSurface } from "@/components/PrototypeSurface";
 import { html } from "@/content/rd-site-html";
 import { initSite } from "@/content/rd-site-script";
 import "@/styles/rd-site.css";
+import { absoluteUrl } from "@/lib/site";
 
 const title = "AI Home Design and Renovation Planning | REAL DESIGNS";
 const description =

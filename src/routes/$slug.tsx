@@ -4,6 +4,7 @@ import { LandingTemplate } from "@/components/seo/LandingTemplate";
 import { PHOTOS } from "@/content/rd-photos";
 import { getLandingPage } from "@/content/seo/registry";
 import { getRequestOrigin } from "@/lib/origin.functions";
+import { absoluteUrl } from "@/lib/site";
 import "@/styles/rd-site.css";
 
 export const Route = createFileRoute("/$slug")({

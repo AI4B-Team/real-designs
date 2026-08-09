@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { FreeToolTemplate } from "@/components/seo/FreeToolTemplate";
 import { RehabCalculator } from "@/components/seo/RehabCalculator";
 import "@/styles/rd-site.css";
+import { absoluteUrl } from "@/lib/site";
 
 const TITLE = "Free Rehab Cost Calculator, No Photo Needed | REAL DESIGNS";
 const DESC =
@@ -16,10 +17,10 @@ export const Route = createFileRoute("/free/rehab-cost-calculator")({
       { property: "og:title", content: TITLE },
       { property: "og:description", content: DESC },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/free/rehab-cost-calculator" },
+      { property: "og:url", content: absoluteUrl("/free/rehab-cost-calculator") },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "/free/rehab-cost-calculator" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/free/rehab-cost-calculator") }],
     scripts: [
       {
         type: "application/ld+json",
