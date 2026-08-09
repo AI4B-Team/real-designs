@@ -66,7 +66,7 @@ help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
 const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security'};
-function go(v){
+function go(v,fromHash){
   if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
@@ -75,13 +75,40 @@ function go(v){
   if(!titles[v]) return;
   const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
   const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
-
+  if(!fromHash){
+    try{
+      const h='#v-'+v;
+      if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
+    }catch(_){}
+  }
   window.scrollTo({top:0});
 }
 
+/* deep links: /app#v-scope, /app#scope and browser back/forward */
+function viewFromHash(){
+  const raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
+  if(!raw) return '';
+  return (titles[raw]||ACCT_ALIAS[raw])?raw:'';
+}
+window.addEventListener('hashchange',()=>{ const v=viewFromHash(); if(v) go(v,true); });
 
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+/* the app shell mounts after this module runs, and can remount once,
+   so keep re-asserting the deep linked view for a short window */
+(function applyHash(){
+  const v=viewFromHash();
+  if(!v) return;
+  const want='v-'+(ACCT_ALIAS[v]?'account':v);
+  let tries=0;
+  const tick=()=>{
+    const target=document.getElementById(want);
+    if(target && !target.classList.contains('on')) go(v,true);
+    if(++tries<110) setTimeout(tick,75);
+  };
+  tick();
+})();
+
 
 /* ---------- account menu ---------- */
 const acctBtn=document.getElementById('acctBtn'),acctMenu=document.getElementById('acctMenu');
@@ -2876,8 +2903,10 @@ if(scopeGrid && !document.getElementById('scSave')){
   let uid='anon';
   try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) uid=data.user.id; }catch(e){}
   const KEY='rd.onb.'+uid;
-  const state=(()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ return {}; } })();
-  const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} };
+  const readState=()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ return {}; } };
+  const state=readState();
+  /* merge on write so a second init cannot drop flags written by the first */
+  const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(Object.assign(readState(),state))); }catch(e){} };
   if(state.done){ card.remove(); return; }
 
   /* already worked in this account? then there is nothing to onboard */
@@ -2932,8 +2961,9 @@ if(scopeGrid && !document.getElementById('scSave')){
 
   /* welcome once per account, but never over a photo handed off from the site */
   const pendingHandoff=(()=>{ try{ return !!window.rdHandoffPending||!!localStorage.getItem('rd.handoff'); }catch(e){ return false; } })();
-  if(!state.welcomed && !pendingHandoff){
-    state.welcomed=true; save();
+  const alreadyWelcomed=state.welcomed||readState().welcomed||window.__rdWelcomed;
+  if(!alreadyWelcomed && !pendingHandoff){
+    state.welcomed=true; window.__rdWelcomed=true; save();
     document.querySelectorAll('#onbModal').forEach(n=>n.remove());
     const m=document.createElement('div'); m.className='up-modal on'; m.id='onbModal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
