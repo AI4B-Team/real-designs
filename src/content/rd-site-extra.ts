@@ -3,6 +3,12 @@
 /* eslint-disable */
 // @ts-nocheck
 import { PHOTOS, photo } from "@/content/rd-photos";
+import DNA_KITCHEN from "@/assets/dna/kitchen.jpg.asset.json";
+import DNA_LIVING from "@/assets/dna/living.jpg.asset.json";
+import DNA_BATH from "@/assets/dna/bath.jpg.asset.json";
+import DNA_FRONT from "@/assets/dna/front.jpg.asset.json";
+import DNA_YARD from "@/assets/dna/backyard.jpg.asset.json";
+import DNA_GUEST from "@/assets/dna/guest.jpg.asset.json";
 
 const $ = (id: string) => document.getElementById(id);
 
@@ -509,8 +515,8 @@ export function initExtra(timers: number[], lucide: any) {
 
   /* ---------- design DNA ring ---------- */
   const DNA = [
-    ["Kitchen", PHOTOS.kitchen], ["Living Room", PHOTOS.after], ["Primary Bath", PHOTOS.bath],
-    ["Front Elevation", PHOTOS.paintedBrick], ["Backyard", PHOTOS.resortYard], ["Guest Room", PHOTOS.japandi],
+    ["Kitchen", DNA_KITCHEN.url], ["Living Room", DNA_LIVING.url], ["Primary Bath", DNA_BATH.url],
+    ["Front Exterior", DNA_FRONT.url], ["Backyard", DNA_YARD.url], ["Guest Room", DNA_GUEST.url],
   ];
   const dr = $("dnaGrid");
   if (dr) dr.innerHTML = DNA.map(([n, src]) =>
