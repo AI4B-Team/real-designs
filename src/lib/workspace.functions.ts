@@ -131,6 +131,7 @@ export const listSavedEstimates = createServerFn({ method: "GET" })
       return {
         version_id: v.id as string,
         created_at: v.created_at as string,
+        before_path: (v.before_path ?? null) as string | null,
         address: v.rooms.projects.properties.address as string,
         project_name: v.rooms.projects.name as string,
         room_name: v.rooms.name as string,
