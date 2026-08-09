@@ -1015,9 +1015,9 @@ async function buildNotifs(){
   try{
     const vers=await listSavedEstimates();
     (vers||[]).slice(0,10).forEach(v=>{
-      out.push({id:'v:'+v.id, ic:v.status==='approved'?'check-circle-2':'wand-sparkles', cat:v.status==='approved'?'approvals':'designs',
+      out.push({id:'v:'+v.version_id, ic:v.status==='approved'?'check-circle-2':'wand-sparkles', cat:v.status==='approved'?'approvals':'designs',
         t:v.room_name+' v'+(v.version_no||1)+(v.status==='approved'?' approved':' saved'),
-        b:(v.property_address?v.property_address+' \u00b7 ':'')+(v.project_name||'Project'),
+        b:(v.address?v.address+' \u00b7 ':'')+(v.project_name||'Project'),
         at:v.created_at, tm:nAgo(v.created_at)});
     });
   }catch(e){}
