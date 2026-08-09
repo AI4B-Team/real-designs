@@ -466,7 +466,8 @@ const P=[
 
 let bill='yr';
 function drawPlans(){
-  document.getElementById('plans').innerHTML=P.map(p=>`
+  const plansEl=document.getElementById('plans');if(!plansEl)return;
+  plansEl.innerHTML=P.map(p=>`
   <div class="plan ${p.pop?'pop':''}"><h3>${p.n}</h3>
     <div class="pr"><b>$${p[bill]}</b><span>/mo</span></div>
     <div class="who">${p.mo===0?'Free forever':bill==='yr'?`Billed yearly · $${p.mo}/mo monthly`:'Billed monthly'}</div>
