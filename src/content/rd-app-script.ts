@@ -15,6 +15,7 @@ import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSumm
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { getPortfolioReport } from "@/lib/reports.functions";
+import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
 import { submitFeedback } from "@/lib/feedback";
@@ -299,6 +300,48 @@ function paintOnboarding(s,pres){
 
 
 
+/* ---------- sample workspace ---------- */
+let SAMPLE_BUSY=false;
+async function paintSample(s){
+  const host=document.getElementById('v-dash'); if(!host) return;
+  let bar=document.getElementById('sampleBar');
+  let present=false;
+  try{ present=(await hasSampleWorkspace()).present; }catch(_){ }
+  const wanted = present || !s.counts.properties;
+  if(!wanted){ if(bar) bar.remove(); return; }
+  if(!bar){
+    bar=document.createElement('div');
+    bar.id='sampleBar'; bar.className='note';
+    bar.style.margin='0 0 16px';
+    host.insertBefore(bar,host.firstChild);
+  }
+  bar.innerHTML = present
+    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data for exploring Properties, Scope and Reports.</span>'
+      +'<button class="btn btn-ghost btn-xs" id="sampleGo" style="margin-left:auto"><i data-lucide="map-pin"></i>Open It</button>'
+      +'<button class="btn btn-ghost btn-xs" id="sampleOff"><i data-lucide="trash-2"></i>Remove Sample</button>'
+    : '<i data-lucide="flask-conical"></i><span><b>Nothing Saved Yet.</b> Load a sample property with three rooms and a budget target to see how the workspace fits together. No credits are used.</span>'
+      +'<button class="btn btn-primary btn-xs" id="sampleOn" style="margin-left:auto"><i data-lucide="download"></i>Load Sample Property</button>';
+  try{ lucide.createIcons(); }catch(_){}
+
+  const on=document.getElementById('sampleOn');
+  const off=document.getElementById('sampleOff');
+  const goP=document.getElementById('sampleGo');
+  if(goP) goP.onclick=()=>go('props');
+  const run=async(fn,btn,label)=>{
+    if(SAMPLE_BUSY) return; SAMPLE_BUSY=true;
+    if(btn){ btn.classList.add('is-busy'); btn.textContent=label; }
+    try{ await fn(); }catch(e){ try{ showAlert(e.message||'That did not work. Try again.'); }catch(_){} }
+    SAMPLE_BUSY=false;
+    await loadDashboard();
+    try{ window.dispatchEvent(new Event('rd:saved')); }catch(_){}
+  };
+  if(on) on.onclick=()=>run(()=>loadSampleWorkspace({data:{photos:{
+    livingBefore:PHOTOS.before, livingAfter:PHOTOS.after,
+    kitchenBefore:PHOTOS.kitchenBefore, kitchenAfter:PHOTOS.kitchenAfter,
+    bathBefore:PHOTOS.bathBefore }}}), on, 'Loading Sample');
+  if(off) off.onclick=()=>run(()=>removeSampleWorkspace(), off, 'Removing');
+}
+
 async function loadDashboard(){
   const rl=document.getElementById('recentList'), al=document.getElementById('attnList'), bt=document.getElementById('budgetTable');
   if(!rl||!al||!bt) return;
@@ -355,6 +398,7 @@ async function loadDashboard(){
 
   /* first run checklist: shown until every step is done or the user dismisses it */
   paintOnboarding(s,pres);
+  paintSample(s);
 
 
   al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab,dest,pid])=>`
