@@ -286,6 +286,8 @@ async function loadDashboard(){
 <div class="rowi"><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
     :empty('Nothing needs your attention','Priced rooms inside target will stay quiet here');
 
+  paintOnboarding(s);
+
   /* budget vs scope */
   bt.innerHTML=s.projects.length?s.projects.map(p=>{
     const t=p.budget_target;
@@ -296,6 +298,31 @@ async function loadDashboard(){
   }).join('')
     :'<tr><td colspan="6">No saved projects yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
 }
+/* ---------- first-run checklist, driven by real workspace state ---------- */
+async function paintOnboarding(s){
+  const card=document.getElementById('obCard'), box=document.getElementById('obSteps');
+  if(!card||!box) return;
+  if(localStorage.getItem('rd_ob_hidden')==='1'){ card.hidden=true; return; }
+  let pres=0; try{ pres=(await listPresentations()).length; }catch(_){}
+  let brand=''; try{ brand=(await getPrefs()).brand.company.trim(); }catch(_){}
+  const steps=[
+    ['Save Your First Design','Upload a room photo in Studio and save it.', s.counts.designs>0,'studio'],
+    ['Price A Scope','Turn a saved room into line items and a range.', s.counts.priced>0,'scope'],
+    ['Add Your Brand Kit','Your company name and accent on every export.', !!brand,'branding'],
+    ['Share A Presentation','Send a client a link they can approve.', pres>0,'present']
+  ];
+  const done=steps.filter(x=>x[2]).length;
+  if(done===steps.length){ card.hidden=true; return; }
+  card.hidden=false;
+  const sub=document.getElementById('obSub');
+  if(sub) sub.textContent=done+' of '+steps.length+' done \u00b7 four steps to your first client-ready package';
+  box.innerHTML=steps.map(([t,d,ok,go],i)=>'<button class="ob-s'+(ok?' done':'')+'" data-goto="'+go+'"><span class="tick">'+(ok?'\u2713':(i+1))+'</span><span><b>'+t+'</b><span>'+d+'</span></span></button>').join('');
+}
+document.getElementById('obHide')?.addEventListener('click',()=>{
+  localStorage.setItem('rd_ob_hidden','1');
+  const c=document.getElementById('obCard'); if(c) c.hidden=true;
+});
+
 loadDashboard();
 window.addEventListener('rd:saved', loadDashboard);
 
