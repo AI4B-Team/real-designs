@@ -563,28 +563,60 @@ export function initExtra(timers: number[], lucide: any) {
   /* ---------- pro workflows ---------- */
   const PRO = [
     ["Investor", PHOTOS.neutral, "Underwrite the design, not just admire it.",
-      ["Rental grade versus retail grade on the same room", "ARV impact range against recent comps", "Parallel scenarios with side by side numbers", "Whole property budget rolled up"]],
+      ["Rental grade versus retail grade on the same room", "ARV impact range against recent comps", "Parallel scenarios with side by side numbers", "Whole property budget rolled up"],
+      [["Deal Screen", "Minutes"], ["Scenarios", "Unlimited"], ["Rolled Up", "Whole Property"]],
+      ["Upload The Walkthrough Photos", "Set The Intensity Band", "Compare Two Scenarios", "Export The Underwriting Sheet"],
+      ["Scope PDF", "Budget CSV", "Scenario Board"]],
     ["Agent", PHOTOS.coastal, "Batch stage a listing without a rental truck.",
-      ["Batch staging across every photo in one direction", "MLS and state disclosure labeling applied automatically", "Originals retained with an audit trail", "Branded client and seller presentations"]],
+      ["Batch staging across every photo in one direction", "MLS and state disclosure labeling applied automatically", "Originals retained with an audit trail", "Branded client and seller presentations"],
+      [["Whole Listing", "One Pass"], ["Disclosure", "Auto Labeled"], ["Originals", "Always Kept"]],
+      ["Drop The Full Photo Set", "Pick One Direction", "Batch Render The Listing", "Send The Seller Presentation"],
+      ["Listing Set", "Disclosure Log", "Seller Deck"]],
     ["Designer", PHOTOS.japandi, "Concept time cut in half, approvals in one place.",
-      ["Mood boards and version approvals per room", "Brand presets and white label decks", "Comments and tracked client activity", "Product boards with live pricing"]],
+      ["Mood boards and version approvals per room", "Brand presets and white label decks", "Comments and tracked client activity", "Product boards with live pricing"],
+      [["Concepts", "Same Day"], ["Approvals", "Tracked"], ["Decks", "White Label"]],
+      ["Load The Client's Rooms", "Build The Design DNA", "Share An Approval Link", "Hand Over The Product Board"],
+      ["Client Deck", "Product Board", "Approval Link"]],
     ["Contractor", PHOTOS.kitchen, "Close in the driveway, quote before you leave.",
-      ["Line item scope with quantities and trades", "Location adjusted labor assumptions", "Bid ready proposal with a signature line", "Change tracking between versions"]],
+      ["Line item scope with quantities and trades", "Location adjusted labor assumptions", "Bid ready proposal with a signature line", "Change tracking between versions"],
+      [["Quote Time", "On Site"], ["Line Items", "Qty And Trade"], ["Rates", "Local"]],
+      ["Shoot The Room On Your Phone", "Generate The Scope", "Adjust Quantities And Rates", "Send The Proposal"],
+      ["Line Item Scope", "Proposal PDF", "Change Log"]],
     ["Builder", PHOTOS.craftsman, "Sell the spec before you frame it.",
-      ["Floor plan to furnished 3D visualization", "Design DNA across an entire community", "Org wide locked brand kit", "API and white label widget"]],
+      ["Floor plan to furnished 3D visualization", "Design DNA across an entire community", "Org wide locked brand kit", "API and white label widget"],
+      [["Plans", "2D To 3D"], ["Community", "One DNA"], ["Brand Kit", "Org Locked"]],
+      ["Upload The Plan Set", "Furnish The Model Home", "Lock The Community DNA", "Publish The Buyer Widget"],
+      ["3D Plan", "Spec Sheet", "Buyer Widget"]],
     ["Landscaper", PHOTOS.resortYard, "Show the yard before you break ground.",
-      ["Hardscape, planting, pool and lighting passes", "Material quantities and coverage", "Seasonal and day to dusk previews", "Neighbor friendly before and after boards"]],
+      ["Hardscape, planting, pool and lighting passes", "Material quantities and coverage", "Seasonal and day to dusk previews", "Neighbor friendly before and after boards"],
+      [["Passes", "Hardscape To Light"], ["Materials", "Coverage Math"], ["Previews", "Day To Dusk"]],
+      ["Photograph The Yard", "Choose The Passes", "Price The Materials", "Present The Before And After"],
+      ["Yard Board", "Material List", "Dusk Preview"]],
   ];
   const pt = $("proTabs");
   function setPro(i: number) {
-    const [n, src, lede, list] = PRO[i] as any;
+    const [n, src, lede, list, stats, flow, outs] = PRO[i] as any;
     pt?.querySelectorAll(".ptab").forEach((x: any, j: number) => x.classList.toggle("on", j === i));
     const pp = $("proPanel");
     if (pp) pp.innerHTML = `
       <div class="pro-im">${photo(src, n + " workflow preview")}<span class="stamp">${n.toUpperCase()}</span></div>
       <div class="pro-tx"><h3>${lede}</h3><ul class="checks">${
         list.map((l: string) => `<li><i data-lucide="check"></i><span>${l}</span></li>`).join("")
-      }</ul></div>`;
+      }</ul>
+        <div class="pro-stats">${
+          (stats || []).map(([k, v]: [string, string]) => `<div class="pro-stat"><span class="mono">${k}</span><b>${v}</b></div>`).join("")
+        }</div>
+      </div>
+      <div class="pro-foot">
+        <div class="pro-flow">
+          <span class="pro-lab mono">Typical Flow</span>
+          <ol>${(flow || []).map((f: string, j: number) => `<li><i class="mono">${String(j + 1).padStart(2, "0")}</i><span>${f}</span></li>`).join("")}</ol>
+        </div>
+        <div class="pro-outs">
+          <span class="pro-lab mono">What You Walk Away With</span>
+          <div>${(outs || []).map((o: string) => `<span class="pb"><i data-lucide="file-down"></i>${o}</span>`).join("")}</div>
+        </div>
+      </div>`;
     lucide.createIcons();
   }
   if (pt) {
@@ -592,6 +624,7 @@ export function initExtra(timers: number[], lucide: any) {
     pt.querySelectorAll(".ptab").forEach((b: any) => b.addEventListener("click", () => setPro(+b.dataset.p)));
     setPro(0);
   }
+
 
   /* ---------- comparison table ---------- */
   const CMP: [string, string, string, string, string][] = [
