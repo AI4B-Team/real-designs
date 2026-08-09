@@ -1134,16 +1134,18 @@
   backdrop-filter:blur(4px);animation:rdNote 1.6s ease forwards}
 @keyframes rdNote{0%{opacity:0}25%,70%{opacity:1}100%{opacity:0}}
 
-.rd-site .tour-sum{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;
-  background:rgba(255,255,255,.97);border-radius:12px;padding:16px 20px;width:min(320px,80%);
+.rd-site .tour-sum{position:absolute;left:50%;top:50%;translate:-50% -50%;z-index:10;
+  background:rgba(255,255,255,.97);border-radius:12px;padding:13px 17px;width:min(272px,72%);
+  max-height:calc(100% - 40px);overflow-y:auto;-webkit-overflow-scrolling:touch;
   box-shadow:0 16px 44px rgba(0,0,0,.3);opacity:0;animation:rdPop .45s ease .25s forwards}
-.rd-site .tour-sum .ts-lab{font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;
-  color:var(--red);margin-bottom:10px}
-.rd-site .tour-sum .ts-rows div{display:flex;justify-content:space-between;gap:12px;
-  font-size:.78rem;padding:3.5px 0;color:var(--ink-2)}
+.rd-site .tour-sum .ts-lab{font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--red);margin-bottom:8px}
+.rd-site .tour-sum .ts-rows div{display:flex;justify-content:space-between;gap:10px;
+  font-size:.7rem;padding:3px 0;color:var(--ink-2)}
 .rd-site .tour-sum .ts-rows em{font-style:normal;font-family:'DM Mono',monospace;color:var(--ink)}
-.rd-site .tour-sum .ts-tot{display:flex;justify-content:space-between;gap:12px;font-weight:700;
-  font-size:.9rem;border-top:1px solid var(--line);margin-top:8px;padding-top:9px}
+.rd-site .tour-sum .ts-tot{display:flex;justify-content:space-between;gap:10px;font-weight:700;
+  font-size:.78rem;border-top:1px solid var(--line);margin-top:7px;padding-top:8px}
+
 .rd-site .tour-sum .ts-tot em{font-style:normal;font-family:'DM Mono',monospace;color:var(--red)}
 
 .rd-site #heroEst.soft{font-size:1rem;color:#A8A8AE;font-weight:500}
@@ -1231,23 +1233,17 @@
 .rd-site .hero.arch .hero-grid{position:relative}
 .rd-site .hero.arch .hero-left{position:relative;z-index:1}
 .rd-site .hero.arch .hero-right{z-index:1}
-/* 1. "Same walls" -> the left image */
+/* 1. "Same walls" -> the left image, pointing at the wall/window edge */
 .rd-site .hero.arch .hero-left::before{
   content:'';position:absolute;z-index:0;pointer-events:none;
-  left:-162px;top:150px;width:170px;height:126px;opacity:.9;
+  left:-134px;top:126px;width:158px;height:118px;opacity:.9;
   background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27150%27%20viewBox%3D%270%200%20200%20150%27%20fill%3D%27none%27%3E%3Ctext%20x%3D%272%27%20y%3D%2724%27%20font-family%3D%27Segoe%20Script%2C%20Bradley%20Hand%2C%20Comic%20Sans%20MS%2C%20cursive%27%20font-size%3D%2718%27%20fill%3D%27%23CC0000%27%20fill-opacity%3D%27.5%27%3Esame%20walls%3C%2Ftext%3E%3Cpath%20d%3D%27M28%2038%20C%2020%2080%2C%2078%20106%2C%20182%20104%27%20stroke%3D%27%23CC0000%27%20stroke-opacity%3D%27.45%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M182%20104%20l-22%20-9%20M182%20104%20l-21%2011%27%20stroke%3D%27%23CC0000%27%20stroke-opacity%3D%27.45%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3C%2Fsvg%3E") no-repeat center/contain;
 }
 /* 2. "Budget first" -> the builder's budget choices */
 .rd-site .hero.arch .hero-grid::before{
   content:'';position:absolute;z-index:0;pointer-events:none;
-  right:-162px;top:288px;width:172px;height:126px;opacity:.9;
+  right:-140px;top:330px;width:160px;height:118px;opacity:.9;
   background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27200%27%20height%3D%27150%27%20viewBox%3D%270%200%20200%20150%27%20fill%3D%27none%27%3E%3Ctext%20x%3D%2760%27%20y%3D%2724%27%20font-family%3D%27Segoe%20Script%2C%20Bradley%20Hand%2C%20Comic%20Sans%20MS%2C%20cursive%27%20font-size%3D%2718%27%20fill%3D%27%23CC0000%27%20fill-opacity%3D%27.5%27%3Ebudget%20first%3C%2Ftext%3E%3Cpath%20d%3D%27M170%2040%20C%20176%2088%2C%20110%20120%2C%2016%20118%27%20stroke%3D%27%23CC0000%27%20stroke-opacity%3D%27.45%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M16%20118%20l22%20-10%20M16%20118%20l21%2012%27%20stroke%3D%27%23CC0000%27%20stroke-opacity%3D%27.45%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3C%2Fsvg%3E") no-repeat center/contain;
-}
-/* 3. "From photo to plan" -> beneath the two panels */
-.rd-site .hero.arch .hero-grid::after{
-  content:'';position:absolute;z-index:0;pointer-events:none;
-  left:21%;bottom:6px;width:266px;height:56px;opacity:.85;
-  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27300%27%20height%3D%2764%27%20viewBox%3D%270%200%20300%2064%27%20fill%3D%27none%27%3E%3Ctext%20x%3D%270%27%20y%3D%2724%27%20font-family%3D%27Segoe%20Script%2C%20Bradley%20Hand%2C%20Comic%20Sans%20MS%2C%20cursive%27%20font-size%3D%2718%27%20fill%3D%27%23CC0000%27%20fill-opacity%3D%27.5%27%3Efrom%20photo%20to%20plan%3C%2Ftext%3E%3Cpath%20d%3D%27M164%2018%20C%20214%2016%2C%20250%2028%2C%20286%2042%27%20stroke%3D%27%23CC0000%27%20stroke-opacity%3D%27.45%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M286%2042%20l-24%20-2%20M286%2042%20l-14%20-19%27%20stroke%3D%27%23CC0000%27%20stroke-opacity%3D%27.45%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3C%2Fsvg%3E") no-repeat center/contain;
 }
 .rd-site .hero.arch{overflow-x:clip}
 /* slightly wider hero content, tighter gap between the panels */
@@ -1261,7 +1257,7 @@
   .rd-site .hero.arch::after{background-position:left 10px top 6px,right 6px top -4px,-9999px -9999px,-9999px -9999px,-9999px -9999px}
 }
 @media(max-width:900px){
-  .rd-site .hero.arch .hero-grid::after{display:none}
+
   .rd-site .hero.arch::before{opacity:.5}
   /* mobile: drop the large floor plans, keep one small measurement line */
   .rd-site .hero.arch::after{
@@ -2536,3 +2532,8 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .cmp-t svg.nope{color:#c9c6c1}
 .rd-site.rd-pricing .cred-note{font-size:.95rem;color:var(--mute);margin-top:14px}
 .rd-site.rd-pricing .cred-note.center{text-align:center}
+
+/* hero: lock the slideshow column height so panels never shift between slides */
+.rd-site .hero-left #heroSummary{min-height:132px;height:132px;margin-top:12px}
+.rd-site .hero-left #heroSummary .rsp{height:132px}
+.rd-site .hero-left .show{flex:0 0 auto}
