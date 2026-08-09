@@ -268,6 +268,17 @@ document.getElementById('genBtn').addEventListener('click',()=>{
   },220);
 });
 document.getElementById('drop').addEventListener('click',unlock);
+/* header CTA: scroll to the builder and open the uploader */
+const navUp=document.getElementById('navUpload');
+if(navUp) navUp.addEventListener('click',(e)=>{
+  e.preventDefault();
+  const drop=document.getElementById('drop');
+  if(!drop) return;
+  drop.scrollIntoView({block:'center',behavior:'smooth'});
+  unlock();
+  drop.classList.add('pulse');
+  setTimeout(()=>drop.classList.remove('pulse'),1400);
+});
 document.getElementById('genBtn').addEventListener('click',unlock);
 
 /* ---------- marquee ---------- */

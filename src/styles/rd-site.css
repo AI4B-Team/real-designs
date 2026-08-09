@@ -1807,3 +1807,8 @@
 
 .rd-site .lede-wide{max-width:none;width:100%;white-space:nowrap}
 @media(max-width:900px){.rd-site .lede-wide{white-space:normal;font-size:.86rem}}
+
+
+/* header upload CTA target highlight */
+@keyframes dropPulse{0%,100%{box-shadow:0 0 0 0 rgba(204,0,0,0)}35%{box-shadow:0 0 0 6px rgba(204,0,0,.18)}}
+.drop.pulse{border-color:var(--red);animation:dropPulse 1.4s ease}
