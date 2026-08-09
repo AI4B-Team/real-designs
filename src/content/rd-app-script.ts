@@ -14,6 +14,7 @@ import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSumm
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
+import { buildSocialReel } from "@/lib/social-reel";
 
 export function initApp(): () => void {
   const timers: number[] = [];
@@ -1075,7 +1076,7 @@ const pkg=[['Before And After Slider','In the client approval link','p-ok','Live
 ['Branded PDF Export','Print ready package from any link','p-ok','Live'],
 ['Walkthrough Video','Dolly in, eight seconds, from Studio','p-ok','Live'],
 ['Product Board','Every item with price and link','p-gray','Planned'],
-['Social Reel, 9x16','Cross fade before to after, 12 seconds','p-gray','Planned']];
+['Social Reel, 9x16','Cross fade before to after, 12 seconds','p-ok','Live']];
 document.getElementById('pkgList').innerHTML=pkg.map(([n,d,cls,lab])=>`
 <div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="${cls.startsWith('plan-pill')?cls:'pill '+cls}">${lab}</span></div>`).join('');
 
@@ -1110,6 +1111,7 @@ async function paintPresentations(){
       <span class="pill ${cls}">${lab}</span>
       <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
       <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
+      <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
       <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>`;
   }).join('');
   lucide.createIcons();
@@ -1176,6 +1178,32 @@ async function exportPresentationPdf(id,btn){
   }
 }
 
+async function exportSocialReel(id,btn){
+  const old=btn?btn.innerHTML:null;
+  const setLab=(t)=>{ if(btn) btn.innerHTML='<span style="font-size:.66rem;font-weight:700">'+t+'</span>'; };
+  if(btn) btn.disabled=true;
+  setLab('0%');
+  try{
+    const p=await getPresentationPackage({data:{id}});
+    if(!p.before_url||!p.after_url) throw new Error('This version needs both a before photo and a finished render.');
+    const range=p.total_low!=null?(presMoney(p.total_low)+' \u2013 '+presMoney(p.total_high)):null;
+    const {blob,ext}=await buildSocialReel(p.before_url,p.after_url,{
+      room:p.room_name, address:p.address,
+      style:p.style?(p.style+' \u00b7 '+(p.grade||'retail')+' grade'):null, range
+    },(pct)=>setLab(Math.round(pct*100)+'%'));
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=String(p.room_name||'real-designs').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'-reel.'+ext;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);
+  }catch(e){
+    showAlert('Could not build that reel. '+((e&&e.message)||''));
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=old; lucide.createIcons(); }
+  }
+}
+
 const linkList=document.getElementById('linkList');
 if(linkList) linkList.addEventListener('click',async e=>{
   const row=e.target.closest('[data-pid]'); if(!row) return;
@@ -1188,6 +1216,10 @@ if(linkList) linkList.addEventListener('click',async e=>{
   }
   if(e.target.closest('[data-pdf]')){
     exportPresentationPdf(row.dataset.pid,e.target.closest('[data-pdf]'));
+    return;
+  }
+  if(e.target.closest('[data-reel]')){
+    exportSocialReel(row.dataset.pid,e.target.closest('[data-reel]'));
     return;
   }
   if(e.target.closest('[data-del]')){
