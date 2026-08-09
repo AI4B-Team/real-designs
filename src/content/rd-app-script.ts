@@ -282,6 +282,18 @@ async function loadDashboard(){
     if(p.priced<p.rooms) attn.push([p.rooms-p.priced+' '+(p.rooms-p.priced===1?'room needs':'rooms need')+' pricing',p.address+' &middot; '+p.project_name,'p-amb','Price It']);
     if(p.budget_target&&p.high>p.budget_target) attn.push(['Scope exceeds target by '+kfmt(p.high-p.budget_target),p.address+' &middot; '+p.project_name,'p-red','Review']);
   });
+  try{
+    const pres=await listPresentations();
+    const hrs=(d)=>d?(Date.now()-new Date(d).getTime())/36e5:null;
+    (pres||[]).forEach(p=>{
+      const who=p.client_name||p.client_email||'Client';
+      const where=(p.address?p.address+' &middot; ':'')+p.room_name;
+      if(p.status==='changes') attn.unshift([who+' requested changes on '+p.title, where,'p-red','Review']);
+      else if(p.status==='viewed'&&hrs(p.last_viewed_at)>48) attn.push([who+' viewed but has not decided', where+' &middot; '+Math.round(hrs(p.last_viewed_at)/24)+' days ago','p-amb','Follow Up']);
+      else if(p.status==='sent'&&hrs(p.created_at)>72) attn.push([p.title+' has not been opened', where+' &middot; sent '+Math.round(hrs(p.created_at)/24)+' days ago','p-amb','Resend']);
+    });
+  }catch(e){}
+
   al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab])=>`
 <div class="rowi"><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
     :empty('Nothing needs your attention','Priced rooms inside target will stay quiet here');
@@ -1754,6 +1766,27 @@ async function buildNotifs(){
         t:(ACTION_LABEL[l.action]||l.action)+(spent?' used '+Math.abs(l.delta)+(Math.abs(l.delta)===1?' credit':' credits'):(l.delta>0?' +'+l.delta+' credits':'')),
         b:(l.note||'Credit activity')+' \u00b7 Balance '+l.balance_after,
         at:l.created_at, tm:nAgo(l.created_at)});
+    });
+  }catch(e){}
+  try{
+    const pres=await listPresentations();
+    (pres||[]).slice(0,12).forEach(p=>{
+      const who=p.client_name||p.client_email||'Your client';
+      const where=(p.address?p.address+' \u00b7 ':'')+p.room_name+' v'+(p.version_no||1);
+      if(p.status==='approved'){
+        out.push({id:'pa:'+p.id, ic:'badge-check', cat:'approvals', t:who+' approved '+p.title,
+          b:(p.decision_note?'\u201c'+p.decision_note+'\u201d \u00b7 ':'')+where,
+          at:p.decided_at||p.last_viewed_at||p.created_at, tm:nAgo(p.decided_at||p.created_at)});
+      }else if(p.status==='changes'){
+        out.push({id:'pc:'+p.id, ic:'message-square-warning', cat:'approvals', t:who+' requested changes on '+p.title,
+          b:(p.decision_note?'\u201c'+p.decision_note+'\u201d \u00b7 ':'')+where,
+          at:p.decided_at||p.created_at, tm:nAgo(p.decided_at||p.created_at)});
+      }else if(p.status==='viewed'&&p.last_viewed_at){
+        out.push({id:'pv:'+p.id+':'+p.view_count, ic:'eye', cat:'approvals',
+          t:who+' opened '+p.title,
+          b:p.view_count+(p.view_count===1?' view':' views')+' \u00b7 no decision yet \u00b7 '+where,
+          at:p.last_viewed_at, tm:nAgo(p.last_viewed_at)});
+      }
     });
   }catch(e){}
   try{
