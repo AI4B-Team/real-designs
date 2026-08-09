@@ -759,7 +759,7 @@
 .rd-app .onb-tx{min-width:0;flex:1}
 .rd-app .onb-tx b{display:block;font-size:.9rem}
 .rd-app .onb-tx span{display:block;font-size:.8rem;color:var(--muted,#6b6864)}
-.rd-app .up-cost{display:block!important}
-.rd-app .up-cost b{display:block;font-size:.86rem}
-.rd-app .up-cost span{display:block;font-size:.8rem;color:var(--muted,#6b6864)}
+.up-cost{display:block!important}
+.up-cost b{display:block;font-size:.86rem}
+.up-cost span{display:block;font-size:.8rem;color:var(--muted,#6b6864)}
 @media(max-width:640px){.rd-app .onb-step{flex-wrap:wrap}}
