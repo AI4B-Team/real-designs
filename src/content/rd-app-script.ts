@@ -338,8 +338,8 @@ async function loadDashboard(){
   paintOnboarding(s,pres);
 
 
-  al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab,dest])=>`
-<div class="rowi"${dest?` data-goto="${dest}" role="button" tabindex="0" style="cursor:pointer"`:''}><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
+  al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab,dest,pid])=>`
+<div class="rowi"${dest?` data-goto="${dest}"${pid?` data-focus-pres="${pid}"`:''} role="button" tabindex="0" style="cursor:pointer"`:''}><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
     :empty('Nothing Needs Your Attention','Priced rooms inside target will stay quiet here');
 
   /* budget vs scope */
@@ -353,7 +353,10 @@ async function loadDashboard(){
     :'<tr><td colspan="6">No saved projects yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
 }
 document.getElementById('attnList')?.addEventListener('click',(e)=>{
-  const r=e.target.closest('[data-goto]'); if(r) go(r.dataset.goto);
+  const r=e.target.closest('[data-goto]'); if(!r) return;
+  go(r.dataset.goto);
+  const pid=r.dataset.focusPres;
+  if(pid) setTimeout(()=>{ try{ focusPresentation(pid); }catch(_){} },60);
 });
 loadDashboard();
 window.addEventListener('rd:saved', loadDashboard);
