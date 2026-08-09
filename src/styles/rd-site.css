@@ -2235,3 +2235,17 @@
 .cmp-cta-sub{font-size:.72rem;color:var(--mute-2)}
 .cmp-cta .cmp-more-link{margin-top:14px}
 p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)}
+
+.rd-site .prog-head.center{display:flex;justify-content:center;text-align:center}
+.rd-site .prog-head.center .prog-lab{margin-bottom:16px}
+.rd-site .pnode{min-width:165px;flex:1 0 165px}
+.rd-site .pnode .plab{color:var(--ink-2);font-weight:600;font-size:.68rem}
+.rd-site .pnode .pout{position:absolute;left:50%;transform:translate(-50%,4px);bottom:auto;margin-top:-26px;
+  background:var(--red);color:#fff;font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:3px 9px;border-radius:999px;opacity:0;transition:opacity .25s ease,transform .25s ease;pointer-events:none;z-index:3;white-space:nowrap}
+.rd-site .pnode{position:relative}
+.rd-site .pnode.on .pout{opacity:1;transform:translate(-50%,0)}
+.rd-site .fstep .fdot{transition:background .25s ease,border-color .25s ease,box-shadow .25s ease}
+.rd-site .fstep.done .fdot{background:var(--red);border-color:var(--red)}
+.rd-site .fstep.on .fdot{background:var(--red);border-color:var(--red);box-shadow:0 0 0 0 rgba(204,0,0,.45);animation:fdotPulse 1.8s ease-out infinite}
+@keyframes fdotPulse{0%{box-shadow:0 0 0 0 rgba(204,0,0,.45)}70%{box-shadow:0 0 0 8px rgba(204,0,0,0)}100%{box-shadow:0 0 0 0 rgba(204,0,0,0)}}
