@@ -440,12 +440,9 @@ document.getElementById('styleGrid').innerHTML=SL.slice(0,4).map(([n,src],i)=>`
    customer quotes ONLY when they are genuine, attributable and permissioned in
    writing. Fabricated endorsements with attributed names are deceptive advertising. */
 const Q=[
-['lock','Reality Lock On Every Render','Your walls, windows and layout are preserved on every generation. Not a style preset, a constraint.'],
-['wallet','Budget Before The Design','Set the number first and the AI only proposes work that plausibly fits it. Nobody else does this.'],
-['calculator','Line Items, Not A Ballpark','Quantities, trades and location-adjusted ranges with a stated confidence level, never a single fake number.'],
-['hard-hat','Built From Real Rehab Work','The cost logic comes out of two decades of buying, gutting and reselling distressed property.'],
-['gift','Free To Start, No Card Needed','Five designs a day on the free plan. The watermark comes off when you upgrade.'],
-['scale','Commercial License Available','Paid plans include commercial use, and your images stay yours if you cancel.']];
+['lock','Your Space Stays Your Space.','Preserve walls, windows, layout and selected objects across every generation.'],
+['wallet','Set the Budget Before You Generate.','Choose a target and see design decisions intended to fit that planning range. Design decisions are guided by your target from the beginning.'],
+['clipboard-list','Go Beyond the Rendering.','Turn the approved design into a shopping list, planning scope and contractor brief. See work items, quantities, trades and location-adjusted planning ranges&mdash;not one unexplained total.']];
 document.getElementById('quotes').innerHTML=Q.map(([ic,t,d])=>`
   <div class="proof-card"><div class="pic"><i data-lucide="${ic}"></i></div><b>${t}</b><p>${d}</p></div>`).join('');
 
