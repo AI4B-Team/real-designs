@@ -93,7 +93,12 @@ function AuthPage() {
     <main className="rd-auth">
       <aside className="promo">
         <p className="mark">REAL DESIGNS</p>
-        <h2>Redesign Any Space. Know What It Costs.</h2>
+        <h2>
+          Redesign Any Space With AI.
+          <br />
+          See The Design. Plan The Cost.
+        </h2>
+
         <p className="sub">
           Turn one photo into a photoreal design, a priced scope and a contractor planning brief.
         </p>
