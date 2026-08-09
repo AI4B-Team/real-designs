@@ -19,6 +19,8 @@ export const Route = createFileRoute("/free/rehab-cost-calculator")({
       { property: "og:type", content: "website" },
       { property: "og:url", content: absoluteUrl("/free/rehab-cost-calculator") },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: absoluteUrl("/og-cover.jpg") },
+      { name: "twitter:image", content: absoluteUrl("/og-cover.jpg") },
     ],
     links: [{ rel: "canonical", href: absoluteUrl("/free/rehab-cost-calculator") }],
     scripts: [
