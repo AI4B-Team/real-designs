@@ -1618,7 +1618,9 @@ function renderPresRows(){
     const seen=r.view_count?(r.view_count===1?'opened once':'opened '+r.view_count+' times'):'not opened';
     const ctx=[r.address,r.room_name].filter(Boolean).map(esc).join(' &middot; ');
     const dropped=(r.excluded_count||0)?`<span class="pill warn" style="margin-left:6px">${r.excluded_count} Line${r.excluded_count===1?'':'s'} Removed</span>`:'';
-    const note=(r.decision_note||r.excluded_count)?`<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\">${r.decision_note?`<i>&ldquo;${esc(r.decision_note)}&rdquo;</i> &mdash; ${esc(r.client_name||'client')}`:`${esc(r.client_name||'The client')} trimmed the scope`}</span>${dropped}</div></div>`:'';
+    const notesPill=(r.note_count||0)?`<span class="pill" style="margin-left:6px">${r.note_count} Line Comment${r.note_count===1?'':'s'}</span>`:'';
+    const lineNotes=(r.note_count||0)?Object.values(r.line_notes||{}).slice(0,3).map((t:any)=>`<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\"><i>&ldquo;${esc(String(t))}&rdquo;</i></span></div></div>`).join(''):'';
+    const note=(r.decision_note||r.excluded_count||r.note_count)?`<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\">${r.decision_note?`<i>&ldquo;${esc(r.decision_note)}&rdquo;</i> &mdash; ${esc(r.client_name||'client')}`:(r.excluded_count?`${esc(r.client_name||'The client')} trimmed the scope`:`${esc(r.client_name||'The client')} left notes on the scope`)}</span>${dropped}${notesPill}</div></div>`+lineNotes:'';
     return `<div class=\"rowi\" data-pid=\"${r.id}\" data-tok=\"${r.token}\">
       <div class=\"rowt\"><b>${esc(r.title)}</b><span>${ctx?ctx+' &middot; ':''}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
       <span class="pill ${cls}">${lab}</span>

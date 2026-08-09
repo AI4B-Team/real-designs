@@ -15,7 +15,7 @@ export const listPresentations = createServerFn({ method: "GET" })
       .from("presentations")
       .select(
         `id, title, client_name, client_email, token, status, view_count, last_viewed_at,
-         decision_note, excluded_lines, decided_at, created_at,
+         decision_note, excluded_lines, line_notes, decided_at, created_at,
          versions!inner ( version_no,
            rooms!inner ( name,
              projects!inner ( name, properties!inner ( address ) ) ) )`,
@@ -35,6 +35,8 @@ export const listPresentations = createServerFn({ method: "GET" })
       last_viewed_at: (p.last_viewed_at ?? null) as string | null,
       decision_note: (p.decision_note ?? null) as string | null,
       excluded_count: Array.isArray(p.excluded_lines) ? (p.excluded_lines as any[]).length : 0,
+      line_notes: (p.line_notes && typeof p.line_notes === "object" ? p.line_notes : {}) as Record<string, string>,
+      note_count: p.line_notes && typeof p.line_notes === "object" ? Object.keys(p.line_notes).length : 0,
       created_at: p.created_at as string,
       address: p.versions.rooms.projects.properties.address as string,
       project_name: p.versions.rooms.projects.name as string,
@@ -95,6 +97,7 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
       status: (p.status ?? "sent") as string,
       decision_note: (p.decision_note ?? null) as string | null,
       excluded_lines: ((p.excluded_lines ?? []) as any[]).map(String),
+      line_notes: (p.line_notes ?? {}) as Record<string, string>,
       brand_name: (p.brand_name ?? null) as string | null,
       brand_accent: (p.brand_accent ?? null) as string | null,
       address: p.address as string,
@@ -131,6 +134,7 @@ export const respondToPresentation = createServerFn({ method: "POST" })
       _token: data.token,
       _decision: data.decision,
       _excluded: data.excluded ?? [],
+      _line_notes: data.line_notes ?? {},
       ...(data.note ? { _note: data.note } : {}),
     } as never);
     if (error) throw new Error(error.message);

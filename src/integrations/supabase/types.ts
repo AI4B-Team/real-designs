@@ -255,6 +255,7 @@ export type Database = {
           excluded_lines: Json
           id: string
           last_viewed_at: string | null
+          line_notes: Json
           status: string
           title: string
           token: string
@@ -272,6 +273,7 @@ export type Database = {
           excluded_lines?: Json
           id?: string
           last_viewed_at?: string | null
+          line_notes?: Json
           status?: string
           title: string
           token?: string
@@ -289,6 +291,7 @@ export type Database = {
           excluded_lines?: Json
           id?: string
           last_viewed_at?: string | null
+          line_notes?: Json
           status?: string
           title?: string
           token?: string
@@ -744,6 +747,7 @@ export type Database = {
         Args: {
           _decision: string
           _excluded?: Json
+          _line_notes?: Json
           _note?: string
           _token: string
         }
