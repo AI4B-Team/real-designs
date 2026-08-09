@@ -574,6 +574,8 @@ async function run3dPlan(){
       direction:(document.getElementById('fStyle')||{}).value||'Warm Minimal',
       floor_area_sf:parseFloat((document.getElementById('scFloor')||{}).value)||null
     }});
+    lastRender=r.image; lastRenderPath=null;
+    try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,'Furnished 3D plan of the same room');
     addRenderVariant(r.image,'3D Plan');
     window.dispatchEvent(new Event('rd:credits-changed'));
@@ -640,7 +642,8 @@ async function runRoomToolFlow(tool,label,useRender){
       grade:grade?grade.textContent:'Retail Grade',
       notes:(document.getElementById('agentNote')||{}).value||null
     }});
-    lastRender=r.image;
+    lastRender=r.image; lastRenderPath=null;
+    try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,label+' result');
     addRenderVariant(r.image,label);
     window.dispatchEvent(new Event('rd:credits-changed'));
