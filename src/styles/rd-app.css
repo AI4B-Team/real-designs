@@ -36,10 +36,10 @@
 /* sidebar */
 .rd-app .side{background:var(--white);border-right:1px solid var(--line);display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
 
-.rd-app .side-top{padding:18px 18px 14px;border-bottom:1px solid var(--line)}
+.rd-app .side-top{padding:18px 18px 14px;border-bottom:1px solid var(--line);overflow:visible}
 
 .rd-app .side-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.rd-app .side-top .logo{order:1;min-width:0;overflow:hidden;white-space:nowrap;flex:1;display:flex;align-items:center;justify-content:center;padding-left:36px}
+.rd-app .side-top .logo{order:1;min-width:0;overflow:visible;white-space:nowrap;flex:1;display:flex;align-items:center;justify-content:center;padding-left:36px;position:relative;z-index:3;margin-bottom:-22px}
 .rd-app .side-toggle{order:2;flex:none;width:28px;height:28px;display:grid;place-items:center;border:1px solid var(--line);border-radius:8px;background:var(--white);color:var(--ink-2);transition:.14s}
 .rd-app .side-toggle:hover{background:var(--paper);color:var(--ink)}
 .rd-app .side-toggle svg{width:15px;height:15px}
@@ -47,7 +47,7 @@
 /* collapsed rail */
 .rd-app .app.sidemin{grid-template-columns:64px 1fr}
 .rd-app .app.sidemin .side-top{flex-direction:column;padding:14px 8px 12px;gap:10px}
-.rd-app .app.sidemin .side-top .logo{order:1;font-size:0;gap:0;padding-left:0;justify-content:center;cursor:pointer;position:relative}
+.rd-app .app.sidemin .side-top .logo{order:1;font-size:0;gap:0;padding-left:0;margin-bottom:0;justify-content:center;cursor:pointer;position:relative}
 .rd-app .app.sidemin .side-toggle{display:none}
 .rd-app .app.sidemin .side-nav{padding:12px 8px;overflow:visible}
 .rd-app .app.sidemin .nav-group{font-size:0;padding:10px 0 4px;height:1px;background:var(--line);margin:8px 6px}
@@ -865,10 +865,10 @@
 .rd-app #sampleBar .btn{flex:none}
 
 /* ===== Brand badge mark ===== */
-.rd-app .rd-mark{display:inline-flex;align-items:center;justify-content:center;background:var(--red);padding:5px;flex:none}
-.rd-app .rd-mark i{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #fff;font-style:normal;padding:6px 15px 5px}
-.rd-app .rd-mark b{color:#fff;font-weight:900;font-size:21px;line-height:.92;letter-spacing:.01em}
-.rd-app .rd-mark em{color:#fff;font-style:normal;text-transform:uppercase;font-weight:700;font-size:7px;line-height:1;letter-spacing:.34em;text-indent:.34em;margin:4px 0 0}
+.rd-app .rd-mark{display:inline-flex;align-items:center;justify-content:center;background:var(--red);padding:6px;flex:none}
+.rd-app .rd-mark i{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #fff;font-style:normal;padding:8px 19px 7px}
+.rd-app .rd-mark b{color:#fff;font-weight:900;font-size:26px;line-height:.92;letter-spacing:.01em}
+.rd-app .rd-mark em{color:#fff;font-style:normal;text-transform:uppercase;font-weight:700;font-size:8px;line-height:1;letter-spacing:.34em;text-indent:.34em;margin:4px 0 0}
 
 /* collapsed rail: red R badge only */
 .rd-app .app.sidemin .rd-mark{padding:0;border-radius:9px;width:34px;height:34px}
