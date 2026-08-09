@@ -181,7 +181,7 @@ function ResourcesPage() {
           <div className="sec-head">
             <h2>Start With Your Own Photo</h2>
             <p className="lede">
-            Upload a room, set a budget band and get a design plus a contractor-ready scope in the
+            Upload a room, set a budget band and get a design plus a contractor planning brief in the
             same session.
             </p>
             <a className="btn btn-primary" href="/#builder">

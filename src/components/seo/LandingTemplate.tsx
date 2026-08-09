@@ -44,7 +44,7 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
             <div className="badge-row" style={{ marginTop: 18 }}>
               <span className="pb ok">Reality Lock</span>
               <span className="pb">Budget-First Generation</span>
-              <span className="pb">Contractor-Ready Scope</span>
+              <span className="pb">Contractor Planning Brief</span>
             </div>
           </div>
           <div>
