@@ -277,6 +277,8 @@ async function loadProperties(){
   if(cp) cp.textContent=String(PROP_TREE.length);
   if(cd) cd.textContent=String(PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0));
   paintTree();
+  paintDesigns();
+
 }
 loadProperties();
 window.addEventListener('rd:saved', loadProperties);
