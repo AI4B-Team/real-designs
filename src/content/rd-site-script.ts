@@ -248,29 +248,89 @@ function unlock(){
   document.getElementById('hint').classList.add('gone');
 }
 document.querySelectorAll('.samp').forEach(s=>s.addEventListener('click',()=>{
-  document.querySelectorAll('.samp').forEach(x=>x.classList.remove('on'));s.classList.add('on');unlock();
+  document.querySelectorAll('.samp').forEach(x=>x.classList.remove('on'));s.classList.add('on');UPLOAD=null;unlock();
 }));
 
 const steps=['Reading room geometry','Locking walls and windows','Fitting the design to your budget','Selecting materials and finishes','Rendering at full resolution','Pricing the scope'];
 const OUTPAL=['warm','coastal','farm','green'];
 let busy=false;
+
+/* ---------- real photo handoff ----------
+   When a visitor uploads their own photo we cannot render it without an
+   account, so we show their actual space, then hand the photo and every
+   builder choice to the app through localStorage. Studio picks it up the
+   moment they land, so nothing they entered has to be typed twice. */
+let UPLOAD=null;                       // {dataUrl,name}
+const HANDOFF_KEY='rd.handoff';
+const BUDGET_NAMES=['Refresh','Makeover','Renovation','Reimagine'];
+
+/** Downscale to a sane width so the handoff fits comfortably in storage. */
+function shrinkPhoto(file,max=1400){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onerror=()=>rej(new Error('read'));
+    fr.onload=()=>{
+      const img=new Image();
+      img.onerror=()=>rej(new Error('decode'));
+      img.onload=()=>{
+        const sc=Math.min(1,max/Math.max(img.width,img.height));
+        const c=document.createElement('canvas');
+        c.width=Math.round(img.width*sc); c.height=Math.round(img.height*sc);
+        c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+        res(c.toDataURL('image/jpeg',0.82));
+      };
+      img.src=String(fr.result);
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+function saveHandoff(){
+  if(!UPLOAD) return;
+  const sp=(document.querySelector('#spaceChips .chip.on')||{dataset:{}}).dataset.sp||'interior';
+  const st=(document.querySelector('#styleChips .chip.on')||{textContent:''}).textContent.trim();
+  const payload={photo:UPLOAD.dataUrl,name:UPLOAD.name,space:sp,budget:bi,
+    budgetName:BUDGET_NAMES[bi]||'Makeover',style:st,
+    notes:(document.getElementById('notes')||{value:''}).value.trim(),ts:Date.now()};
+  try{ localStorage.setItem(HANDOFF_KEY,JSON.stringify(payload)); }catch(e){}
+}
+
 document.getElementById('genBtn').addEventListener('click',()=>{
   if(busy)return;busy=true;unlock();
   const out=document.getElementById('out'),ov=document.getElementById('genOv'),
         bar=document.getElementById('barFill'),gs=document.getElementById('genStep');
   const si=+(document.querySelector('.samp.on')||{dataset:{s:0}}).dataset.s;
-  document.getElementById('outImg').innerHTML=room('after',PALS[OUTPAL[si]]);
+  const mine=!!UPLOAD;
+  const oi=document.getElementById('outImg');
+  if(mine){ oi.innerHTML='<img src="'+UPLOAD.dataUrl+'" alt="The space you uploaded" style="width:100%;height:100%;object-fit:cover;display:block">'; }
+  else{ oi.innerHTML=room('after',PALS[OUTPAL[si]]); }
+  if(!ov.dataset.base) ov.dataset.base=ov.innerHTML;
+  ov.innerHTML=ov.dataset.base;
   out.classList.add('on');ov.classList.add('on');
   bar.style.width='0%';gs.textContent=steps[0];
   out.scrollIntoView({block:'center',behavior:'smooth'});
   let p=0,i=0;
   const t=setInterval(()=>{
     p+=Math.random()*12+5;
-    if(p>=100){p=100;clearInterval(t);setTimeout(()=>{ov.classList.remove('on');busy=false},380)}
+    if(p>=100){p=100;clearInterval(t);setTimeout(()=>{
+      if(mine){
+        saveHandoff();
+        ov.innerHTML='<div class="gen-gate"><i data-lucide="lock"></i>'
+          +'<b>Your Space Is Locked And Ready</b>'
+          +'<span>Reality Lock has your walls, windows and layout. Create your free account and this exact photo renders first, with your settings already loaded.</span>'
+          +'<a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="sparkles"></i>Render My Photo Free</a>'
+          +'<em class="mono">5 Free Designs A Day &middot; No Credit Card</em></div>';
+        if(window.lucide) window.lucide.createIcons();
+      }else{
+        ov.classList.remove('on');
+      }
+      busy=false;
+    },380)}
     bar.style.width=Math.min(p,100)+'%';
     if(p>(i+1)*(100/steps.length)&&i<steps.length-1){i++;gs.textContent=steps[i]}
   },220);
 });
+
 document.getElementById('drop').addEventListener('click',()=>openUpload());
 
 /* ---------- upload modal ---------- */
@@ -298,7 +358,7 @@ modal.innerHTML=`
       <div class="usamp" data-s="2"></div><div class="usamp" data-s="3"></div>
     </div>
     <button class="btn btn-primary btn-lg btn-block" id="uGo"><i data-lucide="sparkles"></i>Continue To The Builder</button>
-    <p class="no-card">1 Free Design &middot; <b>No Credit Card</b> &middot; <b>No Account</b></p>
+    <p class="no-card">5 Free Designs A Day &middot; <b>No Credit Card</b></p>
   </div>`;
 rootEl.appendChild(modal);
 
@@ -318,14 +378,16 @@ modal.querySelectorAll('[data-close]').forEach(el=>el.addEventListener('click',c
 document.addEventListener('keydown',(e)=>{if(e.key==='Escape'&&modal.classList.contains('on'))closeUpload()});
 
 const uFile=modal.querySelector('#uFile');
-uFile.addEventListener('change',()=>{
+uFile.addEventListener('change',async()=>{
   const f=uFile.files&&uFile.files[0];
   if(!f)return;
   modal.querySelector('#uName').textContent=f.name;
   const url=URL.createObjectURL(f);
   modal.querySelector('#uThumb').style.backgroundImage=`url(${url})`;
   modal.classList.add('has-file');
+  try{ UPLOAD={dataUrl:await shrinkPhoto(f),name:f.name}; }catch(e){ UPLOAD=null; }
 });
+
 const uDrop=modal.querySelector('#uDrop');
 ['dragenter','dragover'].forEach(ev=>uDrop.addEventListener(ev,(e)=>{e.preventDefault();uDrop.classList.add('over')}));
 ['dragleave','drop'].forEach(ev=>uDrop.addEventListener(ev,(e)=>{e.preventDefault();uDrop.classList.remove('over')}));
@@ -338,7 +400,7 @@ uDrop.addEventListener('drop',(e)=>{
 let uSel=0;
 modal.querySelectorAll('.usamp').forEach(s=>s.addEventListener('click',()=>{
   modal.querySelectorAll('.usamp').forEach(x=>x.classList.remove('on'));
-  s.classList.add('on');uSel=+s.dataset.s;
+  s.classList.add('on');uSel=+s.dataset.s;UPLOAD=null;modal.classList.remove('has-file');
 }));
 modal.querySelector('#uGo').addEventListener('click',()=>{
   const samps=document.querySelectorAll('.samp');
@@ -379,7 +441,7 @@ const Q=[
 ['wallet','Budget Before The Design','Set the number first and the AI only proposes work that plausibly fits it. Nobody else does this.'],
 ['calculator','Line Items, Not A Ballpark','Quantities, trades and location-adjusted ranges with a stated confidence level, never a single fake number.'],
 ['hard-hat','Built From Real Rehab Work','The cost logic comes out of two decades of buying, gutting and reselling distressed property.'],
-['gift','Free Preview, No Card, No Account','Generate before you decide. The watermark comes off when you do.'],
+['gift','Free To Start, No Card Needed','Five designs a day on the free plan. The watermark comes off when you upgrade.'],
 ['scale','Commercial License Available','Paid plans include commercial use, and your images stay yours if you cancel.']];
 document.getElementById('quotes').innerHTML=Q.map(([ic,t,d])=>`
   <div class="proof-card"><div class="pic"><i data-lucide="${ic}"></i></div><b>${t}</b><p>${d}</p></div>`).join('');
@@ -387,8 +449,8 @@ document.getElementById('quotes').innerHTML=Q.map(([ic,t,d])=>`
 
 /* ---------- pricing ---------- */
 const P=[
-{n:'Free',mo:0,yr:0,who:'Anyone. No card, no account to start.',cta:'Start Free',pop:false,note:'No card · No account to start',
- f:['<b>5 credits a day</b>','First design needs no account at all','Interiors, exteriors and landscapes','Full style library, Reality Lock, keep/replace/remove controls','Virtual staging, declutter, material swap, style transfer','Typical budget range by room type and finish level','Watermarked, standard resolution'],
+{n:'Free',mo:0,yr:0,who:'Anyone. No card to start.',cta:'Start Free',pop:false,note:'No card to start · Cancel anytime',
+ f:['<b>5 credits a day</b>','No credit card to start','Interiors, exteriors and landscapes','Full style library, Reality Lock, keep/replace/remove controls','Virtual staging, declutter, material swap, style transfer','Typical budget range by room type and finish level','Watermarked, standard resolution'],
  x:['Clean HD download','Scope and budget from YOUR photo','Commercial license']},
 {n:'Starter',mo:15,yr:7,who:'One property. Personal projects.',cta:'Choose Starter',pop:false,note:'30 day money back · Cancel anytime',
  f:['<b>200 credits a month</b>','Clean HD, no watermark','Personal use license','Scope and budget from your photo','Design DNA on one property','Shopping list with live pricing','Before and after presentation'],
