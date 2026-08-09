@@ -1874,6 +1874,9 @@
   .rd-site .pnode.on .pim{box-shadow:0 8px 18px -14px rgba(0,0,0,.5)}
   .rd-site .pdet{min-height:2.8em}
   .rd-site .parrow{display:none}
+  .rd-site .band-scope{overflow-x:auto;scrollbar-width:none}
+  .rd-site .band-scope::-webkit-scrollbar{display:none}
+  .rd-site .band-scope table{min-width:560px}
 }
 
 /* ============ SHARED PRESENTATION PAGE ============ */
