@@ -482,9 +482,9 @@
 
 /* ---------- account dropdown ---------- */
 .rd-app .acct-wrap{position:relative}
-.rd-app .acct-btn{display:flex;align-items:center;gap:6px;padding:3px 7px 3px 3px;border-radius:999px;border:2px solid var(--red);background:#fff}
+.rd-app .acct-btn{display:flex;align-items:center;justify-content:center;padding:2px;border-radius:50%;border:2px solid var(--red);background:transparent;transition:background .15s ease}
 .rd-app .acct-btn:hover{background:var(--paper)}
-.rd-app .acct-btn svg{width:14px;height:14px;color:var(--mute-2)}
+.rd-app .acct-btn .av{width:32px;height:32px;background:var(--red);font-size:.72rem}
 .rd-app .av.lg{width:42px;height:42px;font-size:.9rem}
 .rd-app .av,.rd-app .acct-head .av{color:#fff}
 .rd-app .acct-menu{position:absolute;top:calc(100% + 10px);right:0;width:288px;max-height:78vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 44px rgba(20,18,15,.16);padding:12px;z-index:80;display:none}
