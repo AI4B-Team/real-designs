@@ -1262,6 +1262,28 @@ async function exportPresentationPdf(id,btn){
   }
 }
 
+async function exportPresentationBoard(id,btn){
+  const old=btn?btn.innerHTML:null;
+  if(btn){ btn.disabled=true; btn.innerHTML='<i data-lucide="loader"></i>'; lucide.createIcons(); }
+  try{
+    const p=await getPresentationPackage({data:{id}});
+    const lines=(p.lines||[]).map(l=>({description:l.description,trade:l.trade,qty:l.qty,uom:l.uom,
+      material_low:l.low,material_high:l.high,price_source:'From the approved scope'}));
+    const tl=lines.reduce((a,l)=>a+l.material_low,0), th=lines.reduce((a,l)=>a+l.material_high,0);
+    const w=window.open('','_blank');
+    if(!w) throw new Error('Allow pop-ups to open the board.');
+    w.document.write(boardPrintHtml(p.title,
+      [p.address,p.project_name,p.room_name,(p.grade||'retail')+' grade'].filter(Boolean).join(' \u00b7 '),
+      p.grade, lines, lines.length?[tl,th]:null));
+    w.document.close(); w.focus();
+    setTimeout(()=>{ try{ w.print(); }catch(_){} },700);
+  }catch(e){
+    showAlert('Could not build that board. '+((e&&e.message)||''));
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=old; lucide.createIcons(); }
+  }
+}
+
 async function exportSocialReel(id,btn){
   const old=btn?btn.innerHTML:null;
   const setLab=(t)=>{ if(btn) btn.innerHTML='<span style="font-size:.66rem;font-weight:700">'+t+'</span>'; };
