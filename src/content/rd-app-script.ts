@@ -6,7 +6,7 @@ import { PHOTOS, photo } from "@/content/rd-photos";
 import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
-import { getMyCredits } from "@/lib/credits.functions";
+import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 
