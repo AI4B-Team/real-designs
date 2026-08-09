@@ -735,8 +735,9 @@ function histModal(){
   }
   return m;
 }
+let HIST_SEL=[];
 async function openHistory(r){
-  HIST_ROOM=r;
+  HIST_ROOM=r; HIST_SEL=[];
   const m=histModal();
   m.querySelector('#hmTitle').textContent=r.name+' \u2014 Version History';
   m.querySelector('#hmSub').textContent=r.address+' \u00b7 '+r.project;
@@ -758,8 +759,12 @@ function paintHistory(){
 <div class="rowt" style="flex:1"><b>v${v.version_no}${i===0?' \u00b7 Latest':''}</b><span class="mono">${cost} \u00b7 ${when}${v.style?' \u00b7 '+v.style:''}</span></div>
 <span class="pill ${st[0]}">${st[1]}</span>
 <button class="btn btn-ghost btn-xs" data-hopen="${v.id}">Open</button>
-<button class="btn btn-ghost btn-xs" data-happ="${v.id}">${v.status==='approved'?'Unapprove':'Approve'}</button></div>`;
-  }).join('');
+<button class="btn btn-ghost btn-xs" data-happ="${v.id}">${v.status==='approved'?'Unapprove':'Approve'}</button>
+<label style="display:flex;align-items:center;gap:4px;font-size:.72rem;color:var(--mute-2)"><input type="checkbox" data-hcmp="${v.id}" ${HIST_SEL.indexOf(v.id)>-1?'checked':''}>Compare</label></div>`;
+  }).join('')
+  +`<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px">
+<span style="font-size:.75rem;color:var(--mute-2)">${HIST_SEL.length} of 2 selected</span>
+<button class="btn btn-primary btn-xs" id="hmCmp" ${HIST_SEL.length===2?'':'disabled'}>Compare Versions</button></div>`;
   body.querySelectorAll('[data-hphoto]').forEach(async(img)=>{
     const p=img.getAttribute('data-hphoto'); if(!p) return;
     const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
@@ -780,6 +785,41 @@ function paintHistory(){
       window.dispatchEvent(new Event('rd:saved'));
     }catch(e){ b.disabled=false; }
   }));
+  body.querySelectorAll('[data-hcmp]').forEach(cb=>cb.addEventListener('change',()=>{
+    const id=cb.getAttribute('data-hcmp');
+    const i=HIST_SEL.indexOf(id);
+    if(i>-1) HIST_SEL.splice(i,1);
+    else { HIST_SEL.push(id); if(HIST_SEL.length>2) HIST_SEL.shift(); }
+    paintHistory();
+  }));
+  const cmpBtn=body.querySelector('#hmCmp');
+  if(cmpBtn) cmpBtn.addEventListener('click',paintCompare);
+  lucide.createIcons();
+}
+async function paintCompare(){
+  const m=histModal(), body=m.querySelector('#hmBody');
+  const picks=HIST_SEL.map(id=>HIST_LIST.find(v=>v.id===id)).filter(Boolean);
+  if(picks.length!==2){ paintHistory(); return; }
+  picks.sort((a,b)=>a.version_no-b.version_no);
+  const [a,b]=picks;
+  const money=v=>v.total_low!=null?kfmt(v.total_low)+' to '+kfmt(v.total_high):'Not priced';
+  const delta=(a.total_low!=null&&b.total_low!=null)
+    ? (()=>{ const d=Number(b.total_low)-Number(a.total_low); const sign=d>0?'+':d<0?'\u2212':''; return sign+kfmt(Math.abs(d))+' on the low end'; })()
+    : 'Only one of these versions is priced';
+  body.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+${picks.map(v=>`<div><img data-cphoto="${v.after_path||v.before_path||''}" alt="Version ${v.version_no}" style="width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px;background:#EFEDE8" hidden>
+<div style="margin-top:6px"><b style="font-size:.82rem">v${v.version_no}</b>
+<div class="mono" style="font-size:.75rem;color:var(--mute-2)">${money(v)}</div>
+<div style="font-size:.75rem;color:var(--mute-2)">${v.style||'No style noted'} \u00b7 ${new Date(v.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'})}</div></div></div>`).join('')}
+</div>
+<div class="rowi" style="margin-top:10px"><div class="rowt"><b>Difference</b><span class="mono">v${a.version_no} to v${b.version_no}: ${delta}</span></div></div>
+<button class="btn btn-ghost btn-block" style="margin-top:10px" id="hmBack">Back To History</button>`;
+  body.querySelectorAll('[data-cphoto]').forEach(async(img)=>{
+    const p=img.getAttribute('data-cphoto'); if(!p) return;
+    const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+    if(url){ img.src=url; img.hidden=false; }
+  });
+  const bk=body.querySelector('#hmBack'); if(bk) bk.addEventListener('click',paintHistory);
   lucide.createIcons();
 }
 const DFILT=['all','approved','review','archived'];
