@@ -799,3 +799,14 @@
 .invite-bar .ib-t{flex:1;min-width:0}
 .invite-bar .ib-t b{display:block;font-size:.86rem}
 .invite-bar .ib-t span{display:block;font-size:.74rem;color:var(--mute-2)}
+
+/* dashboard first run checklist */
+.rd-app .ob-card{margin-bottom:16px}
+.rd-app .ob-steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-top:6px}
+.rd-app .ob-step{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+.rd-app .ob-step > i{width:17px;height:17px;flex:none;color:var(--mute-2)}
+.rd-app .ob-step.ok > i{color:#0a7b3e}
+.rd-app .ob-step .rowt{flex:1;min-width:0}
+.rd-app .ob-step .rowt b{display:block;font-size:.84rem}
+.rd-app .ob-step .rowt span{display:block;font-size:.73rem;color:var(--mute-2)}
+@media (max-width:900px){.rd-app .ob-steps{grid-template-columns:1fr}}
