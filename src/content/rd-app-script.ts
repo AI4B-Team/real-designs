@@ -56,7 +56,7 @@ account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
-const ACCT_ALIAS={team:'team',settings:'brand',billing:'billing',invoices:'invoices'};
+const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices'};
 function go(v){
   if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
@@ -2145,7 +2145,9 @@ if(scopeGrid && !document.getElementById('scSave')){
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
     {k:'priced',t:'Price The Scope',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Scope'},
-    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'}
+    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'},
+    {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent colour on every export.',i:'palette',cta:'Set Brand'},
+    {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
   ];
   /* insert synchronously so a double init cannot duplicate the card */
   const card=document.createElement('div');
@@ -2171,6 +2173,8 @@ if(scopeGrid && !document.getElementById('scSave')){
 
 
   function act(k){
+    if(k==='brand'){ go('branding'); return; }
+    if(k==='shared'){ go('present'); return; }
     go('scope');
     setTimeout(()=>{
       if(k==='photo'){ const l=document.querySelector('label[for="svPhoto"]'); if(l){ l.scrollIntoView({behavior:'smooth',block:'center'}); l.click(); } }
@@ -2198,8 +2202,16 @@ if(scopeGrid && !document.getElementById('scSave')){
   }
   render();
 
+  /* reflect real account state for the two account-level steps */
+  (async()=>{
+    let changed=false;
+    try{ if((await getPrefs()).brand.company.trim() && !state.brand){ state.brand=true; changed=true; } }catch(e){}
+    try{ if((await listPresentations()).length && !state.shared){ state.shared=true; changed=true; } }catch(e){}
+    if(changed){ save(); render(); }
+  })();
+
   document.getElementById('onbHide').addEventListener('click',()=>{ state.done=true; save(); card.remove(); });
-  ['photo','priced','saved'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
+  ['photo','priced','saved','brand','shared'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
 
   /* welcome once per account */
   if(!state.welcomed){
