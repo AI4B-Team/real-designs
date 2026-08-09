@@ -2739,7 +2739,7 @@ if(scopeGrid && !document.getElementById('scSave')){
   ['photo','priced','saved','brand','shared'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
 
   /* welcome once per account, but never over a photo handed off from the site */
-  const pendingHandoff=(()=>{ try{ return !!localStorage.getItem('rd.handoff'); }catch(e){ return false; } })();
+  const pendingHandoff=(()=>{ try{ return !!window.rdHandoffPending||!!localStorage.getItem('rd.handoff'); }catch(e){ return false; } })();
   if(!state.welcomed && !pendingHandoff){
     state.welcomed=true; save();
     document.querySelectorAll('#onbModal').forEach(n=>n.remove());
@@ -3044,6 +3044,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   try{ h=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){ h=null; }
   try{ localStorage.removeItem(KEY); }catch(e){}
   if(!h||!h.photo) return;
+  window.rdHandoffPending=true;
   if(Date.now()-(h.ts||0)>1000*60*60*24*7) return;   // stale, ignore
 
   try{ go('studio'); }catch(e){}
