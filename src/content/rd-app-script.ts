@@ -1506,7 +1506,9 @@ function boardPrintHtml(title,sub,grade,lines,totals){
   const rows=lines.map(l=>{const s=boardSearch(l.description,grade);
     return `<tr><td><b>${esc(l.description)}</b><div class="s">${esc(l.price_source||'')}</div></td><td>${esc(l.trade)}</td>
 <td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${presMoney(l.material_low)} &ndash; ${presMoney(l.material_high)}</td>
-<td><a href="${s.url}">${esc(s.name)}</a></td></tr>`;}).join('')||'<tr><td colspan="5">No material lines.</td></tr>';
+<td>${esc(buyLabel(buyStatus(l)))}</td>
+<td><a href="${s.url}">${esc(s.name)}</a></td></tr>`;}).join('')||'<tr><td colspan="6">No material lines.</td></tr>';
+
   return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — Product Board</title><style>
 @page{size:letter;margin:14mm}body{font:13px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#141414;margin:0}
 .mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #CC0000;padding-bottom:10px;margin-bottom:16px}
