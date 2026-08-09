@@ -7,7 +7,7 @@ import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
-import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary } from "@/lib/workspace.functions";
+import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto } from "@/lib/room-photos";
 
@@ -198,24 +198,89 @@ loadDashboard();
 window.addEventListener('rd:saved', loadDashboard);
 
 
-/* ---------- properties ---------- */
-const tree=[[1,'map-pin','206 N MacDill Ave','DNA Locked',true],[2,'folder','Retail Flip, Q3','4 rooms',false],
-[3,'sofa','Living Room','v4',false],[3,'chef-hat','Kitchen','v7',false],[3,'bath','Primary Bath','v2',false],
-[3,'home','Front Elevation','v1',false],[2,'folder','Rental Scenario','4 rooms',false],[3,'sofa','Living Room','v2',false],
-[1,'map-pin','1412 E Idlewild Ave','DNA Locked',false],[2,'folder','Retail Flip','6 rooms',false],
-[1,'map-pin','8809 N Ola Ave','No DNA',false],[1,'map-pin','3320 W Cypress St','DNA Locked',false]];
-document.getElementById('tree').innerHTML=tree.map(([l,ic,n,m,on])=>`
-<div class="tr l${l} ${on?'on':''}"><i data-lucide="${ic}"></i>${n}<span class="meta">${m}</span></div>`).join('');
+/* ---------- properties: real owned hierarchy ---------- */
+const RT_ICON=(t)=>{const s=String(t||'').toLowerCase();
+  if(s.includes('kitchen'))return 'chef-hat'; if(s.includes('bath'))return 'bath';
+  if(s.includes('bed'))return 'bed'; if(s.includes('exterior')||s.includes('elevation')||s.includes('yard'))return 'home';
+  if(s.includes('office'))return 'lamp-desk'; return 'sofa';};
+let PROP_TREE=[], SEL={p:0,pr:0};
 
-const rooms=[['Living Room','v4 Approved','after','warm','p-ok','$11.4K to $14.9K'],
-['Kitchen','v7 Approved','after','farm','p-ok','$26.2K to $34.1K'],
-['Primary Bath','v2 In Review','after','coastal','p-amb','$8.9K to $12.4K'],
-['Front Elevation','v1 Approved','before','warm','p-ok','$11.9K to $16.8K']];
-document.getElementById('roomCards').innerHTML=rooms.map(([n,v,m,p,cls,cost])=>`
-<div class="card"><div style="aspect-ratio:8/5;background:#EFEDE8;border-radius:7px 7px 0 0;overflow:hidden">${room(m,PALS[p])}</div>
+async function paintRooms(){
+  const rc=document.getElementById('roomCards'); if(!rc) return;
+  const prop=PROP_TREE[SEL.p]||null, proj=prop?(prop.projects[SEL.pr]||null):null;
+  const t=document.getElementById('propTitle'), sub=document.getElementById('propSub'), rs=document.getElementById('roomsSub');
+  if(t) t.textContent=prop?prop.address:'No property selected';
+  if(sub) sub.textContent=prop&&proj
+    ? proj.name+' \u00b7 '+proj.rooms.length+(proj.rooms.length===1?' room':' rooms')+' \u00b7 '+proj.rooms.reduce((n,r)=>n+r.versions,0)+' versions'
+    : 'Save a room in Studio to build your property tree';
+  if(rs) rs.textContent=proj?('Rooms saved under '+proj.name):'Rooms saved under the selected project';
+  const dna=document.getElementById('dnaRow');
+  if(dna){
+    if(dna.dataset.orig===undefined) dna.dataset.orig=dna.innerHTML;
+    dna.innerHTML=(prop&&prop.has_dna)?dna.dataset.orig
+      :'<span style="font-size:.79rem;color:var(--mute-2)">No Design DNA locked for this property yet.</span>';
+  }
+
+  const rooms=proj?proj.rooms:[];
+  if(!rooms.length){
+    rc.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No rooms here yet. Price a room in Studio, then use Save To My Projects.</p>';
+    return;
+  }
+  rc.innerHTML=rooms.map(r=>{
+    const priced=r.total_low!=null;
+    const cls=priced?'p-ok':'p-gray';
+    const cost=priced?kfmt(r.total_low)+' to '+kfmt(r.total_high):'Not priced yet';
+    const st=(r.status==='approved'?'Approved':(r.status?'Draft':'\u2014'));
+    return `<div class="card"><div style="aspect-ratio:8/5;background:#EFEDE8;border-radius:7px 7px 0 0;overflow:hidden">
+<img data-photo="${r.after_path||r.before_path||''}" alt="${r.name}" style="width:100%;height:100%;object-fit:cover" hidden></div>
 <div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
-<b style="font-size:.87rem">${n}</b><span class="pill ${cls}">${v}</span></div>
-<div class="mono" style="font-size:.71rem;color:var(--mute-2);margin-top:5px">${cost}</div></div></div>`).join('');
+<b style="font-size:.87rem">${r.name}</b><span class="pill ${cls}">v${r.version_no||1} ${st}</span></div>
+<div class="mono" style="font-size:.71rem;color:var(--mute-2);margin-top:5px">${cost}</div></div></div>`;
+  }).join('');
+  rc.querySelectorAll('[data-photo]').forEach(async(img)=>{
+    const p=img.getAttribute('data-photo'); if(!p) return;
+    const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+    if(url){ img.src=url; img.hidden=false; }
+  });
+}
+
+function paintTree(){
+  const el=document.getElementById('tree'); if(!el) return;
+  if(!PROP_TREE.length){
+    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No properties yet. Saving a room in Studio creates one.</p>';
+    paintRooms(); return;
+  }
+  const rows=[];
+  PROP_TREE.forEach((p,pi)=>{
+    rows.push(`<div class="tr l1 ${pi===SEL.p?'on':''}" data-pi="${pi}" data-pri="0"><i data-lucide="map-pin"></i>${p.address}<span class="meta">${p.has_dna?'DNA Locked':'No DNA'}</span></div>`);
+    p.projects.forEach((pr,pri)=>{
+      rows.push(`<div class="tr l2 ${pi===SEL.p&&pri===SEL.pr?'on':''}" data-pi="${pi}" data-pri="${pri}"><i data-lucide="folder"></i>${pr.name}<span class="meta">${pr.rooms.length} ${pr.rooms.length===1?'room':'rooms'}</span></div>`);
+      pr.rooms.forEach(r=>{
+        rows.push(`<div class="tr l3" data-pi="${pi}" data-pri="${pri}"><i data-lucide="${RT_ICON(r.room_type)}"></i>${r.name}<span class="meta">v${r.version_no||1}</span></div>`);
+      });
+    });
+  });
+  el.innerHTML=rows.join('');
+  el.querySelectorAll('.tr').forEach(tr=>tr.addEventListener('click',()=>{
+    SEL={p:+tr.dataset.pi,pr:+tr.dataset.pri}; paintTree();
+  }));
+  lucide.createIcons();
+  paintRooms();
+}
+
+async function loadProperties(){
+  if(!document.getElementById('tree')) return;
+  try{ PROP_TREE=await getPropertyTree(); }
+  catch(e){ PROP_TREE=[]; }
+  if(SEL.p>=PROP_TREE.length) SEL={p:0,pr:0};
+  const cp=document.getElementById('cntProps'), cd=document.getElementById('cntDesigns');
+  if(cp) cp.textContent=String(PROP_TREE.length);
+  if(cd) cd.textContent=String(PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0));
+  paintTree();
+}
+loadProperties();
+window.addEventListener('rd:saved', loadProperties);
+
 
 /* ---------- studio ---------- */
 document.getElementById('cBefore').innerHTML=room('before');

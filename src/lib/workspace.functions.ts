@@ -234,3 +234,59 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
       properties: (props ?? []).map((p: any) => ({ id: p.id, address: p.address })),
     };
   });
+
+/** Full owned hierarchy for the Properties view: property -> project -> room -> latest version. */
+export const getPropertyTree = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase } = context;
+
+    const { data, error } = await supabase
+      .from("properties")
+      .select(
+        `id, address, design_dna, created_at,
+         projects ( id, name, finish_grade, budget_target, created_at,
+           rooms ( id, name, room_type, created_at,
+             versions ( id, version_no, status, before_path, after_path, created_at,
+               scopes ( total_low, total_high, budget_fit ) ) ) )`,
+      )
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+
+    return (data ?? []).map((p: any) => ({
+      id: p.id as string,
+      address: p.address as string,
+      has_dna: !!p.design_dna && Object.keys(p.design_dna ?? {}).length > 0,
+      projects: (p.projects ?? [])
+        .slice()
+        .sort((a: any, b: any) => String(a.created_at).localeCompare(String(b.created_at)))
+        .map((pr: any) => ({
+          id: pr.id as string,
+          name: pr.name as string,
+          grade: pr.finish_grade as string,
+          budget_target: pr.budget_target == null ? null : Number(pr.budget_target),
+          rooms: (pr.rooms ?? [])
+            .slice()
+            .sort((a: any, b: any) => String(a.created_at).localeCompare(String(b.created_at)))
+            .map((r: any) => {
+              const versions = (r.versions ?? [])
+                .slice()
+                .sort((a: any, b: any) => (b.version_no ?? 0) - (a.version_no ?? 0));
+              const latest = versions[0] ?? null;
+              const scope = latest ? ((latest.scopes ?? [])[0] ?? null) : null;
+              return {
+                id: r.id as string,
+                name: r.name as string,
+                room_type: r.room_type as string,
+                versions: versions.length,
+                version_no: latest?.version_no ?? null,
+                status: latest?.status ?? null,
+                before_path: latest?.before_path ?? null,
+                after_path: latest?.after_path ?? null,
+                total_low: scope ? Number(scope.total_low) : null,
+                total_high: scope ? Number(scope.total_high) : null,
+              };
+            }),
+        })),
+    }));
+  });
