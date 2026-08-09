@@ -478,6 +478,98 @@ function addRenderVariant(src,label){
   });
 }
 
+/* ---------- studio tools: 3D plan and walkthrough video ---------- */
+function toolOverlay(steps){
+  const ov=document.getElementById('cGen'),bar=document.getElementById('cBar'),st=document.getElementById('cStep');
+  let p=0,i=0;
+  ov.classList.add('on'); bar.style.width='0%'; st.textContent=steps[0];
+  const t=setInterval(()=>{
+    p=Math.min(p+Math.random()*4+1,92); bar.style.width=p+'%';
+    if(p>(i+1)*(92/steps.length)&&i<steps.length-1){i++;st.textContent=steps[i]}
+  },600);
+  return {
+    say:(m)=>{ st.textContent=m; },
+    at:(pct)=>{ p=Math.max(p,Math.min(pct,96)); bar.style.width=p+'%'; },
+    done:()=>{ clearInterval(t); bar.style.width='100%'; setTimeout(()=>ov.classList.remove('on'),320); }
+  };
+}
+
+async function run3dPlan(){
+  if(busy) return; busy=true;
+  const ui=toolOverlay(['Reading the room geometry','Building the floor plate','Placing the furniture','Rendering the 3D plan']);
+  try{
+    const image=await toDataUrl(lastRender||studioSrc('after'),1100);
+    const r=await renderPlan3d({data:{
+      image,
+      room_type:currentRoomType(),
+      direction:(document.getElementById('fStyle')||{}).value||'Warm Minimal',
+      floor_area_sf:parseFloat((document.getElementById('scFloor')||{}).value)||null
+    }});
+    cAfter.innerHTML=photo(r.image,'Furnished 3D plan of the same room');
+    addRenderVariant(r.image,'3D Plan');
+    window.dispatchEvent(new Event('rd:credits-changed'));
+    ui.done();
+  }catch(e){
+    ui.done();
+    if(!creditGate(e)) showToolError('Could not build the 3D plan. '+((e&&e.message)||''));
+  }finally{ busy=false; }
+}
+
+async function runWalkthrough(){
+  if(busy) return; busy=true;
+  const ui=toolOverlay(['Locking the finished render','Queuing the camera move','Rendering the walkthrough']);
+  try{
+    const image=await toDataUrl(lastRender||studioSrc('after'),1100);
+    const job=await startWalkthrough({data:{
+      image,
+      room_type:currentRoomType(),
+      direction:(document.getElementById('fStyle')||{}).value||'Warm Minimal'
+    }});
+    window.dispatchEvent(new Event('rd:credits-changed'));
+    ui.say('Rendering the walkthrough, this takes a minute or two');
+    let url=null;
+    for(let i=0;i<50;i++){
+      await new Promise(res=>setTimeout(res,6000));
+      const s=await pollWalkthrough({data:{id:job.id}});
+      if(s.progress) ui.at(Math.max(20,s.progress));
+      if(s.status==='completed'&&s.url){ url=s.url; break; }
+    }
+    ui.done();
+    if(!url) throw new Error('The video is taking longer than usual. Check back in a moment.');
+    videoModal(url);
+  }catch(e){
+    ui.done();
+    if(!creditGate(e)) showToolError('Could not render the walkthrough. '+((e&&e.message)||''));
+  }finally{ busy=false; }
+}
+
+function showToolError(msg){
+  const i=document.getElementById('toolInfo'); if(!i){ alert(msg); return; }
+  document.getElementById('toolInfoName').textContent='That Did Not Finish';
+  document.getElementById('toolInfoDesc').textContent=msg;
+  i.hidden=false;
+}
+
+function videoModal(url){
+  let m=document.getElementById('vidModal');
+  if(!m){
+    m=document.createElement('div'); m.id='vidModal'; m.className='up-modal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" style="width:min(720px,calc(100vw - 32px))">'+
+      '<h3>Walkthrough Video</h3><p>Eight seconds, dolly in, built from your finished render.</p>'+
+      '<video id="vidPlayer" controls playsinline style="width:100%;border-radius:12px;background:#111"></video>'+
+      '<a class="btn btn-primary btn-block" id="vidDl" style="margin-top:12px" download="walkthrough.mp4"><i data-lucide="download"></i>Download MP4</a>'+
+      '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click',(e)=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')){ m.classList.remove('on'); m.querySelector('#vidPlayer').pause(); } });
+  }
+  m.querySelector('#vidPlayer').src=url;
+  m.querySelector('#vidDl').href=url;
+  m.classList.add('on');
+  lucide.createIcons();
+}
+
+
+
 
 async function openInStudio(r){
   try{
