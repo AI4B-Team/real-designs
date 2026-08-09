@@ -293,3 +293,50 @@ export const getPropertyTree = createServerFn({ method: "GET" })
         })),
     }));
   });
+
+/**
+ * Store a batch-generated render as a new version of an existing owned room.
+ * RLS on `versions` proves ownership through room -> project -> property.
+ */
+export const saveRoomVersion = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        room_id: z.string().uuid(),
+        before_path: z.string().min(1),
+        after_path: z.string().min(1),
+        style: z.string().max(80).nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+
+    const { data: prev, error: prevErr } = await supabase
+      .from("versions")
+      .select("version_no")
+      .eq("room_id", data.room_id)
+      .order("version_no", { ascending: false })
+      .limit(1);
+    if (prevErr) throw new Error(prevErr.message);
+
+    const next = ((prev ?? [])[0]?.version_no ?? 0) + 1;
+
+    const { data: row, error } = await supabase
+      .from("versions")
+      .insert({
+        room_id: data.room_id,
+        version_no: next,
+        status: "draft",
+        style: data.style ?? null,
+        before_path: data.before_path,
+        after_path: data.after_path,
+        gen_model: "google/gemini-2.5-flash-image",
+      })
+      .select("id, version_no")
+      .single();
+    if (error) throw new Error(error.message);
+
+    return { id: row.id as string, version_no: row.version_no as number };
+  });
