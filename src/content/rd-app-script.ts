@@ -7,6 +7,8 @@ import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { renderDesign } from "@/lib/design-render.functions";
+import { renderPlan3d } from "@/lib/plan3d.functions";
+import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
