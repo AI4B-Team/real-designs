@@ -1988,14 +1988,17 @@ function presMessage(r,reminder){
 }
 
 
-function presSendModal(r){
+function presSendModal(r,reminder){
   if(!r) return;
-  const msg=presMessage(r);
+  const msg=presMessage(r,reminder);
+  const sent=(r.reminder_count||0);
   let m=document.getElementById('sendModal');
   if(!m){ m=document.createElement('div'); m.id='sendModal'; m.className='up-modal'; (document.querySelector('.rd-app')||document.body).appendChild(m); }
   m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" style="width:min(560px,calc(100vw - 32px))">'
-    +'<h3>Send To Client</h3>'
-    +'<p>Edit anything you like, then send it from your own inbox so the reply comes back to you. The link works without a login and updates as you change the design.</p>'
+    +'<h3>'+(reminder?'Send Approval Reminder':'Send To Client')+'</h3>'
+    +'<p>'+(reminder
+      ?('This link has been out since '+presHistWhen(r.reminded_at||r.created_at)+(sent?(' and '+sent+' reminder'+(sent===1?' has':'s have')+' gone out already'):' with no decision yet')+'. Send this from your own inbox and the reminder is logged on the activity timeline.')
+      :'Edit anything you like, then send it from your own inbox so the reply comes back to you. The link works without a login and updates as you change the design.')+'</p>'
     +'<div class="field"><label>To</label><input id="sndTo" type="email" placeholder="client@email.com" value="'+esc(r.client_email||'')+'"></div>'
     +'<div class="field"><label>Subject</label><input id="sndSub" type="text" value="'+esc(msg.subject)+'"></div>'
     +'<div class="field"><label>Message</label><textarea id="sndBody" rows="9">'+esc(msg.body)+'</textarea></div>'
@@ -2006,6 +2009,13 @@ function presSendModal(r){
   lucide.createIcons();
   const close=()=>m.classList.remove('on');
   m.addEventListener('click',e=>{ if(e.target.closest('[data-close]')) close(); });
+  const logged={done:false};
+  const logReminder=async()=>{
+    if(!reminder||logged.done) return;
+    logged.done=true;
+    try{ await markPresentationReminded({data:{id:r.id}}); await paintPresentations(); }
+    catch(_){ }
+  };
   const vals=()=>({to:(document.getElementById('sndTo')||{value:''}).value.trim(),
     sub:(document.getElementById('sndSub')||{value:''}).value,
     body:(document.getElementById('sndBody')||{value:''}).value});
@@ -2014,12 +2024,15 @@ function presSendModal(r){
     try{ await navigator.clipboard.writeText(v.sub+'\n\n'+v.body); }catch(_){}
     const b=ev.currentTarget; const old=b.innerHTML; b.textContent='Copied';
     setTimeout(()=>{ b.innerHTML=old; lucide.createIcons(); },1400);
+    logReminder();
   });
   document.getElementById('sndMail').addEventListener('click',()=>{
     const v=vals();
     window.location.href='mailto:'+encodeURIComponent(v.to)+'?subject='+encodeURIComponent(v.sub)+'&body='+encodeURIComponent(v.body);
+    logReminder();
     close();
   });
+
 }
 
 
