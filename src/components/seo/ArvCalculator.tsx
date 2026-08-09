@@ -120,8 +120,8 @@ export function ArvCalculator() {
           metrics={[
             {
               label: "Recoup On Rehab",
-              value: `${r.recoupLow} to ${r.recoupHigh} percent`,
-              tone: "positive" as const,
+              value: `${r.recoupLow}%–${r.recoupHigh}%`,
+              plain: true,
             },
             { label: "Method", value: "Comparable Uplift", plain: true },
             { label: "Basis", value: "Planning Estimate", plain: true },
