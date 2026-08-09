@@ -59,7 +59,7 @@ const cursorSVG=`<svg class="cursor" width="22" height="24" viewBox="0 0 22 24" 
 // running total accumulates so the tour ends on a whole-property number.
 const TOUR=[
  {ch:'Exterior',dur:1800,img:PHOTOS.exteriorBefore,style:'As Found',lock:'Reality Lock On',
-  lab:'Front Elevation',est:'Scanning',fit:'Reading Geometry',mets:[['Budget Fit','Reading Geometry','conf-md'],['Layout Confidence','Measuring','conf-md'],['Structural Changes','None Detected','conf-hi']]},
+  lab:'Front Elevation',proc:{msg:'Reading the elevation…',detail:'Measuring geometry, materials and trim before pricing'},mets:[['Reality Lock','On'],['Structure','No Changes']]},
  {ch:'Exterior',dur:1800,img:PHOTOS.paintedBrick,style:'Painted Brick',lock:'Reality Lock On',
   lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes','None Detected','conf-hi']]},
  {ch:'Exterior',dur:1800,img:PHOTOS.craftsman,style:'Craftsman',lock:'Reality Lock On',
@@ -68,12 +68,12 @@ const TOUR=[
   lab:'Front Elevation',est:'$11,900 to $16,800',fit:'Approved',mets:[['Budget Fit','Approved','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes','None Detected','conf-hi']],note:'Stepping Inside'},
 
  {ch:'Interior',dur:1800,img:PHOTOS.before,style:'As Found',lock:'Reality Lock On',
-  lab:'Living Room',est:'Scanning',fit:'Reading Room',mets:[['Budget Fit','Reading Room','conf-md'],['Layout Confidence','Measuring','conf-md'],['Structural Changes','None Detected','conf-hi']]},
+  lab:'Living Room',proc:{msg:'Reading the room…',detail:'Measuring walls, windows and floor area'},mets:[['Reality Lock','On'],['Layout','Measuring']]},
  {ch:'Interior',dur:1900,img:PHOTOS.after,style:'Warm Minimal',lock:'Reality Lock On',
   lab:'Living Room',est:'$11,400 to $14,900',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Layout Confidence','High','conf-hi'],['Structural Changes','None Detected','conf-hi']]},
 
  {ch:'Declutter',dur:1900,img:PHOTOS.clutter,style:'As Found',lock:'Declutter On',
-  lab:'Living Room',est:'Detecting Contents',fit:'14 Objects Found',mets:[['Objects Detected','14','conf-md'],['Reality Lock','On','conf-hi'],['Disclosure Ready','Yes','conf-hi']]},
+  lab:'Living Room',proc:{msg:'Detecting contents…',detail:'14 objects found'},mets:[['Reality Lock','On'],['Disclosure Ready','Yes']]},
  {ch:'Declutter',dur:1900,img:PHOTOS.empty,style:'Emptied',lock:'Declutter On',
   lab:'Living Room',est:'Architecture Preserved',fit:'Walls, Windows, Floor',mets:[['Objects Removed','14 of 14','conf-hi'],['Reality Lock','On','conf-hi'],['Disclosure Ready','Yes','conf-hi']]},
 
@@ -89,7 +89,7 @@ const TOUR=[
   toast:'Added To Project',toastAt:2600},
 
  {ch:'Garden',dur:1600,img:PHOTOS.yardBefore,style:'As Found',lock:'Reality Lock On',zoom:'out',
-  lab:'Backyard',est:'Scanning',fit:'Reading Site',mets:[['Budget Fit','Reading Site','conf-md'],['Trades','3','conf-hi'],['Pricing Confidence','Medium','conf-md']],note:'Heading Out Back'},
+  lab:'Backyard',proc:{msg:'Reading the site…',detail:'Analyzing landscaping, materials and trades'},mets:[['Trades','3 Detected'],['Pricing Confidence','Medium']],note:'Heading Out Back'},
  {ch:'Garden',dur:2500,img:PHOTOS.resortYard,style:'Resort',lock:'Budget Mode On',
   lab:'Backyard',est:'$26,100 to $31,500',fit:'Within Target',mets:[['Budget Fit','Within Target','conf-hi'],['Trades','3','conf-hi'],['Pricing Confidence','High','conf-hi']]},
 
