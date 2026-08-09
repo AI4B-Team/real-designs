@@ -177,6 +177,8 @@ function AuthPage() {
           <a href="/">Back To Home</a>
         </p>
       </section>
+      </div>
+
     </main>
   );
 }
