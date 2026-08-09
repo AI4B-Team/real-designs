@@ -10,6 +10,7 @@ import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto } from "@/lib/room-photos";
+import { listPresentations, createPresentation, deletePresentation } from "@/lib/presentations.functions";
 
 export function initApp(): () => void {
   const timers: number[] = [];
@@ -836,12 +837,111 @@ const pkg=[['Before And After Slider','Interactive, embeds anywhere','p-ok','Rea
 document.getElementById('pkgList').innerHTML=pkg.map(([n,d,cls,lab])=>`
 <div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="${cls.startsWith('plan-pill')?cls:'pill '+cls}">${lab}</span></div>`).join('');
 
-const links=[['206 N MacDill, Full Package','Sent to Keisha C. &middot; opened 6 times','p-ok','2 Approved'],
-['1412 E Idlewild, Living Room','Sent to J. Alvarez &middot; opened 3 times','p-amb','No Decision'],
-['8809 N Ola, Exterior Options','Sent to M. Reyes &middot; not opened','p-gray','Pending'],
-['3320 W Cypress, Kitchen','Sent to T. Boone &middot; commented twice','p-blue','Feedback']];
-document.getElementById('linkList').innerHTML=links.map(([n,d,cls,lab])=>`
-<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('');
+const PRES_STATUS={sent:['p-gray','Sent'],viewed:['p-blue','Opened'],approved:['p-ok','Approved'],changes:['p-amb','Changes Requested']};
+let PRES_ROWS=[];
+
+function presAgo(iso){
+  if(!iso) return 'never';
+  const d=(Date.now()-new Date(iso).getTime())/1000;
+  if(d<60) return 'just now';
+  if(d<3600) return Math.floor(d/60)+'m ago';
+  if(d<86400) return Math.floor(d/3600)+'h ago';
+  return Math.floor(d/86400)+'d ago';
+}
+
+function presLink(token){ return location.origin+'/p/'+token; }
+
+async function paintPresentations(){
+  const el=document.getElementById('linkList'); if(!el) return;
+  try{ PRES_ROWS=await listPresentations(); }
+  catch(e){ PRES_ROWS=[]; }
+  if(!PRES_ROWS.length){
+    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No client links yet. Save a room in Studio, then use New Link to share it for approval.</p>';
+    return;
+  }
+  el.innerHTML=PRES_ROWS.map(r=>{
+    const [cls,lab]=PRES_STATUS[r.status]||PRES_STATUS.sent;
+    const who=r.client_name?('Sent to '+r.client_name):'No recipient named';
+    const seen=r.view_count?(r.view_count===1?'opened once':'opened '+r.view_count+' times'):'not opened';
+    return `<div class="rowi" data-pid="${r.id}" data-tok="${r.token}">
+      <div class="rowt"><b>${r.title}</b><span>${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
+      <span class="pill ${cls}">${lab}</span>
+      <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
+      <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
+const linkList=document.getElementById('linkList');
+if(linkList) linkList.addEventListener('click',async e=>{
+  const row=e.target.closest('[data-pid]'); if(!row) return;
+  if(e.target.closest('[data-copy]')){
+    const url=presLink(row.dataset.tok);
+    try{ await navigator.clipboard.writeText(url); }catch(_){}
+    const pill=row.querySelector('.pill'); const old=pill.textContent;
+    pill.textContent='Link Copied'; setTimeout(()=>{pill.textContent=old;},1400);
+    return;
+  }
+  if(e.target.closest('[data-del]')){
+    try{ await deletePresentation({data:{id:row.dataset.pid}}); }catch(_){}
+    paintPresentations();
+  }
+});
+
+function presModal(){
+  let m=document.getElementById('presModal');
+  if(!m){
+    m=document.createElement('div'); m.id='presModal'; m.className='up-modal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'+
+      '<h3>New Client Approval Link</h3>'+
+      '<p>Pick a saved design. The client opens a branded page with the before and after, the scope and a budget range, then approves or asks for changes. No login needed.</p>'+
+      '<div class="field"><label>Design</label><select id="plVer"></select></div>'+
+      '<div class="field"><label>Title</label><input id="plTitle" type="text" placeholder="Living Room Refresh"></div>'+
+      '<div class="field"><label>Client Name</label><input id="plName" type="text" placeholder="Keisha C."></div>'+
+      '<div class="field"><label>Client Email (Optional)</label><input id="plMail" type="email" placeholder="client@email.com"></div>'+
+      '<div id="plErr" style="display:none;font-size:.78rem;color:var(--red);margin-bottom:8px"></div>'+
+      '<div id="plOut" style="display:none;margin-bottom:10px"><div class="rowi"><div class="rowt"><b>Link Ready</b><span id="plUrl" style="word-break:break-all"></span></div></div></div>'+
+      '<button class="btn btn-primary btn-block" id="plGo"><i data-lucide="link"></i>Create Link</button>'+
+      '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
+    m.querySelector('#plGo').addEventListener('click',async ()=>{
+      const err=m.querySelector('#plErr'), out=m.querySelector('#plOut'), go=m.querySelector('#plGo');
+      const version_id=m.querySelector('#plVer').value;
+      const title=(m.querySelector('#plTitle').value||'').trim();
+      if(!version_id){ err.style.display='block'; err.textContent='Save a room in Studio first, then come back.'; return; }
+      if(!title){ err.style.display='block'; err.textContent='Give the package a title your client will recognise.'; return; }
+      err.style.display='none'; go.disabled=true;
+      try{
+        const res=await createPresentation({data:{version_id,title,
+          client_name:(m.querySelector('#plName').value||'').trim()||undefined,
+          client_email:(m.querySelector('#plMail').value||'').trim()||undefined}});
+        const url=presLink(res.token);
+        out.style.display='block'; m.querySelector('#plUrl').textContent=url;
+        try{ await navigator.clipboard.writeText(url); }catch(_){}
+        paintPresentations();
+      }catch(e){ err.style.display='block'; err.textContent=(e&&e.message)||'Could not create the link.'; }
+      go.disabled=false;
+    });
+  }
+  const sel=m.querySelector('#plVer');
+  const versions=[];
+  PROP_TREE.forEach(p=>p.projects.forEach(pr=>pr.rooms.forEach(r=>{
+    if(r.version_id) versions.push({id:r.version_id,label:p.address+' \u00b7 '+r.name});
+  })));
+  sel.innerHTML=versions.length
+    ? versions.map(v=>`<option value="${v.id}">${v.label}</option>`).join('')
+    : '<option value="">No saved designs yet</option>';
+  m.querySelector('#plErr').style.display='none';
+  m.querySelector('#plOut').style.display='none';
+  m.classList.add('on');
+  lucide.createIcons();
+}
+
+const newLinkBtn=document.getElementById('newLinkBtn');
+if(newLinkBtn) newLinkBtn.addEventListener('click',presModal);
+paintPresentations();
+window.addEventListener('rd:saved',()=>paintPresentations());
 
 /* ---------- team ---------- */
 const team=[['Dolmar Cross','Owner','DC','p-ink','Owner'],['Keisha Cross','Project Manager','KC','p-blue','Admin'],
