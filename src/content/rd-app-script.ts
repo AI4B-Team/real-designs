@@ -1707,7 +1707,7 @@ window.addEventListener('rd:credits-changed',()=>paintTeam());
 
 /* Pending workspace invites: shown at the top of the app until answered. */
 async function paintInviteBanner(){
-  const host=document.querySelector('.rd-app .content'); if(!host) return;
+  const host=document.querySelector('.content')||document.querySelector('.main'); if(!host) return;
   let team={received:[]};
   try{ team=await listTeam(); }catch(_){ return; }
   const inv=(team.received||[]);
