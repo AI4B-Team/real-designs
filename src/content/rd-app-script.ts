@@ -8,6 +8,7 @@ import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { renderDesign } from "@/lib/design-render.functions";
 import { renderPlan3d } from "@/lib/plan3d.functions";
+import { runRoomTool } from "@/lib/room-tools.functions";
 import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions } from "@/lib/workspace.functions";
@@ -610,6 +611,45 @@ async function runWalkthrough(){
   }catch(e){
     ui.done();
     if(!creditGate(e)) showToolError('Could not render the walkthrough. '+((e&&e.message)||''));
+  }finally{ busy=false; }
+}
+
+const ROOM_TOOL_STEPS={
+  stage:['Reading the empty room','Choosing furniture that fits','Placing and lighting the set','Rendering the staged room'],
+  declutter:['Reading the room','Marking clutter and personal items','Filling the space naturally','Rendering the clean room'],
+  materials:['Reading surfaces and finishes','Selecting the new materials','Matching light and reflection','Rendering the swap'],
+  sketch:['Reading the sketch lines','Building the geometry','Applying real materials','Rendering the photo'],
+  angle:['Reading room geometry','Moving the virtual camera','Keeping the design consistent','Rendering the new angle']
+};
+
+/** Run one of the one-credit Studio room tools against the current canvas image. */
+async function runRoomToolFlow(tool,label,useRender){
+  if(busy) return;
+  if(!ensureCredits(1,label)) return;
+  busy=true;
+  const ui=toolOverlay(ROOM_TOOL_STEPS[tool]||['Working on the image']);
+  try{
+    const base=useRender?(lastRender||studioSrc('after')):studioSrc('before');
+    const image=await toDataUrl(base,1100);
+    const grade=document.querySelector('#gradeChips .chip.on');
+    const r=await runRoomTool({data:{
+      tool,
+      image,
+      room_type:currentRoomType(),
+      direction:(document.getElementById('fStyle')||{}).value||'Warm Minimal',
+      grade:grade?grade.textContent:'Retail Grade',
+      notes:(document.getElementById('agentNote')||{}).value||null
+    }});
+    lastRender=r.image;
+    cAfter.innerHTML=photo(r.image,label+' result');
+    addRenderVariant(r.image,label);
+    window.dispatchEvent(new Event('rd:credits-changed'));
+    ui.done();
+    cRng.value=100;setC(100);
+    setTimeout(()=>{let v=100;const b2=setInterval(()=>{v-=2.6;cRng.value=v;setC(v);if(v<=44)clearInterval(b2)},20)},600);
+  }catch(e){
+    ui.done();
+    if(!creditGate(e)) showToolError('Could not finish '+label+'. '+((e&&e.message)||''));
   }finally{ busy=false; }
 }
 
@@ -1998,7 +2038,7 @@ renderNotifs();
 /* ---------- studio: tool rows with plan badges ---------- */
 const toolRows = Array.from(document.querySelectorAll('.toolrow'));
 const toolInfo = document.getElementById('toolInfo');
-const LIVE_TOOLS={'2D To 3D Plan':run3dPlan,'Walkthrough Video':runWalkthrough};
+const LIVE_TOOLS={'2D To 3D Plan':run3dPlan,'Walkthrough Video':runWalkthrough,'Virtual Stage':()=>runRoomToolFlow('stage','Virtual Stage',false),'Declutter':()=>runRoomToolFlow('declutter','Declutter',false),'Material Swap':()=>runRoomToolFlow('materials','Material Swap',true),'Sketch To Render':()=>runRoomToolFlow('sketch','Sketch To Render',false),'Multi Angle':()=>runRoomToolFlow('angle','Multi Angle',true)};
 const TOOL_COST={'Redesign':1,'Virtual Stage':1,'Declutter':1,'Material Swap':1,'Sketch To Render':1,'Scope & Budget':3,'Multi Angle':1,'Walkthrough Video':40,'2D To 3D Plan':6};
 toolRows.forEach((r)=>{
   const nm=r.getAttribute('data-tool')||'';
