@@ -1248,6 +1248,39 @@ function presAgo(iso){
 
 function presLink(token){ return location.origin+'/p/'+token; }
 
+let PRES_FILTER='all';
+const PRES_TABS=[['all','All'],['sent','Awaiting'],['viewed','Opened'],['approved','Approved'],['changes','Changes']];
+
+function presMatch(r){
+  if(PRES_FILTER==='all') return true;
+  return (r.status||'sent')===PRES_FILTER;
+}
+
+function renderPresRows(){
+  const el=document.getElementById('linkList'); if(!el) return;
+  const counts=PRES_TABS.map(([k])=>k==='all'?PRES_ROWS.length:PRES_ROWS.filter(r=>(r.status||'sent')===k).length);
+  const tabs=`<div class=\"notif-tabs\" id=\"presTabs\" style=\"margin:0 0 10px\">`+
+    PRES_TABS.map(([k,l],i)=>`<button class=\"notif-tab${PRES_FILTER===k?' on':''}\" data-pf=\"${k}\">${l} ${counts[i]}</button>`).join('')+`</div>`;
+  const rows=PRES_ROWS.filter(presMatch);
+  const body=rows.length?rows.map(r=>{
+    const [cls,lab]=PRES_STATUS[r.status]||PRES_STATUS.sent;
+    const who=r.client_name?('Sent to '+esc(r.client_name)):'No recipient named';
+    const seen=r.view_count?(r.view_count===1?'opened once':'opened '+r.view_count+' times'):'not opened';
+    const ctx=[r.address,r.room_name].filter(Boolean).map(esc).join(' &middot; ');
+    const note=r.decision_note?`<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\"><i>&ldquo;${esc(r.decision_note)}&rdquo;</i> &mdash; ${esc(r.client_name||'client')}</span></div></div>`:'';
+    return `<div class=\"rowi\" data-pid=\"${r.id}\" data-tok=\"${r.token}\">
+      <div class=\"rowt\"><b>${esc(r.title)}</b><span>${ctx?ctx+' &middot; ':''}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
+      <span class="pill ${cls}">${lab}</span>
+      <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
+      <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
+      <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
+      <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
+      <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>${note}`;
+  }).join(''):'<p style="font-size:.79rem;color:var(--mute-2)">No links with that status yet.</p>';
+  el.innerHTML=tabs+body;
+  lucide.createIcons();
+}
+
 async function paintPresentations(){
   const el=document.getElementById('linkList'); if(!el) return;
   try{ PRES_ROWS=await listPresentations(); }
@@ -1257,21 +1290,9 @@ async function paintPresentations(){
     el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No client links yet. Save a room in Studio, then use New Link to share it for approval.</p>';
     return;
   }
-  el.innerHTML=PRES_ROWS.map(r=>{
-    const [cls,lab]=PRES_STATUS[r.status]||PRES_STATUS.sent;
-    const who=r.client_name?('Sent to '+r.client_name):'No recipient named';
-    const seen=r.view_count?(r.view_count===1?'opened once':'opened '+r.view_count+' times'):'not opened';
-    return `<div class="rowi" data-pid="${r.id}" data-tok="${r.token}">
-      <div class="rowt"><b>${r.title}</b><span>${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
-      <span class="pill ${cls}">${lab}</span>
-      <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
-      <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
-      <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
-      <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
-      <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>`;
-  }).join('');
-  lucide.createIcons();
+  renderPresRows();
 }
+
 
 const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const presMoney=(n)=>'$'+Math.round(n||0).toLocaleString('en-US');
