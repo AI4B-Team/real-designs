@@ -303,6 +303,12 @@ async function paintRooms(){
     ? proj.name+' \u00b7 '+proj.rooms.length+(proj.rooms.length===1?' room':' rooms')+' \u00b7 '+proj.rooms.reduce((n,r)=>n+r.versions,0)+' versions'
     : 'Save a room in Studio to build your property tree';
   if(rs) rs.textContent=proj?('Rooms saved under '+proj.name):'Rooms saved under the selected project';
+  const dnaPill=document.getElementById('dnaPill');
+  if(dnaPill){
+    const n=((prop&&prop.dna)||[]).length;
+    dnaPill.className='pill '+(n?'p-ink':'p-gray');
+    dnaPill.innerHTML='<i data-lucide="dna"></i>'+(n?'Design DNA Locked':'No Design DNA Yet');
+  }
   const dna=document.getElementById('dnaRow');
   if(dna){
     const items=(prop&&prop.dna)||[];
@@ -338,6 +344,14 @@ async function paintRooms(){
   lucide.createIcons();
 }
 
+function paintStudioSub(){
+  const el=document.getElementById('studioSub'); if(!el) return;
+  const prop=PROP_TREE[SEL.p]||null, proj=prop?(prop.projects[SEL.pr]||null):null;
+  const roomSel=document.getElementById('fRoom');
+  const room=roomSel?roomSel.value:'New room';
+  el.textContent=prop?(prop.address+(proj?' \u00b7 '+proj.name:'')+' \u00b7 '+room):('New room \u00b7 '+room);
+}
+
 function paintTree(){
   const el=document.getElementById('tree'); if(!el) return;
   if(!PROP_TREE.length){
@@ -360,6 +374,7 @@ function paintTree(){
   }));
   lucide.createIcons();
   paintRooms();
+  paintStudioSub();
 }
 
 async function loadProperties(){
@@ -777,6 +792,12 @@ const SCOPE_ITEMS=[{label:'demolition'},{label:'flooring',material:'lvp'},{label
 const money=(n)=>'$'+Math.round(n).toLocaleString('en-US');
 const scopeRowsEl=document.getElementById('scopeRows');
 let scopeMarkets=[];
+function scopeContext(){
+  const sp=PROP_TREE[SEL.p]||null, sj=sp?(sp.projects[SEL.pr]||null):null;
+  const roomSel=document.getElementById('fRoom');
+  const room=roomSel?roomSel.value:'Room';
+  return (sp?sp.address+(sj?' \u00b7 '+sj.name:''):'Unsaved room')+' \u00b7 '+room;
+}
 let lastScope=null;
 
 
@@ -1007,7 +1028,7 @@ tr.sub td{font-weight:700;background:#fafafa}
 .sig div{border-top:1px solid #141414;padding-top:6px;font-size:11px;color:#6b6b6b}
 @media print{body{padding:0}}
 </style></head><body>
-<div class="head"><div><h1>Contractor Brief</h1><div class="meta">206 N MacDill Ave &middot; Living Room v4 &middot; ${esc(r.grade[0].toUpperCase()+r.grade.slice(1))} Grade</div></div>
+<div class="head"><div><h1>Contractor Brief</h1><div class="meta">${esc(scopeContext())} &middot; ${esc(r.grade[0].toUpperCase()+r.grade.slice(1))} Grade</div></div>
 <div class="meta" style="text-align:right">REAL DESIGNS<br>${esc(r.market.name)}<br>${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>
 <div class="photos"><figure><img src="${PHOTOS.before}"><figcaption>Existing Condition</figcaption></figure>
 <figure><img src="${PHOTOS.after}"><figcaption>Proposed Design</figcaption></figure></div>
