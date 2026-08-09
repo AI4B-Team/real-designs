@@ -15,7 +15,7 @@ export const listPresentations = createServerFn({ method: "GET" })
       .from("presentations")
       .select(
         `id, title, client_name, client_email, token, status, view_count, last_viewed_at,
-         decision_note, decided_at, created_at,
+         decision_note, excluded_lines, decided_at, created_at,
          versions!inner ( version_no,
            rooms!inner ( name,
              projects!inner ( name, properties!inner ( address ) ) ) )`,
