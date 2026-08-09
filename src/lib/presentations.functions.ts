@@ -86,13 +86,18 @@ export const listPresentationActivity = createServerFn({ method: "POST" })
       .order("created_at", { ascending: false })
       .limit(60);
     if (error) throw new Error(error.message);
-    return (rows ?? []).map((e: any) => ({
-      id: e.id as string,
-      kind: (e.kind ?? "viewed") as string,
-      detail: (e.detail ?? "") as string,
-      meta: (e.meta && typeof e.meta === "object" ? e.meta : {}) as Record<string, unknown>,
-      created_at: e.created_at as string,
-    }));
+    return (rows ?? []).map((e: any) => {
+      const m = (e.meta && typeof e.meta === "object" ? e.meta : {}) as any;
+      return {
+        id: e.id as string,
+        kind: (e.kind ?? "viewed") as string,
+        detail: (e.detail ?? "") as string,
+        note: (m.note ?? null) as string | null,
+        excluded_count: Number(m.excluded_count ?? 0),
+        note_count: Number(m.note_count ?? 0),
+        created_at: e.created_at as string,
+      };
+    });
   });
 
 /* ---------------- public share link ---------------- */
