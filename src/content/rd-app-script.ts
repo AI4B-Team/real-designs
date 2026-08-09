@@ -320,7 +320,7 @@ async function paintOnboarding(s){
 
 }
 document.getElementById('obSteps')?.addEventListener('click',(e)=>{
-  const b=e.target.closest('[data-goto]'); if(b) go(b.dataset.goto);
+  const b=e.target.closest('[data-goto]'); console.log('OBCLICK',b&&b.dataset.goto); if(b) go(b.dataset.goto);
 });
 document.getElementById('obHide')?.addEventListener('click',()=>{
   localStorage.setItem('rd_ob_hidden','1');
