@@ -632,33 +632,34 @@ export function initExtra(timers: number[], lucide: any) {
 
   /* ---------- comparison table ---------- */
   const CMP: [string, string, string, string, string][] = [
-    ["Redesign interiors, exteriors and landscapes", "yes", "Varies", "Limited", "yes"],
-    ["Preserve architecture and control individual objects", "yes", "Limited", "Usually", "yes"],
-    ["Apply one Design DNA across an entire property", "yes", "no", "no", "Manual"],
-    ["Design around a target budget", "yes", "no", "no", "yes"],
-    ["Generate line item scope and planning ranges", "yes", "Limited", "no", "Varies"],
-    ["Track rooms, versions and approvals", "yes", "Limited", "Limited", "Manual"],
-    ["Typical first concepts", "Minutes", "Minutes", "Minutes", "Days to weeks"],
-    ["Create a contractor ready scope and brief", "yes", "no", "no", "Varies"],
-    ["Match real products at three price levels", "yes", "Limited", "Limited", "yes"],
-    ["Create listing ready staging in batches", "yes", "Limited", "yes", "Manual"],
-    ["Client approval links", "yes", "no", "Limited", "yes"],
-    ["Walkthrough videos", "yes", "Limited", "Limited", "Varies"],
-    ["Social presentation packages", "yes", "no", "Limited", "Varies"],
-    ["Team collaboration", "yes", "Limited", "Limited", "yes"],
-    ["Commercial use exports", "yes", "Varies", "yes", "yes"],
+    ["Interior, exterior and landscape redesign", "yes", "varies", "limited", "yes"],
+    ["Architecture and object-level control", "yes", "limited", "limited", "yes"],
+    ["Property-wide Design DNA", "yes", "no", "no", "manual"],
+    ["Budget-guided generation", "yes", "no", "no", "yes"],
+    ["Line-item scope and planning ranges", "yes", "limited", "no", "varies"],
+    ["Shopping and contractor-ready outputs", "yes", "limited", "no", "manual"],
+    ["Track rooms, versions and approvals", "yes", "limited", "limited", "manual"],
+    ["Match real products at three price levels", "yes", "limited", "limited", "yes"],
+    ["Create listing ready staging in batches", "yes", "limited", "yes", "manual"],
+    ["Client approval links", "yes", "no", "limited", "yes"],
+    ["Walkthrough videos", "yes", "limited", "limited", "varies"],
+    ["Social presentation packages", "yes", "no", "limited", "varies"],
+    ["Team collaboration", "yes", "limited", "limited", "yes"],
+    ["Commercial use exports", "yes", "varies", "yes", "yes"],
   ];
 
-  const cell = (v: string, us = false) =>
-    v === "yes"
-      ? `<span class="cm ok${us ? " us" : ""}"><i data-lucide="check"></i></span>`
-      : v === "no"
-        ? `<span class="cm none">&mdash;</span>`
-        : `<span class="cm soft">${v}</span>`;
+
+  const cell = (v: string, us = false) => {
+    if (us) return `<span class="cm us"><i data-lucide="check"></i></span>`;
+    if (v === "yes") return `<span class="cm ok"><i data-lucide="check"></i></span>`;
+    if (v === "limited") return `<span class="cm lim"><i data-lucide="minus"></i>Limited</span>`;
+    if (v === "no") return `<span class="cm none"><i data-lucide="minus"></i></span>`;
+    return `<span class="cm soft">${v === "manual" ? "Manual" : "Varies"}</span>`;
+  };
   const cmpBody = $("cmpBody"), cmpMore = $("cmpMore");
   if (cmpBody) {
     cmpBody.innerHTML = CMP.map(([cap, a, b, c, d], i) => `
-      <tr class="${i >= 7 ? "cmp-extra" : ""}">
+      <tr class="${i >= 6 ? "cmp-extra" : ""}">
         <th scope="row">${cap}</th>
         <td class="cmp-us">${cell(a, true)}</td>
         <td>${cell(b)}</td><td>${cell(c)}</td><td>${cell(d)}</td>
