@@ -3,6 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PrototypeSurface } from "@/components/PrototypeSurface";
 import { html } from "@/content/rd-site-html";
 import { initSite } from "@/content/rd-site-script";
+import { FAQ } from "@/content/rd-faq";
 import "@/styles/rd-site.css";
 import { absoluteUrl } from "@/lib/site";
 
@@ -25,7 +26,50 @@ export const Route = createFileRoute("/")({
       { name: "twitter:image", content: absoluteUrl("/og-cover.jpg") },
     ],
     links: [{ rel: "canonical", href: absoluteUrl("/") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: FAQ.map(([question, answer]) => ({
+            "@type": "Question",
+            name: question,
+            acceptedAnswer: { "@type": "Answer", text: answer },
+          })),
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "SoftwareApplication",
+          name: "REAL DESIGNS",
+          url: absoluteUrl("/"),
+          applicationCategory: "DesignApplication",
+          operatingSystem: "Web",
+          description,
+          offers: [
+            { "@type": "Offer", name: "Free", price: "0", priceCurrency: "USD" },
+            { "@type": "Offer", name: "Starter", price: "7", priceCurrency: "USD" },
+            { "@type": "Offer", name: "Pro", price: "10", priceCurrency: "USD" },
+            { "@type": "Offer", name: "Studio", price: "13", priceCurrency: "USD" },
+          ],
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Organization",
+          name: "REAL DESIGNS",
+          url: absoluteUrl("/"),
+          logo: absoluteUrl("/og-cover.jpg"),
+        }),
+      },
+    ],
   }),
+
   component: SitePage,
 });
 
