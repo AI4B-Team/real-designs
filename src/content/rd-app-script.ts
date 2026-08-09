@@ -2069,6 +2069,21 @@ async function buildNotifs(){
       out.push({id:'low:'+c.balance, ic:'triangle-alert', cat:'billing', t:'Credits running low',
         b:c.balance+' credits left on your '+c.plan+' plan.', at:new Date().toISOString(), tm:'now'});
   }catch(e){}
+  try{
+    const tm=await listTeam();
+    (tm.received||[]).forEach(i=>{
+      out.push({id:'ti:'+i.id, ic:'user-plus', cat:'team', go:'account',
+        t:'You Were Invited To Another Workspace',
+        b:'Accept in Account, Team to share their properties, designs and scopes. Role: '+String(i.role||'member'),
+        at:i.created_at, tm:nAgo(i.created_at)});
+    });
+    (tm.sent||[]).filter(i=>i.status==='accepted').slice(0,8).forEach(i=>{
+      out.push({id:'tj:'+i.id, ic:'users', cat:'team', go:'account',
+        t:i.email+' joined your workspace',
+        b:'Role: '+String(i.role||'member')+' \u00b7 they can now see shared properties and designs.',
+        at:i.accepted_at||i.created_at, tm:nAgo(i.accepted_at||i.created_at)});
+    });
+  }catch(e){}
   out.sort((a,b)=>new Date(b.at)-new Date(a.at));
   const np=(PREFS&&PREFS.notifs)||{};
   const kept=out.filter(n=>np[n.cat]!==false);
