@@ -851,31 +851,43 @@ export function initExtra(timers: number[], lucide: any) {
       scope: [["Paint", "1 room"], ["Cabinet Refacing", "18 doors"], ["Lighting Swap", "4 fixtures"]] },
     { range: "$11.4K&ndash;$14.9K", items: "6", status: "Within Target", img: PHOTOS.after,
       scope: [["Flooring", "340 sf"], ["Paint", "1 room"], ["Lighting", "6 cans"]] },
-    { range: "$26K&ndash;$35K", items: "6", status: "Within Target", img: PHOTOS.kitchen,
-      scope: [["Cabinetry", "24 lf"], ["Appliances", "4 units"], ["Flooring", "340 sf"]] },
-    { range: "Your Number", items: "&mdash;", status: "Priced To Fit", img: PHOTOS.luxury,
+    { range: "$26K&ndash;$35K", items: "6", status: "Within Target", img: PHOTOS.luxury,
+      scope: [["Cabinetry", "24 lf"], ["Built-Ins", "1 wall"], ["Flooring", "340 sf"]] },
+    { range: "Your Number", items: "&mdash;", status: "Priced To Fit", img: PHOTOS.japandi,
       scope: [["Flooring", "Optional"], ["Paint", "Optional"], ["Lighting", "Optional"]] },
   ];
+  const OUT_LABS = [["Refresh", "$5K"], ["Makeover", "$15K"], ["Renovation", "$35K"]];
   const bfSeg = $("bfSeg"), bfImg = $("bfImg"), bfScope = $("bfScope");
   if (bfSeg && bfImg && bfScope) {
+    const bfOuts = $("bfOuts");
+    if (bfOuts)
+      bfOuts.innerHTML = OUT_LABS.map(([lab, cost], i) =>
+        `<button class="bfd-outc${i === 1 ? " on" : ""}" data-b="${i}">
+           <span class="bfd-outc-img">${photo(BFC[i]!.img, `${lab} outcome for the same room`)}</span>
+           <b>${lab}</b><em class="mono">${cost}</em>
+         </button>`).join("");
     const paintBFC = (n: number) => {
       const b = BFC[n]; if (!b) return;
       bfImg.innerHTML = photo(b.img, "Room designed to a target budget");
-      const r = $("bfRange"), it = $("bfItems"), st = $("bfStatus");
+      const r = $("bfRange"), it = $("bfItems"), st = $("bfStatus"), ct = $("bfCount");
       if (r) r.innerHTML = b.range;
       if (it) it.innerHTML = b.items;
+      if (ct) ct.innerHTML = b.items;
       if (st) st.innerHTML = b.status;
       bfScope.innerHTML = b.scope.map(([n2, q]) =>
         `<li><span>${n2}</span><em class="mono">${q}</em></li>`).join("");
+      bfSeg.querySelectorAll("button").forEach((o: any) =>
+        o.classList.toggle("on", Number(o.dataset.b) === n));
+      bfOuts?.querySelectorAll("button").forEach((o: any) =>
+        o.classList.toggle("on", Number(o.dataset.b) === n));
       lucide?.createIcons?.();
     };
     bfSeg.querySelectorAll("button").forEach((b: any) =>
-      b.addEventListener("click", () => {
-        bfSeg.querySelectorAll("button").forEach((o: any) => o.classList.remove("on"));
-        b.classList.add("on");
-        paintBFC(Number(b.dataset.b));
-      }));
+      b.addEventListener("click", () => paintBFC(Number(b.dataset.b))));
+    bfOuts?.querySelectorAll("button").forEach((b: any) =>
+      b.addEventListener("click", () => paintBFC(Number(b.dataset.b))));
     paintBFC(1);
+
 
     /* ----- action footer: outputs + simulated previews ----- */
     const bfBtns = $("bfBtns"), bfPrev = $("bfPrev"), bfView = $("bfView");
