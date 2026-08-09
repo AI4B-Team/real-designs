@@ -785,6 +785,70 @@ export function initExtra(timers: number[], lucide: any) {
         paintBFC(Number(b.dataset.b));
       }));
     paintBFC(1);
+
+    /* ----- action footer: outputs + simulated previews ----- */
+    const bfBtns = $("bfBtns"), bfPrev = $("bfPrev"), bfView = $("bfView");
+    const ACTS: Record<string, [string, string, string][]> = {
+      pro: [
+        ["brief", "file-text", "Contractor Brief"],
+        ["shop", "shopping-bag", "Product Schedule"],
+        ["share", "send", "Send To Client"],
+      ],
+      home: [
+        ["brief", "file-text", "Project Checklist"],
+        ["shop", "shopping-bag", "Shopping List"],
+        ["share", "send", "Share Project"],
+      ],
+    };
+    const PREV: Record<string, string> = {
+      brief: `<div class="bfp-head"><b>Contractor Brief</b><span class="mono">Preview</span></div>
+        <ul class="bfp-rows">
+          <li><span>Project Summary</span><em>Living Room &middot; Warm Minimal</em></li>
+          <li><span>Work Items</span><em>6 Items</em></li>
+          <li><span>Required Trades</span><em>Flooring, Paint, Electrical</em></li>
+          <li><span>Planning Range</span><em>$11.4K&ndash;$14.9K</em></li>
+        </ul>
+        <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="download"></i>Download PDF</a>`,
+      shop: `<div class="bfp-head"><b>Shopping List</b><span class="mono">8 Of 11 Products Matched</span></div>
+        <ul class="bfp-rows">
+          <li><span>Sofa</span><em>Closest Match</em></li>
+          <li><span>Coffee Table</span><em>Best Price</em></li>
+          <li><span>Floor Lamp</span><em>Premium</em></li>
+        </ul>
+        <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="shopping-bag"></i>View Shopping List</a>`,
+      share: `<div class="bfp-head"><b>Share Project</b><span class="mono ok">Ready To Share</span></div>
+        <div class="bfp-link"><i data-lucide="link"></i><span>realdesigns.ai/p/bayshore-living</span></div>
+        <ul class="bfp-rows">
+          <li><span>View Only</span><em>Anyone With The Link</em></li>
+          <li><span>Approval Access</span><em>Client Can Approve Items</em></li>
+        </ul>
+        <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="copy"></i>Copy Link</a>`,
+    };
+    if (bfBtns && bfPrev && bfView) {
+      let mode = "pro", open = "";
+      const paintPrev = () => {
+        if (!open) { bfPrev.className = "bfc-prev"; bfPrev.innerHTML = ""; return; }
+        bfPrev.className = "bfc-prev on";
+        bfPrev.innerHTML = PREV[open];
+        lucide?.createIcons?.();
+      };
+      const paintBtns = () => {
+        bfBtns.innerHTML = ACTS[mode].map(([k, ic, lab]) =>
+          `<button class="bfc-out${open === k ? " on" : ""}" data-k="${k}"><i data-lucide="${ic}"></i>${lab}</button>`).join("");
+        bfBtns.querySelectorAll("button").forEach((b: any) =>
+          b.addEventListener("click", () => {
+            open = open === b.dataset.k ? "" : b.dataset.k;
+            paintBtns(); paintPrev();
+          }));
+        lucide?.createIcons?.();
+      };
+      bfView.querySelectorAll("button").forEach((b: any) =>
+        b.addEventListener("click", () => {
+          bfView.querySelectorAll("button").forEach((o: any) => o.classList.remove("on"));
+          b.classList.add("on"); mode = b.dataset.v; paintBtns();
+        }));
+      paintBtns();
+    }
   }
 
 

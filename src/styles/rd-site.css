@@ -2174,3 +2174,42 @@
   .rd-site .dnax-pulse{display:none}
   .rd-site .dnax-grid{grid-template-columns:repeat(2,1fr)}
   .rd-site .dirlib.tight .styles{grid-template-columns:repeat(2,1fr)}}
+
+/* ===== Budget card action footer ===== */
+.rd-site .bfc-link b{font-weight:600}
+.rd-site .bfc-act{margin:16px -16px -16px;padding:16px;background:#FBFAF8;border-top:1px solid var(--line);
+  border-radius:0 0 15px 15px}
+.rd-site .bfc-act-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.rd-site .bfc-act-head .mono{font-size:.63rem;letter-spacing:.14em;text-transform:uppercase;color:var(--red)}
+.rd-site .bfc-act-head p{margin:5px 0 0;font-size:.88rem;color:var(--mute)}
+.rd-site .bfc-view{display:inline-flex;align-items:center;gap:6px}
+.rd-site .bfc-view .mono{font-size:.58rem;color:var(--mute-2)}
+.rd-site .bfc-view button{border:1px solid var(--line);background:var(--white);border-radius:999px;
+  padding:5px 11px;font-size:.75rem;font-weight:600;color:var(--ink);cursor:pointer}
+.rd-site .bfc-view button.on{background:var(--red);border-color:var(--red);color:#fff}
+.rd-site .bfc-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:14px}
+.rd-site .bfc-out{display:flex;align-items:center;justify-content:center;gap:8px;height:46px;padding:0 10px;
+  border:1px solid var(--line);background:var(--white);border-radius:10px;cursor:pointer;
+  font-size:.88rem;font-weight:600;color:var(--ink);white-space:nowrap;transition:.16s}
+.rd-site .bfc-out svg{width:16px;height:16px;color:var(--red)}
+.rd-site .bfc-out:hover{border-color:var(--red)}
+.rd-site .bfc-out.on{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in oklab,var(--red) 12%,transparent)}
+.rd-site .bfc-prev{max-height:0;overflow:hidden;transition:max-height .3s ease}
+.rd-site .bfc-prev.on{max-height:420px;margin-top:12px;overflow:visible}
+.rd-site .bfc-prev.on{background:var(--white);border:1px solid var(--line);border-radius:12px;padding:14px}
+.rd-site .bfp-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.rd-site .bfp-head b{font-size:.98rem}
+.rd-site .bfp-head .mono{font-size:.63rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute-2)}
+.rd-site .bfp-head .mono.ok{color:#16A34A}
+.rd-site .bfp-rows{list-style:none;margin:10px 0 12px;padding:0}
+.rd-site .bfp-rows li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;
+  border-bottom:1px solid var(--line);font-size:.88rem}
+.rd-site .bfp-rows li:last-child{border-bottom:0}
+.rd-site .bfp-rows em{font-style:normal;color:var(--mute)}
+.rd-site .bfp-link{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 11px;
+  border:1px dashed var(--line);border-radius:9px;font-size:.82rem;color:var(--ink-2)}
+.rd-site .bfp-link svg{width:15px;height:15px;color:var(--red)}
+@media(max-width:520px){
+  .rd-site .bfc-btns{grid-template-columns:1fr}
+  .rd-site .bfc-act-head{flex-direction:column}
+}
