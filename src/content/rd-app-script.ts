@@ -1109,9 +1109,71 @@ async function paintPresentations(){
       <div class="rowt"><b>${r.title}</b><span>${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
       <span class="pill ${cls}">${lab}</span>
       <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
+      <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
       <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>`;
   }).join('');
   lucide.createIcons();
+}
+
+const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const presMoney=(n)=>'$'+Math.round(n||0).toLocaleString('en-US');
+
+function presPdfHtml(p){
+  const when=new Date(p.created_at||Date.now()).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+  const rows=(p.lines||[]).map(l=>`<tr><td>${esc(l.description)}</td><td>${esc(l.trade)}</td><td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${presMoney(l.low)} &ndash; ${presMoney(l.high)}</td></tr>`).join('')
+    ||'<tr><td colspan="4">No priced line items on this version yet.</td></tr>';
+  const range=p.total_low!=null?presMoney(p.total_low)+' &ndash; '+presMoney(p.total_high):'Not priced yet';
+  const img=(u,l)=>u?`<figure><img src="${esc(u)}" alt="${l}"><figcaption>${l}</figcaption></figure>`:`<figure class="ph"><div>${l} not available</div></figure>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(p.title)} — REAL DESIGNS</title>
+<style>
+@page{size:letter;margin:14mm}
+*{box-sizing:border-box}
+body{font:13px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#141414;margin:0}
+.mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #CC0000;padding-bottom:10px;margin-bottom:18px}
+.brand{font-weight:800;letter-spacing:.16em;font-size:12px;text-transform:uppercase}
+.brand b{color:#CC0000}
+h1{font-size:22px;margin:0 0 4px}
+.sub{color:#6b6b6b;font-size:12px}
+.figs{display:flex;gap:12px;margin:0 0 18px}
+figure{margin:0;flex:1}
+figure img{width:100%;height:210px;object-fit:cover;border-radius:8px;border:1px solid #e4e4e4}
+figure.ph div{height:210px;display:flex;align-items:center;justify-content:center;border:1px dashed #ccc;border-radius:8px;color:#8a8a8a;font-size:12px}
+figcaption{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin-top:6px}
+.range{border:1px solid #e4e4e4;border-radius:10px;padding:12px 14px;margin-bottom:18px}
+.range b{display:block;font-size:20px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid #ececec}
+th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b}
+td.n,th.n{text-align:right}
+.note{margin-top:16px;font-size:10.5px;color:#6b6b6b;border-top:1px solid #ececec;padding-top:10px}
+</style></head><body>
+<div class="mast"><div><div class="brand">REAL<b>&nbsp;DESIGNS</b></div><h1>${esc(p.title)}</h1>
+<div class="sub">${esc(p.address)} &middot; ${esc(p.project_name)} &middot; ${esc(p.room_name)} &middot; v${p.version_no}</div></div>
+<div class="sub" style="text-align:right">${when}<br>${esc(p.client_name||'Client copy')}</div></div>
+<div class="figs">${img(p.before_url,'Before')}${img(p.after_url,'After')}</div>
+<div class="range"><div class="sub">Estimated Planning Range</div><b>${range}</b>
+<div class="sub">${esc((p.style||'Direction on file'))} &middot; ${esc(p.grade)} grade finishes</div></div>
+<table><thead><tr><th>Scope Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Range</th></tr></thead><tbody>${rows}</tbody></table>
+<div class="note">Planning estimates derived from the approved design and local cost data. Not a construction bid, subcontractor pricing governs. Rendered images are design visualisations of the same space.</div>
+</body></html>`;
+}
+
+async function exportPresentationPdf(id,btn){
+  const old=btn?btn.innerHTML:null;
+  if(btn){ btn.disabled=true; btn.innerHTML='<i data-lucide="loader"></i>'; lucide.createIcons(); }
+  try{
+    const p=await getPresentationPackage({data:{id}});
+    const w=window.open('','_blank');
+    if(!w) throw new Error('Allow pop-ups to export the PDF.');
+    w.document.write(presPdfHtml(p));
+    w.document.close();
+    w.focus();
+    setTimeout(()=>{ try{ w.print(); }catch(_){} },700);
+  }catch(e){
+    showAlert('Could not build that PDF. '+((e&&e.message)||''));
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=old; lucide.createIcons(); }
+  }
 }
 
 const linkList=document.getElementById('linkList');
@@ -1122,6 +1184,10 @@ if(linkList) linkList.addEventListener('click',async e=>{
     try{ await navigator.clipboard.writeText(url); }catch(_){}
     const pill=row.querySelector('.pill'); const old=pill.textContent;
     pill.textContent='Link Copied'; setTimeout(()=>{pill.textContent=old;},1400);
+    return;
+  }
+  if(e.target.closest('[data-pdf]')){
+    exportPresentationPdf(row.dataset.pid,e.target.closest('[data-pdf]'));
     return;
   }
   if(e.target.closest('[data-del]')){
