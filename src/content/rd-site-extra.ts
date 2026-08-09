@@ -685,46 +685,90 @@ export function initExtra(timers: number[], lucide: any) {
   after(() => lucide.createIcons(), 0);
   lucide.createIcons();
 
-  /* ---------- sketch to plan to photoreal ---------- */
-  const P3: [string, string, string, string, string, boolean][] = [
-    ["Source", "file-pen", "Source Sketch", "Hand-drawn walls, doors, windows and kitchen placement.", PHOTOS.sketchHand, true],
-    ["Clean Plan", "ruler", "Clean Plan", "The exact same geometry squared into a measured architectural plan.", PHOTOS.plan2d, true],
-    ["Furnished Plan", "sofa", "Furnished Plan", "Same walls and openings, furnished in your Design DNA.", PHOTOS.plan3d, true],
-    ["Photoreal", "camera", "Photoreal View", "Eye level from the marked camera position, ready to price and present.", PHOTOS.sketchRender, false],
+  /* ---------- sketch to plan to photoreal ----------
+     One canonical property (Geometry ID RD-102, 39ft x 22ft one bedroom).
+     Every stage is a different REPRESENTATION of that same geometry, never a
+     different property. Each stage owns its own title, copy, image and output,
+     so a tab can never show another stage's caption. */
+  const PROJECT = {
+    facts: ["1,020 Sq. Ft.", "1 Bedroom", "1 Bathroom", "3 Exterior Windows"],
+    geometryId: "RD-102",
+  };
+  type Stage = {
+    short: string; icon: string; title: string; copy: string;
+    src: string; outLabel: string; outValue: string; split?: boolean;
+  };
+  const P3: Stage[] = [
+    {
+      short: "Source", icon: "file-pen", title: "Source Sketch",
+      copy: "Hand-drawn walls, doors, windows and room placement.",
+      src: PHOTOS.sketchHand, outLabel: "Stage Output", outValue: "Input Recognized",
+    },
+    {
+      short: "Clean Plan", icon: "ruler", title: "Clean Plan",
+      copy: "The source geometry converted into a clean, measurable plan.",
+      src: PHOTOS.plan2d, outLabel: "Stage Output", outValue: "Geometry Preserved",
+    },
+    {
+      short: "Furnished Plan", icon: "sofa", title: "Furnished Plan",
+      copy: "The same geometry furnished in your selected Design DNA.",
+      src: PHOTOS.plan3d, outLabel: "Stage Output", outValue: "Design DNA Applied",
+    },
+    {
+      short: "Photoreal", icon: "camera", title: "Photoreal View",
+      copy: "Eye-level visualization from the marked camera position.",
+      src: PHOTOS.sketchRender, outLabel: "Planning Range", outValue: "$49.4K\u2013$63.2K",
+      split: true,
+    },
   ];
+  // The camera sits in the circulation area outside the bathroom door and looks
+  // diagonally back across the kitchen and living room. Same marker on the
+  // furnished plan and on the photoreal thumbnail, so the two agree.
+  const camMark = `<span class="p3cam"><span class="p3cone"></span><i data-lucide="camera"></i></span>`;
 
-  const p3n = $("p3Nav"), p3s = $("p3Stage"), p3c = $("p3Cap");
+  const p3n = $("p3Nav"), p3s = $("p3Stage"), p3c = $("p3Cap"), p3o = $("p3Out");
   if (p3n && p3s) {
-    p3n.innerHTML = P3.map(([short, ic], i) =>
+    p3n.innerHTML = P3.map((s, i) =>
       `<button class="p3step${i === 0 ? " on" : ""}" data-n="${i}">
-         <i class="p3dot"><i data-lucide="${i === 0 ? ic : "check"}"></i></i>
-         <span class="mono">0${i + 1}</span><b>${short}</b>
+         <i class="p3dot"><i data-lucide="${i === 0 ? s.icon : "check"}"></i></i>
+         <span class="mono">0${i + 1}</span><b>${s.short}</b>
        </button>`).join("");
     let p3i = 0, p3t: any = null;
     const showP3 = (i: number) => {
       p3i = i;
-      const [, , t, d, src, contain] = P3[i];
-      const cam = i === 2 ? `<span class="p3cam"><i data-lucide="camera"></i></span>` : "";
+      const s = P3[i];
       const layer = document.createElement("div");
-      layer.className = "p3layer" + (contain ? " fit" : "");
-      layer.innerHTML = photo(src, t) + cam;
+      layer.className = "p3layer fit" + (s.split ? " split" : "");
+      layer.innerHTML = s.split
+        ? `<div class="p3-thumb">${photo(PHOTOS.plan3d, "Furnished plan with the camera position marked")}${camMark}
+             <span class="p3-thumb-lab mono">Camera Position</span>
+           </div>
+           <div class="p3-shot">${photo(s.src, s.title)}</div>`
+        : photo(s.src, s.title) + (i === 2 ? camMark : "");
       p3s.appendChild(layer);
       requestAnimationFrame(() => layer.classList.add("on"));
       Array.from(p3s.children).forEach((c: any) => { if (c !== layer) setTimeout(() => c.remove(), 500); });
-      if (p3c) p3c.innerHTML = `<b>${t}</b><span>${d}</span>`;
+      if (p3c) p3c.innerHTML = `<b>${s.title}</b><span>${s.copy}</span>`;
+      if (p3o) p3o.innerHTML = `<span class="mono">${s.outLabel}</span><b>${s.outValue}</b>`;
       p3n.querySelectorAll(".p3step").forEach((b: any, j: number) => {
         b.classList.toggle("on", j === i);
         b.classList.toggle("done", j < i);
         const ico = b.querySelector(".p3dot i");
-        if (ico) ico.setAttribute("data-lucide", j < i ? "check" : P3[j][1]);
+        if (ico) ico.setAttribute("data-lucide", j < i ? "check" : P3[j].icon);
       });
       lucide.createIcons();
     };
+    const facts = $("p3Facts");
+    if (facts) facts.innerHTML =
+      PROJECT.facts.map((f) => `<span>${f}</span>`).join("") +
+      `<span class="p3-gid mono">Geometry ID ${PROJECT.geometryId}</span>`;
     const loop = () => { p3t = setTimeout(() => { showP3((p3i + 1) % P3.length); loop(); }, 3600); };
     p3n.querySelectorAll(".p3step").forEach((b: any) =>
       b.addEventListener("click", () => { clearTimeout(p3t); showP3(Number(b.dataset.n)); loop(); }));
     showP3(0); loop();
   }
+
+
 
 
   /* ---------- device switcher ---------- */
