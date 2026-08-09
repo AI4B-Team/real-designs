@@ -7,6 +7,9 @@ import { initExtra } from "@/content/rd-site-extra";
 import { initShowcase } from "@/content/rd-showcase";
 
 export function initSite(): () => void {
+  const root = document.querySelector('.rd-site') as HTMLElement | null;
+  if (root && root.dataset['rdInit'] === '1') return () => {};
+  if (root) root.dataset['rdInit'] = '1';
   const timers: number[] = [];
   const setInterval = (fn: any, ms?: number) => { const id = window.setInterval(fn, ms); timers.push(id); return id; };
   const setTimeout = (fn: any, ms?: number) => { const id = window.setTimeout(fn, ms); timers.push(id); return id; };
