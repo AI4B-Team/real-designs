@@ -51,9 +51,6 @@ const VALUE_MAP: Record<string, string> = {
   yes: "Ready",
   none: "No Changes",
   "none detected": "No Changes",
-  "high confidence": "High",
-  "medium confidence": "Medium",
-  "low confidence": "Low",
   "14 of 14 found": "14 of 14",
 };
 
@@ -63,7 +60,6 @@ const POSITIVE = [
   "approved",
   "ready",
   "no changes",
-  "high",
   "staged",
   "preserved",
   "applied",
@@ -113,23 +109,25 @@ function esc(s: string): string {
 /** Vanilla renderer used by the string-HTML surfaces. */
 export function summaryHTML(m: SummaryModel): string {
   const processing = m.state === "processing";
-  const metrics = (m.metrics ?? [])
-    .slice(0, 3)
-    .map((x) => {
-      const tone = x.tone ?? toneFor(x.value);
-      const dot = showsDot(tone, x.plain)
-        ? `<i class="rsp-dot is-${tone}${tone === "processing" ? " rsp-live" : ""}"></i>`
-        : "";
-      return `<div class="rsp-col"><span class="rsp-label">${esc(x.label)}</span><span class="rsp-value is-${x.plain ? "neutral" : tone}">${dot}${esc(x.value)}</span></div>`;
-    })
-    .join("");
+  const cells: string[] = [];
 
   const value = processing ? (m.progressMessage ?? "Working") : (m.primaryValue ?? "");
-  const primary =
-    `<span class="rsp-label">${esc(primaryLabelOf(m))}</span>` +
-    `<span class="rsp-primary${processing ? " is-processing" : ""}">${processing ? '<i class="rsp-dot is-processing rsp-live"></i>' : ""}${esc(value)}</span>`;
+  cells.push(
+    `<div class="rsp-col rsp-lead"><span class="rsp-label">${esc(primaryLabelOf(m))}</span>` +
+      `<span class="rsp-primary${processing ? " is-processing" : ""}">${processing ? '<i class="rsp-dot is-processing rsp-live"></i>' : ""}${esc(value)}</span></div>`,
+  );
 
-  return `<div class="rsp${m.compact ? " rsp-compact" : ""}${m.flush ? " rsp-flush" : ""}" data-state="${processing ? "processing" : (m.state ?? "completed")}">
-  <div class="rsp-col rsp-lead">${primary}</div>${metrics}
-</div>`;
+  for (const x of (m.metrics ?? []).slice(0, 3)) {
+    const tone = x.tone ?? toneFor(x.value);
+    const dot = showsDot(tone, x.plain)
+      ? `<i class="rsp-dot is-${tone}${tone === "processing" ? " rsp-live" : ""}"></i>`
+      : "";
+    cells.push(
+      `<div class="rsp-col"><span class="rsp-label">${esc(x.label)}</span><span class="rsp-value is-${x.plain ? "neutral" : tone}">${dot}${esc(x.value)}</span></div>`,
+    );
+  }
+  // the tray is always four cells so it never changes shape between states
+  while (cells.length < 4) cells.push('<div class="rsp-col" aria-hidden="true"></div>');
+
+  return `<div class="rsp${m.compact ? " rsp-compact" : ""}${m.flush ? " rsp-flush" : ""}" data-state="${processing ? "processing" : (m.state ?? "completed")}">${cells.join("")}</div>`;
 }
