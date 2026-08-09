@@ -477,6 +477,22 @@ function addRenderVariant(src,label){
 }
 
 
+async function openInStudio(r){
+  try{
+    const beforeUrl=r.before_path?(isStoredPhoto(r.before_path)?await roomPhotoUrl(r.before_path):r.before_path):PHOTOS.before;
+    const afterUrl=r.after_path?(isStoredPhoto(r.after_path)?await roomPhotoUrl(r.after_path):r.after_path):null;
+    const cB=document.getElementById('cBefore');
+    if(cB&&beforeUrl) cB.innerHTML=photo(beforeUrl,'Original space before redesign');
+    if(afterUrl){
+      cAfter.innerHTML=photo(afterUrl,'Redesigned space, AI render');
+      lastRender=null; lastRenderPath=r.after_path||null;
+      addRenderVariant(afterUrl,(r.name||'Saved')+' v'+(r.version_no||1));
+    }
+    cRng.value=44; setC(44);
+  }catch(e){}
+  go('studio');
+}
+
 async function paintVersions(){
   const el=document.getElementById('verList'); if(!el) return;
   let list=[];
@@ -525,7 +541,7 @@ function paintDesigns(){
 <div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
 <b style="font-size:.86rem">${r.name} v${r.version_no||1}</b><span class="pill ${s[0]}">${s[1]}</span></div>
 <div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">${r.address} &middot; ${cost}</div>
-<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Open</button>
+<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost btn-xs" style="flex:1" data-open="${r.id}">Open</button>
 <button class="btn btn-ghost btn-xs" data-goto="scope"><i data-lucide="calculator"></i></button></div></div></div>`;
   }).join('');
   lucide.createIcons();
@@ -535,6 +551,10 @@ function paintDesigns(){
     if(url){ img.src=url; img.hidden=false; }
   });
   g.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+  g.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{
+    const r=list.find(x=>String(x.id)===b.getAttribute('data-open'));
+    if(r) openInStudio(r);
+  }));
 }
 const DFILT=['all','approved','review','archived'];
 document.querySelectorAll('#designTabs button').forEach((b,i)=>b.addEventListener('click',()=>{
