@@ -2162,7 +2162,15 @@ function avTone(seed){ let h=0; for(let i=0;i<(seed||'').length;i++) h=(h*31+see
 function paintAvatars(av,seed){
   const tone=avTone(seed||av);
   window.__rdAv={av:av,tone:tone};
+  if(!window.__rdAvObs){
+    window.__rdAvObs=new MutationObserver(()=>{ const a=window.__rdAv; if(!a) return;
+      document.querySelectorAll('.av').forEach(e=>{ if(e.dataset.avDone) return; e.dataset.avDone='1';
+        if(!e.style.backgroundImage){ e.textContent=a.av; e.style.background=a.tone; } e.style.color='#fff'; });
+    });
+    window.__rdAvObs.observe(document.body,{childList:true,subtree:true});
+  }
   document.querySelectorAll('.av').forEach(e=>{
+    e.dataset.avDone='1';
     if(!e.style.backgroundImage){ e.textContent=av; e.style.background=tone; }
     e.style.color='#fff';
   });
