@@ -177,21 +177,23 @@ const NOTIF_PREFS=[['designs','Saved And Approved Designs','Shows in your in app
 ['billing','Credits And Billing','Credit spend, refunds and low balance warnings']];
 let PREFS=null;
 function paintNotifPrefs(){
-  const el=document.getElementById('notifRows'); if(!el||!PREFS) return;
-  el.innerHTML=NOTIF_PREFS.map(([k,n,d])=>{
+  if(!PREFS) return;
+  const body=NOTIF_PREFS.map(([k,n,d])=>{
     const on=PREFS.notifs[k]!==false;
     return `<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div>
       <button class="pill ${on?'p-ok':'p-gray'}" data-npref="${k}">${on?'On':'Off'}</button></div>`;
   }).join('')+'<div class="note"><i data-lucide="info"></i><span>These control the in app feed. We do not send marketing email, and account email is limited to security messages.</span></div>';
+  ['notifRows','notifPrefs'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=body; });
   lucide.createIcons();
 }
-document.getElementById('notifRows').addEventListener('click',async(e)=>{
+document.addEventListener('click',async(e)=>{
   const b=e.target.closest('[data-npref]'); if(!b||!PREFS) return;
   const k=b.getAttribute('data-npref'); const next=PREFS.notifs[k]===false;
   PREFS.notifs[k]=next; paintNotifPrefs();
   try{ await savePrefs({notifs:{[k]:next}}); }catch(_){}
   try{ window.dispatchEvent(new CustomEvent('rd:prefs')); }catch(_){}
 });
+
 
 
 document.getElementById('invRows').innerHTML=
@@ -1723,10 +1725,9 @@ buildNotifs();
 window.addEventListener('rd:saved', buildNotifs);
 window.addEventListener('rd:credits-changed', buildNotifs);
 
-const prefsEl=document.getElementById('notifPrefs');
-if(prefsEl) prefsEl.innerHTML=[['Design approvals','Email + In app'],['Client comments','Email + In app'],['Batch renders','In app'],
- ['Scope changes','In app'],['Team activity','Weekly digest'],['Billing and invoices','Email']]
- .map(([t,v])=>`<div class="seat"><div class="rowt"><b>${t}</b><span>${v}</span></div><span class="pill">On</span></div>`).join('');
+window.addEventListener('rd:prefs',()=>{ try{ buildNotifs(); }catch(_){} });
+try{ paintNotifPrefs(); }catch(_){}
+
 renderNotifs();
 
 /* ---------- studio: tool rows with plan badges ---------- */
