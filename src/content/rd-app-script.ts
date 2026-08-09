@@ -658,12 +658,18 @@ document.querySelectorAll('#designTabs button').forEach((b,i)=>b.addEventListene
 
 
 /* ---------- batch ---------- */
+let BATCH_ROOMS=[];
+let batchBusy=false;
+function batchStateEl(){ return document.getElementById('batchState'); }
 function paintBatch(){
   const sel=document.getElementById('batchProp'), list=document.getElementById('batchList');
   if(!sel||!list) return;
+  const runBtn=document.getElementById('batchRun');
   if(!PROP_TREE.length){
     sel.innerHTML='<option value="">No properties yet</option>';
     list.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Add a property and upload room photos to build a batch.</p>';
+    BATCH_ROOMS=[];
+    if(runBtn) runBtn.disabled=true;
     return;
   }
   const keep=sel.value;
@@ -672,21 +678,75 @@ function paintBatch(){
   const prop=PROP_TREE.find(p=>p.id===sel.value)||PROP_TREE[0];
   sel.value=prop.id;
   const rooms=[]; prop.projects.forEach(pr=>pr.rooms.forEach(r=>rooms.push(r)));
+  BATCH_ROOMS=rooms.filter(r=>!!r.before_path);
   const sub=document.getElementById('batchSub');
-  if(sub) sub.textContent=rooms.length?(rooms.length+(rooms.length===1?' room':' rooms')+' on file'):'No rooms on this property yet';
+  if(sub) sub.textContent=rooms.length?(rooms.length+(rooms.length===1?' room':' rooms')+' on file, '+BATCH_ROOMS.length+' with a photo'):'No rooms on this property yet';
+  const st=batchStateEl();
+  if(st){ st.className='pill '+(BATCH_ROOMS.length?'p-ok':'p-gray'); st.textContent=BATCH_ROOMS.length?(BATCH_ROOMS.length+' Ready · '+BATCH_ROOMS.length+' Credits'):'Nothing To Run'; }
+  if(runBtn) runBtn.disabled=!BATCH_ROOMS.length||batchBusy;
   list.innerHTML=rooms.length
     ? rooms.map(r=>{
         const done=(r.versions||0)>0;
-        return `<div class="rowi"><div class="rowt"><b>${r.name}</b><span>${done?('v'+(r.version_no||1)+' saved'):'no design yet'}</span></div>
-          <span class="pill ${done?'p-ok':'p-gray'}">${done?'Designed':'Not Started'}</span></div>`;
+        const ready=!!r.before_path;
+        return `<div class="rowi" data-broom="${r.id}"><div class="rowt"><b>${r.name}</b><span data-bmsg>${ready?(done?('v'+(r.version_no||1)+' saved'):'ready to stage'):'no photo on file'}</span></div>
+          <span class="pill ${ready?(done?'p-ok':'p-gray'):'p-amb'}" data-bpill>${ready?(done?'Designed':'Queued'):'No Photo'}</span></div>`;
       }).join('')
     : '<p style="font-size:.79rem;color:var(--mute-2)">No rooms on this property yet.</p>';
 }
 const batchProp=document.getElementById('batchProp');
 if(batchProp) batchProp.addEventListener('change',paintBatch);
+
+function batchRowSet(roomId,pillCls,pillText,msg){
+  const row=document.querySelector(`[data-broom="${roomId}"]`); if(!row) return;
+  const pill=row.querySelector('[data-bpill]'), m=row.querySelector('[data-bmsg]');
+  if(pill){ pill.className='pill '+pillCls; pill.textContent=pillText; }
+  if(m&&msg) m.textContent=msg;
+}
+
+async function runBatch(){
+  if(batchBusy||!BATCH_ROOMS.length) return;
+  batchBusy=true;
+  const runBtn=document.getElementById('batchRun');
+  const dirSel=document.querySelector('#v-listings select:not(#batchProp)');
+  const direction=((dirSel&&dirSel.value)||'Warm Minimal').replace(/,.*$/,'');
+  const st=batchStateEl();
+  if(runBtn){ runBtn.disabled=true; runBtn.innerHTML='<i data-lucide="loader"></i>Running Batch'; lucide.createIcons(); }
+  let done=0,failed=0;
+  const queue=BATCH_ROOMS.slice();
+  for(const room of queue){
+    if(st){ st.className='pill p-amb'; st.textContent='Staging '+(done+failed+1)+' Of '+queue.length; }
+    batchRowSet(room.id,'p-amb','Staging','rendering in '+direction);
+    try{
+      const src=isStoredPhoto(room.before_path)?await roomPhotoUrl(room.before_path):room.before_path;
+      const image=await toDataUrl(src,1100);
+      const r=await renderDesign({data:{
+        image,
+        room_type:room.room_type||'living room',
+        direction,
+        intensity:'Makeover',
+        grade:'Retail Grade',
+        notes:null, keep:[], replace:[], remove:[]
+      }});
+      const afterPath=await uploadRenderDataUrl(r.image);
+      const v=await saveRoomVersion({data:{room_id:room.id,before_path:room.before_path,after_path:afterPath,style:direction}});
+      done++;
+      batchRowSet(room.id,'p-ok','Designed','v'+v.version_no+' saved · '+direction);
+      window.dispatchEvent(new Event('rd:credits-changed'));
+    }catch(e){
+      failed++;
+      const gated=creditGate(e);
+      batchRowSet(room.id,'p-amb',gated?'Paused':'Failed',(e&&e.message)||'could not render this room');
+      if(gated) break;
+    }
+  }
+  if(st){ st.className='pill '+(failed?'p-amb':'p-ok'); st.textContent=done+' Staged'+(failed?', '+failed+' Skipped':''); }
+  if(runBtn){ runBtn.disabled=false; runBtn.innerHTML='<i data-lucide="play"></i>Run Batch'; lucide.createIcons(); }
+  batchBusy=false;
+  try{ window.dispatchEvent(new CustomEvent('rd:saved')); }catch(e){}
+  try{ PROP_TREE=await getPropertyTree(); }catch(e){}
+}
 const batchRun=document.getElementById('batchRun');
-if(batchRun) batchRun.addEventListener('click',()=>upgradeModal('Batch Runs Are Not Live Yet',
-  'Batch staging runs every room of a property through one locked direction. It is in development. For now, design rooms one at a time in Studio.'));
+if(batchRun) batchRun.addEventListener('click',runBatch);
 
 /* ---------- scope: live pricing from the cost database ---------- */
 const SCOPE_ITEMS=[{label:'demolition'},{label:'flooring',material:'lvp'},{label:'wall_paint',material:'paint'},
