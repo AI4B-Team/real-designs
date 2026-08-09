@@ -6,6 +6,7 @@ import { PHOTOS, photo } from "@/content/rd-photos";
 import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
+import { getMyCredits } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -984,6 +985,30 @@ if(scopeGrid && !document.getElementById('scSave')){
 }
 
 lucide.createIcons();
+
+/* ---------- live credit meter ---------- */
+async function refreshCredits(){
+  const lab=document.getElementById('credLab'); if(!lab) return;
+  const box=lab.closest('.credit-box'); const bar=box&&box.querySelector('.meter i');
+  const foot=box&&box.querySelectorAll('.lab')[1];
+  try{
+    const c=await getMyCredits();
+    const title=box&&box.querySelector('.lab span');
+    if(c.plan==='free'){
+      if(title) title.textContent='Free Designs Today';
+      lab.textContent=(c.remainingToday??0)+' / 5';
+      if(bar) bar.style.width=(((c.remainingToday??0)/5)*100)+'%';
+      if(foot) foot.innerHTML='<span>Free Plan</span><b>Upgrade For Credits</b>';
+    }else{
+      if(title) title.textContent='Credit Balance';
+      lab.textContent=c.balance.toLocaleString();
+      if(bar) bar.style.width=Math.min(100,(c.balance/4000)*100)+'%';
+      if(foot) foot.innerHTML='<span>'+c.plan.charAt(0).toUpperCase()+c.plan.slice(1)+' Plan</span><b>1 Design &bull; 3 Scope &bull; 40 Video</b>';
+    }
+  }catch(e){ /* signed out or not provisioned yet */ }
+}
+refreshCredits();
+window.addEventListener('rd:credits-changed', refreshCredits);
 
   } catch (e) { console.error(e); }
   return () => { timers.forEach((t) => { window.clearInterval(t); window.clearTimeout(t); }); };
