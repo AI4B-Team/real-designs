@@ -1047,30 +1047,34 @@ if(scopeGrid && !document.getElementById('scSave')){
 (async function onboarding(){
   const dash=document.getElementById('v-dash');
   if(!dash||document.getElementById('onbCard')) return;
-  let uid='anon';
-  try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) uid=data.user.id; }catch(e){}
-  const KEY='rd.onb.'+uid;
-  const state=(()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ return {}; } })();
-  const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} };
-  if(state.done) return;
-
-  /* already worked in this account? then there is nothing to onboard */
-  try{
-    const list=await listSavedEstimates();
-    if(list&&list.length){ state.done=true; save(); return; }
-  }catch(e){}
 
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
     {k:'priced',t:'Price The Scope',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Scope'},
     {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'}
   ];
+  /* insert synchronously so a double init cannot duplicate the card */
   const card=document.createElement('div');
-  card.className='card onb'; card.id='onbCard'; card.style.marginBottom='16px';
+  card.className='card onb'; card.id='onbCard'; card.style.marginBottom='16px'; card.hidden=true;
   card.innerHTML='<div class="card-h"><div><h3>Get Started</h3><div class="sub" id="onbSub"></div></div>'
     +'<button class="btn btn-ghost btn-xs" id="onbHide"><i data-lucide="x"></i>Dismiss</button></div>'
     +'<div class="card-b"><div class="onb-bar"><i id="onbFill"></i></div><div class="onb-steps" id="onbSteps"></div></div>';
   dash.insertBefore(card,dash.firstChild);
+
+  let uid='anon';
+  try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) uid=data.user.id; }catch(e){}
+  const KEY='rd.onb.'+uid;
+  const state=(()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ return {}; } })();
+  const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} };
+  if(state.done){ card.remove(); return; }
+
+  /* already worked in this account? then there is nothing to onboard */
+  try{
+    const list=await listSavedEstimates();
+    if(list&&list.length){ state.done=true; save(); card.remove(); return; }
+  }catch(e){}
+  card.hidden=false;
+
 
   function act(k){
     go('scope');
