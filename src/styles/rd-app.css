@@ -865,10 +865,11 @@
 .rd-app #sampleBar .btn{flex:none}
 
 /* ===== Brand badge mark ===== */
-.rd-app .rd-mark{display:inline-flex;align-items:center;justify-content:center;background:var(--red);padding:4px;flex:none}
-.rd-app .rd-mark i{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #fff;font-style:normal;padding:4px 12px}
-.rd-app .rd-mark b{color:#fff;font-weight:900;font-size:15px;line-height:1;letter-spacing:.04em}
-.rd-app .rd-mark em{color:#fff;font-style:normal;text-transform:uppercase;font-weight:700;font-size:6px;line-height:1;letter-spacing:.3em;margin:3px 0 0 .3em}
+.rd-app .rd-mark{display:inline-flex;align-items:center;justify-content:center;background:var(--red);padding:5px;flex:none}
+.rd-app .rd-mark i{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #fff;font-style:normal;padding:6px 15px 5px}
+.rd-app .rd-mark b{color:#fff;font-weight:900;font-size:21px;line-height:.92;letter-spacing:.01em}
+.rd-app .rd-mark em{color:#fff;font-style:normal;text-transform:uppercase;font-weight:700;font-size:7px;line-height:1;letter-spacing:.34em;text-indent:.34em;margin:4px 0 0}
+
 /* collapsed rail: red R badge only */
 .rd-app .app.sidemin .rd-mark{padding:0;border-radius:9px;width:34px;height:34px}
 .rd-app .app.sidemin .rd-mark i{border:0;padding:0;width:100%;height:100%}
