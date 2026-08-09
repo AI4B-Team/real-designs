@@ -2260,12 +2260,12 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .dev-sel button:hover{border-color:var(--ink-2)}
 .rd-site .dev-sel button.on{background:var(--red);border-color:var(--red);color:#fff}
 .rd-site .dev-stage.solo{margin-top:20px;padding:34px 20px 30px}
-.rd-site .dev-stage.solo .dev-hold{position:relative;z-index:1;height:470px}
+.rd-site .dev-stage.solo .dev-hold{position:relative;z-index:1;height:500px}
 .rd-site .dev-stage.solo .dvp{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   opacity:0;transform:translateY(14px) scale(.985);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
 .rd-site .dev-stage.solo .dvp.on{opacity:1;transform:none;pointer-events:auto}
 .rd-site .dev-stage.solo .dev-laptop,.rd-site .dev-stage.solo .dev-tablet,.rd-site .dev-stage.solo .dev-phone{margin:0}
-.rd-site .dev-stage.solo .dev-laptop .dev-screen{width:min(820px,78vw);height:auto;aspect-ratio:16/10}
+.rd-site .dev-stage.solo .dev-laptop .dev-screen{width:min(760px,74vw);height:auto;aspect-ratio:16/10}
 .rd-site .dev-stage.solo .dev-tablet .dev-screen{width:min(430px,62vw);height:auto;aspect-ratio:3/4}
 .rd-site .dev-stage.solo .dev-phone .dev-screen{width:min(250px,54vw);height:440px}
 .rd-site .dev-stage.solo .dev-cap{color:#F3F1EC;font-size:1.02rem;font-weight:500;margin-top:22px;text-align:center}
