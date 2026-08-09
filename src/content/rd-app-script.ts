@@ -24,7 +24,7 @@ import { polishFeedback } from "@/lib/feedback.functions";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
-import { summaryHTML, metric } from "@/lib/design-result-summary";
+import { summaryHTML, metric } from "@/lib/result-summary";
 
 
 export function initApp(): () => void {
@@ -621,9 +621,9 @@ const BANDS=[{lo:3200,hi:5000,fit:'Well Within Target',c:'c-hi'},{lo:11400,hi:14
 const m=n=>'$'+n.toLocaleString();
 function paintStudioSummary(d){
   const el=document.getElementById('studioSummary'); if(!el) return;
-  el.innerHTML=summaryHTML({contextLabel:'Estimated Project Cost',primaryValue:`${m(d.lo)} to ${m(d.hi)}`,
-    metrics:[metric('Budget Fit',d.fit),metric('Layout Confidence','High'),
-             metric('Pricing Confidence','Medium'),metric('Structural Changes','None Detected')]});
+  el.innerHTML=summaryHTML({primaryLabel:'Planning Range',primaryValue:`${m(d.lo)} to ${m(d.hi)}`,
+    metrics:[metric('Budget Fit',d.fit),metric('Pricing Confidence','Medium'),
+             metric('Structure','No Changes')]});
 }
 paintStudioSummary(BANDS[1]);
 document.querySelectorAll('.bchip').forEach(b=>b.addEventListener('click',()=>{

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 
 import { PHOTOS } from "@/content/rd-photos";
 import { estimate, fmt, type FinishGrade, type RoomKey } from "@/lib/planning-range";
-import { DesignResultSummary } from "@/components/DesignResultSummary";
-import { metric } from "@/lib/design-result-summary";
+import { ResultSummaryPanel } from "@/components/ResultSummaryPanel";
+import { metric } from "@/lib/result-summary";
 
 const BANDS = [
   { label: "Refresh", note: "Finishes and decor · under $5K", grade: "rental" as FinishGrade },
@@ -192,8 +192,8 @@ export function Builder({
           )}
         </div>
 
-        <DesignResultSummary
-          contextLabel="Estimated Planning Range"
+        <ResultSummaryPanel
+          primaryLabel="Estimated Planning Range"
           primaryValue={`${fmt(result.totalLow)} to ${fmt(result.totalHigh)}`}
           compact
           metrics={[metric("Pricing Confidence", result.confidence)]}
