@@ -23,7 +23,11 @@ export const Route = createFileRoute("/sitemap.xml")({
             changefreq: "monthly" as const,
             priority: path.startsWith("/free/") ? "0.9" : "0.8",
           })),
+          { path: "/terms", changefreq: "yearly", priority: "0.3" },
+          { path: "/privacy", changefreq: "yearly", priority: "0.3" },
+          { path: "/refund-policy", changefreq: "yearly", priority: "0.3" },
         ];
+
 
         const urls = entries.map((e) =>
           [
