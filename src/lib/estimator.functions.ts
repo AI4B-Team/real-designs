@@ -58,6 +58,11 @@ export const buildScope = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
 
+    // Metered: a priced scope costs three credits.
+    const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
+    const billing = await charge(context.userId, "scope", "priced scope");
+    if (!billing.ok) throw new Error(chargeErrorMessage(billing));
+
     // ---- 1. Load the version and its property hierarchy (RLS scopes this to the caller) ----
     const { data: version, error: versionError } = await supabase
       .from("versions")
