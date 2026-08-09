@@ -17,6 +17,7 @@ import { listPresentations, createPresentation, deletePresentation, getPresentat
 import { buildSocialReel } from "@/lib/social-reel";
 import { submitFeedback } from "@/lib/feedback";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
+import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 
 
 export function initApp(): () => void {
@@ -1785,6 +1786,68 @@ supabase.auth.getUser().then(({data})=>{
   const se=$id('secEmail'); if(se) se.textContent=u.email;
 }).catch(()=>{});
 
+/* ---------- account side card + data & privacy ---------- */
+async function paintAcctSide(){
+  try{
+    const { data } = await supabase.auth.getUser();
+    const u=data&&data.user; if(!u) return;
+    const m=u.user_metadata||{};
+    const name=m.full_name||m.name||u.email.split('@')[0];
+    const sn=$id('sideName'); if(sn) sn.textContent=name;
+    const sm=$id('sideMail'); if(sm) sm.textContent=u.email;
+    const sr=$id('sideRole'); if(sr) sr.textContent=m.role||'Owner';
+    const sv=$id('sideVerified');
+    if(sv){ const ok=!!u.email_confirmed_at; sv.textContent=ok?'Verified':'Unverified'; sv.className='pill '+(ok?'p-ok':'p-amb'); }
+  }catch(_){}
+  try{
+    const c=await getMyCredits(); if(!c) return;
+    const sp=$id('sidePlan'); if(sp) sp.textContent=c.plan==='free'?'Free':c.plan.charAt(0).toUpperCase()+c.plan.slice(1);
+    const sc=$id('sideCredit'), sb=$id('sideCreditBar'), ss=$id('sideCreditSub');
+    if(c.plan==='free'){
+      const left=Math.max(0,5-(c.free_used_today||0));
+      if(sc) sc.textContent=left+' of 5 free designs left today';
+      if(sb) sb.style.width=(left/5*100)+'%';
+      if(ss) ss.textContent='Free plan resets every day';
+    } else {
+      if(sc) sc.textContent=c.balance+(c.balance===1?' credit':' credits')+' available';
+      if(sb) sb.style.width=Math.min(100,(c.balance/200)*100)+'%';
+      if(ss) ss.textContent='One balance covers designs, scopes, plans and video';
+    }
+  }catch(_){}
+}
+paintAcctSide();
+window.addEventListener('rd:credits-changed', paintAcctSide);
+
+const dpExport=$id('dpExport');
+if(dpExport) dpExport.addEventListener('click',async()=>{
+  const msg=$id('dpMsg'); const set=(t)=>{ if(msg) msg.textContent=t; };
+  dpExport.disabled=true; set('Building your export');
+  try{
+    const payload=await exportMyData();
+    const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='real-designs-export-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    set('Export downloaded. It contains every property, room, design, scope and presentation on your account.');
+  }catch(e){ set('Could not build the export: '+(e&&e.message?e.message:'unknown error')); }
+  dpExport.disabled=false;
+});
+
+const dpDelete=$id('dpDelete');
+if(dpDelete) dpDelete.addEventListener('click',async()=>{
+  const msg=$id('dpMsg'); const set=(t)=>{ if(msg) msg.textContent=t; };
+  const typed=window.prompt('This permanently deletes your workspace, every design, scope and client link, and your sign in. Type DELETE to confirm.');
+  if((typed||'').trim().toUpperCase()!=='DELETE'){ set('Deletion cancelled. Nothing was removed.'); return; }
+  dpDelete.disabled=true; set('Deleting your account');
+  try{
+    await deleteMyAccount();
+    try{ await supabase.auth.signOut(); }catch(_){}
+    window.location.href='/';
+  }catch(e){ set('Could not delete the account: '+(e&&e.message?e.message:'unknown error')); dpDelete.disabled=false; }
+});
+
 const pfSave=$id('pfSave');
 if(pfSave) pfSave.addEventListener('click',async()=>{
   const msg=$id('pfMsg'); const name=($id('pfName').value||'').trim();
@@ -1802,6 +1865,7 @@ if(pfSave) pfSave.addEventListener('click',async()=>{
     const av=initials(name);
     document.querySelectorAll('.acct-btn .av,.acct-head .av,.apane .av').forEach(e=>e.textContent=av);
     const head=document.querySelector('.acct-head b'); if(head) head.textContent=name;
+    paintAcctSide();
     setTimeout(()=>{ if(msg) msg.textContent=''; },2500);
   }
 });
