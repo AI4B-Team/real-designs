@@ -2137,6 +2137,9 @@ loadPrefs();
   const tog=document.getElementById('sideToggle');
   if(!shell||!tog) return;
   const KEY='rd.sidemin';
+  // Studio needs the canvas width, so the rail is forced closed there and the
+  // user's own preference comes back on every other view.
+  const FORCED=['studio'];
   function apply(min){
     shell.classList.toggle('sidemin',min);
     tog.setAttribute('aria-label',min?'Expand menu':'Collapse menu');
@@ -2146,13 +2149,20 @@ loadPrefs();
   }
   let min=false;
   try{ min=localStorage.getItem(KEY)==='1'; }catch(_){}
-  apply(min);
+  function currentView(){
+    const on=document.querySelector('.rd-app .view.on');
+    return on?on.id.replace(/^v-/,''):'';
+  }
+  function applyForView(v){ apply(FORCED.indexOf(v||currentView())>=0 ? true : min); }
+  window.__rdRailForView=applyForView;
+  applyForView('');
   tog.addEventListener('click',()=>{
-    min=!min;
+    min=!shell.classList.contains('sidemin');
     try{ localStorage.setItem(KEY,min?'1':'0'); }catch(_){}
     apply(min);
   });
 })();
+
 
 
 /* ---------- help menu ---------- */
