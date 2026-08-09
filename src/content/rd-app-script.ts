@@ -194,6 +194,7 @@ if(schInput){
 /* ---------- account page ---------- */
 const NOTIF_PREFS=[['designs','Saved And Approved Designs','Shows in your in app notification feed'],
 ['approvals','Client Approvals','When a client approves a presentation link'],
+['team','Team And Invites','Invites you receive and teammates who join your workspace'],
 ['billing','Credits And Billing','Credit spend, refunds and low balance warnings']];
 let PREFS=null;
 function paintNotifPrefs(){
@@ -1675,7 +1676,8 @@ async function paintTeam(){
       <button class="btn btn-g" data-revoke="${i.id}" style="margin-left:8px">Remove</button></div>`).join('');
   const inbound=(team.received||[]).map(i=>`<div class="seat"><span class="av">IN</span>
       <div class="rowt"><b>You Were Invited To Another Workspace</b><span>Role: ${esc(i.role)}</span></div>
-      <button class="btn btn-p" data-accept="${i.id}">Accept</button></div>`).join('');
+      <button class="btn btn-g" data-decline="${i.id}">Decline</button>
+      <button class="btn btn-p" data-accept="${i.id}" style="margin-left:8px">Accept</button></div>`).join('');
   list.innerHTML=`<div class="seat"><span class="av">${av}</span><div class="rowt"><b>${name}</b><span>${mail||'Signed in'}</span></div>
     <span class="pill p-ink">Owner</span></div>${invites}${inbound}
     ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No teammates yet. Invite one below. They sign in with that email, accept the invite, and then share this workspace with you.</p>'}`;
@@ -1687,7 +1689,11 @@ async function paintTeam(){
   }));
   list.querySelectorAll('[data-accept]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await acceptInvite({data:{id:b.dataset.accept}}); }catch(_){}
-    paintTeam();
+    paintTeam(); paintInviteBanner(); setTimeout(()=>window.location.reload(),400);
+  }));
+  list.querySelectorAll('[data-decline]').forEach(b=>b.addEventListener('click',async()=>{
+    b.disabled=true; try{ await declineInvite({data:{id:b.dataset.decline}}); }catch(_){}
+    paintTeam(); paintInviteBanner();
   }));
 
   const rows=document.getElementById('usageRows');
@@ -2062,6 +2068,21 @@ async function buildNotifs(){
     if(c&&c.plan!=='free'&&c.balance<=20)
       out.push({id:'low:'+c.balance, ic:'triangle-alert', cat:'billing', t:'Credits running low',
         b:c.balance+' credits left on your '+c.plan+' plan.', at:new Date().toISOString(), tm:'now'});
+  }catch(e){}
+  try{
+    const tm=await listTeam();
+    (tm.received||[]).forEach(i=>{
+      out.push({id:'ti:'+i.id, ic:'user-plus', cat:'team', go:'account',
+        t:'You Were Invited To Another Workspace',
+        b:'Accept in Account, Team to share their properties, designs and scopes. Role: '+String(i.role||'member'),
+        at:i.created_at, tm:nAgo(i.created_at)});
+    });
+    (tm.sent||[]).filter(i=>i.status==='accepted').slice(0,8).forEach(i=>{
+      out.push({id:'tj:'+i.id, ic:'users', cat:'team', go:'account',
+        t:i.email+' joined your workspace',
+        b:'Role: '+String(i.role||'member')+' \u00b7 they can now see shared properties and designs.',
+        at:i.accepted_at||i.created_at, tm:nAgo(i.accepted_at||i.created_at)});
+    });
   }catch(e){}
   out.sort((a,b)=>new Date(b.at)-new Date(a.at));
   const np=(PREFS&&PREFS.notifs)||{};
