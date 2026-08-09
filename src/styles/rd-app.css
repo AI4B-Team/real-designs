@@ -763,3 +763,5 @@
 .up-cost b{display:block;font-size:.86rem}
 .up-cost span{display:block;font-size:.8rem;color:var(--muted,#6b6864)}
 @media(max-width:640px){.rd-app .onb-step{flex-wrap:wrap}}
+.up-act{display:flex;gap:10px;flex-wrap:wrap}
+.up-act .btn{flex:1 1 auto;justify-content:center}
