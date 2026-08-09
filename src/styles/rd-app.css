@@ -810,3 +810,14 @@
 .rd-app .ob-step .rowt b{display:block;font-size:.84rem}
 .rd-app .ob-step .rowt span{display:block;font-size:.73rem;color:var(--mute-2)}
 @media (max-width:900px){.rd-app .ob-steps{grid-template-columns:1fr}}
+
+/* attention deep-link highlight on a client link row */
+.rd-app .rowi.rd-flash{
+  animation: rdFlash 2.4s ease-out 1;
+  border-radius: 10px;
+}
+@keyframes rdFlash{
+  0%{ box-shadow: 0 0 0 2px var(--red, #CC0000) inset; background: rgba(204,0,0,.10); }
+  70%{ box-shadow: 0 0 0 2px var(--red, #CC0000) inset; background: rgba(204,0,0,.06); }
+  100%{ box-shadow: 0 0 0 0 transparent inset; background: transparent; }
+}
