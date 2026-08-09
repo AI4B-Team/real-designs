@@ -61,6 +61,7 @@ function go(v){
   if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  if(v==='studio'){ try{ paintStudioSub(); }catch(_){} }
   if(!titles[v]) return;
   const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
   const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
@@ -107,6 +108,16 @@ function searchIndex(){
       });
     });
   });
+  (typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).forEach(pr=>{
+    out.push({kind:'Presentations',ic:'presentation',t:pr.title||'Client link',
+      s:(pr.status==='approved'?'Approved':pr.status==='viewed'?'Opened':pr.status==='changes'?'Changes requested':'Sent'),view:'present'});
+  });
+  SAVED_EST.forEach(e=>{
+    out.push({kind:'Scopes',ic:'calculator',t:(e.name||'Saved room')+' scope',
+      s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Scope')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
+    out.push({kind:'Products',ic:'shopping-bag',t:(e.name||'Saved room')+' product board',
+      s:'Allowances from the saved scope',view:'products'});
+  });
   return out;
 }
 function runSearch(){
@@ -121,9 +132,9 @@ function runSearch(){
   lucide.createIcons();
   schRes.querySelectorAll('[data-r]').forEach(btn=>btn.addEventListener('click',()=>{
     const r=rows[+btn.dataset.r]; if(!r) return;
-    SEL={p:r.pi,pr:r.pri};
+    if(r.pi!=null) SEL={p:r.pi,pr:r.pri};
     closeSchRes(); if(schInput) schInput.value='';
-    go(r.design?'designs':'props'); paintTree();
+    go(r.view||(r.design?'designs':'props')); paintTree();
   }));
 }
 function updateSearchMeta(){
@@ -132,6 +143,8 @@ function updateSearchMeta(){
   const designs=PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0);
   const set=(sc,v)=>{const b=schMenu.querySelector('[data-scope="'+sc+'"] .mv'); if(b) b.textContent=String(v);};
   set('Properties',PROP_TREE.length); set('Rooms',rooms); set('Designs',designs);
+  set('Presentations',(typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).length);
+  set('Scopes',SAVED_EST.length); set('Products',SAVED_EST.length);
   const recents=searchIndex().filter(r=>r.kind==='Designs').slice(0,3);
   const groups=schMenu.querySelectorAll('.acct-group');
   const recHead=groups[groups.length-1];
@@ -293,6 +306,7 @@ const RT_ICON=(t)=>{const s=String(t||'').toLowerCase();
   if(s.includes('bed'))return 'bed'; if(s.includes('exterior')||s.includes('elevation')||s.includes('yard'))return 'home';
   if(s.includes('office'))return 'lamp-desk'; return 'sofa';};
 let PROP_TREE=[], SEL={p:0,pr:0};
+let SAVED_EST=[];
 
 async function paintRooms(){
   const rc=document.getElementById('roomCards'); if(!rc) return;
@@ -303,6 +317,12 @@ async function paintRooms(){
     ? proj.name+' \u00b7 '+proj.rooms.length+(proj.rooms.length===1?' room':' rooms')+' \u00b7 '+proj.rooms.reduce((n,r)=>n+r.versions,0)+' versions'
     : 'Save a room in Studio to build your property tree';
   if(rs) rs.textContent=proj?('Rooms saved under '+proj.name):'Rooms saved under the selected project';
+  const dnaPill=document.getElementById('dnaPill');
+  if(dnaPill){
+    const n=((prop&&prop.dna)||[]).length;
+    dnaPill.className='pill '+(n?'p-ink':'p-gray');
+    dnaPill.innerHTML='<i data-lucide="dna"></i>'+(n?'Design DNA Locked':'No Design DNA Yet');
+  }
   const dna=document.getElementById('dnaRow');
   if(dna){
     const items=(prop&&prop.dna)||[];
@@ -310,8 +330,6 @@ async function paintRooms(){
       ? items.map(it=>`<span class="dna-i"><span class="sw" style="background:${it.color}"></span>${it.label}</span>`).join('')
       :'<span style="font-size:.79rem;color:var(--mute-2)">No Design DNA locked for this property yet. Use Edit DNA to set the palette and finishes every room should follow.</span>';
   }
-  const dnaPill=document.querySelector('#v-props .pill.p-ink');
-  if(dnaPill) dnaPill.innerHTML='<i data-lucide="dna"></i>'+((prop&&prop.dna&&prop.dna.length)?'Design DNA Locked':'No Design DNA');
 
 
   const rooms=proj?proj.rooms:[];
@@ -338,11 +356,19 @@ async function paintRooms(){
   lucide.createIcons();
 }
 
+function paintStudioSub(){
+  const el=document.getElementById('studioSub'); if(!el) return;
+  const prop=PROP_TREE[SEL.p]||null, proj=prop?(prop.projects[SEL.pr]||null):null;
+  const roomSel=document.getElementById('fRoom');
+  const room=roomSel?roomSel.value:'New room';
+  el.textContent=prop?(prop.address+(proj?' \u00b7 '+proj.name:'')+' \u00b7 '+room):('New room \u00b7 '+room);
+}
+
 function paintTree(){
   const el=document.getElementById('tree'); if(!el) return;
   if(!PROP_TREE.length){
     el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No properties yet. Saving a room in Studio creates one.</p>';
-    paintRooms(); return;
+    paintRooms(); paintStudioSub(); return;
   }
   const rows=[];
   PROP_TREE.forEach((p,pi)=>{
@@ -360,6 +386,7 @@ function paintTree(){
   }));
   lucide.createIcons();
   paintRooms();
+  paintStudioSub();
 }
 
 async function loadProperties(){
@@ -613,6 +640,7 @@ async function paintVersions(){
   const el=document.getElementById('verList'); if(!el) return;
   let list=[];
   try{ list=await listSavedEstimates(); }catch(e){ list=[]; }
+  SAVED_EST=list; updateSearchMeta();
   list=list.slice(0,6);
   if(!list.length){
     el.innerHTML='<p style="font-size:.78rem;color:var(--mute-2);padding:6px 0">No versions yet. Save a design to start the history.</p>';
@@ -777,6 +805,13 @@ const SCOPE_ITEMS=[{label:'demolition'},{label:'flooring',material:'lvp'},{label
 const money=(n)=>'$'+Math.round(n).toLocaleString('en-US');
 const scopeRowsEl=document.getElementById('scopeRows');
 let scopeMarkets=[];
+(function(){ const rs=document.getElementById('fRoom'); if(rs) rs.addEventListener('change',paintStudioSub); })();
+function scopeContext(){
+  const sp=PROP_TREE[SEL.p]||null, sj=sp?(sp.projects[SEL.pr]||null):null;
+  const roomSel=document.getElementById('fRoom');
+  const room=roomSel?roomSel.value:'Room';
+  return (sp?sp.address+(sj?' \u00b7 '+sj.name:''):'Unsaved room')+' \u00b7 '+room;
+}
 let lastScope=null;
 
 
@@ -1007,7 +1042,7 @@ tr.sub td{font-weight:700;background:#fafafa}
 .sig div{border-top:1px solid #141414;padding-top:6px;font-size:11px;color:#6b6b6b}
 @media print{body{padding:0}}
 </style></head><body>
-<div class="head"><div><h1>Contractor Brief</h1><div class="meta">206 N MacDill Ave &middot; Living Room v4 &middot; ${esc(r.grade[0].toUpperCase()+r.grade.slice(1))} Grade</div></div>
+<div class="head"><div><h1>Contractor Brief</h1><div class="meta">${esc(scopeContext())} &middot; ${esc(r.grade[0].toUpperCase()+r.grade.slice(1))} Grade</div></div>
 <div class="meta" style="text-align:right">REAL DESIGNS<br>${esc(r.market.name)}<br>${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>
 <div class="photos"><figure><img src="${PHOTOS.before}"><figcaption>Existing Condition</figcaption></figure>
 <figure><img src="${PHOTOS.after}"><figcaption>Proposed Design</figcaption></figure></div>
@@ -1202,6 +1237,7 @@ async function paintPresentations(){
   const el=document.getElementById('linkList'); if(!el) return;
   try{ PRES_ROWS=await listPresentations(); }
   catch(e){ PRES_ROWS=[]; }
+  updateSearchMeta();
   if(!PRES_ROWS.length){
     el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No client links yet. Save a room in Studio, then use New Link to share it for approval.</p>';
     return;
