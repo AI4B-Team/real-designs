@@ -1685,10 +1685,16 @@ async function paintTeam(){
     ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No teammates yet. Invite one below. They sign in with that email, accept the invite, and then share this workspace with you.</p>'}`;
   const seatEl=document.getElementById('seatCount');
   if(seatEl){ const n=1+(team.sent||[]).length; seatEl.textContent=n+(n===1?' Seat':' Seats'); }
+  list.querySelectorAll('[data-copyinv]').forEach(b=>b.addEventListener('click',async()=>{
+    const link=window.location.origin+'/app?invite='+encodeURIComponent(b.dataset.copyinv);
+    try{ await navigator.clipboard.writeText(link); }catch(_){}
+    const t=b.textContent; b.textContent='Link Copied'; setTimeout(()=>{ b.textContent=t; },1600);
+  }));
   list.querySelectorAll('[data-revoke]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await revokeInvite({data:{id:b.dataset.revoke}}); }catch(_){}
     paintTeam();
   }));
+
   list.querySelectorAll('[data-accept]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await acceptInvite({data:{id:b.dataset.accept}}); }catch(_){}
     paintTeam(); paintInviteBanner(); setTimeout(()=>window.location.reload(),400);
