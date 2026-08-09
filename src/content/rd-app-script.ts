@@ -248,6 +248,38 @@ document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>
 const kfmt=(n)=>n>=1000?'$'+(Math.round(n/100)/10)+'K':'$'+Math.round(n).toLocaleString('en-US');
 const empty=(t,s)=>'<div class="rowi"><div class="rowt"><b>'+t+'</b><span>'+s+'</span></div></div>';
 
+/* First run checklist on the dashboard, driven by real workspace data. */
+function paintOnboarding(s,pres){
+  const view=document.getElementById('v-dash'); if(!view) return;
+  let card=document.getElementById('obCard');
+  const done=[
+    ['Save Your First Room','Upload a photo in Studio and save it to a property.', (s.counts.designs||0)>0, 'studio','Open Studio'],
+    ['Price A Scope','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Scope'],
+    ['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'props','Open Properties'],
+    ['Send A Client Presentation','Share a branded approval link and track the decision.', (pres||[]).length>0, 'present','Open Presentations'],
+  ];
+  const left=done.filter(d=>!d[2]).length;
+  if(!left||localStorage.getItem('rd.obDone')==='1'){ if(card) card.remove(); return; }
+  if(!card){
+    card=document.createElement('div');
+    card.id='obCard'; card.className='card ob-card';
+    view.prepend(card);
+  }
+  card.innerHTML='<div class="card-h"><div><h3>Get Set Up</h3><div class="sub">'+(4-left)+' Of 4 Done</div></div>'
+    +'<button class="btn btn-ghost btn-xs" id="obHide">Hide</button></div>'
+    +'<div class="card-b ob-steps">'+done.map(([t,sub,ok,dest,lab])=>
+      '<div class="ob-step'+(ok?' ok':'')+'"><i data-lucide="'+(ok?'check-circle-2':'circle')+'"></i>'
+      +'<div class="rowt"><b>'+t+'</b><span>'+sub+'</span></div>'
+      +(ok?'<span class="pill p-ok">Done</span>':'<button class="btn btn-ghost btn-xs" data-goto="'+dest+'">'+lab+'</button>')
+      +'</div>').join('')+'</div>';
+  try{ lucide.createIcons(); }catch(_){}
+  const hide=document.getElementById('obHide');
+  if(hide) hide.addEventListener('click',()=>{ localStorage.setItem('rd.obDone','1'); card.remove(); });
+  card.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+}
+
+
+
 async function loadDashboard(){
   const rl=document.getElementById('recentList'), al=document.getElementById('attnList'), bt=document.getElementById('budgetTable');
   if(!rl||!al||!bt) return;
