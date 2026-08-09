@@ -1136,7 +1136,7 @@
 
 .rd-site .tour-sum{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:10;
   background:rgba(255,255,255,.97);border-radius:12px;padding:13px 17px;width:min(272px,72%);
-  max-height:calc(100% - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;
+  max-height:calc(100% - 40px);overflow-y:auto;-webkit-overflow-scrolling:touch;
   box-shadow:0 16px 44px rgba(0,0,0,.3);opacity:0;animation:rdPop .45s ease .25s forwards}
 .rd-site .tour-sum .ts-lab{font-size:.56rem;letter-spacing:.15em;text-transform:uppercase;
   color:var(--red);margin-bottom:8px}

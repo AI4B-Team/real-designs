@@ -145,9 +145,15 @@ function paint(i){
   const layer=document.createElement('div');
   layer.className='tlayer'+(b.zoom==='in'?' zoom-in':b.zoom==='out'?' zoom-out':b.zoom==='ken'?' zoom-ken':b.zoom==='aerial'?' zoom-aerial':'');
   layer.innerHTML=photo(b.img,b.ch+' '+b.style)
-    +(b.shop?shopOverlay():'')+(b.rec?recOverlay():'')+(b.summary?summaryOverlay():'')
+    +(b.shop?shopOverlay():'')+(b.rec?recOverlay():'')
     +(b.note?`<span class="tour-note">${b.note}</span>`:'');
   showStage.appendChild(layer);
+  // summary tray sits on the un-transformed stage frame so zoom animations cannot shift it
+  const showEl=document.getElementById('show');
+  if(showEl){
+    showEl.querySelectorAll('.tour-sum').forEach(n=>n.remove());
+    if(b.summary){const holder=document.createElement('div');holder.innerHTML=summaryOverlay().trim();const node=holder.firstElementChild;if(node)showEl.appendChild(node);}
+  }
   requestAnimationFrame(()=>layer.classList.add('in'));
   setTimeout(()=>{
     while(showStage.children.length>1)showStage.removeChild(showStage.firstChild);
