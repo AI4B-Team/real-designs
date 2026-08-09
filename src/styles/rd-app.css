@@ -746,3 +746,20 @@
 .rd-app .saved-prop{display:flex;align-items:center;gap:10px;min-width:0}
 .rd-app .saved-thumb{width:44px;height:34px;object-fit:cover;border-radius:8px;border:1px solid var(--line,#e6e4e0);flex:0 0 auto}
 @media(max-width:640px){.rd-app .save-form{grid-template-columns:1fr}}
+
+/* first run onboarding */
+.rd-app .onb-bar{height:6px;border-radius:999px;background:var(--line,#eeecE8);overflow:hidden;margin:2px 0 14px}
+.rd-app .onb-bar i{display:block;height:100%;width:0;background:#CC0000;border-radius:999px;transition:width .35s ease}
+.rd-app .onb-steps{display:grid;gap:10px}
+.rd-app .onb-step{display:flex;align-items:center;gap:12px;padding:11px 12px;border:1px solid var(--line,#e6e4e0);border-radius:12px}
+.rd-app .onb-step.on{opacity:.72}
+.rd-app .onb-ic{flex:0 0 auto;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;border:1px solid var(--line,#e6e4e0)}
+.rd-app .onb-step.on .onb-ic{border-color:#0a7b3e;color:#0a7b3e}
+.rd-app .onb-ic i{width:15px;height:15px}
+.rd-app .onb-tx{min-width:0;flex:1}
+.rd-app .onb-tx b{display:block;font-size:.9rem}
+.rd-app .onb-tx span{display:block;font-size:.8rem;color:var(--muted,#6b6864)}
+.rd-app .up-cost{display:block!important}
+.rd-app .up-cost b{display:block;font-size:.86rem}
+.rd-app .up-cost span{display:block;font-size:.8rem;color:var(--muted,#6b6864)}
+@media(max-width:640px){.rd-app .onb-step{flex-wrap:wrap}}
