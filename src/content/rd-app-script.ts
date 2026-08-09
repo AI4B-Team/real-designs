@@ -410,7 +410,7 @@ async function runScope(){
     renderScope(r);
   }catch(e){
     scopeRowsEl.innerHTML='<tr><td colspan="5">No priced lines.</td></tr>';
-    showAlert('Could not price this scope. '+((e&&e.message)||'Try again in a moment.'));
+    if(!creditGate(e)) showAlert('Could not price this scope. '+((e&&e.message)||'Try again in a moment.'));
   }finally{
     scopeBusy=false; runBtn.disabled=false; runBtn.classList.remove('is-busy');
     document.getElementById('estSum').classList.remove('is-loading');
@@ -442,7 +442,7 @@ async function detectScopeChanges(){
     await runScope();
     if(r.summary) note.textContent=r.summary+' '+note.textContent;
   }catch(e){
-    showAlert('Could not read the photos. '+((e&&e.message)||''));
+    if(!creditGate(e)) showAlert('Could not read the photos. '+((e&&e.message)||''));
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
 
@@ -470,7 +470,7 @@ async function runDims(){
     await runScope();
     note.textContent=r.basis+' '+r.disclaimer+' '+note.textContent;
   }catch(e){
-    showAlert('Could not measure this photo. '+((e&&e.message)||''));
+    if(!creditGate(e)) showAlert('Could not measure this photo. '+((e&&e.message)||''));
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
 
