@@ -24,6 +24,7 @@ import { polishFeedback } from "@/lib/feedback.functions";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
+import { summaryHTML, metric } from "@/lib/design-result-summary";
 
 
 export function initApp(): () => void {
@@ -618,11 +619,17 @@ drawLocks();
 const BANDS=[{lo:3200,hi:5000,fit:'Well Within Target',c:'c-hi'},{lo:11400,hi:14900,fit:'Within Target',c:'c-hi'},
 {lo:26000,hi:35000,fit:'Within Target',c:'c-hi'},{lo:41000,hi:62000,fit:'Above Band, Review',c:'c-md'}];
 const m=n=>'$'+n.toLocaleString();
+function paintStudioSummary(d){
+  const el=document.getElementById('studioSummary'); if(!el) return;
+  el.innerHTML=summaryHTML({contextLabel:'Estimated Project Cost',primaryValue:`${m(d.lo)} to ${m(d.hi)}`,
+    metrics:[metric('Budget Fit',d.fit),metric('Layout Confidence','High'),
+             metric('Pricing Confidence','Medium'),metric('Structural Changes','None Detected')]});
+}
+paintStudioSummary(BANDS[1]);
 document.querySelectorAll('.bchip').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.bchip').forEach(x=>x.classList.remove('on'));b.classList.add('on');
   const d=BANDS[+b.dataset.b];
-  document.getElementById('estVal').textContent=`${m(d.lo)} to ${m(d.hi)}`;
-  const f=document.getElementById('fitVal');f.textContent=d.fit;f.className=d.c;
+  paintStudioSummary(d);
 }));
 document.querySelectorAll('#gradeChips .chip, #spChips .chip').forEach(c=>c.addEventListener('click',()=>{
   c.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
