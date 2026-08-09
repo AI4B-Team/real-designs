@@ -348,6 +348,7 @@ async function loadProperties(){
   paintTree();
   paintDesigns();
   updateSearchMeta();
+  try{ paintBatch(); }catch(_){}
 
 }
 loadProperties();
@@ -956,16 +957,34 @@ paintPresentations();
 window.addEventListener('rd:saved',()=>paintPresentations());
 
 /* ---------- team ---------- */
-const team=[['Dolmar Cross','Owner','DC','p-ink','Owner'],['Keisha Cross','Project Manager','KC','p-blue','Admin'],
-['Marcus Tate','Acquisitions','MT','p-gray','Member'],['Ray Gutierrez','General Contractor','RG','p-gray','Member'],
-['Priya Nair','Listing Agent','PN','p-gray','Member'],['Alex Boone','Photographer','AB','p-amb','Viewer']];
-document.getElementById('teamList').innerHTML=team.map(([n,r,i,cls,role])=>`
-<div class="seat"><span class="av">${i}</span><div class="rowt"><b>${n}</b><span>${r}</span></div>
-<span class="pill ${cls}">${role}</span><button class="icon-btn"><i data-lucide="ellipsis"></i></button></div>`).join('');
-document.getElementById('usageRows').innerHTML=[['Dolmar Cross','Owner',412,28,'2 min ago'],['Keisha Cross','Admin',388,19,'1 hour ago'],
-['Marcus Tate','Member',201,11,'Yesterday'],['Ray Gutierrez','Member',144,22,'Yesterday'],
-['Priya Nair','Member',69,3,'3 days ago'],['Alex Boone','Viewer',0,0,'2 weeks ago']]
-.map(([n,r,d,s,l])=>`<tr><td><b>${n}</b></td><td>${r}</td><td class="n">${d}</td><td class="n">${s}</td><td class="n">${l}</td></tr>`).join('');
+async function paintTeam(){
+  const list=document.getElementById('teamList'); if(!list) return;
+  let name='You', mail='', av='YOU';
+  try{
+    const { data:{ user } }=await supabase.auth.getUser();
+    if(user){
+      mail=user.email||'';
+      name=(user.user_metadata&&(user.user_metadata.full_name||user.user_metadata.name))||mail.split('@')[0]||'You';
+      av=name.split(/[\s._-]+/).filter(Boolean).slice(0,2).map(w=>w[0].toUpperCase()).join('')||'YOU';
+    }
+  }catch(_){}
+  list.innerHTML=`<div class="seat"><span class="av">${av}</span><div class="rowt"><b>${name}</b><span>${mail||'Signed in'}</span></div>
+    <span class="pill p-ink">Owner</span></div>
+    <p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">Extra seats and invitations are in development. Everything in this workspace belongs to your account today.</p>`;
+
+  const rows=document.getElementById('usageRows');
+  if(rows){
+    let designs=0, scopes=0;
+    try{
+      const hist=await listCreditHistory();
+      hist.forEach(h=>{ if(h.action==='design') designs++; if(h.action==='scope') scopes++; });
+    }catch(_){}
+    rows.innerHTML=`<tr><td><b>${name}</b></td><td>Owner</td><td class="n">${designs}</td><td class="n">${scopes}</td><td class="n">Now</td></tr>`;
+  }
+  lucide.createIcons();
+}
+paintTeam();
+window.addEventListener('rd:credits-changed',()=>paintTeam());
 
 /* ---------- help menu ---------- */
 const helpBtn=document.getElementById('helpBtn'),helpMenu=document.getElementById('helpMenu');
