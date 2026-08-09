@@ -727,6 +727,21 @@ export function initExtra(timers: number[], lucide: any) {
   }
 
 
+  /* ---------- device switcher ---------- */
+  const devSel = $("devSel");
+  if (devSel) {
+    const CAPS = ["Plan the entire property", "Review designs with clients", "Capture changes on site"];
+    const panels = Array.from(document.querySelectorAll(".rd-site .dvp")) as any[];
+    const setDev = (n: number) => {
+      panels.forEach((p: any) => p.classList.toggle("on", +p.dataset.d === n));
+      devSel.querySelectorAll("button").forEach((b: any) => b.classList.toggle("on", +b.dataset.d === n));
+      const c = $("devCap"); if (c) c.textContent = CAPS[n] || "";
+    };
+    devSel.querySelectorAll("button").forEach((b: any) =>
+      b.addEventListener("click", () => setDev(Number(b.dataset.d))));
+    setDev(0);
+  }
+
   /* ---------- device showcase screens ---------- */
   const devShots: [string, string][] = [
     ["devShotA", PHOTOS.after],
