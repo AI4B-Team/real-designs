@@ -487,7 +487,9 @@ document.querySelectorAll('#gradeChips .chip, #spChips .chip').forEach(c=>c.addE
 const gsteps=['Reading room geometry','Applying object locks','Fitting design to budget band','Selecting retail grade finishes','Rendering the space','Finishing the image'];
 let busy=false, lastRender=null, lastRenderPath=null;
 document.getElementById('genBtn').addEventListener('click',async ()=>{
-  if(busy)return;busy=true;
+  if(busy)return;
+  if(!ensureCredits(1,'A Design Render')) return;
+  busy=true;
   const btn=document.getElementById('genBtn'); btn.disabled=true;
   const ov=document.getElementById('cGen'),bar=document.getElementById('cBar'),st=document.getElementById('cStep');
   ov.classList.add('on');bar.style.width='0%';st.textContent=gsteps[0];
@@ -559,7 +561,9 @@ function toolOverlay(steps){
 }
 
 async function run3dPlan(){
-  if(busy) return; busy=true;
+  if(busy) return;
+  if(!ensureCredits(6,'A 3D Plan')) return;
+  busy=true;
   const ui=toolOverlay(['Reading the room geometry','Building the floor plate','Placing the furniture','Rendering the 3D plan']);
   try{
     const image=await toDataUrl(lastRender||studioSrc('after'),1100);
@@ -580,7 +584,9 @@ async function run3dPlan(){
 }
 
 async function runWalkthrough(){
-  if(busy) return; busy=true;
+  if(busy) return;
+  if(!ensureCredits(40,'A Walkthrough Video')) return;
+  busy=true;
   const ui=toolOverlay(['Locking the finished render','Queuing the camera move','Rendering the walkthrough']);
   try{
     const image=await toDataUrl(lastRender||studioSrc('after'),1100);
@@ -1927,7 +1933,7 @@ async function buildNotifs(){
     });
   }catch(e){}
   try{
-    const c=await getMyCredits();
+    const c=await getMyCredits(); CREDITS=c;
     if(c&&c.plan!=='free'&&c.balance<=20)
       out.push({id:'low:'+c.balance, ic:'triangle-alert', cat:'billing', t:'Credits running low',
         b:c.balance+' credits left on your '+c.plan+' plan.', at:new Date().toISOString(), tm:'now'});
@@ -2511,6 +2517,19 @@ function paintBilling(c){
     '<div class="mono" style="font-size:.78rem">'+r[1]+'</div></div>').join('');
 }
 
+let CREDITS=null;
+/** Pre-flight credit check so a run is blocked before it starts. */
+function ensureCredits(cost,label){
+  if(!CREDITS) return true;
+  if(CREDITS.plan==='free'){
+    if(cost>1){ upgradeModal('Upgrade To Use '+label,label+' costs '+cost+' credits and needs a paid plan. The free plan covers 5 designs a day.'); return false; }
+    if((CREDITS.remainingToday??0)<=0){ upgradeModal('You Have Used Today\u2019s Free Designs','Free designs reset at midnight. A paid plan adds a credit balance you can spend on any tool.'); return false; }
+    return true;
+  }
+  if((CREDITS.balance??0)<cost){ upgradeModal('You Need More Credits',label+' costs '+cost+' credits and your balance is '+(CREDITS.balance??0)+'. Top up or move to a bigger plan.'); return false; }
+  return true;
+}
+
 async function refreshCredits(){
   const lab=document.getElementById('credLab'); if(!lab) return;
   const box=lab.closest('.credit-box'); const bar=box&&box.querySelector('.meter i');
@@ -2518,6 +2537,7 @@ async function refreshCredits(){
   try{
     const c=await getMyCredits();
     const title=box&&box.querySelector('.lab span');
+    const gc=document.getElementById('genCost'); if(gc) gc.textContent=c.plan==='free'?'Free':'1';
     if(c.plan==='free'){
       if(title) title.textContent='Free Designs Today';
       lab.textContent=(c.remainingToday??0)+' / 5';

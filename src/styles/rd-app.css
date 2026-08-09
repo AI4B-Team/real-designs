@@ -779,3 +779,12 @@
 .rd-app select,.rd-app option,.rd-app optgroup{color-scheme:light;background-color:#fff;color:var(--ink)}
 
 .rd-app .toolrow b{white-space:nowrap}
+
+/* credit cost badge on action buttons */
+.rd-app .cost-chip{
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:18px; height:18px; padding:0 5px; margin-left:6px;
+  border-radius:999px; font-size:.66rem; line-height:1; font-weight:700;
+  background:rgba(255,255,255,.22); color:#fff;
+}
+.rd-app .btn-ghost .cost-chip{ background:var(--line); color:var(--ink-2); }
