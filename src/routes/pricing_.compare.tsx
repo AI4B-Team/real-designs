@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { Fragment } from "react";
 import { Check, X, ArrowLeft } from "lucide-react";
 
 import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
@@ -106,8 +107,8 @@ function ComparePage() {
               </thead>
               <tbody>
                 {GROUPS.map((g) => (
-                  <>
-                    <tr className="grp" key={g.title}>
+                  <Fragment key={g.title}>
+                    <tr className="grp">
                       <td colSpan={5}>{g.title}</td>
                     </tr>
                     {g.rows.map((r) => (
@@ -127,7 +128,7 @@ function ComparePage() {
                         </td>
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
