@@ -11,41 +11,51 @@ const TITLE = "Resources Hub — Design, Cost And Scope Guides | REAL DESIGNS";
 const DESC =
   "Every REAL DESIGNS guide in one place: AI design pages, renovation cost breakdowns, contractor scope references and free planning tools.";
 
-const GROUPS: { heading: string; blurb: string; match: (p: LandingPage) => boolean }[] = [
+const GROUPS: { heading: string; blurb: string; priority: number; match: (p: LandingPage) => boolean }[] = [
   {
     heading: "Design Guides",
     blurb: "Generate a designed space from a real photo, then price what it takes to build it.",
     match: (p) => /design|staging|render|floor-plan|declutter|curb-appeal/.test(p.slug),
+    priority: 4,
   },
   {
     heading: "Cost And Scope Guides",
     blurb: "Planning ranges, line item scopes and the decisions that actually move the number.",
     match: (p) => /cost|calculator|estimator|scope|grade/.test(p.slug),
+    priority: 3,
   },
   {
     heading: "Rules And Compliance",
     blurb: "Disclosure and photo rules you need to follow before a staged image goes live.",
     match: (p) => /rules|disclosure|mls/.test(p.slug),
+    priority: 2,
   },
   {
     heading: "By Role",
     blurb: "How flippers, contractors, agents, managers, designers and landlords use the workflow.",
     match: (p) => p.slug.startsWith("/for-") || p.slug.includes("house-flippers"),
+    priority: 1,
   },
 ];
 
 function grouped() {
   const used = new Set<string>();
-  const out = GROUPS.map((g) => {
+  const byHeading = new Map<string, LandingPage[]>();
+  // Assign each page to its most specific group first, then render in display order.
+  for (const g of [...GROUPS].sort((a, b) => a.priority - b.priority)) {
     const pages = LANDING_PAGES.filter((p) => !used.has(p.slug) && g.match(p));
     pages.forEach((p) => used.add(p.slug));
-    return { ...g, pages };
-  }).filter((g) => g.pages.length > 0);
+    byHeading.set(g.heading, pages);
+  }
+  const out = GROUPS.map((g) => ({ ...g, pages: byHeading.get(g.heading) ?? [] })).filter(
+    (g) => g.pages.length > 0,
+  );
   const rest = LANDING_PAGES.filter((p) => !used.has(p.slug));
   if (rest.length) {
     out.push({
       heading: "More Guides",
       blurb: "Everything else worth reading before you commit a budget.",
+      priority: 99,
       match: () => true,
       pages: rest,
     });
