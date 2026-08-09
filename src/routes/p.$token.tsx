@@ -156,10 +156,17 @@ function SharedPresentation() {
         {hasCompare ? <p className="pp-hint">Drag across the photo to reveal the redesign.</p> : null}
 
         {deck.total_low != null && deck.total_high != null ? (
-          <div className="pp-range-box">
+          <div className={"pp-range-box" + (trimmed ? " is-trimmed" : "")}>
             <span>Estimated Planning Range</span>
             <b>
-              {money(deck.total_low)} to {money(deck.total_high)}
+              {trimmed ? (
+                <>
+                  <s>{money(deck.total_low)} to {money(deck.total_high)}</s>{" "}
+                  {money(keptLow)} to {money(keptHigh)}
+                </>
+              ) : (
+                <>{money(deck.total_low)} to {money(deck.total_high)}</>
+              )}
             </b>
           </div>
         ) : null}
@@ -168,9 +175,17 @@ function SharedPresentation() {
       {deck.lines.length ? (
         <section className="pp-card">
           <h2 className="pp-h2">Scope Of Work</h2>
+          <p className="pp-hint pp-hint-left">
+            {decided
+              ? excluded.length
+                ? `You removed ${excluded.length} ${excluded.length === 1 ? "item" : "items"} from this scope.`
+                : "You kept every line in this scope."
+              : "Uncheck any line you do not want. The range updates as you go."}
+          </p>
           <table className="pp-table">
             <thead>
               <tr>
+                {!decided ? <th className="c">Keep</th> : null}
                 <th>Line Item</th>
                 <th>Trade</th>
                 <th className="n">Qty</th>
@@ -179,8 +194,19 @@ function SharedPresentation() {
               </tr>
             </thead>
             <tbody>
-              {deck.lines.map((l: { description: string; trade: string; qty: number; uom: string; low: number; high: number }, i: number) => (
-                <tr key={i}>
+              {deck.lines.map((l: { id: string; description: string; trade: string; qty: number; uom: string; low: number; high: number }, i: number) => (
+                <tr key={l.id || i} className={isOut(l.id) ? "is-out" : ""}>
+                  {!decided ? (
+                    <td className="c" data-l="Keep">
+                      <input
+                        type="checkbox"
+                        className="pp-check"
+                        checked={!isOut(l.id)}
+                        aria-label={`Keep ${l.description}`}
+                        onChange={() => toggleLine(l.id)}
+                      />
+                    </td>
+                  ) : null}
                   <td data-l="Line Item">{l.description}</td>
                   <td data-l="Trade">{l.trade}</td>
                   <td className="n" data-l="Qty">
