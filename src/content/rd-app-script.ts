@@ -2961,8 +2961,9 @@ if(scopeGrid && !document.getElementById('scSave')){
 
   /* welcome once per account, but never over a photo handed off from the site */
   const pendingHandoff=(()=>{ try{ return !!window.rdHandoffPending||!!localStorage.getItem('rd.handoff'); }catch(e){ return false; } })();
-  if(!state.welcomed && !pendingHandoff){
-    state.welcomed=true; save();
+  const alreadyWelcomed=state.welcomed||readState().welcomed||window.__rdWelcomed;
+  if(!alreadyWelcomed && !pendingHandoff){
+    state.welcomed=true; window.__rdWelcomed=true; save();
     document.querySelectorAll('#onbModal').forEach(n=>n.remove());
     const m=document.createElement('div'); m.className='up-modal on'; m.id='onbModal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
