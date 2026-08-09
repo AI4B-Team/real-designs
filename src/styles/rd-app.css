@@ -723,3 +723,15 @@
    The topbar is counter-scaled so its menu items keep their current size. */
 .rd-app{zoom:.8}
 .rd-app .topbar{zoom:1.25}
+
+/* ---------- credits: upgrade prompt ---------- */
+.up-modal{position:fixed;inset:0;z-index:200;display:none}
+.up-modal.on{display:block}
+.up-scrim{position:absolute;inset:0;background:rgba(17,17,19,.6);backdrop-filter:blur(3px)}
+.up-card{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100vw - 32px));background:var(--card,#fff);border:1px solid var(--line,#e6e4e0);border-radius:18px;padding:24px;box-shadow:0 28px 70px rgba(17,17,19,.3)}
+.up-card h3{margin:0 0 8px;font-size:1.12rem;letter-spacing:-.01em}
+.up-card p{margin:0 0 14px;color:var(--mute,#6b6b6b);font-size:.9rem;line-height:1.5}
+.up-costs{border:1px solid var(--line,#e6e4e0);border-radius:12px;padding:6px 12px;margin-bottom:14px}
+.up-costs div{display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:.84rem;border-bottom:1px solid var(--line,#efeeeb)}
+.up-costs div:last-child{border-bottom:0}
+.cred-up{cursor:pointer;text-decoration:underline;text-underline-offset:2px}

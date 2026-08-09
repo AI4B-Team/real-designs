@@ -6,7 +6,7 @@ import { PHOTOS, photo } from "@/content/rd-photos";
 import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
-import { getMyCredits } from "@/lib/credits.functions";
+import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -410,7 +410,7 @@ async function runScope(){
     renderScope(r);
   }catch(e){
     scopeRowsEl.innerHTML='<tr><td colspan="5">No priced lines.</td></tr>';
-    showAlert('Could not price this scope. '+((e&&e.message)||'Try again in a moment.'));
+    if(!creditGate(e)) showAlert('Could not price this scope. '+((e&&e.message)||'Try again in a moment.'));
   }finally{
     scopeBusy=false; runBtn.disabled=false; runBtn.classList.remove('is-busy');
     document.getElementById('estSum').classList.remove('is-loading');
@@ -442,7 +442,7 @@ async function detectScopeChanges(){
     await runScope();
     if(r.summary) note.textContent=r.summary+' '+note.textContent;
   }catch(e){
-    showAlert('Could not read the photos. '+((e&&e.message)||''));
+    if(!creditGate(e)) showAlert('Could not read the photos. '+((e&&e.message)||''));
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
 
@@ -470,7 +470,7 @@ async function runDims(){
     await runScope();
     note.textContent=r.basis+' '+r.disclaimer+' '+note.textContent;
   }catch(e){
-    showAlert('Could not measure this photo. '+((e&&e.message)||''));
+    if(!creditGate(e)) showAlert('Could not measure this photo. '+((e&&e.message)||''));
   }finally{ btn.disabled=false; btn.innerHTML=lab; }
 }
 
@@ -987,7 +987,88 @@ if(scopeGrid && !document.getElementById('scSave')){
 
 lucide.createIcons();
 
-/* ---------- live credit meter ---------- */
+/* ---------- live credit meter, billing pane and upgrade prompts ---------- */
+const COST_ROWS=[['Design','1 Credit','A photoreal redesign of one photo'],
+                 ['Scope','3 Credits','Line items, quantities and local rates'],
+                 ['3D Plan','6 Credits','A furnished plan from your photo'],
+                 ['Video','40 Credits','A cinematic walkthrough clip']];
+const PLAN_NAME={free:'Free',starter:'Starter',pro:'Pro',studio:'Studio'};
+const PLAN_CAP={free:5,starter:200,pro:2000,studio:4000};
+
+function upgradeModal(title,body){
+  let m=document.getElementById('upModal');
+  if(!m){
+    m=document.createElement('div'); m.id='upModal'; m.className='up-modal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'+
+      '<h3 id="upTitle"></h3><p id="upBody"></p>'+
+      '<div id="upCosts" class="up-costs"></div>'+
+      '<button class="btn btn-primary btn-block" id="upGo"><i data-lucide="zap"></i>See Plans And Credits</button>'+
+      '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Not Now</button></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click',(e)=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
+    m.querySelector('#upGo').addEventListener('click',()=>{
+      m.classList.remove('on');
+      const b=document.querySelector('[data-goto="account"]'); if(b) b.click();
+      const rail=document.querySelector('[data-pane="billing"]'); if(rail) rail.click();
+    });
+  }
+  m.querySelector('#upTitle').textContent=title;
+  m.querySelector('#upBody').textContent=body;
+  m.querySelector('#upCosts').innerHTML=COST_ROWS.map(r=>'<div><span>'+r[0]+'</span><b class="mono">'+r[1]+'</b></div>').join('');
+  m.classList.add('on');
+  lucide.createIcons();
+}
+
+/** Turn a server refusal into an upgrade prompt instead of a raw error. */
+function creditGate(e){
+  const msg=(e&&e.message)||'';
+  if(/credit|free designs|paid plan/i.test(msg)){
+    upgradeModal(/free designs/i.test(msg)?'You Have Used Today\u2019s Free Designs':'You Need More Credits',msg);
+    return true;
+  }
+  return false;
+}
+window.rdCreditGate=creditGate;
+
+async function loadCreditHistory(){
+  const el=document.getElementById('billHist'); if(!el) return;
+  try{
+    const rows=await listCreditHistory();
+    if(!rows.length) return;
+    el.innerHTML=rows.slice(0,15).map(r=>{
+      const when=new Date(r.created_at).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+      const label=(r.action||'').replace('plan_3d','3D Plan').replace(/^./,c=>c.toUpperCase());
+      const delta=r.delta>0?'+'+r.delta:(r.delta<0?String(r.delta):'Free');
+      return '<div class="rowi"><div class="rowt"><b>'+label+'</b><span>'+when+(r.note?' \u00b7 '+r.note:'')+'</span></div>'+
+             '<div class="mono" style="font-size:.78rem">'+delta+'</div></div>';
+    }).join('');
+  }catch(e){ /* signed out */ }
+}
+
+function paintBilling(c){
+  const sub=document.getElementById('billSub'); if(!sub) return;
+  const name=PLAN_NAME[c.plan]||c.plan;
+  sub.textContent=c.plan==='free'?'Free plan \u00b7 5 designs a day':name+' plan \u00b7 billed annually';
+  const st=document.getElementById('billStatus');
+  if(st){ st.textContent=c.plan==='free'?'Free':'Active'; st.className='pill '+(c.plan==='free'?'p-ink':'p-ok'); }
+  const lab=document.getElementById('billMeterLab'), val=document.getElementById('billMeterVal'),
+        bar=document.getElementById('billMeterBar'), note=document.getElementById('billMeterNote');
+  if(c.plan==='free'){
+    lab.textContent='Free Designs Left Today';
+    val.textContent=(c.remainingToday??0)+' / 5';
+    bar.style.width=(((c.remainingToday??0)/5)*100)+'%';
+    note.textContent='Resets at midnight. Scopes, 3D plans and video need a paid plan.';
+  }else{
+    lab.textContent='Credit Balance';
+    val.textContent=c.balance.toLocaleString();
+    bar.style.width=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100)+'%';
+    note.textContent='One balance across every tool. Credits refresh each billing cycle.';
+  }
+  const costs=document.getElementById('billCosts');
+  if(costs) costs.innerHTML=COST_ROWS.map(r=>'<div class="rowi"><div class="rowt"><b>'+r[0]+'</b><span>'+r[2]+'</span></div>'+
+    '<div class="mono" style="font-size:.78rem">'+r[1]+'</div></div>').join('');
+}
+
 async function refreshCredits(){
   const lab=document.getElementById('credLab'); if(!lab) return;
   const box=lab.closest('.credit-box'); const bar=box&&box.querySelector('.meter i');
@@ -999,17 +1080,27 @@ async function refreshCredits(){
       if(title) title.textContent='Free Designs Today';
       lab.textContent=(c.remainingToday??0)+' / 5';
       if(bar) bar.style.width=(((c.remainingToday??0)/5)*100)+'%';
-      if(foot) foot.innerHTML='<span>Free Plan</span><b>Upgrade For Credits</b>';
+      if(foot) foot.innerHTML='<span>Free Plan</span><b class="cred-up" role="button" tabindex="0">Upgrade For Credits</b>';
     }else{
       if(title) title.textContent='Credit Balance';
       lab.textContent=c.balance.toLocaleString();
-      if(bar) bar.style.width=Math.min(100,(c.balance/4000)*100)+'%';
-      if(foot) foot.innerHTML='<span>'+c.plan.charAt(0).toUpperCase()+c.plan.slice(1)+' Plan</span><b>1 Design &bull; 3 Scope &bull; 40 Video</b>';
+      if(bar) bar.style.width=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100)+'%';
+      if(foot) foot.innerHTML='<span>'+(PLAN_NAME[c.plan]||c.plan)+' Plan</span><b>1 Design &bull; 3 Scope &bull; 40 Video</b>';
     }
+    if(box && !box.dataset.wired){
+      box.dataset.wired='1';
+      box.addEventListener('click',(e)=>{
+        if(e.target.classList&&e.target.classList.contains('cred-up'))
+          upgradeModal('Upgrade For A Credit Balance','The free plan covers 5 designs a day. Paid plans add scopes, 3D plans and video from one shared balance.');
+      });
+    }
+    paintBilling(c);
+    loadCreditHistory();
   }catch(e){ /* signed out or not provisioned yet */ }
 }
 refreshCredits();
 window.addEventListener('rd:credits-changed', refreshCredits);
+
 
   } catch (e) { console.error(e); }
   return () => { timers.forEach((t) => { window.clearInterval(t); window.clearTimeout(t); }); };
