@@ -252,6 +252,7 @@ export type Database = {
           created_at: string
           decided_at: string | null
           decision_note: string | null
+          excluded_lines: Json
           id: string
           last_viewed_at: string | null
           status: string
@@ -268,6 +269,7 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           decision_note?: string | null
+          excluded_lines?: Json
           id?: string
           last_viewed_at?: string | null
           status?: string
@@ -284,6 +286,7 @@ export type Database = {
           created_at?: string
           decided_at?: string | null
           decision_note?: string | null
+          excluded_lines?: Json
           id?: string
           last_viewed_at?: string | null
           status?: string
@@ -738,7 +741,12 @@ export type Database = {
       has_workspace_access: { Args: { _owner: string }; Returns: boolean }
       record_presentation_view: { Args: { _token: string }; Returns: undefined }
       respond_to_presentation: {
-        Args: { _decision: string; _note?: string; _token: string }
+        Args: {
+          _decision: string
+          _excluded?: Json
+          _note?: string
+          _token: string
+        }
         Returns: Json
       }
       spend_credits: {

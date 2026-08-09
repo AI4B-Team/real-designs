@@ -15,7 +15,7 @@ export const listPresentations = createServerFn({ method: "GET" })
       .from("presentations")
       .select(
         `id, title, client_name, client_email, token, status, view_count, last_viewed_at,
-         decision_note, decided_at, created_at,
+         decision_note, excluded_lines, decided_at, created_at,
          versions!inner ( version_no,
            rooms!inner ( name,
              projects!inner ( name, properties!inner ( address ) ) ) )`,
@@ -34,6 +34,7 @@ export const listPresentations = createServerFn({ method: "GET" })
       view_count: (p.view_count ?? 0) as number,
       last_viewed_at: (p.last_viewed_at ?? null) as string | null,
       decision_note: (p.decision_note ?? null) as string | null,
+      excluded_count: Array.isArray(p.excluded_lines) ? (p.excluded_lines as any[]).length : 0,
       created_at: p.created_at as string,
       address: p.versions.rooms.projects.properties.address as string,
       project_name: p.versions.rooms.projects.name as string,
@@ -93,6 +94,7 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
       client_name: (p.client_name ?? null) as string | null,
       status: (p.status ?? "sent") as string,
       decision_note: (p.decision_note ?? null) as string | null,
+      excluded_lines: ((p.excluded_lines ?? []) as any[]).map(String),
       brand_name: (p.brand_name ?? null) as string | null,
       brand_accent: (p.brand_accent ?? null) as string | null,
       address: p.address as string,
@@ -106,6 +108,7 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
       total_low: p.total_low == null ? null : Number(p.total_low),
       total_high: p.total_high == null ? null : Number(p.total_high),
       lines: ((p.lines ?? []) as any[]).map((l) => ({
+        id: String(l.id ?? ""),
         description: String(l.description),
         trade: String(l.trade ?? ""),
         qty: Number(l.qty ?? 0),
@@ -127,8 +130,9 @@ export const respondToPresentation = createServerFn({ method: "POST" })
     const { data: res, error } = await client.rpc("respond_to_presentation", {
       _token: data.token,
       _decision: data.decision,
+      _excluded: data.excluded ?? [],
       ...(data.note ? { _note: data.note } : {}),
-    });
+    } as never);
     if (error) throw new Error(error.message);
     return res as { ok: boolean; status?: string; reason?: string };
   });
