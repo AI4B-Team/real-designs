@@ -159,6 +159,39 @@ export type Database = {
         }
         Relationships: []
       }
+      feedback: {
+        Row: {
+          attachment_path: string | null
+          body: string
+          category: string
+          created_at: string
+          id: string
+          status: string
+          user_id: string
+          view_context: string | null
+        }
+        Insert: {
+          attachment_path?: string | null
+          body: string
+          category?: string
+          created_at?: string
+          id?: string
+          status?: string
+          user_id: string
+          view_context?: string | null
+        }
+        Update: {
+          attachment_path?: string | null
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          status?: string
+          user_id?: string
+          view_context?: string | null
+        }
+        Relationships: []
+      }
       founding_members: {
         Row: {
           claimed_at: string

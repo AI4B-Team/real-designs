@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
+import { submitFeedback } from "@/lib/feedback";
+
 
 export function initApp(): () => void {
   const timers: number[] = [];
@@ -1513,8 +1515,11 @@ document.getElementById('fbCats').addEventListener('click',e=>{
   document.querySelectorAll('#fbCats .fb-cat').forEach(x=>x.classList.remove('on'));
   if(!on) c.classList.add('on');
 });
+let fbAttachPath=null;
 function openFb(){ document.getElementById('fbForm').hidden=false; document.getElementById('fbDone').hidden=true;
-  document.getElementById('fbBody').value=''; document.getElementById('fbFile').hidden=true;
+  document.getElementById('fbBody').value=''; const ff=document.getElementById('fbFile'); ff.hidden=true; ff.textContent='';
+  fbAttachPath=null;
+  const send=document.getElementById('fbSend'); send.disabled=false; send.textContent='Send Feedback';
   document.querySelectorAll('#fbCats .fb-cat').forEach(x=>x.classList.remove('on'));
   fbModal.classList.add('on'); lucide.createIcons(); }
 function closeFb(){ fbModal.classList.remove('on'); }
@@ -1524,13 +1529,32 @@ document.getElementById('fbClose').addEventListener('click',closeFb);
 document.getElementById('fbDoneClose').addEventListener('click',closeFb);
 fbModal.addEventListener('click',e=>{ if(e.target===fbModal) closeFb(); });
 document.getElementById('fbAttach').addEventListener('click',()=>{
-  const f=document.getElementById('fbFile'); f.hidden=false; f.textContent='screenshot-2026-08-06.png';
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='image/*';
+  inp.addEventListener('change',async()=>{
+    const file=inp.files&&inp.files[0]; if(!file) return;
+    const f=document.getElementById('fbFile'); f.hidden=false; f.textContent='Uploading '+file.name+'…';
+    try{ fbAttachPath=await uploadRoomPhoto(file); f.textContent=file.name; }
+    catch(err){ fbAttachPath=null; f.textContent=(err&&err.message)||'Could not attach that file.'; }
+  });
+  inp.click();
 });
-document.getElementById('fbSend').addEventListener('click',()=>{
+document.getElementById('fbSend').addEventListener('click',async()=>{
   const b=document.getElementById('fbBody');
   if(b.value.trim().length<3){ b.focus(); b.style.borderColor='var(--red)'; return; }
-  b.style.borderColor=''; document.getElementById('fbForm').hidden=true; document.getElementById('fbDone').hidden=false; lucide.createIcons();
+  b.style.borderColor='';
+  const send=document.getElementById('fbSend'); send.disabled=true; send.textContent='Sending…';
+  const cat=(document.querySelector('#fbCats .fb-cat.on')||{}).textContent||'Something Else';
+  const view=(document.querySelector('.view.on')||{}).id||'';
+  try{
+    await submitFeedback({category:cat,body:b.value,viewContext:view.replace(/^v-/,''),attachmentPath:fbAttachPath});
+    document.getElementById('fbForm').hidden=true; document.getElementById('fbDone').hidden=false; lucide.createIcons();
+  }catch(err){
+    send.disabled=false; send.textContent='Send Feedback';
+    b.style.borderColor='var(--red)';
+    const f=document.getElementById('fbFile'); f.hidden=false; f.textContent=(err&&err.message)||'Could not send feedback.';
+  }
 });
+
 
 /* ---------- product tour ---------- */
 const TOUR=[['.sidebar .nav-i','Navigation','Every part of the workspace lives here, from properties through client presentations.'],
