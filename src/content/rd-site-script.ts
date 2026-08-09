@@ -157,20 +157,15 @@ function paint(i){
   styleChip.textContent=b.style;
 
   if(!budgetTouched){
-    const he=document.getElementById('heroEst'),hf=document.getElementById('heroFit'),
-          hl=document.getElementById('heroEstLab');
-    if(hl)hl.textContent=b.lab;
-    if(he){const money=/\$/.test(b.est);he.textContent=b.est;he.classList.toggle('soft',!money);he.classList.toggle('ann-circle',money)}
-    if(hf){hf.textContent=b.fit;hf.className=b.summary?'conf-hi big':'conf-hi'}
-    if(b.mets){
-      const ids=[['heroM1Lab','heroFit'],['heroM2Lab','heroM2'],['heroM3Lab','heroM3']];
-      b.mets.forEach((m,i)=>{
-        const l=document.getElementById(ids[i][0]),v=document.getElementById(ids[i][1]);
-        if(l)l.textContent=m[0];
-        if(v){v.textContent=m[1];v.className=(i===0&&b.summary?m[2]+' big':m[2])}
-      });
+    const hs=document.getElementById('heroSummary');
+    if(hs){
+      const mets=(b.mets||[]).map(m=>metric(m[0],m[1]));
+      hs.innerHTML=b.proc
+        ? summaryHTML({contextLabel:b.lab,state:'processing',progressMessage:b.proc.msg,progressDetail:b.proc.detail,metrics:mets})
+        : summaryHTML({contextLabel:b.lab,primaryValue:b.est,metrics:mets});
     }
   }
+
 
   toastEl.classList.remove('on');
   if(tToast)clearTimeout(tToast);
