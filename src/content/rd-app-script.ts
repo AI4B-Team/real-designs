@@ -10,7 +10,7 @@ import { renderDesign } from "@/lib/design-render.functions";
 import { renderPlan3d } from "@/lib/plan3d.functions";
 import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
-import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion } from "@/lib/workspace.functions";
+import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
@@ -305,10 +305,14 @@ async function paintRooms(){
   if(rs) rs.textContent=proj?('Rooms saved under '+proj.name):'Rooms saved under the selected project';
   const dna=document.getElementById('dnaRow');
   if(dna){
-    if(dna.dataset.orig===undefined) dna.dataset.orig=dna.innerHTML;
-    dna.innerHTML=(prop&&prop.has_dna)?dna.dataset.orig
-      :'<span style="font-size:.79rem;color:var(--mute-2)">No Design DNA locked for this property yet.</span>';
+    const items=(prop&&prop.dna)||[];
+    dna.innerHTML=items.length
+      ? items.map(it=>`<span class="dna-i"><span class="sw" style="background:${it.color}"></span>${it.label}</span>`).join('')
+      :'<span style="font-size:.79rem;color:var(--mute-2)">No Design DNA locked for this property yet. Use Edit DNA to set the palette and finishes every room should follow.</span>';
   }
+  const dnaPill=document.querySelector('#v-props .pill.p-ink');
+  if(dnaPill) dnaPill.innerHTML='<i data-lucide="dna"></i>'+((prop&&prop.dna&&prop.dna.length)?'Design DNA Locked':'No Design DNA');
+
 
   const rooms=proj?proj.rooms:[];
   if(!rooms.length){
@@ -331,6 +335,7 @@ async function paintRooms(){
     const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
     if(url){ img.src=url; img.hidden=false; }
   });
+  lucide.createIcons();
 }
 
 function paintTree(){
@@ -2297,6 +2302,151 @@ async function refreshCredits(){
 }
 refreshCredits();
 window.addEventListener('rd:credits-changed', refreshCredits);
+
+/* ---------- property Design DNA, scenarios, approval, avatar ---------- */
+
+function miniModal(title,intro,bodyHtml,onGo,goLabel){
+  let m=document.getElementById('miniModal');
+  if(!m){
+    m=document.createElement('div'); m.id='miniModal'; m.className='up-modal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
+      +'<h3 id="mmTitle"></h3><p id="mmIntro"></p><div id="mmBody"></div>'
+      +'<div id="mmErr" style="display:none;font-size:.78rem;color:var(--red);margin-bottom:8px"></div>'
+      +'<button class="btn btn-primary btn-block" id="mmGo"></button>'
+      +'<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
+    document.body.appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
+  }
+  m.querySelector('#mmTitle').textContent=title;
+  m.querySelector('#mmIntro').textContent=intro;
+  m.querySelector('#mmBody').innerHTML=bodyHtml;
+  const err=m.querySelector('#mmErr'); err.style.display='none';
+  const go=m.querySelector('#mmGo'); go.textContent=goLabel||'Save';
+  const fresh=go.cloneNode(true); go.parentNode.replaceChild(fresh,go);
+  fresh.addEventListener('click',async()=>{
+    fresh.disabled=true;
+    try{ await onGo(m); m.classList.remove('on'); }
+    catch(e){ err.style.display='block'; err.textContent=(e&&e.message)||'That did not save.'; }
+    fresh.disabled=false;
+  });
+  m.classList.add('on'); lucide.createIcons();
+  return m;
+}
+
+function curProp(){ return PROP_TREE[SEL.p]||null; }
+async function reloadTree(){ try{ PROP_TREE=await getPropertyTree(); }catch(e){} paintTree(); }
+
+const dnaEditBtn=document.getElementById('dnaEdit');
+if(dnaEditBtn) dnaEditBtn.addEventListener('click',()=>{
+  const prop=curProp();
+  if(!prop){ showAlert('Select a property in the tree first.'); return; }
+  const items=(prop.dna&&prop.dna.length?prop.dna:[{label:'',color:'#E8E2D6'}]).slice(0,8);
+  const rows=items.concat(Array.from({length:Math.max(0,5-items.length)},()=>({label:'',color:'#E8E2D6'})))
+    .map((it,i)=>`<div class="field" style="display:flex;gap:8px;align-items:center">
+      <input type="color" data-dnac="${i}" value="${it.color||'#E8E2D6'}" style="width:38px;height:32px;padding:0;border:1px solid var(--line);border-radius:6px">
+      <input type="text" data-dnal="${i}" value="${(it.label||'').replace(/"/g,'&quot;')}" placeholder="White Oak LVP" style="flex:1"></div>`).join('');
+  miniModal('Design DNA','These finish decisions travel with the property, so every room you design stays in the same language. Leave a line blank to drop it.',rows,async(m)=>{
+    const out=[];
+    m.querySelectorAll('[data-dnal]').forEach(inp=>{
+      const label=(inp.value||'').trim(); if(!label) return;
+      const c=m.querySelector('[data-dnac="'+inp.dataset.dnal+'"]');
+      out.push({label,color:(c&&c.value)||'#E8E2D6'});
+    });
+    await setPropertyDna({data:{property_id:prop.id,items:out}});
+    await reloadTree();
+  },'Lock Design DNA');
+});
+
+const dnaCopyBtn=document.getElementById('dnaCopy');
+if(dnaCopyBtn) dnaCopyBtn.addEventListener('click',()=>{
+  const prop=curProp();
+  if(!prop){ return; }
+  const others=PROP_TREE.filter(p=>p.id!==prop.id);
+  if(!others.length){ miniModal('Copy Design DNA','You only have one property so far. Save a room under a second address and you can copy this DNA onto it.','',async()=>{},'Got It'); return; }
+  const body='<div class="field"><label>Copy Onto</label><select id="dnaTo">'
+    +others.map(p=>`<option value="${p.id}">${p.address}</option>`).join('')+'</select></div>';
+  miniModal('Copy Design DNA','The palette and finish choices locked on '+prop.address+' will replace whatever the other property has.',body,async(m)=>{
+    await copyPropertyDna({data:{from_id:prop.id,to_id:m.querySelector('#dnaTo').value}});
+    await reloadTree();
+  },'Copy DNA');
+});
+
+const newScenarioBtn=document.getElementById('newScenario');
+if(newScenarioBtn) newScenarioBtn.addEventListener('click',()=>{
+  const prop=curProp(); if(!prop) return;
+  const body='<div class="field"><label>Scenario Name</label><input id="scnName" type="text" placeholder="Rental Grade Pass"></div>'
+    +'<div class="field"><label>Finish Grade</label><select id="scnGrade"><option value="rental">Rental Grade</option><option value="retail" selected>Retail Grade</option><option value="premium">Premium Grade</option></select></div>';
+  miniModal('New Scenario','A scenario is a second run at the same property, priced at its own finish grade. Rooms you save can go under either one.',body,async(m)=>{
+    const name=(m.querySelector('#scnName').value||'').trim();
+    if(!name) throw new Error('Give the scenario a name.');
+    await createProject({data:{property_id:prop.id,name,finish_grade:m.querySelector('#scnGrade').value}});
+    await reloadTree();
+  },'Create Scenario');
+});
+
+/* Studio: approve the latest saved version, and download the render on screen. */
+function latestRoom(){
+  const prop=curProp(); const proj=prop?prop.projects[SEL.pr]:null;
+  const rooms=proj?proj.rooms.filter(r=>r.version_id):[];
+  return rooms.length?rooms[rooms.length-1]:null;
+}
+const stApprove=document.getElementById('stApprove');
+if(stApprove) stApprove.addEventListener('click',async()=>{
+  const room=latestRoom();
+  if(!room){ showAlert('Save a room first. Approval applies to a saved version.'); return; }
+  const approved=room.status==='approved';
+  stApprove.disabled=true;
+  try{
+    await setVersionStatus({data:{version_id:room.version_id,status:approved?'draft':'approved'}});
+    await reloadTree();
+    stApprove.innerHTML='<i data-lucide="check"></i>'+(approved?'Approve Latest Version':('v'+(room.version_no||1)+' Approved'));
+    lucide.createIcons();
+    try{ window.dispatchEvent(new CustomEvent('rd:saved')); }catch(e){}
+  }catch(e){ showAlert((e&&e.message)||'Could not update that version.'); }
+  stApprove.disabled=false;
+});
+
+const stDownload=document.getElementById('stDownload');
+if(stDownload) stDownload.addEventListener('click',async()=>{
+  const img=document.querySelector('#cAfter img');
+  const src=lastRender||(img&&img.src);
+  if(!src){ showAlert('Generate a design first, then download it.'); return; }
+  try{
+    const data=await toDataUrl(src,1600);
+    const a=document.createElement('a');
+    a.href=data; a.download='real-designs-'+Date.now()+'.jpg';
+    document.body.appendChild(a); a.click(); a.remove();
+  }catch(e){ showAlert('Could not prepare that image for download.'); }
+});
+
+const scSend=document.getElementById('scSend');
+if(scSend) scSend.addEventListener('click',()=>{ go('present'); presModal(); });
+
+/* Account: profile photo, stored small on the account and shown on every avatar. */
+function paintAvatar(url){
+  document.querySelectorAll('.av').forEach(el=>{
+    if(url){ el.style.backgroundImage='url('+url+')'; el.style.backgroundSize='cover'; el.style.backgroundPosition='center'; el.dataset.hadText=el.dataset.hadText||el.textContent; el.textContent=''; }
+    else { el.style.backgroundImage=''; if(el.dataset.hadText) el.textContent=el.dataset.hadText; }
+  });
+}
+(async()=>{
+  try{
+    const { data:{ user } }=await supabase.auth.getUser();
+    const u=user&&user.user_metadata&&user.user_metadata.avatar_data;
+    if(u) paintAvatar(u);
+  }catch(e){}
+})();
+const avPhoto=document.getElementById('avPhoto');
+if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
+  const file=e.target.files&&e.target.files[0]; if(!file) return;
+  try{
+    const data=await toDataUrl(URL.createObjectURL(file),160);
+    const { error }=await supabase.auth.updateUser({ data:{ avatar_data:data } });
+    if(error) throw new Error(error.message);
+    paintAvatar(data);
+  }catch(err){ showAlert((err&&err.message)||'Could not save that photo.'); }
+});
+
 
 
   } catch (e) { console.error(e); }
