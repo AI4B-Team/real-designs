@@ -1841,3 +1841,24 @@
 .rd-site .usamp{width:46px;height:34px;border-radius:8px;overflow:hidden;border:2px solid transparent;cursor:pointer;background:var(--alt,#f5f3f0)}
 .rd-site .usamp.on{border-color:var(--red,#c00)}
 .rd-site .umodal .no-card{margin:10px 0 0;text-align:center}
+
+/* ---------- mobile hardening: no horizontal page scroll ---------- */
+.rd-site{overflow-x:clip}
+.rd-site .hero-grid,.rd-site .hero-left,.rd-site .hero-right,
+.rd-site .builder,.rd-site .show,.rd-site .show-stage,.rd-site .gal-head{min-width:0}
+@media(max-width:1020px){
+  .rd-site .hero-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:780px){
+  .rd-site .wrap{padding:0 16px}
+  .rd-site .gal-head .mono{transform:none;font-size:1rem}
+  .rd-site .numbar{overflow-x:auto;scrollbar-width:none}
+  .rd-site .numbar::-webkit-scrollbar{display:none}
+  .rd-site .ribbon .wrap{overflow-x:auto;scrollbar-width:none;justify-content:flex-start}
+  .rd-site .ribbon .wrap::-webkit-scrollbar{display:none}
+  .rd-site .pnode{flex:1 0 120px;min-width:120px}
+  .rd-site .cmp-table{display:block;overflow-x:auto}
+}
+@media(max-width:520px){
+  .rd-site .feat-grid{grid-template-columns:minmax(0,1fr)}
+}
