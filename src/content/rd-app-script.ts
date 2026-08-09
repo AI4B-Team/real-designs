@@ -1192,6 +1192,10 @@ if(linkList) linkList.addEventListener('click',async e=>{
     exportPresentationPdf(row.dataset.pid,e.target.closest('[data-pdf]'));
     return;
   }
+  if(e.target.closest('[data-reel]')){
+    exportSocialReel(row.dataset.pid,e.target.closest('[data-reel]'));
+    return;
+  }
   if(e.target.closest('[data-del]')){
     try{ await deletePresentation({data:{id:row.dataset.pid}}); }catch(_){}
     paintPresentations();
