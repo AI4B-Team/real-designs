@@ -1062,12 +1062,95 @@ function paintBands(){
 paintBands();
 
 
-/* ---------- products ---------- */
-const prodGridEl=document.getElementById('prodGrid');
-if(prodGridEl) prodGridEl.innerHTML='<div class="card" style="grid-column:1/-1"><div class="card-b">'+
-  '<b style="display:block;margin-bottom:5px">Item Level Product Matching Is In Development</b>'+
-  '<span style="font-size:.8rem;color:var(--mute-2)">Until it ships, the materials allowance above is built from your priced scope, so the money side stays real. Shoppable furniture and fixture matches will land here.</span>'+
-  '</div></div>';
+/* ---------- product board ---------- */
+const RETAIL=[
+  [/floor|tile|carpet|lvp|hardwood/i,'Home Depot','https://www.homedepot.com/s/'],
+  [/paint|drywall|texture|primer/i,'Home Depot','https://www.homedepot.com/s/'],
+  [/light|fixture|sconce|recessed|electrical/i,'Lowes','https://www.lowes.com/search?searchTerm='],
+  [/cabinet|counter|vanity|door|casing|baseboard|trim|hardware/i,'Home Depot','https://www.homedepot.com/s/'],
+  [/sink|faucet|toilet|shower|plumb/i,'Ferguson','https://www.ferguson.com/search/'],
+  [/sofa|chair|rug|table|bed|lamp|art|decor|furnish|stag/i,'Wayfair','https://www.wayfair.com/keyword.php?keyword=']
+];
+function boardSearch(desc,grade){
+  const q=String(desc||'').replace(/,\s*installed/i,'').trim();
+  const term=(grade&&grade!=='retail'?grade+' ':'')+q;
+  for(const [re,name,base] of RETAIL){ if(re.test(q)) return {name,url:base+encodeURIComponent(term)}; }
+  return {name:'Google Shopping',url:'https://www.google.com/search?tbm=shop&q='+encodeURIComponent(term)};
+}
+function boardLines(r){ return r?r.lines.filter(l=>l.material_high>0):[]; }
+function renderProductBoard(r){
+  const g=document.getElementById('prodGrid'); if(!g) return;
+  const sub=document.getElementById('shopSub');
+  const mat=boardLines(r);
+  if(!mat.length){
+    g.innerHTML='<div class="card" style="grid-column:1/-1"><div class="card-b">'+
+      '<b style="display:block;margin-bottom:5px">No Material Lines Yet</b>'+
+      '<span style="font-size:.8rem;color:var(--mute-2)">Price a scope in Scope &amp; Budget and every material line lands here as a shoppable card with its allowance.</span>'+
+      '</div></div>';
+    if(sub) sub.textContent='Price a scope to build the board';
+    return;
+  }
+  g.innerHTML=mat.map(l=>{
+    const s=boardSearch(l.description,r.grade);
+    return `<div class="card"><div class="card-b">
+      <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mute-2)">${esc(l.trade)}</div>
+      <b style="display:block;margin:4px 0 6px">${esc(l.description)}</b>
+      <div style="font-size:.78rem;color:var(--mute-2);margin-bottom:10px">${l.qty} ${esc(l.uom)} &middot; ${esc(l.price_source)}</div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:11px">
+        <span style="font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute-2)">Allowance</span>
+        <b style="font-family:'DM Mono',monospace">${money(l.material_low)} to ${money(l.material_high)}</b></div>
+      <a class="btn btn-ghost btn-xs" style="width:100%;justify-content:center" href="${s.url}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Shop On ${esc(s.name)}</a>
+    </div></div>`;
+  }).join('');
+  if(sub) sub.textContent=`${mat.length} shoppable lines · ${r.market.name} · ${r.grade[0].toUpperCase()+r.grade.slice(1)} grade allowances`;
+  lucide.createIcons();
+}
+function boardCsv(){
+  const r=lastScope; if(!r) return;
+  const rows=[['Item','Trade','Qty','UOM','Allowance Low','Allowance High','Retailer','Search Link']]
+    .concat(boardLines(r).map(l=>{const s=boardSearch(l.description,r.grade);
+      return [l.description,l.trade,l.qty,l.uom,l.material_low,l.material_high,s.name,s.url];}));
+  const csv=rows.map(r2=>r2.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='real-designs-product-board.csv'; a.click(); URL.revokeObjectURL(a.href);
+}
+function boardPrintHtml(title,sub,grade,lines,totals){
+  const rows=lines.map(l=>{const s=boardSearch(l.description,grade);
+    return `<tr><td><b>${esc(l.description)}</b><div class="s">${esc(l.price_source||'')}</div></td><td>${esc(l.trade)}</td>
+<td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${presMoney(l.material_low)} &ndash; ${presMoney(l.material_high)}</td>
+<td><a href="${s.url}">${esc(s.name)}</a></td></tr>`;}).join('')||'<tr><td colspan="5">No material lines.</td></tr>';
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — Product Board</title><style>
+@page{size:letter;margin:14mm}body{font:13px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#141414;margin:0}
+.mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #CC0000;padding-bottom:10px;margin-bottom:16px}
+.brand{font-weight:800;letter-spacing:.16em;font-size:12px;text-transform:uppercase}.brand b{color:#CC0000}
+h1{font-size:20px;margin:0 0 4px}.sub{color:#6b6b6b;font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid #ececec;vertical-align:top}
+th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b}td.n,th.n{text-align:right}
+td .s{color:#8a8a8a;font-size:10px}a{color:#CC0000}
+.note{margin-top:16px;font-size:10.5px;color:#6b6b6b;border-top:1px solid #ececec;padding-top:10px}
+</style></head><body><div class="mast"><div><div class="brand">REAL<b>&nbsp;DESIGNS</b></div><h1>${esc(title)}</h1>
+<div class="sub">${esc(sub)}</div></div><div class="sub" style="text-align:right">Product Board<br>${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div>
+<table><thead><tr><th>Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Allowance</th><th>Where To Buy</th></tr></thead><tbody>${rows}</tbody>
+${totals?`<tfoot><tr><td colspan="3"><b>Material Allowance Total</b></td><td class="n"><b>${presMoney(totals[0])} &ndash; ${presMoney(totals[1])}</b></td><td></td></tr></tfoot>`:''}</table>
+<div class="note">Allowances are planning figures per line at the selected finish grade, not quoted product prices. Retailer links are searches, not endorsements or reserved stock.</div>
+</body></html>`;
+}
+function boardPrint(){
+  const r=lastScope; if(!r){ showAlert('Price a scope first, then print the board.'); return; }
+  const sp=PROP_TREE[SEL.p], sj=sp?sp.projects[SEL.pr]:null;
+  const w=window.open('','_blank'); if(!w) return;
+  w.document.write(boardPrintHtml('Product Board',
+    (sp?sp.address+(sj?' · '+sj.name:''):'Unsaved room')+' · '+r.market.name+' · '+r.grade+' grade',
+    r.grade, boardLines(r), [r.material_low,r.material_high]));
+  w.document.close(); w.focus(); setTimeout(()=>{try{w.print();}catch(_){}} ,600);
+}
+renderProductBoard(lastScope);
+window.addEventListener('rd:priced',()=>renderProductBoard(lastScope));
+const boardCsvBtn=document.getElementById('boardCsv');
+if(boardCsvBtn) boardCsvBtn.addEventListener('click',boardCsv);
+const boardPrintBtn=document.getElementById('boardPrint');
+if(boardPrintBtn) boardPrintBtn.addEventListener('click',boardPrint);
 
 /* ---------- presentations ---------- */
 const pkg=[['Before And After Slider','In the client approval link','p-ok','Live'],
@@ -1075,7 +1158,7 @@ const pkg=[['Before And After Slider','In the client approval link','p-ok','Live
 ['Client Decision Capture','Approve or request changes, tracked','p-ok','Live'],
 ['Branded PDF Export','Print ready package from any link','p-ok','Live'],
 ['Walkthrough Video','Dolly in, eight seconds, from Studio','p-ok','Live'],
-['Product Board','Every item with price and link','p-gray','Planned'],
+['Product Board','Allowance per item with a buy search','p-ok','Live'],
 ['Social Reel, 9x16','Cross fade before to after, 12 seconds','p-ok','Live']];
 document.getElementById('pkgList').innerHTML=pkg.map(([n,d,cls,lab])=>`
 <div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="${cls.startsWith('plan-pill')?cls:'pill '+cls}">${lab}</span></div>`).join('');
@@ -1111,6 +1194,7 @@ async function paintPresentations(){
       <span class="pill ${cls}">${lab}</span>
       <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
       <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
+      <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
       <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
       <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>`;
   }).join('');
@@ -1178,6 +1262,28 @@ async function exportPresentationPdf(id,btn){
   }
 }
 
+async function exportPresentationBoard(id,btn){
+  const old=btn?btn.innerHTML:null;
+  if(btn){ btn.disabled=true; btn.innerHTML='<i data-lucide="loader"></i>'; lucide.createIcons(); }
+  try{
+    const p=await getPresentationPackage({data:{id}});
+    const lines=(p.lines||[]).map(l=>({description:l.description,trade:l.trade,qty:l.qty,uom:l.uom,
+      material_low:l.low,material_high:l.high,price_source:'From the approved scope'}));
+    const tl=lines.reduce((a,l)=>a+l.material_low,0), th=lines.reduce((a,l)=>a+l.material_high,0);
+    const w=window.open('','_blank');
+    if(!w) throw new Error('Allow pop-ups to open the board.');
+    w.document.write(boardPrintHtml(p.title,
+      [p.address,p.project_name,p.room_name,(p.grade||'retail')+' grade'].filter(Boolean).join(' \u00b7 '),
+      p.grade, lines, lines.length?[tl,th]:null));
+    w.document.close(); w.focus();
+    setTimeout(()=>{ try{ w.print(); }catch(_){} },700);
+  }catch(e){
+    showAlert('Could not build that board. '+((e&&e.message)||''));
+  }finally{
+    if(btn){ btn.disabled=false; btn.innerHTML=old; lucide.createIcons(); }
+  }
+}
+
 async function exportSocialReel(id,btn){
   const old=btn?btn.innerHTML:null;
   const setLab=(t)=>{ if(btn) btn.innerHTML='<span style="font-size:.66rem;font-weight:700">'+t+'</span>'; };
@@ -1216,6 +1322,10 @@ if(linkList) linkList.addEventListener('click',async e=>{
   }
   if(e.target.closest('[data-pdf]')){
     exportPresentationPdf(row.dataset.pid,e.target.closest('[data-pdf]'));
+    return;
+  }
+  if(e.target.closest('[data-board]')){
+    exportPresentationBoard(row.dataset.pid,e.target.closest('[data-board]'));
     return;
   }
   if(e.target.closest('[data-reel]')){
