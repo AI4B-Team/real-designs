@@ -128,3 +128,54 @@ export const respondToPresentation = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return res as { ok: boolean; status?: string; reason?: string };
   });
+
+/**
+ * Owner: the full package behind one of their own share links, for the
+ * branded PDF export. Ownership is proven by an RLS-scoped read of the
+ * presentation row before the payload RPC runs, and no view is recorded.
+ */
+export const getPresentationPackage = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => presentationIdSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: own, error: ownErr } = await context.supabase
+      .from("presentations")
+      .select("token")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (ownErr) throw new Error(ownErr.message);
+    if (!own) throw new Error("That presentation is not available.");
+
+    const { data: payload, error } = await context.supabase.rpc("get_shared_presentation", {
+      _token: own.token as string,
+    });
+    if (error) throw new Error(error.message);
+    if (!payload) throw new Error("That presentation is not available.");
+
+    const { signRoomPhoto } = await import("@/lib/presentations.server");
+    const p = payload as any;
+    return {
+      title: p.title as string,
+      client_name: (p.client_name ?? null) as string | null,
+      status: (p.status ?? "sent") as string,
+      address: p.address as string,
+      project_name: p.project_name as string,
+      room_name: p.room_name as string,
+      grade: (p.grade ?? "retail") as string,
+      style: (p.style ?? null) as string | null,
+      version_no: (p.version_no ?? 1) as number,
+      created_at: p.created_at as string,
+      total_low: p.total_low == null ? null : Number(p.total_low),
+      total_high: p.total_high == null ? null : Number(p.total_high),
+      lines: ((p.lines ?? []) as any[]).map((l) => ({
+        description: String(l.description),
+        trade: String(l.trade ?? ""),
+        qty: Number(l.qty ?? 0),
+        uom: String(l.uom ?? ""),
+        low: Number(l.low ?? 0),
+        high: Number(l.high ?? 0),
+      })),
+      before_url: await signRoomPhoto((p.before_path ?? null) as string | null),
+      after_url: await signRoomPhoto((p.after_path ?? null) as string | null),
+    };
+  });
