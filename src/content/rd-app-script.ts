@@ -1779,7 +1779,6 @@ function presMessage(r){
     body:'Hi '+who+',\n\nHere is the design for '+(place||what)+'. One page, no login. You will see the before and after photo, what is being changed and a planning budget range:\n\n'+url+'\n\nApprove it right on the page, or leave a note with anything you want changed.\n\nThank you'};
 }
 
-window.__presSend=presSendModal;
 function presSendModal(r){
   if(!r) return;
   const msg=presMessage(r);
