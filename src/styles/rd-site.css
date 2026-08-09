@@ -2081,8 +2081,19 @@
 .rd-site .rd-mark i{display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid #fff;font-style:normal;padding:6px 15px}
 .rd-site .rd-mark b{color:#fff;font-weight:900;font-size:20px;line-height:1;letter-spacing:.04em}
 .rd-site .rd-mark em{color:#fff;font-style:normal;text-transform:uppercase;font-weight:700;font-size:7.5px;line-height:1;letter-spacing:.3em;margin:3px 0 0 .3em}
-.rd-site header .logo{gap:0}
-@media(max-width:820px){.rd-site .rd-mark i{padding:5px 12px}.rd-site .rd-mark b{font-size:17px}}
+.rd-site header .logo{gap:0;position:relative;z-index:3}
+/* oversized header badge that hangs past the header border */
+.rd-site header{overflow:visible}
+.rd-site header .rd-mark{padding:9px;transform:translateY(17px);box-shadow:0 14px 30px -18px rgba(0,0,0,.45)}
+.rd-site header .rd-mark i{border-width:3px;padding:9px 22px}
+.rd-site header .rd-mark b{font-size:30px;letter-spacing:.05em}
+.rd-site header .rd-mark em{font-size:10.5px;letter-spacing:.34em;margin-top:4px}
+@media(max-width:820px){.rd-site .rd-mark i{padding:5px 12px}.rd-site .rd-mark b{font-size:17px}
+  .rd-site header .rd-mark{padding:6px;transform:translateY(11px)}
+  .rd-site header .rd-mark i{border-width:2px;padding:6px 14px}
+  .rd-site header .rd-mark b{font-size:20px}
+  .rd-site header .rd-mark em{font-size:7.5px;margin-top:3px}}
+
 
 /* ===== Resources hub ===== */
 .rd-site .crumbs{font-size:.78rem;color:var(--mute);margin-bottom:14px}
