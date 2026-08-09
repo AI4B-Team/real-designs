@@ -520,7 +520,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
     lastRender=r.image; lastRenderPath=null;
     try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,'Redesigned space, AI render');
-    addRenderVariant(r.image,(document.getElementById('fStyle')||{}).value||'Your Render');
+    addRenderVariant(r.image,(document.getElementById('fStyle')||{}).value||'Your Render',lastRenderPath);
     window.dispatchEvent(new Event('rd:credits-changed'));
     window.dispatchEvent(new Event('rd:photo'));
     finish();
@@ -532,16 +532,17 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
   }
 });
 
-function addRenderVariant(src,label){
+function addRenderVariant(src,label,path){
   const wrap=document.getElementById('vars'); if(!wrap) return;
   const d=document.createElement('div');
-  d.className='var on'; d.dataset.src=src;
+  d.className='var on'; d.dataset.src=src; if(path) d.dataset.path=path;
   d.innerHTML=`<div style="aspect-ratio:8/5">${photo(src,label+' render')}</div><div class="vl">${label}</div>`;
   wrap.querySelectorAll('.var').forEach(x=>x.classList.remove('on'));
   wrap.prepend(d);
   d.addEventListener('click',()=>{
     wrap.querySelectorAll('.var').forEach(x=>x.classList.remove('on'));d.classList.add('on');
     cAfter.innerHTML=photo(src,label+' render');
+    lastRender=src; lastRenderPath=d.dataset.path||null;
   });
 }
 
@@ -577,7 +578,7 @@ async function run3dPlan(){
     lastRender=r.image; lastRenderPath=null;
     try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,'Furnished 3D plan of the same room');
-    addRenderVariant(r.image,'3D Plan');
+    addRenderVariant(r.image,'3D Plan',lastRenderPath);
     window.dispatchEvent(new Event('rd:credits-changed'));
     ui.done();
   }catch(e){
@@ -645,7 +646,7 @@ async function runRoomToolFlow(tool,label,useRender){
     lastRender=r.image; lastRenderPath=null;
     try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,label+' result');
-    addRenderVariant(r.image,label);
+    addRenderVariant(r.image,label,lastRenderPath);
     window.dispatchEvent(new Event('rd:credits-changed'));
     ui.done();
     cRng.value=100;setC(100);
@@ -693,7 +694,7 @@ async function openInStudio(r){
     if(afterUrl){
       cAfter.innerHTML=photo(afterUrl,'Redesigned space, AI render');
       lastRender=null; lastRenderPath=r.after_path||null;
-      addRenderVariant(afterUrl,(r.name||'Saved')+' v'+(r.version_no||1));
+      addRenderVariant(afterUrl,(r.name||'Saved')+' v'+(r.version_no||1),r.after_path||null);
     }
     cRng.value=44; setC(44);
   }catch(e){}
