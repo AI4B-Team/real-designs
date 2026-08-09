@@ -1671,9 +1671,11 @@ async function paintTeam(){
   try{ team=await listTeam(); }catch(_){}
   const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
   const invites=(team.sent||[]).map(i=>`<div class="seat"><span class="av">${esc((i.email||'?')[0].toUpperCase())}</span>
-      <div class="rowt"><b>${esc(i.email)}</b><span>${i.status==='accepted'?'Accepted':'Invite pending'} \u00b7 ${esc(i.role)}</span></div>
-      <span class="pill ${i.status==='accepted'?'p-green':'p-gray'}">${i.status==='accepted'?'Active':'Pending'}</span>
+      <div class="rowt"><b>${esc(i.email)}</b><span>${i.status==='accepted'?'Accepted':(i.status==='declined'?'Declined':'Invite pending')} \u00b7 ${esc(i.role)}</span></div>
+      <span class="pill ${i.status==='accepted'?'p-green':'p-gray'}">${i.status==='accepted'?'Active':(i.status==='declined'?'Declined':'Pending')}</span>
+      ${i.status==='pending'?`<button class="btn btn-g" data-copyinv="${esc(i.email)}" style="margin-left:8px">Copy Invite Link</button>`:''}
       <button class="btn btn-g" data-revoke="${i.id}" style="margin-left:8px">Remove</button></div>`).join('');
+
   const inbound=(team.received||[]).map(i=>`<div class="seat"><span class="av">IN</span>
       <div class="rowt"><b>You Were Invited To Another Workspace</b><span>Role: ${esc(i.role)}</span></div>
       <button class="btn btn-g" data-decline="${i.id}">Decline</button>
