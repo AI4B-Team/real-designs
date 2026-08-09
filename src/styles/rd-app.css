@@ -719,10 +719,8 @@
   .rd-app .card-h>div{row-gap:8px}
 }
 
-/* Density: back office renders at 80% scale to match the marketing site.
-   The topbar is counter-scaled so its menu items keep their current size. */
-.rd-app{zoom:.8}
-.rd-app .topbar{zoom:1.25}
+
+
 
 /* ---------- credits: upgrade prompt ---------- */
 .up-modal{position:fixed;inset:0;z-index:200;display:none}
