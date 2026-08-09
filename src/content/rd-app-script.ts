@@ -1678,7 +1678,7 @@ async function paintTeam(){
       <button class="btn btn-p" data-accept="${i.id}">Accept</button></div>`).join('');
   list.innerHTML=`<div class="seat"><span class="av">${av}</span><div class="rowt"><b>${name}</b><span>${mail||'Signed in'}</span></div>
     <span class="pill p-ink">Owner</span></div>${invites}${inbound}
-    ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No teammates yet. Invite one below and they join this workspace when they sign in with that email.</p>'}`;
+    ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No teammates yet. Invite one below. They sign in with that email, accept the invite, and then share this workspace with you.</p>'}`;
   const seatEl=document.getElementById('seatCount');
   if(seatEl){ const n=1+(team.sent||[]).length; seatEl.textContent=n+(n===1?' Seat':' Seats'); }
   list.querySelectorAll('[data-revoke]').forEach(b=>b.addEventListener('click',async()=>{
@@ -1713,7 +1713,7 @@ if(tmSend) tmSend.addEventListener('click',async()=>{
   tmSend.disabled=true; if(msg){ msg.textContent='Sending'; msg.style.color='var(--mute)'; }
   try{
     const r=await inviteMember({data:{email,role:(rl&&rl.value)||'member'}});
-    if(r&&r.ok){ if(msg){ msg.textContent='Invite added. They join when they sign in with '+email+'.'; msg.style.color='var(--mute-2)'; } if(em) em.value=''; paintTeam(); }
+    if(r&&r.ok){ if(msg){ msg.textContent='Invite added. '+email+' can accept it after signing in.'; msg.style.color='var(--mute-2)'; } if(em) em.value=''; paintTeam(); }
     else if(msg){ msg.textContent=(r&&r.error)||'Could not send that invite.'; msg.style.color='var(--red)'; }
   }catch(e){ if(msg){ msg.textContent='Could not send that invite.'; msg.style.color='var(--red)'; } }
   tmSend.disabled=false;
