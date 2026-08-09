@@ -669,6 +669,7 @@ function paintBatch(){
     sel.innerHTML='<option value="">No properties yet</option>';
     list.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Add a property and upload room photos to build a batch.</p>';
     BATCH_ROOMS=[];
+    const st0=batchStateEl(); if(st0){ st0.className='pill p-gray'; st0.textContent='Nothing To Run'; }
     if(runBtn) runBtn.disabled=true;
     return;
   }
