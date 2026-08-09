@@ -3168,7 +3168,54 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   try{ window.rdPendingPhotoPath=await uploadRenderDataUrl(h.photo); }catch(e){}
 })();
 
+/* ---------- keyboard shortcuts ---------- */
+(function(){
+  const SC=[
+    ['Navigate',[['G then D','Dashboard'],['G then P','Properties'],['G then S','Studio'],['G then I','Designs'],
+      ['G then B','Scope & Budget'],['G then R','Reports'],['G then A','Account']]],
+    ['Actions',[['⌘ K','Search Workspace'],['⌘ B','Collapse Or Expand Menu'],['N','New Design'],
+      ['?','Keyboard Shortcuts'],['Esc','Close Menus And Dialogs']]]
+  ];
+  const isMac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
+  function key(k){ return isMac?k:k.replace('⌘','Ctrl'); }
+  let m=null;
+  function build(){
+    m=document.createElement('div'); m.id='kbdModal'; m.className='rd-modal';
+    m.innerHTML='<div class="rd-modal-card" role="dialog" aria-modal="true" aria-label="Keyboard Shortcuts">'
+      +'<button class="rd-modal-x" aria-label="Close"><i data-lucide="x"></i></button>'
+      +'<h3 style="margin:0 0 4px">Keyboard Shortcuts</h3>'
+      +'<div class="sub" style="margin-bottom:14px">Works anywhere outside a text field.</div>'
+      +SC.map(([g,rows])=>'<div class="acct-group">'+g+'</div>'
+        +rows.map(([k,l])=>'<div class="rowi"><div class="rowt"><b>'+l+'</b></div><kbd class="kbd">'+key(k)+'</kbd></div>').join('')
+      ).join('')
+      +'</div>';
+    (document.querySelector('.rd-app')||document.body).appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target===m||e.target.closest('.rd-modal-x')) close(); });
+    try{ lucide.createIcons(); }catch(_){}
+  }
+  function open(){ if(!m) build(); m.classList.add('on'); }
+  function close(){ if(m) m.classList.remove('on'); }
+  window.rdShortcuts=open;
+  document.querySelectorAll('[data-kbd]').forEach(b=>b.addEventListener('click',()=>{ open(); }));
+
+  let gPending=0;
+  const GO={d:'dash',p:'props',s:'studio',i:'designs',b:'scope',r:'reports',a:'account'};
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'){ close(); return; }
+    const t=e.target;
+    if(t&&(t.tagName==='INPUT'||t.tagName==='TEXTAREA'||t.tagName==='SELECT'||t.isContentEditable)) return;
+    if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='b'){ e.preventDefault(); const tg=document.getElementById('sideToggle'); if(tg) tg.click(); return; }
+    if(e.metaKey||e.ctrlKey||e.altKey) return;
+    const k=e.key.toLowerCase();
+    if(Date.now()<gPending&&GO[k]){ gPending=0; e.preventDefault(); go(GO[k]); return; }
+    if(k==='g'){ gPending=Date.now()+1400; return; }
+    gPending=0;
+    if(e.key==='?'){ e.preventDefault(); open(); return; }
+    if(k==='n'){ e.preventDefault(); go('studio'); }
+  });
+})();
 
   } catch (e) { console.error(e); }
+
   return () => { timers.forEach((t) => { window.clearInterval(t); window.clearTimeout(t); }); };
 }
