@@ -3,6 +3,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { PHOTOS, photo } from "@/content/rd-photos";
+import { FAQ } from "@/content/rd-faq";
 import { initExtra } from "@/content/rd-site-extra";
 import { initShowcase } from "@/content/rd-showcase";
 
