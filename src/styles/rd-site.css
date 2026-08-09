@@ -1255,7 +1255,7 @@
 .rd-site .p3layer{position:absolute;inset:0;opacity:0;transition:opacity .45s ease}
 .rd-site .p3layer.on{opacity:1}
 .rd-site .p3-stage img{width:100%;height:100%;object-fit:cover;object-position:center}
-.rd-site .p3layer.fit img{object-fit:contain}
+.rd-site .p3layer.fit img{object-fit:contain!important;background:#FBFAF8}
 .rd-site .p3cam{position:absolute;right:16%;bottom:16%;width:30px;height:30px;border-radius:50%;
   display:grid;place-items:center;background:var(--red);color:#fff;box-shadow:0 0 0 0 color-mix(in oklab,var(--red) 45%,transparent);
   animation:rdCam 1.8s ease-out infinite}
