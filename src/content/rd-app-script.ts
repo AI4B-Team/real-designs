@@ -38,8 +38,8 @@ const PALS={
 };
 
 /* ---------- nav ---------- */
-const titles={dash:['Dashboard','Real Advisors &middot; 6 active properties'],props:['Properties','Property, project, room, version'],
-studio:['Studio','206 N MacDill Ave &middot; Living Room &middot; v5 draft'],designs:['Designs','248 designs across 6 properties'],
+const titles={dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
+studio:['Studio','Price a room and save it to a project'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations'],
@@ -48,16 +48,35 @@ help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
 const ACCT_ALIAS={team:'team',settings:'brand',billing:'billing',invoices:'invoices'};
+let CUR_VIEW='dash';
+function plural(n,w){ return n+' '+w+(n===1?'':'s'); }
+function dynSub(v){
+  const tree=(typeof PROP_TREE!=='undefined'&&PROP_TREE)?PROP_TREE:[];
+  const designs=tree.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0);
+  if(v==='dash') return tree.length?plural(tree.length,'active property').replace('propertys','properties'):'No properties yet, start in Studio';
+  if(v==='designs') return designs?plural(designs,'design')+' across '+plural(tree.length,'property').replace('propertys','properties'):'No saved designs yet';
+  if(v==='studio'){
+    const prop=tree[SEL?SEL.p:0]; const proj=prop?prop.projects[SEL.pr]:null;
+    return prop?(prop.address+(proj?' \u00b7 '+proj.name:'')):'Price a room and save it to a project';
+  }
+  return null;
+}
+function refreshTitles(){
+  const d=dynSub(CUR_VIEW); const t2=document.getElementById('pgCrumb');
+  if(d&&t2) t2.textContent=d;
+}
 function go(v){
   if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
   if(!titles[v]) return;
+  CUR_VIEW=v;
   const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
-  const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
+  const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=dynSub(v)||titles[v][1];
 
   window.scrollTo({top:0});
 }
+
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
 
