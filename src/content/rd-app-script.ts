@@ -1648,6 +1648,44 @@ async function paintPresentations(){
   renderPresRows();
 }
 
+const HIST_META={
+  created:['plus-circle','Link Created'],
+  viewed:['eye','Opened'],
+  approved:['check-circle-2','Approved'],
+  changes:['refresh-cw','Changes Requested'],
+  comments:['message-square','Line Comments']
+};
+
+function presHistWhen(iso){
+  try{ return new Date(iso).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+  catch(_){ return ''; }
+}
+
+async function togglePresHistory(pid){
+  const box=document.querySelector('[data-hist-for="'+pid+'"]');
+  if(!box) return;
+  if(!box.hidden){ box.hidden=true; return; }
+  box.hidden=false;
+  box.innerHTML='<div class="pres-hist-i"><span>Loading Activity&hellip;</span></div>';
+  let rows=[];
+  try{ rows=await listPresentationActivity({data:{id:pid}}); }catch(_){ rows=[]; }
+  const meta=PRES_ROWS.find(x=>x.id===pid);
+  if(meta&&meta.created_at) rows=rows.concat([{id:'created',kind:'created',detail:'Share link created',note:null,excluded_count:0,note_count:0,created_at:meta.created_at}]);
+  if(!rows.length){
+    box.innerHTML='<div class="pres-hist-i"><span>No activity yet. The timeline fills in once the client opens the link.</span></div>';
+    return;
+  }
+  box.innerHTML=rows.map(ev=>{
+    const m=HIST_META[ev.kind]||HIST_META.viewed;
+    const extras=[];
+    if(ev.excluded_count) extras.push(ev.excluded_count+' line'+(ev.excluded_count===1?'':'s')+' removed');
+    if(ev.note_count) extras.push(ev.note_count+' line comment'+(ev.note_count===1?'':'s'));
+    const quote=ev.note?`<em>&ldquo;${esc(ev.note)}&rdquo;</em>`:'';
+    return `<div class="pres-hist-i"><i data-lucide="${m[0]}"></i><div><b>${m[1]}</b><span>${esc(ev.detail||'')}${extras.length?' &middot; '+extras.join(' &middot; '):''}</span>${quote}</div><span class="tm">${presHistWhen(ev.created_at)}</span></div>`;
+  }).join('');
+  lucide.createIcons();
+}
+
 /* jump to one client link from the dashboard attention list */
 async function focusPresentation(pid){
   if(!PRES_ROWS.length) await paintPresentations();
