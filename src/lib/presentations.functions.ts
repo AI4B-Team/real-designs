@@ -16,10 +16,12 @@ export const listPresentations = createServerFn({ method: "GET" })
       .select(
         `id, title, client_name, client_email, token, status, view_count, last_viewed_at,
          decision_note, excluded_lines, line_notes, decided_at, created_at,
+         reminded_at, reminder_count,
          versions!inner ( version_no,
            rooms!inner ( name,
              projects!inner ( name, properties!inner ( address ) ) ) )`,
       )
+
       .order("created_at", { ascending: false })
       .limit(40);
     if (error) throw new Error(error.message);
