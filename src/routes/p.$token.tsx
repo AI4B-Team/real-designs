@@ -74,6 +74,8 @@ function SharedPresentation() {
   const keptLow = kept.reduce((s, l) => s + Number(l.low || 0), 0);
   const keptHigh = kept.reduce((s, l) => s + Number(l.high || 0), 0);
   const trimmed = excluded.length > 0 && deck.lines.length > 0;
+  const noteCount = Object.values(lineNotes).filter((v) => (v || "").trim().length > 0).length;
+  const setLineNote = (id: string, v: string) => setLineNotes((cur) => ({ ...cur, [id]: v.slice(0, 400) }));
 
   function moveSplit(clientX: number, el: HTMLElement) {
     const r = el.getBoundingClientRect();
@@ -84,8 +86,10 @@ function SharedPresentation() {
   async function decide(decision: "approved" | "changes") {
     setBusy(true);
     try {
+      const cleaned: Record<string, string> = {};
+      for (const [k, v] of Object.entries(lineNotes)) if ((v || "").trim()) cleaned[k] = v.trim();
       const res = await respondToPresentation({
-        data: { token, decision, note: note || undefined, excluded },
+        data: { token, decision, note: note || undefined, excluded, line_notes: cleaned },
       });
       if (res?.ok) {
         setStatus(decision);
