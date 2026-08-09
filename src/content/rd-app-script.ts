@@ -350,7 +350,7 @@ function paintTree(){
   });
   el.innerHTML=rows.join('');
   el.querySelectorAll('.tr').forEach(tr=>tr.addEventListener('click',()=>{
-    SEL={p:+tr.dataset.pi,pr:+tr.dataset.pri}; paintTree();
+    SEL={p:+tr.dataset.pi,pr:+tr.dataset.pri}; paintTree(); refreshTitles();
   }));
   lucide.createIcons();
   paintRooms();
