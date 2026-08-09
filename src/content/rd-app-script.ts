@@ -17,6 +17,7 @@ import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } fro
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
 import { submitFeedback } from "@/lib/feedback";
+import { polishFeedback } from "@/lib/feedback.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 
@@ -1865,6 +1866,24 @@ document.getElementById('fbAttach').addEventListener('click',()=>{
     catch(err){ fbAttachPath=null; f.textContent=(err&&err.message)||'Could not attach that file.'; }
   });
   inp.click();
+});
+document.getElementById('fbPolish').addEventListener('click',async()=>{
+  const b=document.getElementById('fbBody');
+  const f=document.getElementById('fbFile');
+  if(b.value.trim().length<3){ b.focus(); b.style.borderColor='var(--red)'; return; }
+  b.style.borderColor='';
+  const btn=document.getElementById('fbPolish'); const prev=btn.innerHTML;
+  btn.disabled=true; btn.textContent='Improving…';
+  const cat=(document.querySelector('#fbCats .fb-cat.on')||{}).textContent||null;
+  try{
+    const res=await polishFeedback({data:{body:b.value,category:cat}});
+    if(res&&res.text){ b.value=res.text; }
+    else { f.hidden=false; f.textContent="Couldn't improve that right now."; }
+  }catch(err){
+    f.hidden=false; f.textContent=(err&&err.message)||"Couldn't improve that right now.";
+  }finally{
+    btn.disabled=false; btn.innerHTML=prev; lucide.createIcons();
+  }
 });
 document.getElementById('fbSend').addEventListener('click',async()=>{
   const b=document.getElementById('fbBody');

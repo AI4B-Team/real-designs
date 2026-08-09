@@ -519,6 +519,9 @@
 .rd-app .fb-link{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;color:var(--mute);cursor:pointer}
 .rd-app .fb-link:hover{color:var(--ink)}
 .rd-app .fb-link svg{width:14px;height:14px}
+.rd-app #fbPolish{color:var(--red);font-weight:600;margin-right:auto}
+.rd-app #fbPolish:hover{text-decoration:underline}
+.rd-app #fbPolish:disabled{opacity:.6;cursor:default}
 .rd-app .fb-file{font-size:.74rem;background:var(--paper);border-radius:999px;padding:3px 10px;color:var(--mute)}
 .rd-app .fb-check{width:46px;height:46px;border-radius:999px;background:rgba(37,140,90,.12);display:grid;place-items:center;margin:0 auto}
 .rd-app .fb-check svg{width:22px;height:22px;color:#258C5A}
