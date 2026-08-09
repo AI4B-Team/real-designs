@@ -99,6 +99,66 @@ export type Database = {
           },
         ]
       }
+      credit_accounts: {
+        Row: {
+          balance: number
+          created_at: string
+          free_day: string
+          free_used_today: number
+          plan: Database["public"]["Enums"]["plan_tier"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance?: number
+          created_at?: string
+          free_day?: string
+          free_used_today?: number
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance?: number
+          created_at?: string
+          free_day?: string
+          free_used_today?: number
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      credit_ledger: {
+        Row: {
+          action: Database["public"]["Enums"]["credit_action"]
+          balance_after: number
+          created_at: string
+          delta: number
+          id: string
+          note: string | null
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["credit_action"]
+          balance_after: number
+          created_at?: string
+          delta: number
+          id?: string
+          note?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["credit_action"]
+          balance_after?: number
+          created_at?: string
+          delta?: number
+          id?: string
+          note?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       founding_members: {
         Row: {
           claimed_at: string
@@ -517,10 +577,57 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      credit_cost: {
+        Args: { _action: Database["public"]["Enums"]["credit_action"] }
+        Returns: number
+      }
+      ensure_credit_account: {
+        Args: { _user_id: string }
+        Returns: {
+          balance: number
+          created_at: string
+          free_day: string
+          free_used_today: number
+          plan: Database["public"]["Enums"]["plan_tier"]
+          updated_at: string
+          user_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "credit_accounts"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       founding_members_claimed: { Args: never; Returns: number }
+      grant_credits: {
+        Args: {
+          _action?: Database["public"]["Enums"]["credit_action"]
+          _amount: number
+          _note?: string
+          _user_id: string
+        }
+        Returns: Json
+      }
+      spend_credits: {
+        Args: {
+          _action: Database["public"]["Enums"]["credit_action"]
+          _note?: string
+          _user_id: string
+        }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      credit_action:
+        | "design"
+        | "scope"
+        | "plan_3d"
+        | "video"
+        | "topup"
+        | "grant"
+        | "refund"
+      plan_tier: "free" | "starter" | "pro" | "studio"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -647,6 +754,17 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      credit_action: [
+        "design",
+        "scope",
+        "plan_3d",
+        "video",
+        "topup",
+        "grant",
+        "refund",
+      ],
+      plan_tier: ["free", "starter", "pro", "studio"],
+    },
   },
 } as const

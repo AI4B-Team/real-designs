@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import type { Database } from "@/integrations/supabase/types";
 
 /**
@@ -26,8 +27,14 @@ const ItemSchema = z.object({
 });
 
 export const detectChanges = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => DetectInput.parse(input))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    // Metered: one design credit, charged before the model runs.
+    const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
+    const billing = await charge(context.userId, "design", "change detection");
+    if (!billing.ok) throw new Error(chargeErrorMessage(billing));
+
     const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
     const supabase = createClient<Database>(process.env["SUPABASE_URL"]!, key, {
       auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
@@ -123,9 +130,15 @@ export const detectChanges = createServerFn({ method: "POST" })
       }),
     });
 
-    if (res.status === 429) throw new Error("Rate limit reached, try again shortly.");
-    if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
-    if (!res.ok) throw new Error(`Change detection failed (${res.status}).`);
+    if (!res.ok) {
+      // The model never ran usefully, so give the credit back.
+      const { refund } = await import("@/lib/credits.server");
+      await refund(context.userId, billing.charged, "change detection failed");
+      if (res.status === 429) throw new Error("Rate limit reached, try again shortly.");
+      if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
+      throw new Error(`Change detection failed (${res.status}).`);
+    }
+
 
     const payload = (await res.json()) as any;
     const call = payload?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
