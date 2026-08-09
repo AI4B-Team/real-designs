@@ -367,7 +367,7 @@ function paintTree(){
   const el=document.getElementById('tree'); if(!el) return;
   if(!PROP_TREE.length){
     el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No properties yet. Saving a room in Studio creates one.</p>';
-    paintRooms(); return;
+    paintRooms(); paintStudioSub(); return;
   }
   const rows=[];
   PROP_TREE.forEach((p,pi)=>{
