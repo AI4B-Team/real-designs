@@ -2738,8 +2738,9 @@ if(scopeGrid && !document.getElementById('scSave')){
   document.getElementById('onbHide').addEventListener('click',()=>{ state.done=true; save(); card.remove(); });
   ['photo','priced','saved','brand','shared'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
 
-  /* welcome once per account */
-  if(!state.welcomed){
+  /* welcome once per account, but never over a photo handed off from the site */
+  const pendingHandoff=(()=>{ try{ return !!localStorage.getItem('rd.handoff'); }catch(e){ return false; } })();
+  if(!state.welcomed && !pendingHandoff){
     state.welcomed=true; save();
     document.querySelectorAll('#onbModal').forEach(n=>n.remove());
     const m=document.createElement('div'); m.className='up-modal on'; m.id='onbModal';
@@ -3067,10 +3068,6 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
     card.appendChild(bn);
     lucide.createIcons();
   }
-
-  /* The welcome modal would cover the photo they came here to render. */
-  const dropModal=()=>document.querySelectorAll('#onbModal').forEach(n=>n.remove());
-  dropModal(); setTimeout(dropModal,400); setTimeout(dropModal,1200);
 
   /* Store it on the account so Save To My Projects keeps the real photo. */
   try{ window.rdPendingPhotoPath=await uploadRenderDataUrl(h.photo); }catch(e){}
