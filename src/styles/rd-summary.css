@@ -28,6 +28,7 @@
   background: var(--rsp-bg);
   border: 1px solid var(--rsp-border);
   border-radius: 14px;
+  container-type: inline-size;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
   color: var(--rsp-value);
   font-family: "Inter", "DM Sans", system-ui, sans-serif;
@@ -158,16 +159,11 @@
   }
 }
 
-/* ---- responsive ---- */
-@media (max-width: 1000px) {
-  .rsp {
-    grid-template-columns: 1fr 1fr;
-    gap: 18px 20px;
-    min-height: 0;
-  }
-
+/* ---- responsive (container based, panels sit in narrow columns too) ---- */
+@container (max-width: 760px) {
   .rsp-col {
-    padding-left: 20px;
+    grid-column: span 2;
+    padding-left: 24px;
   }
 
   .rsp-col:nth-child(odd) {
@@ -178,6 +174,14 @@
   .rsp-value,
   .rsp-primary {
     white-space: normal;
+  }
+}
+
+@container (max-width: 420px) {
+  .rsp-col {
+    grid-column: span 4;
+    padding-left: 0;
+    border-left: 0;
   }
 }
 
