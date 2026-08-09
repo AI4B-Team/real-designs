@@ -308,6 +308,9 @@ async function loadDashboard(){
   }).join('')
     :'<tr><td colspan="6">No saved projects yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
 }
+document.getElementById('attnList')?.addEventListener('click',(e)=>{
+  const r=e.target.closest('[data-goto]'); if(r) go(r.dataset.goto);
+});
 loadDashboard();
 window.addEventListener('rd:saved', loadDashboard);
 
