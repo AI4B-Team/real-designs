@@ -127,7 +127,7 @@ export const respondToPresentation = createServerFn({ method: "POST" })
     const { data: res, error } = await client.rpc("respond_to_presentation", {
       _token: data.token,
       _decision: data.decision,
-      _note: data.note ?? null,
+      _note: data.note ?? undefined,
     });
     if (error) throw new Error(error.message);
     return res as { ok: boolean; status?: string; reason?: string };
