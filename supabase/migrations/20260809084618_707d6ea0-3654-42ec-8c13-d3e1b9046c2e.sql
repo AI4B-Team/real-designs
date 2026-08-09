@@ -1,0 +1,1 @@
+DELETE FROM public.feedback WHERE body = 'Automated verification of feedback persistence.';
