@@ -430,3 +430,30 @@ export const setVersionStatus = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, status: data.status };
   });
+
+/** Every saved version of one room, newest first, with its priced range. */
+export const listRoomVersions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ room_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("versions")
+      .select("id, version_no, status, style, before_path, after_path, created_at, scopes ( total_low, total_high )")
+      .eq("room_id", data.room_id)
+      .order("version_no", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (rows ?? []).map((v: any) => {
+      const s = (v.scopes ?? [])[0] ?? null;
+      return {
+        id: v.id as string,
+        version_no: (v.version_no ?? 1) as number,
+        status: (v.status ?? "draft") as string,
+        style: (v.style ?? null) as string | null,
+        before_path: (v.before_path ?? null) as string | null,
+        after_path: (v.after_path ?? null) as string | null,
+        created_at: v.created_at as string,
+        total_low: s ? Number(s.total_low) : null,
+        total_high: s ? Number(s.total_high) : null,
+      };
+    });
+  });
