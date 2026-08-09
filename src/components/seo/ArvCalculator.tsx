@@ -115,7 +115,7 @@ export function ArvCalculator() {
       <div className="out on" style={{ display: "block" }}>
         <ResultSummaryPanel
           primaryLabel="ARV Impact Range"
-          primaryValue={`${fmt(r.arvLow)} to ${fmt(r.arvHigh)}`}
+          primaryValue={`${fmt(r.arvLow)}–${fmt(r.arvHigh)}`}
           compact
           metrics={[
             {
@@ -123,6 +123,8 @@ export function ArvCalculator() {
               value: `${r.recoupLow} to ${r.recoupHigh} percent`,
               tone: "positive" as const,
             },
+            { label: "Method", value: "Comparable Uplift", plain: true },
+            { label: "Basis", value: "Planning Estimate", plain: true },
           ]}
         />
 
