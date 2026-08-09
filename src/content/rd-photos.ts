@@ -37,8 +37,14 @@ import sketchRender from "@/assets/rd-plan-04-photo.jpg";
 import stageEmpty from "@/assets/stage-empty.jpg";
 import stageStaged from "@/assets/stage-staged.jpg";
 import stageClutter from "@/assets/stage-clutter.jpg";
+import bfdRefresh from "@/assets/bfd-refresh.jpg";
+import bfdMakeover from "@/assets/bfd-makeover.jpg";
+import bfdRenovation from "@/assets/bfd-renovation.jpg";
 
 export const PHOTOS = {
+  bfdRefresh,
+  bfdMakeover,
+  bfdRenovation,
   before: roomBefore,
   after: roomAfter,
   kitchen: roomKitchen,
