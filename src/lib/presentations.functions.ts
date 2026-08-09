@@ -93,6 +93,8 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
       client_name: (p.client_name ?? null) as string | null,
       status: (p.status ?? "sent") as string,
       decision_note: (p.decision_note ?? null) as string | null,
+      brand_name: (p.brand_name ?? null) as string | null,
+      brand_accent: (p.brand_accent ?? null) as string | null,
       address: p.address as string,
       project_name: p.project_name as string,
       room_name: p.room_name as string,

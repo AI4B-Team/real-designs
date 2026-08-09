@@ -10,7 +10,7 @@ import { renderDesign } from "@/lib/design-render.functions";
 import { renderPlan3d } from "@/lib/plan3d.functions";
 import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
-import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus } from "@/lib/workspace.functions";
+import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
@@ -701,6 +701,7 @@ function paintDesigns(){
 <b style="font-size:.86rem">${r.name} v${r.version_no||1}</b><span class="pill ${s[0]}">${s[1]}</span></div>
 <div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">${r.address} &middot; ${cost}</div>
 <div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost btn-xs" style="flex:1" data-open="${r.id}">Open</button>
+<button class="btn btn-ghost btn-xs" data-hist="${r.id}" title="Version history"><i data-lucide="history"></i></button>
 <button class="btn btn-ghost btn-xs" data-goto="scope"><i data-lucide="calculator"></i></button></div></div></div>`;
   }).join('');
   lucide.createIcons();
@@ -714,6 +715,72 @@ function paintDesigns(){
     const r=list.find(x=>String(x.id)===b.getAttribute('data-open'));
     if(r) openInStudio(r);
   }));
+  g.querySelectorAll('[data-hist]').forEach(b=>b.addEventListener('click',()=>{
+    const r=list.find(x=>String(x.id)===b.getAttribute('data-hist'));
+    if(r) openHistory(r);
+  }));
+}
+
+/* ---------- version history for one room ---------- */
+let HIST_ROOM=null, HIST_LIST=[];
+function histModal(){
+  let m=document.getElementById('histModal');
+  if(!m){
+    m=document.createElement('div'); m.id='histModal'; m.className='up-modal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" style="max-width:560px">'
+      +'<h3 id="hmTitle">Version History</h3><p id="hmSub"></p><div id="hmBody"></div>'
+      +'<button class="btn btn-ghost btn-block" style="margin-top:10px" data-close>Close</button></div>';
+    (document.querySelector('.rd-app')||document.body).appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
+  }
+  return m;
+}
+async function openHistory(r){
+  HIST_ROOM=r;
+  const m=histModal();
+  m.querySelector('#hmTitle').textContent=r.name+' \u2014 Version History';
+  m.querySelector('#hmSub').textContent=r.address+' \u00b7 '+r.project;
+  m.querySelector('#hmBody').innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Loading versions\u2026</p>';
+  m.classList.add('on');
+  try{ HIST_LIST=await listRoomVersions({data:{room_id:r.id}}); }
+  catch(e){ HIST_LIST=[]; }
+  paintHistory();
+}
+function paintHistory(){
+  const m=histModal(), body=m.querySelector('#hmBody');
+  if(!HIST_LIST.length){ body.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No saved versions on this room yet.</p>'; return; }
+  body.innerHTML=HIST_LIST.map((v,i)=>{
+    const st=ST_PILL(v.status);
+    const cost=v.total_low!=null?kfmt(v.total_low)+' to '+kfmt(v.total_high):'Not priced';
+    const when=new Date(v.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    return `<div class="rowi" style="padding:10px 0;align-items:center;gap:10px">
+<img data-hphoto="${v.after_path||v.before_path||''}" alt="" style="width:52px;height:38px;object-fit:cover;border-radius:6px;background:#EFEDE8" hidden>
+<div class="rowt" style="flex:1"><b>v${v.version_no}${i===0?' \u00b7 Latest':''}</b><span class="mono">${cost} \u00b7 ${when}${v.style?' \u00b7 '+v.style:''}</span></div>
+<span class="pill ${st[0]}">${st[1]}</span>
+<button class="btn btn-ghost btn-xs" data-hopen="${v.id}">Open</button>
+<button class="btn btn-ghost btn-xs" data-happ="${v.id}">${v.status==='approved'?'Unapprove':'Approve'}</button></div>`;
+  }).join('');
+  body.querySelectorAll('[data-hphoto]').forEach(async(img)=>{
+    const p=img.getAttribute('data-hphoto'); if(!p) return;
+    const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+    if(url){ img.src=url; img.hidden=false; }
+  });
+  body.querySelectorAll('[data-hopen]').forEach(b=>b.addEventListener('click',()=>{
+    const v=HIST_LIST.find(x=>x.id===b.getAttribute('data-hopen')); if(!v||!HIST_ROOM) return;
+    m.classList.remove('on');
+    openInStudio({...HIST_ROOM,before_path:v.before_path,after_path:v.after_path,version_no:v.version_no});
+  }));
+  body.querySelectorAll('[data-happ]').forEach(b=>b.addEventListener('click',async()=>{
+    const v=HIST_LIST.find(x=>x.id===b.getAttribute('data-happ')); if(!v) return;
+    b.disabled=true;
+    try{
+      const next=v.status==='approved'?'draft':'approved';
+      await setVersionStatus({data:{version_id:v.id,status:next}});
+      v.status=next; paintHistory();
+      window.dispatchEvent(new Event('rd:saved'));
+    }catch(e){ b.disabled=false; }
+  }));
+  lucide.createIcons();
 }
 const DFILT=['all','approved','review','archived'];
 document.querySelectorAll('#designTabs button').forEach((b,i)=>b.addEventListener('click',()=>{
