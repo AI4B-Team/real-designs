@@ -24,6 +24,39 @@ export const Route = createFileRoute("/pricing")({
       { name: "twitter:image", content: absoluteUrl("/og-cover.jpg") },
     ],
     links: [{ rel: "canonical", href: absoluteUrl("/pricing") }],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: FAQ.map(([question, answer]) => ({
+            "@type": "Question",
+            name: question,
+            acceptedAnswer: { "@type": "Answer", text: answer },
+          })),
+        }),
+      },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "Product",
+          name: "REAL DESIGNS",
+          description: DESC,
+          url: absoluteUrl("/pricing"),
+          brand: { "@type": "Brand", name: "REAL DESIGNS" },
+          offers: PLANS.map((p) => ({
+            "@type": "Offer",
+            name: p.n,
+            price: String(p.yr),
+            priceCurrency: "USD",
+            url: absoluteUrl("/pricing"),
+            availability: "https://schema.org/InStock",
+          })),
+        }),
+      },
+    ],
   }),
   component: PricingPage,
 });
