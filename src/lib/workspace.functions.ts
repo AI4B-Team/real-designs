@@ -258,7 +258,11 @@ export const getPropertyTree = createServerFn({ method: "GET" })
     return (data ?? []).map((p: any) => ({
       id: p.id as string,
       address: p.address as string,
-      has_dna: !!p.design_dna && Object.keys(p.design_dna ?? {}).length > 0,
+      has_dna: Array.isArray(p.design_dna?.items) && p.design_dna.items.length > 0,
+      dna: (Array.isArray(p.design_dna?.items) ? p.design_dna.items : []) as {
+        label: string;
+        color: string;
+      }[],
       projects: (p.projects ?? [])
         .slice()
         .sort((a: any, b: any) => String(a.created_at).localeCompare(String(b.created_at)))
@@ -339,4 +343,90 @@ export const saveRoomVersion = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     return { id: row.id as string, version_no: row.version_no as number };
+  });
+
+/** Design DNA is a small ordered list of finish decisions locked to a property. */
+const dnaSchema = z.object({
+  property_id: z.string().uuid(),
+  items: z
+    .array(z.object({ label: z.string().min(1).max(60), color: z.string().max(24) }))
+    .max(12),
+});
+
+export const setPropertyDna = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => dnaSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("properties")
+      .update({ design_dna: { items: data.items } })
+      .eq("id", data.property_id);
+    if (error) throw new Error(error.message);
+    return { ok: true, items: data.items };
+  });
+
+/** Copy one property's locked DNA onto another owned property. */
+export const copyPropertyDna = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ from_id: z.string().uuid(), to_id: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase } = context;
+    const { data: src, error: srcErr } = await supabase
+      .from("properties")
+      .select("design_dna")
+      .eq("id", data.from_id)
+      .maybeSingle();
+    if (srcErr) throw new Error(srcErr.message);
+    if (!src?.design_dna) throw new Error("That property has no locked Design DNA yet.");
+    const { error } = await supabase
+      .from("properties")
+      .update({ design_dna: src.design_dna })
+      .eq("id", data.to_id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** A scenario is a second project under the same property (for example a rental grade pass). */
+export const createProject = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        property_id: z.string().uuid(),
+        name: z.string().min(1).max(80),
+        finish_grade: z.string().max(40).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase
+      .from("projects")
+      .insert({
+        property_id: data.property_id,
+        name: data.name,
+        finish_grade: data.finish_grade ?? "retail",
+      })
+      .select("id, name")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id as string, name: row.name as string };
+  });
+
+/** Approve or reset a saved version. Approval is what client packages are built from. */
+export const setVersionStatus = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({ version_id: z.string().uuid(), status: z.enum(["draft", "approved"]) })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("versions")
+      .update({ status: data.status })
+      .eq("id", data.version_id);
+    if (error) throw new Error(error.message);
+    return { ok: true, status: data.status };
   });
