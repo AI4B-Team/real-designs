@@ -6,6 +6,7 @@ import { PHOTOS, photo } from "@/content/rd-photos";
 import { FAQ } from "@/content/rd-faq";
 import { initExtra } from "@/content/rd-site-extra";
 import { initShowcase } from "@/content/rd-showcase";
+import { track } from "@/lib/analytics";
 
 export function initSite(): () => void {
   const root = document.querySelector('.rd-site') as HTMLElement | null;
@@ -366,6 +367,7 @@ const uPals=[PHOTOS.before,PALS.coastal,PALS.farm,PALS.green];
 modal.querySelectorAll('.usamp').forEach((s,i)=>{s.innerHTML=room(i===0?'before':'after',uPals[i])});
 
 function openUpload(){
+  track('upload_modal_opened');
   modal.classList.add('on');
   document.body.style.overflow='hidden';
   if(window.lucide) window.lucide.createIcons();
@@ -385,7 +387,7 @@ uFile.addEventListener('change',async()=>{
   const url=URL.createObjectURL(f);
   modal.querySelector('#uThumb').style.backgroundImage=`url(${url})`;
   modal.classList.add('has-file');
-  try{ UPLOAD={dataUrl:await shrinkPhoto(f),name:f.name}; }catch(e){ UPLOAD=null; }
+  try{ UPLOAD={dataUrl:await shrinkPhoto(f),name:f.name}; track('upload_photo_selected',{source:'file'}); }catch(e){ UPLOAD=null; }
 });
 
 const uDrop=modal.querySelector('#uDrop');
@@ -403,6 +405,7 @@ modal.querySelectorAll('.usamp').forEach(s=>s.addEventListener('click',()=>{
   s.classList.add('on');uSel=+s.dataset.s;UPLOAD=null;modal.classList.remove('has-file');
 }));
 modal.querySelector('#uGo').addEventListener('click',()=>{
+  track('builder_started',{source:UPLOAD?'upload':'sample'});
   const samps=document.querySelectorAll('.samp');
   samps.forEach(x=>x.classList.remove('on'));
   if(samps[uSel])samps[uSel].classList.add('on');
@@ -473,7 +476,7 @@ function drawPlans(){
     <ul>${p.f.map(x=>`<li><i data-lucide="check"></i><span>${x}</span></li>`).join('')}${
       (p.x||[]).map(x=>`<li class="no"><i data-lucide="x"></i><span>${x}</span></li>`).join('')}</ul></div>`).join('');
   document.querySelectorAll('#plans [data-plan]').forEach(a=>a.addEventListener('click',ev=>{
-    const n=a.dataset.plan;if(n==='Free')return;ev.preventDefault();openCheckout(n);
+    const n=a.dataset.plan;track('plan_cta_clicked',{plan:n,billing:bill});if(n==='Free')return;ev.preventDefault();openCheckout(n);
   }));
   lucide.createIcons();
 }
@@ -503,6 +506,7 @@ function coRender(name){
 
 let coPlan='Pro';
 function openCheckout(name){
+  track('checkout_opened',{plan:name});
   coPlan=name;coRender(coPlan);coMask.hidden=false;
   document.body.style.overflow='hidden';lucide.createIcons();
 }

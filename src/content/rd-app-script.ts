@@ -18,6 +18,7 @@ import { getPortfolioReport } from "@/lib/reports.functions";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
+import { track } from "@/lib/analytics";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
@@ -654,6 +655,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
       notes:(document.getElementById('agentNote')||{}).value||null,
       keep:groups.keep, replace:groups.replace, remove:groups.remove
     }});
+    track('design_rendered',{surface:'studio',room_type:currentRoomType()});
     lastRender=r.image; lastRenderPath=null;
     try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,'Redesigned space, AI render');
@@ -1090,6 +1092,7 @@ async function runBatch(){
       const afterPath=await uploadRenderDataUrl(r.image);
       const v=await saveRoomVersion({data:{room_id:room.id,before_path:room.before_path,after_path:afterPath,style:direction}});
       done++;
+      track('design_rendered',{surface:'batch',room_type:room.room_type||'living room'});
       batchRowSet(room.id,'p-ok','Designed','v'+v.version_no+' saved · '+direction);
       window.dispatchEvent(new Event('rd:credits-changed'));
     }catch(e){
