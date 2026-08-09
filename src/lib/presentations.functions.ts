@@ -1,6 +1,11 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  presentationCreateSchema,
+  presentationIdSchema,
+  presentationRespondSchema,
+  presentationTokenSchema,
+} from "@/lib/presentations.schemas";
 
 /** Owner: every share link created from their own saved versions, newest first. */
 export const listPresentations = createServerFn({ method: "GET" })
@@ -39,16 +44,7 @@ export const listPresentations = createServerFn({ method: "GET" })
 
 export const createPresentation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) =>
-    z
-      .object({
-        version_id: z.string().uuid(),
-        title: z.string().trim().min(1).max(120),
-        client_name: z.string().trim().max(120).optional(),
-        client_email: z.string().trim().email().max(160).optional().or(z.literal("")),
-      })
-      .parse(input),
-  )
+  .inputValidator((input: unknown) => presentationCreateSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { data: row, error } = await context.supabase
       .from("presentations")
@@ -66,7 +62,7 @@ export const createPresentation = createServerFn({ method: "POST" })
 
 export const deletePresentation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) => presentationIdSchema.parse(input))
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase.from("presentations").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -75,41 +71,19 @@ export const deletePresentation = createServerFn({ method: "POST" })
 
 /* ---------------- public share link ---------------- */
 
-async function publicClient() {
-  const { createClient } = await import("@supabase/supabase-js");
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-  return createClient(process.env["SUPABASE_URL"]!, key, {
-    auth: { persistSession: false, autoRefreshToken: false },
-    global: {
-      fetch: (input: any, init: any) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) h.delete("Authorization");
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
-  });
-}
-
-const tokenSchema = z.object({ token: z.string().trim().regex(/^[a-f0-9]{16,64}$/i) });
-
 /** Public: read one presentation by its share token and register the view. */
 export const getSharedPresentation = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) => tokenSchema.parse(input))
+  .inputValidator((input: unknown) => presentationTokenSchema.parse(input))
   .handler(async ({ data }) => {
-    const client = await publicClient();
+    const { publicShareClient } = await import("@/lib/presentations.server");
+    const client = publicShareClient();
     const { data: payload, error } = await client.rpc("get_shared_presentation", { _token: data.token });
     if (error) throw new Error(error.message);
     if (!payload) return null;
 
     await client.rpc("record_presentation_view", { _token: data.token });
 
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const sign = async (path: string | null) => {
-      if (!path || /^(https?:|\/|data:)/.test(path)) return path;
-      const { data: signed } = await supabaseAdmin.storage.from("room-photos").createSignedUrl(path, 3600);
-      return signed?.signedUrl ?? null;
-    };
+    const { signRoomPhoto } = await import("@/lib/presentations.server");
 
     const p = payload as any;
     return {
@@ -135,23 +109,17 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
         low: Number(l.low ?? 0),
         high: Number(l.high ?? 0),
       })),
-      before_url: await sign((p.before_path ?? null) as string | null),
-      after_url: await sign((p.after_path ?? null) as string | null),
+      before_url: await signRoomPhoto((p.before_path ?? null) as string | null),
+      after_url: await signRoomPhoto((p.after_path ?? null) as string | null),
     };
   });
 
 /** Public: the client's Approve / Request Changes decision. */
 export const respondToPresentation = createServerFn({ method: "POST" })
-  .inputValidator((input: unknown) =>
-    tokenSchema
-      .extend({
-        decision: z.enum(["approved", "changes"]),
-        note: z.string().trim().max(1000).optional(),
-      })
-      .parse(input),
-  )
+  .inputValidator((input: unknown) => presentationRespondSchema.parse(input))
   .handler(async ({ data }) => {
-    const client = await publicClient();
+    const { publicShareClient } = await import("@/lib/presentations.server");
+    const client = publicShareClient();
     const { data: res, error } = await client.rpc("respond_to_presentation", {
       _token: data.token,
       _decision: data.decision,
