@@ -50,7 +50,7 @@ export function SiteFooter() {
             </p>
             <p style={{ maxWidth: "33ch", fontSize: ".84rem", marginTop: 10 }}>
               <a href="/">Home</a> &middot; <a href="/resources">Resources</a> &middot;{" "}
-              <a href="/#pricing">Pricing</a>
+              <a href="/pricing">Pricing</a>
 
               <br />
               <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;{" "}
