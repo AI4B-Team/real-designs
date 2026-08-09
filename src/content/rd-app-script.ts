@@ -181,18 +181,16 @@ document.getElementById('notifRows').innerHTML=notifs.map(([n,d,st])=>`
 <div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div>
 <span class="pill ${st==='On'?'p-ok':'p-gray'}">${st}</span></div>`).join('');
 
-const invoices=[['Jul 28, 2026','Pro Monthly','$25.00'],['Jun 28, 2026','Pro Monthly','$25.00'],
-['May 28, 2026','Pro Monthly','$25.00'],['Apr 28, 2026','Pro Monthly','$25.00'],
-['Mar 28, 2026','Starter Monthly','$79.00'],['Feb 28, 2026','Starter Monthly','$79.00']];
-document.getElementById('invRows').innerHTML=invoices.map(([d,p,a])=>`
-<tr><td><b>${d}</b></td><td>${p}</td><td class="n">${a}</td>
-<td style="text-align:right"><button class="btn btn-ghost btn-xs">PDF</button></td></tr>`).join('');
+document.getElementById('invRows').innerHTML=
+'<tr><td colspan="4" style="padding:18px 12px;color:var(--mute-2);font-size:.82rem">'+
+'No invoices yet. Receipts appear here after your first paid plan or credit top up.</td></tr>';
+
 
 const PANE_META={profile:['Profile','How you appear to teammates and clients'],
 security:['Security','Password, two factor and active sessions'],
 notifs:['Notifications','What we email and push to you'],
 billing:['Subscription','Plan, usage and payment method'],
-invoices:['Invoices','Receipts for the last six months'],
+invoices:['Invoices','Receipts for paid plans and credit top ups'],
 team:['Team','Members, roles and seat usage'],
 brand:['Brand Kit','Applied to exports, decks and client links'],
 defaults:['Defaults','Applied to every new design'],
