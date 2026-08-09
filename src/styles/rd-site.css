@@ -2284,3 +2284,15 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
   .rd-site .dev-stage.solo .dev-phone .dev-screen{height:300px}
   .rd-site .dev-rail span{border-right:0;padding:5px 12px}
 }
+
+/* ---- simplified homepage pricing ---- */
+.rd-site .plans.plans-3{grid-template-columns:repeat(3,minmax(0,1fr));max-width:1000px;margin:0 auto}
+@media(max-width:900px){.rd-site .plans.plans-3{grid-template-columns:1fr}}
+.rd-site .price-trust{text-align:center;font-size:.73rem;color:var(--mute-2);margin-top:20px}
+.rd-site .price-more{text-align:center;margin-top:10px}
+.rd-site .price-more a{font-weight:600;font-size:.9rem;color:var(--ink);border-bottom:1px solid var(--line);display:inline-flex;align-items:center;gap:6px;padding-bottom:2px}
+.rd-site .price-more a:hover{color:var(--red);border-color:var(--red)}
+.rd-site .price-more i{width:15px;height:15px}
+.rd-site .annbar{display:flex;align-items:center;justify-content:center;gap:8px;background:var(--ink);color:#fff;font-size:.8rem;padding:9px 16px;text-align:center}
+.rd-site .annbar b{color:#fff;text-decoration:underline}
+.rd-site .annbar i{width:14px;height:14px}
