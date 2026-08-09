@@ -25,6 +25,13 @@ import { page as planTo3d } from "@/content/seo/pages/2d-to-3d-floor-plan";
 import { page as declutterPhoto } from "@/content/seo/pages/declutter-photo";
 import { page as gradeCompare } from "@/content/seo/pages/rental-grade-vs-retail-grade";
 
+import { page as wholeHouseRenovationCost } from "@/content/seo/pages/whole-house-renovation-cost";
+import { page as flooringInstallationCost } from "@/content/seo/pages/flooring-installation-cost";
+import { page as homeStagingCost } from "@/content/seo/pages/home-staging-cost";
+import { page as airbnbInteriorDesign } from "@/content/seo/pages/airbnb-interior-design";
+import { page as brrrrCalculator } from "@/content/seo/pages/brrrr-calculator";
+import { page as curbAppealIdeas } from "@/content/seo/pages/curb-appeal-ideas";
+
 export const LANDING_PAGES: LandingPage[] = [
   aiInteriorDesign,
   aiExteriorDesign,
@@ -50,6 +57,12 @@ export const LANDING_PAGES: LandingPage[] = [
   planTo3d,
   declutterPhoto,
   gradeCompare,
+  wholeHouseRenovationCost,
+  flooringInstallationCost,
+  homeStagingCost,
+  airbnbInteriorDesign,
+  brrrrCalculator,
+  curbAppealIdeas,
 ];
 
 /** Keyed by bare slug, without the leading slash. */

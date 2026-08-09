@@ -295,6 +295,10 @@ document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>
 /* ---------- dashboard: real data for the signed-in account ---------- */
 const kfmt=(n)=>n>=1000?'$'+(Math.round(n/100)/10)+'K':'$'+Math.round(n).toLocaleString('en-US');
 const empty=(t,s)=>'<div class="rowi"><div class="rowt"><b>'+t+'</b><span>'+s+'</span></div></div>';
+/* Skeleton placeholders shown while real data loads. */
+const skList=(n=3)=>Array.from({length:n},()=>'<div class="rowi sk-rowi"><div class="sk sk-th"></div><div class="sk-lines"><div class="sk sk-l1"></div><div class="sk sk-l2"></div></div></div>').join('');
+const skRows=(cols=6,n=4)=>Array.from({length:n},()=>'<tr class="sk-tr">'+Array.from({length:cols},()=>'<td><div class="sk sk-cell"></div></td>').join('')+'</tr>').join('');
+const skLines=(n=3)=>'<div class="sk-lines">'+Array.from({length:n},()=>'<div class="sk sk-l1"></div>').join('')+'</div>';
 
 /* First run checklist on the dashboard, driven by real workspace data. */
 function paintOnboarding(s,pres){
@@ -359,7 +363,7 @@ async function paintSample(s){
   const run=async(fn,btn,label)=>{
     if(SAMPLE_BUSY) return; SAMPLE_BUSY=true;
     if(btn){ btn.classList.add('is-busy'); btn.textContent=label; }
-    try{ await fn(); }catch(e){ try{ showAlert(e.message||'That did not work. Try again.'); }catch(_){} }
+    try{ await fn(); }catch(e){ try{ showAlert(e.message||'That did not go through. Give it another try in a moment.'); }catch(_){} }
     SAMPLE_BUSY=false;
     await loadDashboard();
     try{ window.dispatchEvent(new Event('rd:saved')); }catch(_){}
@@ -374,10 +378,11 @@ async function paintSample(s){
 async function loadDashboard(){
   const rl=document.getElementById('recentList'), al=document.getElementById('attnList'), bt=document.getElementById('budgetTable');
   if(!rl||!al||!bt) return;
+  rl.innerHTML=skList(3); al.innerHTML=skList(2); bt.innerHTML=skRows(6,3);
   let s;
   try{ s=await getWorkspaceSummary(); }
   catch(e){
-    rl.innerHTML=empty('Could Not Load Your Workspace','Sign in again, then refresh this page');
+    rl.innerHTML=empty('We Could Not Load Your Workspace','Your session may have timed out. Sign in again, then refresh this page.');
     al.innerHTML=''; bt.innerHTML='';
     return;
   }
@@ -842,6 +847,7 @@ async function openInStudio(r){
 
 async function paintVersions(){
   const el=document.getElementById('verList'); if(!el) return;
+  if(!el.innerHTML.trim()) el.innerHTML=skList(3);
   let list=[];
   try{ list=await listSavedEstimates(); }catch(e){ list=[]; }
   SAVED_EST=list; updateSearchMeta();
@@ -930,7 +936,7 @@ async function openHistory(r){
   const m=histModal();
   m.querySelector('#hmTitle').textContent=r.name+' \u2014 Version History';
   m.querySelector('#hmSub').textContent=r.address+' \u00b7 '+r.project;
-  m.querySelector('#hmBody').innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Loading versions\u2026</p>';
+  m.querySelector('#hmBody').innerHTML=skLines(3);
   m.classList.add('on');
   try{ HIST_LIST=await listRoomVersions({data:{room_id:r.id}}); }
   catch(e){ HIST_LIST=[]; }
@@ -1638,6 +1644,7 @@ function renderPresRows(){
 
 async function paintPresentations(){
   const el=document.getElementById('linkList'); if(!el) return;
+  if(!el.innerHTML.trim()) el.innerHTML=skList(3);
   try{ PRES_ROWS=await listPresentations(); }
   catch(e){ PRES_ROWS=[]; }
   updateSearchMeta();
@@ -1666,7 +1673,7 @@ async function togglePresHistory(pid){
   if(!box) return;
   if(!box.hidden){ box.hidden=true; return; }
   box.hidden=false;
-  box.innerHTML='<div class="pres-hist-i"><span>Loading Activity&hellip;</span></div>';
+  box.innerHTML='<div class="pres-hist-i">'+skLines(2)+'</div>';
   let rows=[];
   try{ rows=await listPresentationActivity({data:{id:pid}}); }catch(_){ rows=[]; }
   const meta=PRES_ROWS.find(x=>x.id===pid);
@@ -1757,9 +1764,9 @@ async function paintReports(force){
   if(REPORT&&!force){ reportKpis(REPORT); reportRows(REPORT); reportPanels(REPORT); lucide.createIcons(); return; }
   if(REPORT_LOADING) return;
   REPORT_LOADING=true;
-  tb.innerHTML='<tr><td colspan="9" style="color:var(--mute-2);font-size:.79rem">Loading&hellip;</td></tr>';
+  tb.innerHTML=skRows(9,4);
   try{ REPORT=await getPortfolioReport(); }
-  catch(e){ REPORT_LOADING=false; tb.innerHTML='<tr><td colspan="9" style="color:var(--mute-2);font-size:.79rem">Could not load reports. Try Refresh.</td></tr>'; return; }
+  catch(e){ REPORT_LOADING=false; tb.innerHTML='<tr><td colspan="9" style="color:var(--mute-2);font-size:.79rem">We could not load your reports just now. Hit Refresh to try again.</td></tr>'; return; }
   REPORT_LOADING=false;
   reportKpis(REPORT); reportRows(REPORT); reportPanels(REPORT);
   lucide.createIcons();
@@ -2024,7 +2031,7 @@ function presModal(){
         out.style.display='block'; m.querySelector('#plUrl').textContent=url;
         try{ await navigator.clipboard.writeText(url); }catch(_){}
         paintPresentations();
-      }catch(e){ err.style.display='block'; err.textContent=(e&&e.message)||'Could not create the link.'; }
+      }catch(e){ err.style.display='block'; err.textContent=(e&&e.message)||'We could not create that link. Check the details and try again.'; }
       go.disabled=false;
     });
   }
@@ -2143,7 +2150,7 @@ if(tmSend) tmSend.addEventListener('click',async()=>{
     const r=await inviteMember({data:{email,role:(rl&&rl.value)||'member'}});
     if(r&&r.ok){ if(msg){ msg.textContent='Invite added. '+email+' can accept it after signing in.'; msg.style.color='var(--mute-2)'; } if(em) em.value=''; paintTeam(); }
     else if(msg){ msg.textContent=(r&&r.error)||'Could not send that invite.'; msg.style.color='var(--red)'; }
-  }catch(e){ if(msg){ msg.textContent='Could not send that invite.'; msg.style.color='var(--red)'; } }
+  }catch(e){ if(msg){ msg.textContent='We could not send that invite. Double-check the email address and try again.'; msg.style.color='var(--red)'; } }
   tmSend.disabled=false;
 });
 
@@ -2374,7 +2381,7 @@ document.getElementById('fbAttach').addEventListener('click',()=>{
     const file=inp.files&&inp.files[0]; if(!file) return;
     const f=document.getElementById('fbFile'); f.hidden=false; f.textContent='Uploading '+file.name+'…';
     try{ fbAttachPath=await uploadRoomPhoto(file); f.textContent=file.name; }
-    catch(err){ fbAttachPath=null; f.textContent=(err&&err.message)||'Could not attach that file.'; }
+    catch(err){ fbAttachPath=null; f.textContent=(err&&err.message)||'We could not attach that file. Try a smaller image.'; }
   });
   inp.click();
 });
@@ -2875,7 +2882,7 @@ if(scopeGrid && !document.getElementById('scSave')){
   savedCard.innerHTML='<div class="card-h"><div><h3>Saved Estimates</h3><div class="sub" id="savedSub">Your saved rooms and priced scopes</div></div>'
     +'<button class="btn btn-ghost btn-xs" id="savedRefresh"><i data-lucide="refresh-cw"></i>Refresh</button></div>'
     +'<div class="card-b"><table><thead><tr><th>Property</th><th>Room</th><th>Grade</th><th style="text-align:right">Low</th><th style="text-align:right">High</th><th></th></tr></thead>'
-    +'<tbody id="savedRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>';
+    +'<tbody id="savedRows">'+skRows(6,3)+'</tbody></table></div>';
   scopeGrid.appendChild(savedCard);
 
   async function loadSaved(){
