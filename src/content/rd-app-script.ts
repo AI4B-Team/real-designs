@@ -255,7 +255,7 @@ function paintOnboarding(s,pres){
   const done=[
     ['Save Your First Room','Upload a photo in Studio and save it to a property.', (s.counts.designs||0)>0, 'studio','Open Studio'],
     ['Price A Scope','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Scope'],
-    ['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'props','Open Properties'],
+    ['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'scope','Open Scope'],
     ['Send A Client Presentation','Share a branded approval link and track the decision.', (pres||[]).length>0, 'present','Open Presentations'],
   ];
   const left=done.filter(d=>!d[2]).length;
