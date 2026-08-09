@@ -1867,6 +1867,13 @@
   .rd-site .hero{padding-top:20px!important;padding-bottom:18px!important}
   .rd-site .ribbon,.rd-site .marquee{padding-top:16px!important;padding-bottom:16px!important}
   .rd-site .sec-head{margin-bottom:28px}
+  .rd-site .hero-head .lede br{display:none}
+  .rd-site .prog-strip{padding:6px 2px 18px;scroll-padding-left:2px;scrollbar-width:none}
+  .rd-site .prog-strip::-webkit-scrollbar{display:none}
+  .rd-site .pnode.on{transform:none}
+  .rd-site .pnode.on .pim{box-shadow:0 8px 18px -14px rgba(0,0,0,.5)}
+  .rd-site .pdet{min-height:2.8em}
+  .rd-site .parrow{display:none}
 }
 
 /* ============ SHARED PRESENTATION PAGE ============ */
