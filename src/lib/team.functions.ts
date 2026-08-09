@@ -75,3 +75,15 @@ export const acceptInvite = createServerFn({ method: "POST" })
       .eq("id", data.id);
     return { ok: !error, error: error?.message ?? null };
   });
+
+/** Decline an invite addressed to your email. */
+export const declineInvite = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ id: z.string().uuid() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("team_invites")
+      .update({ status: "declined" })
+      .eq("id", data.id);
+    return { ok: !error, error: error?.message ?? null };
+  });

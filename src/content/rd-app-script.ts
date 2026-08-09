@@ -18,7 +18,7 @@ import { listPresentations, createPresentation, deletePresentation, getPresentat
 import { buildSocialReel } from "@/lib/social-reel";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
-import { listTeam, inviteMember, revokeInvite, acceptInvite } from "@/lib/team.functions";
+import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 
@@ -1704,6 +1704,28 @@ async function paintTeam(){
 }
 paintTeam();
 window.addEventListener('rd:credits-changed',()=>paintTeam());
+
+/* Pending workspace invites: shown at the top of the app until answered. */
+async function paintInviteBanner(){
+  const host=document.querySelector('.content')||document.querySelector('.main'); if(!host) return;
+  let team={received:[]};
+  try{ team=await listTeam(); }catch(_){ return; }
+  const inv=(team.received||[]);
+  let bar=document.getElementById('inviteBar');
+  if(!inv.length){ if(bar) bar.remove(); return; }
+  if(!bar){ bar=document.createElement('div'); bar.id='inviteBar'; bar.className='invite-bar'; host.prepend(bar); }
+  const i=inv[0];
+  bar.innerHTML='<i data-lucide="user-plus"></i><div class="ib-t"><b>You have been invited to join a workspace</b>'
+    +'<span>Accept to share their properties, designs, scopes and presentations. Role: '+String(i.role||'member')+'</span></div>'
+    +'<button class="btn btn-ghost btn-xs" id="ibNo">Decline</button>'
+    +'<button class="btn btn-primary btn-xs" id="ibYes">Accept Invite</button>';
+  lucide.createIcons();
+  const done=()=>{ paintInviteBanner(); paintTeam(); setTimeout(()=>window.location.reload(),400); };
+  const yes=document.getElementById('ibYes'), no=document.getElementById('ibNo');
+  if(yes) yes.addEventListener('click',async()=>{ yes.disabled=true; try{ await acceptInvite({data:{id:i.id}}); }catch(_){} done(); });
+  if(no) no.addEventListener('click',async()=>{ no.disabled=true; try{ await declineInvite({data:{id:i.id}}); }catch(_){} paintInviteBanner(); });
+}
+paintInviteBanner();
 
 const tmSend=document.getElementById('tmSend');
 if(tmSend) tmSend.addEventListener('click',async()=>{
