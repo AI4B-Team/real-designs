@@ -1257,12 +1257,42 @@
 .rd-site .p3layer.on{opacity:1}
 .rd-site .p3-stage img{width:100%;height:100%;object-fit:cover;object-position:center}
 .rd-site .p3layer.fit img{object-fit:contain!important;background:#FBFAF8}
-.rd-site .p3cam{position:absolute;right:16%;bottom:16%;width:30px;height:30px;border-radius:50%;
+/* Camera marker. Plan images are 3:2 inside a 16:8 stage, so the letterbox
+   bars are 12.5% each side; 46.25% lands on the circulation area outside the
+   bathroom door. The same marker rides the photoreal thumbnail. */
+.rd-site .p3cam{position:absolute;left:46.25%;top:60%;width:30px;height:30px;border-radius:50%;
   display:grid;place-items:center;background:var(--red);color:#fff;box-shadow:0 0 0 0 color-mix(in oklab,var(--red) 45%,transparent);
-  animation:rdCam 1.8s ease-out infinite}
+  animation:rdCam 1.8s ease-out infinite;z-index:2}
 .rd-site .p3cam i{width:15px;height:15px;color:#fff}
+.rd-site .p3cone{position:absolute;left:50%;top:50%;width:0;height:0;
+  border-left:58px solid transparent;border-right:58px solid transparent;
+  border-bottom:132px solid color-mix(in oklab,var(--red) 22%,transparent);
+  transform-origin:50% 100%;transform:translate(-50%,-100%) rotate(-38deg);pointer-events:none}
 @keyframes rdCam{0%{box-shadow:0 0 0 0 color-mix(in oklab,var(--red) 45%,transparent)}
   100%{box-shadow:0 0 0 18px transparent}}
+
+/* Photoreal stage: plan thumbnail (with the camera position) beside the shot. */
+.rd-site .p3layer.split{display:grid;grid-template-columns:25% 75%;background:#FBFAF8}
+.rd-site .p3-thumb{position:relative;border-right:1px solid var(--line);background:#fff;overflow:hidden}
+.rd-site .p3-thumb img{width:100%;height:100%;object-fit:contain!important}
+.rd-site .p3-thumb .p3cam{left:45%;top:60%;width:22px;height:22px}
+.rd-site .p3-thumb .p3cam i{width:11px;height:11px}
+.rd-site .p3-thumb .p3cone{border-left-width:34px;border-right-width:34px;border-bottom-width:78px}
+.rd-site .p3-thumb-lab{position:absolute;left:8px;bottom:8px;font-size:.55rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--mute-2);background:#fff;border:1px solid var(--line);
+  border-radius:999px;padding:3px 8px}
+.rd-site .p3-shot{position:relative;overflow:hidden}
+.rd-site .p3-shot img{width:100%;height:100%;object-fit:cover!important}
+@media(max-width:760px){.rd-site .p3layer.split{grid-template-columns:34% 66%}}
+
+/* Permanent geometry anchors — identical on every stage. */
+.rd-site .p3-facts{display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  padding:11px 18px;border-top:1px solid var(--line);background:#fff}
+.rd-site .p3-facts span{font-size:.72rem;color:var(--mute);border:1px solid var(--line);
+  border-radius:999px;padding:3px 10px}
+.rd-site .p3-facts .p3-gid{margin-left:auto;font-size:.62rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--red);border-color:color-mix(in oklab,var(--red) 30%,transparent)}
+
 
 .rd-site .p3-cap{padding:14px 18px;border-top:1px solid var(--line)}
 .rd-site .p3-cap b{display:block;font-size:1rem}
