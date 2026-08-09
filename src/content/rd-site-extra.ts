@@ -740,7 +740,8 @@ export function initExtra(timers: number[], lucide: any) {
       const layer = document.createElement("div");
       layer.className = "p3layer fit" + (s.split ? " split" : "");
       layer.innerHTML = s.split
-        ? `<div class="p3-thumb">${photo(PHOTOS.plan3d, "Furnished plan with the camera position marked")}${camMark}
+        ? `<div class="p3-thumb">
+             <div class="p3-thumb-inner">${photo(PHOTOS.plan3d, "Furnished plan with the camera position marked")}${camMark}</div>
              <span class="p3-thumb-lab mono">Camera Position</span>
            </div>
            <div class="p3-shot">${photo(s.src, s.title)}</div>`
