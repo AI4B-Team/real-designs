@@ -1415,38 +1415,88 @@ function boardSearch(desc,grade){
   return {name:'Google Shopping',url:'https://www.google.com/search?tbm=shop&q='+encodeURIComponent(term)};
 }
 function boardLines(r){ return r?r.lines.filter(l=>l.material_high>0):[]; }
+
+/* purchase tracking, per material line, saved on this device */
+const BUY_KEY='rd.board.buy';
+const BUY_STATES=[['todo','To Buy','p-gray'],['ordered','Ordered','p-amb'],['received','Received','p-ok']];
+function buyMap(){ try{ return JSON.parse(localStorage.getItem(BUY_KEY)||'{}')||{}; }catch(e){ return {}; } }
+function buyKey(l){ return (l.trade+'|'+l.description).toLowerCase().replace(/[^a-z0-9|]+/g,'-'); }
+function buyStatus(l){ const v=buyMap()[buyKey(l)]; return v==='ordered'||v==='received'?v:'todo'; }
+function buySet(k,v){ const m=buyMap(); if(v==='todo') delete m[k]; else m[k]=v; try{ localStorage.setItem(BUY_KEY,JSON.stringify(m)); }catch(e){} }
+function buyLabel(s){ const f=BUY_STATES.find(x=>x[0]===s)||BUY_STATES[0]; return f[1]; }
+function buyPill(s){ const f=BUY_STATES.find(x=>x[0]===s)||BUY_STATES[0]; return f[2]; }
+let BOARD_FILTER='all';
+
 function renderProductBoard(r){
   const g=document.getElementById('prodGrid'); if(!g) return;
   const sub=document.getElementById('shopSub');
   const mat=boardLines(r);
+  const bar=document.getElementById('boardTrack');
   if(!mat.length){
     g.innerHTML='<div class="card" style="grid-column:1/-1"><div class="card-b">'+
       '<b style="display:block;margin-bottom:5px">No Material Lines Yet</b>'+
       '<span style="font-size:.8rem;color:var(--mute-2)">Price a scope in Scope &amp; Budget and every material line lands here as a shoppable card with its allowance.</span>'+
       '</div></div>';
     if(sub) sub.textContent='Price a scope to build the board';
+    if(bar) bar.remove();
     return;
   }
-  g.innerHTML=mat.map(l=>{
+  renderBoardTrack(mat);
+  const shown=mat.filter(l=>BOARD_FILTER==='all'||buyStatus(l)===BOARD_FILTER);
+  g.innerHTML=(shown.length?shown:[]).map(l=>{
     const s=boardSearch(l.description,r.grade);
+    const st=buyStatus(l), k=buyKey(l);
     return `<div class="card"><div class="card-b">
-      <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mute-2)">${esc(l.trade)}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <div style="font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mute-2)">${esc(l.trade)}</div>
+        <span class="pill ${buyPill(st)}">${buyLabel(st)}</span></div>
       <b style="display:block;margin:4px 0 6px">${esc(l.description)}</b>
       <div style="font-size:.78rem;color:var(--mute-2);margin-bottom:10px">${l.qty} ${esc(l.uom)} &middot; ${esc(l.price_source)}</div>
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:11px">
         <span style="font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute-2)">Allowance</span>
         <b style="font-family:'DM Mono',monospace">${money(l.material_low)} to ${money(l.material_high)}</b></div>
+      <div class="notif-tabs" style="margin:0 0 9px">${BUY_STATES.map(([v,lab])=>
+        `<button class="notif-tab${st===v?' on':''}" data-buy="${k}" data-buyv="${v}">${lab}</button>`).join('')}</div>
       <a class="btn btn-ghost btn-xs" style="width:100%;justify-content:center" href="${s.url}" target="_blank" rel="noopener"><i data-lucide="external-link"></i>Shop On ${esc(s.name)}</a>
     </div></div>`;
-  }).join('');
+  }).join('')||'<div class="card" style="grid-column:1/-1"><div class="card-b"><b>Nothing In This Status</b><div class="sub">Switch the filter to see the rest of the board.</div></div></div>';
   if(sub) sub.textContent=`${mat.length} shoppable lines · ${r.market.name} · ${r.grade[0].toUpperCase()+r.grade.slice(1)} grade allowances`;
   lucide.createIcons();
 }
+
+function renderBoardTrack(mat){
+  const g=document.getElementById('prodGrid'); if(!g) return;
+  let bar=document.getElementById('boardTrack');
+  if(!bar){ bar=document.createElement('div'); bar.className='card'; bar.id='boardTrack';
+    bar.style.marginBottom='16px'; g.parentNode.insertBefore(bar,g); }
+  const counts={todo:0,ordered:0,received:0};
+  mat.forEach(l=>{ counts[buyStatus(l)]++; });
+  const done=counts.received, pct=Math.round((done/mat.length)*100);
+  const tabs=[['all','All',mat.length]].concat(BUY_STATES.map(([v,lab])=>[v,lab,counts[v]]));
+  bar.innerHTML=`<div class="card-h"><div><h3>Purchase Tracking</h3>
+      <div class="sub">${done} of ${mat.length} lines received &middot; ${counts.ordered} ordered &middot; saved on this device</div></div>
+      <button class="btn btn-ghost btn-xs" id="boardReset"><i data-lucide="rotate-ccw"></i>Reset Statuses</button></div>
+    <div class="card-b" style="padding-top:2px">
+      <div class="meter" style="margin-bottom:10px"><i style="width:${Math.max(2,pct)}%"></i></div>
+      <div class="notif-tabs" id="boardTabs">${tabs.map(([v,lab,n])=>
+        `<button class="notif-tab${BOARD_FILTER===v?' on':''}" data-bf="${v}">${lab} ${n}</button>`).join('')}</div>
+    </div>`;
+}
+
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-buy]');
+  if(b){ buySet(b.getAttribute('data-buy'),b.getAttribute('data-buyv')); renderProductBoard(lastScope); return; }
+  const f=e.target.closest('[data-bf]');
+  if(f){ BOARD_FILTER=f.getAttribute('data-bf'); renderProductBoard(lastScope); return; }
+  if(e.target.closest('#boardReset')){ try{ localStorage.removeItem(BUY_KEY); }catch(_){} renderProductBoard(lastScope); }
+});
+
 function boardCsv(){
   const r=lastScope; if(!r) return;
-  const rows=[['Item','Trade','Qty','UOM','Allowance Low','Allowance High','Retailer','Search Link']]
+  const rows=[['Item','Trade','Qty','UOM','Allowance Low','Allowance High','Status','Retailer','Search Link']]
     .concat(boardLines(r).map(l=>{const s=boardSearch(l.description,r.grade);
-      return [l.description,l.trade,l.qty,l.uom,l.material_low,l.material_high,s.name,s.url];}));
+      return [l.description,l.trade,l.qty,l.uom,l.material_low,l.material_high,buyLabel(buyStatus(l)),s.name,s.url];}));
+
   const csv=rows.map(r2=>r2.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
