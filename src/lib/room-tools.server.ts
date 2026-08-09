@@ -8,7 +8,7 @@ export type RoomToolInput = {
   room_type: string;
   direction: string;
   grade: string;
-  notes?: string | null;
+  notes?: string | null | undefined;
 };
 
 const BASE =
