@@ -2537,3 +2537,8 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .hero-left #heroSummary{min-height:132px;height:132px;margin-top:12px}
 .rd-site .hero-left #heroSummary .rsp{height:132px}
 .rd-site .hero-left .show{flex:0 0 auto}
+
+/* pricing: keep the H1 on a single line on desktop */
+.rd-pricing .sec-head{max-width:none}
+.rd-pricing .sec-head h1{max-width:none;white-space:nowrap}
+@media(max-width:900px){.rd-pricing .sec-head h1{white-space:normal}}
