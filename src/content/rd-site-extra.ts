@@ -561,61 +561,58 @@ export function initExtra(timers: number[], lucide: any) {
     <h3>${t}</h3><p>${d}</p></div>`).join("");
 
   /* ---------- pro workflows ---------- */
-  const PRO = [
-    ["Investor", PHOTOS.neutral, "Underwrite the design, not just admire it.",
-      ["Rental grade versus retail grade on the same room", "ARV impact range against recent comps", "Parallel scenarios with side by side numbers", "Whole property budget rolled up"],
-      [["Deal Screen", "Minutes"], ["Scenarios", "Unlimited"], ["Rolled Up", "Whole Property"]],
-      ["Upload The Walkthrough Photos", "Set The Intensity Band", "Compare Two Scenarios", "Export The Underwriting Sheet"],
-      ["Scope PDF", "Budget CSV", "Scenario Board"]],
-    ["Agent", PHOTOS.coastal, "Batch stage a listing without a rental truck.",
-      ["Batch staging across every photo in one direction", "MLS and state disclosure labeling applied automatically", "Originals retained with an audit trail", "Branded client and seller presentations"],
-      [["Whole Listing", "One Pass"], ["Disclosure", "Auto Labeled"], ["Originals", "Always Kept"]],
-      ["Drop The Full Photo Set", "Pick One Direction", "Batch Render The Listing", "Send The Seller Presentation"],
-      ["Listing Set", "Disclosure Log", "Seller Deck"]],
-    ["Designer", PHOTOS.japandi, "Concept time cut in half, approvals in one place.",
-      ["Mood boards and version approvals per room", "Brand presets and white label decks", "Comments and tracked client activity", "Product boards with live pricing"],
-      [["Concepts", "Same Day"], ["Approvals", "Tracked"], ["Decks", "White Label"]],
-      ["Load The Client's Rooms", "Build The Design DNA", "Share An Approval Link", "Hand Over The Product Board"],
-      ["Client Deck", "Product Board", "Approval Link"]],
-    ["Contractor", PHOTOS.kitchen, "Close in the driveway, quote before you leave.",
-      ["Line item scope with quantities and trades", "Location adjusted labor assumptions", "Bid ready proposal with a signature line", "Change tracking between versions"],
-      [["Quote Time", "On Site"], ["Line Items", "Qty And Trade"], ["Rates", "Local"]],
-      ["Shoot The Room On Your Phone", "Generate The Scope", "Adjust Quantities And Rates", "Send The Proposal"],
-      ["Line Item Scope", "Proposal PDF", "Change Log"]],
-    ["Builder", PHOTOS.craftsman, "Sell the spec before you frame it.",
-      ["Floor plan to furnished 3D visualization", "Design DNA across an entire community", "Org wide locked brand kit", "API and white label widget"],
-      [["Plans", "2D To 3D"], ["Community", "One DNA"], ["Brand Kit", "Org Locked"]],
-      ["Upload The Plan Set", "Furnish The Model Home", "Lock The Community DNA", "Publish The Buyer Widget"],
-      ["3D Plan", "Spec Sheet", "Buyer Widget"]],
-    ["Landscaper", PHOTOS.resortYard, "Show the yard before you break ground.",
-      ["Hardscape, planting, pool and lighting passes", "Material quantities and coverage", "Seasonal and day to dusk previews", "Neighbor friendly before and after boards"],
-      [["Passes", "Hardscape To Light"], ["Materials", "Coverage Math"], ["Previews", "Day To Dusk"]],
-      ["Photograph The Yard", "Choose The Passes", "Price The Materials", "Present The Before And After"],
-      ["Yard Board", "Material List", "Dusk Preview"]],
+  type Role = [string, string, string, string, [string, string, string][], string];
+  const PRO: Role[] = [
+    ["Investor", PHOTOS.neutral, "See The Design And The Deal Before You Commit.",
+      "Compare renovation levels, understand the planning range and see how each design direction could affect the property.",
+      [["wallet", "Budget Options", "Compare refresh, makeover and renovation scenarios."],
+       ["trending-up", "Value Insight", "Review potential ARV impact against recent comps."],
+       ["list-checks", "Complete Scope", "Roll every approved room into one property budget."]],
+      "Plan An Investment Property"],
+    ["Agent", PHOTOS.coastal, "Help Buyers See What The Property Could Become.",
+      "Stage every listing photo in one direction, then hand sellers and buyers a presentation that looks like your brand.",
+      [["sofa", "Virtual Staging", "Furnish empty rooms across the whole photo set."],
+       ["eye", "Buyer-Ready Concepts", "Show the potential without a rental truck."],
+       ["presentation", "Branded Presentations", "Send a seller deck with your logo on it."]],
+      "Create A Buyer Presentation"],
+    ["Designer", PHOTOS.japandi, "Explore Faster Without Losing Creative Control.",
+      "Set the palette and materials once, then move through rooms and revisions without redoing the concept every time.",
+      [["palette", "Design DNA", "One style system applied across every room."],
+       ["mouse-pointer-click", "Object-Level Control", "Keep, swap or restyle individual pieces."],
+       ["shopping-bag", "Product Matching", "Real products at three price levels."]],
+      "Explore Design Tools"],
+    ["Contractor", PHOTOS.kitchen, "Turn The Approved Look Into A Clearer Scope.",
+      "Take the design the client signed off on and turn it into work items, quantities and a proposal you can send the same day.",
+      [["hammer", "Work Items", "Line item scope built from the room photo."],
+       ["ruler", "Quantities And Trades", "Measured quantities with local rate assumptions."],
+       ["file-check", "Client Approvals", "Signed off versions with a change log."]],
+      "See The Contractor Workflow"],
+    ["Builder", PHOTOS.craftsman, "Keep Every Room Consistent Across The Property.",
+      "Lock a finish package once and carry it through model homes, whole properties and entire communities.",
+      [["layers", "Finish Packages", "One locked package, reused everywhere."],
+       ["home", "Multi-Room Consistency", "Every room reads like the same project."],
+       ["sliders-horizontal", "Budget Scenarios", "Price good, better and best side by side."]],
+      "Plan A Spec Property"],
+    ["Landscaper", PHOTOS.resortYard, "Show The Finished Property, Front Yard To Backyard.",
+      "Present hardscape, planting and lighting together so the client sees the finished property, not a plant list.",
+      [["trees", "Landscape Concepts", "Hardscape, planting, pool and lighting passes."],
+       ["house", "Exterior Coordination", "The yard matched to the house design."],
+       ["calculator", "Outdoor Planning Ranges", "Material coverage with a planning range."]],
+      "Plan An Outdoor Project"],
   ];
   const pt = $("proTabs");
   function setPro(i: number) {
-    const [n, src, lede, list, stats, flow, outs] = PRO[i] as any;
+    const [n, src, title, desc, cards, cta] = PRO[i];
     pt?.querySelectorAll(".ptab").forEach((x: any, j: number) => x.classList.toggle("on", j === i));
     const pp = $("proPanel");
     if (pp) pp.innerHTML = `
-      <div class="pro-im">${photo(src, n + " workflow preview")}<span class="stamp">${n.toUpperCase()}</span></div>
-      <div class="pro-tx"><h3>${lede}</h3><ul class="checks">${
-        list.map((l: string) => `<li><i data-lucide="check"></i><span>${l}</span></li>`).join("")
-      }</ul>
-        <div class="pro-stats">${
-          (stats || []).map(([k, v]: [string, string]) => `<div class="pro-stat"><span class="mono">${k}</span><b>${v}</b></div>`).join("")
-        }</div>
-      </div>
-      <div class="pro-foot">
-        <div class="pro-flow">
-          <span class="pro-lab mono">Typical Flow</span>
-          <ol>${(flow || []).map((f: string, j: number) => `<li><i class="mono">${String(j + 1).padStart(2, "0")}</i><span>${f}</span></li>`).join("")}</ol>
-        </div>
-        <div class="pro-outs">
-          <span class="pro-lab mono">What You Walk Away With</span>
-          <div>${(outs || []).map((o: string) => `<span class="pb"><i data-lucide="file-down"></i>${o}</span>`).join("")}</div>
-        </div>
+      <div class="pro-im">${photo(src, n + " project preview")}<span class="stamp">${n.toUpperCase()}</span></div>
+      <div class="pro-tx">
+        <h3>${title}</h3>
+        <p class="pro-desc">${desc}</p>
+        <div class="pro-mini">${cards.map(([ic, t, d]) =>
+          `<div class="pmini"><i data-lucide="${ic}"></i><b>${t}</b><span>${d}</span></div>`).join("")}</div>
+        <a class="pro-cta" href="/auth">${cta}<i data-lucide="arrow-right"></i></a>
       </div>`;
     lucide.createIcons();
   }
@@ -624,6 +621,7 @@ export function initExtra(timers: number[], lucide: any) {
     pt.querySelectorAll(".ptab").forEach((b: any) => b.addEventListener("click", () => setPro(+b.dataset.p)));
     setPro(0);
   }
+
 
 
   /* ---------- comparison table ---------- */
