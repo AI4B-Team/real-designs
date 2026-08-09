@@ -2224,7 +2224,7 @@
 .cm.ok{color:#16794a}
 .cm.lim{display:inline-flex;align-items:center;gap:5px;color:#9a6a12;font-size:.76rem}
 .cm.lim i{width:13px;height:13px}
-.cm.none{color:#c3c3c0}
+.cm.none{color:#8a8a86}
 .cm.soft{color:var(--mute-2);font-size:.76rem}
 .cmp-legend{display:flex;flex-wrap:wrap;gap:18px;justify-content:center;padding:30px 16px 6px;font-size:.7rem;color:var(--mute-2)}
 .cmp-legend span{display:inline-flex;align-items:center;gap:6px}
