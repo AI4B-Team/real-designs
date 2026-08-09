@@ -50,9 +50,11 @@ const money = (n: number) => "$" + Math.round(n).toLocaleString();
 function SharedPresentation() {
   const { token, deck } = Route.useLoaderData();
   const [status, setStatus] = useState(deck?.status ?? "sent");
+  const [savedNote, setSavedNote] = useState(deck?.decision_note ?? "");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [split, setSplit] = useState(50);
+  const [dragging, setDragging] = useState(false);
 
   useEffect(() => {
     if (deck) document.title = `${deck.title} | REAL DESIGNS`;
@@ -61,12 +63,22 @@ function SharedPresentation() {
   if (!deck) return <Shell><p>This link is no longer active.</p></Shell>;
 
   const decided = status === "approved" || status === "changes";
+  const hasCompare = Boolean(deck.after_url && deck.before_url);
+
+  function moveSplit(clientX: number, el: HTMLElement) {
+    const r = el.getBoundingClientRect();
+    const pct = ((clientX - r.left) / r.width) * 100;
+    setSplit(Math.max(0, Math.min(100, pct)));
+  }
 
   async function decide(decision: "approved" | "changes") {
     setBusy(true);
     try {
       const res = await respondToPresentation({ data: { token, decision, note: note || undefined } });
-      if (res?.ok) setStatus(decision);
+      if (res?.ok) {
+        setStatus(decision);
+        setSavedNote(note);
+      }
     } finally {
       setBusy(false);
     }
@@ -87,19 +99,36 @@ function SharedPresentation() {
         </p>
 
         {deck.after_url || deck.before_url ? (
-          <div className="pp-compare">
+          <div
+            className={"pp-compare" + (hasCompare ? " is-compare" : "") + (dragging ? " is-drag" : "")}
+            onPointerDown={hasCompare ? (e) => {
+              (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+              setDragging(true);
+              moveSplit(e.clientX, e.currentTarget);
+            } : undefined}
+            onPointerMove={hasCompare ? (e) => {
+              if (dragging) moveSplit(e.clientX, e.currentTarget);
+            } : undefined}
+            onPointerUp={hasCompare ? () => setDragging(false) : undefined}
+            onPointerCancel={hasCompare ? () => setDragging(false) : undefined}
+          >
             <img src={deck.before_url ?? deck.after_url ?? ""} alt={`${deck.room_name} before the redesign`} />
-            {deck.after_url && deck.before_url ? (
+            {hasCompare ? (
               <>
+                <span className="pp-tag pp-tag-before">Before</span>
                 <div className="pp-after" style={{ width: split + "%" }}>
-                  <img src={deck.after_url} alt={`${deck.room_name} after the redesign`} />
+                  <img src={deck.after_url!} alt={`${deck.room_name} after the redesign`} />
+                  <span className="pp-tag pp-tag-after">After</span>
+                </div>
+                <div className="pp-handle" style={{ left: split + "%" }} aria-hidden="true">
+                  <span />
                 </div>
                 <input
                   className="pp-range"
                   type="range"
                   min={0}
                   max={100}
-                  value={split}
+                  value={Math.round(split)}
                   aria-label="Drag to compare before and after"
                   onChange={(e) => setSplit(Number(e.target.value))}
                 />
@@ -107,6 +136,8 @@ function SharedPresentation() {
             ) : null}
           </div>
         ) : null}
+
+        {hasCompare ? <p className="pp-hint">Drag across the photo to reveal the redesign.</p> : null}
 
         {deck.total_low != null && deck.total_high != null ? (
           <div className="pp-range-box">
@@ -134,13 +165,13 @@ function SharedPresentation() {
             <tbody>
               {deck.lines.map((l: { description: string; trade: string; qty: number; uom: string; low: number; high: number }, i: number) => (
                 <tr key={i}>
-                  <td>{l.description}</td>
-                  <td>{l.trade}</td>
-                  <td className="n">
+                  <td data-l="Line Item">{l.description}</td>
+                  <td data-l="Trade">{l.trade}</td>
+                  <td className="n" data-l="Qty">
                     {l.qty} {l.uom}
                   </td>
-                  <td className="n">{money(l.low)}</td>
-                  <td className="n">{money(l.high)}</td>
+                  <td className="n" data-l="Low">{money(l.low)}</td>
+                  <td className="n" data-l="High">{money(l.high)}</td>
                 </tr>
               ))}
             </tbody>
@@ -152,14 +183,17 @@ function SharedPresentation() {
         </section>
       ) : null}
 
-      <section className="pp-card">
+      <section className="pp-card" id="decision">
         <h2 className="pp-h2">Your Decision</h2>
         {decided ? (
-          <p className="pp-done">
-            {status === "approved"
-              ? "Approved. The sender has been notified in their workspace."
-              : "Changes requested. The sender will follow up with a new version."}
-          </p>
+          <>
+            <p className={"pp-done" + (status === "changes" ? " is-changes" : "")}>
+              {status === "approved"
+                ? "Approved. The sender has been notified in their workspace."
+                : "Changes requested. The sender will follow up with a new version."}
+            </p>
+            {savedNote ? <p className="pp-yournote">Your note: “{savedNote}”</p> : null}
+          </>
         ) : (
           <>
             <textarea
@@ -171,7 +205,7 @@ function SharedPresentation() {
             />
             <div className="pp-actions">
               <button className="pp-btn pp-btn-primary" disabled={busy} onClick={() => decide("approved")}>
-                Approve This Design
+                {busy ? "Sending…" : "Approve This Design"}
               </button>
               <button className="pp-btn" disabled={busy} onClick={() => decide("changes")}>
                 Request Changes
@@ -182,6 +216,13 @@ function SharedPresentation() {
       </section>
 
       <footer className="pp-foot">Shared securely through REAL DESIGNS. No account needed.</footer>
+
+      {!decided ? (
+        <div className="pp-sticky">
+          <a className="pp-btn pp-btn-primary" href="#decision">Approve Or Request Changes</a>
+        </div>
+      ) : null}
     </main>
   );
 }
+
