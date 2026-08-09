@@ -1493,6 +1493,7 @@ function renderPresRows(){
     return `<div class=\"rowi\" data-pid=\"${r.id}\" data-tok=\"${r.token}\">
       <div class=\"rowt\"><b>${esc(r.title)}</b><span>${ctx?ctx+' &middot; ':''}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
       <span class="pill ${cls}">${lab}</span>
+      <button class="icon-btn" data-send title="Send to client"><i data-lucide="send"></i></button>
       <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
       <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
       <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
@@ -1722,6 +1723,10 @@ if(linkList) linkList.addEventListener('click',async e=>{
   const tab=e.target.closest('[data-pf]');
   if(tab){ PRES_FILTER=tab.getAttribute('data-pf'); renderPresRows(); return; }
   const row=e.target.closest('[data-pid]'); if(!row) return;
+  if(e.target.closest('[data-send]')){
+    presSendModal(PRES_ROWS.find(x=>x.id===row.dataset.pid));
+    return;
+  }
   if(e.target.closest('[data-copy]')){
     const url=presLink(row.dataset.tok);
     try{ await navigator.clipboard.writeText(url); }catch(_){}
@@ -1746,6 +1751,69 @@ if(linkList) linkList.addEventListener('click',async e=>{
     paintPresentations();
   }
 });
+
+/* ---------- send a client link ----------
+   No mail server is wired up, so we hand the pro a finished message they can
+   send from their own inbox. Wording changes with the status of the link so a
+   follow up never reads like the first email. */
+function presMessage(r){
+  const url=presLink(r.token);
+  const who=r.client_name||'there';
+  const what=r.title||'your design';
+  const place=[r.address,r.room_name].filter(Boolean).join(', ');
+  const st=r.status||'sent';
+  const opened=(r.view_count||0)>0;
+  if(st==='changes'){
+    return {subject:'Updated: '+what,
+      body:'Hi '+who+',\n\nI made the changes you asked for on '+(place||what)+'. Same link, updated design and budget range:\n\n'+url+'\n\nTake a look and approve it there, or tell me what to adjust next.\n\nThank you'};
+  }
+  if(opened&&st!=='approved'){
+    return {subject:'Following Up On '+what,
+      body:'Hi '+who+',\n\nJust checking in on the design I sent for '+(place||what)+'. Everything you need is on one page, the before and after, the scope and the budget range:\n\n'+url+'\n\nApprove it there when you are ready, or leave a note with what you want changed.\n\nThank you'};
+  }
+  if(st==='approved'){
+    return {subject:'Approved: '+what,
+      body:'Hi '+who+',\n\nThanks for approving '+(place||what)+'. Here is the page again for your records:\n\n'+url+'\n\nI will get the next steps moving and follow up with timing.\n\nThank you'};
+  }
+  return {subject:'Your Design Is Ready: '+what,
+    body:'Hi '+who+',\n\nHere is the design for '+(place||what)+'. One page, no login. You will see the before and after photo, what is being changed and a planning budget range:\n\n'+url+'\n\nApprove it right on the page, or leave a note with anything you want changed.\n\nThank you'};
+}
+
+window.__presSend=presSendModal;
+function presSendModal(r){
+  if(!r) return;
+  const msg=presMessage(r);
+  let m=document.getElementById('sendModal');
+  if(!m){ m=document.createElement('div'); m.id='sendModal'; m.className='up-modal'; (document.querySelector('.rd-app')||document.body).appendChild(m); }
+  m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" style="width:min(560px,calc(100vw - 32px))">'
+    +'<h3>Send To Client</h3>'
+    +'<p>Edit anything you like, then send it from your own inbox so the reply comes back to you. The link works without a login and updates as you change the design.</p>'
+    +'<div class="field"><label>To</label><input id="sndTo" type="email" placeholder="client@email.com" value="'+esc(r.client_email||'')+'"></div>'
+    +'<div class="field"><label>Subject</label><input id="sndSub" type="text" value="'+esc(msg.subject)+'"></div>'
+    +'<div class="field"><label>Message</label><textarea id="sndBody" rows="9">'+esc(msg.body)+'</textarea></div>'
+    +'<div class="up-act"><button class="btn btn-ghost btn-sm" data-close>Cancel</button>'
+    +'<button class="btn btn-ghost btn-sm" id="sndCopy"><i data-lucide="copy"></i>Copy Message</button>'
+    +'<button class="btn btn-primary btn-sm" id="sndMail"><i data-lucide="send"></i>Open In Email App</button></div></div>';
+  m.classList.add('on');
+  lucide.createIcons();
+  const close=()=>m.classList.remove('on');
+  m.addEventListener('click',e=>{ if(e.target.closest('[data-close]')) close(); });
+  const vals=()=>({to:(document.getElementById('sndTo')||{value:''}).value.trim(),
+    sub:(document.getElementById('sndSub')||{value:''}).value,
+    body:(document.getElementById('sndBody')||{value:''}).value});
+  document.getElementById('sndCopy').addEventListener('click',async ev=>{
+    const v=vals();
+    try{ await navigator.clipboard.writeText(v.sub+'\n\n'+v.body); }catch(_){}
+    const b=ev.currentTarget; const old=b.innerHTML; b.textContent='Copied';
+    setTimeout(()=>{ b.innerHTML=old; lucide.createIcons(); },1400);
+  });
+  document.getElementById('sndMail').addEventListener('click',()=>{
+    const v=vals();
+    window.location.href='mailto:'+encodeURIComponent(v.to)+'?subject='+encodeURIComponent(v.sub)+'&body='+encodeURIComponent(v.body);
+    close();
+  });
+}
+
 
 function presModal(){
   let m=document.getElementById('presModal');
