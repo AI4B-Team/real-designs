@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { DesignResultSummary } from "@/components/DesignResultSummary";
+import { metric } from "@/lib/design-result-summary";
 import {
   estimate,
   fmt,
@@ -8,6 +10,7 @@ import {
   type FinishGrade,
   type RoomKey,
 } from "@/lib/planning-range";
+
 
 /**
  * Works with no image, no account and no server call: typed dimensions times
@@ -95,20 +98,12 @@ export function RehabCalculator({ defaultRoom = "kitchen" as RoomKey }) {
       </div>
 
       <div className="out on" style={{ display: "block" }}>
-        <div className="out-num">
-          <div>
-            <span>Estimated Planning Range</span>
-            <b>
-              {fmt(result.totalLow)} to {fmt(result.totalHigh)}
-            </b>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <span>Pricing Confidence</span>
-            <b className={result.confidence === "High" ? "conf-hi" : "conf-md"}>
-              {result.confidence}
-            </b>
-          </div>
-        </div>
+        <DesignResultSummary
+          contextLabel="Estimated Planning Range"
+          primaryValue={`${fmt(result.totalLow)} to ${fmt(result.totalHigh)}`}
+          compact
+          metrics={[metric("Pricing Confidence", result.confidence)]}
+        />
 
         <table className="lp-table calc-table">
           <thead>
