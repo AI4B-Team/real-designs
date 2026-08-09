@@ -2903,8 +2903,10 @@ if(scopeGrid && !document.getElementById('scSave')){
   let uid='anon';
   try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) uid=data.user.id; }catch(e){}
   const KEY='rd.onb.'+uid;
-  const state=(()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ return {}; } })();
-  const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(state)); }catch(e){} };
+  const readState=()=>{ try{ return JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ return {}; } };
+  const state=readState();
+  /* merge on write so a second init cannot drop flags written by the first */
+  const save=()=>{ try{ localStorage.setItem(KEY,JSON.stringify(Object.assign(readState(),state))); }catch(e){} };
   if(state.done){ card.remove(); return; }
 
   /* already worked in this account? then there is nothing to onboard */
