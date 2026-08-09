@@ -1944,3 +1944,6 @@
   .pp-card{break-inside:avoid;border-color:#ccc}
 }
 
+
+/* Hero lede: keep the manual line break on wide screens only */
+@media (max-width: 860px){ .br-wide{ display:none } }
