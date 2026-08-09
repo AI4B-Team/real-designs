@@ -2319,8 +2319,8 @@ function upgradeModal(title,body){
     m.addEventListener('click',(e)=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
     m.querySelector('#upGo').addEventListener('click',()=>{
       m.classList.remove('on');
-      const b=document.querySelector('[data-goto="account"]'); if(b) b.click();
-      const rail=document.querySelector('[data-pane="billing"]'); if(rail) rail.click();
+      try{ go('billing'); }catch(_){ const b=document.querySelector('[data-goto="account"]'); if(b) b.click(); }
+      setTimeout(()=>{ const rail=document.querySelector('[data-pane="billing"]'); if(rail) rail.click(); },40);
     });
   }
   m.querySelector('#upTitle').textContent=title;
