@@ -43,7 +43,7 @@ export async function charge(
   const { data, error } = await supabaseAdmin.rpc("spend_credits", {
     _user_id: userId,
     _action: action,
-    _note: note ?? null,
+    _note: note,
   });
   if (error) throw new Error(`Credit charge failed: ${error.message}`);
   return data as unknown as ChargeResult;
@@ -56,7 +56,7 @@ export async function refund(userId: string, amount: number, note?: string): Pro
     _user_id: userId,
     _amount: amount,
     _action: "refund",
-    _note: note ?? null,
+    _note: note,
   });
 }
 
