@@ -2352,8 +2352,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     const m=document.createElement('div'); m.className='up-modal on'; m.id='onbModal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
       +'<h3>Welcome To REAL DESIGNS</h3>'
-      +'<p>Three steps take you from a room photo to a priced, contractor ready scope. Your checklist is on the dashboard.</p>'
-      +'<div class="up-costs">'+STEPS.map((s,n)=>'<div class="up-cost"><b>'+(n+1)+'. '+s.t+'</b><span>'+s.b+'</span></div>').join('')+'</div>'
+      +'<p>Upload one room photo and REAL DESIGNS gives you a redesign, a priced scope and a client ready package. Your '+STEPS.length+' step checklist is waiting on the dashboard.</p>'
       +'<div class="up-act"><button class="btn btn-primary" id="onbStart">Start With A Photo</button>'
       +'<button class="btn btn-ghost" data-close>Look Around First</button></div></div>';
     (document.querySelector(".rd-app")||document.body).appendChild(m);
