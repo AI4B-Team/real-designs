@@ -29,6 +29,8 @@ export const Route = createFileRoute("/sitemap.xml")({
         ];
 
 
+        const lastmod = new Date().toISOString().slice(0, 10);
+
         const urls = entries.map((e) =>
           [
             `  <url>`,
