@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
+import { submitFeedback } from "@/lib/feedback";
+
 
 export function initApp(): () => void {
   const timers: number[] = [];
