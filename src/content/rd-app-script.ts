@@ -38,8 +38,8 @@ const PALS={
 };
 
 /* ---------- nav ---------- */
-const titles={dash:['Dashboard','Real Advisors &middot; 6 active properties'],props:['Properties','Property, project, room, version'],
-studio:['Studio','206 N MacDill Ave &middot; Living Room &middot; v5 draft'],designs:['Designs','248 designs across 6 properties'],
+const titles={dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
+studio:['Studio','Price a room and save it to a project'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations'],
@@ -58,6 +58,8 @@ function go(v){
 
   window.scrollTo({top:0});
 }
+
+
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
 
@@ -537,7 +539,9 @@ function renderScope(r){
   document.getElementById('scopeTotLow').textContent=money(r.total_low);
   document.getElementById('scopeTotHigh').textContent=money(r.total_high);
   document.getElementById('scopeTotLab').textContent='Estimated Total'+(r.budget_fit?' · '+r.budget_fit:'');
-  document.getElementById('scopeSub').textContent=`206 N MacDill · Living Room v4 · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
+  const _sp=PROP_TREE[SEL.p], _sj=_sp?_sp.projects[SEL.pr]:null;
+  const _scx=_sp?(_sp.address+(_sj?' · '+_sj.name:'')):'Unsaved room';
+  document.getElementById('scopeSub').textContent=`${_scx} · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
   document.getElementById('scopeNote').textContent=`${r.disclaimer} Quantities are derived from the measurements above and should be field verified.`;
 
   /* summary header */
