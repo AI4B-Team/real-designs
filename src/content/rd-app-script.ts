@@ -1194,6 +1194,7 @@ async function paintPresentations(){
       <span class="pill ${cls}">${lab}</span>
       <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
       <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
+      <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
       <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
       <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>`;
   }).join('');
