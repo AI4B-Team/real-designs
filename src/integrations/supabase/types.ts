@@ -245,6 +245,8 @@ export type Database = {
       }
       presentations: {
         Row: {
+          brand_accent: string | null
+          brand_name: string | null
           client_email: string | null
           client_name: string | null
           created_at: string
@@ -259,6 +261,8 @@ export type Database = {
           view_count: number
         }
         Insert: {
+          brand_accent?: string | null
+          brand_name?: string | null
           client_email?: string | null
           client_name?: string | null
           created_at?: string
@@ -273,6 +277,8 @@ export type Database = {
           view_count?: number
         }
         Update: {
+          brand_accent?: string | null
+          brand_name?: string | null
           client_email?: string | null
           client_name?: string | null
           created_at?: string

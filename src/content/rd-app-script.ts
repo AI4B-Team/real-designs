@@ -1458,9 +1458,13 @@ function presModal(){
       if(!title){ err.style.display='block'; err.textContent='Give the package a title your client will recognise.'; return; }
       err.style.display='none'; go.disabled=true;
       try{
+        const bk=(PREFS&&PREFS.brand)||{};
+        const accent=/^#[0-9a-f]{6}$/i.test(bk.color||'')?bk.color:undefined;
         const res=await createPresentation({data:{version_id,title,
           client_name:(m.querySelector('#plName').value||'').trim()||undefined,
-          client_email:(m.querySelector('#plMail').value||'').trim()||undefined}});
+          client_email:(m.querySelector('#plMail').value||'').trim()||undefined,
+          brand_name:(bk.company||'').trim()||undefined,
+          brand_accent:accent}});
         const url=presLink(res.token);
         out.style.display='block'; m.querySelector('#plUrl').textContent=url;
         try{ await navigator.clipboard.writeText(url); }catch(_){}

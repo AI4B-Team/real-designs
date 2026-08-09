@@ -53,6 +53,8 @@ export const createPresentation = createServerFn({ method: "POST" })
         title: data.title,
         client_name: data.client_name || null,
         client_email: data.client_email || null,
+        brand_name: data.brand_name || null,
+        brand_accent: data.brand_accent || null,
       })
       .select("id, token")
       .single();

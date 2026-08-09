@@ -84,10 +84,16 @@ function SharedPresentation() {
     }
   }
 
+  const accent = /^#[0-9a-f]{6}$/i.test(deck.brand_accent || "") ? (deck.brand_accent as string) : "#CC0000";
+  const brandName = (deck.brand_name || "").trim();
+
   return (
-    <main className="pp-wrap">
+    <main className="pp-wrap" style={{ "--pp-accent": accent } as Record<string, string>}>
       <header className="pp-head">
-        <span className="pp-brand">REAL DESIGNS</span>
+        <span className="pp-brand">
+          {brandName || (<>REAL <b>DESIGNS</b></>)}
+          {brandName ? <span className="pp-via">via Real Designs</span> : null}
+        </span>
         <span className="pp-kicker">Prepared For {deck.client_name || "You"}</span>
       </header>
 
