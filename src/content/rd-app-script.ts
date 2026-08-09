@@ -1605,11 +1605,23 @@ function presAgo(iso){
 function presLink(token){ return location.origin+'/p/'+token; }
 
 let PRES_FILTER='all';
-const PRES_TABS=[['all','All'],['sent','Awaiting'],['viewed','Opened'],['approved','Approved'],['changes','Changes']];
+const PRES_TABS=[['all','All'],['due','Follow Up'],['sent','Awaiting'],['viewed','Opened'],['approved','Approved'],['changes','Changes']];
+
+/* A link needs a nudge once it has been out for three days with no decision,
+   and again three days after the last reminder. Approved links never nag. */
+const PRES_NUDGE_MS=3*86400000;
+function presDue(r){
+  const st=r.status||'sent';
+  if(st==='approved') return false;
+  const since=new Date(r.reminded_at||r.created_at||Date.now()).getTime();
+  return Date.now()-since>PRES_NUDGE_MS;
+}
 
 function presMatch(r){
   if(PRES_FILTER==='all') return true;
+  if(PRES_FILTER==='due') return presDue(r);
   return (r.status||'sent')===PRES_FILTER;
+
 }
 
 function renderPresRows(){
