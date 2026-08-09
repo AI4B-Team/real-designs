@@ -289,10 +289,11 @@ async function loadDashboard(){
     if(p.priced<p.rooms) attn.push([p.rooms-p.priced+' '+(p.rooms-p.priced===1?'room needs':'rooms need')+' pricing',p.address+' &middot; '+p.project_name,'p-amb','Price It','scope']);
     if(p.budget_target&&p.high>p.budget_target) attn.push(['Scope exceeds target by '+kfmt(p.high-p.budget_target),p.address+' &middot; '+p.project_name,'p-red','Review','scope']);
   });
+  let pres=[];
   try{
-    const pres=await listPresentations();
+    pres=await listPresentations()||[];
     const hrs=(d)=>d?(Date.now()-new Date(d).getTime())/36e5:null;
-    (pres||[]).forEach(p=>{
+    pres.forEach(p=>{
       const who=p.client_name||p.client_email||'Client';
       const where=(p.address?p.address+' &middot; ':'')+p.room_name;
       if(p.status==='changes') attn.unshift([who+' requested changes on '+p.title, where,'p-red','Review','present']);
@@ -300,6 +301,10 @@ async function loadDashboard(){
       else if(p.status==='sent'&&hrs(p.created_at)>72) attn.push([p.title+' has not been opened', where+' &middot; sent '+Math.round(hrs(p.created_at)/24)+' days ago','p-amb','Resend','present']);
     });
   }catch(e){}
+
+  /* first run checklist: shown until every step is done or the user dismisses it */
+  paintOnboarding(s,pres);
+
 
   al.innerHTML=attn.length?attn.slice(0,5).map(([t,sub,cls,lab,dest])=>`
 <div class="rowi"${dest?` data-goto="${dest}" role="button" tabindex="0" style="cursor:pointer"`:''}><div class="rowt"><b>${t}</b><span>${sub}</span></div><span class="pill ${cls}">${lab}</span></div>`).join('')
