@@ -144,8 +144,22 @@
 }
 
 /* ---- sign-in surface ---- */
-.rd-auth { min-height: 100dvh; display: grid; place-items: center; background: #F7F6F3; padding: 40px 20px; font-family: "DM Sans", system-ui, sans-serif; color: #14110F; }
+.rd-auth { min-height: 100dvh; display: grid; grid-template-columns: 1fr 1fr; background: #F7F6F3; font-family: "DM Sans", system-ui, sans-serif; color: #14110F; }
+.rd-auth .promo { position: relative; background: #14110F; color: #fff; padding: 56px 56px; display: flex; flex-direction: column; justify-content: center; gap: 26px; overflow: hidden; }
+.rd-auth .promo::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(#ffffff0d 1px, transparent 1px), linear-gradient(90deg, #ffffff0d 1px, transparent 1px); background-size: 34px 34px; pointer-events: none; }
+.rd-auth .promo > * { position: relative; z-index: 1; }
+.rd-auth .promo .mark { font-size: .7rem; letter-spacing: .22em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0; }
+.rd-auth .promo h2 { font-size: 2.1rem; line-height: 1.12; letter-spacing: -.03em; margin: 0; max-width: 15ch; }
+.rd-auth .promo p.sub { margin: 0; font-size: .95rem; color: #B9B3AA; max-width: 40ch; }
+.rd-auth .promo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.rd-auth .promo li { display: flex; gap: 12px; align-items: flex-start; font-size: .9rem; color: #E8E4DD; }
+.rd-auth .promo li b { display: block; font-size: .92rem; color: #fff; }
+.rd-auth .promo li span.n { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #CC0000; color: #fff; font-size: .7rem; font-weight: 700; display: grid; place-items: center; font-family: "DM Mono", ui-monospace, monospace; }
+.rd-auth .promo .quote { margin: 0; padding-top: 22px; border-top: 1px solid #2A2622; font-size: .88rem; color: #B9B3AA; }
+.rd-auth .panel { display: grid; place-items: center; padding: 40px 20px; }
 .rd-auth section { width: 100%; max-width: 400px; background: #fff; border: 1px solid #E4E1DA; border-radius: 14px; padding: 30px 28px; }
+@media (max-width: 900px) { .rd-auth { grid-template-columns: 1fr; } .rd-auth .promo { padding: 40px 24px; gap: 20px; } .rd-auth .promo h2 { font-size: 1.6rem; } }
+
 .rd-auth .eyebrow { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0 0 10px; }
 .rd-auth h1 { font-size: 1.5rem; margin: 0 0 6px; letter-spacing: -.02em; }
 .rd-auth .lede { font-size: .85rem; color: #6B655D; margin: 0 0 20px; }

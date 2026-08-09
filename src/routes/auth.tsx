@@ -91,8 +91,42 @@ function AuthPage() {
 
   return (
     <main className="rd-auth">
+      <aside className="promo">
+        <p className="mark">REAL DESIGNS</p>
+        <h2>Redesign Any Space. Know What It Costs.</h2>
+        <p className="sub">
+          Turn one photo into a photoreal design, a priced scope and a contractor planning brief.
+        </p>
+        <ul>
+          <li>
+            <span className="n">1</span>
+            <span>
+              <b>Upload Your Space</b>
+              Same walls, same windows. Reality stays locked.
+            </span>
+          </li>
+          <li>
+            <span className="n">2</span>
+            <span>
+              <b>See The Design</b>
+              Refresh, Makeover or Renovation from one room.
+            </span>
+          </li>
+          <li>
+            <span className="n">3</span>
+            <span>
+              <b>Plan The Build</b>
+              Line-item costs, 3D plans and shareable approvals.
+            </span>
+          </li>
+        </ul>
+        <p className="quote">Free to start. 5 designs a day, no card required.</p>
+      </aside>
+
+      <div className="panel">
       <section>
         <p className="eyebrow">REAL DESIGNS</p>
+
         <h1>{mode === "signin" ? "Sign In" : "Create Your Account"}</h1>
         <p className="lede">
           Save properties, priced scopes and contractor briefs to your own workspace.
@@ -143,6 +177,8 @@ function AuthPage() {
           <a href="/">Back To Home</a>
         </p>
       </section>
+      </div>
+
     </main>
   );
 }
