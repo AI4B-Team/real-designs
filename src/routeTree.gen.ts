@@ -26,6 +26,7 @@ import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calcula
 import { Route as FreeRehabCostCalculatorRouteImport } from './routes/free/rehab-cost-calculator'
 import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-staging'
 import { Route as PTokenRouteImport } from './routes/p.$token'
+import { Route as PricingCompareRouteImport } from './routes/pricing_.compare'
 import { Route as PricingCreditsRouteImport } from './routes/pricing_.credits'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 
@@ -113,6 +114,11 @@ const PTokenRoute = PTokenRouteImport.update({
   path: '/p/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PricingCompareRoute = PricingCompareRouteImport.update({
+  id: '/pricing_/compare',
+  path: '/pricing/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingCreditsRoute = PricingCreditsRouteImport.update({
   id: '/pricing_/credits',
   path: '/pricing/credits',
@@ -141,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pricing/compare': typeof PricingCompareRoute
   '/pricing/credits': typeof PricingCreditsRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pricing/compare': typeof PricingCompareRoute
   '/pricing/credits': typeof PricingCreditsRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pricing_/compare': typeof PricingCompareRoute
   '/pricing_/credits': typeof PricingCreditsRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -205,6 +214,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pricing/compare'
     | '/pricing/credits'
     | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pricing/compare'
     | '/pricing/credits'
     | '/api/public/founding'
   id:
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pricing_/compare'
     | '/pricing_/credits'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
@@ -267,6 +279,7 @@ export interface RootRouteChildren {
   FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
   FreeVirtualStagingRoute: typeof FreeVirtualStagingRoute
   PTokenRoute: typeof PTokenRoute
+  PricingCompareRoute: typeof PricingCompareRoute
   PricingCreditsRoute: typeof PricingCreditsRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
@@ -392,6 +405,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pricing_/compare': {
+      id: '/pricing_/compare'
+      path: '/pricing/compare'
+      fullPath: '/pricing/compare'
+      preLoaderRoute: typeof PricingCompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing_/credits': {
       id: '/pricing_/credits'
       path: '/pricing/credits'
@@ -437,6 +457,7 @@ const rootRouteChildren: RootRouteChildren = {
   FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
   FreeVirtualStagingRoute: FreeVirtualStagingRoute,
   PTokenRoute: PTokenRoute,
+  PricingCompareRoute: PricingCompareRoute,
   PricingCreditsRoute: PricingCreditsRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }
