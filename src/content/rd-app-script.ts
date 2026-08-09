@@ -922,6 +922,48 @@ if(scopeGrid && !document.getElementById('scSave')){
   saveBtn.innerHTML='<i data-lucide="save"></i>Save To My Projects';
   briefBtn.parentNode.insertBefore(saveBtn,briefBtn);
 
+  /* remember the last property the user typed so the next save is one click */
+  const LS='rd.saveMeta';
+  const meta=(()=>{ try{ return JSON.parse(localStorage.getItem(LS)||'{}')||{}; }catch(e){ return {}; } })();
+  let uploadPath=null;
+
+  const saveCard=document.createElement('div');
+  saveCard.className='card'; saveCard.style.gridColumn='1 / -1';
+  saveCard.innerHTML='<div class="card-h"><div><h3>Save This Room</h3><div class="sub">Your photo and priced scope are stored on your account</div></div></div>'
+    +'<div class="card-b"><div class="save-form">'
+    +'<label>Property Address<input id="svAddress" type="text" placeholder="206 N MacDill Ave, Tampa FL"></label>'
+    +'<label>Project Name<input id="svProject" type="text" placeholder="Retail Flip"></label>'
+    +'<label>Room Name<input id="svRoom" type="text" placeholder="Living Room"></label>'
+    +'<label>Room Type<input id="svType" type="text" placeholder="living room"></label>'
+    +'</div>'
+    +'<div class="save-photo"><label class="btn btn-ghost btn-xs" for="svPhoto"><i data-lucide="image-up"></i>Upload Room Photo</label>'
+    +'<input id="svPhoto" type="file" accept="image/*" hidden>'
+    +'<span class="sub" id="svPhotoNote">No photo uploaded yet. The sample room is used until you add one.</span>'
+    +'<img id="svThumb" alt="" hidden></div></div>';
+  scopeGrid.appendChild(saveCard);
+
+  const $=(id)=>document.getElementById(id);
+  $('svAddress').value=meta.address||'';
+  $('svProject').value=meta.project||'';
+  $('svRoom').value=meta.room||'';
+  $('svType').value=meta.type||'';
+
+  $('svPhoto').addEventListener('change',async(e)=>{
+    const file=e.target.files&&e.target.files[0];
+    if(!file) return;
+    const note=$('svPhotoNote'); note.textContent='Uploading…';
+    try{
+      uploadPath=await uploadRoomPhoto(file);
+      const url=await roomPhotoUrl(uploadPath);
+      const thumb=$('svThumb');
+      if(url){ thumb.src=url; thumb.hidden=false; }
+      note.textContent='Photo stored on your account.';
+    }catch(err){
+      uploadPath=null;
+      note.textContent=(err&&err.message)||'Could not upload that photo.';
+    }
+  });
+
   savedCard=document.createElement('div');
   savedCard.className='card'; savedCard.style.gridColumn='1 / -1';
   savedCard.innerHTML='<div class="card-h"><div><h3>Saved Estimates</h3><div class="sub" id="savedSub">Your saved rooms and priced scopes</div></div>'
@@ -935,7 +977,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     try{
       const list=await listSavedEstimates();
       if(!list.length){ rows.innerHTML='<tr><td colspan="6">Nothing saved yet. Price a scope, then use Save To My Projects.</td></tr>'; return; }
-      rows.innerHTML=list.map(v=>`<tr><td><b>${v.address}</b><div class="sub">${v.project_name}</div></td><td>${v.room_name}</td>
+      rows.innerHTML=list.map(v=>`<tr><td><div class="saved-prop"><img class="saved-thumb" data-photo="${v.before_path||''}" alt="" hidden><div><b>${v.address}</b><div class="sub">${v.project_name}</div></div></div></td><td>${v.room_name}</td>
 <td>${v.grade[0].toUpperCase()+v.grade.slice(1)}</td>
 <td class="n">${v.total_low==null?'—':money(v.total_low)}</td>
 <td class="n">${v.total_high==null?'—':money(v.total_high)}</td>
@@ -946,6 +988,12 @@ if(scopeGrid && !document.getElementById('scSave')){
         try{ await deleteSavedEstimate({data:{version_id:b.getAttribute('data-del')}}); await loadSaved(); }
         catch(e){ b.disabled=false; }
       }));
+      rows.querySelectorAll('.saved-thumb').forEach(async(img)=>{
+        const p=img.getAttribute('data-photo');
+        if(!p) return;
+        const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+        if(url){ img.src=url; img.hidden=false; }
+      });
       lucide.createIcons();
     }catch(e){
       rows.innerHTML='<tr><td colspan="6">Could not load saved estimates. '+((e&&e.message)||'')+'</td></tr>';
@@ -957,14 +1005,19 @@ if(scopeGrid && !document.getElementById('scSave')){
   saveBtn.addEventListener('click',async()=>{
     const note=document.getElementById('scopeNote');
     if(!lastScope){ note.textContent='Price the scope first, then save it.'; return; }
+    const address=($('svAddress').value||'').trim();
+    const project=($('svProject').value||'').trim()||'Untitled Project';
+    const room=($('svRoom').value||'').trim()||'Living Room';
+    const type=($('svType').value||'').trim()||'living room';
+    if(address.length<3){ note.textContent='Add the property address before saving.'; $('svAddress').focus(); return; }
     const num=(id,d)=>{const v=parseFloat((document.getElementById(id)||{}).value);return Number.isFinite(v)&&v>0?v:d;};
     saveBtn.disabled=true; const lab=saveBtn.innerHTML; saveBtn.textContent='Saving…';
     try{
       await saveEstimate({data:{
-        address:'206 N MacDill Ave, Tampa FL',
-        project_name:'Retail Flip',
-        room_name:'Living Room',
-        room_type:'living room',
+        address,
+        project_name:project,
+        room_name:room,
+        room_type:type,
         grade:document.getElementById('scGrade').value,
         market_id:lastScope.market.id,
         budget_target:num('scBudget',null),
@@ -974,10 +1027,11 @@ if(scopeGrid && !document.getElementById('scSave')){
         ceiling_ht_in:dimsProposal?dimsProposal.ceiling_ht_in:96,
         dims_source:dimsProposal?(dimsConfirmed?'user':'depth_estimate'):'user',
         dims_confirmed:!dimsProposal||dimsConfirmed,
-        before_path:PHOTOS.before,
-        after_path:PHOTOS.after,
+        before_path:uploadPath||PHOTOS.before,
+        after_path:uploadPath?null:PHOTOS.after,
         items:scopeItems,
       }});
+      try{ localStorage.setItem(LS,JSON.stringify({address,project,room,type})); }catch(e){}
       note.textContent='Saved to your projects.';
       await loadSaved();
     }catch(e){
@@ -985,6 +1039,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     }finally{ saveBtn.disabled=false; saveBtn.innerHTML=lab; lucide.createIcons(); }
   });
 }
+
 
 lucide.createIcons();
 
