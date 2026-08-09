@@ -24,7 +24,7 @@ import { polishFeedback } from "@/lib/feedback.functions";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
-import { summaryHTML, metric } from "@/lib/design-result-summary";
+import { summaryHTML, metric } from "@/lib/result-summary";
 
 
 export function initApp(): () => void {
