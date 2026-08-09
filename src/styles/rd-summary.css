@@ -1,0 +1,233 @@
+/* ============================================================
+   DesignResultSummary — the single dark "project intelligence"
+   panel used across the marketing site and the application.
+   Do not fork this. Change it here and it changes everywhere.
+   ============================================================ */
+
+:root,
+.rd-site,
+.rd-app {
+  --summary-bg: #18181b;
+  --summary-border: #2c2c31;
+  --summary-label: #a1a1aa;
+  --summary-value: #fafafa;
+
+  --status-positive-bg: rgba(34, 197, 94, 0.14);
+  --status-positive-text: #86efac;
+  --status-warning-bg: rgba(245, 158, 11, 0.14);
+  --status-warning-text: #fcd34d;
+  --status-negative-bg: rgba(220, 38, 38, 0.16);
+  --status-negative-text: #fca5a5;
+  --status-neutral-bg: rgba(255, 255, 255, 0.08);
+  --status-neutral-text: #e4e4e7;
+}
+
+.rds {
+  display: grid;
+  grid-template-columns: minmax(0, 40fr) minmax(0, 60fr);
+  gap: 20px 28px;
+  align-items: center;
+  min-height: 124px;
+  padding: 20px 24px;
+  background: var(--summary-bg);
+  border: 1px solid var(--summary-border);
+  border-radius: 10px;
+  color: var(--summary-value);
+  font-family: "Inter", "DM Sans", system-ui, sans-serif;
+}
+
+.rds.rds-flush {
+  border-radius: 0 0 10px 10px;
+  border-top: 0;
+}
+
+.rds.rds-compact {
+  min-height: 0;
+  padding: 14px 16px;
+  gap: 12px 18px;
+}
+
+/* ---- primary result ---- */
+.rds-primary {
+  min-width: 0;
+}
+
+.rds-context {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--summary-label);
+  margin-bottom: 8px;
+}
+
+.rds-value {
+  display: block;
+  font-size: 28px;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--summary-value);
+  font-family: inherit;
+}
+
+.rds-compact .rds-value {
+  font-size: 22px;
+}
+
+.rds-sub {
+  display: block;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--summary-label);
+}
+
+/* ---- processing ---- */
+.rds-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--summary-value);
+}
+
+.rds-spinner {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-top-color: var(--status-warning-text);
+  animation: rds-spin 0.9s linear infinite;
+}
+
+@keyframes rds-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rds-spinner {
+    animation: none;
+    border-top-color: var(--status-warning-text);
+  }
+}
+
+/* ---- metrics ---- */
+.rds-metrics {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  min-width: 0;
+}
+
+.rds-metric {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 18px;
+  border-left: 1px solid var(--summary-border);
+}
+
+.rds-metric:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.rds-metric:last-child {
+  padding-right: 0;
+}
+
+.rds-label {
+  display: block;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--summary-label);
+  margin-bottom: 8px;
+}
+
+.rds-metric-value {
+  display: block;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--summary-value);
+}
+
+/* ---- status pills ---- */
+.rds-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+  background: var(--status-neutral-bg);
+  color: var(--status-neutral-text);
+}
+
+.rds-pill.is-positive {
+  background: var(--status-positive-bg);
+  color: var(--status-positive-text);
+}
+
+.rds-pill.is-warning {
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+.rds-pill.is-negative {
+  background: var(--status-negative-bg);
+  color: var(--status-negative-text);
+}
+
+.rds-pill.is-processing {
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+/* ---- responsive ---- */
+@media (max-width: 1000px) {
+  .rds {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .rds-metrics {
+    gap: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .rds {
+    padding: 16px 16px 18px;
+  }
+
+  .rds-value {
+    font-size: 24px;
+  }
+
+  .rds-metrics {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+  }
+
+  .rds-metric {
+    padding: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  .rds-value {
+    font-size: 22px;
+  }
+}
