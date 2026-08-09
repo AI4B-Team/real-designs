@@ -79,7 +79,7 @@ export const Route = createFileRoute("/$slug")({
         { property: "og:title", content: page.metaTitle },
         { property: "og:description", content: page.metaDescription },
         { property: "og:type", content: "website" },
-        { property: "og:url", content: page.slug },
+        { property: "og:url", content: absoluteUrl(page.slug) },
         { name: "twitter:card", content: "summary_large_image" },
         ...(image
           ? [
@@ -88,7 +88,7 @@ export const Route = createFileRoute("/$slug")({
             ]
           : []),
       ],
-      links: [{ rel: "canonical", href: page.slug }],
+      links: [{ rel: "canonical", href: absoluteUrl(page.slug) }],
       scripts,
     };
   },
