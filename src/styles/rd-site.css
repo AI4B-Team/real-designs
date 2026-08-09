@@ -2542,3 +2542,11 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-pricing .sec-head{max-width:none}
 .rd-pricing .sec-head h1{max-width:none;white-space:nowrap}
 @media(max-width:900px){.rd-pricing .sec-head h1{white-space:normal}}
+
+/* stage provenance: unverified concept badge */
+.rd-site .p3-cap .p3-unver{
+  display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+  font-style:normal;font-size:.68rem;letter-spacing:.06em;
+  padding:5px 10px;border-radius:999px;
+  color:#8a6a12;background:#fdf6e3;border:1px solid #efe0b5;
+}
