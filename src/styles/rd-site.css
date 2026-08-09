@@ -2437,11 +2437,16 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .bfd-copy{position:relative;align-self:center;padding-left:6px}
 .rd-site .bfd-copy h2{font-size:clamp(1.85rem,2.5vw,2.35rem);line-height:1.12}
 .rd-site .bfd-copy .lede{max-width:44ch}
-.rd-site .bfd-copy::before{content:'';position:absolute;left:-56px;top:8px;width:120px;height:300px;
-  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27120%27%20height%3D%27300%27%20viewBox%3D%270%200%20120%20300%27%20fill%3D%27none%27%3E%3Cpath%20d%3D%27M40%2014%20C%2016%2022%2C%2014%2060%2C%2018%20120%20C%2022%20180%2C%2014%20224%2C%2034%20246%27%20stroke%3D%27%23CC0000%27%20stroke-opacity%3D%27.5%27%20stroke-width%3D%272.2%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M18%20120%20h-12%27%20stroke%3D%27%23CC0000%27%20stroke-opacity%3D%27.5%27%20stroke-width%3D%272.2%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3Ctext%20x%3D%274%27%20y%3D%27276%27%20font-family%3D%27Segoe%20Script%2C%20Bradley%20Hand%2C%20Comic%20Sans%20MS%2C%20cursive%27%20font-size%3D%2717%27%20fill%3D%27%23CC0000%27%20fill-opacity%3D%27.4%27%3Etarget%20budget%3C%2Ftext%3E%3C%2Fsvg%3E") no-repeat left top/contain;pointer-events:none;opacity:.85}
+/* handwritten note + short curved arrow pointing at the outcome thumbnails */
+.rd-site .bfd-out-wrap{position:relative;margin-top:34px}
+.rd-site .bfd-note{position:absolute;top:-26px;left:6px;font-family:'Segoe Script','Bradley Hand','Comic Sans MS',cursive;
+  font-size:.95rem;color:#E8756B;opacity:.55;pointer-events:none;white-space:nowrap}
+.rd-site .bfd-note::after{content:'';position:absolute;left:calc(100% + 8px);top:2px;width:58px;height:34px;
+  background:url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%2758%27%20height%3D%2734%27%20viewBox%3D%270%200%2058%2034%27%20fill%3D%27none%27%3E%3Cpath%20d%3D%27M2%206%20C%2024%20-2%2C%2046%206%2C%2046%2026%27%20stroke%3D%27%23E8756B%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20fill%3D%27none%27%2F%3E%3Cpath%20d%3D%27M40%2018%20L%2046%2028%20L%2052%2018%27%20stroke%3D%27%23E8756B%27%20stroke-width%3D%272%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20fill%3D%27none%27%2F%3E%3C%2Fsvg%3E") no-repeat center/contain;
+  opacity:.5}
+.rd-site .bfd-out{margin-top:0}
+@media(max-width:1080px){.rd-site .bfd-note{display:none}}
 
-
-@media(max-width:1080px){.rd-site .bfd-copy::before{display:none}}
 
 /* numbered proof rows */
 .rd-site .bfd-proof{list-style:none;margin:26px 0 0;padding:0;display:grid;gap:10px}
@@ -2454,7 +2459,7 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .bfd-proof li span{display:block;margin-top:3px;font-size:.86rem;color:var(--mute)}
 
 /* three budget outcomes */
-.rd-site .bfd-out{margin-top:22px;padding:14px 15px 15px;border:1px solid var(--line);border-radius:14px;background:var(--white)}
+.rd-site .bfd-out{margin-top:0;padding:14px 15px 15px;border:1px solid var(--line);border-radius:14px;background:var(--white)}
 .rd-site .bfd-out-lab{display:block;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute-2)}
 .rd-site .bfd-outs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
 .rd-site .bfd-outc{display:block;width:100%;padding:0;border:0;background:none;cursor:pointer;text-align:center}
