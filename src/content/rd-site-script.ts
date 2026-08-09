@@ -163,8 +163,8 @@ function paint(i){
     if(hs){
       const mets=(b.mets||[]).map(m=>metric(m[0],m[1]));
       hs.innerHTML=b.proc
-        ? summaryHTML({contextLabel:b.lab,state:'processing',progressMessage:b.proc.msg,progressDetail:b.proc.detail,metrics:mets})
-        : summaryHTML({contextLabel:b.lab,primaryValue:b.est,metrics:mets});
+        ? summaryHTML({primaryLabel:b.lab,state:'processing',progressMessage:b.est,metrics:mets})
+        : summaryHTML({primaryLabel:b.lab,primaryValue:b.est,metrics:mets});
     }
   }
 
@@ -227,13 +227,13 @@ function money(n){return '$'+n.toLocaleString()}
 function setBudget(i){
   bi=i;const b=budgets[i];
   const txt=`${money(b.lo)} to ${money(b.hi)}`;
-  const model={contextLabel:'Typical Range',primaryValue:txt,
-    metrics:[metric('Budget Fit',b.fit),metric('Layout','High'),metric('Structure','None Detected')]};
+  const model={primaryLabel:'Room',primaryValue:'Living Room',
+    metrics:[metric('Planning Range',txt,'neutral'),metric('Budget Fit',b.fit),metric('Structure','No Changes')]};
   const bs=document.getElementById('builderSummary');
   if(bs)bs.innerHTML=summaryHTML({...model,compact:true,flush:true});
   // hero panel mirrors the builder so the two never disagree
   const hs=document.getElementById('heroSummary');
-  if(hs)hs.innerHTML=summaryHTML({...model,contextLabel:'Estimated Planning Range'});
+  if(hs)hs.innerHTML=summaryHTML(model);
 }
 
 document.querySelectorAll('#budgetChips .chip').forEach(c=>c.addEventListener('click',()=>{
