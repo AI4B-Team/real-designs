@@ -70,6 +70,7 @@ function go(v,fromHash){
   if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
   if(v==='studio'){ try{ paintStudioSub(); }catch(_){} }
   if(v==='reports'){ try{ paintReports(); }catch(_){} }
   if(!titles[v]) return;
