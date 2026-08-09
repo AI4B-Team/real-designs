@@ -14,6 +14,7 @@ import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
 import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
 import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calculator'
@@ -44,6 +45,11 @@ const AuthRoute = AuthRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/$slug': typeof SlugRoute
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/auth'
     | '/sitemap.xml'
+    | '/terms'
     | '/app'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/auth'
     | '/sitemap.xml'
+    | '/terms'
     | '/app'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/auth'
     | '/sitemap.xml'
+    | '/terms'
     | '/_authenticated/app'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
@@ -172,6 +184,7 @@ export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   FreeAiInteriorDesignRoute: typeof FreeAiInteriorDesignRoute
   FreeArvCalculatorRoute: typeof FreeArvCalculatorRoute
   FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
@@ -215,6 +228,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/app': {
@@ -286,6 +306,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   FreeAiInteriorDesignRoute: FreeAiInteriorDesignRoute,
   FreeArvCalculatorRoute: FreeArvCalculatorRoute,
   FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
@@ -296,13 +317,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
