@@ -344,6 +344,7 @@ async function loadProperties(){
   if(cd) cd.textContent=String(PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0));
   paintTree();
   paintDesigns();
+  updateSearchMeta();
 
 }
 loadProperties();
