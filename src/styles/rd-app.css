@@ -852,3 +852,5 @@
 }
 
 .rd-app .search-menu [data-r].sel{background:rgba(204,0,0,.08);outline:1px solid rgba(204,0,0,.35)}
+
+.rd-app .kbd{font-family:'DM Mono',ui-monospace,monospace;font-size:.7rem;border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:3px 8px;background:var(--paper);color:var(--ink);white-space:nowrap}
