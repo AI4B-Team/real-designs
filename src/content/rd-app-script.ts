@@ -1302,6 +1302,10 @@ if(linkList) linkList.addEventListener('click',async e=>{
     exportPresentationPdf(row.dataset.pid,e.target.closest('[data-pdf]'));
     return;
   }
+  if(e.target.closest('[data-board]')){
+    exportPresentationBoard(row.dataset.pid,e.target.closest('[data-board]'));
+    return;
+  }
   if(e.target.closest('[data-reel]')){
     exportSocialReel(row.dataset.pid,e.target.closest('[data-reel]'));
     return;
