@@ -132,7 +132,7 @@ function SharedPresentation() {
               </tr>
             </thead>
             <tbody>
-              {deck.lines.map((l, i) => (
+              {deck.lines.map((l: { description: string; trade: string; qty: number; uom: string; low: number; high: number }, i: number) => (
                 <tr key={i}>
                   <td>{l.description}</td>
                   <td>{l.trade}</td>
