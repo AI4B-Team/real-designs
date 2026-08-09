@@ -1671,9 +1671,11 @@ async function paintTeam(){
   try{ team=await listTeam(); }catch(_){}
   const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
   const invites=(team.sent||[]).map(i=>`<div class="seat"><span class="av">${esc((i.email||'?')[0].toUpperCase())}</span>
-      <div class="rowt"><b>${esc(i.email)}</b><span>${i.status==='accepted'?'Accepted':'Invite pending'} \u00b7 ${esc(i.role)}</span></div>
-      <span class="pill ${i.status==='accepted'?'p-green':'p-gray'}">${i.status==='accepted'?'Active':'Pending'}</span>
+      <div class="rowt"><b>${esc(i.email)}</b><span>${i.status==='accepted'?'Accepted':(i.status==='declined'?'Declined':'Invite pending')} \u00b7 ${esc(i.role)}</span></div>
+      <span class="pill ${i.status==='accepted'?'p-green':'p-gray'}">${i.status==='accepted'?'Active':(i.status==='declined'?'Declined':'Pending')}</span>
+      ${i.status==='pending'?`<button class="btn btn-g" data-copyinv="${esc(i.email)}" style="margin-left:8px">Copy Invite Link</button>`:''}
       <button class="btn btn-g" data-revoke="${i.id}" style="margin-left:8px">Remove</button></div>`).join('');
+
   const inbound=(team.received||[]).map(i=>`<div class="seat"><span class="av">IN</span>
       <div class="rowt"><b>You Were Invited To Another Workspace</b><span>Role: ${esc(i.role)}</span></div>
       <button class="btn btn-g" data-decline="${i.id}">Decline</button>
@@ -1683,10 +1685,16 @@ async function paintTeam(){
     ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No teammates yet. Invite one below. They sign in with that email, accept the invite, and then share this workspace with you.</p>'}`;
   const seatEl=document.getElementById('seatCount');
   if(seatEl){ const n=1+(team.sent||[]).length; seatEl.textContent=n+(n===1?' Seat':' Seats'); }
+  list.querySelectorAll('[data-copyinv]').forEach(b=>b.addEventListener('click',async()=>{
+    const link=window.location.origin+'/app?invite='+encodeURIComponent(b.dataset.copyinv);
+    try{ await navigator.clipboard.writeText(link); }catch(_){}
+    const t=b.textContent; b.textContent='Link Copied'; setTimeout(()=>{ b.textContent=t; },1600);
+  }));
   list.querySelectorAll('[data-revoke]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await revokeInvite({data:{id:b.dataset.revoke}}); }catch(_){}
     paintTeam();
   }));
+
   list.querySelectorAll('[data-accept]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await acceptInvite({data:{id:b.dataset.accept}}); }catch(_){}
     paintTeam(); paintInviteBanner(); setTimeout(()=>window.location.reload(),400);
