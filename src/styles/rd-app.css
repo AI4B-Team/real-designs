@@ -876,3 +876,13 @@
 .rd-app .app.sidemin .rd-mark b{font-size:0;line-height:1}
 .rd-app .app.sidemin .rd-mark b::before{content:'R';font-size:18px;font-weight:900;letter-spacing:0}
 .rd-app .app.sidemin .rd-mark em{display:none}
+
+/* ---- presentation activity history ---- */
+.pres-hist{border-left:2px solid var(--line);margin:2px 0 10px 12px;padding:2px 0 2px 12px;display:flex;flex-direction:column;gap:8px}
+.pres-hist-i{display:flex;align-items:flex-start;gap:9px;font-size:.76rem}
+.pres-hist-i i[data-lucide]{width:14px;height:14px;color:var(--red);flex:none;margin-top:2px}
+.pres-hist-i > div{min-width:0;display:flex;flex-direction:column;gap:1px}
+.pres-hist-i b{font-size:.76rem}
+.pres-hist-i span{color:var(--mute-2)}
+.pres-hist-i em{color:var(--mute-2)}
+.pres-hist-i .tm{margin-left:auto;white-space:nowrap;color:var(--mute-2);font-size:.72rem}

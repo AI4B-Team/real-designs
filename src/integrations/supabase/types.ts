@@ -243,6 +243,41 @@ export type Database = {
         }
         Relationships: []
       }
+      presentation_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          id: string
+          kind: string
+          meta: Json
+          presentation_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind: string
+          meta?: Json
+          presentation_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind?: string
+          meta?: Json
+          presentation_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_events_presentation_id_fkey"
+            columns: ["presentation_id"]
+            isOneToOne: false
+            referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       presentations: {
         Row: {
           brand_accent: string | null

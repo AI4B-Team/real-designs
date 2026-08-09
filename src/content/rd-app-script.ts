@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { getPortfolioReport } from "@/lib/reports.functions";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
-import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
+import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
 import { track } from "@/lib/analytics";
 import { submitFeedback } from "@/lib/feedback";
@@ -1622,14 +1622,15 @@ function renderPresRows(){
     const lineNotes=(r.note_count||0)?Object.values(r.line_notes||{}).slice(0,3).map((t:any)=>`<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\"><i>&ldquo;${esc(String(t))}&rdquo;</i></span></div></div>`).join(''):'';
     const note=(r.decision_note||r.excluded_count||r.note_count)?`<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\">${r.decision_note?`<i>&ldquo;${esc(r.decision_note)}&rdquo;</i> &mdash; ${esc(r.client_name||'client')}`:(r.excluded_count?`${esc(r.client_name||'The client')} trimmed the scope`:`${esc(r.client_name||'The client')} left notes on the scope`)}</span>${dropped}${notesPill}</div></div>`+lineNotes:'';
     return `<div class=\"rowi\" data-pid=\"${r.id}\" data-tok=\"${r.token}\">
-      <div class=\"rowt\"><b>${esc(r.title)}</b><span>${ctx?ctx+' &middot; ':''}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
+      <div class="rowt"><b>${esc(r.title)}</b><span>${ctx?ctx+' &middot; ':''}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
       <span class="pill ${cls}">${lab}</span>
+      <button class="icon-btn" data-hist title="Activity history"><i data-lucide="history"></i></button>
       <button class="icon-btn" data-send title="Send to client"><i data-lucide="send"></i></button>
       <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
       <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
       <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
       <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
-      <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>${note}`;
+      <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>${note}<div class="pres-hist" data-hist-for="${r.id}" hidden></div>`;
   }).join(''):'<p style="font-size:.79rem;color:var(--mute-2)">No links with that status yet.</p>';
   el.innerHTML=tabs+body;
   lucide.createIcons();
@@ -1645,6 +1646,44 @@ async function paintPresentations(){
     return;
   }
   renderPresRows();
+}
+
+const HIST_META={
+  created:['plus-circle','Link Created'],
+  viewed:['eye','Opened'],
+  approved:['check-circle-2','Approved'],
+  changes:['refresh-cw','Changes Requested'],
+  comments:['message-square','Line Comments']
+};
+
+function presHistWhen(iso){
+  try{ return new Date(iso).toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}); }
+  catch(_){ return ''; }
+}
+
+async function togglePresHistory(pid){
+  const box=document.querySelector('[data-hist-for="'+pid+'"]');
+  if(!box) return;
+  if(!box.hidden){ box.hidden=true; return; }
+  box.hidden=false;
+  box.innerHTML='<div class="pres-hist-i"><span>Loading Activity&hellip;</span></div>';
+  let rows=[];
+  try{ rows=await listPresentationActivity({data:{id:pid}}); }catch(_){ rows=[]; }
+  const meta=PRES_ROWS.find(x=>x.id===pid);
+  if(meta&&meta.created_at) rows=rows.concat([{id:'created',kind:'created',detail:'Share link created',note:null,excluded_count:0,note_count:0,created_at:meta.created_at}]);
+  if(!rows.length){
+    box.innerHTML='<div class="pres-hist-i"><span>No activity yet. The timeline fills in once the client opens the link.</span></div>';
+    return;
+  }
+  box.innerHTML=rows.map(ev=>{
+    const m=HIST_META[ev.kind]||HIST_META.viewed;
+    const extras=[];
+    if(ev.excluded_count) extras.push(ev.excluded_count+' line'+(ev.excluded_count===1?'':'s')+' removed');
+    if(ev.note_count) extras.push(ev.note_count+' line comment'+(ev.note_count===1?'':'s'));
+    const quote=ev.note?`<em>&ldquo;${esc(ev.note)}&rdquo;</em>`:'';
+    return `<div class="pres-hist-i"><i data-lucide="${m[0]}"></i><div><b>${m[1]}</b><span>${esc(ev.detail||'')}${extras.length?' &middot; '+extras.join(' &middot; '):''}</span>${quote}</div><span class="tm">${presHistWhen(ev.created_at)}</span></div>`;
+  }).join('');
+  lucide.createIcons();
 }
 
 /* jump to one client link from the dashboard attention list */
@@ -1854,6 +1893,10 @@ if(linkList) linkList.addEventListener('click',async e=>{
   const tab=e.target.closest('[data-pf]');
   if(tab){ PRES_FILTER=tab.getAttribute('data-pf'); renderPresRows(); return; }
   const row=e.target.closest('[data-pid]'); if(!row) return;
+  if(e.target.closest('[data-hist]')){
+    togglePresHistory(row.dataset.pid);
+    return;
+  }
   if(e.target.closest('[data-send]')){
     presSendModal(PRES_ROWS.find(x=>x.id===row.dataset.pid));
     return;
