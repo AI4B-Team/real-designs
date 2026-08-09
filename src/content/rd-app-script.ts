@@ -274,7 +274,8 @@ function paintOnboarding(s,pres){
     ['Send A Client Presentation','Share a branded approval link and track the decision.', (pres||[]).length>0, 'present','Open Presentations'],
   ];
   const left=done.filter(d=>!d[2]).length;
-  if(!left||localStorage.getItem('rd.obDone')==='1'){ if(card) card.remove(); return; }
+  /* the first run Get Started card covers the same ground, never show both */
+  if(!left||localStorage.getItem('rd.obDone')==='1'||document.getElementById('onbCard')){ if(card) card.remove(); return; }
   if(!card){
     card=document.createElement('div');
     card.id='obCard'; card.className='card ob-card';
@@ -2610,6 +2611,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     if(list&&list.length){ state.done=true; save(); card.remove(); return; }
   }catch(e){}
   card.hidden=false;
+  const dup=document.getElementById('obCard'); if(dup) dup.remove();
 
 
   function act(k){
@@ -2637,7 +2639,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     lucide.createIcons();
     if(done===STEPS.length){
       state.done=true; save();
-      setTimeout(()=>{ card.remove(); },2400);
+      setTimeout(()=>{ card.remove(); try{ window.dispatchEvent(new CustomEvent('rd:saved')); }catch(_){} },2400);
     }
   }
   render();
