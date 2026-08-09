@@ -458,6 +458,7 @@
 .rd-app .acct-btn:hover{background:var(--paper)}
 .rd-app .acct-btn svg{width:14px;height:14px;color:var(--mute-2)}
 .rd-app .av.lg{width:42px;height:42px;font-size:.9rem}
+.rd-app .av,.rd-app .acct-head .av{color:#fff}
 .rd-app .acct-menu{position:absolute;top:calc(100% + 10px);right:0;width:288px;max-height:78vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 44px rgba(20,18,15,.16);padding:12px;z-index:80;display:none}
 .rd-app .acct-menu.on{display:block}
 .rd-app .acct-head{display:flex;gap:11px;align-items:center;margin-bottom:12px}
