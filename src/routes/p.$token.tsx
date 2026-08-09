@@ -88,7 +88,7 @@ function SharedPresentation() {
   const brandName = (deck.brand_name || "").trim();
 
   return (
-    <main className="pp-wrap" style={{ ["--pp-accent" as string]: accent } as React.CSSProperties}>
+    <main className="pp-wrap" style={{ "--pp-accent": accent } as Record<string, string>}>
       <header className="pp-head">
         <span className="pp-brand">
           {brandName || (<>REAL <b>DESIGNS</b></>)}
