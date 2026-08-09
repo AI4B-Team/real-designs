@@ -277,6 +277,8 @@ async function loadProperties(){
   if(cp) cp.textContent=String(PROP_TREE.length);
   if(cd) cd.textContent=String(PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0));
   paintTree();
+  paintDesigns();
+
 }
 loadProperties();
 window.addEventListener('rd:saved', loadProperties);
@@ -367,25 +369,50 @@ const vers=[['v5','Draft &middot; just now','p-gray'],['v4','Approved &middot; 2
 document.getElementById('verList').innerHTML=vers.map(([v,s,cls])=>`
 <div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v}</b><span>${s}</span></div><span class="pill ${cls}">${cls==='p-ok'?'Live':'Past'}</span></div>`).join('');
 
-/* ---------- designs ---------- */
-const DG=[];
-const rns=['Living Room','Kitchen','Primary Bath','Front Elevation','Backyard','Dining Room','Primary Bedroom','Guest Bath','Patio'];
-const prs=['206 N MacDill','1412 E Idlewild','8809 N Ola','3320 W Cypress'];
-const sts=[['p-ok','Approved'],['p-amb','In Review'],['p-gray','Draft']];
-const pk=['warm','farm','coastal','green'];
-for(let i=0;i<9;i++){
-  const s=sts[i%3];
-  DG.push(`<div class="card"><div style="aspect-ratio:8/5;overflow:hidden;border-radius:7px 7px 0 0;background:#EFEDE8">${room(i%4===3?'before':'after',PALS[pk[i%4]])}</div>
-  <div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
-  <b style="font-size:.86rem">${rns[i]} v${(i%6)+1}</b><span class="pill ${s[0]}">${s[1]}</span></div>
-  <div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">${prs[i%4]} &middot; ${['$11.4K to $14.9K','$26.2K to $34.1K','$8.9K to $12.4K','$4.1K to $6.2K'][i%4]}</div>
-  <div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Open</button>
-  <button class="btn btn-ghost btn-xs" data-goto="scope"><i data-lucide="calculator"></i></button></div></div></div>`);
+/* ---------- designs: real saved versions ---------- */
+let DESIGN_FILTER='all';
+const ST_PILL=(s)=>s==='approved'?['p-ok','Approved']:s==='review'?['p-amb','In Review']:s==='archived'?['p-gray','Archived']:['p-gray','Draft'];
+
+function paintDesigns(){
+  const g=document.getElementById('designGrid'); if(!g) return;
+  const all=[];
+  PROP_TREE.forEach(p=>p.projects.forEach(pr=>pr.rooms.forEach(r=>all.push({...r,address:p.address,project:pr.name}))));
+  const list=all.filter(r=>{
+    const s=r.status||'draft';
+    if(DESIGN_FILTER==='all') return true;
+    if(DESIGN_FILTER==='approved') return s==='approved';
+    if(DESIGN_FILTER==='review') return s==='review';
+    return s==='archived';
+  });
+  if(!list.length){
+    g.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">'+(all.length?'No designs in this tab yet.':'No designs yet. Upload a photo in Studio, price it, then save it.')+'</p>';
+    return;
+  }
+  g.innerHTML=list.map(r=>{
+    const s=ST_PILL(r.status||'draft');
+    const cost=r.total_low!=null?kfmt(r.total_low)+' to '+kfmt(r.total_high):'Not priced yet';
+    return `<div class="card"><div style="aspect-ratio:8/5;overflow:hidden;border-radius:7px 7px 0 0;background:#EFEDE8">
+<img data-photo="${r.after_path||r.before_path||''}" alt="${r.name}" style="width:100%;height:100%;object-fit:cover" hidden></div>
+<div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+<b style="font-size:.86rem">${r.name} v${r.version_no||1}</b><span class="pill ${s[0]}">${s[1]}</span></div>
+<div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">${r.address} &middot; ${cost}</div>
+<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Open</button>
+<button class="btn btn-ghost btn-xs" data-goto="scope"><i data-lucide="calculator"></i></button></div></div></div>`;
+  }).join('');
+  lucide.createIcons();
+  g.querySelectorAll('[data-photo]').forEach(async(img)=>{
+    const p=img.getAttribute('data-photo'); if(!p) return;
+    const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+    if(url){ img.src=url; img.hidden=false; }
+  });
+  g.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
 }
-document.getElementById('designGrid').innerHTML=DG.join('');
-document.querySelectorAll('#designTabs button').forEach(b=>b.addEventListener('click',()=>{
+const DFILT=['all','approved','review','archived'];
+document.querySelectorAll('#designTabs button').forEach((b,i)=>b.addEventListener('click',()=>{
   document.querySelectorAll('#designTabs button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  DESIGN_FILTER=DFILT[i]||'all'; paintDesigns();
 }));
+
 
 /* ---------- batch ---------- */
 const batch=[['Kitchen','IMG_0412.jpg','after','kitchen','p-ok','Staged'],['Living Room','IMG_0418.jpg','after','warm','p-ok','Staged'],
