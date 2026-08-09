@@ -1076,7 +1076,7 @@ const pkg=[['Before And After Slider','In the client approval link','p-ok','Live
 ['Branded PDF Export','Print ready package from any link','p-ok','Live'],
 ['Walkthrough Video','Dolly in, eight seconds, from Studio','p-ok','Live'],
 ['Product Board','Every item with price and link','p-gray','Planned'],
-['Social Reel, 9x16','Cross fade before to after, 12 seconds','p-gray','Planned']];
+['Social Reel, 9x16','Cross fade before to after, 12 seconds','p-ok','Live']];
 document.getElementById('pkgList').innerHTML=pkg.map(([n,d,cls,lab])=>`
 <div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="${cls.startsWith('plan-pill')?cls:'pill '+cls}">${lab}</span></div>`).join('');
 
