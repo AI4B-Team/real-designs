@@ -51,6 +51,9 @@ const ACCT_ALIAS={team:'team',settings:'brand',billing:'billing',invoices:'invoi
 let CUR_VIEW='dash';
 function plural(n,w){ return n+' '+w+(n===1?'':'s'); }
 function dynSub(v){
+  try{ return dynSub_(v); }catch(e){ return null; }
+}
+function dynSub_(v){
   const tree=(typeof PROP_TREE!=='undefined'&&PROP_TREE)?PROP_TREE:[];
   const designs=tree.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0);
   if(v==='dash') return tree.length?plural(tree.length,'active property').replace('propertys','properties'):'No properties yet, start in Studio';
@@ -364,6 +367,7 @@ async function loadProperties(){
   paintTree();
   paintDesigns();
   updateSearchMeta();
+  refreshTitles();
 
 }
 loadProperties();
@@ -556,7 +560,9 @@ function renderScope(r){
   document.getElementById('scopeTotLow').textContent=money(r.total_low);
   document.getElementById('scopeTotHigh').textContent=money(r.total_high);
   document.getElementById('scopeTotLab').textContent='Estimated Total'+(r.budget_fit?' · '+r.budget_fit:'');
-  document.getElementById('scopeSub').textContent=`206 N MacDill · Living Room v4 · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
+  const _sp=PROP_TREE[SEL.p], _sj=_sp?_sp.projects[SEL.pr]:null;
+  const _scx=_sp?(_sp.address+(_sj?' · '+_sj.name:'')):'Unsaved room';
+  document.getElementById('scopeSub').textContent=`${_scx} · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
   document.getElementById('scopeNote').textContent=`${r.disclaimer} Quantities are derived from the measurements above and should be field verified.`;
 
   /* summary header */
