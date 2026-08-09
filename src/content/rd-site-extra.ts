@@ -673,31 +673,47 @@ export function initExtra(timers: number[], lucide: any) {
   after(() => lucide.createIcons(), 0);
   lucide.createIcons();
 
-  /* ---------- sketch to plan to 3D ---------- */
-  const P3 = [
-    ["Napkin Sketch", "Drawn on the hood of a truck. Good enough.", () => photo(PHOTOS.sketchHand, "Napkin sketch floor plan")],
-    ["Clean 2D Plan", "Walls squared, openings found, dimensions proposed for you to confirm.", () => photo(PHOTOS.plan2d, "Clean 2D floor plan")],
-    ["Furnished 3D Plan", "Laid out and furnished in your property's Design DNA.", () => photo(PHOTOS.plan3d, "Furnished 3D plan")],
-    ["Photoreal Room", "Rendered at eye level, ready to price, shop and present.", () => photo(PHOTOS.sketchRender, "Photoreal room from plan")],
+  /* ---------- sketch to plan to photoreal ---------- */
+  const P3: [string, string, string, string, string, boolean][] = [
+    ["Source", "file-pen", "Source Sketch", "Hand-drawn walls, doors, windows and kitchen placement.", PHOTOS.sketchHand, true],
+    ["Clean Plan", "ruler", "Clean Plan", "The exact same geometry squared into a measured architectural plan.", PHOTOS.plan2d, true],
+    ["Furnished Plan", "sofa", "Furnished Plan", "Same walls and openings, furnished in your Design DNA.", PHOTOS.plan3d, true],
+    ["Photoreal", "camera", "Photoreal View", "Eye level from the marked camera position, ready to price and present.", PHOTOS.sketchRender, false],
   ];
 
   const p3n = $("p3Nav"), p3s = $("p3Stage"), p3c = $("p3Cap");
   if (p3n && p3s) {
-    p3n.innerHTML = P3.map(([t], i) =>
-      `<button data-n="${i}"${i === 0 ? ' class="on"' : ""}><span class="mono">0${i + 1}</span>${t}</button>`).join("");
+    p3n.innerHTML = P3.map(([short, ic], i) =>
+      `<button class="p3step${i === 0 ? " on" : ""}" data-n="${i}">
+         <i class="p3dot"><i data-lucide="${i === 0 ? ic : "check"}"></i></i>
+         <span class="mono">0${i + 1}</span><b>${short}</b>
+       </button>`).join("");
     let p3i = 0, p3t: any = null;
     const showP3 = (i: number) => {
       p3i = i;
-      const [t, d, render] = P3[i] as any;
-      p3s.innerHTML = `<div class="p3layer">${render()}</div>`;
+      const [, , t, d, src, contain] = P3[i];
+      const cam = i === 2 ? `<span class="p3cam"><i data-lucide="camera"></i></span>` : "";
+      const layer = document.createElement("div");
+      layer.className = "p3layer" + (contain ? " fit" : "");
+      layer.innerHTML = photo(src, t) + cam;
+      p3s.appendChild(layer);
+      requestAnimationFrame(() => layer.classList.add("on"));
+      Array.from(p3s.children).forEach((c: any) => { if (c !== layer) setTimeout(() => c.remove(), 500); });
       if (p3c) p3c.innerHTML = `<b>${t}</b><span>${d}</span>`;
-      p3n.querySelectorAll("button").forEach((b: any) => b.classList.toggle("on", Number(b.dataset.n) === i));
+      p3n.querySelectorAll(".p3step").forEach((b: any, j: number) => {
+        b.classList.toggle("on", j === i);
+        b.classList.toggle("done", j < i);
+        const ico = b.querySelector(".p3dot i");
+        if (ico) ico.setAttribute("data-lucide", j < i ? "check" : P3[j][1]);
+      });
+      lucide.createIcons();
     };
-    const loop = () => { p3t = setTimeout(() => { showP3((p3i + 1) % P3.length); loop(); }, 3400); };
-    p3n.querySelectorAll("button").forEach((b: any) =>
+    const loop = () => { p3t = setTimeout(() => { showP3((p3i + 1) % P3.length); loop(); }, 3600); };
+    p3n.querySelectorAll(".p3step").forEach((b: any) =>
       b.addEventListener("click", () => { clearTimeout(p3t); showP3(Number(b.dataset.n)); loop(); }));
     showP3(0); loop();
   }
+
 
   /* ---------- device showcase screens ---------- */
   const devShots: [string, string][] = [
