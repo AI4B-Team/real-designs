@@ -16,6 +16,7 @@ import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } fro
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
 import { submitFeedback } from "@/lib/feedback";
+import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 
 
 export function initApp(): () => void {
@@ -171,15 +172,27 @@ if(schInput){
 
 
 /* ---------- account page ---------- */
-const notifs=[['Client Opens A Presentation Link','Email and in app','On'],
-['Design Finishes Rendering','In app only','On'],
-['Scope Exceeds The Target Band','Email and in app','On'],
-['Teammate Comments On A Design','Email','On'],
-['Monthly Usage Report','Email, first of the month','On'],
-['Product And Feature Updates','Email','Off']];
-document.getElementById('notifRows').innerHTML=notifs.map(([n,d,st])=>`
-<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div>
-<span class="pill ${st==='On'?'p-ok':'p-gray'}">${st}</span></div>`).join('');
+const NOTIF_PREFS=[['designs','Saved And Approved Designs','Shows in your in app notification feed'],
+['approvals','Client Approvals','When a client approves a presentation link'],
+['billing','Credits And Billing','Credit spend, refunds and low balance warnings']];
+let PREFS=null;
+function paintNotifPrefs(){
+  const el=document.getElementById('notifRows'); if(!el||!PREFS) return;
+  el.innerHTML=NOTIF_PREFS.map(([k,n,d])=>{
+    const on=PREFS.notifs[k]!==false;
+    return `<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div>
+      <button class="pill ${on?'p-ok':'p-gray'}" data-npref="${k}">${on?'On':'Off'}</button></div>`;
+  }).join('')+'<div class="note"><i data-lucide="info"></i><span>These control the in app feed. We do not send marketing email, and account email is limited to security messages.</span></div>';
+  lucide.createIcons();
+}
+document.getElementById('notifRows').addEventListener('click',async(e)=>{
+  const b=e.target.closest('[data-npref]'); if(!b||!PREFS) return;
+  const k=b.getAttribute('data-npref'); const next=PREFS.notifs[k]===false;
+  PREFS.notifs[k]=next; paintNotifPrefs();
+  try{ await savePrefs({notifs:{[k]:next}}); }catch(_){}
+  try{ window.dispatchEvent(new CustomEvent('rd:prefs')); }catch(_){}
+});
+
 
 document.getElementById('invRows').innerHTML=
 '<tr><td colspan="4" style="padding:18px 12px;color:var(--mute-2);font-size:.82rem">'+
@@ -1423,6 +1436,35 @@ async function paintTeam(){
 paintTeam();
 window.addEventListener('rd:credits-changed',()=>paintTeam());
 
+/* ---------- workspace preferences ---------- */
+function pfSet(id,v){ const el=document.getElementById(id); if(el&&v!=null) el.value=v; }
+async function loadPrefs(){
+  try{ PREFS=await getPrefs(); }catch(_){ PREFS={...DEFAULT_PREFS}; }
+  paintNotifPrefs();
+  pfSet('bkCompany',PREFS.brand.company); pfSet('bkColor',PREFS.brand.color); pfSet('bkMark',PREFS.brand.watermark);
+  pfSet('dfMarket',PREFS.defaults.market); pfSet('dfGrade',PREFS.defaults.grade);
+  pfSet('dfBand',PREFS.defaults.band); pfSet('dfDisc',PREFS.defaults.disclosure);
+  try{ buildNotifs(); }catch(_){}
+}
+function wireSave(btnId,msgId,collect,key){
+  const btn=document.getElementById(btnId); if(!btn) return;
+  btn.addEventListener('click',async()=>{
+    const msg=document.getElementById(msgId);
+    btn.disabled=true; if(msg){ msg.textContent='Saving'; msg.style.color='var(--mute)'; }
+    try{
+      PREFS=await savePrefs({[key]:collect()});
+      if(msg){ msg.textContent='Saved'; msg.style.color='var(--ok,#0a7b3e)'; }
+    }catch(err){
+      if(msg){ msg.textContent=(err&&err.message)||'Could not save'; msg.style.color='var(--red,#CC0000)'; }
+    }
+    btn.disabled=false;
+  });
+}
+const val=(id)=>{ const el=document.getElementById(id); return el?el.value:''; };
+wireSave('bkSave','bkMsg',()=>({company:val('bkCompany'),color:val('bkColor'),watermark:val('bkMark')}),'brand');
+wireSave('dfSave','dfMsg',()=>({market:val('dfMarket'),grade:val('dfGrade'),band:val('dfBand'),disclosure:val('dfDisc')}),'defaults');
+loadPrefs();
+
 /* ---------- help menu ---------- */
 const helpBtn=document.getElementById('helpBtn'),helpMenu=document.getElementById('helpMenu');
 function closeHelp(){ if(helpMenu){helpMenu.classList.remove('on');helpBtn.setAttribute('aria-expanded','false');} }
@@ -1632,7 +1674,9 @@ async function buildNotifs(){
         b:c.balance+' credits left on your '+c.plan+' plan.', at:new Date().toISOString(), tm:'now'});
   }catch(e){}
   out.sort((a,b)=>new Date(b.at)-new Date(a.at));
-  NOTIFS=out.slice(0,20).map(n=>({...n, unread:!read.has(n.id)}));
+  const np=(PREFS&&PREFS.notifs)||{};
+  const kept=out.filter(n=>np[n.cat]!==false);
+  NOTIFS=kept.slice(0,20).map(n=>({...n, unread:!read.has(n.id)}));
   renderNotifs();
 }
 function notifFilter(tab){ return NOTIFS.filter(n=> tab==='all'?true: tab==='unread'?n.unread: n.cat===tab); }
