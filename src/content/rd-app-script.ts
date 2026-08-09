@@ -1303,19 +1303,27 @@ renderNotifs();
 /* ---------- studio: tool rows with plan badges ---------- */
 const toolRows = Array.from(document.querySelectorAll('.toolrow'));
 const toolInfo = document.getElementById('toolInfo');
+const LIVE_TOOLS={'2D To 3D Plan':run3dPlan,'Walkthrough Video':runWalkthrough};
 toolRows.forEach((r) => r.addEventListener('click', () => {
   toolRows.forEach((x) => x.classList.remove('on'));
   r.classList.add('on');
+  const name = r.getAttribute('data-tool');
   const plan = r.getAttribute('data-plan');
+  if (LIVE_TOOLS[name]) {
+    if (toolInfo) toolInfo.hidden = true;
+    LIVE_TOOLS[name]();
+    return;
+  }
   if (plan && toolInfo) {
     document.getElementById('toolInfoName').textContent =
-      r.getAttribute('data-tool') + ' is on the ' + (plan === 'pro' ? 'Pro' : 'Studio') + ' plan';
+      name + ' is on the ' + (plan === 'pro' ? 'Pro' : 'Studio') + ' plan';
     document.getElementById('toolInfoDesc').textContent = r.getAttribute('data-desc');
     toolInfo.hidden = false;
   } else if (toolInfo) {
     toolInfo.hidden = true;
   }
 }));
+
 
 /* ---------- studio: canvas dark / light surround ---------- */
 const canvasCard = document.getElementById('canvasCard');
