@@ -1,5 +1,5 @@
 /* ============================================================
-   ResultSummaryPanel — the single white "result summary" card
+   ResultSummaryPanel — the single white "result summary" tray
    used across the marketing site and the application.
    Do not fork this. Change it here and it changes everywhere.
    ============================================================ */
@@ -8,28 +8,32 @@
 .rd-site,
 .rd-app {
   --rsp-bg: #ffffff;
-  --rsp-border: #e5e5e5;
-  --rsp-label: #77777f;
-  --rsp-value: #18181b;
-  --rsp-primary: #111111;
+  --rsp-tint: #fcfbfa;
+  --rsp-border: #e3e0dc;
+  --rsp-divider: #ece9e5;
+  --rsp-label: #85858c;
+  --rsp-value: #27272a;
+  --rsp-primary: #171717;
   --rsp-positive: #168354;
-  --rsp-progress: #a46a00;
-  --rsp-warning: #c2413a;
+  --rsp-progress: #a66700;
+  --rsp-warning: #c63c36;
   --rsp-neutral: #27272a;
 }
 
 .rsp {
   display: grid;
-  grid-template-columns: 1.45fr 1fr 1fr 1fr;
-  gap: 24px;
-  align-items: center;
-  min-height: 88px;
-  padding: 18px 22px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: 1fr 1fr;
+  gap: 0;
+  height: 132px;
+  min-height: 132px;
+  box-sizing: border-box;
+  overflow: hidden;
   background: var(--rsp-bg);
   border: 1px solid var(--rsp-border);
   border-radius: 14px;
   container-type: inline-size;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 10px 28px rgba(20, 20, 20, 0.07);
   color: var(--rsp-value);
   font-family: "Inter", "DM Sans", system-ui, sans-serif;
 }
@@ -37,66 +41,69 @@
 .rsp.rsp-flush {
   border-radius: 0 0 14px 14px;
   border-top: 0;
-  box-shadow: none;
-}
-
-.rsp.rsp-compact {
-  min-height: 76px;
-  padding: 14px 18px;
-  gap: 18px;
 }
 
 .rsp-col {
   min-width: 0;
-  padding-left: 24px;
-  border-left: 1px solid var(--rsp-border);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 14px 20px;
+  box-sizing: border-box;
+  border-left: 1px solid var(--rsp-divider);
 }
 
-.rsp-col:first-child {
-  padding-left: 0;
+/* 2x2: dividers between columns and rows only */
+.rsp-col:nth-child(odd) {
   border-left: 0;
+}
+
+.rsp-col:nth-child(n + 3) {
+  border-top: 1px solid var(--rsp-divider);
+}
+
+/* subtle warm tint on alternating cells */
+.rsp-col:nth-child(2),
+.rsp-col:nth-child(3) {
+  background: var(--rsp-tint);
 }
 
 .rsp-label {
   display: block;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--rsp-label);
-  margin-bottom: 7px;
+  margin: 0 0 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rsp-value,
+.rsp-primary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: inherit;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .rsp-value {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-family: inherit;
-  font-size: 15.5px;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 1.25;
   color: var(--rsp-value);
-  white-space: nowrap;
 }
 
 .rsp-primary {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  font-family: inherit;
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 700;
   letter-spacing: -0.015em;
-  line-height: 1.25;
   color: var(--rsp-primary);
-  white-space: nowrap;
-}
-
-.rsp-compact .rsp-primary {
-  font-size: 19px;
 }
 
 .rsp-value.is-positive {
@@ -159,52 +166,16 @@
   }
 }
 
-/* ---- responsive (container based, panels sit in narrow columns too) ---- */
-@container (max-width: 760px) {
+@media (max-width: 420px) {
   .rsp-col {
-    grid-column: span 2;
-    padding-left: 24px;
-  }
-
-  .rsp-col:nth-child(odd) {
-    padding-left: 0;
-    border-left: 0;
-  }
-
-  .rsp-value,
-  .rsp-primary {
-    white-space: normal;
-  }
-}
-
-@container (max-width: 420px) {
-  .rsp-col {
-    grid-column: span 4;
-    padding-left: 0;
-    border-left: 0;
-  }
-}
-
-@media (max-width: 480px) {
-  .rsp {
-    padding: 16px;
-    gap: 16px 14px;
+    padding: 12px 14px;
   }
 
   .rsp-primary {
-    font-size: 19px;
+    font-size: 16px;
   }
 
   .rsp-value {
-    font-size: 15px;
+    font-size: 13px;
   }
-}
-
-/* fewer metrics: keep the same height, close the empty tracks */
-.rsp:has(> .rsp-col:nth-child(2):last-child) {
-  grid-template-columns: 1.45fr 1fr;
-}
-
-.rsp:has(> .rsp-col:nth-child(3):last-child) {
-  grid-template-columns: 1.45fr 1fr 1fr;
 }

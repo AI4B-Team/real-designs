@@ -40,6 +40,10 @@ export function ResultSummaryPanel(model: SummaryModel) {
           </div>
         );
       })}
+      {/* the tray is always four cells so it never changes shape between states */}
+      {Array.from({ length: Math.max(0, 3 - metrics.slice(0, 3).length) }).map((_, i) => (
+        <div className="rsp-col" aria-hidden="true" key={`pad-${i}`} />
+      ))}
     </div>
   );
 }

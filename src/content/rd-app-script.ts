@@ -621,9 +621,9 @@ const BANDS=[{lo:3200,hi:5000,fit:'Well Within Target',c:'c-hi'},{lo:11400,hi:14
 const m=n=>'$'+n.toLocaleString();
 function paintStudioSummary(d){
   const el=document.getElementById('studioSummary'); if(!el) return;
-  el.innerHTML=summaryHTML({primaryLabel:'Planning Range',primaryValue:`${m(d.lo)} to ${m(d.hi)}`,
-    metrics:[metric('Budget Fit',d.fit),metric('Pricing Confidence','Medium'),
-             metric('Structure','No Changes')]});
+  el.innerHTML=summaryHTML({primaryLabel:'Planning Range',primaryValue:`${m(d.lo)}–${m(d.hi)}`,
+    metrics:[metric('Budget Fit',d.fit),metric('Pricing','Medium Confidence','warning'),
+             metric('Structure','No Changes','positive')]});
 }
 paintStudioSummary(BANDS[1]);
 document.querySelectorAll('.bchip').forEach(b=>b.addEventListener('click',()=>{
@@ -1169,9 +1169,12 @@ function renderScope(r){
   document.getElementById('scopeNote').textContent=`${r.disclaimer} Quantities are derived from the measurements above and should be field verified.`;
 
   /* summary header */
-  document.getElementById('esRange').textContent=money(r.total_low)+' to '+money(r.total_high);
-  const fit=document.getElementById('esFit');
-  fit.className='pill '+fitClass(r.budget_fit); fit.textContent=r.budget_fit||'No Target Set';
+  const ss=document.getElementById('scopeSummary');
+  if(ss) ss.innerHTML=summaryHTML({primaryLabel:'Planning Range',
+    primaryValue:money(r.total_low)+'–'+money(r.total_high),
+    metrics:[metric('Budget Fit',r.budget_fit||'No Target Set'),
+             metric('Layout',r.layout_conf,'neutral'),
+             metric('Pricing',r.pricing_conf,r.pricing_conf&&/high/i.test(r.pricing_conf)?'neutral':undefined)]});
   const target=parseFloat(document.getElementById('scBudget').value);
   const wrap=document.getElementById('esMeterWrap');
   if(Number.isFinite(target)&&target>0){

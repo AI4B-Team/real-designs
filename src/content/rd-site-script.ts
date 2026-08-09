@@ -60,47 +60,47 @@ const cursorSVG=`<svg class="cursor" width="22" height="24" viewBox="0 0 22 24" 
 // running total accumulates so the tour ends on a whole-property number.
 const TOUR=[
  {ch:'Exterior',dur:1800,img:PHOTOS.exteriorBefore,style:'As Found',lock:'Reality Lock On',
-  lab:'Room',est:'Front Elevation',proc:{msg:'Reading Elevation'},mets:[['Status','Reading Elevation'],['Reality Lock','On'],['Layout','Measuring']]},
+  lab:'Space',est:'Front Elevation',proc:{msg:'Reading Elevation'},mets:[['Status','Reading Elevation','processing'],['Reality Lock','On','positive'],['Layout','Measuring','warning']]},
  {ch:'Exterior',dur:1800,img:PHOTOS.paintedBrick,style:'Painted Brick',lock:'Reality Lock On',
-  lab:'Room',est:'Front Elevation',fit:'Within Target',mets:[['Planning Range','$11,900 to $16,800'],['Budget Fit','Within Target'],['Structure','No Changes']]},
+  lab:'Space',est:'Front Elevation',fit:'Within Target',mets:[['Planning Range','$11,900–$16,800','neutral'],['Budget Fit','Within Target','positive'],['Structure','No Changes','positive']]},
  {ch:'Exterior',dur:1800,img:PHOTOS.craftsman,style:'Craftsman',lock:'Reality Lock On',
-  lab:'Room',est:'Front Elevation',fit:'Within Target',mets:[['Planning Range','$14,200 to $19,400'],['Budget Fit','Within Target'],['Structure','No Changes']]},
+  lab:'Space',est:'Front Elevation',fit:'Within Target',mets:[['Planning Range','$14,200–$19,400','neutral'],['Budget Fit','Within Target','positive'],['Structure','No Changes','positive']]},
  {ch:'Exterior',dur:1600,img:PHOTOS.ranch,style:'Florida Ranch',lock:'Reality Lock On',zoom:'in',
-  lab:'Room',est:'Front Elevation',fit:'Approved',mets:[['Planning Range','$11,900 to $16,800'],['Budget Fit','Approved'],['Structure','No Changes']],note:'Stepping Inside'},
+  lab:'Space',est:'Front Elevation',fit:'Approved',mets:[['Planning Range','$11,900–$16,800','neutral'],['Budget Fit','Approved','positive'],['Structure','No Changes','positive']],note:'Stepping Inside'},
 
  {ch:'Interior',dur:1800,img:PHOTOS.before,style:'As Found',lock:'Reality Lock On',
-  lab:'Room',est:'Living Room',proc:{msg:'Reading Space'},mets:[['Status','Reading Space'],['Reality Lock','On'],['Layout','Measuring']]},
+  lab:'Room',est:'Living Room',proc:{msg:'Reading Space'},mets:[['Status','Reading Space','processing'],['Reality Lock','On','positive'],['Layout','Measuring','warning']]},
  {ch:'Interior',dur:1900,img:PHOTOS.after,style:'Warm Minimal',lock:'Reality Lock On',
-  lab:'Room',est:'Living Room',fit:'Within Target',mets:[['Planning Range','$11,400 to $14,900'],['Budget Fit','Within Target'],['Structure','No Changes']]},
+  lab:'Room',est:'Living Room',fit:'Within Target',mets:[['Planning Range','$11,400–$14,900','neutral'],['Layout','High Confidence','neutral'],['Structure','No Changes','positive']]},
 
  {ch:'Declutter',dur:1900,img:PHOTOS.clutter,style:'As Found',lock:'Declutter On',
-  lab:'Room',est:'Living Room',proc:{msg:'Detecting Contents'},mets:[['Status','Detecting Contents'],['Objects','14 Found'],['Disclosure','Ready']]},
+  lab:'Room',est:'Living Room',proc:{msg:'Detecting Contents'},mets:[['Status','Detecting Contents','processing'],['Objects','14 Found','neutral'],['Disclosure','Ready','positive']]},
  {ch:'Declutter',dur:1900,img:PHOTOS.empty,style:'Emptied',lock:'Declutter On',
-  lab:'Room',est:'Living Room',fit:'Architecture Preserved',mets:[['Result','Architecture Preserved'],['Objects','14 of 14'],['Disclosure','Ready']]},
+  lab:'Room',est:'Living Room',fit:'Architecture Preserved',mets:[['Result','Architecture Preserved','positive'],['Objects','14 of 14','neutral'],['Disclosure','Ready','positive']]},
 
  {ch:'Stage',dur:1750,img:PHOTOS.after,style:'Warm Minimal',lock:'Reality Lock On',
-  lab:'Room',est:'Living Room',fit:'Within Target',mets:[['Planning Range','$11,400 to $14,900'],['Budget Fit','Within Target'],['Staging','Ready']]},
+  lab:'Room',est:'Living Room',fit:'Within Target',mets:[['Planning Range','$11,400–$14,900','neutral'],['Layout','High Confidence','neutral'],['Design DNA','Applied','positive']]},
  {ch:'Stage',dur:1750,img:PHOTOS.coastal,style:'Coastal',lock:'Reality Lock On',
-  lab:'Room',est:'Living Room',fit:'Within Target',mets:[['Planning Range','$13,800 to $17,600'],['Budget Fit','Within Target'],['Staging','Ready']]},
+  lab:'Room',est:'Living Room',fit:'Within Target',mets:[['Planning Range','$13,800–$17,600','neutral'],['Layout','High Confidence','neutral'],['Design DNA','Applied','positive']]},
  {ch:'Stage',dur:1750,img:PHOTOS.japandi,style:'Japandi',lock:'Reality Lock On',
-  lab:'Room',est:'Living Room',fit:'Within Target',mets:[['Planning Range','$12,600 to $16,100'],['Budget Fit','Within Target'],['Design DNA','Applied']]},
+  lab:'Room',est:'Living Room',fit:'Within Target',mets:[['Planning Range','$12,600–$16,100','neutral'],['Layout','High Confidence','neutral'],['Design DNA','Applied','positive']]},
 
  {ch:'Shop',dur:4200,img:PHOTOS.japandi,style:'Japandi',lock:'Reality Lock On',shop:true,
-  lab:'Project Cart',est:'$3,284',fit:'Within Target',mets:[['Budget Fit','Within Target'],['Products Matched','14 of 14'],['Confidence','High']],
+  lab:'Project Cart',est:'$3,284',fit:'Within Target',mets:[['Budget Fit','Within Target','positive'],['Products Matched','14 of 14','neutral'],['Confidence','High','positive']],
   toast:'Added To Project',toastAt:2600},
 
  {ch:'Garden',dur:1600,img:PHOTOS.yardBefore,style:'As Found',lock:'Reality Lock On',zoom:'out',
-  lab:'Room',est:'Backyard',proc:{msg:'Reading Site'},mets:[['Status','Reading Site'],['Trades','3 Detected'],['Pricing','Medium']],note:'Heading Out Back'},
+  lab:'Area',est:'Backyard',proc:{msg:'Reading Site'},mets:[['Status','Reading Site','processing'],['Trades','3 Detected','neutral'],['Pricing','Medium Confidence','warning']],note:'Heading Out Back'},
  {ch:'Garden',dur:2500,img:PHOTOS.resortYard,style:'Resort',lock:'Budget Mode On',
-  lab:'Room',est:'Backyard',fit:'Within Target',mets:[['Planning Range','$26,100 to $31,500'],['Budget Fit','Within Target'],['Pricing','High']]},
+  lab:'Area',est:'Backyard',fit:'Within Target',mets:[['Planning Range','$26,100–$31,500','neutral'],['Budget Fit','Within Target','positive'],['Pricing','High Confidence','neutral']]},
 
  {ch:'Video',dur:2600,img:PHOTOS.resortYard,style:'Cinematic Push',lock:'Recording',zoom:'ken',rec:true,
-  lab:'Video Walkthrough',est:'20 Seconds',fit:'Ready',mets:[['Format','Cinematic Push'],['Resolution','1080p'],['Delivery','Ready']]},
+  lab:'Video Walkthrough',est:'20 Seconds',fit:'Ready',mets:[['Format','Cinematic Push','neutral'],['Resolution','1080p','neutral'],['Delivery','Ready','positive']]},
  {ch:'3D Plan',dur:2800,img:PHOTOS.plan3d,style:'Furnished 3D',lock:'Design DNA Applied',zoom:'aerial',
-  lab:'Whole Property',est:'4 Rooms Planned',fit:'Design DNA Applied',mets:[['Plan Type','Furnished 3D'],['Rooms','4 of 4'],['Design DNA','Applied']]},
+  lab:'Whole Property',est:'4 Rooms Planned',fit:'Design DNA Applied',mets:[['Plan Type','Furnished 3D','neutral'],['Layout','Preserved','positive'],['Planning Range','$49.4K–$63.2K','neutral']]},
 
  {ch:'3D Plan',dur:3200,img:PHOTOS.resortYard,style:'Design DNA Applied',lock:'Budget Mode On',summary:true,
-  lab:'Whole Property',est:'$49,400 to $63,200',fit:'4 Rooms Approved',mets:[['Rooms','4 of 4'],['Line Items','62'],['Pricing Confidence','High']]}
+  lab:'Whole Property',est:'$49.4K–$63.2K',fit:'4 Rooms Approved',mets:[['Plan Type','Furnished 3D','neutral'],['Rooms Approved','4 of 4','neutral'],['Layout','Preserved','positive']]}
 ];
 
 const CHAPTERS=['Exterior','Interior','Declutter','Stage','Shop','Garden','Video','3D Plan'];
@@ -161,7 +161,7 @@ function paint(i){
   if(!budgetTouched){
     const hs=document.getElementById('heroSummary');
     if(hs){
-      const mets=(b.mets||[]).map((m,ix)=>metric(m[0],m[1],b.proc&&ix===0?'processing':undefined));
+      const mets=(b.mets||[]).map((m,ix)=>metric(m[0],m[1],(m[2]||(b.proc&&ix===0?'processing':undefined))));
       hs.innerHTML=summaryHTML({primaryLabel:b.lab,primaryValue:b.est,metrics:mets});
     }
   }
@@ -224,9 +224,9 @@ document.querySelectorAll('#spaceChips .chip').forEach(c=>c.addEventListener('cl
 function money(n){return '$'+n.toLocaleString()}
 function setBudget(i){
   bi=i;const b=budgets[i];
-  const txt=`${money(b.lo)} to ${money(b.hi)}`;
+  const txt=`${money(b.lo)}–${money(b.hi)}`;
   const model={primaryLabel:'Room',primaryValue:'Living Room',
-    metrics:[metric('Planning Range',txt,'neutral'),metric('Budget Fit',b.fit),metric('Structure','No Changes')]};
+    metrics:[metric('Planning Range',txt,'neutral'),metric('Budget Fit',b.fit),metric('Structure','No Changes','positive')]};
   const bs=document.getElementById('builderSummary');
   if(bs)bs.innerHTML=summaryHTML({...model,compact:true,flush:true});
   // hero panel mirrors the builder so the two never disagree

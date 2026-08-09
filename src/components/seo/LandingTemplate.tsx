@@ -155,8 +155,12 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
           <div className="lp-scope card">
             <ResultSummaryPanel
               primaryLabel="Estimated Planning Range"
-              primaryValue={`${fmt(scopeLow)} to ${fmt(scopeHigh)}`}
-              metrics={[metric("Pricing Confidence", page.confidence)]}
+              primaryValue={`${fmt(scopeLow)}–${fmt(scopeHigh)}`}
+              metrics={[
+                metric("Pricing", page.confidence),
+                { label: "Structure", value: "No Changes", tone: "positive" as const },
+                { label: "Basis", value: "Planning Estimate", plain: true },
+              ]}
             />
 
             <table className="lp-table">

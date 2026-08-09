@@ -100,9 +100,13 @@ export function RehabCalculator({ defaultRoom = "kitchen" as RoomKey }) {
       <div className="out on" style={{ display: "block" }}>
         <ResultSummaryPanel
           primaryLabel="Estimated Planning Range"
-          primaryValue={`${fmt(result.totalLow)} to ${fmt(result.totalHigh)}`}
+          primaryValue={`${fmt(result.totalLow)}–${fmt(result.totalHigh)}`}
           compact
-          metrics={[metric("Pricing Confidence", result.confidence)]}
+          metrics={[
+            metric("Pricing", result.confidence),
+            { label: "Line Items", value: String(result.lines.length), plain: true },
+            { label: "Basis", value: "Planning Estimate", plain: true },
+          ]}
         />
 
         <table className="lp-table calc-table">
