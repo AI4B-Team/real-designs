@@ -56,6 +56,8 @@ function SharedPresentation() {
   const [split, setSplit] = useState(50);
   const [dragging, setDragging] = useState(false);
   const [excluded, setExcluded] = useState<string[]>(deck?.excluded_lines ?? []);
+  const [lineNotes, setLineNotes] = useState<Record<string, string>>(deck?.line_notes ?? {});
+  const [openNote, setOpenNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (deck) document.title = `${deck.title} | REAL DESIGNS`;
