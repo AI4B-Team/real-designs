@@ -89,7 +89,7 @@ export const renderDesign = createServerFn({ method: "POST" })
         charged: charged.charged,
       };
     } catch (err) {
-      await refund(context.userId, 1, "Design render failed");
+      await refund(context.userId, charged.charged, "Design render failed");
       throw err;
     }
   });
