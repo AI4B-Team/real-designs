@@ -94,7 +94,18 @@ window.addEventListener('hashchange',()=>{ const v=viewFromHash(); if(v) go(v,tr
 
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
-setTimeout(()=>{ const v=viewFromHash(); if(v) go(v,true); },0);
+/* the app shell mounts after this module runs, so retry until the views exist */
+(function applyHash(){
+  const v=viewFromHash();
+  if(!v) return;
+  let tries=0;
+  const tick=()=>{
+    const target=document.getElementById('v-'+(ACCT_ALIAS[v]?'account':v));
+    if(target){ go(v,true); return; }
+    if(++tries<60) setTimeout(tick,50);
+  };
+  tick();
+})();
 
 
 /* ---------- account menu ---------- */
