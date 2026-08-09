@@ -34,6 +34,7 @@ export const listPresentations = createServerFn({ method: "GET" })
       view_count: (p.view_count ?? 0) as number,
       last_viewed_at: (p.last_viewed_at ?? null) as string | null,
       decision_note: (p.decision_note ?? null) as string | null,
+      excluded_count: Array.isArray(p.excluded_lines) ? (p.excluded_lines as any[]).length : 0,
       created_at: p.created_at as string,
       address: p.versions.rooms.projects.properties.address as string,
       project_name: p.versions.rooms.projects.name as string,
