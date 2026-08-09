@@ -1579,7 +1579,7 @@ const TUTS=[
 document.getElementById('tutGrid').innerHTML=TUTS.map(([t,tag,view,steps],i)=>`<div class="card"><div class="card-b">
   <div class="help-cat"><i data-lucide="list-checks"></i>${t}</div>
   <div class="sub" style="margin:-4px 0 8px">${tag}</div>
-  <ol style="margin:0 0 10px 16px;padding:0;font-size:.83rem;color:var(--mute);line-height:1.55">${steps.map(s=>`<li style="margin-bottom:4px">${s}</li>`).join('')}</ol>
+  <ol style="margin:0 0 10px 18px;padding:0;list-style:decimal;font-size:.83rem;color:var(--mute);line-height:1.55">${steps.map(s=>`<li style="margin-bottom:4px">${s}</li>`).join('')}</ol>
   <button class="btn btn-ghost btn-xs" data-open="${view}"><i data-lucide="arrow-right"></i>Open ${tag==='Getting Started'?'Studio':''}</button>
 </div></div>`).join('');
 document.getElementById('tutPaths').innerHTML=[
