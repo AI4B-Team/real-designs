@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check, X, ArrowRight } from "lucide-react";
+import { Check, ArrowRight } from "lucide-react";
 import { useState } from "react";
 
 import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
 import { absoluteUrl } from "@/lib/site";
 import "@/styles/rd-site.css";
 
-const TITLE = "Pricing — Plans, Credits And Project Packs | REAL DESIGNS";
+const TITLE = "Pricing — Simple Plans For Every Kind Of Project | REAL DESIGNS";
 const DESC =
-  "Compare REAL DESIGNS plans: free daily designs, Starter, Pro and Studio. See what each plan produces, credit allowances, top ups and one time project packs.";
+  "Start free. Upgrade for more projects, professional planning tools or team collaboration. Compare Free, Starter, Pro and Studio plans for REAL DESIGNS.";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -68,9 +68,7 @@ type Plan = {
   who: string;
   cta: string;
   pop?: boolean;
-  note: string;
   f: string[];
-  x?: string[];
 };
 
 const PLANS: Plan[] = [
@@ -78,124 +76,113 @@ const PLANS: Plan[] = [
     n: "Free",
     mo: 0,
     yr: 0,
-    who: "Anyone. No card to start.",
+    who: "Homeowners Trying Ideas",
     cta: "Start Free",
-    note: "No card to start · Cancel anytime",
     f: [
-      "5 credits a day",
-      "Interiors, exteriors and landscapes",
-      "Full style library and Reality Lock",
-      "Virtual staging, declutter, material swap",
-      "Typical budget range by room type",
-      "Watermarked, standard resolution",
+      "5 Designs A Day",
+      "Interiors, Exteriors And Landscapes",
+      "Full Style Library And Reality Lock",
+      "Virtual Staging And Declutter",
+      "Watermarked Standard Resolution",
     ],
-    x: ["Clean HD download", "Scope and budget from your photo", "Commercial license"],
   },
   {
     n: "Starter",
     mo: 15,
     yr: 7,
-    who: "One property. Personal projects.",
+    who: "One Property At A Time",
     cta: "Choose Starter",
-    note: "30 day money back · Cancel anytime",
     f: [
-      "200 credits a month",
-      "Clean HD, no watermark",
-      "Personal use license",
-      "Scope and budget from your photo",
-      "Design DNA on one property",
-      "Shopping list with live pricing",
-      "Before and after presentation",
+      "200 Credits A Month",
+      "Clean HD, No Watermark",
+      "Scope And Budget From Your Photo",
+      "Shopping List With Live Pricing",
+      "Before And After Presentation",
+      "Personal Use License",
     ],
-    x: ["Commercial license", "ARV impact range", "Batch listing staging"],
   },
   {
     n: "Pro",
     mo: 25,
     yr: 10,
-    who: "Investors, flippers, contractors and agents.",
+    who: "Multiple Active Projects",
     cta: "Choose Pro",
     pop: true,
-    note: "30 day money back · Cancel anytime",
     f: [
-      "2,000 credits a month",
-      "Everything in Starter",
-      "Commercial license",
-      "Contractor brief PDF",
-      "ARV impact range",
-      "Batch listing staging with MLS disclosure",
-      "Design DNA across unlimited properties",
-      "5 team seats",
+      "2,000 Credits A Month",
+      "Everything In Starter",
+      "Commercial License",
+      "Contractor Brief PDF And ARV Range",
+      "Batch Listing Staging",
+      "5 Team Seats",
     ],
-    x: ["Video walkthroughs and 3D plans", "Client approval portal"],
   },
   {
     n: "Studio",
     mo: 35,
     yr: 13,
-    who: "Design teams and brokerage offices.",
+    who: "Teams And Client Work",
     cta: "Choose Studio",
-    note: "30 day money back · Cancel anytime",
     f: [
-      "4,000 credits a month",
-      "Everything in Pro",
-      "Video walkthroughs",
-      "2D to 3D floor plans",
-      "Client approval portal",
-      "Brand presets and white label decks",
-      "Priority render queue",
-      "Unlimited team seats",
+      "4,000 Credits A Month",
+      "Everything In Pro",
+      "Video Walkthroughs",
+      "2D To 3D Floor Plans",
+      "Client Approval Portal",
+      "Unlimited Team Seats",
     ],
   },
 ];
 
-const CAPACITY = [
+const CHOOSER = [
   {
-    plan: "Starter · 200 credits",
-    lines: ["About 200 standard redesigns", "Or about 66 scope and budget reports", "Or a mix of both"],
+    plan: "Starter",
+    a: "One Property At A Time",
+    b: "Personal Redesigns",
+    c: "Best For Homeowners",
   },
   {
-    plan: "Pro · 2,000 credits",
-    lines: [
-      "About 2,000 standard redesigns",
-      "Or about 660 scope and budget reports",
-      "Enough for roughly 20 full property packages",
-    ],
+    plan: "Pro",
+    a: "Multiple Active Projects",
+    b: "Budgets, Scopes And Commercial Use",
+    c: "Best For Investors And Contractors",
   },
   {
-    plan: "Studio · 4,000 credits",
-    lines: [
-      "About 4,000 standard redesigns",
-      "Or about 100 video walkthroughs",
-      "Or about 660 furnished 3D floor plans",
-    ],
+    plan: "Studio",
+    a: "Teams And Client Work",
+    b: "Collaboration And Advanced Outputs",
+    c: "Best For Design Teams",
   },
 ];
 
 const FAQ: [string, string][] = [
   [
-    "What is a credit?",
-    "A credit is the unit we bill generation with. One design costs one credit, a scope and budget costs three, a furnished 3D floor plan costs six and a video walkthrough costs forty. The cost is shown before you spend it.",
+    "Which Plan Is Right For Me?",
+    "If you are redesigning your own home, Starter is enough. If you work on several properties and need budgets, scopes and commercial rights, choose Pro. If you present to clients with a team, choose Studio.",
   ],
   [
-    "Do credits expire?",
-    "Plan credits reset each billing period. Top up credits never expire while your subscription is active.",
+    "What Counts As A Credit?",
+    "A credit is the usage meter, not the product. Most redesigns use one credit. Budgets, floor plans and walkthroughs cost more, and the cost is always shown before you generate.",
   ],
   [
-    "Can I use the images commercially?",
-    "Yes on Pro and Studio. Starter is a personal use license. Free downloads are watermarked and not licensed for marketing use.",
+    "Can I Buy One Project Without Subscribing?",
+    "Yes. Project packs cover a single room, a listing, a whole home or a full renovation plan as a one time purchase.",
   ],
   [
-    "How do team seats work?",
-    "Pro includes five seats sharing one credit balance. Studio includes unlimited seats with roles and client approval links.",
+    "Can I Use The Images Commercially?",
+    "Yes on Pro and Studio. Starter is a personal use license, and free downloads are watermarked and not licensed for marketing use.",
   ],
   [
-    "Can I cancel anytime?",
-    "Yes, in two clicks from your dashboard. You keep access until the end of the paid period and everything you already generated stays yours.",
+    "Do Unused Credits Roll Over?",
+    "Plan credits reset each billing period. Credits you purchase separately stay in your balance while your subscription is active.",
   ],
   [
-    "What is the refund policy?",
-    "Paid plans include a 30 day money back guarantee. See the refund policy page for the full terms.",
+    "Can I Cancel Or Change Plans?",
+    "Yes, in two clicks from your dashboard. Upgrades apply immediately and downgrades start at your next billing date.",
+  ],
+  [
+    "What Happens To My Projects After Cancellation?",
+    "Everything you already generated stays yours to download. Your projects remain viewable in read only mode, and paid features pause until you resubscribe.",
   ],
 ];
 
@@ -203,18 +190,17 @@ function PricingPage() {
   const [bill, setBill] = useState<"mo" | "yr">("yr");
 
   return (
-    <div className="rd-site rd-lp">
+    <div className="rd-site rd-lp rd-pricing">
       <SiteHeader />
 
       <section className="alt">
         <div className="wrap">
           <div className="sec-head center">
             <span className="eyebrow">Pricing</span>
-            <h1>Plans For Every Kind Of Project.</h1>
+            <h1>Simple Plans For Every Kind Of Project.</h1>
             <p className="lede lede-wide">
-              Start free with five designs a day. Upgrade when you need professional downloads,
-              budgets, scopes or a team. Every plan uses one credit balance, so there is nothing
-              else to keep track of.
+              Start free. Upgrade for more projects, professional planning tools or team
+              collaboration.
             </p>
           </div>
 
@@ -230,39 +216,32 @@ function PricingPage() {
             <span className="save">Save With Yearly</span>
           </div>
 
-          <div className="plans">
+          <div className="plans plans-tidy">
             {PLANS.map((p) => (
               <div className={`plan${p.pop ? " pop" : ""}`} key={p.n}>
                 <h3>{p.n}</h3>
+                <div className="who">{p.who}</div>
                 <div className="pr">
                   <b>${p[bill]}</b>
-                  <span>/mo</span>
+                  <span>/month</span>
                 </div>
-                <div className="who">
+                <div className="bill-exp">
                   {p.mo === 0
-                    ? "Free forever"
+                    ? "Free forever, no card required"
                     : bill === "yr"
-                      ? `Billed yearly · $${p.mo}/mo monthly`
-                      : "Billed monthly"}
+                      ? `Billed $${p.yr * 12} annually`
+                      : `Billed $${p.mo} monthly`}
                 </div>
-                <p style={{ fontSize: ".84rem" }}>{p.who}</p>
                 <a
                   href="/auth"
                   className={`btn ${p.pop ? "btn-primary" : "btn-ghost"} btn-block`}
                 >
                   {p.cta}
                 </a>
-                <p className="plan-note">{p.note}</p>
                 <ul>
                   {p.f.map((f) => (
                     <li key={f}>
-                      <Check size={15} />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                  {(p.x ?? []).map((f) => (
-                    <li className="no" key={f}>
-                      <X size={15} />
+                      <Check size={16} />
                       <span>{f}</span>
                     </li>
                   ))}
@@ -271,9 +250,14 @@ function PricingPage() {
             ))}
           </div>
 
-          <p className="price-trust mono">
-            No credit card to start &middot; Cancel anytime &middot; Commercial use on Pro and
-            Studio
+          <p className="price-more">
+            <a href="/pricing/compare">
+              Compare Every Feature <ArrowRight size={15} />
+            </a>
+          </p>
+
+          <p className="price-trust">
+            No credit card to start &middot; Cancel anytime &middot; 30 day money back on paid plans
           </p>
         </div>
       </section>
@@ -281,119 +265,46 @@ function PricingPage() {
       <section>
         <div className="wrap">
           <div className="sec-head center">
-            <span className="eyebrow">What You Can Actually Make</span>
-            <h2>How Much Work Fits In A Plan.</h2>
-            <p className="lede lede-wide">
-              Credits are just the meter. Here is the practical output each plan covers in a normal
-              month.
-            </p>
+            <span className="eyebrow">Choose Your Plan</span>
+            <h2>Which Plan Is For Me?</h2>
           </div>
 
-          <div className="pack-row">
-            {CAPACITY.map((c) => (
-              <div className="pack" key={c.plan}>
+          <div className="chooser">
+            {CHOOSER.map((c) => (
+              <div className="ch" key={c.plan}>
                 <b>{c.plan}</b>
-                <small>
-                  {c.lines.map((l) => (
-                    <span key={l} style={{ display: "block" }}>
-                      {l}
-                    </span>
-                  ))}
-                </small>
+                <span>{c.a}</span>
+                <span>{c.b}</span>
+                <em>{c.c}</em>
               </div>
             ))}
-          </div>
-
-          <div className="credtab" style={{ marginTop: 26 }}>
-            <details>
-              <summary style={{ cursor: "pointer", fontWeight: 700 }}>See Exact Credit Usage</summary>
-              <table className="cred-t" style={{ marginTop: 14 }}>
-                <tbody>
-                  <tr>
-                    <td>
-                      Design, restyle, virtual stage, declutter, material swap, sky swap, style
-                      transfer
-                    </td>
-                    <td className="mono">1 credit</td>
-                  </tr>
-                  <tr>
-                    <td>Scope and budget from your photo</td>
-                    <td className="mono">3 credits</td>
-                  </tr>
-                  <tr>
-                    <td>2D to 3D floor plan</td>
-                    <td className="mono">6 credits</td>
-                  </tr>
-                  <tr>
-                    <td>Video walkthrough</td>
-                    <td className="mono">40 credits</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p className="cred-note mono">
-                Credits reset monthly and never expire while your subscription is active.
-              </p>
-            </details>
           </div>
         </div>
       </section>
 
       <section className="alt">
         <div className="wrap">
-          <div className="topup">
-            <h4>Need More This Month?</h4>
-            <p>Top up any paid plan. Credits never expire while your subscription is active.</p>
-            <div className="topup-row">
-              <div className="tu">
-                <b className="mono">250 Credits</b>
-                <span className="mono">$5</span>
-                <small className="mono">$0.020 Per Credit</small>
-              </div>
-              <div className="tu">
-                <b className="mono">750 Credits</b>
-                <span className="mono">$12</span>
-                <small className="mono">$0.016 Per Credit</small>
-              </div>
-              <div className="tu">
-                <b className="mono">2,000 Credits</b>
-                <span className="mono">$25</span>
-                <small className="mono">$0.013 Per Credit</small>
-              </div>
-            </div>
-            <p className="tu-note mono">
-              Top ups cost more per credit than the next plan up. If you are buying them often,
-              upgrade instead.
+          <div className="credit-note">
+            <h3>One Balance. Every Tool.</h3>
+            <p>
+              Use credits for designs, budgets, floor plans and walkthroughs. Most redesigns use one
+              credit. Your dashboard always shows the cost before you generate.
             </p>
+            <a href="/pricing/credits" className="lnk">
+              See Credit Usage <ArrowRight size={15} />
+            </a>
           </div>
 
-          <div className="packs" style={{ marginTop: 26 }}>
-            <h4>Not Ready For A Subscription?</h4>
-            <p>
-              One project does not need a monthly bill following you around. Buy the project, keep
-              everything you make, walk away.
-            </p>
-            <div className="pack-row">
-              <div className="pack">
-                <b>Single Room Pack</b>
-                <span>$12</span>
-                <small>One room, unlimited versions, HD, 30 days</small>
-              </div>
-              <div className="pack">
-                <b>Listing Staging Pack</b>
-                <span>$29</span>
-                <small>One property, all photos, disclosure labeling</small>
-              </div>
-              <div className="pack">
-                <b>Whole Home Pack</b>
-                <span>$39</span>
-                <small>Every room, Design DNA, 60 days</small>
-              </div>
-              <div className="pack">
-                <b>Renovation Planning Pack</b>
-                <span>$49</span>
-                <small>Whole home plus scope, budget and contractor brief</small>
-              </div>
+          <div className="oneoff">
+            <div>
+              <h4>Only Need One Project?</h4>
+              <p>
+                Purchase a room, listing, whole home or renovation package without subscribing.
+              </p>
             </div>
+            <a href="/pricing/credits#packs" className="btn btn-ghost">
+              View Project Packs
+            </a>
           </div>
         </div>
       </section>
@@ -401,8 +312,8 @@ function PricingPage() {
       <section>
         <div className="wrap">
           <div className="sec-head center">
-            <span className="eyebrow">Details</span>
-            <h2>Licensing, Seats And Cancellation.</h2>
+            <span className="eyebrow">Questions</span>
+            <h2>Answers Before You Choose.</h2>
           </div>
 
           <div className="faq">
@@ -413,12 +324,23 @@ function PricingPage() {
               </details>
             ))}
           </div>
+        </div>
+      </section>
 
-          <p className="price-more" style={{ marginTop: 24 }}>
-            <a href="/founders">
-              See Founding Member Pricing <ArrowRight size={15} />
-            </a>
-          </p>
+      <section className="alt">
+        <div className="wrap">
+          <div className="final-cta">
+            <h2>Start With Five Free Designs Today.</h2>
+            <p>No card, no commitment. Upgrade the moment a project gets real.</p>
+            <div className="cta-row">
+              <a href="/auth" className="btn btn-primary">
+                Start Free
+              </a>
+              <a href="/founders" className="btn btn-ghost">
+                See Founding Member Pricing
+              </a>
+            </div>
+          </div>
         </div>
       </section>
 
