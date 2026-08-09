@@ -60,7 +60,7 @@ export const showcaseHtml = `
     <div class="sec-head rv">
       <span class="eyebrow">Twelve Tools, One Running Total</span>
       <h2>Every Tool Feeds <em class="ann-underline">The Same Number.</em></h2>
-      <p class="lede">Restyle, stage, price, shop, film and plan. Each one runs on the photo you uploaded, and each one adds to a single project budget you can hand a contractor.</p>
+      <p class="lede">Restyle, stage, price, shop, film and plan. Each one runs on the photo you uploaded, and each one adds to a single project budget you can review with a contractor.</p>
     </div>
     <div class="sc-grid" id="scGrid">
 
@@ -104,7 +104,7 @@ export const showcaseHtml = `
         </div>`)}
 
       ${card(7, "Scope And Budget", "Price The Job, Not Just The Furniture",
-        "Line items, quantities, trades and local labour rates. A planning range you can hand a contractor, not a ballpark.", `
+        "Line items, quantities, trades and local labour rates. A planning range you can review with a contractor, not a ballpark.", `
         <div class="sc-scope">
           <div class="sc-lyr">${im(PHOTOS.after, "Priced room")}</div>
           <div class="sc-panel">

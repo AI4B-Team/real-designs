@@ -6,7 +6,7 @@ export const page: LandingPage = {
   intent: "Buyer wants a realistic whole house renovation cost range broken down by room and trade before committing to a full gut or a phased plan.",
 
   metaTitle: "Whole House Renovation Cost Planning Guide",
-  metaDescription: "See a realistic whole house renovation cost range by room and trade, from a cosmetic pass to a full gut, with line items you can hand to a contractor.",
+  metaDescription: "See a realistic whole house renovation cost range by room and trade, from a cosmetic pass to a full gut, with line items you can review with a contractor.",
 
   eyebrow: "Whole House Renovation",
   h1: "Whole House Renovation Cost",

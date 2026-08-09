@@ -9,7 +9,7 @@ import { absoluteUrl } from "@/lib/site";
 
 const title = "AI Home Design and Renovation Planning | REAL DESIGNS";
 const description =
-  "Turn one photo into a photoreal redesign of your real space, plus a planning budget range, shopping list and contractor-ready scope.";
+  "Turn one photo into a photoreal redesign of your real space, plus a planning budget range, shopping list and contractor planning brief.";
 
 
 export const Route = createFileRoute("/")({

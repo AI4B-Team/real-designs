@@ -135,6 +135,6 @@ export const page: LandingPage = {
   },
 
   ctaTitle: "See Your Rehab Number Line By Line",
-  ctaBody: "Upload a photo and get a measured scope with unit rates, a contingency line, and a range you can hand to a contractor.",
+  ctaBody: "Upload a photo and get a measured scope with unit rates, a contingency line, and a range you can review with a contractor.",
   ctaLabel: "Calculate My Rehab Cost",
 };
