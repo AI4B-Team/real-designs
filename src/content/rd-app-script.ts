@@ -806,6 +806,7 @@ const SCOPE_ITEMS=[{label:'demolition'},{label:'flooring',material:'lvp'},{label
 const money=(n)=>'$'+Math.round(n).toLocaleString('en-US');
 const scopeRowsEl=document.getElementById('scopeRows');
 let scopeMarkets=[];
+(function(){ const rs=document.getElementById('fRoom'); if(rs) rs.addEventListener('change',paintStudioSub); })();
 function scopeContext(){
   const sp=PROP_TREE[SEL.p]||null, sj=sp?(sp.projects[SEL.pr]||null):null;
   const roomSel=document.getElementById('fRoom');
@@ -1237,6 +1238,7 @@ async function paintPresentations(){
   const el=document.getElementById('linkList'); if(!el) return;
   try{ PRES_ROWS=await listPresentations(); }
   catch(e){ PRES_ROWS=[]; }
+  updateSearchMeta();
   if(!PRES_ROWS.length){
     el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No client links yet. Save a room in Studio, then use New Link to share it for approval.</p>';
     return;
