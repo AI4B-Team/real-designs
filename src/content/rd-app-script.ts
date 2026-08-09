@@ -18,6 +18,7 @@ import { listPresentations, createPresentation, deletePresentation, getPresentat
 import { buildSocialReel } from "@/lib/social-reel";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
+import { listTeam, inviteMember, revokeInvite, acceptInvite } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 
