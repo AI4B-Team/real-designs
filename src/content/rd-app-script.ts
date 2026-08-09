@@ -2001,6 +2001,8 @@ function wireSave(btnId,msgId,collect,key){
 const val=(id)=>{ const el=document.getElementById(id); return el?el.value:''; };
 wireSave('bkSave','bkMsg',()=>({company:val('bkCompany'),color:val('bkColor'),watermark:val('bkMark')}),'brand');
 wireSave('dfSave','dfMsg',()=>({market:val('dfMarket'),grade:val('dfGrade'),band:val('dfBand'),disclosure:val('dfDisc')}),'defaults');
+loadPrefs();
+
 
 /* ---------- collapse the left menu ----------
    The rail keeps the icons visible and only then shows tooltips, since the
