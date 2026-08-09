@@ -49,7 +49,7 @@
 .rd-app .app.sidemin .side-top{flex-direction:column;padding:14px 8px 12px;gap:10px}
 .rd-app .app.sidemin .side-top .logo{order:2;font-size:0;gap:0;justify-content:center}
 .rd-app .app.sidemin .side-toggle{order:1}
-.rd-app .app.sidemin .side-nav{padding:12px 8px}
+.rd-app .app.sidemin .side-nav{padding:12px 8px;overflow:visible}
 .rd-app .app.sidemin .nav-group{font-size:0;padding:10px 0 4px;height:1px;background:var(--line);margin:8px 6px}
 .rd-app .app.sidemin .nav-group:first-child{margin-top:0;padding-top:0}
 .rd-app .app.sidemin .nav-i{font-size:0;gap:0;justify-content:center;padding:9px 0}
