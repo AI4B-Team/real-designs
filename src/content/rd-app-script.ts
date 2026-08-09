@@ -16,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { getPortfolioReport } from "@/lib/reports.functions";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
-import { listPresentations, createPresentation, deletePresentation, getPresentationPackage } from "@/lib/presentations.functions";
+import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
 import { track } from "@/lib/analytics";
 import { submitFeedback } from "@/lib/feedback";
