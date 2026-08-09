@@ -760,8 +760,19 @@ export function initExtra(timers: number[], lucide: any) {
       p3s.appendChild(layer);
       requestAnimationFrame(() => layer.classList.add("on"));
       Array.from(p3s.children).forEach((c: any) => { if (c !== layer) setTimeout(() => c.remove(), 500); });
-      if (p3c) p3c.innerHTML = `<b>${s.title}</b><span>${s.copy}</span>`;
+      const ok = verified(s);
+      if (p3c) p3c.innerHTML =
+        `<b>${s.title}</b><span>${s.copy}</span>` +
+        (ok ? "" : `<em class="p3-unver mono">Concept View &mdash; Geometry Not Verified</em>`);
       if (p3o) p3o.innerHTML = `<span class="mono">${s.outLabel}</span><b>${s.outValue}</b>`;
+      const lay = $("p3Lay");
+      if (lay) lay.innerHTML =
+        `<span class="mono">Layout</span><b>${ok ? "Preserved" : "Not Verified"}</b>`;
+      const facts = $("p3Facts");
+      if (facts) facts.innerHTML =
+        PROJECT.facts.map((f) => `<span>${f}</span>`).join("") +
+        `<span class="p3-gid mono">Geometry ID ${s.geometryId ?? "\u2014"}</span>` +
+        `<span class="p3-gid mono">Camera ID ${s.cameraId ?? "\u2014"}</span>`;
       p3n.querySelectorAll(".p3step").forEach((b: any, j: number) => {
         b.classList.toggle("on", j === i);
         b.classList.toggle("done", j < i);
@@ -770,10 +781,7 @@ export function initExtra(timers: number[], lucide: any) {
       });
       lucide.createIcons();
     };
-    const facts = $("p3Facts");
-    if (facts) facts.innerHTML =
-      PROJECT.facts.map((f) => `<span>${f}</span>`).join("") +
-      `<span class="p3-gid mono">Geometry ID ${PROJECT.geometryId}</span>`;
+
     const loop = () => { p3t = setTimeout(() => { showP3((p3i + 1) % P3.length); loop(); }, 3600); };
     p3n.querySelectorAll(".p3step").forEach((b: any) =>
       b.addEventListener("click", () => { clearTimeout(p3t); showP3(Number(b.dataset.n)); loop(); }));
