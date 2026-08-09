@@ -61,8 +61,9 @@
 /* tooltips, only on the collapsed rail */
 .rd-app .app.sidemin .nav-i[data-tip]:hover::after,.rd-app .app.sidemin .side-toggle:hover::after{
   content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
-  background:var(--ink);color:#fff;font-size:.74rem;font-weight:600;letter-spacing:-.01em;white-space:nowrap;
-  padding:5px 9px;border-radius:6px;z-index:90;pointer-events:none;box-shadow:0 6px 18px rgba(20,18,15,.18)}
+  background:var(--white);color:var(--ink);border:1px solid var(--line);
+  font-size:.74rem;font-weight:600;letter-spacing:-.01em;white-space:nowrap;
+  padding:5px 9px;border-radius:6px;z-index:90;pointer-events:none;box-shadow:0 8px 22px rgba(20,18,15,.14)}
 .rd-app .app.sidemin .side-toggle{position:relative}
 .rd-app .app.sidemin .side-toggle:hover::after{content:'Expand Menu'}
 
