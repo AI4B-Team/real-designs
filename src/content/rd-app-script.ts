@@ -316,10 +316,10 @@ async function paintSample(s){
     host.insertBefore(bar,host.firstChild);
   }
   bar.innerHTML = present
-    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data so you can explore Properties, Scope and Reports. Remove it any time.</span>'
+    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data for exploring Properties, Scope and Reports.</span>'
       +'<button class="btn btn-ghost btn-xs" id="sampleGo" style="margin-left:auto"><i data-lucide="map-pin"></i>Open It</button>'
       +'<button class="btn btn-ghost btn-xs" id="sampleOff"><i data-lucide="trash-2"></i>Remove Sample</button>'
-    : '<i data-lucide="flask-conical"></i><span><b>Nothing Saved Yet.</b> Load a sample property with three rooms, a priced scope and a budget target to see how the workspace fits together. No credits are used.</span>'
+    : '<i data-lucide="flask-conical"></i><span><b>Nothing Saved Yet.</b> Load a sample property with three rooms and a budget target to see how the workspace fits together. No credits are used.</span>'
       +'<button class="btn btn-primary btn-xs" id="sampleOn" style="margin-left:auto"><i data-lucide="download"></i>Load Sample Property</button>';
   try{ lucide.createIcons(); }catch(_){}
 
