@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS public.respond_to_presentation(text, text, text);

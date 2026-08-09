@@ -740,20 +740,15 @@ export type Database = {
       }
       has_workspace_access: { Args: { _owner: string }; Returns: boolean }
       record_presentation_view: { Args: { _token: string }; Returns: undefined }
-      respond_to_presentation:
-        | {
-            Args: { _decision: string; _note?: string; _token: string }
-            Returns: Json
-          }
-        | {
-            Args: {
-              _decision: string
-              _excluded?: Json
-              _note?: string
-              _token: string
-            }
-            Returns: Json
-          }
+      respond_to_presentation: {
+        Args: {
+          _decision: string
+          _excluded?: Json
+          _note?: string
+          _token: string
+        }
+        Returns: Json
+      }
       spend_credits: {
         Args: {
           _action: Database["public"]["Enums"]["credit_action"]
