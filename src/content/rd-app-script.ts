@@ -2603,8 +2603,8 @@ if (canvasCard && canvasThemeBtn) {
 
 /* ---------- accounts: signed-in identity + saved projects ---------- */
 const initials=(s)=>s.split(/[.@\s_-]+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('')||'RD';
-const AV_TONES=['#2563eb','#059669','#7c3aed','#64748b','#e11d48','#0d9488'];
-function avTone(seed){ let h=0; for(let i=0;i<(seed||'').length;i++) h=(h*31+seed.charCodeAt(i))%9973; return AV_TONES[h%AV_TONES.length]; }
+// Avatar initials always use the REAL DESIGNS brand red so the mark stays on-brand.
+function avTone(_seed){ return '#CC0000'; }
 function paintAvatars(av,seed){
   const tone=avTone(seed||av);
   window.__rdAv={av:av,tone:tone};
