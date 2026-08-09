@@ -230,14 +230,15 @@ function money(n){return '$'+n.toLocaleString()}
 function setBudget(i){
   bi=i;const b=budgets[i];
   const txt=`${money(b.lo)} to ${money(b.hi)}`;
-  document.getElementById('estVal').textContent=txt;
-  const f=document.getElementById('fitVal');f.textContent=b.fit;
-  f.className=i===3?'conf-md':'conf-hi';
-  // hero number bar mirrors the builder so the two never disagree
-  const he=document.getElementById('heroEst'),hf=document.getElementById('heroFit');
-  if(he)he.textContent=txt;
-  if(hf){hf.textContent=b.fit;hf.className=i===3?'conf-md':'conf-hi';}
+  const model={contextLabel:'Typical Range',primaryValue:txt,
+    metrics:[metric('Budget Fit',b.fit),metric('Layout','High'),metric('Structure','None Detected')]};
+  const bs=document.getElementById('builderSummary');
+  if(bs)bs.innerHTML=summaryHTML({...model,compact:true,flush:true});
+  // hero panel mirrors the builder so the two never disagree
+  const hs=document.getElementById('heroSummary');
+  if(hs)hs.innerHTML=summaryHTML({...model,contextLabel:'Estimated Planning Range'});
 }
+
 document.querySelectorAll('#budgetChips .chip').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('#budgetChips .chip').forEach(x=>x.classList.remove('on'));
   c.classList.add('on');budgetTouched=true;
