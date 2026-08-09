@@ -1867,7 +1867,7 @@ const HELP_CATS=[
  ['user-round','Account & Workspace',[
   ['bell','Notifications','Notifications are in-app. The three toggles in Account, Notifications control which categories reach your feed. We do not send marketing email.','notifications'],
   ['sliders-horizontal','Defaults','Market, finish grade, budget band and disclosure ruleset set the starting point for every new scope. They are saved to your account.','account'],
-  ['users','Seats','REAL DESIGNS is a single seat workspace today. Multi-user teams are not available yet.','account'],
+  ['users','Team Seats','Invite teammates from Account, Team. They accept the invite with their own login and then share your properties, designs, scopes and presentations. You can copy an invite link to send it yourself, and revoke access at any time.','team'],
   ['download','Export And Delete','You can download a JSON of every property, room, version, scope and credit entry, or delete the account and all of its data, from Account, Data And Privacy.','account']]]];
 
 const helpCatsEl=document.getElementById('helpCats');
