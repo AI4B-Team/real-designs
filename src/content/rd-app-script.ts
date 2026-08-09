@@ -1689,7 +1689,11 @@ async function paintTeam(){
   }));
   list.querySelectorAll('[data-accept]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await acceptInvite({data:{id:b.dataset.accept}}); }catch(_){}
-    paintTeam();
+    paintTeam(); paintInviteBanner(); setTimeout(()=>window.location.reload(),400);
+  }));
+  list.querySelectorAll('[data-decline]').forEach(b=>b.addEventListener('click',async()=>{
+    b.disabled=true; try{ await declineInvite({data:{id:b.dataset.decline}}); }catch(_){}
+    paintTeam(); paintInviteBanner();
   }));
 
   const rows=document.getElementById('usageRows');
