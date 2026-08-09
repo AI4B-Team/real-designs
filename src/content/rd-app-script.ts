@@ -329,8 +329,6 @@ async function paintRooms(){
       ? items.map(it=>`<span class="dna-i"><span class="sw" style="background:${it.color}"></span>${it.label}</span>`).join('')
       :'<span style="font-size:.79rem;color:var(--mute-2)">No Design DNA locked for this property yet. Use Edit DNA to set the palette and finishes every room should follow.</span>';
   }
-  const dnaPill=document.querySelector('#v-props .pill.p-ink');
-  if(dnaPill) dnaPill.innerHTML='<i data-lucide="dna"></i>'+((prop&&prop.dna&&prop.dna.length)?'Design DNA Locked':'No Design DNA');
 
 
   const rooms=proj?proj.rooms:[];
