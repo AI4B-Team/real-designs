@@ -777,3 +777,5 @@
 
 /* Native dropdowns: always light/white popup */
 .rd-app select,.rd-app option,.rd-app optgroup{color-scheme:light;background-color:#fff;color:var(--ink)}
+
+.rd-app .toolrow b{white-space:nowrap}

@@ -1993,6 +1993,12 @@ renderNotifs();
 const toolRows = Array.from(document.querySelectorAll('.toolrow'));
 const toolInfo = document.getElementById('toolInfo');
 const LIVE_TOOLS={'2D To 3D Plan':run3dPlan,'Walkthrough Video':runWalkthrough};
+const TOOL_COST={'Redesign':1,'Virtual Stage':1,'Declutter':1,'Material Swap':1,'Sketch To Render':1,'Scope & Budget':3,'Multi Angle':1,'Walkthrough Video':40,'2D To 3D Plan':6};
+toolRows.forEach((r)=>{
+  const nm=r.getAttribute('data-tool')||'';
+  const c=TOOL_COST[nm];
+  r.title = nm + (c?(' \u00b7 ' + c + ' credit' + (c>1?'s':'')):'') + '\n' + (r.getAttribute('data-desc')||'');
+});
 toolRows.forEach((r) => r.addEventListener('click', () => {
   toolRows.forEach((x) => x.classList.remove('on'));
   r.classList.add('on');
@@ -2006,7 +2012,9 @@ toolRows.forEach((r) => r.addEventListener('click', () => {
   if (plan && toolInfo) {
     document.getElementById('toolInfoName').textContent =
       name + ' is on the ' + (plan === 'pro' ? 'Pro' : 'Studio') + ' plan';
-    document.getElementById('toolInfoDesc').textContent = r.getAttribute('data-desc');
+    const cst = TOOL_COST[name];
+    document.getElementById('toolInfoDesc').textContent =
+      (r.getAttribute('data-desc') || '') + (cst ? ' Costs ' + cst + ' credit' + (cst>1?'s':'') + ' per run.' : '');
     toolInfo.hidden = false;
   } else if (toolInfo) {
     toolInfo.hidden = true;
