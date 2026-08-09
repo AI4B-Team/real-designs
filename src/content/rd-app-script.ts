@@ -1072,10 +1072,10 @@ if(prodGridEl) prodGridEl.innerHTML='<div class="card" style="grid-column:1/-1">
 const pkg=[['Before And After Slider','In the client approval link','p-ok','Live'],
 ['Scope Of Work And Budget','Line items and range in the link','p-ok','Live'],
 ['Client Decision Capture','Approve or request changes, tracked','p-ok','Live'],
+['Branded PDF Export','Print ready package from any link','p-ok','Live'],
+['Walkthrough Video','Dolly in, eight seconds, from Studio','p-ok','Live'],
 ['Product Board','Every item with price and link','p-gray','Planned'],
-['Branded PDF Export','Print ready package','p-gray','Planned'],
-['Social Reel, 9x16','Cross fade before to after, 12 seconds','plan-pill lvl-pro','PRO'],
-['Walkthrough Video','Dolly in, 20 seconds','plan-pill lvl-studio','STUDIO']];
+['Social Reel, 9x16','Cross fade before to after, 12 seconds','p-gray','Planned']];
 document.getElementById('pkgList').innerHTML=pkg.map(([n,d,cls,lab])=>`
 <div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="${cls.startsWith('plan-pill')?cls:'pill '+cls}">${lab}</span></div>`).join('');
 
