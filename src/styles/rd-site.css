@@ -2532,3 +2532,8 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .cmp-t svg.nope{color:#c9c6c1}
 .rd-site.rd-pricing .cred-note{font-size:.95rem;color:var(--mute);margin-top:14px}
 .rd-site.rd-pricing .cred-note.center{text-align:center}
+
+/* hero: lock the slideshow column height so panels never shift between slides */
+.rd-site .hero-left #heroSummary{min-height:132px;height:132px;margin-top:12px}
+.rd-site .hero-left #heroSummary .rsp{height:132px}
+.rd-site .hero-left .show{flex:0 0 auto}
