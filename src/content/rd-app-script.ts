@@ -2012,7 +2012,9 @@ toolRows.forEach((r) => r.addEventListener('click', () => {
   if (plan && toolInfo) {
     document.getElementById('toolInfoName').textContent =
       name + ' is on the ' + (plan === 'pro' ? 'Pro' : 'Studio') + ' plan';
-    document.getElementById('toolInfoDesc').textContent = r.getAttribute('data-desc');
+    const cst = TOOL_COST[name];
+    document.getElementById('toolInfoDesc').textContent =
+      (r.getAttribute('data-desc') || '') + (cst ? ' Costs ' + cst + ' credit' + (cst>1?'s':'') + ' per run.' : '');
     toolInfo.hidden = false;
   } else if (toolInfo) {
     toolInfo.hidden = true;
