@@ -1622,14 +1622,15 @@ function renderPresRows(){
     const lineNotes=(r.note_count||0)?Object.values(r.line_notes||{}).slice(0,3).map((t:any)=>`<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\"><i>&ldquo;${esc(String(t))}&rdquo;</i></span></div></div>`).join(''):'';
     const note=(r.decision_note||r.excluded_count||r.note_count)?`<div class=\"rowi\" style=\"border-top:0;padding-top:0\"><div class=\"rowt\" style=\"padding-left:2px\"><span style=\"color:var(--mute-2)\">${r.decision_note?`<i>&ldquo;${esc(r.decision_note)}&rdquo;</i> &mdash; ${esc(r.client_name||'client')}`:(r.excluded_count?`${esc(r.client_name||'The client')} trimmed the scope`:`${esc(r.client_name||'The client')} left notes on the scope`)}</span>${dropped}${notesPill}</div></div>`+lineNotes:'';
     return `<div class=\"rowi\" data-pid=\"${r.id}\" data-tok=\"${r.token}\">
-      <div class=\"rowt\"><b>${esc(r.title)}</b><span>${ctx?ctx+' &middot; ':''}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
+      <div class="rowt"><b>${esc(r.title)}</b><span>${ctx?ctx+' &middot; ':''}${who} &middot; ${seen} &middot; ${presAgo(r.last_viewed_at||r.created_at)}</span></div>
       <span class="pill ${cls}">${lab}</span>
+      <button class="icon-btn" data-hist title="Activity history"><i data-lucide="history"></i></button>
       <button class="icon-btn" data-send title="Send to client"><i data-lucide="send"></i></button>
       <button class="icon-btn" data-copy title="Copy link"><i data-lucide="copy"></i></button>
       <button class="icon-btn" data-pdf title="Branded PDF"><i data-lucide="file-text"></i></button>
       <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
       <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
-      <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>${note}`;
+      <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>${note}<div class="pres-hist" data-hist-for="${r.id}" hidden></div>`;
   }).join(''):'<p style="font-size:.79rem;color:var(--mute-2)">No links with that status yet.</p>';
   el.innerHTML=tabs+body;
   lucide.createIcons();
