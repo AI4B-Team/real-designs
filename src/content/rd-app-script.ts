@@ -73,25 +73,91 @@ acctMenu.addEventListener('click',e=>{ if(e.target.closest('.acct-i,[data-goto]'
 document.addEventListener('click',e=>{ if(!e.target.closest('.acct-wrap')) closeAcct(); });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAcct(); });
 
-/* ---------- search scope menu ---------- */
+/* ---------- search scope menu + live results ---------- */
 const schBtn=document.getElementById('schBtn'),schMenu=document.getElementById('schMenu');
 const schInput=document.querySelector('.search input');
+let SCH_SCOPE='All';
+let schRes=null;
+if(schMenu&&schMenu.parentElement){
+  schRes=document.createElement('div');
+  schRes.className='search-menu'; schRes.id='schRes';
+  schMenu.parentElement.appendChild(schRes);
+}
 function closeSch(){ if(schMenu){schMenu.classList.remove('on'); schBtn.setAttribute('aria-expanded','false');} }
+function closeSchRes(){ if(schRes) schRes.classList.remove('on'); }
+function searchIndex(){
+  const out=[];
+  PROP_TREE.forEach((p,pi)=>{
+    out.push({kind:'Properties',ic:'map-pin',t:p.address,s:p.has_dna?'DNA Locked':'No DNA yet',pi,pri:0});
+    p.projects.forEach((pr,pri)=>{
+      pr.rooms.forEach(r=>{
+        out.push({kind:'Rooms',ic:'sofa',t:r.name,s:p.address+' \u00b7 '+pr.name,pi,pri});
+        out.push({kind:'Designs',ic:'images',t:r.name+' v'+(r.version_no||1),s:(r.status==='approved'?'Approved':'Draft')+' \u00b7 '+pr.name,pi,pri,design:true});
+      });
+    });
+  });
+  return out;
+}
+function runSearch(){
+  if(!schRes) return;
+  const q=(schInput&&schInput.value||'').trim().toLowerCase();
+  if(!q){ closeSchRes(); return; }
+  let rows=searchIndex().filter(r=>(SCH_SCOPE==='All'||r.kind===SCH_SCOPE)&&(r.t+' '+r.s).toLowerCase().includes(q)).slice(0,8);
+  schRes.innerHTML=rows.length
+    ? '<div class="acct-group">Results</div>'+rows.map((r,i)=>`<button class="acct-i" data-r="${i}"><i data-lucide="${r.ic}"></i>${r.t}<span class="mv">${r.s}</span></button>`).join('')
+    : '<div class="acct-group">Results</div><div class="acct-i" style="pointer-events:none;color:var(--mute-2)">Nothing matches that search.</div>';
+  schRes.classList.add('on');
+  lucide.createIcons();
+  schRes.querySelectorAll('[data-r]').forEach(btn=>btn.addEventListener('click',()=>{
+    const r=rows[+btn.dataset.r]; if(!r) return;
+    SEL={p:r.pi,pr:r.pri};
+    closeSchRes(); if(schInput) schInput.value='';
+    go(r.design?'designs':'props'); paintTree();
+  }));
+}
+function updateSearchMeta(){
+  if(!schMenu) return;
+  const rooms=PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.length,0),0);
+  const designs=PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0);
+  const set=(sc,v)=>{const b=schMenu.querySelector('[data-scope="'+sc+'"] .mv'); if(b) b.textContent=String(v);};
+  set('Properties',PROP_TREE.length); set('Rooms',rooms); set('Designs',designs);
+  const recents=searchIndex().filter(r=>r.kind==='Designs').slice(0,3);
+  const groups=schMenu.querySelectorAll('.acct-group');
+  const recHead=groups[groups.length-1];
+  if(recHead){
+    let n=recHead.nextElementSibling;
+    while(n){ const nx=n.nextElementSibling; n.remove(); n=nx; }
+    recHead.insertAdjacentHTML('afterend', recents.length
+      ? recents.map(r=>`<button class="acct-i" data-rec="${r.pi}:${r.pri}"><i data-lucide="history"></i>${r.t}</button>`).join('')
+      : '<div class="acct-i" style="pointer-events:none;color:var(--mute-2)">Nothing saved yet</div>');
+    schMenu.querySelectorAll('[data-rec]').forEach(b=>b.addEventListener('click',()=>{
+      const [pi,pri]=b.dataset.rec.split(':').map(Number);
+      SEL={p:pi,pr:pri}; closeSch(); go('props'); paintTree();
+    }));
+    lucide.createIcons();
+  }
+}
 if(schBtn&&schMenu){
   schBtn.addEventListener('click',e=>{
-    e.stopPropagation(); closeAcct();
+    e.stopPropagation(); closeAcct(); closeSchRes();
     const open=!schMenu.classList.contains('on');
     schMenu.classList.toggle('on',open); schBtn.setAttribute('aria-expanded',String(open));
   });
   schMenu.addEventListener('click',e=>{
     const it=e.target.closest('.acct-i'); if(!it) return;
     const sc=it.dataset.scope;
-    if(sc&&schInput) schInput.setAttribute('placeholder', sc==='All'?'Search properties, rooms, designs':'Search '+sc.toLowerCase());
-    closeSch();
+    if(sc){ SCH_SCOPE=sc==='All'?'All':sc;
+      if(schInput) schInput.setAttribute('placeholder', sc==='All'?'Search properties, rooms, designs':'Search '+sc.toLowerCase()); }
+    closeSch(); runSearch();
   });
-  document.addEventListener('click',e=>{ if(!e.target.closest('.search-wrap')) closeSch(); });
-  document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeSch(); });
+  document.addEventListener('click',e=>{ if(!e.target.closest('.search-wrap')){ closeSch(); closeSchRes(); } });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ closeSch(); closeSchRes(); } });
 }
+if(schInput){
+  schInput.addEventListener('input',()=>{ closeSch(); runSearch(); });
+  schInput.addEventListener('focus',()=>{ if(schInput.value.trim()) runSearch(); });
+}
+
 
 
 
@@ -278,6 +344,7 @@ async function loadProperties(){
   if(cd) cd.textContent=String(PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0));
   paintTree();
   paintDesigns();
+  updateSearchMeta();
 
 }
 loadProperties();
