@@ -421,6 +421,22 @@ modal.querySelector('#uGo').addEventListener('click',()=>{
 const navUp=document.getElementById('navUpload');
 if(navUp) navUp.addEventListener('click',(e)=>{e.preventDefault();openUpload()});
 
+/* header auth state: swap Log In for Dashboard when signed in */
+(async()=>{
+  const link=document.querySelector('.nav-cta a[href="/auth"]');
+  if(!link)return;
+  try{
+    const {supabase}=await import('@/integrations/supabase/client');
+    const apply=(session)=>{
+      if(session){link.setAttribute('href','/app');link.textContent='Dashboard';}
+      else{link.setAttribute('href','/auth');link.textContent='Log In';}
+    };
+    const {data}=await supabase.auth.getSession();
+    apply(data.session);
+    supabase.auth.onAuthStateChange((_e,session)=>apply(session));
+  }catch(e){}
+})();
+
 
 /* ---------- marquee ---------- */
 const mqI=[['sofa','Interior Redesign'],['home','Exterior Redesign'],['trees','Landscape Design'],['bed-double','Virtual Staging'],
