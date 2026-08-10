@@ -226,7 +226,7 @@ function AuthPage() {
             </button>
           </p>
           <p className="alt quiet">
-            <a href="/">Back To Home</a>
+            <a href="/"><ArrowLeft size={14} /> Back To Home</a>
           </p>
         </section>
       </div>
