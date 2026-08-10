@@ -37,6 +37,7 @@ export function BrandMark() {
 }
 
 export function SiteHeader() {
+  const signedIn = useSignedIn();
   return (
     <header id="hdr">
       <div className="wrap nav">
@@ -45,9 +46,15 @@ export function SiteHeader() {
         </a>
 
         <div className="nav-cta">
-          <Link to="/auth" className="btn btn-ghost btn-sm">
-            Log In
-          </Link>
+          {signedIn ? (
+            <Link to="/app" className="btn btn-ghost btn-sm">
+              Dashboard
+            </Link>
+          ) : (
+            <Link to="/auth" className="btn btn-ghost btn-sm">
+              Log In
+            </Link>
+          )}
           <a href="#builder" className="btn btn-primary btn-sm">
             Upload Your Space
           </a>
