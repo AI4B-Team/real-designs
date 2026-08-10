@@ -85,12 +85,13 @@ export const FOOTER_GROUPS: NavGroup[] = [
   {
     heading: "Company",
     links: [
+      { href: "/about", label: "About REAL DESIGNS" },
       { href: "/#why", label: "Why REAL DESIGNS" },
       { href: "/pricing", label: "Pricing" },
       { href: "/resources", label: "Help Center" },
-      { href: "/terms", label: "Fair Use" },
-      { href: "/refund-policy", label: "Refunds" },
-      { href: "/privacy", label: "Terms & Privacy" },
+      { href: "/terms", label: "Terms of Use" },
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/refund-policy", label: "Refund Policy" },
     ],
   },
 ];
@@ -148,20 +149,20 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
   {
     heading: "Company",
     links: [
-      { href: null, label: "About REAL DESIGNS" },
+      { href: "/about", label: "About REAL DESIGNS" },
       { href: "/#why", label: "Why REAL DESIGNS" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/resources", label: "Help Center" },
       { href: null, label: "Careers" },
-      { href: null, label: "Press & Media" },
-      { href: null, label: "Partners" },
       { href: null, label: "Contact" },
     ],
   },
 ];
 
 export const LEGAL_LINKS: FooterLink[] = [
-  { href: "/terms", label: "Terms" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/refund-policy", label: "Refunds" },
+  { href: "/terms", label: "Terms of Use" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/refund-policy", label: "Refund Policy" },
   { href: null, label: "Cookies" },
   { href: null, label: "Acceptable Use" },
   { href: null, label: "Accessibility" },
@@ -177,8 +178,18 @@ export const POPULAR_TOOL_LINKS: NavLink[] = [
   { href: "/resources", label: "View All Tools" },
 ];
 
+export const CORE_PAGE_LINKS: NavLink[] = [
+  { href: "/about", label: "About REAL DESIGNS" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/resources", label: "Help Center" },
+  { href: "/terms", label: "Terms of Use" },
+  { href: "/privacy", label: "Privacy Policy" },
+  { href: "/refund-policy", label: "Refund Policy" },
+];
+
 /** Every URL that belongs in sitemap.xml, in priority order. */
 export const ALL_PAGE_PATHS: string[] = [
+  ...CORE_PAGE_LINKS.map((l) => l.href),
   ...FREE_TOOL_LINKS.map((l) => l.href),
   ...DESIGN_LINKS.map((l) => l.href),
   ...PLAN_LINKS.map((l) => l.href),
@@ -186,7 +197,7 @@ export const ALL_PAGE_PATHS: string[] = [
 ];
 
 export const LABEL_BY_PATH: Record<string, string> = Object.fromEntries(
-  [...DESIGN_LINKS, ...PLAN_LINKS, ...AUDIENCE_LINKS, ...FREE_TOOL_LINKS].map((l) => [
+  [...CORE_PAGE_LINKS, ...DESIGN_LINKS, ...PLAN_LINKS, ...AUDIENCE_LINKS, ...FREE_TOOL_LINKS].map((l) => [
     l.href,
     l.label,
   ]),
