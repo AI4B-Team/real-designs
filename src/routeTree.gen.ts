@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as FoundersRouteImport } from './routes/founders'
 import { Route as PricingRouteImport } from './routes/pricing'
@@ -43,6 +44,11 @@ const SlugRoute = SlugRouteImport.update({
 } as any)
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -139,6 +145,7 @@ const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$slug': typeof SlugRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
@@ -185,6 +193,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/$slug': typeof SlugRoute
+  '/about': typeof AboutRoute
   '/auth': typeof AuthRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
@@ -209,6 +218,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/$slug'
+    | '/about'
     | '/auth'
     | '/founders'
     | '/pricing'
@@ -231,6 +241,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/$slug'
+    | '/about'
     | '/auth'
     | '/founders'
     | '/pricing'
@@ -254,6 +265,7 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/$slug'
+    | '/about'
     | '/auth'
     | '/founders'
     | '/pricing'
@@ -278,6 +290,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   SlugRoute: typeof SlugRoute
+  AboutRoute: typeof AboutRoute
   AuthRoute: typeof AuthRoute
   FoundersRoute: typeof FoundersRoute
   PricingRoute: typeof PricingRoute
@@ -318,6 +331,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -464,6 +484,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   SlugRoute: SlugRoute,
+  AboutRoute: AboutRoute,
   AuthRoute: AuthRoute,
   FoundersRoute: FoundersRoute,
   PricingRoute: PricingRoute,
@@ -485,13 +506,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
