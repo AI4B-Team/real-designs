@@ -15,6 +15,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AcceptableUseRouteImport } from './routes/acceptable-use'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CopyrightRouteImport } from './routes/copyright'
 import { Route as FoundersRouteImport } from './routes/founders'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -61,6 +62,11 @@ const AcceptableUseRoute = AcceptableUseRouteImport.update({
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CopyrightRoute = CopyrightRouteImport.update({
+  id: '/copyright',
+  path: '/copyright',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FoundersRoute = FoundersRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/acceptable-use': typeof AcceptableUseRoute
   '/auth': typeof AuthRoute
+  '/copyright': typeof CopyrightRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/acceptable-use': typeof AcceptableUseRoute
   '/auth': typeof AuthRoute
+  '/copyright': typeof CopyrightRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/acceptable-use': typeof AcceptableUseRoute
   '/auth': typeof AuthRoute
+  '/copyright': typeof CopyrightRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/acceptable-use'
     | '/auth'
+    | '/copyright'
     | '/founders'
     | '/pricing'
     | '/privacy'
@@ -264,6 +274,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/acceptable-use'
     | '/auth'
+    | '/copyright'
     | '/founders'
     | '/pricing'
     | '/privacy'
@@ -290,6 +301,7 @@ export interface FileRouteTypes {
     | '/about'
     | '/acceptable-use'
     | '/auth'
+    | '/copyright'
     | '/founders'
     | '/pricing'
     | '/privacy'
@@ -317,6 +329,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   AcceptableUseRoute: typeof AcceptableUseRoute
   AuthRoute: typeof AuthRoute
+  CopyrightRoute: typeof CopyrightRoute
   FoundersRoute: typeof FoundersRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -378,6 +391,13 @@ declare module '@tanstack/react-router' {
       path: '/auth'
       fullPath: '/auth'
       preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/copyright': {
+      id: '/copyright'
+      path: '/copyright'
+      fullPath: '/copyright'
+      preLoaderRoute: typeof CopyrightRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/founders': {
@@ -527,6 +547,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   AcceptableUseRoute: AcceptableUseRoute,
   AuthRoute: AuthRoute,
+  CopyrightRoute: CopyrightRoute,
   FoundersRoute: FoundersRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
