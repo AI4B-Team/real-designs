@@ -86,12 +86,33 @@
   display: flex;
   align-items: center;
   gap: 7px;
+  min-width: 0;
   font-family: inherit;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
+
+/* the text node needs its own box, otherwise ellipsis never applies
+   to a flex child and long values are cut mid-character */
+.rsp-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* long ranges such as "$296,250–$323,250" get one step smaller so the
+   whole figure stays readable inside the fixed cell */
+.rsp-primary.is-long {
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+
+.rsp-value.is-long {
+  font-size: 12.5px;
+}
+
 
 .rsp-value {
   font-size: 14px;

@@ -1,4 +1,5 @@
 import {
+  LONG_VALUE,
   primaryLabelOf,
   showsDot,
   toneFor,
@@ -23,9 +24,11 @@ export function ResultSummaryPanel(model: SummaryModel) {
     >
       <div className="rsp-col rsp-lead">
         <span className="rsp-label">{primaryLabelOf(model)}</span>
-        <span className={`rsp-primary${processing ? " is-processing" : ""}`}>
+        <span
+          className={`rsp-primary${processing ? " is-processing" : ""}${value.length > LONG_VALUE ? " is-long" : ""}`}
+        >
           {processing ? <i className="rsp-dot is-processing rsp-live" /> : null}
-          {value}
+          <span className="rsp-text">{value}</span>
         </span>
       </div>
       {metrics.slice(0, 3).map((m: SummaryMetric) => {
@@ -33,13 +36,16 @@ export function ResultSummaryPanel(model: SummaryModel) {
         return (
           <div className="rsp-col" key={m.label}>
             <span className="rsp-label">{m.label}</span>
-            <span className={`rsp-value is-${m.plain ? "neutral" : tone}`}>
+            <span
+              className={`rsp-value is-${m.plain ? "neutral" : tone}${m.value.length > LONG_VALUE ? " is-long" : ""}`}
+            >
               {showsDot(tone, m.plain) ? <i className={`rsp-dot is-${tone}${tone === "processing" ? " rsp-live" : ""}`} /> : null}
-              {m.value}
+              <span className="rsp-text">{m.value}</span>
             </span>
           </div>
         );
       })}
+
       {/* the tray is always four cells so it never changes shape between states */}
       {Array.from({ length: Math.max(0, 3 - metrics.slice(0, 3).length) }).map((_, i) => (
         <div className="rsp-col" aria-hidden="true" key={`pad-${i}`} />
