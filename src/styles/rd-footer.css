@@ -12,7 +12,7 @@
 }
 .rd-foot-grid {
   display: grid;
-  grid-template-columns: 1.5fr repeat(5, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 0 40px;
   align-items: start;
 }
