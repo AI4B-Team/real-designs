@@ -1001,9 +1001,10 @@ export function initExtra(timers: number[], lucide: any) {
       bfView.querySelectorAll("button").forEach((b: any) =>
         b.addEventListener("click", () => {
           bfView.querySelectorAll("button").forEach((o: any) => o.classList.remove("on"));
-          b.classList.add("on"); mode = b.dataset.v; paintBtns();
+          b.classList.add("on"); mode = b.dataset.v; paintBtns(); paintPrev();
         }));
-      paintBtns();
+      paintBtns(); paintPrev();
+
     }
   }
 
