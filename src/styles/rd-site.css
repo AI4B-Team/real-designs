@@ -1987,8 +1987,6 @@
 @media(max-width:860px){.rd-site .lp-links{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.rd-site .lp-links{grid-template-columns:1fr}}
 
-.rd-site .lp-foot{grid-template-columns:1.5fr repeat(4,1fr)}
-@media(max-width:900px){.rd-site .lp-foot{grid-template-columns:1fr 1fr}}
 
 .rd-site .calc .calc-field{display:flex;align-items:center;gap:8px;border:1px solid var(--line-2);border-radius:var(--ri);padding:10px 14px;background:var(--white)}
 .rd-site .calc .calc-field input{border:none;outline:none;font:inherit;font-family:'DM Mono',monospace;font-size:1.05rem;width:100%;background:transparent;color:var(--ink)}
