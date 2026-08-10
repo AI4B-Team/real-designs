@@ -1,112 +1,115 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-import { LegalTemplate } from "@/components/seo/LegalTemplate";
-import { absoluteUrl } from "@/lib/site";
+import { LegalDoc } from "@/components/seo/LegalDoc";
+import { pageHead } from "@/lib/page-head";
 import "@/styles/rd-site.css";
 
 const TITLE = "Privacy Policy | REAL DESIGNS";
 const DESC =
-  "What REAL DESIGNS collects, how your property photos are stored and processed, who we share data with, and how to delete your workspace.";
+  "We do not sell your personal information and we do not train AI models on your photographs. What we collect, how long we keep it, and how to export or delete it.";
 
 export const Route = createFileRoute("/privacy")({
-  head: () => ({
-    meta: [
-      { title: TITLE },
-      { name: "description", content: DESC },
-      { property: "og:title", content: TITLE },
-      { property: "og:description", content: DESC },
-      { property: "og:type", content: "website" },
-      { property: "og:url", content: absoluteUrl("/privacy") },
-      { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:image", content: absoluteUrl("/og-cover.jpg") },
-      { name: "twitter:image", content: absoluteUrl("/og-cover.jpg") },
-    ],
-    links: [{ rel: "canonical", href: absoluteUrl("/privacy") }],
-  }),
+  head: () => pageHead("/privacy", TITLE, DESC),
   component: PrivacyPage,
 });
 
 function PrivacyPage() {
   return (
-    <LegalTemplate
-      eyebrow="Legal"
+    <LegalDoc
       h1="Privacy Policy"
-      lede="Your property photos are the most sensitive thing you give us. This explains exactly what we hold, where it lives and how to get rid of it."
-      updated="August 2026"
+      updated="August 10, 2026"
+      lede="Your property photographs are the most sensitive thing you give us. This is what we hold, where it lives and how to get rid of it."
+      draftNotice="Draft pending attorney review. Retention and sub processor statements must be reconciled against actual system behaviour before publish. In particular, the 30 day free tier deletion job must be live before this page goes public."
       sections={[
         {
-          h2: "What We Collect",
-          body: ["We keep the collection narrow. In practice that is:"],
+          id: "short-version",
+          h2: "The Short Version",
           bullets: [
-            "Account data: your email address, your name if you give it, and your sign in method",
-            "Content you upload: room photos, sketches, floor plans and the notes you type into the builder",
-            "Work we generate for you: designs, scope line items, budget ranges and presentation links",
-            "Usage data: credits spent, actions taken in the application and basic error logs",
-            "Technical data: IP address, browser and device type, captured for security and abuse prevention",
+            "We do not sell your personal information.",
+            "We do not train AI models on your photographs.",
+            "Free tier images are deleted after 30 days. Paid images stay until you delete them or close your account.",
+            "You can export or delete everything from your dashboard.",
           ],
         },
         {
-          h2: "What We Do Not Collect",
+          id: "what-we-collect",
+          h2: "What We Collect",
+          bullets: [
+            "Account: name, email, company, password hash, plan",
+            "Content: photographs you upload, designs generated, dimensions you confirm, project names, property addresses you enter",
+            "Payment: handled by Stripe. We never see or store full card numbers",
+            "Usage: pages viewed, features used, credits consumed, device and browser, truncated IP address",
+            "Support: anything you send us",
+          ],
+        },
+        {
+          id: "property-addresses",
+          h2: "Property Addresses",
+          counsel: true,
           body: [
-            "We do not ask for a property address unless you choose to type one as a label. We do not collect government identifiers, and we never see or store your full card details. When payments are enabled they are handled by a payment processor and card data goes straight to them.",
+            "Addresses you enter are used to select local cost data and comparable sales. They are stored with your account and are not published, sold or shared with contractors unless you explicitly send a scope to a specific recipient.",
           ],
         },
         {
-          h2: "How Your Photos Are Handled",
+          id: "photographs",
+          h2: "Photographs: Retention And Training",
           body: [
-            "Uploads go into private storage. Access is enforced per account at the database level, so another user cannot read your files, and links to your images are short lived signed URLs rather than public addresses.",
-            "Photos are sent to our AI processing providers to produce your design, read room geometry and estimate quantities. They are transmitted for that purpose and are not used to train public models.",
-            "The one exception is a presentation link you create yourself. Anything inside it is visible to whoever holds the URL until you expire it.",
+            "We do not use your photographs or generated designs to train AI models.",
+            "Uploads are transmitted to our GPU processing providers to generate your result and are not retained by them for training under our agreements.",
+            "Free tier uploads and outputs are deleted 30 days after creation. Paid tier content is retained until you delete it or close your account, then removed within 30 days.",
           ],
         },
         {
-          h2: "Why We Process Your Data",
-          body: [
-            "To run the service you asked for, to enforce credit limits and plan entitlements, to keep the platform secure, to answer support requests and to meet our legal obligations. Where the law requires consent, such as marketing email, we ask for it and you can withdraw it at any time.",
-          ],
-        },
-        {
+          id: "sub-processors",
           h2: "Who We Share With",
+          body: ["We use a small set of processors, each bound to act only on our instructions:"],
+          bullets: [
+            "Supabase: database, storage and authentication",
+            "Stripe: payments",
+            "Resend: transactional email",
+            "[GPU PROVIDER]: image generation",
+            "[ANALYTICS]: product analytics",
+            "[SUPPORT TOOL]: support conversations",
+          ],
+          after: ["A current list is maintained at /subprocessors."],
+        },
+        {
+          id: "affiliate-tracking",
+          h2: "Affiliate And Advertising Tracking",
           body: [
-            "We use a small set of processors, each bound to handle your data only on our instructions: our cloud hosting and database provider, our AI model providers, our email delivery provider and, once payments are live, our payment processor.",
-            "We do not sell personal data. We do not share your uploads with advertisers or data brokers.",
+            "Product links may carry affiliate parameters that let a retailer attribute a purchase to us. We do not receive your payment details from those retailers. See our Affiliate Disclosure at /affiliate-disclosure.",
           ],
         },
         {
-          h2: "How Long We Keep Things",
-          body: [
-            "Uploads and generated work stay while your account is open, because that is your workspace. Delete a room, design or property and it goes from your workspace immediately and from backups within thirty days.",
-            "Close your account and we delete your content within thirty days, keeping only what we must for tax, accounting and fraud records.",
-          ],
-        },
-        {
+          id: "your-rights",
           h2: "Your Rights",
           body: [
-            "You can ask for a copy of your data, correct it, delete it, or object to a particular use. Profile and security details are editable directly on the account page. For anything else, write to privacy@realdesigns.ai and we will respond within thirty days.",
-            "If you are in the UK, EU or a state with equivalent law, those rights include portability and the right to complain to your data protection regulator.",
+            "Access, correction, deletion, export, and objection.",
+            "California residents: right to know, delete, correct, and to opt out of sale or sharing. We do not sell or share personal information as those terms are defined under the CCPA.",
+            "EU and UK residents: GDPR rights including portability and the right to lodge a complaint with a supervisory authority.",
+            "Exercise any of these at privacy@realdesigns.ai or in your dashboard.",
           ],
         },
         {
+          id: "cookies",
           h2: "Cookies",
           body: [
-            "We use the cookies and local storage needed to keep you signed in, remember your workspace preferences and secure the session. We do not run third party advertising trackers.",
+            "Essential cookies for login and security. Analytics cookies only with consent where consent is required.",
           ],
         },
         {
-          h2: "Security",
-          body: [
-            "Data is encrypted in transit and at rest. Row level security scopes every database read to the account that owns the row. Storage buckets are private by default. No system is perfect, and if a breach affects you we will tell you and the relevant regulator within the required window.",
-          ],
-        },
-        {
+          id: "children",
           h2: "Children",
           body: [
-            "REAL DESIGNS is not for anyone under eighteen and we do not knowingly collect their data. If you believe a minor has an account, email privacy@realdesigns.ai and we will remove it.",
+            "REAL DESIGNS is not directed to anyone under 16 and we do not knowingly collect their data.",
           ],
         },
         {
-          h2: "Changes And Contact",
+          id: "security-transfers-changes",
+          h2: "Security, International Transfers, Changes And Contact",
           body: [
+            "Data is encrypted in transit and at rest, and row level security scopes every database read to the account that owns the row. See /security for detail.",
+            "Data is processed in the United States. Where we transfer personal data out of the EU or UK we rely on standard contractual clauses.",
             "If we make a material change we will update the date at the top and notify account holders by email. Questions go to privacy@realdesigns.ai.",
           ],
         },

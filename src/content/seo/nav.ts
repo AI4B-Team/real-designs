@@ -89,7 +89,7 @@ export const FOOTER_GROUPS: NavGroup[] = [
       { href: "/pricing", label: "Pricing" },
       { href: "/resources", label: "Help Center" },
       { href: "/terms", label: "Fair Use" },
-      { href: "/refund-policy", label: "Refunds" },
+      { href: "/refunds", label: "Refunds" },
       { href: "/privacy", label: "Terms & Privacy" },
     ],
   },
@@ -138,22 +138,22 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
     heading: "Resources",
     links: [
       { href: "/#workflow", label: "How It Works" },
-      { href: null, label: "Design Styles" },
-      { href: null, label: "Examples" },
       { href: "/resources", label: "Help Center" },
-      { href: null, label: "Documentation" },
-      { href: null, label: "Contact Support" },
+      { href: "/status", label: "System Status" },
+      { href: "/security", label: "Security" },
+      { href: "/subprocessors", label: "Sub Processors" },
+      { href: "/contact", label: "Contact Support" },
     ],
   },
   {
     heading: "Company",
     links: [
-      { href: null, label: "About REAL DESIGNS" },
+      { href: "/about", label: "About REAL DESIGNS" },
       { href: "/#why", label: "Why REAL DESIGNS" },
-      { href: null, label: "Careers" },
-      { href: null, label: "Press & Media" },
-      { href: null, label: "Partners" },
-      { href: null, label: "Contact" },
+      { href: "/contact", label: "Contact" },
+      { href: "/refunds", label: "Refunds & Guarantee" },
+      { href: "/affiliate-disclosure", label: "Affiliate Disclosure" },
+      { href: "/accessibility", label: "Accessibility" },
     ],
   },
 ];
@@ -161,12 +161,14 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
 export const LEGAL_LINKS: FooterLink[] = [
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
-  { href: "/refund-policy", label: "Refunds" },
-  { href: null, label: "Cookies" },
-  { href: null, label: "Acceptable Use" },
-  { href: null, label: "Accessibility" },
-  { href: null, label: "Cookie Settings" },
+  { href: "/refunds", label: "Refunds" },
+  { href: "/acceptable-use", label: "Acceptable Use" },
+  { href: "/copyright", label: "Copyright" },
+  { href: "/affiliate-disclosure", label: "Affiliate Disclosure" },
+  { href: "/accessibility", label: "Accessibility" },
+  { href: "/do-not-sell", label: "Do Not Sell My Info" },
 ];
+
 
 
 export const POPULAR_TOOL_LINKS: NavLink[] = [
