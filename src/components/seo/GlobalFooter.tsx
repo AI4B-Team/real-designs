@@ -6,8 +6,18 @@ import "@/styles/rd-footer.css";
 export function GlobalFooter() {
   return (
     <footer className="rd-foot">
+      <a href="/" className="rd-foot-badge" aria-label="REAL DESIGNS Home">
+        <span className="rd-foot-mark">
+          <i>
+            <b>REAL</b>
+            <em>Designs</em>
+          </i>
+        </span>
+      </a>
       <div className="rd-foot-wrap">
         <div className="rd-foot-grid">
+
+
 
 
           {FOOTER_COLUMNS.map((col) => (
