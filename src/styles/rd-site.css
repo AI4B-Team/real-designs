@@ -2247,35 +2247,37 @@
   .rd-site .bfc-seg{grid-template-columns:repeat(2,1fr)}}
 
 /* ============ DESIGN DNA (redesigned) ============ */
-.rd-site .dnax{display:grid;grid-template-columns:250px 1fr;gap:64px;align-items:start;
-  max-width:1240px;margin:0 auto;position:relative}
+.rd-site .dnax{display:grid;grid-template-columns:290px 1fr;gap:30px;align-items:start;
+  max-width:1360px;margin:0 auto;position:relative}
 .rd-site .dnax-rail{position:relative;border:1px solid var(--line);border-radius:16px;background:var(--white);
-  padding:20px;box-shadow:0 12px 34px -24px rgba(0,0,0,.2)}
-.rd-site .dnax-rail>span.mono{font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute-2)}
-.rd-site .dnax-rail>b{display:block;margin-top:6px;font-size:1.2rem;font-weight:700}
-.rd-site .dnax-sw{display:flex;gap:8px;margin-top:14px}
-.rd-site .dnax-sw i{width:34px;height:34px;border-radius:8px;border:1px solid var(--line)}
-.rd-site .dnax-mat{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:12px}
-.rd-site .dnax-mat li{display:flex;align-items:center;gap:10px;font-size:1rem}
-.rd-site .dnax-mat .dot{width:12px;height:12px;border-radius:50%;border:1px solid var(--line)}
-.rd-site .dnax-pulse{position:absolute;top:50%;left:100%;width:64px;height:2px;background:rgba(204,0,0,.16);overflow:hidden}
+  padding:24px;box-shadow:0 12px 34px -24px rgba(0,0,0,.2)}
+.rd-site .dnax-rail>span.mono{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute-2)}
+.rd-site .dnax-rail>b{display:block;margin-top:7px;font-size:1.38rem;font-weight:700}
+.rd-site .dnax-sw{display:flex;gap:9px;margin-top:16px}
+.rd-site .dnax-sw i{width:39px;height:39px;border-radius:8px;border:1px solid var(--line)}
+.rd-site .dnax-mat{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:13px}
+.rd-site .dnax-mat li{display:flex;align-items:center;gap:11px;font-size:1.12rem}
+.rd-site .dnax-mat .dot{width:14px;height:14px;border-radius:50%;border:1px solid var(--line)}
+.rd-site .dnax-pulse{position:absolute;top:50%;left:100%;width:30px;height:2px;background:rgba(204,0,0,.16);overflow:hidden}
 .rd-site .dnax-pulse i{position:absolute;inset:0;background:var(--red,#CC0000);transform-origin:left;
   animation:dnaPulse 2.4s ease-in-out infinite}
 @keyframes dnaPulse{0%{transform:scaleX(0);opacity:0}30%{opacity:1}100%{transform:scaleX(1);opacity:0}}
-.rd-site .dnax-grid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:18px;row-gap:30px}
+.rd-site .dnax-grid{display:grid;grid-template-columns:repeat(3,1fr);column-gap:20px;row-gap:34px}
 .rd-site .dnax-grid .dcell{margin:0;display:flex;flex-direction:column}
 .rd-site .dnax-grid .dcell img{width:100%!important;height:auto!important;aspect-ratio:4/3;object-fit:cover;display:block;
   border-radius:12px;border:1px solid var(--line)}
-.rd-site .dnax-grid figcaption{margin-top:8px;font-family:'DM Mono',monospace;font-size:.72rem;
+.rd-site .dnax-grid figcaption{margin-top:9px;font-family:'DM Mono',monospace;font-size:.82rem;
   letter-spacing:.06em;color:var(--mute-2)}
 .rd-site .dnax-cards{margin-top:44px}
 .rd-site .dirlib.tight{margin-top:34px}
 .rd-site .dirlib.tight .styles{overflow:visible;display:grid;grid-template-columns:repeat(4,1fr)}
 .rd-site .dirlib.tight .styles .st{flex:none}
+.rd-site .dirlib-sub{text-align:center;font-size:.92rem;color:var(--mute);margin:8px 0 18px}
 @media(max-width:900px){.rd-site .dnax{grid-template-columns:1fr;gap:26px}
   .rd-site .dnax-pulse{display:none}
   .rd-site .dnax-grid{grid-template-columns:repeat(2,1fr)}
   .rd-site .dirlib.tight .styles{grid-template-columns:repeat(2,1fr)}}
+
 
 /* ===== Budget card action footer ===== */
 .rd-site .bfc-link b{font-weight:600}
@@ -2316,9 +2318,12 @@
   .rd-site .bfc-act-head{flex-direction:column}
 }
 
-.dnax-id{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 18px}
-.dnax-id span{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mute-2)}
-.dnax-id b{font-size:.82rem;font-weight:600;color:var(--mute)}
+.dnax-id{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;margin:0 0 30px}
+.dnax-id span{font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mute-2)}
+.dnax-id b{font-size:.98rem;font-weight:600;color:var(--mute)}
+.dnax-id::after{content:"";position:absolute;top:100%;left:50%;width:1px;height:16px;
+  background:linear-gradient(to bottom,rgba(204,0,0,.32),rgba(204,0,0,0))}
+
 
 .cmp-flow{display:block;margin-top:5px;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;font-style:normal;color:var(--mute-2)}
 .cm.us{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:var(--red);color:#fff}
