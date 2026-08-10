@@ -38,12 +38,21 @@ export function BrandMark() {
 
 export function SiteHeader() {
   const signedIn = useSignedIn();
+  // Most pages that render this header have no #builder section, so a plain
+  // hash link is a dead button there. Scroll when it exists, otherwise send
+  // the visitor to the builder on the home page.
+  function onUpload(e: React.MouseEvent<HTMLAnchorElement>) {
+    const target = document.getElementById("builder");
+    if (!target) return;
+    e.preventDefault();
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
   return (
     <header id="hdr">
       <div className="wrap nav">
-        <a href="/" className="logo">
+        <Link to="/" className="logo">
           <BrandMark />
-        </a>
+        </Link>
 
         <div className="nav-cta">
           {signedIn ? (
@@ -55,7 +64,7 @@ export function SiteHeader() {
               Log In
             </Link>
           )}
-          <a href="#builder" className="btn btn-primary btn-sm">
+          <a href="/#builder" className="btn btn-primary btn-sm" onClick={onUpload}>
             Upload Your Space
           </a>
         </div>
