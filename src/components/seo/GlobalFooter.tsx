@@ -54,7 +54,7 @@ export function GlobalFooter() {
                   .filter((l) => l.href)
                   .map((l) => (
                     <li key={`${col.heading}-${l.label}`}>
-                      <a href={l.href}>{l.label}</a>
+                      <a href={l.href ?? undefined}>{l.label}</a>
                     </li>
                   ))}
               </ul>
@@ -68,7 +68,7 @@ export function GlobalFooter() {
             {POPULAR_TOOL_LINKS.map((l, i) => (
               <span key={l.href}>
                 {i > 0 ? <span aria-hidden="true"> · </span> : null}
-                <a href={l.href}>{l.label}</a>
+                <a href={l.href ?? undefined}>{l.label}</a>
               </span>
             ))}
           </p>
@@ -79,7 +79,7 @@ export function GlobalFooter() {
 
           <nav className="rd-foot-legal-links" aria-label="Legal">
             {LEGAL_LINKS.filter((l) => l.href).map((l) => (
-              <a key={l.label} href={l.href}>
+              <a key={l.label} href={l.href ?? undefined}>
                 {l.label}
               </a>
             ))}
