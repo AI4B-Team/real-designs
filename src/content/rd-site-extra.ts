@@ -705,6 +705,50 @@ export function initExtra(timers: number[], lucide: any) {
 
 
 
+  /* ---------- why three cards ---------- */
+  const w3 = $("why3");
+  if (w3) {
+    w3.innerHTML = `
+      <article class="wc">
+        <div class="wc-vis wc-ba">
+          <figure>${photo(PHOTOS.before, "Original room before redesign")}<figcaption class="mono">Before</figcaption></figure>
+          <figure class="on">${photo(PHOTOS.after, "Same room redesigned")}<figcaption class="mono">After</figcaption>
+            <span class="wc-lock" style="left:16%;top:30%"></span>
+            <span class="wc-lock" style="left:52%;top:18%"></span>
+            <span class="wc-lock" style="left:82%;top:62%"></span>
+          </figure>
+          <span class="wc-tag"><i data-lucide="lock"></i>Reality Lock On</span>
+        </div>
+        <h3>Your Space Stays Your Space</h3>
+        <p>Preserve walls, windows, camera angle and selected objects with Reality Lock.</p>
+      </article>
+      <article class="wc">
+        <div class="wc-vis wc-band">
+          ${[["Refresh", "$5K"], ["Makeover", "$15K"], ["Renovation", "$35K"]]
+            .map(([l, v], j) => `<button type="button" class="wcb${j === 1 ? " on" : ""}" data-w="${j}"><b>${l}</b><em class="mono">${v}</em></button>`).join("")}
+          <span class="wc-cap mono" id="wcCap">Target: $15K &middot; Furniture &amp; Materials</span>
+        </div>
+        <h3>Design Around Your Budget</h3>
+        <p>Choose a target before generating and compare what $5K, $15K or $35K can realistically change.</p>
+      </article>
+      <article class="wc">
+        <div class="wc-vis wc-out">
+          <span class="wco"><i data-lucide="file-text"></i>Contractor Brief</span>
+          <span class="wco"><i data-lucide="shopping-bag"></i>Shopping List</span>
+          <span class="wco"><i data-lucide="link"></i>Client Link</span>
+          <span class="wc-cap mono">Planning Range $12K&ndash;$16K &middot; 7 Work Items</span>
+        </div>
+        <h3>Turn The Look Into A Plan</h3>
+        <p>Generate planning ranges, work items, product matches, contractor briefs and client approvals.</p>
+      </article>`;
+    const CAPS = ["Target: $5K &middot; Finishes &amp; Decor", "Target: $15K &middot; Furniture &amp; Materials", "Target: $35K &middot; Cabinetry &amp; Built-Ins"];
+    w3.querySelectorAll(".wcb").forEach((b: any) => b.addEventListener("click", () => {
+      w3.querySelectorAll(".wcb").forEach((x: any) => x.classList.toggle("on", x === b));
+      const c = $("wcCap"); if (c) c.innerHTML = CAPS[+b.dataset.w];
+    }));
+    lucide.createIcons();
+  }
+
   /* ---------- comparison table ---------- */
   const CMP: [string, string, string, string, string][] = [
     ["Preserves architecture and selected objects", "yes", "limited", "limited", "manual"],
