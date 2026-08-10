@@ -940,7 +940,7 @@
   border:1px solid var(--line);border-radius:var(--r);background:var(--white);padding:24px;box-shadow:var(--sh);min-height:520px}
 .rd-site .pro-im{position:relative;border-radius:var(--ri);overflow:hidden;background:var(--paper);min-height:470px;border:1px solid var(--line)}
 .rd-site .pro-im img{width:100%;height:100%;object-fit:cover}
-.rd-site .pro-im .stamp{position:absolute;left:14px;top:14px;z-index:3;background:var(--white)}
+.rd-site .pro-im .stamp{position:absolute;right:20px;top:20px;z-index:3;background:var(--white)}
 
 /* role visuals */
 .rd-site .pv{position:absolute;inset:0;display:flex;flex-direction:column;gap:10px;padding:12px;background:var(--paper)}
