@@ -2562,7 +2562,7 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 
 /* ============ budget action panel: flow + fixed-height previews ============ */
 .rd-site .bfd{row-gap:0}
-.rd-site .bfd-act{margin-top:56px;position:relative;min-height:0}
+.rd-site .bfd-act{margin-top:64px;position:relative;min-height:0}
 @media(max-width:900px){.rd-site .bfd-act{margin-top:40px}}
 .rd-site .bfd-act .bfc-prev{max-height:none;overflow:visible}
 .rd-site .bfd-act .bfc-prev:not(.on){display:none}
