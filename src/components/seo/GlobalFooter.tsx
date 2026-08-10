@@ -1,6 +1,6 @@
 import { Globe } from "lucide-react";
 
-import { FOOTER_COLUMNS, LEGAL_LINKS, POPULAR_TOOL_LINKS } from "@/content/seo/nav";
+import { FOOTER_COLUMNS, LEGAL_LINKS } from "@/content/seo/nav";
 import "@/styles/rd-footer.css";
 
 export function GlobalFooter() {
