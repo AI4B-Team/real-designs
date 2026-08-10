@@ -89,7 +89,7 @@ export const FOOTER_GROUPS: NavGroup[] = [
       { href: "/pricing", label: "Pricing" },
       { href: "/resources", label: "Help Center" },
       { href: "/terms", label: "Fair Use" },
-      { href: "/refund-policy", label: "Refunds" },
+      { href: "/refunds", label: "Refunds" },
       { href: "/privacy", label: "Terms & Privacy" },
     ],
   },
