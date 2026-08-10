@@ -637,7 +637,7 @@ export function initExtra(timers: number[], lucide: any) {
       `<div class="pv pv-ctrl">
         <figure class="pv-lead">${photo(PHOTOS.japandi, "Design concept with object controls")}
           <span class="pv-pin" style="left:22%;top:58%"><i>1</i>Keep Sofa</span>
-          <span class="pv-pin" style="left:80%;top:45%"><i>2</i>Replace Art</span>
+          <span class="pv-pin rev" style="left:90%;top:38%"><i>2</i>Replace Art</span>
           <span class="pv-pin" style="left:44%;top:78%"><i>3</i>Lock Rug</span>
         </figure>
         <div class="pv-vers"><span class="mono">Versions</span><b class="on">V3</b><b>V2</b><b>V1</b></div>
