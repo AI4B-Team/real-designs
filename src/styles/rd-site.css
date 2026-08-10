@@ -2698,3 +2698,5 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 /* Comparison: keep headline on one line */
 .rd-site #compare .sec-head h2{ max-width:none; white-space:nowrap; font-size:clamp(1.6rem, 4.1vw, 3rem) }
 @media (max-width: 640px){ .rd-site #compare .sec-head h2{ white-space:normal } }
+.rd-site #compare .sec-head .lede{ max-width:none; white-space:nowrap }
+@media (max-width: 860px){ .rd-site #compare .sec-head .lede{ white-space:normal } }
