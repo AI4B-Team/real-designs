@@ -145,7 +145,7 @@ function AuthPage() {
             </span>
           </li>
         </ul>
-        <p className="quote">Free To Start. 5 Designs A Day, No Card Required.</p>
+        <p className="quote">Free to start · 5 designs daily · No credit card required</p>
       </aside>
 
       <div className="panel">
@@ -153,9 +153,10 @@ function AuthPage() {
           <a href="/" className="brand" aria-label="REAL DESIGNS Home">
             <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
           </a>
-          <h2>Redesign Any Space With AI.</h2>
-          <p>Free To Start. 5 Designs A Day, No Card Required.</p>
+          <h2>Redesign any space with AI.</h2>
+          <p>Free to start · 5 designs daily · No credit card required</p>
         </div>
+
         <section>
           <p className="eyebrow">REAL DESIGNS</p>
 
