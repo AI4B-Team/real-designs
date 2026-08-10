@@ -106,15 +106,19 @@ function esc(s: string): string {
   );
 }
 
+/** Values past this length no longer fit a cell at full size. */
+export const LONG_VALUE = 13;
+
 /** Vanilla renderer used by the string-HTML surfaces. */
 export function summaryHTML(m: SummaryModel): string {
   const processing = m.state === "processing";
   const cells: string[] = [];
 
   const value = processing ? (m.progressMessage ?? "Working") : (m.primaryValue ?? "");
+  const longPrimary = value.length > LONG_VALUE ? " is-long" : "";
   cells.push(
     `<div class="rsp-col rsp-lead"><span class="rsp-label">${esc(primaryLabelOf(m))}</span>` +
-      `<span class="rsp-primary${processing ? " is-processing" : ""}">${processing ? '<i class="rsp-dot is-processing rsp-live"></i>' : ""}${esc(value)}</span></div>`,
+      `<span class="rsp-primary${processing ? " is-processing" : ""}${longPrimary}">${processing ? '<i class="rsp-dot is-processing rsp-live"></i>' : ""}<span class="rsp-text">${esc(value)}</span></span></div>`,
   );
 
   for (const x of (m.metrics ?? []).slice(0, 3)) {
@@ -122,10 +126,12 @@ export function summaryHTML(m: SummaryModel): string {
     const dot = showsDot(tone, x.plain)
       ? `<i class="rsp-dot is-${tone}${tone === "processing" ? " rsp-live" : ""}"></i>`
       : "";
+    const long = x.value.length > LONG_VALUE ? " is-long" : "";
     cells.push(
-      `<div class="rsp-col"><span class="rsp-label">${esc(x.label)}</span><span class="rsp-value is-${x.plain ? "neutral" : tone}">${dot}${esc(x.value)}</span></div>`,
+      `<div class="rsp-col"><span class="rsp-label">${esc(x.label)}</span><span class="rsp-value is-${x.plain ? "neutral" : tone}${long}">${dot}<span class="rsp-text">${esc(x.value)}</span></span></div>`,
     );
   }
+
   // the tray is always four cells so it never changes shape between states
   while (cells.length < 4) cells.push('<div class="rsp-col" aria-hidden="true"></div>');
 
