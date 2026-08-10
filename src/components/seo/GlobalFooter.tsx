@@ -38,17 +38,8 @@ export function GlobalFooter() {
           ))}
         </div>
 
-        <div className="rd-foot-tools">
-          <span className="rd-foot-tools-lab">Popular Free Tools</span>
-          <p>
-            {POPULAR_TOOL_LINKS.map((l, i) => (
-              <span key={l.href}>
-                {i > 0 ? <span aria-hidden="true"> · </span> : null}
-                <a href={l.href ?? undefined}>{l.label}</a>
-              </span>
-            ))}
-          </p>
-        </div>
+
+
 
         <div className="rd-foot-legal">
           <span className="rd-foot-copy">&copy; 2026 REAL DESIGNS. All rights reserved.</span>
