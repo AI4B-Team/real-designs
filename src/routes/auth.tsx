@@ -108,7 +108,9 @@ function AuthPage() {
   return (
     <main className="rd-auth">
       <aside className="promo">
-        <p className="mark">REAL DESIGNS</p>
+        <a href="/" className="brand" aria-label="REAL DESIGNS Home">
+          <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
+        </a>
         <h2>
           Redesign Any Space With AI.
           <br />
@@ -142,14 +144,16 @@ function AuthPage() {
             </span>
           </li>
         </ul>
-        <p className="quote">Free to start. 5 designs a day, no card required.</p>
+        <p className="quote">Free To Start. 5 Designs A Day, No Card Required.</p>
       </aside>
 
       <div className="panel">
         <div className="mobile-head">
-          <p className="mark">REAL DESIGNS</p>
+          <a href="/" className="brand" aria-label="REAL DESIGNS Home">
+            <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
+          </a>
           <h2>Redesign Any Space With AI.</h2>
-          <p>Free to start. 5 designs a day, no card required.</p>
+          <p>Free To Start. 5 Designs A Day, No Card Required.</p>
         </div>
         <section>
           <p className="eyebrow">REAL DESIGNS</p>
