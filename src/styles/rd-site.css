@@ -2719,7 +2719,8 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 @media(max-width:900px){.rd-site .why3{grid-template-columns:1fr}}
 
 /* Who: keep sub-headline to two lines */
-.rd-site #who .sec-head .lede{ max-width: 1000px; margin-left:auto; margin-right:auto; text-wrap: pretty }
+.rd-site #who .sec-head{max-width:1180px}
+.rd-site #who .sec-head .lede{ max-width: 1120px; margin-left:auto; margin-right:auto; text-wrap: pretty }
 
 /* Comparison: keep headline on one line */
 .rd-site #compare .sec-head h2{ max-width:none; white-space:nowrap; font-size:clamp(1.6rem, 4.1vw, 3rem) }
