@@ -885,6 +885,8 @@ export function initExtra(timers: number[], lucide: any) {
         `<b>${s.title}</b><span>${s.copy}</span>` +
         (ok ? "" : `<em class="p3-unver mono">Concept View &mdash; Geometry Not Verified</em>`);
       if (p3o) p3o.innerHTML = `<span class="mono">${s.outLabel}</span><b>${s.outValue}</b>`;
+      const cta = $("p3Cta");
+      if (cta) cta.innerHTML = `<i data-lucide="upload"></i>${s.cta}`;
       const lay = $("p3Lay");
       if (lay) lay.innerHTML =
         `<span class="mono">Layout</span><b>${ok ? "Preserved" : "Not Verified"}</b>`;
