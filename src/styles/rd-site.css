@@ -2318,9 +2318,12 @@
   .rd-site .bfc-act-head{flex-direction:column}
 }
 
-.dnax-id{display:flex;flex-direction:column;align-items:center;gap:4px;margin:0 0 18px}
-.dnax-id span{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mute-2)}
-.dnax-id b{font-size:.82rem;font-weight:600;color:var(--mute)}
+.dnax-id{position:relative;display:flex;flex-direction:column;align-items:center;gap:5px;margin:0 0 30px}
+.dnax-id span{font-size:.76rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mute-2)}
+.dnax-id b{font-size:.98rem;font-weight:600;color:var(--mute)}
+.dnax-id::after{content:"";position:absolute;top:100%;left:50%;width:1px;height:16px;
+  background:linear-gradient(to bottom,rgba(204,0,0,.32),rgba(204,0,0,0))}
+
 
 .cmp-flow{display:block;margin-top:5px;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;font-style:normal;color:var(--mute-2)}
 .cm.us{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:999px;background:var(--red);color:#fff}
