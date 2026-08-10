@@ -2691,3 +2691,6 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site .cmp-morewrap{text-align:center;margin-top:16px}
 .rd-site .cmp-sec .cmp-cta{margin-top:26px}
 @media(max-width:900px){.rd-site .why3{grid-template-columns:1fr}}
+
+/* Who: keep sub-headline to two lines */
+.rd-site #who .sec-head .lede{ max-width: 1000px; margin-left:auto; margin-right:auto; text-wrap: pretty }
