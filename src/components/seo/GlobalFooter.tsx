@@ -66,8 +66,8 @@ export function GlobalFooter() {
         </div>
 
         <p className="rd-foot-disclaimer">
-          Planning ranges are estimates, not construction bids. Verify dimensions, pricing and local
-          disclosure requirements before use.
+          Planning Ranges Are Estimates, Not Construction Bids. Verify Dimensions, Pricing And Local
+          Disclosure Requirements Before Use.
         </p>
       </div>
     </footer>
