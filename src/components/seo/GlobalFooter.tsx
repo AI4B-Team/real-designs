@@ -1,8 +1,19 @@
 import { Facebook, Instagram, Linkedin, Youtube, Globe } from "lucide-react";
 
-import { BrandMark } from "@/components/seo/BrandMark";
 import { FOOTER_COLUMNS, LEGAL_LINKS, POPULAR_TOOL_LINKS } from "@/content/seo/nav";
 import "@/styles/rd-footer.css";
+
+function BrandMark() {
+  return (
+    <span className="rd-mark" aria-label="REAL DESIGNS">
+      <i>
+        <b>REAL</b>
+        <em>Designs</em>
+      </i>
+    </span>
+  );
+}
+
 
 const SOCIALS = [
   { Icon: Instagram, label: "Instagram", href: "https://instagram.com" },
