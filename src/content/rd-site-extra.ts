@@ -808,7 +808,7 @@ export function initExtra(timers: number[], lucide: any) {
   };
   type Stage = {
     short: string; icon: string; title: string; copy: string;
-    src: string; outLabel: string; outValue: string;
+    src: string; outLabel: string; outValue: string; cta: string;
     /* provenance: every stage declares the geometry it was produced from, and
        the camera it was rendered with. A stage may only claim "Layout
        Preserved" when its geometryId matches the project geometry AND it
@@ -818,33 +818,38 @@ export function initExtra(timers: number[], lucide: any) {
   const CAMERA_ID = "CAM-102-A";
   const P3: Stage[] = [
     {
-      short: "Source", icon: "file-pen", title: "Source Sketch",
-      copy: "Hand-drawn walls, doors, windows and room placement.",
-      src: PHOTOS.sketchHand, outLabel: "Stage Output", outValue: "Input Recognized",
+      short: "Rough Sketch", icon: "file-pen", title: "Napkin Sketch",
+      copy: "A rough idea is enough. We identify the rooms, walls, openings and approximate dimensions.",
+      src: PHOTOS.sketchHand, outLabel: "Stage Output", outValue: "Dimensions Interpreted \u00b7 Layout Captured",
+      cta: "Try It With Your Sketch",
       geometryId: PROJECT.geometryId, cameraId: null,
     },
     {
-      short: "Clean Plan", icon: "ruler", title: "Clean Plan",
-      copy: "The source geometry converted into a clean, measurable plan.",
+      short: "Digitized Plan", icon: "ruler", title: "Digitized Plan",
+      copy: "The sketch geometry redrawn as a clean, structured plan.",
       src: PHOTOS.plan2d, outLabel: "Stage Output", outValue: "Geometry Preserved",
+      cta: "Try It With Your Plan",
       geometryId: PROJECT.geometryId, cameraId: null,
     },
     {
       short: "Furnished Plan", icon: "sofa", title: "Furnished Plan",
       copy: "The same geometry furnished in your selected Design DNA.",
       src: PHOTOS.plan3d, outLabel: "Stage Output", outValue: "Design DNA Applied",
+      cta: "Try It With Your Plan",
       geometryId: PROJECT.geometryId, cameraId: null,
     },
     {
       /* Rendered from the furnished plan model with the stored camera:
          standing in the living room, looking into the kitchen. */
-      short: "Photoreal", icon: "image", title: "Photoreal View",
+      short: "Photoreal View", icon: "image", title: "Photoreal View",
       copy: "The same room rendered from the living room looking into the kitchen.",
       src: PHOTOS.sketchRender, outLabel: "Planning Range", outValue: "$49.4K\u2013$63.2K",
+      cta: "Try It With Your Sketch",
       geometryId: PROJECT.geometryId, cameraId: CAMERA_ID,
     },
 
   ];
+
   // A stage is geometry-verified only when it comes from the project geometry
   // and was rendered with the stored camera for that model.
   const verified = (s: Stage) =>
@@ -880,6 +885,8 @@ export function initExtra(timers: number[], lucide: any) {
         `<b>${s.title}</b><span>${s.copy}</span>` +
         (ok ? "" : `<em class="p3-unver mono">Concept View &mdash; Geometry Not Verified</em>`);
       if (p3o) p3o.innerHTML = `<span class="mono">${s.outLabel}</span><b>${s.outValue}</b>`;
+      const cta = $("p3Cta");
+      if (cta) cta.innerHTML = `<i data-lucide="upload"></i>${s.cta}`;
       const lay = $("p3Lay");
       if (lay) lay.innerHTML =
         `<span class="mono">Layout</span><b>${ok ? "Preserved" : "Not Verified"}</b>`;
