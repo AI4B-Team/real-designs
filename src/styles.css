@@ -197,12 +197,12 @@
 .rd-auth .alt.quiet a { color: #57514A; font-weight: 600; font-size: .8rem; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
 .rd-auth .alt.quiet a:hover { color: #14110F; text-decoration: underline; }
 
-.rd-auth .brand { position: absolute; top: 26px; left: 40px; z-index: 3; display: inline-flex; text-decoration: none; }
+.rd-auth .brand { position: absolute; top: 56px; left: 64px; z-index: 3; display: inline-flex; text-decoration: none; }
 .rd-auth .rd-mark { display: inline-flex; align-items: center; justify-content: center; background: #CC0000; padding: 8px; flex: none; box-shadow: 0 14px 30px -18px rgba(0,0,0,.45); }
 .rd-auth .rd-mark i { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #fff; font-style: normal; padding: 7px 16px; }
 .rd-auth .rd-mark b { color: #fff; font-weight: 900; font-size: 22px; line-height: 1; letter-spacing: .05em; }
 .rd-auth .rd-mark em { color: #fff; font-style: normal; text-transform: uppercase; font-weight: 700; font-size: 8.5px; line-height: 1; letter-spacing: .32em; margin: 4px 0 0 .3em; }
-.rd-auth .promo { padding-top: 104px; }
+.rd-auth .promo { padding-top: 200px; }
 @media (max-width: 900px) {
   .rd-auth .brand { position: static; margin-bottom: 14px; }
   .rd-auth .rd-mark { padding: 7px; }
