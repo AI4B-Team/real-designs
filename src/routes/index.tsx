@@ -74,5 +74,11 @@ export const Route = createFileRoute("/")({
 });
 
 function SitePage() {
-  return <PrototypeSurface className="rd-site" html={html} init={initSite} />;
+  return (
+    <>
+      <PrototypeSurface className="rd-site" html={html} init={initSite} />
+      <GlobalFooter />
+    </>
+  );
 }
+
