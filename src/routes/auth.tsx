@@ -112,10 +112,11 @@ function AuthPage() {
           <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
         </a>
         <h2>
-          Redesign Any Space With AI.
+          Redesign any space with AI.
           <br />
-          See The Design. Plan The Cost.
+          See the design. Plan the cost.
         </h2>
+
 
         <p className="sub">
           Turn one photo into a photoreal redesign, a planning range, shopping list and
