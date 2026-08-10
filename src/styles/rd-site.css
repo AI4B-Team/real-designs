@@ -714,14 +714,15 @@
   border-radius:99px;padding:3px 8px;white-space:nowrap;box-shadow:var(--sh)}
 
 /* --- trust ribbon --- */
-.rd-site .ribbon{padding:22px 0;background:var(--white);border-bottom:1px solid var(--line);overflow-x:auto}
-.rd-site .ribbon .wrap{display:flex;align-items:center;justify-content:center;gap:22px;max-width:none;white-space:nowrap;padding:0 28px}
-.rd-site .ribbon-lab{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mute-2);flex:none}
-.rd-site .ribbon-row{display:flex;gap:9px;flex-wrap:nowrap;flex:none}
-.rd-site .rb{display:inline-flex;align-items:center;gap:7px;font-size:.78rem;font-weight:500;color:var(--ink-2);
-  border:1px solid var(--line);border-radius:99px;padding:6px 12px;background:var(--paper);white-space:nowrap;flex:none}
-.rd-site .rb i{width:13px;height:13px;color:var(--red);flex:none}
-.rd-site .rb svg{width:13px;height:13px;color:var(--red);flex:none}
+.rd-site .ribbon{padding:26px 0;background:var(--white);border-bottom:1px solid var(--line);overflow-x:auto}
+.rd-site .ribbon .wrap{display:flex;align-items:center;justify-content:center;gap:24px;max-width:none;white-space:nowrap;padding:0 28px}
+.rd-site .ribbon-lab{font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mute-2);flex:none}
+.rd-site .ribbon-row{display:flex;gap:11px;flex-wrap:nowrap;flex:none}
+.rd-site .rb{display:inline-flex;align-items:center;gap:9px;font-size:.95rem;font-weight:500;color:var(--ink-2);
+  border:1px solid var(--line);border-radius:99px;padding:9px 17px;background:var(--paper);white-space:nowrap;flex:none}
+.rd-site .rb i{width:17px;height:17px;color:var(--red);flex:none}
+.rd-site .rb svg{width:17px;height:17px;color:var(--red);flex:none}
+
 
 
 /* --- gallery --- */
