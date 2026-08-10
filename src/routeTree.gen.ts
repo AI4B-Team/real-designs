@@ -14,6 +14,7 @@ import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as AcceptableUseRouteImport } from './routes/acceptable-use'
+import { Route as AffiliateDisclosureRouteImport } from './routes/affiliate-disclosure'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as CopyrightRouteImport } from './routes/copyright'
 import { Route as FoundersRouteImport } from './routes/founders'
@@ -57,6 +58,11 @@ const AboutRoute = AboutRouteImport.update({
 const AcceptableUseRoute = AcceptableUseRouteImport.update({
   id: '/acceptable-use',
   path: '/acceptable-use',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AffiliateDisclosureRoute = AffiliateDisclosureRouteImport.update({
+  id: '/affiliate-disclosure',
+  path: '/affiliate-disclosure',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/$slug': typeof SlugRoute
   '/about': typeof AboutRoute
   '/acceptable-use': typeof AcceptableUseRoute
+  '/affiliate-disclosure': typeof AffiliateDisclosureRoute
   '/auth': typeof AuthRoute
   '/copyright': typeof CopyrightRoute
   '/founders': typeof FoundersRoute
@@ -191,6 +198,7 @@ export interface FileRoutesByTo {
   '/$slug': typeof SlugRoute
   '/about': typeof AboutRoute
   '/acceptable-use': typeof AcceptableUseRoute
+  '/affiliate-disclosure': typeof AffiliateDisclosureRoute
   '/auth': typeof AuthRoute
   '/copyright': typeof CopyrightRoute
   '/founders': typeof FoundersRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/$slug': typeof SlugRoute
   '/about': typeof AboutRoute
   '/acceptable-use': typeof AcceptableUseRoute
+  '/affiliate-disclosure': typeof AffiliateDisclosureRoute
   '/auth': typeof AuthRoute
   '/copyright': typeof CopyrightRoute
   '/founders': typeof FoundersRoute
@@ -247,6 +256,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/about'
     | '/acceptable-use'
+    | '/affiliate-disclosure'
     | '/auth'
     | '/copyright'
     | '/founders'
@@ -273,6 +283,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/about'
     | '/acceptable-use'
+    | '/affiliate-disclosure'
     | '/auth'
     | '/copyright'
     | '/founders'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/$slug'
     | '/about'
     | '/acceptable-use'
+    | '/affiliate-disclosure'
     | '/auth'
     | '/copyright'
     | '/founders'
@@ -328,6 +340,7 @@ export interface RootRouteChildren {
   SlugRoute: typeof SlugRoute
   AboutRoute: typeof AboutRoute
   AcceptableUseRoute: typeof AcceptableUseRoute
+  AffiliateDisclosureRoute: typeof AffiliateDisclosureRoute
   AuthRoute: typeof AuthRoute
   CopyrightRoute: typeof CopyrightRoute
   FoundersRoute: typeof FoundersRoute
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       path: '/acceptable-use'
       fullPath: '/acceptable-use'
       preLoaderRoute: typeof AcceptableUseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/affiliate-disclosure': {
+      id: '/affiliate-disclosure'
+      path: '/affiliate-disclosure'
+      fullPath: '/affiliate-disclosure'
+      preLoaderRoute: typeof AffiliateDisclosureRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -546,6 +566,7 @@ const rootRouteChildren: RootRouteChildren = {
   SlugRoute: SlugRoute,
   AboutRoute: AboutRoute,
   AcceptableUseRoute: AcceptableUseRoute,
+  AffiliateDisclosureRoute: AffiliateDisclosureRoute,
   AuthRoute: AuthRoute,
   CopyrightRoute: CopyrightRoute,
   FoundersRoute: FoundersRoute,
