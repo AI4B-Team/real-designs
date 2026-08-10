@@ -2617,7 +2617,7 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site.rd-pricing .price-trust{text-align:center;margin-top:12px;font-size:.92rem;color:var(--mute)}
 .rd-site.rd-pricing .price-more{text-align:center;margin-top:18px}
 /* final cta */
-.rd-site .final-cta{text-align:center;max-width:720px;margin:0 auto}
+.rd-site .final-cta{text-align:center;max-width:1120px;margin:0 auto}
 .rd-site .final-cta p{color:var(--ink-2);margin-top:10px}
 .rd-site .final-cta .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px}
 /* compare table */
