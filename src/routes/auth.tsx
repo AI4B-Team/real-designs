@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable/index";
@@ -112,10 +112,11 @@ function AuthPage() {
           <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
         </a>
         <h2>
-          Redesign Any Space With AI.
+          Redesign any space with AI.
           <br />
-          See The Design. Plan The Cost.
+          See the design. Plan the cost.
         </h2>
+
 
         <p className="sub">
           Turn one photo into a photoreal redesign, a planning range, shopping list and
@@ -144,7 +145,7 @@ function AuthPage() {
             </span>
           </li>
         </ul>
-        <p className="quote">Free To Start. 5 Designs A Day, No Card Required.</p>
+        <p className="quote">Free to start · 5 designs daily · No credit card required</p>
       </aside>
 
       <div className="panel">
@@ -152,9 +153,10 @@ function AuthPage() {
           <a href="/" className="brand" aria-label="REAL DESIGNS Home">
             <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
           </a>
-          <h2>Redesign Any Space With AI.</h2>
-          <p>Free To Start. 5 Designs A Day, No Card Required.</p>
+          <h2>Redesign any space with AI.</h2>
+          <p>Free to start · 5 designs daily · No credit card required</p>
         </div>
+
         <section>
           <p className="eyebrow">REAL DESIGNS</p>
 
@@ -224,7 +226,7 @@ function AuthPage() {
             </button>
           </p>
           <p className="alt quiet">
-            <a href="/">Back To Home</a>
+            <a href="/"><ArrowLeft size={14} /> Back To Home</a>
           </p>
         </section>
       </div>
