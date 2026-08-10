@@ -2710,3 +2710,5 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
   .rd-site .cmp{ overflow: hidden }
   .rd-site .cmp-scroll{ overflow-x: auto }
 }
+.rd-site #compare .sec-head{ width:100%; max-width:none; margin-left:auto; margin-right:auto; text-align:center }
+.rd-site #compare .sec-head h2,.rd-site #compare .sec-head .lede{ width:max-content; max-width:100%; margin-left:auto; margin-right:auto }
