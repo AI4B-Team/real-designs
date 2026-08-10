@@ -42,7 +42,7 @@ export function GlobalFooter() {
 
 
         <div className="rd-foot-legal">
-          <span className="rd-foot-copy">&copy; 2026 REAL DESIGNS. All rights reserved.</span>
+          <span className="rd-foot-copy">&copy; 2026 REAL DESIGNS. All Rights Reserved.</span>
 
           <nav className="rd-foot-legal-links" aria-label="Legal">
             {LEGAL_LINKS.filter((l) => l.href).map((l) => (
