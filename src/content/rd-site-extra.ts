@@ -721,14 +721,14 @@ export function initExtra(timers: number[], lucide: any) {
       geometryId: PROJECT.geometryId, cameraId: null,
     },
     {
-      /* This asset was not exported from the furnished plan model, so it does
-         not carry the project geometry or the stored camera. It is presented
-         as an unverified concept view until a real render exists. */
-      short: "Concept View", icon: "image", title: "Concept View",
-      copy: "Illustrative interior concept in the same Design DNA. It is not rendered from the plan geometry.",
+      /* Rendered from the furnished plan model with the stored camera:
+         standing in the living room, looking into the kitchen. */
+      short: "Photoreal", icon: "image", title: "Photoreal View",
+      copy: "The same room rendered from the living room looking into the kitchen.",
       src: PHOTOS.sketchRender, outLabel: "Planning Range", outValue: "$49.4K\u2013$63.2K",
-      geometryId: null, cameraId: null,
+      geometryId: PROJECT.geometryId, cameraId: CAMERA_ID,
     },
+
   ];
   // A stage is geometry-verified only when it comes from the project geometry
   // and was rendered with the stored camera for that model.
