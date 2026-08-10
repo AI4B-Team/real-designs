@@ -707,20 +707,18 @@ export function initExtra(timers: number[], lucide: any) {
 
   /* ---------- comparison table ---------- */
   const CMP: [string, string, string, string, string][] = [
-    ["Interior, exterior and landscape redesign", "yes", "varies", "limited", "yes"],
-    ["Architecture and object-level control", "yes", "limited", "limited", "yes"],
+    ["Preserves architecture and selected objects", "yes", "limited", "limited", "manual"],
+    ["Designs around a target budget", "yes", "no", "no", "manual"],
+    ["Creates line-item planning ranges", "yes", "no", "no", "manual"],
+    ["Produces shopping and contractor-ready outputs", "yes", "limited", "no", "manual"],
     ["Property-wide Design DNA", "yes", "no", "no", "manual"],
-    ["Budget-guided generation", "yes", "no", "no", "yes"],
-    ["Line-item scope and planning ranges", "yes", "limited", "no", "varies"],
-    ["Shopping and contractor-ready outputs", "yes", "limited", "no", "manual"],
-    ["Track rooms, versions and approvals", "yes", "limited", "limited", "manual"],
-    ["Match real products at three price levels", "yes", "limited", "limited", "yes"],
-    ["Create listing ready staging in batches", "yes", "limited", "yes", "manual"],
-    ["Client approval links", "yes", "no", "limited", "yes"],
-    ["Walkthrough videos", "yes", "limited", "limited", "varies"],
-    ["Social presentation packages", "yes", "no", "limited", "varies"],
-    ["Team collaboration", "yes", "limited", "limited", "yes"],
-    ["Commercial use exports", "yes", "varies", "yes", "yes"],
+    ["Object-level keep, replace and lock controls", "yes", "limited", "limited", "manual"],
+    ["Match real products at three price levels", "yes", "no", "no", "manual"],
+    ["Track rooms, versions and approvals", "yes", "no", "limited", "manual"],
+    ["Client approval links", "yes", "no", "limited", "manual"],
+    ["Batch listing staging", "yes", "limited", "yes", "not"],
+    ["Walkthrough videos", "yes", "limited", "limited", "not"],
+    ["Team collaboration", "yes", "no", "limited", "manual"],
   ];
 
 
@@ -729,19 +727,19 @@ export function initExtra(timers: number[], lucide: any) {
     if (v === "yes") return `<span class="cm ok"><i data-lucide="check"></i></span>`;
     if (v === "limited") return `<span class="cm lim"><i data-lucide="minus"></i>Limited</span>`;
     if (v === "no") return `<span class="cm none"><i data-lucide="minus"></i></span>`;
-    return `<span class="cm soft">${v === "manual" ? "Manual" : "Varies"}</span>`;
+    return `<span class="cm soft">${v === "manual" ? "Manual" : "Not Integrated"}</span>`;
   };
   const cmpBody = $("cmpBody"), cmpMore = $("cmpMore");
   if (cmpBody) {
     cmpBody.innerHTML = CMP.map(([cap, a, b, c, d], i) => `
-      <tr class="${i >= 6 ? "cmp-extra" : ""}">
+      <tr class="${i >= 4 ? "cmp-extra" : ""}">
         <th scope="row">${cap}</th>
         <td class="cmp-us">${cell(a, true)}</td>
         <td>${cell(b)}</td><td>${cell(c)}</td><td>${cell(d)}</td>
       </tr>`).join("");
     cmpMore?.addEventListener("click", () => {
       const open = document.getElementById("cmpTable")?.classList.toggle("all");
-      cmpMore.innerHTML = open ? "Show Fewer Rows" : "View The Full Comparison &rarr;";
+      cmpMore.innerHTML = open ? "Show Fewer Rows" : "View Full Comparison &rarr;";
     });
     lucide.createIcons();
   }
