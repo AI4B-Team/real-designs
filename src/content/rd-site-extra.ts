@@ -571,50 +571,122 @@ export function initExtra(timers: number[], lucide: any) {
   /* ---------- pro workflows ---------- */
   type Role = [string, string, string, string, [string, string, string][], string];
   const PRO: Role[] = [
-    ["Investor", PHOTOS.neutral, "See The Design And The Deal Before You Commit.",
-      "Compare renovation levels, understand the planning range and see how each design direction could affect the property.",
-      [["wallet", "Budget Options", "Compare refresh, makeover and renovation scenarios."],
-       ["trending-up", "Value Insight", "Review potential ARV impact against recent comps."],
-       ["list-checks", "Complete Scope", "Roll every approved room into one property budget."]],
-      "Plan An Investment Property"],
-    ["Agent", PHOTOS.coastal, "Help Buyers See What The Property Could Become.",
-      "Stage every listing photo in one direction, then hand sellers and buyers a presentation that looks like your brand.",
-      [["sofa", "Virtual Staging", "Furnish empty rooms across the whole photo set."],
-       ["eye", "Buyer-Ready Concepts", "Show the potential without a rental truck."],
-       ["presentation", "Branded Presentations", "Send a seller deck with your logo on it."]],
-      "Create A Buyer Presentation"],
-    ["Designer", PHOTOS.japandi, "Explore Faster Without Losing Creative Control.",
-      "Set the palette and materials once, then move through rooms and revisions without redoing the concept every time.",
-      [["palette", "Design DNA", "One style system applied across every room."],
-       ["mouse-pointer-click", "Object-Level Control", "Keep, swap or restyle individual pieces."],
-       ["shopping-bag", "Product Matching", "Real products at three price levels."]],
-      "Explore Design Tools"],
-    ["Contractor", PHOTOS.kitchen, "Turn The Approved Look Into A Clearer Scope.",
-      "Take the design the client signed off on and turn it into work items, quantities and a proposal you can send the same day.",
-      [["hammer", "Work Items", "Line item scope built from the room photo."],
-       ["ruler", "Quantities And Trades", "Measured quantities with local rate assumptions."],
-       ["file-check", "Client Approvals", "Signed off versions with a change log."]],
-      "See The Contractor Workflow"],
-    ["Builder", PHOTOS.craftsman, "Keep Every Room Consistent Across The Property.",
-      "Lock a finish package once and carry it through model homes, whole properties and entire communities.",
-      [["layers", "Finish Packages", "One locked package, reused everywhere."],
-       ["home", "Multi-Room Consistency", "Every room reads like the same project."],
-       ["sliders-horizontal", "Budget Scenarios", "Price good, better and best side by side."]],
-      "Plan A Spec Property"],
-    ["Landscaper", PHOTOS.resortYard, "Show The Finished Property, Front Yard To Backyard.",
-      "Present hardscape, planting and lighting together so the client sees the finished property, not a plant list.",
-      [["trees", "Landscape Concepts", "Hardscape, planting, pool and lighting passes."],
-       ["house", "Exterior Coordination", "The yard matched to the house design."],
-       ["calculator", "Outdoor Planning Ranges", "Material coverage with a planning range."]],
-      "Plan An Outdoor Project"],
+    ["Investor", PHOTOS.neutral, "Know What The Renovation Could Return Before You Commit.",
+      "Compare rental, resale and renovation scenarios for the same property, with visual concepts, planning ranges and potential value impact in one place.",
+      [["scale", "Compare Deal Scenarios", "See what Refresh, Makeover and Renovation change, and what each may cost."],
+       ["wallet", "Budget Before You Buy", "Build a property-level planning range before finalizing the deal."],
+       ["trending-up", "Plan The Exit", "Connect the approved design to rehab scope and potential ARV impact."]],
+      "Underwrite A Property"],
+    ["Agent", PHOTOS.coastal, "Help Buyers See The Potential, And Sellers See The Strategy.",
+      "Turn empty, dated or cluttered rooms into realistic listing concepts while preserving the property's actual walls, windows and layout.",
+      [["sofa", "Listing-Ready Staging", "Furnish empty rooms and declutter occupied spaces across the full photo set."],
+       ["eye", "Sell The Possibility", "Help buyers understand how the home could live without misrepresenting the property."],
+       ["share-2", "Shareable Presentations", "Send branded before-and-after links that sellers and buyers can review without an account."]],
+      "Create A Listing Concept"],
+    ["Designer", PHOTOS.japandi, "Turn Client Direction Into Faster Approvals.",
+      "Explore alternatives, preserve what matters and keep every room coordinated without recreating the concept after every revision.",
+      [["palette", "Property-Wide Design DNA", "Apply one palette, material language and design direction throughout the property."],
+       ["mouse-pointer-click", "Precision Controls", "Keep, replace, remove or lock individual objects before regenerating."],
+       ["messages-square", "Client-Ready Options", "Present alternatives, collect feedback and return to previous versions."]],
+      "Build A Client Concept"],
+    ["Contractor", PHOTOS.kitchen, "Start With A Clearer Scope Before Work Begins.",
+      "Turn the approved design into an organized starting point for work items, quantities, trades and client handoff.",
+      [["hammer", "Scope From The Design", "Translate proposed changes into work items organized by trade."],
+       ["file-text", "Quote-Ready Starting Point", "Replace planning assumptions with supplier and subcontractor quotes."],
+       ["git-compare", "Fewer Handoff Gaps", "Keep the approved image, scope and change history connected."]],
+      "Build A Project Scope"],
+    ["Builder", PHOTOS.craftsman, "Help Buyers Decide Before Changes Reach The Field.",
+      "Visualize finish packages and upgrades early, then keep selections, approvals and planning ranges connected to the correct home.",
+      [["layers", "Visualize The Options", "Show base, upgraded and premium packages inside the actual floor plan."],
+       ["copy-check", "Repeat Proven Packages", "Reuse coordinated materials and finish sets across homes or communities."],
+       ["file-check", "Document Every Decision", "Keep selections, approvals and versions tied to the correct property."]],
+      "Create A Finish Package"],
+    ["Landscaper", PHOTOS.resortYard, "Turn An Unfinished Yard Into A Plan Clients Can Approve.",
+      "Show planting, hardscape, lighting and outdoor living ideas on the actual property, with preliminary scope and planning ranges attached.",
+      [["trees", "Design On The Real Site", "Preserve the house and existing features while redesigning the surrounding space."],
+       ["sliders-horizontal", "Compare Outdoor Scenarios", "Present a simple refresh, entertaining upgrade and full transformation."],
+       ["calculator", "Plan The Build", "Organize proposed materials, trades and preliminary cost ranges."]],
+      "Design An Outdoor Space"],
   ];
+
+  /* Role-specific visual: each tab shows the artifact that role actually works
+     with, not a generic finished room. */
+  function proVisual(i: number) {
+    const V = [
+      /* Investor: scenario comparison + deal numbers */
+      `<div class="pv pv-scen">
+        <div class="pv-row">
+          ${[["Refresh", PHOTOS.neutral, "$8K–$12K"], ["Makeover", PHOTOS.after, "$18K–$26K"], ["Renovation", PHOTOS.kitchen, "$34K–$48K"]]
+            .map(([l, s, p]: any, j) => `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " scenario")}<figcaption><b>${l}</b><em class="mono">${p}</em></figcaption></figure>`).join("")}
+        </div>
+        <div class="pv-nums">
+          <div><span class="mono">Purchase</span><b class="mono">$285,000</b></div>
+          <div><span class="mono">Rehab Range</span><b class="mono">$18K–$26K</b></div>
+          <div><span class="mono">Potential ARV</span><b class="mono">$372,000</b></div>
+        </div>
+      </div>`,
+      /* Agent: listing photo set + staging disclosure */
+      `<div class="pv pv-set">
+        <figure class="pv-lead">${photo(PHOTOS.coastal, "Staged listing photo")}<span class="pv-disc"><i data-lucide="shield-check"></i>Virtually Staged &middot; Disclosure Attached</span></figure>
+        <div class="pv-thumbs">
+          ${[PHOTOS.empty, PHOTOS.japandi, PHOTOS.neutral, PHOTOS.bath].map((s, j) => `<figure class="pv-th${j === 0 ? " on" : ""}">${photo(s, "Listing photo " + (j + 2))}</figure>`).join("")}
+        </div>
+        <div class="pv-cap mono">Photo Set &middot; 12 Of 12 Staged</div>
+      </div>`,
+      /* Designer: object controls, versions, comments */
+      `<div class="pv pv-ctrl">
+        <figure class="pv-lead">${photo(PHOTOS.japandi, "Design concept with object controls")}
+          <span class="pv-pin" style="left:22%;top:58%"><i>1</i>Keep Sofa</span>
+          <span class="pv-pin" style="left:63%;top:36%"><i>2</i>Replace Art</span>
+          <span class="pv-pin" style="left:44%;top:78%"><i>3</i>Lock Rug</span>
+        </figure>
+        <div class="pv-vers"><span class="mono">Versions</span><b class="on">V3</b><b>V2</b><b>V1</b></div>
+        <div class="pv-note"><i data-lucide="message-square"></i>Client: “Prefer the lighter oak on the floor.”</div>
+      </div>`,
+      /* Contractor: scope + brief */
+      `<div class="pv pv-scope">
+        <figure class="pv-lead sm">${photo(PHOTOS.kitchen, "Approved kitchen design")}<span class="pv-disc"><i data-lucide="file-check"></i>Approved Design</span></figure>
+        <div class="pv-table">
+          ${[["Cabinetry, Shaker", "24 LF", "Carpentry"], ["Quartz Countertops", "38 SF", "Countertops"], ["Tile Backsplash", "32 SF", "Tile"], ["LVP Flooring", "210 SF", "Flooring"]]
+            .map(([a, b, c]) => `<div class="pv-tr"><span>${a}</span><em class="mono">${b}</em><b class="mono">${c}</b></div>`).join("")}
+        </div>
+        <div class="pv-cap mono">Contractor Planning Brief &middot; Quantities To Verify On Site</div>
+      </div>`,
+      /* Builder: one home, three finish packages */
+      `<div class="pv pv-pack">
+        <div class="pv-row">
+          ${[["Base", PHOTOS.neutral], ["Upgraded", PHOTOS.craftsman], ["Premium", PHOTOS.luxury]]
+            .map(([l, s]: any, j) => `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " finish package")}<figcaption><b>${l}</b></figcaption></figure>`).join("")}
+        </div>
+        <div class="pv-sw">
+          <span class="mono">Package Materials</span>
+          <i style="background:#E8E2D9"></i><i style="background:#B4A48C"></i><i style="background:#2A2A28"></i><i style="background:#2F4A3C"></i><i style="background:#8A5A36"></i>
+        </div>
+        <div class="pv-cap mono">Same Plan &middot; Lot 14 &middot; 3 Selection Levels</div>
+      </div>`,
+      /* Landscaper: real-site before/after + materials */
+      `<div class="pv pv-yard">
+        <div class="pv-ba">
+          <figure>${photo(PHOTOS.ranch, "Existing yard")}<figcaption class="mono">Before</figcaption></figure>
+          <figure class="on">${photo(PHOTOS.resortYard, "Proposed outdoor design")}<figcaption class="mono">After</figcaption></figure>
+        </div>
+        <div class="pv-table">
+          ${[["Paver Patio", "420 SF", "Hardscape"], ["Planting Beds", "160 SF", "Planting"], ["Landscape Lighting", "9 Fixtures", "Electrical"]]
+            .map(([a, b, c]) => `<div class="pv-tr"><span>${a}</span><em class="mono">${b}</em><b class="mono">${c}</b></div>`).join("")}
+        </div>
+        <div class="pv-cap mono">Preliminary Materials &middot; Planning Range $14K–$22K</div>
+      </div>`,
+    ];
+    return V[i];
+  }
+
   const pt = $("proTabs");
   function setPro(i: number) {
-    const [n, src, title, desc, cards, cta] = PRO[i];
+    const [n, , title, desc, cards, cta] = PRO[i];
     pt?.querySelectorAll(".ptab").forEach((x: any, j: number) => x.classList.toggle("on", j === i));
     const pp = $("proPanel");
     if (pp) pp.innerHTML = `
-      <div class="pro-im">${photo(src, n + " project preview")}<span class="stamp">${n.toUpperCase()}</span></div>
+      <div class="pro-im">${proVisual(i)}<span class="stamp">${n.toUpperCase()}</span></div>
       <div class="pro-tx">
         <h3>${title}</h3>
         <p class="pro-desc">${desc}</p>
@@ -629,6 +701,7 @@ export function initExtra(timers: number[], lucide: any) {
     pt.querySelectorAll(".ptab").forEach((b: any) => b.addEventListener("click", () => setPro(+b.dataset.p)));
     setPro(0);
   }
+
 
 
 
