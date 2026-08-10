@@ -980,7 +980,7 @@ export function initExtra(timers: number[], lucide: any) {
       },
     };
     if (bfBtns && bfPrev && bfView) {
-      let mode = "pro", open = "";
+      let mode = "pro", open = "brief";
       const paintPrev = () => {
         if (!open) { bfPrev.className = "bfc-prev"; bfPrev.innerHTML = ""; return; }
         bfPrev.className = "bfc-prev on";
