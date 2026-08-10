@@ -705,22 +705,64 @@ export function initExtra(timers: number[], lucide: any) {
 
 
 
+  /* ---------- why three cards ---------- */
+  const w3 = $("why3");
+  if (w3) {
+    w3.innerHTML = `
+      <article class="wc">
+        <div class="wc-vis wc-ba">
+          <figure>${photo(PHOTOS.before, "Original room before redesign")}<figcaption class="mono">Before</figcaption></figure>
+          <figure class="on">${photo(PHOTOS.after, "Same room redesigned")}<figcaption class="mono">After</figcaption>
+            <span class="wc-lock" style="left:16%;top:30%"></span>
+            <span class="wc-lock" style="left:52%;top:18%"></span>
+            <span class="wc-lock" style="left:82%;top:62%"></span>
+          </figure>
+          <span class="wc-tag"><i data-lucide="lock"></i>Reality Lock On</span>
+        </div>
+        <h3>Your Space Stays Your Space</h3>
+        <p>Preserve walls, windows, camera angle and selected objects with Reality Lock.</p>
+      </article>
+      <article class="wc">
+        <div class="wc-vis wc-band">
+          ${[["Refresh", "$5K"], ["Makeover", "$15K"], ["Renovation", "$35K"]]
+            .map(([l, v], j) => `<button type="button" class="wcb${j === 1 ? " on" : ""}" data-w="${j}"><b>${l}</b><em class="mono">${v}</em></button>`).join("")}
+          <span class="wc-cap mono" id="wcCap">Target: $15K &middot; Furniture &amp; Materials</span>
+        </div>
+        <h3>Design Around Your Budget</h3>
+        <p>Choose a target before generating and compare what $5K, $15K or $35K can realistically change.</p>
+      </article>
+      <article class="wc">
+        <div class="wc-vis wc-out">
+          <span class="wco"><i data-lucide="file-text"></i>Contractor Brief</span>
+          <span class="wco"><i data-lucide="shopping-bag"></i>Shopping List</span>
+          <span class="wco"><i data-lucide="link"></i>Client Link</span>
+          <span class="wc-cap mono">Planning Range $12K&ndash;$16K &middot; 7 Work Items</span>
+        </div>
+        <h3>Turn The Look Into A Plan</h3>
+        <p>Generate planning ranges, work items, product matches, contractor briefs and client approvals.</p>
+      </article>`;
+    const CAPS = ["Target: $5K &middot; Finishes &amp; Decor", "Target: $15K &middot; Furniture &amp; Materials", "Target: $35K &middot; Cabinetry &amp; Built-Ins"];
+    w3.querySelectorAll(".wcb").forEach((b: any) => b.addEventListener("click", () => {
+      w3.querySelectorAll(".wcb").forEach((x: any) => x.classList.toggle("on", x === b));
+      const c = $("wcCap"); if (c) c.innerHTML = CAPS[+b.dataset.w];
+    }));
+    lucide.createIcons();
+  }
+
   /* ---------- comparison table ---------- */
   const CMP: [string, string, string, string, string][] = [
-    ["Interior, exterior and landscape redesign", "yes", "varies", "limited", "yes"],
-    ["Architecture and object-level control", "yes", "limited", "limited", "yes"],
+    ["Preserves architecture and selected objects", "yes", "limited", "limited", "manual"],
+    ["Designs around a target budget", "yes", "no", "no", "manual"],
+    ["Creates line-item planning ranges", "yes", "no", "no", "manual"],
+    ["Produces shopping and contractor-ready outputs", "yes", "limited", "no", "manual"],
     ["Property-wide Design DNA", "yes", "no", "no", "manual"],
-    ["Budget-guided generation", "yes", "no", "no", "yes"],
-    ["Line-item scope and planning ranges", "yes", "limited", "no", "varies"],
-    ["Shopping and contractor-ready outputs", "yes", "limited", "no", "manual"],
-    ["Track rooms, versions and approvals", "yes", "limited", "limited", "manual"],
-    ["Match real products at three price levels", "yes", "limited", "limited", "yes"],
-    ["Create listing ready staging in batches", "yes", "limited", "yes", "manual"],
-    ["Client approval links", "yes", "no", "limited", "yes"],
-    ["Walkthrough videos", "yes", "limited", "limited", "varies"],
-    ["Social presentation packages", "yes", "no", "limited", "varies"],
-    ["Team collaboration", "yes", "limited", "limited", "yes"],
-    ["Commercial use exports", "yes", "varies", "yes", "yes"],
+    ["Object-level keep, replace and lock controls", "yes", "limited", "limited", "manual"],
+    ["Match real products at three price levels", "yes", "no", "no", "manual"],
+    ["Track rooms, versions and approvals", "yes", "no", "limited", "manual"],
+    ["Client approval links", "yes", "no", "limited", "manual"],
+    ["Batch listing staging", "yes", "limited", "yes", "not"],
+    ["Walkthrough videos", "yes", "limited", "limited", "not"],
+    ["Team collaboration", "yes", "no", "limited", "manual"],
   ];
 
 
@@ -729,19 +771,19 @@ export function initExtra(timers: number[], lucide: any) {
     if (v === "yes") return `<span class="cm ok"><i data-lucide="check"></i></span>`;
     if (v === "limited") return `<span class="cm lim"><i data-lucide="minus"></i>Limited</span>`;
     if (v === "no") return `<span class="cm none"><i data-lucide="minus"></i></span>`;
-    return `<span class="cm soft">${v === "manual" ? "Manual" : "Varies"}</span>`;
+    return `<span class="cm soft">${v === "manual" ? "Manual" : "Not Integrated"}</span>`;
   };
   const cmpBody = $("cmpBody"), cmpMore = $("cmpMore");
   if (cmpBody) {
     cmpBody.innerHTML = CMP.map(([cap, a, b, c, d], i) => `
-      <tr class="${i >= 6 ? "cmp-extra" : ""}">
+      <tr class="${i >= 4 ? "cmp-extra" : ""}">
         <th scope="row">${cap}</th>
         <td class="cmp-us">${cell(a, true)}</td>
         <td>${cell(b)}</td><td>${cell(c)}</td><td>${cell(d)}</td>
       </tr>`).join("");
     cmpMore?.addEventListener("click", () => {
       const open = document.getElementById("cmpTable")?.classList.toggle("all");
-      cmpMore.innerHTML = open ? "Show Fewer Rows" : "View The Full Comparison &rarr;";
+      cmpMore.innerHTML = open ? "Show Fewer Rows" : "View Full Comparison &rarr;";
     });
     lucide.createIcons();
   }

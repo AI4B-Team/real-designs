@@ -437,16 +437,6 @@ const SL=[['Warm Minimal',PHOTOS.after],['Modern Farmhouse',PHOTOS.farmhouse],['
 document.getElementById('styleGrid').innerHTML=SL.slice(0,4).map(([n,src],i)=>`
   <div class="st"><div class="sw2" style="overflow:hidden">${photo(src,n+' interior design style')}</div><div class="nm">${n}<span>${String(i+1).padStart(3,'0')}</span></div></div>`).join('');
 
-/* ---------- proof cards ---------- */
-/* NOTE: These are verifiable product claims, not testimonials. Replace with real
-   customer quotes ONLY when they are genuine, attributable and permissioned in
-   writing. Fabricated endorsements with attributed names are deceptive advertising. */
-const Q=[
-['lock','Your Space Stays Your Space.','Preserve walls, windows, layout and selected objects across every generation.'],
-['wallet','Set the Budget Before You Generate.','Choose a target and see design decisions intended to fit that planning range. Design decisions are guided by your target from the beginning.'],
-['clipboard-list','Go Beyond the Rendering.','Turn the approved design into a shopping list, planning scope and contractor brief. See work items, quantities, trades and location-adjusted planning ranges&mdash;not one unexplained total.']];
-document.getElementById('quotes').innerHTML=Q.map(([ic,t,d])=>`
-  <div class="proof-card"><div class="pic"><i data-lucide="${ic}"></i></div><b>${t}</b><p>${d}</p></div>`).join('');
 
 
 /* ---------- pricing ---------- */
