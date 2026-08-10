@@ -1,0 +1,230 @@
+/* ===== Global site footer (REAL DESIGNS) ===== */
+.rd-foot {
+  background: #0B0B0C;
+  color: #B4B4BA;
+  font-family: "DM Sans", system-ui, sans-serif;
+  border-top: 1px solid #2A2A2D;
+}
+.rd-foot-wrap {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 56px 24px 28px;
+}
+.rd-foot-grid {
+  display: grid;
+  grid-template-columns: 1.5fr repeat(5, 1fr);
+  gap: 0 40px;
+  align-items: start;
+}
+.rd-foot-brand p {
+  max-width: 260px;
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 14px 0 0;
+  color: #9C9CA3;
+}
+.rd-foot-logo {
+  display: inline-block;
+  text-decoration: none;
+}
+.rd-foot-social {
+  display: flex;
+  gap: 8px;
+  margin-top: 18px;
+}
+.rd-foot-social a {
+  width: 32px;
+  height: 32px;
+  border: 1px solid #2A2A2D;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #B4B4BA;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.rd-foot-social a:hover {
+  color: #fff;
+  border-color: #CC0000;
+}
+
+.rd-foot-col {
+  border: 0;
+}
+.rd-foot-col summary {
+  list-style: none;
+  cursor: default;
+}
+.rd-foot-col summary::-webkit-details-marker {
+  display: none;
+}
+.rd-foot-col summary::marker {
+  content: "";
+}
+.rd-foot h4 {
+  color: #E7E7EA;
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+  margin: 0 0 14px;
+}
+.rd-foot ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rd-foot li {
+  line-height: 1.4;
+}
+.rd-foot a {
+  color: #C7C7CD;
+  font-size: 15px;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  padding-bottom: 1px;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.rd-foot a:hover {
+  color: #fff;
+  border-bottom-color: #CC0000;
+}
+
+.rd-foot-tools {
+  margin-top: 36px;
+  padding-top: 18px;
+  border-top: 1px solid #2A2A2D;
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  align-items: baseline;
+}
+.rd-foot-tools p {
+  margin: 0;
+  font-size: 14px;
+}
+.rd-foot-tools-lab {
+  font-family: "DM Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #E7E7EA;
+}
+
+.rd-foot-legal {
+  margin-top: 18px;
+  padding-top: 18px;
+  border-top: 1px solid #2A2A2D;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px 22px;
+  flex-wrap: wrap;
+  font-size: 13px;
+}
+.rd-foot-copy {
+  color: #8E8E96;
+}
+.rd-foot-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.rd-foot-legal-links a {
+  font-size: 13px;
+}
+.rd-foot-prefs {
+  display: flex;
+  gap: 10px;
+}
+.rd-foot-locale {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid #2A2A2D;
+  border-radius: 999px;
+  padding: 6px 12px;
+  color: #C7C7CD;
+}
+.rd-foot-locale select {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+.rd-foot-locale option {
+  color: #111;
+}
+.rd-foot-disclaimer {
+  margin: 14px 0 0;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #7C7C84;
+  max-width: 860px;
+}
+.rd-foot .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 1080px) {
+  .rd-foot-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 34px 32px;
+  }
+  .rd-foot-brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 720px) {
+  .rd-foot-wrap {
+    padding: 40px 20px 24px;
+  }
+  .rd-foot-grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .rd-foot-brand {
+    margin-bottom: 22px;
+  }
+  .rd-foot-col {
+    border-top: 1px solid #2A2A2D;
+  }
+  .rd-foot-col summary {
+    cursor: pointer;
+    padding: 14px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .rd-foot-col summary h4 {
+    margin-bottom: 0;
+  }
+  .rd-foot-col summary::after {
+    content: "+";
+    color: #fff;
+    font-size: 16px;
+    line-height: 1;
+  }
+  .rd-foot-col[open] summary::after {
+    content: "\2013";
+  }
+  .rd-foot-col ul {
+    padding-bottom: 16px;
+  }
+  .rd-foot-legal {
+    justify-content: flex-start;
+  }
+}

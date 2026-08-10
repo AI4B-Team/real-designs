@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { PrototypeSurface } from "@/components/PrototypeSurface";
+import { GlobalFooter } from "@/components/seo/GlobalFooter";
 import { html } from "@/content/rd-site-html";
 import { initSite } from "@/content/rd-site-script";
 import { FAQ } from "@/content/rd-faq";
@@ -74,5 +75,11 @@ export const Route = createFileRoute("/")({
 });
 
 function SitePage() {
-  return <PrototypeSurface className="rd-site" html={html} init={initSite} />;
+  return (
+    <>
+      <PrototypeSurface className="rd-site" html={html} init={initSite} />
+      <GlobalFooter />
+    </>
+  );
 }
+

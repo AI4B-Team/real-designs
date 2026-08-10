@@ -95,6 +95,80 @@ export const FOOTER_GROUPS: NavGroup[] = [
   },
 ];
 
+/** Global footer columns. `href: null` = page does not exist yet, link is hidden. */
+export type FooterLink = { href: string | null; label: string };
+export type FooterColumn = { heading: string; links: FooterLink[] };
+
+export const FOOTER_COLUMNS: FooterColumn[] = [
+  {
+    heading: "Design",
+    links: [
+      { href: "/ai-interior-design", label: "Interior Design" },
+      { href: "/ai-exterior-design", label: "Exterior Design" },
+      { href: "/ai-landscape-design", label: "Landscape Design" },
+      { href: "/ai-virtual-staging", label: "Virtual Staging" },
+      { href: "/declutter-photo", label: "Declutter & Empty Room" },
+      { href: "/sketch-to-render", label: "Sketch & Floor Plan" },
+      { href: "/resources", label: "View All Features" },
+    ],
+  },
+  {
+    heading: "Plan & Build",
+    links: [
+      { href: "/renovation-cost-estimator", label: "Budget & Scope" },
+      { href: null, label: "Shopping Lists" },
+      { href: "/contractor-scope-generator", label: "Contractor Briefs" },
+      { href: "/rehab-cost-calculator", label: "Rehab Calculator" },
+      { href: "/arv-calculator", label: "ARV Calculator" },
+      { href: "/pricing", label: "Pricing" },
+    ],
+  },
+  {
+    heading: "Solutions",
+    links: [
+      { href: null, label: "Homeowners" },
+      { href: "/ai-design-for-house-flippers", label: "Real Estate Investors" },
+      { href: "/for-real-estate-agents", label: "Agents & Brokerages" },
+      { href: "/for-interior-designers", label: "Designers" },
+      { href: "/for-contractors", label: "Contractors & Builders" },
+      { href: "/for-property-managers", label: "Property Managers" },
+    ],
+  },
+  {
+    heading: "Resources",
+    links: [
+      { href: "/#workflow", label: "How It Works" },
+      { href: null, label: "Design Styles" },
+      { href: null, label: "Examples" },
+      { href: "/resources", label: "Help Center" },
+      { href: null, label: "Documentation" },
+      { href: null, label: "Contact Support" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { href: null, label: "About REAL DESIGNS" },
+      { href: "/#why", label: "Why REAL DESIGNS" },
+      { href: null, label: "Careers" },
+      { href: null, label: "Press & Media" },
+      { href: null, label: "Partners" },
+      { href: null, label: "Contact" },
+    ],
+  },
+];
+
+export const LEGAL_LINKS: FooterLink[] = [
+  { href: "/terms", label: "Terms" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/refund-policy", label: "Refunds" },
+  { href: null, label: "Cookies" },
+  { href: null, label: "Acceptable Use" },
+  { href: null, label: "Accessibility" },
+  { href: null, label: "Cookie Settings" },
+];
+
+
 export const POPULAR_TOOL_LINKS: NavLink[] = [
   { href: "/free/ai-interior-design", label: "AI Redesign" },
   { href: "/free/virtual-staging", label: "Virtual Staging" },
