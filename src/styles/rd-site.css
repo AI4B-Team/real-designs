@@ -2700,3 +2700,13 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 @media (max-width: 640px){ .rd-site #compare .sec-head h2{ white-space:normal } }
 .rd-site #compare .sec-head .lede{ max-width:none; white-space:nowrap }
 @media (max-width: 860px){ .rd-site #compare .sec-head .lede{ white-space:normal } }
+
+/* Comparison: pill straddles the table's top border */
+.rd-site .cmp{ overflow: visible }
+.rd-site .cmp-scroll{ overflow-x: visible; border-radius: 18px }
+.rd-site .cmp-table thead th{ padding-top: 30px }
+.rd-site .cmp-badge{ top: -10px; box-shadow: 0 0 0 4px var(--card,#fff) }
+@media (max-width: 900px){
+  .rd-site .cmp{ overflow: hidden }
+  .rd-site .cmp-scroll{ overflow-x: auto }
+}
