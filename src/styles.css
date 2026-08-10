@@ -149,6 +149,7 @@
 .rd-auth .promo::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(#ffffff0d 1px, transparent 1px), linear-gradient(90deg, #ffffff0d 1px, transparent 1px); background-size: 34px 34px; pointer-events: none; }
 .rd-auth .promo > * { position: relative; z-index: 1; }
 .rd-auth .promo .mark { font-size: .8rem; letter-spacing: .22em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0; }
+.rd-auth .promo .brand { display: inline-flex; margin-bottom: 34px; }
 .rd-auth .promo h2 { font-size: 2.25rem; line-height: 1.12; letter-spacing: -.03em; margin: 0; max-width: none; }
 .rd-auth .promo p.sub { margin: 0; font-size: 1.05rem; line-height: 1.5; color: #B9B3AA; max-width: 42ch; }
 .rd-auth .promo p.sub + ul { margin-top: -12px; }
