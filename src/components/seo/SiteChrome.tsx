@@ -39,47 +39,53 @@ export function SiteFooter() {
   return (
     <footer className="site">
       <div className="wrap">
-        <div className="foot lp-foot">
-          <div>
+        <div className="foot">
+          <div className="foot-brand">
             <div style={{ marginBottom: 13 }}>
               <BrandMark />
             </div>
-
-            <p style={{ maxWidth: "33ch", fontSize: ".84rem" }}>
-              AI home design, virtual staging and renovation planning for people who actually own
-              the property.
-            </p>
-            <p style={{ maxWidth: "33ch", fontSize: ".84rem", marginTop: 10 }}>
-              <a href="/">Home</a> &middot; <a href="/resources">Resources</a> &middot;{" "}
-              <a href="/pricing">Pricing</a>
-
-              <br />
-              <a href="/terms">Terms</a> &middot; <a href="/privacy">Privacy</a> &middot;{" "}
-              <a href="/refund-policy">Refunds</a>
-
+            <p>
+              AI home design, virtual staging and renovation planning&mdash;from one photo to a
+              project-ready plan.
             </p>
           </div>
           {FOOTER_GROUPS.map((g) => (
-            <div key={g.heading}>
-              <h4>{g.heading}</h4>
+            <details className="foot-col" key={g.heading} open>
+              <summary>
+                <h4>{g.heading}</h4>
+              </summary>
               <ul>
                 {g.links.map((l) => (
-                  <li key={l.href}>
+                  <li key={`${g.heading}-${l.href}`}>
                     <a href={l.href}>{l.label}</a>
                   </li>
                 ))}
               </ul>
-            </div>
+            </details>
           ))}
         </div>
+
+        <div className="foot-tools">
+          <span className="mono">Popular Free Tools</span>
+          <p>
+            {POPULAR_TOOL_LINKS.map((l, i) => (
+              <span key={l.href}>
+                {i > 0 ? " · " : null}
+                <a href={l.href}>{l.label}</a>
+              </span>
+            ))}
+          </p>
+        </div>
+
         <div className="foot-b">
-          <span>Copyright 2026 REAL DESIGNS. All rights reserved.</span>
+          <span>&copy; 2026 REAL DESIGNS. All rights reserved.</span>
           <span className="mono">
-            Cost figures are planning estimates, not construction bids. Staged images are labeled
-            per MLS and state rules.
+            Planning ranges are estimates, not construction bids. Disclose virtually staged images
+            where required.
           </span>
         </div>
       </div>
     </footer>
   );
 }
+
