@@ -1,6 +1,8 @@
 import { Link } from "@tanstack/react-router";
 
-import { FOOTER_GROUPS, POPULAR_TOOL_LINKS } from "@/content/seo/nav";
+import { GlobalFooter } from "@/components/seo/GlobalFooter";
+
+
 
 
 export function BrandMark() {
