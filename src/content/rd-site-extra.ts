@@ -655,7 +655,7 @@ export function initExtra(timers: number[], lucide: any) {
       /* Builder: one home, three finish packages */
       `<div class="pv pv-pack">
         <div class="pv-row">
-          ${[["Base", PHOTOS.neutral], ["Upgraded", PHOTOS.craftsman], ["Premium", PHOTOS.luxury]]
+          ${[["Base", PHOTOS.neutral], ["Upgraded", PHOTOS.after], ["Premium", PHOTOS.luxury]]
             .map(([l, s]: any, j) => `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " finish package")}<figcaption><b>${l}</b></figcaption></figure>`).join("")}
         </div>
         <div class="pv-sw">
