@@ -145,19 +145,21 @@
 
 /* ---- sign-in surface ---- */
 .rd-auth { min-height: 100dvh; display: grid; grid-template-columns: 44fr 56fr; background: #F7F6F3; font-family: "DM Sans", system-ui, sans-serif; color: #14110F; }
-.rd-auth .promo { position: relative; background: #14110F; color: #fff; padding: 64px 64px; display: flex; flex-direction: column; justify-content: center; gap: 30px; overflow: hidden; }
+.rd-auth .promo { position: relative; background: #14110F; color: #fff; padding: 64px 64px; display: flex; flex-direction: column; justify-content: flex-start; gap: 26px; overflow: hidden; }
 .rd-auth .promo::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(#ffffff0d 1px, transparent 1px), linear-gradient(90deg, #ffffff0d 1px, transparent 1px); background-size: 34px 34px; pointer-events: none; }
 .rd-auth .promo > * { position: relative; z-index: 1; }
 .rd-auth .promo .mark { font-size: .8rem; letter-spacing: .22em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0; }
-.rd-auth .promo h2 { font-size: 2.45rem; line-height: 1.12; letter-spacing: -.03em; margin: 0; max-width: none; }
-.rd-auth .promo p.sub { margin: 0; font-size: 1.1rem; line-height: 1.5; color: #B9B3AA; max-width: 42ch; }
+.rd-auth .promo h2 { font-size: 2.25rem; line-height: 1.12; letter-spacing: -.03em; margin: 0; max-width: none; }
+.rd-auth .promo p.sub { margin: 0; font-size: 1.05rem; line-height: 1.5; color: #B9B3AA; max-width: 42ch; }
+.rd-auth .promo p.sub + ul { margin-top: -12px; }
 .rd-auth .promo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
 .rd-auth .promo li { display: flex; gap: 14px; align-items: flex-start; font-size: 1.03rem; line-height: 1.45; color: #E8E4DD; }
 .rd-auth .promo li b { display: block; font-size: 1.06rem; color: #fff; }
 .rd-auth .promo li span.n { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 999px; background: #CC0000; color: #fff; font-size: .8rem; font-weight: 700; display: grid; place-items: center; font-family: "DM Mono", ui-monospace, monospace; }
-.rd-auth .promo .quote { margin: 0; padding-top: 26px; border-top: 1px solid #2A2622; font-size: 1rem; color: #B9B3AA; }
+.rd-auth .promo .quote { margin: 6px 0 0; padding-top: 26px; border-top: 1px solid #2A2622; font-size: 1rem; color: #B9B3AA; }
 .rd-auth .panel { display: grid; place-items: center; padding: 48px 24px; }
-.rd-auth section { width: 100%; max-width: 440px; background: #fff; border: 1px solid #E4E1DA; border-radius: 16px; padding: 36px 34px; }
+.rd-auth section { width: 100%; max-width: 468px; background: #fff; border: 1px solid #E4E1DA; border-radius: 16px; padding: 36px 34px; }
+
 .rd-auth .mobile-head { display: none; }
 @media (max-width: 900px) {
   .rd-auth { grid-template-columns: 1fr; }
