@@ -144,33 +144,53 @@
 }
 
 /* ---- sign-in surface ---- */
-.rd-auth { min-height: 100dvh; display: grid; grid-template-columns: 1fr 1fr; background: #F7F6F3; font-family: "DM Sans", system-ui, sans-serif; color: #14110F; }
-.rd-auth .promo { position: relative; background: #14110F; color: #fff; padding: 56px 56px; display: flex; flex-direction: column; justify-content: center; gap: 26px; overflow: hidden; }
+.rd-auth { min-height: 100dvh; display: grid; grid-template-columns: 44fr 56fr; background: #F7F6F3; font-family: "DM Sans", system-ui, sans-serif; color: #14110F; }
+.rd-auth .promo { position: relative; background: #14110F; color: #fff; padding: 64px 64px; display: flex; flex-direction: column; justify-content: center; gap: 30px; overflow: hidden; }
 .rd-auth .promo::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(#ffffff0d 1px, transparent 1px), linear-gradient(90deg, #ffffff0d 1px, transparent 1px); background-size: 34px 34px; pointer-events: none; }
 .rd-auth .promo > * { position: relative; z-index: 1; }
-.rd-auth .promo .mark { font-size: .7rem; letter-spacing: .22em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0; }
-.rd-auth .promo h2 { font-size: 2.1rem; line-height: 1.12; letter-spacing: -.03em; margin: 0; max-width: none; }
-.rd-auth .promo p.sub { margin: 0; font-size: .95rem; color: #B9B3AA; max-width: 40ch; }
-.rd-auth .promo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
-.rd-auth .promo li { display: flex; gap: 12px; align-items: flex-start; font-size: .9rem; color: #E8E4DD; }
-.rd-auth .promo li b { display: block; font-size: .92rem; color: #fff; }
-.rd-auth .promo li span.n { flex: 0 0 auto; width: 24px; height: 24px; border-radius: 999px; background: #CC0000; color: #fff; font-size: .7rem; font-weight: 700; display: grid; place-items: center; font-family: "DM Mono", ui-monospace, monospace; }
-.rd-auth .promo .quote { margin: 0; padding-top: 22px; border-top: 1px solid #2A2622; font-size: .88rem; color: #B9B3AA; }
-.rd-auth .panel { display: grid; place-items: center; padding: 40px 20px; }
-.rd-auth section { width: 100%; max-width: 400px; background: #fff; border: 1px solid #E4E1DA; border-radius: 14px; padding: 30px 28px; }
-@media (max-width: 900px) { .rd-auth { grid-template-columns: 1fr; } .rd-auth .promo { padding: 40px 24px; gap: 20px; } .rd-auth .promo h2 { font-size: 1.6rem; } }
+.rd-auth .promo .mark { font-size: .8rem; letter-spacing: .22em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0; }
+.rd-auth .promo h2 { font-size: 2.45rem; line-height: 1.12; letter-spacing: -.03em; margin: 0; max-width: none; }
+.rd-auth .promo p.sub { margin: 0; font-size: 1.1rem; line-height: 1.5; color: #B9B3AA; max-width: 42ch; }
+.rd-auth .promo ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.rd-auth .promo li { display: flex; gap: 14px; align-items: flex-start; font-size: 1.03rem; line-height: 1.45; color: #E8E4DD; }
+.rd-auth .promo li b { display: block; font-size: 1.06rem; color: #fff; }
+.rd-auth .promo li span.n { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 999px; background: #CC0000; color: #fff; font-size: .8rem; font-weight: 700; display: grid; place-items: center; font-family: "DM Mono", ui-monospace, monospace; }
+.rd-auth .promo .quote { margin: 0; padding-top: 26px; border-top: 1px solid #2A2622; font-size: 1rem; color: #B9B3AA; }
+.rd-auth .panel { display: grid; place-items: center; padding: 48px 24px; }
+.rd-auth section { width: 100%; max-width: 440px; background: #fff; border: 1px solid #E4E1DA; border-radius: 16px; padding: 36px 34px; }
+.rd-auth .mobile-head { display: none; }
+@media (max-width: 900px) {
+  .rd-auth { grid-template-columns: 1fr; }
+  .rd-auth .promo { display: none; }
+  .rd-auth .panel { padding: 28px 18px 48px; align-content: start; }
+  .rd-auth .mobile-head { display: block; width: 100%; max-width: 440px; margin: 0 auto 18px; }
+  .rd-auth .mobile-head .mark { font-size: .74rem; letter-spacing: .22em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0 0 8px; }
+  .rd-auth .mobile-head h2 { font-size: 1.5rem; line-height: 1.15; letter-spacing: -.02em; margin: 0 0 8px; }
+  .rd-auth .mobile-head p { margin: 0; font-size: .88rem; color: #6B655D; }
+}
 
-.rd-auth .eyebrow { font-size: .68rem; letter-spacing: .18em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0 0 10px; }
-.rd-auth h1 { font-size: 1.5rem; margin: 0 0 6px; letter-spacing: -.02em; }
-.rd-auth .lede { font-size: .85rem; color: #6B655D; margin: 0 0 20px; }
-.rd-auth label { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: #6B655D; margin: 12px 0 5px; }
-.rd-auth input { width: 100%; padding: 10px 12px; border: 1px solid #DDD9D1; border-radius: 8px; font-size: .9rem; background: #fff; }
+.rd-auth .eyebrow { font-size: .7rem; letter-spacing: .18em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0 0 10px; }
+.rd-auth h1 { font-size: 1.7rem; margin: 0 0 8px; letter-spacing: -.02em; }
+.rd-auth .lede { font-size: .92rem; line-height: 1.5; color: #6B655D; margin: 0 0 22px; }
+.rd-auth label { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .08em; color: #6B655D; margin: 14px 0 6px; }
+.rd-auth .labelrow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.rd-auth .labelrow label { margin-bottom: 6px; }
+.rd-auth .labelrow button { background: none; border: 0; padding: 0; font-size: .74rem; color: #CC0000; font-weight: 600; cursor: pointer; }
+.rd-auth input { width: 100%; height: 50px; padding: 0 14px; border: 1px solid #DDD9D1; border-radius: 10px; font-size: .95rem; background: #fff; }
+.rd-auth .pw { position: relative; }
+.rd-auth .pw input { padding-right: 46px; }
+.rd-auth .pw .toggle { position: absolute; right: 6px; top: 0; height: 50px; width: 40px; display: grid; place-items: center; background: none; border: 0; color: #6B655D; cursor: pointer; }
 .rd-auth input:focus { outline: 2px solid #CC0000; outline-offset: 1px; }
-.rd-auth button.primary { width: 100%; margin-top: 18px; padding: 11px; border: 0; border-radius: 999px; background: #14110F; color: #fff; font-weight: 600; font-size: .88rem; cursor: pointer; }
-.rd-auth button.google { width: 100%; padding: 11px; border: 1px solid #DDD9D1; border-radius: 999px; background: #fff; font-weight: 600; font-size: .88rem; cursor: pointer; }
+.rd-auth button.primary { width: 100%; height: 52px; margin-top: 22px; border: 0; border-radius: 999px; background: #CC0000; color: #fff; font-weight: 600; font-size: .95rem; cursor: pointer; }
+.rd-auth button.primary:hover { background: #B00000; }
+.rd-auth button.google { width: 100%; height: 50px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid #DDD9D1; border-radius: 999px; background: #fff; font-weight: 600; font-size: .92rem; cursor: pointer; }
 .rd-auth button:disabled { opacity: .6; cursor: default; }
-.rd-auth .or { display: flex; align-items: center; gap: 10px; margin: 18px 0 2px; color: #9A948B; font-size: .7rem; text-transform: uppercase; letter-spacing: .1em; }
+.rd-auth .or { display: flex; align-items: center; gap: 10px; margin: 20px 0 2px; color: #9A948B; font-size: .72rem; text-transform: uppercase; letter-spacing: .1em; }
 .rd-auth .or::before, .rd-auth .or::after { content: ""; flex: 1; height: 1px; background: #E4E1DA; }
-.rd-auth .msg { margin-top: 14px; font-size: .8rem; color: #CC0000; }
-.rd-auth .alt { margin: 14px 0 0; font-size: .8rem; color: #6B655D; text-align: center; }
-.rd-auth .alt button, .rd-auth .alt a { background: none; border: 0; padding: 0; color: #14110F; font-weight: 600; text-decoration: underline; cursor: pointer; font-size: .8rem; }
+.rd-auth .msg { margin-top: 14px; font-size: .82rem; color: #CC0000; }
+.rd-auth .alt { margin: 16px 0 0; font-size: .85rem; color: #6B655D; text-align: center; }
+.rd-auth .alt button, .rd-auth .alt a { background: none; border: 0; padding: 0; color: #14110F; font-weight: 600; text-decoration: underline; cursor: pointer; font-size: .85rem; }
+.rd-auth .alt.quiet { margin-top: 10px; }
+.rd-auth .alt.quiet a { color: #9A948B; font-weight: 500; font-size: .78rem; text-decoration: none; }
+.rd-auth .alt.quiet a:hover { text-decoration: underline; }
+
