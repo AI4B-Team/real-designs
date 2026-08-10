@@ -2740,6 +2740,7 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 .rd-site #compare .sec-head h2,.rd-site #compare .sec-head .lede{ width:max-content; max-width:100%; margin-left:auto; margin-right:auto }
 
 /* Sketch-to-plan lede: hold to two lines on desktop */
+.rd-site #plan3d .sec-head{max-width:1180px}
 .rd-site #plan3d .sec-head .lede{max-width:1140px!important;width:100%;margin-inline:auto;text-wrap:pretty;
   font-size:clamp(.92rem,1.02vw,1.02rem)}
 @media(max-width:900px){.rd-site #plan3d .sec-head .lede br.br-wide{display:none}}
