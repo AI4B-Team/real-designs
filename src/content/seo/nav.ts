@@ -50,10 +50,57 @@ export const FREE_TOOL_LINKS: NavLink[] = [
 ];
 
 export const FOOTER_GROUPS: NavGroup[] = [
-  { heading: "Design", links: DESIGN_LINKS },
-  { heading: "Plan", links: PLAN_LINKS },
-  { heading: "Who It's For", links: AUDIENCE_LINKS },
-  { heading: "Free Tools", links: FREE_TOOL_LINKS },
+  {
+    heading: "Design",
+    links: [
+      { href: "/ai-interior-design", label: "Interior" },
+      { href: "/ai-exterior-design", label: "Exterior" },
+      { href: "/ai-landscape-design", label: "Landscape" },
+      { href: "/ai-virtual-staging", label: "Virtual Staging" },
+      { href: "/sketch-to-render", label: "Sketch To Render" },
+      { href: "/resources", label: "View All Features" },
+    ],
+  },
+  {
+    heading: "Planning",
+    links: [
+      { href: "/renovation-cost-estimator", label: "Budget & Scope" },
+      { href: "/rehab-cost-calculator", label: "Rehab Calculator" },
+      { href: "/arv-calculator", label: "ARV Calculator" },
+      { href: "/contractor-scope-generator", label: "Contractor Brief" },
+      { href: "/pricing", label: "Pricing" },
+    ],
+  },
+  {
+    heading: "Who It's For",
+    links: [
+      { href: "/ai-design-for-house-flippers", label: "Investors" },
+      { href: "/for-real-estate-agents", label: "Agents" },
+      { href: "/for-interior-designers", label: "Designers" },
+      { href: "/for-contractors", label: "Contractors" },
+      { href: "/for-property-managers", label: "Property Managers" },
+      { href: "/for-landlords", label: "Landlords" },
+    ],
+  },
+  {
+    heading: "Company",
+    links: [
+      { href: "/#why", label: "Why REAL DESIGNS" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/resources", label: "Help Center" },
+      { href: "/terms", label: "Fair Use" },
+      { href: "/refund-policy", label: "Refunds" },
+      { href: "/privacy", label: "Terms & Privacy" },
+    ],
+  },
+];
+
+export const POPULAR_TOOL_LINKS: NavLink[] = [
+  { href: "/free/ai-interior-design", label: "AI Redesign" },
+  { href: "/free/virtual-staging", label: "Virtual Staging" },
+  { href: "/free/rehab-cost-calculator", label: "Rehab Calculator" },
+  { href: "/free/arv-calculator", label: "ARV Calculator" },
+  { href: "/resources", label: "View All Tools" },
 ];
 
 /** Every URL that belongs in sitemap.xml, in priority order. */
