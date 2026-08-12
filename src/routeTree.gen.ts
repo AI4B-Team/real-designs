@@ -33,6 +33,7 @@ import { Route as StatusRouteImport } from './routes/status'
 import { Route as SubprocessorsRouteImport } from './routes/subprocessors'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as FreeIndexRouteImport } from './routes/free/index'
 import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
 import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calculator'
 import { Route as FreeRehabCostCalculatorRouteImport } from './routes/free/rehab-cost-calculator'
@@ -161,6 +162,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const FreeIndexRoute = FreeIndexRouteImport.update({
+  id: '/free/',
+  path: '/free/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FreeAiInteriorDesignRoute = FreeAiInteriorDesignRouteImport.update({
   id: '/free/ai-interior-design',
   path: '/free/ai-interior-design',
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/p/$token': typeof PTokenRoute
   '/pricing/compare': typeof PricingCompareRoute
   '/pricing/credits': typeof PricingCreditsRoute
+  '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesByTo {
@@ -266,6 +273,7 @@ export interface FileRoutesByTo {
   '/p/$token': typeof PTokenRoute
   '/pricing/compare': typeof PricingCompareRoute
   '/pricing/credits': typeof PricingCreditsRoute
+  '/free': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRoutesById {
@@ -301,6 +309,7 @@ export interface FileRoutesById {
   '/p/$token': typeof PTokenRoute
   '/pricing_/compare': typeof PricingCompareRoute
   '/pricing_/credits': typeof PricingCreditsRoute
+  '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
 export interface FileRouteTypes {
@@ -336,6 +345,7 @@ export interface FileRouteTypes {
     | '/p/$token'
     | '/pricing/compare'
     | '/pricing/credits'
+    | '/free/'
     | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -369,6 +379,7 @@ export interface FileRouteTypes {
     | '/p/$token'
     | '/pricing/compare'
     | '/pricing/credits'
+    | '/free'
     | '/api/public/founding'
   id:
     | '__root__'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/p/$token'
     | '/pricing_/compare'
     | '/pricing_/credits'
+    | '/free/'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
 }
@@ -437,6 +449,7 @@ export interface RootRouteChildren {
   PTokenRoute: typeof PTokenRoute
   PricingCompareRoute: typeof PricingCompareRoute
   PricingCreditsRoute: typeof PricingCreditsRoute
+  FreeIndexRoute: typeof FreeIndexRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
 
@@ -610,6 +623,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/free/': {
+      id: '/free/'
+      path: '/free'
+      fullPath: '/free/'
+      preLoaderRoute: typeof FreeIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/free/ai-interior-design': {
       id: '/free/ai-interior-design'
       path: '/free/ai-interior-design'
@@ -711,6 +731,7 @@ const rootRouteChildren: RootRouteChildren = {
   PTokenRoute: PTokenRoute,
   PricingCompareRoute: PricingCompareRoute,
   PricingCreditsRoute: PricingCreditsRoute,
+  FreeIndexRoute: FreeIndexRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }
 export const routeTree = rootRouteImport
