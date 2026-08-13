@@ -133,6 +133,7 @@ export function mountExplore(go, ctx) {
   function matchesSpace(d) {
     if (cat === "All") return true;
     if (cat === "Virtual Staging") return !!d.staging;
+    if (cat === "Saved") return saved.indexOf(d.id) > -1;
     return d.spaces.indexOf(cat) > -1;
   }
   function matchesRoom(d) {
