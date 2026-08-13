@@ -20,6 +20,7 @@ import { listPresentations, createPresentation, deletePresentation, getPresentat
 import { buildSocialReel } from "@/lib/social-reel";
 import { track } from "@/lib/analytics";
 import { mountFirstUse } from "@/content/rd-firstuse";
+import { mountStudioStart } from "@/content/rd-studio-start";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
@@ -726,7 +727,7 @@ function setStudioSource(kind,src,alt,opts){
   analyzeObjects();
   paintStudioState();
   paintStudioSub();
-  try{ window.rdStudioHideWelcome&&window.rdStudioHideWelcome(); }catch(_){}
+  
   cRng.value=50; setC(50);
 }
 
@@ -905,8 +906,8 @@ function needSourceModal(){
       +'<button class="btn btn-ghost" id="nsSample">Try a Sample</button></div></div>';
     (document.querySelector('.rd-app')||document.body).appendChild(m);
     m.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-close]')) m.classList.remove('on'); });
-    m.querySelector('#nsUpload').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioWelcome&&window.rdStudioWelcome('upload'); }catch(_){} });
-    m.querySelector('#nsSample').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioWelcome&&window.rdStudioWelcome('sample'); }catch(_){} });
+    m.querySelector('#nsUpload').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioStart&&window.rdStudioStart('upload'); }catch(_){} });
+    m.querySelector('#nsSample').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioStart&&window.rdStudioStart('sample'); }catch(_){} });
   }
   m.classList.add('on');
   lucide.createIcons();
