@@ -341,7 +341,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       );
     }
     return (
-      "<h4>Start With A Property</h4><p>Open an existing property or create one to organize multiple rooms and designs. Organize rooms, angles, designs, budgets and project decisions under one address.</p>" +
+      "<h4>Start With A Property</h4><p>Open an existing property or create one to organize multiple rooms and designs.</p>" +
       '<div class="sts-row col">' +
       '<button class="btn btn-dark btn-sm" data-sts="proppick"><i data-lucide="list"></i>Select Existing Property</button>' +
       '<button class="btn btn-ghost btn-sm" data-sts="propnew"><i data-lucide="plus"></i>Create New Property</button>' +
