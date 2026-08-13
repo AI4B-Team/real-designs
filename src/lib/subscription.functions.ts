@@ -89,7 +89,7 @@ export const listBillingEvents = createServerFn({ method: "GET" })
       id: string;
       kind: string;
       detail: string | null;
-      meta: Record<string, unknown>;
+      meta: { amount?: number; plan?: string; credits?: number } | null;
       created_at: string;
     }[];
   });
