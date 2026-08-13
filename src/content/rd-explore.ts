@@ -435,6 +435,9 @@ export function mountExplore(go, ctx) {
       return;
     }
     if (t.closest("#xpPanelX")) { $("xpPanel").classList.remove("on"); $("xpFilterBtn").setAttribute("aria-expanded", "false"); return; }
+    if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
+    if (t.closest("[data-qskip]")) { $("xpQuiz").hidden = true; return; }
+    if (t.closest("[data-qretake]")) { write("rd_ex_quiz", null); qStep = 0; qPicks = []; paintQuiz(); return; }
     if (t.closest("#xpClear")) { room = null; traits = []; grade = null; $("xpQ").value = ""; paint(); return; }
   });
 
