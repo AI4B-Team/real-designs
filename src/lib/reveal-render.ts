@@ -496,7 +496,11 @@ export async function renderReveal(
         const img = imgs[idx]!;
         const cmp = compares[idx];
         const p = local / durations[idx]!;
-        const motion = scene.motion && scene.motion !== "auto" ? scene.motion : "auto";
+        const motion = scene.exterior_effect
+          ? scene.exterior_effect
+          : scene.motion && scene.motion !== "auto"
+            ? scene.motion
+            : "auto";
         const transition = scene.transition || opts.transition || "clean";
 
         if (cmp && scene.scene_type === "before_after") {
