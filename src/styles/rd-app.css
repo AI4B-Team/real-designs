@@ -1174,3 +1174,10 @@
   .rd-app .sts-panel{ position:static; }
   .rd-app .sts-drop{ min-height:320px; }
 }
+
+.rd-app .sts-modal{ position:fixed; inset:0; z-index:70; display:flex; align-items:center; justify-content:center; padding:24px; }
+.rd-app .sts-scrim{ position:absolute; inset:0; background:rgba(17,17,19,.55); }
+.rd-app .sts-modal .sts-samples{
+  position:relative; z-index:1; width:min(720px,100%); max-height:80vh; overflow:auto;
+  background:var(--surface); border:1px solid var(--line); border-radius:16px; padding:20px !important;
+}

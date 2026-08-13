@@ -142,10 +142,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   /* ---------- canvas ---------- */
 
   function canvasHtml() {
-    if (state.samples) return samplesHtml();
-    if (state.method === "describe") return composerHtml();
-    if (state.file) return previewHtml();
-    return dropHtml();
+    const base = state.method === "describe" ? composerHtml() : state.file ? previewHtml() : dropHtml();
+    return state.samples ? base + samplesHtml() : base;
   }
 
   function dropHtml() {
@@ -180,6 +178,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function samplesHtml() {
     return (
+      '<div class="sts-modal" role="dialog" aria-modal="true" aria-label="Choose A Sample Space">' +
+      '<div class="sts-scrim" data-sts="closesamples"></div>' +
       '<div class="sts-samples"><div class="sts-samples-h"><b>Choose A Sample Space</b>' +
       '<button class="sts-link" data-sts="closesamples">Cancel</button></div>' +
       '<div class="sts-grid">' +
@@ -197,7 +197,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       ).join("") +
       "</div>" +
       '<p class="sts-note">Samples stay labelled as samples and are never saved to your account unless you choose to save one.</p>' +
-      "</div>"
+      "</div></div>"
     );
   }
 
