@@ -268,7 +268,7 @@ document.addEventListener('click',async(e)=>{
 
 
 const INV_EMPTY='<tr><td colspan="4" style="padding:18px 12px;color:var(--mute-2);font-size:.82rem">'+
-'No billing history yet. Plan changes, monthly refills and receipts appear here.</td></tr>';
+'No Billing History Yet. Plan changes, monthly refills and receipts appear here.</td></tr>';
 document.getElementById('invRows').innerHTML=INV_EMPTY;
 const EV_LABEL={requested:'Plan Requested',activated:'Plan Activated',downgraded:'Plan Changed',canceled:'Canceled',
   cancel_scheduled:'Cancellation Scheduled',cancel_reverted:'Cancellation Reverted',refill:'Monthly Refill',
@@ -413,7 +413,7 @@ async function loadDashboard(){
     const b=k.querySelector('b'); if(b) b.textContent=val;
     const d=k.querySelector('.d'); if(d){ d.textContent=note; d.classList.remove('up'); } };
   setKpi(0,String(s.counts.designs),s.counts.designs?s.counts.priced+' priced with a scope':'Save a room to get started');
-  setKpi(1,String(s.counts.properties),s.counts.properties?'Saved to your account':'No properties yet');
+  setKpi(1,String(s.counts.properties),s.counts.properties?'Saved to your account':'No Properties Yet');
   setKpi(2,s.counts.scopedTotal?kfmt(s.counts.scopedTotal):'—',s.counts.priced+' priced '+(s.counts.priced===1?'room':'rooms'));
   setKpi(3,String(s.counts.drafts),s.counts.drafts?'Rooms not approved yet':'Nothing pending');
 
@@ -468,7 +468,7 @@ async function loadDashboard(){
 <td class="n">${t?kfmt(t):'—'}</td><td class="n">${p.priced?kfmt(p.low)+' to '+kfmt(p.high):'—'}</td>
 <td style="text-align:right"><span class="pill ${fit[0]}">${fit[1]}</span></td></tr>`;
   }).join('')
-    :'<tr><td colspan="6">No saved projects yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
+    :'<tr><td colspan="6">No Saved Projects Yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
 }
 document.getElementById('attnList')?.addEventListener('click',(e)=>{
   const r=e.target.closest('[data-goto]'); if(!r) return;
@@ -514,7 +514,7 @@ async function paintRooms(){
 
   const rooms=proj?proj.rooms:[];
   if(!rooms.length){
-    rc.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No rooms here yet. Price a room in Studio, then use Save To My Projects.</p>';
+    rc.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No Rooms Here Yet. Price a room in Studio, then use Save To My Projects.</p>';
     return;
   }
   rc.innerHTML=rooms.map(r=>{
@@ -547,7 +547,7 @@ function paintStudioSub(){
 function paintTree(){
   const el=document.getElementById('tree'); if(!el) return;
   if(!PROP_TREE.length){
-    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No properties yet. Saving a room in Studio creates one.</p>';
+    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No Properties Yet. Saving a room in Studio creates one.</p>';
     paintRooms(); paintStudioSub(); return;
   }
   const rows=[];
@@ -880,7 +880,7 @@ async function paintVersions(){
   SAVED_EST=list; updateSearchMeta();
   list=list.slice(0,6);
   if(!list.length){
-    el.innerHTML='<p style="font-size:.78rem;color:var(--mute-2);padding:6px 0">No versions yet. Save a design to start the history.</p>';
+    el.innerHTML='<p style="font-size:.78rem;color:var(--mute-2);padding:6px 0">No Versions Yet. Save a design to start the history.</p>';
     return;
   }
   const ago=(iso)=>{const s=(Date.now()-new Date(iso).getTime())/1000;
@@ -971,7 +971,7 @@ async function openHistory(r){
 }
 function paintHistory(){
   const m=histModal(), body=m.querySelector('#hmBody');
-  if(!HIST_LIST.length){ body.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No saved versions on this room yet.</p>'; return; }
+  if(!HIST_LIST.length){ body.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No Saved Versions On This Room Yet.</p>'; return; }
   body.innerHTML=HIST_LIST.map((v,i)=>{
     const st=ST_PILL(v.status);
     const cost=v.total_low!=null?kfmt(v.total_low)+' to '+kfmt(v.total_high):'Not priced';
@@ -1060,7 +1060,7 @@ function paintBatch(){
   if(!sel||!list) return;
   const runBtn=document.getElementById('batchRun');
   if(!PROP_TREE.length){
-    sel.innerHTML='<option value="">No properties yet</option>';
+    sel.innerHTML='<option value="">No Properties Yet</option>';
     list.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Add a property and upload room photos to build a batch.</p>';
     BATCH_ROOMS=[];
     const st0=batchStateEl(); if(st0){ st0.className='pill p-gray'; st0.textContent='Nothing To Run'; }
@@ -1075,7 +1075,7 @@ function paintBatch(){
   const rooms=[]; prop.projects.forEach(pr=>pr.rooms.forEach(r=>rooms.push(r)));
   BATCH_ROOMS=rooms.filter(r=>!!r.before_path);
   const sub=document.getElementById('batchSub');
-  if(sub) sub.textContent=rooms.length?(rooms.length+(rooms.length===1?' room':' rooms')+' on file, '+BATCH_ROOMS.length+' with a photo'):'No rooms on this property yet';
+  if(sub) sub.textContent=rooms.length?(rooms.length+(rooms.length===1?' room':' rooms')+' on file, '+BATCH_ROOMS.length+' with a photo'):'No Rooms On This Property Yet';
   const st=batchStateEl();
   if(st){ st.className='pill '+(BATCH_ROOMS.length?'p-ok':'p-gray'); st.textContent=BATCH_ROOMS.length?(BATCH_ROOMS.length+' Ready · '+BATCH_ROOMS.length+' Credits'):'Nothing To Run'; }
   if(runBtn) runBtn.disabled=!BATCH_ROOMS.length||batchBusy;
@@ -1086,7 +1086,7 @@ function paintBatch(){
         return `<div class="rowi" data-broom="${r.id}"><div class="rowt"><b>${r.name}</b><span data-bmsg>${ready?(done?('v'+(r.version_no||1)+' saved'):'ready to stage'):'no photo on file'}</span></div>
           <span class="pill ${ready?(done?'p-ok':'p-gray'):'p-amb'}" data-bpill>${ready?(done?'Designed':'Queued'):'No Photo'}</span></div>`;
       }).join('')
-    : '<p style="font-size:.79rem;color:var(--mute-2)">No rooms on this property yet.</p>';
+    : '<p style="font-size:.79rem;color:var(--mute-2)">No Rooms On This Property Yet.</p>';
 }
 const batchProp=document.getElementById('batchProp');
 if(batchProp) batchProp.addEventListener('change',paintBatch);
@@ -1226,7 +1226,7 @@ function showAlert(msg){
 function renderAllowance(r){
   const rows=document.getElementById('allowRows'); if(!rows) return;
   const note=document.getElementById('allowNote'), sub=document.getElementById('allowSub');
-  if(!r){ rows.innerHTML='<tr><td colspan="5">No priced scope yet.</td></tr>';
+  if(!r){ rows.innerHTML='<tr><td colspan="5">No Priced Scope Yet.</td></tr>';
     note.textContent='Open Scope & Budget and price a scope to build the allowance list.'; return; }
   const mat=r.lines.filter(l=>l.material_high>0);
   if(!mat.length){ rows.innerHTML='<tr><td colspan="5">This scope is labor only, so there is no material allowance.</td></tr>';
@@ -1683,7 +1683,7 @@ function renderPresRows(){
       <button class="icon-btn" data-board title="Product board"><i data-lucide="shopping-bag"></i></button>
       <button class="icon-btn" data-reel title="Social reel, 9x16"><i data-lucide="clapperboard"></i></button>
       <button class="icon-btn" data-del title="Delete link"><i data-lucide="trash-2"></i></button></div>${note}<div class="pres-hist" data-hist-for="${r.id}" hidden></div>`;
-  }).join(''):'<p style="font-size:.79rem;color:var(--mute-2)">No links with that status yet.</p>';
+  }).join(''):'<p style="font-size:.79rem;color:var(--mute-2)">No Links With That Status Yet.</p>';
 
   el.innerHTML=tabs+body;
   lucide.createIcons();
@@ -1696,7 +1696,7 @@ async function paintPresentations(){
   catch(e){ PRES_ROWS=[]; }
   updateSearchMeta();
   if(!PRES_ROWS.length){
-    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No client links yet. Save a room in Studio, then use New Link to share it for approval.</p>';
+    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No Client Links Yet. Save a room in Studio, then use New Link to share it for approval.</p>';
     return;
   }
   renderPresRows();
@@ -1728,7 +1728,7 @@ async function togglePresHistory(pid){
   const meta=PRES_ROWS.find(x=>x.id===pid);
   if(meta&&meta.created_at) rows=rows.concat([{id:'created',kind:'created',detail:'Share link created',note:null,excluded_count:0,note_count:0,created_at:meta.created_at}]);
   if(!rows.length){
-    box.innerHTML='<div class="pres-hist-i"><span>No activity yet. The timeline fills in once the client opens the link.</span></div>';
+    box.innerHTML='<div class="pres-hist-i"><span>No Activity Yet. The timeline fills in once the client opens the link.</span></div>';
     return;
   }
   box.innerHTML=rows.map(ev=>{
@@ -1777,7 +1777,7 @@ function reportKpis(r){
 function reportRows(r){
   const tb=document.getElementById('repRows'); if(!tb) return;
   if(!r.rows.length){
-    tb.innerHTML='<tr><td colspan="9" style="color:var(--mute-2);font-size:.79rem">No properties yet. Save a room in Studio to start the rollup.</td></tr>';
+    tb.innerHTML='<tr><td colspan="9" style="color:var(--mute-2);font-size:.79rem">No Properties Yet. Save a room in Studio to start the rollup.</td></tr>';
     return;
   }
   tb.innerHTML=r.rows.map(x=>{
@@ -1842,7 +1842,7 @@ function presPdfHtml(p){
   const when=new Date(p.created_at||Date.now()).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   const lines=(p.lines||[]);
   const rows=lines.map(l=>`<tr><td>${esc(l.description)}</td><td>${esc(l.trade)}</td><td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${presMoney(l.low)} &ndash; ${presMoney(l.high)}</td></tr>`).join('')
-    ||'<tr><td colspan="4">No priced line items on this version yet.</td></tr>';
+    ||'<tr><td colspan="4">No Priced Line Items On This Version Yet.</td></tr>';
   const range=p.total_low!=null?presMoney(p.total_low)+' &ndash; '+presMoney(p.total_high):'Not priced yet';
   const img=(u,l)=>u?`<figure><img src="${esc(u)}" alt="${l}"><figcaption>${l}</figcaption></figure>`:`<figure class="ph"><div>${l} not available</div></figure>`;
   /* Trade rollup so the client sees where the money sits before the line detail. */
@@ -2149,7 +2149,7 @@ function presModal(){
   })));
   sel.innerHTML=versions.length
     ? versions.map(v=>`<option value="${v.id}">${v.label}</option>`).join('')
-    : '<option value="">No saved designs yet</option>';
+    : '<option value="">No Saved Designs Yet</option>';
   m.querySelector('#plErr').style.display='none';
   m.querySelector('#plOut').style.display='none';
   m.classList.add('on');
@@ -2188,7 +2188,7 @@ async function paintTeam(){
       <button class="btn btn-p" data-accept="${i.id}" style="margin-left:8px">Accept</button></div>`).join('');
   list.innerHTML=`<div class="seat"><span class="av">${av}</span><div class="rowt"><b>${name}</b><span>${mail||'Signed in'}</span></div>
     <span class="pill p-ink">Owner</span></div>${invites}${inbound}
-    ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No teammates yet. Invite one below. They sign in with that email, accept the invite, and then share this workspace with you.</p>'}`;
+    ${invites?'':'<p style="font-size:.79rem;color:var(--mute-2);margin:10px 0 0">No Teammates Yet. Invite one below. They sign in with that email, accept the invite, and then share this workspace with you.</p>'}`;
   const seatEl=document.getElementById('seatCount');
   if(seatEl){ const n=1+(team.sent||[]).length; seatEl.textContent=n+(n===1?' Seat':' Seats'); }
   list.querySelectorAll('[data-copyinv]').forEach(b=>b.addEventListener('click',async()=>{
@@ -2434,7 +2434,7 @@ document.getElementById('helpPop').addEventListener('click',e=>{
 });
 
 /* ---------- walkthroughs ---------- */
-/* Written step-by-step guides that open the matching view. No video library yet. */
+/* Written step-by-step guides that open the matching view. No Video Library Yet. */
 const TUTS=[
  ['Add Your First Property','Getting Started','studio',['Open Studio and upload a straight-on photo of the room.','Enter the address so the room is filed under a property.','Generate a version and save it. The property, project and room appear in Properties.']],
  ['Photos That Render Well','Getting Started','studio',['Shoot from a doorway or corner so two walls and the floor are visible.','Turn on the lights and open the blinds. Avoid heavy backlight.','Keep the camera level. Tilted shots distort the ceiling line.']],
@@ -2666,7 +2666,7 @@ function renderNotifs(){
   if(page){ const t2=document.querySelector('#notifTabs2 .notif-tab.on')?.dataset.t||'all'; const r2=notifFilter(t2);
     page.innerHTML=r2.length?r2.map(notifRow).join(''):empty; }
   const cnt=document.getElementById('notifCount');
-  if(cnt) cnt.textContent=NOTIFS.length?(unread?unread+' unread of '+NOTIFS.length+' notifications':'All caught up, '+NOTIFS.length+' notifications'):'No activity yet';
+  if(cnt) cnt.textContent=NOTIFS.length?(unread?unread+' unread of '+NOTIFS.length+' notifications':'All caught up, '+NOTIFS.length+' notifications'):'No Activity Yet';
   lucide.createIcons();
 }
 const notifBtn=document.getElementById('notifBtn'),notifMenu=document.getElementById('notifMenu');
@@ -2957,7 +2957,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     +'</div>'
     +'<div class="save-photo"><label class="btn btn-ghost btn-xs" for="svPhoto"><i data-lucide="image-up"></i>Upload Room Photo</label>'
     +'<input id="svPhoto" type="file" accept="image/*" hidden>'
-    +'<span class="sub" id="svPhotoNote">No photo uploaded yet. The sample room is used until you add one.</span>'
+    +'<span class="sub" id="svPhotoNote">No Photo Uploaded Yet. The sample room is used until you add one.</span>'
     +'<img id="svThumb" alt="" hidden></div></div>';
   scopeGrid.appendChild(saveCard);
 
