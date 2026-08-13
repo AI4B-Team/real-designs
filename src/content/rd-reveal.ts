@@ -1135,6 +1135,10 @@ function editExisting(d) {
     motion: s.motion,
     caption: s.caption,
     disclosure: s.disclosure_type,
+    motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
+    immersive_effect: s.immersive_effect || null,
+    exterior_effect: s.exterior_effect || null,
+    labels: Array.isArray(s.labels) ? s.labels : [],
     asset_id: s.source_asset_id,
     version_id: s.source_version_id,
   }));
