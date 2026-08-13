@@ -67,6 +67,13 @@ const SHELL = `
     <div class="xp-panel-f"><button class="fb-link" id="xpClear">Clear Filters</button></div>
   </div>
 
+  <section class="xp-quiz" id="xpQuiz" hidden>
+    <div class="xp-quiz-top">
+      <div><h3>Find Your Design Direction</h3><p>Five quick picks. Optional, and you can change it later.</p></div>
+    </div>
+    <div class="xp-quiz-card" id="xpQuizCard"></div>
+  </section>
+
   <p class="xp-count" id="xpCount"></p>
   <div class="xp-grid" id="xpGrid"></div>
 </div>
