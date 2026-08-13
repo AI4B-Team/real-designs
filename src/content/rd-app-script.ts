@@ -11,7 +11,7 @@ import { renderPlan3d } from "@/lib/plan3d.functions";
 import { runRoomTool } from "@/lib/room-tools.functions";
 import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
-import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions } from "@/lib/workspace.functions";
+import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions, setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { getPortfolioReport } from "@/lib/reports.functions";
