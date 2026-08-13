@@ -21,7 +21,17 @@ import {
   saveBrandKit,
   saveShareLink,
 } from "@/lib/reveal.functions";
-import { renderReveal, sceneDurations, DISCLOSURE_LABEL } from "@/lib/reveal-render";
+import {
+  renderReveal,
+  sceneDurations,
+  DISCLOSURE_LABEL,
+  STANDARD_MOTIONS,
+  IMMERSIVE_EFFECTS,
+  EXTERIOR_EFFECTS,
+  EXTERIOR_DISCLOSURE,
+  IMMERSIVE_CREDITS_PER_SCENE,
+  suggestLabels,
+} from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
 
 const BUCKET = "reveal-videos";
