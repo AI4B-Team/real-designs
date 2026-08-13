@@ -26,6 +26,19 @@ const SceneInput = z.object({
   transition: z.string().max(30).default("clean"),
   caption: z.string().max(300).nullable().optional(),
   disclosure_type: z.string().max(40).nullable().optional(),
+  motion_level: z.enum(["standard", "immersive"]).default("standard"),
+  immersive_effect: z.string().max(40).nullable().optional(),
+  exterior_effect: z.string().max(40).nullable().optional(),
+  labels: z
+    .array(
+      z.object({
+        text: z.string().max(80),
+        style: z.enum(["clean", "architectural", "callout"]).default("clean"),
+        position: z.enum(["top_left", "top_right", "bottom_left", "bottom_right"]).default("bottom_left"),
+      }),
+    )
+    .max(3)
+    .default([]),
 });
 
 const ProjectInput = z.object({
