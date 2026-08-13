@@ -86,17 +86,17 @@
   gap: 7px;
   min-width: 0;
   font-family: inherit;
-  line-height: 1.35;
+  line-height: 1.45;
   white-space: nowrap;
 }
 
 /* the text node needs its own box, otherwise ellipsis never applies
    to a flex child and long values are cut mid-character */
 .rsp-text {
+  display: block;
   min-width: 0;
-  padding-bottom: 1px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 1px 0 3px;
+  overflow: visible;
   white-space: nowrap;
 }
 
