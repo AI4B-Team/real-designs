@@ -13,7 +13,7 @@ import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions, setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
+import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { getPortfolioReport } from "@/lib/reports.functions";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded } from "@/lib/presentations.functions";
