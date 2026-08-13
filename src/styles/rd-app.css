@@ -944,11 +944,12 @@
 .rd-app .content.rd-routing{opacity:0}
 .rd-app .content{transition:opacity .18s ease}
 .rd-app .fu{background:var(--white);border:1px solid var(--line);border-radius:14px;padding:22px 22px 20px;margin-bottom:16px}
-.rd-app .fu-head{max-width:760px;margin-bottom:16px}
+.rd-app .fu-head{max-width:880px;margin-bottom:16px}
 .rd-app .fu-head.slim{margin-bottom:12px}
 .rd-app .fu-eyebrow{display:block;font-size:.68rem;letter-spacing:.14em;color:var(--red);margin-bottom:8px}
 .rd-app .fu-head h2{font-size:1.5rem;line-height:1.2;margin:0 0 8px}
-.rd-app .fu-head p{margin:0;color:var(--mute);font-size:.92rem}
+.rd-app .fu-head p{margin:0;color:var(--mute);font-size:.86rem;white-space:nowrap}
+@media(max-width:760px){.rd-app .fu-head{max-width:100%}.rd-app .fu-head p{white-space:normal;font-size:.82rem}}
 .rd-app .fu-p{color:var(--mute);font-size:.88rem;margin:0 0 10px}
 .rd-app .fu-rail{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:0 0 18px;padding:0}
 .rd-app .fu-rail-i{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--mute);
