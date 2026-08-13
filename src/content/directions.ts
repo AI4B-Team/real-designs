@@ -8,9 +8,10 @@ export type Direction = {
   id: string; name: string; img: string; line: string; about: string;
   palette: string[]; spaces: string[]; materials: string[]; finishes: string[];
   rooms: string[]; budgets: string[]; grades: string[];
+  traits?: string[]; examples?: string[]; staging?: boolean;
 };
 
-export const DIRECTIONS: Direction[] = [
+const BASE: Direction[] = [
   {
     id: "warm-minimal", name: "Warm Minimal", img: P.after,
     line: "Quiet palette, warm woods, nothing extra.",
@@ -119,4 +120,93 @@ export const DIRECTIONS: Direction[] = [
     finishes: ["White walls", "Light plank floors", "Simple casegoods"],
     rooms: ["Living Room", "Primary Bedroom"], budgets: ["Refresh", "Makeover"], grades: ["Rental Grade", "Retail Grade"],
   },
+  {
+    id: "craftsman-revival", name: "Craftsman Revival", img: P.craftsman,
+    line: "Tapered columns, deep eaves, honest woodwork.",
+    about: "Period correct porch detail, painted siding and stained timber. Restores character to post-war and bungalow elevations without changing the footprint.",
+    palette: ["#F1EBDF", "#9C6B43", "#4A5A48", "#1F1B17"],
+    spaces: ["Exterior"], materials: ["Painted siding", "Stained cedar", "Stone base", "Bronze fixtures"],
+    finishes: ["Tapered porch columns", "Exposed rafter tails", "Divided light windows"],
+    rooms: ["Front Elevation"], budgets: ["Makeover", "Renovation"], grades: ["Retail Grade"],
+  },
+  {
+    id: "painted-brick", name: "Painted Brick", img: P.paintedBrick,
+    line: "One coat of paint, an entirely new elevation.",
+    about: "The highest return exterior move on dated brick. Limewash or masonry paint with refreshed trim, door and lighting.",
+    palette: ["#F7F5F1", "#D8D2C8", "#6E6A64", "#1B1A18"],
+    spaces: ["Exterior"], materials: ["Masonry paint", "Limewash", "Black steel", "Composite door"],
+    finishes: ["Painted brick field", "Contrast trim", "Updated porch lighting"],
+    rooms: ["Front Elevation"], budgets: ["Refresh", "Makeover"], grades: ["Rental Grade", "Retail Grade"],
+  },
+  {
+    id: "resort-landscape", name: "Resort Landscape", img: P.resortYard,
+    line: "Shaded seating, layered planting, evening light.",
+    about: "Treats the yard as an outdoor room: paved living zone, structured planting and low voltage lighting for evening photography.",
+    palette: ["#F2EFE7", "#C6B79A", "#4C6551", "#23231F"],
+    spaces: ["Landscape"], materials: ["Porcelain paving", "Hardwood decking", "Palm planting", "Low voltage lighting"],
+    finishes: ["Shade structure", "Built-in seating", "Planted borders"],
+    rooms: ["Backyard"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade"],
+  },
+  {
+    id: "low-maintenance-yard", name: "Low Maintenance Yard", img: P.yardAfter,
+    line: "Gravel, native planting, almost no upkeep.",
+    about: "Drought tolerant planting, defined edging and hard surfaces. Built for rentals and turnover properties where nobody is mowing.",
+    palette: ["#F4F1E9", "#CFC4AC", "#7C8A6C", "#2A2823"],
+    spaces: ["Landscape"], materials: ["Decomposed granite", "Native grasses", "Steel edging", "Concrete pavers"],
+    finishes: ["Gravel beds", "Drip irrigation", "Paver walkway"],
+    rooms: ["Backyard", "Front Elevation"], budgets: ["Refresh", "Makeover"], grades: ["Rental Grade"],
+  },
 ];
+
+const TRAITS: Record<string, string[]> = {
+  "warm-minimal": ["Warm", "Minimal", "Rental-Friendly"],
+  "organic-modern": ["Organic", "Warm", "Minimal"],
+  "modern-farmhouse": ["Traditional", "Warm", "Rental-Friendly"],
+  "quiet-luxury": ["Luxury", "Minimal"],
+  japandi: ["Minimal", "Organic"],
+  coastal: ["Warm", "Rental-Friendly"],
+  "mid-century": ["Bold", "Warm"],
+  industrial: ["Bold", "Rental-Friendly"],
+  transitional: ["Traditional", "Rental-Friendly"],
+  contemporary: ["Minimal", "Bold", "Luxury"],
+  mediterranean: ["Warm", "Traditional", "Organic"],
+  scandinavian: ["Minimal", "Rental-Friendly"],
+  "craftsman-revival": ["Traditional", "Warm"],
+  "painted-brick": ["Bold", "Rental-Friendly"],
+  "resort-landscape": ["Luxury", "Organic"],
+  "low-maintenance-yard": ["Organic", "Rental-Friendly"],
+};
+
+/** Extra photoreal examples shown in the direction preview. */
+const EXAMPLES: Record<string, string[]> = {
+  "warm-minimal": [P.after, P.kitchenAfter, P.stageEmpty],
+  "organic-modern": [P.neutral, P.yardAfter, P.officeAfter],
+  "modern-farmhouse": [P.farmhouse, P.paintedBrick, P.kitchenAfter],
+  "quiet-luxury": [P.luxury, P.bath, P.after],
+  japandi: [P.japandi, P.bedroomAfter, P.neutral],
+  coastal: [P.coastal, P.stageStaged, P.exteriorAfter],
+  "mid-century": [P.midcentury, P.officeAfter, P.after],
+  industrial: [P.industrial, P.kitchen, P.officeAfter],
+  transitional: [P.bedroomAfter, P.after, P.bath],
+  contemporary: [P.officeAfter, P.exteriorAfter, P.luxury],
+  mediterranean: [P.resortYard, P.craftsman, P.yardAfter],
+  scandinavian: [P.stageStaged, P.neutral, P.bedroomAfter],
+  "craftsman-revival": [P.craftsman, P.ranch, P.exteriorAfter],
+  "painted-brick": [P.paintedBrick, P.ranch, P.craftsman],
+  "resort-landscape": [P.resortYard, P.yardAfter, P.exteriorAfter],
+  "low-maintenance-yard": [P.yardAfter, P.resortYard, P.ranch],
+};
+
+/** Directions that also work as virtual staging presets for empty rooms. */
+const STAGING = new Set(["warm-minimal", "scandinavian", "transitional", "contemporary", "coastal"]);
+
+export const DIRECTIONS: Direction[] = BASE.map((d) => ({
+  ...d,
+  traits: TRAITS[d.id] ?? [],
+  examples: EXAMPLES[d.id] ?? [d.img],
+  staging: STAGING.has(d.id),
+}));
+
+export const TRAIT_OPTIONS = [
+  "Warm", "Minimal", "Traditional", "Organic", "Bold", "Luxury", "Rental-Friendly",
+] as const;
