@@ -162,7 +162,7 @@ export function mountExplore(go, ctx) {
         <button class="xp-save${on ? " on" : ""}" data-save="${d.id}" aria-label="Save Direction" title="Save Direction"><i data-lucide="bookmark"></i></button>
       </div>
       <div class="xp-body">
-        <div class="xp-t"><b>${esc(d.name)}</b></div>
+        <div class="xp-t"><b>${esc(gtxt(d.name))}</b></div>
         <p class="xp-line">${esc(gtxt(d.line))}</p>
         ${swatches(d.palette)}
         <div class="xp-meta">${tags.map((s) => `<span class="xp-tag">${esc(s)}</span>`).join("")}</div>
@@ -234,13 +234,13 @@ export function mountExplore(go, ctx) {
     const p = prop();
     const locked = !!propDirection() && propDirection() !== d.name;
     openDrawer(`
-      <div class="xp-dh"><div><span class="xp-eyebrow">Design Direction</span><h3>${esc(d.name)}</h3><p>${esc(d.line)}</p></div>
+      <div class="xp-dh"><div><span class="xp-eyebrow">Design Direction</span><h3>${esc(gtxt(d.name))}</h3><p>${esc(gtxt(d.line))}</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
         <div class="xp-hero"><img src="${shots[0]}" alt="${esc(d.name)}" id="xpHero"></div>
         ${shots.length > 1 ? `<div class="xp-shots">${shots.map((s, i) => `<button class="xp-shot${i === 0 ? " on" : ""}" data-shot="${s}"><img src="${s}" alt="${esc(d.name)} example ${i + 1}" loading="lazy"></button>`).join("")}</div>` : ""}
         ${compatLine(d)}
-        <p class="xp-about">${esc(d.about)}</p>
+        <p class="xp-about">${esc(gtxt(d.about))}</p>
         <div class="xp-spec"><b>Color Palette</b><div class="xp-pal">${d.palette.map((c) => `<i style="background:${c}"></i>`).join("")}</div></div>
         <div class="xp-spec"><b>Materials And Finishes</b><div>${d.materials.concat(d.finishes).map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
         <div class="xp-spec"><b>Finish Grade Compatibility</b><div>${d.grades.map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
@@ -261,7 +261,7 @@ export function mountExplore(go, ctx) {
       <div class="xp-dh"><div><span class="xp-eyebrow">Collection</span><h3>Saved Directions</h3><p>Directions you kept for later. Generated results stay in Designs.</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
-        ${items.length ? `<div class="xp-saved">${items.map((d) => `<div class="xp-sitem"><img src="${d.img}" alt="${esc(d.name)}"><div><b>${esc(d.name)}</b><span>${esc(d.line)}</span></div><button class="fb-link" data-open="${d.id}">Preview</button><button class="fb-link" data-save="${d.id}">Remove</button></div>`).join("")}</div>`
+        ${items.length ? `<div class="xp-saved">${items.map((d) => `<div class="xp-sitem"><img src="${d.img}" alt="${esc(d.name)}"><div><b>${esc(gtxt(d.name))}</b><span>${esc(gtxt(d.line))}</span></div><button class="fb-link" data-open="${d.id}">Preview</button><button class="fb-link" data-save="${d.id}">Remove</button></div>`).join("")}</div>`
         : '<div class="xp-note"><i data-lucide="bookmark"></i><span>Nothing saved yet. Use Save Direction on any preview.</span></div>'}
       </div>
       <div class="xp-df"><button class="btn btn-ghost btn-sm" data-close="1">Close</button></div>`);
@@ -295,7 +295,7 @@ export function mountExplore(go, ctx) {
     closeDrawer();
     go("studio");
     const p = prop();
-    note(d.name + " Applied In Studio" + (p ? " For " + p.address : "") + ". Confirm Your Settings, Then Generate.");
+    note(gtxt(d.name) + " Applied In Studio" + (p ? " For " + p.address : "") + ". Confirm Your Settings, Then Generate.");
   }
 
   /** Write the direction into the existing property Design DNA system. */
@@ -310,7 +310,7 @@ export function mountExplore(go, ctx) {
       if (api.reloadTree) await api.reloadTree();
       syncProp();
       closeDrawer();
-      note(d.name + " Is Now The Design DNA For " + p.address + ".");
+      note(gtxt(d.name) + " Is Now The Design DNA For " + p.address + ".");
     } catch (e) {
       note((e && e.message) || "That Did Not Save.");
     }
@@ -329,7 +329,7 @@ export function mountExplore(go, ctx) {
         <div class="xp-note warn"><i data-lucide="dna"></i><span>Replacing the Design DNA on ${esc(p.address)} changes the palette and finish rules every room inherits. Existing saved designs are not regenerated.</span></div>
         <div class="xp-cmp">
           <div><span class="xp-lab">Current</span><b>${esc(cur)}</b></div>
-          <div><span class="xp-lab">New</span><b>${esc(d.name)}</b>${swatches(d.palette)}</div>
+          <div><span class="xp-lab">New</span><b>${esc(gtxt(d.name))}</b>${swatches(d.palette)}</div>
         </div>
       </div>
       <div class="xp-df">
@@ -359,7 +359,7 @@ export function mountExplore(go, ctx) {
     if (done && qStep === 0 && !qPicks.length) {
       const d = dir(done);
       if (d) {
-        card.innerHTML = `<div class="xp-quiz-head"><b>Your Direction: ${esc(d.name)}</b><span class="xp-quiz-step">Result</span></div>
+        card.innerHTML = `<div class="xp-quiz-head"><b>Your Direction: ${esc(gtxt(d.name))}</b><span class="xp-quiz-step">Result</span></div>
           <div class="xp-quiz-res"><img src="${d.img}" alt="${esc(gtxt(d.name))}"><p>${esc(gtxt(d.line))}</p></div>
           <div class="xp-quiz-foot"><button class="btn btn-primary btn-xs" data-open="${d.id}">Preview Direction</button><button class="fb-link" data-qretake="1">Retake</button></div>`;
         icons_();
@@ -368,7 +368,7 @@ export function mountExplore(go, ctx) {
     }
     const step = QUIZ[qStep];
     card.innerHTML = `<div class="xp-quiz-head"><b>${esc(step.q)}</b><span class="xp-quiz-step">${qStep + 1} Of ${QUIZ.length}</span></div>
-      <div class="xp-quiz-opts">${step.a.map((id) => { const d = dir(id); return d ? `<button class="xp-quiz-opt" data-qpick="${d.id}"><img src="${d.img}" alt="${esc(d.name)}" loading="lazy"><span>${esc(d.name)}</span></button>` : ""; }).join("")}</div>
+      <div class="xp-quiz-opts">${step.a.map((id) => { const d = dir(id); return d ? `<button class="xp-quiz-opt" data-qpick="${d.id}"><img src="${d.img}" alt="${esc(d.name)}" loading="lazy"><span>${esc(gtxt(d.name))}</span></button>` : ""; }).join("")}</div>
       <div class="xp-quiz-foot"><button class="fb-link" data-qskip="1">Skip For Now</button></div>`;
     icons_();
   }
@@ -384,7 +384,7 @@ export function mountExplore(go, ctx) {
     qStep = 0; qPicks = [];
     paintQuiz();
     const d = dir(win);
-    if (d) note("Your Direction: " + d.name);
+    if (d) note("Your Direction: " + gtxt(d.name));
   }
 
   function toggleSave(id) {
