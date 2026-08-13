@@ -1163,6 +1163,47 @@ export type Database = {
           },
         ]
       }
+      video_presentation_feedback: {
+        Row: {
+          created_at: string
+          id: string
+          kind: string
+          note: string | null
+          share_link_id: string
+          user_id: string
+          visitor_email: string | null
+          visitor_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          share_link_id: string
+          user_id: string
+          visitor_email?: string | null
+          visitor_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kind?: string
+          note?: string | null
+          share_link_id?: string
+          user_id?: string
+          visitor_email?: string | null
+          visitor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_presentation_feedback_share_link_id_fkey"
+            columns: ["share_link_id"]
+            isOneToOne: false
+            referencedRelation: "video_share_links"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_projects: {
         Row: {
           brand_kit_id: string | null
@@ -1258,9 +1299,13 @@ export type Database = {
           crop_data: Json
           disclosure_type: string | null
           duration: number
+          exterior_effect: string | null
           generation_status: string
           id: string
+          immersive_effect: string | null
+          labels: Json
           motion: string
+          motion_level: string
           room_name: string | null
           scene_type: string
           sequence: number
@@ -1278,9 +1323,13 @@ export type Database = {
           crop_data?: Json
           disclosure_type?: string | null
           duration?: number
+          exterior_effect?: string | null
           generation_status?: string
           id?: string
+          immersive_effect?: string | null
+          labels?: Json
           motion?: string
+          motion_level?: string
           room_name?: string | null
           scene_type?: string
           sequence?: number
@@ -1298,9 +1347,13 @@ export type Database = {
           crop_data?: Json
           disclosure_type?: string | null
           duration?: number
+          exterior_effect?: string | null
           generation_status?: string
           id?: string
+          immersive_effect?: string | null
+          labels?: Json
           motion?: string
+          motion_level?: string
           room_name?: string | null
           scene_type?: string
           sequence?: number
@@ -1324,48 +1377,72 @@ export type Database = {
       video_share_links: {
         Row: {
           allow_download: boolean
+          approval_enabled: boolean
           comments_enabled: boolean
           created_at: string
           expires_at: string | null
+          headline: string | null
           id: string
+          mobile_layout: string
+          page_title: string | null
           password_hash: string | null
+          presentation_type: string
           privacy_type: string
+          sections: Json
           show_budget: boolean
           show_products: boolean
           show_project_details: boolean
+          slug: string | null
           token: string
           user_id: string
           video_project_id: string
+          view_count: number
         }
         Insert: {
           allow_download?: boolean
+          approval_enabled?: boolean
           comments_enabled?: boolean
           created_at?: string
           expires_at?: string | null
+          headline?: string | null
           id?: string
+          mobile_layout?: string
+          page_title?: string | null
           password_hash?: string | null
+          presentation_type?: string
           privacy_type?: string
+          sections?: Json
           show_budget?: boolean
           show_products?: boolean
           show_project_details?: boolean
+          slug?: string | null
           token: string
           user_id: string
           video_project_id: string
+          view_count?: number
         }
         Update: {
           allow_download?: boolean
+          approval_enabled?: boolean
           comments_enabled?: boolean
           created_at?: string
           expires_at?: string | null
+          headline?: string | null
           id?: string
+          mobile_layout?: string
+          page_title?: string | null
           password_hash?: string | null
+          presentation_type?: string
           privacy_type?: string
+          sections?: Json
           show_budget?: boolean
           show_products?: boolean
           show_project_details?: boolean
+          slug?: string | null
           token?: string
           user_id?: string
           video_project_id?: string
+          view_count?: number
         }
         Relationships: [
           {
