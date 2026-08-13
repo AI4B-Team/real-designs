@@ -9,6 +9,8 @@ export { DIRECTIONS } from "@/content/directions";
 import { DIRECTIONS } from "@/content/directions";
 
 const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging", "Saved"];
+// App-facing label: "Landscape" data value is shown as "Garden".
+const spaceLabel = (s) => (String(s) === "Landscape" || String(s) === "Landscaping" ? "Garden" : s);
 
 /** Room filters offered in the UI, mapped onto the canonical room labels. */
 const ROOMS = [
