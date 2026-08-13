@@ -96,13 +96,13 @@
 .rd-app .ex-panel-b{flex:1;overflow:auto;padding:18px 20px;display:flex;flex-direction:column;gap:16px}
 .rd-app .ex-panel-f{display:flex;gap:8px;padding:14px 20px;border-top:1px solid var(--line)}
 .rd-app .ex-panel-f .btn{flex:1;justify-content:center}
-.rd-app .ex-hero{border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.rd-app .ex-hero{flex:none;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
 .rd-app .ex-hero img{width:100%;aspect-ratio:16/10;object-fit:cover}
 .rd-app .ex-about{font-size:.84rem;color:var(--mute);line-height:1.6}
-.rd-app .ex-spec{display:flex;flex-direction:column;gap:7px}
+.rd-app .ex-spec{flex:none;display:flex;flex-direction:column;gap:7px}
 .rd-app .ex-spec>b{font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute-2)}
 .rd-app .ex-spec>div{display:flex;gap:6px;flex-wrap:wrap}
-.rd-app .ex-rel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.rd-app .ex-spec>div.ex-rel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .rd-app .ex-rel button{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--white);text-align:left}
 .rd-app .ex-rel img{width:100%;aspect-ratio:4/3;object-fit:cover}
 .rd-app .ex-rel span{display:block;padding:6px 8px;font-size:.72rem;font-weight:600}
