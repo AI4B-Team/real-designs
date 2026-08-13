@@ -292,6 +292,127 @@ function disclosureNote(ctx: CanvasRenderingContext2D, W: number, H: number, lab
   ctx.restore();
 }
 
+/**
+ * Immersive motion. The photograph itself is never redrawn — movement is
+ * layered on top of the frame so walls, windows and furniture stay exactly
+ * where the render put them.
+ */
+function immersiveLayer(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  effect: string,
+  t: number,
+) {
+  const wave = Math.sin(t * Math.PI * 2);
+  ctx.save();
+  if (effect === "fire") {
+    const flick = 0.06 + 0.05 * Math.abs(Math.sin(t * Math.PI * 6));
+    const g = ctx.createRadialGradient(W * 0.5, H * 0.72, W * 0.02, W * 0.5, H * 0.72, W * 0.6);
+    g.addColorStop(0, `rgba(255,150,60,${flick})`);
+    g.addColorStop(1, "rgba(255,120,40,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  } else if (effect === "water") {
+    ctx.globalAlpha = 0.1 + 0.04 * wave;
+    const g = ctx.createLinearGradient(0, H * 0.6, W, H);
+    g.addColorStop(0, "rgba(255,255,255,0)");
+    g.addColorStop(0.5 + 0.12 * wave, "rgba(255,255,255,.5)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, H * 0.55, W, H * 0.45);
+  } else if (effect === "curtains") {
+    ctx.globalAlpha = 0.13 + 0.05 * wave;
+    const x = W * (0.06 + 0.01 * wave);
+    const g = ctx.createLinearGradient(x, 0, x + W * 0.22, 0);
+    g.addColorStop(0, "rgba(255,255,255,.55)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W * 0.42, H);
+  } else if (effect === "foliage") {
+    ctx.globalAlpha = 0.1 + 0.05 * Math.abs(wave);
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+    g.addColorStop(0, "rgba(20,40,20,.45)");
+    g.addColorStop(1, "rgba(20,40,20,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(W * (0.02 * wave), 0, W, H * 0.5);
+  } else {
+    // daylight shift
+    ctx.globalAlpha = 0.09 + 0.05 * t;
+    const g = ctx.createLinearGradient(W, 0, 0, H);
+    g.addColorStop(0, "rgba(255,220,170,.7)");
+    g.addColorStop(1, "rgba(255,220,170,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+  ctx.restore();
+}
+
+/** Restrained scene labels: a room name, a material note or one callout. */
+function sceneLabels(ctx: CanvasRenderingContext2D, W: number, H: number, labels: SceneLabel[], alpha: number) {
+  if (!labels?.length || alpha <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const size = Math.round(W * 0.028);
+  const margin = W * 0.06;
+  const byPos: Record<string, number> = {};
+  for (const l of labels.slice(0, 3)) {
+    const text = (l.text || "").trim();
+    if (!text) continue;
+    const pos = l.position || "bottom_left";
+    const row = byPos[pos] ?? 0;
+    byPos[pos] = row + 1;
+    const offset = row * size * 2.5;
+    const style = l.style || "clean";
+    ctx.font = `${style === "architectural" ? 600 : 700} ${size}px Inter, system-ui, sans-serif`;
+    const label = style === "architectural" ? text.toUpperCase() : text;
+    const padX = size * 0.7;
+    const wBox = ctx.measureText(label).width + padX * 2;
+    const hBox = size * 2;
+    const x = pos.endsWith("right") ? W - margin - wBox : margin;
+    const y = pos.startsWith("top") ? H * 0.16 + offset : H * 0.74 - offset;
+
+    if (style === "callout") {
+      ctx.fillStyle = ACCENT;
+      roundRect(ctx, x, y, wBox, hBox, hBox / 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+    } else if (style === "architectural") {
+      ctx.strokeStyle = "rgba(255,255,255,.75)";
+      ctx.lineWidth = Math.max(1, W * 0.0015);
+      ctx.strokeRect(x, y, wBox, hBox);
+      ctx.fillStyle = "rgba(10,10,10,.42)";
+      ctx.fillRect(x, y, wBox, hBox);
+      ctx.fillStyle = "#fff";
+    } else {
+      ctx.fillStyle = "rgba(10,10,10,.62)";
+      roundRect(ctx, x, y, wBox, hBox, size * 0.4);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+    }
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    if (style === "architectural") ctx.letterSpacing = "0.08em" as unknown as string;
+    ctx.fillText(label, x + padX, y + hBox / 2 + 1);
+    ctx.letterSpacing = "0px" as unknown as string;
+  }
+  ctx.restore();
+}
+
+/** Suggest scene labels from the room name and any caption already written. */
+export function suggestLabels(roomName?: string | null, caption?: string | null): SceneLabel[] {
+  const out: SceneLabel[] = [];
+  const room = (roomName || "").trim();
+  if (room) out.push({ text: room, style: "clean", position: "bottom_left" });
+  const cap = (caption || "").trim();
+  if (cap && cap.toLowerCase() !== room.toLowerCase()) {
+    out.push({ text: cap.slice(0, 40), style: "architectural", position: "bottom_right" });
+  }
+  return out;
+}
+
+
+
 export function estimateDuration(scenes: RevealScene[], lengthPreset: string): number {
   const target = lengthPreset === "quick" ? 15 : lengthPreset === "full" ? 60 : 30;
   if (!scenes.length) return 0;
