@@ -1019,6 +1019,24 @@ function bind() {
   const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
   on("[data-cap]", "input", (e) => { w.scenes[Number(e.currentTarget.dataset.cap)].caption = e.currentTarget.value; });
 
+  /* scene labels */
+  const lref = (v) => { const [i, j] = String(v).split(":").map(Number); return { s: w.scenes[i], j }; };
+  on("#rvSuggestLabels", "click", () => {
+    w.scenes.forEach((s) => { if (!Array.isArray(s.labels) || !s.labels.length) s.labels = suggestLabels(s.room, s.caption); });
+    render();
+  });
+  on("[data-label-add]", "click", (e) => {
+    const s = w.scenes[Number(e.currentTarget.dataset.labelAdd)];
+    s.labels = Array.isArray(s.labels) ? s.labels : [];
+    s.labels.push({ text: s.room || "", style: "clean", position: "bottom_left" });
+    render();
+  });
+  on("[data-label-del]", "click", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelDel); s.labels.splice(j, 1); render(); });
+  on("[data-label-text]", "input", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelText); s.labels[j].text = e.currentTarget.value; });
+  on("[data-label-style]", "change", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelStyle); s.labels[j].style = e.currentTarget.value; });
+  on("[data-label-pos]", "change", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelPos); s.labels[j].position = e.currentTarget.value; });
+
+
   /* branding */
   on("[data-kit]", "click", (e) => { w.brandKitId = e.currentTarget.dataset.kit || null; render(); });
   on("#rvKitNew", "click", () => openBrandKit(null));
