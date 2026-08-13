@@ -4,7 +4,7 @@
 
 .rd-dir .dir-intro{padding:64px 0 26px}
 .rd-dir .dir-intro .eyebrow{display:inline-block;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--red,#CC0000);margin-bottom:12px}
-.rd-dir .dir-intro h1{font-size:clamp(1.9rem,3.6vw,2.9rem);line-height:1.1;letter-spacing:-.02em;margin-bottom:14px;max-width:18ch}
+.rd-dir .dir-intro h1{font-size:clamp(1.45rem,3.1vw,2.7rem);line-height:1.1;letter-spacing:-.02em;margin-bottom:14px;max-width:none;white-space:nowrap}
 .rd-dir .dir-intro p{font-size:1rem;line-height:1.6;color:var(--mute,#5A5A5E);max-width:62ch}
 .rd-dir .dir-intro .dir-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
 
