@@ -10,6 +10,7 @@ import { DIRECTIONS } from "@/content/directions";
 
 const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging", "Saved"];
 // App-facing label: "Landscape" data value is shown as "Garden".
+const gtxt = (s) => String(s).replace(/Landscaping/g, "Gardening").replace(/Landscape/g, "Garden");
 const spaceLabel = (s) => (String(s) === "Landscape" || String(s) === "Landscaping" ? "Garden" : s);
 
 /** Room filters offered in the UI, mapped onto the canonical room labels. */
@@ -162,7 +163,7 @@ export function mountExplore(go, ctx) {
       </div>
       <div class="xp-body">
         <div class="xp-t"><b>${esc(d.name)}</b></div>
-        <p class="xp-line">${esc(d.line)}</p>
+        <p class="xp-line">${esc(gtxt(d.line))}</p>
         ${swatches(d.palette)}
         <div class="xp-meta">${tags.map((s) => `<span class="xp-tag">${esc(s)}</span>`).join("")}</div>
         <div class="xp-acts">
@@ -359,7 +360,7 @@ export function mountExplore(go, ctx) {
       const d = dir(done);
       if (d) {
         card.innerHTML = `<div class="xp-quiz-head"><b>Your Direction: ${esc(d.name)}</b><span class="xp-quiz-step">Result</span></div>
-          <div class="xp-quiz-res"><img src="${d.img}" alt="${esc(d.name)}"><p>${esc(d.line)}</p></div>
+          <div class="xp-quiz-res"><img src="${d.img}" alt="${esc(gtxt(d.name))}"><p>${esc(gtxt(d.line))}</p></div>
           <div class="xp-quiz-foot"><button class="btn btn-primary btn-xs" data-open="${d.id}">Preview Direction</button><button class="fb-link" data-qretake="1">Retake</button></div>`;
         icons_();
         return;
