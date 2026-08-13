@@ -96,8 +96,10 @@ function ExplorePage() {
           <span className="eyebrow">Design Direction Library</span>
           <h1>Find The Direction That Feels Like You.</h1>
           <p>
-            Explore curated directions for interiors, exteriors and landscapes. Start with one you
-            love, then customize the materials, colors and budget around your actual space.
+            Explore curated directions for interiors, exteriors and landscapes.
+            <br />
+            Start with one you love, then customize the materials, colors and budget around your
+            actual space.
           </p>
           <div className="dir-cta">
             <UploadSpaceLink className="btn btn-primary">
