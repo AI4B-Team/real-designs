@@ -7,6 +7,7 @@ import "@/styles/rd-app.css";
 import "@/styles/rd-explore.css";
 import "@/styles/rd-shop.css";
 import "@/styles/rd-media.css";
+import "@/styles/rd-reveal.css";
 
 const title = "Back Office | REAL DESIGNS";
 const description =
