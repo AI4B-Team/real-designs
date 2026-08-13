@@ -152,13 +152,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     return (
       '<div class="sts-drop" id="stsDrop">' +
       '<div class="sts-drop-in">' +
-      "<h4>Start a New Design</h4>" +
-      "<p>Upload a photo of your space, sketch or floor plan, describe an idea, or open a saved project.</p>" +
-      '<button class="btn btn-primary" data-sts="browse"><i data-lucide="image-up"></i>Upload a Space</button>' +
+      "<h4>Start A New Design</h4>" +
+      "<p>Upload a photo of your space, a sketch or floor plan, describe an idea, or open a property.</p>" +
+      '<button class="btn btn-primary" data-sts="browse"><i data-lucide="image-up"></i>Upload A Space</button>' +
       '<div class="sts-links">' +
-      '<button class="sts-link" data-sts="sketch">Upload a Sketch or Plan</button>' +
-      '<button class="sts-link" data-sts="describe">Describe an Idea</button>' +
-      '<button class="sts-link" data-sts="sample">Try a Sample Space</button>' +
+      '<button class="sts-link" data-sts="sketch"><i data-lucide="pen-line"></i>Upload A Sketch Or Plan</button>' +
+      '<button class="sts-link" data-sts="describe"><i data-lucide="pencil-line"></i>Describe An Idea</button>' +
+      '<button class="sts-link" data-sts="sample"><i data-lucide="image"></i>Try A Sample Space</button>' +
       "</div></div></div>"
     );
   }
@@ -170,7 +170,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "<h4>" +
       esc(state.fileName) +
       "</h4>" +
-      "<p>Ready to load. Nothing generates and no credits are used until you press Generate.</p>" +
+      "<p>Ready To Load. Nothing generates and no credits are used until you press Generate.</p>" +
       '<div class="sts-row">' +
       '<button class="btn btn-primary btn-sm" data-sts="load"><i data-lucide="check"></i>Use This File</button>' +
       '<button class="btn btn-ghost btn-sm" data-sts="clearfile">Choose Another</button>' +
@@ -180,7 +180,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function samplesHtml() {
     return (
-      '<div class="sts-samples"><div class="sts-samples-h"><b>Choose a Sample Space</b>' +
+      '<div class="sts-samples"><div class="sts-samples-h"><b>Choose A Sample Space</b>' +
       '<button class="sts-link" data-sts="closesamples">Cancel</button></div>' +
       '<div class="sts-grid">' +
       SAMPLE_KEYS.map(
@@ -193,10 +193,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           esc(s.alt) +
           '"><b>' +
           esc(s.name) +
-          "</b></button>",
+          " (Sample)</b></button>",
       ).join("") +
       "</div>" +
-      '<p class="sts-note">Samples stay labelled as samples and are never added to your account unless you save one as a project.</p>' +
+      '<p class="sts-note">Samples stay labelled as samples and are never saved to your account unless you choose to save one.</p>' +
       "</div>"
     );
   }
@@ -204,10 +204,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   function composerHtml() {
     return (
       '<div class="sts-brief">' +
-      "<h4>Describe an Idea</h4>" +
-      "<p>Create an original room, exterior, landscape, or design concept from a written description.</p>" +
-      '<label class="sts-l" for="stsPrompt">Describe what you want to create</label>' +
-      '<textarea id="stsPrompt" class="sts-ta" rows="7" placeholder="Create a warm modern living room with natural oak floors, an oversized cream sectional, built-in shelving, soft indirect lighting and durable finishes for a family with children. Keep the total furnishing and finish budget under $20,000.">' +
+      "<h4>Describe An Idea</h4>" +
+      "<p>Create an original design concept from a written description.</p>" +
+      '<label class="sts-l" for="stsPrompt">Describe What You Want To Create</label>' +
+      '<textarea id="stsPrompt" class="sts-ta" rows="7" placeholder="Create a warm modern living room with natural oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
       esc(state.prompt) +
       "</textarea>" +
       '<div class="sts-row">' +
@@ -215,14 +215,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       (state.prompt.trim().length < 12 ? " disabled" : "") +
       '><i data-lucide="arrow-right"></i>Generate Concept<span class="cost-chip mono">1</span></button>' +
       '<button class="sts-link" data-sts="inspo">' +
-      (state.inspiration ? "Inspiration: " + esc(state.inspiration.name) : "Add an Inspiration Image") +
+      (state.inspiration ? "Inspiration: " + esc(state.inspiration.name) : "Add An Inspiration Image") +
       "</button>" +
       (state.inspiration ? '<button class="sts-link" data-sts="rminspo">Remove</button>' : "") +
       "</div>" +
-      '<p class="sts-note">Text-only designs are original concepts. Without a photo, sketch or floor plan, the architecture and dimensions are conceptual.</p>' +
+      '<p class="sts-note">Text-only designs are conceptual until connected to a real photo, sketch or floor plan.</p>' +
       "</div>"
     );
   }
+
 
   /* ---------- right panel ---------- */
 
