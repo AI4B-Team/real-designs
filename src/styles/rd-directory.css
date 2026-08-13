@@ -75,6 +75,7 @@
 @media(max-width:640px){
   .rd-dir .dir-grid{grid-template-columns:1fr;gap:16px}
   .rd-dir .dir-intro{padding:40px 0 20px}
+  .rd-dir .dir-intro h1{white-space:normal;font-size:1.8rem}
   .rd-dir .dir-panel{width:100%}
 }
 @media(prefers-reduced-motion:reduce){
