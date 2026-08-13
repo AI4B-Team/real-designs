@@ -643,7 +643,7 @@ function studioStart(){
   if(STUDIO_START) return STUDIO_START;
   try{
     STUDIO_START=mountStudioStart({
-      lucide, esc, photos:PHOTOS, go, track,
+      lucide:{createIcons:(o)=>lucide.createIcons(o)}, esc:(v)=>esc(v), photos:PHOTOS, go:(v)=>go(v), track:(e,pr)=>track(e,pr),
       uploadPhoto:async(f)=>{
         const path=await uploadRoomPhoto(f);
         try{ window.rdPendingPhotoPath=path; }catch(_){}
