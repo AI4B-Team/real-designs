@@ -492,7 +492,7 @@ async function paintRooms(){
   const rc=document.getElementById('roomCards'); if(!rc) return;
   const prop=PROP_TREE[SEL.p]||null, proj=prop?(prop.projects[SEL.pr]||null):null;
   const t=document.getElementById('propTitle'), sub=document.getElementById('propSub'), rs=document.getElementById('roomsSub');
-  if(t) t.textContent=prop?prop.address:'No property selected';
+  if(t) t.textContent=prop?prop.address:'No Property Selected';
   if(sub) sub.textContent=prop&&proj
     ? proj.name+' \u00b7 '+proj.rooms.length+(proj.rooms.length===1?' room':' rooms')+' \u00b7 '+proj.rooms.reduce((n,r)=>n+r.versions,0)+' versions'
     : 'Save a room in Studio to build your property tree';
