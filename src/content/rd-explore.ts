@@ -1,477 +1,398 @@
-// Explore: inspiration library wired into the REAL DESIGNS workflow.
+// Explore: discover and compare canonical design directions inside the app.
+// Studio creates, Designs stores generated output, Design DNA holds property rules.
+// This screen only discovers directions and hands them to those existing systems.
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { PHOTOS } from "@/content/rd-photos";
-
-const P = PHOTOS;
 
 export { DIRECTIONS } from "@/content/directions";
 import { DIRECTIONS } from "@/content/directions";
 
-const GALLERY = [
-  ["Interior", "Living Room", "Warm Minimal", "Makeover", P.after, "kitchens|living"],
-  ["Interior", "Kitchen", "Warm Minimal", "Renovation", P.kitchenAfter, "kitchens"],
-  ["Interior", "Kitchen", "Modern Farmhouse", "Renovation", P.farmhouse, "kitchens"],
-  ["Interior", "Primary Bath", "Quiet Luxury", "Full Remodel", P.bath, "baths"],
-  ["Interior", "Guest Bath", "Contemporary", "Renovation", P.luxury, "baths"],
-  ["Interior", "Primary Bedroom", "Transitional", "Makeover", P.bedroomAfter, "bedrooms"],
-  ["Interior", "Guest Bedroom", "Scandinavian", "Refresh", P.neutral, "bedrooms"],
-  ["Interior", "Living Room", "Japandi", "Makeover", P.japandi, "living"],
-  ["Interior", "Living Room", "Mid-Century", "Makeover", P.midcentury, "living"],
-  ["Interior", "Living Room", "Industrial", "Renovation", P.industrial, "living"],
-  ["Interior", "Home Office", "Contemporary", "Refresh", P.officeAfter, "living"],
-  ["Interior", "Living Room", "Coastal", "Refresh", P.coastal, "living"],
-  ["Interior", "Living Room", "Scandinavian", "Refresh", P.stageStaged, "staging"],
-  ["Interior", "Dining Room", "Warm Minimal", "Makeover", P.stageEmpty, "staging"],
-  ["Exterior", "Front Elevation", "Modern Farmhouse", "Renovation", P.paintedBrick, "exterior"],
-  ["Exterior", "Front Elevation", "Craftsman Revival", "Renovation", P.craftsman, "exterior"],
-  ["Exterior", "Front Elevation", "Ranch Refresh", "Makeover", P.ranch, "exterior"],
-  ["Exterior", "Front Elevation", "Contemporary", "Full Remodel", P.exteriorAfter, "exterior"],
-  ["Landscape", "Backyard", "Mediterranean", "Full Remodel", P.resortYard, "landscape"],
-  ["Landscape", "Backyard", "Organic Modern", "Renovation", P.yardAfter, "landscape"],
-].map((r, i) => ({
-  id: "ex" + i, space: r[0], room: r[1], direction: r[2], budget: r[3], img: r[4], tags: r[5],
-  lock: i % 5 === 3 ? "Layout Held" : "Reality Lock On",
-  grade: r[3] === "Refresh" || r[3] === "Makeover" ? "Rental Grade" : "Retail Grade",
-}));
+const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging"];
 
-const CATS = [
-  ["for-you", "For You"], ["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Landscape"],
-  ["staging", "Virtual Staging"], ["kitchens", "Kitchens"], ["baths", "Bathrooms"],
-  ["bedrooms", "Bedrooms"], ["living", "Living Rooms"], ["saved", "Saved"],
+/** Room filters offered in the UI, mapped onto the canonical room labels. */
+const ROOMS = [
+  ["Living Room", ["Living Room"]],
+  ["Kitchen", ["Kitchen"]],
+  ["Bedroom", ["Primary Bedroom", "Guest Bedroom", "Bedroom"]],
+  ["Bathroom", ["Primary Bath", "Guest Bath", "Bathroom"]],
+  ["Dining Room", ["Dining Room"]],
+  ["Office", ["Home Office", "Office"]],
+  ["Entry", ["Entry", "Entryway", "Front Elevation"]],
+  ["Basement", ["Basement"]],
 ];
 
-const LS = {
-  saved: "rd_ex_saved", boards: "rd_ex_boards", seen: "rd_ex_seen", quiz: "rd_ex_quiz",
-};
+const TRAITS = ["Warm", "Minimal", "Traditional", "Organic", "Bold", "Luxury"];
+const GRADES = ["Rental Grade", "Retail Grade", "Premium"];
+
+const LS = { saved: "rd_ex_saved", seen: "rd_ex_seen" };
 function read(k, f) { try { return JSON.parse(localStorage.getItem(k) || "") ?? f; } catch (_) { return f; } }
 function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} }
 function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
 let saved = read(LS.saved, []);
-let boards = read(LS.boards, []);
 let seen = read(LS.seen, []);
 
 function dir(id) { return DIRECTIONS.find((d) => d.id === id); }
-function dirByName(n) { return DIRECTIONS.find((d) => d.name === n); }
-function swatches(p) { return '<span class="ex-sw">' + p.map((c) => `<i style="background:${c}"></i>`).join("") + "</span>"; }
+function swatches(p) { return '<span class="xp-sw">' + p.map((c) => `<i style="background:${c}"></i>`).join("") + "</span>"; }
 
 const SHELL = `
-<div class="ex">
-  <header class="ex-head">
-    <div class="ex-head-t">
-      <span class="ex-eyebrow">Design Discovery</span>
-      <h2>Explore What Your Space Could Become.</h2>
-      <p>Browse curated design directions for interiors, exteriors and landscapes.<br>Save what you like, preview it in your space or use it to start a new design.</p>
+<div class="xp">
+  <header class="xp-head">
+    <div class="xp-head-t">
+      <h2>Explore</h2>
+      <p>Find a direction, preview it across spaces and apply it to your design.</p>
     </div>
-    <div class="ex-head-a">
-      <button class="btn btn-primary btn-sm" id="exUpload"><i data-lucide="image-up"></i>Upload Your Space</button>
-      <button class="btn btn-ghost btn-sm" id="exSavedBtn"><i data-lucide="bookmark"></i>View Saved Ideas</button>
+    <div class="xp-head-a">
+      <span class="xp-prop" id="xpProp" hidden></span>
+      <button class="btn btn-ghost btn-sm" id="xpSavedBtn"><i data-lucide="bookmark"></i>Saved Directions<span class="xp-cnt" id="xpSavedCnt">0</span></button>
     </div>
   </header>
 
-  <div class="ex-filters">
-    <div class="ex-search"><i data-lucide="search"></i><input id="exQ" type="text" placeholder="Search styles, rooms or design ideas"></div>
-    <select id="exSpace" aria-label="Space Type"><option value="">Space Type</option><option>Interior</option><option>Exterior</option><option>Landscape</option></select>
-    <select id="exRoom" aria-label="Room"><option value="">Room</option></select>
-    <select id="exStyle" aria-label="Style"><option value="">Style</option></select>
-    <select id="exBudget" aria-label="Budget Band"><option value="">Budget Band</option><option>Refresh</option><option>Makeover</option><option>Renovation</option><option>Full Remodel</option></select>
-    <select id="exGrade" aria-label="Finish Grade"><option value="">Finish Grade</option><option>Rental Grade</option><option>Retail Grade</option></select>
-    <select id="exSort" aria-label="Sort"><option value="rec">Recommended</option><option value="az">Direction, A To Z</option><option value="budget">Budget, Low To High</option></select>
-    <button class="btn btn-ghost btn-xs ex-clear" id="exClear" hidden><i data-lucide="x"></i>Clear Filters</button>
+  <div class="xp-bar">
+    <div class="xp-search"><i data-lucide="search"></i><input id="xpQ" type="text" placeholder="Search directions, materials or rooms"></div>
+    <button class="btn btn-ghost btn-sm xp-filter-btn" id="xpFilterBtn" aria-expanded="true"><i data-lucide="sliders-horizontal"></i>Filter<span class="xp-cnt" id="xpFilterCnt" hidden>0</span></button>
   </div>
 
-  <div class="ex-cats" id="exCats"></div>
+  <div class="xp-cats" id="xpCats"></div>
 
-  <section class="ex-sec">
-    <div class="ex-sec-h">
-      <div><h3>Featured Design Directions</h3><div class="sub">Curated looks that carry a palette, materials and finish grade into Studio</div></div>
-      <div class="ex-arrows"><button class="icon-btn" id="exPrev" aria-label="Scroll left"><i data-lucide="chevron-left"></i></button><button class="icon-btn" id="exNext" aria-label="Scroll right"><i data-lucide="chevron-right"></i></button></div>
+  <div class="xp-panel on" id="xpPanel">
+    <div class="xp-panel-h">
+      <b>Filters</b>
+      <button class="icon-btn xp-panel-x" id="xpPanelX" aria-label="Close Filters"><i data-lucide="x"></i></button>
     </div>
-    <div class="ex-rail" id="exRail"></div>
-  </section>
+    <div class="xp-row" id="xpRoomRow"><span class="xp-lab">Room</span><div class="xp-chips" id="xpRooms"></div></div>
+    <div class="xp-row"><span class="xp-lab">Characteristics</span><div class="xp-chips" id="xpTraits"></div></div>
+    <div class="xp-row"><span class="xp-lab">Finish Grade</span><div class="xp-chips" id="xpGrades"></div></div>
+    <div class="xp-panel-f"><button class="fb-link" id="xpClear">Clear Filters</button></div>
+  </div>
 
-  <section class="ex-sec" id="exRecSec">
-    <div class="ex-sec-h"><div><h3 id="exRecTitle">Recommended For You</h3><div class="sub" id="exRecSub">Based on what you viewed, saved and the Design DNA on your properties</div></div></div>
-    <div class="ex-rec" id="exRec"></div>
-  </section>
-
-  <section class="ex-sec">
-    <div class="ex-sec-h"><div><h3>Explore Real Possibilities</h3><div class="sub" id="exCount">Loading</div></div></div>
-    <div class="ex-grid" id="exGrid"></div>
-  </section>
-
-  <div class="ex-sticky"><button class="btn btn-primary btn-block" id="exUpload2"><i data-lucide="image-up"></i>Upload Your Space</button></div>
+  <p class="xp-count" id="xpCount"></p>
+  <div class="xp-grid" id="xpGrid"></div>
 </div>
-<div class="ex-drawer" id="exDrawer" hidden><div class="ex-scrim" id="exScrim"></div><aside class="ex-panel" id="exPanel" role="dialog" aria-modal="true"></aside></div>
+<div class="xp-drawer" id="xpDrawer" hidden><div class="xp-scrim" id="xpScrim"></div><aside class="xp-dpanel" id="xpDPanel" role="dialog" aria-modal="true"></aside></div>
 `;
 
 function exToast(msg) {
-  let t = document.querySelector(".rd-app .ex-toast");
+  let t = document.querySelector(".rd-app .xp-toast");
   if (!t) {
     t = document.createElement("div");
-    t.className = "ex-toast";
+    t.className = "xp-toast";
     (document.querySelector(".rd-app") || document.body).appendChild(t);
   }
   t.textContent = msg;
   t.classList.add("on");
   clearTimeout(t._h);
-  t._h = window.setTimeout(() => t.classList.remove("on"), 2600);
+  t._h = window.setTimeout(() => t.classList.remove("on"), 3000);
 }
 
-export function mountExplore(go) {
+/**
+ * @param go router used by the app shell
+ * @param ctx { curProp, setPropertyDna, reloadTree } from the existing property/DNA system
+ */
+export function mountExplore(go, ctx) {
   const host = document.getElementById("v-explore");
-  if (!host || host.dataset["ready"] === "1") return;
+  if (!host) return;
+  const api = ctx || {};
+  if (host.dataset["ready"] === "1") { host._xpSync && host._xpSync(); return; }
   host.dataset["ready"] = "1";
   host.innerHTML = SHELL;
 
-  const $ = (id) => host.querySelector("#" + id) || document.getElementById(id);
+  const $ = (id) => host.querySelector("#" + id);
   const note = (m) => { try { exToast(m); } catch (_) {} };
   const icons_ = () => { try { createIcons({ icons }); } catch (_) {} };
 
-  // filter option lists
-  const rooms = Array.from(new Set(GALLERY.map((g) => g.room))).sort();
-  $("exRoom").insertAdjacentHTML("beforeend", rooms.map((r) => `<option>${esc(r)}</option>`).join(""));
-  const styles = Array.from(new Set(GALLERY.map((g) => g.direction).concat(DIRECTIONS.map((d) => d.name)))).sort();
-  $("exStyle").insertAdjacentHTML("beforeend", styles.map((s) => `<option>${esc(s)}</option>`).join(""));
+  let cat = "All";
+  let room = null;
+  let traits = [];
+  let grade = null;
 
-  let cat = "for-you";
-  $("exCats").innerHTML = CATS.map(([id, l]) => `<button class="ex-cat${id === cat ? " on" : ""}" data-c="${id}">${l}</button>`).join("");
+  const prop = () => { try { return (api.curProp && api.curProp()) || null; } catch (_) { return null; } };
+  /** Direction name a property is currently locked to, stored as the first DNA line. */
+  function propDirection() {
+    const p = prop();
+    const first = p && p.dna && p.dna[0];
+    if (!first) return null;
+    const hit = DIRECTIONS.find((d) => d.name.toLowerCase() === String(first.label).toLowerCase());
+    return hit ? hit.name : null;
+  }
 
-  /* ---------- featured rail ---------- */
-  function railCard(d) {
-    const on = saved.includes(d.id);
-    return `<article class="ex-card ex-fcard" data-d="${d.id}">
-      <div class="ex-img"><img src="${d.img}" alt="${esc(d.name)} design direction" loading="lazy">
-        <button class="ex-save${on ? " on" : ""}" data-save="${d.id}" aria-label="Save to Saved Ideas"><i data-lucide="heart"></i></button>
-      </div>
-      <div class="ex-body">
-        <div class="ex-t"><b>${esc(d.name)}</b>${swatches(d.palette)}</div>
-        <p>${esc(d.line)}</p>
-        <div class="ex-meta">${d.spaces.map((s) => `<span class="ex-tag">${s}</span>`).join("")}</div>
-        <div class="ex-acts"><button class="btn btn-ghost btn-xs" data-preview="${d.id}">Preview In My Space</button><button class="btn btn-ghost btn-xs" data-open="${d.id}">View Direction</button></div>
-      </div>
-    </article>`;
-  }
-  function paintRail() { $("exRail").innerHTML = DIRECTIONS.map(railCard).join(""); icons_(); }
+  /* ---------- filter chips ---------- */
+  $("xpCats").innerHTML = SPACES.map((s) => `<button class="xp-cat${s === cat ? " on" : ""}" data-c="${s}">${s}</button>`).join("");
+  $("xpRooms").innerHTML = ROOMS.map(([label]) => `<button class="xp-chip" data-room="${label}">${label}</button>`).join("");
+  $("xpTraits").innerHTML = TRAITS.map((t) => `<button class="xp-chip" data-trait="${t}">${t}</button>`).join("");
+  $("xpGrades").innerHTML = GRADES.map((g) => `<button class="xp-chip" data-grade="${g}">${g}</button>`).join("");
 
-  /* ---------- gallery ---------- */
-  function filters() {
-    return {
-      q: ($("exQ").value || "").trim().toLowerCase(),
-      space: $("exSpace").value, room: $("exRoom").value, style: $("exStyle").value,
-      budget: $("exBudget").value, grade: $("exGrade").value, sort: $("exSort").value,
-    };
+  function matchesSpace(d) {
+    if (cat === "All") return true;
+    if (cat === "Virtual Staging") return !!d.staging;
+    return d.spaces.indexOf(cat) > -1;
   }
-  const BORDER = ["Refresh", "Makeover", "Renovation", "Full Remodel"];
-  function matches(g, f) {
-    if (f.space && g.space !== f.space) return false;
-    if (f.room && g.room !== f.room) return false;
-    if (f.style && g.direction !== f.style) return false;
-    if (f.budget && g.budget !== f.budget) return false;
-    if (f.grade && g.grade !== f.grade) return false;
-    if (cat === "saved" && !saved.includes(g.id)) return false;
-    if (cat === "interior" && g.space !== "Interior") return false;
-    if (cat === "exterior" && g.space !== "Exterior") return false;
-    if (cat === "landscape" && g.space !== "Landscape") return false;
-    if (["staging", "kitchens", "baths", "bedrooms", "living"].includes(cat) && !g.tags.split("|").includes(cat)) return false;
-    if (f.q && !(g.room + " " + g.direction + " " + g.space + " " + g.budget).toLowerCase().includes(f.q)) return false;
-    return true;
+  function matchesRoom(d) {
+    if (!room) return true;
+    const syn = (ROOMS.find((r) => r[0] === room) || [null, []])[1];
+    return d.rooms.some((r) => syn.indexOf(r) > -1);
   }
-  function score(g) {
-    let s = 0;
-    if (seen.includes(g.direction)) s += 3;
-    if (saved.some((id) => (dir(id) || {}).name === g.direction)) s += 4;
-    if (g.grade === "Retail Grade") s += 1;
-    return s;
+  function matches(d, q) {
+    if (!matchesSpace(d) || !matchesRoom(d)) return false;
+    if (traits.length && !traits.every((t) => (d.traits || []).indexOf(t) > -1)) return false;
+    if (grade && d.grades.indexOf(grade) === -1) return false;
+    if (!q) return true;
+    return [d.name, d.line, d.about, (d.traits || []).join(" "), d.materials.join(" "), d.rooms.join(" ")]
+      .join(" ").toLowerCase().indexOf(q) > -1;
   }
-  function galleryCard(g) {
-    const on = saved.includes(g.id);
-    return `<article class="ex-card ex-gcard" data-g="${g.id}">
-      <div class="ex-img"><img src="${g.img}" alt="${esc(g.direction)} ${esc(g.room)}" loading="lazy">
-        <span class="ex-space">${g.space}</span>
-        <button class="ex-save${on ? " on" : ""}" data-save="${g.id}" aria-label="Save to Saved Ideas"><i data-lucide="heart"></i></button>
-        <div class="ex-hover"><button class="btn btn-primary btn-xs" data-try="${g.id}">Try This Look</button><button class="btn btn-ghost btn-xs" data-details="${g.id}">View Details</button></div>
+
+  /* ---------- cards ---------- */
+  function card(d) {
+    const on = saved.indexOf(d.id) > -1;
+    const tags = d.spaces.concat(d.staging ? ["Virtual Staging"] : []);
+    return `<article class="xp-card" data-d="${d.id}">
+      <div class="xp-img"><img src="${d.img}" alt="${esc(d.name)} design direction" loading="lazy">
+        <button class="xp-save${on ? " on" : ""}" data-save="${d.id}" aria-label="Save Direction" title="Save Direction"><i data-lucide="bookmark"></i></button>
       </div>
-      <div class="ex-body">
-        <div class="ex-t"><b>${esc(g.room)}</b><span class="ex-dir">${esc(g.direction)}</span></div>
-        <div class="ex-meta"><span class="ex-tag">${g.budget}</span><span class="ex-tag">${g.grade}</span><span class="ex-tag ok"><i data-lucide="lock"></i>${g.lock}</span></div>
+      <div class="xp-body">
+        <div class="xp-t"><b>${esc(d.name)}</b></div>
+        <p class="xp-line">${esc(d.line)}</p>
+        ${swatches(d.palette)}
+        <div class="xp-meta">${tags.map((s) => `<span class="xp-tag">${esc(s)}</span>`).join("")}</div>
+        <div class="xp-acts">
+          <button class="btn btn-ghost btn-xs" data-open="${d.id}">Preview</button>
+          <button class="btn btn-primary btn-xs" data-use="${d.id}">Use This Direction</button>
+        </div>
       </div>
     </article>`;
   }
-  function skeleton(n) {
-    return Array.from({ length: n }).map(() => '<div class="ex-skel"></div>').join("");
-  }
-  let paintToken = 0;
-  function paintGrid() {
-    const f = filters();
-    const dirty = !!(f.q || f.space || f.room || f.style || f.budget || f.grade || cat !== "for-you");
-    $("exClear").hidden = !dirty;
-    const grid = $("exGrid");
-    grid.innerHTML = skeleton(8);
-    $("exCount").textContent = "Loading";
-    const my = ++paintToken;
-    setTimeout(() => {
-      if (my !== paintToken) return;
-      let list = GALLERY.filter((g) => matches(g, f));
-      if (f.sort === "az") list.sort((a, b) => a.direction.localeCompare(b.direction));
-      else if (f.sort === "budget") list.sort((a, b) => BORDER.indexOf(a.budget) - BORDER.indexOf(b.budget));
-      else list.sort((a, b) => score(b) - score(a));
-      $("exCount").textContent = list.length + (list.length === 1 ? " Design Direction" : " Design Directions") + (cat === "saved" ? " Saved" : " Matching Your Filters");
-      grid.innerHTML = list.length
-        ? list.map(galleryCard).join("")
-        : `<div class="ex-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>Try removing a filter or upload your space and describe the direction you want.</p><button class="btn btn-primary btn-sm" id="exCustom">Start A Custom Design</button></div>`;
-      icons_();
-      requestAnimationFrame(() => grid.querySelectorAll(".ex-card").forEach((c, i) => setTimeout(() => c.classList.add("in"), Math.min(i * 28, 320))));
-    }, 220);
+
+  function paint() {
+    const q = ($("xpQ").value || "").trim().toLowerCase();
+    const list = DIRECTIONS.filter((d) => matches(d, q));
+    const active = (room ? 1 : 0) + traits.length + (grade ? 1 : 0);
+    const fc = $("xpFilterCnt");
+    fc.hidden = !active; fc.textContent = active;
+    $("xpRoomRow").hidden = !(cat === "All" || cat === "Interior" || cat === "Virtual Staging");
+    $("xpCount").textContent = list.length + " Of " + DIRECTIONS.length + " Directions";
+    $("xpGrid").innerHTML = list.length
+      ? list.map(card).join("")
+      : `<div class="xp-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>Try removing a filter, or start in Studio and describe the direction you want.</p><button class="btn btn-primary btn-sm" id="xpCustom">Start In Studio</button></div>`;
+    $("xpSavedCnt").textContent = saved.length;
+    host.querySelectorAll(".xp-chip").forEach((c) => {
+      const d = c.dataset;
+      c.classList.toggle("on", (d.room && d.room === room) || (d.trait && traits.indexOf(d.trait) > -1) || (d.grade && d.grade === grade));
+    });
+    icons_();
   }
 
-  /* ---------- recommendations / quiz ---------- */
-  const QUIZ = [
-    ["Which Living Room Feels Right?", ["warm-minimal", "mid-century"]],
-    ["Pick A Kitchen Direction.", ["modern-farmhouse", "contemporary"]],
-    ["Which Bedroom Would You Keep?", ["japandi", "transitional"]],
-    ["Choose An Exterior Language.", ["mediterranean", "modern-farmhouse"]],
-    ["Last One, Pick A Finish Level.", ["quiet-luxury", "scandinavian"]],
-  ];
-  let quizStep = 0;
-  let quizPicks = read(LS.quiz, []);
-  function paintRec() {
-    const isNew = !quizPicks.length && !saved.length && !seen.length;
-    if (isNew) {
-      $("exRecTitle").textContent = "Find Your Design Direction";
-      $("exRecSub").textContent = "Five quick picks. Optional, and you can change it later.";
-      paintQuiz();
-      return;
-    }
-    $("exRecTitle").textContent = "Recommended For You";
-    $("exRecSub").textContent = "Based on what you viewed, saved and the Design DNA on your properties";
-    const weight = {};
-    quizPicks.forEach((id) => (weight[id] = (weight[id] || 0) + 4));
-    seen.forEach((n) => { const d = dirByName(n); if (d) weight[d.id] = (weight[d.id] || 0) + 2; });
-    saved.forEach((id) => { if (dir(id)) weight[id] = (weight[id] || 0) + 3; });
-    const ranked = DIRECTIONS.slice().sort((a, b) => (weight[b.id] || 0) - (weight[a.id] || 0)).slice(0, 4);
-    $("exRec").innerHTML = ranked.map((d) => `<article class="ex-card ex-rcard in" data-d="${d.id}">
-      <div class="ex-img"><img src="${d.img}" alt="${esc(d.name)}" loading="lazy"></div>
-      <div class="ex-body"><div class="ex-t"><b>${esc(d.name)}</b>${swatches(d.palette)}</div>
-      <p>${esc(weight[d.id] ? "Matches your saved and recently viewed directions." : d.line)}</p>
-      <div class="ex-acts"><button class="btn btn-ghost btn-xs" data-open="${d.id}">View Direction</button></div></div>
-    </article>`).join("");
+  /* ---------- property context ---------- */
+  function syncProp() {
+    const p = prop();
+    const pill = $("xpProp");
+    if (!pill) return;
+    if (!p) { pill.hidden = true; return; }
+    pill.hidden = false;
+    const cur = propDirection();
+    pill.innerHTML = '<i data-lucide="map-pin"></i>Previewing For ' + esc(p.address) + (cur ? ' <em>&middot; ' + esc(cur) + " DNA</em>" : "");
     icons_();
   }
-  function paintQuiz() {
-    const [q, pair] = QUIZ[quizStep];
-    $("exRec").innerHTML = `<div class="ex-quiz">
-      <div class="ex-quiz-h"><b>${esc(q)}</b><span>${quizStep + 1} Of ${QUIZ.length}</span></div>
-      <div class="ex-quiz-p">${pair.map((id) => { const d = dir(id); return `<button class="ex-quiz-o" data-pick="${id}"><img src="${d.img}" alt="${esc(d.name)}" loading="lazy"><span>${esc(d.name)}</span></button>`; }).join("")}</div>
-      <button class="fb-link" id="exQuizSkip">Skip For Now</button>
-    </div>`;
-    icons_();
-  }
+  host._xpSync = syncProp;
 
   /* ---------- drawer ---------- */
   function openDrawer(inner) {
-    $("exPanel").innerHTML = inner;
-    $("exDrawer").hidden = false;
-    requestAnimationFrame(() => $("exDrawer").classList.add("on"));
+    $("xpDPanel").innerHTML = inner;
+    $("xpDrawer").hidden = false;
+    requestAnimationFrame(() => $("xpDrawer").classList.add("on"));
     icons_();
   }
-  function closeDrawer() { $("exDrawer").classList.remove("on"); setTimeout(() => ($("exDrawer").hidden = true), 200); }
+  function closeDrawer() { $("xpDrawer").classList.remove("on"); setTimeout(() => ($("xpDrawer").hidden = true), 200); }
+
+  function compatLine(d) {
+    const p = prop();
+    if (!p) return '<div class="xp-note"><i data-lucide="info"></i><span>Choose a direction now. You can apply it to a property when you are ready.</span></div>';
+    const cur = propDirection();
+    if (cur && cur !== d.name) {
+      return `<div class="xp-note warn"><i data-lucide="dna"></i><span>This property currently uses <b>${esc(cur)}</b>. Replacing the Design DNA changes the rules every room follows.</span></div>`;
+    }
+    if (cur === d.name) return `<div class="xp-note ok"><i data-lucide="check"></i><span>${esc(p.address)} already uses this direction as its Design DNA.</span></div>`;
+    return `<div class="xp-note"><i data-lucide="map-pin"></i><span>Previewing For ${esc(p.address)}. No Design DNA locked yet.</span></div>`;
+  }
 
   function directionDrawer(id) {
     const d = dir(id);
     if (!d) return;
-    if (!seen.includes(d.name)) { seen = [d.name].concat(seen).slice(0, 12); write(LS.seen, seen); }
-    const related = DIRECTIONS.filter((x) => x.id !== d.id && x.spaces.some((s) => d.spaces.includes(s))).slice(0, 3);
+    if (seen.indexOf(d.name) === -1) { seen = [d.name].concat(seen).slice(0, 12); write(LS.seen, seen); }
+    const shots = (d.examples && d.examples.length ? d.examples : [d.img]).slice(0, 4);
+    const p = prop();
+    const locked = !!propDirection() && propDirection() !== d.name;
     openDrawer(`
-      <div class="ex-panel-h"><div><span class="ex-eyebrow">Design Direction</span><h3>${esc(d.name)}</h3></div>
+      <div class="xp-dh"><div><span class="xp-eyebrow">Design Direction</span><h3>${esc(d.name)}</h3><p>${esc(d.line)}</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
-      <div class="ex-panel-b">
-        <div class="ex-hero"><img src="${d.img}" alt="${esc(d.name)}"></div>
-        <p class="ex-about">${esc(d.about)}</p>
-        <div class="ex-spec"><b>Color Palette</b><div>${swatches(d.palette)}</div></div>
-        <div class="ex-spec"><b>Materials</b><div>${d.materials.map((m) => `<span class="ex-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="ex-spec"><b>Typical Finishes</b><div>${d.finishes.map((m) => `<span class="ex-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="ex-spec"><b>Best Fit Rooms</b><div>${d.rooms.map((m) => `<span class="ex-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="ex-spec"><b>Suggested Budget Bands</b><div>${d.budgets.map((m) => `<span class="ex-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="ex-spec"><b>Finish Grade Options</b><div>${d.grades.map((m) => `<span class="ex-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="ex-spec"><b>Related Designs</b><div class="ex-rel">${related.map((r) => `<button data-open="${r.id}"><img src="${r.img}" alt="${esc(r.name)}"><span>${esc(r.name)}</span></button>`).join("")}</div></div>
+      <div class="xp-db">
+        <div class="xp-hero"><img src="${shots[0]}" alt="${esc(d.name)}" id="xpHero"></div>
+        ${shots.length > 1 ? `<div class="xp-shots">${shots.map((s, i) => `<button class="xp-shot${i === 0 ? " on" : ""}" data-shot="${s}"><img src="${s}" alt="${esc(d.name)} example ${i + 1}" loading="lazy"></button>`).join("")}</div>` : ""}
+        ${compatLine(d)}
+        <p class="xp-about">${esc(d.about)}</p>
+        <div class="xp-spec"><b>Color Palette</b><div class="xp-pal">${d.palette.map((c) => `<i style="background:${c}"></i>`).join("")}</div></div>
+        <div class="xp-spec"><b>Materials And Finishes</b><div>${d.materials.concat(d.finishes).map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
+        <div class="xp-spec"><b>Finish Grade Compatibility</b><div>${d.grades.map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
+        <div class="xp-spec"><b>Best For</b><div>${d.spaces.concat(d.rooms).map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
+        <div class="xp-spec"><b>Suggested Budget Bands</b><div>${d.budgets.map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
       </div>
-      <div class="ex-panel-f"><button class="btn btn-primary btn-sm" data-apply="${d.id}"><i data-lucide="wand-2"></i>Apply This Direction</button>
-        <button class="btn btn-ghost btn-sm" data-save="${d.id}"><i data-lucide="bookmark"></i>${saved.includes(d.id) ? "Saved To Inspiration" : "Save To Inspiration"}</button></div>`);
+      <div class="xp-df">
+        <button class="btn btn-primary btn-sm" data-use="${d.id}"><i data-lucide="wand-2"></i>Apply To Current Design</button>
+        <button class="btn btn-ghost btn-sm" data-dna="${d.id}"><i data-lucide="dna"></i>${locked ? "Replace Property DNA" : "Set As Property Design DNA"}</button>
+        <button class="btn btn-ghost btn-sm" data-save="${d.id}"><i data-lucide="bookmark"></i>${saved.indexOf(d.id) > -1 ? "Saved" : "Save Direction"}</button>
+      </div>`);
+    if (!p) { /* no property: DNA action still shown, guarded on click */ }
   }
 
-  function galleryDrawer(gid) {
-    const g = GALLERY.find((x) => x.id === gid);
-    if (!g) return;
-    const d = dirByName(g.direction);
-    if (d) return directionDrawer(d.id);
-    openDrawer(`<div class="ex-panel-h"><div><span class="ex-eyebrow">Design Direction</span><h3>${esc(g.direction)}</h3></div><button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
-      <div class="ex-panel-b"><div class="ex-hero"><img src="${g.img}" alt="${esc(g.direction)}"></div>
-      <div class="ex-spec"><b>Best Fit Rooms</b><div><span class="ex-tag">${esc(g.room)}</span></div></div>
-      <div class="ex-spec"><b>Suggested Budget Bands</b><div><span class="ex-tag">${g.budget}</span></div></div>
-      <div class="ex-spec"><b>Finish Grade Options</b><div><span class="ex-tag">${g.grade}</span></div></div></div>
-      <div class="ex-panel-f"><button class="btn btn-primary btn-sm" data-applyg="${g.id}"><i data-lucide="wand-2"></i>Apply This Direction</button>
-      <button class="btn btn-ghost btn-sm" data-save="${g.id}"><i data-lucide="bookmark"></i>Save To Inspiration</button></div>`);
+  function savedDrawer() {
+    const items = saved.map(dir).filter(Boolean);
+    openDrawer(`
+      <div class="xp-dh"><div><span class="xp-eyebrow">Collection</span><h3>Saved Directions</h3><p>Directions you kept for later. Generated results stay in Designs.</p></div>
+        <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="xp-db">
+        ${items.length ? `<div class="xp-saved">${items.map((d) => `<div class="xp-sitem"><img src="${d.img}" alt="${esc(d.name)}"><div><b>${esc(d.name)}</b><span>${esc(d.line)}</span></div><button class="fb-link" data-open="${d.id}">Preview</button><button class="fb-link" data-save="${d.id}">Remove</button></div>`).join("")}</div>`
+        : '<div class="xp-note"><i data-lucide="bookmark"></i><span>Nothing saved yet. Use Save Direction on any preview.</span></div>'}
+      </div>
+      <div class="xp-df"><button class="btn btn-ghost btn-sm" data-close="1">Close</button></div>`);
   }
 
-  /* ---------- apply into Studio ---------- */
-  function applyToStudio(opts) {
+  /* ---------- actions ---------- */
+  const BANDS = ["Refresh", "Makeover", "Renovation", "Full Remodel"];
+
+  /** Hand the direction to the existing Studio controls. Never generates. */
+  function applyToStudio(d) {
     const sel = document.getElementById("fStyle");
-    if (sel && opts.direction) {
-      if (!Array.from(sel.options).some((o) => o.value === opts.direction || o.text === opts.direction)) {
-        sel.insertAdjacentHTML("afterbegin", `<option>${esc(opts.direction)}</option>`);
+    if (sel) {
+      if (!Array.from(sel.options).some((o) => o.value === d.name || o.text === d.name)) {
+        sel.insertAdjacentHTML("afterbegin", `<option>${esc(d.name)}</option>`);
       }
-      sel.value = opts.direction;
+      sel.value = d.name;
       sel.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    if (opts.space) {
-      const key = opts.space === "Landscape" ? "landscape" : opts.space.toLowerCase();
-      const chip = document.querySelector('#spChips [data-sp="' + key + '"]');
-      if (chip) chip.click();
+    const space = d.spaces[0];
+    if (space) {
+      const chip = document.querySelector('#spChips [data-sp="' + space.toLowerCase() + '"]');
+      if (chip && !chip.classList.contains("on")) chip.click();
     }
-    if (opts.room) {
-      const rs = document.getElementById("fRoom");
-      if (rs) {
-        if (!Array.from(rs.options).some((o) => o.text === opts.room)) rs.insertAdjacentHTML("beforeend", `<option>${esc(opts.room)}</option>`);
-        rs.value = opts.room;
-        rs.dispatchEvent(new Event("change", { bubbles: true }));
-      }
-    }
-    if (opts.budget) {
-      const i = BORDER.indexOf(opts.budget);
-      const b = i >= 0 && document.querySelector('#v-studio [data-b="' + i + '"]');
-      if (b) b.click();
-    }
-    if (opts.grade) {
-      const gch = document.querySelector('#gradeChips [data-g="' + (opts.grade === "Rental Grade" ? "rental" : "retail") + '"]');
-      if (gch) gch.click();
+    // Preserve the room already chosen for the current property; only fill a blank.
+    const rs = document.getElementById("fRoom");
+    if (rs && !rs.value && d.rooms[0]) {
+      if (!Array.from(rs.options).some((o) => o.text === d.rooms[0])) rs.insertAdjacentHTML("beforeend", `<option>${esc(d.rooms[0])}</option>`);
+      rs.value = d.rooms[0];
+      rs.dispatchEvent(new Event("change", { bubbles: true }));
     }
     closeDrawer();
     go("studio");
-    note(opts.direction + " Applied. Choose A Property Or Upload A Photo To Continue.");
+    const p = prop();
+    note(d.name + " Applied In Studio" + (p ? " For " + p.address : "") + ". Confirm Your Settings, Then Generate.");
   }
 
-  /* ---------- saved ideas ---------- */
-  function savedItem(id) {
-    const d = dir(id);
-    if (d) return { id, img: d.img, title: d.name, sub: d.line };
-    const g = GALLERY.find((x) => x.id === id);
-    return g ? { id, img: g.img, title: g.direction, sub: g.room + ", " + g.budget } : null;
+  /** Write the direction into the existing property Design DNA system. */
+  async function setDna(d) {
+    const p = prop();
+    if (!p) { note("Select A Property First. Open Properties And Choose One."); return; }
+    if (!api.setPropertyDna) { note("Design DNA Is Not Available Right Now."); return; }
+    const items = [{ label: d.name, color: d.palette[0] }]
+      .concat(d.palette.slice(1, 4).map((c, i) => ({ label: d.materials[i] || "Palette " + (i + 2), color: c })));
+    try {
+      await api.setPropertyDna({ data: { property_id: p.id, items } });
+      if (api.reloadTree) await api.reloadTree();
+      syncProp();
+      closeDrawer();
+      note(d.name + " Is Now The Design DNA For " + p.address + ".");
+    } catch (e) {
+      note((e && e.message) || "That Did Not Save.");
+    }
   }
-  function savedDrawer() {
-    const items = saved.map(savedItem).filter(Boolean);
+
+  function confirmDna(d) {
+    const p = prop();
+    if (!p) { note("Select A Property First. Open Properties And Choose One."); return; }
+    const cur = propDirection();
+    if (!cur || cur === d.name) { setDna(d); return; }
     openDrawer(`
-      <div class="ex-panel-h"><div><span class="ex-eyebrow">Inspiration</span><h3>Saved Ideas</h3></div><button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
-      <div class="ex-panel-b">
-        <div class="ex-spec"><b>Inspiration Boards</b>
-          <div class="ex-boards">${boards.length ? boards.map((b, i) => `<div class="ex-board"><div><b>${esc(b.name)}</b><span>${b.items.length} Saved</span></div><div class="ex-board-a"><button class="fb-link" data-share="${i}">Share</button><button class="fb-link" data-applyb="${i}">Apply</button></div></div>`).join("") : '<span class="ex-quiet">No Boards Yet. Name One By Property Or Room.</span>'}</div>
-          <div class="ex-newboard"><input id="exBoardName" type="text" placeholder="Board name, such as 42 Oak Street Kitchen"><button class="btn btn-ghost btn-xs" id="exBoardAdd"><i data-lucide="plus"></i>Create Board</button></div>
-        </div>
-        <div class="ex-spec"><b>Saved Designs</b>
-          ${items.length ? `<div class="ex-saved">${items.map((s) => `<div class="ex-sitem"><label class="ex-cmp-check"><input type="checkbox" data-cmp="${s.id}"><span></span></label><img src="${s.img}" alt="${esc(s.title)}"><div><b>${esc(s.title)}</b><span>${esc(s.sub)}</span></div><button class="fb-link" data-unsave="${s.id}">Remove</button></div>`).join("")}</div>
-          <span class="ex-quiet">Select Two To Four Saved Directions To Compare Them Side By Side.</span>` : '<span class="ex-quiet">Nothing Saved Yet. Tap The Heart On Any Design.</span>'}
+      <div class="xp-dh"><div><span class="xp-eyebrow">Design DNA</span><h3>Replace Property DNA?</h3>
+        <p>This property currently uses ${esc(cur)}.</p></div>
+        <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="xp-db">
+        <div class="xp-note warn"><i data-lucide="dna"></i><span>Replacing the Design DNA on ${esc(p.address)} changes the palette and finish rules every room inherits. Existing saved designs are not regenerated.</span></div>
+        <div class="xp-cmp">
+          <div><span class="xp-lab">Current</span><b>${esc(cur)}</b></div>
+          <div><span class="xp-lab">New</span><b>${esc(d.name)}</b>${swatches(d.palette)}</div>
         </div>
       </div>
-      <div class="ex-panel-f"><button class="btn btn-primary btn-sm" id="exCompare"><i data-lucide="columns-3"></i>Compare Selected</button></div>`);
+      <div class="xp-df">
+        <button class="btn btn-ghost btn-sm" data-open="${d.id}">Preview Only</button>
+        <button class="btn btn-primary btn-sm" data-dnago="${d.id}"><i data-lucide="dna"></i>Replace Property DNA</button>
+      </div>`);
   }
-  function compareDrawer(ids) {
-    const items = ids.map(savedItem).filter(Boolean);
-    openDrawer(`<div class="ex-panel-h"><div><span class="ex-eyebrow">Side By Side</span><h3>Compare Directions</h3></div><button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
-      <div class="ex-panel-b"><div class="ex-cmpgrid" style="grid-template-columns:repeat(${items.length},minmax(0,1fr))">
-      ${items.map((s) => { const d = dir(s.id); return `<div class="ex-cmpcol"><img src="${s.img}" alt="${esc(s.title)}"><b>${esc(s.title)}</b><span>${esc(s.sub)}</span>${d ? swatches(d.palette) : ""}${d ? `<span class="ex-quiet">${d.budgets.join(", ")}</span>` : ""}<button class="btn btn-ghost btn-xs" data-open="${s.id}">View Direction</button></div>`; }).join("")}
-      </div></div>
-      <div class="ex-panel-f"><button class="btn btn-ghost btn-sm" data-close="1">Close</button></div>`);
+
+  function toggleSave(id) {
+    const on = saved.indexOf(id) > -1;
+    saved = on ? saved.filter((x) => x !== id) : [id].concat(saved);
+    write(LS.saved, saved);
+    note(on ? "Removed From Saved Directions" : "Saved To Your Directions");
+    paint();
+    const open = host.querySelector("#xpDPanel [data-save]");
+    if (open && !$("xpDrawer").hidden && open.dataset.save === id) {
+      open.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Direction" : "Saved");
+      icons_();
+    }
   }
 
   /* ---------- events ---------- */
-  function toggleSave(id, el) {
-    const on = saved.includes(id);
-    saved = on ? saved.filter((x) => x !== id) : [id].concat(saved);
-    write(LS.saved, saved);
-    host.querySelectorAll('[data-save="' + id + '"]').forEach((b) => {
-      b.classList.toggle("on", !on);
-      if (b.classList.contains("btn")) b.innerHTML = '<i data-lucide="bookmark"></i>' + (!on ? "Saved To Inspiration" : "Save To Inspiration");
-    });
-    if (el) { el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop"); }
-    icons_();
-    note(on ? "Removed From Saved Ideas" : "Saved To Inspiration");
-    if (cat === "saved") paintGrid();
-  }
-
   host.addEventListener("click", (e) => {
     const t = e.target;
     const hit = (a) => t.closest("[" + a + "]");
     let el;
-    if ((el = hit("data-c"))) { cat = el.dataset.c; host.querySelectorAll(".ex-cat").forEach((b) => b.classList.toggle("on", b === el)); paintGrid(); return; }
-    if ((el = hit("data-save"))) { toggleSave(el.dataset.save, el); return; }
+    if ((el = hit("data-c"))) {
+      cat = el.dataset.c;
+      if (cat !== "All" && cat !== "Interior" && cat !== "Virtual Staging") room = null;
+      host.querySelectorAll(".xp-cat").forEach((b) => b.classList.toggle("on", b === el));
+      paint(); return;
+    }
+    if ((el = hit("data-room"))) { room = room === el.dataset.room ? null : el.dataset.room; paint(); return; }
+    if ((el = hit("data-trait"))) {
+      const v = el.dataset.trait;
+      traits = traits.indexOf(v) > -1 ? traits.filter((x) => x !== v) : traits.concat([v]);
+      paint(); return;
+    }
+    if ((el = hit("data-grade"))) { grade = grade === el.dataset.grade ? null : el.dataset.grade; paint(); return; }
+    if ((el = hit("data-shot"))) {
+      const img = host.querySelector("#xpHero");
+      if (img) img.src = el.dataset.shot;
+      host.querySelectorAll(".xp-shot").forEach((b) => b.classList.toggle("on", b === el));
+      return;
+    }
+    if ((el = hit("data-save"))) { toggleSave(el.dataset.save); return; }
     if ((el = hit("data-open"))) { directionDrawer(el.dataset.open); return; }
-    if ((el = hit("data-details"))) { galleryDrawer(el.dataset.details); return; }
-    if ((el = hit("data-preview"))) { const d = dir(el.dataset.preview); applyToStudio({ direction: d.name, space: d.spaces[0], grade: d.grades[0] }); return; }
-    if ((el = hit("data-try"))) {
-      const g = GALLERY.find((x) => x.id === el.dataset.try);
-      applyToStudio({ direction: g.direction, space: g.space, room: g.room, budget: g.budget, grade: g.grade });
+    if ((el = hit("data-use"))) { const d = dir(el.dataset.use); if (d) applyToStudio(d); return; }
+    if ((el = hit("data-dnago"))) { const d = dir(el.dataset.dnago); if (d) setDna(d); return; }
+    if ((el = hit("data-dna"))) { const d = dir(el.dataset.dna); if (d) confirmDna(d); return; }
+    if (t.closest("[data-close]") || t.closest("#xpScrim")) { closeDrawer(); return; }
+    if (t.closest("#xpSavedBtn")) { savedDrawer(); return; }
+    if (t.closest("#xpCustom")) { go("studio"); return; }
+    if (t.closest("#xpFilterBtn")) {
+      const p = $("xpPanel");
+      const open = p.classList.toggle("on");
+      $("xpFilterBtn").setAttribute("aria-expanded", String(open));
       return;
     }
-    if ((el = hit("data-apply"))) { const d = dir(el.dataset.apply); applyToStudio({ direction: d.name, space: d.spaces[0], room: d.rooms[0], budget: d.budgets[0], grade: d.grades[0] }); return; }
-    if ((el = hit("data-applyg"))) { const g = GALLERY.find((x) => x.id === el.dataset.applyg); applyToStudio({ direction: g.direction, space: g.space, room: g.room, budget: g.budget, grade: g.grade }); return; }
-    if ((el = hit("data-unsave"))) { toggleSave(el.dataset.unsave); savedDrawer(); return; }
-    if ((el = hit("data-share"))) { const b = boards[+el.dataset.share]; try { navigator.clipboard.writeText(location.origin + "/app#v-explore?board=" + encodeURIComponent(b.name)); } catch (_) {} note("Board Link Copied"); return; }
-    if ((el = hit("data-applyb"))) {
-      const b = boards[+el.dataset.applyb];
-      const first = (b.items || []).map(savedItem).filter(Boolean)[0];
-      if (!first) { note("Add Saved Designs To This Board First"); return; }
-      const d = dir(first.id) || dirByName(first.title);
-      applyToStudio(d ? { direction: d.name, space: d.spaces[0], room: d.rooms[0], budget: d.budgets[0], grade: d.grades[0] } : { direction: first.title });
-      return;
-    }
-    if ((el = hit("data-pick"))) {
-      quizPicks = quizPicks.concat([el.dataset.pick]);
-      write(LS.quiz, quizPicks);
-      quizStep++;
-      if (quizStep >= QUIZ.length) { paintRec(); paintGrid(); note("Your Design Direction Is Set"); }
-      else paintQuiz();
-      return;
-    }
-    if (t.closest("#exQuizSkip")) { quizPicks = quizPicks.length ? quizPicks : ["warm-minimal"]; write(LS.quiz, quizPicks); paintRec(); return; }
-    if (t.closest("#exBoardAdd")) {
-      const inp = host.querySelector("#exBoardName");
-      const name = (inp.value || "").trim();
-      if (!name) { inp.focus(); return; }
-      boards = boards.concat([{ name, items: saved.slice() }]);
-      write(LS.boards, boards);
-      savedDrawer();
-      note("Board Created");
-      return;
-    }
-    if (t.closest("#exCompare")) {
-      const picks = Array.from(host.querySelectorAll("[data-cmp]:checked")).map((c) => c.dataset.cmp);
-      if (picks.length < 2 || picks.length > 4) { note("Select Two To Four Saved Directions"); return; }
-      compareDrawer(picks);
-      return;
-    }
-    if (t.closest("[data-close]") || t.closest("#exScrim")) { closeDrawer(); return; }
-    if (t.closest("#exSavedBtn")) { savedDrawer(); return; }
-    if (t.closest("#exUpload") || t.closest("#exUpload2") || t.closest("#exCustom")) { go("studio"); note("Upload Your Space In Studio To Start"); return; }
-    if (t.closest("#exPrev")) { $("exRail").scrollBy({ left: -560, behavior: "smooth" }); return; }
-    if (t.closest("#exNext")) { $("exRail").scrollBy({ left: 560, behavior: "smooth" }); return; }
-    if (t.closest("#exClear")) {
-      ["exQ", "exSpace", "exRoom", "exStyle", "exBudget", "exGrade"].forEach((id) => ($(id).value = ""));
-      $("exSort").value = "rec";
-      cat = "for-you";
-      host.querySelectorAll(".ex-cat").forEach((b) => b.classList.toggle("on", b.dataset.c === "for-you"));
-      paintGrid();
-    }
+    if (t.closest("#xpPanelX")) { $("xpPanel").classList.remove("on"); $("xpFilterBtn").setAttribute("aria-expanded", "false"); return; }
+    if (t.closest("#xpClear")) { room = null; traits = []; grade = null; $("xpQ").value = ""; paint(); return; }
   });
 
   let qt;
-  $("exQ").addEventListener("input", () => { clearTimeout(qt); qt = window.setTimeout(paintGrid, 180); });
-  ["exSpace", "exRoom", "exStyle", "exBudget", "exGrade", "exSort"].forEach((id) => $(id).addEventListener("change", paintGrid));
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("exDrawer").hidden) closeDrawer(); });
+  $("xpQ").addEventListener("input", () => { clearTimeout(qt); qt = window.setTimeout(paint, 160); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("xpDrawer").hidden) closeDrawer(); });
 
-  paintRail();
-  paintRec();
-  paintGrid();
+  // Filters start collapsed on small screens so the sheet does not cover the grid.
+  if (window.matchMedia("(max-width:900px)").matches) {
+    $("xpPanel").classList.remove("on");
+    $("xpFilterBtn").setAttribute("aria-expanded", "false");
+  }
+
+  syncProp();
+  paint();
   icons_();
 }
