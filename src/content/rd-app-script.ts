@@ -80,7 +80,7 @@ function go(v,fromHash){
   try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
   if(v==='media'){ try{ mountMedia(go,{}); }catch(_){} }
-  if(v==='studio'){ try{ paintStudioSub(); }catch(_){} }
+  if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ paintReports(); }catch(_){} }
   if(!titles[v]) return;
   const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
@@ -546,10 +546,13 @@ async function paintRooms(){
 
 function paintStudioSub(){
   const el=document.getElementById('studioSub'); if(!el) return;
-  const prop=PROP_TREE[SEL.p]||null, proj=prop?(prop.projects[SEL.pr]||null):null;
   const roomSel=document.getElementById('fRoom');
   const room=roomSel?roomSel.value:'New Room';
-  el.textContent=prop?(prop.address+(proj?' \u00b7 '+proj.name:'')+' \u00b7 '+room):('New Room \u00b7 '+room);
+  /* never imply a saved project is loaded: only a real Studio context is named */
+  const ctx=(typeof STUDIO_CTX!=='undefined')?STUDIO_CTX:null;
+  el.textContent=(ctx&&ctx.address)
+    ? (ctx.address+(ctx.project?' \u00b7 '+ctx.project:'')+' \u00b7 '+(ctx.room||room))
+    : ('New Design \u00b7 '+room);
 }
 
 function paintTree(){
@@ -596,20 +599,153 @@ loadProperties();
 window.addEventListener('rd:saved', loadProperties);
 
 
-/* ---------- studio ---------- */
-document.getElementById('cBefore').innerHTML=room('before');
-document.getElementById('cAfter').innerHTML=room('after');
+/* ---------- studio ----------
+   Studio never boots with sample content. Everything below is driven by an
+   explicit source state, and the canvas stays empty until a real source
+   (upload, handoff, saved design, property or an intentionally chosen sample)
+   is loaded. */
 const cRng=document.getElementById('cRng'),cAfter=document.getElementById('cAfter'),cHnd=document.getElementById('cHnd');
+const cBefore=document.getElementById('cBefore');
+const studioWrap=document.querySelector('#v-studio .studio');
+const SRC_EMPTY='empty';
+let STUDIO_SRC=SRC_EMPTY;      // empty|uploading|user_upload|website_handoff|existing_design|existing_property|saved_draft|intentional_sample|processing|generated|error
+let STUDIO_RESULT=false;
+let studioAnalyzeTimer=null;
+
 function setC(v){cAfter.style.clipPath=`inset(0 0 0 ${v}%)`;cHnd.style.left=v+'%'}
 cRng.addEventListener('input',e=>setC(e.target.value));setC(50);
 
-const VAR=[['warm','Warm Minimal'],['farm','Modern Farm'],['coastal','Coastal'],['green','Deep Green']];
-document.getElementById('vars').innerHTML=VAR.map(([p,n],i)=>`
-<div class="var ${i===0?'on':''}" data-p="${p}"><div style="aspect-ratio:8/5">${room('after',PALS[p])}</div><div class="vl">${n}</div></div>`).join('');
-document.querySelectorAll('.var').forEach(v=>v.addEventListener('click',()=>{
-  document.querySelectorAll('.var').forEach(x=>x.classList.remove('on'));v.classList.add('on');
-  cAfter.innerHTML=room('after',PALS[v.dataset.p]);
-}));
+/** Caption shown over an uploaded source before anything has been generated. */
+function sourceCaption(on,text){
+  const host=document.querySelector('#canvasCard .card-b'); if(!host) return;
+  let cap=document.getElementById('srcCap');
+  if(!on){ if(cap) cap.remove(); return; }
+  if(!cap){
+    cap=document.createElement('div'); cap.id='srcCap'; cap.className='src-cap';
+    host.insertBefore(cap,host.firstChild);
+  }
+  cap.innerHTML='<b>Your Source Photo</b><span>'+esc(text||'Choose what you want to create, then generate your first version.')+'</span>';
+}
+
+/** In-canvas empty state so Studio is never a blank card. */
+function studioEmptyState(on){
+  const host=document.querySelector('#canvasCard .card-b'); if(!host) return;
+  let el=document.getElementById('stEmpty');
+  if(!on){ if(el) el.remove(); return; }
+  if(el) return;
+  el=document.createElement('div'); el.id='stEmpty'; el.className='st-empty-state';
+  el.innerHTML='<h4>Start A New Design</h4>'
+    +'<p>Upload a photo of your space, a sketch or floor plan, or open a saved design. Nothing generates and no credits are used until you do.</p>'
+    +'<div class="st-empty-act">'
+    +'<button class="btn btn-primary btn-sm" data-stempty="upload"><i data-lucide="upload"></i>Upload A Photo</button>'
+    +'<button class="btn btn-dark btn-sm" data-stempty="property"><i data-lucide="map-pin"></i>Start With A Property</button>'
+    +'<button class="btn btn-ghost btn-sm" data-stempty="sample"><i data-lucide="image"></i>Try A Sample Space</button>'
+    +'</div>';
+  host.insertBefore(el,host.firstChild);
+  el.addEventListener('click',e=>{
+    const b=e.target.closest('[data-stempty]'); if(!b) return;
+    const k=b.dataset.stempty;
+    if(k==='property'){ go('props'); return; }
+    try{ window.rdStudioWelcome&&window.rdStudioWelcome(k); }catch(_){}
+  });
+  try{ lucide.createIcons(); }catch(_){}
+}
+
+function paintStudioState(){
+  if(studioWrap){
+    studioWrap.dataset.src=STUDIO_SRC;
+    studioWrap.classList.toggle('st-empty',STUDIO_SRC===SRC_EMPTY);
+    studioWrap.classList.toggle('st-result',STUDIO_RESULT);
+  }
+  const gen=document.getElementById('genBtn');
+  if(gen) gen.classList.toggle('is-disabled',STUDIO_SRC===SRC_EMPTY);
+  const canvas=document.getElementById('canvas');
+  if(canvas) canvas.classList.toggle('has-result',STUDIO_RESULT);
+  studioEmptyState(STUDIO_SRC===SRC_EMPTY);
+  const csub=document.querySelector('#canvasCard .card-h .sub');
+  if(csub) csub.textContent=STUDIO_SRC===SRC_EMPTY
+    ? 'Add A Source To Begin'
+    : (STUDIO_RESULT?'Click any object to keep, replace or remove it':'Your source photo, nothing generated yet');
+  if(STUDIO_SRC===SRC_EMPTY) openStudioWelcome();
+}
+
+/** Ask the first-use module for the Studio welcome state, retrying briefly. */
+function openStudioWelcome(tries){
+  const t=tries||0;
+  const view=document.getElementById('v-studio');
+  if(!view||!view.classList.contains('on')) return;
+  if(typeof window.rdStudioWelcome==='function'){ window.rdStudioWelcome(); return; }
+  if(t<40) setTimeout(()=>openStudioWelcome(t+1),120);
+}
+
+/** Object controls only appear once a source exists and analysis has finished. */
+function analyzeObjects(){
+  const sub=document.getElementById('lockCount');
+  if(studioAnalyzeTimer){ clearTimeout(studioAnalyzeTimer); studioAnalyzeTimer=null; }
+  if(studioWrap) studioWrap.classList.add('st-analyzing');
+  if(sub) sub.textContent='Finding Editable Elements\u2026';
+  studioAnalyzeTimer=setTimeout(()=>{
+    if(studioWrap) studioWrap.classList.remove('st-analyzing');
+    drawLocks();
+  },900);
+}
+
+/**
+ * Loads a real source into Studio. Never called with sample imagery unless the
+ * user intentionally picked a sample space.
+ */
+function setStudioSource(kind,src,alt,opts){
+  const o=opts||{};
+  STUDIO_SRC=kind||'user_upload';
+  if(kind!=='existing_design'&&kind!=='existing_property') STUDIO_CTX={room:null,address:null,project:null};
+  STUDIO_RESULT=false;
+  lastRender=null; lastRenderPath=o.afterPath||null;
+  if(cBefore&&src) cBefore.innerHTML=photo(src,alt||'Your source photo');
+  if(cAfter) cAfter.innerHTML='';
+  const vars=document.getElementById('vars'); if(vars) vars.innerHTML='';
+  const sum=document.getElementById('studioSummary'); if(sum) sum.innerHTML='';
+  Object.keys(locks).forEach(k=>delete locks[k]);
+  document.querySelectorAll('.hot').forEach(h=>h.className='hot');
+  sourceCaption(true,o.caption);
+  analyzeObjects();
+  paintStudioState();
+  paintStudioSub();
+  try{ window.rdStudioHideWelcome&&window.rdStudioHideWelcome(); }catch(_){}
+  cRng.value=50; setC(50);
+}
+
+/** Called once a real generated result lands on the canvas. */
+function markStudioResult(){
+  STUDIO_RESULT=true;
+  if(STUDIO_SRC!=='intentional_sample') STUDIO_SRC='generated';
+  sourceCaption(false);
+  paintStudioState();
+  paintVersions();
+}
+
+/** Returns Studio to the clean welcome state. */
+function clearStudioSource(){
+  STUDIO_SRC=SRC_EMPTY; STUDIO_RESULT=false;
+  STUDIO_CTX={room:null,address:null,project:null};
+  lastRender=null; lastRenderPath=null;
+  if(cBefore) cBefore.innerHTML='';
+  if(cAfter) cAfter.innerHTML='';
+  const vars=document.getElementById('vars'); if(vars) vars.innerHTML='';
+  const sum=document.getElementById('studioSummary'); if(sum) sum.innerHTML='';
+  Object.keys(locks).forEach(k=>delete locks[k]);
+  document.querySelectorAll('.hot').forEach(h=>h.className='hot');
+  sourceCaption(false);
+  document.getElementById('fuSampleBar')?.remove();
+  document.getElementById('hoBanner')?.remove();
+  if(studioWrap) studioWrap.classList.remove('st-analyzing');
+  drawLocks();
+  paintStudioState();
+  paintStudioSub();
+}
+window.rdSetStudioSource=setStudioSource;
+window.rdClearStudioSource=clearStudioSource;
+window.rdStudioSourceState=()=>STUDIO_SRC;
+window.rdStudioHasSource=()=>STUDIO_SRC!==SRC_EMPTY;
 
 /* object locks */
 let mode='keep';
@@ -619,13 +755,14 @@ document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',(
 }));
 function drawLocks(){
   const k=Object.keys(locks);
-  document.getElementById('lockCount').textContent=k.length?`${k.length} Object${k.length>1?'s':''} Locked`:'No Objects Locked';
+  const sub=document.getElementById('lockCount');
+  if(sub) sub.textContent=k.length?`${k.length} Object${k.length>1?'s':''} Locked`:'Click Objects On The Canvas';
   document.getElementById('lockList').innerHTML=k.length?k.map(o=>{
     const cls={keep:'p-ok',replace:'p-blue',remove:'p-red'}[locks[o]];
     return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${o}</b></div>
     <span class="pill ${cls}">${locks[o]}</span>
     <button class="icon-btn" data-rm="${o}" style="width:24px;height:24px"><i data-lucide="x" style="width:13px;height:13px"></i></button></div>`;
-  }).join(''):'<p style="font-size:.79rem;color:var(--mute-2)">Nothing locked yet. Every object is fair game for the next generation.</p>';
+  }).join(''):'<p style="font-size:.79rem;color:var(--mute-2)">Pick a mode, then click an object on the canvas to keep, replace or remove it.</p>';
   lucide.createIcons();
   document.querySelectorAll('[data-rm]').forEach(b=>b.addEventListener('click',e=>{
     e.stopPropagation();const o=b.dataset.rm;delete locks[o];
@@ -633,41 +770,42 @@ function drawLocks(){
   }));
 }
 document.querySelectorAll('.hot').forEach(h=>h.addEventListener('click',()=>{
+  if(STUDIO_SRC===SRC_EMPTY) return;
   const o=h.dataset.o;
   if(locks[o]===mode){delete locks[o];h.className='hot'}
   else{locks[o]=mode;h.className='hot set '+mode}
   drawLocks();
 }));
-document.getElementById('clearLocks').addEventListener('click',()=>{
-  Object.keys(locks).forEach(k=>delete locks[k]);
-  document.querySelectorAll('.hot').forEach(h=>h.className='hot');drawLocks();
-});
 drawLocks();
 
-/* budget bands */
+/* budget bands: a band is a target, the planning range only appears with a result */
 const BANDS=[{lo:3200,hi:5000,fit:'Well Within Target',c:'c-hi'},{lo:11400,hi:14900,fit:'Within Target',c:'c-hi'},
 {lo:26000,hi:35000,fit:'Within Target',c:'c-hi'},{lo:41000,hi:62000,fit:'Above Band, Review',c:'c-md'}];
 const m=n=>'$'+n.toLocaleString();
 function paintStudioSummary(d){
   const el=document.getElementById('studioSummary'); if(!el) return;
+  if(!STUDIO_RESULT){ el.innerHTML=''; return; }
   el.innerHTML=summaryHTML({primaryLabel:'Planning Range',primaryValue:`${m(d.lo)}–${m(d.hi)}`,
     metrics:[metric('Budget Fit',d.fit),metric('Pricing','Medium Confidence','warning'),
              metric('Structure','No Changes','positive')]});
 }
-paintStudioSummary(BANDS[1]);
+function currentBand(){ const b=document.querySelector('.bchip.on'); return BANDS[b?+b.dataset.b:1]; }
 document.querySelectorAll('.bchip').forEach(b=>b.addEventListener('click',()=>{
   document.querySelectorAll('.bchip').forEach(x=>x.classList.remove('on'));b.classList.add('on');
-  const d=BANDS[+b.dataset.b];
-  paintStudioSummary(d);
+  paintStudioSummary(BANDS[+b.dataset.b]);
 }));
 document.querySelectorAll('#gradeChips .chip, #spChips .chip').forEach(c=>c.addEventListener('click',()=>{
   c.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
 }));
+paintStudioState();
+
 
 const gsteps=['Reading room geometry','Applying object locks','Fitting design to budget band','Selecting retail grade finishes','Rendering the space','Finishing the image'];
 let busy=false, lastRender=null, lastRenderPath=null;
 document.getElementById('genBtn').addEventListener('click',async ()=>{
   if(busy)return;
+  const srcImg=document.querySelector('#cBefore img');
+  if(STUDIO_SRC===SRC_EMPTY||!srcImg||!srcImg.src){ needSourceModal(); return; }   // never spends a credit
   if(!ensureCredits(1,'A Design Render')) return;
   busy=true;
   const btn=document.getElementById('genBtn'); btn.disabled=true;
@@ -682,8 +820,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
   const finish=()=>{ clearInterval(t); bar.style.width='100%';
     setTimeout(()=>{ov.classList.remove('on');busy=false;btn.disabled=false;},320); };
   try{
-    const srcImg=document.querySelector('#cBefore img');
-    const image=await toDataUrl(srcImg?srcImg.src:PHOTOS.before,1100);
+    const image=await toDataUrl(srcImg.src,1100);
     const band=document.querySelector('.bchip.on'), grade=document.querySelector('#gradeChips .chip.on');
     const groups={keep:[],replace:[],remove:[]};
     Object.keys(locks).forEach(o=>{ (groups[locks[o]]||groups.keep).push(o); });
@@ -701,6 +838,8 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
     try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,'Redesigned space, AI render');
     addRenderVariant(r.image,(document.getElementById('fStyle')||{}).value||'Your Render',lastRenderPath);
+    markStudioResult();
+    paintStudioSummary(currentBand());
     window.dispatchEvent(new Event('rd:credits-changed'));
     window.dispatchEvent(new Event('rd:photo'));
     finish();
@@ -711,6 +850,53 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
     if(!creditGate(e)) showAlert('Could not render this design. '+((e&&e.message)||'Try again in a moment.'));
   }
 });
+
+/** Clear now means: start a brand new design, back to the welcome state. */
+function startNewDesignFlow(){
+  if(STUDIO_SRC===SRC_EMPTY){ clearStudioSource(); return; }
+  let m=document.getElementById('newDesignModal');
+  if(!m){
+    m=document.createElement('div'); m.id='newDesignModal'; m.className='up-modal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
+      +'<h3>Start a New Design?</h3>'
+      +'<p>Your current draft has unsaved changes. Save it before starting over, or discard the changes.</p>'
+      +'<div class="up-act"><button class="btn btn-primary" id="ndSave">Save and Start New</button>'
+      +'<button class="btn btn-dark" id="ndDiscard">Discard and Start New</button>'
+      +'<button class="btn btn-ghost" data-close>Cancel</button></div></div>';
+    (document.querySelector('.rd-app')||document.body).appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-close]')) m.classList.remove('on'); });
+    m.querySelector('#ndSave').addEventListener('click',()=>{
+      m.classList.remove('on');
+      go('scope');
+      setTimeout(()=>{ const a=document.getElementById('svAddress'); if(a) a.scrollIntoView({block:'center'}); },140);
+    });
+    m.querySelector('#ndDiscard').addEventListener('click',()=>{ m.classList.remove('on'); clearStudioSource(); });
+  }
+  m.classList.add('on');
+  lucide.createIcons();
+}
+document.getElementById('clearLocks')?.addEventListener('click',startNewDesignFlow);
+
+/** Shown when Generate is pressed with no valid source. No credit is charged. */
+function needSourceModal(){
+  let m=document.getElementById('noSrcModal');
+  if(!m){
+    m=document.createElement('div'); m.id='noSrcModal'; m.className='up-modal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
+      +'<h3>Add a Source to Continue</h3>'
+      +'<p>Upload a photo, sketch or plan\u2014or intentionally choose a sample space.</p>'
+      +'<div class="up-act"><button class="btn btn-primary" id="nsUpload"><i data-lucide="image-up"></i>Upload a Source</button>'
+      +'<button class="btn btn-ghost" id="nsSample">Try a Sample</button></div></div>';
+    (document.querySelector('.rd-app')||document.body).appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-close]')) m.classList.remove('on'); });
+    m.querySelector('#nsUpload').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioWelcome&&window.rdStudioWelcome('upload'); }catch(_){} });
+    m.querySelector('#nsSample').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioWelcome&&window.rdStudioWelcome('sample'); }catch(_){} });
+  }
+  m.classList.add('on');
+  lucide.createIcons();
+}
+
+
 
 function addRenderVariant(src,label,path){
   const wrap=document.getElementById('vars'); if(!wrap) return;
@@ -744,6 +930,7 @@ function toolOverlay(steps){
 
 async function run3dPlan(){
   if(busy) return;
+  if(!window.rdStudioHasSource()){ needSourceModal(); return; }
   if(!ensureCredits(6,'A 3D Plan')) return;
   busy=true;
   const ui=toolOverlay(['Reading the room geometry','Building the floor plate','Placing the furniture','Rendering the 3D plan']);
@@ -769,6 +956,7 @@ async function run3dPlan(){
 
 async function runWalkthrough(){
   if(busy) return;
+  if(!window.rdStudioHasSource()){ needSourceModal(); return; }
   if(!ensureCredits(40,'A Walkthrough Video')) return;
   busy=true;
   const ui=toolOverlay(['Locking the finished render','Queuing the camera move','Rendering the walkthrough']);
@@ -867,29 +1055,39 @@ function videoModal(url){
 
 async function openInStudio(r){
   try{
-    const beforeUrl=r.before_path?(await resolvePhotoUrl(r.before_path)):PHOTOS.before;
+    const beforeUrl=r.before_path?(await resolvePhotoUrl(r.before_path)):null;
     const afterUrl=r.after_path?(await resolvePhotoUrl(r.after_path)):null;
-    const cB=document.getElementById('cBefore');
-    if(cB&&beforeUrl) cB.innerHTML=photo(beforeUrl,'Original space before redesign');
+    if(!beforeUrl&&!afterUrl){ go('studio'); return; }
+    STUDIO_CTX={room:r.name||null,address:r.address||null,project:r.project_name||null};
+    setStudioSource('existing_design',beforeUrl||afterUrl,'The saved source photo for this design',{afterPath:r.after_path||null});
     if(afterUrl){
       cAfter.innerHTML=photo(afterUrl,'Redesigned space, AI render');
       lastRender=null; lastRenderPath=r.after_path||null;
       addRenderVariant(afterUrl,(r.name||'Saved')+' v'+(r.version_no||1),r.after_path||null);
+      markStudioResult();
+      cRng.value=44; setC(44);
     }
-    cRng.value=44; setC(44);
   }catch(e){}
   go('studio');
 }
 
+let STUDIO_CTX={room:null,address:null,project:null};
+
 async function paintVersions(){
   const el=document.getElementById('verList'); if(!el) return;
+  const sub=document.querySelector('#v-studio .right .card:last-child .card-h .sub');
   if(!el.innerHTML.trim()) el.innerHTML=skList(3);
   let list=[];
   try{ list=await listSavedEstimates(); }catch(e){ list=[]; }
   SAVED_EST=list; updateSearchMeta();
+  /* only the active room's real versions, never an unrelated project's history */
+  if(STUDIO_CTX.room) list=list.filter(v=>v.room_name===STUDIO_CTX.room);
+  else list=[];
+  if(sub) sub.textContent=STUDIO_CTX.room||'This Design';
   list=list.slice(0,6);
   if(!list.length){
-    el.innerHTML='<p style="font-size:.78rem;color:var(--mute-2);padding:6px 0">No Versions Yet. Save a design to start the history.</p>';
+    el.innerHTML='<div style="padding:6px 0"><b style="font-size:.85rem">No Versions Yet</b>'
+      +'<p style="font-size:.78rem;color:var(--mute-2);margin-top:4px">Your generated and approved versions will appear here.</p></div>';
     return;
   }
   const ago=(iso)=>{const s=(Date.now()-new Date(iso).getTime())/1000;
@@ -901,6 +1099,7 @@ async function paintVersions(){
     return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v.room_name} v${v.version_no||1}</b><span>${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
   }).join('');
 }
+
 paintVersions();
 window.addEventListener('rd:saved', paintVersions);
 
@@ -1486,7 +1685,7 @@ function currentRoomType(){
 function studioSrc(which){
   const el=document.querySelector(which==='after'?'#cAfter img':'#cBefore img');
   if(el&&el.src) return el.src;
-  return which==='after'?(lastRender||PHOTOS.after):PHOTOS.before;
+  return which==='after'?(lastRender||null):null;
 }
 
 async function toDataUrl(src,max){
@@ -3153,7 +3352,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     +'</div>'
     +'<div class="save-photo"><label class="btn btn-ghost btn-xs" for="svPhoto"><i data-lucide="image-up"></i>Upload Room Photo</label>'
     +'<input id="svPhoto" type="file" accept="image/*" hidden>'
-    +'<span class="sub" id="svPhotoNote">No Photo Uploaded Yet. The sample room is used until you add one.</span>'
+    +'<span class="sub" id="svPhotoNote">No Photo Uploaded Yet. Add the room photo before saving.</span>'
     +'<img id="svThumb" alt="" hidden></div></div>';
   scopeGrid.appendChild(saveCard);
 
@@ -3226,6 +3425,8 @@ if(scopeGrid && !document.getElementById('scSave')){
     const room=($('svRoom').value||'').trim()||'Living Room';
     const type=($('svType').value||'').trim()||'living room';
     if(address.length<3){ note.textContent='Add the property address before saving.'; $('svAddress').focus(); return; }
+    const srcPath=uploadPath||window.rdPendingPhotoPath||null;
+    if(!srcPath){ note.textContent='Upload the room photo before saving. Sample imagery is never saved to your projects.'; return; }
     const num=(id,d)=>{const v=parseFloat((document.getElementById(id)||{}).value);return Number.isFinite(v)&&v>0?v:d;};
     saveBtn.disabled=true; const lab=saveBtn.innerHTML; saveBtn.textContent='Saving…';
     try{
@@ -3243,8 +3444,8 @@ if(scopeGrid && !document.getElementById('scSave')){
         ceiling_ht_in:dimsProposal?dimsProposal.ceiling_ht_in:96,
         dims_source:dimsProposal?(dimsConfirmed?'user':'depth_estimate'):'user',
         dims_confirmed:!dimsProposal||dimsConfirmed,
-        before_path:uploadPath||window.rdPendingPhotoPath||PHOTOS.before,
-        after_path:lastRenderPath||(uploadPath?null:PHOTOS.after),
+        before_path:srcPath,
+        after_path:lastRenderPath||null,
         items:scopeItems,
       }});
       try{ localStorage.setItem(LS,JSON.stringify({address,project,room,type})); }catch(e){}
@@ -3775,8 +3976,9 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   if(Date.now()-(h.ts||0)>1000*60*60*24*7) return;   // stale, ignore
 
   try{ go('studio'); }catch(e){}
-  const before=document.getElementById('cBefore');
-  if(before) before.innerHTML='<img src="'+h.photo+'" alt="The space you uploaded" style="width:100%;height:100%;object-fit:cover;display:block">';
+  setStudioSource('website_handoff',h.photo,'The space you uploaded on the website',
+    {caption:'Choose what you want to create, then generate your first version.'});
+
 
   const sp=document.querySelector('#spChips .chip[data-sp="'+(h.space||'interior')+'"]');
   if(sp){ document.querySelectorAll('#spChips .chip').forEach(x=>x.classList.remove('on')); sp.classList.add('on'); }
