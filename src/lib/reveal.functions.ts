@@ -303,7 +303,7 @@ export const startRender = createServerFn({ method: "POST" })
       .from("video_projects")
       .update({ status: "processing", error_message: null, updated_at: new Date().toISOString() })
       .eq("id", data.id);
-    return { variants: out ?? [], balance: charged.balance };
+    return { variants: out ?? [], balance };
   });
 
 /** Mark one rendered output complete (or failed) once the browser finishes it. */
