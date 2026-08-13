@@ -540,8 +540,8 @@ function paintStudioSub(){
   const el=document.getElementById('studioSub'); if(!el) return;
   const prop=PROP_TREE[SEL.p]||null, proj=prop?(prop.projects[SEL.pr]||null):null;
   const roomSel=document.getElementById('fRoom');
-  const room=roomSel?roomSel.value:'New room';
-  el.textContent=prop?(prop.address+(proj?' \u00b7 '+proj.name:'')+' \u00b7 '+room):('New room \u00b7 '+room);
+  const room=roomSel?roomSel.value:'New Room';
+  el.textContent=prop?(prop.address+(proj?' \u00b7 '+proj.name:'')+' \u00b7 '+room):('New Room \u00b7 '+room);
 }
 
 function paintTree(){
@@ -610,7 +610,7 @@ document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',(
 }));
 function drawLocks(){
   const k=Object.keys(locks);
-  document.getElementById('lockCount').textContent=k.length?`${k.length} object${k.length>1?'s':''} locked`:'No objects locked';
+  document.getElementById('lockCount').textContent=k.length?`${k.length} Object${k.length>1?'s':''} Locked`:'No Objects Locked';
   document.getElementById('lockList').innerHTML=k.length?k.map(o=>{
     const cls={keep:'p-ok',replace:'p-blue',remove:'p-red'}[locks[o]];
     return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${o}</b></div>
