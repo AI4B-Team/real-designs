@@ -57,9 +57,12 @@ const MOODS = ["Calm", "Warm", "Bright", "Dramatic", "Natural", "Refined"];
 export function mountStudioStart(ctx: StudioStartCtx) {
   const { esc, lucide } = ctx;
   const view = document.getElementById("v-studio");
-  const canvasBody = document.querySelector("#canvasCard .card-b") as HTMLElement | null;
-  const right = document.querySelector("#v-studio .right") as HTMLElement | null;
-  if (!view || !canvasBody || !right) return { paint: () => {}, open: () => {} };
+  const canvasBodyEl = document.querySelector("#canvasCard .card-b") as HTMLElement | null;
+  const rightEl = document.querySelector("#v-studio .right") as HTMLElement | null;
+  if (!view || !canvasBodyEl || !rightEl) return { paint: () => {}, open: () => {} };
+  const canvasBody: HTMLElement = canvasBodyEl;
+  const right: HTMLElement = rightEl;
+
 
   if (!SAMPLE_KEYS.length) {
     const p = ctx.photos || {};
