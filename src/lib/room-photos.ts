@@ -8,6 +8,37 @@ import { supabase } from "@/integrations/supabase/client";
 
 const BUCKET = "room-photos";
 
+/**
+ * Sample/demo rows store the *source* path of a bundled asset (e.g.
+ * "/src/assets/room-before.jpg"). That path only resolves in dev — a
+ * production build emits hashed filenames — so map it back to the real
+ * bundled URL at render time.
+ */
+const BUNDLED = import.meta.glob("/src/assets/*.{jpg,jpeg,png,webp}", {
+  eager: true,
+  query: "?url",
+  import: "default",
+}) as Record<string, string>;
+
+export function bundledPhotoUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  const name = /(?:^|\/)([^/]+\.(?:jpe?g|png|webp))$/i.exec(path)?.[1];
+  if (!name) return null;
+  const direct = BUNDLED["/src/assets/" + name];
+  if (direct) return direct;
+  // Built filenames carry a content hash: room-before-B1a2c3.jpg
+  const base = name.replace(/-[A-Za-z0-9_-]{6,}(\.[a-z]+)$/i, "$1");
+  return BUNDLED["/src/assets/" + base] ?? null;
+}
+
+/** Resolve any stored photo reference to a displayable URL. */
+export async function resolvePhotoUrl(path: string | null | undefined): Promise<string | null> {
+  if (!path) return null;
+  if (/^\/(?:src\/)?assets\//.test(path)) return bundledPhotoUrl(path) ?? path;
+  if (isStoredPhoto(path)) return roomPhotoUrl(path);
+  return path;
+}
+
 export function isStoredPhoto(path: string | null | undefined): boolean {
   if (!path) return false;
   return !/^(https?:|\/|data:)/.test(path);
