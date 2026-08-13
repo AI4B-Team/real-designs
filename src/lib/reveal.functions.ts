@@ -398,21 +398,50 @@ export const deleteBrandKit = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/* ============================ SHARING ============================= */
+/* ==================== PRESENTATION PAGES ==================== */
 
+const SectionsInput = z
+  .object({
+    address: z.boolean().default(true),
+    video: z.boolean().default(true),
+    before_after: z.boolean().default(true),
+    rooms: z.boolean().default(true),
+    budget: z.boolean().default(false),
+    products: z.boolean().default(false),
+    brand: z.boolean().default(true),
+    contact: z.boolean().default(true),
+  })
+  .partial()
+  .default({});
+
+/** Create or update the presentation page behind one video. */
 export const saveShareLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
     z
       .object({
         video_project_id: z.string().uuid(),
+        presentation_type: z.enum(["listing", "design", "renovation", "portfolio"]).default("listing"),
+        slug: z
+          .string()
+          .max(60)
+          .regex(/^[a-z0-9-]*$/, "Use lowercase letters, numbers and hyphens only.")
+          .nullable()
+          .optional(),
+        page_title: z.string().max(160).nullable().optional(),
+        headline: z.string().max(240).nullable().optional(),
         privacy_type: z.enum(["public", "private"]).default("public"),
+        password: z.string().max(80).nullable().optional(),
+        clear_password: z.boolean().default(false),
         expires_at: z.string().max(40).nullable().optional(),
         allow_download: z.boolean().default(true),
         show_project_details: z.boolean().default(true),
         show_products: z.boolean().default(false),
         show_budget: z.boolean().default(false),
         comments_enabled: z.boolean().default(false),
+        approval_enabled: z.boolean().default(false),
+        mobile_layout: z.enum(["stacked", "compact"]).default("stacked"),
+        sections: SectionsInput,
       })
       .parse(input),
   )
@@ -420,17 +449,95 @@ export const saveShareLink = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: existing } = await supabase
       .from("video_share_links")
-      .select("id, token")
+      .select("id, token, password_hash")
       .eq("video_project_id", data.video_project_id)
       .maybeSingle();
-    const token = existing?.token ?? crypto.randomUUID().replace(/-/g, "");
+
+    const token = (existing as any)?.token ?? crypto.randomUUID().replace(/-/g, "");
+    const { hashSharePassword } = await import("@/lib/reveal.server");
+
     const row: any = { ...data, user_id: userId, token };
+    delete row.password;
+    delete row.clear_password;
+    row.slug = data.slug ? data.slug.replace(/^-+|-+$/g, "") || null : null;
+    if (data.clear_password) row.password_hash = null;
+    else if (data.password) row.password_hash = await hashSharePassword(data.password);
+
     if (existing) {
-      const { error } = await supabase.from("video_share_links").update(row).eq("id", existing.id);
-      if (error) throw new Error(error.message);
+      const { error } = await supabase.from("video_share_links").update(row).eq("id", (existing as any).id);
+      if (error) throw new Error(error.message.includes("slug") ? "That link name is already taken." : error.message);
     } else {
       const { error } = await supabase.from("video_share_links").insert(row);
-      if (error) throw new Error(error.message);
+      if (error) throw new Error(error.message.includes("slug") ? "That link name is already taken." : error.message);
     }
-    return { token };
+    return { token, slug: row.slug as string | null };
+  });
+
+/** Owner: every visitor comment or decision left on their presentation page. */
+export const listPresentationFeedback = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ video_project_id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: link } = await context.supabase
+      .from("video_share_links")
+      .select("id")
+      .eq("video_project_id", data.video_project_id)
+      .maybeSingle();
+    if (!link) return [];
+    const { data: rows, error } = await context.supabase
+      .from("video_presentation_feedback")
+      .select("id, visitor_name, kind, note, created_at")
+      .eq("share_link_id", (link as any).id)
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
+  });
+
+/** Public: read one presentation page by its slug or token. */
+export const getRevealPresentation = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({ key: z.string().min(6).max(80), password: z.string().max(80).nullable().optional() })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { loadPresentation } = await import("@/lib/reveal.server");
+    return loadPresentation(data.key, data.password ?? null);
+  });
+
+/** Public: a visitor comment or approval on a presentation page. */
+export const submitPresentationFeedback = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        key: z.string().min(6).max(80),
+        kind: z.enum(["comment", "approved", "changes"]).default("comment"),
+        name: z.string().max(80).nullable().optional(),
+        email: z.string().max(160).nullable().optional(),
+        note: z.string().max(1200).nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: link } = await supabaseAdmin
+      .from("video_share_links")
+      .select("id, user_id, comments_enabled, approval_enabled")
+      .or(`slug.eq.${data.key},token.eq.${data.key}`)
+      .maybeSingle();
+    if (!link) throw new Error("That presentation is no longer available.");
+    const l = link as any;
+    if (data.kind === "comment" && !l.comments_enabled) throw new Error("Comments are turned off for this page.");
+    if (data.kind !== "comment" && !l.approval_enabled) throw new Error("Approvals are turned off for this page.");
+    const { error } = await supabaseAdmin.from("video_presentation_feedback").insert({
+      user_id: l.user_id,
+      share_link_id: l.id,
+      visitor_name: data.name || null,
+      visitor_email: data.email || null,
+      kind: data.kind,
+      note: data.note || null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
