@@ -407,12 +407,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       host.id = "stStart";
       host.className = "sts";
       canvasBody.insertBefore(host, canvasBody.firstChild);
+      host.addEventListener("click", onClick);
     }
     if (!panelHost) {
       panelHost = document.createElement("div");
       panelHost.id = "stStartRight";
       panelHost.className = "sts-right";
       right.insertBefore(panelHost, right.firstChild);
+      panelHost.addEventListener("click", onClick);
     }
     host.innerHTML = canvasHtml();
     panelHost.innerHTML = panelHtml();
@@ -425,11 +427,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   function wire() {
-    const root = [host, panelHost].filter(Boolean) as HTMLElement[];
 
-    root.forEach((r) =>
-      r.addEventListener("click", onClick, { once: true } as any),
-    );
 
     const drop = document.getElementById("stsDrop") || document.getElementById("stsUp");
     if (drop) {
