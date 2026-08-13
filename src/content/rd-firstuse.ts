@@ -981,6 +981,10 @@ export function mountFirstUse(ctx: Ctx) {
     state.mode = "chooser";
     render();
   }
+  (window as any).rdFirstUse = () => {
+    openFirstUse();
+    go("studio");
+  };
   (window as any).rdStudioChooser = () => {
     openChooser();
     go("studio");
