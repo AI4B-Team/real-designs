@@ -494,6 +494,35 @@ function stepAudio() {
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
 }
 
+const LABEL_STYLES: Array<[string, string]> = [
+  ["clean", "Clean"],
+  ["architectural", "Architectural"],
+  ["callout", "Callout"],
+];
+const LABEL_POSITIONS: Array<[string, string]> = [
+  ["top_left", "Top Left"],
+  ["top_right", "Top Right"],
+  ["bottom_left", "Bottom Left"],
+  ["bottom_right", "Bottom Right"],
+];
+
+function labelEditor(s, i) {
+  const labels = Array.isArray(s.labels) ? s.labels : [];
+  return `<div class="rv-mcard">
+    <div class="rv-mcard-h"><b>${esc(s.room || "Scene " + (i + 1))}</b>
+      ${labels.length < 2 ? `<button class="btn btn-ghost btn-sm" data-label-add="${i}">Add Label</button>` : ""}
+    </div>
+    ${labels.length === 0 ? `<div class="rv-note sm">No Labels On This Scene.</div>` : ""}
+    ${labels.map((l, j) => `<div class="rv-labrow">
+      <input data-label-text="${i}:${j}" value="${esc(l.text || "")}" placeholder="Label Text" maxlength="40">
+      <select data-label-style="${i}:${j}">${LABEL_STYLES.map(([v, n]) => `<option value="${v}" ${(l.style || "clean") === v ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <select data-label-pos="${i}:${j}">${LABEL_POSITIONS.map(([v, n]) => `<option value="${v}" ${(l.position || "bottom_left") === v ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <button class="rv-x" data-label-del="${i}:${j}" aria-label="Remove Label"><i data-lucide="x"></i></button>
+    </div>`).join("")}
+  </div>`;
+}
+
+
 function stepBrand() {
   const w = S.wizard;
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
