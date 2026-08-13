@@ -29,8 +29,8 @@ export type JobFile = {
   name: string;
   size: number;
   state: "queued" | "uploading" | "done" | "failed";
-  error?: string;
-  file?: File;
+  error?: string | undefined;
+  file?: File | undefined;
 };
 
 export type Job = {
@@ -293,8 +293,8 @@ async function run(job: Job) {
     running--;
   }
 
-  if (job.state === "Canceled") return;
-  if (paused || job.state === "Paused") return;
+  if ((job.state as JobState) === "Canceled") return;
+  if (paused || (job.state as JobState) === "Paused") return;
 
   if (measured.length) {
     job.state = "Organizing";
