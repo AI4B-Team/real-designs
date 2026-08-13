@@ -13,7 +13,7 @@ import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions, setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
-import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
+import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { getPortfolioReport } from "@/lib/reports.functions";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded } from "@/lib/presentations.functions";
@@ -430,7 +430,7 @@ async function loadDashboard(){
 <span class="pill ${r.total_low!=null?'p-ok':'p-gray'}">${r.total_low!=null?'Priced':'Draft'}</span></div>`).join('');
     rl.querySelectorAll('[data-photo]').forEach(async(img)=>{
       const p=img.getAttribute('data-photo'); if(!p) return;
-      const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+      const url=await resolvePhotoUrl(p);
       if(url){ img.src=url; img.hidden=false; }
     });
   }
@@ -533,7 +533,7 @@ async function paintRooms(){
   }).join('');
   rc.querySelectorAll('[data-photo]').forEach(async(img)=>{
     const p=img.getAttribute('data-photo'); if(!p) return;
-    const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+    const url=await resolvePhotoUrl(p);
     if(url){ img.src=url; img.hidden=false; }
   });
   lucide.createIcons();
@@ -861,8 +861,8 @@ function videoModal(url){
 
 async function openInStudio(r){
   try{
-    const beforeUrl=r.before_path?(isStoredPhoto(r.before_path)?await roomPhotoUrl(r.before_path):r.before_path):PHOTOS.before;
-    const afterUrl=r.after_path?(isStoredPhoto(r.after_path)?await roomPhotoUrl(r.after_path):r.after_path):null;
+    const beforeUrl=r.before_path?(await resolvePhotoUrl(r.before_path)):PHOTOS.before;
+    const afterUrl=r.after_path?(await resolvePhotoUrl(r.after_path)):null;
     const cB=document.getElementById('cBefore');
     if(cB&&beforeUrl) cB.innerHTML=photo(beforeUrl,'Original space before redesign');
     if(afterUrl){
@@ -1030,7 +1030,7 @@ function paintDesigns(){
   lucide.createIcons();
   g.querySelectorAll('[data-photo]').forEach(async(img)=>{
     const p=img.getAttribute('data-photo'); if(!p) return;
-    const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+    const url=await resolvePhotoUrl(p);
     if(url){ img.src=url; img.hidden=false; }
   });
   g.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
@@ -1060,7 +1060,7 @@ function paintDesigns(){
   }));
   g.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',async()=>{
     const d=list.find(x=>x.id===b.getAttribute('data-dl')); if(!d||!d.path) return;
-    const url=isStoredPhoto(d.path)?await roomPhotoUrl(d.path):d.path;
+    const url=await resolvePhotoUrl(d.path);
     if(!url) return;
     const a=document.createElement('a'); a.href=url; a.download=d.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.jpg';
     a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
@@ -1092,7 +1092,7 @@ async function bulkDesigns(action){
   if(action==='download'){
     for(const d of list){
       if(!d.path) continue;
-      const url=isStoredPhoto(d.path)?await roomPhotoUrl(d.path):d.path;
+      const url=await resolvePhotoUrl(d.path);
       if(!url) continue;
       const a=document.createElement('a'); a.href=url; a.download=d.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.jpg';
       a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
@@ -1176,7 +1176,7 @@ function paintHistory(){
 <button class="btn btn-primary btn-xs" id="hmCmp" ${HIST_SEL.length===2?'':'disabled'}>Compare Versions</button></div>`;
   body.querySelectorAll('[data-hphoto]').forEach(async(img)=>{
     const p=img.getAttribute('data-hphoto'); if(!p) return;
-    const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+    const url=await resolvePhotoUrl(p);
     if(url){ img.src=url; img.hidden=false; }
   });
   body.querySelectorAll('[data-hopen]').forEach(b=>b.addEventListener('click',()=>{
@@ -1225,7 +1225,7 @@ ${picks.map(v=>`<div><img data-cphoto="${v.after_path||v.before_path||''}" alt="
 <button class="btn btn-ghost btn-block" style="margin-top:10px" id="hmBack">Back To History</button>`;
   body.querySelectorAll('[data-cphoto]').forEach(async(img)=>{
     const p=img.getAttribute('data-cphoto'); if(!p) return;
-    const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+    const url=await resolvePhotoUrl(p);
     if(url){ img.src=url; img.hidden=false; }
   });
   const bk=body.querySelector('#hmBack'); if(bk) bk.addEventListener('click',paintHistory);
@@ -1299,7 +1299,7 @@ async function runBatch(){
     if(st){ st.className='pill p-amb'; st.textContent='Staging '+(done+failed+1)+' Of '+queue.length; }
     batchRowSet(room.id,'p-amb','Staging','rendering in '+direction);
     try{
-      const src=isStoredPhoto(room.before_path)?await roomPhotoUrl(room.before_path):room.before_path;
+      const src=await resolvePhotoUrl(room.before_path);
       const image=await toDataUrl(src,1100);
       const r=await renderDesign({data:{
         image,
@@ -3201,7 +3201,7 @@ if(scopeGrid && !document.getElementById('scSave')){
       rows.querySelectorAll('.saved-thumb').forEach(async(img)=>{
         const p=img.getAttribute('data-photo');
         if(!p) return;
-        const url=isStoredPhoto(p)?await roomPhotoUrl(p):p;
+        const url=await resolvePhotoUrl(p);
         if(url){ img.src=url; img.hidden=false; }
       });
       lucide.createIcons();
@@ -3667,7 +3667,7 @@ async function shopCtxFromRoom(room, image){
   let img=image||null;
   if(!img && room){
     const p=room.after_path||room.before_path||'';
-    img=p?(isStoredPhoto(p)?await roomPhotoUrl(p):p):null;
+    img=p?(await resolvePhotoUrl(p)):null;
   }
   return {
     go, image:img||'',
@@ -3692,7 +3692,7 @@ const stShop=document.getElementById('stShop');
 if(stShop) stShop.addEventListener('click',shopFromStudio);
 window.rdShopDesign=async function(d){
   if(!d) return;
-  const url=d.path?(isStoredPhoto(d.path)?await roomPhotoUrl(d.path):d.path):'';
+  const url=d.path?(await resolvePhotoUrl(d.path)):'';
   if(d.room) return openShop(await shopCtxFromRoom(d.room,url));
   openShop({ go, image:url, roomType:d.cat||'Living Room', roomId:'sample-'+d.id, roomLabel:d.name,
     propertyId:'sample', propertyLabel:'Sample Design', designId:String(d.id), designLabel:d.name });
