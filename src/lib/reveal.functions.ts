@@ -272,6 +272,21 @@ export const startRender = createServerFn({ method: "POST" })
     const charged = await charge(userId, "video", "REAL REVEAL render");
     if (!charged.ok) throw new Error(chargeErrorMessage(charged));
 
+    // Immersive motion is animated per scene, so it is metered per scene on top
+    // of the render itself. Standard motion stays inside the render charge.
+    let balance = charged.balance;
+    const { data: immersive } = await supabase
+      .from("video_scenes")
+      .select("id, room_name")
+      .eq("video_project_id", data.id)
+      .eq("motion_level", "immersive");
+    for (const s of immersive ?? []) {
+      const extra = await charge(userId, "plan_3d", `REAL REVEAL immersive motion — ${(s as any).room_name || "Scene"}`);
+      if (!extra.ok) throw new Error(chargeErrorMessage(extra));
+      balance = extra.balance;
+    }
+
+
     await supabase.from("video_variants").delete().eq("video_project_id", data.id);
     const rows = data.variants.map((v) => ({
       aspect_ratio: v.aspect_ratio,
