@@ -8,7 +8,7 @@ import { createIcons, icons } from "lucide";
 export { DIRECTIONS } from "@/content/directions";
 import { DIRECTIONS } from "@/content/directions";
 
-const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging"];
+const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging", "Saved"];
 
 /** Room filters offered in the UI, mapped onto the canonical room labels. */
 const ROOMS = [
@@ -133,6 +133,7 @@ export function mountExplore(go, ctx) {
   function matchesSpace(d) {
     if (cat === "All") return true;
     if (cat === "Virtual Staging") return !!d.staging;
+    if (cat === "Saved") return saved.indexOf(d.id) > -1;
     return d.spaces.indexOf(cat) > -1;
   }
   function matchesRoom(d) {
