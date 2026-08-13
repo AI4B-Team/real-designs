@@ -266,6 +266,9 @@
 
 .rd-app .chips{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent);-webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 22px),transparent)}
 .rd-app .chips::-webkit-scrollbar{display:none}
+/* Space Type: always fit all three on one row, never clipped */
+.rd-app #spChips{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;overflow:visible;mask-image:none;-webkit-mask-image:none}
+.rd-app #spChips .chip{flex:initial;width:100%;min-width:0;padding:6px 8px;text-align:center;overflow:hidden;text-overflow:ellipsis}
 
 .rd-app .chip{flex:0 0 auto;white-space:nowrap;border:1px solid var(--line);background:var(--white);border-radius:999px;padding:6px 13px;font-size:.79rem;font-weight:500;color:var(--ink-2);transition:.14s}
 
