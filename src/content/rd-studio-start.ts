@@ -229,7 +229,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   const TABS: Array<[Method, string, string]> = [
     ["space", "image", "Space"],
-    ["sketch", "pen-line", "Sketch or Plan"],
+    ["sketch", "pen-line", "Sketch / Plan"],
     ["describe", "pencil-line", "Describe"],
     ["property", "map-pin", "Property"],
   ];
@@ -261,7 +261,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<div class="sts-up" id="stsUp">' +
       '<i data-lucide="upload"></i>' +
       "<b>" +
-      (state.file ? esc(state.fileName) : "Drag and drop a file") +
+      (state.file ? esc(state.fileName) : "Drag And Drop A File") +
       "</b>" +
       '<button class="btn btn-dark btn-xs" data-sts="browse">Browse Files</button>' +
       '<span class="sts-types">Supported files: ' +
@@ -304,9 +304,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
     if (state.method === "describe") {
       return (
-        "<h4>Describe an Idea</h4><p>Create an original room, exterior, landscape, or design concept from a written description.</p>" +
-        field("What Are You Creating?", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Landscape"]], state.space)) +
-        field("Room or Space Type", select("stsRoom", ROOMS, state.room)) +
+        "<h4>Describe An Idea</h4><p>Create an original design concept from a written description.</p>" +
+        field("What Are You Creating?", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+        field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
         field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
         field("Design Style", select("stsStyle", STYLES, state.style)) +
         field("Mood", select("stsMood", ["", ...MOODS], state.mood)) +
@@ -318,7 +318,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (state.propertyMode === "new") {
       return (
         "<h4>Create New Property</h4><p>Only the essentials now. You can add rooms and details later.</p>" +
-        field("Property Name or Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
+        field("Property Name Or Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
         field("Property Type", select("stsPType", ["Single Family", "Condo", "Townhome", "Multi Family", "Commercial"], state.newType)) +
         field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
         '<div class="sts-row"><button class="btn btn-ghost btn-sm" data-sts="propback">Back</button></div>'
@@ -341,7 +341,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       );
     }
     return (
-      "<h4>Start With a Property</h4><p>Organize rooms, angles, designs, budgets and project decisions under one address.</p>" +
+      "<h4>Start With A Property</h4><p>Open an existing property or create one to organize multiple rooms and designs. Organize rooms, angles, designs, budgets and project decisions under one address.</p>" +
       '<div class="sts-row col">' +
       '<button class="btn btn-dark btn-sm" data-sts="proppick"><i data-lucide="list"></i>Select Existing Property</button>' +
       '<button class="btn btn-ghost btn-sm" data-sts="propnew"><i data-lucide="plus"></i>Create New Property</button>' +
