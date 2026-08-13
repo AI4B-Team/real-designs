@@ -485,6 +485,12 @@ function stepAudio() {
   <div class="rv-sub">Captions</div>
   <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Captions On Scenes</label>
   ${w.captions ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}<input data-cap="${i}" value="${esc(s.caption ?? s.room ?? "")}"></label>`).join("")}</div>` : ""}
+  <div class="rv-sub">Scene Labels</div>
+  <div class="rv-note sm">Short on-screen labels for room names, materials or one callout. Keep them restrained — two per scene is the maximum.</div>
+  <div class="rv-adv">
+    <button class="btn btn-ghost btn-sm" id="rvSuggestLabels"><i data-lucide="wand"></i>Suggest Labels</button>
+    ${w.scenes.map((s, i) => labelEditor(s, i)).join("")}
+  </div>
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
 }
 
