@@ -1038,9 +1038,10 @@
 /* ---------- Studio source states ----------
    Studio boots empty: no sample room, no editing controls, no planning range
    until a real source (upload, saved design, property or a chosen sample). */
-.rd-app .studio.st-empty > .card:first-child,
-.rd-app .studio.st-empty > .right{ display:none; }
-.rd-app .studio.st-empty{ grid-template-columns:1fr; }
+.rd-app .studio.st-empty > .card:first-child{ display:none; }
+.rd-app .studio.st-empty{ grid-template-columns:1fr 344px; }
+.rd-app .studio.st-empty > .right{ display:block; grid-column:auto; }
+.rd-app .studio.st-empty > .right > *:not(#stStartRight){ display:none !important; }
 .rd-app .studio.st-empty #canvasCard .card-h > div:last-child,
 .rd-app .studio.st-empty #canvas,
 .rd-app .studio.st-empty #canvasCard .card-b > div:last-child{ display:none !important; }
@@ -1080,3 +1081,96 @@
 .rd-app .canvas-card.dark .src-cap{ background:#232327; border-color:#2E2E33; margin:24px 24px 0; }
 .rd-app .canvas-card.dark .src-cap b{ color:#fff; }
 .rd-app .canvas-card.dark .src-cap span{ color:#8E8E96; }
+
+
+/* ---------- Studio start experience (single empty state) ---------- */
+.rd-app .sts{ display:block; }
+.rd-app .sts-drop{
+  display:flex; align-items:center; justify-content:center;
+  min-height:min(62vh,560px);
+  border:1px dashed var(--line); border-radius:14px;
+  background:var(--surface-2); text-align:center; padding:34px 22px;
+  transition:border-color .15s ease, background .15s ease;
+}
+.rd-app .sts-drop.over{ border-color:var(--red); background:var(--surface); }
+.rd-app .sts-drop.pulse, .rd-app .sts.pulse .sts-drop{ border-color:var(--red); }
+.rd-app .sts-drop-in{ max-width:520px; display:flex; flex-direction:column; align-items:center; gap:12px; }
+.rd-app .sts-drop-in h4{ font-size:1.12rem; }
+.rd-app .sts-drop-in p{ font-size:.84rem; color:var(--mute); margin:0; }
+.rd-app .sts-fi{ width:26px; height:26px; color:var(--mute); }
+.rd-app .sts-links{ display:flex; gap:18px; flex-wrap:wrap; justify-content:center; margin-top:4px; }
+.rd-app .sts-link{
+  display:inline-flex; align-items:center; gap:6px;
+  background:none; border:0; cursor:pointer; padding:0;
+  font-size:.8rem; color:var(--ink); text-decoration:underline; text-underline-offset:3px;
+}
+.rd-app .sts-link:hover{ color:var(--red); }
+.rd-app .sts-link i{ width:14px; height:14px; }
+.rd-app .sts-row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+.rd-app .sts-row.col{ flex-direction:column; align-items:stretch; }
+.rd-app .sts-note{ font-size:.74rem; color:var(--mute-2); margin:10px 0 0; }
+
+.rd-app .sts-brief{ padding:20px 4px; max-width:720px; margin:0 auto; }
+.rd-app .sts-brief h4{ font-size:1.05rem; margin-bottom:4px; }
+.rd-app .sts-brief p{ font-size:.83rem; color:var(--mute); margin-bottom:14px; }
+.rd-app .sts-l{ display:block; font-size:.76rem; color:var(--mute); margin-bottom:6px; }
+.rd-app .sts-ta{
+  width:100%; padding:12px 14px; border:1px solid var(--line); border-radius:12px;
+  background:var(--surface); font:inherit; font-size:.86rem; resize:vertical; margin-bottom:12px;
+}
+
+.rd-app .sts-samples{ padding:18px 6px; }
+.rd-app .sts-samples-h{ display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.rd-app .sts-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:12px; }
+.rd-app .sts-sample{
+  position:relative; border:1px solid var(--line); border-radius:12px; overflow:hidden;
+  background:var(--surface); cursor:pointer; text-align:left; padding:0 0 10px;
+}
+.rd-app .sts-sample img{ width:100%; height:112px; object-fit:cover; display:block; }
+.rd-app .sts-sample b{ display:block; font-size:.79rem; padding:9px 10px 0; }
+.rd-app .sts-tag{
+  position:absolute; top:8px; left:8px; z-index:2;
+  background:var(--ink); color:var(--surface); font-size:.64rem; letter-spacing:.08em;
+  text-transform:uppercase; padding:3px 7px; border-radius:999px;
+}
+
+.rd-app .sts-panel{ position:sticky; top:12px; }
+.rd-app .sts-tabs{ display:grid; grid-template-columns:repeat(4,1fr); border-bottom:1px solid var(--line); }
+.rd-app .sts-tab{
+  display:flex; flex-direction:column; align-items:center; gap:4px;
+  padding:11px 4px; background:none; border:0; cursor:pointer;
+  font-size:.68rem; color:var(--mute); border-bottom:2px solid transparent;
+}
+.rd-app .sts-tab i{ width:16px; height:16px; }
+.rd-app .sts-tab.on{ color:var(--ink); border-bottom-color:var(--red); }
+.rd-app .sts-body{ padding:16px 16px 4px !important; }
+.rd-app .sts-body h4{ font-size:.95rem; margin-bottom:4px; }
+.rd-app .sts-body > p{ font-size:.78rem; color:var(--mute); margin-bottom:14px; }
+.rd-app .sts-body .field{ margin-bottom:12px; }
+.rd-app .sts-body .field > label{ display:block; font-size:.72rem; color:var(--mute); margin-bottom:5px; }
+.rd-app .sts-up{
+  display:flex; flex-direction:column; align-items:center; gap:7px; text-align:center;
+  border:1px dashed var(--line); border-radius:12px; padding:16px 12px !important; margin-bottom:14px;
+  background:var(--surface-2);
+}
+.rd-app .sts-up.over{ border-color:var(--red); }
+.rd-app .sts-up b{ font-size:.78rem; }
+.rd-app .sts-types{ font-size:.68rem; color:var(--mute-2); }
+.rd-app .sts-props{ display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+.rd-app .sts-prop{
+  text-align:left; border:1px solid var(--line); border-radius:10px; background:var(--surface);
+  padding:9px 11px !important; cursor:pointer;
+}
+.rd-app .sts-prop b{ display:block; font-size:.79rem; }
+.rd-app .sts-prop span{ font-size:.71rem; color:var(--mute); }
+.rd-app .sts-foot{ padding:12px 16px 16px !important; border-top:1px solid var(--line); }
+
+.rd-app .canvas-card.dark .sts-drop{ background:#1C1C1F; border-color:#2E2E33; }
+.rd-app .canvas-card.dark .sts-drop-in h4, .rd-app .canvas-card.dark .sts-link{ color:#fff; }
+.rd-app .canvas-card.dark .sts-drop-in p, .rd-app .canvas-card.dark .sts-note{ color:#8E8E96; }
+
+@media (max-width:1100px){
+  .rd-app .studio.st-empty{ grid-template-columns:1fr; }
+  .rd-app .sts-panel{ position:static; }
+  .rd-app .sts-drop{ min-height:320px; }
+}
