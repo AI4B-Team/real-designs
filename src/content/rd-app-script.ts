@@ -671,7 +671,7 @@ function studioStart(){
         r.readAsDataURL(file);
       })
     });
-  }catch(e){ STUDIO_START=null; }
+  }catch(e){ STUDIO_START=null; try{ window.__stsErr=String(e&&e.stack||e); }catch(_){} }
   return STUDIO_START;
 }
 window.rdStudioStart=(method)=>{ const s=studioStart(); if(s&&s.open) s.open(method); };
