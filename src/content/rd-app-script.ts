@@ -26,6 +26,7 @@ import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
+import { openShop, renderSelectedProducts } from "@/content/rd-shop";
 import { getSubscription, changePlan, setCancelAtPeriodEnd, withdrawPlanRequest, listBillingEvents } from "@/lib/subscription.functions";
 
 
@@ -993,7 +994,7 @@ ${d.sample?'<span class="pill dg-sample">Sample</span>':''}</div>
   ? `<button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Try This Style</button>`
   : `<button class="btn btn-ghost btn-xs" style="flex:1" data-open="${d.id}">Open</button>
 <button class="btn btn-ghost btn-xs" data-hist="${d.id}" title="Version history"><i data-lucide="history"></i></button>`}
-<button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download image"><i data-lucide="download"></i></button></div></div></div>`;
+<button class="btn btn-ghost btn-xs" data-shop="${d.id}" title="Shop this design"><i data-lucide="shopping-bag"></i></button><button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download image"><i data-lucide="download"></i></button></div></div></div>`;
 }
 
 function paintDesignChrome(){
@@ -1052,6 +1053,10 @@ function paintDesigns(){
   g.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
     const d=list.find(x=>x.id===b.getAttribute('data-del'));
     if(d) removeDesigns([d]);
+  }));
+  g.querySelectorAll('[data-shop]').forEach(b=>b.addEventListener('click',()=>{
+    const d=list.find(x=>x.id===b.getAttribute('data-shop'));
+    if(d&&window.rdShopDesign) window.rdShopDesign(d);
   }));
   g.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',async()=>{
     const d=list.find(x=>x.id===b.getAttribute('data-dl')); if(!d||!d.path) return;
@@ -1785,6 +1790,9 @@ function boardPrint(){
   w.document.close(); w.focus(); setTimeout(()=>{try{w.print();}catch(_){}} ,600);
 }
 renderProductBoard(lastScope);
+function paintSelectedProducts(){ try{ renderSelectedProducts(document.getElementById('selProducts'),go); }catch(_){} }
+paintSelectedProducts();
+window.addEventListener('rd:products',paintSelectedProducts);
 window.addEventListener('rd:priced',()=>renderProductBoard(lastScope));
 const boardCsvBtn=document.getElementById('boardCsv');
 if(boardCsvBtn) boardCsvBtn.addEventListener('click',boardCsv);
@@ -3653,6 +3661,43 @@ function latestRoom(){
   const rooms=proj?proj.rooms.filter(r=>r.version_id):[];
   return rooms.length?rooms[rooms.length-1]:null;
 }
+/* Shop the Design: launch the sourcing workspace from Studio or any saved design. */
+async function shopCtxFromRoom(room, image){
+  const prop=curProp(); const proj=prop?prop.projects[SEL.pr]:null;
+  let img=image||null;
+  if(!img && room){
+    const p=room.after_path||room.before_path||'';
+    img=p?(isStoredPhoto(p)?await roomPhotoUrl(p):p):null;
+  }
+  return {
+    go, image:img||'',
+    roomType:(room&&(room.room_type||room.name))||'Living Room',
+    roomId:String((room&&room.id)||'room-current'),
+    roomLabel:(room&&room.name)||'Current Room',
+    propertyId:String((prop&&prop.id)||'prop-current'),
+    propertyLabel:(prop&&prop.address)||'No Property Selected',
+    designId:String((room&&room.version_id)||'design-current'),
+    designLabel:((room&&room.name)||'Current Design')+(room&&room.version_no?(' v'+room.version_no):''),
+    budgetMax:(proj&&proj.budget_target)||null,
+  };
+}
+async function shopFromStudio(){
+  const img=document.querySelector('#cAfter img');
+  const src=lastRender||(img&&img.src)||null;
+  const room=latestRoom();
+  if(!src&&!room){ showAlert('Generate or open a design first, then shop it.'); return; }
+  openShop(await shopCtxFromRoom(room,src));
+}
+const stShop=document.getElementById('stShop');
+if(stShop) stShop.addEventListener('click',shopFromStudio);
+window.rdShopDesign=async function(d){
+  if(!d) return;
+  const url=d.path?(isStoredPhoto(d.path)?await roomPhotoUrl(d.path):d.path):'';
+  if(d.room) return openShop(await shopCtxFromRoom(d.room,url));
+  openShop({ go, image:url, roomType:d.cat||'Living Room', roomId:'sample-'+d.id, roomLabel:d.name,
+    propertyId:'sample', propertyLabel:'Sample Design', designId:String(d.id), designLabel:d.name });
+};
+
 const stApprove=document.getElementById('stApprove');
 if(stApprove) stApprove.addEventListener('click',async()=>{
   const room=latestRoom();
