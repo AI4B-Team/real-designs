@@ -4,6 +4,7 @@ export type NavLink = { href: string; label: string };
 export type NavGroup = { heading: string; links: NavLink[] };
 
 export const DESIGN_LINKS: NavLink[] = [
+  { href: "/explore", label: "Explore Styles" },
   { href: "/ai-interior-design", label: "AI Interior Design" },
   { href: "/ai-exterior-design", label: "AI Exterior Design" },
   { href: "/ai-landscape-design", label: "AI Landscape Design" },
@@ -58,6 +59,7 @@ export const FOOTER_GROUPS: NavGroup[] = [
       { href: "/ai-landscape-design", label: "Landscape" },
       { href: "/ai-virtual-staging", label: "Virtual Staging" },
       { href: "/sketch-to-render", label: "Sketch To Render" },
+      { href: "/explore", label: "Explore Styles" },
       { href: "/resources", label: "View All Features" },
     ],
   },
@@ -109,6 +111,7 @@ export const FOOTER_COLUMNS: FooterColumn[] = [
       { href: "/ai-virtual-staging", label: "Virtual Staging" },
       { href: "/declutter-photo", label: "Declutter & Empty Room" },
       { href: "/sketch-to-render", label: "Sketch & Floor Plan" },
+      { href: "/explore", label: "Explore Styles" },
       { href: "/resources", label: "View All Features" },
     ],
   },

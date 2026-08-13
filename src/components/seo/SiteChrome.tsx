@@ -55,6 +55,9 @@ export function SiteHeader() {
         </Link>
 
         <div className="nav-cta">
+          <Link to="/explore" className="btn btn-ghost btn-sm">
+            Explore Styles
+          </Link>
           {signedIn ? (
             <Link to="/app" className="btn btn-ghost btn-sm">
               Dashboard
