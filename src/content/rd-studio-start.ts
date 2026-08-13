@@ -518,10 +518,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       }
     } else if (act) {
       const k = act.dataset["sts"];
-      if (k === "browse") browse();
-      else if (k === "sketch") setMethod("sketch");
-      else if (k === "describe") setMethod("describe");
-      else if (k === "sample") {
+      if (k === "browse") {
+        if (state.method !== "space" && state.method !== "sketch") setMethod("space");
+        browse();
+      } else if (k === "sketch") setMethod("sketch");
+      else if (k === "describe") {
+        setMethod("describe");
+        const ta = document.getElementById("stsPrompt") as HTMLTextAreaElement | null;
+        if (ta) ta.focus();
+      } else if (k === "sample") {
         state.samples = true;
         render();
       } else if (k === "closesamples") {
@@ -545,14 +550,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       } else if (k === "propback") {
         state.propertyMode = "";
         render();
-      } else render();
-    } else {
-      // re-arm the one-shot listener without changing anything
-      render();
-      return;
+      }
     }
-    if (!tab && !chip) return;
   }
+
 
   function setMethod(m: Method) {
     state.method = m;
