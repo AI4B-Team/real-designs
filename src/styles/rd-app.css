@@ -904,3 +904,37 @@
 .rd-app .sk-cell{height:10px;width:80%}
 .rd-app .sk-tr td{padding:10px 12px}
 @media (prefers-reduced-motion:reduce){.rd-app .sk{animation:none}}
+
+/* ---------- designs gallery: categories, favorites, selection ---------- */
+.rd-app .dg-bar{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin:-8px 0 14px}
+.rd-app .dg-cats{display:flex;gap:6px;flex-wrap:wrap}
+.rd-app .dg-cats button{font-size:.74rem;font-weight:600;padding:6px 12px;border:1px solid var(--line);border-radius:999px;color:var(--mute);background:transparent}
+.rd-app .dg-cats button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.rd-app .dg-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rd-app .dg-search{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:5px 12px;background:var(--card,#fff)}
+.rd-app .dg-search svg{width:14px;height:14px;color:var(--mute-2)}
+.rd-app .dg-search input{border:0;outline:0;background:transparent;font-size:.78rem;width:150px;color:var(--ink)}
+.rd-app .dg-sort{border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:.75rem;background:transparent;color:var(--ink)}
+.rd-app #designFav.on,.rd-app #designSelect.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rd-app .dg-bulk{display:none;gap:8px;align-items:center;flex-wrap:wrap;border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:14px;background:var(--card,#fff)}
+.rd-app .dg-bulk.on{display:flex}
+.rd-app .dg-bulk b{font-size:.8rem}
+.rd-app .dg-sp{flex:1}
+.rd-app .dg-danger{color:var(--red)}
+.rd-app .dg-card{position:relative}
+.rd-app .dg-card.sel{outline:2px solid var(--red);outline-offset:2px}
+.rd-app .dg-thumb{position:relative;aspect-ratio:8/5;overflow:hidden;border-radius:7px 7px 0 0;background:#EFEDE8}
+.rd-app .dg-ov{position:absolute;top:8px;display:flex;gap:6px;opacity:0;transition:opacity .15s}
+.rd-app .dg-ov.l{left:8px}
+.rd-app .dg-ov.r{right:8px}
+.rd-app .dg-card:hover .dg-ov,.rd-app .dg-ov.show{opacity:1}
+.rd-app .dg-ob{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 1px 4px rgba(0,0,0,.2);color:var(--ink)}
+.rd-app .dg-ob svg{width:15px;height:15px}
+.rd-app .dg-ob.fav{color:var(--red)}
+.rd-app .dg-ob.fav svg{fill:currentColor}
+.rd-app .dg-ob.del:hover{background:var(--red);color:#fff}
+.rd-app .dg-ob.chk.on{background:var(--red);color:#fff}
+.rd-app .dg-sample{position:absolute;left:8px;bottom:8px;background:rgba(20,20,20,.82);color:#fff}
+.rd-app .dg-head{display:flex;align-items:center;gap:8px;margin:18px 0 10px}
+.rd-app .dg-head b{font-size:.82rem}
+.rd-app .dg-head span{font-size:.75rem;color:var(--mute-2)}

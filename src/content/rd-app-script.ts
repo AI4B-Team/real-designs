@@ -11,7 +11,7 @@ import { renderPlan3d } from "@/lib/plan3d.functions";
 import { runRoomTool } from "@/lib/room-tools.functions";
 import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
-import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions } from "@/lib/workspace.functions";
+import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions, setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, isStoredPhoto, uploadRenderDataUrl } from "@/lib/room-photos";
 import { getPortfolioReport } from "@/lib/reports.functions";
@@ -895,37 +895,135 @@ async function paintVersions(){
 paintVersions();
 window.addEventListener('rd:saved', paintVersions);
 
-/* ---------- designs: real saved versions ---------- */
-let DESIGN_FILTER='all';
+/* ---------- designs: real saved versions plus sample gallery ---------- */
+let DESIGN_FILTER='all', DESIGN_CAT='all', DESIGN_Q='', DESIGN_SORT='recent';
+let DESIGN_FAVONLY=false, DESIGN_SELMODE=false;
+let DESIGN_SEL=[];
 const ST_PILL=(s)=>s==='approved'?['p-ok','Approved']:s==='review'?['p-amb','In Review']:s==='archived'?['p-gray','Archived']:['p-gray','Draft'];
+
+const DG_CATS=[['all','All'],['kitchen','Kitchen'],['bath','Bath'],['living','Living'],['bedroom','Bedroom'],['office','Office'],['exterior','Exterior'],['outdoor','Outdoor']];
+function dgCat(t){
+  const s=String(t||'').toLowerCase();
+  if(s.indexOf('kitchen')>-1) return 'kitchen';
+  if(s.indexOf('bath')>-1) return 'bath';
+  if(s.indexOf('living')>-1||s.indexOf('family')>-1||s.indexOf('great')>-1) return 'living';
+  if(s.indexOf('bed')>-1) return 'bedroom';
+  if(s.indexOf('office')>-1||s.indexOf('study')>-1) return 'office';
+  if(s.indexOf('exterior')>-1||s.indexOf('facade')>-1||s.indexOf('front')>-1||s.indexOf('curb')>-1) return 'exterior';
+  if(s.indexOf('yard')>-1||s.indexOf('landscape')>-1||s.indexOf('patio')>-1||s.indexOf('pool')>-1) return 'outdoor';
+  return 'living';
+}
+const DG_SAMPLES=[
+  {id:'sm-k1',name:'Kitchen, Warm Minimal',cat:'kitchen',status:'approved',img:PHOTOS.kitchenAfter,note:'Shaker fronts, quartz, warm brass'},
+  {id:'sm-k2',name:'Kitchen, Modern Farmhouse',cat:'kitchen',status:'review',img:PHOTOS.farmhouse,note:'Painted island, apron sink'},
+  {id:'sm-b1',name:'Primary Bath, Spa Neutral',cat:'bath',status:'approved',img:PHOTOS.bath,note:'Porcelain tile, floating vanity'},
+  {id:'sm-b2',name:'Guest Bath, Luxury Stone',cat:'bath',status:'draft',img:PHOTOS.luxury,note:'Stone slab, matte black trim'},
+  {id:'sm-l1',name:'Living Room, Warm Minimal',cat:'living',status:'approved',img:PHOTOS.after,note:'Oak floors, linen seating'},
+  {id:'sm-l2',name:'Living Room, Midcentury',cat:'living',status:'review',img:PHOTOS.midcentury,note:'Walnut, low profile seating'},
+  {id:'sm-l3',name:'Living Room, Japandi',cat:'living',status:'archived',img:PHOTOS.japandi,note:'Pale wood, quiet palette'},
+  {id:'sm-d1',name:'Primary Bedroom, Soft Modern',cat:'bedroom',status:'approved',img:PHOTOS.bedroomAfter,note:'Layered neutrals, wide plank'},
+  {id:'sm-d2',name:'Guest Bedroom, Investor Neutral',cat:'bedroom',status:'draft',img:PHOTOS.neutral,note:'Rental grade, durable finishes'},
+  {id:'sm-o1',name:'Home Office, Focus Studio',cat:'office',status:'review',img:PHOTOS.officeAfter,note:'Built in desk, warm task light'},
+  {id:'sm-e1',name:'Facade, Fresh Curb Appeal',cat:'exterior',status:'approved',img:PHOTOS.exteriorAfter,note:'New paint, lighting, planting'},
+  {id:'sm-e2',name:'Facade, Painted Brick',cat:'exterior',status:'review',img:PHOTOS.paintedBrick,note:'Limewash brick, black windows'},
+  {id:'sm-e3',name:'Facade, Craftsman Revival',cat:'exterior',status:'archived',img:PHOTOS.craftsman,note:'Tapered columns, warm stain'},
+  {id:'sm-y1',name:'Backyard, Resort Yard',cat:'outdoor',status:'approved',img:PHOTOS.yardAfter,note:'Turf, pavers, evening lighting'},
+  {id:'sm-y2',name:'Backyard, Shade Lounge',cat:'outdoor',status:'draft',img:PHOTOS.resortYard,note:'Pergola, gravel, native planting'},
+];
+
+const DG_FAV_KEY='rd.designFavs', DG_HIDE_KEY='rd.designSampleHidden';
+function dgRead(k){ try{ const v=JSON.parse(localStorage.getItem(k)||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return []; } }
+function dgWrite(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){} }
+let DG_FAVS=dgRead(DG_FAV_KEY), DG_HIDDEN=dgRead(DG_HIDE_KEY);
+function isFav(id){ return DG_FAVS.indexOf(String(id))>-1; }
+function toggleFav(id,on){
+  const s=String(id), i=DG_FAVS.indexOf(s);
+  const want=on===undefined?i<0:!!on;
+  if(want&&i<0) DG_FAVS.push(s);
+  if(!want&&i>-1) DG_FAVS.splice(i,1);
+  dgWrite(DG_FAV_KEY,DG_FAVS);
+}
+
+function designItems(){
+  const all=[];
+  PROP_TREE.forEach(p=>p.projects.forEach(pr=>pr.rooms.forEach(r=>all.push({
+    id:String(r.id), version_id:r.version_id, sample:false, name:r.name, version_no:r.version_no||1,
+    status:r.status||'draft', cat:dgCat(r.room_type||r.name), path:r.after_path||r.before_path||'',
+    sub:p.address, total_low:r.total_low, total_high:r.total_high, room:{...r,address:p.address,project:pr.name},
+  }))));
+  const samples=DG_SAMPLES.filter(s=>DG_HIDDEN.indexOf(s.id)<0).map(s=>({
+    id:s.id, version_id:null, sample:true, name:s.name, version_no:1, status:s.status,
+    cat:s.cat, path:s.img, sub:s.note, total_low:null, total_high:null,
+  }));
+  return all.concat(samples);
+}
+function designFiltered(){
+  const q=DESIGN_Q.trim().toLowerCase();
+  let list=designItems().filter(d=>{
+    if(DESIGN_FILTER==='approved'&&d.status!=='approved') return false;
+    if(DESIGN_FILTER==='review'&&d.status!=='review') return false;
+    if(DESIGN_FILTER==='archived'&&d.status!=='archived') return false;
+    if(DESIGN_CAT!=='all'&&d.cat!==DESIGN_CAT) return false;
+    if(DESIGN_FAVONLY&&!isFav(d.id)) return false;
+    if(q&&(d.name+' '+(d.sub||'')).toLowerCase().indexOf(q)<0) return false;
+    return true;
+  });
+  if(DESIGN_SORT==='name') list.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(DESIGN_SORT==='cost') list.sort((a,b)=>(b.total_high||0)-(a.total_high||0));
+  return list;
+}
+
+function dgCard(d){
+  const s=ST_PILL(d.status);
+  const cost=d.sample?d.sub:(d.total_low!=null?kfmt(d.total_low)+' to '+kfmt(d.total_high):'Not priced yet');
+  const sel=DESIGN_SEL.indexOf(d.id)>-1;
+  const fav=isFav(d.id);
+  return `<div class="card dg-card${sel?' sel':''}" data-card="${d.id}"><div class="dg-thumb">
+<img data-photo="${d.path}" alt="${d.name}" style="width:100%;height:100%;object-fit:cover" hidden>
+<div class="dg-ov l${DESIGN_SELMODE||sel?' show':''}"><button class="dg-ob chk${sel?' on':''}" data-pick="${d.id}" aria-label="Select design" title="Select"><i data-lucide="${sel?'check':'square'}"></i></button></div>
+<div class="dg-ov r"><button class="dg-ob${fav?' fav':''}" data-fav="${d.id}" aria-label="Favorite" title="${fav?'Remove From Favorites':'Add To Favorites'}"><i data-lucide="heart"></i></button>
+<button class="dg-ob del" data-del="${d.id}" aria-label="Delete design" title="Delete"><i data-lucide="trash-2"></i></button></div>
+${d.sample?'<span class="pill dg-sample">Sample</span>':''}</div>
+<div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+<b style="font-size:.86rem">${d.name}${d.sample?'':' v'+d.version_no}</b><span class="pill ${s[0]}">${s[1]}</span></div>
+<div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">${d.sample?'Sample Design':d.sub} &middot; ${cost}</div>
+<div style="display:flex;gap:6px;margin-top:10px">${d.sample
+  ? `<button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Try This Style</button>`
+  : `<button class="btn btn-ghost btn-xs" style="flex:1" data-open="${d.id}">Open</button>
+<button class="btn btn-ghost btn-xs" data-hist="${d.id}" title="Version history"><i data-lucide="history"></i></button>`}
+<button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download image"><i data-lucide="download"></i></button></div></div></div>`;
+}
+
+function paintDesignChrome(){
+  const cats=document.getElementById('designCats');
+  if(cats&&!cats.dataset.built){
+    cats.dataset.built='1';
+    cats.innerHTML=DG_CATS.map(c=>`<button data-cat="${c[0]}"${c[0]===DESIGN_CAT?' class="on"':''}>${c[1]}</button>`).join('');
+    cats.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{
+      DESIGN_CAT=b.getAttribute('data-cat');
+      cats.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+      paintDesigns();
+    }));
+  }
+  const bulk=document.getElementById('designBulk');
+  if(bulk) bulk.classList.toggle('on',DESIGN_SELMODE||DESIGN_SEL.length>0);
+  const cnt=document.getElementById('dgCount');
+  if(cnt) cnt.textContent=DESIGN_SEL.length+' Selected';
+}
 
 function paintDesigns(){
   const g=document.getElementById('designGrid'); if(!g) return;
-  const all=[];
-  PROP_TREE.forEach(p=>p.projects.forEach(pr=>pr.rooms.forEach(r=>all.push({...r,address:p.address,project:pr.name}))));
-  const list=all.filter(r=>{
-    const s=r.status||'draft';
-    if(DESIGN_FILTER==='all') return true;
-    if(DESIGN_FILTER==='approved') return s==='approved';
-    if(DESIGN_FILTER==='review') return s==='review';
-    return s==='archived';
-  });
+  const list=designFiltered();
+  const ids=list.map(d=>d.id);
+  DESIGN_SEL=DESIGN_SEL.filter(id=>ids.indexOf(id)>-1);
+  paintDesignChrome();
   if(!list.length){
-    g.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">'+(all.length?'No Designs In This Tab Yet.':'No Designs Yet. Upload a photo in Studio, price it, then save it.')+'</p>';
+    g.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">'+(DESIGN_FAVONLY?'No Favorites In This View Yet. Tap The Heart On Any Design.':'No Designs Match This View Yet. Upload A Photo In Studio, Price It, Then Save It.')+'</p>';
     return;
   }
-  g.innerHTML=list.map(r=>{
-    const s=ST_PILL(r.status||'draft');
-    const cost=r.total_low!=null?kfmt(r.total_low)+' to '+kfmt(r.total_high):'Not priced yet';
-    return `<div class="card"><div style="aspect-ratio:8/5;overflow:hidden;border-radius:7px 7px 0 0;background:#EFEDE8">
-<img data-photo="${r.after_path||r.before_path||''}" alt="${r.name}" style="width:100%;height:100%;object-fit:cover" hidden></div>
-<div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
-<b style="font-size:.86rem">${r.name} v${r.version_no||1}</b><span class="pill ${s[0]}">${s[1]}</span></div>
-<div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">${r.address} &middot; ${cost}</div>
-<div style="display:flex;gap:6px;margin-top:10px"><button class="btn btn-ghost btn-xs" style="flex:1" data-open="${r.id}">Open</button>
-<button class="btn btn-ghost btn-xs" data-hist="${r.id}" title="Version history"><i data-lucide="history"></i></button>
-<button class="btn btn-ghost btn-xs" data-goto="scope"><i data-lucide="calculator"></i></button></div></div></div>`;
-  }).join('');
+  const mine=list.filter(d=>!d.sample), samples=list.filter(d=>d.sample);
+  g.innerHTML=mine.map(dgCard).join('')
+    +(samples.length?`<div class="dg-head" style="grid-column:1/-1"><b>Sample Designs</b><span>Examples you can explore, they do not use credits</span></div>`+samples.map(dgCard).join(''):'');
   lucide.createIcons();
   g.querySelectorAll('[data-photo]').forEach(async(img)=>{
     const p=img.getAttribute('data-photo'); if(!p) return;
@@ -934,14 +1032,96 @@ function paintDesigns(){
   });
   g.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
   g.querySelectorAll('[data-open]').forEach(b=>b.addEventListener('click',()=>{
-    const r=list.find(x=>String(x.id)===b.getAttribute('data-open'));
-    if(r) openInStudio(r);
+    const d=list.find(x=>x.id===b.getAttribute('data-open'));
+    if(d&&d.room) openInStudio(d.room);
   }));
   g.querySelectorAll('[data-hist]').forEach(b=>b.addEventListener('click',()=>{
-    const r=list.find(x=>String(x.id)===b.getAttribute('data-hist'));
-    if(r) openHistory(r);
+    const d=list.find(x=>x.id===b.getAttribute('data-hist'));
+    if(d&&d.room) openHistory(d.room);
+  }));
+  g.querySelectorAll('[data-fav]').forEach(b=>b.addEventListener('click',()=>{
+    toggleFav(b.getAttribute('data-fav')); paintDesigns();
+  }));
+  g.querySelectorAll('[data-pick]').forEach(b=>b.addEventListener('click',()=>{
+    const id=b.getAttribute('data-pick'), i=DESIGN_SEL.indexOf(id);
+    if(i>-1) DESIGN_SEL.splice(i,1); else DESIGN_SEL.push(id);
+    paintDesigns();
+  }));
+  g.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
+    const d=list.find(x=>x.id===b.getAttribute('data-del'));
+    if(d) removeDesigns([d]);
+  }));
+  g.querySelectorAll('[data-dl]').forEach(b=>b.addEventListener('click',async()=>{
+    const d=list.find(x=>x.id===b.getAttribute('data-dl')); if(!d||!d.path) return;
+    const url=isStoredPhoto(d.path)?await roomPhotoUrl(d.path):d.path;
+    if(!url) return;
+    const a=document.createElement('a'); a.href=url; a.download=d.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.jpg';
+    a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
   }));
 }
+
+async function removeDesigns(items){
+  if(!items.length) return;
+  const real=items.filter(d=>!d.sample&&d.version_id);
+  const label=items.length===1?'this design':items.length+' designs';
+  if(real.length&&!window.confirm('Delete '+label+'? Saved versions are removed permanently.')) return;
+  items.filter(d=>d.sample).forEach(d=>{ if(DG_HIDDEN.indexOf(d.id)<0) DG_HIDDEN.push(d.id); });
+  dgWrite(DG_HIDE_KEY,DG_HIDDEN);
+  items.forEach(d=>{ const i=DESIGN_SEL.indexOf(d.id); if(i>-1) DESIGN_SEL.splice(i,1); });
+  if(real.length){
+    try{
+      await deleteVersions({data:{version_ids:real.map(d=>d.version_id)}});
+      window.dispatchEvent(new Event('rd:saved'));
+    }catch(e){ window.alert('Could not delete: '+(e&&e.message?e.message:'try again')); }
+  }
+  paintDesigns();
+}
+
+async function bulkDesigns(action){
+  const list=designFiltered().filter(d=>DESIGN_SEL.indexOf(d.id)>-1);
+  if(!list.length) return;
+  if(action==='favorite'){ const on=!list.every(d=>isFav(d.id)); list.forEach(d=>toggleFav(d.id,on)); paintDesigns(); return; }
+  if(action==='delete'){ await removeDesigns(list); return; }
+  if(action==='download'){
+    for(const d of list){
+      if(!d.path) continue;
+      const url=isStoredPhoto(d.path)?await roomPhotoUrl(d.path):d.path;
+      if(!url) continue;
+      const a=document.createElement('a'); a.href=url; a.download=d.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()+'.jpg';
+      a.target='_blank'; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
+    }
+    return;
+  }
+  const real=list.filter(d=>!d.sample&&d.version_id);
+  if(real.length){
+    try{
+      await setVersionStatusBulk({data:{version_ids:real.map(d=>d.version_id),status:action}});
+      window.dispatchEvent(new Event('rd:saved'));
+    }catch(e){ window.alert('Could not update: '+(e&&e.message?e.message:'try again')); }
+  }
+  DESIGN_SEL=[];
+  paintDesigns();
+}
+
+(function wireDesignChrome(){
+  const q=document.getElementById('designSearch');
+  if(q) q.addEventListener('input',()=>{ DESIGN_Q=q.value||''; paintDesigns(); });
+  const so=document.getElementById('designSort');
+  if(so) so.addEventListener('change',()=>{ DESIGN_SORT=so.value; paintDesigns(); });
+  const fav=document.getElementById('designFav');
+  if(fav) fav.addEventListener('click',()=>{ DESIGN_FAVONLY=!DESIGN_FAVONLY; fav.classList.toggle('on',DESIGN_FAVONLY); paintDesigns(); });
+  const selBtn=document.getElementById('designSelect');
+  if(selBtn) selBtn.addEventListener('click',()=>{
+    DESIGN_SELMODE=!DESIGN_SELMODE; selBtn.classList.toggle('on',DESIGN_SELMODE);
+    if(!DESIGN_SELMODE) DESIGN_SEL=[];
+    paintDesigns();
+  });
+  const all=document.getElementById('dgAll');
+  if(all) all.addEventListener('click',()=>{ DESIGN_SEL=designFiltered().map(d=>d.id); paintDesigns(); });
+  const none=document.getElementById('dgNone');
+  if(none) none.addEventListener('click',()=>{ DESIGN_SEL=[]; paintDesigns(); });
+  document.querySelectorAll('[data-bulk]').forEach(b=>b.addEventListener('click',()=>bulkDesigns(b.getAttribute('data-bulk'))));
+})();
 
 /* ---------- version history for one room ---------- */
 let HIST_ROOM=null, HIST_LIST=[];
