@@ -272,30 +272,36 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function panelBody() {
     if (state.method === "space") {
+      /* progressive disclosure: no generation settings before a source exists */
       return (
-        "<h4>Upload a Space</h4><p>Upload a photo of an interior, exterior, or landscape.</p>" +
+        "<h4>Upload A Space</h4><p>Upload a photo of an interior, exterior or landscape.</p>" +
         uploadBox("JPG, PNG, HEIC, WEBP") +
-        field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Landscape"]], state.space)) +
-        field("Room or Area Type", select("stsRoom", ROOMS, state.room)) +
-        field("Project Goal", chips("goal", GOALS.map((g) => [g, g] as [string, string]), state.goal)) +
-        field("Design Style", select("stsStyle", STYLES, state.style)) +
-        field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
-        field("Accent Colors (Optional)", '<input id="stsAccents" type="text" placeholder="Warm brass, deep green" value="' + esc(state.accents) + '">') +
-        field("Additional Direction (Optional)", '<textarea id="stsNotes" rows="3" placeholder="Keep the fireplace, replace the cabinets">' + esc(state.notes) + "</textarea>")
+        field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+        (state.file
+          ? field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
+            field("Project Goal", chips("goal", GOALS.map((g) => [g, g] as [string, string]), state.goal)) +
+            field("Design Style", select("stsStyle", STYLES, state.style)) +
+            field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
+            field("Accent Colors (Optional)", '<input id="stsAccents" type="text" placeholder="Warm brass, deep green" value="' + esc(state.accents) + '">') +
+            field("Additional Direction (Optional)", '<textarea id="stsNotes" rows="3" placeholder="Keep the fireplace, replace the cabinets">' + esc(state.notes) + "</textarea>")
+          : "")
       );
     }
     if (state.method === "sketch") {
       return (
-        "<h4>Upload a Sketch or Plan</h4><p>Turn a sketch, floor plan, or concept drawing into a realistic design visualization.</p>" +
+        "<h4>Upload A Sketch Or Plan</h4><p>Turn a sketch, floor plan or concept drawing into a realistic visualization.</p>" +
         uploadBox("JPG, PNG, HEIC, WEBP, PDF") +
         field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Elevation", "Concept Drawing"], state.inputType)) +
-        field("Desired Output", select("stsOutput", ["Photorealistic Interior", "Photorealistic Exterior", "Furnished Floor Plan", "3D Concept"], state.output)) +
-        field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
-        field("Design Style", select("stsStyle", STYLES, state.style)) +
-        field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
-        field("Additional Direction (Optional)", '<textarea id="stsNotes" rows="3" placeholder="Open shelving, oak floors">' + esc(state.notes) + "</textarea>")
+        (state.file
+          ? field("Desired Output", select("stsOutput", ["Photorealistic Interior", "Photorealistic Exterior", "Furnished Floor Plan", "3D Concept"], state.output)) +
+            field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
+            field("Design Style", select("stsStyle", STYLES, state.style)) +
+            field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
+            field("Additional Direction (Optional)", '<textarea id="stsNotes" rows="3" placeholder="Open shelving, oak floors">' + esc(state.notes) + "</textarea>")
+          : "")
       );
     }
+
     if (state.method === "describe") {
       return (
         "<h4>Describe an Idea</h4><p>Create an original room, exterior, landscape, or design concept from a written description.</p>" +
