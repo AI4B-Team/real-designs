@@ -25,6 +25,7 @@ import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } fro
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 import { summaryHTML, metric } from "@/lib/result-summary";
+import { getSubscription, changePlan, setCancelAtPeriodEnd, withdrawPlanRequest, listBillingEvents } from "@/lib/subscription.functions";
 
 
 export function initApp(): () => void {
@@ -266,9 +267,28 @@ document.addEventListener('click',async(e)=>{
 
 
 
-document.getElementById('invRows').innerHTML=
-'<tr><td colspan="4" style="padding:18px 12px;color:var(--mute-2);font-size:.82rem">'+
-'No invoices yet. Receipts appear here after your first paid plan or credit top up.</td></tr>';
+const INV_EMPTY='<tr><td colspan="4" style="padding:18px 12px;color:var(--mute-2);font-size:.82rem">'+
+'No billing history yet. Plan changes, monthly refills and receipts appear here.</td></tr>';
+document.getElementById('invRows').innerHTML=INV_EMPTY;
+const EV_LABEL={requested:'Plan Requested',activated:'Plan Activated',downgraded:'Plan Changed',canceled:'Canceled',
+  cancel_scheduled:'Cancellation Scheduled',cancel_reverted:'Cancellation Reverted',refill:'Monthly Refill',
+  past_due:'Renewal Due',request_withdrawn:'Request Withdrawn'};
+async function paintBillingEvents(){
+  const el=document.getElementById('invRows'); if(!el) return;
+  try{
+    const rows=await listBillingEvents();
+    if(!rows.length){ el.innerHTML=INV_EMPTY; return; }
+    el.innerHTML=rows.map(r=>{
+      const when=new Date(r.created_at).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'});
+      const amt=r.meta&&(r.meta.amount||r.meta.credits);
+      return '<tr><td>'+when+'</td><td>'+(EV_LABEL[r.kind]||r.kind)+'<div style="color:var(--mute-2);font-size:.76rem">'+
+        ((r.detail||'').replace(/</g,'&lt;'))+'</div></td>'+
+        '<td class="mono" style="text-align:right">'+(amt?('+'+amt+' Credits'):'\u2014')+'</td>'+
+        '<td style="text-align:right;color:var(--mute-2);font-size:.78rem">'+(r.kind==='activated'?'Manual':'\u2014')+'</td></tr>';
+    }).join('');
+  }catch(e){ /* signed out */ }
+}
+window.rdPaintBillingEvents=paintBillingEvents;
 
 
 const PANE_META={profile:['Profile','How you appear to teammates and clients'],
@@ -3273,6 +3293,96 @@ async function refreshCredits(){
 }
 refreshCredits();
 window.addEventListener('rd:credits-changed', refreshCredits);
+
+/* ---------- plan lifecycle: request, downgrade, cancel, monthly refill ---------- */
+const PLAN_LIST=[['free','Free','5 designs a day, nothing else'],
+                 ['starter','Starter','200 credits a month'],
+                 ['pro','Pro','2,000 credits a month'],
+                 ['studio','Studio','4,000 credits a month']];
+const PLAN_RANK={free:0,starter:1,pro:2,studio:3};
+const STATE_PILL={active:['Active','p-ok'],canceled:['Canceled','p-ink'],past_due:['Renewal Due','p-amb']};
+let SUB=null;
+
+function fmtDate(d){ return d?new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):''; }
+
+function paintPlan(s){
+  const renew=document.getElementById('planRenew'); if(!renew) return;
+  const state=document.getElementById('planState');
+  const pill=STATE_PILL[s.status]||['\u2014','p-ink'];
+  if(state){ state.textContent=s.plan==='free'?'Free':pill[0]; state.className='pill '+(s.plan==='free'?'p-ink':pill[1]); }
+  if(s.plan==='free'){
+    renew.textContent='Free plan \u00b7 5 designs a day, no card on file';
+  }else if(s.cancel_at_period_end){
+    renew.textContent=(PLAN_NAME[s.plan]||s.plan)+' \u00b7 ends '+fmtDate(s.period_end);
+  }else if(s.status==='past_due'){
+    renew.textContent=(PLAN_NAME[s.plan]||s.plan)+' \u00b7 renewal was due '+fmtDate(s.period_end);
+  }else{
+    renew.textContent=(PLAN_NAME[s.plan]||s.plan)+' \u00b7 renews '+fmtDate(s.period_end)+
+      (s.next_refill_on?' \u00b7 next '+s.monthly_credits.toLocaleString()+' credits on '+fmtDate(s.next_refill_on):'');
+  }
+
+  const pend=document.getElementById('planPending');
+  if(pend){
+    if(s.pending_request){
+      pend.style.display='';
+      document.getElementById('planPendingTxt').textContent=
+        (PLAN_NAME[s.pending_request.plan]||s.pending_request.plan)+' requested on '+fmtDate(s.pending_request.created_at)+
+        '. It starts once checkout is switched on and your payment clears.';
+    }else pend.style.display='none';
+  }
+
+  const rows=document.getElementById('planRows');
+  if(rows){
+    rows.innerHTML=PLAN_LIST.map(p=>{
+      const cur=p[0]===s.plan;
+      const up=PLAN_RANK[p[0]]>PLAN_RANK[s.plan];
+      const btn=cur?'<span class="pill p-ok">Current</span>'
+        :'<button class="btn '+(up?'btn-primary':'btn-ghost')+' btn-xs" data-plan="'+p[0]+'">'+
+          (up?'Request':(p[0]==='free'?'Move To Free':'Downgrade'))+'</button>';
+      return '<div class="rowi"><div class="rowt"><b>'+p[1]+'</b><span>'+p[2]+'</span></div>'+btn+'</div>';
+    }).join('');
+  }
+
+  const acts=document.getElementById('planActions');
+  if(acts){
+    acts.innerHTML = s.plan==='free' ? ''
+      : (s.cancel_at_period_end
+          ? '<button class="btn btn-ghost btn-xs" id="planResume"><i data-lucide="rotate-ccw"></i>Keep My Plan</button>'
+          : '<button class="btn btn-ghost btn-xs" id="planCancel"><i data-lucide="x"></i>Cancel At Period End</button>');
+  }
+  lucide.createIcons();
+}
+
+async function refreshPlan(){
+  if(!document.getElementById('planRows')) return;
+  try{ SUB=await getSubscription(); paintPlan(SUB); paintBillingEvents(); }
+  catch(e){ /* signed out */ }
+}
+
+document.addEventListener('click',async(e)=>{
+  const t=e.target.closest&&e.target.closest('[data-plan],#planCancel,#planResume,#planWithdraw');
+  if(!t||!document.getElementById('planRows')) return;
+  t.disabled=true;
+  try{
+    if(t.id==='planCancel'||t.id==='planResume'){
+      await setCancelAtPeriodEnd({data:{cancel:t.id==='planCancel'}});
+    }else if(t.id==='planWithdraw'){
+      await withdrawPlanRequest();
+    }else{
+      const plan=t.getAttribute('data-plan');
+      if(PLAN_RANK[plan]<PLAN_RANK[(SUB&&SUB.plan)||'free']||plan==='free'){
+        if(!window.confirm('Moving to '+(PLAN_NAME[plan]||plan)+' takes effect now. Your remaining credits stay on the account.')){ t.disabled=false; return; }
+      }
+      await changePlan({data:{plan}});
+    }
+    await refreshPlan();
+    window.dispatchEvent(new Event('rd:credits-changed'));
+  }catch(err){ window.alert((err&&err.message)||'That did not go through.'); }
+  t.disabled=false;
+});
+
+refreshPlan();
+window.addEventListener('rd:credits-changed', refreshPlan);
 
 /* ---------- property Design DNA, scenarios, approval, avatar ---------- */
 

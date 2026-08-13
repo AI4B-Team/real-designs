@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      billing_events: {
+        Row: {
+          created_at: string
+          detail: string | null
+          id: string
+          kind: string
+          meta: Json
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind: string
+          meta?: Json
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind?: string
+          meta?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       change_items: {
         Row: {
           action: string
@@ -240,6 +267,39 @@ export type Database = {
           name?: string
           source?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      plan_requests: {
+        Row: {
+          created_at: string
+          current_plan: Database["public"]["Enums"]["plan_tier"]
+          decided_at: string | null
+          id: string
+          note: string | null
+          requested_plan: Database["public"]["Enums"]["plan_tier"]
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_plan: Database["public"]["Enums"]["plan_tier"]
+          decided_at?: string | null
+          id?: string
+          note?: string | null
+          requested_plan: Database["public"]["Enums"]["plan_tier"]
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_plan?: Database["public"]["Enums"]["plan_tier"]
+          decided_at?: string | null
+          id?: string
+          note?: string | null
+          requested_plan?: Database["public"]["Enums"]["plan_tier"]
+          status?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -610,6 +670,48 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean
+          created_at: string
+          last_refill_on: string | null
+          next_refill_on: string | null
+          period_end: string | null
+          period_start: string | null
+          plan: Database["public"]["Enums"]["plan_tier"]
+          source: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          last_refill_on?: string | null
+          next_refill_on?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean
+          created_at?: string
+          last_refill_on?: string | null
+          next_refill_on?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          plan?: Database["public"]["Enums"]["plan_tier"]
+          source?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       team_invites: {
         Row: {
           accepted_at: string | null
@@ -749,6 +851,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      activate_plan_request: {
+        Args: {
+          _plan: Database["public"]["Enums"]["plan_tier"]
+          _user_id: string
+        }
+        Returns: Json
+      }
+      cancel_plan_request: { Args: never; Returns: Json }
       credit_cost: {
         Args: { _action: Database["public"]["Enums"]["credit_action"] }
         Returns: number
@@ -783,11 +893,23 @@ export type Database = {
         Returns: Json
       }
       has_workspace_access: { Args: { _owner: string }; Returns: boolean }
+      plan_monthly_credits: {
+        Args: { _plan: Database["public"]["Enums"]["plan_tier"] }
+        Returns: number
+      }
+      plan_rank: {
+        Args: { _plan: Database["public"]["Enums"]["plan_tier"] }
+        Returns: number
+      }
       record_presentation_reminder: {
         Args: { _id: string }
         Returns: undefined
       }
       record_presentation_view: { Args: { _token: string }; Returns: undefined }
+      request_plan_change: {
+        Args: { _plan: Database["public"]["Enums"]["plan_tier"] }
+        Returns: Json
+      }
       respond_to_presentation: {
         Args: {
           _decision: string
@@ -798,6 +920,7 @@ export type Database = {
         }
         Returns: Json
       }
+      set_subscription_cancel: { Args: { _cancel: boolean }; Returns: Json }
       spend_credits: {
         Args: {
           _action: Database["public"]["Enums"]["credit_action"]
@@ -806,6 +929,7 @@ export type Database = {
         }
         Returns: Json
       }
+      sync_subscription: { Args: never; Returns: Json }
     }
     Enums: {
       credit_action:
