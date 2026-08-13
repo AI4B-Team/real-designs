@@ -491,6 +491,195 @@ export type Database = {
           },
         ]
       }
+      property_media_assets: {
+        Row: {
+          angle_group: string | null
+          approved_version_id: string | null
+          batch_id: string | null
+          created_at: string
+          dup_group: string | null
+          file_size: number | null
+          file_type: string | null
+          flags: string[]
+          hdr_group: string | null
+          height: number | null
+          hidden: boolean
+          id: string
+          modification_class: string
+          original_filename: string | null
+          property_id: string | null
+          property_label: string | null
+          quality: Json
+          recommended: boolean
+          room_confidence: number
+          room_group: string
+          sort_order: number
+          source_type: string
+          storage_path: string
+          updated_at: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          angle_group?: string | null
+          approved_version_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          dup_group?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          flags?: string[]
+          hdr_group?: string | null
+          height?: number | null
+          hidden?: boolean
+          id?: string
+          modification_class?: string
+          original_filename?: string | null
+          property_id?: string | null
+          property_label?: string | null
+          quality?: Json
+          recommended?: boolean
+          room_confidence?: number
+          room_group?: string
+          sort_order?: number
+          source_type?: string
+          storage_path: string
+          updated_at?: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          angle_group?: string | null
+          approved_version_id?: string | null
+          batch_id?: string | null
+          created_at?: string
+          dup_group?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          flags?: string[]
+          hdr_group?: string | null
+          height?: number | null
+          hidden?: boolean
+          id?: string
+          modification_class?: string
+          original_filename?: string | null
+          property_id?: string | null
+          property_label?: string | null
+          quality?: Json
+          recommended?: boolean
+          room_confidence?: number
+          room_group?: string
+          sort_order?: number
+          source_type?: string
+          storage_path?: string
+          updated_at?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_media_assets_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_media_exports: {
+        Row: {
+          created_at: string
+          file_count: number
+          id: string
+          label: string
+          options: Json
+          preset: string
+          property_id: string | null
+          property_label: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          file_count?: number
+          id?: string
+          label: string
+          options?: Json
+          preset: string
+          property_id?: string | null
+          property_label?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          file_count?: number
+          id?: string
+          label?: string
+          options?: Json
+          preset?: string
+          property_id?: string | null
+          property_label?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_media_exports_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_media_versions: {
+        Row: {
+          approved: boolean
+          archived: boolean
+          asset_id: string
+          created_at: string
+          id: string
+          kind: string
+          label: string
+          modification_class: string
+          ops: Json
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          approved?: boolean
+          archived?: boolean
+          asset_id: string
+          created_at?: string
+          id?: string
+          kind?: string
+          label: string
+          modification_class?: string
+          ops?: Json
+          storage_path: string
+          user_id: string
+        }
+        Update: {
+          approved?: boolean
+          archived?: boolean
+          asset_id?: string
+          created_at?: string
+          id?: string
+          kind?: string
+          label?: string
+          modification_class?: string
+          ops?: Json
+          storage_path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_media_versions_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "property_media_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rooms: {
         Row: {
           ceiling_ht_in: number | null

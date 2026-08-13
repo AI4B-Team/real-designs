@@ -28,6 +28,7 @@ import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
+import { mountMedia, openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { getSubscription, changePlan, setCancelAtPeriodEnd, withdrawPlanRequest, listBillingEvents } from "@/lib/subscription.functions";
 
 
@@ -62,7 +63,7 @@ const PALS={
 
 /* ---------- nav ---------- */
 const titles={dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
-studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],designs:['Designs','Saved versions across your properties'],
+studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],media:['Media','Property photos, enhancements and listing packages'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 reports:['Reports','Portfolio rollup, budget fit and credit spend'],
@@ -78,6 +79,7 @@ function go(v,fromHash){
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
   try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
+  if(v==='media'){ try{ mountMedia(go,{}); }catch(_){} }
   if(v==='studio'){ try{ paintStudioSub(); }catch(_){} }
   if(v==='reports'){ try{ paintReports(); }catch(_){} }
   if(!titles[v]) return;
@@ -102,6 +104,8 @@ window.addEventListener('hashchange',()=>{ const v=viewFromHash(); if(v) go(v,tr
 
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+document.querySelectorAll('[data-propupload]').forEach(b=>b.addEventListener('click',()=>{ try{ openPropertyUpload(); }catch(_){} }));
+try{ mountUploadDock(go); }catch(_){}
 /* the app shell mounts after this module runs, and can remount once,
    so keep re-asserting the deep linked view for a short window */
 (function applyHash(){
