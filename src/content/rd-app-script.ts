@@ -671,7 +671,7 @@ function studioStart(){
         r.readAsDataURL(file);
       })
     });
-  }catch(e){ STUDIO_START=null; try{ window.__stsErr=String(e&&e.stack||e); }catch(_){} }
+  }catch(e){ STUDIO_START=null; }
   return STUDIO_START;
 }
 window.rdStudioStart=(method)=>{ const s=studioStart(); if(s&&s.open) s.open(method); };
@@ -691,7 +691,6 @@ function paintStudioState(){
     ? 'Add A Source To Begin'
     : (STUDIO_RESULT?'Click any object to keep, replace or remove it':'Your source photo, nothing generated yet');
   const s=studioStart();
-  try{ window.__paint=(window.__paint||0)+1; window.__paintS=!!(s&&s.paint); }catch(_){}
   if(s&&s.paint) s.paint(STUDIO_SRC===SRC_EMPTY);
 }
 
