@@ -870,12 +870,17 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
 
 /** Clear now means: start a brand new design, back to the welcome state. */
 function startNewDesignFlow(){
-  if(STUDIO_SRC===SRC_EMPTY){ clearStudioSource(); return; }
+  if(STUDIO_SRC===SRC_EMPTY){
+    /* already empty: never add anything to the page, just draw attention */
+    clearStudioSource();
+    try{ window.rdStudioStart&&window.rdStudioStart(); }catch(_){}
+    return;
+  }
   let m=document.getElementById('newDesignModal');
   if(!m){
     m=document.createElement('div'); m.id='newDesignModal'; m.className='up-modal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
-      +'<h3>Start a New Design?</h3>'
+      +'<h3>Start A New Design?</h3>'
       +'<p>Your current draft has unsaved changes. Save it before starting over, or discard the changes.</p>'
       +'<div class="up-act"><button class="btn btn-primary" id="ndSave">Save and Start New</button>'
       +'<button class="btn btn-dark" id="ndDiscard">Discard and Start New</button>'
@@ -893,6 +898,7 @@ function startNewDesignFlow(){
   lucide.createIcons();
 }
 document.getElementById('clearLocks')?.addEventListener('click',startNewDesignFlow);
+document.getElementById('newDesignBtn')?.addEventListener('click',()=>{ go('studio'); startNewDesignFlow(); });
 
 /** Shown when Generate is pressed with no valid source. No credit is charged. */
 function needSourceModal(){
@@ -900,7 +906,7 @@ function needSourceModal(){
   if(!m){
     m=document.createElement('div'); m.id='noSrcModal'; m.className='up-modal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
-      +'<h3>Add a Source to Continue</h3>'
+      +'<h3>Add A Source To Continue</h3>'
       +'<p>Upload a photo, sketch or plan\u2014or intentionally choose a sample space.</p>'
       +'<div class="up-act"><button class="btn btn-primary" id="nsUpload"><i data-lucide="image-up"></i>Upload a Source</button>'
       +'<button class="btn btn-ghost" id="nsSample">Try a Sample</button></div></div>';
