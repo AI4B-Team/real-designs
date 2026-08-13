@@ -67,6 +67,13 @@ const SHELL = `
     <div class="xp-panel-f"><button class="fb-link" id="xpClear">Clear Filters</button></div>
   </div>
 
+  <section class="xp-quiz" id="xpQuiz" hidden>
+    <div class="xp-quiz-top">
+      <div><h3>Find Your Design Direction</h3><p>Five quick picks. Optional, and you can change it later.</p></div>
+    </div>
+    <div class="xp-quiz-card" id="xpQuizCard"></div>
+  </section>
+
   <p class="xp-count" id="xpCount"></p>
   <div class="xp-grid" id="xpGrid"></div>
 </div>
@@ -327,6 +334,55 @@ export function mountExplore(go, ctx) {
       </div>`);
   }
 
+  /* ---------- quick-pick quiz ---------- */
+  const QUIZ = [
+    { q: "Which Living Room Feels Right?", a: ["warm-minimal", "mid-century"] },
+    { q: "Which Kitchen Would You Live In?", a: ["modern-farmhouse", "contemporary"] },
+    { q: "Which Palette Reads Best To You?", a: ["japandi", "industrial"] },
+    { q: "Which Bedroom Feels Like Home?", a: ["quiet-luxury", "scandinavian"] },
+    { q: "Which Exterior Do You Prefer?", a: ["craftsman-revival", "coastal"] },
+  ];
+  let qStep = 0;
+  let qPicks = [];
+  const quizDone = () => read("rd_ex_quiz", null);
+
+  function paintQuiz() {
+    const wrap = $("xpQuiz");
+    const card = $("xpQuizCard");
+    if (!wrap || !card) return;
+    const done = quizDone();
+    wrap.hidden = false;
+    if (done && qStep === 0 && !qPicks.length) {
+      const d = dir(done);
+      if (d) {
+        card.innerHTML = `<div class="xp-quiz-head"><b>Your Direction: ${esc(d.name)}</b><span class="xp-quiz-step">Result</span></div>
+          <div class="xp-quiz-res"><img src="${d.img}" alt="${esc(d.name)}"><p>${esc(d.line)}</p></div>
+          <div class="xp-quiz-foot"><button class="btn btn-primary btn-xs" data-open="${d.id}">Preview Direction</button><button class="fb-link" data-qretake="1">Retake</button></div>`;
+        icons_();
+        return;
+      }
+    }
+    const step = QUIZ[qStep];
+    card.innerHTML = `<div class="xp-quiz-head"><b>${esc(step.q)}</b><span class="xp-quiz-step">${qStep + 1} Of ${QUIZ.length}</span></div>
+      <div class="xp-quiz-opts">${step.a.map((id) => { const d = dir(id); return d ? `<button class="xp-quiz-opt" data-qpick="${d.id}"><img src="${d.img}" alt="${esc(d.name)}" loading="lazy"><span>${esc(d.name)}</span></button>` : ""; }).join("")}</div>
+      <div class="xp-quiz-foot"><button class="fb-link" data-qskip="1">Skip For Now</button></div>`;
+    icons_();
+  }
+
+  function quizPick(id) {
+    qPicks.push(id);
+    if (qStep < QUIZ.length - 1) { qStep++; paintQuiz(); return; }
+    // Winner: the direction picked most often, falling back to the last pick.
+    const tally = {};
+    qPicks.forEach((x) => (tally[x] = (tally[x] || 0) + 1));
+    const win = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0] || id;
+    write("rd_ex_quiz", win);
+    qStep = 0; qPicks = [];
+    paintQuiz();
+    const d = dir(win);
+    if (d) note("Your Direction: " + d.name);
+  }
+
   function toggleSave(id) {
     const on = saved.indexOf(id) > -1;
     saved = on ? saved.filter((x) => x !== id) : [id].concat(saved);
@@ -379,6 +435,9 @@ export function mountExplore(go, ctx) {
       return;
     }
     if (t.closest("#xpPanelX")) { $("xpPanel").classList.remove("on"); $("xpFilterBtn").setAttribute("aria-expanded", "false"); return; }
+    if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
+    if (t.closest("[data-qskip]")) { $("xpQuiz").hidden = true; return; }
+    if (t.closest("[data-qretake]")) { write("rd_ex_quiz", null); qStep = 0; qPicks = []; paintQuiz(); return; }
     if (t.closest("#xpClear")) { room = null; traits = []; grade = null; $("xpQ").value = ""; paint(); return; }
   });
 
@@ -393,6 +452,7 @@ export function mountExplore(go, ctx) {
   }
 
   syncProp();
+  paintQuiz();
   paint();
   icons_();
 }
