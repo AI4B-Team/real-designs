@@ -4,6 +4,7 @@ import { PrototypeSurface } from "@/components/PrototypeSurface";
 import { html } from "@/content/rd-app-html";
 import { initApp } from "@/content/rd-app-script";
 import "@/styles/rd-app.css";
+import "@/styles/rd-explore.css";
 
 const title = "Back Office | REAL DESIGNS";
 const description =
