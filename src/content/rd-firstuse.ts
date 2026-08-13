@@ -285,88 +285,7 @@ export function mountFirstUse(ctx: Ctx) {
     );
   }
 
-  function startHtml() {
-    const cards = [
-      {
-        key: "upload",
-        icon: "image-up",
-        title: "Upload A Space",
-        desc: "Start with a photo of an interior, exterior or landscape.",
-        types: "JPG · PNG · HEIC · WEBP",
-        cta: "Upload A Photo",
-      },
-      {
-        key: "sketch",
-        icon: "pen-line",
-        title: "Upload A Sketch Or Plan",
-        desc: "Turn a hand sketch, floor plan or concept drawing into a visual direction.",
-        types: "JPG · PNG · HEIC · WEBP · PDF",
-        cta: "Upload A Sketch Or Plan",
-      },
-      {
-        key: "property",
-        icon: "map-pin",
-        title: "Start With A Property",
-        desc: "Create a property first and organize multiple rooms, angles and project decisions together.",
-        types: "Rooms, versions and budgets in one place",
-        cta: "Create A Property",
-      },
-    ];
-    return (
-      '<div class="fu-head"><span class="fu-eyebrow mono">WELCOME TO REAL DESIGNS</span>' +
-      "<h2>What Would You Like To Create?</h2>" +
-      "<p>Start with a photo of your space, a sketch or floor plan, or set up a property first. " +
-      "Nothing is generated and no credits are used until you choose.</p></div>" +
-      railHtml(0) +
-      '<div class="fu-cards">' +
-      cards
-        .map(
-          (c) =>
-            '<div class="fu-card"><span class="fu-ic"><i data-lucide="' +
-            c.icon +
-            '"></i></span><h3>' +
-            c.title +
-            "</h3><p>" +
-            c.desc +
-            '</p><span class="fu-types mono">' +
-            c.types +
-            '</span><button class="btn btn-primary btn-sm" data-fu-start="' +
-            c.key +
-            '">' +
-            c.cta +
-            "</button></div>",
-        )
-        .join("") +
-      "</div>" +
-      '<div class="fu-alt">Not ready to upload? <button class="fu-link" data-fu-start="sample">Try A Sample Space.</button>' +
-      '<span class="fu-note mono" id="fuUpNote"></span></div>'
-    );
-  }
 
-  function samplesHtml() {
-    return (
-      '<div class="fu-head"><span class="fu-eyebrow mono">SAMPLE SPACES</span>' +
-      "<h2>Pick A Sample Space.</h2>" +
-      "<p>Every sample runs through the real Studio. Upload your own space whenever you are ready.</p></div>" +
-      railHtml(0) +
-      '<div class="fu-samples">' +
-      SAMPLES.map(
-        (s) =>
-          '<button class="fu-sample" data-fu-sample="' +
-          s.key +
-          '"><span class="fu-sample-tag">Sample</span>' +
-          '<img src="' +
-          s.photo +
-          '" alt="' +
-          esc(s.alt) +
-          '" loading="lazy"><b>' +
-          s.name +
-          "</b></button>",
-      ).join("") +
-      "</div>" +
-      '<div class="fu-alt"><button class="fu-link" data-fu-start="back">Back To Upload Options</button></div>'
-    );
-  }
 
   function guideHtml() {
     const src = state.sourceKind || "photo";
@@ -473,42 +392,6 @@ export function mountFirstUse(ctx: Ctx) {
     return blocks.join("");
   }
 
-  function chooserHtml() {
-    const groups: Array<[string, string]> = [
-      ["design", "Design"],
-      ["listing", "Listing Media"],
-      ["plan", "Plan"],
-    ];
-    return (
-      '<div class="fu-head slim"><h2>What Are You Working On?</h2><p>Pick a workflow and Studio configures itself around it.</p></div>' +
-      groups
-        .map(
-          ([g, label]) =>
-            '<section class="fu-step"><h3>' +
-            label +
-            '</h3><div class="fu-wf">' +
-            Object.entries(WORKFLOWS)
-              .filter(([, w]) => w.group === g)
-              .map(
-                ([k, w]) =>
-                  '<button class="fu-wf-i"' +
-                  (w.status ? " disabled" : "") +
-                  ' data-fu-wf="' +
-                  k +
-                  '"><b>' +
-                  w.label +
-                  (w.status ? '<span class="pill">' + w.status + "</span>" : "") +
-                  "</b><span>" +
-                  w.desc +
-                  "</span></button>",
-              )
-              .join("") +
-            "</div></section>",
-        )
-        .join("") +
-      '<div class="fu-alt"><button class="fu-link" data-fu-act="closeChooser">Close And Use Studio Directly</button></div>'
-    );
-  }
 
   function successHtml() {
     const sample = !!state.sample;
@@ -543,17 +426,18 @@ export function mountFirstUse(ctx: Ctx) {
       panel.appendChild(fileInput);
       return;
     }
+    /* Studio owns the single start experience: never render a second one here. */
+    if (state.mode === "start" || state.mode === "samples" || state.mode === "chooser") {
+      panel.hidden = true;
+      panel.innerHTML = "";
+      panel.appendChild(fileInput);
+      const open = (window as any).rdStudioStart;
+      if (typeof open === "function") open(state.mode === "samples" ? "sample" : undefined);
+      state.mode = "hidden";
+      return;
+    }
     panel.hidden = false;
-    const body =
-      state.mode === "start"
-        ? startHtml()
-        : state.mode === "samples"
-          ? samplesHtml()
-          : state.mode === "guide"
-            ? guideHtml()
-            : state.mode === "chooser"
-              ? chooserHtml()
-              : successHtml();
+    const body = state.mode === "guide" ? guideHtml() : successHtml();
     panel.innerHTML = body;
     panel.appendChild(fileInput);
     lucide.createIcons();
@@ -834,22 +718,16 @@ export function mountFirstUse(ctx: Ctx) {
     // With no source loaded there is nothing to show behind the panel, so the
     // welcome state stays instead of leaving an empty Studio.
     const has = (window as any).rdStudioHasSource;
-    state.mode = typeof has === "function" && !has() ? "start" : "hidden";
+    void has;
+    state.mode = "hidden";
     render();
   }
 
   (window as any).rdStudioWelcome = (kind?: string) => {
-    state.mode = kind === "sample" ? "samples" : "start";
-    render();
-    if (kind === "upload") pickFile("photo");
-    scrollTo("#fuPanel");
+    const open = (window as any).rdStudioStart;
+    if (typeof open === "function") open(kind === "sample" ? "sample" : kind === "upload" ? "upload" : undefined);
   };
-  (window as any).rdStudioHideWelcome = () => {
-    if (state.mode === "start" || state.mode === "samples") {
-      state.mode = "hidden";
-      render();
-    }
-  };
+  (window as any).rdStudioHideWelcome = () => {};
 
   /* ---------- first success ---------- */
   let awaitingFirst = false;

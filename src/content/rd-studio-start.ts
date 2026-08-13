@@ -142,23 +142,21 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   /* ---------- canvas ---------- */
 
   function canvasHtml() {
-    if (state.samples) return samplesHtml();
-    if (state.method === "describe") return composerHtml();
-    if (state.file) return previewHtml();
-    return dropHtml();
+    const base = state.method === "describe" ? composerHtml() : state.file ? previewHtml() : dropHtml();
+    return state.samples ? base + samplesHtml() : base;
   }
 
   function dropHtml() {
     return (
       '<div class="sts-drop" id="stsDrop">' +
       '<div class="sts-drop-in">' +
-      "<h4>Start a New Design</h4>" +
-      "<p>Upload a photo of your space, sketch or floor plan, describe an idea, or open a saved project.</p>" +
-      '<button class="btn btn-primary" data-sts="browse"><i data-lucide="image-up"></i>Upload a Space</button>' +
+      "<h4>Start A New Design</h4>" +
+      "<p>Upload a photo of your space, a sketch or floor plan, describe an idea, or open a property.</p>" +
+      '<button class="btn btn-primary" data-sts="browse"><i data-lucide="image-up"></i>Upload A Space</button>' +
       '<div class="sts-links">' +
-      '<button class="sts-link" data-sts="sketch">Upload a Sketch or Plan</button>' +
-      '<button class="sts-link" data-sts="describe">Describe an Idea</button>' +
-      '<button class="sts-link" data-sts="sample">Try a Sample Space</button>' +
+      '<button class="sts-link" data-sts="sketch"><i data-lucide="pen-line"></i>Upload A Sketch Or Plan</button>' +
+      '<button class="sts-link" data-sts="describe"><i data-lucide="pencil-line"></i>Describe An Idea</button>' +
+      '<button class="sts-link" data-sts="sample"><i data-lucide="image"></i>Try A Sample Space</button>' +
       "</div></div></div>"
     );
   }
@@ -170,7 +168,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "<h4>" +
       esc(state.fileName) +
       "</h4>" +
-      "<p>Ready to load. Nothing generates and no credits are used until you press Generate.</p>" +
+      "<p>Ready To Load. Nothing generates and no credits are used until you press Generate.</p>" +
       '<div class="sts-row">' +
       '<button class="btn btn-primary btn-sm" data-sts="load"><i data-lucide="check"></i>Use This File</button>' +
       '<button class="btn btn-ghost btn-sm" data-sts="clearfile">Choose Another</button>' +
@@ -180,7 +178,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function samplesHtml() {
     return (
-      '<div class="sts-samples"><div class="sts-samples-h"><b>Choose a Sample Space</b>' +
+      '<div class="sts-modal" role="dialog" aria-modal="true" aria-label="Choose A Sample Space">' +
+      '<div class="sts-scrim" data-sts="closesamples"></div>' +
+      '<div class="sts-samples"><div class="sts-samples-h"><b>Choose A Sample Space</b>' +
       '<button class="sts-link" data-sts="closesamples">Cancel</button></div>' +
       '<div class="sts-grid">' +
       SAMPLE_KEYS.map(
@@ -193,21 +193,21 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           esc(s.alt) +
           '"><b>' +
           esc(s.name) +
-          "</b></button>",
+          " (Sample)</b></button>",
       ).join("") +
       "</div>" +
-      '<p class="sts-note">Samples stay labelled as samples and are never added to your account unless you save one as a project.</p>' +
-      "</div>"
+      '<p class="sts-note">Samples stay labelled as samples and are never saved to your account unless you choose to save one.</p>' +
+      "</div></div>"
     );
   }
 
   function composerHtml() {
     return (
       '<div class="sts-brief">' +
-      "<h4>Describe an Idea</h4>" +
-      "<p>Create an original room, exterior, landscape, or design concept from a written description.</p>" +
-      '<label class="sts-l" for="stsPrompt">Describe what you want to create</label>' +
-      '<textarea id="stsPrompt" class="sts-ta" rows="7" placeholder="Create a warm modern living room with natural oak floors, an oversized cream sectional, built-in shelving, soft indirect lighting and durable finishes for a family with children. Keep the total furnishing and finish budget under $20,000.">' +
+      "<h4>Describe An Idea</h4>" +
+      "<p>Create an original design concept from a written description.</p>" +
+      '<label class="sts-l" for="stsPrompt">Describe What You Want To Create</label>' +
+      '<textarea id="stsPrompt" class="sts-ta" rows="7" placeholder="Create a warm modern living room with natural oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
       esc(state.prompt) +
       "</textarea>" +
       '<div class="sts-row">' +
@@ -215,20 +215,21 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       (state.prompt.trim().length < 12 ? " disabled" : "") +
       '><i data-lucide="arrow-right"></i>Generate Concept<span class="cost-chip mono">1</span></button>' +
       '<button class="sts-link" data-sts="inspo">' +
-      (state.inspiration ? "Inspiration: " + esc(state.inspiration.name) : "Add an Inspiration Image") +
+      (state.inspiration ? "Inspiration: " + esc(state.inspiration.name) : "Add An Inspiration Image") +
       "</button>" +
       (state.inspiration ? '<button class="sts-link" data-sts="rminspo">Remove</button>' : "") +
       "</div>" +
-      '<p class="sts-note">Text-only designs are original concepts. Without a photo, sketch or floor plan, the architecture and dimensions are conceptual.</p>' +
+      '<p class="sts-note">Text-only designs are conceptual until connected to a real photo, sketch or floor plan.</p>' +
       "</div>"
     );
   }
+
 
   /* ---------- right panel ---------- */
 
   const TABS: Array<[Method, string, string]> = [
     ["space", "image", "Space"],
-    ["sketch", "pen-line", "Sketch or Plan"],
+    ["sketch", "pen-line", "Sketch / Plan"],
     ["describe", "pencil-line", "Describe"],
     ["property", "map-pin", "Property"],
   ];
@@ -260,7 +261,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<div class="sts-up" id="stsUp">' +
       '<i data-lucide="upload"></i>' +
       "<b>" +
-      (state.file ? esc(state.fileName) : "Drag and drop a file") +
+      (state.file ? esc(state.fileName) : "Drag And Drop A File") +
       "</b>" +
       '<button class="btn btn-dark btn-xs" data-sts="browse">Browse Files</button>' +
       '<span class="sts-types">Supported files: ' +
@@ -271,35 +272,41 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function panelBody() {
     if (state.method === "space") {
+      /* progressive disclosure: no generation settings before a source exists */
       return (
-        "<h4>Upload a Space</h4><p>Upload a photo of an interior, exterior, or landscape.</p>" +
+        "<h4>Upload A Space</h4><p>Upload a photo of an interior, exterior or landscape.</p>" +
         uploadBox("JPG, PNG, HEIC, WEBP") +
-        field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Landscape"]], state.space)) +
-        field("Room or Area Type", select("stsRoom", ROOMS, state.room)) +
-        field("Project Goal", chips("goal", GOALS.map((g) => [g, g] as [string, string]), state.goal)) +
-        field("Design Style", select("stsStyle", STYLES, state.style)) +
-        field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
-        field("Accent Colors (Optional)", '<input id="stsAccents" type="text" placeholder="Warm brass, deep green" value="' + esc(state.accents) + '">') +
-        field("Additional Direction (Optional)", '<textarea id="stsNotes" rows="3" placeholder="Keep the fireplace, replace the cabinets">' + esc(state.notes) + "</textarea>")
+        field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+        (state.file
+          ? field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
+            field("Project Goal", chips("goal", GOALS.map((g) => [g, g] as [string, string]), state.goal)) +
+            field("Design Style", select("stsStyle", STYLES, state.style)) +
+            field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
+            field("Accent Colors (Optional)", '<input id="stsAccents" type="text" placeholder="Warm brass, deep green" value="' + esc(state.accents) + '">') +
+            field("Additional Direction (Optional)", '<textarea id="stsNotes" rows="3" placeholder="Keep the fireplace, replace the cabinets">' + esc(state.notes) + "</textarea>")
+          : "")
       );
     }
     if (state.method === "sketch") {
       return (
-        "<h4>Upload a Sketch or Plan</h4><p>Turn a sketch, floor plan, or concept drawing into a realistic design visualization.</p>" +
+        "<h4>Upload A Sketch Or Plan</h4><p>Turn a sketch, floor plan or concept drawing into a realistic visualization.</p>" +
         uploadBox("JPG, PNG, HEIC, WEBP, PDF") +
         field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Elevation", "Concept Drawing"], state.inputType)) +
-        field("Desired Output", select("stsOutput", ["Photorealistic Interior", "Photorealistic Exterior", "Furnished Floor Plan", "3D Concept"], state.output)) +
-        field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
-        field("Design Style", select("stsStyle", STYLES, state.style)) +
-        field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
-        field("Additional Direction (Optional)", '<textarea id="stsNotes" rows="3" placeholder="Open shelving, oak floors">' + esc(state.notes) + "</textarea>")
+        (state.file
+          ? field("Desired Output", select("stsOutput", ["Photorealistic Interior", "Photorealistic Exterior", "Furnished Floor Plan", "3D Concept"], state.output)) +
+            field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
+            field("Design Style", select("stsStyle", STYLES, state.style)) +
+            field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
+            field("Additional Direction (Optional)", '<textarea id="stsNotes" rows="3" placeholder="Open shelving, oak floors">' + esc(state.notes) + "</textarea>")
+          : "")
       );
     }
+
     if (state.method === "describe") {
       return (
-        "<h4>Describe an Idea</h4><p>Create an original room, exterior, landscape, or design concept from a written description.</p>" +
-        field("What Are You Creating?", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Landscape"]], state.space)) +
-        field("Room or Space Type", select("stsRoom", ROOMS, state.room)) +
+        "<h4>Describe An Idea</h4><p>Create an original design concept from a written description.</p>" +
+        field("What Are You Creating?", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+        field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
         field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
         field("Design Style", select("stsStyle", STYLES, state.style)) +
         field("Mood", select("stsMood", ["", ...MOODS], state.mood)) +
@@ -311,7 +318,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (state.propertyMode === "new") {
       return (
         "<h4>Create New Property</h4><p>Only the essentials now. You can add rooms and details later.</p>" +
-        field("Property Name or Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
+        field("Property Name Or Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
         field("Property Type", select("stsPType", ["Single Family", "Condo", "Townhome", "Multi Family", "Commercial"], state.newType)) +
         field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
         '<div class="sts-row"><button class="btn btn-ghost btn-sm" data-sts="propback">Back</button></div>'
@@ -334,7 +341,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       );
     }
     return (
-      "<h4>Start With a Property</h4><p>Organize rooms, angles, designs, budgets and project decisions under one address.</p>" +
+      "<h4>Start With A Property</h4><p>Open an existing property or create one to organize multiple rooms and designs.</p>" +
       '<div class="sts-row col">' +
       '<button class="btn btn-dark btn-sm" data-sts="proppick"><i data-lucide="list"></i>Select Existing Property</button>' +
       '<button class="btn btn-ghost btn-sm" data-sts="propnew"><i data-lucide="plus"></i>Create New Property</button>' +
@@ -400,12 +407,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       host.id = "stStart";
       host.className = "sts";
       canvasBody.insertBefore(host, canvasBody.firstChild);
+      host.addEventListener("click", onClick);
     }
     if (!panelHost) {
       panelHost = document.createElement("div");
       panelHost.id = "stStartRight";
       panelHost.className = "sts-right";
       right.insertBefore(panelHost, right.firstChild);
+      panelHost.addEventListener("click", onClick);
     }
     host.innerHTML = canvasHtml();
     panelHost.innerHTML = panelHtml();
@@ -418,11 +427,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   function wire() {
-    const root = [host, panelHost].filter(Boolean) as HTMLElement[];
 
-    root.forEach((r) =>
-      r.addEventListener("click", onClick, { once: true } as any),
-    );
 
     const drop = document.getElementById("stsDrop") || document.getElementById("stsUp");
     if (drop) {
@@ -513,10 +518,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       }
     } else if (act) {
       const k = act.dataset["sts"];
-      if (k === "browse") browse();
-      else if (k === "sketch") setMethod("sketch");
-      else if (k === "describe") setMethod("describe");
-      else if (k === "sample") {
+      if (k === "browse") {
+        if (state.method !== "space" && state.method !== "sketch") setMethod("space");
+        browse();
+      } else if (k === "sketch") setMethod("sketch");
+      else if (k === "describe") {
+        setMethod("describe");
+        const ta = document.getElementById("stsPrompt") as HTMLTextAreaElement | null;
+        if (ta) ta.focus();
+      } else if (k === "sample") {
         state.samples = true;
         render();
       } else if (k === "closesamples") {
@@ -540,14 +550,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       } else if (k === "propback") {
         state.propertyMode = "";
         render();
-      } else render();
-    } else {
-      // re-arm the one-shot listener without changing anything
-      render();
-      return;
+      }
     }
-    if (!tab && !chip) return;
   }
+
 
   function setMethod(m: Method) {
     state.method = m;

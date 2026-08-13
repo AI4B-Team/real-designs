@@ -20,6 +20,7 @@ import { listPresentations, createPresentation, deletePresentation, getPresentat
 import { buildSocialReel } from "@/lib/social-reel";
 import { track } from "@/lib/analytics";
 import { mountFirstUse } from "@/content/rd-firstuse";
+import { mountStudioStart } from "@/content/rd-studio-start";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
@@ -635,29 +636,45 @@ function sourceCaption(on,text){
   cap.innerHTML='<b>Your Source Photo</b><span>'+esc(text||'Choose what you want to create, then generate your first version.')+'</span>';
 }
 
-/** In-canvas empty state so Studio is never a blank card. */
-function studioEmptyState(on){
-  const host=document.querySelector('#canvasCard .card-b'); if(!host) return;
-  let el=document.getElementById('stEmpty');
-  if(!on){ if(el) el.remove(); return; }
-  if(el) return;
-  el=document.createElement('div'); el.id='stEmpty'; el.className='st-empty-state';
-  el.innerHTML='<h4>Start A New Design</h4>'
-    +'<p>Upload a photo of your space, a sketch or floor plan, or open a saved design. Nothing generates and no credits are used until you do.</p>'
-    +'<div class="st-empty-act">'
-    +'<button class="btn btn-primary btn-sm" data-stempty="upload"><i data-lucide="upload"></i>Upload A Photo</button>'
-    +'<button class="btn btn-dark btn-sm" data-stempty="property"><i data-lucide="map-pin"></i>Start With A Property</button>'
-    +'<button class="btn btn-ghost btn-sm" data-stempty="sample"><i data-lucide="image"></i>Try A Sample Space</button>'
-    +'</div>';
-  host.insertBefore(el,host.firstChild);
-  el.addEventListener('click',e=>{
-    const b=e.target.closest('[data-stempty]'); if(!b) return;
-    const k=b.dataset.stempty;
-    if(k==='property'){ go('props'); return; }
-    try{ window.rdStudioWelcome&&window.rdStudioWelcome(k); }catch(_){}
-  });
-  try{ lucide.createIcons(); }catch(_){}
+/* The single Studio start experience: in-canvas empty state plus the compact
+   "Start With" panel on the right. Mounted lazily so the Studio markup exists. */
+let STUDIO_START=null;
+function studioStart(){
+  if(STUDIO_START) return STUDIO_START;
+  try{
+    STUDIO_START=mountStudioStart({
+      lucide:{createIcons:(o)=>lucide.createIcons(o)}, esc:(v)=>esc(v), photos:PHOTOS, go:(v)=>go(v), track:(e,pr)=>track(e,pr),
+      uploadPhoto:async(f)=>{
+        const path=await uploadRoomPhoto(f);
+        try{ window.rdPendingPhotoPath=path; }catch(_){}
+        const url=await roomPhotoUrl(path);
+        return url||URL.createObjectURL(f);
+      },
+      setSource:(kind,src,alt,opts)=>setStudioSource(kind,src,alt,opts),
+      showConcept:async(image,label)=>{
+        setStudioSource('user_upload',image,'Design concept',{caption:'Concept design. Attach a real photo, sketch or plan for a true-to-space result.'});
+        cAfter.innerHTML=photo(image,(label||'Concept')+' design');
+        addRenderVariant(image,label||'Concept',null);
+        markStudioResult();
+        try{ window.dispatchEvent(new Event('rd:credits-changed')); }catch(_){}
+      },
+      getProperties:()=>{ try{ return PROP_TREE||[]; }catch(_){ return []; } },
+      setContext:(c)=>{
+        STUDIO_CTX={room:(c&&c.room)||null,address:(c&&c.address)||null,project:(c&&c.project)||null};
+        paintStudioSub();
+      },
+      showAlert:(m)=>showAlert(m),
+      fileToDataUrl:(file)=>new Promise((res,rej)=>{
+        const r=new FileReader();
+        r.onload=()=>res(String(r.result));
+        r.onerror=()=>rej(new Error('Could not read that file.'));
+        r.readAsDataURL(file);
+      })
+    });
+  }catch(e){ STUDIO_START=null; }
+  return STUDIO_START;
 }
+window.rdStudioStart=(method)=>{ const s=studioStart(); if(s&&s.open) s.open(method); };
 
 function paintStudioState(){
   if(studioWrap){
@@ -669,22 +686,14 @@ function paintStudioState(){
   if(gen) gen.classList.toggle('is-disabled',STUDIO_SRC===SRC_EMPTY);
   const canvas=document.getElementById('canvas');
   if(canvas) canvas.classList.toggle('has-result',STUDIO_RESULT);
-  studioEmptyState(STUDIO_SRC===SRC_EMPTY);
   const csub=document.querySelector('#canvasCard .card-h .sub');
   if(csub) csub.textContent=STUDIO_SRC===SRC_EMPTY
     ? 'Add A Source To Begin'
     : (STUDIO_RESULT?'Click any object to keep, replace or remove it':'Your source photo, nothing generated yet');
-  if(STUDIO_SRC===SRC_EMPTY) openStudioWelcome();
+  const s=studioStart();
+  if(s&&s.paint) s.paint(STUDIO_SRC===SRC_EMPTY);
 }
 
-/** Ask the first-use module for the Studio welcome state, retrying briefly. */
-function openStudioWelcome(tries){
-  const t=tries||0;
-  const view=document.getElementById('v-studio');
-  if(!view||!view.classList.contains('on')) return;
-  if(typeof window.rdStudioWelcome==='function'){ window.rdStudioWelcome(); return; }
-  if(t<40) setTimeout(()=>openStudioWelcome(t+1),120);
-}
 
 /** Object controls only appear once a source exists and analysis has finished. */
 function analyzeObjects(){
@@ -718,7 +727,7 @@ function setStudioSource(kind,src,alt,opts){
   analyzeObjects();
   paintStudioState();
   paintStudioSub();
-  try{ window.rdStudioHideWelcome&&window.rdStudioHideWelcome(); }catch(_){}
+  
   cRng.value=50; setC(50);
 }
 
@@ -861,12 +870,17 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
 
 /** Clear now means: start a brand new design, back to the welcome state. */
 function startNewDesignFlow(){
-  if(STUDIO_SRC===SRC_EMPTY){ clearStudioSource(); return; }
+  if(STUDIO_SRC===SRC_EMPTY){
+    /* already empty: never add anything to the page, just draw attention */
+    clearStudioSource();
+    try{ window.rdStudioStart&&window.rdStudioStart(); }catch(_){}
+    return;
+  }
   let m=document.getElementById('newDesignModal');
   if(!m){
     m=document.createElement('div'); m.id='newDesignModal'; m.className='up-modal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
-      +'<h3>Start a New Design?</h3>'
+      +'<h3>Start A New Design?</h3>'
       +'<p>Your current draft has unsaved changes. Save it before starting over, or discard the changes.</p>'
       +'<div class="up-act"><button class="btn btn-primary" id="ndSave">Save and Start New</button>'
       +'<button class="btn btn-dark" id="ndDiscard">Discard and Start New</button>'
@@ -884,6 +898,7 @@ function startNewDesignFlow(){
   lucide.createIcons();
 }
 document.getElementById('clearLocks')?.addEventListener('click',startNewDesignFlow);
+document.getElementById('newDesignBtn')?.addEventListener('click',()=>{ go('studio'); startNewDesignFlow(); });
 
 /** Shown when Generate is pressed with no valid source. No credit is charged. */
 function needSourceModal(){
@@ -891,14 +906,14 @@ function needSourceModal(){
   if(!m){
     m=document.createElement('div'); m.id='noSrcModal'; m.className='up-modal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
-      +'<h3>Add a Source to Continue</h3>'
+      +'<h3>Add A Source To Continue</h3>'
       +'<p>Upload a photo, sketch or plan\u2014or intentionally choose a sample space.</p>'
       +'<div class="up-act"><button class="btn btn-primary" id="nsUpload"><i data-lucide="image-up"></i>Upload a Source</button>'
       +'<button class="btn btn-ghost" id="nsSample">Try a Sample</button></div></div>';
     (document.querySelector('.rd-app')||document.body).appendChild(m);
     m.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-close]')) m.classList.remove('on'); });
-    m.querySelector('#nsUpload').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioWelcome&&window.rdStudioWelcome('upload'); }catch(_){} });
-    m.querySelector('#nsSample').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioWelcome&&window.rdStudioWelcome('sample'); }catch(_){} });
+    m.querySelector('#nsUpload').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioStart&&window.rdStudioStart('upload'); }catch(_){} });
+    m.querySelector('#nsSample').addEventListener('click',()=>{ m.classList.remove('on'); try{ window.rdStudioStart&&window.rdStudioStart('sample'); }catch(_){} });
   }
   m.classList.add('on');
   lucide.createIcons();
