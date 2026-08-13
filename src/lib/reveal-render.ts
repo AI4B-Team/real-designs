@@ -536,13 +536,37 @@ export async function renderReveal(
           drawMotion(ctx, img, W, H, motion, p);
         }
 
+        if (scene.motion_level === "immersive") {
+          immersiveLayer(ctx, W, H, scene.immersive_effect || "light", p);
+        }
+
         if (opts.captionsEnabled !== false) {
           const text = scene.caption || scene.room_name || "";
           const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
           caption(ctx, W, H, text, a);
         }
+        {
+          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
+          sceneLabels(ctx, W, H, scene.labels ?? [], a);
+        }
         if (showDisclosure && scene.disclosure_type) {
           disclosureNote(ctx, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
+        }
+        if (showDisclosure && scene.motion_level === "immersive") {
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          pill(ctx, "AI-Animated", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
+          ctx.restore();
+        }
+        if (showDisclosure && scene.exterior_effect) {
+          ctx.save();
+          ctx.globalAlpha = 0.72;
+          ctx.font = `600 ${Math.round(W * 0.018)}px Inter, system-ui, sans-serif`;
+          ctx.fillStyle = "rgba(255,255,255,.9)";
+          ctx.textAlign = "left";
+          ctx.textBaseline = "alphabetic";
+          ctx.fillText("Simulated camera movement — not drone footage", W * 0.06, H * 0.955);
+          ctx.restore();
         }
         if (showBrand && brand?.company_name) {
           ctx.save();
