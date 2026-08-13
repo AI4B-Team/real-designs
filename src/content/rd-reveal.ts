@@ -719,6 +719,10 @@ async function renderAllVariants(projectId, variants, cfg) {
       transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
       caption: w.captions ? s.caption || s.room : null,
       disclosure_type: s.disclosure || null,
+      motion_level: w.motion !== "auto" && s.motion_level === "immersive" ? "immersive" : "standard",
+      immersive_effect: w.motion !== "auto" && s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
+      exterior_effect: w.motion !== "auto" ? s.exterior_effect || null : null,
+      labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
     });
   }
   const { data: auth } = await supabase.auth.getUser();
