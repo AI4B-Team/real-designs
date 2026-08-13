@@ -389,6 +389,40 @@ function stepScenes() {
   </div>`;
 }
 
+/* ---------- per-scene motion, immersive movement and exterior effects ---------- */
+function isExterior(scene) {
+  return /exterior|front|facade|curb|yard|patio|deck|pool|garden|landscape|backyard|outdoor/i.test(
+    (scene.room || "") + " " + (scene.kind || ""),
+  );
+}
+function immersiveCount() {
+  return (S.wizard?.scenes || []).filter((s) => s.motion_level === "immersive").length;
+}
+
+function sceneMotionCard(s, i) {
+  const level = s.motion_level === "immersive" ? "immersive" : "standard";
+  return `<div class="rv-mcard">
+    <div class="rv-mcard-h"><b>${esc(s.room || "Scene " + (i + 1))}</b>
+      <span class="rv-seg tiny">
+        <button class="${level === "standard" ? "on" : ""}" data-level="standard" data-i="${i}">Standard</button>
+        <button class="${level === "immersive" ? "on" : ""}" data-level="immersive" data-i="${i}">Immersive</button>
+      </span>
+    </div>
+    ${level === "standard"
+      ? `<label class="rv-f">Camera Move<select data-scene-motion="${i}">${STANDARD_MOTIONS
+          .map(([m, n]) => `<option value="${m}" ${(s.motion || "auto") === m ? "selected" : ""}>${n}</option>`).join("")}</select></label>`
+      : `<label class="rv-f">Animated Movement<select data-immersive="${i}">${IMMERSIVE_EFFECTS
+          .map(([m, n]) => `<option value="${m}" ${(s.immersive_effect || "light") === m ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        <div class="rv-note sm">Adds ${IMMERSIVE_CREDITS_PER_SCENE} Credits. Only Movement Is Animated — Walls, Windows And Furniture Stay Exactly As Designed.</div>`}
+    ${isExterior(s) ? `<label class="rv-f">Cinematic Exterior<select data-ext="${i}">
+      <option value="">None</option>
+      ${EXTERIOR_EFFECTS.map(([m, n]) => `<option value="${m}" ${s.exterior_effect === m ? "selected" : ""}>${n}</option>`).join("")}
+    </select></label>
+    ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
+  </div>`;
+}
+
+
 function stepSetup() {
   const w = S.wizard;
   return `<h3>Configure The Video</h3>
