@@ -8,7 +8,7 @@ import { createIcons, icons } from "lucide";
 export { DIRECTIONS } from "@/content/directions";
 import { DIRECTIONS } from "@/content/directions";
 
-const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging"];
+const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging", "Saved"];
 
 /** Room filters offered in the UI, mapped onto the canonical room labels. */
 const ROOMS = [
