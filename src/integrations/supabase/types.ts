@@ -41,6 +41,75 @@ export type Database = {
         }
         Relationships: []
       }
+      brand_kits: {
+        Row: {
+          colors: Json
+          company_name: string | null
+          contact_name: string | null
+          created_at: string
+          default_cta: string | null
+          email: string | null
+          font: string | null
+          id: string
+          intro_enabled: boolean
+          is_default: boolean
+          kit_type: string
+          logo_url: string | null
+          name: string
+          outro_enabled: boolean
+          phone: string | null
+          profile_photo_url: string | null
+          social_links: Json
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          colors?: Json
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          default_cta?: string | null
+          email?: string | null
+          font?: string | null
+          id?: string
+          intro_enabled?: boolean
+          is_default?: boolean
+          kit_type?: string
+          logo_url?: string | null
+          name?: string
+          outro_enabled?: boolean
+          phone?: string | null
+          profile_photo_url?: string | null
+          social_links?: Json
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          colors?: Json
+          company_name?: string | null
+          contact_name?: string | null
+          created_at?: string
+          default_cta?: string | null
+          email?: string | null
+          font?: string | null
+          id?: string
+          intro_enabled?: boolean
+          is_default?: boolean
+          kit_type?: string
+          logo_url?: string | null
+          name?: string
+          outro_enabled?: boolean
+          phone?: string | null
+          profile_photo_url?: string | null
+          social_links?: Json
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       change_items: {
         Row: {
           action: string
@@ -1031,6 +1100,342 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_audio: {
+        Row: {
+          beat_sync: boolean
+          captions_enabled: boolean
+          created_at: string
+          id: string
+          music_track_id: string | null
+          music_volume: number
+          narration_script: string | null
+          narration_type: string
+          narration_url: string | null
+          presentation_style: string
+          updated_at: string
+          user_id: string
+          video_project_id: string
+          voice_id: string | null
+        }
+        Insert: {
+          beat_sync?: boolean
+          captions_enabled?: boolean
+          created_at?: string
+          id?: string
+          music_track_id?: string | null
+          music_volume?: number
+          narration_script?: string | null
+          narration_type?: string
+          narration_url?: string | null
+          presentation_style?: string
+          updated_at?: string
+          user_id: string
+          video_project_id: string
+          voice_id?: string | null
+        }
+        Update: {
+          beat_sync?: boolean
+          captions_enabled?: boolean
+          created_at?: string
+          id?: string
+          music_track_id?: string | null
+          music_volume?: number
+          narration_script?: string | null
+          narration_type?: string
+          narration_url?: string | null
+          presentation_style?: string
+          updated_at?: string
+          user_id?: string
+          video_project_id?: string
+          voice_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_audio_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: true
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_projects: {
+        Row: {
+          brand_kit_id: string | null
+          branding: Json
+          created_at: string
+          design_version_id: string | null
+          disclosure: Json
+          error_message: string | null
+          formats: Json
+          id: string
+          length_preset: string
+          motion: string
+          property_id: string | null
+          property_label: string | null
+          room_id: string | null
+          settings: Json
+          source_type: string
+          status: string
+          title: string
+          transition: string
+          updated_at: string
+          user_id: string
+          video_type: string
+        }
+        Insert: {
+          brand_kit_id?: string | null
+          branding?: Json
+          created_at?: string
+          design_version_id?: string | null
+          disclosure?: Json
+          error_message?: string | null
+          formats?: Json
+          id?: string
+          length_preset?: string
+          motion?: string
+          property_id?: string | null
+          property_label?: string | null
+          room_id?: string | null
+          settings?: Json
+          source_type?: string
+          status?: string
+          title?: string
+          transition?: string
+          updated_at?: string
+          user_id: string
+          video_type?: string
+        }
+        Update: {
+          brand_kit_id?: string | null
+          branding?: Json
+          created_at?: string
+          design_version_id?: string | null
+          disclosure?: Json
+          error_message?: string | null
+          formats?: Json
+          id?: string
+          length_preset?: string
+          motion?: string
+          property_id?: string | null
+          property_label?: string | null
+          room_id?: string | null
+          settings?: Json
+          source_type?: string
+          status?: string
+          title?: string
+          transition?: string
+          updated_at?: string
+          user_id?: string
+          video_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_projects_brand_kit_id_fkey"
+            columns: ["brand_kit_id"]
+            isOneToOne: false
+            referencedRelation: "brand_kits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_projects_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_scenes: {
+        Row: {
+          caption: string | null
+          compare_path: string | null
+          created_at: string
+          crop_data: Json
+          disclosure_type: string | null
+          duration: number
+          generation_status: string
+          id: string
+          motion: string
+          room_name: string | null
+          scene_type: string
+          sequence: number
+          source_asset_id: string | null
+          source_path: string | null
+          source_version_id: string | null
+          transition: string
+          user_id: string
+          video_project_id: string
+        }
+        Insert: {
+          caption?: string | null
+          compare_path?: string | null
+          created_at?: string
+          crop_data?: Json
+          disclosure_type?: string | null
+          duration?: number
+          generation_status?: string
+          id?: string
+          motion?: string
+          room_name?: string | null
+          scene_type?: string
+          sequence?: number
+          source_asset_id?: string | null
+          source_path?: string | null
+          source_version_id?: string | null
+          transition?: string
+          user_id: string
+          video_project_id: string
+        }
+        Update: {
+          caption?: string | null
+          compare_path?: string | null
+          created_at?: string
+          crop_data?: Json
+          disclosure_type?: string | null
+          duration?: number
+          generation_status?: string
+          id?: string
+          motion?: string
+          room_name?: string | null
+          scene_type?: string
+          sequence?: number
+          source_asset_id?: string | null
+          source_path?: string | null
+          source_version_id?: string | null
+          transition?: string
+          user_id?: string
+          video_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_scenes_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_share_links: {
+        Row: {
+          allow_download: boolean
+          comments_enabled: boolean
+          created_at: string
+          expires_at: string | null
+          id: string
+          password_hash: string | null
+          privacy_type: string
+          show_budget: boolean
+          show_products: boolean
+          show_project_details: boolean
+          token: string
+          user_id: string
+          video_project_id: string
+        }
+        Insert: {
+          allow_download?: boolean
+          comments_enabled?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          password_hash?: string | null
+          privacy_type?: string
+          show_budget?: boolean
+          show_products?: boolean
+          show_project_details?: boolean
+          token: string
+          user_id: string
+          video_project_id: string
+        }
+        Update: {
+          allow_download?: boolean
+          comments_enabled?: boolean
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          password_hash?: string | null
+          privacy_type?: string
+          show_budget?: boolean
+          show_products?: boolean
+          show_project_details?: boolean
+          token?: string
+          user_id?: string
+          video_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_share_links_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_variants: {
+        Row: {
+          aspect_ratio: string
+          brand_kit_id: string | null
+          created_at: string
+          credit_cost: number
+          duration: number | null
+          id: string
+          output_path: string | null
+          render_status: string
+          resolution: string | null
+          thumbnail_path: string | null
+          user_id: string
+          version_type: string
+          video_project_id: string
+        }
+        Insert: {
+          aspect_ratio?: string
+          brand_kit_id?: string | null
+          created_at?: string
+          credit_cost?: number
+          duration?: number | null
+          id?: string
+          output_path?: string | null
+          render_status?: string
+          resolution?: string | null
+          thumbnail_path?: string | null
+          user_id: string
+          version_type?: string
+          video_project_id: string
+        }
+        Update: {
+          aspect_ratio?: string
+          brand_kit_id?: string | null
+          created_at?: string
+          credit_cost?: number
+          duration?: number | null
+          id?: string
+          output_path?: string | null
+          render_status?: string
+          resolution?: string | null
+          thumbnail_path?: string | null
+          user_id?: string
+          version_type?: string
+          video_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_variants_brand_kit_id_fkey"
+            columns: ["brand_kit_id"]
+            isOneToOne: false
+            referencedRelation: "brand_kits"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_variants_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
             referencedColumns: ["id"]
           },
         ]

@@ -1,0 +1,411 @@
+/**
+ * REAL REVEAL renderer.
+ *
+ * Renders a scene list to a real video file in the browser: canvas motion +
+ * transitions + captions + disclosure labels + a closing branded scene,
+ * recorded with MediaRecorder. No AI video call, so a re-render of an edited
+ * storyboard is fast and predictable.
+ */
+
+export type RevealScene = {
+  url: string;
+  compareUrl?: string | null;
+  room_name?: string | null;
+  scene_type?: string;
+  duration?: number;
+  motion?: string;
+  transition?: string;
+  caption?: string | null;
+  disclosure_type?: string | null;
+};
+
+export type RevealBrand = {
+  company_name?: string | null;
+  contact_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  website?: string | null;
+  default_cta?: string | null;
+  accent?: string | null;
+  logoUrl?: string | null;
+};
+
+export type RevealOptions = {
+  aspect: "9:16" | "16:9" | "1:1" | "4:5";
+  versionType: "branded" | "clean" | "disclosure";
+  brand?: RevealBrand | null;
+  title?: string | null;
+  subtitle?: string | null;
+  transition?: string;
+  captionsEnabled?: boolean;
+  onProgress?: (pct: number) => void;
+};
+
+export const DISCLOSURE_LABEL: Record<string, string> = {
+  staged: "Virtually Staged",
+  proposed: "Proposed Design",
+  concept: "Conceptual Rendering",
+  altered: "Digitally Altered",
+  ai: "AI-Generated Concept",
+};
+
+const SIZES: Record<RevealOptions["aspect"], [number, number]> = {
+  "9:16": [1080, 1920],
+  "16:9": [1920, 1080],
+  "1:1": [1080, 1080],
+  "4:5": [1080, 1350],
+};
+
+const ACCENT = "#CC0000";
+const FADE = 420; // ms per transition
+
+function loadImage(url: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("One of the scene images could not be loaded."));
+    img.src = url;
+  });
+}
+
+function pickMime(): string {
+  const candidates = [
+    "video/mp4;codecs=avc1.42E01E",
+    "video/mp4",
+    "video/webm;codecs=vp9",
+    "video/webm;codecs=vp8",
+    "video/webm",
+  ];
+  for (const c of candidates) {
+    if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c)) return c;
+  }
+  return "";
+}
+
+function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+/** Cover-crop with a motion offset. Important room content stays centred. */
+function drawMotion(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  W: number,
+  H: number,
+  motion: string,
+  t: number,
+) {
+  let zoom = 1.04;
+  let dx = 0;
+  let dy = 0;
+  switch (motion) {
+    case "push":
+      zoom = 1.0 + 0.09 * t;
+      break;
+    case "pull":
+      zoom = 1.09 - 0.09 * t;
+      break;
+    case "pan_left":
+      zoom = 1.1;
+      dx = (0.5 - t) * W * 0.08;
+      break;
+    case "pan_right":
+      zoom = 1.1;
+      dx = (t - 0.5) * W * 0.08;
+      break;
+    case "orbit_left":
+      zoom = 1.1;
+      dx = (0.5 - t) * W * 0.06;
+      dy = Math.sin(t * Math.PI) * H * 0.01;
+      break;
+    case "orbit_right":
+      zoom = 1.1;
+      dx = (t - 0.5) * W * 0.06;
+      dy = -Math.sin(t * Math.PI) * H * 0.01;
+      break;
+    case "static":
+      zoom = 1.02;
+      break;
+    default:
+      zoom = 1.0 + 0.06 * t; // automatic
+  }
+  const scale = Math.max(W / img.width, H / img.height) * zoom;
+  const w = img.width * scale;
+  const h = img.height * scale;
+  ctx.drawImage(img, (W - w) / 2 + dx, (H - h) / 2 + dy, w, h);
+}
+
+function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, bg: string, fg: string) {
+  ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
+  const padX = size * 0.72;
+  const w = ctx.measureText(text).width + padX * 2;
+  const h = size * 2;
+  ctx.fillStyle = bg;
+  roundRect(ctx, x, y, w, h, h / 2);
+  ctx.fill();
+  ctx.fillStyle = fg;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, x + padX, y + h / 2 + 1);
+  return w;
+}
+
+function caption(ctx: CanvasRenderingContext2D, W: number, H: number, text: string, alpha: number) {
+  if (!text || alpha <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const grad = ctx.createLinearGradient(0, H - H * 0.28, 0, H);
+  grad.addColorStop(0, "rgba(0,0,0,0)");
+  grad.addColorStop(1, "rgba(0,0,0,.72)");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, H - H * 0.28, W, H * 0.28);
+  const size = Math.round(W * 0.042);
+  ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  const max = 34;
+  ctx.fillText(text.length > max ? text.slice(0, max - 1) + "…" : text, W * 0.07, H - H * 0.09);
+  ctx.restore();
+}
+
+function brandOutro(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  brand: RevealBrand,
+  title: string,
+  alpha: number,
+) {
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = "#0b0b0b";
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+
+  let y = H * 0.42;
+  const name = brand.company_name || brand.contact_name || "REAL DESIGNS";
+  ctx.font = `800 ${Math.round(W * 0.062)}px Inter, system-ui, sans-serif`;
+  ctx.fillStyle = "#fff";
+  ctx.fillText(name, W / 2, y);
+  ctx.fillStyle = brand.accent || ACCENT;
+  ctx.fillRect(W / 2 - W * 0.08, y + W * 0.022, W * 0.16, Math.max(4, W * 0.006));
+
+  y += H * 0.075;
+  if (title) {
+    ctx.font = `600 ${Math.round(W * 0.034)}px Inter, system-ui, sans-serif`;
+    ctx.fillStyle = "rgba(255,255,255,.78)";
+    ctx.fillText(title, W / 2, y);
+    y += H * 0.05;
+  }
+  const contact = [brand.phone, brand.email, brand.website].filter(Boolean).join("  •  ");
+  if (contact) {
+    ctx.font = `500 ${Math.round(W * 0.028)}px Inter, system-ui, sans-serif`;
+    ctx.fillStyle = "rgba(255,255,255,.62)";
+    ctx.fillText(contact, W / 2, y);
+    y += H * 0.05;
+  }
+  if (brand.default_cta) {
+    ctx.font = `700 ${Math.round(W * 0.03)}px Inter, system-ui, sans-serif`;
+    const t = brand.default_cta;
+    const w = ctx.measureText(t).width + W * 0.08;
+    ctx.fillStyle = brand.accent || ACCENT;
+    roundRect(ctx, (W - w) / 2, y - W * 0.03, w, W * 0.085, W * 0.045);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.textBaseline = "middle";
+    ctx.fillText(t, W / 2, y + W * 0.012);
+  }
+  ctx.restore();
+}
+
+function disclosureNote(ctx: CanvasRenderingContext2D, W: number, H: number, label: string, alpha: number) {
+  if (!label) return;
+  ctx.save();
+  ctx.globalAlpha = alpha * 0.94;
+  pill(ctx, label, W * 0.06, H * 0.055, Math.round(W * 0.026), "rgba(10,10,10,.78)", "#fff");
+  ctx.restore();
+}
+
+export function estimateDuration(scenes: RevealScene[], lengthPreset: string): number {
+  const target = lengthPreset === "quick" ? 15 : lengthPreset === "full" ? 60 : 30;
+  if (!scenes.length) return 0;
+  return target;
+}
+
+/** Per-scene seconds for a target length. */
+export function sceneDurations(count: number, lengthPreset: string): number {
+  const target = lengthPreset === "quick" ? 15 : lengthPreset === "full" ? 60 : 30;
+  return Math.max(1.6, Math.min(6, target / Math.max(count, 1)));
+}
+
+export async function renderReveal(
+  scenes: RevealScene[],
+  opts: RevealOptions,
+): Promise<{ blob: Blob; ext: string; duration: number; poster: string }> {
+  if (typeof MediaRecorder === "undefined") throw new Error("This browser cannot record video. Try Chrome or Edge.");
+  if (!scenes.length) throw new Error("Add at least one scene first.");
+
+  const [W, H] = SIZES[opts.aspect];
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Canvas is unavailable in this browser.");
+
+  const imgs = await Promise.all(scenes.map((s) => loadImage(s.url)));
+  const compares = await Promise.all(
+    scenes.map((s) => (s.compareUrl ? loadImage(s.compareUrl).catch(() => null) : Promise.resolve(null))),
+  );
+
+  const brand = opts.brand ?? null;
+  const showBrand = opts.versionType === "branded" && !!brand;
+  const showDisclosure = opts.versionType !== "clean";
+
+  const mime = pickMime();
+  const stream = canvas.captureStream(30);
+  const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 9_000_000 } : undefined);
+  const chunks: BlobPart[] = [];
+  rec.ondataavailable = (e) => {
+    if (e.data && e.data.size) chunks.push(e.data);
+  };
+  const done = new Promise<Blob>((resolve) => {
+    rec.onstop = () => resolve(new Blob(chunks, { type: mime || "video/webm" }));
+  });
+
+  const durations = scenes.map((s) => Math.max(1.2, s.duration ?? 3) * 1000);
+  const outro = showBrand ? 2600 : 0;
+  const total = durations.reduce((a, b) => a + b, 0) + outro;
+
+  rec.start();
+  const start = performance.now();
+
+  await new Promise<void>((resolve) => {
+    const frame = () => {
+      const t = performance.now() - start;
+      opts.onProgress?.(Math.min(t / total, 1));
+
+      // find the active scene
+      let acc = 0;
+      let idx = -1;
+      let local = 0;
+      for (let i = 0; i < durations.length; i++) {
+        if (t < acc + durations[i]!) {
+          idx = i;
+          local = t - acc;
+          break;
+        }
+        acc += durations[i]!;
+      }
+
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, W, H);
+
+      if (idx === -1) {
+        // branded closing scene
+        const p = Math.min((t - (total - outro)) / Math.max(outro, 1), 1);
+        if (brand) brandOutro(ctx, W, H, brand, opts.title ?? "", Math.min(1, p * 3));
+      } else {
+        const scene = scenes[idx]!;
+        const img = imgs[idx]!;
+        const cmp = compares[idx];
+        const p = local / durations[idx]!;
+        const motion = scene.motion && scene.motion !== "auto" ? scene.motion : "auto";
+        const transition = scene.transition || opts.transition || "clean";
+
+        if (cmp && scene.scene_type === "before_after") {
+          // Match Frame: same camera, original holds then the design takes over.
+          const mix = Math.min(Math.max((p - 0.42) / 0.22, 0), 1);
+          drawMotion(ctx, cmp, W, H, motion, p);
+          if (mix > 0) {
+            if (transition === "slider" || transition === "wipe") {
+              ctx.save();
+              ctx.beginPath();
+              ctx.rect(0, 0, W * mix, H);
+              ctx.clip();
+              drawMotion(ctx, img, W, H, motion, p);
+              ctx.restore();
+              if (mix < 1) {
+                ctx.fillStyle = ACCENT;
+                ctx.fillRect(W * mix - 3, 0, 6, H);
+              }
+            } else {
+              ctx.save();
+              ctx.globalAlpha = mix;
+              drawMotion(ctx, img, W, H, motion, p);
+              ctx.restore();
+            }
+          }
+          if (opts.captionsEnabled !== false) {
+            const lab = mix > 0.5 ? "After" : "Before";
+            ctx.save();
+            pill(ctx, lab, W * 0.06, H * 0.14, Math.round(W * 0.03), "rgba(10,10,10,.8)", "#fff");
+            ctx.restore();
+          }
+        } else {
+          drawMotion(ctx, img, W, H, motion, p);
+        }
+
+        if (opts.captionsEnabled !== false) {
+          const text = scene.caption || scene.room_name || "";
+          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
+          caption(ctx, W, H, text, a);
+        }
+        if (showDisclosure && scene.disclosure_type) {
+          disclosureNote(ctx, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
+        }
+        if (showBrand && brand?.company_name) {
+          ctx.save();
+          ctx.globalAlpha = 0.8;
+          ctx.font = `800 ${Math.round(W * 0.024)}px Inter, system-ui, sans-serif`;
+          ctx.textAlign = "right";
+          ctx.textBaseline = "alphabetic";
+          ctx.fillStyle = "rgba(255,255,255,.9)";
+          ctx.fillText(brand.company_name, W - W * 0.06, H * 0.075);
+          ctx.restore();
+        }
+
+        // transition fades between scenes
+        if (transition !== "none") {
+          const fadeIn = local < FADE ? 1 - local / FADE : 0;
+          const fadeOut = durations[idx]! - local < FADE ? 1 - (durations[idx]! - local) / FADE : 0;
+          const f = Math.max(fadeIn, fadeOut) * (transition === "cinematic" ? 1 : transition === "smooth" ? 0.8 : 0.6);
+          if (f > 0) {
+            ctx.save();
+            ctx.globalAlpha = f;
+            ctx.fillStyle = "#0a0a0a";
+            ctx.fillRect(0, 0, W, H);
+            ctx.restore();
+          }
+        }
+      }
+
+      if (t >= total) {
+        resolve();
+        return;
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+  });
+
+  rec.stop();
+  stream.getTracks().forEach((tr) => tr.stop());
+  const blob = await done;
+
+  // poster from the first scene
+  ctx.fillStyle = "#0a0a0a";
+  ctx.fillRect(0, 0, W, H);
+  drawMotion(ctx, imgs[0]!, W, H, "static", 0.2);
+  const poster = canvas.toDataURL("image/jpeg", 0.75);
+
+  return { blob, ext: (mime || "video/webm").includes("mp4") ? "mp4" : "webm", duration: total / 1000, poster };
+}
