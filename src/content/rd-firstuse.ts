@@ -165,10 +165,15 @@ export function mountFirstUse(ctx: Ctx) {
     const keep = document.getElementById("mKeep");
     if (level === "most" && keep) (keep as HTMLElement).click();
   }
-  function setSourceImage(src: string, alt: string) {
-    const before = document.getElementById("cBefore");
-    if (before) {
-      before.innerHTML = `<img src="${src}" alt="${esc(alt)}" style="width:100%;height:100%;object-fit:cover;display:block">`;
+  function setSourceImage(src: string, alt: string, kind?: string) {
+    // Studio owns the source state; never paint the canvas behind its back.
+    const set = (window as any).rdSetStudioSource;
+    if (typeof set === "function") set(kind || "user_upload", src, alt);
+    else {
+      const before = document.getElementById("cBefore");
+      if (before) {
+        before.innerHTML = `<img src="${src}" alt="${esc(alt)}" style="width:100%;height:100%;object-fit:cover;display:block">`;
+      }
     }
     state.thumb = src;
   }
@@ -309,8 +314,9 @@ export function mountFirstUse(ctx: Ctx) {
     ];
     return (
       '<div class="fu-head"><span class="fu-eyebrow mono">WELCOME TO REAL DESIGNS</span>' +
-      "<h2>Let\u2019s Create Your First Design.</h2>" +
-      "<p>Upload a photo, sketch or floor plan\u2014or start with a sample space to see how REAL DESIGNS works.</p></div>" +
+      "<h2>What Would You Like To Create?</h2>" +
+      "<p>Start with a photo of your space, a sketch or floor plan, or set up a property first. " +
+      "Nothing is generated and no credits are used until you choose.</p></div>" +
       railHtml(0) +
       '<div class="fu-cards">' +
       cards
@@ -589,7 +595,7 @@ export function mountFirstUse(ctx: Ctx) {
         state.sourceKind = "photo";
         state.space = s.space;
         state.room = s.room;
-        setSourceImage(s.photo, s.alt);
+        setSourceImage(s.photo, s.alt, "intentional_sample");
         applySpace(s.space);
         applyRoom(s.room);
         sampleBanner(true, s.name);
@@ -825,9 +831,25 @@ export function mountFirstUse(ctx: Ctx) {
   }
 
   function hide() {
-    state.mode = "hidden";
+    // With no source loaded there is nothing to show behind the panel, so the
+    // welcome state stays instead of leaving an empty Studio.
+    const has = (window as any).rdStudioHasSource;
+    state.mode = typeof has === "function" && !has() ? "start" : "hidden";
     render();
   }
+
+  (window as any).rdStudioWelcome = (kind?: string) => {
+    state.mode = kind === "sample" ? "samples" : "start";
+    render();
+    if (kind === "upload") pickFile("photo");
+    scrollTo("#fuPanel");
+  };
+  (window as any).rdStudioHideWelcome = () => {
+    if (state.mode === "start" || state.mode === "samples") {
+      state.mode = "hidden";
+      render();
+    }
+  };
 
   /* ---------- first success ---------- */
   let awaitingFirst = false;
@@ -1004,7 +1026,7 @@ export function mountFirstUse(ctx: Ctx) {
       const s = SAMPLES.find((x) => x.key === intent.sample);
       if (s) {
         state.sample = s.key;
-        setSourceImage(s.photo, s.alt);
+        setSourceImage(s.photo, s.alt, "intentional_sample");
         sampleBanner(true, s.name);
       }
     }

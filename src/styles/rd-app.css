@@ -1032,3 +1032,50 @@
   .rd-app .fu-resume-a{margin-left:0}
 }
 @media (prefers-reduced-motion:reduce){ .rd-app .content{transition:none} }
+
+
+/* ---------- Studio source states ----------
+   Studio boots empty: no sample room, no editing controls, no planning range
+   until a real source (upload, saved design, property or a chosen sample). */
+.rd-app .studio.st-empty > .card:first-child,
+.rd-app .studio.st-empty > .right{ display:none; }
+.rd-app .studio.st-empty{ grid-template-columns:1fr; }
+.rd-app .studio.st-empty #canvasCard .card-h > div:last-child,
+.rd-app .studio.st-empty #canvas,
+.rd-app .studio.st-empty #canvasCard .card-b > div:last-child{ display:none !important; }
+
+/* Comparison chrome, variants, planning range and result actions only after a render */
+.rd-app .studio:not(.st-result) #cRng,
+.rd-app .studio:not(.st-result) #cHnd,
+.rd-app .studio:not(.st-result) .canvas .ctag,
+.rd-app .studio:not(.st-result) #vars,
+.rd-app .studio:not(.st-result) #studioSummary,
+.rd-app .studio:not(.st-result) #stApprove,
+.rd-app .studio:not(.st-result) #stDownload,
+.rd-app .studio:not(.st-result) #stShop{ display:none !important; }
+
+/* Object hotspots wait for the element pass to finish */
+.rd-app .studio.st-analyzing .canvas .hot,
+.rd-app .studio.st-empty .canvas .hot{ display:none !important; }
+.rd-app .studio.st-analyzing #lockList{ opacity:.45; pointer-events:none; }
+
+.rd-app #genBtn.is-disabled{ opacity:.55; }
+
+.rd-app .src-cap{
+  display:flex; flex-direction:column; gap:2px;
+  margin:0 0 10px; padding:9px 14px;
+  border:1px solid var(--line); border-radius:10px; background:var(--surface-2);
+}
+.rd-app .src-cap b{ font-size:.82rem; }
+.rd-app .src-cap span{ font-size:.76rem; color:var(--mute); }
+
+.rd-app .st-empty-state{ padding:26px 22px 30px; text-align:center; }
+.rd-app .st-empty-state h4{ font-size:1.02rem; margin-bottom:6px; }
+.rd-app .st-empty-state p{ font-size:.82rem; color:var(--mute); max-width:520px; margin:0 auto 16px; }
+.rd-app .st-empty-act{ display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+
+.rd-app .canvas-card.dark .st-empty-state h4{ color:#fff; }
+.rd-app .canvas-card.dark .st-empty-state p{ color:#8E8E96; }
+.rd-app .canvas-card.dark .src-cap{ background:#232327; border-color:#2E2E33; margin:24px 24px 0; }
+.rd-app .canvas-card.dark .src-cap b{ color:#fff; }
+.rd-app .canvas-card.dark .src-cap span{ color:#8E8E96; }
