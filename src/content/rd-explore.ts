@@ -127,7 +127,7 @@ export function mountExplore(go, ctx) {
   }
 
   /* ---------- filter chips ---------- */
-  $("xpCats").innerHTML = SPACES.map((s) => `<button class="xp-cat${s === cat ? " on" : ""}" data-c="${s}">${s}</button>`).join("");
+  $("xpCats").innerHTML = SPACES.map((s) => `<button class="xp-cat${s === cat ? " on" : ""}" data-c="${s}">${spaceLabel(s)}</button>`).join("");
   $("xpRooms").innerHTML = ROOMS.map(([label]) => `<button class="xp-chip" data-room="${label}">${label}</button>`).join("");
   $("xpTraits").innerHTML = TRAITS.map((t) => `<button class="xp-chip" data-trait="${t}">${t}</button>`).join("");
   $("xpGrades").innerHTML = GRADES.map((g) => `<button class="xp-chip" data-grade="${g}">${g}</button>`).join("");
@@ -155,7 +155,7 @@ export function mountExplore(go, ctx) {
   /* ---------- cards ---------- */
   function card(d) {
     const on = saved.indexOf(d.id) > -1;
-    const tags = d.spaces.concat(d.staging ? ["Virtual Staging"] : []);
+    const tags = d.spaces.map(spaceLabel).concat(d.staging ? ["Virtual Staging"] : []);
     return `<article class="xp-card" data-d="${d.id}">
       <div class="xp-img"><img src="${d.img}" alt="${esc(d.name)} design direction" loading="lazy">
         <button class="xp-save${on ? " on" : ""}" data-save="${d.id}" aria-label="Save Direction" title="Save Direction"><i data-lucide="bookmark"></i></button>
@@ -243,7 +243,7 @@ export function mountExplore(go, ctx) {
         <div class="xp-spec"><b>Color Palette</b><div class="xp-pal">${d.palette.map((c) => `<i style="background:${c}"></i>`).join("")}</div></div>
         <div class="xp-spec"><b>Materials And Finishes</b><div>${d.materials.concat(d.finishes).map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
         <div class="xp-spec"><b>Finish Grade Compatibility</b><div>${d.grades.map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="xp-spec"><b>Best For</b><div>${d.spaces.concat(d.rooms).map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
+        <div class="xp-spec"><b>Best For</b><div>${d.spaces.map(spaceLabel).concat(d.rooms).map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
         <div class="xp-spec"><b>Suggested Budget Bands</b><div>${d.budgets.map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
       </div>
       <div class="xp-df">
