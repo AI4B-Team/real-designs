@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Search, X, ImagePlus, Shuffle } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
+import { SiteFooter, SiteHeader, UploadSpaceLink } from "@/components/seo/SiteChrome";
 import { DIRECTIONS, TRAIT_OPTIONS, type Direction } from "@/content/directions";
 import { absoluteUrl } from "@/lib/site";
 import "@/styles/rd-site.css";
