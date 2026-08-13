@@ -567,7 +567,7 @@ function paintTree(){
   }
   const rows=[];
   PROP_TREE.forEach((p,pi)=>{
-    rows.push(`<div class="tr l1 ${pi===SEL.p?'on':''}" data-pi="${pi}" data-pri="0"><i data-lucide="map-pin"></i><span class="tr-label" title="${p.address}">${p.address}</span><span class="meta">${p.has_dna?'DNA Locked':'No DNA'}</span></div>`);
+    rows.push(`<div class="tr l1 ${pi===SEL.p?'on':''}" data-pi="${pi}" data-pri="0"><i data-lucide="map-pin"></i><span class="tr-label" title="${p.address}">${p.address}</span><span class="meta">${p.has_dna?'DNA Locked':'No DNA'}</span><button class="tr-vid" data-vid-prop="${p.id}" data-vid-label="${p.address}" title="Create Video" aria-label="Create Video"><i data-lucide="clapperboard"></i></button></div>`);
     p.projects.forEach((pr,pri)=>{
       rows.push(`<div class="tr l2 ${pi===SEL.p&&pri===SEL.pr?'on':''}" data-pi="${pi}" data-pri="${pri}"><i data-lucide="folder"></i><span class="tr-label" title="${pr.name}">${pr.name}</span><span class="meta">${pr.rooms.length} ${pr.rooms.length===1?'room':'rooms'}</span></div>`);
       pr.rooms.forEach(r=>{
@@ -579,6 +579,10 @@ function paintTree(){
   el.innerHTML=rows.join('');
   el.querySelectorAll('.tr').forEach(tr=>tr.addEventListener('click',()=>{
     SEL={p:+tr.dataset.pi,pr:+tr.dataset.pri}; paintTree();
+  }));
+  el.querySelectorAll('[data-vid-prop]').forEach(b=>b.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    try{ createVideoFrom({ sourceType:'property', propertyId:b.getAttribute('data-vid-prop'), propertyLabel:b.getAttribute('data-vid-label') }); }catch(_){}
   }));
   lucide.createIcons();
   paintRooms();
@@ -1203,7 +1207,7 @@ ${d.sample?'<span class="pill dg-sample">Sample</span>':''}</div>
   ? `<button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Try This Style</button>`
   : `<button class="btn btn-ghost btn-xs" style="flex:1" data-open="${d.id}">Open</button>
 <button class="btn btn-ghost btn-xs" data-hist="${d.id}" title="Version history"><i data-lucide="history"></i></button>`}
-<button class="btn btn-ghost btn-xs" data-shop="${d.id}" title="Shop this design"><i data-lucide="shopping-bag"></i></button><button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download image"><i data-lucide="download"></i></button></div></div></div>`;
+<button class="btn btn-ghost btn-xs" data-shop="${d.id}" title="Shop this design"><i data-lucide="shopping-bag"></i></button><button class="btn btn-ghost btn-xs" data-vid="${d.id}" title="Create Video"><i data-lucide="clapperboard"></i></button><button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download image"><i data-lucide="download"></i></button></div></div></div>`;
 }
 
 function paintDesignChrome(){
@@ -1262,6 +1266,11 @@ function paintDesigns(){
   g.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>{
     const d=list.find(x=>x.id===b.getAttribute('data-del'));
     if(d) removeDesigns([d]);
+  }));
+  g.querySelectorAll('[data-vid]').forEach(b=>b.addEventListener('click',()=>{
+    const d=list.find(x=>x.id===b.getAttribute('data-vid'));
+    if(!d) return;
+    try{ createVideoFrom({ sourceType:'design', propertyId:d.property_id||null, propertyLabel:d.address||d.sub||null, versionId:d.sample?null:d.id, videoType:'before_after', title:d.name+' Reveal' }); }catch(_){}
   }));
   g.querySelectorAll('[data-shop]').forEach(b=>b.addEventListener('click',()=>{
     const d=list.find(x=>x.id===b.getAttribute('data-shop'));
