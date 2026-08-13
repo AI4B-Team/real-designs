@@ -169,3 +169,29 @@
 .rd-app .tr:hover .tr-vid, .rd-app .tr.on .tr-vid { opacity: 1; }
 .rd-app .tr .tr-vid:hover { color: #cc0000; }
 .rd-app .tr .tr-vid svg { width: 14px; height: 14px; }
+
+/* the app shell resets padding on descendants, so re-assert ours with weight */
+.rd-app #v-reveal .rv-opt,
+.rd-app #v-reveal .rv-row,
+.rd-app #v-reveal .rv-kit { padding: 14px 16px 16px; line-height: 1.45; }
+.rd-app #v-reveal .rv-recent,
+.rd-app #v-reveal .rv-asset,
+.rd-app #v-reveal .rv-scene { padding: 10px 12px; line-height: 1.45; }
+.rd-app #v-reveal .rv-wiz { padding: 20px 22px 22px; }
+.rd-app #v-reveal .rv-chip { padding: 6px 14px; }
+.rd-app #v-reveal .rv-seg button { padding: 6px 13px; }
+.rd-app #v-reveal .rv-card { padding: 10px 12px; }
+.rd-app #v-reveal .rv-empty { padding: 54px 24px; }
+.rd-app #v-reveal .rv-search { padding: 7px 12px; }
+.rd-app #v-reveal .rv-f input,
+.rd-app #v-reveal .rv-f select,
+.rd-app #v-reveal .rv-f textarea { padding: 9px 11px; }
+.rd-app #v-reveal .rv-detail { padding: 18px 20px; }
+.rd-app #v-reveal .rv-b { padding: 2px 7px; }
+.rd-app #v-reveal .rv-steps span { padding: 4px 12px; }
+.rd-app #v-reveal .rv-sc { padding: 8px; }
+.rd-app #v-reveal .rv-fail { padding: 12px 14px; }
+.rd-app #v-reveal .rv-dup { padding: 9px 12px; }
+.rd-app #v-reveal .rv-opt span,
+.rd-app #v-reveal .rv-row span,
+.rd-app #v-reveal .rv-kit span { line-height: 1.5; }
