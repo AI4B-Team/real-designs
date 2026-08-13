@@ -177,6 +177,19 @@ function drawMotion(
     case "static":
       zoom = 1.02;
       break;
+    // Cinematic exterior moves — simulated camera work on a still frame.
+    case "approach":
+      zoom = 1.0 + 0.2 * t;
+      dy = (0.5 - t) * H * 0.02;
+      break;
+    case "rise":
+      zoom = 1.14;
+      dy = (t - 0.5) * H * 0.1;
+      break;
+    case "aerial_reveal":
+      zoom = 1.26 - 0.24 * t;
+      dy = (0.5 - t) * H * 0.05;
+      break;
     default:
       zoom = 1.0 + 0.06 * t; // automatic
   }
