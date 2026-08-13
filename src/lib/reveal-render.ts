@@ -7,6 +7,12 @@
  * storyboard is fast and predictable.
  */
 
+export type SceneLabel = {
+  text: string;
+  style?: "clean" | "architectural" | "callout";
+  position?: "top_left" | "top_right" | "bottom_left" | "bottom_right";
+};
+
 export type RevealScene = {
   url: string;
   compareUrl?: string | null;
@@ -17,7 +23,45 @@ export type RevealScene = {
   transition?: string;
   caption?: string | null;
   disclosure_type?: string | null;
+  /** "standard" = camera motion only. "immersive" = AI-animated movement. */
+  motion_level?: "standard" | "immersive";
+  immersive_effect?: string | null;
+  exterior_effect?: string | null;
+  labels?: SceneLabel[];
 };
+
+/** Standard camera moves. */
+export const STANDARD_MOTIONS: Array<[string, string]> = [
+  ["auto", "Automatic"],
+  ["push", "Push In"],
+  ["pull", "Pull Out"],
+  ["pan_left", "Pan Left"],
+  ["pan_right", "Pan Right"],
+  ["orbit_left", "Orbit Left"],
+  ["orbit_right", "Orbit Right"],
+  ["static", "Static"],
+];
+
+/** Immersive movement inside the frame. Architecture is never redrawn. */
+export const IMMERSIVE_EFFECTS: Array<[string, string]> = [
+  ["curtains", "Curtains Drifting"],
+  ["fire", "Fireplace Flicker"],
+  ["water", "Water Movement"],
+  ["light", "Daylight Shift"],
+  ["foliage", "Foliage Sway"],
+];
+
+/** Cinematic exterior moves. Simulated camera work, never drone footage. */
+export const EXTERIOR_EFFECTS: Array<[string, string]> = [
+  ["approach", "Approach"],
+  ["rise", "Rise"],
+  ["aerial_reveal", "Aerial Reveal"],
+];
+
+export const EXTERIOR_DISCLOSURE =
+  "Cinematic camera movement is simulated from still photography. This is not actual drone footage.";
+
+export const IMMERSIVE_CREDITS_PER_SCENE = 6;
 
 export type RevealBrand = {
   company_name?: string | null;
