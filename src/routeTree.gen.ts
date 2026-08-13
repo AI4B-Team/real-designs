@@ -20,6 +20,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as CopyrightRouteImport } from './routes/copyright'
 import { Route as DoNotSellRouteImport } from './routes/do-not-sell'
+import { Route as ExploreRouteImport } from './routes/explore'
 import { Route as FoundersRouteImport } from './routes/founders'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
@@ -95,6 +96,11 @@ const CopyrightRoute = CopyrightRouteImport.update({
 const DoNotSellRoute = DoNotSellRouteImport.update({
   id: '/do-not-sell',
   path: '/do-not-sell',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FoundersRoute = FoundersRouteImport.update({
@@ -219,6 +225,7 @@ export interface FileRoutesByFullPath {
   '/contact': typeof ContactRoute
   '/copyright': typeof CopyrightRoute
   '/do-not-sell': typeof DoNotSellRoute
+  '/explore': typeof ExploreRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/contact': typeof ContactRoute
   '/copyright': typeof CopyrightRoute
   '/do-not-sell': typeof DoNotSellRoute
+  '/explore': typeof ExploreRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -289,6 +297,7 @@ export interface FileRoutesById {
   '/contact': typeof ContactRoute
   '/copyright': typeof CopyrightRoute
   '/do-not-sell': typeof DoNotSellRoute
+  '/explore': typeof ExploreRoute
   '/founders': typeof FoundersRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
@@ -325,6 +334,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/copyright'
     | '/do-not-sell'
+    | '/explore'
     | '/founders'
     | '/pricing'
     | '/privacy'
@@ -359,6 +369,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/copyright'
     | '/do-not-sell'
+    | '/explore'
     | '/founders'
     | '/pricing'
     | '/privacy'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/contact'
     | '/copyright'
     | '/do-not-sell'
+    | '/explore'
     | '/founders'
     | '/pricing'
     | '/privacy'
@@ -430,6 +442,7 @@ export interface RootRouteChildren {
   ContactRoute: typeof ContactRoute
   CopyrightRoute: typeof CopyrightRoute
   DoNotSellRoute: typeof DoNotSellRoute
+  ExploreRoute: typeof ExploreRoute
   FoundersRoute: typeof FoundersRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
@@ -530,6 +543,13 @@ declare module '@tanstack/react-router' {
       path: '/do-not-sell'
       fullPath: '/do-not-sell'
       preLoaderRoute: typeof DoNotSellRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/founders': {
@@ -712,6 +732,7 @@ const rootRouteChildren: RootRouteChildren = {
   ContactRoute: ContactRoute,
   CopyrightRoute: CopyrightRoute,
   DoNotSellRoute: DoNotSellRoute,
+  ExploreRoute: ExploreRoute,
   FoundersRoute: FoundersRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
