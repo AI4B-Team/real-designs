@@ -426,6 +426,8 @@ modal.querySelector('#uGo').addEventListener('click',()=>{
 });
 
 window.openUpload=openUpload;
+if(location.hash==='#upload'){history.replaceState(null,'',location.pathname);openUpload();}
+window.addEventListener('hashchange',()=>{if(location.hash==='#upload'){history.replaceState(null,'',location.pathname);openUpload();}});
 
 /* header CTA opens the modal */
 const navUp=document.getElementById('navUpload');

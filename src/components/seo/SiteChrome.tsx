@@ -61,7 +61,7 @@ export function UploadSpaceLink({
   children: React.ReactNode;
 }) {
   return (
-    <a href="/#builder" className={className} onClick={handleUploadClick}>
+    <a href="/#upload" className={className} onClick={handleUploadClick}>
       {children}
     </a>
   );
@@ -91,7 +91,7 @@ export function SiteHeader() {
               Log In
             </Link>
           )}
-          <a href="/#builder" className="btn btn-primary btn-sm" onClick={onUpload}>
+          <a href="/#upload" className="btn btn-primary btn-sm" onClick={onUpload}>
             Upload Your Space
           </a>
         </div>
