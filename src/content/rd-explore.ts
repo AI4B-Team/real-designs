@@ -452,6 +452,7 @@ export function mountExplore(go, ctx) {
   }
 
   syncProp();
+  paintQuiz();
   paint();
   icons_();
 }
