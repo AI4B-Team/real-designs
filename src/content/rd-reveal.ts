@@ -399,9 +399,9 @@ function stepSetup() {
     .map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
   <div class="rv-sub">Motion</div>
   <div class="rv-seg"><button class="${w.motion === "auto" ? "on" : ""}" data-motion="auto">Automatic — Recommended</button><button class="${w.motion !== "auto" ? "on" : ""}" data-motion="advanced">Advanced Per Scene</button></div>
-  ${w.motion !== "auto" ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}
-    <select data-scene-motion="${i}">${["auto", "push", "pull", "pan_left", "pan_right", "orbit_left", "orbit_right", "static"]
-      .map((m) => `<option value="${m}" ${s.motion === m ? "selected" : ""}>${({ auto: "Automatic", push: "Push In", pull: "Pull Out", pan_left: "Pan Left", pan_right: "Pan Right", orbit_left: "Orbit Left", orbit_right: "Orbit Right", static: "Static" })[m]}</option>`).join("")}</select></label>`).join("")}</div>` : ""}
+  ${w.motion !== "auto" ? `<div class="rv-adv">${w.scenes.map((s, i) => sceneMotionCard(s, i)).join("")}
+    ${immersiveCount() ? `<div class="rv-note sm">Immersive Motion Is Added To ${immersiveCount()} ${immersiveCount() === 1 ? "Scene" : "Scenes"} — ${immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits.</div>` : ""}
+  </div>` : ""}
   <div class="rv-sub">Transitions</div>
   <div class="rv-seg">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"]]
     .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
