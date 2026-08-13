@@ -23,12 +23,10 @@
 .rsp {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: auto auto;
   gap: 0;
-  height: 132px;
   min-height: 132px;
   box-sizing: border-box;
-  overflow: hidden;
   background: var(--rsp-bg);
   border: 1px solid var(--rsp-border);
   border-radius: 14px;
@@ -88,15 +86,15 @@
   gap: 7px;
   min-width: 0;
   font-family: inherit;
-  line-height: 1.2;
+  line-height: 1.35;
   white-space: nowrap;
-  overflow: hidden;
 }
 
 /* the text node needs its own box, otherwise ellipsis never applies
    to a flex child and long values are cut mid-character */
 .rsp-text {
   min-width: 0;
+  padding-bottom: 1px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
