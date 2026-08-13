@@ -60,11 +60,6 @@ function FreeToolsHub() {
               the same workspace when you are ready to price the whole project.
             </p>
           </div>
-          <div className="badge-row" style={{ marginTop: 18 }}>
-            <span className="pb ok">{FREE_TOOL_LINKS.length} Free Tools</span>
-            <span className="pb">No Card Required</span>
-            <span className="pb">Planning Ranges, Not Bids</span>
-          </div>
         </div>
       </section>
 

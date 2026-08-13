@@ -128,11 +128,6 @@ function ResourcesPage() {
               from the same page.
             </p>
           </div>
-          <div className="badge-row" style={{ marginTop: 18 }}>
-            <span className="pb ok">{LANDING_PAGES.length} Guides</span>
-            <span className="pb">{FREE_TOOL_LINKS.length} Free Tools</span>
-            <span className="pb">Planning Ranges, Not Bids</span>
-          </div>
         </div>
       </section>
 

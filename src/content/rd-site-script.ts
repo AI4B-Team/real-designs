@@ -329,7 +329,7 @@ document.getElementById('genBtn').addEventListener('click',()=>{
         ov.innerHTML='<div class="gen-gate"><i data-lucide="lock"></i>'
           +'<b>Your Space Is Locked And Ready</b>'
           +'<span>Reality Lock has your walls, windows and layout. Create your free account and this exact photo renders first, with your settings already loaded.</span>'
-          +'<a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="sparkles"></i>Render My Photo Free</a>'
+          +'<a href="/auth" class="btn btn-primary btn-sm">Render My Photo Free</a>'
           +'<em class="mono">5 Free Designs A Day &middot; No Credit Card</em></div>';
         if(window.lucide) window.lucide.createIcons();
       }else{
@@ -368,7 +368,7 @@ modal.innerHTML=`
       <div class="usamp on" data-s="0"></div><div class="usamp" data-s="1"></div>
       <div class="usamp" data-s="2"></div><div class="usamp" data-s="3"></div>
     </div>
-    <button class="btn btn-primary btn-lg btn-block" id="uGo"><i data-lucide="sparkles"></i>Continue To The Builder</button>
+    <button class="btn btn-primary btn-lg btn-block" id="uGo">Continue To The Builder</button>
     <p class="no-card">5 Free Designs A Day &middot; <b>No Credit Card</b></p>
   </div>`;
 rootEl.appendChild(modal);
