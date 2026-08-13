@@ -100,10 +100,10 @@ function ExplorePage() {
             love, then customize the materials, colors and budget around your actual space.
           </p>
           <div className="dir-cta">
-            <a href="/#builder" className="btn btn-primary">
+            <UploadSpaceLink className="btn btn-primary">
               <ImagePlus size={16} strokeWidth={1.9} aria-hidden="true" />
               Upload Your Space
-            </a>
+            </UploadSpaceLink>
           </div>
         </section>
 
