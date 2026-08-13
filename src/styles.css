@@ -212,3 +212,10 @@
 }
 
 
+/* Native dropdown popups + form controls always render light/white */
+:root, html, body { color-scheme: light; }
+select, option, optgroup, input, textarea {
+  color-scheme: light;
+  background-color: #fff;
+  color: #14110F;
+}
