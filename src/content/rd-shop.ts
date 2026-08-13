@@ -652,6 +652,18 @@ function mount(ctx) {
   host.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeShop();
   });
+  /* Escape works wherever focus sits, and leaving the workspace by any
+     other route must never leave the page scroll locked behind the overlay. */
+  if (!window.__rdShopGlobals) {
+    window.__rdShopGlobals = true;
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && host && host.classList.contains("on")) closeShop();
+    });
+    window.addEventListener("hashchange", () => {
+      if (host && host.classList.contains("on")) closeShop();
+    });
+  }
+
 
   detect();
 }
