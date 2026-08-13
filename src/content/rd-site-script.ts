@@ -425,6 +425,10 @@ modal.querySelector('#uGo').addEventListener('click',()=>{
   if(b)b.scrollIntoView({block:'center',behavior:'smooth'});
 });
 
+window.openUpload=openUpload;
+if(location.hash==='#upload'){history.replaceState(null,'',location.pathname);openUpload();}
+window.addEventListener('hashchange',()=>{if(location.hash==='#upload'){history.replaceState(null,'',location.pathname);openUpload();}});
+
 /* header CTA opens the modal */
 const navUp=document.getElementById('navUpload');
 if(navUp) navUp.addEventListener('click',(e)=>{e.preventDefault();openUpload()});

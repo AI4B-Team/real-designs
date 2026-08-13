@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Search, X, ImagePlus, Shuffle } from "lucide-react";
 import { useMemo, useState } from "react";
 
-import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
+import { SiteFooter, SiteHeader, UploadSpaceLink } from "@/components/seo/SiteChrome";
 import { DIRECTIONS, TRAIT_OPTIONS, type Direction } from "@/content/directions";
 import { absoluteUrl } from "@/lib/site";
 import "@/styles/rd-site.css";
@@ -100,10 +100,10 @@ function ExplorePage() {
             love, then customize the materials, colors and budget around your actual space.
           </p>
           <div className="dir-cta">
-            <a href="/#builder" className="btn btn-primary">
+            <UploadSpaceLink className="btn btn-primary">
               <ImagePlus size={16} strokeWidth={1.9} aria-hidden="true" />
               Upload Your Space
-            </a>
+            </UploadSpaceLink>
           </div>
         </section>
 

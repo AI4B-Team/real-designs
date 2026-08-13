@@ -36,17 +36,41 @@ export function BrandMark() {
   );
 }
 
+// Most pages that render this CTA have no #builder section, so a plain hash
+// link is a dead button there. Open the upload modal when it exists on the
+// page, scroll to the builder when that exists, otherwise go to the home
+// page builder.
+export function handleUploadClick(e: React.MouseEvent<HTMLAnchorElement>) {
+  const w = window as unknown as { openUpload?: () => void };
+  if (typeof w.openUpload === "function") {
+    e.preventDefault();
+    w.openUpload();
+    return;
+  }
+  const target = document.getElementById("builder");
+  if (!target) return;
+  e.preventDefault();
+  target.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+export function UploadSpaceLink({
+  className = "btn btn-primary",
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a href="/#upload" className={className} onClick={handleUploadClick}>
+      {children}
+    </a>
+  );
+}
+
 export function SiteHeader() {
   const signedIn = useSignedIn();
-  // Most pages that render this header have no #builder section, so a plain
-  // hash link is a dead button there. Scroll when it exists, otherwise send
-  // the visitor to the builder on the home page.
-  function onUpload(e: React.MouseEvent<HTMLAnchorElement>) {
-    const target = document.getElementById("builder");
-    if (!target) return;
-    e.preventDefault();
-    target.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  const onUpload = handleUploadClick;
+
   return (
     <header id="hdr">
       <div className="wrap nav">
@@ -67,7 +91,7 @@ export function SiteHeader() {
               Log In
             </Link>
           )}
-          <a href="/#builder" className="btn btn-primary btn-sm" onClick={onUpload}>
+          <a href="/#upload" className="btn btn-primary btn-sm" onClick={onUpload}>
             Upload Your Space
           </a>
         </div>
