@@ -163,3 +163,9 @@
   .rd-app .rv-search { min-width: 0; width: 100%; }
   .rd-app .rv-foot { position: sticky; bottom: 0; background: #fff; }
 }
+
+/* contextual create-video affordance in the property tree */
+.rd-app .tr .tr-vid { border: 0; background: none; padding: 2px 4px; margin-left: 6px; color: #8a8a8a; cursor: pointer; opacity: 0; }
+.rd-app .tr:hover .tr-vid, .rd-app .tr.on .tr-vid { opacity: 1; }
+.rd-app .tr .tr-vid:hover { color: #cc0000; }
+.rd-app .tr .tr-vid svg { width: 14px; height: 14px; }
