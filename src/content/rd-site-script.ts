@@ -213,10 +213,18 @@ const budgets=[
   {lo:41000,hi:62000,fit:'Above Band, Review'}
 ];
 let sp='interior',bi=1,st='Warm Minimal';
+let PREFILL=(new URLSearchParams(location.search)).get('direction');
 function drawStyles(){
   document.getElementById('styleChips').innerHTML=styleSets[sp].map((s,i)=>
     `<button class="chip ${i===0?'on':''}" data-st="${s}">${s}</button>`).join('');
   st=styleSets[sp][0];
+  if(PREFILL){
+    var wanted=PREFILL;PREFILL=null;
+    var list=document.getElementById('styleChips');
+    var hit=styleSets[sp].filter(function(x){return x.toLowerCase()===wanted.toLowerCase()})[0];
+    if(!hit){var safe=wanted.replace(/[^A-Za-z0-9 &-]/g,'').slice(0,40);if(safe){list.insertAdjacentHTML('afterbegin','<button class="chip" data-st="'+safe+'">'+safe+'</button>');hit=safe;}}
+    if(hit){list.querySelectorAll('.chip').forEach(function(c){c.classList.toggle('on',(c.dataset.st||'').toLowerCase()===hit.toLowerCase())});st=hit;}
+  }
   document.querySelectorAll('#styleChips .chip').forEach(c=>c.addEventListener('click',()=>{
     document.querySelectorAll('#styleChips .chip').forEach(x=>x.classList.remove('on'));
     c.classList.add('on');st=c.dataset.st;
