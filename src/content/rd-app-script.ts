@@ -104,6 +104,8 @@ window.addEventListener('hashchange',()=>{ const v=viewFromHash(); if(v) go(v,tr
 
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+document.querySelectorAll('[data-propupload]').forEach(b=>b.addEventListener('click',()=>{ try{ openPropertyUpload(); }catch(_){} }));
+try{ mountUploadDock(go); }catch(_){}
 /* the app shell mounts after this module runs, and can remount once,
    so keep re-asserting the deep linked view for a short window */
 (function applyHash(){
