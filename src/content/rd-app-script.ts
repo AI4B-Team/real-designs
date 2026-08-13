@@ -3300,7 +3300,7 @@ const PLAN_LIST=[['free','Free','5 designs a day, nothing else'],
                  ['pro','Pro','2,000 credits a month'],
                  ['studio','Studio','4,000 credits a month']];
 const PLAN_RANK={free:0,starter:1,pro:2,studio:3};
-const STATE_PILL={active:['Active','p-ok'],canceled:['Canceled','p-ink'],past_due:['Renewal Due','p-warn']};
+const STATE_PILL={active:['Active','p-ok'],canceled:['Canceled','p-ink'],past_due:['Renewal Due','p-amb']};
 let SUB=null;
 
 function fmtDate(d){ return d?new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'}):''; }
