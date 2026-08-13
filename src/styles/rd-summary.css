@@ -41,12 +41,14 @@
   border-top: 0;
 }
 
-.rsp-col {
+.rsp .rsp-col,
+.rd-app .rsp .rsp-col,
+.rd-site .rsp .rsp-col {
   min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: 14px 20px 14px 28px;
+  padding: 16px 22px 16px 30px;
   box-sizing: border-box;
   border-left: 1px solid var(--rsp-divider);
 }
@@ -186,8 +188,10 @@
 }
 
 @media (max-width: 420px) {
-  .rsp-col {
-    padding: 12px 14px 12px 20px;
+  .rsp .rsp-col,
+  .rd-app .rsp .rsp-col,
+  .rd-site .rsp .rsp-col {
+    padding: 14px 16px 14px 22px;
   }
 
   .rsp-primary {
