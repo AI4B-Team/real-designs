@@ -171,7 +171,7 @@ const SHELL = `
     <div class="ex-head-t">
       <span class="ex-eyebrow">Design Discovery</span>
       <h2>Explore What Your Space Could Become.</h2>
-      <p>Browse curated design directions for interiors, exteriors and landscapes. Save what you like, preview it in your space or use it to start a new design.</p>
+      <p>Browse curated design directions for interiors, exteriors and landscapes.<br>Save what you like, preview it in your space or use it to start a new design.</p>
     </div>
     <div class="ex-head-a">
       <button class="btn btn-primary btn-sm" id="exUpload"><i data-lucide="image-up"></i>Upload Your Space</button>
