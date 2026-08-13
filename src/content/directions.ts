@@ -46,7 +46,7 @@ const BASE: Direction[] = [
     palette: ["#EDE9E3", "#B9A88F", "#5A5147", "#141210"],
     spaces: ["Interior"], materials: ["Book matched marble", "Walnut", "Bronze", "Wool"],
     finishes: ["Slab backsplash", "Integrated appliance panels", "Concealed lighting"],
-    rooms: ["Primary Bath", "Kitchen", "Living Room"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade"],
+    rooms: ["Primary Bath", "Kitchen", "Living Room"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade", "Premium"],
   },
   {
     id: "japandi", name: "Japandi", img: P.japandi,
@@ -100,7 +100,7 @@ const BASE: Direction[] = [
     palette: ["#FFFFFF", "#D5D7D8", "#6A6E70", "#101112"],
     spaces: ["Interior"], materials: ["Large format porcelain", "Lacquer", "Glass", "Matte aluminium"],
     finishes: ["Handleless cabinets", "Linear lighting", "Full height tile"],
-    rooms: ["Kitchen", "Primary Bath", "Home Office"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade"],
+    rooms: ["Kitchen", "Primary Bath", "Home Office"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade", "Premium"],
   },
   {
     id: "mediterranean", name: "Mediterranean", img: P.resortYard,
@@ -109,7 +109,7 @@ const BASE: Direction[] = [
     palette: ["#F5EDE0", "#D6A97B", "#94743F", "#3B2E22"],
     spaces: ["Exterior", "Landscape"], materials: ["Stucco", "Terracotta", "Limestone", "Olive planting"],
     finishes: ["Arched openings", "Clay tile", "Gravel courtyard"],
-    rooms: ["Backyard", "Front Elevation"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade"],
+    rooms: ["Backyard", "Front Elevation"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade", "Premium"],
   },
   {
     id: "scandinavian", name: "Scandinavian", img: P.stageStaged,
@@ -145,7 +145,7 @@ const BASE: Direction[] = [
     palette: ["#F2EFE7", "#C6B79A", "#4C6551", "#23231F"],
     spaces: ["Landscape"], materials: ["Porcelain paving", "Hardwood decking", "Palm planting", "Low voltage lighting"],
     finishes: ["Shade structure", "Built-in seating", "Planted borders"],
-    rooms: ["Backyard"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade"],
+    rooms: ["Backyard"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade", "Premium"],
   },
   {
     id: "low-maintenance-yard", name: "Low Maintenance Yard", img: P.yardAfter,

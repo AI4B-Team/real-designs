@@ -75,7 +75,7 @@ function go(v,fromHash){
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
   try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
-  if(v==='explore'){ try{ mountExplore(go); }catch(_){} }
+  if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
   if(v==='studio'){ try{ paintStudioSub(); }catch(_){} }
   if(v==='reports'){ try{ paintReports(); }catch(_){} }
   if(!titles[v]) return;
