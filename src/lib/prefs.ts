@@ -4,6 +4,7 @@ export type WorkspacePrefs = {
   notifs: Record<string, boolean>;
   brand: { company: string; color: string; watermark: string };
   defaults: { market: string; grade: string; band: string; disclosure: string };
+  start: { page: "smart" | "dashboard" | "studio" | "last" };
 };
 
 export const DEFAULT_PREFS: WorkspacePrefs = {
@@ -15,6 +16,7 @@ export const DEFAULT_PREFS: WorkspacePrefs = {
     band: "Makeover, Under $15K",
     disclosure: "Florida, Stellar MLS",
   },
+  start: { page: "smart" },
 };
 
 const LS = "rd.prefs";
@@ -28,6 +30,7 @@ function readLocal(): WorkspacePrefs {
       notifs: { ...DEFAULT_PREFS.notifs, ...(parsed?.notifs || {}) },
       brand: { ...DEFAULT_PREFS.brand, ...(parsed?.brand || {}) },
       defaults: { ...DEFAULT_PREFS.defaults, ...(parsed?.defaults || {}) },
+      start: { ...DEFAULT_PREFS.start, ...(parsed?.start || {}) },
     };
   } catch {
     return DEFAULT_PREFS;
@@ -47,6 +50,7 @@ export async function getPrefs(): Promise<WorkspacePrefs> {
       notifs: { ...local.notifs, ...(saved.notifs || {}) },
       brand: { ...local.brand, ...(saved.brand || {}) },
       defaults: { ...local.defaults, ...(saved.defaults || {}) },
+      start: { ...local.start, ...(saved.start || {}) },
     };
     try {
       localStorage.setItem(LS, JSON.stringify(merged));
@@ -66,6 +70,7 @@ export async function savePrefs(patch: Partial<WorkspacePrefs>): Promise<Workspa
     notifs: { ...current.notifs, ...(patch.notifs || {}) },
     brand: { ...current.brand, ...(patch.brand || {}) },
     defaults: { ...current.defaults, ...(patch.defaults || {}) },
+    start: { ...current.start, ...(patch.start || {}) },
   };
   try {
     localStorage.setItem(LS, JSON.stringify(next));
