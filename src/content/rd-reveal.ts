@@ -1000,6 +1000,14 @@ function bind() {
   on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
   on("[data-motion]", "click", (e) => { w.motion = e.currentTarget.dataset.motion; render(); });
   on("[data-scene-motion]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.sceneMotion)].motion = e.currentTarget.value; });
+  on("[data-level]", "click", (e) => {
+    const s = w.scenes[Number(e.currentTarget.dataset.i)];
+    s.motion_level = e.currentTarget.dataset.level;
+    if (s.motion_level === "immersive" && !s.immersive_effect) s.immersive_effect = "light";
+    render();
+  });
+  on("[data-immersive]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.immersive)].immersive_effect = e.currentTarget.value; });
+  on("[data-ext]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.ext)].exterior_effect = e.currentTarget.value || null; render(); });
   on("[data-tr]", "click", (e) => { w.transition = e.currentTarget.dataset.tr; render(); });
   on("[data-ba]", "click", (e) => { w.baTransition = e.currentTarget.dataset.ba; render(); });
 
