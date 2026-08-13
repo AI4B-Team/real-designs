@@ -560,12 +560,13 @@ function paintTree(){
   }
   const rows=[];
   PROP_TREE.forEach((p,pi)=>{
-    rows.push(`<div class="tr l1 ${pi===SEL.p?'on':''}" data-pi="${pi}" data-pri="0"><i data-lucide="map-pin"></i>${p.address}<span class="meta">${p.has_dna?'DNA Locked':'No DNA'}</span></div>`);
+    rows.push(`<div class="tr l1 ${pi===SEL.p?'on':''}" data-pi="${pi}" data-pri="0"><i data-lucide="map-pin"></i><span class="tr-label" title="${p.address}">${p.address}</span><span class="meta">${p.has_dna?'DNA Locked':'No DNA'}</span></div>`);
     p.projects.forEach((pr,pri)=>{
-      rows.push(`<div class="tr l2 ${pi===SEL.p&&pri===SEL.pr?'on':''}" data-pi="${pi}" data-pri="${pri}"><i data-lucide="folder"></i>${pr.name}<span class="meta">${pr.rooms.length} ${pr.rooms.length===1?'room':'rooms'}</span></div>`);
+      rows.push(`<div class="tr l2 ${pi===SEL.p&&pri===SEL.pr?'on':''}" data-pi="${pi}" data-pri="${pri}"><i data-lucide="folder"></i><span class="tr-label" title="${pr.name}">${pr.name}</span><span class="meta">${pr.rooms.length} ${pr.rooms.length===1?'room':'rooms'}</span></div>`);
       pr.rooms.forEach(r=>{
-        rows.push(`<div class="tr l3" data-pi="${pi}" data-pri="${pri}"><i data-lucide="${RT_ICON(r.room_type)}"></i>${r.name}<span class="meta">v${r.version_no||1}</span></div>`);
+        rows.push(`<div class="tr l3" data-pi="${pi}" data-pri="${pri}"><i data-lucide="${RT_ICON(r.room_type)}"></i><span class="tr-label" title="${r.name}">${r.name}</span><span class="meta">v${r.version_no||1}</span></div>`);
       });
+
     });
   });
   el.innerHTML=rows.join('');
