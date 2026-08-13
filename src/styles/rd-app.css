@@ -401,7 +401,8 @@
 
 .rd-app .tree .l3{padding-left:46px;color:var(--ink-2)}
 
-.rd-app .tree .meta{margin-left:auto;font-family:'Inter',system-ui,sans-serif;font-size:.66rem;color:var(--mute-2)}
+.rd-app .tree .tr-label{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rd-app .tree .meta{margin-left:auto;flex:none;white-space:nowrap;font-family:'Inter',system-ui,sans-serif;font-size:.66rem;color:var(--mute-2)}
 
 
 /* table */
