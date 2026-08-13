@@ -128,3 +128,28 @@
 @media(prefers-reduced-motion:reduce){
   .rd-app .xp-card,.rd-app .xp-img img,.rd-app .xp-dpanel,.rd-app .xp-scrim{transition:none!important}
 }
+
+/* quick-pick quiz — full width so the question and step counter share one line */
+.rd-app .xp-quiz{display:flex;flex-direction:column;gap:10px}
+.rd-app .xp-quiz-top h3{font-size:1.05rem}
+.rd-app .xp-quiz-top p{font-size:.8rem;color:var(--mute);margin-top:2px}
+.rd-app .xp-quiz-card{width:100%;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.rd-app .xp-quiz-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:nowrap}
+.rd-app .xp-quiz-head b{font-size:1rem;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.rd-app .xp-quiz-step{flex:0 0 auto;white-space:nowrap;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute-2);font-family:"DM Mono",ui-monospace,monospace}
+.rd-app .xp-quiz-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.rd-app .xp-quiz-opt{display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--white);transition:.15s}
+.rd-app .xp-quiz-opt:hover{border-color:var(--red);box-shadow:var(--sh)}
+.rd-app .xp-quiz-opt img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
+.rd-app .xp-quiz-opt span{padding:10px 12px;font-size:.86rem;font-weight:700;color:var(--ink)}
+.rd-app .xp-quiz-res{display:flex;gap:12px;align-items:center}
+.rd-app .xp-quiz-res img{width:132px;height:88px;object-fit:cover;border-radius:8px;flex:none}
+.rd-app .xp-quiz-res p{font-size:.82rem;color:var(--mute);line-height:1.5}
+.rd-app .xp-quiz-foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+@media(max-width:640px){
+  .rd-app .xp-quiz-head{flex-wrap:wrap}
+  .rd-app .xp-quiz-head b{white-space:normal}
+  .rd-app .xp-quiz-opts{grid-template-columns:1fr}
+  .rd-app .xp-quiz-res{flex-direction:column;align-items:flex-start}
+  .rd-app .xp-quiz-res img{width:100%;height:auto}
+}
