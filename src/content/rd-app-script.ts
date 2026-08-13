@@ -3845,7 +3845,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
 
 
 /* ---------- first use experience and adaptive post-login routing ---------- */
-(async function firstUse(){ console.warn("firstuse:start");
+(async function firstUse(){ 
   let fuUid='anon';
   try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) fuUid=data.user.id; }catch(_){}
   try{
@@ -3856,7 +3856,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
       prefsStart:async()=>{ try{ const p=await getPrefs(); return (p&&p.start&&p.start.page)||'smart'; }catch(_){ return 'smart'; } },
       saveStart:async(page)=>{ PREFS=await savePrefs({start:{page}}); }
     });
-  }catch(e){ console.error("firstuse",e); }
+  }catch(e){ /* onboarding is additive, never block the app */ }
 })();
 
   } catch (e) { console.error(e); }
