@@ -457,3 +457,35 @@ export const listRoomVersions = createServerFn({ method: "POST" })
       };
     });
   });
+
+/** Bulk status change across saved versions (approve, review, archive, reset). */
+export const setVersionStatusBulk = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        version_ids: z.array(z.string().uuid()).min(1).max(200),
+        status: z.enum(["draft", "review", "approved", "archived"]),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("versions")
+      .update({ status: data.status })
+      .in("id", data.version_ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: data.version_ids.length, status: data.status };
+  });
+
+/** Permanently delete saved versions the caller owns. RLS scopes the delete. */
+export const deleteVersions = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ version_ids: z.array(z.string().uuid()).min(1).max(200) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("versions").delete().in("id", data.version_ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: data.version_ids.length };
+  });
