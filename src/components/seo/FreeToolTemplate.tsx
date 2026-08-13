@@ -46,11 +46,6 @@ export function FreeToolTemplate({
             {intro.map((p, i) => (
               <p key={i}>{p}</p>
             ))}
-            <div className="badge-row" style={{ marginTop: 18 }}>
-              <span className="pb ok">No Account</span>
-              <span className="pb">No Credit Card</span>
-              <span className="pb">Planning Range, Not A Bid</span>
-            </div>
           </div>
           <div>{tool}</div>
         </div>
