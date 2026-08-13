@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { setStartIntent } from "@/lib/onboarding";
 import { useEffect, useState } from "react";
 
 import { GlobalFooter } from "@/components/seo/GlobalFooter";
@@ -41,6 +42,8 @@ export function BrandMark() {
 // page, scroll to the builder when that exists, otherwise go to the home
 // page builder.
 export function handleUploadClick(e: React.MouseEvent<HTMLAnchorElement>) {
+  // Remember the workflow so signing up or logging in lands straight back on it.
+  setStartIntent({ workflow: "redesign", source: "upload_cta" });
   const w = window as unknown as { openUpload?: () => void };
   if (typeof w.openUpload === "function") {
     e.preventDefault();

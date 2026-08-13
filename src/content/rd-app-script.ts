@@ -19,6 +19,7 @@ import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
 import { track } from "@/lib/analytics";
+import { mountFirstUse } from "@/content/rd-firstuse";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
@@ -3842,7 +3843,24 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   });
 })();
 
+
+/* ---------- first use experience and adaptive post-login routing ---------- */
+(async function firstUse(){ 
+  let fuUid='anon';
+  try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) fuUid=data.user.id; }catch(_){}
+  try{
+    mountFirstUse({
+      go, lucide, esc, photos:PHOTOS, uid:fuUid, track,
+      getSummary:()=>getWorkspaceSummary(),
+      uploadPhoto:(f)=>uploadRoomPhoto(f),
+      prefsStart:async()=>{ try{ const p=await getPrefs(); return (p&&p.start&&p.start.page)||'smart'; }catch(_){ return 'smart'; } },
+      saveStart:async(page)=>{ PREFS=await savePrefs({start:{page}}); }
+    });
+  }catch(e){ /* onboarding is additive, never block the app */ }
+})();
+
   } catch (e) { console.error(e); }
 
   return () => { timers.forEach((t) => { window.clearInterval(t); window.clearTimeout(t); }); };
 }
+
