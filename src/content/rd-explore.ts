@@ -160,7 +160,6 @@ function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<
 let saved = read(LS.saved, []);
 let boards = read(LS.boards, []);
 let seen = read(LS.seen, []);
-let compare = [];
 
 function dir(id) { return DIRECTIONS.find((d) => d.id === id); }
 function dirByName(n) { return DIRECTIONS.find((d) => d.name === n); }
@@ -214,7 +213,6 @@ const SHELL = `
   <div class="ex-sticky"><button class="btn btn-primary btn-block" id="exUpload2"><i data-lucide="image-up"></i>Upload Your Space</button></div>
 </div>
 <div class="ex-drawer" id="exDrawer" hidden><div class="ex-scrim" id="exScrim"></div><aside class="ex-panel" id="exPanel" role="dialog" aria-modal="true"></aside></div>
-<div class="ex-cmp" id="exCmpBar" hidden></div>
 `;
 
 function exToast(msg) {
