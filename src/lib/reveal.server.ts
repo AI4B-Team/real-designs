@@ -107,7 +107,7 @@ export async function loadPresentation(key: string, password: string | null) {
 
   // Budget only exists when the video is tied to a saved design version.
   let budget: { low: number; high: number; lines: Array<{ description: string; trade: string; low: number; high: number }> } | null = null;
-  if (sections.budget && p.design_version_id) {
+  if (sections["budget"] && p.design_version_id) {
     const { data: scope } = await supabaseAdmin
       .from("scopes")
       .select("id, total_low, total_high")
@@ -145,14 +145,14 @@ export async function loadPresentation(key: string, password: string | null) {
     presentation_type: (l.presentation_type ?? "listing") as string,
     title: (l.page_title as string) || (p.title as string),
     headline: (l.headline ?? null) as string | null,
-    address: sections.address ? ((p.property_label ?? null) as string | null) : null,
+    address: sections["address"] ? ((p.property_label ?? null) as string | null) : null,
     mobile_layout: (l.mobile_layout ?? "stacked") as string,
     allow_download: !!l.allow_download,
     comments_enabled: !!l.comments_enabled,
     approval_enabled: !!l.approval_enabled,
     show_project_details: !!l.show_project_details,
     sections,
-    video_url: sections.video ? await signVideo(pick?.output_path ?? null) : null,
+    video_url: sections["video"] ? await signVideo(pick?.output_path ?? null) : null,
     aspect: (pick?.aspect_ratio ?? "16:9") as string,
     scenes: sceneOut,
     budget,
