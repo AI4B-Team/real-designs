@@ -327,6 +327,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           ? '<img src="' + state.filePreview + '" alt="Selected source preview">'
           : '<div class="stw-file-ico"><i data-lucide="file-text"></i></div>') +
         '<div class="stw-file-m"><b>' + esc(state.fileName) + "</b>" +
+        (state.method === "upload" ? detectionHtml() : "") +
         '<span id="stsFileMeta">Nothing generates and no credits are used until you continue.</span>' +
         '<div class="stw-file-a">' +
         '<button class="stw-link" data-sts="browse"><i data-lucide="repeat"></i>Replace</button>' +
@@ -335,6 +336,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         "</div></div></div>"
       );
     }
+
     return (
       '<div class="stw-drop" id="stsDrop">' +
       '<i data-lucide="' + icon + '"></i>' +
