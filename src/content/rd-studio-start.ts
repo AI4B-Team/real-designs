@@ -283,6 +283,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     state.file = null;
     state.fileName = "";
     state.filePreview = "";
+    state.detected = null;
+    state.detecting = false;
+    state.pickType = false;
   }
 
   /* ---------- small builders ---------- */
@@ -966,7 +969,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       state.newAddress = "";
       state.newNickname = "";
       state.newProject = "";
-      openSetup("space");
+      openSetup("upload");
       return;
     }
     if (state.file) loadSource();
@@ -990,7 +993,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       state.attached = "";
       state.property = "";
       clearFile();
-      state.method = "space";
+      state.method = "upload";
     }
     wasEmpty = true;
     render();
@@ -1000,10 +1003,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (method === "sample") {
       state.samples = true;
       render();
-    } else if (method === "describe" || method === "sketch" || method === "property" || method === "space") {
+    } else if (method === "describe" || method === "property") {
       openSetup(method as Method);
-    } else if (method === "upload") {
-      openSetup("space");
+    } else if (method === "upload" || method === "sketch" || method === "space") {
+      openSetup("upload");
       browse();
     } else {
       render();
