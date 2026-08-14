@@ -28,6 +28,45 @@ import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
+import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
+
+/** Canonical style id currently selected in Studio. */
+function currentStyleId(){
+  const sel=document.getElementById('fStyle') as any;
+  const opt=sel&&sel.selectedOptions&&sel.selectedOptions[0];
+  const fromData=opt&&opt.dataset?opt.dataset.styleId:'';
+  return fromData||resolveStyle(sel?sel.value:'').id;
+}
+/** Project type implied by the Studio space chips. */
+function currentProjectType(){
+  const c=document.querySelector('#spChips .chip.on') as any;
+  const v=c?String(c.dataset.sp||'').toLowerCase():'interior';
+  if(v==='exterior') return 'exterior';
+  if(v==='landscape'||v==='garden') return 'garden';
+  if(v==='staging'||v==='virtual-staging') return 'virtual-staging';
+  return 'interior';
+}
+/** Fill the Studio Style select from the canonical catalog, grouped by family. */
+function populateStyleSelect(){
+  const sel=document.getElementById('fStyle') as any;
+  if(!sel||sel.dataset.catalog==='1') return;
+  const keep=sel.value;
+  const type=currentProjectType();
+  const html=STYLE_CATEGORIES.map((cat)=>{
+    const items=STYLES.filter((x)=>x.isActive&&x.category===cat&&x.compatibleProjectTypes.indexOf(type)>-1);
+    if(!items.length) return '';
+    return '<optgroup label="'+cat+'">'+items.map((x)=>'<option value="'+x.displayName+'" data-style-id="'+x.id+'">'+x.displayName+'</option>').join('')+'</optgroup>';
+  }).join('');
+  sel.innerHTML='<option value="Auto — Let REAL DESIGNS Decide" data-style-id="auto">Auto — Let REAL DESIGNS Decide</option>'+html;
+  sel.dataset.catalog='1';
+  const match=Array.from(sel.options).find((o:any)=>o.value===keep||o.text===keep);
+  sel.value=match?(match as any).value:'Warm Minimal';
+}
+try{
+  window.addEventListener('rd:style-selected',()=>{ try{ populateStyleSelect(); }catch(_){} });
+  document.addEventListener('DOMContentLoaded',()=>{ try{ populateStyleSelect(); }catch(_){} });
+  setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
+}catch(_){}
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
 import { mountReveal, createVideoFrom } from "@/content/rd-reveal";
 import { mountListingVideo, openListingVideo } from "@/content/rd-listing-video";
@@ -868,6 +907,8 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
       image,
       room_type:currentRoomType(),
       direction:(document.getElementById('fStyle')||{}).value||'Warm Minimal',
+      style_id:currentStyleId(),
+      project_type:currentProjectType(),
       intensity:band?band.querySelector('b').textContent:'Makeover',
       grade:grade?grade.textContent:'Retail Grade',
       notes:(document.getElementById('agentNote')||{}).value||null,
@@ -1561,6 +1602,8 @@ async function runBatch(){
         image,
         room_type:room.room_type||'living room',
         direction,
+        style_id:resolveStyle(direction).id,
+        project_type:'interior',
         intensity:'Makeover',
         grade:'Retail Grade',
         notes:null, keep:[], replace:[], remove:[]
