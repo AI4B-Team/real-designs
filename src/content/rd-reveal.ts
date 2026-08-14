@@ -965,11 +965,12 @@ function bind() {
       return;
     }
     if (act === "share") {
-      const { token } = await saveShareLink({ video_project_id: id });
-      try { await navigator.clipboard.writeText(location.origin + "/p/" + token); } catch (_) {}
+      const { token, slug } = await saveShareLink({ video_project_id: id });
+      try { await navigator.clipboard.writeText(location.origin + "/v/" + (slug || token)); } catch (_) {}
       await loadLibrary();
-      render();
-      return toast("Share Link Copied.");
+      S.detailTab = "presentation";
+      await openDetail(id);
+      return toast("Presentation Link Copied.");
     }
   });
   on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) => openDetail(e.currentTarget.closest(".rv-card").dataset.id));
