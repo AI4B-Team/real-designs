@@ -265,7 +265,8 @@ function autoArrange() {
 async function loadProperties() {
   try {
     S.properties = await listMediaProperties();
-  } catch (_) {
+  } catch (e) {
+    console.error("[lv] listMediaProperties", e);
     S.properties = [];
   }
 }
@@ -716,7 +717,8 @@ async function beginUpload(files) {
       const row = await createMediaProperty({ data: { address: label } });
       S.propertyId = row.id;
       S.propertyLabel = row.address;
-    } catch (_) {
+    } catch (e) {
+      console.error("[lv] createMediaProperty", e);
       S.standalone = true;
       S.propertyLabel = "Standalone Project";
     }
