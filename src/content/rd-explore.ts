@@ -120,11 +120,8 @@ export function mountExplore(go, ctx) {
     return hit ? hit.name : null;
   }
 
-  /* ---------- filter chips ---------- */
+  /* ---------- primary categories ---------- */
   $("xpCats").innerHTML = SPACES.map((s) => `<button class="xp-cat${s === cat ? " on" : ""}" data-c="${s}">${spaceLabel(s)}</button>`).join("");
-  $("xpRooms").innerHTML = ROOMS.map(([label]) => `<button class="xp-chip" data-room="${label}">${label}</button>`).join("");
-  $("xpTraits").innerHTML = TRAITS.map((t) => `<button class="xp-chip" data-trait="${t}">${t}</button>`).join("");
-  $("xpGrades").innerHTML = GRADES.map((g) => `<button class="xp-chip" data-grade="${g}">${g}</button>`).join("");
 
   function matchesSpace(d) {
     if (cat === "All") return true;
@@ -133,18 +130,29 @@ export function mountExplore(go, ctx) {
     return d.spaces.indexOf(cat) > -1;
   }
   function matchesRoom(d) {
-    if (!room) return true;
-    const syn = (ROOMS.find((r) => r[0] === room) || [null, []])[1];
-    return d.rooms.some((r) => syn.indexOf(r) > -1);
+    if (!rooms.length) return true;
+    return rooms.some((label) => {
+      const syn = (ROOMS.find((r) => r[0] === label) || [null, []])[1];
+      return d.rooms.some((r) => syn.indexOf(r) > -1);
+    });
   }
   function matches(d, q) {
     if (!matchesSpace(d) || !matchesRoom(d)) return false;
     if (traits.length && !traits.every((t) => (d.traits || []).indexOf(t) > -1)) return false;
-    if (grade && d.grades.indexOf(grade) === -1) return false;
+    if (grades.length && !grades.some((g) => d.grades.indexOf(g) > -1)) return false;
     if (!q) return true;
     return [d.name, d.line, d.about, (d.traits || []).join(" "), d.materials.join(" "), d.rooms.join(" ")]
       .join(" ").toLowerCase().indexOf(q) > -1;
   }
+  /** Count of matches for the current selections, used by the drawer button. */
+  function resultCount() {
+    const q = ($("xpQ").value || "").trim().toLowerCase();
+    return DIRECTIONS.filter((d) => matches(d, q)).length;
+  }
+  function activeFilters() {
+    return rooms.map((v) => ["room", v]).concat(traits.map((v) => ["trait", v]), grades.map((v) => ["grade", v]));
+  }
+
 
   /* ---------- cards ---------- */
   function card(d) {
