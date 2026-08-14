@@ -197,6 +197,8 @@ function mount(ctx) {
   let compare = [];
   let savedLater = [];
   let dotsOn = true;
+  const matchCache = {};
+  let catCat = "all";
 
   $("shopTitle").textContent = design.designLabel;
   $("shopCtx").innerHTML =
@@ -270,23 +272,36 @@ function mount(ctx) {
   }
 
   /* ---------------- search ---------------- */
-  async function selectObject(o) {
+  /** One shared match store keyed by design + detected object id. */
+  async function matchesFor(o) {
+    const key = design.designId + "::" + o.id;
+    if (matchCache[key]) return matchCache[key];
+    const list = await visualSearchProvider().search({
+      imageUrl: design.image,
+      crop: o.box,
+      category: o.category,
+      traits: { colors: design.colors, materials: design.materials },
+    });
+    list.forEach((p) => (p.__objId = o.id));
+    matchCache[key] = list;
+    return list;
+  }
+
+  async function selectObject(o, opts) {
     active = o;
+    catCat = o.id;
     paintDots();
-    $("shopObjName").textContent = o.label;
+    $("shopObjName").textContent = o.label + " Matches";
     $("shopObjSub").textContent = o.origin === "manual" ? "Custom object you outlined on the design." : "Detected in the design image.";
     $("shopLock").hidden = false;
     $("shopResults").innerHTML = skeleton();
+    openSheet();
+    paintCatTabs();
     track("shop_object_selected", { category: o.category });
     try {
-      results = await visualSearchProvider().search({
-        imageUrl: design.image,
-        crop: o.box,
-        category: o.category,
-        traits: { colors: design.colors, materials: design.materials },
-        query: query || undefined,
-      });
+      results = await matchesFor(o);
       paintResults();
+      paintCatalog(opts && opts.scroll);
     } catch (e) {
       $("shopResults").innerHTML = errorBlock("Product search is unavailable right now.");
       wireRetry();
