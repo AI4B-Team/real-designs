@@ -82,8 +82,8 @@ export const startListingImport = createServerFn({ method: "POST" })
       .update({
         status: "ready",
         stage: "ready",
-        listing: result.listing,
-        photos: result.photos,
+        listing: result.listing as any,
+        photos: result.photos as any,
         photo_count: result.photos.length,
         error_code: null,
         error_message: null,
@@ -132,9 +132,9 @@ export const linkListingImport = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
-    if (data.property_id !== undefined) patch.property_id = data.property_id;
-    if (data.video_project_id !== undefined) patch.video_project_id = data.video_project_id;
+    const patch: { property_id?: string | null; video_project_id?: string | null } = {};
+    if (data.property_id !== undefined) patch.property_id = data.property_id ?? null;
+    if (data.video_project_id !== undefined) patch.video_project_id = data.video_project_id ?? null;
     const { data: row, error } = await context.supabase
       .from("listing_imports")
       .update(patch)
