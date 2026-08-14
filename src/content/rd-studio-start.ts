@@ -518,6 +518,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
     if (!act) return;
     const k = act.dataset["sts"];
+    if (k === "lvideo") {
+      goListingVideo();
+      return;
+    }
     if (k === "c-space" || k === "c-sketch") {
       openSetup(k === "c-sketch" ? "sketch" : "space");
       browse();
