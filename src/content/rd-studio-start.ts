@@ -11,8 +11,15 @@
  */
 
 import { renderConcept } from "@/lib/concept-render.functions";
+import {
+  detectSource,
+  SOURCE_LABELS,
+  WORKFLOW_BY_TYPE,
+  type SourceDetection,
+  type SourceType,
+} from "@/lib/source-detect.functions";
 
-type Method = "space" | "sketch" | "describe" | "property";
+type Method = "upload" | "describe" | "property";
 
 export type StudioStartCtx = {
   lucide: { createIcons: (o?: any) => void };
@@ -75,11 +82,16 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   const state = {
-    method: "space" as Method,
+    method: "upload" as Method,
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
     filePreview: "",
+    /** Classification of the chosen file, null until the service answers. */
+    detected: null as SourceDetection | null,
+    detecting: false,
+    /** Whether the compact classification dropdown is open. */
+    pickType: false,
     space: "interior",
     room: "Living Room",
     goal: "Makeover",
@@ -133,7 +145,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   });
 
   function browse() {
-    filePick.accept = state.method === "sketch" ? "image/*,application/pdf" : "image/*";
+    filePick.accept = "image/*,application/pdf";
     filePick.click();
   }
 
@@ -142,8 +154,102 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     state.file = f;
     state.fileName = f.name;
     state.filePreview = /^image\//.test(f.type) ? URL.createObjectURL(f) : "";
+    state.detected = null;
+    state.detecting = false;
+    state.pickType = false;
+    render();
+    if (state.method === "upload") runDetection(f);
+  }
+
+  /* ---------- source detection (shared result component) ---------- */
+
+  /** Runs the classification service on the chosen file and repaints. */
+  async function runDetection(f: File) {
+    const supported = /^image\//.test(f.type) || /pdf/i.test(f.type);
+    if (!supported) {
+      state.detected = { sourceType: "unsupported", confidence: 1, suggestedWorkflow: "manual_classification" };
+      render();
+      return;
+    }
+    state.detecting = true;
+    render();
+    let result: SourceDetection = { sourceType: "uncertain", confidence: 0, suggestedWorkflow: "manual_classification" };
+    try {
+      const dataUrl = await ctx.fileToDataUrl(f);
+      result = await detectSource({ data: { file: dataUrl, mimeType: f.type || "image/jpeg" } });
+    } catch (_) {
+      /* the service boundary stays honest: unknown stays uncertain */
+    }
+    if (state.file !== f) return;
+    state.detecting = false;
+    state.detected = result;
+    applyDetection(result.sourceType);
     render();
   }
+
+  /** Maps a classification onto the setup fields that drive the workflow. */
+  function applyDetection(type: SourceType) {
+    if (type === "interior_photo") state.space = "interior";
+    else if (type === "exterior_photo") {
+      state.space = "exterior";
+      state.room = "Facade";
+    } else if (type === "landscape_photo") {
+      state.space = "landscape";
+      state.room = "Backyard";
+    } else if (type === "sketch") state.inputType = "Hand Sketch";
+    else if (type === "floor_plan") state.inputType = "Floor Plan";
+  }
+
+  function isPlanSource() {
+    const t = state.detected?.sourceType;
+    return t === "sketch" || t === "floor_plan";
+  }
+
+  const PICK_TYPES: SourceType[] = [
+    "interior_photo",
+    "exterior_photo",
+    "landscape_photo",
+    "sketch",
+    "floor_plan",
+  ];
+
+  /** Reusable detection-result component shown under the upload preview. */
+  function detectionHtml() {
+    if (!state.file) return "";
+    if (state.detecting) {
+      return '<div class="stw-det"><i data-lucide="loader" class="stw-det-spin"></i><span>Analyzing your upload…</span></div>';
+    }
+    const d = state.detected;
+    if (!d) return "";
+    const dropdown =
+      '<div class="stw-det-pick">' +
+      '<select id="stsType">' +
+      PICK_TYPES.map(
+        (t) =>
+          '<option value="' + t + '"' + (t === d.sourceType ? " selected" : "") + ">" + esc(SOURCE_LABELS[t]) + "</option>",
+      ).join("") +
+      "</select></div>";
+
+    if (d.sourceType === "unsupported") {
+      return (
+        '<div class="stw-det stw-det-warn"><i data-lucide="alert-circle"></i>' +
+        "<span>We can't read that file type. Choose the closest match to continue.</span></div>" +
+        dropdown
+      );
+    }
+    if (d.sourceType === "uncertain") {
+      return (
+        '<div class="stw-det"><i data-lucide="help-circle"></i><span>What type of file is this?</span></div>' + dropdown
+      );
+    }
+    return (
+      '<div class="stw-det"><i data-lucide="check-circle-2"></i>' +
+      "<span>Detected: <b>" + esc(SOURCE_LABELS[d.sourceType]) + "</b></span>" +
+      '<button class="stw-det-change" data-sts="changetype">Change</button></div>' +
+      (state.pickType ? dropdown : "")
+    );
+  }
+
 
   /** Rotates the chosen image 90 degrees so the upload matches how it reads. */
   async function rotateFile() {
@@ -178,6 +284,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     state.file = null;
     state.fileName = "";
     state.filePreview = "";
+    state.detected = null;
+    state.detecting = false;
+    state.pickType = false;
   }
 
   /* ---------- small builders ---------- */
@@ -222,6 +331,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           ? '<img src="' + state.filePreview + '" alt="Selected source preview">'
           : '<div class="stw-file-ico"><i data-lucide="file-text"></i></div>') +
         '<div class="stw-file-m"><b>' + esc(state.fileName) + "</b>" +
+        (state.method === "upload" ? detectionHtml() : "") +
         '<span id="stsFileMeta">Nothing generates and no credits are used until you continue.</span>' +
         '<div class="stw-file-a">' +
         '<button class="stw-link" data-sts="browse"><i data-lucide="repeat"></i>Replace</button>' +
@@ -230,6 +340,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         "</div></div></div>"
       );
     }
+
     return (
       '<div class="stw-drop" id="stsDrop">' +
       '<i data-lucide="' + icon + '"></i>' +
@@ -302,42 +413,37 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   /* ---------- setup screens ---------- */
 
-  function spaceSetup() {
+  /** One shared upload screen for photos, sketches, drawings and plans. */
+  function uploadSetup() {
+    const plan = isPlanSource();
+    const details = plan
+      ? field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
+        field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+        field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
+        propertyField() +
+        field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">')
+      : field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+        field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
+        propertyField() +
+        field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">');
+
     return (
-      workHead("Upload A Space", "Add a photo of the interior, exterior or landscape you want to redesign.", state.file ? 2 : 1) +
-      '<div class="stw-work">' +
-      panel("Your Photo", dropZone("JPG, PNG, HEIC, WEBP", "image-up", "Drop A Photo Of Your Space"), "stw-main") +
-      panel(
-        "Photo Details",
-        field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-          field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
-          propertyField() +
-          field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
-          foot("Continue", !!state.file),
-        "stw-side",
+      workHead(
+        "Upload A Space Or Plan",
+        "Add a photo, sketch, floor plan or concept drawing. We identify what it is for you.",
+        state.file ? 2 : 1,
       ) +
+      '<div class="stw-work">' +
+      panel(
+        "Your File",
+        dropZone("JPG, PNG, HEIC, WEBP, PDF", "image-up", "Drop A Photo, Sketch Or Plan"),
+        "stw-main",
+      ) +
+      panel(plan ? "Plan Details" : "Photo Details", details + foot("Continue", canContinue()), "stw-side") +
       "</div>"
     );
   }
 
-  function sketchSetup() {
-    return (
-      workHead("Upload A Sketch Or Plan", "Turn a sketch, floor plan or concept drawing into a realistic design.", state.file ? 2 : 1) +
-      '<div class="stw-work">' +
-      panel("Your Sketch Or Plan", dropZone("JPG, PNG, HEIC, WEBP, PDF", "pencil-ruler", "Drop A Sketch, Floor Plan Or Drawing"), "stw-main") +
-      panel(
-        "Plan Details",
-        field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
-          field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-          field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
-          propertyField() +
-          field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
-          foot("Continue", !!state.file),
-        "stw-side",
-      ) +
-      "</div>"
-    );
-  }
 
   const EXAMPLES = ["Warm modern living room", "Resort-style backyard", "Contemporary home exterior"];
 
@@ -422,15 +528,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function setupHtml() {
     const body =
-      state.method === "sketch"
-        ? sketchSetup()
-        : state.method === "describe"
-          ? describeSetup()
-          : state.method === "property"
-            ? propertySetup()
-            : spaceSetup();
+      state.method === "describe"
+        ? describeSetup()
+        : state.method === "property"
+          ? propertySetup()
+          : uploadSetup();
     return '<div class="stw">' + body + "</div>" + (state.samples ? samplesHtml() : "");
   }
+
 
   function samplesHtml() {
     return (
@@ -454,20 +559,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   const CARDS: Array<{ act: string; icon: string; title: string; desc: string; meta: string; btn: string }> = [
     {
-      act: "c-space",
+      act: "c-upload",
       icon: "image-up",
-      title: "Upload A Space",
-      desc: "Redesign, stage or improve an existing space.",
-      meta: "JPG · PNG · HEIC · WEBP",
-      btn: "Upload A Photo",
-    },
-    {
-      act: "c-sketch",
-      icon: "pencil-ruler",
-      title: "Sketch Or Plan",
-      desc: "Turn a sketch or floor plan into a realistic design.",
-      meta: "Images · PDF",
-      btn: "Upload A Sketch",
+      title: "Upload A Space Or Plan",
+      desc: "Start with a photo, sketch, floor plan or concept drawing.",
+      meta: "JPG · PNG · HEIC · WEBP · PDF",
+      btn: "Upload A File",
     },
     {
       act: "c-describe",
@@ -489,11 +586,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       act: "lvideo",
       icon: "clapperboard",
       title: "Create A Listing Video",
-      desc: "Turn listing photos into a polished video.",
+      desc: "Turn listing photos into a polished property video.",
       meta: "Photos · Motion · Branding",
       btn: "Create A Listing Video",
     },
   ];
+
 
   function recentHtml() {
     const list = (ctx.getRecent ? ctx.getRecent() : []).slice(0, 4);
@@ -526,8 +624,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<header class="stw-head">' +
       '<div class="stw-head-l">' +
       '<span class="stw-eyebrow">Welcome To REAL DESIGNS</span>' +
-      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
-      "<p>Start with a space, sketch, written idea or property.</p>" +
+      '<div class="stw-title"><h2>How Would You Like To Start?</h2></div>' +
+      "<p>Upload a visual, describe an idea, organize a property or create a listing video.</p>" +
       "</div></header>" +
       '<div class="stw-rule"></div>' +
       '<div class="stw-tiles">' +
@@ -628,6 +726,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       state.newAddress = v;
       syncPrimary();
     });
+    bindVal("stsType", (v) => {
+      const t = v as SourceType;
+      state.detected = { sourceType: t, confidence: 1, suggestedWorkflow: WORKFLOW_BY_TYPE[t] };
+      state.pickType = false;
+      applyDetection(t);
+      render();
+    });
+
+
 
     const ta = document.getElementById("stsPrompt") as HTMLTextAreaElement | null;
     if (ta) {
@@ -662,11 +769,16 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   function canContinue() {
-    if (state.method === "space" || state.method === "sketch") return !!state.file;
+    if (state.method === "upload") {
+      if (!state.file || state.detecting) return false;
+      const t = state.detected?.sourceType;
+      return !!t && t !== "uncertain" && t !== "unsupported";
+    }
     if (state.method === "describe") return state.prompt.trim().length >= 12;
     if (state.method === "property") return state.newAddress.trim().length > 2;
     return false;
   }
+
 
   function goListingVideo() {
     try {
@@ -718,8 +830,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       goListingVideo();
       return;
     }
-    if (k === "c-space" || k === "c-sketch") {
-      openSetup(k === "c-sketch" ? "sketch" : "space");
+    if (k === "changetype") {
+      state.pickType = !state.pickType;
+      render();
+      return;
+    }
+    if (k === "c-upload") {
+      openSetup("upload");
       browse();
     } else if (k === "c-describe") {
       openSetup("describe");
@@ -770,7 +887,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       });
       applySetupToStudio();
       clearFile();
-      ctx.track("studio_source_loaded", { method: state.method });
+      ctx.track("studio_source_loaded", {
+        method: state.method,
+        sourceType: state.detected?.sourceType || "uncertain",
+        workflow: state.detected?.suggestedWorkflow || "manual_classification",
+      });
     } catch (err: any) {
       ctx.showAlert("Could not load that file. " + ((err && err.message) || "Try another image."));
     } finally {
@@ -862,7 +983,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       state.newAddress = "";
       state.newNickname = "";
       state.newProject = "";
-      openSetup("space");
+      openSetup("upload");
       return;
     }
     if (state.file) loadSource();
@@ -886,7 +1007,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       state.attached = "";
       state.property = "";
       clearFile();
-      state.method = "space";
+      state.method = "upload";
     }
     wasEmpty = true;
     render();
@@ -896,10 +1017,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (method === "sample") {
       state.samples = true;
       render();
-    } else if (method === "describe" || method === "sketch" || method === "property" || method === "space") {
+    } else if (method === "describe" || method === "property") {
       openSetup(method as Method);
-    } else if (method === "upload") {
-      openSetup("space");
+    } else if (method === "upload" || method === "sketch" || method === "space") {
+      openSetup("upload");
       browse();
     } else {
       render();
