@@ -145,6 +145,34 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     render();
   }
 
+  /** Rotates the chosen image 90 degrees so the upload matches how it reads. */
+  async function rotateFile() {
+    const f = state.file;
+    if (!f || !/^image\//.test(f.type)) return;
+    const url = URL.createObjectURL(f);
+    try {
+      const img = await new Promise<HTMLImageElement>((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i);
+        i.onerror = () => rej(new Error("read"));
+        i.src = url;
+      });
+      const c = document.createElement("canvas");
+      c.width = img.naturalHeight;
+      c.height = img.naturalWidth;
+      const g = c.getContext("2d")!;
+      g.translate(c.width / 2, c.height / 2);
+      g.rotate(Math.PI / 2);
+      g.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      const blob: Blob | null = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.92));
+      if (blob) takeFile(new File([blob], f.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" }));
+    } catch (_) {
+      /* rotation is a convenience, keep the original on failure */
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   function clearFile() {
     if (state.filePreview) URL.revokeObjectURL(state.filePreview);
     state.file = null;
@@ -194,7 +222,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           ? '<img src="' + state.filePreview + '" alt="Selected source preview">'
           : '<div class="stw-file-ico"><i data-lucide="file-text"></i></div>') +
         '<div class="stw-file-m"><b>' + esc(state.fileName) + "</b>" +
-        '<span id="stsDims2">Nothing generates and no credits are used until you continue.</span>' +
+        '<span id="stsFileMeta">Nothing generates and no credits are used until you continue.</span>' +
         '<div class="stw-file-a">' +
         '<button class="stw-link" data-sts="browse"><i data-lucide="repeat"></i>Replace</button>' +
         '<button class="stw-link" data-sts="clearfile"><i data-lucide="trash-2"></i>Remove</button>' +
@@ -548,6 +576,20 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       /* icons are cosmetic */
     }
     wire();
+    hydrateRecent();
+  }
+
+  function hydrateRecent() {
+    if (!host || !ctx.resolvePhoto) return;
+    host.querySelectorAll<HTMLImageElement>("[data-photo]").forEach(async (img) => {
+      const path = img.getAttribute("data-photo");
+      if (!path) return;
+      const url = await ctx.resolvePhoto!(path);
+      if (url) {
+        img.src = url;
+        img.hidden = false;
+      }
+    });
   }
 
   function wire() {
@@ -641,8 +683,28 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       pickSample(sample.dataset["sample"]!);
       return;
     }
+    const ex = t.closest("[data-ex]") as HTMLElement | null;
+    if (ex) {
+      state.prompt = ex.dataset["ex"] || "";
+      render();
+      const ta = document.getElementById("stsPrompt") as HTMLTextAreaElement | null;
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+      }
+      return;
+    }
+    const rec = t.closest("[data-recent]") as HTMLElement | null;
+    if (rec) {
+      ctx.openRecent?.(rec.dataset["recent"]!);
+      return;
+    }
     if (!act) return;
     const k = act.dataset["sts"];
+    if (k === "rotate") {
+      rotateFile();
+      return;
+    }
     if (k === "lvideo") {
       goListingVideo();
       return;
