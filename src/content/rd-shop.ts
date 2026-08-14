@@ -414,7 +414,7 @@ function mount(ctx) {
         });
       return;
     }
-    box.innerHTML = `<div class="shop-count">${list.length} Matches</div>` + list.map(card).join("");
+    box.innerHTML = `<div class="shop-count">${list.length} ${list.length === 1 ? "Match" : "Matches"}</div>` + list.map(card).join("");
     paintIcons();
     box.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openDetail(b.getAttribute("data-open"))));
     box.querySelectorAll("[data-add]").forEach((b) =>
@@ -590,6 +590,7 @@ function mount(ctx) {
       syncCounts();
       if (active) active.locked = true;
       paintDots();
+      paintResults();
       toast(r.duplicate ? "Product Already On This Room, Updated Instead" : "Added To Project");
       track("shop_product_added", { merchant: p.merchant, category: p.category, price: priceOf(p) });
     });
