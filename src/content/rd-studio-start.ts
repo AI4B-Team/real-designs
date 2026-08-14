@@ -14,6 +14,7 @@ import { renderConcept } from "@/lib/concept-render.functions";
 import {
   detectSource,
   SOURCE_LABELS,
+  WORKFLOW_BY_TYPE,
   type SourceDetection,
   type SourceType,
 } from "@/lib/source-detect.functions";
@@ -886,7 +887,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       });
       applySetupToStudio();
       clearFile();
-      ctx.track("studio_source_loaded", { method: state.method });
+      ctx.track("studio_source_loaded", {
+        method: state.method,
+        sourceType: state.detected?.sourceType || "uncertain",
+        workflow: state.detected?.suggestedWorkflow || "manual_classification",
+      });
     } catch (err: any) {
       ctx.showAlert("Could not load that file. " + ((err && err.message) || "Try another image."));
     } finally {
