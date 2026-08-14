@@ -637,6 +637,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       });
     }
 
+    const meta = document.getElementById("stsFileMeta");
+    if (meta && state.filePreview) {
+      const i = new Image();
+      i.onload = () => {
+        meta.textContent = i.naturalWidth + " x " + i.naturalHeight + " px · Nothing is generated until you continue.";
+      };
+      i.src = state.filePreview;
+    }
+
     document.getElementById("stsGo")?.addEventListener("click", primaryAction);
   }
 
