@@ -10,7 +10,7 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { updateMediaAssets, deleteMediaAssets } from "@/lib/property-media.functions";
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
-import { openVideoDetail, createVideoFrom, continueDesignVideo } from "@/content/rd-reveal";
+import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openListingVideo } from "@/content/rd-listing-video";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
@@ -221,13 +221,18 @@ function bind(view) {
   view.querySelectorAll("#mlBulk [data-b]").forEach((b) => (b.onclick = (ev) => { ev.stopPropagation(); bulk(b.dataset.b, b); }));
 }
 
-/** Open the listing-video workflow without leaving a stale sidebar item. */
+/** Open the canonical listing-video workflow (same one Studio and Properties open). */
 export function openVideoWorkflow(seed = {}) {
+  const open = (window as any).rdListingVideo;
+  if (typeof open === "function") {
+    open({ from: "media", ...seed });
+    return;
+  }
   try {
-    (window as any).__rdAllowReveal && (window as any).__rdAllowReveal();
+    (window as any).__rdGo && (window as any).__rdGo("lvideo");
   } catch (_) {}
-  createVideoFrom(seed);
 }
+
 
 async function load(quiet) {
   if (!quiet) {
