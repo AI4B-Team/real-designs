@@ -178,21 +178,61 @@ export function mountExplore(go, ctx) {
   function paint() {
     const q = ($("xpQ").value || "").trim().toLowerCase();
     const list = DIRECTIONS.filter((d) => matches(d, q));
-    const active = (room ? 1 : 0) + traits.length + (grade ? 1 : 0);
+    const act = activeFilters();
     const fc = $("xpFilterCnt");
-    fc.hidden = !active; fc.textContent = active;
-    $("xpRoomRow").hidden = !(cat === "All" || cat === "Interior" || cat === "Virtual Staging");
+    fc.hidden = !act.length; fc.textContent = act.length;
+    const bar = $("xpActive");
+    bar.hidden = !act.length;
+    bar.innerHTML = act.length
+      ? act.map(([k, v]) => `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`).join("") +
+        '<button class="xp-aclear" id="xpClear">Clear All</button>'
+      : "";
     $("xpCount").textContent = list.length + " Of " + DIRECTIONS.length + " Directions";
     $("xpGrid").innerHTML = list.length
       ? list.map(card).join("")
       : `<div class="xp-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>Try removing a filter, or start in Studio and describe the direction you want.</p><button class="btn btn-primary btn-sm" id="xpCustom">Start In Studio</button></div>`;
     $("xpSavedCnt").textContent = saved.length;
-    host.querySelectorAll(".xp-chip").forEach((c) => {
-      const d = c.dataset;
-      c.classList.toggle("on", (d.room && d.room === room) || (d.trait && traits.indexOf(d.trait) > -1) || (d.grade && d.grade === grade));
-    });
+    syncFilterDrawer();
     icons_();
   }
+
+  /* ---------- filter drawer ---------- */
+  function optRow(kind, label, on) {
+    return `<label class="xp-opt${on ? " on" : ""}"><input type="checkbox" data-f="${kind}:${esc(label)}"${on ? " checked" : ""}><span class="xp-box"><i data-lucide="check"></i></span><span class="xp-optl">${esc(label)}</span></label>`;
+  }
+  function filterDrawerHtml() {
+    const sec = (title, rowsHtml) => `<div class="xp-fsec"><span class="xp-flab">${title}</span><div class="xp-opts">${rowsHtml}</div></div>`;
+    return `
+      <div class="xp-dh"><div><span class="xp-eyebrow">Refine</span><h3>Filter Designs</h3><p>Narrow directions by room, character and finish grade.</p></div>
+        <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="xp-db">
+        ${sec("Room", ROOMS.map(([l]) => optRow("room", l, rooms.indexOf(l) > -1)).join(""))}
+        ${sec("Characteristics", TRAITS.map((t) => optRow("trait", t, traits.indexOf(t) > -1)).join(""))}
+        ${sec("Finish Grade", GRADES.map((g) => optRow("grade", g, grades.indexOf(g) > -1)).join(""))}
+      </div>
+      <div class="xp-df"><button class="fb-link" id="xpClear">Clear All</button><button class="btn btn-primary btn-sm" data-close="1" id="xpShow">Show ${resultCount()} Designs</button></div>`;
+  }
+  /** Keeps drawer checkboxes and the result-count button in sync without a rerender. */
+  function syncFilterDrawer() {
+    const p = $("xpDPanel");
+    if (!p || !p.querySelector(".xp-fsec")) return;
+    p.querySelectorAll(".xp-opt input[data-f]").forEach((inp) => {
+      const [k, v] = String(inp.dataset.f).split(":");
+      const on = (k === "room" ? rooms : k === "trait" ? traits : grades).indexOf(v) > -1;
+      inp.checked = on;
+      inp.closest(".xp-opt").classList.toggle("on", on);
+    });
+    const btn = p.querySelector("#xpShow");
+    if (btn) btn.textContent = "Show " + resultCount() + " Designs";
+  }
+  function toggleFilter(kind, value) {
+    const has = (a) => a.indexOf(value) > -1;
+    if (kind === "room") rooms = has(rooms) ? rooms.filter((x) => x !== value) : rooms.concat([value]);
+    else if (kind === "trait") traits = has(traits) ? traits.filter((x) => x !== value) : traits.concat([value]);
+    else if (kind === "grade") grades = has(grades) ? grades.filter((x) => x !== value) : grades.concat([value]);
+    paint();
+  }
+
 
   /* ---------- property context ---------- */
   function syncProp() {
