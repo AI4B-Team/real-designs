@@ -121,6 +121,17 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
+  // Global: white dropdown menus and white tooltips on every route.
+  useEffect(() => {
+    let stop: Array<() => void> = [];
+    void Promise.all([import("../lib/tooltips"), import("../lib/selects")]).then(
+      ([tips, sels]) => {
+        stop = [tips.initTooltips(document), sels.initSelects(document)];
+      },
+    );
+    return () => stop.forEach((fn) => fn());
+  }, []);
+
   useEffect(() => {
     let unsub: (() => void) | undefined;
     void initAnalytics().then(() => {
@@ -131,6 +142,7 @@ function RootComponent() {
     });
     return () => unsub?.();
   }, [router]);
+
 
   return (
     <QueryClientProvider client={queryClient}>
