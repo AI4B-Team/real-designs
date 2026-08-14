@@ -1,14 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 
 /**
  * Public, read-only pricing preview.
  *
  * Same arithmetic as buildScope, but it persists nothing and touches no
- * user-owned tables: only the three public reference tables (markets,
- * unit_costs, cost_mappings), all of which carry narrow anon SELECT policies.
+ * user-owned tables: only the three server-only reference tables
+ * (markets, unit_costs, cost_mappings), read with the privileged client.
  * No model ever produces a dollar figure here; SQL and arithmetic do.
  */
 
@@ -51,20 +49,11 @@ const num = (v: unknown) => (v == null ? 0 : Number(v));
 export const priceScopePreview = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => PreviewInput.parse(input))
   .handler(async ({ data }) => {
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-    const supabase = createClient<Database>(process.env["SUPABASE_URL"]!, key, {
-      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-      global: {
-        fetch: (input, init) => {
-          const h = new Headers(init?.headers);
-          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
-            h.delete("Authorization");
-          }
-          h.set("apikey", key);
-          return fetch(input, { ...init, headers: h });
-        },
-      },
-    });
+    // Reference pricing tables are server-only: no anon/authenticated SELECT.
+    // This handler reads them privileged and returns aggregated ranges only.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const supabase = supabaseAdmin;
+
 
     const { data: markets, error: marketError } = await supabase
       .from("markets")
