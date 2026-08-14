@@ -223,8 +223,11 @@ function mount(ctx) {
       const locked = lockedCategories(design.roomId);
       objects.forEach((o) => (o.locked = locked.indexOf(o.category) > -1));
       paintDots();
-      if (!objects.length) emptyObjects();
-      else selectObject(objects[0]);
+      paintCatTabs();
+      if (!objects.length) {
+        emptyObjects();
+        paintCatalog();
+      } else selectObject(objects[0]);
     } catch (e) {
       $("shopResults").innerHTML = errorBlock("The object scan could not finish.");
       wireRetry();
@@ -603,14 +606,14 @@ function mount(ctx) {
     host.classList.remove("sheet-on");
   }
 
-  function card(p) {
+  function card(p, big) {
     const mt = safeMatchType(p);
     const inCmp = !!compare.find((x) => x.id === p.id);
     const added = !!listProducts().find((r) => r.roomId === design.roomId && r.id === p.id);
     // Two status labels at most: match closeness, then availability.
     const matchLabel = mt === "exact" && p.verifiedSku ? "Exact Product" : mt === "close" ? "Close Match" : "Similar Match";
     const dims = [p.width && p.width + '" W', p.depth && p.depth + '" D'].filter(Boolean).join(" × ");
-    return `<div class="shop-card" data-open="${p.id}">
+    return `<div class="shop-card${big ? " big" : ""}" data-open="${p.id}">
       <div class="shop-card-img"><img src="${esc(p.images[0] || "")}" alt="${esc(p.name)}">${p.sample ? '<span class="shop-sample">Sample Data</span>' : ""}</div>
       <div class="shop-card-b">
         <div class="shop-card-t"><b>${esc(p.name)}</b><span class="shop-price">${money(priceOf(p))}${p.salePrice ? `<s>${money(p.regularPrice)}</s>` : ""}</span></div>
@@ -908,6 +911,8 @@ function mount(ctx) {
 
   /* ---------------- wiring ---------------- */
   $("shopClose").addEventListener("click", closeShop);
+  const pc = $("shopPanelClose");
+  if (pc) pc.addEventListener("click", closeSheet);
   $("shopDetect").addEventListener("click", detect);
   $("shopSelBtn").addEventListener("click", openSelected);
   $("shopCompareBtn").addEventListener("click", openCompare);
