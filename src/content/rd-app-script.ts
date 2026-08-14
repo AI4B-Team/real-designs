@@ -29,6 +29,16 @@ import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
 import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
+import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
+
+/** Mirrors an Explore style choice into the Studio controls once per selection. */
+let STYLE_CHOICE_TS=0;
+function syncStudioStyleChoice(force?:boolean){
+  const c=getStudioStyle();
+  if(!c) return;
+  if(!force&&c.ts===STYLE_CHOICE_TS) return;
+  if(applyStudioStyleToControls(c)) STYLE_CHOICE_TS=c.ts;
+}
 
 /** Canonical style id currently selected in Studio. */
 function currentStyleId(){
@@ -69,7 +79,7 @@ try{
       if(sel){ sel.dataset.catalog=''; setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },0); }
     }
   },true);
-  window.addEventListener('rd:style-selected',()=>{ try{ populateStyleSelect(); }catch(_){} });
+  window.addEventListener('rd:style-selected',()=>{ try{ populateStyleSelect(); syncStudioStyleChoice(true); }catch(_){} });
   document.addEventListener('DOMContentLoaded',()=>{ try{ populateStyleSelect(); }catch(_){} });
   setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
 }catch(_){}
@@ -761,6 +771,7 @@ function paintStudioState(){
     : (STUDIO_RESULT?'Click any object to keep, replace or remove it':'Your source photo, nothing generated yet');
   const s=studioStart();
   if(s&&s.paint) s.paint(STUDIO_SRC===SRC_EMPTY);
+  if(STUDIO_SRC!==SRC_EMPTY){ try{ populateStyleSelect(); syncStudioStyleChoice(); }catch(_){} }
 }
 
 
