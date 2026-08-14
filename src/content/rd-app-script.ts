@@ -165,6 +165,7 @@ document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
 try{ (window as any).rdListingVideo=(seed:any)=>{ try{ openListingVideo(seed||{}); }catch(_){} }; }catch(_){}
 document.querySelectorAll('[data-lvideo]').forEach(b=>b.addEventListener('click',()=>{ try{ const p=curProp&&curProp(); openListingVideo(p&&p.id?{ propertyId:p.id, propertyLabel:p.address||p.name||'', from:'properties' }:{ from:'menu' }); }catch(_){ openListingVideo({}); } }));
+try{ (window as any).__rdGo=(v:string)=>go(v); }catch(_){}
 try{ (window as any).rdCreateVideo=(seed:any)=>{ try{ createVideoFrom(seed||{}); }catch(_){} }; }catch(_){}
 document.querySelectorAll('[data-createvideo]').forEach(b=>b.addEventListener('click',()=>{ try{ createVideoFrom(JSON.parse(b.getAttribute('data-createvideo')||'{}')); }catch(_){ createVideoFrom({}); } }));
 document.querySelectorAll('[data-propupload]').forEach(b=>b.addEventListener('click',()=>{ try{ openPropertyUpload(); }catch(_){} }));
