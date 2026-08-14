@@ -423,67 +423,98 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       act: "c-space",
       icon: "image-up",
       title: "Upload A Space",
-      desc: "Start with a photo of an interior, exterior or landscape.",
+      desc: "Redesign, stage or improve an existing space.",
       meta: "JPG · PNG · HEIC · WEBP",
       btn: "Upload A Photo",
     },
     {
       act: "c-sketch",
       icon: "pencil-ruler",
-      title: "Upload A Sketch Or Plan",
-      desc: "Turn a hand sketch, floor plan or concept drawing into a design.",
-      meta: "JPG · PNG · HEIC · WEBP · PDF",
+      title: "Sketch Or Plan",
+      desc: "Turn a sketch or floor plan into a realistic design.",
+      meta: "Images · PDF",
       btn: "Upload A Sketch",
     },
     {
       act: "c-describe",
       icon: "message-square-text",
       title: "Describe An Idea",
-      desc: "Start from a written idea when you have no photo or plan.",
-      meta: "Text to concept",
+      desc: "Create a visual concept from a written description.",
+      meta: "Text · Optional inspiration image",
       btn: "Describe An Idea",
     },
     {
       act: "c-property",
       icon: "map-pin",
-      title: "Start With A Property",
-      desc: "Organize rooms, designs, budgets and presentations together.",
-      meta: "Rooms, budgets, presentations",
+      title: "Create A Property",
+      desc: "Organize rooms, designs, budgets and presentations.",
+      meta: "Multi-room project",
       btn: "Create A Property",
     },
     {
       act: "lvideo",
       icon: "clapperboard",
       title: "Create A Listing Video",
-      desc: "Turn your listing photos into a polished video for social media and MLS.",
-      meta: "Photos, motion, branding",
+      desc: "Turn listing photos into a polished video.",
+      meta: "Photos · Motion · Branding",
       btn: "Create A Listing Video",
     },
   ];
 
+  function recentHtml() {
+    const list = (ctx.getRecent ? ctx.getRecent() : []).slice(0, 4);
+    if (!list.length) return "";
+    return (
+      '<section class="stw-recent">' +
+      '<div class="stw-sec-h"><h3>Continue Where You Left Off</h3><span>Your most recent work</span></div>' +
+      '<div class="stw-recent-g">' +
+      list
+        .map(
+          (r) =>
+            '<article class="card dg-card"><div class="dg-thumb">' +
+            '<img data-photo="' + esc(r.path || "") + '" alt="' + esc(r.name) + '" style="width:100%;height:100%;object-fit:cover" hidden></div>' +
+            '<div class="dg-body"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">' +
+            "<b style=\"font-size:.86rem\">" + esc(r.name) + "</b>" +
+            (r.status ? '<span class="pill">' + esc(r.status) + "</span>" : "") +
+            "</div>" +
+            '<div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">' + esc(r.sub || "") + "</div>" +
+            '<div class="dg-acts"><button class="btn btn-ghost btn-xs" style="flex:1" data-recent="' + esc(r.id) + '">Open</button></div>' +
+            "</div></article>",
+        )
+        .join("") +
+      "</div></section>"
+    );
+  }
+
   function chooserHtml() {
     return (
-      '<div class="stc-head">' +
-      '<span class="stc-eyebrow">Welcome To REAL DESIGNS</span>' +
-      "<h2>What Would You Like To Create?</h2>" +
-      "<p>Start with a photo, sketch or floor plan, describe an idea, or organize everything under a property.</p>" +
-      "</div>" +
-      '<div class="stc-grid">' +
+      '<div class="stw">' +
+      '<header class="stw-head">' +
+      '<div class="stw-head-l">' +
+      '<span class="stw-eyebrow">Welcome To REAL DESIGNS</span>' +
+      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
+      "<p>Start with a space, sketch, written idea or property.</p>" +
+      "</div></header>" +
+      '<div class="stw-rule"></div>' +
+      '<div class="stw-tiles">' +
       CARDS.map(
         (c) =>
-          '<button type="button" class="stc-card" data-sts="' + c.act + '">' +
-          '<i data-lucide="' + c.icon + '" class="stc-ico"></i>' +
+          '<button type="button" class="stw-tile" data-sts="' + c.act + '">' +
+          '<i data-lucide="' + c.icon + '" class="stw-tile-ico"></i>' +
           "<h3>" + c.title + "</h3>" +
           "<p>" + c.desc + "</p>" +
-          '<span class="stc-meta">' + c.meta + "</span>" +
-          '<span class="stc-act">' + c.btn + '<i data-lucide="arrow-right"></i></span>' +
+          '<span class="stw-tile-meta">' + c.meta + "</span>" +
+          '<span class="stw-tile-act">' + c.btn + '<i data-lucide="arrow-right"></i></span>' +
           "</button>",
       ).join("") +
       "</div>" +
-      '<p class="stc-foot">Not ready to upload? <button class="stc-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      '<p class="stw-tilefoot">Not ready to upload? <button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      recentHtml() +
+      "</div>" +
       (state.samples ? samplesHtml() : "")
     );
   }
+
 
   /* ---------- render + wiring ---------- */
 
