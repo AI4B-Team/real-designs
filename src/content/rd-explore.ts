@@ -448,17 +448,16 @@ export function mountExplore(go, ctx) {
     let el;
     if ((el = hit("data-c"))) {
       cat = el.dataset.c;
-      if (cat !== "All" && cat !== "Interior" && cat !== "Virtual Staging") room = null;
+      if (cat !== "All" && cat !== "Interior" && cat !== "Virtual Staging") rooms = [];
       host.querySelectorAll(".xp-cat").forEach((b) => b.classList.toggle("on", b === el));
       paint(); return;
     }
-    if ((el = hit("data-room"))) { room = room === el.dataset.room ? null : el.dataset.room; paint(); return; }
-    if ((el = hit("data-trait"))) {
-      const v = el.dataset.trait;
-      traits = traits.indexOf(v) > -1 ? traits.filter((x) => x !== v) : traits.concat([v]);
-      paint(); return;
+    if ((el = hit("data-off"))) {
+      const i = String(el.dataset.off).indexOf(":");
+      toggleFilter(String(el.dataset.off).slice(0, i), String(el.dataset.off).slice(i + 1));
+      return;
     }
-    if ((el = hit("data-grade"))) { grade = grade === el.dataset.grade ? null : el.dataset.grade; paint(); return; }
+
     if ((el = hit("data-shot"))) {
       const img = host.querySelector("#xpHero");
       if (img) img.src = el.dataset.shot;
