@@ -31,7 +31,10 @@ import { mountExplore } from "@/content/rd-explore";
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
 import { mountReveal, createVideoFrom } from "@/content/rd-reveal";
 import { mountListingVideo, openListingVideo } from "@/content/rd-listing-video";
-import { mountMedia, openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
+import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
+import { mountMediaLibrary } from "@/content/rd-media-lib";
+import * as RDMediaLib from "@/lib/media-library";
+try{ (window as any).rdMedia=RDMediaLib; }catch(_){}
 import { getSubscription, changePlan, setCancelAtPeriodEnd, withdrawPlanRequest, listBillingEvents } from "@/lib/subscription.functions";
 
 
