@@ -6,7 +6,7 @@ import "@/styles/rd-site.css";
 
 const TITLE = "Privacy Policy | REAL DESIGNS";
 const DESC =
-  "We do not sell your personal information and we do not train AI models on your photographs. What we collect, how long we keep it, and how to export or delete it.";
+  "We never sell your personal information and never train AI models on your photos. What we collect, how long we keep it, and how to export or delete it.";
 
 export const Route = createFileRoute("/privacy")({
   head: () => pageHead("/privacy", TITLE, DESC),

@@ -6,7 +6,7 @@ import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
 import { absoluteUrl } from "@/lib/site";
 import "@/styles/rd-site.css";
 
-const TITLE = "Pricing — Simple Plans For Every Kind Of Project | REAL DESIGNS";
+const TITLE = "Pricing — Plans For Every Project | REAL DESIGNS";
 const DESC =
   "Start free. Upgrade for more projects, professional planning tools or team collaboration. Compare Free, Starter, Pro and Studio plans for REAL DESIGNS.";
 
