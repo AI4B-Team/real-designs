@@ -77,7 +77,6 @@ function enhance(sel: HTMLSelectElement) {
       openMenu(sel);
     } else if (e.key === "Escape") closeMenu();
   });
-  sel.addEventListener("blur", () => window.setTimeout(closeMenu, 80));
 }
 
 export function initSelects(root: ParentNode = document): Cleanup {
