@@ -682,6 +682,14 @@ async function exportPdf(id) {
 
 let wired = false;
 
+/** Deep link from Reports: open a package detail once the view mounts. */
+try {
+  (window as any).__rdOpenPackage = (id) => {
+    PENDING_OPEN = id;
+  };
+} catch (_) {}
+let PENDING_OPEN = null;
+
 export function mountPresent() {
   const host = document.getElementById("presRoot");
   if (!host) return;
@@ -695,7 +703,15 @@ export function mountPresent() {
     document.addEventListener("click", onClick);
     document.addEventListener("change", onChange);
   }
-  refresh();
+  refresh().then(() => {
+    if (PENDING_OPEN) {
+      const id = PENDING_OPEN;
+      PENDING_OPEN = null;
+      try {
+        openDetail(id);
+      } catch (_) {}
+    }
+  });
 }
 
 async function onClick(e) {

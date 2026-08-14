@@ -14,7 +14,7 @@ import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSummary, getPropertyTree, saveRoomVersion, setPropertyDna, copyPropertyDna, createProject, setVersionStatus, listRoomVersions, setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
-import { getPortfolioReport } from "@/lib/reports.functions";
+import { mountReports } from "@/content/rd-reports";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
@@ -151,7 +151,7 @@ function go(v,fromHash){
   if(v==='lvideo'){ try{ mountListingVideo(go,{}); }catch(_){} }
 
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
-  if(v==='reports'){ try{ paintReports(); }catch(_){} }
+  if(v==='reports'){ try{ mountReports(go); }catch(_){} }
   if(!titles[v]) return;
   const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
   const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
@@ -2285,83 +2285,7 @@ const esc=(s)=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;
 const presMoney=(n)=>'$'+Math.round(n||0).toLocaleString('en-US');
 
 /* ---------- reports ---------- */
-let REPORT=null, REPORT_LOADING=false;
-const FIT_PILL={under:['p-ok','Under Budget'],at:['p-amb','At Budget'],over:['p-red','Over Budget'],unknown:['p-gray','No Target']};
-const ACT_LABEL={design:'Designs',scope:'Scope Runs',plan_3d:'3D Plans',video:'Walkthrough Videos',topup:'Top Ups',grant:'Grants',refund:'Refunds'};
-
-function reportKpis(r){
-  const el=document.getElementById('repKpis'); if(!el) return;
-  const cards=[
-    ['map-pin','Properties',String(r.totals.properties),'Across the workspace'],
-    ['images','Designs Saved',String(r.totals.designs),r.totals.approved+' approved'],
-    ['calculator','Scope Range',presMoney(r.totals.low)+' &ndash; '+presMoney(r.totals.high),'Planning estimate, not a bid'],
-    ['coins','Credits Spent',String(r.credits.spent30),'Last 30 days']
-  ];
-  el.innerHTML=cards.map(c=>`<div class="kpi"><div class="t"><i data-lucide="${c[0]}"></i>${c[1]}</div><b>${c[2]}</b><div class="d">${c[3]}</div></div>`).join('');
-}
-
-function reportRows(r){
-  const tb=document.getElementById('repRows'); if(!tb) return;
-  if(!r.rows.length){
-    tb.innerHTML='<tr><td colspan="9" style="color:var(--mute-2);font-size:.79rem">No Properties Yet. Save a room in Studio to start the rollup.</td></tr>';
-    return;
-  }
-  tb.innerHTML=r.rows.map(x=>{
-    const fit=FIT_PILL[x.budget_fit]||FIT_PILL.unknown;
-    const range=x.priced?presMoney(x.low)+' &ndash; '+presMoney(x.high):'<span style="color:var(--mute-2)">Not Priced</span>';
-    const when=x.last_activity?new Date(x.last_activity).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'&mdash;';
-    return `<tr><td><b>${esc(x.address)}</b></td><td class="n">${x.projects}</td><td class="n">${x.rooms}</td><td class="n">${x.designs}</td><td class="n">${x.approved}</td><td>${range}</td><td>${x.budget_target!=null?presMoney(x.budget_target):'&mdash;'}</td><td><span class="pill ${fit[0]}">${fit[1]}</span></td><td>${when}</td></tr>`;
-  }).join('');
-}
-
-function reportPanels(r){
-  const c=document.getElementById('repCredits');
-  if(c){
-    const entries=Object.keys(r.credits.byAction).map(k=>[k,r.credits.byAction[k]]).sort((a,b)=>b[1]-a[1]);
-    const max=entries.length?entries[0][1]:0;
-    c.innerHTML=entries.length?entries.map(e=>`<div style="margin-bottom:12px"><div class="lab" style="display:flex;justify-content:space-between;font-size:.79rem;margin-bottom:5px"><span>${ACT_LABEL[e[0]]||esc(e[0])}</span><b>${e[1]}</b></div><div class="meter"><i style="width:${max?Math.round(e[1]/max*100):0}%"></i></div></div>`).join(''):'<p style="font-size:.79rem;color:var(--mute-2)">No credits spent in the last 30 days.</p>';
-  }
-  const p=document.getElementById('repPres');
-  if(p){
-    const s=r.presentations;
-    const rate=s.total?Math.round(s.approved/s.total*100):0;
-    p.innerHTML=`<div class="grid g3" style="gap:12px">
-      <div><div class="lab" style="font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mute-2);margin-bottom:6px">Links Sent</div><b style="font-size:1.4rem">${s.total}</b></div>
-      <div><div class="lab" style="font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mute-2);margin-bottom:6px">Approved</div><b style="font-size:1.4rem">${s.approved}</b></div>
-      <div><div class="lab" style="font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--mute-2);margin-bottom:6px">Client Views</div><b style="font-size:1.4rem">${s.views}</b></div>
-    </div>
-    <div style="margin-top:14px"><div class="lab" style="display:flex;justify-content:space-between;font-size:.79rem;margin-bottom:5px"><span>Approval Rate</span><b>${rate}%</b></div><div class="meter"><i style="width:${rate}%"></i></div></div>`;
-  }
-}
-
-async function paintReports(force){
-  const tb=document.getElementById('repRows'); if(!tb) return;
-  if(REPORT&&!force){ reportKpis(REPORT); reportRows(REPORT); reportPanels(REPORT); lucide.createIcons(); return; }
-  if(REPORT_LOADING) return;
-  REPORT_LOADING=true;
-  tb.innerHTML=skRows(9,4);
-  try{ REPORT=await getPortfolioReport(); }
-  catch(e){ REPORT_LOADING=false; tb.innerHTML='<tr><td colspan="9" style="color:var(--mute-2);font-size:.79rem">We could not load your reports just now. Hit Refresh to try again.</td></tr>'; return; }
-  REPORT_LOADING=false;
-  reportKpis(REPORT); reportRows(REPORT); reportPanels(REPORT);
-  lucide.createIcons();
-}
-
-function reportsCsv(){
-  if(!REPORT) return;
-  const head=['Property','Projects','Rooms','Designs','Approved','Scope Low','Scope High','Budget Target','Budget Fit','Last Activity'];
-  const q=(v)=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-  const lines=[head.map(q).join(',')].concat(REPORT.rows.map(x=>[x.address,x.projects,x.rooms,x.designs,x.approved,Math.round(x.low),Math.round(x.high),x.budget_target==null?'':Math.round(x.budget_target),FIT_PILL[x.budget_fit][1],x.last_activity||''].map(q).join(',')));
-  const blob=new Blob([lines.join('\n')],{type:'text/csv;charset=utf-8'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='real-designs-portfolio-'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
-  setTimeout(()=>URL.revokeObjectURL(a.href),2000);
-}
-
-document.getElementById('repRefresh')?.addEventListener('click',()=>paintReports(true));
-document.getElementById('repCsv')?.addEventListener('click',reportsCsv);
+/* Implemented in @/content/rd-reports; mounted when the view opens. */
 
 
 function presPdfHtml(p){

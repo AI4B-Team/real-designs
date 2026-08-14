@@ -8,6 +8,7 @@ import "@/styles/rd-explore.css";
 import "@/styles/rd-shop.css";
 import "@/styles/rd-media.css";
 import "@/styles/rd-media-lib.css";
+import "@/styles/rd-reports.css";
 import "@/styles/rd-lvideo.css";
 import "@/styles/rd-reveal.css";
 import "@/styles/rd-present.css";
