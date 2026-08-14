@@ -504,6 +504,52 @@ function mount(ctx) {
   }
 
   /* ---------------- detail drawer ---------------- */
+  function productImages(p) {
+    const room = String(design.image || "");
+    return (p.images || []).filter((u) => u && String(u) !== room);
+  }
+  function galleryHtml(p) {
+    const imgs = productImages(p);
+    if (!imgs.length) {
+      return `<div class="shop-dr-gal"><div class="shop-img-box empty"><i data-lucide="image-off"></i><span>Product image unavailable.</span></div></div>`;
+    }
+    const thumbs = imgs.slice(0, 5);
+    const multi = imgs.length > 1;
+    return `<div class="shop-dr-gal" id="drGal">
+      <div class="shop-img-box"><img id="drGalMain" src="${esc(imgs[0])}" alt="${esc(p.name)}">
+        ${multi ? `<button class="shop-gal-nav prev" data-gal="prev" aria-label="Previous Image"><i data-lucide="chevron-left"></i></button><button class="shop-gal-nav next" data-gal="next" aria-label="Next Image"><i data-lucide="chevron-right"></i></button><span class="shop-gal-count" id="drGalCount">1 of ${imgs.length}</span>` : ""}
+      </div>
+      ${multi ? `<div class="shop-gal-thumbs">${thumbs.map((u, i) => `<button class="shop-gal-th${i === 0 ? " on" : ""}" data-gal-i="${i}" aria-label="Image ${i + 1}"><img src="${esc(u)}" alt=""></button>`).join("")}</div>` : ""}
+    </div>`;
+  }
+  function wireGallery(p) {
+    const imgs = productImages(p);
+    if (imgs.length < 1) return;
+    const main = $("drGalMain");
+    if (!main) return;
+    let i = 0;
+    const set = (n) => {
+      i = (n + imgs.length) % imgs.length;
+      main.src = imgs[i];
+      const c = $("drGalCount");
+      if (c) c.textContent = `${i + 1} of ${imgs.length}`;
+      document.querySelectorAll(".shop-gal-th").forEach((b) => b.classList.toggle("on", Number(b.getAttribute("data-gal-i")) === i));
+    };
+    document.querySelectorAll("[data-gal]").forEach((b) =>
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        set(i + (b.getAttribute("data-gal") === "next" ? 1 : -1));
+      }),
+    );
+    document.querySelectorAll(".shop-gal-th").forEach((b) => b.addEventListener("click", () => set(Number(b.getAttribute("data-gal-i")))));
+    main.addEventListener("click", () => {
+      const lb = document.createElement("div");
+      lb.className = "shop-lightbox";
+      lb.innerHTML = `<img src="${esc(imgs[i])}" alt="${esc(p.name)}">`;
+      lb.addEventListener("click", () => lb.remove());
+      document.body.appendChild(lb);
+    });
+  }
   function openDetail(id) {
     const p = results.concat(savedLater).find((x) => x.id === id);
     if (!p) return;
@@ -513,7 +559,8 @@ function mount(ctx) {
     d.innerHTML = `<div class="shop-dr">
       <div class="shop-dr-h"><b>Product Detail</b><button class="icon-btn" id="drClose" aria-label="Close product detail"><i data-lucide="x"></i></button></div>
       <div class="shop-dr-b">
-        <div class="shop-dr-img"><img src="${esc(p.images[0] || "")}" alt="${esc(p.name)}"></div>
+        ${galleryHtml(p)}
+
         <h4>${esc(p.name)}</h4>
         <div class="shop-meta">${esc(p.brand)} &middot; ${esc(p.merchant)}</div>
         <div class="shop-dr-price">${money(priceOf(p))}${p.salePrice ? `<s>${money(p.regularPrice)}</s>` : ""}<span class="shop-tag ${p.availability === "in_stock" ? "ok" : "amb"}">${availabilityLabel(p.availability)}</span></div>
