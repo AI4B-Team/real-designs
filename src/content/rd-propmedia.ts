@@ -90,12 +90,12 @@ export async function openPropertyUpload(opts = {}) {
               <label>Property Name<input id="pmuName" placeholder="Riverwalk Listing"></label>
               <label>Property Type<select id="pmuType"><option>Single Family</option><option>Condo</option><option>Townhome</option><option>Multi Family</option><option>Land</option><option>Commercial</option></select></label>
               <label>Listing Status<select id="pmuStatus"><option>Pre Listing</option><option>Active</option><option>Coming Soon</option><option>Pending</option><option>Sold</option></select></label>
-              <label>Bedrooms<input id="pmuBeds" type="number" min="0" max="30"></label>
-              <label>Bathrooms<input id="pmuBaths" type="number" min="0" max="30" step="0.5"></label>
-              <label>Square Footage<input id="pmuSqft" type="number" min="0"></label>
+              <label>Bedrooms<span class="pmu-info" data-tip="Number Of Bedrooms — used to label rooms and size the design estimate."><i data-lucide="info"></i></span><input id="pmuBeds" type="number" min="0" max="30" placeholder="3"></label>
+              <label>Bathrooms<span class="pmu-info" data-tip="Number Of Bathrooms — half baths count as 0.5."><i data-lucide="info"></i></span><input id="pmuBaths" type="number" min="0" max="30" step="0.5" placeholder="2.5"></label>
+              <label>Square Footage<span class="pmu-info" data-tip="Total Living Area In Square Feet — improves cost and material estimates."><i data-lucide="info"></i></span><input id="pmuSqft" type="number" min="0" placeholder="1850"></label>
               <label>Project Purpose<select id="pmuPurpose"><option>Listing Media</option><option>Pre Listing Prep</option><option>Renovation Planning</option><option>Investor Analysis</option><option>Client Presentation</option></select></label>
               <label>Agent, Photographer Or Client<span class="pmu-info" data-tip="Who Is This For — the agent, photographer or client this photo set belongs to. Shown on presentations and exports."><i data-lucide="info"></i></span><input id="pmuWho" placeholder="Who Is This For"></label>
-              <label class="pmu-wide">Internal Notes<textarea id="pmuNotes" rows="2"></textarea></label>
+              <label class="pmu-wide">Internal Notes<span class="pmu-info" data-tip="Private Notes — only visible to your workspace, never shown to clients."><i data-lucide="info"></i></span><textarea id="pmuNotes" rows="2" placeholder="Anything your team should know about this shoot — access details, priority rooms, deadlines"></textarea></label>
             </div>
           </details>
         </div>
