@@ -40,6 +40,7 @@ import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calcula
 import { Route as FreeRehabCostCalculatorRouteImport } from './routes/free/rehab-cost-calculator'
 import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-staging'
 import { Route as PTokenRouteImport } from './routes/p.$token'
+import { Route as PkgTokenRouteImport } from './routes/pkg.$token'
 import { Route as PricingCompareRouteImport } from './routes/pricing_.compare'
 import { Route as PricingCreditsRouteImport } from './routes/pricing_.credits'
 import { Route as VSlugRouteImport } from './routes/v.$slug'
@@ -200,6 +201,11 @@ const PTokenRoute = PTokenRouteImport.update({
   path: '/p/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PkgTokenRoute = PkgTokenRouteImport.update({
+  id: '/pkg/$token',
+  path: '/pkg/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingCompareRoute = PricingCompareRouteImport.update({
   id: '/pricing_/compare',
   path: '/pricing/compare',
@@ -257,6 +263,7 @@ export interface FileRoutesByFullPath {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pkg/$token': typeof PkgTokenRoute
   '/pricing/compare': typeof PricingCompareRoute
   '/pricing/credits': typeof PricingCreditsRoute
   '/v/$slug': typeof VSlugRoute
@@ -294,6 +301,7 @@ export interface FileRoutesByTo {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pkg/$token': typeof PkgTokenRoute
   '/pricing/compare': typeof PricingCompareRoute
   '/pricing/credits': typeof PricingCreditsRoute
   '/v/$slug': typeof VSlugRoute
@@ -333,6 +341,7 @@ export interface FileRoutesById {
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
   '/free/virtual-staging': typeof FreeVirtualStagingRoute
   '/p/$token': typeof PTokenRoute
+  '/pkg/$token': typeof PkgTokenRoute
   '/pricing_/compare': typeof PricingCompareRoute
   '/pricing_/credits': typeof PricingCreditsRoute
   '/v/$slug': typeof VSlugRoute
@@ -372,6 +381,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pkg/$token'
     | '/pricing/compare'
     | '/pricing/credits'
     | '/v/$slug'
@@ -409,6 +419,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pkg/$token'
     | '/pricing/compare'
     | '/pricing/credits'
     | '/v/$slug'
@@ -447,6 +458,7 @@ export interface FileRouteTypes {
     | '/free/rehab-cost-calculator'
     | '/free/virtual-staging'
     | '/p/$token'
+    | '/pkg/$token'
     | '/pricing_/compare'
     | '/pricing_/credits'
     | '/v/$slug'
@@ -485,6 +497,7 @@ export interface RootRouteChildren {
   FreeRehabCostCalculatorRoute: typeof FreeRehabCostCalculatorRoute
   FreeVirtualStagingRoute: typeof FreeVirtualStagingRoute
   PTokenRoute: typeof PTokenRoute
+  PkgTokenRoute: typeof PkgTokenRoute
   PricingCompareRoute: typeof PricingCompareRoute
   PricingCreditsRoute: typeof PricingCreditsRoute
   VSlugRoute: typeof VSlugRoute
@@ -711,6 +724,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pkg/$token': {
+      id: '/pkg/$token'
+      path: '/pkg/$token'
+      fullPath: '/pkg/$token'
+      preLoaderRoute: typeof PkgTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing_/compare': {
       id: '/pricing_/compare'
       path: '/pricing/compare'
@@ -792,6 +812,7 @@ const rootRouteChildren: RootRouteChildren = {
   FreeRehabCostCalculatorRoute: FreeRehabCostCalculatorRoute,
   FreeVirtualStagingRoute: FreeVirtualStagingRoute,
   PTokenRoute: PTokenRoute,
+  PkgTokenRoute: PkgTokenRoute,
   PricingCompareRoute: PricingCompareRoute,
   PricingCreditsRoute: PricingCreditsRoute,
   VSlugRoute: VSlugRoute,
