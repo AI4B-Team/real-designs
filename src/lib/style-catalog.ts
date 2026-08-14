@@ -38,10 +38,6 @@ export type StyleRecord = {
 /* ------------------------------------------------------------------ */
 /* palette presets — 4 swatches each, reused across related styles      */
 /* ------------------------------------------------------------------ */
-const PAL: Record<string, [string[], string[]]> = {
-  warmneutral: [["warm white", "sand", "taupe", "walnut"], ["#F2EDE4", "#DDCDB6", "#9A8straight", "#2E2A26"]],
-};
-// (rebuilt below with valid values)
 const P4: Record<string, { names: string[]; hex: string[] }> = {
   warmneutral: { names: ["warm white", "sand", "taupe", "walnut"], hex: ["#F2EDE4", "#DDCDB6", "#8C7A63", "#2E2A26"] },
   organic: { names: ["oat", "clay", "olive", "espresso"], hex: ["#F4EFE7", "#CBB9A3", "#7D8467", "#3A342C"] },
@@ -61,18 +57,17 @@ const P4: Record<string, { names: string[]; hex: string[] }> = {
   desert: { names: ["bone", "sandstone", "rust", "cactus"], hex: ["#F1E7D9", "#D8B48C", "#B05C38", "#6E7A54"] },
   mountain: { names: ["snow", "stone", "pine", "bark"], hex: ["#EFEFEC", "#B7B2A8", "#3E5045", "#3A2E26"] },
   tropical: { names: ["shell", "palm", "teak", "lagoon"], hex: ["#F7F3E9", "#4F7A4B", "#8B5A2B", "#2E7D8C"] },
-  boho: { names: ["cream", "terracotta", "ochre", "cocoa"], hex: ["#F5EDE1", "#C0714E", "#D6A martin", "#4A3527"] },
+  boho: { names: ["cream", "terracotta", "ochre", "cocoa"], hex: ["#F5EDE1", "#C0714E", "#D6A24B", "#4A3527"] },
   retro: { names: ["butter", "orange", "avocado", "chocolate"], hex: ["#F5E3B3", "#D9683A", "#7E8B3C", "#4B2E20"] },
   dark: { names: ["parchment", "tobacco", "forest", "near black"], hex: ["#E9E0CE", "#8A6A45", "#2F3D33", "#15140F"] },
   garden: { names: ["gravel", "foliage", "bloom", "shadow"], hex: ["#E6E4DC", "#6F8A5A", "#C3A24B", "#2C332B"] },
   gardenformal: { names: ["limestone", "boxwood", "gravel", "yew"], hex: ["#EDE9DE", "#4F6B45", "#C9C2B2", "#26332A"] },
   gardenarid: { names: ["decomposed granite", "agave", "rust", "shade"], hex: ["#E8DDC9", "#8FA07A", "#B0603A", "#3B3A33"] },
 };
-P4["boho"] = { names: ["cream", "terracotta", "ochre", "cocoa"], hex: ["#F5EDE1", "#C0714E", "#D6A24B", "#4A3527"] };
-delete (PAL as Record<string, unknown>)["warmneutral"];
+
 
 const IMG = PHOTOS as Record<string, string>;
-const pick = (k: string) => IMG[k] || IMG["after"];
+const pick = (k: string): string => IMG[k] || IMG["after"] || "";
 
 type Row = {
   id: string;
@@ -366,7 +361,7 @@ function build(row: Row): StyleRecord {
   const types = Array.from(
     new Set(String(row.t).replace(/\s+/g, "").split("").map((c) => TYPE_MAP[c]).filter(Boolean)),
   ) as ProjectType[];
-  const pal = P4[row.pal];
+  const pal = P4[row.pal] || P4["warmneutral"]!;
   const noun = typeNoun(types);
   const prompt = [
     `${row.name.toLowerCase()} ${noun}`,
@@ -421,7 +416,7 @@ export const AUTO_STYLE: StyleRecord = {
   compatibleProjectTypes: ["interior", "exterior", "garden", "virtual-staging", "concept"],
   compatibleRoomTypes: ALL_ROOMS,
   palette: ["warm white", "sand", "taupe", "charcoal"],
-  swatches: P4["warmneutral"].hex,
+  swatches: P4["warmneutral"]!.hex,
   materials: ["broadly appealing materials"],
   definingFeatures: ["chosen automatically from the source photo"],
   finishLevel: ["Rental Grade", "Retail Grade", "Premium"],
@@ -480,8 +475,8 @@ const INDEX: Record<string, StyleRecord> = {};
   ["mid century", "mid-century-modern"],
   ["minimalism", "minimalist"],
 ].forEach(([from, to]) => {
-  const rec = INDEX[norm(to)];
-  if (rec) INDEX[norm(from)] = rec;
+  const rec = INDEX[norm(String(to))];
+  if (rec) INDEX[norm(String(from))] = rec;
 });
 
 export function resolveStyle(input?: string | null): StyleRecord {
@@ -505,7 +500,8 @@ export function styleFromText(text: string): StyleRecord | null {
   let bestLen = 0;
   Object.keys(INDEX).forEach((key) => {
     if (key.length < 4 || key.length <= bestLen) return;
-    if (t.indexOf(key) > -1) { best = INDEX[key]; bestLen = key.length; }
+    const rec = INDEX[key];
+    if (rec && t.indexOf(key) > -1) { best = rec; bestLen = key.length; }
   });
   return best;
 }
