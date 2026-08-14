@@ -458,7 +458,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     return (
       workHead(
         "Upload A Space Or Plan",
-        "Add a photo, sketch, floor plan or concept drawing. We identify what it is for you.",
+        "Begin a design from one source image or plan. We identify what it is for you.",
         state.file ? 2 : 1,
       ) +
       styleBanner() +
@@ -591,7 +591,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       act: "c-upload",
       icon: "image-up",
       title: "Upload A Space Or Plan",
-      desc: "Start with a photo, sketch, floor plan or concept drawing.",
+      desc: "Begin a design from one source image or plan. To import a whole property shoot, use Upload Property Photos in Media.",
       meta: "JPG · PNG · HEIC · WEBP · PDF",
       btn: "Upload A File",
     },
