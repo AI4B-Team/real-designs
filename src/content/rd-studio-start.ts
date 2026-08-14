@@ -524,15 +524,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function setupHtml() {
     const body =
-      state.method === "sketch"
-        ? sketchSetup()
-        : state.method === "describe"
-          ? describeSetup()
-          : state.method === "property"
-            ? propertySetup()
-            : spaceSetup();
+      state.method === "describe"
+        ? describeSetup()
+        : state.method === "property"
+          ? propertySetup()
+          : uploadSetup();
     return '<div class="stw">' + body + "</div>" + (state.samples ? samplesHtml() : "");
   }
+
 
   function samplesHtml() {
     return (
