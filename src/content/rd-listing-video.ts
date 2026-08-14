@@ -265,8 +265,7 @@ function autoArrange() {
 async function loadProperties() {
   try {
     S.properties = await listMediaProperties();
-  } catch (e) {
-    console.error("[lv] listMediaProperties", e);
+  } catch (_) {
     S.properties = [];
   }
 }
@@ -702,7 +701,6 @@ function watchJobs() {
 }
 
 async function beginUpload(files) {
-  console.error("[lv] beginUpload", files.length, S.authorized, S.propertyId, S.standalone, S.addressQuery);
   if (!files.length) return;
   if (!S.authorized) {
     toast("Confirm you own these photos or have permission to use them.");
@@ -716,11 +714,9 @@ async function beginUpload(files) {
     const label = normalizeAddress(S.addressQuery) || "Untitled Property";
     try {
       const row = await createMediaProperty({ data: { address: label } });
-      console.error('[lv] created', JSON.stringify(row), 'label', label, 'props', S.properties.length);
       S.propertyId = row.id;
       S.propertyLabel = row.address;
-    } catch (e) {
-      console.error("[lv] createMediaProperty", e);
+    } catch (_) {
       S.standalone = true;
       S.propertyLabel = "Standalone Project";
     }

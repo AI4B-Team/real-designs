@@ -233,7 +233,7 @@ export const createMediaProperty = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     const { data: row, error } = await supabase
       .from("properties")
-      .insert({ user_id: userId, address: data.address } as any)
+      .insert({ owner_id: userId, address: data.address } as any)
       .select("id, address")
       .single();
     if (error) throw new Error(error.message);
