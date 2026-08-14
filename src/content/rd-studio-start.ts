@@ -409,42 +409,37 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   /* ---------- setup screens ---------- */
 
-  function spaceSetup() {
+  /** One shared upload screen for photos, sketches, drawings and plans. */
+  function uploadSetup() {
+    const plan = isPlanSource();
+    const details = plan
+      ? field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
+        field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+        field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
+        propertyField() +
+        field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">')
+      : field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+        field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
+        propertyField() +
+        field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">');
+
     return (
-      workHead("Upload A Space", "Add a photo of the interior, exterior or landscape you want to redesign.", state.file ? 2 : 1) +
-      '<div class="stw-work">' +
-      panel("Your Photo", dropZone("JPG, PNG, HEIC, WEBP", "image-up", "Drop A Photo Of Your Space"), "stw-main") +
-      panel(
-        "Photo Details",
-        field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-          field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
-          propertyField() +
-          field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
-          foot("Continue", !!state.file),
-        "stw-side",
+      workHead(
+        "Upload A Space Or Plan",
+        "Add a photo, sketch, floor plan or concept drawing. We identify what it is for you.",
+        state.file ? 2 : 1,
       ) +
+      '<div class="stw-work">' +
+      panel(
+        "Your File",
+        dropZone("JPG, PNG, HEIC, WEBP, PDF", "image-up", "Drop A Photo, Sketch Or Plan"),
+        "stw-main",
+      ) +
+      panel(plan ? "Plan Details" : "Photo Details", details + foot("Continue", canContinue()), "stw-side") +
       "</div>"
     );
   }
 
-  function sketchSetup() {
-    return (
-      workHead("Upload A Sketch Or Plan", "Turn a sketch, floor plan or concept drawing into a realistic design.", state.file ? 2 : 1) +
-      '<div class="stw-work">' +
-      panel("Your Sketch Or Plan", dropZone("JPG, PNG, HEIC, WEBP, PDF", "pencil-ruler", "Drop A Sketch, Floor Plan Or Drawing"), "stw-main") +
-      panel(
-        "Plan Details",
-        field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
-          field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-          field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
-          propertyField() +
-          field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
-          foot("Continue", !!state.file),
-        "stw-side",
-      ) +
-      "</div>"
-    );
-  }
 
   const EXAMPLES = ["Warm modern living room", "Resort-style backyard", "Contemporary home exterior"];
 
