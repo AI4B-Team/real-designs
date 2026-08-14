@@ -163,7 +163,8 @@ export const priceScopePreview = createServerFn({ method: "POST" })
       });
     }
 
-    if (lines.length === 0) throw new Error("No priceable items in this selection.");
+    // No matching cost lines is a normal empty state, not a failure — return a
+    // zeroed estimate so the caller can render an empty table instead of erroring.
 
     const subtotalLow = totalLow;
     const subtotalHigh = totalHigh;
