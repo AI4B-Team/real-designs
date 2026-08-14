@@ -129,13 +129,17 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
   window.addEventListener("rd:style-selected", () => { refreshStyleChoice(); if (host) render(); });
 
+  /** Local escape: the banner can render before the shell helpers initialize. */
+  const escLocal = (v: string) =>
+    String(v == null ? "" : v).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch] as string));
+
   /** Compact "Style selected" confirmation shown above the source actions. */
   function styleBanner() {
     if (!styleChoice) return "";
     return (
       '<div class="sts-stylebar">' +
-      (styleChoice.thumb ? '<img src="' + esc(styleChoice.thumb) + '" alt="' + esc(styleChoice.name) + ' style preview">' : "") +
-      "<div><b>Style Selected: " + esc(styleChoice.name) + "</b>" +
+      (styleChoice.thumb ? '<img src="' + escLocal(styleChoice.thumb) + '" alt="' + escLocal(styleChoice.name) + ' style preview">' : "") +
+      "<div><b>Style Selected: " + escLocal(styleChoice.name) + "</b>" +
       "<span>Add a source below. Nothing generates until you press Generate.</span></div>" +
       '<button type="button" class="sts-link" data-sts="changestyle">Change</button>' +
       "</div>"
