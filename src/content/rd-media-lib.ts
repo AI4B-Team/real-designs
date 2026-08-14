@@ -709,7 +709,7 @@ async function remove(m) {
   await archive([m]);
 }
 
-async function bulk(action) {
+async function bulk(action, anchor) {
   const list = filtered().filter((m) => S.sel.has(m.id));
   if (action === "clear") {
     S.sel.clear();
@@ -722,12 +722,30 @@ async function bulk(action) {
     render();
     return;
   }
+  if (action === "video") return videoFrom(list);
+  if (action === "prop") return S.go("props");
+  if (action === "pres") return S.go("present");
+  if (action === "more")
+    return popMenu(anchor, [
+      { icon: "heart", label: "Favorite", fn: () => bulk("fav") },
+      { icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") },
+      { icon: "wand-2", label: "Use In Studio", fn: () => S.go("studio") },
+    ]);
   if (action === "download") {
     for (const m of list) await download(m);
     return;
   }
   if (action === "archive") await archive(list);
 }
+
+function closeDrawer() {
+  const d = document.getElementById("mlDrawer");
+  if (d) {
+    d.hidden = true;
+    d.innerHTML = "";
+  }
+}
+
 
 /* ---------------- detail drawer ---------------- */
 
