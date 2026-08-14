@@ -165,7 +165,10 @@ function libraryHtml() {
       <h2>REAL REVEAL</h2>
       <p>Create polished videos and marketing content from your properties, photos and designs.</p>
     </div>
-    <button class="btn btn-primary" id="rvNew"><i data-lucide="clapperboard"></i>Create Video</button>
+    <div class="rv-head-a">
+      <button class="btn btn-ghost" id="rvListing"><i data-lucide="building-2"></i>Create A Listing Video</button>
+      <button class="btn btn-primary" id="rvNew"><i data-lucide="clapperboard"></i>Create Video</button>
+    </div>
   </div>
   <div class="rv-bar">
     <div class="rv-chips">${["all", "drafts", "processing", "ready", "shared"]
@@ -1134,6 +1137,7 @@ function bind() {
     const url = await signed(v.output_path);
     if (url) window.open(url, "_blank");
   });
+  on("#rvListing", "click", () => { try { window.rdListingVideo({ from: "video" }); } catch (_) {} });
   on("#rvShare", "click", () => { S.detailTab = "presentation"; render(); });
 
   /* presentation page settings */
@@ -1352,3 +1356,12 @@ export async function mountReveal(go, _opts = {}) {
 }
 
 export default mountReveal;
+
+/** Open one video's detail screen from another module (Listing Video, Media). */
+export async function openVideoDetail(id, tab = "video") {
+  if (S.go) S.go("reveal");
+  if (!S.mounted) await mountReveal(S.go, {});
+  else await loadLibrary();
+  S.detailTab = tab;
+  await openDetail(id);
+}

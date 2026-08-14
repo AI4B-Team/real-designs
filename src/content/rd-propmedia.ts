@@ -661,6 +661,7 @@ function renderBulk() {
     <button class="btn btn-ghost btn-xs" data-b="rec"><i data-lucide="star"></i>Mark Recommended</button>
     <button class="btn btn-ghost btn-xs" data-b="hide"><i data-lucide="eye-off"></i>Hide</button>
     <button class="btn btn-dark btn-xs" data-b="edit"><i data-lucide="wand-2"></i>Apply Edit</button>
+    <button class="btn btn-ghost btn-xs" data-b="lvideo"><i data-lucide="clapperboard"></i>Create Listing Video</button>
     <button class="btn btn-ghost btn-xs" data-b="export"><i data-lucide="download"></i>Export Selected</button>
     <button class="btn btn-ghost btn-xs" data-b="del"><i data-lucide="trash-2"></i>Delete</button>
     <button class="fb-link" data-b="clear">Clear</button>
@@ -681,6 +682,7 @@ function renderBulk() {
       } else if (k === "rec") await patch(ids, { recommended: true });
       else if (k === "hide") await patch(ids, { hidden: true });
       else if (k === "edit") openScope({ ids, label: null, op: null, family: "property" });
+      else if (k === "lvideo") { try { window.rdListingVideo({ propertyId: STATE.propertyId, propertyLabel: STATE.propertyLabel, assets: STATE.assets.filter((a) => ids.includes(a.id)), from: "media" }); } catch (_) {} }
       else if (k === "export") openExport(ids);
       else if (k === "del") {
         if (!confirm(`Delete ${ids.length} photo${ids.length === 1 ? "" : "s"}? Saved versions are removed too.`)) return;
