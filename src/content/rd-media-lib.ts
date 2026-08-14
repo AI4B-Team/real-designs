@@ -749,14 +749,16 @@ function closeDrawer() {
 
 /* ---------------- detail drawer ---------------- */
 
-async function openDetail(m) {
+async function openDetail(m, opts) {
   if (!m) return;
   const d = document.getElementById("mlDrawer");
   if (!d) return;
   const g = typeGroup(m.type);
+  const proc = m.status === "processing" || m.status === "queued";
   const related = S.items.filter((x) => x.id !== m.id && x.property && x.property === m.property).slice(0, 6);
   const url = await resolvePhotoUrl(m.assetPath || m.path);
   const srcUrl = m.sourcePath ? await resolvePhotoUrl(m.sourcePath) : null;
+  const compare = !!(opts && opts.compare && srcUrl);
   d.hidden = false;
   d.innerHTML = `<div class="ml-dr-bg" data-close></div>
   <aside class="ml-dr" role="dialog" aria-label="${esc(m.title)}">
@@ -764,12 +766,25 @@ async function openDetail(m) {
       <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="ml-dr-b">
       <div class="ml-dr-prev">${
-        g === "videos" && m.assetPath && url
-          ? `<video src="${url}" controls playsinline style="width:100%;border-radius:10px"></video>`
-          : url
-            ? `<img src="${url}" alt="${esc(m.title)}">`
-            : `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || STATUS_LABEL[m.status])}</span></div>`
+        compare
+          ? `<div class="ml-cmp"><figure><img src="${srcUrl}" alt="Source photo"><figcaption>Source</figcaption></figure><figure><img src="${url}" alt="${esc(m.title)}"><figcaption>Result</figcaption></figure></div>`
+          : g === "videos" && m.assetPath && url
+            ? `<video src="${url}" controls playsinline style="width:100%;border-radius:10px"></video>`
+            : url
+              ? `<img src="${url}" alt="${esc(m.title)}">`
+              : `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || STATUS_LABEL[m.status])}</span></div>`
       }</div>
+      ${
+        proc
+          ? `<div class="ml-dr-note"><i data-lucide="loader"></i><div><b>${esc(stageLabel(m.stage) || "Processing")}</b>
+              <div class="ml-bar ${m.progress == null ? "ind" : ""}"><i style="width:${m.progress == null ? 40 : m.progress}%"></i></div></div></div>`
+          : ""
+      }
+      ${
+        m.status === "failed"
+          ? `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>Generation Failed</b><span>${esc(m.error || "Something went wrong.")}</span></div></div>`
+          : ""
+      }
       <div class="ml-dr-meta">
         <div><span>Status</span><b>${STATUS_LABEL[m.status] || m.status}</b></div>
         <div><span>Type</span><b>${g === "videos" ? "Listing Video" : g === "images" ? "Generated Image" : "Uploaded File"}</b></div>
@@ -778,11 +793,7 @@ async function openDetail(m) {
         ${m.aspect && g === "videos" ? `<div><span>Format</span><b>${esc(m.aspect)}</b></div>` : ""}
         ${m.versions ? `<div><span>Versions</span><b>${m.versions}</b></div>` : ""}
       </div>
-      ${
-        srcUrl
-          ? `<div class="ml-dr-sec"><b>Source Image</b><img src="${srcUrl}" alt="Source photo"></div>`
-          : ""
-      }
+      ${srcUrl && !compare ? `<div class="ml-dr-sec"><b>Source Image</b><img src="${srcUrl}" alt="Source photo"></div>` : ""}
       ${
         g === "videos" && m.scenes && m.scenes.length
           ? `<div class="ml-dr-sec"><b>Scenes</b><ol class="ml-scenes">${m.scenes
@@ -801,23 +812,46 @@ async function openDetail(m) {
               .join("")}</div></div>`
           : ""
       }
-      <div class="ml-dr-a">
-        <button class="btn btn-primary btn-sm" data-dld><i data-lucide="download"></i>Download</button>
-        ${g === "videos" ? `<button class="btn btn-ghost btn-sm" data-shr><i data-lucide="share-2"></i>Share</button>` : ""}
-        <button class="btn btn-ghost btn-sm" data-arc><i data-lucide="archive"></i>Archive</button>
-      </div>
+      <div class="ml-dr-a">${drawerActions(m, g, proc)}</div>
     </div>
   </aside>`;
   paint();
   hydrateThumbs(d);
-  d.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => { d.hidden = true; d.innerHTML = ""; }));
-  const dl = d.querySelector("[data-dld]");
-  if (dl) dl.onclick = () => download(m);
-  const sh = d.querySelector("[data-shr]");
-  if (sh) sh.onclick = () => { try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {} openVideoDetail(m.refId, "share"); };
-  const ar = d.querySelector("[data-arc]");
-  if (ar) ar.onclick = async () => { d.hidden = true; d.innerHTML = ""; await archive([m]); };
+  d.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => closeDrawer()));
+  const bind = (sel, fn) => { const el = d.querySelector(sel); if (el) el.onclick = fn; };
+  bind("[data-dld]", () => download(m));
+  bind("[data-shr]", () => openVideo(m, "share"));
+  bind("[data-arc]", async () => { closeDrawer(); await archive([m]); });
+  bind("[data-edit-img]", () => { closeDrawer(); editImage(m); });
+  bind("[data-mkvid]", () => { closeDrawer(); videoFrom([m]); });
+  bind("[data-studio]", () => { closeDrawer(); S.go("studio"); });
+  bind("[data-editvid]", () => { closeDrawer(); openVideo(m, "video"); });
+  bind("[data-retry]", () => retry(m));
+  bind("[data-cancel]", () => cancelItem(m));
+  const more = d.querySelector("[data-more-dr]");
+  if (more) more.onclick = (ev) => { ev.stopPropagation(); popMenu(more, moreItems(m)); };
   d.querySelectorAll("[data-rel]").forEach((b) => (b.onclick = () => openDetail(S.items.find((x) => x.id === b.dataset.rel))));
 }
+
+/** Primary actions in the drawer differ by asset type and status. */
+function drawerActions(m, g, proc) {
+  if (m.status === "failed")
+    return `<button class="btn btn-primary btn-sm" data-retry><i data-lucide="rotate-ccw"></i>Retry</button>
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+  if (proc)
+    return `${m.job ? `<button class="btn btn-ghost btn-sm" data-cancel><i data-lucide="x"></i>Cancel</button>` : ""}
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+  if (g === "videos")
+    return `<button class="btn btn-primary btn-sm" data-dld><i data-lucide="download"></i>Download</button>
+      <button class="btn btn-ghost btn-sm" data-editvid><i data-lucide="pencil"></i>Edit Video</button>
+      <button class="btn btn-ghost btn-sm" data-shr><i data-lucide="share-2"></i>Share</button>
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+  return `${canEditImage(m) ? `<button class="btn btn-primary btn-sm" data-edit-img><i data-lucide="sliders-horizontal"></i>Edit Image</button>` : ""}
+    <button class="btn btn-${canEditImage(m) ? "ghost" : "primary"} btn-sm" data-mkvid><i data-lucide="clapperboard"></i>Create Video</button>
+    <button class="btn btn-ghost btn-sm" data-studio><i data-lucide="wand-2"></i>Use In Studio</button>
+    <button class="btn btn-ghost btn-sm" data-dld><i data-lucide="download"></i>Download</button>
+    <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+}
+
 
 export default mountMediaLibrary;
