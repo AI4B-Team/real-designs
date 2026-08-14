@@ -1478,9 +1478,20 @@ export async function mountListingVideo(go, opts = {}) {
 
 /** Entry point used from Studio, Properties, Media, Video and the New Design menu. */
 export async function openListingVideo(seed = {}) {
-  if (S.go) S.go("lvideo");
+  // S.go is only set once the view has mounted, so fall back to the app router.
+  const go = S.go || (typeof window !== "undefined" ? window.__rdGo : null);
+  if (go) {
+    S.go = go;
+    go("lvideo");
+  }
+  try {
+    if (typeof history !== "undefined" && location.pathname === "/app" && location.hash !== "#v-lvideo") {
+      history.replaceState(null, "", "/app#v-lvideo");
+    }
+  } catch (_) {}
   await mountListingVideo(S.go, seed);
   track("listing_video_open", { from: seed.from || "menu" });
 }
+
 
 export default mountListingVideo;

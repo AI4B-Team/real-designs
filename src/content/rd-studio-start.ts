@@ -815,10 +815,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       ctx.track?.("studio_start_video", { from: "studio" });
     } catch (_) {}
     // Unified Create A Listing Video workflow (same one Media and Properties open).
+    const open = (window as any).rdListingVideo;
+    if (typeof open === "function") {
+      open({ from: "studio" });
+      return;
+    }
     try {
-      (window as any).rdListingVideo?.({ from: "studio" });
+      (window as any).__rdGo?.("lvideo");
     } catch (_) {
-      ctx.go("reveal");
+      window.location.href = "/app/media/video/new?source=listing";
     }
   }
 

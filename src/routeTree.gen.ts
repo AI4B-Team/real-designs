@@ -44,6 +44,7 @@ import { Route as PricingCompareRouteImport } from './routes/pricing_.compare'
 import { Route as PricingCreditsRouteImport } from './routes/pricing_.credits'
 import { Route as VSlugRouteImport } from './routes/v.$slug'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
+import { Route as AuthenticatedAppMediaVideoNewRouteImport } from './routes/_authenticated/app_.media.video.new'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -219,6 +220,12 @@ const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
   path: '/api/public/founding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedAppMediaVideoNewRoute =
+  AuthenticatedAppMediaVideoNewRouteImport.update({
+    id: '/app_/media/video/new',
+    path: '/app/media/video/new',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -255,6 +262,7 @@ export interface FileRoutesByFullPath {
   '/v/$slug': typeof VSlugRoute
   '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
+  '/app/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -291,6 +299,7 @@ export interface FileRoutesByTo {
   '/v/$slug': typeof VSlugRoute
   '/free': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
+  '/app/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -329,6 +338,7 @@ export interface FileRoutesById {
   '/v/$slug': typeof VSlugRoute
   '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
+  '/_authenticated/app_/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -367,6 +377,7 @@ export interface FileRouteTypes {
     | '/v/$slug'
     | '/free/'
     | '/api/public/founding'
+    | '/app/media/video/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -403,6 +414,7 @@ export interface FileRouteTypes {
     | '/v/$slug'
     | '/free'
     | '/api/public/founding'
+    | '/app/media/video/new'
   id:
     | '__root__'
     | '/'
@@ -440,6 +452,7 @@ export interface FileRouteTypes {
     | '/v/$slug'
     | '/free/'
     | '/api/public/founding'
+    | '/_authenticated/app_/media/video/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -726,15 +739,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFoundingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/app_/media/video/new': {
+      id: '/_authenticated/app_/media/video/new'
+      path: '/app/media/video/new'
+      fullPath: '/app/media/video/new'
+      preLoaderRoute: typeof AuthenticatedAppMediaVideoNewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedAppMediaVideoNewRoute: typeof AuthenticatedAppMediaVideoNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedAppMediaVideoNewRoute: AuthenticatedAppMediaVideoNewRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
