@@ -64,7 +64,7 @@ const SHELL = `
 
   <section class="xp-quiz" id="xpQuiz" hidden>
     <div class="xp-quiz-top">
-      <div><h3>Find Your Style</h3><p>Five quick picks. Optional, and you can change it later.</p></div>
+      <div><h3>Find Your Style</h3><p>Make 5 quick choices to personalize your recommendations.</p></div>
     </div>
     <div class="xp-quiz-card" id="xpQuizCard"></div>
   </section>
@@ -472,6 +472,7 @@ export function mountExplore(go, ctx) {
     write(LS.saved, saved);
     note(on ? "Removed From Saved Styles" : "Saved To Your Styles");
     paint();
+    if (qState.done) paintQuiz();
     const open = host.querySelector("#xpDPanel [data-save]");
     if (open && !$("xpDrawer").hidden && open.dataset.save === id) {
       open.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Style" : "Saved");
