@@ -725,6 +725,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       state.newAddress = v;
       syncPrimary();
     });
+    bindVal("stsType", (v) => {
+      const t = v as SourceType;
+      state.detected = { sourceType: t, confidence: 1, suggestedWorkflow: WORKFLOW_BY_TYPE[t] };
+      state.pickType = false;
+      applyDetection(t);
+      render();
+    });
+
+
 
     const ta = document.getElementById("stsPrompt") as HTMLTextAreaElement | null;
     if (ta) {
