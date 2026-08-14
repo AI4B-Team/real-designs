@@ -218,7 +218,7 @@ function bind(view) {
     $("mlSelect").classList.toggle("on", S.selMode);
     render();
   };
-  view.querySelectorAll("#mlBulk [data-b]").forEach((b) => (b.onclick = () => bulk(b.dataset.b)));
+  view.querySelectorAll("#mlBulk [data-b]").forEach((b) => (b.onclick = (ev) => { ev.stopPropagation(); bulk(b.dataset.b, b); }));
 }
 
 /** Open the listing-video workflow without leaving a stale sidebar item. */
