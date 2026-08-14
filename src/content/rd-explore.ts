@@ -105,9 +105,10 @@ export function mountExplore(go, ctx) {
   const icons_ = () => { try { createIcons({ icons }); } catch (_) {} };
 
   let cat = "All";
-  let room = null;
+  let rooms = [];
   let traits = [];
-  let grade = null;
+  let grades = [];
+
 
   const prop = () => { try { return (api.curProp && api.curProp()) || null; } catch (_) { return null; } };
   /** Direction name a property is currently locked to, stored as the first DNA line. */
