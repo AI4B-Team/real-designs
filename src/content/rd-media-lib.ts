@@ -114,8 +114,8 @@ function shell() {
     <div class="ml-create">
       <button class="btn btn-primary btn-sm" id="mlCreate" aria-haspopup="true" aria-expanded="false"><i data-lucide="plus"></i>Create Media</button>
       <div class="ml-menu" id="mlMenu" role="menu">
-        <button data-c="image" role="menuitem"><i data-lucide="wand-2"></i>Generate an Image</button>
-        <button data-c="video" role="menuitem"><i data-lucide="clapperboard"></i>Create a Listing Video</button>
+        <button data-c="image" role="menuitem"><i data-lucide="wand-2"></i>Generate An Image</button>
+        <button data-c="video" role="menuitem"><i data-lucide="clapperboard"></i>Create A Listing Video</button>
         <button data-c="upload" role="menuitem"><i data-lucide="upload-cloud"></i>Upload Files</button>
       </div>
     </div>
