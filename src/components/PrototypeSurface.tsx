@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { initTooltips } from "@/lib/tooltips";
 
 type Props = {
   className: string;
@@ -16,7 +17,8 @@ export function PrototypeSurface({ className, html, init }: Props) {
   useEffect(() => {
     if (!ref.current) return;
     const cleanup = init();
-    return cleanup;
+    const stopTips = initTooltips(document);
+    return () => { stopTips(); cleanup(); };
   }, [init]);
 
   return (
