@@ -61,9 +61,9 @@ export async function openPropertyUpload(opts = {}) {
   let rejected = [];
 
   function render() {
-    wrap.innerHTML = `<div class="pmu" role="dialog" aria-label="Upload complete property">
+    wrap.innerHTML = `<div class="pmu" role="dialog" aria-label="Upload property photos">
       <div class="pmu-h">
-        <div><b>Upload Complete Property</b><span>Drop the whole shoot. We organize it by room and angle for you.</span></div>
+        <div><b>Upload Property Photos</b><span>Upload the full photo set for one property. We'll automatically organize the images by room and angle.</span></div>
         <button class="icon-btn" id="pmuClose" aria-label="Close upload"><i data-lucide="x"></i></button>
       </div>
       <div class="pmu-b">
@@ -71,8 +71,8 @@ export async function openPropertyUpload(opts = {}) {
           <div class="pmu-lab">Property</div>
           <div class="pmu-seg" role="group" aria-label="Property choice">
             <button data-m="existing" class="${mode === "existing" ? "on" : ""}" ${props.length ? "" : "disabled"}>Existing Property</button>
-            <button data-m="new" class="${mode === "new" ? "on" : ""}">New Property</button>
-            <button data-m="none" class="${mode === "none" ? "on" : ""}">No Address Yet</button>
+            <button data-m="new" class="${mode === "new" ? "on" : ""}">Create New Property</button>
+            <button data-m="none" class="${mode === "none" ? "on" : ""}">Add Address Later</button>
           </div>
           ${
             mode === "existing"
@@ -98,7 +98,7 @@ export async function openPropertyUpload(opts = {}) {
           </details>
         </div>
         <div class="pmu-col">
-          <div class="pmu-lab">Upload Source</div>
+          <div class="pmu-lab">Choose Photos</div>
           <div class="pmu-src">
             <button class="pmu-s on" id="pmuPick"><i data-lucide="monitor"></i>Computer</button>
             <button class="pmu-s" disabled title="Planned"><i data-lucide="hard-drive"></i>Google Drive<em>Planned</em></button>
@@ -106,13 +106,13 @@ export async function openPropertyUpload(opts = {}) {
           </div>
           <div class="pmu-drop" id="pmuDrop" tabindex="0" role="button" aria-label="Drag photos here or press Enter to browse">
             <i data-lucide="upload-cloud"></i>
-            <b>Drag And Drop Your Photos</b>
-            <span>JPG, JPEG, PNG, HEIC and WEBP up to ${UM.MAX_FILE_MB} MB each. 100 to 300 photos is fine — uploads keep running while you work.</span>
+            <b>Drag and drop the property photos here</b>
+            <span>JPG, JPEG, PNG, HEIC or WEBP &middot; Up to ${UM.MAX_FILE_MB} MB per image</span>
           </div>
           <input type="file" id="pmuFiles" multiple accept="${UM.ACCEPT_ATTR}" hidden>
           <div class="pmu-files" id="pmuList"></div>
           <div class="pmu-act">
-            <button class="btn btn-primary" id="pmuStart" ${files.length ? "" : "disabled"}><i data-lucide="upload"></i>Start Upload${files.length ? ` (${files.length})` : ""}</button>
+            <button class="btn btn-primary" id="pmuStart" ${files.length ? "" : "disabled"}><i data-lucide="upload"></i>Upload Photos${files.length ? ` (${files.length})` : ""}</button>
             <button class="btn btn-ghost" id="pmuCancel">Cancel</button>
           </div>
         </div>
@@ -346,7 +346,7 @@ function shell() {
       </div>
       <div class="pm-head-a">
         <label class="pm-pick"><span class="sr-only">Property</span><select id="pmProp"></select></label>
-        <button class="btn btn-primary btn-xs" id="pmUpload"><i data-lucide="upload-cloud"></i>Upload Complete Property</button>
+        <button class="btn btn-primary btn-xs" id="pmUpload"><i data-lucide="upload-cloud"></i>Upload Property Photos</button>
       </div>
     </div>
     <div class="card-b">
@@ -587,7 +587,7 @@ async function renderGrid() {
     el.innerHTML = `<div class="pm-empty">
       <b>${STATE.assets.length ? "Nothing In This Tab" : "No Property Media Yet"}</b>
       <span>${STATE.assets.length ? "Try another tab or clear the room filter." : "Upload a complete property shoot and we will organize it by room and angle."}</span>
-      <button class="btn btn-primary btn-xs" id="pmEmptyUp"><i data-lucide="upload-cloud"></i>Upload Complete Property</button>
+      <button class="btn btn-primary btn-xs" id="pmEmptyUp"><i data-lucide="upload-cloud"></i>Upload Property Photos</button>
     </div>`;
     paint();
     const b = el.querySelector("#pmEmptyUp");
