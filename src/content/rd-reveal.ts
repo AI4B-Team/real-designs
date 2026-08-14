@@ -1709,7 +1709,8 @@ export async function continueDesignVideo(id) {
 let dvActive = false;
 function closeIntroNow() {
   const w = document.getElementById("rvIntroWrap");
-  if (w) { w.className = "rv-modal"; w.innerHTML = ""; }
+  if (w && w.parentNode) w.parentNode.removeChild(w);
+  try { localStorage.setItem("rd_reveal_intro", "1"); } catch (_) {}
 }
 
 function maybeIntro() {
