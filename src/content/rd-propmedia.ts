@@ -95,7 +95,7 @@ export async function openPropertyUpload(opts = {}) {
               <label>Square Footage<span class="pmu-info" data-tip="Total Living Area In Square Feet — improves cost and material estimates."><i data-lucide="info"></i></span><input id="pmuSqft" type="number" min="0" placeholder="1850"></label>
               <label>Project Purpose<select id="pmuPurpose"><option>Listing Media</option><option>Pre Listing Prep</option><option>Renovation Planning</option><option>Investor Analysis</option><option>Client Presentation</option></select></label>
               <label>Agent, Photographer Or Client<span class="pmu-info" data-tip="Who Is This For — the agent, photographer or client this photo set belongs to. Shown on presentations and exports."><i data-lucide="info"></i></span><input id="pmuWho" placeholder="Who Is This For"></label>
-              <label class="pmu-wide">Internal Notes<textarea id="pmuNotes" rows="2"></textarea></label>
+              <label class="pmu-wide">Internal Notes<span class="pmu-info" data-tip="Private Notes — only visible to your workspace, never shown to clients."><i data-lucide="info"></i></span><textarea id="pmuNotes" rows="2" placeholder="Anything your team should know about this shoot — access details, priority rooms, deadlines"></textarea></label>
             </div>
           </details>
         </div>
