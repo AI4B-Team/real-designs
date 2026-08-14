@@ -11,6 +11,12 @@
  */
 
 import { renderConcept } from "@/lib/concept-render.functions";
+import {
+  detectSource,
+  SOURCE_LABELS,
+  type SourceDetection,
+  type SourceType,
+} from "@/lib/source-detect.functions";
 
 type Method = "upload" | "describe" | "property";
 
