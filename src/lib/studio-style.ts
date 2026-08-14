@@ -36,7 +36,7 @@ function build(rec: StyleRecord): StudioStyleChoice {
     thumb: rec.previewImage || "",
     spaces: (rec.compatibleProjectTypes || []).slice(),
     palette: (rec.swatches || []).slice(0, 5),
-    payload: buildStylePayload({ style: rec.id, projectType: rec.compatibleProjectTypes[0] }),
+    payload: buildStylePayload({ style: rec.id, projectType: rec.compatibleProjectTypes[0] || "interior" }),
     ts: Date.now(),
   };
 }
