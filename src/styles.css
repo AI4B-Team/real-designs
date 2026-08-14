@@ -232,7 +232,7 @@ html:not(.dark) select, html:not(.dark) option, html:not(.dark) optgroup { color
 /* Small inline help icon next to labels and section titles */
 .lbl-i {
   display: inline-flex; width: 13px; height: 13px; margin-left: 5px;
-  vertical-align: -1px; color: rgba(20,17,15,.42); cursor: help; flex: none;
+  vertical-align: -1px; color: rgba(20,17,15,.42); cursor: help; flex: none; min-width: 13px; min-height: 13px;
 }
 .lbl-i:hover { color: #CC0000; }
 .dark .lbl-i { color: rgba(255,255,255,.5); }
