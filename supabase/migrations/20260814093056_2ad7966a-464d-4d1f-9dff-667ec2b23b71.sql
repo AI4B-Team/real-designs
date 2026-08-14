@@ -1,0 +1,12 @@
+DROP POLICY IF EXISTS "markets_read" ON public.markets;
+DROP POLICY IF EXISTS "unit_costs_read" ON public.unit_costs;
+DROP POLICY IF EXISTS "cost_mappings_read" ON public.cost_mappings;
+DROP POLICY IF EXISTS "Signed-in users can read markets" ON public.markets;
+DROP POLICY IF EXISTS "Signed-in users can read unit costs" ON public.unit_costs;
+DROP POLICY IF EXISTS "Signed-in users can read cost mappings" ON public.cost_mappings;
+REVOKE ALL ON public.markets FROM anon, authenticated;
+REVOKE ALL ON public.unit_costs FROM anon, authenticated;
+REVOKE ALL ON public.cost_mappings FROM anon, authenticated;
+GRANT ALL ON public.markets TO service_role;
+GRANT ALL ON public.unit_costs TO service_role;
+GRANT ALL ON public.cost_mappings TO service_role;
