@@ -31,6 +31,12 @@ export type StudioStartCtx = {
   /** Applies a chosen property/project context to the Studio header. */
   setContext: (ctx: { address?: string | null; project?: string | null; room?: string | null }) => void;
   showAlert: (msg: string) => void;
+  /** Recent designs for the "Continue Where You Left Off" strip. */
+  getRecent?: () => Array<{ id: string; name: string; sub: string; status: string; path: string }>;
+  /** Opens a recent design in the Studio editor. */
+  openRecent?: (id: string) => void;
+  /** Resolves a stored photo path into a displayable URL. */
+  resolvePhoto?: (path: string) => Promise<string | null>;
   fileToDataUrl: (file: File) => Promise<string>;
 };
 
