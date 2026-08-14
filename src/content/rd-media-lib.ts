@@ -221,13 +221,18 @@ function bind(view) {
   view.querySelectorAll("#mlBulk [data-b]").forEach((b) => (b.onclick = (ev) => { ev.stopPropagation(); bulk(b.dataset.b, b); }));
 }
 
-/** Open the listing-video workflow without leaving a stale sidebar item. */
+/** Open the canonical listing-video workflow (same one Studio and Properties open). */
 export function openVideoWorkflow(seed = {}) {
+  const open = (window as any).rdListingVideo;
+  if (typeof open === "function") {
+    open({ from: "media", ...seed });
+    return;
+  }
   try {
-    (window as any).__rdAllowReveal && (window as any).__rdAllowReveal();
+    (window as any).__rdGo && (window as any).__rdGo("lvideo");
   } catch (_) {}
-  createVideoFrom(seed);
 }
+
 
 async function load(quiet) {
   if (!quiet) {
