@@ -23,7 +23,24 @@ const paint = () => {
   try {
     createIcons({ icons });
   } catch (_) {}
+  resolveImgs();
 };
+
+/** Stored photo paths resolve asynchronously; fill them in after render. */
+async function resolveImgs(root) {
+  const scope = root || document;
+  const list = Array.from(scope.querySelectorAll("img[data-ph]"));
+  await Promise.all(
+    list.map(async (img) => {
+      const path = img.getAttribute("data-ph");
+      img.removeAttribute("data-ph");
+      try {
+        const u = await resolvePhotoUrl(path);
+        if (u) img.src = u;
+      } catch (_) {}
+    }),
+  );
+}
 const toast = (m) => {
   try {
     window.rdToast ? window.rdToast(m) : console.log(m);
@@ -288,11 +305,11 @@ function step2() {
         ? list
             .map((it) => {
               const on = !!d.picked[it.id];
-              const thumb = it.url && it.kind !== "budget" && it.kind !== "video" ? resolvePhotoUrl(it.url) : null;
+              const thumb = it.url && it.kind !== "budget" && it.kind !== "video" ? it.url : null;
               return `<button class="pp-item${on ? " on" : ""}" data-pick="${it.id}" data-src="${tab}">
           <span class="pp-thumb">${
             thumb
-              ? `<img src="${esc(thumb)}" alt="${esc(it.title)}" loading="lazy">`
+              ? `<img data-ph="${esc(thumb)}" alt="${esc(it.title)}" loading="lazy">`
               : `<i data-lucide="${it.kind === "video" ? "clapperboard" : it.kind === "budget" ? "calculator" : "image"}"></i>`
           }${on ? `<em><i data-lucide="check"></i></em>` : ""}</span>
           <b>${esc(it.title)}</b><span>${esc(it.caption || "")}</span>
@@ -604,6 +621,12 @@ async function exportPdf(id) {
     return;
   }
   const pk = p.package;
+  const urls = {};
+  await Promise.all(
+    p.assets.map(async (a) => {
+      if (a.url) urls[a.url] = (await resolvePhotoUrl(a.url)) || "";
+    }),
+  );
   const secs = (p.sections || []).filter((s) => !s.hidden);
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(pk.title)}</title>
   <style>
@@ -634,7 +657,7 @@ async function exportPdf(id) {
           : `<div class="g">${list
               .map(
                 (a) =>
-                  `<figure>${a.url ? `<img src="${esc(resolvePhotoUrl(a.url))}">` : ""}<figcaption>${esc(a.title || "")}</figcaption></figure>`,
+                  `<figure>${a.url && urls[a.url] ? `<img src="${esc(urls[a.url])}">` : ""}<figcaption>${esc(a.title || "")}</figcaption></figure>`,
               )
               .join("")}</div>`;
       return `<h2>${esc(s.title)}</h2>${body}`;
