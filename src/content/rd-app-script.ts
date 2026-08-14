@@ -1363,6 +1363,7 @@ function paintDesigns(){
     const d=list.find(x=>x.id===b.getAttribute('data-del'));
     if(d) removeDesigns([d]);
   }));
+  const toast=(m)=>{ try{ (window as any).rdToast ? (window as any).rdToast(m) : ((window as any).__rdToast && (window as any).__rdToast(m)); }catch(_){ } };
   g.querySelectorAll('[data-vid]').forEach(b=>b.addEventListener('click',async(e)=>{
     e.preventDefault(); e.stopPropagation();
     const id=b.getAttribute('data-vid');
@@ -1372,7 +1373,7 @@ function paintDesigns(){
     if(b.dataset.busy==='1') return;
     b.dataset.busy='1'; b.classList.add('is-busy'); b.setAttribute('aria-busy','true');
     const old=b.innerHTML; b.innerHTML='<i data-lucide="loader-2" class="spin"></i>';
-    try{ paintIcons(); }catch(_){}
+    try{ lucide.createIcons(); }catch(_){}
     try{
       await startDesignVideo(d);
     }catch(err){
