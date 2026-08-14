@@ -707,9 +707,9 @@ async function generate() {
 
 const STAGES = ["Preparing scenes", "Creating motion", "Building transitions", "Adding audio and captions", "Applying branding", "Finalizing formats"];
 
-async function renderAllVariants(projectId, variants, cfg) {
+async function renderAllVariants(projectId, variants, cfg, perOverride) {
   const w = cfg;
-  const per = sceneDurations(w.scenes.length, w.length);
+  const per = perOverride || sceneDurations(w.scenes.length, w.length);
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
   const urls = [];
   for (const s of w.scenes) {
