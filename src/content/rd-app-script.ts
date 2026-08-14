@@ -1244,8 +1244,8 @@ ${d.sample?'<span class="pill dg-sample">Sample</span>':''}</div>
 <div class="dg-acts">${d.sample
   ? `<button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Try This Style</button>`
   : `<button class="btn btn-ghost btn-xs" style="flex:1" data-open="${d.id}">Open</button>
-<button class="btn btn-ghost btn-xs" data-hist="${d.id}" title="Version history"><i data-lucide="history"></i></button>`}
-<button class="btn btn-ghost btn-xs" data-shop="${d.id}" title="Shop this design"><i data-lucide="shopping-bag"></i></button><button class="btn btn-ghost btn-xs" data-vid="${d.id}" title="Create Video"><i data-lucide="clapperboard"></i></button><button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download image"><i data-lucide="download"></i></button></div></div></div>`;
+<button class="btn btn-ghost btn-xs" data-hist="${d.id}" title="Version History"><i data-lucide="history"></i></button>`}
+<button class="btn btn-ghost btn-xs" data-shop="${d.id}" title="Shop This Design"><i data-lucide="shopping-bag"></i></button><button class="btn btn-ghost btn-xs" data-vid="${d.id}" title="Create Video"><i data-lucide="clapperboard"></i></button><button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download Image"><i data-lucide="download"></i></button></div></div></div>`;
 }
 
 function paintDesignChrome(){
