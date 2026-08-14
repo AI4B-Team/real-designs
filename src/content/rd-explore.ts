@@ -44,16 +44,16 @@ const SHELL = `
   <header class="xp-head">
     <div class="xp-head-t">
       <h2>Explore</h2>
-      <p>Find a direction, preview it across spaces and apply it to your design.</p>
+      <p>Find a style, preview it across spaces and apply it to your design.</p>
     </div>
     <div class="xp-head-a">
       <span class="xp-prop" id="xpProp" hidden></span>
-      <button class="btn btn-ghost btn-sm" id="xpSavedBtn"><i data-lucide="bookmark"></i>Saved Directions<span class="xp-cnt" id="xpSavedCnt">0</span></button>
+      <button class="btn btn-ghost btn-sm" id="xpSavedBtn"><i data-lucide="bookmark"></i>Saved Styles<span class="xp-cnt" id="xpSavedCnt">0</span></button>
     </div>
   </header>
 
   <div class="xp-bar">
-    <div class="xp-search"><i data-lucide="search"></i><input id="xpQ" type="text" placeholder="Search directions, materials or rooms"></div>
+    <div class="xp-search"><i data-lucide="search"></i><input id="xpQ" type="text" placeholder="Search styles, materials or rooms"></div>
     <button class="btn btn-ghost btn-sm xp-filter-btn" id="xpFilterBtn" aria-haspopup="dialog"><i data-lucide="sliders-horizontal"></i>Filter<span class="xp-cnt" id="xpFilterCnt" hidden>0</span></button>
   </div>
 
@@ -64,7 +64,7 @@ const SHELL = `
 
   <section class="xp-quiz" id="xpQuiz" hidden>
     <div class="xp-quiz-top">
-      <div><h3>Find Your Design Direction</h3><p>Five quick picks. Optional, and you can change it later.</p></div>
+      <div><h3>Find Your Style</h3><p>Five quick picks. Optional, and you can change it later.</p></div>
     </div>
     <div class="xp-quiz-card" id="xpQuizCard"></div>
   </section>
@@ -159,8 +159,8 @@ export function mountExplore(go, ctx) {
     const on = saved.indexOf(d.id) > -1;
     const tags = d.spaces.map(spaceLabel).concat(d.staging ? ["Virtual Staging"] : []);
     return `<article class="xp-card" data-d="${d.id}">
-      <div class="xp-img"><img src="${d.img}" alt="${esc(d.name)} design direction" loading="lazy">
-        <button class="xp-save${on ? " on" : ""}" data-save="${d.id}" aria-label="Save Direction" title="Save Direction"><i data-lucide="bookmark"></i></button>
+      <div class="xp-img"><img src="${d.img}" alt="${esc(d.name)} design style" loading="lazy">
+        <button class="xp-save${on ? " on" : ""}" data-save="${d.id}" aria-label="Save Style" title="Save Style"><i data-lucide="bookmark"></i></button>
       </div>
       <div class="xp-body">
         <div class="xp-t"><b>${esc(gtxt(d.name))}</b></div>
@@ -169,7 +169,7 @@ export function mountExplore(go, ctx) {
         <div class="xp-meta">${tags.map((s) => `<span class="xp-tag">${esc(s)}</span>`).join("")}</div>
         <div class="xp-acts">
           <button class="btn btn-ghost btn-xs" data-open="${d.id}">Preview</button>
-          <button class="btn btn-primary btn-xs" data-use="${d.id}">Use This Direction</button>
+          <button class="btn btn-primary btn-xs" data-use="${d.id}">Use This Style</button>
         </div>
       </div>
     </article>`;
@@ -187,10 +187,10 @@ export function mountExplore(go, ctx) {
       ? act.map(([k, v]) => `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`).join("") +
         '<button class="xp-aclear" id="xpClear">Clear All</button>'
       : "";
-    $("xpCount").textContent = list.length + " Of " + DIRECTIONS.length + " Directions";
+    $("xpCount").textContent = list.length + " Of " + DIRECTIONS.length + " Styles";
     $("xpGrid").innerHTML = list.length
       ? list.map(card).join("")
-      : `<div class="xp-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>Try removing a filter, or start in Studio and describe the direction you want.</p><button class="btn btn-primary btn-sm" id="xpCustom">Start In Studio</button></div>`;
+      : `<div class="xp-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>Try removing a filter, or start in Studio and describe the style you want.</p><button class="btn btn-primary btn-sm" id="xpCustom">Start In Studio</button></div>`;
     $("xpSavedCnt").textContent = saved.length;
     syncFilterDrawer();
     icons_();
@@ -258,12 +258,12 @@ export function mountExplore(go, ctx) {
 
   function compatLine(d) {
     const p = prop();
-    if (!p) return '<div class="xp-note"><i data-lucide="info"></i><span>Choose a direction now. You can apply it to a property when you are ready.</span></div>';
+    if (!p) return '<div class="xp-note"><i data-lucide="info"></i><span>Choose a style now. You can apply it to a property when you are ready.</span></div>';
     const cur = propDirection();
     if (cur && cur !== d.name) {
       return `<div class="xp-note warn"><i data-lucide="dna"></i><span>This property currently uses <b>${esc(cur)}</b>. Replacing the Design DNA changes the rules every room follows.</span></div>`;
     }
-    if (cur === d.name) return `<div class="xp-note ok"><i data-lucide="check"></i><span>${esc(p.address)} already uses this direction as its Design DNA.</span></div>`;
+    if (cur === d.name) return `<div class="xp-note ok"><i data-lucide="check"></i><span>${esc(p.address)} already uses this style as its Design DNA.</span></div>`;
     return `<div class="xp-note"><i data-lucide="map-pin"></i><span>Previewing For ${esc(p.address)}. No Design DNA locked yet.</span></div>`;
   }
 
@@ -275,7 +275,7 @@ export function mountExplore(go, ctx) {
     const p = prop();
     const locked = !!propDirection() && propDirection() !== d.name;
     openDrawer(`
-      <div class="xp-dh"><div><span class="xp-eyebrow">Design Direction</span><h3>${esc(gtxt(d.name))}</h3><p>${esc(gtxt(d.line))}</p></div>
+      <div class="xp-dh"><div><span class="xp-eyebrow">Design Style</span><h3>${esc(gtxt(d.name))}</h3><p>${esc(gtxt(d.line))}</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
         <div class="xp-hero"><img src="${shots[0]}" alt="${esc(d.name)}" id="xpHero"></div>
@@ -291,7 +291,7 @@ export function mountExplore(go, ctx) {
       <div class="xp-df">
         <button class="btn btn-primary btn-sm" data-use="${d.id}"><i data-lucide="wand-2"></i>Apply To Current Design</button>
         <button class="btn btn-ghost btn-sm" data-dna="${d.id}"><i data-lucide="dna"></i>${locked ? "Replace Property DNA" : "Set As Property Design DNA"}</button>
-        <button class="btn btn-ghost btn-sm" data-save="${d.id}"><i data-lucide="bookmark"></i>${saved.indexOf(d.id) > -1 ? "Saved" : "Save Direction"}</button>
+        <button class="btn btn-ghost btn-sm" data-save="${d.id}"><i data-lucide="bookmark"></i>${saved.indexOf(d.id) > -1 ? "Saved" : "Save Style"}</button>
       </div>`);
     if (!p) { /* no property: DNA action still shown, guarded on click */ }
   }
@@ -299,11 +299,11 @@ export function mountExplore(go, ctx) {
   function savedDrawer() {
     const items = saved.map(dir).filter(Boolean);
     openDrawer(`
-      <div class="xp-dh"><div><span class="xp-eyebrow">Collection</span><h3>Saved Directions</h3><p>Directions you kept for later. Generated results stay in Designs.</p></div>
+      <div class="xp-dh"><div><span class="xp-eyebrow">Collection</span><h3>Saved Styles</h3><p>Styles you kept for later. Generated results stay in Designs.</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
         ${items.length ? `<div class="xp-saved">${items.map((d) => `<div class="xp-sitem"><img src="${d.img}" alt="${esc(d.name)}"><div><b>${esc(gtxt(d.name))}</b><span>${esc(gtxt(d.line))}</span></div><button class="fb-link" data-open="${d.id}">Preview</button><button class="fb-link" data-save="${d.id}">Remove</button></div>`).join("")}</div>`
-        : '<div class="xp-note"><i data-lucide="bookmark"></i><span>Nothing saved yet. Use Save Direction on any preview.</span></div>'}
+        : '<div class="xp-note"><i data-lucide="bookmark"></i><span>Nothing saved yet. Use Save Style on any preview.</span></div>'}
       </div>
       <div class="xp-df"><button class="btn btn-ghost btn-sm" data-close="1">Close</button></div>`);
   }
@@ -400,9 +400,9 @@ export function mountExplore(go, ctx) {
     if (done && qStep === 0 && !qPicks.length) {
       const d = dir(done);
       if (d) {
-        card.innerHTML = `<div class="xp-quiz-head"><b>Your Direction: ${esc(gtxt(d.name))}</b><span class="xp-quiz-step">Result</span></div>
+        card.innerHTML = `<div class="xp-quiz-head"><b>Your Style: ${esc(gtxt(d.name))}</b><span class="xp-quiz-step">Result</span></div>
           <div class="xp-quiz-res"><img src="${d.img}" alt="${esc(gtxt(d.name))}"><p>${esc(gtxt(d.line))}</p></div>
-          <div class="xp-quiz-foot"><button class="btn btn-primary btn-xs" data-open="${d.id}">Preview Direction</button><button class="fb-link" data-qretake="1">Retake</button></div>`;
+          <div class="xp-quiz-foot"><button class="btn btn-primary btn-xs" data-open="${d.id}">Preview Style</button><button class="fb-link" data-qretake="1">Retake</button></div>`;
         icons_();
         return;
       }
@@ -425,18 +425,18 @@ export function mountExplore(go, ctx) {
     qStep = 0; qPicks = [];
     paintQuiz();
     const d = dir(win);
-    if (d) note("Your Direction: " + gtxt(d.name));
+    if (d) note("Your Style: " + gtxt(d.name));
   }
 
   function toggleSave(id) {
     const on = saved.indexOf(id) > -1;
     saved = on ? saved.filter((x) => x !== id) : [id].concat(saved);
     write(LS.saved, saved);
-    note(on ? "Removed From Saved Directions" : "Saved To Your Directions");
+    note(on ? "Removed From Saved Styles" : "Saved To Your Styles");
     paint();
     const open = host.querySelector("#xpDPanel [data-save]");
     if (open && !$("xpDrawer").hidden && open.dataset.save === id) {
-      open.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Direction" : "Saved");
+      open.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Style" : "Saved");
       icons_();
     }
   }

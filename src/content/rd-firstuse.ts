@@ -259,7 +259,7 @@ export function mountFirstUse(ctx: Ctx) {
 
   /* ---------- renderers ---------- */
   function railHtml(active: number) {
-    const steps = ["Source", "Goal", "Direction", "Generate"];
+    const steps = ["Source", "Goal", "Style", "Generate"];
     return (
       '<ol class="fu-rail" aria-label="First design progress">' +
       steps
@@ -339,7 +339,7 @@ export function mountFirstUse(ctx: Ctx) {
       );
 
       blocks.push(
-        '<section class="fu-step" aria-labelledby="fuDirH"><h3 id="fuDirH">Choose A Direction</h3><div class="fu-opts">' +
+        '<section class="fu-step" aria-labelledby="fuDirH"><h3 id="fuDirH">Choose A Style</h3><div class="fu-opts">' +
           ["Warm Minimal", "Modern Farmhouse", "Coastal", "Transitional", "Investor Neutral"]
             .map(
               (d) =>
@@ -347,7 +347,7 @@ export function mountFirstUse(ctx: Ctx) {
             )
             .join("") +
           '</div><div class="fu-subacts">' +
-          '<button class="fu-link" data-fu-act="browse">Browse Directions</button>' +
+          '<button class="fu-link" data-fu-act="browse">Browse Styles</button>' +
           '<button class="fu-link" data-fu-act="recommend">Let AI Recommend</button>' +
           '<button class="fu-link" data-fu-act="nodir">Continue Without Choosing</button></div></section>',
       );
@@ -374,7 +374,7 @@ export function mountFirstUse(ctx: Ctx) {
         ["Goal", GOALS.find((g) => g.key === goal)?.label || "\u2014"],
         ["Space Type", state.space === "landscape" ? "Garden" : state.space === "exterior" ? "Exterior" : "Interior"],
         ["Room", state.room],
-        ["Design Direction", state.direction || "Not Chosen"],
+        ["Design Style", state.direction || "Not Chosen"],
         ["Reality Lock", LOCK_LEVELS.find((l) => l.key === state.lock)?.label || "Default"],
         ["Budget", state.budget && state.budget !== "later" ? state.budget : "Decide Later"],
       ];

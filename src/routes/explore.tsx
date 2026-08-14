@@ -93,8 +93,8 @@ function ExplorePage() {
 
       <main>
         <section className="dir-wrap dir-intro">
-          <span className="eyebrow">Design Direction Library</span>
-          <h1>Find The Direction That Feels Like You.</h1>
+          <span className="eyebrow">Design Style Library</span>
+          <h1>Find The Style That Feels Like You.</h1>
           <p>
             Explore curated directions for interiors, exteriors and landscapes.
             <br />
@@ -114,7 +114,7 @@ function ExplorePage() {
             <div className="dir-frow">
               <label className="dir-search">
                 <Search size={16} strokeWidth={1.9} aria-hidden="true" />
-                <span className="sr-only">Search Directions</span>
+                <span className="sr-only">Search Styles</span>
                 <input
                   type="search"
                   value={q}
@@ -182,14 +182,14 @@ function ExplorePage() {
 
         <div className="dir-wrap">
           <p className="dir-count">
-            {filtered.length} Of {DIRECTIONS.length} Directions
+            {filtered.length} Of {DIRECTIONS.length} Styles
           </p>
 
           <div className="dir-grid">
             {filtered.map((d, i) => (
               <article className="dir-card" key={d.id}>
                 <div className="dir-img">
-                  <img src={d.img} alt={`${d.name} design direction example`} loading="lazy" />
+                  <img src={d.img} alt={`${d.name} design style example`} loading="lazy" />
                 </div>
                 <div className="dir-body">
                   <div className="dir-name">
@@ -211,10 +211,10 @@ function ExplorePage() {
                   </div>
                   <div className="dir-acts">
                     <button type="button" className="btn btn-ghost btn-sm" onClick={() => preview(d)}>
-                      Preview Direction
+                      Preview Style
                     </button>
                     <a className="btn btn-primary btn-sm" href={builderHref(d)}>
-                      Use This Direction
+                      Use This Style
                     </a>
                   </div>
                 </div>
@@ -225,7 +225,7 @@ function ExplorePage() {
               <div className="dir-empty">
                 <b>No Exact Matches Yet.</b>
                 <p>
-                  Try removing a filter, or upload your space and describe the direction you want.
+                  Try removing a filter, or upload your space and describe the style you want.
                 </p>
                 <a href="/#builder" className="btn btn-primary btn-sm">
                   Start A Custom Design
@@ -322,7 +322,7 @@ function ExplorePage() {
                 Keep Browsing
               </button>
               <a className="btn btn-primary" href={builderHref(open)}>
-                Use This Direction
+                Use This Style
               </a>
             </div>
           </aside>
