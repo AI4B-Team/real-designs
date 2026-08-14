@@ -103,11 +103,12 @@ let S = {
   shares: [],
   tree: [],
   kits: [],
-  screen: "library", // library | wizard | detail
+  screen: "library", // library | wizard | design | detail
   detailId: null,
   detailTab: "video",
   detail: null,
   wizard: null,
+  dv: null,
 };
 
 function host() {
