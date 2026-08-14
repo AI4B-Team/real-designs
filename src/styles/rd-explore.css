@@ -151,6 +151,21 @@
 .rd-app .xp-quiz-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .rd-app .xp-quiz-opt{display:flex;flex-direction:column;text-align:left;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--white);transition:.15s}
 .rd-app .xp-quiz-opt:hover{border-color:var(--red);box-shadow:var(--sh)}
+.rd-app .xp-quiz-opt.on{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
+.rd-app .xp-quiz-prog{height:3px;border-radius:2px;background:var(--line);overflow:hidden}
+.rd-app .xp-quiz-prog span{display:block;height:100%;background:var(--red);transition:width .25s ease}
+.rd-app .xp-quiz-nav{display:flex;align-items:center;gap:14px}
+.rd-app .xp-quiz-nav .fb-link{display:inline-flex;align-items:center;gap:4px}
+.rd-app .xp-quiz-nav .fb-link i{width:14px;height:14px}
+.rd-app .xp-quiz-res-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.rd-app .xp-quiz-res-card{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--white);display:flex;flex-direction:column}
+.rd-app .xp-quiz-res-card img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
+.rd-app .xp-quiz-res-body{padding:10px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.rd-app .xp-quiz-res-body b{font-size:.92rem}
+.rd-app .xp-quiz-res-body p{font-size:.78rem;color:var(--mute);line-height:1.45}
+.rd-app .xp-quiz-badge{align-self:flex-start;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;font-family:"DM Mono",ui-monospace,monospace;color:var(--red);border:1px solid var(--red);border-radius:4px;padding:2px 6px}
+.rd-app .xp-quiz-res-act{margin-top:auto;display:flex;gap:8px;flex-wrap:wrap;padding-top:8px}
+@media(max-width:900px){.rd-app .xp-quiz-res-grid{grid-template-columns:1fr}}
 .rd-app .xp-quiz-opt img{width:100%;aspect-ratio:16/10;object-fit:cover;display:block}
 .rd-app .xp-quiz-opt span{padding:10px 12px;font-size:.86rem;font-weight:700;color:var(--ink)}
 .rd-app .xp-quiz-res{display:flex;gap:12px;align-items:center}

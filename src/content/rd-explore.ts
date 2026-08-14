@@ -64,7 +64,7 @@ const SHELL = `
 
   <section class="xp-quiz" id="xpQuiz" hidden>
     <div class="xp-quiz-top">
-      <div><h3>Find Your Style</h3><p>Five quick picks. Optional, and you can change it later.</p></div>
+      <div><h3>Find Your Style</h3><p>Make 5 quick choices to personalize your recommendations.</p></div>
     </div>
     <div class="xp-quiz-card" id="xpQuizCard"></div>
   </section>
@@ -379,54 +379,92 @@ export function mountExplore(go, ctx) {
       </div>`);
   }
 
-  /* ---------- quick-pick quiz ---------- */
+  /* ---------- style match quiz — five sequential pairwise choices ---------- */
   const QUIZ = [
-    { q: "Which Living Room Feels Right?", a: ["warm-minimal", "mid-century"] },
-    { q: "Which Kitchen Would You Live In?", a: ["modern-farmhouse", "contemporary"] },
-    { q: "Which Palette Reads Best To You?", a: ["japandi", "industrial"] },
-    { q: "Which Bedroom Feels Like Home?", a: ["quiet-luxury", "scandinavian"] },
-    { q: "Which Exterior Do You Prefer?", a: ["craftsman-revival", "coastal"] },
+    { a: "warm-minimal", b: "mid-century" },
+    { a: "organic-modern", b: "modern-farmhouse" },
+    { a: "quiet-luxury", b: "industrial" },
+    { a: "japandi", b: "coastal" },
+    { a: "transitional", b: "contemporary" },
   ];
-  let qStep = 0;
-  let qPicks = [];
-  const quizDone = () => read("rd_ex_quiz", null);
+  const QKEY = "rd_ex_quiz_state";
+  const MATCH_LABEL = ["Best Match", "Strong Match", "Also Recommended"];
+  let qState = read(QKEY, null) || { step: 0, picks: [], done: false };
+  if (!Array.isArray(qState.picks)) qState = { step: 0, picks: [], done: false };
+  let qBusy = false;
+  const qSave = () => write(QKEY, qState);
+
+  // Stable per-question left/right flip so images don't jump on repaint.
+  const qFlip = QUIZ.map((_, i) => (i * 7 + 3) % 2 === 1);
+  function qPair(i) { const s = QUIZ[i]; return qFlip[i] ? [s.b, s.a] : [s.a, s.b]; }
+
+  function qResults() {
+    const picked = qState.picks.filter(Boolean);
+    const tally = {};
+    picked.forEach((x) => (tally[x] = (tally[x] || 0) + 1));
+    const ranked = Object.keys(tally).sort((a, b) => tally[b] - tally[a]);
+    // Fill up to three with unseen styles related to the picks.
+    DIRECTIONS.forEach((d) => { if (ranked.length < 3 && ranked.indexOf(d.id) < 0 && picked.length) ranked.push(d.id); });
+    return ranked.slice(0, 3).map(dir).filter(Boolean);
+  }
 
   function paintQuiz() {
     const wrap = $("xpQuiz");
     const card = $("xpQuizCard");
     if (!wrap || !card) return;
-    const done = quizDone();
     wrap.hidden = false;
-    if (done && qStep === 0 && !qPicks.length) {
-      const d = dir(done);
-      if (d) {
-        card.innerHTML = `<div class="xp-quiz-head"><b>Your Style: ${esc(gtxt(d.name))}</b><span class="xp-quiz-step">Result</span></div>
-          <div class="xp-quiz-res"><img src="${d.img}" alt="${esc(gtxt(d.name))}"><p>${esc(gtxt(d.line))}</p></div>
-          <div class="xp-quiz-foot"><button class="btn btn-primary btn-xs" data-open="${d.id}">Preview Style</button><button class="fb-link" data-qretake="1">Retake</button></div>`;
-        icons_();
-        return;
-      }
+
+    if (qState.done) {
+      const res = qResults();
+      card.innerHTML = `<div class="xp-quiz-head"><b>Your Style Matches</b></div>
+        <div class="xp-quiz-res-grid">${res.map((d, i) => `
+          <div class="xp-quiz-res-card">
+            <img src="${d.img}" alt="${esc(gtxt(d.name))}" loading="lazy">
+            <div class="xp-quiz-res-body">
+              <span class="xp-quiz-badge">${MATCH_LABEL[i] || "Also Recommended"}</span>
+              <b>${esc(gtxt(d.name))}</b>
+              <p>${esc(gtxt(d.line))}</p>
+              <div class="xp-quiz-res-act">
+                <button class="btn btn-primary btn-xs" data-use="${d.id}">Try This Style</button>
+                <button class="btn btn-ghost btn-xs" data-save="${d.id}"><i data-lucide="bookmark"></i>${saved.indexOf(d.id) > -1 ? "Saved" : "Save Style"}</button>
+              </div>
+            </div>
+          </div>`).join("")}</div>
+        <div class="xp-quiz-foot"><button class="fb-link" data-qretake="1">Retake</button><button class="btn btn-ghost btn-xs" data-qbrowse="1">Browse All Styles</button></div>`;
+      icons_();
+      return;
     }
-    const step = QUIZ[qStep];
-    card.innerHTML = `<div class="xp-quiz-head"><b>${esc(step.q)}</b><span class="xp-quiz-step">${qStep + 1} Of ${QUIZ.length}</span></div>
-      <div class="xp-quiz-opts">${step.a.map((id) => { const d = dir(id); return d ? `<button class="xp-quiz-opt" data-qpick="${d.id}"><img src="${d.img}" alt="${esc(d.name)}" loading="lazy"><span>${esc(gtxt(d.name))}</span></button>` : ""; }).join("")}</div>
-      <div class="xp-quiz-foot"><button class="fb-link" data-qskip="1">Skip For Now</button></div>`;
+
+    const i = qState.step;
+    const pct = ((i + 1) / QUIZ.length) * 100;
+    const chosen = qState.picks[i] || "";
+    card.innerHTML = `<div class="xp-quiz-head"><b>Choose The Room You Prefer</b><span class="xp-quiz-step">Choice ${i + 1} Of ${QUIZ.length}</span></div>
+      <div class="xp-quiz-prog"><span style="width:${pct}%"></span></div>
+      <div class="xp-quiz-opts">${qPair(i).map((id) => { const d = dir(id); return d ? `<button class="xp-quiz-opt${chosen === d.id ? " on" : ""}" data-qpick="${d.id}"><img src="${d.img}" alt="${esc(gtxt(d.name))}" loading="lazy"><span>${esc(gtxt(d.name))}</span></button>` : ""; }).join("")}</div>
+      <div class="xp-quiz-foot">
+        <div class="xp-quiz-nav">${i > 0 ? '<button class="fb-link" data-qback="1"><i data-lucide="chevron-left"></i>Back</button>' : ""}<button class="fb-link" data-qskip="1">Skip This Choice</button></div>
+        <button class="btn btn-primary btn-xs" data-qnext="1" ${chosen ? "" : "hidden"}>Continue</button>
+      </div>`;
     icons_();
   }
 
-  function quizPick(id) {
-    qPicks.push(id);
-    if (qStep < QUIZ.length - 1) { qStep++; paintQuiz(); return; }
-    // Winner: the direction picked most often, falling back to the last pick.
-    const tally = {};
-    qPicks.forEach((x) => (tally[x] = (tally[x] || 0) + 1));
-    const win = Object.keys(tally).sort((a, b) => tally[b] - tally[a])[0] || id;
-    write("rd_ex_quiz", win);
-    qStep = 0; qPicks = [];
+  function quizAdvance() {
+    if (qState.step < QUIZ.length - 1) { qState.step++; }
+    else { qState.done = true; }
+    qSave();
     paintQuiz();
-    const d = dir(win);
-    if (d) note("Your Style: " + gtxt(d.name));
+    if (qState.done) note("Your Style Matches Are Ready");
   }
+
+  function quizPick(id) {
+    if (qBusy) return;
+    qBusy = true;
+    qState.picks[qState.step] = id;
+    qSave();
+    paintQuiz();
+    window.setTimeout(() => { qBusy = false; quizAdvance(); }, 300);
+  }
+
 
   function toggleSave(id) {
     const on = saved.indexOf(id) > -1;
@@ -434,6 +472,7 @@ export function mountExplore(go, ctx) {
     write(LS.saved, saved);
     note(on ? "Removed From Saved Styles" : "Saved To Your Styles");
     paint();
+    if (qState.done) paintQuiz();
     const open = host.querySelector("#xpDPanel [data-save]");
     if (open && !$("xpDrawer").hidden && open.dataset.save === id) {
       open.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Style" : "Saved");
@@ -475,8 +514,15 @@ export function mountExplore(go, ctx) {
     if (t.closest("#xpCustom")) { go("studio"); return; }
     if (t.closest("#xpFilterBtn")) { openDrawer(filterDrawerHtml()); return; }
     if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
-    if (t.closest("[data-qskip]")) { $("xpQuiz").hidden = true; return; }
-    if (t.closest("[data-qretake]")) { write("rd_ex_quiz", null); qStep = 0; qPicks = []; paintQuiz(); return; }
+    if (t.closest("[data-qnext]")) { if (!qBusy) quizAdvance(); return; }
+    if (t.closest("[data-qback]")) { if (qState.step > 0) { qState.step--; qState.done = false; qSave(); paintQuiz(); } return; }
+    if (t.closest("[data-qskip]")) { if (!qBusy) { qState.picks[qState.step] = null; qSave(); quizAdvance(); } return; }
+    if (t.closest("[data-qbrowse]")) { const g = $("xpGrid"); if (g) g.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    if (t.closest("[data-qretake]")) {
+      if (!window.confirm("Retake the style quiz? Your current matches will be cleared.")) return;
+      qState = { step: 0, picks: [], done: false }; qSave(); paintQuiz(); return;
+    }
+
   });
 
   host.addEventListener("change", (e) => {
