@@ -1,0 +1,591 @@
+/* Create A Listing Video — property video workflow */
+
+.lv {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 4px 0 60px;
+}
+.lv-head {
+  margin-bottom: 20px;
+}
+.lv-head h2 {
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+}
+.lv-head p {
+  margin: 0;
+  color: var(--mute);
+  font-size: 0.88rem;
+}
+.lv-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: 0;
+  color: var(--mute);
+  font-size: 0.78rem;
+  padding: 0 0 10px;
+  cursor: pointer;
+}
+.lv-back:hover {
+  color: var(--ink);
+}
+.lv-back i {
+  width: 14px;
+  height: 14px;
+}
+.lv-note {
+  color: var(--mute-2);
+  font-size: 0.78rem;
+  margin: 8px 0 0;
+  line-height: 1.5;
+}
+
+/* ---- start ---- */
+.lv-start {
+  display: grid;
+  gap: 14px;
+}
+.lv-f {
+  display: grid;
+  gap: 6px;
+}
+.lv-f > span {
+  font-family: "DM Mono", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--mute-2);
+}
+.lv-f.wide {
+  grid-column: 1 / -1;
+}
+.lv-input {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  padding: 0 13px;
+}
+.lv-input i {
+  width: 15px;
+  height: 15px;
+  color: var(--mute-2);
+}
+.lv-input input {
+  flex: 1;
+  border: 0;
+  outline: none;
+  padding: 13px 0;
+  font: inherit;
+  font-size: 0.9rem;
+  background: none;
+}
+.lv-matches {
+  display: grid;
+  gap: 6px;
+}
+.lv-match {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 11px;
+  padding: 11px 13px;
+  cursor: pointer;
+  text-align: left;
+}
+.lv-match:hover {
+  border-color: var(--ink);
+}
+.lv-match i {
+  width: 15px;
+  height: 15px;
+  color: var(--mute-2);
+}
+.lv-match b {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.lv-match span {
+  font-size: 0.72rem;
+  color: var(--mute-2);
+}
+
+.lv-drop {
+  border: 1.5px dashed var(--line);
+  border-radius: 16px;
+  background: #fff;
+  padding: 30px 20px;
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 7px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.lv-drop.over,
+.lv-drop:hover {
+  border-color: var(--red, #c00);
+  background: #fffafa;
+}
+.lv-drop i {
+  width: 26px;
+  height: 26px;
+  color: var(--mute-2);
+}
+.lv-drop b {
+  font-size: 1rem;
+}
+.lv-drop > span {
+  font-size: 0.78rem;
+  color: var(--mute-2);
+  max-width: 460px;
+}
+.lv-drop .btn {
+  margin-top: 6px;
+}
+
+.lv-auth {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 0.8rem;
+  color: var(--mute);
+  line-height: 1.45;
+}
+.lv-cloud {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lv-cbtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 999px;
+  padding: 9px 15px;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+.lv-cbtn:hover {
+  border-color: var(--ink);
+}
+.lv-cbtn i {
+  width: 14px;
+  height: 14px;
+}
+.lv-link,
+.lv-quiet {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: 0;
+  color: var(--mute);
+  font-size: 0.78rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.lv-link:hover,
+.lv-quiet:hover {
+  color: var(--ink);
+}
+.lv-panel,
+.lv-job,
+.lv-ctx {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 16px;
+  display: grid;
+  gap: 11px;
+}
+.lv-ctx {
+  grid-auto-flow: column;
+  justify-content: start;
+  align-items: center;
+  gap: 10px;
+}
+.lv-ctx i {
+  width: 15px;
+  height: 15px;
+  color: var(--red, #c00);
+}
+.lv-panel-a {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lv-result {
+  border-top: 1px solid var(--line);
+  padding-top: 11px;
+  display: grid;
+  gap: 7px;
+}
+.lv-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+.lv-row span {
+  color: var(--mute-2);
+}
+.lv-job-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+  font-size: 0.82rem;
+}
+.lv-job-h span {
+  color: var(--mute-2);
+  font-size: 0.75rem;
+}
+.lv-job-a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.lv-job-a .lv-note {
+  margin: 0;
+}
+.lv-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+.lv-bar.big {
+  height: 9px;
+  margin-bottom: 18px;
+}
+.lv-bar i {
+  display: block;
+  height: 100%;
+  background: var(--red, #c00);
+  transition: width 0.25s ease;
+}
+
+/* ---- photo workspace ---- */
+.lv-bar2 {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+}
+.lv-counts {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-size: 0.8rem;
+  color: var(--mute-2);
+}
+.lv-counts b {
+  color: var(--ink);
+  font-size: 0.86rem;
+}
+.lv-counts .warn {
+  color: var(--red, #c00);
+}
+.lv-tools {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.lv-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 12px;
+}
+.lv-ph {
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  opacity: 0.62;
+}
+.lv-ph.on {
+  opacity: 1;
+  border-color: var(--ink);
+}
+.lv-ph.review::after {
+  content: "Needs Review";
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--red, #c00);
+  color: #fff;
+  font-size: 0.58rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+.lv-ph-i {
+  aspect-ratio: 4 / 3;
+  background: #f2f2f2 center / cover no-repeat;
+}
+.lv-ph-top {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lv-ph-chk input {
+  width: 17px;
+  height: 17px;
+}
+.lv-seq,
+.lv-cover {
+  background: rgba(17, 17, 17, 0.82);
+  color: #fff;
+  font-size: 0.6rem;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+.lv-cover {
+  background: var(--red, #c00);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.lv-ph-b {
+  padding: 9px 10px 10px;
+  display: grid;
+  gap: 7px;
+}
+.lv-ph-b select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+  font-size: 0.78rem;
+  background: #fff;
+}
+.lv-ph-m {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 0.66rem;
+  color: var(--mute-2);
+}
+.lv-ph-m em {
+  font-style: normal;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.lv-ph-a {
+  display: flex;
+  gap: 5px;
+}
+.icon-btn.xs {
+  width: 26px;
+  height: 26px;
+}
+.icon-btn.xs i {
+  width: 13px;
+  height: 13px;
+}
+
+/* ---- setup ---- */
+.lv-set {
+  display: grid;
+  gap: 18px;
+}
+.lv-block {
+  display: grid;
+  gap: 8px;
+}
+.lv-lab {
+  font-family: "DM Mono", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--mute-2);
+}
+.lv-seg {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.lv-seg button {
+  flex: 1 1 180px;
+  text-align: left;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 12px;
+  padding: 11px 13px;
+  cursor: pointer;
+  display: grid;
+  gap: 3px;
+}
+.lv-seg button b {
+  font-size: 0.85rem;
+}
+.lv-seg button span {
+  font-size: 0.72rem;
+  color: var(--mute-2);
+}
+.lv-seg button.on {
+  border-color: var(--red, #c00);
+  box-shadow: inset 0 0 0 1px var(--red, #c00);
+}
+.lv-seg.plain button {
+  flex: 0 0 auto;
+}
+.lv-two {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.lv-two select,
+.lv-adv select,
+.lv-adv input,
+.lv-adv textarea {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 0.82rem;
+  background: #fff;
+  min-width: 200px;
+}
+.lv-adv {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px 16px;
+}
+.lv-adv summary {
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.lv-adv-b {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+  padding-top: 14px;
+}
+.lv-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+}
+
+.lv-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 22px;
+  flex-wrap: wrap;
+}
+.lv-foot.wrap {
+  justify-content: flex-start;
+}
+.lv-cost {
+  font-family: "DM Mono", monospace;
+  font-size: 0.72rem;
+  color: var(--mute-2);
+}
+
+/* ---- progress + result ---- */
+.lv-stages {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 7px;
+}
+.lv-stages li {
+  font-size: 0.82rem;
+  color: var(--mute-2);
+}
+.lv-stages li.on {
+  color: var(--ink);
+  font-weight: 600;
+}
+.lv-stages li.done {
+  color: var(--mute);
+  text-decoration: line-through;
+}
+.lv-player {
+  margin-top: 14px;
+  background: #111;
+  border-radius: 16px;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  min-height: 260px;
+}
+.lv-player video {
+  max-height: 62vh;
+  max-width: 100%;
+}
+
+/* ---- confirm ---- */
+.lv-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.42);
+  display: grid;
+  place-items: center;
+  z-index: 90;
+}
+.lv-modal-in {
+  background: #fff;
+  border-radius: 16px;
+  padding: 22px;
+  max-width: 420px;
+  display: grid;
+  gap: 10px;
+}
+.lv-modal-in b {
+  font-size: 1.05rem;
+}
+.lv-modal-in p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: var(--mute);
+}
+.lv-modal-a {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+@media (max-width: 720px) {
+  .lv-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  .lv-seg button {
+    flex: 1 1 100%;
+  }
+}
