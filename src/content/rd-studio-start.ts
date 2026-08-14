@@ -620,8 +620,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<header class="stw-head">' +
       '<div class="stw-head-l">' +
       '<span class="stw-eyebrow">Welcome To REAL DESIGNS</span>' +
-      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
-      "<p>Start with a space, sketch, written idea or property.</p>" +
+      '<div class="stw-title"><h2>How Would You Like To Start?</h2></div>' +
+      "<p>Upload a visual, describe an idea, organize a property or create a listing video.</p>" +
       "</div></header>" +
       '<div class="stw-rule"></div>' +
       '<div class="stw-tiles">' +
