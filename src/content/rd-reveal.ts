@@ -37,6 +37,7 @@ import { track } from "@/lib/analytics";
 const BUCKET = "reveal-videos";
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const goTo = (v) => { const fn = S.go || (typeof window !== "undefined" && window.__rdGo); if (fn) fn(v); else if (typeof location !== "undefined") location.hash = "#" + v; };
 const paint = () => { try { createIcons({ icons }); } catch (_) {} };
 const toast = (m) => { try { window.rdToast ? window.rdToast(m) : console.log(m); } catch (_) {} };
 
@@ -1654,7 +1655,7 @@ export async function startDesignVideo(design = {}) {
   if (!design || !design.id) throw new Error("That design could not be identified.");
   if (!design.path) throw new Error("That design has no image yet.");
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
-  if (S.go) S.go("reveal");
+  goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
   else if (!S.tree.length) await loadLibrary();
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(design.id));
@@ -1675,7 +1676,7 @@ export async function startDesignVideo(design = {}) {
 /** Continue a saved design-video draft from Media or the library. */
 export async function continueDesignVideo(id) {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
-  if (S.go) S.go("reveal");
+  goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
   const full = await getVideo({ id });
   const p = full.project;
@@ -1731,7 +1732,7 @@ export function startWizard(seed = {}) {
 /** Contextual entry point used from properties, designs and comparisons. */
 export async function createVideoFrom(seed = {}) {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
-  if (S.go) S.go("reveal");
+  goTo("reveal");
   if (!S.projects.length && !S.mounted) await mountReveal(S.go, {});
   if (!S.tree.length) await loadLibrary();
   startWizard(seed);
@@ -1756,7 +1757,7 @@ export default mountReveal;
 /** Open one video's detail screen from another module (Listing Video, Media). */
 export async function openVideoDetail(id, tab = "video") {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
-  if (S.go) S.go("reveal");
+  goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
   else await loadLibrary();
   S.detailTab = tab;
