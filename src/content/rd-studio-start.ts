@@ -482,7 +482,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           foot(
             "Generate Concept",
             state.prompt.trim().length >= 12,
-            "Uses 1 design credit",
+            "Uses 1 Design Credit",
             "Text-only concepts are visual ideas. Add a real photo, sketch or plan for property-specific results.",
           ),
         "stw-side",
