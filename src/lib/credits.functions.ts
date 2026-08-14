@@ -10,15 +10,28 @@ export const getMyCredits = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { readAccount } = await import("@/lib/credits.server");
-    const acct = await readAccount(context.userId);
-    return {
-      plan: acct.plan,
-      balance: acct.balance,
-      remainingToday:
-        acct.plan === "free" ? Math.max(FREE_DAILY_DESIGNS - acct.free_used_today, 0) : null,
-      costs: CREDIT_COSTS,
-    };
+    try {
+      const acct = await readAccount(context.userId);
+      return {
+        plan: acct.plan,
+        balance: acct.balance,
+        remainingToday:
+          acct.plan === "free" ? Math.max(FREE_DAILY_DESIGNS - acct.free_used_today, 0) : null,
+        costs: CREDIT_COSTS,
+        unavailable: false,
+      };
+    } catch {
+      // Backend hiccup: degrade instead of crashing the page.
+      return {
+        plan: "free" as const,
+        balance: 0,
+        remainingToday: null,
+        costs: CREDIT_COSTS,
+        unavailable: true,
+      };
+    }
   });
+
 
 /** Recent credit activity for the account page. */
 export const listCreditHistory = createServerFn({ method: "GET" })
