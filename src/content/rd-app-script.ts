@@ -1219,10 +1219,10 @@ function dgCard(d){
 <div class="dg-ov r"><button class="dg-ob${fav?' fav':''}" data-fav="${d.id}" aria-label="Favorite" title="${fav?'Remove From Favorites':'Add To Favorites'}"><i data-lucide="heart"></i></button>
 <button class="dg-ob del" data-del="${d.id}" aria-label="Delete design" title="Delete"><i data-lucide="trash-2"></i></button></div>
 ${d.sample?'<span class="pill dg-sample">Sample</span>':''}</div>
-<div style="padding:12px 14px"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
+<div class="dg-body"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">
 <b style="font-size:.86rem">${d.name}${d.sample?'':' v'+d.version_no}</b><span class="pill ${s[0]}">${s[1]}</span></div>
 <div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">${d.sample?'Sample Design':d.sub} &middot; ${cost}</div>
-<div style="display:flex;gap:6px;margin-top:10px">${d.sample
+<div class="dg-acts">${d.sample
   ? `<button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Try This Style</button>`
   : `<button class="btn btn-ghost btn-xs" style="flex:1" data-open="${d.id}">Open</button>
 <button class="btn btn-ghost btn-xs" data-hist="${d.id}" title="Version history"><i data-lucide="history"></i></button>`}
