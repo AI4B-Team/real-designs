@@ -513,8 +513,15 @@ export function mountExplore(go, ctx) {
     if (t.closest("#xpCustom")) { go("studio"); return; }
     if (t.closest("#xpFilterBtn")) { openDrawer(filterDrawerHtml()); return; }
     if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
-    if (t.closest("[data-qskip]")) { $("xpQuiz").hidden = true; return; }
-    if (t.closest("[data-qretake]")) { write("rd_ex_quiz", null); qStep = 0; qPicks = []; paintQuiz(); return; }
+    if (t.closest("[data-qnext]")) { if (!qBusy) quizAdvance(); return; }
+    if (t.closest("[data-qback]")) { if (qState.step > 0) { qState.step--; qState.done = false; qSave(); paintQuiz(); } return; }
+    if (t.closest("[data-qskip]")) { if (!qBusy) { qState.picks[qState.step] = null; qSave(); quizAdvance(); } return; }
+    if (t.closest("[data-qbrowse]")) { const g = $("xpGrid"); if (g) g.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    if (t.closest("[data-qretake]")) {
+      if (!window.confirm("Retake the style quiz? Your current matches will be cleared.")) return;
+      qState = { step: 0, picks: [], done: false }; qSave(); paintQuiz(); return;
+    }
+
   });
 
   host.addEventListener("change", (e) => {
