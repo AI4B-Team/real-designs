@@ -120,17 +120,31 @@ async function load(refresh) {
   render();
   const b = bounds();
   try {
-    S.data = await getWorkspaceReport({ data: { from: b.from, to: b.to, propertyId: S.propertyId || null } });
+    S.data = await Promise.race([
+      getWorkspaceReport({ data: { from: b.from, to: b.to, propertyId: S.propertyId || null } }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timeout")), 25000)),
+    ]);
     S.error = "";
     if (refresh) toast("Report Updated");
   } catch (e) {
     console.error("[reports] load failed", e);
-    S.error = "We could not load your report just now.";
+    S.error =
+      String((e && e.message) || "") === "timeout"
+        ? "The report took too long to load. Please try again."
+        : "We could not load your report just now.";
   }
   S.loading = false;
   S.refreshing = false;
   render();
 }
+
+/** Shared failure block so no section can sit on a skeleton forever. */
+function errHtml() {
+  return `<div class="rp-sec-b"><div class="rp-err"><i data-lucide="alert-circle"></i><span>${esc(
+    S.error,
+  )}</span><button class="btn btn-ghost btn-xs" data-a="refresh">Retry</button></div></div>`;
+}
+
 
 /* ---------------- rollup helpers ---------------- */
 
@@ -295,10 +309,11 @@ function sortIcon(key) {
 }
 
 function rollupHtml() {
+  if (S.error && !S.data) return "";
   const body = () => {
     if (S.loading && !S.data)
       return `<div class="rp-sec-b">${'<div class="rp-sk line"></div>'.repeat(6)}</div>`;
-    if (S.error && S.data)
+    if (S.error)
       return `<div class="rp-sec-b"><div class="rp-err"><i data-lucide="alert-circle"></i><span>${esc(S.error)}</span><button class="btn btn-ghost btn-xs" data-a="refresh">Retry</button></div></div>`;
     if (!S.data) return "";
     if (!S.data.rows.length)
@@ -380,6 +395,7 @@ function rollupHtml() {
 }
 
 function progressHtml() {
+  if (S.error) return "";
   if (!S.data) return "";
   const c = S.data.statusCounts;
   const total = STATUS_SEG.reduce((s, x) => s + (c[x[0]] || 0), 0);
@@ -400,8 +416,10 @@ function progressHtml() {
 }
 
 function creditsHtml() {
+  if (S.error && !S.data) return "";
   const inner = () => {
     if (S.loading && !S.data) return `<div class="rp-sec-b">${'<div class="rp-sk line"></div>'.repeat(5)}</div>`;
+    if (S.error) return errHtml();
     if (!S.data) return "";
     const cr = S.data.credits;
     const entries = Object.keys(cr.byType)
@@ -452,8 +470,10 @@ function creditsHtml() {
 }
 
 function clientsHtml() {
+  if (S.error && !S.data) return "";
   const inner = () => {
     if (S.loading && !S.data) return `<div class="rp-sec-b">${'<div class="rp-sk line"></div>'.repeat(5)}</div>`;
+    if (S.error) return errHtml();
     if (!S.data) return "";
     const c = S.data.clients;
     const eligible = S.data.summary.designsCreated > 0;
