@@ -14,7 +14,7 @@ export const Route = createFileRoute("/pkg/$token")({
     }
   },
   head: ({ loaderData }) => {
-    const pk = (loaderData?.pack as any)?.package;
+    const pk = loaderData?.pack && !(loaderData.pack as any).error ? (loaderData.pack as any) : null;
     const title = pk ? `${pk.title} | REAL DESIGNS` : "Client Presentation | REAL DESIGNS";
     const description = pk
       ? `${pk.property_label || "A property presentation"} prepared for ${pk.client_name || "you"} — designs, photos, video and budget in one place.`
@@ -50,7 +50,7 @@ function SharedPackage() {
   const [note, setNote] = useState("");
   const [comment, setComment] = useState("");
   const [sent, setSent] = useState(false);
-  const [decision, setDecision] = useState<string | null>(pack?.package?.status ?? null);
+  const [decision, setDecision] = useState<string | null>(pack?.decision?.decision ?? null);
 
   async function unlock() {
     setBusy(true);
@@ -80,10 +80,10 @@ function SharedPackage() {
   }
   if (gate.error) return <Shell><p>This link is no longer active. Ask the sender for a fresh one.</p></Shell>;
 
-  const pk = gate.package;
+  const pk = gate;
   const accent = /^#[0-9a-f]{6}$/i.test(pk.accent || "") ? pk.accent : "#CC0000";
   const settings = pk.settings || {};
-  const sections = (gate.sections || []).filter((s: any) => !s.hidden);
+  const sections = (gate.sections || []).map((s: any) => ({ ...s, section_key: s.key }));
   const assetsFor = (key: string) => (gate.assets || []).filter((a: any) => a.section_key === key);
 
   async function decide(kind: "approved" | "changes") {
@@ -100,7 +100,7 @@ function SharedPackage() {
     if (!comment.trim()) return;
     setBusy(true);
     try {
-      await commentOnPackage({ data: { token, body: comment.trim(), author_name: pk.client_name || undefined } });
+      await commentOnPackage({ data: { token, body: comment.trim(), name: pk.client_name || undefined } });
       setComment("");
       setSent(true);
     } finally {
