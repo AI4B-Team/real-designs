@@ -180,115 +180,209 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     return field("Add To A Property (Optional)", '<select id="stsPropSel">' + opts + "</select>");
   }
 
-  function dropZone(types: string) {
+  function dropZone(types: string, icon: string, copy: string) {
     if (state.file) {
       return (
-        '<div class="stu-file">' +
+        '<div class="stw-file">' +
         (state.filePreview
           ? '<img src="' + state.filePreview + '" alt="Selected source preview">'
-          : '<div class="stu-file-ico"><i data-lucide="file-text"></i></div>') +
-        '<div class="stu-file-m"><b>' + esc(state.fileName) + "</b>" +
-        '<span>Nothing generates and no credits are used until you continue.</span>' +
-        '<div class="stu-file-a">' +
-        '<button class="stu-link" data-sts="browse"><i data-lucide="repeat"></i>Replace</button>' +
-        '<button class="stu-link" data-sts="clearfile"><i data-lucide="trash-2"></i>Remove</button>' +
+          : '<div class="stw-file-ico"><i data-lucide="file-text"></i></div>') +
+        '<div class="stw-file-m"><b>' + esc(state.fileName) + "</b>" +
+        '<span id="stsDims2">Nothing generates and no credits are used until you continue.</span>' +
+        '<div class="stw-file-a">' +
+        '<button class="stw-link" data-sts="browse"><i data-lucide="repeat"></i>Replace</button>' +
+        '<button class="stw-link" data-sts="clearfile"><i data-lucide="trash-2"></i>Remove</button>' +
+        (state.filePreview ? '<button class="stw-link" data-sts="rotate"><i data-lucide="rotate-cw"></i>Rotate</button>' : "") +
         "</div></div></div>"
       );
     }
     return (
-      '<div class="stu-drop" id="stsDrop">' +
-      '<i data-lucide="upload"></i>' +
-      "<b>Drag And Drop A File</b>" +
+      '<div class="stw-drop" id="stsDrop">' +
+      '<i data-lucide="' + icon + '"></i>' +
+      "<b>" + copy + "</b>" +
+      '<span class="stw-types">Drag and drop, or</span>' +
       '<button class="btn btn-dark btn-sm" data-sts="browse">Browse Files</button>' +
-      '<span class="stu-types">Supported files: ' + types + "</span>" +
+      '<span class="stw-types">Supported files: ' + types + "</span>" +
+      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button>' +
       "</div>"
     );
   }
 
-  function foot(label: string, ok: boolean, note?: string) {
+  function foot(label: string, ok: boolean, note?: string, disclosure?: string) {
     return (
-      '<div class="stu-foot">' +
+      '<div class="stw-foot">' +
       '<button class="btn btn-primary" id="stsGo"' + (ok && !state.busy ? "" : " disabled") + ">" +
       (state.busy ? "Working…" : label) +
       "</button>" +
-      (note ? '<span class="stu-cost">' + note + "</span>" : "") +
+      (note ? '<span class="stw-cost">' + note + "</span>" : "") +
+      (disclosure ? '<p class="stw-note">' + disclosure + "</p>" : "") +
       "</div>"
+    );
+  }
+
+  /* ---------- shared workflow shell ---------- */
+
+  const STEP_LABELS = ["Source", "Details", "Review"];
+
+  function steps(active: number) {
+    return (
+      '<ol class="stw-steps">' +
+      STEP_LABELS.map((l, i) => {
+        const n = i + 1;
+        const cls = n === active ? " on" : n < active ? " done" : "";
+        return (
+          '<li class="stw-step' + cls + '">' +
+          (n < active ? '<i data-lucide="check"></i>' : '<span class="stw-step-n">' + n + "</span>") +
+          "<span>" + l + "</span></li>"
+        );
+      }).join("") +
+      "</ol>"
+    );
+  }
+
+  function workHead(title: string, desc: string, active: number) {
+    return (
+      '<header class="stw-head">' +
+      '<div class="stw-head-l">' +
+      '<span class="stw-eyebrow">New Design</span>' +
+      '<div class="stw-title">' +
+      '<button class="stw-back" data-sts="back" aria-label="Back to starting options"><i data-lucide="arrow-left"></i>Back</button>' +
+      "<h2>" + title + "</h2>" +
+      "</div>" +
+      "<p>" + desc + "</p>" +
+      (state.attached ? '<span class="stw-att"><i data-lucide="map-pin"></i>' + esc(state.attached) + "</span>" : "") +
+      "</div>" +
+      '<div class="stw-head-r">' + steps(active) + "</div>" +
+      "</header>" +
+      '<div class="stw-rule"></div>'
+    );
+  }
+
+  function panel(title: string, inner: string, cls?: string) {
+    return (
+      '<section class="stw-panel' + (cls ? " " + cls : "") + '">' +
+      '<div class="stw-panel-h"><h3>' + title + "</h3></div>" +
+      '<div class="stw-panel-b">' + inner + "</div></section>"
     );
   }
 
   /* ---------- setup screens ---------- */
 
-  function setupHead(title: string, desc: string) {
-    return '<div class="stu-head"><h2>' + title + "</h2><p>" + desc + "</p>" +
-      (state.attached ? '<span class="stu-att"><i data-lucide="map-pin"></i>' + esc(state.attached) + "</span>" : "") +
-      "</div>";
-  }
-
   function spaceSetup() {
     return (
-      setupHead("Upload Your Space", "Add a photo of the interior, exterior or landscape you want to redesign.") +
-      dropZone("JPG, PNG, HEIC, WEBP") +
-      '<div class="stu-form">' +
-      field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-      (state.file ? field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) : "") +
-      propertyField() +
-      "</div>" +
-      foot("Continue", !!state.file)
+      workHead("Upload A Space", "Add a photo of the interior, exterior or landscape you want to redesign.", state.file ? 2 : 1) +
+      '<div class="stw-work">' +
+      panel("Your Photo", dropZone("JPG, PNG, HEIC, WEBP", "image-up", "Drop A Photo Of Your Space"), "stw-main") +
+      panel(
+        "Photo Details",
+        field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+          field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
+          propertyField() +
+          field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
+          foot("Continue", !!state.file),
+        "stw-side",
+      ) +
+      "</div>"
     );
   }
 
   function sketchSetup() {
     return (
-      setupHead("Upload A Sketch Or Plan", "Turn a sketch, floor plan or concept drawing into a realistic design.") +
-      dropZone("JPG, PNG, HEIC, WEBP, PDF") +
-      '<div class="stu-form">' +
-      field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
-      propertyField() +
-      "</div>" +
-      foot("Continue", !!state.file)
+      workHead("Upload A Sketch Or Plan", "Turn a sketch, floor plan or concept drawing into a realistic design.", state.file ? 2 : 1) +
+      '<div class="stw-work">' +
+      panel("Your Sketch Or Plan", dropZone("JPG, PNG, HEIC, WEBP, PDF", "pencil-ruler", "Drop A Sketch, Floor Plan Or Drawing"), "stw-main") +
+      panel(
+        "Plan Details",
+        field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
+          field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+          field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
+          propertyField() +
+          field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
+          foot("Continue", !!state.file),
+        "stw-side",
+      ) +
+      "</div>"
     );
   }
+
+  const EXAMPLES = ["Warm modern living room", "Resort-style backyard", "Contemporary home exterior"];
 
   function describeSetup() {
     return (
-      setupHead("Describe What You Want To Create", "Create an original visual concept from a written description.") +
-      '<div class="stu-two">' +
-      '<div class="stu-col">' +
-      '<div class="field"><label for="stsPrompt">Describe Your Idea</label>' +
-      '<textarea id="stsPrompt" class="stu-ta" rows="10" placeholder="Create a warm modern living room with natural oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
-      esc(state.prompt) +
-      "</textarea></div>" +
-      '<div class="stu-inspo">' +
-      '<button class="stu-link" data-sts="inspo"><i data-lucide="image-plus"></i>' +
-      (state.inspiration ? "Inspiration: " + esc(state.inspiration.name) : "Add An Inspiration Image (Optional)") +
-      "</button>" +
-      (state.inspiration ? '<button class="stu-link" data-sts="rminspo"><i data-lucide="x"></i>Remove</button>' : "") +
-      "</div>" +
-      "</div>" +
-      '<div class="stu-col">' +
-      field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-      field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
-      field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
-      field("Design Style", select("stsStyle", STYLES, state.style)) +
-      field("Mood", select("stsMood", ["", ...MOODS], state.mood)) +
-      field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
-      field("Must-Have Features (Optional)", '<textarea id="stsFeatures" rows="3" placeholder="Built-in shelving, durable rug, reading corner">' + esc(state.features) + "</textarea>") +
-      "</div></div>" +
-      foot("Generate Concept", state.prompt.trim().length >= 12, "Uses 1 design credit") +
-      '<p class="stu-note">Text-only concepts are visual ideas. Connect the concept to a real photo, sketch or floor plan for property-specific results.</p>'
+      workHead("Describe An Idea", "Tell us what you want to create and REAL DESIGNS will turn it into a visual concept.", state.prompt.trim().length >= 12 ? 2 : 1) +
+      '<div class="stw-work stw-work-60">' +
+      panel(
+        "Your Idea",
+        '<textarea id="stsPrompt" class="stw-ta" rows="9" placeholder="Create a warm modern living room with natural oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
+          esc(state.prompt) +
+          "</textarea>" +
+          '<p class="stw-help">The more detail you give about materials, colours and lighting, the closer the concept lands.</p>' +
+          '<div class="stw-ex"><span>Try:</span>' +
+          EXAMPLES.map((e) => '<button class="stw-exlink" data-ex="' + esc(e) + '">' + esc(e) + "</button>").join("") +
+          "</div>" +
+          '<div class="stw-inspo">' +
+          '<button class="stw-link" data-sts="inspo"><i data-lucide="image-plus"></i>' +
+          (state.inspiration ? "Inspiration: " + esc(state.inspiration.name) : "Add An Inspiration Image (Optional)") +
+          "</button>" +
+          (state.inspiration ? '<button class="stw-link" data-sts="rminspo"><i data-lucide="x"></i>Remove</button>' : "") +
+          "</div>",
+        "stw-main",
+      ) +
+      panel(
+        "Design Details",
+        field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+          field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
+          field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
+          '<div class="stw-sep"></div>' +
+          field("Design Style", select("stsStyle", STYLES, state.style)) +
+          field("Mood", select("stsMood", ["", ...MOODS], state.mood)) +
+          '<div class="stw-sep"></div>' +
+          field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
+          field("Must-Have Features (Optional)", '<textarea id="stsFeatures" rows="3" placeholder="Built-in shelving, durable rug, reading corner">' + esc(state.features) + "</textarea>") +
+          foot(
+            "Generate Concept",
+            state.prompt.trim().length >= 12,
+            "Uses 1 design credit",
+            "Text-only concepts are visual ideas. Add a real photo, sketch or plan for property-specific results.",
+          ),
+        "stw-side",
+      ) +
+      "</div>"
     );
   }
 
+  const CREATES: Array<[string, string, string]> = [
+    ["door-open", "Rooms", "Keep every space organized."],
+    ["layout-grid", "Designs", "Compare versions and approvals."],
+    ["calculator", "Budget", "Track projected products and costs."],
+    ["presentation", "Presentations", "Share polished project updates."],
+  ];
+
   function propertySetup() {
     return (
-      setupHead("Create A Property", "Organize rooms, designs, budgets and presentations under one property.") +
-      '<div class="stu-form">' +
-      field("Property Name Or Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
-      field("Nickname (Optional)", '<input id="stsNick" type="text" placeholder="Bayshore Flip" value="' + esc(state.newNickname) + '">') +
-      field("Property Type", select("stsPType", ["Single Family", "Condo", "Townhome", "Multi Family", "Commercial"], state.newType)) +
-      field("Client Or Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
-      "</div>" +
-      foot("Create Property", state.newAddress.trim().length > 2)
+      workHead("Create A Property", "Keep every room, design, budget and presentation organized in one project.", state.newAddress.trim().length > 2 ? 2 : 1) +
+      '<div class="stw-work">' +
+      panel(
+        "Property Details",
+        field("Property Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
+          field("Property Nickname (Optional)", '<input id="stsNick" type="text" placeholder="Bayshore Flip" value="' + esc(state.newNickname) + '">') +
+          field("Property Type", select("stsPType", ["Single Family", "Condo", "Townhome", "Multi Family", "Commercial"], state.newType)) +
+          field("Client Or Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
+          field("Property Photo (Optional)", dropZone("JPG, PNG, HEIC, WEBP", "image-up", "Add A Cover Photo")),
+        "stw-main",
+      ) +
+      panel(
+        "What This Creates",
+        '<ul class="stw-rows">' +
+          CREATES.map(
+            ([i, t, d]) =>
+              '<li><i data-lucide="' + i + '"></i><div><b>' + t + "</b><span>" + d + "</span></div></li>",
+          ).join("") +
+          "</ul>" +
+          foot("Create Property", state.newAddress.trim().length > 2),
+        "stw-side",
+      ) +
+      "</div>"
     );
   }
 
@@ -301,13 +395,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           : state.method === "property"
             ? propertySetup()
             : spaceSetup();
-    return (
-      '<div class="stu">' +
-      '<button class="stu-back" data-sts="back"><i data-lucide="arrow-left"></i>Back To Starting Options</button>' +
-      '<div class="stu-card">' + body + "</div>" +
-      "</div>" +
-      (state.samples ? samplesHtml() : "")
-    );
+    return '<div class="stw">' + body + "</div>" + (state.samples ? samplesHtml() : "");
   }
 
   function samplesHtml() {
