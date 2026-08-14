@@ -466,8 +466,9 @@ function renderProps() {
     STATE.properties
       .map((p) => `<option value="${p.id}" ${p.id === STATE.propertyId ? "selected" : ""}>${esc(p.address)}</option>`)
       .join("");
+  const t = document.getElementById("pmTitle");
   if (t) t.textContent = STATE.propertyId ? STATE.propertyLabel : "Media";
-  if (t) t.textContent = STATE.propertyId ? STATE.propertyLabel : "All Properties";
+
 }
 
 function rooms() {
