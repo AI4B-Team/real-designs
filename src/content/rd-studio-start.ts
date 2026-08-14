@@ -764,26 +764,43 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   /* ---------- public API ---------- */
 
+  let wasEmpty = true;
+
   function paint(empty: boolean) {
     if (!empty) {
-      host?.remove();
-      panelHost?.remove();
-      host = null;
-      panelHost = null;
+      clearWorkHosts();
+      clearChooser();
+      wasEmpty = false;
       return;
     }
+    if (!wasEmpty) {
+      /* returning from an active editor (New Design) resets to the chooser */
+      state.phase = "choose";
+      state.samples = false;
+      state.file = null;
+      state.fileName = "";
+      state.propertyMode = "";
+      state.method = "space";
+    }
+    wasEmpty = true;
     render();
   }
 
   function open(method?: string) {
-    if (method === "sample") state.samples = true;
-    else if (method === "describe" || method === "sketch" || method === "property" || method === "space") {
+    if (method === "sample") {
+      state.samples = true;
+    } else if (method === "describe" || method === "sketch" || method === "property" || method === "space") {
       state.method = method as Method;
       state.samples = false;
+      state.phase = "work";
+      if (method === "property") state.propertyMode = "new";
+    } else if (method === "upload") {
+      state.method = "space";
+      state.phase = "work";
     }
     render();
     if (method === "upload") browse();
-    const el = document.getElementById("stsDrop") || document.getElementById("stStart");
+    const el = document.getElementById("stsDrop") || document.getElementById("stStart") || document.getElementById("stChooser");
     if (el) {
       el.classList.add("pulse");
       window.setTimeout(() => el.classList.remove("pulse"), 900);
@@ -793,3 +810,4 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   return { paint, open };
 }
+
