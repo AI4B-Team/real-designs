@@ -715,7 +715,7 @@ function exportPdf() {
     <tbody><tr><td>${d.statusCounts.draft}</td><td>${d.statusCounts.review}</td><td>${d.statusCounts.approved}</td><td>${d.statusCounts.archived}</td></tr></tbody></table>
     <h2>Credit Usage</h2>
     <table><thead><tr><th>Used</th><th>Remaining</th><th>Average Per Project</th><th>Top Category</th></tr></thead>
-    <tbody><tr><td>${d.credits.used}</td><td>${d.credits.remaining}</td><td>${d.credits.perProject}</td><td>${esc(
+    <tbody><tr><td>${d.credits.used}</td><td>${d.credits.plan === "free" ? d.credits.freeRemainingToday + " Today" : d.credits.remaining}</td><td>${d.credits.perProject}</td><td>${esc(
       Object.keys(d.credits.byType).sort((a, b) => d.credits.byType[b] - d.credits.byType[a]).map((k) => CREDIT_LABEL[k] || k)[0] || "None",
     )}</td></tr></tbody></table>
     <h2>Client Activity</h2>
