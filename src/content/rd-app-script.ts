@@ -2143,15 +2143,8 @@ const boardPrintBtn=document.getElementById('boardPrint');
 if(boardPrintBtn) boardPrintBtn.addEventListener('click',boardPrint);
 
 /* ---------- presentations ---------- */
-const pkg=[['Before And After Slider','In the client approval link','p-ok','Live'],
-['Scope Of Work And Budget','Line items and range in the link','p-ok','Live'],
-['Client Decision Capture','Approve or request changes, tracked','p-ok','Live'],
-['Branded PDF Export','Print ready package from any link','p-ok','Live'],
-['Walkthrough Video','Dolly in, eight seconds, from Studio','p-ok','Live'],
-['Product Board','Allowance per item with a buy search','p-ok','Live'],
-['Social Reel, 9x16','Cross fade before to after, 12 seconds','p-ok','Live']];
-document.getElementById('pkgList').innerHTML=pkg.map(([n,d,cls,lab])=>`
-<div class="rowi"><div class="rowt"><b>${n}</b><span>${d}</span></div><span class="${cls.startsWith('plan-pill')?cls:'pill '+cls}">${lab}</span></div>`).join('');
+import('@/content/rd-present').then(m=>{ try{ m.mountPresent(); }catch(_){} }).catch(()=>{});
+
 
 const PRES_STATUS={sent:['p-gray','Sent'],viewed:['p-blue','Opened'],approved:['p-ok','Approved'],changes:['p-amb','Changes Requested']};
 let PRES_ROWS=[];
