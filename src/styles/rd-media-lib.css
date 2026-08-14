@@ -38,7 +38,8 @@
 .ml-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
 .ml-note { color:#6b7280; font-size:13px; padding:24px 0; }
 
-.ml-card { display:flex; flex-direction:column; overflow:hidden; padding:0; }
+.ml-card { display:flex; flex-direction:column; overflow:visible; padding:0; }
+.ml-thumb { border-radius:inherit; border-bottom-left-radius:0; border-bottom-right-radius:0; }
 .ml-card.sel { outline:2px solid var(--red,#c00); outline-offset:-2px; }
 .ml-thumb { position:relative; aspect-ratio:4/3; background:#0f1115; overflow:hidden; }
 .ml-thumb img { width:100%; height:100%; object-fit:cover; display:block; }
