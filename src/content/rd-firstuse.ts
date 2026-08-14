@@ -413,7 +413,7 @@ export function mountFirstUse(ctx: Ctx) {
       "</div>" +
       '<p class="fu-p">Next: saving files the design under a property so scopes, products and client approvals stay together.</p>' +
       (sample
-        ? '<div class="note fu-ready"><i data-lucide="image-up"></i><span><b>Ready to use your own space?</b> This design came from a sample space.</span>' +
+        ? '<div class="note fu-ready"><i data-lucide="image-up"></i><span><b>Ready To Use Your Own Space?</b> This design came from a sample space.</span>' +
           '<button class="btn btn-primary btn-xs" data-fu-act="uploadOwn" style="margin-left:auto">Upload My Space</button></div>'
         : "")
     );

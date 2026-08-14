@@ -311,7 +311,7 @@ function startHtml() {
   const other = S.otherOpen || S.importState === "failed" || S.propertyId || S.standalone || S.job;
   return `<div class="lv">
     <div class="lv-head">
-      <h2>Create a Listing Video</h2>
+      <h2>Create A Listing Video</h2>
       <p>Start with your listing link. We'll pull in the property details so you can go straight to choosing photos.</p>
     </div>
 
@@ -368,8 +368,8 @@ function startHtml() {
           I own these photos or have permission to use them in designs, videos and marketing materials.</label>
 
         <div class="lv-cloud">
-          <button class="lv-cbtn" data-cloud="dropbox"><i data-lucide="cloud"></i>Import from Dropbox</button>
-          <button class="lv-cbtn" data-cloud="drive"><i data-lucide="hard-drive"></i>Import from Google Drive</button>
+          <button class="lv-cbtn" data-cloud="dropbox"><i data-lucide="cloud"></i>Import From Dropbox</button>
+          <button class="lv-cbtn" data-cloud="drive"><i data-lucide="hard-drive"></i>Import From Google Drive</button>
         </div>
 
         ${S.job ? jobHtml() : ""}
@@ -377,7 +377,7 @@ function startHtml() {
           S.propertyId || S.standalone
             ? `<div class="lv-ctx"><i data-lucide="check"></i><b>${esc(S.propertyLabel || "Standalone Project")}</b>
                 <button class="lv-quiet" id="lvUseMedia">Use Existing Property Media</button></div>`
-            : `<button class="lv-quiet" id="lvStandalone">Create a Standalone Video Instead</button>`
+            : `<button class="lv-quiet" id="lvStandalone">Create A Standalone Video Instead</button>`
         }
       </div>`
           : ""
@@ -449,8 +449,8 @@ function linkPanelHtml() {
             <div class="lv-panel-a">
               ${r.address ? `<button class="btn btn-ghost btn-sm" data-useaddr="${esc(r.address)}"><i data-lucide="map-pin"></i>Use This Address</button>` : ""}
               <button class="btn btn-ghost btn-sm" id="lvLinkUpload"><i data-lucide="upload"></i>Upload Photos</button>
-              <button class="btn btn-ghost btn-sm" data-cloud="dropbox"><i data-lucide="cloud"></i>Import from Dropbox</button>
-              <button class="btn btn-ghost btn-sm" data-cloud="drive"><i data-lucide="hard-drive"></i>Import from Google Drive</button>
+              <button class="btn btn-ghost btn-sm" data-cloud="dropbox"><i data-lucide="cloud"></i>Import From Dropbox</button>
+              <button class="btn btn-ghost btn-sm" data-cloud="drive"><i data-lucide="hard-drive"></i>Import From Google Drive</button>
               <button class="btn btn-ghost btn-sm" data-cloud="mls"><i data-lucide="plug"></i>Connect Listing Source</button>
             </div>
           </div>`
@@ -527,7 +527,7 @@ function photosHtml() {
     <div class="lv-grid" id="lvGrid">${list || `<div class="lv-note">No photos yet. Add photos to continue.</div>`}</div>
     <div class="lv-foot">
       <span class="lv-note">Nothing is deleted. Flagged photos stay available under Needs Review.</span>
-      <button class="btn btn-primary" data-a="to-setup" ${selected ? "" : "disabled"}>Continue to Video Setup</button>
+      <button class="btn btn-primary" data-a="to-setup" ${selected ? "" : "disabled"}>Continue To Video Setup</button>
     </div>
   </div>`;
 }
@@ -707,7 +707,7 @@ function doneHtml() {
       <button class="btn btn-ghost btn-sm" data-a="share"><i data-lucide="share-2"></i>Share</button>
       <button class="btn btn-ghost btn-sm" data-a="duplicate"><i data-lucide="copy"></i>Duplicate</button>
       <button class="btn btn-ghost btn-sm" data-a="quick"><i data-lucide="sliders-horizontal"></i>Quick Edit</button>
-      <button class="btn btn-primary btn-sm" data-a="studio"><i data-lucide="film"></i>Open in Studio</button>
+      <button class="btn btn-primary btn-sm" data-a="studio"><i data-lucide="film"></i>Open In Studio</button>
     </div>
   </div>`;
 }
