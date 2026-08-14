@@ -842,6 +842,9 @@ function detailHtml() {
       <div><span>Created</span><b>${fmtDate(p.created_at)}</b></div>
     </div>`;
   }
+  if (tab === "presentation") body = presentationHtml(d);
+
+
 
   return `<div class="rv-head">
     <div><h2>${esc(p.title)}</h2><p>${esc(p.property_label || "No Property Linked")} • ${statusOf(p)} • ${fmtDate(p.created_at)}</p></div>
