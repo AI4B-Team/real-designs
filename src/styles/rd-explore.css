@@ -16,25 +16,38 @@
 .rd-app .xp-search svg{width:15px;height:15px;color:var(--mute-2)}
 .rd-app .xp-search input{flex:1;border:0;outline:none;background:none;font:inherit;font-size:.83rem;color:var(--ink)}
 
-/* space categories */
-.rd-app .xp-cats{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+/* primary categories: quiet segmented nav */
+.rd-app .xp-cats{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line)}
 .rd-app .xp-cats::-webkit-scrollbar{display:none}
-.rd-app .xp-cat{flex:0 0 auto;white-space:nowrap;height:34px;padding:0 15px;border-radius:999px;border:1px solid var(--line);background:var(--white);font-size:.8rem;font-weight:600;color:var(--ink-2);transition:.14s}
-.rd-app .xp-cat:hover{border-color:var(--line-2)}
-.rd-app .xp-cat.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.rd-app .xp-cat{flex:0 0 auto;white-space:nowrap;height:36px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:none;font-size:.82rem;font-weight:600;color:var(--mute-2);transition:.14s}
+.rd-app .xp-cat:hover{color:var(--ink)}
+.rd-app .xp-cat.on{color:var(--ink);border-bottom-color:var(--red)}
 
-/* filter panel */
-.rd-app .xp-panel{display:none;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:12px 14px;flex-direction:column;gap:10px}
-.rd-app .xp-panel.on{display:flex}
-.rd-app .xp-panel-h{display:none;align-items:center;justify-content:space-between}
-.rd-app .xp-row{display:flex;align-items:center;gap:10px}
-.rd-app .xp-row[hidden]{display:none}
-.rd-app .xp-lab{flex:0 0 118px;font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute-2);font-family:"DM Mono",ui-monospace,monospace}
-.rd-app .xp-chips{display:flex;gap:6px;flex-wrap:wrap}
-.rd-app .xp-chip{height:30px;padding:0 12px;border-radius:999px;border:1px solid var(--line);background:var(--white);font-size:.76rem;font-weight:600;color:var(--ink-2);transition:.14s}
-.rd-app .xp-chip:hover{border-color:var(--line-2)}
-.rd-app .xp-chip.on{background:var(--red);border-color:var(--red);color:#fff}
-.rd-app .xp-panel-f{display:flex;justify-content:flex-end}
+/* active filter chips */
+.rd-app .xp-active{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.rd-app .xp-active[hidden]{display:none}
+.rd-app .xp-achip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--white);font-size:.76rem;font-weight:600;color:var(--ink)}
+.rd-app .xp-achip:hover{border-color:var(--line-2)}
+.rd-app .xp-achip svg{width:13px;height:13px;color:var(--mute-2)}
+.rd-app .xp-aclear{background:none;border:0;padding:0 6px;font-size:.76rem;font-weight:600;color:var(--mute-2);text-decoration:underline;text-underline-offset:3px}
+.rd-app .xp-aclear:hover{color:var(--red)}
+
+/* filter drawer contents */
+.rd-app .xp-fsec{display:flex;flex-direction:column;gap:8px;padding:14px 0;border-bottom:1px solid var(--line)}
+.rd-app .xp-fsec:last-child{border-bottom:0}
+.rd-app .xp-flab{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute-2);font-family:"DM Mono",ui-monospace,monospace}
+.rd-app .xp-opts{display:flex;flex-direction:column}
+.rd-app .xp-opt{display:flex;align-items:center;gap:10px;min-height:40px;padding:2px 4px;border-radius:8px;cursor:pointer}
+.rd-app .xp-opt:hover{background:var(--paper)}
+.rd-app .xp-opt input{position:absolute;opacity:0;width:0;height:0}
+.rd-app .xp-box{display:grid;place-items:center;width:18px;height:18px;border:1px solid var(--line-2);border-radius:4px;background:var(--white);flex:0 0 auto}
+.rd-app .xp-box svg{width:12px;height:12px;color:#fff;opacity:0}
+.rd-app .xp-opt.on .xp-box{background:var(--red);border-color:var(--red)}
+.rd-app .xp-opt.on .xp-box svg{opacity:1}
+.rd-app .xp-optl{font-size:.85rem;color:var(--ink);font-weight:500}
+.rd-app .xp-df{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 2px;border-top:1px solid var(--line)}
+.rd-app .xp-df .btn-primary{min-width:170px;justify-content:center}
+
 
 .rd-app .xp-count{font-size:.74rem;color:var(--mute-2);font-family:"DM Mono",ui-monospace,monospace}
 
