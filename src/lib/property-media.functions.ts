@@ -94,6 +94,7 @@ export const updateMediaAssets = createServerFn({ method: "POST" })
       .object({
         ids: z.array(z.string().uuid()).min(1).max(400),
         patch: z.object({
+          file_name: z.string().max(200).optional(),
           room_group: z.string().max(60).optional(),
           room_confidence: z.number().min(0).max(1).optional(),
           hidden: z.boolean().optional(),
