@@ -92,7 +92,7 @@ export async function openPropertyUpload(opts = {}) {
               <label>Bathrooms<input id="pmuBaths" type="number" min="0" max="30" step="0.5"></label>
               <label>Square Footage<input id="pmuSqft" type="number" min="0"></label>
               <label>Project Purpose<select id="pmuPurpose"><option>Listing Media</option><option>Pre Listing Prep</option><option>Renovation Planning</option><option>Investor Analysis</option><option>Client Presentation</option></select></label>
-              <label>Agent, Photographer Or Client<input id="pmuWho" placeholder="Who is this for"></label>
+              <label>Agent, Photographer Or Client<span class="pmu-info" data-tip="Who Is This For — the agent, photographer or client this photo set belongs to. Shown on presentations and exports."><i data-lucide="info"></i></span><input id="pmuWho" placeholder="Who Is This For"></label>
               <label class="pmu-wide">Internal Notes<textarea id="pmuNotes" rows="2"></textarea></label>
             </div>
           </details>
