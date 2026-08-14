@@ -12,7 +12,7 @@
 
 import { renderConcept } from "@/lib/concept-render.functions";
 
-type Method = "space" | "sketch" | "describe" | "property";
+type Method = "upload" | "describe" | "property";
 
 export type StudioStartCtx = {
   lucide: { createIcons: (o?: any) => void };
