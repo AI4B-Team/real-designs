@@ -1,5 +1,7 @@
 import { useEffect, useRef } from "react";
 import { initTooltips } from "@/lib/tooltips";
+import { initSelects } from "@/lib/selects";
+
 
 type Props = {
   className: string;
