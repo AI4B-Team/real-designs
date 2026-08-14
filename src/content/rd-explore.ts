@@ -7,6 +7,7 @@ import { createIcons, icons } from "lucide";
 import {
   STYLES, STYLE_CATEGORIES, AUTO_STYLE, styleById, resolveStyle, recommendStyles, buildStylePayload,
 } from "@/lib/style-catalog";
+import { setStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 
 export { DIRECTIONS } from "@/content/directions";
 
@@ -554,7 +555,7 @@ export function mountExplore(go, ctx) {
     if ((el = hit("data-off"))) { const raw = String(el.dataset.off); const i = raw.indexOf(":"); toggleFilter(raw.slice(0, i), raw.slice(i + 1)); return; }
     if ((el = hit("data-save"))) { toggleSave(el.dataset.save); return; }
     if ((el = hit("data-open"))) { styleDrawer(el.dataset.open); return; }
-    if ((el = hit("data-use"))) { const s = styleById(el.dataset.use); if (s) applyToStudio(s); return; }
+    if ((el = hit("data-use"))) { e.preventDefault(); const s = styleById(el.dataset.use); if (!s) { note("This Style Could Not Be Loaded. Please Choose Another Style."); return; } applyToStudio(s, el); return; }
     if ((el = hit("data-dnago"))) { const s = styleById(el.dataset.dnago); if (s) setDna(s); return; }
     if ((el = hit("data-dna"))) { const s = styleById(el.dataset.dna); if (s) confirmDna(s); return; }
     if (t.closest("#xpClear")) { clearFilters(); return; }
