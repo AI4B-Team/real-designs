@@ -54,21 +54,13 @@ const SHELL = `
 
   <div class="xp-bar">
     <div class="xp-search"><i data-lucide="search"></i><input id="xpQ" type="text" placeholder="Search directions, materials or rooms"></div>
-    <button class="btn btn-ghost btn-sm xp-filter-btn" id="xpFilterBtn" aria-expanded="true"><i data-lucide="sliders-horizontal"></i>Filter<span class="xp-cnt" id="xpFilterCnt" hidden>0</span></button>
+    <button class="btn btn-ghost btn-sm xp-filter-btn" id="xpFilterBtn" aria-haspopup="dialog"><i data-lucide="sliders-horizontal"></i>Filter<span class="xp-cnt" id="xpFilterCnt" hidden>0</span></button>
   </div>
 
   <div class="xp-cats" id="xpCats"></div>
 
-  <div class="xp-panel on" id="xpPanel">
-    <div class="xp-panel-h">
-      <b>Filters</b>
-      <button class="icon-btn xp-panel-x" id="xpPanelX" aria-label="Close Filters"><i data-lucide="x"></i></button>
-    </div>
-    <div class="xp-row" id="xpRoomRow"><span class="xp-lab">Room</span><div class="xp-chips" id="xpRooms"></div></div>
-    <div class="xp-row"><span class="xp-lab">Characteristics</span><div class="xp-chips" id="xpTraits"></div></div>
-    <div class="xp-row"><span class="xp-lab">Finish Grade</span><div class="xp-chips" id="xpGrades"></div></div>
-    <div class="xp-panel-f"><button class="fb-link" id="xpClear">Clear Filters</button></div>
-  </div>
+  <div class="xp-active" id="xpActive" hidden></div>
+
 
   <section class="xp-quiz" id="xpQuiz" hidden>
     <div class="xp-quiz-top">
