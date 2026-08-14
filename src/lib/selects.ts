@@ -56,7 +56,8 @@ function openMenu(sel: HTMLSelectElement) {
     menu.style.maxHeight = Math.max(140, below - 16) + "px";
   }
 
-  menu.querySelector(".is-sel")?.scrollIntoView({ block: "nearest" });
+  const sel2 = menu.querySelector<HTMLElement>(".is-sel");
+  if (sel2) menu.scrollTop = Math.max(0, sel2.offsetTop - menu.clientHeight / 2);
 }
 
 function enhance(sel: HTMLSelectElement) {
@@ -93,7 +94,10 @@ export function initSelects(root: ParentNode = document): Cleanup {
   });
   obs.observe(document.body, { childList: true, subtree: true });
 
-  const onScroll = () => closeMenu();
+  const onScroll = (e: Event) => {
+    if (e.target instanceof Element && e.target.closest(".rdsel-menu")) return;
+    closeMenu();
+  };
   window.addEventListener("scroll", onScroll, true);
   window.addEventListener("resize", onScroll);
   document.addEventListener("mousedown", (e) => {
