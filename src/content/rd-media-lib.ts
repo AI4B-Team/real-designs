@@ -340,7 +340,7 @@ function card(m) {
       ? `<span class="ml-meta-b">${m.duration ? m.duration + "s" : "—"}</span><span class="ml-meta-b">${esc(m.aspect || "9:16")}</span>`
       : "";
   return `<div class="card ml-card${sel ? " sel" : ""}" data-card="${m.id}">
-    <div class="ml-thumb">${thumb}
+    <div class="ml-thumb" data-thumb="${m.id}" role="button" tabindex="0" aria-label="Open ${esc(m.title)}">${thumb}
       <span class="ml-type"><i data-lucide="${TYPE_ICON[m.type] || "image"}"></i></span>
       ${badges ? `<div class="ml-badges">${badges}</div>` : ""}
       <div class="ml-ov">
@@ -356,28 +356,112 @@ function card(m) {
   </div>`;
 }
 
+/* ---------------- action model ---------------- */
+
+const READY = (m) => ["ready", "shared", "draft"].includes(m.status);
+const videoReady = (m) => READY(m) && typeGroup(m.type) !== "videos" && !!m.path;
+const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !!m.refId && READY(m);
+const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
+
 function actions(m, g) {
   if (m.status === "failed")
     return `<button class="btn btn-ghost btn-xs" data-retry="${m.id}" style="flex:1"><i data-lucide="rotate-ccw"></i>Retry</button>
-      <button class="btn btn-ghost btn-xs" data-remove="${m.id}"><i data-lucide="trash-2"></i></button>`;
+      <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   if (m.status === "processing" || m.status === "queued")
-    return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Details</button>`;
-  if (g === "videos")
-    return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1"><i data-lucide="play"></i>Play</button>
-      <button class="btn btn-ghost btn-xs" data-edit="${m.id}" title="Edit"><i data-lucide="pencil"></i></button>
-      <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download"><i data-lucide="download"></i></button>
-      <button class="btn btn-ghost btn-xs" data-share="${m.id}" title="Share"><i data-lucide="share-2"></i></button>
-      <button class="btn btn-ghost btn-xs" data-arch="${m.id}" title="Archive"><i data-lucide="archive"></i></button>`;
-  if (g === "uploads")
-    return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open</button>
-      <button class="btn btn-ghost btn-xs" data-studio="${m.id}" title="Use in Studio"><i data-lucide="wand-2"></i></button>
-      <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download"><i data-lucide="download"></i></button>
-      <button class="btn btn-ghost btn-xs" data-arch="${m.id}" title="Archive"><i data-lucide="archive"></i></button>`;
+    return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open Details</button>
+      ${m.job ? `<button class="btn btn-ghost btn-xs" data-cancel="${m.id}">Cancel</button>` : ""}`;
   return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open</button>
-    <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download"><i data-lucide="download"></i></button>
-    <button class="btn btn-ghost btn-xs" data-pres="${m.id}" title="Add to Presentation"><i data-lucide="presentation"></i></button>
-    <button class="btn btn-ghost btn-xs" data-arch="${m.id}" title="Archive"><i data-lucide="archive"></i></button>`;
+    <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download" aria-label="Download"><i data-lucide="download"></i></button>
+    <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
 }
+
+/** Every secondary action for one asset. Only implemented workflows appear. */
+function moreItems(m) {
+  const g = typeGroup(m.type);
+  const fav = { icon: "heart", label: isFav(m.id) ? "Unfavorite" : "Favorite", fn: () => { toggleFav(m.id); render(); } };
+  if (m.status === "failed")
+    return [
+      { icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
+      { icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
+      { icon: "trash-2", label: "Remove", danger: true, fn: () => remove(m) },
+    ];
+  if (g === "videos")
+    return [
+      { icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
+      { icon: "copy", label: "Duplicate", fn: () => dupVideo(m, false) },
+      { icon: "scissors", label: "Create Short Version", fn: () => dupVideo(m, true) },
+      { icon: "ratio", label: "Change Format", fn: () => openVideo(m, "video") },
+      { icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") },
+      { icon: "type", label: "Rename", fn: () => renameItem(m) },
+      fav,
+      { icon: "archive", label: "Archive", fn: () => archive([m]) },
+      { icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) },
+    ];
+  const out = [];
+  if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
+  out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
+  out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
+  if (g === "images") out.push({ icon: "layers", label: "Create Variations", fn: () => S.go("studio") });
+  if (m.sourcePath) out.push({ icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
+  out.push({ icon: "home", label: "Add To Property", fn: () => S.go("props") });
+  out.push({ icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") });
+  out.push({ icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
+  if (m.type === "uploaded_image" && !m.job) out.push({ icon: "type", label: "Rename", fn: () => renameItem(m) });
+  out.push(fav);
+  out.push({ icon: "archive", label: "Archive", fn: () => archive([m]) });
+  out.push({ icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) });
+  return out;
+}
+
+/* ---------------- popup menu ---------------- */
+
+let POP = null;
+function closePop() {
+  if (POP) {
+    POP.remove();
+    POP = null;
+  }
+}
+try {
+  document.addEventListener("click", (e) => {
+    if (POP && !POP.contains(e.target)) closePop();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePop();
+  });
+} catch (_) {}
+
+function popMenu(anchor, items) {
+  closePop();
+  const list = items.filter(Boolean);
+  const el = document.createElement("div");
+  el.className = "ml-pop";
+  el.setAttribute("role", "menu");
+  el.innerHTML = list
+    .map(
+      (it, i) =>
+        `<button role="menuitem" data-i="${i}" class="${it.danger ? "danger" : ""}"${it.disabled ? " disabled" : ""}><i data-lucide="${it.icon}"></i>${esc(it.label)}</button>`,
+    )
+    .join("");
+  document.body.appendChild(el);
+  paint();
+  const r = anchor.getBoundingClientRect();
+  const h = el.offsetHeight;
+  const w = el.offsetWidth;
+  el.style.top = Math.max(10, Math.min(window.innerHeight - h - 10, r.bottom + 6)) + "px";
+  el.style.left = Math.max(10, Math.min(window.innerWidth - w - 10, r.right - w)) + "px";
+  el.querySelectorAll("[data-i]").forEach(
+    (b) =>
+      (b.onclick = (ev) => {
+        ev.stopPropagation();
+        const it = list[Number(b.dataset.i)];
+        closePop();
+        if (it && !it.disabled && it.fn) it.fn();
+      }),
+  );
+  POP = el;
+}
+
 
 function fmtDate(d) {
   if (!d) return "Just now";
