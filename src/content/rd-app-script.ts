@@ -1702,7 +1702,9 @@ function renderScope(r){
   const groups=[]; const idx={};
   r.lines.forEach(l=>{ if(idx[l.trade]===undefined){ idx[l.trade]=groups.length; groups.push({trade:l.trade,lines:[]}); }
     groups[idx[l.trade]].lines.push(l); });
-  scopeRowsEl.innerHTML=groups.map(g=>{
+  scopeRowsEl.innerHTML=r.lines.length===0
+    ? '<tr><td colspan="5">No Priceable Items In This Selection. Add Or Change Scope Items, Then Run The Estimate Again.</td></tr>'
+    : groups.map(g=>{
     const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
     return `<tr class="trade-h"><td colspan="3">${g.trade}</td><td class="n">${money(low)}</td><td class="n">${money(high)}</td></tr>`
     +g.lines.map(l=>`<tr><td><b>${l.description}</b>${l.is_fallback?' <span class="pill p-amb">Fallback</span>':''}<span class="src">${l.price_source}</span></td>
