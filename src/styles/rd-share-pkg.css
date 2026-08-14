@@ -1,0 +1,80 @@
+/* REAL DESIGNS — client-facing shared presentation package. */
+
+.sp-wrap {
+  --sp-accent: #cc0000;
+  max-width: 940px;
+  margin: 0 auto;
+  padding: 26px 18px 80px;
+  font-family: "DM Sans", system-ui, sans-serif;
+  color: #111;
+}
+.sp-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.sp-brand { font-size: 0.96rem; letter-spacing: 0.18em; text-transform: uppercase; }
+.sp-brand b { color: var(--sp-accent); }
+.sp-logo { max-height: 38px; width: auto; }
+.sp-kicker { font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.08em; color: #767676; }
+
+.sp-card {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+.sp-center { text-align: center; display: grid; gap: 12px; justify-items: center; }
+.sp-title { font-size: 1.7rem; margin: 0 0 4px; }
+.sp-sub { color: #6b6b6b; font-size: 0.9rem; margin: 0; }
+.sp-intro { margin: 12px 0 0; font-size: 0.96rem; line-height: 1.6; }
+.sp-h2 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--sp-accent);
+  margin: 0 0 12px;
+}
+
+.sp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.sp-fig { margin: 0; }
+.sp-fig img,
+.sp-fig video { width: 100%; border-radius: 10px; border: 1px solid #ececec; display: block; }
+.sp-ba { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.sp-fig figcaption { font-size: 0.8rem; color: #6b6b6b; margin-top: 6px; }
+
+.sp-lines { display: grid; }
+.sp-line { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-bottom: 1px solid #f1f1f1; font-size: 0.9rem; }
+
+.sp-in {
+  width: 100%;
+  border: 1px solid #dcdcdc;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 0.92rem;
+  background: #fff;
+  color: #111;
+  margin-bottom: 10px;
+}
+.sp-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.sp-btn {
+  border: 1px solid #d8d8d8;
+  background: #fff;
+  border-radius: 999px;
+  padding: 10px 20px;
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.sp-btn[disabled] { opacity: 0.55; cursor: default; }
+.sp-btn-primary { background: var(--sp-accent); border-color: var(--sp-accent); color: #fff; }
+.sp-ok { font-size: 0.92rem; color: #14804a; margin: 0 0 10px; }
+.sp-foot { text-align: center; font-size: 0.78rem; color: #8a8a8a; padding: 18px 0; }
+
+@media (max-width: 640px) {
+  .sp-ba { grid-template-columns: 1fr; }
+}

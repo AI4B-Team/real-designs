@@ -10,6 +10,7 @@ import "@/styles/rd-media.css";
 import "@/styles/rd-media-lib.css";
 import "@/styles/rd-lvideo.css";
 import "@/styles/rd-reveal.css";
+import "@/styles/rd-present.css";
 
 const title = "Back Office | REAL DESIGNS";
 const description =
