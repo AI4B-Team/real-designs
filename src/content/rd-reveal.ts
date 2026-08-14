@@ -1133,11 +1133,51 @@ function bind() {
     const url = await signed(v.output_path);
     if (url) window.open(url, "_blank");
   });
-  on("#rvShare", "click", async () => {
-    const { token } = await saveShareLink({ video_project_id: S.detailId });
-    try { await navigator.clipboard.writeText(location.origin + "/p/" + token); } catch (_) {}
-    toast("Share Link Copied.");
+  on("#rvShare", "click", () => { S.detailTab = "presentation"; render(); });
+
+  /* presentation page settings */
+  const share = () => (S.detail.share = S.detail.share || {});
+  on("[data-ptype]", "click", (e) => { share().presentation_type = e.currentTarget.dataset.ptype; render(); });
+  on("[data-pmob]", "click", (e) => { share().mobile_layout = e.currentTarget.dataset.pmob; render(); });
+  on("#prCopy", "click", async () => {
+    const sh = S.detail.share || {};
+    try { await navigator.clipboard.writeText(location.origin + "/v/" + (sh.slug || sh.token)); } catch (_) {}
+    toast("Presentation Link Copied.");
   });
+  on("#prSave", "click", async (e) => {
+    const q = (sel) => el.querySelector(sel);
+    const sh = S.detail.share || {};
+    const sections = {};
+    el.querySelectorAll("[data-psec]").forEach((n) => { sections[n.dataset.psec] = n.checked; });
+    const pwOn = q("#pr_pw_on")?.checked;
+    const pw = q("#pr_pw")?.value || "";
+    e.currentTarget.disabled = true;
+    try {
+      const res = await saveShareLink({
+        video_project_id: S.detailId,
+        presentation_type: sh.presentation_type || "listing",
+        slug: (q("#pr_slug")?.value || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-") || null,
+        headline: q("#pr_head")?.value || null,
+        privacy_type: pwOn ? "private" : "public",
+        password: pwOn && pw ? pw : null,
+        clear_password: !pwOn,
+        allow_download: !!q("#pr_dl")?.checked,
+        approval_enabled: !!q("#pr_appr")?.checked,
+        comments_enabled: !!q("#pr_appr")?.checked,
+        show_budget: !!sections.budget,
+        show_products: !!sections.products,
+        mobile_layout: sh.mobile_layout || "stacked",
+        sections,
+      });
+      S.detail.share = { ...sh, ...res, sections, password_hash: pwOn ? (pw ? "set" : sh.password_hash) : null };
+      toast("Presentation Page Saved.");
+      render();
+    } catch (err) {
+      toast(err?.message || "Could not save the presentation page.");
+      e.currentTarget.disabled = false;
+    }
+  });
+
   on("#rvEdit, #rvEdit2, #rvRetry", "click", () => editExisting(S.detail));
 
   el.querySelectorAll("[data-goto]").forEach((n) => n.addEventListener("click", () => S.go && S.go(n.dataset.goto)));
