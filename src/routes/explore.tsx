@@ -182,14 +182,14 @@ function ExplorePage() {
 
         <div className="dir-wrap">
           <p className="dir-count">
-            {filtered.length} Of {DIRECTIONS.length} Directions
+            {filtered.length} Of {DIRECTIONS.length} Styles
           </p>
 
           <div className="dir-grid">
             {filtered.map((d, i) => (
               <article className="dir-card" key={d.id}>
                 <div className="dir-img">
-                  <img src={d.img} alt={`${d.name} design direction example`} loading="lazy" />
+                  <img src={d.img} alt={`${d.name} design style example`} loading="lazy" />
                 </div>
                 <div className="dir-body">
                   <div className="dir-name">

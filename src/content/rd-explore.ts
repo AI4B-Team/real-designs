@@ -187,7 +187,7 @@ export function mountExplore(go, ctx) {
       ? act.map(([k, v]) => `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`).join("") +
         '<button class="xp-aclear" id="xpClear">Clear All</button>'
       : "";
-    $("xpCount").textContent = list.length + " Of " + DIRECTIONS.length + " Directions";
+    $("xpCount").textContent = list.length + " Of " + DIRECTIONS.length + " Styles";
     $("xpGrid").innerHTML = list.length
       ? list.map(card).join("")
       : `<div class="xp-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>Try removing a filter, or start in Studio and describe the style you want.</p><button class="btn btn-primary btn-sm" id="xpCustom">Start In Studio</button></div>`;
