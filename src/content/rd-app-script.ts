@@ -3173,29 +3173,7 @@ toolRows.forEach((r) => r.addEventListener('click', () => {
 }));
 
 
-/* ---------- studio: canvas dark / light surround ---------- */
-const canvasCard = document.getElementById('canvasCard');
-const canvasThemeBtn = document.getElementById('canvasTheme');
-if (canvasCard && canvasThemeBtn) {
-  const CT_KEY='rd.canvasTheme';
-  const applyCanvasTheme=(mode)=>{
-    const dark = mode !== 'light';
-    canvasCard.classList.toggle('dark', dark);
-    canvasThemeBtn.querySelectorAll('[data-ctheme]').forEach(b=>{
-      const on = b.getAttribute('data-ctheme') === (dark?'dark':'light');
-      b.classList.toggle('on', on);
-      b.setAttribute('aria-pressed', String(on));
-    });
-    try{ localStorage.setItem(CT_KEY, dark?'dark':'light'); }catch(e){}
-  };
-  canvasThemeBtn.querySelectorAll('[data-ctheme]').forEach(b=>b.addEventListener('click',()=>{
-    applyCanvasTheme(b.getAttribute('data-ctheme'));
-    lucide.createIcons();
-  }));
-  let saved='dark';
-  try{ saved = localStorage.getItem(CT_KEY) || 'dark'; }catch(e){}
-  applyCanvasTheme(saved);
-}
+/* ---------- studio: canvas surround (dark, fixed) ---------- */
 
 /* ---------- accounts: signed-in identity + saved projects ---------- */
 const initials=(s)=>s.split(/[.@\s_-]+/).filter(Boolean).slice(0,2).map(x=>x[0].toUpperCase()).join('')||'RD';
