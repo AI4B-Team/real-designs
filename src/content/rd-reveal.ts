@@ -1352,3 +1352,12 @@ export async function mountReveal(go, _opts = {}) {
 }
 
 export default mountReveal;
+
+/** Open one video's detail screen from another module (Listing Video, Media). */
+export async function openVideoDetail(id, tab = "video") {
+  if (S.go) S.go("reveal");
+  if (!S.mounted) await mountReveal(S.go, {});
+  else await loadLibrary();
+  S.detailTab = tab;
+  await openDetail(id);
+}
