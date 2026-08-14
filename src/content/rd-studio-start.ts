@@ -598,7 +598,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (!list.length) return "";
     return (
       '<section class="stw-recent">' +
-      '<div class="stw-sec-h"><h3>Continue Where You Left Off</h3><span>Your most recent work</span></div>' +
+      '<div class="stw-sec-h"><h3>Continue Where You Left Off</h3><span>Your Most Recent Work</span></div>' +
       '<div class="stw-recent-g">' +
       list
         .map(
