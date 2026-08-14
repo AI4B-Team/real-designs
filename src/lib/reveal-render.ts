@@ -7,6 +7,12 @@
  * storyboard is fast and predictable.
  */
 
+export type SceneLabel = {
+  text: string;
+  style?: "clean" | "architectural" | "callout";
+  position?: "top_left" | "top_right" | "bottom_left" | "bottom_right";
+};
+
 export type RevealScene = {
   url: string;
   compareUrl?: string | null;
@@ -17,7 +23,45 @@ export type RevealScene = {
   transition?: string;
   caption?: string | null;
   disclosure_type?: string | null;
+  /** "standard" = camera motion only. "immersive" = AI-animated movement. */
+  motion_level?: "standard" | "immersive";
+  immersive_effect?: string | null;
+  exterior_effect?: string | null;
+  labels?: SceneLabel[];
 };
+
+/** Standard camera moves. */
+export const STANDARD_MOTIONS: Array<[string, string]> = [
+  ["auto", "Automatic"],
+  ["push", "Push In"],
+  ["pull", "Pull Out"],
+  ["pan_left", "Pan Left"],
+  ["pan_right", "Pan Right"],
+  ["orbit_left", "Orbit Left"],
+  ["orbit_right", "Orbit Right"],
+  ["static", "Static"],
+];
+
+/** Immersive movement inside the frame. Architecture is never redrawn. */
+export const IMMERSIVE_EFFECTS: Array<[string, string]> = [
+  ["curtains", "Curtains Drifting"],
+  ["fire", "Fireplace Flicker"],
+  ["water", "Water Movement"],
+  ["light", "Daylight Shift"],
+  ["foliage", "Foliage Sway"],
+];
+
+/** Cinematic exterior moves. Simulated camera work, never drone footage. */
+export const EXTERIOR_EFFECTS: Array<[string, string]> = [
+  ["approach", "Approach"],
+  ["rise", "Rise"],
+  ["aerial_reveal", "Aerial Reveal"],
+];
+
+export const EXTERIOR_DISCLOSURE =
+  "Cinematic camera movement is simulated from still photography. This is not actual drone footage.";
+
+export const IMMERSIVE_CREDITS_PER_SCENE = 6;
 
 export type RevealBrand = {
   company_name?: string | null;
@@ -133,6 +177,19 @@ function drawMotion(
     case "static":
       zoom = 1.02;
       break;
+    // Cinematic exterior moves — simulated camera work on a still frame.
+    case "approach":
+      zoom = 1.0 + 0.2 * t;
+      dy = (0.5 - t) * H * 0.02;
+      break;
+    case "rise":
+      zoom = 1.14;
+      dy = (t - 0.5) * H * 0.1;
+      break;
+    case "aerial_reveal":
+      zoom = 1.26 - 0.24 * t;
+      dy = (0.5 - t) * H * 0.05;
+      break;
     default:
       zoom = 1.0 + 0.06 * t; // automatic
   }
@@ -235,6 +292,127 @@ function disclosureNote(ctx: CanvasRenderingContext2D, W: number, H: number, lab
   ctx.restore();
 }
 
+/**
+ * Immersive motion. The photograph itself is never redrawn — movement is
+ * layered on top of the frame so walls, windows and furniture stay exactly
+ * where the render put them.
+ */
+function immersiveLayer(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  effect: string,
+  t: number,
+) {
+  const wave = Math.sin(t * Math.PI * 2);
+  ctx.save();
+  if (effect === "fire") {
+    const flick = 0.06 + 0.05 * Math.abs(Math.sin(t * Math.PI * 6));
+    const g = ctx.createRadialGradient(W * 0.5, H * 0.72, W * 0.02, W * 0.5, H * 0.72, W * 0.6);
+    g.addColorStop(0, `rgba(255,150,60,${flick})`);
+    g.addColorStop(1, "rgba(255,120,40,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  } else if (effect === "water") {
+    ctx.globalAlpha = 0.1 + 0.04 * wave;
+    const g = ctx.createLinearGradient(0, H * 0.6, W, H);
+    g.addColorStop(0, "rgba(255,255,255,0)");
+    g.addColorStop(0.5 + 0.12 * wave, "rgba(255,255,255,.5)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, H * 0.55, W, H * 0.45);
+  } else if (effect === "curtains") {
+    ctx.globalAlpha = 0.13 + 0.05 * wave;
+    const x = W * (0.06 + 0.01 * wave);
+    const g = ctx.createLinearGradient(x, 0, x + W * 0.22, 0);
+    g.addColorStop(0, "rgba(255,255,255,.55)");
+    g.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W * 0.42, H);
+  } else if (effect === "foliage") {
+    ctx.globalAlpha = 0.1 + 0.05 * Math.abs(wave);
+    const g = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+    g.addColorStop(0, "rgba(20,40,20,.45)");
+    g.addColorStop(1, "rgba(20,40,20,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(W * (0.02 * wave), 0, W, H * 0.5);
+  } else {
+    // daylight shift
+    ctx.globalAlpha = 0.09 + 0.05 * t;
+    const g = ctx.createLinearGradient(W, 0, 0, H);
+    g.addColorStop(0, "rgba(255,220,170,.7)");
+    g.addColorStop(1, "rgba(255,220,170,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  }
+  ctx.restore();
+}
+
+/** Restrained scene labels: a room name, a material note or one callout. */
+function sceneLabels(ctx: CanvasRenderingContext2D, W: number, H: number, labels: SceneLabel[], alpha: number) {
+  if (!labels?.length || alpha <= 0.01) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  const size = Math.round(W * 0.028);
+  const margin = W * 0.06;
+  const byPos: Record<string, number> = {};
+  for (const l of labels.slice(0, 3)) {
+    const text = (l.text || "").trim();
+    if (!text) continue;
+    const pos = l.position || "bottom_left";
+    const row = byPos[pos] ?? 0;
+    byPos[pos] = row + 1;
+    const offset = row * size * 2.5;
+    const style = l.style || "clean";
+    ctx.font = `${style === "architectural" ? 600 : 700} ${size}px Inter, system-ui, sans-serif`;
+    const label = style === "architectural" ? text.toUpperCase() : text;
+    const padX = size * 0.7;
+    const wBox = ctx.measureText(label).width + padX * 2;
+    const hBox = size * 2;
+    const x = pos.endsWith("right") ? W - margin - wBox : margin;
+    const y = pos.startsWith("top") ? H * 0.16 + offset : H * 0.74 - offset;
+
+    if (style === "callout") {
+      ctx.fillStyle = ACCENT;
+      roundRect(ctx, x, y, wBox, hBox, hBox / 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+    } else if (style === "architectural") {
+      ctx.strokeStyle = "rgba(255,255,255,.75)";
+      ctx.lineWidth = Math.max(1, W * 0.0015);
+      ctx.strokeRect(x, y, wBox, hBox);
+      ctx.fillStyle = "rgba(10,10,10,.42)";
+      ctx.fillRect(x, y, wBox, hBox);
+      ctx.fillStyle = "#fff";
+    } else {
+      ctx.fillStyle = "rgba(10,10,10,.62)";
+      roundRect(ctx, x, y, wBox, hBox, size * 0.4);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+    }
+    ctx.textAlign = "left";
+    ctx.textBaseline = "middle";
+    if (style === "architectural") ctx.letterSpacing = "0.08em" as unknown as string;
+    ctx.fillText(label, x + padX, y + hBox / 2 + 1);
+    ctx.letterSpacing = "0px" as unknown as string;
+  }
+  ctx.restore();
+}
+
+/** Suggest scene labels from the room name and any caption already written. */
+export function suggestLabels(roomName?: string | null, caption?: string | null): SceneLabel[] {
+  const out: SceneLabel[] = [];
+  const room = (roomName || "").trim();
+  if (room) out.push({ text: room, style: "clean", position: "bottom_left" });
+  const cap = (caption || "").trim();
+  if (cap && cap.toLowerCase() !== room.toLowerCase()) {
+    out.push({ text: cap.slice(0, 40), style: "architectural", position: "bottom_right" });
+  }
+  return out;
+}
+
+
+
 export function estimateDuration(scenes: RevealScene[], lengthPreset: string): number {
   const target = lengthPreset === "quick" ? 15 : lengthPreset === "full" ? 60 : 30;
   if (!scenes.length) return 0;
@@ -318,7 +496,11 @@ export async function renderReveal(
         const img = imgs[idx]!;
         const cmp = compares[idx];
         const p = local / durations[idx]!;
-        const motion = scene.motion && scene.motion !== "auto" ? scene.motion : "auto";
+        const motion = scene.exterior_effect
+          ? scene.exterior_effect
+          : scene.motion && scene.motion !== "auto"
+            ? scene.motion
+            : "auto";
         const transition = scene.transition || opts.transition || "clean";
 
         if (cmp && scene.scene_type === "before_after") {
@@ -354,13 +536,37 @@ export async function renderReveal(
           drawMotion(ctx, img, W, H, motion, p);
         }
 
+        if (scene.motion_level === "immersive") {
+          immersiveLayer(ctx, W, H, scene.immersive_effect || "light", p);
+        }
+
         if (opts.captionsEnabled !== false) {
           const text = scene.caption || scene.room_name || "";
           const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
           caption(ctx, W, H, text, a);
         }
+        {
+          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
+          sceneLabels(ctx, W, H, scene.labels ?? [], a);
+        }
         if (showDisclosure && scene.disclosure_type) {
           disclosureNote(ctx, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
+        }
+        if (showDisclosure && scene.motion_level === "immersive") {
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          pill(ctx, "AI-Animated", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
+          ctx.restore();
+        }
+        if (showDisclosure && scene.exterior_effect) {
+          ctx.save();
+          ctx.globalAlpha = 0.72;
+          ctx.font = `600 ${Math.round(W * 0.018)}px Inter, system-ui, sans-serif`;
+          ctx.fillStyle = "rgba(255,255,255,.9)";
+          ctx.textAlign = "left";
+          ctx.textBaseline = "alphabetic";
+          ctx.fillText("Simulated camera movement — not drone footage", W * 0.06, H * 0.955);
+          ctx.restore();
         }
         if (showBrand && brand?.company_name) {
           ctx.save();

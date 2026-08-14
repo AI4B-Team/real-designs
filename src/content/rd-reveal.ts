@@ -21,7 +21,17 @@ import {
   saveBrandKit,
   saveShareLink,
 } from "@/lib/reveal.functions";
-import { renderReveal, sceneDurations, DISCLOSURE_LABEL } from "@/lib/reveal-render";
+import {
+  renderReveal,
+  sceneDurations,
+  DISCLOSURE_LABEL,
+  STANDARD_MOTIONS,
+  IMMERSIVE_EFFECTS,
+  EXTERIOR_EFFECTS,
+  EXTERIOR_DISCLOSURE,
+  IMMERSIVE_CREDITS_PER_SCENE,
+  suggestLabels,
+} from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
 
 const BUCKET = "reveal-videos";
@@ -389,6 +399,40 @@ function stepScenes() {
   </div>`;
 }
 
+/* ---------- per-scene motion, immersive movement and exterior effects ---------- */
+function isExterior(scene) {
+  return /exterior|front|facade|curb|yard|patio|deck|pool|garden|landscape|backyard|outdoor/i.test(
+    (scene.room || "") + " " + (scene.kind || ""),
+  );
+}
+function immersiveCount() {
+  return (S.wizard?.scenes || []).filter((s) => s.motion_level === "immersive").length;
+}
+
+function sceneMotionCard(s, i) {
+  const level = s.motion_level === "immersive" ? "immersive" : "standard";
+  return `<div class="rv-mcard">
+    <div class="rv-mcard-h"><b>${esc(s.room || "Scene " + (i + 1))}</b>
+      <span class="rv-seg tiny">
+        <button class="${level === "standard" ? "on" : ""}" data-level="standard" data-i="${i}">Standard</button>
+        <button class="${level === "immersive" ? "on" : ""}" data-level="immersive" data-i="${i}">Immersive</button>
+      </span>
+    </div>
+    ${level === "standard"
+      ? `<label class="rv-f">Camera Move<select data-scene-motion="${i}">${STANDARD_MOTIONS
+          .map(([m, n]) => `<option value="${m}" ${(s.motion || "auto") === m ? "selected" : ""}>${n}</option>`).join("")}</select></label>`
+      : `<label class="rv-f">Animated Movement<select data-immersive="${i}">${IMMERSIVE_EFFECTS
+          .map(([m, n]) => `<option value="${m}" ${(s.immersive_effect || "light") === m ? "selected" : ""}>${n}</option>`).join("")}</select></label>
+        <div class="rv-note sm">Adds ${IMMERSIVE_CREDITS_PER_SCENE} Credits. Only Movement Is Animated — Walls, Windows And Furniture Stay Exactly As Designed.</div>`}
+    ${isExterior(s) ? `<label class="rv-f">Cinematic Exterior<select data-ext="${i}">
+      <option value="">None</option>
+      ${EXTERIOR_EFFECTS.map(([m, n]) => `<option value="${m}" ${s.exterior_effect === m ? "selected" : ""}>${n}</option>`).join("")}
+    </select></label>
+    ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
+  </div>`;
+}
+
+
 function stepSetup() {
   const w = S.wizard;
   return `<h3>Configure The Video</h3>
@@ -399,9 +443,9 @@ function stepSetup() {
     .map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
   <div class="rv-sub">Motion</div>
   <div class="rv-seg"><button class="${w.motion === "auto" ? "on" : ""}" data-motion="auto">Automatic — Recommended</button><button class="${w.motion !== "auto" ? "on" : ""}" data-motion="advanced">Advanced Per Scene</button></div>
-  ${w.motion !== "auto" ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}
-    <select data-scene-motion="${i}">${["auto", "push", "pull", "pan_left", "pan_right", "orbit_left", "orbit_right", "static"]
-      .map((m) => `<option value="${m}" ${s.motion === m ? "selected" : ""}>${({ auto: "Automatic", push: "Push In", pull: "Pull Out", pan_left: "Pan Left", pan_right: "Pan Right", orbit_left: "Orbit Left", orbit_right: "Orbit Right", static: "Static" })[m]}</option>`).join("")}</select></label>`).join("")}</div>` : ""}
+  ${w.motion !== "auto" ? `<div class="rv-adv">${w.scenes.map((s, i) => sceneMotionCard(s, i)).join("")}
+    ${immersiveCount() ? `<div class="rv-note sm">Immersive Motion Is Added To ${immersiveCount()} ${immersiveCount() === 1 ? "Scene" : "Scenes"} — ${immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits.</div>` : ""}
+  </div>` : ""}
   <div class="rv-sub">Transitions</div>
   <div class="rv-seg">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"]]
     .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
@@ -441,8 +485,43 @@ function stepAudio() {
   <div class="rv-sub">Captions</div>
   <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Captions On Scenes</label>
   ${w.captions ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}<input data-cap="${i}" value="${esc(s.caption ?? s.room ?? "")}"></label>`).join("")}</div>` : ""}
+  <div class="rv-sub">Scene Labels</div>
+  <div class="rv-note sm">Short on-screen labels for room names, materials or one callout. Keep them restrained — two per scene is the maximum.</div>
+  <div class="rv-adv">
+    <button class="btn btn-ghost btn-sm" id="rvSuggestLabels"><i data-lucide="wand"></i>Suggest Labels</button>
+    ${w.scenes.map((s, i) => labelEditor(s, i)).join("")}
+  </div>
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
 }
+
+const LABEL_STYLES: Array<[string, string]> = [
+  ["clean", "Clean"],
+  ["architectural", "Architectural"],
+  ["callout", "Callout"],
+];
+const LABEL_POSITIONS: Array<[string, string]> = [
+  ["top_left", "Top Left"],
+  ["top_right", "Top Right"],
+  ["bottom_left", "Bottom Left"],
+  ["bottom_right", "Bottom Right"],
+];
+
+function labelEditor(s, i) {
+  const labels = Array.isArray(s.labels) ? s.labels : [];
+  return `<div class="rv-mcard">
+    <div class="rv-mcard-h"><b>${esc(s.room || "Scene " + (i + 1))}</b>
+      ${labels.length < 2 ? `<button class="btn btn-ghost btn-sm" data-label-add="${i}">Add Label</button>` : ""}
+    </div>
+    ${labels.length === 0 ? `<div class="rv-note sm">No Labels On This Scene.</div>` : ""}
+    ${labels.map((l, j) => `<div class="rv-labrow">
+      <input data-label-text="${i}:${j}" value="${esc(l.text || "")}" placeholder="Label Text" maxlength="40">
+      <select data-label-style="${i}:${j}">${LABEL_STYLES.map(([v, n]) => `<option value="${v}" ${(l.style || "clean") === v ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <select data-label-pos="${i}:${j}">${LABEL_POSITIONS.map(([v, n]) => `<option value="${v}" ${(l.position || "bottom_left") === v ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <button class="rv-x" data-label-del="${i}:${j}" aria-label="Remove Label"><i data-lucide="x"></i></button>
+    </div>`).join("")}
+  </div>`;
+}
+
 
 function stepBrand() {
   const w = S.wizard;
@@ -492,7 +571,8 @@ function stepReview() {
   const per = sceneDurations(w.scenes.length, w.length);
   const dur = Math.round(per * w.scenes.length);
   const vs = plannedVariants();
-  const cost = 40;
+  const imm = w.motion === "auto" ? 0 : immersiveCount();
+  const cost = 40 + imm * IMMERSIVE_CREDITS_PER_SCENE;
   const bal = window.__rdCredits?.balance;
   return `<h3>Review And Generate</h3>
   <div class="rv-review">
@@ -502,7 +582,7 @@ function stepReview() {
     <div><span>Formats</span><b>${esc(w.formats.join(", "))}</b></div>
     <div><span>Estimated Duration</span><b>About ${dur}s</b></div>
     <div><span>Versions</span><b>${vs.map((v) => v.version_type).filter((v, i, a) => a.indexOf(v) === i).join(", ") || "None"}</b></div>
-    <div><span>Credits Required</span><b>${cost}</b></div>
+    <div><span>Credits Required</span><b>${cost}${imm ? ` — Includes ${imm * IMMERSIVE_CREDITS_PER_SCENE} For Immersive Motion` : ""}</b></div>
     <div><span>Current Balance</span><b>${bal == null ? "—" : bal}</b></div>
   </div>
   ${w.busy ? `<div class="rv-proc"><b>Creating Your REAL REVEAL</b>
@@ -583,6 +663,10 @@ async function generate() {
         transition: w.transition,
         caption: w.captions ? s.caption || s.room : null,
         disclosure_type: s.disclosure || null,
+        motion_level: w.motion === "auto" ? "standard" : s.motion_level === "immersive" ? "immersive" : "standard",
+        immersive_effect: w.motion !== "auto" && s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
+        exterior_effect: w.motion !== "auto" ? s.exterior_effect || null : null,
+        labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
       })),
       audio: {
         presentation_style: w.presentation,
@@ -636,6 +720,10 @@ async function renderAllVariants(projectId, variants, cfg) {
       transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
       caption: w.captions ? s.caption || s.room : null,
       disclosure_type: s.disclosure || null,
+      motion_level: w.motion !== "auto" && s.motion_level === "immersive" ? "immersive" : "standard",
+      immersive_effect: w.motion !== "auto" && s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
+      exterior_effect: w.motion !== "auto" ? s.exterior_effect || null : null,
+      labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
     });
   }
   const { data: auth } = await supabase.auth.getUser();
@@ -754,6 +842,9 @@ function detailHtml() {
       <div><span>Created</span><b>${fmtDate(p.created_at)}</b></div>
     </div>`;
   }
+  if (tab === "presentation") body = presentationHtml(d);
+
+
 
   return `<div class="rv-head">
     <div><h2>${esc(p.title)}</h2><p>${esc(p.property_label || "No Property Linked")} • ${statusOf(p)} • ${fmtDate(p.created_at)}</p></div>
@@ -766,10 +857,63 @@ function detailHtml() {
   </div>
   ${p.status === "failed" ? `<div class="rv-fail"><b>This Render Failed</b><span>${esc(p.error_message || "Something went wrong.")}</span>
     <div><button class="btn btn-primary btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button><a class="btn btn-ghost btn-sm" href="/contact">Contact Support</a></div></div>` : ""}
-  <div class="rv-tabs">${[["video", "Video"], ["scenes", "Scenes"], ["captions", "Captions"], ["details", "Details"]]
+  <div class="rv-tabs">${[["video", "Video"], ["scenes", "Scenes"], ["captions", "Captions"], ["presentation", "Presentation"], ["details", "Details"]]
     .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-tab="${id}">${n}</button>`).join("")}</div>
   <div class="rv-detail">${body}</div>`;
 }
+
+const PRES_TYPES: Array<[string, string]> = [
+  ["listing", "Listing Presentation"],
+  ["design", "Design Presentation"],
+  ["renovation", "Renovation Presentation"],
+  ["portfolio", "Portfolio Piece"],
+];
+const PRES_SECTIONS: Array<[string, string]> = [
+  ["address", "Property Address"],
+  ["video", "Video Walkthrough"],
+  ["before_after", "Before And After"],
+  ["rooms", "Room Gallery"],
+  ["budget", "Planning Ranges"],
+  ["products", "Product List"],
+  ["brand", "Brand Header"],
+  ["contact", "Contact Details"],
+];
+
+/** Presentation page settings for one video. */
+function presentationHtml(d) {
+  const sh = d.share || {};
+  const sec = sh.sections || {};
+  const secOn = (k) => (sec[k] === undefined ? !["budget", "products"].includes(k) : !!sec[k]);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const live = sh.slug || sh.token;
+  return `<div class="rv-pres">
+    <div class="rv-sub">Presentation Type</div>
+    <div class="rv-seg wrap">${PRES_TYPES.map(([v, n]) => `<button class="${(sh.presentation_type || "listing") === v ? "on" : ""}" data-ptype="${v}">${n}</button>`).join("")}</div>
+
+    <label class="rv-f">Page Headline<input id="pr_head" value="${esc(sh.headline || d.project.title || "")}" maxlength="120"></label>
+    <label class="rv-f">Custom Link Name<span class="rv-pre">${esc(origin)}/v/</span><input id="pr_slug" value="${esc(sh.slug || "")}" placeholder="oak-street-listing"></label>
+
+    <div class="rv-sub">Sections</div>
+    <div class="rv-adv rv-secs">${PRES_SECTIONS.map(([k, n]) => `<label class="rv-check"><input type="checkbox" data-psec="${k}" ${secOn(k) ? "checked" : ""}> ${n}</label>`).join("")}</div>
+
+    <div class="rv-sub">Access</div>
+    <label class="rv-check"><input type="checkbox" id="pr_pw_on" ${sh.password_hash ? "checked" : ""}> Require A Password</label>
+    <label class="rv-f">Password<input id="pr_pw" type="password" placeholder="${sh.password_hash ? "Saved — Type To Replace" : "Set A Password"}"></label>
+    <label class="rv-check"><input type="checkbox" id="pr_dl" ${sh.allow_download !== false ? "checked" : ""}> Allow Downloads</label>
+    <label class="rv-check"><input type="checkbox" id="pr_appr" ${sh.approval_enabled ? "checked" : ""}> Collect Approvals And Comments</label>
+
+    <div class="rv-sub">Mobile Layout</div>
+    <div class="rv-seg">${[["stacked", "Stacked"], ["compact", "Compact"]].map(([v, n]) => `<button class="${(sh.mobile_layout || "stacked") === v ? "on" : ""}" data-pmob="${v}">${n}</button>`).join("")}</div>
+
+    ${live ? `<div class="rv-note sm">Live At <a href="/v/${esc(live)}" target="_blank" rel="noreferrer">${esc(origin)}/v/${esc(live)}</a></div>` : ""}
+    <div class="rv-foot">
+      ${live ? `<button class="btn btn-ghost" id="prCopy"><i data-lucide="link"></i>Copy Link</button>` : ""}
+      <button class="btn btn-primary" id="prSave">Save Presentation Page</button>
+    </div>
+  </div>`;
+}
+
+
 
 /* ======================= THUMB PAINTING ======================= */
 async function paintAssetThumbs() {
@@ -821,11 +965,12 @@ function bind() {
       return;
     }
     if (act === "share") {
-      const { token } = await saveShareLink({ video_project_id: id });
-      try { await navigator.clipboard.writeText(location.origin + "/p/" + token); } catch (_) {}
+      const { token, slug } = await saveShareLink({ video_project_id: id });
+      try { await navigator.clipboard.writeText(location.origin + "/v/" + (slug || token)); } catch (_) {}
       await loadLibrary();
-      render();
-      return toast("Share Link Copied.");
+      S.detailTab = "presentation";
+      await openDetail(id);
+      return toast("Presentation Link Copied.");
     }
   });
   on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) => openDetail(e.currentTarget.closest(".rv-card").dataset.id));
@@ -921,6 +1066,14 @@ function bind() {
   on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
   on("[data-motion]", "click", (e) => { w.motion = e.currentTarget.dataset.motion; render(); });
   on("[data-scene-motion]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.sceneMotion)].motion = e.currentTarget.value; });
+  on("[data-level]", "click", (e) => {
+    const s = w.scenes[Number(e.currentTarget.dataset.i)];
+    s.motion_level = e.currentTarget.dataset.level;
+    if (s.motion_level === "immersive" && !s.immersive_effect) s.immersive_effect = "light";
+    render();
+  });
+  on("[data-immersive]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.immersive)].immersive_effect = e.currentTarget.value; });
+  on("[data-ext]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.ext)].exterior_effect = e.currentTarget.value || null; render(); });
   on("[data-tr]", "click", (e) => { w.transition = e.currentTarget.dataset.tr; render(); });
   on("[data-ba]", "click", (e) => { w.baTransition = e.currentTarget.dataset.ba; render(); });
 
@@ -939,6 +1092,24 @@ function bind() {
   const voice = el.querySelector("#rvVoice"); if (voice) voice.addEventListener("change", (e) => { w.voice = e.target.value.toLowerCase(); });
   const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
   on("[data-cap]", "input", (e) => { w.scenes[Number(e.currentTarget.dataset.cap)].caption = e.currentTarget.value; });
+
+  /* scene labels */
+  const lref = (v) => { const [i, j] = String(v).split(":").map(Number); return { s: w.scenes[i], j }; };
+  on("#rvSuggestLabels", "click", () => {
+    w.scenes.forEach((s) => { if (!Array.isArray(s.labels) || !s.labels.length) s.labels = suggestLabels(s.room, s.caption); });
+    render();
+  });
+  on("[data-label-add]", "click", (e) => {
+    const s = w.scenes[Number(e.currentTarget.dataset.labelAdd)];
+    s.labels = Array.isArray(s.labels) ? s.labels : [];
+    s.labels.push({ text: s.room || "", style: "clean", position: "bottom_left" });
+    render();
+  });
+  on("[data-label-del]", "click", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelDel); s.labels.splice(j, 1); render(); });
+  on("[data-label-text]", "input", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelText); s.labels[j].text = e.currentTarget.value; });
+  on("[data-label-style]", "change", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelStyle); s.labels[j].style = e.currentTarget.value; });
+  on("[data-label-pos]", "change", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelPos); s.labels[j].position = e.currentTarget.value; });
+
 
   /* branding */
   on("[data-kit]", "click", (e) => { w.brandKitId = e.currentTarget.dataset.kit || null; render(); });
@@ -963,11 +1134,51 @@ function bind() {
     const url = await signed(v.output_path);
     if (url) window.open(url, "_blank");
   });
-  on("#rvShare", "click", async () => {
-    const { token } = await saveShareLink({ video_project_id: S.detailId });
-    try { await navigator.clipboard.writeText(location.origin + "/p/" + token); } catch (_) {}
-    toast("Share Link Copied.");
+  on("#rvShare", "click", () => { S.detailTab = "presentation"; render(); });
+
+  /* presentation page settings */
+  const share = () => (S.detail.share = S.detail.share || {});
+  on("[data-ptype]", "click", (e) => { share().presentation_type = e.currentTarget.dataset.ptype; render(); });
+  on("[data-pmob]", "click", (e) => { share().mobile_layout = e.currentTarget.dataset.pmob; render(); });
+  on("#prCopy", "click", async () => {
+    const sh = S.detail.share || {};
+    try { await navigator.clipboard.writeText(location.origin + "/v/" + (sh.slug || sh.token)); } catch (_) {}
+    toast("Presentation Link Copied.");
   });
+  on("#prSave", "click", async (e) => {
+    const q = (sel) => el.querySelector(sel);
+    const sh = S.detail.share || {};
+    const sections = {};
+    el.querySelectorAll("[data-psec]").forEach((n) => { sections[n.dataset.psec] = n.checked; });
+    const pwOn = q("#pr_pw_on")?.checked;
+    const pw = q("#pr_pw")?.value || "";
+    e.currentTarget.disabled = true;
+    try {
+      const res = await saveShareLink({
+        video_project_id: S.detailId,
+        presentation_type: sh.presentation_type || "listing",
+        slug: (q("#pr_slug")?.value || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-") || null,
+        headline: q("#pr_head")?.value || null,
+        privacy_type: pwOn ? "private" : "public",
+        password: pwOn && pw ? pw : null,
+        clear_password: !pwOn,
+        allow_download: !!q("#pr_dl")?.checked,
+        approval_enabled: !!q("#pr_appr")?.checked,
+        comments_enabled: !!q("#pr_appr")?.checked,
+        show_budget: !!sections.budget,
+        show_products: !!sections.products,
+        mobile_layout: sh.mobile_layout || "stacked",
+        sections,
+      });
+      S.detail.share = { ...sh, ...res, sections, password_hash: pwOn ? (pw ? "set" : sh.password_hash) : null };
+      toast("Presentation Page Saved.");
+      render();
+    } catch (err) {
+      toast(err?.message || "Could not save the presentation page.");
+      e.currentTarget.disabled = false;
+    }
+  });
+
   on("#rvEdit, #rvEdit2, #rvRetry", "click", () => editExisting(S.detail));
 
   el.querySelectorAll("[data-goto]").forEach((n) => n.addEventListener("click", () => S.go && S.go(n.dataset.goto)));
@@ -1022,6 +1233,10 @@ function editExisting(d) {
     motion: s.motion,
     caption: s.caption,
     disclosure: s.disclosure_type,
+    motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
+    immersive_effect: s.immersive_effect || null,
+    exterior_effect: s.exterior_effect || null,
+    labels: Array.isArray(s.labels) ? s.labels : [],
     asset_id: s.source_asset_id,
     version_id: s.source_version_id,
   }));

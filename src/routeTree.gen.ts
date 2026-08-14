@@ -42,6 +42,7 @@ import { Route as FreeVirtualStagingRouteImport } from './routes/free/virtual-st
 import { Route as PTokenRouteImport } from './routes/p.$token'
 import { Route as PricingCompareRouteImport } from './routes/pricing_.compare'
 import { Route as PricingCreditsRouteImport } from './routes/pricing_.credits'
+import { Route as VSlugRouteImport } from './routes/v.$slug'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
 
 const IndexRoute = IndexRouteImport.update({
@@ -208,6 +209,11 @@ const PricingCreditsRoute = PricingCreditsRouteImport.update({
   path: '/pricing/credits',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VSlugRoute = VSlugRouteImport.update({
+  id: '/v/$slug',
+  path: '/v/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
   id: '/api/public/founding',
   path: '/api/public/founding',
@@ -246,6 +252,7 @@ export interface FileRoutesByFullPath {
   '/p/$token': typeof PTokenRoute
   '/pricing/compare': typeof PricingCompareRoute
   '/pricing/credits': typeof PricingCreditsRoute
+  '/v/$slug': typeof VSlugRoute
   '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/p/$token': typeof PTokenRoute
   '/pricing/compare': typeof PricingCompareRoute
   '/pricing/credits': typeof PricingCreditsRoute
+  '/v/$slug': typeof VSlugRoute
   '/free': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -318,6 +326,7 @@ export interface FileRoutesById {
   '/p/$token': typeof PTokenRoute
   '/pricing_/compare': typeof PricingCompareRoute
   '/pricing_/credits': typeof PricingCreditsRoute
+  '/v/$slug': typeof VSlugRoute
   '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
 }
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/p/$token'
     | '/pricing/compare'
     | '/pricing/credits'
+    | '/v/$slug'
     | '/free/'
     | '/api/public/founding'
   fileRoutesByTo: FileRoutesByTo
@@ -390,6 +400,7 @@ export interface FileRouteTypes {
     | '/p/$token'
     | '/pricing/compare'
     | '/pricing/credits'
+    | '/v/$slug'
     | '/free'
     | '/api/public/founding'
   id:
@@ -426,6 +437,7 @@ export interface FileRouteTypes {
     | '/p/$token'
     | '/pricing_/compare'
     | '/pricing_/credits'
+    | '/v/$slug'
     | '/free/'
     | '/api/public/founding'
   fileRoutesById: FileRoutesById
@@ -462,6 +474,7 @@ export interface RootRouteChildren {
   PTokenRoute: typeof PTokenRoute
   PricingCompareRoute: typeof PricingCompareRoute
   PricingCreditsRoute: typeof PricingCreditsRoute
+  VSlugRoute: typeof VSlugRoute
   FreeIndexRoute: typeof FreeIndexRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
 }
@@ -699,6 +712,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingCreditsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/v/$slug': {
+      id: '/v/$slug'
+      path: '/v/$slug'
+      fullPath: '/v/$slug'
+      preLoaderRoute: typeof VSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/founding': {
       id: '/api/public/founding'
       path: '/api/public/founding'
@@ -752,6 +772,7 @@ const rootRouteChildren: RootRouteChildren = {
   PTokenRoute: PTokenRoute,
   PricingCompareRoute: PricingCompareRoute,
   PricingCreditsRoute: PricingCreditsRoute,
+  VSlugRoute: VSlugRoute,
   FreeIndexRoute: FreeIndexRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
 }

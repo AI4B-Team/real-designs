@@ -1,0 +1,102 @@
+/* REAL REVEAL presentation pages — public, mobile first. */
+.pv {
+  --pv-accent: #cc0000;
+  min-height: 100vh;
+  background: #f6f6f5;
+  color: #141414;
+  font-family: "DM Sans", Inter, system-ui, sans-serif;
+  padding: 0 0 96px;
+}
+.pv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px clamp(16px, 5vw, 48px);
+  background: #fff;
+  border-bottom: 1px solid #e6e4e1;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+.pv-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.pv-brand img { height: 34px; width: auto; }
+.pv-kicker { font-size: 13px; color: #6b6b6b; }
+.pv-wrap { max-width: 1040px; margin: 0 auto; padding: clamp(20px, 4vw, 40px) clamp(16px, 5vw, 48px) 0; }
+.pv-card {
+  background: #fff;
+  border: 1px solid #e6e4e1;
+  border-radius: 18px;
+  padding: clamp(18px, 3vw, 30px);
+  margin-bottom: 20px;
+}
+.pv-h1 { font-size: clamp(26px, 4vw, 40px); line-height: 1.12; margin: 0 0 8px; letter-spacing: -0.02em; }
+.pv-sub { color: #5f5f5f; margin: 0 0 4px; }
+.pv-lead { font-size: 17px; color: #333; margin: 14px 0 0; }
+.pv-h2 { font-size: 20px; margin: 0 0 14px; letter-spacing: -0.01em; }
+.pv-video { width: 100%; border-radius: 14px; overflow: hidden; background: #0a0a0a; }
+.pv-video video { width: 100%; display: block; }
+.pv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.pv-shot { border-radius: 12px; overflow: hidden; border: 1px solid #e6e4e1; background: #fff; }
+.pv-shot img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.pv-shot b { display: block; padding: 10px 12px; font-size: 14px; }
+.pv-ba { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.pv-ba figure { margin: 0; }
+.pv-ba img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 10px; display: block; }
+.pv-ba figcaption { font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b6b; padding: 6px 2px 0; }
+.pv-disc {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  background: #f0eeeb;
+  border-radius: 999px;
+  padding: 4px 10px;
+  color: #4a4a4a;
+}
+.pv-range { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; border-top: 1px solid #eceae7; padding-top: 14px; margin-top: 14px; }
+.pv-range b { font-family: "DM Mono", ui-monospace, monospace; font-size: 22px; }
+.pv-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.pv-table th, .pv-table td { text-align: left; padding: 9px 8px; border-bottom: 1px solid #f0eeeb; }
+.pv-table td.n, .pv-table th.n { text-align: right; font-family: "DM Mono", ui-monospace, monospace; }
+.pv-note { font-size: 12.5px; color: #6b6b6b; margin-top: 12px; }
+.pv-f { display: block; margin-bottom: 12px; font-size: 13px; font-weight: 600; }
+.pv-f input, .pv-f textarea {
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px 12px;
+  border: 1px solid #ddd9d4;
+  border-radius: 10px;
+  font: inherit;
+  font-weight: 400;
+  background: #fff;
+}
+.pv-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.pv-btn {
+  border: 1px solid #ddd9d4;
+  background: #fff;
+  color: #141414;
+  border-radius: 999px;
+  padding: 11px 20px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.pv-btn:disabled { opacity: 0.55; cursor: default; }
+.pv-btn-primary { background: var(--pv-accent); border-color: var(--pv-accent); color: #fff; }
+.pv-contact { display: flex; flex-wrap: wrap; gap: 8px 20px; color: #444; font-size: 14px; }
+.pv-foot { text-align: center; color: #7a7a7a; font-size: 12.5px; padding: 24px 16px 0; }
+.pv-ok { background: #ecf7ee; border: 1px solid #cfe8d4; border-radius: 12px; padding: 12px 14px; font-weight: 600; }
+.pv-lock { max-width: 420px; margin: 12vh auto; }
+@media (max-width: 720px) {
+  .pv-ba { grid-template-columns: 1fr; }
+  .pv.is-compact .pv-card { border-radius: 0; border-left: 0; border-right: 0; }
+  .pv.is-compact .pv-wrap { padding-left: 0; padding-right: 0; }
+}
