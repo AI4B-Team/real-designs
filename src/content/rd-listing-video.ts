@@ -715,6 +715,7 @@ async function beginUpload(files) {
     const label = normalizeAddress(S.addressQuery) || "Untitled Property";
     try {
       const row = await createMediaProperty({ data: { address: label } });
+      console.error('[lv] created', JSON.stringify(row), 'label', label, 'props', S.properties.length);
       S.propertyId = row.id;
       S.propertyLabel = row.address;
     } catch (e) {
