@@ -187,6 +187,51 @@ export async function openPropertyUpload(opts = {}) {
     render();
   }
 
+  async function pullLinks(btn) {
+    const ta = wrap.querySelector("#pmuLinks");
+    const msg = wrap.querySelector("#pmuLinkMsg");
+    const urls = (ta?.value || "")
+      .split(/[\s,]+/)
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 20);
+    if (!urls.length) {
+      if (msg) msg.innerHTML = `<span class="pmu-bad">Paste at least one share link.</span>`;
+      return;
+    }
+    btn.disabled = true;
+    const label = btn.innerHTML;
+    btn.textContent = "Fetching Photos…";
+    try {
+      const res = await importCloudPhotos({ data: { urls } });
+      const got = [];
+      for (const f of res.files || []) {
+        const bin = atob(f.data);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        got.push(new File([bytes], f.name, { type: f.type }));
+      }
+      const errs = res.errors || [];
+      const pending = got.length;
+      if (pending) take(got);
+      const box = wrap.querySelector("#pmuLinkMsg");
+      if (box) {
+        box.innerHTML = `${pending ? `<span class="pmu-ok">${pending} Photo${pending === 1 ? "" : "s"} Added</span>` : ""}${errs
+          .map((e) => `<span class="pmu-bad">${esc(e.message)}</span>`)
+          .join("")}`;
+      }
+    } catch (e) {
+      if (msg) msg.innerHTML = `<span class="pmu-bad">${esc(e?.message || "Import failed")}</span>`;
+    } finally {
+      const b = wrap.querySelector("#pmuFetch");
+      if (b) {
+        b.disabled = false;
+        b.innerHTML = label;
+        paint();
+      }
+    }
+  }
+
   function renderList() {
     const l = wrap.querySelector("#pmuList");
     if (!l) return;
