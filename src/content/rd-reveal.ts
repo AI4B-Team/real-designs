@@ -582,7 +582,7 @@ function stepReview() {
     <div><span>Formats</span><b>${esc(w.formats.join(", "))}</b></div>
     <div><span>Estimated Duration</span><b>About ${dur}s</b></div>
     <div><span>Versions</span><b>${vs.map((v) => v.version_type).filter((v, i, a) => a.indexOf(v) === i).join(", ") || "None"}</b></div>
-    <div><span>Credits Required</span><b>${cost}</b></div>
+    <div><span>Credits Required</span><b>${cost}${imm ? ` — Includes ${imm * IMMERSIVE_CREDITS_PER_SCENE} For Immersive Motion` : ""}</b></div>
     <div><span>Current Balance</span><b>${bal == null ? "—" : bal}</b></div>
   </div>
   ${w.busy ? `<div class="rv-proc"><b>Creating Your REAL REVEAL</b>
