@@ -571,7 +571,8 @@ function stepReview() {
   const per = sceneDurations(w.scenes.length, w.length);
   const dur = Math.round(per * w.scenes.length);
   const vs = plannedVariants();
-  const cost = 40;
+  const imm = w.motion === "auto" ? 0 : immersiveCount();
+  const cost = 40 + imm * IMMERSIVE_CREDITS_PER_SCENE;
   const bal = window.__rdCredits?.balance;
   return `<h3>Review And Generate</h3>
   <div class="rv-review">
