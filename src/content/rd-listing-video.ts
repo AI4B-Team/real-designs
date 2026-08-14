@@ -304,13 +304,6 @@ async function loadAssets(propertyId) {
 
 /* ======================= START SCREEN ======================= */
 
-function startHtml() {
-  const matches = S.addressMatches;
-  return `<div class="lv">
-    <div class="lv-head">
-      <h2>Create a Listing Video</h2>
-      <p>Turn your property photos into a polished video for listings, social media and client presentations.</p>
-    </div>
 
 function startHtml() {
   const matches = S.addressMatches;
