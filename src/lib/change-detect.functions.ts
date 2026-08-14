@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import type { Database } from "@/integrations/supabase/types";
 
 /**
  * Phase 2 — change detection.
@@ -35,22 +33,10 @@ export const detectChanges = createServerFn({ method: "POST" })
     const billing = await charge(context.userId, "design", "change detection");
     if (!billing.ok) throw new Error(chargeErrorMessage(billing));
 
-    const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-    const supabase = createClient<Database>(process.env["SUPABASE_URL"]!, key, {
-      auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
-      global: {
-        fetch: (input, init) => {
-          const h = new Headers(init?.headers);
-          if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
-            h.delete("Authorization");
-          }
-          h.set("apikey", key);
-          return fetch(input, { ...init, headers: h });
-        },
-      },
-    });
+    // Cost mappings are internal pricing data: privileged read only.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: mappings, error } = await supabase
+    const { data: mappings, error } = await supabaseAdmin
       .from("cost_mappings")
       .select("label, material, grade, qty_formula");
     if (error) throw new Error(error.message);

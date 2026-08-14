@@ -90,7 +90,10 @@ export const buildScope = createServerFn({ method: "POST" })
       throw new Error("Property has no market assigned; cannot price a scope.");
     }
 
-    const { data: market, error: marketError } = await supabase
+    // Market factors and the cost catalog are internal pricing data: privileged read only.
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: market, error: marketError } = await supabaseAdmin
       .from("markets")
       .select("id, labor_factor, material_factor")
       .eq("id", property.market_id)
@@ -111,7 +114,7 @@ export const buildScope = createServerFn({ method: "POST" })
     const priceable = (changeItems ?? []).filter((c) => c.action !== "keep");
 
     // ---- 3. Cost mappings -> unit costs. A SQL join, nothing invented. ----
-    const { data: mappings, error: mapError } = await supabase
+    const { data: mappings, error: mapError } = await supabaseAdmin
       .from("cost_mappings")
       .select(
         `label, material, grade, qty_formula,
