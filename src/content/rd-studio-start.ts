@@ -640,7 +640,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           "</button>",
       ).join("") +
       "</div>" +
-      '<div class="stw-tilefoot stw-sampletitle"><i data-lucide="sparkles"></i><span>Not ready to upload?</span><button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></div>' +
+      '<div class="stw-tilefoot"><button class="stw-samplelink" data-sts="sample">Not Ready To Upload? Try A Sample Space</button></div>' +
       recentHtml() +
       "</div>" +
       (state.samples ? samplesHtml() : "")

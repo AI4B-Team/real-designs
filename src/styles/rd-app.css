@@ -1241,18 +1241,10 @@
 }
 .rd-app .stw-tile-act i{ width:14px; height:14px; transition:transform .14s ease; }
 .rd-app .stw-tile:hover .stw-tile-act i{ transform:translateX(3px); }
-.rd-app .stw-tilefoot{ margin:16px 0 0; font-size:.83rem; color:var(--mute); }
-.rd-app .stw-sampletitle{
-  margin:22px 0 0; padding:14px 18px; border:1px dashed var(--line);
-  border-radius:12px; background:var(--surface, #fff);
-  display:flex; align-items:center; justify-content:center; gap:9px; flex-wrap:wrap;
-  font-size:1.06rem; font-weight:700; color:var(--ink); line-height:1.2;
-}
-.rd-app .stw-sampletitle i{ width:18px; height:18px; color:var(--red); flex:none; }
-.rd-app .stw-sampletitle span{ color:var(--mute); font-weight:600; }
+.rd-app .stw-tilefoot{ margin:16px 0 0; font-size:.83rem; color:var(--mute); text-align:center; }
 .rd-app .stw-samplelink{
-  background:none; border:0; padding:0; font:inherit; color:var(--red);
-  text-decoration:underline; text-underline-offset:3px; cursor:pointer; font-weight:800;
+  background:none; border:0; padding:0; font:inherit; font-size:.83rem; color:var(--red);
+  text-decoration:underline; text-underline-offset:3px; cursor:pointer; font-weight:600;
 }
 .rd-app .stw-samplelink:hover{ color:#000; }
 
