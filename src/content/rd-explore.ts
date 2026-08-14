@@ -1,96 +1,96 @@
-// Explore: discover and compare canonical design directions inside the app.
-// Studio creates, Designs stores generated output, Design DNA holds property rules.
-// This screen only discovers directions and hands them to those existing systems.
+// Explore: the REAL DESIGNS style catalog inside the app.
+// Styles come from the canonical catalog in src/lib/style-catalog.ts so a
+// selection here always reaches the generation payload.
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import {
+  STYLES, STYLE_CATEGORIES, AUTO_STYLE, styleById, resolveStyle, recommendStyles, buildStylePayload,
+} from "@/lib/style-catalog";
 
 export { DIRECTIONS } from "@/content/directions";
-import { DIRECTIONS } from "@/content/directions";
 
-const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging", "Saved"];
-// App-facing label: "Landscape" data value is shown as "Garden".
-const gtxt = (s) => String(s).replace(/Landscaping/g, "Gardening").replace(/Landscape/g, "Garden");
-const spaceLabel = (s) => (String(s) === "Landscape" || String(s) === "Landscaping" ? "Garden" : s);
+const TABS = ["Featured", "Interior", "Exterior", "Garden", "Virtual Staging", "Saved"];
+const TAB_TYPE = { Interior: "interior", Exterior: "exterior", Garden: "garden", "Virtual Staging": "virtual-staging" };
+const SORTS = [["popular", "Popular"], ["newest", "Newest"], ["az", "A–Z"]];
 
-/** Room filters offered in the UI, mapped onto the canonical room labels. */
-const ROOMS = [
-  ["Living Room", ["Living Room"]],
-  ["Kitchen", ["Kitchen"]],
-  ["Bedroom", ["Primary Bedroom", "Guest Bedroom", "Bedroom"]],
-  ["Bathroom", ["Primary Bath", "Guest Bath", "Bathroom"]],
-  ["Dining Room", ["Dining Room"]],
-  ["Office", ["Home Office", "Office"]],
-  ["Entry", ["Entry", "Entryway", "Front Elevation"]],
-  ["Basement", ["Basement"]],
-];
+const ROOMS = ["Living Room", "Kitchen", "Bedroom", "Bathroom", "Dining Room", "Office", "Entry", "Yard", "Front Elevation"];
+const PALETTES = ["Warm Neutral", "Cool Neutral", "Earth Tone", "Bright And Light", "Dark And Moody", "Bold Colour"];
+const FINISHES = ["Rental Grade", "Retail Grade", "Premium"];
+const MOODS = ["Calm", "Minimal", "Warm", "Natural", "Refined", "Formal", "Bold", "Playful", "Homely", "Classic", "Curb Appeal"];
 
-const TRAITS = ["Warm", "Minimal", "Traditional", "Organic", "Bold", "Luxury"];
-const GRADES = ["Rental Grade", "Retail Grade", "Premium"];
-
-const LS = { saved: "rd_ex_saved", seen: "rd_ex_seen" };
-function read(k, f) { try { return JSON.parse(localStorage.getItem(k) || "") ?? f; } catch (_) { return f; } }
+const LS = { saved: "rd_ex_saved", quiz: "rd_ex_quiz_v2", choice: "rd_style_choice", src: "rd_last_source" };
+function read(k, f) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch (_) { return f; } }
 function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} }
-function esc(s) { return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
 
 let saved = read(LS.saved, []);
-let seen = read(LS.seen, []);
+if (!Array.isArray(saved)) saved = [];
 
-function dir(id) { return DIRECTIONS.find((d) => d.id === id); }
-function swatches(p) { return '<span class="xp-sw">' + p.map((c) => `<i style="background:${c}"></i>`).join("") + "</span>"; }
+/** Coarse palette bucket used by the filter drawer. */
+function paletteBucket(s) {
+  const n = s.palette.join(" ").toLowerCase();
+  if (/black|onyx|soot|ink|near black|tobacco/.test(n) && /forest|jet|charcoal|espresso|sumi|shadow/.test(n)) return "Dark And Moody";
+  if (/gold|emerald|cobalt|orange|avocado|teal|primary/.test(n)) return "Bold Colour";
+  if (/terracotta|clay|olive|rust|sandstone|ochre|cocoa|bark/.test(n)) return "Earth Tone";
+  if (/mist|slate|grey|graphite|gunmetal|concrete/.test(n)) return "Cool Neutral";
+  if (/white|chalk|bone|ivory|snow|shell|rice/.test(n)) return "Bright And Light";
+  return "Warm Neutral";
+}
 
-const SHELL = `
-<div class="xp">
-  <header class="xp-head">
-    <div class="xp-head-t">
-      <h2>Explore</h2>
-      <p>Find a style, preview it across spaces and apply it to your design.</p>
-    </div>
-    <div class="xp-head-a">
-      <span class="xp-prop" id="xpProp" hidden></span>
-      <button class="btn btn-ghost btn-sm" id="xpSavedBtn"><i data-lucide="bookmark"></i>Saved Styles<span class="xp-cnt" id="xpSavedCnt">0</span></button>
-    </div>
-  </header>
-
-  <div class="xp-bar">
-    <div class="xp-search"><i data-lucide="search"></i><input id="xpQ" type="text" placeholder="Search styles, materials or rooms"></div>
-    <button class="btn btn-ghost btn-sm xp-filter-btn" id="xpFilterBtn" aria-haspopup="dialog"><i data-lucide="sliders-horizontal"></i>Filter<span class="xp-cnt" id="xpFilterCnt" hidden>0</span></button>
-  </div>
-
-  <div class="xp-cats" id="xpCats"></div>
-
-  <div class="xp-active" id="xpActive" hidden></div>
-
-
-  <section class="xp-quiz" id="xpQuiz" hidden>
-    <div class="xp-quiz-top">
-      <div><h3>Find Your Style</h3><p>Make 5 quick choices to personalize your recommendations.</p></div>
-    </div>
-    <div class="xp-quiz-card" id="xpQuizCard"></div>
-  </section>
-
-  <p class="xp-count" id="xpCount"></p>
-  <div class="xp-grid" id="xpGrid"></div>
-</div>
-<div class="xp-drawer" id="xpDrawer" hidden><div class="xp-scrim" id="xpScrim"></div><aside class="xp-dpanel" id="xpDPanel" role="dialog" aria-modal="true"></aside></div>
-`;
+function swatches(s) { return '<span class="xp-sw">' + s.swatches.slice(0, 4).map((c) => `<i style="background:${c}"></i>`).join("") + "</span>"; }
 
 function exToast(msg) {
   let t = document.querySelector(".rd-app .xp-toast");
-  if (!t) {
-    t = document.createElement("div");
-    t.className = "xp-toast";
-    (document.querySelector(".rd-app") || document.body).appendChild(t);
-  }
+  if (!t) { t = document.createElement("div"); t.className = "xp-toast"; (document.querySelector(".rd-app") || document.body).appendChild(t); }
   t.textContent = msg;
   t.classList.add("on");
   clearTimeout(t._h);
   t._h = window.setTimeout(() => t.classList.remove("on"), 3000);
 }
 
+const SHELL = `
+<div class="xp">
+  <header class="xp-head">
+    <div class="xp-head-t">
+      <h2>Explore</h2>
+      <p>Browse the REAL DESIGNS style catalog and send any style straight into Studio.</p>
+    </div>
+    <div class="xp-head-a">
+      <span class="xp-prop" id="xpProp" hidden></span>
+      <button class="btn btn-ghost btn-sm" id="xpAdminBtn" hidden><i data-lucide="settings-2"></i>Style Library</button>
+      <button class="btn btn-ghost btn-sm" id="xpSavedBtn"><i data-lucide="bookmark"></i>Saved Styles<span class="xp-cnt" id="xpSavedCnt">0</span></button>
+    </div>
+  </header>
+
+  <div class="xp-bar">
+    <div class="xp-search"><i data-lucide="search"></i><input id="xpQ" type="text" placeholder="Search styles" aria-label="Search styles"></div>
+    <button class="btn btn-ghost btn-sm xp-filter-btn" id="xpFilterBtn" aria-haspopup="dialog"><i data-lucide="sliders-horizontal"></i>Filters<span class="xp-cnt" id="xpFilterCnt" hidden>0</span></button>
+    <div class="xp-sortwrap">
+      <button class="btn btn-ghost btn-sm" id="xpSortBtn" aria-haspopup="menu" aria-expanded="false"><i data-lucide="arrow-up-down"></i><span id="xpSortLab">Popular</span><i data-lucide="chevron-down"></i></button>
+      <div class="xp-sortmenu" id="xpSortMenu" role="menu" hidden></div>
+    </div>
+  </div>
+
+  <div class="xp-cats" id="xpCats" role="tablist"></div>
+  <div class="xp-active" id="xpActive" hidden></div>
+
+  <section class="xp-rec" id="xpRec" hidden></section>
+
+  <section class="xp-quiz" id="xpQuiz" hidden>
+    <div class="xp-quiz-top"><div><h3>Find Your Style</h3><p>Five quick comparisons and we shortlist your best matches.</p></div></div>
+    <div class="xp-quiz-card" id="xpQuizCard"></div>
+  </section>
+
+  <p class="xp-count" id="xpCount"></p>
+  <div id="xpBody"></div>
+</div>
+<div class="xp-drawer" id="xpDrawer" hidden><div class="xp-scrim" id="xpScrim"></div><aside class="xp-dpanel" id="xpDPanel" role="dialog" aria-modal="true"></aside></div>
+`;
+
 /**
  * @param go router used by the app shell
- * @param ctx { curProp, setPropertyDna, reloadTree } from the existing property/DNA system
+ * @param ctx { curProp, setPropertyDna, reloadTree }
  */
 export function mountExplore(go, ctx) {
   const host = document.getElementById("v-explore");
@@ -104,147 +104,172 @@ export function mountExplore(go, ctx) {
   const note = (m) => { try { exToast(m); } catch (_) {} };
   const icons_ = () => { try { createIcons({ icons }); } catch (_) {} };
 
-  let cat = "All";
-  let rooms = [];
-  let traits = [];
-  let grades = [];
-
+  let tab = "Featured";
+  let sort = "popular";
+  let f = { family: [], type: [], room: [], palette: [], finish: [], mood: [] };
+  const expanded = {};
 
   const prop = () => { try { return (api.curProp && api.curProp()) || null; } catch (_) { return null; } };
-  /** Direction name a property is currently locked to, stored as the first DNA line. */
-  function propDirection() {
+  function propStyleName() {
     const p = prop();
     const first = p && p.dna && p.dna[0];
     if (!first) return null;
-    const hit = DIRECTIONS.find((d) => d.name.toLowerCase() === String(first.label).toLowerCase());
-    return hit ? hit.name : null;
+    const rec = resolveStyle(first.label);
+    return rec && !rec.isAuto ? rec.displayName : null;
   }
 
-  /* ---------- primary categories ---------- */
-  $("xpCats").innerHTML = SPACES.map((s) => `<button class="xp-cat${s === cat ? " on" : ""}" data-c="${s}">${spaceLabel(s)}</button>`).join("");
+  /* ---------- tabs ---------- */
+  $("xpCats").innerHTML = TABS.map((s) => `<button class="xp-cat${s === tab ? " on" : ""}" role="tab" aria-selected="${s === tab}" data-c="${s}">${s}</button>`).join("");
+  $("xpSortMenu").innerHTML = SORTS.map(([v, l]) => `<button class="xp-sortopt${v === sort ? " on" : ""}" role="menuitem" data-sort="${v}">${l}</button>`).join("");
 
-  function matchesSpace(d) {
-    if (cat === "All") return true;
-    if (cat === "Virtual Staging") return !!d.staging;
-    if (cat === "Saved") return saved.indexOf(d.id) > -1;
-    return d.spaces.indexOf(cat) > -1;
+  /* ---------- filtering ---------- */
+  function matchesTab(s) {
+    if (tab === "Saved") return saved.indexOf(s.id) > -1;
+    if (tab === "Featured") return true;
+    const t = TAB_TYPE[tab];
+    return !t || s.compatibleProjectTypes.indexOf(t) > -1;
   }
-  function matchesRoom(d) {
-    if (!rooms.length) return true;
-    return rooms.some((label) => {
-      const syn = (ROOMS.find((r) => r[0] === label) || [null, []])[1];
-      return d.rooms.some((r) => syn.indexOf(r) > -1);
-    });
+  function matchesFilters(s) {
+    if (f.family.length && f.family.indexOf(s.category) < 0) return false;
+    if (f.type.length && !f.type.some((t) => s.compatibleProjectTypes.indexOf(t) > -1)) return false;
+    if (f.room.length && !f.room.some((r) => s.compatibleRoomTypes.indexOf(r) > -1)) return false;
+    if (f.palette.length && f.palette.indexOf(paletteBucket(s)) < 0) return false;
+    if (f.finish.length && !f.finish.some((x) => s.finishLevel.indexOf(x) > -1)) return false;
+    if (f.mood.length && !f.mood.some((x) => s.mood.indexOf(x) > -1)) return false;
+    return true;
   }
-  function matches(d, q) {
-    if (!matchesSpace(d) || !matchesRoom(d)) return false;
-    if (traits.length && !traits.every((t) => (d.traits || []).indexOf(t) > -1)) return false;
-    if (grades.length && !grades.some((g) => d.grades.indexOf(g) > -1)) return false;
+  function matches(s, q) {
+    if (!s.isActive || !matchesTab(s) || !matchesFilters(s)) return false;
     if (!q) return true;
-    return [d.name, d.line, d.about, (d.traits || []).join(" "), d.materials.join(" "), d.rooms.join(" ")]
+    return [s.displayName, s.shortDescription, s.category, s.aliases.join(" "), s.materials.join(" "), s.definingFeatures.join(" "), s.palette.join(" ")]
       .join(" ").toLowerCase().indexOf(q) > -1;
   }
-  /** Count of matches for the current selections, used by the drawer button. */
-  function resultCount() {
+  function sorted(list) {
+    const a = list.slice();
+    if (sort === "az") a.sort((x, y) => x.displayName.localeCompare(y.displayName));
+    else if (sort === "newest") a.sort((x, y) => STYLES.indexOf(y) - STYLES.indexOf(x));
+    else a.sort((x, y) => x.featuredRank - y.featuredRank || x.displayName.localeCompare(y.displayName));
+    return a;
+  }
+  function current() {
     const q = ($("xpQ").value || "").trim().toLowerCase();
-    return DIRECTIONS.filter((d) => matches(d, q)).length;
+    return sorted(STYLES.filter((s) => matches(s, q)));
   }
-  function activeFilters() {
-    return rooms.map((v) => ["room", v]).concat(traits.map((v) => ["trait", v]), grades.map((v) => ["grade", v]));
+  function activeChips() {
+    return Object.keys(f).reduce((acc, k) => acc.concat(f[k].map((v) => [k, v])), []);
   }
-
 
   /* ---------- cards ---------- */
-  function card(d) {
-    const on = saved.indexOf(d.id) > -1;
-    return `<article class="xp-card" data-d="${d.id}">
-      <div class="xp-img"><img src="${d.img}" alt="${esc(d.name)} design style" loading="lazy">
-        <button class="xp-save${on ? " on" : ""}" data-save="${d.id}" aria-label="Save Style" title="Save Style"><i data-lucide="bookmark"></i></button>
+  function card(s) {
+    const on = saved.indexOf(s.id) > -1;
+    return `<article class="xp-card" data-d="${s.id}" tabindex="0">
+      <div class="xp-img"><img src="${s.previewImage}" alt="${esc(s.displayName)} design style preview" loading="lazy">
+        <button class="xp-save${on ? " on" : ""}" data-save="${s.id}" aria-pressed="${on}" aria-label="${on ? "Remove From Saved" : "Save Style"}" title="${on ? "Saved" : "Save Style"}"><i data-lucide="bookmark"></i></button>
       </div>
       <div class="xp-body">
-        <div class="xp-t"><b>${esc(gtxt(d.name))}</b></div>
-        <p class="xp-line">${esc(gtxt(d.line))}</p>
-        ${swatches(d.palette)}
-
+        <div class="xp-t"><b>${esc(s.displayName)}</b></div>
+        <p class="xp-line">${esc(s.shortDescription)}</p>
+        ${swatches(s)}
         <div class="xp-acts">
-          <button class="btn btn-ghost btn-xs" data-open="${d.id}">Preview</button>
-          <button class="btn btn-primary btn-xs" data-use="${d.id}">Use This Style</button>
+          <button class="btn btn-ghost btn-xs" data-open="${s.id}">Preview</button>
+          <button class="btn btn-primary btn-xs" data-use="${s.id}">Try This Style</button>
         </div>
       </div>
     </article>`;
   }
+  const grid = (list) => `<div class="xp-grid">${list.map(card).join("")}</div>`;
+
+  function emptyState(msg) {
+    return `<div class="xp-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>${esc(msg)}</p>
+      <button class="btn btn-ghost btn-sm" id="xpClear">Clear Filters</button>
+      <button class="btn btn-primary btn-sm" id="xpCustom">Start In Studio</button></div>`;
+  }
 
   function paint() {
-    const q = ($("xpQ").value || "").trim().toLowerCase();
-    const list = DIRECTIONS.filter((d) => matches(d, q));
-    const act = activeFilters();
+    const list = current();
+    const chips = activeChips();
     const fc = $("xpFilterCnt");
-    fc.hidden = !act.length; fc.textContent = act.length;
+    fc.hidden = !chips.length; fc.textContent = chips.length;
     const bar = $("xpActive");
-    bar.hidden = !act.length;
-    bar.innerHTML = act.length
-      ? act.map(([k, v]) => `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`).join("") +
+    bar.hidden = !chips.length;
+    bar.innerHTML = chips.length
+      ? chips.map(([k, v]) => `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`).join("") +
         '<button class="xp-aclear" id="xpClear">Clear All</button>'
       : "";
-    $("xpCount").textContent = list.length + " Of " + DIRECTIONS.length + " Styles";
-    $("xpGrid").innerHTML = list.length
-      ? list.map(card).join("")
-      : `<div class="xp-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>Try removing a filter, or start in Studio and describe the style you want.</p><button class="btn btn-primary btn-sm" id="xpCustom">Start In Studio</button></div>`;
+    $("xpCount").textContent = list.length + " Of " + STYLES.length + " Styles";
     $("xpSavedCnt").textContent = saved.length;
+    $("xpSortLab").textContent = (SORTS.find((x) => x[0] === sort) || [, "Popular"])[1];
+
+    const body = $("xpBody");
+    if (!list.length) {
+      body.innerHTML = emptyState(tab === "Saved" ? "Save a style from any card and it lands here." : "Try removing a filter, or describe the style you want in Studio.");
+    } else if (tab === "Featured" && !($("xpQ").value || "").trim() && !chips.length) {
+      const popular = list.filter((s) => s.isFeatured);
+      const groups = STYLE_CATEGORIES.filter((c) => c !== "Most Popular")
+        .map((c) => [c, list.filter((s) => s.category === c)])
+        .filter(([, arr]) => arr.length);
+      body.innerHTML =
+        section("Popular Styles", "popular", popular, false) +
+        groups.map(([c, arr]) => section(c, c, arr, true)).join("");
+    } else {
+      body.innerHTML = grid(list);
+    }
     syncFilterDrawer();
     icons_();
   }
 
+  function section(title, key, list, collapsible) {
+    const open = expanded[key] || !collapsible;
+    const shown = open ? list : list.slice(0, 4);
+    const more = collapsible && list.length > 4;
+    return `<section class="xp-sec">
+      <div class="xp-sec-h"><h3>${esc(title)}</h3><span>${list.length} Styles</span>
+        ${more ? `<button class="fb-link" data-more="${esc(key)}">${open ? "Show Less" : "View All"}</button>` : ""}</div>
+      ${grid(shown)}
+    </section>`;
+  }
+
   /* ---------- filter drawer ---------- */
-  function optRow(kind, label, on) {
-    return `<label class="xp-opt${on ? " on" : ""}"><input type="checkbox" data-f="${kind}:${esc(label)}"${on ? " checked" : ""}><span class="xp-box"><i data-lucide="check"></i></span><span class="xp-optl">${esc(label)}</span></label>`;
+  function optRow(kind, label, value, on) {
+    return `<label class="xp-opt${on ? " on" : ""}"><input type="checkbox" data-f="${kind}:${esc(value)}"${on ? " checked" : ""}><span class="xp-box"><i data-lucide="check"></i></span><span class="xp-optl">${esc(label)}</span></label>`;
   }
   function filterDrawerHtml() {
-    const sec = (title, rowsHtml) => `<div class="xp-fsec"><span class="xp-flab">${title}</span><div class="xp-opts">${rowsHtml}</div></div>`;
+    const sec = (t, rows) => `<div class="xp-fsec"><span class="xp-flab">${t}</span><div class="xp-opts">${rows}</div></div>`;
+    const types = [["interior", "Interior"], ["exterior", "Exterior"], ["garden", "Garden"], ["virtual-staging", "Virtual Staging"], ["concept", "Written Concept"]];
     return `
-      <div class="xp-dh"><div><span class="xp-eyebrow">Refine</span><h3>Filter Designs</h3><p>Narrow directions by room, character and finish grade.</p></div>
+      <div class="xp-dh"><div><span class="xp-eyebrow">Refine</span><h3>Filters</h3><p>Narrow the catalog without leaving the page.</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
-        ${sec("Room", ROOMS.map(([l]) => optRow("room", l, rooms.indexOf(l) > -1)).join(""))}
-        ${sec("Characteristics", TRAITS.map((t) => optRow("trait", t, traits.indexOf(t) > -1)).join(""))}
-        ${sec("Finish Grade", GRADES.map((g) => optRow("grade", g, grades.indexOf(g) > -1)).join(""))}
+        ${sec("Style Family", STYLE_CATEGORIES.map((c) => optRow("family", c, c, f.family.indexOf(c) > -1)).join(""))}
+        ${sec("Project Type", types.map(([v, l]) => optRow("type", l, v, f.type.indexOf(v) > -1)).join(""))}
+        ${sec("Room Type", ROOMS.map((r) => optRow("room", r, r, f.room.indexOf(r) > -1)).join(""))}
+        ${sec("Colour Palette", PALETTES.map((p) => optRow("palette", p, p, f.palette.indexOf(p) > -1)).join(""))}
+        ${sec("Finish Level", FINISHES.map((x) => optRow("finish", x, x, f.finish.indexOf(x) > -1)).join(""))}
+        ${sec("Mood", MOODS.map((x) => optRow("mood", x, x, f.mood.indexOf(x) > -1)).join(""))}
       </div>
-      <div class="xp-df"><button class="fb-link" id="xpClear">Clear All</button><button class="btn btn-primary btn-sm" data-close="1" id="xpShow">Show ${resultCount()} Designs</button></div>`;
+      <div class="xp-df"><button class="fb-link" id="xpClear">Clear All</button><button class="btn btn-primary btn-sm" data-close="1" id="xpShow">Show ${current().length} Styles</button></div>`;
   }
-  /** Keeps drawer checkboxes and the result-count button in sync without a rerender. */
   function syncFilterDrawer() {
     const p = $("xpDPanel");
     if (!p || !p.querySelector(".xp-fsec")) return;
     p.querySelectorAll(".xp-opt input[data-f]").forEach((inp) => {
-      const [k, v] = String(inp.dataset.f).split(":");
-      const on = (k === "room" ? rooms : k === "trait" ? traits : grades).indexOf(v) > -1;
+      const raw = String(inp.dataset.f);
+      const i = raw.indexOf(":");
+      const k = raw.slice(0, i), v = raw.slice(i + 1);
+      const on = (f[k] || []).indexOf(v) > -1;
       inp.checked = on;
       inp.closest(".xp-opt").classList.toggle("on", on);
     });
     const btn = p.querySelector("#xpShow");
-    if (btn) btn.textContent = "Show " + resultCount() + " Designs";
+    if (btn) btn.textContent = "Show " + current().length + " Styles";
   }
   function toggleFilter(kind, value) {
-    const has = (a) => a.indexOf(value) > -1;
-    if (kind === "room") rooms = has(rooms) ? rooms.filter((x) => x !== value) : rooms.concat([value]);
-    else if (kind === "trait") traits = has(traits) ? traits.filter((x) => x !== value) : traits.concat([value]);
-    else if (kind === "grade") grades = has(grades) ? grades.filter((x) => x !== value) : grades.concat([value]);
+    const arr = f[kind];
+    if (!arr) return;
+    f[kind] = arr.indexOf(value) > -1 ? arr.filter((x) => x !== value) : arr.concat([value]);
     paint();
   }
-
-
-  /* ---------- property context ---------- */
-  function syncProp() {
-    const p = prop();
-    const pill = $("xpProp");
-    if (!pill) return;
-    if (!p) { pill.hidden = true; return; }
-    pill.hidden = false;
-    const cur = propDirection();
-    pill.innerHTML = '<i data-lucide="map-pin"></i>Previewing For ' + esc(p.address) + (cur ? ' <em>&middot; ' + esc(cur) + " DNA</em>" : "");
-    icons_();
-  }
-  host._xpSync = syncProp;
+  function clearFilters() { Object.keys(f).forEach((k) => (f[k] = [])); paint(); }
 
   /* ---------- drawer ---------- */
   function openDrawer(inner) {
@@ -255,229 +280,252 @@ export function mountExplore(go, ctx) {
   }
   function closeDrawer() { $("xpDrawer").classList.remove("on"); setTimeout(() => ($("xpDrawer").hidden = true), 200); }
 
-  function compatLine(d) {
+  function compatLine(s) {
     const p = prop();
     if (!p) return '<div class="xp-note"><i data-lucide="info"></i><span>Choose a style now. You can apply it to a property when you are ready.</span></div>';
-    const cur = propDirection();
-    if (cur && cur !== d.name) {
+    const cur = propStyleName();
+    if (cur && cur !== s.displayName)
       return `<div class="xp-note warn"><i data-lucide="dna"></i><span>This property currently uses <b>${esc(cur)}</b>. Replacing the Design DNA changes the rules every room follows.</span></div>`;
-    }
-    if (cur === d.name) return `<div class="xp-note ok"><i data-lucide="check"></i><span>${esc(p.address)} already uses this style as its Design DNA.</span></div>`;
+    if (cur === s.displayName) return `<div class="xp-note ok"><i data-lucide="check"></i><span>${esc(p.address)} already uses this style as its Design DNA.</span></div>`;
     return `<div class="xp-note"><i data-lucide="map-pin"></i><span>Previewing For ${esc(p.address)}. No Design DNA locked yet.</span></div>`;
   }
 
-  function directionDrawer(id) {
-    const d = dir(id);
-    if (!d) return;
-    if (seen.indexOf(d.name) === -1) { seen = [d.name].concat(seen).slice(0, 12); write(LS.seen, seen); }
-    const shots = (d.examples && d.examples.length ? d.examples : [d.img]).slice(0, 4);
-    const p = prop();
-    const locked = !!propDirection() && propDirection() !== d.name;
+  function styleDrawer(id) {
+    const s = styleById(id);
+    if (!s) return;
+    const locked = !!propStyleName() && propStyleName() !== s.displayName;
+    const tags = (arr) => arr.map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("");
     openDrawer(`
-      <div class="xp-dh"><div><span class="xp-eyebrow">Design Style</span><h3>${esc(gtxt(d.name))}</h3><p>${esc(gtxt(d.line))}</p></div>
+      <div class="xp-dh"><div><span class="xp-eyebrow">${esc(s.category)}</span><h3>${esc(s.displayName)}</h3><p>${esc(s.shortDescription)}</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
-        <div class="xp-hero"><img src="${shots[0]}" alt="${esc(d.name)}" id="xpHero"></div>
-        ${shots.length > 1 ? `<div class="xp-shots">${shots.map((s, i) => `<button class="xp-shot${i === 0 ? " on" : ""}" data-shot="${s}"><img src="${s}" alt="${esc(d.name)} example ${i + 1}" loading="lazy"></button>`).join("")}</div>` : ""}
-        ${compatLine(d)}
-        <p class="xp-about">${esc(gtxt(d.about))}</p>
-        <div class="xp-spec"><b>Color Palette</b><div class="xp-pal">${d.palette.map((c) => `<i style="background:${c}"></i>`).join("")}</div></div>
-        <div class="xp-spec"><b>Materials And Finishes</b><div>${d.materials.concat(d.finishes).map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="xp-spec"><b>Finish Grade Compatibility</b><div>${d.grades.map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="xp-spec"><b>Best For</b><div>${d.spaces.map(spaceLabel).concat(d.rooms).map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
-        <div class="xp-spec"><b>Suggested Budget Bands</b><div>${d.budgets.map((m) => `<span class="xp-tag">${esc(m)}</span>`).join("")}</div></div>
+        <div class="xp-hero"><img src="${s.previewImage}" alt="${esc(s.displayName)} preview" id="xpHero"></div>
+        ${compatLine(s)}
+        <div class="xp-spec"><b>Colour Palette</b><div class="xp-pal">${s.swatches.map((c) => `<i style="background:${c}"></i>`).join("")}</div><div>${tags(s.palette)}</div></div>
+        <div class="xp-spec"><b>Materials</b><div>${tags(s.materials)}</div></div>
+        <div class="xp-spec"><b>Defining Features</b><div>${tags(s.definingFeatures)}</div></div>
+        <div class="xp-spec"><b>Works With</b><div>${tags(s.compatibleProjectTypes.map((t) => t.replace("-", " ")).concat(s.compatibleRoomTypes.slice(0, 4)))}</div></div>
+        <div class="xp-spec"><b>Finish Levels</b><div>${tags(s.finishLevel)}</div></div>
+        ${s.aliases.length ? `<div class="xp-spec"><b>Also Known As</b><div>${tags(s.aliases)}</div></div>` : ""}
       </div>
       <div class="xp-df">
-        <button class="btn btn-primary btn-sm" data-use="${d.id}"><i data-lucide="wand-2"></i>Apply To Current Design</button>
-        <button class="btn btn-ghost btn-sm" data-dna="${d.id}"><i data-lucide="dna"></i>${locked ? "Replace Property DNA" : "Set As Property Design DNA"}</button>
-        <button class="btn btn-ghost btn-sm" data-save="${d.id}"><i data-lucide="bookmark"></i>${saved.indexOf(d.id) > -1 ? "Saved" : "Save Style"}</button>
+        <button class="btn btn-primary btn-sm" data-use="${s.id}"><i data-lucide="wand-2"></i>Try This Style</button>
+        <button class="btn btn-ghost btn-sm" data-dna="${s.id}"><i data-lucide="dna"></i>${locked ? "Replace Property DNA" : "Set As Property Design DNA"}</button>
+        <button class="btn btn-ghost btn-sm" data-save="${s.id}"><i data-lucide="bookmark"></i>${saved.indexOf(s.id) > -1 ? "Saved" : "Save Style"}</button>
       </div>`);
-    if (!p) { /* no property: DNA action still shown, guarded on click */ }
   }
 
   function savedDrawer() {
-    const items = saved.map(dir).filter(Boolean);
+    const items = saved.map(styleById).filter(Boolean);
     openDrawer(`
       <div class="xp-dh"><div><span class="xp-eyebrow">Collection</span><h3>Saved Styles</h3><p>Styles you kept for later. Generated results stay in Designs.</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
-        ${items.length ? `<div class="xp-saved">${items.map((d) => `<div class="xp-sitem"><img src="${d.img}" alt="${esc(d.name)}"><div><b>${esc(gtxt(d.name))}</b><span>${esc(gtxt(d.line))}</span></div><button class="fb-link" data-open="${d.id}">Preview</button><button class="fb-link" data-save="${d.id}">Remove</button></div>`).join("")}</div>`
-        : '<div class="xp-note"><i data-lucide="bookmark"></i><span>Nothing saved yet. Use Save Style on any preview.</span></div>'}
+        ${items.length ? `<div class="xp-saved">${items.map((s) => `<div class="xp-sitem"><img src="${s.previewImage}" alt="${esc(s.displayName)}"><div><b>${esc(s.displayName)}</b><span>${esc(s.shortDescription)}</span></div><button class="fb-link" data-open="${s.id}">Preview</button><button class="fb-link" data-save="${s.id}">Remove</button></div>`).join("")}</div>`
+        : '<div class="xp-note"><i data-lucide="bookmark"></i><span>Nothing saved yet. Use the bookmark on any style card.</span></div>'}
       </div>
       <div class="xp-df"><button class="btn btn-ghost btn-sm" data-close="1">Close</button></div>`);
   }
 
-  /* ---------- actions ---------- */
-  const BANDS = ["Refresh", "Makeover", "Renovation", "Full Remodel"];
-
-  /** Hand the direction to the existing Studio controls. Never generates. */
-  function applyToStudio(d) {
+  /* ---------- apply a style ---------- */
+  /** Store the canonical selection and hand it to Studio. Never generates, never charges. */
+  function applyToStudio(s) {
+    const payload = buildStylePayload({ style: s.id, projectType: s.compatibleProjectTypes[0] });
+    write(LS.choice, { styleId: s.id, name: s.displayName, payload: payload, ts: Date.now() });
     const sel = document.getElementById("fStyle");
     if (sel) {
-      if (!Array.from(sel.options).some((o) => o.value === d.name || o.text === d.name)) {
-        sel.insertAdjacentHTML("afterbegin", `<option>${esc(d.name)}</option>`);
-      }
-      sel.value = d.name;
+      if (!Array.from(sel.options).some((o) => o.value === s.displayName || o.text === s.displayName))
+        sel.insertAdjacentHTML("afterbegin", `<option value="${esc(s.displayName)}" data-style-id="${esc(s.id)}">${esc(s.displayName)}</option>`);
+      sel.value = s.displayName;
       sel.dispatchEvent(new Event("change", { bubbles: true }));
     }
-    const space = d.spaces[0];
-    if (space) {
-      const chip = document.querySelector('#spChips [data-sp="' + space.toLowerCase() + '"]');
-      if (chip && !chip.classList.contains("on")) chip.click();
-    }
-    // Preserve the room already chosen for the current property; only fill a blank.
-    const rs = document.getElementById("fRoom");
-    if (rs && !rs.value && d.rooms[0]) {
-      if (!Array.from(rs.options).some((o) => o.text === d.rooms[0])) rs.insertAdjacentHTML("beforeend", `<option>${esc(d.rooms[0])}</option>`);
-      rs.value = d.rooms[0];
-      rs.dispatchEvent(new Event("change", { bubbles: true }));
-    }
+    const space = s.compatibleProjectTypes[0] === "exterior" ? "exterior" : s.compatibleProjectTypes[0] === "garden" ? "landscape" : "interior";
+    const chip = document.querySelector('#spChips [data-sp="' + space + '"]');
+    if (chip && !chip.classList.contains("on")) chip.click();
+    try { window.dispatchEvent(new CustomEvent("rd:style-selected", { detail: payload })); } catch (_) {}
     closeDrawer();
     go("studio");
-    const p = prop();
-    note(gtxt(d.name) + " Applied In Studio" + (p ? " For " + p.address : "") + ". Confirm Your Settings, Then Generate.");
+    note(s.displayName + " Applied In Studio. Change It Any Time, Then Generate.");
   }
 
-  /** Write the direction into the existing property Design DNA system. */
-  async function setDna(d) {
+  async function setDna(s) {
     const p = prop();
     if (!p) { note("Select A Property First. Open Properties And Choose One."); return; }
     if (!api.setPropertyDna) { note("Design DNA Is Not Available Right Now."); return; }
-    const items = [{ label: d.name, color: d.palette[0] }]
-      .concat(d.palette.slice(1, 4).map((c, i) => ({ label: d.materials[i] || "Palette " + (i + 2), color: c })));
+    const items = [{ label: s.displayName, color: s.swatches[0] }]
+      .concat(s.swatches.slice(1, 4).map((c, i) => ({ label: s.materials[i] || "Palette " + (i + 2), color: c })));
     try {
       await api.setPropertyDna({ data: { property_id: p.id, items } });
       if (api.reloadTree) await api.reloadTree();
       syncProp();
       closeDrawer();
-      note(gtxt(d.name) + " Is Now The Design DNA For " + p.address + ".");
-    } catch (e) {
-      note((e && e.message) || "That Did Not Save.");
-    }
+      note(s.displayName + " Is Now The Design DNA For " + p.address + ".");
+    } catch (e) { note((e && e.message) || "That Did Not Save."); }
   }
 
-  function confirmDna(d) {
+  function confirmDna(s) {
     const p = prop();
     if (!p) { note("Select A Property First. Open Properties And Choose One."); return; }
-    const cur = propDirection();
-    if (!cur || cur === d.name) { setDna(d); return; }
+    const cur = propStyleName();
+    if (!cur || cur === s.displayName) { setDna(s); return; }
     openDrawer(`
-      <div class="xp-dh"><div><span class="xp-eyebrow">Design DNA</span><h3>Replace Property DNA?</h3>
-        <p>This property currently uses ${esc(cur)}.</p></div>
+      <div class="xp-dh"><div><span class="xp-eyebrow">Design DNA</span><h3>Replace Property DNA?</h3><p>This property currently uses ${esc(cur)}.</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
-      <div class="xp-db">
-        <div class="xp-note warn"><i data-lucide="dna"></i><span>Replacing the Design DNA on ${esc(p.address)} changes the palette and finish rules every room inherits. Existing saved designs are not regenerated.</span></div>
-        <div class="xp-cmp">
-          <div><span class="xp-lab">Current</span><b>${esc(cur)}</b></div>
-          <div><span class="xp-lab">New</span><b>${esc(gtxt(d.name))}</b>${swatches(d.palette)}</div>
-        </div>
-      </div>
-      <div class="xp-df">
-        <button class="btn btn-ghost btn-sm" data-open="${d.id}">Preview Only</button>
-        <button class="btn btn-primary btn-sm" data-dnago="${d.id}"><i data-lucide="dna"></i>Replace Property DNA</button>
-      </div>`);
+      <div class="xp-db"><div class="xp-note warn"><i data-lucide="dna"></i><span>Replacing the Design DNA on ${esc(p.address)} changes the palette and finish rules every room inherits.</span></div>
+        <div class="xp-cmp"><div><span class="xp-lab">Current</span><b>${esc(cur)}</b></div><div><span class="xp-lab">New</span><b>${esc(s.displayName)}</b>${swatches(s)}</div></div></div>
+      <div class="xp-df"><button class="btn btn-ghost btn-sm" data-open="${s.id}">Preview Only</button>
+        <button class="btn btn-primary btn-sm" data-dnago="${s.id}"><i data-lucide="dna"></i>Replace Property DNA</button></div>`);
   }
 
-  /* ---------- style match quiz — five sequential pairwise choices ---------- */
-  const QUIZ = [
-    { a: "warm-minimal", b: "mid-century" },
-    { a: "organic-modern", b: "modern-farmhouse" },
-    { a: "quiet-luxury", b: "industrial" },
-    { a: "japandi", b: "coastal" },
-    { a: "transitional", b: "contemporary" },
-  ];
-  const QKEY = "rd_ex_quiz_state";
-  const MATCH_LABEL = ["Best Match", "Strong Match", "Also Recommended"];
-  let qState = read(QKEY, null) || { step: 0, picks: [], done: false };
-  if (!Array.isArray(qState.picks)) qState = { step: 0, picks: [], done: false };
-  let qBusy = false;
-  const qSave = () => write(QKEY, qState);
+  /* ---------- recommendations ---------- */
+  function paintRec() {
+    const sec = $("xpRec");
+    const src = read(LS.src, null);
+    if (!src) { sec.hidden = true; return; }
+    const recs = recommendStyles({
+      projectType: src.projectType || "interior",
+      roomType: src.roomType,
+      brightness: src.brightness,
+      woodTones: src.woodTones,
+      text: src.text,
+    }, 4);
+    if (!recs.length) { sec.hidden = true; return; }
+    sec.hidden = false;
+    sec.innerHTML = `<div class="xp-sec-h"><h3>Recommended For Your Space</h3><span>Based On Your Last Upload</span></div>
+      <div class="xp-recrow">${recs.map(({ style, reason }) => `
+        <article class="xp-reccard" data-d="${style.id}">
+          <img src="${style.previewImage}" alt="${esc(style.displayName)}" loading="lazy">
+          <div><b>${esc(style.displayName)}</b><p>${esc(reason)}</p>
+            <div class="xp-acts"><button class="btn btn-ghost btn-xs" data-open="${style.id}">Preview</button>
+              <button class="btn btn-primary btn-xs" data-use="${style.id}">Try This Style</button></div></div>
+        </article>`).join("")}</div>`;
+  }
 
-  // Stable per-question left/right flip so images don't jump on repaint.
-  const qFlip = QUIZ.map((_, i) => (i * 7 + 3) % 2 === 1);
-  function qPair(i) { const s = QUIZ[i]; return qFlip[i] ? [s.b, s.a] : [s.a, s.b]; }
+  /* ---------- five step style finder ---------- */
+  const QUIZ = [
+    { key: "aesthetic", q: "Which Overall Aesthetic Feels Right?", opts: ["warm-minimal", "traditional", "industrial", "bohemian"] },
+    { key: "warmth", q: "Which Colour And Warmth Do You Prefer?", opts: ["organic-modern", "coastal", "dark-academia"] },
+    { key: "shape", q: "Which Furniture Shape Appeals More?", opts: ["soft-contemporary", "mid-century-modern", "neoclassical"] },
+    { key: "material", q: "Which Materials And Texture Do You Like?", opts: ["japandi", "quiet-luxury", "rustic", "modern"] },
+    { key: "detail", q: "How Much Detail Do You Want?", opts: ["minimalist", "transitional", "maximalist"] },
+  ];
+  let q = read(LS.quiz, null) || { step: 0, picks: [], done: false };
+  if (!Array.isArray(q.picks)) q = { step: 0, picks: [], done: false };
+  let qBusy = false;
+  const qSave = () => write(LS.quiz, q);
 
   function qResults() {
-    const picked = qState.picks.filter(Boolean);
-    const tally = {};
-    picked.forEach((x) => (tally[x] = (tally[x] || 0) + 1));
-    const ranked = Object.keys(tally).sort((a, b) => tally[b] - tally[a]);
-    // Fill up to three with unseen styles related to the picks.
-    DIRECTIONS.forEach((d) => { if (ranked.length < 3 && ranked.indexOf(d.id) < 0 && picked.length) ranked.push(d.id); });
-    return ranked.slice(0, 3).map(dir).filter(Boolean);
+    const picks = q.picks.filter(Boolean).map(styleById).filter(Boolean);
+    const score = {};
+    picks.forEach((s) => {
+      score[s.id] = (score[s.id] || 0) + 4;
+      STYLES.forEach((o) => {
+        if (o.id === s.id) return;
+        let pts = 0;
+        if (o.category === s.category) pts += 2;
+        if (o.mood.some((m) => s.mood.indexOf(m) > -1)) pts += 1;
+        if (o.materials.some((m) => s.materials.indexOf(m) > -1)) pts += 1;
+        if (pts) score[o.id] = (score[o.id] || 0) + pts;
+      });
+    });
+    return Object.keys(score)
+      .sort((a, b) => score[b] - score[a])
+      .slice(0, 3)
+      .map(styleById)
+      .filter(Boolean);
   }
 
+  const MATCH_LABEL = ["Best Match", "Strong Match", "Also Recommended"];
   function paintQuiz() {
-    const wrap = $("xpQuiz");
-    const card = $("xpQuizCard");
-    if (!wrap || !card) return;
+    const wrap = $("xpQuiz"), cardEl = $("xpQuizCard");
+    if (!wrap || !cardEl) return;
     wrap.hidden = false;
-
-    if (qState.done) {
+    if (q.done) {
       const res = qResults();
-      card.innerHTML = `<div class="xp-quiz-head"><b>Your Style Matches</b></div>
-        <div class="xp-quiz-res-grid">${res.map((d, i) => `
+      cardEl.innerHTML = res.length
+        ? `<div class="xp-quiz-head"><b>Your Style Matches</b></div>
+        <div class="xp-quiz-res-grid">${res.map((s, i) => `
           <div class="xp-quiz-res-card">
-            <img src="${d.img}" alt="${esc(gtxt(d.name))}" loading="lazy">
-            <div class="xp-quiz-res-body">
-              <span class="xp-quiz-badge">${MATCH_LABEL[i] || "Also Recommended"}</span>
-              <b>${esc(gtxt(d.name))}</b>
-              <p>${esc(gtxt(d.line))}</p>
+            <img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy">
+            <div class="xp-quiz-res-body"><span class="xp-quiz-badge">${MATCH_LABEL[i] || "Also Recommended"}</span>
+              <b>${esc(s.displayName)}</b><p>${esc(s.shortDescription)}</p>
               <div class="xp-quiz-res-act">
-                <button class="btn btn-primary btn-xs" data-use="${d.id}">Try This Style</button>
-                <button class="btn btn-ghost btn-xs" data-save="${d.id}"><i data-lucide="bookmark"></i>${saved.indexOf(d.id) > -1 ? "Saved" : "Save Style"}</button>
-              </div>
-            </div>
-          </div>`).join("")}</div>
-        <div class="xp-quiz-foot"><button class="fb-link" data-qretake="1">Retake</button><button class="btn btn-ghost btn-xs" data-qbrowse="1">Browse All Styles</button></div>`;
+                <button class="btn btn-primary btn-xs" data-use="${s.id}">Try This Style</button>
+                <button class="btn btn-ghost btn-xs" data-save="${s.id}"><i data-lucide="bookmark"></i>${saved.indexOf(s.id) > -1 ? "Saved" : "Save Style"}</button>
+              </div></div></div>`).join("")}</div>
+        <div class="xp-quiz-foot"><button class="fb-link" data-qretake="1">Retake</button><button class="btn btn-ghost btn-xs" data-qbrowse="1">Browse All Styles</button></div>`
+        : `<div class="xp-quiz-head"><b>No Answers Yet</b></div><p class="xp-line">You skipped every step. Retake it whenever you like.</p>
+           <div class="xp-quiz-foot"><button class="fb-link" data-qretake="1">Retake</button></div>`;
       icons_();
       return;
     }
-
-    const i = qState.step;
-    const pct = ((i + 1) / QUIZ.length) * 100;
-    const chosen = qState.picks[i] || "";
-    card.innerHTML = `<div class="xp-quiz-head"><b>Choose The Room You Prefer</b><span class="xp-quiz-step">Choice ${i + 1} Of ${QUIZ.length}</span></div>
-      <div class="xp-quiz-prog"><span style="width:${pct}%"></span></div>
-      <div class="xp-quiz-opts">${qPair(i).map((id) => { const d = dir(id); return d ? `<button class="xp-quiz-opt${chosen === d.id ? " on" : ""}" data-qpick="${d.id}"><img src="${d.img}" alt="${esc(gtxt(d.name))}" loading="lazy"><span>${esc(gtxt(d.name))}</span></button>` : ""; }).join("")}</div>
+    const i = Math.max(0, Math.min(q.step, QUIZ.length - 1));
+    const step = QUIZ[i];
+    const chosen = q.picks[i] || "";
+    cardEl.innerHTML = `<div class="xp-quiz-head"><b>${esc(step.q)}</b><span class="xp-quiz-step">${i + 1} Of ${QUIZ.length}</span></div>
+      <div class="xp-quiz-prog"><span style="width:${((i + 1) / QUIZ.length) * 100}%"></span></div>
+      <div class="xp-quiz-opts">${step.opts.map((id) => { const s = styleById(id); return s ? `<button class="xp-quiz-opt${chosen === s.id ? " on" : ""}" data-qpick="${s.id}" aria-pressed="${chosen === s.id}"><img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy"><span>${esc(s.displayName)}</span></button>` : ""; }).join("")}</div>
       <div class="xp-quiz-foot">
-        <div class="xp-quiz-nav">${i > 0 ? '<button class="fb-link" data-qback="1"><i data-lucide="chevron-left"></i>Back</button>' : ""}<button class="fb-link" data-qskip="1">Skip This Choice</button></div>
-        <button class="btn btn-primary btn-xs" data-qnext="1" ${chosen ? "" : "hidden"}>Continue</button>
+        <div class="xp-quiz-nav">${i > 0 ? '<button class="fb-link" data-qback="1"><i data-lucide="chevron-left"></i>Back</button>' : ""}<button class="fb-link" data-qskip="1">Skip For Now</button></div>
+        <button class="btn btn-primary btn-xs" data-qnext="1"${chosen ? "" : " disabled"}>${i === QUIZ.length - 1 ? "See Matches" : "Next"}</button>
       </div>`;
     icons_();
   }
-
   function quizAdvance() {
-    if (qState.step < QUIZ.length - 1) { qState.step++; }
-    else { qState.done = true; }
+    if (q.step < QUIZ.length - 1) q.step++;
+    else q.done = true;
     qSave();
     paintQuiz();
-    if (qState.done) note("Your Style Matches Are Ready");
+    if (q.done) note("Your Style Matches Are Ready");
   }
-
   function quizPick(id) {
     if (qBusy) return;
     qBusy = true;
-    qState.picks[qState.step] = id;
+    q.picks[q.step] = id;
     qSave();
     paintQuiz();
     window.setTimeout(() => { qBusy = false; quizAdvance(); }, 300);
   }
 
-
+  /* ---------- saving ---------- */
   function toggleSave(id) {
     const on = saved.indexOf(id) > -1;
     saved = on ? saved.filter((x) => x !== id) : [id].concat(saved);
     write(LS.saved, saved);
     note(on ? "Removed From Saved Styles" : "Saved To Your Styles");
     paint();
-    if (qState.done) paintQuiz();
-    const open = host.querySelector("#xpDPanel [data-save]");
-    if (open && !$("xpDrawer").hidden && open.dataset.save === id) {
-      open.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Style" : "Saved");
-      icons_();
+    if (q.done) paintQuiz();
+    if (!$("xpDrawer").hidden) {
+      const btn = host.querySelector('#xpDPanel [data-save="' + id + '"]');
+      if (btn && btn.classList.contains("btn")) { btn.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Style" : "Saved"); icons_(); }
     }
   }
+
+  /* ---------- property context ---------- */
+  function syncProp() {
+    const p = prop();
+    const pill = $("xpProp");
+    if (!pill) return;
+    if (!p) { pill.hidden = true; return; }
+    pill.hidden = false;
+    const cur = propStyleName();
+    pill.innerHTML = '<i data-lucide="map-pin"></i>Previewing For ' + esc(p.address) + (cur ? ' <em>&middot; ' + esc(cur) + " DNA</em>" : "");
+    icons_();
+  }
+  host._xpSync = () => { syncProp(); paintRec(); };
+
+  /* ---------- admin style library ---------- */
+  async function openAdmin() {
+    const mod = await import("@/content/rd-style-admin");
+    mod.openStyleAdmin(openDrawer, closeDrawer, note, icons_, host);
+  }
+  (async () => {
+    try {
+      const { isStyleAdmin } = await import("@/lib/style-admin.functions");
+      const ok = await isStyleAdmin();
+      if (ok && ok.admin) { $("xpAdminBtn").hidden = false; icons_(); }
+    } catch (_) {}
+  })();
 
   /* ---------- events ---------- */
   host.addEventListener("click", (e) => {
@@ -485,43 +533,37 @@ export function mountExplore(go, ctx) {
     const hit = (a) => t.closest("[" + a + "]");
     let el;
     if ((el = hit("data-c"))) {
-      cat = el.dataset.c;
-      if (cat !== "All" && cat !== "Interior" && cat !== "Virtual Staging") rooms = [];
-      host.querySelectorAll(".xp-cat").forEach((b) => b.classList.toggle("on", b === el));
+      tab = el.dataset.c;
+      host.querySelectorAll(".xp-cat").forEach((b) => { const on = b === el; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
       paint(); return;
     }
-    if ((el = hit("data-off"))) {
-      const i = String(el.dataset.off).indexOf(":");
-      toggleFilter(String(el.dataset.off).slice(0, i), String(el.dataset.off).slice(i + 1));
-      return;
-    }
-
-    if ((el = hit("data-shot"))) {
-      const img = host.querySelector("#xpHero");
-      if (img) img.src = el.dataset.shot;
-      host.querySelectorAll(".xp-shot").forEach((b) => b.classList.toggle("on", b === el));
-      return;
-    }
+    if ((el = hit("data-sort"))) { sort = el.dataset.sort; $("xpSortMenu").hidden = true; $("xpSortBtn").setAttribute("aria-expanded", "false");
+      host.querySelectorAll(".xp-sortopt").forEach((b) => b.classList.toggle("on", b === el)); paint(); return; }
+    if (t.closest("#xpSortBtn")) { const m = $("xpSortMenu"); m.hidden = !m.hidden; $("xpSortBtn").setAttribute("aria-expanded", String(!m.hidden)); return; }
+    if ((el = hit("data-more"))) { const k = el.dataset.more; expanded[k] = !expanded[k]; paint(); return; }
+    if ((el = hit("data-off"))) { const raw = String(el.dataset.off); const i = raw.indexOf(":"); toggleFilter(raw.slice(0, i), raw.slice(i + 1)); return; }
     if ((el = hit("data-save"))) { toggleSave(el.dataset.save); return; }
-    if ((el = hit("data-open"))) { directionDrawer(el.dataset.open); return; }
-    if ((el = hit("data-use"))) { const d = dir(el.dataset.use); if (d) applyToStudio(d); return; }
-    if ((el = hit("data-dnago"))) { const d = dir(el.dataset.dnago); if (d) setDna(d); return; }
-    if ((el = hit("data-dna"))) { const d = dir(el.dataset.dna); if (d) confirmDna(d); return; }
-    if (t.closest("#xpClear")) { rooms = []; traits = []; grades = []; paint(); return; }
+    if ((el = hit("data-open"))) { styleDrawer(el.dataset.open); return; }
+    if ((el = hit("data-use"))) { const s = styleById(el.dataset.use); if (s) applyToStudio(s); return; }
+    if ((el = hit("data-dnago"))) { const s = styleById(el.dataset.dnago); if (s) setDna(s); return; }
+    if ((el = hit("data-dna"))) { const s = styleById(el.dataset.dna); if (s) confirmDna(s); return; }
+    if (t.closest("#xpClear")) { clearFilters(); return; }
     if (t.closest("[data-close]") || t.closest("#xpScrim")) { closeDrawer(); return; }
     if (t.closest("#xpSavedBtn")) { savedDrawer(); return; }
+    if (t.closest("#xpAdminBtn")) { openAdmin(); return; }
     if (t.closest("#xpCustom")) { go("studio"); return; }
     if (t.closest("#xpFilterBtn")) { openDrawer(filterDrawerHtml()); return; }
     if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
     if (t.closest("[data-qnext]")) { if (!qBusy) quizAdvance(); return; }
-    if (t.closest("[data-qback]")) { if (qState.step > 0) { qState.step--; qState.done = false; qSave(); paintQuiz(); } return; }
-    if (t.closest("[data-qskip]")) { if (!qBusy) { qState.picks[qState.step] = null; qSave(); quizAdvance(); } return; }
-    if (t.closest("[data-qbrowse]")) { const g = $("xpGrid"); if (g) g.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
-    if (t.closest("[data-qretake]")) {
-      if (!window.confirm("Retake the style quiz? Your current matches will be cleared.")) return;
-      qState = { step: 0, picks: [], done: false }; qSave(); paintQuiz(); return;
-    }
+    if (t.closest("[data-qback]")) { if (q.done) { q.done = false; q.step = QUIZ.length - 1; } else if (q.step > 0) q.step--; qSave(); paintQuiz(); return; }
+    if (t.closest("[data-qskip]")) { if (!qBusy) { q.picks[q.step] = null; qSave(); quizAdvance(); } return; }
+    if (t.closest("[data-qbrowse]")) { const b = $("xpBody"); if (b) b.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+    if (t.closest("[data-qretake]")) { q = { step: 0, picks: [], done: false }; qSave(); paintQuiz(); return; }
+  });
 
+  host.addEventListener("keydown", (e) => {
+    const cardEl = e.target.closest && e.target.closest(".xp-card");
+    if (cardEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); styleDrawer(cardEl.dataset.d); }
   });
 
   host.addEventListener("change", (e) => {
@@ -534,11 +576,20 @@ export function mountExplore(go, ctx) {
 
   let qt;
   $("xpQ").addEventListener("input", () => { clearTimeout(qt); qt = window.setTimeout(paint, 160); });
-  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("xpDrawer").hidden) closeDrawer(); });
-
-
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    if (!$("xpDrawer").hidden) closeDrawer();
+    if (!$("xpSortMenu").hidden) $("xpSortMenu").hidden = true;
+  });
+  document.addEventListener("click", (e) => {
+    if (!host.contains(e.target) || !e.target.closest(".xp-sortwrap")) {
+      const m = $("xpSortMenu");
+      if (m && !m.hidden) { m.hidden = true; $("xpSortBtn").setAttribute("aria-expanded", "false"); }
+    }
+  }, true);
 
   syncProp();
+  paintRec();
   paintQuiz();
   paint();
   icons_();
