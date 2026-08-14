@@ -58,6 +58,7 @@ export async function openPropertyUpload(opts = {}) {
   let mode = opts.propertyId ? "existing" : props.length ? "existing" : "new";
   let propertyId = opts.propertyId || (props[0] ? props[0].id : null);
   let files = [];
+  let src = "computer";
   let rejected = [];
 
   function render() {
