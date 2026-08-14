@@ -20,8 +20,10 @@ export function PrototypeSurface({ className, html, init }: Props) {
     if (!ref.current) return;
     const cleanup = init();
     const stopTips = initTooltips(document);
-    return () => { stopTips(); cleanup(); };
+    const stopSelects = initSelects(document);
+    return () => { stopSelects(); stopTips(); cleanup(); };
   }, [init]);
+
 
   return (
     <div ref={ref} className={className} dangerouslySetInnerHTML={{ __html: html }} />
