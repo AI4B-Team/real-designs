@@ -151,11 +151,15 @@ function shell() {
 
   <div class="ml-bulk" id="mlBulk">
     <span id="mlSelCount">0 Selected</span>
-    <button class="btn btn-ghost btn-xs" data-b="fav"><i data-lucide="heart"></i>Favorite</button>
+    <button class="btn btn-primary btn-xs" data-b="video" id="mlBulkVideo"><i data-lucide="clapperboard"></i>Create Video</button>
+    <button class="btn btn-ghost btn-xs" data-b="prop"><i data-lucide="home"></i>Add To Property</button>
+    <button class="btn btn-ghost btn-xs" data-b="pres"><i data-lucide="presentation"></i>Add To Presentation</button>
     <button class="btn btn-ghost btn-xs" data-b="download"><i data-lucide="download"></i>Download</button>
     <button class="btn btn-ghost btn-xs" data-b="archive"><i data-lucide="archive"></i>Archive</button>
+    <button class="btn btn-ghost btn-xs" data-b="more" id="mlBulkMore"><i data-lucide="more-horizontal"></i>More</button>
     <button class="btn btn-ghost btn-xs" data-b="clear">Clear</button>
   </div>
+
 
   <div class="ml-grid" id="mlGrid"></div>
 
