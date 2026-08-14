@@ -109,7 +109,7 @@ function shell() {
   <div class="ml-head">
     <div>
       <h2>Media</h2>
-      <p>All your uploaded and generated images, videos and project files in one place.</p>
+      <p>All your uploaded and generated images, videos and project files in one place. Use Upload Property Photos to import an entire property shoot in bulk.</p>
     </div>
     <div class="ml-create">
       <button class="btn btn-primary btn-sm" id="mlCreate" aria-haspopup="true" aria-expanded="false"><i data-lucide="plus"></i>Create Media</button>
