@@ -494,21 +494,161 @@ function wireCards(grid, list) {
     render();
   }));
   grid.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openDetail(find(b.dataset.open))));
-  grid.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => {
-    const m = find(b.dataset.edit);
-    if (m) { try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {} openVideoDetail(m.refId, "video"); }
-  }));
-  grid.querySelectorAll("[data-share]").forEach((b) => (b.onclick = () => {
-    const m = find(b.dataset.share);
-    if (m) { try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {} openVideoDetail(m.refId, "share"); }
-  }));
+  grid.querySelectorAll("[data-thumb]").forEach((el) => {
+    el.onclick = (ev) => {
+      if (ev.target.closest("[data-fav],[data-pick]")) return;
+      openDetail(find(el.dataset.thumb));
+    };
+    el.onkeydown = (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        openDetail(find(el.dataset.thumb));
+      }
+    };
+  });
+  grid.querySelectorAll("[data-more]").forEach(
+    (b) =>
+      (b.onclick = (ev) => {
+        ev.stopPropagation();
+        const m = find(b.dataset.more);
+        if (m) popMenu(b, moreItems(m));
+      }),
+  );
   grid.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => download(find(b.dataset.dl))));
-  grid.querySelectorAll("[data-arch]").forEach((b) => (b.onclick = () => archive([find(b.dataset.arch)])));
-  grid.querySelectorAll("[data-pres]").forEach((b) => (b.onclick = () => S.go("present")));
-  grid.querySelectorAll("[data-studio]").forEach((b) => (b.onclick = () => S.go("studio")));
   grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
-  grid.querySelectorAll("[data-remove]").forEach((b) => (b.onclick = () => remove(find(b.dataset.remove))));
+  grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
 }
+
+/* ---------------- workflow bridges ---------------- */
+
+function toast(msg) {
+  try {
+    const t = (window as any).__rdToast;
+    if (t) t(msg);
+  } catch (_) {}
+}
+
+function assetRow(m) {
+  return {
+    id: m.refId,
+    storage_path: m.assetPath || m.path,
+    file_name: m.title,
+    original_filename: m.title,
+    room_group: m.room || "Media",
+    property_id: m.propertyId || null,
+    flags: m.flags || [],
+  };
+}
+
+/** Uploads open in the photo editor; generated designs re-open in Studio. */
+function editImage(m) {
+  if (canEditImage(m)) {
+    openPhotoEditor({ assetId: m.refId, assets: [assetRow(m)], versions: [], propertyLabel: m.property || "Media", reload: () => load(true) });
+    return;
+  }
+  toast("Open This Design In Studio To Keep Editing It.");
+  S.go("studio");
+}
+
+/** Seed the listing-video workflow from one or many ready images. */
+function videoFrom(items) {
+  const usable = items.filter(videoReady);
+  if (!usable.length) {
+    toast("Select At Least One Ready Image To Create A Video.");
+    return;
+  }
+  try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  openListingVideo({
+    from: "media",
+    assets: usable.map((x, i) => ({
+      id: x.refId || x.id,
+      storage_path: x.assetPath || x.path,
+      file_name: x.title,
+      original_filename: x.title,
+      room_group: x.room || x.title,
+      sort_order: i,
+    })),
+  });
+}
+
+function openVideo(m, tab) {
+  try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  openVideoDetail(m.refId, tab || "video");
+}
+
+async function dupVideo(m, short) {
+  try {
+    const res = await duplicateVideo({ data: { id: m.refId } });
+    const id = res && (res.id || (res.project && res.project.id));
+    await load(true);
+    if (id) {
+      if (short) toast("Copy Created — Trim The Scenes For A Short Version.");
+      try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+      openVideoDetail(id, "video");
+    }
+  } catch (e) {
+    window.alert("Could not duplicate: " + (e && e.message ? e.message : "try again"));
+  }
+}
+
+const PROJECT_KEYS = ["id","property_id","property_label","room_id","design_version_id","title","video_type","source_type","status","formats","length_preset","transition","motion","brand_kit_id","branding","disclosure","settings"];
+
+async function renameItem(m) {
+  const name = window.prompt("Rename", m.title);
+  if (!name || name.trim() === "" || name === m.title) return;
+  try {
+    if (m.type === "generated_video") {
+      const cur = await getVideo({ data: { id: m.refId } });
+      const project = {};
+      PROJECT_KEYS.forEach((k) => {
+        if (cur.project[k] !== null && cur.project[k] !== undefined) project[k] = cur.project[k];
+      });
+      project.title = name.trim();
+      await saveVideo({ data: { project } });
+    } else {
+      await updateMediaAssets({ data: { ids: [m.refId], patch: { file_name: name.trim() } } });
+    }
+    toast("Renamed.");
+  } catch (e) {
+    window.alert("Could not rename: " + (e && e.message ? e.message : "try again"));
+  }
+  await load(true);
+}
+
+async function del(m) {
+  if (!m) return;
+  if (!window.confirm("Delete “" + m.title + "”? This cannot be undone.")) return;
+  try {
+    if (m.type === "generated_video") await deleteVideo({ data: { id: m.refId } });
+    else if (m.type === "generated_image") await deleteVersions({ data: { version_ids: [m.refId] } });
+    else if (m.refId && !m.job) await deleteMediaAssets({ data: { ids: [m.refId] } });
+    else {
+      await remove(m);
+      return;
+    }
+  } catch (e) {
+    window.alert("Could not delete: " + (e && e.message ? e.message : "try again"));
+    return;
+  }
+  closeDrawer();
+  await load(true);
+}
+
+function cancelItem(m) {
+  if (!m || !m.job) return;
+  try {
+    cancelJob(m.job.id);
+  } catch (_) {}
+  emitMediaChange();
+}
+
+/** Failed items go back to the settings that produced them. */
+function editSettings(m) {
+  if (m.type === "generated_video") return openVideo(m, "video");
+  if (m.job) return openPropertyUpload({});
+  S.go("studio");
+}
+
 
 async function download(m) {
   if (!m) return;
