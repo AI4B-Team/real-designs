@@ -1196,18 +1196,25 @@
 }
 .rd-app .stc-head h2{ font-size:1.6rem; line-height:1.15; margin:0 0 8px; }
 .rd-app .stc-head p{ font-size:.9rem; color:var(--mute); margin:0; max-width:760px; }
-.rd-app .stc-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.rd-app .stc-grid{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; }
 .rd-app .stc-card{
-  display:flex; flex-direction:column; gap:8px;
+  display:flex; flex-direction:column; gap:6px; text-align:left;
   border:1px solid var(--line); border-radius:10px; background:var(--white);
-  padding:18px 18px 16px; min-width:0;
+  padding:16px 16px 14px; min-width:0; cursor:pointer;
+  transition:border-color .14s ease, box-shadow .14s ease, transform .14s ease;
 }
-.rd-app .stc-ico{ width:22px; height:22px; color:var(--ink); margin-bottom:2px; }
-.rd-app .stc-card h3{ font-size:1rem; margin:0; }
-.rd-app .stc-card p{ font-size:.83rem; color:var(--mute); margin:0; }
-.rd-app .stc-meta{ font-size:.72rem; color:var(--mute-2); margin-top:auto; padding-top:8px; }
-.rd-app .stc-btn{ margin-top:12px; width:100%; justify-content:center; }
-.rd-app .stc-foot{ margin:20px 0 0; font-size:.84rem; color:var(--mute); }
+.rd-app .stc-card:hover{ border-color:rgba(20,17,15,.34); box-shadow:0 6px 18px rgba(20,18,15,.08); }
+.rd-app .stc-ico{ width:20px; height:20px; color:var(--ink); margin-bottom:2px; }
+.rd-app .stc-card h3{ font-size:.97rem; margin:0; }
+.rd-app .stc-card p{ font-size:.82rem; color:var(--mute); margin:0; line-height:1.4; }
+.rd-app .stc-meta{ font-size:.7rem; color:var(--mute-2); margin-top:auto; padding-top:8px; }
+.rd-app .stc-act{
+  display:inline-flex; align-items:center; gap:6px; margin-top:8px;
+  font-size:.8rem; font-weight:700; color:var(--red);
+}
+.rd-app .stc-act i{ width:14px; height:14px; transition:transform .14s ease; }
+.rd-app .stc-card:hover .stc-act i{ transform:translateX(3px); }
+.rd-app .stc-foot{ margin:18px 0 0; font-size:.84rem; color:var(--mute); }
 .rd-app .stc-samplelink{
   background:none; border:0; padding:0; font:inherit; color:var(--ink);
   text-decoration:underline; text-underline-offset:3px; cursor:pointer;
@@ -1218,3 +1225,84 @@
   .rd-app .stc-grid{ grid-template-columns:1fr; }
   .rd-app .stc-head h2{ font-size:1.32rem; }
 }
+
+/* ---------- Studio focused source setup ---------- */
+.rd-app .stu{ max-width:980px; margin:0 auto; }
+.rd-app .stu-back{
+  display:inline-flex; align-items:center; gap:7px; background:none; border:0; padding:0;
+  font:inherit; font-size:.82rem; font-weight:600; color:var(--mute); cursor:pointer; margin-bottom:14px;
+}
+.rd-app .stu-back:hover{ color:var(--red); }
+.rd-app .stu-back i{ width:15px; height:15px; }
+.rd-app .stu-card{
+  border:1px solid var(--line); border-radius:12px; background:var(--white); padding:24px;
+}
+.rd-app .stu-head{ margin-bottom:18px; }
+.rd-app .stu-head h2{ font-size:1.3rem; margin:0 0 6px; }
+.rd-app .stu-head p{ font-size:.87rem; color:var(--mute); margin:0; }
+.rd-app .stu-att{
+  display:inline-flex; align-items:center; gap:6px; margin-top:10px;
+  font-size:.74rem; font-weight:600; color:var(--ink);
+  border:1px solid var(--line); border-radius:999px; padding:4px 10px;
+}
+.rd-app .stu-att i{ width:13px; height:13px; color:var(--red); }
+.rd-app .stu-drop{
+  border:1px dashed rgba(20,17,15,.26); border-radius:10px; background:var(--surface);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+  padding:34px 20px; text-align:center;
+}
+.rd-app .stu-drop.over{ border-color:var(--red); }
+.rd-app .stu-drop > i{ width:24px; height:24px; color:var(--mute); }
+.rd-app .stu-drop b{ font-size:.9rem; }
+.rd-app .stu-types{ font-size:.72rem; color:var(--mute-2); }
+.rd-app .stu-file{
+  display:flex; gap:16px; align-items:center;
+  border:1px solid var(--line); border-radius:10px; padding:14px;
+}
+.rd-app .stu-file img{ width:150px; height:104px; object-fit:cover; border-radius:8px; flex:none; }
+.rd-app .stu-file-ico{
+  width:150px; height:104px; border-radius:8px; background:var(--surface); flex:none;
+  display:flex; align-items:center; justify-content:center;
+}
+.rd-app .stu-file-ico i{ width:26px; height:26px; color:var(--mute); }
+.rd-app .stu-file-m{ min-width:0; }
+.rd-app .stu-file-m b{ display:block; font-size:.9rem; word-break:break-word; }
+.rd-app .stu-file-m span{ display:block; font-size:.76rem; color:var(--mute); margin-top:4px; }
+.rd-app .stu-file-a{ display:flex; gap:14px; margin-top:10px; }
+.rd-app .stu-link{
+  display:inline-flex; align-items:center; gap:6px; background:none; border:0; padding:0;
+  font:inherit; font-size:.79rem; font-weight:600; color:var(--ink); cursor:pointer;
+  text-decoration:underline; text-underline-offset:3px;
+}
+.rd-app .stu-link:hover{ color:var(--red); }
+.rd-app .stu-link i{ width:14px; height:14px; }
+.rd-app .stu-form{ margin-top:18px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+.rd-app .stu-form .field{ margin:0; }
+.rd-app .stu-two{ display:grid; grid-template-columns:1.1fr 1fr; gap:22px; }
+.rd-app .stu-col .field{ margin-bottom:12px; }
+.rd-app .stu-col .field > label{ display:block; font-size:.74rem; color:var(--mute); margin-bottom:5px; }
+.rd-app .stu-form .field > label{ display:block; font-size:.74rem; color:var(--mute); margin-bottom:5px; }
+.rd-app .stu-ta{
+  width:100%; border:1px solid var(--line); border-radius:8px; padding:12px;
+  font:inherit; font-size:.87rem; resize:vertical; background:var(--white); color:var(--ink);
+}
+.rd-app .stu-inspo{ display:flex; gap:14px; flex-wrap:wrap; }
+.rd-app .stu-foot{
+  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+  margin-top:20px; padding-top:18px; border-top:1px solid var(--line);
+}
+.rd-app .stu-foot .btn{ min-width:190px; justify-content:center; }
+.rd-app .stu-foot .btn:disabled{ opacity:1; background:#E4E4E7; color:#5B5B62; border-color:#E4E4E7; cursor:not-allowed; }
+.rd-app .stu-cost{ font-size:.78rem; color:var(--mute); }
+.rd-app .stu-note{ font-size:.76rem; color:var(--mute-2); margin:12px 0 0; max-width:640px; }
+@media (max-width:900px){
+  .rd-app .stu-two{ grid-template-columns:1fr; }
+}
+@media (max-width:680px){
+  .rd-app .stu-card{ padding:18px; }
+  .rd-app .stu-form{ grid-template-columns:1fr; }
+  .rd-app .stu-file{ flex-direction:column; align-items:flex-start; }
+  .rd-app .stu-file img, .rd-app .stu-file-ico{ width:100%; height:170px; }
+  .rd-app .stu-foot .btn{ width:100%; }
+}
+
