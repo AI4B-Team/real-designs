@@ -97,6 +97,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     creating: false,
     samples: false,
     propertyMode: "" as "" | "pick" | "new",
+    /** "choose" shows the single onboarding chooser; "work" shows the editor. */
+    phase: "choose" as "choose" | "work",
+
     newAddress: "",
     newType: "Single Family",
     newProject: "",
