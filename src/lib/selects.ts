@@ -6,10 +6,11 @@
 
 const MARK = "data-rdsel";
 
+let openedAt = 0;
+
 type Cleanup = () => void;
 
 function closeMenu() {
-  if (document.querySelector(".rdsel-menu")) console.log("RDSEL close", new Error().stack);
   document.querySelectorAll(".rdsel-menu").forEach((n) => n.remove());
   document.querySelectorAll("select." + "rdsel-open").forEach((n) => n.classList.remove("rdsel-open"));
 }
@@ -41,6 +42,7 @@ function openMenu(sel: HTMLSelectElement) {
   });
 
   document.body.appendChild(menu);
+  openedAt = Date.now();
   sel.classList.add("rdsel-open");
 
   const r = sel.getBoundingClientRect();
@@ -95,6 +97,7 @@ export function initSelects(root: ParentNode = document): Cleanup {
   obs.observe(document.body, { childList: true, subtree: true });
 
   const onScroll = (e: Event) => {
+    if (Date.now() - openedAt < 250) return;
     if (e.target instanceof Element && e.target.closest(".rdsel-menu")) return;
     closeMenu();
   };
