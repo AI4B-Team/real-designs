@@ -1346,7 +1346,16 @@ function bind() {
     }
   });
 
+  el.addEventListener("keydown", (e) => {
+    if (e.target.id === "lvImportUrl" && e.key === "Enter") {
+      e.preventDefault();
+      S.importUrl = e.target.value || "";
+      runImport();
+    }
+  });
+
   el.addEventListener("input", (e) => {
+    if (e.target.id === "lvImportUrl") S.importUrl = e.target.value;
     if (e.target.id === "lvAddr") {
       S.addressQuery = e.target.value;
       matchAddresses();
