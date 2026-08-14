@@ -96,13 +96,13 @@ function activeLink(row) {
 /* ======================= LIBRARY ======================= */
 
 function libraryHtml() {
-  if (S.loading) return `<p class="pp-note">Loading Your Presentations…</p>`;
+  if (S.loading) return `<p class="pk-note">Loading Your Presentations…</p>`;
   if (!S.rows.length) {
-    return `<div class="pp-empty">
+    return `<div class="pk-empty">
       <i data-lucide="presentation"></i>
       <b>No Presentations Yet</b>
       <span>Build a client-ready package from a property's designs, photos, video and budget. Share one branded link, then track every view and decision.</span>
-      <button class="btn btn-primary btn-sm" data-pp="new"><i data-lucide="plus"></i>New Presentation</button>
+      <button class="btn btn-primary btn-sm" data-pk="new"><i data-lucide="plus"></i>New Presentation</button>
     </div>`;
   }
   return S.rows
@@ -110,28 +110,28 @@ function libraryHtml() {
       const [cls, lab] = STATUS[r.status] || STATUS.draft;
       const link = activeLink(r);
       const ctx = [r.property_label, r.client_name ? "For " + r.client_name : null].filter(Boolean).map(esc).join(" · ");
-      return `<div class="pp-row" data-id="${r.id}">
-        <div class="pp-row-t">
+      return `<div class="pk-row" data-id="${r.id}">
+        <div class="pk-row-t">
           <b>${esc(r.title)}</b>
           <span>${ctx ? ctx + " · " : ""}${r.asset_count} Item${r.asset_count === 1 ? "" : "s"} · ${r.view_count || 0} View${
             (r.view_count || 0) === 1 ? "" : "s"
           } · ${esc(r.last_activity || "Created")} ${ago(r.last_activity_at || r.created_at)}</span>
         </div>
         <span class="pill ${cls}">${lab}</span>
-        <button class="icon-btn" data-pp="open" title="Open Presentation"><i data-lucide="eye"></i></button>
-        <button class="icon-btn" data-pp="edit" title="Edit Presentation"><i data-lucide="pencil"></i></button>
-        <button class="icon-btn" data-pp="${link ? "copy" : "link"}" title="${link ? "Copy Client Link" : "Create Client Link"}"><i data-lucide="${
+        <button class="icon-btn" data-pk="open" title="Open Presentation"><i data-lucide="eye"></i></button>
+        <button class="icon-btn" data-pk="edit" title="Edit Presentation"><i data-lucide="pencil"></i></button>
+        <button class="icon-btn" data-pk="${link ? "copy" : "link"}" title="${link ? "Copy Client Link" : "Create Client Link"}"><i data-lucide="${
           link ? "copy" : "link"
         }"></i></button>
-        <button class="icon-btn" data-pp="pdf" title="Export PDF"><i data-lucide="file-text"></i></button>
-        <button class="icon-btn" data-pp="del" title="Delete Presentation"><i data-lucide="trash-2"></i></button>
+        <button class="icon-btn" data-pk="pdf" title="Export PDF"><i data-lucide="file-text"></i></button>
+        <button class="icon-btn" data-pk="del" title="Delete Presentation"><i data-lucide="trash-2"></i></button>
       </div>`;
     })
     .join("");
 }
 
 async function refresh() {
-  const el = document.getElementById("ppList");
+  const el = document.getElementById("pkList");
   if (!el) return;
   S.loading = !S.rows.length;
   el.innerHTML = libraryHtml();
@@ -254,29 +254,29 @@ const STEPS = [
 ];
 
 function stepBar() {
-  return `<div class="pp-steps">${STEPS.map(
+  return `<div class="pk-steps">${STEPS.map(
     ([l, ic], i) =>
-      `<div class="pp-step${S.step === i + 1 ? " on" : ""}${S.step > i + 1 ? " done" : ""}"><i data-lucide="${ic}"></i><span>${i + 1}. ${l}</span></div>`,
+      `<div class="pk-step${S.step === i + 1 ? " on" : ""}${S.step > i + 1 ? " done" : ""}"><i data-lucide="${ic}"></i><span>${i + 1}. ${l}</span></div>`,
   ).join("")}</div>`;
 }
 
 function step1() {
   const d = S.draft;
   const opts = propertyOptions();
-  return `<div class="pp-form">
-    <label class="pp-f"><span>Presentation Title</span>
-      <input id="ppTitle" value="${esc(d.title)}" placeholder="Kitchen And Living Room Concept"></label>
-    <label class="pp-f"><span>Property</span>
-      <select id="ppProp">
+  return `<div class="pk-form">
+    <label class="pk-f"><span>Presentation Title</span>
+      <input id="pkTitle" value="${esc(d.title)}" placeholder="Kitchen And Living Room Concept"></label>
+    <label class="pk-f"><span>Property</span>
+      <select id="pkProp">
         <option value="">Select A Property</option>
         ${opts.map((o) => `<option value="${o.id}"${d.property_id === o.id ? " selected" : ""}>${esc(o.label)}</option>`).join("")}
       </select></label>
-    <div class="pp-two">
-      <label class="pp-f"><span>Client Name</span><input id="ppCName" value="${esc(d.client_name)}" placeholder="Client name"></label>
-      <label class="pp-f"><span>Client Email</span><input id="ppCEmail" value="${esc(d.client_email)}" placeholder="client@email.com"></label>
+    <div class="pk-two">
+      <label class="pk-f"><span>Client Name</span><input id="pkCName" value="${esc(d.client_name)}" placeholder="Client name"></label>
+      <label class="pk-f"><span>Client Email</span><input id="pkCEmail" value="${esc(d.client_email)}" placeholder="client@email.com"></label>
     </div>
-    <label class="pp-f"><span>Introduction</span>
-      <textarea id="ppIntro" rows="4" placeholder="A short note that opens the presentation.">${esc(d.intro)}</textarea></label>
+    <label class="pk-f"><span>Introduction</span>
+      <textarea id="pkIntro" rows="4" placeholder="A short note that opens the presentation.">${esc(d.intro)}</textarea></label>
   </div>`;
 }
 
@@ -293,21 +293,21 @@ function step2() {
   const tab = d.tab || "designs";
   const list = items[tab] || [];
   const count = Object.keys(d.picked).length;
-  return `<div class="pp-assets">
-    <div class="pp-tabs">${TABS.map(
-      ([k, l]) => `<button class="pp-tab${tab === k ? " on" : ""}" data-tab="${k}">${l} ${items[k].length}</button>`,
+  return `<div class="pk-assets">
+    <div class="pk-tabs">${TABS.map(
+      ([k, l]) => `<button class="pk-tab${tab === k ? " on" : ""}" data-tab="${k}">${l} ${items[k].length}</button>`,
     ).join("")}</div>
-    <p class="pp-note">${count} Item${count === 1 ? "" : "s"} Selected${
+    <p class="pk-note">${count} Item${count === 1 ? "" : "s"} Selected${
       d.property_id ? "" : " · Choose a property in step one to narrow these results"
     }</p>
-    <div class="pp-grid">${
+    <div class="pk-grid">${
       list.length
         ? list
             .map((it) => {
               const on = !!d.picked[it.id];
               const thumb = it.url && it.kind !== "budget" && it.kind !== "video" ? it.url : null;
-              return `<button class="pp-item${on ? " on" : ""}" data-pick="${it.id}" data-src="${tab}">
-          <span class="pp-thumb">${
+              return `<button class="pk-item${on ? " on" : ""}" data-pick="${it.id}" data-src="${tab}">
+          <span class="pk-thumb">${
             thumb
               ? `<img data-ph="${esc(thumb)}" alt="${esc(it.title)}" loading="lazy">`
               : `<i data-lucide="${it.kind === "video" ? "clapperboard" : it.kind === "budget" ? "calculator" : "image"}"></i>`
@@ -316,7 +316,7 @@ function step2() {
         </button>`;
             })
             .join("")
-        : `<p class="pp-note">Nothing Here Yet. Create designs, upload photos or run a budget first.</p>`
+        : `<p class="pk-note">Nothing Here Yet. Create designs, upload photos or run a budget first.</p>`
     }</div>
   </div>`;
 }
@@ -325,15 +325,15 @@ function step3() {
   const d = S.draft;
   const used = {};
   Object.values(d.picked).forEach((p) => (used[p.section_key] = (used[p.section_key] || 0) + 1));
-  return `<div class="pp-secs">
-    <p class="pp-note">Reorder sections, rename them or hide any section the client should not see.</p>
+  return `<div class="pk-secs">
+    <p class="pk-note">Reorder sections, rename them or hide any section the client should not see.</p>
     ${d.sections
       .map(
-        (s, i) => `<div class="pp-sec${s.hidden ? " off" : ""}" data-sec="${s.key}">
+        (s, i) => `<div class="pk-sec${s.hidden ? " off" : ""}" data-sec="${s.key}">
         <button class="icon-btn xs" data-secmove="up" ${i === 0 ? "disabled" : ""} title="Move Up"><i data-lucide="chevron-up"></i></button>
         <button class="icon-btn xs" data-secmove="down" ${i === d.sections.length - 1 ? "disabled" : ""} title="Move Down"><i data-lucide="chevron-down"></i></button>
-        <input class="pp-sec-t" data-sectitle value="${esc(s.title)}">
-        <span class="pp-sec-c">${used[s.key] || 0} Item${(used[s.key] || 0) === 1 ? "" : "s"}</span>
+        <input class="pk-sec-t" data-sectitle value="${esc(s.title)}">
+        <span class="pk-sec-c">${used[s.key] || 0} Item${(used[s.key] || 0) === 1 ? "" : "s"}</span>
         <button class="icon-btn xs" data-sechide title="${s.hidden ? "Show Section" : "Hide Section"}"><i data-lucide="${s.hidden ? "eye-off" : "eye"}"></i></button>
       </div>`,
       )
@@ -344,43 +344,43 @@ function step3() {
 function step4() {
   const d = S.draft;
   const st = d.settings;
-  return `<div class="pp-form">
-    <div class="pp-two">
-      <label class="pp-f"><span>Accent Color</span><input id="ppAccent" type="color" value="${esc(d.accent)}"></label>
-      <label class="pp-f"><span>Logo URL</span><input id="ppLogo" value="${esc(d.logo_url)}" placeholder="https://"></label>
+  return `<div class="pk-form">
+    <div class="pk-two">
+      <label class="pk-f"><span>Accent Color</span><input id="pkAccent" type="color" value="${esc(d.accent)}"></label>
+      <label class="pk-f"><span>Logo URL</span><input id="pkLogo" value="${esc(d.logo_url)}" placeholder="https://"></label>
     </div>
-    <div class="pp-toggles">
+    <div class="pk-toggles">
       <label><input type="checkbox" data-set="allow_comments" ${st.allow_comments ? "checked" : ""}> Allow Client Comments</label>
       <label><input type="checkbox" data-set="allow_approve" ${st.allow_approve ? "checked" : ""}> Allow Client Approval</label>
       <label><input type="checkbox" data-set="allow_changes" ${st.allow_changes ? "checked" : ""}> Allow Change Requests</label>
     </div>
-    <div class="pp-two">
-      <label class="pp-f"><span>Access Code</span><input id="ppCode" value="${esc(d.access_code)}" placeholder="Optional"></label>
-      <label class="pp-f"><span>Link Expires</span>
-        <select id="ppExp">
+    <div class="pk-two">
+      <label class="pk-f"><span>Access Code</span><input id="pkCode" value="${esc(d.access_code)}" placeholder="Optional"></label>
+      <label class="pk-f"><span>Link Expires</span>
+        <select id="pkExp">
           <option value="">Never</option>
           <option value="7"${d.expires_days === 7 ? " selected" : ""}>In 7 Days</option>
           <option value="30"${d.expires_days === 30 ? " selected" : ""}>In 30 Days</option>
           <option value="90"${d.expires_days === 90 ? " selected" : ""}>In 90 Days</option>
         </select></label>
     </div>
-    <p class="pp-note">Saving creates the presentation and a branded client link. The client does not need an account.</p>
+    <p class="pk-note">Saving creates the presentation and a branded client link. The client does not need an account.</p>
   </div>`;
 }
 
 function builderHtml() {
   const body = S.step === 1 ? step1() : S.step === 2 ? step2() : S.step === 3 ? step3() : step4();
-  return `<div class="pp-modal" role="dialog" aria-modal="true">
-    <div class="pp-box">
-      <div class="pp-head">
+  return `<div class="pk-modal" role="dialog" aria-modal="true">
+    <div class="pk-box">
+      <div class="pk-head">
         <b>${S.draft.id ? "Edit Presentation" : "New Presentation"}</b>
-        <button class="icon-btn" data-pp="close" aria-label="Close"><i data-lucide="x"></i></button>
+        <button class="icon-btn" data-pk="close" aria-label="Close"><i data-lucide="x"></i></button>
       </div>
       ${stepBar()}
-      <div class="pp-body">${body}</div>
-      <div class="pp-foot">
-        <button class="btn btn-ghost btn-sm" data-pp="back" ${S.step === 1 ? "disabled" : ""}>Back</button>
-        <button class="btn btn-primary btn-sm" data-pp="${S.step === 4 ? "save" : "next"}" ${S.busy ? "disabled" : ""}>
+      <div class="pk-body">${body}</div>
+      <div class="pk-foot">
+        <button class="btn btn-ghost btn-sm" data-pk="back" ${S.step === 1 ? "disabled" : ""}>Back</button>
+        <button class="btn btn-primary btn-sm" data-pk="${S.step === 4 ? "save" : "next"}" ${S.busy ? "disabled" : ""}>
           ${S.busy ? "Saving…" : S.step === 4 ? "Save And Create Link" : "Continue"}</button>
       </div>
     </div>
@@ -388,7 +388,7 @@ function builderHtml() {
 }
 
 function renderBuilder() {
-  const host = document.getElementById("ppModal");
+  const host = document.getElementById("pkModal");
   if (!host) return;
   host.innerHTML = S.draft ? builderHtml() : "";
   paint();
@@ -401,16 +401,16 @@ function readStep() {
     return el ? el.value : "";
   };
   if (S.step === 1) {
-    d.title = v("ppTitle").trim();
-    d.property_id = v("ppProp") || null;
+    d.title = v("pkTitle").trim();
+    d.property_id = v("pkProp") || null;
     const opt = propertyOptions().find((o) => o.id === d.property_id);
     d.property_label = opt ? opt.label : "";
-    d.client_name = v("ppCName").trim();
-    d.client_email = v("ppCEmail").trim();
-    d.intro = v("ppIntro").trim();
+    d.client_name = v("pkCName").trim();
+    d.client_email = v("pkCEmail").trim();
+    d.intro = v("pkIntro").trim();
   }
   if (S.step === 3) {
-    document.querySelectorAll(".pp-sec").forEach((el) => {
+    document.querySelectorAll(".pk-sec").forEach((el) => {
       const key = el.getAttribute("data-sec");
       const s = d.sections.find((x) => x.key === key);
       const inp = el.querySelector("[data-sectitle]");
@@ -418,10 +418,10 @@ function readStep() {
     });
   }
   if (S.step === 4) {
-    d.accent = v("ppAccent") || "#CC0000";
-    d.logo_url = v("ppLogo").trim();
-    d.access_code = v("ppCode").trim();
-    const e = v("ppExp");
+    d.accent = v("pkAccent") || "#CC0000";
+    d.logo_url = v("pkLogo").trim();
+    d.access_code = v("pkCode").trim();
+    const e = v("pkExp");
     d.expires_days = e ? Number(e) : null;
   }
 }
@@ -544,9 +544,9 @@ async function saveDraft() {
 /* ======================= DETAIL / EXPORT ======================= */
 
 async function openDetail(id) {
-  const host = document.getElementById("ppModal");
+  const host = document.getElementById("pkModal");
   if (!host) return;
-  host.innerHTML = `<div class="pp-modal"><div class="pp-box"><div class="pp-body"><p class="pp-note">Loading…</p></div></div></div>`;
+  host.innerHTML = `<div class="pk-modal"><div class="pk-box"><div class="pk-body"><p class="pk-note">Loading…</p></div></div></div>`;
   let p;
   try {
     p = await getPackage({ data: { id } });
@@ -557,30 +557,30 @@ async function openDetail(id) {
   }
   const link = (p.links || []).find((l) => !l.revoked);
   const [cls, lab] = STATUS[p.package.status] || STATUS.draft;
-  host.innerHTML = `<div class="pp-modal" role="dialog" aria-modal="true"><div class="pp-box">
-    <div class="pp-head"><b>${esc(p.package.title)}</b><span class="pill ${cls}">${lab}</span>
-      <button class="icon-btn" data-pp="close" aria-label="Close"><i data-lucide="x"></i></button></div>
-    <div class="pp-body">
-      <div class="pp-detail">
-        <div class="pp-kpi"><b>${p.assets.length}</b><span>Items</span></div>
-        <div class="pp-kpi"><b>${p.package.view_count || 0}</b><span>Views</span></div>
-        <div class="pp-kpi"><b>${p.comments.length}</b><span>Comments</span></div>
-        <div class="pp-kpi"><b>${(p.sections || []).filter((s) => !s.hidden).length}</b><span>Sections</span></div>
+  host.innerHTML = `<div class="pk-modal" role="dialog" aria-modal="true"><div class="pk-box">
+    <div class="pk-head"><b>${esc(p.package.title)}</b><span class="pill ${cls}">${lab}</span>
+      <button class="icon-btn" data-pk="close" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="pk-body">
+      <div class="pk-detail">
+        <div class="pk-kpi"><b>${p.assets.length}</b><span>Items</span></div>
+        <div class="pk-kpi"><b>${p.package.view_count || 0}</b><span>Views</span></div>
+        <div class="pk-kpi"><b>${p.comments.length}</b><span>Comments</span></div>
+        <div class="pk-kpi"><b>${(p.sections || []).filter((s) => !s.hidden).length}</b><span>Sections</span></div>
       </div>
       ${
         link
-          ? `<div class="pp-linkbox"><input readonly value="${esc(shareUrl(link.token))}">
-              <button class="btn btn-dark btn-xs" data-pp="copytok" data-tok="${esc(link.token)}">Copy</button>
-              <button class="btn btn-ghost btn-xs" data-pp="revoke" data-lid="${link.id}">Revoke</button></div>`
-          : `<button class="btn btn-primary btn-sm" data-pp="mklink" data-id="${p.package.id}"><i data-lucide="link"></i>Create Client Link</button>`
+          ? `<div class="pk-linkbox"><input readonly value="${esc(shareUrl(link.token))}">
+              <button class="btn btn-dark btn-xs" data-pk="copytok" data-tok="${esc(link.token)}">Copy</button>
+              <button class="btn btn-ghost btn-xs" data-pk="revoke" data-lid="${link.id}">Revoke</button></div>`
+          : `<button class="btn btn-primary btn-sm" data-pk="mklink" data-id="${p.package.id}"><i data-lucide="link"></i>Create Client Link</button>`
       }
-      <h4 class="pp-h4">Activity</h4>
+      <h4 class="pk-h4">Activity</h4>
       ${
         p.activity.length
           ? p.activity
               .map(
                 (a) =>
-                  `<div class="pp-act"><i data-lucide="${
+                  `<div class="pk-act"><i data-lucide="${
                     a.kind === "approved" ? "check-circle-2" : a.kind === "changes" ? "refresh-cw" : a.kind === "opened" ? "eye" : a.kind === "comment" ? "message-square" : "circle-dot"
                   }"></i><div><b>${esc(a.detail || a.kind)}</b><span>${new Date(a.created_at).toLocaleString("en-US", {
                     month: "short",
@@ -590,23 +590,23 @@ async function openDetail(id) {
                   })}</span></div></div>`,
               )
               .join("")
-          : `<p class="pp-note">No Activity Yet. The timeline fills in once your client opens the link.</p>`
+          : `<p class="pk-note">No Activity Yet. The timeline fills in once your client opens the link.</p>`
       }
       ${
         p.comments.length
-          ? `<h4 class="pp-h4">Client Comments</h4>` +
+          ? `<h4 class="pk-h4">Client Comments</h4>` +
             p.comments
               .map(
                 (c) =>
-                  `<div class="pp-act"><i data-lucide="message-square"></i><div><b>${esc(c.author_name || "Client")}</b><span>${esc(c.body)}</span></div></div>`,
+                  `<div class="pk-act"><i data-lucide="message-square"></i><div><b>${esc(c.author_name || "Client")}</b><span>${esc(c.body)}</span></div></div>`,
               )
               .join("")
           : ""
       }
     </div>
-    <div class="pp-foot">
-      <button class="btn btn-ghost btn-sm" data-pp="edit" data-id="${p.package.id}">Edit</button>
-      <button class="btn btn-primary btn-sm" data-pp="pdf" data-id="${p.package.id}">Export PDF</button>
+    <div class="pk-foot">
+      <button class="btn btn-ghost btn-sm" data-pk="edit" data-id="${p.package.id}">Edit</button>
+      <button class="btn btn-primary btn-sm" data-pk="pdf" data-id="${p.package.id}">Export PDF</button>
     </div>
   </div></div>`;
   paint();
@@ -685,9 +685,9 @@ let wired = false;
 export function mountPresent() {
   const host = document.getElementById("presRoot");
   if (!host) return;
-  if (!document.getElementById("ppModal")) {
+  if (!document.getElementById("pkModal")) {
     const m = document.createElement("div");
-    m.id = "ppModal";
+    m.id = "pkModal";
     host.appendChild(m);
   }
   if (!wired) {
@@ -699,11 +699,11 @@ export function mountPresent() {
 }
 
 async function onClick(e) {
-  const t = e.target.closest("[data-pp],[data-tab],[data-pick],[data-secmove],[data-sechide]");
+  const t = e.target.closest("[data-pk],[data-tab],[data-pick],[data-secmove],[data-sechide]");
   if (!t) return;
-  const row = e.target.closest(".pp-row");
+  const row = e.target.closest(".pk-row");
   const id = t.getAttribute("data-id") || (row ? row.getAttribute("data-id") : null);
-  const a = t.getAttribute("data-pp");
+  const a = t.getAttribute("data-pk");
 
   if (t.hasAttribute("data-tab")) {
     S.draft.tab = t.getAttribute("data-tab");
@@ -730,7 +730,7 @@ async function onClick(e) {
   }
   if (t.hasAttribute("data-secmove")) {
     readStep();
-    const key = t.closest(".pp-sec").getAttribute("data-sec");
+    const key = t.closest(".pk-sec").getAttribute("data-sec");
     const arr = S.draft.sections;
     const i = arr.findIndex((s) => s.key === key);
     const j = t.getAttribute("data-secmove") === "up" ? i - 1 : i + 1;
@@ -742,7 +742,7 @@ async function onClick(e) {
   }
   if (t.hasAttribute("data-sechide")) {
     readStep();
-    const key = t.closest(".pp-sec").getAttribute("data-sec");
+    const key = t.closest(".pk-sec").getAttribute("data-sec");
     const s = S.draft.sections.find((x) => x.key === key);
     if (s) s.hidden = !s.hidden;
     return renderBuilder();
@@ -751,7 +751,7 @@ async function onClick(e) {
   if (a === "new") return openBuilder(null);
   if (a === "close") {
     S.draft = null;
-    const host = document.getElementById("ppModal");
+    const host = document.getElementById("pkModal");
     if (host) host.innerHTML = "";
     return;
   }
@@ -824,7 +824,7 @@ async function onClick(e) {
 function onChange(e) {
   const t = e.target;
   if (!S.draft) return;
-  if (t.id === "ppProp") {
+  if (t.id === "pkProp") {
     readStep();
     return renderBuilder();
   }
