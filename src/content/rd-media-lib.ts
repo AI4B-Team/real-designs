@@ -7,11 +7,15 @@
 import { createIcons, icons } from "lucide";
 import { loadMediaLibrary, onMediaChange, stageLabel, typeGroup, emitMediaChange } from "@/lib/media-library";
 import { resolvePhotoUrl } from "@/lib/room-photos";
-import { setVersionStatusBulk } from "@/lib/workspace.functions";
-import { updateMediaAssets } from "@/lib/property-media.functions";
-import { setVideoStatus } from "@/lib/reveal.functions";
+import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
+import { updateMediaAssets, deleteMediaAssets } from "@/lib/property-media.functions";
+import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, createVideoFrom } from "@/content/rd-reveal";
+import { openListingVideo } from "@/content/rd-listing-video";
+import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
+import { cancelJob } from "@/lib/upload-manager";
+
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
