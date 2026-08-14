@@ -1233,7 +1233,7 @@
 .rd-app .stw-rule{ height:1px; background:var(--line); margin:0 0 20px; }
 
 /* starting tiles */
-.rd-app .stw-tiles{ display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; }
+.rd-app .stw-tiles{ display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; align-items:stretch; }
 .rd-app .stw-tile{
   display:flex; flex-direction:column; gap:6px; text-align:left; min-width:0; cursor:pointer;
   border:1px solid var(--line); border-radius:9px; background:var(--white); padding:15px 15px 13px;
@@ -1350,7 +1350,7 @@
 .rd-app .stw-note{ font-size:.73rem; color:var(--mute-2); margin:10px 0 0; }
 
 @media (max-width:1240px){
-  .rd-app .stw-tiles{ grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .rd-app .stw-tiles{ grid-template-columns:repeat(2,minmax(0,1fr)); }
   .rd-app .stw-recent-g{ grid-template-columns:repeat(2,minmax(0,1fr)); }
 }
 @media (max-width:1040px){
@@ -1367,3 +1367,14 @@
   .rd-app .stw-drop{ min-height:220px; padding:34px 16px; }
   .rd-app .stw-steps{ display:none; }
 }
+
+/* ---- upload source detection ---- */
+.rd-app .stw-det{ display:flex; align-items:center; gap:7px; font-size:.78rem; color:var(--ink); margin:2px 0 4px; }
+.rd-app .stw-det i{ width:14px; height:14px; color:var(--red); flex:0 0 auto; }
+.rd-app .stw-det b{ font-weight:600; }
+.rd-app .stw-det-warn{ color:var(--mute); }
+.rd-app .stw-det-change{ background:none; border:0; padding:0; margin-left:2px; font:inherit; font-size:.75rem; color:var(--red); cursor:pointer; text-decoration:underline; text-underline-offset:2px; }
+.rd-app .stw-det-pick{ margin:0 0 6px; max-width:260px; }
+.rd-app .stw-det-pick select{ width:100%; height:34px; font-size:.8rem; }
+.rd-app .stw-det-spin{ animation:rdspin 1s linear infinite; }
+@keyframes rdspin{ to{ transform:rotate(360deg); } }
