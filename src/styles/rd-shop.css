@@ -184,7 +184,7 @@
 /* Tablet and mobile: full-height drawer. */
 @media(max-width:860px){
   .shop-body{grid-template-columns:1fr;overflow:auto;position:relative}
-  .shop-panel{position:fixed;inset:0;z-index:125;border-left:0;width:100%}
+  .shop-panel{position:fixed;left:0;right:0;bottom:0;top:96px;z-index:125;border-left:0;border-top:1px solid var(--line,#e6e3dd);border-radius:16px 16px 0 0;width:100%;box-shadow:0 -14px 34px rgba(15,18,20,.16)}
   .shop-results{overflow:auto}
   .shop-stage{max-height:none}
 }
