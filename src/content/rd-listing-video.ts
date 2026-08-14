@@ -119,7 +119,13 @@ const S = {
   go: null,
   mounted: false,
   loading: false,
-  step: "start", // start | photos | setup | rendering | done
+  step: "start", // start | review | photos | setup | rendering | done
+  importUrl: "",
+  importState: "idle", // idle | running | failed | ready
+  importStage: "",
+  importError: "",
+  importRow: null,
+  otherOpen: false,
   properties: [],
   propertyId: null,
   propertyLabel: "",
