@@ -399,12 +399,106 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     );
   }
 
+  /* ---------- onboarding chooser (single empty state) ---------- */
+
+  const CARDS: Array<{ act: string; icon: string; title: string; desc: string; meta: string; btn: string }> = [
+    {
+      act: "c-space",
+      icon: "image-up",
+      title: "Upload A Space",
+      desc: "Start with a photo of an interior, exterior or landscape.",
+      meta: "JPG · PNG · HEIC · WEBP",
+      btn: "Upload A Photo",
+    },
+    {
+      act: "c-sketch",
+      icon: "pencil-ruler",
+      title: "Upload A Sketch Or Plan",
+      desc: "Turn a hand sketch, floor plan or concept drawing into a visual design.",
+      meta: "JPG · PNG · HEIC · WEBP · PDF",
+      btn: "Upload A Sketch Or Plan",
+    },
+    {
+      act: "c-describe",
+      icon: "message-square-text",
+      title: "Describe An Idea",
+      desc: "Start from a written idea when you do not have a photo, sketch or plan.",
+      meta: "Describe the room, exterior, landscape or concept you want to create.",
+      btn: "Describe An Idea",
+    },
+    {
+      act: "c-property",
+      icon: "map-pin",
+      title: "Start With A Property",
+      desc: "Create a property first and organize multiple rooms, angles, versions and project decisions together.",
+      meta: "Rooms, designs, budgets and presentations in one place.",
+      btn: "Create A Property",
+    },
+  ];
+
+  function chooserHtml() {
+    return (
+      '<div class="stc-head">' +
+      '<span class="stc-eyebrow">Welcome To REAL DESIGNS</span>' +
+      "<h2>What Would You Like To Create?</h2>" +
+      "<p>Start with a photo, sketch or floor plan, describe an idea, or organize everything under a property.</p>" +
+      "</div>" +
+      '<div class="stc-grid">' +
+      CARDS.map(
+        (c) =>
+          '<div class="stc-card">' +
+          '<i data-lucide="' + c.icon + '" class="stc-ico"></i>' +
+          "<h3>" + esc(c.title) + "</h3>" +
+          "<p>" + esc(c.desc) + "</p>" +
+          '<span class="stc-meta">' + esc(c.meta) + "</span>" +
+          '<button class="btn btn-primary btn-sm stc-btn" data-sts="' + c.act + '">' + esc(c.btn) + "</button>" +
+          "</div>",
+      ).join("") +
+      "</div>" +
+      '<p class="stc-foot">Not ready to upload? <button class="stc-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      (state.samples ? samplesHtml() : "")
+    );
+  }
+
   /* ---------- render + wiring ---------- */
 
   let host: HTMLElement | null = null;
   let panelHost: HTMLElement | null = null;
+  let chooser: HTMLElement | null = null;
+
+  function clearWorkHosts() {
+    host?.remove();
+    panelHost?.remove();
+    host = null;
+    panelHost = null;
+  }
+
+  function clearChooser() {
+    chooser?.remove();
+    chooser = null;
+    view!.classList.remove("sts-choosing");
+  }
 
   function render() {
+    if (state.phase === "choose") {
+      clearWorkHosts();
+      if (!chooser) {
+        chooser = document.createElement("div");
+        chooser.id = "stChooser";
+        chooser.className = "stc";
+        view!.insertBefore(chooser, view!.firstChild);
+        chooser.addEventListener("click", onClick);
+      }
+      view!.classList.add("sts-choosing");
+      chooser.innerHTML = chooserHtml();
+      try {
+        lucide.createIcons();
+      } catch {
+        /* icons are cosmetic */
+      }
+      return;
+    }
+    clearChooser();
     if (!host) {
       host = document.createElement("div");
       host.id = "stStart";
@@ -428,6 +522,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
     wire();
   }
+
 
   function wire() {
 
