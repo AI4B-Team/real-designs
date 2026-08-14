@@ -327,8 +327,8 @@ function mount(ctx) {
     return [priceRange, availFilter, merchFilter, brandFilter, materialFilter, colorFilter, dimFilter].filter(Boolean).length;
   }
 
-  function filtered() {
-    let list = tab === "saved" ? savedLater.slice() : results.slice();
+  function filtered(source) {
+    let list = source ? source.slice() : tab === "saved" ? savedLater.slice() : results.slice();
     list = list.filter((p) => hidden.indexOf(p.id) < 0);
     if (tab === "close") list = list.filter((p) => ["exact", "close"].indexOf(safeMatchType(p)) > -1);
     if (pref === "budget") list = list.filter((p) => (priceOf(p) || 0) <= 500);
@@ -420,26 +420,46 @@ function mount(ctx) {
       fc.hidden = n === 0;
       fc.textContent = String(n);
     }
-    const list = filtered();
+    const all = filtered();
+    const list = all.slice(0, 3);
     const box = $("shopResults");
     if (!list.length) {
       box.innerHTML = `<div class="shop-empty"><b>No Matches In This View</b><span>Widen the price range, clear a filter, or search by keyword to find a stand-in for this item.</span><button class="btn btn-ghost btn-xs" id="shopClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
       paintIcons();
       const c = $("shopClear");
-      if (c)
-        c.addEventListener("click", () => {
-          query = "";
-          tab = "all";
-          pref = "best";
-          $("shopQ").value = "";
-          $("shopPref").value = "best";
-          host.querySelectorAll(".shop-segb").forEach((t) => t.classList.toggle("on", t.getAttribute("data-tab") === "all"));
-          clearFilters();
-        });
+      if (c) c.addEventListener("click", resetAllFilters);
+      paintCatalog();
       return;
     }
-    box.innerHTML = `<div class="shop-count">${list.length} ${list.length === 1 ? "Match" : "Matches"}</div>` + list.map(card).join("");
+    box.innerHTML =
+      `<div class="shop-count">Top ${list.length} Of ${all.length} ${all.length === 1 ? "Match" : "Matches"}</div>` +
+      list.map((p) => card(p)).join("") +
+      (active ? `<button class="shop-viewall" id="shopViewAll">View All ${esc(active.label)} Matches<i data-lucide="arrow-down"></i></button>` : "");
     paintIcons();
+    wireCards(box);
+    const va = $("shopViewAll");
+    if (va)
+      va.addEventListener("click", () => {
+        catCat = active ? active.id : "all";
+        paintCatTabs();
+        paintCatalog(true);
+        closeSheet();
+      });
+    paintCatalog();
+  }
+
+  function resetAllFilters() {
+    query = "";
+    tab = "all";
+    pref = "best";
+    $("shopQ").value = "";
+    $("shopPref").value = "best";
+    host.querySelectorAll(".shop-segb").forEach((t) => t.classList.toggle("on", t.getAttribute("data-tab") === "all"));
+    clearFilters();
+  }
+
+  /** Shared card wiring used by both the quick-match panel and the full catalog. */
+  function wireCards(box) {
     box.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openDetail(b.getAttribute("data-open"))));
     box.querySelectorAll("[data-add]").forEach((b) =>
       b.addEventListener("click", (e) => {
@@ -451,7 +471,7 @@ function mount(ctx) {
       b.addEventListener("click", (e) => {
         e.stopPropagation();
         const open = b.parentElement.classList.contains("on");
-        box.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
+        host.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
         b.parentElement.classList.toggle("on", !open);
       }),
     );
@@ -460,33 +480,127 @@ function mount(ctx) {
         e.stopPropagation();
         const act = b.getAttribute("data-act");
         const id = b.getAttribute("data-id");
-        const p = results.concat(savedLater).find((x) => x.id === id);
-        box.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
+        const p = allKnownProducts().find((x) => x.id === id);
+        host.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
         if (!p) return;
         if (act === "save") {
           if (!savedLater.find((x) => x.id === p.id)) savedLater.push(p);
           toast("Saved For Later");
           track("shop_product_saved", { merchant: p.merchant });
+          repaintAll();
         } else if (act === "compare") {
           if (compare.find((x) => x.id === p.id)) compare = compare.filter((x) => x.id !== p.id);
           else if (compare.length >= 4) return toast("Compare Holds Four Products At A Time");
           else compare.push(p);
           syncCounts();
-          paintResults();
+          repaintAll();
         } else if (act === "detail") {
           openDetail(p.id);
         } else if (act === "hide") {
           hidden.push(p.id);
-          paintResults();
+          repaintAll();
         } else if (act === "remove") {
           const rec = listProducts().find((r) => r.roomId === design.roomId && r.id === p.id);
           if (rec) removeProduct(rec.recordId);
           syncCounts();
-          paintResults();
+          repaintAll();
           toast("Removed From Project");
         }
       }),
     );
+  }
+
+  function allKnownProducts() {
+    return Object.keys(matchCache)
+      .reduce((acc, k) => acc.concat(matchCache[k]), [])
+      .concat(savedLater)
+      .concat(results);
+  }
+
+  function repaintAll() {
+    paintResults();
+  }
+
+  /* ---------------- full catalog ---------------- */
+  function paintCatTabs() {
+    const wrap = $("shopCatTabs");
+    if (!wrap) return;
+    if (!objects.length) {
+      wrap.innerHTML = "";
+      return;
+    }
+    const tabs = [["all", "All Products"]].concat(objects.map((o) => [o.id, o.label]));
+    wrap.innerHTML = tabs
+      .map((t) => `<button class="shop-cattab${catCat === t[0] ? " on" : ""}" role="tab" data-cat="${esc(t[0])}">${esc(t[1])}</button>`)
+      .join("");
+    wrap.querySelectorAll("[data-cat]").forEach((b) =>
+      b.addEventListener("click", () => {
+        catCat = b.getAttribute("data-cat");
+        paintCatTabs();
+        const o = objects.find((x) => x.id === catCat);
+        if (o && o !== active) selectObject(o);
+        else paintCatalog();
+      }),
+    );
+  }
+
+  async function paintCatalog(scrollTo) {
+    const grid = $("shopCatGrid");
+    if (!grid) return;
+    if (!objects.length) {
+      grid.innerHTML = `<div class="shop-empty"><b>No Shoppable Objects Detected</b><span>Draw a box around any item in the design and we will search for matching products.</span></div>`;
+      return;
+    }
+    const targets = catCat === "all" ? objects : objects.filter((o) => o.id === catCat);
+    if (!targets.length) return;
+    const missing = targets.filter((o) => !matchCache[design.designId + "::" + o.id]);
+    if (missing.length) {
+      grid.innerHTML = skeletonGrid();
+      try {
+        await Promise.all(missing.map((o) => matchesFor(o)));
+      } catch (e) {
+        grid.innerHTML = errorBlock("The product catalog could not load.");
+        wireRetry();
+        return;
+      }
+    }
+    const seen = {};
+    let pool = [];
+    targets.forEach((o) => {
+      (matchCache[design.designId + "::" + o.id] || []).forEach((p) => {
+        if (seen[p.id]) return;
+        seen[p.id] = 1;
+        pool.push(p);
+      });
+    });
+    const list = filtered(tab === "saved" ? savedLater : pool);
+    if (!list.length) {
+      grid.innerHTML = `<div class="shop-empty"><b>No Products In This View</b><span>Clear a filter or search by keyword to see more products for this room.</span><button class="btn btn-ghost btn-xs" id="shopCatClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
+      paintIcons();
+      const c = $("shopCatClear");
+      if (c) c.addEventListener("click", resetAllFilters);
+      return;
+    }
+    grid.innerHTML = list.map((p) => card(p, true)).join("");
+    paintIcons();
+    wireCards(grid);
+    if (scrollTo) {
+      const sec = $("shopCat");
+      if (sec) sec.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }
+
+  function skeletonGrid() {
+    return Array.from({ length: 4 })
+      .map(() => `<div class="shop-sk big"><i></i><div><b></b><em></em><u></u></div></div>`)
+      .join("");
+  }
+
+  function openSheet() {
+    host.classList.add("sheet-on");
+  }
+  function closeSheet() {
+    host.classList.remove("sheet-on");
   }
 
   function card(p) {
