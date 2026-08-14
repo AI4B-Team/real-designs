@@ -988,6 +988,63 @@ export type Database = {
           },
         ]
       }
+      style_overrides: {
+        Row: {
+          aliases: string[] | null
+          category: string | null
+          created_at: string
+          display_name: string | null
+          generation_prompt: string | null
+          is_custom: boolean
+          is_featured: boolean | null
+          is_hidden: boolean
+          negative_prompt: string | null
+          preview_image: string | null
+          project_types: string[] | null
+          provider_map: Json
+          short_description: string | null
+          sort_order: number | null
+          style_id: string
+          updated_at: string
+        }
+        Insert: {
+          aliases?: string[] | null
+          category?: string | null
+          created_at?: string
+          display_name?: string | null
+          generation_prompt?: string | null
+          is_custom?: boolean
+          is_featured?: boolean | null
+          is_hidden?: boolean
+          negative_prompt?: string | null
+          preview_image?: string | null
+          project_types?: string[] | null
+          provider_map?: Json
+          short_description?: string | null
+          sort_order?: number | null
+          style_id: string
+          updated_at?: string
+        }
+        Update: {
+          aliases?: string[] | null
+          category?: string | null
+          created_at?: string
+          display_name?: string | null
+          generation_prompt?: string | null
+          is_custom?: boolean
+          is_featured?: boolean | null
+          is_hidden?: boolean
+          negative_prompt?: string | null
+          preview_image?: string | null
+          project_types?: string[] | null
+          provider_map?: Json
+          short_description?: string | null
+          sort_order?: number | null
+          style_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           cancel_at_period_end: boolean
@@ -1111,6 +1168,27 @@ export type Database = {
           source?: string
           source_ref?: string | null
           uom?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -1623,6 +1701,13 @@ export type Database = {
         }
         Returns: Json
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_workspace_access: { Args: { _owner: string }; Returns: boolean }
       plan_monthly_credits: {
         Args: { _plan: Database["public"]["Enums"]["plan_tier"] }
@@ -1663,6 +1748,7 @@ export type Database = {
       sync_subscription: { Args: never; Returns: Json }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       credit_action:
         | "design"
         | "scope"
@@ -1799,6 +1885,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       credit_action: [
         "design",
         "scope",
