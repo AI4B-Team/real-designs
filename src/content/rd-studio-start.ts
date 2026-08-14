@@ -448,10 +448,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         (c) =>
           '<div class="stc-card">' +
           '<i data-lucide="' + c.icon + '" class="stc-ico"></i>' +
-          "<h3>" + esc(c.title) + "</h3>" +
-          "<p>" + esc(c.desc) + "</p>" +
-          '<span class="stc-meta">' + esc(c.meta) + "</span>" +
-          '<button class="btn btn-primary btn-sm stc-btn" data-sts="' + c.act + '">' + esc(c.btn) + "</button>" +
+          "<h3>" + c.title + "</h3>" +
+          "<p>" + c.desc + "</p>" +
+          '<span class="stc-meta">' + c.meta + "</span>" +
+          '<button class="btn btn-primary btn-sm stc-btn" data-sts="' + c.act + '">' + c.btn + "</button>" +
           "</div>",
       ).join("") +
       "</div>" +
