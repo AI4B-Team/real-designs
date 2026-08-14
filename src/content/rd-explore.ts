@@ -469,31 +469,29 @@ export function mountExplore(go, ctx) {
     if ((el = hit("data-use"))) { const d = dir(el.dataset.use); if (d) applyToStudio(d); return; }
     if ((el = hit("data-dnago"))) { const d = dir(el.dataset.dnago); if (d) setDna(d); return; }
     if ((el = hit("data-dna"))) { const d = dir(el.dataset.dna); if (d) confirmDna(d); return; }
+    if (t.closest("#xpClear")) { rooms = []; traits = []; grades = []; paint(); return; }
     if (t.closest("[data-close]") || t.closest("#xpScrim")) { closeDrawer(); return; }
     if (t.closest("#xpSavedBtn")) { savedDrawer(); return; }
     if (t.closest("#xpCustom")) { go("studio"); return; }
-    if (t.closest("#xpFilterBtn")) {
-      const p = $("xpPanel");
-      const open = p.classList.toggle("on");
-      $("xpFilterBtn").setAttribute("aria-expanded", String(open));
-      return;
-    }
-    if (t.closest("#xpPanelX")) { $("xpPanel").classList.remove("on"); $("xpFilterBtn").setAttribute("aria-expanded", "false"); return; }
+    if (t.closest("#xpFilterBtn")) { openDrawer(filterDrawerHtml()); return; }
     if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
     if (t.closest("[data-qskip]")) { $("xpQuiz").hidden = true; return; }
     if (t.closest("[data-qretake]")) { write("rd_ex_quiz", null); qStep = 0; qPicks = []; paintQuiz(); return; }
-    if (t.closest("#xpClear")) { room = null; traits = []; grade = null; $("xpQ").value = ""; paint(); return; }
+  });
+
+  host.addEventListener("change", (e) => {
+    const inp = e.target.closest && e.target.closest("input[data-f]");
+    if (!inp) return;
+    const raw = String(inp.dataset.f);
+    const i = raw.indexOf(":");
+    toggleFilter(raw.slice(0, i), raw.slice(i + 1));
   });
 
   let qt;
   $("xpQ").addEventListener("input", () => { clearTimeout(qt); qt = window.setTimeout(paint, 160); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("xpDrawer").hidden) closeDrawer(); });
 
-  // Filters start collapsed on small screens so the sheet does not cover the grid.
-  if (window.matchMedia("(max-width:900px)").matches) {
-    $("xpPanel").classList.remove("on");
-    $("xpFilterBtn").setAttribute("aria-expanded", "false");
-  }
+
 
   syncProp();
   paintQuiz();
