@@ -36,12 +36,15 @@ const money = (n) =>
 
 const PHASES = ["Design", "Demo", "Rough In", "Finishes", "Furnishing", "Punch List"];
 const BUDGET_CATS = ["Furniture", "Lighting", "Textiles", "Décor", "Fixtures", "Finishes", "Appliances", "Outdoor"];
-const TABS = [
-  ["all", "All Matches"],
-  ["close", "Exact And Close"],
+const SEGS = [
+  ["all", "All"],
+  ["close", "Closest"],
+  ["saved", "Saved"],
+];
+const PREFS = [
+  ["best", "Best Overall"],
   ["budget", "Budget"],
   ["premium", "Premium"],
-  ["saved", "Saved"],
 ];
 
 const DISCLOSURE =
@@ -55,8 +58,8 @@ function shell() {
     <div class="shop-ctx" id="shopCtx"></div>
   </div>
   <div class="shop-h-r">
-    <button class="btn btn-ghost btn-xs" id="shopCompareBtn"><i data-lucide="columns-2"></i>Compare<span class="shop-cnt" id="shopCmpCnt">0</span></button>
-    <button class="btn btn-ghost btn-xs" id="shopSelBtn"><i data-lucide="shopping-bag"></i>Selected Products<span class="shop-cnt" id="shopSelCnt">0</span></button>
+    <button class="shop-iconbtn" id="shopCompareBtn" disabled aria-label="Compare Products" data-tip="Select At Least Two Products To Compare"><i data-lucide="columns-2"></i><span class="shop-cnt" id="shopCmpCnt">0</span></button>
+    <button class="shop-iconbtn" id="shopSelBtn" aria-label="Selected Products" data-tip="Selected Products"><i data-lucide="shopping-bag"></i><span class="shop-cnt" id="shopSelCnt">0</span></button>
     <button class="icon-btn" id="shopClose" aria-label="Close Shop The Design"><i data-lucide="x"></i></button>
   </div>
 </div>
@@ -77,36 +80,36 @@ function shell() {
   </div>
   <div class="shop-panel">
     <div class="shop-p-head">
-      <div>
-        <b id="shopObjName">Select An Object</b>
-        <span id="shopObjSub">Pick a dot on the design, or draw a box around anything the scan missed.</span>
-      </div>
-      <button class="btn btn-ghost btn-xs" id="shopLock" hidden><i data-lucide="lock"></i>Use In All Views</button>
+      <b id="shopObjName">Select An Object</b>
+      <span id="shopObjSub">Pick a dot on the design, or draw a box around anything the scan missed.</span>
+      <button class="shop-applyall" id="shopLock" hidden><i data-lucide="layers"></i>Apply To All Views</button>
     </div>
-    <div class="shop-tabs" id="shopTabs">${TABS.map(
-      (t, i) => `<button class="shop-tab${i === 0 ? " on" : ""}" data-tab="${t[0]}">${t[1]}</button>`,
+    <div class="shop-seg" id="shopSeg" role="tablist">${SEGS.map(
+      (t, i) => `<button class="shop-segb${i === 0 ? " on" : ""}" role="tab" data-tab="${t[0]}">${t[1]}</button>`,
     ).join("")}</div>
     <div class="shop-filters">
-      <div class="shop-search"><i data-lucide="search"></i><input id="shopQ" type="text" placeholder="Refine by brand, material or keyword"></div>
-      <select id="shopSort" class="shop-sel" aria-label="Sort results">
-        <option value="match">Best Match</option>
-        <option value="low">Price, Low To High</option>
-        <option value="high">Price, High To Low</option>
-        <option value="stock">In Stock First</option>
-      </select>
-    </div>
-    <div class="shop-filters2">
-      <select id="shopPrice" class="shop-sel" aria-label="Price range">
-        <option value="">Any Price</option><option value="0-250">Under $250</option><option value="250-750">$250 To $750</option>
-        <option value="750-1500">$750 To $1,500</option><option value="1500-99999">Over $1,500</option>
-      </select>
-      <select id="shopAvail" class="shop-sel" aria-label="Availability">
-        <option value="">Any Availability</option><option value="in_stock">In Stock Only</option>
-      </select>
-      <select id="shopMerch" class="shop-sel" aria-label="Retailer"><option value="">All Retailers</option></select>
+      <div class="shop-search"><i data-lucide="search"></i><input id="shopQ" type="text" placeholder="Search brand, material or product"></div>
+      <div class="shop-filters-row">
+        <select id="shopSort" class="shop-sel" aria-label="Sort results">
+          <option value="match">Best Match</option>
+          <option value="low">Price, Low To High</option>
+          <option value="high">Price, High To Low</option>
+          <option value="stock">In Stock First</option>
+        </select>
+        <select id="shopPref" class="shop-sel" aria-label="Match preference">${PREFS.map(
+          (x) => `<option value="${x[0]}">${x[1]}</option>`,
+        ).join("")}</select>
+        <div class="shop-fwrap">
+          <button class="shop-filterbtn" id="shopFiltersBtn" aria-expanded="false"><i data-lucide="sliders-horizontal"></i>Filters<span class="shop-fcnt" id="shopFCnt" hidden>0</span></button>
+          <div class="shop-fpop" id="shopFPop" hidden></div>
+        </div>
+      </div>
     </div>
     <div class="shop-results" id="shopResults"></div>
-    <div class="shop-disc"><i data-lucide="info"></i><span>${DISCLOSURE}</span></div>
+    <div class="shop-disc-wrap">
+      <button class="shop-disc-t" id="shopDiscT" aria-expanded="false">Product Match And Affiliate Information<i data-lucide="info"></i></button>
+      <div class="shop-disc-b" id="shopDiscB" hidden>${DISCLOSURE}</div>
+    </div>
   </div>
 </div>
 <div class="shop-drawer" id="shopDrawer" hidden></div>
@@ -175,6 +178,12 @@ function mount(ctx) {
   let priceRange = "";
   let availFilter = "";
   let merchFilter = "";
+  let brandFilter = "";
+  let materialFilter = "";
+  let colorFilter = "";
+  let dimFilter = "";
+  let pref = "best";
+  let hidden = [];
   let drawing = false;
   let compare = [];
   let savedLater = [];
@@ -290,12 +299,16 @@ function mount(ctx) {
     if (r) r.addEventListener("click", () => (active ? selectObject(active) : detect()));
   }
 
+  function activeFilterCount() {
+    return [priceRange, availFilter, merchFilter, brandFilter, materialFilter, colorFilter, dimFilter].filter(Boolean).length;
+  }
+
   function filtered() {
-    let list = results.slice();
+    let list = tab === "saved" ? savedLater.slice() : results.slice();
+    list = list.filter((p) => hidden.indexOf(p.id) < 0);
     if (tab === "close") list = list.filter((p) => ["exact", "close"].indexOf(safeMatchType(p)) > -1);
-    if (tab === "budget") list = list.filter((p) => (priceOf(p) || 0) <= 500);
-    if (tab === "premium") list = list.filter((p) => (priceOf(p) || 0) > 500);
-    if (tab === "saved") list = savedLater.slice();
+    if (pref === "budget") list = list.filter((p) => (priceOf(p) || 0) <= 500);
+    if (pref === "premium") list = list.filter((p) => (priceOf(p) || 0) > 500);
     if (query) {
       const q = query.toLowerCase();
       list = list.filter((p) => (p.name + " " + p.brand + " " + p.merchant + " " + p.materials.join(" ")).toLowerCase().indexOf(q) > -1);
@@ -309,17 +322,80 @@ function mount(ctx) {
     }
     if (availFilter) list = list.filter((p) => p.availability === availFilter);
     if (merchFilter) list = list.filter((p) => p.merchant === merchFilter);
+    if (brandFilter) list = list.filter((p) => p.brand === brandFilter);
+    if (materialFilter) list = list.filter((p) => (p.materials || []).indexOf(materialFilter) > -1);
+    if (colorFilter) list = list.filter((p) => (p.colors || []).indexOf(colorFilter) > -1);
+    if (dimFilter) list = list.filter((p) => !p.width || p.width <= Number(dimFilter));
     if (sort === "low") list.sort((a, b) => (priceOf(a) ?? 1e9) - (priceOf(b) ?? 1e9));
     else if (sort === "high") list.sort((a, b) => (priceOf(b) ?? -1) - (priceOf(a) ?? -1));
     else if (sort === "stock") list.sort((a, b) => (a.availability === "in_stock" ? -1 : 1) - (b.availability === "in_stock" ? -1 : 1));
-    else list = rankMatches(list, { budgetMax: design.budgetMax, category: active && active.category });
+    else list = rankMatches(list, { budgetMax: pref === "budget" ? 500 : design.budgetMax, category: active && active.category });
     return list;
   }
 
+  function uniq(get) {
+    return Array.from(new Set(results.flatMap((p) => [].concat(get(p) || [])).filter(Boolean)));
+  }
+
+  function opts(values, current) {
+    return values.map((v) => `<option value="${esc(v)}"${v === current ? " selected" : ""}>${esc(v)}</option>`).join("");
+  }
+
+  /** Filters popover: every secondary filter lives here, never on the panel. */
+  function paintFilterPop() {
+    const pop = $("shopFPop");
+    if (!pop) return;
+    pop.innerHTML = `<div class="shop-fpop-h"><b>Filters</b><button class="shop-flink" id="shopClearF">Clear Filters</button></div>
+      <label class="shop-fp"><span>Price</span><select id="shopPrice" class="shop-sel"><option value="">Any Price</option>
+        <option value="0-250"${priceRange === "0-250" ? " selected" : ""}>Under $250</option>
+        <option value="250-750"${priceRange === "250-750" ? " selected" : ""}>$250 To $750</option>
+        <option value="750-1500"${priceRange === "750-1500" ? " selected" : ""}>$750 To $1,500</option>
+        <option value="1500-99999"${priceRange === "1500-99999" ? " selected" : ""}>Over $1,500</option></select></label>
+      <label class="shop-fp"><span>Availability</span><select id="shopAvail" class="shop-sel"><option value="">Any Availability</option>
+        <option value="in_stock"${availFilter === "in_stock" ? " selected" : ""}>In Stock Only</option>
+        <option value="limited"${availFilter === "limited" ? " selected" : ""}>Limited Stock</option></select></label>
+      <label class="shop-fp"><span>Retailer</span><select id="shopMerch" class="shop-sel"><option value="">All Retailers</option>${opts(uniq((p) => p.merchant), merchFilter)}</select></label>
+      <label class="shop-fp"><span>Brand</span><select id="shopBrand" class="shop-sel"><option value="">All Brands</option>${opts(uniq((p) => p.brand), brandFilter)}</select></label>
+      <label class="shop-fp"><span>Material</span><select id="shopMat" class="shop-sel"><option value="">Any Material</option>${opts(uniq((p) => p.materials), materialFilter)}</select></label>
+      <label class="shop-fp"><span>Color</span><select id="shopColor" class="shop-sel"><option value="">Any Color</option>${opts(uniq((p) => p.colors), colorFilter)}</select></label>
+      <label class="shop-fp"><span>Dimensions</span><select id="shopDim" class="shop-sel"><option value="">Any Width</option>
+        <option value="60"${dimFilter === "60" ? " selected" : ""}>Up To 60" Wide</option>
+        <option value="84"${dimFilter === "84" ? " selected" : ""}>Up To 84" Wide</option>
+        <option value="96"${dimFilter === "96" ? " selected" : ""}>Up To 96" Wide</option></select></label>`;
+    const bind = (id, fn) => {
+      const el = $(id);
+      if (el)
+        el.addEventListener("change", (e) => {
+          fn(e.target.value);
+          paintResults();
+        });
+    };
+    bind("shopPrice", (v) => (priceRange = v));
+    bind("shopAvail", (v) => (availFilter = v));
+    bind("shopMerch", (v) => (merchFilter = v));
+    bind("shopBrand", (v) => (brandFilter = v));
+    bind("shopMat", (v) => (materialFilter = v));
+    bind("shopColor", (v) => (colorFilter = v));
+    bind("shopDim", (v) => (dimFilter = v));
+    $("shopClearF").addEventListener("click", clearFilters);
+    try {
+      if (window.rdInitSelects) window.rdInitSelects(pop);
+    } catch (_) {}
+  }
+
+  function clearFilters() {
+    priceRange = availFilter = merchFilter = brandFilter = materialFilter = colorFilter = dimFilter = "";
+    paintFilterPop();
+    paintResults();
+  }
+
   function paintResults() {
-    const merch = $("shopMerch");
-    const seen = Array.from(new Set(results.map((p) => p.merchant)));
-    merch.innerHTML = `<option value="">All Retailers</option>` + seen.map((m) => `<option value="${esc(m)}"${m === merchFilter ? " selected" : ""}>${esc(m)}</option>`).join("");
+    const fc = $("shopFCnt");
+    const n = activeFilterCount();
+    if (fc) {
+      fc.hidden = n === 0;
+      fc.textContent = String(n);
+    }
     const list = filtered();
     const box = $("shopResults");
     if (!list.length) {
@@ -328,12 +404,13 @@ function mount(ctx) {
       const c = $("shopClear");
       if (c)
         c.addEventListener("click", () => {
-          priceRange = availFilter = merchFilter = query = "";
+          query = "";
           tab = "all";
+          pref = "best";
           $("shopQ").value = "";
-          $("shopPrice").value = $("shopAvail").value = $("shopMerch").value = "";
-          host.querySelectorAll(".shop-tab").forEach((t) => t.classList.toggle("on", t.getAttribute("data-tab") === "all"));
-          paintResults();
+          $("shopPref").value = "best";
+          host.querySelectorAll(".shop-segb").forEach((t) => t.classList.toggle("on", t.getAttribute("data-tab") === "all"));
+          clearFilters();
         });
       return;
     }
@@ -346,26 +423,44 @@ function mount(ctx) {
         openAdd(b.getAttribute("data-add"));
       }),
     );
-    box.querySelectorAll("[data-save]").forEach((b) =>
+    box.querySelectorAll("[data-more]").forEach((b) =>
       b.addEventListener("click", (e) => {
         e.stopPropagation();
-        const p = results.find((x) => x.id === b.getAttribute("data-save"));
-        if (!p) return;
-        if (!savedLater.find((x) => x.id === p.id)) savedLater.push(p);
-        toast("Saved For Later");
-        track("shop_product_saved", { merchant: p.merchant });
+        const open = b.parentElement.classList.contains("on");
+        box.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
+        b.parentElement.classList.toggle("on", !open);
       }),
     );
-    box.querySelectorAll("[data-cmp]").forEach((b) =>
+    box.querySelectorAll("[data-act]").forEach((b) =>
       b.addEventListener("click", (e) => {
         e.stopPropagation();
-        const p = results.find((x) => x.id === b.getAttribute("data-cmp")) || savedLater.find((x) => x.id === b.getAttribute("data-cmp"));
+        const act = b.getAttribute("data-act");
+        const id = b.getAttribute("data-id");
+        const p = results.concat(savedLater).find((x) => x.id === id);
+        box.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
         if (!p) return;
-        if (compare.find((x) => x.id === p.id)) compare = compare.filter((x) => x.id !== p.id);
-        else if (compare.length >= 4) return toast("Compare Holds Four Products At A Time");
-        else compare.push(p);
-        syncCounts();
-        paintResults();
+        if (act === "save") {
+          if (!savedLater.find((x) => x.id === p.id)) savedLater.push(p);
+          toast("Saved For Later");
+          track("shop_product_saved", { merchant: p.merchant });
+        } else if (act === "compare") {
+          if (compare.find((x) => x.id === p.id)) compare = compare.filter((x) => x.id !== p.id);
+          else if (compare.length >= 4) return toast("Compare Holds Four Products At A Time");
+          else compare.push(p);
+          syncCounts();
+          paintResults();
+        } else if (act === "detail") {
+          openDetail(p.id);
+        } else if (act === "hide") {
+          hidden.push(p.id);
+          paintResults();
+        } else if (act === "remove") {
+          const rec = listProducts().find((r) => r.roomId === design.roomId && r.id === p.id);
+          if (rec) removeProduct(rec.recordId);
+          syncCounts();
+          paintResults();
+          toast("Removed From Project");
+        }
       }),
     );
   }
@@ -373,21 +468,36 @@ function mount(ctx) {
   function card(p) {
     const mt = safeMatchType(p);
     const inCmp = !!compare.find((x) => x.id === p.id);
+    const added = !!listProducts().find((r) => r.roomId === design.roomId && r.id === p.id);
+    // Two status labels at most: match closeness, then availability.
+    const matchLabel = mt === "exact" && p.verifiedSku ? "Exact Product" : mt === "close" ? "Close Match" : "Similar Match";
+    const dims = [p.width && p.width + '" W', p.depth && p.depth + '" D'].filter(Boolean).join(" × ");
     return `<div class="shop-card" data-open="${p.id}">
       <div class="shop-card-img"><img src="${esc(p.images[0] || "")}" alt="${esc(p.name)}">${p.sample ? '<span class="shop-sample">Sample Data</span>' : ""}</div>
       <div class="shop-card-b">
         <div class="shop-card-t"><b>${esc(p.name)}</b><span class="shop-price">${money(priceOf(p))}${p.salePrice ? `<s>${money(p.regularPrice)}</s>` : ""}</span></div>
-        <div class="shop-meta">${esc(p.brand)} &middot; ${esc(p.merchant)}${p.width ? ` &middot; ${p.width}" W` : ""}</div>
+        <div class="shop-meta">${esc(p.brand)} &middot; ${esc(p.merchant)}${dims ? " &middot; " + dims : ""}</div>
         <div class="shop-tagrow">
-          <span class="shop-tag ${mt === "exact" ? "ok" : mt === "close" ? "amb" : ""}">${matchTypeLabel(mt)}</span>
-          <span class="shop-tag">${matchStrengthLabel(p.matchStrength)}</span>
-          <span class="shop-tag ${p.availability === "in_stock" ? "ok" : p.availability === "unavailable" ? "bad" : "amb"}">${availabilityLabel(p.availability)}</span>
+          <span class="shop-tag ${mt === "exact" ? "ok" : "amb"}">${matchLabel}</span>
+          <span class="shop-tag ${p.availability === "in_stock" ? "ok" : p.availability === "unavailable" ? "bad" : "amb"}">${p.availability === "in_stock" ? "In Stock" : p.availability === "limited" ? "Low Stock" : availabilityLabel(p.availability)}</span>
         </div>
         <div class="shop-why">${esc(p.matchNotes[0] || "Matched on category and palette.")}</div>
         <div class="shop-card-a">
-          <button class="btn btn-dark btn-xs" data-add="${p.id}"><i data-lucide="plus"></i>Add To Project</button>
-          <button class="btn btn-ghost btn-xs" data-save="${p.id}"><i data-lucide="bookmark"></i>Save</button>
-          <button class="btn btn-ghost btn-xs${inCmp ? " on" : ""}" data-cmp="${p.id}"><i data-lucide="columns-2"></i>${inCmp ? "In Compare" : "Compare"}</button>
+          ${
+            added
+              ? `<button class="btn btn-dark btn-xs is-added" disabled><i data-lucide="check"></i>Added</button>`
+              : `<button class="btn btn-dark btn-xs" data-add="${p.id}"><i data-lucide="plus"></i>Add To Project</button>`
+          }
+          <div class="shop-more">
+            <button class="shop-morebtn" data-more="${p.id}" aria-label="More actions"><i data-lucide="more-horizontal"></i></button>
+            <div class="shop-moremenu">
+              <button data-act="save" data-id="${p.id}">Save</button>
+              <button data-act="compare" data-id="${p.id}">${inCmp ? "Remove From Compare" : "Compare"}</button>
+              <a href="${esc(p.affiliateUrl || p.productUrl)}" target="_blank" rel="nofollow sponsored noopener">View At Retailer</a>
+              <button data-act="detail" data-id="${p.id}">Product Details</button>
+              ${added ? `<button data-act="remove" data-id="${p.id}">Remove From Project</button>` : `<button data-act="hide" data-id="${p.id}">Hide This Match</button>`}
+            </div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -529,7 +639,7 @@ function mount(ctx) {
   }
 
   function openCompare() {
-    if (!compare.length) return toast("Add Products To Compare First");
+    if (compare.length < 2) return toast("Select At Least Two Products To Compare");
     const d = $("shopDrawer");
     d.hidden = false;
     d.innerHTML = `<div class="shop-dr wide">
@@ -557,6 +667,11 @@ function mount(ctx) {
     if (s) s.textContent = String(listProducts().filter((r) => r.roomId === design.roomId).length);
     const c = $("shopCmpCnt");
     if (c) c.textContent = String(compare.length);
+    const cb = $("shopCompareBtn");
+    if (cb) {
+      cb.disabled = compare.length < 2;
+      cb.setAttribute("data-tip", compare.length < 2 ? "Select At Least Two Products To Compare" : "Compare " + compare.length + " Products");
+    }
   }
 
   /* ---------------- manual object draw ---------------- */
@@ -620,10 +735,10 @@ function mount(ctx) {
     paintIcons();
   });
   $("shopLock").addEventListener("click", () => toast("This Selection Now Applies To Every View Of This Room"));
-  host.querySelectorAll(".shop-tab").forEach((b) =>
+  host.querySelectorAll(".shop-segb").forEach((b) =>
     b.addEventListener("click", () => {
       tab = b.getAttribute("data-tab");
-      host.querySelectorAll(".shop-tab").forEach((x) => x.classList.toggle("on", x === b));
+      host.querySelectorAll(".shop-segb").forEach((x) => x.classList.toggle("on", x === b));
       paintResults();
     }),
   );
@@ -637,17 +752,26 @@ function mount(ctx) {
     sort = e.target.value;
     paintResults();
   });
-  $("shopPrice").addEventListener("change", (e) => {
-    priceRange = e.target.value;
+  $("shopPref").addEventListener("change", (e) => {
+    pref = e.target.value;
     paintResults();
   });
-  $("shopAvail").addEventListener("change", (e) => {
-    availFilter = e.target.value;
-    paintResults();
+  paintFilterPop();
+  $("shopFiltersBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const pop = $("shopFPop");
+    pop.hidden = !pop.hidden;
+    $("shopFiltersBtn").setAttribute("aria-expanded", String(!pop.hidden));
   });
-  $("shopMerch").addEventListener("change", (e) => {
-    merchFilter = e.target.value;
-    paintResults();
+  host.addEventListener("click", (e) => {
+    const pop = $("shopFPop");
+    if (pop && !pop.hidden && !e.target.closest(".shop-fwrap")) pop.hidden = true;
+    if (!e.target.closest(".shop-more")) host.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
+  });
+  $("shopDiscT").addEventListener("click", () => {
+    const b = $("shopDiscB");
+    b.hidden = !b.hidden;
+    $("shopDiscT").setAttribute("aria-expanded", String(!b.hidden));
   });
   host.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeShop();
