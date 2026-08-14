@@ -48,7 +48,7 @@ export async function fetchCloudFile(link: CloudLink) {
   if (!res.ok) {
     return { ok: false as const, message: `Could not download (${res.status}) — check that the link is set to “Anyone with the link”` };
   }
-  const type = (res.headers.get("content-type") || "").split(";")[0].trim().toLowerCase();
+  const type = ((res.headers.get("content-type") || "").split(";")[0] || "").trim().toLowerCase();
   if (!OK_TYPES.includes(type)) {
     return { ok: false as const, message: type.startsWith("text/") ? "Link is not shared publicly, or is not a photo" : `Unsupported file type${type ? ` (${type})` : ""}` };
   }
