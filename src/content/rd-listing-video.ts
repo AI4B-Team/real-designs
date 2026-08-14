@@ -23,6 +23,7 @@ import { renderReveal, sceneDurations, DISCLOSURE_LABEL } from "@/lib/reveal-ren
 import { openVideoDetail } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { identifyListing, normalizeAddress, NO_IMPORT_MESSAGE } from "@/lib/listing-source";
+import { startListingImport, linkListingImport } from "@/lib/listing-import.functions";
 import * as UM from "@/lib/upload-manager";
 import { CREDIT_COSTS } from "@/lib/credits.functions";
 import { track } from "@/lib/analytics";
@@ -717,7 +718,9 @@ function render() {
   const el = hostEl();
   if (!el) return;
   el.innerHTML =
-    S.step === "photos"
+    S.step === "review"
+      ? reviewHtml()
+      : S.step === "photos"
       ? photosHtml()
       : S.step === "setup"
         ? setupHtml()
@@ -753,6 +756,74 @@ async function mountPlayer() {
   box.innerHTML = data?.signedUrl
     ? `<video src="${data.signedUrl}" controls playsinline></video>`
     : `<div class="lv-note">Could not load that video.</div>`;
+}
+
+/* ======================= LISTING IMPORT ======================= */
+
+async function runImport() {
+  const url = String(S.importUrl || "").trim();
+  if (!url) return toast("Paste a listing link to continue.");
+  S.importState = "running";
+  S.importStage = "Validating Link";
+  S.importError = "";
+  render();
+  track("lvideo_import_start", { url_host: (url.match(/([a-z0-9.-]+\.[a-z]{2,})/i) || [])[1] || "" });
+  try {
+    S.importStage = "Retrieving Listing Details";
+    const r = await startListingImport({ data: { url, property_id: S.propertyId || null } });
+    S.importRow = r.import || null;
+    if (!r.ok) {
+      S.importState = "failed";
+      S.importError = r.message || "We couldn't import that listing.";
+      S.otherOpen = true;
+      track("lvideo_import_failed", { code: r.code || "unknown" });
+      return render();
+    }
+    S.importState = "ready";
+    S.step = "review";
+    if (S.importRow?.listing?.address) {
+      S.addressQuery = S.importRow.listing.address;
+      matchAddresses();
+    }
+    track("lvideo_import_ready", { photos: S.importRow?.photo_count || 0 });
+    return render();
+  } catch (e) {
+    S.importState = "failed";
+    S.importError = e?.message || "We couldn't reach the import service. Try again in a moment.";
+    S.otherOpen = true;
+    return render();
+  }
+}
+
+/** Turn a reviewed import into a property context and move to the photo step. */
+async function continueFromImport() {
+  const address = normalizeAddress(S.importRow?.listing?.address || S.addressQuery || "");
+  try {
+    if (!S.propertyId) {
+      const existing = S.properties.find((p) => normalizeAddress(p.address) === address);
+      const row = existing || (await createMediaProperty({ data: { address: address || "Imported Listing" } }));
+      if (!existing) S.properties.unshift(row);
+      S.propertyId = row.id;
+      S.propertyLabel = row.address;
+      S.standalone = false;
+    }
+    if (S.importRow?.id) {
+      try {
+        await linkListingImport({ data: { id: S.importRow.id, property_id: S.propertyId } });
+      } catch (_) {}
+    }
+    await loadAssets(S.propertyId);
+  } catch (e) {
+    return toast(e?.message || "Could not set up that property.");
+  }
+  if (!S.photos.length) {
+    S.step = "start";
+    S.otherOpen = true;
+    toast("No photos came through with that listing. Upload the listing photos to continue.");
+    return render();
+  }
+  S.step = "photos";
+  render();
 }
 
 /* ======================= UPLOADS ======================= */
@@ -1055,9 +1126,18 @@ function bind() {
   el.__lvBound = true;
 
   el.addEventListener("click", async (e) => {
-    const t = e.target.closest("[data-a],[data-prop],[data-newprop],[data-cloud],[data-set],[data-ver],[data-useaddr],#lvBrowse,#lvLinkOpen,#lvLinkGo,#lvLinkUpload,#lvStandalone,#lvUseMedia,#lvRetry,#lvCancel,#lvDrop");
+    const t = e.target.closest("[data-a],[data-prop],[data-newprop],[data-cloud],[data-set],[data-ver],[data-useaddr],#lvImportGo,#lvOther,#lvBrowse,#lvLinkOpen,#lvLinkGo,#lvLinkUpload,#lvStandalone,#lvUseMedia,#lvRetry,#lvCancel,#lvDrop");
     if (!t) return;
 
+    if (t.id === "lvOther") {
+      S.otherOpen = !S.otherOpen;
+      return render();
+    }
+    if (t.id === "lvImportGo") {
+      const field = el.querySelector("#lvImportUrl");
+      if (field) S.importUrl = field.value || "";
+      return runImport();
+    }
     if (t.id === "lvDrop" || t.id === "lvBrowse") return el.querySelector("#lvFiles")?.click();
     if (t.id === "lvLinkOpen") {
       S.linkOpen = !S.linkOpen;
@@ -1151,6 +1231,7 @@ function bind() {
 
     const a = t.getAttribute("data-a");
     const id = t.getAttribute("data-id");
+    if (a === "review-continue") return continueFromImport();
     if (a === "back-start") {
       S.step = "start";
       return render();
