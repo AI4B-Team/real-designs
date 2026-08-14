@@ -583,7 +583,9 @@ function mount(ctx) {
       </div>
     </div>`;
     paintIcons();
+    wireGallery(p);
     $("drClose").addEventListener("click", () => (d.hidden = true));
+
     $("drAdd").addEventListener("click", () => openAdd(p.id));
     $("drSave").addEventListener("click", () => {
       if (!savedLater.find((x) => x.id === p.id)) savedLater.push(p);
