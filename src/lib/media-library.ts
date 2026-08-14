@@ -191,7 +191,7 @@ export async function loadMediaLibrary() {
       aspect: (Array.isArray(p.formats) ? p.formats[0] : null) || done?.aspect_ratio || "9:16",
       scenes: sc,
       error: p.error_message || null,
-      settings: { videoType: p.video_type, length: p.length_preset, transition: p.transition, motion: p.motion },
+      settings: { videoType: p.video_type, length: p.length_preset, transition: p.transition, motion: p.motion, sourceType: p.source_type, builder: (p.settings || {}).builder || null },
       progress: null,
       stage: st === "processing" ? "rendering" : null,
     });
