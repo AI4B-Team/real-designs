@@ -142,7 +142,15 @@ export async function openPropertyUpload(opts = {}) {
     sel && (sel.onchange = () => (propertyId = sel.value));
     const input = wrap.querySelector("#pmuFiles");
     const pick = () => input.click();
-    wrap.querySelector("#pmuPick").onclick = pick;
+    wrap.querySelectorAll(".pmu-s").forEach((b) => {
+      b.onclick = () => {
+        if (b.dataset.src === "computer" && src === "computer") return pick();
+        src = b.dataset.src;
+        render();
+      };
+    });
+    const fetchBtn = wrap.querySelector("#pmuFetch");
+    if (fetchBtn) fetchBtn.onclick = () => pullLinks(fetchBtn);
     const drop = wrap.querySelector("#pmuDrop");
     drop.onclick = pick;
     drop.onkeydown = (e) => {
