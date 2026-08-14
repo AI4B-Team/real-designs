@@ -1654,6 +1654,7 @@ async function dvGenerate() {
 export async function startDesignVideo(design = {}) {
   if (!design || !design.id) throw new Error("That design could not be identified.");
   if (!design.path) throw new Error("That design has no image yet.");
+  S.screen = "design";
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
