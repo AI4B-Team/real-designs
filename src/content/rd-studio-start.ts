@@ -133,7 +133,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   });
 
   function browse() {
-    filePick.accept = state.method === "sketch" ? "image/*,application/pdf" : "image/*";
+    filePick.accept = "image/*,application/pdf";
     filePick.click();
   }
 
@@ -142,8 +142,102 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     state.file = f;
     state.fileName = f.name;
     state.filePreview = /^image\//.test(f.type) ? URL.createObjectURL(f) : "";
+    state.detected = null;
+    state.detecting = false;
+    state.pickType = false;
+    render();
+    if (state.method === "upload") runDetection(f);
+  }
+
+  /* ---------- source detection (shared result component) ---------- */
+
+  /** Runs the classification service on the chosen file and repaints. */
+  async function runDetection(f: File) {
+    const supported = /^image\//.test(f.type) || /pdf/i.test(f.type);
+    if (!supported) {
+      state.detected = { sourceType: "unsupported", confidence: 1, suggestedWorkflow: "manual_classification" };
+      render();
+      return;
+    }
+    state.detecting = true;
+    render();
+    let result: SourceDetection = { sourceType: "uncertain", confidence: 0, suggestedWorkflow: "manual_classification" };
+    try {
+      const dataUrl = await ctx.fileToDataUrl(f);
+      result = await detectSource({ data: { file: dataUrl, mimeType: f.type || "image/jpeg" } });
+    } catch (_) {
+      /* the service boundary stays honest: unknown stays uncertain */
+    }
+    if (state.file !== f) return;
+    state.detecting = false;
+    state.detected = result;
+    applyDetection(result.sourceType);
     render();
   }
+
+  /** Maps a classification onto the setup fields that drive the workflow. */
+  function applyDetection(type: SourceType) {
+    if (type === "interior_photo") state.space = "interior";
+    else if (type === "exterior_photo") {
+      state.space = "exterior";
+      state.room = "Facade";
+    } else if (type === "landscape_photo") {
+      state.space = "landscape";
+      state.room = "Backyard";
+    } else if (type === "sketch") state.inputType = "Hand Sketch";
+    else if (type === "floor_plan") state.inputType = "Floor Plan";
+  }
+
+  function isPlanSource() {
+    const t = state.detected?.sourceType;
+    return t === "sketch" || t === "floor_plan";
+  }
+
+  const PICK_TYPES: SourceType[] = [
+    "interior_photo",
+    "exterior_photo",
+    "landscape_photo",
+    "sketch",
+    "floor_plan",
+  ];
+
+  /** Reusable detection-result component shown under the upload preview. */
+  function detectionHtml() {
+    if (!state.file) return "";
+    if (state.detecting) {
+      return '<div class="stw-det"><i data-lucide="loader" class="stw-det-spin"></i><span>Analyzing your upload…</span></div>';
+    }
+    const d = state.detected;
+    if (!d) return "";
+    const dropdown =
+      '<div class="stw-det-pick">' +
+      '<select id="stsType">' +
+      PICK_TYPES.map(
+        (t) =>
+          '<option value="' + t + '"' + (t === d.sourceType ? " selected" : "") + ">" + esc(SOURCE_LABELS[t]) + "</option>",
+      ).join("") +
+      "</select></div>";
+
+    if (d.sourceType === "unsupported") {
+      return (
+        '<div class="stw-det stw-det-warn"><i data-lucide="alert-circle"></i>' +
+        "<span>We can't read that file type. Choose the closest match to continue.</span></div>" +
+        dropdown
+      );
+    }
+    if (d.sourceType === "uncertain") {
+      return (
+        '<div class="stw-det"><i data-lucide="help-circle"></i><span>What type of file is this?</span></div>' + dropdown
+      );
+    }
+    return (
+      '<div class="stw-det"><i data-lucide="check-circle-2"></i>' +
+      "<span>Detected: <b>" + esc(SOURCE_LABELS[d.sourceType]) + "</b></span>" +
+      '<button class="stw-det-change" data-sts="changetype">Change</button></div>' +
+      (state.pickType ? dropdown : "")
+    );
+  }
+
 
   /** Rotates the chosen image 90 degrees so the upload matches how it reads. */
   async function rotateFile() {
