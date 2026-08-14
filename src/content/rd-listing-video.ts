@@ -312,52 +312,128 @@ function startHtml() {
       <p>Turn your property photos into a polished video for listings, social media and client presentations.</p>
     </div>
 
+function startHtml() {
+  const matches = S.addressMatches;
+  const other = S.otherOpen || S.importState === "failed" || S.propertyId || S.standalone || S.job;
+  return `<div class="lv">
+    <div class="lv-head">
+      <h2>Create a Listing Video</h2>
+      <p>Start with your listing link. We'll pull in the property details so you can go straight to choosing photos.</p>
+    </div>
+
     <div class="lv-start">
-      <label class="lv-f">
-        <span>Property or Address</span>
-        <span class="lv-input"><i data-lucide="map-pin"></i>
-          <input id="lvAddr" placeholder="Search your properties or enter an address" value="${esc(S.addressQuery)}" autocomplete="off">
-        </span>
-      </label>
+      <div class="lv-import">
+        <label class="lv-f">
+          <span>Listing Link</span>
+          <span class="lv-input big"><i data-lucide="link"></i>
+            <input id="lvImportUrl" placeholder="https://www.zillow.com/homedetails/..." value="${esc(S.importUrl)}" autocomplete="off" spellcheck="false">
+          </span>
+        </label>
+        <button class="btn btn-primary" id="lvImportGo" ${S.importState === "running" ? "disabled" : ""}>
+          ${S.importState === "running" ? "Importing…" : "Import Listing"}
+        </button>
+        <p class="lv-note">Supported: Zillow, Realtor.com, Redfin, Homes.com, Trulia and Compass. We only use listing data from authorized sources.</p>
+      </div>
+
+      ${importStatusHtml()}
+
+      <button class="lv-quiet" id="lvOther"><i data-lucide="${other ? "chevron-up" : "chevron-down"}"></i>Or Start Another Way</button>
+
       ${
-        S.addressQuery.trim().length > 1
-          ? `<div class="lv-matches">
-              ${matches
-                .map(
-                  (p) =>
-                    `<button class="lv-match" data-prop="${p.id}"><i data-lucide="building-2"></i><b>${esc(p.address)}</b><span>Use This Property</span></button>`,
-                )
-                .join("")}
-              <button class="lv-match new" data-newprop="1"><i data-lucide="plus"></i><b>${esc(normalizeAddress(S.addressQuery))}</b><span>Create Property Draft</span></button>
-            </div>`
+        other
+          ? `<div class="lv-other">
+        <label class="lv-f">
+          <span>Property or Address</span>
+          <span class="lv-input"><i data-lucide="map-pin"></i>
+            <input id="lvAddr" placeholder="Search your properties or enter an address" value="${esc(S.addressQuery)}" autocomplete="off">
+          </span>
+        </label>
+        ${
+          S.addressQuery.trim().length > 1
+            ? `<div class="lv-matches">
+                ${matches
+                  .map(
+                    (p) =>
+                      `<button class="lv-match" data-prop="${p.id}"><i data-lucide="building-2"></i><b>${esc(p.address)}</b><span>Use This Property</span></button>`,
+                  )
+                  .join("")}
+                <button class="lv-match new" data-newprop="1"><i data-lucide="plus"></i><b>${esc(normalizeAddress(S.addressQuery))}</b><span>Create Property Draft</span></button>
+              </div>`
+            : ""
+        }
+
+        <div class="lv-drop" id="lvDrop" tabindex="0" role="button" aria-label="Upload listing photos">
+          <i data-lucide="upload-cloud"></i>
+          <b>Upload Listing Photos</b>
+          <span>Drag and drop, or browse. JPG, PNG, HEIC and WEBP up to ${UM.MAX_FILE_MB} MB each. Uploads keep running while you work.</span>
+          <button class="btn btn-dark btn-sm" id="lvBrowse">Browse Files</button>
+        </div>
+        <input type="file" id="lvFiles" multiple accept="${UM.ACCEPT_ATTR}" hidden>
+
+        <label class="lv-auth"><input type="checkbox" id="lvAuth" ${S.authorized ? "checked" : ""}>
+          I own these photos or have permission to use them in designs, videos and marketing materials.</label>
+
+        <div class="lv-cloud">
+          <button class="lv-cbtn" data-cloud="dropbox"><i data-lucide="cloud"></i>Import from Dropbox</button>
+          <button class="lv-cbtn" data-cloud="drive"><i data-lucide="hard-drive"></i>Import from Google Drive</button>
+        </div>
+
+        ${S.job ? jobHtml() : ""}
+        ${
+          S.propertyId || S.standalone
+            ? `<div class="lv-ctx"><i data-lucide="check"></i><b>${esc(S.propertyLabel || "Standalone Project")}</b>
+                <button class="lv-quiet" id="lvUseMedia">Use Existing Property Media</button></div>`
+            : `<button class="lv-quiet" id="lvStandalone">Create a Standalone Video Instead</button>`
+        }
+      </div>`
           : ""
       }
+    </div>
+  </div>`;
+}
 
-      <div class="lv-drop" id="lvDrop" tabindex="0" role="button" aria-label="Upload listing photos">
-        <i data-lucide="upload-cloud"></i>
-        <b>Upload Listing Photos</b>
-        <span>Drag and drop, or browse. JPG, PNG, HEIC and WEBP up to ${UM.MAX_FILE_MB} MB each. Uploads keep running while you work.</span>
-        <button class="btn btn-dark btn-sm" id="lvBrowse">Browse Files</button>
+function importStatusHtml() {
+  if (S.importState === "running") {
+    return `<div class="lv-job">
+      <div class="lv-job-h"><b>Importing Listing</b><span>${esc(S.importStage || "Retrieving Listing Details")}</span></div>
+      <div class="lv-bar indet"><i></i></div>
+      <p class="lv-note">This keeps running while you work. We'll show the listing details as soon as they arrive.</p>
+    </div>`;
+  }
+  if (S.importState === "failed") {
+    return `<div class="lv-result warn">
+      <b>We Couldn't Import That Listing</b>
+      <p class="lv-note">${esc(S.importError || "Something went wrong with that link.")}</p>
+      <div class="lv-panel-a">
+        <button class="btn btn-ghost btn-sm" id="lvImportGo"><i data-lucide="rotate-cw"></i>Try Again</button>
+        <button class="btn btn-ghost btn-sm" id="lvBrowse"><i data-lucide="upload"></i>Upload Photos Instead</button>
       </div>
-      <input type="file" id="lvFiles" multiple accept="${UM.ACCEPT_ATTR}" hidden>
+    </div>`;
+  }
+  return "";
+}
 
-      <label class="lv-auth"><input type="checkbox" id="lvAuth" ${S.authorized ? "checked" : ""}>
-        I own these photos or have permission to use them in designs, videos and marketing materials.</label>
-
-      <div class="lv-cloud">
-        <button class="lv-cbtn" data-cloud="dropbox"><i data-lucide="cloud"></i>Import from Dropbox</button>
-        <button class="lv-cbtn" data-cloud="drive"><i data-lucide="hard-drive"></i>Import from Google Drive</button>
-      </div>
-
-      <button class="lv-link" id="lvLinkOpen"><i data-lucide="link"></i>Paste a Listing Link</button>
-      ${S.linkOpen ? linkPanelHtml() : ""}
-      ${S.job ? jobHtml() : ""}
-      ${
-        S.propertyId || S.standalone
-          ? `<div class="lv-ctx"><i data-lucide="check"></i><b>${esc(S.propertyLabel || "Standalone Project")}</b>
-              <button class="lv-quiet" id="lvUseMedia">Use Existing Property Media</button></div>`
-          : `<button class="lv-quiet" id="lvStandalone">Create a Standalone Video Instead</button>`
-      }
+function reviewHtml() {
+  const l = (S.importRow && S.importRow.listing) || {};
+  const row = (label, val) => `<div class="lv-row"><span>${label}</span><b>${esc(val || "Not Provided")}</b></div>`;
+  return `<div class="lv">
+    <div class="lv-head">
+      <button class="lv-back" data-a="back-start"><i data-lucide="arrow-left"></i>Back</button>
+      <h2>Review Listing</h2>
+      <p>Confirm the imported details before we build the video.</p>
+    </div>
+    <div class="lv-result">
+      ${row("Address", l.address)}
+      ${row("Price", l.price ? `$${Number(l.price).toLocaleString()}` : "")}
+      ${row("Beds", l.beds)}
+      ${row("Baths", l.baths)}
+      ${row("Floor SF", l.sqft)}
+      ${row("Source", S.importRow ? S.importRow.provider_name : "")}
+      ${row("Photos Imported", S.importRow ? String(S.importRow.photo_count || 0) : "0")}
+    </div>
+    <div class="lv-foot">
+      <button class="btn btn-ghost btn-sm" data-a="back-start">Back</button>
+      <button class="btn btn-primary btn-sm" data-a="review-continue"><i data-lucide="arrow-right"></i>Continue To Photos</button>
     </div>
   </div>`;
 }
