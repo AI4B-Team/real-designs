@@ -182,11 +182,11 @@ function libraryHtml() {
   if (!S.projects.length) {
     return head + `<div class="rv-empty">
       <i data-lucide="clapperboard"></i>
-      <h3>Turn a Design Into a REAL REVEAL</h3>
+      <h3>Turn A Design Into A REAL REVEAL</h3>
       <p>Create a polished property tour, before-and-after reveal or social video from your existing projects.</p>
       <div class="rv-empty-a">
         <button class="btn btn-primary" id="rvNew2">Create Your First Video</button>
-        <button class="btn btn-ghost" data-goto="props">Open a Property</button>
+        <button class="btn btn-ghost" data-goto="props">Open A Property</button>
       </div>
     </div>`;
   }
@@ -327,7 +327,7 @@ function wizardHtml() {
   if (w.step === 7) body = stepReview();
 
   return `<div class="rv-head">
-    <div><h2>Create a REAL REVEAL</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
+    <div><h2>Create A REAL REVEAL</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
   ${rail}
