@@ -782,8 +782,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function goListingVideo() {
     try {
-      (window as any).rdListingVideo({ from: "studio" });
+      ctx.track?.("studio_start_video", { from: "studio" });
     } catch (_) {}
+    // Same destination as the left-sidebar "Video" item (REAL REVEAL workspace).
+    ctx.go("reveal");
   }
 
   function onClick(e: Event) {
