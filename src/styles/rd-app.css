@@ -1234,7 +1234,7 @@
 .rd-app .stw-tile-ico{ width:19px; height:19px; color:var(--ink); margin-bottom:2px; }
 .rd-app .stw-tile h3{ font-size:.93rem; margin:0; }
 .rd-app .stw-tile p{ font-size:.8rem; color:var(--mute); margin:0; line-height:1.4; }
-.rd-app .stw-tile-meta{ font-size:.68rem; color:var(--mute-2); margin-top:auto; padding-top:8px; }
+.rd-app .stw-tile-meta{ font-size:.68rem; color:var(--mute-2); margin-top:auto; padding-top:8px; text-transform:uppercase; letter-spacing:.06em; }
 .rd-app .stw-tile-act{
   display:inline-flex; align-items:center; gap:6px; margin-top:7px;
   font-size:.78rem; font-weight:700; color:var(--red);
