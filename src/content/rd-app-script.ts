@@ -2319,7 +2319,7 @@ tfoot td{font-weight:700;border-top:2px solid #141414;border-bottom:0}
 <div class="sub" style="text-align:right">${when}<br>${esc(p.client_name||'Client copy')}</div></div>
 <div class="figs">${img(p.before_url,'Before')}${img(p.after_url,'After')}</div>
 <div class="range"><div><div class="sub">Estimated Planning Range</div><b>${range}</b>
-<div class="sub">${esc((p.style||'Direction on file'))} &middot; ${esc(p.grade)} grade finishes</div></div>${stamp}</div>
+<div class="sub">${esc((p.style||'Style on file'))} &middot; ${esc(p.grade)} grade finishes</div></div>${stamp}</div>
 ${rollup?'<h2>Where The Budget Sits</h2>'+rollup:''}
 <h2>Scope Detail</h2>
 <table><thead><tr><th>Scope Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Range</th></tr></thead><tbody>${rows}</tbody>
@@ -2789,7 +2789,7 @@ const HELP_CATS=[
   ['coins','How Credits Work','One balance covers everything: a design render is 1 credit, a priced scope is 3, a 2D to 3D plan is 6 and a walkthrough video is 40. If a job fails, the credits are returned automatically. Your balance and every charge are listed in Billing And Credits.','billing']]],
  ['palette','Designing',[
   ['lock','Reality Lock Explained','Reality Lock holds the walls, window and door openings, ceiling line and floor plane from your photo in place, so a version is a redesign of the same room rather than a new room. Finishes, fixtures, furniture and paint change; the building does not.'],
-  ['layers','Style Directions And Intensity','Direction sets the look (for example Japandi, Coastal, Midcentury). Intensity sets how far the work goes, from a Refresh that is paint and styling through a Reimagine that assumes full replacement. Intensity is what moves the budget most.','studio'],
+  ['layers','Styles And Intensity','Style sets the look (for example Japandi, Coastal, Midcentury). Intensity sets how far the work goes, from a Refresh that is paint and styling through a Reimagine that assumes full replacement. Intensity is what moves the budget most.','studio'],
   ['history','Versions','Every generation is saved as a numbered version on the room, so you can compare, keep several options alive, and send the one the client approved.','designs'],
   ['images','Listing Batch','Listing Batch runs every room on a property through the same direction in one pass, one credit per room, and saves each result to its room.','listings']]],
  ['calculator','Scope & Budget',[
@@ -2862,7 +2862,7 @@ const TUTS=[
  ['Add Your First Property','Getting Started','studio',['Open Studio and upload a straight-on photo of the room.','Enter the address so the room is filed under a property.','Generate a version and save it. The property, project and room appear in Properties.']],
  ['Photos That Render Well','Getting Started','studio',['Shoot from a doorway or corner so two walls and the floor are visible.','Turn on the lights and open the blinds. Avoid heavy backlight.','Keep the camera level. Tilted shots distort the ceiling line.']],
  ['Reality Lock In Practice','Designing','studio',['Generate a version, then flip between before and after.','Check the window and door openings line up. They should not move.','If a version drifts, regenerate. Only finishes and furnishings should change.']],
- ['Choosing Direction And Intensity','Designing','studio',['Pick a style direction for the look.','Pick an intensity: Refresh, Makeover, Renovation or Reimagine.','Intensity drives the budget more than direction does, so set it against the money first.']],
+ ['Choosing Style And Intensity','Designing','studio',['Pick a style for the look.','Pick an intensity: Refresh, Makeover, Renovation or Reimagine.','Intensity drives the budget more than direction does, so set it against the money first.']],
  ['Staging A Whole Listing','Listing Batch','listings',['Open Listing Batch and select the property.','Choose one direction for the whole listing.','Run the batch. Each room costs 1 credit and saves to its own room record.']],
  ['Building A Scope And Budget','Scope','scope',['Open a saved version and request a scope for 3 credits.','Set market, finish grade and budget band.','Review the change list and the low to high planning range, then export or share it.']],
  ['Working The Product Board','Products','products',['Open Products after a scope has been priced.','Each material line becomes a card with quantity and allowance range.','Use Shop On to search the right retailer, or export the board as CSV or print.']],
