@@ -862,6 +862,59 @@ function detailHtml() {
   <div class="rv-detail">${body}</div>`;
 }
 
+const PRES_TYPES: Array<[string, string]> = [
+  ["listing", "Listing Presentation"],
+  ["design", "Design Presentation"],
+  ["renovation", "Renovation Presentation"],
+  ["portfolio", "Portfolio Piece"],
+];
+const PRES_SECTIONS: Array<[string, string]> = [
+  ["address", "Property Address"],
+  ["video", "Video Walkthrough"],
+  ["before_after", "Before And After"],
+  ["rooms", "Room Gallery"],
+  ["budget", "Planning Ranges"],
+  ["products", "Product List"],
+  ["brand", "Brand Header"],
+  ["contact", "Contact Details"],
+];
+
+/** Presentation page settings for one video. */
+function presentationHtml(d) {
+  const sh = d.share || {};
+  const sec = sh.sections || {};
+  const secOn = (k) => (sec[k] === undefined ? !["budget", "products"].includes(k) : !!sec[k]);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const live = sh.slug || sh.token;
+  return `<div class="rv-pres">
+    <div class="rv-sub">Presentation Type</div>
+    <div class="rv-seg wrap">${PRES_TYPES.map(([v, n]) => `<button class="${(sh.presentation_type || "listing") === v ? "on" : ""}" data-ptype="${v}">${n}</button>`).join("")}</div>
+
+    <label class="rv-f">Page Headline<input id="pr_head" value="${esc(sh.headline || d.project.title || "")}" maxlength="120"></label>
+    <label class="rv-f">Custom Link Name<span class="rv-pre">${esc(origin)}/v/</span><input id="pr_slug" value="${esc(sh.slug || "")}" placeholder="oak-street-listing"></label>
+
+    <div class="rv-sub">Sections</div>
+    <div class="rv-adv rv-secs">${PRES_SECTIONS.map(([k, n]) => `<label class="rv-check"><input type="checkbox" data-psec="${k}" ${secOn(k) ? "checked" : ""}> ${n}</label>`).join("")}</div>
+
+    <div class="rv-sub">Access</div>
+    <label class="rv-check"><input type="checkbox" id="pr_pw_on" ${sh.password_hash ? "checked" : ""}> Require A Password</label>
+    <label class="rv-f">Password<input id="pr_pw" type="password" placeholder="${sh.password_hash ? "Saved — Type To Replace" : "Set A Password"}"></label>
+    <label class="rv-check"><input type="checkbox" id="pr_dl" ${sh.allow_download !== false ? "checked" : ""}> Allow Downloads</label>
+    <label class="rv-check"><input type="checkbox" id="pr_appr" ${sh.approval_enabled ? "checked" : ""}> Collect Approvals And Comments</label>
+
+    <div class="rv-sub">Mobile Layout</div>
+    <div class="rv-seg">${[["stacked", "Stacked"], ["compact", "Compact"]].map(([v, n]) => `<button class="${(sh.mobile_layout || "stacked") === v ? "on" : ""}" data-pmob="${v}">${n}</button>`).join("")}</div>
+
+    ${live ? `<div class="rv-note sm">Live At <a href="/v/${esc(live)}" target="_blank" rel="noreferrer">${esc(origin)}/v/${esc(live)}</a></div>` : ""}
+    <div class="rv-foot">
+      ${live ? `<button class="btn btn-ghost" id="prCopy"><i data-lucide="link"></i>Copy Link</button>` : ""}
+      <button class="btn btn-primary" id="prSave">Save Presentation Page</button>
+    </div>
+  </div>`;
+}
+
+
+
 /* ======================= THUMB PAINTING ======================= */
 async function paintAssetThumbs() {
   const els = host()?.querySelectorAll("[data-img]") || [];
