@@ -32,7 +32,7 @@ const paint = () => {
 
 let STATE = {
   propertyId: null,
-  propertyLabel: "All Property Media",
+  propertyLabel: "All Properties",
   assets: [],
   versions: [],
   exports: [],
@@ -296,7 +296,7 @@ function renderDock(dock, jobs, go) {
         if (a === "review") {
           const job = UM.listJobs().find((j) => j.id === id);
           STATE.propertyId = job ? job.propertyId : null;
-          STATE.propertyLabel = job ? job.propertyLabel : "All Property Media";
+          STATE.propertyLabel = job ? job.propertyLabel : "All Properties";
           (window.__rdGo || go || (() => {}))("media");
           load();
         }
@@ -340,8 +340,9 @@ function shell() {
   <div class="card pm-head">
     <div class="card-h">
       <div>
-        <h3 id="pmTitle">All Property Media</h3>
-        <div class="sub" id="pmSub">Originals, enhanced photos and export packages, organized by property</div>
+        <h3 id="pmTitle">Media</h3>
+        <div class="sub" id="pmSub">All your uploaded and generated images, videos and project files in one place.</div>
+
       </div>
       <div class="pm-head-a">
         <label class="pm-pick"><span class="sr-only">Property</span><select id="pmProp"></select></label>
@@ -401,7 +402,7 @@ function bind(view) {
     const v = e.target.value;
     STATE.propertyId = v || null;
     const p = STATE.properties.find((x) => x.id === v);
-    STATE.propertyLabel = p ? p.address : "All Property Media";
+    STATE.propertyLabel = p ? p.address : "All Properties";
     STATE.selected = new Set();
     load();
   };
@@ -461,12 +462,13 @@ function renderProps() {
   const sel = document.getElementById("pmProp");
   if (!sel) return;
   sel.innerHTML =
-    `<option value="">All Property Media</option>` +
+    `<option value="">All Properties</option>` +
     STATE.properties
       .map((p) => `<option value="${p.id}" ${p.id === STATE.propertyId ? "selected" : ""}>${esc(p.address)}</option>`)
       .join("");
   const t = document.getElementById("pmTitle");
-  if (t) t.textContent = STATE.propertyId ? STATE.propertyLabel : "All Property Media";
+  if (t) t.textContent = STATE.propertyId ? STATE.propertyLabel : "Media";
+
 }
 
 function rooms() {
@@ -484,15 +486,17 @@ function renderStats() {
   }
   const a = STATE.assets;
   const job = UM.activeJob();
+  const visible = a.filter((x) => !x.hidden);
+  const processing = job ? (job.files || []).filter((f) => f.state === "queued" || f.state === "uploading").length : 0;
+  const needsReview = visible.filter((x) => x.room_group === "Needs Review" || (x.flags || []).length).length;
   const cells = [
-    ["Total Photos", a.length],
-    ["Recommended", a.filter((x) => x.recommended).length],
-    ["Needs Review", a.filter((x) => x.room_group === "Needs Review").length],
-    ["Detected Rooms", new Set(a.filter((x) => x.room_group !== "Needs Review").map((x) => x.room_group)).size],
-    ["Quality Flags", a.filter((x) => (x.flags || []).length).length],
-    ["Processing", job ? job.state : "Idle"],
+    ["Total Media", visible.length],
+    ["Needs Review", needsReview],
+    ["Processing", processing],
+    ["Ready", Math.max(0, visible.length - needsReview - processing)],
   ];
   el.innerHTML = cells.map(([k, v]) => `<div class="pm-stat"><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join("");
+
   const miss = document.getElementById("pmMissing");
   if (miss) {
     const m = missingSpaces(a);
