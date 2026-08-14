@@ -432,6 +432,196 @@ export type Database = {
         }
         Relationships: []
       }
+      presentation_activity: {
+        Row: {
+          created_at: string
+          detail: string | null
+          id: string
+          kind: string
+          meta: Json
+          package_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind: string
+          meta?: Json
+          package_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind?: string
+          meta?: Json
+          package_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_activity_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_assets: {
+        Row: {
+          caption: string | null
+          compare_url: string | null
+          created_at: string
+          id: string
+          kind: string
+          meta: Json
+          package_id: string
+          section_key: string
+          sort_order: number
+          source_id: string | null
+          title: string | null
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          caption?: string | null
+          compare_url?: string | null
+          created_at?: string
+          id?: string
+          kind: string
+          meta?: Json
+          package_id: string
+          section_key: string
+          sort_order?: number
+          source_id?: string | null
+          title?: string | null
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          caption?: string | null
+          compare_url?: string | null
+          created_at?: string
+          id?: string
+          kind?: string
+          meta?: Json
+          package_id?: string
+          section_key?: string
+          sort_order?: number
+          source_id?: string | null
+          title?: string | null
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_assets_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_comments: {
+        Row: {
+          author_name: string | null
+          body: string
+          created_at: string
+          id: string
+          link_id: string | null
+          package_id: string
+          section_key: string | null
+          user_id: string
+        }
+        Insert: {
+          author_name?: string | null
+          body: string
+          created_at?: string
+          id?: string
+          link_id?: string | null
+          package_id: string
+          section_key?: string | null
+          user_id: string
+        }
+        Update: {
+          author_name?: string | null
+          body?: string
+          created_at?: string
+          id?: string
+          link_id?: string | null
+          package_id?: string
+          section_key?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_comments_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presentation_comments_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_decisions: {
+        Row: {
+          client_name: string | null
+          created_at: string
+          decision: string
+          id: string
+          link_id: string | null
+          note: string | null
+          package_id: string
+          user_id: string
+        }
+        Insert: {
+          client_name?: string | null
+          created_at?: string
+          decision: string
+          id?: string
+          link_id?: string | null
+          note?: string | null
+          package_id: string
+          user_id: string
+        }
+        Update: {
+          client_name?: string | null
+          created_at?: string
+          decision?: string
+          id?: string
+          link_id?: string | null
+          note?: string | null
+          package_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_decisions_link_id_fkey"
+            columns: ["link_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_links"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "presentation_decisions_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       presentation_events: {
         Row: {
           created_at: string
@@ -463,6 +653,174 @@ export type Database = {
             columns: ["presentation_id"]
             isOneToOne: false
             referencedRelation: "presentations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_links: {
+        Row: {
+          access_code: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          last_viewed_at: string | null
+          package_id: string
+          revoked: boolean
+          token: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          access_code?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          package_id: string
+          revoked?: boolean
+          token?: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          access_code?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          package_id?: string
+          revoked?: boolean
+          token?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_links_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_packages: {
+        Row: {
+          accent: string
+          archived: boolean
+          client_email: string | null
+          client_name: string | null
+          cover_url: string | null
+          created_at: string
+          id: string
+          intro: string | null
+          last_activity: string | null
+          last_activity_at: string | null
+          last_viewed_at: string | null
+          logo_url: string | null
+          project_name: string | null
+          property_id: string | null
+          property_label: string | null
+          settings: Json
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+          view_count: number
+        }
+        Insert: {
+          accent?: string
+          archived?: boolean
+          client_email?: string | null
+          client_name?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          intro?: string | null
+          last_activity?: string | null
+          last_activity_at?: string | null
+          last_viewed_at?: string | null
+          logo_url?: string | null
+          project_name?: string | null
+          property_id?: string | null
+          property_label?: string | null
+          settings?: Json
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+          view_count?: number
+        }
+        Update: {
+          accent?: string
+          archived?: boolean
+          client_email?: string | null
+          client_name?: string | null
+          cover_url?: string | null
+          created_at?: string
+          id?: string
+          intro?: string | null
+          last_activity?: string | null
+          last_activity_at?: string | null
+          last_viewed_at?: string | null
+          logo_url?: string | null
+          project_name?: string | null
+          property_id?: string | null
+          property_label?: string | null
+          settings?: Json
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_packages_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_sections: {
+        Row: {
+          created_at: string
+          hidden: boolean
+          id: string
+          package_id: string
+          section_key: string
+          sort_order: number
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          package_id: string
+          section_key: string
+          sort_order?: number
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hidden?: boolean
+          id?: string
+          package_id?: string
+          section_key?: string
+          sort_order?: number
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_sections_package_id_fkey"
+            columns: ["package_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_packages"
             referencedColumns: ["id"]
           },
         ]
@@ -1667,10 +2025,23 @@ export type Database = {
         }
         Returns: Json
       }
+      add_presentation_comment: {
+        Args: { _body: string; _name: string; _section: string; _token: string }
+        Returns: Json
+      }
       cancel_plan_request: { Args: never; Returns: Json }
       credit_cost: {
         Args: { _action: Database["public"]["Enums"]["credit_action"] }
         Returns: number
+      }
+      decide_presentation_share: {
+        Args: {
+          _decision: string
+          _name: string
+          _note: string
+          _token: string
+        }
+        Returns: Json
       }
       ensure_credit_account: {
         Args: { _user_id: string }
@@ -1691,6 +2062,10 @@ export type Database = {
         }
       }
       founding_members_claimed: { Args: never; Returns: number }
+      get_presentation_share: {
+        Args: { _code?: string; _token: string }
+        Returns: Json
+      }
       get_shared_presentation: { Args: { _token: string }; Returns: Json }
       grant_credits: {
         Args: {
@@ -1719,6 +2094,10 @@ export type Database = {
       }
       record_presentation_reminder: {
         Args: { _id: string }
+        Returns: undefined
+      }
+      record_presentation_share_view: {
+        Args: { _token: string }
         Returns: undefined
       }
       record_presentation_view: { Args: { _token: string }; Returns: undefined }
