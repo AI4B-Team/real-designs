@@ -54,21 +54,13 @@ const SHELL = `
 
   <div class="xp-bar">
     <div class="xp-search"><i data-lucide="search"></i><input id="xpQ" type="text" placeholder="Search directions, materials or rooms"></div>
-    <button class="btn btn-ghost btn-sm xp-filter-btn" id="xpFilterBtn" aria-expanded="true"><i data-lucide="sliders-horizontal"></i>Filter<span class="xp-cnt" id="xpFilterCnt" hidden>0</span></button>
+    <button class="btn btn-ghost btn-sm xp-filter-btn" id="xpFilterBtn" aria-haspopup="dialog"><i data-lucide="sliders-horizontal"></i>Filter<span class="xp-cnt" id="xpFilterCnt" hidden>0</span></button>
   </div>
 
   <div class="xp-cats" id="xpCats"></div>
 
-  <div class="xp-panel on" id="xpPanel">
-    <div class="xp-panel-h">
-      <b>Filters</b>
-      <button class="icon-btn xp-panel-x" id="xpPanelX" aria-label="Close Filters"><i data-lucide="x"></i></button>
-    </div>
-    <div class="xp-row" id="xpRoomRow"><span class="xp-lab">Room</span><div class="xp-chips" id="xpRooms"></div></div>
-    <div class="xp-row"><span class="xp-lab">Characteristics</span><div class="xp-chips" id="xpTraits"></div></div>
-    <div class="xp-row"><span class="xp-lab">Finish Grade</span><div class="xp-chips" id="xpGrades"></div></div>
-    <div class="xp-panel-f"><button class="fb-link" id="xpClear">Clear Filters</button></div>
-  </div>
+  <div class="xp-active" id="xpActive" hidden></div>
+
 
   <section class="xp-quiz" id="xpQuiz" hidden>
     <div class="xp-quiz-top">
@@ -113,9 +105,10 @@ export function mountExplore(go, ctx) {
   const icons_ = () => { try { createIcons({ icons }); } catch (_) {} };
 
   let cat = "All";
-  let room = null;
+  let rooms = [];
   let traits = [];
-  let grade = null;
+  let grades = [];
+
 
   const prop = () => { try { return (api.curProp && api.curProp()) || null; } catch (_) { return null; } };
   /** Direction name a property is currently locked to, stored as the first DNA line. */
@@ -127,11 +120,8 @@ export function mountExplore(go, ctx) {
     return hit ? hit.name : null;
   }
 
-  /* ---------- filter chips ---------- */
+  /* ---------- primary categories ---------- */
   $("xpCats").innerHTML = SPACES.map((s) => `<button class="xp-cat${s === cat ? " on" : ""}" data-c="${s}">${spaceLabel(s)}</button>`).join("");
-  $("xpRooms").innerHTML = ROOMS.map(([label]) => `<button class="xp-chip" data-room="${label}">${label}</button>`).join("");
-  $("xpTraits").innerHTML = TRAITS.map((t) => `<button class="xp-chip" data-trait="${t}">${t}</button>`).join("");
-  $("xpGrades").innerHTML = GRADES.map((g) => `<button class="xp-chip" data-grade="${g}">${g}</button>`).join("");
 
   function matchesSpace(d) {
     if (cat === "All") return true;
@@ -140,18 +130,29 @@ export function mountExplore(go, ctx) {
     return d.spaces.indexOf(cat) > -1;
   }
   function matchesRoom(d) {
-    if (!room) return true;
-    const syn = (ROOMS.find((r) => r[0] === room) || [null, []])[1];
-    return d.rooms.some((r) => syn.indexOf(r) > -1);
+    if (!rooms.length) return true;
+    return rooms.some((label) => {
+      const syn = (ROOMS.find((r) => r[0] === label) || [null, []])[1];
+      return d.rooms.some((r) => syn.indexOf(r) > -1);
+    });
   }
   function matches(d, q) {
     if (!matchesSpace(d) || !matchesRoom(d)) return false;
     if (traits.length && !traits.every((t) => (d.traits || []).indexOf(t) > -1)) return false;
-    if (grade && d.grades.indexOf(grade) === -1) return false;
+    if (grades.length && !grades.some((g) => d.grades.indexOf(g) > -1)) return false;
     if (!q) return true;
     return [d.name, d.line, d.about, (d.traits || []).join(" "), d.materials.join(" "), d.rooms.join(" ")]
       .join(" ").toLowerCase().indexOf(q) > -1;
   }
+  /** Count of matches for the current selections, used by the drawer button. */
+  function resultCount() {
+    const q = ($("xpQ").value || "").trim().toLowerCase();
+    return DIRECTIONS.filter((d) => matches(d, q)).length;
+  }
+  function activeFilters() {
+    return rooms.map((v) => ["room", v]).concat(traits.map((v) => ["trait", v]), grades.map((v) => ["grade", v]));
+  }
+
 
   /* ---------- cards ---------- */
   function card(d) {
@@ -177,21 +178,61 @@ export function mountExplore(go, ctx) {
   function paint() {
     const q = ($("xpQ").value || "").trim().toLowerCase();
     const list = DIRECTIONS.filter((d) => matches(d, q));
-    const active = (room ? 1 : 0) + traits.length + (grade ? 1 : 0);
+    const act = activeFilters();
     const fc = $("xpFilterCnt");
-    fc.hidden = !active; fc.textContent = active;
-    $("xpRoomRow").hidden = !(cat === "All" || cat === "Interior" || cat === "Virtual Staging");
+    fc.hidden = !act.length; fc.textContent = act.length;
+    const bar = $("xpActive");
+    bar.hidden = !act.length;
+    bar.innerHTML = act.length
+      ? act.map(([k, v]) => `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`).join("") +
+        '<button class="xp-aclear" id="xpClear">Clear All</button>'
+      : "";
     $("xpCount").textContent = list.length + " Of " + DIRECTIONS.length + " Directions";
     $("xpGrid").innerHTML = list.length
       ? list.map(card).join("")
       : `<div class="xp-empty"><i data-lucide="compass"></i><b>No Exact Matches Yet.</b><p>Try removing a filter, or start in Studio and describe the direction you want.</p><button class="btn btn-primary btn-sm" id="xpCustom">Start In Studio</button></div>`;
     $("xpSavedCnt").textContent = saved.length;
-    host.querySelectorAll(".xp-chip").forEach((c) => {
-      const d = c.dataset;
-      c.classList.toggle("on", (d.room && d.room === room) || (d.trait && traits.indexOf(d.trait) > -1) || (d.grade && d.grade === grade));
-    });
+    syncFilterDrawer();
     icons_();
   }
+
+  /* ---------- filter drawer ---------- */
+  function optRow(kind, label, on) {
+    return `<label class="xp-opt${on ? " on" : ""}"><input type="checkbox" data-f="${kind}:${esc(label)}"${on ? " checked" : ""}><span class="xp-box"><i data-lucide="check"></i></span><span class="xp-optl">${esc(label)}</span></label>`;
+  }
+  function filterDrawerHtml() {
+    const sec = (title, rowsHtml) => `<div class="xp-fsec"><span class="xp-flab">${title}</span><div class="xp-opts">${rowsHtml}</div></div>`;
+    return `
+      <div class="xp-dh"><div><span class="xp-eyebrow">Refine</span><h3>Filter Designs</h3><p>Narrow directions by room, character and finish grade.</p></div>
+        <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="xp-db">
+        ${sec("Room", ROOMS.map(([l]) => optRow("room", l, rooms.indexOf(l) > -1)).join(""))}
+        ${sec("Characteristics", TRAITS.map((t) => optRow("trait", t, traits.indexOf(t) > -1)).join(""))}
+        ${sec("Finish Grade", GRADES.map((g) => optRow("grade", g, grades.indexOf(g) > -1)).join(""))}
+      </div>
+      <div class="xp-df"><button class="fb-link" id="xpClear">Clear All</button><button class="btn btn-primary btn-sm" data-close="1" id="xpShow">Show ${resultCount()} Designs</button></div>`;
+  }
+  /** Keeps drawer checkboxes and the result-count button in sync without a rerender. */
+  function syncFilterDrawer() {
+    const p = $("xpDPanel");
+    if (!p || !p.querySelector(".xp-fsec")) return;
+    p.querySelectorAll(".xp-opt input[data-f]").forEach((inp) => {
+      const [k, v] = String(inp.dataset.f).split(":");
+      const on = (k === "room" ? rooms : k === "trait" ? traits : grades).indexOf(v) > -1;
+      inp.checked = on;
+      inp.closest(".xp-opt").classList.toggle("on", on);
+    });
+    const btn = p.querySelector("#xpShow");
+    if (btn) btn.textContent = "Show " + resultCount() + " Designs";
+  }
+  function toggleFilter(kind, value) {
+    const has = (a) => a.indexOf(value) > -1;
+    if (kind === "room") rooms = has(rooms) ? rooms.filter((x) => x !== value) : rooms.concat([value]);
+    else if (kind === "trait") traits = has(traits) ? traits.filter((x) => x !== value) : traits.concat([value]);
+    else if (kind === "grade") grades = has(grades) ? grades.filter((x) => x !== value) : grades.concat([value]);
+    paint();
+  }
+
 
   /* ---------- property context ---------- */
   function syncProp() {
@@ -407,17 +448,16 @@ export function mountExplore(go, ctx) {
     let el;
     if ((el = hit("data-c"))) {
       cat = el.dataset.c;
-      if (cat !== "All" && cat !== "Interior" && cat !== "Virtual Staging") room = null;
+      if (cat !== "All" && cat !== "Interior" && cat !== "Virtual Staging") rooms = [];
       host.querySelectorAll(".xp-cat").forEach((b) => b.classList.toggle("on", b === el));
       paint(); return;
     }
-    if ((el = hit("data-room"))) { room = room === el.dataset.room ? null : el.dataset.room; paint(); return; }
-    if ((el = hit("data-trait"))) {
-      const v = el.dataset.trait;
-      traits = traits.indexOf(v) > -1 ? traits.filter((x) => x !== v) : traits.concat([v]);
-      paint(); return;
+    if ((el = hit("data-off"))) {
+      const i = String(el.dataset.off).indexOf(":");
+      toggleFilter(String(el.dataset.off).slice(0, i), String(el.dataset.off).slice(i + 1));
+      return;
     }
-    if ((el = hit("data-grade"))) { grade = grade === el.dataset.grade ? null : el.dataset.grade; paint(); return; }
+
     if ((el = hit("data-shot"))) {
       const img = host.querySelector("#xpHero");
       if (img) img.src = el.dataset.shot;
@@ -429,31 +469,29 @@ export function mountExplore(go, ctx) {
     if ((el = hit("data-use"))) { const d = dir(el.dataset.use); if (d) applyToStudio(d); return; }
     if ((el = hit("data-dnago"))) { const d = dir(el.dataset.dnago); if (d) setDna(d); return; }
     if ((el = hit("data-dna"))) { const d = dir(el.dataset.dna); if (d) confirmDna(d); return; }
+    if (t.closest("#xpClear")) { rooms = []; traits = []; grades = []; paint(); return; }
     if (t.closest("[data-close]") || t.closest("#xpScrim")) { closeDrawer(); return; }
     if (t.closest("#xpSavedBtn")) { savedDrawer(); return; }
     if (t.closest("#xpCustom")) { go("studio"); return; }
-    if (t.closest("#xpFilterBtn")) {
-      const p = $("xpPanel");
-      const open = p.classList.toggle("on");
-      $("xpFilterBtn").setAttribute("aria-expanded", String(open));
-      return;
-    }
-    if (t.closest("#xpPanelX")) { $("xpPanel").classList.remove("on"); $("xpFilterBtn").setAttribute("aria-expanded", "false"); return; }
+    if (t.closest("#xpFilterBtn")) { openDrawer(filterDrawerHtml()); return; }
     if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
     if (t.closest("[data-qskip]")) { $("xpQuiz").hidden = true; return; }
     if (t.closest("[data-qretake]")) { write("rd_ex_quiz", null); qStep = 0; qPicks = []; paintQuiz(); return; }
-    if (t.closest("#xpClear")) { room = null; traits = []; grade = null; $("xpQ").value = ""; paint(); return; }
+  });
+
+  host.addEventListener("change", (e) => {
+    const inp = e.target.closest && e.target.closest("input[data-f]");
+    if (!inp) return;
+    const raw = String(inp.dataset.f);
+    const i = raw.indexOf(":");
+    toggleFilter(raw.slice(0, i), raw.slice(i + 1));
   });
 
   let qt;
   $("xpQ").addEventListener("input", () => { clearTimeout(qt); qt = window.setTimeout(paint, 160); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("xpDrawer").hidden) closeDrawer(); });
 
-  // Filters start collapsed on small screens so the sheet does not cover the grid.
-  if (window.matchMedia("(max-width:900px)").matches) {
-    $("xpPanel").classList.remove("on");
-    $("xpFilterBtn").setAttribute("aria-expanded", "false");
-  }
+
 
   syncProp();
   paintQuiz();
