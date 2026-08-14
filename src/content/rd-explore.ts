@@ -15,7 +15,7 @@ const TAB_TYPE = { Interior: "interior", Exterior: "exterior", Garden: "garden",
 const SORTS = [["popular", "Popular"], ["newest", "Newest"], ["az", "A–Z"]];
 
 const ROOMS = ["Living Room", "Kitchen", "Bedroom", "Bathroom", "Dining Room", "Office", "Entry", "Yard", "Front Elevation"];
-const PALETTES = ["Warm Neutral", "Cool Neutral", "Earth Tone", "Bright And Light", "Dark And Moody", "Bold Colour"];
+const PALETTES = ["Warm Neutral", "Cool Neutral", "Earth Tone", "Bright And Light", "Dark And Moody", "Bold Color"];
 const FINISHES = ["Rental Grade", "Retail Grade", "Premium"];
 const MOODS = ["Calm", "Minimal", "Warm", "Natural", "Refined", "Formal", "Bold", "Playful", "Homely", "Classic", "Curb Appeal"];
 
@@ -31,7 +31,7 @@ if (!Array.isArray(saved)) saved = [];
 function paletteBucket(s) {
   const n = s.palette.join(" ").toLowerCase();
   if (/black|onyx|soot|ink|near black|tobacco/.test(n) && /forest|jet|charcoal|espresso|sumi|shadow/.test(n)) return "Dark And Moody";
-  if (/gold|emerald|cobalt|orange|avocado|teal|primary/.test(n)) return "Bold Colour";
+  if (/gold|emerald|cobalt|orange|avocado|teal|primary/.test(n)) return "Bold Color";
   if (/terracotta|clay|olive|rust|sandstone|ochre|cocoa|bark/.test(n)) return "Earth Tone";
   if (/mist|slate|grey|graphite|gunmetal|concrete/.test(n)) return "Cool Neutral";
   if (/white|chalk|bone|ivory|snow|shell|rice/.test(n)) return "Bright And Light";
@@ -243,7 +243,7 @@ export function mountExplore(go, ctx) {
         ${sec("Style Family", STYLE_CATEGORIES.map((c) => optRow("family", c, c, f.family.indexOf(c) > -1)).join(""))}
         ${sec("Project Type", types.map(([v, l]) => optRow("type", l, v, f.type.indexOf(v) > -1)).join(""))}
         ${sec("Room Type", ROOMS.map((r) => optRow("room", r, r, f.room.indexOf(r) > -1)).join(""))}
-        ${sec("Colour Palette", PALETTES.map((p) => optRow("palette", p, p, f.palette.indexOf(p) > -1)).join(""))}
+        ${sec("Color Palette", PALETTES.map((p) => optRow("palette", p, p, f.palette.indexOf(p) > -1)).join(""))}
         ${sec("Finish Level", FINISHES.map((x) => optRow("finish", x, x, f.finish.indexOf(x) > -1)).join(""))}
         ${sec("Mood", MOODS.map((x) => optRow("mood", x, x, f.mood.indexOf(x) > -1)).join(""))}
       </div>
@@ -301,7 +301,7 @@ export function mountExplore(go, ctx) {
       <div class="xp-db">
         <div class="xp-hero"><img src="${s.previewImage}" alt="${esc(s.displayName)} preview" id="xpHero"></div>
         ${compatLine(s)}
-        <div class="xp-spec"><b>Colour Palette</b><div class="xp-pal">${s.swatches.map((c) => `<i style="background:${c}"></i>`).join("")}</div><div>${tags(s.palette)}</div></div>
+        <div class="xp-spec"><b>Color Palette</b><div class="xp-pal">${s.swatches.map((c) => `<i style="background:${c}"></i>`).join("")}</div><div>${tags(s.palette)}</div></div>
         <div class="xp-spec"><b>Materials</b><div>${tags(s.materials)}</div></div>
         <div class="xp-spec"><b>Defining Features</b><div>${tags(s.definingFeatures)}</div></div>
         <div class="xp-spec"><b>Works With</b><div>${tags(s.compatibleProjectTypes.map((t) => t.replace("-", " ")).concat(s.compatibleRoomTypes.slice(0, 4)))}</div></div>
@@ -404,7 +404,7 @@ export function mountExplore(go, ctx) {
   /* ---------- five step style finder ---------- */
   const QUIZ = [
     { key: "aesthetic", q: "Which Overall Aesthetic Feels Right?", opts: ["warm-minimal", "traditional", "industrial", "bohemian"] },
-    { key: "warmth", q: "Which Colour And Warmth Do You Prefer?", opts: ["organic-modern", "coastal", "dark-academia"] },
+    { key: "warmth", q: "Which Color And Warmth Do You Prefer?", opts: ["organic-modern", "coastal", "dark-academia"] },
     { key: "shape", q: "Which Furniture Shape Appeals More?", opts: ["soft-contemporary", "mid-century-modern", "neoclassical"] },
     { key: "material", q: "Which Materials And Texture Do You Like?", opts: ["japandi", "quiet-luxury", "rustic", "modern"] },
     { key: "detail", q: "How Much Detail Do You Want?", opts: ["minimalist", "transitional", "maximalist"] },
