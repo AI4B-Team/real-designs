@@ -152,7 +152,79 @@
   display: flex;
   gap: 8px;
   margin-bottom: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pmu-src::-webkit-scrollbar {
+  display: none;
+}
+.pmu-s {
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.pmu-link {
+  border: 1px solid var(--line, #e6e6e8);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 12px;
+  background: #fff;
+}
+.pmu-link textarea {
+  width: 100%;
+  resize: vertical;
+}
+.pmu-linkmsg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 8px;
+  font-size: 12.5px;
+}
+.pmu-linkmsg .pmu-ok {
+  color: #0a7d38;
+  font-weight: 600;
+}
+.pmu-linkmsg .pmu-bad {
+  color: #cc0000;
+}
+.pmu-info {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 6px;
+  color: var(--muted, #6b6b73);
+  cursor: help;
+  position: relative;
+  vertical-align: middle;
+}
+.pmu-info i {
+  width: 14px;
+  height: 14px;
+}
+.pmu-info::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 240px;
+  background: #fff;
+  color: #111113;
+  border: 1px solid var(--line, #e6e6e8);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: 0.12s;
+  z-index: 5;
+}
+.pmu-info:hover::after {
+  opacity: 1;
 }
 .pmu-s {
   display: inline-flex;
