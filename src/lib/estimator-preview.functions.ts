@@ -1,14 +1,12 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
-import type { Database } from "@/integrations/supabase/types";
 
 /**
  * Public, read-only pricing preview.
  *
  * Same arithmetic as buildScope, but it persists nothing and touches no
- * user-owned tables: only the three public reference tables (markets,
- * unit_costs, cost_mappings), all of which carry narrow anon SELECT policies.
+ * user-owned tables: only the three server-only reference tables
+ * (markets, unit_costs, cost_mappings), read with the privileged client.
  * No model ever produces a dollar figure here; SQL and arithmetic do.
  */
 
