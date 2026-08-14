@@ -1380,7 +1380,7 @@ function paintDesigns(){
       toast((err&&err.message)||'The video workspace could not be opened. Please try again.');
     }finally{
       b.dataset.busy=''; b.classList.remove('is-busy'); b.removeAttribute('aria-busy'); b.innerHTML=old;
-      try{ paintIcons(); }catch(_){}
+      try{ lucide.createIcons(); }catch(_){}
     }
   }));
   g.querySelectorAll('[data-shop]').forEach(b=>b.addEventListener('click',()=>{
