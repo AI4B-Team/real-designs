@@ -573,6 +573,7 @@ export function mountExplore(go, ctx) {
   });
 
   host.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("button")) return;
     const cardEl = e.target.closest && e.target.closest(".xp-card");
     if (cardEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); styleDrawer(cardEl.dataset.d); }
   });
