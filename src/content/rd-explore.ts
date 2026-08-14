@@ -329,24 +329,34 @@ export function mountExplore(go, ctx) {
 
   /* ---------- apply a style ---------- */
   /** Store the canonical selection and hand it to Studio. Never generates, never charges. */
-  function applyToStudio(s) {
-    const payload = buildStylePayload({ style: s.id, projectType: s.compatibleProjectTypes[0] });
-    write(LS.choice, { styleId: s.id, name: s.displayName, payload: payload, ts: Date.now() });
-    const sel = document.getElementById("fStyle");
-    if (sel) {
-      if (!Array.from(sel.options).some((o) => o.value === s.displayName || o.text === s.displayName))
-        sel.insertAdjacentHTML("afterbegin", `<option value="${esc(s.displayName)}" data-style-id="${esc(s.id)}">${esc(s.displayName)}</option>`);
-      sel.value = s.displayName;
-      sel.dispatchEvent(new Event("change", { bubbles: true }));
+  let applying = false;
+  function applyToStudio(s, btn) {
+    if (applying) return;
+    const choice = setStudioStyle(s && s.id);
+    if (!choice) { note("This Style Could Not Be Loaded. Please Choose Another Style."); return; }
+    applying = true;
+    let restore = null;
+    if (btn) {
+      restore = btn.innerHTML;
+      btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
+      btn.innerHTML = "Opening Studio…";
     }
-    const space = s.compatibleProjectTypes[0] === "exterior" ? "exterior" : s.compatibleProjectTypes[0] === "garden" ? "landscape" : "interior";
-    const chip = document.querySelector('#spChips [data-sp="' + space + '"]');
-    if (chip && !chip.classList.contains("on")) chip.click();
-    try { window.dispatchEvent(new CustomEvent("rd:style-selected", { detail: payload })); } catch (_) {}
+    applyStudioStyleToControls(choice);
     closeDrawer();
-    go("studio");
-    note(s.displayName + " Applied In Studio. Change It Any Time, Then Generate.");
+    try {
+      go("studio");
+      note(choice.name + " Selected. Add A Source If You Need One, Then Generate.");
+    } catch (err) {
+      note("Studio Could Not Be Opened. Please Try Again.");
+    } finally {
+      window.setTimeout(() => {
+        applying = false;
+        if (btn && restore != null) { btn.disabled = false; btn.removeAttribute("aria-busy"); btn.innerHTML = restore; icons_(); }
+      }, 500);
+    }
   }
+
 
   async function setDna(s) {
     const p = prop();
