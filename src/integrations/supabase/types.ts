@@ -309,6 +309,66 @@ export type Database = {
         }
         Relationships: []
       }
+      listing_imports: {
+        Row: {
+          created_at: string
+          error_code: string | null
+          error_message: string | null
+          id: string
+          listing: Json
+          normalized_url: string
+          photo_count: number
+          photos: Json
+          property_id: string | null
+          provider_id: string
+          provider_name: string
+          source_url: string
+          stage: string
+          status: string
+          updated_at: string
+          user_id: string
+          video_project_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          listing?: Json
+          normalized_url: string
+          photo_count?: number
+          photos?: Json
+          property_id?: string | null
+          provider_id: string
+          provider_name: string
+          source_url: string
+          stage?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          video_project_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_code?: string | null
+          error_message?: string | null
+          id?: string
+          listing?: Json
+          normalized_url?: string
+          photo_count?: number
+          photos?: Json
+          property_id?: string | null
+          provider_id?: string
+          provider_name?: string
+          source_url?: string
+          stage?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          video_project_id?: string | null
+        }
+        Relationships: []
+      }
       markets: {
         Row: {
           cbsa_code: string | null
