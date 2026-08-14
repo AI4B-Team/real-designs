@@ -81,11 +81,16 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   const state = {
-    method: "space" as Method,
+    method: "upload" as Method,
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
     filePreview: "",
+    /** Classification of the chosen file, null until the service answers. */
+    detected: null as SourceDetection | null,
+    detecting: false,
+    /** Whether the compact classification dropdown is open. */
+    pickType: false,
     space: "interior",
     room: "Living Room",
     goal: "Makeover",
