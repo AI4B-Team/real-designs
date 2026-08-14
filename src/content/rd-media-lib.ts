@@ -345,7 +345,7 @@ function card(m) {
       ? `<span class="ml-meta-b">${m.duration ? m.duration + "s" : "—"}</span><span class="ml-meta-b">${esc(m.aspect || "9:16")}</span>`
       : "";
   return `<div class="card ml-card${sel ? " sel" : ""}" data-card="${m.id}">
-    <div class="ml-thumb" data-thumb="${m.id}" role="button" tabindex="0" aria-label="Open ${esc(m.title)}">${thumb}
+    <div class="ml-thumb${proc || m.status === "failed" ? "" : " sk"}" data-thumb="${m.id}" role="button" tabindex="0" aria-label="Open ${esc(m.title)}">${thumb}
       <span class="ml-type"><i data-lucide="${TYPE_ICON[m.type] || "image"}"></i></span>
       ${badges ? `<div class="ml-badges">${badges}</div>` : ""}
       <div class="ml-ov">
@@ -480,13 +480,15 @@ function fmtDate(d) {
 
 async function hydrateThumbs(root) {
   root.querySelectorAll("[data-photo]").forEach(async (img) => {
+    const done = () => img.closest(".ml-thumb")?.classList.remove("sk");
     const p = img.getAttribute("data-photo");
-    if (!p) return;
+    if (!p) return done();
     const url = await resolvePhotoUrl(p);
-    if (url) {
-      img.src = url;
-      img.hidden = false;
-    }
+    if (!url) return done();
+    img.addEventListener("load", done, { once: true });
+    img.addEventListener("error", done, { once: true });
+    img.src = url;
+    img.hidden = false;
   });
 }
 
