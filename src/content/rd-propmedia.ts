@@ -100,10 +100,20 @@ export async function openPropertyUpload(opts = {}) {
         <div class="pmu-col">
           <div class="pmu-lab">Choose Photos</div>
           <div class="pmu-src">
-            <button class="pmu-s on" id="pmuPick"><i data-lucide="monitor"></i>Computer</button>
-            <button class="pmu-s" disabled title="Planned"><i data-lucide="hard-drive"></i>Google Drive<em>Planned</em></button>
-            <button class="pmu-s" disabled title="Planned"><i data-lucide="cloud"></i>Dropbox<em>Planned</em></button>
+            <button class="pmu-s${src === "computer" ? " on" : ""}" data-src="computer"><i data-lucide="monitor"></i>Computer</button>
+            <button class="pmu-s${src === "google_drive" ? " on" : ""}" data-src="google_drive"><i data-lucide="hard-drive"></i>Google Drive</button>
+            <button class="pmu-s${src === "dropbox" ? " on" : ""}" data-src="dropbox"><i data-lucide="cloud"></i>Dropbox</button>
           </div>
+          ${
+            src === "computer"
+              ? ""
+              : `<div class="pmu-link">
+            <label>Paste ${src === "dropbox" ? "Dropbox" : "Google Drive"} Photo Links<textarea id="pmuLinks" rows="3" placeholder="https://${src === "dropbox" ? "www.dropbox.com/scl/fi/..." : "drive.google.com/file/d/..."}"></textarea></label>
+            <p class="pmu-note">One link per line, up to 20. Each link must be shared with “Anyone with the link”. Folder links are not supported yet.</p>
+            <button class="btn btn-ghost" id="pmuFetch"><i data-lucide="download"></i>Add Photos From ${src === "dropbox" ? "Dropbox" : "Drive"}</button>
+            <div class="pmu-linkmsg" id="pmuLinkMsg"></div>
+          </div>`
+          }
           <div class="pmu-drop" id="pmuDrop" tabindex="0" role="button" aria-label="Drag photos here or press Enter to browse">
             <i data-lucide="upload-cloud"></i>
             <b>Drag and drop the property photos here</b>
