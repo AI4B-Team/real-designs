@@ -939,7 +939,7 @@ function render() {
     S.screen === "wizard" ? wizardHtml() : S.screen === "design" ? dvHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
   paintAssetThumbs();
-  if (S.screen === "design") dvPaintThumbs();
+  if (S.screen === "design") { closeIntroNow(); dvPaintThumbs(); }
   if (S.screen === "library") paintThumbs();
   if (S.screen === "detail" && S.detail) mountPlayer();
   bind();
