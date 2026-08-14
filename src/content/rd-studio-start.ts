@@ -756,11 +756,16 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   function canContinue() {
-    if (state.method === "space" || state.method === "sketch") return !!state.file;
+    if (state.method === "upload") {
+      if (!state.file || state.detecting) return false;
+      const t = state.detected?.sourceType;
+      return !!t && t !== "uncertain" && t !== "unsupported";
+    }
     if (state.method === "describe") return state.prompt.trim().length >= 12;
     if (state.method === "property") return state.newAddress.trim().length > 2;
     return false;
   }
+
 
   function goListingVideo() {
     try {
