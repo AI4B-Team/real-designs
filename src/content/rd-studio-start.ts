@@ -817,8 +817,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       goListingVideo();
       return;
     }
-    if (k === "c-space" || k === "c-sketch") {
-      openSetup(k === "c-sketch" ? "sketch" : "space");
+    if (k === "changetype") {
+      state.pickType = !state.pickType;
+      render();
+      return;
+    }
+    if (k === "c-upload") {
+      openSetup("upload");
       browse();
     } else if (k === "c-describe") {
       openSetup("describe");
