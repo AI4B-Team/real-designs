@@ -346,7 +346,7 @@ function shell() {
       </div>
       <div class="pm-head-a">
         <label class="pm-pick"><span class="sr-only">Property</span><select id="pmProp"></select></label>
-        <button class="btn btn-primary btn-xs" id="pmUpload"><i data-lucide="upload-cloud"></i>Upload Complete Property</button>
+        <button class="btn btn-primary btn-xs" id="pmUpload"><i data-lucide="upload-cloud"></i>Upload Property Photos</button>
       </div>
     </div>
     <div class="card-b">
@@ -587,7 +587,7 @@ async function renderGrid() {
     el.innerHTML = `<div class="pm-empty">
       <b>${STATE.assets.length ? "Nothing In This Tab" : "No Property Media Yet"}</b>
       <span>${STATE.assets.length ? "Try another tab or clear the room filter." : "Upload a complete property shoot and we will organize it by room and angle."}</span>
-      <button class="btn btn-primary btn-xs" id="pmEmptyUp"><i data-lucide="upload-cloud"></i>Upload Complete Property</button>
+      <button class="btn btn-primary btn-xs" id="pmEmptyUp"><i data-lucide="upload-cloud"></i>Upload Property Photos</button>
     </div>`;
     paint();
     const b = el.querySelector("#pmEmptyUp");
