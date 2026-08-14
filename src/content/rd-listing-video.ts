@@ -702,6 +702,7 @@ function watchJobs() {
 }
 
 async function beginUpload(files) {
+  console.error("[lv] beginUpload", files.length, S.authorized, S.propertyId, S.standalone, S.addressQuery);
   if (!files.length) return;
   if (!S.authorized) {
     toast("Confirm you own these photos or have permission to use them.");
