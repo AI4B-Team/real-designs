@@ -616,10 +616,25 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       }
     } else if (act) {
       const k = act.dataset["sts"];
-      if (k === "browse") {
+      if (k === "c-space" || k === "c-sketch") {
+        state.phase = "work";
+        setMethod(k === "c-sketch" ? "sketch" : "space");
+        browse();
+      } else if (k === "c-describe") {
+        state.phase = "work";
+        setMethod("describe");
+        document.getElementById("stsPrompt")?.focus();
+      } else if (k === "c-property") {
+        state.phase = "work";
+        state.propertyMode = "new";
+        setMethod("property");
+        state.propertyMode = "new";
+        render();
+      } else if (k === "browse") {
         if (state.method !== "space" && state.method !== "sketch") setMethod("space");
         browse();
       } else if (k === "sketch") setMethod("sketch");
+
       else if (k === "describe") {
         setMethod("describe");
         const ta = document.getElementById("stsPrompt") as HTMLTextAreaElement | null;
