@@ -7,11 +7,15 @@
 import { createIcons, icons } from "lucide";
 import { loadMediaLibrary, onMediaChange, stageLabel, typeGroup, emitMediaChange } from "@/lib/media-library";
 import { resolvePhotoUrl } from "@/lib/room-photos";
-import { setVersionStatusBulk } from "@/lib/workspace.functions";
-import { updateMediaAssets } from "@/lib/property-media.functions";
-import { setVideoStatus } from "@/lib/reveal.functions";
+import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
+import { updateMediaAssets, deleteMediaAssets } from "@/lib/property-media.functions";
+import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, createVideoFrom } from "@/content/rd-reveal";
+import { openListingVideo } from "@/content/rd-listing-video";
+import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
+import { cancelJob } from "@/lib/upload-manager";
+
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -147,11 +151,15 @@ function shell() {
 
   <div class="ml-bulk" id="mlBulk">
     <span id="mlSelCount">0 Selected</span>
-    <button class="btn btn-ghost btn-xs" data-b="fav"><i data-lucide="heart"></i>Favorite</button>
+    <button class="btn btn-primary btn-xs" data-b="video" id="mlBulkVideo"><i data-lucide="clapperboard"></i>Create Video</button>
+    <button class="btn btn-ghost btn-xs" data-b="prop"><i data-lucide="home"></i>Add To Property</button>
+    <button class="btn btn-ghost btn-xs" data-b="pres"><i data-lucide="presentation"></i>Add To Presentation</button>
     <button class="btn btn-ghost btn-xs" data-b="download"><i data-lucide="download"></i>Download</button>
     <button class="btn btn-ghost btn-xs" data-b="archive"><i data-lucide="archive"></i>Archive</button>
+    <button class="btn btn-ghost btn-xs" data-b="more" id="mlBulkMore"><i data-lucide="more-horizontal"></i>More</button>
     <button class="btn btn-ghost btn-xs" data-b="clear">Clear</button>
   </div>
+
 
   <div class="ml-grid" id="mlGrid"></div>
 
@@ -210,7 +218,7 @@ function bind(view) {
     $("mlSelect").classList.toggle("on", S.selMode);
     render();
   };
-  view.querySelectorAll("#mlBulk [data-b]").forEach((b) => (b.onclick = () => bulk(b.dataset.b)));
+  view.querySelectorAll("#mlBulk [data-b]").forEach((b) => (b.onclick = (ev) => { ev.stopPropagation(); bulk(b.dataset.b, b); }));
 }
 
 /** Open the listing-video workflow without leaving a stale sidebar item. */
@@ -289,7 +297,10 @@ function render() {
     bulk.classList.toggle("on", S.selMode && S.sel.size > 0);
     const n = document.getElementById("mlSelCount");
     if (n) n.textContent = S.sel.size + " Selected";
+    const bv = document.getElementById("mlBulkVideo");
+    if (bv) bv.disabled = !selectedItems().some(videoReady);
   }
+
   if (S.loading) {
     grid.innerHTML = `<p class="ml-note">Loading Your Media…</p>`;
     return;
@@ -329,7 +340,7 @@ function card(m) {
       ? `<span class="ml-meta-b">${m.duration ? m.duration + "s" : "—"}</span><span class="ml-meta-b">${esc(m.aspect || "9:16")}</span>`
       : "";
   return `<div class="card ml-card${sel ? " sel" : ""}" data-card="${m.id}">
-    <div class="ml-thumb">${thumb}
+    <div class="ml-thumb" data-thumb="${m.id}" role="button" tabindex="0" aria-label="Open ${esc(m.title)}">${thumb}
       <span class="ml-type"><i data-lucide="${TYPE_ICON[m.type] || "image"}"></i></span>
       ${badges ? `<div class="ml-badges">${badges}</div>` : ""}
       <div class="ml-ov">
@@ -345,28 +356,112 @@ function card(m) {
   </div>`;
 }
 
+/* ---------------- action model ---------------- */
+
+const READY = (m) => ["ready", "shared", "draft"].includes(m.status);
+const videoReady = (m) => READY(m) && typeGroup(m.type) !== "videos" && !!m.path;
+const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !!m.refId && READY(m);
+const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
+
 function actions(m, g) {
   if (m.status === "failed")
     return `<button class="btn btn-ghost btn-xs" data-retry="${m.id}" style="flex:1"><i data-lucide="rotate-ccw"></i>Retry</button>
-      <button class="btn btn-ghost btn-xs" data-remove="${m.id}"><i data-lucide="trash-2"></i></button>`;
+      <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   if (m.status === "processing" || m.status === "queued")
-    return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Details</button>`;
-  if (g === "videos")
-    return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1"><i data-lucide="play"></i>Play</button>
-      <button class="btn btn-ghost btn-xs" data-edit="${m.id}" title="Edit"><i data-lucide="pencil"></i></button>
-      <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download"><i data-lucide="download"></i></button>
-      <button class="btn btn-ghost btn-xs" data-share="${m.id}" title="Share"><i data-lucide="share-2"></i></button>
-      <button class="btn btn-ghost btn-xs" data-arch="${m.id}" title="Archive"><i data-lucide="archive"></i></button>`;
-  if (g === "uploads")
-    return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open</button>
-      <button class="btn btn-ghost btn-xs" data-studio="${m.id}" title="Use in Studio"><i data-lucide="wand-2"></i></button>
-      <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download"><i data-lucide="download"></i></button>
-      <button class="btn btn-ghost btn-xs" data-arch="${m.id}" title="Archive"><i data-lucide="archive"></i></button>`;
+    return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open Details</button>
+      ${m.job ? `<button class="btn btn-ghost btn-xs" data-cancel="${m.id}">Cancel</button>` : ""}`;
   return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open</button>
-    <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download"><i data-lucide="download"></i></button>
-    <button class="btn btn-ghost btn-xs" data-pres="${m.id}" title="Add to Presentation"><i data-lucide="presentation"></i></button>
-    <button class="btn btn-ghost btn-xs" data-arch="${m.id}" title="Archive"><i data-lucide="archive"></i></button>`;
+    <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download" aria-label="Download"><i data-lucide="download"></i></button>
+    <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
 }
+
+/** Every secondary action for one asset. Only implemented workflows appear. */
+function moreItems(m) {
+  const g = typeGroup(m.type);
+  const fav = { icon: "heart", label: isFav(m.id) ? "Unfavorite" : "Favorite", fn: () => { toggleFav(m.id); render(); } };
+  if (m.status === "failed")
+    return [
+      { icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
+      { icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
+      { icon: "trash-2", label: "Remove", danger: true, fn: () => remove(m) },
+    ];
+  if (g === "videos")
+    return [
+      { icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
+      { icon: "copy", label: "Duplicate", fn: () => dupVideo(m, false) },
+      { icon: "scissors", label: "Create Short Version", fn: () => dupVideo(m, true) },
+      { icon: "ratio", label: "Change Format", fn: () => openVideo(m, "video") },
+      { icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") },
+      { icon: "type", label: "Rename", fn: () => renameItem(m) },
+      fav,
+      { icon: "archive", label: "Archive", fn: () => archive([m]) },
+      { icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) },
+    ];
+  const out = [];
+  if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
+  out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
+  out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
+  if (g === "images") out.push({ icon: "layers", label: "Create Variations", fn: () => S.go("studio") });
+  if (m.sourcePath) out.push({ icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
+  out.push({ icon: "home", label: "Add To Property", fn: () => S.go("props") });
+  out.push({ icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") });
+  out.push({ icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
+  if (m.type === "uploaded_image" && !m.job) out.push({ icon: "type", label: "Rename", fn: () => renameItem(m) });
+  out.push(fav);
+  out.push({ icon: "archive", label: "Archive", fn: () => archive([m]) });
+  out.push({ icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) });
+  return out;
+}
+
+/* ---------------- popup menu ---------------- */
+
+let POP = null;
+function closePop() {
+  if (POP) {
+    POP.remove();
+    POP = null;
+  }
+}
+try {
+  document.addEventListener("click", (e) => {
+    if (POP && !POP.contains(e.target)) closePop();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closePop();
+  });
+} catch (_) {}
+
+function popMenu(anchor, items) {
+  closePop();
+  const list = items.filter(Boolean);
+  const el = document.createElement("div");
+  el.className = "ml-pop";
+  el.setAttribute("role", "menu");
+  el.innerHTML = list
+    .map(
+      (it, i) =>
+        `<button role="menuitem" data-i="${i}" class="${it.danger ? "danger" : ""}"${it.disabled ? " disabled" : ""}><i data-lucide="${it.icon}"></i>${esc(it.label)}</button>`,
+    )
+    .join("");
+  document.body.appendChild(el);
+  paint();
+  const r = anchor.getBoundingClientRect();
+  const h = el.offsetHeight;
+  const w = el.offsetWidth;
+  el.style.top = Math.max(10, Math.min(window.innerHeight - h - 10, r.bottom + 6)) + "px";
+  el.style.left = Math.max(10, Math.min(window.innerWidth - w - 10, r.right - w)) + "px";
+  el.querySelectorAll("[data-i]").forEach(
+    (b) =>
+      (b.onclick = (ev) => {
+        ev.stopPropagation();
+        const it = list[Number(b.dataset.i)];
+        closePop();
+        if (it && !it.disabled && it.fn) it.fn();
+      }),
+  );
+  POP = el;
+}
+
 
 function fmtDate(d) {
   if (!d) return "Just now";
@@ -399,21 +494,161 @@ function wireCards(grid, list) {
     render();
   }));
   grid.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openDetail(find(b.dataset.open))));
-  grid.querySelectorAll("[data-edit]").forEach((b) => (b.onclick = () => {
-    const m = find(b.dataset.edit);
-    if (m) { try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {} openVideoDetail(m.refId, "video"); }
-  }));
-  grid.querySelectorAll("[data-share]").forEach((b) => (b.onclick = () => {
-    const m = find(b.dataset.share);
-    if (m) { try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {} openVideoDetail(m.refId, "share"); }
-  }));
+  grid.querySelectorAll("[data-thumb]").forEach((el) => {
+    el.onclick = (ev) => {
+      if (ev.target.closest("[data-fav],[data-pick]")) return;
+      openDetail(find(el.dataset.thumb));
+    };
+    el.onkeydown = (ev) => {
+      if (ev.key === "Enter" || ev.key === " ") {
+        ev.preventDefault();
+        openDetail(find(el.dataset.thumb));
+      }
+    };
+  });
+  grid.querySelectorAll("[data-more]").forEach(
+    (b) =>
+      (b.onclick = (ev) => {
+        ev.stopPropagation();
+        const m = find(b.dataset.more);
+        if (m) popMenu(b, moreItems(m));
+      }),
+  );
   grid.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => download(find(b.dataset.dl))));
-  grid.querySelectorAll("[data-arch]").forEach((b) => (b.onclick = () => archive([find(b.dataset.arch)])));
-  grid.querySelectorAll("[data-pres]").forEach((b) => (b.onclick = () => S.go("present")));
-  grid.querySelectorAll("[data-studio]").forEach((b) => (b.onclick = () => S.go("studio")));
   grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
-  grid.querySelectorAll("[data-remove]").forEach((b) => (b.onclick = () => remove(find(b.dataset.remove))));
+  grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
 }
+
+/* ---------------- workflow bridges ---------------- */
+
+function toast(msg) {
+  try {
+    const t = (window as any).__rdToast;
+    if (t) t(msg);
+  } catch (_) {}
+}
+
+function assetRow(m) {
+  return {
+    id: m.refId,
+    storage_path: m.assetPath || m.path,
+    file_name: m.title,
+    original_filename: m.title,
+    room_group: m.room || "Media",
+    property_id: m.propertyId || null,
+    flags: m.flags || [],
+  };
+}
+
+/** Uploads open in the photo editor; generated designs re-open in Studio. */
+function editImage(m) {
+  if (canEditImage(m)) {
+    openPhotoEditor({ assetId: m.refId, assets: [assetRow(m)], versions: [], propertyLabel: m.property || "Media", reload: () => load(true) });
+    return;
+  }
+  toast("Open This Design In Studio To Keep Editing It.");
+  S.go("studio");
+}
+
+/** Seed the listing-video workflow from one or many ready images. */
+function videoFrom(items) {
+  const usable = items.filter(videoReady);
+  if (!usable.length) {
+    toast("Select At Least One Ready Image To Create A Video.");
+    return;
+  }
+  try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  openListingVideo({
+    from: "media",
+    assets: usable.map((x, i) => ({
+      id: x.refId || x.id,
+      storage_path: x.assetPath || x.path,
+      file_name: x.title,
+      original_filename: x.title,
+      room_group: x.room || x.title,
+      sort_order: i,
+    })),
+  });
+}
+
+function openVideo(m, tab) {
+  try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  openVideoDetail(m.refId, tab || "video");
+}
+
+async function dupVideo(m, short) {
+  try {
+    const res = await duplicateVideo({ data: { id: m.refId } });
+    const id = res && (res.id || (res.project && res.project.id));
+    await load(true);
+    if (id) {
+      if (short) toast("Copy Created — Trim The Scenes For A Short Version.");
+      try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+      openVideoDetail(id, "video");
+    }
+  } catch (e) {
+    window.alert("Could not duplicate: " + (e && e.message ? e.message : "try again"));
+  }
+}
+
+const PROJECT_KEYS = ["id","property_id","property_label","room_id","design_version_id","title","video_type","source_type","status","formats","length_preset","transition","motion","brand_kit_id","branding","disclosure","settings"];
+
+async function renameItem(m) {
+  const name = window.prompt("Rename", m.title);
+  if (!name || name.trim() === "" || name === m.title) return;
+  try {
+    if (m.type === "generated_video") {
+      const cur = await getVideo({ data: { id: m.refId } });
+      const project = {};
+      PROJECT_KEYS.forEach((k) => {
+        if (cur.project[k] !== null && cur.project[k] !== undefined) project[k] = cur.project[k];
+      });
+      project.title = name.trim();
+      await saveVideo({ data: { project } });
+    } else {
+      await updateMediaAssets({ data: { ids: [m.refId], patch: { file_name: name.trim() } } });
+    }
+    toast("Renamed.");
+  } catch (e) {
+    window.alert("Could not rename: " + (e && e.message ? e.message : "try again"));
+  }
+  await load(true);
+}
+
+async function del(m) {
+  if (!m) return;
+  if (!window.confirm("Delete “" + m.title + "”? This cannot be undone.")) return;
+  try {
+    if (m.type === "generated_video") await deleteVideo({ data: { id: m.refId } });
+    else if (m.type === "generated_image") await deleteVersions({ data: { version_ids: [m.refId] } });
+    else if (m.refId && !m.job) await deleteMediaAssets({ data: { ids: [m.refId] } });
+    else {
+      await remove(m);
+      return;
+    }
+  } catch (e) {
+    window.alert("Could not delete: " + (e && e.message ? e.message : "try again"));
+    return;
+  }
+  closeDrawer();
+  await load(true);
+}
+
+function cancelItem(m) {
+  if (!m || !m.job) return;
+  try {
+    cancelJob(m.job.id);
+  } catch (_) {}
+  emitMediaChange();
+}
+
+/** Failed items go back to the settings that produced them. */
+function editSettings(m) {
+  if (m.type === "generated_video") return openVideo(m, "video");
+  if (m.job) return openPropertyUpload({});
+  S.go("studio");
+}
+
 
 async function download(m) {
   if (!m) return;
@@ -474,7 +709,7 @@ async function remove(m) {
   await archive([m]);
 }
 
-async function bulk(action) {
+async function bulk(action, anchor) {
   const list = filtered().filter((m) => S.sel.has(m.id));
   if (action === "clear") {
     S.sel.clear();
@@ -487,6 +722,15 @@ async function bulk(action) {
     render();
     return;
   }
+  if (action === "video") return videoFrom(list);
+  if (action === "prop") return S.go("props");
+  if (action === "pres") return S.go("present");
+  if (action === "more")
+    return popMenu(anchor, [
+      { icon: "heart", label: "Favorite", fn: () => bulk("fav") },
+      { icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") },
+      { icon: "wand-2", label: "Use In Studio", fn: () => S.go("studio") },
+    ]);
   if (action === "download") {
     for (const m of list) await download(m);
     return;
@@ -494,16 +738,27 @@ async function bulk(action) {
   if (action === "archive") await archive(list);
 }
 
+function closeDrawer() {
+  const d = document.getElementById("mlDrawer");
+  if (d) {
+    d.hidden = true;
+    d.innerHTML = "";
+  }
+}
+
+
 /* ---------------- detail drawer ---------------- */
 
-async function openDetail(m) {
+async function openDetail(m, opts) {
   if (!m) return;
   const d = document.getElementById("mlDrawer");
   if (!d) return;
   const g = typeGroup(m.type);
+  const proc = m.status === "processing" || m.status === "queued";
   const related = S.items.filter((x) => x.id !== m.id && x.property && x.property === m.property).slice(0, 6);
   const url = await resolvePhotoUrl(m.assetPath || m.path);
   const srcUrl = m.sourcePath ? await resolvePhotoUrl(m.sourcePath) : null;
+  const compare = !!(opts && opts.compare && srcUrl);
   d.hidden = false;
   d.innerHTML = `<div class="ml-dr-bg" data-close></div>
   <aside class="ml-dr" role="dialog" aria-label="${esc(m.title)}">
@@ -511,12 +766,25 @@ async function openDetail(m) {
       <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="ml-dr-b">
       <div class="ml-dr-prev">${
-        g === "videos" && m.assetPath && url
-          ? `<video src="${url}" controls playsinline style="width:100%;border-radius:10px"></video>`
-          : url
-            ? `<img src="${url}" alt="${esc(m.title)}">`
-            : `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || STATUS_LABEL[m.status])}</span></div>`
+        compare
+          ? `<div class="ml-cmp"><figure><img src="${srcUrl}" alt="Source photo"><figcaption>Source</figcaption></figure><figure><img src="${url}" alt="${esc(m.title)}"><figcaption>Result</figcaption></figure></div>`
+          : g === "videos" && m.assetPath && url
+            ? `<video src="${url}" controls playsinline style="width:100%;border-radius:10px"></video>`
+            : url
+              ? `<img src="${url}" alt="${esc(m.title)}">`
+              : `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || STATUS_LABEL[m.status])}</span></div>`
       }</div>
+      ${
+        proc
+          ? `<div class="ml-dr-note"><i data-lucide="loader"></i><div><b>${esc(stageLabel(m.stage) || "Processing")}</b>
+              <div class="ml-bar ${m.progress == null ? "ind" : ""}"><i style="width:${m.progress == null ? 40 : m.progress}%"></i></div></div></div>`
+          : ""
+      }
+      ${
+        m.status === "failed"
+          ? `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>Generation Failed</b><span>${esc(m.error || "Something went wrong.")}</span></div></div>`
+          : ""
+      }
       <div class="ml-dr-meta">
         <div><span>Status</span><b>${STATUS_LABEL[m.status] || m.status}</b></div>
         <div><span>Type</span><b>${g === "videos" ? "Listing Video" : g === "images" ? "Generated Image" : "Uploaded File"}</b></div>
@@ -525,11 +793,7 @@ async function openDetail(m) {
         ${m.aspect && g === "videos" ? `<div><span>Format</span><b>${esc(m.aspect)}</b></div>` : ""}
         ${m.versions ? `<div><span>Versions</span><b>${m.versions}</b></div>` : ""}
       </div>
-      ${
-        srcUrl
-          ? `<div class="ml-dr-sec"><b>Source Image</b><img src="${srcUrl}" alt="Source photo"></div>`
-          : ""
-      }
+      ${srcUrl && !compare ? `<div class="ml-dr-sec"><b>Source Image</b><img src="${srcUrl}" alt="Source photo"></div>` : ""}
       ${
         g === "videos" && m.scenes && m.scenes.length
           ? `<div class="ml-dr-sec"><b>Scenes</b><ol class="ml-scenes">${m.scenes
@@ -548,23 +812,46 @@ async function openDetail(m) {
               .join("")}</div></div>`
           : ""
       }
-      <div class="ml-dr-a">
-        <button class="btn btn-primary btn-sm" data-dld><i data-lucide="download"></i>Download</button>
-        ${g === "videos" ? `<button class="btn btn-ghost btn-sm" data-shr><i data-lucide="share-2"></i>Share</button>` : ""}
-        <button class="btn btn-ghost btn-sm" data-arc><i data-lucide="archive"></i>Archive</button>
-      </div>
+      <div class="ml-dr-a">${drawerActions(m, g, proc)}</div>
     </div>
   </aside>`;
   paint();
   hydrateThumbs(d);
-  d.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => { d.hidden = true; d.innerHTML = ""; }));
-  const dl = d.querySelector("[data-dld]");
-  if (dl) dl.onclick = () => download(m);
-  const sh = d.querySelector("[data-shr]");
-  if (sh) sh.onclick = () => { try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {} openVideoDetail(m.refId, "share"); };
-  const ar = d.querySelector("[data-arc]");
-  if (ar) ar.onclick = async () => { d.hidden = true; d.innerHTML = ""; await archive([m]); };
+  d.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => closeDrawer()));
+  const bind = (sel, fn) => { const el = d.querySelector(sel); if (el) el.onclick = fn; };
+  bind("[data-dld]", () => download(m));
+  bind("[data-shr]", () => openVideo(m, "share"));
+  bind("[data-arc]", async () => { closeDrawer(); await archive([m]); });
+  bind("[data-edit-img]", () => { closeDrawer(); editImage(m); });
+  bind("[data-mkvid]", () => { closeDrawer(); videoFrom([m]); });
+  bind("[data-studio]", () => { closeDrawer(); S.go("studio"); });
+  bind("[data-editvid]", () => { closeDrawer(); openVideo(m, "video"); });
+  bind("[data-retry]", () => retry(m));
+  bind("[data-cancel]", () => cancelItem(m));
+  const more = d.querySelector("[data-more-dr]");
+  if (more) more.onclick = (ev) => { ev.stopPropagation(); popMenu(more, moreItems(m)); };
   d.querySelectorAll("[data-rel]").forEach((b) => (b.onclick = () => openDetail(S.items.find((x) => x.id === b.dataset.rel))));
 }
+
+/** Primary actions in the drawer differ by asset type and status. */
+function drawerActions(m, g, proc) {
+  if (m.status === "failed")
+    return `<button class="btn btn-primary btn-sm" data-retry><i data-lucide="rotate-ccw"></i>Retry</button>
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+  if (proc)
+    return `${m.job ? `<button class="btn btn-ghost btn-sm" data-cancel><i data-lucide="x"></i>Cancel</button>` : ""}
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+  if (g === "videos")
+    return `<button class="btn btn-primary btn-sm" data-dld><i data-lucide="download"></i>Download</button>
+      <button class="btn btn-ghost btn-sm" data-editvid><i data-lucide="pencil"></i>Edit Video</button>
+      <button class="btn btn-ghost btn-sm" data-shr><i data-lucide="share-2"></i>Share</button>
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+  return `${canEditImage(m) ? `<button class="btn btn-primary btn-sm" data-edit-img><i data-lucide="sliders-horizontal"></i>Edit Image</button>` : ""}
+    <button class="btn btn-${canEditImage(m) ? "ghost" : "primary"} btn-sm" data-mkvid><i data-lucide="clapperboard"></i>Create Video</button>
+    <button class="btn btn-ghost btn-sm" data-studio><i data-lucide="wand-2"></i>Use In Studio</button>
+    <button class="btn btn-ghost btn-sm" data-dld><i data-lucide="download"></i>Download</button>
+    <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+}
+
 
 export default mountMediaLibrary;
