@@ -705,6 +705,7 @@ async function onClick(e) {
   const id = t.getAttribute("data-id") || (row ? row.getAttribute("data-id") : null);
   const a = t.getAttribute("data-pk");
 
+  if (!S.draft && (t.hasAttribute("data-pktab") || t.hasAttribute("data-pkpick") || t.hasAttribute("data-secmove") || t.hasAttribute("data-sechide"))) return;
   if (t.hasAttribute("data-pktab")) {
     S.draft.tab = t.getAttribute("data-pktab");
     return renderBuilder();
