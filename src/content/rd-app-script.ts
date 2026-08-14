@@ -663,6 +663,16 @@ function studioStart(){
         try{ window.dispatchEvent(new Event('rd:credits-changed')); }catch(_){}
       },
       getProperties:()=>{ try{ return PROP_TREE||[]; }catch(_){ return []; } },
+      getRecent:()=>{ try{
+        return designItems().filter(d=>!d.sample).slice(0,4).map(d=>({
+          id:String(d.id), name:d.name, sub:d.sub||'', status:(ST_PILL(d.status)||[])[1]||'', path:d.path||''
+        }));
+      }catch(_){ return []; } },
+      openRecent:(id)=>{ try{
+        const d=designItems().find(x=>String(x.id)===String(id));
+        if(d&&d.room) openInStudio(d.room);
+      }catch(_){} },
+      resolvePhoto:(p)=>resolvePhotoUrl(p),
       setContext:(c)=>{
         STUDIO_CTX={room:(c&&c.room)||null,address:(c&&c.address)||null,project:(c&&c.project)||null};
         paintStudioSub();

@@ -31,6 +31,12 @@ export type StudioStartCtx = {
   /** Applies a chosen property/project context to the Studio header. */
   setContext: (ctx: { address?: string | null; project?: string | null; room?: string | null }) => void;
   showAlert: (msg: string) => void;
+  /** Recent designs for the "Continue Where You Left Off" strip. */
+  getRecent?: () => Array<{ id: string; name: string; sub: string; status: string; path: string }>;
+  /** Opens a recent design in the Studio editor. */
+  openRecent?: (id: string) => void;
+  /** Resolves a stored photo path into a displayable URL. */
+  resolvePhoto?: (path: string) => Promise<string | null>;
   fileToDataUrl: (file: File) => Promise<string>;
 };
 
@@ -139,6 +145,34 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     render();
   }
 
+  /** Rotates the chosen image 90 degrees so the upload matches how it reads. */
+  async function rotateFile() {
+    const f = state.file;
+    if (!f || !/^image\//.test(f.type)) return;
+    const url = URL.createObjectURL(f);
+    try {
+      const img = await new Promise<HTMLImageElement>((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i);
+        i.onerror = () => rej(new Error("read"));
+        i.src = url;
+      });
+      const c = document.createElement("canvas");
+      c.width = img.naturalHeight;
+      c.height = img.naturalWidth;
+      const g = c.getContext("2d")!;
+      g.translate(c.width / 2, c.height / 2);
+      g.rotate(Math.PI / 2);
+      g.drawImage(img, -img.naturalWidth / 2, -img.naturalHeight / 2);
+      const blob: Blob | null = await new Promise((r) => c.toBlob(r, "image/jpeg", 0.92));
+      if (blob) takeFile(new File([blob], f.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" }));
+    } catch (_) {
+      /* rotation is a convenience, keep the original on failure */
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  }
+
   function clearFile() {
     if (state.filePreview) URL.revokeObjectURL(state.filePreview);
     state.file = null;
@@ -180,115 +214,209 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     return field("Add To A Property (Optional)", '<select id="stsPropSel">' + opts + "</select>");
   }
 
-  function dropZone(types: string) {
+  function dropZone(types: string, icon: string, copy: string) {
     if (state.file) {
       return (
-        '<div class="stu-file">' +
+        '<div class="stw-file">' +
         (state.filePreview
           ? '<img src="' + state.filePreview + '" alt="Selected source preview">'
-          : '<div class="stu-file-ico"><i data-lucide="file-text"></i></div>') +
-        '<div class="stu-file-m"><b>' + esc(state.fileName) + "</b>" +
-        '<span>Nothing generates and no credits are used until you continue.</span>' +
-        '<div class="stu-file-a">' +
-        '<button class="stu-link" data-sts="browse"><i data-lucide="repeat"></i>Replace</button>' +
-        '<button class="stu-link" data-sts="clearfile"><i data-lucide="trash-2"></i>Remove</button>' +
+          : '<div class="stw-file-ico"><i data-lucide="file-text"></i></div>') +
+        '<div class="stw-file-m"><b>' + esc(state.fileName) + "</b>" +
+        '<span id="stsFileMeta">Nothing generates and no credits are used until you continue.</span>' +
+        '<div class="stw-file-a">' +
+        '<button class="stw-link" data-sts="browse"><i data-lucide="repeat"></i>Replace</button>' +
+        '<button class="stw-link" data-sts="clearfile"><i data-lucide="trash-2"></i>Remove</button>' +
+        (state.filePreview ? '<button class="stw-link" data-sts="rotate"><i data-lucide="rotate-cw"></i>Rotate</button>' : "") +
         "</div></div></div>"
       );
     }
     return (
-      '<div class="stu-drop" id="stsDrop">' +
-      '<i data-lucide="upload"></i>' +
-      "<b>Drag And Drop A File</b>" +
+      '<div class="stw-drop" id="stsDrop">' +
+      '<i data-lucide="' + icon + '"></i>' +
+      "<b>" + copy + "</b>" +
+      '<span class="stw-types">Drag and drop, or</span>' +
       '<button class="btn btn-dark btn-sm" data-sts="browse">Browse Files</button>' +
-      '<span class="stu-types">Supported files: ' + types + "</span>" +
+      '<span class="stw-types">Supported files: ' + types + "</span>" +
+      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button>' +
       "</div>"
     );
   }
 
-  function foot(label: string, ok: boolean, note?: string) {
+  function foot(label: string, ok: boolean, note?: string, disclosure?: string) {
     return (
-      '<div class="stu-foot">' +
+      '<div class="stw-foot">' +
       '<button class="btn btn-primary" id="stsGo"' + (ok && !state.busy ? "" : " disabled") + ">" +
       (state.busy ? "Working…" : label) +
       "</button>" +
-      (note ? '<span class="stu-cost">' + note + "</span>" : "") +
+      (note ? '<span class="stw-cost">' + note + "</span>" : "") +
+      (disclosure ? '<p class="stw-note">' + disclosure + "</p>" : "") +
       "</div>"
+    );
+  }
+
+  /* ---------- shared workflow shell ---------- */
+
+  const STEP_LABELS = ["Source", "Details", "Review"];
+
+  function steps(active: number) {
+    return (
+      '<ol class="stw-steps">' +
+      STEP_LABELS.map((l, i) => {
+        const n = i + 1;
+        const cls = n === active ? " on" : n < active ? " done" : "";
+        return (
+          '<li class="stw-step' + cls + '">' +
+          (n < active ? '<i data-lucide="check"></i>' : '<span class="stw-step-n">' + n + "</span>") +
+          "<span>" + l + "</span></li>"
+        );
+      }).join("") +
+      "</ol>"
+    );
+  }
+
+  function workHead(title: string, desc: string, active: number) {
+    return (
+      '<header class="stw-head">' +
+      '<div class="stw-head-l">' +
+      '<span class="stw-eyebrow">New Design</span>' +
+      '<div class="stw-title">' +
+      '<button class="stw-back" data-sts="back" aria-label="Back to starting options"><i data-lucide="arrow-left"></i>Back</button>' +
+      "<h2>" + title + "</h2>" +
+      "</div>" +
+      "<p>" + desc + "</p>" +
+      (state.attached ? '<span class="stw-att"><i data-lucide="map-pin"></i>' + esc(state.attached) + "</span>" : "") +
+      "</div>" +
+      '<div class="stw-head-r">' + steps(active) + "</div>" +
+      "</header>" +
+      '<div class="stw-rule"></div>'
+    );
+  }
+
+  function panel(title: string, inner: string, cls?: string) {
+    return (
+      '<section class="stw-panel' + (cls ? " " + cls : "") + '">' +
+      '<div class="stw-panel-h"><h3>' + title + "</h3></div>" +
+      '<div class="stw-panel-b">' + inner + "</div></section>"
     );
   }
 
   /* ---------- setup screens ---------- */
 
-  function setupHead(title: string, desc: string) {
-    return '<div class="stu-head"><h2>' + title + "</h2><p>" + desc + "</p>" +
-      (state.attached ? '<span class="stu-att"><i data-lucide="map-pin"></i>' + esc(state.attached) + "</span>" : "") +
-      "</div>";
-  }
-
   function spaceSetup() {
     return (
-      setupHead("Upload Your Space", "Add a photo of the interior, exterior or landscape you want to redesign.") +
-      dropZone("JPG, PNG, HEIC, WEBP") +
-      '<div class="stu-form">' +
-      field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-      (state.file ? field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) : "") +
-      propertyField() +
-      "</div>" +
-      foot("Continue", !!state.file)
+      workHead("Upload A Space", "Add a photo of the interior, exterior or landscape you want to redesign.", state.file ? 2 : 1) +
+      '<div class="stw-work">' +
+      panel("Your Photo", dropZone("JPG, PNG, HEIC, WEBP", "image-up", "Drop A Photo Of Your Space"), "stw-main") +
+      panel(
+        "Photo Details",
+        field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+          field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
+          propertyField() +
+          field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
+          foot("Continue", !!state.file),
+        "stw-side",
+      ) +
+      "</div>"
     );
   }
 
   function sketchSetup() {
     return (
-      setupHead("Upload A Sketch Or Plan", "Turn a sketch, floor plan or concept drawing into a realistic design.") +
-      dropZone("JPG, PNG, HEIC, WEBP, PDF") +
-      '<div class="stu-form">' +
-      field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
-      propertyField() +
-      "</div>" +
-      foot("Continue", !!state.file)
+      workHead("Upload A Sketch Or Plan", "Turn a sketch, floor plan or concept drawing into a realistic design.", state.file ? 2 : 1) +
+      '<div class="stw-work">' +
+      panel("Your Sketch Or Plan", dropZone("JPG, PNG, HEIC, WEBP, PDF", "pencil-ruler", "Drop A Sketch, Floor Plan Or Drawing"), "stw-main") +
+      panel(
+        "Plan Details",
+        field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
+          field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+          field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
+          propertyField() +
+          field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
+          foot("Continue", !!state.file),
+        "stw-side",
+      ) +
+      "</div>"
     );
   }
+
+  const EXAMPLES = ["Warm modern living room", "Resort-style backyard", "Contemporary home exterior"];
 
   function describeSetup() {
     return (
-      setupHead("Describe What You Want To Create", "Create an original visual concept from a written description.") +
-      '<div class="stu-two">' +
-      '<div class="stu-col">' +
-      '<div class="field"><label for="stsPrompt">Describe Your Idea</label>' +
-      '<textarea id="stsPrompt" class="stu-ta" rows="10" placeholder="Create a warm modern living room with natural oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
-      esc(state.prompt) +
-      "</textarea></div>" +
-      '<div class="stu-inspo">' +
-      '<button class="stu-link" data-sts="inspo"><i data-lucide="image-plus"></i>' +
-      (state.inspiration ? "Inspiration: " + esc(state.inspiration.name) : "Add An Inspiration Image (Optional)") +
-      "</button>" +
-      (state.inspiration ? '<button class="stu-link" data-sts="rminspo"><i data-lucide="x"></i>Remove</button>' : "") +
-      "</div>" +
-      "</div>" +
-      '<div class="stu-col">' +
-      field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-      field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
-      field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
-      field("Design Style", select("stsStyle", STYLES, state.style)) +
-      field("Mood", select("stsMood", ["", ...MOODS], state.mood)) +
-      field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
-      field("Must-Have Features (Optional)", '<textarea id="stsFeatures" rows="3" placeholder="Built-in shelving, durable rug, reading corner">' + esc(state.features) + "</textarea>") +
-      "</div></div>" +
-      foot("Generate Concept", state.prompt.trim().length >= 12, "Uses 1 design credit") +
-      '<p class="stu-note">Text-only concepts are visual ideas. Connect the concept to a real photo, sketch or floor plan for property-specific results.</p>'
+      workHead("Describe An Idea", "Tell us what you want to create and REAL DESIGNS will turn it into a visual concept.", state.prompt.trim().length >= 12 ? 2 : 1) +
+      '<div class="stw-work stw-work-60">' +
+      panel(
+        "Your Idea",
+        '<textarea id="stsPrompt" class="stw-ta" rows="9" placeholder="Create a warm modern living room with natural oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
+          esc(state.prompt) +
+          "</textarea>" +
+          '<p class="stw-help">The more detail you give about materials, colours and lighting, the closer the concept lands.</p>' +
+          '<div class="stw-ex"><span>Try:</span>' +
+          EXAMPLES.map((e) => '<button class="stw-exlink" data-ex="' + esc(e) + '">' + esc(e) + "</button>").join("") +
+          "</div>" +
+          '<div class="stw-inspo">' +
+          '<button class="stw-link" data-sts="inspo"><i data-lucide="image-plus"></i>' +
+          (state.inspiration ? "Inspiration: " + esc(state.inspiration.name) : "Add An Inspiration Image (Optional)") +
+          "</button>" +
+          (state.inspiration ? '<button class="stw-link" data-sts="rminspo"><i data-lucide="x"></i>Remove</button>' : "") +
+          "</div>",
+        "stw-main",
+      ) +
+      panel(
+        "Design Details",
+        field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
+          field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
+          field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
+          '<div class="stw-sep"></div>' +
+          field("Design Style", select("stsStyle", STYLES, state.style)) +
+          field("Mood", select("stsMood", ["", ...MOODS], state.mood)) +
+          '<div class="stw-sep"></div>' +
+          field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
+          field("Must-Have Features (Optional)", '<textarea id="stsFeatures" rows="3" placeholder="Built-in shelving, durable rug, reading corner">' + esc(state.features) + "</textarea>") +
+          foot(
+            "Generate Concept",
+            state.prompt.trim().length >= 12,
+            "Uses 1 design credit",
+            "Text-only concepts are visual ideas. Add a real photo, sketch or plan for property-specific results.",
+          ),
+        "stw-side",
+      ) +
+      "</div>"
     );
   }
 
+  const CREATES: Array<[string, string, string]> = [
+    ["door-open", "Rooms", "Keep every space organized."],
+    ["layout-grid", "Designs", "Compare versions and approvals."],
+    ["calculator", "Budget", "Track projected products and costs."],
+    ["presentation", "Presentations", "Share polished project updates."],
+  ];
+
   function propertySetup() {
     return (
-      setupHead("Create A Property", "Organize rooms, designs, budgets and presentations under one property.") +
-      '<div class="stu-form">' +
-      field("Property Name Or Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
-      field("Nickname (Optional)", '<input id="stsNick" type="text" placeholder="Bayshore Flip" value="' + esc(state.newNickname) + '">') +
-      field("Property Type", select("stsPType", ["Single Family", "Condo", "Townhome", "Multi Family", "Commercial"], state.newType)) +
-      field("Client Or Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
-      "</div>" +
-      foot("Create Property", state.newAddress.trim().length > 2)
+      workHead("Create A Property", "Keep every room, design, budget and presentation organized in one project.", state.newAddress.trim().length > 2 ? 2 : 1) +
+      '<div class="stw-work">' +
+      panel(
+        "Property Details",
+        field("Property Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
+          field("Property Nickname (Optional)", '<input id="stsNick" type="text" placeholder="Bayshore Flip" value="' + esc(state.newNickname) + '">') +
+          field("Property Type", select("stsPType", ["Single Family", "Condo", "Townhome", "Multi Family", "Commercial"], state.newType)) +
+          field("Client Or Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
+          field("Property Photo (Optional)", dropZone("JPG, PNG, HEIC, WEBP", "image-up", "Add A Cover Photo")),
+        "stw-main",
+      ) +
+      panel(
+        "What This Creates",
+        '<ul class="stw-rows">' +
+          CREATES.map(
+            ([i, t, d]) =>
+              '<li><i data-lucide="' + i + '"></i><div><b>' + t + "</b><span>" + d + "</span></div></li>",
+          ).join("") +
+          "</ul>" +
+          foot("Create Property", state.newAddress.trim().length > 2),
+        "stw-side",
+      ) +
+      "</div>"
     );
   }
 
@@ -301,13 +429,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           : state.method === "property"
             ? propertySetup()
             : spaceSetup();
-    return (
-      '<div class="stu">' +
-      '<button class="stu-back" data-sts="back"><i data-lucide="arrow-left"></i>Back To Starting Options</button>' +
-      '<div class="stu-card">' + body + "</div>" +
-      "</div>" +
-      (state.samples ? samplesHtml() : "")
-    );
+    return '<div class="stw">' + body + "</div>" + (state.samples ? samplesHtml() : "");
   }
 
   function samplesHtml() {
@@ -335,67 +457,98 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       act: "c-space",
       icon: "image-up",
       title: "Upload A Space",
-      desc: "Start with a photo of an interior, exterior or landscape.",
+      desc: "Redesign, stage or improve an existing space.",
       meta: "JPG · PNG · HEIC · WEBP",
       btn: "Upload A Photo",
     },
     {
       act: "c-sketch",
       icon: "pencil-ruler",
-      title: "Upload A Sketch Or Plan",
-      desc: "Turn a hand sketch, floor plan or concept drawing into a design.",
-      meta: "JPG · PNG · HEIC · WEBP · PDF",
+      title: "Sketch Or Plan",
+      desc: "Turn a sketch or floor plan into a realistic design.",
+      meta: "Images · PDF",
       btn: "Upload A Sketch",
     },
     {
       act: "c-describe",
       icon: "message-square-text",
       title: "Describe An Idea",
-      desc: "Start from a written idea when you have no photo or plan.",
-      meta: "Text to concept",
+      desc: "Create a visual concept from a written description.",
+      meta: "Text · Optional inspiration image",
       btn: "Describe An Idea",
     },
     {
       act: "c-property",
       icon: "map-pin",
-      title: "Start With A Property",
-      desc: "Organize rooms, designs, budgets and presentations together.",
-      meta: "Rooms, budgets, presentations",
+      title: "Create A Property",
+      desc: "Organize rooms, designs, budgets and presentations.",
+      meta: "Multi-room project",
       btn: "Create A Property",
     },
     {
       act: "lvideo",
       icon: "clapperboard",
       title: "Create A Listing Video",
-      desc: "Turn your listing photos into a polished video for social media and MLS.",
-      meta: "Photos, motion, branding",
+      desc: "Turn listing photos into a polished video.",
+      meta: "Photos · Motion · Branding",
       btn: "Create A Listing Video",
     },
   ];
 
+  function recentHtml() {
+    const list = (ctx.getRecent ? ctx.getRecent() : []).slice(0, 4);
+    if (!list.length) return "";
+    return (
+      '<section class="stw-recent">' +
+      '<div class="stw-sec-h"><h3>Continue Where You Left Off</h3><span>Your most recent work</span></div>' +
+      '<div class="stw-recent-g">' +
+      list
+        .map(
+          (r) =>
+            '<article class="card dg-card"><div class="dg-thumb">' +
+            '<img data-photo="' + esc(r.path || "") + '" alt="' + esc(r.name) + '" style="width:100%;height:100%;object-fit:cover" hidden></div>' +
+            '<div class="dg-body"><div style="display:flex;justify-content:space-between;gap:8px;align-items:center">' +
+            "<b style=\"font-size:.86rem\">" + esc(r.name) + "</b>" +
+            (r.status ? '<span class="pill">' + esc(r.status) + "</span>" : "") +
+            "</div>" +
+            '<div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:5px">' + esc(r.sub || "") + "</div>" +
+            '<div class="dg-acts"><button class="btn btn-ghost btn-xs" style="flex:1" data-recent="' + esc(r.id) + '">Open</button></div>' +
+            "</div></article>",
+        )
+        .join("") +
+      "</div></section>"
+    );
+  }
+
   function chooserHtml() {
     return (
-      '<div class="stc-head">' +
-      '<span class="stc-eyebrow">Welcome To REAL DESIGNS</span>' +
-      "<h2>What Would You Like To Create?</h2>" +
-      "<p>Start with a photo, sketch or floor plan, describe an idea, or organize everything under a property.</p>" +
-      "</div>" +
-      '<div class="stc-grid">' +
+      '<div class="stw">' +
+      '<header class="stw-head">' +
+      '<div class="stw-head-l">' +
+      '<span class="stw-eyebrow">Welcome To REAL DESIGNS</span>' +
+      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
+      "<p>Start with a space, sketch, written idea or property.</p>" +
+      "</div></header>" +
+      '<div class="stw-rule"></div>' +
+      '<div class="stw-tiles">' +
       CARDS.map(
         (c) =>
-          '<button type="button" class="stc-card" data-sts="' + c.act + '">' +
-          '<i data-lucide="' + c.icon + '" class="stc-ico"></i>' +
+          '<button type="button" class="stw-tile" data-sts="' + c.act + '">' +
+          '<i data-lucide="' + c.icon + '" class="stw-tile-ico"></i>' +
           "<h3>" + c.title + "</h3>" +
           "<p>" + c.desc + "</p>" +
-          '<span class="stc-meta">' + c.meta + "</span>" +
-          '<span class="stc-act">' + c.btn + '<i data-lucide="arrow-right"></i></span>' +
+          '<span class="stw-tile-meta">' + c.meta + "</span>" +
+          '<span class="stw-tile-act">' + c.btn + '<i data-lucide="arrow-right"></i></span>' +
           "</button>",
       ).join("") +
       "</div>" +
-      '<p class="stc-foot">Not ready to upload? <button class="stc-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      '<p class="stw-tilefoot">Not ready to upload? <button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      recentHtml() +
+      "</div>" +
       (state.samples ? samplesHtml() : "")
     );
   }
+
 
   /* ---------- render + wiring ---------- */
 
@@ -423,6 +576,20 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       /* icons are cosmetic */
     }
     wire();
+    hydrateRecent();
+  }
+
+  function hydrateRecent() {
+    if (!host || !ctx.resolvePhoto) return;
+    host.querySelectorAll<HTMLImageElement>("[data-photo]").forEach(async (img) => {
+      const path = img.getAttribute("data-photo");
+      if (!path) return;
+      const url = await ctx.resolvePhoto!(path);
+      if (url) {
+        img.src = url;
+        img.hidden = false;
+      }
+    });
   }
 
   function wire() {
@@ -468,6 +635,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.prompt = ta.value;
         syncPrimary();
       });
+    }
+
+    const meta = document.getElementById("stsFileMeta");
+    if (meta && state.filePreview) {
+      const i = new Image();
+      i.onload = () => {
+        meta.textContent = i.naturalWidth + " x " + i.naturalHeight + " px · Nothing is generated until you continue.";
+      };
+      i.src = state.filePreview;
     }
 
     document.getElementById("stsGo")?.addEventListener("click", primaryAction);
@@ -516,8 +692,28 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       pickSample(sample.dataset["sample"]!);
       return;
     }
+    const ex = t.closest("[data-ex]") as HTMLElement | null;
+    if (ex) {
+      state.prompt = ex.dataset["ex"] || "";
+      render();
+      const ta = document.getElementById("stsPrompt") as HTMLTextAreaElement | null;
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+      }
+      return;
+    }
+    const rec = t.closest("[data-recent]") as HTMLElement | null;
+    if (rec) {
+      ctx.openRecent?.(rec.dataset["recent"]!);
+      return;
+    }
     if (!act) return;
     const k = act.dataset["sts"];
+    if (k === "rotate") {
+      rotateFile();
+      return;
+    }
     if (k === "lvideo") {
       goListingVideo();
       return;
