@@ -107,7 +107,8 @@ export const loadSampleWorkspace = createServerFn({ method: "POST" })
     if (existing.error) throw new Error(existing.error.message);
     if ((existing.data ?? []).length) return { created: false, property_id: existing.data[0].id };
 
-    const market = await supabase.from("markets").select("id").limit(1).single();
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const market = await supabaseAdmin.from("markets").select("id").limit(1).single();
     if (market.error) throw new Error(market.error.message);
 
     const property = await supabase
