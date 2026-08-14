@@ -83,7 +83,7 @@ export const getWorkspaceReport = createServerFn({ method: "GET" })
       supabase.from("rooms").select("id, project_id, created_at"),
       versionQ,
       ledgerQ,
-      supabase.from("credit_accounts").select("balance, plan").eq("user_id", userId).maybeSingle(),
+      supabase.from("credit_accounts").select("balance, plan, free_used_today, free_day").eq("user_id", userId).maybeSingle(),
       supabase
         .from("presentation_packages")
         .select("id, title, property_id, property_label, client_name, status, view_count, archived, created_at, last_activity_at"),
@@ -260,6 +260,13 @@ export const getWorkspaceReport = createServerFn({ method: "GET" })
         used,
         remaining: Number((acctR.data as any)?.balance ?? 0),
         plan: (acctR.data as any)?.plan ?? "free",
+        freeRemainingToday: (() => {
+          const acct: any = acctR.data;
+          if (!acct || acct.plan !== "free") return 0;
+          const today = new Date().toISOString().slice(0, 10);
+          const usedToday = acct.free_day === today ? Number(acct.free_used_today ?? 0) : 0;
+          return Math.max(0, 5 - usedToday);
+        })(),
         perProject: projectCount ? Math.round((used / projectCount) * 10) / 10 : 0,
         byType,
         daily: Object.keys(daily)

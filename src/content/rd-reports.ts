@@ -419,7 +419,7 @@ function creditsHtml() {
     return `<div class="rp-sec-b">
       <div class="rp-kv">
         <div><div class="l">Credits Used</div><b>${cr.used}</b></div>
-        <div><div class="l">Credits Remaining</div><b>${cr.remaining}</b></div>
+        <div><div class="l">Credits Remaining</div><b>${cr.plan === "free" ? cr.freeRemainingToday + " Today" : cr.remaining}</b></div>
         <div><div class="l">Average Per Project</div><b>${cr.perProject}</b></div>
       </div>
       ${
