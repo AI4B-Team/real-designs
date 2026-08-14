@@ -124,12 +124,10 @@
 @media(max-width:1280px){.rd-app .xp-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1000px){.rd-app .xp-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){
-  /* filters become a bottom sheet */
-  .rd-app .xp-panel.on{position:fixed;left:0;right:0;bottom:0;top:auto;z-index:65;border-radius:14px 14px 0 0;max-height:78vh;overflow:auto;box-shadow:0 -16px 40px rgba(17,17,19,.18)}
-  .rd-app .xp-panel-h{display:flex}
-  .rd-app .xp-row{flex-direction:column;align-items:flex-start;gap:6px}
-  .rd-app .xp-lab{flex:none}
+  .rd-app .xp-cat{padding:0 10px;font-size:.8rem}
+  .rd-app .xp-df .btn-primary{min-width:0;flex:1}
 }
+
 @media(max-width:640px){
   .rd-app .xp-grid{grid-template-columns:1fr}
   .rd-app .xp-head h2{font-size:1.3rem}
