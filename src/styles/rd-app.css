@@ -1345,7 +1345,7 @@
 /* footer action */
 .rd-app .stw-foot{ margin-top:18px; padding-top:15px; border-top:1px solid var(--line); }
 .rd-app .stw-foot .btn{ width:100%; justify-content:center; height:42px; }
-.rd-app .stw-foot .btn:disabled{ opacity:1; background:#E4E4E7; color:#5B5B62; border-color:#E4E4E7; cursor:not-allowed; }
+.rd-app .stw-foot .btn:disabled{ opacity:.5; background:var(--red); color:#fff; border-color:var(--red); cursor:not-allowed; }
 .rd-app .stw-cost{ display:block; font-size:.76rem; color:var(--mute); margin-top:9px; text-align:center; }
 .rd-app .stw-note{ font-size:.73rem; color:var(--mute-2); margin:10px 0 0; }
 
