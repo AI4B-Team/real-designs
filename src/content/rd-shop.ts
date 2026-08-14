@@ -37,8 +37,8 @@ const money = (n) =>
 const PHASES = ["Design", "Demo", "Rough In", "Finishes", "Furnishing", "Punch List"];
 const BUDGET_CATS = ["Furniture", "Lighting", "Textiles", "Décor", "Fixtures", "Finishes", "Appliances", "Outdoor"];
 const SEGS = [
-  ["all", "All"],
-  ["close", "Closest"],
+  ["all", "Best Matches"],
+  ["close", "Closest Match"],
   ["saved", "Saved"],
 ];
 const PREFS = [
@@ -77,9 +77,18 @@ function shell() {
       <div class="shop-scan" id="shopScan" hidden><span></span>Scanning The Design For Shoppable Objects</div>
     </div>
     <div class="shop-objs" id="shopObjs"></div>
+    <section class="shop-cat" id="shopCat">
+      <div class="shop-cat-h">
+        <b>Shop This Room</b>
+        <span>Browse products matched to the furniture, lighting, decor and finishes in this design.</span>
+      </div>
+      <div class="shop-cat-tabs" id="shopCatTabs" role="tablist"></div>
+      <div class="shop-cat-grid" id="shopCatGrid"></div>
+    </section>
   </div>
   <div class="shop-panel">
     <div class="shop-p-head">
+      <button class="icon-btn shop-p-close" id="shopPanelClose" aria-label="Close Quick Matches"><i data-lucide="x"></i></button>
       <b id="shopObjName">Select An Object</b>
       <span id="shopObjSub">Pick a dot on the design, or draw a box around anything the scan missed.</span>
       <button class="shop-applyall" id="shopLock" hidden><i data-lucide="layers"></i>Apply To All Views</button>
