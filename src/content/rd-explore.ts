@@ -157,7 +157,6 @@ export function mountExplore(go, ctx) {
   /* ---------- cards ---------- */
   function card(d) {
     const on = saved.indexOf(d.id) > -1;
-    const tags = d.spaces.map(spaceLabel).concat(d.staging ? ["Virtual Staging"] : []);
     return `<article class="xp-card" data-d="${d.id}">
       <div class="xp-img"><img src="${d.img}" alt="${esc(d.name)} design style" loading="lazy">
         <button class="xp-save${on ? " on" : ""}" data-save="${d.id}" aria-label="Save Style" title="Save Style"><i data-lucide="bookmark"></i></button>
@@ -166,7 +165,7 @@ export function mountExplore(go, ctx) {
         <div class="xp-t"><b>${esc(gtxt(d.name))}</b></div>
         <p class="xp-line">${esc(gtxt(d.line))}</p>
         ${swatches(d.palette)}
-        <div class="xp-meta">${tags.map((s) => `<span class="xp-tag">${esc(s)}</span>`).join("")}</div>
+
         <div class="xp-acts">
           <button class="btn btn-ghost btn-xs" data-open="${d.id}">Preview</button>
           <button class="btn btn-primary btn-xs" data-use="${d.id}">Use This Style</button>
