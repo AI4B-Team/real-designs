@@ -286,7 +286,7 @@ async function loadAssets(propertyId) {
   S.loading = true;
   render();
   try {
-    const r = await listMediaAssets({ property_id: propertyId || null });
+    const r = await listMediaAssets({ data: { property_id: propertyId || null } });
     S.assets = (r.assets || []).filter((a) => !a.hidden);
     S.photos = S.assets.map(toPhoto);
     autoArrange();
@@ -713,7 +713,7 @@ async function beginUpload(files) {
   if (!S.propertyId && !S.standalone) {
     const label = normalizeAddress(S.addressQuery) || "Untitled Property";
     try {
-      const row = await createMediaProperty({ address: label });
+      const row = await createMediaProperty({ data: { address: label } });
       S.propertyId = row.id;
       S.propertyLabel = row.address;
     } catch (_) {
@@ -804,6 +804,7 @@ async function generate() {
     }));
 
     const saved = await saveVideo({
+      data: {
       project: {
         property_id: S.propertyId || null,
         property_label: S.propertyLabel || (S.standalone ? "Standalone Project" : null),
@@ -841,6 +842,7 @@ async function generate() {
         voice_id: st.voice || null,
         captions_enabled: !!st.captions,
       },
+      },
     });
     projectId = saved.id;
     S.projectId = projectId;
@@ -848,12 +850,14 @@ async function generate() {
     const versions = [{ version_type: "branded" }, { version_type: "clean" }];
     if (needsDisclosure(withCoverFirst)) versions.push({ version_type: "disclosure" });
     const started = await startRender({
+      data: {
       id: projectId,
       variants: versions.map((v) => ({
         aspect_ratio: st.format,
         version_type: v.version_type,
         brand_kit_id: v.version_type === "branded" ? st.brandKitId || null : null,
       })),
+      },
     });
     track("listing_video_generate", { scenes: sceneRows.length, format: st.format, motion: st.motion });
 
@@ -928,21 +932,23 @@ async function generate() {
         thumbPath = null;
       }
       await finishVariant({
+        data: {
         variant_id: v.id,
         render_status: "ready",
         output_path: videoPath,
         thumbnail_path: thumbPath,
         duration: out.duration,
         resolution: v.aspect_ratio === "16:9" ? "1920x1080" : "1080x1920",
+        },
       });
       outs.push({ ...v, output_path: videoPath });
       done += 1;
     }
 
-    await setVideoStatus({ id: projectId, status: "ready" });
+    await setVideoStatus({ data: { id: projectId, status: "ready" } });
     if (S.propertyId && withCoverFirst.length) {
       try {
-        await updateMediaAssets({ ids: withCoverFirst.map((p) => p.assetId).filter(Boolean), patch: { recommended: true } });
+        await updateMediaAssets({ data: { ids: withCoverFirst.map((p) => p.assetId).filter(Boolean), patch: { recommended: true } } });
       } catch (_) {}
     }
     S.outputs = outs;
@@ -957,7 +963,7 @@ async function generate() {
     S.busy = false;
     if (projectId) {
       try {
-        await setVideoStatus({ id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) });
+        await setVideoStatus({ data: { id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) } });
       } catch (_) {}
     }
     toast(e?.message || "The render failed. Your selections were saved.");
@@ -1034,7 +1040,7 @@ function bind() {
     if (t.getAttribute("data-newprop")) {
       const label = normalizeAddress(S.addressQuery);
       try {
-        const row = await createMediaProperty({ address: label });
+        const row = await createMediaProperty({ data: { address: label } });
         S.propertyId = row.id;
         S.propertyLabel = row.address;
         S.standalone = false;
@@ -1179,7 +1185,7 @@ function bind() {
     if (room) {
       const p = S.photos.find((x) => x.id === room);
       if (p) p.room = t.value;
-      if (p?.assetId) updateMediaAssets({ ids: [p.assetId], patch: { room_group: t.value } }).catch(() => {});
+      if (p?.assetId) updateMediaAssets({ data: { ids: [p.assetId], patch: { room_group: t.value } } }).catch(() => {});
       return;
     }
   });
