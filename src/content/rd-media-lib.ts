@@ -297,7 +297,10 @@ function render() {
     bulk.classList.toggle("on", S.selMode && S.sel.size > 0);
     const n = document.getElementById("mlSelCount");
     if (n) n.textContent = S.sel.size + " Selected";
+    const bv = document.getElementById("mlBulkVideo");
+    if (bv) bv.disabled = !selectedItems().some(videoReady);
   }
+
   if (S.loading) {
     grid.innerHTML = `<p class="ml-note">Loading Your Media…</p>`;
     return;
