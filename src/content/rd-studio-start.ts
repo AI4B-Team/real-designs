@@ -555,20 +555,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   const CARDS: Array<{ act: string; icon: string; title: string; desc: string; meta: string; btn: string }> = [
     {
-      act: "c-space",
+      act: "c-upload",
       icon: "image-up",
-      title: "Upload A Space",
-      desc: "Redesign, stage or improve an existing space.",
-      meta: "JPG · PNG · HEIC · WEBP",
-      btn: "Upload A Photo",
-    },
-    {
-      act: "c-sketch",
-      icon: "pencil-ruler",
-      title: "Sketch Or Plan",
-      desc: "Turn a sketch or floor plan into a realistic design.",
-      meta: "Images · PDF",
-      btn: "Upload A Sketch",
+      title: "Upload A Space Or Plan",
+      desc: "Start with a photo, sketch, floor plan or concept drawing.",
+      meta: "JPG · PNG · HEIC · WEBP · PDF",
+      btn: "Upload A File",
     },
     {
       act: "c-describe",
@@ -590,11 +582,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       act: "lvideo",
       icon: "clapperboard",
       title: "Create A Listing Video",
-      desc: "Turn listing photos into a polished video.",
+      desc: "Turn listing photos into a polished property video.",
       meta: "Photos · Motion · Branding",
       btn: "Create A Listing Video",
     },
   ];
+
 
   function recentHtml() {
     const list = (ctx.getRecent ? ctx.getRecent() : []).slice(0, 4);
