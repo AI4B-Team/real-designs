@@ -295,7 +295,7 @@ function step2() {
   const count = Object.keys(d.picked).length;
   return `<div class="pk-assets">
     <div class="pk-tabs">${TABS.map(
-      ([k, l]) => `<button class="pk-tab${tab === k ? " on" : ""}" data-tab="${k}">${l} ${items[k].length}</button>`,
+      ([k, l]) => `<button class="pk-tab${tab === k ? " on" : ""}" data-pktab="${k}">${l} ${items[k].length}</button>`,
     ).join("")}</div>
     <p class="pk-note">${count} Item${count === 1 ? "" : "s"} Selected${
       d.property_id ? "" : " · Choose a property in step one to narrow these results"
@@ -306,7 +306,7 @@ function step2() {
             .map((it) => {
               const on = !!d.picked[it.id];
               const thumb = it.url && it.kind !== "budget" && it.kind !== "video" ? it.url : null;
-              return `<button class="pk-item${on ? " on" : ""}" data-pick="${it.id}" data-src="${tab}">
+              return `<button class="pk-item${on ? " on" : ""}" data-pkpick="${it.id}" data-pksrc="${tab}">
           <span class="pk-thumb">${
             thumb
               ? `<img data-ph="${esc(thumb)}" alt="${esc(it.title)}" loading="lazy">`
@@ -699,19 +699,19 @@ export function mountPresent() {
 }
 
 async function onClick(e) {
-  const t = e.target.closest("[data-pk],[data-tab],[data-pick],[data-secmove],[data-sechide]");
+  const t = e.target.closest("[data-pk],[data-pktab],[data-pkpick],[data-secmove],[data-sechide]");
   if (!t) return;
   const row = e.target.closest(".pk-row");
   const id = t.getAttribute("data-id") || (row ? row.getAttribute("data-id") : null);
   const a = t.getAttribute("data-pk");
 
-  if (t.hasAttribute("data-tab")) {
-    S.draft.tab = t.getAttribute("data-tab");
+  if (t.hasAttribute("data-pktab")) {
+    S.draft.tab = t.getAttribute("data-pktab");
     return renderBuilder();
   }
-  if (t.hasAttribute("data-pick")) {
-    const sid = t.getAttribute("data-pick");
-    const src = t.getAttribute("data-src");
+  if (t.hasAttribute("data-pkpick")) {
+    const sid = t.getAttribute("data-pkpick");
+    const src = t.getAttribute("data-pksrc");
     if (S.draft.picked[sid]) delete S.draft.picked[sid];
     else {
       const it = (sourceItems(S.draft.property_id)[src] || []).find((x) => x.id === sid);
