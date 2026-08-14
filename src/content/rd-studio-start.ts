@@ -784,8 +784,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     try {
       ctx.track?.("studio_start_video", { from: "studio" });
     } catch (_) {}
-    // Same destination as the left-sidebar "Video" item (REAL REVEAL workspace).
-    ctx.go("reveal");
+    // Unified Create A Listing Video workflow (same one Media and Properties open).
+    try {
+      (window as any).rdListingVideo?.({ from: "studio" });
+    } catch (_) {
+      ctx.go("reveal");
+    }
   }
 
   function onClick(e: Event) {

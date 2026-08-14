@@ -23,6 +23,7 @@ import { renderReveal, sceneDurations, DISCLOSURE_LABEL } from "@/lib/reveal-ren
 import { openVideoDetail } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { identifyListing, normalizeAddress, NO_IMPORT_MESSAGE } from "@/lib/listing-source";
+import { startListingImport, linkListingImport } from "@/lib/listing-import.functions";
 import * as UM from "@/lib/upload-manager";
 import { CREDIT_COSTS } from "@/lib/credits.functions";
 import { track } from "@/lib/analytics";
@@ -119,7 +120,13 @@ const S = {
   go: null,
   mounted: false,
   loading: false,
-  step: "start", // start | photos | setup | rendering | done
+  step: "start", // start | review | photos | setup | rendering | done
+  importUrl: "",
+  importState: "idle", // idle | running | failed | ready
+  importStage: "",
+  importError: "",
+  importRow: null,
+  otherOpen: false,
   properties: [],
   propertyId: null,
   propertyLabel: "",
@@ -298,60 +305,129 @@ async function loadAssets(propertyId) {
 
 /* ======================= START SCREEN ======================= */
 
+
 function startHtml() {
   const matches = S.addressMatches;
+  const other = S.otherOpen || S.importState === "failed" || S.propertyId || S.standalone || S.job;
   return `<div class="lv">
     <div class="lv-head">
       <h2>Create a Listing Video</h2>
-      <p>Turn your property photos into a polished video for listings, social media and client presentations.</p>
+      <p>Start with your listing link. We'll pull in the property details so you can go straight to choosing photos.</p>
     </div>
 
     <div class="lv-start">
-      <label class="lv-f">
-        <span>Property or Address</span>
-        <span class="lv-input"><i data-lucide="map-pin"></i>
-          <input id="lvAddr" placeholder="Search your properties or enter an address" value="${esc(S.addressQuery)}" autocomplete="off">
-        </span>
-      </label>
+      <div class="lv-import">
+        <label class="lv-f">
+          <span>Listing Link</span>
+          <span class="lv-input big"><i data-lucide="link"></i>
+            <input id="lvImportUrl" placeholder="https://www.zillow.com/homedetails/..." value="${esc(S.importUrl)}" autocomplete="off" spellcheck="false">
+          </span>
+        </label>
+        <button class="btn btn-primary" id="lvImportGo" ${S.importState === "running" ? "disabled" : ""}>
+          ${S.importState === "running" ? "Importing…" : "Import Listing"}
+        </button>
+        <p class="lv-note">Supported: Zillow, Realtor.com, Redfin, Homes.com, Trulia and Compass. We only use listing data from authorized sources.</p>
+      </div>
+
+      ${importStatusHtml()}
+
+      <button class="lv-quiet" id="lvOther"><i data-lucide="${other ? "chevron-up" : "chevron-down"}"></i>Or Start Another Way</button>
+
       ${
-        S.addressQuery.trim().length > 1
-          ? `<div class="lv-matches">
-              ${matches
-                .map(
-                  (p) =>
-                    `<button class="lv-match" data-prop="${p.id}"><i data-lucide="building-2"></i><b>${esc(p.address)}</b><span>Use This Property</span></button>`,
-                )
-                .join("")}
-              <button class="lv-match new" data-newprop="1"><i data-lucide="plus"></i><b>${esc(normalizeAddress(S.addressQuery))}</b><span>Create Property Draft</span></button>
-            </div>`
+        other
+          ? `<div class="lv-other">
+        <label class="lv-f">
+          <span>Property or Address</span>
+          <span class="lv-input"><i data-lucide="map-pin"></i>
+            <input id="lvAddr" placeholder="Search your properties or enter an address" value="${esc(S.addressQuery)}" autocomplete="off">
+          </span>
+        </label>
+        ${
+          S.addressQuery.trim().length > 1
+            ? `<div class="lv-matches">
+                ${matches
+                  .map(
+                    (p) =>
+                      `<button class="lv-match" data-prop="${p.id}"><i data-lucide="building-2"></i><b>${esc(p.address)}</b><span>Use This Property</span></button>`,
+                  )
+                  .join("")}
+                <button class="lv-match new" data-newprop="1"><i data-lucide="plus"></i><b>${esc(normalizeAddress(S.addressQuery))}</b><span>Create Property Draft</span></button>
+              </div>`
+            : ""
+        }
+
+        <div class="lv-drop" id="lvDrop" tabindex="0" role="button" aria-label="Upload listing photos">
+          <i data-lucide="upload-cloud"></i>
+          <b>Upload Listing Photos</b>
+          <span>Drag and drop, or browse. JPG, PNG, HEIC and WEBP up to ${UM.MAX_FILE_MB} MB each. Uploads keep running while you work.</span>
+          <button class="btn btn-dark btn-sm" id="lvBrowse">Browse Files</button>
+        </div>
+        <input type="file" id="lvFiles" multiple accept="${UM.ACCEPT_ATTR}" hidden>
+
+        <label class="lv-auth"><input type="checkbox" id="lvAuth" ${S.authorized ? "checked" : ""}>
+          I own these photos or have permission to use them in designs, videos and marketing materials.</label>
+
+        <div class="lv-cloud">
+          <button class="lv-cbtn" data-cloud="dropbox"><i data-lucide="cloud"></i>Import from Dropbox</button>
+          <button class="lv-cbtn" data-cloud="drive"><i data-lucide="hard-drive"></i>Import from Google Drive</button>
+        </div>
+
+        ${S.job ? jobHtml() : ""}
+        ${
+          S.propertyId || S.standalone
+            ? `<div class="lv-ctx"><i data-lucide="check"></i><b>${esc(S.propertyLabel || "Standalone Project")}</b>
+                <button class="lv-quiet" id="lvUseMedia">Use Existing Property Media</button></div>`
+            : `<button class="lv-quiet" id="lvStandalone">Create a Standalone Video Instead</button>`
+        }
+      </div>`
           : ""
       }
+    </div>
+  </div>`;
+}
 
-      <div class="lv-drop" id="lvDrop" tabindex="0" role="button" aria-label="Upload listing photos">
-        <i data-lucide="upload-cloud"></i>
-        <b>Upload Listing Photos</b>
-        <span>Drag and drop, or browse. JPG, PNG, HEIC and WEBP up to ${UM.MAX_FILE_MB} MB each. Uploads keep running while you work.</span>
-        <button class="btn btn-dark btn-sm" id="lvBrowse">Browse Files</button>
+function importStatusHtml() {
+  if (S.importState === "running") {
+    return `<div class="lv-job">
+      <div class="lv-job-h"><b>Importing Listing</b><span>${esc(S.importStage || "Retrieving Listing Details")}</span></div>
+      <div class="lv-bar indet"><i></i></div>
+      <p class="lv-note">This keeps running while you work. We'll show the listing details as soon as they arrive.</p>
+    </div>`;
+  }
+  if (S.importState === "failed") {
+    return `<div class="lv-result warn">
+      <b>We Couldn't Import That Listing</b>
+      <p class="lv-note">${esc(S.importError || "Something went wrong with that link.")}</p>
+      <div class="lv-panel-a">
+        <button class="btn btn-ghost btn-sm" id="lvImportGo"><i data-lucide="rotate-cw"></i>Try Again</button>
+        <button class="btn btn-ghost btn-sm" id="lvBrowse"><i data-lucide="upload"></i>Upload Photos Instead</button>
       </div>
-      <input type="file" id="lvFiles" multiple accept="${UM.ACCEPT_ATTR}" hidden>
+    </div>`;
+  }
+  return "";
+}
 
-      <label class="lv-auth"><input type="checkbox" id="lvAuth" ${S.authorized ? "checked" : ""}>
-        I own these photos or have permission to use them in designs, videos and marketing materials.</label>
-
-      <div class="lv-cloud">
-        <button class="lv-cbtn" data-cloud="dropbox"><i data-lucide="cloud"></i>Import from Dropbox</button>
-        <button class="lv-cbtn" data-cloud="drive"><i data-lucide="hard-drive"></i>Import from Google Drive</button>
-      </div>
-
-      <button class="lv-link" id="lvLinkOpen"><i data-lucide="link"></i>Paste a Listing Link</button>
-      ${S.linkOpen ? linkPanelHtml() : ""}
-      ${S.job ? jobHtml() : ""}
-      ${
-        S.propertyId || S.standalone
-          ? `<div class="lv-ctx"><i data-lucide="check"></i><b>${esc(S.propertyLabel || "Standalone Project")}</b>
-              <button class="lv-quiet" id="lvUseMedia">Use Existing Property Media</button></div>`
-          : `<button class="lv-quiet" id="lvStandalone">Create a Standalone Video Instead</button>`
-      }
+function reviewHtml() {
+  const l = (S.importRow && S.importRow.listing) || {};
+  const row = (label, val) => `<div class="lv-row"><span>${label}</span><b>${esc(val || "Not Provided")}</b></div>`;
+  return `<div class="lv">
+    <div class="lv-head">
+      <button class="lv-back" data-a="back-start"><i data-lucide="arrow-left"></i>Back</button>
+      <h2>Review Listing</h2>
+      <p>Confirm the imported details before we build the video.</p>
+    </div>
+    <div class="lv-result">
+      ${row("Address", l.address)}
+      ${row("Price", l.price ? `$${Number(l.price).toLocaleString()}` : "")}
+      ${row("Beds", l.beds)}
+      ${row("Baths", l.baths)}
+      ${row("Floor SF", l.sqft)}
+      ${row("Source", S.importRow ? S.importRow.provider_name : "")}
+      ${row("Photos Imported", S.importRow ? String(S.importRow.photo_count || 0) : "0")}
+    </div>
+    <div class="lv-foot">
+      <button class="btn btn-ghost btn-sm" data-a="back-start">Back</button>
+      <button class="btn btn-primary btn-sm" data-a="review-continue"><i data-lucide="arrow-right"></i>Continue To Photos</button>
     </div>
   </div>`;
 }
@@ -642,7 +718,9 @@ function render() {
   const el = hostEl();
   if (!el) return;
   el.innerHTML =
-    S.step === "photos"
+    S.step === "review"
+      ? reviewHtml()
+      : S.step === "photos"
       ? photosHtml()
       : S.step === "setup"
         ? setupHtml()
@@ -678,6 +756,74 @@ async function mountPlayer() {
   box.innerHTML = data?.signedUrl
     ? `<video src="${data.signedUrl}" controls playsinline></video>`
     : `<div class="lv-note">Could not load that video.</div>`;
+}
+
+/* ======================= LISTING IMPORT ======================= */
+
+async function runImport() {
+  const url = String(S.importUrl || "").trim();
+  if (!url) return toast("Paste a listing link to continue.");
+  S.importState = "running";
+  S.importStage = "Validating Link";
+  S.importError = "";
+  render();
+  track("lvideo_import_start", { url_host: (url.match(/([a-z0-9.-]+\.[a-z]{2,})/i) || [])[1] || "" });
+  try {
+    S.importStage = "Retrieving Listing Details";
+    const r = await startListingImport({ data: { url, property_id: S.propertyId || null } });
+    S.importRow = r.import || null;
+    if (!r.ok) {
+      S.importState = "failed";
+      S.importError = r.message || "We couldn't import that listing.";
+      S.otherOpen = true;
+      track("lvideo_import_failed", { code: r.code || "unknown" });
+      return render();
+    }
+    S.importState = "ready";
+    S.step = "review";
+    if (S.importRow?.listing?.address) {
+      S.addressQuery = S.importRow.listing.address;
+      matchAddresses();
+    }
+    track("lvideo_import_ready", { photos: S.importRow?.photo_count || 0 });
+    return render();
+  } catch (e) {
+    S.importState = "failed";
+    S.importError = e?.message || "We couldn't reach the import service. Try again in a moment.";
+    S.otherOpen = true;
+    return render();
+  }
+}
+
+/** Turn a reviewed import into a property context and move to the photo step. */
+async function continueFromImport() {
+  const address = normalizeAddress(S.importRow?.listing?.address || S.addressQuery || "");
+  try {
+    if (!S.propertyId) {
+      const existing = S.properties.find((p) => normalizeAddress(p.address) === address);
+      const row = existing || (await createMediaProperty({ data: { address: address || "Imported Listing" } }));
+      if (!existing) S.properties.unshift(row);
+      S.propertyId = row.id;
+      S.propertyLabel = row.address;
+      S.standalone = false;
+    }
+    if (S.importRow?.id) {
+      try {
+        await linkListingImport({ data: { id: S.importRow.id, property_id: S.propertyId } });
+      } catch (_) {}
+    }
+    await loadAssets(S.propertyId);
+  } catch (e) {
+    return toast(e?.message || "Could not set up that property.");
+  }
+  if (!S.photos.length) {
+    S.step = "start";
+    S.otherOpen = true;
+    toast("No photos came through with that listing. Upload the listing photos to continue.");
+    return render();
+  }
+  S.step = "photos";
+  render();
 }
 
 /* ======================= UPLOADS ======================= */
@@ -980,9 +1126,18 @@ function bind() {
   el.__lvBound = true;
 
   el.addEventListener("click", async (e) => {
-    const t = e.target.closest("[data-a],[data-prop],[data-newprop],[data-cloud],[data-set],[data-ver],[data-useaddr],#lvBrowse,#lvLinkOpen,#lvLinkGo,#lvLinkUpload,#lvStandalone,#lvUseMedia,#lvRetry,#lvCancel,#lvDrop");
+    const t = e.target.closest("[data-a],[data-prop],[data-newprop],[data-cloud],[data-set],[data-ver],[data-useaddr],#lvImportGo,#lvOther,#lvBrowse,#lvLinkOpen,#lvLinkGo,#lvLinkUpload,#lvStandalone,#lvUseMedia,#lvRetry,#lvCancel,#lvDrop");
     if (!t) return;
 
+    if (t.id === "lvOther") {
+      S.otherOpen = !S.otherOpen;
+      return render();
+    }
+    if (t.id === "lvImportGo") {
+      const field = el.querySelector("#lvImportUrl");
+      if (field) S.importUrl = field.value || "";
+      return runImport();
+    }
     if (t.id === "lvDrop" || t.id === "lvBrowse") return el.querySelector("#lvFiles")?.click();
     if (t.id === "lvLinkOpen") {
       S.linkOpen = !S.linkOpen;
@@ -1076,6 +1231,7 @@ function bind() {
 
     const a = t.getAttribute("data-a");
     const id = t.getAttribute("data-id");
+    if (a === "review-continue") return continueFromImport();
     if (a === "back-start") {
       S.step = "start";
       return render();
@@ -1190,7 +1346,16 @@ function bind() {
     }
   });
 
+  el.addEventListener("keydown", (e) => {
+    if (e.target.id === "lvImportUrl" && e.key === "Enter") {
+      e.preventDefault();
+      S.importUrl = e.target.value || "";
+      runImport();
+    }
+  });
+
   el.addEventListener("input", (e) => {
+    if (e.target.id === "lvImportUrl") S.importUrl = e.target.value;
     if (e.target.id === "lvAddr") {
       S.addressQuery = e.target.value;
       matchAddresses();
