@@ -264,15 +264,15 @@ function counts() {
 
 function emptyState() {
   if (S.tab === "images")
-    return `<div class="ml-empty"><i data-lucide="image"></i><b>No images yet</b><span>Generate a design from a photo and it lands here.</span>
+    return `<div class="ml-empty"><i data-lucide="image"></i><b>No Images Yet</b><span>Generate a design from a photo and it lands here.</span>
       <button class="btn btn-primary btn-sm" data-e="image">Generate an Image</button></div>`;
   if (S.tab === "videos")
-    return `<div class="ml-empty"><i data-lucide="clapperboard"></i><b>No videos yet</b><span>Turn a property shoot or a finished design into a listing video.</span>
+    return `<div class="ml-empty"><i data-lucide="clapperboard"></i><b>No Videos Yet</b><span>Turn a property shoot or a finished design into a listing video.</span>
       <button class="btn btn-primary btn-sm" data-e="video">Create a Listing Video</button></div>`;
   if (S.tab === "uploads")
-    return `<div class="ml-empty"><i data-lucide="upload-cloud"></i><b>No uploads yet</b><span>Add your source photos, sketches and floor plans.</span>
+    return `<div class="ml-empty"><i data-lucide="upload-cloud"></i><b>No Uploads Yet</b><span>Add your source photos, sketches and floor plans.</span>
       <button class="btn btn-primary btn-sm" data-e="upload">Upload Files</button></div>`;
-  return `<div class="ml-empty"><i data-lucide="images"></i><b>No media yet</b><span>Upload a source file or create your first image or listing video.</span>
+  return `<div class="ml-empty"><i data-lucide="images"></i><b>No Media Yet</b><span>Upload a source file or create your first image or listing video.</span>
     <button class="btn btn-primary btn-sm" data-e="upload">Upload Files</button></div>`;
 }
 
