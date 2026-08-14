@@ -483,12 +483,22 @@ async function loadDashboard(){
   if(!rl||!al||!bt) return;
   rl.innerHTML=skList(3); al.innerHTML=skList(2); bt.innerHTML=skRows(6,3);
   let s;
-  try{ s=await getWorkspaceSummary(); }
+  try{
+    s=await Promise.race([
+      getWorkspaceSummary(),
+      new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),25000)),
+    ]);
+  }
   catch(e){
-    rl.innerHTML=empty('We Could Not Load Your Workspace','Your session may have timed out. Sign in again, then refresh this page.');
+    const slow=e&&e.message==='timeout';
+    rl.innerHTML=empty(slow?'This Is Taking Longer Than Usual':'We Could Not Load Your Workspace',
+      slow?'Your workspace did not load in time. Try again.':'Your session may have timed out. Sign in again, then refresh this page.')
+      +'<div class="rowi"><button class="btn" id="dashRetry" type="button">Retry</button></div>';
     al.innerHTML=''; bt.innerHTML='';
+    const rb=document.getElementById('dashRetry'); if(rb) rb.onclick=()=>loadDashboard();
     return;
   }
+
 
   const kpis=document.querySelectorAll('#v-dash .grid.g4 .kpi');
   const setKpi=(i,val,note)=>{ const k=kpis[i]; if(!k) return;
