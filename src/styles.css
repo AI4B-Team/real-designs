@@ -226,3 +226,14 @@ html:not(.dark) select, html:not(.dark) option, html:not(.dark) optgroup { color
   padding: 5px 9px; border-radius: 6px; z-index: 200; pointer-events: none;
   box-shadow: 0 8px 22px rgba(20,18,15,.14);
 }
+[data-tt].tt-wrap:hover::after {
+  white-space: normal; width: 260px; text-align: left; font-weight: 500; line-height: 1.4;
+}
+/* Small inline help icon next to labels and section titles */
+.lbl-i {
+  display: inline-flex; width: 13px; height: 13px; margin-left: 5px;
+  vertical-align: -1px; color: rgba(20,17,15,.42); cursor: help; flex: none;
+}
+.lbl-i:hover { color: #CC0000; }
+.dark .lbl-i { color: rgba(255,255,255,.5); }
+
