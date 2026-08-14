@@ -597,3 +597,66 @@ export function recommendStyles(sig: SourceSignals, limit = 4): { style: StyleRe
   scored.sort((a, b) => b.score - a.score);
   return scored.slice(0, Math.max(3, limit)).map(({ style, reason }) => ({ style, reason }));
 }
+
+/* ------------------------------------------------------------------ */
+/* admin overrides                                                     */
+/* ------------------------------------------------------------------ */
+export type StyleOverrideRow = {
+  style_id: string;
+  display_name?: string | null;
+  short_description?: string | null;
+  category?: string | null;
+  aliases?: string[] | null;
+  project_types?: string[] | null;
+  preview_image?: string | null;
+  provider_map?: Record<string, string> | null;
+  generation_prompt?: string | null;
+  negative_prompt?: string | null;
+  sort_order?: number | null;
+  is_featured?: boolean | null;
+  is_hidden?: boolean | null;
+  is_custom?: boolean | null;
+};
+
+/** Apply admin overrides on top of the shipped catalog. IDs never change. */
+export function applyStyleOverrides(rows: StyleOverrideRow[]): void {
+  (rows || []).forEach((row) => {
+    if (!row || !row.style_id) return;
+    let rec = styleById(row.style_id);
+    if (!rec && row.is_custom) {
+      rec = {
+        ...AUTO_STYLE,
+        id: row.style_id,
+        slug: row.style_id,
+        displayName: row.display_name || row.style_id,
+        shortDescription: row.short_description || "",
+        category: row.category || "Most Popular",
+        aliases: [],
+        isAuto: false,
+        featuredRank: 900,
+        isFeatured: false,
+      };
+      STYLES.push(rec);
+      INDEX[norm(rec.id)] = rec;
+      INDEX[norm(rec.displayName)] = rec;
+    }
+    if (!rec) return;
+    if (row.display_name) { rec.displayName = row.display_name; INDEX[norm(row.display_name)] = rec; }
+    if (row.short_description) rec.shortDescription = row.short_description;
+    if (row.category) rec.category = row.category;
+    if (row.aliases) { rec.aliases = row.aliases; row.aliases.forEach((a) => { INDEX[norm(a)] = rec as StyleRecord; }); }
+    if (row.project_types && row.project_types.length) rec.compatibleProjectTypes = row.project_types as ProjectType[];
+    if (row.preview_image) rec.previewImage = row.preview_image;
+    if (row.generation_prompt) rec.generationPrompt = row.generation_prompt;
+    if (row.negative_prompt) rec.negativePrompt = row.negative_prompt;
+    if (typeof row.sort_order === "number") rec.featuredRank = row.sort_order;
+    if (typeof row.is_featured === "boolean") rec.isFeatured = row.is_featured;
+    if (typeof row.is_hidden === "boolean") rec.isActive = !row.is_hidden;
+    if (row.provider_map) {
+      Object.entries(row.provider_map).forEach(([provider, name]) => {
+        PROVIDER_STYLE_MAP[provider] = PROVIDER_STYLE_MAP[provider] || {};
+        (PROVIDER_STYLE_MAP[provider] as Record<string, string>)[rec!.id] = name;
+      });
+    }
+  });
+}
