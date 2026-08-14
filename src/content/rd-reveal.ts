@@ -1539,7 +1539,7 @@ function dvBind() {
   const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
   const upd = (fn) => { fn(); dvQueueSave(); render(); };
 
-  on("#dvClose, #dvBackLib", "click", async () => { await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
+  on("#dvClose, #dvBackLib", "click", async () => { dvActive = false; await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
   const t = el.querySelector("#dvTitle");
   if (t) t.addEventListener("change", () => { d.title = t.value.trim() || "Design Video"; dvQueueSave(); });
   on("[data-dvmotion]", "click", (e) => upd(() => { d.motionStyle = e.currentTarget.dataset.dvmotion; }));
@@ -1655,6 +1655,8 @@ export async function startDesignVideo(design = {}) {
   if (!design || !design.id) throw new Error("That design could not be identified.");
   if (!design.path) throw new Error("That design has no image yet.");
   S.screen = "design";
+  dvActive = true;
+  setTimeout(closeIntroNow, 300); setTimeout(closeIntroNow, 1200);
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
@@ -1704,13 +1706,14 @@ export async function continueDesignVideo(id) {
 }
 
 /* ======================= INTRO ======================= */
+let dvActive = false;
 function closeIntroNow() {
   const w = document.getElementById("rvIntroWrap");
   if (w) { w.className = "rv-modal"; w.innerHTML = ""; }
 }
 
 function maybeIntro() {
-  if (S.screen === "design") { closeIntroNow(); return; }
+  if (dvActive || S.screen === "design") { closeIntroNow(); return; }
   try { if (localStorage.getItem("rd_reveal_intro") === "1") return; } catch (_) { return; }
   let wrap = document.getElementById("rvIntroWrap");
   if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; document.body.appendChild(wrap); }
