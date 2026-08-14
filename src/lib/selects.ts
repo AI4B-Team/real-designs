@@ -11,6 +11,7 @@ let openedAt = 0;
 type Cleanup = () => void;
 
 function closeMenu() {
+  if (document.querySelector(".rdsel-menu")) console.log("RDSEL close", new Error().stack);
   document.querySelectorAll(".rdsel-menu").forEach((n) => n.remove());
   document.querySelectorAll("select." + "rdsel-open").forEach((n) => n.classList.remove("rdsel-open"));
 }
