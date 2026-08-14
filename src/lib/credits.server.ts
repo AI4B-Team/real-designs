@@ -60,14 +60,35 @@ export async function refund(userId: string, amount: number, note?: string): Pro
   });
 }
 
-export async function readAccount(userId: string) {
-  const { data, error } = await supabaseAdmin.rpc("ensure_credit_account", { _user_id: userId });
-  if (error) throw new Error(error.message);
-  return data as unknown as {
-    user_id: string;
-    plan: "free" | "starter" | "pro" | "studio";
-    balance: number;
-    free_used_today: number;
-    free_day: string;
-  };
+export type CreditAccount = {
+  user_id: string;
+  plan: "free" | "starter" | "pro" | "studio";
+  balance: number;
+  free_used_today: number;
+  free_day: string;
+};
+
+/** Transient upstream/network failures (connection reset, 111, fetch failed). */
+function isTransient(message: string): boolean {
+  return /upstream connect|connect error|fetch failed|ECONNRESET|ETIMEDOUT|socket hang up|502|503|504/i.test(
+    message,
+  );
 }
+
+export async function readAccount(userId: string): Promise<CreditAccount> {
+  let lastMessage = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const { data, error } = await supabaseAdmin
+      .rpc("ensure_credit_account", { _user_id: userId })
+      .then(
+        (r) => r,
+        (e: unknown) => ({ data: null, error: { message: String((e as Error)?.message ?? e) } }),
+      );
+    if (!error) return data as unknown as CreditAccount;
+    lastMessage = error.message;
+    if (!isTransient(lastMessage)) break;
+    await new Promise((r) => setTimeout(r, 250 * (attempt + 1)));
+  }
+  throw new Error(lastMessage || "Could not read credit account");
+}
+
