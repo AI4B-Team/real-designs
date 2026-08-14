@@ -41,7 +41,8 @@
 @media (max-width:1000px){ .rp-grid2 { grid-template-columns:1fr; } }
 
 .rp-filters { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.rp-search { position:relative; display:flex; align-items:center; min-width:220px; flex:1; }
+.rp-search { position:relative; display:flex; align-items:center; min-width:200px; max-width:280px; flex:1; }
+.rp-filters select { min-width:158px; }
 .rp-search svg { position:absolute; left:11px; width:15px; height:15px; color:#9ca3af; }
 .rp-search input { width:100%; padding:8px 12px 8px 33px; border:1px solid var(--line,#e5e7eb); border-radius:999px;
   font:inherit; font-size:13px; background:#fff; }
