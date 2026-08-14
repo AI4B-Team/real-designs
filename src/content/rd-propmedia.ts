@@ -340,8 +340,9 @@ function shell() {
   <div class="card pm-head">
     <div class="card-h">
       <div>
-        <h3 id="pmTitle">All Property Media</h3>
-        <div class="sub" id="pmSub">Originals, enhanced photos and export packages, organized by property</div>
+        <h3 id="pmTitle">Media</h3>
+        <div class="sub" id="pmSub">All your uploaded and generated images, videos and project files in one place.</div>
+
       </div>
       <div class="pm-head-a">
         <label class="pm-pick"><span class="sr-only">Property</span><select id="pmProp"></select></label>
