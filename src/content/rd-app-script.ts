@@ -63,6 +63,12 @@ function populateStyleSelect(){
   sel.value=match?(match as any).value:'Warm Minimal';
 }
 try{
+  document.addEventListener('click',(e:any)=>{
+    if(e.target&&e.target.closest&&e.target.closest('#spChips .chip')){
+      const sel=document.getElementById('fStyle') as any;
+      if(sel){ sel.dataset.catalog=''; setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },0); }
+    }
+  },true);
   window.addEventListener('rd:style-selected',()=>{ try{ populateStyleSelect(); }catch(_){} });
   document.addEventListener('DOMContentLoaded',()=>{ try{ populateStyleSelect(); }catch(_){} });
   setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
@@ -786,6 +792,17 @@ function setStudioSource(kind,src,alt,opts){
   Object.keys(locks).forEach(k=>delete locks[k]);
   document.querySelectorAll('.hot').forEach(h=>h.className='hot');
   sourceCaption(true,o.caption);
+  // Remember the source so Explore can recommend compatible styles.
+  try{
+    localStorage.setItem('rd_last_source',JSON.stringify({
+      projectType:currentProjectType(),
+      roomType:(document.getElementById('fRoom')||{}).value||'',
+      brightness:'average',
+      woodTones:true,
+      text:(document.getElementById('agentNote')||{}).value||'',
+      ts:Date.now()
+    }));
+  }catch(_){}
   analyzeObjects();
   paintStudioState();
   paintStudioSub();

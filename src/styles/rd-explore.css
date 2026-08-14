@@ -182,3 +182,35 @@
 
 /* label used in the DNA compare rows */
 .rd-app .xp-lab{font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mute-2);font-family:"DM Mono",ui-monospace,monospace}
+
+/* ---------- catalog: sort menu, sections, recommendations, admin ---------- */
+.rd-app .xp-sortwrap{position:relative}
+.rd-app .xp-sortmenu{position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:170px;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 40px rgba(15,18,20,.14);padding:6px}
+.rd-app .xp-sortopt{display:block;width:100%;text-align:left;padding:8px 10px;border:0;background:transparent;border-radius:8px;font:inherit;font-size:.82rem;color:var(--ink);cursor:pointer}
+.rd-app .xp-sortopt:hover,.rd-app .xp-sortopt:focus-visible{background:var(--wash)}
+.rd-app .xp-sortopt.on{font-weight:600;color:var(--red)}
+.rd-app .xp-sec{margin:22px 0 0}
+.rd-app .xp-sec-h{display:flex;align-items:baseline;gap:10px;margin:0 0 10px}
+.rd-app .xp-sec-h h3{margin:0;font-size:1rem;letter-spacing:-.01em}
+.rd-app .xp-sec-h span{font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.rd-app .xp-sec-h .fb-link{margin-left:auto}
+.rd-app .xp-rec{margin:14px 0 4px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--wash)}
+.rd-app .xp-recrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.rd-app .xp-reccard{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.rd-app .xp-reccard img{width:100%;aspect-ratio:4/3;object-fit:cover}
+.rd-app .xp-reccard>div{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1}
+.rd-app .xp-reccard p{margin:0;font-size:.78rem;color:var(--muted)}
+.rd-app .xp-reccard .xp-acts{margin-top:auto;padding-top:8px}
+.rd-app .xp-admin-list{display:flex;flex-direction:column;gap:8px}
+.rd-app .xp-admin-row{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.rd-app .xp-admin-row.off{opacity:.55}
+.rd-app .xp-admin-row img{width:52px;height:40px;object-fit:cover;border-radius:6px}
+.rd-app .xp-admin-meta{min-width:0;flex:1}
+.rd-app .xp-admin-meta b{display:block;font-size:.86rem}
+.rd-app .xp-admin-meta span{font-size:.72rem;color:var(--muted)}
+.rd-app .xp-admin-acts{display:flex;gap:10px;flex-shrink:0}
+@media(max-width:1100px){.rd-app .xp-recrow{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){
+  .rd-app .xp-recrow{grid-template-columns:1fr}
+  .rd-app .xp-drawer.on .xp-dpanel{position:fixed;left:0;right:0;bottom:0;top:auto;width:100%;max-height:88vh;border-radius:18px 18px 0 0}
+}
