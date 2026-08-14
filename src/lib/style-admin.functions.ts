@@ -60,8 +60,9 @@ export const saveStyleOverride = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => Override.parse(input))
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
-    const row = { ...data, updated_at: new Date().toISOString() };
-    const { error } = await context.supabase.from("style_overrides").upsert(row, { onConflict: "style_id" });
+    const row: Record<string, unknown> = { updated_at: new Date().toISOString() };
+    Object.entries(data).forEach(([k, v]) => { if (v !== undefined) row[k] = v; });
+    const { error } = await context.supabase.from("style_overrides").upsert(row as never, { onConflict: "style_id" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
