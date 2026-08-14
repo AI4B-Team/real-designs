@@ -363,6 +363,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       meta: "Rooms, budgets, presentations",
       btn: "Create A Property",
     },
+    {
+      act: "lvideo",
+      icon: "clapperboard",
+      title: "Create A Listing Video",
+      desc: "Turn your listing photos into a polished video for social media and MLS.",
+      meta: "Photos, motion, branding",
+      btn: "Create A Listing Video",
+    },
   ];
 
   function chooserHtml() {
@@ -482,6 +490,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (state.method === "describe") return state.prompt.trim().length >= 12;
     if (state.method === "property") return state.newAddress.trim().length > 2;
     return false;
+  }
+
+  function goListingVideo() {
+    try {
+      (window as any).rdListingVideo({ from: "studio" });
+    } catch (_) {}
   }
 
   function onClick(e: Event) {
