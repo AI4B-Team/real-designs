@@ -4,7 +4,9 @@
  * MutationObserver, to any select added later.
  */
 
-const MARK = "data-rdsel";
+// Tracked in memory, not as a DOM attribute: writing an attribute during
+// hydration makes the client markup differ from the server HTML.
+const enhanced = new WeakSet<HTMLSelectElement>();
 
 let openedAt = 0;
 
@@ -64,8 +66,8 @@ function openMenu(sel: HTMLSelectElement) {
 }
 
 function enhance(sel: HTMLSelectElement) {
-  if (sel.multiple || sel.size > 1 || sel.hasAttribute(MARK) || sel.hasAttribute("data-native-select")) return;
-  sel.setAttribute(MARK, "1");
+  if (sel.multiple || sel.size > 1 || enhanced.has(sel) || sel.hasAttribute("data-native-select")) return;
+  enhanced.add(sel);
   sel.addEventListener("mousedown", (e) => {
     e.preventDefault();
     if (sel.classList.contains("rdsel-open")) closeMenu();
