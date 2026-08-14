@@ -1670,6 +1670,7 @@ export async function startDesignVideo(design = {}) {
   });
   S.screen = "design";
   render();
+  closeIntroNow();
   try { await dvSaveDraft(); } catch (e) { toast(e?.message || "The draft could not be saved. You can still build the video."); }
   render();
 }
@@ -1703,8 +1704,13 @@ export async function continueDesignVideo(id) {
 }
 
 /* ======================= INTRO ======================= */
+function closeIntroNow() {
+  const w = document.getElementById("rvIntroWrap");
+  if (w) { w.className = "rv-modal"; w.innerHTML = ""; }
+}
+
 function maybeIntro() {
-  if (S.screen === "design") return;
+  if (S.screen === "design") { closeIntroNow(); return; }
   try { if (localStorage.getItem("rd_reveal_intro") === "1") return; } catch (_) { return; }
   let wrap = document.getElementById("rvIntroWrap");
   if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; document.body.appendChild(wrap); }
