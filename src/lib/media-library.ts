@@ -204,7 +204,7 @@ export async function loadMediaLibrary() {
       refId: a.id,
       type: "uploaded_image",
       status: a.hidden ? "archived" : "ready",
-      title: a.file_name || a.room_group || "Uploaded Photo",
+      title: a.original_filename || a.file_name || a.room_group || "Uploaded Photo",
       propertyId: a.property_id || null,
       property: a.property_label || null,
       room: a.room_group || null,
