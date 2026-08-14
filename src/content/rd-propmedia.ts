@@ -16,6 +16,7 @@ import {
   listExportPackages,
 } from "@/lib/property-media.functions";
 import { runPhotoEdit } from "@/lib/photo-edit.functions";
+import { importCloudPhotos } from "@/lib/cloud-import.functions";
 import { uploadRenderDataUrl } from "@/lib/room-photos";
 import * as UM from "@/lib/upload-manager";
 import { ROOM_GROUPS, FLAG_LABEL, recommendations, similarTo, missingSpaces, pickRecommended } from "@/lib/media-analysis";
