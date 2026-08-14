@@ -1656,7 +1656,7 @@ export async function startDesignVideo(design = {}) {
   if (!design.path) throw new Error("That design has no image yet.");
   S.screen = "design";
   dvActive = true;
-  setTimeout(closeIntroNow, 300); setTimeout(closeIntroNow, 1200);
+  [0, 300, 900, 1800, 3000].forEach((ms) => setTimeout(closeIntroNow, ms));
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
