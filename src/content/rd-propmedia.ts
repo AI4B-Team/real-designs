@@ -484,15 +484,17 @@ function renderStats() {
   }
   const a = STATE.assets;
   const job = UM.activeJob();
+  const visible = a.filter((x) => !x.hidden);
+  const processing = job ? (job.files || []).filter((f) => f.state === "queued" || f.state === "uploading").length : 0;
+  const needsReview = visible.filter((x) => x.room_group === "Needs Review" || (x.flags || []).length).length;
   const cells = [
-    ["Total Photos", a.length],
-    ["Recommended", a.filter((x) => x.recommended).length],
-    ["Needs Review", a.filter((x) => x.room_group === "Needs Review").length],
-    ["Detected Rooms", new Set(a.filter((x) => x.room_group !== "Needs Review").map((x) => x.room_group)).size],
-    ["Quality Flags", a.filter((x) => (x.flags || []).length).length],
-    ["Processing", job ? job.state : "Idle"],
+    ["Total Media", visible.length],
+    ["Needs Review", needsReview],
+    ["Processing", processing],
+    ["Ready", Math.max(0, visible.length - needsReview - processing)],
   ];
   el.innerHTML = cells.map(([k, v]) => `<div class="pm-stat"><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join("");
+
   const miss = document.getElementById("pmMissing");
   if (miss) {
     const m = missingSpaces(a);
