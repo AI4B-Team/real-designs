@@ -97,7 +97,7 @@
 .shop-more{position:relative;flex:0 0 auto}
 .shop-morebtn{display:grid;place-items:center;width:32px;height:30px;border-radius:8px;border:1px solid var(--line,#e6e3dd);background:var(--white,#fff);cursor:pointer;color:var(--ink-2,#3a382f)}
 .shop-morebtn svg{width:15px;height:15px}
-.shop-moremenu{display:none;position:absolute;right:0;bottom:calc(100% + 6px);z-index:25;min-width:180px;background:var(--white,#fff);border:1px solid var(--line,#e6e3dd);border-radius:10px;box-shadow:0 18px 40px rgba(15,18,20,.16);padding:5px}
+.shop-moremenu{display:none;position:absolute;right:0;top:calc(100% + 6px);z-index:40;min-width:180px;background:var(--white,#fff);border:1px solid var(--line,#e6e3dd);border-radius:10px;box-shadow:0 18px 40px rgba(15,18,20,.16);padding:5px}
 .shop-more.on .shop-moremenu{display:block}
 .shop-moremenu button,.shop-moremenu a{display:block;width:100%;text-align:left;padding:7px 9px;border:0;background:none;border-radius:7px;font:inherit;font-size:.76rem;color:var(--ink,#1b1a17);text-decoration:none;cursor:pointer}
 .shop-moremenu button:hover,.shop-moremenu a:hover{background:var(--paper,#f6f5f2)}
