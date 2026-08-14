@@ -7,6 +7,7 @@ import { createIcons, icons } from "lucide";
 import {
   STYLES, STYLE_CATEGORIES, AUTO_STYLE, styleById, resolveStyle, recommendStyles, buildStylePayload,
 } from "@/lib/style-catalog";
+import { setStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 
 export { DIRECTIONS } from "@/content/directions";
 
@@ -329,24 +330,34 @@ export function mountExplore(go, ctx) {
 
   /* ---------- apply a style ---------- */
   /** Store the canonical selection and hand it to Studio. Never generates, never charges. */
-  function applyToStudio(s) {
-    const payload = buildStylePayload({ style: s.id, projectType: s.compatibleProjectTypes[0] });
-    write(LS.choice, { styleId: s.id, name: s.displayName, payload: payload, ts: Date.now() });
-    const sel = document.getElementById("fStyle");
-    if (sel) {
-      if (!Array.from(sel.options).some((o) => o.value === s.displayName || o.text === s.displayName))
-        sel.insertAdjacentHTML("afterbegin", `<option value="${esc(s.displayName)}" data-style-id="${esc(s.id)}">${esc(s.displayName)}</option>`);
-      sel.value = s.displayName;
-      sel.dispatchEvent(new Event("change", { bubbles: true }));
+  let applying = false;
+  function applyToStudio(s, btn) {
+    if (applying) return;
+    const choice = setStudioStyle(s && s.id);
+    if (!choice) { note("This Style Could Not Be Loaded. Please Choose Another Style."); return; }
+    applying = true;
+    let restore = null;
+    if (btn) {
+      restore = btn.innerHTML;
+      btn.disabled = true;
+      btn.setAttribute("aria-busy", "true");
+      btn.innerHTML = "Opening Studio…";
     }
-    const space = s.compatibleProjectTypes[0] === "exterior" ? "exterior" : s.compatibleProjectTypes[0] === "garden" ? "landscape" : "interior";
-    const chip = document.querySelector('#spChips [data-sp="' + space + '"]');
-    if (chip && !chip.classList.contains("on")) chip.click();
-    try { window.dispatchEvent(new CustomEvent("rd:style-selected", { detail: payload })); } catch (_) {}
+    applyStudioStyleToControls(choice);
     closeDrawer();
-    go("studio");
-    note(s.displayName + " Applied In Studio. Change It Any Time, Then Generate.");
+    try {
+      go("studio");
+      note(choice.name + " Selected. Add A Source If You Need One, Then Generate.");
+    } catch (err) {
+      note("Studio Could Not Be Opened. Please Try Again.");
+    } finally {
+      window.setTimeout(() => {
+        applying = false;
+        if (btn && restore != null) { btn.disabled = false; btn.removeAttribute("aria-busy"); btn.innerHTML = restore; icons_(); }
+      }, 500);
+    }
   }
+
 
   async function setDna(s) {
     const p = prop();
@@ -544,7 +555,7 @@ export function mountExplore(go, ctx) {
     if ((el = hit("data-off"))) { const raw = String(el.dataset.off); const i = raw.indexOf(":"); toggleFilter(raw.slice(0, i), raw.slice(i + 1)); return; }
     if ((el = hit("data-save"))) { toggleSave(el.dataset.save); return; }
     if ((el = hit("data-open"))) { styleDrawer(el.dataset.open); return; }
-    if ((el = hit("data-use"))) { const s = styleById(el.dataset.use); if (s) applyToStudio(s); return; }
+    if ((el = hit("data-use"))) { e.preventDefault(); const s = styleById(el.dataset.use); if (!s) { note("This Style Could Not Be Loaded. Please Choose Another Style."); return; } applyToStudio(s, el); return; }
     if ((el = hit("data-dnago"))) { const s = styleById(el.dataset.dnago); if (s) setDna(s); return; }
     if ((el = hit("data-dna"))) { const s = styleById(el.dataset.dna); if (s) confirmDna(s); return; }
     if (t.closest("#xpClear")) { clearFilters(); return; }
@@ -562,6 +573,7 @@ export function mountExplore(go, ctx) {
   });
 
   host.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("button")) return;
     const cardEl = e.target.closest && e.target.closest(".xp-card");
     if (cardEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); styleDrawer(cardEl.dataset.d); }
   });

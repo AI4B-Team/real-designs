@@ -18,6 +18,7 @@ import {
   type SourceDetection,
   type SourceType,
 } from "@/lib/source-detect.functions";
+import { getStudioStyle, clearStudioStyle, applyStudioStyleToControls, type StudioStyleChoice } from "@/lib/studio-style";
 
 type Method = "upload" | "describe" | "property";
 
@@ -117,6 +118,33 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     /** "choose" shows the starting selector, "setup" the focused source setup. */
     phase: "choose" as "choose" | "setup",
   };
+
+  /** Style chosen on Explore, if any. Selecting never generates or charges. */
+  let styleChoice: StudioStyleChoice | null = getStudioStyle();
+  if (styleChoice) state.style = styleChoice.name;
+
+  function refreshStyleChoice() {
+    styleChoice = getStudioStyle();
+    if (styleChoice) state.style = styleChoice.name;
+  }
+  window.addEventListener("rd:style-selected", () => { refreshStyleChoice(); if (host) render(); });
+
+  /** Local escape: the banner can render before the shell helpers initialize. */
+  const escLocal = (v: string) =>
+    String(v == null ? "" : v).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch] as string));
+
+  /** Compact "Style selected" confirmation shown above the source actions. */
+  function styleBanner() {
+    if (!styleChoice) return "";
+    return (
+      '<div class="sts-stylebar">' +
+      (styleChoice.thumb ? '<img src="' + escLocal(styleChoice.thumb) + '" alt="' + escLocal(styleChoice.name) + ' style preview">' : "") +
+      "<div><b>Style Selected: " + escLocal(styleChoice.name) + "</b>" +
+      "<span>Add a source below. Nothing generates until you press Generate.</span></div>" +
+      '<button type="button" class="sts-link" data-sts="changestyle">Change</button>' +
+      "</div>"
+    );
+  }
 
   /* ---------- hidden file inputs ---------- */
   const filePick = document.createElement("input");
@@ -433,6 +461,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         "Add a photo, sketch, floor plan or concept drawing. We identify what it is for you.",
         state.file ? 2 : 1,
       ) +
+      styleBanner() +
       '<div class="stw-work">' +
       panel(
         "Your File",
@@ -628,6 +657,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "<p>Upload a visual, describe an idea, organize a property or create a listing video.</p>" +
       "</div></header>" +
       '<div class="stw-rule"></div>' +
+      styleBanner() +
       '<div class="stw-tiles">' +
       CARDS.map(
         (c) =>
@@ -836,6 +866,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       goListingVideo();
       return;
     }
+    if (k === "changestyle") {
+      clearStudioStyle();
+      styleChoice = null;
+      ctx.go("explore");
+      return;
+    }
     if (k === "changetype") {
       state.pickType = !state.pickType;
       render();
@@ -912,8 +948,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (sp) sp.click();
     const room = document.getElementById("fRoom") as HTMLSelectElement | null;
     if (room && Array.from(room.options).some((o) => o.value === state.room || o.text === state.room)) room.value = state.room;
-    const style = document.getElementById("fStyle") as HTMLSelectElement | null;
-    if (style && Array.from(style.options).some((o) => o.text === state.style)) style.value = state.style;
+    if (styleChoice) applyStudioStyleToControls(styleChoice);
+    else {
+      const style = document.getElementById("fStyle") as HTMLSelectElement | null;
+      if (style && Array.from(style.options).some((o) => o.text === state.style)) style.value = state.style;
+    }
     const bandIdx = BUDGETS.indexOf(state.budget);
     const band = document.querySelector('.bchip[data-b="' + (bandIdx < 0 ? 1 : bandIdx) + '"]') as HTMLElement | null;
     if (band) band.click();

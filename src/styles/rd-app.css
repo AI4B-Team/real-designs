@@ -1369,3 +1369,14 @@
 .rd-app .stw-det-pick select{ width:100%; height:34px; font-size:.8rem; }
 .rd-app .stw-det-spin{ animation:rdspin 1s linear infinite; }
 @keyframes rdspin{ to{ transform:rotate(360deg); } }
+
+/* Explore -> Studio style handoff confirmation */
+.rd-app .sts-stylebar{
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px;
+  padding:10px 14px; margin:0 0 16px; border:1px solid var(--line,#e6e3dd);
+  border-radius:12px; background:var(--white,#fff);
+}
+.rd-app .sts-stylebar img{ width:48px; height:36px; object-fit:cover; border-radius:8px; flex:none; }
+.rd-app .sts-stylebar b{ display:block; font-size:.86rem; }
+.rd-app .sts-stylebar span{ display:block; font-size:.74rem; color:var(--mute-2,#8a867d); margin-top:2px; }
+.rd-app .sts-stylebar .sts-link{ white-space:nowrap; }
