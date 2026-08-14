@@ -37,6 +37,7 @@ import { track } from "@/lib/analytics";
 const BUCKET = "reveal-videos";
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const goTo = (v) => { const fn = S.go || (typeof window !== "undefined" && window.__rdGo); if (fn) fn(v); else if (typeof location !== "undefined") location.hash = "#" + v; };
 const paint = () => { try { createIcons({ icons }); } catch (_) {} };
 const toast = (m) => { try { window.rdToast ? window.rdToast(m) : console.log(m); } catch (_) {} };
 
@@ -103,11 +104,12 @@ let S = {
   shares: [],
   tree: [],
   kits: [],
-  screen: "library", // library | wizard | detail
+  screen: "library", // library | wizard | design | detail
   detailId: null,
   detailTab: "video",
   detail: null,
   wizard: null,
+  dv: null,
 };
 
 function host() {
@@ -707,9 +709,9 @@ async function generate() {
 
 const STAGES = ["Preparing scenes", "Creating motion", "Building transitions", "Adding audio and captions", "Applying branding", "Finalizing formats"];
 
-async function renderAllVariants(projectId, variants, cfg) {
+async function renderAllVariants(projectId, variants, cfg, perOverride) {
   const w = cfg;
-  const per = sceneDurations(w.scenes.length, w.length);
+  const per = perOverride || sceneDurations(w.scenes.length, w.length);
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
   const urls = [];
   for (const s of w.scenes) {
@@ -934,12 +936,14 @@ function render() {
   const el = host();
   if (!el) return;
   el.innerHTML =
-    S.screen === "wizard" ? wizardHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
+    S.screen === "wizard" ? wizardHtml() : S.screen === "design" ? dvHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
   paintAssetThumbs();
+  if (S.screen === "design") { closeIntroNow(); dvPaintThumbs(); }
   if (S.screen === "library") paintThumbs();
   if (S.screen === "detail" && S.detail) mountPlayer();
   bind();
+  if (S.screen === "design") dvBind();
 }
 
 function bind() {
@@ -1305,8 +1309,412 @@ function openBrandKit(kit) {
   };
 }
 
+/* ======================= DESIGN VIDEO BUILDER =======================
+   "Turn This Design Into A Video" — a single-design builder, kept separate
+   from the property/listing wizard. It seeds the selected design as scene one
+   so the user never re-uploads it, saves a draft immediately, and only spends
+   credits when Generate Video is confirmed. */
+const DV_MOTION = [["subtle", "Subtle"], ["cinematic", "Cinematic"], ["walkthrough", "Walkthrough"]];
+const DV_DURATIONS = [5, 10, 15];
+const DV_FORMATS = [["9:16", "Portrait 9:16"], ["1:1", "Square 1:1"], ["16:9", "Landscape 16:9"]];
+
+const videoSupported = () => typeof MediaRecorder !== "undefined" && typeof HTMLCanvasElement !== "undefined";
+
+function dvSceneMotion(style, i) {
+  if (style === "cinematic") return i % 2 ? "orbit_left" : "push";
+  if (style === "walkthrough") return i % 2 ? "pan_left" : "pan_right";
+  return "auto";
+}
+
+function newDV(seed = {}) {
+  return {
+    projectId: seed.projectId || null,
+    designId: seed.designId || null,
+    propertyId: seed.propertyId || null,
+    propertyLabel: seed.propertyLabel || null,
+    versionId: seed.versionId || null,
+    title: seed.title || "Design Video",
+    motionStyle: "subtle",
+    duration: 10,
+    aspect: "16:9",
+    music: "none",
+    captions: false,
+    brandKitId: S.kits.find((k) => k.is_default)?.id || null,
+    branding: { outro: false, watermark: false, contact: false, cta: false },
+    scenes: seed.scenes || [],
+    busy: false,
+    progress: 0,
+    stage: "",
+    saving: false,
+    picker: false,
+  };
+}
+
+function dvScene(src = {}) {
+  return {
+    key: src.key || "s-" + Math.random().toString(36).slice(2, 9),
+    path: src.path,
+    room: src.room || "Scene",
+    caption: src.caption || "",
+    version_id: src.version_id || null,
+    asset_id: src.asset_id || null,
+    scene_type: src.scene_type || "design",
+  };
+}
+
+/** Draft persistence — every change is saved so leaving never loses work. */
+let dvSaveTimer = null;
+function dvQueueSave() {
+  clearTimeout(dvSaveTimer);
+  dvSaveTimer = setTimeout(() => { dvSaveDraft().catch(() => {}); }, 700);
+}
+
+async function dvSaveDraft(status = "draft") {
+  const d = S.dv;
+  if (!d) return null;
+  const per = d.scenes.length ? d.duration / d.scenes.length : d.duration;
+  const saved = await saveVideo({
+    project: {
+      id: d.projectId || undefined,
+      property_id: d.propertyId || null,
+      property_label: d.propertyLabel || null,
+      design_version_id: d.versionId || null,
+      title: d.title || "Design Video",
+      video_type: "design_reveal",
+      source_type: "design",
+      status,
+      formats: [d.aspect],
+      length_preset: "custom",
+      transition: "clean",
+      motion: d.motionStyle,
+      brand_kit_id: d.brandKitId || null,
+      branding: d.branding,
+      disclosure: { mode: "altered" },
+      settings: {
+        builder: "design",
+        motionStyle: d.motionStyle,
+        totalDuration: d.duration,
+        sourceDesignId: d.designId || null,
+        sourceImageUrl: d.scenes[0]?.path || null,
+      },
+    },
+    scenes: d.scenes.map((s, i) => ({
+      source_asset_id: s.asset_id || null,
+      source_version_id: s.version_id || null,
+      source_path: s.path,
+      compare_path: null,
+      room_name: s.room,
+      sequence: i,
+      scene_type: s.scene_type || "design",
+      duration: Math.max(0.5, Math.min(20, per)),
+      motion: dvSceneMotion(d.motionStyle, i),
+      transition: "clean",
+      caption: s.caption || null,
+      disclosure_type: "proposed",
+      motion_level: "standard",
+      labels: [],
+    })),
+    audio: {
+      presentation_style: d.music === "none" ? "silent" : "music",
+      music_track_id: d.music,
+      music_volume: 0.6,
+      beat_sync: true,
+      narration_type: "none",
+      captions_enabled: !!d.captions,
+    },
+  });
+  d.projectId = saved.id;
+  return saved;
+}
+
+function dvHtml() {
+  const d = S.dv;
+  const blocked = !videoSupported();
+  if (d.busy) {
+    return `<div class="rv-wiz"><div class="rv-proc">
+      <i data-lucide="clapperboard"></i><h3>Creating Your Video</h3><span>${esc(d.stage || "Preparing scenes")}</span>
+      <div class="rv-prog"><i style="width:${Math.round(d.progress * 100)}%"></i></div>
+    </div></div>`;
+  }
+  const scenes = d.scenes.map((s, i) => `<div class="dv-scene" data-dvi="${i}" draggable="true">
+      <span class="dv-num">${i + 1}</span>
+      <div class="dv-thumb" data-dvthumb="${esc(s.path)}"></div>
+      <div class="dv-sc-meta"><b>${esc(s.room)}</b><span>${i === 0 ? "Selected Design" : "Added Scene"}</span>
+        <input class="dv-cap" data-dvcap="${i}" value="${esc(s.caption)}" placeholder="Add Text (Optional)">
+      </div>
+      <div class="dv-sc-act">
+        <button class="icon-btn" data-dvmove="-1" title="Move Up" aria-label="Move Scene Up"><i data-lucide="chevron-up"></i></button>
+        <button class="icon-btn" data-dvmove="1" title="Move Down" aria-label="Move Scene Down"><i data-lucide="chevron-down"></i></button>
+        <button class="icon-btn" data-dvprev="${i}" title="Preview" aria-label="Preview Scene"><i data-lucide="eye"></i></button>
+        <button class="icon-btn" data-dvdupe="${i}" title="Duplicate" aria-label="Duplicate Scene"><i data-lucide="copy"></i></button>
+        <button class="icon-btn" data-dvdel="${i}" title="Remove" aria-label="Remove Scene"><i data-lucide="trash-2"></i></button>
+      </div>
+    </div>`).join("");
+
+  const seg = (name, items, cur, attr) => `<div class="rv-seg dv-seg" role="group" aria-label="${name}">${items
+    .map(([v, l]) => `<button class="${String(cur) === String(v) ? "on" : ""}" ${attr}="${v}">${l}</button>`).join("")}</div>`;
+
+  return `<div class="rv-wiz dv-wrap">
+    <div class="dv-head">
+      <div><h2>Turn This Design Into a Video</h2><p>Add motion, music and branding to your design.</p></div>
+      <button class="btn btn-ghost btn-sm" id="dvClose"><i data-lucide="x"></i>Close</button>
+    </div>
+
+    <label class="dv-field"><span>Title</span><input id="dvTitle" value="${esc(d.title)}"></label>
+
+    <div class="dv-scenes">${scenes || `<div class="rv-note">This Design Has No Usable Image.</div>`}</div>
+    <div class="dv-add">
+      <button class="btn btn-ghost btn-sm" id="dvAddScene"><i data-lucide="plus"></i>Add Another Scene</button>
+      <input type="file" id="dvFiles" accept="image/*" multiple hidden>
+    </div>
+
+    <div class="dv-controls">
+      <div><span class="dv-lab">Motion Style</span>${seg("Motion Style", DV_MOTION, d.motionStyle, "data-dvmotion")}</div>
+      <div><span class="dv-lab">Duration</span>${seg("Duration", DV_DURATIONS.map((n) => [n, n + "s"]), d.duration, "data-dvdur")}</div>
+      <div><span class="dv-lab">Format</span>${seg("Format", DV_FORMATS, d.aspect, "data-dvfmt")}</div>
+    </div>
+
+    <div class="dv-opts">
+      <label class="dv-field"><span>Music</span><select id="dvMusic">${MUSIC.map((m) => `<option value="${m.id}" ${d.music === m.id ? "selected" : ""}>${esc(m.name)}</option>`).join("")}</select></label>
+      <label class="dv-field"><span>Logo Or Branding</span><select id="dvKit"><option value="">No Branding</option>${S.kits
+        .map((k) => `<option value="${k.id}" ${d.brandKitId === k.id ? "selected" : ""}>${esc(k.company_name || "Brand Kit")}</option>`).join("")}</select></label>
+      <label class="dv-check"><input type="checkbox" id="dvCaptions" ${d.captions ? "checked" : ""}><span>Show Text On Scenes</span></label>
+    </div>
+
+    ${blocked ? `<div class="rv-fail">Video generation is not connected yet.</div>` : ""}
+
+    <div class="rv-foot dv-foot">
+      <div class="dv-foot-l">
+        <button class="btn btn-ghost btn-sm" id="dvBackLib"><i data-lucide="arrow-left"></i>Back</button>
+        <button class="btn btn-ghost btn-sm" id="dvToListing"><i data-lucide="building-2"></i>Add to a Listing Video</button>
+      </div>
+      <button class="btn btn-primary" id="dvGen" ${blocked || !d.scenes.length ? "disabled" : ""}><i data-lucide="clapperboard"></i>Generate Video</button>
+    </div>
+  </div>
+  ${d.picker ? dvPickerHtml() : ""}`;
+}
+
+function dvAvailable() {
+  const out = [];
+  for (const p of S.tree || []) {
+    for (const pr of p.projects || []) {
+      for (const r of pr.rooms || []) {
+        if (r.after_path) out.push({ key: "d-" + r.id, path: r.after_path, room: r.name + " — Design", version_id: r.version_id, scene_type: "design" });
+        if (r.before_path) out.push({ key: "o-" + r.id, path: r.before_path, room: r.name + " — Original", version_id: r.version_id, scene_type: "original" });
+      }
+    }
+  }
+  return out;
+}
+
+function dvPickerHtml() {
+  const items = dvAvailable();
+  return `<div class="rv-modal on" id="dvPicker"><div class="rv-modal-in" role="dialog" aria-label="Add A Scene">
+    <div class="rv-modal-h"><b>Add Another Scene</b></div>
+    <div class="rv-modal-b">
+      <div class="dv-pick">${items.length
+        ? items.map((a) => `<button class="dv-pick-i" data-dvpick="${a.key}"><span class="dv-thumb" data-dvthumb="${esc(a.path)}"></span><b>${esc(a.room)}</b></button>`).join("")
+        : `<div class="rv-note">No Saved Designs Or Photos Yet. Upload An Image Instead.</div>`}</div>
+    </div>
+    <div class="rv-modal-f"><button class="btn btn-ghost" id="dvPickUpload"><i data-lucide="image-plus"></i>Upload An Image</button><button class="btn btn-ghost" id="dvPickClose">Done</button></div>
+  </div></div>`;
+}
+
+async function dvPaintThumbs() {
+  const el = host();
+  if (!el) return;
+  for (const n of el.querySelectorAll("[data-dvthumb]")) {
+    const p = n.getAttribute("data-dvthumb");
+    if (!p || n.dataset.painted) continue;
+    n.dataset.painted = "1";
+    const url = /^(blob:|https?:|data:)/.test(p) ? p : await resolvePhotoUrl(p);
+    if (url) n.style.backgroundImage = `url("${url}")`;
+  }
+}
+
+function dvBind() {
+  const el = host();
+  const d = S.dv;
+  if (!el || !d) return;
+  const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
+  const upd = (fn) => { fn(); dvQueueSave(); render(); };
+
+  on("#dvClose, #dvBackLib", "click", async () => { dvActive = false; await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
+  const t = el.querySelector("#dvTitle");
+  if (t) t.addEventListener("change", () => { d.title = t.value.trim() || "Design Video"; dvQueueSave(); });
+  on("[data-dvmotion]", "click", (e) => upd(() => { d.motionStyle = e.currentTarget.dataset.dvmotion; }));
+  on("[data-dvdur]", "click", (e) => upd(() => { d.duration = Number(e.currentTarget.dataset.dvdur); }));
+  on("[data-dvfmt]", "click", (e) => upd(() => { d.aspect = e.currentTarget.dataset.dvfmt; }));
+  const mu = el.querySelector("#dvMusic");
+  if (mu) mu.addEventListener("change", () => { d.music = mu.value; dvQueueSave(); });
+  const kit = el.querySelector("#dvKit");
+  if (kit) kit.addEventListener("change", () => { d.brandKitId = kit.value || null; d.branding = { ...d.branding, outro: !!kit.value, contact: !!kit.value }; dvQueueSave(); });
+  const cap = el.querySelector("#dvCaptions");
+  if (cap) cap.addEventListener("change", () => { d.captions = cap.checked; dvQueueSave(); });
+
+  on("[data-dvcap]", "change", (e) => { d.scenes[Number(e.currentTarget.dataset.dvcap)].caption = e.currentTarget.value; d.captions = true; dvQueueSave(); });
+  on("[data-dvdel]", "click", (e) => upd(() => { d.scenes.splice(Number(e.currentTarget.dataset.dvdel), 1); }));
+  on("[data-dvdupe]", "click", (e) => upd(() => {
+    const i = Number(e.currentTarget.dataset.dvdupe);
+    d.scenes.splice(i + 1, 0, dvScene({ ...d.scenes[i], key: null }));
+  }));
+  on("[data-dvmove]", "click", (e) => upd(() => {
+    const row = e.currentTarget.closest(".dv-scene");
+    const i = Number(row.dataset.dvi), j = i + Number(e.currentTarget.dataset.dvmove);
+    if (j < 0 || j >= d.scenes.length) return;
+    const [x] = d.scenes.splice(i, 1);
+    d.scenes.splice(j, 0, x);
+  }));
+  on("[data-dvprev]", "click", async (e) => {
+    const s = d.scenes[Number(e.currentTarget.dataset.dvprev)];
+    const url = /^(blob:|https?:|data:)/.test(s.path) ? s.path : await resolvePhotoUrl(s.path);
+    if (url) window.open(url, "_blank", "noopener");
+    else toast("That Scene Image Is Unavailable.");
+  });
+  el.querySelectorAll(".dv-scene").forEach((n) => {
+    n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.dvi));
+    n.addEventListener("dragover", (e) => e.preventDefault());
+    n.addEventListener("drop", (e) => {
+      e.preventDefault();
+      const from = Number(e.dataTransfer.getData("text/plain")), to = Number(n.dataset.dvi);
+      if (Number.isNaN(from) || from === to) return;
+      upd(() => { const [x] = d.scenes.splice(from, 1); d.scenes.splice(to, 0, x); });
+    });
+  });
+
+  on("#dvAddScene", "click", () => { d.picker = true; render(); });
+  on("#dvPickClose", "click", () => { d.picker = false; render(); });
+  on("#dvPickUpload", "click", () => el.querySelector("#dvFiles")?.click());
+  const files = el.querySelector("#dvFiles");
+  if (files) files.addEventListener("change", (e) => {
+    for (const f of Array.from(e.target.files || [])) {
+      d.scenes.push(dvScene({ path: URL.createObjectURL(f), room: f.name.replace(/\.[a-z0-9]+$/i, ""), scene_type: "original" }));
+    }
+    d.picker = false;
+    dvQueueSave();
+    render();
+  });
+  on("[data-dvpick]", "click", (e) => {
+    const a = dvAvailable().find((x) => x.key === e.currentTarget.dataset.dvpick);
+    if (a) d.scenes.push(dvScene(a));
+    d.picker = false;
+    dvQueueSave();
+    render();
+  });
+
+  on("#dvToListing", "click", async () => {
+    await dvSaveDraft().catch(() => {});
+    try { window.rdListingVideo({ from: "design", designId: d.designId, path: d.scenes[0]?.path || null }); }
+    catch (_) { toast("Could Not Open The Listing Video Workflow."); }
+  });
+  on("#dvGen", "click", () => dvGenerate());
+}
+
+async function dvGenerate() {
+  const d = S.dv;
+  if (!d || !d.scenes.length) return toast("Add At Least One Scene First.");
+  if (!videoSupported()) {
+    console.warn("[REAL REVEAL] Video generation provider is not configured in this environment (MediaRecorder unavailable).");
+    return toast("Video generation is not connected yet.");
+  }
+  d.busy = true; d.progress = 0; d.stage = "Preparing scenes";
+  render();
+  let projectId = d.projectId;
+  try {
+    const saved = await dvSaveDraft("queued");
+    projectId = saved.id;
+    const variants = [{ aspect_ratio: d.aspect, version_type: d.brandKitId ? "branded" : "clean", brand_kit_id: d.brandKitId || null }];
+    const started = await startRender({ id: projectId, variants });
+    track?.("design_video_generate", { aspect: d.aspect, scenes: d.scenes.length, motion: d.motionStyle });
+    const cfg = {
+      scenes: d.scenes.map((s, i) => ({ ...s, motion: dvSceneMotion(d.motionStyle, i), compare: null, disclosure: "proposed", labels: [] })),
+      length: "custom",
+      motion: "custom",
+      transition: "clean",
+      captions: !!d.captions,
+      brandKitId: d.brandKitId,
+      branding: d.branding,
+      title: d.title,
+      propertyLabel: d.propertyLabel,
+    };
+    await renderAllVariants(projectId, started.variants, cfg, d.duration / d.scenes.length);
+    await setVideoStatus({ id: projectId, status: "ready" });
+    toast("Your Design Video Is Ready.");
+    await loadLibrary();
+    S.dv = null;
+    await openDetail(projectId);
+  } catch (e) {
+    if (projectId) { try { await setVideoStatus({ id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) }); } catch (_) {} }
+    toast(e?.message || "The Video Could Not Be Created. Your Draft Was Saved.");
+    if (S.dv) { S.dv.busy = false; render(); }
+  }
+}
+
+/** Entry point from a design card: seeds the design as scene one. */
+export async function startDesignVideo(design = {}) {
+  if (!design || !design.id) throw new Error("That design could not be identified.");
+  if (!design.path) throw new Error("That design has no image yet.");
+  S.screen = "design";
+  dvActive = true;
+  [0, 300, 900, 1800, 3000].forEach((ms) => setTimeout(closeIntroNow, ms));
+  try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+  goTo("reveal");
+  if (!S.mounted) await mountReveal(S.go, {});
+  else if (!S.tree.length) await loadLibrary();
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(design.id));
+  S.dv = newDV({
+    designId: design.id,
+    versionId: design.sample || !isUuid ? null : design.id,
+    propertyId: design.property_id || null,
+    propertyLabel: design.address || design.sub || null,
+    title: (design.name || "Design") + " Video",
+    scenes: [dvScene({ path: design.path, room: design.name || "Selected Design", version_id: design.sample || !isUuid ? null : design.id })],
+  });
+  S.screen = "design";
+  render();
+  closeIntroNow();
+  try { await dvSaveDraft(); } catch (e) { toast(e?.message || "The draft could not be saved. You can still build the video."); }
+  render();
+}
+
+/** Continue a saved design-video draft from Media or the library. */
+export async function continueDesignVideo(id) {
+  try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+  goTo("reveal");
+  if (!S.mounted) await mountReveal(S.go, {});
+  const full = await getVideo({ id });
+  const p = full.project;
+  const st = p.settings || {};
+  S.dv = newDV({
+    projectId: p.id,
+    designId: st.sourceDesignId || null,
+    propertyId: p.property_id,
+    propertyLabel: p.property_label,
+    versionId: p.design_version_id,
+    title: p.title,
+    scenes: (full.scenes || []).map((s) => dvScene({ path: s.source_path, room: s.room_name, caption: s.caption || "", version_id: s.source_version_id, asset_id: s.source_asset_id, scene_type: s.scene_type })),
+  });
+  S.dv.motionStyle = st.motionStyle || "subtle";
+  S.dv.duration = st.totalDuration || 10;
+  S.dv.aspect = (p.formats || [])[0] || "16:9";
+  S.dv.brandKitId = p.brand_kit_id || null;
+  S.dv.branding = p.branding || S.dv.branding;
+  S.dv.music = full.audio?.music_track_id || "none";
+  S.dv.captions = !!full.audio?.captions_enabled;
+  S.screen = "design";
+  render();
+}
+
 /* ======================= INTRO ======================= */
+let dvActive = false;
+function closeIntroNow() {
+  const w = document.getElementById("rvIntroWrap");
+  if (w && w.parentNode) w.parentNode.removeChild(w);
+  try { localStorage.setItem("rd_reveal_intro", "1"); } catch (_) {}
+}
+
 function maybeIntro() {
+  if (dvActive || S.screen === "design") { closeIntroNow(); return; }
   try { if (localStorage.getItem("rd_reveal_intro") === "1") return; } catch (_) { return; }
   let wrap = document.getElementById("rvIntroWrap");
   if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; document.body.appendChild(wrap); }
@@ -1335,7 +1743,8 @@ export function startWizard(seed = {}) {
 
 /** Contextual entry point used from properties, designs and comparisons. */
 export async function createVideoFrom(seed = {}) {
-  if (S.go) S.go("reveal");
+  try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+  goTo("reveal");
   if (!S.projects.length && !S.mounted) await mountReveal(S.go, {});
   if (!S.tree.length) await loadLibrary();
   startWizard(seed);
@@ -1359,7 +1768,8 @@ export default mountReveal;
 
 /** Open one video's detail screen from another module (Listing Video, Media). */
 export async function openVideoDetail(id, tab = "video") {
-  if (S.go) S.go("reveal");
+  try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+  goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
   else await loadLibrary();
   S.detailTab = tab;

@@ -74,7 +74,7 @@ try{
   setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
 }catch(_){}
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
-import { mountReveal, createVideoFrom } from "@/content/rd-reveal";
+import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo } from "@/content/rd-reveal";
 import { mountListingVideo, openListingVideo } from "@/content/rd-listing-video";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
@@ -128,6 +128,7 @@ const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing
    the reveal view, and it flags that intent right before navigating. */
 let __allowReveal=0;
 try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
+try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
 function go(v,fromHash){
   if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
@@ -1303,7 +1304,7 @@ ${d.sample?'<span class="pill dg-sample">Sample</span>':''}</div>
   ? `<button class="btn btn-ghost btn-xs" style="flex:1" data-goto="studio">Try This Style</button>`
   : `<button class="btn btn-ghost btn-xs" style="flex:1" data-open="${d.id}">Open</button>
 <button class="btn btn-ghost btn-xs" data-hist="${d.id}" title="Version History"><i data-lucide="history"></i></button>`}
-<button class="btn btn-ghost btn-xs" data-shop="${d.id}" title="Shop This Design"><i data-lucide="shopping-bag"></i></button><button class="btn btn-ghost btn-xs" data-vid="${d.id}" title="Create Video"><i data-lucide="clapperboard"></i></button><button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download Image"><i data-lucide="download"></i></button></div></div></div>`;
+<button class="btn btn-ghost btn-xs" data-shop="${d.id}" title="Shop This Design"><i data-lucide="shopping-bag"></i></button><button class="btn btn-ghost btn-xs" data-vid="${d.id}" title="Turn Into Video" aria-label="Turn ${esc(d.name)} into a video"><i data-lucide="clapperboard"></i></button><button class="btn btn-ghost btn-xs" data-dl="${d.id}" title="Download Image"><i data-lucide="download"></i></button></div></div></div>`;
 }
 
 function paintDesignChrome(){
@@ -1363,10 +1364,25 @@ function paintDesigns(){
     const d=list.find(x=>x.id===b.getAttribute('data-del'));
     if(d) removeDesigns([d]);
   }));
-  g.querySelectorAll('[data-vid]').forEach(b=>b.addEventListener('click',()=>{
-    const d=list.find(x=>x.id===b.getAttribute('data-vid'));
-    if(!d) return;
-    try{ createVideoFrom({ sourceType:'design', propertyId:d.property_id||null, propertyLabel:d.address||d.sub||null, versionId:d.sample?null:d.id, videoType:'before_after', title:d.name+' Reveal' }); }catch(_){}
+  const toast=(m)=>{ try{ (window as any).rdToast ? (window as any).rdToast(m) : ((window as any).__rdToast && (window as any).__rdToast(m)); }catch(_){ } };
+  g.querySelectorAll('[data-vid]').forEach(b=>b.addEventListener('click',async(e)=>{
+    e.preventDefault(); e.stopPropagation();
+    const id=b.getAttribute('data-vid');
+    const d=list.find(x=>x.id===id);
+    if(!d){ toast('That design could not be found. Refresh and try again.'); return; }
+    if(!d.path){ toast('That design has no image yet, so it cannot be turned into a video.'); return; }
+    if(b.dataset.busy==='1') return;
+    b.dataset.busy='1'; b.classList.add('is-busy'); b.setAttribute('aria-busy','true');
+    const old=b.innerHTML; b.innerHTML='<i data-lucide="loader-2" class="spin"></i>';
+    try{ lucide.createIcons(); }catch(_){}
+    try{
+      await startDesignVideo(d);
+    }catch(err){
+      toast((err&&err.message)||'The video workspace could not be opened. Please try again.');
+    }finally{
+      b.dataset.busy=''; b.classList.remove('is-busy'); b.removeAttribute('aria-busy'); b.innerHTML=old;
+      try{ lucide.createIcons(); }catch(_){}
+    }
   }));
   g.querySelectorAll('[data-shop]').forEach(b=>b.addEventListener('click',()=>{
     const d=list.find(x=>x.id===b.getAttribute('data-shop'));

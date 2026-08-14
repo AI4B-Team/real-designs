@@ -10,7 +10,7 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { updateMediaAssets, deleteMediaAssets } from "@/lib/property-media.functions";
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
-import { openVideoDetail, createVideoFrom } from "@/content/rd-reveal";
+import { openVideoDetail, createVideoFrom, continueDesignVideo } from "@/content/rd-reveal";
 import { openListingVideo } from "@/content/rd-listing-video";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
@@ -399,6 +399,7 @@ function moreItems(m) {
     ];
   const out = [];
   if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
+  if (isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => openVideo(m) });
   out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
   out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
   if (g === "images") out.push({ icon: "layers", label: "Create Variations", fn: () => S.go("studio") });
@@ -571,8 +572,16 @@ function videoFrom(items) {
   });
 }
 
+function isDesignDraft(m) {
+  return m && m.type === "generated_video" && m.status === "draft" && (m.settings || {}).builder === "design";
+}
+
 function openVideo(m, tab) {
   try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  if (isDesignDraft(m)) {
+    continueDesignVideo(m.refId).catch((e) => toast(e?.message || "Could not open that draft."));
+    return;
+  }
   openVideoDetail(m.refId, tab || "video");
 }
 
