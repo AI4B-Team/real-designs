@@ -1517,3 +1517,13 @@
 .rd-app .dash-hello h2{margin:0;font-family:var(--font-display,inherit);font-size:24px;line-height:1.2;letter-spacing:-.01em;color:var(--ink)}
 .rd-app .dash-hello p{margin:6px 0 0;font-size:13px;color:var(--mute)}
 @media(max-width:720px){.rd-app .dash-hello h2{font-size:20px}}
+
+/* Viral VFX Pack — Looks tab */
+.pme-looks{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin:10px 0 14px; }
+.pme-look{ text-align:left; padding:9px 10px; border:1px solid var(--line,#e6e3dd); border-radius:10px;
+  background:var(--white,#fff); cursor:pointer; display:grid; gap:3px; }
+.pme-look b{ font-size:.78rem; letter-spacing:.01em; }
+.pme-look em{ font-style:normal; font-size:.68rem; color:var(--mute-2,#8a857c); line-height:1.3; }
+.pme-look:hover{ border-color:var(--ink,#141210); }
+.pme-look.on{ border-color:var(--red,#c00); box-shadow:inset 0 0 0 1px var(--red,#c00); }
+.pme-kind.looks b{ color:var(--ink,#141210); }

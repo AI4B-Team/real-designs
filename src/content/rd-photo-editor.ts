@@ -17,6 +17,7 @@ import {
 import { runPhotoEdit, interpretPhotoRequest, analyzePhoto } from "@/lib/photo-edit.functions";
 import { track } from "@/lib/analytics";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+import { VFX_LOOKS, lookById, applyLookAdjust, lookOverlayHTML, bakeLook } from "@/lib/rd-vfx-looks";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -174,7 +175,7 @@ async function loadImg(src) {
 }
 
 /** Bake the live preview settings into a real pixel render for the new version. */
-async function renderToDataUrl(src, adj, geo, maxW) {
+async function renderToDataUrl(src, adj, geo, maxW, look, lookAmount) {
   const img = await loadImg(src);
   const scale = maxW && img.naturalWidth > maxW ? maxW / img.naturalWidth : 1;
   const w = Math.round(img.naturalWidth * scale);
@@ -191,6 +192,9 @@ async function renderToDataUrl(src, adj, geo, maxW) {
   ctx.rotate((((geo.rotate + geo.straighten) * Math.PI) / 180));
   ctx.scale(zoom, zoom);
   ctx.drawImage(img, -w / 2, -h / 2, w, h);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.filter = "none";
+  bakeLook(ctx, w, h, look, lookAmount);
   return c.toDataURL("image/jpeg", 0.92);
 }
 
@@ -209,6 +213,8 @@ export async function openPhotoEditor(ctx) {
   let compare = "current";
   let adj = blankAdjust();
   let geo = blankGeometry();
+  let lookId = null;
+  let lookAmount = 70;
   let baseUrl = "";
   let originalUrl = "";
   let versions = [];
@@ -251,6 +257,7 @@ export async function openPhotoEditor(ctx) {
             <button class="on" data-t="analyze" role="tab">Analyze</button>
             <button data-t="adjust" role="tab">Adjust</button>
             <button data-t="geometry" role="tab">Geometry</button>
+            <button data-t="looks" role="tab">Looks</button>
             <button data-t="property" role="tab">Property AI</button>
             <button data-t="design" role="tab">Design AI</button>
             <button data-t="history" role="tab">Versions</button>
@@ -317,6 +324,7 @@ export async function openPhotoEditor(ctx) {
   async function loadAsset() {
     adj = blankAdjust();
     geo = blankGeometry();
+    lookId = null;
     const a = asset();
     versions = (ctx.versions || []).filter((v) => v.asset_id === a.id && !v.archived);
     originalUrl = (await roomPhotoUrl(a.storage_path)) || "";
@@ -331,19 +339,24 @@ export async function openPhotoEditor(ctx) {
     renderPane();
   }
 
+  function liveAdjust() {
+    return applyLookAdjust(adj, lookById(lookId), lookAmount);
+  }
+
   function renderStage() {
     const c = wrap.querySelector("#pmeCanvas");
-    const f = filterCSS(adj);
+    const f = filterCSS(liveAdjust());
     const t = transformCSS(geo);
+    const vfx = lookOverlayHTML(lookById(lookId), lookAmount);
     if (compare === "side") {
       c.innerHTML = `<div class="pme-side2">
         <figure><img src="${esc(originalUrl)}" alt="Original photo"><figcaption>Original</figcaption></figure>
-        <figure><img id="pmeMain" src="${esc(baseUrl)}" alt="Current version" style="filter:${f};transform:${t}"><figcaption>Current</figcaption></figure>
+        <figure style="position:relative"><img id="pmeMain" src="${esc(baseUrl)}" alt="Current version" style="filter:${f};transform:${t}">${vfx}<figcaption>Current</figcaption></figure>
       </div>`;
     } else if (compare === "slider") {
       c.innerHTML = `<div class="pme-slide" id="pmeSlide">
         <img src="${esc(originalUrl)}" alt="Original photo">
-        <div class="pme-slide-top" id="pmeTop"><img id="pmeMain" src="${esc(baseUrl)}" alt="Current version" style="filter:${f};transform:${t}"></div>
+        <div class="pme-slide-top" id="pmeTop"><img id="pmeMain" src="${esc(baseUrl)}" alt="Current version" style="filter:${f};transform:${t}">${vfx}</div>
         <input type="range" min="0" max="100" value="50" aria-label="Before and after position" id="pmeRange">
       </div>`;
       const r = c.querySelector("#pmeRange");
@@ -354,7 +367,7 @@ export async function openPhotoEditor(ctx) {
     } else {
       const src = compare === "original" ? originalUrl : baseUrl;
       const style = compare === "original" ? "" : `filter:${f};transform:${t}`;
-      c.innerHTML = `<img id="pmeMain" src="${esc(src)}" alt="${compare === "original" ? "Original photo" : "Current version"}" style="${style}">`;
+      c.innerHTML = `<span class="pme-frame" style="position:relative;display:inline-block"><img id="pmeMain" src="${esc(src)}" alt="${compare === "original" ? "Original photo" : "Current version"}" style="${style}">${compare === "original" ? "" : vfx}</span>`;
     }
     paint();
   }
@@ -419,6 +432,11 @@ export async function openPhotoEditor(ctx) {
       paint();
       return;
     }
+    if (tab === "looks") {
+      renderLooks(p);
+      paint();
+      return;
+    }
     if (tab === "adjust" || tab === "geometry") {
       const list = tab === "adjust" ? ADJUST : GEOMETRY;
       const store = tab === "adjust" ? adj : geo;
@@ -468,6 +486,48 @@ export async function openPhotoEditor(ctx) {
       renderHistory(p);
     }
     paint();
+  }
+
+  /* ---------------- Looks (Viral VFX Pack) ---------------- */
+
+  function renderLooks(p) {
+    p.innerHTML = `<div class="pme-kind looks">
+        <b>Viral VFX Pack</b>
+        <span>One-click cinematic looks. Free, instant, and saved as a new version only when you choose Save Version.</span>
+      </div>
+      <div class="pme-looks">
+        ${VFX_LOOKS.map(
+          (l) => `<button class="pme-look${l.id === lookId ? " on" : ""}" data-look="${l.id}">
+            <b>${esc(l.label)}</b><em>${esc(l.blurb)}</em>
+          </button>`,
+        ).join("")}
+      </div>
+      <label class="pme-sl"><span>Look Strength<b>${lookAmount}</b></span>
+        <input type="range" min="10" max="100" value="${lookAmount}" id="pmeLookAmt" aria-label="Look strength" ${lookId ? "" : "disabled"}>
+      </label>
+      <button class="btn btn-ghost btn-xs" id="pmeLookClear"><i data-lucide="rotate-ccw"></i>Clear Look</button>
+      <p class="pme-note">Looks stack on top of your manual adjustments and geometry.</p>`;
+    p.querySelectorAll(".pme-look").forEach((b) => {
+      b.onclick = () => {
+        lookId = lookId === b.dataset.look ? null : b.dataset.look;
+        renderLooks(p);
+        paint();
+        renderStage();
+      };
+    });
+    const amt = p.querySelector("#pmeLookAmt");
+    if (amt)
+      amt.oninput = () => {
+        lookAmount = Number(amt.value);
+        amt.parentElement.querySelector("b").textContent = amt.value;
+        renderStage();
+      };
+    p.querySelector("#pmeLookClear").onclick = () => {
+      lookId = null;
+      renderLooks(p);
+      paint();
+      renderStage();
+    };
   }
 
   /* ---------------- Analyze ---------------- */
@@ -802,20 +862,23 @@ export async function openPhotoEditor(ctx) {
   async function saveVersion() {
     if (busy) return;
     const changed =
-      ADJUST.some(([k, , , , d]) => adj[k] !== d) || GEOMETRY.some(([k, , , , d]) => geo[k] !== d);
-    if (!changed) return toast("Move an adjustment or geometry control first.");
+      ADJUST.some(([k, , , , d]) => adj[k] !== d) ||
+      GEOMETRY.some(([k, , , , d]) => geo[k] !== d) ||
+      !!lookId;
+    if (!changed) return toast("Move an adjustment, geometry control, or pick a look first.");
     busy = true;
     try {
-      const dataUrl = await renderToDataUrl(baseUrl, adj, geo, 2600);
+      const look = lookById(lookId);
+      const dataUrl = await renderToDataUrl(baseUrl, adj, geo, 2600, look, lookAmount);
       const path = await uploadRenderDataUrl(dataUrl);
       const row = await addMediaVersion({
         data: {
           asset_id: asset().id,
-          label: "Manual Adjustments",
+          label: look ? `Look, ${look.label}` : "Manual Adjustments",
           kind: "enhanced",
           modification_class: "Enhanced",
           storage_path: path,
-          ops: { adjust: adj, geometry: geo },
+          ops: { adjust: adj, geometry: geo, look: look ? { id: look.id, amount: lookAmount } : null },
           approve: false,
         },
       });
@@ -825,6 +888,7 @@ export async function openPhotoEditor(ctx) {
       baseUrl = dataUrl;
       adj = blankAdjust();
       geo = blankGeometry();
+      lookId = null;
       renderStage();
       renderPane();
       toast("Saved as a new version.");
