@@ -116,13 +116,40 @@ export function openSignupSurvey(seed?: any) {
           skipped: false,
         },
       });
+      await syncToAccount({
+        full_name: val("full_name"),
+        phone: val("phone"),
+        company: val("company"),
+      });
       close();
+      try {
+        document.dispatchEvent(new CustomEvent("rd:survey-saved"));
+      } catch (_) {
+        /* no listeners is fine */
+      }
       toast("Thanks — Your Workspace Is Ready.");
+
     } catch (e: any) {
       btn.disabled = false;
       toast(e?.message || "Those answers could not be saved.");
     }
   };
+}
+
+/** Mirrors the shared contact fields onto the account profile. */
+async function syncToAccount(fields: { full_name: string; phone: string; company: string }) {
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getUser();
+    const m: any = data?.user?.user_metadata || {};
+    const next: any = {};
+    if (fields.full_name && fields.full_name !== m.full_name) next.full_name = fields.full_name;
+    if (fields.phone && fields.phone !== m.phone) next.phone = fields.phone;
+    if (fields.company && fields.company !== m.company) next.company = fields.company;
+    if (Object.keys(next).length) await supabase.auth.updateUser({ data: next });
+  } catch (_) {
+    /* the questionnaire row is the source of truth */
+  }
 }
 
 /** Fills blank name/phone/company from the account profile. */
