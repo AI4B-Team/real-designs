@@ -658,7 +658,26 @@ const MOTION_COPY = {
   orbit_left: "Orbit Left rotates the camera counter clockwise around the focal point.",
   orbit_right: "Orbit Right rotates the camera clockwise around the focal point, creating a sense of depth.",
   static: "Static holds the frame still, letting the design speak for itself.",
+  curtains: "Curtains Drifting adds a soft fabric movement near windows while the room stays exactly as designed.",
+  fire: "Fireplace Flicker animates the flame and its light spill only.",
+  water: "Water Movement ripples pools, tubs and open water in the frame.",
+  light: "Daylight Shift moves the natural light across the room over the length of the clip.",
+  foliage: "Foliage Sway adds a gentle breeze through plants and trees.",
+  approach: "Approach drives the camera toward the front of the property.",
+  rise: "Rise lifts the camera upward to open the view.",
+  aerial_reveal: "Aerial Reveal pulls up and back for a wide establishing look.",
 };
+/** Preview animation class per option. Immersive and exterior reuse the closest camera move. */
+const MOTION_PREVIEW = {
+  curtains: "static", fire: "static", water: "static", light: "static", foliage: "static",
+  approach: "push", rise: "pull", aerial_reveal: "pull",
+};
+function motionName(id) {
+  const all = [...STANDARD_MOTIONS, ...IMMERSIVE_EFFECTS, ...EXTERIOR_EFFECTS];
+  const hit = all.find(([i]) => i === id);
+  return hit ? (id === "auto" ? "Automatic, Recommended" : hit[1]) : "Automatic, Recommended";
+}
+
 const CROPS = [["center", "Center"], ["top", "Top"], ["bottom", "Bottom"]];
 
 function motionLabel(s) {
@@ -702,28 +721,46 @@ function popoverHtml() {
   let body = "";
   if (kind === "motion") {
     const q = (w.popQ || "").toLowerCase();
-    const rows = STANDARD_MOTIONS.filter(([, n]) => !q || n.toLowerCase().includes(q));
-    const hov = w.popHover || (s.motion_level === "immersive" ? null : s.motion || "auto");
+    const match = (n) => !q || n.toLowerCase().includes(q);
+    const rows = STANDARD_MOTIONS.filter(([, n]) => match(n));
+    const imms = IMMERSIVE_EFFECTS.filter(([, n]) => match(n));
+    const exts = EXTERIOR_EFFECTS.filter(([, n]) => match(n));
+    const sel = s.motion_level === "immersive" ? s.immersive_effect || "light" : s.motion || "auto";
+    const hov = w.popHover || sel;
     body = `<div class="rv-pop-two">
-      <div class="rv-pop-list">
-        <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Choose Camera Motion">
-        ${rows.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && (s.motion || "auto") === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${id === "auto" ? "Automatic, Recommended" : n}</button>`).join("")}
-        <div class="rv-pop-sep"></div>
-        <div class="rv-pop-h">Immersive Movement</div>
-        ${IMMERSIVE_EFFECTS.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level === "immersive" && (s.immersive_effect || "light") === id ? "on" : ""}" data-immpick="${id}">${esc(n)}<i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE}</i></button>`).join("")}
-        <div class="rv-note sm">Only movement is animated. Walls, windows and furniture stay exactly as designed.</div>
+      <div class="rv-pop-side">
+        <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Search Camera Motions">
+        <div class="rv-pop-scroll">
+          <div class="rv-pop-h">Camera Moves</div>
+          <div class="rv-pop-grid">
+            ${rows.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && (s.motion || "auto") === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${id === "auto" ? "Automatic, Recommended" : n}</button>`).join("")}
+          </div>
+          ${imms.length ? `<div class="rv-pop-sep"></div>
+          <div class="rv-pop-h">Immersive Movement <i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE} Each</i></div>
+          <div class="rv-pop-grid">
+            ${imms.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level === "immersive" && (s.immersive_effect || "light") === id ? "on" : ""}" data-immpick="${id}" data-hover="${id}">${esc(n)}<i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE}</i></button>`).join("")}
+          </div>
+          <div class="rv-note sm">Only movement is animated. Walls, windows and furniture stay exactly as designed.</div>` : ""}
+          ${isExterior(s) && exts.length ? `<div class="rv-pop-sep"></div><div class="rv-pop-h">Cinematic Exterior</div>
+          <div class="rv-pop-grid">
+            <button class="rv-pop-row ${s.exterior_effect ? "" : "on"}" data-extpick="">None</button>
+            ${exts.map(([id, n]) => `<button class="rv-pop-row ${s.exterior_effect === id ? "on" : ""}" data-extpick="${id}" data-hover="${id}">${esc(n)}</button>`).join("")}
+          </div>
+          ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
+        </div>
         <label class="rv-check"><input type="checkbox" id="rvAllMotion"> Apply To All Scenes</label>
-        ${isExterior(s) ? `<div class="rv-pop-sep"></div><div class="rv-pop-h">Cinematic Exterior</div>
-        <button class="rv-pop-row ${s.exterior_effect ? "" : "on"}" data-extpick="">None</button>
-        ${EXTERIOR_EFFECTS.map(([id, n]) => `<button class="rv-pop-row ${s.exterior_effect === id ? "on" : ""}" data-extpick="${id}">${esc(n)}</button>`).join("")}
-        ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
       </div>
       <div class="rv-pop-prev">
-        <div class="rv-pop-clip ${esc(hov || "auto")}" data-img="${esc(s.path)}"></div>
-        <b>${esc((STANDARD_MOTIONS.find(([id]) => id === hov) || ["", "Automatic"])[1])}</b>
-        <span>${esc(MOTION_COPY[hov] || MOTION_COPY.auto)}</span>
+        <div class="rv-pop-stage">
+          <div class="rv-pop-clip m-${esc(MOTION_PREVIEW[hov] || hov || "auto")}" data-img="${esc(s.path)}"></div>
+          <span class="rv-pop-live"><i></i>Live Preview</span>
+        </div>
+        <b id="rvPopName">${esc(motionName(hov))}</b>
+        <span id="rvPopCopy">${esc(MOTION_COPY[hov] || MOTION_COPY.auto)}</span>
+        <span class="rv-pop-tip">Hover Any Option To Preview It. The Loop Repeats Automatically.</span>
       </div>
     </div>`;
+
   } else if (kind === "crop") {
     body = `<div class="rv-pop-list">
       <div class="rv-pop-h">Crop <i class="mono">${esc(w.formats[0] || "9:16")}</i></div>
@@ -750,7 +787,7 @@ function popoverHtml() {
       <label class="rv-check"><input type="checkbox" id="rvAllLook"> Apply To All Scenes</label>
     </div>`;
   }
-  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in wide" role="dialog" aria-label="Scene options">
+  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${kind === "motion" ? "xwide" : "wide"}" role="dialog" aria-label="Scene options">
     <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Select VFX"}</b>${kind === "look" ? `<span class="rv-pill">Experimental</span>` : ""}<button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">${body}</div>
     <div class="rv-modal-f"><button class="btn btn-primary" id="rvPopDone">Done</button></div>
@@ -1609,7 +1646,16 @@ function bind() {
     s.motion_level = "standard";
     render();
   });
-  on("[data-hover]", "mouseenter", (e) => { w.popHover = e.currentTarget.dataset.hover; render(); });
+  on("[data-hover]", "mouseenter", (e) => {
+    const id = e.currentTarget.dataset.hover;
+    w.popHover = id;
+    const clip = el.querySelector(".rv-pop-clip");
+    if (!clip) return; // preview not mounted, nothing to repaint
+    clip.className = `rv-pop-clip m-${MOTION_PREVIEW[id] || id || "auto"}`;
+    const nm = el.querySelector("#rvPopName"); if (nm) nm.textContent = motionName(id);
+    const cp = el.querySelector("#rvPopCopy"); if (cp) cp.textContent = MOTION_COPY[id] || MOTION_COPY.auto;
+  });
+
   on("[data-immpick]", "click", (e) => {
     const s = cur(); if (!s) return;
     s.motion_level = "immersive";
