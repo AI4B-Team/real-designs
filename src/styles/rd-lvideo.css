@@ -399,8 +399,14 @@
 }
 .lv-ph-a {
   display: flex;
-  gap: 5px;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 10px;
 }
+.lv-ph-a .btn-xs {
+  padding: 6px 10px;
+}
+
 .icon-btn.xs {
   width: 26px;
   height: 26px;
