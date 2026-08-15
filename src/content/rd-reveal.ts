@@ -34,6 +34,17 @@ import {
   suggestLabels,
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
+import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
+
+/** Null when the account can pay for a video render, otherwise the reason. */
+function videoCreditBlock() {
+  const c = S.credits;
+  if (!c || c.unavailable) return null;
+  if (c.plan === "free") return "Video rendering needs a paid plan. The free plan covers 5 designs a day.";
+  if ((c.balance ?? 0) < CREDIT_COSTS.video)
+    return `Not enough credits. This video costs ${CREDIT_COSTS.video} and you have ${c.balance ?? 0}.`;
+  return null;
+}
 
 const BUCKET = "reveal-videos";
 const esc = (s) =>
@@ -165,11 +176,13 @@ function host() {
 async function loadLibrary() {
   S.loading = true;
   try {
-    const [lib, tree, kits] = await Promise.all([
+    const [lib, tree, kits, credits] = await Promise.all([
       listVideos(),
       getPropertyTree().catch(() => []),
       listBrandKits().catch(() => []),
+      getMyCredits().catch(() => null),
     ]);
+    S.credits = credits;
     S.projects = lib.projects;
     S.variants = lib.variants;
     S.scenes = lib.scenes;
@@ -1790,6 +1803,12 @@ function dvBind() {
 async function dvGenerate() {
   const d = S.dv;
   if (!d || !d.scenes.length) return toast("Add At Least One Scene First.");
+  const gate = videoCreditBlock();
+  if (gate) {
+    toast(gate);
+    S.go && S.go("billing");
+    return;
+  }
   if (!videoSupported()) {
     console.warn("[REAL REVEAL] Video generation provider is not configured in this environment (MediaRecorder unavailable).");
     return toast("Video generation is not connected yet.");
