@@ -3364,6 +3364,46 @@ if(pfSave) pfSave.addEventListener('click',async()=>{
   }
 });
 
+// ---- Signup questionnaire summary (Profile pane) ----
+async function paintSurveySummary(){
+  const box=$id('surveySummary'); if(!box) return;
+  try{
+    const mod=await import('@/lib/signup-survey.functions');
+    const out=await mod.getSignupSurvey();
+    const r=(out&&out.row)||null;
+    if(!r||(!r.completed&&!r.skipped)){
+      box.innerHTML='<div class="mono" style="font-size:.72rem;color:var(--mute)">You Have Not Answered The Signup Questionnaire Yet.</div>';
+      return;
+    }
+    if(r.skipped&&!r.completed){
+      box.innerHTML='<div class="mono" style="font-size:.72rem;color:var(--mute)">You Skipped The Signup Questionnaire.</div>';
+      return;
+    }
+    const rows=[
+      ['Full Name',r.full_name],['Phone',r.phone],['Company',r.company],
+      ['Role',r.role],['Heard About Us',r.heard_from],
+      ['Listings Per Year',r.listings_per_year],['Team Size',r.team_size],
+      ['Primary Goal',r.primary_goal],
+      ['Marketing Emails',r.marketing_opt_in?'Yes':'No']
+    ].filter(function(x){ return x[1]!==null&&x[1]!==undefined&&x[1]!==''; });
+    box.innerHTML=rows.map(function(x){
+      return '<div class="rowi"><div class="rowt"><b>'+x[0]+'</b><span>'+String(x[1])+'</span></div></div>';
+    }).join('');
+  }catch(_){
+    box.innerHTML='<div class="mono" style="font-size:.72rem;color:var(--mute)">Those Answers Could Not Be Loaded.</div>';
+  }
+}
+const surveyEdit=$id('surveyEdit');
+if(surveyEdit) surveyEdit.addEventListener('click',async()=>{
+  try{
+    const mod=await import('@/lib/rd-survey-ui');
+    await mod.editSignupSurvey();
+    setTimeout(paintSurveySummary,1200);
+  }catch(_){}
+});
+paintSurveySummary();
+
+
 const pwSave=$id('pwSave');
 if(pwSave) pwSave.addEventListener('click',async()=>{
   const msg=$id('pwMsg'), a=$id('pwNew').value, b=$id('pwConfirm').value;
