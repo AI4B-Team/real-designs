@@ -221,19 +221,21 @@
 html:not(.dark), body:not(.dark) { color-scheme: light; }
 html:not(.dark) select, html:not(.dark) option, html:not(.dark) optgroup { color-scheme: light; background-color: #fff; color: #14110F; }
 
-/* Styled replacement for native (dark) title tooltips. */
+/* Styled replacement for native (dark) title tooltips.
+   Rendered as a floating element by initTooltips so it also works on SVG
+   icons, where ::after pseudo elements never paint. */
 [data-tt] { position: relative; }
-[data-tt]:hover::after {
-  content: attr(data-tt);
-  position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+.rd-tt {
+  position: fixed; z-index: 9000; pointer-events: none; opacity: 0;
+  transform: translateY(3px); transition: opacity .12s ease, transform .12s ease;
   background: #fff; color: #14110F; border: 1px solid rgba(20,17,15,.12);
-  font-size: .74rem; font-weight: 600; letter-spacing: -.01em; white-space: nowrap;
-  padding: 5px 9px; border-radius: 6px; z-index: 200; pointer-events: none;
+  font-size: .74rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.4;
+  padding: 6px 10px; border-radius: 7px; max-width: 280px;
   box-shadow: 0 8px 22px rgba(20,18,15,.14);
+  font-family: inherit; white-space: normal;
 }
-[data-tt].tt-wrap:hover::after {
-  white-space: normal; width: 260px; text-align: left; font-weight: 500; line-height: 1.4;
-}
+.rd-tt.on { opacity: 1; transform: translateY(0); }
+.rd-tt.short { white-space: nowrap; font-weight: 600; }
 /* Small inline help icon next to labels and section titles */
 .lbl-i {
   display: inline-flex; width: 13px; height: 13px; margin-left: 5px;
