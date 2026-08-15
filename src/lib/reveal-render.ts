@@ -86,6 +86,7 @@ export type RevealOptions = {
   captionsEnabled?: boolean;
   music?: string | null;
   musicVolume?: number;
+  narrationUrl?: string | null;
   onProgress?: (pct: number) => void;
 };
 
@@ -461,7 +462,7 @@ export async function renderReveal(
   const showDisclosure = opts.versionType !== "clean";
 
   const stream = canvas.captureStream(30);
-  const music = await createMusicTrack(opts.music, opts.musicVolume ?? 0.55);
+  const music = await createMusicTrack(opts.music, opts.musicVolume ?? 0.55, opts.narrationUrl ?? null);
   if (music) stream.addTrack(music.track);
   const mime = pickMime(!!music);
   const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 9_000_000 } : undefined);

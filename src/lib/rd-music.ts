@@ -192,12 +192,14 @@ export function toggleMusic(id: string): boolean {
 
 /* ---------------- soundtrack for rendered videos ---------------- */
 
-/** Build a live audio track for a music id, to mux into a MediaRecorder stream. */
+/** Build a live audio track for a music id (plus optional narration), to mux
+ *  into a MediaRecorder stream. Music ducks automatically under narration. */
 export async function createMusicTrack(
   id: string | null | undefined,
   volume = 0.6,
+  narrationUrl?: string | null,
 ): Promise<{ track: MediaStreamTrack; stop: () => void } | null> {
-  if (!id || id === "none") return null;
+  if ((!id || id === "none") && !narrationUrl) return null;
   try {
     const ac: AudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     if (ac.state === "suspended") await ac.resume().catch(() => {});
@@ -207,6 +209,38 @@ export async function createMusicTrack(
     gain.connect(dest);
 
     let stopSrc: () => void = () => {};
+    let stopVoice: () => void = () => {};
+
+    if (narrationUrl) {
+      try {
+        const vres = await fetch(narrationUrl);
+        const vbuf = await ac.decodeAudioData(await vres.arrayBuffer());
+        const vsrc = ac.createBufferSource();
+        vsrc.buffer = vbuf;
+        const vgain = ac.createGain();
+        vgain.gain.value = 1;
+        vsrc.connect(vgain);
+        vgain.connect(dest);
+        vsrc.start();
+        stopVoice = () => { try { vsrc.stop(); } catch (_) { /* noop */ } };
+        // duck the music bed while a voice is present
+        gain.gain.value = Math.min(volume, 0.22);
+      } catch (_) { /* narration is optional */ }
+    }
+
+    if (!id || id === "none") {
+      const track0 = dest.stream.getAudioTracks()[0];
+      if (!track0) { ac.close().catch(() => {}); return null; }
+      return {
+        track: track0,
+        stop: () => {
+          stopVoice();
+          try { track0.stop(); } catch (_) { /* noop */ }
+          window.setTimeout(() => { ac.close().catch(() => {}); }, 250);
+        },
+      };
+    }
+
     if (isCustom(id)) {
       const t = customTracks.find((c) => c.id === id);
       if (!t) { ac.close().catch(() => {}); return null; }
@@ -230,6 +264,7 @@ export async function createMusicTrack(
       track,
       stop: () => {
         try { stopSrc(); } catch (_) { /* noop */ }
+        try { stopVoice(); } catch (_) { /* noop */ }
         try { track.stop(); } catch (_) { /* noop */ }
         window.setTimeout(() => { ac.close().catch(() => {}); }, 250);
       },
