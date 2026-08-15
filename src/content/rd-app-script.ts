@@ -161,7 +161,7 @@ function go(v,fromHash){
     let n=0;
     const applyPane=()=>{
       const el=document.getElementById('p-'+pane);
-      if(el && !el.classList.contains('on')) acctPane(pane);
+      console.log('RDPANE',n,!!el,el&&el.className); if(el && !el.classList.contains('on')) acctPane(pane);
       if(++n<60) setTimeout(applyPane,75);
     };
     setTimeout(applyPane,0);
