@@ -1306,8 +1306,10 @@ function bind() {
     w.step = Math.min(4, w.step + 1);
     render();
   });
-  on("#rvLowX, #rvLowMore", "click", () => { w.lowModal = false; if (event) w.step = 2; render(); });
+  on("#rvLowX", "click", () => { w.lowModal = false; render(); });
+  on("#rvLowMore", "click", () => { w.lowModal = false; w.step = 1; render(); });
   on("#rvLowGo", "click", () => { w.lowModal = false; w.step = 3; render(); });
+
 
   on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
   on("[data-prop]", "click", (e) => { w.propertyId = e.currentTarget.dataset.prop; w.sourceType = w.sourceType || "property"; render(); });
