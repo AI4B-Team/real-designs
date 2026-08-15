@@ -106,8 +106,8 @@ export function openMotionClip(item: MotionClipInput) {
   wrap.querySelectorAll(".mc-chips").forEach((g) => {
     (g as HTMLElement).querySelectorAll("button").forEach((b) => {
       b.onclick = () => {
-        const key = (g as HTMLElement).dataset.g as "motion" | "aspect" | "seconds";
-        const raw = (b as HTMLElement).dataset.v as string;
+        const key = (g as HTMLElement).dataset['g'] as "motion" | "aspect" | "seconds";
+        const raw = (b as HTMLElement).dataset['v'] as string;
         (state as any)[key] = key === "seconds" ? Number(raw) : raw;
         (g as HTMLElement).querySelectorAll("button").forEach((x) => x.classList.remove("on"));
         b.classList.add("on");
