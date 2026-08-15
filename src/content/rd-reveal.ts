@@ -496,7 +496,10 @@ function stepPhotos() {
           /* Several unsorted properties can share the same label, so date
              stamp the duplicates to keep the picker unambiguous. */
           const dupe = recent.filter((q) => q.address === p.address).length > 1;
-          const when = p.created_at ? new Date(p.created_at).toLocaleDateString() : "";
+          /* Same-day duplicates are common, so include the time too. */
+          const when = p.created_at
+            ? new Date(p.created_at).toLocaleString([], { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })
+            : "";
           const label = dupe && when ? `${p.address} · ${when}` : p.address;
           return `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}"><i data-lucide="home"></i><b>${esc(label)}</b><span class="mono">${(p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0)} Rooms</span></button>`;
         })
