@@ -554,11 +554,8 @@ export async function openPhotoEditor(ctx) {
     p.querySelector("#pmeRun").onclick = () => runAnalysis(asset());
     const anUpg = p.querySelector("#pmeAnUpg");
     if (anUpg)
-      anUpg.onclick = () => {
-        const um = (window as any).rdUpgradeModal;
-        const m = String(analysis[asset().id]?.error || "");
-        if (typeof um === "function") um(/free designs/i.test(m) ? "You Have Used Today\u2019s Free Designs" : "You Need More Credits", m);
-      };
+      anUpg.onclick = () => openUpgrade(String(analysis[asset().id]?.error || ""));
+
     const runAll = p.querySelector("#pmeRunAll");
     if (runAll)
       runAll.onclick = async () => {
