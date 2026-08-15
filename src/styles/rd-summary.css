@@ -25,7 +25,7 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   grid-template-rows: auto auto;
   gap: 0;
-  min-height: 132px;
+  min-height: 152px;
   box-sizing: border-box;
   background: var(--rsp-bg);
   border: 1px solid var(--rsp-border);
@@ -50,6 +50,7 @@
   justify-content: center;
   padding: 16px 20px;
   box-sizing: border-box;
+  gap: 2px;
   overflow: hidden;
   border-left: 1px solid var(--rsp-divider);
 }
@@ -75,7 +76,8 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--rsp-label);
-  margin: 0 0 5px;
+  line-height: 1.5;
+  margin: 0 0 3px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
