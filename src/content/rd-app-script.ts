@@ -212,11 +212,14 @@ try{ mountUploadDock(go); }catch(_){}
 (function applyHash(){
   const v=viewFromHash();
   if(!v) return;
-  const want='v-'+(ACCT_ALIAS[v]?'account':v);
+  const pane=ACCT_ALIAS[v]||'';
+  const want='v-'+(pane?'account':v);
   let tries=0;
   const tick=()=>{
     const target=document.getElementById(want);
     if(target && !target.classList.contains('on')) go(v,true);
+    /* the account markup can remount, so keep the deep linked pane selected */
+    if(pane){ const el=document.getElementById('p-'+pane); if(el && !el.classList.contains('on')) acctPane(pane); }
     if(++tries<110) setTimeout(tick,75);
   };
   tick();
