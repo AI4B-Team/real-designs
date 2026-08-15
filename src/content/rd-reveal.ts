@@ -590,7 +590,9 @@ function stepAudio() {
   <div class="rv-adv"><button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
   ${w.narration === "upload" ? `<label class="rv-f">Voiceover File — MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
   <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
+  ${avatarSection(w.avatar, w.title || w.propertyLabel || "")}
   <div class="rv-sub">Captions</div>
+
   <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Captions On Scenes</label>
   ${w.captions ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}<input data-cap="${i}" value="${esc(s.caption ?? s.room ?? "")}"></label>`).join("")}</div>` : ""}
   <div class="rv-sub">Scene Labels</div>
