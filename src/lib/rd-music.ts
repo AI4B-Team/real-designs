@@ -90,7 +90,7 @@ function synth(mood: Mood) {
   const step = 60 / mood.bpm / 2;
   let i = 0;
   const tick = () => {
-    const semi = mood.scale[i % mood.scale.length] + (i % 8 >= 4 ? 12 : 0);
+    const semi = (mood.scale[i % mood.scale.length] ?? 0) + (i % 8 >= 4 ? 12 : 0);
     const o = ac.createOscillator();
     o.type = mood.wave;
     o.frequency.value = mood.root * Math.pow(2, semi / 12);
