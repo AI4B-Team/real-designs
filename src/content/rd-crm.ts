@@ -114,11 +114,13 @@ async function pushSignup(userId: string) {
     ]
       .filter(Boolean)
       .join("\n"),
+    onSent: async () => {
+      try {
+        await markSignupPushed({ data: { userId } });
+        if (S.signups) r.crm_pushed_at = new Date().toISOString();
+      } catch (_) {}
+    },
   });
-  try {
-    await markSignupPushed({ data: { userId } });
-    if (S.signups) r.crm_pushed_at = new Date().toISOString();
-  } catch (_) {}
 }
 
 
