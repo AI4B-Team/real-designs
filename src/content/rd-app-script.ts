@@ -180,8 +180,15 @@ function go(v,fromHash){
     window.setTimeout(applyPane,0);
   }
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
-  document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='reveal'?'media':v)));
-  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
+     keys like lvideo) must never leave the content area blank. */
+  let viewId = v==='lvideo' ? 'reveal' : v;
+  if(!document.getElementById('v-'+viewId)) viewId='dash';
+  const navId = (viewId==='reveal') ? 'media' : viewId;
+  document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===navId));
+  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+viewId));
+
+
   scrollTopHard();
   try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
@@ -200,7 +207,7 @@ function go(v,fromHash){
      that have no entry in the title map. */
   if(!fromHash){
     try{
-      const h='#v-'+v;
+      const h='#v-'+viewId;
       if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
     }catch(_){}
   }

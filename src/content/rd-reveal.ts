@@ -1990,7 +1990,20 @@ export function startWizard(seed = {}) {
   S.screen = "wizard";
   if (S.wizard.propertyId) loadWizardAssets().then(render);
   render();
+  /* Another view can steal focus while the builder mounts (media tab
+     restores, deep links). The wizard host must stay the visible view. */
+  const focusHost = () => {
+    try {
+      const el = host();
+      if (!el || S.screen !== "wizard") return;
+      if (!el.classList.contains("on")) {
+        document.querySelectorAll(".view").forEach((v) => v.classList.toggle("on", v === el));
+      }
+    } catch (_) {}
+  };
+  [0, 200, 600, 1200, 2000].forEach((ms) => setTimeout(focusHost, ms));
 }
+
 
 /** Contextual entry point used from properties, designs and comparisons. */
 export async function createVideoFrom(seed = {}) {
