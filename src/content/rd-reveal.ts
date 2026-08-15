@@ -457,6 +457,28 @@ function wizardHtml() {
 }
 
 /* ======================= STEP 1, PHOTOS ======================= */
+/** Every finished design in the workspace, newest property first. */
+function designChoices() {
+  const out = [];
+  for (const p of S.tree || []) {
+    for (const pr of p.projects || []) {
+      for (const r of pr.rooms || []) {
+        if (!r.after_path) continue;
+        out.push({
+          roomId: r.id, versionId: r.version_id, propertyId: p.id, propertyLabel: p.address,
+          room: r.name || "Untitled Room", after: r.after_path, before: r.before_path || null,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/** Title the user never has to type: address, property or design name. */
+function defaultTitle(w) {
+  return w.title || w.propertyLabel || "Untitled Video";
+}
+
 function stepPhotos() {
   const w = S.wizard;
   const opts = [
@@ -479,16 +501,28 @@ function stepPhotos() {
         <button class="btn btn-ghost btn-xs" data-cand="${i}">Use This Listing</button>
       </div>`).join("")}</div>` : ""}
       ${w.addrNote ? `<div class="rv-note">${esc(w.addrNote)}</div>` : ""}
-      <button class="fb-link" id="rvAddrSkip">No Thanks, I Will Upload Photos Myself</button>
+      ${(w.candidates || []).length || w.addrNote ? `<button class="fb-link" id="rvAddrSkip">No Thanks, I Will Upload Photos Myself</button>` : ""}
     </div>`;
   } else if (w.sourceType === "upload") {
     panel = `<div class="rv-srcpanel">
-      <div class="rv-upload"><input type="file" id="rvFiles" accept="image/*" multiple hidden>
-        <button class="btn btn-ghost" id="rvBrowse"><i data-lucide="image-plus"></i>Browse Files</button>
-        <span class="mono">${w.uploads.length} Photos Added</span>
+      <input type="file" id="rvFiles" accept="image/*" multiple hidden>
+      <div class="rv-dz ${w.dragging ? "hot" : ""}" id="rvDrop">
+        <i data-lucide="upload-cloud"></i>
+        <b>Drag And Drop Photos Here</b>
+        <span class="rv-or">Or</span>
+        <button class="btn btn-ghost btn-sm" id="rvBrowse">Browse Files</button>
+        <div class="rv-dz-cloud">
+          <button class="btn btn-ghost btn-sm" id="rvDrive">${DRIVE_ICON}Google Drive</button>
+          <button class="btn btn-ghost btn-sm" id="rvDropbox">${DROPBOX_ICON}Dropbox</button>
+        </div>
+        <span class="rv-hint">JPG, PNG Or HEIC, Up To 10 MB Each</span>
       </div>
+      ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
+        .map((u) => `<div class="rv-thumb" style="background-image:url('${esc(u.url)}')"><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
+        .join("")}</div>
+      <div class="rv-upload"><span class="mono">${w.uploads.length} Photos Added</span></div>` : ""}
     </div>`;
-  } else if (w.sourceType === "property" || w.sourceType === "design") {
+  } else if (w.sourceType === "property") {
     panel = recent.length
       ? `<div class="rv-sub">Recent Properties</div>
       <div class="rv-recents">${recent
@@ -501,20 +535,43 @@ function stepPhotos() {
             ? new Date(p.created_at).toLocaleString([], { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })
             : "";
           const label = dupe && when ? `${p.address} · ${when}` : p.address;
-          return `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}"><i data-lucide="home"></i><b>${esc(label)}</b><span class="mono">${(p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0)} Rooms</span></button>`;
+          const rooms = (p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0);
+          const assets = Number(p.asset_count || 0);
+          /* Upload-only properties have no rooms, so never claim "0 Rooms". */
+          const meta = rooms ? `${rooms} ${rooms === 1 ? "Room" : "Rooms"}`
+            : assets ? `${assets} ${assets === 1 ? "Photo" : "Photos"}`
+            : "Empty";
+          const dead = !rooms && !assets;
+          return `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}" title="${esc(label)}" ${dead ? "disabled" : ""}><i data-lucide="home"></i><b>${esc(label)}</b><span class="mono">${meta}</span></button>`;
         })
         .join("")}</div>`
 
       : `<div class="rv-note">No Properties Yet. Upload Photos To Start.</div>`;
+  } else if (w.sourceType === "design") {
+    const designs = designChoices();
+    panel = designs.length
+      ? `<div class="rv-sub">Pick A Design</div>
+      <div class="rv-designs">${designs
+        .map((d) => `<button class="rv-dcard ${w.versionId === d.versionId ? "on" : ""}" data-design="${esc(d.roomId)}">
+          <span class="rv-dcard-th">${d.before ? `<span data-img="${esc(d.before)}"></span>` : ""}<span data-img="${esc(d.after)}"></span></span>
+          <span class="rv-dcard-b"><b>${esc(d.room)}</b><em>${esc(d.propertyLabel)}</em><span class="rv-dpill">${d.before ? "Before And After" : "Design"}</span></span>
+        </button>`)
+        .join("")}</div>`
+      : `<div class="rv-srcpanel"><b>No Finished Designs Yet</b>
+        <p class="rv-hint">Create A Design In Studio First, Or Start From Photos Instead.</p>
+        <button class="btn btn-ghost btn-sm" id="rvUsePhotos">Use Photos Instead</button></div>`;
   }
 
-  const ready = w.sourceType === "upload" || w.sourceType === "address" ? w.uploads.length > 0 : !!w.propertyId;
+  const ready =
+    w.sourceType === "upload" || w.sourceType === "address" ? w.uploads.length > 0
+    : w.sourceType === "design" ? !!w.versionId
+    : !!w.propertyId;
   return `<h3>Where Are The Photos?</h3>
+  <label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
   <div class="rv-opts">${opts
     .map(([id, n, d, ic]) => `<button class="rv-opt ${w.sourceType === id ? "on" : ""}" data-src="${id}"><i data-lucide="${ic}"></i><b>${n}</b><span>${d}</span></button>`)
     .join("")}</div>
   ${panel}
-  <label class="rv-f">Video Title<input id="rvTitle" value="${esc(w.title || (w.propertyLabel ? w.propertyLabel + " Reveal" : "Untitled Reveal"))}"></label>
   <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${ready ? "" : "disabled"}>Continue</button></div>`;
 }
 
