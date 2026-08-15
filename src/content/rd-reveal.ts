@@ -787,7 +787,7 @@ function popoverHtml() {
       <label class="rv-check"><input type="checkbox" id="rvAllLook"> Apply To All Scenes</label>
     </div>`;
   }
-  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in wide" role="dialog" aria-label="Scene options">
+  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${kind === "motion" ? "xwide" : "wide"}" role="dialog" aria-label="Scene options">
     <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Select VFX"}</b>${kind === "look" ? `<span class="rv-pill">Experimental</span>` : ""}<button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">${body}</div>
     <div class="rv-modal-f"><button class="btn btn-primary" id="rvPopDone">Done</button></div>
