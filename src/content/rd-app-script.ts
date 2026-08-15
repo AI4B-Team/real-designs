@@ -3674,9 +3674,13 @@ if(scopeGrid && !document.getElementById('scSave')){
   }
 
   function render(){
+    /* The card is removed on dismiss/completion; late async re-renders must no-op. */
+    if(!card.isConnected) return;
+    const sub=document.getElementById('onbSub'), fill=document.getElementById('onbFill'), steps=document.getElementById('onbSteps');
+    if(!sub||!fill||!steps) return;
     const done=STEPS.filter(s=>state[s.k]).length;
-    document.getElementById('onbSub').textContent=done+' of '+STEPS.length+' complete';
-    document.getElementById('onbFill').style.width=Math.round(done/STEPS.length*100)+'%';
+    sub.textContent=done+' of '+STEPS.length+' complete';
+    fill.style.width=Math.round(done/STEPS.length*100)+'%';
     document.getElementById('onbSteps').innerHTML=STEPS.map((s,n)=>
       '<div class="onb-step'+(state[s.k]?' on':'')+'">'
       +'<span class="onb-ic"><i data-lucide="'+(state[s.k]?'check':s.i)+'"></i></span>'
