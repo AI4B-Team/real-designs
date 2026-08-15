@@ -14,7 +14,7 @@ import {
   deleteMediaVersion,
   saveExportPackage,
 } from "@/lib/property-media.functions";
-import { runPhotoEdit, interpretPhotoRequest } from "@/lib/photo-edit.functions";
+import { runPhotoEdit, interpretPhotoRequest, analyzePhoto } from "@/lib/photo-edit.functions";
 import { track } from "@/lib/analytics";
 
 const esc = (s) =>
@@ -204,7 +204,7 @@ export async function openPhotoEditor(ctx) {
   let assets = ctx.assets.slice();
   let idx = Math.max(0, assets.findIndex((a) => a.id === ctx.assetId));
   if (idx < 0) idx = 0;
-  let tab = "adjust";
+  let tab = "analyze";
   let compare = "current";
   let adj = blankAdjust();
   let geo = blankGeometry();
@@ -214,6 +214,8 @@ export async function openPhotoEditor(ctx) {
   let activeVersionId = null;
   let busy = false;
   let pending = null;
+  const analysis = {}; // asset id -> { loading, error, data }
+  const picked = new Set(); // asset ids selected for batch work
 
   const asset = () => assets[idx];
 
@@ -245,7 +247,8 @@ export async function openPhotoEditor(ctx) {
         </div>
         <aside class="pme-side">
           <div class="pme-tabs" role="tablist">
-            <button class="on" data-t="adjust" role="tab">Adjust</button>
+            <button class="on" data-t="analyze" role="tab">Analyze</button>
+            <button data-t="adjust" role="tab">Adjust</button>
             <button data-t="geometry" role="tab">Geometry</button>
             <button data-t="property" role="tab">Property AI</button>
             <button data-t="design" role="tab">Design AI</button>
@@ -358,10 +361,18 @@ export async function openPhotoEditor(ctx) {
   async function renderStrip() {
     const s = wrap.querySelector("#pmeStrip");
     s.innerHTML = assets
-      .map(
-        (a, i) =>
-          `<button class="pme-thumb${i === idx ? " on" : ""}" data-i="${i}" role="listitem" aria-current="${i === idx}" title="${esc(a.room_group)}"><span class="pme-th-img" data-p="${esc(a.storage_path)}"></span><em>${esc(a.room_group)}</em></button>`,
-      )
+      .map((a, i) => {
+        const an = analysis[a.id];
+        const badge = an && an.data
+          ? `<span class="pme-th-badge ${an.data.issues.length ? "warn" : "ok"}">${an.data.issues.length ? an.data.issues.length + " Fix" + (an.data.issues.length === 1 ? "" : "es") : "Clean"}</span>`
+          : an && an.loading
+            ? `<span class="pme-th-badge">Analyzing</span>`
+            : "";
+        return `<div class="pme-thumb-wrap${picked.has(a.id) ? " picked" : ""}">
+          <button class="pme-thumb${i === idx ? " on" : ""}" data-i="${i}" role="listitem" aria-current="${i === idx}" title="${esc(a.room_group)}"><span class="pme-th-img" data-p="${esc(a.storage_path)}"></span>${badge}<em>${esc(a.room_group)}</em></button>
+          <label class="pme-th-pick" title="Select For Batch Edit"><input type="checkbox" data-pick="${esc(a.id)}" ${picked.has(a.id) ? "checked" : ""} aria-label="Select ${esc(a.room_group)} for batch edit"></label>
+        </div>`;
+      })
       .join("");
     s.querySelectorAll(".pme-thumb").forEach((b) => {
       b.onclick = () => {
@@ -369,11 +380,25 @@ export async function openPhotoEditor(ctx) {
         loadAsset();
       };
     });
+    s.querySelectorAll("[data-pick]").forEach((c) => {
+      c.onchange = () => {
+        if (c.checked) picked.add(c.dataset.pick);
+        else picked.delete(c.dataset.pick);
+        c.closest(".pme-thumb-wrap").classList.toggle("picked", c.checked);
+        if (tab === "analyze" || tab === "property" || tab === "design") renderPane();
+      };
+    });
     for (const el of s.querySelectorAll(".pme-th-img")) {
       const url = await roomPhotoUrl(el.dataset.p);
       if (url) el.style.backgroundImage = `url("${url}")`;
     }
   }
+
+  function targets() {
+    const list = assets.filter((a) => picked.has(a.id));
+    return list.length ? list : [asset()];
+  }
+
 
   function sliders(list, store) {
     return list
@@ -388,6 +413,11 @@ export async function openPhotoEditor(ctx) {
 
   function renderPane() {
     const p = wrap.querySelector("#pmePane");
+    if (tab === "analyze") {
+      renderAnalyze(p);
+      paint();
+      return;
+    }
     if (tab === "adjust" || tab === "geometry") {
       const list = tab === "adjust" ? ADJUST : GEOMETRY;
       const store = tab === "adjust" ? adj : geo;
@@ -439,6 +469,108 @@ export async function openPhotoEditor(ctx) {
     paint();
   }
 
+  /* ---------------- Analyze ---------------- */
+
+  async function urlForAsset(a) {
+    const vs = (ctx.versions || []).filter((v) => v.asset_id === a.id && !v.archived);
+    const approved = vs.find((v) => v.id === a.approved_version_id) || vs[vs.length - 1];
+    const p = approved ? approved.storage_path : a.storage_path;
+    return (await roomPhotoUrl(p)) || "";
+  }
+
+  async function runAnalysis(a) {
+    if (analysis[a.id] && analysis[a.id].loading) return;
+    analysis[a.id] = { loading: true };
+    if (tab === "analyze") renderAnalyze(wrap.querySelector("#pmePane"));
+    renderStrip();
+    try {
+      const url = a.id === asset().id ? baseUrl : await urlForAsset(a);
+      const dataUrl = /^data:/.test(url) ? url : await toDataUrl(url);
+      const out = await analyzePhoto({ data: { image: dataUrl, room: a.room_group || "Room" } });
+      analysis[a.id] = { data: out };
+      track("photo_analyzed", { issues: out.issues.length });
+    } catch (e) {
+      analysis[a.id] = { error: e.message || "Analysis failed." };
+    }
+    if (tab === "analyze") renderAnalyze(wrap.querySelector("#pmePane"));
+    renderStrip();
+  }
+
+  function renderAnalyze(p) {
+    const a = asset();
+    const state = analysis[a.id];
+    const picks = targets();
+    const many = picks.length > 1;
+    const head = `<div class="pme-kind analyze">
+        <b>AI Photo Review</b>
+        <span>Free to run. We look at the photo and tell you what is holding it back before you spend a credit.</span>
+      </div>
+      <div class="pme-an-act">
+        <button class="btn btn-dark btn-xs" id="pmeRun"><i data-lucide="scan-eye"></i>${state && state.data ? "Re-Analyze This Photo" : "Analyze This Photo"}</button>
+        <button class="btn btn-ghost btn-xs" id="pmeRunAll"><i data-lucide="layers"></i>Analyze ${many ? picks.length + " Selected" : "All " + assets.length}</button>
+      </div>`;
+
+    let body = `<p class="pme-note">Select photos in the filmstrip to review or fix several at once.</p>`;
+
+    if (state && state.loading) {
+      body = `<div class="pme-review"><b>Analyzing</b><span>Reading the photo for exposure, framing, clutter and staging opportunities.</span></div>`;
+    } else if (state && state.error) {
+      body = `<div class="pme-review err"><b>Analysis Failed</b><span>${esc(state.error)}</span></div>`;
+    } else if (state && state.data) {
+      const d = state.data;
+      body = `<div class="pme-score"><b>${d.quality}</b><span>Listing Readiness</span><i style="width:${d.quality}%"></i></div>
+        ${d.summary ? `<p class="pme-an-sum">${esc(d.summary)}</p>` : ""}
+        ${
+          d.issues.length
+            ? `<div class="pme-an-list">${d.issues
+                .map(
+                  (i) =>
+                    `<div class="pme-an-issue ${esc(i.severity)}"><b>${esc(i.title)}</b><span>${esc(i.detail)}</span></div>`,
+                )
+                .join("")}</div>`
+            : `<div class="pme-an-clean"><i data-lucide="check-circle-2"></i>No Problems Found</div>`
+        }
+        ${
+          d.suggestions.length
+            ? `<div class="pme-sub-h">Recommended Fixes</div>
+              <div class="pme-an-list">${d.suggestions
+                .map(
+                  (s, n) =>
+                    `<div class="pme-an-sug"><div><b>${esc(s.label)}</b><span>${esc(s.why)}</span></div><button class="btn btn-ghost btn-xs" data-sug="${n}">Apply</button></div>`,
+                )
+                .join("")}</div>
+              <button class="btn btn-primary btn-xs" id="pmeApplyAll"><i data-lucide="wand-sparkles"></i>Apply All Recommended — ${d.suggestions.length * picks.length} Credit${d.suggestions.length * picks.length === 1 ? "" : "s"}</button>
+              ${many ? `<p class="pme-note">These fixes will be applied to all ${picks.length} selected photos.</p>` : `<p class="pme-note">Each fix uses 1 credit and is saved as a new version.</p>`}`
+            : ""
+        }`;
+    }
+
+    p.innerHTML = head + body + `<div id="pmeReview"></div>`;
+    paint();
+    p.querySelector("#pmeRun").onclick = () => runAnalysis(asset());
+    p.querySelector("#pmeRunAll").onclick = async () => {
+      for (const t of picks.length > 1 ? picks : assets) await runAnalysis(t);
+    };
+    p.querySelectorAll("[data-sug]").forEach((b) => {
+      b.onclick = () => {
+        const s = analysis[asset().id].data.suggestions[Number(b.dataset.sug)];
+        confirmSteps([{ family: s.family, op: s.op, label: s.label }], null, s.why);
+      };
+    });
+    const all = p.querySelector("#pmeApplyAll");
+    if (all)
+      all.onclick = () => {
+        const d = analysis[asset().id].data;
+        confirmSteps(
+          d.suggestions.map((s) => ({ family: s.family, op: s.op, label: s.label })),
+          null,
+          d.summary,
+        );
+      };
+  }
+
+
+
   async function interpret() {
     const t = wrap.querySelector("#pmeAsk");
     const req = (t.value || "").trim();
@@ -460,12 +592,14 @@ export async function openPhotoEditor(ctx) {
   function confirmSteps(steps, instruction, summary, material) {
     const box = wrap.querySelector("#pmeReview") || wrap.querySelector("#pmePane");
     const isMaterial = material || steps.some((s) => s.family === "design");
+    const picks = targets();
+    const cost = steps.length * picks.length;
     pending = { steps, instruction };
     box.innerHTML = `<div class="pme-review">
       <b>Review Edit</b>
       ${summary ? `<span>${esc(summary)}</span>` : ""}
       <ul>${steps.map((s) => `<li>${esc(s.label)}</li>`).join("")}</ul>
-      <span>Apply to: This photo · ${steps.length} credit${steps.length === 1 ? "" : "s"}</span>
+      <span>Apply to: ${picks.length > 1 ? picks.length + " selected photos" : "This photo"} · ${cost} credit${cost === 1 ? "" : "s"}</span>
       ${isMaterial ? `<div class="pme-disc"><i data-lucide="triangle-alert"></i>This materially changes the property. It will be saved as Design Media and labeled as modified.</div>` : ""}
       <div class="pme-review-a">
         <button class="btn btn-primary btn-xs" id="pmeApply"><i data-lucide="play"></i>Apply Edit</button>
@@ -483,53 +617,83 @@ export async function openPhotoEditor(ctx) {
     box.querySelector("#pmeCancel").onclick = () => (box.innerHTML = "");
   }
 
+  /** Run the pending steps against one asset and save the result as a version. */
+  async function runStepsOn(a, startUrl) {
+    let src = startUrl;
+    let last = null;
+    let image = null;
+    for (const step of pending.steps) {
+      const dataUrl = /^data:/.test(src) ? src : await toDataUrl(src);
+      last = await runPhotoEdit({
+        data: {
+          family: step.family,
+          op: step.op,
+          image: dataUrl,
+          room: a.room_group,
+          direction: ctx.direction || "Warm Minimal",
+          instruction: pending.instruction || null,
+        },
+      });
+      src = last.image;
+      image = last.image;
+      track("ai_edit_submitted", { family: step.family });
+    }
+    const path = await uploadRenderDataUrl(image);
+    const row = await addMediaVersion({
+      data: {
+        asset_id: a.id,
+        label: pending.steps.map((s) => s.label).join(" + "),
+        kind: last.family === "design" ? "design" : "ai_edit",
+        modification_class: last.modification_class,
+        storage_path: path,
+        ops: { steps: pending.steps.map((s) => s.op) },
+        approve: false,
+      },
+    });
+    ctx.versions.push(row);
+    a.modification_class = last.modification_class;
+    return { row, image };
+  }
+
   async function applySteps() {
     if (busy || !pending) return;
     busy = true;
     const box = wrap.querySelector("#pmeReview") || wrap.querySelector("#pmePane");
-    box.innerHTML = `<div class="pme-review"><b>Applying Edit</b><span>Working on ${pending.steps.length} step${pending.steps.length === 1 ? "" : "s"}. You can watch the result appear above.</span></div>`;
-    let image = null;
+    const picks = targets();
+    const say = (n) =>
+      (box.innerHTML = `<div class="pme-review"><b>Applying Edit</b><span>${picks.length > 1 ? `Photo ${n} of ${picks.length}. ` : ""}Working on ${pending.steps.length} step${pending.steps.length === 1 ? "" : "s"}.</span></div>`);
+    let done = 0;
+    const failed = [];
     try {
-      let src = baseUrl;
-      let last = null;
-      for (const step of pending.steps) {
-        const dataUrl = /^data:/.test(src) ? src : await toDataUrl(src);
-        last = await runPhotoEdit({
-          data: {
-            family: step.family,
-            op: step.op,
-            image: dataUrl,
-            room: asset().room_group,
-            direction: ctx.direction || "Warm Minimal",
-            instruction: pending.instruction || null,
-          },
-        });
-        src = last.image;
-        image = last.image;
-        track("ai_edit_submitted", { family: step.family });
+      for (const a of picks) {
+        say(done + 1);
+        try {
+          const start = a.id === asset().id ? baseUrl : await urlForAsset(a);
+          const out = await runStepsOn(a, start);
+          if (a.id === asset().id) {
+            baseUrl = out.image;
+            activeVersionId = out.row.id;
+            versions = ctx.versions.filter((v) => v.asset_id === asset().id && !v.archived);
+            adj = blankAdjust();
+            geo = blankGeometry();
+            renderStage();
+          }
+          delete analysis[a.id];
+          done++;
+        } catch (e) {
+          failed.push(`${a.room_group}: ${e.message || e}`);
+        }
       }
-      const path = await uploadRenderDataUrl(image);
-      const row = await addMediaVersion({
-        data: {
-          asset_id: asset().id,
-          label: pending.steps.map((s) => s.label).join(" + "),
-          kind: last.family === "design" ? "design" : "ai_edit",
-          modification_class: last.modification_class,
-          storage_path: path,
-          ops: { steps: pending.steps.map((s) => s.op) },
-          approve: false,
-        },
-      });
-      ctx.versions.push(row);
-      asset().modification_class = last.modification_class;
-      baseUrl = image;
-      activeVersionId = row.id;
-      versions = ctx.versions.filter((v) => v.asset_id === asset().id && !v.archived);
-      adj = blankAdjust();
-      geo = blankGeometry();
-      renderStage();
-      box.innerHTML = "";
-      toast(`${row.label} saved as a new version.`);
+      renderStrip();
+      if (!done) throw new Error(failed[0] || "Edit failed.");
+      box.innerHTML = failed.length
+        ? `<div class="pme-review err"><b>Partly Applied</b><span>${done} of ${picks.length} photos updated.</span><ul>${failed.map((f) => `<li>${esc(f)}</li>`).join("")}</ul></div>`
+        : "";
+      toast(
+        picks.length > 1
+          ? `${done} photos updated with ${pending.steps.map((s) => s.label).join(" + ")}.`
+          : `${pending.steps.map((s) => s.label).join(" + ")} saved as a new version.`,
+      );
     } catch (e) {
       box.innerHTML = `<div class="pme-review err"><b>Edit Failed</b><span>${esc(e.message || e)}</span><div class="pme-review-a"><button class="btn btn-ghost btn-xs" id="pmeRetry">Retry</button></div></div>`;
       const r = box.querySelector("#pmeRetry");

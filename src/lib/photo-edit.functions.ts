@@ -178,3 +178,99 @@ export const interpretPhotoRequest = createServerFn({ method: "POST" })
       material: steps.some((s: any) => s.family === "design"),
     };
   });
+
+/**
+ * Vision analysis of a single photo. Free — no credit is charged. The model
+ * looks at the actual pixels and reports what is wrong with the shot plus the
+ * catalog operations that would fix it, so the user can approve the fixes
+ * before anything is spent.
+ */
+export const analyzePhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        image: z.string().min(16),
+        room: z.string().max(60).default("Room"),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const apiKey = process.env["LOVABLE_API_KEY"];
+    if (!apiKey) throw new Error("AI is not configured.");
+
+    const catalog = [
+      ...Object.entries(PROPERTY_OPS).map(([k, v]) => `property:${k} = ${v}`),
+      ...Object.entries(DESIGN_OPS).map(([k, v]) => `design:${k} = ${v}`),
+    ].join("\n");
+
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          {
+            role: "system",
+            content: `You are a real estate photo editor reviewing one photograph before it goes on a listing. Judge only what you can actually see. Available fixes:\n${catalog}\nReturn JSON only:\n{"summary":"one sentence verdict","quality":0-100,"issues":[{"title":"short label","detail":"one sentence, plain language","severity":"high|medium|low"}],"suggestions":[{"family":"property|design","op":"catalog key","why":"one short sentence"}],"staging_worthwhile":true|false}\nAt most 5 issues and 5 suggestions, ordered by impact. Only use operation keys from the catalog. If the photo is already good, return an empty issues array and say so in the summary.`,
+          },
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `This is a photo of a ${data.room}. Review it.` },
+              { type: "image_url", image_url: { url: data.image } },
+            ],
+          },
+        ],
+        response_format: { type: "json_object" },
+      }),
+    });
+    if (res.status === 429) throw new Error("Rate limit reached, try again in a moment.");
+    if (res.status === 402) throw new Error("AI credits are exhausted for this workspace.");
+    if (!res.ok) throw new Error(`Could not analyze that photo (${res.status}).`);
+
+    const payload = (await res.json()) as any;
+    let parsed: any = {};
+    try {
+      parsed = JSON.parse(payload?.choices?.[0]?.message?.content ?? "{}");
+    } catch {
+      parsed = {};
+    }
+
+    const issues = (Array.isArray(parsed.issues) ? parsed.issues : [])
+      .slice(0, 5)
+      .map((i: any) => ({
+        title: String(i?.title ?? "Issue").slice(0, 60),
+        detail: String(i?.detail ?? "").slice(0, 200),
+        severity: ["high", "medium", "low"].includes(i?.severity) ? i.severity : "medium",
+      }));
+
+    const suggestions = (Array.isArray(parsed.suggestions) ? parsed.suggestions : [])
+      .filter(
+        (s: any) =>
+          (s?.family === "property" && (PROPERTY_OPS as Record<string, string>)[s?.op]) ||
+          (s?.family === "design" && (DESIGN_OPS as Record<string, string>)[s?.op]),
+      )
+      .slice(0, 5)
+      .map((s: any) => ({
+        family: s.family as "property" | "design",
+        op: String(s.op),
+        label:
+          s.family === "property"
+            ? (PROPERTY_OPS as Record<string, string>)[s.op]!
+            : (DESIGN_OPS as Record<string, string>)[s.op]!,
+        why: String(s?.why ?? "").slice(0, 160),
+      }));
+
+    const quality = Number.isFinite(Number(parsed.quality))
+      ? Math.max(0, Math.min(100, Math.round(Number(parsed.quality))))
+      : Math.max(20, 100 - issues.length * 15);
+
+    return {
+      summary: typeof parsed.summary === "string" ? parsed.summary.slice(0, 240) : "",
+      quality,
+      issues,
+      suggestions,
+      staging: parsed.staging_worthwhile === true,
+    };
+  });
