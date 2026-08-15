@@ -812,6 +812,8 @@ export async function renderReveal(
             ? scene.motion
             : "auto";
         const transition = scene.transition || opts.transition || "clean";
+        const vfxOn = vfxEnter(ctx, W, H, transition, local, durations[idx]!);
+
 
         if (cmp && scene.scene_type === "before_after") {
           // Match Frame: same camera, original holds then the design takes over.
