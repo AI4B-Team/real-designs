@@ -13,6 +13,7 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
+import { FLAG_LABEL, recommendations, missingSpaces } from "@/lib/media-analysis";
 import {
   listVideos as _listVideos,
   getVideo as _getVideo,
@@ -113,7 +114,7 @@ const MUSIC = [
   { id: "modern", group: "Modern", name: "Clean Modern" },
   { id: "luxury", group: "Luxury", name: "Quiet Luxury" },
   { id: "warm", group: "Warm", name: "Warm Home" },
-  { id: "cinematic", group: "Cinematic", name: "Cinematic Reveal" },
+  { id: "cinematic", group: "Cinematic", name: "Cinematic Sweep" },
   { id: "upbeat", group: "Upbeat", name: "Upbeat Listing" },
   { id: "minimal", group: "Minimal", name: "Minimal Pulse" },
 ];
@@ -124,7 +125,7 @@ function musicList() {
 function musicPicker(id, sel, withGroup) {
   const on = playingId() && playingId() === sel;
   return `<div class="rv-music">
-    <select id="${id}">${musicList().map((m) => `<option value="${m.id}" ${sel === m.id ? "selected" : ""}>${esc(withGroup ? m.group + " \u2014 " + m.name : m.name)}</option>`).join("")}</select>
+    <select id="${id}">${musicList().map((m) => `<option value="${m.id}" ${sel === m.id ? "selected" : ""}>${esc(withGroup ? m.group + ", " + m.name : m.name)}</option>`).join("")}</select>
     <button type="button" class="btn btn-ghost btn-sm rv-music-play" data-musicplay="${id}" ${sel === "none" ? "disabled" : ""}><i data-lucide="${on ? "pause" : "play"}"></i>${on ? "Stop" : "Preview"}</button>
     <button type="button" class="btn btn-ghost btn-sm" data-musicup="${id}"><i data-lucide="upload"></i>Upload Track</button>
     <input type="file" accept="audio/*" class="rv-music-file" data-musicfile="${id}" hidden>
@@ -943,7 +944,7 @@ function defaultScript() {
   const rooms = Array.from(new Set(w.scenes.map((s) => s.room).filter(Boolean))).slice(0, 6);
   const lines = [];
   if (w.propertyLabel) lines.push(`A look at ${w.propertyLabel}.`);
-  if (rooms.length) lines.push(`This reveal covers ${rooms.join(", ")}.`);
+  if (rooms.length) lines.push(`This video covers ${rooms.join(", ")}.`);
   if (w.scenes.some((s) => s.scene_type === "before_after")) lines.push("Each space is shown as it is today, then as the proposed design.");
   lines.push("Every design shown is a proposed concept created in REAL DESIGNS.");
   return lines.join(" ");
@@ -1108,7 +1109,7 @@ function assetToScene(a) {
     key: a.key,
     path: a.path,
     compare: isBA ? a.compare || null : null,
-    room: a.room || "Untitled",
+    room: a.room || UNSORTED,
     kind: a.kind,
     scene_type: isBA && a.compare ? "before_after" : a.kind === "Original" ? "original" : "design",
     duration: 3,
@@ -1175,6 +1176,7 @@ async function generate() {
         immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
         exterior_effect: s.exterior_effect || null,
         labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
+        enhance: s.enhance || null,
       })),
       audio: {
         presentation_style: w.presentation,
@@ -1232,6 +1234,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
       immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
       exterior_effect: s.exterior_effect || null,
       labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
+      enhance: s.enhance || null,
     });
   }
   const { data: auth } = await supabase.auth.getUser();
@@ -1423,7 +1426,7 @@ function presentationHtml(d) {
 
     <div class="rv-sub">Access</div>
     <label class="rv-check"><input type="checkbox" id="pr_pw_on" ${sh.password_hash ? "checked" : ""}> Require A Password</label>
-    <label class="rv-f">Password<input id="pr_pw" type="password" placeholder="${sh.password_hash ? "Saved — Type To Replace" : "Set A Password"}"></label>
+    <label class="rv-f">Password<input id="pr_pw" type="password" placeholder="${sh.password_hash ? "Saved, Type To Replace" : "Set A Password"}"></label>
     <label class="rv-check"><input type="checkbox" id="pr_dl" ${sh.allow_download !== false ? "checked" : ""}> Allow Downloads</label>
     <label class="rv-check"><input type="checkbox" id="pr_appr" ${sh.approval_enabled ? "checked" : ""}> Collect Approvals & Comments</label>
 
