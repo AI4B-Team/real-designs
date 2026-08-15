@@ -1078,6 +1078,11 @@ async function paintAssetThumbs() {
 function render() {
   const el = host();
   if (!el) return;
+  // A screen can only stay open while its state object exists; otherwise the
+  // step renderers dereference null and the whole view crashes.
+  if (S.screen === "wizard" && !S.wizard) S.screen = "library";
+  if (S.screen === "design" && !S.dv) S.screen = "library";
+  if (S.screen === "detail" && !S.detail) S.screen = "library";
   el.innerHTML =
     S.screen === "wizard" ? wizardHtml() : S.screen === "design" ? dvHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
@@ -1129,6 +1134,7 @@ function bind() {
 
   /* wizard */
   const w = S.wizard;
+  if (w) {
   on("#rvCancel", "click", () => { S.screen = "library"; S.wizard = null; render(); });
   on("#rvBack", "click", () => { w.step = Math.max(1, w.step - 1); render(); });
   on("#rvNext", "click", async () => {
@@ -1299,6 +1305,7 @@ function bind() {
 
   /* review */
   on("#rvGen", "click", () => generate());
+  } // end wizard bindings (S.wizard may be null on the library screen)
 
   /* detail */
   on("[data-tab]", "click", (e) => { S.detailTab = e.currentTarget.dataset.tab; render(); });

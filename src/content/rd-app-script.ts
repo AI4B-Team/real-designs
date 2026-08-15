@@ -3674,10 +3674,14 @@ if(scopeGrid && !document.getElementById('scSave')){
   }
 
   function render(){
+    /* The card is removed on dismiss/completion; late async re-renders must no-op. */
+    if(!card.isConnected) return;
+    const sub=document.getElementById('onbSub'), fill=document.getElementById('onbFill'), steps=document.getElementById('onbSteps');
+    if(!sub||!fill||!steps) return;
     const done=STEPS.filter(s=>state[s.k]).length;
-    document.getElementById('onbSub').textContent=done+' of '+STEPS.length+' complete';
-    document.getElementById('onbFill').style.width=Math.round(done/STEPS.length*100)+'%';
-    document.getElementById('onbSteps').innerHTML=STEPS.map((s,n)=>
+    sub.textContent=done+' of '+STEPS.length+' complete';
+    fill.style.width=Math.round(done/STEPS.length*100)+'%';
+    steps.innerHTML=STEPS.map((s,n)=>
       '<div class="onb-step'+(state[s.k]?' on':'')+'">'
       +'<span class="onb-ic"><i data-lucide="'+(state[s.k]?'check':s.i)+'"></i></span>'
       +'<div class="onb-tx"><b>'+(n+1)+'. '+s.t+'</b><span>'+s.b+'</span></div>'
@@ -3700,7 +3704,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     if(changed){ save(); render(); }
   })();
 
-  document.getElementById('onbHide').addEventListener('click',()=>{ state.done=true; save(); card.remove(); });
+  document.getElementById('onbHide')?.addEventListener('click',()=>{ state.done=true; save(); card.remove(); });
   ['photo','priced','saved','brand','shared'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
 
   /* welcome once per account, but never over a photo handed off from the site */
