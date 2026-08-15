@@ -539,10 +539,11 @@ function photosHtml() {
           ${p.flags.map((f) => `<em>${esc(flagLabel(f))}</em>`).join("")}
         </div>
         <div class="lv-ph-a">
-          <button class="icon-btn xs" data-a="cover" data-id="${p.id}" title="Set as cover"><i data-lucide="star"></i></button>
-          <button class="icon-btn xs" data-a="rotate" data-id="${p.id}" title="Rotate"><i data-lucide="rotate-cw"></i></button>
-          <button class="icon-btn xs" data-a="replace" data-id="${p.id}" title="Replace"><i data-lucide="repeat"></i></button>
-          <button class="icon-btn xs" data-a="edit" data-id="${p.id}" title="Edit photo"><i data-lucide="wand-2"></i></button>
+          <button class="btn btn-ghost btn-xs" data-a="cover" data-id="${p.id}" title="Set As Cover" aria-label="Set As Cover"><i data-lucide="star"></i></button>
+          <button class="btn btn-ghost btn-xs" data-a="rotate" data-id="${p.id}" title="Rotate" aria-label="Rotate"><i data-lucide="rotate-cw"></i></button>
+          <button class="btn btn-ghost btn-xs" data-a="replace" data-id="${p.id}" title="Replace" aria-label="Replace"><i data-lucide="repeat"></i></button>
+          <button class="btn btn-ghost btn-xs" data-a="edit" data-id="${p.id}" title="Edit Photo" aria-label="Edit Photo"><i data-lucide="wand-2"></i></button>
+
         </div>
       </div>
     </div>`,
