@@ -3589,6 +3589,29 @@ if(scopeGrid && !document.getElementById('scSave')){
   });
 }
 
+/* ---------- dashboard greeting ---------- */
+(async function dashGreeting(){
+  try{
+    const t=document.getElementById('dashHelloT'); const sub=document.getElementById('dashHelloS');
+    if(!t) return;
+
+    const {data}=await supabase.auth.getUser();
+    const u=data&&data.user; if(!u) return;
+    const m=(u.user_metadata||{});
+    const full=String(m.full_name||m.name||(u.email||'').split('@')[0]||'').trim();
+    const first=full.split(/\s+/)[0]||'There';
+    const h=new Date().getHours();
+    const part=h<12?'Good Morning':(h<18?'Good Afternoon':'Good Evening');
+    t.textContent=part+', '+first.charAt(0).toUpperCase()+first.slice(1);
+    try{
+      const { getSignupSurvey }=await import('@/lib/signup-survey.functions');
+      const r=await getSignupSurvey({} as any);
+      const goal=r&&r.row&&r.row.primary_goal;
+      if(goal&&sub) sub.textContent='Your Goal: '+goal+'. Here Is Where Your Workspace Stands Today.';
+    }catch(_){}
+  }catch(_){}
+})();
+
 /* ---------- signup questionnaire (once per member) ---------- */
 (async function signupQuestionnaire(){
   try{

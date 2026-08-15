@@ -1505,3 +1505,10 @@
 .rd-welcome .rd-welcome-card .sv-field input,.rd-welcome .rd-welcome-card .sv-opt{height:auto}
 .rd-welcome .promo .brand{margin-bottom:26px}
 @media (max-width:520px){.rd-welcome .rd-welcome-card{padding:20px 18px 16px}}
+
+/* ---------- dashboard greeting ---------- */
+.rd-app #v-dash.view{display:flex;flex-direction:column}
+.rd-app .dash-hello{order:-1;margin:0 0 16px}
+.rd-app .dash-hello h2{margin:0;font-family:var(--font-display,inherit);font-size:24px;line-height:1.2;letter-spacing:-.01em;color:var(--ink)}
+.rd-app .dash-hello p{margin:6px 0 0;font-size:13px;color:var(--mute)}
+@media(max-width:720px){.rd-app .dash-hello h2{font-size:20px}}
