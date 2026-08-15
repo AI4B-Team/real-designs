@@ -1485,6 +1485,66 @@ export type Database = {
           },
         ]
       }
+      signup_profiles: {
+        Row: {
+          company: string | null
+          completed: boolean
+          created_at: string
+          crm_pushed_at: string | null
+          email: string | null
+          full_name: string | null
+          how_heard: string | null
+          how_heard_detail: string | null
+          listings_per_year: string | null
+          marketing_opt_in: boolean
+          phone: string | null
+          primary_goal: string | null
+          role: string | null
+          skipped: boolean
+          team_size: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company?: string | null
+          completed?: boolean
+          created_at?: string
+          crm_pushed_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          how_heard?: string | null
+          how_heard_detail?: string | null
+          listings_per_year?: string | null
+          marketing_opt_in?: boolean
+          phone?: string | null
+          primary_goal?: string | null
+          role?: string | null
+          skipped?: boolean
+          team_size?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company?: string | null
+          completed?: boolean
+          created_at?: string
+          crm_pushed_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          how_heard?: string | null
+          how_heard_detail?: string | null
+          listings_per_year?: string | null
+          marketing_opt_in?: boolean
+          phone?: string | null
+          primary_goal?: string | null
+          role?: string | null
+          skipped?: boolean
+          team_size?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       style_overrides: {
         Row: {
           aliases: string[] | null
