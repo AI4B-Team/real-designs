@@ -419,15 +419,16 @@ async function loadWizardAssets() {
       const media = await listMediaAssets({ property_id: w.propertyId });
       for (const a of media.assets || []) {
         if (a.hidden) continue;
+        const room = roomLabelOf(a.room_group);
         out.push({
-          key: "m-" + a.id, path: a.storage_path, room: a.room_group || "Other", kind: "Original",
-          group: groupFor(a.room_group, ""), asset_id: a.id, disclosure: null, recommended: !!a.recommended,
-          dup: a.dup_group || null,
+          key: "m-" + a.id, path: a.storage_path, room, kind: "Original",
+          group: groupFor(room === UNSORTED ? "" : room, ""), asset_id: a.id, disclosure: null, recommended: !!a.recommended,
+          dup: a.dup_group || null, hdr: a.hdr_group || null, flags: a.flags || [], quality: a.quality || {},
         });
       }
     } catch (_) {}
   }
-  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.name, kind: "Original", group: "Other", disclosure: null, uploaded: true });
+  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.name || UNSORTED, kind: "Original", group: "Other", disclosure: null, uploaded: true, flags: [] });
   w.available = out;
 }
 
