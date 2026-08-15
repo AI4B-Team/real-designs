@@ -352,3 +352,9 @@
 .rd-app .rv-photostrip .rv-mchip svg { width: 12px !important; height: 12px !important; }
 .rd-app .rv-photostrip .rv-scard-b > b { display: block; font-size: 13px; margin: 2px 0 4px; }
 .rd-app .rv-photostrip .rv-cap { width: 100%; font-size: 12px; }
+
+/* VFX tile modal */
+.rd-app .rv-look em { display:block; font-style:normal; font-size:11px; color:#6b6b6b; line-height:1.25; margin-top:2px; }
+.rd-app .rv-look .mono { position:absolute; top:6px; right:6px; background:#cc0000; color:#fff; border-radius:999px; padding:1px 7px; font-size:10.5px; }
+.rd-app .rv-look { position:relative; }
+.rd-app .rv-pill { margin-left:8px; border:1px solid #e4e4e4; border-radius:999px; padding:2px 9px; font-size:10.5px; color:#6b6b6b; }

@@ -55,7 +55,7 @@ import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvata
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { VFX_LOOKS, VFX_CATEGORIES, lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
-import { VFX_TILES, VFX_TILE_CATEGORIES, tileById, tilesForCat } from "@/lib/rd-vfx-tiles";
+import { VFX_TILE_CATEGORIES, tileById, tilesForCat } from "@/lib/rd-vfx-tiles";
 
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
@@ -761,7 +761,7 @@ function stepEdit() {
   const imm = immersiveCount();
   const orient = orientationOf(w);
   return `<div class="rv-head-row">
-    <h3>Configure Photos</h3>
+    <div><h3>Configure Photos</h3><p class="rv-hint">Drag To Reorder. Set Orientation, Crop Photos, And Customize Camera Motions.</p></div>
     <div class="rv-orient"><span>Video Orientation</span>
       <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
     </div>
