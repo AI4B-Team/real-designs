@@ -1253,11 +1253,14 @@ function bind() {
       S.propertyId = propId;
       S.propertyLabel = p ? p.address : "";
       S.standalone = false;
-      await loadAssets(propId);
+      await loadAssets(propId, true);
       S.step = S.photos.length ? "photos" : "start";
       if (!S.photos.length) toast("That property has no photos yet. Upload the listing photos to continue.");
+      else if (S.usedLibrary)
+        toast("That property has no photos yet — showing photos from your media library instead.");
       return render();
     }
+
 
     if (t.getAttribute("data-newprop")) {
       const label = normalizeAddress(S.addressQuery);
