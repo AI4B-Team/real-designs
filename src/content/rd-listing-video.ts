@@ -290,12 +290,18 @@ async function loadKits() {
   }
 }
 
-async function loadAssets(propertyId) {
+async function loadAssets(propertyId, allowLibraryFallback = false) {
   S.loading = true;
+  S.usedLibrary = false;
   render();
   try {
     const r = await listMediaAssets({ data: { property_id: propertyId || null } });
     S.assets = (r.assets || []).filter((a) => !a.hidden);
+    if (!S.assets.length && propertyId && allowLibraryFallback) {
+      const all = await listMediaAssets({ data: { property_id: null } });
+      S.assets = (all.assets || []).filter((a) => !a.hidden);
+      S.usedLibrary = S.assets.length > 0;
+    }
     S.photos = S.assets.map(toPhoto);
     autoArrange();
   } catch (e) {
@@ -303,6 +309,7 @@ async function loadAssets(propertyId) {
   }
   S.loading = false;
 }
+
 
 /* ======================= START SCREEN ======================= */
 
@@ -1220,10 +1227,16 @@ function bind() {
       return render();
     }
     if (t.id === "lvUseMedia") {
-      await loadAssets(S.propertyId);
+      await loadAssets(S.propertyId, true);
+      if (!S.photos.length) {
+        toast("No photos found yet. Upload listing photos to continue.");
+        return render();
+      }
+      if (S.usedLibrary) toast("Showing photos from your media library.");
       S.step = "photos";
       return render();
     }
+
     if (t.id === "lvRetry") {
       UM.retryFailed(S.job.id);
       return;
@@ -1246,11 +1259,14 @@ function bind() {
       S.propertyId = propId;
       S.propertyLabel = p ? p.address : "";
       S.standalone = false;
-      await loadAssets(propId);
+      await loadAssets(propId, true);
       S.step = S.photos.length ? "photos" : "start";
       if (!S.photos.length) toast("That property has no photos yet. Upload the listing photos to continue.");
+      else if (S.usedLibrary)
+        toast("That property has no photos yet — showing photos from your media library instead.");
       return render();
     }
+
 
     if (t.getAttribute("data-newprop")) {
       const label = normalizeAddress(S.addressQuery);
