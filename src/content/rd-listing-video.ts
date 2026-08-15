@@ -630,11 +630,14 @@ function setupHtml() {
             <option value="generate" ${st.narration === "generate" ? "selected" : ""}>AI Narration</option>
             <option value="upload" ${st.narration === "upload" ? "selected" : ""}>Upload My Voiceover</option>
           </select></label>
-          <label class="lv-f"><span>Voice</span><select id="lvVoice">
-            <option value="">Saved Or Cloned Voice</option>
-            <option value="warm">Warm Female</option><option value="clear">Clear Male</option><option value="calm">Calm Neutral</option>
+          ${st.narration === "generate" ? `<label class="lv-f"><span>Voice</span><select id="lvVoice">
+            ${[["warm", "Warm Female"], ["clear", "Clear Male"], ["calm", "Calm Neutral"], ["luxury", "Luxury"]]
+              .map(([v, n]) => `<option value="${v}" ${st.voice === v ? "selected" : ""}>${n}</option>`).join("")}
           </select></label>
           <label class="lv-f wide"><span>Narration Script</span><textarea id="lvScript" rows="3" placeholder="Leave empty and we write one from your scenes.">${esc(st.script)}</textarea></label>
+          <div class="lv-f wide"><button type="button" class="btn btn-ghost btn-sm" data-a="lvVoicePrev"><i data-lucide="volume-2"></i>${st.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
+          ${st.narration === "upload" ? `<label class="lv-f wide"><span>Voiceover File</span><input type="file" id="lvNarFile" accept="audio/*"></label>
+          <p class="lv-note">${st.narrationName ? `Using ${esc(st.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</p>` : ""}
           <label class="lv-check"><input type="checkbox" data-chk="captions" ${st.captions ? "checked" : ""}> Captions</label>
           <label class="lv-check"><input type="checkbox" data-chk="labels" ${st.labels ? "checked" : ""}> Scene Labels</label>
           <label class="lv-check"><input type="checkbox" data-chk="intro" ${st.intro ? "checked" : ""}> Intro</label>
@@ -692,14 +695,44 @@ function confirmHtml() {
 /* Map friendly voice names to gateway voices. */
 const VOICE_MAP: Record<string, string> = {
   professional: "alloy", warm: "coral", conversational: "sage", luxury: "ballad",
+  clear: "echo", calm: "sage",
 };
 
+let voiceAudio: HTMLAudioElement | null = null;
+
+function stopVoicePreview() {
+  if (voiceAudio) { try { voiceAudio.pause(); } catch (_) { /* noop */ } voiceAudio = null; }
+  if (S.setup) S.setup.voicePreviewing = false;
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = () => rej(new Error("read failed"));
+    r.readAsDataURL(file);
+  });
+}
+
+/* Fallback script written from the included scenes. */
+function lvDefaultScript() {
+  const rooms = Array.from(new Set(S.photos.filter((p) => p.include).map((p) => p.room).filter(Boolean))).slice(0, 6);
+  const lines = [];
+  if (S.setup.title) lines.push(`A look at ${S.setup.title}.`);
+  if (rooms.length) lines.push(`This tour covers ${rooms.join(", ")}.`);
+  lines.push("Every design shown is a proposed concept created in REAL DESIGNS.");
+  return lines.join(" ");
+}
+
 async function buildNarration(type: string, script: string | null | undefined, voice: string | null | undefined) {
-  if (type !== "generate" || !script || script.trim().length < 4) return null;
+  if (type === "upload") return S.setup?.narrationUpload || null;
+  if (type !== "generate") return null;
+  const text = (script || "").trim() || lvDefaultScript();
+  if (text.length < 4) return null;
   try {
     const { synthesizeNarration } = await import("@/lib/narration.functions");
     const out = await synthesizeNarration({
-      data: { script: script.trim().slice(0, 4000), voice: VOICE_MAP[(voice || "").toLowerCase()] || "alloy" },
+      data: { script: text.slice(0, 4000), voice: VOICE_MAP[(voice || "").toLowerCase()] || "alloy" },
     });
     return out?.audio || null;
   } catch (_) {
@@ -1331,6 +1364,17 @@ function bind() {
     const a = t.getAttribute("data-a");
     const id = t.getAttribute("data-id");
     if (a === "review-continue") return continueFromImport();
+    if (a === "lvVoicePrev") {
+      if (S.setup.voicePreviewing) { stopVoicePreview(); return render(); }
+      S.setup.voicePreviewing = true;
+      render();
+      return void buildNarration("generate", (S.setup.script || lvDefaultScript()).slice(0, 400), S.setup.voice).then((url) => {
+        if (!url) { S.setup.voicePreviewing = false; render(); return void toast("Voiceover Preview Failed."); }
+        voiceAudio = new Audio(url);
+        voiceAudio.onended = () => { S.setup.voicePreviewing = false; render(); };
+        voiceAudio.play().catch(() => {});
+      });
+    }
     if (a === "back-start") {
       S.step = "start";
       return render();
@@ -1446,7 +1490,19 @@ function bind() {
     }
     if (t.id === "lvMusic") { S.setup.music = t.value; stopMusic(); return void render(); }
     if (t.id === "lvKit") return void (S.setup.brandKitId = t.value || null);
-    if (t.id === "lvNarr") return void (S.setup.narration = t.value);
+    if (t.id === "lvNarr") { stopVoicePreview(); S.setup.narration = t.value; return void render(); }
+    if (t.id === "lvNarFile") {
+      const f = t.files && t.files[0];
+      if (!f) return;
+      if (f.size > 25 * 1024 * 1024) return void toast("Voiceover Must Be Under 25 MB.");
+      fileToDataUrl(f).then((url) => {
+        S.setup.narrationName = f.name;
+        S.setup.narrationUpload = url;
+        toast("Voiceover Added.");
+        render();
+      }).catch(() => toast("Could Not Read That File."));
+      return;
+    }
     if (t.id === "lvVoice") return void (S.setup.voice = t.value);
     if (t.id === "lvScript") return void (S.setup.script = t.value);
     if (t.id === "lvTrans") return void (S.setup.transition = t.value);
