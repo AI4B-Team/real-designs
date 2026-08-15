@@ -851,6 +851,9 @@ export async function renderReveal(
         if (scene.motion_level === "immersive") {
           immersiveLayer(ctx, W, H, scene.immersive_effect || "light", p);
         }
+        if (vfxOn) ctx.restore();
+        vfxOverlay(ctx, W, H, transition, local, durations[idx]!);
+
 
         if (opts.captionsEnabled !== false) {
           const text = scene.caption || scene.room_name || "";
