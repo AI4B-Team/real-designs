@@ -26,7 +26,7 @@ import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { identifyListing, normalizeAddress, NO_IMPORT_MESSAGE } from "@/lib/listing-source";
 import { startListingImport, linkListingImport } from "@/lib/listing-import.functions";
 import * as UM from "@/lib/upload-manager";
-import { CREDIT_COSTS } from "@/lib/credits.functions";
+import { CREDIT_COSTS, getMyCredits } from "@/lib/credits.functions";
 import { track } from "@/lib/analytics";
 
 const BUCKET = "reveal-videos";
@@ -168,6 +168,8 @@ const S = {
     sceneDuration: 0,
   },
   confirm: false,
+  credits: null,
+
   progress: 0,
   stage: "",
   busy: false,
@@ -288,7 +290,23 @@ async function loadKits() {
   } catch (_) {
     S.kits = [];
   }
+  try {
+    S.credits = await getMyCredits();
+  } catch (_) {
+    S.credits = null;
+  }
 }
+
+/** Null when the account can pay, otherwise the reason it cannot. */
+function creditBlock() {
+  const c = S.credits;
+  if (!c || c.unavailable) return null;
+  if (c.plan === "free") return "Video rendering needs a paid plan. The free plan covers 5 designs a day.";
+  if ((c.balance ?? 0) < creditCost())
+    return `Not enough credits. This video costs ${creditCost()} and you have ${c.balance ?? 0}.`;
+  return null;
+}
+
 
 async function loadAssets(propertyId, allowLibraryFallback = false) {
   S.loading = true;
@@ -688,6 +706,18 @@ function setupHtml() {
 }
 
 function confirmHtml() {
+  const block = creditBlock();
+  if (block)
+    return `<div class="lv-modal" role="dialog" aria-label="Upgrade required">
+    <div class="lv-modal-in">
+      <b>Upgrade To Render Video</b>
+      <p>${block}</p>
+      <div class="lv-modal-a">
+        <button class="btn btn-ghost" data-a="cancel-gen">Cancel</button>
+        <a class="btn btn-primary" href="/app#v-billing">View Plans</a>
+      </div>
+    </div>
+  </div>`;
   return `<div class="lv-modal" role="dialog" aria-label="Confirm video generation">
     <div class="lv-modal-in">
       <b>Generate This Video?</b>
@@ -699,6 +729,7 @@ function confirmHtml() {
     </div>
   </div>`;
 }
+
 
 
 /* Map friendly voice names to gateway voices. */
@@ -1468,9 +1499,17 @@ function bind() {
     if (a === "generate") {
       stopVoicePreview();
       stopMusic();
+      if (!S.credits) {
+        try {
+          S.credits = await getMyCredits();
+        } catch (_) {
+          S.credits = null;
+        }
+      }
       S.confirm = true;
       return render();
     }
+
     if (a === "cancel-gen") {
       S.confirm = false;
       return render();
