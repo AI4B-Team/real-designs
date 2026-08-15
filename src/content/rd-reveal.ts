@@ -866,6 +866,8 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
       captionsEnabled: !!w.captions,
       music: w.music && w.music !== "none" ? w.music : null,
       narrationUrl,
+      avatar,
+
       musicVolume: typeof w.volume === "number" ? w.volume : 0.6,
       onProgress: (p) => {
         S.wizard.progress = (done + p) / variants.length;
