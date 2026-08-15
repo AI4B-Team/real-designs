@@ -762,6 +762,44 @@ async function hydrateThumbs() {
   }
 }
 
+/** Live preview player for the setup step. */
+let lvPvTimer = null;
+let lvPvPaused = false;
+
+function stopPreview() {
+  if (lvPvTimer) { clearInterval(lvPvTimer); lvPvTimer = null; }
+}
+
+async function startPreview() {
+  stopPreview();
+  const el = hostEl();
+  const stage = el?.querySelector("#lvStage");
+  if (!stage) return;
+  const scenes = S.photos.filter((p) => p.include).slice(0, 12);
+  if (!scenes.length) return;
+
+  const urls = [];
+  for (const p of scenes) urls.push(await resolvePhotoUrl(p.path).catch(() => null));
+  if (hostEl() !== el || !el.contains(stage)) return;
+
+  const total = S.setup.length === "quick" ? 15 : S.setup.length === "full" ? 60 : 30;
+  const per = S.setup.sceneDuration || Math.max(1.5, total / scenes.length);
+  stage.innerHTML = scenes.map((p, i) => `<figure class="lv-pv-slide${i === 0 ? " on" : ""}">
+      ${urls[i] ? `<img src="${esc(urls[i])}" alt="${esc(p.room)}">` : `<span class="lv-pv-miss">Image Unavailable</span>`}
+      ${S.setup.labels ? `<figcaption>${esc(p.room)}</figcaption>` : ""}
+    </figure>`).join("");
+  stage.style.setProperty("--lv-per", per + "s");
+
+  const meta = el.querySelector("#lvPvMeta");
+  let i = 0;
+  const show = () => {
+    stage.querySelectorAll(".lv-pv-slide").forEach((n, k) => n.classList.toggle("on", k === i));
+    if (meta) meta.textContent = `Scene ${i + 1} Of ${scenes.length} · ${per.toFixed(1)}s Each`;
+  };
+  show();
+  if (!lvPvPaused) lvPvTimer = setInterval(() => { i = (i + 1) % scenes.length; show(); }, per * 1000);
+}
+
 async function mountPlayer() {
   const box = hostEl()?.querySelector("#lvPlayer");
   if (!box) return;
@@ -770,6 +808,7 @@ async function mountPlayer() {
     box.innerHTML = `<div class="lv-note">No output yet.</div>`;
     return;
   }
+
   const { data } = await supabase.storage.from(BUCKET).createSignedUrl(cur.output_path, 3600);
   box.innerHTML = data?.signedUrl
     ? `<video src="${data.signedUrl}" controls playsinline></video>`
