@@ -4120,6 +4120,16 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   }catch(e){ /* onboarding is additive, never block the app */ }
 })();
 
+/* Escape closes any open lightweight modal (.up-modal.on) */
+document.addEventListener('keydown',(e)=>{
+  if(e.key!=='Escape') return;
+  const open=[...document.querySelectorAll('.up-modal.on')];
+  if(!open.length) return;
+  open[open.length-1].classList.remove('on');
+});
+
+
+
   } catch (e) { console.error(e); }
 
   return () => { timers.forEach((t) => { window.clearInterval(t); window.clearTimeout(t); }); };
