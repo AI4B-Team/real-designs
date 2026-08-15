@@ -247,7 +247,8 @@ export async function openPhotoEditor(ctx) {
         </div>
         <aside class="pme-side">
           <div class="pme-tabs" role="tablist">
-            <button class="on" data-t="adjust" role="tab">Adjust</button>
+            <button class="on" data-t="analyze" role="tab">Analyze</button>
+            <button data-t="adjust" role="tab">Adjust</button>
             <button data-t="geometry" role="tab">Geometry</button>
             <button data-t="property" role="tab">Property AI</button>
             <button data-t="design" role="tab">Design AI</button>
