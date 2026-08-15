@@ -1281,19 +1281,34 @@ function bind() {
   if (w) {
   on("#rvCancel", "click", () => { S.screen = "library"; S.wizard = null; render(); });
   on("#rvBack", "click", () => { w.step = Math.max(1, w.step - 1); render(); });
+  on(".rv-steps span", "click", (e) => {
+    const n = Number(e.currentTarget.dataset.step);
+    if (n && n < w.step) { w.step = n; render(); }
+  });
   on("#rvNext", "click", async () => {
-    if (w.step === 2) {
-      const t = el.querySelector("#rvTitle");
-      if (t) w.title = t.value;
-      w.step = 3;
+    const t = el.querySelector("#rvTitle");
+    if (t) w.title = t.value;
+    if (w.step === 1) {
+      w.step = 2;
       await loadWizardAssets();
       if (!w.scenes.length) { selectRecommended(); autoArrange(); }
       render();
       return;
     }
-    w.step = Math.min(7, w.step + 1);
+    if (w.step === 2) {
+      if (w.scenes.length < 5 && !w.lowWarned) { w.lowWarned = true; w.lowModal = true; render(); return; }
+      /* Video type follows the content unless the user already changed it. */
+      if (!w.typeTouched) {
+        const ba = w.scenes.filter((s) => s.compare).length;
+        w.videoType = ba > w.scenes.length / 2 ? "before_after" : "property_tour";
+      }
+    }
+    w.step = Math.min(4, w.step + 1);
     render();
   });
+  on("#rvLowX, #rvLowMore", "click", () => { w.lowModal = false; if (event) w.step = 2; render(); });
+  on("#rvLowGo", "click", () => { w.lowModal = false; w.step = 3; render(); });
+
   on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
   on("[data-prop]", "click", (e) => { w.propertyId = e.currentTarget.dataset.prop; w.sourceType = w.sourceType || "property"; render(); });
   on("#rvBrowse", "click", () => el.querySelector("#rvFiles")?.click());
