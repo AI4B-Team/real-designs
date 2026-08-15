@@ -10,6 +10,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks } from "@/lib/rd-music";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import {
@@ -581,13 +582,15 @@ function setupHtml() {
       <div class="lv-block"><span class="lv-lab">Video Length</span>${seg("length", LENGTHS, st.length)}</div>
       <div class="lv-block"><span class="lv-lab">Motion</span>${seg("motion", MOTIONS, st.motion)}</div>
       <div class="lv-block"><span class="lv-lab">Music</span>
-        <div class="lv-two">
+        <div class="rv-music">
           <select id="lvMusic">
             <option value="none" ${st.music === "none" ? "selected" : ""}>No Music</option>
             <optgroup label="Music Library">${MUSIC.map(([id, n]) => `<option value="${id}" ${st.music === id ? "selected" : ""}>${esc(n)}</option>`).join("")}</optgroup>
-            ${st.uploadedTrack ? `<option value="upload" selected>${esc(st.uploadedTrack)}</option>` : ""}
+            ${getCustomTracks().length ? `<optgroup label="My Uploads">${getCustomTracks().map((t) => `<option value="${t.id}" ${st.music === t.id ? "selected" : ""}>${esc(t.name)}</option>`).join("")}</optgroup>` : ""}
           </select>
-          <button class="btn btn-ghost btn-sm" data-a="audio"><i data-lucide="upload"></i>Upload Audio</button>
+          <button type="button" class="btn btn-ghost btn-sm rv-music-play" data-a="musicplay" ${st.music === "none" ? "disabled" : ""}><i data-lucide="${playingId() === st.music ? "pause" : "play"}"></i>${playingId() === st.music ? "Stop" : "Preview"}</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-a="audio"><i data-lucide="upload"></i>Upload Audio</button>
+          <input type="file" accept="audio/*" id="lvMusicFile" hidden>
         </div>
         <p class="lv-note">Recommended track: ${esc(MUSIC[0][1])}. Uploaded audio is stored in your media library.</p>
       </div>
@@ -1283,7 +1286,28 @@ function bind() {
       S.go && S.go("reveal");
       return toast("Brand kits are managed on the Video page.");
     }
-    if (a === "audio") return toast("Upload audio from the Media page to add it to your library.");
+    if (a === "musicplay") {
+      const cur = S.setup.music;
+      if (!cur || cur === "none") return toast("Choose A Track First.");
+      toggleMusic(cur);
+      return void render();
+    }
+    if (a === "audio") {
+      const inp = document.getElementById("lvMusicFile");
+      if (!inp) return;
+      inp.onchange = (ev) => {
+        const f = ev.target.files && ev.target.files[0];
+        if (!f) return;
+        if (f.size > 20 * 1024 * 1024) return toast("Audio Files Must Be Under 20MB.");
+        const t = addCustomTrack(f);
+        stopMusic();
+        S.setup.music = t.id;
+        S.setup.uploadedTrack = t.name;
+        toast("Track Uploaded.");
+        render();
+      };
+      return void inp.click();
+    }
     if (a === "generate") {
       S.confirm = true;
       return render();
@@ -1318,7 +1342,7 @@ function bind() {
       S.authorizedAt = t.checked ? new Date().toISOString() : null;
       return;
     }
-    if (t.id === "lvMusic") return void (S.setup.music = t.value);
+    if (t.id === "lvMusic") { S.setup.music = t.value; stopMusic(); return void render(); }
     if (t.id === "lvKit") return void (S.setup.brandKitId = t.value || null);
     if (t.id === "lvNarr") return void (S.setup.narration = t.value);
     if (t.id === "lvVoice") return void (S.setup.voice = t.value);
