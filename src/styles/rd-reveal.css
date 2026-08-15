@@ -271,11 +271,14 @@
 .rd-app .rv-pop-two { display: grid; grid-template-columns: minmax(0,1fr) 400px; gap: 22px; align-items: start; }
 @media (max-width: 900px) { .rd-app .rv-pop-two { grid-template-columns: 1fr; } }
 .rd-app .rv-pop-side { display: grid; gap: 10px; align-content: start; min-width: 0; }
+.rd-app .rv-pop-side .rv-check { margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--line, #e6e6e6);
+  display: flex; align-items: center; gap: 9px; font-size: 13px; cursor: pointer; }
+.rd-app .rv-pop-side .rv-check input[type="checkbox"] { flex: 0 0 auto; width: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--red, #CC0000); }
 .rd-app .rv-pop-scroll { display: grid; gap: 8px; max-height: 460px; overflow: auto; padding-right: 4px; }
 .rd-app .rv-pop-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
 @media (max-width: 560px) { .rd-app .rv-pop-grid { grid-template-columns: 1fr; } }
 .rd-app .rv-pop-list { display: grid; gap: 4px; max-height: 380px; overflow: auto; }
-.rd-app .rv-pop-side input, .rd-app .rv-pop-list input { width: 100%; padding: 9px 12px; border: 1px solid var(--line, #e6e6e6); border-radius: 10px; font-size: 13px; }
+.rd-app .rv-pop-side input:not([type="checkbox"]), .rd-app .rv-pop-list input:not([type="checkbox"]) { width: 100%; padding: 9px 12px; border: 1px solid var(--line, #e6e6e6); border-radius: 10px; font-size: 13px; }
 .rd-app .rv-pop-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
   text-align: left; background: #fff; border: 1px solid var(--line, #e6e6e6); border-radius: 10px; padding: 9px 12px; font-size: 13px; cursor: pointer; }
 .rd-app .rv-pop-row:hover { background: #f6f6f6; }
