@@ -714,7 +714,7 @@ function confirmHtml() {
       <p>${block}</p>
       <div class="lv-modal-a">
         <button class="btn btn-ghost" data-a="cancel-gen">Cancel</button>
-        <a class="btn btn-primary" href="/app/account/billing">View Plans</a>
+        <a class="btn btn-primary" href="/app#v-billing">View Plans</a>
       </div>
     </div>
   </div>`;
