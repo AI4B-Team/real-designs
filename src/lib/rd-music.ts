@@ -22,19 +22,67 @@ const MOODS: Record<string, Mood> = {
 
 export type CustomTrack = { id: string; name: string; url: string };
 
+const BUCKET = "user-audio";
 const customTracks: CustomTrack[] = [];
 export const getCustomTracks = () => customTracks.slice();
 export const isCustom = (id: string) => id.startsWith("custom:");
 
+let loaded = false;
+let loading: Promise<CustomTrack[]> | null = null;
+
+/** Load previously uploaded tracks for the signed-in user (once per session). */
+export function loadCustomTracks(force = false): Promise<CustomTrack[]> {
+  if (loaded && !force) return Promise.resolve(getCustomTracks());
+  if (loading) return loading;
+  loading = (async () => {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) return getCustomTracks();
+      const { data: files } = await supabase.storage.from(BUCKET).list(uid, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+      for (const f of files || []) {
+        const id = "custom:" + f.name;
+        if (customTracks.some((t) => t.id === id)) continue;
+        const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(`${uid}/${f.name}`, 60 * 60 * 8);
+        if (!signed?.signedUrl) continue;
+        const name = f.name.replace(/^\d+-/, "").replace(/\.[a-z0-9]+$/i, "").slice(0, 60) || "My Track";
+        customTracks.push({ id, name, url: signed.signedUrl });
+      }
+      loaded = true;
+    } catch (_) { /* offline / signed out — session-only tracks still work */ }
+    return getCustomTracks();
+  })();
+  const p = loading;
+  p.finally(() => { loading = null; });
+  return p;
+}
+
 export function addCustomTrack(file: File): CustomTrack {
+  const ext = (file.name.match(/\.[a-z0-9]+$/i) || [".mp3"])[0].toLowerCase();
+  const key = `${Date.now()}-${file.name.replace(/[^a-z0-9._-]+/gi, "-").slice(-48)}`.replace(/\.[a-z0-9]+$/i, "") + ext;
   const t: CustomTrack = {
-    id: "custom:" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    id: "custom:" + key,
     name: file.name.replace(/\.[a-z0-9]+$/i, "").slice(0, 60) || "My Track",
     url: URL.createObjectURL(file),
   };
   customTracks.push(t);
+  // Persist in the background so the track survives reloads.
+  void (async () => {
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { data: auth } = await supabase.auth.getUser();
+      const uid = auth?.user?.id;
+      if (!uid) return;
+      await supabase.storage.from(BUCKET).upload(`${uid}/${key}`, file, {
+        contentType: file.type || "audio/mpeg",
+        upsert: true,
+      });
+    } catch (_) { /* keep the local object URL */ }
+  })();
   return t;
 }
+
 
 /* ---------------- playback ---------------- */
 let ctx: AudioContext | null = null;
