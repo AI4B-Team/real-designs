@@ -1500,11 +1500,8 @@
 @media (max-width:520px){.rd-app .sv-opts{grid-template-columns:1fr}}
 
 /* Signup questionnaire — full page (no modal) */
-.rd-welcome-page{min-height:100vh;background:var(--wash,#F6F5F3);display:flex;align-items:flex-start;justify-content:center;padding:56px 20px 72px}
-.rd-welcome-shell{width:100%;max-width:620px;display:grid;gap:22px}
-.rd-welcome-brand{display:grid;gap:10px;justify-items:center;text-align:center}
-.rd-welcome-mark{display:inline-grid;justify-items:center;gap:2px;background:var(--red,#CC0000);color:#fff;padding:12px 20px;border-radius:6px;font-weight:800;font-size:1.15rem;letter-spacing:.02em;box-shadow:inset 0 0 0 1px rgba(255,255,255,.55)}
-.rd-welcome-mark em{font-style:normal;font-size:.62rem;letter-spacing:.42em;padding-left:.42em}
-.rd-welcome-kicker{margin:0;font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute-2)}
-.rd-welcome-card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:26px 28px 20px}
-@media (max-width:520px){.rd-welcome-page{padding:32px 14px 48px}.rd-welcome-card{padding:20px 18px 16px}}
+.rd-welcome .rd-welcome-card{max-width:520px;padding:30px 30px 22px;background:#fff}
+.rd-welcome .rd-welcome-card .sv-body{min-height:270px}
+.rd-welcome .rd-welcome-card .sv-field input,.rd-welcome .rd-welcome-card .sv-opt{height:auto}
+.rd-welcome .promo .brand{margin-bottom:26px}
+@media (max-width:520px){.rd-welcome .rd-welcome-card{padding:20px 18px 16px}}
