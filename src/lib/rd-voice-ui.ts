@@ -195,7 +195,7 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
 
     el.querySelectorAll("[data-a]").forEach((n) => {
       (n as HTMLElement).onclick = () => {
-        const a = (n as HTMLElement).dataset.a;
+        const a = (n as HTMLElement).dataset["a"];
         if (a === "close") return close();
         if (a === "record") return void startRecording();
         if (a === "stop") return stopRecording();
