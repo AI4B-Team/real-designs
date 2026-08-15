@@ -1121,31 +1121,6 @@ function bind() {
      never get torn down mid-typing. */
   if (q) q.addEventListener("input", (e) => { S.q = e.target.value; renderList(); });
   bindCards(el);
-  /* wizard */
-    e.stopPropagation();
-    const card = e.currentTarget.closest(".rv-card");
-    const id = card.dataset.id;
-    const act = e.currentTarget.dataset.act;
-    if (act === "open" || act === "edit") return openDetail(id);
-    if (act === "dupe") { await duplicateVideo({ id }); await loadLibrary(); render(); return toast("Video Duplicated."); }
-    if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ id }); await loadLibrary(); render(); return; }
-    if (act === "download") {
-      const v = S.variants.find((x) => x.video_project_id === id && x.output_path);
-      if (!v) return toast("Nothing Rendered Yet.");
-      const url = await signed(v.output_path);
-      if (url) window.open(url, "_blank");
-      return;
-    }
-    if (act === "share") {
-      const { token, slug } = await saveShareLink({ video_project_id: id });
-      try { await navigator.clipboard.writeText(location.origin + "/v/" + (slug || token)); } catch (_) {}
-      await loadLibrary();
-      S.detailTab = "presentation";
-      await openDetail(id);
-      return toast("Presentation Link Copied.");
-    }
-  });
-  on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) => openDetail(e.currentTarget.closest(".rv-card").dataset.id));
 
   /* wizard */
   const w = S.wizard;
@@ -2038,4 +2013,34 @@ export async function openVideoDetail(id, tab = "video") {
   if (!S.mounted) await mountReveal(S.go, {});
   S.detailTab = tab;
   await openDetail(id);
+}
+
+
+function bindCards(root) {
+  const on = (sel, ev, fn) => root.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
+  on(".rv-card .icon-btn", "click", async (e) => {
+    e.stopPropagation();
+    const card = e.currentTarget.closest(".rv-card");
+    const id = card.dataset.id;
+    const act = e.currentTarget.dataset.act;
+    if (act === "open" || act === "edit") return openDetail(id);
+    if (act === "dupe") { await duplicateVideo({ id }); await loadLibrary(); render(); return toast("Video Duplicated."); }
+    if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ id }); await loadLibrary(); render(); return; }
+    if (act === "download") {
+      const v = S.variants.find((x) => x.video_project_id === id && x.output_path);
+      if (!v) return toast("Nothing Rendered Yet.");
+      const url = await signed(v.output_path);
+      if (url) window.open(url, "_blank");
+      return;
+    }
+    if (act === "share") {
+      const { token, slug } = await saveShareLink({ video_project_id: id });
+      try { await navigator.clipboard.writeText(location.origin + "/v/" + (slug || token)); } catch (_) {}
+      await loadLibrary();
+      S.detailTab = "presentation";
+      await openDetail(id);
+      return toast("Presentation Link Copied.");
+    }
+  });
+  on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) => openDetail(e.currentTarget.closest(".rv-card").dataset.id));
 }
