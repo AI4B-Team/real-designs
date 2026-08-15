@@ -1479,7 +1479,19 @@ function bind() {
     }
     if (t.id === "lvMusic") { S.setup.music = t.value; stopMusic(); return void render(); }
     if (t.id === "lvKit") return void (S.setup.brandKitId = t.value || null);
-    if (t.id === "lvNarr") return void (S.setup.narration = t.value);
+    if (t.id === "lvNarr") { stopVoicePreview(); S.setup.narration = t.value; return void render(); }
+    if (t.id === "lvNarFile") {
+      const f = t.files && t.files[0];
+      if (!f) return;
+      if (f.size > 25 * 1024 * 1024) return void toast("Voiceover Must Be Under 25 MB.");
+      fileToDataUrl(f).then((url) => {
+        S.setup.narrationName = f.name;
+        S.setup.narrationUpload = url;
+        toast("Voiceover Added.");
+        render();
+      }).catch(() => toast("Could Not Read That File."));
+      return;
+    }
     if (t.id === "lvVoice") return void (S.setup.voice = t.value);
     if (t.id === "lvScript") return void (S.setup.script = t.value);
     if (t.id === "lvTrans") return void (S.setup.transition = t.value);
