@@ -364,14 +364,15 @@ function card(m) {
         <div class="ml-bar ${m.progress == null ? "ind" : ""}"><i style="width:${m.progress == null ? 40 : m.progress}%"></i></div></div>`
     : m.status === "failed"
       ? `<div class="ml-fail"><i data-lucide="alert-triangle"></i><span>${esc(m.error || "Generation failed")}</span></div>`
-      : `<img data-photo="${esc(m.path || "")}" alt="${esc(m.title)}" hidden>
+      : `<img data-photo="${esc(m.path || "")}" alt="${esc(m.title)}"${THUMB_URLS.get(m.path) ? ` src="${esc(THUMB_URLS.get(m.path))}"` : " hidden"}>
          ${g === "videos" ? `<span class="ml-play"><i data-lucide="play"></i></span>` : ""}`;
   const badges =
     g === "videos" && !proc
       ? `<span class="ml-meta-b">${m.duration ? m.duration + "s" : "—"}</span><span class="ml-meta-b">${esc(m.aspect || "9:16")}</span>`
       : "";
+  const cached = !!(m.path && THUMB_URLS.get(m.path));
   return `<div class="card ml-card${sel ? " sel" : ""}" data-card="${m.id}">
-    <div class="ml-thumb${proc || m.status === "failed" ? "" : " sk"}" data-thumb="${m.id}" role="button" tabindex="0" aria-label="Open ${esc(m.title)}">${thumb}
+    <div class="ml-thumb${proc || m.status === "failed" || cached ? "" : " sk"}" data-thumb="${m.id}" role="button" tabindex="0" aria-label="Open ${esc(m.title)}">${thumb}
       <span class="ml-type"><i data-lucide="${TYPE_ICON[m.type] || "image"}"></i></span>
       ${badges ? `<div class="ml-badges">${badges}</div>` : ""}
       <div class="ml-ov">
@@ -526,13 +527,20 @@ function fmtDate(d) {
   }
 }
 
+/* Signed thumbnail URLs are cached per storage path so re-rendering the grid
+   (typing in search, toggling a filter) repaints instantly instead of blanking
+   every tile back to its skeleton while new URLs are fetched. */
+const THUMB_URLS = new Map<string, string>();
+
 async function hydrateThumbs(root) {
   root.querySelectorAll("[data-photo]").forEach(async (img) => {
     const done = () => img.closest(".ml-thumb")?.classList.remove("sk");
     const p = img.getAttribute("data-photo");
     if (!p) return done();
+    if (THUMB_URLS.has(p)) { if (!img.src) { img.src = THUMB_URLS.get(p); img.hidden = false; } return done(); }
     const url = await resolvePhotoUrl(p);
     if (!url) return done();
+    THUMB_URLS.set(p, url);
     img.addEventListener("load", done, { once: true });
     img.addEventListener("error", done, { once: true });
     img.src = url;
