@@ -299,6 +299,26 @@
 .rd-app .rv-pop-clip.m-orbit_left { animation-name: rvOrbitLeft; }
 .rd-app .rv-pop-clip.m-orbit_right { animation-name: rvOrbitRight; }
 .rd-app .rv-pop-clip.m-static { animation-name: rvHold; }
+.rd-app .rv-pop-clip.m-tilt_up { animation-name: rvTiltUp; }
+.rd-app .rv-pop-clip.m-tilt_down { animation-name: rvTiltDown; }
+.rd-app .rv-pop-clip.m-dolly_left { animation-name: rvDollyLeft; }
+.rd-app .rv-pop-clip.m-dolly_right { animation-name: rvDollyRight; }
+.rd-app .rv-pop-clip.m-crane_up { animation-name: rvCraneUp; }
+.rd-app .rv-pop-clip.m-crane_down { animation-name: rvCraneDown; }
+.rd-app .rv-pop-clip.m-diag_in { animation-name: rvDiagIn; }
+.rd-app .rv-pop-clip.m-diag_out { animation-name: rvDiagOut; }
+.rd-app .rv-pop-clip.m-drift_in { animation-name: rvDriftIn; }
+.rd-app .rv-pop-clip.m-drift_out { animation-name: rvDriftOut; }
+@keyframes rvTiltUp { from { transform: scale(1.18) translateY(4%); } to { transform: scale(1.18) translateY(-4%); } }
+@keyframes rvTiltDown { from { transform: scale(1.18) translateY(-4%); } to { transform: scale(1.18) translateY(4%); } }
+@keyframes rvDollyLeft { from { transform: scale(1.1) translateX(5%); } to { transform: scale(1.18) translateX(-5%); } }
+@keyframes rvDollyRight { from { transform: scale(1.1) translateX(-5%); } to { transform: scale(1.18) translateX(5%); } }
+@keyframes rvCraneUp { from { transform: scale(1.22) translateY(5%); } to { transform: scale(1.06) translateY(-3%); } }
+@keyframes rvCraneDown { from { transform: scale(1.06) translateY(-3%); } to { transform: scale(1.22) translateY(5%); } }
+@keyframes rvDiagIn { from { transform: scale(1.04) translate(2.5%, 2.5%); } to { transform: scale(1.2) translate(-2.5%, -2.5%); } }
+@keyframes rvDiagOut { from { transform: scale(1.2) translate(-2.5%, -2.5%); } to { transform: scale(1.04) translate(2.5%, 2.5%); } }
+@keyframes rvDriftIn { from { transform: scale(1.04); } to { transform: scale(1.1); } }
+@keyframes rvDriftOut { from { transform: scale(1.1); } to { transform: scale(1.04); } }
 @keyframes rvPushIn { from { transform: scale(1.02); } to { transform: scale(1.2); } }
 @keyframes rvPullOut { from { transform: scale(1.2); } to { transform: scale(1.02); } }
 @keyframes rvPanLeft { from { transform: scale(1.16) translateX(4%); } to { transform: scale(1.16) translateX(-4%); } }
@@ -448,3 +468,16 @@
 .rd-app .rv-logo.on { border-color: var(--red, #c00); }
 .rd-app .rv-noimg { display: grid; place-items: center; }
 .rd-app .rv-noimg-i { width: 18px; height: 18px; color: var(--mute-2); }
+
+/* Featured Auto row in the Camera Motion picker */
+.rd-app .rv-pop-auto { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  border: 1px solid var(--line, #e6e6e6); border-radius: 12px; background: #fff; padding: 11px 14px; cursor: pointer;
+  text-align: left; margin-bottom: 4px; }
+.rd-app .rv-pop-auto span { display: grid; gap: 2px; }
+.rd-app .rv-pop-auto b { font-size: 13.5px; }
+.rd-app .rv-pop-auto em { font-style: normal; font-size: 11.5px; color: #6b6b6b; }
+.rd-app .rv-pop-auto i { width: 16px; height: 16px; color: #b9b9b9; }
+.rd-app .rv-pop-auto:hover { border-color: #111; }
+.rd-app .rv-pop-auto.on { border-color: var(--red, #CC0000); box-shadow: inset 0 0 0 1px var(--red, #CC0000); }
+.rd-app .rv-pop-auto.on b { color: var(--red, #CC0000); }
+.rd-app .rv-pop-auto.on i { color: var(--red, #CC0000); }
