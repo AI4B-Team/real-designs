@@ -33,7 +33,10 @@
   border-radius:12px; margin-bottom:12px; }
 .ml-bulk.on { display:flex; }
 .ml-bulk span { font-size:12.5px; font-weight:600; margin-right:6px; }
-.ml-bulk .btn { color:#fff; border-color:rgba(255,255,255,.28); }
+.ml-bulk .btn { background:transparent; color:#fff; border-color:rgba(255,255,255,.28); }
+.ml-bulk .btn:hover { background:rgba(255,255,255,.12); color:#fff; }
+.ml-bulk .btn i, .ml-bulk .btn svg { color:#fff; stroke:currentColor; }
+.ml-bulk .btn.btn-primary { background:var(--red,#c00); border-color:var(--red,#c00); }
 
 .ml-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:16px; }
 .ml-note { color:#6b7280; font-size:13px; padding:24px 0; }
