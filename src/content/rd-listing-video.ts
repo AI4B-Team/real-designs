@@ -749,7 +749,10 @@ function render() {
             : startHtml();
   paint();
   hydrateThumbs();
+  stopPreview();
+  if (S.step === "setup") startPreview();
   if (S.step === "done") mountPlayer();
+
 }
 
 async function hydrateThumbs() {
