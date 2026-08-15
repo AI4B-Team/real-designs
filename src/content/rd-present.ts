@@ -118,13 +118,16 @@ function libraryHtml() {
           } · ${esc(r.last_activity || "Created")} ${ago(r.last_activity_at || r.created_at)}</span>
         </div>
         <span class="pill ${cls}">${lab}</span>
-        <button class="icon-btn" data-pk="open" title="Open Presentation"><i data-lucide="eye"></i></button>
-        <button class="icon-btn" data-pk="edit" title="Edit Presentation"><i data-lucide="pencil"></i></button>
-        <button class="icon-btn" data-pk="${link ? "copy" : "link"}" title="${link ? "Copy Client Link" : "Create Client Link"}"><i data-lucide="${
-          link ? "copy" : "link"
-        }"></i></button>
-        <button class="icon-btn" data-pk="pdf" title="Export PDF"><i data-lucide="file-text"></i></button>
-        <button class="icon-btn" data-pk="del" title="Delete Presentation"><i data-lucide="trash-2"></i></button>
+        <div class="pk-row-a">
+          <button class="btn btn-ghost btn-xs" data-pk="open" title="Open Presentation"><i data-lucide="eye"></i>Open</button>
+          <button class="btn btn-ghost btn-xs" data-pk="edit" title="Edit Presentation"><i data-lucide="pencil"></i>Edit</button>
+          <button class="btn btn-ghost btn-xs" data-pk="${link ? "copy" : "link"}" title="${link ? "Copy Client Link" : "Create Client Link"}"><i data-lucide="${
+            link ? "copy" : "link"
+          }"></i>${link ? "Copy Link" : "Client Link"}</button>
+          <button class="btn btn-ghost btn-xs" data-pk="pdf" title="Export PDF"><i data-lucide="file-text"></i>PDF</button>
+          <button class="btn btn-ghost btn-xs" data-pk="del" title="Delete Presentation"><i data-lucide="trash-2"></i>Delete</button>
+        </div>
+
       </div>`;
     })
     .join("");
