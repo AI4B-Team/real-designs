@@ -601,24 +601,50 @@ function stepReady() {
 }
 
 /* ======================= STEP 2, SELECT ======================= */
+/** Analysis-shaped view of the wizard's available photos. */
+function analysisAssets() {
+  return (S.wizard?.available || []).map((a) => ({
+    id: a.key,
+    room_group: a.room,
+    room_confidence: 1,
+    flags: a.flags || [],
+    hdr_group: a.hdr || null,
+    dup_group: a.dup || null,
+    quality: a.quality || {},
+    hidden: false,
+  }));
+}
+
+function nameCell(value, attr) {
+  const w = S.wizard;
+  if (w.renaming === attr) {
+    return `<input class="rv-nameedit" data-nameinput="${esc(attr)}" value="${esc(value)}" maxlength="60">`;
+  }
+  return `<b class="rv-editname" data-rename="${esc(attr)}" title="Click To Rename">${esc(value)}</b>`;
+}
+
 function stepSelect() {
   const w = S.wizard;
   const groups = {};
   for (const a of w.available) (groups[a.group] = groups[a.group] || []).push(a);
   const order = Object.keys(groups).sort((a, b) => orderRank(a) - orderRank(b));
   const dupCount = w.available.filter((a) => a.dup).length;
+  const assets = analysisAssets();
+  const flagged = w.available.filter((a) => (a.flags || []).length);
+  const recs = recommendations(assets).filter((r) => r.op);
+  const missing = missingSpaces(assets);
 
-  const left = order.map((g) => `<div class="rv-g"><div class="rv-g-h">${esc(g)}</div><div class="rv-g-b">${groups[g]
+  const left = order.map((g) => `<div class="rv-g"><div class="rv-g-h">${esc(g)}<i class="mono">${groups[g].length}</i></div><div class="rv-g-b">${groups[g]
     .map((a) => `<button class="rv-asset ${w.scenes.some((s) => s.key === a.key) ? "on" : ""}" data-asset="${a.key}">
-      <span class="rv-a-th" data-img="${esc(a.path)}"></span>
-      <span class="rv-a-m"><b>${esc(a.room || "Untitled")}</b><i>${a.kind}${a.disclosure ? " • " + DISCLOSURE_LABEL[a.disclosure] : ""}</i></span>
+      <span class="rv-a-th" data-img="${esc(a.path)}">${(a.flags || []).length ? `<em class="rv-flag" title="${esc((a.flags || []).map((f) => FLAG_LABEL[f] || f).join(", "))}"><i data-lucide="triangle-alert"></i></em>` : ""}</span>
+      <span class="rv-a-m">${nameCell(a.room || UNSORTED, "a:" + a.key)}<i>${a.kind}${a.disclosure ? " • " + DISCLOSURE_LABEL[a.disclosure] : ""}</i></span>
     </button>`).join("")}</div></div>`).join("");
 
   const right = w.scenes.length
     ? w.scenes.map((s, i) => `<div class="rv-scene" draggable="true" data-idx="${i}">
         <span class="rv-seq mono">${i + 1}</span>
         <span class="rv-a-th" data-img="${esc(s.path)}"></span>
-        <span class="rv-s-m"><b>${esc(s.room)}</b><i>${s.scene_type === "before_after" ? "Before & After" : s.kind}</i></span>
+        <span class="rv-s-m">${nameCell(s.room || UNSORTED, "s:" + i)}<i>${s.scene_type === "before_after" ? "Before & After" : s.kind}</i></span>
         <span class="rv-s-a">
           <button class="icon-btn" data-move="-1" title="Move Up"><i data-lucide="chevron-up"></i></button>
           <button class="icon-btn" data-move="1" title="Move Down"><i data-lucide="chevron-down"></i></button>
@@ -627,12 +653,25 @@ function stepSelect() {
       </div>`).join("")
     : `<div class="rv-note">No Scenes Yet. Add Content From The Left.</div>`;
 
+  const fixCard = recs.length && !w.enhanceDismissed ? `<div class="rv-fix">
+    <b>We Found ${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve</b>
+    ${recs.map((r) => `<div class="rv-fix-row"><span>${esc(r.label)}</span><i class="mono">${r.ids.length} ${r.ids.length === 1 ? "Photo" : "Photos"}</i><em>${esc(r.note)}</em></div>`).join("")}
+    <div class="rv-fix-a">
+      <button class="btn btn-primary btn-sm" id="rvFixAll">Fix All</button>
+      <button class="btn btn-ghost btn-sm" data-goto="media">Review Each</button>
+      <button class="btn btn-ghost btn-sm" id="rvFixSkip">Skip</button>
+    </div>
+  </div>` : "";
+
   return `<h3>Select The Photos</h3>
   ${dupCount ? `<div class="rv-dup"><i data-lucide="copy"></i><b>${dupCount} Similar Angles Detected</b><span><button class="fb-link" id="rvKeepBest">Keep Best</button><button class="fb-link" data-goto="media">Review</button><button class="fb-link" id="rvKeepAll">Keep All</button></span></div>` : ""}
+  ${flagged.length ? `<div class="rv-issues"><i data-lucide="triangle-alert"></i><b>${flagged.length} Photos Have Issues We Can Fix</b><button class="fb-link" data-goto="media">Review</button></div>` : ""}
+  ${missing.length ? `<div class="rv-note sm">No ${missing.slice(0, 2).join(" Or ")} In This Set. Buyers Look For Those First.</div>` : ""}
   <div class="rv-two">
     <div class="rv-col"><div class="rv-col-h">Available Photos<span class="mono">${w.available.length}</span></div><div class="rv-col-b">${left || `<div class="rv-note">No Content Found For This Source.</div>`}</div></div>
     <div class="rv-col"><div class="rv-col-h">Selected Photos<span class="mono">${w.scenes.length}</span></div><div class="rv-col-b" id="rvSceneList">${right}</div></div>
   </div>
+  ${fixCard}
   <div class="rv-foot">
     <button class="btn btn-ghost" id="rvBack">Back</button>
     <button class="btn btn-ghost" id="rvRecommend">Select All Recommended</button>
