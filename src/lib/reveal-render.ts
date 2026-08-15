@@ -74,6 +74,8 @@ export type RevealBrand = {
   logoUrl?: string | null;
 };
 
+import { createMusicTrack } from "@/lib/rd-music";
+
 export type RevealOptions = {
   aspect: "9:16" | "16:9" | "1:1" | "4:5";
   versionType: "branded" | "clean" | "disclosure";
@@ -82,6 +84,8 @@ export type RevealOptions = {
   subtitle?: string | null;
   transition?: string;
   captionsEnabled?: boolean;
+  music?: string | null;
+  musicVolume?: number;
   onProgress?: (pct: number) => void;
 };
 
@@ -450,6 +454,8 @@ export async function renderReveal(
 
   const mime = pickMime();
   const stream = canvas.captureStream(30);
+  const music = await createMusicTrack(opts.music, opts.musicVolume ?? 0.55);
+  if (music) stream.addTrack(music.track);
   const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 9_000_000 } : undefined);
   const chunks: BlobPart[] = [];
   rec.ondataavailable = (e) => {
@@ -604,6 +610,7 @@ export async function renderReveal(
   });
 
   rec.stop();
+  music?.stop();
   stream.getTracks().forEach((tr) => tr.stop());
   const blob = await done;
 
