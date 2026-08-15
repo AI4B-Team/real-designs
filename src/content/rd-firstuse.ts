@@ -50,7 +50,7 @@ const WORKFLOWS: Record<
   sketch: { label: "Start From A Sketch Or Plan", tool: "Sketch To Render", space: "interior", group: "design", desc: "Turn a hand sketch or floor plan into a render." },
   enhance: { label: "Enhance Listing Photos", tool: "Redesign", space: "interior", group: "listing", desc: "Clean, bright, MLS ready photography." },
   declutter: { label: "Declutter Or Empty", tool: "Declutter", space: "interior", group: "listing", desc: "Remove clutter and personal items." },
-  dusk: { label: "Day To Dusk", group: "listing", status: "Coming Soon", desc: "Twilight conversion for exterior listing shots." },
+  dusk: { label: "Day To Dusk", space: "exterior", group: "listing", desc: "Twilight conversion for exterior listing shots." },
   batch: { label: "Prepare A Complete Listing", group: "listing", desc: "Stage a whole property in one direction." },
   property: { label: "Upload A Complete Property", group: "listing", desc: "Create the property first, then add rooms." },
   budget: { label: "Design Around A Budget", tool: "Scope & Budget", group: "plan", desc: "Hold the design to a planning range." },
