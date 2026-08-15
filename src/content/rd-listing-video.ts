@@ -303,6 +303,15 @@ async function loadAssets(propertyId, allowLibraryFallback = false) {
       S.usedLibrary = S.assets.length > 0;
     }
     S.photos = S.assets.map(toPhoto);
+    // Every photo can be flagged for review, which would leave nothing selected
+    // and dead-end the flow. Keep the strongest shots on so the user can proceed.
+    if (S.photos.length && !S.photos.some((p) => p.include)) {
+      [...S.photos]
+        .sort((a, b) => b.score - a.score)
+        .slice(0, Math.min(8, S.photos.length))
+        .forEach((p) => (p.include = true));
+      toast("All Photos Were Flagged For Review — We Preselected The Best Ones.");
+    }
     autoArrange();
   } catch (e) {
     toast(e?.message || "Could not load that property's photos.");
