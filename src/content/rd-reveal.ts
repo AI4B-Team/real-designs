@@ -222,13 +222,17 @@ async function signed(path) {
 }
 
 /* ======================= LIBRARY ======================= */
+/* Resolved thumbnail URLs are cached so re-renders paint instantly instead of
+   blanking the tile while a new signed URL is fetched (visible as a flash). */
+const THUMBS = new Map();
+
 function statusOf(p) {
   return p.status === "ready" ? "Ready" : p.status === "processing" ? "Processing" : p.status === "failed" ? "Failed" : p.status === "archived" ? "Archived" : "Draft";
 }
 
-function libraryHtml() {
+function libraryRows() {
   const q = S.q.toLowerCase().trim();
-  const rows = S.projects.filter((p) => {
+  return S.projects.filter((p) => {
     if (S.filter === "drafts" && p.status !== "draft") return false;
     if (S.filter === "processing" && p.status !== "processing") return false;
     if (S.filter === "ready" && p.status !== "ready") return false;
@@ -236,7 +240,10 @@ function libraryHtml() {
     if (!q) return true;
     return [p.title, p.property_label, p.video_type].filter(Boolean).join(" ").toLowerCase().includes(q);
   });
+}
 
+function libraryHtml() {
+  const rows = libraryRows();
   const head = `<div class="rv-head">
     <div>
       <h2>Property Videos</h2>
@@ -266,6 +273,10 @@ function libraryHtml() {
     </div>`;
   }
 
+  return head + `<div class="rv-list">${cardsHtml(rows)}</div>`;
+}
+
+function cardsHtml(rows) {
   const cards = rows.map((p) => {
     const vs = S.variants.filter((v) => v.video_project_id === p.id);
     const sc = S.scenes.filter((s) => s.video_project_id === p.id);
@@ -274,7 +285,7 @@ function libraryHtml() {
     const type = VIDEO_TYPES.find((t) => t.id === p.video_type)?.name || "Video";
     const disc = p.disclosure?.mode ? "Disclosure Applied" : "No Disclosure";
     return `<div class="rv-card" data-id="${p.id}">
-      <div class="rv-thumb" data-thumb="${p.id}"><i data-lucide="film"></i></div>
+      <div class="rv-thumb" data-thumb="${p.id}"${THUMBS.get(p.id) ? ` style="background-image:url('${THUMBS.get(p.id)}')"` : ""}><i data-lucide="film"></i></div>
       <div class="rv-meta">
         <b>${esc(p.title)}</b>
         <span>${esc(p.property_label || "No Property Linked")}</span>
@@ -299,13 +310,14 @@ function libraryHtml() {
     </div>`;
   }).join("");
 
-  return head + `<div class="rv-list">${cards || `<div class="rv-note">No Videos Match That Filter.</div>`}</div>`;
+  return cards || `<div class="rv-note">No Videos Match That Filter.</div>`;
 }
 
 async function paintThumbs() {
   for (const p of S.projects) {
     const el = host()?.querySelector(`[data-thumb="${p.id}"]`);
     if (!el) continue;
+    if (THUMBS.has(p.id)) { el.style.backgroundImage = `url("${THUMBS.get(p.id)}")`; continue; }
     const v = S.variants.find((x) => x.video_project_id === p.id && x.thumbnail_path);
     let url = null;
     if (v?.thumbnail_path) url = await signed(v.thumbnail_path);
@@ -313,7 +325,7 @@ async function paintThumbs() {
       const s = S.scenes.filter((x) => x.video_project_id === p.id).sort((a, b) => a.sequence - b.sequence)[0];
       if (s?.source_path) url = await resolvePhotoUrl(s.source_path);
     }
-    if (url) el.style.backgroundImage = `url("${url}")`;
+    if (url) { THUMBS.set(p.id, url); el.style.backgroundImage = `url("${url}")`; }
   }
 }
 
@@ -1103,34 +1115,12 @@ function bind() {
 
   /* library */
   on("#rvNew, #rvNew2", "click", () => startWizard({}));
-  on(".rv-chip", "click", (e) => { S.filter = e.currentTarget.dataset.f; render(); });
+  on(".rv-chip", "click", (e) => { S.filter = e.currentTarget.dataset.f; renderList(); });
   const q = el.querySelector("#rvQ");
-  if (q) q.addEventListener("input", (e) => { S.q = e.target.value; const p = e.target.selectionStart; render(); const n = host().querySelector("#rvQ"); if (n) { n.focus(); n.setSelectionRange(p, p); } });
-  on(".rv-card .icon-btn", "click", async (e) => {
-    e.stopPropagation();
-    const card = e.currentTarget.closest(".rv-card");
-    const id = card.dataset.id;
-    const act = e.currentTarget.dataset.act;
-    if (act === "open" || act === "edit") return openDetail(id);
-    if (act === "dupe") { await duplicateVideo({ id }); await loadLibrary(); render(); return toast("Video Duplicated."); }
-    if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ id }); await loadLibrary(); render(); return; }
-    if (act === "download") {
-      const v = S.variants.find((x) => x.video_project_id === id && x.output_path);
-      if (!v) return toast("Nothing Rendered Yet.");
-      const url = await signed(v.output_path);
-      if (url) window.open(url, "_blank");
-      return;
-    }
-    if (act === "share") {
-      const { token, slug } = await saveShareLink({ video_project_id: id });
-      try { await navigator.clipboard.writeText(location.origin + "/v/" + (slug || token)); } catch (_) {}
-      await loadLibrary();
-      S.detailTab = "presentation";
-      await openDetail(id);
-      return toast("Presentation Link Copied.");
-    }
-  });
-  on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) => openDetail(e.currentTarget.closest(".rv-card").dataset.id));
+  /* Only the result list is repainted so the focused input and the thumbnails
+     never get torn down mid-typing. */
+  if (q) q.addEventListener("input", (e) => { S.q = e.target.value; renderList(); });
+  bindCards(el);
 
   /* wizard */
   const w = S.wizard;
@@ -2023,4 +2013,48 @@ export async function openVideoDetail(id, tab = "video") {
   if (!S.mounted) await mountReveal(S.go, {});
   S.detailTab = tab;
   await openDetail(id);
+}
+
+
+/* Repaint only the filtered result list; the toolbar, search input and any
+   already-loaded thumbnails stay in the DOM so nothing flashes. */
+function renderList() {
+  const el = host();
+  if (!el || S.screen !== "library") return;
+  el.querySelectorAll(".rv-chip").forEach((c) => c.classList.toggle("on", c.dataset.f === S.filter));
+  const list = el.querySelector(".rv-list");
+  if (!list) return render();
+  list.innerHTML = cardsHtml(libraryRows());
+  try { window.lucide?.createIcons(); } catch (_) {}
+  bindCards(list);
+  paintThumbs();
+}
+
+function bindCards(root) {
+  const on = (sel, ev, fn) => root.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
+  on(".rv-card .icon-btn", "click", async (e) => {
+    e.stopPropagation();
+    const card = e.currentTarget.closest(".rv-card");
+    const id = card.dataset.id;
+    const act = e.currentTarget.dataset.act;
+    if (act === "open" || act === "edit") return openDetail(id);
+    if (act === "dupe") { await duplicateVideo({ id }); await loadLibrary(); render(); return toast("Video Duplicated."); }
+    if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ id }); await loadLibrary(); render(); return; }
+    if (act === "download") {
+      const v = S.variants.find((x) => x.video_project_id === id && x.output_path);
+      if (!v) return toast("Nothing Rendered Yet.");
+      const url = await signed(v.output_path);
+      if (url) window.open(url, "_blank");
+      return;
+    }
+    if (act === "share") {
+      const { token, slug } = await saveShareLink({ video_project_id: id });
+      try { await navigator.clipboard.writeText(location.origin + "/v/" + (slug || token)); } catch (_) {}
+      await loadLibrary();
+      S.detailTab = "presentation";
+      await openDetail(id);
+      return toast("Presentation Link Copied.");
+    }
+  });
+  on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) => openDetail(e.currentTarget.closest(".rv-card").dataset.id));
 }
