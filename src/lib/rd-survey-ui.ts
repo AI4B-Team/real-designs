@@ -110,18 +110,24 @@ function toast(msg: string) {
   } catch (_) {}
 }
 
-/** Opens the questionnaire. Steps through one question at a time. */
-export function openSignupSurvey(seed?: any) {
-  if (document.getElementById("rdSurvey")) return;
-  const a: any = { ...(seed || {}) };
+type FlowOpts = {
+  seed?: any;
+  /** Called after answers save (or a skip). */
+  onDone?: (result: "saved" | "skipped") => void;
+  /** Renders a close affordance (modal only). */
+  showClose?: boolean;
+};
+
+/**
+ * Renders the questionnaire inside `host`, one question per screen.
+ * Used by the full-page signup step and by the account "Edit Answers" flow.
+ */
+export function mountSignupSurvey(host: HTMLElement, opts: FlowOpts = {}) {
+  const a: any = { ...(opts.seed || {}) };
   let i = 0;
 
-  const wrap = document.createElement("div");
-  wrap.className = "rd-modal on";
-  wrap.id = "rdSurvey";
-  wrap.innerHTML = `
-  <div class="rd-modal-card rd-survey" role="dialog" aria-modal="true" aria-label="Welcome Questionnaire">
-    <button class="rd-modal-x" data-x aria-label="Close"><i data-lucide="x"></i></button>
+  host.innerHTML = `
+    ${opts.showClose ? `<button class="rd-modal-x" data-x aria-label="Close"><i data-lucide="x"></i></button>` : ""}
     <div class="sv-top">
       <span class="mono sv-count" data-count></span>
       <div class="sv-bar"><i data-bar></i></div>
@@ -133,15 +139,13 @@ export function openSignupSurvey(seed?: any) {
         <button class="btn btn-ghost btn-xs" data-skip>Skip For Now</button>
         <button class="btn btn-primary btn-xs" data-next>Next<i data-lucide="arrow-right"></i></button>
       </div>
-    </div>
-  </div>`;
-  (document.querySelector(".rd-app") || document.body).appendChild(wrap);
+    </div>`;
 
-  const body = wrap.querySelector("[data-body]") as HTMLElement;
-  const bar = wrap.querySelector("[data-bar]") as HTMLElement;
-  const count = wrap.querySelector("[data-count]") as HTMLElement;
-  const backBtn = wrap.querySelector("[data-back]") as HTMLButtonElement;
-  const nextBtn = wrap.querySelector("[data-next]") as HTMLButtonElement;
+  const body = host.querySelector("[data-body]") as HTMLElement;
+  const bar = host.querySelector("[data-bar]") as HTMLElement;
+  const count = host.querySelector("[data-count]") as HTMLElement;
+  const backBtn = host.querySelector("[data-back]") as HTMLButtonElement;
+  const nextBtn = host.querySelector("[data-next]") as HTMLButtonElement;
 
   function render() {
     const step = STEPS[i]!;
@@ -201,7 +205,7 @@ export function openSignupSurvey(seed?: any) {
     }
 
     try {
-      createIcons({ icons, root: wrap } as any);
+      createIcons({ icons, root: host } as any);
     } catch (_) {}
     const first = body.querySelector("input") as HTMLInputElement | null;
     if (first) first.focus();
@@ -237,28 +241,27 @@ export function openSignupSurvey(seed?: any) {
     }
   }
 
-  const close = () => {
-    wrap.remove();
-    document.removeEventListener("keydown", onKey);
-  };
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape") void skip();
+    if (e.key === "Escape" && opts.showClose) void skip();
     if (e.key === "Enter") {
       const step = STEPS[i]!;
       if (step.kind !== "choice") next();
     }
   };
   document.addEventListener("keydown", onKey);
-  wrap.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = () => void skip()));
+  const stop = () => document.removeEventListener("keydown", onKey);
+
+  host.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = () => void skip()));
   backBtn.onclick = back;
   nextBtn.onclick = next;
-  (wrap.querySelector("[data-skip]") as HTMLButtonElement).onclick = () => void skip();
+  (host.querySelector("[data-skip]") as HTMLButtonElement).onclick = () => void skip();
 
   async function skip() {
-    close();
+    stop();
     try {
       await saveSignupSurvey({ data: { skipped: true } });
     } catch (_) {}
+    opts.onDone?.("skipped");
   }
 
   async function save() {
@@ -291,13 +294,14 @@ export function openSignupSurvey(seed?: any) {
       } catch (_) {
         /* CRM push is best-effort */
       }
-      close();
+      stop();
       try {
         document.dispatchEvent(new CustomEvent("rd:survey-saved"));
       } catch (_) {
         /* no listeners is fine */
       }
       toast("Thanks — Your Workspace Is Ready.");
+      opts.onDone?.("saved");
     } catch (e: any) {
       nextBtn.disabled = false;
       toast(e?.message || "Those answers could not be saved.");
@@ -305,7 +309,9 @@ export function openSignupSurvey(seed?: any) {
   }
 
   render();
+  return stop;
 }
+
 
 /** Mirrors the shared contact fields onto the account profile. */
 async function syncToAccount(fields: { full_name: string; phone: string; company: string }) {
