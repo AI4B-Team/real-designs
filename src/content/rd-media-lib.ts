@@ -745,8 +745,12 @@ function cancelItem(m) {
 
 /** Failed items go back to the settings that produced them. */
 function editSettings(m) {
-  if (m.type === "generated_video") return openVideo(m, "video");
-  if (m.job) return openPropertyUpload({});
+  if (m.type === "generated_video") {
+    if (m.refId) return openVideo(m, "video");
+    toast("This Video Draft Is No Longer Available. Create A New Video To Try Again.");
+    return;
+  }
+  if (m.job) return openPropertyUpload({ propertyId: m.propertyId || m.job.propertyId || null });
   S.go("studio");
 }
 

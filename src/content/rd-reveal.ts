@@ -926,12 +926,18 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
 
 /* ======================= DETAIL ======================= */
 async function openDetail(id) {
+  if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id))) {
+    toast("This Video Draft Is No Longer Available. Create A New Video To Try Again.");
+    S.screen = "library";
+    render();
+    return;
+  }
   S.screen = "detail";
   S.detailId = id;
   S.detail = null;
   render();
   try {
-    S.detail = await getVideo({ id });
+    S.detail = await getVideo({ data: { id } });
   } catch (e) {
     toast(e?.message || "Could not open that video.");
     S.screen = "library";
@@ -1919,7 +1925,7 @@ export async function continueDesignVideo(id) {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
-  const full = await getVideo({ id });
+  const full = await getVideo({ data: { id } });
   const p = full.project;
   const st = p.settings || {};
   S.dv = newDV({
@@ -2008,7 +2014,6 @@ export async function openVideoDetail(id, tab = "video") {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
-  else await loadLibrary();
   S.detailTab = tab;
   await openDetail(id);
 }

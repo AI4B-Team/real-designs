@@ -239,7 +239,12 @@ export async function loadMediaLibrary() {
     });
 
   /* pending generations -------------------------------------------------- */
-  listPendingMedia().forEach((p) => out.push({ ...p, path: p.thumbnailUrl || "", pending: true }));
+  listPendingMedia().forEach((p) => out.push({
+    ...p,
+    refId: p.projectId || p.refId,
+    path: p.thumbnailUrl || "",
+    pending: true,
+  }));
 
   out.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
   return out;
