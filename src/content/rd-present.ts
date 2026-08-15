@@ -787,7 +787,15 @@ async function onClick(e) {
   }
   if (a === "next") {
     readStep();
-    if (S.step === 1 && !S.draft.title) return toast("Give the presentation a title.");
+    if (S.step === 1 && !S.draft.title) {
+      const ti = document.querySelector('.pk-modal [data-pkf="title"]');
+      if (ti) {
+        ti.classList.add("pk-invalid");
+        ti.focus();
+        ti.addEventListener("input", () => ti.classList.remove("pk-invalid"), { once: true });
+      }
+      return toast("Give the presentation a title.");
+    }
     S.step = Math.min(4, S.step + 1);
     return renderBuilder();
   }
