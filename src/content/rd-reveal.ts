@@ -1748,7 +1748,7 @@ export async function startDesignVideo(design = {}) {
     propertyLabel: design.address || design.sub || null,
     versionId,
     sourceType: "design",
-    videoType: "design_showcase",
+    videoType: "design_reveal",
     title: (design.name || "Design") + " Video",
   });
   const w = S.wizard;
