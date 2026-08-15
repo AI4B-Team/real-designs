@@ -552,9 +552,19 @@ export async function openPhotoEditor(ctx) {
     p.innerHTML = head + body + `<div id="pmeReview"></div>`;
     paint();
     p.querySelector("#pmeRun").onclick = () => runAnalysis(asset());
-    p.querySelector("#pmeRunAll").onclick = async () => {
-      for (const t of picks.length > 1 ? picks : assets) await runAnalysis(t);
-    };
+    const anUpg = p.querySelector("#pmeAnUpg");
+    if (anUpg)
+      anUpg.onclick = () => {
+        const um = (window as any).rdUpgradeModal;
+        const m = String(analysis[asset().id]?.error || "");
+        if (typeof um === "function") um(/free designs/i.test(m) ? "You Have Used Today\u2019s Free Designs" : "You Need More Credits", m);
+      };
+    const runAll = p.querySelector("#pmeRunAll");
+    if (runAll)
+      runAll.onclick = async () => {
+        for (const t of picks.length > 1 ? picks : assets) await runAnalysis(t);
+      };
+
     p.querySelectorAll("[data-sug]").forEach((b) => {
       b.onclick = () => {
         const s = analysis[asset().id].data.suggestions[Number(b.dataset.sug)];
