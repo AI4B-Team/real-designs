@@ -237,8 +237,11 @@
 
 .rd-app .rv-srcpanel { border: 1px solid var(--line, #e6e6e6); border-radius: 12px; padding: 14px; margin: 12px 0; }
 .rd-app .rv-inp-ic { position: relative; display: block; }
-.rd-app .rv-inp-ic svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #8a8a8a; }
+.rd-app .rv-inp-ic svg { position: absolute !important; left: 10px; top: 50%; transform: translateY(-50%); width: 15px !important; height: 15px !important; color: #8a8a8a; margin: 0 !important; }
 .rd-app .rv-inp-ic input { padding-left: 32px; width: 100%; }
+.rd-app .rv-srcpanel #rvAddrGo { margin-top: 14px; }
+.rd-app .rv-srcpanel #rvAddrSkip { margin-left: 10px; }
+
 .rd-app .rv-cands { display: grid; gap: 8px; }
 .rd-app .rv-cand { display: grid; grid-template-columns: 88px minmax(0,1fr) auto; gap: 10px; align-items: center;
   border: 1px solid var(--line, #e6e6e6); border-radius: 12px; padding: 8px; }
