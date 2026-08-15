@@ -630,11 +630,14 @@ function setupHtml() {
             <option value="generate" ${st.narration === "generate" ? "selected" : ""}>AI Narration</option>
             <option value="upload" ${st.narration === "upload" ? "selected" : ""}>Upload My Voiceover</option>
           </select></label>
-          <label class="lv-f"><span>Voice</span><select id="lvVoice">
-            <option value="">Saved Or Cloned Voice</option>
-            <option value="warm">Warm Female</option><option value="clear">Clear Male</option><option value="calm">Calm Neutral</option>
+          ${st.narration === "generate" ? `<label class="lv-f"><span>Voice</span><select id="lvVoice">
+            ${[["warm", "Warm Female"], ["clear", "Clear Male"], ["calm", "Calm Neutral"], ["luxury", "Luxury"]]
+              .map(([v, n]) => `<option value="${v}" ${st.voice === v ? "selected" : ""}>${n}</option>`).join("")}
           </select></label>
           <label class="lv-f wide"><span>Narration Script</span><textarea id="lvScript" rows="3" placeholder="Leave empty and we write one from your scenes.">${esc(st.script)}</textarea></label>
+          <div class="lv-f wide"><button type="button" class="btn btn-ghost btn-sm" data-a="lvVoicePrev"><i data-lucide="volume-2"></i>${st.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
+          ${st.narration === "upload" ? `<label class="lv-f wide"><span>Voiceover File</span><input type="file" id="lvNarFile" accept="audio/*"></label>
+          <p class="lv-note">${st.narrationName ? `Using ${esc(st.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</p>` : ""}
           <label class="lv-check"><input type="checkbox" data-chk="captions" ${st.captions ? "checked" : ""}> Captions</label>
           <label class="lv-check"><input type="checkbox" data-chk="labels" ${st.labels ? "checked" : ""}> Scene Labels</label>
           <label class="lv-check"><input type="checkbox" data-chk="intro" ${st.intro ? "checked" : ""}> Intro</label>
