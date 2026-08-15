@@ -504,6 +504,25 @@ function stepSetup() {
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext" ${w.formats.length ? "" : "disabled"}>Continue</button></div>`;
 }
 
+
+/* Map friendly voice names to gateway voices. */
+const VOICE_MAP: Record<string, string> = {
+  professional: "alloy", warm: "coral", conversational: "sage", luxury: "ballad",
+};
+
+async function buildNarration(type: string, script: string | null | undefined, voice: string | null | undefined) {
+  if (type !== "generate" || !script || script.trim().length < 4) return null;
+  try {
+    const { synthesizeNarration } = await import("@/lib/narration.functions");
+    const out = await synthesizeNarration({
+      data: { script: script.trim().slice(0, 4000), voice: VOICE_MAP[(voice || "").toLowerCase()] || "alloy" },
+    });
+    return out?.audio || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 function defaultScript() {
   const w = S.wizard;
   const rooms = Array.from(new Set(w.scenes.map((s) => s.room).filter(Boolean))).slice(0, 6);
@@ -777,6 +796,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
   }
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
+  const narrationUrl = await buildNarration(w.narration, w.script || defaultScript(), w.voice);
 
   let done = 0;
   for (const v of variants) {
@@ -798,6 +818,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
       transition: w.transition,
       captionsEnabled: !!w.captions,
       music: w.music && w.music !== "none" ? w.music : null,
+      narrationUrl,
       musicVolume: typeof w.volume === "number" ? w.volume : 0.6,
       onProgress: (p) => {
         S.wizard.progress = (done + p) / variants.length;

@@ -688,6 +688,25 @@ function confirmHtml() {
   </div>`;
 }
 
+
+/* Map friendly voice names to gateway voices. */
+const VOICE_MAP: Record<string, string> = {
+  professional: "alloy", warm: "coral", conversational: "sage", luxury: "ballad",
+};
+
+async function buildNarration(type: string, script: string | null | undefined, voice: string | null | undefined) {
+  if (type !== "generate" || !script || script.trim().length < 4) return null;
+  try {
+    const { synthesizeNarration } = await import("@/lib/narration.functions");
+    const out = await synthesizeNarration({
+      data: { script: script.trim().slice(0, 4000), voice: VOICE_MAP[(voice || "").toLowerCase()] || "alloy" },
+    });
+    return out?.audio || null;
+  } catch (_) {
+    return null;
+  }
+}
+
 /* ======================= RENDER PROGRESS + RESULT ======================= */
 
 const STAGES = [
@@ -1099,6 +1118,7 @@ async function generate() {
 
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
+    const narrationUrl = await buildNarration(st.narration, st.script, st.voice);
     const outs = [];
     let done = 0;
     for (const v of started.variants) {
@@ -1123,6 +1143,7 @@ async function generate() {
         transition: st.transition,
         captionsEnabled: !!st.captions,
         music: st.music && st.music !== "none" ? st.music : null,
+        narrationUrl,
         musicVolume: 0.6,
         onProgress: (pct) => {
           S.progress = (done + pct) / started.variants.length;
