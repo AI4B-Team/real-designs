@@ -387,7 +387,7 @@ function newWizard(seed = {}) {
     candidates: [],
     pop: null,
     popQ: "",
-    popCat: "featured",
+    popCat: "all",
     lowModal: false,
     lowWarned: false,
     disclosureMode: "altered",
@@ -719,7 +719,7 @@ function popoverHtml() {
       ${CROPS.map(([id, n]) => `<button class="rv-pop-row ${(s.crop || "center") === id ? "on" : ""}" data-croppick="${id}">${n}</button>`).join("")}
     </div>`;
   } else {
-    const cat = w.popCat || "all";
+    const cat = VFX_TILE_CATEGORIES.some(([id]) => id === w.popCat) ? w.popCat : "all";
     const tiles = tilesForCat(cat);
     const active = s.vfx || "none";
     body = `<div class="rv-pop-look">
