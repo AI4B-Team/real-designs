@@ -610,3 +610,10 @@
 .lv-pv-miss { position: absolute; inset: 0; display: grid; place-items: center; color: #94a3b8; font-size: 12.5px; }
 .lv-pv-foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
 .lv-pv-meta { font-size: 12px; color: #6b6b6b; }
+
+/* Address confirmation modal */
+.rd-app .lv-confirm .lv-confirm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rd-app .lv-confirm .lv-confirm-grid .lv-f:first-child{grid-column:1 / -1}
+.rd-app .lv-confirm .lv-row{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line)}
+.rd-app .lv-confirm .lv-row:last-child{border-bottom:none}
+.rd-app .lv-confirm .lv-panel-a{display:flex;gap:10px}

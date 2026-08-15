@@ -26,7 +26,7 @@ import { renderReveal, sceneDurations, DISCLOSURE_LABEL } from "@/lib/reveal-ren
 import { openVideoDetail } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { identifyListing, normalizeAddress, NO_IMPORT_MESSAGE } from "@/lib/listing-source";
-import { startListingImport, linkListingImport } from "@/lib/listing-import.functions";
+import { startListingImport, linkListingImport, lookupListingByAddress } from "@/lib/listing-import.functions";
 import * as UM from "@/lib/upload-manager";
 import { CREDIT_COSTS, getMyCredits } from "@/lib/credits.functions";
 import { track } from "@/lib/analytics";
@@ -391,7 +391,7 @@ function startHtml() {
                       `<button class="lv-match" data-prop="${p.id}"><i data-lucide="building-2"></i><b>${esc(p.address)}</b><span>Use This Property</span></button>`,
                   )
                   .join("")}
-                <button class="lv-match new" data-newprop="1"><i data-lucide="plus"></i><b>${esc(normalizeAddress(S.addressQuery))}</b><span>Create Property Draft</span></button>
+                <button class="lv-match new" data-newprop="1"><i data-lucide="plus"></i><b>${esc(normalizeAddress(S.addressQuery))}</b><span>Confirm This Address</span></button>
               </div>`
             : ""
         }
@@ -1395,18 +1395,7 @@ function bind() {
 
 
     if (t.getAttribute("data-newprop")) {
-      const label = normalizeAddress(S.addressQuery);
-      try {
-        const row = await createMediaProperty({ data: { address: label } });
-        S.propertyId = row.id;
-        S.propertyLabel = row.address;
-        S.standalone = false;
-        S.properties.unshift(row);
-        toast("Property Draft Created.");
-      } catch (err) {
-        toast(err?.message || "Could not create that property.");
-      }
-      return render();
+      return openAddressConfirm(normalizeAddress(S.addressQuery));
     }
 
     const cloud = t.getAttribute("data-cloud");
@@ -1612,6 +1601,13 @@ function bind() {
   });
 
   el.addEventListener("keydown", (e) => {
+    if (e.target.id === "lvAddr" && e.key === "Enter") {
+      e.preventDefault();
+      S.addressQuery = e.target.value || "";
+      const q = normalizeAddress(S.addressQuery);
+      if (q.length > 2) openAddressConfirm(q);
+      return;
+    }
     if (e.target.id === "lvImportUrl" && e.key === "Enter") {
       e.preventDefault();
       S.importUrl = e.target.value || "";
@@ -1760,3 +1756,151 @@ export async function openListingVideo(seed = {}) {
 
 
 export default mountListingVideo;
+
+
+/* ======================= ADDRESS CONFIRM MODAL ======================= */
+
+/** Split a typed address into street / city / state+zip for the confirm card. */
+function splitAddress(addr) {
+  const parts = String(addr || "")
+    .split(",")
+    .map((x) => x.trim())
+    .filter(Boolean);
+  const tail = parts.length > 2 ? parts[parts.length - 1] : parts[2] || "";
+  const m = /^([A-Za-z]{2})\s*(\d{5})?$/.exec(tail || "");
+  return {
+    street: parts[0] || "",
+    city: parts.length > 1 ? parts[1] : "",
+    state: m ? m[1].toUpperCase() : "",
+    zip: m && m[2] ? m[2] : (/(\d{5})\s*$/.exec(addr || "") || [])[1] || "",
+  };
+}
+
+/**
+ * Typing an address opens this confirmation step: we look the listing up with
+ * the licensed provider, show what came back (or the address as typed when no
+ * provider is connected) and only create/select the property once the user
+ * confirms.
+ */
+export function openAddressConfirm(rawAddress) {
+  const address = normalizeAddress(rawAddress || "");
+  if (!address) return;
+  const existing = S.properties.find((p) => (p.address || "").toLowerCase() === address.toLowerCase()) || null;
+
+  const wrap = document.createElement("div");
+  wrap.className = "rd-modal on";
+  wrap.innerHTML = `
+  <div class="rd-modal-card lv-confirm" role="dialog" aria-modal="true" aria-label="Confirm Property" style="max-width:560px">
+    <button class="rd-modal-x" data-x aria-label="Close"><i data-lucide="x"></i></button>
+    <h3 style="margin:0 0 4px">Confirm This Property</h3>
+    <p class="lv-note" style="margin:0 0 14px">We Looked This Address Up. Check The Details Before We Start The Video.</p>
+    <div data-body></div>
+  </div>`;
+  (document.querySelector(".rd-app") || document.body).appendChild(wrap);
+  const body = wrap.querySelector("[data-body]");
+  const close = () => {
+    wrap.remove();
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e) => {
+    if (e.key === "Escape") close();
+  };
+  document.addEventListener("keydown", onKey);
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap) close();
+  });
+  wrap.querySelectorAll("[data-x]").forEach((b) => (b.onclick = close));
+
+  const loading = () => {
+    body.innerHTML = `<div class="lv-job">
+      <div class="lv-job-h"><b>Looking Up Listing</b><span>${esc(address)}</span></div>
+      <div class="lv-bar indet"><i></i></div>
+    </div>`;
+    paint();
+  };
+
+  const detail = (label, val) =>
+    `<div class="lv-row"><span>${label}</span><b>${esc(val || "Not Provided")}</b></div>`;
+
+  const showForm = (listing, note) => {
+    const a = splitAddress(listing?.address || address);
+    body.innerHTML = `
+      ${note ? `<p class="lv-note" style="margin:0 0 12px">${esc(note)}</p>` : ""}
+      <div class="lv-confirm-grid">
+        <label class="lv-f"><span>Street Address</span><span class="lv-input"><i data-lucide="map-pin"></i>
+          <input data-f="street" value="${esc(a.street)}" placeholder="123 Main Street"></span></label>
+        <label class="lv-f"><span>City</span><span class="lv-input">
+          <input data-f="city" value="${esc(a.city)}" placeholder="City"></span></label>
+        <label class="lv-f"><span>State</span><span class="lv-input">
+          <input data-f="state" value="${esc(a.state)}" placeholder="FL" maxlength="2"></span></label>
+        <label class="lv-f"><span>ZIP Code</span><span class="lv-input">
+          <input data-f="zip" value="${esc(a.zip)}" placeholder="33544"></span></label>
+      </div>
+      ${
+        listing
+          ? `<div class="lv-result" style="margin-top:12px">
+              ${detail("Price", listing.price ? `$${Number(listing.price).toLocaleString()}` : "")}
+              ${detail("Beds", listing.beds)}
+              ${detail("Baths", listing.baths)}
+              ${detail("Floor SF", listing.sqft)}
+            </div>`
+          : ""
+      }
+      ${
+        existing
+          ? `<p class="lv-note" style="margin:12px 0 0">You Already Have This Property. Confirming Will Use It And Its Existing Photos.</p>`
+          : ""
+      }
+      <div class="lv-panel-a" style="margin-top:16px">
+        <button class="btn btn-primary btn-sm" data-go><i data-lucide="check"></i>${existing ? "Use This Property" : "Confirm Property"}</button>
+        <button class="btn btn-ghost btn-sm" data-x>Cancel</button>
+      </div>`;
+    paint();
+    wrap.querySelectorAll("[data-x]").forEach((b) => (b.onclick = close));
+    const val = (k) => (wrap.querySelector(`[data-f="${k}"]`)?.value || "").trim();
+    wrap.querySelector("[data-go]").onclick = async (ev) => {
+      const btn = ev.currentTarget;
+      btn.disabled = true;
+      const joined = normalizeAddress(
+        [val("street"), val("city"), [val("state").toUpperCase(), val("zip")].filter(Boolean).join(" ")]
+          .filter(Boolean)
+          .join(", "),
+      );
+      if (!joined) {
+        btn.disabled = false;
+        return toast("Enter The Street Address To Continue.");
+      }
+      try {
+        let row = existing;
+        if (!row) {
+          row = await createMediaProperty({ data: { address: joined } });
+          S.properties.unshift(row);
+        }
+        S.propertyId = row.id;
+        S.propertyLabel = row.address;
+        S.addressQuery = row.address;
+        S.standalone = false;
+        S.addressMatches = [];
+        close();
+        await loadAssets(row.id, false);
+        S.step = S.photos.length ? "photos" : "start";
+        if (!S.photos.length) toast("Property Confirmed. Upload The Listing Photos To Continue.");
+        render();
+      } catch (err) {
+        btn.disabled = false;
+        toast(err?.message || "Could not save that property.");
+      }
+    };
+  };
+
+  loading();
+  lookupListingByAddress({ data: { address } })
+    .then((r) => {
+      if (!wrap.isConnected) return;
+      if (r?.ok && r.listing) showForm(r.listing, "Listing Details Found. Confirm Or Correct Them Below.");
+      else showForm(null, "We Could Not Pull Listing Data For This Address. Confirm The Details Below And Continue.");
+    })
+    .catch(() => {
+      if (wrap.isConnected) showForm(null, "We Could Not Pull Listing Data For This Address. Confirm The Details Below And Continue.");
+    });
+}
