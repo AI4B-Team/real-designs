@@ -1607,9 +1607,8 @@ function paintBatch(){
   }
   const keep=sel.value;
   sel.innerHTML=PROP_TREE.map(p=>`<option value="${p.id}">${p.address}</option>`).join('');
-  if(keep) sel.value=keep;
   const hasPhotos=p=>p.projects.some(pr=>pr.rooms.some(r=>!!r.before_path));
-  const prop=PROP_TREE.find(p=>p.id===sel.value)||PROP_TREE.find(hasPhotos)||PROP_TREE[0];
+  const prop=(keep&&PROP_TREE.find(p=>p.id===keep))||PROP_TREE.find(hasPhotos)||PROP_TREE[0];
   sel.value=prop.id;
   const rooms=[]; prop.projects.forEach(pr=>pr.rooms.forEach(r=>rooms.push(r)));
   BATCH_ROOMS=rooms.filter(r=>!!r.before_path);
