@@ -505,7 +505,10 @@ export async function openPhotoEditor(ctx) {
       <label class="pme-sl"><span>Look Strength<b>${lookAmount}</b></span>
         <input type="range" min="10" max="100" value="${lookAmount}" id="pmeLookAmt" aria-label="Look strength" ${lookId ? "" : "disabled"}>
       </label>
-      <button class="btn btn-ghost btn-xs" id="pmeLookClear"><i data-lucide="rotate-ccw"></i>Clear Look</button>
+      <div class="pme-look-actions">
+        <button class="btn btn-ghost btn-xs" id="pmeLookClear"><i data-lucide="rotate-ccw"></i>Clear Look</button>
+        ${picked.size > 1 ? `<button class="btn btn-dark btn-xs" id="pmeLookBatch" ${lookId ? "" : "disabled"}><i data-lucide="layers"></i>Apply To ${picked.size} Selected</button>` : ""}
+      </div>
       <p class="pme-note">Looks stack on top of your manual adjustments and geometry.</p>`;
     p.querySelectorAll(".pme-look").forEach((b) => {
       b.onclick = () => {
@@ -522,12 +525,59 @@ export async function openPhotoEditor(ctx) {
         amt.parentElement.querySelector("b").textContent = amt.value;
         renderStage();
       };
+    const batch = p.querySelector("#pmeLookBatch");
+    if (batch) batch.onclick = applyLookToSelected;
     p.querySelector("#pmeLookClear").onclick = () => {
       lookId = null;
       renderLooks(p);
       paint();
       renderStage();
     };
+  }
+
+  async function applyLookToSelected() {
+    const look = lookById(lookId);
+    if (!look || busy) return;
+    const list = assets.filter((a) => picked.has(a.id));
+    if (!list.length) return;
+    busy = true;
+    let done = 0;
+    let failed = 0;
+    for (const a of list) {
+      try {
+        toast(`Applying ${look.label} — ${done + failed + 1} Of ${list.length}`);
+        const url = a.id === asset().id ? baseUrl : await urlForAsset(a);
+        if (!url) throw new Error("Photo unavailable.");
+        const dataUrl = await renderToDataUrl(url, blankAdjust(), blankGeometry(), 2600, look, lookAmount);
+        const path = await uploadRenderDataUrl(dataUrl);
+        const row = await addMediaVersion({
+          data: {
+            asset_id: a.id,
+            label: `Look, ${look.label}`,
+            kind: "enhanced",
+            modification_class: "Enhanced",
+            storage_path: path,
+            ops: { look: { id: look.id, amount: lookAmount } },
+            approve: false,
+          },
+        });
+        ctx.versions.push(row);
+        if (a.id === asset().id) {
+          baseUrl = dataUrl;
+          activeVersionId = row.id;
+          lookId = null;
+        }
+        done++;
+      } catch (_) {
+        failed++;
+      }
+    }
+    busy = false;
+    versions = ctx.versions.filter((v) => v.asset_id === asset().id && !v.archived);
+    renderStage();
+    renderPane();
+    track("vfx_look_batch", { look: look.id, done, failed });
+    toast(`${look.label} Applied To ${done} Photo${done === 1 ? "" : "s"}${failed ? `, ${failed} Failed` : ""}.`);
   }
 
   /* ---------------- Analyze ---------------- */

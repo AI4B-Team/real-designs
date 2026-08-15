@@ -1527,3 +1527,4 @@
 .pme-look:hover{ border-color:var(--ink,#141210); }
 .pme-look.on{ border-color:var(--red,#c00); box-shadow:inset 0 0 0 1px var(--red,#c00); }
 .pme-kind.looks b{ color:var(--ink,#141210); }
+.pme-look-actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
