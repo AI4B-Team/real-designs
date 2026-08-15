@@ -53,6 +53,7 @@ import { track } from "@/lib/analytics";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+import { VFX_LOOKS, VFX_CATEGORIES, lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
@@ -92,12 +93,18 @@ export const VIDEO_TYPES = [
 ];
 
 const FORMATS = [
-  { id: "9:16", name: "Vertical — 9:16", d: "Reels, TikTok and Shorts" },
-  { id: "16:9", name: "Landscape — 16:9", d: "YouTube, websites and presentations" },
-  { id: "1:1", name: "Square — 1:1", d: "Flexible social posting" },
-  { id: "4:5", name: "Portrait — 4:5", d: "Instagram and Facebook feeds" },
-
+  { id: "9:16", name: "Vertical 9:16", d: "Reels, TikTok and Shorts" },
+  { id: "4:5", name: "Portrait 4:5", d: "Instagram and Facebook feeds" },
+  { id: "1:1", name: "Square 1:1", d: "Flexible social posting" },
+  { id: "16:9", name: "Landscape 16:9", d: "YouTube, websites and presentations" },
 ];
+
+const LENGTHS = [
+  ["quick", "Quick, About 15s"],
+  ["standard", "Standard, About 30s"],
+  ["full", "Full, About 60s"],
+];
+
 
 const MUSIC = [
   { id: "none", group: "No Music", name: "No Music" },
@@ -264,12 +271,11 @@ function libraryHtml() {
       <p>Create polished videos and marketing content from your properties, photos and designs.</p>
     </div>
     <div class="rv-head-a">
-      <button class="btn btn-ghost" id="rvListing"><i data-lucide="building-2"></i>Create A Listing Video</button>
       <button class="btn btn-primary" id="rvNew"><i data-lucide="clapperboard"></i>Create Video</button>
     </div>
   </div>
   <div class="rv-bar">
-    <div class="rv-chips">${["all", "drafts", "processing", "ready", "shared"]
+    <div class="rv-mchips">${["all", "drafts", "processing", "ready", "shared"]
       .map((f) => `<button class="rv-chip ${S.filter === f ? "on" : ""}" data-f="${f}">${f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}</button>`)
       .join("")}</div>
     <div class="rv-search"><i data-lucide="search"></i><input id="rvQ" placeholder="Search Property, Project, Room Or Title" value="${esc(S.q)}"></div>
@@ -372,7 +378,16 @@ function newWizard(seed = {}) {
     captions: true,
     brandKitId: S.kits.find((k) => k.is_default)?.id || null,
     branding: { outro: true, watermark: false, contact: true, cta: true, scope: "final" },
-    versions: { branded: true, clean: false, disclosure: true },
+    versions: { branded: true, clean: true, disclosure: true },
+    outputMode: "both",
+    template: "clean",
+    address: "",
+    candidates: [],
+    pop: null,
+    popQ: "",
+    popCat: "featured",
+    lowModal: false,
+    lowWarned: false,
     disclosureMode: "altered",
     uploads: [],
     busy: false,
@@ -414,60 +429,86 @@ async function loadWizardAssets() {
   w.available = out;
 }
 
+const WIZ_STEPS = ["Photos", "Select", "Edit", "Brand"];
+
 function wizardHtml() {
   const w = S.wizard;
-  const steps = ["Source", "Type", "Scenes", "Setup", "Audio", "Branding", "Review"];
-  const rail = `<div class="rv-steps">${steps
-    .map((s, i) => `<span class="${w.step === i + 1 ? "on" : w.step > i + 1 ? "done" : ""}">${s}</span>`)
+  const rail = `<div class="rv-steps">${WIZ_STEPS
+    .map((s, i) => `<span class="${w.step === i + 1 ? "on" : w.step > i + 1 ? "done" : ""}" data-step="${i + 1}">${s}${i === 1 && w.scenes.length ? `<i class="rv-badge mono">${w.scenes.length}</i>` : ""}</span>`)
     .join("")}</div>`;
 
   let body = "";
-  if (w.step === 1) body = stepSource();
-  if (w.step === 2) body = stepType();
-  if (w.step === 3) body = stepScenes();
-  if (w.step === 4) body = stepSetup();
-  if (w.step === 5) body = stepAudio();
-  if (w.step === 6) body = stepBrand();
-  if (w.step === 7) body = stepReview();
+  if (w.step === 1) body = stepPhotos();
+  if (w.step === 2) body = stepSelect();
+  if (w.step === 3) body = stepEdit();
+  if (w.step === 4) body = stepBrand();
 
   return `<div class="rv-head">
     <div><h2>Create A Property Video</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
   ${rail}
-  <div class="rv-wiz">${body}</div>`;
+  <div class="rv-layout ${w.step > 1 ? "with-side" : ""}">
+    <div class="rv-wiz">${body}</div>
+    ${w.step > 1 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
+  </div>
+  ${w.pop ? popoverHtml() : ""}
+  ${w.lowModal ? lowSceneModal() : ""}`;
 }
 
-function stepSource() {
+/* ======================= STEP 1, PHOTOS ======================= */
+function stepPhotos() {
   const w = S.wizard;
   const opts = [
-    ["property", "Property", "Use rooms, photos and designs from an existing property.", "map-pin"],
-    ["design", "Completed Design", "Create a reveal from one design or before-and-after result.", "images"],
-    ["upload", "Upload Photos", "Start with a new group of property images.", "upload"],
-    ["concept", "Concept", "Turn a text-generated or sketch-generated concept into a presentation.", "sparkle"],
+    ["address", "Property Address", "Import Photos From The Listing.", "map-pin"],
+    ["upload", "Upload", "Drag Photos In Or Browse Your Device.", "upload"],
+    ["property", "A Property You Already Have", "Use Rooms, Designs And Photos Already In Your Workspace.", "home"],
+    ["design", "A Design", "Start From One Finished Design Or A Before And After.", "images"],
   ];
   const recent = S.tree.slice(0, 6);
-  return `<h3>What Do You Want To Turn Into a Video?</h3>
+  let panel = "";
+  if (w.sourceType === "address") {
+    panel = `<div class="rv-srcpanel">
+      <label class="rv-f">Property Address<span class="rv-inp-ic"><i data-lucide="search"></i><input id="rvAddr" value="${esc(w.address || "")}" placeholder="3417 Hoover Dr, Holiday, FL 34691"></span></label>
+      <button class="btn btn-primary btn-sm" id="rvAddrGo">${w.addrBusy ? "Looking Up" : "Find Photos"}</button>
+      ${(w.candidates || []).length ? `<div class="rv-sub">Choose A Listing</div>
+      <div class="rv-cands">${w.candidates.map((c, i) => `<div class="rv-cand">
+        <span class="rv-a-th" data-img="${esc(c.cover || "")}"></span>
+        <div><b class="mono">${esc(c.price || "")}</b><span>${esc(c.address || "")}</span>
+        <i class="mono">${esc(c.meta || "")}</i></div>
+        <button class="btn btn-ghost btn-xs" data-cand="${i}">Use This Listing</button>
+      </div>`).join("")}</div>` : ""}
+      ${w.addrNote ? `<div class="rv-note">${esc(w.addrNote)}</div>` : ""}
+      <button class="fb-link" id="rvAddrSkip">No Thanks, I Will Upload Photos Myself</button>
+    </div>`;
+  } else if (w.sourceType === "upload") {
+    panel = `<div class="rv-srcpanel">
+      <div class="rv-upload"><input type="file" id="rvFiles" accept="image/*" multiple hidden>
+        <button class="btn btn-ghost" id="rvBrowse"><i data-lucide="image-plus"></i>Browse Files</button>
+        <span class="mono">${w.uploads.length} Photos Added</span>
+      </div>
+    </div>`;
+  } else if (w.sourceType === "property" || w.sourceType === "design") {
+    panel = recent.length
+      ? `<div class="rv-sub">Recent Properties</div>
+      <div class="rv-recents">${recent
+        .map((p) => `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}"><i data-lucide="home"></i><b>${esc(p.address)}</b><span class="mono">${(p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0)} Rooms</span></button>`)
+        .join("")}</div>`
+      : `<div class="rv-note">No Properties Yet. Upload Photos To Start.</div>`;
+  }
+
+  const ready = w.sourceType === "upload" || w.sourceType === "address" ? w.uploads.length > 0 : !!w.propertyId;
+  return `<h3>Where Are The Photos?</h3>
   <div class="rv-opts">${opts
     .map(([id, n, d, ic]) => `<button class="rv-opt ${w.sourceType === id ? "on" : ""}" data-src="${id}"><i data-lucide="${ic}"></i><b>${n}</b><span>${d}</span></button>`)
     .join("")}</div>
-  ${recent.length ? `<div class="rv-sub">Recent Properties</div>
-  <div class="rv-recents">${recent
-    .map((p) => `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}"><i data-lucide="home"></i><b>${esc(p.address)}</b><span>${(p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0)} Rooms</span></button>`)
-    .join("")}</div>` : `<div class="rv-note">No Properties Yet. Upload Photos To Start.</div>`}
-  ${w.sourceType === "upload" ? `<div class="rv-upload"><input type="file" id="rvFiles" accept="image/*" multiple hidden><button class="btn btn-ghost" id="rvBrowse"><i data-lucide="image-plus"></i>Browse Files</button><span>${w.uploads.length} Photos Added</span></div>` : ""}
-  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${w.sourceType && (w.propertyId || w.uploads.length || w.sourceType === "concept") ? "" : "disabled"}>Continue</button></div>`;
-}
-
-function stepType() {
-  const w = S.wizard;
-  return `<h3>What Are You Creating?</h3>
-  <div class="rv-rows">${VIDEO_TYPES.map((t) => `<button class="rv-row ${w.videoType === t.id ? "on" : ""}" data-type="${t.id}"><b>${t.name}</b><span>${t.d}</span></button>`).join("")}</div>
+  ${panel}
   <label class="rv-f">Video Title<input id="rvTitle" value="${esc(w.title || (w.propertyLabel ? w.propertyLabel + " Reveal" : "Untitled Reveal"))}"></label>
-  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
+  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${ready ? "" : "disabled"}>Continue</button></div>`;
 }
 
-function stepScenes() {
+/* ======================= STEP 2, SELECT ======================= */
+function stepSelect() {
   const w = S.wizard;
   const groups = {};
   for (const a of w.available) (groups[a.group] = groups[a.group] || []).push(a);
@@ -482,7 +523,7 @@ function stepScenes() {
 
   const right = w.scenes.length
     ? w.scenes.map((s, i) => `<div class="rv-scene" draggable="true" data-idx="${i}">
-        <span class="rv-seq">${i + 1}</span>
+        <span class="rv-seq mono">${i + 1}</span>
         <span class="rv-a-th" data-img="${esc(s.path)}"></span>
         <span class="rv-s-m"><b>${esc(s.room)}</b><i>${s.scene_type === "before_after" ? "Before & After" : s.kind}</i></span>
         <span class="rv-s-a">
@@ -497,7 +538,7 @@ function stepScenes() {
   ${dupCount ? `<div class="rv-dup"><i data-lucide="copy"></i><b>${dupCount} Similar Angles Detected</b><span><button class="fb-link" id="rvKeepBest">Keep Best</button><button class="fb-link" data-goto="media">Review</button><button class="fb-link" id="rvKeepAll">Keep All</button></span></div>` : ""}
   <div class="rv-two">
     <div class="rv-col"><div class="rv-col-h">Available Content</div><div class="rv-col-b">${left || `<div class="rv-note">No Content Found For This Source.</div>`}</div></div>
-    <div class="rv-col"><div class="rv-col-h">Video Scenes<span>${w.scenes.length}</span></div><div class="rv-col-b" id="rvSceneList">${right}</div></div>
+    <div class="rv-col"><div class="rv-col-h">Video Scenes<span class="mono">${w.scenes.length}</span></div><div class="rv-col-b" id="rvSceneList">${right}</div></div>
   </div>
   <div class="rv-foot">
     <button class="btn btn-ghost" id="rvBack">Back</button>
@@ -506,6 +547,15 @@ function stepScenes() {
     <button class="btn btn-ghost" id="rvAuto">Auto Arrange</button>
     <button class="btn btn-primary" id="rvNext" ${w.scenes.length ? "" : "disabled"}>Continue</button>
   </div>`;
+}
+
+function lowSceneModal() {
+  const w = S.wizard;
+  return `<div class="rv-modal on" id="rvLowWrap"><div class="rv-modal-in" role="dialog" aria-label="Add a few more rooms">
+    <div class="rv-modal-h"><b>Add A Few More Rooms</b><button class="icon-btn" id="rvLowX"><i data-lucide="x"></i></button></div>
+    <div class="rv-modal-b"><p>Videos with 8 to 12 rooms hold attention longest. You have <b class="mono">${w.scenes.length}</b>.</p></div>
+    <div class="rv-modal-f"><button class="btn btn-ghost" id="rvLowMore">Add More Photos</button><button class="btn btn-primary" id="rvLowGo">Continue Anyway</button></div>
+  </div></div>`;
 }
 
 /* ---------- per-scene motion, immersive movement and exterior effects ---------- */
@@ -518,54 +568,136 @@ function immersiveCount() {
   return (S.wizard?.scenes || []).filter((s) => s.motion_level === "immersive").length;
 }
 
-function sceneMotionCard(s, i) {
-  const level = s.motion_level === "immersive" ? "immersive" : "standard";
-  return `<div class="rv-mcard">
-    <div class="rv-mcard-h"><b>${esc(s.room || "Scene " + (i + 1))}</b>
-      <span class="rv-seg tiny">
-        <button class="${level === "standard" ? "on" : ""}" data-level="standard" data-i="${i}">Standard</button>
-        <button class="${level === "immersive" ? "on" : ""}" data-level="immersive" data-i="${i}">Immersive</button>
-      </span>
+const MOTION_COPY = {
+  auto: "Automatic picks the camera move that suits each room.",
+  push: "Push In moves the camera slowly toward the room, drawing the viewer inward.",
+  pull: "Pull Out starts tight and widens to reveal the whole space.",
+  pan_left: "Pan Left glides across the room from right to left.",
+  pan_right: "Pan Right glides across the room from left to right.",
+  orbit_left: "Orbit Left rotates the camera counter clockwise around the focal point.",
+  orbit_right: "Orbit Right rotates the camera clockwise around the focal point, creating a sense of depth.",
+  static: "Static holds the frame still, letting the design speak for itself.",
+};
+const CROPS = [["center", "Center"], ["top", "Top"], ["bottom", "Bottom"], ["left", "Left"], ["right", "Right"]];
+
+function motionLabel(s) {
+  if (s.motion_level === "immersive") {
+    const e = IMMERSIVE_EFFECTS.find(([id]) => id === (s.immersive_effect || "light"));
+    return e ? e[1] : "Immersive";
+  }
+  const m = STANDARD_MOTIONS.find(([id]) => id === (s.motion || "auto"));
+  return m ? m[1] : "Automatic";
+}
+
+function sceneCard(s, i) {
+  const w = S.wizard;
+  const look = s.look ? lookById(s.look) : null;
+  const changed = (s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect;
+  return `<div class="rv-scard" draggable="true" data-idx="${i}">
+    <div class="rv-scard-th" data-img="${esc(s.path)}">
+      <span class="rv-seq mono">${i + 1}</span>
+      <button class="rv-x" data-drop="${i}" aria-label="Remove Scene"><i data-lucide="x"></i></button>
+      <div class="rv-mchips">
+        <button class="rv-mchip ${changed ? "hot" : ""}" data-pop="motion" data-i="${i}"><i data-lucide="video"></i>${esc(motionLabel(s))}<i data-lucide="chevron-down"></i></button>
+        <button class="rv-mchip" data-pop="crop" data-i="${i}"><i data-lucide="crop"></i><span class="mono">${esc((CROPS.find(([c]) => c === (s.crop || "center")) || CROPS[0])[1])}</span></button>
+        <button class="rv-mchip ${look ? "hot" : ""}" data-pop="look" data-i="${i}"><i data-lucide="palette"></i>${esc(look ? look.label : "Look")}</button>
+      </div>
     </div>
-    ${level === "standard"
-      ? `<label class="rv-f">Camera Move<select data-scene-motion="${i}">${STANDARD_MOTIONS
-          .map(([m, n]) => `<option value="${m}" ${(s.motion || "auto") === m ? "selected" : ""}>${n}</option>`).join("")}</select></label>`
-      : `<label class="rv-f">Animated Movement<select data-immersive="${i}">${IMMERSIVE_EFFECTS
-          .map(([m, n]) => `<option value="${m}" ${(s.immersive_effect || "light") === m ? "selected" : ""}>${n}</option>`).join("")}</select></label>
-        <div class="rv-note sm">Adds ${IMMERSIVE_CREDITS_PER_SCENE} Credits. Only Movement Is Animated — Walls, Windows And Furniture Stay Exactly As Designed.</div>`}
-    ${isExterior(s) ? `<label class="rv-f">Cinematic Exterior<select data-ext="${i}">
-      <option value="">None</option>
-      ${EXTERIOR_EFFECTS.map(([m, n]) => `<option value="${m}" ${s.exterior_effect === m ? "selected" : ""}>${n}</option>`).join("")}
-    </select></label>
-    ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
+    <div class="rv-scard-b">
+      <b>${esc(s.room || "Scene " + (i + 1))}</b>
+      <input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional">
+      <div class="rv-scard-a">
+        <button class="icon-btn" data-move="-1" title="Move Up"><i data-lucide="chevron-up"></i></button>
+        <button class="icon-btn" data-move="1" title="Move Down"><i data-lucide="chevron-down"></i></button>
+      </div>
+    </div>
   </div>`;
 }
 
-
-function stepSetup() {
+function popoverHtml() {
   const w = S.wizard;
-  return `<h3>Configure The Video</h3>
-  <div class="rv-sub">Format</div>
-  <div class="rv-opts sm">${FORMATS.map((f) => `<button class="rv-opt ${w.formats.includes(f.id) ? "on" : ""} ${f.soon ? "soon" : ""}" data-fmt="${f.id}" ${f.soon ? "disabled" : ""}><b>${f.name}</b><span>${f.d}${f.soon ? " — Coming Soon" : ""}</span></button>`).join("")}</div>
-  <div class="rv-sub">Length</div>
-  <div class="rv-seg">${[["quick", "Quick — About 15s"], ["standard", "Standard — About 30s"], ["full", "Full — About 60s"]]
-    .map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
-  <div class="rv-sub">Motion</div>
-  <div class="rv-seg"><button class="${w.motion === "auto" ? "on" : ""}" data-motion="auto">Automatic — Recommended</button><button class="${w.motion !== "auto" ? "on" : ""}" data-motion="advanced">Advanced Per Scene</button></div>
-  ${w.motion !== "auto" ? `<div class="rv-adv">${w.scenes.map((s, i) => sceneMotionCard(s, i)).join("")}
-    ${immersiveCount() ? `<div class="rv-note sm">Immersive Motion Is Added To ${immersiveCount()} ${immersiveCount() === 1 ? "Scene" : "Scenes"} — ${immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits.</div>` : ""}
-  </div>` : ""}
-  <div class="rv-sub">Transitions</div>
-  <div class="rv-seg">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"]]
-    .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
-  <div class="rv-sub sm">Viral VFX</div>
-  <div class="rv-note sm">High-energy cuts built for social. Best on short vertical edits.</div>
-  <div class="rv-seg">${[["whip", "Whip Pan"], ["punch", "Zoom Punch"], ["flash", "Flash Cut"], ["glitch", "Glitch"], ["leak", "Light Leak"], ["slide", "Slide"]]
-    .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
+  const { kind, i } = w.pop;
+  const s = w.scenes[i];
+  if (!s) return "";
+  let body = "";
+  if (kind === "motion") {
+    const q = (w.popQ || "").toLowerCase();
+    const rows = STANDARD_MOTIONS.filter(([, n]) => !q || n.toLowerCase().includes(q));
+    const hov = w.popHover || (s.motion_level === "immersive" ? null : s.motion || "auto");
+    body = `<div class="rv-pop-two">
+      <div class="rv-pop-list">
+        <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Choose Camera Motion">
+        ${rows.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && (s.motion || "auto") === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${id === "auto" ? "Automatic, Recommended" : n}</button>`).join("")}
+        <div class="rv-pop-sep"></div>
+        <div class="rv-pop-h">Immersive Movement</div>
+        ${IMMERSIVE_EFFECTS.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level === "immersive" && (s.immersive_effect || "light") === id ? "on" : ""}" data-immpick="${id}">${esc(n)}<i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE}</i></button>`).join("")}
+        <div class="rv-note sm">Only movement is animated. Walls, windows and furniture stay exactly as designed.</div>
+        ${isExterior(s) ? `<div class="rv-pop-sep"></div><div class="rv-pop-h">Cinematic Exterior</div>
+        <button class="rv-pop-row ${s.exterior_effect ? "" : "on"}" data-extpick="">None</button>
+        ${EXTERIOR_EFFECTS.map(([id, n]) => `<button class="rv-pop-row ${s.exterior_effect === id ? "on" : ""}" data-extpick="${id}">${esc(n)}</button>`).join("")}
+        ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
+      </div>
+      <div class="rv-pop-prev">
+        <div class="rv-pop-clip ${esc(hov || "auto")}" data-img="${esc(s.path)}"></div>
+        <b>${esc((STANDARD_MOTIONS.find(([id]) => id === hov) || ["", "Automatic"])[1])}</b>
+        <span>${esc(MOTION_COPY[hov] || MOTION_COPY.auto)}</span>
+      </div>
+    </div>`;
+  } else if (kind === "crop") {
+    body = `<div class="rv-pop-list">
+      <div class="rv-pop-h">Crop <i class="mono">${esc(w.formats[0] || "9:16")}</i></div>
+      ${CROPS.map(([id, n]) => `<button class="rv-pop-row ${(s.crop || "center") === id ? "on" : ""}" data-croppick="${id}">${n}</button>`).join("")}
+    </div>`;
+  } else {
+    const cat = w.popCat || "featured";
+    const looks = VFX_LOOKS.filter((l) => (l.cat || "featured") === cat);
+    body = `<div class="rv-pop-look">
+      <div class="rv-seg tiny">${VFX_CATEGORIES.map(([id, n]) => `<button class="${cat === id ? "on" : ""}" data-lookcat="${id}">${n}</button>`).join("")}</div>
+      <div class="rv-looks">
+        <button class="rv-look ${s.look ? "" : "on"}" data-lookpick=""><span class="rv-look-th none"><i data-lucide="ban"></i></span><b>None</b></button>
+        ${looks.map((l) => `<button class="rv-look ${s.look === l.id ? "on" : ""}" data-lookpick="${l.id}" title="${esc(l.blurb)}"><span class="rv-look-th" data-img="${esc(s.path)}">${lookOverlayHTML(l, s.look_amount ?? 100)}</span><b>${esc(l.label)}</b></button>`).join("")}
+      </div>
+      <label class="rv-f">Intensity<input type="range" id="rvLookAmt" min="10" max="100" value="${s.look_amount ?? 100}"></label>
+    </div>`;
+  }
+  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in wide" role="dialog" aria-label="Scene options">
+    <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Look"}</b><button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
+    <div class="rv-modal-b">${body}</div>
+    <div class="rv-modal-f"><button class="btn btn-primary" id="rvPopDone">Done</button></div>
+  </div></div>`;
+}
 
-  ${w.scenes.some((s) => s.scene_type === "before_after") ? `<div class="rv-sub">Before-And-After Reveal</div>
-  <div class="rv-seg">${[["match", "Match Frame"], ["slider", "Slider Reveal"], ["wipe", "Wipe"], ["fade", "Fade"]]
+/* ======================= STEP 3, EDIT ======================= */
+function stepEdit() {
+  const w = S.wizard;
+  const per = sceneDurations(w.scenes.length, w.length);
+  const total = Math.round(per * w.scenes.length);
+  const imm = immersiveCount();
+  return `<h3>Edit The Video</h3>
+  <div class="rv-sub">Video Type</div>
+  <div class="rv-seg wrap">${VIDEO_TYPES.map((t) => `<button class="${w.videoType === t.id ? "on" : ""}" data-type="${t.id}">${t.name}</button>`).join("")}</div>
+  <div class="rv-sub">Format</div>
+  <div class="rv-seg wrap">${FORMATS.map((f) => `<button class="${w.formats.includes(f.id) ? "on" : ""}" data-fmt="${f.id}">${f.name}</button>`).join("")}</div>
+  <div class="rv-sub">Length</div>
+  <div class="rv-seg wrap">${LENGTHS.map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
+
+  <div class="rv-bulk">
+    <button class="btn btn-ghost btn-xs" id="rvAllMotion"><i data-lucide="video"></i>Apply Motion To All</button>
+    <button class="btn btn-ghost btn-xs" id="rvAllLook"><i data-lucide="palette"></i>Apply Look To All</button>
+    <button class="btn btn-ghost btn-xs" id="rvAuto"><i data-lucide="arrow-down-up"></i>Auto Arrange</button>
+    <span class="mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</span>
+  </div>
+  ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
+  <div class="rv-sgrid">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
+
+  <div class="rv-sub">Transitions</div>
+  <div class="rv-seg wrap">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"], ["whip", "Whip Pan"], ["punch", "Zoom Punch"], ["flash", "Flash Cut"], ["glitch", "Glitch"], ["leak", "Light Leak"], ["slide", "Slide"]]
+    .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
+  ${w.scenes.some((s) => s.scene_type === "before_after") ? `<div class="rv-sub">Before &amp; After Reveal</div>
+  <div class="rv-seg wrap">${[["match", "Match Frame"], ["slider", "Slider Reveal"], ["wipe", "Wipe"], ["fade", "Fade"]]
     .map(([id, n]) => `<button class="${w.baTransition === id || (!w.baTransition && id === "match") ? "on" : ""}" data-ba="${id}">${n}</button>`).join("")}</div>` : ""}
+  <label class="rv-f">Narration Script, Optional<textarea id="rvScript" rows="4" placeholder="Leave Blank For No Narration">${esc(w.script || "")}</textarea></label>
+
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext" ${w.formats.length ? "" : "disabled"}>Continue</button></div>`;
 }
 
@@ -616,42 +748,6 @@ function defaultScript() {
   return lines.join(" ");
 }
 
-function stepAudio() {
-  const w = S.wizard;
-  if (!w.avatar) w.avatar = blankAvatarConfig();
-
-  return `<h3>Audio & Story</h3>
-  <div class="rv-sub">Presentation Style</div>
-  <div class="rv-seg">${[["music", "Music Only"], ["captions", "Captions"], ["narration", "Narration"], ["both", "Music + Narration"]]
-    .map(([id, n]) => `<button class="${w.presentation === id ? "on" : ""}" data-pres="${id}">${n}</button>`).join("")}</div>
-  <div class="rv-sub">Music</div>
-  <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music, true)}
-  <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
-  <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
-  <div class="rv-note sm">Music is mixed into your download. Beat sync paces scene timing.</div>
-  <div class="rv-sub">Narration</div>
-  <div class="rv-seg">${[["none", "No Narration"], ["generate", "Generate Narration"], ["upload", "Upload Voiceover"]]
-    .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}</button>`).join("")}</div>
-  ${w.narration === "generate" ? `<label class="rv-f">Script — Editable Draft<textarea id="rvScript" rows="4">${esc(w.script || defaultScript())}</textarea></label>
-  <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option value="${v.toLowerCase()}" ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}${myVoiceOption(w.voice)}</select></label>
-  <div class="rv-f">${voiceStudioButton()}</div>
-  <div class="rv-adv"><button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
-  ${w.narration === "upload" ? `<label class="rv-f">Voiceover File — MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
-  <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
-  ${avatarSection(w.avatar, w.title || w.propertyLabel || "")}
-  <div class="rv-sub">Captions</div>
-
-  <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Captions On Scenes</label>
-  ${w.captions ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}<input data-cap="${i}" value="${esc(s.caption ?? s.room ?? "")}"></label>`).join("")}</div>` : ""}
-  <div class="rv-sub">Scene Labels</div>
-  <div class="rv-note sm">Short on-screen labels for room names, materials or one callout. Keep them restrained — two per scene is the maximum.</div>
-  <div class="rv-adv">
-    <button class="btn btn-ghost btn-sm" id="rvSuggestLabels"><i data-lucide="wand"></i>Suggest Labels</button>
-    ${w.scenes.map((s, i) => labelEditor(s, i)).join("")}
-  </div>
-  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
-}
-
 const LABEL_STYLES: Array<[string, string]> = [
   ["clean", "Clean"],
   ["architectural", "Architectural"],
@@ -681,74 +777,115 @@ function labelEditor(s, i) {
 }
 
 
+/* ======================= STEP 4, BRAND ======================= */
 function stepBrand() {
   const w = S.wizard;
+  if (!w.avatar) w.avatar = blankAvatarConfig();
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
-  return `<h3>Branding & Disclosure</h3>
-  <div class="rv-sub">Brand Kit</div>
-  <div class="rv-kits">${S.kits.map((k) => `<button class="rv-kit ${w.brandKitId === k.id ? "on" : ""}" data-kit="${k.id}"><b>${esc(k.name)}</b><span>${esc(k.company_name || k.contact_name || "No Company Name")}</span></button>`).join("")}
-    <button class="rv-kit add" id="rvKitNew"><i data-lucide="plus"></i><b>New Brand Kit</b></button>
-    <button class="rv-kit ${w.brandKitId ? "" : "on"}" data-kit=""><b>Continue Without Branding</b><span>Clean Video, No Logo Or Contact</span></button>
-  </div>
-  ${kit ? `<div class="rv-adv">
-    <label class="rv-check"><input type="checkbox" data-br="outro" ${w.branding.outro ? "checked" : ""}> Closing Branded Scene</label>
-    <label class="rv-check"><input type="checkbox" data-br="watermark" ${w.branding.watermark ? "checked" : ""}> Logo Watermark On Every Scene</label>
-    <label class="rv-check"><input type="checkbox" data-br="contact" ${w.branding.contact ? "checked" : ""}> Contact Information</label>
-    <label class="rv-check"><input type="checkbox" data-br="cta" ${w.branding.cta ? "checked" : ""}> Call To Action</label>
-    <button class="fb-link" id="rvKitEdit">Edit This Brand Kit</button>
-  </div>` : ""}
-  <div class="rv-sub">Export Versions</div>
-  <div class="rv-adv">
-    <label class="rv-check"><input type="checkbox" data-ver="branded" ${w.versions.branded ? "checked" : ""}> Branded — Brand Elements & CTA</label>
-    <label class="rv-check"><input type="checkbox" data-ver="clean" ${w.versions.clean ? "checked" : ""}> Clean — No Logo Or Contact</label>
-    <label class="rv-check"><input type="checkbox" data-ver="disclosure" ${w.versions.disclosure ? "checked" : ""}> Disclosure Ready — Alteration Labels Applied</label>
-  </div>
-  <div class="rv-sub">Disclosure</div>
-  <div class="rv-adv">
-    ${w.scenes.filter((s) => s.disclosure).map((s, i) => `<label class="rv-f">${esc(s.room)}
-      <select data-disc="${w.scenes.indexOf(s)}">${Object.keys(DISCLOSURE_LABEL).map((k) => `<option value="${k}" ${s.disclosure === k ? "selected" : ""}>${DISCLOSURE_LABEL[k]}</option>`).join("")}</select></label>`).join("") || `<div class="rv-note sm">No Altered Scenes Detected. Nothing To Disclose.</div>`}
-    <div class="rv-seg">${[["altered", "Altered Scenes Only"], ["all", "Apply Throughout Video"], ["intro", "Intro Disclosure"], ["outro", "Outro Disclosure"]]
-      .map(([id, n]) => `<button class="${w.disclosureMode === id ? "on" : ""}" data-dmode="${id}">${n}</button>`).join("")}</div>
-  </div>
-  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
+  const discScenes = w.scenes.filter((s) => s.disclosure);
+  return `<h3>Brand & Audio</h3>
+
+  <details class="rv-acc" open><summary>Template</summary>
+    <div class="rv-seg wrap">${[["none", "No Intro Or Outro"], ["clean", "Clean Title Card"], ["editorial", "Editorial"], ["bold", "Bold Listing"]]
+      .map(([id, n]) => `<button class="${(w.template || "clean") === id ? "on" : ""}" data-tpl="${id}">${n}</button>`).join("")}</div>
+  </details>
+
+  <details class="rv-acc"><summary>Brand Kit</summary>
+    <div class="rv-kits">${S.kits.map((k) => `<button class="rv-kit ${w.brandKitId === k.id ? "on" : ""}" data-kit="${k.id}"><b>${esc(k.name)}</b><span>${esc(k.company_name || k.contact_name || "No Company Name")}</span></button>`).join("")}
+      <button class="rv-kit add" id="rvKitNew"><i data-lucide="plus"></i><b>New Brand Kit</b></button>
+    </div>
+    ${kit ? `<div class="rv-adv">
+      <label class="rv-check"><input type="checkbox" data-br="outro" ${w.branding.outro ? "checked" : ""}> Closing Branded Scene</label>
+      <label class="rv-check"><input type="checkbox" data-br="watermark" ${w.branding.watermark ? "checked" : ""}> Logo Watermark On Every Scene</label>
+      <label class="rv-check"><input type="checkbox" data-br="contact" ${w.branding.contact ? "checked" : ""}> Contact Information</label>
+      <label class="rv-check"><input type="checkbox" data-br="cta" ${w.branding.cta ? "checked" : ""}> Call To Action</label>
+      <button class="fb-link" id="rvKitEdit">Edit This Brand Kit</button>
+    </div>` : `<div class="rv-note sm">Add A Brand Kit To Put Your Logo And Contact Details On The Branded Version.</div>`}
+    <div class="rv-sub">Output Versions</div>
+    <div class="rv-seg">${[["unbranded", "Unbranded"], ["branded", "Branded"], ["both", "Both"]]
+      .map(([id, n]) => `<button class="${(w.outputMode || "both") === id ? "on" : ""}" data-out="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else. Both Renders Unbranded First.</div>
+  </details>
+
+  <details class="rv-acc"><summary>Audio</summary>
+    <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music, true)}
+    <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
+    <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
+    <div class="rv-sub">Narration</div>
+    <div class="rv-seg">${[["none", "No Narration"], ["generate", "Generate Narration"], ["upload", "Upload Voiceover"]]
+      .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}</button>`).join("")}</div>
+    ${w.narration === "generate" ? `<label class="rv-f">Script, Editable Draft<textarea id="rvScript" rows="4">${esc(w.script || defaultScript())}</textarea></label>
+    <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option value="${v.toLowerCase()}" ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}${myVoiceOption(w.voice)}</select></label>
+    <div class="rv-f">${voiceStudioButton()}</div>
+    <div class="rv-adv"><button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
+    ${w.narration === "upload" ? `<label class="rv-f">Voiceover File, MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
+    <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
+    ${avatarSection(w.avatar, w.title || w.propertyLabel || "")}
+  </details>
+
+  <details class="rv-acc"><summary>Captions & Disclosure</summary>
+    <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Text On Scenes</label>
+    <div class="rv-sub">Scene Labels</div>
+    <div class="rv-adv">
+      <button class="btn btn-ghost btn-sm" id="rvSuggestLabels"><i data-lucide="wand"></i>Suggest Labels</button>
+      ${w.scenes.map((s, i) => labelEditor(s, i)).join("")}
+    </div>
+    <div class="rv-sub">Disclosure</div>
+    <div class="rv-note sm">${discScenes.length ? `${discScenes.length} ${discScenes.length === 1 ? "Scene Will" : "Scenes Will"} Carry A Disclosure Label. Required Labels Cannot Be Removed.` : "No Altered Scenes Detected. Nothing To Disclose."}</div>
+    <div class="rv-adv">
+      ${discScenes.map((s) => `<label class="rv-f">${esc(s.room)}
+        <select data-disc="${w.scenes.indexOf(s)}">${Object.keys(DISCLOSURE_LABEL).map((k) => `<option value="${k}" ${s.disclosure === k ? "selected" : ""}>${DISCLOSURE_LABEL[k]}</option>`).join("")}</select></label>`).join("")}
+      <div class="rv-seg wrap">${[["altered", "Altered Scenes Only"], ["all", "Apply Throughout Video"], ["intro", "Intro Disclosure"], ["outro", "Outro Disclosure"]]
+        .map(([id, n]) => `<button class="${w.disclosureMode === id ? "on" : ""}" data-dmode="${id}">${n}</button>`).join("")}</div>
+    </div>
+  </details>
+  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button></div>`;
 }
 
 function plannedVariants() {
   const w = S.wizard;
+  const mode = w.outputMode || "both";
+  const versions = [];
+  if (mode === "unbranded" || mode === "both") versions.push("clean");
+  if (mode === "branded" || mode === "both") versions.push("branded");
+  if (w.versions?.disclosure) versions.push("disclosure");
   const out = [];
   for (const f of w.formats) {
-    for (const v of ["branded", "clean", "disclosure"]) {
-      if (w.versions[v]) out.push({ aspect_ratio: f, version_type: v, brand_kit_id: v === "branded" ? w.brandKitId || null : null });
-    }
+    for (const v of versions) out.push({ aspect_ratio: f, version_type: v, brand_kit_id: v === "branded" ? w.brandKitId || null : null });
   }
   return out;
 }
 
-function stepReview() {
+function creditTotal() {
+  return CREDIT_COSTS.video + immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE;
+}
+
+/* ======================= PERSISTENT PREVIEW PANEL ======================= */
+function previewPanel() {
   const w = S.wizard;
   const per = sceneDurations(w.scenes.length, w.length);
-  const dur = Math.round(per * w.scenes.length);
+  const total = Math.round(per * w.scenes.length);
   const vs = plannedVariants();
-  const imm = w.motion === "auto" ? 0 : immersiveCount();
-  const cost = 40 + imm * IMMERSIVE_CREDITS_PER_SCENE;
-  const bal = window.__rdCredits?.balance;
-  return `<h3>Review & Generate</h3>
-  <div class="rv-review">
-    <div><span>Source</span><b>${esc(w.propertyLabel || (w.sourceType === "upload" ? "Uploaded Photos" : "Concept"))}</b></div>
-    <div><span>Video Type</span><b>${esc(VIDEO_TYPES.find((t) => t.id === w.videoType)?.name || "")}</b></div>
-    <div><span>Scenes</span><b>${w.scenes.length}</b></div>
-    <div><span>Formats</span><b>${esc(w.formats.join(", "))}</b></div>
-    <div><span>Estimated Duration</span><b>About ${dur}s</b></div>
-    <div><span>Versions</span><b>${vs.map((v) => v.version_type).filter((v, i, a) => a.indexOf(v) === i).join(", ") || "None"}</b></div>
-    <div><span>Credits Required</span><b>${cost}${imm ? ` — Includes ${imm * IMMERSIVE_CREDITS_PER_SCENE} For Immersive Motion` : ""}</b></div>
-    <div><span>Current Balance</span><b>${bal == null ? "—" : bal}</b></div>
-  </div>
-  ${w.busy ? `<div class="rv-proc"><b>Creating Your Video</b>
-    <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
-    <span>${esc(w.stage || "Preparing scenes")}</span>
-    <div class="rv-note sm">You Can Leave This Page — We Will Notify You When It Is Ready.</div></div>`
-    : `<div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvGen" ${vs.length ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button></div>`}`;
+  const cost = creditTotal();
+  const bal = S.credits?.balance ?? window.__rdCredits?.balance;
+  const first = w.scenes[0];
+  return `<div class="rv-preview">
+    <div class="rv-stage" data-img="${esc(first?.path || "")}">${first ? "" : `<span class="rv-note sm">No Scenes Yet</span>`}</div>
+    <div class="mono rv-meta">Scene 1 Of ${w.scenes.length || 0} · ${per ? per.toFixed(1) : "0.0"}s · ${total}s Total</div>
+    <div class="rv-sub sm">Variants</div>
+    <div class="rv-vars">${vs.length ? vs.map((v) => `<div><span class="mono">${esc(v.aspect_ratio)}</span><i>${v.version_type === "clean" ? "Unbranded" : v.version_type === "branded" ? "Branded" : "Disclosure Ready"}</i><b>Queued</b></div>`).join("") : `<div class="rv-note sm">Pick A Format.</div>`}</div>
+    <div class="rv-cost mono">${cost} Credits</div>
+    ${bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
+    ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
+      <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
+      <span>${esc(w.stage || "Preparing scenes")}</span>
+      <div class="rv-note sm">You Can Leave This Page. We Will Notify You When It Is Ready.</div></div>`
+      : w.step === 4
+        ? `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+        : `<button class="btn btn-primary rv-cta" id="rvNext">Continue</button>`}
+  </div>`;
 }
+
 
 /* ======================= SCENE HELPERS ======================= */
 function assetToScene(a) {
@@ -821,9 +958,9 @@ async function generate() {
         transition: w.transition,
         caption: w.captions ? s.caption || s.room : null,
         disclosure_type: s.disclosure || null,
-        motion_level: w.motion === "auto" ? "standard" : s.motion_level === "immersive" ? "immersive" : "standard",
-        immersive_effect: w.motion !== "auto" && s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
-        exterior_effect: w.motion !== "auto" ? s.exterior_effect || null : null,
+        motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
+        immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
+        exterior_effect: s.exterior_effect || null,
         labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
       })),
       audio: {
@@ -874,13 +1011,13 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
       room_name: s.room,
       scene_type: s.scene_type,
       duration: per,
-      motion: w.motion === "auto" ? "auto" : s.motion || "auto",
+      motion: s.motion || "auto",
       transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
       caption: w.captions ? s.caption || s.room : null,
       disclosure_type: s.disclosure || null,
-      motion_level: w.motion !== "auto" && s.motion_level === "immersive" ? "immersive" : "standard",
-      immersive_effect: w.motion !== "auto" && s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
-      exterior_effect: w.motion !== "auto" ? s.exterior_effect || null : null,
+      motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
+      immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
+      exterior_effect: s.exterior_effect || null,
       labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
     });
   }
@@ -1142,20 +1279,83 @@ function bind() {
   if (w) {
   on("#rvCancel", "click", () => { S.screen = "library"; S.wizard = null; render(); });
   on("#rvBack", "click", () => { w.step = Math.max(1, w.step - 1); render(); });
+  on(".rv-steps span", "click", (e) => {
+    const n = Number(e.currentTarget.dataset.step);
+    if (n && n < w.step) { w.step = n; render(); }
+  });
   on("#rvNext", "click", async () => {
-    if (w.step === 2) {
-      const t = el.querySelector("#rvTitle");
-      if (t) w.title = t.value;
-      w.step = 3;
+    const t = el.querySelector("#rvTitle");
+    if (t) w.title = t.value;
+    if (w.step === 1) {
+      w.step = 2;
       await loadWizardAssets();
       if (!w.scenes.length) { selectRecommended(); autoArrange(); }
       render();
       return;
     }
-    w.step = Math.min(7, w.step + 1);
+    if (w.step === 2) {
+      if (w.scenes.length < 5 && !w.lowWarned) { w.lowWarned = true; w.lowModal = true; render(); return; }
+      /* Video type follows the content unless the user already changed it. */
+      if (!w.typeTouched) {
+        const ba = w.scenes.filter((s) => s.compare).length;
+        w.videoType = ba > w.scenes.length / 2 ? "before_after" : "property_tour";
+      }
+    }
+    w.step = Math.min(4, w.step + 1);
     render();
   });
+  on("#rvLowX", "click", () => { w.lowModal = false; render(); });
+  on("#rvLowMore", "click", () => { w.lowModal = false; w.step = 1; render(); });
+  on("#rvLowGo", "click", () => { w.lowModal = false; w.step = 3; render(); });
+
+
   on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
+  const addrIn = el.querySelector("#rvAddr");
+  if (addrIn) addrIn.addEventListener("input", (ev) => { w.address = ev.target.value; });
+  on("#rvAddrSkip", "click", () => { w.sourceType = "upload"; render(); });
+  on("#rvAddrGo", "click", async () => {
+    const v = (el.querySelector("#rvAddr")?.value || "").trim();
+    if (v.length < 3) return toast("Type A Full Property Address.");
+    w.address = v; w.addrBusy = true; w.addrNote = ""; w.candidates = []; render();
+    try {
+      const { lookupListingByAddress } = await import("@/lib/listing-import.functions");
+      const r = await lookupListingByAddress({ data: { address: v } });
+      if (r?.ok && r.listing) {
+        const l = r.listing;
+        const photos = r.photos || [];
+        w.candidates = [{
+          cover: photos[0]?.url || photos[0]?.path || "",
+          price: l.price ? "$" + Number(l.price).toLocaleString() : "",
+          address: l.address || v,
+          meta: [l.beds ? l.beds + " Bd" : "", l.baths ? l.baths + " Ba" : "", l.sqft ? Number(l.sqft).toLocaleString() + " Sqft" : "", photos.length + " Photos"].filter(Boolean).join(" · "),
+          photos,
+        }];
+      } else {
+        const { NO_IMPORT_MESSAGE } = await import("@/lib/listing-source");
+        w.addrNote = r?.message || NO_IMPORT_MESSAGE;
+        w.propertyLabel = v;
+        w.sourceType = "upload";
+      }
+    } catch (_) {
+      const { NO_IMPORT_MESSAGE } = await import("@/lib/listing-source");
+      w.addrNote = NO_IMPORT_MESSAGE;
+      w.propertyLabel = v;
+      w.sourceType = "upload";
+    }
+    w.addrBusy = false;
+    render();
+  });
+  on("[data-cand]", "click", (e) => {
+    const c = w.candidates[Number(e.currentTarget.dataset.cand)];
+    if (!c) return;
+    w.propertyLabel = c.address;
+    for (const ph of c.photos || []) {
+      const url = ph.url || ph.path;
+      if (url) w.uploads.push({ id: crypto.randomUUID(), name: ph.room || "Listing Photo", url });
+    }
+    toast("Listing Photos Added.");
+    render();
+  });
   on("[data-prop]", "click", (e) => { w.propertyId = e.currentTarget.dataset.prop; w.sourceType = w.sourceType || "property"; render(); });
   on("#rvBrowse", "click", () => el.querySelector("#rvFiles")?.click());
   const files = el.querySelector("#rvFiles");
@@ -1165,7 +1365,7 @@ function bind() {
     }
     render();
   });
-  on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; render(); });
+  on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; w.typeTouched = true; render(); });
 
   on("[data-asset]", "click", (e) => {
     const key = e.currentTarget.dataset.asset;
@@ -1180,7 +1380,7 @@ function bind() {
   on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); render(); });
   on("[data-move]", "click", (e) => {
     e.stopPropagation();
-    const row = e.currentTarget.closest(".rv-scene");
+    const row = e.currentTarget.closest(".rv-scene, .rv-scard");
     const i = Number(row.dataset.idx);
     const j = i + Number(e.currentTarget.dataset.move);
     if (j < 0 || j >= w.scenes.length) return;
@@ -1206,7 +1406,7 @@ function bind() {
   on("#rvKeepAll", "click", () => render());
 
   /* drag ordering */
-  el.querySelectorAll(".rv-scene").forEach((n) => {
+  el.querySelectorAll(".rv-scene, .rv-scard").forEach((n) => {
     n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.idx));
     n.addEventListener("dragover", (e) => e.preventDefault());
     n.addEventListener("drop", (e) => {
@@ -1227,16 +1427,55 @@ function bind() {
     render();
   });
   on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
-  on("[data-motion]", "click", (e) => { w.motion = e.currentTarget.dataset.motion; render(); });
-  on("[data-scene-motion]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.sceneMotion)].motion = e.currentTarget.value; });
-  on("[data-level]", "click", (e) => {
-    const s = w.scenes[Number(e.currentTarget.dataset.i)];
-    s.motion_level = e.currentTarget.dataset.level;
-    if (s.motion_level === "immersive" && !s.immersive_effect) s.immersive_effect = "light";
+  /* scene chips and their popovers */
+  const cur = () => (w.pop ? w.scenes[w.pop.i] : null);
+  on("[data-pop]", "click", (e) => {
+    e.stopPropagation();
+    w.pop = { kind: e.currentTarget.dataset.pop, i: Number(e.currentTarget.dataset.i) };
+    w.popQ = ""; w.popHover = null;
     render();
   });
-  on("[data-immersive]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.immersive)].immersive_effect = e.currentTarget.value; });
-  on("[data-ext]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.ext)].exterior_effect = e.currentTarget.value || null; render(); });
+  on("#rvPopX, #rvPopDone", "click", () => { w.pop = null; render(); });
+  const pq = el.querySelector("#rvPopQ");
+  if (pq) pq.addEventListener("input", (ev) => { w.popQ = ev.target.value; render(); el.querySelector("#rvPopQ")?.focus(); });
+  on("[data-motionpick]", "click", (e) => {
+    const s = cur(); if (!s) return;
+    s.motion = e.currentTarget.dataset.motionpick;
+    s.motion_level = "standard";
+    render();
+  });
+  on("[data-hover]", "mouseenter", (e) => { w.popHover = e.currentTarget.dataset.hover; render(); });
+  on("[data-immpick]", "click", (e) => {
+    const s = cur(); if (!s) return;
+    s.motion_level = "immersive";
+    s.immersive_effect = e.currentTarget.dataset.immpick;
+    render();
+  });
+  on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
+  on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
+  on("[data-lookcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.lookcat; render(); });
+  on("[data-lookpick]", "click", (e) => { const s = cur(); if (!s) return; s.look = e.currentTarget.dataset.lookpick || null; render(); });
+  const amt = el.querySelector("#rvLookAmt");
+  if (amt) amt.addEventListener("change", (ev) => { const s = cur(); if (s) s.look_amount = Number(ev.target.value); render(); });
+  on("#rvAllMotion", "click", () => {
+    const first = w.scenes[0]; if (!first) return;
+    w.scenes.forEach((s) => { s.motion = first.motion || "auto"; s.motion_level = first.motion_level || "standard"; s.immersive_effect = first.immersive_effect || null; });
+    toast("Motion Applied To Every Scene.");
+    render();
+  });
+  on("#rvAllLook", "click", () => {
+    const first = w.scenes[0]; if (!first) return;
+    w.scenes.forEach((s) => { s.look = first.look || null; s.look_amount = first.look_amount ?? 100; });
+    toast("Look Applied To Every Scene.");
+    render();
+  });
+  on("[data-tpl]", "click", (e) => { w.template = e.currentTarget.dataset.tpl; render(); });
+  on("[data-out]", "click", (e) => {
+    w.outputMode = e.currentTarget.dataset.out;
+    w.versions.clean = w.outputMode !== "branded";
+    w.versions.branded = w.outputMode !== "unbranded";
+    render();
+  });
   on("[data-tr]", "click", (e) => { w.transition = e.currentTarget.dataset.tr; render(); });
   on("[data-ba]", "click", (e) => { w.baTransition = e.currentTarget.dataset.ba; render(); });
 
@@ -1323,7 +1562,6 @@ function bind() {
     const url = await signed(v.output_path);
     if (url) window.open(url, "_blank");
   });
-  on("#rvListing", "click", () => { try { window.rdListingVideo({ from: "video" }); } catch (_) {} });
   on("#rvShare", "click", () => { S.detailTab = "presentation"; render(); });
 
   /* presentation page settings */
@@ -1681,7 +1919,6 @@ function dvHtml() {
     <div class="rv-foot dv-foot">
       <div class="dv-foot-l">
         <button class="btn btn-ghost btn-sm" id="dvBackLib"><i data-lucide="arrow-left"></i>Back</button>
-        <button class="btn btn-ghost btn-sm" id="dvToListing"><i data-lucide="building-2"></i>Add to a Listing Video</button>
       </div>
       <button class="btn btn-primary" id="dvGen" ${blocked || !d.scenes.length ? "disabled" : ""}><i data-lucide="clapperboard"></i>Generate Video</button>
     </div>
@@ -1852,11 +2089,6 @@ function dvBind() {
     render();
   });
 
-  on("#dvToListing", "click", async () => {
-    await dvSaveDraft().catch(() => {});
-    try { window.rdListingVideo({ from: "design", designId: d.designId, path: d.scenes[0]?.path || null }); }
-    catch (_) { toast("Could Not Open The Listing Video Workflow."); }
-  });
   on("#dvGen", "click", () => dvGenerate());
 }
 
