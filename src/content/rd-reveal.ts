@@ -1669,6 +1669,19 @@ function bind() {
 
 
   on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
+  on("[data-addrtab]", "click", (e) => { w.addrTab = e.currentTarget.dataset.addrtab; w.addrNote = ""; w.candidates = []; render(); });
+  const urlIn = el.querySelector("#rvUrl");
+  if (urlIn) urlIn.addEventListener("input", (e) => { w.listingUrl = e.target.value; });
+  const urlGo = el.querySelector("#rvUrlGo");
+  if (urlGo) urlGo.addEventListener("click", () => {
+    const res = identifyListing(w.listingUrl || "");
+    if (!res.ok) { w.addrNote = res.message; render(); return; }
+    if (res.address) { w.address = res.address; w.propertyLabel = res.address; w.title = w.title || res.address; }
+    w.addrNote = res.address
+      ? `${res.message} Upload The Listing Photos To Continue, Photos Are Not Imported From The Link.`
+      : `${res.message} Enter The Address Instead, Or Upload The Photos.`;
+    render();
+  });
   const addrIn = el.querySelector("#rvAddr");
   if (addrIn) addrIn.addEventListener("input", (ev) => { w.address = ev.target.value; });
   const titleIn = el.querySelector("#rvTitle");
@@ -1935,8 +1948,73 @@ function bind() {
     w.versions.branded = w.outputMode !== "unbranded";
     render();
   });
+  on("[data-tplscope]", "click", (e) => { w.tplScope = e.currentTarget.dataset.tplscope; render(); });
+  on("[data-tplintro]", "click", (e) => { w.introTemplate = e.currentTarget.dataset.tplintro; w.template = w.introTemplate; render(); });
+  on("[data-tploutro]", "click", (e) => { w.outroTemplate = e.currentTarget.dataset.tploutro; render(); });
+  const sr = el.querySelector("#rvSpeedRamps"); if (sr) sr.addEventListener("change", (e) => { w.speedRamps = e.target.checked; });
+  const lb = el.querySelector("#rvLogoBrand");
+  if (lb) lb.addEventListener("change", (e) => { w.logoBranding = e.target.checked; w.branding.watermark = e.target.checked; });
+  const ad = el.querySelector("#rvAiDisc"); if (ad) ad.addEventListener("change", (e) => { w.aiDisclaimer = e.target.checked; });
+  const bd = el.querySelector("#rvBurnDisc"); if (bd) bd.addEventListener("change", (e) => { w.burnDisclosure = e.target.checked; });
+  const pl = el.querySelector("#rvPickLogo"); if (pl) pl.addEventListener("click", (e) => { e.preventDefault(); w.logoModal = true; render(); });
+  ["#rvLogoX", "#rvLogoCancel"].forEach((sel2) => {
+    const b = el.querySelector(sel2); if (b) b.addEventListener("click", () => { w.logoModal = false; render(); });
+  });
+  const ldone = el.querySelector("#rvLogoDone");
+  if (ldone) ldone.addEventListener("click", () => { w.logoModal = false; w.logoBranding = true; w.branding.watermark = true; render(); });
+  const lup = el.querySelector("#rvLogoUp"); if (lup) lup.addEventListener("click", () => el.querySelector("#rvLogoFile")?.click());
+  const lfile = el.querySelector("#rvLogoFile");
+  if (lfile) lfile.addEventListener("change", async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    w.logoDataUrl = await fileToDataUrl(f);
+    w.logoModal = false; w.logoBranding = true; w.branding.watermark = true;
+    toast("Logo Added."); render();
+  });
   on("[data-tr]", "click", (e) => { w.transition = e.currentTarget.dataset.tr; render(); });
   on("[data-ba]", "click", (e) => { w.baTransition = e.currentTarget.dataset.ba; render(); });
+
+  /* inline room rename */
+  on("[data-rename]", "click", (e) => { e.preventDefault(); e.stopPropagation(); w.renaming = e.currentTarget.dataset.rename; render(); });
+  const nameIn = el.querySelector("[data-nameinput]");
+  if (nameIn) {
+    nameIn.focus(); nameIn.select();
+    const commit = (save) => {
+      const attr = nameIn.dataset.nameinput || "";
+      const val = roomLabelOf(nameIn.value);
+      w.renaming = null;
+      if (save && attr) {
+        if (attr.startsWith("a:")) {
+          const key = attr.slice(2);
+          const a = w.available.find((x) => x.key === key);
+          if (a) a.room = val;
+          w.scenes.filter((x) => x.key === key).forEach((x) => { x.room = val; });
+        } else {
+          const sc = w.scenes[Number(attr.slice(2))];
+          if (sc) sc.room = val;
+        }
+      }
+      render();
+    };
+    nameIn.addEventListener("blur", () => commit(true));
+    nameIn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); commit(true); }
+      if (e.key === "Escape") { e.preventDefault(); commit(false); }
+    });
+  }
+  const fixAll = el.querySelector("#rvFixAll");
+  if (fixAll) fixAll.addEventListener("click", () => {
+    const recs = recommendations(analysisAssets()).filter((r) => r.op);
+    const byId = new Map();
+    recs.forEach((r) => r.ids.forEach((id) => byId.set(id, r.op)));
+    let n = 0;
+    w.available.forEach((a) => { if (byId.has(a.key)) { a.enhance = byId.get(a.key); n++; } });
+    w.scenes.forEach((sc) => { if (byId.has(sc.key)) sc.enhance = byId.get(sc.key); });
+    w.enhanceDismissed = true;
+    toast(`${n} ${n === 1 ? "Photo Will Be Enhanced" : "Photos Will Be Enhanced"} When The Video Renders.`);
+    render();
+  });
+  const fixSkip = el.querySelector("#rvFixSkip");
+  if (fixSkip) fixSkip.addEventListener("click", () => { w.enhanceDismissed = true; render(); });
 
   /* audio */
   on("[data-pres]", "click", (e) => {
@@ -1945,7 +2023,23 @@ function bind() {
     if (w.presentation === "narration" || w.presentation === "both") w.narration = w.narration === "none" ? "generate" : w.narration;
     render();
   });
-  const mus = el.querySelector("#rvMusic"); if (mus) mus.addEventListener("change", (e) => { w.music = e.target.value; stopMusic(); render(); });
+  on("[data-track]", "click", (e) => {
+    if (e.target.closest("[data-trackplay]")) return;
+    w.music = e.currentTarget.dataset.track; stopMusic(); render();
+  });
+  on("[data-trackplay]", "click", (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const id = e.currentTarget.dataset.trackplay;
+    if (!id || id === "none") return;
+    toggleMusic(id); render();
+  });
+  on("[data-musicgenre]", "click", (e) => { w.musicGenre = e.currentTarget.dataset.musicgenre; render(); });
+  const mq = el.querySelector("#rvMusicQ");
+  if (mq) mq.addEventListener("input", (e) => {
+    w.musicQ = e.target.value;
+    const at = e.target.selectionStart; render();
+    const n = host()?.querySelector("#rvMusicQ"); if (n) { n.focus(); try { n.setSelectionRange(at, at); } catch (_) {} }
+  });
   bindMusicControls(el, (v) => { w.music = v; render(); }, () => w.music);
   const vol = el.querySelector("#rvVol"); if (vol) vol.addEventListener("input", (e) => { w.volume = Number(e.target.value) / 100; });
   const beat = el.querySelector("#rvBeat"); if (beat) beat.addEventListener("change", (e) => { w.beatSync = e.target.checked; });
