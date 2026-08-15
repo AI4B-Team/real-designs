@@ -544,12 +544,15 @@ function stepAudio() {
   <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music, true)}
   <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
   <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
-  <div class="rv-note sm">Music is mixed into downloads in a later phase. Beat sync currently paces scene timing.</div>
+  <div class="rv-note sm">Music is mixed into your download. Beat sync paces scene timing.</div>
   <div class="rv-sub">Narration</div>
-  <div class="rv-seg">${[["none", "No Narration"], ["generate", "Generate Narration"], ["upload", "Record Or Upload"]]
-    .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}${id === "upload" ? " — Coming Soon" : ""}</button>`).join("")}</div>
+  <div class="rv-seg">${[["none", "No Narration"], ["generate", "Generate Narration"], ["upload", "Upload Voiceover"]]
+    .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}</button>`).join("")}</div>
   ${w.narration === "generate" ? `<label class="rv-f">Script — Editable Draft<textarea id="rvScript" rows="4">${esc(w.script || defaultScript())}</textarea></label>
-  <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}</select></label>` : ""}
+  <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+  <div class="rv-adv"><button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
+  ${w.narration === "upload" ? `<label class="rv-f">Voiceover File — MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
+  <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
   <div class="rv-sub">Captions</div>
   <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Captions On Scenes</label>
   ${w.captions ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}<input data-cap="${i}" value="${esc(s.caption ?? s.room ?? "")}"></label>`).join("")}</div>` : ""}
