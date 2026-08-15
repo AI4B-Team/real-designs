@@ -10,6 +10,7 @@ import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
+import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import {
@@ -1000,7 +1001,7 @@ async function generate() {
         property_id: w.propertyId || null,
         property_label: w.propertyLabel || null,
         design_version_id: w.versionId || null,
-        title: w.title || (w.propertyLabel ? w.propertyLabel + " Reveal" : "Untitled Reveal"),
+        title: w.title || w.propertyLabel || "Untitled Video",
         video_type: w.videoType,
         source_type: w.sourceType || "property",
         status: "queued",
@@ -1378,6 +1379,8 @@ function bind() {
   on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
   const addrIn = el.querySelector("#rvAddr");
   if (addrIn) addrIn.addEventListener("input", (ev) => { w.address = ev.target.value; });
+  const titleIn = el.querySelector("#rvTitle");
+  if (titleIn) titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
   on("#rvAddrSkip", "click", () => { w.sourceType = "upload"; render(); });
   on("#rvAddrGo", "click", async () => {
     const v = (el.querySelector("#rvAddr")?.value || "").trim();
@@ -1415,6 +1418,7 @@ function bind() {
     const c = w.candidates[Number(e.currentTarget.dataset.cand)];
     if (!c) return;
     w.propertyLabel = c.address;
+    if (!w.titleTouched) w.title = c.address;
     for (const ph of c.photos || []) {
       const url = ph.url || ph.path;
       if (url) w.uploads.push({ id: crypto.randomUUID(), name: ph.room || "Listing Photo", url });
