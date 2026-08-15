@@ -19,6 +19,7 @@ import {
   type SourceType,
 } from "@/lib/source-detect.functions";
 import { getStudioStyle, clearStudioStyle, applyStudioStyleToControls, type StudioStyleChoice } from "@/lib/studio-style";
+import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 
 type Method = "upload" | "describe" | "property";
 
