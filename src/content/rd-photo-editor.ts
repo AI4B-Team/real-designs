@@ -707,17 +707,11 @@ export async function openPhotoEditor(ctx) {
       );
     } catch (e) {
       const msg = String((e && e.message) || e || "");
-      const gated = /paid plan|credit|free designs|upgrade/i.test(msg);
+      const gated = isPlanBlocked(msg);
       box.innerHTML = `<div class="pme-review err"><b>${gated ? "Upgrade To Apply This Edit" : "Edit Failed"}</b><span>${esc(msg)}</span><div class="pme-review-a"><button class="btn btn-${gated ? "primary" : "ghost"} btn-xs" id="pmeRetry">${gated ? "Upgrade Plan" : "Retry"}</button></div></div>`;
       const r = box.querySelector("#pmeRetry");
-      r && (r.onclick = () => {
-        if (!gated) return applySteps();
-        try {
-          const um = (window as any).rdUpgradeModal;
-          if (um) return um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "Upgrade To Apply This Edit", msg);
-        } catch (_) {}
-        try { (window as any).__rdGo && (window as any).__rdGo("billing"); } catch (_) {}
-      });
+      r && (r.onclick = () => (gated ? openUpgrade(msg, "Upgrade To Apply This Edit") : applySteps()));
+
     } finally {
       busy = false;
       pending = null;
