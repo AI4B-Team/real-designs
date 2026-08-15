@@ -1167,8 +1167,28 @@ function bind() {
   bindMusicControls(el, (v) => { w.music = v; render(); }, () => w.music);
   const vol = el.querySelector("#rvVol"); if (vol) vol.addEventListener("input", (e) => { w.volume = Number(e.target.value) / 100; });
   const beat = el.querySelector("#rvBeat"); if (beat) beat.addEventListener("change", (e) => { w.beatSync = e.target.checked; });
-  on("[data-nar]", "click", (e) => { const v = e.currentTarget.dataset.nar; if (v === "upload") return toast("Voiceover Upload Is Coming Soon."); w.narration = v; render(); });
+  on("[data-nar]", "click", (e) => { stopVoicePreview(); w.narration = e.currentTarget.dataset.nar; render(); });
   const scr = el.querySelector("#rvScript"); if (scr) scr.addEventListener("input", (e) => { w.script = e.target.value; });
+  const narFile = el.querySelector("#rvNarFile");
+  if (narFile) narFile.addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 25 * 1024 * 1024) return toast("Voiceover Must Be Under 25 MB.");
+    w.narrationName = f.name;
+    w.narrationUpload = await fileToDataUrl(f);
+    toast("Voiceover Added.");
+    render();
+  });
+  const vprev = el.querySelector("#rvVoicePrev");
+  if (vprev) vprev.addEventListener("click", async () => {
+    if (w.voicePreviewing) { stopVoicePreview(); render(); return; }
+    w.voicePreviewing = true; render();
+    const url = await buildNarration("generate", (w.script || defaultScript()).slice(0, 400), w.voice);
+    if (!url) { w.voicePreviewing = false; render(); return toast("Voiceover Preview Failed."); }
+    voiceAudio = new Audio(url);
+    voiceAudio.onended = () => { w.voicePreviewing = false; render(); };
+    voiceAudio.play().catch(() => {});
+  });
   const voice = el.querySelector("#rvVoice"); if (voice) voice.addEventListener("change", (e) => { w.voice = e.target.value.toLowerCase(); });
   const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
   on("[data-cap]", "input", (e) => { w.scenes[Number(e.currentTarget.dataset.cap)].caption = e.currentTarget.value; });
