@@ -219,7 +219,7 @@ export function openBulkRestyle(input: BulkRestyleInput) {
           state.busy = false;
           wrap.remove();
           document.removeEventListener("keydown", onKey);
-          openUpgrade({ message: e?.message, title: "Add Credits To Redesign These Photos" });
+          openUpgrade(e?.message, "Add Credits To Redesign These Photos");
           if (done && input.onDone) input.onDone();
           return;
         }

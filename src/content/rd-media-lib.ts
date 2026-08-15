@@ -16,6 +16,7 @@ import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
 import { cancelJob } from "@/lib/upload-manager";
 import { openMotionClip } from "@/lib/rd-motion-clip";
+import { openBulkRestyle } from "@/lib/rd-bulk-restyle";
 import { isPlanBlocked, openUpgrade as openUpgradeFlow } from "@/lib/rd-upgrade";
 
 
@@ -155,6 +156,7 @@ function shell() {
   <div class="ml-bulk" id="mlBulk">
     <span id="mlSelCount">0 Selected</span>
     <button class="btn btn-primary btn-xs" data-b="video" id="mlBulkVideo"><i data-lucide="clapperboard"></i>Create Video</button>
+    <button class="btn btn-ghost btn-xs" data-b="restyle" id="mlBulkRestyle"><i data-lucide="wand-2"></i>Redesign</button>
     <button class="btn btn-ghost btn-xs" data-b="prop"><i data-lucide="home"></i>Add To Property</button>
     <button class="btn btn-ghost btn-xs" data-b="pres"><i data-lucide="presentation"></i>Add To Presentation</button>
     <button class="btn btn-ghost btn-xs" data-b="download"><i data-lucide="download"></i>Download</button>
@@ -436,6 +438,7 @@ function moreItems(m) {
   const out = [];
   if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
   if (isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => openVideo(m) });
+  if (canEditImage(m)) out.push({ icon: "wand-2", label: "Redesign In A Style", fn: () => restyleFrom([m]) });
   out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
   if (videoReady(m)) out.push({ icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
   out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
@@ -619,6 +622,26 @@ function videoFrom(items) {
   });
 }
 
+/** Apply one style to many uploaded photos at once, one credit each. */
+function restyleFrom(items) {
+  const usable = items.filter(canEditImage);
+  if (!usable.length) {
+    toast("Select Uploaded Photos To Redesign Them In Bulk.");
+    return;
+  }
+  openBulkRestyle({
+    items: usable.map((m) => ({
+      id: m.id,
+      assetId: m.refId,
+      title: m.title,
+      path: m.assetPath || m.path,
+      room: m.room || null,
+    })),
+    toast,
+    onDone: () => load(true),
+  });
+}
+
 /** One photo becomes a short cinematic clip, no builder required. */
 function motionClip(m) {
   if (!videoReady(m)) {
@@ -795,6 +818,7 @@ async function bulk(action, anchor) {
     return;
   }
   if (action === "video") return videoFrom(list);
+  if (action === "restyle") return restyleFrom(list);
   if (action === "prop") return S.go("props");
   if (action === "pres") return S.go("present");
   if (action === "more")
