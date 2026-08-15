@@ -6,6 +6,7 @@
 import { createIcons, icons } from "lucide";
 import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks, loadCustomTracks } from "@/lib/rd-music";
 import { voiceRequest } from "@/lib/rd-voice";
+import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
@@ -317,6 +318,7 @@ function cardsHtml(rows) {
         <button class="icon-btn" data-act="edit" title="Edit"><i data-lucide="pencil"></i></button>
         <button class="icon-btn" data-act="dupe" title="Duplicate"><i data-lucide="copy"></i></button>
         <button class="icon-btn" data-act="download" title="Download"><i data-lucide="download"></i></button>
+        <button class="icon-btn" data-act="caption" title="Write Social Caption"><i data-lucide="message-square-quote"></i></button>
         <button class="icon-btn" data-act="share" title="Share"><i data-lucide="share-2"></i></button>
         <button class="icon-btn" data-act="del" title="Delete"><i data-lucide="trash-2"></i></button>
       </div>
@@ -2082,6 +2084,15 @@ function bindCards(root) {
     const id = card.dataset.id;
     const act = e.currentTarget.dataset.act;
     if (act === "open" || act === "edit") return openDetail(id);
+    if (act === "caption") {
+      const p = S.projects.find((x) => x.id === id);
+      openSocialCopy({
+        title: p?.title || "Property Video",
+        propertyLabel: p?.property_label || null,
+        kind: "video",
+      });
+      return;
+    }
     if (act === "dupe") { await duplicateVideo({ id }); await loadLibrary(); render(); return toast("Video Duplicated."); }
     if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ id }); await loadLibrary(); render(); return; }
     if (act === "download") {
