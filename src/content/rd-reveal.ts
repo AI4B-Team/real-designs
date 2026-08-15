@@ -1244,7 +1244,7 @@ function bind() {
   on("[data-tab]", "click", (e) => { S.detailTab = e.currentTarget.dataset.tab; render(); });
   on("[data-pf]", "click", (e) => { S.playFormat = e.currentTarget.dataset.pf; render(); });
   on("[data-pv]", "click", (e) => { S.playVersion = e.currentTarget.dataset.pv; render(); });
-  on("#rvBackLib", "click", async () => { await loadLibrary(); S.screen = "library"; render(); });
+  on("#rvBackLib", "click", async () => { stopVoicePreview(); stopMusic(); await loadLibrary(); S.screen = "library"; render(); });
   on("#rvDl", "click", async () => {
     const v = S.detail?.variants.find((x) => x.output_path);
     if (!v) return toast("Nothing Rendered Yet.");
