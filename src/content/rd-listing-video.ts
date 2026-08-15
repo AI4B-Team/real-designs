@@ -133,6 +133,8 @@ const S = {
   importError: "",
   importRow: null,
   otherOpen: false,
+  manualOpen: false,
+  manual: { address: "", price: "", beds: "", baths: "", sqft: "" },
   properties: [],
   propertyId: null,
   propertyLabel: "",
@@ -442,10 +444,31 @@ function importStatusHtml() {
       <div class="lv-panel-a">
         <button class="btn btn-ghost btn-sm" id="lvImportGo"><i data-lucide="rotate-cw"></i>Try Again</button>
         <button class="btn btn-ghost btn-sm" id="lvBrowse"><i data-lucide="upload"></i>Upload Photos Instead</button>
+        <button class="btn btn-ghost btn-sm" id="lvManualOpen"><i data-lucide="pencil"></i>Enter Details Manually</button>
       </div>
+      ${manualHtml()}
     </div>`;
   }
   return "";
+}
+
+function manualHtml() {
+  if (!S.manualOpen) return "";
+  const m = S.manual;
+  const f = (id, label, val, ph, type) =>
+    `<label class="lv-f"><span>${label}</span><span class="lv-input"><input id="lvM${id}" type="${type || "text"}" placeholder="${ph}" value="${esc(String(val || ""))}"></span></label>`;
+  return `<div class="lv-panel">
+    <p class="lv-note">Type the listing facts yourself, then upload the photos. Nothing is pulled from the listing site.</p>
+    ${f("Addr", "Property Address", m.address, "123 Main St, Tampa, FL 33601")}
+    ${f("Price", "Price", m.price, "725000", "number")}
+    ${f("Beds", "Beds", m.beds, "4", "number")}
+    ${f("Baths", "Baths", m.baths, "3", "number")}
+    ${f("Sqft", "Floor SF", m.sqft, "2450", "number")}
+    <div class="lv-panel-a">
+      <button class="btn btn-primary btn-sm" id="lvManualGo"><i data-lucide="arrow-right"></i>Use These Details</button>
+      <button class="btn btn-ghost btn-sm" id="lvManualCancel">Cancel</button>
+    </div>
+  </div>`;
 }
 
 function reviewHtml() {
@@ -480,6 +503,7 @@ function linkPanelHtml() {
       <span class="lv-input"><i data-lucide="link"></i><input id="lvLink" placeholder="https://www.example.com/homedetails/..." value="${esc(S.linkValue)}"></span>
     </label>
     <div class="lv-panel-a"><button class="btn btn-dark btn-sm" id="lvLinkGo">Check Link</button></div>
+    ${manualHtml()}
     ${
       r
         ? `<div class="lv-result">
@@ -490,6 +514,7 @@ function linkPanelHtml() {
             <div class="lv-panel-a">
               ${r.address ? `<button class="btn btn-ghost btn-sm" data-useaddr="${esc(r.address)}"><i data-lucide="map-pin"></i>Use This Address</button>` : ""}
               <button class="btn btn-ghost btn-sm" id="lvLinkUpload"><i data-lucide="upload"></i>Upload Photos</button>
+              <button class="btn btn-ghost btn-sm" id="lvManualOpen"><i data-lucide="pencil"></i>Enter Details Manually</button>
               <button class="btn btn-ghost btn-sm" data-cloud="dropbox">${DROPBOX_ICON}Import From Dropbox</button>
               <button class="btn btn-ghost btn-sm" data-cloud="drive">${DRIVE_ICON}Import From Google Drive</button>
               <button class="btn btn-ghost btn-sm" data-cloud="mls"><i data-lucide="plug"></i>Connect Listing Source</button>
@@ -1321,7 +1346,7 @@ function bind() {
   el.__lvBound = true;
 
   el.addEventListener("click", async (e) => {
-    const t = e.target.closest("[data-a],[data-prop],[data-newprop],[data-cloud],[data-set],[data-ver],[data-useaddr],#lvImportGo,#lvOther,#lvBrowse,#lvLinkOpen,#lvLinkGo,#lvLinkUpload,#lvStandalone,#lvUseMedia,#lvRetry,#lvCancel,#lvDrop");
+    const t = e.target.closest("[data-a],[data-prop],[data-newprop],[data-cloud],[data-set],[data-ver],[data-useaddr],#lvImportGo,#lvOther,#lvBrowse,#lvLinkOpen,#lvLinkGo,#lvLinkUpload,#lvStandalone,#lvUseMedia,#lvRetry,#lvCancel,#lvDrop,#lvManualOpen,#lvManualGo,#lvManualCancel");
     if (!t) return;
 
     if (t.id === "lvOther") {
@@ -1332,6 +1357,44 @@ function bind() {
       const field = el.querySelector("#lvImportUrl");
       if (field) S.importUrl = field.value || "";
       return runImport();
+    }
+    if (t.id === "lvManualOpen") {
+      S.manualOpen = true;
+      if (!S.manual.address) S.manual.address = S.link?.address || S.addressQuery || "";
+      return render();
+    }
+    if (t.id === "lvManualCancel") {
+      S.manualOpen = false;
+      return render();
+    }
+    if (t.id === "lvManualGo") {
+      const get = (id) => el.querySelector(id)?.value?.trim() || "";
+      S.manual = {
+        address: get("#lvMAddr"),
+        price: get("#lvMPrice"),
+        beds: get("#lvMBeds"),
+        baths: get("#lvMBaths"),
+        sqft: get("#lvMSqft"),
+      };
+      if (!S.manual.address) return toast("Add the property address first.");
+      S.importRow = {
+        id: null,
+        provider_name: "Entered Manually",
+        photo_count: 0,
+        listing: {
+          address: S.manual.address,
+          price: S.manual.price ? Number(S.manual.price) : null,
+          beds: S.manual.beds || "",
+          baths: S.manual.baths || "",
+          sqft: S.manual.sqft || "",
+        },
+      };
+      S.manualOpen = false;
+      S.importState = "ready";
+      S.addressQuery = S.manual.address;
+      S.step = "review";
+      track("lvideo_manual_details", {});
+      return render();
     }
     if (t.id === "lvDrop" || t.id === "lvBrowse") return el.querySelector("#lvFiles")?.click();
     if (t.id === "lvLinkOpen") {
