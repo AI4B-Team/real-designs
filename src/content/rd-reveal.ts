@@ -40,16 +40,12 @@ import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
 function planBlockedMsg(p) {
-  return /paid plan|credit|free designs|upgrade/i.test(String((p && p.error_message) || ""));
+  return isPlanBlocked((p && p.error_message) || "");
 }
 
 function openUpgradeFlow(p) {
-  const msg = String((p && p.error_message) || "");
-  try {
-    const um = (window as any).rdUpgradeModal;
-    if (um) { um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "Upgrade To Finish This Render", msg || "Video rendering needs a paid plan."); return; }
-  } catch (_) {}
-  try { (window as any).__rdGo && (window as any).__rdGo("billing"); } catch (_) {}
+  const msg = String((p && p.error_message) || "") || "Video rendering needs a paid plan.";
+  openUpgrade(msg);
 }
 
 /** Null when the account can pay for a video render, otherwise the reason. */
