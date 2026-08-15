@@ -1297,9 +1297,17 @@ async function generate() {
         await setVideoStatus({ data: { id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) } });
       } catch (_) {}
     }
-    toast(e?.message || "The render failed. Your selections were saved.");
+    const msg = String((e as any)?.message || "");
+    if (/credit|free designs|paid plan|upgrade/i.test(msg)) {
+      const um = (window as any).rdUpgradeModal;
+      if (typeof um === "function") um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "You Need More Credits", msg);
+      else toast(msg);
+    } else {
+      toast(msg || "The render failed. Your selections were saved.");
+    }
     S.step = "setup";
     render();
+
   }
 }
 
