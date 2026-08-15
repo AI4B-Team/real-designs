@@ -1528,3 +1528,17 @@
 .pme-look.on{ border-color:var(--red,#c00); box-shadow:inset 0 0 0 1px var(--red,#c00); }
 .pme-kind.looks b{ color:var(--ink,#141210); }
 .pme-look-actions{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+/* ---------- inline info icons sit to the right of their title/label ---------- */
+.rd-app h2 > svg.lucide-info,
+.rd-app h3 > svg.lucide-info,
+.rd-app h4 > svg.lucide-info,
+.rd-app label > svg.lucide-info,
+.rd-app .card-h .sub > svg.lucide-info,
+.rd-app .field label > svg.lucide-info{
+  display:inline-block;vertical-align:-2px;width:13px;height:13px;
+  margin:0 0 0 6px;color:var(--mute-2);flex:none;cursor:help
+}
+.rd-app h2:has(> svg.lucide-info),
+.rd-app h3:has(> svg.lucide-info),
+.rd-app h4:has(> svg.lucide-info){display:block}
