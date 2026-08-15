@@ -510,7 +510,24 @@ const VOICE_MAP: Record<string, string> = {
   professional: "alloy", warm: "coral", conversational: "sage", luxury: "ballad",
 };
 
+let voiceAudio: HTMLAudioElement | null = null;
+
+function stopVoicePreview() {
+  if (voiceAudio) { try { voiceAudio.pause(); } catch (_) { /* noop */ } voiceAudio = null; }
+  if (S.wizard) S.wizard.voicePreviewing = false;
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = () => rej(new Error("read failed"));
+    r.readAsDataURL(file);
+  });
+}
+
 async function buildNarration(type: string, script: string | null | undefined, voice: string | null | undefined) {
+  if (type === "upload") return S.wizard?.narrationUpload || null;
   if (type !== "generate" || !script || script.trim().length < 4) return null;
   try {
     const { synthesizeNarration } = await import("@/lib/narration.functions");
@@ -544,12 +561,15 @@ function stepAudio() {
   <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music, true)}
   <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
   <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
-  <div class="rv-note sm">Music is mixed into downloads in a later phase. Beat sync currently paces scene timing.</div>
+  <div class="rv-note sm">Music is mixed into your download. Beat sync paces scene timing.</div>
   <div class="rv-sub">Narration</div>
-  <div class="rv-seg">${[["none", "No Narration"], ["generate", "Generate Narration"], ["upload", "Record Or Upload"]]
-    .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}${id === "upload" ? " — Coming Soon" : ""}</button>`).join("")}</div>
+  <div class="rv-seg">${[["none", "No Narration"], ["generate", "Generate Narration"], ["upload", "Upload Voiceover"]]
+    .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}</button>`).join("")}</div>
   ${w.narration === "generate" ? `<label class="rv-f">Script — Editable Draft<textarea id="rvScript" rows="4">${esc(w.script || defaultScript())}</textarea></label>
-  <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}</select></label>` : ""}
+  <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+  <div class="rv-adv"><button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
+  ${w.narration === "upload" ? `<label class="rv-f">Voiceover File — MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
+  <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
   <div class="rv-sub">Captions</div>
   <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Captions On Scenes</label>
   ${w.captions ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}<input data-cap="${i}" value="${esc(s.caption ?? s.room ?? "")}"></label>`).join("")}</div>` : ""}
@@ -1164,8 +1184,28 @@ function bind() {
   bindMusicControls(el, (v) => { w.music = v; render(); }, () => w.music);
   const vol = el.querySelector("#rvVol"); if (vol) vol.addEventListener("input", (e) => { w.volume = Number(e.target.value) / 100; });
   const beat = el.querySelector("#rvBeat"); if (beat) beat.addEventListener("change", (e) => { w.beatSync = e.target.checked; });
-  on("[data-nar]", "click", (e) => { const v = e.currentTarget.dataset.nar; if (v === "upload") return toast("Voiceover Upload Is Coming Soon."); w.narration = v; render(); });
+  on("[data-nar]", "click", (e) => { stopVoicePreview(); w.narration = e.currentTarget.dataset.nar; render(); });
   const scr = el.querySelector("#rvScript"); if (scr) scr.addEventListener("input", (e) => { w.script = e.target.value; });
+  const narFile = el.querySelector("#rvNarFile");
+  if (narFile) narFile.addEventListener("change", async (e) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    if (f.size > 25 * 1024 * 1024) return toast("Voiceover Must Be Under 25 MB.");
+    w.narrationName = f.name;
+    w.narrationUpload = await fileToDataUrl(f);
+    toast("Voiceover Added.");
+    render();
+  });
+  const vprev = el.querySelector("#rvVoicePrev");
+  if (vprev) vprev.addEventListener("click", async () => {
+    if (w.voicePreviewing) { stopVoicePreview(); render(); return; }
+    w.voicePreviewing = true; render();
+    const url = await buildNarration("generate", (w.script || defaultScript()).slice(0, 400), w.voice);
+    if (!url) { w.voicePreviewing = false; render(); return toast("Voiceover Preview Failed."); }
+    voiceAudio = new Audio(url);
+    voiceAudio.onended = () => { w.voicePreviewing = false; render(); };
+    voiceAudio.play().catch(() => {});
+  });
   const voice = el.querySelector("#rvVoice"); if (voice) voice.addEventListener("change", (e) => { w.voice = e.target.value.toLowerCase(); });
   const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
   on("[data-cap]", "input", (e) => { w.scenes[Number(e.currentTarget.dataset.cap)].caption = e.currentTarget.value; });
@@ -1204,7 +1244,7 @@ function bind() {
   on("[data-tab]", "click", (e) => { S.detailTab = e.currentTarget.dataset.tab; render(); });
   on("[data-pf]", "click", (e) => { S.playFormat = e.currentTarget.dataset.pf; render(); });
   on("[data-pv]", "click", (e) => { S.playVersion = e.currentTarget.dataset.pv; render(); });
-  on("#rvBackLib", "click", async () => { await loadLibrary(); S.screen = "library"; render(); });
+  on("#rvBackLib", "click", async () => { stopVoicePreview(); stopMusic(); await loadLibrary(); S.screen = "library"; render(); });
   on("#rvDl", "click", async () => {
     const v = S.detail?.variants.find((x) => x.output_path);
     if (!v) return toast("Nothing Rendered Yet.");
