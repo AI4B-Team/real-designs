@@ -51,20 +51,55 @@ function WelcomePage() {
   }, [navigate]);
 
   return (
-    <div className="rd-app rd-welcome-page">
-      <div className="rd-welcome-shell">
-        <div className="rd-welcome-brand">
-          <span className="rd-welcome-mark">
-            REAL
-            <em>DESIGNS</em>
-          </span>
-          <p className="rd-welcome-kicker">Let’s Set Up Your Workspace</p>
+    <main className="rd-auth rd-welcome">
+      <aside className="promo">
+        <a href="/" className="brand" aria-label="REAL DESIGNS Home">
+          <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
+        </a>
+        <h2>
+          Welcome To REAL DESIGNS.
+          <br />
+          Let’s Tune Your Workspace.
+        </h2>
+        <p className="sub">
+          A few quick questions so your studio, credits and templates match the way you work.
+        </p>
+        <ul>
+          <li>
+            <span className="n">1</span>
+            <span>
+              <b>Tell Us Who You Are</b>
+              Your name and company appear on shared links.
+            </span>
+          </li>
+          <li>
+            <span className="n">2</span>
+            <span>
+              <b>Share How You Work</b>
+              Role, listing volume and team size shape your defaults.
+            </span>
+          </li>
+          <li>
+            <span className="n">3</span>
+            <span>
+              <b>Start Designing</b>
+              Land straight in Studio with everything ready.
+            </span>
+          </li>
+        </ul>
+        <p className="quote">Takes About 30 Seconds · You Can Change Answers Anytime</p>
+      </aside>
+
+      <div className="panel">
+        <div className="mobile-head">
+          <h2>Welcome To REAL DESIGNS</h2>
+          <p>A Few Quick Questions To Set Up Your Workspace.</p>
         </div>
-        <div className="rd-welcome-card">
+        <section className="rd-app rd-welcome-card">
           <div ref={host} />
           {!ready ? <p className="sv-hint">Loading…</p> : null}
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 }
