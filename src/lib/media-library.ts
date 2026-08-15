@@ -8,6 +8,7 @@ import { getPropertyTree } from "@/lib/workspace.functions";
 import { listVideos } from "@/lib/reveal.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import * as UM from "@/lib/upload-manager";
+import { propLabel } from "@/lib/property-label";
 
 export type MediaType = "uploaded_image" | "uploaded_document" | "generated_image" | "generated_video";
 export type MediaStatus = "draft" | "queued" | "processing" | "ready" | "failed" | "shared" | "archived";
@@ -182,7 +183,7 @@ export async function loadMediaLibrary() {
       status: shared && st === "ready" ? "shared" : st,
       title: p.title || "Untitled Reveal",
       propertyId: p.property_id || null,
-      property: p.property_label || null,
+      property: p.property_label ? propLabel(p.property_label) : null,
       room: null,
       path: done?.thumbnail_path || sc[0]?.source_path || "",
       assetPath: done?.output_path || null,
@@ -206,7 +207,7 @@ export async function loadMediaLibrary() {
       status: a.hidden ? "archived" : "ready",
       title: a.original_filename || a.file_name || a.room_group || "Uploaded Photo",
       propertyId: a.property_id || null,
-      property: a.property_label || null,
+      property: a.property_label ? propLabel(a.property_label) : null,
       room: a.room_group || null,
       path: a.storage_path || "",
       createdAt: a.created_at || null,
@@ -226,7 +227,7 @@ export async function loadMediaLibrary() {
         type: "uploaded_image",
         status: j.state === "Failed" ? "failed" : "processing",
         title: j.files.length + " Photo" + (j.files.length === 1 ? "" : "s") + " Uploading",
-        property: j.propertyLabel || null,
+        property: j.propertyLabel ? propLabel(j.propertyLabel) : null,
         propertyId: j.propertyId || null,
         path: "",
         createdAt: new Date(j.startedAt).toISOString(),
