@@ -788,7 +788,7 @@ async function onClick(e) {
   if (a === "next") {
     readStep();
     if (S.step === 1 && !S.draft.title) {
-      const ti = document.querySelector('.pk-modal [data-pkf="title"]');
+      const ti = document.getElementById("pkTitle");
       if (ti) {
         ti.classList.add("pk-invalid");
         ti.focus();
