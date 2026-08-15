@@ -1607,9 +1607,12 @@ function paintBatch(){
   }
   const keep=sel.value;
   sel.innerHTML=PROP_TREE.map(p=>`<option value="${p.id}">${p.address}</option>`).join('');
-  const hasPhotos=p=>p.projects.some(pr=>pr.rooms.some(r=>!!r.before_path));
-  const prop=(keep&&PROP_TREE.find(p=>p.id===keep))||PROP_TREE.find(hasPhotos)||PROP_TREE[0];
+  const roomsOf=p=>p.projects.reduce((n,pr)=>n+pr.rooms.length,0);
+  const photosOf=p=>p.projects.reduce((n,pr)=>n+pr.rooms.filter(r=>!!r.before_path).length,0);
+  const best=[...PROP_TREE].sort((a,b)=>(photosOf(b)-photosOf(a))||(roomsOf(b)-roomsOf(a)))[0];
+  const prop=(keep&&PROP_TREE.find(p=>p.id===keep))||best||PROP_TREE[0];
   sel.value=prop.id;
+  if(sel.dataset.selSync!==prop.id){ sel.dataset.selSync=prop.id; sel.dispatchEvent(new Event('change',{bubbles:true})); }
   const rooms=[]; prop.projects.forEach(pr=>pr.rooms.forEach(r=>rooms.push(r)));
   BATCH_ROOMS=rooms.filter(r=>!!r.before_path);
   const sub=document.getElementById('batchSub');
