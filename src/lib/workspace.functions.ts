@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { propLabel } from "@/lib/property-label";
 
 /**
  * Saved projects.
@@ -134,7 +135,7 @@ export const listSavedEstimates = createServerFn({ method: "GET" })
         before_path: (v.before_path ?? null) as string | null,
         version_no: (v.version_no ?? 1) as number,
         status: (v.status ?? "draft") as string,
-        address: v.rooms.projects.properties.address as string,
+        address: propLabel(v.rooms.projects.properties.address),
         project_name: v.rooms.projects.name as string,
         room_name: v.rooms.name as string,
         grade: v.rooms.projects.finish_grade as string,
@@ -192,7 +193,7 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
         grade: v.rooms.projects.finish_grade as string,
         budget_target: v.rooms.projects.budget_target == null ? null : Number(v.rooms.projects.budget_target),
         property_id: v.rooms.projects.properties.id as string,
-        address: v.rooms.projects.properties.address as string,
+        address: propLabel(v.rooms.projects.properties.address),
         total_low: scope ? Number(scope.total_low) : null,
         total_high: scope ? Number(scope.total_high) : null,
       };
@@ -233,7 +234,7 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
       },
       recent: flat.slice(0, 5),
       projects: Array.from(byProject.values()),
-      properties: (props ?? []).map((p: any) => ({ id: p.id, address: p.address })),
+      properties: (props ?? []).map((p: any) => ({ id: p.id, address: propLabel(p.address) })),
     };
   });
 
@@ -257,7 +258,7 @@ export const getPropertyTree = createServerFn({ method: "GET" })
 
     return (data ?? []).map((p: any) => ({
       id: p.id as string,
-      address: p.address as string,
+      address: propLabel(p.address),
       has_dna: Array.isArray(p.design_dna?.items) && p.design_dna.items.length > 0,
       dna: (Array.isArray(p.design_dna?.items) ? p.design_dna.items : []) as {
         label: string;
