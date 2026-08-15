@@ -168,6 +168,8 @@ const S = {
     sceneDuration: 0,
   },
   confirm: false,
+  credits: null,
+
   progress: 0,
   stage: "",
   busy: false,
