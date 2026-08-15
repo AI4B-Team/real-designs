@@ -28,6 +28,7 @@ import { startListingImport, linkListingImport } from "@/lib/listing-import.func
 import * as UM from "@/lib/upload-manager";
 import { CREDIT_COSTS, getMyCredits } from "@/lib/credits.functions";
 import { track } from "@/lib/analytics";
+import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 
 const BUCKET = "reveal-videos";
 const esc = (s) =>
@@ -166,6 +167,7 @@ const S = {
     disclosure: "auto",
     resolution: "1080",
     sceneDuration: 0,
+    avatar: blankAvatarConfig(),
   },
   confirm: false,
   credits: null,
@@ -600,7 +602,9 @@ function seg(name, opts, value) {
 
 function setupHtml() {
   const st = S.setup;
+  if (!st.avatar) st.avatar = blankAvatarConfig();
   const kit = S.kits.find((k) => k.id === st.brandKitId);
+
   const scenes = S.photos.filter((p) => p.include).length;
   return `<div class="lv">
     <div class="lv-head">
@@ -665,7 +669,9 @@ function setupHtml() {
           <div class="lv-f wide"><button type="button" class="btn btn-ghost btn-sm" data-a="lvVoicePrev"><i data-lucide="volume-2"></i>${st.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
           ${st.narration === "upload" ? `<label class="lv-f wide"><span>Voiceover File</span><input type="file" id="lvNarFile" accept="audio/*"></label>
           <p class="lv-note">${st.narrationName ? `Using ${esc(st.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</p>` : ""}
+          <div class="lv-f wide av-block">${avatarSection(st.avatar, S.propertyLabel || "")}</div>
           <label class="lv-check"><input type="checkbox" data-chk="captions" ${st.captions ? "checked" : ""}> Captions</label>
+
           <label class="lv-check"><input type="checkbox" data-chk="labels" ${st.labels ? "checked" : ""}> Scene Labels</label>
           <label class="lv-check"><input type="checkbox" data-chk="intro" ${st.intro ? "checked" : ""}> Intro</label>
           <label class="lv-check"><input type="checkbox" data-chk="outro" ${st.outro ? "checked" : ""}> Outro</label>
@@ -849,8 +855,12 @@ function render() {
   paint();
   hydrateThumbs();
   stopPreview();
-  if (S.step === "setup") startPreview();
+  if (S.step === "setup") {
+    startPreview();
+    bindAvatar(el, S.setup.avatar, render, toast);
+  }
   if (S.step === "done") mountPlayer();
+
 
 }
 
@@ -1191,7 +1201,9 @@ async function generate() {
 
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    const narrationUrl = await buildNarration(st.narration, st.script, st.voice);
+    const avTitle = S.propertyLabel || "";
+    const narrationUrl = await buildNarration(st.narration, avatarScript(st.avatar, st.script || "", avTitle), st.voice);
+    const avatar = avatarRenderOption(st.avatar, avTitle);
     const outs = [];
     let done = 0;
     for (const v of started.variants) {
@@ -1217,6 +1229,7 @@ async function generate() {
         captionsEnabled: !!st.captions,
         music: st.music && st.music !== "none" ? st.music : null,
         narrationUrl,
+        avatar,
         musicVolume: 0.6,
         onProgress: (pct) => {
           S.progress = (done + pct) / started.variants.length;

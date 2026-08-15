@@ -34,7 +34,9 @@ import {
   suggestLabels,
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
+import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
+
 
 /** Null when the account can pay for a video render, otherwise the reason. */
 function videoCreditBlock() {
@@ -322,6 +324,8 @@ function newWizard(seed = {}) {
     music: "modern",
     volume: 0.6,
     beatSync: true,
+    avatar: blankAvatarConfig(),
+
     narration: "none",
     script: "",
     voice: "professional",
@@ -569,6 +573,8 @@ function defaultScript() {
 
 function stepAudio() {
   const w = S.wizard;
+  if (!w.avatar) w.avatar = blankAvatarConfig();
+
   return `<h3>Audio And Story</h3>
   <div class="rv-sub">Presentation Style</div>
   <div class="rv-seg">${[["music", "Music Only"], ["captions", "Captions"], ["narration", "Narration"], ["both", "Music + Narration"]]
@@ -586,7 +592,9 @@ function stepAudio() {
   <div class="rv-adv"><button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
   ${w.narration === "upload" ? `<label class="rv-f">Voiceover File — MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
   <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
+  ${avatarSection(w.avatar, w.title || w.propertyLabel || "")}
   <div class="rv-sub">Captions</div>
+
   <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Captions On Scenes</label>
   ${w.captions ? `<div class="rv-adv">${w.scenes.map((s, i) => `<label class="rv-f">${esc(s.room)}<input data-cap="${i}" value="${esc(s.caption ?? s.room ?? "")}"></label>`).join("")}</div>` : ""}
   <div class="rv-sub">Scene Labels</div>
@@ -832,7 +840,10 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
   }
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
-  const narrationUrl = await buildNarration(w.narration, w.script || defaultScript(), w.voice);
+  const avTitle = w.title || w.propertyLabel || "";
+  const narrationUrl = await buildNarration(w.narration, avatarScript(w.avatar, w.script || defaultScript(), avTitle), w.voice);
+  const avatar = avatarRenderOption(w.avatar, avTitle);
+
 
   let done = 0;
   for (const v of variants) {
@@ -855,6 +866,8 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
       captionsEnabled: !!w.captions,
       music: w.music && w.music !== "none" ? w.music : null,
       narrationUrl,
+      avatar,
+
       musicVolume: typeof w.volume === "number" ? w.volume : 0.6,
       onProgress: (p) => {
         S.wizard.progress = (done + p) / variants.length;
@@ -1224,6 +1237,8 @@ function bind() {
   });
   const voice = el.querySelector("#rvVoice"); if (voice) voice.addEventListener("change", (e) => { w.voice = e.target.value.toLowerCase(); });
   const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
+  if (w.avatar) bindAvatar(el, w.avatar, render, toast);
+
   on("[data-cap]", "input", (e) => { w.scenes[Number(e.currentTarget.dataset.cap)].caption = e.currentTarget.value; });
 
   /* scene labels */
