@@ -154,7 +154,10 @@ export function mountFirstUse(ctx: Ctx) {
     const sel = document.getElementById("fStyle") as HTMLSelectElement | null;
     if (!sel || !dir) return;
     const opt = Array.from(sel.options).find((o) => o.text.toLowerCase() === dir.toLowerCase());
-    if (opt) sel.value = opt.value;
+    if (opt) {
+      sel.value = opt.value;
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   }
   function applyBudget(band: string) {
     const i = BANDS.indexOf(band);
