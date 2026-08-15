@@ -926,6 +926,12 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
 
 /* ======================= DETAIL ======================= */
 async function openDetail(id) {
+  if (!id || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(id))) {
+    toast("This Video Draft Is No Longer Available. Create A New Video To Try Again.");
+    S.screen = "library";
+    render();
+    return;
+  }
   S.screen = "detail";
   S.detailId = id;
   S.detail = null;
