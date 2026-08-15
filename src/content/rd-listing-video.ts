@@ -575,7 +575,17 @@ function setupHtml() {
       <p>${scenes} scenes • ${esc(S.propertyLabel || "Standalone Project")}</p>
     </div>
 
+    <div class="lv-preview">
+      <span class="lv-lab">Live Preview</span>
+      <div class="lv-stage ar-${esc(st.format).replace(":", "-")}" id="lvStage" data-motion="${esc(st.motion)}"><div class="lv-stage-empty">Include A Photo To Preview</div></div>
+      <div class="lv-pv-foot">
+        <button type="button" class="btn btn-ghost btn-sm" data-a="pvtoggle"><i data-lucide="${lvPvPaused ? "play" : "pause"}"></i>${lvPvPaused ? "Play" : "Pause"}</button>
+        <span class="lv-pv-meta" id="lvPvMeta"></span>
+      </div>
+    </div>
+
     <div class="lv-set">
+
       <div class="lv-block"><span class="lv-lab">Video Type</span>${seg("type", LV_TYPES.map((t) => [t[0], t[1], t[2]]), st.type)}</div>
       <div class="lv-block"><span class="lv-lab">Video Format</span>${seg("format", FORMATS, st.format)}
         <p class="lv-note">${st.format === "9:16" ? "Recommended for social media." : st.format === "16:9" ? "Recommended for MLS and websites." : "Recommended for feed posts and email."}</p></div>
@@ -739,7 +749,10 @@ function render() {
             : startHtml();
   paint();
   hydrateThumbs();
+  stopPreview();
+  if (S.step === "setup") startPreview();
   if (S.step === "done") mountPlayer();
+
 }
 
 async function hydrateThumbs() {
@@ -752,6 +765,44 @@ async function hydrateThumbs() {
   }
 }
 
+/** Live preview player for the setup step. */
+let lvPvTimer = null;
+let lvPvPaused = false;
+
+function stopPreview() {
+  if (lvPvTimer) { clearInterval(lvPvTimer); lvPvTimer = null; }
+}
+
+async function startPreview() {
+  stopPreview();
+  const el = hostEl();
+  const stage = el?.querySelector("#lvStage");
+  if (!stage) return;
+  const scenes = S.photos.filter((p) => p.include).slice(0, 12);
+  if (!scenes.length) return;
+
+  const urls = [];
+  for (const p of scenes) urls.push(await resolvePhotoUrl(p.path).catch(() => null));
+  if (hostEl() !== el || !el.contains(stage)) return;
+
+  const total = S.setup.length === "quick" ? 15 : S.setup.length === "full" ? 60 : 30;
+  const per = S.setup.sceneDuration || Math.max(1.5, total / scenes.length);
+  stage.innerHTML = scenes.map((p, i) => `<figure class="lv-pv-slide${i === 0 ? " on" : ""}">
+      ${urls[i] ? `<img src="${esc(urls[i])}" alt="${esc(p.room)}">` : `<span class="lv-pv-miss">Image Unavailable</span>`}
+      ${S.setup.labels ? `<figcaption>${esc(p.room)}</figcaption>` : ""}
+    </figure>`).join("");
+  stage.style.setProperty("--lv-per", per + "s");
+
+  const meta = el.querySelector("#lvPvMeta");
+  let i = 0;
+  const show = () => {
+    stage.querySelectorAll(".lv-pv-slide").forEach((n, k) => n.classList.toggle("on", k === i));
+    if (meta) meta.textContent = `Scene ${i + 1} Of ${scenes.length} · ${per.toFixed(1)}s Each`;
+  };
+  show();
+  if (!lvPvPaused) lvPvTimer = setInterval(() => { i = (i + 1) % scenes.length; show(); }, per * 1000);
+}
+
 async function mountPlayer() {
   const box = hostEl()?.querySelector("#lvPlayer");
   if (!box) return;
@@ -760,6 +811,7 @@ async function mountPlayer() {
     box.innerHTML = `<div class="lv-note">No output yet.</div>`;
     return;
   }
+
   const { data } = await supabase.storage.from(BUCKET).createSignedUrl(cur.output_path, 3600);
   box.innerHTML = data?.signedUrl
     ? `<video src="${data.signedUrl}" controls playsinline></video>`
@@ -1291,7 +1343,13 @@ function bind() {
       S.go && S.go("reveal");
       return toast("Brand kits are managed on the Video page.");
     }
+    if (a === "pvtoggle") {
+      lvPvPaused = !lvPvPaused;
+      if (lvPvPaused) stopPreview();
+      return void render();
+    }
     if (a === "musicplay") {
+
       const cur = S.setup.music;
       if (!cur || cur === "none") return toast("Choose A Track First.");
       toggleMusic(cur);
