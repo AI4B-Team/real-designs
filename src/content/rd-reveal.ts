@@ -1134,6 +1134,7 @@ function bind() {
 
   /* wizard */
   const w = S.wizard;
+  if (w) {
   on("#rvCancel", "click", () => { S.screen = "library"; S.wizard = null; render(); });
   on("#rvBack", "click", () => { w.step = Math.max(1, w.step - 1); render(); });
   on("#rvNext", "click", async () => {
@@ -1304,6 +1305,7 @@ function bind() {
 
   /* review */
   on("#rvGen", "click", () => generate());
+  } // end wizard bindings (S.wizard may be null on the library screen)
 
   /* detail */
   on("[data-tab]", "click", (e) => { S.detailTab = e.currentTarget.dataset.tab; render(); });
