@@ -74,6 +74,8 @@ export type RevealBrand = {
   logoUrl?: string | null;
 };
 
+import { createMusicTrack } from "@/lib/rd-music";
+
 export type RevealOptions = {
   aspect: "9:16" | "16:9" | "1:1" | "4:5";
   versionType: "branded" | "clean" | "disclosure";
@@ -82,6 +84,8 @@ export type RevealOptions = {
   subtitle?: string | null;
   transition?: string;
   captionsEnabled?: boolean;
+  music?: string | null;
+  musicVolume?: number;
   onProgress?: (pct: number) => void;
 };
 
@@ -113,14 +117,22 @@ function loadImage(url: string): Promise<HTMLImageElement> {
   });
 }
 
-function pickMime(): string {
-  const candidates = [
-    "video/mp4;codecs=avc1.42E01E",
-    "video/mp4",
-    "video/webm;codecs=vp9",
-    "video/webm;codecs=vp8",
-    "video/webm",
-  ];
+function pickMime(withAudio = false): string {
+  const candidates = withAudio
+    ? [
+        "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
+        "video/mp4",
+        "video/webm;codecs=vp9,opus",
+        "video/webm;codecs=vp8,opus",
+        "video/webm",
+      ]
+    : [
+        "video/mp4;codecs=avc1.42E01E",
+        "video/mp4",
+        "video/webm;codecs=vp9",
+        "video/webm;codecs=vp8",
+        "video/webm",
+      ];
   for (const c of candidates) {
     if (typeof MediaRecorder !== "undefined" && MediaRecorder.isTypeSupported(c)) return c;
   }
@@ -448,8 +460,10 @@ export async function renderReveal(
   const showBrand = opts.versionType === "branded" && !!brand;
   const showDisclosure = opts.versionType !== "clean";
 
-  const mime = pickMime();
   const stream = canvas.captureStream(30);
+  const music = await createMusicTrack(opts.music, opts.musicVolume ?? 0.55);
+  if (music) stream.addTrack(music.track);
+  const mime = pickMime(!!music);
   const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 9_000_000 } : undefined);
   const chunks: BlobPart[] = [];
   rec.ondataavailable = (e) => {
@@ -604,6 +618,7 @@ export async function renderReveal(
   });
 
   rec.stop();
+  music?.stop();
   stream.getTracks().forEach((tr) => tr.stop());
   const blob = await done;
 

@@ -106,9 +106,9 @@ export function stopMusic() {
   emit();
 }
 
-function synth(mood: Mood) {
-  if (!ctx) ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-  const ac = ctx;
+function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
+  if (!ac2 && !ctx) ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+  const ac = ac2 || ctx!;
   if (ac.state === "suspended") ac.resume().catch(() => {});
 
   const master = ac.createGain();
@@ -117,7 +117,7 @@ function synth(mood: Mood) {
   filter.type = "lowpass";
   filter.frequency.value = mood.bright;
   filter.connect(master);
-  master.connect(ac.destination);
+  master.connect(out || ac.destination);
   master.gain.linearRampToValueAtTime(0.5, ac.currentTime + 0.5);
 
   // sustained pad (two detuned oscillators on the root + fifth)
@@ -187,4 +187,54 @@ export function toggleMusic(id: string): boolean {
   currentId = id;
   emit();
   return true;
+}
+
+
+/* ---------------- soundtrack for rendered videos ---------------- */
+
+/** Build a live audio track for a music id, to mux into a MediaRecorder stream. */
+export async function createMusicTrack(
+  id: string | null | undefined,
+  volume = 0.6,
+): Promise<{ track: MediaStreamTrack; stop: () => void } | null> {
+  if (!id || id === "none") return null;
+  try {
+    const ac: AudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    if (ac.state === "suspended") await ac.resume().catch(() => {});
+    const dest = ac.createMediaStreamDestination();
+    const gain = ac.createGain();
+    gain.gain.value = volume;
+    gain.connect(dest);
+
+    let stopSrc: () => void = () => {};
+    if (isCustom(id)) {
+      const t = customTracks.find((c) => c.id === id);
+      if (!t) { ac.close().catch(() => {}); return null; }
+      const res = await fetch(t.url);
+      const buf = await ac.decodeAudioData(await res.arrayBuffer());
+      const src = ac.createBufferSource();
+      src.buffer = buf;
+      src.loop = true;
+      src.connect(gain);
+      src.start();
+      stopSrc = () => { try { src.stop(); } catch (_) { /* noop */ } };
+    } else {
+      const mood = MOODS[id];
+      if (!mood) { ac.close().catch(() => {}); return null; }
+      stopSrc = synth(mood, gain, ac);
+    }
+
+    const track = dest.stream.getAudioTracks()[0];
+    if (!track) { ac.close().catch(() => {}); return null; }
+    return {
+      track,
+      stop: () => {
+        try { stopSrc(); } catch (_) { /* noop */ }
+        try { track.stop(); } catch (_) { /* noop */ }
+        window.setTimeout(() => { ac.close().catch(() => {}); }, 250);
+      },
+    };
+  } catch (_) {
+    return null;
+  }
 }

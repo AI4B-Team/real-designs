@@ -797,6 +797,8 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
       title: w.title || w.propertyLabel || "",
       transition: w.transition,
       captionsEnabled: !!w.captions,
+      music: w.music && w.music !== "none" ? w.music : null,
+      musicVolume: typeof w.volume === "number" ? w.volume : 0.6,
       onProgress: (p) => {
         S.wizard.progress = (done + p) / variants.length;
         S.wizard.stage = STAGES[Math.min(STAGES.length - 1, Math.floor(p * STAGES.length))];
