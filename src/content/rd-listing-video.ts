@@ -1364,6 +1364,17 @@ function bind() {
     const a = t.getAttribute("data-a");
     const id = t.getAttribute("data-id");
     if (a === "review-continue") return continueFromImport();
+    if (a === "lvVoicePrev") {
+      if (S.setup.voicePreviewing) { stopVoicePreview(); return render(); }
+      S.setup.voicePreviewing = true;
+      render();
+      return void buildNarration("generate", (S.setup.script || lvDefaultScript()).slice(0, 400), S.setup.voice).then((url) => {
+        if (!url) { S.setup.voicePreviewing = false; render(); return void toast("Voiceover Preview Failed."); }
+        voiceAudio = new Audio(url);
+        voiceAudio.onended = () => { S.setup.voicePreviewing = false; render(); };
+        voiceAudio.play().catch(() => {});
+      });
+    }
     if (a === "back-start") {
       S.step = "start";
       return render();
