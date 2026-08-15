@@ -1443,3 +1443,16 @@
 .av-up { border-style: dashed; }
 .av-seg { flex-wrap: wrap; }
 .av-block { display: block; }
+
+/* motion clip modal */
+.rd-app .mc-f{margin-bottom:14px}
+.rd-app .mc-f>label{display:block;font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute-2);margin-bottom:6px}
+.rd-app .mc-f input[type=text]{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;font-size:.85rem;background:var(--paper);color:var(--ink)}
+.rd-app .mc-f input[type=text]:focus{outline:none;border-color:var(--ink);background:#fff}
+.rd-app .mc-chips{display:flex;flex-wrap:wrap;gap:6px}
+.rd-app .mc-chips button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:6px 12px;font-size:.8rem;cursor:pointer}
+.rd-app .mc-chips button:hover{border-color:var(--ink)}
+.rd-app .mc-chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rd-app .mc-prog{height:5px;border-radius:999px;background:var(--paper);overflow:hidden;margin:6px 0 12px}
+.rd-app .mc-prog i{display:block;height:100%;width:0;background:#CC0000;transition:width .2s}
+.rd-app .mc-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
