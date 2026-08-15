@@ -38,6 +38,20 @@ import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvata
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 
 
+/** True when a failed render was refused for plan/credit reasons, not a bug. */
+function planBlockedMsg(p) {
+  return /paid plan|credit|free designs|upgrade/i.test(String((p && p.error_message) || ""));
+}
+
+function openUpgradeFlow(p) {
+  const msg = String((p && p.error_message) || "");
+  try {
+    const um = (window as any).rdUpgradeModal;
+    if (um) { um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "Upgrade To Finish This Render", msg || "Video rendering needs a paid plan."); return; }
+  } catch (_) {}
+  try { (window as any).__rdGo && (window as any).__rdGo("billing"); } catch (_) {}
+}
+
 /** Null when the account can pay for a video render, otherwise the reason. */
 function videoCreditBlock() {
   const c = S.credits;
@@ -981,8 +995,10 @@ function detailHtml() {
       <button class="btn btn-primary" id="rvEdit"><i data-lucide="pencil"></i>Edit</button>
     </div>
   </div>
-  ${p.status === "failed" ? `<div class="rv-fail"><b>This Render Failed</b><span>${esc(p.error_message || "Something went wrong.")}</span>
-    <div><button class="btn btn-primary btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button><a class="btn btn-ghost btn-sm" href="/contact">Contact Support</a></div></div>` : ""}
+  ${p.status === "failed" ? `<div class="rv-fail"><b>${planBlockedMsg(p) ? "This Render Needs A Paid Plan" : "This Render Failed"}</b><span>${esc(p.error_message || "Something went wrong.")}</span>
+    <div>${planBlockedMsg(p)
+      ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Upgrade Plan</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
+      : `<button class="btn btn-primary btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button><a class="btn btn-ghost btn-sm" href="/contact">Contact Support</a>`}</div></div>` : ""}
   <div class="rv-tabs">${[["video", "Video"], ["scenes", "Scenes"], ["captions", "Captions"], ["presentation", "Presentation"], ["details", "Details"]]
     .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-tab="${id}">${n}</button>`).join("")}</div>
   <div class="rv-detail">${body}</div>`;
@@ -1334,6 +1350,7 @@ function bind() {
   });
 
   on("#rvEdit, #rvEdit2, #rvRetry", "click", () => editExisting(S.detail));
+  on("#rvUpgrade", "click", () => openUpgradeFlow(S.detail));
 
   el.querySelectorAll("[data-goto]").forEach((n) => n.addEventListener("click", () => S.go && S.go(n.dataset.goto)));
 }
