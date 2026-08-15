@@ -685,9 +685,12 @@ function socialCopy(m) {
   });
 }
 
+/* Any unfinished video reopens in the unified builder rather than a detail
+   page that has nothing to play yet. */
 function isDesignDraft(m) {
-  return m && m.type === "generated_video" && m.status === "draft" && (m.settings || {}).builder === "design";
+  return m && m.type === "generated_video" && m.status === "draft";
 }
+
 
 function openVideo(m, tab) {
   try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}

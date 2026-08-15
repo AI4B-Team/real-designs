@@ -215,66 +215,8 @@
   .rd-app .rv-pres .rv-secs { grid-template-columns: 1fr; }
 }
 
-/* ---------- Design video builder (Turn This Design Into A Video) ---------- */
-.rd-app .dv-wrap { display: grid; gap: 18px; }
-.rd-app .dv-head { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; }
-.rd-app .dv-head h2 { margin: 0 0 4px; font-size: 20px; }
-.rd-app .dv-head p { margin: 0; color: var(--muted); font-size: 13px; }
-.rd-app .dv-field { display: grid; gap: 6px; font-size: 12px; color: var(--mute, #6B6B6B); min-width: 0; }
-.rd-app .dv-field input, .rd-app .dv-field select { width: 100%; color: var(--ink, #111113); font-size: 13px; }
-
-.rd-app .dv-scenes { display: grid; gap: 10px; }
-.rd-app .dv-scene { display: grid; grid-template-columns: 22px 96px minmax(0,1fr) auto; align-items: center; gap: 12px;
-  border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; }
-.rd-app .dv-num { font-family: var(--mono, monospace); font-size: 12px; color: var(--muted); }
-.rd-app .dv-thumb { display: block; width: 96px; height: 62px; border-radius: 8px; background: #eee 50% / cover no-repeat; }
-.rd-app .dv-sc-meta { min-width: 0; display: grid; gap: 4px; }
-.rd-app .dv-sc-meta b { font-size: 14px; }
-.rd-app .dv-sc-meta span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
-.rd-app .dv-cap { width: 100%; font-size: 12px; padding: 6px 9px; }
-.rd-app .dv-sc-act { display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
-.rd-app .dv-controls { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; }
-.rd-app .dv-lab { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin-bottom: 6px; }
-.rd-app .dv-seg { display: inline-flex; flex-wrap: wrap; }
-.rd-app .dv-opts { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; align-items: end; }
-.rd-app .dv-check { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-.rd-app .dv-foot { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 12px; align-items: center; }
-.rd-app .dv-foot-l { display: flex; gap: 8px; flex-wrap: wrap; }
-.rd-app .dv-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
-.rd-app .dv-pick-i { display: grid; gap: 6px; text-align: left; border: 1px solid var(--line); border-radius: 10px; padding: 8px; background: #fff; }
-.rd-app .dv-pick-i .dv-thumb { width: 100%; }
-.rd-app .dv-pick-i b { font-size: 12px; }
 .rd-app .is-busy .spin { animation: dv-spin 1s linear infinite; }
 @keyframes dv-spin { to { transform: rotate(360deg); } }
-@media (max-width: 860px) {
-  .rd-app .dv-controls, .rd-app .dv-opts { grid-template-columns: 1fr; }
-  .rd-app .dv-scene { grid-template-columns: 22px 72px minmax(0,1fr); }
-  .rd-app .dv-thumb { width: 72px; height: 52px; }
-  .rd-app .dv-sc-act { grid-column: 1 / -1; justify-content: flex-start; }
-  .rd-app .dv-foot { grid-template-columns: 1fr; }
-}
-
-/* Design video: live preview player */
-.rd-app .dv-preview { margin: 4px 0 14px; }
-.rd-app .dv-stage { position: relative; width: 100%; max-width: 560px; aspect-ratio: 16/9; margin-top: 6px;
-  border-radius: 12px; overflow: hidden; background: #0f1115; }
-.rd-app .dv-stage.ar-9-16 { aspect-ratio: 9/16; max-width: 300px; }
-.rd-app .dv-stage.ar-1-1 { aspect-ratio: 1/1; max-width: 420px; }
-.rd-app .dv-stage.ar-4-5 { aspect-ratio: 4/5; max-width: 360px; }
-.rd-app .dv-stage-empty { position: absolute; inset: 0; display: grid; place-items: center; color: #cbd5e1; font-size: 13px; }
-.rd-app .dv-pv-slide { position: absolute; inset: 0; margin: 0; opacity: 0; transition: opacity .5s ease; }
-.rd-app .dv-pv-slide.on { opacity: 1; }
-.rd-app .dv-pv-slide img { width: 100%; height: 100%; object-fit: cover; display: block; transform-origin: center; }
-.rd-app .dv-pv-slide.on img { animation: dvKen var(--dv-per, 3s) ease-out forwards; }
-.rd-app .dv-stage[data-motion="pan"] .dv-pv-slide.on img { animation-name: dvPan; }
-.rd-app .dv-stage[data-motion="still"] .dv-pv-slide.on img { animation: none; }
-@keyframes dvKen { from { transform: scale(1.02); } to { transform: scale(1.12); } }
-@keyframes dvPan { from { transform: scale(1.1) translateX(-2%); } to { transform: scale(1.1) translateX(2%); } }
-.rd-app .dv-pv-slide figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 10px 12px;
-  background: linear-gradient(to top, rgba(0,0,0,.62), rgba(0,0,0,0)); color: #fff; font-size: 13px; }
-.rd-app .dv-pv-miss { position: absolute; inset: 0; display: grid; place-items: center; color: #94a3b8; font-size: 12.5px; }
-.rd-app .dv-pv-foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-.rd-app .dv-pv-meta { font-size: 12px; color: #6b6b6b; }
 .rv-tour{ display:grid; gap:10px; justify-items:center; text-align:center; padding:14px 6px 4px; }
 .rv-tour i{ width:34px; height:34px; color:var(--red, #CC0000); }
 .rv-tour b{ font-size:16px; }
