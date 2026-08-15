@@ -510,7 +510,24 @@ const VOICE_MAP: Record<string, string> = {
   professional: "alloy", warm: "coral", conversational: "sage", luxury: "ballad",
 };
 
+let voiceAudio: HTMLAudioElement | null = null;
+
+function stopVoicePreview() {
+  if (voiceAudio) { try { voiceAudio.pause(); } catch (_) { /* noop */ } voiceAudio = null; }
+  if (S.wizard) S.wizard.voicePreviewing = false;
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = () => rej(new Error("read failed"));
+    r.readAsDataURL(file);
+  });
+}
+
 async function buildNarration(type: string, script: string | null | undefined, voice: string | null | undefined) {
+  if (type === "upload") return S.wizard?.narrationUpload || null;
   if (type !== "generate" || !script || script.trim().length < 4) return null;
   try {
     const { synthesizeNarration } = await import("@/lib/narration.functions");
