@@ -45,7 +45,7 @@ export function openSignupSurvey(seed?: any) {
   <div class="rd-modal-card" role="dialog" aria-modal="true" aria-label="Welcome Questionnaire" style="max-width:560px">
     <button class="rd-modal-x" data-x aria-label="Close"><i data-lucide="x"></i></button>
     <h3 style="margin:0 0 4px">Welcome To REAL DESIGNS</h3>
-    <p class="mono" style="margin:0 0 14px;color:var(--mute-2)">Three Quick Questions So We Can Set Your Workspace Up Properly.</p>
+    <p class="mono" style="margin:0 0 14px;color:var(--mute-2)">A Few Quick Questions So We Can Set Your Workspace Up Properly. You Can Change These Later In Account &rarr; Profile.</p>
     <div class="crm-form">
       <label>Your Name<input type="text" data-f="full_name" value="${esc(r.full_name || "")}" placeholder="Jordan Reyes" maxlength="120"></label>
       <label>Phone Number<input type="tel" data-f="phone" value="${esc(r.phone || "")}" placeholder="(555) 123-4567" maxlength="40"></label>
