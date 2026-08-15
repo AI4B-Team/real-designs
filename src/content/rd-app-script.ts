@@ -412,7 +412,7 @@ brand:['Brand Kit','Applied to exports, decks and client links'],
 defaults:['Defaults','Applied to every new design'],
 api:['API & White Label','Business plan feature'],
 danger:['Data & Privacy','Export or permanently remove your data']};
-function acctPane(k){ try{(window as any).__paneLog=((window as any).__paneLog||[]).concat([k+':'+Date.now()%100000]);}catch(_){}
+function acctPane(k){
   if(!PANE_META[k]) k='profile';
   document.querySelectorAll('.arail-i').forEach(b=>b.classList.toggle('on',b.dataset.pane===k));
   document.querySelectorAll('.apane').forEach(x=>x.classList.toggle('on',x.id==='p-'+k));
