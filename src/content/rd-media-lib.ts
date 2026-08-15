@@ -306,6 +306,14 @@ function render() {
     if (el) el.textContent = String(c[k.toLowerCase()] || 0);
   });
   const bulk = document.getElementById("mlBulk");
+  const allBtn = document.getElementById("mlAll") as HTMLButtonElement | null;
+  if (allBtn) {
+    allBtn.hidden = !S.selMode;
+    const vis = filtered();
+    const all = vis.length > 0 && vis.every((m) => S.sel.has(m.id));
+    allBtn.textContent = all ? "Clear Selection" : "Select All";
+    allBtn.classList.toggle("on", all);
+  }
   if (bulk) {
     bulk.classList.toggle("on", S.selMode && S.sel.size > 0);
     const n = document.getElementById("mlSelCount");
