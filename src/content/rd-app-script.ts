@@ -3381,11 +3381,14 @@ async function paintSurveySummary(){
     }
     const rows=[
       ['Full Name',r.full_name],['Phone',r.phone],['Company',r.company],
-      ['Role',r.role],['Heard About Us',r.heard_from],
+      ['Role',r.role],['Heard About Us',r.how_heard?(r.how_heard+(r.how_heard_detail?(' · '+r.how_heard_detail):'')):''],
       ['Listings Per Year',r.listings_per_year],['Team Size',r.team_size],
       ['Primary Goal',r.primary_goal],
       ['Marketing Emails',r.marketing_opt_in?'Yes':'No']
     ].filter(function(x){ return x[1]!==null&&x[1]!==undefined&&x[1]!==''; });
+    // Fill blank profile fields from the questionnaire answers
+    var fill=function(id,v){ var el=$id(id); if(el&&!el.value&&v) el.value=v; };
+    fill('pfName',r.full_name); fill('pfPhone',r.phone); fill('pfCompany',r.company);
     box.innerHTML=rows.map(function(x){
       return '<div class="rowi"><div class="rowt"><b>'+x[0]+'</b><span>'+String(x[1])+'</span></div></div>';
     }).join('');
