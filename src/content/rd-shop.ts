@@ -810,7 +810,7 @@ function mount(ctx) {
           <div><span>Estimated Delivery</span><b>${money(roll.delivery)}</b></div>
           <div><span>Contingency</span><b>${money(roll.contingency)}</b></div>
           <div class="tot"><span>Estimated Product Total</span><b>${money(roll.total)}</b></div></div>
-        <div class="shop-disc"><i data-lucide="info"></i><span>Product totals are planning estimates and roll into Scope &amp; Budget alongside the labor and materials estimate.</span></div>
+        <div class="shop-disc"><i data-lucide="info"></i><span>Product totals are planning estimates and roll into Budget alongside the labor and materials estimate.</span></div>
       </div>
       <div class="shop-dr-f"><button class="btn btn-dark btn-xs" id="selGo"><i data-lucide="shopping-bag"></i>Open Products Page</button></div>
     </div>`;
