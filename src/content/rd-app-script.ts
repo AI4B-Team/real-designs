@@ -192,7 +192,7 @@ function go(v,fromHash){
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
-  if(v==='lvideo'){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
+  if(v==='lvideo'){ try{ mountMediaLibrary(go,{}); }catch(_){} try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
 
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
@@ -205,7 +205,7 @@ function go(v,fromHash){
      that have no entry in the title map. */
   if(!fromHash){
     try{
-      const h='#v-'+v;
+      const h='#v-'+viewId;
       if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
     }catch(_){}
   }
