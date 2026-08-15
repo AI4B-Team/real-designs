@@ -10,6 +10,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks, loadCustomTracks } from "@/lib/rd-music";
 import { voiceRequest } from "@/lib/rd-voice";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
@@ -408,8 +409,8 @@ function startHtml() {
           I own these photos or have permission to use them in designs, videos and marketing materials.</label>
 
         <div class="lv-cloud">
-          <button class="lv-cbtn" data-cloud="dropbox"><i data-lucide="cloud"></i>Import From Dropbox</button>
-          <button class="lv-cbtn" data-cloud="drive"><i data-lucide="hard-drive"></i>Import From Google Drive</button>
+          <button class="lv-cbtn" data-cloud="dropbox">${DROPBOX_ICON}Import From Dropbox</button>
+          <button class="lv-cbtn" data-cloud="drive">${DRIVE_ICON}Import From Google Drive</button>
         </div>
 
         ${S.job ? jobHtml() : ""}
@@ -489,8 +490,8 @@ function linkPanelHtml() {
             <div class="lv-panel-a">
               ${r.address ? `<button class="btn btn-ghost btn-sm" data-useaddr="${esc(r.address)}"><i data-lucide="map-pin"></i>Use This Address</button>` : ""}
               <button class="btn btn-ghost btn-sm" id="lvLinkUpload"><i data-lucide="upload"></i>Upload Photos</button>
-              <button class="btn btn-ghost btn-sm" data-cloud="dropbox"><i data-lucide="cloud"></i>Import From Dropbox</button>
-              <button class="btn btn-ghost btn-sm" data-cloud="drive"><i data-lucide="hard-drive"></i>Import From Google Drive</button>
+              <button class="btn btn-ghost btn-sm" data-cloud="dropbox">${DROPBOX_ICON}Import From Dropbox</button>
+              <button class="btn btn-ghost btn-sm" data-cloud="drive">${DRIVE_ICON}Import From Google Drive</button>
               <button class="btn btn-ghost btn-sm" data-cloud="mls"><i data-lucide="plug"></i>Connect Listing Source</button>
             </div>
           </div>`

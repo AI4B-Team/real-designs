@@ -5,6 +5,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { roomPhotoUrl } from "@/lib/room-photos";
 import {
   listMediaAssets,
@@ -108,8 +109,8 @@ export async function openPropertyUpload(opts = {}) {
           <div class="pmu-lab">Choose Photos</div>
           <div class="pmu-src">
             <button class="pmu-s${src === "computer" ? " on" : ""}" data-src="computer"><i data-lucide="monitor"></i>Computer</button>
-            <button class="pmu-s${src === "google_drive" ? " on" : ""}" data-src="google_drive"><i data-lucide="hard-drive"></i>Google Drive</button>
-            <button class="pmu-s${src === "dropbox" ? " on" : ""}" data-src="dropbox"><i data-lucide="cloud"></i>Dropbox</button>
+            <button class="pmu-s${src === "google_drive" ? " on" : ""}" data-src="google_drive">${DRIVE_ICON}Google Drive</button>
+            <button class="pmu-s${src === "dropbox" ? " on" : ""}" data-src="dropbox">${DROPBOX_ICON}Dropbox</button>
           </div>
           ${
             src === "computer"
