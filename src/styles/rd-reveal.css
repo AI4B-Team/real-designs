@@ -273,7 +273,7 @@
 .rd-app .rv-pop-side { display: grid; gap: 10px; align-content: start; min-width: 0; }
 .rd-app .rv-pop-side .rv-check, .rd-app .rv-pop-prev .rv-check { margin-top: 2px; padding-top: 10px; border-top: 1px solid var(--line, #e6e6e6);
   display: flex; align-items: center; gap: 9px; font-size: 13px; cursor: pointer; }
-.rd-app .rv-pop-side .rv-check, .rd-app .rv-pop-prev .rv-check input[type="checkbox"] { flex: 0 0 auto; width: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--red, #CC0000); }
+.rd-app .rv-pop-side .rv-check input[type="checkbox"], .rd-app .rv-pop-prev .rv-check input[type="checkbox"] { flex: 0 0 auto; width: 16px; height: 16px; margin: 0; padding: 0; accent-color: var(--red, #CC0000); }
 .rd-app .rv-pop-scroll { display: grid; gap: 8px; max-height: 460px; overflow: auto; padding-right: 4px; }
 .rd-app .rv-pop-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 6px; }
 @media (max-width: 560px) { .rd-app .rv-pop-grid { grid-template-columns: 1fr; } }
