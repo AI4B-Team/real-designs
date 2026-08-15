@@ -371,7 +371,7 @@ function card(m) {
     </div>
     <div class="ml-body">
       <div class="ml-t"><b>${esc(m.title)}</b><span class="pill st-${m.status}">${STATUS_LABEL[m.status] || m.status}</span></div>
-      <div class="mono ml-sub">${esc(m.property || "Unassigned")}${m.room ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.createdAt))}</div>
+      <div class="mono ml-sub">${esc(m.property || "Unassigned")}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
       <div class="ml-acts">${actions(m, g)}</div>
     </div>
   </div>`;
