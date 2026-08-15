@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { saveVideo, startRender, finishVariant, setVideoStatus } from "@/lib/reveal.functions";
 import { renderReveal } from "@/lib/reveal-render";
+import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+
 
 const BUCKET = "reveal-videos";
 
