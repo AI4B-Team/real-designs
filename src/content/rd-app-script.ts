@@ -69,8 +69,18 @@ function populateStyleSelect(){
   }).join('');
   sel.innerHTML='<option value="Auto — Let REAL DESIGNS Decide" data-style-id="auto">Auto — Let REAL DESIGNS Decide</option>'+html;
   sel.dataset.catalog='1';
-  const match=Array.from(sel.options).find((o:any)=>o.value===keep||o.text===keep);
+  let match:any=Array.from(sel.options).find((o:any)=>o.value===keep||o.text===keep);
+  if(!match&&keep&&keep!=='Warm Minimal'){
+    // Keep a chosen style (e.g. picked on Explore) even when it is not in this
+    // project type's catalog, instead of silently resetting to Warm Minimal.
+    const opt=document.createElement('option');
+    opt.value=keep; opt.textContent=keep;
+    sel.insertBefore(opt,sel.firstChild);
+    match=opt;
+  }
   sel.value=match?(match as any).value:'Warm Minimal';
+  // Never leave the control blank: fall back to the first available option.
+  if(!sel.value&&sel.options.length) sel.value=sel.options[0].value;
 }
 try{
   document.addEventListener('click',(e:any)=>{
