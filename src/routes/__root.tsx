@@ -35,12 +35,32 @@ function NotFoundComponent() {
   );
 }
 
+// A stale/replaced build chunk makes the browser fail the route's dynamic
+// import and blanks the page. Reload once (guarded) to pick up fresh chunks.
+function isChunkLoadError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    /Failed to fetch dynamically imported module/i.test(message) ||
+    /Importing a module script failed/i.test(message) ||
+    /error loading dynamically imported module/i.test(message)
+  );
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    if (isChunkLoadError(error) && typeof window !== "undefined") {
+      const key = "rd:chunk-reload";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
+        return;
+      }
+    }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -120,6 +140,16 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
+
+  // The app mounted fine, so allow a future one-shot chunk reload again.
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("rd:chunk-reload");
+    } catch {
+      /* private mode */
+    }
+  }, []);
+
 
   // Global: white dropdown menus and white tooltips on every route.
   useEffect(() => {
