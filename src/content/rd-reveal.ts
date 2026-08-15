@@ -2137,11 +2137,11 @@ async function dvGenerate() {
   }
 }
 
-/** Entry point from a design card: seeds the design as scene one. */
+/** Entry point from a design card: seeds the design as scene one of the
+    unified builder and opens it at the Edit step. */
 export async function startDesignVideo(design = {}) {
   if (!design || !design.id) throw new Error("That design could not be identified.");
   if (!design.path) throw new Error("That design has no image yet.");
-  S.screen = "design";
   dvActive = true;
   [0, 300, 900, 1800, 3000].forEach((ms) => setTimeout(closeIntroNow, ms));
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
@@ -2149,19 +2149,33 @@ export async function startDesignVideo(design = {}) {
   if (!S.mounted) await mountReveal(S.go, {});
   else if (!S.tree.length) await loadLibrary();
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(design.id));
-  S.dv = newDV({
-    designId: design.id,
-    versionId: design.sample || !isUuid ? null : design.id,
+  const versionId = design.sample || !isUuid ? null : design.id;
+  startWizard({
     propertyId: design.property_id || null,
     propertyLabel: design.address || design.sub || null,
+    versionId,
+    sourceType: "design",
+    videoType: "design_showcase",
     title: (design.name || "Design") + " Video",
-    scenes: [dvScene({ path: design.path, room: design.name || "Selected Design", version_id: design.sample || !isUuid ? null : design.id })],
   });
-  S.screen = "design";
+  const w = S.wizard;
+  w.scenes = [{
+    key: "seed-" + design.id,
+    path: design.path,
+    compare: design.before_path || null,
+    room: design.name || "Selected Design",
+    kind: "Design",
+    scene_type: "design",
+    duration: 3,
+    motion: "auto",
+    caption: design.name || "",
+    disclosure: "proposed",
+    asset_id: null,
+    version_id: versionId,
+  }];
+  w.step = 3;
   render();
   closeIntroNow();
-  try { await dvSaveDraft(); } catch (e) { toast(e?.message || "The draft could not be saved. You can still build the video."); }
-  render();
 }
 
 /** Continue a saved design-video draft from Media or the library. */
@@ -2170,27 +2184,9 @@ export async function continueDesignVideo(id) {
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
   const full = await getVideo({ id });
-  const p = full.project;
-  const st = p.settings || {};
-  S.dv = newDV({
-    projectId: p.id,
-    designId: st.sourceDesignId || null,
-    propertyId: p.property_id,
-    propertyLabel: p.property_label,
-    versionId: p.design_version_id,
-    title: p.title,
-    scenes: (full.scenes || []).map((s) => dvScene({ path: s.source_path, room: s.room_name, caption: s.caption || "", version_id: s.source_version_id, asset_id: s.source_asset_id, scene_type: s.scene_type })),
-  });
-  S.dv.motionStyle = st.motionStyle || "subtle";
-  S.dv.duration = st.totalDuration || 10;
-  S.dv.aspect = (p.formats || [])[0] || "16:9";
-  S.dv.brandKitId = p.brand_kit_id || null;
-  S.dv.branding = p.branding || S.dv.branding;
-  S.dv.music = full.audio?.music_track_id || "none";
-  S.dv.captions = !!full.audio?.captions_enabled;
-  S.screen = "design";
-  render();
+  editExisting(full);
 }
+
 
 /* ======================= INTRO ======================= */
 let dvActive = false; // set while a contextual builder is being seeded
