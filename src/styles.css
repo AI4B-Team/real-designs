@@ -150,6 +150,11 @@
 .rd-auth .promo > * { position: relative; z-index: 1; }
 .rd-auth .promo .mark { font-size: .8rem; letter-spacing: .22em; text-transform: uppercase; color: #CC0000; font-weight: 700; margin: 0; }
 .rd-auth .promo .brand { display: inline-flex; margin-bottom: 34px; }
+/* REAL DESIGNS badge mark — same lockup as the marketing site and app shell */
+.rd-auth .rd-mark { display: inline-flex; align-items: center; justify-content: center; background: #CC0000; padding: 7px; flex: none; }
+.rd-auth .rd-mark i { display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px solid #fff; font-style: normal; padding: 7px 16px; }
+.rd-auth .rd-mark b { color: #fff; font-weight: 900; font-size: 22px; line-height: 1; letter-spacing: .05em; }
+.rd-auth .rd-mark em { color: #fff; font-style: normal; text-transform: uppercase; font-weight: 700; font-size: 8px; line-height: 1; letter-spacing: .32em; margin: 3px 0 0 .3em; }
 .rd-auth .promo h2 { font-size: 2.25rem; line-height: 1.12; letter-spacing: -.03em; margin: 0; max-width: none; }
 .rd-auth .promo p.sub { margin: 0; font-size: 1.05rem; line-height: 1.5; color: #B9B3AA; max-width: 42ch; }
 .rd-auth .promo p.sub + ul { margin-top: -12px; }
