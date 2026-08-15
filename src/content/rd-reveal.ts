@@ -1845,8 +1845,7 @@ async function dvGenerate() {
   if (!d || !d.scenes.length) return toast("Add At Least One Scene First.");
   const gate = videoCreditBlock();
   if (gate) {
-    toast(gate);
-    S.go && S.go("billing");
+    openUpgradeFlow({ error_message: gate });
     return;
   }
   if (!videoSupported()) {
