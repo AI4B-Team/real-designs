@@ -3,6 +3,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { installRdToast } from "@/lib/rd-toast";
+import { isPlanBlocked, planBlockTitle } from "@/lib/rd-upgrade";
 import { PHOTOS, photo } from "@/content/rd-photos";
 import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
