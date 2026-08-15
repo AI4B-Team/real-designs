@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
+import { absoluteUrl } from "@/lib/site";
+
 import { PrototypeSurface } from "@/components/PrototypeSurface";
 import { html } from "@/content/rd-app-html";
 import { initApp } from "@/content/rd-app-script";
@@ -26,10 +28,10 @@ export const Route = createFileRoute("/_authenticated/app")({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "/app" },
+      { property: "og:url", content: absoluteUrl("/app") },
       { name: "robots", content: "noindex" },
     ],
-    links: [{ rel: "canonical", href: "/app" }],
+    links: [{ rel: "canonical", href: absoluteUrl("/app") }],
   }),
   component: BackOfficePage,
 });
