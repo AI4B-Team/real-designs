@@ -702,7 +702,15 @@ export function mountPresent() {
     wired = true;
     document.addEventListener("click", onClick);
     document.addEventListener("change", onChange);
+    document.addEventListener("keydown", (e: any) => {
+      if (e.key !== "Escape") return;
+      const m = document.getElementById("pkModal");
+      if (!m || !m.innerHTML.trim()) return;
+      S.draft = null;
+      m.innerHTML = "";
+    });
   }
+
   refresh().then(() => {
     if (PENDING_OPEN) {
       const id = PENDING_OPEN;
