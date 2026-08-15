@@ -129,6 +129,20 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
   window.addEventListener("rd:style-selected", () => { refreshStyleChoice(); if (host) render(); });
 
+  /** Close the sample chooser on Escape and whenever the user leaves Studio. */
+  function closeSamples() {
+    if (!state.samples) return;
+    state.samples = false;
+    if (host) render();
+  }
+  window.addEventListener("keydown", (ev: KeyboardEvent) => {
+    if (ev.key === "Escape") closeSamples();
+  });
+  window.addEventListener("hashchange", () => {
+    if (!/#v-studio\b/.test(location.hash)) closeSamples();
+  });
+
+
   /** Local escape: the banner can render before the shell helpers initialize. */
   const escLocal = (v: string) =>
     String(v == null ? "" : v).replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch] as string));
