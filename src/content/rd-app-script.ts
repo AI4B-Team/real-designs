@@ -3595,7 +3595,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     const {data}=await supabase.auth.getUser();
     if(!data||!data.user) return;
     const mod=await import('@/lib/rd-survey-ui');
-    setTimeout(()=>{ try{ mod.maybeOpenSignupSurvey(); }catch(_){} },900);
+    try{ await mod.maybeOpenSignupSurvey(); }catch(_){}
   }catch(_){}
 })();
 
