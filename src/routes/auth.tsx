@@ -55,7 +55,7 @@ function AuthPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/app" },
+          options: { emailRedirectTo: window.location.origin + "/welcome" },
         });
         if (error) throw error;
         track("signed_up", { method: "email" });
