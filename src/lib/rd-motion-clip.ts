@@ -244,7 +244,18 @@ export function openMotionClip(item: MotionClipInput) {
       goBtn.disabled = false;
       goBtn.textContent = "Create Clip";
       bar.hidden = true;
-      note(e?.message || "The Motion Clip Could Not Be Created.");
+      const msg = String(e?.message || "");
+      if (/credit|free designs|paid plan|upgrade/i.test(msg)) {
+        const um = (window as any).rdUpgradeModal;
+        if (typeof um === "function") {
+          wrap.remove();
+          document.removeEventListener("keydown", onKey);
+          um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "You Need More Credits", msg);
+          return;
+        }
+      }
+      note(msg || "The Motion Clip Could Not Be Created.");
+
     }
   };
 }
