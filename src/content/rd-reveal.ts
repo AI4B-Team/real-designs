@@ -92,12 +92,18 @@ export const VIDEO_TYPES = [
 ];
 
 const FORMATS = [
-  { id: "9:16", name: "Vertical — 9:16", d: "Reels, TikTok and Shorts" },
-  { id: "16:9", name: "Landscape — 16:9", d: "YouTube, websites and presentations" },
-  { id: "1:1", name: "Square — 1:1", d: "Flexible social posting" },
-  { id: "4:5", name: "Portrait — 4:5", d: "Instagram and Facebook feeds" },
-
+  { id: "9:16", name: "Vertical 9:16", d: "Reels, TikTok and Shorts" },
+  { id: "4:5", name: "Portrait 4:5", d: "Instagram and Facebook feeds" },
+  { id: "1:1", name: "Square 1:1", d: "Flexible social posting" },
+  { id: "16:9", name: "Landscape 16:9", d: "YouTube, websites and presentations" },
 ];
+
+const LENGTHS = [
+  ["quick", "Quick, About 15s"],
+  ["standard", "Standard, About 30s"],
+  ["full", "Full, About 60s"],
+];
+
 
 const MUSIC = [
   { id: "none", group: "No Music", name: "No Music" },
