@@ -1343,7 +1343,13 @@ function bind() {
       S.go && S.go("reveal");
       return toast("Brand kits are managed on the Video page.");
     }
+    if (a === "pvtoggle") {
+      lvPvPaused = !lvPvPaused;
+      if (lvPvPaused) stopPreview();
+      return void render();
+    }
     if (a === "musicplay") {
+
       const cur = S.setup.music;
       if (!cur || cur === "none") return toast("Choose A Track First.");
       toggleMusic(cur);
