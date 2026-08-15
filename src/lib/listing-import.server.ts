@@ -151,3 +151,49 @@ function sanitizePhotos(raw: any) {
     order: i,
   }));
 }
+
+/**
+ * Look a listing up by street address through the same licensed provider.
+ * No public listing page is fetched. Returns a not-connected result when no
+ * provider credentials are configured, so the UI can fall back to confirming
+ * the address the user typed.
+ */
+export async function fetchListingByAddress(address: string): Promise<ProviderFetch> {
+  const base = process.env["LISTING_DATA_API_URL"];
+  const key = process.env["LISTING_DATA_API_KEY"];
+  if (!base || !key) {
+    return {
+      ok: false,
+      code: "provider_not_connected",
+      message: "Automatic listing lookup is not connected yet.",
+    };
+  }
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 20000);
+  try {
+    const res = await fetch(`${base.replace(/\/+$/, "")}/listings?address=${encodeURIComponent(address)}`, {
+      headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
+      redirect: "error",
+      signal: controller.signal,
+    });
+    if (!res.ok) return { ok: false, code: "provider_error", message: `The listing provider returned ${res.status}.` };
+    const raw = await res.text();
+    if (raw.length > 2_000_000) return { ok: false, code: "provider_error", message: "The listing response was too large to process." };
+    const data = JSON.parse(raw) as any;
+    const first = Array.isArray(data?.listings) ? data.listings[0] : (data?.listing ?? data);
+    if (!first) return { ok: false, code: "provider_error", message: "No listing matched that address." };
+    return {
+      ok: true,
+      listing: sanitizeListing(first, String(first?.provider_id || "address")),
+      photos: sanitizePhotos(data?.photos ?? first?.photos ?? []),
+    };
+  } catch (e: any) {
+    return {
+      ok: false,
+      code: "provider_error",
+      message: e?.name === "AbortError" ? "The listing provider timed out." : "The listing provider is unavailable.",
+    };
+  } finally {
+    clearTimeout(timer);
+  }
+}
