@@ -141,6 +141,16 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
+  // The app mounted fine, so allow a future one-shot chunk reload again.
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("rd:chunk-reload");
+    } catch {
+      /* private mode */
+    }
+  }, []);
+
+
   // Global: white dropdown menus and white tooltips on every route.
   useEffect(() => {
     let stop: Array<() => void> = [];
