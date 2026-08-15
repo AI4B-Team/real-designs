@@ -147,6 +147,7 @@ function shell() {
     </select></label>
     <button class="btn btn-ghost btn-xs" id="mlFav"><i data-lucide="heart"></i>Favorites</button>
     <button class="btn btn-ghost btn-xs" id="mlSelect"><i data-lucide="check-square"></i>Select</button>
+    <button class="btn btn-ghost btn-xs" id="mlAll" hidden><i data-lucide="list-checks"></i>Select All</button>
   </div>
 
   <div class="ml-bulk" id="mlBulk">
@@ -216,6 +217,13 @@ function bind(view) {
     S.selMode = !S.selMode;
     if (!S.selMode) S.sel.clear();
     $("mlSelect").classList.toggle("on", S.selMode);
+    render();
+  };
+  $("mlAll").onclick = () => {
+    const list = filtered();
+    const all = list.length > 0 && list.every((m) => S.sel.has(m.id));
+    if (all) list.forEach((m) => S.sel.delete(m.id));
+    else list.forEach((m) => S.sel.add(m.id));
     render();
   };
   view.querySelectorAll("#mlBulk [data-b]").forEach((b) => (b.onclick = (ev) => { ev.stopPropagation(); bulk(b.dataset.b, b); }));
