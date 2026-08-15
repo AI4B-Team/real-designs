@@ -695,9 +695,18 @@ export async function openPhotoEditor(ctx) {
           : `${pending.steps.map((s) => s.label).join(" + ")} saved as a new version.`,
       );
     } catch (e) {
-      box.innerHTML = `<div class="pme-review err"><b>Edit Failed</b><span>${esc(e.message || e)}</span><div class="pme-review-a"><button class="btn btn-ghost btn-xs" id="pmeRetry">Retry</button></div></div>`;
+      const msg = String((e && e.message) || e || "");
+      const gated = /paid plan|credit|free designs|upgrade/i.test(msg);
+      box.innerHTML = `<div class="pme-review err"><b>${gated ? "Upgrade To Apply This Edit" : "Edit Failed"}</b><span>${esc(msg)}</span><div class="pme-review-a"><button class="btn btn-${gated ? "primary" : "ghost"} btn-xs" id="pmeRetry">${gated ? "Upgrade Plan" : "Retry"}</button></div></div>`;
       const r = box.querySelector("#pmeRetry");
-      r && (r.onclick = () => applySteps());
+      r && (r.onclick = () => {
+        if (!gated) return applySteps();
+        try {
+          const um = (window as any).rdUpgradeModal;
+          if (um) return um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "Upgrade To Apply This Edit", msg);
+        } catch (_) {}
+        try { (window as any).__rdGo && (window as any).__rdGo("billing"); } catch (_) {}
+      });
     } finally {
       busy = false;
       pending = null;
