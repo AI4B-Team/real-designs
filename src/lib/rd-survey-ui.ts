@@ -125,13 +125,29 @@ export function openSignupSurvey(seed?: any) {
   };
 }
 
+/** Fills blank name/phone/company from the account profile. */
+async function withAuthSeed(row: any) {
+  const seed: any = { ...(row || {}) };
+  try {
+    const { supabase } = await import("@/integrations/supabase/client");
+    const { data } = await supabase.auth.getUser();
+    const m: any = data?.user?.user_metadata || {};
+    if (!seed.full_name) seed.full_name = m.full_name || m.name || "";
+    if (!seed.phone) seed.phone = m.phone || "";
+    if (!seed.company) seed.company = m.company || "";
+  } catch (_) {
+    /* seeding is best effort */
+  }
+  return seed;
+}
+
 /** Opens the questionnaire only when this member has never answered it. */
 export async function maybeOpenSignupSurvey() {
   try {
     const out: any = await getSignupSurvey();
     const row = out?.row;
     if (row && (row.completed || row.skipped)) return;
-    openSignupSurvey(row || null);
+    openSignupSurvey(await withAuthSeed(row));
   } catch (_) {
     /* never block the app on the questionnaire */
   }
@@ -141,8 +157,8 @@ export async function maybeOpenSignupSurvey() {
 export async function editSignupSurvey() {
   try {
     const out: any = await getSignupSurvey();
-    openSignupSurvey(out?.row || null);
+    openSignupSurvey(await withAuthSeed(out?.row));
   } catch (_) {
-    openSignupSurvey(null);
+    openSignupSurvey(await withAuthSeed(null));
   }
 }
