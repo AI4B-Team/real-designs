@@ -1728,7 +1728,6 @@ function openBrandKit(kit) {
   };
 }
 
-const videoSupported = () => typeof MediaRecorder !== "undefined" && typeof HTMLCanvasElement !== "undefined";
 
 
 /** Entry point from a design card: seeds the design as scene one of the
