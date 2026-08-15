@@ -434,8 +434,8 @@ const WIZ_STEPS = ["Photos", "Select", "Edit", "Brand"];
 function wizardHtml() {
   const w = S.wizard;
   const rail = `<div class="rv-steps">${WIZ_STEPS
-    .map((s, i) => `<span class="${w.step === i + 1 ? "on" : w.step > i + 1 ? "done" : ""}" data-step="${i + 1}">${s}${i === 1 && w.scenes.length ? `<i class="rv-badge mono">${w.scenes.length}</i>` : ""}</span>`)
-    .join("")}</div>`;
+    .map((s, i) => `<span class="${w.step === i + 1 ? "on" : w.step > i + 1 ? "done" : ""}" data-step="${i + 1}"><em class="rv-n">${i + 1}</em>${s}${i === 1 && w.scenes.length ? `<i class="rv-badge mono">${w.scenes.length}</i>` : ""}</span>`)
+    .join(`<b class="rv-conn"></b>`)}</div>`;
 
   let body = "";
   if (w.step === 1) body = stepPhotos();
