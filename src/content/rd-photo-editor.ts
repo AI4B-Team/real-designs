@@ -469,6 +469,108 @@ export async function openPhotoEditor(ctx) {
     paint();
   }
 
+  /* ---------------- Analyze ---------------- */
+
+  async function urlForAsset(a) {
+    const vs = (ctx.versions || []).filter((v) => v.asset_id === a.id && !v.archived);
+    const approved = vs.find((v) => v.id === a.approved_version_id) || vs[vs.length - 1];
+    const p = approved ? approved.storage_path : a.storage_path;
+    return (await roomPhotoUrl(p)) || "";
+  }
+
+  async function runAnalysis(a) {
+    if (analysis[a.id] && analysis[a.id].loading) return;
+    analysis[a.id] = { loading: true };
+    if (tab === "analyze") renderAnalyze(wrap.querySelector("#pmePane"));
+    renderStrip();
+    try {
+      const url = a.id === asset().id ? baseUrl : await urlForAsset(a);
+      const dataUrl = /^data:/.test(url) ? url : await toDataUrl(url);
+      const out = await analyzePhoto({ data: { image: dataUrl, room: a.room_group || "Room" } });
+      analysis[a.id] = { data: out };
+      track("photo_analyzed", { issues: out.issues.length });
+    } catch (e) {
+      analysis[a.id] = { error: e.message || "Analysis failed." };
+    }
+    if (tab === "analyze") renderAnalyze(wrap.querySelector("#pmePane"));
+    renderStrip();
+  }
+
+  function renderAnalyze(p) {
+    const a = asset();
+    const state = analysis[a.id];
+    const picks = targets();
+    const many = picks.length > 1;
+    const head = `<div class="pme-kind analyze">
+        <b>AI Photo Review</b>
+        <span>Free to run. We look at the photo and tell you what is holding it back before you spend a credit.</span>
+      </div>
+      <div class="pme-an-act">
+        <button class="btn btn-dark btn-xs" id="pmeRun"><i data-lucide="scan-eye"></i>${state && state.data ? "Re-Analyze This Photo" : "Analyze This Photo"}</button>
+        <button class="btn btn-ghost btn-xs" id="pmeRunAll"><i data-lucide="layers"></i>Analyze ${many ? picks.length + " Selected" : "All " + assets.length}</button>
+      </div>`;
+
+    let body = `<p class="pme-note">Select photos in the filmstrip to review or fix several at once.</p>`;
+
+    if (state && state.loading) {
+      body = `<div class="pme-review"><b>Analyzing</b><span>Reading the photo for exposure, framing, clutter and staging opportunities.</span></div>`;
+    } else if (state && state.error) {
+      body = `<div class="pme-review err"><b>Analysis Failed</b><span>${esc(state.error)}</span></div>`;
+    } else if (state && state.data) {
+      const d = state.data;
+      body = `<div class="pme-score"><b>${d.quality}</b><span>Listing Readiness</span><i style="width:${d.quality}%"></i></div>
+        ${d.summary ? `<p class="pme-an-sum">${esc(d.summary)}</p>` : ""}
+        ${
+          d.issues.length
+            ? `<div class="pme-an-list">${d.issues
+                .map(
+                  (i) =>
+                    `<div class="pme-an-issue ${esc(i.severity)}"><b>${esc(i.title)}</b><span>${esc(i.detail)}</span></div>`,
+                )
+                .join("")}</div>`
+            : `<div class="pme-an-clean"><i data-lucide="check-circle-2"></i>No Problems Found</div>`
+        }
+        ${
+          d.suggestions.length
+            ? `<div class="pme-sub-h">Recommended Fixes</div>
+              <div class="pme-an-list">${d.suggestions
+                .map(
+                  (s, n) =>
+                    `<div class="pme-an-sug"><div><b>${esc(s.label)}</b><span>${esc(s.why)}</span></div><button class="btn btn-ghost btn-xs" data-sug="${n}">Apply</button></div>`,
+                )
+                .join("")}</div>
+              <button class="btn btn-primary btn-xs" id="pmeApplyAll"><i data-lucide="wand-sparkles"></i>Apply All Recommended — ${d.suggestions.length * picks.length} Credit${d.suggestions.length * picks.length === 1 ? "" : "s"}</button>
+              ${many ? `<p class="pme-note">These fixes will be applied to all ${picks.length} selected photos.</p>` : `<p class="pme-note">Each fix uses 1 credit and is saved as a new version.</p>`}`
+            : ""
+        }`;
+    }
+
+    p.innerHTML = head + body;
+    paint();
+    p.querySelector("#pmeRun").onclick = () => runAnalysis(asset());
+    p.querySelector("#pmeRunAll").onclick = async () => {
+      for (const t of picks.length > 1 ? picks : assets) await runAnalysis(t);
+    };
+    p.querySelectorAll("[data-sug]").forEach((b) => {
+      b.onclick = () => {
+        const s = analysis[asset().id].data.suggestions[Number(b.dataset.sug)];
+        confirmSteps([{ family: s.family, op: s.op, label: s.label }], null, s.why);
+      };
+    });
+    const all = p.querySelector("#pmeApplyAll");
+    if (all)
+      all.onclick = () => {
+        const d = analysis[asset().id].data;
+        confirmSteps(
+          d.suggestions.map((s) => ({ family: s.family, op: s.op, label: s.label })),
+          null,
+          d.summary,
+        );
+      };
+  }
+
+
+
   async function interpret() {
     const t = wrap.querySelector("#pmeAsk");
     const req = (t.value || "").trim();
