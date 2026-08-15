@@ -180,8 +180,13 @@ function go(v,fromHash){
     window.setTimeout(applyPane,0);
   }
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
-  document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='reveal'?'media':v)));
-  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
+     keys like lvideo) must never leave the content area blank. */
+  let viewId = v==='reveal' ? 'media' : (v==='lvideo' ? 'media' : v);
+  if(!document.getElementById('v-'+viewId)) viewId='dash';
+  document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===viewId));
+  document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+viewId));
+
   scrollTopHard();
   try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
