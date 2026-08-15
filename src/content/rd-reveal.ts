@@ -505,9 +505,18 @@ function stepPhotos() {
   const recent = S.tree.slice(0, 6);
   let panel = "";
   if (w.sourceType === "address") {
+    const tab = w.addrTab === "url" ? "url" : "address";
     panel = `<div class="rv-srcpanel">
-      <label class="rv-f" style="display:block">Property Address<input id="rvAddr" style="display:block;width:100%;margin-top:6px" value="${esc(w.address || "")}" placeholder="3417 Hoover Dr, Holiday, FL 34691"></label>
-      <button class="btn btn-primary btn-sm" id="rvAddrGo" style="margin-top:14px">${w.addrBusy ? "Looking Up" : "Find Photos"}</button>
+      <div class="rv-seg tiny">
+        <button class="${tab === "address" ? "on" : ""}" data-addrtab="address">Address</button>
+        <button class="${tab === "url" ? "on" : ""}" data-addrtab="url">URL</button>
+      </div>
+      ${tab === "address"
+        ? `<label class="rv-f" style="display:block">Property Address<input id="rvAddr" style="display:block;width:100%;margin-top:6px" value="${esc(w.address || "")}" placeholder="3417 Hoover Dr, Holiday, FL 34691"></label>
+      <button class="btn btn-primary btn-sm" id="rvAddrGo" style="margin-top:14px">${w.addrBusy ? "Looking Up" : "Find Photos"}</button>`
+        : `<label class="rv-f" style="display:block">Listing Link<input id="rvUrl" style="display:block;width:100%;margin-top:6px" value="${esc(w.listingUrl || "")}" placeholder="https://www.zillow.com/homedetails/..."></label>
+      <button class="btn btn-primary btn-sm" id="rvUrlGo" style="margin-top:14px">${w.addrBusy ? "Reading Link" : "Read Listing"}</button>
+      <div class="rv-note sm">Listing Links Are Read As Text Only. No Photos Or Media Are Imported From A Public Listing Page.</div>`}
       ${(w.candidates || []).length ? `<div class="rv-sub">Choose A Listing</div>
       <div class="rv-cands">${w.candidates.map((c, i) => `<div class="rv-cand">
         <span class="rv-a-th" data-img="${esc(c.cover || "")}"></span>
