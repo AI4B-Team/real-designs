@@ -243,18 +243,22 @@ export const getPropertyTree = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
+    const { withRetry } = await import("./db-retry.server");
 
-    const { data, error } = await supabase
-      .from("properties")
-      .select(
-        `id, address, design_dna, created_at,
+    const { data, error } = await withRetry(async () =>
+      supabase
+        .from("properties")
+        .select(
+          `id, address, design_dna, created_at,
          projects ( id, name, finish_grade, budget_target, created_at,
            rooms ( id, name, room_type, created_at,
              versions ( id, version_no, status, before_path, after_path, created_at,
                scopes ( total_low, total_high, budget_fit ) ) ) )`,
-      )
-      .order("created_at", { ascending: false });
+        )
+        .order("created_at", { ascending: false }),
+    );
     if (error) throw new Error(error.message);
+
 
     return (data ?? []).map((p: any) => ({
       id: p.id as string,
