@@ -1507,7 +1507,19 @@ function dvHtml() {
 
     <label class="dv-field"><span>Title</span><input id="dvTitle" value="${esc(d.title)}"></label>
 
+    <div class="dv-preview">
+      <div class="dv-lab">Live Preview</div>
+      <div class="dv-stage ar-${esc(d.aspect).replace(/[^0-9x:]/g, "").replace(":", "-")}" id="dvStage" data-motion="${esc(d.motionStyle)}">
+        <div class="dv-stage-empty">Add A Scene To Preview</div>
+      </div>
+      <div class="dv-pv-foot">
+        <button class="btn btn-ghost btn-sm" id="dvPvToggle"><i data-lucide="pause"></i>Pause</button>
+        <span class="dv-pv-meta" id="dvPvMeta"></span>
+      </div>
+    </div>
+
     <div class="dv-scenes">${scenes || `<div class="rv-note">This Design Has No Usable Image.</div>`}</div>
+
     <div class="dv-add">
       <button class="btn btn-ghost btn-sm" id="dvAddScene"><i data-lucide="plus"></i>Add Another Scene</button>
       <input type="file" id="dvFiles" accept="image/*" multiple hidden>
