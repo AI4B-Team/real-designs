@@ -53,6 +53,7 @@ import { track } from "@/lib/analytics";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+import { VFX_LOOKS, VFX_CATEGORIES, lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
@@ -378,7 +379,16 @@ function newWizard(seed = {}) {
     captions: true,
     brandKitId: S.kits.find((k) => k.is_default)?.id || null,
     branding: { outro: true, watermark: false, contact: true, cta: true, scope: "final" },
-    versions: { branded: true, clean: false, disclosure: true },
+    versions: { branded: true, clean: true, disclosure: true },
+    outputMode: "both",
+    template: "clean",
+    address: "",
+    candidates: [],
+    pop: null,
+    popQ: "",
+    popCat: "featured",
+    lowModal: false,
+    lowWarned: false,
     disclosureMode: "altered",
     uploads: [],
     busy: false,
