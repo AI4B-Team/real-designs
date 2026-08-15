@@ -770,23 +770,53 @@ function popoverHtml() {
     const cat = VFX_TILE_CATEGORIES.some(([id]) => id === w.popCat) ? w.popCat : "all";
     const tiles = tilesForCat(cat);
     const active = s.vfx || "none";
-    body = `<div class="rv-pop-look">
-      <div class="rv-note sm">Apply A Visual Effect To This Clip. Color Grades Are Free. Effects That Add Content To The Frame Cost Credits And Carry A Disclosure Label.</div>
-      <div class="rv-seg tiny">${VFX_TILE_CATEGORIES.map(([id, n]) => `<button class="${cat === id ? "on" : ""}" data-lookcat="${id}">${n}</button>`).join("")}</div>
-      <div class="rv-looks">
-        ${tiles.map((t) => {
-          const lk = t.look ? lookById(t.look) : null;
-          return `<button class="rv-look ${active === t.id ? "on" : ""}" data-vfxpick="${t.id}" title="${esc(t.sub)}">
-            <span class="rv-look-th ${t.id === "none" ? "none" : ""}" data-img="${esc(s.path)}">${lk ? lookOverlayHTML(lk, s.look_amount ?? 100) : t.id === "none" ? `<i data-lucide="ban"></i>` : ""}</span>
-            <b>${esc(t.label)}</b><em>${esc(t.sub)}</em>
-            ${t.gen ? `<i class="mono">+${t.credits}</i>` : ""}
-          </button>`;
-        }).join("")}
+    const gcat = VFX_CATEGORIES.some(([id]) => id === w.popGrade) ? w.popGrade : "featured";
+    const grades = VFX_LOOKS.filter((l) => (l.cat || "featured") === gcat);
+    const amt = s.look_amount ?? 100;
+    const activeLook = s.look ? lookById(s.look) : null;
+    body = `<div class="rv-pop-two look">
+      <div class="rv-pop-side">
+        <div class="rv-pop-scroll tall">
+          <div class="rv-pop-h">Color Grades <i>Free</i></div>
+          <div class="rv-seg tiny">${VFX_CATEGORIES.map(([id, n]) => `<button class="${gcat === id ? "on" : ""}" data-gradecat="${id}">${n}</button>`).join("")}</div>
+          <div class="rv-looks">
+            <button class="rv-look ${!s.look ? "on" : ""}" data-lookpick="">
+              <span class="rv-look-th none"><i data-lucide="ban"></i></span><b>None</b><em>No Grade</em>
+            </button>
+            ${grades.map((l) => `<button class="rv-look ${s.look === l.id ? "on" : ""}" data-lookpick="${esc(l.id)}" title="${esc(l.blurb || "")}">
+              <span class="rv-look-th" data-img="${esc(s.path)}">${lookOverlayHTML(l, amt)}</span>
+              <b>${esc(l.label)}</b><em>${esc(l.blurb || "")}</em>
+            </button>`).join("")}
+          </div>
+          <div class="rv-pop-sep"></div>
+          <div class="rv-pop-h">Effects <i>Some Cost Credits</i></div>
+          <div class="rv-seg tiny">${VFX_TILE_CATEGORIES.map(([id, n]) => `<button class="${cat === id ? "on" : ""}" data-lookcat="${id}">${n}</button>`).join("")}</div>
+          <div class="rv-looks">
+            ${tiles.map((t) => {
+              const lk = t.look ? lookById(t.look) : null;
+              return `<button class="rv-look ${active === t.id ? "on" : ""}" data-vfxpick="${t.id}" title="${esc(t.sub)}">
+                <span class="rv-look-th ${t.id === "none" ? "none" : ""}" data-img="${esc(s.path)}">${lk ? lookOverlayHTML(lk, amt) : t.id === "none" ? `<i data-lucide="ban"></i>` : ""}</span>
+                <b>${esc(t.label)}</b><em>${esc(t.sub)}</em>
+                ${t.gen ? `<i class="mono">+${t.credits}</i>` : ""}
+              </button>`;
+            }).join("")}
+          </div>
+        </div>
       </div>
-      <label class="rv-f">Intensity<input type="range" id="rvLookAmt" min="10" max="100" value="${s.look_amount ?? 100}"></label>
-      <label class="rv-check"><input type="checkbox" id="rvAllLook"> Apply To All Scenes</label>
+      <div class="rv-pop-prev">
+        <div class="rv-pop-stage">
+          <div class="rv-pop-clip m-static" data-img="${esc(s.path)}">${activeLook ? lookOverlayHTML(activeLook, amt) : ""}</div>
+          <span class="rv-pop-live"><i></i>Live Preview</span>
+        </div>
+        <b>${esc(activeLook ? activeLook.label : tileById(active)?.label || "None")}</b>
+        <span>${esc(activeLook ? activeLook.blurb || "" : tileById(active)?.sub || "No Effect Applied. The Photo Renders Exactly As Uploaded.")}</span>
+        <label class="rv-f">Intensity<input type="range" id="rvLookAmt" min="10" max="100" value="${amt}"></label>
+        <label class="rv-check"><input type="checkbox" id="rvAllLook"> Apply To All Scenes</label>
+        <span class="rv-pop-tip">Color Grades Are Free. Effects That Add Content To The Frame Cost Credits And Carry A Disclosure Label.</span>
+      </div>
     </div>`;
   }
+
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${kind === "motion" ? "xwide" : "wide"}" role="dialog" aria-label="Scene options">
     <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Select VFX"}</b>${kind === "look" ? `<span class="rv-pill">Experimental</span>` : ""}<button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">${body}</div>
