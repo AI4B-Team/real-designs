@@ -411,6 +411,7 @@ export function openPush(seed?: { title?: string; body?: string; link?: string; 
       });
       close();
       toast(out.detail || "Sent To Your CRM.");
+      try { seed?.onSent?.(); } catch (_) {}
       await load();
     } catch (e: any) {
       btn.disabled = false;
