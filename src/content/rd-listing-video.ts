@@ -1122,6 +1122,8 @@ async function generate() {
         title: S.propertyLabel || "",
         transition: st.transition,
         captionsEnabled: !!st.captions,
+        music: st.music && st.music !== "none" ? st.music : null,
+        musicVolume: 0.6,
         onProgress: (pct) => {
           S.progress = (done + pct) / started.variants.length;
           const bar = hostEl()?.querySelector(".lv-bar i");
