@@ -162,7 +162,7 @@ function go(v,fromHash){
     let n=0;
     const applyPane=()=>{
       const el=document.getElementById('p-'+pane);
-      try{(window as any).__paneTick=((window as any).__paneTick||0)+1;}catch(_){} if(el && !el.classList.contains('on')) acctPane(pane);
+      try{(window as any).__paneLog=((window as any).__paneLog||[]).concat(['tick'+n+':'+(el?el.className:'none')]);}catch(_){} if(el && !el.classList.contains('on')) acctPane(pane);
       if(++n<60) window.setTimeout(applyPane,75);
     };
     applyPane();
