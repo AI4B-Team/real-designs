@@ -161,8 +161,8 @@ function go(v,fromHash){
     let n=0;
     const applyPane=()=>{
       const el=document.getElementById('p-'+pane);
-      if(el){ acctPane(pane); if(el.classList.contains('on')) return; }
-      if(++n<40) setTimeout(applyPane,75);
+      if(el && !el.classList.contains('on')) acctPane(pane);
+      if(++n<60) setTimeout(applyPane,75);
     };
     setTimeout(applyPane,0);
   }
