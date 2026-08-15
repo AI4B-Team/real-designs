@@ -310,7 +310,7 @@ function updateSearchMeta(){
     while(n){ const nx=n.nextElementSibling; n.remove(); n=nx; }
     recHead.insertAdjacentHTML('afterend', recents.length
       ? recents.map(r=>`<button class="acct-i" data-rec="${r.pi}:${r.pri}"><i data-lucide="history"></i>${r.t}</button>`).join('')
-      : '<div class="acct-i" style="pointer-events:none;color:var(--mute-2)">Nothing saved yet</div>');
+      : '<div class="acct-i" style="pointer-events:none;color:var(--mute-2)">Nothing Saved Yet</div>');
     schMenu.querySelectorAll('[data-rec]').forEach(b=>b.addEventListener('click',()=>{
       const [pi,pri]=b.dataset.rec.split(':').map(Number);
       SEL={p:pi,pr:pri}; closeSch(); go('props'); paintTree();

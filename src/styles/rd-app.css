@@ -130,7 +130,7 @@
 
 .rd-app .search{position:relative;width:100%}
 
-.rd-app .search-caret{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:999px;display:grid;place-items:center;color:var(--mute-2);background:transparent;border:0;cursor:pointer}
+.rd-app .search-caret{position:absolute;right:10px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:999px;display:grid;place-items:center;color:var(--mute-2);background:transparent;border:0;cursor:pointer}
 
 .rd-app .search-caret:hover{background:var(--paper-2,rgba(20,18,15,.06));color:var(--ink)}
 
@@ -142,7 +142,7 @@
 
 .rd-app .search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:14px;height:14px;color:var(--mute-2)}
 
-.rd-app .search input{width:100%;padding:8px 34px 8px 32px;border:1px solid var(--line);border-radius:999px;font-family:inherit;font-size:.83rem;background:var(--paper)}
+.rd-app .search input{width:100%;padding:8px 42px 8px 32px;border:1px solid var(--line);border-radius:999px;font-family:inherit;font-size:.83rem;background:var(--paper)}
 
 .rd-app .search input:focus{outline:none;border-color:var(--ink);background:var(--white)}
 
