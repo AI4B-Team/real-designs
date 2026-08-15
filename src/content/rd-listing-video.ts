@@ -1376,10 +1376,12 @@ function bind() {
       });
     }
     if (a === "back-start") {
+      stopVoicePreview();
       S.step = "start";
       return render();
     }
     if (a === "back-photos") {
+      stopVoicePreview();
       S.step = "photos";
       return render();
     }
