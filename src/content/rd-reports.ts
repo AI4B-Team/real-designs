@@ -478,10 +478,10 @@ function clientsHtml() {
     const c = S.data.clients;
     const eligible = S.data.summary.designsCreated > 0;
     const kv = [
-      ["Links Shared", c.shared],
-      ["Presentations Viewed", c.viewed],
-      ["Changes Requested", c.changes],
-      ["Presentations Approved", c.approved],
+      ["Shared", c.shared],
+      ["Viewed", c.viewed],
+      ["Changes", c.changes],
+      ["Approved", c.approved],
     ];
     return `<div class="rp-sec-b">
       <div class="rp-kv" style="grid-template-columns:repeat(4,minmax(0,1fr))">
