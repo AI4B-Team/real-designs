@@ -36,8 +36,91 @@ const PROVIDERS: Array<{ id: string; name: string; icon: string; blurb: string; 
   },
 ];
 
-const S: any = { data: null, loading: true, busy: "", picked: "", error: "" };
+const S: any = { data: null, loading: true, busy: "", picked: "", error: "", admin: false, signups: null };
 let GO: any = null;
+
+/** Back office: signup questionnaire answers, admin only. */
+function signupPanel() {
+  const d = S.signups || { rows: [], total: 0, completed: 0, optIn: 0, sources: [] };
+  const rows = d.rows || [];
+  return `
+  <div class="card" style="margin-top:16px">
+    <div class="card-h"><div><h3>Signup Questionnaire</h3><div class="sub">${d.total} Member${d.total === 1 ? "" : "s"} · ${d.completed} Completed · ${d.optIn} Marketing Opt-In</div></div>
+      <button class="btn btn-ghost btn-xs" data-sigcsv><i data-lucide="download"></i>Export CSV</button></div>
+    <div class="card-b" style="padding-top:4px">
+      ${
+        d.sources && d.sources.length
+          ? `<div class="crm-meta" style="margin-bottom:10px">${d.sources
+              .slice(0, 6)
+              .map((s: any) => `<div><span>${esc(s[0])}</span><b class="mono">${s[1]}</b></div>`)
+              .join("")}</div>`
+          : ""
+      }
+      ${
+        rows.length
+          ? `<table><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>Role</th><th>Heard Via</th><th>Listings/Year</th><th style="text-align:right">Action</th></tr></thead><tbody>
+              ${rows
+                .slice(0, 100)
+                .map(
+                  (r: any) => `<tr><td><b>${esc(r.full_name || "Unnamed")}</b>${r.company ? `<span class="sub"> · ${esc(r.company)}</span>` : ""}</td>
+                  <td class="mono">${esc(r.email || "—")}</td><td class="mono">${esc(r.phone || "—")}</td>
+                  <td>${esc(r.role || "—")}</td><td>${esc(r.how_heard || "—")}${r.how_heard_detail ? ` · ${esc(r.how_heard_detail)}` : ""}</td>
+                  <td class="mono">${esc(r.listings_per_year || "—")}</td>
+                  <td style="text-align:right">${
+                    r.crm_pushed_at
+                      ? `<span class="pill p-ok">In CRM</span>`
+                      : `<button class="fb-link" data-sigpush="${esc(r.user_id)}">Send To CRM</button>`
+                  }</td></tr>`,
+                )
+                .join("")}
+            </tbody></table>`
+          : `<p class="mono" style="color:var(--mute-2)">No questionnaire answers yet.</p>`
+      }
+    </div>
+  </div>`;
+}
+
+function signupCsv() {
+  const rows = (S.signups?.rows || []) as any[];
+  const cols = ["full_name", "email", "phone", "company", "role", "how_heard", "how_heard_detail", "listings_per_year", "team_size", "primary_goal", "marketing_opt_in", "created_at"];
+  const cell = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const csv = [cols.join(","), ...rows.map((r) => cols.map((c) => cell(r[c])).join(","))].join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "real-designs-signups.csv";
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+
+async function pushSignup(userId: string) {
+  const r = (S.signups?.rows || []).find((x: any) => x.user_id === userId);
+  if (!r) return;
+  if (!(S.data?.connections || []).length) {
+    toast("Connect A CRM First.");
+    return;
+  }
+  openPush({
+    title: `New Signup — ${r.full_name || r.email || "Member"}`,
+    body: [
+      r.email ? `Email: ${r.email}` : "",
+      r.phone ? `Phone: ${r.phone}` : "",
+      r.company ? `Company: ${r.company}` : "",
+      r.role ? `Role: ${r.role}` : "",
+      r.how_heard ? `Heard Via: ${r.how_heard}${r.how_heard_detail ? ` (${r.how_heard_detail})` : ""}` : "",
+      r.listings_per_year ? `Listings Per Year: ${r.listings_per_year}` : "",
+      r.primary_goal ? `Goal: ${r.primary_goal}` : "",
+      r.marketing_opt_in ? "Marketing Opt-In: Yes" : "Marketing Opt-In: No",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  });
+  try {
+    await markSignupPushed({ data: { userId } });
+    if (S.signups) r.crm_pushed_at = new Date().toISOString();
+  } catch (_) {}
+}
+
 
 function esc(s: any) {
   return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
