@@ -1607,9 +1607,12 @@ function paintBatch(){
   }
   const keep=sel.value;
   sel.innerHTML=PROP_TREE.map(p=>`<option value="${p.id}">${p.address}</option>`).join('');
-  if(keep) sel.value=keep;
-  const prop=PROP_TREE.find(p=>p.id===sel.value)||PROP_TREE[0];
+  const roomsOf=p=>p.projects.reduce((n,pr)=>n+pr.rooms.length,0);
+  const photosOf=p=>p.projects.reduce((n,pr)=>n+pr.rooms.filter(r=>!!r.before_path).length,0);
+  const best=[...PROP_TREE].sort((a,b)=>(photosOf(b)-photosOf(a))||(roomsOf(b)-roomsOf(a)))[0];
+  const prop=(keep&&PROP_TREE.find(p=>p.id===keep))||best||PROP_TREE[0];
   sel.value=prop.id;
+  if(sel.dataset.selSync!==prop.id){ sel.dataset.selSync=prop.id; sel.dispatchEvent(new Event('change',{bubbles:true})); }
   const rooms=[]; prop.projects.forEach(pr=>pr.rooms.forEach(r=>rooms.push(r)));
   BATCH_ROOMS=rooms.filter(r=>!!r.before_path);
   const sub=document.getElementById('batchSub');
@@ -1624,7 +1627,11 @@ function paintBatch(){
         return `<div class="rowi" data-broom="${r.id}"><div class="rowt"><b>${r.name}</b><span data-bmsg>${ready?(done?('v'+(r.version_no||1)+' saved'):'ready to stage'):'no photo on file'}</span></div>
           <span class="pill ${ready?(done?'p-ok':'p-gray'):'p-amb'}" data-bpill>${ready?(done?'Designed':'Queued'):'No Photo'}</span></div>`;
       }).join('')
-    : '<p style="font-size:.79rem;color:var(--mute-2)">No Rooms On This Property Yet.</p>';
+    : `<div style="text-align:center;padding:22px 10px">
+        <p style="font-size:.82rem;color:var(--mute-2);margin:0 0 12px">This property has no room photos yet. Upload a shoot and every room lands here, ready to batch.</p>
+        <button class="btn btn-dark btn-xs" data-propupload="1"><i data-lucide="upload-cloud"></i>Upload Property Photos</button>
+      </div>`;
+  if(!rooms.length) lucide.createIcons();
 }
 const batchProp=document.getElementById('batchProp');
 if(batchProp) batchProp.addEventListener('change',paintBatch);
