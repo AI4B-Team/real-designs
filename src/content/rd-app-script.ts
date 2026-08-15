@@ -222,7 +222,7 @@ try{ mountUploadDock(go); }catch(_){}
     const target=document.getElementById(want);
     if(target && !target.classList.contains('on')) go(v,true);
     /* the account markup can remount, so keep the deep linked pane selected */
-    if(pane){ const el=document.getElementById('p-'+pane); if(el && !el.classList.contains('on')) acctPane(pane); }
+    if(pane){ try{ const el=document.getElementById('p-'+pane); if(el && !el.classList.contains('on')) acctPane(pane); }catch(_){} }
     if(++tries<110) setTimeout(tick,75);
   };
   tick();
