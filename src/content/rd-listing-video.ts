@@ -1499,9 +1499,17 @@ function bind() {
     if (a === "generate") {
       stopVoicePreview();
       stopMusic();
+      if (!S.credits) {
+        try {
+          S.credits = await getMyCredits();
+        } catch (_) {
+          S.credits = null;
+        }
+      }
       S.confirm = true;
       return render();
     }
+
     if (a === "cancel-gen") {
       S.confirm = false;
       return render();
