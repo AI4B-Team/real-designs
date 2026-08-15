@@ -516,7 +516,7 @@ export async function openPhotoEditor(ctx) {
     if (state && state.loading) {
       body = `<div class="pme-review"><b>Analyzing</b><span>Reading the photo for exposure, framing, clutter and staging opportunities.</span></div>`;
     } else if (state && state.error) {
-      const gatedA = /credit|free designs|paid plan|upgrade/i.test(String(state.error));
+      const gatedA = isPlanBlocked(state.error);
       body = `<div class="pme-review err"><b>${gatedA ? "Upgrade To Run This Review" : "Analysis Failed"}</b><span>${esc(state.error)}</span>${
         gatedA ? `<div class="pme-review-a"><button class="btn btn-primary btn-xs" id="pmeAnUpg">Upgrade Plan</button></div>` : ""
       }</div>`;
