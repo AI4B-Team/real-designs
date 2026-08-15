@@ -396,7 +396,7 @@ function openUpgrade(m) {
 
 function actions(m, g) {
   if (m.status === "failed" && planBlocked(m))
-    return `<button class="btn btn-primary btn-xs" data-upg="${m.id}" style="flex:1"><i data-lucide="zap"></i>Upgrade Plan</button>
+    return `<button class="btn btn-primary btn-xs" data-upg="${m.id}" style="flex:1"><i data-lucide="zap"></i>Upgrade</button>
       <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   if (m.status === "failed")
     return `<button class="btn btn-ghost btn-xs" data-retry="${m.id}" style="flex:1"><i data-lucide="rotate-ccw"></i>Retry</button>
@@ -416,7 +416,7 @@ function moreItems(m) {
   if (m.status === "failed")
     return [
       ...(planBlocked(m)
-        ? [{ icon: "zap", label: "Upgrade Plan", fn: () => openUpgrade(m) }]
+        ? [{ icon: "zap", label: "Upgrade", fn: () => openUpgrade(m) }]
         : [{ icon: "rotate-ccw", label: "Retry", fn: () => retry(m) }]),
       { icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
       { icon: "trash-2", label: "Remove", danger: true, fn: () => remove(m) },
@@ -909,7 +909,7 @@ async function openDetail(m, opts) {
 /** Primary actions in the drawer differ by asset type and status. */
 function drawerActions(m, g, proc) {
   if (m.status === "failed" && planBlocked(m))
-    return `<button class="btn btn-primary btn-sm" data-upg><i data-lucide="zap"></i>Upgrade Plan</button>
+    return `<button class="btn btn-primary btn-sm" data-upg><i data-lucide="zap"></i>Upgrade</button>
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
   if (m.status === "failed")
     return `<button class="btn btn-primary btn-sm" data-retry><i data-lucide="rotate-ccw"></i>Retry</button>
