@@ -575,7 +575,17 @@ function setupHtml() {
       <p>${scenes} scenes • ${esc(S.propertyLabel || "Standalone Project")}</p>
     </div>
 
+    <div class="lv-preview">
+      <span class="lv-lab">Live Preview</span>
+      <div class="lv-stage ar-${esc(st.format).replace(":", "-")}" id="lvStage" data-motion="${esc(st.motion)}"><div class="lv-stage-empty">Include A Photo To Preview</div></div>
+      <div class="lv-pv-foot">
+        <button type="button" class="btn btn-ghost btn-sm" data-a="pvtoggle"><i data-lucide="${lvPvPaused ? "play" : "pause"}"></i>${lvPvPaused ? "Play" : "Pause"}</button>
+        <span class="lv-pv-meta" id="lvPvMeta"></span>
+      </div>
+    </div>
+
     <div class="lv-set">
+
       <div class="lv-block"><span class="lv-lab">Video Type</span>${seg("type", LV_TYPES.map((t) => [t[0], t[1], t[2]]), st.type)}</div>
       <div class="lv-block"><span class="lv-lab">Video Format</span>${seg("format", FORMATS, st.format)}
         <p class="lv-note">${st.format === "9:16" ? "Recommended for social media." : st.format === "16:9" ? "Recommended for MLS and websites." : "Recommended for feed posts and email."}</p></div>
