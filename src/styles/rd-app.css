@@ -220,7 +220,7 @@
 
 .rd-app .pill svg{width:11px;height:11px}
 
-.rd-app .p-ok{background:var(--ok-tint);color:var(--ok)}
+.rd-app .p-ok,.rd-app .p-grn{background:var(--ok-tint);color:var(--ok)}
 
 .rd-app .p-red{background:var(--red-tint);color:var(--red)}
 
