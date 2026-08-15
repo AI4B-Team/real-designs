@@ -840,7 +840,10 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
   }
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
-  const narrationUrl = await buildNarration(w.narration, w.script || defaultScript(), w.voice);
+  const avTitle = w.title || w.propertyLabel || "";
+  const narrationUrl = await buildNarration(w.narration, avatarScript(w.avatar, w.script || defaultScript(), avTitle), w.voice);
+  const avatar = avatarRenderOption(w.avatar, avTitle);
+
 
   let done = 0;
   for (const v of variants) {
