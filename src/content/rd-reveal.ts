@@ -685,8 +685,9 @@ function motionLabel(s) {
     const e = IMMERSIVE_EFFECTS.find(([id]) => id === (s.immersive_effect || "light"));
     return e ? e[1] : "Immersive";
   }
-  const m = STANDARD_MOTIONS.find(([id]) => id === (s.motion || "auto"));
-  return m ? m[1] : "Automatic";
+  if ((s.motion || "auto") === "auto") return "Auto";
+  const m = STANDARD_MOTIONS.find(([id]) => id === s.motion);
+  return m ? m[1] : "Auto";
 }
 
 function sceneCard(s, i) {
