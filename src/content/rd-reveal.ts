@@ -759,7 +759,7 @@ function stepEdit() {
   </div>
   <div class="rv-meta mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</div>
   ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
-  <div class="rv-strip">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
+  <div class="rv-photostrip">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext" ${w.formats.length ? "" : "disabled"}>Continue</button></div>`;
 }
 
@@ -850,6 +850,15 @@ function stepBrand() {
   <details class="rv-acc" open><summary>Template</summary>
     <div class="rv-seg wrap">${[["none", "No Intro Or Outro"], ["clean", "Clean Title Card"], ["editorial", "Editorial"], ["bold", "Bold Listing"]]
       .map(([id, n]) => `<button class="${(w.template || "clean") === id ? "on" : ""}" data-tpl="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-sub">Speed</div>
+    <div class="rv-seg">${[["full", "Slow"], ["standard", "Medium"], ["quick", "Fast"]]
+      .map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-sub">Transitions</div>
+    <div class="rv-seg wrap">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"]]
+      .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
+    ${w.scenes.some((s) => s.scene_type === "before_after") ? `<div class="rv-sub">Before &amp; After Reveal</div>
+    <div class="rv-seg wrap">${[["match", "Match Frame"], ["slider", "Slider Reveal"], ["wipe", "Wipe"], ["fade", "Fade"]]
+      .map(([id, n]) => `<button class="${w.baTransition === id || (!w.baTransition && id === "match") ? "on" : ""}" data-ba="${id}">${n}</button>`).join("")}</div>` : ""}
   </details>
 
   <details class="rv-acc"><summary>Brand Kit</summary>
