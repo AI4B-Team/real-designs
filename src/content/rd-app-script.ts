@@ -154,7 +154,7 @@ const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing
 let __allowReveal=0;
 try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
 try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
-function go(v,fromHash){
+function go(v,fromHash){ console.log('RDGO',v,fromHash);
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
     /* the account markup can mount after this call, so keep trying briefly */
