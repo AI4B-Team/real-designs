@@ -748,13 +748,23 @@ function immersiveCount() {
 }
 
 const MOTION_COPY = {
-  auto: "Automatic picks the camera move that suits each room.",
+  auto: "Auto picks the camera move that suits each room, based on what is in the frame.",
   push: "Push In moves the camera slowly toward the room, drawing the viewer inward.",
   pull: "Pull Out starts tight and widens to reveal the whole space.",
   pan_left: "Pan Left glides across the room from right to left.",
   pan_right: "Pan Right glides across the room from left to right.",
   orbit_left: "Orbit Left rotates the camera counter clockwise around the focal point.",
   orbit_right: "Orbit Right rotates the camera clockwise around the focal point, creating a sense of depth.",
+  tilt_up: "Tilt Up sweeps the frame upward, good for tall ceilings and entryways.",
+  tilt_down: "Tilt Down settles the frame downward, good for stairs and open floor plans.",
+  dolly_left: "Dolly Left tracks sideways to the left while easing in.",
+  dolly_right: "Dolly Right tracks sideways to the right while easing in.",
+  crane_up: "Crane Up lifts and widens at the same time for an opening shot.",
+  crane_down: "Crane Down descends into the room for a closing shot.",
+  diag_in: "Diagonal In pushes toward the upper corner of the frame.",
+  diag_out: "Diagonal Out drifts back and away from the focal point.",
+  drift_in: "Slow Drift In is a barely there push, best under narration.",
+  drift_out: "Slow Drift Out is a barely there pull, best under narration.",
   static: "Static holds the frame still, letting the design speak for itself.",
   curtains: "Curtains Drifting adds a soft fabric movement near windows while the room stays exactly as designed.",
   fire: "Fireplace Flicker animates the flame and its light spill only.",
@@ -773,7 +783,7 @@ const MOTION_PREVIEW = {
 function motionName(id) {
   const all = [...STANDARD_MOTIONS, ...IMMERSIVE_EFFECTS, ...EXTERIOR_EFFECTS];
   const hit = all.find(([i]) => i === id);
-  return hit ? (id === "auto" ? "Automatic, Recommended" : hit[1]) : "Automatic, Recommended";
+  return hit ? (id === "auto" ? "Auto, Recommended" : hit[1]) : "Auto, Recommended";
 }
 
 const CROPS = [["center", "Center"], ["top", "Top"], ["bottom", "Bottom"]];
@@ -831,8 +841,11 @@ function popoverHtml() {
         <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Search Camera Motions">
         <div class="rv-pop-scroll">
           <div class="rv-pop-h">Camera Moves</div>
+          ${rows.some(([id]) => id === "auto") ? `<button class="rv-pop-auto ${s.motion_level !== "immersive" && (s.motion || "auto") === "auto" ? "on" : ""}" data-motionpick="auto" data-hover="auto">
+            <span><b>Auto, Recommended</b><em>We Pick The Best Move For Each Room</em></span><i data-lucide="sparkles"></i>
+          </button>` : ""}
           <div class="rv-pop-grid">
-            ${rows.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && (s.motion || "auto") === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${id === "auto" ? "Automatic, Recommended" : n}</button>`).join("")}
+            ${rows.filter(([id]) => id !== "auto").map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && s.motion === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${esc(n)}</button>`).join("")}
           </div>
           ${imms.length ? `<div class="rv-pop-sep"></div>
           <div class="rv-pop-h">Immersive Movement <i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE} Each</i></div>
