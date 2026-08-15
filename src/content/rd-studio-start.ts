@@ -19,6 +19,7 @@ import {
   type SourceType,
 } from "@/lib/source-detect.functions";
 import { getStudioStyle, clearStudioStyle, applyStudioStyleToControls, type StudioStyleChoice } from "@/lib/studio-style";
+import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 
 type Method = "upload" | "describe" | "property";
 
@@ -1029,7 +1030,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       ctx.track("concept_generated", { space: state.space });
       await ctx.showConcept(r.image, "Concept");
     } catch (err: any) {
-      ctx.showAlert("Could not create that concept. " + ((err && err.message) || "Try again in a moment."));
+      if (isPlanBlocked(err)) openUpgrade(err);
+      else ctx.showAlert("Could not create that concept. " + ((err && err.message) || "Try again in a moment."));
       if (btn) {
         btn.textContent = "Generate Concept";
       }
