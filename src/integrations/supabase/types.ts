@@ -255,6 +255,145 @@ export type Database = {
         }
         Relationships: []
       }
+      crm_connections: {
+        Row: {
+          account_name: string | null
+          auto_push: boolean
+          created_at: string
+          credential: string
+          endpoint: string | null
+          id: string
+          label: string | null
+          last_error: string | null
+          last_synced_at: string | null
+          provider: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          auto_push?: boolean
+          created_at?: string
+          credential: string
+          endpoint?: string | null
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          account_name?: string | null
+          auto_push?: boolean
+          created_at?: string
+          credential?: string
+          endpoint?: string | null
+          id?: string
+          label?: string | null
+          last_error?: string | null
+          last_synced_at?: string | null
+          provider?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      crm_contacts: {
+        Row: {
+          connection_id: string
+          created_at: string
+          email: string | null
+          external_id: string
+          id: string
+          last_activity_at: string | null
+          name: string | null
+          phone: string | null
+          stage: string | null
+          tags: string[]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          connection_id: string
+          created_at?: string
+          email?: string | null
+          external_id: string
+          id?: string
+          last_activity_at?: string | null
+          name?: string | null
+          phone?: string | null
+          stage?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          connection_id?: string
+          created_at?: string
+          email?: string | null
+          external_id?: string
+          id?: string
+          last_activity_at?: string | null
+          name?: string | null
+          phone?: string | null
+          stage?: string | null
+          tags?: string[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_contacts_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "crm_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_sync_log: {
+        Row: {
+          action: string
+          connection_id: string | null
+          created_at: string
+          detail: string | null
+          id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          connection_id?: string | null
+          created_at?: string
+          detail?: string | null
+          id?: string
+          status: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          connection_id?: string | null
+          created_at?: string
+          detail?: string | null
+          id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "crm_sync_log_connection_id_fkey"
+            columns: ["connection_id"]
+            isOneToOne: false
+            referencedRelation: "crm_connections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       feedback: {
         Row: {
           attachment_path: string | null

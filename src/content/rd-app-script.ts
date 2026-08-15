@@ -99,6 +99,7 @@ import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo } f
 import { mountListingVideo, openListingVideo } from "@/content/rd-listing-video";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
+import { mountCrm } from "@/content/rd-crm";
 import * as RDMediaLib from "@/lib/media-library";
 try{ (window as any).rdMedia=RDMediaLib; }catch(_){}
 import { getSubscription, changePlan, setCancelAtPeriodEnd, withdrawPlanRequest, listBillingEvents } from "@/lib/subscription.functions";
@@ -140,6 +141,7 @@ studio:['Studio','Price a room and save it to a project'],explore:['Explore','Di
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 reports:['Reports','Portfolio rollup, budget fit and credit spend'],
+crm:['CRM Sync','Connect your CRM, sync contacts and push finished work'],
 team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations'],
 account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
@@ -164,6 +166,7 @@ function go(v,fromHash){
 
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
+  if(v==='crm'){ try{ mountCrm(go); }catch(_){} }
   if(!titles[v]) return;
   const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
   const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
