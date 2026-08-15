@@ -153,6 +153,16 @@ const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing
 let __allowReveal=0;
 try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
 try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
+/* Views mount their content asynchronously, and the browser's scroll
+   anchoring pulls the page back to roughly where it was once that content
+   lands. Pinning the top on the next few frames keeps every page open at
+   the top the way a fresh page load would. */
+function scrollTopHard(){
+  const top=()=>{ try{ window.scrollTo(0,0); document.documentElement.scrollTop=0; if(document.body) document.body.scrollTop=0; }catch(_){} };
+  top();
+  try{ requestAnimationFrame(()=>{ top(); requestAnimationFrame(top); }); }catch(_){}
+  [60,160,320,600].forEach(ms=>window.setTimeout(top,ms));
+}
 function go(v,fromHash){
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
@@ -172,6 +182,7 @@ function go(v,fromHash){
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='reveal'?'media':v)));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+  scrollTopHard();
   try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
@@ -190,7 +201,7 @@ function go(v,fromHash){
       if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
     }catch(_){}
   }
-  window.scrollTo({top:0});
+  scrollTopHard();
 }
 
 /* deep links: /app#v-scope, /app#scope and browser back/forward */

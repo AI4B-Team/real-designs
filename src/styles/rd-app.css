@@ -116,7 +116,7 @@
 
 
 /* main */
-.rd-app .main{min-width:0;display:flex;flex-direction:column}
+.rd-app .main{min-width:0;display:flex;flex-direction:column;overflow-anchor:none}
 
 .rd-app .topbar{height:58px;border-bottom:1px solid var(--line);background:var(--white);display:flex;align-items:center;gap:14px;padding:0 22px;position:sticky;top:0;z-index:20}
 
