@@ -345,13 +345,24 @@ async function withAuthSeed(row: any) {
   return seed;
 }
 
-/** Opens the questionnaire only when this member has never answered it. */
+/** Loads saved answers merged with the account profile, for the welcome pages. */
+export async function loadSurveySeed() {
+  try {
+    const out: any = await getSignupSurvey();
+    return { row: out?.row || null, seed: await withAuthSeed(out?.row) };
+  } catch (_) {
+    return { row: null, seed: await withAuthSeed(null) };
+  }
+}
+
+/** Sends new members to the full-page questionnaire before the app. */
 export async function maybeOpenSignupSurvey() {
   try {
+    if (location.pathname.startsWith("/welcome")) return;
     const out: any = await getSignupSurvey();
     const row = out?.row;
     if (row && (row.completed || row.skipped)) return;
-    openSignupSurvey(await withAuthSeed(row));
+    location.assign("/welcome");
   } catch (_) {
     /* never block the app on the questionnaire */
   }
@@ -359,10 +370,6 @@ export async function maybeOpenSignupSurvey() {
 
 /** Reopen for editing from the account area. */
 export async function editSignupSurvey() {
-  try {
-    const out: any = await getSignupSurvey();
-    openSignupSurvey(await withAuthSeed(out?.row));
-  } catch (_) {
-    openSignupSurvey(await withAuthSeed(null));
-  }
+  location.assign("/welcome?edit=1");
 }
+
