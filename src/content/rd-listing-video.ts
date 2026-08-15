@@ -706,6 +706,18 @@ function setupHtml() {
 }
 
 function confirmHtml() {
+  const block = creditBlock();
+  if (block)
+    return `<div class="lv-modal" role="dialog" aria-label="Upgrade required">
+    <div class="lv-modal-in">
+      <b>Upgrade To Render Video</b>
+      <p>${block}</p>
+      <div class="lv-modal-a">
+        <button class="btn btn-ghost" data-a="cancel-gen">Cancel</button>
+        <a class="btn btn-primary" href="/app/account/billing">View Plans</a>
+      </div>
+    </div>
+  </div>`;
   return `<div class="lv-modal" role="dialog" aria-label="Confirm video generation">
     <div class="lv-modal-in">
       <b>Generate This Video?</b>
@@ -717,6 +729,7 @@ function confirmHtml() {
     </div>
   </div>`;
 }
+
 
 
 /* Map friendly voice names to gateway voices. */
