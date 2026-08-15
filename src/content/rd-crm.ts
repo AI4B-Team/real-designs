@@ -114,11 +114,13 @@ async function pushSignup(userId: string) {
     ]
       .filter(Boolean)
       .join("\n"),
+    onSent: async () => {
+      try {
+        await markSignupPushed({ data: { userId } });
+        if (S.signups) r.crm_pushed_at = new Date().toISOString();
+      } catch (_) {}
+    },
   });
-  try {
-    await markSignupPushed({ data: { userId } });
-    if (S.signups) r.crm_pushed_at = new Date().toISOString();
-  } catch (_) {}
 }
 
 
@@ -261,7 +263,7 @@ function card(p: any) {
               <div><span>Last Sync</span><b class="mono">${esc(fmt(c.last_synced_at))}</b></div>
              </div>
              ${c.last_error ? `<div class="note"><i data-lucide="alert-triangle"></i><span>${esc(c.last_error)}</span></div>` : ""}
-             <label class="crm-toggle"><input type="checkbox" data-auto="${c.id}" ${c.auto_push ? "checked" : ""}> Push New Videos And Presentations Automatically</label>
+             <label class="crm-toggle"><input type="checkbox" data-auto="${c.id}" ${c.auto_push ? "checked" : ""}> Push New Videos, Presentations And Signups Automatically</label>
              <div class="crm-actions">
                ${p.id !== "webhook" ? `<button class="btn btn-primary btn-xs" data-sync="${c.id}" ${S.busy === c.id ? "disabled" : ""}><i data-lucide="refresh-cw"></i>${S.busy === c.id ? "Syncing…" : "Sync Contacts"}</button>` : ""}
                <button class="btn btn-ghost btn-xs" data-test="${p.id}"><i data-lucide="key-round"></i>Replace Key</button>
@@ -362,7 +364,7 @@ async function auto(id: string, on: boolean) {
 }
 
 /** Send a link (video, presentation, design) into the CRM timeline. */
-export function openPush(seed?: { title?: string; body?: string; link?: string }) {
+export function openPush(seed?: { title?: string; body?: string; link?: string; onSent?: () => void }) {
   const conns = S.data?.connections || [];
   const contacts = S.data?.contacts || [];
   if (!conns.length) {
@@ -411,6 +413,7 @@ export function openPush(seed?: { title?: string; body?: string; link?: string }
       });
       close();
       toast(out.detail || "Sent To Your CRM.");
+      try { seed?.onSent?.(); } catch (_) {}
       await load();
     } catch (e: any) {
       btn.disabled = false;
