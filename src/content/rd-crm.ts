@@ -362,7 +362,7 @@ async function auto(id: string, on: boolean) {
 }
 
 /** Send a link (video, presentation, design) into the CRM timeline. */
-export function openPush(seed?: { title?: string; body?: string; link?: string }) {
+export function openPush(seed?: { title?: string; body?: string; link?: string; onSent?: () => void }) {
   const conns = S.data?.connections || [];
   const contacts = S.data?.contacts || [];
   if (!conns.length) {
