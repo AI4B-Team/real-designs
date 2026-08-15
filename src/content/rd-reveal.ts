@@ -492,8 +492,16 @@ function stepPhotos() {
     panel = recent.length
       ? `<div class="rv-sub">Recent Properties</div>
       <div class="rv-recents">${recent
-        .map((p) => `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}"><i data-lucide="home"></i><b>${esc(p.address)}</b><span class="mono">${(p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0)} Rooms</span></button>`)
+        .map((p) => {
+          /* Several unsorted properties can share the same label, so date
+             stamp the duplicates to keep the picker unambiguous. */
+          const dupe = recent.filter((q) => q.address === p.address).length > 1;
+          const when = p.created_at ? new Date(p.created_at).toLocaleDateString() : "";
+          const label = dupe && when ? `${p.address} · ${when}` : p.address;
+          return `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}"><i data-lucide="home"></i><b>${esc(label)}</b><span class="mono">${(p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0)} Rooms</span></button>`;
+        })
         .join("")}</div>`
+
       : `<div class="rv-note">No Properties Yet. Upload Photos To Start.</div>`;
   }
 
