@@ -2008,7 +2008,6 @@ export async function openVideoDetail(id, tab = "video") {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
-  else await loadLibrary();
   S.detailTab = tab;
   await openDetail(id);
 }
