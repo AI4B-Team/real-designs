@@ -397,3 +397,54 @@
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .rd-app .rv-pop-two.look .rv-pop-prev .rv-f { display: grid; gap: 6px; font-size: 12px; font-weight: 600; }
 .rd-app .rv-pop-two.look .rv-pop-clip { animation: none; transform: scale(1.02); }
+
+/* ---- Step 4 templates, toggles, music library ---- */
+.rd-app .rv-seg.tiny button { flex: 0 0 auto; padding: 6px 12px; font-size: .76rem; border-radius: 999px; }
+.rd-app .rv-tpls { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 12px; }
+.rd-app .rv-tpl { border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 8px; display: grid; gap: 5px; cursor: pointer; text-align: left; }
+.rd-app .rv-tpl.on { border-color: var(--red, #c00); box-shadow: inset 0 0 0 1px var(--red, #c00); }
+.rd-app .rv-tpl b { font-size: .8rem; }
+.rd-app .rv-tpl em { font-style: normal; font-size: .68rem; color: var(--mute-2); }
+.rd-app .rv-tpl-th { display: grid; place-content: center; gap: 4px; aspect-ratio: 16/9; border-radius: 8px; background: #f4f4f4; border: 1px solid var(--line); }
+.rd-app .rv-tpl-th i { display: block; width: 54px; height: 7px; border-radius: 2px; background: #111; }
+.rd-app .rv-tpl-th em { display: block; width: 34px; height: 5px; border-radius: 2px; background: #b9b9b9; }
+.rd-app .rv-tpl-th.t-plain i, .rd-app .rv-tpl-th.t-plain em { background: #dcdcdc; }
+.rd-app .rv-tpl-th.t-bold { background: var(--red, #c00); }
+.rd-app .rv-tpl-th.t-bold i, .rd-app .rv-tpl-th.t-bold em { background: #fff; }
+.rd-app .rv-tpl-th.t-dark, .rd-app .rv-tpl-th.t-agentb { background: #111; }
+.rd-app .rv-tpl-th.t-dark i, .rd-app .rv-tpl-th.t-agentb i { background: #fff; }
+.rd-app .rv-tpl-th.t-dark em, .rd-app .rv-tpl-th.t-agentb em { background: #777; }
+.rd-app .rv-tpl-th.t-bar { align-content: end; justify-items: start; padding: 8px; }
+.rd-app .rv-tpl-th.t-split { justify-items: start; padding: 8px; background: linear-gradient(90deg, #d8d8d8 0 44%, #f4f4f4 44%); }
+.rd-app .rv-tpl-th.t-stamp i { border: 2px solid #111; height: 20px; width: 62px; background: none; }
+.rd-app .rv-tpl-th.t-kicker i { width: 26px; background: var(--red, #c00); }
+.rd-app .rv-tog { display: grid; gap: 8px; margin-top: 10px; }
+.rd-app .rv-tog-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px 13px; }
+.rd-app .rv-tog-row span { display: grid; gap: 2px; }
+.rd-app .rv-tog-row b { font-size: .84rem; }
+.rd-app .rv-tog-row em { font-style: normal; font-size: .72rem; color: var(--mute-2); }
+.rd-app .rv-switch { position: relative; width: 40px; height: 22px; flex: 0 0 auto; }
+.rd-app .rv-switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
+.rd-app .rv-switch i { display: block; width: 40px; height: 22px; border-radius: 999px; background: #dcdcdc; transition: background .15s; }
+.rd-app .rv-switch i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.rd-app .rv-switch input:checked + i { background: var(--red, #c00); }
+.rd-app .rv-switch input:checked + i::after { transform: translateX(18px); }
+.rd-app .rv-music-top { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.rd-app .rv-music-search { flex: 1 1 200px; display: flex; align-items: center; gap: 7px; border: 1px solid var(--line); border-radius: 999px; padding: 0 12px; background: #fff; }
+.rd-app .rv-music-search i { width: 14px; height: 14px; color: var(--mute-2); }
+.rd-app .rv-music-search input { flex: 1; border: 0; outline: none; background: none; font: inherit; font-size: .82rem; padding: 8px 0; }
+.rd-app .rv-tracks { margin-top: 8px; display: grid; gap: 4px; max-height: 260px; overflow: auto; }
+.rd-app .rv-track { display: flex; align-items: center; gap: 10px; border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 7px 10px; cursor: pointer; }
+.rd-app .rv-track b { flex: 1; font-size: .82rem; font-weight: 500; }
+.rd-app .rv-track span { font-size: .72rem; color: var(--mute-2); }
+.rd-app .rv-track.on { border-color: var(--red, #c00); }
+.rd-app .rv-track em { color: var(--red, #c00); display: flex; }
+.rd-app .rv-track em i { width: 15px; height: 15px; }
+.rd-app .rv-nameedit { border: 1px solid var(--red, #c00); border-radius: 6px; padding: 2px 6px; font: inherit; font-size: .8rem; width: 100%; }
+.rd-app .rv-editname { cursor: text; }
+.rd-app .rv-editname:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+.rd-app .rv-logos { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.rd-app .rv-logo { border: 1px solid var(--line); border-radius: 10px; background: #fff; padding: 8px; display: grid; gap: 6px; cursor: pointer; }
+.rd-app .rv-logo.on { border-color: var(--red, #c00); }
+.rd-app .rv-noimg { display: grid; place-items: center; }
+.rd-app .rv-noimg-i { width: 18px; height: 18px; color: var(--mute-2); }

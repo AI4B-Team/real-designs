@@ -13,6 +13,8 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
+import { FLAG_LABEL, recommendations, missingSpaces } from "@/lib/media-analysis";
+import { identifyListing } from "@/lib/listing-source";
 import {
   listVideos as _listVideos,
   getVideo as _getVideo,
@@ -109,25 +111,49 @@ const LENGTHS = [
 
 
 const MUSIC = [
-  { id: "none", group: "No Music", name: "No Music" },
-  { id: "modern", group: "Modern", name: "Clean Modern" },
-  { id: "luxury", group: "Luxury", name: "Quiet Luxury" },
-  { id: "warm", group: "Warm", name: "Warm Home" },
-  { id: "cinematic", group: "Cinematic", name: "Cinematic Reveal" },
-  { id: "upbeat", group: "Upbeat", name: "Upbeat Listing" },
-  { id: "minimal", group: "Minimal", name: "Minimal Pulse" },
+  { id: "none", group: "No Music", genre: "all", name: "No Music", dur: "0:00" },
+  { id: "modern", group: "Modern", genre: "pop", name: "Clean Modern", dur: "1:48" },
+  { id: "luxury", group: "Luxury", genre: "classical", name: "Quiet Luxury", dur: "2:12" },
+  { id: "warm", group: "Warm", genre: "indie", name: "Warm Home", dur: "1:56" },
+  { id: "cinematic", group: "Cinematic", genre: "classical", name: "Cinematic Sweep", dur: "2:30" },
+  { id: "upbeat", group: "Upbeat", genre: "dance", name: "Upbeat Listing", dur: "1:42" },
+  { id: "minimal", group: "Minimal", genre: "indie", name: "Minimal Pulse", dur: "2:04" },
+  { id: "porchlight", group: "Country", genre: "country", name: "Porch Light", dur: "2:18" },
+  { id: "sunroom", group: "Pop", genre: "pop", name: "Sunroom", dur: "1:38" },
+  { id: "nightdrive", group: "Dance", genre: "dance", name: "Night Drive", dur: "2:22" },
+  { id: "openhouse", group: "Indie", genre: "indie", name: "Open House", dur: "1:50" },
+  { id: "stringlight", group: "Classical", genre: "classical", name: "String Light", dur: "2:44" },
 ];
 
+const MUSIC_GENRES = [["all", "All"], ["dance", "Dance"], ["indie", "Indie"], ["pop", "Pop"], ["classical", "Classical"], ["country", "Country"], ["mine", "My Tracks"]];
+
 function musicList() {
-  return MUSIC.concat(getCustomTracks().map((t) => ({ id: t.id, group: "My Uploads", name: t.name })));
+  return MUSIC.concat(getCustomTracks().map((t) => ({ id: t.id, group: "My Tracks", genre: "mine", name: t.name, dur: "" })));
 }
-function musicPicker(id, sel, withGroup) {
-  const on = playingId() && playingId() === sel;
+
+/** Browsable music library: search, genre tabs and a play button per track. */
+function musicPicker(id, sel) {
+  const w = S.wizard || {};
+  const g = MUSIC_GENRES.some(([k]) => k === w.musicGenre) ? w.musicGenre : "all";
+  const q = (w.musicQ || "").toLowerCase();
+  const rows = musicList().filter((m) => (g === "all" ? true : m.genre === g) && (!q || m.name.toLowerCase().includes(q)));
+  const cur = playingId();
   return `<div class="rv-music">
-    <select id="${id}">${musicList().map((m) => `<option value="${m.id}" ${sel === m.id ? "selected" : ""}>${esc(withGroup ? m.group + " \u2014 " + m.name : m.name)}</option>`).join("")}</select>
-    <button type="button" class="btn btn-ghost btn-sm rv-music-play" data-musicplay="${id}" ${sel === "none" ? "disabled" : ""}><i data-lucide="${on ? "pause" : "play"}"></i>${on ? "Stop" : "Preview"}</button>
-    <button type="button" class="btn btn-ghost btn-sm" data-musicup="${id}"><i data-lucide="upload"></i>Upload Track</button>
-    <input type="file" accept="audio/*" class="rv-music-file" data-musicfile="${id}" hidden>
+    <div class="rv-music-top">
+      <span class="rv-music-search"><i data-lucide="search"></i><input id="rvMusicQ" value="${esc(w.musicQ || "")}" placeholder="Search Tracks"></span>
+      <button type="button" class="btn btn-ghost btn-sm" data-musicup="${id}"><i data-lucide="upload"></i>Upload Audio</button>
+      <input type="file" accept="audio/*" class="rv-music-file" data-musicfile="${id}" hidden>
+    </div>
+    <div class="rv-seg tiny">${MUSIC_GENRES.map(([k, n]) => `<button type="button" class="${g === k ? "on" : ""}" data-musicgenre="${k}">${n}</button>`).join("")}</div>
+    <div class="rv-tracks">${rows.length ? rows.map((m) => {
+      const on = cur === m.id;
+      return `<div class="rv-track ${sel === m.id ? "on" : ""} ${on ? "playing" : ""}" data-track="${esc(m.id)}">
+        <button type="button" class="icon-btn xs" data-trackplay="${esc(m.id)}" title="${on ? "Pause" : "Play"}" ${m.id === "none" ? "disabled" : ""}><i data-lucide="${on ? "pause" : "play"}"></i></button>
+        <b>${esc(m.name)}</b>
+        <span class="mono">${esc(m.dur || "")}</span>
+        ${sel === m.id ? `<em><i data-lucide="check"></i></em>` : ""}
+      </div>`;
+    }).join("") : `<div class="rv-note sm">No Tracks Match That Search.</div>`}</div>
   </div>`;
 }
 
@@ -164,8 +190,19 @@ function bindMusicControls(el, setTrack, getTrack) {
 const ORDER = [
   "Front Exterior", "Exterior", "Entry", "Living", "Living Areas", "Kitchen", "Dining",
   "Primary Bedroom", "Primary Bathroom", "Bedrooms", "Bathrooms", "Specialty",
-  "Outdoor Areas", "Backyard", "Floor Plans", "Concepts", "Other",
+  "Outdoor Areas", "Backyard", "Floor Plans", "Concepts", "Unsorted",
 ];
+
+/* A photo with no confident room stays Unsorted. Quality flags such as
+   "Needs Review" describe the picture, never the room, so they are never
+   used as a scene name. */
+export const UNSORTED = "Unsorted";
+const FLAG_NAMES = /^(needs review|unclassified|unknown|other|untitled)$/i;
+function roomLabelOf(name) {
+  const s = String(name || "").trim();
+  if (!s || FLAG_NAMES.test(s)) return UNSORTED;
+  return s;
+}
 
 function groupFor(name = "", type = "") {
   const s = (name + " " + type).toLowerCase();
@@ -178,7 +215,7 @@ function groupFor(name = "", type = "") {
   if (/yard|patio|deck|pool|garden|landscape/.test(s)) return "Outdoor Areas";
   if (/plan|sketch/.test(s)) return "Floor Plans";
   if (/concept/.test(s)) return "Concepts";
-  return "Other";
+  return UNSORTED;
 }
 function orderRank(group) {
   const i = ORDER.indexOf(group);
@@ -383,6 +420,17 @@ function newWizard(seed = {}) {
     versions: { branded: true, clean: true, disclosure: true },
     outputMode: "both",
     template: "clean",
+    introTemplate: "clean",
+    outroTemplate: "agent_white",
+    tplScope: "intro",
+    speedRamps: false,
+    logoBranding: false,
+    aiDisclaimer: false,
+    logoModal: false,
+    musicGenre: "all",
+    musicQ: "",
+    addrTab: "address",
+    listingUrl: "",
     address: "",
     candidates: [],
     pop: null,
@@ -419,15 +467,16 @@ async function loadWizardAssets() {
       const media = await listMediaAssets({ property_id: w.propertyId });
       for (const a of media.assets || []) {
         if (a.hidden) continue;
+        const room = roomLabelOf(a.room_group);
         out.push({
-          key: "m-" + a.id, path: a.storage_path, room: a.room_group || "Other", kind: "Original",
-          group: groupFor(a.room_group, ""), asset_id: a.id, disclosure: null, recommended: !!a.recommended,
-          dup: a.dup_group || null,
+          key: "m-" + a.id, path: a.storage_path, room, kind: "Original",
+          group: groupFor(room === UNSORTED ? "" : room, ""), asset_id: a.id, disclosure: null, recommended: !!a.recommended,
+          dup: a.dup_group || null, hdr: a.hdr_group || null, flags: a.flags || [], quality: a.quality || {},
         });
       }
     } catch (_) {}
   }
-  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.name, kind: "Original", group: "Other", disclosure: null, uploaded: true });
+  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.name || UNSORTED, kind: "Original", group: "Other", disclosure: null, uploaded: true, flags: [] });
   w.available = out;
 }
 
@@ -455,7 +504,8 @@ function wizardHtml() {
     ${w.step > 1 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
   </div>
   ${w.pop ? popoverHtml() : ""}
-  ${w.lowModal ? lowSceneModal() : ""}`;
+  ${w.lowModal ? lowSceneModal() : ""}
+  ${w.logoModal ? logoModalHtml() : ""}`;
 }
 
 /* ======================= STEP 1, PHOTOS ======================= */
@@ -492,9 +542,18 @@ function stepPhotos() {
   const recent = S.tree.slice(0, 6);
   let panel = "";
   if (w.sourceType === "address") {
+    const tab = w.addrTab === "url" ? "url" : "address";
     panel = `<div class="rv-srcpanel">
-      <label class="rv-f" style="display:block">Property Address<input id="rvAddr" style="display:block;width:100%;margin-top:6px" value="${esc(w.address || "")}" placeholder="3417 Hoover Dr, Holiday, FL 34691"></label>
-      <button class="btn btn-primary btn-sm" id="rvAddrGo" style="margin-top:14px">${w.addrBusy ? "Looking Up" : "Find Photos"}</button>
+      <div class="rv-seg tiny">
+        <button class="${tab === "address" ? "on" : ""}" data-addrtab="address">Address</button>
+        <button class="${tab === "url" ? "on" : ""}" data-addrtab="url">URL</button>
+      </div>
+      ${tab === "address"
+        ? `<label class="rv-f" style="display:block">Property Address<input id="rvAddr" style="display:block;width:100%;margin-top:6px" value="${esc(w.address || "")}" placeholder="3417 Hoover Dr, Holiday, FL 34691"></label>
+      <button class="btn btn-primary btn-sm" id="rvAddrGo" style="margin-top:14px">${w.addrBusy ? "Looking Up" : "Find Photos"}</button>`
+        : `<label class="rv-f" style="display:block">Listing Link<input id="rvUrl" style="display:block;width:100%;margin-top:6px" value="${esc(w.listingUrl || "")}" placeholder="https://www.zillow.com/homedetails/..."></label>
+      <button class="btn btn-primary btn-sm" id="rvUrlGo" style="margin-top:14px">${w.addrBusy ? "Reading Link" : "Read Listing"}</button>
+      <div class="rv-note sm">Listing Links Are Read As Text Only. No Photos Or Media Are Imported From A Public Listing Page.</div>`}
       ${(w.candidates || []).length ? `<div class="rv-sub">Choose A Listing</div>
       <div class="rv-cands">${w.candidates.map((c, i) => `<div class="rv-cand">
         <span class="rv-a-th" data-img="${esc(c.cover || "")}"></span>
@@ -589,24 +648,50 @@ function stepReady() {
 }
 
 /* ======================= STEP 2, SELECT ======================= */
+/** Analysis-shaped view of the wizard's available photos. */
+function analysisAssets() {
+  return (S.wizard?.available || []).map((a) => ({
+    id: a.key,
+    room_group: a.room,
+    room_confidence: 1,
+    flags: a.flags || [],
+    hdr_group: a.hdr || null,
+    dup_group: a.dup || null,
+    quality: a.quality || {},
+    hidden: false,
+  }));
+}
+
+function nameCell(value, attr) {
+  const w = S.wizard;
+  if (w.renaming === attr) {
+    return `<input class="rv-nameedit" data-nameinput="${esc(attr)}" value="${esc(value)}" maxlength="60">`;
+  }
+  return `<b class="rv-editname" data-rename="${esc(attr)}" title="Click To Rename">${esc(value)}</b>`;
+}
+
 function stepSelect() {
   const w = S.wizard;
   const groups = {};
   for (const a of w.available) (groups[a.group] = groups[a.group] || []).push(a);
   const order = Object.keys(groups).sort((a, b) => orderRank(a) - orderRank(b));
   const dupCount = w.available.filter((a) => a.dup).length;
+  const assets = analysisAssets();
+  const flagged = w.available.filter((a) => (a.flags || []).length);
+  const recs = recommendations(assets).filter((r) => r.op);
+  const missing = missingSpaces(assets);
 
-  const left = order.map((g) => `<div class="rv-g"><div class="rv-g-h">${esc(g)}</div><div class="rv-g-b">${groups[g]
+  const left = order.map((g) => `<div class="rv-g"><div class="rv-g-h">${esc(g)}<i class="mono">${groups[g].length}</i></div><div class="rv-g-b">${groups[g]
     .map((a) => `<button class="rv-asset ${w.scenes.some((s) => s.key === a.key) ? "on" : ""}" data-asset="${a.key}">
-      <span class="rv-a-th" data-img="${esc(a.path)}"></span>
-      <span class="rv-a-m"><b>${esc(a.room || "Untitled")}</b><i>${a.kind}${a.disclosure ? " • " + DISCLOSURE_LABEL[a.disclosure] : ""}</i></span>
+      <span class="rv-a-th" data-img="${esc(a.path)}">${(a.flags || []).length ? `<em class="rv-flag" title="${esc((a.flags || []).map((f) => FLAG_LABEL[f] || f).join(", "))}"><i data-lucide="triangle-alert"></i></em>` : ""}</span>
+      <span class="rv-a-m">${nameCell(a.room || UNSORTED, "a:" + a.key)}<i>${a.kind}${a.disclosure ? " • " + DISCLOSURE_LABEL[a.disclosure] : ""}</i></span>
     </button>`).join("")}</div></div>`).join("");
 
   const right = w.scenes.length
     ? w.scenes.map((s, i) => `<div class="rv-scene" draggable="true" data-idx="${i}">
         <span class="rv-seq mono">${i + 1}</span>
         <span class="rv-a-th" data-img="${esc(s.path)}"></span>
-        <span class="rv-s-m"><b>${esc(s.room)}</b><i>${s.scene_type === "before_after" ? "Before & After" : s.kind}</i></span>
+        <span class="rv-s-m">${nameCell(s.room || UNSORTED, "s:" + i)}<i>${s.scene_type === "before_after" ? "Before & After" : s.kind}</i></span>
         <span class="rv-s-a">
           <button class="icon-btn" data-move="-1" title="Move Up"><i data-lucide="chevron-up"></i></button>
           <button class="icon-btn" data-move="1" title="Move Down"><i data-lucide="chevron-down"></i></button>
@@ -615,12 +700,25 @@ function stepSelect() {
       </div>`).join("")
     : `<div class="rv-note">No Scenes Yet. Add Content From The Left.</div>`;
 
+  const fixCard = recs.length && !w.enhanceDismissed ? `<div class="rv-fix">
+    <b>We Found ${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve</b>
+    ${recs.map((r) => `<div class="rv-fix-row"><span>${esc(r.label)}</span><i class="mono">${r.ids.length} ${r.ids.length === 1 ? "Photo" : "Photos"}</i><em>${esc(r.note)}</em></div>`).join("")}
+    <div class="rv-fix-a">
+      <button class="btn btn-primary btn-sm" id="rvFixAll">Fix All</button>
+      <button class="btn btn-ghost btn-sm" data-goto="media">Review Each</button>
+      <button class="btn btn-ghost btn-sm" id="rvFixSkip">Skip</button>
+    </div>
+  </div>` : "";
+
   return `<h3>Select The Photos</h3>
   ${dupCount ? `<div class="rv-dup"><i data-lucide="copy"></i><b>${dupCount} Similar Angles Detected</b><span><button class="fb-link" id="rvKeepBest">Keep Best</button><button class="fb-link" data-goto="media">Review</button><button class="fb-link" id="rvKeepAll">Keep All</button></span></div>` : ""}
+  ${flagged.length ? `<div class="rv-issues"><i data-lucide="triangle-alert"></i><b>${flagged.length} Photos Have Issues We Can Fix</b><button class="fb-link" data-goto="media">Review</button></div>` : ""}
+  ${missing.length ? `<div class="rv-note sm">No ${missing.slice(0, 2).join(" Or ")} In This Set. Buyers Look For Those First.</div>` : ""}
   <div class="rv-two">
     <div class="rv-col"><div class="rv-col-h">Available Photos<span class="mono">${w.available.length}</span></div><div class="rv-col-b">${left || `<div class="rv-note">No Content Found For This Source.</div>`}</div></div>
     <div class="rv-col"><div class="rv-col-h">Selected Photos<span class="mono">${w.scenes.length}</span></div><div class="rv-col-b" id="rvSceneList">${right}</div></div>
   </div>
+  ${fixCard}
   <div class="rv-foot">
     <button class="btn btn-ghost" id="rvBack">Back</button>
     <button class="btn btn-ghost" id="rvRecommend">Select All Recommended</button>
@@ -892,7 +990,7 @@ function defaultScript() {
   const rooms = Array.from(new Set(w.scenes.map((s) => s.room).filter(Boolean))).slice(0, 6);
   const lines = [];
   if (w.propertyLabel) lines.push(`A look at ${w.propertyLabel}.`);
-  if (rooms.length) lines.push(`This reveal covers ${rooms.join(", ")}.`);
+  if (rooms.length) lines.push(`This video covers ${rooms.join(", ")}.`);
   if (w.scenes.some((s) => s.scene_type === "before_after")) lines.push("Each space is shown as it is today, then as the proposed design.");
   lines.push("Every design shown is a proposed concept created in REAL DESIGNS.");
   return lines.join(" ");
@@ -927,6 +1025,53 @@ function labelEditor(s, i) {
 }
 
 
+
+/* ---------- Step 4 templates ---------- */
+const INTRO_TEMPLATES = [
+  ["none", "None", "No Intro Card", "plain"],
+  ["clean", "Clean Title Card", "Address On White", "clean"],
+  ["editorial", "Editorial", "Serif Title, Thin Rule", "editorial"],
+  ["bold", "Bold Listing", "Red Block, Large Type", "bold"],
+  ["minimal_bar", "Minimal Bar", "Lower Third Only", "bar"],
+  ["split", "Split Frame", "Photo Beside The Title", "split"],
+  ["stamp", "Stamp", "Boxed Address Stamp", "stamp"],
+  ["dark", "Dark Card", "White Type On Black", "dark"],
+  ["kicker", "Kicker", "Just Listed Kicker Above Address", "kicker"],
+];
+const OUTRO_TEMPLATES = [
+  ["none", "None", "No Outro Card", "plain"],
+  ["agent_white", "Agent Card, White", "Headshot, Name, Title, Phone, Email, CTA", "agentw"],
+  ["agent_black", "Agent Card, Black", "Headshot, Name, Title, Phone, Email, CTA", "agentb"],
+  ["contact_bar", "Contact Bar", "Single Line Contact Strip", "bar"],
+  ["cta_only", "Call To Action", "Book A Showing", "bold"],
+];
+function tplThumb(kind) {
+  return `<span class="rv-tpl-th t-${kind}"><i></i><em></em></span>`;
+}
+function templateGrid(list, sel, attr) {
+  return `<div class="rv-tpls">${list
+    .map(([id, name, note, kind]) => `<button class="rv-tpl ${sel === id ? "on" : ""}" data-${attr}="${id}">
+      ${tplThumb(kind)}<b>${name}</b><em>${note}</em>
+    </button>`)
+    .join("")}</div>`;
+}
+function logoModalHtml() {
+  const w = S.wizard;
+  const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
+  const logo = kit?.logo_path || null;
+  return `<div class="rv-modal on" id="rvLogoWrap"><div class="rv-modal-in" role="dialog" aria-label="Select logo">
+    <div class="rv-modal-h"><b>Select Logo</b><button class="icon-btn" id="rvLogoX"><i data-lucide="x"></i></button></div>
+    <div class="rv-modal-b">
+      ${logo
+        ? `<div class="rv-logos"><button class="rv-logo on" data-logopick="${esc(logo)}"><span class="rv-a-th" data-img="${esc(logo)}"></span><b>${esc(kit.name || "Brand Kit Logo")}</b></button></div>`
+        : `<div class="rv-note">No Images Uploaded Yet</div>
+      <button class="btn btn-ghost btn-sm" id="rvLogoUp"><i data-lucide="upload"></i>Upload Image</button>
+      <input type="file" id="rvLogoFile" accept="image/*" hidden>`}
+    </div>
+    <div class="rv-modal-f"><button class="btn btn-ghost" id="rvLogoCancel">Cancel</button><button class="btn btn-primary" id="rvLogoDone">Select Logo</button></div>
+  </div></div>`;
+}
+
 /* ======================= STEP 4, BRAND ======================= */
 function stepBrand() {
   const w = S.wizard;
@@ -936,8 +1081,11 @@ function stepBrand() {
   return `<h3>Brand & Audio</h3>
 
   <details class="rv-acc" open><summary>Template</summary>
-    <div class="rv-seg wrap">${[["none", "No Intro Or Outro"], ["clean", "Clean Title Card"], ["editorial", "Editorial"], ["bold", "Bold Listing"]]
-      .map(([id, n]) => `<button class="${(w.template || "clean") === id ? "on" : ""}" data-tpl="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-seg tiny">${[["intro", "Intro"], ["outro", "Outro"], ["full", "Full Video"]]
+      .map(([id, n]) => `<button class="${(w.tplScope || "intro") === id ? "on" : ""}" data-tplscope="${id}">${n}</button>`).join("")}</div>
+    ${(w.tplScope || "intro") === "intro" ? templateGrid(INTRO_TEMPLATES, w.introTemplate || "clean", "tplintro") : ""}
+    ${w.tplScope === "outro" ? templateGrid(OUTRO_TEMPLATES, w.outroTemplate || "agent_white", "tploutro") : ""}
+    ${w.tplScope === "full" ? `
     <div class="rv-sub">Speed</div>
     <div class="rv-seg">${[["full", "Slow"], ["standard", "Medium"], ["quick", "Fast"]]
       .map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
@@ -947,6 +1095,22 @@ function stepBrand() {
     ${w.scenes.some((s) => s.scene_type === "before_after") ? `<div class="rv-sub">Before &amp; After Reveal</div>
     <div class="rv-seg wrap">${[["match", "Match Frame"], ["slider", "Slider Reveal"], ["wipe", "Wipe"], ["fade", "Fade"]]
       .map(([id, n]) => `<button class="${w.baTransition === id || (!w.baTransition && id === "match") ? "on" : ""}" data-ba="${id}">${n}</button>`).join("")}</div>` : ""}
+    <div class="rv-sub">Video Options</div>
+    <div class="rv-tog">
+      <div class="rv-tog-row" data-tip="Adds transitions to accelerate between clips for a more cinematic, dynamic look.">
+        <span><b>Speed Ramps</b><em>Elevate Your Video With Speed Transitions.</em></span>
+        <label class="rv-switch"><input type="checkbox" id="rvSpeedRamps" ${w.speedRamps ? "checked" : ""}><i></i></label>
+      </div>
+      <div class="rv-tog-row" data-tip="Places your logo as a watermark on every frame of the video.">
+        <span><b>Logo Branding</b><em>Show A Logo Watermark Throughout The Video.</em>
+        <button class="fb-link" id="rvPickLogo">Select Logo</button></span>
+        <label class="rv-switch"><input type="checkbox" id="rvLogoBrand" ${w.logoBranding ? "checked" : ""}><i></i></label>
+      </div>
+      <div class="rv-tog-row" data-tip="Burns a Digitally Altered watermark into the full duration of the video.">
+        <span><b>AI Disclaimer</b><em>Add A "Digitally Altered" Watermark For The Full Duration.</em></span>
+        <label class="rv-switch"><input type="checkbox" id="rvAiDisc" ${w.aiDisclaimer ? "checked" : ""}><i></i></label>
+      </div>
+    </div>` : ""}
   </details>
 
   <details class="rv-acc"><summary>Brand Kit</summary>
@@ -963,11 +1127,12 @@ function stepBrand() {
     <div class="rv-sub">Output Versions</div>
     <div class="rv-seg">${[["unbranded", "Unbranded"], ["branded", "Branded"], ["both", "Both"]]
       .map(([id, n]) => `<button class="${(w.outputMode || "both") === id ? "on" : ""}" data-out="${id}">${n}</button>`).join("")}</div>
-    <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else. Both Renders Unbranded First.</div>
+    <label class="rv-check"><input type="checkbox" id="rvBurnDisc" ${w.burnDisclosure ? "checked" : ""}> Burn In Disclosure Labels</label>
+    <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else. Both Renders Unbranded First. Disclosure Labels Burn Into The Versions You Already Render, So Nothing Renders Twice.</div>
   </details>
 
   <details class="rv-acc"><summary>Audio</summary>
-    <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music, true)}
+    <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music)}
     <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
     <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
     <div class="rv-sub">Narration</div>
@@ -1007,7 +1172,6 @@ function plannedVariants() {
   const versions = [];
   if (mode === "unbranded" || mode === "both") versions.push("clean");
   if (mode === "branded" || mode === "both") versions.push("branded");
-  if (w.versions?.disclosure) versions.push("disclosure");
   const out = [];
   for (const f of w.formats) {
     for (const v of versions) out.push({ aspect_ratio: f, version_type: v, brand_kit_id: v === "branded" ? w.brandKitId || null : null });
@@ -1057,7 +1221,7 @@ function assetToScene(a) {
     key: a.key,
     path: a.path,
     compare: isBA ? a.compare || null : null,
-    room: a.room || "Untitled",
+    room: a.room || UNSORTED,
     kind: a.kind,
     scene_type: isBA && a.compare ? "before_after" : a.kind === "Original" ? "original" : "design",
     duration: 3,
@@ -1124,6 +1288,7 @@ async function generate() {
         immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
         exterior_effect: s.exterior_effect || null,
         labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
+        enhance: s.enhance || null,
       })),
       audio: {
         presentation_style: w.presentation,
@@ -1181,6 +1346,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
       immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
       exterior_effect: s.exterior_effect || null,
       labels: Array.isArray(s.labels) ? s.labels.filter((l) => (l.text || "").trim()) : [],
+      enhance: s.enhance || null,
     });
   }
   const { data: auth } = await supabase.auth.getUser();
@@ -1372,7 +1538,7 @@ function presentationHtml(d) {
 
     <div class="rv-sub">Access</div>
     <label class="rv-check"><input type="checkbox" id="pr_pw_on" ${sh.password_hash ? "checked" : ""}> Require A Password</label>
-    <label class="rv-f">Password<input id="pr_pw" type="password" placeholder="${sh.password_hash ? "Saved — Type To Replace" : "Set A Password"}"></label>
+    <label class="rv-f">Password<input id="pr_pw" type="password" placeholder="${sh.password_hash ? "Saved, Type To Replace" : "Set A Password"}"></label>
     <label class="rv-check"><input type="checkbox" id="pr_dl" ${sh.allow_download !== false ? "checked" : ""}> Allow Downloads</label>
     <label class="rv-check"><input type="checkbox" id="pr_appr" ${sh.approval_enabled ? "checked" : ""}> Collect Approvals & Comments</label>
 
@@ -1390,14 +1556,48 @@ function presentationHtml(d) {
 
 
 /* ======================= THUMB PAINTING ======================= */
+/* One resolve per storage path for the whole surface: the same photo shows up
+   in Available, Scenes, the scene card, the popover preview and the stage. */
+const IMG_URLS = new Map();
+function cachedPhotoUrl(path) {
+  if (!path) return Promise.resolve(null);
+  if (IMG_URLS.has(path)) return IMG_URLS.get(path);
+  const p = Promise.resolve()
+    .then(() => resolvePhotoUrl(path))
+    .catch(() => null)
+    .then((url) => {
+      /* Never cache a failure: an expired signed URL must be retried. */
+      if (!url) IMG_URLS.delete(path);
+      return url;
+    });
+  IMG_URLS.set(path, p);
+  return p;
+}
+
 async function paintAssetThumbs() {
-  const els = host()?.querySelectorAll("[data-img]") || [];
-  for (const el of els) {
-    if (el.dataset.painted) continue;
-    const url = await resolvePhotoUrl(el.getAttribute("data-img"));
-    if (url) el.style.backgroundImage = `url("${url}")`;
-    el.dataset.painted = "1";
-  }
+  const els = Array.from(host()?.querySelectorAll("[data-img]") || []);
+  let missing = false;
+  await Promise.all(
+    els.map(async (el) => {
+      if (el.dataset.painted) return;
+      const path = el.getAttribute("data-img");
+      if (!path) return;
+      const url = await cachedPhotoUrl(path);
+      if (url) {
+        el.style.backgroundImage = `url("${url}")`;
+        el.classList.remove("rv-noimg");
+        /* Only a real paint counts, otherwise the tile is poisoned forever. */
+        el.dataset.painted = "1";
+        return;
+      }
+      if (!el.querySelector(".rv-noimg-i")) {
+        el.insertAdjacentHTML("beforeend", `<i class="rv-noimg-i" data-lucide="image-off"></i>`);
+      }
+      el.classList.add("rv-noimg");
+      missing = true;
+    }),
+  );
+  if (missing) paint();
 }
 
 /* ======================= RENDER + EVENTS ======================= */
@@ -1470,6 +1670,19 @@ function bind() {
 
 
   on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
+  on("[data-addrtab]", "click", (e) => { w.addrTab = e.currentTarget.dataset.addrtab; w.addrNote = ""; w.candidates = []; render(); });
+  const urlIn = el.querySelector("#rvUrl");
+  if (urlIn) urlIn.addEventListener("input", (e) => { w.listingUrl = e.target.value; });
+  const urlGo = el.querySelector("#rvUrlGo");
+  if (urlGo) urlGo.addEventListener("click", () => {
+    const res = identifyListing(w.listingUrl || "");
+    if (!res.ok) { w.addrNote = res.message; render(); return; }
+    if (res.address) { w.address = res.address; w.propertyLabel = res.address; w.title = w.title || res.address; }
+    w.addrNote = res.address
+      ? `${res.message} Upload The Listing Photos To Continue, Photos Are Not Imported From The Link.`
+      : `${res.message} Enter The Address Instead, Or Upload The Photos.`;
+    render();
+  });
   const addrIn = el.querySelector("#rvAddr");
   if (addrIn) addrIn.addEventListener("input", (ev) => { w.address = ev.target.value; });
   const titleIn = el.querySelector("#rvTitle");
@@ -1736,8 +1949,73 @@ function bind() {
     w.versions.branded = w.outputMode !== "unbranded";
     render();
   });
+  on("[data-tplscope]", "click", (e) => { w.tplScope = e.currentTarget.dataset.tplscope; render(); });
+  on("[data-tplintro]", "click", (e) => { w.introTemplate = e.currentTarget.dataset.tplintro; w.template = w.introTemplate; render(); });
+  on("[data-tploutro]", "click", (e) => { w.outroTemplate = e.currentTarget.dataset.tploutro; render(); });
+  const sr = el.querySelector("#rvSpeedRamps"); if (sr) sr.addEventListener("change", (e) => { w.speedRamps = e.target.checked; });
+  const lb = el.querySelector("#rvLogoBrand");
+  if (lb) lb.addEventListener("change", (e) => { w.logoBranding = e.target.checked; w.branding.watermark = e.target.checked; });
+  const ad = el.querySelector("#rvAiDisc"); if (ad) ad.addEventListener("change", (e) => { w.aiDisclaimer = e.target.checked; });
+  const bd = el.querySelector("#rvBurnDisc"); if (bd) bd.addEventListener("change", (e) => { w.burnDisclosure = e.target.checked; });
+  const pl = el.querySelector("#rvPickLogo"); if (pl) pl.addEventListener("click", (e) => { e.preventDefault(); w.logoModal = true; render(); });
+  ["#rvLogoX", "#rvLogoCancel"].forEach((sel2) => {
+    const b = el.querySelector(sel2); if (b) b.addEventListener("click", () => { w.logoModal = false; render(); });
+  });
+  const ldone = el.querySelector("#rvLogoDone");
+  if (ldone) ldone.addEventListener("click", () => { w.logoModal = false; w.logoBranding = true; w.branding.watermark = true; render(); });
+  const lup = el.querySelector("#rvLogoUp"); if (lup) lup.addEventListener("click", () => el.querySelector("#rvLogoFile")?.click());
+  const lfile = el.querySelector("#rvLogoFile");
+  if (lfile) lfile.addEventListener("change", async (e) => {
+    const f = e.target.files?.[0]; if (!f) return;
+    w.logoDataUrl = await fileToDataUrl(f);
+    w.logoModal = false; w.logoBranding = true; w.branding.watermark = true;
+    toast("Logo Added."); render();
+  });
   on("[data-tr]", "click", (e) => { w.transition = e.currentTarget.dataset.tr; render(); });
   on("[data-ba]", "click", (e) => { w.baTransition = e.currentTarget.dataset.ba; render(); });
+
+  /* inline room rename */
+  on("[data-rename]", "click", (e) => { e.preventDefault(); e.stopPropagation(); w.renaming = e.currentTarget.dataset.rename; render(); });
+  const nameIn = el.querySelector("[data-nameinput]");
+  if (nameIn) {
+    nameIn.focus(); nameIn.select();
+    const commit = (save) => {
+      const attr = nameIn.dataset.nameinput || "";
+      const val = roomLabelOf(nameIn.value);
+      w.renaming = null;
+      if (save && attr) {
+        if (attr.startsWith("a:")) {
+          const key = attr.slice(2);
+          const a = w.available.find((x) => x.key === key);
+          if (a) a.room = val;
+          w.scenes.filter((x) => x.key === key).forEach((x) => { x.room = val; });
+        } else {
+          const sc = w.scenes[Number(attr.slice(2))];
+          if (sc) sc.room = val;
+        }
+      }
+      render();
+    };
+    nameIn.addEventListener("blur", () => commit(true));
+    nameIn.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); commit(true); }
+      if (e.key === "Escape") { e.preventDefault(); commit(false); }
+    });
+  }
+  const fixAll = el.querySelector("#rvFixAll");
+  if (fixAll) fixAll.addEventListener("click", () => {
+    const recs = recommendations(analysisAssets()).filter((r) => r.op);
+    const byId = new Map();
+    recs.forEach((r) => r.ids.forEach((id) => byId.set(id, r.op)));
+    let n = 0;
+    w.available.forEach((a) => { if (byId.has(a.key)) { a.enhance = byId.get(a.key); n++; } });
+    w.scenes.forEach((sc) => { if (byId.has(sc.key)) sc.enhance = byId.get(sc.key); });
+    w.enhanceDismissed = true;
+    toast(`${n} ${n === 1 ? "Photo Will Be Enhanced" : "Photos Will Be Enhanced"} When The Video Renders.`);
+    render();
+  });
+  const fixSkip = el.querySelector("#rvFixSkip");
+  if (fixSkip) fixSkip.addEventListener("click", () => { w.enhanceDismissed = true; render(); });
 
   /* audio */
   on("[data-pres]", "click", (e) => {
@@ -1746,7 +2024,23 @@ function bind() {
     if (w.presentation === "narration" || w.presentation === "both") w.narration = w.narration === "none" ? "generate" : w.narration;
     render();
   });
-  const mus = el.querySelector("#rvMusic"); if (mus) mus.addEventListener("change", (e) => { w.music = e.target.value; stopMusic(); render(); });
+  on("[data-track]", "click", (e) => {
+    if (e.target.closest("[data-trackplay]")) return;
+    w.music = e.currentTarget.dataset.track; stopMusic(); render();
+  });
+  on("[data-trackplay]", "click", (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const id = e.currentTarget.dataset.trackplay;
+    if (!id || id === "none") return;
+    toggleMusic(id); render();
+  });
+  on("[data-musicgenre]", "click", (e) => { w.musicGenre = e.currentTarget.dataset.musicgenre; render(); });
+  const mq = el.querySelector("#rvMusicQ");
+  if (mq) mq.addEventListener("input", (e) => {
+    w.musicQ = e.target.value;
+    const at = e.target.selectionStart; render();
+    const n = host()?.querySelector("#rvMusicQ"); if (n) { n.focus(); try { n.setSelectionRange(at, at); } catch (_) {} }
+  });
   bindMusicControls(el, (v) => { w.music = v; render(); }, () => w.music);
   const vol = el.querySelector("#rvVol"); if (vol) vol.addEventListener("input", (e) => { w.volume = Number(e.target.value) / 100; });
   const beat = el.querySelector("#rvBeat"); if (beat) beat.addEventListener("change", (e) => { w.beatSync = e.target.checked; });
