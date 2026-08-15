@@ -518,6 +518,11 @@ function stepSetup() {
   <div class="rv-sub">Transitions</div>
   <div class="rv-seg">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"]]
     .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
+  <div class="rv-sub sm">Viral VFX</div>
+  <div class="rv-note sm">High-energy cuts built for social. Best on short vertical edits.</div>
+  <div class="rv-seg">${[["whip", "Whip Pan"], ["punch", "Zoom Punch"], ["flash", "Flash Cut"], ["glitch", "Glitch"], ["leak", "Light Leak"], ["slide", "Slide"]]
+    .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
+
   ${w.scenes.some((s) => s.scene_type === "before_after") ? `<div class="rv-sub">Before-And-After Reveal</div>
   <div class="rv-seg">${[["match", "Match Frame"], ["slider", "Slider Reveal"], ["wipe", "Wipe"], ["fade", "Fade"]]
     .map(([id, n]) => `<button class="${w.baTransition === id || (!w.baTransition && id === "match") ? "on" : ""}" data-ba="${id}">${n}</button>`).join("")}</div>` : ""}

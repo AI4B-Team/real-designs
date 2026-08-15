@@ -676,9 +676,16 @@ function setupHtml() {
           <label class="lv-check"><input type="checkbox" data-chk="intro" ${st.intro ? "checked" : ""}> Intro</label>
           <label class="lv-check"><input type="checkbox" data-chk="outro" ${st.outro ? "checked" : ""}> Outro</label>
           <label class="lv-f"><span>Transitions</span><select id="lvTrans">
+            <optgroup label="Classic">
             ${[["clean", "Clean Cut"], ["fade", "Fade"], ["slide", "Slide"], ["architectural", "Architectural Wipe"]]
               .map(([v, n]) => `<option value="${v}" ${st.transition === v ? "selected" : ""}>${n}</option>`).join("")}
+            </optgroup>
+            <optgroup label="Viral VFX">
+            ${[["whip", "Whip Pan"], ["punch", "Zoom Punch"], ["flash", "Flash Cut"], ["glitch", "Glitch"], ["leak", "Light Leak"]]
+              .map(([v, n]) => `<option value="${v}" ${st.transition === v ? "selected" : ""}>${n}</option>`).join("")}
+            </optgroup>
           </select></label>
+
           <label class="lv-f"><span>Video Effects</span><select id="lvFx">
             ${[["none", "None"], ["film", "Subtle Film Grain"], ["warm", "Warm Grade"], ["cool", "Cool Grade"]]
               .map(([v, n]) => `<option value="${v}" ${st.effects === v ? "selected" : ""}>${n}</option>`).join("")}

@@ -117,6 +117,108 @@ const SIZES: Record<RevealOptions["aspect"], [number, number]> = {
 const ACCENT = "#CC0000";
 const FADE = 420; // ms per transition
 
+/** Every transition style the builders can offer. */
+export const TRANSITIONS: Array<[string, string]> = [
+  ["clean", "Clean"],
+  ["smooth", "Smooth"],
+  ["cinematic", "Cinematic"],
+  ["whip", "Whip Pan"],
+  ["punch", "Zoom Punch"],
+  ["flash", "Flash Cut"],
+  ["glitch", "Glitch"],
+  ["leak", "Light Leak"],
+  ["slide", "Slide"],
+  ["none", "None"],
+];
+
+/** High-energy social styles handled by the VFX pipeline. */
+export const VIRAL_TRANSITIONS = new Set(["whip", "punch", "flash", "glitch", "leak", "slide"]);
+
+const VFX_MS = 360;
+
+/** 0..1 ramps at the head and tail of a scene. */
+function edgeRamp(local: number, dur: number, ms = VFX_MS) {
+  const tIn = local < ms ? 1 - local / ms : 0;
+  const tOut = dur - local < ms ? 1 - (dur - local) / ms : 0;
+  return { tIn, tOut, k: Math.max(tIn, tOut) };
+}
+
+/** Camera-level distortion applied before the scene is drawn. Returns a restore flag. */
+function vfxEnter(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  style: string,
+  local: number,
+  dur: number,
+): boolean {
+  if (!VIRAL_TRANSITIONS.has(style)) return false;
+  const { tIn, tOut, k } = edgeRamp(local, dur);
+  if (k <= 0) return false;
+  ctx.save();
+  if (style === "whip" || style === "slide") {
+    const dx = tOut * W * 0.85 * -1 + tIn * W * 0.85;
+    ctx.translate(dx, 0);
+    if (style === "whip") ctx.filter = `blur(${Math.round(k * 16)}px)`;
+  } else if (style === "punch") {
+    const s = 1 + k * 0.28;
+    ctx.translate(W / 2, H / 2);
+    ctx.scale(s, s);
+    ctx.translate(-W / 2, -H / 2);
+  } else if (style === "glitch") {
+    ctx.translate(Math.sin(local * 0.09) * k * W * 0.012, 0);
+  }
+  return true;
+}
+
+/** Overlays drawn after the scene: flashes, leaks, glitch slices. */
+function vfxOverlay(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  style: string,
+  local: number,
+  dur: number,
+) {
+  if (!VIRAL_TRANSITIONS.has(style)) return;
+  const { k } = edgeRamp(local, dur);
+  if (k <= 0) return;
+  ctx.save();
+  if (style === "flash") {
+    ctx.globalAlpha = Math.min(0.92, k * k * 1.1);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, W, H);
+  } else if (style === "leak") {
+    const g = ctx.createLinearGradient(0, H, W, 0);
+    g.addColorStop(0, "rgba(255,180,90,0)");
+    g.addColorStop(0.5, "rgba(255,150,70,.85)");
+    g.addColorStop(1, "rgba(204,0,0,0)");
+    ctx.globalCompositeOperation = "screen";
+    ctx.globalAlpha = k * 0.85;
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+  } else if (style === "glitch") {
+    const slices = 7;
+    for (let i = 0; i < slices; i++) {
+      const sh = H / slices;
+      const sy = i * sh;
+      const off = (i % 2 === 0 ? 1 : -1) * k * W * (0.02 + (i % 3) * 0.012);
+      ctx.globalAlpha = 0.85;
+      ctx.drawImage(ctx.canvas, 0, sy, W, sh, off, sy, W, sh);
+    }
+    ctx.globalAlpha = k * 0.35;
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = ACCENT;
+    ctx.fillRect(0, 0, W, H);
+  } else if (style === "punch" || style === "whip") {
+    ctx.globalAlpha = k * 0.35;
+    ctx.fillStyle = "#0a0a0a";
+    ctx.fillRect(0, 0, W, H);
+  }
+  ctx.restore();
+}
+
+
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -710,6 +812,8 @@ export async function renderReveal(
             ? scene.motion
             : "auto";
         const transition = scene.transition || opts.transition || "clean";
+        const vfxOn = vfxEnter(ctx, W, H, transition, local, durations[idx]!);
+
 
         if (cmp && scene.scene_type === "before_after") {
           // Match Frame: same camera, original holds then the design takes over.
@@ -747,6 +851,9 @@ export async function renderReveal(
         if (scene.motion_level === "immersive") {
           immersiveLayer(ctx, W, H, scene.immersive_effect || "light", p);
         }
+        if (vfxOn) ctx.restore();
+        vfxOverlay(ctx, W, H, transition, local, durations[idx]!);
+
 
         if (opts.captionsEnabled !== false) {
           const text = scene.caption || scene.room_name || "";
@@ -794,7 +901,7 @@ export async function renderReveal(
 
         // transition fades between scenes
 
-        if (transition !== "none") {
+        if (transition !== "none" && !VIRAL_TRANSITIONS.has(transition)) {
           const fadeIn = local < FADE ? 1 - local / FADE : 0;
           const fadeOut = durations[idx]! - local < FADE ? 1 - (durations[idx]! - local) / FADE : 0;
           const f = Math.max(fadeIn, fadeOut) * (transition === "cinematic" ? 1 : transition === "smooth" ? 0.8 : 0.6);
