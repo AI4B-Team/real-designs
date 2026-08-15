@@ -1422,15 +1422,82 @@ function bind() {
     toast("Listing Photos Added.");
     render();
   });
-  on("[data-prop]", "click", (e) => { w.propertyId = e.currentTarget.dataset.prop; w.sourceType = w.sourceType || "property"; render(); });
+  on("[data-prop]", "click", (e) => {
+    const p = S.tree.find((x) => x.id === e.currentTarget.dataset.prop);
+    w.propertyId = e.currentTarget.dataset.prop;
+    w.sourceType = w.sourceType || "property";
+    /* Title follows the source unless the user typed one. */
+    if (p && !w.titleTouched) w.title = p.address;
+    render();
+  });
+  on("[data-design]", "click", async (e) => {
+    const d = designChoices().find((x) => x.roomId === e.currentTarget.dataset.design);
+    if (!d) return;
+    w.sourceType = "design";
+    w.propertyId = d.propertyId;
+    w.propertyLabel = d.propertyLabel;
+    w.versionId = d.versionId;
+    if (!w.titleTouched) w.title = `${d.room} Design`;
+    if (d.before && !w.typeTouched) w.videoType = "before_after";
+    await loadWizardAssets();
+    const a = w.available.find((x) => x.key === "d-" + d.roomId) || w.available.find((x) => x.path === d.after);
+    w.scenes = a ? [assetToScene(a)] : [];
+    /* One design, nothing to select, so Step 2 is skipped. */
+    w.step = 3;
+    render();
+  });
+  on("#rvUsePhotos", "click", () => { w.sourceType = "upload"; render(); });
   on("#rvBrowse", "click", () => el.querySelector("#rvFiles")?.click());
-  const files = el.querySelector("#rvFiles");
-  if (files) files.addEventListener("change", async (e) => {
-    for (const f of Array.from(e.target.files || [])) {
+  on("[data-rmup]", "click", (e) => {
+    const id = e.currentTarget.dataset.rmup;
+    w.uploads = w.uploads.filter((u) => u.id !== id);
+    render();
+  });
+  const addUploads = (list) => {
+    for (const f of Array.from(list || [])) {
+      if (!/^image\//.test(f.type || "")) continue;
       w.uploads.push({ id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url: URL.createObjectURL(f) });
     }
     render();
-  });
+  };
+  const files = el.querySelector("#rvFiles");
+  if (files) files.addEventListener("change", (e) => addUploads(e.target.files));
+  const dz = el.querySelector("#rvDrop");
+  if (dz) {
+    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("hot"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("hot"));
+    dz.addEventListener("drop", (e) => { e.preventDefault(); dz.classList.remove("hot"); addUploads(e.dataTransfer?.files); });
+  }
+  /* A stray drop outside the zone must never navigate away from the app. */
+  if (!window.__rvDropGuard) {
+    window.__rvDropGuard = true;
+    window.addEventListener("dragover", (e) => e.preventDefault());
+    window.addEventListener("drop", (e) => e.preventDefault());
+  }
+  const cloudPull = async (label) => {
+    const raw = window.prompt(`Paste ${label} Share Links, One Per Line.`);
+    const urls = (raw || "").split(/[\s,]+/).map((s) => s.trim()).filter(Boolean).slice(0, 20);
+    if (!urls.length) return;
+    toast("Fetching Photos…");
+    try {
+      const { importCloudPhotos } = await import("@/lib/cloud-import.functions");
+      const res = await importCloudPhotos({ data: { urls } });
+      const got = [];
+      for (const f of res.files || []) {
+        const bin = atob(f.data);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        got.push(new File([bytes], f.name, { type: f.type }));
+      }
+      if (!got.length) return toast(res.errors?.[0]?.message || "No Photos Found At That Link.");
+      addUploads(got);
+      toast(`${got.length} Photo${got.length === 1 ? "" : "s"} Added.`);
+    } catch (err) {
+      toast(err?.message || "Import Failed.");
+    }
+  };
+  on("#rvDrive", "click", () => cloudPull("Google Drive"));
+  on("#rvDropbox", "click", () => cloudPull("Dropbox"));
   on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; w.typeTouched = true; render(); });
 
   on("[data-asset]", "click", (e) => {
