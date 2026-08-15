@@ -15,6 +15,7 @@ import { openListingVideo } from "@/content/rd-listing-video";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
 import { cancelJob } from "@/lib/upload-manager";
+import { openMotionClip } from "@/lib/rd-motion-clip";
 
 
 const esc = (s) =>
@@ -422,6 +423,7 @@ function moreItems(m) {
   if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
   if (isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => openVideo(m) });
   out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
+  if (videoReady(m)) out.push({ icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
   out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
   if (g === "images") out.push({ icon: "layers", label: "Create Variations", fn: () => S.go("studio") });
   if (m.sourcePath) out.push({ icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
@@ -599,6 +601,22 @@ function videoFrom(items) {
       room_group: x.room || x.title,
       sort_order: i,
     })),
+  });
+}
+
+/** One photo becomes a short cinematic clip, no builder required. */
+function motionClip(m) {
+  if (!videoReady(m)) {
+    toast("Pick A Ready Image To Create A Motion Clip.");
+    return;
+  }
+  openMotionClip({
+    title: m.title,
+    path: m.assetPath || m.path,
+    propertyLabel: m.property || null,
+    room: m.room && m.room !== "Needs Review" ? m.room : null,
+    toast,
+    onDone: () => load(true),
   });
 }
 
