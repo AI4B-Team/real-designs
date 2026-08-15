@@ -574,7 +574,22 @@ function stepPhotos() {
     .map(([id, n, d, ic]) => `<button class="rv-opt ${w.sourceType === id ? "on" : ""}" data-src="${id}"><i data-lucide="${ic}"></i><b>${n}</b><span>${d}</span></button>`)
     .join("")}</div>
   ${panel}
-  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${ready ? "" : "disabled"}>Continue</button></div>`;
+  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button></div>`;
+}
+
+/* The preview panel renders its own Continue, so readiness lives in one place
+   and both buttons stay in sync. */
+function stepReady() {
+  const w = S.wizard;
+  if (!w) return false;
+  if (w.step === 1) {
+    return w.sourceType === "upload" || w.sourceType === "address" ? (w.uploads || []).length > 0
+      : w.sourceType === "design" ? !!w.versionId
+      : !!w.propertyId;
+  }
+  if (w.step === 2) return w.scenes.length > 0;
+  if (w.step === 3) return (w.formats || []).length > 0;
+  return true;
 }
 
 /* ======================= STEP 2, SELECT ======================= */
