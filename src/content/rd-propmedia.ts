@@ -286,9 +286,9 @@ export async function openPropertyUpload(opts = {}) {
     wrap.innerHTML = "";
     document.body.style.overflow = "";
     document.removeEventListener("keydown", onEsc);
+    window.removeEventListener("hashchange", close);
   }
-  const onEsc = (e) => e.key === "Escape" && close();
-  document.addEventListener("keydown", onEsc);
+
 
   render();
 }
