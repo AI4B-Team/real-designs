@@ -971,7 +971,7 @@ function assetToScene(a) {
     scene_type: isBA && a.compare ? "before_after" : a.kind === "Original" ? "original" : "design",
     duration: 3,
     motion: "auto",
-    caption: a.room || "",
+    caption: "",
     disclosure: a.disclosure || null,
     asset_id: a.asset_id || null,
     version_id: a.version_id || null,
