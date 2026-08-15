@@ -565,6 +565,7 @@ function wireCards(grid, list) {
   );
   grid.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => download(find(b.dataset.dl))));
   grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
+  grid.querySelectorAll("[data-upg]").forEach((b) => (b.onclick = () => openUpgrade(find(b.dataset.upg))));
   grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
 }
 
