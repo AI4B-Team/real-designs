@@ -334,3 +334,4 @@
 .rd-app .rv-dpill { justify-self: start; font-family: "DM Mono", ui-monospace, monospace; font-size: 10.5px; border: 1px solid var(--line, #e6e6e6); border-radius: 999px; padding: 1px 8px; color: #4a4a4a; }
 @media (max-width: 900px) { .rd-app .rv-designs, .rd-app .rv-recents { grid-template-columns: 1fr 1fr; } }
 @media (max-width: 620px) { .rd-app .rv-designs, .rd-app .rv-recents { grid-template-columns: 1fr; } }
+.rd-app .rv-steps .rv-n { font-style: normal; }
