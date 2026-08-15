@@ -602,7 +602,9 @@ function seg(name, opts, value) {
 
 function setupHtml() {
   const st = S.setup;
+  if (!st.avatar) st.avatar = blankAvatarConfig();
   const kit = S.kits.find((k) => k.id === st.brandKitId);
+
   const scenes = S.photos.filter((p) => p.include).length;
   return `<div class="lv">
     <div class="lv-head">
