@@ -73,9 +73,17 @@ async function load() {
   } catch (e: any) {
     S.error = e?.message || "Could not load your CRM connections.";
   }
+  try {
+    const who: any = await isSignupAdmin();
+    S.admin = !!who?.admin;
+    if (S.admin) S.signups = await listSignupSurveys();
+  } catch (_) {
+    S.admin = false;
+  }
   S.loading = false;
   render();
 }
+
 
 function connectionFor(id: string) {
   return (S.data?.connections || []).find((c: any) => c.provider === id) || null;
