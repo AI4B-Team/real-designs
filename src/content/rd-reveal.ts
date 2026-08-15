@@ -659,20 +659,19 @@ function motionLabel(s) {
 }
 
 function sceneCard(s, i) {
-  const w = S.wizard;
   const look = s.look ? lookById(s.look) : null;
   const changed = (s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect;
   return `<div class="rv-scard" draggable="true" data-idx="${i}">
     <div class="rv-scard-th" data-img="${esc(s.path)}">
       <span class="rv-seq mono">${i + 1}</span>
       <button class="rv-x" data-drop="${i}" aria-label="Remove Scene"><i data-lucide="x"></i></button>
-      <div class="rv-mchips">
-        <button class="rv-mchip ${changed ? "hot" : ""}" data-pop="motion" data-i="${i}"><i data-lucide="video"></i>${esc(motionLabel(s))}<i data-lucide="chevron-down"></i></button>
-        <button class="rv-mchip" data-pop="crop" data-i="${i}"><i data-lucide="crop"></i><span class="mono">${esc((CROPS.find(([c]) => c === (s.crop || "center")) || CROPS[0])[1])}</span></button>
-        <button class="rv-mchip ${look ? "hot" : ""}" data-pop="look" data-i="${i}"><i data-lucide="palette"></i>${esc(look ? look.label : "Look")}</button>
-      </div>
     </div>
     <div class="rv-scard-b">
+      <div class="rv-mchips">
+        <button class="rv-mchip ${changed ? "hot" : ""}" data-pop="motion" data-i="${i}" title="Camera Motion">${esc(motionLabel(s))}<i data-lucide="chevron-down"></i></button>
+        <button class="rv-mchip" data-pop="crop" data-i="${i}" title="Crop">Crop</button>
+        <button class="rv-mchip ${look ? "hot" : ""}" data-pop="look" data-i="${i}" title="Look">Look</button>
+      </div>
       <b>${esc(s.room || "Scene " + (i + 1))}</b>
       <input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional">
       <div class="rv-scard-a">
@@ -701,6 +700,7 @@ function popoverHtml() {
         <div class="rv-pop-h">Immersive Movement</div>
         ${IMMERSIVE_EFFECTS.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level === "immersive" && (s.immersive_effect || "light") === id ? "on" : ""}" data-immpick="${id}">${esc(n)}<i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE}</i></button>`).join("")}
         <div class="rv-note sm">Only movement is animated. Walls, windows and furniture stay exactly as designed.</div>
+        <label class="rv-check"><input type="checkbox" id="rvAllMotion"> Apply To All Scenes</label>
         ${isExterior(s) ? `<div class="rv-pop-sep"></div><div class="rv-pop-h">Cinematic Exterior</div>
         <button class="rv-pop-row ${s.exterior_effect ? "" : "on"}" data-extpick="">None</button>
         ${EXTERIOR_EFFECTS.map(([id, n]) => `<button class="rv-pop-row ${s.exterior_effect === id ? "on" : ""}" data-extpick="${id}">${esc(n)}</button>`).join("")}
@@ -727,6 +727,7 @@ function popoverHtml() {
         ${looks.map((l) => `<button class="rv-look ${s.look === l.id ? "on" : ""}" data-lookpick="${l.id}" title="${esc(l.blurb)}"><span class="rv-look-th" data-img="${esc(s.path)}">${lookOverlayHTML(l, s.look_amount ?? 100)}</span><b>${esc(l.label)}</b></button>`).join("")}
       </div>
       <label class="rv-f">Intensity<input type="range" id="rvLookAmt" min="10" max="100" value="${s.look_amount ?? 100}"></label>
+      <label class="rv-check"><input type="checkbox" id="rvAllLook"> Apply To All Scenes</label>
     </div>`;
   }
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in wide" role="dialog" aria-label="Scene options">
@@ -737,36 +738,28 @@ function popoverHtml() {
 }
 
 /* ======================= STEP 3, EDIT ======================= */
+const ORIENTATIONS: Array<[string, string, string[]]> = [
+  ["portrait", "Portrait", ["9:16", "4:5"]],
+  ["landscape", "Landscape", ["16:9", "1:1"]],
+];
+function orientationOf(w) {
+  return (w.formats || []).some((f) => f === "16:9" || f === "1:1") ? "landscape" : "portrait";
+}
 function stepEdit() {
   const w = S.wizard;
   const per = sceneDurations(w.scenes.length, w.length);
   const total = Math.round(per * w.scenes.length);
   const imm = immersiveCount();
-  return `<h3>Edit The Video</h3>
-  <div class="rv-sub">Video Type</div>
-  <div class="rv-seg wrap">${VIDEO_TYPES.map((t) => `<button class="${w.videoType === t.id ? "on" : ""}" data-type="${t.id}">${t.name}</button>`).join("")}</div>
-  <div class="rv-sub">Format</div>
-  <div class="rv-seg wrap">${FORMATS.map((f) => `<button class="${w.formats.includes(f.id) ? "on" : ""}" data-fmt="${f.id}">${f.name}</button>`).join("")}</div>
-  <div class="rv-sub">Length</div>
-  <div class="rv-seg wrap">${LENGTHS.map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
-
-  <div class="rv-bulk">
-    <button class="btn btn-ghost btn-xs" id="rvAllMotion"><i data-lucide="video"></i>Apply Motion To All</button>
-    <button class="btn btn-ghost btn-xs" id="rvAllLook"><i data-lucide="palette"></i>Apply Look To All</button>
-    <button class="btn btn-ghost btn-xs" id="rvAuto"><i data-lucide="arrow-down-up"></i>Auto Arrange</button>
-    <span class="mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</span>
+  const orient = orientationOf(w);
+  return `<div class="rv-head-row">
+    <h3>Edit The Photos</h3>
+    <div class="rv-orient"><span>Orientation</span>
+      <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
+    </div>
   </div>
+  <div class="rv-meta mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</div>
   ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
-  <div class="rv-sgrid">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
-
-  <div class="rv-sub">Transitions</div>
-  <div class="rv-seg wrap">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"], ["whip", "Whip Pan"], ["punch", "Zoom Punch"], ["flash", "Flash Cut"], ["glitch", "Glitch"], ["leak", "Light Leak"], ["slide", "Slide"]]
-    .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
-  ${w.scenes.some((s) => s.scene_type === "before_after") ? `<div class="rv-sub">Before &amp; After Reveal</div>
-  <div class="rv-seg wrap">${[["match", "Match Frame"], ["slider", "Slider Reveal"], ["wipe", "Wipe"], ["fade", "Fade"]]
-    .map(([id, n]) => `<button class="${w.baTransition === id || (!w.baTransition && id === "match") ? "on" : ""}" data-ba="${id}">${n}</button>`).join("")}</div>` : ""}
-  <label class="rv-f">Narration Script, Optional<textarea id="rvScript" rows="4" placeholder="Leave Blank For No Narration">${esc(w.script || "")}</textarea></label>
-
+  <div class="rv-strip">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext" ${w.formats.length ? "" : "disabled"}>Continue</button></div>`;
 }
 
@@ -1561,6 +1554,11 @@ function bind() {
     w.formats = w.formats.includes(f) ? w.formats.filter((x) => x !== f) : w.formats.concat(f);
     render();
   });
+  on("[data-orient]", "click", (e) => {
+    const o = ORIENTATIONS.find(([id]) => id === e.currentTarget.dataset.orient);
+    if (o) w.formats = o[2].slice();
+    render();
+  });
   on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
   /* scene chips and their popovers */
   const cur = () => (w.pop ? w.scenes[w.pop.i] : null);
@@ -1592,17 +1590,17 @@ function bind() {
   on("[data-lookpick]", "click", (e) => { const s = cur(); if (!s) return; s.look = e.currentTarget.dataset.lookpick || null; render(); });
   const amt = el.querySelector("#rvLookAmt");
   if (amt) amt.addEventListener("change", (ev) => { const s = cur(); if (s) s.look_amount = Number(ev.target.value); render(); });
-  on("#rvAllMotion", "click", () => {
-    const first = w.scenes[0]; if (!first) return;
-    w.scenes.forEach((s) => { s.motion = first.motion || "auto"; s.motion_level = first.motion_level || "standard"; s.immersive_effect = first.immersive_effect || null; });
+  on("#rvAllMotion", "change", (e) => {
+    if (!e.currentTarget.checked) return;
+    const src = cur(); if (!src) return;
+    w.scenes.forEach((s) => { s.motion = src.motion || "auto"; s.motion_level = src.motion_level || "standard"; s.immersive_effect = src.immersive_effect || null; });
     toast("Motion Applied To Every Scene.");
-    render();
   });
-  on("#rvAllLook", "click", () => {
-    const first = w.scenes[0]; if (!first) return;
-    w.scenes.forEach((s) => { s.look = first.look || null; s.look_amount = first.look_amount ?? 100; });
+  on("#rvAllLook", "change", (e) => {
+    if (!e.currentTarget.checked) return;
+    const src = cur(); if (!src) return;
+    w.scenes.forEach((s) => { s.look = src.look || null; s.look_amount = src.look_amount ?? 100; });
     toast("Look Applied To Every Scene.");
-    render();
   });
   on("[data-tpl]", "click", (e) => { w.template = e.currentTarget.dataset.tpl; render(); });
   on("[data-out]", "click", (e) => {
@@ -1898,7 +1896,7 @@ export async function startDesignVideo(design = {}) {
     scene_type: "design",
     duration: 3,
     motion: "auto",
-    caption: design.name || "",
+    caption: "",
     disclosure: "proposed",
     asset_id: null,
     version_id: versionId,
