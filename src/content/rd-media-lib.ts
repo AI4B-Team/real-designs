@@ -385,14 +385,11 @@ const videoReady = (m) => READY(m) && typeGroup(m.type) !== "videos" && !!m.path
 const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !!m.refId && READY(m);
 const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
-const planBlocked = (m) => /paid plan|credit|free designs|upgrade/i.test(String(m && m.error || ""));
+const planBlocked = (m) => isPlanBlocked((m && m.error) || "");
 
 function openUpgrade(m) {
-  const msg = String((m && m.error) || "");
-  try {
-    const um = (window as any).rdUpgradeModal;
-    if (um) { um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "Upgrade To Finish This Render", msg || "This action needs a paid plan."); return; }
-  } catch (_) {}
+  const msg = String((m && m.error) || "") || "This action needs a paid plan.";
+  if (typeof (window as any).rdUpgradeModal === "function") { openUpgradeFlow(msg); return; }
   S.go("billing");
 }
 
