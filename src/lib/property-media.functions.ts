@@ -64,28 +64,34 @@ export const listMediaAssets = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    let q = supabase
-      .from("property_media_assets")
-      .select("*")
-      .order("sort_order", { ascending: true })
-      .order("created_at", { ascending: true })
-      .limit(600);
-    if (data.property_id) q = q.eq("property_id", data.property_id);
-    const { data: assets, error } = await q;
+    const { withRetry } = await import("./db-retry.server");
+    const { data: assets, error } = await withRetry(async () => {
+      let q = supabase
+        .from("property_media_assets")
+        .select("*")
+        .order("sort_order", { ascending: true })
+        .order("created_at", { ascending: true })
+        .limit(600);
+      if (data.property_id) q = q.eq("property_id", data.property_id);
+      return await q;
+    });
     if (error) throw new Error(error.message);
     const ids = (assets ?? []).map((a: any) => a.id);
     let versions: any[] = [];
     if (ids.length) {
-      const { data: v, error: ve } = await supabase
-        .from("property_media_versions")
-        .select("*")
-        .in("asset_id", ids)
-        .order("created_at", { ascending: true });
+      const { data: v, error: ve } = await withRetry(async () =>
+        supabase
+          .from("property_media_versions")
+          .select("*")
+          .in("asset_id", ids)
+          .order("created_at", { ascending: true }),
+      );
       if (ve) throw new Error(ve.message);
       versions = v ?? [];
     }
     return { assets: assets ?? [], versions };
   });
+
 
 export const updateMediaAssets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
