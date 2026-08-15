@@ -695,14 +695,44 @@ function confirmHtml() {
 /* Map friendly voice names to gateway voices. */
 const VOICE_MAP: Record<string, string> = {
   professional: "alloy", warm: "coral", conversational: "sage", luxury: "ballad",
+  clear: "echo", calm: "sage",
 };
 
+let voiceAudio: HTMLAudioElement | null = null;
+
+function stopVoicePreview() {
+  if (voiceAudio) { try { voiceAudio.pause(); } catch (_) { /* noop */ } voiceAudio = null; }
+  if (S.setup) S.setup.voicePreviewing = false;
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(String(r.result));
+    r.onerror = () => rej(new Error("read failed"));
+    r.readAsDataURL(file);
+  });
+}
+
+/* Fallback script written from the included scenes. */
+function lvDefaultScript() {
+  const rooms = Array.from(new Set(S.photos.filter((p) => p.include).map((p) => p.room).filter(Boolean))).slice(0, 6);
+  const lines = [];
+  if (S.setup.title) lines.push(`A look at ${S.setup.title}.`);
+  if (rooms.length) lines.push(`This tour covers ${rooms.join(", ")}.`);
+  lines.push("Every design shown is a proposed concept created in REAL DESIGNS.");
+  return lines.join(" ");
+}
+
 async function buildNarration(type: string, script: string | null | undefined, voice: string | null | undefined) {
-  if (type !== "generate" || !script || script.trim().length < 4) return null;
+  if (type === "upload") return S.setup?.narrationUpload || null;
+  if (type !== "generate") return null;
+  const text = (script || "").trim() || lvDefaultScript();
+  if (text.length < 4) return null;
   try {
     const { synthesizeNarration } = await import("@/lib/narration.functions");
     const out = await synthesizeNarration({
-      data: { script: script.trim().slice(0, 4000), voice: VOICE_MAP[(voice || "").toLowerCase()] || "alloy" },
+      data: { script: text.slice(0, 4000), voice: VOICE_MAP[(voice || "").toLowerCase()] || "alloy" },
     });
     return out?.audio || null;
   } catch (_) {
