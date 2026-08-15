@@ -25,7 +25,13 @@ export function openUpgrade(msg: unknown, title?: string): void {
     return;
   }
   try {
-    location.hash = "#/account/billing";
+    const go = (window as any).__rdGo;
+    if (typeof go === "function") {
+      go("billing");
+      return;
+    }
+    // App shell is not mounted (marketing pages): deep link into billing.
+    location.href = "/app#billing";
   } catch (_) {
     /* no-op */
   }
