@@ -983,7 +983,9 @@ function render() {
     S.screen === "wizard" ? wizardHtml() : S.screen === "design" ? dvHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
   paintAssetThumbs();
+  dvStopPreview();
   if (S.screen === "design") { closeIntroNow(); dvPaintThumbs(); }
+
   if (S.screen === "library") paintThumbs();
   if (S.screen === "detail" && S.detail) mountPlayer();
   bind();
@@ -1507,7 +1509,19 @@ function dvHtml() {
 
     <label class="dv-field"><span>Title</span><input id="dvTitle" value="${esc(d.title)}"></label>
 
+    <div class="dv-preview">
+      <div class="dv-lab">Live Preview</div>
+      <div class="dv-stage ar-${esc(d.aspect).replace(/[^0-9x:]/g, "").replace(":", "-")}" id="dvStage" data-motion="${esc(d.motionStyle)}">
+        <div class="dv-stage-empty">Add A Scene To Preview</div>
+      </div>
+      <div class="dv-pv-foot">
+        <button class="btn btn-ghost btn-sm" id="dvPvToggle"><i data-lucide="pause"></i>Pause</button>
+        <span class="dv-pv-meta" id="dvPvMeta"></span>
+      </div>
+    </div>
+
     <div class="dv-scenes">${scenes || `<div class="rv-note">This Design Has No Usable Image.</div>`}</div>
+
     <div class="dv-add">
       <button class="btn btn-ghost btn-sm" id="dvAddScene"><i data-lucide="plus"></i>Add Another Scene</button>
       <input type="file" id="dvFiles" accept="image/*" multiple hidden>
@@ -1565,6 +1579,49 @@ function dvPickerHtml() {
   </div></div>`;
 }
 
+/** Live preview player: cycles the scene images with the chosen motion. */
+let dvPvTimer = null;
+let dvPvPaused = false;
+
+export function dvStopPreview() {
+  if (dvPvTimer) { clearInterval(dvPvTimer); dvPvTimer = null; }
+}
+
+async function dvStartPreview() {
+  dvStopPreview();
+  const el = host();
+  const d = S.dv;
+  const stage = el?.querySelector("#dvStage");
+  if (!el || !d || !stage) return;
+  const scenes = d.scenes || [];
+  if (!scenes.length) return;
+
+  const urls = [];
+  for (const s of scenes) {
+    const p = s.path || "";
+    urls.push(/^(blob:|https?:|data:)/.test(p) ? p : await resolvePhotoUrl(p).catch(() => null));
+  }
+  if (host() !== el || S.dv !== d) return;
+
+  const per = Math.max(1.2, (Number(d.duration) || 15) / scenes.length);
+  stage.innerHTML = scenes.map((s, i) => `<figure class="dv-pv-slide${i === 0 ? " on" : ""}" data-pv="${i}">
+      ${urls[i] ? `<img src="${esc(urls[i])}" alt="${esc(s.room || "Scene")}">` : `<span class="dv-pv-miss">Image Unavailable</span>`}
+      ${d.captions && s.caption ? `<figcaption>${esc(s.caption)}</figcaption>` : ""}
+    </figure>`).join("");
+  stage.style.setProperty("--dv-per", per + "s");
+
+  const meta = el.querySelector("#dvPvMeta");
+  let i = 0;
+  const show = () => {
+    stage.querySelectorAll(".dv-pv-slide").forEach((n, k) => n.classList.toggle("on", k === i));
+    if (meta) meta.textContent = `Scene ${i + 1} Of ${scenes.length} · ${per.toFixed(1)}s Each · ${d.duration}s Total`;
+  };
+  show();
+  if (!dvPvPaused) {
+    dvPvTimer = setInterval(() => { i = (i + 1) % scenes.length; show(); }, per * 1000);
+  }
+}
+
 async function dvPaintThumbs() {
   const el = host();
   if (!el) return;
@@ -1575,6 +1632,7 @@ async function dvPaintThumbs() {
     const url = /^(blob:|https?:|data:)/.test(p) ? p : await resolvePhotoUrl(p);
     if (url) n.style.backgroundImage = `url("${url}")`;
   }
+  dvStartPreview();
 }
 
 function dvBind() {
@@ -1584,7 +1642,17 @@ function dvBind() {
   const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
   const upd = (fn) => { fn(); dvQueueSave(); render(); };
 
-  on("#dvClose, #dvBackLib", "click", async () => { dvActive = false; stopMusic(); await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
+  on("#dvPvToggle", "click", (e) => {
+    dvPvPaused = !dvPvPaused;
+    e.currentTarget.innerHTML = dvPvPaused
+      ? '<i data-lucide="play"></i>Play'
+      : '<i data-lucide="pause"></i>Pause';
+    try { window.lucide?.createIcons?.(); } catch (_) {}
+    if (dvPvPaused) dvStopPreview(); else dvStartPreview();
+  });
+
+  on("#dvClose, #dvBackLib", "click", async () => { dvActive = false; dvStopPreview(); stopMusic(); await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
+
   const t = el.querySelector("#dvTitle");
   if (t) t.addEventListener("change", () => { d.title = t.value.trim() || "Design Video"; dvQueueSave(); });
   on("[data-dvmotion]", "click", (e) => upd(() => { d.motionStyle = e.currentTarget.dataset.dvmotion; }));
