@@ -4,6 +4,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks } from "@/lib/rd-music";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { getPropertyTree } from "@/lib/workspace.functions";
@@ -66,6 +67,43 @@ const MUSIC = [
   { id: "upbeat", group: "Upbeat", name: "Upbeat Listing" },
   { id: "minimal", group: "Minimal", name: "Minimal Pulse" },
 ];
+
+function musicList() {
+  return MUSIC.concat(getCustomTracks().map((t) => ({ id: t.id, group: "My Uploads", name: t.name })));
+}
+function musicPicker(id, sel, withGroup) {
+  const on = playingId() && playingId() === sel;
+  return `<div class="rv-music">
+    <select id="${id}">${musicList().map((m) => `<option value="${m.id}" ${sel === m.id ? "selected" : ""}>${esc(withGroup ? m.group + " \u2014 " + m.name : m.name)}</option>`).join("")}</select>
+    <button type="button" class="btn btn-ghost btn-sm rv-music-play" data-musicplay="${id}" ${sel === "none" ? "disabled" : ""}><i data-lucide="${on ? "pause" : "play"}"></i>${on ? "Stop" : "Preview"}</button>
+    <button type="button" class="btn btn-ghost btn-sm" data-musicup="${id}"><i data-lucide="upload"></i>Upload Track</button>
+    <input type="file" accept="audio/*" class="rv-music-file" data-musicfile="${id}" hidden>
+  </div>`;
+}
+
+function bindMusicControls(el, setTrack, getTrack) {
+  el.querySelectorAll("[data-musicplay]").forEach((b) => b.addEventListener("click", (e) => {
+    e.preventDefault();
+    const id = getTrack();
+    if (!id || id === "none") return toast("Choose A Track First.");
+    toggleMusic(id);
+    render();
+  }));
+  el.querySelectorAll("[data-musicup]").forEach((b) => b.addEventListener("click", (e) => {
+    e.preventDefault();
+    const input = el.querySelector(`[data-musicfile="${b.dataset.musicup}"]`);
+    if (input) input.click();
+  }));
+  el.querySelectorAll("[data-musicfile]").forEach((inp) => inp.addEventListener("change", (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    if (f.size > 20 * 1024 * 1024) return toast("Audio Files Must Be Under 20MB.");
+    const t = addCustomTrack(f);
+    stopMusic();
+    setTrack(t.id);
+    toast("Track Uploaded.");
+  }));
+}
 
 const ORDER = [
   "Front Exterior", "Exterior", "Entry", "Living", "Living Areas", "Kitchen", "Dining",
@@ -478,7 +516,7 @@ function stepAudio() {
   <div class="rv-seg">${[["music", "Music Only"], ["captions", "Captions"], ["narration", "Narration"], ["both", "Music + Narration"]]
     .map(([id, n]) => `<button class="${w.presentation === id ? "on" : ""}" data-pres="${id}">${n}</button>`).join("")}</div>
   <div class="rv-sub">Music</div>
-  <label class="rv-f">Track<select id="rvMusic">${MUSIC.map((m) => `<option value="${m.id}" ${w.music === m.id ? "selected" : ""}>${m.group} — ${m.name}</option>`).join("")}</select></label>
+  <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music, true)}
   <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
   <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
   <div class="rv-note sm">Music is mixed into downloads in a later phase. Beat sync currently paces scene timing.</div>
@@ -1091,7 +1129,8 @@ function bind() {
     if (w.presentation === "narration" || w.presentation === "both") w.narration = w.narration === "none" ? "generate" : w.narration;
     render();
   });
-  const mus = el.querySelector("#rvMusic"); if (mus) mus.addEventListener("change", (e) => { w.music = e.target.value; });
+  const mus = el.querySelector("#rvMusic"); if (mus) mus.addEventListener("change", (e) => { w.music = e.target.value; stopMusic(); render(); });
+  bindMusicControls(el, (v) => { w.music = v; render(); }, () => w.music);
   const vol = el.querySelector("#rvVol"); if (vol) vol.addEventListener("input", (e) => { w.volume = Number(e.target.value) / 100; });
   const beat = el.querySelector("#rvBeat"); if (beat) beat.addEventListener("change", (e) => { w.beatSync = e.target.checked; });
   on("[data-nar]", "click", (e) => { const v = e.currentTarget.dataset.nar; if (v === "upload") return toast("Voiceover Upload Is Coming Soon."); w.narration = v; render(); });
@@ -1475,7 +1514,7 @@ function dvHtml() {
     </div>
 
     <div class="dv-opts">
-      <label class="dv-field"><span>Music</span><select id="dvMusic">${MUSIC.map((m) => `<option value="${m.id}" ${d.music === m.id ? "selected" : ""}>${esc(m.name)}</option>`).join("")}</select></label>
+      <label class="dv-field"><span>Music</span>${musicPicker("dvMusic", d.music, false)}</label>
       <label class="dv-field"><span>Logo Or Branding</span><select id="dvKit"><option value="">No Branding</option>${S.kits
         .map((k) => `<option value="${k.id}" ${d.brandKitId === k.id ? "selected" : ""}>${esc(k.company_name || "Brand Kit")}</option>`).join("")}</select></label>
       <label class="dv-check"><input type="checkbox" id="dvCaptions" ${d.captions ? "checked" : ""}><span>Show Text On Scenes</span></label>
@@ -1539,14 +1578,15 @@ function dvBind() {
   const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
   const upd = (fn) => { fn(); dvQueueSave(); render(); };
 
-  on("#dvClose, #dvBackLib", "click", async () => { dvActive = false; await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
+  on("#dvClose, #dvBackLib", "click", async () => { dvActive = false; stopMusic(); await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
   const t = el.querySelector("#dvTitle");
   if (t) t.addEventListener("change", () => { d.title = t.value.trim() || "Design Video"; dvQueueSave(); });
   on("[data-dvmotion]", "click", (e) => upd(() => { d.motionStyle = e.currentTarget.dataset.dvmotion; }));
   on("[data-dvdur]", "click", (e) => upd(() => { d.duration = Number(e.currentTarget.dataset.dvdur); }));
   on("[data-dvfmt]", "click", (e) => upd(() => { d.aspect = e.currentTarget.dataset.dvfmt; }));
   const mu = el.querySelector("#dvMusic");
-  if (mu) mu.addEventListener("change", () => { d.music = mu.value; dvQueueSave(); });
+  if (mu) mu.addEventListener("change", () => { d.music = mu.value; stopMusic(); dvQueueSave(); render(); });
+  bindMusicControls(el, (v) => { d.music = v; dvQueueSave(); render(); }, () => d.music);
   const kit = el.querySelector("#dvKit");
   if (kit) kit.addEventListener("change", () => { d.brandKitId = kit.value || null; d.branding = { ...d.branding, outro: !!kit.value, contact: !!kit.value }; dvQueueSave(); });
   const cap = el.querySelector("#dvCaptions");

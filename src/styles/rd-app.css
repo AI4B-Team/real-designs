@@ -1381,3 +1381,9 @@
 .rd-app .sts-stylebar b{ display:block; font-size:.86rem; }
 .rd-app .sts-stylebar span{ display:block; font-size:.74rem; color:var(--mute-2,#8a867d); margin-top:2px; }
 .rd-app .sts-stylebar .sts-link{ white-space:nowrap; }
+
+/* music preview + upload */
+.rv-music{display:flex;align-items:center;gap:8px;flex-wrap:wrap;width:100%}
+.rv-music select{flex:1 1 200px;min-width:180px}
+.rv-music .btn{white-space:nowrap}
+.rv-music-play i{width:15px;height:15px}
