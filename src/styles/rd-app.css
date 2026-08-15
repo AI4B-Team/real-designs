@@ -1471,3 +1471,5 @@
 .rd-app .crm-form input,.rd-app .crm-form select,.rd-app .crm-form textarea{border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;font-size:.85rem;background:#fff;color:var(--ink);text-transform:none;letter-spacing:0}
 .rd-app .crm-form input:focus,.rd-app .crm-form select:focus,.rd-app .crm-form textarea:focus{outline:none;border-color:var(--ink)}
 .rd-app .crm-help{font-size:.74rem;color:var(--mute-2);margin:-2px 0 0}
+.rd-app .crm-form label.crm-toggle{display:flex;flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:.82rem;color:var(--ink)}
+.rd-app .crm-form label.crm-toggle input[type=checkbox]{width:16px;height:16px;flex:0 0 auto;padding:0;accent-color:var(--red,#CC0000)}
