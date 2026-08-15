@@ -492,8 +492,8 @@ function stepPhotos() {
   let panel = "";
   if (w.sourceType === "address") {
     panel = `<div class="rv-srcpanel">
-      <label class="rv-f">Property Address<span class="rv-inp-ic"><i data-lucide="search"></i><input id="rvAddr" value="${esc(w.address || "")}" placeholder="3417 Hoover Dr, Holiday, FL 34691"></span></label>
-      <button class="btn btn-primary btn-sm" id="rvAddrGo">${w.addrBusy ? "Looking Up" : "Find Photos"}</button>
+      <label class="rv-f" style="display:block">Property Address<input id="rvAddr" style="display:block;width:100%;margin-top:6px" value="${esc(w.address || "")}" placeholder="3417 Hoover Dr, Holiday, FL 34691"></label>
+      <button class="btn btn-primary btn-sm" id="rvAddrGo" style="margin-top:14px">${w.addrBusy ? "Looking Up" : "Find Photos"}</button>
       ${(w.candidates || []).length ? `<div class="rv-sub">Choose A Listing</div>
       <div class="rv-cands">${w.candidates.map((c, i) => `<div class="rv-cand">
         <span class="rv-a-th" data-img="${esc(c.cover || "")}"></span>
