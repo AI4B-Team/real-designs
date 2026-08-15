@@ -449,8 +449,15 @@ try {
     if (POP && !POP.contains(e.target)) closePop();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closePop();
+    if (e.key !== "Escape") return;
+    if (POP) {
+      closePop();
+      return;
+    }
+    const d = document.getElementById("mlDrawer");
+    if (d && !d.hidden) closeDrawer();
   });
+
 } catch (_) {}
 
 function popMenu(anchor, items) {
