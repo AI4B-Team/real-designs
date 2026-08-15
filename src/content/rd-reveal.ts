@@ -573,6 +573,8 @@ function defaultScript() {
 
 function stepAudio() {
   const w = S.wizard;
+  if (!w.avatar) w.avatar = blankAvatarConfig();
+
   return `<h3>Audio And Story</h3>
   <div class="rv-sub">Presentation Style</div>
   <div class="rv-seg">${[["music", "Music Only"], ["captions", "Captions"], ["narration", "Narration"], ["both", "Music + Narration"]]
