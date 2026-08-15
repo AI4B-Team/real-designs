@@ -45,12 +45,29 @@ export const saveEstimate = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
 
-    const { data: property, error: pErr } = await supabase
+    /* Reuse an existing property with the same address instead of creating a
+       duplicate row. Without this, every save spawned another property, so
+       pickers filled up with repeated "Unsorted Uploads" / same-address rows. */
+    const wanted = data.address.trim();
+    const { data: existing } = await supabase
       .from("properties")
-      .insert({ address: data.address, market_id: data.market_id })
       .select("id")
-      .single();
-    if (pErr) throw new Error(pErr.message);
+      .ilike("address", wanted)
+      .order("created_at", { ascending: true })
+      .limit(1)
+      .maybeSingle();
+
+    let property = existing as { id: string } | null;
+    if (!property) {
+      const { data: created, error: pErr } = await supabase
+        .from("properties")
+        .insert({ address: wanted, market_id: data.market_id })
+        .select("id")
+        .single();
+      if (pErr) throw new Error(pErr.message);
+      property = created;
+    }
+
 
     const { data: project, error: prErr } = await supabase
       .from("projects")
@@ -263,6 +280,8 @@ export const getPropertyTree = createServerFn({ method: "GET" })
     return (data ?? []).map((p: any) => ({
       id: p.id as string,
       address: propLabel(p.address),
+      created_at: p.created_at as string,
+
       has_dna: Array.isArray(p.design_dna?.items) && p.design_dna.items.length > 0,
       dna: (Array.isArray(p.design_dna?.items) ? p.design_dna.items : []) as {
         label: string;

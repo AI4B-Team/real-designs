@@ -257,7 +257,7 @@ export async function openPropertyUpload(opts = {}) {
 
   async function start() {
     let pid = null;
-    let label = "Unassigned Media";
+    let label = "Unsorted Uploads";
     if (mode === "existing") {
       pid = propertyId;
       label = (props.find((p) => p.id === pid) || {}).address || "Property";
