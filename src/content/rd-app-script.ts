@@ -3401,9 +3401,9 @@ if(surveyEdit) surveyEdit.addEventListener('click',async()=>{
   try{
     const mod=await import('@/lib/rd-survey-ui');
     await mod.editSignupSurvey();
-    setTimeout(paintSurveySummary,1200);
   }catch(_){}
 });
+document.addEventListener('rd:survey-saved',function(){ paintSurveySummary(); });
 paintSurveySummary();
 
 
