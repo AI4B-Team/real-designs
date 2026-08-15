@@ -976,7 +976,7 @@ function previewPanel() {
       <div class="rv-note sm">You Can Leave This Page. We Will Notify You When It Is Ready.</div></div>`
       : w.step === 4
         ? `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
-        : `<button class="btn btn-primary rv-cta" id="rvNext">Continue</button>`}
+        : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
   </div>`;
 }
 
