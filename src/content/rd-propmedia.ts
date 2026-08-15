@@ -392,8 +392,9 @@ let goFn = (v) => {};
 let mounted = false;
 
 export function mountMedia(go, ctx = {}) {
-  goFn = go;
-  window.__rdGo = go;
+  goFn = typeof go === "function" ? go : goFn;
+  /* Never clobber the app's global navigator with an undefined handler. */
+  if (typeof go === "function") window.__rdGo = go;
   mountUploadDock(go);
   const view = document.getElementById("v-media");
   if (!view) return;
