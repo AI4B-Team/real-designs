@@ -110,25 +110,49 @@ const LENGTHS = [
 
 
 const MUSIC = [
-  { id: "none", group: "No Music", name: "No Music" },
-  { id: "modern", group: "Modern", name: "Clean Modern" },
-  { id: "luxury", group: "Luxury", name: "Quiet Luxury" },
-  { id: "warm", group: "Warm", name: "Warm Home" },
-  { id: "cinematic", group: "Cinematic", name: "Cinematic Sweep" },
-  { id: "upbeat", group: "Upbeat", name: "Upbeat Listing" },
-  { id: "minimal", group: "Minimal", name: "Minimal Pulse" },
+  { id: "none", group: "No Music", genre: "all", name: "No Music", dur: "0:00" },
+  { id: "modern", group: "Modern", genre: "pop", name: "Clean Modern", dur: "1:48" },
+  { id: "luxury", group: "Luxury", genre: "classical", name: "Quiet Luxury", dur: "2:12" },
+  { id: "warm", group: "Warm", genre: "indie", name: "Warm Home", dur: "1:56" },
+  { id: "cinematic", group: "Cinematic", genre: "classical", name: "Cinematic Sweep", dur: "2:30" },
+  { id: "upbeat", group: "Upbeat", genre: "dance", name: "Upbeat Listing", dur: "1:42" },
+  { id: "minimal", group: "Minimal", genre: "indie", name: "Minimal Pulse", dur: "2:04" },
+  { id: "porchlight", group: "Country", genre: "country", name: "Porch Light", dur: "2:18" },
+  { id: "sunroom", group: "Pop", genre: "pop", name: "Sunroom", dur: "1:38" },
+  { id: "nightdrive", group: "Dance", genre: "dance", name: "Night Drive", dur: "2:22" },
+  { id: "openhouse", group: "Indie", genre: "indie", name: "Open House", dur: "1:50" },
+  { id: "stringlight", group: "Classical", genre: "classical", name: "String Light", dur: "2:44" },
 ];
 
+const MUSIC_GENRES = [["all", "All"], ["dance", "Dance"], ["indie", "Indie"], ["pop", "Pop"], ["classical", "Classical"], ["country", "Country"], ["mine", "My Tracks"]];
+
 function musicList() {
-  return MUSIC.concat(getCustomTracks().map((t) => ({ id: t.id, group: "My Uploads", name: t.name })));
+  return MUSIC.concat(getCustomTracks().map((t) => ({ id: t.id, group: "My Tracks", genre: "mine", name: t.name, dur: "" })));
 }
-function musicPicker(id, sel, withGroup) {
-  const on = playingId() && playingId() === sel;
+
+/** Browsable music library: search, genre tabs and a play button per track. */
+function musicPicker(id, sel) {
+  const w = S.wizard || {};
+  const g = MUSIC_GENRES.some(([k]) => k === w.musicGenre) ? w.musicGenre : "all";
+  const q = (w.musicQ || "").toLowerCase();
+  const rows = musicList().filter((m) => (g === "all" ? true : m.genre === g) && (!q || m.name.toLowerCase().includes(q)));
+  const cur = playingId();
   return `<div class="rv-music">
-    <select id="${id}">${musicList().map((m) => `<option value="${m.id}" ${sel === m.id ? "selected" : ""}>${esc(withGroup ? m.group + ", " + m.name : m.name)}</option>`).join("")}</select>
-    <button type="button" class="btn btn-ghost btn-sm rv-music-play" data-musicplay="${id}" ${sel === "none" ? "disabled" : ""}><i data-lucide="${on ? "pause" : "play"}"></i>${on ? "Stop" : "Preview"}</button>
-    <button type="button" class="btn btn-ghost btn-sm" data-musicup="${id}"><i data-lucide="upload"></i>Upload Track</button>
-    <input type="file" accept="audio/*" class="rv-music-file" data-musicfile="${id}" hidden>
+    <div class="rv-music-top">
+      <span class="rv-music-search"><i data-lucide="search"></i><input id="rvMusicQ" value="${esc(w.musicQ || "")}" placeholder="Search Tracks"></span>
+      <button type="button" class="btn btn-ghost btn-sm" data-musicup="${id}"><i data-lucide="upload"></i>Upload Audio</button>
+      <input type="file" accept="audio/*" class="rv-music-file" data-musicfile="${id}" hidden>
+    </div>
+    <div class="rv-seg tiny">${MUSIC_GENRES.map(([k, n]) => `<button type="button" class="${g === k ? "on" : ""}" data-musicgenre="${k}">${n}</button>`).join("")}</div>
+    <div class="rv-tracks">${rows.length ? rows.map((m) => {
+      const on = cur === m.id;
+      return `<div class="rv-track ${sel === m.id ? "on" : ""} ${on ? "playing" : ""}" data-track="${esc(m.id)}">
+        <button type="button" class="icon-btn xs" data-trackplay="${esc(m.id)}" title="${on ? "Pause" : "Play"}" ${m.id === "none" ? "disabled" : ""}><i data-lucide="${on ? "pause" : "play"}"></i></button>
+        <b>${esc(m.name)}</b>
+        <span class="mono">${esc(m.dur || "")}</span>
+        ${sel === m.id ? `<em><i data-lucide="check"></i></em>` : ""}
+      </div>`;
+    }).join("") : `<div class="rv-note sm">No Tracks Match That Search.</div>`}</div>
   </div>`;
 }
 
@@ -395,6 +419,17 @@ function newWizard(seed = {}) {
     versions: { branded: true, clean: true, disclosure: true },
     outputMode: "both",
     template: "clean",
+    introTemplate: "clean",
+    outroTemplate: "agent_white",
+    tplScope: "intro",
+    speedRamps: false,
+    logoBranding: false,
+    aiDisclaimer: false,
+    logoModal: false,
+    musicGenre: "all",
+    musicQ: "",
+    addrTab: "address",
+    listingUrl: "",
     address: "",
     candidates: [],
     pop: null,
