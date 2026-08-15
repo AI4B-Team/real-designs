@@ -236,9 +236,6 @@
 .rd-app .mono, .rd-app .rv-cost, .rd-app .rv-meta { font-family: "DM Mono", ui-monospace, monospace; }
 
 .rd-app .rv-srcpanel { border: 1px solid var(--line, #e6e6e6); border-radius: 12px; padding: 14px; margin: 12px 0; }
-.rd-app .rv-inp-ic { position: relative; display: block; }
-.rd-app .rv-inp-ic svg { position: absolute !important; left: 10px; top: 50%; transform: translateY(-50%); width: 15px !important; height: 15px !important; color: #8a8a8a; margin: 0 !important; }
-.rd-app .rv-inp-ic input { padding-left: 32px; width: 100%; }
 .rd-app .rv-srcpanel #rvAddrGo { margin-top: 14px; }
 .rd-app .rv-srcpanel #rvAddrSkip { margin-left: 10px; }
 
@@ -339,6 +336,3 @@
 @media (max-width: 620px) { .rd-app .rv-designs, .rd-app .rv-recents { grid-template-columns: 1fr; } }
 .rd-app .rv-steps .rv-n { font-style: normal; }
 
-/* Keep the search glyph clear of the typed address (ID-scoped padding above wins otherwise). */
-.rd-app #v-reveal .rv-inp-ic input,
-.rd-app .rv-inp-ic input { padding-left: 34px; }
