@@ -324,6 +324,12 @@ function render() {
     if (n) n.textContent = S.sel.size + " Selected";
     const bv = document.getElementById("mlBulkVideo");
     if (bv) bv.disabled = !selectedItems().some(videoReady);
+    const br = document.getElementById("mlBulkRestyle");
+    if (br) {
+      const n2 = selectedItems().filter(canEditImage).length;
+      br.disabled = n2 === 0;
+      br.innerHTML = `<i data-lucide="wand-2"></i>Redesign${n2 > 1 ? " " + n2 : ""}`;
+    }
   }
 
   if (S.loading) {
