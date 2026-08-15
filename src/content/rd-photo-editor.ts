@@ -204,7 +204,7 @@ export async function openPhotoEditor(ctx) {
   let assets = ctx.assets.slice();
   let idx = Math.max(0, assets.findIndex((a) => a.id === ctx.assetId));
   if (idx < 0) idx = 0;
-  let tab = "adjust";
+  let tab = "analyze";
   let compare = "current";
   let adj = blankAdjust();
   let geo = blankGeometry();
@@ -214,6 +214,8 @@ export async function openPhotoEditor(ctx) {
   let activeVersionId = null;
   let busy = false;
   let pending = null;
+  const analysis = {}; // asset id -> { loading, error, data }
+  const picked = new Set(); // asset ids selected for batch work
 
   const asset = () => assets[idx];
 
