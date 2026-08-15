@@ -1457,6 +1457,8 @@ function bind() {
       return void inp.click();
     }
     if (a === "generate") {
+      stopVoicePreview();
+      stopMusic();
       S.confirm = true;
       return render();
     }
