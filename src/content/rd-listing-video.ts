@@ -851,8 +851,12 @@ function render() {
   paint();
   hydrateThumbs();
   stopPreview();
-  if (S.step === "setup") startPreview();
+  if (S.step === "setup") {
+    startPreview();
+    bindAvatar(el, S.setup.avatar, render, toast);
+  }
   if (S.step === "done") mountPlayer();
+
 
 }
 
