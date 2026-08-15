@@ -564,10 +564,6 @@ function stepPhotos() {
         <button class="btn btn-ghost btn-sm" id="rvUsePhotos">Use Photos Instead</button></div>`;
   }
 
-  const ready =
-    w.sourceType === "upload" || w.sourceType === "address" ? w.uploads.length > 0
-    : w.sourceType === "design" ? !!w.versionId
-    : !!w.propertyId;
   return `<h3>Where Are The Photos?</h3>
   <label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
   <div class="rv-opts">${opts
