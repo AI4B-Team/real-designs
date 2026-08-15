@@ -625,7 +625,7 @@ function videoFrom(items) {
     return;
   }
   try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
-  openListingVideo({
+  openVideoWorkflow({
     from: "media",
     assets: usable.map((x, i) => ({
       id: x.refId || x.id,
