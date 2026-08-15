@@ -827,7 +827,7 @@ async function generate() {
     const started = await startRender({ id: projectId, variants: vs });
     track?.("reveal_generate", { formats: w.formats.join(","), scenes: w.scenes.length });
     await renderAllVariants(projectId, started.variants, w);
-    await setVideoStatus({ id: projectId, status: "ready" });
+    await setVideoStatus({ data: { id: projectId, status: "ready" } });
     toast("Your Video Is Ready.");
     await loadLibrary();
     S.screen = "detail";
@@ -835,7 +835,7 @@ async function generate() {
     await openDetail(projectId);
   } catch (e) {
     if (projectId) {
-      try { await setVideoStatus({ id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) }); } catch (_) {}
+      try { await setVideoStatus({ data: { id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) } }); } catch (_) {}
     }
     toast(e?.message || "The render failed. Your selections were saved.");
     w.busy = false;
@@ -1878,13 +1878,13 @@ async function dvGenerate() {
       propertyLabel: d.propertyLabel,
     };
     await renderAllVariants(projectId, started.variants, cfg, d.duration / d.scenes.length);
-    await setVideoStatus({ id: projectId, status: "ready" });
+    await setVideoStatus({ data: { id: projectId, status: "ready" } });
     toast("Your Design Video Is Ready.");
     await loadLibrary();
     S.dv = null;
     await openDetail(projectId);
   } catch (e) {
-    if (projectId) { try { await setVideoStatus({ id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) }); } catch (_) {} }
+    if (projectId) { try { await setVideoStatus({ data: { id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) } }); } catch (_) {} }
     toast(e?.message || "The Video Could Not Be Created. Your Draft Was Saved.");
     if (S.dv) { S.dv.busy = false; render(); }
   }
@@ -2038,8 +2038,8 @@ function bindCards(root) {
     const id = card.dataset.id;
     const act = e.currentTarget.dataset.act;
     if (act === "open" || act === "edit") return openDetail(id);
-    if (act === "dupe") { await duplicateVideo({ id }); await loadLibrary(); render(); return toast("Video Duplicated."); }
-    if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ id }); await loadLibrary(); render(); return; }
+    if (act === "dupe") { await duplicateVideo({ data: { id } }); await loadLibrary(); render(); return toast("Video Duplicated."); }
+    if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ data: { id } }); await loadLibrary(); render(); return; }
     if (act === "download") {
       const v = S.variants.find((x) => x.video_project_id === id && x.output_path);
       if (!v) return toast("Nothing Rendered Yet.");
