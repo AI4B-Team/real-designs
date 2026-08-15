@@ -121,6 +121,12 @@ export function openSignupSurvey(seed?: any) {
         phone: val("phone"),
         company: val("company"),
       });
+      try {
+        const { autoPushSignupToCrm } = await import("@/lib/signup-survey.functions");
+        void autoPushSignupToCrm({ data: undefined } as any).catch(() => {});
+      } catch (_) {
+        /* CRM push is best-effort */
+      }
       close();
       try {
         document.dispatchEvent(new CustomEvent("rd:survey-saved"));

@@ -122,3 +122,76 @@ export const markSignupPushed = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Pushes the current member's signup answers into any of their auto-push CRM connections. */
+export const autoPushSignupToCrm = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context as any;
+    const { data: conns } = await supabase
+      .from("crm_connections")
+      .select("*")
+      .eq("auto_push", true);
+    if (!conns?.length) return { ok: true, pushed: 0 };
+
+    const { data: profile } = await supabase
+      .from("signup_profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (!profile) return { ok: true, pushed: 0 };
+    if ((profile as any).crm_pushed_at) return { ok: true, pushed: 0 };
+
+    const p: any = profile;
+    const title = `New Signup — ${p.full_name || p.email || "Member"}`;
+    const body = [
+      p.email ? `Email: ${p.email}` : null,
+      p.phone ? `Phone: ${p.phone}` : null,
+      p.company ? `Company: ${p.company}` : null,
+      p.role ? `Role: ${p.role}` : null,
+      p.how_heard ? `Heard Via: ${p.how_heard}${p.how_heard_detail ? ` (${p.how_heard_detail})` : ""}` : null,
+      p.listings_per_year ? `Listings Per Year: ${p.listings_per_year}` : null,
+      Array.isArray(p.goals) && p.goals.length ? `Goals: ${p.goals.join(", ")}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n")
+      .slice(0, 2000);
+
+    const { pushCrm } = await import("@/lib/crm.server");
+    let pushed = 0;
+    for (const conn of conns as any[]) {
+      try {
+        const out = await pushCrm(
+          conn.provider,
+          conn.credential,
+          { title, body, link: null, contactExternalId: null, contactEmail: p.email ?? null },
+          conn.endpoint,
+        );
+        pushed += 1;
+        await supabase.from("crm_sync_log").insert({
+          user_id: userId,
+          connection_id: conn.id,
+          action: "push",
+          status: "ok",
+          detail: `${title} — ${out.detail}`,
+        } as any);
+      } catch (e: any) {
+        await supabase.from("crm_sync_log").insert({
+          user_id: userId,
+          connection_id: conn.id,
+          action: "push",
+          status: "error",
+          detail: String(e?.message || e).slice(0, 300),
+        } as any);
+      }
+    }
+
+    if (pushed > 0) {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      await supabaseAdmin
+        .from("signup_profiles")
+        .update({ crm_pushed_at: new Date().toISOString() } as any)
+        .eq("user_id", userId);
+    }
+    return { ok: true, pushed };
+  });
