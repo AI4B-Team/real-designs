@@ -192,9 +192,12 @@ function go(v,fromHash){
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
   if(v==='crm'){ try{ mountCrm(go); }catch(_){} }
-  if(!titles[v]) return;
-  const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
-  const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
+  if(titles[v]){
+    const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
+    const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
+  }
+  /* The hash and the scroll reset must run for every view, including views
+     that have no entry in the title map. */
   if(!fromHash){
     try{
       const h='#v-'+v;
