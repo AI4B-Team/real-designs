@@ -658,7 +658,26 @@ const MOTION_COPY = {
   orbit_left: "Orbit Left rotates the camera counter clockwise around the focal point.",
   orbit_right: "Orbit Right rotates the camera clockwise around the focal point, creating a sense of depth.",
   static: "Static holds the frame still, letting the design speak for itself.",
+  curtains: "Curtains Drifting adds a soft fabric movement near windows while the room stays exactly as designed.",
+  fire: "Fireplace Flicker animates the flame and its light spill only.",
+  water: "Water Movement ripples pools, tubs and open water in the frame.",
+  light: "Daylight Shift moves the natural light across the room over the length of the clip.",
+  foliage: "Foliage Sway adds a gentle breeze through plants and trees.",
+  approach: "Approach drives the camera toward the front of the property.",
+  rise: "Rise lifts the camera upward to open the view.",
+  aerial_reveal: "Aerial Reveal pulls up and back for a wide establishing look.",
 };
+/** Preview animation class per option. Immersive and exterior reuse the closest camera move. */
+const MOTION_PREVIEW = {
+  curtains: "static", fire: "static", water: "static", light: "static", foliage: "static",
+  approach: "push", rise: "pull", aerial_reveal: "pull",
+};
+function motionName(id) {
+  const all = [...STANDARD_MOTIONS, ...IMMERSIVE_EFFECTS, ...EXTERIOR_EFFECTS];
+  const hit = all.find(([i]) => i === id);
+  return hit ? (id === "auto" ? "Automatic, Recommended" : hit[1]) : "Automatic, Recommended";
+}
+
 const CROPS = [["center", "Center"], ["top", "Top"], ["bottom", "Bottom"]];
 
 function motionLabel(s) {
