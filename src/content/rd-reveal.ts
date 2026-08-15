@@ -2193,7 +2193,7 @@ export async function continueDesignVideo(id) {
 }
 
 /* ======================= INTRO ======================= */
-let dvActive = false;
+let dvActive = false; // set while a contextual builder is being seeded
 function closeIntroNow() {
   const w = document.getElementById("rvIntroWrap");
   if (w && w.parentNode) w.parentNode.removeChild(w);
