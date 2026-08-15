@@ -2016,6 +2016,20 @@ export async function openVideoDetail(id, tab = "video") {
 }
 
 
+/* Repaint only the filtered result list; the toolbar, search input and any
+   already-loaded thumbnails stay in the DOM so nothing flashes. */
+function renderList() {
+  const el = host();
+  if (!el || S.screen !== "library") return;
+  el.querySelectorAll(".rv-chip").forEach((c) => c.classList.toggle("on", c.dataset.f === S.filter));
+  const list = el.querySelector(".rv-list");
+  if (!list) return render();
+  list.innerHTML = cardsHtml(libraryRows());
+  try { window.lucide?.createIcons(); } catch (_) {}
+  bindCards(list);
+  paintThumbs();
+}
+
 function bindCards(root) {
   const on = (sel, ev, fn) => root.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
   on(".rv-card .icon-btn", "click", async (e) => {
