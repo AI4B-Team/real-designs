@@ -123,11 +123,27 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
+// Runs before hydration: if the client entry chunk itself fails to load (stale
+// chunk after a redeploy/dev restart), React never mounts, so the router error
+// boundary can't help. Reload once to fetch fresh chunks.
+const chunkRecoveryScript = `(function(){
+  var K='rd:chunk-reload';
+  function isChunk(m){return typeof m==='string'&&(/Failed to fetch dynamically imported module/i.test(m)||/Importing a module script failed/i.test(m)||/error loading dynamically imported module/i.test(m));}
+  function retry(m){
+    if(!isChunk(m))return;
+    try{if(sessionStorage.getItem(K))return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
+    location.reload();
+  }
+  addEventListener('error',function(e){retry(e&&e.message);});
+  addEventListener('unhandledrejection',function(e){var r=e&&e.reason;retry(r&&r.message||String(r));});
+})();`;
+
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: chunkRecoveryScript }} />
       </head>
       <body>
         {children}
@@ -136,6 +152,7 @@ function RootShell({ children }: { children: ReactNode }) {
     </html>
   );
 }
+
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
