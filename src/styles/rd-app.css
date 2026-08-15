@@ -1473,3 +1473,28 @@
 .rd-app .crm-help{font-size:.74rem;color:var(--mute-2);margin:-2px 0 0}
 .rd-app .crm-form label.crm-toggle{display:flex;flex-direction:row;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-size:.82rem;color:var(--ink)}
 .rd-app .crm-form label.crm-toggle input[type=checkbox]{width:16px;height:16px;flex:0 0 auto;padding:0;accent-color:var(--red,#CC0000)}
+
+/* Signup questionnaire — one question per step */
+.rd-app .rd-survey{max-width:560px;padding:22px 24px 18px}
+.rd-app .sv-top{display:flex;flex-direction:column;gap:8px;margin:2px 34px 16px 0}
+.rd-app .sv-count{font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mute-2)}
+.rd-app .sv-bar{height:4px;border-radius:99px;background:var(--line);overflow:hidden}
+.rd-app .sv-bar i{display:block;height:100%;background:var(--red,#CC0000);border-radius:99px;transition:width .25s ease}
+.rd-app .sv-body{min-height:240px}
+.rd-app .sv-body h3{margin:0 0 4px;font-size:1.15rem;line-height:1.25}
+.rd-app .sv-hint{margin:0 0 14px;font-size:.84rem;color:var(--mute-2)}
+.rd-app .sv-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.rd-app .sv-opt{text-align:left;border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:11px 13px;font:inherit;font-size:.87rem;cursor:pointer;transition:border-color .15s ease,background .15s ease}
+.rd-app .sv-opt:hover{border-color:var(--ink)}
+.rd-app .sv-opt.on{border-color:var(--red,#CC0000);background:rgba(204,0,0,.06);font-weight:600}
+.rd-app .sv-fields{display:grid;gap:12px;margin-top:14px}
+.rd-app .sv-field{display:grid;gap:5px;font-size:.7rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mute-2)}
+.rd-app .sv-field input{border:1px solid var(--line);border-radius:9px;padding:10px 12px;font:inherit;font-size:.9rem;background:#fff;color:var(--ink);text-transform:none;letter-spacing:0}
+.rd-app .sv-field input:focus{outline:none;border-color:var(--ink)}
+.rd-app .sv-detail{margin-top:12px}
+.rd-app .sv-check{display:flex;align-items:center;gap:8px;font-size:.85rem;color:var(--ink)}
+.rd-app .sv-check input[type=checkbox]{width:16px;height:16px;flex:0 0 auto;accent-color:var(--red,#CC0000)}
+.rd-app .sv-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line)}
+.rd-app .sv-foot-right{display:flex;align-items:center;gap:8px}
+.rd-app .sv-foot .btn:disabled{opacity:.4;pointer-events:none}
+@media (max-width:520px){.rd-app .sv-opts{grid-template-columns:1fr}}
