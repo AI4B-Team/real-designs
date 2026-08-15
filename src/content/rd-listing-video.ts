@@ -290,12 +290,18 @@ async function loadKits() {
   }
 }
 
-async function loadAssets(propertyId) {
+async function loadAssets(propertyId, allowLibraryFallback = false) {
   S.loading = true;
+  S.usedLibrary = false;
   render();
   try {
     const r = await listMediaAssets({ data: { property_id: propertyId || null } });
     S.assets = (r.assets || []).filter((a) => !a.hidden);
+    if (!S.assets.length && propertyId && allowLibraryFallback) {
+      const all = await listMediaAssets({ data: { property_id: null } });
+      S.assets = (all.assets || []).filter((a) => !a.hidden);
+      S.usedLibrary = S.assets.length > 0;
+    }
     S.photos = S.assets.map(toPhoto);
     autoArrange();
   } catch (e) {
@@ -303,6 +309,7 @@ async function loadAssets(propertyId) {
   }
   S.loading = false;
 }
+
 
 /* ======================= START SCREEN ======================= */
 
