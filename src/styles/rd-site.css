@@ -2636,7 +2636,7 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 
 /* hero: lock the slideshow column height so panels never shift between slides */
 .rd-site .hero-left #heroSummary{min-height:132px;height:132px;margin-top:12px}
-.rd-site .hero-left #heroSummary .rsp{height:132px}
+.rd-site .hero-left #heroSummary .rsp{height:auto;min-height:152px}
 .rd-site .hero-left .show{flex:0 0 auto}
 
 /* pricing: keep the H1 on a single line on desktop */
