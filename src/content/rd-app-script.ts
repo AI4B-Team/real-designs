@@ -3546,7 +3546,18 @@ if(scopeGrid && !document.getElementById('scSave')){
   });
 }
 
+/* ---------- signup questionnaire (once per member) ---------- */
+(async function signupQuestionnaire(){
+  try{
+    const {data}=await supabase.auth.getUser();
+    if(!data||!data.user) return;
+    const mod=await import('@/lib/rd-survey-ui');
+    setTimeout(()=>{ try{ mod.maybeOpenSignupSurvey(); }catch(_){} },900);
+  }catch(_){}
+})();
+
 /* ---------- first run onboarding ---------- */
+
 (async function onboarding(){
   const dash=document.getElementById('v-dash');
   if(!dash) return;
