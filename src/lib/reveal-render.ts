@@ -32,13 +32,23 @@ export type RevealScene = {
 
 /** Standard camera moves. */
 export const STANDARD_MOTIONS: Array<[string, string]> = [
-  ["auto", "Automatic"],
+  ["auto", "Auto"],
   ["push", "Push In"],
   ["pull", "Pull Out"],
   ["pan_left", "Pan Left"],
   ["pan_right", "Pan Right"],
+  ["tilt_up", "Tilt Up"],
+  ["tilt_down", "Tilt Down"],
+  ["dolly_left", "Dolly Left"],
+  ["dolly_right", "Dolly Right"],
   ["orbit_left", "Orbit Left"],
   ["orbit_right", "Orbit Right"],
+  ["crane_up", "Crane Up"],
+  ["crane_down", "Crane Down"],
+  ["diag_in", "Diagonal In"],
+  ["diag_out", "Diagonal Out"],
+  ["drift_in", "Slow Drift In"],
+  ["drift_out", "Slow Drift Out"],
   ["static", "Static"],
 ];
 
@@ -297,6 +307,46 @@ function drawMotion(
       zoom = 1.1;
       dx = (t - 0.5) * W * 0.06;
       dy = -Math.sin(t * Math.PI) * H * 0.01;
+      break;
+    case "tilt_up":
+      zoom = 1.12;
+      dy = (0.5 - t) * H * 0.09;
+      break;
+    case "tilt_down":
+      zoom = 1.12;
+      dy = (t - 0.5) * H * 0.09;
+      break;
+    case "dolly_left":
+      zoom = 1.06 + 0.04 * t;
+      dx = (0.5 - t) * W * 0.1;
+      break;
+    case "dolly_right":
+      zoom = 1.06 + 0.04 * t;
+      dx = (t - 0.5) * W * 0.1;
+      break;
+    case "crane_up":
+      zoom = 1.14 - 0.06 * t;
+      dy = (0.5 - t) * H * 0.11;
+      break;
+    case "crane_down":
+      zoom = 1.08 + 0.06 * t;
+      dy = (t - 0.5) * H * 0.11;
+      break;
+    case "diag_in":
+      zoom = 1.0 + 0.11 * t;
+      dx = (0.5 - t) * W * 0.05;
+      dy = (0.5 - t) * H * 0.05;
+      break;
+    case "diag_out":
+      zoom = 1.13 - 0.11 * t;
+      dx = (t - 0.5) * W * 0.05;
+      dy = (t - 0.5) * H * 0.05;
+      break;
+    case "drift_in":
+      zoom = 1.0 + 0.04 * t;
+      break;
+    case "drift_out":
+      zoom = 1.04 - 0.04 * t;
       break;
     case "static":
       zoom = 1.02;
