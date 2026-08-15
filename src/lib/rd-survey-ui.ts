@@ -41,7 +41,6 @@ const GOALS = [
 ];
 const TEAMS = ["Just Me", "2 To 5", "6 To 20", "20+"];
 
-type Answers = Record<string, any> & Record<never, never>;
 
 type Step =
   | {
