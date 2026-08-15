@@ -4131,11 +4131,17 @@ document.addEventListener('keydown',(e)=>{
   if(e.key!=='Escape') return;
   closeTopUpModal();
 });
-/* Changing views must never leave a modal scrim covering the app */
+/* Changing views must never leave a modal scrim covering the app.
+   Some modals open asynchronously, so sweep again briefly after the switch. */
 window.addEventListener('hashchange',()=>{
-  document.querySelectorAll('.up-modal.on').forEach((m)=>m.classList.remove('on'));
-  document.body.style.overflow='';
+  const sweep=()=>{
+    document.querySelectorAll('.up-modal.on').forEach((m)=>m.classList.remove('on'));
+    document.body.style.overflow='';
+  };
+  sweep();
+  [250,700,1500].forEach((ms)=>timers.push(window.setTimeout(sweep,ms)));
 });
+
 
 
 
