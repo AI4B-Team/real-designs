@@ -159,6 +159,8 @@ let S = {
   shares: [],
   tree: [],
   kits: [],
+  credits: null,
+
   screen: "library", // library | wizard | design | detail
   detailId: null,
   detailTab: "video",
