@@ -1791,7 +1791,7 @@ function closeIntroNow() {
 }
 
 function maybeIntro() {
-  if (dvActive || S.screen === "design") { closeIntroNow(); return; }
+  if (dvActive) { closeIntroNow(); return; }
   try { if (localStorage.getItem("rd_reveal_intro") === "1") return; } catch (_) { return; }
   let wrap = document.getElementById("rvIntroWrap");
   if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; document.body.appendChild(wrap); }
