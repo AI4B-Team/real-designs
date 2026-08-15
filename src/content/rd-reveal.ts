@@ -14,6 +14,7 @@ import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations, missingSpaces } from "@/lib/media-analysis";
+import { identifyListing } from "@/lib/listing-source";
 import {
   listVideos as _listVideos,
   getVideo as _getVideo,
