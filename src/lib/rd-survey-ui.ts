@@ -1,9 +1,10 @@
 /**
- * Signup / onboarding questionnaire modal.
+ * Signup / onboarding questionnaire.
  *
- * Shown once, the first time a new member opens the app. Answers are stored
- * on their signup profile so the back office can work the list and push it
- * into the connected CRM.
+ * Shown once, the first time a new member opens the app. One question per
+ * step with a progress bar, so it never feels like a form dump. Answers are
+ * stored on their signup profile so the back office can work the list and
+ * push it into the connected CRM.
  */
 import { createIcons, icons } from "lucide";
 import { getSignupSurvey, saveSignupSurvey } from "@/lib/signup-survey.functions";
@@ -20,13 +21,88 @@ const HOW_HEARD = [
   "Other",
 ];
 const VOLUME = ["Under 10", "10 To 25", "26 To 50", "51 To 100", "100+", "Not Sure Yet"];
-const ROLES = ["Real Estate Agent", "Broker Or Team Lead", "Photographer", "Investor Or Flipper", "Designer Or Stager", "Contractor", "Homeowner", "Other"];
-const GOALS = ["Win More Listings", "Sell Listings Faster", "Virtual Staging", "Renovation Planning", "Marketing Videos", "Client Presentations"];
+const ROLES = [
+  "Real Estate Agent",
+  "Broker Or Team Lead",
+  "Photographer",
+  "Investor Or Flipper",
+  "Designer Or Stager",
+  "Contractor",
+  "Homeowner",
+  "Other",
+];
+const GOALS = [
+  "Win More Listings",
+  "Sell Listings Faster",
+  "Virtual Staging",
+  "Renovation Planning",
+  "Marketing Videos",
+  "Client Presentations",
+];
 const TEAMS = ["Just Me", "2 To 5", "6 To 20", "20+"];
 
-const esc = (s: any) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
-const opts = (list: string[], val: string) =>
-  `<option value="">Select One</option>` + list.map((o) => `<option${o === val ? " selected" : ""}>${esc(o)}</option>`).join("");
+
+type Step =
+  | {
+      kind: "text";
+      title: string;
+      hint?: string;
+      fields: Array<{ key: string; label: string; placeholder: string; type?: string }>;
+      required?: string[];
+    }
+  | { kind: "choice"; title: string; hint?: string; key: string; options: string[]; required?: boolean }
+  | { kind: "finish"; title: string; hint?: string };
+
+const STEPS: Step[] = [
+  {
+    kind: "text",
+    title: "First, What Should We Call You?",
+    hint: "This Shows Up On Your Presentations And Shared Links.",
+    fields: [
+      { key: "full_name", label: "Your Name", placeholder: "Jordan Reyes" },
+      { key: "company", label: "Company Or Brokerage", placeholder: "Optional" },
+    ],
+  },
+  {
+    kind: "choice",
+    title: "What Best Describes You?",
+    hint: "We Tune Your Workspace Around This.",
+    key: "role",
+    options: ROLES,
+    required: true,
+  },
+  {
+    kind: "choice",
+    title: "How Did You Hear About Us?",
+    key: "how_heard",
+    options: HOW_HEARD,
+    required: true,
+  },
+  {
+    kind: "choice",
+    title: "How Many Listings Do You Handle Per Year?",
+    key: "listings_per_year",
+    options: VOLUME,
+  },
+  { kind: "choice", title: "How Big Is Your Team?", key: "team_size", options: TEAMS },
+  {
+    kind: "choice",
+    title: "What Is Your Main Goal Right Now?",
+    key: "primary_goal",
+    options: GOALS,
+  },
+  {
+    kind: "finish",
+    title: "Where Can We Reach You?",
+    hint: "Get Texts With New Features And Launch Offers. Optional — Stop Anytime.",
+  },
+];
+
+const esc = (s: any) =>
+  String(s ?? "").replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string),
+  );
 
 function toast(msg: string) {
   try {
@@ -34,56 +110,149 @@ function toast(msg: string) {
   } catch (_) {}
 }
 
-/** Opens the questionnaire. Returns once the member saves or skips. */
+/** Opens the questionnaire. Steps through one question at a time. */
 export function openSignupSurvey(seed?: any) {
   if (document.getElementById("rdSurvey")) return;
-  const r = seed || {};
+  const a: any = { ...(seed || {}) };
+  let i = 0;
+
   const wrap = document.createElement("div");
   wrap.className = "rd-modal on";
   wrap.id = "rdSurvey";
   wrap.innerHTML = `
-  <div class="rd-modal-card" role="dialog" aria-modal="true" aria-label="Welcome Questionnaire" style="max-width:560px">
+  <div class="rd-modal-card rd-survey" role="dialog" aria-modal="true" aria-label="Welcome Questionnaire">
     <button class="rd-modal-x" data-x aria-label="Close"><i data-lucide="x"></i></button>
-    <h3 style="margin:0 0 4px">Welcome To REAL DESIGNS</h3>
-    <p class="mono" style="margin:0 0 14px;color:var(--mute-2)">A Few Quick Questions So We Can Set Your Workspace Up Properly. You Can Change These Later In Account &rarr; Profile.</p>
-    <div class="crm-form">
-      <label>Your Name<input type="text" data-f="full_name" value="${esc(r.full_name || "")}" placeholder="Jordan Reyes" maxlength="120"></label>
-      <label>Phone Number<input type="tel" data-f="phone" value="${esc(r.phone || "")}" placeholder="(555) 123-4567" maxlength="40"></label>
-      <label>Company Or Brokerage<input type="text" data-f="company" value="${esc(r.company || "")}" placeholder="Optional" maxlength="120"></label>
-      <label>What Best Describes You<select data-f="role">${opts(ROLES, r.role || "")}</select></label>
-      <label>How Did You Hear About Us<select data-f="how_heard">${opts(HOW_HEARD, r.how_heard || "")}</select></label>
-      <label data-detail hidden>Tell Us More<input type="text" data-f="how_heard_detail" value="${esc(r.how_heard_detail || "")}" placeholder="Who Or Where?" maxlength="200"></label>
-      <label>Listings Per Year<select data-f="listings_per_year">${opts(VOLUME, r.listings_per_year || "")}</select></label>
-      <label>Team Size<select data-f="team_size">${opts(TEAMS, r.team_size || "")}</select></label>
-      <label>Main Goal<select data-f="primary_goal">${opts(GOALS, r.primary_goal || "")}</select></label>
-      <label class="crm-toggle"><input type="checkbox" data-f="marketing_opt_in"${r.marketing_opt_in ? " checked" : ""}> Send Me Product Tips And Launch News</label>
-      <div class="crm-actions">
-        <button class="btn btn-primary btn-xs" data-save><i data-lucide="check"></i>Save And Continue</button>
+    <div class="sv-top">
+      <span class="mono sv-count" data-count></span>
+      <div class="sv-bar"><i data-bar></i></div>
+    </div>
+    <div class="sv-body" data-body></div>
+    <div class="sv-foot">
+      <button class="btn btn-ghost btn-xs" data-back><i data-lucide="arrow-left"></i>Back</button>
+      <div class="sv-foot-right">
         <button class="btn btn-ghost btn-xs" data-skip>Skip For Now</button>
+        <button class="btn btn-primary btn-xs" data-next>Next<i data-lucide="arrow-right"></i></button>
       </div>
     </div>
   </div>`;
   (document.querySelector(".rd-app") || document.body).appendChild(wrap);
-  try { createIcons({ icons, root: wrap } as any); } catch (_) {}
 
-  const q = (k: string) => wrap.querySelector(`[data-f="${k}"]`) as HTMLInputElement | HTMLSelectElement | null;
-  const val = (k: string) => (q(k) as HTMLInputElement)?.value?.trim() || "";
-  const detail = wrap.querySelector("[data-detail]") as HTMLElement | null;
-  const syncDetail = () => {
-    if (detail) detail.hidden = val("how_heard") !== "Other" && val("how_heard") !== "Friend Or Colleague";
-  };
-  (q("how_heard") as HTMLSelectElement).onchange = syncDetail;
-  syncDetail();
+  const body = wrap.querySelector("[data-body]") as HTMLElement;
+  const bar = wrap.querySelector("[data-bar]") as HTMLElement;
+  const count = wrap.querySelector("[data-count]") as HTMLElement;
+  const backBtn = wrap.querySelector("[data-back]") as HTMLButtonElement;
+  const nextBtn = wrap.querySelector("[data-next]") as HTMLButtonElement;
+
+  function render() {
+    const step = STEPS[i]!;
+    count.textContent = `Step ${i + 1} Of ${STEPS.length}`;
+    bar.style.width = `${((i + 1) / STEPS.length) * 100}%`;
+    backBtn.disabled = i === 0;
+    nextBtn.innerHTML =
+      i === STEPS.length - 1
+        ? `<i data-lucide="check"></i>Finish`
+        : `Next<i data-lucide="arrow-right"></i>`;
+
+    if (step.kind === "choice") {
+      const detail =
+        step.key === "how_heard" &&
+        (a.how_heard === "Other" || a.how_heard === "Friend Or Colleague")
+          ? `<label class="sv-field sv-detail">Tell Us More<input type="text" data-f="how_heard_detail" value="${esc(a.how_heard_detail || "")}" placeholder="Who Or Where?" maxlength="200"></label>`
+          : "";
+      body.innerHTML = `
+        <h3>${esc(step.title)}</h3>
+        ${step.hint ? `<p class="sv-hint">${esc(step.hint)}</p>` : ""}
+        <div class="sv-opts">${step.options
+          .map(
+            (o) =>
+              `<button type="button" class="sv-opt${a[step.key] === o ? " on" : ""}" data-opt="${esc(o)}">${esc(o)}</button>`,
+          )
+          .join("")}</div>
+        ${detail}`;
+      body.querySelectorAll<HTMLButtonElement>("[data-opt]").forEach((b) => {
+        b.onclick = () => {
+          a[step.key] = b.dataset["opt"];
+          if (step.key === "how_heard") {
+            render();
+            return;
+          }
+          render();
+          window.setTimeout(next, 140);
+        };
+      });
+    } else if (step.kind === "text") {
+      body.innerHTML = `
+        <h3>${esc(step.title)}</h3>
+        ${step.hint ? `<p class="sv-hint">${esc(step.hint)}</p>` : ""}
+        <div class="sv-fields">${step.fields
+          .map(
+            (f) =>
+              `<label class="sv-field">${esc(f.label)}<input type="${f.type || "text"}" data-f="${f.key}" value="${esc(a[f.key] || "")}" placeholder="${esc(f.placeholder)}" maxlength="120"></label>`,
+          )
+          .join("")}</div>`;
+    } else {
+      body.innerHTML = `
+        <h3>${esc(step.title)}</h3>
+        ${step.hint ? `<p class="sv-hint">${esc(step.hint)}</p>` : ""}
+        <div class="sv-fields">
+          <label class="sv-field">Phone Number<input type="tel" data-f="phone" value="${esc(a.phone || "")}" placeholder="(555) 123-4567" maxlength="40"></label>
+          <label class="sv-check"><input type="checkbox" data-f="marketing_opt_in"${a.marketing_opt_in ? " checked" : ""}> Send Me Product Tips And Launch News</label>
+        </div>`;
+    }
+
+    try {
+      createIcons({ icons, root: wrap } as any);
+    } catch (_) {}
+    const first = body.querySelector("input") as HTMLInputElement | null;
+    if (first) first.focus();
+  }
+
+  function collect() {
+    body.querySelectorAll<HTMLInputElement>("[data-f]").forEach((el) => {
+      const k = el.dataset["f"]!;
+      a[k] = el.type === "checkbox" ? el.checked : el.value.trim();
+    });
+  }
+
+  function next() {
+    collect();
+    const step = STEPS[i]!;
+    if (step.kind === "choice" && step.required && !a[step.key]) {
+      toast("Pick One To Continue.");
+      return;
+    }
+    if (i < STEPS.length - 1) {
+      i++;
+      render();
+      return;
+    }
+    void save();
+  }
+
+  function back() {
+    collect();
+    if (i > 0) {
+      i--;
+      render();
+    }
+  }
 
   const close = () => {
     wrap.remove();
     document.removeEventListener("keydown", onKey);
   };
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape") skip();
+    if (e.key === "Escape") void skip();
+    if (e.key === "Enter") {
+      const step = STEPS[i]!;
+      if (step.kind !== "choice") next();
+    }
   };
   document.addEventListener("keydown", onKey);
-  wrap.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = () => skip()));
+  wrap.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = () => void skip()));
+  backBtn.onclick = back;
+  nextBtn.onclick = next;
+  (wrap.querySelector("[data-skip]") as HTMLButtonElement).onclick = () => void skip();
 
   async function skip() {
     close();
@@ -92,34 +261,29 @@ export function openSignupSurvey(seed?: any) {
     } catch (_) {}
   }
 
-  (wrap.querySelector("[data-save]") as HTMLButtonElement).onclick = async (ev) => {
-    const btn = ev.currentTarget as HTMLButtonElement;
-    if (!val("how_heard")) {
-      toast("Let Us Know How You Heard About Us.");
-      return;
-    }
-    btn.disabled = true;
+  async function save() {
+    nextBtn.disabled = true;
     try {
       await saveSignupSurvey({
         data: {
-          full_name: val("full_name") || null,
-          phone: val("phone") || null,
-          company: val("company") || null,
-          role: val("role") || null,
-          how_heard: val("how_heard") || null,
-          how_heard_detail: val("how_heard_detail") || null,
-          listings_per_year: val("listings_per_year") || null,
-          team_size: val("team_size") || null,
-          primary_goal: val("primary_goal") || null,
-          marketing_opt_in: !!(q("marketing_opt_in") as HTMLInputElement)?.checked,
+          full_name: a.full_name || null,
+          phone: a.phone || null,
+          company: a.company || null,
+          role: a.role || null,
+          how_heard: a.how_heard || null,
+          how_heard_detail: a.how_heard_detail || null,
+          listings_per_year: a.listings_per_year || null,
+          team_size: a.team_size || null,
+          primary_goal: a.primary_goal || null,
+          marketing_opt_in: !!a.marketing_opt_in,
           completed: true,
           skipped: false,
         },
       });
       await syncToAccount({
-        full_name: val("full_name"),
-        phone: val("phone"),
-        company: val("company"),
+        full_name: a.full_name || "",
+        phone: a.phone || "",
+        company: a.company || "",
       });
       try {
         const { autoPushSignupToCrm } = await import("@/lib/signup-survey.functions");
@@ -134,12 +298,13 @@ export function openSignupSurvey(seed?: any) {
         /* no listeners is fine */
       }
       toast("Thanks — Your Workspace Is Ready.");
-
     } catch (e: any) {
-      btn.disabled = false;
+      nextBtn.disabled = false;
       toast(e?.message || "Those answers could not be saved.");
     }
-  };
+  }
+
+  render();
 }
 
 /** Mirrors the shared contact fields onto the account profile. */
