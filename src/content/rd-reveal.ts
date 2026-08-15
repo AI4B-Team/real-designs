@@ -81,7 +81,13 @@ function musicPicker(id, sel, withGroup) {
   </div>`;
 }
 
+let musicLoadedOnce = false;
 function bindMusicControls(el, setTrack, getTrack) {
+  if (!musicLoadedOnce) {
+    musicLoadedOnce = true;
+    loadCustomTracks().then((list) => { if (list.length) render(); });
+  }
+
   el.querySelectorAll("[data-musicplay]").forEach((b) => b.addEventListener("click", (e) => {
     e.preventDefault();
     const id = getTrack();
