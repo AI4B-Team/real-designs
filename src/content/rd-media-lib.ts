@@ -449,8 +449,15 @@ try {
     if (POP && !POP.contains(e.target)) closePop();
   });
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") closePop();
+    if (e.key !== "Escape") return;
+    if (POP) {
+      closePop();
+      return;
+    }
+    const d = document.getElementById("mlDrawer");
+    if (d && !d.hidden) closeDrawer();
   });
+
 } catch (_) {}
 
 function popMenu(anchor, items) {
@@ -794,7 +801,7 @@ async function openDetail(m, opts) {
   d.hidden = false;
   d.innerHTML = `<div class="ml-dr-bg" data-close></div>
   <aside class="ml-dr" role="dialog" aria-label="${esc(m.title)}">
-    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span class="mono">${esc(m.property || "Unassigned")}${m.room ? " &middot; " + esc(m.room) : ""}</span></div>
+    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span class="mono">${esc(m.property || "Unassigned")}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</span></div>
       <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="ml-dr-b">
       <div class="ml-dr-prev">${
