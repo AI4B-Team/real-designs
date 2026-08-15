@@ -154,17 +154,18 @@ const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing
 let __allowReveal=0;
 try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
 try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
-function go(v,fromHash){ console.log('RDGO',v,fromHash);
+function go(v,fromHash){
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
-    /* the account markup can mount after this call, so keep trying briefly */
+    /* The account markup can mount after this call, and the first mount's
+       managed timers may be cleared, so retry on unmanaged timers. */
     let n=0;
     const applyPane=()=>{
       const el=document.getElementById('p-'+pane);
-      console.log('RDPANE',n,!!el,el&&el.className); if(el && !el.classList.contains('on')) acctPane(pane);
-      if(++n<60) setTimeout(applyPane,75);
+      if(el && !el.classList.contains('on')) acctPane(pane);
+      if(++n<60) window.setTimeout(applyPane,75);
     };
-    setTimeout(applyPane,0);
+    applyPane();
   }
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='reveal'?'media':v)));
