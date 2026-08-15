@@ -503,7 +503,8 @@ function wizardHtml() {
     ${w.step > 1 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
   </div>
   ${w.pop ? popoverHtml() : ""}
-  ${w.lowModal ? lowSceneModal() : ""}`;
+  ${w.lowModal ? lowSceneModal() : ""}
+  ${w.logoModal ? logoModalHtml() : ""}`;
 }
 
 /* ======================= STEP 1, PHOTOS ======================= */
@@ -1023,6 +1024,53 @@ function labelEditor(s, i) {
 }
 
 
+
+/* ---------- Step 4 templates ---------- */
+const INTRO_TEMPLATES = [
+  ["none", "None", "No Intro Card", "plain"],
+  ["clean", "Clean Title Card", "Address On White", "clean"],
+  ["editorial", "Editorial", "Serif Title, Thin Rule", "editorial"],
+  ["bold", "Bold Listing", "Red Block, Large Type", "bold"],
+  ["minimal_bar", "Minimal Bar", "Lower Third Only", "bar"],
+  ["split", "Split Frame", "Photo Beside The Title", "split"],
+  ["stamp", "Stamp", "Boxed Address Stamp", "stamp"],
+  ["dark", "Dark Card", "White Type On Black", "dark"],
+  ["kicker", "Kicker", "Just Listed Kicker Above Address", "kicker"],
+];
+const OUTRO_TEMPLATES = [
+  ["none", "None", "No Outro Card", "plain"],
+  ["agent_white", "Agent Card, White", "Headshot, Name, Title, Phone, Email, CTA", "agentw"],
+  ["agent_black", "Agent Card, Black", "Headshot, Name, Title, Phone, Email, CTA", "agentb"],
+  ["contact_bar", "Contact Bar", "Single Line Contact Strip", "bar"],
+  ["cta_only", "Call To Action", "Book A Showing", "bold"],
+];
+function tplThumb(kind) {
+  return `<span class="rv-tpl-th t-${kind}"><i></i><em></em></span>`;
+}
+function templateGrid(list, sel, attr) {
+  return `<div class="rv-tpls">${list
+    .map(([id, name, note, kind]) => `<button class="rv-tpl ${sel === id ? "on" : ""}" data-${attr}="${id}">
+      ${tplThumb(kind)}<b>${name}</b><em>${note}</em>
+    </button>`)
+    .join("")}</div>`;
+}
+function logoModalHtml() {
+  const w = S.wizard;
+  const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
+  const logo = kit?.logo_path || null;
+  return `<div class="rv-modal on" id="rvLogoWrap"><div class="rv-modal-in" role="dialog" aria-label="Select logo">
+    <div class="rv-modal-h"><b>Select Logo</b><button class="icon-btn" id="rvLogoX"><i data-lucide="x"></i></button></div>
+    <div class="rv-modal-b">
+      ${logo
+        ? `<div class="rv-logos"><button class="rv-logo on" data-logopick="${esc(logo)}"><span class="rv-a-th" data-img="${esc(logo)}"></span><b>${esc(kit.name || "Brand Kit Logo")}</b></button></div>`
+        : `<div class="rv-note">No Images Uploaded Yet</div>
+      <button class="btn btn-ghost btn-sm" id="rvLogoUp"><i data-lucide="upload"></i>Upload Image</button>
+      <input type="file" id="rvLogoFile" accept="image/*" hidden>`}
+    </div>
+    <div class="rv-modal-f"><button class="btn btn-ghost" id="rvLogoCancel">Cancel</button><button class="btn btn-primary" id="rvLogoDone">Select Logo</button></div>
+  </div></div>`;
+}
+
 /* ======================= STEP 4, BRAND ======================= */
 function stepBrand() {
   const w = S.wizard;
@@ -1032,8 +1080,11 @@ function stepBrand() {
   return `<h3>Brand & Audio</h3>
 
   <details class="rv-acc" open><summary>Template</summary>
-    <div class="rv-seg wrap">${[["none", "No Intro Or Outro"], ["clean", "Clean Title Card"], ["editorial", "Editorial"], ["bold", "Bold Listing"]]
-      .map(([id, n]) => `<button class="${(w.template || "clean") === id ? "on" : ""}" data-tpl="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-seg tiny">${[["intro", "Intro"], ["outro", "Outro"], ["full", "Full Video"]]
+      .map(([id, n]) => `<button class="${(w.tplScope || "intro") === id ? "on" : ""}" data-tplscope="${id}">${n}</button>`).join("")}</div>
+    ${(w.tplScope || "intro") === "intro" ? templateGrid(INTRO_TEMPLATES, w.introTemplate || "clean", "tplintro") : ""}
+    ${w.tplScope === "outro" ? templateGrid(OUTRO_TEMPLATES, w.outroTemplate || "agent_white", "tploutro") : ""}
+    ${w.tplScope === "full" ? `
     <div class="rv-sub">Speed</div>
     <div class="rv-seg">${[["full", "Slow"], ["standard", "Medium"], ["quick", "Fast"]]
       .map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
@@ -1043,6 +1094,22 @@ function stepBrand() {
     ${w.scenes.some((s) => s.scene_type === "before_after") ? `<div class="rv-sub">Before &amp; After Reveal</div>
     <div class="rv-seg wrap">${[["match", "Match Frame"], ["slider", "Slider Reveal"], ["wipe", "Wipe"], ["fade", "Fade"]]
       .map(([id, n]) => `<button class="${w.baTransition === id || (!w.baTransition && id === "match") ? "on" : ""}" data-ba="${id}">${n}</button>`).join("")}</div>` : ""}
+    <div class="rv-sub">Video Options</div>
+    <div class="rv-tog">
+      <div class="rv-tog-row" data-tip="Adds transitions to accelerate between clips for a more cinematic, dynamic look.">
+        <span><b>Speed Ramps</b><em>Elevate Your Video With Speed Transitions.</em></span>
+        <label class="rv-switch"><input type="checkbox" id="rvSpeedRamps" ${w.speedRamps ? "checked" : ""}><i></i></label>
+      </div>
+      <div class="rv-tog-row" data-tip="Places your logo as a watermark on every frame of the video.">
+        <span><b>Logo Branding</b><em>Show A Logo Watermark Throughout The Video.</em>
+        <button class="fb-link" id="rvPickLogo">Select Logo</button></span>
+        <label class="rv-switch"><input type="checkbox" id="rvLogoBrand" ${w.logoBranding ? "checked" : ""}><i></i></label>
+      </div>
+      <div class="rv-tog-row" data-tip="Burns a Digitally Altered watermark into the full duration of the video.">
+        <span><b>AI Disclaimer</b><em>Add A "Digitally Altered" Watermark For The Full Duration.</em></span>
+        <label class="rv-switch"><input type="checkbox" id="rvAiDisc" ${w.aiDisclaimer ? "checked" : ""}><i></i></label>
+      </div>
+    </div>` : ""}
   </details>
 
   <details class="rv-acc"><summary>Brand Kit</summary>
@@ -1059,11 +1126,12 @@ function stepBrand() {
     <div class="rv-sub">Output Versions</div>
     <div class="rv-seg">${[["unbranded", "Unbranded"], ["branded", "Branded"], ["both", "Both"]]
       .map(([id, n]) => `<button class="${(w.outputMode || "both") === id ? "on" : ""}" data-out="${id}">${n}</button>`).join("")}</div>
-    <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else. Both Renders Unbranded First.</div>
+    <label class="rv-check"><input type="checkbox" id="rvBurnDisc" ${w.burnDisclosure ? "checked" : ""}> Burn In Disclosure Labels</label>
+    <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else. Both Renders Unbranded First. Disclosure Labels Burn Into The Versions You Already Render, So Nothing Renders Twice.</div>
   </details>
 
   <details class="rv-acc"><summary>Audio</summary>
-    <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music, true)}
+    <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music)}
     <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
     <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
     <div class="rv-sub">Narration</div>
@@ -1103,7 +1171,6 @@ function plannedVariants() {
   const versions = [];
   if (mode === "unbranded" || mode === "both") versions.push("clean");
   if (mode === "branded" || mode === "both") versions.push("branded");
-  if (w.versions?.disclosure) versions.push("disclosure");
   const out = [];
   for (const f of w.formats) {
     for (const v of versions) out.push({ aspect_ratio: f, version_type: v, brand_kit_id: v === "branded" ? w.brandKitId || null : null });
