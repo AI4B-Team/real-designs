@@ -26,7 +26,7 @@ import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { identifyListing, normalizeAddress, NO_IMPORT_MESSAGE } from "@/lib/listing-source";
 import { startListingImport, linkListingImport } from "@/lib/listing-import.functions";
 import * as UM from "@/lib/upload-manager";
-import { CREDIT_COSTS } from "@/lib/credits.functions";
+import { CREDIT_COSTS, getMyCredits } from "@/lib/credits.functions";
 import { track } from "@/lib/analytics";
 
 const BUCKET = "reveal-videos";
