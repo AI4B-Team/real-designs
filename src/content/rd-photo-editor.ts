@@ -361,10 +361,18 @@ export async function openPhotoEditor(ctx) {
   async function renderStrip() {
     const s = wrap.querySelector("#pmeStrip");
     s.innerHTML = assets
-      .map(
-        (a, i) =>
-          `<button class="pme-thumb${i === idx ? " on" : ""}" data-i="${i}" role="listitem" aria-current="${i === idx}" title="${esc(a.room_group)}"><span class="pme-th-img" data-p="${esc(a.storage_path)}"></span><em>${esc(a.room_group)}</em></button>`,
-      )
+      .map((a, i) => {
+        const an = analysis[a.id];
+        const badge = an && an.data
+          ? `<span class="pme-th-badge ${an.data.issues.length ? "warn" : "ok"}">${an.data.issues.length ? an.data.issues.length + " Fix" + (an.data.issues.length === 1 ? "" : "es") : "Clean"}</span>`
+          : an && an.loading
+            ? `<span class="pme-th-badge">Analyzing</span>`
+            : "";
+        return `<div class="pme-thumb-wrap${picked.has(a.id) ? " picked" : ""}">
+          <button class="pme-thumb${i === idx ? " on" : ""}" data-i="${i}" role="listitem" aria-current="${i === idx}" title="${esc(a.room_group)}"><span class="pme-th-img" data-p="${esc(a.storage_path)}"></span>${badge}<em>${esc(a.room_group)}</em></button>
+          <label class="pme-th-pick" title="Select For Batch Edit"><input type="checkbox" data-pick="${esc(a.id)}" ${picked.has(a.id) ? "checked" : ""} aria-label="Select ${esc(a.room_group)} for batch edit"></label>
+        </div>`;
+      })
       .join("");
     s.querySelectorAll(".pme-thumb").forEach((b) => {
       b.onclick = () => {
@@ -372,11 +380,25 @@ export async function openPhotoEditor(ctx) {
         loadAsset();
       };
     });
+    s.querySelectorAll("[data-pick]").forEach((c) => {
+      c.onchange = () => {
+        if (c.checked) picked.add(c.dataset.pick);
+        else picked.delete(c.dataset.pick);
+        c.closest(".pme-thumb-wrap").classList.toggle("picked", c.checked);
+        if (tab === "analyze" || tab === "property" || tab === "design") renderPane();
+      };
+    });
     for (const el of s.querySelectorAll(".pme-th-img")) {
       const url = await roomPhotoUrl(el.dataset.p);
       if (url) el.style.backgroundImage = `url("${url}")`;
     }
   }
+
+  function targets() {
+    const list = assets.filter((a) => picked.has(a.id));
+    return list.length ? list : [asset()];
+  }
+
 
   function sliders(list, store) {
     return list
