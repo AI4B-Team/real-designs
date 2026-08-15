@@ -1987,6 +1987,8 @@ export function startWizard(seed = {}) {
 
 /** Contextual entry point used from properties, designs and comparisons. */
 export async function createVideoFrom(seed = {}) {
+  dvActive = true;
+  [0, 300, 900, 1800].forEach((ms) => setTimeout(closeIntroNow, ms));
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.projects.length && !S.mounted) await mountReveal(S.go, {});
