@@ -16,6 +16,7 @@ import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
 import { cancelJob } from "@/lib/upload-manager";
 import { openMotionClip } from "@/lib/rd-motion-clip";
+import { openSocialCopy } from "@/lib/rd-social-copy";
 import { openBulkRestyle } from "@/lib/rd-bulk-restyle";
 import { isPlanBlocked, openUpgrade as openUpgradeFlow } from "@/lib/rd-upgrade";
 
@@ -437,6 +438,7 @@ function moreItems(m) {
       { icon: "scissors", label: "Create Short Version", fn: () => dupVideo(m, true) },
       { icon: "ratio", label: "Change Format", fn: () => openVideo(m, "video") },
       { icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") },
+      { icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) },
       { icon: "type", label: "Rename", fn: () => renameItem(m) },
       fav,
       { icon: "archive", label: "Archive", fn: () => archive([m]) },
@@ -454,6 +456,7 @@ function moreItems(m) {
   out.push({ icon: "home", label: "Add To Property", fn: () => S.go("props") });
   out.push({ icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") });
   out.push({ icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
+  out.push({ icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
   if (m.type === "uploaded_image" && !m.job) out.push({ icon: "type", label: "Rename", fn: () => renameItem(m) });
   out.push(fav);
   out.push({ icon: "archive", label: "Archive", fn: () => archive([m]) });
@@ -669,6 +672,17 @@ function motionClip(m) {
     room: m.room && m.room !== "Needs Review" ? m.room : null,
     toast,
     onDone: () => load(true),
+  });
+}
+
+/** AI caption and hashtags for any asset, text only and free. */
+function socialCopy(m) {
+  openSocialCopy({
+    title: m.title,
+    room: m.room && m.room !== "Needs Review" ? m.room : null,
+    style: m.style || null,
+    propertyLabel: m.property || null,
+    kind: typeGroup(m.type) === "videos" ? "video" : "image",
   });
 }
 
