@@ -594,8 +594,8 @@ function sceneCard(s, i) {
   const w = S.wizard;
   const look = s.look ? lookById(s.look) : null;
   const changed = (s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect;
-  return `<div class="rv-card" draggable="true" data-idx="${i}">
-    <div class="rv-card-th" data-img="${esc(s.path)}">
+  return `<div class="rv-scard" draggable="true" data-idx="${i}">
+    <div class="rv-scard-th" data-img="${esc(s.path)}">
       <span class="rv-seq mono">${i + 1}</span>
       <button class="rv-x" data-drop="${i}" aria-label="Remove Scene"><i data-lucide="x"></i></button>
       <div class="rv-mchips">
@@ -604,10 +604,10 @@ function sceneCard(s, i) {
         <button class="rv-mchip ${look ? "hot" : ""}" data-pop="look" data-i="${i}"><i data-lucide="palette"></i>${esc(look ? look.label : "Look")}</button>
       </div>
     </div>
-    <div class="rv-card-b">
+    <div class="rv-scard-b">
       <b>${esc(s.room || "Scene " + (i + 1))}</b>
       <input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional">
-      <div class="rv-card-a">
+      <div class="rv-scard-a">
         <button class="icon-btn" data-move="-1" title="Move Up"><i data-lucide="chevron-up"></i></button>
         <button class="icon-btn" data-move="1" title="Move Down"><i data-lucide="chevron-down"></i></button>
       </div>
@@ -689,7 +689,7 @@ function stepEdit() {
     <span class="mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</span>
   </div>
   ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
-  <div class="rv-grid">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
+  <div class="rv-sgrid">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
 
   <div class="rv-sub">Transitions</div>
   <div class="rv-seg wrap">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"], ["whip", "Whip Pan"], ["punch", "Zoom Punch"], ["flash", "Flash Cut"], ["glitch", "Glitch"], ["leak", "Light Leak"], ["slide", "Slide"]]
@@ -1381,7 +1381,7 @@ function bind() {
   on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); render(); });
   on("[data-move]", "click", (e) => {
     e.stopPropagation();
-    const row = e.currentTarget.closest(".rv-scene, .rv-card");
+    const row = e.currentTarget.closest(".rv-scene, .rv-scard");
     const i = Number(row.dataset.idx);
     const j = i + Number(e.currentTarget.dataset.move);
     if (j < 0 || j >= w.scenes.length) return;
@@ -1407,7 +1407,7 @@ function bind() {
   on("#rvKeepAll", "click", () => render());
 
   /* drag ordering */
-  el.querySelectorAll(".rv-scene, .rv-card").forEach((n) => {
+  el.querySelectorAll(".rv-scene, .rv-scard").forEach((n) => {
     n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.idx));
     n.addEventListener("dragover", (e) => e.preventDefault());
     n.addEventListener("drop", (e) => {
