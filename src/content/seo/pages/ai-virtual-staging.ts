@@ -29,7 +29,7 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Upload The Listing Photo", text: "Use the actual photo from your shoot, vacant or lightly furnished. The room's walls, windows, floor and ceiling height stay locked to what the camera captured." },
-    { title: "Choose A Style And Generate", text: "Pick a furniture style that matches the buyer pool for that price point and generate the staged version. Nothing about the architecture moves." },
+    { title: "Choose A Style & Generate", text: "Pick a furniture style that matches the buyer pool for that price point and generate the staged version. Nothing about the architecture moves." },
     { title: "Export With Disclosure Applied", text: "Download the image with the disclosure caption already burned in or attached as metadata, ready for MLS upload without a manual edit." },
   ],
 
@@ -59,7 +59,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "What Staging Can Legally Imply And What It Cannot",
+      h2: "What Staging Can Legally Imply & What It Cannot",
       body: [
         "Virtual staging can show buyers how a room might be furnished. It cannot show anything that misrepresents the physical condition or the fixed features of the property. Adding a sofa and a rug to an empty living room is staging. Removing a visible crack in a wall, changing the flooring material, or showing a fireplace that does not exist is misrepresentation, and boards treat the two very differently.",
         "The safe test most agents use is whether the change could be undone by moving furniture in or out. Furniture, art, rugs and small decor pass that test. Structural elements, finishes, and anything load bearing do not, and a tool with real structure preservation, sometimes called Reality Lock, keeps walls, windows and room dimensions untouched by design.",

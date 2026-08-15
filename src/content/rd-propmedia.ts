@@ -436,7 +436,7 @@ function shell() {
 
   <div class="pm-main">
     <aside class="card pm-rooms">
-      <div class="card-h"><div><h3>Rooms And Spaces</h3><div class="sub">Grouped from the upload</div></div>
+      <div class="card-h"><div><h3>Rooms & Spaces</h3><div class="sub">Grouped from the upload</div></div>
         <button class="icon-btn" id="pmNewRoom" aria-label="Create a custom group"><i data-lucide="folder-plus"></i></button></div>
       <div class="card-b" id="pmRoomList"></div>
     </aside>

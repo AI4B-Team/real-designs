@@ -28,7 +28,7 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Pick A Room", text: "Kitchen, bathroom, living room, bedroom or whole home, each with its own cost drivers." },
-    { title: "Set Square Footage And Grade", text: "Room size and rental, retail or premium grade both scale the total." },
+    { title: "Set Square Footage & Grade", text: "Room size and rental, retail or premium grade both scale the total." },
     { title: "Compare Rooms Side By Side", text: "See which room's renovation cost is the largest share of your total budget." },
   ],
 
@@ -37,14 +37,14 @@ export const page: LandingPage = {
   scopeTitle: "Sample Living Room Renovation Scope",
   scopeIntro: "A 300 square foot living room at retail grade, flooring, paint, trim, electrical and furnishing included.",
   scopeLines: [
-    { item: "Demolition And Prep", qty: "300 SF", trade: "Demolition", low: 960, high: 1320 },
+    { item: "Demolition & Prep", qty: "300 SF", trade: "Demolition", low: 960, high: 1320 },
     { item: "Flooring", qty: "300 SF", trade: "Flooring", low: 2250, high: 3600 },
-    { item: "Paint, Walls And Ceiling", qty: "300 SF", trade: "Paint", low: 1080, high: 1620 },
-    { item: "Trim And Baseboard", qty: "300 SF", trade: "Carpentry", low: 720, high: 1200 },
-    { item: "Lighting And Devices", qty: "300 SF", trade: "Electrical", low: 840, high: 1380 },
+    { item: "Paint, Walls & Ceiling", qty: "300 SF", trade: "Paint", low: 1080, high: 1620 },
+    { item: "Trim & Baseboard", qty: "300 SF", trade: "Carpentry", low: 720, high: 1200 },
+    { item: "Lighting & Devices", qty: "300 SF", trade: "Electrical", low: 840, high: 1380 },
     { item: "Window Trim Repair", qty: "1 LS", trade: "Carpentry", low: 400, high: 900 },
     { item: "Ceiling Fan Or Fixture Swap", qty: "1 LS", trade: "Electrical", low: 300, high: 650 },
-    { item: "Furniture And Soft Goods", qty: "300 SF", trade: "Furnishing", low: 3300, high: 6600 },
+    { item: "Furniture & Soft Goods", qty: "300 SF", trade: "Furnishing", low: 3300, high: 6600 },
     { item: "Window Treatments", qty: "1 LS", trade: "Furnishing", low: 450, high: 1100 },
     { item: "Contingency", qty: "10 Pct", trade: "Reserve", low: 1030, high: 1837 },
   ],

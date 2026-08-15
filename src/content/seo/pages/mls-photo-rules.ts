@@ -39,7 +39,7 @@ export const page: LandingPage = {
   scopeLines: [
     { item: "Base Exterior Photography", qty: "6 Photos", trade: "Photography", low: 80, high: 200 },
     { item: "Sky Replacement", qty: "4 Photos", trade: "Editing", low: 20, high: 60 },
-    { item: "Vehicle And Bin Removal", qty: "3 Photos", trade: "Editing", low: 15, high: 45 },
+    { item: "Vehicle & Bin Removal", qty: "3 Photos", trade: "Editing", low: 15, high: 45 },
     { item: "Virtual Renovation Rendering", qty: "2 Photos", trade: "Rendering", low: 60, high: 180 },
     { item: "Disclosure Labeling", qty: "9 Photos", trade: "Labeling", low: 0, high: 40 },
     { item: "Watermark Application", qty: "9 Photos", trade: "Branding", low: 0, high: 25 },
@@ -58,7 +58,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Sky Replacement And Removing Cars Or Trash Bins",
+      h2: "Sky Replacement & Removing Cars Or Trash Bins",
       body: [
         "Sky replacement is one of the more common edits agents ask about, since a gray overcast sky can make an otherwise strong exterior photo look flat. Many boards treat sky replacement more leniently than other alterations because the sky is not a feature of the property itself, but this is exactly the kind of assumption that needs local confirmation rather than treatment as a universal rule, since some MLS policies do restrict it as a form of alteration regardless of what it depicts.",
         "Removing a car parked on the street or a trash bin at the curb sits in a similar category for many boards, treated as tidying up a temporary object rather than altering the property. But temporary objects can shade into something else quickly, removing a neighbor's fence, a utility box, or a permanent structure on an adjacent lot crosses from tidying into altering what the photo represents about the property and its surroundings, and that is squarely the kind of edit that needs a disclosure check against your specific MLS policy before you publish it.",
@@ -78,7 +78,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Watermarks, Branding, And Photo Ownership",
+      h2: "Watermarks, Branding, & Photo Ownership",
       body: [
         "Watermark and branding rules are a separate layer from disclosure rules, and many boards have specific policies restricting or prohibiting brokerage logos, contact information, or other branding overlaid on MLS photos, sometimes independent of whatever other listings in the same market do. Confirm your board's current watermark policy before adding a logo or phone number to an image headed for the MLS feed, since this is one of the more commonly enforced technical rules and one of the easier ones to get flagged for.",
         "Photo ownership and copyright generally rest with the photographer who took the original image, not with the agent, the brokerage, or the seller, unless a specific license agreement transfers those rights. Editing a photo, whether that is staging, sky replacement, or a virtual renovation rendering, does not change who owns the underlying image, and using a photographer's work beyond the terms of the license you were given, including on a different listing or after the listing has expired, is a licensing question separate from any MLS photo rule. Check the terms of your photography agreement, not just your MLS policy, before an edited image gets reused.",

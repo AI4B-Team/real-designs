@@ -4,7 +4,7 @@ import { LegalDoc } from "@/components/seo/LegalDoc";
 import { pageHead } from "@/lib/page-head";
 import "@/styles/rd-site.css";
 
-const TITLE = "Copyright And DMCA Policy | REAL DESIGNS";
+const TITLE = "Copyright & DMCA Policy | REAL DESIGNS";
 const DESC =
   "How to file a DMCA takedown notice with REAL DESIGNS, the counter notice process, and why agents uploading MLS listing photographs need to check their licence.";
 
@@ -16,7 +16,7 @@ export const Route = createFileRoute("/copyright")({
 function CopyrightPage() {
   return (
     <LegalDoc
-      h1="Copyright And DMCA Policy"
+      h1="Copyright & DMCA Policy"
       updated="August 10, 2026"
       lede="If you are an agent uploading listing photographs, confirm your licence covers creating derivative works. Many photographer agreements do not."
       draftNotice="Draft pending attorney review. The DMCA designated agent below is a placeholder and must be registered with the US Copyright Office before this page is published."

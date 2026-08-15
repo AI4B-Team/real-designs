@@ -143,7 +143,7 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
       <section id="scope">
         <div className="wrap">
           <div className="sec-head">
-            <span className="eyebrow">Budget And Scope</span>
+            <span className="eyebrow">Budget & Scope</span>
             <h2>{page.scopeTitle}</h2>
             <p className="lede">{page.scopeIntro}</p>
           </div>

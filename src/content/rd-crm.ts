@@ -263,7 +263,7 @@ function card(p: any) {
               <div><span>Last Sync</span><b class="mono">${esc(fmt(c.last_synced_at))}</b></div>
              </div>
              ${c.last_error ? `<div class="note"><i data-lucide="alert-triangle"></i><span>${esc(c.last_error)}</span></div>` : ""}
-             <label class="crm-toggle"><input type="checkbox" data-auto="${c.id}" ${c.auto_push ? "checked" : ""}> Push New Videos, Presentations And Signups Automatically</label>
+             <label class="crm-toggle"><input type="checkbox" data-auto="${c.id}" ${c.auto_push ? "checked" : ""}> Push New Videos, Presentations & Signups Automatically</label>
              <div class="crm-actions">
                ${p.id !== "webhook" ? `<button class="btn btn-primary btn-xs" data-sync="${c.id}" ${S.busy === c.id ? "disabled" : ""}><i data-lucide="refresh-cw"></i>${S.busy === c.id ? "Syncing…" : "Sync Contacts"}</button>` : ""}
                <button class="btn btn-ghost btn-xs" data-test="${p.id}"><i data-lucide="key-round"></i>Replace Key</button>

@@ -55,7 +55,7 @@ function TermsPage() {
         },
         {
           id: "arv-and-market-figures",
-          h2: "ARV And Market Figures Are Not Appraisals",
+          h2: "ARV & Market Figures Are Not Appraisals",
           counsel: true,
           body: [
             "ARV impact ranges are modelled from comparable sales data. They are not an appraisal, not a broker price opinion, not investment advice, and not a prediction of resale value. We are not a licensed appraiser or broker.",
@@ -63,7 +63,7 @@ function TermsPage() {
         },
         {
           id: "your-photographs",
-          h2: "Your Photographs And Your Rights",
+          h2: "Your Photographs & Your Rights",
           counsel: true,
           body: [
             "You must own or have permission to use every image you upload. This matters particularly for listing photographs, which are frequently owned by the photographer rather than the agent or seller. Uploading a photograph you do not have rights to is a breach of these terms and you indemnify us against any resulting claim.",
@@ -90,7 +90,7 @@ function TermsPage() {
         },
         {
           id: "mls-and-staging-disclosure",
-          h2: "MLS And Staging Disclosure",
+          h2: "MLS & Staging Disclosure",
           counsel: true,
           body: [
             "Our disclosure tooling applies labels according to the ruleset you select. You remain solely responsible for complying with your MLS rules, your state law and your brokerage policy. These rules vary and change. We provide tooling, not legal advice, and we do not warrant that any ruleset is current or complete.",
@@ -98,7 +98,7 @@ function TermsPage() {
         },
         {
           id: "credits-and-fair-use",
-          h2: "Credits And Fair Use",
+          h2: "Credits & Fair Use",
           body: [
             "Credits reset monthly and do not expire while your subscription is active. Unused credits do not carry over past cancellation and have no cash value.",
             "All plans, add ons and top ups are subject to a fair use policy: sustained usage far beyond the typical pattern for your plan may pause new generations for 24 hours. We will contact you before pausing.",
@@ -121,7 +121,7 @@ function TermsPage() {
         },
         {
           id: "third-party-products",
-          h2: "Third Party Products And Links",
+          h2: "Third Party Products & Links",
           body: [
             "Product suggestions link to third party retailers. We are not the seller, we do not warrant fitness, availability, dimensions or price accuracy, and we are not party to your purchase. Some links are affiliate links; see our Affiliate Disclosure at /affiliate-disclosure.",
           ],

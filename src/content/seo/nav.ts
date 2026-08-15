@@ -13,7 +13,7 @@ export const DESIGN_LINKS: NavLink[] = [
   { href: "/ai-bathroom-design", label: "AI Bathroom Design" },
   { href: "/sketch-to-render", label: "Sketch To Render" },
   { href: "/2d-to-3d-floor-plan", label: "2D Plan To Furnished 3D" },
-  { href: "/declutter-photo", label: "Remove Furniture And Clutter" },
+  { href: "/declutter-photo", label: "Remove Furniture & Clutter" },
   { href: "/airbnb-interior-design", label: "Airbnb Interior Design" },
   { href: "/curb-appeal-ideas", label: "Curb Appeal Ideas" },
 ];

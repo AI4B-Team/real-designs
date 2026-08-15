@@ -116,7 +116,7 @@ function shell() {
     </div>
     <div class="shop-results" id="shopResults"></div>
     <div class="shop-disc-wrap">
-      <button class="shop-disc-t" id="shopDiscT" aria-expanded="false">Product Match And Affiliate Information<i data-lucide="info"></i></button>
+      <button class="shop-disc-t" id="shopDiscT" aria-expanded="false">Product Match & Affiliate Information<i data-lucide="info"></i></button>
       <div class="shop-disc-b" id="shopDiscB" hidden>${DISCLOSURE}</div>
     </div>
   </div>

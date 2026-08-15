@@ -5,11 +5,11 @@ export const page: LandingPage = {
   tier: "A",
   intent: "Investor wants a BRRRR method calculator to check rehab, refinance and holding numbers before committing to a deal.",
 
-  metaTitle: "BRRRR Calculator: Rehab And Refinance Numbers",
+  metaTitle: "BRRRR Calculator: Rehab & Refinance Numbers",
   metaDescription: "Run the BRRRR method calculator, buy, rehab, rent, refinance, repeat, and see a realistic rehab budget, ARV assumption and cash-out refinance number side by side.",
 
   eyebrow: "BRRRR Calculator",
-  h1: "BRRRR Calculator For Rehab And Refinance Numbers",
+  h1: "BRRRR Calculator For Rehab & Refinance Numbers",
   lede: "Model the buy, rehab, rent, refinance and repeat cycle against a rehab scope pulled from your actual property, not a generic per square foot guess.",
 
   spaceType: "interior",
@@ -28,23 +28,23 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Upload The Property Photos", text: "The rehab scope is built from the actual condition of the walls, floors and fixtures instead of an assumed per square foot number." },
-    { title: "Set Rehab Level And Budget Band", text: "Choose a rental-grade or retail-grade finish level so the rehab estimate matches the exit strategy, refinance and hold versus a flip and sell." },
-    { title: "Compare Rehab Cost To ARV And Refinance", text: "See the rehab line items next to an ARV assumption and a 70 to 75 percent cash-out refinance number to check how much cash stays in the deal." },
+    { title: "Set Rehab Level & Budget Band", text: "Choose a rental-grade or retail-grade finish level so the rehab estimate matches the exit strategy, refinance and hold versus a flip and sell." },
+    { title: "Compare Rehab Cost To ARV & Refinance", text: "See the rehab line items next to an ARV assumption and a 70 to 75 percent cash-out refinance number to check how much cash stays in the deal." },
   ],
 
   showcase: ["scope", "budget-mode", "arv", "grades"],
 
-  scopeTitle: "BRRRR Rehab Scope And Planning Range",
+  scopeTitle: "BRRRR Rehab Scope & Planning Range",
   scopeIntro: "Line items for a moderate rental-grade rehab on a typical 3 bedroom, 2 bath single family property.",
   scopeLines: [
     { item: "Interior Paint, Whole House", qty: "1,400 SF", trade: "Painting", low: 2800, high: 5200 },
     { item: "Flooring, LVP Throughout", qty: "1,200 SF", trade: "Flooring", low: 4800, high: 8400 },
-    { item: "Kitchen Refresh, Cabinets And Counters", qty: "1 kitchen", trade: "Cabinetry", low: 5500, high: 12000 },
+    { item: "Kitchen Refresh, Cabinets & Counters", qty: "1 kitchen", trade: "Cabinetry", low: 5500, high: 12000 },
     { item: "Bathroom Refresh, 2 Baths", qty: "2 bathrooms", trade: "Plumbing", low: 4000, high: 9000 },
     { item: "HVAC Service Or Replacement", qty: "1 system", trade: "HVAC", low: 2500, high: 7500 },
     { item: "Roof Repair Or Patch", qty: "As needed", trade: "Roofing", low: 1500, high: 6500 },
-    { item: "Electrical Panel And Fixture Updates", qty: "1 panel, 8 fixtures", trade: "Electrical", low: 1800, high: 4500 },
-    { item: "Exterior Paint And Landscaping Cleanup", qty: "1 exterior", trade: "Exterior", low: 2200, high: 5800 },
+    { item: "Electrical Panel & Fixture Updates", qty: "1 panel, 8 fixtures", trade: "Electrical", low: 1800, high: 4500 },
+    { item: "Exterior Paint & Landscaping Cleanup", qty: "1 exterior", trade: "Exterior", low: 2200, high: 5800 },
   ],
   scopeBasis: "Planning range built from typical national material and labor costs for rental-grade single family rehabs, not a contractor bid.",
   confidence: "Medium",
@@ -116,7 +116,7 @@ export const page: LandingPage = {
     ],
   },
 
-  ctaTitle: "Scope Your Rehab And Run The Numbers",
+  ctaTitle: "Scope Your Rehab & Run The Numbers",
   ctaBody: "Upload the property and get a rental-grade rehab scope you can plug straight into your BRRRR calculator.",
   ctaLabel: "Start Rehab Scope",
 };

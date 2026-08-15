@@ -4,7 +4,7 @@ import { LegalDoc } from "@/components/seo/LegalDoc";
 import { pageHead } from "@/lib/page-head";
 import "@/styles/rd-site.css";
 
-const TITLE = "Refund Policy And 30 Day Guarantee | REAL DESIGNS";
+const TITLE = "Refund Policy & 30 Day Guarantee | REAL DESIGNS";
 const DESC =
   "Every paid REAL DESIGNS subscription carries a 30 day money back guarantee. How refunds work for annual plans, project packs, top ups and founding member rates.";
 

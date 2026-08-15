@@ -5,7 +5,7 @@ export const page: LandingPage = {
   tier: "C",
   intent: "Listing agents who need to show sellers the return on a pre-list refresh and help buyers see past dated finishes, all with proper staging disclosure.",
 
-  metaTitle: "AI Staging And Design For Real Estate Agents",
+  metaTitle: "AI Staging & Design For Real Estate Agents",
   metaDescription: "Show sellers what a pre-list refresh could return and help buyers see past dated finishes, with disclosure-labeled staging built for MLS compliance.",
 
   eyebrow: "For Real Estate Agents",
@@ -40,8 +40,8 @@ export const page: LandingPage = {
     { item: "Interior Paint, Neutral Palette", qty: "420 SF", trade: "Painting", low: 600, high: 1200 },
     { item: "Carpet Replacement Or Deep Clean", qty: "280 SF", trade: "Flooring", low: 700, high: 2200 },
     { item: "Light Fixture Swap", qty: "3 Fixtures", trade: "Electrical", low: 350, high: 800 },
-    { item: "Wall Patch And Touch-Up", qty: "1 Room", trade: "Drywall", low: 200, high: 450 },
-    { item: "Deep Clean And Window Wash", qty: "1 Room", trade: "Cleaning", low: 150, high: 350 },
+    { item: "Wall Patch & Touch-Up", qty: "1 Room", trade: "Drywall", low: 200, high: 450 },
+    { item: "Deep Clean & Window Wash", qty: "1 Room", trade: "Cleaning", low: 150, high: 350 },
     { item: "Virtual Staging For MLS Photos", qty: "1 Room", trade: "Photography", low: 100, high: 300 },
   ],
   scopeBasis: "Ranges reflect national averages for a cosmetic pre-list refresh, intended to help sellers weigh cost against likely buyer impact, not as a contractor bid.",

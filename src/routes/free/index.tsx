@@ -5,7 +5,7 @@ import { FREE_TOOL_LINKS } from "@/content/seo/nav";
 import { absoluteUrl } from "@/lib/site";
 import "@/styles/rd-site.css";
 
-const TITLE = "Free Design And Renovation Tools | REAL DESIGNS";
+const TITLE = "Free Design & Renovation Tools | REAL DESIGNS";
 const DESC =
   "Run a free AI redesign, virtual staging, rehab cost calculator or ARV calculator. No account, no card, planning ranges you can use today.";
 
@@ -54,7 +54,7 @@ function FreeToolsHub() {
           </nav>
           <div className="hero-head">
             <span className="eyebrow">No Account Needed</span>
-            <h1>Free Design And Renovation Tools</h1>
+            <h1>Free Design & Renovation Tools</h1>
             <p className="lede">
               Start with a photo or a number. Every tool here runs free, and each one hands off into
               the same workspace when you are ready to price the whole project.

@@ -40,7 +40,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
     ],
   },
   {
-    title: "Output And Licensing",
+    title: "Output & Licensing",
     rows: [
       ["Clean HD download", false, true, true, true],
       ["Watermark removed", false, true, true, true],
@@ -61,7 +61,7 @@ const GROUPS: { title: string; rows: Row[] }[] = [
     ],
   },
   {
-    title: "Delivery And Teams",
+    title: "Delivery & Teams",
     rows: [
       ["Before and after presentation", false, true, true, true],
       ["Batch listing staging with MLS disclosure", false, false, true, true],

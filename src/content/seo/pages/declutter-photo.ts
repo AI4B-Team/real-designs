@@ -5,11 +5,11 @@ export const page: LandingPage = {
   tier: "D",
   intent: "Someone with an occupied, cluttered room needs to remove furniture and personal items from a listing photo.",
 
-  metaTitle: "Remove Furniture And Clutter From A Photo",
+  metaTitle: "Remove Furniture & Clutter From A Photo",
   metaDescription: "Clear furniture and clutter from an occupied listing photo. Privacy, defects, reflections, and when a photo cannot be cleaned. See before and after.",
 
   eyebrow: "Declutter Photo",
-  h1: "Remove Furniture And Clutter From A Photo",
+  h1: "Remove Furniture & Clutter From A Photo",
   lede: "Clear a lived-in room back to its architecture so buyers read the space, not the current tenant's belongings.",
 
   spaceType: "interior",
@@ -29,7 +29,7 @@ export const page: LandingPage = {
   steps: [
     { title: "Upload The Occupied Photo", text: "Submit a photo of the room as it currently looks, clutter and all." },
     { title: "Review What Gets Removed", text: "Personal items and excess furniture are cleared while fixed features stay untouched." },
-    { title: "Check For Defects And Reflections", text: "Confirm nothing that should stay visible, like a condition issue, has been hidden by the cleanup." },
+    { title: "Check For Defects & Reflections", text: "Confirm nothing that should stay visible, like a condition issue, has been hidden by the cleanup." },
   ],
 
   showcase: ["declutter", "staging", "mls", "reality-lock"],
@@ -40,7 +40,7 @@ export const page: LandingPage = {
     { item: "Occupied Room Photography", qty: "6 Rooms", trade: "Photography", low: 150, high: 300 },
     { item: "Digital Decluttering", qty: "6 Photos", trade: "Editing", low: 60, high: 180 },
     { item: "Disclosure Labeling", qty: "6 Photos", trade: "Labeling", low: 0, high: 30 },
-    { item: "Reflection And Shadow Cleanup", qty: "2 Photos", trade: "Editing", low: 20, high: 60 },
+    { item: "Reflection & Shadow Cleanup", qty: "2 Photos", trade: "Editing", low: 20, high: 60 },
     { item: "Reshoot Allowance", qty: "1 Visit", trade: "Photography", low: 100, high: 250 },
     { item: "Optional Virtual Staging After Declutter", qty: "3 Rooms", trade: "Staging", low: 90, high: 240 },
   ],
@@ -49,14 +49,14 @@ export const page: LandingPage = {
 
   sections: [
     {
-      h2: "Occupied Listings And Personal Items",
+      h2: "Occupied Listings & Personal Items",
       body: [
         "Occupied listings are the most common reason to use a decluttering tool, since scheduling a full move out before photography is often not realistic. A tenant still living in the unit, a seller who has not finished packing, or a property manager turning a unit between leases all produce the same problem: the room's actual layout and finishes are the selling point, but the current state of the room, full of somebody's belongings, obscures them in a straight photo.",
         "Personal items, family photos on the wall, mail on the counter, clothing on furniture, are the first thing removed, both because they clutter the visual read of the room and because leaving them in a public listing photo is a privacy concern for whoever currently lives there. Removing personal items from a listing photo is generally treated as routine cleanup rather than a disclosure-heavy alteration in most MLS frameworks, but the resulting image is still an edited photo and should carry the same disclosure language any other altered image would.",
       ],
     },
     {
-      h2: "Personal Items And Privacy",
+      h2: "Personal Items & Privacy",
       body: [
         "Beyond clutter, there is a genuine privacy dimension to decluttering an occupied space. A photo showing a resident's mail with a visible name and address, medication on a nightstand, or children's belongings is not something that should end up in a public listing regardless of how it affects the sale, and clearing those items protects the people currently living there as much as it improves the photo. This is particularly relevant for property managers and landlords photographing occupied rental units for a new listing while a tenant is still in place.",
         "Handled well, decluttering an occupied photo is a service to the current occupant, not just a marketing tool for the seller or agent. It lets photography happen on a schedule that works for everyone without requiring the resident to stage their own home or worry about what ends up visible to strangers browsing a listing site.",
@@ -76,7 +76,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Reflections, Shadows, And When A Photo Cannot Be Cleaned",
+      h2: "Reflections, Shadows, & When A Photo Cannot Be Cleaned",
       body: [
         "Reflective surfaces, mirrors, glass cabinet doors, glossy flooring, television screens, are the most technically demanding part of decluttering a photo well, because an item removed from the room but still visible in its own reflection produces an obviously wrong image, a room that looks clear in the main frame but still shows the removed clutter reflected in a mirror across from it. A careful decluttering pass accounts for reflections and shadows consistently with the objects removed, not just the direct view.",
         "Some photos cannot be fully cleaned regardless of how carefully this is done. A room photographed at a severe angle with heavy clutter stacked floor to ceiling, a shot where the flooring or a wall is almost entirely obscured, or an image where removing everything present would require inventing what the underlying surface looks like rather than simply revealing it, are all situations where the honest answer is a reshoot rather than an edit. A decluttering tool is meant to clear away what is blocking a view of the real room, not to guess at what a room looks like when there is not enough of it visible to work from.",
@@ -117,7 +117,7 @@ export const page: LandingPage = {
   ],
 
   howTo: {
-    name: "How To Remove Furniture And Clutter From A Photo",
+    name: "How To Remove Furniture & Clutter From A Photo",
     steps: [
       { name: "Photograph The Occupied Room", text: "Take a clear, well lit photo of the room in its current occupied state." },
       { name: "Identify Items For Removal", text: "Flag personal items and excess furniture, leaving fixed architectural features untouched." },

@@ -70,7 +70,7 @@ const GOALS = [
 
 const LOCK_LEVELS = [
   { key: "most", label: "Keep Most Of The Space", note: "Keep the layout, walls, windows and flooring. Update styling only." },
-  { key: "finishes", label: "Update Finishes And Furnishings", note: "Keep the architecture, replace finishes and furniture." },
+  { key: "finishes", label: "Update Finishes & Furnishings", note: "Keep the architecture, replace finishes and furniture." },
   { key: "major", label: "Make Major Changes", note: "Open up the space, replace cabinetry, finishes and layout where needed." },
   { key: "custom", label: "Custom", note: "" },
 ];
@@ -386,7 +386,7 @@ export function mountFirstUse(ctx: Ctx) {
         ["Budget", state.budget && state.budget !== "later" ? state.budget : "Decide Later"],
       ];
       blocks.push(
-        '<section class="fu-review" aria-labelledby="fuRevH"><h3 id="fuRevH">Review And Generate</h3><dl class="fu-sum">' +
+        '<section class="fu-review" aria-labelledby="fuRevH"><h3 id="fuRevH">Review & Generate</h3><dl class="fu-sum">' +
           summary.map(([k, v]) => "<div><dt>" + k + "</dt><dd>" + esc(v) + "</dd></div>").join("") +
           '</dl><div class="fu-acts"><button class="btn btn-primary" data-fu-act="generate"><i data-lucide="sparkles"></i>Generate My Design</button>' +
           '<button class="btn btn-ghost" data-fu-act="back">Back</button>' +

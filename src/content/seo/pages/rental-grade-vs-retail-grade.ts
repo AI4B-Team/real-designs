@@ -59,7 +59,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Cabinets, Counters And Paint Sheen",
+      h2: "Cabinets, Counters & Paint Sheen",
       body: [
         "Rental grade cabinets are typically stock, laminate faced boxes with simple hardware, selected because replacement cost per unit is low and matching a single damaged cabinet later does not require special ordering. Retail grade cabinets move toward semi custom construction with better hinges, soft close hardware and a wider range of door styles, priced to match what a buyer expects walking through a kitchen they intend to live with for years rather than a unit they will occupy for a lease term.",
         "Counters follow a similar logic. Rental grade laminate counters resist staining reasonably well, are inexpensive to replace section by section, and hold up fine under tenant use without an owner needing to worry about disclosure of every ding. Retail grade counters, typically quartz in most markets now, cost substantially more installed but are what comparable listings in a retail neighborhood are priced against, and a kitchen that shows laminate counters in a market where every competing listing shows quartz will read as behind rather than merely economical.",
@@ -73,7 +73,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Fixtures And The Replacement Cycle Economics",
+      h2: "Fixtures & The Replacement Cycle Economics",
       body: [
         "Fixtures, light fixtures, faucets, cabinet hardware, door hardware, are where the durability and replacement cycle argument is easiest to see in isolation because the price gap per item is small but the number of items in a property is large. A rental grade light fixture might run a fraction of the cost of a retail grade equivalent, and across a dozen fixtures in a typical home that difference adds up to a meaningful line item, but the rental grade fixture is also more likely to need replacing after a few tenant cycles due to wear on cheaper finishes and mechanisms.",
         "The economics only make sense when you actually run the replacement cycle math rather than comparing sticker price alone. A rental grade faucet that needs replacing every three to four tenant turns because the finish wears through or the cartridge fails can cost more over a ten year hold than a mid tier retail faucet installed once and maintained, even though the retail faucet cost more on day one. This is the core argument for why rental grade is not simply the cheap option, it is the option optimized for a specific turnover pattern, and outside that pattern the math can flip.",

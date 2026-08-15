@@ -29,7 +29,7 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Upload The Room", text: "One photo of the space gives Reality Lock the wall lengths, ceiling height and fixture locations the scope is built on." },
-    { title: "Set The Finish Level And Budget", text: "Pick a grade and a target number and the scope is generated to match it, not the other way around." },
+    { title: "Set The Finish Level & Budget", text: "Pick a grade and a target number and the scope is generated to match it, not the other way around." },
     { title: "Export The Document", text: "A printable scope with quantities, trades and a planning range per line, ready to hand to three bidders." },
   ],
 
@@ -39,16 +39,16 @@ export const page: LandingPage = {
   scopeIntro:
     "This is the level of detail a scope needs before a trade can price it in one pass. Quantities are pulled from the room, not assumed from a national average.",
   scopeLines: [
-    { item: "Demolition And Disposal", qty: "180 SF", trade: "Demolition", low: 580, high: 790 },
-    { item: "Cabinetry, Base And Wall", qty: "24 LF", trade: "Cabinetry", low: 7900, high: 11900 },
+    { item: "Demolition & Disposal", qty: "180 SF", trade: "Demolition", low: 580, high: 790 },
+    { item: "Cabinetry, Base & Wall", qty: "24 LF", trade: "Cabinetry", low: 7900, high: 11900 },
     { item: "Countertops, Quartz", qty: "42 SF", trade: "Countertops", low: 2600, high: 3900 },
     { item: "Tile Backsplash", qty: "30 SF", trade: "Tile", low: 1200, high: 1750 },
     { item: "Flooring, LVP", qty: "180 SF", trade: "Flooring", low: 1500, high: 2300 },
-    { item: "Paint, Walls And Ceiling", qty: "180 SF", trade: "Paint", low: 750, high: 1100 },
-    { item: "Plumbing, Sink And Faucet", qty: "1 LS", trade: "Plumbing", low: 900, high: 1500 },
-    { item: "Electrical And Under-Cabinet Lighting", qty: "1 LS", trade: "Electrical", low: 1100, high: 1900 },
+    { item: "Paint, Walls & Ceiling", qty: "180 SF", trade: "Paint", low: 750, high: 1100 },
+    { item: "Plumbing, Sink & Faucet", qty: "1 LS", trade: "Plumbing", low: 900, high: 1500 },
+    { item: "Electrical & Under-Cabinet Lighting", qty: "1 LS", trade: "Electrical", low: 1100, high: 1900 },
     { item: "Appliance Set, Mid Range", qty: "1 LS", trade: "Appliances", low: 2400, high: 4600 },
-    { item: "Permit And Inspection Fees", qty: "1 LS", trade: "General", low: 350, high: 900 },
+    { item: "Permit & Inspection Fees", qty: "1 LS", trade: "General", low: 350, high: 900 },
   ],
   scopeBasis: "Rates reflect a 180 SF kitchen at retail finish grade. Layout is not changing and no plumbing or gas lines are moving.",
   confidence: "Medium",
@@ -82,7 +82,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Exclusions, Allowances And Who Supplies What",
+      h2: "Exclusions, Allowances & Who Supplies What",
       body: [
         "A complete scope names what is excluded as clearly as what is included. If the appliance package is a homeowner-supplied allowance rather than a contractor markup, say so on the line, because the price a contractor quotes for 'appliance install' with their own supplied units is not comparable to installing units you bought yourself. The same applies to tile, plumbing fixtures and lighting: allowance lines should state a dollar figure the homeowner is budgeting for that item, separate from the labor to install it.",
         "This matters most on countertops and cabinetry, the two most expensive lines in almost every kitchen scope. A cabinetry allowance of $8,000 means nothing without stating whether it covers stock cabinets or semi-custom, because that single distinction can move the line by 40 percent. Write the allowance and the grade assumption on the same line, every time.",
@@ -133,10 +133,10 @@ export const page: LandingPage = {
     name: "How To Generate A Contractor Scope Of Work",
     steps: [
       { name: "Photograph The Room", text: "Take one clear, well-lit photo of the space from a corner so both wall runs are visible." },
-      { name: "Set Finish Grade And Budget", text: "Choose rental, retail or premium grade and enter a target budget so the scope is priced to match it." },
+      { name: "Set Finish Grade & Budget", text: "Choose rental, retail or premium grade and enter a target budget so the scope is priced to match it." },
       { name: "Review The Generated Line Items", text: "Check that each line names a trade, a quantity and an allowance or unit rate, and adjust any that do not match your room." },
-      { name: "Add Exclusions And Notes", text: "State anything homeowner-supplied, anything explicitly excluded, and any known site conditions like an older electrical panel." },
-      { name: "Export And Distribute", text: "Send the finished scope to three contractors so every bid answers the same document." },
+      { name: "Add Exclusions & Notes", text: "State anything homeowner-supplied, anything explicitly excluded, and any known site conditions like an older electrical panel." },
+      { name: "Export & Distribute", text: "Send the finished scope to three contractors so every bid answers the same document." },
     ],
   },
 

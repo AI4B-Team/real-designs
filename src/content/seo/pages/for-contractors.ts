@@ -5,7 +5,7 @@ export const page: LandingPage = {
   tier: "C",
   intent: "Contractors and remodelers who need to win a bid, show a client what they are paying for, and stop change orders that erode margin.",
 
-  metaTitle: "AI Design And Scope Tools For Contractors",
+  metaTitle: "AI Design & Scope Tools For Contractors",
   metaDescription: "Show clients exactly what you are pricing before you break ground. Reality Lock keeps designs buildable and scoped, so bids hold and change orders drop.",
 
   eyebrow: "For Contractors",
@@ -28,7 +28,7 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Photograph The Existing Space", text: "Use the same phone photos you would take for your own estimate walk-through, no measuring or CAD required." },
-    { title: "Generate The Design And Scope Together", text: "The redesign and the itemized scope of work are produced from the same job, so the picture and the price sheet always match." },
+    { title: "Generate The Design & Scope Together", text: "The redesign and the itemized scope of work are produced from the same job, so the picture and the price sheet always match." },
     { title: "Attach Both To The Proposal", text: "Send the client a design they can approve and a scope they can read line by line, closing the gap between what they picture and what they are paying for." },
   ],
 
@@ -37,13 +37,13 @@ export const page: LandingPage = {
   scopeTitle: "Sample Kitchen Remodel Scope",
   scopeIntro: "A representative mid-range kitchen scope generated alongside the design, ready to attach to a client proposal or adjust to your own pricing.",
   scopeLines: [
-    { item: "Cabinet Replacement, Base And Upper", qty: "26 LF", trade: "Cabinetry", low: 9800, high: 18500 },
+    { item: "Cabinet Replacement, Base & Upper", qty: "26 LF", trade: "Cabinetry", low: 9800, high: 18500 },
     { item: "Quartz Countertops With Sink Cutout", qty: "42 SF", trade: "Countertops", low: 3100, high: 5600 },
     { item: "Tile Backsplash Installation", qty: "34 SF", trade: "Tile", low: 1400, high: 2900 },
-    { item: "Undercabinet And Recessed Lighting", qty: "12 Fixtures", trade: "Electrical", low: 1800, high: 3400 },
+    { item: "Undercabinet & Recessed Lighting", qty: "12 Fixtures", trade: "Electrical", low: 1800, high: 3400 },
     { item: "Plumbing Rough-In For Relocated Sink", qty: "1 Sink", trade: "Plumbing", low: 1200, high: 2600 },
     { item: "Luxury Vinyl Plank Flooring", qty: "280 SF", trade: "Flooring", low: 1900, high: 3400 },
-    { item: "Demo And Haul-Away", qty: "1 Kitchen", trade: "Demolition", low: 900, high: 1800 },
+    { item: "Demo & Haul-Away", qty: "1 Kitchen", trade: "Demolition", low: 900, high: 1800 },
   ],
   scopeBasis: "Ranges reflect national material and labor averages for a mid-range kitchen remodel, to be adjusted to your own supplier and crew pricing before quoting.",
   confidence: "Medium",
@@ -116,7 +116,7 @@ export const page: LandingPage = {
     "/rehab-cost-calculator",
   ],
 
-  ctaTitle: "Give Every Proposal A Picture And A Scope",
+  ctaTitle: "Give Every Proposal A Picture & A Scope",
   ctaBody: "Photograph the existing space and generate a design and an itemized scope your client can approve in the same meeting.",
   ctaLabel: "Build A Client Proposal",
 };

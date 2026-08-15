@@ -29,7 +29,7 @@ export const Route = createFileRoute("/free/arv-calculator")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "HowTo",
-          name: "How To Calculate ARV And Maximum Allowable Offer",
+          name: "How To Calculate ARV & Maximum Allowable Offer",
           step: [
             { "@type": "HowToStep", position: 1, name: "Pull Comparable Sales", text: "Find closed sales of similar size and condition within a short radius and a recent window." },
             { "@type": "HowToStep", position: 2, name: "Set The After Repair Value", text: "Take the price per square foot the renovated comparables achieved and apply it to your subject." },
@@ -47,7 +47,7 @@ function FreeArvTool() {
   return (
     <FreeToolTemplate
       eyebrow="Free Tool"
-      h1="Free ARV And Maximum Offer Calculator"
+      h1="Free ARV & Maximum Offer Calculator"
       lede="After repair value, rehab budget, and the highest price the deal can survive. No photo, no signup."
       intro={[
         "After repair value is what the property is worth once the work is finished and sold in normal condition. Everything else in a flip is downstream of that one number, which is why getting it wrong is the most expensive mistake in the business.",

@@ -357,10 +357,10 @@ if(schInput){
 
 
 /* ---------- account page ---------- */
-const NOTIF_PREFS=[['designs','Saved And Approved Designs','Shows in your in app notification feed'],
+const NOTIF_PREFS=[['designs','Saved & Approved Designs','Shows in your in app notification feed'],
 ['approvals','Client Approvals','When a client approves a presentation link'],
-['team','Team And Invites','Invites you receive and teammates who join your workspace'],
-['billing','Credits And Billing','Credit spend, refunds and low balance warnings']];
+['team','Team & Invites','Invites you receive and teammates who join your workspace'],
+['billing','Credits & Billing','Credit spend, refunds and low balance warnings']];
 let PREFS=null;
 function paintNotifPrefs(){
   if(!PREFS) return;
@@ -2027,9 +2027,9 @@ const BAND_ITEMS={
   remodel:SCOPE_ITEMS.concat([{label:'base_cabinet'},{label:'countertop',material:'quartz'},
     {label:'wall_tile',material:'ceramic'},{label:'vanity',qty:1},{label:'sink_faucet',qty:1}])
 };
-const bands=[['refresh','Refresh','Paint And Lighting Only','rental',5000],
+const bands=[['refresh','Refresh','Paint & Lighting Only','rental',5000],
 ['makeover','Makeover','Adds Flooring, Casing, Doors','retail',15000],
-['renovation','Renovation','Adds Cabinetry And Countertops','retail',35000],
+['renovation','Renovation','Adds Cabinetry & Countertops','retail',35000],
 ['remodel','Full Remodel','Adds Tile, Vanity, Plumbing Fixtures','premium',62000]];
 let bandOn='makeover';
 function paintBands(){
@@ -3747,7 +3747,7 @@ function upgradeModal(title,body){
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'+
       '<h3 id="upTitle"></h3><p id="upBody"></p>'+
       '<div id="upCosts" class="up-costs"></div>'+
-      '<button class="btn btn-primary btn-block" id="upGo"><i data-lucide="zap"></i>See Plans And Credits</button>'+
+      '<button class="btn btn-primary btn-block" id="upGo"><i data-lucide="zap"></i>See Plans & Credits</button>'+
       '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Not Now</button></div>';
     (document.querySelector(".rd-app")||document.body).appendChild(m);
     m.addEventListener('click',(e)=>{ if(e.target.hasAttribute&&e.target.hasAttribute('data-close')) m.classList.remove('on'); });
@@ -4179,7 +4179,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
     ['Navigate',[['G then D','Dashboard'],['G then P','Properties'],['G then S','Studio'],['G then I','Designs'],
       ['G then B','Scope & Budget'],['G then R','Reports'],['G then A','Account']]],
     ['Actions',[['⌘ K','Search Workspace'],['⌘ B','Collapse Or Expand Menu'],['N','New Design'],
-      ['?','Keyboard Shortcuts'],['Esc','Close Menus And Dialogs']]]
+      ['?','Keyboard Shortcuts'],['Esc','Close Menus & Dialogs']]]
   ];
   const isMac=/Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent);
   function key(k){ return isMac?k:k.replace('⌘','Ctrl'); }

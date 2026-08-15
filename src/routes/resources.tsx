@@ -19,13 +19,13 @@ const GROUPS: { heading: string; blurb: string; priority: number; match: (p: Lan
     priority: 4,
   },
   {
-    heading: "Cost And Scope Guides",
+    heading: "Cost & Scope Guides",
     blurb: "Planning ranges, line item scopes and the decisions that actually move the number.",
     match: (p) => /cost|calculator|estimator|scope|grade/.test(p.slug),
     priority: 3,
   },
   {
-    heading: "Rules And Compliance",
+    heading: "Rules & Compliance",
     blurb: "Disclosure and photo rules you need to follow before a staged image goes live.",
     match: (p) => /rules|disclosure|mls/.test(p.slug),
     priority: 2,
@@ -121,7 +121,7 @@ function ResourcesPage() {
           </nav>
           <div className="hero-head">
             <span className="eyebrow">Resources Hub</span>
-            <h1>Design, Cost And Scope Guides</h1>
+            <h1>Design, Cost & Scope Guides</h1>
             <p className="lede">
               Every guide we publish, grouped by what you are trying to decide. Each one pairs a real
               before and after with a line item planning range, so the design and the budget come

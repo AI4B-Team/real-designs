@@ -34,7 +34,7 @@ export const page: LandingPage = {
 
   showcase: ["scope", "budget-mode", "interior", "brief", "grades"],
 
-  scopeTitle: "Whole House Renovation Scope And Planning Range",
+  scopeTitle: "Whole House Renovation Scope & Planning Range",
   scopeIntro: "Line items for a full renovation of an average 2,000 square foot, three bedroom, two bathroom home.",
   scopeLines: [
     { item: "Kitchen Remodel", qty: "1 kitchen, 180 SF", trade: "General", low: 35000, high: 75000 },
@@ -42,9 +42,9 @@ export const page: LandingPage = {
     { item: "Secondary Bathroom Remodel", qty: "1 bath, 45 SF", trade: "General", low: 9000, high: 18000 },
     { item: "Flooring Throughout", qty: "1,600 SF", trade: "Flooring", low: 12000, high: 28000 },
     { item: "Interior Paint, Whole House", qty: "2,000 SF", trade: "Painting", low: 6000, high: 13000 },
-    { item: "Electrical Updates And Fixtures", qty: "24 fixtures", trade: "Electrical", low: 8000, high: 18000 },
+    { item: "Electrical Updates & Fixtures", qty: "24 fixtures", trade: "Electrical", low: 8000, high: 18000 },
     { item: "HVAC System Updates", qty: "1 system", trade: "Mechanical", low: 9000, high: 20000 },
-    { item: "Windows And Trim", qty: "16 windows", trade: "Carpentry", low: 14000, high: 32000 },
+    { item: "Windows & Trim", qty: "16 windows", trade: "Carpentry", low: 14000, high: 32000 },
   ],
   scopeBasis: "Planning range built from typical national material and labor costs for mid-range residential whole house renovations, not a contractor bid.",
   confidence: "Medium",
@@ -64,14 +64,14 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Kitchens And Bathrooms Drive The Total",
+      h2: "Kitchens & Bathrooms Drive The Total",
       body: [
         "Wet rooms, the kitchen and every bathroom, carry a disproportionate share of any whole house budget because they combine cabinetry, tile, plumbing and electrical in a small footprint. A house with a kitchen and three bathrooms being fully redone can spend 50 to 60 percent of the total renovation budget in those rooms alone, even though they represent a fraction of the square footage.",
         "This is why two houses of the same size can have wildly different whole house numbers, one where only bedrooms and living spaces are touched will cost far less than one where every bathroom is also gutted. Scoping wet rooms first and separately from the rest of the house gives a much more accurate whole house total than a blended per square foot number.",
       ],
     },
     {
-      h2: "Sequencing And Living Through The Work",
+      h2: "Sequencing & Living Through The Work",
       body: [
         "Whole house renovations are typically sequenced kitchen and bathrooms first, since those trades take longest and the house is least livable during that phase, followed by flooring, paint and lighting throughout. Attempting every room simultaneously usually costs more in trade coordination and mistakes than a sequenced plan, even though it takes longer calendar time.",
         "Whether you can live in the house during a whole house renovation depends almost entirely on whether the kitchen and at least one bathroom stay functional at any given time. A full gut renovation of every room simultaneously typically requires moving out, while a phased cosmetic to mid-range renovation can often be done with the household staying in place.",
@@ -79,7 +79,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Systems And Structure Behind The Finishes",
+      h2: "Systems & Structure Behind The Finishes",
       body: [
         "Older homes frequently need electrical panel upgrades, HVAC replacement, or plumbing repiping as part of a whole house renovation even though none of that work is visible in the finished photos. These system level costs, typically $8,000 to $20,000 per system, are the most common source of whole house budgets running over, because they are discovered once walls are opened rather than planned for up front.",
         "A house built before the 1990s should assume at least one major system, electrical, plumbing or HVAC, needs meaningful investment during a full renovation, and pricing that in during planning avoids a mid-project scramble when it is found during demolition.",

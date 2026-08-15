@@ -40,10 +40,10 @@ export const page: LandingPage = {
     { item: "Living Room Furniture Package", qty: "1 room", trade: "Staging", low: 300, high: 900 },
     { item: "Primary Bedroom Furniture Package", qty: "1 room", trade: "Staging", low: 250, high: 700 },
     { item: "Dining Room Furniture Package", qty: "1 room", trade: "Staging", low: 200, high: 500 },
-    { item: "Kitchen And Counter Styling", qty: "1 room", trade: "Staging", low: 100, high: 300 },
-    { item: "Delivery And Setup Fee", qty: "1 visit", trade: "Staging", low: 300, high: 800 },
+    { item: "Kitchen & Counter Styling", qty: "1 room", trade: "Staging", low: 100, high: 300 },
+    { item: "Delivery & Setup Fee", qty: "1 visit", trade: "Staging", low: 300, high: 800 },
     { item: "Monthly Rental Extension", qty: "per month after first", trade: "Staging", low: 500, high: 1500 },
-    { item: "Removal And Pickup Fee", qty: "1 visit", trade: "Staging", low: 150, high: 400 },
+    { item: "Removal & Pickup Fee", qty: "1 visit", trade: "Staging", low: 150, high: 400 },
     { item: "Virtual Staging, Per Photo Alternative", qty: "18 photos", trade: "Virtual Staging", low: 360, high: 1350 },
   ],
   scopeBasis: "Planning range built from typical national physical staging rental and virtual staging photo pricing, not a vendor quote for a specific market.",
@@ -58,7 +58,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "What Virtual Staging Actually Replaces And What It Does Not",
+      h2: "What Virtual Staging Actually Replaces & What It Does Not",
       body: [
         "Virtual staging replaces the photography problem, an empty room photographs as smaller and less inviting than a furnished one, and buyers scrolling listings online form their first impression entirely from photos. At $20 to $75 per photo, virtual staging solves that problem for a fraction of physical staging cost and with none of the delivery or removal logistics.",
         "What virtual staging does not replace is the in person showing experience. A buyer who tours a home staged only in photos will walk into an empty room, and agents report that the gap between the staged photo and the empty reality can undercut buyer confidence if it is not managed with clear expectations. Virtual staging works best for listings where online photos drive the bulk of interest and in person traffic is being filtered by the photos first.",

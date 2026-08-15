@@ -37,11 +37,11 @@ export const page: LandingPage = {
   scopeTitle: "Where This Fits In A Design Engagement",
   scopeIntro: "A representative breakdown of a typical early-stage engagement, showing where a generated concept fits and where it stops.",
   scopeLines: [
-    { item: "Initial Consult And Room Photography", qty: "1 Visit", trade: "Design", low: 0, high: 0 },
+    { item: "Initial Consult & Room Photography", qty: "1 Visit", trade: "Design", low: 0, high: 0 },
     { item: "Directional Concept Generation", qty: "2-3 Concepts", trade: "Design", low: 0, high: 0 },
     { item: "Client Alignment Meeting", qty: "1 Meeting", trade: "Design", low: 0, high: 0 },
-    { item: "Space Planning And Specification", qty: "1 Room", trade: "Design", low: 1800, high: 4500 },
-    { item: "Sourcing And Vendor Coordination", qty: "1 Room", trade: "Design", low: 1200, high: 3200 },
+    { item: "Space Planning & Specification", qty: "1 Room", trade: "Design", low: 1800, high: 4500 },
+    { item: "Sourcing & Vendor Coordination", qty: "1 Room", trade: "Design", low: 1200, high: 3200 },
     { item: "Installation Oversight", qty: "1 Room", trade: "Design", low: 800, high: 2000 },
   ],
   scopeBasis: "Design fee ranges reflect national averages for a single-room engagement and vary widely by market, designer experience and scope of service.",
@@ -68,7 +68,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Where The Tool Stops And The Designer Starts",
+      h2: "Where The Tool Stops & The Designer Starts",
       body: [
         "A generated concept is a starting conversation, not a finished design. It does not select or specify actual products, does not account for lead times, custom fabrication, lighting design at a technical level, or the hundred small decisions that separate a rendered concept from a room that has actually been designed and installed. That work, the sourcing, the detailing, the vendor relationships and the judgment about how pieces actually work together in person, remains the part of the engagement only a designer does.",
         "We think of this as narrowing the distance between a client's imagination and a designer's first pass, so the billable work that follows is spent building the real thing instead of guessing at a direction. It is a tool for the beginning of a relationship, not a replacement for the relationship itself.",
