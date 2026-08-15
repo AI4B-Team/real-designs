@@ -288,7 +288,23 @@ async function loadKits() {
   } catch (_) {
     S.kits = [];
   }
+  try {
+    S.credits = await getMyCredits();
+  } catch (_) {
+    S.credits = null;
+  }
 }
+
+/** Null when the account can pay, otherwise the reason it cannot. */
+function creditBlock() {
+  const c = S.credits;
+  if (!c || c.unavailable) return null;
+  if (c.plan === "free") return "Video rendering needs a paid plan. The free plan covers 5 designs a day.";
+  if ((c.balance ?? 0) < creditCost())
+    return `Not enough credits. This video costs ${creditCost()} and you have ${c.balance ?? 0}.`;
+  return null;
+}
+
 
 async function loadAssets(propertyId, allowLibraryFallback = false) {
   S.loading = true;
