@@ -55,6 +55,7 @@ import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvata
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { VFX_LOOKS, VFX_CATEGORIES, lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
+import { VFX_TILE_CATEGORIES, tileById, tilesForCat } from "@/lib/rd-vfx-tiles";
 
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
@@ -386,7 +387,7 @@ function newWizard(seed = {}) {
     candidates: [],
     pop: null,
     popQ: "",
-    popCat: "featured",
+    popCat: "all",
     lowModal: false,
     lowWarned: false,
     disclosureMode: "altered",
@@ -603,11 +604,11 @@ function stepSelect() {
       </div>`).join("")
     : `<div class="rv-note">No Scenes Yet. Add Content From The Left.</div>`;
 
-  return `<h3>Select Scenes</h3>
+  return `<h3>Select The Photos</h3>
   ${dupCount ? `<div class="rv-dup"><i data-lucide="copy"></i><b>${dupCount} Similar Angles Detected</b><span><button class="fb-link" id="rvKeepBest">Keep Best</button><button class="fb-link" data-goto="media">Review</button><button class="fb-link" id="rvKeepAll">Keep All</button></span></div>` : ""}
   <div class="rv-two">
-    <div class="rv-col"><div class="rv-col-h">Available Content</div><div class="rv-col-b">${left || `<div class="rv-note">No Content Found For This Source.</div>`}</div></div>
-    <div class="rv-col"><div class="rv-col-h">Video Scenes<span class="mono">${w.scenes.length}</span></div><div class="rv-col-b" id="rvSceneList">${right}</div></div>
+    <div class="rv-col"><div class="rv-col-h">Available Photos<span class="mono">${w.available.length}</span></div><div class="rv-col-b">${left || `<div class="rv-note">No Content Found For This Source.</div>`}</div></div>
+    <div class="rv-col"><div class="rv-col-h">Selected Photos<span class="mono">${w.scenes.length}</span></div><div class="rv-col-b" id="rvSceneList">${right}</div></div>
   </div>
   <div class="rv-foot">
     <button class="btn btn-ghost" id="rvBack">Back</button>
@@ -621,7 +622,7 @@ function stepSelect() {
 function lowSceneModal() {
   const w = S.wizard;
   return `<div class="rv-modal on" id="rvLowWrap"><div class="rv-modal-in" role="dialog" aria-label="Add a few more rooms">
-    <div class="rv-modal-h"><b>Add A Few More Rooms</b><button class="icon-btn" id="rvLowX"><i data-lucide="x"></i></button></div>
+    <div class="rv-modal-h"><b>Your Video Deserves More Photos</b><button class="icon-btn" id="rvLowX"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b"><p>Videos with 8 to 12 rooms hold attention longest. You have <b class="mono">${w.scenes.length}</b>.</p></div>
     <div class="rv-modal-f"><button class="btn btn-ghost" id="rvLowMore">Add More Photos</button><button class="btn btn-primary" id="rvLowGo">Continue Anyway</button></div>
   </div></div>`;
@@ -647,7 +648,7 @@ const MOTION_COPY = {
   orbit_right: "Orbit Right rotates the camera clockwise around the focal point, creating a sense of depth.",
   static: "Static holds the frame still, letting the design speak for itself.",
 };
-const CROPS = [["center", "Center"], ["top", "Top"], ["bottom", "Bottom"], ["left", "Left"], ["right", "Right"]];
+const CROPS = [["center", "Center"], ["top", "Top"], ["bottom", "Bottom"]];
 
 function motionLabel(s) {
   if (s.motion_level === "immersive") {
@@ -670,7 +671,7 @@ function sceneCard(s, i) {
       <div class="rv-mchips">
         <button class="rv-mchip ${changed ? "hot" : ""}" data-pop="motion" data-i="${i}" title="Camera Motion">${esc(motionLabel(s))}<i data-lucide="chevron-down"></i></button>
         <button class="rv-mchip" data-pop="crop" data-i="${i}" title="Crop">Crop</button>
-        <button class="rv-mchip ${look ? "hot" : ""}" data-pop="look" data-i="${i}" title="Look">Look</button>
+        <button class="rv-mchip ${s.vfx && s.vfx !== "none" ? "hot" : ""}" data-pop="look" data-i="${i}" title="VFX">${esc(tileById(s.vfx)?.label || "VFX")}</button>
       </div>
       <b>${esc(s.room || "Scene " + (i + 1))}</b>
       <input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional">
@@ -718,20 +719,28 @@ function popoverHtml() {
       ${CROPS.map(([id, n]) => `<button class="rv-pop-row ${(s.crop || "center") === id ? "on" : ""}" data-croppick="${id}">${n}</button>`).join("")}
     </div>`;
   } else {
-    const cat = w.popCat || "featured";
-    const looks = VFX_LOOKS.filter((l) => (l.cat || "featured") === cat);
+    const cat = VFX_TILE_CATEGORIES.some(([id]) => id === w.popCat) ? w.popCat : "all";
+    const tiles = tilesForCat(cat);
+    const active = s.vfx || "none";
     body = `<div class="rv-pop-look">
-      <div class="rv-seg tiny">${VFX_CATEGORIES.map(([id, n]) => `<button class="${cat === id ? "on" : ""}" data-lookcat="${id}">${n}</button>`).join("")}</div>
+      <div class="rv-note sm">Apply A Visual Effect To This Clip. Color Grades Are Free. Effects That Add Content To The Frame Cost Credits And Carry A Disclosure Label.</div>
+      <div class="rv-seg tiny">${VFX_TILE_CATEGORIES.map(([id, n]) => `<button class="${cat === id ? "on" : ""}" data-lookcat="${id}">${n}</button>`).join("")}</div>
       <div class="rv-looks">
-        <button class="rv-look ${s.look ? "" : "on"}" data-lookpick=""><span class="rv-look-th none"><i data-lucide="ban"></i></span><b>None</b></button>
-        ${looks.map((l) => `<button class="rv-look ${s.look === l.id ? "on" : ""}" data-lookpick="${l.id}" title="${esc(l.blurb)}"><span class="rv-look-th" data-img="${esc(s.path)}">${lookOverlayHTML(l, s.look_amount ?? 100)}</span><b>${esc(l.label)}</b></button>`).join("")}
+        ${tiles.map((t) => {
+          const lk = t.look ? lookById(t.look) : null;
+          return `<button class="rv-look ${active === t.id ? "on" : ""}" data-vfxpick="${t.id}" title="${esc(t.sub)}">
+            <span class="rv-look-th ${t.id === "none" ? "none" : ""}" data-img="${esc(s.path)}">${lk ? lookOverlayHTML(lk, s.look_amount ?? 100) : t.id === "none" ? `<i data-lucide="ban"></i>` : ""}</span>
+            <b>${esc(t.label)}</b><em>${esc(t.sub)}</em>
+            ${t.gen ? `<i class="mono">+${t.credits}</i>` : ""}
+          </button>`;
+        }).join("")}
       </div>
       <label class="rv-f">Intensity<input type="range" id="rvLookAmt" min="10" max="100" value="${s.look_amount ?? 100}"></label>
       <label class="rv-check"><input type="checkbox" id="rvAllLook"> Apply To All Scenes</label>
     </div>`;
   }
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in wide" role="dialog" aria-label="Scene options">
-    <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Look"}</b><button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
+    <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Select VFX"}</b>${kind === "look" ? `<span class="rv-pill">Experimental</span>` : ""}<button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">${body}</div>
     <div class="rv-modal-f"><button class="btn btn-primary" id="rvPopDone">Done</button></div>
   </div></div>`;
@@ -752,8 +761,8 @@ function stepEdit() {
   const imm = immersiveCount();
   const orient = orientationOf(w);
   return `<div class="rv-head-row">
-    <h3>Edit The Photos</h3>
-    <div class="rv-orient"><span>Orientation</span>
+    <div><h3>Configure Photos</h3><p class="rv-hint">Drag To Reorder. Set Orientation, Crop Photos, And Customize Camera Motions.</p></div>
+    <div class="rv-orient"><span>Video Orientation</span>
       <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
     </div>
   </div>
@@ -927,8 +936,11 @@ function plannedVariants() {
   return out;
 }
 
+function vfxGenCredits() {
+  return (S.wizard?.scenes || []).reduce((n, s) => n + (s.vfx_gen ? (tileById(s.vfx_gen)?.credits || 0) : 0), 0);
+}
 function creditTotal() {
-  return CREDIT_COSTS.video + immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE;
+  return CREDIT_COSTS.video + immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE + vfxGenCredits();
 }
 
 /* ======================= PERSISTENT PREVIEW PANEL ======================= */
@@ -1596,7 +1608,15 @@ function bind() {
   on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
   on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
   on("[data-lookcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.lookcat; render(); });
-  on("[data-lookpick]", "click", (e) => { const s = cur(); if (!s) return; s.look = e.currentTarget.dataset.lookpick || null; render(); });
+  on("[data-vfxpick]", "click", (e) => {
+    const s = cur(); if (!s) return;
+    const t = tileById(e.currentTarget.dataset.vfxpick);
+    s.vfx = t?.id || "none";
+    s.look = t?.look || null;
+    s.vfx_gen = t?.gen ? t.id : null;
+    if (t?.gen && t.disclosure) s.disclosure = t.disclosure;
+    render();
+  });
   const amt = el.querySelector("#rvLookAmt");
   if (amt) amt.addEventListener("change", (ev) => { const s = cur(); if (s) s.look_amount = Number(ev.target.value); render(); });
   on("#rvAllMotion", "change", (e) => {
@@ -1608,8 +1628,12 @@ function bind() {
   on("#rvAllLook", "change", (e) => {
     if (!e.currentTarget.checked) return;
     const src = cur(); if (!src) return;
-    w.scenes.forEach((s) => { s.look = src.look || null; s.look_amount = src.look_amount ?? 100; });
-    toast("Look Applied To Every Scene.");
+    w.scenes.forEach((s) => {
+      s.look = src.look || null; s.look_amount = src.look_amount ?? 100;
+      s.vfx = src.vfx || "none"; s.vfx_gen = src.vfx_gen || null;
+      if (src.vfx_gen) { const t = tileById(src.vfx_gen); if (t?.disclosure) s.disclosure = t.disclosure; }
+    });
+    toast("VFX Applied To Every Scene.");
   });
   on("[data-tpl]", "click", (e) => { w.template = e.currentTarget.dataset.tpl; render(); });
   on("[data-out]", "click", (e) => {
