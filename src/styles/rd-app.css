@@ -480,6 +480,8 @@
 
 .rd-app .view{display:none}
 .rd-app .view.on{display:block}
+/* Guard: no later stylesheet may force an inactive view visible. */
+.rd-app .view:not(.on){display:none !important}
 
 @media(prefers-reduced-motion:reduce){
 .rd-app, .rd-app *{transition-duration:.001ms!important;animation-duration:.001ms!important}
