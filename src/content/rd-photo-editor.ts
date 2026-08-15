@@ -14,7 +14,7 @@ import {
   deleteMediaVersion,
   saveExportPackage,
 } from "@/lib/property-media.functions";
-import { runPhotoEdit, interpretPhotoRequest } from "@/lib/photo-edit.functions";
+import { runPhotoEdit, interpretPhotoRequest, analyzePhoto } from "@/lib/photo-edit.functions";
 import { track } from "@/lib/analytics";
 
 const esc = (s) =>
