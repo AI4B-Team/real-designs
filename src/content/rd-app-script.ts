@@ -157,14 +157,18 @@ try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
 function go(v,fromHash){
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
-    /* The account markup can mount after this call, so retry briefly. */
+    /* The account markup can mount (and remount) after this call, so retry
+       briefly on unmanaged timers. Never run synchronously: acctPane reads
+       consts declared later in this module. */
     let n=0;
     const applyPane=()=>{
-      const el=document.getElementById('p-'+pane);
-      if(el && !el.classList.contains('on')) acctPane(pane);
+      try{
+        const el=document.getElementById('p-'+pane);
+        if(el && !el.classList.contains('on')) acctPane(pane);
+      }catch(_){}
       if(++n<60) window.setTimeout(applyPane,75);
     };
-    applyPane();
+    window.setTimeout(applyPane,0);
   }
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='reveal'?'media':v)));
