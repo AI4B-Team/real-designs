@@ -41,7 +41,7 @@ const GOALS = [
 ];
 const TEAMS = ["Just Me", "2 To 5", "6 To 20", "20+"];
 
-type Answers = Record<string, any>;
+type Answers = Record<string, any> & Record<never, never>;
 
 type Step =
   | {
@@ -114,7 +114,7 @@ function toast(msg: string) {
 /** Opens the questionnaire. Steps through one question at a time. */
 export function openSignupSurvey(seed?: any) {
   if (document.getElementById("rdSurvey")) return;
-  const a: Answers = { ...(seed || {}) };
+  const a: any = { ...(seed || {}) };
   let i = 0;
 
   const wrap = document.createElement("div");
