@@ -213,3 +213,4 @@
 }
 
 .pk-invalid{border-color:#CC0000 !important;box-shadow:0 0 0 3px rgba(204,0,0,.12) !important}
+.pk-row-a{ display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-left:auto; }
