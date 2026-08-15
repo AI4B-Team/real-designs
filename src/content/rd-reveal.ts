@@ -1078,6 +1078,11 @@ async function paintAssetThumbs() {
 function render() {
   const el = host();
   if (!el) return;
+  // A screen can only stay open while its state object exists; otherwise the
+  // step renderers dereference null and the whole view crashes.
+  if (S.screen === "wizard" && !S.wizard) S.screen = "library";
+  if (S.screen === "design" && !S.dv) S.screen = "library";
+  if (S.screen === "detail" && !S.detail) S.screen = "library";
   el.innerHTML =
     S.screen === "wizard" ? wizardHtml() : S.screen === "design" ? dvHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
