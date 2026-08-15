@@ -3674,6 +3674,7 @@ function creditGate(e){
   return false;
 }
 window.rdCreditGate=creditGate;
+try{ (window as any).rdUpgradeModal=upgradeModal; }catch(_){}
 
 async function loadCreditHistory(){
   const el=document.getElementById('billHist'); if(!el) return;
