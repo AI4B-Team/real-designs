@@ -1390,14 +1390,48 @@ function presentationHtml(d) {
 
 
 /* ======================= THUMB PAINTING ======================= */
+/* One resolve per storage path for the whole surface: the same photo shows up
+   in Available, Scenes, the scene card, the popover preview and the stage. */
+const IMG_URLS = new Map();
+function cachedPhotoUrl(path) {
+  if (!path) return Promise.resolve(null);
+  if (IMG_URLS.has(path)) return IMG_URLS.get(path);
+  const p = Promise.resolve()
+    .then(() => resolvePhotoUrl(path))
+    .catch(() => null)
+    .then((url) => {
+      /* Never cache a failure: an expired signed URL must be retried. */
+      if (!url) IMG_URLS.delete(path);
+      return url;
+    });
+  IMG_URLS.set(path, p);
+  return p;
+}
+
 async function paintAssetThumbs() {
-  const els = host()?.querySelectorAll("[data-img]") || [];
-  for (const el of els) {
-    if (el.dataset.painted) continue;
-    const url = await resolvePhotoUrl(el.getAttribute("data-img"));
-    if (url) el.style.backgroundImage = `url("${url}")`;
-    el.dataset.painted = "1";
-  }
+  const els = Array.from(host()?.querySelectorAll("[data-img]") || []);
+  let missing = false;
+  await Promise.all(
+    els.map(async (el) => {
+      if (el.dataset.painted) return;
+      const path = el.getAttribute("data-img");
+      if (!path) return;
+      const url = await cachedPhotoUrl(path);
+      if (url) {
+        el.style.backgroundImage = `url("${url}")`;
+        el.classList.remove("rv-noimg");
+        /* Only a real paint counts, otherwise the tile is poisoned forever. */
+        el.dataset.painted = "1";
+        return;
+      }
+      if (!el.querySelector(".rv-noimg-i")) {
+        el.insertAdjacentHTML("beforeend", `<i class="rv-noimg-i" data-lucide="image-off"></i>`);
+      }
+      el.classList.add("rv-noimg");
+      missing = true;
+    }),
+  );
+  if (missing) paint();
 }
 
 /* ======================= RENDER + EVENTS ======================= */
