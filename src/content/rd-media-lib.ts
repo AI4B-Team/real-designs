@@ -16,6 +16,7 @@ import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
 import { cancelJob } from "@/lib/upload-manager";
 import { openMotionClip } from "@/lib/rd-motion-clip";
+import { isPlanBlocked, openUpgrade as openUpgradeFlow } from "@/lib/rd-upgrade";
 
 
 const esc = (s) =>
