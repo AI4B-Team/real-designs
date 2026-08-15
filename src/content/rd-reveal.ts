@@ -1646,7 +1646,16 @@ function bind() {
     s.motion_level = "standard";
     render();
   });
-  on("[data-hover]", "mouseenter", (e) => { w.popHover = e.currentTarget.dataset.hover; render(); });
+  on("[data-hover]", "mouseenter", (e) => {
+    const id = e.currentTarget.dataset.hover;
+    w.popHover = id;
+    const clip = el.querySelector(".rv-pop-clip");
+    if (!clip) return; // preview not mounted, nothing to repaint
+    clip.className = `rv-pop-clip m-${MOTION_PREVIEW[id] || id || "auto"}`;
+    const nm = el.querySelector("#rvPopName"); if (nm) nm.textContent = motionName(id);
+    const cp = el.querySelector("#rvPopCopy"); if (cp) cp.textContent = MOTION_COPY[id] || MOTION_COPY.auto;
+  });
+
   on("[data-immpick]", "click", (e) => {
     const s = cur(); if (!s) return;
     s.motion_level = "immersive";
