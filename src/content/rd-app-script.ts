@@ -155,7 +155,21 @@ let __allowReveal=0;
 try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
 try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
 function go(v,fromHash){
-  if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
+  if(ACCT_ALIAS[v]){
+    const pane=ACCT_ALIAS[v]; v='account';
+    /* The account markup can mount (and remount) after this call, so retry
+       briefly on unmanaged timers. Never run synchronously: acctPane reads
+       consts declared later in this module. */
+    let n=0;
+    const applyPane=()=>{
+      try{
+        const el=document.getElementById('p-'+pane);
+        if(el && !el.classList.contains('on')) acctPane(pane);
+      }catch(_){}
+      if(++n<60) window.setTimeout(applyPane,75);
+    };
+    window.setTimeout(applyPane,0);
+  }
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='reveal'?'media':v)));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
@@ -201,11 +215,14 @@ try{ mountUploadDock(go); }catch(_){}
 (function applyHash(){
   const v=viewFromHash();
   if(!v) return;
-  const want='v-'+(ACCT_ALIAS[v]?'account':v);
+  const pane=ACCT_ALIAS[v]||'';
+  const want='v-'+(pane?'account':v);
   let tries=0;
   const tick=()=>{
     const target=document.getElementById(want);
     if(target && !target.classList.contains('on')) go(v,true);
+    /* the account markup can remount, so keep the deep linked pane selected */
+    if(pane){ try{ const el=document.getElementById('p-'+pane); if(el && !el.classList.contains('on')) acctPane(pane); }catch(_){} }
     if(++tries<110) setTimeout(tick,75);
   };
   tick();
