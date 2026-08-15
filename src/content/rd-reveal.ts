@@ -276,7 +276,7 @@ function libraryHtml() {
     </div>
   </div>
   <div class="rv-bar">
-    <div class="rv-chips">${["all", "drafts", "processing", "ready", "shared"]
+    <div class="rv-mchips">${["all", "drafts", "processing", "ready", "shared"]
       .map((f) => `<button class="rv-chip ${S.filter === f ? "on" : ""}" data-f="${f}">${f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}</button>`)
       .join("")}</div>
     <div class="rv-search"><i data-lucide="search"></i><input id="rvQ" placeholder="Search Property, Project, Room Or Title" value="${esc(S.q)}"></div>
@@ -598,10 +598,10 @@ function sceneCard(s, i) {
     <div class="rv-card-th" data-img="${esc(s.path)}">
       <span class="rv-seq mono">${i + 1}</span>
       <button class="rv-x" data-drop="${i}" aria-label="Remove Scene"><i data-lucide="x"></i></button>
-      <div class="rv-chips">
-        <button class="rv-chip ${changed ? "hot" : ""}" data-pop="motion" data-i="${i}"><i data-lucide="video"></i>${esc(motionLabel(s))}<i data-lucide="chevron-down"></i></button>
-        <button class="rv-chip" data-pop="crop" data-i="${i}"><i data-lucide="crop"></i><span class="mono">${esc((CROPS.find(([c]) => c === (s.crop || "center")) || CROPS[0])[1])}</span></button>
-        <button class="rv-chip ${look ? "hot" : ""}" data-pop="look" data-i="${i}"><i data-lucide="palette"></i>${esc(look ? look.label : "Look")}</button>
+      <div class="rv-mchips">
+        <button class="rv-mchip ${changed ? "hot" : ""}" data-pop="motion" data-i="${i}"><i data-lucide="video"></i>${esc(motionLabel(s))}<i data-lucide="chevron-down"></i></button>
+        <button class="rv-mchip" data-pop="crop" data-i="${i}"><i data-lucide="crop"></i><span class="mono">${esc((CROPS.find(([c]) => c === (s.crop || "center")) || CROPS[0])[1])}</span></button>
+        <button class="rv-mchip ${look ? "hot" : ""}" data-pop="look" data-i="${i}"><i data-lucide="palette"></i>${esc(look ? look.label : "Look")}</button>
       </div>
     </div>
     <div class="rv-card-b">
@@ -1321,7 +1321,7 @@ function bind() {
     }
     render();
   });
-  on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; render(); });
+  on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; w.typeTouched = true; render(); });
 
   on("[data-asset]", "click", (e) => {
     const key = e.currentTarget.dataset.asset;
@@ -1336,7 +1336,7 @@ function bind() {
   on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); render(); });
   on("[data-move]", "click", (e) => {
     e.stopPropagation();
-    const row = e.currentTarget.closest(".rv-scene");
+    const row = e.currentTarget.closest(".rv-scene, .rv-card");
     const i = Number(row.dataset.idx);
     const j = i + Number(e.currentTarget.dataset.move);
     if (j < 0 || j >= w.scenes.length) return;
@@ -1362,7 +1362,7 @@ function bind() {
   on("#rvKeepAll", "click", () => render());
 
   /* drag ordering */
-  el.querySelectorAll(".rv-scene").forEach((n) => {
+  el.querySelectorAll(".rv-scene, .rv-card").forEach((n) => {
     n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.idx));
     n.addEventListener("dragover", (e) => e.preventDefault());
     n.addEventListener("drop", (e) => {
@@ -1383,16 +1383,55 @@ function bind() {
     render();
   });
   on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
-  on("[data-motion]", "click", (e) => { w.motion = e.currentTarget.dataset.motion; render(); });
-  on("[data-scene-motion]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.sceneMotion)].motion = e.currentTarget.value; });
-  on("[data-level]", "click", (e) => {
-    const s = w.scenes[Number(e.currentTarget.dataset.i)];
-    s.motion_level = e.currentTarget.dataset.level;
-    if (s.motion_level === "immersive" && !s.immersive_effect) s.immersive_effect = "light";
+  /* scene chips and their popovers */
+  const cur = () => (w.pop ? w.scenes[w.pop.i] : null);
+  on("[data-pop]", "click", (e) => {
+    e.stopPropagation();
+    w.pop = { kind: e.currentTarget.dataset.pop, i: Number(e.currentTarget.dataset.i) };
+    w.popQ = ""; w.popHover = null;
     render();
   });
-  on("[data-immersive]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.immersive)].immersive_effect = e.currentTarget.value; });
-  on("[data-ext]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.ext)].exterior_effect = e.currentTarget.value || null; render(); });
+  on("#rvPopX, #rvPopDone", "click", () => { w.pop = null; render(); });
+  const pq = el.querySelector("#rvPopQ");
+  if (pq) pq.addEventListener("input", (ev) => { w.popQ = ev.target.value; render(); el.querySelector("#rvPopQ")?.focus(); });
+  on("[data-motionpick]", "click", (e) => {
+    const s = cur(); if (!s) return;
+    s.motion = e.currentTarget.dataset.motionpick;
+    s.motion_level = "standard";
+    render();
+  });
+  on("[data-hover]", "mouseenter", (e) => { w.popHover = e.currentTarget.dataset.hover; render(); });
+  on("[data-immpick]", "click", (e) => {
+    const s = cur(); if (!s) return;
+    s.motion_level = "immersive";
+    s.immersive_effect = e.currentTarget.dataset.immpick;
+    render();
+  });
+  on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
+  on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
+  on("[data-lookcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.lookcat; render(); });
+  on("[data-lookpick]", "click", (e) => { const s = cur(); if (!s) return; s.look = e.currentTarget.dataset.lookpick || null; render(); });
+  const amt = el.querySelector("#rvLookAmt");
+  if (amt) amt.addEventListener("change", (ev) => { const s = cur(); if (s) s.look_amount = Number(ev.target.value); render(); });
+  on("#rvAllMotion", "click", () => {
+    const first = w.scenes[0]; if (!first) return;
+    w.scenes.forEach((s) => { s.motion = first.motion || "auto"; s.motion_level = first.motion_level || "standard"; s.immersive_effect = first.immersive_effect || null; });
+    toast("Motion Applied To Every Scene.");
+    render();
+  });
+  on("#rvAllLook", "click", () => {
+    const first = w.scenes[0]; if (!first) return;
+    w.scenes.forEach((s) => { s.look = first.look || null; s.look_amount = first.look_amount ?? 100; });
+    toast("Look Applied To Every Scene.");
+    render();
+  });
+  on("[data-tpl]", "click", (e) => { w.template = e.currentTarget.dataset.tpl; render(); });
+  on("[data-out]", "click", (e) => {
+    w.outputMode = e.currentTarget.dataset.out;
+    w.versions.clean = w.outputMode !== "branded";
+    w.versions.branded = w.outputMode !== "unbranded";
+    render();
+  });
   on("[data-tr]", "click", (e) => { w.transition = e.currentTarget.dataset.tr; render(); });
   on("[data-ba]", "click", (e) => { w.baTransition = e.currentTarget.dataset.ba; render(); });
 
