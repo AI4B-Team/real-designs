@@ -157,12 +157,11 @@ try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
 function go(v,fromHash){
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
-    /* The account markup can mount after this call, and the first mount's
-       managed timers may be cleared, so retry on unmanaged timers. */
+    /* The account markup can mount after this call, so retry briefly. */
     let n=0;
     const applyPane=()=>{
       const el=document.getElementById('p-'+pane);
-      try{(window as any).__paneLog=((window as any).__paneLog||[]).concat(['tick'+n+':'+(el?el.className:'none')]);}catch(_){} if(el && !el.classList.contains('on')) acctPane(pane);
+      if(el && !el.classList.contains('on')) acctPane(pane);
       if(++n<60) window.setTimeout(applyPane,75);
     };
     applyPane();
