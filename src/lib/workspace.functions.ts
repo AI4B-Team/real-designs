@@ -280,6 +280,8 @@ export const getPropertyTree = createServerFn({ method: "GET" })
     return (data ?? []).map((p: any) => ({
       id: p.id as string,
       address: propLabel(p.address),
+      created_at: p.created_at as string,
+
       has_dna: Array.isArray(p.design_dna?.items) && p.design_dna.items.length > 0,
       dna: (Array.isArray(p.design_dna?.items) ? p.design_dna.items : []) as {
         label: string;
