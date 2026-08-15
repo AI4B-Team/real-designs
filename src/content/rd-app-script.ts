@@ -3279,7 +3279,8 @@ async function paintAcctSide(){
     const sp=$id('sidePlan'); if(sp) sp.textContent=c.plan==='free'?'Free':c.plan.charAt(0).toUpperCase()+c.plan.slice(1);
     const sc=$id('sideCredit'), sb=$id('sideCreditBar'), ss=$id('sideCreditSub');
     if(c.plan==='free'){
-      const left=Math.max(0,5-(c.free_used_today||0));
+      /* Server returns remainingToday, not a used-count. */
+      const left=Math.max(0,Math.min(5,c.remainingToday??5));
       if(sc) sc.textContent=left+' of 5 free designs left today';
       if(sb) sb.style.width=(left/5*100)+'%';
       if(ss) ss.textContent='Free plan resets every day';
