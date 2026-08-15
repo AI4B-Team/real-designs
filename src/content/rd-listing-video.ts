@@ -857,8 +857,10 @@ function render() {
   stopPreview();
   if (S.step === "setup") {
     startPreview();
+    if (!S.setup.avatar) S.setup.avatar = blankAvatarConfig();
     bindAvatar(el, S.setup.avatar, render, toast);
   }
+
   if (S.step === "done") mountPlayer();
 
 
