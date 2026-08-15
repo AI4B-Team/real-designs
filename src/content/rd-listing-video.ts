@@ -1298,13 +1298,9 @@ async function generate() {
       } catch (_) {}
     }
     const msg = String((e as any)?.message || "");
-    if (/credit|free designs|paid plan|upgrade/i.test(msg)) {
-      const um = (window as any).rdUpgradeModal;
-      if (typeof um === "function") um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "You Need More Credits", msg);
-      else toast(msg);
-    } else {
-      toast(msg || "The render failed. Your selections were saved.");
-    }
+    if (isPlanBlocked(msg)) openUpgrade(msg);
+    else toast(msg || "The render failed. Your selections were saved.");
+
     S.step = "setup";
     render();
 
