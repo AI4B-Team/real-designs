@@ -721,28 +721,46 @@ function popoverHtml() {
   let body = "";
   if (kind === "motion") {
     const q = (w.popQ || "").toLowerCase();
-    const rows = STANDARD_MOTIONS.filter(([, n]) => !q || n.toLowerCase().includes(q));
-    const hov = w.popHover || (s.motion_level === "immersive" ? null : s.motion || "auto");
+    const match = (n) => !q || n.toLowerCase().includes(q);
+    const rows = STANDARD_MOTIONS.filter(([, n]) => match(n));
+    const imms = IMMERSIVE_EFFECTS.filter(([, n]) => match(n));
+    const exts = EXTERIOR_EFFECTS.filter(([, n]) => match(n));
+    const sel = s.motion_level === "immersive" ? s.immersive_effect || "light" : s.motion || "auto";
+    const hov = w.popHover || sel;
     body = `<div class="rv-pop-two">
-      <div class="rv-pop-list">
-        <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Choose Camera Motion">
-        ${rows.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && (s.motion || "auto") === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${id === "auto" ? "Automatic, Recommended" : n}</button>`).join("")}
-        <div class="rv-pop-sep"></div>
-        <div class="rv-pop-h">Immersive Movement</div>
-        ${IMMERSIVE_EFFECTS.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level === "immersive" && (s.immersive_effect || "light") === id ? "on" : ""}" data-immpick="${id}">${esc(n)}<i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE}</i></button>`).join("")}
-        <div class="rv-note sm">Only movement is animated. Walls, windows and furniture stay exactly as designed.</div>
+      <div class="rv-pop-side">
+        <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Search Camera Motions">
+        <div class="rv-pop-scroll">
+          <div class="rv-pop-h">Camera Moves</div>
+          <div class="rv-pop-grid">
+            ${rows.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && (s.motion || "auto") === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${id === "auto" ? "Automatic, Recommended" : n}</button>`).join("")}
+          </div>
+          ${imms.length ? `<div class="rv-pop-sep"></div>
+          <div class="rv-pop-h">Immersive Movement <i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE} Each</i></div>
+          <div class="rv-pop-grid">
+            ${imms.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level === "immersive" && (s.immersive_effect || "light") === id ? "on" : ""}" data-immpick="${id}" data-hover="${id}">${esc(n)}<i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE}</i></button>`).join("")}
+          </div>
+          <div class="rv-note sm">Only movement is animated. Walls, windows and furniture stay exactly as designed.</div>` : ""}
+          ${isExterior(s) && exts.length ? `<div class="rv-pop-sep"></div><div class="rv-pop-h">Cinematic Exterior</div>
+          <div class="rv-pop-grid">
+            <button class="rv-pop-row ${s.exterior_effect ? "" : "on"}" data-extpick="">None</button>
+            ${exts.map(([id, n]) => `<button class="rv-pop-row ${s.exterior_effect === id ? "on" : ""}" data-extpick="${id}" data-hover="${id}">${esc(n)}</button>`).join("")}
+          </div>
+          ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
+        </div>
         <label class="rv-check"><input type="checkbox" id="rvAllMotion"> Apply To All Scenes</label>
-        ${isExterior(s) ? `<div class="rv-pop-sep"></div><div class="rv-pop-h">Cinematic Exterior</div>
-        <button class="rv-pop-row ${s.exterior_effect ? "" : "on"}" data-extpick="">None</button>
-        ${EXTERIOR_EFFECTS.map(([id, n]) => `<button class="rv-pop-row ${s.exterior_effect === id ? "on" : ""}" data-extpick="${id}">${esc(n)}</button>`).join("")}
-        ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
       </div>
       <div class="rv-pop-prev">
-        <div class="rv-pop-clip ${esc(hov || "auto")}" data-img="${esc(s.path)}"></div>
-        <b>${esc((STANDARD_MOTIONS.find(([id]) => id === hov) || ["", "Automatic"])[1])}</b>
-        <span>${esc(MOTION_COPY[hov] || MOTION_COPY.auto)}</span>
+        <div class="rv-pop-stage">
+          <div class="rv-pop-clip m-${esc(MOTION_PREVIEW[hov] || hov || "auto")}" data-img="${esc(s.path)}"></div>
+          <span class="rv-pop-live"><i></i>Live Preview</span>
+        </div>
+        <b id="rvPopName">${esc(motionName(hov))}</b>
+        <span id="rvPopCopy">${esc(MOTION_COPY[hov] || MOTION_COPY.auto)}</span>
+        <span class="rv-pop-tip">Hover Any Option To Preview It. The Loop Repeats Automatically.</span>
       </div>
     </div>`;
+
   } else if (kind === "crop") {
     body = `<div class="rv-pop-list">
       <div class="rv-pop-h">Crop <i class="mono">${esc(w.formats[0] || "9:16")}</i></div>
