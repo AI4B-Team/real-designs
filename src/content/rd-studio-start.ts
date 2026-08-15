@@ -966,11 +966,18 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     const sp = document.querySelector('#spChips .chip[data-sp="' + state.space + '"]') as HTMLElement | null;
     if (sp) sp.click();
     const room = document.getElementById("fRoom") as HTMLSelectElement | null;
-    if (room && Array.from(room.options).some((o) => o.value === state.room || o.text === state.room)) room.value = state.room;
+    if (room && Array.from(room.options).some((o) => o.value === state.room || o.text === state.room)) {
+      room.value = state.room;
+      room.dispatchEvent(new Event("input", { bubbles: true }));
+      room.dispatchEvent(new Event("change", { bubbles: true }));
+    }
     if (styleChoice) applyStudioStyleToControls(styleChoice);
     else {
       const style = document.getElementById("fStyle") as HTMLSelectElement | null;
-      if (style && Array.from(style.options).some((o) => o.text === state.style)) style.value = state.style;
+      if (style && Array.from(style.options).some((o) => o.text === state.style)) {
+        style.value = state.style;
+        style.dispatchEvent(new Event("change", { bubbles: true }));
+      }
     }
     const bandIdx = BUDGETS.indexOf(state.budget);
     const band = document.querySelector('.bchip[data-b="' + (bandIdx < 0 ? 1 : bandIdx) + '"]') as HTMLElement | null;

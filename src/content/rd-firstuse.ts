@@ -139,7 +139,11 @@ export function mountFirstUse(ctx: Ctx) {
     const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
     if (!sel) return;
     const opt = Array.from(sel.options).find((o) => o.text.toLowerCase() === room.toLowerCase());
-    if (opt) sel.value = opt.value;
+    if (opt) {
+      sel.value = opt.value;
+      sel.dispatchEvent(new Event("input", { bubbles: true }));
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+    }
   }
   function applyTool(tool?: string) {
     if (!tool) return;
