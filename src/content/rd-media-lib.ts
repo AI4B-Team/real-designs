@@ -385,7 +385,21 @@ const videoReady = (m) => READY(m) && typeGroup(m.type) !== "videos" && !!m.path
 const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !!m.refId && READY(m);
 const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
+const planBlocked = (m) => /paid plan|credit|free designs|upgrade/i.test(String(m && m.error || ""));
+
+function openUpgrade(m) {
+  const msg = String((m && m.error) || "");
+  try {
+    const um = (window as any).rdUpgradeModal;
+    if (um) { um(/free designs/i.test(msg) ? "You Have Used Today\u2019s Free Designs" : "Upgrade To Finish This Render", msg || "This action needs a paid plan."); return; }
+  } catch (_) {}
+  S.go("billing");
+}
+
 function actions(m, g) {
+  if (m.status === "failed" && planBlocked(m))
+    return `<button class="btn btn-primary btn-xs" data-upg="${m.id}" style="flex:1"><i data-lucide="zap"></i>Upgrade Plan</button>
+      <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   if (m.status === "failed")
     return `<button class="btn btn-ghost btn-xs" data-retry="${m.id}" style="flex:1"><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
@@ -403,7 +417,9 @@ function moreItems(m) {
   const fav = { icon: "heart", label: isFav(m.id) ? "Unfavorite" : "Favorite", fn: () => { toggleFav(m.id); render(); } };
   if (m.status === "failed")
     return [
-      { icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
+      ...(planBlocked(m)
+        ? [{ icon: "zap", label: "Upgrade Plan", fn: () => openUpgrade(m) }]
+        : [{ icon: "rotate-ccw", label: "Retry", fn: () => retry(m) }]),
       { icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
       { icon: "trash-2", label: "Remove", danger: true, fn: () => remove(m) },
     ];
@@ -549,6 +565,7 @@ function wireCards(grid, list) {
   );
   grid.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => download(find(b.dataset.dl))));
   grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
+  grid.querySelectorAll("[data-upg]").forEach((b) => (b.onclick = () => openUpgrade(find(b.dataset.upg))));
   grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
 }
 
@@ -884,6 +901,7 @@ async function openDetail(m, opts) {
   bind("[data-studio]", () => { closeDrawer(); S.go("studio"); });
   bind("[data-editvid]", () => { closeDrawer(); openVideo(m, "video"); });
   bind("[data-retry]", () => retry(m));
+  bind("[data-upg]", () => openUpgrade(m));
   bind("[data-cancel]", () => cancelItem(m));
   const more = d.querySelector("[data-more-dr]");
   if (more) more.onclick = (ev) => { ev.stopPropagation(); popMenu(more, moreItems(m)); };
@@ -892,6 +910,9 @@ async function openDetail(m, opts) {
 
 /** Primary actions in the drawer differ by asset type and status. */
 function drawerActions(m, g, proc) {
+  if (m.status === "failed" && planBlocked(m))
+    return `<button class="btn btn-primary btn-sm" data-upg><i data-lucide="zap"></i>Upgrade Plan</button>
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
   if (m.status === "failed")
     return `<button class="btn btn-primary btn-sm" data-retry><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
