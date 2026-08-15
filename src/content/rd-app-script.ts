@@ -104,6 +104,7 @@ import { getSubscription, changePlan, setCancelAtPeriodEnd, withdrawPlanRequest,
 
 
 export function initApp(): () => void {
+  installRdToast();
   const root = document.querySelector('.rd-app') as HTMLElement | null;
   if (root && root.dataset['rdInit'] === '1') return () => {};
   if (root) root.dataset['rdInit'] = '1';
