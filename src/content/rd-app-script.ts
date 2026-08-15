@@ -1733,7 +1733,9 @@ function renderScope(r){
   document.getElementById('scopeTotHigh').textContent=money(r.total_high);
   document.getElementById('scopeTotLab').textContent='Estimated Total'+(r.budget_fit?' · '+r.budget_fit:'');
   const _sp=PROP_TREE[SEL.p], _sj=_sp?_sp.projects[SEL.pr]:null;
-  const _scx=_sp?(_sp.address+(_sj?' · '+_sj.name:'')):'Unsaved room';
+  const _addr=_sp?String(_sp.address||'').trim():'';
+  const _scx=_sp?((/^untitled property$/i.test(_addr)||!_addr?'Unsorted Uploads':_addr)+(_sj?' · '+_sj.name:'')):'Unsaved room';
+
   document.getElementById('scopeSub').textContent=`${_scx} · ${r.grade[0].toUpperCase()+r.grade.slice(1)} Grade · ${r.market.name}`;
   document.getElementById('scopeNote').textContent=`${r.disclaimer} Quantities are derived from the measurements above and should be field verified.`;
 

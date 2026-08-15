@@ -140,7 +140,7 @@ export function startJob(opts: {
   const job: Job = {
     id: crypto.randomUUID(),
     propertyId: opts.propertyId,
-    propertyLabel: opts.propertyLabel || "Untitled Property",
+    propertyLabel: opts.propertyLabel || "Unsorted Uploads",
     source: opts.source || "computer",
     state: "Preparing",
     files: opts.files.map((f) => ({ name: f.name, size: f.size, state: "queued", file: f })),
