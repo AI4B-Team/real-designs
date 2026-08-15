@@ -62,15 +62,25 @@ export async function uploadRoomPhoto(file: File): Promise<string> {
   return path;
 }
 
+/* Signed URLs are memoized per path (until shortly before they expire) so that
+   re-rendering a gallery reuses the same URL instead of re-signing every tile,
+   which made thumbnails blank out for a moment on each repaint. */
+const SIGNED = new Map<string, { url: string; exp: number }>();
+
 export async function roomPhotoUrl(path: string, expiresIn = 3600): Promise<string | null> {
   if (!isStoredPhoto(path)) return path;
+  const hit = SIGNED.get(path);
+  if (hit && hit.exp > Date.now()) return hit.url;
   const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, expiresIn);
   if (error) return null;
-  return data?.signedUrl ?? null;
+  const url = data?.signedUrl ?? null;
+  if (url) SIGNED.set(path, { url, exp: Date.now() + Math.max(30, expiresIn - 60) * 1000 });
+  return url;
 }
 
 export async function deleteRoomPhoto(path: string): Promise<void> {
   if (!isStoredPhoto(path)) return;
+  SIGNED.delete(path);
   await supabase.storage.from(BUCKET).remove([path]);
 }
 
