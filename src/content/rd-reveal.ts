@@ -1578,7 +1578,7 @@ function dvBind() {
   const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
   const upd = (fn) => { fn(); dvQueueSave(); render(); };
 
-  on("#dvClose, #dvBackLib", "click", async () => { dvActive = false; await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
+  on("#dvClose, #dvBackLib", "click", async () => { dvActive = false; stopMusic(); await dvSaveDraft().catch(() => {}); await loadLibrary(); S.screen = "library"; S.dv = null; render(); });
   const t = el.querySelector("#dvTitle");
   if (t) t.addEventListener("change", () => { d.title = t.value.trim() || "Design Video"; dvQueueSave(); });
   on("[data-dvmotion]", "click", (e) => upd(() => { d.motionStyle = e.currentTarget.dataset.dvmotion; }));
