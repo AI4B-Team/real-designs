@@ -134,7 +134,10 @@
 
 .rd-app .search-caret:hover{background:var(--paper-2,rgba(20,18,15,.06));color:var(--ink)}
 
-.rd-app .search-caret svg{position:static;transform:none;width:14px;height:14px}
+.rd-app .search-caret{padding:0;line-height:0}
+
+.rd-app .search-caret svg{position:static!important;left:auto!important;top:auto!important;transform:none!important;display:block;width:14px;height:14px;margin:0}
+
 
 .rd-app .search-menu{position:absolute;top:calc(100% + 8px);left:0;width:272px;max-height:70vh;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 18px 44px rgba(20,18,15,.16);padding:12px;z-index:80;display:none}
 
