@@ -217,8 +217,9 @@
 .rd-app .dv-head { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: start; gap: 12px; }
 .rd-app .dv-head h2 { margin: 0 0 4px; font-size: 20px; }
 .rd-app .dv-head p { margin: 0; color: var(--muted); font-size: 13px; }
-.rd-app .dv-field { display: grid; gap: 6px; font-size: 12px; color: var(--muted); min-width: 0; }
-.rd-app .dv-field input, .rd-app .dv-field select { width: 100%; }
+.rd-app .dv-field { display: grid; gap: 6px; font-size: 12px; color: var(--mute, #6B6B6B); min-width: 0; }
+.rd-app .dv-field input, .rd-app .dv-field select { width: 100%; color: var(--ink, #111113); font-size: 13px; }
+
 .rd-app .dv-scenes { display: grid; gap: 10px; }
 .rd-app .dv-scene { display: grid; grid-template-columns: 22px 96px minmax(0,1fr) auto; align-items: center; gap: 12px;
   border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; background: #fff; }
