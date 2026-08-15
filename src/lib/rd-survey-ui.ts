@@ -116,8 +116,19 @@ export function openSignupSurvey(seed?: any) {
           skipped: false,
         },
       });
+      await syncToAccount({
+        full_name: val("full_name"),
+        phone: val("phone"),
+        company: val("company"),
+      });
       close();
+      try {
+        document.dispatchEvent(new CustomEvent("rd:survey-saved"));
+      } catch (_) {
+        /* no listeners is fine */
+      }
       toast("Thanks — Your Workspace Is Ready.");
+
     } catch (e: any) {
       btn.disabled = false;
       toast(e?.message || "Those answers could not be saved.");
