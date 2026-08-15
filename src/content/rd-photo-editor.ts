@@ -413,6 +413,11 @@ export async function openPhotoEditor(ctx) {
 
   function renderPane() {
     const p = wrap.querySelector("#pmePane");
+    if (tab === "analyze") {
+      renderAnalyze(p);
+      paint();
+      return;
+    }
     if (tab === "adjust" || tab === "geometry") {
       const list = tab === "adjust" ? ADJUST : GEOMETRY;
       const store = tab === "adjust" ? adj : geo;
