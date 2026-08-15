@@ -138,7 +138,7 @@ const PALS={
 /* ---------- nav ---------- */
 const titles={dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
 studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
-listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
+listings:['Listing Batch','Stage a whole property in one direction'],scope:['Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 reports:['Reports','Portfolio rollup, budget fit and credit spend'],
 crm:['CRM Sync','Connect your CRM, sync contacts and push finished work'],
@@ -454,8 +454,8 @@ function paintOnboarding(s,pres){
   let card=document.getElementById('obCard');
   const done=[
     ['Save Your First Room','Upload a photo in Studio and save it to a property.', (s.counts.designs||0)>0, 'studio','Open Studio'],
-    ['Price A Scope','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Scope'],
-    ['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'scope','Open Scope'],
+    ['Price A Scope','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Budget'],
+    ['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'scope','Open Budget'],
     ['Send A Client Presentation','Share a branded approval link and track the decision.', (pres||[]).length>0, 'present','Open Presentations'],
   ];
   const left=done.filter(d=>!d[2]).length;
@@ -1823,7 +1823,7 @@ function renderAllowance(r){
   const rows=document.getElementById('allowRows'); if(!rows) return;
   const note=document.getElementById('allowNote'), sub=document.getElementById('allowSub');
   if(!r){ rows.innerHTML='<tr><td colspan="5">No Priced Scope Yet.</td></tr>';
-    note.textContent='Open Scope & Budget and price a scope to build the allowance list.'; return; }
+    note.textContent='Open Budget & Budget and price a scope to build the allowance list.'; return; }
   const mat=r.lines.filter(l=>l.material_high>0);
   if(!mat.length){ rows.innerHTML='<tr><td colspan="5">This scope is labor only, so there is no material allowance.</td></tr>';
     note.textContent='No material lines in the current scope.'; return; }
@@ -1991,7 +1991,7 @@ tr.sub td{font-weight:700;background:#fafafa}
 <div class="photos"><figure><img src="${PHOTOS.before}" alt="Existing condition of the space"><figcaption>Existing Condition</figcaption></figure>
 <figure><img src="${PHOTOS.after}" alt="Proposed design for the space"><figcaption>Proposed Design</figcaption></figure></div>
 <h2>Room Measurements</h2><div class="meta">${esc(dimLine)} &middot; Layout confidence ${esc(r.layout_conf)}${dimsProposal&&!dimsConfirmed?' &middot; dimensions proposed from a photo and not yet confirmed':''}</div>
-<h2>Scope Of Work By Trade</h2>${groups}
+<h2>Budget By Trade</h2>${groups}
 <div class="totals">
 <div class="row"><span>Material</span><b class="n">${money(r.material_low)} &ndash; ${money(r.material_high)}</b></div>
 <div class="row"><span>Labor</span><b class="n">${money(r.labor_low)} &ndash; ${money(r.labor_high)}</b></div>
@@ -2098,7 +2098,7 @@ function renderProductBoard(r){
   if(!mat.length){
     g.innerHTML='<div class="card" style="grid-column:1/-1"><div class="card-b">'+
       '<b style="display:block;margin-bottom:5px">No Material Lines Yet</b>'+
-      '<span style="font-size:.8rem;color:var(--mute-2)">Price a scope in Scope &amp; Budget and every material line lands here as a shoppable card with its allowance.</span>'+
+      '<span style="font-size:.8rem;color:var(--mute-2)">Price a budget in Budget and every material line lands here as a shoppable card with its allowance.</span>'+
       '</div></div>';
     if(sub) sub.textContent='Price a scope to build the board';
     if(bar) bar.remove();
@@ -3643,7 +3643,7 @@ if(scopeGrid && !document.getElementById('scSave')){
 
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
-    {k:'priced',t:'Price The Scope',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Scope'},
+    {k:'priced',t:'Price The Scope',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Budget'},
     {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'},
     {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent colour on every export.',i:'palette',cta:'Set Brand'},
     {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
