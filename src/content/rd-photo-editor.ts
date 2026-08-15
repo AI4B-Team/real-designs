@@ -592,12 +592,14 @@ export async function openPhotoEditor(ctx) {
   function confirmSteps(steps, instruction, summary, material) {
     const box = wrap.querySelector("#pmeReview") || wrap.querySelector("#pmePane");
     const isMaterial = material || steps.some((s) => s.family === "design");
+    const picks = targets();
+    const cost = steps.length * picks.length;
     pending = { steps, instruction };
     box.innerHTML = `<div class="pme-review">
       <b>Review Edit</b>
       ${summary ? `<span>${esc(summary)}</span>` : ""}
       <ul>${steps.map((s) => `<li>${esc(s.label)}</li>`).join("")}</ul>
-      <span>Apply to: This photo · ${steps.length} credit${steps.length === 1 ? "" : "s"}</span>
+      <span>Apply to: ${picks.length > 1 ? picks.length + " selected photos" : "This photo"} · ${cost} credit${cost === 1 ? "" : "s"}</span>
       ${isMaterial ? `<div class="pme-disc"><i data-lucide="triangle-alert"></i>This materially changes the property. It will be saved as Design Media and labeled as modified.</div>` : ""}
       <div class="pme-review-a">
         <button class="btn btn-primary btn-xs" id="pmeApply"><i data-lucide="play"></i>Apply Edit</button>
@@ -615,53 +617,83 @@ export async function openPhotoEditor(ctx) {
     box.querySelector("#pmeCancel").onclick = () => (box.innerHTML = "");
   }
 
+  /** Run the pending steps against one asset and save the result as a version. */
+  async function runStepsOn(a, startUrl) {
+    let src = startUrl;
+    let last = null;
+    let image = null;
+    for (const step of pending.steps) {
+      const dataUrl = /^data:/.test(src) ? src : await toDataUrl(src);
+      last = await runPhotoEdit({
+        data: {
+          family: step.family,
+          op: step.op,
+          image: dataUrl,
+          room: a.room_group,
+          direction: ctx.direction || "Warm Minimal",
+          instruction: pending.instruction || null,
+        },
+      });
+      src = last.image;
+      image = last.image;
+      track("ai_edit_submitted", { family: step.family });
+    }
+    const path = await uploadRenderDataUrl(image);
+    const row = await addMediaVersion({
+      data: {
+        asset_id: a.id,
+        label: pending.steps.map((s) => s.label).join(" + "),
+        kind: last.family === "design" ? "design" : "ai_edit",
+        modification_class: last.modification_class,
+        storage_path: path,
+        ops: { steps: pending.steps.map((s) => s.op) },
+        approve: false,
+      },
+    });
+    ctx.versions.push(row);
+    a.modification_class = last.modification_class;
+    return { row, image };
+  }
+
   async function applySteps() {
     if (busy || !pending) return;
     busy = true;
     const box = wrap.querySelector("#pmeReview") || wrap.querySelector("#pmePane");
-    box.innerHTML = `<div class="pme-review"><b>Applying Edit</b><span>Working on ${pending.steps.length} step${pending.steps.length === 1 ? "" : "s"}. You can watch the result appear above.</span></div>`;
-    let image = null;
+    const picks = targets();
+    const say = (n) =>
+      (box.innerHTML = `<div class="pme-review"><b>Applying Edit</b><span>${picks.length > 1 ? `Photo ${n} of ${picks.length}. ` : ""}Working on ${pending.steps.length} step${pending.steps.length === 1 ? "" : "s"}.</span></div>`);
+    let done = 0;
+    const failed = [];
     try {
-      let src = baseUrl;
-      let last = null;
-      for (const step of pending.steps) {
-        const dataUrl = /^data:/.test(src) ? src : await toDataUrl(src);
-        last = await runPhotoEdit({
-          data: {
-            family: step.family,
-            op: step.op,
-            image: dataUrl,
-            room: asset().room_group,
-            direction: ctx.direction || "Warm Minimal",
-            instruction: pending.instruction || null,
-          },
-        });
-        src = last.image;
-        image = last.image;
-        track("ai_edit_submitted", { family: step.family });
+      for (const a of picks) {
+        say(done + 1);
+        try {
+          const start = a.id === asset().id ? baseUrl : await urlForAsset(a);
+          const out = await runStepsOn(a, start);
+          if (a.id === asset().id) {
+            baseUrl = out.image;
+            activeVersionId = out.row.id;
+            versions = ctx.versions.filter((v) => v.asset_id === asset().id && !v.archived);
+            adj = blankAdjust();
+            geo = blankGeometry();
+            renderStage();
+          }
+          delete analysis[a.id];
+          done++;
+        } catch (e) {
+          failed.push(`${a.room_group}: ${e.message || e}`);
+        }
       }
-      const path = await uploadRenderDataUrl(image);
-      const row = await addMediaVersion({
-        data: {
-          asset_id: asset().id,
-          label: pending.steps.map((s) => s.label).join(" + "),
-          kind: last.family === "design" ? "design" : "ai_edit",
-          modification_class: last.modification_class,
-          storage_path: path,
-          ops: { steps: pending.steps.map((s) => s.op) },
-          approve: false,
-        },
-      });
-      ctx.versions.push(row);
-      asset().modification_class = last.modification_class;
-      baseUrl = image;
-      activeVersionId = row.id;
-      versions = ctx.versions.filter((v) => v.asset_id === asset().id && !v.archived);
-      adj = blankAdjust();
-      geo = blankGeometry();
-      renderStage();
-      box.innerHTML = "";
-      toast(`${row.label} saved as a new version.`);
+      renderStrip();
+      if (!done) throw new Error(failed[0] || "Edit failed.");
+      box.innerHTML = failed.length
+        ? `<div class="pme-review err"><b>Partly Applied</b><span>${done} of ${picks.length} photos updated.</span><ul>${failed.map((f) => `<li>${esc(f)}</li>`).join("")}</ul></div>`
+        : "";
+      toast(
+        picks.length > 1
+          ? `${done} photos updated with ${pending.steps.map((s) => s.label).join(" + ")}.`
+          : `${pending.steps.map((s) => s.label).join(" + ")} saved as a new version.`,
+      );
     } catch (e) {
       box.innerHTML = `<div class="pme-review err"><b>Edit Failed</b><span>${esc(e.message || e)}</span><div class="pme-review-a"><button class="btn btn-ghost btn-xs" id="pmeRetry">Retry</button></div></div>`;
       const r = box.querySelector("#pmeRetry");
