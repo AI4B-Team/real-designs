@@ -1403,13 +1403,11 @@ function bind() {
         const { NO_IMPORT_MESSAGE } = await import("@/lib/listing-source");
         w.addrNote = r?.message || NO_IMPORT_MESSAGE;
         w.propertyLabel = v;
-        w.sourceType = "upload";
       }
     } catch (_) {
       const { NO_IMPORT_MESSAGE } = await import("@/lib/listing-source");
       w.addrNote = NO_IMPORT_MESSAGE;
       w.propertyLabel = v;
-      w.sourceType = "upload";
     }
     w.addrBusy = false;
     render();
