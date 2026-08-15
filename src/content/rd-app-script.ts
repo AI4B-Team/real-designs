@@ -3594,8 +3594,14 @@ if(scopeGrid && !document.getElementById('scSave')){
   try{
     const t=document.getElementById('dashHelloT'); const sub=document.getElementById('dashHelloS');
     if(!t) return;
-    try{ const host=document.getElementById('dashHello'); const view=document.getElementById('v-dash');
-      if(host&&view&&view.firstElementChild!==host) view.insertBefore(host,view.firstElementChild); }catch(_){}
+    try{
+      const view=document.getElementById('v-dash');
+      const lift=()=>{ const host=document.getElementById('dashHello');
+        if(host&&view&&view.firstElementChild!==host) view.insertBefore(host,view.firstElementChild); };
+      lift();
+      if(view){ const mo=new MutationObserver(lift); mo.observe(view,{childList:true});
+        setTimeout(()=>{ try{ mo.disconnect(); }catch(_){} },15000); }
+    }catch(_){}
     const {data}=await supabase.auth.getUser();
     const u=data&&data.user; if(!u) return;
     const m=(u.user_metadata||{});
