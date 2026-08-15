@@ -2,7 +2,7 @@
 
 .rd-app{
   --ink:#111113;--ink-2:#2A2A2E;--paper:#FAFAFA;--white:#FFF;
-  --surface:#FFF;--surface-2:#F5F5F5;
+  --surface:#FFF;--surface-2:#F5F5F5;--wash:#F5F5F5;
   --line:#E5E5E5;--line-2:#D6D6D6;--red:#CC0000;--red-dk:#A30000;--red-tint:#FDECEC;
   --mute:#6B6B6B;--mute-2:#8E8E8E;--ok:#0F7B4F;--ok-tint:#E8F4EE;
   --amber:#9A5B00;--amber-tint:#FBF0E2;--blue:#1F5FA8;--blue-tint:#E9F0F9;
