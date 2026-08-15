@@ -52,6 +52,11 @@ export async function openPropertyUpload(opts = {}) {
   const wrap = hostEl("pmu-wrap");
   wrap.classList.add("on");
   document.body.style.overflow = "hidden";
+  /* Bind escape and navigation close before any async work so the scrim can never trap the app. */
+  const onEsc = (e) => e.key === "Escape" && close();
+  document.addEventListener("keydown", onEsc);
+  window.addEventListener("hashchange", close);
+
   let props = [];
   try {
     props = await listMediaProperties();
@@ -286,9 +291,9 @@ export async function openPropertyUpload(opts = {}) {
     wrap.innerHTML = "";
     document.body.style.overflow = "";
     document.removeEventListener("keydown", onEsc);
+    window.removeEventListener("hashchange", close);
   }
-  const onEsc = (e) => e.key === "Escape" && close();
-  document.addEventListener("keydown", onEsc);
+
 
   render();
 }
@@ -985,9 +990,12 @@ function openScope(cfg) {
     wrap.classList.remove("on");
     wrap.innerHTML = "";
     document.removeEventListener("keydown", onEsc);
+    window.removeEventListener("hashchange", close);
   }
   const onEsc = (e) => e.key === "Escape" && close();
   document.addEventListener("keydown", onEsc);
+  window.addEventListener("hashchange", close);
+
   render();
 }
 

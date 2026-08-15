@@ -4121,12 +4121,28 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
 })();
 
 /* Escape closes any open lightweight modal (.up-modal.on) */
+function closeTopUpModal(){
+  const open=[...document.querySelectorAll('.up-modal.on')];
+  if(!open.length) return false;
+  open[open.length-1].classList.remove('on');
+  return true;
+}
 document.addEventListener('keydown',(e)=>{
   if(e.key!=='Escape') return;
-  const open=[...document.querySelectorAll('.up-modal.on')];
-  if(!open.length) return;
-  open[open.length-1].classList.remove('on');
+  closeTopUpModal();
 });
+/* Changing views must never leave a modal scrim covering the app.
+   Some modals open asynchronously, so sweep again briefly after the switch. */
+window.addEventListener('hashchange',()=>{
+  const sweep=()=>{
+    document.querySelectorAll('.up-modal.on').forEach((m)=>m.classList.remove('on'));
+    document.body.style.overflow='';
+  };
+  sweep();
+  [250,700,1500].forEach((ms)=>timers.push(window.setTimeout(sweep,ms)));
+});
+
+
 
 
 
