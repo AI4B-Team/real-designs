@@ -713,7 +713,7 @@ function stepReview() {
     <div><span>Credits Required</span><b>${cost}${imm ? ` — Includes ${imm * IMMERSIVE_CREDITS_PER_SCENE} For Immersive Motion` : ""}</b></div>
     <div><span>Current Balance</span><b>${bal == null ? "—" : bal}</b></div>
   </div>
-  ${w.busy ? `<div class="rv-proc"><b>Creating Your REAL REVEAL</b>
+  ${w.busy ? `<div class="rv-proc"><b>Creating Your Video</b>
     <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
     <span>${esc(w.stage || "Preparing scenes")}</span>
     <div class="rv-note sm">You Can Leave This Page — We Will Notify You When It Is Ready.</div></div>`
@@ -813,7 +813,7 @@ async function generate() {
     track?.("reveal_generate", { formats: w.formats.join(","), scenes: w.scenes.length });
     await renderAllVariants(projectId, started.variants, w);
     await setVideoStatus({ id: projectId, status: "ready" });
-    toast("Your REAL REVEAL Is Ready.");
+    toast("Your Video Is Ready.");
     await loadLibrary();
     S.screen = "detail";
     S.detailId = projectId;
@@ -1951,8 +1951,8 @@ function maybeIntro() {
   let wrap = document.getElementById("rvIntroWrap");
   if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; document.body.appendChild(wrap); }
   wrap.className = "rv-modal on";
-  wrap.innerHTML = `<div class="rv-modal-in sm" role="dialog" aria-label="Welcome to REAL REVEAL">
-    <div class="rv-modal-h"><b>Create Your First REAL REVEAL</b></div>
+  wrap.innerHTML = `<div class="rv-modal-in sm" role="dialog" aria-label="Welcome To Property Videos">
+    <div class="rv-modal-h"><b>Create Your First Property Video</b></div>
     <div class="rv-modal-b">
       <ol class="rv-intro"><li>Choose a property or design</li><li>Select the scenes</li><li>Choose a format and style</li><li>Generate and share</li></ol>
     </div>
