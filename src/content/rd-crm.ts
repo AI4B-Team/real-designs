@@ -5,6 +5,8 @@
  */
 import { createIcons, icons } from "lucide";
 import { listCrm, connectCrm, disconnectCrm, setCrmAutoPush, syncCrmContacts, pushToCrm } from "@/lib/crm.functions";
+import { isSignupAdmin, listSignupSurveys, markSignupPushed } from "@/lib/signup-survey.functions";
+
 
 const PROVIDERS: Array<{ id: string; name: string; icon: string; blurb: string; keyLabel: string; keyHelp: string; needsUrl?: boolean }> = [
   {
