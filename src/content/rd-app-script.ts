@@ -79,6 +79,8 @@ function populateStyleSelect(){
     match=opt;
   }
   sel.value=match?(match as any).value:'Warm Minimal';
+  // Never leave the control blank: fall back to the first available option.
+  if(!sel.value&&sel.options.length) sel.value=sel.options[0].value;
 }
 try{
   document.addEventListener('click',(e:any)=>{
