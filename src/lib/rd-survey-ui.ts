@@ -176,8 +176,12 @@ export function mountSignupSurvey(host: HTMLElement, opts: FlowOpts = {}) {
       body.querySelectorAll<HTMLButtonElement>("[data-opt]").forEach((b) => {
         b.onclick = () => {
           a[step.key] = b.dataset["opt"];
-          if (step.key === "how_heard") {
+          if (
+            step.key === "how_heard" &&
+            (a.how_heard === "Other" || a.how_heard === "Friend Or Colleague")
+          ) {
             render();
+            (body.querySelector("[data-f=how_heard_detail]") as HTMLInputElement)?.focus();
             return;
           }
           render();
