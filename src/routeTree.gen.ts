@@ -34,6 +34,7 @@ import { Route as StatusRouteImport } from './routes/status'
 import { Route as SubprocessorsRouteImport } from './routes/subprocessors'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/app'
+import { Route as AuthenticatedWelcomeRouteImport } from './routes/_authenticated/welcome'
 import { Route as FreeIndexRouteImport } from './routes/free/index'
 import { Route as FreeAiInteriorDesignRouteImport } from './routes/free/ai-interior-design'
 import { Route as FreeArvCalculatorRouteImport } from './routes/free/arv-calculator'
@@ -171,6 +172,11 @@ const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
   path: '/app',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedWelcomeRoute = AuthenticatedWelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const FreeIndexRoute = FreeIndexRouteImport.update({
   id: '/free/',
   path: '/free/',
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRoute
+  '/welcome': typeof AuthenticatedWelcomeRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
@@ -296,6 +303,7 @@ export interface FileRoutesByTo {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/app': typeof AuthenticatedAppRoute
+  '/welcome': typeof AuthenticatedWelcomeRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
@@ -336,6 +344,7 @@ export interface FileRoutesById {
   '/subprocessors': typeof SubprocessorsRoute
   '/terms': typeof TermsRoute
   '/_authenticated/app': typeof AuthenticatedAppRoute
+  '/_authenticated/welcome': typeof AuthenticatedWelcomeRoute
   '/free/ai-interior-design': typeof FreeAiInteriorDesignRoute
   '/free/arv-calculator': typeof FreeArvCalculatorRoute
   '/free/rehab-cost-calculator': typeof FreeRehabCostCalculatorRoute
@@ -376,6 +385,7 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/app'
+    | '/welcome'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
@@ -414,6 +424,7 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/app'
+    | '/welcome'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/subprocessors'
     | '/terms'
     | '/_authenticated/app'
+    | '/_authenticated/welcome'
     | '/free/ai-interior-design'
     | '/free/arv-calculator'
     | '/free/rehab-cost-calculator'
@@ -682,6 +694,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/welcome': {
+      id: '/_authenticated/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof AuthenticatedWelcomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/free/': {
       id: '/free/'
       path: '/free'
@@ -771,11 +790,13 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAppRoute: typeof AuthenticatedAppRoute
+  AuthenticatedWelcomeRoute: typeof AuthenticatedWelcomeRoute
   AuthenticatedAppMediaVideoNewRoute: typeof AuthenticatedAppMediaVideoNewRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAppRoute: AuthenticatedAppRoute,
+  AuthenticatedWelcomeRoute: AuthenticatedWelcomeRoute,
   AuthenticatedAppMediaVideoNewRoute: AuthenticatedAppMediaVideoNewRoute,
 }
 

@@ -36,11 +36,11 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/app", replace: true });
+      if (data.session) navigate({ to: "/welcome", replace: true });
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
       if (session && (event === "SIGNED_IN" || event === "INITIAL_SESSION")) {
-        navigate({ to: "/app", replace: true });
+        navigate({ to: "/welcome", replace: true });
       }
     });
     return () => sub.subscription.unsubscribe();
@@ -55,7 +55,7 @@ function AuthPage() {
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
-          options: { emailRedirectTo: window.location.origin + "/app" },
+          options: { emailRedirectTo: window.location.origin + "/welcome" },
         });
         if (error) throw error;
         track("signed_up", { method: "email" });
@@ -88,7 +88,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    navigate({ to: "/app", replace: true });
+    navigate({ to: "/welcome", replace: true });
   }
 
   async function forgot() {
