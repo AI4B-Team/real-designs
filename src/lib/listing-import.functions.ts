@@ -156,6 +156,6 @@ export const lookupListingByAddress = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { fetchListingByAddress } = await import("@/lib/listing-import.server");
     const r = await fetchListingByAddress(data.address.trim());
-    if (!r.ok) return { ok: false as const, code: r.code, message: r.message, listing: null, photos: [] };
-    return { ok: true as const, code: null, message: "", listing: r.listing, photos: r.photos };
+    if (!r.ok) return { ok: false as const, code: r.code, message: r.message, listing: null as any, photos: [] as any };
+    return { ok: true as const, code: null, message: "", listing: r.listing as any, photos: r.photos as any };
   });
