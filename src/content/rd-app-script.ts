@@ -3669,8 +3669,8 @@ function upgradeModal(title,body){
 /** Turn a server refusal into an upgrade prompt instead of a raw error. */
 function creditGate(e){
   const msg=(e&&e.message)||'';
-  if(/credit|free designs|paid plan/i.test(msg)){
-    upgradeModal(/free designs/i.test(msg)?'You Have Used Today\u2019s Free Designs':'You Need More Credits',msg);
+  if(isPlanBlocked(msg)){
+    upgradeModal(planBlockTitle(msg),msg);
     return true;
   }
   return false;
