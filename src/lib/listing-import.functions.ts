@@ -144,3 +144,18 @@ export const linkListingImport = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { import: row };
   });
+
+/**
+ * Address lookup used by the confirm-the-listing modal. Returns provider data
+ * when a licensed provider is connected, otherwise reports that plainly so the
+ * user can confirm the address they typed and continue.
+ */
+export const lookupListingByAddress = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) => z.object({ address: z.string().min(3).max(300) }).parse(d))
+  .handler(async ({ data }) => {
+    const { fetchListingByAddress } = await import("@/lib/listing-import.server");
+    const r = await fetchListingByAddress(data.address.trim());
+    if (!r.ok) return { ok: false as const, code: r.code, message: r.message, listing: null as any, photos: [] as any };
+    return { ok: true as const, code: null, message: "", listing: r.listing as any, photos: r.photos as any };
+  });
