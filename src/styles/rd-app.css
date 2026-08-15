@@ -1456,3 +1456,18 @@
 .rd-app .mc-prog{height:5px;border-radius:999px;background:var(--paper);overflow:hidden;margin:6px 0 12px}
 .rd-app .mc-prog i{display:block;height:100%;width:0;background:#CC0000;transition:width .2s}
 .rd-app .mc-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:6px}
+
+/* CRM sync */
+.rd-app .crm-card h3{display:flex;align-items:center;gap:8px}
+.rd-app .crm-card h3 svg{width:16px;height:16px;color:#CC0000}
+.rd-app .crm-card.on{border-color:var(--ink)}
+.rd-app .crm-meta{display:grid;gap:8px;margin-bottom:10px}
+.rd-app .crm-meta>div{display:flex;justify-content:space-between;gap:10px;font-size:.82rem}
+.rd-app .crm-meta span{color:var(--mute-2)}
+.rd-app .crm-toggle{display:flex;align-items:center;gap:8px;font-size:.8rem;margin:6px 0 12px;color:var(--ink)}
+.rd-app .crm-actions{display:flex;flex-wrap:wrap;gap:8px}
+.rd-app .crm-form{display:grid;gap:10px;margin-top:6px}
+.rd-app .crm-form label{display:grid;gap:5px;font-size:.72rem;letter-spacing:.07em;text-transform:uppercase;color:var(--mute-2)}
+.rd-app .crm-form input,.rd-app .crm-form select,.rd-app .crm-form textarea{border:1px solid var(--line);border-radius:9px;padding:9px 12px;font:inherit;font-size:.85rem;background:#fff;color:var(--ink);text-transform:none;letter-spacing:0}
+.rd-app .crm-form input:focus,.rd-app .crm-form select:focus,.rd-app .crm-form textarea:focus{outline:none;border-color:var(--ink)}
+.rd-app .crm-help{font-size:.74rem;color:var(--mute-2);margin:-2px 0 0}
