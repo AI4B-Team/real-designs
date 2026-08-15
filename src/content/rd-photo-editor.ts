@@ -545,7 +545,7 @@ export async function openPhotoEditor(ctx) {
         }`;
     }
 
-    p.innerHTML = head + body;
+    p.innerHTML = head + body + `<div id="pmeReview"></div>`;
     paint();
     p.querySelector("#pmeRun").onclick = () => runAnalysis(asset());
     p.querySelector("#pmeRunAll").onclick = async () => {
