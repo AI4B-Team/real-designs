@@ -2038,7 +2038,7 @@ function bindCards(root) {
     const id = card.dataset.id;
     const act = e.currentTarget.dataset.act;
     if (act === "open" || act === "edit") return openDetail(id);
-    if (act === "dupe") { await duplicateVideo({ id }); await loadLibrary(); render(); return toast("Video Duplicated."); }
+    if (act === "dupe") { await duplicateVideo({ data: { id } }); await loadLibrary(); render(); return toast("Video Duplicated."); }
     if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ id }); await loadLibrary(); render(); return; }
     if (act === "download") {
       const v = S.variants.find((x) => x.video_project_id === id && x.output_path);
