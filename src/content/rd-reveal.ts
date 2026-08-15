@@ -1695,6 +1695,12 @@ function bind() {
   on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
   on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
   on("[data-lookcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.lookcat; render(); });
+  on("[data-gradecat]", "click", (e) => { w.popGrade = e.currentTarget.dataset.gradecat; render(); });
+  on("[data-lookpick]", "click", (e) => {
+    const s = cur(); if (!s) return;
+    s.look = e.currentTarget.dataset.lookpick || null;
+    render();
+  });
   on("[data-vfxpick]", "click", (e) => {
     const s = cur(); if (!s) return;
     const t = tileById(e.currentTarget.dataset.vfxpick);
