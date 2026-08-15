@@ -3722,24 +3722,10 @@ if(scopeGrid && !document.getElementById('scSave')){
   document.getElementById('onbHide')?.addEventListener('click',()=>{ state.done=true; save(); card.remove(); });
   ['photo','priced','saved','brand','shared'].forEach(k=>window.addEventListener('rd:'+k,()=>{ if(!state[k]){ state[k]=true; save(); render(); } }));
 
-  /* welcome once per account, but never over a photo handed off from the site */
-  const pendingHandoff=(()=>{ try{ return !!window.rdHandoffPending||!!localStorage.getItem('rd.handoff'); }catch(e){ return false; } })();
-  const alreadyWelcomed=state.welcomed||readState().welcomed||window.__rdWelcomed;
-  if(!alreadyWelcomed && !pendingHandoff){
-    state.welcomed=true; window.__rdWelcomed=true; save();
-    document.querySelectorAll('#onbModal').forEach(n=>n.remove());
-    const m=document.createElement('div'); m.className='up-modal on'; m.id='onbModal';
-    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
-      +'<h3>Welcome To REAL DESIGNS</h3>'
-      +'<p>Upload one room photo and REAL DESIGNS gives you a redesign, a priced scope and a client ready package. Your '+STEPS.length+' step checklist is waiting on the dashboard.</p>'
-      +'<div class="up-act"><button class="btn btn-primary" id="onbStart">Start With A Photo</button>'
-      +'<button class="btn btn-ghost" data-close>Look Around First</button></div></div>';
-    (document.querySelector(".rd-app")||document.body).appendChild(m);
-    const close=()=>m.remove();
-    m.addEventListener('click',e=>{ if(e.target.closest('[data-close]')) close(); });
-    m.querySelector('#onbStart').addEventListener('click',()=>{ close(); act('photo'); });
-    lucide.createIcons();
-  }
+  /* The welcome step now lives in the full page signup flow at /welcome,
+     so the old welcome modal is gone. Only mark the account as welcomed. */
+  if(!(state.welcomed||readState().welcomed)){ state.welcomed=true; save(); }
+  document.querySelectorAll('#onbModal').forEach(n=>n.remove());
 })();
 
 
