@@ -498,7 +498,7 @@ function stepPhotos() {
       : `<div class="rv-note">No Properties Yet. Upload Photos To Start.</div>`;
   }
 
-  const ready = w.sourceType === "upload" ? w.uploads.length > 0 : !!w.propertyId;
+  const ready = w.sourceType === "upload" || w.sourceType === "address" ? w.uploads.length > 0 : !!w.propertyId;
   return `<h3>Where Are The Photos?</h3>
   <div class="rv-opts">${opts
     .map(([id, n, d, ic]) => `<button class="rv-opt ${w.sourceType === id ? "on" : ""}" data-src="${id}"><i data-lucide="${ic}"></i><b>${n}</b><span>${d}</span></button>`)
@@ -1312,6 +1312,52 @@ function bind() {
 
 
   on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
+  const addrIn = el.querySelector("#rvAddr");
+  if (addrIn) addrIn.addEventListener("input", (ev) => { w.address = ev.target.value; });
+  on("#rvAddrSkip", "click", () => { w.sourceType = "upload"; render(); });
+  on("#rvAddrGo", "click", async () => {
+    const v = (el.querySelector("#rvAddr")?.value || "").trim();
+    if (v.length < 3) return toast("Type A Full Property Address.");
+    w.address = v; w.addrBusy = true; w.addrNote = ""; w.candidates = []; render();
+    try {
+      const { lookupListingByAddress } = await import("@/lib/listing-import.functions");
+      const r = await lookupListingByAddress({ data: { address: v } });
+      if (r?.ok && r.listing) {
+        const l = r.listing;
+        const photos = r.photos || [];
+        w.candidates = [{
+          cover: photos[0]?.url || photos[0]?.path || "",
+          price: l.price ? "$" + Number(l.price).toLocaleString() : "",
+          address: l.address || v,
+          meta: [l.beds ? l.beds + " Bd" : "", l.baths ? l.baths + " Ba" : "", l.sqft ? Number(l.sqft).toLocaleString() + " Sqft" : "", photos.length + " Photos"].filter(Boolean).join(" · "),
+          photos,
+        }];
+      } else {
+        const { NO_IMPORT_MESSAGE } = await import("@/lib/listing-source");
+        w.addrNote = r?.message || NO_IMPORT_MESSAGE;
+        w.propertyLabel = v;
+        w.sourceType = "upload";
+      }
+    } catch (_) {
+      const { NO_IMPORT_MESSAGE } = await import("@/lib/listing-source");
+      w.addrNote = NO_IMPORT_MESSAGE;
+      w.propertyLabel = v;
+      w.sourceType = "upload";
+    }
+    w.addrBusy = false;
+    render();
+  });
+  on("[data-cand]", "click", (e) => {
+    const c = w.candidates[Number(e.currentTarget.dataset.cand)];
+    if (!c) return;
+    w.propertyLabel = c.address;
+    for (const ph of c.photos || []) {
+      const url = ph.url || ph.path;
+      if (url) w.uploads.push({ id: crypto.randomUUID(), name: ph.room || "Listing Photo", url });
+    }
+    toast("Listing Photos Added.");
+    render();
+  });
   on("[data-prop]", "click", (e) => { w.propertyId = e.currentTarget.dataset.prop; w.sourceType = w.sourceType || "property"; render(); });
   on("#rvBrowse", "click", () => el.querySelector("#rvFiles")?.click());
   const files = el.querySelector("#rvFiles");
