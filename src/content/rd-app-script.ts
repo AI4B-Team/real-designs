@@ -155,7 +155,17 @@ let __allowReveal=0;
 try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
 try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
 function go(v,fromHash){
-  if(ACCT_ALIAS[v]){ const pane=ACCT_ALIAS[v]; v='account'; setTimeout(()=>acctPane(pane),0); }
+  if(ACCT_ALIAS[v]){
+    const pane=ACCT_ALIAS[v]; v='account';
+    /* the account markup can mount after this call, so keep trying briefly */
+    let n=0;
+    const applyPane=()=>{
+      const el=document.getElementById('p-'+pane);
+      if(el){ acctPane(pane); if(el.classList.contains('on')) return; }
+      if(++n<40) setTimeout(applyPane,75);
+    };
+    setTimeout(applyPane,0);
+  }
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===(v==='reveal'?'media':v)));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
