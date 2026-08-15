@@ -347,7 +347,7 @@ export function mountExplore(go, ctx) {
     closeDrawer();
     try {
       go("studio");
-      note(choice.name + " Selected. Add A Source If You Need One, Then Generate.");
+      note(choice.name + " Selected. Choose A Source Below To Start.");
     } catch (err) {
       note("Studio Could Not Be Opened. Please Try Again.");
     } finally {

@@ -1378,7 +1378,7 @@
 
 /* Explore -> Studio style handoff confirmation */
 .rd-app .sts-stylebar{
-  display:grid; grid-template-columns:auto minmax(0,1fr) auto; align-items:center; gap:12px;
+  display:grid; grid-template-columns:auto minmax(0,1fr) auto auto; align-items:center; gap:12px;
   padding:10px 14px; margin:0 0 16px; border:1px solid var(--line,#e6e3dd);
   border-radius:12px; background:var(--white,#fff);
 }

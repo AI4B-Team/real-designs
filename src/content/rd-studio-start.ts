@@ -155,7 +155,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<div class="sts-stylebar">' +
       (styleChoice.thumb ? '<img src="' + escLocal(styleChoice.thumb) + '" alt="' + escLocal(styleChoice.name) + ' style preview">' : "") +
       "<div><b>Style Selected: " + escLocal(styleChoice.name) + "</b>" +
-      "<span>Add a source below. Nothing generates until you press Generate.</span></div>" +
+      "<span>Choose a source below to start designing in this style.</span></div>" +
+      '<button type="button" class="btn btn-primary btn-xs" data-sts="c-upload">Upload A File</button>' +
       '<button type="button" class="sts-link" data-sts="changestyle">Change</button>' +
       "</div>"
     );
