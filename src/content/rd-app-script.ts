@@ -3369,7 +3369,7 @@ async function paintSurveySummary(){
   const box=$id('surveySummary'); if(!box) return;
   try{
     const mod=await import('@/lib/signup-survey.functions');
-    const out=await mod.getSignupSurvey({ data:{} });
+    const out=await mod.getSignupSurvey();
     const r=(out&&out.row)||null;
     if(!r||(!r.completed&&!r.skipped)){
       box.innerHTML='<div class="mono" style="font-size:.72rem;color:var(--mute)">You Have Not Answered The Signup Questionnaire Yet.</div>';
