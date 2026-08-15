@@ -5,6 +5,8 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks, loadCustomTracks } from "@/lib/rd-music";
+import { voiceRequest } from "@/lib/rd-voice";
+import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { getPropertyTree } from "@/lib/workspace.functions";
@@ -568,7 +570,7 @@ async function buildNarration(type: string, script: string | null | undefined, v
   try {
     const { synthesizeNarration } = await import("@/lib/narration.functions");
     const out = await synthesizeNarration({
-      data: { script: script.trim().slice(0, 4000), voice: VOICE_MAP[(voice || "").toLowerCase()] || "alloy" },
+      data: { script: script.trim().slice(0, 4000), ...voiceRequest(voice, VOICE_MAP) },
     });
     return out?.audio || null;
   } catch (_) {
@@ -604,7 +606,8 @@ function stepAudio() {
   <div class="rv-seg">${[["none", "No Narration"], ["generate", "Generate Narration"], ["upload", "Upload Voiceover"]]
     .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}</button>`).join("")}</div>
   ${w.narration === "generate" ? `<label class="rv-f">Script — Editable Draft<textarea id="rvScript" rows="4">${esc(w.script || defaultScript())}</textarea></label>
-  <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}</select></label>
+  <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option value="${v.toLowerCase()}" ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}${myVoiceOption(w.voice)}</select></label>
+  <div class="rv-f">${voiceStudioButton()}</div>
   <div class="rv-adv"><button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
   ${w.narration === "upload" ? `<label class="rv-f">Voiceover File — MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
   <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
@@ -1254,6 +1257,8 @@ function bind() {
     voiceAudio.play().catch(() => {});
   });
   const voice = el.querySelector("#rvVoice"); if (voice) voice.addEventListener("change", (e) => { w.voice = e.target.value.toLowerCase(); });
+  const vstudio = el.querySelector('[data-a="voiceStudio"]');
+  if (vstudio) vstudio.addEventListener("click", () => openVoiceStudio((p) => { if (p) w.voice = "myvoice"; render(); }));
   const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
   if (w.avatar) bindAvatar(el, w.avatar, render, toast);
 

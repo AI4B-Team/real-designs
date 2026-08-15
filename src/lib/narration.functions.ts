@@ -12,6 +12,8 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 const Input = z.object({
   script: z.string().min(4).max(4000),
   voice: z.string().max(40).nullable().optional(),
+  /** Spoken delivery brief, used when narrating in a matched (cloned) voice. */
+  instructions: z.string().max(400).nullable().optional(),
 });
 
 const MODEL = "openai/gpt-4o-mini-tts";
@@ -54,7 +56,13 @@ export const synthesizeNarration = createServerFn({ method: "POST" })
       const res = await fetch("https://ai.gateway.lovable.dev/v1/audio/speech", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: MODEL, voice, input: text, response_format: "mp3" }),
+        body: JSON.stringify({
+          model: MODEL,
+          voice,
+          input: text,
+          response_format: "mp3",
+          ...(data.instructions ? { instructions: data.instructions } : {}),
+        }),
       });
       if (res.status === 429) throw new Error("Rate limit reached, try again in a moment.");
       if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");

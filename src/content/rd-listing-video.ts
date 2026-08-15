@@ -11,6 +11,8 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks, loadCustomTracks } from "@/lib/rd-music";
+import { voiceRequest } from "@/lib/rd-voice";
+import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import {
@@ -664,8 +666,9 @@ function setupHtml() {
           </select></label>
           ${st.narration === "generate" ? `<label class="lv-f"><span>Voice</span><select id="lvVoice">
             ${[["warm", "Warm Female"], ["clear", "Clear Male"], ["calm", "Calm Neutral"], ["luxury", "Luxury"]]
-              .map(([v, n]) => `<option value="${v}" ${st.voice === v ? "selected" : ""}>${n}</option>`).join("")}
+              .map(([v, n]) => `<option value="${v}" ${st.voice === v ? "selected" : ""}>${n}</option>`).join("")}${myVoiceOption(st.voice)}
           </select></label>
+          <div class="lv-f">${voiceStudioButton()}</div>
           <label class="lv-f wide"><span>Narration Script</span><textarea id="lvScript" rows="3" placeholder="Leave empty and we write one from your scenes.">${esc(st.script)}</textarea></label>
           <div class="lv-f wide"><button type="button" class="btn btn-ghost btn-sm" data-a="lvVoicePrev"><i data-lucide="volume-2"></i>${st.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
           ${st.narration === "upload" ? `<label class="lv-f wide"><span>Voiceover File</span><input type="file" id="lvNarFile" accept="audio/*"></label>
@@ -786,7 +789,7 @@ async function buildNarration(type: string, script: string | null | undefined, v
   try {
     const { synthesizeNarration } = await import("@/lib/narration.functions");
     const out = await synthesizeNarration({
-      data: { script: text.slice(0, 4000), voice: VOICE_MAP[(voice || "").toLowerCase()] || "alloy" },
+      data: { script: text.slice(0, 4000), ...voiceRequest(voice, VOICE_MAP) },
     });
     return out?.audio || null;
   } catch (_) {
@@ -1431,6 +1434,7 @@ function bind() {
     const a = t.getAttribute("data-a");
     const id = t.getAttribute("data-id");
     if (a === "review-continue") return continueFromImport();
+    if (a === "voiceStudio") return void openVoiceStudio((p) => { if (p) S.setup.voice = "myvoice"; render(); });
     if (a === "lvVoicePrev") {
       if (S.setup.voicePreviewing) { stopVoicePreview(); return render(); }
       S.setup.voicePreviewing = true;
