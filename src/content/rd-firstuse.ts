@@ -607,6 +607,16 @@ export function mountFirstUse(ctx: Ctx) {
       go("listings");
       return;
     }
+    if (key === "dusk") {
+      try {
+        (window as any).rdToast?.("Open An Exterior Photo, Then Choose Day To Dusk In The Editor.");
+      } catch {
+        /* toast is optional */
+      }
+      hide();
+      go("props");
+      return;
+    }
     if (key === "products") {
       hide();
       go("products");
