@@ -518,7 +518,7 @@ export async function openPhotoEditor(ctx) {
     } else if (state && state.error) {
       const gatedA = isPlanBlocked(state.error);
       body = `<div class="pme-review err"><b>${gatedA ? "Upgrade To Run This Review" : "Analysis Failed"}</b><span>${esc(state.error)}</span>${
-        gatedA ? `<div class="pme-review-a"><button class="btn btn-primary btn-xs" id="pmeAnUpg">Upgrade Plan</button></div>` : ""
+        gatedA ? `<div class="pme-review-a"><button class="btn btn-primary btn-xs" id="pmeAnUpg">Upgrade</button></div>` : ""
       }</div>`;
 
     } else if (state && state.data) {
@@ -709,7 +709,7 @@ export async function openPhotoEditor(ctx) {
     } catch (e) {
       const msg = String((e && e.message) || e || "");
       const gated = isPlanBlocked(msg);
-      box.innerHTML = `<div class="pme-review err"><b>${gated ? "Upgrade To Apply This Edit" : "Edit Failed"}</b><span>${esc(msg)}</span><div class="pme-review-a"><button class="btn btn-${gated ? "primary" : "ghost"} btn-xs" id="pmeRetry">${gated ? "Upgrade Plan" : "Retry"}</button></div></div>`;
+      box.innerHTML = `<div class="pme-review err"><b>${gated ? "Upgrade To Apply This Edit" : "Edit Failed"}</b><span>${esc(msg)}</span><div class="pme-review-a"><button class="btn btn-${gated ? "primary" : "ghost"} btn-xs" id="pmeRetry">${gated ? "Upgrade" : "Retry"}</button></div></div>`;
       const r = box.querySelector("#pmeRetry");
       r && (r.onclick = () => (gated ? openUpgrade(msg, "Upgrade To Apply This Edit") : applySteps()));
 

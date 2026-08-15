@@ -994,7 +994,7 @@ function detailHtml() {
   </div>
   ${p.status === "failed" ? `<div class="rv-fail"><b>${planBlockedMsg(p) ? "This Render Needs A Paid Plan" : "This Render Failed"}</b><span>${esc(p.error_message || "Something went wrong.")}</span>
     <div>${planBlockedMsg(p)
-      ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Upgrade Plan</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
+      ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Upgrade</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
       : `<button class="btn btn-primary btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button><a class="btn btn-ghost btn-sm" href="/contact">Contact Support</a>`}</div></div>` : ""}
   <div class="rv-tabs">${[["video", "Video"], ["scenes", "Scenes"], ["captions", "Captions"], ["presentation", "Presentation"], ["details", "Details"]]
     .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-tab="${id}">${n}</button>`).join("")}</div>
