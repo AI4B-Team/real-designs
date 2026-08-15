@@ -3381,7 +3381,7 @@ async function paintSurveySummary(){
     }
     const rows=[
       ['Full Name',r.full_name],['Phone',r.phone],['Company',r.company],
-      ['Role',r.role],['Heard About Us',r.heard_from],
+      ['Role',r.role],['Heard About Us',r.how_heard?(r.how_heard+(r.how_heard_detail?(' · '+r.how_heard_detail):'')):''],
       ['Listings Per Year',r.listings_per_year],['Team Size',r.team_size],
       ['Primary Goal',r.primary_goal],
       ['Marketing Emails',r.marketing_opt_in?'Yes':'No']
