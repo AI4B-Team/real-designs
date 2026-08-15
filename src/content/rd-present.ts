@@ -268,7 +268,7 @@ function step1() {
   const opts = propertyOptions();
   return `<div class="pk-form">
     <label class="pk-f"><span>Presentation Title</span>
-      <input id="pkTitle" value="${esc(d.title)}" placeholder="Kitchen And Living Room Concept"></label>
+      <input id="pkTitle" value="${esc(d.title)}" placeholder="Kitchen & Living Room Concept"></label>
     <label class="pk-f"><span>Property</span>
       <select id="pkProp">
         <option value="">Select A Property</option>
@@ -384,7 +384,7 @@ function builderHtml() {
       <div class="pk-foot">
         <button class="btn btn-ghost btn-sm" data-pk="back" ${S.step === 1 ? "disabled" : ""}>Back</button>
         <button class="btn btn-primary btn-sm" data-pk="${S.step === 4 ? "save" : "next"}" ${S.busy ? "disabled" : ""}>
-          ${S.busy ? "Saving…" : S.step === 4 ? "Save And Create Link" : "Continue"}</button>
+          ${S.busy ? "Saving…" : S.step === 4 ? "Save & Create Link" : "Continue"}</button>
       </div>
     </div>
   </div>`;

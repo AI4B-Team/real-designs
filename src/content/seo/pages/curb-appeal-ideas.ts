@@ -5,11 +5,11 @@ export const page: LandingPage = {
   tier: "B",
   intent: "Homeowner or seller wants curb appeal ideas along with a realistic sense of what those exterior improvements cost.",
 
-  metaTitle: "Curb Appeal Ideas And Cost Planning",
+  metaTitle: "Curb Appeal Ideas & Cost Planning",
   metaDescription: "Curb appeal ideas that actually move resale value, paint, landscaping, lighting and the front door, with a realistic planning range for each.",
 
   eyebrow: "Curb Appeal",
-  h1: "Curb Appeal Ideas And What They Cost",
+  h1: "Curb Appeal Ideas & What They Cost",
   lede: "See exterior paint, landscaping, lighting and entry updates rendered on your actual house so you know which ideas fit the budget before anything gets scheduled.",
 
   spaceType: "exterior",
@@ -34,17 +34,17 @@ export const page: LandingPage = {
 
   showcase: ["exterior", "budget-mode", "scope"],
 
-  scopeTitle: "Curb Appeal Scope And Planning Range",
+  scopeTitle: "Curb Appeal Scope & Planning Range",
   scopeIntro: "Line items for a typical single family front exterior refresh to makeover level project.",
   scopeLines: [
     { item: "Exterior Paint, Front Facade", qty: "600 SF", trade: "Painting", low: 2200, high: 5500 },
     { item: "Front Door, Paint Or Replace", qty: "1 door", trade: "Carpentry", low: 200, high: 1800 },
-    { item: "Landscaping Beds And Mulch", qty: "200 SF", trade: "Landscaping", low: 800, high: 2200 },
+    { item: "Landscaping Beds & Mulch", qty: "200 SF", trade: "Landscaping", low: 800, high: 2200 },
     { item: "Exterior Light Fixtures", qty: "3 fixtures", trade: "Electrical", low: 400, high: 1200 },
-    { item: "House Numbers And Mailbox", qty: "1 set", trade: "Exterior", low: 150, high: 500 },
+    { item: "House Numbers & Mailbox", qty: "1 set", trade: "Exterior", low: 150, high: 500 },
     { item: "Walkway Repair Or Pavers", qty: "40 SF", trade: "Hardscape", low: 900, high: 3200 },
     { item: "Garage Door, Paint Or Replace", qty: "1 door", trade: "Exterior", low: 300, high: 3800 },
-    { item: "Pressure Washing, Siding And Walkway", qty: "1 exterior", trade: "Cleaning", low: 250, high: 700 },
+    { item: "Pressure Washing, Siding & Walkway", qty: "1 exterior", trade: "Cleaning", low: 250, high: 700 },
   ],
   scopeBasis: "Planning range built from typical national material and labor costs for exterior curb appeal projects, not a contractor bid.",
   confidence: "Medium",
@@ -77,7 +77,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Lighting And Small Details Signal Maintenance",
+      h2: "Lighting & Small Details Signal Maintenance",
       body: [
         "Updated exterior light fixtures, a matching set of house numbers, and a clean mailbox are small line items, typically $400 to $1,200 for lighting and $150 to $500 for numbers and mailbox, but they signal that a house is well maintained in a way that buyers and neighbors notice even if they cannot articulate why. Mismatched or dated fixtures are a common giveaway that a house has not been updated in years, even when the bigger items, roof, siding, windows, are in good condition.",
         "These small detail items are also the easiest to plan and execute without a contractor, which makes them a good starting point for a curb appeal project before committing to bigger paint or landscaping spend.",

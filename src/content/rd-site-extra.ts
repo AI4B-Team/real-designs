@@ -945,27 +945,27 @@ export function initExtra(timers: number[], lucide: any) {
   /* ---------- budget bands -> scope of work ---------- */
   const BANDS = [
     { sub: "Living Room &middot; Warm Minimal &middot; Refresh Band", total: "$3.2K to $5K", rows: [
-      ["Paint, Walls And Ceiling", "Painter", "1 rm", "$580 to $760"],
+      ["Paint, Walls & Ceiling", "Painter", "1 rm", "$580 to $760"],
       ["Cabinet Refacing, Doors", "Carpentry", "18 ea", "$1,150 to $1,700"],
-      ["Hardware And Fixtures", "Carpentry", "22 ea", "$240 to $360"],
+      ["Hardware & Fixtures", "Carpentry", "22 ea", "$240 to $360"],
       ["Lighting Swap, Surface", "Electrical", "4 ea", "$380 to $560"],
       ["Styling Package", "Furnishings", "1 set", "$850 to $1,120"],
     ]},
     { sub: "Living Room &middot; Warm Minimal &middot; Makeover Band", total: "$11.4K to $14.9K", rows: [
       ["LVP Flooring, Installed", "Flooring", "340 sf", "$1,700 to $2,100"],
-      ["Paint, Walls And Ceiling", "Painter", "1 rm", "$580 to $760"],
+      ["Paint, Walls & Ceiling", "Painter", "1 rm", "$580 to $760"],
       ["Recessed Lighting, 6 Cans", "Electrical", "6 ea", "$1,020 to $1,380"],
-      ["Baseboard And Casing", "Carpentry", "76 lf", "$430 to $620"],
-      ["Drywall Repair And Texture", "Drywall", "1 rm", "$340 to $520"],
+      ["Baseboard & Casing", "Carpentry", "76 lf", "$430 to $620"],
+      ["Drywall Repair & Texture", "Drywall", "1 rm", "$340 to $520"],
       ["Furnishing Package", "Furnishings", "1 set", "$2,900 to $3,800"],
     ]},
     { sub: "Living Room &middot; Warm Minimal &middot; Renovation Band", total: "$26K to $35K", rows: [
-      ["Demolition And Haul Off", "General", "1 lot", "$1,200 to $1,800"],
+      ["Demolition & Haul Off", "General", "1 lot", "$1,200 to $1,800"],
       ["Cabinetry, New Boxes", "Carpentry", "24 lf", "$8,400 to $11,200"],
       ["Island With Counter", "Carpentry", "1 ea", "$3,100 to $4,300"],
       ["Appliance Package", "Appliances", "4 ea", "$4,200 to $6,000"],
-      ["Electrical Rough And Trim", "Electrical", "1 lot", "$2,300 to $3,100"],
-      ["Flooring And Trim", "Flooring", "340 sf", "$2,600 to $3,400"],
+      ["Electrical Rough & Trim", "Electrical", "1 lot", "$2,300 to $3,100"],
+      ["Flooring & Trim", "Flooring", "340 sf", "$2,600 to $3,400"],
     ]},
   ];
   const BFC = [

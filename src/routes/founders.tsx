@@ -166,7 +166,7 @@ function FoundersPage() {
             &middot; Cancel in two clicks &middot; Your images stay yours
           </p>
           <p className="price-more">
-            <a href="/pricing">See Full Pricing And Credit Details</a>
+            <a href="/pricing">See Full Pricing & Credit Details</a>
           </p>
         </div>
       </section>

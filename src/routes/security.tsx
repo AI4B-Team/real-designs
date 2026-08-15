@@ -4,7 +4,7 @@ import { LegalDoc } from "@/components/seo/LegalDoc";
 import { pageHead } from "@/lib/page-head";
 import "@/styles/rd-site.css";
 
-const TITLE = "Security At REAL DESIGNS | Encryption, Access And Disclosure";
+const TITLE = "Security At REAL DESIGNS | Encryption, Access & Disclosure";
 const DESC =
   "How REAL DESIGNS encrypts and isolates your property photographs, who can access them, where data is stored, and how to report a vulnerability.";
 
@@ -52,7 +52,7 @@ function SecurityPage() {
         },
         {
           id: "retention",
-          h2: "Retention And Deletion",
+          h2: "Retention & Deletion",
           body: [
             "Free tier uploads and outputs are deleted 30 days after creation. Paid tier content is retained until you delete it or close your account, then removed within 30 days. Deletion is available from your dashboard at any time.",
           ],

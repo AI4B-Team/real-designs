@@ -27,9 +27,9 @@ export const page: LandingPage = {
   afterCaption: "Post rehab condition matched to what nearby comps support.",
 
   steps: [
-    { title: "Enter As Is Value And Rehab", text: "Start with a current value or purchase price and your planned rehab budget." },
-    { title: "Set Condition And Comp Ceiling", text: "Condition sets the recoup multiple, and a comp ceiling caps the top of the range." },
-    { title: "Get ARV And Max Offer", text: "See an ARV range, projected lift, and the maximum offer the 70 percent rule supports." },
+    { title: "Enter As Is Value & Rehab", text: "Start with a current value or purchase price and your planned rehab budget." },
+    { title: "Set Condition & Comp Ceiling", text: "Condition sets the recoup multiple, and a comp ceiling caps the top of the range." },
+    { title: "Get ARV & Max Offer", text: "See an ARV range, projected lift, and the maximum offer the 70 percent rule supports." },
   ],
 
   showcase: ["arv", "scope", "grades", "reality-lock", "budget-mode"],
@@ -69,7 +69,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Improvements That Return, And Improvements That Do Not",
+      h2: "Improvements That Return, & Improvements That Do Not",
       body: [
         "Kitchens and bathrooms consistently return the highest share of their cost in resale markets because they are the rooms buyers judge a property by on a walkthrough. A well executed kitchen remodel in a retail flip market frequently recoups 80 to 100 percent of its cost in added sale price, sometimes more when it corrects an obviously dated or non functional layout. Fresh paint and flooring recoup well too, because they are the cheapest way to make a property show as move in ready.",
         "Structural and mechanical work, a new roof, updated electrical panel, HVAC replacement, rarely returns its full cost directly in sale price, but it is not optional. Buyers and their inspectors will find deferred maintenance on these systems and either walk away or demand a credit that costs more than doing the work upfront. Think of this spend as removing a deal killer, not as a value add line item.",
@@ -83,7 +83,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Holding Costs And Selling Costs, The Numbers Everyone Forgets",
+      h2: "Holding Costs & Selling Costs, The Numbers Everyone Forgets",
       body: [
         "Holding costs accumulate every month a property sits between purchase and closed sale: loan interest, property taxes, insurance, utilities and basic maintenance. On a $185,000 property with hard money financing, six to seven months of holding costs commonly runs $8,000 to $13,000, and every month a rehab runs long adds directly to that total. This is why a realistic timeline matters as much as a realistic rehab budget.",
         "Selling costs are the second forgotten line: realtor commissions typically run 5 to 6 percent of sale price, plus closing costs, transfer taxes and any buyer concessions negotiated at the table. Combined, selling costs commonly land at 8 to 10 percent of the final sale price. On a $260,000 resale, that is $20,000 to $26,000 leaving the deal before the flipper sees a dollar of profit.",

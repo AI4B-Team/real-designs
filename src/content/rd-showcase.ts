@@ -30,9 +30,9 @@ function card(n: number, cat: string, title: string, body: string, media: string
 
 const SCOPE_ROWS: [string, string, string][] = [
   ["LVP Flooring, Installed", "340 sf", "$1,700 to $2,100"],
-  ["Paint, Walls And Ceiling", "1 rm", "$580 to $760"],
+  ["Paint, Walls & Ceiling", "1 rm", "$580 to $760"],
   ["Recessed Lighting", "6 ea", "$1,020 to $1,380"],
-  ["Baseboard And Casing", "76 lf", "$430 to $620"],
+  ["Baseboard & Casing", "76 lf", "$430 to $620"],
   ["Drywall Repair", "1 rm", "$340 to $520"],
 ];
 

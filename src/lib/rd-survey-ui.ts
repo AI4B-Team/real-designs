@@ -204,7 +204,7 @@ export function mountSignupSurvey(host: HTMLElement, opts: FlowOpts = {}) {
         ${step.hint ? `<p class="sv-hint">${esc(step.hint)}</p>` : ""}
         <div class="sv-fields">
           <label class="sv-field">Phone Number<input type="tel" data-f="phone" value="${esc(a.phone || "")}" placeholder="(555) 123-4567" maxlength="40"></label>
-          <label class="sv-check"><input type="checkbox" data-f="marketing_opt_in"${a.marketing_opt_in ? " checked" : ""}> Send Me Product Tips And Launch News</label>
+          <label class="sv-check"><input type="checkbox" data-f="marketing_opt_in"${a.marketing_opt_in ? " checked" : ""}> Send Me Product Tips & Launch News</label>
         </div>`;
     }
 

@@ -5,11 +5,11 @@ export const page: LandingPage = {
   tier: "A",
   intent: "Buyer wants AI bathroom design plus a realistic remodel cost range and understanding of why bathrooms are so expensive per square foot.",
 
-  metaTitle: "AI Bathroom Design And Remodel Cost Planning",
+  metaTitle: "AI Bathroom Design & Remodel Cost Planning",
   metaDescription: "Design a bathroom with AI and see a realistic remodel cost range. Waterproofing, tile labor, tub to shower conversion and ventilation broken down.",
 
   eyebrow: "AI Bathroom Design",
-  h1: "AI Bathroom Design And Remodel Cost",
+  h1: "AI Bathroom Design & Remodel Cost",
   lede: "A 40 square foot bathroom can cost more per square foot to remodel than an entire kitchen. See a designed version of your actual bathroom next to a line item planning range before you call a contractor.",
 
   spaceType: "interior",
@@ -28,22 +28,22 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Upload Your Bathroom Photo", text: "Tub, shower, vanity and toilet positions from your actual room anchor the design so waterproofing and tile scope match reality." },
-    { title: "Choose Fixtures And Tile Level", text: "Select a tub to shower conversion, vanity upgrade or full gut, and the design generates a layout that fits your budget band." },
-    { title: "Get A Waterproofing And Trade Scope", text: "Export a scope with tile square footage, waterproofing membrane area and plumbing moves flagged as their own line items." },
+    { title: "Choose Fixtures & Tile Level", text: "Select a tub to shower conversion, vanity upgrade or full gut, and the design generates a layout that fits your budget band." },
+    { title: "Get A Waterproofing & Trade Scope", text: "Export a scope with tile square footage, waterproofing membrane area and plumbing moves flagged as their own line items." },
   ],
 
   showcase: ["scope", "brief", "reality-lock", "grades"],
 
-  scopeTitle: "Bathroom Remodel Scope And Planning Range",
+  scopeTitle: "Bathroom Remodel Scope & Planning Range",
   scopeIntro: "Line items for a standard 5 by 8 foot, roughly 40 square foot, full bathroom remodel.",
   scopeLines: [
-    { item: "Waterproofing Membrane, Shower Pan And Walls", qty: "60 SF", trade: "Waterproofing", low: 1200, high: 2800 },
-    { item: "Tile, Floor And Shower Walls", qty: "150 SF", trade: "Tile", low: 3000, high: 7500 },
-    { item: "Vanity And Countertop", qty: "1 vanity, 36 in", trade: "Cabinetry", low: 900, high: 2800 },
+    { item: "Waterproofing Membrane, Shower Pan & Walls", qty: "60 SF", trade: "Waterproofing", low: 1200, high: 2800 },
+    { item: "Tile, Floor & Shower Walls", qty: "150 SF", trade: "Tile", low: 3000, high: 7500 },
+    { item: "Vanity & Countertop", qty: "1 vanity, 36 in", trade: "Cabinetry", low: 900, high: 2800 },
     { item: "Tub To Shower Conversion", qty: "1 conversion", trade: "Plumbing", low: 3500, high: 8500 },
     { item: "Toilet Replacement", qty: "1 unit", trade: "Plumbing", low: 400, high: 1100 },
-    { item: "Exhaust Fan And Ventilation", qty: "1 fan, ducted", trade: "Electrical", low: 350, high: 900 },
-    { item: "Lighting And Electrical", qty: "4 fixtures", trade: "Electrical", low: 700, high: 1800 },
+    { item: "Exhaust Fan & Ventilation", qty: "1 fan, ducted", trade: "Electrical", low: 350, high: 900 },
+    { item: "Lighting & Electrical", qty: "4 fixtures", trade: "Electrical", low: 700, high: 1800 },
     { item: "Glass Shower Enclosure", qty: "1 enclosure", trade: "Glass", low: 900, high: 2600 },
   ],
   scopeBasis: "Planning range built from typical national material and labor costs for a standard size residential bathroom remodel, not a contractor bid.",
@@ -58,7 +58,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Waterproofing And Tile Labor Are The Real Cost Drivers",
+      h2: "Waterproofing & Tile Labor Are The Real Cost Drivers",
       body: [
         "Waterproofing a shower pan and walls correctly, with a membrane system rather than just a mortar bed, typically runs $1,200 to $2,800 in materials and labor before a single tile goes down. Skipping or shortcutting this step is the single most common cause of bathroom failures, leaks into the subfloor or the ceiling below, that show up twelve to twenty-four months after a remodel, well after the contractor is gone.",
         "Tile labor is priced by square foot of tiled surface and by the complexity of the pattern, a straight-set 12 by 24 inch tile on a shower wall runs $8 to $15 per square foot installed, while a small format mosaic or a herringbone pattern can run $18 to $30 per square foot installed because the layout takes significantly longer to set and grout. In a shower with 60 to 80 square feet of wall and floor tile, that pattern choice alone can swing the bill by $1,500 to $2,500.",
@@ -77,7 +77,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Ventilation And Why DIY Estimates Miss The Mark",
+      h2: "Ventilation & Why DIY Estimates Miss The Mark",
       body: [
         "A bathroom without adequate exhaust ventilation traps moisture that leads to mold on grout lines, peeling paint, and eventually damage to drywall behind tile. Code generally requires either an operable window or a mechanical exhaust fan ducted to the exterior, not just into the attic space, and retrofitting proper exterior ducting into an existing bathroom can run $350 to $900 depending on the duct run length and roof or wall penetration required.",
         "Bathrooms are the room where DIY cost estimates are most often wrong because homeowners price the visible finishes, tile, vanity, fixtures, and forget the waterproofing membrane, the exhaust ducting, and the plumbing labor that never shows up in a big box store receipt. A homeowner pricing tile and a vanity at $6,000 in materials is often surprised when the finished remodel with labor lands at $16,000 to $20,000, and the gap is almost always waterproofing and plumbing labor that was never in the material estimate to begin with.",
@@ -102,7 +102,7 @@ export const page: LandingPage = {
     "/2d-to-3d-floor-plan",
   ],
 
-  ctaTitle: "Design Your Bathroom And See The Scope",
+  ctaTitle: "Design Your Bathroom & See The Scope",
   ctaBody: "Upload your bathroom and get a design with tile, waterproofing and a planning range attached.",
   ctaLabel: "Start Bathroom Design",
 };

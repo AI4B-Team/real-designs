@@ -39,16 +39,16 @@ export const page: LandingPage = {
   scopeIntro:
     "A standard hall bath with a tub-to-shower conversion, new tile and no plumbing relocation beyond the shower valve.",
   scopeLines: [
-    { item: "Demolition And Disposal", qty: "45 SF", trade: "Demolition", low: 360, high: 540 },
-    { item: "Shower Pan And Waterproofing Membrane", qty: "40 SF", trade: "Waterproofing", low: 900, high: 1600 },
+    { item: "Demolition & Disposal", qty: "45 SF", trade: "Demolition", low: 360, high: 540 },
+    { item: "Shower Pan & Waterproofing Membrane", qty: "40 SF", trade: "Waterproofing", low: 900, high: 1600 },
     { item: "Tub-To-Shower Conversion, Plumbing", qty: "1 LS", trade: "Plumbing", low: 1600, high: 3200 },
     { item: "Wall Tile, Shower Surround", qty: "80 SF", trade: "Tile", low: 3400, high: 5400 },
     { item: "Floor Tile", qty: "45 SF", trade: "Tile", low: 1900, high: 3100 },
-    { item: "Vanity And Countertop", qty: "1 LS", trade: "Cabinetry", low: 900, high: 2000 },
-    { item: "Toilet, Sink And Trim", qty: "1 LS", trade: "Plumbing", low: 750, high: 1400 },
-    { item: "Exhaust Fan And Lighting", qty: "1 LS", trade: "Electrical", low: 550, high: 1050 },
-    { item: "Paint And Drywall Repair", qty: "45 SF", trade: "Paint", low: 320, high: 500 },
-    { item: "Permits And Inspection", qty: "1 LS", trade: "General", low: 250, high: 600 },
+    { item: "Vanity & Countertop", qty: "1 LS", trade: "Cabinetry", low: 900, high: 2000 },
+    { item: "Toilet, Sink & Trim", qty: "1 LS", trade: "Plumbing", low: 750, high: 1400 },
+    { item: "Exhaust Fan & Lighting", qty: "1 LS", trade: "Electrical", low: 550, high: 1050 },
+    { item: "Paint & Drywall Repair", qty: "45 SF", trade: "Paint", low: 320, high: 500 },
+    { item: "Permits & Inspection", qty: "1 LS", trade: "General", low: 250, high: 600 },
   ],
   scopeBasis: "Based on a 45 SF hall bathroom, retail finish grade, tub replaced with a tiled shower, no wall relocation.",
   confidence: "Medium",
@@ -76,14 +76,14 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Waterproofing Is Not Optional, And It Is Not Visible",
+      h2: "Waterproofing Is Not Optional, & It Is Not Visible",
       body: [
         "A tiled shower is only as good as the membrane underneath it, and waterproofing is the line item that never shows up in a finished photo but is the single most common source of costly failure years after the remodel. A properly installed shower pan liner or sheet membrane system, sloped correctly to the drain, is what keeps water inside the shower rather than migrating into the subfloor or the wall cavity behind it.",
         "Skipping or underspecifying waterproofing to save money on a bathroom remodel is one of the worst trades a homeowner can make, because the cost of fixing a failed membrane after the fact, including new tile, new subfloor and sometimes mold remediation, is almost always several times the cost of doing it correctly the first time. Any bid that does not name a specific waterproofing product or method by line item deserves a direct question before you sign it.",
       ],
     },
     {
-      h2: "Tub-To-Shower Conversion And The Plumbing Behind It",
+      h2: "Tub-To-Shower Conversion & The Plumbing Behind It",
       body: [
         "Converting a tub to a walk-in or curbless shower is one of the most requested bathroom updates, especially in primary suites and homes preparing for long-term aging in place. The plumbing side of that conversion, relocating or replacing the valve, adjusting the drain location and sometimes reframing the opening, typically runs $1,600 to $3,200 as its own line, separate from the tile and waterproofing that finish the shower once the rough plumbing is done.",
         "The cost swings most on drain relocation: a shower placed directly over the existing tub drain is straightforward, while a curbless shower that requires lowering the subfloor to create a flush transition adds framing and sometimes structural work that a standard conversion does not need. Ask specifically whether your conversion requires a drain move before assuming the lower end of any range applies.",

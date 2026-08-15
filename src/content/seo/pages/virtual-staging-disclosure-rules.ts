@@ -40,7 +40,7 @@ export const page: LandingPage = {
     { item: "Base Listing Photography", qty: "20 Photos", trade: "Photography", low: 150, high: 350 },
     { item: "Virtual Staging Per Room", qty: "4 Rooms", trade: "Staging", low: 120, high: 320 },
     { item: "Disclosure Label Application", qty: "24 Photos", trade: "Labeling", low: 0, high: 60 },
-    { item: "Caption And Remarks Review", qty: "1 LS", trade: "Compliance", low: 0, high: 75 },
+    { item: "Caption & Remarks Review", qty: "1 LS", trade: "Compliance", low: 0, high: 75 },
     { item: "Reshoot Allowance", qty: "1 Visit", trade: "Photography", low: 100, high: 250 },
     { item: "MLS Resubmission Fee", qty: "1 LS", trade: "Admin", low: 0, high: 50 },
     { item: "Brokerage Compliance Review", qty: "1 LS", trade: "Compliance", low: 0, high: 100 },

@@ -5,11 +5,11 @@ export const page: LandingPage = {
   tier: "A",
   intent: "Someone wants a priced AI exterior design and curb appeal makeover for a house they own, not just a rendering.",
 
-  metaTitle: "AI Exterior Design And Curb Appeal, Priced",
+  metaTitle: "AI Exterior Design & Curb Appeal, Priced",
   metaDescription: "Upload a front elevation photo and get an AI exterior design with paint, siding, roof and door choices priced as a planning range.",
 
   eyebrow: "AI Exterior Design",
-  h1: "AI Exterior Design And Curb Appeal, Priced Like A Job",
+  h1: "AI Exterior Design & Curb Appeal, Priced Like A Job",
   lede: "See a new paint scheme, siding, roof and front door on your actual house, with dollars attached to each choice.",
 
   spaceType: "exterior",
@@ -28,7 +28,7 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Upload A Front Elevation Photo", text: "Stand across the street or in the driveway and photograph the full front of the house, including the roofline and the driveway if possible." },
-    { title: "Test Paint, Siding And Door Options", text: "Generate a few exterior looks against your actual roofline and window placement, not a generic house shape." },
+    { title: "Test Paint, Siding & Door Options", text: "Generate a few exterior looks against your actual roofline and window placement, not a generic house shape." },
     { title: "Get A Priced Curb Appeal Scope", text: "Receive a scope broken out by trade, paint, roof, siding, door and landscaping, so you can phase the work or hand it to a contractor." },
   ],
 
@@ -37,14 +37,14 @@ export const page: LandingPage = {
   scopeTitle: "Curb Appeal Makeover Budget",
   scopeIntro: "A cosmetic exterior refresh on a roughly 1,800 SF single story house, roof and structure untouched.",
   scopeLines: [
-    { item: "Exterior Paint, Body And Trim", qty: "1,800 SF Elevation", trade: "Painting", low: 3200, high: 6500 },
+    { item: "Exterior Paint, Body & Trim", qty: "1,800 SF Elevation", trade: "Painting", low: 3200, high: 6500 },
     { item: "Front Door Replacement", qty: "1 Unit", trade: "Carpentry", low: 600, high: 1800 },
-    { item: "Shutters And Trim Accents", qty: "8 Shutters", trade: "Carpentry", low: 400, high: 1000 },
+    { item: "Shutters & Trim Accents", qty: "8 Shutters", trade: "Carpentry", low: 400, high: 1000 },
     { item: "Garage Door Refresh Or Replace", qty: "1 Unit", trade: "Doors", low: 900, high: 2800 },
-    { item: "Exterior Lighting, Sconces And Path", qty: "6 Fixtures", trade: "Electrical", low: 400, high: 1200 },
-    { item: "Roof Spot Repair And Gutter Cleanout", qty: "Allowance", trade: "Roofing", low: 400, high: 2500 },
+    { item: "Exterior Lighting, Sconces & Path", qty: "6 Fixtures", trade: "Electrical", low: 400, high: 1200 },
+    { item: "Roof Spot Repair & Gutter Cleanout", qty: "Allowance", trade: "Roofing", low: 400, high: 2500 },
     { item: "Foundation Bed Landscaping", qty: "60 LF", trade: "Landscaping", low: 500, high: 1600 },
-    { item: "Driveway And Walkway Pressure Wash", qty: "800 SF", trade: "Cleaning", low: 200, high: 500 },
+    { item: "Driveway & Walkway Pressure Wash", qty: "800 SF", trade: "Cleaning", low: 200, high: 500 },
   ],
   scopeBasis: "Ranges reflect national averages for exterior cosmetic work, adjusted for a single story elevation with no siding tear-off.",
   confidence: "Medium",
@@ -58,14 +58,14 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "What Paint And A Front Door Actually Return",
+      h2: "What Paint & A Front Door Actually Return",
       body: [
         "Paint and a front door are the two items most commonly cited as high-return exterior work, and the reason is straightforward: they are the two elements a buyer's eye lands on in the first three seconds, and they are inexpensive relative to structural work. A repaint on a modest single story house typically runs a few thousand dollars, well under the cost of a roof or a siding job, which is part of why the return percentage looks favorable.",
         "That does not mean paint color is a minor decision. Color choice is one of the few free variables in a renovation, so the tool generates several palette options against your actual roofline and trim before you spend anything, since repainting a repaint is money nobody wants to spend twice.",
       ],
     },
     {
-      h2: "Roof And Siding Allowances, Handled Honestly",
+      h2: "Roof & Siding Allowances, Handled Honestly",
       body: [
         "Roof and siding are the two line items in an exterior scope that a photo genuinely cannot price with confidence, because condition matters more than appearance. A roof that looks fine from the street can have five years of life left or fifteen, and that difference is a five figure swing.",
         "For that reason, roof and siding line items in this tool are always shown as an allowance with a wider range and a lower confidence label, rather than a tight number dressed up to look precise. If your project depends on the roof, treat that line as a placeholder to confirm with an inspection, not as a planning figure to build a budget around.",

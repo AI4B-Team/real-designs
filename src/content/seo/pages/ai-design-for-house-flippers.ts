@@ -5,7 +5,7 @@ export const page: LandingPage = {
   tier: "C",
   intent: "Flippers deciding whether a property pencils out before writing an offer, and how to hold contractors to a scope after closing.",
 
-  metaTitle: "AI Design And Budgeting For House Flippers",
+  metaTitle: "AI Design & Budgeting For House Flippers",
   metaDescription: "Model rehab scope and cost before you offer, then hand the same scope to contractors for bids. Reality Lock keeps designs buildable at your ARV.",
 
   eyebrow: "For House Flippers",
@@ -41,10 +41,10 @@ export const page: LandingPage = {
     { item: "Kitchen Cabinet Refacing Or Replacement", qty: "24 LF", trade: "Cabinetry", low: 6500, high: 14000 },
     { item: "Quartz Countertops", qty: "38 SF", trade: "Countertops", low: 2400, high: 4200 },
     { item: "Luxury Vinyl Plank Flooring", qty: "1,800 SF", trade: "Flooring", low: 5400, high: 9000 },
-    { item: "Bathroom Vanity And Fixture Swap, 2 Baths", qty: "2 Baths", trade: "Plumbing", low: 3200, high: 6800 },
-    { item: "Light Fixture And Hardware Refresh", qty: "22 Fixtures", trade: "Electrical", low: 1800, high: 3600 },
-    { item: "Exterior Paint And Trim", qty: "2,000 SF", trade: "Painting", low: 3800, high: 6200 },
-    { item: "Landscaping And Mulch Refresh", qty: "1 Lot", trade: "Landscaping", low: 1200, high: 2800 },
+    { item: "Bathroom Vanity & Fixture Swap, 2 Baths", qty: "2 Baths", trade: "Plumbing", low: 3200, high: 6800 },
+    { item: "Light Fixture & Hardware Refresh", qty: "22 Fixtures", trade: "Electrical", low: 1800, high: 3600 },
+    { item: "Exterior Paint & Trim", qty: "2,000 SF", trade: "Painting", low: 3800, high: 6200 },
+    { item: "Landscaping & Mulch Refresh", qty: "1 Lot", trade: "Landscaping", low: 1200, high: 2800 },
   ],
   scopeBasis: "Ranges reflect national material and labor averages for a mid-market single-family renovation, before local contractor bids.",
   confidence: "Medium",

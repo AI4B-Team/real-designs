@@ -5,11 +5,11 @@ export const page: LandingPage = {
   tier: "A",
   intent: "Buyer wants AI kitchen design plus a realistic sense of what a kitchen remodel actually costs and why estimates vary so widely.",
 
-  metaTitle: "AI Kitchen Design And Remodel Cost Planning",
+  metaTitle: "AI Kitchen Design & Remodel Cost Planning",
   metaDescription: "Design a kitchen with AI and see a realistic remodel cost range. Cabinetry, layout changes, appliances and plumbing broken down by line item.",
 
   eyebrow: "AI Kitchen Design",
-  h1: "AI Kitchen Design And Remodel Cost",
+  h1: "AI Kitchen Design & Remodel Cost",
   lede: "Generate a designed kitchen from your real layout and see the line items, cabinetry, counters, appliances and plumbing, that actually drive the number before a contractor walks in.",
 
   spaceType: "interior",
@@ -28,21 +28,21 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Upload Your Kitchen Photo", text: "The cabinet locations, window and appliance positions from your actual room anchor the design so the plan matches what a contractor will actually build." },
-    { title: "Set Budget Band And Finish Level", text: "Choose a refresh, makeover or full renovation level and the design generates cabinetry, counters and appliances that fit that spend, not an aspirational one." },
-    { title: "Get A Cabinetry And Trade Scope", text: "Export a line item scope with cabinet linear footage, counter square footage and any plumbing or electrical relocation flagged separately." },
+    { title: "Set Budget Band & Finish Level", text: "Choose a refresh, makeover or full renovation level and the design generates cabinetry, counters and appliances that fit that spend, not an aspirational one." },
+    { title: "Get A Cabinetry & Trade Scope", text: "Export a line item scope with cabinet linear footage, counter square footage and any plumbing or electrical relocation flagged separately." },
   ],
 
   showcase: ["scope", "brief", "budget-mode", "shop", "reality-lock"],
 
-  scopeTitle: "Kitchen Remodel Scope And Planning Range",
+  scopeTitle: "Kitchen Remodel Scope & Planning Range",
   scopeIntro: "Line items for a mid-size kitchen, roughly 150 to 200 square feet, keeping the existing footprint unless noted.",
   scopeLines: [
-    { item: "Cabinetry, New Fronts And Boxes", qty: "28 LF", trade: "Cabinetry", low: 9000, high: 22000 },
+    { item: "Cabinetry, New Fronts & Boxes", qty: "28 LF", trade: "Cabinetry", low: 9000, high: 22000 },
     { item: "Countertops, Quartz", qty: "45 SF", trade: "Countertop", low: 3200, high: 6800 },
-    { item: "Backsplash Tile And Install", qty: "35 SF", trade: "Tile", low: 900, high: 2400 },
+    { item: "Backsplash Tile & Install", qty: "35 SF", trade: "Tile", low: 900, high: 2400 },
     { item: "Appliance Package", qty: "4 appliances", trade: "Appliances", low: 3500, high: 9500 },
     { item: "Kitchen Sink Relocation", qty: "1 relocation", trade: "Plumbing", low: 1800, high: 4200 },
-    { item: "Electrical, New Circuits And Fixtures", qty: "6 fixtures", trade: "Electrical", low: 1500, high: 3800 },
+    { item: "Electrical, New Circuits & Fixtures", qty: "6 fixtures", trade: "Electrical", low: 1500, high: 3800 },
     { item: "Flooring", qty: "180 SF", trade: "Flooring", low: 2200, high: 5400 },
     { item: "Island Addition", qty: "1 island, 6 ft", trade: "Cabinetry", low: 3800, high: 9000 },
   ],
@@ -79,7 +79,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Appliance Allowances And Plumbing Relocation",
+      h2: "Appliance Allowances & Plumbing Relocation",
       body: [
         "Appliance packages vary more than almost any other line item, a builder grade four piece package runs $2,500 to $4,500 while a mid to high end package with a professional range can run $9,000 to $18,000 or more. Because appliances are often selected last, after cabinets and counters are already committed, it is common for a kitchen budget to run over specifically because the appliance allowance was set too low at the start.",
         "Plumbing relocation, moving a sink more than a foot or two from its existing drain line, typically adds $1,800 to $4,500 depending on whether the work is on a slab foundation or an accessible crawlspace, since slab work usually means cutting concrete. If the design keeps the sink and dishwasher on their existing plumbing lines, that cost disappears entirely, which is one of the fastest ways to cut a kitchen budget without touching the visible finishes.",
@@ -104,7 +104,7 @@ export const page: LandingPage = {
     "/rental-grade-vs-retail-grade",
   ],
 
-  ctaTitle: "Design Your Kitchen And See The Scope",
+  ctaTitle: "Design Your Kitchen & See The Scope",
   ctaBody: "Upload your kitchen and get a design with cabinetry, counters and a planning range attached.",
   ctaLabel: "Start Kitchen Design",
 };

@@ -5,11 +5,11 @@ export const page: LandingPage = {
   tier: "B",
   intent: "Short term rental host wants interior design ideas and a realistic budget for furnishing or refreshing an Airbnb to compete for bookings.",
 
-  metaTitle: "Airbnb Interior Design And Furnishing Cost",
+  metaTitle: "Airbnb Interior Design & Furnishing Cost",
   metaDescription: "Design your short term rental interior and see a realistic furnishing and refresh budget, from bedding to statement pieces that drive bookings.",
 
   eyebrow: "Airbnb Interior Design",
-  h1: "Airbnb Interior Design And Furnishing Cost",
+  h1: "Airbnb Interior Design & Furnishing Cost",
   lede: "A short term rental has to photograph well, sleep guests comfortably, and survive heavy turnover, which is a different design brief than a personal residence. Here is what a competitive interior actually costs to furnish or refresh.",
 
   spaceType: "interior",
@@ -29,7 +29,7 @@ export const page: LandingPage = {
   steps: [
     { title: "Upload Your Rental's Room Photo", text: "The existing layout, windows and furniture positions from your unit anchor the redesign so the plan reflects what guests will actually experience." },
     { title: "Pick A Style That Fits Your Market", text: "Choose a design direction, coastal, mid-century, industrial loft, that matches your target guest and local competitive set of listings." },
-    { title: "Get A Furnishing And Refresh Scope", text: "Export a line item list of furniture, textiles and decor with a planning budget, sized to either a full furnish or a lighter photo refresh." },
+    { title: "Get A Furnishing & Refresh Scope", text: "Export a line item list of furniture, textiles and decor with a planning budget, sized to either a full furnish or a lighter photo refresh." },
   ],
 
   showcase: ["scope", "brief", "budget-mode", "shop"],
@@ -38,12 +38,12 @@ export const page: LandingPage = {
   scopeIntro: "Line items for furnishing a mid-size living room in a short term rental, durable mid-range finish level built for guest turnover.",
   scopeLines: [
     { item: "Sofa Or Sectional, Durable Fabric", qty: "1 piece", trade: "Furniture", low: 900, high: 2200 },
-    { item: "Coffee Table And Side Tables", qty: "3 pieces", trade: "Furniture", low: 300, high: 800 },
-    { item: "Media Console And TV Mount", qty: "1 piece", trade: "Furniture", low: 400, high: 1000 },
+    { item: "Coffee Table & Side Tables", qty: "3 pieces", trade: "Furniture", low: 300, high: 800 },
+    { item: "Media Console & TV Mount", qty: "1 piece", trade: "Furniture", low: 400, high: 1000 },
     { item: "Area Rug, Stain Resistant", qty: "1 large rug", trade: "Textiles", low: 250, high: 700 },
-    { item: "Lighting, Lamps And Fixtures", qty: "4 fixtures", trade: "Lighting", low: 350, high: 900 },
-    { item: "Wall Art And Mirrors", qty: "6 pieces", trade: "Decor", low: 400, high: 1100 },
-    { item: "Throw Pillows, Blankets And Curtains", qty: "1 set", trade: "Textiles", low: 300, high: 750 },
+    { item: "Lighting, Lamps & Fixtures", qty: "4 fixtures", trade: "Lighting", low: 350, high: 900 },
+    { item: "Wall Art & Mirrors", qty: "6 pieces", trade: "Decor", low: 400, high: 1100 },
+    { item: "Throw Pillows, Blankets & Curtains", qty: "1 set", trade: "Textiles", low: 300, high: 750 },
     { item: "Statement Accent Chair Or Piece", qty: "1 piece", trade: "Furniture", low: 400, high: 1200 },
   ],
   scopeBasis: "Planning range built from typical national retail pricing for durable, guest-ready mid-range furniture and decor, not a specific vendor quote.",
@@ -103,7 +103,7 @@ export const page: LandingPage = {
     "/renovation-cost-estimator",
   ],
 
-  ctaTitle: "Design Your Rental And See The Budget",
+  ctaTitle: "Design Your Rental & See The Budget",
   ctaBody: "Upload a photo of your unit and get a furnishing plan with a planning range attached.",
   ctaLabel: "Start Rental Design",
 };

@@ -41,9 +41,9 @@ export const page: LandingPage = {
     { item: "Carpet Or LVP Flooring Replacement", qty: "700 SF", trade: "Flooring", low: 2100, high: 4200 },
     { item: "Cabinet Touch-Up Or Hardware Swap", qty: "1 Kitchen", trade: "Cabinetry", low: 250, high: 900 },
     { item: "Appliance Cleaning Or Replacement", qty: "4 Appliances", trade: "Appliances", low: 400, high: 2400 },
-    { item: "Plumbing Fixture Check And Repair", qty: "2 Baths", trade: "Plumbing", low: 300, high: 900 },
-    { item: "Blind And Fixture Replacement", qty: "6 Windows", trade: "Electrical", low: 350, high: 700 },
-    { item: "Deep Clean And Pest Treatment", qty: "1 Unit", trade: "Cleaning", low: 200, high: 450 },
+    { item: "Plumbing Fixture Check & Repair", qty: "2 Baths", trade: "Plumbing", low: 300, high: 900 },
+    { item: "Blind & Fixture Replacement", qty: "6 Windows", trade: "Electrical", low: 350, high: 700 },
+    { item: "Deep Clean & Pest Treatment", qty: "1 Unit", trade: "Cleaning", low: 200, high: 450 },
   ],
   scopeBasis: "Ranges reflect national averages for a standard rental turn at durable, mid-tier finish, before local vendor pricing is applied.",
   confidence: "Medium",
@@ -76,7 +76,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Documenting Condition For Deposit And Liability Disputes",
+      h2: "Documenting Condition For Deposit & Liability Disputes",
       body: [
         "A timestamped photo record at move-out, tied to the generated turn scope, becomes useful well beyond the turn itself. When a security deposit deduction is disputed, having a documented before condition alongside an itemized scope of the work performed gives you a clearer record than a maintenance log entry written after the fact.",
         "This same documentation habit, applied consistently across every unit turn, also builds a longitudinal record of a property's condition over time, which is useful when planning larger capital projects like roof or HVAC replacement cycles across a portfolio.",

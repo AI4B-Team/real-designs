@@ -618,7 +618,7 @@ function stepAudio() {
   const w = S.wizard;
   if (!w.avatar) w.avatar = blankAvatarConfig();
 
-  return `<h3>Audio And Story</h3>
+  return `<h3>Audio & Story</h3>
   <div class="rv-sub">Presentation Style</div>
   <div class="rv-seg">${[["music", "Music Only"], ["captions", "Captions"], ["narration", "Narration"], ["both", "Music + Narration"]]
     .map(([id, n]) => `<button class="${w.presentation === id ? "on" : ""}" data-pres="${id}">${n}</button>`).join("")}</div>
@@ -682,7 +682,7 @@ function labelEditor(s, i) {
 function stepBrand() {
   const w = S.wizard;
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
-  return `<h3>Branding And Disclosure</h3>
+  return `<h3>Branding & Disclosure</h3>
   <div class="rv-sub">Brand Kit</div>
   <div class="rv-kits">${S.kits.map((k) => `<button class="rv-kit ${w.brandKitId === k.id ? "on" : ""}" data-kit="${k.id}"><b>${esc(k.name)}</b><span>${esc(k.company_name || k.contact_name || "No Company Name")}</span></button>`).join("")}
     <button class="rv-kit add" id="rvKitNew"><i data-lucide="plus"></i><b>New Brand Kit</b></button>
@@ -697,7 +697,7 @@ function stepBrand() {
   </div>` : ""}
   <div class="rv-sub">Export Versions</div>
   <div class="rv-adv">
-    <label class="rv-check"><input type="checkbox" data-ver="branded" ${w.versions.branded ? "checked" : ""}> Branded — Brand Elements And CTA</label>
+    <label class="rv-check"><input type="checkbox" data-ver="branded" ${w.versions.branded ? "checked" : ""}> Branded — Brand Elements & CTA</label>
     <label class="rv-check"><input type="checkbox" data-ver="clean" ${w.versions.clean ? "checked" : ""}> Clean — No Logo Or Contact</label>
     <label class="rv-check"><input type="checkbox" data-ver="disclosure" ${w.versions.disclosure ? "checked" : ""}> Disclosure Ready — Alteration Labels Applied</label>
   </div>
@@ -730,7 +730,7 @@ function stepReview() {
   const imm = w.motion === "auto" ? 0 : immersiveCount();
   const cost = 40 + imm * IMMERSIVE_CREDITS_PER_SCENE;
   const bal = window.__rdCredits?.balance;
-  return `<h3>Review And Generate</h3>
+  return `<h3>Review & Generate</h3>
   <div class="rv-review">
     <div><span>Source</span><b>${esc(w.propertyLabel || (w.sourceType === "upload" ? "Uploaded Photos" : "Concept"))}</b></div>
     <div><span>Video Type</span><b>${esc(VIDEO_TYPES.find((t) => t.id === w.videoType)?.name || "")}</b></div>
@@ -1073,7 +1073,7 @@ function presentationHtml(d) {
     <label class="rv-check"><input type="checkbox" id="pr_pw_on" ${sh.password_hash ? "checked" : ""}> Require A Password</label>
     <label class="rv-f">Password<input id="pr_pw" type="password" placeholder="${sh.password_hash ? "Saved — Type To Replace" : "Set A Password"}"></label>
     <label class="rv-check"><input type="checkbox" id="pr_dl" ${sh.allow_download !== false ? "checked" : ""}> Allow Downloads</label>
-    <label class="rv-check"><input type="checkbox" id="pr_appr" ${sh.approval_enabled ? "checked" : ""}> Collect Approvals And Comments</label>
+    <label class="rv-check"><input type="checkbox" id="pr_appr" ${sh.approval_enabled ? "checked" : ""}> Collect Approvals & Comments</label>
 
     <div class="rv-sub">Mobile Layout</div>
     <div class="rv-seg">${[["stacked", "Stacked"], ["compact", "Compact"]].map(([v, n]) => `<button class="${(sh.mobile_layout || "stacked") === v ? "on" : ""}" data-pmob="${v}">${n}</button>`).join("")}</div>
@@ -1990,7 +1990,7 @@ const TOUR = [
   { icon: "home", t: "Pick The Property", b: "Start from a property you already uploaded, a saved design, or a listing link. Every photo in that property is ready to drop into the timeline." },
   { icon: "images", t: "Choose The Scenes", b: "Order the rooms the way a buyer would walk the home. Drag to reorder, drop weak shots, and add before and after pairs where staging tells the story." },
   { icon: "sliders-horizontal", t: "Set The Look", b: "Choose a format for where it will post, add music or an AI voiceover, and pick transitions. Captions and your branding are applied automatically." },
-  { icon: "share-2", t: "Generate And Share", b: "Rendering runs in the background. When it finishes you can download it, share a client link, or send it straight into a presentation." },
+  { icon: "share-2", t: "Generate & Share", b: "Rendering runs in the background. When it finishes you can download it, share a client link, or send it straight into a presentation." },
 ];
 
 function renderTour(wrap, done, i = 0) {

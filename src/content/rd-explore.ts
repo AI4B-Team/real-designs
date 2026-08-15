@@ -16,7 +16,7 @@ const TAB_TYPE = { Interior: "interior", Exterior: "exterior", Garden: "garden",
 const SORTS = [["popular", "Popular"], ["newest", "Newest"], ["az", "A–Z"]];
 
 const ROOMS = ["Living Room", "Kitchen", "Bedroom", "Bathroom", "Dining Room", "Office", "Entry", "Yard", "Front Elevation"];
-const PALETTES = ["Warm Neutral", "Cool Neutral", "Earth Tone", "Bright And Light", "Dark And Moody", "Bold Color"];
+const PALETTES = ["Warm Neutral", "Cool Neutral", "Earth Tone", "Bright & Light", "Dark & Moody", "Bold Color"];
 const FINISHES = ["Rental Grade", "Retail Grade", "Premium"];
 const MOODS = ["Calm", "Minimal", "Warm", "Natural", "Refined", "Formal", "Bold", "Playful", "Homely", "Classic", "Curb Appeal"];
 

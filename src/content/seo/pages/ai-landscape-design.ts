@@ -9,7 +9,7 @@ export const page: LandingPage = {
   metaDescription: "Upload a yard photo and get an AI backyard design with plants, hardscape and irrigation priced separately as planning ranges.",
 
   eyebrow: "AI Landscape Design",
-  h1: "AI Landscape And Backyard Design With A Real Materials Budget",
+  h1: "AI Landscape & Backyard Design With A Real Materials Budget",
   lede: "See your actual yard redesigned with planting beds, patio and lighting, priced by material, not by mood.",
 
   spaceType: "landscape",
@@ -28,7 +28,7 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Upload A Photo Of Your Yard", text: "A photo taken from the back door or a corner of the yard, showing the fence lines and any existing trees, gives the software enough to work with." },
-    { title: "Choose A Style And Climate Zone", text: "Select a landscape style and confirm your general climate zone so plant selections are ones that will actually survive where you live." },
+    { title: "Choose A Style & Climate Zone", text: "Select a landscape style and confirm your general climate zone so plant selections are ones that will actually survive where you live." },
     { title: "Get A Split Materials Budget", text: "Review a scope that separates plant material, hardscape, irrigation and lighting, plus an estimated ongoing maintenance cost." },
   ],
 
@@ -38,13 +38,13 @@ export const page: LandingPage = {
   scopeIntro: "A mid-range backyard refresh on a roughly 30x40 yard, existing fence and grade kept as is.",
   scopeLines: [
     { item: "Paver Patio", qty: "200 SF", trade: "Hardscape", low: 2400, high: 5000 },
-    { item: "Planting Beds, Shrubs And Perennials", qty: "120 SF Bed Area", trade: "Landscaping", low: 800, high: 2200 },
+    { item: "Planting Beds, Shrubs & Perennials", qty: "120 SF Bed Area", trade: "Landscaping", low: 800, high: 2200 },
     { item: "Shade Tree, 15 Gallon", qty: "2 Trees", trade: "Landscaping", low: 300, high: 900 },
     { item: "Sod Or Seed Replacement", qty: "600 SF", trade: "Landscaping", low: 400, high: 1200 },
-    { item: "Drip Irrigation, Beds And Trees", qty: "1 Zone", trade: "Irrigation", low: 600, high: 1800 },
-    { item: "Grading And Drainage Correction", qty: "Allowance", trade: "Grading", low: 500, high: 2500 },
-    { item: "Low Voltage Path And Bed Lighting", qty: "10 Fixtures", trade: "Electrical", low: 600, high: 1600 },
-    { item: "Mulch And Edging", qty: "120 SF Bed Area", trade: "Landscaping", low: 200, high: 500 },
+    { item: "Drip Irrigation, Beds & Trees", qty: "1 Zone", trade: "Irrigation", low: 600, high: 1800 },
+    { item: "Grading & Drainage Correction", qty: "Allowance", trade: "Grading", low: 500, high: 2500 },
+    { item: "Low Voltage Path & Bed Lighting", qty: "10 Fixtures", trade: "Electrical", low: 600, high: 1600 },
+    { item: "Mulch & Edging", qty: "120 SF Bed Area", trade: "Landscaping", low: 200, high: 500 },
   ],
   scopeBasis: "Ranges reflect typical regional material and installed labor costs and assume no major slope or drainage rework beyond the stated allowance.",
   confidence: "Medium",
@@ -58,7 +58,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Irrigation And Drainage: The Invisible Budget Line",
+      h2: "Irrigation & Drainage: The Invisible Budget Line",
       body: [
         "Irrigation and drainage rarely appear in a homeowner's mental picture of a landscape project, because neither one is visible once installed. But skipping them is how a beautiful planting bed dies in its first August or a new patio ends up with standing water after every storm.",
         "The tool includes an irrigation line for any bed or tree work proposed, and a drainage allowance whenever the yard photo suggests grading could be an issue, low corners, water staining near a fence line, a downspout draining directly into a planting area. These are flagged with lower confidence than the plant list itself, since actual drainage behavior depends on rainfall and soil conditions a photo cannot fully capture, but leaving them off the budget entirely is worse than an imperfect estimate.",

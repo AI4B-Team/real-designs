@@ -327,7 +327,7 @@ document.getElementById('genBtn').addEventListener('click',()=>{
       if(mine){
         saveHandoff();
         ov.innerHTML='<div class="gen-gate"><i data-lucide="lock"></i>'
-          +'<b>Your Space Is Locked And Ready</b>'
+          +'<b>Your Space Is Locked & Ready</b>'
           +'<span>Reality Lock has your walls, windows and layout. Create your free account and this exact photo renders first, with your settings already loaded.</span>'
           +'<a href="/auth" class="btn btn-primary btn-sm">Render My Photo Free</a>'
           +'<em class="mono">5 Free Designs A Day &middot; No Credit Card</em></div>';

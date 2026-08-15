@@ -28,7 +28,7 @@ export const page: LandingPage = {
 
   steps: [
     { title: "Draw The Layout", text: "Sketch walls, door and window openings, and label rough dimensions if you have them." },
-    { title: "Set Style And Budget", text: "Pick a design style and a budget band so the render furnishes the room at the right level." },
+    { title: "Set Style & Budget", text: "Pick a design style and a budget band so the render furnishes the room at the right level." },
     { title: "Review The Render", text: "Use the photoreal result as a direction to discuss with a client or contractor before drawings are made." },
   ],
 
@@ -70,7 +70,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Scale And Proportion",
+      h2: "Scale & Proportion",
       body: [
         "Getting scale roughly right on the sketch is what keeps the furniture in the render at a believable size relative to the room. A sofa that reads correctly in an 11 by 14 room will look oversized or undersized if the render assumed the room was 9 by 12 because no dimension was marked on the sketch. This is the single most common reason a first render disappoints, not the style chosen but a scale mismatch traced back to an unlabeled sketch.",
         "Proportion works the same way at the level of individual elements. A window drawn taking up half a wall will be rendered as a large window, and a narrow slot drawn near a corner will read as a small one. If your actual window does not match what you drew, the render will not either, so it is worth a second look at the sketch against the real room before submitting it, particularly for walls with more than one opening.",
@@ -121,7 +121,7 @@ export const page: LandingPage = {
     name: "How To Turn A Sketch Into A Photoreal Render",
     steps: [
       { name: "Draw The Room Outline", text: "Sketch the outer walls of the room, including any interior partial walls, on paper or a tablet." },
-      { name: "Mark Doors And Windows", text: "Show every door and window opening and note its approximate width on the sketch." },
+      { name: "Mark Doors & Windows", text: "Show every door and window opening and note its approximate width on the sketch." },
       { name: "Add A Scale Reference", text: "Label at least one overall dimension, such as the room's total length and width." },
       { name: "Upload The Sketch", text: "Submit the sketch along with a design style and budget band for the furnishing pass." },
       { name: "Generate Style Variations", text: "Produce a few style options from the same layout to compare before choosing one." },

@@ -52,7 +52,7 @@ function PrivacyPage() {
         },
         {
           id: "photographs",
-          h2: "Photographs: Retention And Training",
+          h2: "Photographs: Retention & Training",
           body: [
             "We do not use your photographs or generated designs to train AI models.",
             "Uploads are transmitted to our GPU processing providers to generate your result and are not retained by them for training under our agreements.",
@@ -75,7 +75,7 @@ function PrivacyPage() {
         },
         {
           id: "affiliate-tracking",
-          h2: "Affiliate And Advertising Tracking",
+          h2: "Affiliate & Advertising Tracking",
           body: [
             "Product links may carry affiliate parameters that let a retailer attribute a purchase to us. We do not receive your payment details from those retailers. See our Affiliate Disclosure at /affiliate-disclosure.",
           ],
@@ -106,7 +106,7 @@ function PrivacyPage() {
         },
         {
           id: "security-transfers-changes",
-          h2: "Security, International Transfers, Changes And Contact",
+          h2: "Security, International Transfers, Changes & Contact",
           body: [
             "Data is encrypted in transit and at rest, and row level security scopes every database read to the account that owns the row. See /security for detail.",
             "Data is processed in the United States. Where we transfer personal data out of the EU or UK we rely on standard contractual clauses.",

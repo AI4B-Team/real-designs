@@ -37,12 +37,12 @@ export const page: LandingPage = {
   scopeTitle: "Sample Single Unit Turn Scope",
   scopeIntro: "A representative scope for one bedroom and adjoining living space between tenants, sized for a small landlord doing a normal turn rather than a full renovation.",
   scopeLines: [
-    { item: "Wall And Trim Paint, Bedroom", qty: "300 SF", trade: "Painting", low: 280, high: 550 },
+    { item: "Wall & Trim Paint, Bedroom", qty: "300 SF", trade: "Painting", low: 280, high: 550 },
     { item: "LVP Flooring, Bedroom", qty: "150 SF", trade: "Flooring", low: 450, high: 900 },
-    { item: "Closet Door And Hardware Repair", qty: "1 Closet", trade: "Carpentry", low: 120, high: 300 },
+    { item: "Closet Door & Hardware Repair", qty: "1 Closet", trade: "Carpentry", low: 120, high: 300 },
     { item: "Blind Replacement", qty: "2 Windows", trade: "Fixtures", low: 80, high: 180 },
-    { item: "Outlet And Switch Cover Swap", qty: "4 Points", trade: "Electrical", low: 40, high: 120 },
-    { item: "Deep Clean And Carpet Or Floor Detail", qty: "1 Room", trade: "Cleaning", low: 100, high: 220 },
+    { item: "Outlet & Switch Cover Swap", qty: "4 Points", trade: "Electrical", low: 40, high: 120 },
+    { item: "Deep Clean & Carpet Or Floor Detail", qty: "1 Room", trade: "Cleaning", low: 100, high: 220 },
   ],
   scopeBasis: "Ranges reflect national averages for a single room turn at durable rental grade finish, before local labor pricing is applied.",
   confidence: "Medium",
@@ -57,7 +57,7 @@ export const page: LandingPage = {
       ],
     },
     {
-      h2: "Which Upgrades Raise Rent And Which Just Cost Money",
+      h2: "Which Upgrades Raise Rent & Which Just Cost Money",
       body: [
         "Not every upgrade you can make to a rental bedroom will move the rent a tenant is willing to pay for it. Fresh paint and clean, durable flooring consistently make a unit rent faster and sometimes at a slightly higher number, because they read as cared for in a listing photo. A built-in closet system or premium light fixtures rarely move the needle the same way in a rental, because most tenants are comparing your unit to three others in the same rent band, not evaluating it like a buyer would.",
         "Seeing the room redesigned before you spend anything gives you a chance to ask the harder question honestly: does this specific change look different enough in the finished photo to justify the cost, or does it just look tidier. A lot of landlord money gets spent on upgrades that make an owner feel better about the unit without actually changing what a tenant will pay.",

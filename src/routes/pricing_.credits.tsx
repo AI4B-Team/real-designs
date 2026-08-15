@@ -5,7 +5,7 @@ import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
 import { absoluteUrl } from "@/lib/site";
 import "@/styles/rd-site.css";
 
-const TITLE = "Credits, Top Ups And Project Packs | REAL DESIGNS";
+const TITLE = "Credits, Top Ups & Project Packs | REAL DESIGNS";
 const DESC =
   "Exactly what each action costs in credits, how resets work, top up pricing and one time project packs for REAL DESIGNS.";
 

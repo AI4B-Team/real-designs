@@ -178,7 +178,7 @@ function PresentationPage() {
 
         {s.before_after !== false && beforeAfter.length ? (
           <section className="pv-card">
-            <h2 className="pv-h2">Before And After</h2>
+            <h2 className="pv-h2">Before & After</h2>
             {beforeAfter.map((x: any, i: number) => (
               <div key={i} style={{ marginBottom: 18 }}>
                 <b>{x.room_name}</b>

@@ -15,7 +15,7 @@ export type ShowcaseCard = {
 export const SHOWCASE_CARDS: ShowcaseCard[] = [
   {
     id: "exterior",
-    title: "Exterior And Curb Appeal",
+    title: "Exterior & Curb Appeal",
     line: "Paint, roof, siding, windows and trim priced as a job, not as a mood board.",
     photo: PHOTOS.exteriorAfter,
     href: "/ai-exterior-design",
@@ -29,7 +29,7 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   },
   {
     id: "landscape",
-    title: "Landscape And Yard",
+    title: "Landscape & Yard",
     line: "Planting beds, hardscape, fencing and lighting with a square foot quantity behind each one.",
     photo: PHOTOS.yardAfter,
     href: "/ai-landscape-design",
@@ -43,7 +43,7 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   },
   {
     id: "declutter",
-    title: "Furniture And Clutter Removal",
+    title: "Furniture & Clutter Removal",
     line: "Clear a lived-in room back to its architecture so buyers read the space, not the stuff.",
     photo: PHOTOS.stageEmpty,
     href: "/declutter-photo",
@@ -57,7 +57,7 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   },
   {
     id: "scope",
-    title: "Scope And Budget",
+    title: "Scope & Budget",
     line: "Every design produces line items with quantities, trades and a planning range. Not a ballpark.",
     photo: PHOTOS.kitchenAfter,
     href: "/renovation-cost-estimator",
@@ -106,7 +106,7 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   },
   {
     id: "grades",
-    title: "Rental Grade And Retail Grade",
+    title: "Rental Grade & Retail Grade",
     line: "Price the same room twice, once for a tenant turn and once for a resale buyer.",
     photo: PHOTOS.bedroomAfter,
     href: "/rental-grade-vs-retail-grade",

@@ -4,7 +4,7 @@ import { LegalDoc } from "@/components/seo/LegalDoc";
 import { pageHead } from "@/lib/page-head";
 import "@/styles/rd-site.css";
 
-const TITLE = "Contact REAL DESIGNS | Support And Business Address";
+const TITLE = "Contact REAL DESIGNS | Support & Business Address";
 const DESC =
   "How to reach REAL DESIGNS support, press, copyright and privacy teams, our response time expectation, and our business mailing address in Tampa Bay, Florida.";
 

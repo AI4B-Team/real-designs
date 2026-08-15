@@ -284,7 +284,7 @@ function ExplorePage() {
               </div>
 
               <div className="dir-spec">
-                <b>Materials And Finishes</b>
+                <b>Materials & Finishes</b>
                 <div>
                   {[...open.materials, ...open.finishes].map((m) => (
                     <span className="dir-tag" key={m}>
@@ -306,7 +306,7 @@ function ExplorePage() {
               </div>
 
               <div className="dir-spec">
-                <b>Budget And Finish Grade</b>
+                <b>Budget & Finish Grade</b>
                 <div>
                   {[...open.budgets, ...open.grades].map((b) => (
                     <span className="dir-tag" key={b}>
