@@ -724,3 +724,12 @@
 @keyframes lvIndet{0%{left:-40%}100%{left:100%}}
 .lv-result.warn{border-color:#f3d0d0;background:#fff7f7}
 .lv-result.warn>b{display:block;margin-bottom:4px}
+
+/* Official brand marks inside source pickers and buttons */
+.brand-ico {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  display: inline-block;
+  vertical-align: -3px;
+}
