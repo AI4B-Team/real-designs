@@ -164,8 +164,19 @@ function bindMusicControls(el, setTrack, getTrack) {
 const ORDER = [
   "Front Exterior", "Exterior", "Entry", "Living", "Living Areas", "Kitchen", "Dining",
   "Primary Bedroom", "Primary Bathroom", "Bedrooms", "Bathrooms", "Specialty",
-  "Outdoor Areas", "Backyard", "Floor Plans", "Concepts", "Other",
+  "Outdoor Areas", "Backyard", "Floor Plans", "Concepts", "Unsorted",
 ];
+
+/* A photo with no confident room stays Unsorted. Quality flags such as
+   "Needs Review" describe the picture, never the room, so they are never
+   used as a scene name. */
+export const UNSORTED = "Unsorted";
+const FLAG_NAMES = /^(needs review|unclassified|unknown|other|untitled)$/i;
+function roomLabelOf(name) {
+  const s = String(name || "").trim();
+  if (!s || FLAG_NAMES.test(s)) return UNSORTED;
+  return s;
+}
 
 function groupFor(name = "", type = "") {
   const s = (name + " " + type).toLowerCase();
@@ -178,7 +189,7 @@ function groupFor(name = "", type = "") {
   if (/yard|patio|deck|pool|garden|landscape/.test(s)) return "Outdoor Areas";
   if (/plan|sketch/.test(s)) return "Floor Plans";
   if (/concept/.test(s)) return "Concepts";
-  return "Other";
+  return UNSORTED;
 }
 function orderRank(group) {
   const i = ORDER.indexOf(group);
