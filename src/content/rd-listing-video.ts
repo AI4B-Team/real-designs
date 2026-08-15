@@ -28,6 +28,7 @@ import { startListingImport, linkListingImport } from "@/lib/listing-import.func
 import * as UM from "@/lib/upload-manager";
 import { CREDIT_COSTS, getMyCredits } from "@/lib/credits.functions";
 import { track } from "@/lib/analytics";
+import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 
 const BUCKET = "reveal-videos";
 const esc = (s) =>
@@ -166,6 +167,7 @@ const S = {
     disclosure: "auto",
     resolution: "1080",
     sceneDuration: 0,
+    avatar: blankAvatarConfig(),
   },
   confirm: false,
   credits: null,
@@ -1197,7 +1199,9 @@ async function generate() {
 
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
-    const narrationUrl = await buildNarration(st.narration, st.script, st.voice);
+    const avTitle = S.propertyLabel || "";
+    const narrationUrl = await buildNarration(st.narration, avatarScript(st.avatar, st.script || "", avTitle), st.voice);
+    const avatar = avatarRenderOption(st.avatar, avTitle);
     const outs = [];
     let done = 0;
     for (const v of started.variants) {
@@ -1223,6 +1227,7 @@ async function generate() {
         captionsEnabled: !!st.captions,
         music: st.music && st.music !== "none" ? st.music : null,
         narrationUrl,
+        avatar,
         musicVolume: 0.6,
         onProgress: (pct) => {
           S.progress = (done + pct) / started.variants.length;
