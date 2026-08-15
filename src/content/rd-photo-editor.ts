@@ -16,6 +16,7 @@ import {
 } from "@/lib/property-media.functions";
 import { runPhotoEdit, interpretPhotoRequest, analyzePhoto } from "@/lib/photo-edit.functions";
 import { track } from "@/lib/analytics";
+import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));

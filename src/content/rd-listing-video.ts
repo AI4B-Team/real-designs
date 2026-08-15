@@ -29,6 +29,7 @@ import * as UM from "@/lib/upload-manager";
 import { CREDIT_COSTS, getMyCredits } from "@/lib/credits.functions";
 import { track } from "@/lib/analytics";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
+import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 
 const BUCKET = "reveal-videos";
 const esc = (s) =>
