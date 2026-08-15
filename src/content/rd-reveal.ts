@@ -36,6 +36,7 @@ import {
 import { track } from "@/lib/analytics";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
+import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
