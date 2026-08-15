@@ -665,7 +665,9 @@ function setupHtml() {
           <div class="lv-f wide"><button type="button" class="btn btn-ghost btn-sm" data-a="lvVoicePrev"><i data-lucide="volume-2"></i>${st.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
           ${st.narration === "upload" ? `<label class="lv-f wide"><span>Voiceover File</span><input type="file" id="lvNarFile" accept="audio/*"></label>
           <p class="lv-note">${st.narrationName ? `Using ${esc(st.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</p>` : ""}
+          <div class="lv-f wide av-block">${avatarSection(st.avatar, S.propertyLabel || "")}</div>
           <label class="lv-check"><input type="checkbox" data-chk="captions" ${st.captions ? "checked" : ""}> Captions</label>
+
           <label class="lv-check"><input type="checkbox" data-chk="labels" ${st.labels ? "checked" : ""}> Scene Labels</label>
           <label class="lv-check"><input type="checkbox" data-chk="intro" ${st.intro ? "checked" : ""}> Intro</label>
           <label class="lv-check"><input type="checkbox" data-chk="outro" ${st.outro ? "checked" : ""}> Outro</label>
