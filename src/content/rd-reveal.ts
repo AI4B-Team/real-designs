@@ -1922,7 +1922,6 @@ function dvHtml() {
     <div class="rv-foot dv-foot">
       <div class="dv-foot-l">
         <button class="btn btn-ghost btn-sm" id="dvBackLib"><i data-lucide="arrow-left"></i>Back</button>
-        <button class="btn btn-ghost btn-sm" id="dvToListing"><i data-lucide="building-2"></i>Add to a Listing Video</button>
       </div>
       <button class="btn btn-primary" id="dvGen" ${blocked || !d.scenes.length ? "disabled" : ""}><i data-lucide="clapperboard"></i>Generate Video</button>
     </div>
@@ -2093,11 +2092,6 @@ function dvBind() {
     render();
   });
 
-  on("#dvToListing", "click", async () => {
-    await dvSaveDraft().catch(() => {});
-    try { window.rdListingVideo({ from: "design", designId: d.designId, path: d.scenes[0]?.path || null }); }
-    catch (_) { toast("Could Not Open The Listing Video Workflow."); }
-  });
   on("#dvGen", "click", () => dvGenerate());
 }
 
