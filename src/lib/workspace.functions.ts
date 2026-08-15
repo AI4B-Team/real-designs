@@ -282,6 +282,11 @@ export const getPropertyTree = createServerFn({ method: "GET" })
       id: p.id as string,
       address: propLabel(p.address),
       created_at: p.created_at as string,
+      /* Upload-only properties have assets and no rooms, so the card needs
+         this count to avoid reading "0 Rooms". */
+      asset_count: Number(
+        Array.isArray(p.property_media_assets) ? (p.property_media_assets[0]?.count ?? 0) : 0,
+      ),
 
       has_dna: Array.isArray(p.design_dna?.items) && p.design_dna.items.length > 0,
       dna: (Array.isArray(p.design_dna?.items) ? p.design_dna.items : []) as {
