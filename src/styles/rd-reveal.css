@@ -218,7 +218,7 @@
 .rd-app .is-busy .spin { animation: dv-spin 1s linear infinite; }
 @keyframes dv-spin { to { transform: rotate(360deg); } }
 .rv-tour{ display:grid; gap:10px; justify-items:center; text-align:center; padding:14px 6px 4px; }
-.rv-tour i{ width:34px; height:34px; color:var(--red, #CC0000); }
+.rv-tour svg{ width:34px; height:34px; color:var(--red, #CC0000); }
 .rv-tour b{ font-size:16px; }
 .rv-tour p{ font-size:13.5px; color:var(--muted); max-width:44ch; line-height:1.55; }
 .rv-tour-dots{ display:flex; gap:6px; justify-content:center; padding:14px 0 2px; }
@@ -237,7 +237,7 @@
 
 .rd-app .rv-srcpanel { border: 1px solid var(--line, #e6e6e6); border-radius: 12px; padding: 14px; margin: 12px 0; }
 .rd-app .rv-inp-ic { position: relative; display: block; }
-.rd-app .rv-inp-ic i { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #8a8a8a; }
+.rd-app .rv-inp-ic svg { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: #8a8a8a; }
 .rd-app .rv-inp-ic input { padding-left: 32px; width: 100%; }
 .rd-app .rv-cands { display: grid; gap: 8px; }
 .rd-app .rv-cand { display: grid; grid-template-columns: 88px minmax(0,1fr) auto; gap: 10px; align-items: center;
@@ -255,11 +255,11 @@
 .rd-app .rv-scard-th { position: relative; aspect-ratio: 4 / 3; background-size: cover; background-position: center; background-color: #f2f2f2; }
 .rd-app .rv-scard-th .rv-seq { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,.66); color: #fff; border-radius: 6px; font-size: 11px; padding: 1px 6px; }
 .rd-app .rv-scard-th .rv-x { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,.66); color: #fff; border: 0; border-radius: 999px; width: 22px; height: 22px; display: grid; place-items: center; cursor: pointer; }
-.rd-app .rv-scard-th .rv-x i { width: 13px; height: 13px; }
+.rd-app .rv-scard-th .rv-x svg { width: 13px; height: 13px; }
 .rd-app .rv-mchips { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
 .rd-app .rv-mchip { display: inline-flex; align-items: center; gap: 4px; border: 0; cursor: pointer;
   background: rgba(255,255,255,.94); border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 600; color: #111; }
-.rd-app .rv-mchip i { width: 12px; height: 12px; }
+.rd-app .rv-mchip svg { width: 12px; height: 12px; }
 .rd-app .rv-mchip.hot { box-shadow: inset 0 0 0 1px var(--red, #CC0000); color: var(--red, #CC0000); }
 .rd-app .rv-scard-b { padding: 8px 10px 10px; display: grid; gap: 6px; }
 .rd-app .rv-scard-b b { font-size: 13px; }
@@ -301,3 +301,37 @@
 .rd-app .rv-vars i { font-style: normal; color: #6b6b6b; }
 .rd-app .rv-cost { font-size: 16px; font-weight: 700; }
 .rd-app .rv-cta { width: 100%; justify-content: center; }
+
+/* ===== Step 1 patch: numbered rail, dropzone, design picker, property cards ===== */
+.rd-app .rv-steps { align-items: center; }
+.rd-app .rv-steps .rv-conn { display: inline-block; width: 18px; height: 1px; background: var(--line, #e6e6e6); border: 0; padding: 0; }
+.rd-app .rv-steps .rv-n { font-family: "DM Mono", ui-monospace, monospace; font-size: 11px; opacity: .75; }
+
+.rd-app .rv-recents { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; }
+.rd-app .rv-recent span { white-space: nowrap; font-family: "DM Mono", ui-monospace, monospace; }
+.rd-app .rv-recent[disabled] { opacity: .5; cursor: not-allowed; }
+
+.rd-app .rv-dz { border: 1px dashed var(--line, #d8d8d8); border-radius: 12px; padding: 26px 18px; display: grid; gap: 8px; justify-items: center; text-align: center; background: #fff; }
+.rd-app .rv-dz.hot { border-color: #cc0000; background: rgba(204,0,0,.04); }
+.rd-app .rv-dz svg { width: 26px; height: 26px; color: #cc0000; }
+.rd-app .rv-dz b { font-size: 14px; }
+.rd-app .rv-dz .rv-or, .rd-app .rv-dz .rv-hint { font-size: 11.5px; color: var(--muted, #6b6b6b); }
+.rd-app .rv-dz-cloud { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 2px; }
+.rd-app .rv-thumbs { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 12px; }
+.rd-app .rv-thumb { position: relative; aspect-ratio: 4/3; border-radius: 10px; background-size: cover; background-position: center; background-color: #f2f2f2; }
+.rd-app .rv-thumb button { position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,.66); color: #fff; border: 0; border-radius: 999px; width: 20px; height: 20px; display: grid; place-items: center; cursor: pointer; }
+.rd-app .rv-thumb button svg { width: 12px; height: 12px; }
+
+.rd-app .rv-designs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.rd-app .rv-dcard { border: 1px solid var(--line, #e6e6e6); border-radius: 12px; overflow: hidden; background: #fff; cursor: pointer; text-align: left; padding: 0; }
+.rd-app .rv-dcard.on { border-color: #cc0000; }
+.rd-app .rv-dcard-th { display: flex; aspect-ratio: 4/3; background: #f2f2f2; }
+.rd-app .rv-dcard-th span { flex: 1 1 0; background-size: cover; background-position: center; }
+.rd-app .rv-dcard-th span + span { border-left: 1px solid var(--line, #e6e6e6); }
+.rd-app .rv-dcard-b { padding: 8px 10px 10px; display: grid; gap: 3px; }
+.rd-app .rv-dcard-b b { font-size: 13px; }
+.rd-app .rv-dcard-b em { font-style: normal; font-size: 11.5px; color: var(--muted, #6b6b6b); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-app .rv-dpill { justify-self: start; font-family: "DM Mono", ui-monospace, monospace; font-size: 10.5px; border: 1px solid var(--line, #e6e6e6); border-radius: 999px; padding: 1px 8px; color: #4a4a4a; }
+@media (max-width: 900px) { .rd-app .rv-designs, .rd-app .rv-recents { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 620px) { .rd-app .rv-designs, .rd-app .rv-recents { grid-template-columns: 1fr; } }
+.rd-app .rv-steps .rv-n { font-style: normal; }

@@ -10,6 +10,7 @@ import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
+import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import {
@@ -434,8 +435,8 @@ const WIZ_STEPS = ["Photos", "Select", "Edit", "Brand"];
 function wizardHtml() {
   const w = S.wizard;
   const rail = `<div class="rv-steps">${WIZ_STEPS
-    .map((s, i) => `<span class="${w.step === i + 1 ? "on" : w.step > i + 1 ? "done" : ""}" data-step="${i + 1}">${s}${i === 1 && w.scenes.length ? `<i class="rv-badge mono">${w.scenes.length}</i>` : ""}</span>`)
-    .join("")}</div>`;
+    .map((s, i) => `<span class="${w.step === i + 1 ? "on" : w.step > i + 1 ? "done" : ""}" data-step="${i + 1}"><em class="rv-n">${i + 1}</em>${s}${i === 1 && w.scenes.length ? `<i class="rv-badge mono">${w.scenes.length}</i>` : ""}</span>`)
+    .join(`<b class="rv-conn"></b>`)}</div>`;
 
   let body = "";
   if (w.step === 1) body = stepPhotos();
@@ -457,6 +458,28 @@ function wizardHtml() {
 }
 
 /* ======================= STEP 1, PHOTOS ======================= */
+/** Every finished design in the workspace, newest property first. */
+function designChoices() {
+  const out = [];
+  for (const p of S.tree || []) {
+    for (const pr of p.projects || []) {
+      for (const r of pr.rooms || []) {
+        if (!r.after_path) continue;
+        out.push({
+          roomId: r.id, versionId: r.version_id, propertyId: p.id, propertyLabel: p.address,
+          room: r.name || "Untitled Room", after: r.after_path, before: r.before_path || null,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/** Title the user never has to type: address, property or design name. */
+function defaultTitle(w) {
+  return w.title || w.propertyLabel || "Untitled Video";
+}
+
 function stepPhotos() {
   const w = S.wizard;
   const opts = [
@@ -479,16 +502,28 @@ function stepPhotos() {
         <button class="btn btn-ghost btn-xs" data-cand="${i}">Use This Listing</button>
       </div>`).join("")}</div>` : ""}
       ${w.addrNote ? `<div class="rv-note">${esc(w.addrNote)}</div>` : ""}
-      <button class="fb-link" id="rvAddrSkip">No Thanks, I Will Upload Photos Myself</button>
+      ${(w.candidates || []).length || w.addrNote ? `<button class="fb-link" id="rvAddrSkip">No Thanks, I Will Upload Photos Myself</button>` : ""}
     </div>`;
   } else if (w.sourceType === "upload") {
     panel = `<div class="rv-srcpanel">
-      <div class="rv-upload"><input type="file" id="rvFiles" accept="image/*" multiple hidden>
-        <button class="btn btn-ghost" id="rvBrowse"><i data-lucide="image-plus"></i>Browse Files</button>
-        <span class="mono">${w.uploads.length} Photos Added</span>
+      <input type="file" id="rvFiles" accept="image/*" multiple hidden>
+      <div class="rv-dz ${w.dragging ? "hot" : ""}" id="rvDrop">
+        <i data-lucide="upload-cloud"></i>
+        <b>Drag And Drop Photos Here</b>
+        <span class="rv-or">Or</span>
+        <button class="btn btn-ghost btn-sm" id="rvBrowse">Browse Files</button>
+        <div class="rv-dz-cloud">
+          <button class="btn btn-ghost btn-sm" id="rvDrive">${DRIVE_ICON}Google Drive</button>
+          <button class="btn btn-ghost btn-sm" id="rvDropbox">${DROPBOX_ICON}Dropbox</button>
+        </div>
+        <span class="rv-hint">JPG, PNG Or HEIC, Up To 10 MB Each</span>
       </div>
+      ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
+        .map((u) => `<div class="rv-thumb" style="background-image:url('${esc(u.url)}')"><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
+        .join("")}</div>
+      <div class="rv-upload"><span class="mono">${w.uploads.length} Photos Added</span></div>` : ""}
     </div>`;
-  } else if (w.sourceType === "property" || w.sourceType === "design") {
+  } else if (w.sourceType === "property") {
     panel = recent.length
       ? `<div class="rv-sub">Recent Properties</div>
       <div class="rv-recents">${recent
@@ -501,20 +536,43 @@ function stepPhotos() {
             ? new Date(p.created_at).toLocaleString([], { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })
             : "";
           const label = dupe && when ? `${p.address} · ${when}` : p.address;
-          return `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}"><i data-lucide="home"></i><b>${esc(label)}</b><span class="mono">${(p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0)} Rooms</span></button>`;
+          const rooms = (p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0);
+          const assets = Number(p.asset_count || 0);
+          /* Upload-only properties have no rooms, so never claim "0 Rooms". */
+          const meta = rooms ? `${rooms} ${rooms === 1 ? "Room" : "Rooms"}`
+            : assets ? `${assets} ${assets === 1 ? "Photo" : "Photos"}`
+            : "Empty";
+          const dead = !rooms && !assets;
+          return `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}" title="${esc(label)}" ${dead ? "disabled" : ""}><i data-lucide="home"></i><b>${esc(label)}</b><span class="mono">${meta}</span></button>`;
         })
         .join("")}</div>`
 
       : `<div class="rv-note">No Properties Yet. Upload Photos To Start.</div>`;
+  } else if (w.sourceType === "design") {
+    const designs = designChoices();
+    panel = designs.length
+      ? `<div class="rv-sub">Pick A Design</div>
+      <div class="rv-designs">${designs
+        .map((d) => `<button class="rv-dcard ${w.versionId === d.versionId ? "on" : ""}" data-design="${esc(d.roomId)}">
+          <span class="rv-dcard-th">${d.before ? `<span data-img="${esc(d.before)}"></span>` : ""}<span data-img="${esc(d.after)}"></span></span>
+          <span class="rv-dcard-b"><b>${esc(d.room)}</b><em>${esc(d.propertyLabel)}</em><span class="rv-dpill">${d.before ? "Before And After" : "Design"}</span></span>
+        </button>`)
+        .join("")}</div>`
+      : `<div class="rv-srcpanel"><b>No Finished Designs Yet</b>
+        <p class="rv-hint">Create A Design In Studio First, Or Start From Photos Instead.</p>
+        <button class="btn btn-ghost btn-sm" id="rvUsePhotos">Use Photos Instead</button></div>`;
   }
 
-  const ready = w.sourceType === "upload" || w.sourceType === "address" ? w.uploads.length > 0 : !!w.propertyId;
+  const ready =
+    w.sourceType === "upload" || w.sourceType === "address" ? w.uploads.length > 0
+    : w.sourceType === "design" ? !!w.versionId
+    : !!w.propertyId;
   return `<h3>Where Are The Photos?</h3>
+  <label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
   <div class="rv-opts">${opts
     .map(([id, n, d, ic]) => `<button class="rv-opt ${w.sourceType === id ? "on" : ""}" data-src="${id}"><i data-lucide="${ic}"></i><b>${n}</b><span>${d}</span></button>`)
     .join("")}</div>
   ${panel}
-  <label class="rv-f">Video Title<input id="rvTitle" value="${esc(w.title || (w.propertyLabel ? w.propertyLabel + " Reveal" : "Untitled Reveal"))}"></label>
   <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${ready ? "" : "disabled"}>Continue</button></div>`;
 }
 
@@ -943,7 +1001,7 @@ async function generate() {
         property_id: w.propertyId || null,
         property_label: w.propertyLabel || null,
         design_version_id: w.versionId || null,
-        title: w.title || (w.propertyLabel ? w.propertyLabel + " Reveal" : "Untitled Reveal"),
+        title: w.title || w.propertyLabel || "Untitled Video",
         video_type: w.videoType,
         source_type: w.sourceType || "property",
         status: "queued",
@@ -1321,6 +1379,8 @@ function bind() {
   on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
   const addrIn = el.querySelector("#rvAddr");
   if (addrIn) addrIn.addEventListener("input", (ev) => { w.address = ev.target.value; });
+  const titleIn = el.querySelector("#rvTitle");
+  if (titleIn) titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
   on("#rvAddrSkip", "click", () => { w.sourceType = "upload"; render(); });
   on("#rvAddrGo", "click", async () => {
     const v = (el.querySelector("#rvAddr")?.value || "").trim();
@@ -1358,6 +1418,7 @@ function bind() {
     const c = w.candidates[Number(e.currentTarget.dataset.cand)];
     if (!c) return;
     w.propertyLabel = c.address;
+    if (!w.titleTouched) w.title = c.address;
     for (const ph of c.photos || []) {
       const url = ph.url || ph.path;
       if (url) w.uploads.push({ id: crypto.randomUUID(), name: ph.room || "Listing Photo", url });
@@ -1365,15 +1426,82 @@ function bind() {
     toast("Listing Photos Added.");
     render();
   });
-  on("[data-prop]", "click", (e) => { w.propertyId = e.currentTarget.dataset.prop; w.sourceType = w.sourceType || "property"; render(); });
+  on("[data-prop]", "click", (e) => {
+    const p = S.tree.find((x) => x.id === e.currentTarget.dataset.prop);
+    w.propertyId = e.currentTarget.dataset.prop;
+    w.sourceType = w.sourceType || "property";
+    /* Title follows the source unless the user typed one. */
+    if (p && !w.titleTouched) w.title = p.address;
+    render();
+  });
+  on("[data-design]", "click", async (e) => {
+    const d = designChoices().find((x) => x.roomId === e.currentTarget.dataset.design);
+    if (!d) return;
+    w.sourceType = "design";
+    w.propertyId = d.propertyId;
+    w.propertyLabel = d.propertyLabel;
+    w.versionId = d.versionId;
+    if (!w.titleTouched) w.title = `${d.room} Design`;
+    if (d.before && !w.typeTouched) w.videoType = "before_after";
+    await loadWizardAssets();
+    const a = w.available.find((x) => x.key === "d-" + d.roomId) || w.available.find((x) => x.path === d.after);
+    w.scenes = a ? [assetToScene(a)] : [];
+    /* One design, nothing to select, so Step 2 is skipped. */
+    w.step = 3;
+    render();
+  });
+  on("#rvUsePhotos", "click", () => { w.sourceType = "upload"; render(); });
   on("#rvBrowse", "click", () => el.querySelector("#rvFiles")?.click());
-  const files = el.querySelector("#rvFiles");
-  if (files) files.addEventListener("change", async (e) => {
-    for (const f of Array.from(e.target.files || [])) {
+  on("[data-rmup]", "click", (e) => {
+    const id = e.currentTarget.dataset.rmup;
+    w.uploads = w.uploads.filter((u) => u.id !== id);
+    render();
+  });
+  const addUploads = (list) => {
+    for (const f of Array.from(list || [])) {
+      if (!/^image\//.test(f.type || "")) continue;
       w.uploads.push({ id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url: URL.createObjectURL(f) });
     }
     render();
-  });
+  };
+  const files = el.querySelector("#rvFiles");
+  if (files) files.addEventListener("change", (e) => addUploads(e.target.files));
+  const dz = el.querySelector("#rvDrop");
+  if (dz) {
+    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("hot"); });
+    dz.addEventListener("dragleave", () => dz.classList.remove("hot"));
+    dz.addEventListener("drop", (e) => { e.preventDefault(); dz.classList.remove("hot"); addUploads(e.dataTransfer?.files); });
+  }
+  /* A stray drop outside the zone must never navigate away from the app. */
+  if (!window.__rvDropGuard) {
+    window.__rvDropGuard = true;
+    window.addEventListener("dragover", (e) => e.preventDefault());
+    window.addEventListener("drop", (e) => e.preventDefault());
+  }
+  const cloudPull = async (label) => {
+    const raw = window.prompt(`Paste ${label} Share Links, One Per Line.`);
+    const urls = (raw || "").split(/[\s,]+/).map((s) => s.trim()).filter(Boolean).slice(0, 20);
+    if (!urls.length) return;
+    toast("Fetching Photos…");
+    try {
+      const { importCloudPhotos } = await import("@/lib/cloud-import.functions");
+      const res = await importCloudPhotos({ data: { urls } });
+      const got = [];
+      for (const f of res.files || []) {
+        const bin = atob(f.data);
+        const bytes = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        got.push(new File([bytes], f.name, { type: f.type }));
+      }
+      if (!got.length) return toast(res.errors?.[0]?.message || "No Photos Found At That Link.");
+      addUploads(got);
+      toast(`${got.length} Photo${got.length === 1 ? "" : "s"} Added.`);
+    } catch (err) {
+      toast(err?.message || "Import Failed.");
+    }
+  };
+  on("#rvDrive", "click", () => cloudPull("Google Drive"));
+  on("#rvDropbox", "click", () => cloudPull("Dropbox"));
   on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; w.typeTouched = true; render(); });
 
   on("[data-asset]", "click", (e) => {
