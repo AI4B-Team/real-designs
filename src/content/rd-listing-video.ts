@@ -1227,10 +1227,16 @@ function bind() {
       return render();
     }
     if (t.id === "lvUseMedia") {
-      await loadAssets(S.propertyId);
+      await loadAssets(S.propertyId, true);
+      if (!S.photos.length) {
+        toast("No photos found yet. Upload listing photos to continue.");
+        return render();
+      }
+      if (S.usedLibrary) toast("Showing photos from your media library.");
       S.step = "photos";
       return render();
     }
+
     if (t.id === "lvRetry") {
       UM.retryFailed(S.job.id);
       return;
