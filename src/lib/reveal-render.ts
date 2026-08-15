@@ -87,8 +87,17 @@ export type RevealOptions = {
   music?: string | null;
   musicVolume?: number;
   narrationUrl?: string | null;
+  avatar?: {
+    url: string;
+    name?: string | null;
+    title?: string | null;
+    mode: "intro_bubble" | "full" | "bubble";
+    corner?: "bottom_left" | "bottom_right" | "top_left" | "top_right";
+    greeting?: string | null;
+  } | null;
   onProgress?: (pct: number) => void;
 };
+
 
 export const DISCLOSURE_LABEL: Record<string, string> = {
   staged: "Virtually Staged",
@@ -297,6 +306,134 @@ function brandOutro(
   ctx.restore();
 }
 
+/** Full-frame AI presenter card used to open and close the video. */
+function presenterCard(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  img: HTMLImageElement,
+  name: string,
+  title: string,
+  line: string,
+  accent: string,
+  p: number,
+) {
+  const a = Math.min(1, p * 5) * Math.min(1, (1 - p) * 5 + 0.2);
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(1, a));
+  ctx.fillStyle = "#0b0b0b";
+  ctx.fillRect(0, 0, W, H);
+
+  // portrait, gently pushed in over the card
+  const r = Math.min(W, H) * 0.19 * (1 + p * 0.03);
+  const cx = W / 2;
+  const cy = H * 0.36;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.closePath();
+  ctx.clip();
+  const scale = Math.max((r * 2) / img.width, (r * 2) / img.height) * 1.06;
+  const dw = img.width * scale;
+  const dh = img.height * scale;
+  ctx.drawImage(img, cx - dw / 2, cy - dh / 2 - r * 0.06, dw, dh);
+  ctx.restore();
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = Math.max(3, W * 0.006);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r + ctx.lineWidth, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  let y = cy + r + H * 0.075;
+  if (name) {
+    ctx.font = `800 ${Math.round(W * 0.052)}px Inter, system-ui, sans-serif`;
+    ctx.fillStyle = "#fff";
+    ctx.fillText(name, cx, y);
+    y += H * 0.042;
+  }
+  if (title) {
+    ctx.font = `600 ${Math.round(W * 0.026)}px Inter, system-ui, sans-serif`;
+    ctx.fillStyle = "rgba(255,255,255,.66)";
+    ctx.fillText(title, cx, y);
+    y += H * 0.05;
+  }
+  if (line) {
+    ctx.font = `500 ${Math.round(W * 0.03)}px Inter, system-ui, sans-serif`;
+    ctx.fillStyle = "rgba(255,255,255,.86)";
+    wrapCenter(ctx, line, cx, y, W * 0.78, W * 0.042);
+  }
+  ctx.restore();
+}
+
+function wrapCenter(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  cx: number,
+  y: number,
+  maxW: number,
+  lh: number,
+) {
+  const words = text.split(/\s+/);
+  let line = "";
+  const lines: string[] = [];
+  for (const w of words) {
+    const next = line ? line + " " + w : w;
+    if (ctx.measureText(next).width > maxW && line) {
+      lines.push(line);
+      line = w;
+    } else line = next;
+  }
+  if (line) lines.push(line);
+  lines.slice(0, 3).forEach((l, i) => ctx.fillText(l, cx, y + i * lh));
+}
+
+/** Small circular presenter bubble kept over the property scenes. */
+function presenterBubble(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  img: HTMLImageElement,
+  corner: string,
+  accent: string,
+  t: number,
+  alpha: number,
+) {
+  const r = Math.min(W, H) * 0.075;
+  const m = W * 0.055;
+  const cx = corner.endsWith("left") ? m + r : W - m - r;
+  const cy = corner.startsWith("top") ? H * 0.14 + r : H - m - r;
+  const pulse = 1 + Math.sin(t / 320) * 0.012;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.shadowColor = "rgba(0,0,0,.45)";
+  ctx.shadowBlur = r * 0.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * pulse, 0, Math.PI * 2);
+  ctx.fillStyle = "#0b0b0b";
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * pulse, 0, Math.PI * 2);
+  ctx.clip();
+  const scale = Math.max((r * 2 * pulse) / img.width, (r * 2 * pulse) / img.height) * 1.08;
+  const dw = img.width * scale;
+  const dh = img.height * scale;
+  ctx.drawImage(img, cx - dw / 2, cy - dh / 2 - r * 0.08, dw, dh);
+  ctx.restore();
+  ctx.strokeStyle = accent;
+  ctx.lineWidth = Math.max(2, W * 0.0045);
+  ctx.beginPath();
+  ctx.arc(cx, cy, r * pulse + ctx.lineWidth, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+
+
 function disclosureNote(ctx: CanvasRenderingContext2D, W: number, H: number, label: string, alpha: number) {
   if (!label) return;
   ctx.save();
@@ -461,6 +598,13 @@ export async function renderReveal(
   const showBrand = opts.versionType === "branded" && !!brand;
   const showDisclosure = opts.versionType !== "clean";
 
+  const av = opts.avatar ?? null;
+  const avImg = av?.url ? await loadImage(av.url).catch(() => null) : null;
+  const avFull = !!avImg && (av!.mode === "full" || av!.mode === "intro_bubble");
+  const avBubble = !!avImg && (av!.mode === "bubble" || av!.mode === "intro_bubble");
+  const avAccent = brand?.accent || ACCENT;
+
+
   const stream = canvas.captureStream(30);
   const music = await createMusicTrack(opts.music, opts.musicVolume ?? 0.55, opts.narrationUrl ?? null);
   if (music) stream.addTrack(music.track);
@@ -475,8 +619,11 @@ export async function renderReveal(
   });
 
   const durations = scenes.map((s) => Math.max(1.2, s.duration ?? 3) * 1000);
+  const avIntro = avFull ? 3000 : 0;
+  const avOutro = avFull ? 2600 : 0;
   const outro = showBrand ? 2600 : 0;
-  const total = durations.reduce((a, b) => a + b, 0) + outro;
+  const total = avIntro + durations.reduce((a, b) => a + b, 0) + avOutro + outro;
+
 
   rec.start();
   const start = performance.now();
@@ -486,26 +633,72 @@ export async function renderReveal(
       const t = performance.now() - start;
       opts.onProgress?.(Math.min(t / total, 1));
 
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, W, H);
+
+      // AI presenter opening card
+      if (avFull && avImg && t < avIntro) {
+        presenterCard(
+          ctx,
+          W,
+          H,
+          avImg,
+          av?.name || "",
+          av?.title || "",
+          av?.greeting || "",
+          avAccent,
+          Math.min(t / Math.max(avIntro, 1), 1),
+        );
+        if (t >= total) {
+          resolve();
+          return;
+        }
+        requestAnimationFrame(frame);
+        return;
+      }
+
+      const ts = t - avIntro;
+      const sceneEnd = durations.reduce((a, b) => a + b, 0);
+
       // find the active scene
       let acc = 0;
       let idx = -1;
       let local = 0;
       for (let i = 0; i < durations.length; i++) {
-        if (t < acc + durations[i]!) {
+        if (ts < acc + durations[i]!) {
           idx = i;
-          local = t - acc;
+          local = ts - acc;
           break;
         }
         acc += durations[i]!;
       }
 
-      ctx.fillStyle = "#0a0a0a";
-      ctx.fillRect(0, 0, W, H);
+      if (idx === -1 && avFull && avImg && ts < sceneEnd + avOutro) {
+        // AI presenter closing card
+        presenterCard(
+          ctx,
+          W,
+          H,
+          avImg,
+          av?.name || "",
+          av?.title || "",
+          brand?.default_cta || "Reach Out For A Private Tour.",
+          avAccent,
+          Math.min((ts - sceneEnd) / Math.max(avOutro, 1), 1),
+        );
+        if (t >= total) {
+          resolve();
+          return;
+        }
+        requestAnimationFrame(frame);
+        return;
+      }
 
       if (idx === -1) {
         // branded closing scene
         const p = Math.min((t - (total - outro)) / Math.max(outro, 1), 1);
         if (brand) brandOutro(ctx, W, H, brand, opts.title ?? "", Math.min(1, p * 3));
+
       } else {
         const scene = scenes[idx]!;
         const img = imgs[idx]!;
@@ -594,7 +787,13 @@ export async function renderReveal(
           ctx.restore();
         }
 
+        if (avBubble && avImg) {
+          const fade = Math.min(1, ts / 500) * Math.min(1, (sceneEnd - ts) / 500);
+          presenterBubble(ctx, W, H, avImg, av?.corner || "bottom_right", avAccent, t, Math.max(0, fade));
+        }
+
         // transition fades between scenes
+
         if (transition !== "none") {
           const fadeIn = local < FADE ? 1 - local / FADE : 0;
           const fadeOut = durations[idx]! - local < FADE ? 1 - (durations[idx]! - local) / FADE : 0;

@@ -34,7 +34,9 @@ import {
   suggestLabels,
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
+import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
+
 
 /** Null when the account can pay for a video render, otherwise the reason. */
 function videoCreditBlock() {
@@ -322,6 +324,8 @@ function newWizard(seed = {}) {
     music: "modern",
     volume: 0.6,
     beatSync: true,
+    avatar: blankAvatarConfig(),
+
     narration: "none",
     script: "",
     voice: "professional",
