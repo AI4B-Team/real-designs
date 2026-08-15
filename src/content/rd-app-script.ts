@@ -163,22 +163,27 @@ function scrollTopHard(){
   try{ requestAnimationFrame(()=>{ top(); requestAnimationFrame(top); }); }catch(_){}
   [60,160,320,600].forEach(ms=>window.setTimeout(top,ms));
 }
+let __paneSeq=0;
 function go(v,fromHash){
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
     /* The account markup can mount (and remount) after this call, so retry
        briefly on unmanaged timers. Never run synchronously: acctPane reads
-       consts declared later in this module. */
+       consts declared later in this module. A sequence token makes sure an
+       older retry loop can never re-select a pane the user has left. */
+    const seq=++__paneSeq;
     let n=0;
     const applyPane=()=>{
+      if(seq!==__paneSeq) return;
+      let done=false;
       try{
         const el=document.getElementById('p-'+pane);
-        if(el && !el.classList.contains('on')) acctPane(pane);
+        if(el){ if(!el.classList.contains('on')) acctPane(pane); done=true; }
       }catch(_){}
-      if(++n<60) window.setTimeout(applyPane,75);
+      if(!done && ++n<60) window.setTimeout(applyPane,75);
     };
     window.setTimeout(applyPane,0);
-  }
+  }else if(v!=='account'){ __paneSeq++; }
   if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
      keys like lvideo) must never leave the content area blank. */
@@ -237,13 +242,16 @@ try{ mountUploadDock(go); }catch(_){}
 (function applyHash(){
   const v=viewFromHash();
   if(!v) return;
+  const startHash=location.hash;
   const pane=ACCT_ALIAS[v]||'';
   const want='v-'+(pane?'account':v);
   let tries=0;
   const tick=()=>{
+    /* stop the moment the user navigates away, so this loop can never
+       drag an old view or account pane back on screen */
+    if(location.hash!==startHash) return;
     const target=document.getElementById(want);
     if(target && !target.classList.contains('on')) go(v,true);
-    /* the account markup can remount, so keep the deep linked pane selected */
     if(pane){ try{ const el=document.getElementById('p-'+pane); if(el && !el.classList.contains('on')) acctPane(pane); }catch(_){} }
     if(++tries<110) setTimeout(tick,75);
   };

@@ -799,6 +799,18 @@ async function onClick(e) {
       }
       return toast("Give the presentation a title.");
     }
+    if (S.step === 1 && !S.draft.property_id) {
+      const ps = document.getElementById("pkProp");
+      if (ps) {
+        ps.classList.add("pk-invalid");
+        ps.focus();
+        ps.addEventListener("change", () => ps.classList.remove("pk-invalid"), { once: true });
+      }
+      return toast("Pick A Property For This Presentation.");
+    }
+    if (S.step === 2 && !Object.keys(S.draft.picked).length) {
+      return toast("Select At Least One Item To Include.");
+    }
     S.step = Math.min(4, S.step + 1);
     return renderBuilder();
   }
