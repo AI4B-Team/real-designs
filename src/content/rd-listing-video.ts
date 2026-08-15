@@ -10,7 +10,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks } from "@/lib/rd-music";
+import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks, loadCustomTracks } from "@/lib/rd-music";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import {
@@ -717,9 +717,14 @@ function doneHtml() {
 
 /* ======================= RENDER ======================= */
 
+let lvMusicLoaded = false;
 function render() {
   const el = hostEl();
   if (!el) return;
+  if (!lvMusicLoaded) {
+    lvMusicLoaded = true;
+    loadCustomTracks().then((list) => { if (list.length) render(); });
+  }
   el.innerHTML =
     S.step === "review"
       ? reviewHtml()
