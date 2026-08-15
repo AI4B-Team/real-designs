@@ -1982,8 +1982,39 @@ function maybeIntro() {
   paint();
   const done = () => { try { localStorage.setItem("rd_reveal_intro", "1"); } catch (_) {} wrap.className = "rv-modal"; wrap.innerHTML = ""; };
   wrap.querySelector("#rvIntroNo").onclick = done;
-  wrap.querySelector("#rvIntroTour").onclick = () => { done(); toast("The Quick Tour Is Coming Soon."); };
+  wrap.querySelector("#rvIntroTour").onclick = () => renderTour(wrap, done);
   wrap.querySelector("#rvIntroGo").onclick = () => { done(); startWizard({}); };
+}
+
+const TOUR = [
+  { icon: "home", t: "Pick The Property", b: "Start from a property you already uploaded, a saved design, or a listing link. Every photo in that property is ready to drop into the timeline." },
+  { icon: "images", t: "Choose The Scenes", b: "Order the rooms the way a buyer would walk the home. Drag to reorder, drop weak shots, and add before and after pairs where staging tells the story." },
+  { icon: "sliders-horizontal", t: "Set The Look", b: "Choose a format for where it will post, add music or an AI voiceover, and pick transitions. Captions and your branding are applied automatically." },
+  { icon: "share-2", t: "Generate And Share", b: "Rendering runs in the background. When it finishes you can download it, share a client link, or send it straight into a presentation." },
+];
+
+function renderTour(wrap, done, i = 0) {
+  const s = TOUR[i];
+  wrap.innerHTML = `<div class="rv-modal-in sm" role="dialog" aria-label="Quick Tour">
+    <div class="rv-modal-h"><b>Quick Tour</b><span>Step ${i + 1} Of ${TOUR.length}</span></div>
+    <div class="rv-modal-b">
+      <div class="rv-tour"><i data-lucide="${s.icon}"></i><b>${s.t}</b><p>${s.b}</p></div>
+      <div class="rv-tour-dots">${TOUR.map((_, n) => `<span class="${n === i ? "on" : ""}"></span>`).join("")}</div>
+    </div>
+    <div class="rv-modal-f">
+      <button class="btn btn-ghost" id="rvTourSkip">Skip Tour</button>
+      ${i > 0 ? `<button class="btn btn-ghost" id="rvTourBack">Back</button>` : ""}
+      <button class="btn btn-primary" id="rvTourNext">${i === TOUR.length - 1 ? "Create Video" : "Next"}</button>
+    </div>
+  </div>`;
+  paint();
+  wrap.querySelector("#rvTourSkip").onclick = done;
+  const back = wrap.querySelector("#rvTourBack");
+  if (back) back.onclick = () => renderTour(wrap, done, i - 1);
+  wrap.querySelector("#rvTourNext").onclick = () => {
+    if (i === TOUR.length - 1) { done(); startWizard({}); return; }
+    renderTour(wrap, done, i + 1);
+  };
 }
 
 /* ======================= PUBLIC API ======================= */
