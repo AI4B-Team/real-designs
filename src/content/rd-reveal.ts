@@ -1115,10 +1115,13 @@ function bind() {
 
   /* library */
   on("#rvNew, #rvNew2", "click", () => startWizard({}));
-  on(".rv-chip", "click", (e) => { S.filter = e.currentTarget.dataset.f; render(); });
+  on(".rv-chip", "click", (e) => { S.filter = e.currentTarget.dataset.f; renderList(); });
   const q = el.querySelector("#rvQ");
-  if (q) q.addEventListener("input", (e) => { S.q = e.target.value; const p = e.target.selectionStart; render(); const n = host().querySelector("#rvQ"); if (n) { n.focus(); n.setSelectionRange(p, p); } });
-  on(".rv-card .icon-btn", "click", async (e) => {
+  /* Only the result list is repainted so the focused input and the thumbnails
+     never get torn down mid-typing. */
+  if (q) q.addEventListener("input", (e) => { S.q = e.target.value; renderList(); });
+  bindCards(el);
+  /* wizard */
     e.stopPropagation();
     const card = e.currentTarget.closest(".rv-card");
     const id = card.dataset.id;
