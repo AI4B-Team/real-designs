@@ -237,7 +237,7 @@ function libraryHtml() {
 
   const head = `<div class="rv-head">
     <div>
-      <h2>REAL REVEAL</h2>
+      <h2>Property Videos</h2>
       <p>Create polished videos and marketing content from your properties, photos and designs.</p>
     </div>
     <div class="rv-head-a">
@@ -255,7 +255,7 @@ function libraryHtml() {
   if (!S.projects.length) {
     return head + `<div class="rv-empty">
       <i data-lucide="clapperboard"></i>
-      <h3>Turn A Design Into A REAL REVEAL</h3>
+      <h3>Turn A Design Into A Video</h3>
       <p>Create a polished property tour, before-and-after reveal or social video from your existing projects.</p>
       <div class="rv-empty-a">
         <button class="btn btn-primary" id="rvNew2">Create Your First Video</button>
@@ -402,7 +402,7 @@ function wizardHtml() {
   if (w.step === 7) body = stepReview();
 
   return `<div class="rv-head">
-    <div><h2>Create A REAL REVEAL</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
+    <div><h2>Create A Property Video</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
   ${rail}
