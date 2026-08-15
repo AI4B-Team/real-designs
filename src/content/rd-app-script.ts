@@ -97,7 +97,6 @@ try{
 }catch(_){}
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
 import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo } from "@/content/rd-reveal";
-import { mountListingVideo, openListingVideo } from "@/content/rd-listing-video";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
 import { mountCrm } from "@/content/rd-crm";
@@ -138,7 +137,7 @@ const PALS={
 
 /* ---------- nav ---------- */
 const titles={dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
-studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Listing Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
+studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Scope &amp; Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 reports:['Reports','Portfolio rollup, budget fit and credit spend'],
@@ -177,7 +176,7 @@ function go(v,fromHash){
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
-  if(v==='lvideo'){ try{ mountListingVideo(go,{}); }catch(_){} }
+  if(v==='lvideo'){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
 
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
@@ -204,8 +203,10 @@ window.addEventListener('hashchange',()=>{ const v=viewFromHash(); if(v) go(v,tr
 
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
-try{ (window as any).rdListingVideo=(seed:any)=>{ try{ openListingVideo(seed||{}); }catch(_){} }; }catch(_){}
-document.querySelectorAll('[data-lvideo]').forEach(b=>b.addEventListener('click',()=>{ try{ const p=curProp&&curProp(); openListingVideo(p&&p.id?{ propertyId:p.id, propertyLabel:p.address||p.name||'', from:'properties' }:{ from:'menu' }); }catch(_){ openListingVideo({}); } }));
+/* The listing video builder is merged into the property video builder.
+   Every legacy entry point now opens the unified four step builder. */
+try{ (window as any).rdListingVideo=(seed:any)=>{ try{ createVideoFrom({ ...(seed||{}), sourceType:(seed&&seed.propertyId)?'property':'address' }); }catch(_){} }; }catch(_){}
+document.querySelectorAll('[data-lvideo]').forEach(b=>b.addEventListener('click',()=>{ try{ const p=curProp&&curProp(); createVideoFrom(p&&p.id?{ sourceType:'property', propertyId:p.id, propertyLabel:p.address||p.name||'', from:'properties' }:{ sourceType:'address', from:'menu' }); }catch(_){ createVideoFrom({}); } }));
 try{ (window as any).rdCreateVideo=(seed:any)=>{ try{ createVideoFrom(seed||{}); }catch(_){} }; }catch(_){}
 document.querySelectorAll('[data-createvideo]').forEach(b=>b.addEventListener('click',()=>{ try{ createVideoFrom(JSON.parse(b.getAttribute('data-createvideo')||'{}')); }catch(_){ createVideoFrom({}); } }));
 document.querySelectorAll('[data-propupload]').forEach(b=>b.addEventListener('click',()=>{ try{ openPropertyUpload(); }catch(_){} }));

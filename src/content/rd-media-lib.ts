@@ -11,7 +11,6 @@ import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions"
 import { updateMediaAssets, deleteMediaAssets } from "@/lib/property-media.functions";
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
-import { openListingVideo } from "@/content/rd-listing-video";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
 import { cancelJob } from "@/lib/upload-manager";

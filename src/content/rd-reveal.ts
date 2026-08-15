@@ -271,7 +271,6 @@ function libraryHtml() {
       <p>Create polished videos and marketing content from your properties, photos and designs.</p>
     </div>
     <div class="rv-head-a">
-      <button class="btn btn-ghost" id="rvListing"><i data-lucide="building-2"></i>Create A Listing Video</button>
       <button class="btn btn-primary" id="rvNew"><i data-lucide="clapperboard"></i>Create Video</button>
     </div>
   </div>
@@ -1563,7 +1562,6 @@ function bind() {
     const url = await signed(v.output_path);
     if (url) window.open(url, "_blank");
   });
-  on("#rvListing", "click", () => { try { window.rdListingVideo({ from: "video" }); } catch (_) {} });
   on("#rvShare", "click", () => { S.detailTab = "presentation"; render(); });
 
   /* presentation page settings */
