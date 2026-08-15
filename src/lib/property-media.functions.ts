@@ -235,12 +235,29 @@ export const listMediaProperties = createServerFn({ method: "GET" })
 
 export const createMediaProperty = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ address: z.string().min(2).max(200) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ address: z.string().max(200).optional() }).parse(input ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const raw = (data.address ?? "").trim();
+    const untitled = raw === "" || /^untitled property$/i.test(raw) || /^unsorted uploads$/i.test(raw);
+    const address = untitled ? "Untitled Property" : raw;
+
+    /* Reuse instead of forking: one shared untitled bucket per user, and one
+       property per distinct address (case insensitive). */
+    const { data: found } = await supabase
+      .from("properties")
+      .select("id, address")
+      .eq("owner_id", userId)
+      .ilike("address", address)
+      .order("created_at", { ascending: true })
+      .limit(1);
+    if (found && found.length) return found[0];
+
     const { data: row, error } = await supabase
       .from("properties")
-      .insert({ owner_id: userId, address: data.address } as any)
+      .insert({ owner_id: userId, address } as any)
       .select("id, address")
       .single();
     if (error) throw new Error(error.message);
