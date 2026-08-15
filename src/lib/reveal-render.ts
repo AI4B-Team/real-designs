@@ -901,7 +901,7 @@ export async function renderReveal(
 
         // transition fades between scenes
 
-        if (transition !== "none") {
+        if (transition !== "none" && !VIRAL_TRANSITIONS.has(transition)) {
           const fadeIn = local < FADE ? 1 - local / FADE : 0;
           const fadeOut = durations[idx]! - local < FADE ? 1 - (durations[idx]! - local) / FADE : 0;
           const f = Math.max(fadeIn, fadeOut) * (transition === "cinematic" ? 1 : transition === "smooth" ? 0.8 : 0.6);
