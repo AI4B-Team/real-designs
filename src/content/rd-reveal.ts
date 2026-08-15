@@ -931,7 +931,7 @@ async function openDetail(id) {
   S.detail = null;
   render();
   try {
-    S.detail = await getVideo({ id });
+    S.detail = await getVideo({ data: { id } });
   } catch (e) {
     toast(e?.message || "Could not open that video.");
     S.screen = "library";
@@ -1919,7 +1919,7 @@ export async function continueDesignVideo(id) {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
-  const full = await getVideo({ id });
+  const full = await getVideo({ data: { id } });
   const p = full.project;
   const st = p.settings || {};
   S.dv = newDV({
