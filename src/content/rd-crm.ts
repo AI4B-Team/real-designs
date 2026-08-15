@@ -147,7 +147,10 @@ function render() {
         </div>
       </div>
     </div>
+
+    ${S.admin ? signupPanel() : ""}
   </div>`;
+
 
   bind();
   try {
