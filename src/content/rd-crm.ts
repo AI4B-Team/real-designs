@@ -301,7 +301,11 @@ function bind() {
   el.querySelectorAll("[data-auto]").forEach((b: any) => (b.onchange = () => auto(b.dataset.auto, b.checked)));
   const push = el.querySelector("[data-push]") as HTMLElement | null;
   if (push) push.onclick = () => openPush();
+  const csv = el.querySelector("[data-sigcsv]") as HTMLElement | null;
+  if (csv) csv.onclick = () => signupCsv();
+  el.querySelectorAll("[data-sigpush]").forEach((b: any) => (b.onclick = () => pushSignup(b.dataset.sigpush)));
 }
+
 
 async function save(provider: string) {
   const el = host();
