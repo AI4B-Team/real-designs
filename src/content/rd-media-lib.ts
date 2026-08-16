@@ -412,11 +412,13 @@ function openUpgrade(m) {
 
 function actions(m, g) {
   if (m.status === "failed" && planBlocked(m))
-    return `<button class="btn btn-primary btn-xs" data-upg="${m.id}" style="flex:1"><i data-lucide="zap"></i>Upgrade</button>
+    return `<button class="btn btn-primary btn-xs" data-upg="${m.id}" style="flex:1"><i data-lucide="zap"></i>Add Credits</button>
+      <button class="btn btn-ghost btn-xs" data-retry="${m.id}"><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   if (m.status === "failed")
     return `<button class="btn btn-ghost btn-xs" data-retry="${m.id}" style="flex:1"><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
+
   if (m.status === "processing" || m.status === "queued")
     return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open Details</button>
       ${m.job ? `<button class="btn btn-ghost btn-xs" data-cancel="${m.id}">Cancel</button>` : ""}`;
