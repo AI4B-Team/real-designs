@@ -232,7 +232,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         .map((s) => {
           const m = SOURCE_META[s];
           return (
-            '<button type="button" class="sp-tab' + (s === "upload" ? " sp-primary" : "") + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s + '">' +
+            '<button type="button" class="sp-tab' + (s === "upload" && state.tab === "upload" ? " sp-primary" : "") + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s + '">' +
             (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
             esc(m.label) +
             "</button>"
