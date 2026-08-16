@@ -308,7 +308,7 @@ function searchIndex(){
     out.push({kind:'Scopes',ic:'calculator',t:(e.name||'Saved room')+' scope',
       s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Scope')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
     out.push({kind:'Products',ic:'shopping-bag',t:(e.name||'Saved room')+' product board',
-      s:'Allowances from the saved scope',view:'products'});
+      s:'Allowances from the saved budget',view:'products'});
   });
   return out;
 }
@@ -496,7 +496,7 @@ function paintOnboarding(s,pres){
   let card=document.getElementById('obCard');
   const done=[
     ['Save Your First Room','Upload a photo in Studio and save it to a property.', (s.counts.designs||0)>0, 'studio','Open Studio'],
-    ['Price A Scope','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Budget'],
+    ['Price A Budget','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Budget'],
     ['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'scope','Open Budget'],
     ['Send A Client Presentation','Share a branded approval link and track the decision.', (pres||[]).length>0, 'present','Open Presentations'],
   ];
@@ -539,7 +539,7 @@ async function paintSample(s){
     host.insertBefore(bar,host.firstChild);
   }
   bar.innerHTML = present
-    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data for exploring Properties, Scope and Reports.</span>'
+    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data for exploring Properties, Budget and Reports.</span>'
       +'<button class="btn btn-ghost btn-xs" id="sampleGo" style="margin-left:auto"><i data-lucide="map-pin"></i>Open It</button>'
       +'<button class="btn btn-ghost btn-xs" id="sampleOff"><i data-lucide="trash-2"></i>Remove Sample</button>'
     : '<i data-lucide="flask-conical"></i><span><b>Nothing Saved Yet.</b> Load a sample property with three rooms and a budget target to see how the workspace fits together. No credits are used.</span>'
@@ -615,7 +615,7 @@ async function loadDashboard(){
   const attn=[];
   s.projects.forEach(p=>{
     if(p.priced<p.rooms) attn.push([p.rooms-p.priced+' '+(p.rooms-p.priced===1?'room needs':'rooms need')+' pricing',p.address+' &middot; '+p.project_name,'p-amb','Price It','scope']);
-    if(p.budget_target&&p.high>p.budget_target) attn.push(['Scope exceeds target by '+kfmt(p.high-p.budget_target),p.address+' &middot; '+p.project_name,'p-red','Review','scope']);
+    if(p.budget_target&&p.high>p.budget_target) attn.push(['Budget exceeds target by '+kfmt(p.high-p.budget_target),p.address+' &middot; '+p.project_name,'p-red','Review','scope']);
   });
   let pres=[];
   try{
@@ -647,7 +647,7 @@ async function loadDashboard(){
 <td class="n">${t?kfmt(t):'—'}</td><td class="n">${p.priced?kfmt(p.low)+' to '+kfmt(p.high):'—'}</td>
 <td style="text-align:right"><span class="pill ${fit[0]}">${fit[1]}</span></td></tr>`;
   }).join('')
-    :'<tr><td colspan="6">No Saved Projects Yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
+    :'<tr><td colspan="6">No Saved Projects Yet. Price A Budget In Studio, Then Use Save To My Projects.</td></tr>';
 }
 document.getElementById('attnList')?.addEventListener('click',(e)=>{
   const r=e.target.closest('[data-goto]'); if(!r) return;
@@ -1807,7 +1807,7 @@ function renderScope(r){
   r.lines.forEach(l=>{ if(idx[l.trade]===undefined){ idx[l.trade]=groups.length; groups.push({trade:l.trade,lines:[]}); }
     groups[idx[l.trade]].lines.push(l); });
   scopeRowsEl.innerHTML=r.lines.length===0
-    ? '<tr><td colspan="5">No Priceable Items In This Selection. Add Or Change Scope Items, Then Run The Estimate Again.</td></tr>'
+    ? '<tr><td colspan="5">No Priceable Items In This Selection. Add Or Change Budget Items, Then Run The Estimate Again.</td></tr>'
     : groups.map(g=>{
     const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
     return `<tr class="trade-h"><td colspan="3">${g.trade}</td><td class="n">${money(low)}</td><td class="n">${money(high)}</td></tr>`
@@ -1864,7 +1864,7 @@ function showAlert(msg){
 function renderAllowance(r){
   const rows=document.getElementById('allowRows'); if(!rows) return;
   const note=document.getElementById('allowNote'), sub=document.getElementById('allowSub');
-  if(!r){ rows.innerHTML='<tr><td colspan="5">No Priced Scope Yet.</td></tr>';
+  if(!r){ rows.innerHTML='<tr><td colspan="5">No Priced Budget Yet.</td></tr>';
     note.textContent='Open Budget & Budget and price a scope to build the allowance list.'; return; }
   const mat=r.lines.filter(l=>l.material_high>0);
   if(!mat.length){ rows.innerHTML='<tr><td colspan="5">This scope is labor only, so there is no material allowance.</td></tr>';
@@ -2239,7 +2239,7 @@ ${totals?`<tfoot><tr><td colspan="3"><b>Material Allowance Total</b></td><td cla
 </body></html>`;
 }
 function boardPrint(){
-  const r=lastScope; if(!r){ showAlert('Price a scope first, then print the board.'); return; }
+  const r=lastScope; if(!r){ showAlert('Price A Budget First, Then Print The Board.'); return; }
   const sp=PROP_TREE[SEL.p], sj=sp?sp.projects[SEL.pr]:null;
   const w=window.open('','_blank'); if(!w) return;
   w.document.write(boardPrintHtml('Product Board',
@@ -2934,12 +2934,12 @@ if(helpBtn&&helpMenu){
 }
 
 /* ---------- help center ---------- */
-const HELP_POP=['Getting Started','Photos','Reality Lock','Credits','Scope','Client Links'];
+const HELP_POP=['Getting Started','Photos','Reality Lock','Credits','Budget','Client Links'];
 document.getElementById('helpPop').innerHTML=HELP_POP.map(t=>`<span class="chip">${t}</span>`).join('');
 document.getElementById('helpQuick').innerHTML=[
  ['1','Add Your First Property','Open Studio, upload a room photo, and save the version to create the property and room record.'],
  ['2','Design A Room','Pick a direction and intensity, generate a version for 1 credit, and keep the one that lands.'],
- ['3','Send A Client Link','Package approved rooms with the priced scope and share one link for approval.']]
+ ['3','Send A Client Link','Package approved rooms with the priced budget and share one link for approval.']]
  .map(([n,t,b])=>`<div class="qs-card"><span class="n">STEP ${n}</span><b>${t}</b><span>${b}</span></div>`).join('');
 
 /* Each article is real written help. [icon, title, body, optional view to open] */
@@ -2948,17 +2948,17 @@ const HELP_CATS=[
   ['image-up','Upload Room Photos','Use a straight-on shot of the room with the widest angle you can get, taken in daylight if possible. JPG or PNG up to about 10MB. Photos are stored privately against your account and are only visible to you until you share a client link.','studio'],
   ['map-pin','Add A Property','Properties are created from the work you save. Save a room version in Studio with an address and the property, project and room records appear in the Properties tree.','props'],
   ['wand-sparkles','Your First Design','In Studio choose a style direction and an intensity (Refresh, Makeover, Renovation, Reimagine), then generate. Each design render costs 1 credit and lands beside the original photo.','studio'],
-  ['coins','How Credits Work','One balance covers everything: a design render is 1 credit, a priced scope is 3, a 2D to 3D plan is 6 and a walkthrough video is 40. If a job fails, the credits are returned automatically. Your balance and every charge are listed in Billing And Credits.','billing']]],
+  ['coins','How Credits Work','One balance covers everything: a design render is 1 credit, a priced budget is 3, a 2D to 3D plan is 6 and a walkthrough video is 40. If a job fails, the credits are returned automatically. Your balance and every charge are listed in Billing And Credits.','billing']]],
  ['palette','Designing',[
   ['lock','Reality Lock Explained','Reality Lock holds the walls, window and door openings, ceiling line and floor plane from your photo in place, so a version is a redesign of the same room rather than a new room. Finishes, fixtures, furniture and paint change; the building does not.'],
   ['layers','Styles And Intensity','Style sets the look (for example Japandi, Coastal, Midcentury). Intensity sets how far the work goes, from a Refresh that is paint and styling through a Reimagine that assumes full replacement. Intensity is what moves the budget most.','studio'],
   ['history','Versions','Every generation is saved as a numbered version on the room, so you can compare, keep several options alive, and send the one the client approved.','designs'],
   ['images','Listing Batch','Listing Batch runs every room on a property through the same direction in one pass, one credit per room, and saves each result to its room.','listings']]],
- ['calculator','Scope & Budget',[
-  ['dollar-sign','How Pricing Is Built','A scope compares the original photo to the approved version, lists what actually changed, then prices those lines by trade at your market and finish grade. It returns a low to high planning range with a contingency, not a bid.','scope'],
+ ['calculator','Budget & Pricing',[
+  ['dollar-sign','How Pricing Is Built','A budget compares the original photo to the approved version, lists what actually changed, then prices those lines by trade at your market and finish grade. It returns a low to high planning range with a contingency, not a bid.','scope'],
   ['sliders-horizontal','Budget Bands And Grades','Finish grade (rental, retail, premium) and budget band set the allowance level used for every line. Change either and the range recalculates against the same change list.','scope'],
   ['shopping-bag','Product Board','The Products board turns each material line into a card with quantity, allowance range and a search link at the right retailer for that trade. Links are searches, not quoted prices.','products'],
-  ['triangle-alert','What A Scope Is Not','Every figure is a planning estimate. Subcontractor pricing governs. Always confirm with a bid before committing a client to a number.']]],
+  ['triangle-alert','What A Budget Is Not','Every figure is a planning estimate. Subcontractor pricing governs. Always confirm with a bid before committing a client to a number.']]],
  ['share-2','Client Delivery',[
   ['presentation','Building A Presentation','Pick a version, add a title and the client name, and generate a link. The client sees the before and after, the change list and the planning range on a branded page.','present'],
   ['link','Approval Links','Links are read-only for the client and can be opened without an account. Approvals and decision notes come back into Presentations, and view counts update as the link is opened.','present'],
@@ -2966,9 +2966,9 @@ const HELP_CATS=[
   ['palette','Brand Kit','Company name, accent color and watermark from Account, Brand Kit are applied to client pages and exports.','account']]],
  ['user-round','Account & Workspace',[
   ['bell','Notifications','Notifications are in-app. The three toggles in Account, Notifications control which categories reach your feed. We do not send marketing email.','notifications'],
-  ['sliders-horizontal','Defaults','Market, finish grade, budget band and disclosure ruleset set the starting point for every new scope. They are saved to your account.','account'],
-  ['users','Team Seats','Invite teammates from Account, Team. They accept the invite with their own login and then share your properties, designs, scopes and presentations. You can copy an invite link to send it yourself, and revoke access at any time.','team'],
-  ['download','Export And Delete','You can download a JSON of every property, room, version, scope and credit entry, or delete the account and all of its data, from Account, Data And Privacy.','account']]]];
+  ['sliders-horizontal','Defaults','Market, finish grade, budget band and disclosure ruleset set the starting point for every new budget. They are saved to your account.','account'],
+  ['users','Team Seats','Invite teammates from Account, Team. They accept the invite with their own login and then share your properties, designs, budgets and presentations. You can copy an invite link to send it yourself, and revoke access at any time.','team'],
+  ['download','Export And Delete','You can download a JSON of every property, room, version, budget and credit entry, or delete the account and all of its data, from Account, Data And Privacy.','account']]]];
 
 const helpCatsEl=document.getElementById('helpCats');
 function renderCats(q){
@@ -2994,9 +2994,9 @@ document.addEventListener('click',e=>{
 });
 const HELP_FAQ=[
  ['Do The Designs Change The Structure Of The Room?','No. Reality Lock holds walls, windows, ceiling lines and the floor plane in place, so every version is a redesign of the same space.'],
- ['How Accurate Is The Scope?','A scope is a planning range built from the change list, your market and your finish grade. It is not a bid, and subcontractor pricing governs.'],
+ ['How Accurate Is The Budget?','A budget is a planning range built from the change list, your market and your finish grade. It is not a bid, and subcontractor pricing governs.'],
  ['Can I Upload My Own Photos?','Yes. Any straight-on room photo works. Better light and a wider angle produce better versions.'],
- ['What Does Each Action Cost?','Design render 1 credit, priced scope 3, 2D to 3D plan 6, walkthrough video 40. Failed jobs are refunded automatically.'],
+ ['What Does Each Action Cost?','Design render 1 credit, priced budget 3, 2D to 3D plan 6, walkthrough video 40. Failed jobs are refunded automatically.'],
  ['What Happens When I Run Out Of Credits?','Nothing is deleted. New generations pause until your allowance resets or you top up, and all existing work stays available.'],
  ['Can Clients See My Work Before I Share It?','No. Photos, versions and scopes are private to your account until you create a client link for a specific version.']];
 const helpFaqEl=document.getElementById('helpFaq');
