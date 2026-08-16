@@ -213,7 +213,7 @@ const chunkRecoveryScript = `(function(){
   function isChunk(m){return typeof m==='string'&&(/Failed to fetch dynamically imported module/i.test(m)||/Importing a module script failed/i.test(m)||/error loading dynamically imported module/i.test(m));}
   function retry(m){
     if(!isChunk(m))return;
-    try{if(sessionStorage.getItem(K))return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
+    try{var l=Number(sessionStorage.getItem(K)||0);if(l&&Date.now()-l<20000)return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
     location.reload();
   }
   addEventListener('error',function(e){retry(e&&e.message);});
