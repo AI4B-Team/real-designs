@@ -531,7 +531,7 @@ function sectionReady(key: string) {
   return (w.scenes || []).length > 0;
 }
 function stepForSection(key: string) {
-  if (key === "scenes") return (S.wizard.scenes || []).length ? 3 : 2;
+  if (key === "scenes") return 2;
   return (WIZ_SECTIONS.find((x) => x[0] === key) || [null, null, null, 1])[3];
 }
 
