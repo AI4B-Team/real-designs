@@ -69,10 +69,17 @@ export type PickerOptions = {
   lucide?: { createIcons: (o?: any) => void };
   /** Properties already in the workspace, for the property source. */
   properties?: () => Array<{ address: string; meta?: string }>;
+  /** Finished designs, for the design source. */
+  designs?: () => Array<{ id: string; label: string; sub?: string; badge?: string }>;
+  /** Which source opens first, so a host can remember the tab across renders. */
+  initialTab?: SourceId;
+  onTab?: (tab: SourceId) => void;
   /** Called with everything the user picked, after measurement. */
   onPick: (picked: PickedFile[]) => void;
   /** Called when the user chooses an existing property instead of files. */
   onProperty?: (address: string) => void;
+  /** Called when the user chooses a finished design. */
+  onDesign?: (id: string) => void;
   /** Optional "Try A Sample Space" affordance under the dropzone. */
   onSample?: () => void;
   showAlert?: (msg: string) => void;
@@ -87,7 +94,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const alert = opts.showAlert || ((m: string) => console.warn(m));
 
   const state = {
-    tab: cfg.sources[0] as SourceId,
+    tab: (opts.initialTab && cfg.sources.includes(opts.initialTab) ? opts.initialTab : cfg.sources[0]) as SourceId,
     busy: false,
     note: "",
     address: "",
@@ -96,6 +103,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
   };
+
 
   const input = document.createElement("input");
   input.type = "file";
@@ -291,7 +299,24 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         "</div></div>"
       );
     }
+    if (state.tab === "design") {
+      const list = (opts.designs ? opts.designs() : []).slice(0, 40);
+      if (!list.length)
+        return '<div class="sp-pane"><p class="sp-note">No Finished Designs Yet. Start From Photos Instead.</p></div>';
+      return (
+        '<div class="sp-pane"><div class="sp-props">' +
+        list
+          .map(
+            (d) =>
+              '<button type="button" class="sp-prop" data-sp-design="' + esc(d.id) + '"><i data-lucide="images"></i><b>' +
+              esc(d.label) + '</b><span class="mono">' + esc(d.sub || d.badge || "") + "</span></button>",
+          )
+          .join("") +
+        "</div></div>"
+      );
+    }
     return "";
+
   }
 
   function chooser() {
@@ -387,6 +412,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (tab) {
       state.tab = tab.dataset["spTab"] as SourceId;
       state.note = "";
+      opts.onTab?.(state.tab);
       render();
       return;
     }
@@ -395,6 +421,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       opts.onProperty?.(prop.dataset["spProp"]!);
       return;
     }
+    const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
+    if (dsn) {
+      opts.onDesign?.(dsn.dataset["spDesign"]!);
+      return;
+    }
+
     const choice = t.closest("[data-sp-choice]") as HTMLElement | null;
     if (choice) {
       const picked = state.choose[Number(choice.dataset["spChoice"])];

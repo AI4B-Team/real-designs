@@ -102,6 +102,7 @@ try{
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
 import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo, resetReveal } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
+import { mountSourcePicker } from "@/lib/source-picker";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
 import { mountCrm } from "@/content/rd-crm";
 import * as RDMediaLib from "@/lib/media-library";
@@ -1844,6 +1845,7 @@ let BATCH_ROOMS=[];
 let batchBusy=false;
 function batchStateEl(){ return document.getElementById('batchState'); }
 function paintBatch(){
+  mountBatchSource();
   const sel=document.getElementById('batchProp'), list=document.getElementById('batchList');
   if(!sel||!list) return;
   const runBtn=document.getElementById('batchRun');
@@ -1882,6 +1884,24 @@ function paintBatch(){
         <button class="btn btn-dark btn-xs" data-propupload="1"><i data-lucide="upload-cloud"></i>Upload Property Photos</button>
       </div>`;
   if(!rooms.length) lucide.createIcons();
+}
+var batchPicker=null;
+function mountBatchSource(){
+  const slot=document.getElementById('batchSource');
+  if(!slot||batchPicker) return;
+  batchPicker=mountSourcePicker(slot,{
+    context:'batch',
+    esc:(v)=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
+    lucide:{createIcons:()=>{try{lucide.createIcons();}catch(_){}}},
+    properties:()=>PROP_TREE.map(p=>({address:p.address,meta:p.projects.reduce((n,pr)=>n+pr.rooms.length,0)+' Rooms'})),
+    onPick:(picked)=>{ try{ openPropertyUpload({files:picked.map(x=>x.file)}); }catch(_){} },
+    onProperty:(address)=>{
+      const p=PROP_TREE.find(x=>x.address===address);
+      const sel=document.getElementById('batchProp');
+      if(p&&sel){ sel.value=p.id; paintBatch(); }
+    },
+    showAlert:(m)=>{try{window.rdToast&&window.rdToast(m);}catch(_){}},
+  });
 }
 const batchProp=document.getElementById('batchProp');
 if(batchProp) batchProp.addEventListener('change',paintBatch);

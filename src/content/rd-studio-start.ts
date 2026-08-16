@@ -787,12 +787,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<div class="stw">' +
       '<header class="stw-head">' +
       '<div class="stw-head-l">' +
-      '<span class="stw-eyebrow">Welcome To REAL DESIGNS</span>' +
-      '<div class="stw-title"><h2>How Would You Like To Start?</h2></div>' +
+      '<span class="stw-eyebrow">Studio</span>' +
+      '<div class="stw-title"><h2>What Are You Making?</h2></div>' +
       "<p>Choose a path below. You can switch between them anytime.</p>" +
       "</div></header>" +
       '<div class="stw-rule"></div>' +
       styleBanner() +
+      '<div class="stw-doorwrap' + (state.door === "design" ? "" : " center") + '">' +
       '<div class="stw-doors">' +
       '<button type="button" class="stw-door' + (state.door === "design" ? " on" : "") + '" data-sts="door-design">' +
       '<i data-lucide="wand-sparkles"></i>' +
@@ -803,10 +804,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<button type="button" class="stw-door" data-sts="door-video">' +
       '<i data-lucide="clapperboard"></i>' +
       "<b>Make A Video</b>" +
-      "<span>Turn property photos into a narrated listing video.</span>" +
+      "<span>Turn property photos into a listing video.</span>" +
       '<span class="stw-door-cta">Start A Video<i data-lucide="arrow-right"></i></span>' +
       "</button>" +
       "</div>" +
+      '<p class="stw-secondary stw-doorfoot">Nothing to upload yet? ' +
+      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      "</div>" +
+
       (state.door === "design"
         ? '<div class="stw-source"><div class="stw-sec-h"><h3>Where Are The Photos?</h3>' +
           "<span>Every Source Below Ends In The Same Place</span></div>" +

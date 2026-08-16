@@ -5,7 +5,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
+import { mountSourcePicker } from "@/lib/source-picker";
 import { roomPhotoUrl } from "@/lib/room-photos";
 import {
   listMediaAssets,
@@ -17,7 +17,6 @@ import {
   listExportPackages,
 } from "@/lib/property-media.functions";
 import { runPhotoEdit } from "@/lib/photo-edit.functions";
-import { importCloudPhotos } from "@/lib/cloud-import.functions";
 import { uploadRenderDataUrl } from "@/lib/room-photos";
 import * as UM from "@/lib/upload-manager";
 import { ROOM_GROUPS, FLAG_LABEL, recommendations, similarTo, missingSpaces, pickRecommended } from "@/lib/media-analysis";
@@ -64,8 +63,9 @@ export async function openPropertyUpload(opts = {}) {
   } catch (_) {}
   let mode = opts.propertyId ? "existing" : props.length ? "existing" : "new";
   let propertyId = opts.propertyId || (props[0] ? props[0].id : null);
-  let files = [];
-  let src = "computer";
+  let files = Array.isArray(opts.files) ? opts.files.slice() : [];
+  let src = "upload";
+  let pendingAddress = "";
   let rejected = [];
 
   function render() {
@@ -88,7 +88,7 @@ export async function openPropertyUpload(opts = {}) {
                   .map((p) => `<option value="${p.id}" ${p.id === propertyId ? "selected" : ""}>${esc(p.address)}</option>`)
                   .join("")}</select></label>`
               : mode === "new"
-                ? `<label class="pmu-f">Address<input id="pmuAddr" placeholder="123 Main St, Tampa FL"></label>`
+                ? `<label class="pmu-f">Address<input id="pmuAddr" value="${esc(pendingAddress)}" placeholder="123 Main St, Tampa FL"></label>`
                 : `<p class="pmu-note">Photos upload into an unassigned set. You can attach them to a property later from Media.</p>`
           }
           <details class="pmu-more"><summary>Optional Property Details</summary>
@@ -107,27 +107,7 @@ export async function openPropertyUpload(opts = {}) {
         </div>
         <div class="pmu-col">
           <div class="pmu-lab">Choose Photos</div>
-          <div class="pmu-src">
-            <button class="pmu-s${src === "computer" ? " on" : ""}" data-src="computer"><i data-lucide="monitor"></i>Computer</button>
-            <button class="pmu-s${src === "google_drive" ? " on" : ""}" data-src="google_drive">${DRIVE_ICON}Google Drive</button>
-            <button class="pmu-s${src === "dropbox" ? " on" : ""}" data-src="dropbox">${DROPBOX_ICON}Dropbox</button>
-          </div>
-          ${
-            src === "computer"
-              ? ""
-              : `<div class="pmu-link">
-            <label>Paste ${src === "dropbox" ? "Dropbox" : "Google Drive"} Photo Links<textarea id="pmuLinks" rows="3" placeholder="https://${src === "dropbox" ? "www.dropbox.com/scl/fi/..." : "drive.google.com/file/d/..."}"></textarea></label>
-            <p class="pmu-note">One link per line, up to 20. Each link must be shared with “Anyone with the link”. Folder links are not supported yet.</p>
-            <button class="btn btn-ghost" id="pmuFetch"><i data-lucide="download"></i>Add Photos From ${src === "dropbox" ? "Dropbox" : "Drive"}</button>
-            <div class="pmu-linkmsg" id="pmuLinkMsg"></div>
-          </div>`
-          }
-          <div class="pmu-drop" id="pmuDrop" tabindex="0" role="button" aria-label="Drag photos here or press Enter to browse">
-            <i data-lucide="upload-cloud"></i>
-            <b>Drag and drop the property photos here</b>
-            <span>JPG, JPEG, PNG, HEIC or WEBP &middot; Up to ${UM.MAX_FILE_MB} MB per image</span>
-          </div>
-          <input type="file" id="pmuFiles" multiple accept="${UM.ACCEPT_ATTR}" hidden>
+          <div id="pmuPicker"></div>
           <div class="pmu-files" id="pmuList"></div>
           <div class="pmu-act">
             <button class="btn btn-primary" id="pmuStart" ${files.length ? "" : "disabled"}><i data-lucide="upload"></i>Upload Photos${files.length ? ` (${files.length})` : ""}</button>
@@ -147,39 +127,26 @@ export async function openPropertyUpload(opts = {}) {
     });
     const sel = wrap.querySelector("#pmuProp");
     sel && (sel.onchange = () => (propertyId = sel.value));
-    const input = wrap.querySelector("#pmuFiles");
-    const pick = () => input.click();
-    wrap.querySelectorAll(".pmu-s").forEach((b) => {
-      b.onclick = () => {
-        if (b.dataset.src === "computer" && src === "computer") return pick();
-        src = b.dataset.src;
-        render();
-      };
-    });
-    const fetchBtn = wrap.querySelector("#pmuFetch");
-    if (fetchBtn) fetchBtn.onclick = () => pullLinks(fetchBtn);
-    const drop = wrap.querySelector("#pmuDrop");
-    drop.onclick = pick;
-    drop.onkeydown = (e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        pick();
-      }
-    };
-    ["dragenter", "dragover"].forEach((ev) =>
-      drop.addEventListener(ev, (e) => {
-        e.preventDefault();
-        drop.classList.add("over");
-      }),
-    );
-    ["dragleave", "drop"].forEach((ev) =>
-      drop.addEventListener(ev, (e) => {
-        e.preventDefault();
-        drop.classList.remove("over");
-      }),
-    );
-    drop.addEventListener("drop", (e) => take(Array.from(e.dataTransfer.files || [])));
-    input.onchange = () => take(Array.from(input.files || []));
+    /* The one shared source picker. This screen owns no dropzone of its own. */
+    const slot = wrap.querySelector("#pmuPicker");
+    if (slot) {
+      mountSourcePicker(slot, {
+        context: "property-media",
+        esc,
+        lucide: { createIcons: () => paint() },
+        initialTab: src,
+        onTab: (t) => { src = t; },
+        onPick: (picked) => take(picked.map((p) => p.file)),
+        onProperty: (address) => {
+          const found = props.find((p) => p.address === address);
+          if (found) { mode = "existing"; propertyId = found.id; }
+          else { mode = "new"; pendingAddress = address; }
+          render();
+          const ai = wrap.querySelector("#pmuAddr");
+          if (ai && !ai.value) ai.value = address;
+        },
+      });
+    }
     wrap.querySelector("#pmuStart").onclick = start;
     renderList();
   }
@@ -193,50 +160,6 @@ export async function openPropertyUpload(opts = {}) {
     render();
   }
 
-  async function pullLinks(btn) {
-    const ta = wrap.querySelector("#pmuLinks");
-    const msg = wrap.querySelector("#pmuLinkMsg");
-    const urls = (ta?.value || "")
-      .split(/[\s,]+/)
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .slice(0, 20);
-    if (!urls.length) {
-      if (msg) msg.innerHTML = `<span class="pmu-bad">Paste at least one share link.</span>`;
-      return;
-    }
-    btn.disabled = true;
-    const label = btn.innerHTML;
-    btn.textContent = "Fetching Photos…";
-    try {
-      const res = await importCloudPhotos({ data: { urls } });
-      const got = [];
-      for (const f of res.files || []) {
-        const bin = atob(f.data);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        got.push(new File([bytes], f.name, { type: f.type }));
-      }
-      const errs = res.errors || [];
-      const pending = got.length;
-      if (pending) take(got);
-      const box = wrap.querySelector("#pmuLinkMsg");
-      if (box) {
-        box.innerHTML = `${pending ? `<span class="pmu-ok">${pending} Photo${pending === 1 ? "" : "s"} Added</span>` : ""}${errs
-          .map((e) => `<span class="pmu-bad">${esc(e.message)}</span>`)
-          .join("")}`;
-      }
-    } catch (e) {
-      if (msg) msg.innerHTML = `<span class="pmu-bad">${esc(e?.message || "Import failed")}</span>`;
-    } finally {
-      const b = wrap.querySelector("#pmuFetch");
-      if (b) {
-        b.disabled = false;
-        b.innerHTML = label;
-        paint();
-      }
-    }
-  }
 
   function renderList() {
     const l = wrap.querySelector("#pmuList");
