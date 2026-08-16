@@ -1967,6 +1967,7 @@ function bind() {
       seen.add(g);
       return true;
     });
+    syncSceneOrder();
     render();
   });
   on("#rvKeepAll", "click", () => render());
