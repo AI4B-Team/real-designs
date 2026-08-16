@@ -884,10 +884,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         (ctx.getProperties ? ctx.getProperties() : []).map((p) => ({
           address: p.address,
           meta: (() => {
-            const n = (p.projects || []).reduce(
-              (t, pr) => t + ((pr as any).rooms || []).filter((r: any) => !!r.before_path).length,
-              0,
-            );
+            const n =
+              (p.projects || []).reduce(
+                (t, pr) => t + (((pr as any).rooms || []) as any[]).filter((r: any) => !!r.before_path).length,
+                0,
+              ) || Number((p as any).asset_count || 0);
             return n === 1 ? "1 Photo" : n + " Photos";
           })(),
         })),
