@@ -2864,7 +2864,7 @@ function presModal(){
         jump=document.createElement('button');
         jump.id='plStudio'; jump.className='btn btn-primary btn-block';
         jump.textContent='Open Studio';
-        jump.addEventListener('click',()=>{ m.classList.remove('on'); go2('studio'); });
+        jump.addEventListener('click',()=>{ m.classList.remove('on'); go('studio'); });
         go.parentNode.insertBefore(jump,go);
       }
       jump.hidden=false; go.hidden=true;
