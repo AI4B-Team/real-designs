@@ -1130,7 +1130,7 @@ function stepBrand() {
     </div>` : ""}
   </details>
 
-  <details class="rv-acc"><summary>Brand Kit</summary>
+  <details class="rv-acc" data-acc="brandkit"${accOpen.has("brandkit") ? " open" : ""}><summary>Brand Kit</summary>
     <div class="rv-kits">${S.kits.map((k) => `<button class="rv-kit ${w.brandKitId === k.id ? "on" : ""}" data-kit="${k.id}"><b>${esc(k.name)}</b><span>${esc(k.company_name || k.contact_name || "No Company Name")}</span></button>`).join("")}
       <button class="rv-kit add" id="rvKitNew"><i data-lucide="plus"></i><b>New Brand Kit</b></button>
     </div>
