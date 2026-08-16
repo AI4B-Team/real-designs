@@ -131,7 +131,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {
     if (isChunkLoadError(error) && typeof window !== "undefined") {
       const key = "rd:chunk-reload";
-      if (!sessionStorage.getItem(key)) {
+      const last = Number(sessionStorage.getItem(key) || 0);
+      // Allow another one-shot reload if the last attempt was a while ago.
+      if (!last || Date.now() - last > 20000) {
         sessionStorage.setItem(key, String(Date.now()));
         window.location.reload();
         return;
@@ -139,6 +141,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
+
 
 
   return (
@@ -210,7 +213,7 @@ const chunkRecoveryScript = `(function(){
   function isChunk(m){return typeof m==='string'&&(/Failed to fetch dynamically imported module/i.test(m)||/Importing a module script failed/i.test(m)||/error loading dynamically imported module/i.test(m));}
   function retry(m){
     if(!isChunk(m))return;
-    try{if(sessionStorage.getItem(K))return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
+    try{var l=Number(sessionStorage.getItem(K)||0);if(l&&Date.now()-l<20000)return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
     location.reload();
   }
   addEventListener('error',function(e){retry(e&&e.message);});
