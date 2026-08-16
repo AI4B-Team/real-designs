@@ -79,9 +79,9 @@ const SHELL = `
   <section class="xp-rec" id="xpRec" hidden></section>
 
   <section class="xp-quiz" id="xpQuiz" hidden>
-    <div class="xp-quiz-top"><div><h3>Find Your Style</h3><p>Five quick comparisons and we shortlist your best matches.</p></div></div>
     <div class="xp-quiz-card" id="xpQuizCard"></div>
   </section>
+
 
   <p class="xp-count" id="xpCount"></p>
   <div id="xpBody"></div>
