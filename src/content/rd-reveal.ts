@@ -2013,7 +2013,14 @@ function bind() {
     render();
   });
   on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); syncSceneOrder(); render(); });
-  on("#rvGroupBy", "click", () => { w.groupBy = !w.groupBy; render(); });
+  on("#rvGroupBy", "click", () => { w.groupBy = w.groupBy === false; render(); });
+  /* The warning pip is its own action; it must not toggle the tile under it. */
+  on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
+  on(".rv-tile-th", "keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    e.currentTarget.click();
+  });
   on("#rvRecommend", "click", () => { selectRecommended(); autoArrange(); render(); });
   on("#rvClear", "click", () => { w.scenes = []; syncSceneOrder(); render(); });
   on("#rvAuto", "click", () => { autoArrange(); render(); });
