@@ -2317,8 +2317,6 @@ export async function startDesignVideo(design = {}) {
   [0, 300, 900, 1800, 3000].forEach((ms) => setTimeout(closeIntroNow, ms));
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
-  if (!S.mounted) await mountReveal(S.go, {});
-  else if (!S.tree.length) await loadLibrary();
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(design.id));
   const versionId = design.sample || !isUuid ? null : design.id;
   startWizard({
@@ -2347,6 +2345,10 @@ export async function startDesignVideo(design = {}) {
   w.step = 3;
   render();
   closeIntroNow();
+  /* Paint the requested editor before yielding to library requests. Otherwise
+     the previous standalone video library can appear for one frame. */
+  if (!S.tree.length) await loadLibrary();
+  if (S.wizard === w) render();
 }
 
 /** Continue a saved design-video draft from Media or the library. */
@@ -2445,9 +2447,12 @@ export async function createVideoFrom(seed = {}) {
   [0, 300, 900, 1800].forEach((ms) => setTimeout(closeIntroNow, ms));
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
-  if (!S.projects.length && !S.mounted) await mountReveal(S.go, {});
-  if (!S.tree.length) await loadLibrary();
+  /* Build immediately, before the first await, so navigation never exposes
+     stale library markup while property and media data are loading. */
   startWizard(seed);
+  const wizard = S.wizard;
+  if (!S.tree.length) await loadLibrary();
+  if (S.wizard === wizard) render();
 }
 
 export async function mountReveal(go, _opts = {}) {
