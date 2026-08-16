@@ -148,7 +148,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       const { importCloudPhotos } = await import("@/lib/cloud-import.functions");
       const res = await importCloudPhotos({ data: { urls: urls.slice(0, 20) } });
       const files = (res.files || []).map((f: any) => dataUrlToFile(f.data, f.name, f.type));
-      if (res.errors?.length) state.note = res.errors[0].message;
+      if (res.errors?.length) state.note = res.errors[0]?.message || "Some Links Could Not Be Read.";
       if (files.length) await intake(files);
       else if (!state.note) state.note = "Nothing Could Be Read From That Link. Upload The Photos Instead.";
     } catch (_) {
@@ -201,11 +201,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     state.note = "";
     render();
     try {
-      const { readListingUrl: read } = await import("@/lib/listing-import.functions");
-      const r: any = await (read as any)({ data: { url: v } });
-      if (r?.address) opts.onProperty?.(r.address);
+      const { startListingImport } = await import("@/lib/listing-import.functions");
+      const r: any = await startListingImport({ data: { url: v } });
+      const addr = r?.import?.address || r?.import?.raw_address || "";
+      if (addr) opts.onProperty?.(addr);
       state.note =
-        (r?.message || "Listing Read.") +
+        (r?.message || (addr ? "Listing Read: " + addr + "." : "Listing Read.")) +
         " Listing Links Are Read As Text Only. No Photos Are Imported From A Public Listing Page.";
     } catch (_) {
       state.note = "That Link Could Not Be Read. Listing Links Are Read As Text Only, So Upload The Photos Below.";
