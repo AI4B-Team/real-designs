@@ -250,7 +250,18 @@ try{ mountUploadDock(go); }catch(_){}
    so keep re-asserting the deep linked view for a short window */
 (function applyHash(){
   const v=viewFromHash();
-  if(!v) return;
+  if(!v){
+    /* an unknown or stale hash must not stay in the address bar while a
+       different view is on screen, or a refresh looks like a dead link */
+    try{
+      if(location.hash){
+        const cur=document.querySelector('.rd-app .view.on');
+        history.replaceState(null,'',location.pathname+location.search+(cur?'#'+cur.id:''));
+      }
+    }catch(_){}
+    return;
+  }
+
   const startHash=location.hash;
   const pane=ACCT_ALIAS[v]||'';
   const want='v-'+(pane?'account':v);
