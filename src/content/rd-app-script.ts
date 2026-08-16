@@ -34,6 +34,7 @@ import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
 import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
 import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
+import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
 
 /** Mirrors an Explore style choice into the Studio controls once per selection. */
 let STYLE_CHOICE_TS=0;
@@ -2050,71 +2051,65 @@ async function runDims(){
 }
 
 /* ---------- phase 4: contractor brief, rendered from the priced scope ---------- */
-function briefHtml(r){
-  const esc=(s)=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+/* The brief is generated server side as a real PDF file, so it downloads on a
+   phone and never depends on pop-ups or a print dialog. */
+async function briefDoc(r){
   const divs={};
   r.lines.forEach(l=>{ (divs[l.csi_division]=divs[l.csi_division]||{trade:l.trade,lines:[]}).lines.push(l); });
-  const groups=Object.keys(divs).sort().map(d=>{
+  const sections=Object.keys(divs).sort().map(d=>{
     const g=divs[d];
     const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
-    return `<h3>${esc(d)} &middot; ${esc(g.trade)}</h3>
-<table><thead><tr><th>Item</th><th class="n">Qty</th><th class="n">Material</th><th class="n">Labor</th><th style="text-align:right">Low</th><th style="text-align:right">High</th></tr></thead><tbody>
-${g.lines.map(l=>`<tr><td>${esc(l.description)}${l.is_fallback?' <em>(fallback cost record)</em>':''}<br><span class="src">${esc(l.price_source)}</span></td>
-<td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${money(l.material_low)}&ndash;${money(l.material_high)}</td>
-<td class="n">${money(l.labor_low)}&ndash;${money(l.labor_high)}</td><td class="n">${money(l.line_low)}</td><td class="n">${money(l.line_high)}</td></tr>`).join('')}
-<tr class="sub"><td colspan="4">Division Subtotal</td><td class="n">${money(low)}</td><td class="n">${money(high)}</td></tr>
-</tbody></table>`;
-  }).join('');
-  const dimLine=`${document.getElementById('scFloor').value} SF floor &middot; ${document.getElementById('scWall').value} SF wall &middot; ${document.getElementById('scPerim').value} LF perimeter`;
-  return `<!doctype html><html><head><meta charset="utf-8"><title>Contractor Brief &middot; REAL DESIGNS</title>
-<style>
-*{box-sizing:border-box}body{font:13px/1.5 'DM Sans',system-ui,sans-serif;color:#141414;margin:0;padding:36px 44px;background:#fff}
-h1{font-size:22px;margin:0 0 2px}h2{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a;margin:26px 0 8px}
-h3{font-size:13px;margin:18px 0 6px;border-bottom:1px solid #e6e6e6;padding-bottom:5px}
-.head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #CC0000;padding-bottom:12px}
-.meta{color:#6b6b6b;font-size:12px}
-.photos{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
-.photos figure{margin:0}.photos img{width:100%;border:1px solid #e0e0e0;display:block}
-figcaption{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#8a8a8a;margin-top:5px}
-table{width:100%;border-collapse:collapse}th,td{padding:6px 8px;text-align:left;vertical-align:top;border-bottom:1px solid #efefef}
-th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8a8a8a}
-.n{text-align:right;font-family:'DM Mono',ui-monospace,monospace;white-space:nowrap}
-.src{font-size:10px;color:#a0a0a0;font-family:ui-monospace,monospace}
-tr.sub td{font-weight:700;background:#fafafa}
-.totals{margin-top:18px;border:1px solid #e0e0e0;padding:14px}
-.totals .row{display:flex;justify-content:space-between;padding:4px 0}
-.totals .grand{border-top:1px solid #e0e0e0;margin-top:6px;padding-top:10px;font-size:16px;font-weight:700}
-.note{margin-top:18px;font-size:11.5px;color:#5c5c5c;border-left:3px solid #CC0000;padding-left:12px}
-.sig{margin-top:34px;display:grid;grid-template-columns:1fr 1fr;gap:34px}
-.sig div{border-top:1px solid #141414;padding-top:6px;font-size:11px;color:#6b6b6b}
-@media print{body{padding:0}}
-</style></head><body>
-<div class="head"><div><h1>Contractor Brief</h1><div class="meta">${esc(scopeContext())} &middot; ${esc(r.grade[0].toUpperCase()+r.grade.slice(1))} Grade</div></div>
-<div class="meta" style="text-align:right">REAL DESIGNS<br>${esc(r.market.name)}<br>${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</div></div>
-<div class="photos"><figure><img src="${PHOTOS.before}" alt="Existing condition of the space"><figcaption>Existing Condition</figcaption></figure>
-<figure><img src="${PHOTOS.after}" alt="Proposed design for the space"><figcaption>Proposed Design</figcaption></figure></div>
-<h2>Room Measurements</h2><div class="meta">${esc(dimLine)} &middot; Layout confidence ${esc(r.layout_conf)}${dimsProposal&&!dimsConfirmed?' &middot; dimensions proposed from a photo and not yet confirmed':''}</div>
-<h2>Budget By Trade</h2>${groups}
-<div class="totals">
-<div class="row"><span>Material</span><b class="n">${money(r.material_low)} &ndash; ${money(r.material_high)}</b></div>
-<div class="row"><span>Labor</span><b class="n">${money(r.labor_low)} &ndash; ${money(r.labor_high)}</b></div>
-<div class="row"><span>Subtotal</span><b class="n">${money(r.subtotal_low)} &ndash; ${money(r.subtotal_high)}</b></div>
-<div class="row"><span>Contingency At ${r.contingency_pct}%</span><b class="n">${money(r.contingency_low)} &ndash; ${money(r.contingency_high)}</b></div>
-<div class="row grand"><span>Estimated Planning Range${r.budget_fit?' &middot; '+esc(r.budget_fit):''}</span><span class="n">${money(r.total_low)} &ndash; ${money(r.total_high)}</span></div>
-</div>
-<div class="note"><b>Confidence Statement.</b> Layout confidence ${esc(r.layout_conf)}. Pricing confidence ${esc(r.pricing_conf)}, with ${r.matched_pct}% of lines matched to an exact cost record for this market and finish grade. Costs are adjusted to ${esc(r.market.name)} labor and material factors.<br><br>
-<b>Disclosure.</b> ${esc(r.disclaimer)} Quantities derive from the measurements above; verify in the field before ordering material or committing to a schedule. Line items exclude permits, structural work, abatement, and any condition not visible in the photographs.</div>
-<div class="sig"><div>Contractor Signature &amp; Date</div><div>Owner Signature &amp; Date</div></div>
-</body></html>`;
+    return {
+      heading:d+' - '+g.trade,
+      columns:[{label:'Item',width:34},{label:'Qty',align:'right',width:11},{label:'Material',align:'right',width:16},
+        {label:'Labor',align:'right',width:16},{label:'Low',align:'right',width:11},{label:'High',align:'right',width:12}],
+      rows:g.lines.map(l=>[
+        l.description+(l.is_fallback?' (fallback cost record)':'')+'\n'+l.price_source,
+        l.qty+' '+l.uom,
+        money(l.material_low)+'-'+money(l.material_high),
+        money(l.labor_low)+'-'+money(l.labor_high),
+        money(l.line_low), money(l.line_high)
+      ]).concat([['Division Subtotal','','','',money(low),money(high)]]),
+      emphasizeRows:[g.lines.length]
+    };
+  });
+  const dimLine=`${document.getElementById('scFloor').value} SF floor - ${document.getElementById('scWall').value} SF wall - ${document.getElementById('scPerim').value} LF perimeter`;
+  const [before,after]=await Promise.all([imageForPdf(PHOTOS.before),imageForPdf(PHOTOS.after)]);
+  const images=[];
+  if(before) images.push({url:before,caption:'EXISTING CONDITION'});
+  if(after) images.push({url:after,caption:'PROPOSED DESIGN'});
+  return {
+    title:'Contractor Brief',
+    subtitle:scopeContext()+' - '+(r.grade[0].toUpperCase()+r.grade.slice(1))+' Grade',
+    metaRight:[r.market.name,new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})],
+    images,
+    sections:[{heading:'Room Measurements',text:dimLine+' - Layout confidence '+r.layout_conf+(dimsProposal&&!dimsConfirmed?' - dimensions proposed from a photo and not yet confirmed':'')}].concat(sections),
+    totals:[
+      {label:'Material',value:money(r.material_low)+' - '+money(r.material_high)},
+      {label:'Labor',value:money(r.labor_low)+' - '+money(r.labor_high)},
+      {label:'Subtotal',value:money(r.subtotal_low)+' - '+money(r.subtotal_high)},
+      {label:'Contingency At '+r.contingency_pct+'%',value:money(r.contingency_low)+' - '+money(r.contingency_high)},
+      {label:'Estimated Planning Range'+(r.budget_fit?' - '+r.budget_fit:''),value:money(r.total_low)+' - '+money(r.total_high),strong:true}
+    ],
+    notes:[
+      'Confidence Statement. Layout confidence '+r.layout_conf+'. Pricing confidence '+r.pricing_conf+', with '+r.matched_pct+'% of lines matched to an exact cost record for this market and finish grade. Costs are adjusted to '+r.market.name+' labor and material factors.',
+      'Disclosure. '+r.disclaimer+' Quantities derive from the measurements above; verify in the field before ordering material or committing to a schedule. Line items exclude permits, structural work, abatement, and any condition not visible in the photographs.'
+    ],
+    signatures:['Contractor Signature & Date','Owner Signature & Date']
+  };
 }
-function exportBrief(){
-  if(!lastScope){ return; }
-  const w=window.open('','_blank');
-  if(!w){ showAlert('Allow pop-ups to open the contractor brief.'); return; }
-  w.document.write(briefHtml(lastScope));
-  w.document.close();
-  setTimeout(()=>{ try{ w.focus(); w.print(); }catch(e){} },600);
+async function exportBrief(){
+  if(!lastScope) return;
+  const btn=document.getElementById('scBrief'); const lab=btn?btn.innerHTML:'';
+  if(btn){ btn.disabled=true; btn.textContent='Building PDF…'; }
+  try{
+    await downloadPdf(await briefDoc(lastScope),'contractor-brief-'+scopeContext());
+    try{ (window as any).rdToast && (window as any).rdToast('Contractor Brief Downloaded'); }catch(_){ }
+  }catch(e){
+    showAlert('Could not build the contractor brief. '+((e&&e.message)||''));
+  }finally{ if(btn){ btn.disabled=false; btn.innerHTML=lab; } }
 }
+
 document.getElementById('scBrief').addEventListener('click',exportBrief);
 document.getElementById('scBrief').disabled=true;
 document.getElementById('allowBuild').addEventListener('click',()=>{ lastScope?renderAllowance(lastScope):runScope(); });
@@ -2268,39 +2263,40 @@ function boardCsv(){
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='real-designs-product-board.csv'; a.click(); URL.revokeObjectURL(a.href);
 }
-function boardPrintHtml(title,sub,grade,lines,totals){
-  const rows=lines.map(l=>{const s=boardSearch(l.description,grade);
-    return `<tr><td><b>${esc(l.description)}</b><div class="s">${esc(l.price_source||'')}</div></td><td>${esc(l.trade)}</td>
-<td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${presMoney(l.material_low)} &ndash; ${presMoney(l.material_high)}</td>
-<td>${esc(buyLabel(buyStatus(l)))}</td>
-<td><a href="${s.url}">${esc(s.name)}</a></td></tr>`;}).join('')||'<tr><td colspan="6">No material lines.</td></tr>';
-
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — Product Board</title><style>
-@page{size:letter;margin:14mm}body{font:13px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#141414;margin:0}
-.mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #CC0000;padding-bottom:10px;margin-bottom:16px}
-.brand{font-weight:800;letter-spacing:.16em;font-size:12px;text-transform:uppercase}.brand b{color:#CC0000}
-h1{font-size:20px;margin:0 0 4px}.sub{color:#6b6b6b;font-size:12px}
-table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid #ececec;vertical-align:top}
-th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b}td.n,th.n{text-align:right}
-td .s{color:#8a8a8a;font-size:10px}a{color:#CC0000}
-.note{margin-top:16px;font-size:10.5px;color:#6b6b6b;border-top:1px solid #ececec;padding-top:10px}
-</style></head><body><div class="mast"><div><div class="brand">REAL<b>&nbsp;DESIGNS</b></div><h1>${esc(title)}</h1>
-<div class="sub">${esc(sub)}</div></div><div class="sub" style="text-align:right">Product Board<br>${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div>
-<table><thead><tr><th>Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Allowance</th><th>Status</th><th>Where To Buy</th></tr></thead><tbody>${rows}</tbody>
-${totals?`<tfoot><tr><td colspan="3"><b>Material Allowance Total</b></td><td class="n"><b>${presMoney(totals[0])} &ndash; ${presMoney(totals[1])}</b></td><td></td><td></td></tr></tfoot>`:''}</table>
-
-<div class="note">Allowances are planning figures per line at the selected finish grade, not quoted product prices. Retailer links are searches, not endorsements or reserved stock.</div>
-</body></html>`;
+function boardPdfDoc(title,sub,grade,lines,totals){
+  const rows=lines.map(l=>{
+    const s=boardSearch(l.description,grade);
+    return [l.description+(l.price_source?'\n'+l.price_source:''), l.trade, l.qty+' '+l.uom,
+      presMoney(l.material_low)+' - '+presMoney(l.material_high), buyLabel(buyStatus(l)), s.name];
+  });
+  if(!rows.length) rows.push(['No material lines.','','','','','']);
+  return {
+    title,
+    subtitle:sub,
+    metaRight:['Product Board',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})],
+    sections:[{
+      columns:[{label:'Item',width:30},{label:'Trade',width:14},{label:'Quantity',align:'right',width:12},
+        {label:'Allowance',align:'right',width:18},{label:'Status',width:12},{label:'Where To Buy',width:14}],
+      rows
+    }],
+    totals:totals?[{label:'Material Allowance Total',value:presMoney(totals[0])+' - '+presMoney(totals[1]),strong:true}]:[],
+    notes:['Allowances are planning figures per line at the selected finish grade, not quoted product prices. Retailer links are searches, not endorsements or reserved stock.']
+  };
 }
-function boardPrint(){
-  const r=lastScope; if(!r){ showAlert('Price A Budget First, Then Print The Board.'); return; }
+async function boardPrint(){
+  const r=lastScope; if(!r){ showAlert('Price A Budget First, Then Export The Board.'); return; }
   const sp=PROP_TREE[SEL.p], sj=sp?sp.projects[SEL.pr]:null;
-  const w=window.open('','_blank'); if(!w) return;
-  w.document.write(boardPrintHtml('Product Board',
-    (sp?sp.address+(sj?' · '+sj.name:''):'Unsaved room')+' · '+r.market.name+' · '+r.grade+' grade',
-    r.grade, boardLines(r), [r.material_low,r.material_high]));
-  w.document.close(); w.focus(); setTimeout(()=>{try{w.print();}catch(_){}} ,600);
+  const btn=document.getElementById('boardPrint'); const lab=btn?btn.innerHTML:'';
+  if(btn){ btn.disabled=true; btn.textContent='Building PDF…'; }
+  try{
+    await downloadPdf(boardPdfDoc('Product Board',
+      (sp?sp.address+(sj?' - '+sj.name:''):'Unsaved room')+' - '+r.market.name+' - '+r.grade+' grade',
+      r.grade, boardLines(r), [r.material_low,r.material_high]),'product-board');
+    try{ (window as any).rdToast && (window as any).rdToast('Product Board Downloaded'); }catch(_){ }
+  }catch(e){ showAlert('Could not build the product board. '+((e&&e.message)||'')); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML=lab; } }
 }
+
 renderProductBoard(lastScope);
 function paintSelectedProducts(){ try{ renderSelectedProducts(document.getElementById('selProducts'),go); }catch(_){} }
 paintSelectedProducts();
@@ -2457,72 +2453,43 @@ const presMoney=(n)=>'$'+Math.round(n||0).toLocaleString('en-US');
 /* Implemented in @/content/rd-reports; mounted when the view opens. */
 
 
-function presPdfHtml(p){
+async function presPdfDoc(p){
   const when=new Date(p.created_at||Date.now()).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   const lines=(p.lines||[]);
-  const rows=lines.map(l=>`<tr><td>${esc(l.description)}</td><td>${esc(l.trade)}</td><td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${presMoney(l.low)} &ndash; ${presMoney(l.high)}</td></tr>`).join('')
-    ||'<tr><td colspan="4">No Priced Line Items On This Version Yet.</td></tr>';
-  const range=p.total_low!=null?presMoney(p.total_low)+' &ndash; '+presMoney(p.total_high):'Not priced yet';
-  const img=(u,l)=>u?`<figure><img src="${esc(u)}" alt="${l}"><figcaption>${l}</figcaption></figure>`:`<figure class="ph"><div>${l} not available</div></figure>`;
-  /* Trade rollup so the client sees where the money sits before the line detail. */
+  const rows=lines.map(l=>[l.description,l.trade,l.qty+' '+l.uom,presMoney(l.low)+' - '+presMoney(l.high)]);
+  if(!rows.length) rows.push(['No Priced Line Items On This Version Yet.','','','']);
+  const range=p.total_low!=null?presMoney(p.total_low)+' - '+presMoney(p.total_high):'Not priced yet';
   const byTrade={};
   lines.forEach(l=>{ const k=l.trade||'Other'; (byTrade[k]=byTrade[k]||{low:0,high:0,n:0}); byTrade[k].low+=Number(l.low||0); byTrade[k].high+=Number(l.high||0); byTrade[k].n++; });
   const trades=Object.keys(byTrade).sort((a,b)=>byTrade[b].high-byTrade[a].high).slice(0,6);
-  const rollup=trades.length?`<div class="roll">`+trades.map(t=>{
-    const v=byTrade[t];
-    return `<div class="rc"><span class="rl">${esc(t)}</span><b>${presMoney(v.low)} &ndash; ${presMoney(v.high)}</b><span class="rl">${v.n} item${v.n===1?'':'s'}</span></div>`;
-  }).join('')+`</div>`:'';
-  const approved=(p.status==='approved');
-  const stamp=approved?`<div class="stamp">Approved By Client</div>`:'';
-  const sign=approved?'':`<div class="sign"><div><span>Client Signature</span></div><div><span>Date</span></div></div>`;
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(p.title)} — REAL DESIGNS</title>
-<style>
-@page{size:letter;margin:14mm}
-*{box-sizing:border-box}
-body{font:13px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#141414;margin:0}
-.mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #CC0000;padding-bottom:10px;margin-bottom:16px}
-.badge{display:inline-block;background:#CC0000;padding:5px;border-radius:3px}
-.badge .in{border:1.5px solid #fff;border-radius:2px;padding:4px 9px 5px;text-align:center;color:#fff;line-height:1}
-.badge .r{font-weight:900;font-size:17px;letter-spacing:.01em}
-.badge .d{font-size:6.5px;font-weight:700;letter-spacing:.34em;margin-top:2px}
-h1{font-size:22px;margin:8px 0 4px}
-.sub{color:#6b6b6b;font-size:12px}
-.figs{display:flex;gap:12px;margin:0 0 16px}
-figure{margin:0;flex:1}
-figure img{width:100%;height:208px;object-fit:cover;border-radius:8px;border:1px solid #e4e4e4}
-figure.ph div{height:208px;display:flex;align-items:center;justify-content:center;border:1px dashed #ccc;border-radius:8px;color:#8a8a8a;font-size:12px}
-figcaption{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin-top:6px}
-.range{border:1px solid #e4e4e4;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:14px}
-.range b{display:block;font-size:20px}
-.stamp{border:2px solid #157a3f;color:#157a3f;border-radius:6px;padding:6px 10px;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
-.roll{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.rc{flex:1 1 30%;border:1px solid #ececec;border-radius:8px;padding:8px 10px}
-.rc b{display:block;font-size:12.5px;margin:2px 0}
-.rl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#8a8a8a}
-h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6b6b6b;margin:0 0 6px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th,td{text-align:left;padding:7px 6px;border-bottom:1px solid #ececec}
-th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b}
-td.n,th.n{text-align:right}
-tfoot td{font-weight:700;border-top:2px solid #141414;border-bottom:0}
-.sign{display:flex;gap:24px;margin-top:26px}
-.sign div{flex:1;border-top:1px solid #9a9a9a;padding-top:5px}
-.sign span{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a}
-.note{margin-top:16px;font-size:10.5px;color:#6b6b6b;border-top:1px solid #ececec;padding-top:10px}
-</style></head><body>
-<div class="mast"><div><span class="badge"><span class="in"><span class="r">REAL</span><div class="d">DESIGNS</div></span></span><h1>${esc(p.title)}</h1>
-<div class="sub">${esc(p.address)} &middot; ${esc(p.project_name)} &middot; ${esc(p.room_name)} &middot; v${p.version_no}</div></div>
-<div class="sub" style="text-align:right">${when}<br>${esc(p.client_name||'Client copy')}</div></div>
-<div class="figs">${img(p.before_url,'Before')}${img(p.after_url,'After')}</div>
-<div class="range"><div><div class="sub">Estimated Planning Range</div><b>${range}</b>
-<div class="sub">${esc((p.style||'Style on file'))} &middot; ${esc(p.grade)} grade finishes</div></div>${stamp}</div>
-${rollup?'<h2>Where The Budget Sits</h2>'+rollup:''}
-<h2>Scope Detail</h2>
-<table><thead><tr><th>Scope Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Range</th></tr></thead><tbody>${rows}</tbody>
-<tfoot><tr><td colspan="3">Total Planning Range</td><td class="n">${range}</td></tr></tfoot></table>
-${sign}
-<div class="note">Planning estimates derived from the approved design and local cost data. Not a construction bid, subcontractor pricing governs. Rendered images are design visualisations of the same space.</div>
-</body></html>`;
+  const [before,after]=await Promise.all([p.before_url?imageForPdf(p.before_url):null,p.after_url?imageForPdf(p.after_url):null]);
+  const images=[];
+  if(before) images.push({url:before,caption:'BEFORE'});
+  if(after) images.push({url:after,caption:'AFTER'});
+  const sections=[];
+  if(trades.length) sections.push({
+    heading:'Where The Budget Sits',
+    columns:[{label:'Trade',width:40},{label:'Items',align:'right',width:16},{label:'Range',align:'right',width:44}],
+    rows:trades.map(t=>[t,String(byTrade[t].n),presMoney(byTrade[t].low)+' - '+presMoney(byTrade[t].high)])
+  });
+  sections.push({
+    heading:'Scope Detail',
+    columns:[{label:'Scope Item',width:44},{label:'Trade',width:18},{label:'Quantity',align:'right',width:16},{label:'Range',align:'right',width:22}],
+    rows
+  });
+  return {
+    title:p.title,
+    subtitle:[p.address,p.project_name,p.room_name,'v'+p.version_no].filter(Boolean).join(' - '),
+    metaRight:[when,p.client_name||'Client copy',(p.status==='approved'?'Approved By Client':'')].filter(Boolean),
+    images,
+    sections,
+    totals:[
+      {label:(p.style||'Style on file')+' - '+(p.grade||'retail')+' grade finishes',value:''},
+      {label:'Estimated Planning Range',value:range,strong:true}
+    ],
+    notes:['Planning estimates derived from the approved design and local cost data. Not a construction bid, subcontractor pricing governs. Rendered images are design visualisations of the same space.'],
+    signatures:p.status==='approved'?[]:['Client Signature','Date']
+  };
 }
 
 
@@ -2531,12 +2498,8 @@ async function exportPresentationPdf(id,btn){
   if(btn){ btn.disabled=true; btn.innerHTML='<i data-lucide="loader"></i>'; lucide.createIcons(); }
   try{
     const p=await getPresentationPackage({data:{id}});
-    const w=window.open('','_blank');
-    if(!w) throw new Error('Allow pop-ups to export the PDF.');
-    w.document.write(presPdfHtml(p));
-    w.document.close();
-    w.focus();
-    setTimeout(()=>{ try{ w.print(); }catch(_){} },700);
+    await downloadPdf(await presPdfDoc(p),p.title||'presentation');
+    try{ (window as any).rdToast && (window as any).rdToast('PDF Downloaded'); }catch(_){ }
   }catch(e){
     showAlert('Could not build that PDF. '+((e&&e.message)||''));
   }finally{
@@ -2552,19 +2515,17 @@ async function exportPresentationBoard(id,btn){
     const lines=(p.lines||[]).map(l=>({description:l.description,trade:l.trade,qty:l.qty,uom:l.uom,
       material_low:l.low,material_high:l.high,price_source:'From the approved scope'}));
     const tl=lines.reduce((a,l)=>a+l.material_low,0), th=lines.reduce((a,l)=>a+l.material_high,0);
-    const w=window.open('','_blank');
-    if(!w) throw new Error('Allow pop-ups to open the board.');
-    w.document.write(boardPrintHtml(p.title,
-      [p.address,p.project_name,p.room_name,(p.grade||'retail')+' grade'].filter(Boolean).join(' \u00b7 '),
-      p.grade, lines, lines.length?[tl,th]:null));
-    w.document.close(); w.focus();
-    setTimeout(()=>{ try{ w.print(); }catch(_){} },700);
+    await downloadPdf(boardPdfDoc(p.title,
+      [p.address,p.project_name,p.room_name,(p.grade||'retail')+' grade'].filter(Boolean).join(' - '),
+      p.grade, lines, lines.length?[tl,th]:null),(p.title||'product')+'-board');
+    try{ (window as any).rdToast && (window as any).rdToast('Product Board Downloaded'); }catch(_){ }
   }catch(e){
     showAlert('Could not build that board. '+((e&&e.message)||''));
   }finally{
     if(btn){ btn.disabled=false; btn.innerHTML=old; lucide.createIcons(); }
   }
 }
+
 
 async function exportSocialReel(id,btn){
   const old=btn?btn.innerHTML:null;

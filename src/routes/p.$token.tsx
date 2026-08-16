@@ -58,6 +58,7 @@ function SharedPresentation() {
   const [excluded, setExcluded] = useState<string[]>(deck?.excluded_lines ?? []);
   const [lineNotes, setLineNotes] = useState<Record<string, string>>(deck?.line_notes ?? {});
   const [openNote, setOpenNote] = useState<string | null>(null);
+  const [pdfBusy, setPdfBusy] = useState(false);
 
   useEffect(() => {
     if (deck) document.title = `${deck.title} | REAL DESIGNS`;
@@ -103,6 +104,70 @@ function SharedPresentation() {
   const accent = /^#[0-9a-f]{6}$/i.test(deck.brand_accent || "") ? (deck.brand_accent as string) : "#CC0000";
   const brandName = (deck.brand_name || "").trim();
 
+  async function downloadCopy() {
+    setPdfBusy(true);
+    try {
+      const { downloadPdf, imageForPdf } = await import("@/lib/pdf-download");
+      const [before, after] = await Promise.all([
+        deck!.before_url ? imageForPdf(deck!.before_url) : null,
+        deck!.after_url ? imageForPdf(deck!.after_url) : null,
+      ]);
+      const images = [
+        ...(before ? [{ url: before, caption: "BEFORE" }] : []),
+        ...(after ? [{ url: after, caption: "AFTER" }] : []),
+      ];
+      await downloadPdf(
+        {
+          title: deck!.title,
+          subtitle: [deck!.address, deck!.room_name, "Version " + deck!.version_no, deck!.style]
+            .filter(Boolean)
+            .join(" - "),
+          org: brandName || "REAL DESIGNS",
+          accent,
+          metaRight: [
+            new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+            "Prepared For " + (deck!.client_name || "You"),
+          ],
+          images,
+          sections: [
+            {
+              heading: "Scope Detail",
+              columns: [
+                { label: "Scope Item", width: 46 },
+                { label: "Trade", width: 18 },
+                { label: "Quantity", align: "right" as const, width: 14 },
+                { label: "Range", align: "right" as const, width: 22 },
+              ],
+              rows: kept.length
+                ? kept.map((l: any) => [
+                    l.description + (lineNotes[l.id] ? "\nNote: " + lineNotes[l.id] : ""),
+                    l.trade || "",
+                    (l.qty ?? "") + " " + (l.uom || ""),
+                    money(Number(l.low || 0)) + " - " + money(Number(l.high || 0)),
+                  ])
+                : [["No priced line items on this version yet.", "", "", ""]],
+            },
+          ],
+          totals: [
+            {
+              label: "Estimated Planning Range" + (trimmed ? " (Selected Items)" : ""),
+              value: money(keptLow) + " - " + money(keptHigh),
+              strong: true,
+            },
+          ],
+          notes: [
+            "Planning estimates derived from the approved design and local cost data. Not a construction bid, subcontractor pricing governs.",
+          ],
+        },
+        deck!.title || "design-package",
+      );
+    } catch {
+      /* the button simply re-enables; nothing sensitive to surface here */
+    } finally {
+      setPdfBusy(false);
+    }
+  }
+
   return (
     <main className="pp-wrap" style={{ "--pp-accent": accent } as Record<string, string>}>
       <header className="pp-head">
@@ -110,8 +175,14 @@ function SharedPresentation() {
           {brandName || (<>REAL <b>DESIGNS</b></>)}
           {brandName ? <span className="pp-via">via Real Designs</span> : null}
         </span>
-        <span className="pp-kicker">Prepared For {deck.client_name || "You"}</span>
+        <span className="pp-head-right">
+          <span className="pp-kicker">Prepared For {deck.client_name || "You"}</span>
+          <button type="button" className="pp-btn pp-btn-ghost" onClick={downloadCopy} disabled={pdfBusy}>
+            {pdfBusy ? "Preparing…" : "Download PDF"}
+          </button>
+        </span>
       </header>
+
 
       <section className="pp-card">
         <h1 className="pp-title">{deck.title}</h1>

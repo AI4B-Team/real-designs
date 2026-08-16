@@ -86,20 +86,34 @@ export const buildScope = createServerFn({ method: "POST" })
     const project = room.projects;
     const property = project.properties;
 
-    if (!property.market_id) {
-      throw new Error("Property has no market assigned; cannot price a scope.");
-    }
-
     // Market factors and the cost catalog are internal pricing data: privileged read only.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: market, error: marketError } = await supabaseAdmin
-      .from("markets")
-      .select("id, labor_factor, material_factor")
-      .eq("id", property.market_id)
-      .maybeSingle();
-    if (marketError) throw new Error(marketError.message);
-    if (!market) throw new Error("Market not found");
+    // A property without a market still gets a price: fall back to the baseline
+    // market so the user sees a planning range instead of a dead end.
+    let market: { id: string; labor_factor: number | null; material_factor: number | null } | null = null;
+    if (property.market_id) {
+      const { data: m, error: marketError } = await supabaseAdmin
+        .from("markets")
+        .select("id, labor_factor, material_factor")
+        .eq("id", property.market_id)
+        .maybeSingle();
+      if (marketError) throw new Error(marketError.message);
+      market = m as any;
+    }
+    if (!market) {
+      const { data: fallback } = await supabaseAdmin
+        .from("markets")
+        .select("id, labor_factor, material_factor")
+        .order("name", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+      market = fallback as any;
+    }
+    if (!market) {
+      throw new Error("No cost markets are set up yet, so this scope cannot be priced. Add a market with unit costs first.");
+    }
+
 
     const laborFactor = num(market.labor_factor) || 1;
     const materialFactor = num(market.material_factor) || 1;
