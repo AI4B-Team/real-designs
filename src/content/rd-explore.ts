@@ -197,7 +197,7 @@ export function mountExplore(go, ctx) {
       ? chips.map(([k, v]) => `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`).join("") +
         '<button class="xp-aclear" id="xpClear">Clear All</button>'
       : "";
-    $("xpCount").textContent = list.length + " Of " + STYLES.length + " Styles";
+    $("xpCount").textContent = list.length + (list.length === 1 ? " style" : " styles");
     $("xpSavedCnt").textContent = saved.length;
     $("xpSortLab").textContent = (SORTS.find((x) => x[0] === sort) || [, "Popular"])[1];
 
@@ -454,12 +454,10 @@ export function mountExplore(go, ctx) {
   }
 
   /** left rail is identical in every state so the card never changes shape */
-  function quizAside(sub) {
+  function quizAside() {
     return `<aside class="xp-quiz-aside">
-      <span class="xp-quiz-eyebrow">Find Your Style</span>
       <h3>Find Your Style</h3>
-      <p>Answer a few quick questions for personalized recommendations.</p>
-      <span class="xp-quiz-step">${sub}</span>
+      <p>Answer five quick questions for personalized recommendations.</p>
     </aside>`;
   }
 
