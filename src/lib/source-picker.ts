@@ -225,40 +225,34 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /* ---------- markup ---------- */
 
-  function tabs() {
+  function dropbox() {
     return (
-      '<div class="sp-tabs">' +
-      cfg.sources
-        .map((s) => {
-          const m = SOURCE_META[s];
-          return (
-            '<button type="button" class="sp-tab' + (s === "upload" ? " sp-primary" : "") + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s + '">' +
-            (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
-            esc(m.label) +
-            "</button>"
-          );
-        })
-        .join("") +
+      '<div class="sp-drop' + (state.dragging ? " over" : "") + '" data-sp-drop="1">' +
+      '<i data-lucide="upload-cloud"></i>' +
+      "<b>" + (cfg.multiple ? "Drop Your Photos, Or" : "Drop A Photo, Sketch Or Plan, Or") + "</b>" +
+      '<div class="sp-acts">' +
+      '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Browse Files</button>' +
+      (cfg.sources.includes("cloud")
+        ? '<button type="button" class="sp-cloudbtn" data-sp="tab-cloud">' + DRIVE_ICON + "Drive</button>" +
+          '<button type="button" class="sp-cloudbtn" data-sp="tab-cloud">' + DROPBOX_ICON + "Dropbox</button>"
+        : "") +
+      "</div>" +
+      '<span class="sp-hint">' + esc(cfg.acceptHint) + " · Up To " + MAX_MB + " MB Each</span>" +
+      (opts.onSample ? '<button type="button" class="sp-link" data-sp="sample">No Photo Yet? Try A Sample Space</button>' : "") +
       "</div>"
     );
   }
 
+  function backLink() {
+    return '<button type="button" class="sp-link sp-back" data-sp="tab-upload"><i data-lucide="arrow-left"></i>Back To Upload</button>';
+  }
+
   function panel() {
-    if (state.tab === "upload") {
-      return (
-        '<div class="sp-drop' + (state.dragging ? " over" : "") + '" data-sp-drop="1">' +
-        '<i data-lucide="upload-cloud"></i>' +
-        "<b>" + (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") + "</b>" +
-        '<span class="sp-or">Drag and drop, or</span>' +
-        '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Browse Files</button>' +
-        '<span class="sp-hint">Supported files: ' + esc(cfg.acceptHint) + ' · Up to ' + MAX_MB + " MB each</span>" +
-        (opts.onSample ? '<button type="button" class="sp-link" data-sp="sample">Not Ready To Upload? Try A Sample Space</button>' : "") +
-        "</div>"
-      );
-    }
+    if (state.tab === "upload") return dropbox();
+
     if (state.tab === "cloud") {
       return (
-        '<div class="sp-pane">' +
+        '<div class="sp-pane">' + backLink() +
         '<div class="sp-cloudrow"><span>' + DRIVE_ICON + "Google Drive</span><span>" + DROPBOX_ICON + "Dropbox</span></div>" +
         '<label class="sp-f">Public Share Link<input type="text" id="spCloud" placeholder="https://drive.google.com/file/d/..."></label>' +
         '<button type="button" class="btn btn-primary btn-sm" data-sp="cloudgo">' + (state.busy ? "Importing" : "Import Photos") + "</button>" +
@@ -268,32 +262,24 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     }
     if (state.tab === "address") {
       return (
-        '<div class="sp-pane">' +
+        '<div class="sp-pane">' + backLink() +
         '<label class="sp-f sp-search">Property Address<span><i data-lucide="search"></i>' +
         '<input type="text" id="spAddr" placeholder="3417 Hoover Dr, Holiday, FL 34691" value="' + esc(state.address) + '"></span></label>' +
         '<button type="button" class="btn btn-primary btn-sm" data-sp="addrgo">' + (state.busy ? "Looking Up" : "Look Up Address") + "</button>" +
-        '<p class="sp-note">An address lookup files your work under that property and fills in listing details such as beds, baths and square footage. It does not download photos from a listing — add those from Upload.</p>' +
-        "</div>"
-      );
-    }
-    if (state.tab === "url") {
-      return (
-        '<div class="sp-pane">' +
-        '<label class="sp-f">Listing Link<input type="text" id="spUrl" placeholder="https://www.zillow.com/homedetails/..." value="' + esc(state.url) + '"></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' + (state.busy ? "Reading Link" : "Import Listing Details") + "</button>" +
-        '<p class="sp-note">Listing links are read as text only. No photos or media are imported from a public listing page.</p>' +
+        '<p class="sp-note">An address lookup files your work under that property and fills in listing details such as beds, baths and square footage. It does not download photos from a listing.</p>' +
         "</div>"
       );
     }
     if (state.tab === "property") {
       const list = (opts.properties ? opts.properties() : []).slice(0, 30);
-      if (!list.length) return '<div class="sp-pane"><p class="sp-note">No Properties Yet. Upload Photos To Start.</p></div>';
+      if (!list.length) return '<div class="sp-pane">' + backLink() + '<p class="sp-note">No Properties Yet. Upload Photos To Start.</p></div>';
       return (
-        '<div class="sp-pane"><div class="sp-props">' +
+        '<div class="sp-pane">' + backLink() + '<div class="sp-props">' +
         list
           .map(
             (p) =>
-              '<button type="button" class="sp-prop" data-sp-prop="' + esc(p.address) + '"><i data-lucide="home"></i><b>' +
+              '<button type="button" class="sp-prop' + (p.disabled ? " off" : "") + '"' + (p.disabled ? " disabled" : "") +
+              ' data-sp-prop="' + esc(p.address) + '"><i data-lucide="home"></i><b>' +
               esc(p.address) + "</b><span class=\"mono\">" + esc(p.meta || "") + "</span></button>",
           )
           .join("") +
@@ -303,9 +289,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (state.tab === "design") {
       const list = (opts.designs ? opts.designs() : []).slice(0, 40);
       if (!list.length)
-        return '<div class="sp-pane"><p class="sp-note">No Finished Designs Yet. Start From Photos Instead.</p></div>';
+        return '<div class="sp-pane">' + backLink() + '<p class="sp-note">No Finished Designs Yet. Start From Photos Instead.</p></div>';
       return (
-        '<div class="sp-pane"><div class="sp-props">' +
+        '<div class="sp-pane">' + backLink() + '<div class="sp-props">' +
         list
           .map(
             (d) =>
@@ -317,44 +303,50 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       );
     }
     return "";
-
   }
 
-  function chooser() {
-    if (!state.choose.length) return "";
+  /** One quiet line for things already in the workspace. */
+  function workspaceLine() {
+    const has: string[] = [];
+    if (cfg.sources.includes("property")) has.push('<button type="button" class="sp-inline" data-sp="tab-property">Existing Property</button>');
+    if (cfg.sources.includes("design")) has.push('<button type="button" class="sp-inline" data-sp="tab-design">Existing Design</button>');
+    if (cfg.sources.includes("address")) has.push('<button type="button" class="sp-inline" data-sp="tab-address">Property Address</button>');
+    if (!has.length) return "";
+    return '<p class="sp-line">Or Use Something You Already Have: ' + has.join('<em class="sp-dot">·</em>') + "</p>";
+  }
+
+  /** One collapsed line for a listing link, expanding to an input inline. */
+  function listingLine() {
+    if (!cfg.sources.includes("url")) return "";
+    if (!state.listing) {
+      return (
+        '<p class="sp-line"><b>Have A Listing Link?</b> ' +
+        '<button type="button" class="sp-inline" data-sp="listing">Paste It To Fill In The Property Details</button></p>'
+      );
+    }
     return (
-      '<div class="sp-modal" role="dialog" aria-modal="true" aria-label="Choose One Photo">' +
-      '<div class="sp-scrim" data-sp="closechoose"></div>' +
-      '<div class="sp-choose"><div class="sp-choose-h"><b>' +
-      state.choose.length + ' Photos Imported. Choose One To Design.</b>' +
-      '<button type="button" class="sp-link" data-sp="closechoose">Cancel</button></div>' +
-      '<div class="sp-choose-g">' +
-      state.choose
-        .map((p, i) => {
-          const flag = p.flags.length ? FLAG_LABEL[p.flags[0]!] || "Photo Quality" : "";
-          return (
-            '<button type="button" class="sp-choice" data-sp-choice="' + i + '">' +
-            '<img alt="' + esc(p.file.name) + '" src="' + URL.createObjectURL(p.file) + '">' +
-            "<b>" + esc(p.file.name) + "</b>" +
-            (flag ? '<em class="sp-flag">' + esc(flag) + "</em>" : "") +
-            "</button>"
-          );
-        })
-        .join("") +
-      "</div></div></div>"
+      '<div class="sp-listing">' +
+      '<div class="sp-listing-h"><b>Have A Listing Link?</b><span>Paste It To Fill In The Property Details</span></div>' +
+      '<div class="sp-listing-r">' +
+      '<input type="text" id="spUrl" placeholder="https://www.zillow.com/homedetails/..." value="' + esc(state.url) + '">' +
+      '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' + (state.busy ? "Reading" : "Read Listing Details") + "</button>" +
+      "</div>" +
+      '<p class="sp-note">We pull the address, price, beds, baths and square footage to set up your project. Photos come from you, because listing photos usually belong to the photographer or the brokerage.</p>' +
+      "</div>"
     );
   }
 
   function html() {
     return (
       '<div class="sp">' +
-      tabs() +
       panel() +
+      (state.tab === "upload" ? workspaceLine() + listingLine() : "") +
       (state.note ? '<div class="sp-msg">' + esc(state.note) + "</div>" : "") +
       "</div>" +
       chooser()
     );
   }
+
 
   let body: HTMLElement | null = null;
 
