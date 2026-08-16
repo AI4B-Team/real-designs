@@ -33,6 +33,12 @@ export const detectShopObjects = createServerFn({ method: "POST" })
     if (!billing.ok) throw new Error(chargeErrorMessage(billing));
 
     const allowed = data.categories;
+    let refunded = false;
+    const giveBack = async (why: string) => {
+      if (refunded) return;
+      refunded = true;
+      await refund(context.userId, billing.charged, why);
+    };
 
     try {
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -97,7 +103,7 @@ export const detectShopObjects = createServerFn({ method: "POST" })
       });
 
       if (!res.ok) {
-        await refund(context.userId, billing.charged, "object scan failed");
+        await giveBack("object scan failed");
         if (res.status === 429) throw new Error("Rate limit reached, try again shortly.");
         if (res.status === 402) throw new Error("AI credits exhausted for this workspace.");
         throw new Error(`The object scan could not finish (${res.status}).`);
@@ -106,7 +112,7 @@ export const detectShopObjects = createServerFn({ method: "POST" })
       const payload = (await res.json()) as any;
       const call = payload?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
       if (!call) {
-        await refund(context.userId, billing.charged, "object scan returned nothing");
+        await giveBack("object scan returned nothing");
         throw new Error("The object scan returned no result.");
       }
 
@@ -114,7 +120,7 @@ export const detectShopObjects = createServerFn({ method: "POST" })
       try {
         parsed = JSON.parse(call);
       } catch {
-        await refund(context.userId, billing.charged, "object scan unreadable");
+        await giveBack("object scan unreadable");
         throw new Error("The object scan returned an unreadable result.");
       }
 
@@ -158,6 +164,7 @@ export const detectShopObjects = createServerFn({ method: "POST" })
         remainingToday: billing.remainingToday ?? null,
       };
     } catch (err) {
+      await giveBack("object scan failed");
       throw err;
     }
   });
