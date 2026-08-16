@@ -210,7 +210,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 // bubble, so listen in the capture phase and inspect the failed script URL too.
 const chunkRecoveryScript = `(function(){
   var K='rd:chunk-reload';
-  function isChunk(m){return typeof m==='string'&&(/Failed to fetch dynamically imported module/i.test(m)||/Importing a module script failed/i.test(m)||/error loading dynamically imported module/i.test(m)||/default-entry\/client\.tsx/i.test(m));}
+  function isChunk(m){return typeof m==='string'&&(/Failed to fetch dynamically imported module/i.test(m)||/Importing a module script failed/i.test(m)||/error loading dynamically imported module/i.test(m)||m.indexOf('default-entry/client.tsx')!==-1);}
   function retry(m){
     if(!isChunk(m))return;
     try{var l=Number(sessionStorage.getItem(K)||0);if(l&&Date.now()-l<20000)return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
