@@ -236,3 +236,31 @@
   .shop-f{flex-direction:column;align-items:stretch}
   .shop-f input,.shop-f select{min-width:0;width:100%}
 }
+
+/* --- hotspot editing, confidence, product empty states, quick save --- */
+.shop-hbox{position:absolute;border:2px solid var(--red,#c00);background:rgba(204,0,0,.10);border-radius:6px;cursor:move}
+.shop-hres{position:absolute;right:-6px;bottom:-6px;width:12px;height:12px;border-radius:3px;background:#fff;border:2px solid var(--red,#c00);cursor:nwse-resize}
+.shop-conf{font-style:normal;font-family:"DM Mono",ui-monospace,monospace;font-size:.6rem;margin-left:6px;color:var(--mute-2,#8a867d)}
+.shop-conf.low{opacity:.6}
+.shop-cost{font-style:normal;font-family:"DM Mono",ui-monospace,monospace;font-size:.62rem;margin-left:6px;color:var(--mute-2,#8a867d)}
+.shop-noimgtile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;min-height:64px;background:#f4f3f0;border-radius:8px;color:var(--mute-2,#8a867d)}
+.shop-noimgtile i{width:22px;height:22px}
+.shop-noimgtile span{font-size:.62rem;letter-spacing:.06em;text-transform:uppercase}
+.shop-noimgtile.mini{width:54px;height:54px;min-height:0;flex:0 0 54px}
+.shop-noimgtile.mini span,.shop-noimgtile.cmp span{display:none}
+.shop-noimgtile.cmp{aspect-ratio:1}
+.sp-row .shop-noimgtile{width:46px;height:46px;min-height:0;flex:0 0 46px}
+.sp-row .shop-noimgtile span{display:none}
+.shop-bm{position:absolute;top:6px;right:6px;width:28px;height:28px;border-radius:50%;border:1px solid var(--line,#e6e3dd);background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--ink,#1b1a18)}
+.shop-bm i{width:15px;height:15px}
+.shop-bm.on{color:var(--red,#c00);border-color:var(--red,#c00)}
+.shop-bm.on i{fill:var(--red,#c00)}
+.shop-dr-h .shop-bm{position:static;margin-left:auto;margin-right:6px}
+.shop-undo{background:none;border:0;color:#fff;text-decoration:underline;font-weight:700;cursor:pointer;margin-left:12px}
+.shop-adv{grid-column:1/-1}
+.shop-adv-t{display:flex;align-items:center;gap:6px;background:none;border:0;padding:6px 0;font-weight:700;font-size:.78rem;cursor:pointer;color:var(--ink,#1b1a18)}
+.shop-adv-t i{width:15px;height:15px;transition:.15s}
+.shop-adv-t.on i{transform:rotate(180deg)}
+.shop-adv-b{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
+.shop-adv-b .shop-f.col{grid-column:1/-1}
+.shop-toast.on{pointer-events:auto}

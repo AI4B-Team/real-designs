@@ -7,7 +7,8 @@
 import { createIcons, icons } from "lucide";
 import {
   visualSearchProvider,
-  sampleDetection,
+  visionDetection,
+  categoryIcon,
   isProductSearchConfigured,
   matchTypeLabel,
   matchStrengthLabel,
@@ -66,8 +67,8 @@ function shell() {
 <div class="shop-body">
   <div class="shop-canvas">
     <div class="shop-tools">
-      <button class="btn btn-ghost btn-xs" id="shopDetect"><i data-lucide="scan-search"></i>Re-Scan Objects</button>
-      <button class="btn btn-ghost btn-xs" id="shopDraw"><i data-lucide="square-dashed-mouse-pointer"></i>Add Object</button>
+      <button class="btn btn-dark btn-xs" id="shopDraw"><i data-lucide="square-dashed-mouse-pointer"></i>Add Object</button>
+      <button class="btn btn-ghost btn-xs" id="shopDetect"><i data-lucide="scan-search"></i>Re-Scan Objects<em class="shop-cost">1 Credit</em></button>
       <button class="btn btn-ghost btn-xs" id="shopDots"><i data-lucide="eye"></i>Hide Dots</button>
       <span class="shop-hint" id="shopHint">Tap Any Dot To Shop That Item</span>
     </div>
@@ -123,6 +124,12 @@ function shell() {
 </div>
 <div class="shop-drawer" id="shopDrawer" hidden></div>
 <div class="shop-toast" id="shopToast"></div>`;
+}
+
+function spThumb(p) {
+  const url = (p.images || []).find((u) => !!u);
+  if (url) return `<img src="${esc(url)}" alt="${esc(p.name || "")}">`;
+  return `<div class="shop-noimgtile"><i data-lucide="${esc(categoryIcon(p.category))}"></i><span>No Product Image</span></div>`;
 }
 
 let host = null;
@@ -197,6 +204,7 @@ function mount(ctx) {
   let compare = [];
   let savedLater = [];
   let dotsOn = true;
+  let scanFailed = false;
   const matchCache = {};
   let catCat = "all";
 
@@ -215,11 +223,12 @@ function mount(ctx) {
   syncCounts();
 
   /* ---------------- detection ---------------- */
-  async function detect() {
+  async function detect(force) {
     $("shopScan").hidden = false;
     $("shopDotLayer").innerHTML = "";
+    scanFailed = false;
     try {
-      objects = await sampleDetection.detect(design.image, design.roomType);
+      objects = await visionDetection.detect(design.image, design.roomType, { force: !!force });
       const locked = lockedCategories(design.roomId);
       objects.forEach((o) => (o.locked = locked.indexOf(o.category) > -1));
       paintDots();
@@ -229,24 +238,57 @@ function mount(ctx) {
         paintCatalog();
       } else selectObject(objects[0]);
     } catch (e) {
-      $("shopResults").innerHTML = errorBlock("The object scan could not finish.");
-      wireRetry();
+      scanFailed = true;
+      objects = [];
+      paintDots();
+      paintCatTabs();
+      emptyObjects(e && e.message ? String(e.message) : "");
+      $("shopResults").innerHTML = scanEmptyBlock();
+      wireScanEmpty();
+      paintCatalog();
     } finally {
       $("shopScan").hidden = true;
     }
   }
 
-  function emptyObjects() {
-    $("shopObjs").innerHTML = `<div class="shop-empty"><b>No Objects Detected</b><span>Draw a box around any item in the design and we will search for matching products.</span></div>`;
+  function scanEmptyBlock() {
+    return scanFailed
+      ? `<div class="shop-empty"><b>We Could Not Scan This Image. Add Objects Manually.</b><span>Nothing was charged for the failed scan. Draw a box around any item and we will search for matching products.</span><button class="btn btn-dark btn-xs" id="shopEmptyAdd"><i data-lucide="square-dashed-mouse-pointer"></i>Add Object</button><button class="btn btn-ghost btn-xs" id="shopRetry"><i data-lucide="refresh-cw"></i>Try Again</button></div>`
+      : `<div class="shop-empty"><b>No Objects Detected Confidently. Tap Add Object To Mark One Yourself.</b><span>We only place a dot when we are sure what it is sitting on.</span><button class="btn btn-dark btn-xs" id="shopEmptyAdd"><i data-lucide="square-dashed-mouse-pointer"></i>Add Object</button></div>`;
+  }
+
+  function wireScanEmpty() {
+    paintIcons();
+    const a = $("shopEmptyAdd");
+    if (a) a.addEventListener("click", startDrawing);
+    const r = $("shopRetry");
+    if (r) r.addEventListener("click", () => detect(true));
+  }
+
+  function emptyObjects(msg) {
+    $("shopObjs").innerHTML = `<div class="shop-empty"><b>${
+      scanFailed ? "We Could Not Scan This Image. Add Objects Manually." : "No Objects Detected Confidently. Tap Add Object To Mark One Yourself."
+    }</b><span>${esc(msg || "Draw a box around any item in the design and we will search for matching products.")}</span></div>`;
+  }
+
+  function confPill(o) {
+    if (o.origin === "manual" || typeof o.confidence !== "number") return "";
+    const low = o.confidence < 0.65;
+    return `<em class="shop-conf${low ? " low" : ""}">${Math.round(o.confidence * 100)}%</em>`;
   }
 
   function paintDots() {
     const layer = $("shopDotLayer");
     layer.innerHTML = objects
-      .map(
-        (o) =>
-          `<button class="shop-dot${active && active.id === o.id ? " on" : ""}${o.locked ? " locked" : ""}" data-dot="${o.id}" style="left:${(o.box.x + o.box.w / 2) * 100}%;top:${(o.box.y + o.box.h / 2) * 100}%" title="${esc(o.label)}"><span></span><em>${esc(o.label)}</em></button>`,
-      )
+      .map((o) => {
+        const on = active && active.id === o.id;
+        return (
+          `<button class="shop-dot${on ? " on" : ""}${o.locked ? " locked" : ""}" data-dot="${o.id}" style="left:${(o.box.x + o.box.w / 2) * 100}%;top:${(o.box.y + o.box.h / 2) * 100}%" title="${esc(o.label)}"><span></span><em>${esc(o.label)}${typeof o.confidence === "number" && o.origin === "auto" ? ` · ${Math.round(o.confidence * 100)}%` : ""}</em></button>` +
+          (on
+            ? `<div class="shop-hbox" data-box="${o.id}" style="left:${o.box.x * 100}%;top:${o.box.y * 100}%;width:${o.box.w * 100}%;height:${o.box.h * 100}%"><i class="shop-hres" data-res="${o.id}"></i></div>`
+            : "")
+        );
+      })
       .join("");
     layer.querySelectorAll("[data-dot]").forEach((b) =>
       b.addEventListener("click", () => {
@@ -254,12 +296,13 @@ function mount(ctx) {
         if (o) selectObject(o);
       }),
     );
+    wireHotspotEdit(layer);
     $("shopObjs").innerHTML =
       `<div class="shop-objs-h">Detected Objects</div>` +
       objects
         .map(
           (o) =>
-            `<button class="shop-obj${active && active.id === o.id ? " on" : ""}" data-obj="${o.id}"><i data-lucide="${o.origin === "manual" ? "square-dashed" : "circle-dot"}"></i>${esc(o.label)}${o.locked ? '<em class="shop-lockpill">Selected</em>' : ""}</button>`,
+            `<button class="shop-obj${active && active.id === o.id ? " on" : ""}" data-obj="${o.id}"><i data-lucide="${o.origin === "manual" ? "square-dashed" : "circle-dot"}"></i>${esc(o.label)}${confPill(o)}${o.locked ? '<em class="shop-lockpill">Selected</em>' : ""}</button>`,
         )
         .join("");
     $("shopObjs")
@@ -272,6 +315,118 @@ function mount(ctx) {
       );
     layer.classList.toggle("hide", !dotsOn);
     paintIcons();
+  }
+
+  /** Drag to reposition, corner handle to resize. Editing an auto hotspot makes it manual. */
+  function wireHotspotEdit(layer) {
+    const stageEl = $("shopStage");
+    const box = layer.querySelector("[data-box]");
+    if (!box || !stageEl) return;
+    const o = objects.find((x) => x.id === box.getAttribute("data-box"));
+    if (!o) return;
+    const clamp = (v, max) => Math.min(max, Math.max(0, v));
+
+    const drag = (e, mode) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const r = stageEl.getBoundingClientRect();
+      const sx = e.clientX,
+        sy = e.clientY;
+      const b0 = { ...o.box };
+      const move = (ev) => {
+        const dx = (ev.clientX - sx) / r.width;
+        const dy = (ev.clientY - sy) / r.height;
+        if (mode === "move") {
+          o.box.x = clamp(b0.x + dx, 1 - b0.w);
+          o.box.y = clamp(b0.y + dy, 1 - b0.h);
+        } else {
+          o.box.w = Math.max(0.03, Math.min(1 - b0.x, b0.w + dx));
+          o.box.h = Math.max(0.03, Math.min(1 - b0.y, b0.h + dy));
+        }
+        box.style.left = o.box.x * 100 + "%";
+        box.style.top = o.box.y * 100 + "%";
+        box.style.width = o.box.w * 100 + "%";
+        box.style.height = o.box.h * 100 + "%";
+      };
+      const up = () => {
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", up);
+        if (o.origin === "auto") {
+          o.origin = "manual";
+          o.confidence = undefined;
+        }
+        delete matchCache[design.designId + "::" + o.id];
+        paintDots();
+        selectObject(o);
+      };
+      document.addEventListener("mousemove", move);
+      document.addEventListener("mouseup", up);
+    };
+
+    box.addEventListener("mousedown", (e) => {
+      if (e.target && e.target.hasAttribute && e.target.hasAttribute("data-res")) return;
+      drag(e, "move");
+    });
+    const res = box.querySelector("[data-res]");
+    if (res) res.addEventListener("mousedown", (e) => drag(e, "resize"));
+  }
+
+
+  function setDrawing(v) {
+    drawing = !!v;
+    const b = $("shopDraw");
+    if (b) b.classList.toggle("on", drawing);
+    const h = $("shopHint");
+    if (h) h.textContent = drawing ? "Drag A Box Around The Item You Want To Shop" : "Tap Any Dot To Shop That Item";
+  }
+  function startDrawing() {
+    setDrawing(true);
+    const st = $("shopStage");
+    if (st) st.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  /* ---------------- product imagery ---------------- */
+  /** Products with no real photography show one shared empty state, never the room photo. */
+  function thumb(p, cls) {
+    const url = (p.images || []).find((u) => !!u);
+    if (url) return `<img class="${cls || ""}" src="${esc(url)}" alt="${esc(p.name || "")}">`;
+    return `<div class="shop-noimgtile ${cls || ""}"><i data-lucide="${esc(categoryIcon(p.category))}"></i><span>No Product Image</span></div>`;
+  }
+
+  function isSaved(id) {
+    return !!savedLater.find((x) => x.id === id);
+  }
+  function saveBtn(p) {
+    const on = isSaved(p.id);
+    return `<button class="shop-bm${on ? " on" : ""}" data-bm="${p.id}" aria-label="${on ? "Remove From Saved" : "Save"}" data-tip="${on ? "Remove From Saved" : "Save"}"><i data-lucide="bookmark"></i></button>`;
+  }
+  function toggleSaved(p) {
+    const was = isSaved(p.id);
+    if (was) savedLater = savedLater.filter((x) => x.id !== p.id);
+    else savedLater.push(p);
+    syncCounts();
+    repaintAll();
+    toastUndo(was ? "Removed From Saved" : "Saved", () => {
+      if (was) savedLater.push(p);
+      else savedLater = savedLater.filter((x) => x.id !== p.id);
+      syncCounts();
+      repaintAll();
+    });
+    track(was ? "shop_product_unsaved" : "shop_product_saved", { merchant: p.merchant });
+  }
+  function toastUndo(msg, undo) {
+    const t = $("shopToast");
+    if (!t) return;
+    t.innerHTML = `<span>${esc(msg)}</span><button class="shop-undo" type="button">Undo</button>`;
+    t.classList.add("on");
+    const b = t.querySelector(".shop-undo");
+    if (b)
+      b.addEventListener("click", () => {
+        t.classList.remove("on");
+        undo();
+      });
+    clearTimeout(t._h);
+    t._h = window.setTimeout(() => t.classList.remove("on"), 4200);
   }
 
   /* ---------------- search ---------------- */
@@ -437,7 +592,9 @@ function mount(ctx) {
     box.innerHTML =
       `<div class="shop-count">Top ${list.length} Of ${all.length} ${all.length === 1 ? "Match" : "Matches"}</div>` +
       list.map((p) => card(p)).join("") +
-      (active ? `<button class="shop-viewall" id="shopViewAll">View All ${esc(active.label)} Matches<i data-lucide="arrow-down"></i></button>` : "");
+      (active && all.length > 1
+        ? `<button class="shop-viewall" id="shopViewAll">View All ${esc(active.label)} Matches<i data-lucide="arrow-down"></i></button>`
+        : "");
     paintIcons();
     wireCards(box);
     const va = $("shopViewAll");
@@ -463,6 +620,13 @@ function mount(ctx) {
 
   /** Shared card wiring used by both the quick-match panel and the full catalog. */
   function wireCards(box) {
+    box.querySelectorAll("[data-bm]").forEach((b) =>
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const p = allKnownProducts().find((x) => x.id === b.getAttribute("data-bm"));
+        if (p) toggleSaved(p);
+      }),
+    );
     box.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openDetail(b.getAttribute("data-open"))));
     box.querySelectorAll("[data-add]").forEach((b) =>
       b.addEventListener("click", (e) => {
@@ -555,6 +719,8 @@ function mount(ctx) {
       return;
     }
     const targets = catCat === "all" ? objects : objects.filter((o) => o.id === catCat);
+    const excludeIds = {};
+    if (catCat === "all" && active) (matchCache[design.designId + "::" + active.id] || []).forEach((p) => (excludeIds[p.id] = 1));
     if (!targets.length) return;
     const missing = targets.filter((o) => !matchCache[design.designId + "::" + o.id]);
     if (missing.length) {
@@ -571,7 +737,7 @@ function mount(ctx) {
     let pool = [];
     targets.forEach((o) => {
       (matchCache[design.designId + "::" + o.id] || []).forEach((p) => {
-        if (seen[p.id]) return;
+        if (seen[p.id] || excludeIds[p.id]) return;
         seen[p.id] = 1;
         pool.push(p);
       });
@@ -614,7 +780,7 @@ function mount(ctx) {
     const matchLabel = mt === "exact" && p.verifiedSku ? "Exact Product" : mt === "close" ? "Close Match" : "Similar Match";
     const dims = [p.width && p.width + '" W', p.depth && p.depth + '" D'].filter(Boolean).join(" × ");
     return `<div class="shop-card${big ? " big" : ""}" data-open="${p.id}">
-      <div class="shop-card-img"><img src="${esc(p.images[0] || "")}" alt="${esc(p.name)}">${p.sample ? '<span class="shop-sample">Sample Data</span>' : ""}</div>
+      <div class="shop-card-img">${thumb(p)}${p.sample ? '<span class="shop-sample">Sample Data</span>' : ""}${saveBtn(p)}</div>
       <div class="shop-card-b">
         <div class="shop-card-t"><b>${esc(p.name)}</b><span class="shop-price">${money(priceOf(p))}${p.salePrice ? `<s>${money(p.regularPrice)}</s>` : ""}</span></div>
         <div class="shop-meta">${esc(p.brand)} &middot; ${esc(p.merchant)}${dims ? " &middot; " + dims : ""}</div>
@@ -632,7 +798,6 @@ function mount(ctx) {
           <div class="shop-more">
             <button class="shop-morebtn" data-more="${p.id}" aria-label="More actions"><i data-lucide="more-horizontal"></i></button>
             <div class="shop-moremenu">
-              <button data-act="save" data-id="${p.id}">Save</button>
               <button data-act="compare" data-id="${p.id}">${inCmp ? "Remove From Compare" : "Compare"}</button>
               <a href="${esc(p.affiliateUrl || p.productUrl)}" target="_blank" rel="nofollow sponsored noopener">View At Retailer</a>
               <button data-act="detail" data-id="${p.id}">Product Details</button>
@@ -646,13 +811,12 @@ function mount(ctx) {
 
   /* ---------------- detail drawer ---------------- */
   function productImages(p) {
-    const room = String(design.image || "");
-    return (p.images || []).filter((u) => u && String(u) !== room);
+    return (p.images || []).filter(Boolean);
   }
   function galleryHtml(p) {
     const imgs = productImages(p);
     if (!imgs.length) {
-      return `<div class="shop-dr-gal"><div class="shop-img-box empty"><i data-lucide="image-off"></i><span>Product image unavailable.</span></div></div>`;
+      return `<div class="shop-dr-gal"><div class="shop-img-box empty"><div class="shop-noimgtile big"><i data-lucide="${esc(categoryIcon(p.category))}"></i><span>No Product Image</span></div></div></div>`;
     }
     const thumbs = imgs.slice(0, 5);
     const multi = imgs.length > 1;
@@ -698,7 +862,7 @@ function mount(ctx) {
     const d = $("shopDrawer");
     d.hidden = false;
     d.innerHTML = `<div class="shop-dr">
-      <div class="shop-dr-h"><b>Product Detail</b><button class="icon-btn" id="drClose" aria-label="Close product detail"><i data-lucide="x"></i></button></div>
+      <div class="shop-dr-h"><b>Product Detail</b>${saveBtn(p)}<button class="icon-btn" id="drClose" aria-label="Close product detail"><i data-lucide="x"></i></button></div>
       <div class="shop-dr-b">
         ${galleryHtml(p)}
 
@@ -712,7 +876,7 @@ function mount(ctx) {
           <div><dt>Materials</dt><dd>${esc(p.materials.join(", ") || "Not Listed")}</dd></div>
           <div><dt>Colors</dt><dd>${esc(p.colors.join(", ") || "Not Listed")}</dd></div>
           <div><dt>Delivery</dt><dd>${esc(p.delivery || "Not Listed")}</dd></div>
-          <div><dt>Verified SKU</dt><dd>${p.verifiedSku ? "Yes" : "No"}</dd></div>
+          <div><dt>Verified With Retailer</dt><dd>${p.verifiedSku ? "Yes" : '<span class="shop-tag amb">Not Yet Connected</span>'}</dd></div>
         </dl></div>
         ${p.sample ? `<div class="shop-disc"><i data-lucide="triangle-alert"></i><span>This is sample development data. Live retailer pricing and stock are not connected yet.</span></div>` : ""}
         <div class="shop-disc"><i data-lucide="info"></i><span>${DISCLOSURE}</span></div>
@@ -728,10 +892,25 @@ function mount(ctx) {
     $("drClose").addEventListener("click", () => (d.hidden = true));
 
     $("drAdd").addEventListener("click", () => openAdd(p.id));
+    const syncDrSave = () => {
+      const b = $("drSave");
+      if (b) b.innerHTML = `<i data-lucide="bookmark"></i>${isSaved(p.id) ? "Saved" : "Save For Later"}`;
+      const bm = d.querySelector("[data-bm]");
+      if (bm) bm.classList.toggle("on", isSaved(p.id));
+      paintIcons();
+    };
+    syncDrSave();
     $("drSave").addEventListener("click", () => {
-      if (!savedLater.find((x) => x.id === p.id)) savedLater.push(p);
-      toast("Saved For Later");
+      toggleSaved(p);
+      syncDrSave();
     });
+    d.querySelectorAll("[data-bm]").forEach((b) =>
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleSaved(p);
+        syncDrSave();
+      }),
+    );
     track("shop_product_viewed", { merchant: p.merchant, category: p.category });
   }
 
@@ -744,20 +923,33 @@ function mount(ctx) {
     d.innerHTML = `<div class="shop-dr">
       <div class="shop-dr-h"><b>Add To Project</b><button class="icon-btn" id="drClose" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="shop-dr-b">
-        <div class="shop-mini"><img src="${esc(p.images[0] || "")}" alt=""><div><b>${esc(p.name)}</b><span>${esc(p.merchant)} &middot; ${money(priceOf(p))}</span></div></div>
+        <div class="shop-mini">${thumb(p, "mini")}<div><b>${esc(p.name)}</b><span>${esc(p.merchant)} &middot; ${money(priceOf(p))}</span></div></div>
         <label class="shop-f"><span>Quantity</span><input id="afQty" type="number" min="1" value="1"></label>
         <label class="shop-f"><span>Room</span><input id="afRoom" type="text" value="${esc(design.roomLabel)}" readonly></label>
-        <label class="shop-f"><span>Phase</span><select id="afPhase">${PHASES.map((x) => `<option${x === "Furnishing" ? " selected" : ""}>${x}</option>`).join("")}</select></label>
         <label class="shop-f"><span>Budget Category</span><select id="afCat">${BUDGET_CATS.map((x) => `<option>${x}</option>`).join("")}</select></label>
-        <label class="shop-f"><span>Status</span><select id="afStatus"><option value="selected">Selected</option><option value="saved">Saved</option><option value="approved">Approved</option></select></label>
-        <label class="shop-f"><span>Design DNA</span><select id="afDna"><option value="none">Do Not Add To Design DNA</option><option value="room">Lock For This Room</option><option value="rooms">Apply To Similar Rooms</option><option value="property">Apply To Whole Property</option></select></label>
-        <label class="shop-f col"><span>Notes</span><textarea id="afNote" rows="2" placeholder="Anything the buyer or client should know"></textarea></label>
+        <div class="shop-adv">
+          <button type="button" class="shop-adv-t" id="afMore" aria-expanded="false">More Options<i data-lucide="chevron-down"></i></button>
+          <div class="shop-adv-b" id="afMoreB" hidden>
+            <label class="shop-f"><span>Phase</span><select id="afPhase">${PHASES.map((x) => `<option${x === "Furnishing" ? " selected" : ""}>${x}</option>`).join("")}</select></label>
+            <label class="shop-f"><span>Status</span><select id="afStatus"><option value="selected">Selected</option><option value="saved">Saved</option><option value="approved">Approved</option></select></label>
+            <label class="shop-f col"><span>Notes</span><textarea id="afNote" rows="2" placeholder="Anything the buyer or client should know"></textarea></label>
+          </div>
+        </div>
       </div>
       <div class="shop-dr-f"><button class="btn btn-dark btn-xs" id="afGo"><i data-lucide="check"></i>Add To Project</button><button class="btn btn-ghost btn-xs" id="afCancel">Cancel</button></div>
     </div>`;
     paintIcons();
+    try {
+      if (window.rdInitSelects) window.rdInitSelects(d);
+    } catch (_) {}
     $("drClose").addEventListener("click", () => (d.hidden = true));
     $("afCancel").addEventListener("click", () => (d.hidden = true));
+    $("afMore").addEventListener("click", () => {
+      const b = $("afMoreB");
+      b.hidden = !b.hidden;
+      $("afMore").setAttribute("aria-expanded", String(!b.hidden));
+      $("afMore").classList.toggle("on", !b.hidden);
+    });
     $("afGo").addEventListener("click", () => {
       const r = addProduct({
         product: p,
@@ -774,7 +966,7 @@ function mount(ctx) {
         phase: $("afPhase").value,
         budgetCategory: $("afCat").value,
         notes: $("afNote").value.trim(),
-        dnaScope: $("afDna").value,
+        dnaScope: "none",
       });
       d.hidden = true;
       syncCounts();
@@ -799,7 +991,7 @@ function mount(ctx) {
           list.length
             ? list
                 .map(
-                  (r) => `<div class="shop-mini"><img src="${esc(r.images[0] || "")}" alt=""><div><b>${esc(r.name)}</b><span>${esc(r.merchant)} &middot; ${money(priceOf(r))} &times; ${r.quantity} &middot; ${STATUS_LABEL[r.status]}</span></div>
+                  (r) => `<div class="shop-mini">${thumb(r, "mini")}<div><b>${esc(r.name)}</b><span>${esc(r.merchant)} &middot; ${money(priceOf(r))} &times; ${r.quantity} &middot; ${STATUS_LABEL[r.status]}</span></div>
                   <button class="icon-btn" data-rm="${r.recordId}" aria-label="Remove product"><i data-lucide="trash-2"></i></button></div>`,
                 )
                 .join("")
@@ -837,7 +1029,7 @@ function mount(ctx) {
       <div class="shop-dr-h"><b>Compare Products</b><button class="icon-btn" id="drClose" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="shop-dr-b"><div class="shop-cmp">${compare
         .map(
-          (p) => `<div class="shop-cmp-c"><img src="${esc(p.images[0] || "")}" alt=""><b>${esc(p.name)}</b>
+          (p) => `<div class="shop-cmp-c">${thumb(p, "cmp")}<b>${esc(p.name)}</b>
         <span class="shop-meta">${esc(p.merchant)}</span>
         <div class="shop-price">${money(priceOf(p))}</div>
         <dl><div><dt>Size</dt><dd>${[p.width && p.width + '"', p.depth && p.depth + '"', p.height && p.height + '"'].filter(Boolean).join(" × ") || "Not Listed"}</dd></div>
@@ -854,6 +1046,8 @@ function mount(ctx) {
   }
 
   function syncCounts() {
+    const savedTab = host.querySelector('.shop-segb[data-tab="saved"]');
+    if (savedTab) savedTab.textContent = savedLater.length ? `Saved (${savedLater.length})` : "Saved";
     const s = $("shopSelCnt");
     if (s) s.textContent = String(listProducts().filter((r) => r.roomId === design.roomId).length);
     const c = $("shopCmpCnt");
@@ -913,14 +1107,10 @@ function mount(ctx) {
   $("shopClose").addEventListener("click", closeShop);
   const pc = $("shopPanelClose");
   if (pc) pc.addEventListener("click", closeSheet);
-  $("shopDetect").addEventListener("click", detect);
+  $("shopDetect").addEventListener("click", () => detect(true));
   $("shopSelBtn").addEventListener("click", openSelected);
   $("shopCompareBtn").addEventListener("click", openCompare);
-  $("shopDraw").addEventListener("click", () => {
-    drawing = !drawing;
-    $("shopDraw").classList.toggle("on", drawing);
-    $("shopHint").textContent = drawing ? "Drag A Box Around The Item You Want To Shop" : "Tap Any Dot To Shop That Item";
-  });
+  $("shopDraw").addEventListener("click", () => setDrawing(!drawing));
   $("shopDots").addEventListener("click", () => {
     dotsOn = !dotsOn;
     $("shopDotLayer").classList.toggle("hide", !dotsOn);
@@ -1006,7 +1196,7 @@ export function renderSelectedProducts(mountEl, go) {
         (k) => `<div class="sp-group"><div class="sp-group-h"><b>${esc(k)}</b><span>${groups[k].length} Products</span></div>
     ${groups[k]
       .map(
-        (r) => `<div class="sp-row"><img src="${esc(r.images[0] || "")}" alt="">
+        (r) => `<div class="sp-row">${spThumb(r)}
       <div class="sp-main"><b>${esc(r.name)}</b><span>${esc(r.brand)} &middot; ${esc(r.merchant)} &middot; ${esc(r.budgetCategory)} &middot; ${esc(r.phase)}</span></div>
       <span class="shop-tag">${STATUS_LABEL[r.status]}</span>
       <span class="sp-price">${money(priceOf(r))}${r.quantity > 1 ? ` &times; ${r.quantity}` : ""}</span>
