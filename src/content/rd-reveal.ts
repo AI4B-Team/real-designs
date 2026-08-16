@@ -725,15 +725,6 @@ function stepSelect() {
     grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
   }
 
-  const fixCard = recs.length && !w.enhanceDismissed ? `<div class="rv-fix">
-    <b>We Found ${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve</b>
-    ${recs.map((r) => `<div class="rv-fix-row"><span>${esc(r.label)}</span><i class="mono">${r.ids.length} ${r.ids.length === 1 ? "Photo" : "Photos"}</i><em>${esc(r.note)}</em></div>`).join("")}
-    <div class="rv-fix-a">
-      <button class="btn btn-primary btn-sm" id="rvFixAll">Fix All</button>
-      <button class="btn btn-ghost btn-sm" data-goto="media">Review Each</button>
-      <button class="btn btn-ghost btn-sm" id="rvFixSkip">Skip</button>
-    </div>
-  </div>` : "";
 
   const pct = w.available.length ? Math.round((w.scenes.length / w.available.length) * 100) : 0;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : !(w.formats || []).length ? "Choose A Video Format To Continue." : "";
