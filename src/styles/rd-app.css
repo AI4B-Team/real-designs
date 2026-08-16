@@ -1615,7 +1615,7 @@
 .rd-app .home-else{margin-top:24px;font-size:.84rem;color:var(--mute-2)}
 .rd-app .home-elselink{background:none;border:0;padding:0;color:var(--red,#CC0000);font:inherit;cursor:pointer;text-decoration:underline}
 .rd-app .nav-soon{margin-left:auto;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase;color:var(--mute-2);border:1px solid var(--line,#e5e5e5);border-radius:999px;padding:1px 7px}
-.rd-app .side.mini .nav-soon{display:none}
+.rd-app .side.mini .nav-soon,.rd-app .app.sidemin .nav-soon,.rd-app .sidemin .nav-soon{display:none}
 
 /* ---------- budget coming soon (one block, every budget entry point) ---------- */
 .bcs{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:22px;max-width:760px}
