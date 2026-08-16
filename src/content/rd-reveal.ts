@@ -1681,77 +1681,28 @@ function bind() {
   on("#rvLowGo", "click", () => { w.lowModal = false; w.step = 3; render(); });
 
 
-  on("[data-src]", "click", (e) => { w.sourceType = e.currentTarget.dataset.src; render(); });
-  on("[data-addrtab]", "click", (e) => { w.addrTab = e.currentTarget.dataset.addrtab; w.addrNote = ""; w.candidates = []; render(); });
-  const urlIn = el.querySelector("#rvUrl");
-  if (urlIn) urlIn.addEventListener("input", (e) => { w.listingUrl = e.target.value; });
-  const urlGo = el.querySelector("#rvUrlGo");
-  if (urlGo) urlGo.addEventListener("click", () => {
-    const res = identifyListing(w.listingUrl || "");
-    if (!res.ok) { w.addrNote = res.message; render(); return; }
-    if (res.address) { w.address = res.address; w.propertyLabel = res.address; w.title = w.title || res.address; }
-    w.addrNote = res.address
-      ? `${res.message} Upload The Listing Photos To Continue, Photos Are Not Imported From The Link.`
-      : `${res.message} Enter The Address Instead, Or Upload The Photos.`;
-    render();
-  });
-  const addrIn = el.querySelector("#rvAddr");
-  if (addrIn) addrIn.addEventListener("input", (ev) => { w.address = ev.target.value; });
   const titleIn = el.querySelector("#rvTitle");
   if (titleIn) titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
-  on("#rvAddrSkip", "click", () => { w.sourceType = "upload"; render(); });
-  on("#rvAddrGo", "click", async () => {
-    const v = (el.querySelector("#rvAddr")?.value || "").trim();
-    if (v.length < 3) return toast("Type A Full Property Address.");
-    w.address = v; w.addrBusy = true; w.addrNote = ""; w.candidates = []; render();
-    try {
-      const { lookupListingByAddress } = await import("@/lib/listing-import.functions");
-      const r = await lookupListingByAddress({ data: { address: v } });
-      if (r?.ok && r.listing) {
-        const l = r.listing;
-        const photos = r.photos || [];
-        w.candidates = [{
-          cover: photos[0]?.url || photos[0]?.path || "",
-          price: l.price ? "$" + Number(l.price).toLocaleString() : "",
-          address: l.address || v,
-          meta: [l.beds ? l.beds + " Bd" : "", l.baths ? l.baths + " Ba" : "", l.sqft ? Number(l.sqft).toLocaleString() + " Sqft" : "", photos.length + " Photos"].filter(Boolean).join(" · "),
-          photos,
-        }];
-      } else {
-        const { NO_IMPORT_MESSAGE } = await import("@/lib/listing-source");
-        w.addrNote = r?.message || NO_IMPORT_MESSAGE;
-        w.propertyLabel = v;
-      }
-    } catch (_) {
-      const { NO_IMPORT_MESSAGE } = await import("@/lib/listing-source");
-      w.addrNote = NO_IMPORT_MESSAGE;
-      w.propertyLabel = v;
+  on("[data-rmup]", "click", (e) => {
+    const id = e.currentTarget.dataset.rmup;
+    w.uploads = w.uploads.filter((u) => u.id !== id);
+    render();
+  });
+  const addUploads = (list) => {
+    for (const f of Array.from(list || [])) {
+      if (!/^image\//.test(f.type || "")) continue;
+      w.uploads.push({ id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url: URL.createObjectURL(f) });
     }
-    w.addrBusy = false;
     render();
-  });
-  on("[data-cand]", "click", (e) => {
-    const c = w.candidates[Number(e.currentTarget.dataset.cand)];
-    if (!c) return;
-    w.propertyLabel = c.address;
-    if (!w.titleTouched) w.title = c.address;
-    for (const ph of c.photos || []) {
-      const url = ph.url || ph.path;
-      if (url) w.uploads.push({ id: crypto.randomUUID(), name: ph.room || "Listing Photo", url });
-    }
-    toast("Listing Photos Added.");
-    render();
-  });
-  on("[data-prop]", "click", (e) => {
-    const p = S.tree.find((x) => x.id === e.currentTarget.dataset.prop);
-    w.propertyId = e.currentTarget.dataset.prop;
-    w.sourceType = w.sourceType || "property";
-    /* Title follows the source unless the user typed one. */
-    if (p && !w.titleTouched) w.title = p.address;
-    render();
-  });
-  on("[data-design]", "click", async (e) => {
-    const d = designChoices().find((x) => x.roomId === e.currentTarget.dataset.design);
+  };
+  /* A stray drop outside a dropzone must never navigate away from the app. */
+  if (!window.__rvDropGuard) {
+    window.__rvDropGuard = true;
+    window.addEventListener("dragover", (e) => e.preventDefault());
+    window.addEventListener("drop", (e) => e.preventDefault());
+  }
+  const useDesign = async (roomId) => {
+    const d = designChoices().find((x) => x.roomId === roomId);
     if (!d) return;
     w.sourceType = "design";
     w.propertyId = d.propertyId;
@@ -1765,59 +1716,45 @@ function bind() {
     /* One design, nothing to select, so Step 2 is skipped. */
     w.step = 3;
     render();
-  });
-  on("#rvUsePhotos", "click", () => { w.sourceType = "upload"; render(); });
-  on("#rvBrowse", "click", () => el.querySelector("#rvFiles")?.click());
-  on("[data-rmup]", "click", (e) => {
-    const id = e.currentTarget.dataset.rmup;
-    w.uploads = w.uploads.filter((u) => u.id !== id);
-    render();
-  });
-  const addUploads = (list) => {
-    for (const f of Array.from(list || [])) {
-      if (!/^image\//.test(f.type || "")) continue;
-      w.uploads.push({ id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url: URL.createObjectURL(f) });
-    }
-    render();
   };
-  const files = el.querySelector("#rvFiles");
-  if (files) files.addEventListener("change", (e) => addUploads(e.target.files));
-  const dz = el.querySelector("#rvDrop");
-  if (dz) {
-    dz.addEventListener("dragover", (e) => { e.preventDefault(); dz.classList.add("hot"); });
-    dz.addEventListener("dragleave", () => dz.classList.remove("hot"));
-    dz.addEventListener("drop", (e) => { e.preventDefault(); dz.classList.remove("hot"); addUploads(e.dataTransfer?.files); });
+  /* Step 1 uses the one shared source picker, mounted fresh on every paint. */
+  const slot = el.querySelector("#rvPicker");
+  if (slot) {
+    mountSourcePicker(slot, {
+      context: "video",
+      esc,
+      lucide: { createIcons: () => paint() },
+      initialTab: w.sourceType || "upload",
+      onTab: (t) => { w.sourceType = t; },
+      properties: () =>
+        S.tree.map((p) => {
+          const rooms = (p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0);
+          const assets = Number(p.asset_count || 0);
+          return {
+            address: p.address,
+            meta: rooms ? `${rooms} ${rooms === 1 ? "Room" : "Rooms"}` : assets ? `${assets} ${assets === 1 ? "Photo" : "Photos"}` : "Empty",
+          };
+        }),
+      designs: () =>
+        designChoices().map((d) => ({
+          id: d.roomId,
+          label: d.room,
+          sub: `${d.propertyLabel} · ${d.before ? "Before And After" : "Design"}`,
+        })),
+      onPick: (picked) => addUploads(picked.map((p) => p.file)),
+      onProperty: (address) => {
+        const p = S.tree.find((x) => x.address === address);
+        w.propertyLabel = address;
+        if (p) w.propertyId = p.id;
+        if (!w.titleTouched) w.title = address;
+        render();
+      },
+      onDesign: (id) => useDesign(id),
+      showAlert: toast,
+    });
   }
-  /* A stray drop outside the zone must never navigate away from the app. */
-  if (!window.__rvDropGuard) {
-    window.__rvDropGuard = true;
-    window.addEventListener("dragover", (e) => e.preventDefault());
-    window.addEventListener("drop", (e) => e.preventDefault());
-  }
-  const cloudPull = async (label) => {
-    const raw = window.prompt(`Paste ${label} Share Links, One Per Line.`);
-    const urls = (raw || "").split(/[\s,]+/).map((s) => s.trim()).filter(Boolean).slice(0, 20);
-    if (!urls.length) return;
-    toast("Fetching Photos…");
-    try {
-      const { importCloudPhotos } = await import("@/lib/cloud-import.functions");
-      const res = await importCloudPhotos({ data: { urls } });
-      const got = [];
-      for (const f of res.files || []) {
-        const bin = atob(f.data);
-        const bytes = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
-        got.push(new File([bytes], f.name, { type: f.type }));
-      }
-      if (!got.length) return toast(res.errors?.[0]?.message || "No Photos Found At That Link.");
-      addUploads(got);
-      toast(`${got.length} Photo${got.length === 1 ? "" : "s"} Added.`);
-    } catch (err) {
-      toast(err?.message || "Import Failed.");
-    }
-  };
-  on("#rvDrive", "click", () => cloudPull("Google Drive"));
-  on("#rvDropbox", "click", () => cloudPull("Dropbox"));
+  on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; w.typeTouched = true; render(); });
+
   on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; w.typeTouched = true; render(); });
 
   on("[data-asset]", "click", (e) => {
