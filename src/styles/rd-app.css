@@ -62,12 +62,16 @@
 .rd-app .app.sidemin .credit-box{display:none}
 
 /* tooltips, only on the collapsed rail */
+.rd-app .app.sidemin .side{z-index:120;overflow:visible}
+.rd-app .app.sidemin .side-nav{overflow:visible !important}
+.rd-app .app.sidemin .nav-i[data-tip]:hover,.rd-app .app.sidemin .side-top .logo:hover,.rd-app .app.sidemin .side-toggle[data-tip]:hover{z-index:130}
 .rd-app .app.sidemin .nav-i[data-tip]:hover::after,.rd-app .app.sidemin .side-top .logo:hover::after,.rd-app .app.sidemin .side-toggle[data-tip]:hover::after{
   content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
   background:var(--white);color:var(--ink);border:1px solid var(--line);
   font-size:.74rem;font-weight:600;letter-spacing:-.01em;white-space:nowrap;
-  padding:5px 9px;border-radius:6px;z-index:90;pointer-events:none;box-shadow:0 8px 22px rgba(20,18,15,.14)}
+  padding:5px 9px;border-radius:6px;z-index:130;pointer-events:none;box-shadow:0 8px 22px rgba(20,18,15,.14)}
 .rd-app .app.sidemin .side-top .logo:hover::after{content:'Expand Menu'}
+
 
 
 
