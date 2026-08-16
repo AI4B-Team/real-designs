@@ -167,6 +167,7 @@ function scrollTopHard(){
 }
 let __paneSeq=0;
 function go(v,fromHash){
+  const acctAlias = ACCT_ALIAS[v] ? v : '';
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
     /* The account markup can mount (and remount) after this call, so retry
@@ -217,14 +218,14 @@ function go(v,fromHash){
     const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[titleKey][0];
     const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[titleKey][1];
   }
-  /* The hash and the scroll reset must run for every view, including views
-     that have no entry in the title map. */
-  if(!fromHash){
-    try{
-      const h='#v-'+viewId;
-      if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
-    }catch(_){}
-  }
+  /* The hash must always name the view that actually rendered, including
+     when a deep link was redirected (stale #v-reveal, unknown keys), so a
+     refresh or a copied link never lands somewhere else. */
+  try{
+    const h='#v-'+(acctAlias && viewId==='account' ? acctAlias : viewId);
+    if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
+  }catch(_){}
+
   scrollTopHard();
 }
 
@@ -252,15 +253,28 @@ try{ mountUploadDock(go); }catch(_){}
   const v=viewFromHash();
   if(!v){
     /* an unknown or stale hash must not stay in the address bar while a
-       different view is on screen, or a refresh looks like a dead link */
-    try{
-      if(location.hash){
-        const cur=document.querySelector('.rd-app .view.on');
-        history.replaceState(null,'',location.pathname+location.search+(cur?'#'+cur.id:''));
-      }
-    }catch(_){}
+       different view is on screen, or a refresh looks like a dead link.
+       The shell can mount after this runs, so keep looking for the live
+       view for a short window instead of giving up on the first frame */
+    const bad=location.hash;
+    if(!bad) return;
+    let n=0;
+    const clean=()=>{
+      const now=location.hash;
+      /* the router re-applies its own url for a few frames after mount, so
+         keep re-asserting until the bad hash stops coming back */
+      if(now!==bad && now!=='') return;
+      try{
+        const cur=document.querySelector('.rd-app .view.on')||document.querySelector('.view.on');
+        if(cur) history.replaceState(null,'',location.pathname+location.search+'#'+cur.id);
+      }catch(_){}
+      if(++n<80) window.setTimeout(clean,75);
+    };
+    clean();
+
     return;
   }
+
 
   const startHash=location.hash;
   const pane=ACCT_ALIAS[v]||'';
