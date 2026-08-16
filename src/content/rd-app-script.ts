@@ -26,6 +26,7 @@ import { mountStudioStart } from "@/content/rd-studio-start";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
 import { readIntegrations } from "@/lib/integrations.functions";
+import { isProductSearchConfigured } from "@/lib/product-catalog";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite, updateInviteRole } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
@@ -476,6 +477,7 @@ async function paintIntegrations(){
   if(note) note.hidden=!!(prod&&prod.connected);
   if(window.lucide&&window.lucide.createIcons) window.lucide.createIcons();
 }
+(function(){ const n=document.getElementById('prodSampleNote'); if(n) n.hidden=isProductSearchConfigured(); })();
 paintIntegrations();
 
 
