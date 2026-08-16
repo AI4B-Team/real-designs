@@ -20,6 +20,8 @@ import {
 } from "@/lib/source-detect.functions";
 import { getStudioStyle, clearStudioStyle, applyStudioStyleToControls, type StudioStyleChoice } from "@/lib/studio-style";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
+import { getMyCredits } from "@/lib/credits.functions";
 
 type Method = "upload" | "describe" | "property";
 
@@ -51,16 +53,38 @@ export type StudioStartCtx = {
 
 const SAMPLE_KEYS: Array<{ key: string; name: string; space: string; room: string; photo: string; alt: string }> = [];
 
+const ROOM_OTHER = "Other";
 const ROOMS = [
   "Living Room",
   "Kitchen",
   "Primary Bedroom",
+  "Bedroom",
+  "Guest Bedroom",
+  "Nursery",
   "Primary Bath",
+  "Guest Bath",
+  "Half Bath",
   "Dining Room",
   "Home Office",
+  "Bonus Room",
+  "Sunroom",
   "Entry",
+  "Hallway",
+  "Stairwell",
+  "Closet",
+  "Laundry",
+  "Mudroom",
+  "Garage",
+  "Basement",
+  "Attic",
+  "Commercial Space",
   "Facade",
+  "Front Yard",
   "Backyard",
+  "Patio",
+  "Deck",
+  "Pool Area",
+  ROOM_OTHER,
 ];
 const STYLES = ["Warm Minimal", "Modern Farmhouse", "Coastal", "Transitional", "Investor Neutral", "Midcentury", "Japandi"];
 const BUDGETS = ["Under $5K", "Under $15K", "Under $35K", "$35K+"];
@@ -95,7 +119,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     /** Whether the compact classification dropdown is open. */
     pickType: false,
     space: "interior",
-    room: "Living Room",
+    /** Empty until the user chooses, or detection assigns one. */
+    room: "",
+    roomOther: "",
+    roomDetected: false,
+    /** Quality flags measured on the chosen photo, advisory only. */
+    flags: [] as string[],
+    flagsDismissed: false,
+    credits: null as any,
     goal: "Makeover",
     style: "Warm Minimal",
     budget: "Under $15K",
@@ -201,8 +232,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     state.detected = null;
     state.detecting = false;
     state.pickType = false;
+    state.flags = [];
+    state.flagsDismissed = false;
     render();
-    if (state.method === "upload") runDetection(f);
+    if (state.method === "upload") {
+      runDetection(f);
+      runQuality(f);
+    }
   }
 
   /* ---------- source detection (shared result component) ---------- */
@@ -231,15 +267,44 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     render();
   }
 
+  /** Advisory photo-quality check. Never blocks, never charges. */
+  async function runQuality(f: File) {
+    if (!/^image\//.test(f.type)) return;
+    try {
+      const m = await measureImage(f);
+      const c = classify(f.name || "", m);
+      if (state.file !== f) return;
+      state.flags = c.flags || [];
+      render();
+    } catch (_) {
+      /* measurement is advisory: a failure stays silent */
+    }
+  }
+
+  /** Real balance and remaining free designs, so the cost is honest. */
+  async function loadCredits() {
+    try {
+      const c = await getMyCredits();
+      state.credits = c;
+      if (host) render();
+    } catch (_) {
+      /* the button falls back to a plain Continue */
+    }
+  }
+  loadCredits();
+  window.addEventListener("rd:credits-changed", () => { loadCredits(); });
+
   /** Maps a classification onto the setup fields that drive the workflow. */
   function applyDetection(type: SourceType) {
     if (type === "interior_photo") state.space = "interior";
     else if (type === "exterior_photo") {
       state.space = "exterior";
       state.room = "Facade";
+      state.roomDetected = true;
     } else if (type === "landscape_photo") {
       state.space = "landscape";
       state.room = "Backyard";
+      state.roomDetected = true;
     } else if (type === "sketch") state.inputType = "Hand Sketch";
     else if (type === "floor_plan") state.inputType = "Floor Plan";
   }
@@ -345,6 +410,76 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "</select>"
     );
   }
+  /** Room select with an unselected placeholder, a Detected pill and Other. */
+  function roomField(label: string) {
+    const opts =
+      '<option value=""' + (state.room ? "" : " selected") + ">Select A Room Type</option>" +
+      ROOMS.map((o) => "<option" + (o === state.room ? " selected" : "") + ">" + esc(o) + "</option>").join("");
+    const pill =
+      state.roomDetected && state.room
+        ? '<span class="stw-detpill"><i data-lucide="sparkles"></i>Detected</span>'
+        : "";
+    const other =
+      state.room === ROOM_OTHER
+        ? '<input id="stsRoomOther" type="text" placeholder="Describe The Space" value="' + esc(state.roomOther) + '" style="margin-top:8px">'
+        : "";
+    return (
+      '<div class="field"><label>' + label + pill + "</label>" +
+      '<select id="stsRoom">' + opts + "</select>" + other + "</div>"
+    );
+  }
+
+  /** The room string that travels with the design. */
+  function roomValue() {
+    return state.room === ROOM_OTHER ? state.roomOther.trim() : state.room;
+  }
+
+  function freeLeft() {
+    const c = state.credits;
+    if (!c || c.plan !== "free") return null;
+    return typeof c.remainingToday === "number" ? c.remainingToday : null;
+  }
+
+  function outOfFree() {
+    const left = freeLeft();
+    return left !== null && left <= 0;
+  }
+
+  /** Continue label carries the real cost, in DM Mono. */
+  function continueLabel() {
+    const c = state.credits;
+    if (!c) return "Continue";
+    if (outOfFree()) return "Add Credits To Continue";
+    const left = freeLeft();
+    if (left !== null) {
+      return 'Continue &middot; <span class="mono">1</span> Of <span class="mono">' + left + "</span> Free Designs Today";
+    }
+    return 'Continue &middot; <span class="mono">1</span> Credit';
+  }
+
+  function costNote() {
+    if (outOfFree()) {
+      return "You've used all 5 free designs for today. They reset tomorrow, or upgrade for a credit balance.";
+    }
+    return "Nothing generates and no credits are used until you continue.";
+  }
+
+  /** Non-blocking quality advice on the chosen photo. */
+  function qualityNotice() {
+    if (state.flagsDismissed || !state.flags.length) return "";
+    const labels = state.flags.map((f) => FLAG_LABEL[f] || "Photo Quality");
+    const head = labels[0] + (labels.length > 1 ? " And " + (labels.length - 1) + " Other Issues" : "");
+    return (
+      '<div class="stw-qual" title="' + esc(labels.join(", ")) + '">' +
+      '<i data-lucide="triangle-alert"></i>' +
+      "<div><b>" + esc(head) + "</b><span>Results May Vary.</span></div>" +
+      '<div class="stw-qual-a">' +
+      '<button class="stw-link" data-sts="browse"><i data-lucide="image-up"></i>Replace Photo</button>' +
+      '<button class="stw-link" data-sts="qualok">Continue Anyway</button>' +
+      "</div></div>"
+    );
+  }
+
   function chips(name: string, opts: Array<[string, string]>, value: string) {
     return (
       '<div class="chips">' +
@@ -376,7 +511,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           : '<div class="stw-file-ico"><i data-lucide="file-text"></i></div>') +
         '<div class="stw-file-m"><b>' + esc(state.fileName) + "</b>" +
         (state.method === "upload" ? detectionHtml() : "") +
-        '<span id="stsFileMeta">Nothing generates and no credits are used until you continue.</span>' +
+        '<span id="stsFileMeta">' + costNote() + '</span>' +
         '<div class="stw-file-a">' +
         '<button class="stw-link" data-sts="browse"><i data-lucide="repeat"></i>Replace</button>' +
         '<button class="stw-link" data-sts="clearfile"><i data-lucide="trash-2"></i>Remove</button>' +
@@ -463,13 +598,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     const details = plan
       ? field("Input Type", select("stsInput", ["Hand Sketch", "Floor Plan", "Concept Drawing"], state.inputType)) +
         field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-        field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
+        roomField("Room Or Space Type") +
         propertyField() +
         field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">')
       : field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-        field("Room Or Area Type", select("stsRoom", ROOMS, state.room)) +
+        roomField("Room Or Area Type") +
         propertyField() +
-        field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">');
+        field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="e.g. Pre Listing Refresh" value="' + esc(state.newProject) + '">');
 
     return (
       workHead(
@@ -484,7 +619,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         dropZone("JPG, PNG, HEIC, WEBP, PDF", "image-up", "Drop A Photo, Sketch Or Plan"),
         "stw-main",
       ) +
-      panel(plan ? "Plan Details" : "Photo Details", details + foot("Continue", canContinue()), "stw-side") +
+      panel(plan ? "Plan Details" : "Photo Details", details + qualityNotice() + foot(continueLabel(), canContinue(), "", costNote()), "stw-side") +
       "</div>"
     );
   }
@@ -516,7 +651,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       panel(
         "Design Details",
         field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
-          field("Room Or Space Type", select("stsRoom", ROOMS, state.room)) +
+          roomField("Room Or Space Type") +
           field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
           '<div class="stw-sep"></div>' +
           field("Design Style", select("stsStyle", STYLES, state.style)) +
@@ -552,7 +687,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         field("Property Address", '<input id="stsAddr" type="text" placeholder="1420 Bayshore Boulevard, Tampa FL" value="' + esc(state.newAddress) + '">') +
           field("Property Nickname (Optional)", '<input id="stsNick" type="text" placeholder="Bayshore Flip" value="' + esc(state.newNickname) + '">') +
           field("Property Type", select("stsPType", ["Single Family", "Condo", "Townhome", "Multi Family", "Commercial"], state.newType)) +
-          field("Client Or Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
+          field("Client Or Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="e.g. Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
           field("Property Photo (Optional)", dropZone("JPG, PNG, HEIC, WEBP", "image-up", "Add A Cover Photo")),
         "stw-main",
       ) +
@@ -757,7 +892,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       });
     }
 
-    bindVal("stsRoom", (v) => (state.room = v));
+    bindVal("stsRoom", (v) => {
+      state.room = v;
+      state.roomDetected = false;
+      render();
+    });
+    bindVal("stsRoomOther", (v) => {
+      state.roomOther = v;
+      syncPrimary();
+    });
     bindVal("stsStyle", (v) => (state.style = v));
     bindVal("stsBudget", (v) => (state.budget = v));
     bindVal("stsMood", (v) => (state.mood = v));
@@ -817,6 +960,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   function canContinue() {
     if (state.method === "upload") {
       if (!state.file || state.detecting) return false;
+      if (outOfFree()) return false;
+      if (!roomValue()) return false;
       const t = state.detected?.sourceType;
       return !!t && t !== "uncertain" && t !== "unsupported";
     }
@@ -879,6 +1024,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
     if (!act) return;
     const k = act.dataset["sts"];
+    if (k === "qualok") {
+      state.flagsDismissed = true;
+      render();
+      return;
+    }
     if (k === "rotate") {
       rotateFile();
       return;
@@ -929,12 +1079,21 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
   }
 
+  function scrollTop() {
+    try {
+      const c = document.querySelector(".content") as HTMLElement | null;
+      if (c) c.scrollTop = 0;
+      window.scrollTo(0, 0);
+    } catch (_) {}
+  }
+
   function openSetup(m: Method) {
     state.method = m;
     state.phase = "setup";
     state.samples = false;
     ctx.track("studio_start_method", { method: m });
     render();
+    scrollTop();
   }
 
   async function loadSource() {
@@ -944,7 +1103,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     syncPrimary();
     try {
       const url = await ctx.uploadPhoto(f);
-      if (state.property) ctx.setContext({ address: state.property, room: state.room });
+      if (state.property) ctx.setContext({ address: state.property, room: roomValue() });
       ctx.setSource("user_upload", url, "Your uploaded source", {
         caption: "Set your direction, then press Generate. Nothing has been generated yet.",
       });
@@ -968,8 +1127,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     const sp = document.querySelector('#spChips .chip[data-sp="' + state.space + '"]') as HTMLElement | null;
     if (sp) sp.click();
     const room = document.getElementById("fRoom") as HTMLSelectElement | null;
-    if (room && Array.from(room.options).some((o) => o.value === state.room || o.text === state.room)) {
-      room.value = state.room;
+    const rv = roomValue();
+    if (room && rv) {
+      if (!Array.from(room.options).some((o) => o.value === rv || o.text === rv)) {
+        const opt = document.createElement("option");
+        opt.textContent = rv;
+        room.appendChild(opt);
+      }
+      room.value = rv;
       room.dispatchEvent(new Event("input", { bubbles: true }));
       room.dispatchEvent(new Event("change", { bubbles: true }));
     }
@@ -997,6 +1162,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     state.samples = false;
     state.space = s.space;
     state.room = s.room;
+    state.roomDetected = true;
     ctx.setSource("intentional_sample", s.photo, s.alt, {
       caption: "Sample space. Nothing is saved to your account unless you choose to.",
       sample: true,
@@ -1019,7 +1185,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         data: {
           prompt: state.prompt.trim(),
           space: state.space,
-          room: state.room,
+          room: roomValue(),
           dimensions: state.dims || null,
           style: state.style || null,
           mood: state.mood || null,
@@ -1050,7 +1216,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (state.method === "property") {
       const addr = state.newAddress.trim();
       if (addr.length < 3) return;
-      ctx.setContext({ address: addr, project: state.newProject.trim() || null, room: state.room });
+      ctx.setContext({ address: addr, project: state.newProject.trim() || null, room: roomValue() });
       ctx.track("property_created_from_studio", {});
       state.attached = state.newNickname.trim() || addr;
       state.property = addr;
@@ -1103,7 +1269,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (el) {
       el.classList.add("pulse");
       window.setTimeout(() => el.classList.remove("pulse"), 900);
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      scrollTop();
     }
   }
 
