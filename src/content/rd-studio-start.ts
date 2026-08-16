@@ -112,7 +112,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   const state = {
     method: "upload" as Method,
     /** Which door the user opened on the start screen: "" (none yet) or "design". */
-    door: "" as "" | "design",
+    door: "" as "" | "design" | "video",
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
@@ -793,7 +793,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "</div></header>" +
       '<div class="stw-rule"></div>' +
       styleBanner() +
-      '<div class="stw-doorwrap' + (state.door === "design" ? "" : " center") + '">' +
+      '<div class="stw-doorwrap' + (state.door ? "" : " center") + '">' +
       '<div class="stw-doors">' +
       '<button type="button" class="stw-door' + (state.door === "design" ? " on" : "") + '" data-sts="door-design">' +
       '<i data-lucide="wand-sparkles"></i>' +
@@ -801,7 +801,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "<span>Restyle, stage or plan a room from a photo, sketch or floor plan.</span>" +
       '<span class="stw-door-cta">Start Designing<i data-lucide="arrow-right"></i></span>' +
       "</button>" +
-      '<button type="button" class="stw-door" data-sts="door-video">' +
+      '<button type="button" class="stw-door' + (state.door === "video" ? " on" : "") + '" data-sts="door-video">' +
       '<i data-lucide="clapperboard"></i>' +
       "<b>Make A Video</b>" +
       "<span>Turn property photos into a listing video.</span>" +
@@ -812,13 +812,18 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
       "</div>" +
 
-      (state.door === "design"
+      (state.door
         ? '<div class="stw-source"><div class="stw-sec-h"><h3>Where Are The Photos?</h3>' +
           "<span>Every Source Below Ends In The Same Place</span></div>" +
           '<div id="stSource"></div>' +
-          '<p class="stw-secondary">No Photo Yet? ' +
-          '<button class="stw-seclink" data-sts="c-describe">Describe An Idea Instead</button></p></div>'
+          (state.door === "design"
+            ? '<p class="stw-secondary">No Photo Yet? ' +
+              '<button class="stw-seclink" data-sts="c-describe">Describe An Idea Instead</button></p>'
+            : '<p class="stw-secondary">Ready To Build? ' +
+              '<button class="stw-seclink" data-sts="video-open">Open The Video Builder</button></p>') +
+          "</div>"
         : "") +
+
       recentHtml() +
       "</div>" +
       (state.samples ? samplesHtml() : "")
@@ -864,8 +869,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     picker = null;
     const slot = document.getElementById("stSource");
     if (!slot) return;
+    const isVideo = state.door === "video";
     picker = mountSourcePicker(slot, {
-      context: "design",
+      context: isVideo ? "video" : "design",
       esc,
       lucide,
       showAlert: ctx.showAlert,
@@ -877,10 +883,26 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       onPick: (picked) => {
         const first = picked[0];
         if (!first) return;
+        if (isVideo) {
+          try {
+            (window as any).rdListingVideo?.({ from: "studio", files: picked.map((p) => p.file) });
+          } catch (_) {
+            ctx.go("studio");
+          }
+          return;
+        }
         openSetup("upload");
         takeFile(first.file);
       },
       onProperty: (address) => {
+        if (isVideo) {
+          try {
+            (window as any).rdListingVideo?.({ from: "studio", address });
+          } catch (_) {
+            ctx.go("studio");
+          }
+          return;
+        }
         state.newAddress = address;
         state.property = address;
         openSetup("property");
@@ -890,6 +912,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         render();
       },
     });
+
   }
 
   function hydrateRecent() {
@@ -1090,6 +1113,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
     if (k === "door-video") {
       ctx.track("studio_start_method", { method: "video" });
+      state.door = "video";
+      render();
+      return;
+    }
+    if (k === "video-open") {
       try {
         (window as any).rdListingVideo?.({ from: "studio" });
       } catch (_) {
@@ -1097,6 +1125,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       }
       return;
     }
+
     if (k === "c-upload") {
       openSetup("upload");
       browse();
