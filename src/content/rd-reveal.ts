@@ -1090,6 +1090,8 @@ function logoModalHtml() {
 }
 
 /* ======================= STEP 4, BRAND ======================= */
+/** Which Step 4 accordions are open, kept across re-renders. */
+const accOpen = new Set<string>(["template"]);
 function stepBrand() {
   const w = S.wizard;
   if (!w.avatar) w.avatar = blankAvatarConfig();
