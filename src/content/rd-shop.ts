@@ -7,7 +7,8 @@
 import { createIcons, icons } from "lucide";
 import {
   visualSearchProvider,
-  sampleDetection,
+  visionDetection,
+  categoryIcon,
   isProductSearchConfigured,
   matchTypeLabel,
   matchStrengthLabel,
@@ -66,8 +67,8 @@ function shell() {
 <div class="shop-body">
   <div class="shop-canvas">
     <div class="shop-tools">
-      <button class="btn btn-ghost btn-xs" id="shopDetect"><i data-lucide="scan-search"></i>Re-Scan Objects</button>
-      <button class="btn btn-ghost btn-xs" id="shopDraw"><i data-lucide="square-dashed-mouse-pointer"></i>Add Object</button>
+      <button class="btn btn-dark btn-xs" id="shopDraw"><i data-lucide="square-dashed-mouse-pointer"></i>Add Object</button>
+      <button class="btn btn-ghost btn-xs" id="shopDetect"><i data-lucide="scan-search"></i>Re-Scan Objects<em class="shop-cost">1 Credit</em></button>
       <button class="btn btn-ghost btn-xs" id="shopDots"><i data-lucide="eye"></i>Hide Dots</button>
       <span class="shop-hint" id="shopHint">Tap Any Dot To Shop That Item</span>
     </div>
@@ -197,6 +198,7 @@ function mount(ctx) {
   let compare = [];
   let savedLater = [];
   let dotsOn = true;
+  let scanFailed = false;
   const matchCache = {};
   let catCat = "all";
 
@@ -215,11 +217,12 @@ function mount(ctx) {
   syncCounts();
 
   /* ---------------- detection ---------------- */
-  async function detect() {
+  async function detect(force) {
     $("shopScan").hidden = false;
     $("shopDotLayer").innerHTML = "";
+    scanFailed = false;
     try {
-      objects = await sampleDetection.detect(design.image, design.roomType);
+      objects = await visionDetection.detect(design.image, design.roomType, { force: !!force });
       const locked = lockedCategories(design.roomId);
       objects.forEach((o) => (o.locked = locked.indexOf(o.category) > -1));
       paintDots();
@@ -229,15 +232,37 @@ function mount(ctx) {
         paintCatalog();
       } else selectObject(objects[0]);
     } catch (e) {
-      $("shopResults").innerHTML = errorBlock("The object scan could not finish.");
-      wireRetry();
+      scanFailed = true;
+      objects = [];
+      paintDots();
+      paintCatTabs();
+      emptyObjects(e && e.message ? String(e.message) : "");
+      $("shopResults").innerHTML = scanEmptyBlock();
+      wireScanEmpty();
+      paintCatalog();
     } finally {
       $("shopScan").hidden = true;
     }
   }
 
-  function emptyObjects() {
-    $("shopObjs").innerHTML = `<div class="shop-empty"><b>No Objects Detected</b><span>Draw a box around any item in the design and we will search for matching products.</span></div>`;
+  function scanEmptyBlock() {
+    return scanFailed
+      ? `<div class="shop-empty"><b>We Could Not Scan This Image. Add Objects Manually.</b><span>Nothing was charged for the failed scan. Draw a box around any item and we will search for matching products.</span><button class="btn btn-dark btn-xs" id="shopEmptyAdd"><i data-lucide="square-dashed-mouse-pointer"></i>Add Object</button><button class="btn btn-ghost btn-xs" id="shopRetry"><i data-lucide="refresh-cw"></i>Try Again</button></div>`
+      : `<div class="shop-empty"><b>No Objects Detected Confidently. Tap Add Object To Mark One Yourself.</b><span>We only place a dot when we are sure what it is sitting on.</span><button class="btn btn-dark btn-xs" id="shopEmptyAdd"><i data-lucide="square-dashed-mouse-pointer"></i>Add Object</button></div>`;
+  }
+
+  function wireScanEmpty() {
+    paintIcons();
+    const a = $("shopEmptyAdd");
+    if (a) a.addEventListener("click", startDrawing);
+    const r = $("shopRetry");
+    if (r) r.addEventListener("click", () => detect(true));
+  }
+
+  function emptyObjects(msg) {
+    $("shopObjs").innerHTML = `<div class="shop-empty"><b>${
+      scanFailed ? "We Could Not Scan This Image. Add Objects Manually." : "No Objects Detected Confidently. Tap Add Object To Mark One Yourself."
+    }</b><span>${esc(msg || "Draw a box around any item in the design and we will search for matching products.")}</span></div>`;
   }
 
   function paintDots() {
