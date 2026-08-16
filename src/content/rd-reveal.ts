@@ -912,30 +912,14 @@ function popoverHtml() {
   </div></div>`;
 }
 
-/* ======================= STEP 3, EDIT ======================= */
+/* Video format. The old step 3 folded into the grid, so the segmented control
+   lives in the grid header now. */
 const ORIENTATIONS: Array<[string, string, string[]]> = [
   ["portrait", "Portrait", ["9:16", "4:5"]],
   ["landscape", "Landscape", ["16:9", "1:1"]],
 ];
 function orientationOf(w) {
   return (w.formats || []).some((f) => f === "16:9" || f === "1:1") ? "landscape" : "portrait";
-}
-function stepEdit() {
-  const w = S.wizard;
-  const per = sceneDurations(w.scenes.length, w.length);
-  const total = Math.round(per * w.scenes.length);
-  const imm = immersiveCount();
-  const orient = orientationOf(w);
-  return `<div class="rv-head-row">
-    <div><h3>Configure Photos</h3><p class="rv-hint">Drag To Reorder. Set Orientation, Crop Photos, And Customize Camera Motions.</p></div>
-    <div class="rv-orient"><span>Video Orientation</span>
-      <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
-    </div>
-  </div>
-  <div class="rv-meta mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</div>
-  ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
-  <div class="rv-photostrip">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
-  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext" ${w.formats.length ? "" : "disabled"}>Continue</button></div>`;
 }
 
 
