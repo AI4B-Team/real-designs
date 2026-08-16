@@ -58,11 +58,6 @@ export const buildScope = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
 
-    // Metered: a priced scope costs three credits.
-    const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
-    const billing = await charge(context.userId, "scope", "priced scope");
-    if (!billing.ok) throw new Error(chargeErrorMessage(billing));
-
     // ---- 1. Load the version and its property hierarchy (RLS scopes this to the caller) ----
     const { data: version, error: versionError } = await supabase
       .from("versions")
@@ -113,6 +108,12 @@ export const buildScope = createServerFn({ method: "POST" })
     if (!market) {
       throw new Error("No cost markets are set up yet, so this scope cannot be priced. Add a market with unit costs first.");
     }
+
+    // Metered: charge only once we know the scope can actually be priced, so a
+    // missing market or catalog never costs the user credits.
+    const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
+    const billing = await charge(context.userId, "scope", "priced scope");
+    if (!billing.ok) throw new Error(chargeErrorMessage(billing));
 
 
     const laborFactor = num(market.labor_factor) || 1;
