@@ -131,14 +131,25 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {
     if (isChunkLoadError(error) && typeof window !== "undefined") {
       const key = "rd:chunk-reload";
-      const last = Number(sessionStorage.getItem(key) || 0);
-      // Allow another one-shot reload if the last attempt was a while ago.
-      if (!last || Date.now() - last > 20000) {
-        sessionStorage.setItem(key, String(Date.now()));
-        window.location.reload();
+      let s: { n?: number; at?: number } = {};
+      try {
+        s = JSON.parse(sessionStorage.getItem(key) || "{}") || {};
+      } catch {
+        s = {};
+      }
+      const now = Date.now();
+      const n = s.at && now - s.at < 30000 ? s.n || 0 : 0;
+      if (n < 3) {
+        try {
+          sessionStorage.setItem(key, JSON.stringify({ n: n + 1, at: now }));
+        } catch {
+          /* private mode */
+        }
+        window.setTimeout(() => window.location.reload(), 600 * (n + 1));
         return;
       }
     }
+
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
