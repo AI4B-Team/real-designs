@@ -543,104 +543,19 @@ function defaultTitle(w) {
   return w.title || w.propertyLabel || "Untitled Video";
 }
 
+/* Step 1 is the shared source picker, mounted after render. Nothing about
+   uploading, dropping, cloud links or address lookup lives in this file. */
 function stepPhotos() {
   const w = S.wizard;
-  const opts = [
-    ["address", "Property Address", "Import Photos From The Listing.", "map-pin"],
-    ["upload", "Upload", "Drag Photos In Or Browse Your Device.", "upload"],
-    ["property", "A Property You Already Have", "Use Rooms, Designs And Photos Already In Your Workspace.", "home"],
-    ["design", "A Design", "Start From One Finished Design Or A Before And After.", "images"],
-  ];
-  const recent = S.tree.slice(0, 6);
-  let panel = "";
-  if (w.sourceType === "address") {
-    const tab = w.addrTab === "url" ? "url" : "address";
-    panel = `<div class="rv-srcpanel">
-      <div class="rv-seg tiny">
-        <button class="${tab === "address" ? "on" : ""}" data-addrtab="address">Address</button>
-        <button class="${tab === "url" ? "on" : ""}" data-addrtab="url">URL</button>
-      </div>
-      ${tab === "address"
-        ? `<label class="rv-f" style="display:block">Property Address<input id="rvAddr" style="display:block;width:100%;margin-top:6px" value="${esc(w.address || "")}" placeholder="3417 Hoover Dr, Holiday, FL 34691"></label>
-      <button class="btn btn-primary btn-sm" id="rvAddrGo" style="margin-top:14px">${w.addrBusy ? "Looking Up" : "Find Photos"}</button>`
-        : `<label class="rv-f" style="display:block">Listing Link<input id="rvUrl" style="display:block;width:100%;margin-top:6px" value="${esc(w.listingUrl || "")}" placeholder="https://www.zillow.com/homedetails/..."></label>
-      <button class="btn btn-primary btn-sm" id="rvUrlGo" style="margin-top:14px">${w.addrBusy ? "Reading Link" : "Read Listing"}</button>
-      <div class="rv-note sm">Listing Links Are Read As Text Only. No Photos Or Media Are Imported From A Public Listing Page.</div>`}
-      ${(w.candidates || []).length ? `<div class="rv-sub">Choose A Listing</div>
-      <div class="rv-cands">${w.candidates.map((c, i) => `<div class="rv-cand">
-        <span class="rv-a-th" data-img="${esc(c.cover || "")}"></span>
-        <div><b class="mono">${esc(c.price || "")}</b><span>${esc(c.address || "")}</span>
-        <i class="mono">${esc(c.meta || "")}</i></div>
-        <button class="btn btn-ghost btn-xs" data-cand="${i}">Use This Listing</button>
-      </div>`).join("")}</div>` : ""}
-      ${w.addrNote ? `<div class="rv-note">${esc(w.addrNote)}</div>` : ""}
-      ${(w.candidates || []).length || w.addrNote ? `<button class="fb-link" id="rvAddrSkip">No Thanks, I Will Upload Photos Myself</button>` : ""}
-    </div>`;
-  } else if (w.sourceType === "upload") {
-    panel = `<div class="rv-srcpanel">
-      <input type="file" id="rvFiles" accept="image/*" multiple hidden>
-      <div class="rv-dz ${w.dragging ? "hot" : ""}" id="rvDrop">
-        <i data-lucide="upload-cloud"></i>
-        <b>Drag And Drop Photos Here</b>
-        <span class="rv-or">Or</span>
-        <button class="btn btn-ghost btn-sm" id="rvBrowse">Browse Files</button>
-        <div class="rv-dz-cloud">
-          <button class="btn btn-ghost btn-sm" id="rvDrive">${DRIVE_ICON}Google Drive</button>
-          <button class="btn btn-ghost btn-sm" id="rvDropbox">${DROPBOX_ICON}Dropbox</button>
-        </div>
-        <span class="rv-hint">JPG, PNG Or HEIC, Up To 10 MB Each</span>
-      </div>
-      ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
-        .map((u) => `<div class="rv-thumb" style="background-image:url('${esc(u.url)}')"><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
-        .join("")}</div>
-      <div class="rv-upload"><span class="mono">${w.uploads.length} Photos Added</span></div>` : ""}
-    </div>`;
-  } else if (w.sourceType === "property") {
-    panel = recent.length
-      ? `<div class="rv-sub">Recent Properties</div>
-      <div class="rv-recents">${recent
-        .map((p) => {
-          /* Several unsorted properties can share the same label, so date
-             stamp the duplicates to keep the picker unambiguous. */
-          const dupe = recent.filter((q) => q.address === p.address).length > 1;
-          /* Same-day duplicates are common, so include the time too. */
-          const when = p.created_at
-            ? new Date(p.created_at).toLocaleString([], { month: "numeric", day: "numeric", hour: "numeric", minute: "2-digit" })
-            : "";
-          const label = dupe && when ? `${p.address} · ${when}` : p.address;
-          const rooms = (p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0);
-          const assets = Number(p.asset_count || 0);
-          /* Upload-only properties have no rooms, so never claim "0 Rooms". */
-          const meta = rooms ? `${rooms} ${rooms === 1 ? "Room" : "Rooms"}`
-            : assets ? `${assets} ${assets === 1 ? "Photo" : "Photos"}`
-            : "Empty";
-          const dead = !rooms && !assets;
-          return `<button class="rv-recent ${w.propertyId === p.id ? "on" : ""}" data-prop="${p.id}" title="${esc(label)}" ${dead ? "disabled" : ""}><i data-lucide="home"></i><b>${esc(label)}</b><span class="mono">${meta}</span></button>`;
-        })
-        .join("")}</div>`
-
-      : `<div class="rv-note">No Properties Yet. Upload Photos To Start.</div>`;
-  } else if (w.sourceType === "design") {
-    const designs = designChoices();
-    panel = designs.length
-      ? `<div class="rv-sub">Pick A Design</div>
-      <div class="rv-designs">${designs
-        .map((d) => `<button class="rv-dcard ${w.versionId === d.versionId ? "on" : ""}" data-design="${esc(d.roomId)}">
-          <span class="rv-dcard-th">${d.before ? `<span data-img="${esc(d.before)}"></span>` : ""}<span data-img="${esc(d.after)}"></span></span>
-          <span class="rv-dcard-b"><b>${esc(d.room)}</b><em>${esc(d.propertyLabel)}</em><span class="rv-dpill">${d.before ? "Before And After" : "Design"}</span></span>
-        </button>`)
-        .join("")}</div>`
-      : `<div class="rv-srcpanel"><b>No Finished Designs Yet</b>
-        <p class="rv-hint">Create A Design In Studio First, Or Start From Photos Instead.</p>
-        <button class="btn btn-ghost btn-sm" id="rvUsePhotos">Use Photos Instead</button></div>`;
-  }
-
+  const chosen = w.propertyId ? (S.tree.find((p) => p.id === w.propertyId)?.address || w.propertyLabel) : "";
   return `<h3>Where Are The Photos?</h3>
   <label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
-  <div class="rv-opts">${opts
-    .map(([id, n, d, ic]) => `<button class="rv-opt ${w.sourceType === id ? "on" : ""}" data-src="${id}"><i data-lucide="${ic}"></i><b>${n}</b><span>${d}</span></button>`)
+  <div id="rvPicker"></div>
+  ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
+  ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
+    .map((u) => `<div class="rv-thumb" style="background-image:url('${esc(u.url)}')"><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
     .join("")}</div>
-  ${panel}
+  <div class="rv-upload"><span class="mono">${w.uploads.length} Photos Added</span></div>` : ""}
   <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button></div>`;
 }
 
@@ -649,15 +564,12 @@ function stepPhotos() {
 function stepReady() {
   const w = S.wizard;
   if (!w) return false;
-  if (w.step === 1) {
-    return w.sourceType === "upload" || w.sourceType === "address" ? (w.uploads || []).length > 0
-      : w.sourceType === "design" ? !!w.versionId
-      : !!w.propertyId;
-  }
+  if (w.step === 1) return (w.uploads || []).length > 0 || !!w.versionId || !!w.propertyId;
   if (w.step === 2) return w.scenes.length > 0;
   if (w.step === 3) return (w.formats || []).length > 0;
   return true;
 }
+
 
 /* ======================= STEP 2, SELECT ======================= */
 /** Analysis-shaped view of the wizard's available photos. */
