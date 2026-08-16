@@ -933,7 +933,7 @@ async function openDetail(m, opts) {
       }
       ${
         m.status === "failed"
-          ? `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>Generation Failed</b><span>${esc(m.error || "Something went wrong.")}</span></div></div>`
+          ? `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>${planBlocked(m) ? "Not Enough Credits" : "Render Failed"}</b><span>${esc(failReason(m))}</span></div></div>`
           : ""
       }
       <div class="ml-dr-meta">
