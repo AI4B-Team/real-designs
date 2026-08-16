@@ -41,7 +41,9 @@ export async function resolvePhotoUrl(path: string | null | undefined): Promise<
 
 export function isStoredPhoto(path: string | null | undefined): boolean {
   if (!path) return false;
-  return !/^(https?:|\/|data:)/.test(path);
+  // Local uploads use browser object URLs until the video is saved. They are
+  // already displayable and must never be sent to storage for URL signing.
+  return !/^(https?:|blob:|\/|data:)/.test(path);
 }
 
 export async function uploadRoomPhoto(file: File): Promise<string> {
