@@ -1738,30 +1738,46 @@ function cachedPhotoUrl(path) {
   return p;
 }
 
+let thumbObserver: IntersectionObserver | null = null;
+
+/** Sign and paint one element. The painted guard is what stops a failed
+    tile from retrying forever. */
+async function paintOneThumb(el) {
+  if (el.dataset.painted) return true;
+  const path = el.getAttribute("data-img");
+  if (!path) return true;
+  const url = await cachedPhotoUrl(path);
+  if (url) {
+    el.style.backgroundImage = `url("${url}")`;
+    el.classList.remove("rv-noimg");
+    el.dataset.painted = "1";
+    return true;
+  }
+  if (!el.querySelector(".rv-noimg-i")) {
+    el.insertAdjacentHTML("beforeend", `<i class="rv-noimg-i" data-lucide="image-off"></i>`);
+  }
+  el.classList.add("rv-noimg");
+  paint();
+  return false;
+}
+
+/* Full size tiles are expensive to sign and fetch, so only the ones near the
+   viewport ask for a URL. */
 async function paintAssetThumbs() {
   const els = Array.from(host()?.querySelectorAll("[data-img]") || []);
-  let missing = false;
-  await Promise.all(
-    els.map(async (el) => {
-      if (el.dataset.painted) return;
-      const path = el.getAttribute("data-img");
-      if (!path) return;
-      const url = await cachedPhotoUrl(path);
-      if (url) {
-        el.style.backgroundImage = `url("${url}")`;
-        el.classList.remove("rv-noimg");
-        /* Only a real paint counts, otherwise the tile is poisoned forever. */
-        el.dataset.painted = "1";
-        return;
-      }
-      if (!el.querySelector(".rv-noimg-i")) {
-        el.insertAdjacentHTML("beforeend", `<i class="rv-noimg-i" data-lucide="image-off"></i>`);
-      }
-      el.classList.add("rv-noimg");
-      missing = true;
-    }),
-  );
-  if (missing) paint();
+  if (thumbObserver) { thumbObserver.disconnect(); thumbObserver = null; }
+  if (typeof IntersectionObserver === "undefined") {
+    await Promise.all(els.map((el) => paintOneThumb(el)));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      if (!en.isIntersecting) continue;
+      paintOneThumb(en.target).then((ok) => { if (ok) io.unobserve(en.target); });
+    }
+  }, { rootMargin: "400px" });
+  thumbObserver = io;
+  els.forEach((el) => { if (!el.dataset.painted) io.observe(el); });
 }
 
 /* ======================= RENDER + EVENTS ======================= */
