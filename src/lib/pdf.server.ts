@@ -113,7 +113,7 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
     s: string,
     x: number,
     size: number,
-    opts: { font?: PDFFont; color?: ReturnType<typeof rgb>; align?: "left" | "right"; width?: number } = {},
+    opts: { font?: PDFFont; color?: ReturnType<typeof rgb>; align?: "left" | "right" | undefined; width?: number } = {},
   ) => {
     const f = opts.font || reg;
     const str = clean(s);
