@@ -536,6 +536,7 @@ export function mountExplore(go, ctx) {
   }
   /** selecting saves immediately and enables Next; it must not auto-advance or scroll */
   function quizPick(id) {
+    if (!id || !styleById(id)) return;
     q.picks[qIndex()] = id;
     qSave();
     paintQuiz();
