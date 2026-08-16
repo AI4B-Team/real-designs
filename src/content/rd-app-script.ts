@@ -563,7 +563,7 @@ async function paintOnboarding(s,pres){
   try{ brandOk=!!(PREFS&&PREFS.brand&&(PREFS.brand.company||'').trim()); }catch(_){}
   const done=[
     ['Save Your First Room','Upload a photo in Studio and save it to a property.', (s.counts.designs||0)>0, 'studio','Open Studio'],
-    ['Create A Listing Video','Turn property photos into a video you can share.', (s.counts.videos||0)>0, 'lvideo','Open Listing Video'],
+    ['Create A Listing Video','Turn property photos into a video you can share.', videoOk, 'lvideo','Open Listing Video'],
     ['Send A Client Presentation','Share a branded approval link and track the decision.', (pres||[]).length>0, 'present','Open Presentations'],
     ['Set Up Your Brand Kit','Add your logo and contact details to everything you send.', brandOk, 'settings','Open Brand Kit'],
   ];
