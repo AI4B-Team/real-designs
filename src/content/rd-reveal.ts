@@ -505,7 +505,8 @@ const WIZ_SECTIONS: Array<[string, string, string, number]> = [
   ["brand", "Brand", "palette", 4],
   ["quality", "Quality", "sparkles", 7],
 ];
-const FLOW = [1, 2, 3, 5, 6, 4, 7];
+/* Step 3 folded into step 2. Old links resolving to 3 are normalised in render(). */
+const FLOW = [1, 2, 5, 6, 4, 7];
 function nextStep(n: number) {
   const i = FLOW.indexOf(n);
   return i < 0 || i === FLOW.length - 1 ? n : FLOW[i + 1];
