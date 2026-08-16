@@ -3349,13 +3349,13 @@ async function paintAcctSide(){
     if(c.plan==='free'){
       /* Server returns remainingToday, not a used-count. */
       const left=Math.max(0,Math.min(5,c.remainingToday??5));
-      if(sc) sc.textContent=left+' of 5 free designs left today';
+      if(sc) sc.textContent=left+' Of 5 Free Designs Left Today';
       if(sb) sb.style.width=(left/5*100)+'%';
-      if(ss) ss.textContent='Free plan resets every day';
+      if(ss) ss.textContent='Free Plan Resets Every Day';
     } else {
-      if(sc) sc.textContent=c.balance+(c.balance===1?' credit':' credits')+' available';
+      if(sc) sc.textContent=c.balance+(c.balance===1?' Credit':' Credits')+' Available';
       if(sb) sb.style.width=Math.min(100,(c.balance/200)*100)+'%';
-      if(ss) ss.textContent='One balance covers designs, scopes, plans and video';
+      if(ss) ss.textContent='One Balance Covers Designs, Budgets, Plans And Video';
     }
   }catch(_){}
 }
