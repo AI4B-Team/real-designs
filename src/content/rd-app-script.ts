@@ -34,6 +34,7 @@ import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
 import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
 import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
+import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
 
 /** Mirrors an Explore style choice into the Studio controls once per selection. */
 let STYLE_CHOICE_TS=0;
@@ -2103,7 +2104,7 @@ async function exportBrief(){
   if(btn){ btn.disabled=true; btn.textContent='Building PDF…'; }
   try{
     await downloadPdf(await briefDoc(lastScope),'contractor-brief-'+scopeContext());
-    showToast&&showToast('Contractor Brief Downloaded');
+    try{ (window as any).rdToast && (window as any).rdToast('Contractor Brief Downloaded'); }catch(_){ }
   }catch(e){
     showAlert('Could not build the contractor brief. '+((e&&e.message)||''));
   }finally{ if(btn){ btn.disabled=false; btn.innerHTML=lab; } }
