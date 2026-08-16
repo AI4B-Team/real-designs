@@ -869,8 +869,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     picker = null;
     const slot = document.getElementById("stSource");
     if (!slot) return;
+    const isVideo = state.door === "video";
     picker = mountSourcePicker(slot, {
-      context: "design",
+      context: isVideo ? "video" : "design",
       esc,
       lucide,
       showAlert: ctx.showAlert,
@@ -882,10 +883,26 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       onPick: (picked) => {
         const first = picked[0];
         if (!first) return;
+        if (isVideo) {
+          try {
+            (window as any).rdListingVideo?.({ from: "studio", files: picked.map((p) => p.file) });
+          } catch (_) {
+            ctx.go("studio");
+          }
+          return;
+        }
         openSetup("upload");
         takeFile(first.file);
       },
       onProperty: (address) => {
+        if (isVideo) {
+          try {
+            (window as any).rdListingVideo?.({ from: "studio", address });
+          } catch (_) {
+            ctx.go("studio");
+          }
+          return;
+        }
         state.newAddress = address;
         state.property = address;
         openSetup("property");
@@ -895,6 +912,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         render();
       },
     });
+
   }
 
   function hydrateRecent() {
