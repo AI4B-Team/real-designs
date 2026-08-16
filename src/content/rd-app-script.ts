@@ -308,7 +308,7 @@ function searchIndex(){
     out.push({kind:'Scopes',ic:'calculator',t:(e.name||'Saved room')+' scope',
       s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Scope')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
     out.push({kind:'Products',ic:'shopping-bag',t:(e.name||'Saved room')+' product board',
-      s:'Allowances from the saved scope',view:'products'});
+      s:'Allowances from the saved budget',view:'products'});
   });
   return out;
 }
@@ -647,7 +647,7 @@ async function loadDashboard(){
 <td class="n">${t?kfmt(t):'—'}</td><td class="n">${p.priced?kfmt(p.low)+' to '+kfmt(p.high):'—'}</td>
 <td style="text-align:right"><span class="pill ${fit[0]}">${fit[1]}</span></td></tr>`;
   }).join('')
-    :'<tr><td colspan="6">No Saved Projects Yet. Price a scope in Studio, then use Save To My Projects.</td></tr>';
+    :'<tr><td colspan="6">No Saved Projects Yet. Price A Budget In Studio, Then Use Save To My Projects.</td></tr>';
 }
 document.getElementById('attnList')?.addEventListener('click',(e)=>{
   const r=e.target.closest('[data-goto]'); if(!r) return;
@@ -1807,7 +1807,7 @@ function renderScope(r){
   r.lines.forEach(l=>{ if(idx[l.trade]===undefined){ idx[l.trade]=groups.length; groups.push({trade:l.trade,lines:[]}); }
     groups[idx[l.trade]].lines.push(l); });
   scopeRowsEl.innerHTML=r.lines.length===0
-    ? '<tr><td colspan="5">No Priceable Items In This Selection. Add Or Change Scope Items, Then Run The Estimate Again.</td></tr>'
+    ? '<tr><td colspan="5">No Priceable Items In This Selection. Add Or Change Budget Items, Then Run The Estimate Again.</td></tr>'
     : groups.map(g=>{
     const low=g.lines.reduce((a,l)=>a+l.line_low,0), high=g.lines.reduce((a,l)=>a+l.line_high,0);
     return `<tr class="trade-h"><td colspan="3">${g.trade}</td><td class="n">${money(low)}</td><td class="n">${money(high)}</td></tr>`
