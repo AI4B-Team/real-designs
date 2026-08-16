@@ -33,6 +33,7 @@ import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 import { summaryHTML, metric } from "@/lib/result-summary";
 import { mountExplore } from "@/content/rd-explore";
+import { mountWatch } from "@/content/rd-watch";
 import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
 import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
@@ -143,7 +144,7 @@ const PALS={
 /* ---------- nav ---------- */
 const titles={home:['Dashboard','Your workspace at a glance'],
 dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
-studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
+studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],watch:['Watch A Site','Monitor a listing site you own and prepare videos for new properties'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 reports:['Reports','Portfolio rollup, budget fit and credit spend'],
@@ -210,6 +211,7 @@ function go(v,fromHash){
   scrollTopHard();
   try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
+  if(v==='watch'){ try{ mountWatch(go); }catch(_){} }
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
   if(v==='lvideo'){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
@@ -243,7 +245,7 @@ const VIEW_ALIAS={dashboard:'dash',home:'home',start:'home',overview:'dash',prop
 batch:'listings',listing:'listings',listings:'listings',budget:'scope',estimate:'scope',
 video:'reveal',videos:'reveal',presentations:'present',report:'reports',product:'products',
 shop:'products',shopping:'products',sourcing:'products',
-explore:'explore',designs:'designs',media:'media'};
+explore:'explore',designs:'designs',media:'media',watch:'watch',monitor:'watch',sites:'watch'};
 function viewFromHash(){
   let raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
   if(!raw) return '';
