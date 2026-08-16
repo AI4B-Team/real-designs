@@ -135,6 +135,12 @@
   .ml-head { flex-direction:column; }
   .ml-grid { grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:12px; }
 }
+/* On phones a two up grid squeezes the card buttons past the screen edge,
+   so cards go full width and their action labels can shrink. */
+@media (max-width:560px) {
+  .ml-grid { grid-template-columns:minmax(0,1fr); }
+  .ml-acts .btn { flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+}
 
 /* Sticky multi-select bar */
 .ml-bulk.on { position:sticky; top:8px; z-index:30; flex-wrap:wrap; box-shadow:0 8px 24px rgba(17,24,39,.18); }
