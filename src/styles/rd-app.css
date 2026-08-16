@@ -1553,3 +1553,10 @@
 .rd-app .sc-f textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;font:inherit;font-size:.86rem;line-height:1.5;background:var(--paper);color:var(--ink);resize:vertical}
 .rd-app .sc-f textarea:focus{outline:none;border-color:var(--ink);background:#fff}
 .rd-app .sc-actions{display:flex;align-items:center;gap:8px;margin-top:6px}
+
+/* Role permission matrix: the Yes/No cells read as columns, so center them
+   under their centered headers instead of inheriting numeric right-align. */
+.rd-app .perm-tbl td.n,
+.rd-app .perm-tbl th{text-align:center}
+.rd-app .perm-tbl td:first-child,
+.rd-app .perm-tbl th:first-child{text-align:left}
