@@ -1684,7 +1684,7 @@
 .sp-tab.sp-primary{background:#111;border-color:#111;color:#fff;font-weight:600;font-size:.82rem;padding:9px 18px;margin-right:6px}
 .sp-tab.sp-primary i,.sp-tab.sp-primary svg{color:#fff;stroke:#fff}
 .sp-tab.sp-primary.on{background:var(--red);border-color:var(--red);color:#fff}
-.sp-drop{display:flex;flex-direction:column;align-items:center;gap:8px;padding:26px 20px;border:1.5px dashed var(--line);border-radius:16px;background:var(--card);text-align:center}
+.sp-drop{display:flex;flex-direction:column;align-items:center;gap:8px;padding:38px 20px;border:1.5px dashed var(--line);border-radius:16px;background:var(--card);text-align:center}
 .sp-drop.over{border-color:var(--red);background:rgba(204,0,0,.04)}
 .sp-drop i{width:26px;height:26px;color:var(--red)}
 .sp-or,.sp-hint{font-size:.76rem;color:var(--mute-2)}
@@ -1718,21 +1718,3 @@
 
 .rd-app .create-wrap .chev{width:14px;height:14px;margin-left:2px}
 .rd-app .create-wrap .help-menu{width:190px}
-
-.sp-acts{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
-.sp-cloudbtn{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--bg);color:var(--ink);font-size:.78rem;cursor:pointer}
-.sp-cloudbtn:hover{border-color:var(--red)}
-.sp-cloudbtn .brand-ico,.sp-cloudbtn svg{width:15px;height:15px}
-.sp-line{margin:12px 0 0;font-size:.8rem;color:var(--mute-2)}
-.sp-inline{background:none;border:0;padding:0;color:var(--red);font-size:.8rem;cursor:pointer;text-decoration:underline}
-.sp-dot{margin:0 8px;font-style:normal;color:var(--mute-2)}
-.sp-back{display:inline-flex;align-items:center;gap:6px;text-decoration:none}
-.sp-back svg{width:14px;height:14px}
-.sp-listing{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:12px;background:var(--card)}
-.sp-listing-h{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;font-size:.82rem}
-.sp-listing-h span{color:var(--mute-2);font-size:.78rem}
-.sp-listing-r{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
-.sp-listing-r input{flex:1;min-width:240px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:.85rem;color:inherit}
-.sp-prop span.mono{white-space:nowrap;font-family:var(--mono,'DM Mono',monospace)}
-.sp-prop.off{opacity:.55;cursor:not-allowed}
-.sp-prop.off:hover{border-color:var(--line)}

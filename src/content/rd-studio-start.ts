@@ -881,20 +881,17 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       lucide,
       showAlert: ctx.showAlert,
       properties: () =>
-        (ctx.getProperties ? ctx.getProperties() : []).map((p) => {
-          const rooms = (p.projects || []).reduce(
-            (t, pr) => t + (((pr as any).rooms || []) as any[]).length,
-            0,
-          );
-          const photos = Number((p as any).asset_count || 0);
-          const meta = rooms
-            ? rooms === 1 ? "1 Room" : rooms + " Rooms"
-            : photos
-              ? photos === 1 ? "1 Photo" : photos + " Photos"
-              : "Empty";
-          return { address: p.address, meta, disabled: !rooms && !photos };
-        }),
-
+        (ctx.getProperties ? ctx.getProperties() : []).map((p) => ({
+          address: p.address,
+          meta: (() => {
+            const n =
+              (p.projects || []).reduce(
+                (t, pr) => t + (((pr as any).rooms || []) as any[]).filter((r: any) => !!r.before_path).length,
+                0,
+              ) || Number((p as any).asset_count || 0);
+            return n === 1 ? "1 Photo" : n + " Photos";
+          })(),
+        })),
       onPick: (picked) => {
         const first = picked[0];
         if (!first) return;

@@ -131,25 +131,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {
     if (isChunkLoadError(error) && typeof window !== "undefined") {
       const key = "rd:chunk-reload";
-      let s: { n?: number; at?: number } = {};
-      try {
-        s = JSON.parse(sessionStorage.getItem(key) || "{}") || {};
-      } catch {
-        s = {};
-      }
-      const now = Date.now();
-      const n = s.at && now - s.at < 30000 ? s.n || 0 : 0;
-      if (n < 3) {
-        try {
-          sessionStorage.setItem(key, JSON.stringify({ n: n + 1, at: now }));
-        } catch {
-          /* private mode */
-        }
-        window.setTimeout(() => window.location.reload(), 600 * (n + 1));
+      const last = Number(sessionStorage.getItem(key) || 0);
+      // Allow another one-shot reload if the last attempt was a while ago.
+      if (!last || Date.now() - last > 20000) {
+        sessionStorage.setItem(key, String(Date.now()));
+        window.location.reload();
         return;
       }
     }
-
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
@@ -222,23 +211,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 const chunkRecoveryScript = `(function(){
   var K='rd:chunk-reload';
   function isChunk(m){return typeof m==='string'&&(/Failed to fetch dynamically imported module/i.test(m)||/Importing a module script failed/i.test(m)||/error loading dynamically imported module/i.test(m));}
-  function state(){try{return JSON.parse(sessionStorage.getItem(K)||'{}')||{};}catch(e){return {};}}
   function retry(m){
     if(!isChunk(m))return;
-    var s=state();var now=Date.now();
-    var n=(s.at&&now-s.at<30000)?(s.n||0):0;
-    if(n>=3)return;
-    try{sessionStorage.setItem(K,JSON.stringify({n:n+1,at:now}));}catch(e){return;}
-    // The dev/deploy server may still be swapping bundles: wait, then verify the
-    // document is reachable before reloading so we don't spin on a dead server.
-    setTimeout(function(){
-      fetch(location.pathname,{cache:'reload'}).then(function(){location.reload();},function(){location.reload();});
-    },600*(n+1));
+    try{var l=Number(sessionStorage.getItem(K)||0);if(l&&Date.now()-l<20000)return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
+    location.reload();
   }
   addEventListener('error',function(e){retry(e&&e.message);});
   addEventListener('unhandledrejection',function(e){var r=e&&e.reason;retry(r&&r.message||String(r));});
 })();`;
-
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
