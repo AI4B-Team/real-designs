@@ -1717,7 +1717,7 @@ function paintBatch(){
   const rooms=[]; prop.projects.forEach(pr=>pr.rooms.forEach(r=>rooms.push(r)));
   BATCH_ROOMS=rooms.filter(r=>!!r.before_path);
   const sub=document.getElementById('batchSub');
-  if(sub) sub.textContent=rooms.length?(rooms.length+(rooms.length===1?' room':' rooms')+' on file, '+BATCH_ROOMS.length+' with a photo'):'No Rooms on This Property Yet';
+  if(sub) sub.textContent=rooms.length?(rooms.length+(rooms.length===1?' room':' rooms')+' on file, '+BATCH_ROOMS.length+' with a photo'):'No Rooms On This Property Yet';
   const st=batchStateEl();
   if(st){ st.className='pill '+(BATCH_ROOMS.length?'p-ok':'p-gray'); st.textContent=BATCH_ROOMS.length?(BATCH_ROOMS.length+' Ready · '+BATCH_ROOMS.length+' Credits'):'Nothing To Run'; }
   if(runBtn) runBtn.disabled=!BATCH_ROOMS.length||batchBusy;
