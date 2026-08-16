@@ -39,7 +39,7 @@ const CREDIT_LABEL = {
   design: "Image Generation",
   video: "Video Generation",
   plan_3d: "3D Plan Generation",
-  scope: "Scope And Budget",
+  scope: "Budget",
   topup: "Top Up",
   grant: "Grant",
   refund: "Refund",

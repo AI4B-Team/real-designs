@@ -3026,8 +3026,8 @@ const TUTS=[
  ['Reality Lock In Practice','Designing','studio',['Generate a version, then flip between before and after.','Check the window and door openings line up. They should not move.','If a version drifts, regenerate. Only finishes and furnishings should change.']],
  ['Choosing Style And Intensity','Designing','studio',['Pick a style for the look.','Pick an intensity: Refresh, Makeover, Renovation or Reimagine.','Intensity drives the budget more than direction does, so set it against the money first.']],
  ['Staging A Whole Listing','Listing Batch','listings',['Open Listing Batch and select the property.','Choose one direction for the whole listing.','Run the batch. Each room costs 1 credit and saves to its own room record.']],
- ['Building A Scope And Budget','Scope','scope',['Open a saved version and request a scope for 3 credits.','Set market, finish grade and budget band.','Review the change list and the low to high planning range, then export or share it.']],
- ['Working The Product Board','Products','products',['Open Products after a scope has been priced.','Each material line becomes a card with quantity and allowance range.','Use Shop On to search the right retailer, or export the board as CSV or print.']],
+ ['Building A Budget','Budget','scope',['Open a saved version and request a budget for 3 credits.','Set market, finish grade and budget band.','Review the change list and the low to high planning range, then export or share it.']],
+ ['Working The Product Board','Products','products',['Open Products after a budget has been priced.','Each material line becomes a card with quantity and allowance range.','Use Shop On to search the right retailer, or export the board as CSV or print.']],
  ['Sending A Client Link','Delivery','present',['Open Presentations and pick an approved version.','Add a title and the client name, then generate the link.','Share the link. Views, approvals and notes come back into the same row.']],
  ['Tracking Approvals','Delivery','present',['Watch the status pill on each presentation row.','View counts update as the client opens the link.','Approval decisions and client notes appear inline and in your notification feed.']]];
 document.getElementById('tutGrid').innerHTML=TUTS.map(([t,tag,view,steps],i)=>`<div class="card"><div class="card-b">
@@ -3292,7 +3292,7 @@ renderNotifs();
 const toolRows = Array.from(document.querySelectorAll('.toolrow'));
 const toolInfo = document.getElementById('toolInfo');
 const LIVE_TOOLS={'2D To 3D Plan':run3dPlan,'Walkthrough Video':runWalkthrough,'Virtual Stage':()=>runRoomToolFlow('stage','Virtual Stage',false),'Declutter':()=>runRoomToolFlow('declutter','Declutter',false),'Material Swap':()=>runRoomToolFlow('materials','Material Swap',true),'Sketch To Render':()=>runRoomToolFlow('sketch','Sketch To Render',false),'Multi Angle':()=>runRoomToolFlow('angle','Multi Angle',true)};
-const TOOL_COST={'Redesign':1,'Virtual Stage':1,'Declutter':1,'Material Swap':1,'Sketch To Render':1,'Scope & Budget':3,'Multi Angle':1,'Walkthrough Video':40,'2D To 3D Plan':6};
+const TOOL_COST={'Redesign':1,'Virtual Stage':1,'Declutter':1,'Material Swap':1,'Sketch To Render':1,'Budget':3,'Multi Angle':1,'Walkthrough Video':40,'2D To 3D Plan':6};
 toolRows.forEach((r)=>{
   const nm=r.getAttribute('data-tool')||'';
   const c=TOOL_COST[nm];
@@ -4244,7 +4244,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
 (function(){
   const SC=[
     ['Navigate',[['G then D','Dashboard'],['G then P','Properties'],['G then S','Studio'],['G then I','Designs'],
-      ['G then B','Scope & Budget'],['G then R','Reports'],['G then A','Account']]],
+      ['G then B','Budget'],['G then R','Reports'],['G then A','Account']]],
     ['Actions',[['⌘ K','Search Workspace'],['⌘ B','Collapse Or Expand Menu'],['N','New Design'],
       ['?','Keyboard Shortcuts'],['Esc','Close Menus & Dialogs']]]
   ];

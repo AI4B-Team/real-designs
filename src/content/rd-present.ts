@@ -54,7 +54,7 @@ export const PRES_SECTIONS = [
   { key: "designs", title: "Design Concepts" },
   { key: "photos", title: "Property Photos" },
   { key: "video", title: "Walkthrough Video" },
-  { key: "budget", title: "Scope And Budget" },
+  { key: "budget", title: "Budget" },
   { key: "next", title: "Next Steps" },
 ];
 
