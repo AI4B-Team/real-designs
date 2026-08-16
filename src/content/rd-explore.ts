@@ -79,9 +79,9 @@ const SHELL = `
   <section class="xp-rec" id="xpRec" hidden></section>
 
   <section class="xp-quiz" id="xpQuiz" hidden>
-    <div class="xp-quiz-top"><div><h3>Find Your Style</h3><p>Five quick comparisons and we shortlist your best matches.</p></div></div>
     <div class="xp-quiz-card" id="xpQuizCard"></div>
   </section>
+
 
   <p class="xp-count" id="xpCount"></p>
   <div id="xpBody"></div>
@@ -427,7 +427,7 @@ export function mountExplore(go, ctx) {
   let qBusy = false;
   const qSave = () => write(LS.quiz, q);
 
-  function qResults() {
+  function qScores() {
     const picks = q.picks.filter(Boolean).map(styleById).filter(Boolean);
     const score = {};
     picks.forEach((s) => {
@@ -441,47 +441,76 @@ export function mountExplore(go, ctx) {
         if (pts) score[o.id] = (score[o.id] || 0) + pts;
       });
     });
-    return Object.keys(score)
-      .sort((a, b) => score[b] - score[a])
-      .slice(0, 3)
-      .map(styleById)
-      .filter(Boolean);
+    return score;
   }
 
-  const MATCH_LABEL = ["Best Match", "Strong Match", "Also Recommended"];
+  function qResults() {
+    const score = qScores();
+    const ids = Object.keys(score).sort((a, b) => score[b] - score[a]).slice(0, 3);
+    const top = score[ids[0]] || 1;
+    return ids
+      .map((id) => ({ style: styleById(id), pct: Math.max(62, Math.round((score[id] / top) * 100)) }))
+      .filter((r) => r.style);
+  }
+
+  /** left rail is identical in every state so the card never changes shape */
+  function quizAside(sub) {
+    return `<aside class="xp-quiz-aside">
+      <span class="xp-quiz-eyebrow">Find Your Style</span>
+      <h3>Find Your Style</h3>
+      <p>Answer a few quick questions for personalized recommendations.</p>
+      <span class="xp-quiz-step">${sub}</span>
+    </aside>`;
+  }
+
   function paintQuiz() {
     const wrap = $("xpQuiz"), cardEl = $("xpQuizCard");
     if (!wrap || !cardEl) return;
     wrap.hidden = false;
     if (q.done) {
       const res = qResults();
-      cardEl.innerHTML = res.length
-        ? `<div class="xp-quiz-head"><b>Your Style Matches</b></div>
-        <div class="xp-quiz-res-grid">${res.map((s, i) => `
-          <div class="xp-quiz-res-card">
-            <img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy">
-            <div class="xp-quiz-res-body"><span class="xp-quiz-badge">${MATCH_LABEL[i] || "Also Recommended"}</span>
-              <b>${esc(s.displayName)}</b><p>${esc(s.shortDescription)}</p>
-              <div class="xp-quiz-res-act">
-                <button class="btn btn-primary btn-xs" data-use="${s.id}">Try This Style</button>
-                <button class="btn btn-ghost btn-xs" data-save="${s.id}"><i data-lucide="bookmark"></i>${saved.indexOf(s.id) > -1 ? "Saved" : "Save Style"}</button>
-              </div></div></div>`).join("")}</div>
-        <div class="xp-quiz-foot"><button class="fb-link" data-qretake="1">Retake</button><button class="btn btn-ghost btn-xs" data-qbrowse="1">Browse All Styles</button></div>`
-        : `<div class="xp-quiz-head"><b>No Answers Yet</b></div><p class="xp-line">You skipped every step. Retake it whenever you like.</p>
-           <div class="xp-quiz-foot"><button class="fb-link" data-qretake="1">Retake</button></div>`;
+      cardEl.innerHTML = quizAside(res.length ? "Your Matches" : "Not Answered") + (res.length
+        ? `<div class="xp-quiz-main">
+          <div class="xp-quiz-qhead"><b>Your Style Matches</b></div>
+          <div class="xp-quiz-res-row">${res.map(({ style: s, pct }) => `
+            <div class="xp-quiz-res-card">
+              <img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy">
+              <div class="xp-quiz-res-body">
+                <b>${esc(s.displayName)}</b><span class="xp-quiz-pct">${pct}% Match</span>
+                <div class="xp-quiz-res-act">
+                  <button class="btn btn-ghost btn-xs" data-open="${s.id}">Preview</button>
+                  <button class="btn btn-primary btn-xs" data-use="${s.id}">Try This Style</button>
+                </div></div></div>`).join("")}</div>
+          <div class="xp-quiz-foot">
+            <button class="fb-link" data-qretake="1">Retake Quiz</button>
+            <button class="btn btn-ghost btn-xs" data-qbrowse="1">View All Matches</button>
+          </div></div>`
+        : `<div class="xp-quiz-main"><div class="xp-quiz-qhead"><b>No Answers Yet</b></div>
+           <p class="xp-line">You skipped every question. Retake it whenever you like.</p>
+           <div class="xp-quiz-foot"><button class="fb-link" data-qretake="1">Retake Quiz</button></div></div>`);
       icons_();
       return;
     }
     const i = Math.max(0, Math.min(q.step, QUIZ.length - 1));
     const step = QUIZ[i];
     const chosen = q.picks[i] || "";
-    cardEl.innerHTML = `<div class="xp-quiz-head"><b>${esc(step.q)}</b><span class="xp-quiz-step">${i + 1} Of ${QUIZ.length}</span></div>
-      <div class="xp-quiz-prog"><span style="width:${((i + 1) / QUIZ.length) * 100}%"></span></div>
-      <div class="xp-quiz-opts">${(() => { const seen = new Set(); return step.opts.filter((id) => { const s = styleById(id); if (!s) return false; if (seen.has(s.previewImage)) return false; seen.add(s.previewImage); return true; }); })().map((id) => { const s = styleById(id); return s ? `<button class="xp-quiz-opt${chosen === s.id ? " on" : ""}" data-qpick="${s.id}" aria-pressed="${chosen === s.id}"><img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy"><span>${esc(s.displayName)}</span></button>` : ""; }).join("")}</div>
+    const opts = (() => {
+      const seen = new Set();
+      return step.opts.filter((id) => {
+        const s = styleById(id);
+        if (!s || seen.has(s.previewImage)) return false;
+        seen.add(s.previewImage);
+        return true;
+      });
+    })();
+    cardEl.innerHTML = quizAside(`Question ${i + 1} Of ${QUIZ.length}`) + `<div class="xp-quiz-main">
+      <div class="xp-quiz-qhead"><b>${esc(step.q)}</b>
+        <div class="xp-quiz-prog"><span style="width:${((i + 1) / QUIZ.length) * 100}%"></span></div></div>
+      <div class="xp-quiz-opts" data-step="${i}">${opts.map((id) => { const s = styleById(id); return `<button class="xp-quiz-opt${chosen === s.id ? " on" : ""}" data-qpick="${s.id}" aria-pressed="${chosen === s.id}"><img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy"><span>${esc(s.displayName)}${chosen === s.id ? '<i data-lucide="check"></i>' : ""}</span></button>`; }).join("")}</div>
       <div class="xp-quiz-foot">
         <div class="xp-quiz-nav">${i > 0 ? '<button class="fb-link" data-qback="1"><i data-lucide="chevron-left"></i>Back</button>' : ""}<button class="fb-link" data-qskip="1">Skip For Now</button></div>
-        <button class="btn btn-primary btn-xs" data-qnext="1"${chosen ? "" : " disabled"}>${i === QUIZ.length - 1 ? "See Matches" : "Next"}</button>
-      </div>`;
+        <button class="btn btn-primary btn-xs" data-qnext="1"${chosen ? "" : " disabled"}>${i === QUIZ.length - 1 ? "See My Styles" : "Next"}</button>
+      </div></div>`;
     icons_();
   }
   function quizAdvance() {
@@ -491,13 +520,12 @@ export function mountExplore(go, ctx) {
     paintQuiz();
     if (q.done) note("Your Style Matches Are Ready");
   }
+  /** selecting saves immediately and enables Next; it must not auto-advance or scroll */
   function quizPick(id) {
-    if (qBusy) return;
-    qBusy = true;
     q.picks[q.step] = id;
     qSave();
     paintQuiz();
-    window.setTimeout(() => { qBusy = false; quizAdvance(); }, 300);
+
   }
 
   /* ---------- saving ---------- */
