@@ -1553,10 +1553,11 @@ function detailHtml() {
       <button class="btn btn-primary" id="rvEdit"><i data-lucide="pencil"></i>Edit</button>
     </div>
   </div>
-  ${p.status === "failed" ? `<div class="rv-fail"><b>${planBlockedMsg(p) ? "This Render Needs A Paid Plan" : "This Render Failed"}</b><span>${esc(p.error_message || "Something went wrong.")}</span>
+  ${p.status === "failed" ? `<div class="rv-fail"><b>${planBlockedMsg(p) ? "Not Enough Credits To Render" : "This Render Failed"}</b><span>${esc(planBlockedMsg(p) ? "This Video Was Never Rendered And Nothing Was Charged. Add Credits, Then Try Again." : p.error_message || "The render did not finish.")}</span>
     <div>${planBlockedMsg(p)
-      ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Upgrade</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
+      ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Add Credits</button><button class="btn btn-ghost btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
       : `<button class="btn btn-primary btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button><a class="btn btn-ghost btn-sm" href="/contact">Contact Support</a>`}</div></div>` : ""}
+
   <div class="rv-tabs">${[["video", "Video"], ["scenes", "Scenes"], ["captions", "Captions"], ["presentation", "Presentation"], ["details", "Details"]]
     .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-tab="${id}">${n}</button>`).join("")}</div>
   <div class="rv-detail">${body}</div>`;
