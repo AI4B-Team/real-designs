@@ -73,15 +73,22 @@ function openUpgradeFlow(p) {
   openUpgrade(msg);
 }
 
-/** Null when the account can pay for a video render, otherwise the reason. */
-function videoCreditBlock() {
+/**
+ * Null when the account can pay for this render, otherwise the reason.
+ * A video render is metered against the credit balance, never against the
+ * free plan's daily design counter.
+ */
+function videoCreditBlock(cost) {
   const c = S.credits;
   if (!c || c.unavailable) return null;
-  if (c.plan === "free") return "Video rendering needs a paid plan. The free plan covers 5 designs a day.";
-  if ((c.balance ?? 0) < CREDIT_COSTS.video)
-    return `Not enough credits. This video costs ${CREDIT_COSTS.video} and you have ${c.balance ?? 0}.`;
+  const need = cost == null ? CREDIT_COSTS.video : cost;
+  if (c.plan === "free")
+    return `Video Rendering Is Not Included In The Free Plan. Upgrade Or Add Credits To Render.`;
+  if ((c.balance ?? 0) < need)
+    return `This Render Costs ${need} Credits And Your Balance Is ${c.balance ?? 0}.`;
   return null;
 }
+
 
 const BUCKET = "reveal-videos";
 const esc = (s) =>
