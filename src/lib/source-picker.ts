@@ -74,9 +74,10 @@ async function normalize(f: File): Promise<File> {
     const { default: heic2any } = await import("heic2any");
     const blob: any = await heic2any({ blob: f, toType: "image/jpeg", quality: 0.9 });
     const out = Array.isArray(blob) ? blob[0] : blob;
+    if (!out) throw new Error("No converted image was returned.");
     return new File([out], f.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
   } catch (_) {
-    return f;
+    throw new Error(f.name + ": This HEIC Photo Could Not Be Converted. Export It As JPG And Try Again.");
   }
 }
 
@@ -119,6 +120,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     address: "",
     url: "",
     dragging: false,
+    busyLabel: "Adding Photos",
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
   };
@@ -138,13 +140,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /** One size limit, one measurement pass, one error message, every source. */
   async function intake(raw: File[]) {
-    let files = raw;
+    let files: File[] = [];
     state.busy = true;
     state.note = "";
-    render();
     const hasHeic = raw.some((f) => /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || ""));
-    if (hasHeic) {
-      files = await Promise.all(raw.map(normalize));
+    state.busyLabel = hasHeic ? "Converting Photos" : "Adding Photos";
+    render();
+    for (const file of raw) {
+      try {
+        files.push(await normalize(file));
+      } catch (error) {
+        alert(error instanceof Error ? error.message : file.name + ": This Photo Could Not Be Added.");
+      }
     }
     const ok: File[] = [];
     for (const f of files) {
@@ -292,8 +299,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         return (
           '<div class="sp-drop" data-sp-drop="1">' +
           '<i data-lucide="loader"></i>' +
-          "<b>Adding Photos</b>" +
-          '<span class="sp-hint">' + (state.note || "Preparing previews. This takes a moment.") + "</span>" +
+          "<b>" + state.busyLabel + "</b>" +
+          '<span class="sp-hint">' + (state.busyLabel === "Converting Photos" ? "iPhone photos are being converted. This takes a moment." : "Preparing previews. This takes a moment.") + "</span>" +
           "</div>"
         );
       }
