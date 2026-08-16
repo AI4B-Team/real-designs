@@ -2893,11 +2893,13 @@ loadPrefs();
   const FORCED=['studio'];
   function apply(min){
     shell.classList.toggle('sidemin',min);
-    tog.setAttribute('aria-label',min?'Expand menu':'Collapse menu');
-    tog.title=min?'':'Collapse menu';
+    tog.setAttribute('aria-label',min?'Expand Menu':'Collapse Menu');
+    tog.setAttribute('data-tip',min?'Expand Menu':'');
+    tog.title=min?'':'Collapse Menu';
     tog.innerHTML='<i data-lucide="'+(min?'chevrons-right':'chevrons-left')+'"></i>';
     try{ lucide.createIcons(); }catch(_){}
   }
+
   let min=false;
   try{ min=localStorage.getItem(KEY)==='1'; }catch(_){}
   function currentView(){
