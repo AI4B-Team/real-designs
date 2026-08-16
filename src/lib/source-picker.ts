@@ -21,10 +21,10 @@ export type PickedFile = { file: File; flags: string[] };
 export const SOURCE_META: Record<SourceId, { icon: string; label: string; desc: string }> = {
   upload: { icon: "upload-cloud", label: "Upload", desc: "Drag and drop or browse." },
   cloud: { icon: "cloud", label: "Google Drive Or Dropbox", desc: "Paste a public share link." },
-  address: { icon: "map-pin", label: "Property Address", desc: "Look up a listing by address." },
-  url: { icon: "link", label: "Listing URL", desc: "Read listing text, no media." },
-  property: { icon: "home", label: "A Property You Already Have", desc: "Reuse photos already uploaded." },
-  design: { icon: "images", label: "A Design You Already Have", desc: "Start from a finished design." },
+  address: { icon: "map-pin", label: "Property Address", desc: "Fills in the address only." },
+  url: { icon: "link", label: "Listing URL", desc: "Reads listing text, no media." },
+  property: { icon: "home", label: "Existing Property", desc: "Reuse photos already uploaded." },
+  design: { icon: "images", label: "Existing Design", desc: "Start from a finished design." },
 };
 
 export type ContextConfig = {
@@ -232,7 +232,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         .map((s) => {
           const m = SOURCE_META[s];
           return (
-            '<button type="button" class="sp-tab' + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s + '">' +
+            '<button type="button" class="sp-tab' + (s === "upload" ? " sp-primary" : "") + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s + '">' +
             (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
             esc(m.label) +
             "</button>"
@@ -271,7 +271,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         '<div class="sp-pane">' +
         '<label class="sp-f sp-search">Property Address<span><i data-lucide="search"></i>' +
         '<input type="text" id="spAddr" placeholder="3417 Hoover Dr, Holiday, FL 34691" value="' + esc(state.address) + '"></span></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="addrgo">' + (state.busy ? "Looking Up" : "Find Photos") + "</button>" +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="addrgo">' + (state.busy ? "Looking Up" : "Look Up Address") + "</button>" +
+        '<p class="sp-note">An address lookup files your work under that property and fills in listing details such as beds, baths and square footage. It does not download photos from a listing — add those from Upload.</p>' +
         "</div>"
       );
     }
@@ -279,7 +280,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return (
         '<div class="sp-pane">' +
         '<label class="sp-f">Listing Link<input type="text" id="spUrl" placeholder="https://www.zillow.com/homedetails/..." value="' + esc(state.url) + '"></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' + (state.busy ? "Reading Link" : "Read Listing") + "</button>" +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' + (state.busy ? "Reading Link" : "Import Listing Details") + "</button>" +
         '<p class="sp-note">Listing links are read as text only. No photos or media are imported from a public listing page.</p>' +
         "</div>"
       );

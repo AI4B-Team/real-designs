@@ -1727,11 +1727,14 @@ function bind() {
       onTab: (t) => { w.sourceType = t; },
       properties: () =>
         S.tree.map((p) => {
-          const rooms = (p.projects || []).reduce((a, pr) => a + (pr.rooms || []).length, 0);
+          const rooms = (p.projects || []).reduce(
+            (a, pr) => a + ((pr.rooms || []) as any[]).filter((r: any) => !!r.before_path).length,
+            0,
+          );
           const assets = Number(p.asset_count || 0);
           return {
             address: p.address,
-            meta: rooms ? `${rooms} ${rooms === 1 ? "Room" : "Rooms"}` : assets ? `${assets} ${assets === 1 ? "Photo" : "Photos"}` : "Empty",
+            meta: (() => { const n = rooms || assets; return n ? `${n} ${n === 1 ? "Photo" : "Photos"}` : "No Photos Yet"; })(),
           };
         }),
       designs: () =>

@@ -1676,10 +1676,14 @@
 .rd-app .stw-door:hover .stw-door-cta{background:#a80000}
 .stw-source{margin-top:18px}
 .sp{margin-top:10px}
-.sp-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
-.sp-tab{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:.8rem;cursor:pointer}
+.sp-tabs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:12px}
+.sp-tab{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid transparent;border-radius:999px;background:transparent;color:var(--mute-2);font-size:.78rem;cursor:pointer}
 .sp-tab i,.sp-tab .brand-ico{width:15px;height:15px}
-.sp-tab.on{border-color:var(--red);color:var(--red)}
+.sp-tab:hover{color:var(--ink)}
+.sp-tab.on{border-color:var(--line);background:var(--card);color:var(--red)}
+.sp-tab.sp-primary{background:#111;border-color:#111;color:#fff;font-weight:600;font-size:.82rem;padding:9px 18px;margin-right:6px}
+.sp-tab.sp-primary i,.sp-tab.sp-primary svg{color:#fff;stroke:#fff}
+.sp-tab.sp-primary.on{background:var(--red);border-color:var(--red);color:#fff}
 .sp-drop{display:flex;flex-direction:column;align-items:center;gap:8px;padding:38px 20px;border:1.5px dashed var(--line);border-radius:16px;background:var(--card);text-align:center}
 .sp-drop.over{border-color:var(--red);background:rgba(204,0,0,.04)}
 .sp-drop i{width:26px;height:26px;color:var(--red)}
@@ -1711,3 +1715,6 @@
 .sp-choice img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px}
 .sp-choice b{font-size:.74rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sp-flag{font-size:.68rem;color:var(--red);font-style:normal}
+
+.rd-app .create-wrap .chev{width:14px;height:14px;margin-left:2px}
+.rd-app .create-wrap .help-menu{width:190px}

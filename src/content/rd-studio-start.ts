@@ -38,7 +38,10 @@ export type StudioStartCtx = {
   /** Places a finished concept image on the canvas as a result. */
   showConcept: (image: string, label: string) => Promise<void> | void;
   /** Property tree already loaded by the app shell. */
-  getProperties: () => Array<{ address: string; projects: Array<{ name: string }> }>;
+  getProperties: () => Array<{
+    address: string;
+    projects: Array<{ name: string; rooms?: Array<{ before_path?: string | null }> }>;
+  }>;
   /** Applies a chosen property/project context to the Studio header. */
   setContext: (ctx: { address?: string | null; project?: string | null; room?: string | null }) => void;
   showAlert: (msg: string) => void;
@@ -808,19 +811,21 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<span class="stw-door-cta">Start A Video<i data-lucide="arrow-right"></i></span>' +
       "</button>" +
       "</div>" +
-      '<p class="stw-secondary stw-doorfoot">Nothing To Upload Yet? ' +
-      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      (state.door
+        ? ""
+        : '<p class="stw-secondary stw-doorfoot">No Photo Yet? ' +
+          '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>') +
       "</div>" +
 
       (state.door
-        ? '<div class="stw-source"><div class="stw-sec-h"><h3>Where Are The Photos?</h3>' +
-          "<span>Every Source Below Ends In The Same Place</span></div>" +
+        ? '<div class="stw-source"><div class="stw-sec-h"><h3>' +
+          (state.door === "design" ? "Choose Your Starting Point" : "Where Are Your Property Photos?") +
+          "</h3></div>" +
           '<div id="stSource"></div>' +
           (state.door === "design"
             ? '<p class="stw-secondary">No Photo Yet? ' +
               '<button class="stw-seclink" data-sts="c-describe">Describe An Idea Instead</button></p>'
-            : '<p class="stw-secondary">Ready To Build? ' +
-              '<button class="stw-seclink" data-sts="video-open">Open The Video Builder</button></p>') +
+            : "") +
           "</div>"
         : "") +
 
@@ -878,7 +883,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       properties: () =>
         (ctx.getProperties ? ctx.getProperties() : []).map((p) => ({
           address: p.address,
-          meta: (p.projects || []).length + " Projects",
+          meta: (() => {
+            const n =
+              (p.projects || []).reduce(
+                (t, pr) => t + (((pr as any).rooms || []) as any[]).filter((r: any) => !!r.before_path).length,
+                0,
+              ) || Number((p as any).asset_count || 0);
+            return n === 1 ? "1 Photo" : n + " Photos";
+          })(),
         })),
       onPick: (picked) => {
         const first = picked[0];
@@ -1332,6 +1344,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   function open(method?: string) {
+    if (method === "design" || method === "video") {
+      state.phase = "choose";
+      state.door = method;
+      render();
+      return;
+    }
     if (method === "sample") {
       state.samples = true;
       render();

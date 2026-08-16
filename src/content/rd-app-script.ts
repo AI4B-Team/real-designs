@@ -1252,7 +1252,20 @@ function startNewDesignFlow(){
   lucide.createIcons();
 }
 document.getElementById('clearLocks')?.addEventListener('click',startNewDesignFlow);
-document.getElementById('newDesignBtn')?.addEventListener('click',()=>{ go('studio'); startNewDesignFlow(); });
+(function(){
+  const btn=document.getElementById('newDesignBtn'), menu=document.getElementById('createMenu');
+  if(!btn) return;
+  function close(){ if(menu){ menu.classList.remove('on'); btn.setAttribute('aria-expanded','false'); } }
+  if(!menu){ btn.addEventListener('click',()=>{ go('studio'); startNewDesignFlow(); }); return; }
+  btn.addEventListener('click',e=>{ e.stopPropagation();
+    const open=!menu.classList.contains('on'); menu.classList.toggle('on',open); btn.setAttribute('aria-expanded',String(open)); });
+  document.addEventListener('click',close);
+  menu.addEventListener('click',e=>{
+    const it=e.target.closest('[data-create]'); if(!it) return;
+    close(); go('studio');
+    try{ window.rdStudioStart && window.rdStudioStart(it.getAttribute('data-create')); }catch(_){}
+  });
+})();
 
 /** Shown when Generate is pressed with no valid source. No credit is charged. */
 function needSourceModal(){
@@ -1893,7 +1906,7 @@ function mountBatchSource(){
     context:'batch',
     esc:(v)=>String(v==null?'':v).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),
     lucide:{createIcons:()=>{try{lucide.createIcons();}catch(_){}}},
-    properties:()=>PROP_TREE.map(p=>({address:p.address,meta:p.projects.reduce((n,pr)=>n+pr.rooms.length,0)+' Rooms'})),
+    properties:()=>PROP_TREE.map(p=>{ const n=p.projects.reduce((t,pr)=>t+(pr.rooms||[]).filter(r=>!!r.before_path).length,0)||Number(p.asset_count||0); return {address:p.address,meta:(n===1?'1 Photo':n+' Photos')}; }),
     onPick:(picked)=>{ try{ openPropertyUpload({files:picked.map(x=>x.file)}); }catch(_){} },
     onProperty:(address)=>{
       const p=PROP_TREE.find(x=>x.address===address);
