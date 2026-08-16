@@ -1223,6 +1223,7 @@ function previewPanel() {
   const vs = plannedVariants();
   const cost = creditTotal();
   const bal = S.credits?.balance ?? window.__rdCredits?.balance;
+  const block = videoCreditBlock(cost);
   const first = w.scenes[0];
   return `<div class="rv-preview">
     <div class="rv-stage" data-img="${esc(first?.path || "")}">${first ? "" : `<span class="rv-note sm">No Scenes Yet</span>`}</div>
@@ -1230,14 +1231,17 @@ function previewPanel() {
     <div class="rv-sub sm">Variants</div>
     <div class="rv-vars">${vs.length ? vs.map((v) => `<div><span class="mono">${esc(v.aspect_ratio)}</span><i>${v.version_type === "clean" ? "Unbranded" : v.version_type === "branded" ? "Branded" : "Disclosure Ready"}</i><b>Queued</b></div>`).join("") : `<div class="rv-note sm">Pick A Format.</div>`}</div>
     <div class="rv-cost mono">${cost} Credits</div>
-    ${bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
+    ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
       <div class="rv-note sm">You Can Leave This Page. We Will Notify You When It Is Ready.</div></div>`
       : w.step === 4
-        ? `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+        ? block
+          ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
+          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
         : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
+
   </div>`;
 }
 
