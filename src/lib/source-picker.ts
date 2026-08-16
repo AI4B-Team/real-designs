@@ -36,25 +36,25 @@ export type ContextConfig = {
 
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
-    sources: ["upload", "cloud", "address", "url", "property"],
+    sources: ["upload", "cloud", "url", "property"],
     multiple: false,
     accept: "image/*,application/pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "address", "url", "property", "design"],
+    sources: ["upload", "cloud", "url", "property", "design"],
     multiple: true,
     accept: "image/*",
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   "property-media": {
-    sources: ["upload", "cloud", "address", "url"],
+    sources: ["upload", "cloud", "url"],
     multiple: true,
     accept: "image/*",
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   batch: {
-    sources: ["upload", "cloud", "address", "url", "property"],
+    sources: ["upload", "cloud", "url", "property"],
     multiple: true,
     accept: "image/*",
     acceptHint: "JPG, PNG, HEIC, WEBP",
@@ -68,7 +68,7 @@ export type PickerOptions = {
   esc: (s: string) => string;
   lucide?: { createIcons: (o?: any) => void };
   /** Properties already in the workspace, for the property source. */
-  properties?: () => Array<{ address: string; meta?: string }>;
+  properties?: () => Array<{ address: string; meta?: string; disabled?: boolean }>;
   /** Finished designs, for the design source. */
   designs?: () => Array<{ id: string; label: string; sub?: string; badge?: string }>;
   /** Which source opens first, so a host can remember the tab across renders. */
@@ -100,6 +100,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     address: "",
     url: "",
     dragging: false,
+    /** Listing link line expanded inline. */
+    listing: false,
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
   };
@@ -336,6 +338,31 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
+  function chooser() {
+    if (!state.choose.length) return "";
+    return (
+      '<div class="sp-modal" role="dialog" aria-modal="true" aria-label="Choose One Photo">' +
+      '<div class="sp-scrim" data-sp="closechoose"></div>' +
+      '<div class="sp-choose"><div class="sp-choose-h"><b>' +
+      state.choose.length + ' Photos Imported. Choose One To Design.</b>' +
+      '<button type="button" class="sp-link" data-sp="closechoose">Cancel</button></div>' +
+      '<div class="sp-choose-g">' +
+      state.choose
+        .map((p, i) => {
+          const flag = p.flags.length ? FLAG_LABEL[p.flags[0]!] || "Photo Quality" : "";
+          return (
+            '<button type="button" class="sp-choice" data-sp-choice="' + i + '">' +
+            '<img alt="' + esc(p.file.name) + '" src="' + URL.createObjectURL(p.file) + '">' +
+            "<b>" + esc(p.file.name) + "</b>" +
+            (flag ? '<em class="sp-flag">' + esc(flag) + "</em>" : "") +
+            "</button>"
+          );
+        })
+        .join("") +
+      "</div></div></div>"
+    );
+  }
+
   function html() {
     return (
       '<div class="sp">' +
@@ -431,6 +458,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const act = t.closest("[data-sp]") as HTMLElement | null;
     if (!act) return;
     const k = act.dataset["sp"];
+    if (k && k.startsWith("tab-")) {
+      state.tab = k.slice(4) as SourceId;
+      state.note = "";
+      opts.onTab?.(state.tab);
+      render();
+      return;
+    }
+    if (k === "listing") {
+      state.listing = true;
+      render();
+      return;
+    }
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
     else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
