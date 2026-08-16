@@ -1279,10 +1279,26 @@ function autoArrange() {
 async function generate() {
   const w = S.wizard;
   const vs = plannedVariants();
+
+  // Preflight. Entitlement is decided before any row or render job exists, so
+  // a render we already know cannot run never leaves a failed card behind.
+  try {
+    const fresh = await getMyCredits().catch(() => null);
+    if (fresh) S.credits = fresh;
+  } catch (_) {}
+  const block = videoCreditBlock(creditTotal());
+  if (block) {
+    render();
+    toast(block);
+    openUpgrade(block);
+    return;
+  }
+
   w.busy = true;
   w.progress = 0;
   w.stage = "Preparing scenes";
   render();
+
 
   let projectId = null;
   try {
