@@ -2837,18 +2837,47 @@ function presModal(){
     });
   }
   const sel=m.querySelector('#plVer');
-  const versions=[];
-  PROP_TREE.forEach(p=>p.projects.forEach(pr=>pr.rooms.forEach(r=>{
-    if(r.version_id) versions.push({id:r.version_id,label:p.address+' \u00b7 '+r.name});
-  })));
-  sel.innerHTML=versions.length
-    ? versions.map(v=>`<option value="${v.id}">${v.label}</option>`).join('')
-    : '<option value="">No Saved Designs Yet</option>';
+  const go=m.querySelector('#plGo');
   m.querySelector('#plErr').style.display='none';
   m.querySelector('#plOut').style.display='none';
   m.classList.add('on');
+  sel.innerHTML='<option value="">Loading Your Saved Designs</option>';
+  go.disabled=true;
   lucide.createIcons();
+  (async()=>{
+    let versions=[];
+    try{ versions=await listShareableVersions()||[]; }catch(_){ versions=[]; }
+    if(!versions.length){
+      /* fall back to whatever the loaded tree knows about */
+      PROP_TREE.forEach(p=>p.projects.forEach(pr=>pr.rooms.forEach(r=>{
+        if(r.version_id) versions.push({id:r.version_id,label:p.address+' \u00b7 '+r.name});
+      })));
+    }
+    if(!versions.length){
+      sel.innerHTML='<option value="">No Saved Designs Yet</option>';
+      const err=m.querySelector('#plErr');
+      err.style.display='block';
+      err.textContent='Save a design in Studio first. Approval links are built from a saved before and after.';
+      go.disabled=true;
+      let jump=m.querySelector('#plStudio');
+      if(!jump){
+        jump=document.createElement('button');
+        jump.id='plStudio'; jump.className='btn btn-primary btn-block';
+        jump.textContent='Open Studio';
+        jump.addEventListener('click',()=>{ m.classList.remove('on'); go2('studio'); });
+        go.parentNode.insertBefore(jump,go);
+      }
+      jump.hidden=false; go.hidden=true;
+      return;
+    }
+    const jump=m.querySelector('#plStudio'); if(jump) jump.hidden=true;
+    go.hidden=false; go.disabled=false;
+    sel.innerHTML=versions.map(v=>`<option value="${v.id}">${esc(v.label)}</option>`).join('');
+    const t=m.querySelector('#plTitle');
+    if(t&&!t.value) t.value=(versions[0].room?versions[0].room:'Design')+' Approval';
+  })();
 }
+
 
 const newLinkBtn=document.getElementById('newLinkBtn');
 if(newLinkBtn) newLinkBtn.addEventListener('click',presModal);
