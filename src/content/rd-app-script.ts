@@ -17,6 +17,7 @@ import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSumm
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { mountReports } from "@/content/rd-reports";
+import { mountBudgetComingSoon, budgetAvailability } from "@/lib/budget-coming-soon";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
@@ -212,6 +213,7 @@ function go(v,fromHash){
 
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
+  if(v==='scope'){ try{ paintBudgetGate(); }catch(_){} }
   if(v==='home'){ try{ paintHome(); }catch(_){} }
   /* Legacy or unknown keys fall back to the dashboard view, so the header
      must follow the view that actually rendered, never the stale one. */
@@ -843,6 +845,32 @@ function workspaceCounts(){
   }catch(_){}
   return {props,designs};
 }
+/* Budget is promised, not faked: until verified cost data exists for a market
+   every budget surface shows the same coming soon block instead of numbers. */
+async function paintBudgetGate(){
+  const view=document.getElementById('v-scope'); if(!view) return;
+  const grid=document.getElementById('scopeGrid');
+  let host=document.getElementById('budgetSoon');
+  if(!host){
+    host=document.createElement('div');
+    host.id='budgetSoon';
+    view.insertBefore(host,view.firstChild);
+  }
+  const gated=await mountBudgetComingSoon(host,'Every Number You Share With A Client');
+  if(grid) grid.hidden=!!gated;
+  host.hidden=!gated;
+}
+/* Sidebar tells the same truth before the click. */
+(async function budgetNavPill(){
+  try{
+    const a=await budgetAvailability();
+    if(a.available) return;
+    const b=document.querySelector('.nav-i[data-v="scope"]');
+    if(!b||b.querySelector('.nav-soon')) return;
+    const s=document.createElement('span'); s.className='nav-soon'; s.textContent='Coming Soon';
+    b.appendChild(s);
+  }catch(_){}
+})();
 function progressiveNav(){
   const {props,designs}=workspaceCounts();
   const rule={designs:designs>0,scope:designs>0,products:designs>0,
