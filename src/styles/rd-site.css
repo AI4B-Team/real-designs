@@ -2754,3 +2754,9 @@ p.cmp-note{text-align:center;margin-top:16px;font-size:.7rem;color:var(--mute-2)
 
 /* Link from the hero builder to the public direction library */
 .rd-site .dir-lib-link{display:inline-block;margin:-2px 0 8px;font-size:.76rem;font-weight:600;color:var(--red);text-decoration:underline;text-underline-offset:3px}
+
+/* Client link header: keeps the download action beside the recipient line. */
+.pp-head-right{display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+.pp-btn-ghost{background:#fff;color:#141414;border:1px solid #dcdcdc;padding:7px 14px;font-size:.78rem}
+.pp-btn-ghost:hover{border-color:var(--pp-accent,#CC0000);color:var(--pp-accent,#CC0000)}
+.pp-btn-ghost:disabled{opacity:.6;cursor:default}
