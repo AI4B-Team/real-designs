@@ -99,9 +99,9 @@ export const startListingImport = createServerFn({ method: "POST" })
       .update({
         status: "ready",
         stage: "ready",
-        listing: result.listing as any,
-        photos: result.photos as any,
-        photo_count: result.photos.length,
+        listing: listing as any,
+        photos: photos as any,
+        photo_count: photos.length,
         error_code: null,
         error_message: null,
       })
@@ -109,7 +109,8 @@ export const startListingImport = createServerFn({ method: "POST" })
       .select("*")
       .single();
 
-    return { ok: true as const, status: "ready", code: null, message: "", import: upd.data || row };
+    return { ok: true as const, status: "ready", code: null, message: note, import: upd.data || row };
+
   });
 
 export const getListingImport = createServerFn({ method: "GET" })
