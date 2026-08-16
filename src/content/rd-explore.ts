@@ -513,7 +513,9 @@ export function mountExplore(go, ctx) {
       </div></div>`;
     icons_();
   }
+  const qIndex = () => Math.max(0, Math.min(q.step, QUIZ.length - 1));
   function quizAdvance() {
+    q.step = qIndex();
     if (q.step < QUIZ.length - 1) q.step++;
     else q.done = true;
     qSave();
@@ -522,10 +524,9 @@ export function mountExplore(go, ctx) {
   }
   /** selecting saves immediately and enables Next; it must not auto-advance or scroll */
   function quizPick(id) {
-    q.picks[q.step] = id;
+    q.picks[qIndex()] = id;
     qSave();
     paintQuiz();
-
   }
 
   /* ---------- saving ---------- */
