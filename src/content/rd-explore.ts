@@ -467,7 +467,7 @@ export function mountExplore(go, ctx) {
     wrap.hidden = false;
     if (q.done) {
       const res = qResults();
-      cardEl.innerHTML = quizAside(res.length ? "Your Matches" : "Not Answered") + (res.length
+      cardEl.innerHTML = quizAside() + (res.length
         ? `<div class="xp-quiz-main">
           <div class="xp-quiz-qhead"><b>Your Style Matches</b></div>
           <div class="xp-quiz-res-row">${res.map(({ style: s, pct }) => `
@@ -501,13 +501,15 @@ export function mountExplore(go, ctx) {
         return true;
       });
     })();
-    cardEl.innerHTML = quizAside(`Question ${i + 1} Of ${QUIZ.length}`) + `<div class="xp-quiz-main">
+    const last = i === QUIZ.length - 1;
+    cardEl.innerHTML = quizAside() + `<div class="xp-quiz-main">
       <div class="xp-quiz-qhead"><b>${esc(step.q)}</b>
+        <span class="xp-quiz-prognum">${i + 1} of ${QUIZ.length}</span>
         <div class="xp-quiz-prog"><span style="width:${((i + 1) / QUIZ.length) * 100}%"></span></div></div>
       <div class="xp-quiz-opts" data-step="${i}">${opts.map((id) => { const s = styleById(id); return `<button class="xp-quiz-opt${chosen === s.id ? " on" : ""}" data-qpick="${s.id}" aria-pressed="${chosen === s.id}"><img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy"><span>${esc(s.displayName)}${chosen === s.id ? '<i data-lucide="check"></i>' : ""}</span></button>`; }).join("")}</div>
       <div class="xp-quiz-foot">
-        <div class="xp-quiz-nav">${i > 0 ? '<button class="fb-link" data-qback="1"><i data-lucide="chevron-left"></i>Back</button>' : ""}<button class="fb-link" data-qskip="1">Skip For Now</button></div>
-        <button class="btn btn-primary btn-xs" data-qnext="1"${chosen ? "" : " disabled"}>${i === QUIZ.length - 1 ? "See My Styles" : "Next"}</button>
+        <div class="xp-quiz-nav">${i > 0 ? '<button class="fb-link" data-qback="1"><i data-lucide="chevron-left"></i>Back</button>' : ""}<button class="fb-link" data-qskip="1">Skip</button></div>
+        <div class="xp-quiz-act">${!chosen ? '<span class="xp-quiz-hint">Choose one option to continue.</span>' : ""}<button class="btn btn-primary btn-xs${chosen ? "" : " is-waiting"}" data-qnext="1"${chosen ? "" : " disabled"}>${last ? "See My Styles" : "Next"}</button></div>
       </div></div>`;
     icons_();
   }
