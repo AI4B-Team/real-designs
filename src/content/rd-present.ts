@@ -293,7 +293,7 @@ const TABS = [
 function step2() {
   const d = S.draft;
   const items = sourceItems(d.property_id);
-  console.log("RD_STEP2_MARK", Object.keys(items).map((k) => k + ":" + (items[k] || []).length).join(","), d.tab);
+  // Land on a tab that actually has something instead of an empty "Designs".
   if (!d.tab) d.tab = (TABS.find(([k]) => (items[k] || []).length) || TABS[0])[0];
 
   const tab = d.tab || "designs";
