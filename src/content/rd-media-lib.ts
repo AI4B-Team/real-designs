@@ -976,8 +976,10 @@ async function openDetail(m, opts) {
 /** Primary actions in the drawer differ by asset type and status. */
 function drawerActions(m, g, proc) {
   if (m.status === "failed" && planBlocked(m))
-    return `<button class="btn btn-primary btn-sm" data-upg><i data-lucide="zap"></i>Upgrade</button>
+    return `<button class="btn btn-primary btn-sm" data-upg><i data-lucide="zap"></i>Add Credits</button>
+      <button class="btn btn-ghost btn-sm" data-retry><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+
   if (m.status === "failed")
     return `<button class="btn btn-primary btn-sm" data-retry><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
