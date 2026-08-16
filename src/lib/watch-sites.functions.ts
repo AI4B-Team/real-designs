@@ -46,7 +46,7 @@ async function robotsAllows(origin: string) {
     let applies = false;
     let allowed = true;
     for (const line of txt.split(/\r?\n/)) {
-      const [rawKey, ...rest] = line.split("#")[0].split(":");
+      const [rawKey, ...rest] = String(line.split("#")[0] || "").split(":");
       const key = (rawKey || "").trim().toLowerCase();
       const val = rest.join(":").trim();
       if (key === "user-agent") applies = val === "*" || /real designs/i.test(val);
