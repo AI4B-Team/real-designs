@@ -1845,6 +1845,7 @@ let BATCH_ROOMS=[];
 let batchBusy=false;
 function batchStateEl(){ return document.getElementById('batchState'); }
 function paintBatch(){
+  mountBatchSource();
   const sel=document.getElementById('batchProp'), list=document.getElementById('batchList');
   if(!sel||!list) return;
   const runBtn=document.getElementById('batchRun');
