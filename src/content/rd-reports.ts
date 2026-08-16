@@ -513,14 +513,23 @@ function clientsHtml() {
 function actLabel(kind) {
   const m = {
     view: "Viewed The Presentation",
+    viewed: "Viewed The Presentation",
     comment: "Left A Comment",
+    comments: "Left A Comment",
     decision: "Made A Decision",
+    approved: "Approved The Package",
+    changes: "Requested Changes",
     share: "Link Shared",
+    shared: "Link Shared",
     created: "Package Created",
     updated: "Package Updated",
   };
-  return m[kind] || String(kind || "Activity").replace(/_/g, " ");
+  if (m[kind]) return m[kind];
+  return String(kind || "Activity")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
+
 
 /* ---------------- events ---------------- */
 
