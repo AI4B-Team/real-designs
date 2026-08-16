@@ -1095,6 +1095,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
     if (k === "door-video") {
       ctx.track("studio_start_method", { method: "video" });
+      state.door = "video";
+      render();
+      return;
+    }
+    if (k === "video-open") {
       try {
         (window as any).rdListingVideo?.({ from: "studio" });
       } catch (_) {
@@ -1102,6 +1107,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       }
       return;
     }
+
     if (k === "c-upload") {
       openSetup("upload");
       browse();
