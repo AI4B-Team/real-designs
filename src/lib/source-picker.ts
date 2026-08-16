@@ -272,6 +272,15 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   function panel() {
     if (state.tab === "upload") {
+      if (state.busy) {
+        return (
+          '<div class="sp-drop" data-sp-drop="1">' +
+          '<i data-lucide="loader"></i>' +
+          "<b>Converting Photos</b>" +
+          '<span class="sp-hint">iPhone photos are being converted. This takes a moment.</span>' +
+          "</div>"
+        );
+      }
       return (
         '<div class="sp-drop' + (state.dragging ? " over" : "") + '" data-sp-drop="1">' +
         '<i data-lucide="upload-cloud"></i>' +
