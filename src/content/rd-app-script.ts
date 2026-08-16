@@ -911,37 +911,9 @@ function progressiveNav(){
   }catch(_){}
 })();
 
-/* ---------- home chooser ---------- */
-function paintHome(){
-  const strip=document.getElementById('homeRecent'), grid=document.getElementById('homeRecentG');
-  if(!grid||!strip) return;
-  let list=[];
-  try{ list=designItems().filter(d=>!d.sample).slice(0,6); }catch(_){ list=[]; }
-  if(!list.length){ strip.hidden=true; grid.innerHTML=''; return; }
-  strip.hidden=false;
-  grid.innerHTML=list.map(d=>
-    '<article class="card dg-card" data-open-recent="'+esc(String(d.id))+'">'+
-    '<div class="dg-thumb"><img data-homephoto="'+esc(d.path||'')+'" alt="'+esc(d.name||'Saved design')+'" hidden></div>'+
-    '<div class="dg-body"><b>'+esc(d.name||'Untitled')+'</b>'+
-    '<div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:4px">'+esc(d.sub||'')+'</div></div></article>').join('');
-  lucide.createIcons();
-  grid.querySelectorAll('[data-open-recent]').forEach(c=>c.addEventListener('click',()=>{
-    try{
-      const d=designItems().find(x=>String(x.id)===String(c.getAttribute('data-open-recent')));
-      if(d&&d.room){ openInStudio(d.room); }
-      else go('designs');
-    }catch(_){ go('designs'); }
-  }));
-  grid.querySelectorAll('[data-homephoto]').forEach(async img=>{
-    const p=img.getAttribute('data-homephoto'); if(!p) return;
-    try{ const u=await resolvePhotoUrl(p); if(u){ img.src=u; img.hidden=false; } }catch(_){}
-  });
-}
-document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',()=>{
-  const k=b.getAttribute('data-home');
-  if(k==='video'){ try{ createVideoFrom({ sourceType:'address', from:'home' }); }catch(_){ go('reveal'); } return; }
-  go('studio');
-}));
+/* The home chooser is gone: Home renders the dashboard, and the two doors
+   live in the sidebar under Create. */
+
 
 
 
