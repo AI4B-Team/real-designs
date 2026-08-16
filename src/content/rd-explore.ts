@@ -20,7 +20,7 @@ const PALETTES = ["Warm Neutral", "Cool Neutral", "Earth Tone", "Bright & Light"
 const FINISHES = ["Rental Grade", "Retail Grade", "Premium"];
 const MOODS = ["Calm", "Minimal", "Warm", "Natural", "Refined", "Formal", "Bold", "Playful", "Homely", "Classic", "Curb Appeal"];
 
-const LS = { saved: "rd_ex_saved", quiz: "rd_ex_quiz_v2", choice: "rd_style_choice", src: "rd_last_source" };
+const LS = { saved: "rd_ex_saved", quiz: "rd_ex_quiz_v3", choice: "rd_style_choice", src: "rd_last_source" };
 function read(k, f) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch (_) { return f; } }
 function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
