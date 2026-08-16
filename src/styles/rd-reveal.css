@@ -399,8 +399,8 @@
 .rd-app .rv-photostrip .rv-scard { flex: 0 0 200px; width: 200px; border: 1px solid var(--line, #e6e6e6); border-radius: 12px; overflow: hidden; background: #fff; }
 .rd-app .rv-photostrip .rv-scard-th { position: relative; height: 130px; background: #f3f3f3 center/cover no-repeat; }
 .rd-app .rv-photostrip .rv-scard-b { padding: 8px 10px 10px; }
-.rd-app .rv-photostrip .rv-mchips { position: static; display: flex; gap: 6px; flex-wrap: nowrap; margin-bottom: 6px; }
-.rd-app .rv-photostrip .rv-mchip { flex: 1 1 auto; min-width: 0; display: inline-flex; align-items: center; justify-content: center; gap: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; padding: 3px 6px; border: 1px solid var(--line, #e6e6e6); border-radius: 999px; background: #fff; cursor: pointer; }
+.rd-app .rv-photostrip .rv-mchips { position: static; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin-bottom: 6px; width: 100%; }
+.rd-app .rv-photostrip .rv-mchip { position: relative; flex: 0 1 auto; min-width: 0; max-width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; padding: 3px 6px; border: 1px solid var(--line, #e6e6e6); border-radius: 999px; background: #fff; cursor: pointer; }
 .rd-app .rv-photostrip .rv-mchip.hot { border-color: #CC0000; color: #CC0000; }
 .rd-app .rv-photostrip .rv-mchip svg { width: 12px !important; height: 12px !important; }
 .rd-app .rv-photostrip .rv-scard-b > b { display: block; font-size: 13px; margin: 2px 0 4px; }
