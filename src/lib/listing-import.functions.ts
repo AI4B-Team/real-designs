@@ -60,22 +60,39 @@ export const startListingImport = createServerFn({ method: "POST" })
         .eq("id", row.id);
     }
 
+    let listing: Record<string, unknown> | null = null;
+    let photos: Array<Record<string, unknown>> = [];
+    let note = "";
+
     const result = await fetchListing(check.url, check.provider.id);
-    if (!result.ok) {
-      const upd = await supabase
-        .from("listing_imports")
-        .update({ status: "failed", stage: "failed", error_code: result.code, error_message: result.message })
-        .eq("id", row.id)
-        .select("*")
-        .single();
-      return {
-        ok: false as const,
-        status: "failed",
-        code: result.code,
-        message: result.message,
-        import: upd.data || row,
-      };
+    if (result.ok) {
+      listing = result.listing;
+      photos = result.photos;
+    } else {
+      // No licensed provider: read the public link preview only (meta tags and
+      // JSON-LD). Details fill in the project; photos still come from the user.
+      const { fetchListingMeta } = await import("@/lib/listing-import.server");
+      const meta = await fetchListingMeta(check.url, check.provider.id);
+      if (meta.ok) {
+        listing = meta.listing;
+        note = "We pull the address, price, beds, baths and square footage to set up your project. Photos come from you, because listing photos usually belong to the photographer or the brokerage.";
+      } else {
+        const upd = await supabase
+          .from("listing_imports")
+          .update({ status: "failed", stage: "failed", error_code: meta.code, error_message: meta.message })
+          .eq("id", row.id)
+          .select("*")
+          .single();
+        return {
+          ok: false as const,
+          status: "failed",
+          code: meta.code,
+          message: meta.message,
+          import: upd.data || row,
+        };
+      }
     }
+
 
     const upd = await supabase
       .from("listing_imports")
