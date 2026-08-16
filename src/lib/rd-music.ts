@@ -4,20 +4,78 @@
 
 type Mood = {
   bpm: number;
-  root: number;
-  scale: number[];
-  wave: OscillatorType;
-  pad: number;
-  bright: number;
+  root: number;               // Hz of the tonic
+  prog: number[][];           // chord progression, semitone offsets from the tonic
+  scale: number[];            // melodic scale over the tonic
+  lead: OscillatorType;       // melody timbre
+  padWave: OscillatorType;    // chord bed timbre
+  pad: number;                // chord bed level
+  bright: number;             // master lowpass, Hz
+  swing: number;              // 0..0.3 shuffle amount
+  drums: "none" | "brush" | "soft" | "house" | "pop" | "cine";
+  bass: number;               // bass level, 0 disables
+  arp: number;                // melody level, 0 disables
+  delay: number;              // echo feedback level
 };
 
+/* One preset per built-in track. Each is a short chord progression with a bass
+   line, melody and its own drum feel, so the genres are actually distinct. */
 const MOODS: Record<string, Mood> = {
-  modern: { bpm: 104, root: 261.63, scale: [0, 4, 7, 11, 14], wave: "triangle", pad: 0.14, bright: 1600 },
-  luxury: { bpm: 76, root: 196.0, scale: [0, 3, 7, 10, 14], wave: "sine", pad: 0.2, bright: 1100 },
-  warm: { bpm: 88, root: 220.0, scale: [0, 4, 7, 9, 12], wave: "sine", pad: 0.18, bright: 1300 },
-  cinematic: { bpm: 68, root: 174.61, scale: [0, 3, 7, 12, 15], wave: "sawtooth", pad: 0.1, bright: 900 },
-  upbeat: { bpm: 122, root: 293.66, scale: [0, 4, 7, 9, 12], wave: "square", pad: 0.06, bright: 2000 },
-  minimal: { bpm: 96, root: 246.94, scale: [0, 5, 7, 12], wave: "triangle", pad: 0.09, bright: 1500 },
+  modern: {
+    bpm: 104, root: 261.63, prog: [[0, 4, 7, 11], [-3, 2, 5, 9], [-5, 0, 4, 7], [-1, 2, 7, 11]],
+    scale: [0, 2, 4, 7, 9, 11], lead: "triangle", padWave: "sine", pad: 0.1, bright: 2600,
+    swing: 0.04, drums: "soft", bass: 0.16, arp: 0.09, delay: 0.22,
+  },
+  luxury: {
+    bpm: 74, root: 196.0, prog: [[0, 3, 7, 10], [-4, 0, 3, 7], [-7, -2, 2, 5], [-5, 0, 3, 10]],
+    scale: [0, 3, 5, 7, 10], lead: "sine", padWave: "sine", pad: 0.16, bright: 1500,
+    swing: 0.06, drums: "none", bass: 0.13, arp: 0.06, delay: 0.34,
+  },
+  warm: {
+    bpm: 88, root: 220.0, prog: [[0, 4, 7, 9], [-3, 0, 4, 7], [-5, -1, 2, 7], [0, 4, 7, 12]],
+    scale: [0, 2, 4, 7, 9], lead: "sine", padWave: "triangle", pad: 0.14, bright: 1800,
+    swing: 0.1, drums: "brush", bass: 0.14, arp: 0.08, delay: 0.24,
+  },
+  cinematic: {
+    bpm: 66, root: 174.61, prog: [[0, 3, 7, 14], [-5, -1, 2, 7], [-3, 0, 4, 12], [-7, 0, 3, 10]],
+    scale: [0, 3, 5, 7, 10, 12], lead: "sawtooth", padWave: "sawtooth", pad: 0.13, bright: 1200,
+    swing: 0, drums: "cine", bass: 0.18, arp: 0.05, delay: 0.4,
+  },
+  upbeat: {
+    bpm: 122, root: 293.66, prog: [[0, 4, 7, 11], [2, 5, 9, 12], [-3, 0, 4, 9], [-1, 4, 7, 11]],
+    scale: [0, 2, 4, 7, 9, 12], lead: "square", padWave: "triangle", pad: 0.06, bright: 3200,
+    swing: 0, drums: "pop", bass: 0.17, arp: 0.11, delay: 0.16,
+  },
+  minimal: {
+    bpm: 96, root: 246.94, prog: [[0, 7, 12], [-5, 2, 7], [-3, 4, 9], [0, 5, 12]],
+    scale: [0, 5, 7, 12], lead: "triangle", padWave: "sine", pad: 0.09, bright: 2200,
+    swing: 0, drums: "soft", bass: 0.1, arp: 0.08, delay: 0.3,
+  },
+  porchlight: {
+    bpm: 92, root: 233.08, prog: [[0, 4, 7], [5, 9, 12], [-3, 0, 4], [-5, 0, 7]],
+    scale: [0, 2, 4, 5, 7, 9], lead: "triangle", padWave: "triangle", pad: 0.08, bright: 2400,
+    swing: 0.16, drums: "brush", bass: 0.16, arp: 0.12, delay: 0.14,
+  },
+  sunroom: {
+    bpm: 110, root: 277.18, prog: [[0, 4, 7, 11], [-2, 2, 5, 9], [-5, 0, 4, 9], [-3, 2, 5, 11]],
+    scale: [0, 2, 4, 7, 11], lead: "triangle", padWave: "sine", pad: 0.09, bright: 3000,
+    swing: 0.05, drums: "pop", bass: 0.15, arp: 0.1, delay: 0.2,
+  },
+  nightdrive: {
+    bpm: 124, root: 220.0, prog: [[0, 3, 7, 10], [-2, 3, 5, 10], [-5, 0, 3, 7], [-4, 0, 5, 10]],
+    scale: [0, 3, 5, 7, 10], lead: "sawtooth", padWave: "sawtooth", pad: 0.08, bright: 2800,
+    swing: 0, drums: "house", bass: 0.2, arp: 0.1, delay: 0.28,
+  },
+  openhouse: {
+    bpm: 100, root: 261.63, prog: [[0, 4, 9], [-3, 2, 7], [-5, 0, 4], [2, 7, 11]],
+    scale: [0, 2, 4, 7, 9], lead: "triangle", padWave: "triangle", pad: 0.1, bright: 2500,
+    swing: 0.12, drums: "brush", bass: 0.13, arp: 0.11, delay: 0.22,
+  },
+  stringlight: {
+    bpm: 70, root: 207.65, prog: [[0, 4, 7, 11], [-4, 0, 5, 9], [-7, -3, 2, 7], [-2, 2, 7, 11]],
+    scale: [0, 2, 4, 7, 11, 14], lead: "sine", padWave: "sawtooth", pad: 0.15, bright: 1400,
+    swing: 0, drums: "none", bass: 0.12, arp: 0.07, delay: 0.38,
+  },
 };
 
 export type CustomTrack = { id: string; name: string; url: string };
