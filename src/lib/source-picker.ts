@@ -299,7 +299,24 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         "</div></div>"
       );
     }
+    if (state.tab === "design") {
+      const list = (opts.designs ? opts.designs() : []).slice(0, 40);
+      if (!list.length)
+        return '<div class="sp-pane"><p class="sp-note">No Finished Designs Yet. Start From Photos Instead.</p></div>';
+      return (
+        '<div class="sp-pane"><div class="sp-props">' +
+        list
+          .map(
+            (d) =>
+              '<button type="button" class="sp-prop" data-sp-design="' + esc(d.id) + '"><i data-lucide="images"></i><b>' +
+              esc(d.label) + '</b><span class="mono">' + esc(d.sub || d.badge || "") + "</span></button>",
+          )
+          .join("") +
+        "</div></div>"
+      );
+    }
     return "";
+
   }
 
   function chooser() {
