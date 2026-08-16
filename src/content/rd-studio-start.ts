@@ -20,6 +20,8 @@ import {
 } from "@/lib/source-detect.functions";
 import { getStudioStyle, clearStudioStyle, applyStudioStyleToControls, type StudioStyleChoice } from "@/lib/studio-style";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
+import { getMyCredits } from "@/lib/credits.functions";
 
 type Method = "upload" | "describe" | "property";
 
@@ -51,16 +53,38 @@ export type StudioStartCtx = {
 
 const SAMPLE_KEYS: Array<{ key: string; name: string; space: string; room: string; photo: string; alt: string }> = [];
 
+const ROOM_OTHER = "Other";
 const ROOMS = [
   "Living Room",
   "Kitchen",
   "Primary Bedroom",
+  "Bedroom",
+  "Guest Bedroom",
+  "Nursery",
   "Primary Bath",
+  "Guest Bath",
+  "Half Bath",
   "Dining Room",
   "Home Office",
+  "Bonus Room",
+  "Sunroom",
   "Entry",
+  "Hallway",
+  "Stairwell",
+  "Closet",
+  "Laundry",
+  "Mudroom",
+  "Garage",
+  "Basement",
+  "Attic",
+  "Commercial Space",
   "Facade",
+  "Front Yard",
   "Backyard",
+  "Patio",
+  "Deck",
+  "Pool Area",
+  ROOM_OTHER,
 ];
 const STYLES = ["Warm Minimal", "Modern Farmhouse", "Coastal", "Transitional", "Investor Neutral", "Midcentury", "Japandi"];
 const BUDGETS = ["Under $5K", "Under $15K", "Under $35K", "$35K+"];
@@ -95,7 +119,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     /** Whether the compact classification dropdown is open. */
     pickType: false,
     space: "interior",
-    room: "Living Room",
+    /** Empty until the user chooses, or detection assigns one. */
+    room: "",
+    roomOther: "",
+    roomDetected: false,
+    /** Quality flags measured on the chosen photo, advisory only. */
+    flags: [] as string[],
+    flagsDismissed: false,
+    credits: null as any,
     goal: "Makeover",
     style: "Warm Minimal",
     budget: "Under $15K",
@@ -201,8 +232,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     state.detected = null;
     state.detecting = false;
     state.pickType = false;
+    state.flags = [];
+    state.flagsDismissed = false;
     render();
-    if (state.method === "upload") runDetection(f);
+    if (state.method === "upload") {
+      runDetection(f);
+      runQuality(f);
+    }
   }
 
   /* ---------- source detection (shared result component) ---------- */
@@ -231,15 +267,44 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     render();
   }
 
+  /** Advisory photo-quality check. Never blocks, never charges. */
+  async function runQuality(f: File) {
+    if (!/^image\//.test(f.type)) return;
+    try {
+      const m = await measureImage(f);
+      const c = classify(f.name || "", m);
+      if (state.file !== f) return;
+      state.flags = c.flags || [];
+      render();
+    } catch (_) {
+      /* measurement is advisory: a failure stays silent */
+    }
+  }
+
+  /** Real balance and remaining free designs, so the cost is honest. */
+  async function loadCredits() {
+    try {
+      const c = await getMyCredits();
+      state.credits = c;
+      if (host) render();
+    } catch (_) {
+      /* the button falls back to a plain Continue */
+    }
+  }
+  loadCredits();
+  window.addEventListener("rd:credits-changed", () => { loadCredits(); });
+
   /** Maps a classification onto the setup fields that drive the workflow. */
   function applyDetection(type: SourceType) {
     if (type === "interior_photo") state.space = "interior";
     else if (type === "exterior_photo") {
       state.space = "exterior";
       state.room = "Facade";
+      state.roomDetected = true;
     } else if (type === "landscape_photo") {
       state.space = "landscape";
       state.room = "Backyard";
+      state.roomDetected = true;
     } else if (type === "sketch") state.inputType = "Hand Sketch";
     else if (type === "floor_plan") state.inputType = "Floor Plan";
   }
