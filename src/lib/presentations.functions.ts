@@ -7,7 +7,33 @@ import {
   presentationTokenSchema,
 } from "@/lib/presentations.schemas";
 
+/** Every saved design the signed-in user can share, newest first. */
+export const listShareableVersions = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("versions")
+      .select(
+        `id, version_no, created_at,
+         rooms!inner ( name, projects!inner ( name, properties!inner ( address ) ) )`,
+      )
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((v: any) => {
+      const room = v.rooms?.name ?? "Room";
+      const address = v.rooms?.projects?.properties?.address ?? "Property";
+      return {
+        id: v.id as string,
+        room: room as string,
+        address: String(address).split(",")[0],
+        label: `${String(address).split(",")[0]} · ${room} · V${v.version_no ?? 1}`,
+      };
+    });
+  });
+
 /** Owner: every share link created from their own saved versions, newest first. */
+
 export const listPresentations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
