@@ -268,9 +268,15 @@ export const startRender = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { charge, chargeErrorMessage, CREDIT_COSTS } = await import("@/lib/credits.server");
     const charged = await charge(userId, "video", "REAL REVEAL render");
-    if (!charged.ok) throw new Error(chargeErrorMessage(charged));
+    if (!charged.ok)
+      throw new Error(
+        charged.reason === "plan_required"
+          ? `Not enough credits. Rendering a video costs ${CREDIT_COSTS.video} credits and is not part of the free plan.`
+          : chargeErrorMessage(charged),
+      );
+
 
     // Immersive motion is animated per scene, so it is metered per scene on top
     // of the render itself. Standard motion stays inside the render charge.
