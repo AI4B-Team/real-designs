@@ -50,7 +50,9 @@ async function clipFor(id: string): Promise<string> {
     return out.audio;
   })();
   pending.set(id, job);
-  job.finally(() => pending.delete(id));
+  // Detach bookkeeping from the caller's chain so a failed clip never surfaces
+  // as an unhandled rejection.
+  void job.finally(() => pending.delete(id)).catch(() => {});
   return job;
 }
 
