@@ -38,7 +38,10 @@ export type StudioStartCtx = {
   /** Places a finished concept image on the canvas as a result. */
   showConcept: (image: string, label: string) => Promise<void> | void;
   /** Property tree already loaded by the app shell. */
-  getProperties: () => Array<{ address: string; projects: Array<{ name: string }> }>;
+  getProperties: () => Array<{
+    address: string;
+    projects: Array<{ name: string; rooms?: Array<{ before_path?: string | null }> }>;
+  }>;
   /** Applies a chosen property/project context to the Studio header. */
   setContext: (ctx: { address?: string | null; project?: string | null; room?: string | null }) => void;
   showAlert: (msg: string) => void;
@@ -880,7 +883,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       properties: () =>
         (ctx.getProperties ? ctx.getProperties() : []).map((p) => ({
           address: p.address,
-          meta: (p.projects || []).length + " Projects",
+          meta: (() => {
+            const n = (p.projects || []).reduce(
+              (t, pr) => t + ((pr as any).rooms || []).filter((r: any) => !!r.before_path).length,
+              0,
+            );
+            return n === 1 ? "1 Photo" : n + " Photos";
+          })(),
         })),
       onPick: (picked) => {
         const first = picked[0];
@@ -1334,6 +1343,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   function open(method?: string) {
+    if (method === "design" || method === "video") {
+      state.phase = "choose";
+      state.door = method;
+      render();
+      return;
+    }
     if (method === "sample") {
       state.samples = true;
       render();
