@@ -229,13 +229,32 @@ function go(v,fromHash){
   scrollTopHard();
 }
 
-/* deep links: /app#v-scope, /app#scope and browser back/forward */
+/* deep links: /app#v-scope, /app#scope and browser back/forward.
+   Friendly hashes match the sidebar labels a user would guess, so a typed
+   or bookmarked /app#budget opens Budget instead of a dead hash. */
+const VIEW_ALIAS={dashboard:'dash',home:'dash',overview:'dash',properties:'props',property:'props',
+batch:'listings',listing:'listings',listings:'listings',budget:'scope',estimate:'scope',
+video:'reveal',videos:'reveal',presentations:'present',report:'reports',product:'products',
+explore:'explore',designs:'designs',media:'media'};
 function viewFromHash(){
-  const raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
+  let raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
   if(!raw) return '';
+  if(!titles[raw] && !ACCT_ALIAS[raw] && VIEW_ALIAS[raw]) raw=VIEW_ALIAS[raw];
   return (titles[raw]||ACCT_ALIAS[raw])?raw:'';
 }
-window.addEventListener('hashchange',()=>{ const v=viewFromHash(); if(v) go(v,true); });
+window.addEventListener('hashchange',()=>{
+  const v=viewFromHash();
+  if(v){ go(v,true); return; }
+  /* An unknown hash arriving mid session must not sit in the address bar
+     while a different view is on screen. Point it at what is rendered. */
+  try{
+    const cur=document.querySelector('.rd-app .view.on')||document.querySelector('.view.on');
+    if(cur && location.hash && location.hash!=='#'+cur.id){
+      history.replaceState(null,'',location.pathname+location.search+'#'+cur.id);
+    }
+  }catch(_){}
+});
+
 
 document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go(b.dataset.v)));
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
@@ -286,6 +305,12 @@ try{ mountUploadDock(go); }catch(_){}
     if(location.hash!==startHash) return;
     const target=document.getElementById(want);
     if(target && !target.classList.contains('on')) go(v,true);
+    /* A friendly alias such as #dashboard that already matches the mounted
+       view still needs the canonical hash, or a copied link looks broken. */
+    else if(target && !pane){
+      const canon='#'+want;
+      if(location.hash!==canon){ try{ history.replaceState(null,'',location.pathname+location.search+canon); }catch(_){} return; }
+    }
     if(pane){ try{ const el=document.getElementById('p-'+pane); if(el && !el.classList.contains('on')) acctPane(pane); }catch(_){} }
     if(++tries<110) setTimeout(tick,75);
   };
