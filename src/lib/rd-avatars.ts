@@ -9,7 +9,17 @@ import kai from "@/assets/avatars/presenter-kai.jpg";
 import sofia from "@/assets/avatars/presenter-sofia.jpg";
 import grant from "@/assets/avatars/presenter-grant.jpg";
 
-export type Avatar = { id: string; name: string; blurb: string; url: string; custom?: boolean };
+export type Avatar = {
+  id: string;
+  name: string;
+  blurb: string;
+  url: string;
+  custom?: boolean;
+  /** Text-to-speech voice this presenter speaks with. */
+  voice?: string;
+  /** Delivery brief that shapes tone and pacing for this presenter. */
+  instructions?: string;
+};
 
 /** How the presenter appears in the rendered video. */
 export type AvatarMode = "intro_bubble" | "full" | "bubble";
@@ -43,13 +53,26 @@ export function blankAvatarConfig(): AvatarConfig {
 }
 
 export const PRESET_AVATARS: Avatar[] = [
-  { id: "ava", name: "Ava", blurb: "Warm Listing Agent", url: ava },
-  { id: "marcus", name: "Marcus", blurb: "Confident Closer", url: marcus },
-  { id: "nia", name: "Nia", blurb: "Luxury Specialist", url: nia },
-  { id: "kai", name: "Kai", blurb: "Friendly Guide", url: kai },
-  { id: "sofia", name: "Sofia", blurb: "Neighborhood Expert", url: sofia },
-  { id: "grant", name: "Grant", blurb: "Veteran Broker", url: grant },
+  { id: "ava", name: "Ava", blurb: "Warm Listing Agent", url: ava, voice: "shimmer", instructions: "Warm, welcoming and upbeat, like a friendly listing agent greeting buyers at the door. Moderate pace." },
+  { id: "marcus", name: "Marcus", blurb: "Confident Closer", url: marcus, voice: "echo", instructions: "Confident and persuasive, crisp consonants, steady pace with a light smile in the voice." },
+  { id: "nia", name: "Nia", blurb: "Luxury Specialist", url: nia, voice: "coral", instructions: "Polished and refined, unhurried and elegant, the tone of a luxury property specialist." },
+  { id: "kai", name: "Kai", blurb: "Friendly Guide", url: kai, voice: "verse", instructions: "Easygoing and conversational, like a friend showing you around. Relaxed pace." },
+  { id: "sofia", name: "Sofia", blurb: "Neighborhood Expert", url: sofia, voice: "sage", instructions: "Bright, knowledgeable and neighborly, with a helpful local-expert energy." },
+  { id: "grant", name: "Grant", blurb: "Veteran Broker", url: grant, voice: "ash", instructions: "Deeper, seasoned and reassuring, measured delivery with authority." },
 ];
+
+/** Sample line every presenter reads when the user previews the voice. */
+export const AVATAR_SAMPLE_SCRIPT =
+  "Hi, I'm your presenter for this tour. Let's step inside and take a look around this beautiful home.";
+
+/** Narration voice and delivery for a presenter (uploaded headshots use a neutral default). */
+export function avatarVoice(id: string): { voice: string; instructions: string } {
+  const a = findAvatar(id);
+  return {
+    voice: a.voice || "alloy",
+    instructions: a.instructions || "Warm, natural real estate narration at a moderate pace.",
+  };
+}
 
 const BUCKET = "room-photos";
 const custom: Avatar[] = [];
