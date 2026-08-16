@@ -63,7 +63,7 @@ export async function openPropertyUpload(opts = {}) {
   } catch (_) {}
   let mode = opts.propertyId ? "existing" : props.length ? "existing" : "new";
   let propertyId = opts.propertyId || (props[0] ? props[0].id : null);
-  let files = [];
+  let files = Array.isArray(opts.files) ? opts.files.slice() : [];
   let src = "upload";
   let pendingAddress = "";
   let rejected = [];
