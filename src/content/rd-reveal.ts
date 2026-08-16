@@ -1934,12 +1934,16 @@ function bind() {
   });
   const addUploads = (list) => {
     const rejects = [];
+    const added = [];
     for (const f of Array.from(list || [])) {
       const why = rejectReason(f);
       if (why) { rejects.push(f.name + ": " + why); continue; }
-      w.uploads.push({ id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url: URL.createObjectURL(f) });
+      const upload = { id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url: URL.createObjectURL(f), file: f };
+      w.uploads.push(upload);
+      added.push(upload);
     }
     if (rejects.length) toast(rejects.length === 1 ? rejects[0] : rejects.length + " Files Could Not Be Added. " + rejects[0]);
+    if (added.length) toast(`${added.length} ${added.length === 1 ? "Photo" : "Photos"} Added.`);
     render();
   };
   /* A stray drop outside a dropzone must never navigate away from the app. */

@@ -12,6 +12,7 @@
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
+import { MAX_FILE_MB, rejectReason } from "@/lib/upload-manager";
 
 export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design";
 export type PickerContext = "design" | "video" | "property-media" | "batch";
@@ -79,7 +80,7 @@ async function normalize(f: File): Promise<File> {
   }
 }
 
-export const MAX_MB = 10;
+export const MAX_MB = MAX_FILE_MB;
 
 export type PickerOptions = {
   context: PickerContext;
@@ -138,23 +139,37 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   /** One size limit, one measurement pass, one error message, every source. */
   async function intake(raw: File[]) {
     let files = raw;
-    if (raw.some((f) => /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || ""))) {
-      state.busy = true;
-      state.note = "";
-      render();
+    state.busy = true;
+    state.note = "";
+    render();
+    const hasHeic = raw.some((f) => /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || ""));
+    if (hasHeic) {
       files = await Promise.all(raw.map(normalize));
-      state.busy = false;
-      render();
     }
     const ok: File[] = [];
     for (const f of files) {
-      if (f.size > MAX_MB * 1024 * 1024) {
-        alert(esc(f.name) + " Is Larger Than " + MAX_MB + " MB. Try A Smaller File.");
+      const why = rejectReason(f);
+      if (why) {
+        alert(f.name + ": " + why);
         continue;
       }
       ok.push(f);
     }
-    if (!ok.length) return;
+    if (!ok.length) {
+      state.busy = false;
+      render();
+      return;
+    }
+
+    /* Video thumbnails do not consume quality flags on the source screen.
+       Hand those files to the builder immediately instead of making a large
+       property shoot wait for a sequential image-analysis pass. */
+    if (opts.context === "video") {
+      state.busy = false;
+      opts.onPick(ok.map((file) => ({ file, flags: [] })));
+      return;
+    }
+
     const measured: PickedFile[] = [];
     for (const f of ok) {
       let flags: string[] = [];
@@ -165,6 +180,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       }
       measured.push({ file: f, flags });
     }
+    state.busy = false;
     if (!cfg.multiple && measured.length > 1) {
       state.choose = measured;
       render();
@@ -276,8 +292,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         return (
           '<div class="sp-drop" data-sp-drop="1">' +
           '<i data-lucide="loader"></i>' +
-          "<b>Converting Photos</b>" +
-          '<span class="sp-hint">iPhone photos are being converted. This takes a moment.</span>' +
+          "<b>Adding Photos</b>" +
+          '<span class="sp-hint">' + (state.note || "Preparing previews. This takes a moment.") + "</span>" +
           "</div>"
         );
       }
