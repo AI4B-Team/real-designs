@@ -2699,6 +2699,7 @@ export function revealBusy() {
 try { (window as any).__rdRevealBusy = revealBusy; } catch (_) {}
 
 export function resetReveal() {
+  stopAvatarVoice(); // never let a voice sample keep playing after navigation
   S.screen = "library";
   S.wizard = null;
   S.detail = null;
