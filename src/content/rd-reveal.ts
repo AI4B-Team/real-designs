@@ -1090,6 +1090,8 @@ function logoModalHtml() {
 }
 
 /* ======================= STEP 4, BRAND ======================= */
+/** Which Step 4 accordions are open, kept across re-renders. */
+const accOpen = new Set<string>(["template"]);
 function stepBrand() {
   const w = S.wizard;
   if (!w.avatar) w.avatar = blankAvatarConfig();
@@ -1097,7 +1099,7 @@ function stepBrand() {
   const discScenes = w.scenes.filter((s) => s.disclosure);
   return `<h3>Brand & Audio</h3>
 
-  <details class="rv-acc" open><summary>Template</summary>
+  <details class="rv-acc" data-acc="template"${accOpen.has("template") ? " open" : ""}><summary>Template</summary>
     <div class="rv-seg tiny">${[["intro", "Intro"], ["outro", "Outro"], ["full", "Full Video"]]
       .map(([id, n]) => `<button class="${(w.tplScope || "intro") === id ? "on" : ""}" data-tplscope="${id}">${n}</button>`).join("")}</div>
     ${(w.tplScope || "intro") === "intro" ? templateGrid(INTRO_TEMPLATES, w.introTemplate || "clean", "tplintro") : ""}
@@ -1130,7 +1132,7 @@ function stepBrand() {
     </div>` : ""}
   </details>
 
-  <details class="rv-acc"><summary>Brand Kit</summary>
+  <details class="rv-acc" data-acc="brandkit"${accOpen.has("brandkit") ? " open" : ""}><summary>Brand Kit</summary>
     <div class="rv-kits">${S.kits.map((k) => `<button class="rv-kit ${w.brandKitId === k.id ? "on" : ""}" data-kit="${k.id}"><b>${esc(k.name)}</b><span>${esc(k.company_name || k.contact_name || "No Company Name")}</span></button>`).join("")}
       <button class="rv-kit add" id="rvKitNew"><i data-lucide="plus"></i><b>New Brand Kit</b></button>
     </div>
@@ -1148,7 +1150,7 @@ function stepBrand() {
     <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else. Both Renders Unbranded First. Disclosure Labels Burn Into The Versions You Already Render, So Nothing Renders Twice.</div>
   </details>
 
-  <details class="rv-acc"><summary>Audio</summary>
+  <details class="rv-acc" data-acc="audio"${accOpen.has("audio") ? " open" : ""}><summary>Audio</summary>
     <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music)}
     <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
     <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
@@ -1164,7 +1166,7 @@ function stepBrand() {
     ${avatarSection(w.avatar, w.title || w.propertyLabel || "")}
   </details>
 
-  <details class="rv-acc"><summary>Captions & Disclosure</summary>
+  <details class="rv-acc" data-acc="captions"${accOpen.has("captions") ? " open" : ""}><summary>Captions &amp; Disclosure</summary>
     <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Text On Scenes</label>
     <div class="rv-sub">Scene Labels</div>
     <div class="rv-adv">
@@ -2045,6 +2047,10 @@ function bind() {
     if (w.presentation === "narration" || w.presentation === "both") w.narration = w.narration === "none" ? "generate" : w.narration;
     render();
   });
+  el.querySelectorAll("details.rv-acc[data-acc]").forEach((d) => d.addEventListener("toggle", () => {
+    const k = d.dataset.acc;
+    if (d.open) accOpen.add(k); else accOpen.delete(k);
+  }));
   on("[data-track]", "click", (e) => {
     if (e.target.closest("[data-trackplay]")) return;
     w.music = e.currentTarget.dataset.track; stopMusic(); render();
