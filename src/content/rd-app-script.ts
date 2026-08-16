@@ -2501,7 +2501,10 @@ async function paintPresentations(){
   catch(e){ PRES_ROWS=[]; }
   updateSearchMeta();
   if(!PRES_ROWS.length){
-    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No Client Links Yet. Save a room in Studio, then use New Link to share it for approval.</p>';
+    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No Client Links Yet. Save a design in Studio, then use New Link to share it for approval.</p><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary btn-sm" data-goto="studio"><i data-lucide="wand-2"></i>Open Studio</button><button class="btn btn-ghost btn-sm" id="emptyNewLink"><i data-lucide="link"></i>New Link</button></div>';
+    el.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+    const enl=el.querySelector('#emptyNewLink'); if(enl) enl.addEventListener('click',presModal);
+    lucide.createIcons();
     return;
   }
   renderPresRows();
