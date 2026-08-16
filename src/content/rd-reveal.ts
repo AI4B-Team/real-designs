@@ -549,7 +549,7 @@ function wizardHtml() {
   let body = "";
   if (w.step === 1) body = stepPhotos();
   if (w.step === 2) body = stepSelect();
-  if (w.step === 3) body = stepEdit();
+  
   if (w.step === 4) body = stepBrand();
   if (w.step === 5) body = stepTitles();
   if (w.step === 6) body = stepAudio();
