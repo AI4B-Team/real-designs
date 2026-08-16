@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set Up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install
+        run: bun install --frozen-lockfile
+
+      # Typecheck is allowed to fail for now. The count is published to the job
+      # summary so it stays visible while it is driven down. Remove
+      # continue-on-error once the count reaches zero.
+      - name: Typecheck
+        id: typecheck
+        continue-on-error: true
+        run: |
+          set +e
+          bun run typecheck > typecheck.log 2>&1
+          status=$?
+          count=$(grep -cE "error TS[0-9]+" typecheck.log)
+          {
+            echo "### Typecheck"
+            echo ""
+            echo "Errors: **$count**"
+            echo ""
+            echo "<details><summary>Top error codes</summary>"
+            echo ""
+            echo '```'
+            grep -oE "error TS[0-9]+" typecheck.log | sort | uniq -c | sort -rn | head -15
+            echo '```'
+            echo ""
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+
+      # Lint is also non-blocking for now for the same reason: the repo starts
+      # with a large prettier/eslint backlog. The count is published so it stays
+      # visible. Remove continue-on-error once it reaches zero.
+      - name: Lint
+        continue-on-error: true
+        run: |
+          set +e
+          bun run lint > lint.log 2>&1
+          status=$?
+          {
+            echo "### Lint"
+            echo ""
+            echo "$(grep -cE '  error  ' lint.log) errors"
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
+
+      - name: Build
+        run: bun run build

@@ -25,6 +25,8 @@ import { mountFirstUse } from "@/content/rd-firstuse";
 import { mountStudioStart } from "@/content/rd-studio-start";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
+import { readIntegrations } from "@/lib/integrations.functions";
+import { isProductSearchConfigured } from "@/lib/product-catalog";
 import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite, updateInviteRole } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
@@ -449,7 +451,8 @@ team:['Team','Members, roles and seat usage'],
 brand:['Brand Kit','Applied to exports, decks and client links'],
 defaults:['Defaults','Applied to every new design'],
 api:['API & White Label','Business plan feature'],
-danger:['Data & Privacy','Export or permanently remove your data']};
+danger:['Data & Privacy','Export or permanently remove your data'],
+integrations:['Integrations','What is connected right now, read from the server']};
 function acctPane(k){
   if(!PANE_META[k]) k='profile';
   document.querySelectorAll('.arail-i').forEach(b=>b.classList.toggle('on',b.dataset.pane===k));
@@ -459,6 +462,23 @@ function acctPane(k){
   if(su) su.textContent=PANE_META[k][1];
 }
 document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>acctPane(b.dataset.pane)));
+
+/* ---------- integrations readiness (owner only, read from the server) ---------- */
+async function paintIntegrations(){
+  const box=document.getElementById('integRows'); if(!box) return;
+  let res=null;
+  try{ res=await readIntegrations(); }catch(_){ }
+  const rail=document.getElementById('railIntegrations');
+  if(!res||!res.owner){ if(rail) rail.hidden=true; return; }
+  if(rail) rail.hidden=false;
+  box.innerHTML=res.items.map(it=>'<div class="rowi"><div class="rowt"><b>'+it.name+'</b><span>'+(it.connected?'Connected And In Use.':it.note)+'</span></div><span class="pill '+(it.connected?'p-ok':'p-ink')+'">'+(it.connected?'Connected':'Not Configured')+'</span></div>').join('');
+  const prod=res.items.find(x=>x.key==='products');
+  const note=document.getElementById('prodSampleNote');
+  if(note) note.hidden=!!(prod&&prod.connected);
+  if(window.lucide&&window.lucide.createIcons) window.lucide.createIcons();
+}
+(function(){ const n=document.getElementById('prodSampleNote'); if(n) n.hidden=isProductSearchConfigured(); })();
+paintIntegrations();
 
 
 
