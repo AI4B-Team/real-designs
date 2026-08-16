@@ -405,6 +405,17 @@ const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
 const planBlocked = (m) => isPlanBlocked((m && m.error) || "");
 
+/** What actually happened, in the user's terms. Never a generic paywall line. */
+function failReason(m) {
+  const raw = String((m && m.error) || "").trim();
+  if (planBlocked(m))
+    return typeGroup(m.type) === "videos"
+      ? "Not Enough Credits To Render This Video. Nothing Was Charged."
+      : "Not Enough Credits For This Generation. Nothing Was Charged.";
+  return raw || "The Render Did Not Finish. Try Again.";
+}
+
+
 function openUpgrade(m) {
   const msg = String((m && m.error) || "") || "This action needs a paid plan.";
   if (typeof (window as any).rdUpgradeModal === "function") { openUpgradeFlow(msg); return; }
