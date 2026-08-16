@@ -58,6 +58,22 @@ export const buildScope = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase } = context;
 
+    // ---- 0. Refuse before we charge. Pricing only exists where a market has
+    // been verified against real cost data; anything else would be a guess. ----
+    {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const [{ count: verified }, { count: catalog }] = await Promise.all([
+        supabaseAdmin.from("markets").select("id", { count: "exact", head: true }).not("verified_at", "is", null),
+        supabaseAdmin.from("unit_costs").select("id", { count: "exact", head: true }),
+      ]);
+      if (!verified || !catalog) {
+        throw new Error(
+          "BUDGET_UNAVAILABLE: Budgets are not live yet. We only price against verified local cost data, so nothing was charged.",
+        );
+      }
+    }
+
+
     // ---- 1. Load the version and its property hierarchy (RLS scopes this to the caller) ----
     const { data: version, error: versionError } = await supabase
       .from("versions")
