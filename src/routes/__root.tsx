@@ -73,7 +73,7 @@ function NotFoundComponent() {
         <p className="mt-2 text-sm" style={{ color: "#6b6660" }}>
           This page does not exist or has moved. Head back home or jump straight into the app.
         </p>
-        <div className="mt-6 flex items-center justify-center gap-10px" style={{ gap: 10 }}>
+        <div className="mt-6 flex items-center justify-center" style={{ gap: 10 }}>
           <Link
             to="/"
             style={{
