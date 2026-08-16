@@ -76,25 +76,11 @@
 
 .rd-app .rv-upload { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 12.5px; color: var(--muted, #5c5c5c); }
 
-.rd-app .rv-two { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-.rd-app .rv-col { border: 1px solid var(--line, #e6e6e6); border-radius: 12px; overflow: hidden; background: #fff; }
-.rd-app .rv-col-h { display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6a6a6a; padding: 10px 12px; border-bottom: 1px solid var(--line, #eee); }
-.rd-app .rv-col-b { max-height: 460px; overflow: auto; padding: 8px; }
 .rd-app .rv-g-h { font-size: 11.5px; font-weight: 700; color: #8a8a8a; padding: 8px 4px 4px; }
 .rd-app .rv-g-b { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
-.rd-app .rv-asset { display: flex; gap: 8px; align-items: center; border: 1px solid var(--line, #eee); border-radius: 9px; background: #fff; padding: 6px; cursor: pointer; text-align: left; }
-.rd-app .rv-asset.on { border-color: #cc0000; box-shadow: inset 0 0 0 1px #cc0000; }
 .rd-app .rv-a-th { width: 52px; height: 40px; border-radius: 6px; background: #f0f0f0 center/cover no-repeat; flex: 0 0 auto; display: block; }
-.rd-app .rv-a-m { min-width: 0; }
-.rd-app .rv-a-m b { display: block; font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rd-app .rv-a-m i { font-style: normal; font-size: 11px; color: var(--muted, #6a6a6a); }
 
-.rd-app .rv-scene { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line, #eee); border-radius: 9px; background: #fff; padding: 6px; margin-bottom: 6px; }
 .rd-app .rv-seq { width: 20px; height: 20px; border-radius: 50%; background: #111; color: #fff; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; }
-.rd-app .rv-s-m { flex: 1 1 auto; min-width: 0; }
-.rd-app .rv-s-m b { display: block; font-size: 12.5px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rd-app .rv-s-m i { font-style: normal; font-size: 11px; color: var(--muted, #6a6a6a); }
-.rd-app .rv-s-a { display: flex; gap: 2px; }
 
 .rd-app .rv-dup { display: flex; align-items: center; gap: 10px; border: 1px solid #ffe0b2; background: #fffaf1; border-radius: 10px; padding: 9px 12px; margin-bottom: 12px; font-size: 12.5px; }
 .rd-app .rv-dup span { display: flex; gap: 12px; margin-left: auto; }
@@ -157,7 +143,6 @@
 
 @media (max-width: 1100px) {
   .rd-app .rv-opts, .rd-app .rv-opts.sm, .rd-app .rv-recents, .rd-app .rv-kits, .rd-app .rv-review { grid-template-columns: 1fr 1fr; }
-  .rd-app .rv-two { grid-template-columns: 1fr; }
 }
 @media (max-width: 720px) {
   .rd-app .rv-opts, .rd-app .rv-opts.sm, .rd-app .rv-recents, .rd-app .rv-kits, .rd-app .rv-review, .rd-app .rv-g-b { grid-template-columns: 1fr; }
@@ -177,9 +162,7 @@
 .rd-app #v-reveal .rv-opt,
 .rd-app #v-reveal .rv-row,
 .rd-app #v-reveal .rv-kit { padding: 14px 16px 16px; line-height: 1.45; }
-.rd-app #v-reveal .rv-recent,
-.rd-app #v-reveal .rv-asset,
-.rd-app #v-reveal .rv-scene { padding: 10px 12px; line-height: 1.45; }
+.rd-app #v-reveal .rv-recent { padding: 10px 12px; line-height: 1.45; }
 .rd-app #v-reveal .rv-wiz { padding: 20px 22px 22px; }
 .rd-app #v-reveal .rv-chip { padding: 6px 14px; }
 .rd-app #v-reveal .rv-seg button { padding: 6px 13px; }
@@ -252,20 +235,12 @@
 .rd-app .rv-bulk span { margin-left: auto; font-size: 12px; color: #6b6b6b; }
 
 .rd-app .rv-sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
-.rd-app .rv-scard { border: 1px solid var(--line, #e6e6e6); border-radius: 12px; overflow: hidden; background: #fff; }
-.rd-app .rv-scard-th { position: relative; aspect-ratio: 4 / 3; background-size: cover; background-position: center; background-color: #f2f2f2; }
-.rd-app .rv-scard-th .rv-seq { position: absolute; top: 6px; left: 6px; background: rgba(0,0,0,.66); color: #fff; border-radius: 6px; font-size: 11px; padding: 1px 6px; }
-.rd-app .rv-scard-th .rv-x { position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,.66); color: #fff; border: 0; border-radius: 999px; width: 22px; height: 22px; display: grid; place-items: center; cursor: pointer; }
-.rd-app .rv-scard-th .rv-x svg { width: 13px; height: 13px; }
 .rd-app .rv-mchips { position: absolute; left: 6px; right: 6px; bottom: 6px; display: flex; gap: 4px; flex-wrap: wrap; }
 .rd-app .rv-mchip { display: inline-flex; align-items: center; gap: 4px; border: 0; cursor: pointer;
   background: rgba(255,255,255,.94); border-radius: 999px; padding: 3px 8px; font-size: 11px; font-weight: 600; color: #111; }
 .rd-app .rv-mchip svg { width: 12px; height: 12px; }
 .rd-app .rv-mchip.hot { box-shadow: inset 0 0 0 1px var(--red, #CC0000); color: var(--red, #CC0000); }
-.rd-app .rv-scard-b { padding: 8px 10px 10px; display: grid; gap: 6px; }
-.rd-app .rv-scard-b b { font-size: 13px; }
 .rd-app .rv-cap { width: 100%; font-size: 12px; padding: 5px 8px; border: 1px solid var(--line, #e6e6e6); border-radius: 8px; }
-.rd-app .rv-scard-a { display: flex; gap: 4px; }
 
 .rd-app .rv-modal-in.wide { max-width: 720px; }
 .rd-app .rv-modal-in.xwide { width: min(1040px, 100%); max-width: 1040px; max-height: 90vh; }
@@ -416,16 +391,6 @@
 .rd-app .rv-head-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .rd-app .rv-orient { display: flex; align-items: center; gap: 10px; }
 .rd-app .rv-orient > span { font-size: 12px; color: #6b6b6b; }
-.rd-app .rv-photostrip { display: flex; gap: 12px; overflow-x: auto; padding: 6px 2px 14px; }
-.rd-app .rv-photostrip .rv-scard { flex: 0 0 200px; width: 200px; border: 1px solid var(--line, #e6e6e6); border-radius: 12px; overflow: hidden; background: #fff; }
-.rd-app .rv-photostrip .rv-scard-th { position: relative; height: 130px; background: #f3f3f3 center/cover no-repeat; }
-.rd-app .rv-photostrip .rv-scard-b { padding: 8px 10px 10px; }
-.rd-app .rv-photostrip .rv-mchips { position: static; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; margin-bottom: 6px; width: 100%; }
-.rd-app .rv-photostrip .rv-mchip { position: relative; flex: 0 1 auto; min-width: 0; max-width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 11px; padding: 3px 6px; border: 1px solid var(--line, #e6e6e6); border-radius: 999px; background: #fff; cursor: pointer; }
-.rd-app .rv-photostrip .rv-mchip.hot { border-color: #CC0000; color: #CC0000; }
-.rd-app .rv-photostrip .rv-mchip svg { width: 12px !important; height: 12px !important; }
-.rd-app .rv-photostrip .rv-scard-b > b { display: block; font-size: 13px; margin: 2px 0 4px; }
-.rd-app .rv-photostrip .rv-cap { width: 100%; font-size: 12px; }
 
 /* VFX tile modal */
 .rd-app .rv-look em { display:block; font-style:normal; font-size:11px; color:#6b6b6b; line-height:1.25; margin-top:2px; }
@@ -519,9 +484,7 @@
 .rd-app .rv-logo-th svg { width: 18px; height: 18px; color: var(--mute-2); }
 .rd-app .rv-logo-th img { width: 100%; height: 100%; object-fit: contain; }
 .rd-app .rv-hint-in { display: block; margin-top: 7px; font-size: 11.5px; font-weight: 500; color: var(--mute-2, #8a8a8a); }
-.rd-app .rv-color { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
 .rd-app .rv-f .rv-color input[type="color"] { width: 46px; height: 34px; padding: 2px; margin-top: 0; flex: none; border-radius: 9px; }
-.rd-app .rv-color b { font-family: "DM Mono", ui-monospace, monospace; font-size: 12.5px; font-weight: 500; color: #111; letter-spacing: .02em; }
 
 .rd-app .rv-nameedit { border: 1px solid var(--red, #c00); border-radius: 6px; padding: 2px 6px; font: inherit; font-size: .8rem; width: 100%; }
 .rd-app .rv-editname { cursor: text; }
@@ -564,3 +527,51 @@
 .rv-qover{font-style:normal;font-size:.74rem;color:#a11}
 @media (max-width:1100px){.rv-layout.rv-railed,.rv-layout.rv-railed.with-side{grid-template-columns:minmax(0,1fr)}
 .rv-rail{flex-direction:row;overflow:auto;position:static}}
+
+
+/* ======================= STEP 2, THE PHOTO GRID ======================= */
+.rd-app .rv-head-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.rd-app .rv-gridbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 12px 0 10px; }
+.rd-app .rv-gridbar .btn-sm.on { border-color: #111; color: #111; font-weight: 700; }
+.rd-app .rv-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.rd-app .rv-grid.landscape .rv-tile-th { aspect-ratio: 4 / 3; }
+.rd-app .rv-g-head { position: sticky; top: 0; z-index: 2; background: #fff; padding: 10px 2px 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: #6a6a6a; grid-column: 1 / -1; }
+.rd-app .rv-g-head i { font-family: "DM Mono", ui-monospace, monospace; font-style: normal; color: #9a9a9a; }
+.rd-app .rv-tile { border-radius: 12px; }
+.rd-app .rv-tile-th { position: relative; aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; background: #f2f2f2 center/cover no-repeat; cursor: pointer; opacity: .5; transition: opacity .12s; }
+.rd-app .rv-tile.on .rv-tile-th { opacity: 1; }
+.rd-app .rv-tile-th:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
+.rd-app .rv-tile-check { position: absolute; top: 10px; left: 10px; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; border: 1.5px solid #fff; background: rgba(0,0,0,.28); }
+.rd-app .rv-tile.on .rv-tile-check { background: #111; border-color: #111; }
+.rd-app .rv-tile-check svg { width: 17px; height: 17px; color: #fff; opacity: 0; }
+.rd-app .rv-tile.on .rv-tile-check svg { opacity: 1; }
+.rd-app .rv-tile .rv-flag { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: #fff3d6; color: #9a6300; border: 0; cursor: pointer; }
+.rd-app .rv-tile .rv-flag svg { width: 14px; height: 14px; }
+.rd-app .rv-tile-seq { position: absolute; left: 10px; bottom: 10px; font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; color: #fff; background: rgba(0,0,0,.66); border-radius: 6px; padding: 1px 7px; }
+.rd-app .rv-tools { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%) translateY(4px); display: flex; gap: 2px; padding: 4px; background: #fff; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,.18); opacity: 0; pointer-events: none; transition: opacity .12s, transform .12s; }
+.rd-app .rv-tile.on:hover .rv-tools,
+.rd-app .rv-tile.on:focus-within .rv-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.rd-app .rv-tool { position: relative; width: 34px; height: 34px; border: 0; border-radius: 999px; background: transparent; display: grid; place-items: center; cursor: pointer; }
+.rd-app .rv-tool:hover { background: #f2f2f4; }
+.rd-app .rv-tool svg { width: 16px; height: 16px; }
+.rd-app .rv-tool.hot::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 999px; background: var(--red, #CC0000); }
+.rd-app .rv-tool em { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 11.5px; font-weight: 600; color: #fff; background: #111; border-radius: 6px; padding: 3px 8px; opacity: 0; pointer-events: none; transition: opacity .1s; }
+.rd-app .rv-tool:hover em, .rd-app .rv-tool:focus-visible em { opacity: 1; }
+.rd-app .rv-tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 2px 0; font-size: 12px; }
+.rd-app .rv-tile-foot b { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-app .rv-tile-kind { font-style: normal; font-size: 11.5px; color: var(--muted, #6a6a6a); }
+.rd-app .rv-cap-b { max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-app .rv-tile.drop-l .rv-tile-th::before { content: ""; position: absolute; inset: 0 auto 0 -8px; width: 3px; background: var(--red, #CC0000); border-radius: 2px; z-index: 3; }
+.rd-app .rv-gridfoot { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding: 12px 2px; background: #fff; border-top: 1px solid var(--line, #f0f0f0); }
+.rd-app .rv-gridfoot-a { display: flex; gap: 8px; flex: 0 0 auto; }
+.rd-app .rv-count { min-width: 0; font-size: 13px; }
+.rd-app .rv-count span { display: inline-flex; align-items: center; gap: 6px; }
+.rd-app .rv-count svg { width: 15px; height: 15px; }
+.rd-app .rv-count b { font-family: "DM Mono", ui-monospace, monospace; }
+.rd-app .rv-bar { height: 4px; border-radius: 999px; background: #eee; margin: 6px 0 4px; max-width: 260px; }
+.rd-app .rv-bar i { display: block; height: 100%; border-radius: 999px; background: #111; }
+@media (max-width: 900px) {
+  .rd-app .rv-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
+  .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .rd-app .rv-gridfoot { flex-wrap: wrap; }
+}
