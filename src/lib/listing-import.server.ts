@@ -197,3 +197,107 @@ export async function fetchListingByAddress(address: string): Promise<ProviderFe
     clearTimeout(timer);
   }
 }
+
+/**
+ * Read the public link preview for a listing page.
+ *
+ * This is one plain GET for the page's meta tags, exactly what any link
+ * preview performs. No gallery is enumerated, no internal endpoint is called
+ * and no client bundle payload is parsed. `og:image` is a cover image only.
+ */
+export type ListingMeta = {
+  ok: true;
+  listing: Record<string, unknown>;
+  cover: string;
+} | { ok: false; code: "meta_unavailable"; message: string };
+
+const META_FAIL = "We Could Not Read That Listing. You Can Still Add The Details Yourself.";
+
+export async function fetchListingMeta(normalizedUrl: string, providerId: string): Promise<ListingMeta> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000);
+  try {
+    const res = await fetch(normalizedUrl, {
+      headers: { Accept: "text/html", "User-Agent": "RealDesigns/1.0 (+link preview)" },
+      redirect: "follow",
+      signal: controller.signal,
+    });
+    if (!res.ok) return { ok: false, code: "meta_unavailable", message: META_FAIL };
+    const html = (await res.text()).slice(0, 1_500_000);
+
+    const meta = (prop: string) => {
+      const re = new RegExp(
+        `<meta[^>]+(?:property|name)=["']${prop.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}["'][^>]*>`,
+        "i",
+      );
+      const tag = re.exec(html)?.[0] || "";
+      const c = /content=["']([^"']*)["']/i.exec(tag)?.[1] || "";
+      return decodeEntities(c);
+    };
+
+    const ld = readJsonLd(html);
+    const addr = ld?.address
+      ? [ld.address.streetAddress, ld.address.addressLocality, ld.address.addressRegion, ld.address.postalCode]
+          .filter(Boolean)
+          .join(", ")
+      : "";
+
+    const title = meta("og:title") || /<title[^>]*>([^<]*)<\/title>/i.exec(html)?.[1] || "";
+    const cover = meta("og:image");
+    const listing = sanitizeListing(
+      {
+        address: addr || title,
+        title,
+        description: meta("og:description"),
+        price: ld?.price ?? null,
+        beds: ld?.beds ?? null,
+        baths: ld?.baths ?? null,
+        sqft: ld?.sqft ?? null,
+      },
+      providerId,
+    );
+    if (!listing.address && !listing.title) return { ok: false, code: "meta_unavailable", message: META_FAIL };
+    return { ok: true, listing: { ...listing, cover_url: text(cover, 1000) }, cover: text(cover, 1000) };
+  } catch {
+    return { ok: false, code: "meta_unavailable", message: META_FAIL };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+function decodeEntities(s: string) {
+  return s
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#0?39;/g, "'")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">");
+}
+
+/** Pull address, price, beds, baths and square footage from a listing JSON-LD block. */
+function readJsonLd(html: string): any {
+  const re = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html))) {
+    let parsed: any;
+    try {
+      parsed = JSON.parse((m[1] || "").trim());
+    } catch {
+      continue;
+    }
+    const nodes: any[] = Array.isArray(parsed) ? parsed : parsed?.["@graph"] ? parsed["@graph"] : [parsed];
+    for (const n of nodes) {
+      const t = String(n?.["@type"] || "");
+      if (!/RealEstateListing|SingleFamilyResidence|Residence|Product|Place|House|Apartment/i.test(t)) continue;
+      const offer = n.offers || n.offer || {};
+      return {
+        address: n.address && typeof n.address === "object" ? n.address : undefined,
+        price: offer.price ?? n.price ?? null,
+        beds: n.numberOfRooms ?? n.numberOfBedrooms ?? null,
+        baths: n.numberOfBathroomsTotal ?? n.numberOfBathrooms ?? null,
+        sqft: n.floorSize?.value ?? null,
+      };
+    }
+  }
+  return null;
+}
