@@ -293,7 +293,11 @@ const TABS = [
 function step2() {
   const d = S.draft;
   const items = sourceItems(d.property_id);
+  // Land on a tab that actually has something instead of an empty "Designs".
+  if (!d.tab) d.tab = (TABS.find(([k]) => (items[k] || []).length) || TABS[0])[0];
+
   const tab = d.tab || "designs";
+
   const list = items[tab] || [];
   const count = Object.keys(d.picked).length;
   return `<div class="pk-assets">
@@ -436,6 +440,9 @@ async function openBuilder(id) {
   S.step = 1;
   renderBuilder();
   await loadSources();
+  // Sources can take a moment; keep anything typed into step one meanwhile.
+  if (!id) readStep();
+
   if (id) {
     try {
       const p = await getPackage({ data: { id } });
