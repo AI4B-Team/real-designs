@@ -422,8 +422,20 @@ export function mountExplore(go, ctx) {
     { key: "material", q: "Which Materials And Texture Do You Like?", opts: ["japandi", "rustic", "modern", "transitional"] },
     { key: "detail", q: "How Much Detail Do You Want?", opts: ["minimalist", "traditional", "maximalist"] },
   ];
-  let q = read(LS.quiz, null) || { step: 0, picks: [], done: false };
-  if (!Array.isArray(q.picks)) q = { step: 0, picks: [], done: false };
+  /** a fresh quiz has no selection anywhere: every pick is null, never the first option */
+  const blankQuiz = () => ({ step: 0, picks: QUIZ.map(() => null), done: false });
+  /** stored state is only trusted when each pick is null or a real style id for that question */
+  function sanitizeQuiz(raw) {
+    if (!raw || typeof raw !== "object" || !Array.isArray(raw.picks)) return blankQuiz();
+    const picks = QUIZ.map((step, i) => {
+      const v = raw.picks[i];
+      if (typeof v !== "string" || !v) return null;
+      return step.opts.indexOf(v) > -1 && styleById(v) ? v : null;
+    });
+    const step = Number.isInteger(raw.step) ? Math.max(0, Math.min(raw.step, QUIZ.length - 1)) : 0;
+    return { step, picks, done: raw.done === true };
+  }
+  let q = sanitizeQuiz(read(LS.quiz, null));
   let qBusy = false;
   const qSave = () => write(LS.quiz, q);
 
