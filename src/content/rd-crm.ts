@@ -188,7 +188,7 @@ function render() {
 
   el.innerHTML = `
   <div class="crm">
-    <div class="dash-hello" style="margin-bottom:14px"><h2>CRM Sync</h2><p>Keep Your Contacts And Shared Designs In Step With Your CRM.</p></div>
+    
     ${S.error ? `<div class="note"><i data-lucide="alert-triangle"></i><span>${esc(S.error)}</span></div>` : ""}
 
     <div class="grid g3" style="margin-bottom:16px">
