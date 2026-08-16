@@ -25,7 +25,7 @@ import { mountFirstUse } from "@/content/rd-firstuse";
 import { mountStudioStart } from "@/content/rd-studio-start";
 import { submitFeedback } from "@/lib/feedback";
 import { polishFeedback } from "@/lib/feedback.functions";
-import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite } from "@/lib/team.functions";
+import { listTeam, inviteMember, revokeInvite, acceptInvite, declineInvite, updateInviteRole } from "@/lib/team.functions";
 import { getPrefs, savePrefs, DEFAULT_PREFS } from "@/lib/prefs";
 import { exportMyData, deleteMyAccount } from "@/lib/account.functions";
 import { summaryHTML, metric } from "@/lib/result-summary";
@@ -2697,6 +2697,13 @@ window.addEventListener('rd:saved',()=>paintPresentations());
 
 /* ---------- team ---------- */
 async function paintTeam(){
+const ROLE_ORDER=['viewer','member','admin'];
+const ROLE_LABEL={viewer:'Viewer',member:'Member',admin:'Admin'};
+const ROLE_HELP={
+  viewer:'Viewer: Can view properties, designs, budgets and presentations, and leave comments. Cannot upload, generate or spend credits.',
+  member:'Member: Everything a Viewer can do, plus upload photos, create designs, budgets, videos and presentations. Spends workspace credits. Cannot invite people or change billing.',
+  admin:'Admin: Everything a Member can do, plus invite teammates, change roles, delete any work and edit Brand Kit, Defaults and CRM Sync. Cannot manage the plan or billing.'
+};
   const list=document.getElementById('teamList'); if(!list) return;
   let name='You', mail='', av='YOU';
   try{
@@ -2711,7 +2718,8 @@ async function paintTeam(){
   try{ team=await listTeam(); }catch(_){}
   const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
   const invites=(team.sent||[]).map(i=>`<div class="seat"><span class="av">${esc((i.email||'?')[0].toUpperCase())}</span>
-      <div class="rowt"><b>${esc(i.email)}</b><span>${i.status==='accepted'?'Accepted':(i.status==='declined'?'Declined':'Invite pending')} \u00b7 ${esc(i.role)}</span></div>
+      <div class="rowt"><b>${esc(i.email)}</b><span>${i.status==='accepted'?'Accepted':(i.status==='declined'?'Declined':'Invite Pending')} \u00b7 ${esc(ROLE_LABEL[i.role]||i.role)}</span></div>
+      <select class="seat-role" data-setrole="${i.id}" title="Change Role" style="width:120px;border:1px solid var(--line,#e6e6e6);border-radius:10px;padding:6px 8px;background:#fff;font-size:12px;margin-left:8px">${ROLE_ORDER.map(r=>`<option value="${r}"${i.role===r?' selected':''}>${ROLE_LABEL[r]}</option>`).join('')}</select>
       <span class="pill ${i.status==='accepted'?'p-green':'p-gray'}">${i.status==='accepted'?'Active':(i.status==='declined'?'Declined':'Pending')}</span>
       ${i.status==='pending'?`<button class="btn btn-g" data-copyinv="${esc(i.email)}" style="margin-left:8px">Copy Invite Link</button>`:''}
       <button class="btn btn-g" data-revoke="${i.id}" style="margin-left:8px">Remove</button></div>`).join('');
@@ -2729,6 +2737,11 @@ async function paintTeam(){
     const link=window.location.origin+'/app?invite='+encodeURIComponent(b.dataset.copyinv);
     try{ await navigator.clipboard.writeText(link); }catch(_){}
     const t=b.textContent; b.textContent='Link Copied'; setTimeout(()=>{ b.textContent=t; },1600);
+  }));
+  list.querySelectorAll('[data-setrole]').forEach(sel=>sel.addEventListener('change',async()=>{
+    sel.disabled=true;
+    try{ await updateInviteRole({data:{id:sel.dataset.setrole,role:sel.value}}); }catch(_){}
+    paintTeam();
   }));
   list.querySelectorAll('[data-revoke]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await revokeInvite({data:{id:b.dataset.revoke}}); }catch(_){}
@@ -2781,6 +2794,13 @@ async function paintInviteBanner(){
 }
 paintInviteBanner();
 
+(function(){
+  const rl=document.getElementById('tmRole'), help=document.getElementById('tmRoleHelp');
+  if(!rl||!help) return;
+  const paint=()=>{ help.textContent=ROLE_HELP[rl.value]||''; };
+  rl.addEventListener('change',paint); paint();
+})();
+
 const tmSend=document.getElementById('tmSend');
 if(tmSend) tmSend.addEventListener('click',async()=>{
   const em=document.getElementById('tmEmail'), rl=document.getElementById('tmRole'), msg=document.getElementById('tmMsg');
@@ -2789,7 +2809,7 @@ if(tmSend) tmSend.addEventListener('click',async()=>{
   tmSend.disabled=true; if(msg){ msg.textContent='Sending'; msg.style.color='var(--mute)'; }
   try{
     const r=await inviteMember({data:{email,role:(rl&&rl.value)||'member'}});
-    if(r&&r.ok){ if(msg){ msg.textContent='Invite added. '+email+' can accept it after signing in.'; msg.style.color='var(--mute-2)'; } if(em) em.value=''; paintTeam(); }
+    if(r&&r.ok){ if(msg){ msg.textContent='Invite Added. '+email+' can accept it after signing in as a '+(ROLE_LABEL[(rl&&rl.value)||'member']||'Member')+'.'; msg.style.color='var(--mute-2)'; } if(em) em.value=''; paintTeam(); }
     else if(msg){ msg.textContent=(r&&r.error)||'Could not send that invite.'; msg.style.color='var(--red)'; }
   }catch(e){ if(msg){ msg.textContent='We could not send that invite. Double-check the email address and try again.'; msg.style.color='var(--red)'; } }
   tmSend.disabled=false;
