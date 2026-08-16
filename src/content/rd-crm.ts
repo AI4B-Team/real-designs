@@ -128,7 +128,7 @@ function esc(s: any) {
   return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 }
 function host() {
-  return document.getElementById("v-crm");
+  return document.getElementById("p-crm") || document.getElementById("v-crm");
 }
 function toast(msg: string) {
   try {
