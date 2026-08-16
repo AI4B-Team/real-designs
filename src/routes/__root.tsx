@@ -211,14 +211,23 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 const chunkRecoveryScript = `(function(){
   var K='rd:chunk-reload';
   function isChunk(m){return typeof m==='string'&&(/Failed to fetch dynamically imported module/i.test(m)||/Importing a module script failed/i.test(m)||/error loading dynamically imported module/i.test(m));}
+  function state(){try{return JSON.parse(sessionStorage.getItem(K)||'{}')||{};}catch(e){return {};}}
   function retry(m){
     if(!isChunk(m))return;
-    try{var l=Number(sessionStorage.getItem(K)||0);if(l&&Date.now()-l<20000)return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
-    location.reload();
+    var s=state();var now=Date.now();
+    var n=(s.at&&now-s.at<30000)?(s.n||0):0;
+    if(n>=3)return;
+    try{sessionStorage.setItem(K,JSON.stringify({n:n+1,at:now}));}catch(e){return;}
+    // The dev/deploy server may still be swapping bundles: wait, then verify the
+    // document is reachable before reloading so we don't spin on a dead server.
+    setTimeout(function(){
+      fetch(location.pathname,{cache:'reload'}).then(function(){location.reload();},function(){location.reload();});
+    },600*(n+1));
   }
   addEventListener('error',function(e){retry(e&&e.message);});
   addEventListener('unhandledrejection',function(e){var r=e&&e.reason;retry(r&&r.message||String(r));});
 })();`;
+
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
