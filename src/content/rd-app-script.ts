@@ -305,8 +305,8 @@ function searchIndex(){
       s:(pr.status==='approved'?'Approved':pr.status==='viewed'?'Opened':pr.status==='changes'?'Changes requested':'Sent'),view:'present',pres:pr.id});
   });
   SAVED_EST.forEach(e=>{
-    out.push({kind:'Scopes',ic:'calculator',t:(e.name||'Saved room')+' scope',
-      s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Scope')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
+    out.push({kind:'Budgets',ic:'calculator',t:(e.name||'Saved room')+' budget',
+      s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Budget')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
     out.push({kind:'Products',ic:'shopping-bag',t:(e.name||'Saved room')+' product board',
       s:'Allowances from the saved budget',view:'products'});
   });
@@ -337,7 +337,7 @@ function updateSearchMeta(){
   const set=(sc,v)=>{const b=schMenu.querySelector('[data-scope="'+sc+'"] .mv'); if(b) b.textContent=String(v);};
   set('Properties',PROP_TREE.length); set('Rooms',rooms); set('Designs',designs);
   set('Presentations',(typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).length);
-  set('Scopes',SAVED_EST.length); set('Products',SAVED_EST.length);
+  set('Budgets',SAVED_EST.length); set('Products',SAVED_EST.length);
   const recents=searchIndex().filter(r=>r.kind==='Designs').slice(0,3);
   const groups=schMenu.querySelectorAll('.acct-group');
   const recHead=groups[groups.length-1];
@@ -3165,7 +3165,7 @@ function nAgo(iso){
   if(s<90) return 'now'; if(s<5400) return Math.round(s/60)+'m';
   if(s<172800) return Math.round(s/3600)+'h'; return Math.round(s/86400)+'d';
 }
-const ACTION_LABEL={design:'Design',scope:'Scope',plan_3d:'3D Plan',video:'Video',topup:'Top Up',grant:'Credits Granted',refund:'Refund'};
+const ACTION_LABEL={design:'Design',scope:'Budget',plan_3d:'3D Plan',video:'Video',topup:'Top Up',grant:'Credits Granted',refund:'Refund'};
 async function buildNotifs(){
   const read=notifRead(); const out=[];
   try{
@@ -3712,8 +3712,8 @@ if(scopeGrid && !document.getElementById('scSave')){
 
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
-    {k:'priced',t:'Price The Scope',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Budget'},
-    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'},
+    {k:'priced',t:'Price The Budget',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Budget'},
+    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced budget on your account.',i:'save',cta:'Save Room'},
     {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent colour on every export.',i:'palette',cta:'Set Brand'},
     {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
   ];
@@ -3801,7 +3801,7 @@ lucide.createIcons();
 
 /* ---------- live credit meter, billing pane and upgrade prompts ---------- */
 const COST_ROWS=[['Design','1 Credit','A photoreal redesign of one photo'],
-                 ['Scope','3 Credits','Line items, quantities and local rates'],
+                 ['Budget','3 Credits','Line items, quantities and local rates'],
                  ['3D Plan','6 Credits','A furnished plan from your photo'],
                  ['Video','40 Credits','A cinematic walkthrough clip']];
 const PLAN_NAME={free:'Free',starter:'Starter',pro:'Pro',studio:'Studio'};
@@ -3870,7 +3870,7 @@ function paintBilling(c){
     lab.textContent='Free Designs Left Today';
     val.textContent=(c.remainingToday??0)+' / 5';
     bar.style.width=(((c.remainingToday??0)/5)*100)+'%';
-    note.textContent='Resets at midnight. Scopes, 3D plans and video need a paid plan.';
+    note.textContent='Resets at midnight. Budgets, 3D plans and video need a paid plan.';
   }else{
     lab.textContent='Credit Balance';
     val.textContent=c.balance.toLocaleString();
@@ -3912,7 +3912,7 @@ async function refreshCredits(){
       if(title) title.textContent='Credit Balance';
       lab.textContent=c.balance.toLocaleString();
       if(bar) bar.style.width=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100)+'%';
-      if(foot) foot.innerHTML='<span>'+(PLAN_NAME[c.plan]||c.plan)+' Plan</span><b>1 Design &bull; 3 Scope &bull; 40 Video</b>';
+      if(foot) foot.innerHTML='<span>'+(PLAN_NAME[c.plan]||c.plan)+' Plan</span><b>1 Design &bull; 3 Budget &bull; 40 Video</b>';
     }
     if(box && !box.dataset.wired){
       box.dataset.wired='1';
