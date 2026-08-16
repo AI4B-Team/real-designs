@@ -449,19 +449,39 @@
 .rd-app .rv-tpl.on { border-color: var(--red, #c00); box-shadow: inset 0 0 0 1px var(--red, #c00); }
 .rd-app .rv-tpl b { font-size: .8rem; }
 .rd-app .rv-tpl em { font-style: normal; font-size: .68rem; color: var(--mute-2); }
-.rd-app .rv-tpl-th { display: grid; place-content: center; gap: 4px; aspect-ratio: 16/9; border-radius: 8px; background: #f4f4f4; border: 1px solid var(--line); }
-.rd-app .rv-tpl-th i { display: block; width: 54px; height: 7px; border-radius: 2px; background: #111; }
-.rd-app .rv-tpl-th em { display: block; width: 34px; height: 5px; border-radius: 2px; background: #b9b9b9; }
-.rd-app .rv-tpl-th.t-plain i, .rd-app .rv-tpl-th.t-plain em { background: #dcdcdc; }
+/* Template previews: real, typeset mini cards */
+.rd-app .rv-tpl-th { position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; aspect-ratio: 16/9; border-radius: 8px; background: #fff center/cover no-repeat; border: 1px solid var(--line); padding: 8px; text-align: center; }
+.rd-app .rv-tpl-th .tp-a { font-size: .58rem; font-weight: 700; line-height: 1.15; color: #111; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-app .rv-tpl-th .tp-b { font-size: .46rem; letter-spacing: .06em; text-transform: uppercase; color: #8a8a8a; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-app .rv-tpl-th .tp-none { font-size: .5rem; letter-spacing: .1em; text-transform: uppercase; color: #b5b5b5; }
+.rd-app .rv-tpl-th.t-plain { background: #f4f4f4; }
+.rd-app .rv-tpl-th.t-editorial .tp-a { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: .66rem; }
+.rd-app .rv-tpl-th .tp-rule { display: block; width: 34px; height: 1px; background: #111; margin: 2px 0; }
 .rd-app .rv-tpl-th.t-bold { background: var(--red, #c00); }
-.rd-app .rv-tpl-th.t-bold i, .rd-app .rv-tpl-th.t-bold em { background: #fff; }
+.rd-app .rv-tpl-th.t-bold .tp-a { color: #fff; }
+.rd-app .rv-tpl-th.t-bold .tp-a.big { font-size: .72rem; letter-spacing: -.01em; }
+.rd-app .rv-tpl-th.t-bold .tp-b { color: rgba(255,255,255,.8); }
 .rd-app .rv-tpl-th.t-dark, .rd-app .rv-tpl-th.t-agentb { background: #111; }
-.rd-app .rv-tpl-th.t-dark i, .rd-app .rv-tpl-th.t-agentb i { background: #fff; }
-.rd-app .rv-tpl-th.t-dark em, .rd-app .rv-tpl-th.t-agentb em { background: #777; }
-.rd-app .rv-tpl-th.t-bar { align-content: end; justify-items: start; padding: 8px; }
-.rd-app .rv-tpl-th.t-split { justify-items: start; padding: 8px; background: linear-gradient(90deg, #d8d8d8 0 44%, #f4f4f4 44%); }
-.rd-app .rv-tpl-th.t-stamp i { border: 2px solid #111; height: 20px; width: 62px; background: none; }
-.rd-app .rv-tpl-th.t-kicker i { width: 26px; background: var(--red, #c00); }
+.rd-app .rv-tpl-th.t-dark .tp-a, .rd-app .rv-tpl-th.t-agentb .tp-a { color: #fff; }
+.rd-app .rv-tpl-th.t-dark .tp-b, .rd-app .rv-tpl-th.t-agentb .tp-b { color: #9a9a9a; }
+/* Lower third over the photo */
+.rd-app .rv-tpl-th.t-bar { justify-content: flex-end; align-items: stretch; padding: 0; background-color: #dfdfdf; }
+.rd-app .rv-tpl-th.t-bar .tp-lower { display: grid; gap: 1px; background: rgba(255,255,255,.94); padding: 5px 7px; text-align: left; }
+/* Split frame */
+.rd-app .rv-tpl-th.t-split { flex-direction: row; align-items: stretch; padding: 0; gap: 0; }
+.rd-app .rv-tpl-th.t-split .tp-half { width: 44%; background: #d8d8d8 center/cover no-repeat; }
+.rd-app .rv-tpl-th.t-split .tp-side { flex: 1; display: grid; align-content: center; gap: 2px; padding: 0 8px; text-align: left; }
+/* Stamp */
+.rd-app .rv-tpl-th.t-stamp { background: #f7f7f7; }
+.rd-app .rv-tpl-th.t-stamp .tp-stamp { border: 1.5px solid #111; border-radius: 3px; padding: 3px 8px; max-width: 100%; }
+/* Kicker */
+.rd-app .rv-tpl-th.t-kicker .tp-kick { font-size: .42rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #fff; background: var(--red, #c00); border-radius: 999px; padding: 2px 7px; }
+/* Agent cards */
+.rd-app .rv-tpl-th.t-agentw, .rd-app .rv-tpl-th.t-agentb { gap: 2px; }
+.rd-app .rv-tpl-th .tp-face { width: 20px; height: 20px; border-radius: 50%; background: #d8d8d8; margin-bottom: 1px; }
+.rd-app .rv-tpl-th.t-agentb .tp-face { background: #3a3a3a; }
+.rd-app .rv-tpl-th .tp-cta { margin-top: 2px; font-size: .42rem; font-weight: 700; letter-spacing: .04em; color: #fff; background: var(--red, #c00); border-radius: 999px; padding: 2px 8px; }
+
 .rd-app .rv-tog { display: grid; gap: 8px; margin-top: 10px; }
 .rd-app .rv-tog-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; padding: 10px 13px; }
 .rd-app .rv-tog-row span { display: grid; gap: 2px; }
