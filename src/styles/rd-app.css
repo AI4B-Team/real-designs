@@ -1654,3 +1654,50 @@
 }
 .rd-app .stw-seclink:hover{ color:var(--red, #CC0000); }
 .rd-app .stw-secdot{ color:var(--mute-2); }
+
+/* ---------- studio doors + shared source picker ---------- */
+.stw-doors{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0 4px}
+@media (max-width:760px){.stw-doors{grid-template-columns:1fr}}
+.stw-door{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--card);cursor:pointer;transition:.15s}
+.stw-door:hover{border-color:var(--red);transform:translateY(-1px)}
+.stw-door.on{border-color:var(--red);box-shadow:inset 0 0 0 1px var(--red)}
+.stw-door i{width:22px;height:22px;color:var(--red)}
+.stw-door b{font-size:1rem}
+.stw-door span{font-size:.82rem;color:var(--mute-2)}
+.stw-source{margin-top:18px}
+.sp{margin-top:10px}
+.sp-tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sp-tab{display:inline-flex;align-items:center;gap:7px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:var(--card);font-size:.8rem;cursor:pointer}
+.sp-tab i,.sp-tab .brand-ico{width:15px;height:15px}
+.sp-tab.on{border-color:var(--red);color:var(--red)}
+.sp-drop{display:flex;flex-direction:column;align-items:center;gap:8px;padding:38px 20px;border:1.5px dashed var(--line);border-radius:16px;background:var(--card);text-align:center}
+.sp-drop.over{border-color:var(--red);background:rgba(204,0,0,.04)}
+.sp-drop i{width:26px;height:26px;color:var(--red)}
+.sp-or,.sp-hint{font-size:.76rem;color:var(--mute-2)}
+.sp-link{background:none;border:0;color:var(--red);font-size:.78rem;cursor:pointer;text-decoration:underline}
+.sp-pane{padding:20px;border:1px solid var(--line);border-radius:16px;background:var(--card);display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.sp-f{display:block;width:100%;font-size:.76rem;color:var(--mute-2)}
+.sp-f input{display:block;width:100%;margin-top:6px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg);font-size:.85rem;color:inherit}
+.sp-search span{position:relative;display:block}
+.sp-search i{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:var(--mute-2)}
+.sp-search input{padding-left:32px}
+.sp-cloudrow{display:flex;gap:16px;font-size:.82rem;align-items:center}
+.sp-cloudrow span{display:inline-flex;align-items:center;gap:6px}
+.sp-note,.sp-msg{font-size:.76rem;color:var(--mute-2);margin:0}
+.sp-msg{margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+.sp-props{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;width:100%}
+.sp-prop{display:flex;flex-direction:column;gap:3px;align-items:flex-start;text-align:left;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer}
+.sp-prop:hover{border-color:var(--red)}
+.sp-prop i{width:16px;height:16px;color:var(--red)}
+.sp-prop b{font-size:.84rem}
+.sp-prop span{font-size:.7rem;color:var(--mute-2)}
+.sp-modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:24px}
+.sp-scrim{position:absolute;inset:0;background:rgba(12,12,14,.55)}
+.sp-choose{position:relative;width:min(760px,100%);max-height:82vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+.sp-choose-h{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.sp-choose-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sp-choice{display:flex;flex-direction:column;gap:5px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--bg);cursor:pointer;text-align:left}
+.sp-choice:hover{border-color:var(--red)}
+.sp-choice img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:8px}
+.sp-choice b{font-size:.74rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sp-flag{font-size:.68rem;color:var(--red);font-style:normal}
