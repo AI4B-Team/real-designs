@@ -413,12 +413,14 @@ export function mountExplore(go, ctx) {
   }
 
   /* ---------- five step style finder ---------- */
+  /* Options inside one question must never share a preview photo, or the
+     comparison shows the same room twice and the choice means nothing. */
   const QUIZ = [
-    { key: "aesthetic", q: "Which Overall Aesthetic Feels Right?", opts: ["warm-minimal", "traditional", "industrial", "bohemian"] },
+    { key: "aesthetic", q: "Which Overall Aesthetic Feels Right?", opts: ["warm-minimal", "modern-farmhouse", "industrial", "quiet-luxury"] },
     { key: "warmth", q: "Which Color And Warmth Do You Prefer?", opts: ["organic-modern", "coastal", "dark-academia"] },
     { key: "shape", q: "Which Furniture Shape Appeals More?", opts: ["soft-contemporary", "mid-century-modern", "neoclassical"] },
-    { key: "material", q: "Which Materials And Texture Do You Like?", opts: ["japandi", "quiet-luxury", "rustic", "modern"] },
-    { key: "detail", q: "How Much Detail Do You Want?", opts: ["minimalist", "transitional", "maximalist"] },
+    { key: "material", q: "Which Materials And Texture Do You Like?", opts: ["japandi", "rustic", "modern", "transitional"] },
+    { key: "detail", q: "How Much Detail Do You Want?", opts: ["minimalist", "traditional", "maximalist"] },
   ];
   let q = read(LS.quiz, null) || { step: 0, picks: [], done: false };
   if (!Array.isArray(q.picks)) q = { step: 0, picks: [], done: false };
@@ -475,7 +477,7 @@ export function mountExplore(go, ctx) {
     const chosen = q.picks[i] || "";
     cardEl.innerHTML = `<div class="xp-quiz-head"><b>${esc(step.q)}</b><span class="xp-quiz-step">${i + 1} Of ${QUIZ.length}</span></div>
       <div class="xp-quiz-prog"><span style="width:${((i + 1) / QUIZ.length) * 100}%"></span></div>
-      <div class="xp-quiz-opts">${step.opts.map((id) => { const s = styleById(id); return s ? `<button class="xp-quiz-opt${chosen === s.id ? " on" : ""}" data-qpick="${s.id}" aria-pressed="${chosen === s.id}"><img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy"><span>${esc(s.displayName)}</span></button>` : ""; }).join("")}</div>
+      <div class="xp-quiz-opts">${(() => { const seen = new Set(); return step.opts.filter((id) => { const s = styleById(id); if (!s) return false; if (seen.has(s.previewImage)) return false; seen.add(s.previewImage); return true; }); })().map((id) => { const s = styleById(id); return s ? `<button class="xp-quiz-opt${chosen === s.id ? " on" : ""}" data-qpick="${s.id}" aria-pressed="${chosen === s.id}"><img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy"><span>${esc(s.displayName)}</span></button>` : ""; }).join("")}</div>
       <div class="xp-quiz-foot">
         <div class="xp-quiz-nav">${i > 0 ? '<button class="fb-link" data-qback="1"><i data-lucide="chevron-left"></i>Back</button>' : ""}<button class="fb-link" data-qskip="1">Skip For Now</button></div>
         <button class="btn btn-primary btn-xs" data-qnext="1"${chosen ? "" : " disabled"}>${i === QUIZ.length - 1 ? "See Matches" : "Next"}</button>
