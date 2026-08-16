@@ -793,7 +793,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "</div></header>" +
       '<div class="stw-rule"></div>' +
       styleBanner() +
-      '<div class="stw-doorwrap' + (state.door === "design" ? "" : " center") + '">' +
+      '<div class="stw-doorwrap' + (state.door ? "" : " center") + '">' +
       '<div class="stw-doors">' +
       '<button type="button" class="stw-door' + (state.door === "design" ? " on" : "") + '" data-sts="door-design">' +
       '<i data-lucide="wand-sparkles"></i>' +
@@ -801,7 +801,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "<span>Restyle, stage or plan a room from a photo, sketch or floor plan.</span>" +
       '<span class="stw-door-cta">Start Designing<i data-lucide="arrow-right"></i></span>' +
       "</button>" +
-      '<button type="button" class="stw-door" data-sts="door-video">' +
+      '<button type="button" class="stw-door' + (state.door === "video" ? " on" : "") + '" data-sts="door-video">' +
       '<i data-lucide="clapperboard"></i>' +
       "<b>Make A Video</b>" +
       "<span>Turn property photos into a listing video.</span>" +
@@ -812,13 +812,18 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
       "</div>" +
 
-      (state.door === "design"
+      (state.door
         ? '<div class="stw-source"><div class="stw-sec-h"><h3>Where Are The Photos?</h3>' +
           "<span>Every Source Below Ends In The Same Place</span></div>" +
           '<div id="stSource"></div>' +
-          '<p class="stw-secondary">No Photo Yet? ' +
-          '<button class="stw-seclink" data-sts="c-describe">Describe An Idea Instead</button></p></div>'
+          (state.door === "design"
+            ? '<p class="stw-secondary">No Photo Yet? ' +
+              '<button class="stw-seclink" data-sts="c-describe">Describe An Idea Instead</button></p>'
+            : '<p class="stw-secondary">Ready To Build? ' +
+              '<button class="stw-seclink" data-sts="video-open">Open The Video Builder</button></p>') +
+          "</div>"
         : "") +
+
       recentHtml() +
       "</div>" +
       (state.samples ? samplesHtml() : "")
