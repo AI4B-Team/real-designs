@@ -126,6 +126,12 @@ function shell() {
 <div class="shop-toast" id="shopToast"></div>`;
 }
 
+function spThumb(p) {
+  const url = (p.images || []).find((u) => !!u);
+  if (url) return `<img src="${esc(url)}" alt="${esc(p.name || "")}">`;
+  return `<div class="shop-noimgtile"><i data-lucide="${esc(categoryIcon(p.category))}"></i><span>No Product Image</span></div>`;
+}
+
 let host = null;
 
 export function openShop(ctx) {
@@ -713,6 +719,8 @@ function mount(ctx) {
       return;
     }
     const targets = catCat === "all" ? objects : objects.filter((o) => o.id === catCat);
+    const excludeIds = {};
+    if (catCat === "all" && active) (matchCache[design.designId + "::" + active.id] || []).forEach((p) => (excludeIds[p.id] = 1));
     if (!targets.length) return;
     const missing = targets.filter((o) => !matchCache[design.designId + "::" + o.id]);
     if (missing.length) {
@@ -729,7 +737,7 @@ function mount(ctx) {
     let pool = [];
     targets.forEach((o) => {
       (matchCache[design.designId + "::" + o.id] || []).forEach((p) => {
-        if (seen[p.id]) return;
+        if (seen[p.id] || excludeIds[p.id]) return;
         seen[p.id] = 1;
         pool.push(p);
       });
@@ -884,10 +892,25 @@ function mount(ctx) {
     $("drClose").addEventListener("click", () => (d.hidden = true));
 
     $("drAdd").addEventListener("click", () => openAdd(p.id));
+    const syncDrSave = () => {
+      const b = $("drSave");
+      if (b) b.innerHTML = `<i data-lucide="bookmark"></i>${isSaved(p.id) ? "Saved" : "Save For Later"}`;
+      const bm = d.querySelector("[data-bm]");
+      if (bm) bm.classList.toggle("on", isSaved(p.id));
+      paintIcons();
+    };
+    syncDrSave();
     $("drSave").addEventListener("click", () => {
-      if (!savedLater.find((x) => x.id === p.id)) savedLater.push(p);
-      toast("Saved For Later");
+      toggleSaved(p);
+      syncDrSave();
     });
+    d.querySelectorAll("[data-bm]").forEach((b) =>
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleSaved(p);
+        syncDrSave();
+      }),
+    );
     track("shop_product_viewed", { merchant: p.merchant, category: p.category });
   }
 
@@ -903,17 +926,30 @@ function mount(ctx) {
         <div class="shop-mini">${thumb(p, "mini")}<div><b>${esc(p.name)}</b><span>${esc(p.merchant)} &middot; ${money(priceOf(p))}</span></div></div>
         <label class="shop-f"><span>Quantity</span><input id="afQty" type="number" min="1" value="1"></label>
         <label class="shop-f"><span>Room</span><input id="afRoom" type="text" value="${esc(design.roomLabel)}" readonly></label>
-        <label class="shop-f"><span>Phase</span><select id="afPhase">${PHASES.map((x) => `<option${x === "Furnishing" ? " selected" : ""}>${x}</option>`).join("")}</select></label>
         <label class="shop-f"><span>Budget Category</span><select id="afCat">${BUDGET_CATS.map((x) => `<option>${x}</option>`).join("")}</select></label>
-        <label class="shop-f"><span>Status</span><select id="afStatus"><option value="selected">Selected</option><option value="saved">Saved</option><option value="approved">Approved</option></select></label>
-        <label class="shop-f"><span>Design DNA</span><select id="afDna"><option value="none">Do Not Add To Design DNA</option><option value="room">Lock For This Room</option><option value="rooms">Apply To Similar Rooms</option><option value="property">Apply To Whole Property</option></select></label>
-        <label class="shop-f col"><span>Notes</span><textarea id="afNote" rows="2" placeholder="Anything the buyer or client should know"></textarea></label>
+        <div class="shop-adv">
+          <button type="button" class="shop-adv-t" id="afMore" aria-expanded="false">More Options<i data-lucide="chevron-down"></i></button>
+          <div class="shop-adv-b" id="afMoreB" hidden>
+            <label class="shop-f"><span>Phase</span><select id="afPhase">${PHASES.map((x) => `<option${x === "Furnishing" ? " selected" : ""}>${x}</option>`).join("")}</select></label>
+            <label class="shop-f"><span>Status</span><select id="afStatus"><option value="selected">Selected</option><option value="saved">Saved</option><option value="approved">Approved</option></select></label>
+            <label class="shop-f col"><span>Notes</span><textarea id="afNote" rows="2" placeholder="Anything the buyer or client should know"></textarea></label>
+          </div>
+        </div>
       </div>
       <div class="shop-dr-f"><button class="btn btn-dark btn-xs" id="afGo"><i data-lucide="check"></i>Add To Project</button><button class="btn btn-ghost btn-xs" id="afCancel">Cancel</button></div>
     </div>`;
     paintIcons();
+    try {
+      if (window.rdInitSelects) window.rdInitSelects(d);
+    } catch (_) {}
     $("drClose").addEventListener("click", () => (d.hidden = true));
     $("afCancel").addEventListener("click", () => (d.hidden = true));
+    $("afMore").addEventListener("click", () => {
+      const b = $("afMoreB");
+      b.hidden = !b.hidden;
+      $("afMore").setAttribute("aria-expanded", String(!b.hidden));
+      $("afMore").classList.toggle("on", !b.hidden);
+    });
     $("afGo").addEventListener("click", () => {
       const r = addProduct({
         product: p,
@@ -930,7 +966,6 @@ function mount(ctx) {
         phase: $("afPhase").value,
         budgetCategory: $("afCat").value,
         notes: $("afNote").value.trim(),
-        dnaScope: $("afDna").value,
       });
       d.hidden = true;
       syncCounts();
@@ -1010,6 +1045,8 @@ function mount(ctx) {
   }
 
   function syncCounts() {
+    const savedTab = host.querySelector('.shop-segb[data-tab="saved"]');
+    if (savedTab) savedTab.textContent = savedLater.length ? `Saved (${savedLater.length})` : "Saved";
     const s = $("shopSelCnt");
     if (s) s.textContent = String(listProducts().filter((r) => r.roomId === design.roomId).length);
     const c = $("shopCmpCnt");
