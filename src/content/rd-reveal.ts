@@ -14,11 +14,10 @@ import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
-import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations, missingSpaces } from "@/lib/media-analysis";
-import { identifyListing } from "@/lib/listing-source";
+import { mountSourcePicker } from "@/lib/source-picker";
 import {
   listVideos as _listVideos,
   getVideo as _getVideo,
