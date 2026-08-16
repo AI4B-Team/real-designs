@@ -36,7 +36,7 @@ export function budgetComingSoonHtml(context?: string) {
       <h2>Budgets Are Coming Soon</h2>
       <p>We Are Not Guessing At Renovation Costs. Budgets Turn On Once Verified Local Contractor Cost Data Is Licensed For Your Market${
         context ? `, So ${esc(context)} Stays Honest` : ""
-      }. Until Then You Will Never See A Made Up Number Here.</p>
+      }.<br>Until Then You Will Never See A Made Up Number Here.</p>
     </div>
     <ul class="bcs-list">
       <li><i data-lucide="scan-search"></i><div><b>What Already Works</b><span>The Change List From Your Approved Design Is Built And Saved Today.</span></div></li>

@@ -1633,7 +1633,7 @@
 .bcs-list b{display:block;font-size:13px}
 .bcs-list span{display:block;color:var(--mute-2);font-size:13px;line-height:1.5}
 .bcs-form{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:20px}
-.bcs-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;flex:1 1 260px}
+.bcs-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;flex:0 1 320px;max-width:320px}
 .bcs-form input{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;background:var(--bg);color:inherit}
 .bcs-note{margin:12px 0 0;color:var(--mute-2);font-size:12.5px;line-height:1.5}
 .bcs-steps{margin:0 0 10px;padding-left:18px;display:grid;gap:8px;font-size:13px;line-height:1.5}
