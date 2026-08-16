@@ -1072,8 +1072,41 @@ const OUTRO_TEMPLATES = [
   ["contact_bar", "Contact Bar", "Single Line Contact Strip", "bar"],
   ["cta_only", "Call To Action", "Book A Showing", "bold"],
 ];
+/** Real, typeset mini previews of each intro/outro card. */
+function tplCtx() {
+  const w = S.wizard || ({} as any);
+  const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
+  const raw = String(w.address || w.propertyLabel || w.title || "123 Maple Ave, Austin, TX");
+  const parts = raw.split(",");
+  const line1 = (parts[0] || raw).trim();
+  const line2 = parts.slice(1).join(",").trim() || "For Sale";
+  const shot = (w.scenes || []).find((s) => s && s.path);
+  return {
+    a: esc(line1),
+    b: esc(line2),
+    agent: esc(kit?.name || "Your Name"),
+    phone: esc(kit?.phone || "(555) 555, 0134"),
+    photo: shot ? esc(shot.path) : "",
+  };
+}
 function tplThumb(kind) {
-  return `<span class="rv-tpl-th t-${kind}"><i></i><em></em></span>`;
+  const c = tplCtx();
+  const bg = c.photo ? ` data-img="${c.photo}"` : "";
+  const body = {
+    plain: `<span class="tp-none">No Card</span>`,
+    clean: `<span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
+    editorial: `<span class="tp-a serif">${c.a}</span><span class="tp-rule"></span><span class="tp-b">${c.b}</span>`,
+    bold: `<span class="tp-a big">${c.a}</span><span class="tp-b">${c.b}</span>`,
+    bar: `<span class="tp-lower"><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span></span>`,
+    split: `<span class="tp-half"${bg}></span><span class="tp-side"><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span></span>`,
+    stamp: `<span class="tp-stamp"><span class="tp-a">${c.a}</span></span><span class="tp-b">${c.b}</span>`,
+    dark: `<span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
+    kicker: `<span class="tp-kick">Just Listed</span><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
+    agentw: `<span class="tp-face"></span><span class="tp-a">${c.agent}</span><span class="tp-b">${c.phone}</span><span class="tp-cta">Book A Showing</span>`,
+    agentb: `<span class="tp-face"></span><span class="tp-a">${c.agent}</span><span class="tp-b">${c.phone}</span><span class="tp-cta">Book A Showing</span>`,
+  }[kind] || `<span class="tp-a">${c.a}</span>`;
+  const photoBg = kind === "bar" ? bg : "";
+  return `<span class="rv-tpl-th t-${kind}"${photoBg}>${body}</span>`;
 }
 function templateGrid(list, sel, attr) {
   return `<div class="rv-tpls">${list
@@ -1082,6 +1115,7 @@ function templateGrid(list, sel, attr) {
     </button>`)
     .join("")}</div>`;
 }
+
 function logoModalHtml() {
   const w = S.wizard;
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
