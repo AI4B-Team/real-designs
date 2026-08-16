@@ -1363,15 +1363,25 @@ async function generate() {
     S.detailId = projectId;
     await openDetail(projectId);
   } catch (e) {
+    const msg = String(e?.message || e || "");
+    const entitlement = isPlanBlocked(msg);
     if (projectId) {
-      try { await setVideoStatus({ id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) }); } catch (_) {}
+      if (entitlement) {
+        // The server refused before rendering anything, so nothing was spent
+        // and nothing should stay in the library.
+        try { await deleteVideo({ id: projectId }); } catch (_) {}
+      } else {
+        try { await setVideoStatus({ id: projectId, status: "failed", error_message: (msg || "The render did not finish.").slice(0, 300) }); } catch (_) {}
+      }
     }
-    toast(e?.message || "The render failed. Your selections were saved.");
+    toast(msg || "The render failed. Your selections were saved.");
+    if (entitlement) openUpgrade(msg);
     w.busy = false;
     await loadLibrary();
-    S.screen = "library";
+    S.screen = entitlement ? "wizard" : "library";
     render();
   }
+
 }
 
 const STAGES = ["Preparing scenes", "Creating motion", "Building transitions", "Adding audio and captions", "Applying branding", "Finalizing formats"];
