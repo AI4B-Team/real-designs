@@ -1885,7 +1885,7 @@ function paintBatch(){
       </div>`;
   if(!rooms.length) lucide.createIcons();
 }
-let batchPicker=null;
+var batchPicker=null;
 function mountBatchSource(){
   const slot=document.getElementById('batchSource');
   if(!slot||batchPicker) return;
