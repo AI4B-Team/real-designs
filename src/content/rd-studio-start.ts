@@ -788,7 +788,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<header class="stw-head">' +
       '<div class="stw-head-l">' +
       '<span class="stw-eyebrow">Studio</span>' +
-      '<div class="stw-title"><h2>What Are You Making?</h2></div>' +
+      '<div class="stw-title"><h2>How Would You Like To Start?</h2></div>' +
       "<p>Choose a path below. You can switch between them anytime.</p>" +
       "</div></header>" +
       '<div class="stw-rule"></div>' +
