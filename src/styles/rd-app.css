@@ -1587,11 +1587,11 @@
 /* Studio start: detected room pill and advisory photo-quality notice */
 .rd-app .stw-detpill{ display:inline-flex; align-items:center; gap:4px; margin-left:8px; padding:2px 8px;
   border:1px solid var(--line); border-radius:999px; font-size:.64rem; letter-spacing:.04em;
-  text-transform:uppercase; color:var(--mute); background:var(--soft); }
+  text-transform:uppercase; color:var(--mute); background:var(--wash); }
 .rd-app .stw-detpill svg{ width:11px; height:11px; }
 .rd-app .stw-qual{ display:flex; align-items:flex-start; gap:10px; padding:11px 12px; margin:2px 0 12px;
-  border:1px solid var(--line); border-radius:12px; background:var(--soft); }
-.rd-app .stw-qual > svg{ width:16px; height:16px; flex:none; margin-top:2px; color:var(--brand); }
+  border:1px solid var(--line); border-radius:12px; background:var(--wash); }
+.rd-app .stw-qual > svg{ width:16px; height:16px; flex:none; margin-top:2px; color:var(--red); }
 .rd-app .stw-qual b{ display:block; font-size:.8rem; }
 .rd-app .stw-qual span{ display:block; font-size:.73rem; color:var(--mute); }
 .rd-app .stw-qual-a{ display:flex; gap:10px; margin-left:auto; flex-wrap:wrap; }
