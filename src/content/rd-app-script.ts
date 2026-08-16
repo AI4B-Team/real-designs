@@ -154,7 +154,7 @@ account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
-const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations'};
+const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
 let __allowReveal=0;
@@ -211,7 +211,6 @@ function go(v,fromHash){
   scrollTopHard();
   try{ window.__rdRailForView && window.__rdRailForView(v); }catch(_){}
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
-  if(v==='watch'){ try{ mountWatch(go); }catch(_){} }
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
   if(v==='lvideo'){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
@@ -515,7 +514,8 @@ brand:['Brand Kit','Applied to exports, decks and client links'],
 defaults:['Defaults','Applied to every new design'],
 api:['API & White Label','Business plan feature'],
 danger:['Data & Privacy','Export or permanently remove your data'],
-integrations:['Integrations','Services you connect, and what the platform provides']};
+integrations:['Integrations','Services you connect, and what the platform provides'],
+watch:['Watch A Site','Monitor a listing site you own and prepare videos for new properties']};
 function acctPane(k){
   if(!PANE_META[k]) k='profile';
   document.querySelectorAll('.arail-i').forEach(b=>b.classList.toggle('on',b.dataset.pane===k));
@@ -523,6 +523,7 @@ function acctPane(k){
   const t=document.getElementById('acctPaneTitle'),su=document.getElementById('acctPaneSub');
   if(t) t.textContent=PANE_META[k][0];
   if(su) su.textContent=PANE_META[k][1];
+  if(k==='watch'){ try{ mountWatch(go); }catch(_){} }
   if(k==='integrations'){ try{ mountCrm(go); }catch(_){} try{ paintIntegrations(); }catch(_){} }
   /* The address bar must name the pane on screen, so a refresh or a copied
      link reopens the same account section instead of falling back. */

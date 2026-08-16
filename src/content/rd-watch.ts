@@ -31,7 +31,7 @@ const S: any = {
 };
 
 function host() {
-  return document.getElementById("v-watch");
+  return document.getElementById("p-watch") || document.getElementById("v-watch");
 }
 function esc(s: any) {
   return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
