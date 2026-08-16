@@ -235,6 +235,7 @@ function go(v,fromHash){
 const VIEW_ALIAS={dashboard:'dash',home:'dash',overview:'dash',properties:'props',property:'props',
 batch:'listings',listing:'listings',listings:'listings',budget:'scope',estimate:'scope',
 video:'reveal',videos:'reveal',presentations:'present',report:'reports',product:'products',
+shop:'products',shopping:'products',sourcing:'products',
 explore:'explore',designs:'designs',media:'media'};
 function viewFromHash(){
   let raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
