@@ -265,13 +265,24 @@ function mount(ctx) {
     }</b><span>${esc(msg || "Draw a box around any item in the design and we will search for matching products.")}</span></div>`;
   }
 
+  function confPill(o) {
+    if (o.origin === "manual" || typeof o.confidence !== "number") return "";
+    const low = o.confidence < 0.65;
+    return `<em class="shop-conf${low ? " low" : ""}">${Math.round(o.confidence * 100)}%</em>`;
+  }
+
   function paintDots() {
     const layer = $("shopDotLayer");
     layer.innerHTML = objects
-      .map(
-        (o) =>
-          `<button class="shop-dot${active && active.id === o.id ? " on" : ""}${o.locked ? " locked" : ""}" data-dot="${o.id}" style="left:${(o.box.x + o.box.w / 2) * 100}%;top:${(o.box.y + o.box.h / 2) * 100}%" title="${esc(o.label)}"><span></span><em>${esc(o.label)}</em></button>`,
-      )
+      .map((o) => {
+        const on = active && active.id === o.id;
+        return (
+          `<button class="shop-dot${on ? " on" : ""}${o.locked ? " locked" : ""}" data-dot="${o.id}" style="left:${(o.box.x + o.box.w / 2) * 100}%;top:${(o.box.y + o.box.h / 2) * 100}%" title="${esc(o.label)}"><span></span><em>${esc(o.label)}${typeof o.confidence === "number" && o.origin === "auto" ? ` · ${Math.round(o.confidence * 100)}%` : ""}</em></button>` +
+          (on
+            ? `<div class="shop-hbox" data-box="${o.id}" style="left:${o.box.x * 100}%;top:${o.box.y * 100}%;width:${o.box.w * 100}%;height:${o.box.h * 100}%"><i class="shop-hres" data-res="${o.id}"></i></div>`
+            : "")
+        );
+      })
       .join("");
     layer.querySelectorAll("[data-dot]").forEach((b) =>
       b.addEventListener("click", () => {
@@ -279,12 +290,13 @@ function mount(ctx) {
         if (o) selectObject(o);
       }),
     );
+    wireHotspotEdit(layer);
     $("shopObjs").innerHTML =
       `<div class="shop-objs-h">Detected Objects</div>` +
       objects
         .map(
           (o) =>
-            `<button class="shop-obj${active && active.id === o.id ? " on" : ""}" data-obj="${o.id}"><i data-lucide="${o.origin === "manual" ? "square-dashed" : "circle-dot"}"></i>${esc(o.label)}${o.locked ? '<em class="shop-lockpill">Selected</em>' : ""}</button>`,
+            `<button class="shop-obj${active && active.id === o.id ? " on" : ""}" data-obj="${o.id}"><i data-lucide="${o.origin === "manual" ? "square-dashed" : "circle-dot"}"></i>${esc(o.label)}${confPill(o)}${o.locked ? '<em class="shop-lockpill">Selected</em>' : ""}</button>`,
         )
         .join("");
     $("shopObjs")
@@ -298,6 +310,61 @@ function mount(ctx) {
     layer.classList.toggle("hide", !dotsOn);
     paintIcons();
   }
+
+  /** Drag to reposition, corner handle to resize. Editing an auto hotspot makes it manual. */
+  function wireHotspotEdit(layer) {
+    const stageEl = $("shopStage");
+    const box = layer.querySelector("[data-box]");
+    if (!box || !stageEl) return;
+    const o = objects.find((x) => x.id === box.getAttribute("data-box"));
+    if (!o) return;
+    const clamp = (v, max) => Math.min(max, Math.max(0, v));
+
+    const drag = (e, mode) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const r = stageEl.getBoundingClientRect();
+      const sx = e.clientX,
+        sy = e.clientY;
+      const b0 = { ...o.box };
+      const move = (ev) => {
+        const dx = (ev.clientX - sx) / r.width;
+        const dy = (ev.clientY - sy) / r.height;
+        if (mode === "move") {
+          o.box.x = clamp(b0.x + dx, 1 - b0.w);
+          o.box.y = clamp(b0.y + dy, 1 - b0.h);
+        } else {
+          o.box.w = Math.max(0.03, Math.min(1 - b0.x, b0.w + dx));
+          o.box.h = Math.max(0.03, Math.min(1 - b0.y, b0.h + dy));
+        }
+        box.style.left = o.box.x * 100 + "%";
+        box.style.top = o.box.y * 100 + "%";
+        box.style.width = o.box.w * 100 + "%";
+        box.style.height = o.box.h * 100 + "%";
+      };
+      const up = () => {
+        document.removeEventListener("mousemove", move);
+        document.removeEventListener("mouseup", up);
+        if (o.origin === "auto") {
+          o.origin = "manual";
+          o.confidence = undefined;
+        }
+        delete matchCache[design.designId + "::" + o.id];
+        paintDots();
+        selectObject(o);
+      };
+      document.addEventListener("mousemove", move);
+      document.addEventListener("mouseup", up);
+    };
+
+    box.addEventListener("mousedown", (e) => {
+      if (e.target && e.target.hasAttribute && e.target.hasAttribute("data-res")) return;
+      drag(e, "move");
+    });
+    const res = box.querySelector("[data-res]");
+    if (res) res.addEventListener("mousedown", (e) => drag(e, "resize"));
+  }
+
 
   /* ---------------- search ---------------- */
   /** One shared match store keyed by design + detected object id. */
