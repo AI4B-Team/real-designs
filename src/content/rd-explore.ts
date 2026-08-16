@@ -20,7 +20,7 @@ const PALETTES = ["Warm Neutral", "Cool Neutral", "Earth Tone", "Bright & Light"
 const FINISHES = ["Rental Grade", "Retail Grade", "Premium"];
 const MOODS = ["Calm", "Minimal", "Warm", "Natural", "Refined", "Formal", "Bold", "Playful", "Homely", "Classic", "Curb Appeal"];
 
-const LS = { saved: "rd_ex_saved", quiz: "rd_ex_quiz_v2", choice: "rd_style_choice", src: "rd_last_source" };
+const LS = { saved: "rd_ex_saved", quiz: "rd_ex_quiz_v3", choice: "rd_style_choice", src: "rd_last_source" };
 function read(k, f) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch (_) { return f; } }
 function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} }
 function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
@@ -422,8 +422,20 @@ export function mountExplore(go, ctx) {
     { key: "material", q: "Which Materials And Texture Do You Like?", opts: ["japandi", "rustic", "modern", "transitional"] },
     { key: "detail", q: "How Much Detail Do You Want?", opts: ["minimalist", "traditional", "maximalist"] },
   ];
-  let q = read(LS.quiz, null) || { step: 0, picks: [], done: false };
-  if (!Array.isArray(q.picks)) q = { step: 0, picks: [], done: false };
+  /** a fresh quiz has no selection anywhere: every pick is null, never the first option */
+  const blankQuiz = () => ({ step: 0, picks: QUIZ.map(() => null), done: false });
+  /** stored state is only trusted when each pick is null or a real style id for that question */
+  function sanitizeQuiz(raw) {
+    if (!raw || typeof raw !== "object" || !Array.isArray(raw.picks)) return blankQuiz();
+    const picks = QUIZ.map((step, i) => {
+      const v = raw.picks[i];
+      if (typeof v !== "string" || !v) return null;
+      return step.opts.indexOf(v) > -1 && styleById(v) ? v : null;
+    });
+    const step = Number.isInteger(raw.step) ? Math.max(0, Math.min(raw.step, QUIZ.length - 1)) : 0;
+    return { step, picks, done: raw.done === true };
+  }
+  let q = sanitizeQuiz(read(LS.quiz, null));
   let qBusy = false;
   const qSave = () => write(LS.quiz, q);
 
@@ -524,6 +536,7 @@ export function mountExplore(go, ctx) {
   }
   /** selecting saves immediately and enables Next; it must not auto-advance or scroll */
   function quizPick(id) {
+    if (!id || !styleById(id)) return;
     q.picks[qIndex()] = id;
     qSave();
     paintQuiz();
@@ -600,7 +613,7 @@ export function mountExplore(go, ctx) {
     if (t.closest("[data-qback]")) { if (q.done) { q.done = false; q.step = QUIZ.length - 1; } else if (q.step > 0) q.step--; qSave(); paintQuiz(); return; }
     if (t.closest("[data-qskip]")) { if (!qBusy) { q.picks[qIndex()] = null; qSave(); quizAdvance(); } return; }
     if (t.closest("[data-qbrowse]")) { const b = $("xpBody"); if (b) b.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
-    if (t.closest("[data-qretake]")) { q = { step: 0, picks: [], done: false }; qSave(); paintQuiz(); return; }
+    if (t.closest("[data-qretake]")) { q = blankQuiz(); qSave(); paintQuiz(); return; }
   });
 
   host.addEventListener("keydown", (e) => {
