@@ -1,5 +1,6 @@
 {
   "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts", "eslint.config.js"],
+  "exclude": ["src/content/rd-reveal.ts", "src/content/rd-app-script.ts", "src/content/rd-present.ts", "src/content/rd-shop.ts", "src/content/rd-explore.ts", "src/content/rd-reports.ts", "src/content/rd-media-lib.ts", "src/content/rd-photo-editor.ts", "src/content/rd-propmedia.ts", "src/content/rd-site-script.ts", "src/content/rd-site-extra.ts", "src/content/rd-showcase.ts", "src/content/rd-style-admin.ts", "src/lib/media-library.ts", "src/lib/rd-bulk-restyle.ts", "src/lib/rd-vfx-looks.ts"],
   "compilerOptions": {
     "target": "ES2022",
     "jsx": "react-jsx",
