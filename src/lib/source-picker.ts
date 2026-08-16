@@ -271,7 +271,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         '<div class="sp-pane">' +
         '<label class="sp-f sp-search">Property Address<span><i data-lucide="search"></i>' +
         '<input type="text" id="spAddr" placeholder="3417 Hoover Dr, Holiday, FL 34691" value="' + esc(state.address) + '"></span></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="addrgo">' + (state.busy ? "Looking Up" : "Find Photos") + "</button>" +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="addrgo">' + (state.busy ? "Looking Up" : "Look Up Address") + "</button>" +
+        '<p class="sp-note">An address lookup files your work under that property and fills in listing details such as beds, baths and square footage. It does not download photos from a listing — add those from Upload.</p>' +
         "</div>"
       );
     }
@@ -279,7 +280,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return (
         '<div class="sp-pane">' +
         '<label class="sp-f">Listing Link<input type="text" id="spUrl" placeholder="https://www.zillow.com/homedetails/..." value="' + esc(state.url) + '"></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' + (state.busy ? "Reading Link" : "Read Listing") + "</button>" +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' + (state.busy ? "Reading Link" : "Import Listing Details") + "</button>" +
         '<p class="sp-note">Listing links are read as text only. No photos or media are imported from a public listing page.</p>' +
         "</div>"
       );
