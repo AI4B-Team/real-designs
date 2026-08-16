@@ -89,7 +89,7 @@
 
 .rd-app .nav-i:hover{background:var(--paper)}
 
-.rd-app .nav-i.on{background:var(--ink);color:#fff;font-weight:700}
+.rd-app .nav-i.on{background:var(--ink);color:#fff;font-weight:700;box-shadow:0 0 0 2px var(--red)}
 
 .rd-app .nav-i svg{width:16px;height:16px;flex:none}
 
