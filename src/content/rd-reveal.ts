@@ -1161,7 +1161,7 @@ function stepBrand() {
   </details>
 
   <details class="rv-acc" data-acc="audio"${accOpen.has("audio") ? " open" : ""}><summary>Audio</summary>
-    <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music)}
+    <div class="rv-sub">Track</div>${musicPicker("rvMusic", w.music)}
     <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
     <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
     <div class="rv-sub">Narration</div>
@@ -2491,7 +2491,7 @@ function maybeIntro() {
   if (dvActive) { closeIntroNow(); return; }
   try { if (localStorage.getItem("rd_reveal_intro") === "1") return; } catch (_) { return; }
   let wrap = document.getElementById("rvIntroWrap");
-  if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; document.body.appendChild(wrap); }
+  if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; (document.querySelector(".rd-app") || document.body).appendChild(wrap); }
   wrap.className = "rv-modal on";
   wrap.innerHTML = `<div class="rv-modal-in sm" role="dialog" aria-label="Welcome To Property Videos">
     <div class="rv-modal-h"><b>Create Your First Property Video</b></div>
