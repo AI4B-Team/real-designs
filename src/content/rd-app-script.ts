@@ -19,7 +19,7 @@ import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } f
 import { mountReports } from "@/content/rd-reports";
 import { mountBudgetComingSoon, budgetAvailability } from "@/lib/budget-coming-soon";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
-import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded } from "@/lib/presentations.functions";
+import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded, listShareableVersions } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
 import { track } from "@/lib/analytics";
 import { mountFirstUse } from "@/content/rd-firstuse";
@@ -2501,7 +2501,10 @@ async function paintPresentations(){
   catch(e){ PRES_ROWS=[]; }
   updateSearchMeta();
   if(!PRES_ROWS.length){
-    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No Client Links Yet. Save a room in Studio, then use New Link to share it for approval.</p>';
+    el.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">No Client Links Yet. Save a design in Studio, then use New Link to share it for approval.</p><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-primary btn-sm" data-goto="studio"><i data-lucide="wand-2"></i>Open Studio</button><button class="btn btn-ghost btn-sm" id="emptyNewLink"><i data-lucide="link"></i>New Link</button></div>';
+    el.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
+    const enl=el.querySelector('#emptyNewLink'); if(enl) enl.addEventListener('click',presModal);
+    lucide.createIcons();
     return;
   }
   renderPresRows();
@@ -2837,18 +2840,47 @@ function presModal(){
     });
   }
   const sel=m.querySelector('#plVer');
-  const versions=[];
-  PROP_TREE.forEach(p=>p.projects.forEach(pr=>pr.rooms.forEach(r=>{
-    if(r.version_id) versions.push({id:r.version_id,label:p.address+' \u00b7 '+r.name});
-  })));
-  sel.innerHTML=versions.length
-    ? versions.map(v=>`<option value="${v.id}">${v.label}</option>`).join('')
-    : '<option value="">No Saved Designs Yet</option>';
+  const plGo=m.querySelector('#plGo');
   m.querySelector('#plErr').style.display='none';
   m.querySelector('#plOut').style.display='none';
   m.classList.add('on');
+  sel.innerHTML='<option value="">Loading Your Saved Designs</option>';
+  plGo.disabled=true;
   lucide.createIcons();
+  (async()=>{
+    let versions=[];
+    try{ versions=await listShareableVersions()||[]; }catch(_){ versions=[]; }
+    if(!versions.length){
+      /* fall back to whatever the loaded tree knows about */
+      PROP_TREE.forEach(p=>p.projects.forEach(pr=>pr.rooms.forEach(r=>{
+        if(r.version_id) versions.push({id:r.version_id,label:p.address+' \u00b7 '+r.name});
+      })));
+    }
+    if(!versions.length){
+      sel.innerHTML='<option value="">No Saved Designs Yet</option>';
+      const err=m.querySelector('#plErr');
+      err.style.display='block';
+      err.textContent='Save a design in Studio first. Approval links are built from a saved before and after.';
+      plGo.disabled=true;
+      let jump=m.querySelector('#plStudio');
+      if(!jump){
+        jump=document.createElement('button');
+        jump.id='plStudio'; jump.className='btn btn-primary btn-block';
+        jump.textContent='Open Studio';
+        jump.addEventListener('click',()=>{ m.classList.remove('on'); go('studio'); });
+        plGo.parentNode.insertBefore(jump,plGo);
+      }
+      jump.hidden=false; plGo.hidden=true;
+      return;
+    }
+    const jump=m.querySelector('#plStudio'); if(jump) jump.hidden=true;
+    plGo.hidden=false; plGo.disabled=false;
+    sel.innerHTML=versions.map(v=>`<option value="${v.id}">${esc(v.label)}</option>`).join('');
+    const t=m.querySelector('#plTitle');
+    if(t&&!t.value) t.value=(versions[0].room?versions[0].room:'Design')+' Approval';
+  })();
 }
+
 
 const newLinkBtn=document.getElementById('newLinkBtn');
 if(newLinkBtn) newLinkBtn.addEventListener('click',presModal);
