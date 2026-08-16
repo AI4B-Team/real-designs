@@ -8,6 +8,10 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   tanstackStart: {
+    // Serve the browser bootstrap from app source. The preview proxy can
+    // briefly lose dependency-source URLs during rebuilds, so using TanStack's
+    // node_modules default entry here can leave the page permanently blank.
+    client: { entry: "client" },
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
     server: { entry: "server" },

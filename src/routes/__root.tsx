@@ -205,27 +205,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   errorComponent: ErrorComponent,
 });
 
-// Runs before hydration: if the client entry itself fails to load, React never
-// mounts and the router boundary cannot help. Resource error events do not
-// bubble, so listen in the capture phase and inspect the failed script URL too.
-const chunkRecoveryScript = `(function(){
-  var K='rd:chunk-reload';
-  function isChunk(m){return typeof m==='string'&&(/Failed to fetch dynamically imported module/i.test(m)||/Importing a module script failed/i.test(m)||/error loading dynamically imported module/i.test(m)||m.indexOf('default-entry/client.tsx')!==-1);}
-  function retry(m){
-    if(!isChunk(m))return;
-    try{var l=Number(sessionStorage.getItem(K)||0);if(l&&Date.now()-l<20000)return;sessionStorage.setItem(K,String(Date.now()));}catch(e){return;}
-    var u=new URL(location.href);u.searchParams.set('__rd_retry',String(Date.now()));location.replace(u.href);
-  }
-  addEventListener('error',function(e){var t=e&&e.target;retry((e&&e.message)||t&&t.src||'');},true);
-  addEventListener('unhandledrejection',function(e){var r=e&&e.reason;retry(r&&r.message||String(r));});
-})();`;
-
 function RootShell({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <head>
         <HeadContent />
-        <script dangerouslySetInnerHTML={{ __html: chunkRecoveryScript }} />
       </head>
       <body>
         {children}
