@@ -3077,9 +3077,8 @@ loadPrefs();
   const tog=document.getElementById('sideToggle');
   if(!shell||!tog) return;
   const KEY='rd.sidemin';
-  // Studio needs the canvas width, so the rail is forced closed there and the
-  // user's own preference comes back on every other view.
-  const FORCED=['studio'];
+  // No view forces the rail closed anymore; the user's preference always wins.
+  const FORCED: string[] = [];
   function apply(min){
     shell.classList.toggle('sidemin',min);
     tog.setAttribute('aria-label',min?'Expand Menu':'Collapse Menu');
