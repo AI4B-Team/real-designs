@@ -268,13 +268,20 @@ export const startRender = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
+    const { charge, chargeErrorMessage, CREDIT_COSTS } = await import("@/lib/credits.server");
     const charged = await charge(userId, "video", "REAL REVEAL render");
-    if (!charged.ok) throw new Error(chargeErrorMessage(charged));
+    if (!charged.ok)
+      throw new Error(
+        charged.reason === "plan_required"
+          ? `Not enough credits. Rendering a video costs ${CREDIT_COSTS.video} credits and is not part of the free plan.`
+          : chargeErrorMessage(charged),
+      );
+
 
     // Immersive motion is animated per scene, so it is metered per scene on top
     // of the render itself. Standard motion stays inside the render charge.
     let balance = charged.balance;
+    let spent = charged.charged;
     const { data: immersive } = await supabase
       .from("video_scenes")
       .select("id, room_name")
@@ -282,9 +289,16 @@ export const startRender = createServerFn({ method: "POST" })
       .eq("motion_level", "immersive");
     for (const s of immersive ?? []) {
       const extra = await charge(userId, "plan_3d", `REAL REVEAL immersive motion — ${(s as any).room_name || "Scene"}`);
-      if (!extra.ok) throw new Error(chargeErrorMessage(extra));
+      if (!extra.ok) {
+        // Never keep a partial debit for a render that will not happen.
+        const { refund } = await import("@/lib/credits.server");
+        await refund(userId, spent, "REAL REVEAL render could not be started");
+        throw new Error(chargeErrorMessage(extra));
+      }
+      spent += extra.charged;
       balance = extra.balance;
     }
+
 
 
     await supabase.from("video_variants").delete().eq("video_project_id", data.id);

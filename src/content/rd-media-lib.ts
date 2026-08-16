@@ -370,7 +370,8 @@ function card(m) {
     ? `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || "Processing")}</span>
         <div class="ml-bar ${m.progress == null ? "ind" : ""}"><i style="width:${m.progress == null ? 40 : m.progress}%"></i></div></div>`
     : m.status === "failed"
-      ? `<div class="ml-fail"><i data-lucide="alert-triangle"></i><span>${esc(m.error || "Generation failed")}</span></div>`
+      ? `<div class="ml-fail"><i data-lucide="alert-triangle"></i><span>${esc(failReason(m))}</span></div>`
+
       : `<img data-photo="${esc(m.path || "")}" alt="${esc(m.title)}"${THUMB_URLS.get(m.path) ? ` src="${esc(THUMB_URLS.get(m.path))}"` : " hidden"}>
          ${g === "videos" ? `<span class="ml-play"><i data-lucide="play"></i></span>` : ""}`;
   const badges =
@@ -404,6 +405,17 @@ const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
 const planBlocked = (m) => isPlanBlocked((m && m.error) || "");
 
+/** What actually happened, in the user's terms. Never a generic paywall line. */
+function failReason(m) {
+  const raw = String((m && m.error) || "").trim();
+  if (planBlocked(m))
+    return typeGroup(m.type) === "videos"
+      ? "Not Enough Credits To Render This Video. Nothing Was Charged."
+      : "Not Enough Credits For This Generation. Nothing Was Charged.";
+  return raw || "The Render Did Not Finish. Try Again.";
+}
+
+
 function openUpgrade(m) {
   const msg = String((m && m.error) || "") || "This action needs a paid plan.";
   if (typeof (window as any).rdUpgradeModal === "function") { openUpgradeFlow(msg); return; }
@@ -412,11 +424,13 @@ function openUpgrade(m) {
 
 function actions(m, g) {
   if (m.status === "failed" && planBlocked(m))
-    return `<button class="btn btn-primary btn-xs" data-upg="${m.id}" style="flex:1"><i data-lucide="zap"></i>Upgrade</button>
+    return `<button class="btn btn-primary btn-xs" data-upg="${m.id}" style="flex:1"><i data-lucide="zap"></i>Add Credits</button>
+      <button class="btn btn-ghost btn-xs" data-retry="${m.id}"><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   if (m.status === "failed")
     return `<button class="btn btn-ghost btn-xs" data-retry="${m.id}" style="flex:1"><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
+
   if (m.status === "processing" || m.status === "queued")
     return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open Details</button>
       ${m.job ? `<button class="btn btn-ghost btn-xs" data-cancel="${m.id}">Cancel</button>` : ""}`;
@@ -431,12 +445,12 @@ function moreItems(m) {
   const fav = { icon: "heart", label: isFav(m.id) ? "Unfavorite" : "Favorite", fn: () => { toggleFav(m.id); render(); } };
   if (m.status === "failed")
     return [
-      ...(planBlocked(m)
-        ? [{ icon: "zap", label: "Upgrade", fn: () => openUpgrade(m) }]
-        : [{ icon: "rotate-ccw", label: "Retry", fn: () => retry(m) }]),
+      { icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
+      ...(planBlocked(m) ? [{ icon: "zap", label: "Add Credits", fn: () => openUpgrade(m) }] : []),
       { icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
-      { icon: "trash-2", label: "Remove", danger: true, fn: () => remove(m) },
+      { icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) },
     ];
+
   if (g === "videos")
     return [
       { icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
@@ -919,7 +933,7 @@ async function openDetail(m, opts) {
       }
       ${
         m.status === "failed"
-          ? `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>Generation Failed</b><span>${esc(m.error || "Something went wrong.")}</span></div></div>`
+          ? `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>${planBlocked(m) ? "Not Enough Credits" : "Render Failed"}</b><span>${esc(failReason(m))}</span></div></div>`
           : ""
       }
       <div class="ml-dr-meta">
@@ -974,8 +988,10 @@ async function openDetail(m, opts) {
 /** Primary actions in the drawer differ by asset type and status. */
 function drawerActions(m, g, proc) {
   if (m.status === "failed" && planBlocked(m))
-    return `<button class="btn btn-primary btn-sm" data-upg><i data-lucide="zap"></i>Upgrade</button>
+    return `<button class="btn btn-primary btn-sm" data-upg><i data-lucide="zap"></i>Add Credits</button>
+      <button class="btn btn-ghost btn-sm" data-retry><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+
   if (m.status === "failed")
     return `<button class="btn btn-primary btn-sm" data-retry><i data-lucide="rotate-ccw"></i>Retry</button>
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;

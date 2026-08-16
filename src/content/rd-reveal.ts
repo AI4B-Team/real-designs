@@ -73,15 +73,22 @@ function openUpgradeFlow(p) {
   openUpgrade(msg);
 }
 
-/** Null when the account can pay for a video render, otherwise the reason. */
-function videoCreditBlock() {
+/**
+ * Null when the account can pay for this render, otherwise the reason.
+ * A video render is metered against the credit balance, never against the
+ * free plan's daily design counter.
+ */
+function videoCreditBlock(cost) {
   const c = S.credits;
   if (!c || c.unavailable) return null;
-  if (c.plan === "free") return "Video rendering needs a paid plan. The free plan covers 5 designs a day.";
-  if ((c.balance ?? 0) < CREDIT_COSTS.video)
-    return `Not enough credits. This video costs ${CREDIT_COSTS.video} and you have ${c.balance ?? 0}.`;
+  const need = cost == null ? CREDIT_COSTS.video : cost;
+  if (c.plan === "free")
+    return `Video Rendering Is Not Included In The Free Plan. Upgrade Or Add Credits To Render.`;
+  if ((c.balance ?? 0) < need)
+    return `This Render Costs ${need} Credits And Your Balance Is ${c.balance ?? 0}.`;
   return null;
 }
+
 
 const BUCKET = "reveal-videos";
 const esc = (s) =>
@@ -1216,6 +1223,7 @@ function previewPanel() {
   const vs = plannedVariants();
   const cost = creditTotal();
   const bal = S.credits?.balance ?? window.__rdCredits?.balance;
+  const block = videoCreditBlock(cost);
   const first = w.scenes[0];
   return `<div class="rv-preview">
     <div class="rv-stage" data-img="${esc(first?.path || "")}">${first ? "" : `<span class="rv-note sm">No Scenes Yet</span>`}</div>
@@ -1223,14 +1231,17 @@ function previewPanel() {
     <div class="rv-sub sm">Variants</div>
     <div class="rv-vars">${vs.length ? vs.map((v) => `<div><span class="mono">${esc(v.aspect_ratio)}</span><i>${v.version_type === "clean" ? "Unbranded" : v.version_type === "branded" ? "Branded" : "Disclosure Ready"}</i><b>Queued</b></div>`).join("") : `<div class="rv-note sm">Pick A Format.</div>`}</div>
     <div class="rv-cost mono">${cost} Credits</div>
-    ${bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
+    ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
       <div class="rv-note sm">You Can Leave This Page. We Will Notify You When It Is Ready.</div></div>`
       : w.step === 4
-        ? `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+        ? block
+          ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
+          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
         : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
+
   </div>`;
 }
 
@@ -1268,10 +1279,26 @@ function autoArrange() {
 async function generate() {
   const w = S.wizard;
   const vs = plannedVariants();
+
+  // Preflight. Entitlement is decided before any row or render job exists, so
+  // a render we already know cannot run never leaves a failed card behind.
+  try {
+    const fresh = await getMyCredits().catch(() => null);
+    if (fresh) S.credits = fresh;
+  } catch (_) {}
+  const block = videoCreditBlock(creditTotal());
+  if (block) {
+    render();
+    toast(block);
+    openUpgrade(block);
+    return;
+  }
+
   w.busy = true;
   w.progress = 0;
   w.stage = "Preparing scenes";
   render();
+
 
   let projectId = null;
   try {
@@ -1336,15 +1363,25 @@ async function generate() {
     S.detailId = projectId;
     await openDetail(projectId);
   } catch (e) {
+    const msg = String(e?.message || e || "");
+    const entitlement = isPlanBlocked(msg);
     if (projectId) {
-      try { await setVideoStatus({ id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) }); } catch (_) {}
+      if (entitlement) {
+        // The server refused before rendering anything, so nothing was spent
+        // and nothing should stay in the library.
+        try { await deleteVideo({ id: projectId }); } catch (_) {}
+      } else {
+        try { await setVideoStatus({ id: projectId, status: "failed", error_message: (msg || "The render did not finish.").slice(0, 300) }); } catch (_) {}
+      }
     }
-    toast(e?.message || "The render failed. Your selections were saved.");
+    toast(msg || "The render failed. Your selections were saved.");
+    if (entitlement) openUpgrade(msg);
     w.busy = false;
     await loadLibrary();
-    S.screen = "library";
+    S.screen = entitlement ? "wizard" : "library";
     render();
   }
+
 }
 
 const STAGES = ["Preparing scenes", "Creating motion", "Building transitions", "Adding audio and captions", "Applying branding", "Finalizing formats"];
@@ -1516,10 +1553,11 @@ function detailHtml() {
       <button class="btn btn-primary" id="rvEdit"><i data-lucide="pencil"></i>Edit</button>
     </div>
   </div>
-  ${p.status === "failed" ? `<div class="rv-fail"><b>${planBlockedMsg(p) ? "This Render Needs A Paid Plan" : "This Render Failed"}</b><span>${esc(p.error_message || "Something went wrong.")}</span>
+  ${p.status === "failed" ? `<div class="rv-fail"><b>${planBlockedMsg(p) ? "Not Enough Credits To Render" : "This Render Failed"}</b><span>${esc(planBlockedMsg(p) ? "This Video Was Never Rendered And Nothing Was Charged. Add Credits, Then Try Again." : p.error_message || "The render did not finish.")}</span>
     <div>${planBlockedMsg(p)
-      ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Upgrade</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
+      ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Add Credits</button><button class="btn btn-ghost btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
       : `<button class="btn btn-primary btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button><a class="btn btn-ghost btn-sm" href="/contact">Contact Support</a>`}</div></div>` : ""}
+
   <div class="rv-tabs">${[["video", "Video"], ["scenes", "Scenes"], ["captions", "Captions"], ["presentation", "Presentation"], ["details", "Details"]]
     .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-tab="${id}">${n}</button>`).join("")}</div>
   <div class="rv-detail">${body}</div>`;
@@ -2133,6 +2171,8 @@ function bind() {
 
   /* review */
   on("#rvGen", "click", () => generate());
+  on("#rvAddCredits", "click", () => openUpgrade(videoCreditBlock(creditTotal()) || "You need more credits to render this video."));
+
   } // end wizard bindings (S.wizard may be null on the library screen)
 
   /* detail */
