@@ -250,7 +250,18 @@ try{ mountUploadDock(go); }catch(_){}
    so keep re-asserting the deep linked view for a short window */
 (function applyHash(){
   const v=viewFromHash();
-  if(!v) return;
+  if(!v){
+    /* an unknown or stale hash must not stay in the address bar while a
+       different view is on screen, or a refresh looks like a dead link */
+    try{
+      if(location.hash){
+        const cur=document.querySelector('.rd-app .view.on');
+        history.replaceState(null,'',location.pathname+location.search+(cur?'#'+cur.id:''));
+      }
+    }catch(_){}
+    return;
+  }
+
   const startHash=location.hash;
   const pane=ACCT_ALIAS[v]||'';
   const want='v-'+(pane?'account':v);
@@ -2893,11 +2904,17 @@ loadPrefs();
   const FORCED=['studio'];
   function apply(min){
     shell.classList.toggle('sidemin',min);
-    tog.setAttribute('aria-label',min?'Expand menu':'Collapse menu');
-    tog.title=min?'':'Collapse menu';
+    tog.setAttribute('aria-label',min?'Expand Menu':'Collapse Menu');
+    /* the rail draws its own tooltip from data-tip, so the shared data-tt
+       hint is removed there to avoid a stale, duplicated label */
+    if(min){ tog.setAttribute('data-tip','Expand Menu'); tog.removeAttribute('data-tt'); }
+    else { tog.removeAttribute('data-tip'); tog.setAttribute('data-tt','Collapse Menu'); }
+    tog.removeAttribute('title');
     tog.innerHTML='<i data-lucide="'+(min?'chevrons-right':'chevrons-left')+'"></i>';
     try{ lucide.createIcons(); }catch(_){}
   }
+
+
   let min=false;
   try{ min=localStorage.getItem(KEY)==='1'; }catch(_){}
   function currentView(){

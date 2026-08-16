@@ -50,7 +50,8 @@
 .rd-app .app.sidemin{grid-template-columns:64px 1fr}
 .rd-app .app.sidemin .side-top{flex-direction:column;padding:14px 8px 12px;gap:10px}
 .rd-app .app.sidemin .side-top .logo{order:1;font-size:0;gap:0;padding-left:0;margin-bottom:0;justify-content:center;cursor:pointer;position:relative}
-.rd-app .app.sidemin .side-toggle{display:none}
+/* the toggle stays on the rail so the menu can always be reopened */
+.rd-app .app.sidemin .side-toggle{order:2;width:32px;height:32px;position:relative}
 .rd-app .app.sidemin .side-nav{padding:12px 8px;overflow:visible}
 .rd-app .app.sidemin .nav-group{font-size:0;padding:0;height:1px;background:var(--line);margin:12px 8px}
 .rd-app .app.sidemin .nav-group:first-child{margin-top:0}
@@ -61,12 +62,14 @@
 .rd-app .app.sidemin .credit-box{display:none}
 
 /* tooltips, only on the collapsed rail */
-.rd-app .app.sidemin .nav-i[data-tip]:hover::after,.rd-app .app.sidemin .side-top .logo:hover::after{
+.rd-app .app.sidemin .nav-i[data-tip]:hover::after,.rd-app .app.sidemin .side-top .logo:hover::after,.rd-app .app.sidemin .side-toggle[data-tip]:hover::after{
   content:attr(data-tip);position:absolute;left:calc(100% + 10px);top:50%;transform:translateY(-50%);
   background:var(--white);color:var(--ink);border:1px solid var(--line);
   font-size:.74rem;font-weight:600;letter-spacing:-.01em;white-space:nowrap;
   padding:5px 9px;border-radius:6px;z-index:90;pointer-events:none;box-shadow:0 8px 22px rgba(20,18,15,.14)}
 .rd-app .app.sidemin .side-top .logo:hover::after{content:'Expand Menu'}
+
+
 
 .rd-app .logo{display:flex;align-items:center;gap:9px;font-weight:700;letter-spacing:-.03em;font-size:.98rem}
 

@@ -67,17 +67,20 @@ function show(node: EventTarget | null) {
     return;
   }
   const text = el.getAttribute("data-tt");
-  if (!text) return;
-  if (el === current) return;
+  if (!text) { if (current === el) hide(); return; }
+  // Repaint when the same element changes its hint (a toggle flipping label).
+  if (el === current && bubble && bubble.textContent === text) return;
   current = el;
   window.clearTimeout(hideTimer);
   place(el, text);
 }
 
 let bound = false;
+let lastPointer = "mouse";
 function bindBubble() {
   if (bound) return;
   bound = true;
+  document.addEventListener("pointerdown", (e) => { lastPointer = (e as PointerEvent).pointerType || "mouse"; }, true);
   document.addEventListener("pointerover", (e) => show(e.target), true);
   document.addEventListener("pointerout", (e) => {
     const to = (e as PointerEvent).relatedTarget;
@@ -89,13 +92,15 @@ function bindBubble() {
   document.addEventListener("keydown", (e) => { if ((e as KeyboardEvent).key === "Escape") hide(); }, true);
   window.addEventListener("scroll", hide, true);
   window.addEventListener("resize", hide);
-  // Touch: tap an inline help icon to reveal, tap anywhere to dismiss.
+  // Touch: tap an inline help icon to reveal, tap anywhere to dismiss. A mouse
+  // click always dismisses, so a hint can never linger over the new UI state.
   document.addEventListener("click", (e) => {
     const el = targetFor(e.target);
-    if (el) { current = null; show(e.target); window.clearTimeout(hideTimer); hideTimer = window.setTimeout(hide, 3200); }
+    if (el && lastPointer === "touch") { current = null; show(e.target); window.clearTimeout(hideTimer); hideTimer = window.setTimeout(hide, 3200); }
     else hide();
   }, true);
 }
+
 
 export function initTooltips(root: ParentNode = document): () => void {
   const convert = (scope: ParentNode) => {
