@@ -8,6 +8,7 @@
 // types the module state object first; do not blanket-suppress.
 import { createIcons, icons } from "lucide";
 import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks, loadCustomTracks } from "@/lib/rd-music";
+import { stopAvatarVoice } from "@/lib/rd-avatar-voice";
 import { voiceRequest } from "@/lib/rd-voice";
 import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
@@ -2699,6 +2700,7 @@ export function revealBusy() {
 try { (window as any).__rdRevealBusy = revealBusy; } catch (_) {}
 
 export function resetReveal() {
+  stopAvatarVoice(); // never let a voice sample keep playing after navigation
   S.screen = "library";
   S.wizard = null;
   S.detail = null;

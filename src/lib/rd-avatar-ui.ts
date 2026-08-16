@@ -69,6 +69,8 @@ export function avatarSection(cfg: AvatarConfig, title?: string | null): string 
   }`;
 }
 
+let voiceEvt: (() => void) | null = null;
+
 /** Wire the presenter block. `rerender` redraws the step; `toast` is optional. */
 export function bindAvatar(
   el: ParentNode,
@@ -118,11 +120,15 @@ export function bindAvatar(
     e.stopPropagation();
     void preview((e.currentTarget as HTMLElement).dataset['avplay']!);
   });
-  const onVoiceEvt = () => {
+  // Only one presenter block is on screen at a time, so drop the previous
+  // block's listener instead of stacking one per rerender.
+  if (voiceEvt) window.removeEventListener("rd:avatar-voice", voiceEvt);
+  voiceEvt = () => {
+    if (!el.querySelector("[data-avplay]")) return; // block was rerendered away
     const id = speakingAvatar();
     allAvatars().forEach((a) => label(a.id, a.id === id ? "playing" : "idle"));
   };
-  window.addEventListener("rd:avatar-voice", onVoiceEvt);
+  window.addEventListener("rd:avatar-voice", voiceEvt);
 
   const chk = el.querySelector("#avOn") as HTMLInputElement | null;
   if (chk)
