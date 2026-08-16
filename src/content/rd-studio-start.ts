@@ -748,40 +748,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   /* ---------- starting selector ---------- */
 
-  const CARDS: Array<{ act: string; icon: string; title: string; desc: string; meta: string; btn: string }> = [
-    {
-      act: "c-upload",
-      icon: "image-up",
-      title: "Upload A Space Or Plan",
-      desc: "Begin a design from one source image or plan. To import a whole property shoot, use Upload Property Photos in Media.",
-      meta: "JPG · PNG · HEIC · WEBP · PDF",
-      btn: "Upload A File",
-    },
-    {
-      act: "c-describe",
-      icon: "message-square-text",
-      title: "Describe An Idea",
-      desc: "Create a visual concept from a written description.",
-      meta: "Text · Optional inspiration image",
-      btn: "Describe An Idea",
-    },
-    {
-      act: "c-property",
-      icon: "map-pin",
-      title: "Create A Property",
-      desc: "Organize rooms, designs, budgets and presentations.",
-      meta: "Multi-room project",
-      btn: "Create A Property",
-    },
-    {
-      act: "lvideo",
-      icon: "clapperboard",
-      title: "Create A Listing Video",
-      desc: "Turn listing photos into a polished property video.",
-      meta: "Photos · Motion · Branding",
-      btn: "Create A Listing Video",
-    },
-  ];
+  /* Studio means designing a space. The listing video builder is a peer nav
+     item, not a card in here. */
+
 
 
   function recentHtml() {
