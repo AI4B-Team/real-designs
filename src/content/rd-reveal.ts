@@ -2144,6 +2144,8 @@ function bind() {
 
   /* review */
   on("#rvGen", "click", () => generate());
+  on("#rvAddCredits", "click", () => openUpgrade(videoCreditBlock(creditTotal()) || "You need more credits to render this video."));
+
   } // end wizard bindings (S.wizard may be null on the library screen)
 
   /* detail */
