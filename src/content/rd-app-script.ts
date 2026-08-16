@@ -561,6 +561,13 @@ async function paintOnboarding(s,pres){
   let card=document.getElementById('obCard');
   let brandOk=false;
   try{ brandOk=!!(PREFS&&PREFS.brand&&(PREFS.brand.company||'').trim()); }catch(_){}
+  let videoOk=false;
+  try{
+    const mod=await import('@/lib/reveal.functions');
+    const vids=await mod.listVideos();
+    videoOk=((vids&&vids.projects)||[]).length>0;
+  }catch(_){}
+
   const done=[
     ['Save Your First Room','Upload a photo in Studio and save it to a property.', (s.counts.designs||0)>0, 'studio','Open Studio'],
     ['Create A Listing Video','Turn property photos into a video you can share.', videoOk, 'lvideo','Open Listing Video'],
