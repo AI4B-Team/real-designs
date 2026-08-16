@@ -114,6 +114,25 @@ export function initTooltips(root: ParentNode = document): () => void {
       if (!el.hasAttribute("data-tip")) el.setAttribute("data-tt", t);
       el.removeAttribute("title");
     });
+    label(scope);
+  };
+
+  // Icon only controls carry their meaning in data-tt / data-tip. Without an
+  // aria-label a screen reader announces them as an unnamed button, so mirror
+  // the hint onto the control itself.
+  const label = (scope: ParentNode) => {
+    const q = (scope as Element).querySelectorAll;
+    if (!q) return;
+    (scope as Element)
+      .querySelectorAll("[data-tt],[data-tip]")
+      .forEach((el) => {
+        const tag = el.tagName;
+        if (tag !== "BUTTON" && tag !== "A" && !el.hasAttribute("role")) return;
+        if (el.getAttribute("aria-label")) return;
+        if ((el as HTMLElement).textContent?.trim()) return;
+        const t = el.getAttribute("data-tt") || el.getAttribute("data-tip");
+        if (t) el.setAttribute("aria-label", t);
+      });
   };
 
   convert(root);
@@ -132,6 +151,6 @@ export function initTooltips(root: ParentNode = document): () => void {
       m.removedNodes.forEach((n) => { if (current && n instanceof Element && (n === current || n.contains(current))) hide(); });
     }
   });
-  if (target) obs.observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ["title"] });
+  if (target) obs.observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ["title", "data-tt", "data-tip"] });
   return () => { obs.disconnect(); hide(); };
 }
