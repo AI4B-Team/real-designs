@@ -29,7 +29,7 @@ export const inviteMember = createServerFn({ method: "POST" })
     z
       .object({
         email: z.string().email().max(200),
-        role: z.enum(["member", "admin"]).default("member"),
+        role: z.enum(["viewer", "member", "admin"]).default("member"),
       })
       .parse(d),
   )
@@ -45,6 +45,23 @@ export const inviteMember = createServerFn({ method: "POST" })
       return { ok: false, error: error.message };
     }
     return { ok: true };
+  });
+
+/** Change the role on an invite you sent. */
+export const updateInviteRole = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d) =>
+    z
+      .object({ id: z.string().uuid(), role: z.enum(["viewer", "member", "admin"]) })
+      .parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("team_invites")
+      .update({ role: data.role })
+      .eq("id", data.id)
+      .eq("owner_id", context.userId);
+    return { ok: !error, error: error?.message ?? null };
   });
 
 /** Revoke an invite you sent. */
