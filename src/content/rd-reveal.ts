@@ -1832,6 +1832,31 @@ function bind() {
     w.step = nextStep(w.step);
     render();
   });
+  /* Titles section */
+  on("[data-tt]", "change", (e) => {
+    const k = e.currentTarget.dataset.tt;
+    w.titles = w.titles || { property: true, contact: true, custom: [] };
+    w.titles[k] = !!e.currentTarget.checked;
+    render();
+  });
+  const ttHead = el.querySelector("#rvTtHead");
+  if (ttHead) ttHead.addEventListener("input", (ev) => { w.titles.headline = ev.target.value; });
+  const ttSub = el.querySelector("#rvTtSub");
+  if (ttSub) ttSub.addEventListener("input", (ev) => { w.titles.sub = ev.target.value; });
+  on("#rvTtAdd", "click", () => {
+    w.titles.custom = (w.titles.custom || []).concat("");
+    render();
+  });
+  el.querySelectorAll("[data-tcustom]").forEach((i) =>
+    i.addEventListener("input", (ev) => { w.titles.custom[Number(ev.target.dataset.tcustom)] = ev.target.value; }));
+  on("[data-tcustom-del]", "click", (e) => {
+    w.titles.custom.splice(Number(e.currentTarget.dataset.tcustomDel), 1);
+    render();
+  });
+  /* Quality section */
+  on("[data-qual]", "click", (e) => { w.quality = e.currentTarget.dataset.qual; render(); });
+  on("[data-mode]", "click", (e) => { w.mode = e.currentTarget.dataset.mode; render(); });
+
   on("#rvLowX", "click", () => { w.lowModal = false; render(); });
   on("#rvLowMore", "click", () => { w.lowModal = false; w.step = 1; render(); });
   on("#rvLowGo", "click", () => { w.lowModal = false; w.step = 3; render(); });
