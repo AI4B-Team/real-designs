@@ -139,7 +139,8 @@ const PALS={
 };
 
 /* ---------- nav ---------- */
-const titles={dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
+const titles={home:['Start','Two ways in: design a space or create a listing video'],
+dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
 studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
