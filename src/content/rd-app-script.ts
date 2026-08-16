@@ -253,15 +253,24 @@ try{ mountUploadDock(go); }catch(_){}
   const v=viewFromHash();
   if(!v){
     /* an unknown or stale hash must not stay in the address bar while a
-       different view is on screen, or a refresh looks like a dead link */
-    try{
-      if(location.hash){
+       different view is on screen, or a refresh looks like a dead link.
+       The shell can mount after this runs, so keep looking for the live
+       view for a short window instead of giving up on the first frame */
+    const bad=location.hash;
+    if(!bad) return;
+    let n=0;
+    const clean=()=>{
+      if(location.hash!==bad) return;
+      try{
         const cur=document.querySelector('.rd-app .view.on');
-        history.replaceState(null,'',location.pathname+location.search+(cur?'#'+cur.id:''));
-      }
-    }catch(_){}
+        if(cur){ history.replaceState(null,'',location.pathname+location.search+'#'+cur.id); return; }
+      }catch(_){}
+      if(++n<60) window.setTimeout(clean,75);
+    };
+    clean();
     return;
   }
+
 
   const startHash=location.hash;
   const pane=ACCT_ALIAS[v]||'';
