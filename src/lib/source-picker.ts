@@ -48,7 +48,7 @@ export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   "property-media": {
-    sources: ["upload", "cloud", "address", "url"],
+    sources: ["upload", "cloud", "address"],
     multiple: true,
     accept: "image/*",
     acceptHint: "JPG, PNG, HEIC, WEBP",
