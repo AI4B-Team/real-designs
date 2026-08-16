@@ -620,7 +620,7 @@ function stepReady() {
 }
 
 
-/* ======================= STEP 2, SELECT ======================= */
+/* ======================= STEP 2, THE PHOTO GRID ======================= */
 /** Analysis-shaped view of the wizard's available photos. */
 function analysisAssets() {
   return (S.wizard?.available || []).map((a) => ({
@@ -643,35 +643,76 @@ function nameCell(value, attr) {
   return `<b class="rv-editname" data-rename="${esc(attr)}" title="Click To Rename">${esc(value)}</b>`;
 }
 
+/** The grid is the order. w.scenes is always the selected subset of
+    w.gridOrder, in gridOrder sequence. Call after every mutation. */
+function syncSceneOrder() {
+  const w = S.wizard;
+  if (!w || !w.scenes) return;
+  const pos = new Map((w.gridOrder || []).map((k, i) => [k, i]));
+  w.scenes.sort((a, b) => (pos.get(a.key) ?? 1e9) - (pos.get(b.key) ?? 1e9));
+}
+
+function tileHtml(a, seq) {
+  const w = S.wizard;
+  const s = w.scenes.find((x) => x.key === a.key) || null;
+  const flags = (a.flags || []).map((f) => FLAG_LABEL[f] || f);
+  const cropHot = s && s.crop && s.crop !== "center";
+  const vfxHot = s && ((s.vfx && s.vfx !== "none") || s.look);
+  const camHot = s && ((s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect);
+  const cap = s ? String(s.caption || "") : "";
+  const tools = s ? `<div class="rv-tools">
+      <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
+      <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Add VFX"><i data-lucide="wand-sparkles"></i><em>Add VFX</em></button>
+      <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Camera Movements"><i data-lucide="camera"></i><em>Camera Movements</em></button>
+    </div>` : "";
+  return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" ${s ? `draggable="true"` : ""}>
+    <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
+      <span class="rv-tile-check"><i data-lucide="check"></i></span>
+      ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
+      ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
+      ${tools}
+    </div>
+    <div class="rv-tile-foot">
+      ${nameCell(a.room || UNSORTED, "a:" + a.key)}
+      ${s
+        ? (cap
+          ? `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}" title="${esc(cap)}">${esc(cap.length > 18 ? cap.slice(0, 18) + "…" : cap)}</button>`
+          : `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}">Add Text</button>`)
+        : `<i class="rv-tile-kind">${esc(a.kind)}</i>`}
+    </div>
+  </div>`;
+}
+
 function stepSelect() {
   const w = S.wizard;
-  const groups = {};
-  for (const a of w.available) (groups[a.group] = groups[a.group] || []).push(a);
-  const order = Object.keys(groups).sort((a, b) => orderRank(a) - orderRank(b));
+  const byKey = new Map(w.available.map((a) => [a.key, a]));
+  const ordered = (w.gridOrder || []).map((k) => byKey.get(k)).filter(Boolean);
+  const seqOf = new Map(w.scenes.map((s, i) => [s.key, i + 1]));
+
   const dupCount = w.available.filter((a) => a.dup).length;
   const assets = analysisAssets();
   const flagged = w.available.filter((a) => (a.flags || []).length);
   const recs = recommendations(assets).filter((r) => r.op);
   const missing = missingSpaces(assets);
+  const orient = orientationOf(w);
+  const per = sceneDurations(w.scenes.length, w.length);
+  const total = Math.round(per * w.scenes.length);
+  const imm = immersiveCount();
 
-  const left = order.map((g) => `<div class="rv-g"><div class="rv-g-h">${esc(g)}<i class="mono">${groups[g].length}</i></div><div class="rv-g-b">${groups[g]
-    .map((a) => `<button class="rv-asset ${w.scenes.some((s) => s.key === a.key) ? "on" : ""}" data-asset="${a.key}">
-      <span class="rv-a-th" data-img="${esc(a.path)}">${(a.flags || []).length ? `<em class="rv-flag" title="${esc((a.flags || []).map((f) => FLAG_LABEL[f] || f).join(", "))}"><i data-lucide="triangle-alert"></i></em>` : ""}</span>
-      <span class="rv-a-m">${nameCell(a.room || UNSORTED, "a:" + a.key)}<i>${a.kind}${a.disclosure ? " • " + DISCLOSURE_LABEL[a.disclosure] : ""}</i></span>
-    </button>`).join("")}</div></div>`).join("");
-
-  const right = w.scenes.length
-    ? w.scenes.map((s, i) => `<div class="rv-scene" draggable="true" data-idx="${i}">
-        <span class="rv-seq mono">${i + 1}</span>
-        <span class="rv-a-th" data-img="${esc(s.path)}"></span>
-        <span class="rv-s-m">${nameCell(s.room || UNSORTED, "s:" + i)}<i>${s.scene_type === "before_after" ? "Before & After" : s.kind}</i></span>
-        <span class="rv-s-a">
-          <button class="icon-btn" data-move="-1" title="Move Up"><i data-lucide="chevron-up"></i></button>
-          <button class="icon-btn" data-move="1" title="Move Down"><i data-lucide="chevron-down"></i></button>
-          <button class="icon-btn" data-drop="${i}" title="Remove"><i data-lucide="x"></i></button>
-        </span>
-      </div>`).join("")
-    : `<div class="rv-note">No Scenes Yet. Add Content From The Left.</div>`;
+  let grid = "";
+  if (w.groupBy !== false) {
+    const groups = new Map();
+    for (const a of ordered) {
+      const g = a.group || UNSORTED;
+      if (!groups.has(g)) groups.set(g, []);
+      groups.get(g).push(a);
+    }
+    grid = Array.from(groups.entries())
+      .map(([g, list]) => `<div class="rv-g-head">${esc(g)} <i class="mono">${list.length}</i></div>${list.map((a) => tileHtml(a, seqOf.get(a.key))).join("")}`)
+      .join("");
+  } else {
+    grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
+  }
 
   const fixCard = recs.length && !w.enhanceDismissed ? `<div class="rv-fix">
     <b>We Found ${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve</b>
@@ -683,21 +724,37 @@ function stepSelect() {
     </div>
   </div>` : "";
 
-  return `<h3>Select The Photos</h3>
+  const pct = w.available.length ? Math.round((w.scenes.length / w.available.length) * 100) : 0;
+  const why = !w.scenes.length ? "Check At Least One Photo To Continue." : !(w.formats || []).length ? "Choose A Video Format To Continue." : "";
+
+  return `<div class="rv-head-row">
+    <div><h3>Select The Photos</h3><p class="rv-hint">Check The Photos You Want. Drag To Reorder. The Order You See Is The Order It Plays.</p></div>
+    <div class="rv-orient"><span>Video Format</span>
+      <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
+    </div>
+  </div>
   ${dupCount ? `<div class="rv-dup"><i data-lucide="copy"></i><b>${dupCount} Similar Angles Detected</b><span><button class="fb-link" id="rvKeepBest">Keep Best</button><button class="fb-link" data-goto="media">Review</button><button class="fb-link" id="rvKeepAll">Keep All</button></span></div>` : ""}
   ${flagged.length ? `<div class="rv-issues"><i data-lucide="triangle-alert"></i><b>${flagged.length} Photos Have Issues We Can Fix</b><button class="fb-link" data-goto="media">Review</button></div>` : ""}
   ${missing.length ? `<div class="rv-note sm">No ${missing.slice(0, 2).join(" Or ")} In This Set. Buyers Look For Those First.</div>` : ""}
-  <div class="rv-two">
-    <div class="rv-col"><div class="rv-col-h">Available Photos<span class="mono">${w.available.length}</span></div><div class="rv-col-b">${left || `<div class="rv-note">No Content Found For This Source.</div>`}</div></div>
-    <div class="rv-col"><div class="rv-col-h">Selected Photos<span class="mono">${w.scenes.length}</span></div><div class="rv-col-b" id="rvSceneList">${right}</div></div>
-  </div>
   ${fixCard}
-  <div class="rv-foot">
-    <button class="btn btn-ghost" id="rvBack">Back</button>
-    <button class="btn btn-ghost" id="rvRecommend">Select All Recommended</button>
-    <button class="btn btn-ghost" id="rvClear">Clear</button>
-    <button class="btn btn-ghost" id="rvAuto">Auto Arrange</button>
-    <button class="btn btn-primary" id="rvNext" ${w.scenes.length ? "" : "disabled"}>Continue</button>
+  <div class="rv-gridbar">
+    <button class="btn btn-ghost btn-sm" id="rvRecommend">Select All Recommended</button>
+    <button class="btn btn-ghost btn-sm" id="rvClear">Clear</button>
+    <button class="btn btn-ghost btn-sm" id="rvAuto">Auto Arrange</button>
+    <button class="btn btn-ghost btn-sm ${w.groupBy !== false ? "on" : ""}" id="rvGroupBy">Group By Room</button>
+  </div>
+  <div class="rv-grid ${orient}">${grid || `<div class="rv-note">No Content Found For This Source.</div>`}</div>
+  <div class="rv-gridfoot">
+    <div class="rv-count">
+      <span><i data-lucide="images"></i> <b>${w.scenes.length} / ${w.available.length}</b> Photos Selected</span>
+      <div class="rv-bar"><i style="width:${pct}%"></i></div>
+      <div class="rv-meta mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</div>
+      ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
+    </div>
+    <div class="rv-gridfoot-a">
+      <button class="btn btn-ghost" id="rvBack">Back</button>
+      <button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : `disabled title="${esc(why)}"`}>Continue</button>
+    </div>
   </div>`;
 }
 
