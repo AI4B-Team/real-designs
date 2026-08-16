@@ -567,10 +567,10 @@ async function loadDashboard(){
   const setKpi=(i,val,note)=>{ const k=kpis[i]; if(!k) return;
     const b=k.querySelector('b'); if(b) b.textContent=val;
     const d=k.querySelector('.d'); if(d){ d.textContent=note; d.classList.remove('up'); } };
-  setKpi(0,String(s.counts.designs),s.counts.designs?s.counts.priced+' priced with a scope':'Save a room to get started');
-  setKpi(1,String(s.counts.properties),s.counts.properties?'Saved to your account':'No Properties Yet');
-  setKpi(2,s.counts.scopedTotal?kfmt(s.counts.scopedTotal):'—',s.counts.priced+' priced '+(s.counts.priced===1?'room':'rooms'));
-  setKpi(3,String(s.counts.drafts),s.counts.drafts?'Rooms not approved yet':'Nothing pending');
+  setKpi(0,String(s.counts.designs),s.counts.designs?s.counts.priced+' Priced With A Budget':'Save A Room To Get Started');
+  setKpi(1,String(s.counts.properties),s.counts.properties?'Saved To Your Account':'No Properties Yet');
+  setKpi(2,s.counts.scopedTotal?kfmt(s.counts.scopedTotal):'—',s.counts.priced+' Priced '+(s.counts.priced===1?'Room':'Rooms'));
+  setKpi(3,String(s.counts.drafts),s.counts.drafts?'Rooms Not Approved Yet':'Nothing Pending');
 
   /* recent rooms */
   if(!s.recent.length){
