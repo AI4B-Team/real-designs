@@ -613,8 +613,7 @@ function stepReady() {
   const w = S.wizard;
   if (!w) return false;
   if (w.step === 1) return (w.uploads || []).length > 0 || !!w.versionId || !!w.propertyId;
-  if (w.step === 2) return w.scenes.length > 0;
-  if (w.step === 3) return (w.formats || []).length > 0;
+  if (w.step === 2) return w.scenes.length > 0 && (w.formats || []).length > 0;
   if (w.step === 7) return (w.formats || []).length > 0;
   return true;
 }
