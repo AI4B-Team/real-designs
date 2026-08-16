@@ -798,11 +798,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<i data-lucide="wand-sparkles"></i>' +
       "<b>Design A Space</b>" +
       "<span>Restyle, stage or plan a room from a photo, sketch or floor plan.</span>" +
+      '<span class="stw-door-cta">Start Designing<i data-lucide="arrow-right"></i></span>' +
       "</button>" +
       '<button type="button" class="stw-door" data-sts="door-video">' +
       '<i data-lucide="clapperboard"></i>' +
       "<b>Make A Video</b>" +
       "<span>Turn property photos into a narrated listing video.</span>" +
+      '<span class="stw-door-cta">Start A Video<i data-lucide="arrow-right"></i></span>' +
       "</button>" +
       "</div>" +
       (state.door === "design"
