@@ -97,7 +97,7 @@ const PLANS: Plan[] = [
       "200 Credits A Month",
       "Clean HD, No Watermark",
       "Scope & Budget From Your Photo",
-      "Shopping List With Live Pricing",
+      "Shopping List With Product Links",
       "Before & After Presentation",
       "Personal Use License",
     ],

@@ -105,7 +105,8 @@
 
 .rd-app .meter{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
 
-.rd-app .meter i{display:block;height:100%;background:var(--red)}
+.rd-app .meter i{display:block;height:100%;background:var(--mute-2);transition:width .2s ease}
+.rd-app .meter i.low{background:var(--red)}
 
 .rd-app .user{display:flex;align-items:center;gap:9px;padding:7px 6px;border-radius:6px}
 

@@ -152,7 +152,7 @@ account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
-const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'crm'};
+const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
 let __allowReveal=0;
@@ -510,8 +510,7 @@ brand:['Brand Kit','Applied to exports, decks and client links'],
 defaults:['Defaults','Applied to every new design'],
 api:['API & White Label','Business plan feature'],
 danger:['Data & Privacy','Export or permanently remove your data'],
-integrations:['Integrations','What is connected right now, read from the server'],
-crm:['CRM Sync','Keep your contacts and shared designs in step with your CRM']};
+integrations:['Integrations','Services you connect, and what the platform provides']};
 function acctPane(k){
   if(!PANE_META[k]) k='profile';
   document.querySelectorAll('.arail-i').forEach(b=>b.classList.toggle('on',b.dataset.pane===k));
@@ -519,7 +518,7 @@ function acctPane(k){
   const t=document.getElementById('acctPaneTitle'),su=document.getElementById('acctPaneSub');
   if(t) t.textContent=PANE_META[k][0];
   if(su) su.textContent=PANE_META[k][1];
-  if(k==='crm'){ try{ mountCrm(go); }catch(_){} }
+  if(k==='integrations'){ try{ mountCrm(go); }catch(_){} try{ paintIntegrations(); }catch(_){} }
 }
 document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>acctPane(b.dataset.pane)));
 
@@ -531,7 +530,9 @@ async function paintIntegrations(){
   const rail=document.getElementById('railIntegrations');
   if(!res||!res.owner){ if(rail) rail.hidden=true; return; }
   if(rail) rail.hidden=false;
-  box.innerHTML=res.items.map(it=>'<div class="rowi"><div class="rowt"><b>'+it.name+'</b><span>'+(it.connected?'Connected And In Use.':it.note)+'</span></div><span class="pill '+(it.connected?'p-ok':'p-ink')+'">'+(it.connected?'Connected':'Not Configured')+'</span></div>').join('');
+  const stateOf=(it)=>it.connected?['Connected','p-ok']:(it.key==='products'?['Sample Data','p-amb']:['Not Configured','p-ink']);
+  box.innerHTML=res.items.map(it=>{ const st=stateOf(it);
+    return '<div class="rowi"><div class="rowt"><b>'+it.name+'</b><span>'+(it.connected?'Connected And In Use.':it.note)+'</span></div><span class="pill '+st[1]+'">'+st[0]+'</span></div>'; }).join('');
   const prod=res.items.find(x=>x.key==='products');
   const note=document.getElementById('prodSampleNote');
   if(note) note.hidden=!!(prod&&prod.connected);
@@ -2034,7 +2035,7 @@ function renderAllowance(r){
   const rows=document.getElementById('allowRows'); if(!rows) return;
   const note=document.getElementById('allowNote'), sub=document.getElementById('allowSub');
   if(!r){ rows.innerHTML='<tr><td colspan="5">No Priced Budget Yet.</td></tr>';
-    note.textContent='Open Budget & Budget and price a scope to build the allowance list.'; return; }
+    note.textContent='Open Budget And Price A Room To Build The Allowance List.'; return; }
   const mat=r.lines.filter(l=>l.material_high>0);
   if(!mat.length){ rows.innerHTML='<tr><td colspan="5">This scope is labor only, so there is no material allowance.</td></tr>';
     note.textContent='No material lines in the current scope.'; return; }
@@ -3014,7 +3015,24 @@ async function loadPrefs(){
   try{ PREFS=await getPrefs(); }catch(_){ PREFS={...DEFAULT_PREFS}; }
   paintNotifPrefs();
   pfSet('bkCompany',PREFS.brand.company); pfSet('bkColor',PREFS.brand.color); pfSet('bkMark',PREFS.brand.watermark);
-  pfSet('dfMarket',PREFS.defaults.market); pfSet('dfGrade',PREFS.defaults.grade);
+  (async()=>{
+    const sel=document.getElementById('dfMarket'); if(!sel) return;
+    const note=document.getElementById('dfMarketNote');
+    let a={markets:[]};
+    try{ a=await budgetAvailability(); }catch(_){ }
+    const list=(a&&a.markets)||[];
+    if(!list.length){
+      sel.innerHTML='<option value="">No Markets Available Yet</option>';
+      sel.disabled=true;
+      if(note) note.textContent='Budgets Turn On Once Verified Local Cost Data Is Licensed For A Market.';
+      return;
+    }
+    sel.disabled=false;
+    sel.innerHTML=list.map(m=>'<option>'+m+'</option>').join('');
+    if(note) note.textContent='';
+    pfSet('dfMarket',PREFS.defaults.market);
+  })();
+  pfSet('dfGrade',PREFS.defaults.grade);
   pfSet('dfBand',PREFS.defaults.band); pfSet('dfDisc',PREFS.defaults.disclosure);
   try{ buildNotifs(); }catch(_){}
 }
@@ -3548,11 +3566,11 @@ async function paintAcctSide(){
       /* Server returns remainingToday, not a used-count. */
       const left=Math.max(0,Math.min(5,c.remainingToday??5));
       if(sc) sc.textContent=left+' Of 5 Free Designs Left Today';
-      if(sb) sb.style.width=(left/5*100)+'%';
+      if(sb){ sb.style.width=((5-left)/5*100)+'%'; sb.className=left<=1?'low':''; }
       if(ss) ss.textContent='Free Plan Resets Every Day';
     } else {
       if(sc) sc.textContent=c.balance+(c.balance===1?' Credit':' Credits')+' Available';
-      if(sb) sb.style.width=Math.min(100,(c.balance/200)*100)+'%';
+      if(sb){ const pl=Math.min(100,(c.balance/200)*100); sb.style.width=(100-pl)+'%'; sb.className=pl<=10?'low':''; }
       if(ss) ss.textContent='One Balance Covers Designs, Budgets, Plans And Video';
     }
   }catch(_){}
@@ -4035,13 +4053,18 @@ function paintBilling(c){
         bar=document.getElementById('billMeterBar'), note=document.getElementById('billMeterNote');
   if(c.plan==='free'){
     lab.textContent='Free Designs Left Today';
-    val.textContent=(c.remainingToday??0)+' / 5';
-    bar.style.width=(((c.remainingToday??0)/5)*100)+'%';
+    const leftToday=Math.max(0,Math.min(5,c.remainingToday??5));
+    lab.textContent='Free Designs Used Today';
+    val.textContent=(5-leftToday)+' / 5 Used';
+    bar.style.width=(((5-leftToday)/5)*100)+'%';
+    bar.className=leftToday<=1?'low':'';
     note.textContent='Resets at midnight. Budgets, 3D plans and video need a paid plan.';
   }else{
     lab.textContent='Credit Balance';
     val.textContent=c.balance.toLocaleString();
-    bar.style.width=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100)+'%';
+    const pctLeft=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100);
+    bar.style.width=(100-pctLeft)+'%';
+    bar.className=pctLeft<=10?'low':'';
     note.textContent='One balance across every tool. Credits refresh each billing cycle.';
   }
   const costs=document.getElementById('billCosts');
@@ -4072,13 +4095,15 @@ async function refreshCredits(){
     const gc=document.getElementById('genCost'); if(gc) gc.textContent=c.plan==='free'?'Free':'1';
     if(c.plan==='free'){
       if(title) title.textContent='Free Designs Today';
-      lab.textContent=(c.remainingToday??0)+' / 5';
-      if(bar) bar.style.width=(((c.remainingToday??0)/5)*100)+'%';
+      const left=Math.max(0,Math.min(5,c.remainingToday??5));
+      lab.textContent=left+' / 5 Left';
+      if(bar){ bar.style.width=(((5-left)/5)*100)+'%'; bar.className=left<=1?'low':''; }
       if(foot) foot.innerHTML='<span>Free Plan</span><b class="cred-up" role="button" tabindex="0">Upgrade For Credits</b>';
     }else{
       if(title) title.textContent='Credit Balance';
       lab.textContent=c.balance.toLocaleString();
-      if(bar) bar.style.width=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100)+'%';
+      if(bar){ const pctLeft=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100);
+        bar.style.width=(100-pctLeft)+'%'; bar.className=pctLeft<=10?'low':''; }
       if(foot) foot.innerHTML='<span>'+(PLAN_NAME[c.plan]||c.plan)+' Plan</span><b>1 Design &bull; 3 Budget &bull; 40 Video</b>';
     }
     if(box && !box.dataset.wired){
