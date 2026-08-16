@@ -18,6 +18,7 @@ import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations, missingSpaces } from "@/lib/media-analysis";
 import { mountSourcePicker } from "@/lib/source-picker";
+import { rejectReason } from "@/lib/upload-manager";
 import {
   listVideos as _listVideos,
   getVideo as _getVideo,
