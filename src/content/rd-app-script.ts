@@ -210,9 +210,12 @@ function go(v,fromHash){
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
   if(v==='crm'){ try{ mountCrm(go); }catch(_){} }
-  if(titles[v]){
-    const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[v][0];
-    const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[v][1];
+  /* Legacy or unknown keys fall back to the dashboard view, so the header
+     must follow the view that actually rendered, never the stale one. */
+  const titleKey = titles[v] ? v : viewId;
+  if(titles[titleKey]){
+    const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[titleKey][0];
+    const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[titleKey][1];
   }
   /* The hash and the scroll reset must run for every view, including views
      that have no entry in the title map. */
