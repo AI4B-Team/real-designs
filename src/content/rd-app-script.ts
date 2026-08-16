@@ -233,7 +233,7 @@ function go(v,fromHash){
 /* deep links: /app#v-scope, /app#scope and browser back/forward.
    Friendly hashes match the sidebar labels a user would guess, so a typed
    or bookmarked /app#budget opens Budget instead of a dead hash. */
-const VIEW_ALIAS={dashboard:'dash',home:'dash',overview:'dash',properties:'props',property:'props',
+const VIEW_ALIAS={dashboard:'dash',home:'home',start:'home',overview:'dash',properties:'props',property:'props',
 batch:'listings',listing:'listings',listings:'listings',budget:'scope',estimate:'scope',
 video:'reveal',videos:'reveal',presentations:'present',report:'reports',product:'products',
 shop:'products',shopping:'products',sourcing:'products',
