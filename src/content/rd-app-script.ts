@@ -184,7 +184,8 @@ function go(v,fromHash){
     };
     window.setTimeout(applyPane,0);
   }else if(v!=='account'){ __paneSeq++; }
-  if(v==='reveal' && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
+  const revealLive=(()=>{ try{ return !!((window as any).__rdRevealBusy && (window as any).__rdRevealBusy()); }catch(_){ return false; } })();
+  if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
      keys like lvideo) must never leave the content area blank. */
   let viewId = v==='lvideo' ? 'reveal' : v;

@@ -2527,6 +2527,15 @@ function bindCards(root) {
    The old standalone "Property Videos" library was folded into Media > Videos;
    this view now only hosts the builder and the video detail screen, so it is
    emptied on exit and rebuilt fresh next time. */
+/* The shell only lets the reveal view open right after a builder entry point
+   flags its intent. A builder or detail screen that is already live must keep
+   that permission, otherwise a later navigation to "reveal" (hash restore,
+   remount, deep link) bounces the user back to Media mid-build. */
+export function revealBusy() {
+  return !!(S.wizard || S.detail || S.detailId);
+}
+try { (window as any).__rdRevealBusy = revealBusy; } catch (_) {}
+
 export function resetReveal() {
   S.screen = "library";
   S.wizard = null;
