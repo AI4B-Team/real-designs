@@ -1695,7 +1695,7 @@ function paintBatch(){
           <span class="pill ${ready?(done?'p-ok':'p-gray'):'p-amb'}" data-bpill>${ready?(done?'Designed':'Queued'):'No Photo'}</span></div>`;
       }).join('')
     : `<div style="text-align:center;padding:22px 10px">
-        <p style="font-size:.82rem;color:var(--mute-2);margin:0 0 12px">This property has no room photos yet. Upload a shoot and every room lands here, ready to batch.</p>
+        <p style="font-size:.82rem;color:var(--mute-2);margin:0 0 12px">This property has no room photos yet.<br>Upload a shoot and every room lands here, ready to batch.</p>
         <button class="btn btn-dark btn-xs" data-propupload="1"><i data-lucide="upload-cloud"></i>Upload Property Photos</button>
       </div>`;
   if(!rooms.length) lucide.createIcons();
