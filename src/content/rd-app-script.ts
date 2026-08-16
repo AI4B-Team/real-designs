@@ -19,7 +19,7 @@ import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } f
 import { mountReports } from "@/content/rd-reports";
 import { mountBudgetComingSoon, budgetAvailability } from "@/lib/budget-coming-soon";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
-import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded } from "@/lib/presentations.functions";
+import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded, listShareableVersions } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
 import { track } from "@/lib/analytics";
 import { mountFirstUse } from "@/content/rd-firstuse";
