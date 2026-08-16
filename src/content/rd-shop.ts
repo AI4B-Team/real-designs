@@ -366,6 +366,63 @@ function mount(ctx) {
   }
 
 
+  function setDrawing(v) {
+    drawing = !!v;
+    const b = $("shopDraw");
+    if (b) b.classList.toggle("on", drawing);
+    const h = $("shopHint");
+    if (h) h.textContent = drawing ? "Drag A Box Around The Item You Want To Shop" : "Tap Any Dot To Shop That Item";
+  }
+  function startDrawing() {
+    setDrawing(true);
+    const st = $("shopStage");
+    if (st) st.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  /* ---------------- product imagery ---------------- */
+  /** Products with no real photography show one shared empty state, never the room photo. */
+  function thumb(p, cls) {
+    const url = (p.images || []).find((u) => !!u);
+    if (url) return `<img class="${cls || ""}" src="${esc(url)}" alt="${esc(p.name || "")}">`;
+    return `<div class="shop-noimgtile ${cls || ""}"><i data-lucide="${esc(categoryIcon(p.category))}"></i><span>No Product Image</span></div>`;
+  }
+
+  function isSaved(id) {
+    return !!savedLater.find((x) => x.id === id);
+  }
+  function saveBtn(p) {
+    const on = isSaved(p.id);
+    return `<button class="shop-bm${on ? " on" : ""}" data-bm="${p.id}" aria-label="${on ? "Remove From Saved" : "Save"}" data-tip="${on ? "Remove From Saved" : "Save"}"><i data-lucide="bookmark"></i></button>`;
+  }
+  function toggleSaved(p) {
+    const was = isSaved(p.id);
+    if (was) savedLater = savedLater.filter((x) => x.id !== p.id);
+    else savedLater.push(p);
+    syncCounts();
+    repaintAll();
+    toastUndo(was ? "Removed From Saved" : "Saved", () => {
+      if (was) savedLater.push(p);
+      else savedLater = savedLater.filter((x) => x.id !== p.id);
+      syncCounts();
+      repaintAll();
+    });
+    track(was ? "shop_product_unsaved" : "shop_product_saved", { merchant: p.merchant });
+  }
+  function toastUndo(msg, undo) {
+    const t = $("shopToast");
+    if (!t) return;
+    t.innerHTML = `<span>${esc(msg)}</span><button class="shop-undo" type="button">Undo</button>`;
+    t.classList.add("on");
+    const b = t.querySelector(".shop-undo");
+    if (b)
+      b.addEventListener("click", () => {
+        t.classList.remove("on");
+        undo();
+      });
+    clearTimeout(t._h);
+    t._h = window.setTimeout(() => t.classList.remove("on"), 4200);
+  }
+
   /* ---------------- search ---------------- */
   /** One shared match store keyed by design + detected object id. */
   async function matchesFor(o) {
@@ -529,7 +586,9 @@ function mount(ctx) {
     box.innerHTML =
       `<div class="shop-count">Top ${list.length} Of ${all.length} ${all.length === 1 ? "Match" : "Matches"}</div>` +
       list.map((p) => card(p)).join("") +
-      (active ? `<button class="shop-viewall" id="shopViewAll">View All ${esc(active.label)} Matches<i data-lucide="arrow-down"></i></button>` : "");
+      (active && all.length > 1
+        ? `<button class="shop-viewall" id="shopViewAll">View All ${esc(active.label)} Matches<i data-lucide="arrow-down"></i></button>`
+        : "");
     paintIcons();
     wireCards(box);
     const va = $("shopViewAll");
@@ -555,6 +614,13 @@ function mount(ctx) {
 
   /** Shared card wiring used by both the quick-match panel and the full catalog. */
   function wireCards(box) {
+    box.querySelectorAll("[data-bm]").forEach((b) =>
+      b.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const p = allKnownProducts().find((x) => x.id === b.getAttribute("data-bm"));
+        if (p) toggleSaved(p);
+      }),
+    );
     box.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openDetail(b.getAttribute("data-open"))));
     box.querySelectorAll("[data-add]").forEach((b) =>
       b.addEventListener("click", (e) => {
@@ -706,7 +772,7 @@ function mount(ctx) {
     const matchLabel = mt === "exact" && p.verifiedSku ? "Exact Product" : mt === "close" ? "Close Match" : "Similar Match";
     const dims = [p.width && p.width + '" W', p.depth && p.depth + '" D'].filter(Boolean).join(" × ");
     return `<div class="shop-card${big ? " big" : ""}" data-open="${p.id}">
-      <div class="shop-card-img"><img src="${esc(p.images[0] || "")}" alt="${esc(p.name)}">${p.sample ? '<span class="shop-sample">Sample Data</span>' : ""}</div>
+      <div class="shop-card-img">${thumb(p)}${p.sample ? '<span class="shop-sample">Sample Data</span>' : ""}${saveBtn(p)}</div>
       <div class="shop-card-b">
         <div class="shop-card-t"><b>${esc(p.name)}</b><span class="shop-price">${money(priceOf(p))}${p.salePrice ? `<s>${money(p.regularPrice)}</s>` : ""}</span></div>
         <div class="shop-meta">${esc(p.brand)} &middot; ${esc(p.merchant)}${dims ? " &middot; " + dims : ""}</div>
@@ -724,7 +790,6 @@ function mount(ctx) {
           <div class="shop-more">
             <button class="shop-morebtn" data-more="${p.id}" aria-label="More actions"><i data-lucide="more-horizontal"></i></button>
             <div class="shop-moremenu">
-              <button data-act="save" data-id="${p.id}">Save</button>
               <button data-act="compare" data-id="${p.id}">${inCmp ? "Remove From Compare" : "Compare"}</button>
               <a href="${esc(p.affiliateUrl || p.productUrl)}" target="_blank" rel="nofollow sponsored noopener">View At Retailer</a>
               <button data-act="detail" data-id="${p.id}">Product Details</button>
@@ -738,13 +803,12 @@ function mount(ctx) {
 
   /* ---------------- detail drawer ---------------- */
   function productImages(p) {
-    const room = String(design.image || "");
-    return (p.images || []).filter((u) => u && String(u) !== room);
+    return (p.images || []).filter(Boolean);
   }
   function galleryHtml(p) {
     const imgs = productImages(p);
     if (!imgs.length) {
-      return `<div class="shop-dr-gal"><div class="shop-img-box empty"><i data-lucide="image-off"></i><span>Product image unavailable.</span></div></div>`;
+      return `<div class="shop-dr-gal"><div class="shop-img-box empty"><div class="shop-noimgtile big"><i data-lucide="${esc(categoryIcon(p.category))}"></i><span>No Product Image</span></div></div></div>`;
     }
     const thumbs = imgs.slice(0, 5);
     const multi = imgs.length > 1;
@@ -790,7 +854,7 @@ function mount(ctx) {
     const d = $("shopDrawer");
     d.hidden = false;
     d.innerHTML = `<div class="shop-dr">
-      <div class="shop-dr-h"><b>Product Detail</b><button class="icon-btn" id="drClose" aria-label="Close product detail"><i data-lucide="x"></i></button></div>
+      <div class="shop-dr-h"><b>Product Detail</b>${saveBtn(p)}<button class="icon-btn" id="drClose" aria-label="Close product detail"><i data-lucide="x"></i></button></div>
       <div class="shop-dr-b">
         ${galleryHtml(p)}
 
@@ -804,7 +868,7 @@ function mount(ctx) {
           <div><dt>Materials</dt><dd>${esc(p.materials.join(", ") || "Not Listed")}</dd></div>
           <div><dt>Colors</dt><dd>${esc(p.colors.join(", ") || "Not Listed")}</dd></div>
           <div><dt>Delivery</dt><dd>${esc(p.delivery || "Not Listed")}</dd></div>
-          <div><dt>Verified SKU</dt><dd>${p.verifiedSku ? "Yes" : "No"}</dd></div>
+          <div><dt>Verified With Retailer</dt><dd>${p.verifiedSku ? "Yes" : '<span class="shop-tag amb">Not Yet Connected</span>'}</dd></div>
         </dl></div>
         ${p.sample ? `<div class="shop-disc"><i data-lucide="triangle-alert"></i><span>This is sample development data. Live retailer pricing and stock are not connected yet.</span></div>` : ""}
         <div class="shop-disc"><i data-lucide="info"></i><span>${DISCLOSURE}</span></div>
@@ -836,7 +900,7 @@ function mount(ctx) {
     d.innerHTML = `<div class="shop-dr">
       <div class="shop-dr-h"><b>Add To Project</b><button class="icon-btn" id="drClose" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="shop-dr-b">
-        <div class="shop-mini"><img src="${esc(p.images[0] || "")}" alt=""><div><b>${esc(p.name)}</b><span>${esc(p.merchant)} &middot; ${money(priceOf(p))}</span></div></div>
+        <div class="shop-mini">${thumb(p, "mini")}<div><b>${esc(p.name)}</b><span>${esc(p.merchant)} &middot; ${money(priceOf(p))}</span></div></div>
         <label class="shop-f"><span>Quantity</span><input id="afQty" type="number" min="1" value="1"></label>
         <label class="shop-f"><span>Room</span><input id="afRoom" type="text" value="${esc(design.roomLabel)}" readonly></label>
         <label class="shop-f"><span>Phase</span><select id="afPhase">${PHASES.map((x) => `<option${x === "Furnishing" ? " selected" : ""}>${x}</option>`).join("")}</select></label>
@@ -891,7 +955,7 @@ function mount(ctx) {
           list.length
             ? list
                 .map(
-                  (r) => `<div class="shop-mini"><img src="${esc(r.images[0] || "")}" alt=""><div><b>${esc(r.name)}</b><span>${esc(r.merchant)} &middot; ${money(priceOf(r))} &times; ${r.quantity} &middot; ${STATUS_LABEL[r.status]}</span></div>
+                  (r) => `<div class="shop-mini">${thumb(r, "mini")}<div><b>${esc(r.name)}</b><span>${esc(r.merchant)} &middot; ${money(priceOf(r))} &times; ${r.quantity} &middot; ${STATUS_LABEL[r.status]}</span></div>
                   <button class="icon-btn" data-rm="${r.recordId}" aria-label="Remove product"><i data-lucide="trash-2"></i></button></div>`,
                 )
                 .join("")
@@ -929,7 +993,7 @@ function mount(ctx) {
       <div class="shop-dr-h"><b>Compare Products</b><button class="icon-btn" id="drClose" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="shop-dr-b"><div class="shop-cmp">${compare
         .map(
-          (p) => `<div class="shop-cmp-c"><img src="${esc(p.images[0] || "")}" alt=""><b>${esc(p.name)}</b>
+          (p) => `<div class="shop-cmp-c">${thumb(p, "cmp")}<b>${esc(p.name)}</b>
         <span class="shop-meta">${esc(p.merchant)}</span>
         <div class="shop-price">${money(priceOf(p))}</div>
         <dl><div><dt>Size</dt><dd>${[p.width && p.width + '"', p.depth && p.depth + '"', p.height && p.height + '"'].filter(Boolean).join(" × ") || "Not Listed"}</dd></div>
@@ -1005,14 +1069,10 @@ function mount(ctx) {
   $("shopClose").addEventListener("click", closeShop);
   const pc = $("shopPanelClose");
   if (pc) pc.addEventListener("click", closeSheet);
-  $("shopDetect").addEventListener("click", detect);
+  $("shopDetect").addEventListener("click", () => detect(true));
   $("shopSelBtn").addEventListener("click", openSelected);
   $("shopCompareBtn").addEventListener("click", openCompare);
-  $("shopDraw").addEventListener("click", () => {
-    drawing = !drawing;
-    $("shopDraw").classList.toggle("on", drawing);
-    $("shopHint").textContent = drawing ? "Drag A Box Around The Item You Want To Shop" : "Tap Any Dot To Shop That Item";
-  });
+  $("shopDraw").addEventListener("click", () => setDrawing(!drawing));
   $("shopDots").addEventListener("click", () => {
     dotsOn = !dotsOn;
     $("shopDotLayer").classList.toggle("hide", !dotsOn);
@@ -1098,7 +1158,7 @@ export function renderSelectedProducts(mountEl, go) {
         (k) => `<div class="sp-group"><div class="sp-group-h"><b>${esc(k)}</b><span>${groups[k].length} Products</span></div>
     ${groups[k]
       .map(
-        (r) => `<div class="sp-row"><img src="${esc(r.images[0] || "")}" alt="">
+        (r) => `<div class="sp-row">${spThumb(r)}
       <div class="sp-main"><b>${esc(r.name)}</b><span>${esc(r.brand)} &middot; ${esc(r.merchant)} &middot; ${esc(r.budgetCategory)} &middot; ${esc(r.phase)}</span></div>
       <span class="shop-tag">${STATUS_LABEL[r.status]}</span>
       <span class="sp-price">${money(priceOf(r))}${r.quantity > 1 ? ` &times; ${r.quantity}` : ""}</span>
