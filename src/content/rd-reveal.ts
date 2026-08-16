@@ -1148,7 +1148,7 @@ function stepBrand() {
     <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else. Both Renders Unbranded First. Disclosure Labels Burn Into The Versions You Already Render, So Nothing Renders Twice.</div>
   </details>
 
-  <details class="rv-acc"><summary>Audio</summary>
+  <details class="rv-acc" data-acc="audio"${accOpen.has("audio") ? " open" : ""}><summary>Audio</summary>
     <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music)}
     <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
     <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
