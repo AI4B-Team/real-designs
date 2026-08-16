@@ -2696,7 +2696,6 @@ paintPresentations();
 window.addEventListener('rd:saved',()=>paintPresentations());
 
 /* ---------- team ---------- */
-async function paintTeam(){
 const ROLE_ORDER=['viewer','member','admin'];
 const ROLE_LABEL={viewer:'Viewer',member:'Member',admin:'Admin'};
 const ROLE_HELP={
@@ -2704,6 +2703,7 @@ const ROLE_HELP={
   member:'Member: Everything a Viewer can do, plus upload photos, create designs, budgets, videos and presentations. Spends workspace credits. Cannot invite people or change billing.',
   admin:'Admin: Everything a Member can do, plus invite teammates, change roles, delete any work and edit Brand Kit, Defaults and CRM Sync. Cannot manage the plan or billing.'
 };
+async function paintTeam(){
   const list=document.getElementById('teamList'); if(!list) return;
   let name='You', mail='', av='YOU';
   try{
