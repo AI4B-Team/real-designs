@@ -153,7 +153,7 @@ account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
-const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations'};
+const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
 let __allowReveal=0;
@@ -522,6 +522,15 @@ function acctPane(k){
   if(t) t.textContent=PANE_META[k][0];
   if(su) su.textContent=PANE_META[k][1];
   if(k==='integrations'){ try{ mountCrm(go); }catch(_){} try{ paintIntegrations(); }catch(_){} }
+  /* The address bar must name the pane on screen, so a refresh or a copied
+     link reopens the same account section instead of falling back. */
+  try{
+    const acctOn=document.getElementById('v-account');
+    if(acctOn && acctOn.classList.contains('on')){
+      const h='#v-'+k;
+      if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
+    }
+  }catch(_){}
 }
 document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>acctPane(b.dataset.pane)));
 
