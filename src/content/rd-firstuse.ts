@@ -53,7 +53,7 @@ const WORKFLOWS: Record<
   dusk: { label: "Day To Dusk", space: "exterior", group: "listing", desc: "Twilight conversion for exterior listing shots." },
   batch: { label: "Prepare A Complete Listing", group: "listing", desc: "Stage a whole property in one direction." },
   property: { label: "Upload A Complete Property", group: "listing", desc: "Create the property first, then add rooms." },
-  budget: { label: "Design Around A Budget", tool: "Scope & Budget", group: "plan", desc: "Hold the design to a planning range." },
+  budget: { label: "Design Around A Budget", tool: "Budget", group: "plan", desc: "Hold the design to a planning range." },
   products: { label: "Design With Products", group: "plan", desc: "Shop the design and price real products." },
   continue: { label: "Continue An Existing Property", group: "plan", desc: "Pick up a property you already started." },
 };
@@ -416,7 +416,7 @@ export function mountFirstUse(ctx: Ctx) {
       '<button class="fu-link" data-fu-act="shop">Shop This Design</button>' +
       '<button class="fu-link" data-fu-act="property">Add To A Property</button>' +
       '<button class="fu-link" data-fu-act="budget">Set A Budget</button>' +
-      '<button class="fu-link" data-fu-act="scope">Build Scope</button>' +
+      '<button class="fu-link" data-fu-act="scope">Build Budget</button>' +
       "</div>" +
       '<p class="fu-p">Next: saving files the design under a property so scopes, products and client approvals stay together.</p>' +
       (sample
