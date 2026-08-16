@@ -2006,11 +2006,19 @@ function bind() {
     render();
   });
   on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
-  /* scene chips and their popovers */
-  const cur = () => (w.pop ? w.scenes[w.pop.i] : null);
+  /* scene chips and their popovers. Keyed by asset so a reorder underneath
+     the open popover never retargets it at a different scene. */
+  const cur = () => {
+    if (!w.pop) return null;
+    if (w.pop.key) return w.scenes.find((s) => s.key === w.pop.key) || null;
+    return w.scenes[w.pop.i] || null;
+  };
   on("[data-pop]", "click", (e) => {
     e.stopPropagation();
-    w.pop = { kind: e.currentTarget.dataset.pop, i: Number(e.currentTarget.dataset.i) };
+    const key = e.currentTarget.dataset.key || null;
+    const i = key ? w.scenes.findIndex((s) => s.key === key) : Number(e.currentTarget.dataset.i);
+    if (i < 0) return;
+    w.pop = { kind: e.currentTarget.dataset.pop, i, key };
     w.popQ = ""; w.popHover = null;
     render();
   });
