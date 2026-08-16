@@ -160,7 +160,11 @@
 
 .rd-app .icon-btn .bdg{position:absolute;top:4px;right:4px;width:6px;height:6px;border-radius:50%;background:var(--red)}
 
-.rd-app .content{padding:24px;flex:1}
+.rd-app .content{padding:24px;flex:1;min-width:0}
+/* Wide tables and rails scroll inside their own card instead of stretching
+   the page, so narrow screens never get a sideways scrollbar. */
+.rd-app .view,.rd-app .card,.rd-app .card-b,.rd-app .acct-main{min-width:0}
+.rd-app .card-b>table,.rd-app .view>table{display:block;overflow-x:auto;max-width:100%}
 
 
 /* buttons */
