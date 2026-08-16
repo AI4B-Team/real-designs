@@ -1615,3 +1615,21 @@
 .rd-app .home-elselink{background:none;border:0;padding:0;color:var(--red,#CC0000);font:inherit;cursor:pointer;text-decoration:underline}
 .rd-app .nav-soon{margin-left:auto;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase;color:var(--mute-2);border:1px solid var(--line,#e5e5e5);border-radius:999px;padding:1px 7px}
 .rd-app .side.mini .nav-soon{display:none}
+
+/* ---------- budget coming soon (one block, every budget entry point) ---------- */
+.bcs{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:22px;max-width:760px}
+.bcs-head h2{margin:8px 0 6px;font-size:20px}
+.bcs-head p{margin:0;color:var(--mute-2);line-height:1.55;max-width:62ch}
+.bcs-pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  color:#fff;background:var(--red,#c00);border-radius:999px;padding:3px 10px}
+.bcs-list{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:12px}
+.bcs-list li{display:flex;gap:10px;align-items:flex-start}
+.bcs-list li i,.bcs-list li svg{width:18px;height:18px;flex:0 0 18px;margin-top:2px;color:var(--red,#c00)}
+.bcs-list b{display:block;font-size:13px}
+.bcs-list span{display:block;color:var(--mute-2);font-size:13px;line-height:1.5}
+.bcs-form{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:20px}
+.bcs-form label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:600;flex:1 1 260px}
+.bcs-form input{border:1px solid var(--line);border-radius:10px;padding:9px 11px;font:inherit;background:var(--bg);color:inherit}
+.bcs-note{margin:12px 0 0;color:var(--mute-2);font-size:12.5px;line-height:1.5}
+.bcs-steps{margin:0 0 10px;padding-left:18px;display:grid;gap:8px;font-size:13px;line-height:1.5}
+@media (max-width:640px){.bcs{padding:16px}}
