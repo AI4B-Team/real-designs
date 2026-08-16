@@ -1252,7 +1252,20 @@ function startNewDesignFlow(){
   lucide.createIcons();
 }
 document.getElementById('clearLocks')?.addEventListener('click',startNewDesignFlow);
-document.getElementById('newDesignBtn')?.addEventListener('click',()=>{ go('studio'); startNewDesignFlow(); });
+(function(){
+  const btn=document.getElementById('newDesignBtn'), menu=document.getElementById('createMenu');
+  if(!btn) return;
+  function close(){ if(menu){ menu.classList.remove('on'); btn.setAttribute('aria-expanded','false'); } }
+  if(!menu){ btn.addEventListener('click',()=>{ go('studio'); startNewDesignFlow(); }); return; }
+  btn.addEventListener('click',e=>{ e.stopPropagation();
+    const open=!menu.classList.contains('on'); menu.classList.toggle('on',open); btn.setAttribute('aria-expanded',String(open)); });
+  document.addEventListener('click',close);
+  menu.addEventListener('click',e=>{
+    const it=e.target.closest('[data-create]'); if(!it) return;
+    close(); go('studio');
+    try{ window.rdStudioStart && window.rdStudioStart(it.getAttribute('data-create')); }catch(_){}
+  });
+})();
 
 /** Shown when Generate is pressed with no valid source. No credit is charged. */
 function needSourceModal(){
