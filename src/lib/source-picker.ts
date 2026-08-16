@@ -21,10 +21,10 @@ export type PickedFile = { file: File; flags: string[] };
 export const SOURCE_META: Record<SourceId, { icon: string; label: string; desc: string }> = {
   upload: { icon: "upload-cloud", label: "Upload", desc: "Drag and drop or browse." },
   cloud: { icon: "cloud", label: "Google Drive Or Dropbox", desc: "Paste a public share link." },
-  address: { icon: "map-pin", label: "Property Address", desc: "Look up a listing by address." },
-  url: { icon: "link", label: "Listing URL", desc: "Read listing text, no media." },
-  property: { icon: "home", label: "A Property You Already Have", desc: "Reuse photos already uploaded." },
-  design: { icon: "images", label: "A Design You Already Have", desc: "Start from a finished design." },
+  address: { icon: "map-pin", label: "Property Address", desc: "Fills in the address only." },
+  url: { icon: "link", label: "Listing URL", desc: "Reads listing text, no media." },
+  property: { icon: "home", label: "Existing Property", desc: "Reuse photos already uploaded." },
+  design: { icon: "images", label: "Existing Design", desc: "Start from a finished design." },
 };
 
 export type ContextConfig = {
