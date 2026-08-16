@@ -808,19 +808,21 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<span class="stw-door-cta">Start A Video<i data-lucide="arrow-right"></i></span>' +
       "</button>" +
       "</div>" +
-      '<p class="stw-secondary stw-doorfoot">Nothing To Upload Yet? ' +
-      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      (state.door
+        ? ""
+        : '<p class="stw-secondary stw-doorfoot">No Photo Yet? ' +
+          '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>') +
       "</div>" +
 
       (state.door
-        ? '<div class="stw-source"><div class="stw-sec-h"><h3>Where Are The Photos?</h3>' +
-          "<span>Every Source Below Ends In The Same Place</span></div>" +
+        ? '<div class="stw-source"><div class="stw-sec-h"><h3>' +
+          (state.door === "design" ? "Choose Your Starting Point" : "Where Are Your Property Photos?") +
+          "</h3></div>" +
           '<div id="stSource"></div>' +
           (state.door === "design"
             ? '<p class="stw-secondary">No Photo Yet? ' +
               '<button class="stw-seclink" data-sts="c-describe">Describe An Idea Instead</button></p>'
-            : '<p class="stw-secondary">Ready To Build? ' +
-              '<button class="stw-seclink" data-sts="video-open">Open The Video Builder</button></p>') +
+            : "") +
           "</div>"
         : "") +
 
