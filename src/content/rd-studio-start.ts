@@ -501,7 +501,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         '<textarea id="stsPrompt" class="stw-ta" rows="9" placeholder="Create a warm modern living room with natural oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
           esc(state.prompt) +
           "</textarea>" +
-          '<p class="stw-help">The more detail you give about materials, colours and lighting, the closer the concept lands.</p>' +
+          '<p class="stw-help">The more detail you give about materials, colors and lighting, the closer the concept lands.</p>' +
           '<div class="stw-ex"><span>Try:</span>' +
           EXAMPLES.map((e) => '<button class="stw-exlink" data-ex="' + esc(e) + '">' + esc(e) + "</button>").join("") +
           "</div>" +
@@ -986,7 +986,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (band) band.click();
     const notes = document.getElementById("agentNote") as HTMLTextAreaElement | null;
     if (notes && !notes.value) {
-      const extra = [state.accents ? "Accent colours: " + state.accents : "", state.notes].filter(Boolean).join(". ");
+      const extra = [state.accents ? "Accent colors: " + state.accents : "", state.notes].filter(Boolean).join(". ");
       if (extra) notes.value = extra;
     }
   }

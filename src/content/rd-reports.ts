@@ -337,7 +337,7 @@ function rollupHtml() {
       ["rooms", "Rooms", "n"],
       ["designs", "Designs", "n"],
       ["approved", "Approved", "n"],
-      ["scope", "Scope Range", "n"],
+      ["scope", "Budget Range", "n"],
       ["budget_target", "Planned Budget", "n"],
       ["budget_fit", "Budget Fit", ""],
       ["last_activity", "Last Activity", ""],
@@ -378,7 +378,7 @@ function rollupHtml() {
   };
   return `<div class="rp-sec">
     <div class="rp-sec-h">
-      <div><h3>Portfolio Rollup</h3><div class="sub">Every property and project, with priced scope and budget fit</div></div>
+      <div><h3>Portfolio Rollup</h3><div class="sub">Every property and project, with priced budget and fit</div></div>
       <div class="rp-filters">
         <div class="rp-search"><i data-lucide="search"></i><input id="rpSearch" type="text" placeholder="Search Property, Project Or Client" value="${esc(S.q)}"></div>
         <select id="rpFit" aria-label="Budget fit filter">
@@ -513,14 +513,23 @@ function clientsHtml() {
 function actLabel(kind) {
   const m = {
     view: "Viewed The Presentation",
+    viewed: "Viewed The Presentation",
     comment: "Left A Comment",
+    comments: "Left A Comment",
     decision: "Made A Decision",
+    approved: "Approved The Package",
+    changes: "Requested Changes",
     share: "Link Shared",
+    shared: "Link Shared",
     created: "Package Created",
     updated: "Package Updated",
   };
-  return m[kind] || String(kind || "Activity").replace(/_/g, " ");
+  if (m[kind]) return m[kind];
+  return String(kind || "Activity")
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
+
 
 /* ---------------- events ---------------- */
 
@@ -657,8 +666,8 @@ function exportCsv() {
     "Designs",
     "Approved Designs",
     "Approval Rate",
-    "Scope Minimum",
-    "Scope Maximum",
+    "Budget Minimum",
+    "Budget Maximum",
     "Planned Budget",
     "Budget Variance",
     "Budget Fit",
@@ -742,7 +751,7 @@ function exportPdf() {
     <table><thead><tr><th>Links Shared</th><th>Viewed</th><th>Changes Requested</th><th>Approved</th></tr></thead>
     <tbody><tr><td>${d.clients.shared}</td><td>${d.clients.viewed}</td><td>${d.clients.changes}</td><td>${d.clients.approved}</td></tr></tbody></table>`;
 
-  const tableHead = `<tr><th>Property</th><th>Project</th><th>Rooms</th><th>Designs</th><th>Approved</th><th>Scope Range</th><th>Budget</th><th>Fit</th><th>Last Activity</th></tr>`;
+  const tableHead = `<tr><th>Property</th><th>Project</th><th>Rooms</th><th>Designs</th><th>Approved</th><th>Budget Range</th><th>Budget</th><th>Fit</th><th>Last Activity</th></tr>`;
   const pages = [pdfPage(summary, 1, totalPages)].concat(
     chunks.map((ch, i) =>
       pdfPage(
