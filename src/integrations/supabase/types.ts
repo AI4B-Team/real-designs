@@ -508,6 +508,33 @@ export type Database = {
         }
         Relationships: []
       }
+      market_requests: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          note: string | null
+          region: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          note?: string | null
+          region: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          note?: string | null
+          region?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       markets: {
         Row: {
           cbsa_code: string | null
@@ -517,6 +544,7 @@ export type Database = {
           name: string
           source: string | null
           updated_at: string
+          verified_at: string | null
         }
         Insert: {
           cbsa_code?: string | null
@@ -526,6 +554,7 @@ export type Database = {
           name: string
           source?: string | null
           updated_at?: string
+          verified_at?: string | null
         }
         Update: {
           cbsa_code?: string | null
@@ -535,6 +564,7 @@ export type Database = {
           name?: string
           source?: string | null
           updated_at?: string
+          verified_at?: string | null
         }
         Relationships: []
       }
