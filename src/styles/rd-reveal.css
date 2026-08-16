@@ -236,6 +236,7 @@
 .rd-app .mono, .rd-app .rv-cost, .rd-app .rv-meta { font-family: "DM Mono", ui-monospace, monospace; }
 
 .rd-app .rv-srcpanel { border: 1px solid var(--line, #e6e6e6); border-radius: 12px; padding: 14px; margin: 12px 0; }
+.rd-app .rv-srcpanel > .rv-hint { margin: 6px 0 12px; }
 .rd-app .rv-srcpanel #rvAddrGo { margin-top: 14px; }
 .rd-app .rv-srcpanel #rvAddrSkip { margin-left: 10px; }
 
