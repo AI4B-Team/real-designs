@@ -139,7 +139,8 @@ const PALS={
 };
 
 /* ---------- nav ---------- */
-const titles={dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
+const titles={home:['Start','Two ways in: design a space or create a listing video'],
+dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
 studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
@@ -211,6 +212,7 @@ function go(v,fromHash){
 
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
+  if(v==='home'){ try{ paintHome(); }catch(_){} }
   /* Legacy or unknown keys fall back to the dashboard view, so the header
      must follow the view that actually rendered, never the stale one. */
   const titleKey = titles[v] ? v : viewId;
@@ -232,7 +234,7 @@ function go(v,fromHash){
 /* deep links: /app#v-scope, /app#scope and browser back/forward.
    Friendly hashes match the sidebar labels a user would guess, so a typed
    or bookmarked /app#budget opens Budget instead of a dead hash. */
-const VIEW_ALIAS={dashboard:'dash',home:'dash',overview:'dash',properties:'props',property:'props',
+const VIEW_ALIAS={dashboard:'dash',home:'home',start:'home',overview:'dash',properties:'props',property:'props',
 batch:'listings',listing:'listings',listings:'listings',budget:'scope',estimate:'scope',
 video:'reveal',videos:'reveal',presentations:'present',report:'reports',product:'products',
 shop:'products',shopping:'products',sourcing:'products',
@@ -824,10 +826,93 @@ async function loadProperties(){
   paintDesigns();
   updateSearchMeta();
   try{ paintBatch(); }catch(_){}
-
+  try{ progressiveNav(); }catch(_){}
+  try{ paintHome(); }catch(_){}
 }
 loadProperties();
 window.addEventListener('rd:saved', loadProperties);
+
+/* ---------- progressive navigation ----------
+   The sidebar only shows what the workspace can actually use today. Counts
+   are read from the live property tree, never from a flag. */
+function workspaceCounts(){
+  let props=0, designs=0;
+  try{
+    props=PROP_TREE.length;
+    designs=PROP_TREE.reduce((n,p)=>n+p.projects.reduce((m,pr)=>m+pr.rooms.reduce((k,r)=>k+r.versions,0),0),0);
+  }catch(_){}
+  return {props,designs};
+}
+function progressiveNav(){
+  const {props,designs}=workspaceCounts();
+  const rule={designs:designs>0,scope:designs>0,products:designs>0,
+              media:props>0,listings:props>0,present:props>0,
+              reports:designs>=3};
+  document.querySelectorAll('.nav-i').forEach(b=>{
+    const v=b.dataset.v;
+    if(!(v in rule)) return;
+    const show=rule[v]||b.classList.contains('on');
+    b.hidden=!show;
+  });
+  /* Group headers with nothing left under them should not linger. */
+  document.querySelectorAll('.side-nav .nav-group').forEach(g=>{
+    let any=false;
+    for(let n=g.nextElementSibling;n&&!n.classList.contains('nav-group');n=n.nextElementSibling){
+      if(n.classList.contains('nav-i')&&!n.hidden) any=true;
+    }
+    g.hidden=!any;
+  });
+}
+/* Honest module labels: read from the live integration status, never typed in. */
+(async function moduleStatusPills(){
+  try{
+    const r=await readIntegrations();
+    const byKey={}; (r.items||[]).forEach(i=>{ byKey[i.key]=i; });
+    const mark=(view,label)=>{
+      const b=document.querySelector('.nav-i[data-v="'+view+'"]');
+      if(!b||b.querySelector('.nav-soon')) return;
+      const s=document.createElement('span');
+      s.className='nav-soon'; s.textContent=label;
+      b.appendChild(s);
+    };
+    if(byKey['products']&&!byKey['products'].connected) mark('products','Sample Data');
+    if(byKey['listing']&&!byKey['listing'].connected) mark('listings','Manual Only');
+  }catch(_){}
+})();
+
+/* ---------- home chooser ---------- */
+function paintHome(){
+  const strip=document.getElementById('homeRecent'), grid=document.getElementById('homeRecentG');
+  if(!grid||!strip) return;
+  let list=[];
+  try{ list=designItems().filter(d=>!d.sample).slice(0,6); }catch(_){ list=[]; }
+  if(!list.length){ strip.hidden=true; grid.innerHTML=''; return; }
+  strip.hidden=false;
+  grid.innerHTML=list.map(d=>
+    '<article class="card dg-card" data-open-recent="'+esc(String(d.id))+'">'+
+    '<div class="dg-thumb"><img data-homephoto="'+esc(d.path||'')+'" alt="'+esc(d.name||'Saved design')+'" hidden></div>'+
+    '<div class="dg-body"><b>'+esc(d.name||'Untitled')+'</b>'+
+    '<div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:4px">'+esc(d.sub||'')+'</div></div></article>').join('');
+  lucide.createIcons();
+  grid.querySelectorAll('[data-open-recent]').forEach(c=>c.addEventListener('click',()=>{
+    try{
+      const d=designItems().find(x=>String(x.id)===String(c.getAttribute('data-open-recent')));
+      if(d&&d.room){ openInStudio(d.room); }
+      else go('designs');
+    }catch(_){ go('designs'); }
+  }));
+  grid.querySelectorAll('[data-homephoto]').forEach(async img=>{
+    const p=img.getAttribute('data-homephoto'); if(!p) return;
+    try{ const u=await resolvePhotoUrl(p); if(u){ img.src=u; img.hidden=false; } }catch(_){}
+  });
+}
+document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.getAttribute('data-home');
+  if(k==='video'){ try{ createVideoFrom({ sourceType:'address', from:'home' }); }catch(_){ go('reveal'); } return; }
+  go('studio');
+}));
+
+
 
 
 /* ---------- studio ----------
