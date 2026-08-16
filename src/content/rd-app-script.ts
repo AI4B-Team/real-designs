@@ -3734,7 +3734,7 @@ if(scopeGrid && !document.getElementById('scSave')){
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
     {k:'priced',t:'Price The Budget',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Budget'},
     {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced budget on your account.',i:'save',cta:'Save Room'},
-    {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent colour on every export.',i:'palette',cta:'Set Brand'},
+    {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent color on every export.',i:'palette',cta:'Set Brand'},
     {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
   ];
   /* insert synchronously so a double init cannot duplicate the card */
