@@ -251,6 +251,7 @@ try{ mountUploadDock(go); }catch(_){}
    so keep re-asserting the deep linked view for a short window */
 (function applyHash(){
   const v=viewFromHash();
+  try{ console.log('APPLYHASH',location.hash,v); }catch(_){}
   if(!v){
     /* an unknown or stale hash must not stay in the address bar while a
        different view is on screen, or a refresh looks like a dead link.
