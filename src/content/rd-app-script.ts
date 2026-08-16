@@ -522,6 +522,15 @@ function acctPane(k){
   if(t) t.textContent=PANE_META[k][0];
   if(su) su.textContent=PANE_META[k][1];
   if(k==='integrations'){ try{ mountCrm(go); }catch(_){} try{ paintIntegrations(); }catch(_){} }
+  /* The address bar must name the pane on screen, so a refresh or a copied
+     link reopens the same account section instead of falling back. */
+  try{
+    const acctOn=document.getElementById('v-account');
+    if(acctOn && acctOn.classList.contains('on')){
+      const h='#v-'+k;
+      if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
+    }
+  }catch(_){}
 }
 document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>acctPane(b.dataset.pane)));
 
