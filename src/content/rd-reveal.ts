@@ -1097,7 +1097,7 @@ function stepBrand() {
   const discScenes = w.scenes.filter((s) => s.disclosure);
   return `<h3>Brand & Audio</h3>
 
-  <details class="rv-acc" open><summary>Template</summary>
+  <details class="rv-acc" data-acc="template"${accOpen.has("template") ? " open" : ""}><summary>Template</summary>
     <div class="rv-seg tiny">${[["intro", "Intro"], ["outro", "Outro"], ["full", "Full Video"]]
       .map(([id, n]) => `<button class="${(w.tplScope || "intro") === id ? "on" : ""}" data-tplscope="${id}">${n}</button>`).join("")}</div>
     ${(w.tplScope || "intro") === "intro" ? templateGrid(INTRO_TEMPLATES, w.introTemplate || "clean", "tplintro") : ""}
