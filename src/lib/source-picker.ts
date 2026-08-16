@@ -136,7 +136,16 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   });
 
   /** One size limit, one measurement pass, one error message, every source. */
-  async function intake(files: File[]) {
+  async function intake(raw: File[]) {
+    let files = raw;
+    if (raw.some((f) => /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || ""))) {
+      state.busy = true;
+      state.note = "";
+      render();
+      files = await Promise.all(raw.map(normalize));
+      state.busy = false;
+      render();
+    }
     const ok: File[] = [];
     for (const f of files) {
       if (f.size > MAX_MB * 1024 * 1024) {
