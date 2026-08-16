@@ -410,6 +410,8 @@ function newWizard(seed = {}) {
     title: seed.title || "",
     videoType: seed.videoType || "property_tour",
     available: [],
+    gridOrder: [],
+    groupBy: true,
     scenes: [],
     formats: ["9:16"],
     length: "standard",
@@ -492,6 +494,14 @@ async function loadWizardAssets() {
   }
   for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.name || UNSORTED, kind: "Original", group: "Other", disclosure: null, uploaded: true, flags: [] });
   w.available = out;
+  /* The grid is the order. Build it in room group order; new uploads append. */
+  const keep = new Set(out.map((a) => a.key));
+  const prev = (w.gridOrder || []).filter((k) => keep.has(k));
+  const seen = new Set(prev);
+  const fresh = out.filter((a) => !seen.has(a.key));
+  fresh.sort((a, b) => orderRank(a.group) - orderRank(b.group) || String(a.room || "").localeCompare(String(b.room || "")));
+  w.gridOrder = prev.concat(fresh.map((a) => a.key));
+  syncSceneOrder();
 }
 
 /* The builder is organised as six named sections in a left rail. Internally
@@ -505,7 +515,8 @@ const WIZ_SECTIONS: Array<[string, string, string, number]> = [
   ["brand", "Brand", "palette", 4],
   ["quality", "Quality", "sparkles", 7],
 ];
-const FLOW = [1, 2, 3, 5, 6, 4, 7];
+/* Step 3 folded into step 2. Old links resolving to 3 are normalised in render(). */
+const FLOW = [1, 2, 5, 6, 4, 7];
 function nextStep(n: number) {
   const i = FLOW.indexOf(n);
   return i < 0 || i === FLOW.length - 1 ? n : FLOW[i + 1];
@@ -530,7 +541,7 @@ function sectionReady(key: string) {
   return (w.scenes || []).length > 0;
 }
 function stepForSection(key: string) {
-  if (key === "scenes") return (S.wizard.scenes || []).length ? 3 : 2;
+  if (key === "scenes") return 2;
   return (WIZ_SECTIONS.find((x) => x[0] === key) || [null, null, null, 1])[3];
 }
 
@@ -548,7 +559,7 @@ function wizardHtml() {
   let body = "";
   if (w.step === 1) body = stepPhotos();
   if (w.step === 2) body = stepSelect();
-  if (w.step === 3) body = stepEdit();
+  
   if (w.step === 4) body = stepBrand();
   if (w.step === 5) body = stepTitles();
   if (w.step === 6) body = stepAudio();
@@ -613,14 +624,13 @@ function stepReady() {
   const w = S.wizard;
   if (!w) return false;
   if (w.step === 1) return (w.uploads || []).length > 0 || !!w.versionId || !!w.propertyId;
-  if (w.step === 2) return w.scenes.length > 0;
-  if (w.step === 3) return (w.formats || []).length > 0;
+  if (w.step === 2) return w.scenes.length > 0 && (w.formats || []).length > 0;
   if (w.step === 7) return (w.formats || []).length > 0;
   return true;
 }
 
 
-/* ======================= STEP 2, SELECT ======================= */
+/* ======================= STEP 2, THE PHOTO GRID ======================= */
 /** Analysis-shaped view of the wizard's available photos. */
 function analysisAssets() {
   return (S.wizard?.available || []).map((a) => ({
@@ -643,35 +653,76 @@ function nameCell(value, attr) {
   return `<b class="rv-editname" data-rename="${esc(attr)}" title="Click To Rename">${esc(value)}</b>`;
 }
 
+/** The grid is the order. w.scenes is always the selected subset of
+    w.gridOrder, in gridOrder sequence. Call after every mutation. */
+function syncSceneOrder() {
+  const w = S.wizard;
+  if (!w || !w.scenes) return;
+  const pos = new Map((w.gridOrder || []).map((k, i) => [k, i]));
+  w.scenes.sort((a, b) => (pos.get(a.key) ?? 1e9) - (pos.get(b.key) ?? 1e9));
+}
+
+function tileHtml(a, seq) {
+  const w = S.wizard;
+  const s = w.scenes.find((x) => x.key === a.key) || null;
+  const flags = (a.flags || []).map((f) => FLAG_LABEL[f] || f);
+  const cropHot = s && s.crop && s.crop !== "center";
+  const vfxHot = s && ((s.vfx && s.vfx !== "none") || s.look);
+  const camHot = s && ((s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect);
+  const cap = s ? String(s.caption || "") : "";
+  const tools = s ? `<div class="rv-tools">
+      <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
+      <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Add VFX"><i data-lucide="wand-sparkles"></i><em>Add VFX</em></button>
+      <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Camera Movements"><i data-lucide="camera"></i><em>Camera Movements</em></button>
+    </div>` : "";
+  return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" ${s ? `draggable="true"` : ""}>
+    <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
+      <span class="rv-tile-check"><i data-lucide="check"></i></span>
+      ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
+      ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
+      ${tools}
+    </div>
+    <div class="rv-tile-foot">
+      ${nameCell(a.room || UNSORTED, "a:" + a.key)}
+      ${s
+        ? (cap
+          ? `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}" title="${esc(cap)}">${esc(cap.length > 18 ? cap.slice(0, 18) + "…" : cap)}</button>`
+          : `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}">Add Text</button>`)
+        : `<i class="rv-tile-kind">${esc(a.kind)}</i>`}
+    </div>
+  </div>`;
+}
+
 function stepSelect() {
   const w = S.wizard;
-  const groups = {};
-  for (const a of w.available) (groups[a.group] = groups[a.group] || []).push(a);
-  const order = Object.keys(groups).sort((a, b) => orderRank(a) - orderRank(b));
+  const byKey = new Map(w.available.map((a) => [a.key, a]));
+  const ordered = (w.gridOrder || []).map((k) => byKey.get(k)).filter(Boolean);
+  const seqOf = new Map(w.scenes.map((s, i) => [s.key, i + 1]));
+
   const dupCount = w.available.filter((a) => a.dup).length;
   const assets = analysisAssets();
   const flagged = w.available.filter((a) => (a.flags || []).length);
   const recs = recommendations(assets).filter((r) => r.op);
   const missing = missingSpaces(assets);
+  const orient = orientationOf(w);
+  const per = sceneDurations(w.scenes.length, w.length);
+  const total = Math.round(per * w.scenes.length);
+  const imm = immersiveCount();
 
-  const left = order.map((g) => `<div class="rv-g"><div class="rv-g-h">${esc(g)}<i class="mono">${groups[g].length}</i></div><div class="rv-g-b">${groups[g]
-    .map((a) => `<button class="rv-asset ${w.scenes.some((s) => s.key === a.key) ? "on" : ""}" data-asset="${a.key}">
-      <span class="rv-a-th" data-img="${esc(a.path)}">${(a.flags || []).length ? `<em class="rv-flag" title="${esc((a.flags || []).map((f) => FLAG_LABEL[f] || f).join(", "))}"><i data-lucide="triangle-alert"></i></em>` : ""}</span>
-      <span class="rv-a-m">${nameCell(a.room || UNSORTED, "a:" + a.key)}<i>${a.kind}${a.disclosure ? " • " + DISCLOSURE_LABEL[a.disclosure] : ""}</i></span>
-    </button>`).join("")}</div></div>`).join("");
-
-  const right = w.scenes.length
-    ? w.scenes.map((s, i) => `<div class="rv-scene" draggable="true" data-idx="${i}">
-        <span class="rv-seq mono">${i + 1}</span>
-        <span class="rv-a-th" data-img="${esc(s.path)}"></span>
-        <span class="rv-s-m">${nameCell(s.room || UNSORTED, "s:" + i)}<i>${s.scene_type === "before_after" ? "Before & After" : s.kind}</i></span>
-        <span class="rv-s-a">
-          <button class="icon-btn" data-move="-1" title="Move Up"><i data-lucide="chevron-up"></i></button>
-          <button class="icon-btn" data-move="1" title="Move Down"><i data-lucide="chevron-down"></i></button>
-          <button class="icon-btn" data-drop="${i}" title="Remove"><i data-lucide="x"></i></button>
-        </span>
-      </div>`).join("")
-    : `<div class="rv-note">No Scenes Yet. Add Content From The Left.</div>`;
+  let grid = "";
+  if (w.groupBy !== false) {
+    const groups = new Map();
+    for (const a of ordered) {
+      const g = a.group || UNSORTED;
+      if (!groups.has(g)) groups.set(g, []);
+      groups.get(g).push(a);
+    }
+    grid = Array.from(groups.entries())
+      .map(([g, list]) => `<div class="rv-g-head">${esc(g)} <i class="mono">${list.length}</i></div>${list.map((a) => tileHtml(a, seqOf.get(a.key))).join("")}`)
+      .join("");
+  } else {
+    grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
+  }
 
   const fixCard = recs.length && !w.enhanceDismissed ? `<div class="rv-fix">
     <b>We Found ${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve</b>
@@ -683,21 +734,37 @@ function stepSelect() {
     </div>
   </div>` : "";
 
-  return `<h3>Select The Photos</h3>
+  const pct = w.available.length ? Math.round((w.scenes.length / w.available.length) * 100) : 0;
+  const why = !w.scenes.length ? "Check At Least One Photo To Continue." : !(w.formats || []).length ? "Choose A Video Format To Continue." : "";
+
+  return `<div class="rv-head-row">
+    <div><h3>Select The Photos</h3><p class="rv-hint">Check The Photos You Want. Drag To Reorder. The Order You See Is The Order It Plays.</p></div>
+    <div class="rv-orient"><span>Video Format</span>
+      <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
+    </div>
+  </div>
   ${dupCount ? `<div class="rv-dup"><i data-lucide="copy"></i><b>${dupCount} Similar Angles Detected</b><span><button class="fb-link" id="rvKeepBest">Keep Best</button><button class="fb-link" data-goto="media">Review</button><button class="fb-link" id="rvKeepAll">Keep All</button></span></div>` : ""}
   ${flagged.length ? `<div class="rv-issues"><i data-lucide="triangle-alert"></i><b>${flagged.length} Photos Have Issues We Can Fix</b><button class="fb-link" data-goto="media">Review</button></div>` : ""}
   ${missing.length ? `<div class="rv-note sm">No ${missing.slice(0, 2).join(" Or ")} In This Set. Buyers Look For Those First.</div>` : ""}
-  <div class="rv-two">
-    <div class="rv-col"><div class="rv-col-h">Available Photos<span class="mono">${w.available.length}</span></div><div class="rv-col-b">${left || `<div class="rv-note">No Content Found For This Source.</div>`}</div></div>
-    <div class="rv-col"><div class="rv-col-h">Selected Photos<span class="mono">${w.scenes.length}</span></div><div class="rv-col-b" id="rvSceneList">${right}</div></div>
-  </div>
   ${fixCard}
-  <div class="rv-foot">
-    <button class="btn btn-ghost" id="rvBack">Back</button>
-    <button class="btn btn-ghost" id="rvRecommend">Select All Recommended</button>
-    <button class="btn btn-ghost" id="rvClear">Clear</button>
-    <button class="btn btn-ghost" id="rvAuto">Auto Arrange</button>
-    <button class="btn btn-primary" id="rvNext" ${w.scenes.length ? "" : "disabled"}>Continue</button>
+  <div class="rv-gridbar">
+    <button class="btn btn-ghost btn-sm" id="rvRecommend">Select All Recommended</button>
+    <button class="btn btn-ghost btn-sm" id="rvClear">Clear</button>
+    <button class="btn btn-ghost btn-sm" id="rvAuto">Auto Arrange</button>
+    <button class="btn btn-ghost btn-sm ${w.groupBy !== false ? "on" : ""}" id="rvGroupBy">Group By Room</button>
+  </div>
+  <div class="rv-grid ${orient}">${grid || `<div class="rv-note">No Content Found For This Source.</div>`}</div>
+  <div class="rv-gridfoot">
+    <div class="rv-count">
+      <span><i data-lucide="images"></i> <b>${w.scenes.length} / ${w.available.length}</b> Photos Selected</span>
+      <div class="rv-bar"><i style="width:${pct}%"></i></div>
+      <div class="rv-meta mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</div>
+      ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
+    </div>
+    <div class="rv-gridfoot-a">
+      <button class="btn btn-ghost" id="rvBack">Back</button>
+      <button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : `disabled title="${esc(why)}"`}>Continue</button>
+    </div>
   </div>`;
 }
 
@@ -773,33 +840,12 @@ function motionLabel(s) {
   return m ? m[1] : "Auto";
 }
 
-function sceneCard(s, i) {
-  const look = s.look ? lookById(s.look) : null;
-  const changed = (s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect;
-  return `<div class="rv-scard" draggable="true" data-idx="${i}">
-    <div class="rv-scard-th" data-img="${esc(s.path)}">
-      <span class="rv-seq mono">${i + 1}</span>
-      <button class="rv-x" data-drop="${i}" aria-label="Remove Scene"><i data-lucide="x"></i></button>
-    </div>
-    <div class="rv-scard-b">
-      <div class="rv-mchips">
-        <button class="rv-mchip ${changed ? "hot" : ""}" data-pop="motion" data-i="${i}" title="Camera Motion">${esc(motionLabel(s))}<i data-lucide="chevron-down"></i></button>
-        <button class="rv-mchip" data-pop="crop" data-i="${i}" title="Crop">Crop</button>
-        <button class="rv-mchip ${s.vfx && s.vfx !== "none" ? "hot" : ""}" data-pop="look" data-i="${i}" title="VFX">${esc(tileById(s.vfx)?.label || "VFX")}</button>
-      </div>
-      <b>${esc(s.room || "Scene " + (i + 1))}</b>
-      <input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional">
-      <div class="rv-scard-a">
-        <button class="icon-btn" data-move="-1" title="Move Up"><i data-lucide="chevron-up"></i></button>
-        <button class="icon-btn" data-move="1" title="Move Down"><i data-lucide="chevron-down"></i></button>
-      </div>
-    </div>
-  </div>`;
-}
-
 function popoverHtml() {
   const w = S.wizard;
-  const { kind, i } = w.pop;
+  const { kind } = w.pop;
+  /* Resolve by asset key when we have one, so a reorder underneath an open
+     popover cannot retarget it at a different scene. */
+  const i = w.pop.key ? w.scenes.findIndex((x) => x.key === w.pop.key) : w.pop.i;
   const s = w.scenes[i];
   if (!s) return "";
   let body = "";
@@ -853,6 +899,12 @@ function popoverHtml() {
     body = `<div class="rv-pop-list">
       <div class="rv-pop-h">Crop <i class="mono">${esc(w.formats[0] || "9:16")}</i></div>
       ${CROPS.map(([id, n]) => `<button class="rv-pop-row ${(s.crop || "center") === id ? "on" : ""}" data-croppick="${id}">${n}</button>`).join("")}
+    </div>`;
+  } else if (kind === "cap") {
+    body = `<div class="rv-pop-list">
+      <div class="rv-pop-h">On Screen Text</div>
+      <label class="rv-f">${esc(s.room || "Scene")}<input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional"></label>
+      <div class="rv-note sm">Shown over this photo while it plays.</div>
     </div>`;
   } else {
     const cat = VFX_TILE_CATEGORIES.some(([id]) => id === w.popCat) ? w.popCat : "all";
@@ -912,30 +964,14 @@ function popoverHtml() {
   </div></div>`;
 }
 
-/* ======================= STEP 3, EDIT ======================= */
+/* Video format. The old step 3 folded into the grid, so the segmented control
+   lives in the grid header now. */
 const ORIENTATIONS: Array<[string, string, string[]]> = [
   ["portrait", "Portrait", ["9:16", "4:5"]],
   ["landscape", "Landscape", ["16:9", "1:1"]],
 ];
 function orientationOf(w) {
   return (w.formats || []).some((f) => f === "16:9" || f === "1:1") ? "landscape" : "portrait";
-}
-function stepEdit() {
-  const w = S.wizard;
-  const per = sceneDurations(w.scenes.length, w.length);
-  const total = Math.round(per * w.scenes.length);
-  const imm = immersiveCount();
-  const orient = orientationOf(w);
-  return `<div class="rv-head-row">
-    <div><h3>Configure Photos</h3><p class="rv-hint">Drag To Reorder. Set Orientation, Crop Photos, And Customize Camera Motions.</p></div>
-    <div class="rv-orient"><span>Video Orientation</span>
-      <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
-    </div>
-  </div>
-  <div class="rv-meta mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</div>
-  ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
-  <div class="rv-photostrip">${w.scenes.map((s, i) => sceneCard(s, i)).join("") || `<div class="rv-note">No Scenes Selected.</div>`}</div>
-  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext" ${w.formats.length ? "" : "disabled"}>Continue</button></div>`;
 }
 
 
@@ -1371,11 +1407,17 @@ function assetToScene(a) {
 function autoArrange() {
   const w = S.wizard;
   if (!w || !w.scenes) return;
-  w.scenes.sort((a, b) => {
-    const ga = orderRank(groupFor(a.room));
-    const gb = orderRank(groupFor(b.room));
-    return ga - gb || a.room.localeCompare(b.room);
+  /* The grid is the order, so arranging sorts gridOrder and lets the scenes
+     follow. Unselected photos travel with their room group. */
+  const byKey = new Map((w.available || []).map((a) => [a.key, a]));
+  (w.gridOrder || []).sort((ka, kb) => {
+    const a = byKey.get(ka);
+    const b = byKey.get(kb);
+    const ga = orderRank(a?.group || groupFor(a?.room || ""));
+    const gb = orderRank(b?.group || groupFor(b?.room || ""));
+    return ga - gb || String(a?.room || "").localeCompare(String(b?.room || ""));
   });
+  syncSceneOrder();
 }
 
 /* ======================= GENERATION ======================= */
@@ -1738,30 +1780,46 @@ function cachedPhotoUrl(path) {
   return p;
 }
 
+let thumbObserver: IntersectionObserver | null = null;
+
+/** Sign and paint one element. The painted guard is what stops a failed
+    tile from retrying forever. */
+async function paintOneThumb(el) {
+  if (el.dataset.painted) return true;
+  const path = el.getAttribute("data-img");
+  if (!path) return true;
+  const url = await cachedPhotoUrl(path);
+  if (url) {
+    el.style.backgroundImage = `url("${url}")`;
+    el.classList.remove("rv-noimg");
+    el.dataset.painted = "1";
+    return true;
+  }
+  if (!el.querySelector(".rv-noimg-i")) {
+    el.insertAdjacentHTML("beforeend", `<i class="rv-noimg-i" data-lucide="image-off"></i>`);
+  }
+  el.classList.add("rv-noimg");
+  paint();
+  return false;
+}
+
+/* Full size tiles are expensive to sign and fetch, so only the ones near the
+   viewport ask for a URL. */
 async function paintAssetThumbs() {
   const els = Array.from(host()?.querySelectorAll("[data-img]") || []);
-  let missing = false;
-  await Promise.all(
-    els.map(async (el) => {
-      if (el.dataset.painted) return;
-      const path = el.getAttribute("data-img");
-      if (!path) return;
-      const url = await cachedPhotoUrl(path);
-      if (url) {
-        el.style.backgroundImage = `url("${url}")`;
-        el.classList.remove("rv-noimg");
-        /* Only a real paint counts, otherwise the tile is poisoned forever. */
-        el.dataset.painted = "1";
-        return;
-      }
-      if (!el.querySelector(".rv-noimg-i")) {
-        el.insertAdjacentHTML("beforeend", `<i class="rv-noimg-i" data-lucide="image-off"></i>`);
-      }
-      el.classList.add("rv-noimg");
-      missing = true;
-    }),
-  );
-  if (missing) paint();
+  if (thumbObserver) { thumbObserver.disconnect(); thumbObserver = null; }
+  if (typeof IntersectionObserver === "undefined") {
+    await Promise.all(els.map((el) => paintOneThumb(el)));
+    return;
+  }
+  const io = new IntersectionObserver((entries) => {
+    for (const en of entries) {
+      if (!en.isIntersecting) continue;
+      paintOneThumb(en.target).then((ok) => { if (ok) io.unobserve(en.target); });
+    }
+  }, { rootMargin: "400px" });
+  thumbObserver = io;
+  els.forEach((el) => { if (!el.dataset.painted) io.observe(el); });
 }
 
 /* ======================= RENDER + EVENTS ======================= */
@@ -1773,6 +1831,8 @@ function render() {
   if (S.screen === "wizard" && !S.wizard) S.screen = "library";
   if (S.screen === "design") S.screen = "library";
   if (S.screen === "detail" && !S.detail) S.screen = "library";
+  /* Step 3 folded into step 2; old deep links must not land on nothing. */
+  if (S.wizard && S.wizard.step === 3) S.wizard.step = 2;
   el.innerHTML =
     S.screen === "wizard" ? wizardHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
@@ -1859,7 +1919,7 @@ function bind() {
 
   on("#rvLowX", "click", () => { w.lowModal = false; render(); });
   on("#rvLowMore", "click", () => { w.lowModal = false; w.step = 1; render(); });
-  on("#rvLowGo", "click", () => { w.lowModal = false; w.step = 3; render(); });
+  on("#rvLowGo", "click", () => { w.lowModal = false; w.step = nextStep(2); render(); });
 
 
   const titleIn = el.querySelector("#rvTitle");
@@ -1949,21 +2009,20 @@ function bind() {
       const a = w.available.find((x) => x.key === key);
       if (a) w.scenes.push(assetToScene(a));
     }
+    syncSceneOrder();
     render();
   });
-  on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); render(); });
-  on("[data-move]", "click", (e) => {
-    e.stopPropagation();
-    const row = e.currentTarget.closest(".rv-scene, .rv-scard");
-    const i = Number(row.dataset.idx);
-    const j = i + Number(e.currentTarget.dataset.move);
-    if (j < 0 || j >= w.scenes.length) return;
-    const [x] = w.scenes.splice(i, 1);
-    w.scenes.splice(j, 0, x);
-    render();
+  on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); syncSceneOrder(); render(); });
+  on("#rvGroupBy", "click", () => { w.groupBy = w.groupBy === false; render(); });
+  /* The warning pip is its own action; it must not toggle the tile under it. */
+  on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
+  on(".rv-tile-th", "keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    e.currentTarget.click();
   });
   on("#rvRecommend", "click", () => { selectRecommended(); autoArrange(); render(); });
-  on("#rvClear", "click", () => { w.scenes = []; render(); });
+  on("#rvClear", "click", () => { w.scenes = []; syncSceneOrder(); render(); });
   on("#rvAuto", "click", () => { autoArrange(); render(); });
   on("#rvKeepBest", "click", () => {
     const seen = new Set();
@@ -1975,21 +2034,30 @@ function bind() {
       seen.add(g);
       return true;
     });
+    syncSceneOrder();
     render();
   });
   on("#rvKeepAll", "click", () => render());
 
   /* drag ordering */
-  el.querySelectorAll(".rv-scene, .rv-scard").forEach((n) => {
-    n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.idx));
-    n.addEventListener("dragover", (e) => e.preventDefault());
+  el.querySelectorAll(".rv-tile[draggable='true']").forEach((n) => {
+    n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.key));
+    n.addEventListener("dragover", (e) => { e.preventDefault(); n.classList.add("drop-l"); });
+    n.addEventListener("dragleave", () => n.classList.remove("drop-l"));
+    n.addEventListener("dragend", () => n.classList.remove("drop-l"));
     n.addEventListener("drop", (e) => {
       e.preventDefault();
-      const from = Number(e.dataTransfer.getData("text/plain"));
-      const to = Number(n.dataset.idx);
-      if (Number.isNaN(from) || from === to) return;
-      const [x] = w.scenes.splice(from, 1);
-      w.scenes.splice(to, 0, x);
+      n.classList.remove("drop-l");
+      const from = e.dataTransfer.getData("text/plain");
+      const to = n.dataset.key;
+      if (!from || from === to) return;
+      const order = w.gridOrder || [];
+      const fi = order.indexOf(from);
+      const ti = order.indexOf(to);
+      if (fi < 0 || ti < 0) return;
+      order.splice(fi, 1);
+      order.splice(ti, 0, from);
+      syncSceneOrder();
       render();
     });
   });
@@ -2006,11 +2074,19 @@ function bind() {
     render();
   });
   on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
-  /* scene chips and their popovers */
-  const cur = () => (w.pop ? w.scenes[w.pop.i] : null);
+  /* scene chips and their popovers. Keyed by asset so a reorder underneath
+     the open popover never retargets it at a different scene. */
+  const cur = () => {
+    if (!w.pop) return null;
+    if (w.pop.key) return w.scenes.find((s) => s.key === w.pop.key) || null;
+    return w.scenes[w.pop.i] || null;
+  };
   on("[data-pop]", "click", (e) => {
     e.stopPropagation();
-    w.pop = { kind: e.currentTarget.dataset.pop, i: Number(e.currentTarget.dataset.i) };
+    const key = e.currentTarget.dataset.key || null;
+    const i = key ? w.scenes.findIndex((s) => s.key === key) : Number(e.currentTarget.dataset.i);
+    if (i < 0) return;
+    w.pop = { kind: e.currentTarget.dataset.pop, i, key };
     w.popQ = ""; w.popHover = null;
     render();
   });
@@ -2323,6 +2399,7 @@ function selectRecommended() {
   }
   const chosen = (picked.length ? picked : pool).slice(0, 12);
   w.scenes = chosen.map(assetToScene);
+  syncSceneOrder();
 }
 
 /** Reopen an existing project in the wizard at the storyboard step. */

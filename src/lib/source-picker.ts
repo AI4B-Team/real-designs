@@ -21,7 +21,7 @@ export type PickedFile = { file: File; flags: string[] };
 export const SOURCE_META: Record<SourceId, { icon: string; label: string; desc: string }> = {
   upload: { icon: "upload-cloud", label: "Upload", desc: "Drag and drop or browse." },
   cloud: { icon: "cloud", label: "Google Drive Or Dropbox", desc: "Paste a public share link." },
-  address: { icon: "map-pin", label: "Property Address", desc: "Fills in the address only." },
+  address: { icon: "map-pin", label: "Property Address", desc: "Fills in address and listing details." },
   url: { icon: "link", label: "Listing URL", desc: "Reads listing text, no media." },
   property: { icon: "home", label: "Existing Property", desc: "Reuse photos already uploaded." },
   design: { icon: "images", label: "Existing Design", desc: "Start from a finished design." },
@@ -36,25 +36,25 @@ export type ContextConfig = {
 
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
-    sources: ["upload", "cloud", "address", "url", "property"],
+    sources: ["upload", "cloud", "address", "property"],
     multiple: false,
     accept: "image/*,application/pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "address", "url", "property", "design"],
+    sources: ["upload", "cloud", "address", "property", "design"],
     multiple: true,
     accept: "image/*",
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   "property-media": {
-    sources: ["upload", "cloud", "address", "url"],
+    sources: ["upload", "cloud", "address"],
     multiple: true,
     accept: "image/*",
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   batch: {
-    sources: ["upload", "cloud", "address", "url", "property"],
+    sources: ["upload", "cloud", "address", "property"],
     multiple: true,
     accept: "image/*",
     acceptHint: "JPG, PNG, HEIC, WEBP",
