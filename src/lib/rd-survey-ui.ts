@@ -376,9 +376,6 @@ export async function maybeOpenSignupSurvey() {
     } catch (_) {
       /* private mode: fall through, the timing guard still applies */
     }
-    const bootedAt =
-      typeof performance !== "undefined" && performance.now ? performance.now() : 0;
-
     let touched = false;
     const mark = () => {
       touched = true;
@@ -397,9 +394,10 @@ export async function maybeOpenSignupSurvey() {
     const row = out?.row;
     if (row && (row.completed || row.skipped)) return;
     if (touched) return;
-    const now =
+    /* performance.now() is time since this document started loading */
+    const sinceLoad =
       typeof performance !== "undefined" && performance.now ? performance.now() : 0;
-    if (now - bootedAt > 6000) return;
+    if (sinceLoad > 8000) return;
     try {
       localStorage.setItem(SURVEY_SENT_KEY, String(Date.now()));
     } catch (_) {
