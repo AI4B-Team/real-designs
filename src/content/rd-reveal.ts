@@ -18,6 +18,7 @@ import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations, missingSpaces } from "@/lib/media-analysis";
 import { mountSourcePicker } from "@/lib/source-picker";
+import { rejectReason } from "@/lib/upload-manager";
 import {
   listVideos as _listVideos,
   getVideo as _getVideo,
@@ -1926,14 +1927,19 @@ function bind() {
   if (titleIn) titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
   on("[data-rmup]", "click", (e) => {
     const id = e.currentTarget.dataset.rmup;
+    const gone = (w.uploads || []).find((u) => u.id === id);
+    if (gone?.url) { try { URL.revokeObjectURL(gone.url); } catch (_) {} }
     w.uploads = w.uploads.filter((u) => u.id !== id);
     render();
   });
   const addUploads = (list) => {
+    const rejects = [];
     for (const f of Array.from(list || [])) {
-      if (!/^image\//.test(f.type || "")) continue;
+      const why = rejectReason(f);
+      if (why) { rejects.push(f.name + ": " + why); continue; }
       w.uploads.push({ id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url: URL.createObjectURL(f) });
     }
+    if (rejects.length) toast(rejects.length === 1 ? rejects[0] : rejects.length + " Files Could Not Be Added. " + rejects[0]);
     render();
   };
   /* A stray drop outside a dropzone must never navigate away from the app. */

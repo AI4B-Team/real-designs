@@ -34,32 +34,50 @@ export type ContextConfig = {
   acceptHint: string;
 };
 
+/** Chrome greys out .heic when accept is image/*, so list extensions explicitly. */
+const IMAGE_ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.heif";
+
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
     sources: ["upload", "cloud", "address", "property"],
     multiple: false,
-    accept: "image/*,application/pdf",
+    accept: IMAGE_ACCEPT + ",application/pdf,.pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
     sources: ["upload", "cloud", "address", "property", "design"],
     multiple: true,
-    accept: "image/*",
+    accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   "property-media": {
     sources: ["upload", "cloud", "address"],
     multiple: true,
-    accept: "image/*",
+    accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   batch: {
     sources: ["upload", "cloud", "address", "property"],
     multiple: true,
-    accept: "image/*",
+    accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
 };
+
+/** Browsers other than Safari cannot decode HEIC. Convert once, on the way in,
+    so every downstream preview, thumbnail and upload is a normal JPEG. */
+async function normalize(f: File): Promise<File> {
+  const isHeic = /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || "");
+  if (!isHeic) return f;
+  try {
+    const { default: heic2any } = await import("heic2any");
+    const blob: any = await heic2any({ blob: f, toType: "image/jpeg", quality: 0.9 });
+    const out = Array.isArray(blob) ? blob[0] : blob;
+    return new File([out], f.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
+  } catch (_) {
+    return f;
+  }
+}
 
 export const MAX_MB = 10;
 
@@ -118,7 +136,16 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   });
 
   /** One size limit, one measurement pass, one error message, every source. */
-  async function intake(files: File[]) {
+  async function intake(raw: File[]) {
+    let files = raw;
+    if (raw.some((f) => /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || ""))) {
+      state.busy = true;
+      state.note = "";
+      render();
+      files = await Promise.all(raw.map(normalize));
+      state.busy = false;
+      render();
+    }
     const ok: File[] = [];
     for (const f of files) {
       if (f.size > MAX_MB * 1024 * 1024) {
@@ -245,6 +272,15 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   function panel() {
     if (state.tab === "upload") {
+      if (state.busy) {
+        return (
+          '<div class="sp-drop" data-sp-drop="1">' +
+          '<i data-lucide="loader"></i>' +
+          "<b>Converting Photos</b>" +
+          '<span class="sp-hint">iPhone photos are being converted. This takes a moment.</span>' +
+          "</div>"
+        );
+      }
       return (
         '<div class="sp-drop' + (state.dragging ? " over" : "") + '" data-sp-drop="1">' +
         '<i data-lucide="upload-cloud"></i>' +
