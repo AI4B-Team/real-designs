@@ -2047,6 +2047,10 @@ function bind() {
     if (w.presentation === "narration" || w.presentation === "both") w.narration = w.narration === "none" ? "generate" : w.narration;
     render();
   });
+  el.querySelectorAll("details.rv-acc[data-acc]").forEach((d) => d.addEventListener("toggle", () => {
+    const k = d.dataset.acc;
+    if (d.open) accOpen.add(k); else accOpen.delete(k);
+  }));
   on("[data-track]", "click", (e) => {
     if (e.target.closest("[data-trackplay]")) return;
     w.music = e.currentTarget.dataset.track; stopMusic(); render();
