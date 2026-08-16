@@ -450,6 +450,9 @@ function newWizard(seed = {}) {
     lowWarned: false,
     disclosureMode: "altered",
     uploads: [],
+    mode: "auto",
+    quality: "standard",
+    titles: { property: true, contact: true, custom: [] },
     busy: false,
     progress: 0,
     stage: "",
@@ -491,26 +494,72 @@ async function loadWizardAssets() {
   w.available = out;
 }
 
-const WIZ_STEPS = ["Photos", "Select", "Edit", "Brand"];
+/* The builder is organised as six named sections in a left rail. Internally
+   the wizard still tracks a step number, so every existing deep link, modal
+   and shortcut keeps working. */
+const WIZ_SECTIONS: Array<[string, string, string, number]> = [
+  ["photos", "Photos", "image", 1],
+  ["scenes", "Scenes", "layout-grid", 2],
+  ["titles", "Titles", "type", 5],
+  ["audio", "Audio", "music", 6],
+  ["brand", "Brand", "palette", 4],
+  ["quality", "Quality", "sparkles", 7],
+];
+const FLOW = [1, 2, 3, 5, 6, 4, 7];
+function nextStep(n: number) {
+  const i = FLOW.indexOf(n);
+  return i < 0 || i === FLOW.length - 1 ? n : FLOW[i + 1];
+}
+function prevStep(n: number) {
+  const i = FLOW.indexOf(n);
+  return i <= 0 ? 1 : FLOW[i - 1];
+}
+function sectionOf(step: number) {
+  if (step === 1) return "photos";
+  if (step === 2 || step === 3) return "scenes";
+  if (step === 5) return "titles";
+  if (step === 6) return "audio";
+  if (step === 4) return "brand";
+  return "quality";
+}
+/** A section is reachable once the user has photos selected. */
+function sectionReady(key: string) {
+  const w = S.wizard;
+  if (key === "photos") return true;
+  if (key === "scenes") return (w.uploads || []).length > 0 || !!w.propertyId || !!w.versionId;
+  return (w.scenes || []).length > 0;
+}
+function stepForSection(key: string) {
+  if (key === "scenes") return (S.wizard.scenes || []).length ? 3 : 2;
+  return (WIZ_SECTIONS.find((x) => x[0] === key) || [null, null, null, 1])[3];
+}
 
 function wizardHtml() {
   const w = S.wizard;
-  const rail = `<div class="rv-steps">${WIZ_STEPS
-    .map((s, i) => `<span class="${w.step === i + 1 ? "on" : w.step > i + 1 ? "done" : ""}" data-step="${i + 1}"><em class="rv-n">${i + 1}</em>${s}${i === 1 && w.scenes.length ? `<i class="rv-badge mono">${w.scenes.length}</i>` : ""}</span>`)
-    .join(`<b class="rv-conn"></b>`)}</div>`;
+  const cur = sectionOf(w.step);
+  const rail = `<nav class="rv-rail">${WIZ_SECTIONS
+    .map(([key, name, icon]) => {
+      const ok = sectionReady(key);
+      return `<button class="rv-rail-i ${cur === key ? "on" : ""} ${ok ? "" : "off"}" data-sec="${key}" ${ok ? "" : "disabled"}>
+        <i data-lucide="${icon}"></i><span>${name}</span>${key === "scenes" && w.scenes.length ? `<i class="rv-badge mono">${w.scenes.length}</i>` : ""}</button>`;
+    })
+    .join("")}</nav>`;
 
   let body = "";
   if (w.step === 1) body = stepPhotos();
   if (w.step === 2) body = stepSelect();
   if (w.step === 3) body = stepEdit();
   if (w.step === 4) body = stepBrand();
+  if (w.step === 5) body = stepTitles();
+  if (w.step === 6) body = stepAudio();
+  if (w.step === 7) body = stepQuality();
 
   return `<div class="rv-head">
     <div><h2>Create A Property Video</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
-  ${rail}
-  <div class="rv-layout ${w.step > 1 ? "with-side" : ""}">
+  <div class="rv-layout rv-railed ${w.step > 1 ? "with-side" : ""}">
+    ${rail}
     <div class="rv-wiz">${body}</div>
     ${w.step > 1 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
   </div>
