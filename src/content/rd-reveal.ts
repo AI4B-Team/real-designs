@@ -1,8 +1,6 @@
 // REAL REVEAL — property video and marketing content.
 // Library, create wizard, storyboard editor and share settings. Sources come
 // from the property tree and media that already exist; nothing is re-uploaded.
-/* eslint-disable */
-// @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks, loadCustomTracks } from "@/lib/rd-music";
 import { voiceRequest } from "@/lib/rd-voice";
