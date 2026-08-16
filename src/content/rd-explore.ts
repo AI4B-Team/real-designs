@@ -598,7 +598,7 @@ export function mountExplore(go, ctx) {
     if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
     if (t.closest("[data-qnext]")) { if (!qBusy) quizAdvance(); return; }
     if (t.closest("[data-qback]")) { if (q.done) { q.done = false; q.step = QUIZ.length - 1; } else if (q.step > 0) q.step--; qSave(); paintQuiz(); return; }
-    if (t.closest("[data-qskip]")) { if (!qBusy) { q.picks[q.step] = null; qSave(); quizAdvance(); } return; }
+    if (t.closest("[data-qskip]")) { if (!qBusy) { q.picks[qIndex()] = null; qSave(); quizAdvance(); } return; }
     if (t.closest("[data-qbrowse]")) { const b = $("xpBody"); if (b) b.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
     if (t.closest("[data-qretake]")) { q = { step: 0, picks: [], done: false }; qSave(); paintQuiz(); return; }
   });
