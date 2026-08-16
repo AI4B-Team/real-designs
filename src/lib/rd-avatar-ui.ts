@@ -11,6 +11,7 @@ import {
   loadCustomAvatars,
   type AvatarConfig,
 } from "@/lib/rd-avatars";
+import { playAvatarVoice, speakingAvatar, stopAvatarVoice } from "@/lib/rd-avatar-voice";
 
 const esc = (s: unknown) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
@@ -33,6 +34,7 @@ export function avatarSection(cfg: AvatarConfig, title?: string | null): string 
         (a) => `<button type="button" class="av-card${a.id === cfg.avatarId ? " on" : ""}" data-av="${esc(a.id)}" title="${esc(a.name)}">
         <span class="av-img" style="background-image:url('${esc(a.url)}')"></span>
         <b>${esc(a.name)}</b><em>${esc(a.blurb)}</em>
+        <span class="av-play" role="button" tabindex="0" data-avplay="${esc(a.id)}" title="Hear ${esc(a.name)}'s Voice" aria-label="Hear ${esc(a.name)}'s Voice"><i data-lucide="volume-2"></i>Hear Voice</span>
       </button>`,
       )
       .join("")}
@@ -76,6 +78,51 @@ export function bindAvatar(
 ) {
   const on = (sel: string, ev: string, fn: (e: Event) => void) =>
     el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
+
+  const label = (id: string, state: "idle" | "loading" | "playing") => {
+    const node = el.querySelector(`[data-avplay="${CSS.escape(id)}"]`) as HTMLElement | null;
+    if (!node) return;
+    node.classList.toggle("busy", state === "loading");
+    node.classList.toggle("on", state === "playing");
+    const icon = state === "playing" ? "square" : state === "loading" ? "loader" : "volume-2";
+    const text = state === "playing" ? "Stop" : state === "loading" ? "Loading" : "Hear Voice";
+    node.innerHTML = `<i data-lucide="${icon}"></i>${text}`;
+    try {
+      (window as unknown as { lucide?: { createIcons: (o?: unknown) => void } }).lucide?.createIcons();
+    } catch (_) { /* icons refresh on next paint */ }
+  };
+
+  const preview = async (id: string) => {
+    const stopping = speakingAvatar() === id;
+    allAvatars().forEach((a) => label(a.id, "idle"));
+    if (stopping) return stopAvatarVoice();
+    label(id, "loading");
+    try {
+      const res = await playAvatarVoice(id);
+      label(id, res === "played" ? "playing" : "idle");
+    } catch (err) {
+      label(id, "idle");
+      toast?.(err instanceof Error ? err.message : "Voice Preview Failed.");
+    }
+  };
+
+  on("[data-avplay]", "click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    void preview((e.currentTarget as HTMLElement).dataset['avplay']!);
+  });
+  on("[data-avplay]", "keydown", (e) => {
+    const k = (e as KeyboardEvent).key;
+    if (k !== "Enter" && k !== " ") return;
+    e.preventDefault();
+    e.stopPropagation();
+    void preview((e.currentTarget as HTMLElement).dataset['avplay']!);
+  });
+  const onVoiceEvt = () => {
+    const id = speakingAvatar();
+    allAvatars().forEach((a) => label(a.id, a.id === id ? "playing" : "idle"));
+  };
+  window.addEventListener("rd:avatar-voice", onVoiceEvt);
 
   const chk = el.querySelector("#avOn") as HTMLInputElement | null;
   if (chk)

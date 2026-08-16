@@ -1567,3 +1567,19 @@
 .rd-app .perm-tbl th{text-align:center}
 .rd-app .perm-tbl td:first-child,
 .rd-app .perm-tbl th:first-child{text-align:left}
+
+/* Presenter voice preview chip on each avatar card */
+.av-card { position: relative; }
+.av-play {
+  display: inline-flex; align-items: center; gap: 4px; margin-top: 2px;
+  padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  color: var(--muted, #6b7280); background: var(--wash, #f3f4f6);
+  border: 1px solid var(--line, rgba(0,0,0,.10)); cursor: pointer;
+  transition: color .15s ease, background .15s ease, border-color .15s ease;
+}
+.av-play:hover { color: #cc0000; border-color: rgba(204,0,0,.35); background: rgba(204,0,0,.06); }
+.av-play.on { color: #fff; background: #cc0000; border-color: #cc0000; }
+.av-play.busy { opacity: .7; cursor: progress; }
+.av-play.busy svg { animation: av-spin 1s linear infinite; }
+.av-play svg { width: 12px; height: 12px; }
+@keyframes av-spin { to { transform: rotate(360deg); } }
