@@ -260,14 +260,18 @@ try{ mountUploadDock(go); }catch(_){}
     if(!bad) return;
     let n=0;
     const clean=()=>{
-      if(location.hash!==bad) return;
+      const now=location.hash;
+      /* the router re-applies its own url for a few frames after mount, so
+         keep re-asserting until the bad hash stops coming back */
+      if(now!==bad && now!=='') return;
       try{
         const cur=document.querySelector('.rd-app .view.on')||document.querySelector('.view.on');
-        if(cur){ history.replaceState(null,'',location.pathname+location.search+'#'+cur.id); return; }
+        if(cur) history.replaceState(null,'',location.pathname+location.search+'#'+cur.id);
       }catch(_){}
-      if(++n<60) window.setTimeout(clean,75);
+      if(++n<80) window.setTimeout(clean,75);
     };
     clean();
+
     return;
   }
 
