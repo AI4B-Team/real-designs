@@ -436,6 +436,9 @@ async function openBuilder(id) {
   S.step = 1;
   renderBuilder();
   await loadSources();
+  // Sources can take a moment; keep anything typed into step one meanwhile.
+  if (!id) readStep();
+
   if (id) {
     try {
       const p = await getPackage({ data: { id } });
