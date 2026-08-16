@@ -305,8 +305,8 @@ function searchIndex(){
       s:(pr.status==='approved'?'Approved':pr.status==='viewed'?'Opened':pr.status==='changes'?'Changes requested':'Sent'),view:'present',pres:pr.id});
   });
   SAVED_EST.forEach(e=>{
-    out.push({kind:'Scopes',ic:'calculator',t:(e.name||'Saved room')+' scope',
-      s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Scope')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
+    out.push({kind:'Budgets',ic:'calculator',t:(e.name||'Saved room')+' budget',
+      s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Budget')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
     out.push({kind:'Products',ic:'shopping-bag',t:(e.name||'Saved room')+' product board',
       s:'Allowances from the saved budget',view:'products'});
   });
@@ -337,7 +337,7 @@ function updateSearchMeta(){
   const set=(sc,v)=>{const b=schMenu.querySelector('[data-scope="'+sc+'"] .mv'); if(b) b.textContent=String(v);};
   set('Properties',PROP_TREE.length); set('Rooms',rooms); set('Designs',designs);
   set('Presentations',(typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).length);
-  set('Scopes',SAVED_EST.length); set('Products',SAVED_EST.length);
+  set('Budgets',SAVED_EST.length); set('Products',SAVED_EST.length);
   const recents=searchIndex().filter(r=>r.kind==='Designs').slice(0,3);
   const groups=schMenu.querySelectorAll('.acct-group');
   const recHead=groups[groups.length-1];
@@ -3026,8 +3026,8 @@ const TUTS=[
  ['Reality Lock In Practice','Designing','studio',['Generate a version, then flip between before and after.','Check the window and door openings line up. They should not move.','If a version drifts, regenerate. Only finishes and furnishings should change.']],
  ['Choosing Style And Intensity','Designing','studio',['Pick a style for the look.','Pick an intensity: Refresh, Makeover, Renovation or Reimagine.','Intensity drives the budget more than direction does, so set it against the money first.']],
  ['Staging A Whole Listing','Listing Batch','listings',['Open Listing Batch and select the property.','Choose one direction for the whole listing.','Run the batch. Each room costs 1 credit and saves to its own room record.']],
- ['Building A Scope And Budget','Scope','scope',['Open a saved version and request a scope for 3 credits.','Set market, finish grade and budget band.','Review the change list and the low to high planning range, then export or share it.']],
- ['Working The Product Board','Products','products',['Open Products after a scope has been priced.','Each material line becomes a card with quantity and allowance range.','Use Shop On to search the right retailer, or export the board as CSV or print.']],
+ ['Building A Budget','Budget','scope',['Open a saved version and request a budget for 3 credits.','Set market, finish grade and budget band.','Review the change list and the low to high planning range, then export or share it.']],
+ ['Working The Product Board','Products','products',['Open Products after a budget has been priced.','Each material line becomes a card with quantity and allowance range.','Use Shop On to search the right retailer, or export the board as CSV or print.']],
  ['Sending A Client Link','Delivery','present',['Open Presentations and pick an approved version.','Add a title and the client name, then generate the link.','Share the link. Views, approvals and notes come back into the same row.']],
  ['Tracking Approvals','Delivery','present',['Watch the status pill on each presentation row.','View counts update as the client opens the link.','Approval decisions and client notes appear inline and in your notification feed.']]];
 document.getElementById('tutGrid').innerHTML=TUTS.map(([t,tag,view,steps],i)=>`<div class="card"><div class="card-b">
@@ -3165,7 +3165,7 @@ function nAgo(iso){
   if(s<90) return 'now'; if(s<5400) return Math.round(s/60)+'m';
   if(s<172800) return Math.round(s/3600)+'h'; return Math.round(s/86400)+'d';
 }
-const ACTION_LABEL={design:'Design',scope:'Scope',plan_3d:'3D Plan',video:'Video',topup:'Top Up',grant:'Credits Granted',refund:'Refund'};
+const ACTION_LABEL={design:'Design',scope:'Budget',plan_3d:'3D Plan',video:'Video',topup:'Top Up',grant:'Credits Granted',refund:'Refund'};
 async function buildNotifs(){
   const read=notifRead(); const out=[];
   try{
@@ -3292,7 +3292,7 @@ renderNotifs();
 const toolRows = Array.from(document.querySelectorAll('.toolrow'));
 const toolInfo = document.getElementById('toolInfo');
 const LIVE_TOOLS={'2D To 3D Plan':run3dPlan,'Walkthrough Video':runWalkthrough,'Virtual Stage':()=>runRoomToolFlow('stage','Virtual Stage',false),'Declutter':()=>runRoomToolFlow('declutter','Declutter',false),'Material Swap':()=>runRoomToolFlow('materials','Material Swap',true),'Sketch To Render':()=>runRoomToolFlow('sketch','Sketch To Render',false),'Multi Angle':()=>runRoomToolFlow('angle','Multi Angle',true)};
-const TOOL_COST={'Redesign':1,'Virtual Stage':1,'Declutter':1,'Material Swap':1,'Sketch To Render':1,'Scope & Budget':3,'Multi Angle':1,'Walkthrough Video':40,'2D To 3D Plan':6};
+const TOOL_COST={'Redesign':1,'Virtual Stage':1,'Declutter':1,'Material Swap':1,'Sketch To Render':1,'Budget':3,'Multi Angle':1,'Walkthrough Video':40,'2D To 3D Plan':6};
 toolRows.forEach((r)=>{
   const nm=r.getAttribute('data-tool')||'';
   const c=TOOL_COST[nm];
@@ -3712,8 +3712,8 @@ if(scopeGrid && !document.getElementById('scSave')){
 
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
-    {k:'priced',t:'Price The Scope',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Budget'},
-    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced scope on your account.',i:'save',cta:'Save Room'},
+    {k:'priced',t:'Price The Budget',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Budget'},
+    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced budget on your account.',i:'save',cta:'Save Room'},
     {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent colour on every export.',i:'palette',cta:'Set Brand'},
     {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
   ];
@@ -3801,7 +3801,7 @@ lucide.createIcons();
 
 /* ---------- live credit meter, billing pane and upgrade prompts ---------- */
 const COST_ROWS=[['Design','1 Credit','A photoreal redesign of one photo'],
-                 ['Scope','3 Credits','Line items, quantities and local rates'],
+                 ['Budget','3 Credits','Line items, quantities and local rates'],
                  ['3D Plan','6 Credits','A furnished plan from your photo'],
                  ['Video','40 Credits','A cinematic walkthrough clip']];
 const PLAN_NAME={free:'Free',starter:'Starter',pro:'Pro',studio:'Studio'};
@@ -3870,7 +3870,7 @@ function paintBilling(c){
     lab.textContent='Free Designs Left Today';
     val.textContent=(c.remainingToday??0)+' / 5';
     bar.style.width=(((c.remainingToday??0)/5)*100)+'%';
-    note.textContent='Resets at midnight. Scopes, 3D plans and video need a paid plan.';
+    note.textContent='Resets at midnight. Budgets, 3D plans and video need a paid plan.';
   }else{
     lab.textContent='Credit Balance';
     val.textContent=c.balance.toLocaleString();
@@ -3912,7 +3912,7 @@ async function refreshCredits(){
       if(title) title.textContent='Credit Balance';
       lab.textContent=c.balance.toLocaleString();
       if(bar) bar.style.width=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100)+'%';
-      if(foot) foot.innerHTML='<span>'+(PLAN_NAME[c.plan]||c.plan)+' Plan</span><b>1 Design &bull; 3 Scope &bull; 40 Video</b>';
+      if(foot) foot.innerHTML='<span>'+(PLAN_NAME[c.plan]||c.plan)+' Plan</span><b>1 Design &bull; 3 Budget &bull; 40 Video</b>';
     }
     if(box && !box.dataset.wired){
       box.dataset.wired='1';
@@ -4244,7 +4244,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
 (function(){
   const SC=[
     ['Navigate',[['G then D','Dashboard'],['G then P','Properties'],['G then S','Studio'],['G then I','Designs'],
-      ['G then B','Scope & Budget'],['G then R','Reports'],['G then A','Account']]],
+      ['G then B','Budget'],['G then R','Reports'],['G then A','Account']]],
     ['Actions',[['⌘ K','Search Workspace'],['⌘ B','Collapse Or Expand Menu'],['N','New Design'],
       ['?','Keyboard Shortcuts'],['Esc','Close Menus & Dialogs']]]
   ];
