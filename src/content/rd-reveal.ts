@@ -777,9 +777,11 @@ const MOTION_COPY = {
 };
 /** Preview animation class per option. Immersive and exterior reuse the closest camera move. */
 const MOTION_PREVIEW = {
-  curtains: "static", fire: "static", water: "static", light: "static", foliage: "static",
+  curtains: "drift_in", fire: "static", water: "drift_in", light: "static", foliage: "drift_in",
   approach: "push", rise: "pull", aerial_reveal: "pull",
 };
+const FX_PREVIEW = ["curtains", "fire", "water", "light", "foliage"];
+function fxClass(id) { return FX_PREVIEW.includes(id) ? `rv-pop-fx fx-${id}` : "rv-pop-fx"; }
 function motionName(id) {
   const all = [...STANDARD_MOTIONS, ...IMMERSIVE_EFFECTS, ...EXTERIOR_EFFECTS];
   const hit = all.find(([i]) => i === id);
@@ -865,6 +867,7 @@ function popoverHtml() {
       <div class="rv-pop-prev">
         <div class="rv-pop-stage">
           <div class="rv-pop-clip m-${esc(MOTION_PREVIEW[hov] || hov || "auto")}" data-img="${esc(s.path)}"></div>
+          <div class="${fxClass(hov)}"></div>
           <span class="rv-pop-live"><i></i>Live Preview</span>
         </div>
         <b id="rvPopName">${esc(motionName(hov))}</b>
@@ -1909,6 +1912,7 @@ function bind() {
     const clip = el.querySelector(".rv-pop-clip");
     if (!clip) return; // preview not mounted, nothing to repaint
     clip.className = `rv-pop-clip m-${MOTION_PREVIEW[id] || id || "auto"}`;
+    const fx = el.querySelector(".rv-pop-fx"); if (fx) fx.className = fxClass(id);
     const nm = el.querySelector("#rvPopName"); if (nm) nm.textContent = motionName(id);
     const cp = el.querySelector("#rvPopCopy"); if (cp) cp.textContent = MOTION_COPY[id] || MOTION_COPY.auto;
   });
