@@ -17,18 +17,36 @@ function AuthenticatedLayout() {
 
   useEffect(() => {
     let cancelled = false;
-    supabase.auth.getUser().then(({ data, error }) => {
-      if (cancelled) return;
-      if (error || !data.user) {
-        navigate({ to: "/auth", replace: true });
-        return;
+
+    // A network hiccup on the session lookup must never bounce someone out of
+    // a page they are working in. Only a confirmed missing session redirects;
+    // a failed request is retried, and a stored session keeps them in place.
+    (async () => {
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const { data, error } = await supabase.auth.getUser();
+        if (cancelled) return;
+        if (data?.user) {
+          setState("in");
+          return;
+        }
+        if (!error) break; // answered cleanly: there is genuinely no user
+        const { data: s } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (s?.session) {
+          setState("in");
+          return;
+        }
+        await new Promise((r) => setTimeout(r, 400 * (attempt + 1)));
+        if (cancelled) return;
       }
-      setState("in");
-    });
+      if (!cancelled) navigate({ to: "/auth", replace: true });
+    })();
+
     return () => {
       cancelled = true;
     };
   }, [navigate]);
+
 
   if (state !== "in") return null;
   return <Outlet />;
