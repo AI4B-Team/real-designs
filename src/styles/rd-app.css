@@ -1622,9 +1622,9 @@
 .rd-app .side.mini .nav-soon,.rd-app .app.sidemin .nav-soon,.rd-app .sidemin .nav-soon{display:none}
 
 /* ---------- budget coming soon (one block, every budget entry point) ---------- */
-.bcs{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:22px;max-width:760px}
+.bcs{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:22px;max-width:none;width:100%}
 .bcs-head h2{margin:8px 0 6px;font-size:20px}
-.bcs-head p{margin:0;color:var(--mute-2);line-height:1.55;max-width:62ch}
+.bcs-head p{margin:0;color:var(--mute-2);line-height:1.55;max-width:none}
 .bcs-pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
   color:#fff;background:var(--red,#c00);border-radius:999px;padding:3px 10px}
 .bcs-list{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:12px}
