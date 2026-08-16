@@ -773,33 +773,12 @@ function motionLabel(s) {
   return m ? m[1] : "Auto";
 }
 
-function sceneCard(s, i) {
-  const look = s.look ? lookById(s.look) : null;
-  const changed = (s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect;
-  return `<div class="rv-scard" draggable="true" data-idx="${i}">
-    <div class="rv-scard-th" data-img="${esc(s.path)}">
-      <span class="rv-seq mono">${i + 1}</span>
-      <button class="rv-x" data-drop="${i}" aria-label="Remove Scene"><i data-lucide="x"></i></button>
-    </div>
-    <div class="rv-scard-b">
-      <div class="rv-mchips">
-        <button class="rv-mchip ${changed ? "hot" : ""}" data-pop="motion" data-i="${i}" title="Camera Motion">${esc(motionLabel(s))}<i data-lucide="chevron-down"></i></button>
-        <button class="rv-mchip" data-pop="crop" data-i="${i}" title="Crop">Crop</button>
-        <button class="rv-mchip ${s.vfx && s.vfx !== "none" ? "hot" : ""}" data-pop="look" data-i="${i}" title="VFX">${esc(tileById(s.vfx)?.label || "VFX")}</button>
-      </div>
-      <b>${esc(s.room || "Scene " + (i + 1))}</b>
-      <input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional">
-      <div class="rv-scard-a">
-        <button class="icon-btn" data-move="-1" title="Move Up"><i data-lucide="chevron-up"></i></button>
-        <button class="icon-btn" data-move="1" title="Move Down"><i data-lucide="chevron-down"></i></button>
-      </div>
-    </div>
-  </div>`;
-}
-
 function popoverHtml() {
   const w = S.wizard;
-  const { kind, i } = w.pop;
+  const { kind } = w.pop;
+  /* Resolve by asset key when we have one, so a reorder underneath an open
+     popover cannot retarget it at a different scene. */
+  const i = w.pop.key ? w.scenes.findIndex((x) => x.key === w.pop.key) : w.pop.i;
   const s = w.scenes[i];
   if (!s) return "";
   let body = "";
