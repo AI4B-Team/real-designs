@@ -106,16 +106,17 @@ export const buildScope = createServerFn({ method: "POST" })
     if (property.market_id) {
       const { data: m, error: marketError } = await supabaseAdmin
         .from("markets")
-        .select("id, labor_factor, material_factor")
+        .select("id, labor_factor, material_factor, verified_at")
         .eq("id", property.market_id)
         .maybeSingle();
       if (marketError) throw new Error(marketError.message);
-      market = m as any;
+      market = (m as any)?.verified_at ? (m as any) : null;
     }
     if (!market) {
       const { data: fallback } = await supabaseAdmin
         .from("markets")
         .select("id, labor_factor, material_factor")
+        .not("verified_at", "is", null)
         .order("name", { ascending: true })
         .limit(1)
         .maybeSingle();
