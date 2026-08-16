@@ -2263,39 +2263,40 @@ function boardCsv(){
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='real-designs-product-board.csv'; a.click(); URL.revokeObjectURL(a.href);
 }
-function boardPrintHtml(title,sub,grade,lines,totals){
-  const rows=lines.map(l=>{const s=boardSearch(l.description,grade);
-    return `<tr><td><b>${esc(l.description)}</b><div class="s">${esc(l.price_source||'')}</div></td><td>${esc(l.trade)}</td>
-<td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${presMoney(l.material_low)} &ndash; ${presMoney(l.material_high)}</td>
-<td>${esc(buyLabel(buyStatus(l)))}</td>
-<td><a href="${s.url}">${esc(s.name)}</a></td></tr>`;}).join('')||'<tr><td colspan="6">No material lines.</td></tr>';
-
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)} — Product Board</title><style>
-@page{size:letter;margin:14mm}body{font:13px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#141414;margin:0}
-.mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #CC0000;padding-bottom:10px;margin-bottom:16px}
-.brand{font-weight:800;letter-spacing:.16em;font-size:12px;text-transform:uppercase}.brand b{color:#CC0000}
-h1{font-size:20px;margin:0 0 4px}.sub{color:#6b6b6b;font-size:12px}
-table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:7px 6px;border-bottom:1px solid #ececec;vertical-align:top}
-th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b}td.n,th.n{text-align:right}
-td .s{color:#8a8a8a;font-size:10px}a{color:#CC0000}
-.note{margin-top:16px;font-size:10.5px;color:#6b6b6b;border-top:1px solid #ececec;padding-top:10px}
-</style></head><body><div class="mast"><div><div class="brand">REAL<b>&nbsp;DESIGNS</b></div><h1>${esc(title)}</h1>
-<div class="sub">${esc(sub)}</div></div><div class="sub" style="text-align:right">Product Board<br>${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div>
-<table><thead><tr><th>Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Allowance</th><th>Status</th><th>Where To Buy</th></tr></thead><tbody>${rows}</tbody>
-${totals?`<tfoot><tr><td colspan="3"><b>Material Allowance Total</b></td><td class="n"><b>${presMoney(totals[0])} &ndash; ${presMoney(totals[1])}</b></td><td></td><td></td></tr></tfoot>`:''}</table>
-
-<div class="note">Allowances are planning figures per line at the selected finish grade, not quoted product prices. Retailer links are searches, not endorsements or reserved stock.</div>
-</body></html>`;
+function boardPdfDoc(title,sub,grade,lines,totals){
+  const rows=lines.map(l=>{
+    const s=boardSearch(l.description,grade);
+    return [l.description+(l.price_source?'\n'+l.price_source:''), l.trade, l.qty+' '+l.uom,
+      presMoney(l.material_low)+' - '+presMoney(l.material_high), buyLabel(buyStatus(l)), s.name];
+  });
+  if(!rows.length) rows.push(['No material lines.','','','','','']);
+  return {
+    title,
+    subtitle:sub,
+    metaRight:['Product Board',new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})],
+    sections:[{
+      columns:[{label:'Item',width:30},{label:'Trade',width:14},{label:'Quantity',align:'right',width:12},
+        {label:'Allowance',align:'right',width:18},{label:'Status',width:12},{label:'Where To Buy',width:14}],
+      rows
+    }],
+    totals:totals?[{label:'Material Allowance Total',value:presMoney(totals[0])+' - '+presMoney(totals[1]),strong:true}]:[],
+    notes:['Allowances are planning figures per line at the selected finish grade, not quoted product prices. Retailer links are searches, not endorsements or reserved stock.']
+  };
 }
-function boardPrint(){
-  const r=lastScope; if(!r){ showAlert('Price A Budget First, Then Print The Board.'); return; }
+async function boardPrint(){
+  const r=lastScope; if(!r){ showAlert('Price A Budget First, Then Export The Board.'); return; }
   const sp=PROP_TREE[SEL.p], sj=sp?sp.projects[SEL.pr]:null;
-  const w=window.open('','_blank'); if(!w) return;
-  w.document.write(boardPrintHtml('Product Board',
-    (sp?sp.address+(sj?' · '+sj.name:''):'Unsaved room')+' · '+r.market.name+' · '+r.grade+' grade',
-    r.grade, boardLines(r), [r.material_low,r.material_high]));
-  w.document.close(); w.focus(); setTimeout(()=>{try{w.print();}catch(_){}} ,600);
+  const btn=document.getElementById('boardPrint'); const lab=btn?btn.innerHTML:'';
+  if(btn){ btn.disabled=true; btn.textContent='Building PDF…'; }
+  try{
+    await downloadPdf(boardPdfDoc('Product Board',
+      (sp?sp.address+(sj?' - '+sj.name:''):'Unsaved room')+' - '+r.market.name+' - '+r.grade+' grade',
+      r.grade, boardLines(r), [r.material_low,r.material_high]),'product-board');
+    try{ (window as any).rdToast && (window as any).rdToast('Product Board Downloaded'); }catch(_){ }
+  }catch(e){ showAlert('Could not build the product board. '+((e&&e.message)||'')); }
+  finally{ if(btn){ btn.disabled=false; btn.innerHTML=lab; } }
 }
+
 renderProductBoard(lastScope);
 function paintSelectedProducts(){ try{ renderSelectedProducts(document.getElementById('selProducts'),go); }catch(_){} }
 paintSelectedProducts();
