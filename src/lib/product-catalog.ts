@@ -64,6 +64,8 @@ export interface DetectedObject {
   /** normalized 0-1 box over the design image */
   box: { x: number; y: number; w: number; h: number };
   origin: "auto" | "manual";
+  /** 0-1 model confidence for auto objects */
+  confidence?: number | undefined;
   traits?: { colors?: string[] | undefined; materials?: string[] | undefined; shape?: string | undefined } | undefined;
 }
 
@@ -97,7 +99,7 @@ export interface RetailerFeedProvider {
 export interface ObjectDetectionProvider {
   id: string;
   configured: boolean;
-  detect(imageUrl: string, roomType?: string): Promise<DetectedObject[]>;
+  detect(imageUrl: string, roomType?: string, opts?: { force?: boolean }): Promise<DetectedObject[]>;
 }
 
 export function isProductSearchConfigured(): boolean {
@@ -333,78 +335,65 @@ export function visualSearchProvider(): VisualSearchProvider {
   return sampleVisualSearch;
 }
 
-/* ---------------- object detection (sample layouts) ---------------- */
+/* ---------------- object detection (real vision) ---------------- */
 
-const LAYOUTS: Record<string, Array<[string, number, number, number, number]>> = {
-  living: [
-    ["Sofa", 0.26, 0.52, 0.4, 0.24],
-    ["Coffee Table", 0.38, 0.72, 0.22, 0.13],
-    ["Rug", 0.2, 0.76, 0.55, 0.18],
-    ["Lamp", 0.12, 0.38, 0.11, 0.3],
-    ["Artwork", 0.24, 0.18, 0.2, 0.22],
-    ["Side Table", 0.68, 0.6, 0.12, 0.14],
-    ["Plant", 0.82, 0.5, 0.13, 0.3],
-    ["Flooring", 0.08, 0.88, 0.84, 0.1],
-  ],
-  kitchen: [
-    ["Cabinet", 0.1, 0.42, 0.3, 0.34],
-    ["Countertop", 0.34, 0.56, 0.36, 0.1],
-    ["Faucet", 0.46, 0.44, 0.08, 0.12],
-    ["Chandelier", 0.42, 0.12, 0.18, 0.16],
-    ["Tile", 0.14, 0.3, 0.28, 0.12],
-    ["Flooring", 0.08, 0.86, 0.84, 0.11],
-  ],
-  bath: [
-    ["Vanity", 0.24, 0.5, 0.32, 0.26],
-    ["Faucet", 0.37, 0.44, 0.08, 0.1],
-    ["Tile", 0.62, 0.24, 0.3, 0.42],
-    ["Lamp", 0.28, 0.24, 0.1, 0.14],
-    ["Flooring", 0.08, 0.86, 0.84, 0.11],
-  ],
-  bedroom: [
-    ["Chair", 0.72, 0.56, 0.16, 0.22],
-    ["Artwork", 0.3, 0.16, 0.24, 0.2],
-    ["Rug", 0.18, 0.78, 0.56, 0.16],
-    ["Lamp", 0.14, 0.44, 0.1, 0.2],
-    ["Side Table", 0.62, 0.6, 0.12, 0.14],
-    ["Flooring", 0.08, 0.88, 0.84, 0.1],
-  ],
-  outdoor: [
-    ["Chair", 0.24, 0.54, 0.18, 0.22],
-    ["Coffee Table", 0.46, 0.62, 0.18, 0.13],
-    ["Plant", 0.78, 0.46, 0.16, 0.32],
-    ["Lamp", 0.1, 0.4, 0.1, 0.24],
-  ],
+export const PRODUCT_CATEGORIES = Object.keys(SEEDS);
+
+/** Lucide glyph per category, used for product image empty states. */
+export const CATEGORY_ICON: Record<string, string> = {
+  Sofa: "sofa",
+  Chair: "armchair",
+  "Coffee Table": "table",
+  "Side Table": "table-2",
+  Rug: "grid-2x2",
+  Lamp: "lamp",
+  Chandelier: "lightbulb",
+  Artwork: "image",
+  Plant: "leaf",
+  Cabinet: "archive",
+  Vanity: "bath",
+  Faucet: "droplet",
+  Flooring: "layers",
+  Tile: "grid-3x3",
+  Countertop: "square",
+  "Paint Color": "paint-bucket",
 };
 
-export function detectionLayout(kind: string): Array<[string, number, number, number, number]> {
-  return LAYOUTS[kind] ?? LAYOUTS['living']!;
+export function categoryIcon(category: string): string {
+  return CATEGORY_ICON[category] || "package";
 }
 
-/** SAMPLE detection provider: geometry heuristics, not a trained model. */
-export const sampleDetection: ObjectDetectionProvider = {
-  id: "sample",
-  configured: false,
-  async detect(_imageUrl, roomType) {
-    await new Promise((r) => setTimeout(r, 700));
-    const kind = String(roomType || "living").toLowerCase();
-    const key = kind.includes("kitchen")
-      ? "kitchen"
-      : kind.includes("bath")
-        ? "bath"
-        : kind.includes("bed")
-          ? "bedroom"
-          : kind.includes("yard") || kind.includes("outdoor") || kind.includes("exterior") || kind.includes("garden")
-            ? "outdoor"
-            : "living";
-    return detectionLayout(key).map((row, i) => ({
+const detectCache = new Map<string, DetectedObject[]>();
+
+/**
+ * Vision detection. Sends the real design image through the AI gateway and
+ * returns boxes derived from THAT image. There is deliberately no coordinate
+ * fallback: a failed or low-confidence scan produces no hotspots at all.
+ */
+export const visionDetection: ObjectDetectionProvider = {
+  id: "vision",
+  configured: true,
+  async detect(imageUrl: string, roomType?: string, opts?: { force?: boolean }): Promise<DetectedObject[]> {
+    const key = String(imageUrl || "") + "::" + String(roomType || "");
+    if (!opts?.force && detectCache.has(key)) return detectCache.get(key)!.map((o) => ({ ...o, box: { ...o.box } }));
+    const { detectShopObjects } = await import("@/lib/shop-detect.functions");
+    const res = await detectShopObjects({
+      data: { image: imageUrl, roomType: roomType || "Living Room", categories: PRODUCT_CATEGORIES },
+    });
+    const objects: DetectedObject[] = (res.objects || []).map((o, i) => ({
       id: "auto-" + i,
-      category: row[0],
-      label: row[0],
-      box: { x: row[1], y: row[2], w: row[3], h: row[4] },
+      category: o.category,
+      label: o.label,
+      box: o.box,
       origin: "auto" as const,
+      confidence: o.confidence,
     }));
+    detectCache.set(key, objects.map((o) => ({ ...o, box: { ...o.box } })));
+    return objects;
   },
 };
 
-export const PRODUCT_CATEGORIES = Object.keys(SEEDS);
+export function objectDetectionProvider(): ObjectDetectionProvider {
+  return visionDetection;
+}
+
