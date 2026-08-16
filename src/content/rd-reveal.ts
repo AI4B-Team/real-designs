@@ -1980,16 +1980,24 @@ function bind() {
   on("#rvKeepAll", "click", () => render());
 
   /* drag ordering */
-  el.querySelectorAll(".rv-scene, .rv-scard").forEach((n) => {
-    n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.idx));
-    n.addEventListener("dragover", (e) => e.preventDefault());
+  el.querySelectorAll(".rv-tile[draggable='true']").forEach((n) => {
+    n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.key));
+    n.addEventListener("dragover", (e) => { e.preventDefault(); n.classList.add("drop-l"); });
+    n.addEventListener("dragleave", () => n.classList.remove("drop-l"));
+    n.addEventListener("dragend", () => n.classList.remove("drop-l"));
     n.addEventListener("drop", (e) => {
       e.preventDefault();
-      const from = Number(e.dataTransfer.getData("text/plain"));
-      const to = Number(n.dataset.idx);
-      if (Number.isNaN(from) || from === to) return;
-      const [x] = w.scenes.splice(from, 1);
-      w.scenes.splice(to, 0, x);
+      n.classList.remove("drop-l");
+      const from = e.dataTransfer.getData("text/plain");
+      const to = n.dataset.key;
+      if (!from || from === to) return;
+      const order = w.gridOrder || [];
+      const fi = order.indexOf(from);
+      const ti = order.indexOf(to);
+      if (fi < 0 || ti < 0) return;
+      order.splice(fi, 1);
+      order.splice(ti, 0, from);
+      syncSceneOrder();
       render();
     });
   });
