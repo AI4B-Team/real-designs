@@ -1371,11 +1371,17 @@ function assetToScene(a) {
 function autoArrange() {
   const w = S.wizard;
   if (!w || !w.scenes) return;
-  w.scenes.sort((a, b) => {
-    const ga = orderRank(groupFor(a.room));
-    const gb = orderRank(groupFor(b.room));
-    return ga - gb || a.room.localeCompare(b.room);
+  /* The grid is the order, so arranging sorts gridOrder and lets the scenes
+     follow. Unselected photos travel with their room group. */
+  const byKey = new Map((w.available || []).map((a) => [a.key, a]));
+  (w.gridOrder || []).sort((ka, kb) => {
+    const a = byKey.get(ka);
+    const b = byKey.get(kb);
+    const ga = orderRank(a?.group || groupFor(a?.room || ""));
+    const gb = orderRank(b?.group || groupFor(b?.room || ""));
+    return ga - gb || String(a?.room || "").localeCompare(String(b?.room || ""));
   });
+  syncSceneOrder();
 }
 
 /* ======================= GENERATION ======================= */
