@@ -1933,13 +1933,28 @@ function bind() {
     w.uploads = w.uploads.filter((u) => u.id !== id);
     render();
   });
-  const addUploads = (list) => {
+  const addUploads = async (list) => {
     const rejects = [];
     const added = [];
     for (const f of Array.from(list || [])) {
       const why = rejectReason(f);
       if (why) { rejects.push(f.name + ": " + why); continue; }
-      const upload = { id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url: URL.createObjectURL(f), file: f };
+      /* Keep a self-contained preview instead of a transient object URL. The
+         shared picker repaints itself while intake finishes, and object URLs
+         created by that detached picker could disappear before this wizard's
+         next render. The original File is still retained for saving/rendering. */
+      let url = "";
+      try {
+        url = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+          reader.onerror = () => reject(reader.error || new Error("Preview could not be created."));
+          reader.readAsDataURL(f);
+        });
+      } catch (_) {
+        url = URL.createObjectURL(f);
+      }
+      const upload = { id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url, file: f };
       w.uploads.push(upload);
       added.push(upload);
     }
@@ -1996,7 +2011,7 @@ function bind() {
           label: d.room,
           sub: `${d.propertyLabel} · ${d.before ? "Before And After" : "Design"}`,
         })),
-      onPick: (picked) => addUploads(picked.map((p) => p.file)),
+      onPick: (picked) => { void addUploads(picked.map((p) => p.file)); },
       onProperty: (address) => {
         const p = S.tree.find((x) => x.address === address);
         w.propertyLabel = address;
