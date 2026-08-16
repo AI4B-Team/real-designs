@@ -96,7 +96,7 @@ try{
   setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
 }catch(_){}
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
-import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo } from "@/content/rd-reveal";
+import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo, resetReveal } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
 import { mountCrm } from "@/content/rd-crm";
@@ -190,6 +190,9 @@ function go(v,fromHash){
   let viewId = v==='lvideo' ? 'reveal' : v;
   if(!document.getElementById('v-'+viewId)) viewId='dash';
   const navId = (viewId==='reveal') ? 'media' : viewId;
+  /* Drop any half-finished video builder before showing another view, so a
+     stale wizard can never flash on the next visit. */
+  if(viewId!=='reveal'){ try{ resetReveal(); }catch(_){} }
   document.querySelectorAll('.nav-i').forEach(b=>b.classList.toggle('on',b.dataset.v===navId));
   document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+viewId));
 
