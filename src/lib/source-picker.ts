@@ -40,13 +40,13 @@ const IMAGE_ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.heif";
 
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
-    sources: ["upload", "cloud", "address", "property"],
+    sources: ["upload", "cloud", "property"],
     multiple: false,
     accept: IMAGE_ACCEPT + ",application/pdf,.pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "address", "property", "design"],
+    sources: ["upload", "cloud", "property", "design"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",

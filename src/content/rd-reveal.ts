@@ -570,10 +570,10 @@ function wizardHtml() {
     <div><h2>Create A Property Video</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
-  <div class="rv-layout rv-railed ${w.step > 1 ? "with-side" : ""}">
+  <div class="rv-layout rv-railed ${w.step > 2 ? "with-side" : ""}">
     ${rail}
     <div class="rv-wiz">${body}</div>
-    ${w.step > 1 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
+    ${w.step > 2 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
   </div>
   ${w.pop ? popoverHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
@@ -615,7 +615,7 @@ function stepPhotos() {
   ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
     .map((u) => `<div class="rv-thumb" style="background-image:url('${esc(u.url)}')"><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
     .join("")}</div>
-  <div class="rv-upload"><span class="mono">${w.uploads.length} Photos Added</span></div>` : ""}
+  <div class="rv-upload"><span class="mono">${w.uploads.length} ${w.uploads.length === 1 ? "Photo" : "Photos"} Added</span></div>` : ""}
   <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button></div>`;
 }
 
