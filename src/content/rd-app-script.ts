@@ -140,7 +140,7 @@ const PALS={
 };
 
 /* ---------- nav ---------- */
-const titles={home:['Start','Two ways in: design a space or create a listing video'],
+const titles={home:['Dashboard','Your workspace at a glance'],
 dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
 studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Budget','Planning estimates from approved designs'],
@@ -193,10 +193,12 @@ function go(v,fromHash){
   const revealLive=(()=>{ try{ return !!((window as any).__rdRevealBusy && (window as any).__rdRevealBusy()); }catch(_){ return false; } })();
   if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
-     keys like lvideo) must never leave the content area blank. */
-  let viewId = v==='lvideo' ? 'reveal' : v;
+     keys like lvideo) must never leave the content area blank. Home and the
+     dashboard are one view now, reachable only as dash. */
+  let viewId = v==='lvideo' ? 'reveal' : (v==='home' ? 'dash' : v);
   if(!document.getElementById('v-'+viewId)) viewId='dash';
-  const navId = (viewId==='reveal') ? 'media' : viewId;
+  const navId = (v==='lvideo') ? 'lvideo' : (viewId==='reveal') ? 'media' : viewId;
+
   /* Drop any half-finished video builder before showing another view, so a
      stale wizard can never flash on the next visit. */
   if(viewId!=='reveal'){ try{ resetReveal(); }catch(_){} }
@@ -214,7 +216,7 @@ function go(v,fromHash){
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
   if(v==='scope'){ try{ paintBudgetGate(); }catch(_){} }
-  if(v==='home'){ try{ paintHome(); }catch(_){} }
+  
   /* Legacy or unknown keys fall back to the dashboard view, so the header
      must follow the view that actually rendered, never the stale one. */
   const titleKey = titles[v] ? v : viewId;
@@ -551,16 +553,34 @@ const skList=(n=3)=>Array.from({length:n},()=>'<div class="rowi sk-rowi"><div cl
 const skRows=(cols=6,n=4)=>Array.from({length:n},()=>'<tr class="sk-tr">'+Array.from({length:cols},()=>'<td><div class="sk sk-cell"></div></td>').join('')+'</tr>').join('');
 const skLines=(n=3)=>'<div class="sk-lines">'+Array.from({length:n},()=>'<div class="sk sk-l1"></div>').join('')+'</div>';
 
-/* First run checklist on the dashboard, driven by real workspace data. */
-function paintOnboarding(s,pres){
+/* First run checklist on the dashboard, driven by real workspace data.
+   Every task here must be completable today, so the budget tasks only appear
+   once verified cost data exists for a market. */
+async function paintOnboarding(s,pres){
   const view=document.getElementById('v-dash'); if(!view) return;
   let card=document.getElementById('obCard');
+  let brandOk=false;
+  try{ brandOk=!!(PREFS&&PREFS.brand&&(PREFS.brand.company||'').trim()); }catch(_){}
+  let videoOk=false;
+  try{
+    const mod=await import('@/lib/reveal.functions');
+    const vids=await mod.listVideos();
+    videoOk=((vids&&vids.projects)||[]).length>0;
+  }catch(_){}
+
   const done=[
     ['Save Your First Room','Upload a photo in Studio and save it to a property.', (s.counts.designs||0)>0, 'studio','Open Studio'],
-    ['Price A Budget','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Budget'],
-    ['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'scope','Open Budget'],
+    ['Create A Listing Video','Turn property photos into a video you can share.', videoOk, 'lvideo','Open Listing Video'],
     ['Send A Client Presentation','Share a branded approval link and track the decision.', (pres||[]).length>0, 'present','Open Presentations'],
+    ['Set Up Your Brand Kit','Add your logo and contact details to everything you send.', brandOk, 'settings','Open Brand Kit'],
   ];
+  let budgetLive=false;
+  try{ budgetLive=!!(await budgetAvailability()).available; }catch(_){}
+  if(budgetLive){
+    done.push(['Price A Budget','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Budget']);
+    done.push(['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'scope','Open Budget']);
+  }
+  const total=done.length;
   const left=done.filter(d=>!d[2]).length;
   /* the first run Get Started card covers the same ground, never show both */
   if(!left||localStorage.getItem('rd.obDone')==='1'||document.getElementById('onbCard')){ if(card) card.remove(); return; }
@@ -569,7 +589,8 @@ function paintOnboarding(s,pres){
     card.id='obCard'; card.className='card ob-card';
     view.prepend(card);
   }
-  card.innerHTML='<div class="card-h"><div><h3>Get Set Up</h3><div class="sub">'+(4-left)+' Of 4 Done</div></div>'
+  card.innerHTML='<div class="card-h"><div><h3>Get Set Up</h3><div class="sub">'+(total-left)+' Of '+total+' Done</div></div>'
+
     +'<button class="btn btn-ghost btn-xs" id="obHide">Hide</button></div>'
     +'<div class="card-b ob-steps">'+done.map(([t,sub,ok,dest,lab])=>
       '<div class="ob-step'+(ok?' ok':'')+'"><i data-lucide="'+(ok?'check-circle-2':'circle')+'"></i>'
@@ -654,7 +675,7 @@ async function loadDashboard(){
     const d=k.querySelector('.d'); if(d){ d.textContent=note; d.classList.remove('up'); } };
   setKpi(0,String(s.counts.designs),s.counts.designs?s.counts.priced+' Priced With A Budget':'Save A Room To Get Started');
   setKpi(1,String(s.counts.properties),s.counts.properties?'Saved To Your Account':'No Properties Yet');
-  setKpi(2,s.counts.scopedTotal?kfmt(s.counts.scopedTotal):'—',s.counts.priced+' Priced '+(s.counts.priced===1?'Room':'Rooms'));
+  setKpi(2,s.counts.scopedTotal?kfmt(s.counts.scopedTotal):'Coming Soon',s.counts.scopedTotal?(s.counts.priced+' Priced '+(s.counts.priced===1?'Room':'Rooms')):'Verified Local Cost Data Is Not Licensed Yet');
   setKpi(3,String(s.counts.drafts),s.counts.drafts?'Rooms Not Approved Yet':'Nothing Pending');
 
   /* recent rooms */
@@ -708,7 +729,7 @@ async function loadDashboard(){
 <td class="n">${t?kfmt(t):'—'}</td><td class="n">${p.priced?kfmt(p.low)+' to '+kfmt(p.high):'—'}</td>
 <td style="text-align:right"><span class="pill ${fit[0]}">${fit[1]}</span></td></tr>`;
   }).join('')
-    :'<tr><td colspan="6">No Saved Projects Yet. Price A Budget In Studio, Then Use Save To My Projects.</td></tr>';
+    :'<tr><td colspan="6">No Saved Projects Yet. Save A Room In Studio To Start One.</td></tr>';
 }
 document.getElementById('attnList')?.addEventListener('click',(e)=>{
   const r=e.target.closest('[data-goto]'); if(!r) return;
@@ -909,37 +930,9 @@ function progressiveNav(){
   }catch(_){}
 })();
 
-/* ---------- home chooser ---------- */
-function paintHome(){
-  const strip=document.getElementById('homeRecent'), grid=document.getElementById('homeRecentG');
-  if(!grid||!strip) return;
-  let list=[];
-  try{ list=designItems().filter(d=>!d.sample).slice(0,6); }catch(_){ list=[]; }
-  if(!list.length){ strip.hidden=true; grid.innerHTML=''; return; }
-  strip.hidden=false;
-  grid.innerHTML=list.map(d=>
-    '<article class="card dg-card" data-open-recent="'+esc(String(d.id))+'">'+
-    '<div class="dg-thumb"><img data-homephoto="'+esc(d.path||'')+'" alt="'+esc(d.name||'Saved design')+'" hidden></div>'+
-    '<div class="dg-body"><b>'+esc(d.name||'Untitled')+'</b>'+
-    '<div class="mono" style="font-size:.7rem;color:var(--mute-2);margin-top:4px">'+esc(d.sub||'')+'</div></div></article>').join('');
-  lucide.createIcons();
-  grid.querySelectorAll('[data-open-recent]').forEach(c=>c.addEventListener('click',()=>{
-    try{
-      const d=designItems().find(x=>String(x.id)===String(c.getAttribute('data-open-recent')));
-      if(d&&d.room){ openInStudio(d.room); }
-      else go('designs');
-    }catch(_){ go('designs'); }
-  }));
-  grid.querySelectorAll('[data-homephoto]').forEach(async img=>{
-    const p=img.getAttribute('data-homephoto'); if(!p) return;
-    try{ const u=await resolvePhotoUrl(p); if(u){ img.src=u; img.hidden=false; } }catch(_){}
-  });
-}
-document.querySelectorAll('[data-home]').forEach(b=>b.addEventListener('click',()=>{
-  const k=b.getAttribute('data-home');
-  if(k==='video'){ try{ createVideoFrom({ sourceType:'address', from:'home' }); }catch(_){ go('reveal'); } return; }
-  go('studio');
-}));
+/* The home chooser is gone: Home renders the dashboard, and the two doors
+   live in the sidebar under Create. */
+
 
 
 
@@ -2035,7 +2028,7 @@ function renderAllowance(r){
   const rows=document.getElementById('allowRows'); if(!rows) return;
   const note=document.getElementById('allowNote'), sub=document.getElementById('allowSub');
   if(!r){ rows.innerHTML='<tr><td colspan="5">No Priced Budget Yet.</td></tr>';
-    note.textContent='Open Budget And Price A Room To Build The Allowance List.'; return; }
+    note.textContent='The Allowance List Turns On With Budgets, Once Verified Local Cost Data Is Licensed For Your Market.'; return; }
   const mat=r.lines.filter(l=>l.material_high>0);
   if(!mat.length){ rows.innerHTML='<tr><td colspan="5">This scope is labor only, so there is no material allowance.</td></tr>';
     note.textContent='No material lines in the current scope.'; return; }
@@ -2399,7 +2392,7 @@ function boardPdfDoc(title,sub,grade,lines,totals){
   };
 }
 async function boardPrint(){
-  const r=lastScope; if(!r){ showAlert('Price A Budget First, Then Export The Board.'); return; }
+  const r=lastScope; if(!r){ showAlert('This Board Exports Once Budgets Are Live In Your Market.'); return; }
   const sp=PROP_TREE[SEL.p], sj=sp?sp.projects[SEL.pr]:null;
   const btn=document.getElementById('boardPrint'); const lab=btn?btn.innerHTML:'';
   if(btn){ btn.disabled=true; btn.textContent='Building PDF…'; }
@@ -3124,7 +3117,7 @@ document.getElementById('helpPop').innerHTML=HELP_POP.map(t=>`<span class="chip"
 document.getElementById('helpQuick').innerHTML=[
  ['1','Add Your First Property','Open Studio, upload a room photo, and save the version to create the property and room record.'],
  ['2','Design A Room','Pick a direction and intensity, generate a version for 1 credit, and keep the one that lands.'],
- ['3','Send A Client Link','Package approved rooms with the priced budget and share one link for approval.']]
+ ['3','Send A Client Link','Package approved rooms and share one link for approval.']]
  .map(([n,t,b])=>`<div class="qs-card"><span class="n">STEP ${n}</span><b>${t}</b><span>${b}</span></div>`).join('');
 
 /* Each article is real written help. [icon, title, body, optional view to open] */
@@ -3897,8 +3890,7 @@ if(scopeGrid && !document.getElementById('scSave')){
 
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
-    {k:'priced',t:'Price The Budget',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Budget'},
-    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced budget on your account.',i:'save',cta:'Save Room'},
+        {k:'saved',t:'Save Your First Room',b:'Store the photo and property on your account.',i:'save',cta:'Save Room'},
     {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent color on every export.',i:'palette',cta:'Set Brand'},
     {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
   ];
@@ -3931,12 +3923,8 @@ if(scopeGrid && !document.getElementById('scSave')){
   function act(k){
     if(k==='brand'){ go('branding'); return; }
     if(k==='shared'){ go('present'); return; }
-    go('scope');
-    setTimeout(()=>{
-      if(k==='photo'){ const l=document.querySelector('label[for="svPhoto"]'); if(l){ l.scrollIntoView({behavior:'smooth',block:'center'}); l.click(); } }
-      else if(k==='priced'){ const b=document.getElementById('scRun'); if(b){ b.scrollIntoView({behavior:'smooth',block:'center'}); b.click(); } }
-      else { const a=document.getElementById('svAddress'); if(a){ a.scrollIntoView({behavior:'smooth',block:'center'}); a.focus(); } }
-    },80);
+    /* Everything left is a Studio task: upload a photo, save the room. */
+    go('studio');
   }
 
   function render(){

@@ -748,40 +748,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   /* ---------- starting selector ---------- */
 
-  const CARDS: Array<{ act: string; icon: string; title: string; desc: string; meta: string; btn: string }> = [
-    {
-      act: "c-upload",
-      icon: "image-up",
-      title: "Upload A Space Or Plan",
-      desc: "Begin a design from one source image or plan. To import a whole property shoot, use Upload Property Photos in Media.",
-      meta: "JPG · PNG · HEIC · WEBP · PDF",
-      btn: "Upload A File",
-    },
-    {
-      act: "c-describe",
-      icon: "message-square-text",
-      title: "Describe An Idea",
-      desc: "Create a visual concept from a written description.",
-      meta: "Text · Optional inspiration image",
-      btn: "Describe An Idea",
-    },
-    {
-      act: "c-property",
-      icon: "map-pin",
-      title: "Create A Property",
-      desc: "Organize rooms, designs, budgets and presentations.",
-      meta: "Multi-room project",
-      btn: "Create A Property",
-    },
-    {
-      act: "lvideo",
-      icon: "clapperboard",
-      title: "Create A Listing Video",
-      desc: "Turn listing photos into a polished property video.",
-      meta: "Photos · Motion · Branding",
-      btn: "Create A Listing Video",
-    },
-  ];
+  /* Studio means designing a space. The listing video builder is a peer nav
+     item, not a card in here. */
+
 
 
   function recentHtml() {
@@ -815,29 +784,30 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<header class="stw-head">' +
       '<div class="stw-head-l">' +
       '<span class="stw-eyebrow">Welcome To REAL DESIGNS</span>' +
-      '<div class="stw-title"><h2>How Would You Like To Start?</h2></div>' +
-      "<p>Upload a visual, describe an idea, organize a property or create a listing video.</p>" +
+      '<div class="stw-title"><h2>Design A Space</h2></div>' +
+      "<p>Upload a room photo, a sketch or a floor plan.</p>" +
       "</div></header>" +
       '<div class="stw-rule"></div>' +
       styleBanner() +
-      '<div class="stw-tiles">' +
-      CARDS.map(
-        (c) =>
-          '<button type="button" class="stw-tile" data-sts="' + c.act + '">' +
-          '<i data-lucide="' + c.icon + '" class="stw-tile-ico"></i>' +
-          "<h3>" + c.title + "</h3>" +
-          "<p>" + c.desc + "</p>" +
-          '<span class="stw-tile-meta">' + c.meta + "</span>" +
-          '<span class="stw-tile-act">' + c.btn + '<i data-lucide="arrow-right"></i></span>' +
-          "</button>",
-      ).join("") +
+      '<div class="stw-primary">' +
+      '<button type="button" class="stw-primary-drop" data-sts="c-upload">' +
+      '<i data-lucide="image-up"></i>' +
+      "<b>Upload A File</b>" +
+      "<span>Drag and drop, or browse. JPG, PNG, HEIC, WEBP, PDF.</span>" +
+      "</button>" +
       "</div>" +
+      '<p class="stw-secondary">Or start from: ' +
+      '<button class="stw-seclink" data-sts="c-describe">Describe An Idea</button>' +
+      '<span class="stw-secdot">·</span>' +
+      '<button class="stw-seclink" data-sts="c-property">A Property You Already Have</button>' +
+      "</p>" +
       '<div class="stw-tilefoot"><button class="stw-samplelink" data-sts="sample">Not Ready To Upload? Try A Sample Space</button></div>' +
       recentHtml() +
       "</div>" +
       (state.samples ? samplesHtml() : "")
     );
   }
+
 
 
   /* ---------- render + wiring ---------- */
