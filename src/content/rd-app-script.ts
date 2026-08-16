@@ -305,6 +305,12 @@ try{ mountUploadDock(go); }catch(_){}
     if(location.hash!==startHash) return;
     const target=document.getElementById(want);
     if(target && !target.classList.contains('on')) go(v,true);
+    /* A friendly alias such as #dashboard that already matches the mounted
+       view still needs the canonical hash, or a copied link looks broken. */
+    else if(target && !pane){
+      const canon='#'+want;
+      if(location.hash!==canon){ try{ history.replaceState(null,'',location.pathname+location.search+canon); }catch(_){} return; }
+    }
     if(pane){ try{ const el=document.getElementById('p-'+pane); if(el && !el.classList.contains('on')) acctPane(pane); }catch(_){} }
     if(++tries<110) setTimeout(tick,75);
   };
