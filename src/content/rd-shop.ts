@@ -966,6 +966,7 @@ function mount(ctx) {
         phase: $("afPhase").value,
         budgetCategory: $("afCat").value,
         notes: $("afNote").value.trim(),
+        dnaScope: "none",
       });
       d.hidden = true;
       syncCounts();
