@@ -854,6 +854,12 @@ function popoverHtml() {
       <div class="rv-pop-h">Crop <i class="mono">${esc(w.formats[0] || "9:16")}</i></div>
       ${CROPS.map(([id, n]) => `<button class="rv-pop-row ${(s.crop || "center") === id ? "on" : ""}" data-croppick="${id}">${n}</button>`).join("")}
     </div>`;
+  } else if (kind === "cap") {
+    body = `<div class="rv-pop-list">
+      <div class="rv-pop-h">On Screen Text</div>
+      <label class="rv-f">${esc(s.room || "Scene")}<input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional"></label>
+      <div class="rv-note sm">Shown over this photo while it plays.</div>
+    </div>`;
   } else {
     const cat = VFX_TILE_CATEGORIES.some(([id]) => id === w.popCat) ? w.popCat : "all";
     const tiles = tilesForCat(cat);
