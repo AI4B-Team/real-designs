@@ -15,25 +15,104 @@ import { initAnalytics, trackPageview } from "../lib/analytics";
 
 function NotFoundComponent() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
+    <div
+      className="flex min-h-screen items-center justify-center px-4"
+      style={{ background: "#faf8f5", fontFamily: "'DM Sans', system-ui, sans-serif" }}
+    >
       <div className="max-w-md text-center">
-        <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+        <div
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#CC0000",
+            padding: 6,
+            marginBottom: 22,
+          }}
+        >
+          <span
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              border: "2px solid #fff",
+              padding: "6px 15px",
+              color: "#fff",
+            }}
+          >
+            <b style={{ fontWeight: 900, fontSize: 20, lineHeight: 1, letterSpacing: ".04em" }}>REAL</b>
+            <em
+              style={{
+                fontStyle: "normal",
+                textTransform: "uppercase",
+                fontWeight: 700,
+                fontSize: 7.5,
+                lineHeight: 1,
+                letterSpacing: ".3em",
+                margin: "3px 0 0 .3em",
+              }}
+            >
+              Designs
+            </em>
+          </span>
+        </div>
+        <div
+          style={{
+            fontFamily: "'DM Mono', monospace",
+            fontSize: "2.4rem",
+            fontWeight: 500,
+            color: "#CC0000",
+            lineHeight: 1,
+          }}
+        >
+          404
+        </div>
+        <h1 className="mt-4 text-xl font-semibold" style={{ color: "#14120f", letterSpacing: "-.02em" }}>
+          Page Not Found
+        </h1>
+        <p className="mt-2 text-sm" style={{ color: "#6b6660" }}>
+          This page does not exist or has moved. Head back home or jump straight into the app.
         </p>
-        <div className="mt-6">
+        <div className="mt-6 flex items-center justify-center gap-10px" style={{ gap: 10 }}>
           <Link
             to="/"
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 999,
+              background: "#CC0000",
+              padding: "10px 18px",
+              fontSize: ".88rem",
+              fontWeight: 600,
+              color: "#fff",
+            }}
           >
-            Go home
+            Go Home
+          </Link>
+          <Link
+            to="/pricing"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: 999,
+              border: "1px solid #e4dfd7",
+              background: "#fff",
+              padding: "10px 18px",
+              fontSize: ".88rem",
+              fontWeight: 600,
+              color: "#14120f",
+            }}
+          >
+            See Pricing
           </Link>
         </div>
       </div>
     </div>
   );
 }
+
 
 // A stale/replaced build chunk makes the browser fail the route's dynamic
 // import and blanks the page. Reload once (guarded) to pick up fresh chunks.
