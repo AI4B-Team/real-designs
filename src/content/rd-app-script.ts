@@ -216,7 +216,7 @@ function go(v,fromHash){
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
   if(v==='scope'){ try{ paintBudgetGate(); }catch(_){} }
-  if(v==='home'){ try{ paintHome(); }catch(_){} }
+  
   /* Legacy or unknown keys fall back to the dashboard view, so the header
      must follow the view that actually rendered, never the stale one. */
   const titleKey = titles[v] ? v : viewId;
