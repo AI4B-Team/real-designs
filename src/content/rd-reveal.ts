@@ -615,6 +615,7 @@ function stepReady() {
   if (w.step === 1) return (w.uploads || []).length > 0 || !!w.versionId || !!w.propertyId;
   if (w.step === 2) return w.scenes.length > 0;
   if (w.step === 3) return (w.formats || []).length > 0;
+  if (w.step === 7) return (w.formats || []).length > 0;
   return true;
 }
 
@@ -1312,7 +1313,7 @@ function vfxGenCredits() {
   return (S.wizard?.scenes || []).reduce((n, s) => n + (s.vfx_gen ? (tileById(s.vfx_gen)?.credits || 0) : 0), 0);
 }
 function creditTotal() {
-  return CREDIT_COSTS.video + immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE + vfxGenCredits();
+  return qualityCost(S.wizard?.quality || "standard") + immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE + vfxGenCredits();
 }
 
 /* ======================= PERSISTENT PREVIEW PANEL ======================= */
@@ -1337,7 +1338,7 @@ function previewPanel() {
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
       <div class="rv-note sm">Keep This Tab Open And Visible Until The Render Finishes. Switching Away Can Stall It.</div></div>`
-      : w.step === 4
+      : w.step === 7
         ? block
           ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
           : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && typeof MediaRecorder !== "undefined" ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
@@ -1421,7 +1422,7 @@ async function generate() {
         brand_kit_id: w.brandKitId || null,
         branding: w.branding,
         disclosure: { mode: w.disclosureMode },
-        settings: { baTransition: w.baTransition || "match" },
+        settings: { baTransition: w.baTransition || "match", quality: w.quality || "standard", mode: w.mode || "auto", titles: w.titles || null },
       },
       scenes: w.scenes.map((s, i) => ({
         source_asset_id: s.asset_id || null,
@@ -1801,10 +1802,12 @@ function bind() {
   const w = S.wizard;
   if (w) {
   on("#rvCancel", "click", () => { S.screen = "library"; S.wizard = null; render(); });
-  on("#rvBack", "click", () => { w.step = Math.max(1, w.step - 1); render(); });
-  on(".rv-steps span", "click", (e) => {
-    const n = Number(e.currentTarget.dataset.step);
-    if (n && n < w.step) { w.step = n; render(); }
+  on("#rvBack", "click", () => { w.step = prevStep(w.step); render(); });
+  on(".rv-rail-i", "click", (e) => {
+    const key = e.currentTarget.dataset.sec;
+    if (!key || !sectionReady(key)) return;
+    w.step = stepForSection(key);
+    render();
   });
   on("#rvNext", "click", async () => {
     const t = el.querySelector("#rvTitle");
@@ -1826,7 +1829,7 @@ function bind() {
         w.videoType = ba > w.scenes.length / 2 ? "before_after" : "property_tour";
       }
     }
-    w.step = Math.min(4, w.step + 1);
+    w.step = nextStep(w.step);
     render();
   });
   on("#rvLowX", "click", () => { w.lowModal = false; render(); });
