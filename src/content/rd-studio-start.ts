@@ -51,6 +51,8 @@ export type StudioStartCtx = {
   fileToDataUrl: (file: File) => Promise<string>;
 };
 
+import { mountSourcePicker } from "@/lib/source-picker";
+
 const SAMPLE_KEYS: Array<{ key: string; name: string; space: string; room: string; photo: string; alt: string }> = [];
 
 const ROOM_OTHER = "Other";
@@ -109,6 +111,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   const state = {
     method: "upload" as Method,
+    /** Which door the user opened on the start screen: "" (none yet) or "design". */
+    door: "" as "" | "design",
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
@@ -784,37 +788,43 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<header class="stw-head">' +
       '<div class="stw-head-l">' +
       '<span class="stw-eyebrow">Welcome To REAL DESIGNS</span>' +
-      '<div class="stw-title"><h2>Design A Space</h2></div>' +
-      "<p>Upload a room photo, a sketch or a floor plan.</p>" +
+      '<div class="stw-title"><h2>What Are You Making?</h2></div>' +
+      "<p>Pick one. You can do the other right after.</p>" +
       "</div></header>" +
       '<div class="stw-rule"></div>' +
       styleBanner() +
-      '<div class="stw-primary">' +
-      '<button type="button" class="stw-primary-drop" data-sts="c-upload">' +
-      '<i data-lucide="image-up"></i>' +
-      "<b>Upload A File</b>" +
-      "<span>Drag and drop, or browse. JPG, PNG, HEIC, WEBP, PDF.</span>" +
+      '<div class="stw-doors">' +
+      '<button type="button" class="stw-door' + (state.door === "design" ? " on" : "") + '" data-sts="door-design">' +
+      '<i data-lucide="wand-sparkles"></i>' +
+      "<b>Design A Space</b>" +
+      "<span>Restyle, stage or plan a room from a photo, sketch or floor plan.</span>" +
+      "</button>" +
+      '<button type="button" class="stw-door" data-sts="door-video">' +
+      '<i data-lucide="clapperboard"></i>' +
+      "<b>Make A Video</b>" +
+      "<span>Turn property photos into a narrated listing video.</span>" +
       "</button>" +
       "</div>" +
-      '<p class="stw-secondary">Or start from: ' +
-      '<button class="stw-seclink" data-sts="c-describe">Describe An Idea</button>' +
-      '<span class="stw-secdot">·</span>' +
-      '<button class="stw-seclink" data-sts="c-property">A Property You Already Have</button>' +
-      "</p>" +
-      '<div class="stw-tilefoot"><button class="stw-samplelink" data-sts="sample">Not Ready To Upload? Try A Sample Space</button></div>' +
+      (state.door === "design"
+        ? '<div class="stw-source"><div class="stw-sec-h"><h3>Where Are The Photos?</h3>' +
+          "<span>Every Source Below Ends In The Same Place</span></div>" +
+          '<div id="stSource"></div>' +
+          '<p class="stw-secondary">No photo yet? ' +
+          '<button class="stw-seclink" data-sts="c-describe">Describe An Idea Instead</button></p></div>'
+        : "") +
       recentHtml() +
       "</div>" +
       (state.samples ? samplesHtml() : "")
     );
   }
 
-
-
   /* ---------- render + wiring ---------- */
 
   let host: HTMLElement | null = null;
 
   function clearHost() {
+    picker?.destroy();
+    picker = null;
     host?.remove();
     host = null;
     view!.classList.remove("sts-choosing");
@@ -836,7 +846,43 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       /* icons are cosmetic */
     }
     wire();
+    mountPicker();
     hydrateRecent();
+  }
+
+  /** The one shared source picker, configured for the design context. */
+  let picker: { destroy: () => void } | null = null;
+  function mountPicker() {
+    picker?.destroy();
+    picker = null;
+    const slot = document.getElementById("stSource");
+    if (!slot) return;
+    picker = mountSourcePicker(slot, {
+      context: "design",
+      esc,
+      lucide,
+      showAlert: ctx.showAlert,
+      properties: () =>
+        (ctx.getProperties ? ctx.getProperties() : []).map((p) => ({
+          address: p.address,
+          meta: (p.projects || []).length + " Projects",
+        })),
+      onPick: (picked) => {
+        const first = picked[0];
+        if (!first) return;
+        openSetup("upload");
+        takeFile(first.file);
+      },
+      onProperty: (address) => {
+        state.newAddress = address;
+        state.property = address;
+        openSetup("property");
+      },
+      onSample: () => {
+        state.samples = true;
+        render();
+      },
+    });
   }
 
   function hydrateRecent() {
@@ -1028,6 +1074,20 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (k === "changetype") {
       state.pickType = !state.pickType;
       render();
+      return;
+    }
+    if (k === "door-design") {
+      state.door = "design";
+      render();
+      return;
+    }
+    if (k === "door-video") {
+      ctx.track("studio_start_method", { method: "video" });
+      try {
+        (window as any).rdListingVideo?.({ from: "studio" });
+      } catch (_) {
+        ctx.go("studio");
+      }
       return;
     }
     if (k === "c-upload") {
