@@ -449,6 +449,7 @@ function newWizard(seed = {}) {
 /** Build the available asset list from what the property already holds. */
 async function loadWizardAssets() {
   const w = S.wizard;
+  if (!w) return;
   const out = [];
   const prop = S.tree.find((p) => p.id === w.propertyId) || null;
   if (prop) {
@@ -1231,7 +1232,7 @@ function previewPanel() {
 
 /* ======================= SCENE HELPERS ======================= */
 function assetToScene(a) {
-  const w = S.wizard;
+  const w = S.wizard || {};
   const isBA = w.videoType === "before_after" || w.videoType === "renovation_vision";
   return {
     key: a.key,
@@ -1250,6 +1251,7 @@ function assetToScene(a) {
 }
 function autoArrange() {
   const w = S.wizard;
+  if (!w || !w.scenes) return;
   w.scenes.sort((a, b) => {
     const ga = orderRank(groupFor(a.room));
     const gb = orderRank(groupFor(b.room));
@@ -1665,6 +1667,8 @@ function bind() {
     if (w.step === 1) {
       w.step = 2;
       await loadWizardAssets();
+      /* The user can leave the builder mid-load; never touch a discarded wizard. */
+      if (S.wizard !== w) return;
       if (!w.scenes.length) { selectRecommended(); autoArrange(); }
       render();
       return;
@@ -2186,6 +2190,7 @@ function bind() {
 
 function selectRecommended() {
   const w = S.wizard;
+  if (!w || !w.available) return;
   const pool = w.available.filter((a) => (w.videoType === "before_after" ? a.compare : true));
   const picked = [];
   const seenRoom = new Set();

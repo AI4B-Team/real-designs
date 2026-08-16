@@ -1915,6 +1915,9 @@ function studioSrc(which){
 }
 
 async function toDataUrl(src,max){
+  /* Without a photo the browser would request "/null" and fail with an opaque
+     decode error, so surface a readable message instead. */
+  if(!src) throw new Error('Add a photo in Studio first, then run this again.');
   const img=new Image(); img.crossOrigin='anonymous'; img.src=src;
   await img.decode();
   const sc=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));
@@ -1929,7 +1932,9 @@ async function detectScopeChanges(){
   const note=document.getElementById('scopeNote');
   btn.disabled=true; const lab=btn.innerHTML; btn.textContent='Reading Photos\u2026';
   try{
-    const [before,after]=await Promise.all([toDataUrl(studioSrc('before'),900),toDataUrl(lastRender||studioSrc('after'),900)]);
+    const bSrc=studioSrc('before'), aSrc=lastRender||studioSrc('after');
+    if(!bSrc||!aSrc) throw new Error('Add a before and after photo in Studio first, then run this again.');
+    const [before,after]=await Promise.all([toDataUrl(bSrc,900),toDataUrl(aSrc,900)]);
     const r=await detectChanges({data:{before,after,grade:document.getElementById('scGrade').value}});
     window.dispatchEvent(new Event('rd:credits-changed'));
     if(r.priceable.length){ scopeItems=r.priceable; }
@@ -1954,7 +1959,9 @@ async function runDims(){
   const btn=document.getElementById('scDims'); const note=document.getElementById('scopeNote');
   btn.disabled=true; const lab=btn.innerHTML; btn.textContent='Measuring\u2026';
   try{
-    const image=await toDataUrl(studioSrc('before'),900);
+    const bSrc=studioSrc('before');
+    if(!bSrc) throw new Error('Add a photo in Studio first, then run this again.');
+    const image=await toDataUrl(bSrc,900);
     const r=await estimateDimensions({data:{image,room_type:currentRoomType()}});
     dimsProposal=r; dimsConfirmed=false;
     document.getElementById('scFloor').value=r.floor_area_sf;
