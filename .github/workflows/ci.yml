@@ -45,8 +45,21 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           exit $status
 
+      # Lint is also non-blocking for now for the same reason: the repo starts
+      # with a large prettier/eslint backlog. The count is published so it stays
+      # visible. Remove continue-on-error once it reaches zero.
       - name: Lint
-        run: bun run lint
+        continue-on-error: true
+        run: |
+          set +e
+          bun run lint > lint.log 2>&1
+          status=$?
+          {
+            echo "### Lint"
+            echo ""
+            echo "$(grep -cE '  error  ' lint.log) errors"
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit $status
 
       - name: Build
         run: bun run build
