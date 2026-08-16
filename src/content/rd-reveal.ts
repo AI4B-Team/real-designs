@@ -1161,7 +1161,7 @@ function stepBrand() {
   </details>
 
   <details class="rv-acc" data-acc="audio"${accOpen.has("audio") ? " open" : ""}><summary>Audio</summary>
-    <label class="rv-f">Track</label>${musicPicker("rvMusic", w.music)}
+    <div class="rv-sub">Track</div>${musicPicker("rvMusic", w.music)}
     <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
     <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
     <div class="rv-sub">Narration</div>
@@ -2303,23 +2303,62 @@ function editExisting(d) {
 /* ======================= BRAND KIT MODAL ======================= */
 function openBrandKit(kit) {
   let wrap = document.getElementById("rvKitWrap");
-  if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvKitWrap"; document.body.appendChild(wrap); }
+  /* Modals must live inside .rd-app: every field rule is scoped to it, so a
+     body-level modal renders unstyled. */
+  if (!wrap) {
+    wrap = document.createElement("div"); wrap.id = "rvKitWrap";
+    (document.querySelector(".rd-app") || document.body).appendChild(wrap);
+  }
   const k = kit || {};
+  const logo0 = esc(k.logo_url || "");
+  const color0 = esc(k.colors?.primary || "#CC0000");
   wrap.className = "rv-modal on";
   wrap.innerHTML = `<div class="rv-modal-in" role="dialog" aria-label="Brand kit">
     <div class="rv-modal-h"><b>${kit ? "Edit" : "New"} Brand Kit</b><button class="icon-btn" id="rvKitX"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">
-      <label class="rv-f">Brand Kit Name<input id="k_name" value="${esc(k.name || "My Brand Kit")}"></label>
-      <label class="rv-f">Kit Type<select id="k_type">${["personal", "company", "client"].map((t) => `<option value="${t}" ${k.kit_type === t ? "selected" : ""}>${t[0].toUpperCase() + t.slice(1)} Brand Kit</option>`).join("")}</select></label>
-      <label class="rv-f">Company Name<input id="k_co" value="${esc(k.company_name || "")}"></label>
-      <label class="rv-f">Agent Or Designer Name<input id="k_person" value="${esc(k.contact_name || "")}"></label>
-      <label class="rv-f">Logo URL<input id="k_logo" value="${esc(k.logo_url || "")}"></label>
-      <label class="rv-f">Primary Brand Color<input id="k_color" type="color" value="${esc(k.colors?.primary || "#CC0000")}"></label>
-      <label class="rv-f">Primary Font<input id="k_font" value="${esc(k.font || "Inter")}"></label>
-      <label class="rv-f">Phone<input id="k_phone" value="${esc(k.phone || "")}"></label>
-      <label class="rv-f">Email<input id="k_email" value="${esc(k.email || "")}"></label>
+      <div class="rv-sub">Identity</div>
+      <div class="rv-grid2">
+        <label class="rv-f">Brand Kit Name<input id="k_name" value="${esc(k.name || "My Brand Kit")}"></label>
+        <label class="rv-f">Kit Type<select id="k_type">${["personal", "company", "client"].map((t) => `<option value="${t}" ${k.kit_type === t ? "selected" : ""}>${t[0].toUpperCase() + t.slice(1)} Brand Kit</option>`).join("")}</select></label>
+      </div>
+
+      <div class="rv-sub">Names</div>
+      <div class="rv-grid2">
+        <label class="rv-f">Company Name<input id="k_co" value="${esc(k.company_name || "")}"></label>
+        <label class="rv-f">Agent Or Designer Name<input id="k_person" value="${esc(k.contact_name || "")}"></label>
+      </div>
+
+      <div class="rv-sub">Look</div>
+      <div class="rv-f">Logo
+        <div class="rv-logo-up">
+          <span class="rv-logo-th${logo0 ? " has" : ""}" id="rvKitLogoTh">${logo0 ? `<img src="${logo0}" alt="Brand logo">` : `<i data-lucide="image"></i>`}</span>
+          <button type="button" class="btn btn-ghost btn-sm" id="rvKitLogoUp"><i data-lucide="upload"></i>Upload Logo</button>
+          ${logo0 ? `<button type="button" class="btn btn-ghost btn-sm" id="rvKitLogoClear">Remove</button>` : ""}
+          <input type="file" id="rvKitLogoFile" accept="image/*" hidden>
+          <input type="hidden" id="k_logo" value="${logo0}">
+        </div>
+        <span class="rv-hint-in">PNG Or SVG Works Best. A Transparent Background Looks Cleanest On Video.</span>
+      </div>
+      <div class="rv-grid2">
+        <label class="rv-f">Primary Brand Color
+          <span class="rv-color">
+            <input id="k_color" type="color" value="${color0}">
+            <b class="mono" id="rvKitHex">${color0.toUpperCase()}</b>
+          </span>
+        </label>
+        <label class="rv-f">Primary Font<input id="k_font" value="${esc(k.font || "Inter")}"></label>
+      </div>
+
+      <div class="rv-sub">Contact</div>
+      <div class="rv-grid2">
+        <label class="rv-f">Phone<input id="k_phone" value="${esc(k.phone || "")}"></label>
+        <label class="rv-f">Email<input id="k_email" value="${esc(k.email || "")}"></label>
+      </div>
       <label class="rv-f">Website<input id="k_web" value="${esc(k.website || "")}"></label>
-      <label class="rv-f">Default Call To Action<input id="k_cta" value="${esc(k.default_cta || "Book A Design Consultation")}"></label>
+
+      <div class="rv-sub">Default Call To Action</div>
+      <label class="rv-f">Call To Action<input id="k_cta" value="${esc(k.default_cta || "Book A Design Consultation")}"></label>
+
       <label class="rv-check"><input type="checkbox" id="k_def" ${k.is_default ? "checked" : ""}> Use As My Default Brand Kit</label>
     </div>
     <div class="rv-modal-f"><button class="btn btn-ghost" id="rvKitCancel">Cancel</button><button class="btn btn-primary" id="rvKitSave">Save Brand Kit</button></div>
@@ -2328,6 +2367,36 @@ function openBrandKit(kit) {
   const close = () => { wrap.className = "rv-modal"; wrap.innerHTML = ""; };
   wrap.querySelector("#rvKitX").onclick = close;
   wrap.querySelector("#rvKitCancel").onclick = close;
+  /* Logo upload, with the pasted-URL field kept as a hidden value so the save
+     handler and existing kits keep working unchanged. */
+  const hex = wrap.querySelector("#rvKitHex");
+  const colorIn = wrap.querySelector("#k_color");
+  if (colorIn && hex) colorIn.addEventListener("input", () => { hex.textContent = String(colorIn.value || "").toUpperCase(); });
+  const logoHidden = wrap.querySelector("#k_logo");
+  const setLogo = (url) => {
+    if (logoHidden) logoHidden.value = url || "";
+    const th = wrap.querySelector("#rvKitLogoTh");
+    if (th) { th.className = "rv-logo-th" + (url ? " has" : ""); th.innerHTML = url ? `<img src="${esc(url)}" alt="Brand logo">` : `<i data-lucide="image"></i>`; }
+    paint();
+  };
+  wrap.querySelector("#rvKitLogoUp")?.addEventListener("click", () => wrap.querySelector("#rvKitLogoFile")?.click());
+  wrap.querySelector("#rvKitLogoClear")?.addEventListener("click", () => setLogo(""));
+  wrap.querySelector("#rvKitLogoFile")?.addEventListener("change", async (e) => {
+    const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return;
+    try {
+      const { data: u } = await supabase.auth.getUser();
+      const uid = u?.user?.id;
+      if (!uid) throw new Error("Please sign in again to upload a logo.");
+      const ext = (f.name.split(".").pop() || "png").toLowerCase();
+      const path = `${uid}/brand/${Date.now()}.${ext}`;
+      const up = await supabase.storage.from(BUCKET).upload(path, f, { contentType: f.type || "image/png", upsert: true });
+      if (up.error) throw new Error(up.error.message);
+      const url = await signed(path);
+      setLogo(url || "");
+      toast("Logo Uploaded.");
+    } catch (err) { toast(err?.message || "Could not upload that logo."); }
+  });
+
   wrap.querySelector("#rvKitSave").onclick = async () => {
     const g = (id) => wrap.querySelector("#" + id)?.value || "";
     try {
@@ -2422,7 +2491,7 @@ function maybeIntro() {
   if (dvActive) { closeIntroNow(); return; }
   try { if (localStorage.getItem("rd_reveal_intro") === "1") return; } catch (_) { return; }
   let wrap = document.getElementById("rvIntroWrap");
-  if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; document.body.appendChild(wrap); }
+  if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; (document.querySelector(".rd-app") || document.body).appendChild(wrap); }
   wrap.className = "rv-modal on";
   wrap.innerHTML = `<div class="rv-modal-in sm" role="dialog" aria-label="Welcome To Property Videos">
     <div class="rv-modal-h"><b>Create Your First Property Video</b></div>
