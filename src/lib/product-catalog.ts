@@ -274,7 +274,7 @@ function slug(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 
-function toProduct(seed: Seed, category: string, i: number, imageUrl: string): NormalizedProduct {
+function toProduct(seed: Seed, category: string, i: number): NormalizedProduct {
   const merch = SAMPLE_MERCHANTS[(category.length + i) % SAMPLE_MERCHANTS.length]!;
   const id = `sample-${slug(category)}-${i}`;
   return {
@@ -287,7 +287,7 @@ function toProduct(seed: Seed, category: string, i: number, imageUrl: string): N
     category,
     description:
       "Sample development record used to build the sourcing workflow. Product data, price and availability are placeholders until a retailer feed is connected.",
-    images: [imageUrl],
+    images: [],
     width: seed.w,
     depth: seed.d,
     height: seed.h,
@@ -320,7 +320,7 @@ export const sampleVisualSearch: VisualSearchProvider = {
   async search(req) {
     await new Promise((r) => setTimeout(r, 550));
     const seeds = SEEDS[req.category] ?? GENERIC;
-    const list = seeds.map((s, i) => toProduct(s, req.category, i, req.imageUrl));
+    const list = seeds.map((s, i) => toProduct(s, req.category, i));
     if (req.query) {
       const q = req.query.toLowerCase();
       const hit = list.filter((p) => (p.name + " " + p.brand + " " + p.materials.join(" ")).toLowerCase().includes(q));
