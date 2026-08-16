@@ -675,7 +675,7 @@ async function loadDashboard(){
     const d=k.querySelector('.d'); if(d){ d.textContent=note; d.classList.remove('up'); } };
   setKpi(0,String(s.counts.designs),s.counts.designs?s.counts.priced+' Priced With A Budget':'Save A Room To Get Started');
   setKpi(1,String(s.counts.properties),s.counts.properties?'Saved To Your Account':'No Properties Yet');
-  setKpi(2,s.counts.scopedTotal?kfmt(s.counts.scopedTotal):'—',s.counts.priced+' Priced '+(s.counts.priced===1?'Room':'Rooms'));
+  setKpi(2,s.counts.scopedTotal?kfmt(s.counts.scopedTotal):'Coming Soon',s.counts.scopedTotal?(s.counts.priced+' Priced '+(s.counts.priced===1?'Room':'Rooms')):'Verified Local Cost Data Is Not Licensed Yet');
   setKpi(3,String(s.counts.drafts),s.counts.drafts?'Rooms Not Approved Yet':'Nothing Pending');
 
   /* recent rooms */
@@ -729,7 +729,7 @@ async function loadDashboard(){
 <td class="n">${t?kfmt(t):'—'}</td><td class="n">${p.priced?kfmt(p.low)+' to '+kfmt(p.high):'—'}</td>
 <td style="text-align:right"><span class="pill ${fit[0]}">${fit[1]}</span></td></tr>`;
   }).join('')
-    :'<tr><td colspan="6">No Saved Projects Yet. Price A Budget In Studio, Then Use Save To My Projects.</td></tr>';
+    :'<tr><td colspan="6">No Saved Projects Yet. Save A Room In Studio To Start One.</td></tr>';
 }
 document.getElementById('attnList')?.addEventListener('click',(e)=>{
   const r=e.target.closest('[data-goto]'); if(!r) return;
@@ -2028,7 +2028,7 @@ function renderAllowance(r){
   const rows=document.getElementById('allowRows'); if(!rows) return;
   const note=document.getElementById('allowNote'), sub=document.getElementById('allowSub');
   if(!r){ rows.innerHTML='<tr><td colspan="5">No Priced Budget Yet.</td></tr>';
-    note.textContent='Open Budget And Price A Room To Build The Allowance List.'; return; }
+    note.textContent='The Allowance List Turns On With Budgets, Once Verified Local Cost Data Is Licensed For Your Market.'; return; }
   const mat=r.lines.filter(l=>l.material_high>0);
   if(!mat.length){ rows.innerHTML='<tr><td colspan="5">This scope is labor only, so there is no material allowance.</td></tr>';
     note.textContent='No material lines in the current scope.'; return; }
@@ -2392,7 +2392,7 @@ function boardPdfDoc(title,sub,grade,lines,totals){
   };
 }
 async function boardPrint(){
-  const r=lastScope; if(!r){ showAlert('Price A Budget First, Then Export The Board.'); return; }
+  const r=lastScope; if(!r){ showAlert('This Board Exports Once Budgets Are Live In Your Market.'); return; }
   const sp=PROP_TREE[SEL.p], sj=sp?sp.projects[SEL.pr]:null;
   const btn=document.getElementById('boardPrint'); const lab=btn?btn.innerHTML:'';
   if(btn){ btn.disabled=true; btn.textContent='Building PDF…'; }
@@ -3117,7 +3117,7 @@ document.getElementById('helpPop').innerHTML=HELP_POP.map(t=>`<span class="chip"
 document.getElementById('helpQuick').innerHTML=[
  ['1','Add Your First Property','Open Studio, upload a room photo, and save the version to create the property and room record.'],
  ['2','Design A Room','Pick a direction and intensity, generate a version for 1 credit, and keep the one that lands.'],
- ['3','Send A Client Link','Package approved rooms with the priced budget and share one link for approval.']]
+ ['3','Send A Client Link','Package approved rooms and share one link for approval.']]
  .map(([n,t,b])=>`<div class="qs-card"><span class="n">STEP ${n}</span><b>${t}</b><span>${b}</span></div>`).join('');
 
 /* Each article is real written help. [icon, title, body, optional view to open] */
@@ -3890,8 +3890,7 @@ if(scopeGrid && !document.getElementById('scSave')){
 
   const STEPS=[
     {k:'photo',t:'Upload A Room Photo',b:'One clear photo of the space you want to redesign.',i:'image-up',cta:'Upload Photo'},
-    {k:'priced',t:'Price The Budget',b:'Turn the design into line items and a local planning range.',i:'calculator',cta:'Open Budget'},
-    {k:'saved',t:'Save Your First Room',b:'Store the photo, property and priced budget on your account.',i:'save',cta:'Save Room'},
+        {k:'saved',t:'Save Your First Room',b:'Store the photo and property on your account.',i:'save',cta:'Save Room'},
     {k:'brand',t:'Add Your Brand Kit',b:'Your company name and accent color on every export.',i:'palette',cta:'Set Brand'},
     {k:'shared',t:'Share A Presentation',b:'Send a client a branded link they can approve.',i:'presentation',cta:'Open Presentations'}
   ];
