@@ -2453,72 +2453,43 @@ const presMoney=(n)=>'$'+Math.round(n||0).toLocaleString('en-US');
 /* Implemented in @/content/rd-reports; mounted when the view opens. */
 
 
-function presPdfHtml(p){
+async function presPdfDoc(p){
   const when=new Date(p.created_at||Date.now()).toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
   const lines=(p.lines||[]);
-  const rows=lines.map(l=>`<tr><td>${esc(l.description)}</td><td>${esc(l.trade)}</td><td class="n">${l.qty} ${esc(l.uom)}</td><td class="n">${presMoney(l.low)} &ndash; ${presMoney(l.high)}</td></tr>`).join('')
-    ||'<tr><td colspan="4">No Priced Line Items On This Version Yet.</td></tr>';
-  const range=p.total_low!=null?presMoney(p.total_low)+' &ndash; '+presMoney(p.total_high):'Not priced yet';
-  const img=(u,l)=>u?`<figure><img src="${esc(u)}" alt="${l}"><figcaption>${l}</figcaption></figure>`:`<figure class="ph"><div>${l} not available</div></figure>`;
-  /* Trade rollup so the client sees where the money sits before the line detail. */
+  const rows=lines.map(l=>[l.description,l.trade,l.qty+' '+l.uom,presMoney(l.low)+' - '+presMoney(l.high)]);
+  if(!rows.length) rows.push(['No Priced Line Items On This Version Yet.','','','']);
+  const range=p.total_low!=null?presMoney(p.total_low)+' - '+presMoney(p.total_high):'Not priced yet';
   const byTrade={};
   lines.forEach(l=>{ const k=l.trade||'Other'; (byTrade[k]=byTrade[k]||{low:0,high:0,n:0}); byTrade[k].low+=Number(l.low||0); byTrade[k].high+=Number(l.high||0); byTrade[k].n++; });
   const trades=Object.keys(byTrade).sort((a,b)=>byTrade[b].high-byTrade[a].high).slice(0,6);
-  const rollup=trades.length?`<div class="roll">`+trades.map(t=>{
-    const v=byTrade[t];
-    return `<div class="rc"><span class="rl">${esc(t)}</span><b>${presMoney(v.low)} &ndash; ${presMoney(v.high)}</b><span class="rl">${v.n} item${v.n===1?'':'s'}</span></div>`;
-  }).join('')+`</div>`:'';
-  const approved=(p.status==='approved');
-  const stamp=approved?`<div class="stamp">Approved By Client</div>`:'';
-  const sign=approved?'':`<div class="sign"><div><span>Client Signature</span></div><div><span>Date</span></div></div>`;
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(p.title)} — REAL DESIGNS</title>
-<style>
-@page{size:letter;margin:14mm}
-*{box-sizing:border-box}
-body{font:13px/1.5 -apple-system,"Segoe UI",Helvetica,Arial,sans-serif;color:#141414;margin:0}
-.mast{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px solid #CC0000;padding-bottom:10px;margin-bottom:16px}
-.badge{display:inline-block;background:#CC0000;padding:5px;border-radius:3px}
-.badge .in{border:1.5px solid #fff;border-radius:2px;padding:4px 9px 5px;text-align:center;color:#fff;line-height:1}
-.badge .r{font-weight:900;font-size:17px;letter-spacing:.01em}
-.badge .d{font-size:6.5px;font-weight:700;letter-spacing:.34em;margin-top:2px}
-h1{font-size:22px;margin:8px 0 4px}
-.sub{color:#6b6b6b;font-size:12px}
-.figs{display:flex;gap:12px;margin:0 0 16px}
-figure{margin:0;flex:1}
-figure img{width:100%;height:208px;object-fit:cover;border-radius:8px;border:1px solid #e4e4e4}
-figure.ph div{height:208px;display:flex;align-items:center;justify-content:center;border:1px dashed #ccc;border-radius:8px;color:#8a8a8a;font-size:12px}
-figcaption{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#6b6b6b;margin-top:6px}
-.range{border:1px solid #e4e4e4;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:14px}
-.range b{display:block;font-size:20px}
-.stamp{border:2px solid #157a3f;color:#157a3f;border-radius:6px;padding:6px 10px;font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;white-space:nowrap}
-.roll{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
-.rc{flex:1 1 30%;border:1px solid #ececec;border-radius:8px;padding:8px 10px}
-.rc b{display:block;font-size:12.5px;margin:2px 0}
-.rl{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:#8a8a8a}
-h2{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#6b6b6b;margin:0 0 6px}
-table{width:100%;border-collapse:collapse;font-size:12px}
-th,td{text-align:left;padding:7px 6px;border-bottom:1px solid #ececec}
-th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#6b6b6b}
-td.n,th.n{text-align:right}
-tfoot td{font-weight:700;border-top:2px solid #141414;border-bottom:0}
-.sign{display:flex;gap:24px;margin-top:26px}
-.sign div{flex:1;border-top:1px solid #9a9a9a;padding-top:5px}
-.sign span{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a}
-.note{margin-top:16px;font-size:10.5px;color:#6b6b6b;border-top:1px solid #ececec;padding-top:10px}
-</style></head><body>
-<div class="mast"><div><span class="badge"><span class="in"><span class="r">REAL</span><div class="d">DESIGNS</div></span></span><h1>${esc(p.title)}</h1>
-<div class="sub">${esc(p.address)} &middot; ${esc(p.project_name)} &middot; ${esc(p.room_name)} &middot; v${p.version_no}</div></div>
-<div class="sub" style="text-align:right">${when}<br>${esc(p.client_name||'Client copy')}</div></div>
-<div class="figs">${img(p.before_url,'Before')}${img(p.after_url,'After')}</div>
-<div class="range"><div><div class="sub">Estimated Planning Range</div><b>${range}</b>
-<div class="sub">${esc((p.style||'Style on file'))} &middot; ${esc(p.grade)} grade finishes</div></div>${stamp}</div>
-${rollup?'<h2>Where The Budget Sits</h2>'+rollup:''}
-<h2>Scope Detail</h2>
-<table><thead><tr><th>Scope Item</th><th>Trade</th><th class="n">Quantity</th><th class="n">Range</th></tr></thead><tbody>${rows}</tbody>
-<tfoot><tr><td colspan="3">Total Planning Range</td><td class="n">${range}</td></tr></tfoot></table>
-${sign}
-<div class="note">Planning estimates derived from the approved design and local cost data. Not a construction bid, subcontractor pricing governs. Rendered images are design visualisations of the same space.</div>
-</body></html>`;
+  const [before,after]=await Promise.all([p.before_url?imageForPdf(p.before_url):null,p.after_url?imageForPdf(p.after_url):null]);
+  const images=[];
+  if(before) images.push({url:before,caption:'BEFORE'});
+  if(after) images.push({url:after,caption:'AFTER'});
+  const sections=[];
+  if(trades.length) sections.push({
+    heading:'Where The Budget Sits',
+    columns:[{label:'Trade',width:40},{label:'Items',align:'right',width:16},{label:'Range',align:'right',width:44}],
+    rows:trades.map(t=>[t,String(byTrade[t].n),presMoney(byTrade[t].low)+' - '+presMoney(byTrade[t].high)])
+  });
+  sections.push({
+    heading:'Scope Detail',
+    columns:[{label:'Scope Item',width:44},{label:'Trade',width:18},{label:'Quantity',align:'right',width:16},{label:'Range',align:'right',width:22}],
+    rows
+  });
+  return {
+    title:p.title,
+    subtitle:[p.address,p.project_name,p.room_name,'v'+p.version_no].filter(Boolean).join(' - '),
+    metaRight:[when,p.client_name||'Client copy',(p.status==='approved'?'Approved By Client':'')].filter(Boolean),
+    images,
+    sections,
+    totals:[
+      {label:(p.style||'Style on file')+' - '+(p.grade||'retail')+' grade finishes',value:''},
+      {label:'Estimated Planning Range',value:range,strong:true}
+    ],
+    notes:['Planning estimates derived from the approved design and local cost data. Not a construction bid, subcontractor pricing governs. Rendered images are design visualisations of the same space.'],
+    signatures:p.status==='approved'?[]:['Client Signature','Date']
+  };
 }
 
 
@@ -2527,12 +2498,8 @@ async function exportPresentationPdf(id,btn){
   if(btn){ btn.disabled=true; btn.innerHTML='<i data-lucide="loader"></i>'; lucide.createIcons(); }
   try{
     const p=await getPresentationPackage({data:{id}});
-    const w=window.open('','_blank');
-    if(!w) throw new Error('Allow pop-ups to export the PDF.');
-    w.document.write(presPdfHtml(p));
-    w.document.close();
-    w.focus();
-    setTimeout(()=>{ try{ w.print(); }catch(_){} },700);
+    await downloadPdf(await presPdfDoc(p),p.title||'presentation');
+    try{ (window as any).rdToast && (window as any).rdToast('PDF Downloaded'); }catch(_){ }
   }catch(e){
     showAlert('Could not build that PDF. '+((e&&e.message)||''));
   }finally{
@@ -2548,19 +2515,17 @@ async function exportPresentationBoard(id,btn){
     const lines=(p.lines||[]).map(l=>({description:l.description,trade:l.trade,qty:l.qty,uom:l.uom,
       material_low:l.low,material_high:l.high,price_source:'From the approved scope'}));
     const tl=lines.reduce((a,l)=>a+l.material_low,0), th=lines.reduce((a,l)=>a+l.material_high,0);
-    const w=window.open('','_blank');
-    if(!w) throw new Error('Allow pop-ups to open the board.');
-    w.document.write(boardPrintHtml(p.title,
-      [p.address,p.project_name,p.room_name,(p.grade||'retail')+' grade'].filter(Boolean).join(' \u00b7 '),
-      p.grade, lines, lines.length?[tl,th]:null));
-    w.document.close(); w.focus();
-    setTimeout(()=>{ try{ w.print(); }catch(_){} },700);
+    await downloadPdf(boardPdfDoc(p.title,
+      [p.address,p.project_name,p.room_name,(p.grade||'retail')+' grade'].filter(Boolean).join(' - '),
+      p.grade, lines, lines.length?[tl,th]:null),(p.title||'product')+'-board');
+    try{ (window as any).rdToast && (window as any).rdToast('Product Board Downloaded'); }catch(_){ }
   }catch(e){
     showAlert('Could not build that board. '+((e&&e.message)||''));
   }finally{
     if(btn){ btn.disabled=false; btn.innerHTML=old; lucide.createIcons(); }
   }
 }
+
 
 async function exportSocialReel(id,btn){
   const old=btn?btn.innerHTML:null;
