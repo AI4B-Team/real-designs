@@ -2522,3 +2522,17 @@ function bindCards(root) {
   });
   on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) => openDetail(e.currentTarget.closest(".rv-card").dataset.id));
 }
+
+/* Leaving the video workspace must not leave a half-finished builder mounted
+   in the DOM. Otherwise the next visit paints that stale screen for a frame
+   before the fresh view lands, which reads as a glitch. */
+export function resetReveal() {
+  S.screen = "library";
+  S.wizard = null;
+  S.detail = null;
+  S.detailId = null;
+  const el = host();
+  if (el && S.mounted) {
+    try { el.innerHTML = libraryHtml(); paint(); bind(); paintThumbs(); } catch (_) { el.innerHTML = ""; }
+  }
+}
