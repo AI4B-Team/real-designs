@@ -1949,21 +1949,13 @@ function bind() {
       const a = w.available.find((x) => x.key === key);
       if (a) w.scenes.push(assetToScene(a));
     }
+    syncSceneOrder();
     render();
   });
-  on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); render(); });
-  on("[data-move]", "click", (e) => {
-    e.stopPropagation();
-    const row = e.currentTarget.closest(".rv-scene, .rv-scard");
-    const i = Number(row.dataset.idx);
-    const j = i + Number(e.currentTarget.dataset.move);
-    if (j < 0 || j >= w.scenes.length) return;
-    const [x] = w.scenes.splice(i, 1);
-    w.scenes.splice(j, 0, x);
-    render();
-  });
+  on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); syncSceneOrder(); render(); });
+  on("#rvGroupBy", "click", () => { w.groupBy = !w.groupBy; render(); });
   on("#rvRecommend", "click", () => { selectRecommended(); autoArrange(); render(); });
-  on("#rvClear", "click", () => { w.scenes = []; render(); });
+  on("#rvClear", "click", () => { w.scenes = []; syncSceneOrder(); render(); });
   on("#rvAuto", "click", () => { autoArrange(); render(); });
   on("#rvKeepBest", "click", () => {
     const seen = new Set();
