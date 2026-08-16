@@ -144,7 +144,7 @@ const PALS={
 /* ---------- nav ---------- */
 const titles={home:['Dashboard','Your workspace at a glance'],
 dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, project, room, version'],
-studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],watch:['Watch A Site','Monitor a listing site you own and prepare videos for new properties'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
+studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],watch:['Site Watch','Monitor a listing site you own and prepare videos for new properties'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
 reports:['Reports','Portfolio rollup, budget fit and credit spend'],
@@ -515,7 +515,7 @@ defaults:['Defaults','Applied to every new design'],
 api:['API & White Label','Business plan feature'],
 danger:['Data & Privacy','Export or permanently remove your data'],
 integrations:['Integrations','Services you connect, and what the platform provides'],
-watch:['Watch A Site','Monitor a listing site you own and prepare videos for new properties']};
+watch:['Site Watch','Monitor a listing site you own and prepare videos for new properties']};
 function acctPane(k){
   if(!PANE_META[k]) k='profile';
   document.querySelectorAll('.arail-i').forEach(b=>b.classList.toggle('on',b.dataset.pane===k));

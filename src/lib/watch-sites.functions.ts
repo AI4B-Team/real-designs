@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
- * Watch A Site — listing site monitoring, gated on a written ownership
+ * Site Watch — listing site monitoring, gated on a written ownership
  * attestation. We never pull from portals: the person granting access has to
  * be the person who owns the content, so portal hosts are rejected outright
  * and every row stores the exact attestation text the user agreed to.
