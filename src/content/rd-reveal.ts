@@ -410,6 +410,8 @@ function newWizard(seed = {}) {
     title: seed.title || "",
     videoType: seed.videoType || "property_tour",
     available: [],
+    gridOrder: [],
+    groupBy: true,
     scenes: [],
     formats: ["9:16"],
     length: "standard",
@@ -492,6 +494,14 @@ async function loadWizardAssets() {
   }
   for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.name || UNSORTED, kind: "Original", group: "Other", disclosure: null, uploaded: true, flags: [] });
   w.available = out;
+  /* The grid is the order. Build it in room group order; new uploads append. */
+  const keep = new Set(out.map((a) => a.key));
+  const prev = (w.gridOrder || []).filter((k) => keep.has(k));
+  const seen = new Set(prev);
+  const fresh = out.filter((a) => !seen.has(a.key));
+  fresh.sort((a, b) => orderRank(a.group) - orderRank(b.group) || String(a.room || "").localeCompare(String(b.room || "")));
+  w.gridOrder = prev.concat(fresh.map((a) => a.key));
+  syncSceneOrder();
 }
 
 /* The builder is organised as six named sections in a left rail. Internally
@@ -1821,6 +1831,8 @@ function render() {
   if (S.screen === "wizard" && !S.wizard) S.screen = "library";
   if (S.screen === "design") S.screen = "library";
   if (S.screen === "detail" && !S.detail) S.screen = "library";
+  /* Step 3 folded into step 2; old deep links must not land on nothing. */
+  if (S.wizard && S.wizard.step === 3) S.wizard.step = 2;
   el.innerHTML =
     S.screen === "wizard" ? wizardHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
@@ -2380,6 +2392,7 @@ function selectRecommended() {
   }
   const chosen = (picked.length ? picked : pool).slice(0, 12);
   w.scenes = chosen.map(assetToScene);
+  syncSceneOrder();
 }
 
 /** Reopen an existing project in the wizard at the storyboard step. */
