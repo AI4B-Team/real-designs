@@ -412,6 +412,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (tab) {
       state.tab = tab.dataset["spTab"] as SourceId;
       state.note = "";
+      opts.onTab?.(state.tab);
       render();
       return;
     }
@@ -420,6 +421,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       opts.onProperty?.(prop.dataset["spProp"]!);
       return;
     }
+    const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
+    if (dsn) {
+      opts.onDesign?.(dsn.dataset["spDesign"]!);
+      return;
+    }
+
     const choice = t.closest("[data-sp-choice]") as HTMLElement | null;
     if (choice) {
       const picked = state.choose[Number(choice.dataset["spChoice"])];
