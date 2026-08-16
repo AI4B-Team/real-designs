@@ -5,7 +5,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
+import { mountSourcePicker } from "@/lib/source-picker";
 import { roomPhotoUrl } from "@/lib/room-photos";
 import {
   listMediaAssets,
@@ -17,7 +17,6 @@ import {
   listExportPackages,
 } from "@/lib/property-media.functions";
 import { runPhotoEdit } from "@/lib/photo-edit.functions";
-import { importCloudPhotos } from "@/lib/cloud-import.functions";
 import { uploadRenderDataUrl } from "@/lib/room-photos";
 import * as UM from "@/lib/upload-manager";
 import { ROOM_GROUPS, FLAG_LABEL, recommendations, similarTo, missingSpaces, pickRecommended } from "@/lib/media-analysis";
@@ -65,7 +64,8 @@ export async function openPropertyUpload(opts = {}) {
   let mode = opts.propertyId ? "existing" : props.length ? "existing" : "new";
   let propertyId = opts.propertyId || (props[0] ? props[0].id : null);
   let files = [];
-  let src = "computer";
+  let src = "upload";
+  let pendingAddress = "";
   let rejected = [];
 
   function render() {
@@ -88,7 +88,7 @@ export async function openPropertyUpload(opts = {}) {
                   .map((p) => `<option value="${p.id}" ${p.id === propertyId ? "selected" : ""}>${esc(p.address)}</option>`)
                   .join("")}</select></label>`
               : mode === "new"
-                ? `<label class="pmu-f">Address<input id="pmuAddr" placeholder="123 Main St, Tampa FL"></label>`
+                ? `<label class="pmu-f">Address<input id="pmuAddr" value="${esc(pendingAddress)}" placeholder="123 Main St, Tampa FL"></label>`
                 : `<p class="pmu-note">Photos upload into an unassigned set. You can attach them to a property later from Media.</p>`
           }
           <details class="pmu-more"><summary>Optional Property Details</summary>
