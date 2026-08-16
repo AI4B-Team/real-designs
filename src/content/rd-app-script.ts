@@ -553,16 +553,27 @@ const skList=(n=3)=>Array.from({length:n},()=>'<div class="rowi sk-rowi"><div cl
 const skRows=(cols=6,n=4)=>Array.from({length:n},()=>'<tr class="sk-tr">'+Array.from({length:cols},()=>'<td><div class="sk sk-cell"></div></td>').join('')+'</tr>').join('');
 const skLines=(n=3)=>'<div class="sk-lines">'+Array.from({length:n},()=>'<div class="sk sk-l1"></div>').join('')+'</div>';
 
-/* First run checklist on the dashboard, driven by real workspace data. */
-function paintOnboarding(s,pres){
+/* First run checklist on the dashboard, driven by real workspace data.
+   Every task here must be completable today, so the budget tasks only appear
+   once verified cost data exists for a market. */
+async function paintOnboarding(s,pres){
   const view=document.getElementById('v-dash'); if(!view) return;
   let card=document.getElementById('obCard');
+  let brandOk=false;
+  try{ brandOk=!!(PREFS&&PREFS.brand&&(PREFS.brand.company||'').trim()); }catch(_){}
   const done=[
     ['Save Your First Room','Upload a photo in Studio and save it to a property.', (s.counts.designs||0)>0, 'studio','Open Studio'],
-    ['Price A Budget','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Budget'],
-    ['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'scope','Open Budget'],
+    ['Create A Listing Video','Turn property photos into a video you can share.', (s.counts.videos||0)>0, 'lvideo','Open Listing Video'],
     ['Send A Client Presentation','Share a branded approval link and track the decision.', (pres||[]).length>0, 'present','Open Presentations'],
+    ['Set Up Your Brand Kit','Add your logo and contact details to everything you send.', brandOk, 'brand','Open Brand Kit'],
   ];
+  let budgetLive=false;
+  try{ budgetLive=!!(await budgetAvailability()).available; }catch(_){}
+  if(budgetLive){
+    done.push(['Price A Budget','Turn an approved room into a line by line planning range.', (s.counts.priced||0)>0, 'scope','Open Budget']);
+    done.push(['Set A Budget Target','Give a project a target so the dashboard can flag overruns.', s.projects.some(p=>p.budget_target), 'scope','Open Budget']);
+  }
+  const total=done.length;
   const left=done.filter(d=>!d[2]).length;
   /* the first run Get Started card covers the same ground, never show both */
   if(!left||localStorage.getItem('rd.obDone')==='1'||document.getElementById('onbCard')){ if(card) card.remove(); return; }
@@ -571,7 +582,8 @@ function paintOnboarding(s,pres){
     card.id='obCard'; card.className='card ob-card';
     view.prepend(card);
   }
-  card.innerHTML='<div class="card-h"><div><h3>Get Set Up</h3><div class="sub">'+(4-left)+' Of 4 Done</div></div>'
+  card.innerHTML='<div class="card-h"><div><h3>Get Set Up</h3><div class="sub">'+(total-left)+' Of '+total+' Done</div></div>'
+
     +'<button class="btn btn-ghost btn-xs" id="obHide">Hide</button></div>'
     +'<div class="card-b ob-steps">'+done.map(([t,sub,ok,dest,lab])=>
       '<div class="ob-step'+(ok?' ok':'')+'"><i data-lucide="'+(ok?'check-circle-2':'circle')+'"></i>'
