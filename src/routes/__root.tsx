@@ -131,7 +131,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   useEffect(() => {
     if (isChunkLoadError(error) && typeof window !== "undefined") {
       const key = "rd:chunk-reload";
-      if (!sessionStorage.getItem(key)) {
+      const last = Number(sessionStorage.getItem(key) || 0);
+      // Allow another one-shot reload if the last attempt was a while ago.
+      if (!last || Date.now() - last > 20000) {
         sessionStorage.setItem(key, String(Date.now()));
         window.location.reload();
         return;
@@ -139,6 +141,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
+
 
 
   return (
