@@ -172,6 +172,8 @@ function shell() {
 </div>`;
 }
 
+let MENU_WIRED = false;
+
 function bind(view) {
   const $ = (id) => view.querySelector("#" + id);
   const menu = $("mlMenu");
