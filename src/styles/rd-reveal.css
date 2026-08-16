@@ -53,7 +53,7 @@
 .rd-app .rv-wiz h3 { font-size: 17px; font-weight: 800; margin: 0 0 14px; }
 .rd-app .rv-sub { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #8a8a8a; margin: 18px 0 8px; }
 
-.rd-app .rv-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.rd-app .rv-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
 .rd-app .rv-opts.sm { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .rd-app .rv-opt { text-align: left; border: 1px solid var(--line, #e6e6e6); border-radius: 11px; background: #fff; padding: 13px 14px; cursor: pointer; }
 .rd-app .rv-opt svg { width: 16px; height: 16px; margin-bottom: 6px; }
@@ -103,7 +103,7 @@
 .rd-app .rv-seg button { border: 1px solid var(--line, #e6e6e6); background: #fff; border-radius: 999px; padding: 6px 13px; font-size: 12.5px; font-weight: 600; cursor: pointer; }
 .rd-app .rv-seg button.on { background: #111; color: #fff; border-color: #111; }
 
-.rd-app .rv-f { display: block; font-size: 12px; font-weight: 700; color: #6a6a6a; margin: 12px 0 0; }
+.rd-app .rv-f { display: block; font-size: 12px; font-weight: 700; color: #6a6a6a; margin: 12px 0 14px; }
 .rd-app .rv-f input, .rd-app .rv-f select, .rd-app .rv-f textarea { display: block; width: 100%; margin-top: 5px; border: 1px solid var(--line, #e0e0e0); border-radius: 9px; padding: 9px 11px; font-size: 13px; font-weight: 500; color: #111; background: #fff; }
 .rd-app .rv-check { display: flex; align-items: center; gap: 8px; font-size: 12.5px; margin-top: 10px; }
 .rd-app .rv-adv { border-top: 1px solid var(--line, #f0f0f0); margin-top: 12px; padding-top: 6px; }
