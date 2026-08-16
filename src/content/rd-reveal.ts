@@ -570,10 +570,10 @@ function wizardHtml() {
     <div><h2>Create A Property Video</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
-  <div class="rv-layout rv-railed ${w.step > 1 ? "with-side" : ""}">
+  <div class="rv-layout rv-railed ${w.step > 2 ? "with-side" : ""}">
     ${rail}
     <div class="rv-wiz">${body}</div>
-    ${w.step > 1 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
+    ${w.step > 2 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
   </div>
   ${w.pop ? popoverHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
@@ -615,7 +615,7 @@ function stepPhotos() {
   ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
     .map((u) => `<div class="rv-thumb" style="background-image:url('${esc(u.url)}')"><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
     .join("")}</div>
-  <div class="rv-upload"><span class="mono">${w.uploads.length} Photos Added</span></div>` : ""}
+  <div class="rv-upload"><span class="mono">${w.uploads.length} ${w.uploads.length === 1 ? "Photo" : "Photos"} Added</span></div>` : ""}
   <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button></div>`;
 }
 
@@ -725,34 +725,35 @@ function stepSelect() {
     grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
   }
 
-  const fixCard = recs.length && !w.enhanceDismissed ? `<div class="rv-fix">
-    <b>We Found ${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve</b>
-    ${recs.map((r) => `<div class="rv-fix-row"><span>${esc(r.label)}</span><i class="mono">${r.ids.length} ${r.ids.length === 1 ? "Photo" : "Photos"}</i><em>${esc(r.note)}</em></div>`).join("")}
-    <div class="rv-fix-a">
-      <button class="btn btn-primary btn-sm" id="rvFixAll">Fix All</button>
-      <button class="btn btn-ghost btn-sm" data-goto="media">Review Each</button>
-      <button class="btn btn-ghost btn-sm" id="rvFixSkip">Skip</button>
-    </div>
-  </div>` : "";
 
   const pct = w.available.length ? Math.round((w.scenes.length / w.available.length) * 100) : 0;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : !(w.formats || []).length ? "Choose A Video Format To Continue." : "";
 
+  const advisories = [
+    dupCount ? `${dupCount} Similar Angles` : "",
+    flagged.length ? `${flagged.length} Photos With Issues` : "",
+    recs.length ? `${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve` : "",
+    missing.length ? `No ${missing.slice(0, 2).join(" Or ")}` : "",
+  ].filter(Boolean);
+
   return `<div class="rv-head-row">
-    <div><h3>Select The Photos</h3><p class="rv-hint">Check The Photos You Want. Drag To Reorder. The Order You See Is The Order It Plays.</p></div>
+    <div><h3>Select The Photos</h3><p class="rv-hint">Check The Photos You Want. Drag To Reorder.</p></div>
     <div class="rv-orient"><span>Video Format</span>
       <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
     </div>
   </div>
-  ${dupCount ? `<div class="rv-dup"><i data-lucide="copy"></i><b>${dupCount} Similar Angles Detected</b><span><button class="fb-link" id="rvKeepBest">Keep Best</button><button class="fb-link" data-goto="media">Review</button><button class="fb-link" id="rvKeepAll">Keep All</button></span></div>` : ""}
-  ${flagged.length ? `<div class="rv-issues"><i data-lucide="triangle-alert"></i><b>${flagged.length} Photos Have Issues We Can Fix</b><button class="fb-link" data-goto="media">Review</button></div>` : ""}
-  ${missing.length ? `<div class="rv-note sm">No ${missing.slice(0, 2).join(" Or ")} In This Set. Buyers Look For Those First.</div>` : ""}
-  ${fixCard}
+  ${advisories.length && !w.enhanceDismissed ? `<div class="rv-advise">
+    <i data-lucide="info"></i><b>${esc(advisories.join(" · "))}</b>
+    ${recs.length ? `<button class="fb-link" id="rvFixAll">Fix All</button>` : ""}
+    <button class="fb-link" data-goto="media">Review</button>
+    <button class="icon-btn sm" id="rvFixSkip" aria-label="Dismiss"><i data-lucide="x"></i></button>
+  </div>` : ""}
   <div class="rv-gridbar">
     <button class="btn btn-ghost btn-sm" id="rvRecommend">Select All Recommended</button>
     <button class="btn btn-ghost btn-sm" id="rvClear">Clear</button>
     <button class="btn btn-ghost btn-sm" id="rvAuto">Auto Arrange</button>
     <button class="btn btn-ghost btn-sm ${w.groupBy !== false ? "on" : ""}" id="rvGroupBy">Group By Room</button>
+    ${dupCount ? `<button class="btn btn-ghost btn-sm" id="rvKeepBest">Keep Best</button>` : ""}
   </div>
   <div class="rv-grid ${orient}">${grid || `<div class="rv-note">No Content Found For This Source.</div>`}</div>
   <div class="rv-gridfoot">
