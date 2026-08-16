@@ -74,7 +74,7 @@ function signupPanel() {
                 )
                 .join("")}
             </tbody></table>`
-          : `<p class="mono" style="color:var(--mute-2)">No questionnaire answers yet.</p>`
+          : `<p style="color:var(--mute-2);margin:6px 0">No Questionnaire Answers Yet.</p>`
       }
     </div>
   </div>`;
