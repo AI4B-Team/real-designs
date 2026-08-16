@@ -193,10 +193,12 @@ function go(v,fromHash){
   const revealLive=(()=>{ try{ return !!((window as any).__rdRevealBusy && (window as any).__rdRevealBusy()); }catch(_){ return false; } })();
   if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
-     keys like lvideo) must never leave the content area blank. */
-  let viewId = v==='lvideo' ? 'reveal' : v;
+     keys like lvideo) must never leave the content area blank. Home and the
+     dashboard are one view now, reachable only as dash. */
+  let viewId = v==='lvideo' ? 'reveal' : (v==='home' ? 'dash' : v);
   if(!document.getElementById('v-'+viewId)) viewId='dash';
-  const navId = (viewId==='reveal') ? 'media' : viewId;
+  const navId = (v==='lvideo') ? 'lvideo' : (viewId==='reveal') ? 'media' : viewId;
+
   /* Drop any half-finished video builder before showing another view, so a
      stale wizard can never flash on the next visit. */
   if(viewId!=='reveal'){ try{ resetReveal(); }catch(_){} }
