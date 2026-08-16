@@ -1164,7 +1164,7 @@ function stepBrand() {
     ${avatarSection(w.avatar, w.title || w.propertyLabel || "")}
   </details>
 
-  <details class="rv-acc"><summary>Captions & Disclosure</summary>
+  <details class="rv-acc" data-acc="captions"${accOpen.has("captions") ? " open" : ""}><summary>Captions &amp; Disclosure</summary>
     <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Text On Scenes</label>
     <div class="rv-sub">Scene Labels</div>
     <div class="rv-adv">
