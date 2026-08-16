@@ -217,14 +217,14 @@ function go(v,fromHash){
     const t1=document.getElementById('pgTitle'); if(t1) t1.innerHTML=titles[titleKey][0];
     const t2=document.getElementById('pgCrumb'); if(t2) t2.innerHTML=titles[titleKey][1];
   }
-  /* The hash and the scroll reset must run for every view, including views
-     that have no entry in the title map. */
-  if(!fromHash){
-    try{
-      const h='#v-'+viewId;
-      if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
-    }catch(_){}
-  }
+  /* The hash must always name the view that actually rendered, including
+     when a deep link was redirected (stale #v-reveal, unknown keys), so a
+     refresh or a copied link never lands somewhere else. */
+  try{
+    const h='#v-'+viewId;
+    if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
+  }catch(_){}
+
   scrollTopHard();
 }
 
