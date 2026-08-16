@@ -150,7 +150,7 @@ account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts']};
-const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security'};
+const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'crm'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
 let __allowReveal=0;
@@ -211,7 +211,6 @@ function go(v,fromHash){
 
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
-  if(v==='crm'){ try{ mountCrm(go); }catch(_){} }
   /* Legacy or unknown keys fall back to the dashboard view, so the header
      must follow the view that actually rendered, never the stale one. */
   const titleKey = titles[v] ? v : viewId;
@@ -507,7 +506,8 @@ brand:['Brand Kit','Applied to exports, decks and client links'],
 defaults:['Defaults','Applied to every new design'],
 api:['API & White Label','Business plan feature'],
 danger:['Data & Privacy','Export or permanently remove your data'],
-integrations:['Integrations','What is connected right now, read from the server']};
+integrations:['Integrations','What is connected right now, read from the server'],
+crm:['CRM Sync','Keep your contacts and shared designs in step with your CRM']};
 function acctPane(k){
   if(!PANE_META[k]) k='profile';
   document.querySelectorAll('.arail-i').forEach(b=>b.classList.toggle('on',b.dataset.pane===k));
@@ -515,6 +515,7 @@ function acctPane(k){
   const t=document.getElementById('acctPaneTitle'),su=document.getElementById('acctPaneSub');
   if(t) t.textContent=PANE_META[k][0];
   if(su) su.textContent=PANE_META[k][1];
+  if(k==='crm'){ try{ mountCrm(go); }catch(_){} }
 }
 document.querySelectorAll('.arail-i').forEach(b=>b.addEventListener('click',()=>acctPane(b.dataset.pane)));
 
