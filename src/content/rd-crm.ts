@@ -180,7 +180,7 @@ function render() {
   const el = host();
   if (!el) return;
   if (S.loading && !S.data) {
-    el.innerHTML = `<div class="card"><div class="card-b"><p class="mono">Loading Your CRM Connections…</p></div></div>`;
+    el.innerHTML = `<div class="card"><div class="card-b"><p style="color:var(--mute-2)">Loading Your CRM Connections…</p></div></div>`;
     return;
   }
   const contacts = S.data?.contacts || [];
@@ -188,6 +188,7 @@ function render() {
 
   el.innerHTML = `
   <div class="crm">
+    <div class="dash-hello" style="margin-bottom:14px"><h2>CRM Sync</h2><p>Keep Your Contacts And Shared Designs In Step With Your CRM.</p></div>
     ${S.error ? `<div class="note"><i data-lucide="alert-triangle"></i><span>${esc(S.error)}</span></div>` : ""}
 
     <div class="grid g3" style="margin-bottom:16px">
@@ -210,7 +211,7 @@ function render() {
                     )
                     .join("")}
                 </tbody></table>`
-              : `<p class="mono" style="color:var(--mute-2)">Connect a CRM and run a sync to pull your contacts in.</p>`
+              : `<p style="color:var(--mute-2);margin:6px 0">Connect a CRM and run a sync to pull your contacts in.</p>`
           }
         </div>
       </div>
@@ -227,7 +228,7 @@ function render() {
                     <span class="pill ${l.status === "ok" ? "p-ok" : "p-warn"}">${l.status === "ok" ? "Done" : "Failed"}</span></div>`,
                   )
                   .join("")
-              : `<p class="mono" style="color:var(--mute-2)">Nothing has synced yet.</p>`
+              : `<p style="color:var(--mute-2);margin:6px 0">Nothing has synced yet.</p>`
           }
         </div>
       </div>
