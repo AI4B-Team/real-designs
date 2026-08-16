@@ -39,7 +39,7 @@ const LINE = rgb(0.9, 0.9, 0.9);
 function hexColor(hex?: string) {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
   if (!m) return RED;
-  const n = parseInt(m[1], 16);
+  const n = parseInt(m[1]!, 16);
   return rgb(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255);
 }
 
@@ -151,7 +151,7 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
   // ---- images ----
   if (doc.images?.length) {
     const imgs = await Promise.all(doc.images.map((i) => fetchImage(pdf, i.url)));
-    const shown = imgs.map((img, i) => ({ img, cap: doc.images![i].caption })).filter((p) => p.img);
+    const shown = imgs.map((img, i) => ({ img, cap: doc.images![i]!.caption })).filter((p) => p.img);
     if (shown.length) {
       const gap = 12;
       const cw = (W - gap * (shown.length - 1)) / shown.length;
@@ -195,7 +195,7 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
       const header = () => {
         need(22);
         sec.columns!.forEach((c, i) =>
-          text(c.label.toUpperCase(), xs[i], 7.5, { font: bold, color: MUTED, align: c.align, width: colW[i] }),
+          text(c.label.toUpperCase(), xs[i]!, 7.5, { font: bold, color: MUTED, align: c.align, width: colW[i]! }),
         );
         y -= 6;
         page.drawRectangle({ x: M, y, width: W, height: 0.7, color: LINE });
@@ -204,7 +204,7 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
       header();
 
       sec.rows.forEach((row, ri) => {
-        const cells = row.map((cell, i) => wrap(cell, reg, 9, colW[i]));
+        const cells = row.map((cell, i) => wrap(cell, reg, 9, colW[i]!));
         const h = Math.max(...cells.map((c) => c.length)) * 11 + 6;
         if (y - h < M + 24) {
           newPage();
@@ -217,9 +217,9 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
         cells.forEach((linesArr, i) => {
           y = rowTop;
           for (const l of linesArr) {
-            text(l, xs[i], 9, {
-              align: sec.columns![i].align,
-              width: colW[i],
+            text(l, xs[i]!, 9, {
+              align: sec.columns![i]!.align,
+              width: colW[i]!,
               font: sec.emphasizeRows?.includes(ri) ? bold : reg,
             });
             y -= 11;
