@@ -493,6 +493,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     );
   }
 
+  /* Budget is chosen before generation so the concept and its estimate agree. */
+  function budgetField() {
+    return field(
+      "Budget Target",
+      chips("budget", BUDGETS.map((b) => [b, b] as [string, string]), state.budget) +
+        '<p class="stw-help">The design is generated to fit this range, and the estimate uses the same range.</p>',
+    );
+  }
+
   function propertyField() {
     const props = (ctx.getProperties() || []).slice(0, 40);
     if (!props.length) return "";
@@ -600,11 +609,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
         roomField("Room Or Space Type") +
         propertyField() +
-        field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">')
+        field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
+        budgetField()
       : field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
         roomField("Room Or Area Type") +
         propertyField() +
-        field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="e.g. Pre Listing Refresh" value="' + esc(state.newProject) + '">');
+        field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="e.g. Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
+        budgetField();
 
     return (
       workHead(
@@ -999,6 +1010,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       const val = chip.dataset["val"]!;
       if (name === "space") state.space = val;
       if (name === "goal") state.goal = val;
+      if (name === "budget") state.budget = state.budget === val ? "" : val;
       render();
       return;
     }
