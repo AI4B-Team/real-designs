@@ -2242,6 +2242,63 @@ export type Database = {
           },
         ]
       }
+      watched_sites: {
+        Row: {
+          attestation_text: string
+          attestation_version: string
+          attested_at: string
+          created_at: string
+          host: string
+          id: string
+          last_checked_at: string | null
+          new_listing_mode: string
+          period: string
+          robots_ok: boolean
+          site_url: string
+          status: string
+          updated_at: string
+          user_id: string
+          video_type: string
+          watch_since: string | null
+        }
+        Insert: {
+          attestation_text: string
+          attestation_version?: string
+          attested_at?: string
+          created_at?: string
+          host: string
+          id?: string
+          last_checked_at?: string | null
+          new_listing_mode?: string
+          period?: string
+          robots_ok?: boolean
+          site_url: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          video_type?: string
+          watch_since?: string | null
+        }
+        Update: {
+          attestation_text?: string
+          attestation_version?: string
+          attested_at?: string
+          created_at?: string
+          host?: string
+          id?: string
+          last_checked_at?: string | null
+          new_listing_mode?: string
+          period?: string
+          robots_ok?: boolean
+          site_url?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          video_type?: string
+          watch_since?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
