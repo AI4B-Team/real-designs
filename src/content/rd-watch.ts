@@ -1,5 +1,5 @@
 /**
- * Watch A Site — monitor a listing site the user owns and prepare videos for
+ * Site Watch — monitor a listing site the user owns and prepare videos for
  * new properties. Nothing runs until the user attests, in writing, that they
  * own the site and have the right to the data on it.
  */
