@@ -262,7 +262,7 @@ try{ mountUploadDock(go); }catch(_){}
     const clean=()=>{
       if(location.hash!==bad) return;
       try{
-        const cur=document.querySelector('.rd-app .view.on');
+        const cur=document.querySelector('.rd-app .view.on')||document.querySelector('.view.on');
         if(cur){ history.replaceState(null,'',location.pathname+location.search+'#'+cur.id); return; }
       }catch(_){}
       if(++n<60) window.setTimeout(clean,75);
