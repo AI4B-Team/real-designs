@@ -107,6 +107,25 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   };
 
 
+  /**
+   * Address lookup only exists when a licensed listing-data provider is
+   * connected. Nothing to configure here: it appears on its own.
+   */
+  (async () => {
+    if (cfg.sources.includes("address")) return;
+    try {
+      const { readIntegrations } = await import("@/lib/integrations.functions");
+      const r: any = await readIntegrations();
+      const on = (r?.items || []).some((i: any) => i.key === "listing" && i.connected);
+      if (on && !cfg.sources.includes("address")) {
+        cfg.sources.splice(cfg.sources.indexOf("url"), 0, "address");
+        render();
+      }
+    } catch {
+      /* readiness is advisory */
+    }
+  })();
+
   const input = document.createElement("input");
   input.type = "file";
   input.hidden = true;
