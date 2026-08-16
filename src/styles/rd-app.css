@@ -1718,3 +1718,34 @@
 
 .rd-app .create-wrap .chev{width:14px;height:14px;margin-left:2px}
 .rd-app .create-wrap .help-menu{width:190px}
+
+/* ---------- Watch A Site ---------- */
+.rd-app .wt-card{margin-bottom:16px}
+.rd-app .wt-form{display:grid;gap:16px;max-width:640px}
+.rd-app .wt-f{display:grid;gap:6px;font-size:.86rem;font-weight:600}
+.rd-app .wt-f em{font-style:normal;font-weight:400;font-size:.78rem;color:#6b6b72}
+.rd-app .wt-f input[type=url],.rd-app .wt-f input[type=date]{border:1px solid #d9d9df;border-radius:10px;padding:9px 12px;font:inherit;font-size:.9rem;background:#fff;max-width:420px}
+.rd-app .wt-row{display:flex;gap:8px;align-items:center}
+.rd-app .wt-row input{flex:1}
+.rd-app .wt-seg{display:inline-flex;border:1px solid #d9d9df;border-radius:999px;overflow:hidden;width:max-content}
+.rd-app .wt-seg button{border:0;background:#fff;padding:7px 16px;font:inherit;font-size:.84rem;cursor:pointer}
+.rd-app .wt-seg button.on{background:var(--red,#c00);color:#fff}
+.rd-app .wt-radio{display:flex;gap:10px;align-items:flex-start;border:1px solid #e6e6ea;border-radius:10px;padding:10px 12px;cursor:pointer;font-weight:400}
+.rd-app .wt-radio b{display:block;font-size:.88rem}
+.rd-app .wt-radio em{font-style:normal;font-size:.78rem;color:#6b6b72}
+.rd-app .wt-attest{border:1px solid #e6e6ea;border-radius:12px;padding:14px;background:#fafafa}
+.rd-app .wt-attest b{font-size:.86rem}
+.rd-app .wt-attest p{margin:4px 0 10px;font-size:.8rem;color:#6b6b72}
+.rd-app .wt-check-box{display:flex;gap:10px;align-items:flex-start;font-size:.82rem;line-height:1.5;cursor:pointer}
+.rd-app .wt-check{display:flex;gap:8px;align-items:center;font-size:.84rem;border-radius:10px;padding:9px 12px;margin-bottom:12px}
+.rd-app .wt-check.ok{background:#effaf3;color:#14804a}
+.rd-app .wt-check.bad{background:#fdf1f1;color:#a11}
+.rd-app .wt-check i{width:16px;height:16px}
+.rd-app .wt-note{font-size:.76rem;color:#8a8a92}
+.rd-app .wt-list{display:grid;gap:10px}
+.rd-app .wt-row-item{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;border:1px solid #e6e6ea;border-radius:12px;padding:12px 14px}
+.rd-app .wt-row-item .wt-site b{display:block;font-size:.92rem}
+.rd-app .wt-row-item .wt-site span{font-size:.78rem;color:#8a8a92;word-break:break-all}
+.rd-app .wt-meta{grid-column:1;font-size:.78rem;color:#6b6b72}
+.rd-app .wt-row-item button{grid-column:2;grid-row:1}
+.rd-app .wt-empty{font-size:.86rem;color:#6b6b72;padding:12px 0}
