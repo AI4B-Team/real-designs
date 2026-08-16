@@ -167,6 +167,7 @@ function scrollTopHard(){
 }
 let __paneSeq=0;
 function go(v,fromHash){
+  const acctAlias = ACCT_ALIAS[v] ? v : '';
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
     /* The account markup can mount (and remount) after this call, so retry
@@ -221,7 +222,7 @@ function go(v,fromHash){
      when a deep link was redirected (stale #v-reveal, unknown keys), so a
      refresh or a copied link never lands somewhere else. */
   try{
-    const h='#v-'+viewId;
+    const h='#v-'+(acctAlias && viewId==='account' ? acctAlias : viewId);
     if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
   }catch(_){}
 
