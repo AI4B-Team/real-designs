@@ -181,9 +181,14 @@ function bind(view) {
     menu.classList.toggle("on", on);
     $("mlCreate").setAttribute("aria-expanded", String(on));
   };
-  document.addEventListener("click", (e) => {
-    if (!e.target.closest || !e.target.closest(".ml-create")) menu.classList.remove("on");
-  });
+  if (!MENU_WIRED) {
+    MENU_WIRED = true;
+    document.addEventListener("click", (e) => {
+      const m = document.getElementById("mlMenu");
+      if (!m) return;
+      if (!e.target.closest || !e.target.closest(".ml-create")) m.classList.remove("on");
+    });
+  }
   menu.querySelectorAll("[data-c]").forEach((b) => {
     b.onclick = () => {
       menu.classList.remove("on");
