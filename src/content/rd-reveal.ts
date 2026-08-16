@@ -1085,7 +1085,7 @@ function tplCtx() {
     a: esc(line1),
     b: esc(line2),
     agent: esc(kit?.name || "Your Name"),
-    phone: esc(kit?.phone || "(555) 555, 0134"),
+    phone: esc(kit?.phone || "(555) 555-0134"),
     photo: shot ? esc(shot.path) : "",
   };
 }

@@ -470,7 +470,8 @@
 /* Split frame */
 .rd-app .rv-tpl-th.t-split { flex-direction: row; align-items: stretch; padding: 0; gap: 0; }
 .rd-app .rv-tpl-th.t-split .tp-half { width: 44%; background: #d8d8d8 center/cover no-repeat; }
-.rd-app .rv-tpl-th.t-split .tp-side { flex: 1; display: grid; align-content: center; gap: 2px; padding: 0 8px; text-align: left; }
+.rd-app .rv-tpl-th.t-split .tp-side { flex: 1; min-width: 0; display: grid; align-content: center; gap: 2px; padding: 0 8px; text-align: left; }
+.rd-app .rv-tpl-th.t-split .tp-a { white-space: normal; font-size: .54rem; }
 /* Stamp */
 .rd-app .rv-tpl-th.t-stamp { background: #f7f7f7; }
 .rd-app .rv-tpl-th.t-stamp .tp-stamp { border: 1.5px solid #111; border-radius: 3px; padding: 3px 8px; max-width: 100%; }
