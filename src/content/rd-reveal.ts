@@ -1859,7 +1859,7 @@ function bind() {
 
   on("#rvLowX", "click", () => { w.lowModal = false; render(); });
   on("#rvLowMore", "click", () => { w.lowModal = false; w.step = 1; render(); });
-  on("#rvLowGo", "click", () => { w.lowModal = false; w.step = 3; render(); });
+  on("#rvLowGo", "click", () => { w.lowModal = false; w.step = nextStep(2); render(); });
 
 
   const titleIn = el.querySelector("#rvTitle");
