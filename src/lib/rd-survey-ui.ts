@@ -359,18 +359,58 @@ export async function loadSurveySeed() {
   }
 }
 
-/** Sends new members to the full-page questionnaire before the app. */
+/** Sends brand new members to the full-page questionnaire before the app.
+ *  This check is deliberately conservative: the lookup is a network call, so
+ *  it can resolve long after the app is on screen. Yanking someone out of a
+ *  page they are already working in reads as a random redirect, so we only
+ *  ever redirect during the first moments of a fresh app load, only once per
+ *  browser, and never once the person has started interacting. */
+const SURVEY_SENT_KEY = "rd.survey.sent";
 export async function maybeOpenSignupSurvey() {
   try {
     if (location.pathname.startsWith("/welcome")) return;
+    /* a deep link into a specific view is intentional navigation, leave it */
+    if (location.hash && location.hash !== "#v-dash") return;
+    try {
+      if (localStorage.getItem(SURVEY_SENT_KEY)) return;
+    } catch (_) {
+      /* private mode: fall through, the timing guard still applies */
+    }
+    const bootedAt =
+      typeof performance !== "undefined" && performance.now ? performance.now() : 0;
+
+    let touched = false;
+    const mark = () => {
+      touched = true;
+    };
+    const opts: any = { once: true, capture: true };
+    ["pointerdown", "keydown", "wheel", "touchstart"].forEach((e) =>
+      document.addEventListener(e, mark, opts),
+    );
+
     const out: any = await getSignupSurvey();
+
+    ["pointerdown", "keydown", "wheel", "touchstart"].forEach((e) =>
+      document.removeEventListener(e, mark, true),
+    );
+
     const row = out?.row;
     if (row && (row.completed || row.skipped)) return;
+    if (touched) return;
+    const now =
+      typeof performance !== "undefined" && performance.now ? performance.now() : 0;
+    if (now - bootedAt > 6000) return;
+    try {
+      localStorage.setItem(SURVEY_SENT_KEY, String(Date.now()));
+    } catch (_) {
+      /* best effort */
+    }
     location.assign("/welcome");
   } catch (_) {
     /* never block the app on the questionnaire */
   }
 }
+
 
 /** Reopen for editing from the account area. */
 export async function editSignupSurvey() {
