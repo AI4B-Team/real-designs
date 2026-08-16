@@ -433,12 +433,12 @@ function moreItems(m) {
   const fav = { icon: "heart", label: isFav(m.id) ? "Unfavorite" : "Favorite", fn: () => { toggleFav(m.id); render(); } };
   if (m.status === "failed")
     return [
-      ...(planBlocked(m)
-        ? [{ icon: "zap", label: "Upgrade", fn: () => openUpgrade(m) }]
-        : [{ icon: "rotate-ccw", label: "Retry", fn: () => retry(m) }]),
+      { icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
+      ...(planBlocked(m) ? [{ icon: "zap", label: "Add Credits", fn: () => openUpgrade(m) }] : []),
       { icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
-      { icon: "trash-2", label: "Remove", danger: true, fn: () => remove(m) },
+      { icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) },
     ];
+
   if (g === "videos")
     return [
       { icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
