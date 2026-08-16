@@ -2837,12 +2837,12 @@ function presModal(){
     });
   }
   const sel=m.querySelector('#plVer');
-  const go=m.querySelector('#plGo');
+  const plGo=m.querySelector('#plGo');
   m.querySelector('#plErr').style.display='none';
   m.querySelector('#plOut').style.display='none';
   m.classList.add('on');
   sel.innerHTML='<option value="">Loading Your Saved Designs</option>';
-  go.disabled=true;
+  plGo.disabled=true;
   lucide.createIcons();
   (async()=>{
     let versions=[];
@@ -2858,20 +2858,20 @@ function presModal(){
       const err=m.querySelector('#plErr');
       err.style.display='block';
       err.textContent='Save a design in Studio first. Approval links are built from a saved before and after.';
-      go.disabled=true;
+      plGo.disabled=true;
       let jump=m.querySelector('#plStudio');
       if(!jump){
         jump=document.createElement('button');
         jump.id='plStudio'; jump.className='btn btn-primary btn-block';
         jump.textContent='Open Studio';
         jump.addEventListener('click',()=>{ m.classList.remove('on'); go('studio'); });
-        go.parentNode.insertBefore(jump,go);
+        plGo.parentNode.insertBefore(jump,plGo);
       }
-      jump.hidden=false; go.hidden=true;
+      jump.hidden=false; plGo.hidden=true;
       return;
     }
     const jump=m.querySelector('#plStudio'); if(jump) jump.hidden=true;
-    go.hidden=false; go.disabled=false;
+    plGo.hidden=false; plGo.disabled=false;
     sel.innerHTML=versions.map(v=>`<option value="${v.id}">${esc(v.label)}</option>`).join('');
     const t=m.querySelector('#plTitle');
     if(t&&!t.value) t.value=(versions[0].room?versions[0].room:'Design')+' Approval';
