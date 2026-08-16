@@ -3923,12 +3923,8 @@ if(scopeGrid && !document.getElementById('scSave')){
   function act(k){
     if(k==='brand'){ go('branding'); return; }
     if(k==='shared'){ go('present'); return; }
-    go('scope');
-    setTimeout(()=>{
-      if(k==='photo'){ const l=document.querySelector('label[for="svPhoto"]'); if(l){ l.scrollIntoView({behavior:'smooth',block:'center'}); l.click(); } }
-      else if(k==='priced'){ const b=document.getElementById('scRun'); if(b){ b.scrollIntoView({behavior:'smooth',block:'center'}); b.click(); } }
-      else { const a=document.getElementById('svAddress'); if(a){ a.scrollIntoView({behavior:'smooth',block:'center'}); a.focus(); } }
-    },80);
+    /* Everything left is a Studio task: upload a photo, save the room. */
+    go('studio');
   }
 
   function render(){
