@@ -149,7 +149,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     render();
     for (const file of raw) {
       try {
-        files.push(await normalize(file));
+        files.push(await normalizeImageFile(file));
       } catch (error) {
         alert(error instanceof Error ? error.message : file.name + ": This Photo Could Not Be Added.");
       }
