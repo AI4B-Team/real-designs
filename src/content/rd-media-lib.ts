@@ -55,6 +55,8 @@ const S = {
   items: [],
   tab: "all",
   status: "all",
+  prop: "all",
+  propList: [],
   q: "",
   sort: "new",
   favOnly: false,
