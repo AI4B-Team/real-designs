@@ -2105,7 +2105,31 @@ function bind() {
     render();
   });
   on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); syncSceneOrder(); render(); });
-  on("#rvGroupBy", "click", () => { w.groupBy = w.groupBy === false; render(); });
+  on("#rvGroupBy", "change", () => { w.groupBy = w.groupBy === false; render(); });
+  on("#rvSelAll", "change", (e) => {
+    if (e.currentTarget.checked) w.scenes = (w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean).map(assetToScene);
+    else w.scenes = [];
+    syncSceneOrder();
+    render();
+  });
+  on("#rvReverse", "click", () => { w.gridOrder = (w.gridOrder || []).slice().reverse(); syncSceneOrder(); render(); });
+  on("#rvResetOrder", "click", () => {
+    const list = (w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean);
+    list.sort((a, b) => orderRank(a.group) - orderRank(b.group) || String(a.room || "").localeCompare(String(b.room || "")));
+    w.gridOrder = list.map((a) => a.key);
+    syncSceneOrder();
+    render();
+  });
+  /* Header and notice shortcuts both reopen the picker step without losing work. */
+  on("#rvHeadAdd", "click", () => { w.step = 1; render(); });
+  on("#rvNoticeAdd", "click", () => { w.step = 1; render(); });
+  on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
+  on("[data-orient]", "click", (e) => {
+    const id = e.currentTarget.dataset.orient;
+    const found = ORIENTATIONS.find(([k]) => k === id);
+    if (found) w.formats = [found[2][0]];
+    render();
+  });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
   on(".rv-tile-th", "keydown", (e) => {
