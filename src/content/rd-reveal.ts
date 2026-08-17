@@ -614,7 +614,7 @@ function wizardHtml() {
     : "";
 
   return `<div class="rv-head">
-    <div><h2>${esc(pageTitle)}</h2><p>${esc(w.propertyLabel || pageSub)}</p></div>
+    <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
     ${headTools}
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
@@ -675,15 +675,19 @@ function defaultTitle(w) {
 function stepPhotos() {
   const w = S.wizard;
   const chosen = w.propertyId ? (S.tree.find((p) => p.id === w.propertyId)?.address || w.propertyLabel) : "";
-  return `<h3>Where Are The Photos?</h3>
-  <label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
+  const failed = w.uploadFails || [];
+  return `<label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
   <div id="rvPicker"></div>
   ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
-  ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
-    .map((u) => `<div class="rv-thumb" draggable="true" data-upload-id="${u.id}" style="background-image:url('${esc(u.url)}')"><span>${esc(u.originalName || u.name)}</span><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
-    .join("")}</div>
-  <div class="rv-upload"><span class="mono">${w.uploads.length} ${w.uploads.length === 1 ? "Photo" : "Photos"} Added</span></div>` : ""}
-  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Review Photos</button></div>`;
+  ${w.uploadPrep && w.uploadPrep.length ? `<div class="rv-prep">${w.uploadPrep
+    .map((f) => `<div class="rv-prep-r"><span>${esc(f.name)}</span><i class="rv-prep-bar"><em style="width:${f.pct}%"></em></i></div>`)
+    .join("")}</div>` : ""}
+  ${w.uploads.length ? `<div class="rv-added"><i data-lucide="check"></i>${w.uploads.length} ${w.uploads.length === 1 ? "photo" : "photos"} added</div>` : ""}
+  ${failed.length ? `<div class="rv-fails">${failed
+    .map((f, i) => `<div class="rv-fail-r"><i data-lucide="triangle-alert"></i><span>${esc(f.name)}</span><em>${esc(f.why)}</em>
+      <button class="fb-link" data-failretry="${i}">Retry</button><button class="fb-link" data-failrm="${i}">Remove</button></div>`)
+    .join("")}</div>` : ""}
+  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button></div>`;
 }
 
 /* The preview panel renders its own Continue, so readiness lives in one place
