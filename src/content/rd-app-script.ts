@@ -269,7 +269,12 @@ document.querySelectorAll('.nav-i').forEach(b=>b.addEventListener('click',()=>go
 document.querySelectorAll('[data-goto]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.goto)));
 /* The listing video builder is merged into the property video builder.
    Every legacy entry point now opens the unified four step builder. */
-try{ (window as any).rdListingVideo=(seed:any)=>{ try{ const s=seed||{}; createVideoFrom({ ...s, sourceType:s.sourceType||(s.files&&s.files.length?'upload':s.propertyId?'property':'address') }); }catch(_){} }; }catch(_){}
+try{ (window as any).rdListingVideo=(seed:any)=>{ try{
+  const s=seed||{};
+  const files=Array.from(s.files||[]).filter((file:any)=>typeof File!=="undefined"&&file instanceof File);
+  const sourceType=files.length?'upload':s.propertyId?'property':s.versionId?'design':s.sourceType||'address';
+  createVideoFrom({ ...s, files, sourceType });
+}catch(_){} }; }catch(_){}
 document.querySelectorAll('[data-lvideo]').forEach(b=>b.addEventListener('click',()=>{ try{ const p=curProp&&curProp(); createVideoFrom(p&&p.id?{ sourceType:'property', propertyId:p.id, propertyLabel:p.address||p.name||'', from:'properties' }:{ sourceType:'address', from:'menu' }); }catch(_){ createVideoFrom({}); } }));
 try{ (window as any).rdCreateVideo=(seed:any)=>{ try{ createVideoFrom(seed||{}); }catch(_){} }; }catch(_){}
 document.querySelectorAll('[data-createvideo]').forEach(b=>b.addEventListener('click',()=>{ try{ createVideoFrom(JSON.parse(b.getAttribute('data-createvideo')||'{}')); }catch(_){ createVideoFrom({}); } }));
