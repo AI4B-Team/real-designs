@@ -2825,13 +2825,27 @@ function bind() {
   on("#rvTlAdd", "click", () => el.querySelector("#rvTlFile")?.click());
   const tlf = el.querySelector("#rvTlFile");
   if (tlf) tlf.addEventListener("change", async (e) => { const f = [...(e.target.files || [])]; if (f.length) await addUploads(f); });
-  on("[data-sec]", "click", (e) => { goSection(e.currentTarget.dataset.sec); });
+  on("[data-sec]:not(.rv-rail-i)", "click", async (e) => {
+    const key = e.currentTarget.dataset.sec;
+    if (!key || !sectionReady(key)) return;
+    w.step = stepForSection(key);
+    if (key === "scenes") await loadWizardAssets();
+    if (S.wizard !== w) return;
+    render();
+  });
 
   /* titles */
   on("[data-tfont]", "click", (e) => { w.titleFont = e.currentTarget.dataset.tfont; render(); });
   on("[data-tpos]", "click", (e) => { w.titlePos = e.currentTarget.dataset.tpos; render(); });
   const stx = el.querySelector("#rvSceneText");
-  if (stx) stx.addEventListener("input", (e) => { const sc = activeScene(); if (sc) { sc.caption = e.target.value; paintCanvasText(); } });
+  if (stx) stx.addEventListener("input", (e) => {
+    const sc = activeScene(); if (!sc) return;
+    sc.caption = e.target.value;
+    const ov = el.querySelector(".rv-ov-cap");
+    if (ov) ov.textContent = sc.caption || sc.room || "";
+    const tl = el.querySelector(`.rv-tl-i[data-tlpick="${activeIndex()}"] b`);
+    if (tl) tl.textContent = sc.room || "Scene";
+  });
   on("#rvCapAll", "click", () => { w.scenes.forEach((sc) => { if (!sc.caption) sc.caption = sc.room || ""; }); render(); });
 
   /* audio */
