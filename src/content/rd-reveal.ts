@@ -441,7 +441,10 @@ function newWizard(seed = {}) {
     gridOrder: [],
     groupBy: true,
     scenes: [],
-    formats: ["9:16"],
+    /* One canonical format, chosen in Select & Order. Extra deliverables live
+       in additionalFormats and never overwrite the primary. */
+    primaryFormat: DEFAULT_FORMAT,
+    additionalFormats: [],
     length: "standard",
     motion: "auto",
     transition: "clean",
