@@ -209,3 +209,93 @@ export async function runAdvanceToGrid(
   }
   await runEnrichment(w, deps as Partial<IntakeDeps>);
 }
+
+/* ===================== CANONICAL ENTRY POINTS =====================
+   Every path that puts photos into the builder — Browse Files, drag and
+   drop, Studio / Create Media handoff, seed.files, cloud imports, retries,
+   staging handoff — resolves its step through these helpers. There is no
+   second navigation implementation. */
+
+/** Structured diagnostics; swallowed when analytics is unavailable. */
+export function logVideoEvent(event: string, data: Record<string, any>): void {
+  try {
+    const payload = { event, ...data };
+    (globalThis as any).__rdVideoEvents = ((globalThis as any).__rdVideoEvents || []).concat(payload);
+    if ((globalThis as any).__rdVideoDebug) console.info("[rd]", payload);
+  } catch (_) {}
+}
+
+/**
+ * The single rule for where a freshly built wizard opens.
+ * Photos always win: a wizard holding uploads can never open on Add Photos.
+ */
+export function initialWizardStep(
+  seed: { propertyId?: any; versionId?: any; step?: number } = {},
+  uploads: any[] = [],
+): number {
+  if (seed.step && seed.step > 1) return seed.step;
+  if ((uploads || []).length > 0) return 2;
+  if (seed.propertyId || seed.versionId) return 2;
+  return 1;
+}
+
+/**
+ * Defensive invariant: a wizard with photos is never left on Step 1.
+ * Protection against regression, not a replacement for the entry-path fixes.
+ */
+export function ensureStepInvariant(w: IntakeWizard, deps?: Partial<IntakeDeps>): boolean {
+  if (!w || w.step !== 1 || !(w.uploads || []).length) return false;
+  w.step = 2;
+  (deps?.attachUploads || attachUploadAssets)(w);
+  if (!(w['scenes'] || []).length) deps?.selectUploads?.(w);
+  deps?.render?.();
+  logVideoEvent("video_step_invariant_applied", { totalUploads: (w.uploads || []).length });
+  return true;
+}
+
+/**
+ * Synchronously make already-seeded uploads visible on Scenes, before the
+ * first paint. Enrichment (assets, rooms, quality) continues afterwards.
+ */
+export function hydrateSeededWizard(w: IntakeWizard, deps: Partial<IntakeDeps>): boolean {
+  if (!w || !(w.uploads || []).length) return false;
+  const attach = deps.attachUploads || attachUploadAssets;
+  w.step = 2;
+  attach(w);
+  if (!(w['scenes'] || []).length) deps.selectUploads?.(w);
+  w.selectGridLoading = true;
+  logVideoEvent("video_photos_accepted", {
+    entrySource: "seed",
+    addedCount: (w.uploads || []).length,
+    totalUploads: (w.uploads || []).length,
+    visibleStep: w.step,
+  });
+  return true;
+}
+
+/**
+ * Canonical accepted-photo pipeline. Validates, attaches, previews, selects,
+ * advances when entering from Step 1, renders, then persists / enriches.
+ */
+export async function acceptVideoPhotos(opts: {
+  wizard: IntakeWizard;
+  files: any;
+  source: string;
+  shouldAdvance?: boolean;
+  deps: IntakeDeps;
+}): Promise<void> {
+  const { wizard: w, files, source, deps } = opts;
+  if (!w) return;
+  const before = (w.uploads || []).length;
+  const advance = opts.shouldAdvance === false
+    ? { ...deps, advance: async (x: IntakeWizard) => { x.step = Math.max(x.step, 2); } }
+    : deps;
+  await runIntake(w, files, advance);
+  ensureStepInvariant(w, deps);
+  logVideoEvent("video_photos_accepted", {
+    entrySource: source,
+    addedCount: (w.uploads || []).length - before,
+    totalUploads: (w.uploads || []).length,
+    visibleStep: w.step,
+  });
+}
