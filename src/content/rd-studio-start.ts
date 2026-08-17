@@ -56,6 +56,7 @@ export type StudioStartCtx = {
 
 import { mountSourcePicker } from "@/lib/source-picker";
 import { cleanAddressText } from "@/lib/property-address";
+import { openStagingReview } from "@/content/rd-staging";
 
 const SAMPLE_KEYS: Array<{ key: string; name: string; space: string; room: string; photo: string; alt: string }> = [];
 
@@ -915,6 +916,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           }
           return;
         }
+        /* Many photos go to the staging review grid; one photo stays inline. */
+        if (picked.length > 1) {
+          openStagingReview({ files: picked.map((p) => p.file), address: state.property || state.address || "" });
+          return;
+        }
         openSetup("upload");
         takeFile(first.file);
       },
@@ -969,8 +975,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         }),
       );
       drop.addEventListener("drop", (ev: any) => {
-        const f = ev.dataTransfer?.files?.[0];
-        if (f) takeFile(f);
+        const files: File[] = Array.from(ev.dataTransfer?.files || []);
+        if (files.length > 1) {
+          openStagingReview({ files, address: state.property || state.address || "" });
+          return;
+        }
+        if (files[0]) takeFile(files[0]);
       });
     }
 
