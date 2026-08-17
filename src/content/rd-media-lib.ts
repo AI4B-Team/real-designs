@@ -224,6 +224,10 @@ function bind(view) {
     S.status = e.target.value;
     render();
   };
+  $("mlProp").onchange = (e) => {
+    S.prop = e.target.value;
+    render();
+  };
   $("mlSort").onchange = (e) => {
     S.sort = e.target.value;
     render();
