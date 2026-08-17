@@ -799,3 +799,30 @@
   .rd-app .fx-modal .fx-tabs { position: sticky; top: 0; background: #fff; z-index: 3; }
   .rd-app .fx-modal .rv-modal-f { position: sticky; bottom: 0; background: #fff; }
 }
+
+/* ---------- Optional Property Address ---------- */
+.rd-app .rv-head-tools { flex: 1 1 auto; }
+.rd-app .rd-addr-bar { display: flex; align-items: center; gap: 8px; margin-right: auto; min-width: 220px; flex: 0 1 380px; }
+.rd-app .rd-addr-in { position: relative; display: flex; align-items: center; width: 100%; }
+.rd-app .rd-addr-in i { position: absolute; left: 10px; width: 15px; height: 15px; color: var(--muted); pointer-events: none; }
+.rd-app .rd-addr-in input {
+  width: 100%; padding: 8px 12px 8px 30px; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--card); color: var(--ink); font-size: 13px;
+}
+.rd-app .rd-addr-in input:focus { outline: none; border-color: var(--brand); }
+.rd-app .rd-addrf .rd-addr-in { margin-top: 6px; }
+.rd-app .rv-save { font-size: 11px; color: var(--muted); margin-left: 8px; }
+.rd-app .rv-save.ok { color: var(--muted); }
+.rd-app .rv-save.bad { color: var(--brand); }
+.rd-app .rd-addr-match {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  margin: 10px 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font-size: 13px;
+}
+.rd-app .rd-addr-match i { width: 16px; height: 16px; color: var(--brand); }
+@media (max-width: 1040px) {
+  .rd-app .rd-addr-bar { flex: 1 1 100%; order: -1; margin-bottom: 8px; }
+}
+@media (max-width: 640px) {
+  .rd-app .rd-addr-bar { min-width: 0; }
+  .rd-app .rd-addr-bar input { font-size: 12px; }
+}
