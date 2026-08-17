@@ -581,17 +581,17 @@ const WIZ_SECTIONS: Array<[string, string, string, number]> = [
   ["titles", "Titles", "type", 5],
   ["audio", "Audio", "music", 6],
   ["brand", "Brand", "palette", 4],
-  ["quality", "Quality", "sparkles", 7],
+  ["quality", "Review", "circle-check", 7],
 ];
 /* Each step owns the page-level title so the white workspace stays free of
    duplicated headings. */
 const STEP_TITLES: Record<number, [string, string]> = {
   1: ["Add Photos", "Upload property photos or choose media you already have."],
   2: ["Select & Order Photos", "Choose what to include, then drag photos into the order viewers should see them."],
-  5: ["Add Titles", "Add the on-screen text that introduces the property."],
-  6: ["Choose Audio", "Pick the music or narration that carries the video."],
-  4: ["Apply Branding", "Apply your brand kit, logo and contact details."],
-  7: ["Review Quality", "Check the output settings, then render the video."],
+  5: ["Add Titles", "Add the text viewers will see throughout the video."],
+  6: ["Choose Audio", "Choose the sound that carries the video."],
+  4: ["Apply Branding", "Add your brand without overpowering the property."],
+  7: ["Review & Generate", "Check the final details before creating your video."],
 };
 
 /* Step 3 folded into step 2. Old links resolving to 3 are normalised in render(). */
@@ -622,6 +622,100 @@ function sectionReady(key: string) {
 function stepForSection(key: string) {
   if (key === "scenes") return 2;
   return (WIZ_SECTIONS.find((x) => x[0] === key) || [null, null, null, 1])[3];
+}
+
+const EDITOR_STEPS = [5, 6, 4];
+
+/* ================= SHARED EDITING CANVAS =================
+   One preview and one timeline for Titles, Audio, Brand and Review. Every
+   control in the right panel writes to wizard state and repaints this. */
+function fmtClock(sec) {
+  const s = Math.max(0, Math.round(sec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+function activeIndex() {
+  const w = S.wizard;
+  const n = (w?.scenes || []).length;
+  if (!n) return 0;
+  const i = Math.min(Math.max(Number(w.activeIdx) || 0, 0), n - 1);
+  w.activeIdx = i;
+  return i;
+}
+function activeScene() {
+  const w = S.wizard;
+  return (w?.scenes || [])[activeIndex()] || null;
+}
+function previewBrandOn() {
+  const w = S.wizard;
+  if (w.previewBrand === false) return false;
+  return (w.outputMode || "both") !== "unbranded";
+}
+function waveBars(seed) {
+  let x = seed || 7;
+  return Array.from({ length: 60 }, () => {
+    x = (x * 1103515245 + 12345) % 2147483648;
+    return 18 + (x % 70);
+  });
+}
+function canvasHtml(compact = false) {
+  const w = S.wizard;
+  const list = w.scenes || [];
+  const per = sceneDurations(list.length, w.length);
+  const total = Math.round(per * list.length);
+  const i = activeIndex();
+  const sc = list[i] || null;
+  const fmt = w.primaryFormat || DEFAULT_FORMAT;
+  const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
+  const t = w.titles || {};
+  const d = titleDefaults();
+  const openOn = i === 0 && t.property !== false;
+  const closeOn = i === list.length - 1 && !!w.branding?.outro;
+  const cap = w.captions && sc ? sc.caption || sc.room : "";
+  const brandOn = previewBrandOn();
+  const musicOn = w.music && w.music !== "none";
+  const narrOn = w.narration && w.narration !== "none";
+  const audioOn = musicOn || narrOn || w.avatar?.enabled;
+
+  return `<div class="rv-cv">
+    <div class="rv-cv-stage fmt-${fmt.replace(":", "x")}">
+      <div class="rv-cv-img" data-img="${esc(sc?.path || "")}">
+        ${sc ? "" : `<span class="rv-note sm">No Scenes Selected Yet.</span>`}
+        ${brandOn && kit?.logo_path && (w.branding?.watermark || w.logoBranding) ? `<span class="rv-ov-logo" data-img="${esc(kit.logo_path)}"></span>` : ""}
+        ${openOn ? `<div class="rv-ov-title pos-${esc(w.titlePos || "bottom")} f-${esc(w.titleFont || "editorial")}">
+          <b>${esc(t.headline == null ? d.headline : t.headline)}</b>
+          ${(t.sub == null ? "For Sale" : t.sub) ? `<span>${esc(t.sub == null ? "For Sale" : t.sub)}</span>` : ""}</div>` : ""}
+        ${cap ? `<div class="rv-ov-cap">${esc(cap)}</div>` : ""}
+        ${closeOn && brandOn ? `<div class="rv-ov-close">
+          <b>${esc(kit?.company_name || kit?.contact_name || d.company || "Your Brand")}</b>
+          ${w.branding?.cta && kit?.default_cta ? `<span>${esc(kit.default_cta)}</span>` : ""}
+          ${w.branding?.contact ? `<em>${esc([d.contactPhone, d.contactEmail].filter(Boolean).join(" · "))}</em>` : ""}</div>` : ""}
+        ${sc?.disclosure ? `<span class="rv-ov-disc">${esc(DISCLOSURE_LABEL[sc.disclosure] || "Digitally Altered")}</span>` : ""}
+      </div>
+    </div>
+    <div class="rv-cv-bar">
+      <button class="icon-btn sm" id="rvPrevScene" aria-label="Previous Scene" ${i > 0 ? "" : "disabled"}><i data-lucide="skip-back"></i></button>
+      <button class="icon-btn sm" id="rvPlay" aria-label="${w.playing ? "Pause" : "Play"}"><i data-lucide="${w.playing ? "pause" : "play"}"></i></button>
+      <button class="icon-btn sm" id="rvNextScene" aria-label="Next Scene" ${i < list.length - 1 ? "" : "disabled"}><i data-lucide="skip-forward"></i></button>
+      <span class="mono sm">${fmtClock(i * per)} / ${fmtClock(total)}</span>
+      <span class="rv-cv-sp"></span>
+      <span class="mono sm">${esc(formatLabel(fmt))}</span>
+      <label class="rv-toggle sm"><input type="checkbox" id="rvPrevBrand" ${brandOn ? "checked" : ""}><span>Branded</span></label>
+    </div>
+    <div class="rv-tl">${list.map((s2, n) => `<button class="rv-tl-i ${n === i ? "on" : ""}" data-tlpick="${n}" data-key="${esc(s2.key)}" draggable="true">
+      <span class="rv-tl-th" data-img="${esc(s2.path)}"></span>
+      <em class="mono">${n + 1}</em>
+      ${(s2.caption && w.captions) || (n === 0 && openOn) ? `<i class="rv-tl-mark" data-lucide="type"></i>` : ""}
+      <b>${esc(s2.room || "Scene")}</b><span class="mono">${per.toFixed(1)}s</span>
+    </button>`).join("") || `<div class="rv-note sm">Add Photos To Build The Timeline.</div>`}
+      <button class="rv-tl-add" id="rvTlAdd" aria-label="Add Photos"><i data-lucide="plus"></i><b>Add</b></button>
+      <input type="file" id="rvTlFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
+    </div>
+    ${audioOn ? `<div class="rv-wave" aria-hidden="true">${waveBars(list.length + 3).map((h) => `<i style="height:${h}%"></i>`).join("")}</div>` : ""}
+    <div class="rv-tl-foot">
+      <span class="mono">${list.length} ${list.length === 1 ? "Scene" : "Scenes"} · ${total}s${musicOn ? " · Music" : ""}${narrOn ? " · Narration" : ""}</span>
+      <button class="fb-link" data-sec="scenes">Back To Select &amp; Order</button>
+    </div>
+  </div>`;
 }
 
 function wizardHtml() {
@@ -660,17 +754,38 @@ function wizardHtml() {
      only appears once photos are in play; the builder's own step navigation
      stays visible from Select & Order onward. */
   const wide = w.step === 1;
+  const editor = EDITOR_STEPS.includes(w.step);
+  /* Titles, Audio and Brand share one editing canvas: the preview and the
+     scene timeline stay put and only the right-hand tools change. */
+  const shell = editor
+    ? `<div class="rv-layout rv-editor">
+        ${rail}
+        <div class="rv-canvas">${canvasHtml()}</div>
+        <aside class="rv-panel">
+          <div class="rv-panel-b">${body}</div>
+          <div class="rv-panel-f">
+            <button class="btn btn-ghost btn-sm" id="rvBack">Back</button>
+            <button class="btn btn-primary btn-sm" id="rvNext">Continue</button>
+          </div>
+        </aside>
+      </div>`
+    : w.step === 7
+      ? `<div class="rv-layout rv-editor rv-review">
+          ${rail}
+          <div class="rv-canvas">${canvasHtml(true)}${body}</div>
+          <aside class="rv-panel">${previewPanel()}</aside>
+        </div>`
+      : `<div class="rv-layout ${wide ? "rv-wide" : "rv-railed"}">
+          ${wide ? "" : rail}
+          <div class="rv-wiz">${body}</div>
+        </div>`;
   return `<div class="rv-head">
     <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
     ${headTools}
     <button class="btn btn-ghost btn-sm" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
   ${w.step === 2 ? frameNotice() : ""}
-  <div class="rv-layout ${wide ? "rv-wide" : "rv-railed"} ${w.step > 2 ? "with-side" : ""}">
-    ${wide ? "" : rail}
-    <div class="rv-wiz">${body}</div>
-    ${w.step > 2 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
-  </div>
+  ${shell}
 
   ${w.pop ? popoverHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
@@ -1265,77 +1380,69 @@ function stepBrand() {
   if (!w.avatar) w.avatar = blankAvatarConfig();
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
   const discScenes = w.scenes.filter((s) => s.disclosure);
-  return `<h3>Brand & Audio</h3>
-
-  <details class="rv-acc" data-acc="template"${accOpen.has("template") ? " open" : ""}><summary>Template</summary>
-    <div class="rv-seg tiny">${[["intro", "Intro"], ["outro", "Outro"], ["full", "Full Video"]]
-      .map(([id, n]) => `<button class="${(w.tplScope || "intro") === id ? "on" : ""}" data-tplscope="${id}">${n}</button>`).join("")}</div>
-    ${(w.tplScope || "intro") === "intro" ? templateGrid(INTRO_TEMPLATES, w.introTemplate || "clean", "tplintro") : ""}
-    ${w.tplScope === "outro" ? templateGrid(OUTRO_TEMPLATES, w.outroTemplate || "agent_white", "tploutro") : ""}
-    ${w.tplScope === "full" ? `
-    <div class="rv-sub">Speed</div>
-    <div class="rv-seg">${[["full", "Slow"], ["standard", "Medium"], ["quick", "Fast"]]
-      .map(([id, n]) => `<button class="${w.length === id ? "on" : ""}" data-len="${id}">${n}</button>`).join("")}</div>
-    <div class="rv-sub">Transitions</div>
-    <div class="rv-seg wrap">${[["clean", "Clean"], ["smooth", "Smooth"], ["cinematic", "Cinematic"], ["match", "Before & After"], ["none", "None"]]
-      .map(([id, n]) => `<button class="${w.transition === id ? "on" : ""}" data-tr="${id}">${n}</button>`).join("")}</div>
-    ${w.scenes.some((s) => s.scene_type === "before_after") ? `<div class="rv-sub">Before &amp; After Reveal</div>
-    <div class="rv-seg wrap">${[["match", "Match Frame"], ["slider", "Slider Reveal"], ["wipe", "Wipe"], ["fade", "Fade"]]
-      .map(([id, n]) => `<button class="${w.baTransition === id || (!w.baTransition && id === "match") ? "on" : ""}" data-ba="${id}">${n}</button>`).join("")}</div>` : ""}
-    <div class="rv-sub">Video Options</div>
-    <div class="rv-tog">
-      <div class="rv-tog-row" data-tip="Adds transitions to accelerate between clips for a more cinematic, dynamic look.">
-        <span><b>Speed Ramps</b><em>Elevate Your Video With Speed Transitions.</em></span>
-        <label class="rv-switch"><input type="checkbox" id="rvSpeedRamps" ${w.speedRamps ? "checked" : ""}><i></i></label>
-      </div>
-      <div class="rv-tog-row" data-tip="Places your logo as a watermark on every frame of the video.">
-        <span><b>Logo Branding</b><em>Show A Logo Watermark Throughout The Video.</em>
-        <button class="fb-link" id="rvPickLogo">Select Logo</button></span>
-        <label class="rv-switch"><input type="checkbox" id="rvLogoBrand" ${w.logoBranding ? "checked" : ""}><i></i></label>
-      </div>
-      <div class="rv-tog-row" data-tip="Burns a Digitally Altered watermark into the full duration of the video.">
-        <span><b>AI Disclaimer</b><em>Add A "Digitally Altered" Watermark For The Full Duration.</em></span>
-        <label class="rv-switch"><input type="checkbox" id="rvAiDisc" ${w.aiDisclaimer ? "checked" : ""}><i></i></label>
-      </div>
-    </div>` : ""}
-  </details>
-
-  <details class="rv-acc" data-acc="brandkit"${accOpen.has("brandkit") ? " open" : ""}><summary>Brand Kit</summary>
+  const colors = kit?.colors || {};
+  const swatches = ["primary", "secondary", "accent"].map((k) => colors[k]).filter(Boolean);
+  return `
+  <section class="rv-sec">
+    <h4>Brand Kit</h4>
     <div class="rv-kits">${S.kits.map((k) => `<button class="rv-kit ${w.brandKitId === k.id ? "on" : ""}" data-kit="${k.id}"><b>${esc(k.name)}</b><span>${esc(k.company_name || k.contact_name || "No Company Name")}</span></button>`).join("")}
       <button class="rv-kit add" id="rvKitNew"><i data-lucide="plus"></i><b>New Brand Kit</b></button>
     </div>
-    ${kit ? `<div class="rv-adv">
-      <label class="rv-check"><input type="checkbox" data-br="outro" ${w.branding.outro ? "checked" : ""}> Closing Branded Scene</label>
-      <label class="rv-check"><input type="checkbox" data-br="watermark" ${w.branding.watermark ? "checked" : ""}> Logo Watermark On Every Scene</label>
-      <label class="rv-check"><input type="checkbox" data-br="contact" ${w.branding.contact ? "checked" : ""}> Contact Information</label>
-      <label class="rv-check"><input type="checkbox" data-br="cta" ${w.branding.cta ? "checked" : ""}> Call To Action</label>
-      <button class="fb-link" id="rvKitEdit">Edit This Brand Kit</button>
+    ${kit ? `<div class="rv-kitface">
+      <span class="rv-sw">${swatches.length ? swatches.map((c) => `<i style="background:${esc(c)}"></i>`).join("") : `<em class="sm">Kit Colors Not Set</em>`}</span>
+      <span class="sm">${esc(kit.font || "Default Typography")}</span>
+      <button class="fb-link" id="rvKitEdit">Edit</button>
     </div>` : `<div class="rv-note sm">Add A Brand Kit To Put Your Logo And Contact Details On The Branded Version.</div>`}
-    <div class="rv-sub">Output Versions</div>
+  </section>
+
+  <section class="rv-sec">
+    <h4>Logo &amp; Watermark</h4>
+    <div class="rv-tog">
+      <div class="rv-tog-row">
+        <span><b>Logo Watermark</b><em>Your Logo On Every Scene.</em><button class="fb-link" id="rvPickLogo">Select Logo</button></span>
+        <label class="rv-switch"><input type="checkbox" id="rvLogoBrand" ${w.logoBranding ? "checked" : ""}><i></i></label>
+      </div>
+    </div>
+    <details class="rv-adv-d"><summary>Advanced Placement</summary>
+      <div class="rv-seg tiny wrap">${[["tl", "Top Left"], ["tr", "Top Right"], ["bl", "Bottom Left"], ["br", "Bottom Right"]]
+        .map(([id, n]) => `<button class="${(w.logoPos || "tr") === id ? "on" : ""}" data-logopos="${id}">${n}</button>`).join("")}</div>
+      <label class="rv-f">Opacity<input type="range" id="rvLogoOp" min="20" max="100" value="${Math.round((w.logoOpacity ?? 0.85) * 100)}"></label>
+    </details>
+  </section>
+
+  <section class="rv-sec">
+    <h4>Opening &amp; Closing Cards</h4>
+    <div class="rv-seg tiny">${[["intro", "Opening"], ["outro", "Closing"]]
+      .map(([id, n]) => `<button class="${(w.tplScope === "outro" ? "outro" : "intro") === id ? "on" : ""}" data-tplscope="${id}">${n}</button>`).join("")}</div>
+    ${w.tplScope === "outro"
+      ? templateGrid(OUTRO_TEMPLATES, w.outroTemplate || "agent_white", "tploutro")
+      : templateGrid(INTRO_TEMPLATES, w.introTemplate || "clean", "tplintro")}
+    ${kit ? `<div class="rv-checks">
+      <label class="rv-check"><input type="checkbox" data-br="outro" ${w.branding.outro ? "checked" : ""}> Closing Branded Scene</label>
+      <label class="rv-check"><input type="checkbox" data-br="contact" ${w.branding.contact ? "checked" : ""}> Contact Information</label>
+      <label class="rv-check"><input type="checkbox" data-br="cta" ${w.branding.cta ? "checked" : ""}> Call To Action${kit.default_cta ? ` — ${esc(kit.default_cta)}` : ""}</label>
+    </div>` : ""}
+  </section>
+
+  <section class="rv-sec">
+    <h4>Output</h4>
     <div class="rv-seg">${[["unbranded", "Unbranded"], ["branded", "Branded"], ["both", "Both"]]
       .map(([id, n]) => `<button class="${(w.outputMode || "both") === id ? "on" : ""}" data-out="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else.</div>
+  </section>
+
+  <section class="rv-sec">
+    <h4>Disclosure</h4>
+    <div class="rv-note sm">${discScenes.length ? `${discScenes.length} ${discScenes.length === 1 ? "Scene Carries" : "Scenes Carry"} A Disclosure Label. Required Labels Cannot Be Removed.` : "No Altered Scenes Detected. Nothing To Disclose."}</div>
+    <label class="rv-check"><input type="checkbox" id="rvAiDisc" ${w.aiDisclaimer ? "checked" : ""}> Digitally Altered Watermark For The Full Video</label>
     <label class="rv-check"><input type="checkbox" id="rvBurnDisc" ${w.burnDisclosure ? "checked" : ""}> Burn In Disclosure Labels</label>
-    <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else. Both Renders Unbranded First. Disclosure Labels Burn Into The Versions You Already Render, So Nothing Renders Twice.</div>
-  </details>
-
-
-  <details class="rv-acc" data-acc="captions"${accOpen.has("captions") ? " open" : ""}><summary>Captions &amp; Disclosure</summary>
-    <label class="rv-check"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}> Show Text On Scenes</label>
-    <div class="rv-sub">Scene Labels</div>
-    <div class="rv-adv">
-      <button class="btn btn-ghost btn-sm" id="rvSuggestLabels"><i data-lucide="wand"></i>Suggest Labels</button>
-      ${w.scenes.map((s, i) => labelEditor(s, i)).join("")}
-    </div>
-    <div class="rv-sub">Disclosure</div>
-    <div class="rv-note sm">${discScenes.length ? `${discScenes.length} ${discScenes.length === 1 ? "Scene Will" : "Scenes Will"} Carry A Disclosure Label. Required Labels Cannot Be Removed.` : "No Altered Scenes Detected. Nothing To Disclose."}</div>
-    <div class="rv-adv">
-      ${discScenes.map((s) => `<label class="rv-f">${esc(s.room)}
-        <select data-disc="${w.scenes.indexOf(s)}">${Object.keys(DISCLOSURE_LABEL).map((k) => `<option value="${k}" ${s.disclosure === k ? "selected" : ""}>${DISCLOSURE_LABEL[k]}</option>`).join("")}</select></label>`).join("")}
-      <div class="rv-seg wrap">${[["altered", "Altered Scenes Only"], ["all", "Apply Throughout Video"], ["intro", "Intro Disclosure"], ["outro", "Outro Disclosure"]]
+    ${discScenes.length ? `<details class="rv-adv-d"><summary>Per Scene Labels</summary>
+      ${discScenes.map((s2) => `<label class="rv-f">${esc(s2.room)}
+        <select data-disc="${w.scenes.indexOf(s2)}">${Object.keys(DISCLOSURE_LABEL).map((k) => `<option value="${k}" ${s2.disclosure === k ? "selected" : ""}>${DISCLOSURE_LABEL[k]}</option>`).join("")}</select></label>`).join("")}
+      <div class="rv-seg tiny wrap">${[["altered", "Altered Only"], ["all", "Whole Video"], ["intro", "Intro"], ["outro", "Outro"]]
         .map(([id, n]) => `<button class="${w.disclosureMode === id ? "on" : ""}" data-dmode="${id}">${n}</button>`).join("")}</div>
-    </div>
-  </details>
-  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
+    </details>` : ""}
+  </section>`;
 }
 
 /* ======================= TITLES ======================= */
@@ -1353,66 +1460,97 @@ function titleDefaults() {
   };
 }
 
+const TITLE_FONTS = [["editorial", "Editorial"], ["modern", "Modern"], ["bold", "Bold"]];
+
 function stepTitles() {
   const w = S.wizard;
   if (!w.titles) w.titles = { property: true, contact: true, custom: [] };
   const t = w.titles;
   const d = titleDefaults();
   const custom = Array.isArray(t.custom) ? t.custom : [];
-  return `<h3>Titles</h3>
-  <p class="rv-hint">Text Cards Drawn From The Property And Your Brand Kit. Turn Off Anything You Do Not Want On Screen.</p>
+  const sc = activeScene();
+  const i = activeIndex();
+  const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
 
-  <div class="rv-tog">
-    <div class="rv-tog-row">
-      <span><b>Property Details</b><em>${esc(d.address)}</em></span>
-      <label class="rv-switch"><input type="checkbox" data-tt="property" ${t.property ? "checked" : ""}><i></i></label>
+  return `
+  <section class="rv-sec">
+    <div class="rv-sec-h"><h4>Opening Title</h4>
+      <label class="rv-switch sm"><input type="checkbox" data-tt="property" ${t.property ? "checked" : ""}><i></i></label></div>
+    ${t.property ? `
+    <label class="rv-f">Headline<input id="rvTtHead" value="${esc(t.headline == null ? d.headline : t.headline)}" maxlength="80"></label>
+    <label class="rv-f">Supporting Line<input id="rvTtSub" value="${esc(t.sub == null ? "For Sale" : t.sub)}" maxlength="80"></label>
+    <div class="rv-sub">Typography</div>
+    <div class="rv-seg tiny">${TITLE_FONTS.map(([id, n]) => `<button class="${(w.titleFont || "editorial") === id ? "on" : ""}" data-tfont="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-sub">Position</div>
+    <div class="rv-seg tiny">${[["top", "Top"], ["center", "Center"], ["bottom", "Bottom"]]
+      .map(([id, n]) => `<button class="${(w.titlePos || "bottom") === id ? "on" : ""}" data-tpos="${id}">${n}</button>`).join("")}</div>
+    <details class="rv-adv-d"${t.customOn ? " open" : ""}><summary>Extra Title Cards</summary>
+      <label class="rv-check"><input type="checkbox" data-tt="customOn" ${t.customOn ? "checked" : ""}> Show Custom Title Cards</label>
+      ${t.customOn ? `${custom.map((c, n) => `<div class="rv-labrow"><input data-tcustom="${n}" value="${esc(c)}" maxlength="60" placeholder="Custom Title">
+        <button class="rv-x" data-tcustom-del="${n}" aria-label="Remove Title"><i data-lucide="x"></i></button></div>`).join("")}
+      <button class="btn btn-ghost btn-sm" id="rvTtAdd"><i data-lucide="plus"></i>Add A Title</button>` : ""}
+    </details>` : `<div class="rv-note sm">No Opening Title Card.</div>`}
+  </section>
+
+  <section class="rv-sec">
+    <div class="rv-sec-h"><h4>Scene Text</h4>
+      <label class="rv-switch sm"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}><i></i></label></div>
+    ${w.captions ? (sc ? `
+    <label class="rv-f">Scene ${i + 1} — ${esc(sc.room || "Scene")}<input id="rvSceneText" value="${esc(sc.caption || "")}" maxlength="60" placeholder="${esc(sc.room || "Scene Text")}"></label>
+    <div class="rv-inline">
+      <button class="btn btn-ghost btn-sm" id="rvSuggestLabels"><i data-lucide="wand"></i>Suggest Labels</button>
+      <button class="btn btn-ghost btn-sm" id="rvCapAll">Use Room Names Everywhere</button>
     </div>
-    <div class="rv-tog-row">
-      <span><b>Contact Details</b><em>${esc([d.contactName, d.contactPhone, d.contactEmail].filter(Boolean).join(" · ") || "Add A Brand Kit To Fill This In")}</em></span>
-      <label class="rv-switch"><input type="checkbox" data-tt="contact" ${t.contact ? "checked" : ""}><i></i></label>
-    </div>
-    <div class="rv-tog-row">
-      <span><b>Custom Titles</b><em>Your Own Lines, Shown In Order.</em></span>
-      <label class="rv-switch"><input type="checkbox" data-tt="customOn" ${t.customOn ? "checked" : ""}><i></i></label>
-    </div>
-  </div>
+    <details class="rv-adv-d"><summary>On Screen Labels</summary>${labelEditor(sc, i)}</details>
+    <div class="rv-note sm">Select A Thumbnail In The Timeline To Edit Another Scene.</div>`
+      : `<div class="rv-note sm">Select A Scene To Add Text.</div>`)
+      : `<div class="rv-note sm">Scene Text Is Off.</div>`}
+  </section>
 
-  ${t.property ? `<label class="rv-f">Headline<input id="rvTtHead" value="${esc(t.headline == null ? d.headline : t.headline)}" maxlength="80"></label>
-  <label class="rv-f">Sub Line<input id="rvTtSub" value="${esc(t.sub == null ? "For Sale" : t.sub)}" maxlength="80"></label>` : ""}
-
-  ${t.customOn ? `<div class="rv-adv">
-    ${custom.map((c, i) => `<div class="rv-labrow"><input data-tcustom="${i}" value="${esc(c)}" maxlength="60" placeholder="Custom Title">
-      <button class="rv-x" data-tcustom-del="${i}" aria-label="Remove Title"><i data-lucide="x"></i></button></div>`).join("")}
-    <button class="btn btn-ghost btn-sm" id="rvTtAdd"><i data-lucide="plus"></i>Add A Title</button>
-  </div>` : ""}
-
-  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
+  <section class="rv-sec">
+    <div class="rv-sec-h"><h4>Closing Title</h4>
+      <label class="rv-switch sm"><input type="checkbox" data-br="outro" ${w.branding.outro ? "checked" : ""}><i></i></label></div>
+    ${w.branding.outro ? `
+    <div class="rv-note sm">${kit ? `Using ${esc(kit.name)}: ${esc([kit.contact_name, kit.phone, kit.email].filter(Boolean).join(" · ") || "No Contact Details Yet")}` : "Add A Brand Kit In Brand To Fill The Closing Card."}</div>
+    <label class="rv-check"><input type="checkbox" data-br="cta" ${w.branding.cta ? "checked" : ""}> Call To Action${kit?.default_cta ? ` — ${esc(kit.default_cta)}` : ""}</label>
+    <label class="rv-check"><input type="checkbox" data-br="contact" ${w.branding.contact ? "checked" : ""}> Contact Details</label>
+    <button class="fb-link" data-sec="brand">Edit In Brand</button>` : `<div class="rv-note sm">No Closing Card.</div>`}
+  </section>`;
 }
 
 /* ======================= AUDIO ======================= */
 function stepAudio() {
   const w = S.wizard;
   if (!w.avatar) w.avatar = blankAvatarConfig();
-  return `<h3>Audio</h3>
-  <p class="rv-hint">Music Bed, Narration And Presenter.</p>
-  <div class="rv-audio-sec">
-  <details class="rv-acc" data-acc="audio"${accOpen.has("audio") ? " open" : ""}><summary>Audio</summary>
-    <div class="rv-sub">Track</div>${musicPicker("rvMusic", w.music)}
+  const tab = w.audioTab || "music";
+  const title = w.title || w.propertyLabel || "";
+  return `
+  <div class="rv-seg">${[["music", "Music"], ["narration", "Narration"], ["presenter", "Presenter"]]
+    .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-atab="${id}">${n}</button>`).join("")}</div>
+
+  ${tab === "music" ? `<section class="rv-sec">
+    ${musicPicker("rvMusic", w.music)}
     <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
     <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
-    <div class="rv-sub">Narration</div>
-    <div class="rv-seg">${[["none", "No Narration"], ["generate", "Generate Narration"], ["upload", "Upload Voiceover"]]
+    ${w.music && w.music !== "none" ? `<button class="fb-link" id="rvMusicOff">Remove Track</button>` : ""}
+  </section>` : ""}
+
+  ${tab === "narration" ? `<section class="rv-sec">
+    <div class="rv-seg tiny">${[["none", "None"], ["generate", "Generate"], ["upload", "Upload"]]
       .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}</button>`).join("")}</div>
-    ${w.narration === "generate" ? `<label class="rv-f">Script, Editable Draft<textarea id="rvScript" rows="4">${esc(w.script || defaultScript())}</textarea></label>
+    ${w.narration === "generate" ? `<label class="rv-f">Script<textarea id="rvScript" rows="5">${esc(w.script || defaultScript())}</textarea></label>
     <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option value="${v.toLowerCase()}" ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}${myVoiceOption(w.voice)}</select></label>
-    <div class="rv-f">${voiceStudioButton()}</div>
-    <div class="rv-adv"><button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voiceover"}</button></div>` : ""}
+    <div class="rv-inline">${voiceStudioButton()}
+      <button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voice"}</button></div>` : ""}
     ${w.narration === "upload" ? `<label class="rv-f">Voiceover File, MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
     <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
-    ${avatarSection(w.avatar, w.title || w.propertyLabel || "")}
-  </details>
-  </div>
-  <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button><button class="btn btn-primary" id="rvNext">Continue</button></div>`;
+    ${w.narration === "none" ? `<div class="rv-note sm">No Narration. Music Alone Carries The Video.</div>` : ""}
+  </section>` : ""}
+
+  ${tab === "presenter" ? `<section class="rv-sec">
+    ${w.avatar?.enabled ? avatarSection(w.avatar, title) : `<div class="rv-note sm">A Presenter Speaks Over The Video On Camera. Narration Settings Still Apply.</div>
+      <button class="btn btn-ghost btn-sm" id="rvPresOn"><i data-lucide="user-round"></i>Add A Presenter</button>`}
+  </section>` : ""}`;
 }
 
 /* ======================= QUALITY ======================= */
@@ -1430,8 +1568,20 @@ function stepQuality() {
   const compat = qualityCompat(w);
   const lowest = lowestCompatibleQuality(scenes);
 
-  return `<h3>Quality</h3>
-  <p class="rv-hint">Higher Tiers Render Sharper And Cost More Credits. ${scenes} Photo${scenes === 1 ? "" : "s"} Selected.</p>
+  const per = sceneDurations(scenes, w.length);
+  const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
+  const rows = [
+    ["Scenes", `${scenes} · ${Math.round(per * scenes)}s`, "scenes"],
+    ["Format", formatLabel(w.primaryFormat || DEFAULT_FORMAT), "scenes"],
+    ["Titles", w.titles?.property === false ? "No Opening Title" : "Opening Title On", "titles"],
+    ["Audio", w.music && w.music !== "none" ? "Music On" : w.narration && w.narration !== "none" ? "Narration Only" : "No Audio", "audio"],
+    ["Brand", kit ? kit.name : "No Brand Kit", "brand"],
+  ];
+  return `<h3>Review &amp; Generate</h3>
+  <p class="rv-hint">Everything Below Is What Will Be Created. Change Anything Before You Render.</p>
+  <div class="rv-rev">${rows.map(([k, v, sec]) => `<div class="rv-rev-r"><span>${k}</span><b>${esc(String(v))}</b><button class="fb-link" data-sec="${sec}">Change</button></div>`).join("")}</div>
+  <div class="rv-sub">Quality</div>
+  <p class="rv-hint">Higher Tiers Render Sharper And Cost More Credits.</p>
 
   <div class="rv-qtiers">${QUALITY_TIERS.map((t) => {
     const c = getQualityCompatibility(t.id, scenes);
@@ -2653,11 +2803,66 @@ function bind() {
   on("[data-label-pos]", "change", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelPos); s.labels[j].position = e.currentTarget.value; });
 
 
+  /* ---- shared canvas + panel controls ---- */
+  on("[data-tlpick]", "click", (e) => { w.activeIdx = Number(e.currentTarget.dataset.tlpick); render(); });
+  on("#rvPrevScene", "click", () => { w.activeIdx = Math.max(0, activeIndex() - 1); render(); });
+  on("#rvNextScene", "click", () => { w.activeIdx = Math.min(w.scenes.length - 1, activeIndex() + 1); render(); });
+  on("#rvPlay", "click", () => {
+    w.playing = !w.playing; render();
+    if (w.playing) {
+      clearInterval(w.playTimer);
+      w.playTimer = setInterval(() => {
+        const cur = S.wizard;
+        if (!cur || !cur.playing) { clearInterval(w.playTimer); return; }
+        cur.activeIdx = (Number(cur.activeIdx) || 0) + 1;
+        if (cur.activeIdx >= cur.scenes.length) { cur.activeIdx = 0; cur.playing = false; clearInterval(w.playTimer); }
+        render();
+      }, Math.max(700, sceneDurations(w.scenes.length, w.length) * 1000));
+    } else clearInterval(w.playTimer);
+  });
+  const pb = el.querySelector("#rvPrevBrand");
+  if (pb) pb.addEventListener("change", (e) => { w.previewBrand = e.target.checked; render(); });
+  on("#rvTlAdd", "click", () => el.querySelector("#rvTlFile")?.click());
+  const tlf = el.querySelector("#rvTlFile");
+  if (tlf) tlf.addEventListener("change", async (e) => { const f = [...(e.target.files || [])]; if (f.length) await addUploads(f); });
+  on("[data-sec]:not(.rv-rail-i)", "click", async (e) => {
+    const key = e.currentTarget.dataset.sec;
+    if (!key || !sectionReady(key)) return;
+    w.step = stepForSection(key);
+    if (key === "scenes") await loadWizardAssets();
+    if (S.wizard !== w) return;
+    render();
+  });
+
+  /* titles */
+  on("[data-tfont]", "click", (e) => { w.titleFont = e.currentTarget.dataset.tfont; render(); });
+  on("[data-tpos]", "click", (e) => { w.titlePos = e.currentTarget.dataset.tpos; render(); });
+  const stx = el.querySelector("#rvSceneText");
+  if (stx) stx.addEventListener("input", (e) => {
+    const sc = activeScene(); if (!sc) return;
+    sc.caption = e.target.value;
+    const ov = el.querySelector(".rv-ov-cap");
+    if (ov) ov.textContent = sc.caption || sc.room || "";
+    const tl = el.querySelector(`.rv-tl-i[data-tlpick="${activeIndex()}"] b`);
+    if (tl) tl.textContent = sc.room || "Scene";
+  });
+  on("#rvCapAll", "click", () => { w.scenes.forEach((sc) => { if (!sc.caption) sc.caption = sc.room || ""; }); render(); });
+
+  /* audio */
+  on("[data-atab]", "click", (e) => { w.audioTab = e.currentTarget.dataset.atab; render(); });
+  on("#rvMusicOff", "click", () => { w.music = "none"; render(); });
+  on("#rvPresOn", "click", () => { w.avatar = w.avatar || blankAvatarConfig(); w.avatar.enabled = true; render(); });
+
+  /* brand placement */
+  on("[data-logopos]", "click", (e) => { w.logoPos = e.currentTarget.dataset.logopos; render(); });
+  const lop = el.querySelector("#rvLogoOp");
+  if (lop) lop.addEventListener("input", (e) => { w.logoOpacity = Number(e.target.value) / 100; });
+
   /* branding */
   on("[data-kit]", "click", (e) => { w.brandKitId = e.currentTarget.dataset.kit || null; render(); });
   on("#rvKitNew", "click", () => openBrandKit(null));
   on("#rvKitEdit", "click", () => openBrandKit(S.kits.find((k) => k.id === w.brandKitId)));
-  on("[data-br]", "change", (e) => { w.branding[e.currentTarget.dataset.br] = e.currentTarget.checked; });
+  on("[data-br]", "change", (e) => { w.branding[e.currentTarget.dataset.br] = e.currentTarget.checked; render(); });
   on("[data-ver]", "change", (e) => { w.versions[e.currentTarget.dataset.ver] = e.currentTarget.checked; });
   on("[data-disc]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.disc)].disclosure = e.currentTarget.value; });
   on("[data-dmode]", "click", (e) => { w.disclosureMode = e.currentTarget.dataset.dmode; render(); });
