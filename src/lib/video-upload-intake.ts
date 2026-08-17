@@ -50,15 +50,17 @@ export const ENRICH_NOTICE =
  */
 export function attachUploadAssets(w: IntakeWizard): string[] {
   if (!w) return [];
-  w.available = Array.isArray(w.available) ? w.available : [];
-  w.gridOrder = Array.isArray(w.gridOrder) ? w.gridOrder : [];
-  const have = new Set(w.available.map((a: any) => a.key));
-  const ordered = new Set(w.gridOrder);
+  const available: any[] = Array.isArray(w['available']) ? w['available'] : [];
+  const gridOrder: string[] = Array.isArray(w['gridOrder']) ? w['gridOrder'] : [];
+  w['available'] = available;
+  w['gridOrder'] = gridOrder;
+  const have = new Set(available.map((a: any) => a.key));
+  const ordered = new Set(gridOrder);
   const added: string[] = [];
   for (const u of w.uploads || []) {
     const key = "u-" + u.id;
     if (!have.has(key)) {
-      w.available.push({
+      available.push({
         key,
         path: u.url,
         room: u.room || "Unsorted",
@@ -71,7 +73,7 @@ export function attachUploadAssets(w: IntakeWizard): string[] {
       have.add(key);
     }
     if (!ordered.has(key)) {
-      w.gridOrder.push(key);
+      gridOrder.push(key);
       ordered.add(key);
       added.push(key);
     }
