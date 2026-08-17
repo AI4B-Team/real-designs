@@ -971,6 +971,105 @@ function selectSceneKeys(w, keys) {
 
 
 
+
+/* ---------- Property address (optional, autosaved) ---------- */
+let addrTimer = null;
+
+function addrDraftPayload(w) {
+  return {
+    id: w.editingId || undefined,
+    property_id: w.propertyId || null,
+    property_label: w.propertyLabel || null,
+    ...addressColumns(w),
+    title_touched: !!w.titleTouched,
+    design_version_id: w.versionId || null,
+    title: defaultTitle(w),
+    video_type: w.videoType,
+    source_type: w.sourceType || "upload",
+    status: "draft",
+    formats: outputFormats(w),
+    length_preset: w.length,
+    transition: w.transition,
+    motion: w.motion,
+    brand_kit_id: w.brandKitId || null,
+    branding: w.branding,
+    disclosure: { mode: w.disclosureMode },
+    settings: { quality: w.quality || "standard", primaryFormat: w.primaryFormat || DEFAULT_FORMAT, additionalFormats: w.additionalFormats || [] },
+  };
+}
+
+/** Address edits ride the shared draft autosave. No success toast per edit. */
+async function autosaveAddress(w) {
+  if (!w.editingId && !(w.scenes || []).length) { w.addressSaveState = ""; return; }
+  w.addressSaveState = "saving";
+  paintSaveState(w);
+  try {
+    const saved = await saveVideo({ project: addrDraftPayload(w) });
+    if (saved?.id) w.editingId = saved.id;
+    w.addressSaveState = "saved";
+  } catch (_) {
+    w.addressSaveState = "error";
+  }
+  paintSaveState(w);
+}
+
+function paintSaveState(w) {
+  if (S.wizard !== w) return;
+  document.querySelectorAll(".rv-save").forEach((n) => n.remove());
+  const host = document.querySelector(".rd-addr-bar") || document.querySelector(".rd-addrf");
+  if (!host) return;
+  const span = document.createElement("span");
+  span.className = "rv-save mono" + (w.addressSaveState === "saved" ? " ok" : w.addressSaveState === "error" ? " bad" : "");
+  span.textContent = w.addressSaveState === "saving" ? "Saving\u2026" : w.addressSaveState === "saved" ? "Saved" : w.addressSaveState === "error" ? "Couldn\u2019t Save \u2014 Retry" : "";
+  if (!span.textContent) return;
+  if (w.addressSaveState === "error") span.onclick = () => autosaveAddress(w);
+  host.appendChild(span);
+}
+
+async function lookupAddressMatch(w) {
+  const text = cleanAddressText(w.address);
+  if (text.length < 8 || w.propertyId) { w.addressMatch = null; return; }
+  try {
+    const res = await matchPropertyAddress({ data: { address: text } });
+    if (S.wizard !== w) return;
+    w.addressMatch = res?.match || null;
+    if (w.addressMatch) render();
+  } catch (_) {}
+}
+
+function bindAddressInputs(el, w) {
+  el.querySelectorAll("#rvAddr, #rvAddrBar").forEach((input) => {
+    input.addEventListener("input", (ev) => {
+      applyAddress(w, ev.target.value, "manual");
+      w.addressMatchDismissed = false;
+      /* Keep the sibling copy of the field in sync without a full repaint. */
+      el.querySelectorAll("#rvAddr, #rvAddrBar").forEach((other) => { if (other !== input) other.value = w.address; });
+      const t = el.querySelector("#rvTitle");
+      if (t && !w.titleTouched) t.value = defaultTitle(w);
+      clearTimeout(addrTimer);
+      addrTimer = setTimeout(() => { autosaveAddress(w); lookupAddressMatch(w); }, 900);
+    });
+  });
+  el.querySelectorAll("[data-addr-use]").forEach((b) => (b.onclick = async () => {
+    const id = b.dataset.addrUse;
+    w.propertyId = id;
+    w.propertyLabel = w.addressMatch?.address || w.address;
+    w.address = w.addressMatch?.address || w.address;
+    applyAddress(w, w.address, "existing_property");
+    w.addressMatch = null;
+    render();
+    autosaveAddress(w);
+  }));
+  el.querySelectorAll("[data-addr-sep]").forEach((b) => (b.onclick = () => {
+    /* Keep Separate preserves the typed address as project metadata only. */
+    w.addressMatchDismissed = true;
+    w.propertyId = null;
+    render();
+    autosaveAddress(w);
+  }));
+  el.querySelectorAll("[data-addr-retry]").forEach((b) => (b.onclick = () => autosaveAddress(w)));
+}
+
 /** Title the user never has to type: address, property or design name. */
 
 function defaultTitle(w) {
@@ -1971,6 +2070,7 @@ async function generate() {
         property_id: w.propertyId || null,
         property_label: w.propertyLabel || null,
         ...addressColumns(w),
+        title_touched: !!w.titleTouched,
         design_version_id: w.versionId || null,
         title: defaultTitle(w),
         video_type: w.videoType,
