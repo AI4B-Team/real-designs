@@ -1894,6 +1894,16 @@ function render() {
   if (S.screen === "detail" && !S.detail) S.screen = "library";
   /* Step 3 folded into step 2; old deep links must not land on nothing. */
   if (S.wizard && S.wizard.step === 3) S.wizard.step = 2;
+  /* The builder has its own step navigation, so from Select & Order onward the
+     main app rail is borrowed (collapsed without touching the saved
+     preference) and released when the workflow closes. */
+  try {
+    const railApi = (window as any).__rdRailBorrow;
+    if (railApi) {
+      if (S.screen === "wizard" && S.wizard && S.wizard.step >= 2) railApi.collapse();
+      else if (S.screen !== "wizard") railApi.release();
+    }
+  } catch (_) {}
   el.innerHTML =
     S.screen === "wizard" ? wizardHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
