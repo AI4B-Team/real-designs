@@ -1973,12 +1973,7 @@ function bind() {
     const t = el.querySelector("#rvTitle");
     if (t) w.title = t.value;
     if (w.step === 1) {
-      w.step = 2;
-      await loadWizardAssets();
-      /* The user can leave the builder mid-load; never touch a discarded wizard. */
-      if (S.wizard !== w) return;
-      if (!w.scenes.length) { selectRecommended(); autoArrange(); }
-      render();
+      await advanceToGrid(w);
       return;
     }
     if (w.step === 2) {
