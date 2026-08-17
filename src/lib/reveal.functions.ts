@@ -45,6 +45,21 @@ const ProjectInput = z.object({
   id: z.string().uuid().optional(),
   property_id: z.string().uuid().nullable().optional(),
   property_label: z.string().max(200).nullable().optional(),
+  /* Optional project address. Structured parts plus a formatted snapshot so a
+     project keeps its address even if the property record changes later. */
+  property_address: z.string().max(200).nullable().optional(),
+  address_line_1: z.string().max(200).nullable().optional(),
+  address_line_2: z.string().max(60).nullable().optional(),
+  city: z.string().max(80).nullable().optional(),
+  state: z.string().max(40).nullable().optional(),
+  postal_code: z.string().max(20).nullable().optional(),
+  country: z.string().max(60).nullable().optional(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  normalized_address: z.string().max(400).nullable().optional(),
+  address_source: z.enum(["manual", "autocomplete", "existing_property", "listing_import", "inherited", "unknown"]).optional(),
+  address_verified_at: z.string().max(40).nullable().optional(),
+  title_touched: z.boolean().optional(),
   room_id: z.string().uuid().nullable().optional(),
   design_version_id: z.string().uuid().nullable().optional(),
   title: z.string().max(160).default("Untitled Reveal"),
@@ -139,6 +154,13 @@ export const saveVideo = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const p: any = { ...data.project, user_id: userId, updated_at: new Date().toISOString() };
+    /* Never trust a client-supplied property_id: confirm the signed-in user can
+       actually read that property before linking the project to it. */
+    if (p.property_id) {
+      const { data: prop } = await supabase.from("properties").select("id, address").eq("id", p.property_id).maybeSingle();
+      if (!prop) throw new Error("That property is not available on this account.");
+      if (!p.property_label) p.property_label = (prop as any).address ?? null;
+    }
     let projectId = data.project.id ?? null;
 
     if (projectId) {
