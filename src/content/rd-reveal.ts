@@ -2019,34 +2019,18 @@ function bind() {
     w.scenes = (w.scenes || []).filter((scene) => scene.key !== "u-" + id);
     render();
   });
-  const addUploads = async (list) => {
-    const files = Array.from(list || []);
-    if (!files.length) return;
-    const added = [];
-    w.uploadFails = w.uploadFails || [];
-    /* Validate and add every file first: no render() mid-processing, so the
-       DOM is never rebuilt while the batch is still being handled. */
-    for (const f of files) {
-      const why = rejectReason(f);
-      if (why) { w.uploadFails.push({ name: f.name, why, file: f }); continue; }
-      /* Object URLs are available synchronously and remain valid until they
-         are explicitly revoked. This makes even a large property shoot appear
-         immediately instead of waiting for sequential base64 conversions. */
-      const url = URL.createObjectURL(f);
-      const upload = { id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), originalName: f.name, url, file: f };
-      w.uploads.push(upload);
-      added.push(upload);
-    }
-    w.uploadPrep = [];
-    if (added.length && w.step === 1) { await advanceToGrid(w); return; }
-    if (added.length) {
-      try { await loadWizardAssets(); } catch (_) {}
-      if (S.wizard === w) render();
-      return;
-    }
-    render();
-
-  };
+  /* Intake lives in @/lib/video-upload-intake so the Step 1 -> Step 2
+     transition can be exercised without a DOM. */
+  const addUploads = async (list) =>
+    runIntake(w, list, {
+      rejectReason,
+      createUrl: (f) => URL.createObjectURL(f),
+      uuid: () => crypto.randomUUID(),
+      advance: advanceToGrid,
+      loadAssets: loadWizardAssets,
+      isCurrent: (x) => S.wizard === x,
+      render,
+    });
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
   on("[data-failretry]", "click", (e) => {
     const i = Number(e.currentTarget.dataset.failretry);
