@@ -534,13 +534,24 @@ async function loadWizardAssets() {
    the wizard still tracks a step number, so every existing deep link, modal
    and shortcut keeps working. */
 const WIZ_SECTIONS: Array<[string, string, string, number]> = [
-  ["photos", "Photos", "image", 1],
-  ["scenes", "Scenes", "layout-grid", 2],
+  ["photos", "Add Photos", "image", 1],
+  ["scenes", "Select & Order", "layout-grid", 2],
   ["titles", "Titles", "type", 5],
   ["audio", "Audio", "music", 6],
   ["brand", "Brand", "palette", 4],
   ["quality", "Quality", "sparkles", 7],
 ];
+/* Each step owns the page-level title so the white workspace stays free of
+   duplicated headings. */
+const STEP_TITLES: Record<number, [string, string]> = {
+  1: ["Add Photos", "Upload property photos or choose media you already have."],
+  2: ["Select & Order Photos", "Choose what to include, then drag photos into the order viewers should see them."],
+  5: ["Add Titles", "Add the on-screen text that introduces the property."],
+  6: ["Choose Audio", "Pick the music or narration that carries the video."],
+  4: ["Apply Branding", "Apply your brand kit, logo and contact details."],
+  7: ["Review Quality", "Check the output settings, then render the video."],
+};
+
 /* Step 3 folded into step 2. Old links resolving to 3 are normalised in render(). */
 const FLOW = [1, 2, 5, 6, 4, 7];
 function nextStep(n: number) {
