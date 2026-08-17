@@ -56,6 +56,7 @@ export type StudioStartCtx = {
 
 import { mountSourcePicker } from "@/lib/source-picker";
 import { cleanAddressText } from "@/lib/property-address";
+import { openStagingReview } from "@/content/rd-staging";
 
 const SAMPLE_KEYS: Array<{ key: string; name: string; space: string; room: string; photo: string; alt: string }> = [];
 
