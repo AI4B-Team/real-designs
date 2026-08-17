@@ -639,6 +639,7 @@ function wireCards(grid, list) {
   grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
   grid.querySelectorAll("[data-upg]").forEach((b) => (b.onclick = () => openUpgrade(find(b.dataset.upg))));
   grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
+  grid.querySelectorAll("[data-cont]").forEach((b) => (b.onclick = () => openVideo(find(b.dataset.cont))));
 }
 
 /* ---------------- workflow bridges ---------------- */
