@@ -714,6 +714,7 @@ function stepPhotos() {
     .map((f) => `<div class="rv-prep-r"><span>${esc(f.name)}</span><i class="rv-prep-bar"><em style="width:${f.pct}%"></em></i></div>`)
     .join("")}</div>` : ""}
   ${w.uploads.length ? `<div class="rv-added"><i data-lucide="check"></i>${w.uploads.length} ${w.uploads.length === 1 ? "photo" : "photos"} added</div>` : ""}
+  ${w.uploadError ? `<div class="rv-fails"><div class="rv-fail-r"><i data-lucide="triangle-alert"></i><span>${esc(w.uploadError)}</span></div></div>` : ""}
   ${failed.length ? `<div class="rv-fails">${failed
     .map((f, i) => `<div class="rv-fail-r"><i data-lucide="triangle-alert"></i><span>${esc(f.name)}</span><em>${esc(f.why)}</em>
       <button class="fb-link" data-failretry="${i}">Retry</button><button class="fb-link" data-failrm="${i}">Remove</button></div>`)
