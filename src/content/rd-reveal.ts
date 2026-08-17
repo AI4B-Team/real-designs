@@ -772,10 +772,6 @@ function stepSelect() {
   const seqOf = new Map(w.scenes.map((s, i) => [s.key, i + 1]));
 
   const dupCount = w.available.filter((a) => a.dup).length;
-  const assets = analysisAssets();
-  const flagged = w.available.filter((a) => (a.flags || []).length);
-  const recs = recommendations(assets).filter((r) => r.op);
-  const missing = missingSpaces(assets);
   const orient = orientationOf(w);
   const per = sceneDurations(w.scenes.length, w.length);
   const total = Math.round(per * w.scenes.length);
@@ -785,57 +781,42 @@ function stepSelect() {
   if (w.groupBy !== false) {
     const groups = new Map();
     for (const a of ordered) {
-      const g = a.group || UNSORTED;
+      const g = a.group && a.group !== "Other" ? a.group : UNSORTED;
       if (!groups.has(g)) groups.set(g, []);
       groups.get(g).push(a);
     }
     grid = Array.from(groups.entries())
-      .map(([g, list]) => `<div class="rv-g-head">${esc(g)} <i class="mono">${list.length}</i></div>${list.map((a) => tileHtml(a, seqOf.get(a.key))).join("")}`)
+      .map(([g, list]) => `<div class="rv-g-head">${esc(g)}</div>${list.map((a) => tileHtml(a, seqOf.get(a.key))).join("")}`)
       .join("");
   } else {
     grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
   }
 
-
-  const pct = w.available.length ? Math.round((w.scenes.length / w.available.length) * 100) : 0;
+  const all = w.available.length > 0 && w.scenes.length === w.available.length;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : !(w.formats || []).length ? "Choose A Video Format To Continue." : "";
 
-  const advisories = [
-    dupCount ? `${dupCount} Similar Angles` : "",
-    flagged.length ? `${flagged.length} Photos With Issues` : "",
-    recs.length ? `${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve` : "",
-    missing.length ? `No ${missing.slice(0, 2).join(" Or ")}` : "",
-  ].filter(Boolean);
-
-  return `<div class="rv-head-row">
-    <div><h3>Select The Photos</h3><p class="rv-hint">Check The Photos You Want. Drag To Reorder.</p></div>
-    <div class="rv-orient"><span>Video Format</span>
-      <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
+  return `<div class="rv-utility">
+    <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
+    <div class="rv-utility-a">
+      <button class="btn btn-ghost btn-sm" id="rvAuto"><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
+      <label class="rv-toggle"><input type="checkbox" id="rvGroupBy" ${w.groupBy !== false ? "checked" : ""}><span>Group By Room</span></label>
+      <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+        <div class="rv-more-m">
+          <button id="rvRecommend">Select Recommended</button>
+          <button id="rvClear">Clear Selection</button>
+          <button id="rvReverse">Reverse Order</button>
+          <button id="rvResetOrder">Reset Original Order</button>
+          ${dupCount ? `<button id="rvKeepBest">Keep Best Of Similar</button>` : ""}
+        </div>
+      </details>
     </div>
-  </div>
-  ${advisories.length && !w.enhanceDismissed ? `<div class="rv-advise">
-    <i data-lucide="info"></i><b>${esc(advisories.join(" · "))}</b>
-    ${recs.length ? `<button class="fb-link" id="rvFixAll">Fix All</button>` : ""}
-    <button class="fb-link" data-goto="media">Review</button>
-    <button class="icon-btn sm" id="rvFixSkip" aria-label="Dismiss"><i data-lucide="x"></i></button>
-  </div>` : ""}
-  <div class="rv-gridbar">
-    <button class="btn btn-ghost btn-sm" id="rvRecommend">Select All Recommended</button>
-    <button class="btn btn-ghost btn-sm" id="rvClear">Clear</button>
-    <button class="btn btn-ghost btn-sm" id="rvAuto">Auto Arrange</button>
-    <button class="btn btn-ghost btn-sm ${w.groupBy !== false ? "on" : ""}" id="rvGroupBy">Group By Room</button>
-    ${dupCount ? `<button class="btn btn-ghost btn-sm" id="rvKeepBest">Keep Best</button>` : ""}
   </div>
   <div class="rv-grid ${orient}">${grid || `<div class="rv-note">No Content Found For This Source.</div>`}</div>
   <div class="rv-gridfoot">
     <div class="rv-count">
-      <span><i data-lucide="images"></i> <b>${w.scenes.length} / ${w.available.length}</b> Photos Selected</span>
-      <div class="rv-bar"><i style="width:${pct}%"></i></div>
-      <div class="rv-meta mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</div>
-      ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
-    </div>
-    <div class="rv-gridfoot-a">
-      <button class="btn btn-ghost" id="rvBack">Back</button>
+      <span>${w.scenes.length} ${w.scenes.length === 1 ? "scene" : "scenes"} · ${total} sec · ${creditTotal()} credits</span>
+      ${imm > 4 ? `<div class="rv-note sm">Immersive movement is on for ${imm} scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} extra credits.</div>` : ""}
+
       <button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : `disabled title="${esc(why)}"`}>Continue</button>
     </div>
   </div>`;
