@@ -93,7 +93,7 @@ export async function runAdvanceToGrid(
     delete w.uploadError;
     await deps.loadAssets();
     if (!deps.isCurrent(w)) return;
-    if (!(w.scenes || []).length) {
+    if (!(w['scenes'] || []).length) {
       deps.selectRecommended();
       deps.autoArrange();
     }
