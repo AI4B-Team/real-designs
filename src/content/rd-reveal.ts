@@ -2708,20 +2708,7 @@ function bind() {
   });
   /* Intake lives in @/lib/video-upload-intake so the Step 1 -> Step 2
      transition can be exercised without a DOM. */
-  const addUploads = async (list) =>
-    runIntake(w, list, {
-      rejectReason,
-      createUrl: (f) => URL.createObjectURL(f),
-      uuid: () => crypto.randomUUID(),
-      advance: advanceToGrid,
-      loadAssets: loadWizardAssets,
-      isCurrent: (x) => S.wizard === x,
-      attachUploads: attachUploadAssets,
-      selectUploads: selectUploadedScenes,
-      selectKeys: selectSceneKeys,
-      autoArrange,
-      render,
-    }).then(() => classifyUploads().catch(() => {}));
+  const addUploads = (list) => acceptPhotos(w, list, w.step === 1 ? "picker" : "picker_step2");
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
   on("[data-failretry]", "click", (e) => {
     const i = Number(e.currentTarget.dataset.failretry);
