@@ -190,7 +190,7 @@ export function findMatchingProperty<T extends { id: string; address?: string | 
 export function streetOf(address: unknown): string {
   const text = cleanAddressText(address);
   if (!text) return "";
-  return text.split(",")[0].trim();
+  return (text.split(",")[0] || "").trim();
 }
 
 /** Title default that never overwrites what the user typed. */
