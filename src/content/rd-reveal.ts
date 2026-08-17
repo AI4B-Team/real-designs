@@ -43,7 +43,10 @@ import {
   listBrandKits as _listBrandKits,
   saveBrandKit as _saveBrandKit,
   saveShareLink as _saveShareLink,
+  listRenderJobs as _listRenderJobs,
+  updateRenderJob as _updateRenderJob,
 } from "@/lib/reveal.functions";
+import { jobStatusLabel, isJobStale, renderProvider } from "@/lib/render-providers";
 /* Server functions take a single { data } envelope; these thin wrappers let
    call sites keep passing plain arguments. */
 const listVideos = (d) => _listVideos(d === undefined ? undefined : { data: d });
@@ -57,6 +60,8 @@ const finishVariant = (d) => _finishVariant(d === undefined ? undefined : { data
 const listBrandKits = (d) => _listBrandKits(d === undefined ? undefined : { data: d });
 const saveBrandKit = (d) => _saveBrandKit(d === undefined ? undefined : { data: d });
 const saveShareLink = (d) => _saveShareLink(d === undefined ? undefined : { data: d });
+const listRenderJobs = (d) => _listRenderJobs(d === undefined ? undefined : { data: d });
+const updateRenderJob = (d) => _updateRenderJob(d === undefined ? undefined : { data: d });
 import {
   renderReveal,
   sceneDurations,
@@ -277,12 +282,14 @@ function host() {
 async function loadLibrary() {
   S.loading = true;
   try {
-    const [lib, tree, kits, credits] = await Promise.all([
+    const [lib, tree, kits, credits, jobs] = await Promise.all([
       listVideos(),
       getPropertyTree().catch(() => []),
       listBrandKits().catch(() => []),
       getMyCredits().catch(() => null),
+      listRenderJobs().catch(() => []),
     ]);
+    S.jobs = jobs || [];
     S.credits = credits;
     S.projects = lib.projects;
     S.variants = lib.variants;
@@ -358,6 +365,23 @@ function libraryHtml() {
   return head + `<div class="rv-list">${cardsHtml(rows)}</div>`;
 }
 
+/* Render jobs survive refreshes, so the library reads the job row rather than
+   whatever the last open tab happened to remember. */
+function jobFor(projectId) {
+  return (S.jobs || []).find((j) => j.video_project_id === projectId) || null;
+}
+function renderJobBadge(projectId) {
+  const j = jobFor(projectId);
+  if (!j) return "";
+  if (j.status === "completed" || j.status === "cancelled") return "";
+  const stale = isJobStale(j);
+  if (j.status === "failed" && !j.error_message) return "";
+  const label = jobStatusLabel(j);
+  if (!label) return "";
+  const extra = stale ? "" : j.stage ? ` · ${esc(j.stage)}` : "";
+  return `<span class="rv-b rv-jobb${stale || j.status === "failed" ? " bad" : ""}">${esc(label)}${extra}</span>`;
+}
+
 function cardsHtml(rows) {
   const cards = rows.map((p) => {
     const vs = S.variants.filter((v) => v.video_project_id === p.id);
@@ -376,6 +400,7 @@ function cardsHtml(rows) {
           <span class="rv-b">${esc(type)}</span>
           ${dur ? `<span class="rv-b">${Math.round(dur)}s</span>` : ""}
           <span class="rv-b is-${p.status}">${statusOf(p)}</span>
+          ${renderJobBadge(p.id)}
           ${shared ? `<span class="rv-b">Shared</span>` : ""}
           <span class="rv-b">${esc(disc)}</span>
           <span class="rv-b">${fmtDate(p.created_at)}</span>
