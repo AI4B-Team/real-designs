@@ -602,10 +602,23 @@ function wizardHtml() {
   if (w.step === 6) body = stepAudio();
   if (w.step === 7) body = stepQuality();
 
+  const [pageTitle, pageSub] = STEP_TITLES[w.step] || STEP_TITLES[1];
+  const orient = orientationOf(w);
+  const headTools = w.step === 2
+    ? `<div class="rv-head-tools">
+        <div class="rv-orient"><span>Video Format</span>
+          <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n} ${id === "portrait" ? "9:16" : "16:9"}</button>`).join("")}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="rvHeadAdd"><i data-lucide="plus"></i>Add Photos</button>
+      </div>`
+    : "";
+
   return `<div class="rv-head">
-    <div><h2>Create A Property Video</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
+    <div><h2>${esc(pageTitle)}</h2><p>${esc(w.propertyLabel || pageSub)}</p></div>
+    ${headTools}
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
+  ${w.step === 2 ? frameNotice() : ""}
   <div class="rv-layout rv-railed ${w.step > 2 ? "with-side" : ""}">
     ${rail}
     <div class="rv-wiz">${body}</div>
@@ -615,6 +628,24 @@ function wizardHtml() {
   ${w.lowModal ? lowSceneModal() : ""}
   ${w.logoModal ? logoModalHtml() : ""}`;
 }
+
+/** Compact inline notice, shown only when neither a front-exterior nor a
+    living-room photo is present. Re-evaluated on every paint, so it clears
+    itself once photos are added or relabelled. */
+function frameNotice() {
+  const w = S.wizard;
+  if (!w || w.frameNoticeDismissed || !(w.available || []).length) return "";
+  const missing = missingSpaces(analysisAssets());
+  const gone = missing.includes("Front Exterior") && missing.includes("Living Room");
+  if (!gone) return "";
+  return `<div class="rv-notice">
+    <i data-lucide="info"></i>
+    <span>No front exterior or living-room photo detected.</span>
+    <button class="btn btn-ghost btn-sm" id="rvNoticeAdd">Add Photos</button>
+    <button class="fb-link" id="rvNoticeX">Dismiss</button>
+  </div>`;
+}
+
 
 /* ======================= STEP 1, PHOTOS ======================= */
 /** Every finished design in the workspace, newest property first. */
