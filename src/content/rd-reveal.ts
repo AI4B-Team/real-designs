@@ -1992,12 +1992,23 @@ function bind() {
     w.scenes = (w.scenes || []).filter((scene) => scene.key !== "u-" + id);
     render();
   });
+  /* Move from step 1 to the grid without a click once photos are ready. */
+  const advanceToGrid = async () => {
+    w.step = 2;
+    await loadWizardAssets();
+    if (S.wizard !== w) return;
+    if (!w.scenes.length) { selectRecommended(); autoArrange(); }
+    render();
+  };
   const addUploads = (list) => {
-    const rejects = [];
+    const files = Array.from(list || []);
     const added = [];
-    for (const f of Array.from(list || [])) {
+    w.uploadFails = w.uploadFails || [];
+    w.uploadPrep = files.map((f) => ({ name: f.name, pct: 0 }));
+    render();
+    for (const f of files) {
       const why = rejectReason(f);
-      if (why) { rejects.push(f.name + ": " + why); continue; }
+      if (why) { w.uploadFails.push({ name: f.name, why, file: f }); continue; }
       /* Object URLs are available synchronously and remain valid until they
          are explicitly revoked. This makes even a large property shoot appear
          immediately instead of waiting for sequential base64 conversions. */
@@ -2006,10 +2017,18 @@ function bind() {
       w.uploads.push(upload);
       added.push(upload);
     }
-    if (rejects.length) toast(rejects.length === 1 ? rejects[0] : rejects.length + " Files Could Not Be Added. " + rejects[0]);
-    if (added.length) toast(`${added.length} ${added.length === 1 ? "Photo" : "Photos"} Added.`);
+    w.uploadPrep = [];
+    if (added.length && w.step === 1) { void advanceToGrid(); return; }
     render();
   };
+  on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
+  on("[data-failretry]", "click", (e) => {
+    const i = Number(e.currentTarget.dataset.failretry);
+    const entry = (w.uploadFails || [])[i];
+    if (!entry) return;
+    w.uploadFails.splice(i, 1);
+    addUploads(entry.file ? [entry.file] : []);
+  });
   el.querySelectorAll(".rv-thumb[draggable='true']").forEach((thumb) => {
     thumb.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/rd-upload", thumb.dataset.uploadId));
     thumb.addEventListener("dragover", (e) => { e.preventDefault(); thumb.classList.add("drop-l"); });
