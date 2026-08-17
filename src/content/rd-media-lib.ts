@@ -337,6 +337,7 @@ function emptyState() {
 function render() {
   const grid = document.getElementById("mlGrid");
   if (!grid) return;
+  paintPropFilter();
   const c = counts();
   ["All", "Images", "Videos", "Uploads"].forEach((k) => {
     const el = document.getElementById("mlc" + k);
