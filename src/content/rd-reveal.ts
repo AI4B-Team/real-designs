@@ -77,7 +77,7 @@ import { track } from "@/lib/analytics";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
-import { VFX_LOOKS, VFX_CATEGORIES, lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
+import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
 import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
