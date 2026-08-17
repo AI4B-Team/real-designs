@@ -115,20 +115,26 @@ export async function runIntake(w: IntakeWizard, list: any, deps: IntakeDeps): P
     return;
   }
 
+  /* New photos are an explicit choice: keep them selected wherever we land. */
+  const newKeys = added.map((u) => "u-" + u.id);
+
   if (w.step === 1) {
     await deps.advance(w);
+    if (!deps.isCurrent || deps.isCurrent(w)) {
+      deps.selectKeys?.(w, newKeys);
+      deps.render();
+    }
     return;
   }
 
   /* Already on the grid: show the new photos immediately, enrich after. */
   (deps.attachUploads || attachUploadAssets)(w);
-  console.log("[intake] append branch", w.step, (w.uploads||[]).length);
-  if (deps.selectUploads) deps.selectUploads(w);
+  deps.selectKeys?.(w, newKeys);
   w.selectGridLoading = true;
   deps.render();
   await runEnrichment(w, deps);
-
 }
+
 
 export const STEP_TWO_ERROR =
   "Your photos were added, but the next step could not load. Please try again.";
