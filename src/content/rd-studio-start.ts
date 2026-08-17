@@ -975,8 +975,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         }),
       );
       drop.addEventListener("drop", (ev: any) => {
-        const f = ev.dataTransfer?.files?.[0];
-        if (f) takeFile(f);
+        const files: File[] = Array.from(ev.dataTransfer?.files || []);
+        if (files.length > 1) {
+          openStagingReview({ files, address: state.property || state.address || "" });
+          return;
+        }
+        if (files[0]) takeFile(files[0]);
       });
     }
 
