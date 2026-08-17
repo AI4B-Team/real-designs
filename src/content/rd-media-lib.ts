@@ -1046,4 +1046,85 @@ function drawerActions(m, g, proc) {
 }
 
 
+/* ---------------- assign to a property ---------------- */
+
+/** Point records at a property (or clear it). One row, no copies. */
+async function doAssign(items, propertyId) {
+  const payload = (items || [])
+    .map((m) => ({ kind: assignKind(m), id: m.refId, m }))
+    .filter((x) => x.kind && x.id);
+  const skipped = (items || []).length - payload.length;
+  if (!payload.length) {
+    toast("Designs Follow Their Room's Property. Move The Project Instead.");
+    return;
+  }
+  try {
+    await assignMediaToProperty({ data: { items: payload.map(({ kind, id }) => ({ kind, id })), property_id: propertyId || null } });
+  } catch (e) {
+    window.alert("Could not update: " + (e && e.message ? e.message : "try again"));
+    return;
+  }
+  toast(
+    (propertyId ? "Moved " : "Removed From Property: ") + payload.length + " Item" + (payload.length === 1 ? "" : "s") +
+      (skipped ? " · " + skipped + " Design" + (skipped === 1 ? "" : "s") + " Skipped" : ""),
+  );
+  S.sel.clear();
+  await load(true);
+  emitMediaChange();
+}
+
+function openAssign(items) {
+  const list = (items || []).filter(Boolean);
+  if (!list.length) return;
+  const usable = list.filter(isAssignable);
+  const host = document.createElement("div");
+  host.className = "ml-assign";
+  host.innerHTML = `<div class="ml-assign-bg" data-x></div>
+    <div class="ml-assign-w" role="dialog" aria-label="Assign To A Property">
+      <h3>Assign To A Property</h3>
+      <p>${usable.length} Item${usable.length === 1 ? "" : "s"} Will Move. Nothing Is Copied — The Same Record Shows In Media And Under The Property.</p>
+      ${list.length !== usable.length ? `<p class="ml-assign-note">${list.length - usable.length} Design${list.length - usable.length === 1 ? "" : "s"} Stay With Their Room's Property.</p>` : ""}
+      <label class="ml-assign-f"><span>Existing Property</span>
+        <select id="maSel"><option value="">Choose A Property</option>${S.propList
+          .map((p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`)
+          .join("")}</select></label>
+      <label class="ml-assign-f"><span>Or Add A New Address</span>
+        <input id="maNew" placeholder="123 Main Street, Austin TX"></label>
+      <div class="ml-assign-a">
+        <button class="btn btn-ghost btn-sm" data-x>Cancel</button>
+        <button class="btn btn-ghost btn-sm" id="maNone">Remove From Property</button>
+        <button class="btn btn-primary btn-sm" id="maGo">Assign</button>
+      </div>
+    </div>`;
+  document.body.appendChild(host);
+  paint();
+  const close = () => host.remove();
+  host.querySelectorAll("[data-x]").forEach((b) => (b.onclick = close));
+  host.querySelector("#maNone").onclick = async () => {
+    close();
+    await doAssign(usable, null);
+  };
+  host.querySelector("#maGo").onclick = async () => {
+    const sel = host.querySelector("#maSel").value;
+    const fresh = String(host.querySelector("#maNew").value || "").trim();
+    let id = sel;
+    if (fresh) {
+      try {
+        const row = await createMediaProperty({ data: { address: fresh } });
+        id = row && row.id;
+        S.propList = await listMediaProperties();
+      } catch (e) {
+        window.alert("Could not add that property: " + (e && e.message ? e.message : "try again"));
+        return;
+      }
+    }
+    if (!id) {
+      window.alert("Choose a property or type a new address.");
+      return;
+    }
+    close();
+    await doAssign(usable, id);
+  };
+}
+
 export default mountMediaLibrary;
