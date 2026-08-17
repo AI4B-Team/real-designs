@@ -512,8 +512,13 @@ function newWizard(seed = {}) {
     listingUrl: "",
     /* Optional property address. Never required to save a draft, and never a
        reason to invent a placeholder property. */
-    address: seed.address || "",
-    addressSource: seed.addressSource || (seed.propertyId ? "existing_property" : seed.versionId ? "inherited" : "unknown"),
+    address: seed.address || seed.listingAddress || (seed.propertyId || seed.versionId ? seed.propertyLabel || "" : ""),
+    addressSource:
+      seed.addressSource ||
+      (seed.listingAddress || seed.from === "listing" ? "listing_import"
+        : seed.propertyId ? "existing_property"
+        : seed.versionId ? "inherited"
+        : "unknown"),
     addressStructured: null,
     addressMatch: null,
     addressMatchDismissed: false,
