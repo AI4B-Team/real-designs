@@ -2146,12 +2146,6 @@ function bind() {
   on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvHeadFile", "change", (e) => { addUploads(e.currentTarget.files); e.currentTarget.value = ""; });
   on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
-  on("[data-orient]", "click", (e) => {
-    const id = e.currentTarget.dataset.orient;
-    const found = ORIENTATIONS.find(([k]) => k === id);
-    if (found) w.formats = [found[2][0]];
-    render();
-  });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
   on(".rv-tile-th", "keydown", (e) => {
