@@ -2034,20 +2034,13 @@ function bind() {
     w.scenes = (w.scenes || []).filter((scene) => scene.key !== "u-" + id);
     render();
   });
-  /* Move from step 1 to the grid without a click once photos are ready. */
-  const advanceToGrid = async () => {
-    w.step = 2;
-    await loadWizardAssets();
-    if (S.wizard !== w) return;
-    if (!w.scenes.length) { selectRecommended(); autoArrange(); }
-    render();
-  };
-  const addUploads = (list) => {
+  const addUploads = async (list) => {
     const files = Array.from(list || []);
+    if (!files.length) return;
     const added = [];
     w.uploadFails = w.uploadFails || [];
-    w.uploadPrep = files.map((f) => ({ name: f.name, pct: 0 }));
-    render();
+    /* Validate and add every file first: no render() mid-processing, so the
+       DOM is never rebuilt while the batch is still being handled. */
     for (const f of files) {
       const why = rejectReason(f);
       if (why) { w.uploadFails.push({ name: f.name, why, file: f }); continue; }
@@ -2060,9 +2053,14 @@ function bind() {
       added.push(upload);
     }
     w.uploadPrep = [];
-    if (added.length && w.step === 1) { void advanceToGrid(); return; }
-    if (added.length) { void loadWizardAssets().then(() => { if (S.wizard === w) render(); }); return; }
+    if (added.length && w.step === 1) { await advanceToGrid(w); return; }
+    if (added.length) {
+      try { await loadWizardAssets(); } catch (_) {}
+      if (S.wizard === w) render();
+      return;
+    }
     render();
+
   };
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
   on("[data-failretry]", "click", (e) => {
