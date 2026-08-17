@@ -20,7 +20,7 @@ describe("runAdvanceToGrid", () => {
     const p = runAdvanceToGrid(w, {
       loadAssets: () => new Promise<void>((r) => { resolveLoad = () => r(); }),
       isCurrent: () => true,
-      selectUploads: (x) => { x.scenes = x.gridOrder.map((k: string) => ({ key: k })); },
+      selectUploads: (x) => { x['scenes'] = x['gridOrder'].map((k: string) => ({ key: k })); },
       attachUploads: attachUploadAssets,
       autoArrange: () => {},
       render,
@@ -42,7 +42,7 @@ describe("runAdvanceToGrid", () => {
     await runAdvanceToGrid(w, {
       loadAssets: () => Promise.reject(new Error("boom")),
       isCurrent: () => true,
-      selectUploads: (x) => { x.scenes = x.gridOrder.map((k: string) => ({ key: k })); },
+      selectUploads: (x) => { x['scenes'] = x['gridOrder'].map((k: string) => ({ key: k })); },
       render: () => {},
     });
     expect(w.step).toBe(2);
@@ -56,7 +56,7 @@ describe("runAdvanceToGrid", () => {
     await runAdvanceToGrid(w, {
       loadAssets: () => new Promise<void>(() => {}),
       isCurrent: () => true,
-      selectUploads: (x) => { x.scenes = x.gridOrder.map((k: string) => ({ key: k })); },
+      selectUploads: (x) => { x['scenes'] = x['gridOrder'].map((k: string) => ({ key: k })); },
       render: () => {},
       timeoutMs: 10,
     });
