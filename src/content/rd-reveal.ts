@@ -2063,7 +2063,7 @@ function bind() {
     const entry = (w.uploadFails || [])[i];
     if (!entry) return;
     w.uploadFails.splice(i, 1);
-    addUploads(entry.file ? [entry.file] : []);
+    void addUploads(entry.file ? [entry.file] : []);
   });
   el.querySelectorAll(".rv-thumb[draggable='true']").forEach((thumb) => {
     thumb.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/rd-upload", thumb.dataset.uploadId));
@@ -2132,7 +2132,7 @@ function bind() {
           label: d.room,
           sub: `${d.propertyLabel} · ${d.before ? "Before And After" : "Design"}`,
         })),
-      onPick: (picked) => { addUploads(picked.map((p) => p.file)); },
+      onPick: (picked) => { void addUploads(picked.map((p) => p.file)); },
       onProperty: (address) => {
         const p = S.tree.find((x) => x.address === address);
         w.propertyLabel = address;
@@ -2178,7 +2178,7 @@ function bind() {
   /* Header and notice shortcuts both reopen the picker step without losing work. */
   on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-  on("#rvHeadFile", "change", (e) => { addUploads(e.currentTarget.files); e.currentTarget.value = ""; });
+  on("#rvHeadFile", "change", (e) => { void addUploads(e.currentTarget.files); e.currentTarget.value = ""; });
   on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
