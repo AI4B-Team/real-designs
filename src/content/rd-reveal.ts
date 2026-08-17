@@ -24,7 +24,8 @@ import {
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
-import { runIntake, runAdvanceToGrid, attachUploadAssets } from "@/lib/video-upload-intake";
+import { runIntake, runAdvanceToGrid, attachUploadAssets, initialWizardStep, hydrateSeededWizard, ensureStepInvariant, acceptVideoPhotos, runEnrichment, logVideoEvent } from "@/lib/video-upload-intake";
+import { normalizeImageFile } from "@/lib/source-picker";
 import {
   VIDEO_FORMATS,
   DEFAULT_FORMAT,
@@ -449,10 +450,21 @@ async function paintThumbs() {
 }
 
 /* ======================= WIZARD ======================= */
-function seededUploads(files) {
+function seededUploads(files, out = {}) {
+  out.fails = out.fails || [];
+  out.pending = out.pending || [];
   if (typeof URL === "undefined" || typeof URL.createObjectURL !== "function") return [];
   return Array.from(files || []).flatMap((file) => {
-    if (!(file instanceof File) || rejectReason(file)) return [];
+    if (!(file instanceof File)) return [];
+    const why = rejectReason(file);
+    if (why) { out.fails.push({ name: file.name, why, file }); return []; }
+    /* HEIC cannot be previewed by non-Safari browsers. Defer it to the same
+       conversion the source picker uses, then feed it back through the
+       canonical accept pipeline. Never drop it silently. */
+    if (/\.(heic|heif)$/i.test(file.name) || /image\/hei[cf]/i.test(file.type || "")) {
+      out.pending.push(file);
+      return [];
+    }
     return [{
       id: crypto.randomUUID(),
       name: file.name.replace(/\.[a-z0-9]+$/i, ""),
@@ -464,9 +476,13 @@ function seededUploads(files) {
 }
 
 function newWizard(seed = {}) {
-  const uploads = seededUploads(seed.files);
+  const seedOut = { fails: [], pending: [] };
+  const uploads = seededUploads(seed.files, seedOut);
   return {
-    step: seed.propertyId || seed.versionId ? 2 : 1,
+    /* Photos always win: a wizard holding uploads never opens on Add Photos. */
+    step: initialWizardStep(seed, uploads),
+    uploadFails: seedOut.fails,
+    seedPending: seedOut.pending,
     sourceType: uploads.length ? "upload" : seed.sourceType || (seed.versionId ? "design" : seed.propertyId ? "property" : ""),
     propertyId: seed.propertyId || null,
     propertyLabel: seed.propertyLabel || null,
@@ -3611,12 +3627,40 @@ function renderTour(wrap, done, i = 0) {
 /* ======================= PUBLIC API ======================= */
 export function startWizard(seed = {}) {
   revokeUploadUrls(S.wizard);
-  S.wizard = newWizard(seed);
+  const w = newWizard(seed);
+  S.wizard = w;
   S.screen = "wizard";
-  if (S.wizard.propertyId) loadWizardAssets().then(render);
-  render();
-  /* Another view can steal focus while the builder mounts (media tab
-     restores, deep links). The wizard host must stay the visible view. */
+  logVideoEvent("video_builder_started", {
+    seedFileCount: Array.from(seed.files || []).length,
+    uploadCount: (w.uploads || []).length,
+    propertyId: w.propertyId,
+    versionId: w.versionId,
+    resolvedInitialStep: w.step,
+    entrySource: seed.from || seed.source || (w.uploads.length ? "handoff" : w.propertyId ? "property" : "empty"),
+  });
+
+  if ((w.uploads || []).length) {
+    /* Seeded / handoff photos take the same route as a direct upload:
+       visible on Scenes before the first paint, enrichment afterwards. */
+    hydrateSeededWizard(w, { attachUploads: attachUploadAssets, selectUploads: selectUploadedScenes });
+    render();
+    runEnrichment(w, {
+      loadAssets: loadWizardAssets,
+      isCurrent: (x) => S.wizard === x,
+      attachUploads: attachUploadAssets,
+      selectUploads: selectUploadedScenes,
+      autoArrange,
+      render,
+    }).catch(() => {});
+    classifyUploads().catch(() => {});
+    drainSeedPending(w);
+  } else if (w.propertyId || w.versionId) {
+    loadWizardAssets().then(render);
+    render();
+  } else {
+    render();
+  }
+  ensureStepInvariant(w, { attachUploads: attachUploadAssets, selectUploads: selectUploadedScenes, render });
   const focusHost = () => {
     try {
       const el = host();
