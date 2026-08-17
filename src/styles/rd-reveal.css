@@ -640,3 +640,6 @@
 .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
 .rd-app .rv-g-head { grid-column: 1 / -1; }
 .rd-app .rv-gridfoot .rv-count > span { font-size: .84rem; color: var(--mute); font-family: inherit; }
+
+/* Full-width workspace for the photo steps (no step rail) */
+.rv-layout.rv-wide{grid-template-columns:minmax(0,1fr)}

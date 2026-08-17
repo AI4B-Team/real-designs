@@ -614,17 +614,21 @@ function wizardHtml() {
       </div>`
     : "";
 
+  /* Steps 1 and 2 run full width: the grid is the whole job, so the step rail
+     only appears once the later configuration sections unlock. */
+  const wide = w.step <= 2;
   return `<div class="rv-head">
     <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
     ${headTools}
-    <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
+    <button class="btn btn-ghost btn-sm" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
   ${w.step === 2 ? frameNotice() : ""}
-  <div class="rv-layout rv-railed ${w.step > 2 ? "with-side" : ""}">
-    ${rail}
+  <div class="rv-layout ${wide ? "rv-wide" : "rv-railed"} ${w.step > 2 ? "with-side" : ""}">
+    ${wide ? "" : rail}
     <div class="rv-wiz">${body}</div>
     ${w.step > 2 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
   </div>
+
   ${w.pop ? popoverHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
   ${w.logoModal ? logoModalHtml() : ""}`;
