@@ -580,3 +580,62 @@
   .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .rd-app .rv-gridfoot { flex-wrap: wrap; }
 }
+
+/* ---- Property Video: redesigned steps 1 & 2 ---- */
+.rd-app .rv-head { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+.rd-app .rv-head-tools { display: flex; align-items: center; gap: 14px; margin-left: auto; flex-wrap: wrap; }
+.rd-app .rv-head-tools .rv-orient { display: flex; align-items: center; gap: 8px; }
+.rd-app .rv-head-tools .rv-orient > span {
+  font-family: "DM Mono", monospace; font-size: .58rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mute-2);
+}
+
+.rd-app .rv-notice {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  border: 1px solid var(--line); border-radius: 10px; background: #fff;
+  padding: 8px 12px; margin: 0 0 12px; font-size: .82rem;
+}
+.rd-app .rv-notice > i { width: 15px; height: 15px; color: var(--red, #c00); }
+.rd-app .rv-notice > span { flex: 1; }
+
+.rd-app .rv-added {
+  display: inline-flex; align-items: center; gap: 7px; font-size: .84rem; color: var(--mute);
+}
+.rd-app .rv-added i { width: 14px; height: 14px; color: var(--red, #c00); }
+.rd-app .rv-prep { display: grid; gap: 6px; }
+.rd-app .rv-prep-r { display: flex; align-items: center; gap: 10px; font-size: .78rem; color: var(--mute-2); }
+.rd-app .rv-prep-bar { flex: 1; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
+.rd-app .rv-prep-bar em { display: block; height: 100%; background: var(--red, #c00); }
+.rd-app .rv-fails { display: grid; gap: 6px; }
+.rd-app .rv-fail-r {
+  display: flex; align-items: center; gap: 10px; font-size: .78rem;
+  border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; background: #fff;
+}
+.rd-app .rv-fail-r i { width: 14px; height: 14px; color: var(--red, #c00); }
+.rd-app .rv-fail-r span { font-weight: 600; }
+.rd-app .rv-fail-r em { flex: 1; font-style: normal; color: var(--mute-2); }
+
+.rd-app .rv-utility {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  flex-wrap: wrap; padding: 0 0 10px; border-bottom: 1px solid var(--line); margin-bottom: 12px;
+}
+.rd-app .rv-selall, .rd-app .rv-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; cursor: pointer; }
+.rd-app .rv-selall input, .rd-app .rv-toggle input { width: 15px; height: 15px; }
+.rd-app .rv-utility-a { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rd-app .rv-more { position: relative; }
+.rd-app .rv-more > summary { list-style: none; cursor: pointer; }
+.rd-app .rv-more > summary::-webkit-details-marker { display: none; }
+.rd-app .rv-more-m {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 30; min-width: 200px;
+  background: #fff; border: 1px solid var(--line); border-radius: 11px; padding: 5px;
+  box-shadow: 0 12px 28px rgba(17,17,17,.12); display: grid;
+}
+.rd-app .rv-more-m button {
+  text-align: left; background: none; border: 0; padding: 8px 10px; border-radius: 8px;
+  font: inherit; font-size: .82rem; cursor: pointer;
+}
+.rd-app .rv-more-m button:hover { background: #f6f6f6; }
+
+.rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.rd-app .rv-g-head { grid-column: 1 / -1; }
+.rd-app .rv-gridfoot .rv-count > span { font-size: .84rem; color: var(--mute); font-family: inherit; }
