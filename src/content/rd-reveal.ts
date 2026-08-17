@@ -963,6 +963,46 @@ export async function advanceToGrid(w) {
   classifyUploads().catch(() => { if (S.wizard === w) { w.analysisStatus = "failed"; render(); } });
 }
 
+/** Dependency set shared by every accepted-photo entry path. */
+function intakeDeps() {
+  return {
+    rejectReason,
+    createUrl: (f) => URL.createObjectURL(f),
+    uuid: () => crypto.randomUUID(),
+    advance: advanceToGrid,
+    loadAssets: loadWizardAssets,
+    isCurrent: (x) => S.wizard === x,
+    attachUploads: attachUploadAssets,
+    selectUploads: selectUploadedScenes,
+    selectKeys: selectSceneKeys,
+    autoArrange,
+    render,
+  };
+}
+
+/** Canonical accept for every entry path (picker, drop, handoff, retry). */
+export function acceptPhotos(w, files, source) {
+  return acceptVideoPhotos({ wizard: w, files, source, deps: intakeDeps() })
+    .then(() => classifyUploads().catch(() => {}));
+}
+
+/** Seeded HEIC files: convert with the shared picker rules, then accept. */
+async function drainSeedPending(w) {
+  const pending = (w.seedPending || []).splice(0);
+  if (!pending.length) return;
+  const ready = [];
+  for (const f of pending) {
+    try { ready.push(await normalizeImageFile(f)); }
+    catch (err) {
+      w.uploadFails = w.uploadFails || [];
+      w.uploadFails.push({ name: f.name, why: "HEIC Could Not Be Converted", file: f });
+    }
+  }
+  if (S.wizard !== w) return;
+  if (ready.length) await acceptPhotos(w, ready, "seed_heic");
+  else render();
+}
+
 /** Uploaded photos are the user's explicit choice: select them by default. */
 function selectUploadedScenes(w) {
   if (!w) return;
