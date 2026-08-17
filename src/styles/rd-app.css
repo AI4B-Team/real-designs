@@ -31,6 +31,9 @@
 
 @media(max-width:900px){
 .rd-app .app{grid-template-columns:1fr}
+/* below the tablet breakpoint the menu lives behind the header control, so the
+   collapsed rail must not reappear as a 64px strip */
+.rd-app .app.sidemin{grid-template-columns:1fr}
 .rd-app .side{display:none}
 }
 

@@ -3131,12 +3131,33 @@ loadPrefs();
   function applyForView(v){ apply(FORCED.indexOf(v||currentView())>=0 ? true : min); }
   window.__rdRailForView=applyForView;
   applyForView('');
+  /* Workflows such as the listing-video builder can borrow the rail for the
+     duration of the flow. The borrowed state is never written to storage, and a
+     manual toggle during the flow wins until the flow ends. */
+  let borrowed=false, prevMin=null, manual=false;
+  window.__rdRailBorrow={
+    collapse(){
+      if(manual) return;
+      if(prevMin===null) prevMin=shell.classList.contains('sidemin');
+      borrowed=true;
+      apply(true);
+    },
+    release(){
+      if(prevMin!==null) apply(prevMin);
+      prevMin=null; borrowed=false; manual=false;
+    }
+  };
   function toggle(){
-    min=!shell.classList.contains('sidemin');
-    try{ localStorage.setItem(KEY,min?'1':'0'); }catch(_){}
-    apply(min);
+    const next=!shell.classList.contains('sidemin');
+    if(borrowed){ manual=true; }
+    else { min=next; try{ localStorage.setItem(KEY,min?'1':'0'); }catch(_){} }
+    apply(next);
   }
   tog.addEventListener('click',toggle);
+  /* leaving the workflow via the main menu also hands the rail back */
+  document.addEventListener('click',(e)=>{
+    if(borrowed && e.target.closest && e.target.closest('.rd-app .nav-i')) window.__rdRailBorrow.release();
+  },true);
   const brand=document.querySelector('.rd-app .side-top .logo');
   if(brand){
     brand.setAttribute('role','button');
