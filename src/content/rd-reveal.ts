@@ -610,6 +610,7 @@ function wizardHtml() {
           <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n} ${id === "portrait" ? "9:16" : "16:9"}</button>`).join("")}</div>
         </div>
         <button class="btn btn-ghost btn-sm" id="rvHeadAdd"><i data-lucide="plus"></i>Add Photos</button>
+        <input type="file" id="rvHeadFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
       </div>`
     : "";
 
@@ -2019,6 +2020,7 @@ function bind() {
     }
     w.uploadPrep = [];
     if (added.length && w.step === 1) { void advanceToGrid(); return; }
+    if (added.length) { void loadWizardAssets().then(() => { if (S.wizard === w) render(); }); return; }
     render();
   };
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
@@ -2140,8 +2142,9 @@ function bind() {
     render();
   });
   /* Header and notice shortcuts both reopen the picker step without losing work. */
-  on("#rvHeadAdd", "click", () => { w.step = 1; render(); });
-  on("#rvNoticeAdd", "click", () => { w.step = 1; render(); });
+  on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+  on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+  on("#rvHeadFile", "change", (e) => { addUploads(e.currentTarget.files); e.currentTarget.value = ""; });
   on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
   on("[data-orient]", "click", (e) => {
     const id = e.currentTarget.dataset.orient;
