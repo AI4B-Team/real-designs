@@ -19,7 +19,7 @@ import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations, missingSpaces } from "@/lib/media-analysis";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
-import { runIntake, runAdvanceToGrid } from "@/lib/video-upload-intake";
+import { runIntake, runAdvanceToGrid, attachUploadAssets } from "@/lib/video-upload-intake";
 import {
   VIDEO_FORMATS,
   DEFAULT_FORMAT,
@@ -836,10 +836,26 @@ export async function advanceToGrid(w) {
   await runAdvanceToGrid(w, {
     loadAssets: loadWizardAssets,
     isCurrent: (x) => S.wizard === x,
+    attachUploads: attachUploadAssets,
+    selectUploads: selectUploadedScenes,
     selectRecommended,
     autoArrange,
     render,
   });
+}
+
+/** Uploaded photos are the user's explicit choice: select them by default. */
+function selectUploadedScenes(w) {
+  if (!w) return;
+  const ups = (w.gridOrder || [])
+    .map((k) => (w.available || []).find((a) => a.key === k))
+    .filter((a) => a && a.uploaded);
+  if (ups.length) {
+    w.scenes = ups.map(assetToScene);
+    syncSceneOrder();
+    return;
+  }
+  selectRecommended();
 }
 
 /** Title the user never has to type: address, property or design name. */
@@ -2378,6 +2394,9 @@ function bind() {
       advance: advanceToGrid,
       loadAssets: loadWizardAssets,
       isCurrent: (x) => S.wizard === x,
+      attachUploads: attachUploadAssets,
+      selectUploads: selectUploadedScenes,
+      autoArrange,
       render,
     });
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
@@ -2386,7 +2405,10 @@ function bind() {
     const entry = (w.uploadFails || [])[i];
     if (!entry) return;
     w.uploadFails.splice(i, 1);
-    void addUploads(entry.file ? [entry.file] : []);
+    addUploads(entry.file ? [entry.file] : []).catch(() => {
+      w.uploadError = "That photo could not be added. Please try again.";
+      render();
+    });
   });
   el.querySelectorAll(".rv-thumb[draggable='true']").forEach((thumb) => {
     thumb.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/rd-upload", thumb.dataset.uploadId));
@@ -2455,7 +2477,14 @@ function bind() {
           label: d.room,
           sub: `${d.propertyLabel} · ${d.before ? "Before And After" : "Design"}`,
         })),
-      onPick: (picked) => { void addUploads(picked.map((p) => p.file).filter(Boolean)); },
+      onPick: async (picked) => {
+        try {
+          await addUploads(picked.map((p) => p.file).filter(Boolean));
+        } catch (_) {
+          w.uploadError = "Your photos were added, but the next step could not load. Please try again.";
+          render();
+        }
+      },
       onProperty: (address) => {
         const p = S.tree.find((x) => x.address === address);
         w.propertyLabel = address;
@@ -2501,7 +2530,11 @@ function bind() {
   /* Header and notice shortcuts both reopen the picker step without losing work. */
   on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-  on("#rvHeadFile", "change", (e) => { void addUploads(e.currentTarget.files); e.currentTarget.value = ""; });
+  on("#rvHeadFile", "change", (e) => {
+    const files = e.currentTarget.files;
+    e.currentTarget.value = "";
+    addUploads(files).catch(() => { w.uploadError = "Those photos could not be added. Please try again."; render(); });
+  });
   on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
@@ -2546,6 +2579,7 @@ function bind() {
       if (fi < 0 || ti < 0) return;
       order.splice(fi, 1);
       order.splice(ti, 0, from);
+      w.manualOrder = true;
       syncSceneOrder();
       render();
     });
@@ -2824,7 +2858,11 @@ function bind() {
   if (pb) pb.addEventListener("change", (e) => { w.previewBrand = e.target.checked; render(); });
   on("#rvTlAdd", "click", () => el.querySelector("#rvTlFile")?.click());
   const tlf = el.querySelector("#rvTlFile");
-  if (tlf) tlf.addEventListener("change", async (e) => { const f = [...(e.target.files || [])]; if (f.length) await addUploads(f); });
+  if (tlf) tlf.addEventListener("change", async (e) => {
+    const f = [...(e.target.files || [])];
+    if (!f.length) return;
+    try { await addUploads(f); } catch (_) { toast("Those photos could not be added."); }
+  });
   on("[data-sec]:not(.rv-rail-i)", "click", async (e) => {
     const key = e.currentTarget.dataset.sec;
     if (!key || !sectionReady(key)) return;
