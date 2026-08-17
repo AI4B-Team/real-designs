@@ -2414,6 +2414,7 @@ function bind() {
       isCurrent: (x) => S.wizard === x,
       attachUploads: attachUploadAssets,
       selectUploads: selectUploadedScenes,
+      selectKeys: selectSceneKeys,
       autoArrange,
       render,
     });
