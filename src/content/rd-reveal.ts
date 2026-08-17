@@ -77,8 +77,9 @@ import { track } from "@/lib/analytics";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
-import { VFX_LOOKS, VFX_CATEGORIES, lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
-import { VFX_TILE_CATEGORIES, tileById, tilesForCat } from "@/lib/rd-vfx-tiles";
+import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
+import { tileById } from "@/lib/rd-vfx-tiles";
+import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
@@ -955,8 +956,9 @@ function tileHtml(a, seq) {
   const cap = s ? String(s.caption || "") : "";
   const tools = s ? `<div class="rv-tools">
       <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
-      <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="VFX"><i data-lucide="wand-sparkles"></i><em>VFX</em></button>
+      <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
+      <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
     </div>` : "";
   return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" ${s ? `draggable="true"` : ""}>
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
@@ -1176,60 +1178,89 @@ function popoverHtml() {
       <div class="rv-note sm">Shown over this photo while it plays.</div>
     </div>`;
   } else {
-    const cat = VFX_TILE_CATEGORIES.some(([id]) => id === w.popCat) ? w.popCat : "all";
-    const tiles = tilesForCat(cat);
-    const active = s.vfx || "none";
-    const gcat = VFX_CATEGORIES.some(([id]) => id === w.popGrade) ? w.popGrade : "featured";
-    const grades = VFX_LOOKS.filter((l) => (l.cat || "featured") === gcat);
-    const amt = s.look_amount ?? 100;
+    /* Effects modal. Two tabs — Looks (colour and presentation, free) and
+       Effects (adds or animates content, costs credits). Display grouping
+       only: every picked option still writes the same stored ids. */
+    const tab = w.popTab === "effects" ? "effects" : "looks";
+    const cats = tab === "looks" ? lookCats() : fxCats();
+    const catId = cats.some(([id]) => id === w.popCat) ? w.popCat : "all";
+    const amt = s.look_amount ?? DEFAULT_INTENSITY;
     const activeLook = s.look ? lookById(s.look) : null;
-    body = `<div class="rv-pop-two look">
-      <div class="rv-pop-side">
-        <div class="rv-pop-scroll tall">
-          <div class="rv-pop-h">Color Grades <i>Free</i></div>
-          <div class="rv-seg tiny">${VFX_CATEGORIES.map(([id, n]) => `<button class="${gcat === id ? "on" : ""}" data-gradecat="${id}">${n}</button>`).join("")}</div>
-          <div class="rv-looks">
-            <button class="rv-look ${!s.look ? "on" : ""}" data-lookpick="">
-              <span class="rv-look-th none"><i data-lucide="ban"></i></span><b>None</b><em>No Grade</em>
-            </button>
-            ${grades.map((l) => `<button class="rv-look ${s.look === l.id ? "on" : ""}" data-lookpick="${esc(l.id)}" title="${esc(l.blurb || "")}">
-              <span class="rv-look-th" data-img="${esc(s.path)}">${lookOverlayHTML(l, amt)}</span>
-              <b>${esc(l.label)}</b><em>${esc(l.blurb || "")}</em>
-            </button>`).join("")}
-          </div>
-          <div class="rv-pop-sep"></div>
-          <div class="rv-pop-h">Effects <i>Some Cost Credits</i></div>
-          <div class="rv-seg tiny">${VFX_TILE_CATEGORIES.map(([id, n]) => `<button class="${cat === id ? "on" : ""}" data-lookcat="${id}">${n}</button>`).join("")}</div>
-          <div class="rv-looks">
-            ${tiles.map((t) => {
-              const lk = t.look ? lookById(t.look) : null;
-              return `<button class="rv-look ${active === t.id ? "on" : ""}" data-vfxpick="${t.id}" title="${esc(t.sub)}">
-                <span class="rv-look-th ${t.id === "none" ? "none" : ""}" data-img="${esc(s.path)}">${lk ? lookOverlayHTML(lk, amt) : t.id === "none" ? `<i data-lucide="ban"></i>` : ""}</span>
-                <b>${esc(t.label)}</b><em>${esc(t.sub)}</em>
-                ${t.gen ? `<i class="mono">+${t.credits}</i>` : ""}
-              </button>`;
-            }).join("")}
-          </div>
-        </div>
+    const activeTile = s.vfx && s.vfx !== "none" ? tileById(s.vfx) : null;
+    const nothing = !activeLook && !activeTile;
+    const plan = applyAllPlan(w.scenes, s);
+    const canAll = !nothing && plan.targets > 0;
+
+    const card = (o) => `<button class="fx-card ${o.on ? "on" : ""}" ${o.attr} role="option"
+      aria-selected="${o.on ? "true" : "false"}" title="${esc(o.blurb || o.name)}">
+      <span class="fx-th ${o.blank ? "blank" : ""}" ${o.blank ? "" : `data-img="${esc(s.path)}"`}>${o.blank ? `<i data-lucide="ban"></i>` : o.overlay || ""}
+        ${o.on ? `<i class="fx-ck" data-lucide="check"></i>` : ""}</span>
+      <span class="fx-nm">${esc(o.name)}</span>
+      ${o.credits ? `<em class="fx-cost">${o.credits} Credits</em>` : ""}
+      ${o.beta ? `<em class="fx-beta">Beta</em>` : ""}
+    </button>`;
+
+    const grid = tab === "looks"
+      ? card({ name: "None", blurb: "No Look Applied", on: !activeLook && !activeTile, blank: true, attr: `data-lookpick=""` }) +
+        looksForCat(catId).map((l) => card({
+          name: l.label, blurb: l.blurb, on: s.look === l.id && !activeTile,
+          overlay: lookOverlayHTML(l, amt), attr: `data-lookpick="${esc(l.id)}"`,
+        })).join("")
+      : card({ name: "None", blurb: "No Effect Applied", on: nothing, blank: true, attr: `data-vfxpick="none"` }) +
+        effectTiles(catId).map((t) => {
+          const lk = t.look ? lookById(t.look) : null;
+          return card({
+            name: t.label, blurb: t.sub, on: s.vfx === t.id, credits: t.credits || 0, beta: !!t.gen,
+            overlay: lk ? lookOverlayHTML(lk, amt) : "", attr: `data-vfxpick="${esc(t.id)}"`,
+          });
+        }).join("");
+
+    const selName = activeTile ? activeTile.label : activeLook ? activeLook.label : "None";
+    const selCopy = activeTile ? activeTile.sub : activeLook ? activeLook.blurb || "" : "No effect applied.";
+    const cost = sceneEffectCredits(s);
+
+    body = `<div class="fx-wrap">
+      <div class="fx-tabs" role="tablist">
+        <button role="tab" aria-selected="${tab === "looks"}" class="${tab === "looks" ? "on" : ""}" data-fxtab="looks">Looks</button>
+        <button role="tab" aria-selected="${tab === "effects"}" class="${tab === "effects" ? "on" : ""}" data-fxtab="effects">Effects</button>
       </div>
-      <div class="rv-pop-prev">
-        <div class="rv-pop-stage">
-          <div class="rv-pop-clip m-static" data-img="${esc(s.path)}">${activeLook ? lookOverlayHTML(activeLook, amt) : ""}</div>
-          <span class="rv-pop-live"><i></i>Live Preview</span>
-        </div>
-        <b>${esc(activeLook ? activeLook.label : tileById(active)?.label || "None")}</b>
-        <span>${esc(activeLook ? activeLook.blurb || "" : tileById(active)?.sub || "No Effect Applied. The Photo Renders Exactly As Uploaded.")}</span>
-        <label class="rv-f">Intensity<input type="range" id="rvLookAmt" min="10" max="100" value="${amt}"></label>
-        <label class="rv-check"><input type="checkbox" id="rvAllLook"> Apply To All Scenes</label>
-        <span class="rv-pop-tip">Color Grades Are Free. Effects That Add Content To The Frame Cost Credits And Carry A Disclosure Label.</span>
+      <div class="fx-body">
+        <nav class="fx-cats" aria-label="Categories">
+          ${cats.map(([id, n]) => `<button class="${catId === id ? "on" : ""}" data-fxcat="${id}">${esc(n)}</button>`).join("")}
+        </nav>
+        <div class="fx-grid" role="listbox" aria-label="${tab === "looks" ? "Looks" : "Effects"}">${grid}</div>
+        <aside class="fx-prev">
+          <div class="rv-pop-stage">
+            <div class="rv-pop-clip m-static" data-img="${esc(s.path)}">${activeLook ? lookOverlayHTML(activeLook, amt) : ""}</div>
+            <span class="rv-pop-live"><i></i>Live Preview</span>
+          </div>
+          <b>${esc(selName)}${cost ? ` <em class="fx-cost inline">${cost} Credits</em>` : ""}</b>
+          <span>${esc(selCopy)}</span>
+          ${supportsIntensity(s) ? `<label class="rv-f">Intensity <i class="fx-amt">${esc(intensityWord(amt))}</i>
+            <input type="range" id="rvLookAmt" min="10" max="100" value="${amt}">
+            <span class="fx-scale"><em>Subtle</em><em>Balanced</em><em>Strong</em></span></label>` : ""}
+          <button class="btn btn-ghost btn-sm fx-all" id="rvAllLook" ${canAll ? "" : "disabled"}>
+            <i data-lucide="copy"></i>Apply to All${plan.targets ? ` (${plan.targets + 1} Scenes)` : ""}</button>
+          ${w.popAll ? `<span class="fx-ok"><i data-lucide="check"></i>Will Apply To All ${plan.total} Scenes</span>` : ""}
+          ${needsDisclosure(s) ? `<span class="rv-pop-tip">Generated effects may require an AI-modified disclosure.</span>` : ""}
+        </aside>
       </div>
+      ${w.popConfirm ? `<div class="fx-confirm"><div>
+        <b>Apply this effect to ${plan.total} scenes${plan.credits ? ` for an estimated ${plan.credits} additional credits` : ""}?</b>
+        ${plan.perScene && plan.credits !== plan.perScene * plan.targets ? `<span>${Math.round(plan.credits / plan.perScene)} of ${plan.targets} other scenes still need it.</span>` : ""}
+        <div class="fx-confirm-a"><button class="btn btn-ghost btn-sm" id="rvAllNo">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="rvAllYes">Apply to All</button></div>
+      </div></div>` : ""}
     </div>`;
   }
 
-  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${kind === "crop" ? "wide" : "xwide"}" role="dialog" aria-label="Scene options">
-    <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Look & Effects"}</b>${kind === "look" ? `<span class="rv-pill">Experimental</span>` : ""}<button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
+  const isFx = kind === "look";
+  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${kind === "crop" ? "wide" : "xwide"} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="Scene options">
+    <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Effects"}</b><button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">${body}</div>
-    <div class="rv-modal-f"><button class="btn btn-primary" id="rvPopDone">Done</button></div>
+    <div class="rv-modal-f">${isFx
+      ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
+      : `<button class="btn btn-primary" id="rvPopDone">Done</button>`}</div>
   </div></div>`;
 }
 
@@ -2631,11 +2662,51 @@ function bind() {
     const key = e.currentTarget.dataset.key || null;
     const i = key ? w.scenes.findIndex((s) => s.key === key) : Number(e.currentTarget.dataset.i);
     if (i < 0) return;
-    w.pop = { kind: e.currentTarget.dataset.pop, i, key };
+    const kind = e.currentTarget.dataset.pop;
+    w.pop = { kind, i, key };
     w.popQ = ""; w.popHover = null;
+    if (kind === "look") {
+      /* Snapshot so Cancel and Escape can put the scene back exactly. */
+      const sc = w.scenes[i];
+      w.pop.snap = fxSnap(sc);
+      w.popTab = sc && sc.vfx && sc.vfx !== "none" ? "effects" : "looks";
+      w.popCat = "all"; w.popAll = false; w.popConfirm = false;
+    }
     render();
   });
-  on("#rvPopX, #rvPopDone", "click", () => { w.pop = null; render(); });
+  const closeFx = (commit) => {
+    const s = cur();
+    if (w.pop?.kind === "look") {
+      if (commit) {
+        if (w.popAll && s) {
+          w.scenes.forEach((t) => {
+            if (t === s) return;
+            t.look = s.look || null; t.look_amount = s.look_amount ?? null;
+            t.vfx = s.vfx || "none"; t.vfx_gen = s.vfx_gen || null;
+            if (s.vfx_gen) { const tl = tileById(s.vfx_gen); if (tl?.disclosure) t.disclosure = tl.disclosure; }
+            else if (w.pop.snap && !w.pop.snap.vfx_gen) t.disclosure = t.disclosure && tileById(t.vfx_gen || "") ? null : t.disclosure;
+          });
+          toast("Effect Applied To Every Scene.");
+        }
+      } else {
+        fxRestore(s, w.pop.snap);
+      }
+    }
+    w.pop = null; w.popAll = false; w.popConfirm = false;
+    render();
+  };
+  on("#rvPopX, #rvPopCancel", "click", () => closeFx(false));
+  on("#rvPopDone", "click", () => closeFx(true));
+  const popWrap = el.querySelector("#rvPopWrap");
+  if (popWrap) {
+    popWrap.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") { ev.preventDefault(); closeFx(false); return; }
+      if ((ev.key === "Enter" || ev.key === " ") && ev.target?.classList?.contains("fx-card")) {
+        ev.preventDefault(); ev.target.click();
+      }
+    });
+    if (w.pop?.kind === "look") setTimeout(() => popWrap.querySelector(".fx-card.on, .fx-card")?.focus?.({ preventScroll: true }), 0);
+  }
   const pq = el.querySelector("#rvPopQ");
   if (pq) pq.addEventListener("input", (ev) => { w.popQ = ev.target.value; render(); el.querySelector("#rvPopQ")?.focus(); });
   on("[data-motionpick]", "click", (e) => {
@@ -2663,11 +2734,15 @@ function bind() {
   });
   on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
   on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
-  on("[data-lookcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.lookcat; render(); });
-  on("[data-gradecat]", "click", (e) => { w.popGrade = e.currentTarget.dataset.gradecat; render(); });
+  on("[data-fxtab]", "click", (e) => { w.popTab = e.currentTarget.dataset.fxtab; w.popCat = "all"; render(); });
+  on("[data-fxcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.fxcat; render(); });
+  /* Base disclosure the scene carried before any generative effect. */
+  const baseDisc = () => (w.pop?.snap && !w.pop.snap.vfx_gen ? w.pop.snap.disclosure : null);
   on("[data-lookpick]", "click", (e) => {
     const s = cur(); if (!s) return;
     s.look = e.currentTarget.dataset.lookpick || null;
+    s.vfx = "none"; s.vfx_gen = null; s.disclosure = baseDisc();
+    if (s.look && s.look_amount == null) s.look_amount = DEFAULT_INTENSITY;
     render();
   });
   on("[data-vfxpick]", "click", (e) => {
@@ -2677,26 +2752,31 @@ function bind() {
     s.look = t?.look || null;
     s.vfx_gen = t?.gen ? t.id : null;
     if (t?.gen && t.disclosure) s.disclosure = t.disclosure;
+    else s.disclosure = baseDisc();
+    if (s.look && s.look_amount == null) s.look_amount = DEFAULT_INTENSITY;
     render();
   });
   const amt = el.querySelector("#rvLookAmt");
-  if (amt) amt.addEventListener("change", (ev) => { const s = cur(); if (s) s.look_amount = Number(ev.target.value); render(); });
+  if (amt) amt.addEventListener("input", (ev) => {
+    const s = cur(); if (!s) return;
+    s.look_amount = Number(ev.target.value);
+    render();
+    const again = el.querySelector("#rvLookAmt"); if (again) again.focus();
+  });
   on("#rvAllMotion", "change", (e) => {
     if (!e.currentTarget.checked) return;
     const src = cur(); if (!src) return;
     w.scenes.forEach((s) => { s.motion = src.motion || "auto"; s.motion_level = src.motion_level || "standard"; s.immersive_effect = src.immersive_effect || null; });
     toast("Motion Applied To Every Scene.");
   });
-  on("#rvAllLook", "change", (e) => {
-    if (!e.currentTarget.checked) return;
+  on("#rvAllLook", "click", () => {
     const src = cur(); if (!src) return;
-    w.scenes.forEach((s) => {
-      s.look = src.look || null; s.look_amount = src.look_amount ?? 100;
-      s.vfx = src.vfx || "none"; s.vfx_gen = src.vfx_gen || null;
-      if (src.vfx_gen) { const t = tileById(src.vfx_gen); if (t?.disclosure) s.disclosure = t.disclosure; }
-    });
-    toast("VFX Applied To Every Scene.");
+    /* Paid effects confirm first; free looks apply straight away. */
+    if (sceneEffectCredits(src) > 0) { w.popConfirm = true; render(); return; }
+    w.popAll = true; render();
   });
+  on("#rvAllNo", "click", () => { w.popConfirm = false; render(); });
+  on("#rvAllYes", "click", () => { w.popAll = true; w.popConfirm = false; render(); });
   on("[data-tpl]", "click", (e) => { w.template = e.currentTarget.dataset.tpl; render(); });
   on("[data-out]", "click", (e) => {
     w.outputMode = e.currentTarget.dataset.out;

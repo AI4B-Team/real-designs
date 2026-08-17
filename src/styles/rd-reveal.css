@@ -741,3 +741,61 @@
 .rv-organizing{display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;opacity:.75}
 .rv-organizing i{width:14px;height:14px;animation:rv-spin 1s linear infinite}
 @keyframes rv-spin{to{transform:rotate(360deg)}}
+
+/* ---------- Effects modal: Looks / Effects, category rail, preview ---------- */
+.rd-app .rv-modal-in.fx-modal { width: min(1080px, 100%); max-width: 1080px; }
+.rd-app .fx-wrap { position: relative; }
+.rd-app .fx-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line, #e6e6e6); margin: -4px 0 12px; }
+.rd-app .fx-tabs button { border: 0; background: none; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #6b6b6b;
+  cursor: pointer; border-bottom: 2px solid transparent; }
+.rd-app .fx-tabs button.on { color: #111; border-bottom-color: var(--red, #CC0000); }
+.rd-app .fx-body { display: grid; grid-template-columns: 132px minmax(0, 1fr) minmax(0, 36%); gap: 16px; align-items: start; }
+.rd-app .fx-cats { display: grid; gap: 2px; align-content: start; }
+.rd-app .fx-cats button { text-align: left; border: 0; background: none; border-radius: 8px; padding: 7px 10px; font-size: 12.5px;
+  color: #4b4b4b; cursor: pointer; }
+.rd-app .fx-cats button:hover { background: #f5f5f5; }
+.rd-app .fx-cats button.on { background: #f2f2f2; color: #111; font-weight: 600; box-shadow: inset 2px 0 0 var(--red, #CC0000); }
+.rd-app .fx-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 10px;
+  max-height: 52vh; overflow: auto; padding-right: 4px; }
+.rd-app .fx-card { position: relative; border: 0; background: none; padding: 0; cursor: pointer; display: grid; gap: 5px; text-align: left; }
+.rd-app .fx-card:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 3px; border-radius: 12px; }
+.rd-app .fx-th { position: relative; display: block; width: 100%; aspect-ratio: 1; border-radius: 10px; overflow: hidden;
+  background: #f2f2f2 center/cover no-repeat; border: 1px solid var(--line, #e6e6e6); }
+.rd-app .fx-th.blank { display: grid; place-items: center; color: #8a8a8a; }
+.rd-app .fx-card.on .fx-th { border-color: var(--red, #CC0000); box-shadow: 0 0 0 1px var(--red, #CC0000); }
+.rd-app .fx-ck { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; border-radius: 999px;
+  background: var(--red, #CC0000); color: #fff; display: grid; place-items: center; }
+.rd-app .fx-ck svg { width: 12px; height: 12px; }
+.rd-app .fx-nm { font-size: 11.5px; font-weight: 600; color: #111; }
+.rd-app .fx-cost { position: absolute; top: 6px; right: 6px; font-style: normal; font-family: "DM Mono", monospace;
+  font-size: 10px; background: rgba(17, 17, 19, .82); color: #fff; border-radius: 999px; padding: 2px 6px; }
+.rd-app .fx-cost.inline { position: static; display: inline-block; margin-left: 6px; }
+.rd-app .fx-beta { position: absolute; bottom: 26px; right: 6px; font-style: normal; font-size: 9.5px; letter-spacing: .08em;
+  text-transform: uppercase; background: #fff; border: 1px solid var(--line, #e6e6e6); border-radius: 999px; padding: 1px 6px; color: #6b6b6b; }
+.rd-app .fx-prev { display: grid; gap: 8px; align-content: start; }
+.rd-app .fx-prev b { font-size: 14px; }
+.rd-app .fx-prev > span { font-size: 12.5px; color: #6b6b6b; line-height: 1.5; }
+.rd-app .fx-amt { font-style: normal; font-family: "DM Mono", monospace; font-size: 11px; color: #6b6b6b; }
+.rd-app .fx-scale { display: flex; justify-content: space-between; }
+.rd-app .fx-scale em { font-style: normal; font-size: 10px; color: #8a8a8a; }
+.rd-app .fx-all { justify-self: start; }
+.rd-app .fx-ok { display: inline-flex; align-items: center; gap: 5px; font-size: 11.5px; color: #1a7f37; }
+.rd-app .fx-ok svg { width: 13px; height: 13px; }
+.rd-app .fx-confirm { position: absolute; inset: 0; background: rgba(255, 255, 255, .92); display: grid; place-items: center; z-index: 4; }
+.rd-app .fx-confirm > div { background: #fff; border: 1px solid var(--line, #e6e6e6); border-radius: 14px; padding: 18px;
+  width: min(380px, 92%); display: grid; gap: 8px; box-shadow: 0 18px 40px rgba(15, 23, 42, .16); }
+.rd-app .fx-confirm b { font-size: 14px; line-height: 1.4; }
+.rd-app .fx-confirm span { font-size: 12px; color: #6b6b6b; }
+.rd-app .fx-confirm-a { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+@media (max-width: 1000px) {
+  .rd-app .fx-body { grid-template-columns: minmax(0, 1fr); }
+  .rd-app .fx-cats { grid-auto-flow: column; grid-auto-columns: max-content; overflow: auto; gap: 4px; }
+  .rd-app .fx-cats button.on { box-shadow: none; border: 1px solid var(--red, #CC0000); }
+  .rd-app .fx-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: none; }
+  .rd-app .fx-prev { order: -1; }
+}
+@media (max-width: 640px) {
+  .rd-app .rv-modal-in.fx-modal { width: 100%; max-width: 100%; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .rd-app .fx-modal .fx-tabs { position: sticky; top: 0; background: #fff; z-index: 3; }
+  .rd-app .fx-modal .rv-modal-f { position: sticky; bottom: 0; background: #fff; }
+}
