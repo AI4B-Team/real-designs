@@ -2016,6 +2016,77 @@ export type Database = {
           },
         ]
       }
+      video_render_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          credits_charged: number
+          error_message: string | null
+          heartbeat_at: string
+          id: string
+          output_formats: string[]
+          progress: number
+          provider: string
+          provider_job_id: string | null
+          quality: string | null
+          scene_count: number
+          stage: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          video_project_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          credits_charged?: number
+          error_message?: string | null
+          heartbeat_at?: string
+          id?: string
+          output_formats?: string[]
+          progress?: number
+          provider?: string
+          provider_job_id?: string | null
+          quality?: string | null
+          scene_count?: number
+          stage?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          video_project_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          credits_charged?: number
+          error_message?: string | null
+          heartbeat_at?: string
+          id?: string
+          output_formats?: string[]
+          progress?: number
+          provider?: string
+          provider_job_id?: string | null
+          quality?: string | null
+          scene_count?: number
+          stage?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          video_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_render_jobs_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_scenes: {
         Row: {
           caption: string | null
