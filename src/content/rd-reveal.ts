@@ -24,7 +24,7 @@ import {
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
-import { runIntake, runAdvanceToGrid, attachUploadAssets, initialWizardStep, hydrateSeededWizard, ensureStepInvariant, acceptVideoPhotos, runEnrichment, logVideoEvent } from "@/lib/video-upload-intake";
+import { runAdvanceToGrid, attachUploadAssets, initialWizardStep, hydrateSeededWizard, ensureStepInvariant, acceptVideoPhotos, runEnrichment, logVideoEvent } from "@/lib/video-upload-intake";
 import { normalizeImageFile } from "@/lib/source-picker";
 import {
   VIDEO_FORMATS,
