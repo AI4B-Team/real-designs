@@ -904,7 +904,7 @@ async function bulk(action, anchor) {
   }
   if (action === "video") return videoFrom(list);
   if (action === "restyle") return restyleFrom(list);
-  if (action === "prop") return S.go("props");
+  if (action === "prop") return openAssign(list);
   if (action === "pres") return S.go("present");
   if (action === "more")
     return popMenu(anchor, [
