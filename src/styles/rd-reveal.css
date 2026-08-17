@@ -511,8 +511,8 @@
 .rd-app .rv-pop-auto.on i { color: var(--red, #CC0000); }
 
 /* ---------- Builder left section rail ---------- */
-.rv-layout.rv-railed{display:grid;grid-template-columns:190px minmax(0,1fr);gap:20px}
-.rv-layout.rv-railed.with-side{grid-template-columns:190px minmax(0,1fr) 300px}
+.rv-layout.rv-railed{display:grid;grid-template-columns:165px minmax(0,1fr);gap:20px}
+.rv-layout.rv-railed.with-side{grid-template-columns:165px minmax(0,1fr) 300px}
 .rv-rail{display:flex;flex-direction:column;gap:4px;position:sticky;top:12px;align-self:start}
 .rv-rail-i{display:flex;align-items:center;gap:10px;border:1px solid transparent;background:transparent;border-radius:10px;padding:9px 12px;font:inherit;font-size:.88rem;cursor:pointer;text-align:left;color:#3a3a42}
 .rv-rail-i i[data-lucide]{width:16px;height:16px}
