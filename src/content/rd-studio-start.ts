@@ -55,6 +55,7 @@ export type StudioStartCtx = {
 };
 
 import { mountSourcePicker } from "@/lib/source-picker";
+import { cleanAddressText } from "@/lib/property-address";
 
 const SAMPLE_KEYS: Array<{ key: string; name: string; space: string; room: string; photo: string; alt: string }> = [];
 
@@ -148,6 +149,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     samples: false,
     busy: false,
     property: "",
+    /** Optional property address. Never required to start or save a design. */
+    address: "",
     /** Property attached after a create-property step. */
     attached: "",
     newAddress: "",
@@ -511,11 +514,20 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function propertyField() {
     const props = (ctx.getProperties() || []).slice(0, 40);
-    if (!props.length) return "";
     const opts =
       '<option value="">No Property</option>' +
       props.map((p) => '<option value="' + esc(p.address) + '"' + (p.address === state.property ? " selected" : "") + ">" + esc(p.address) + "</option>").join("");
-    return field("Add To A Property (Optional)", '<select id="stsPropSel">' + opts + "</select>");
+    const picker = props.length ? field("Add To A Property (Optional)", '<select id="stsPropSel">' + opts + "</select>") : "";
+    /* Optional address: a project can stay unassigned and still be saved. */
+    const list =
+      '<datalist id="stsAddrList">' +
+      props.map((p) => '<option value="' + esc(p.address) + '"></option>').join("") +
+      "</datalist>";
+    const input =
+      '<span class="rd-addr-in"><i data-lucide="map-pin"></i>' +
+      '<input id="stsAddr" list="stsAddrList" type="text" maxlength="200" placeholder="Enter the property address" value="' +
+      esc(state.address) + '"></span>' + list;
+    return picker + field("Property Address", input);
   }
 
   function dropZone(types: string, icon: string, copy: string) {
@@ -917,6 +929,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         }
         state.newAddress = address;
         state.property = address;
+        state.address = address;
         openSetup("property");
       },
       onSample: () => {
@@ -979,7 +992,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     bindVal("stsPType", (v) => (state.newType = v));
     bindVal("stsNick", (v) => (state.newNickname = v));
     bindVal("stsPProject", (v) => (state.newProject = v));
-    bindVal("stsPropSel", (v) => (state.property = v));
+    bindVal("stsPropSel", (v) => {
+      state.property = v;
+      if (v) state.address = v;
+    });
+    bindVal("stsAddr", (v) => (state.address = cleanAddressText(v)));
     bindVal("stsAddr", (v) => {
       state.newAddress = v;
       syncPrimary();
@@ -1193,7 +1210,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     syncPrimary();
     try {
       const url = await ctx.uploadPhoto(f);
-      if (state.property) ctx.setContext({ address: state.property, room: roomValue() });
+      if (state.property || state.address)
+        ctx.setContext({ address: state.property || state.address, room: roomValue() });
       ctx.setSource("user_upload", url, "Your uploaded source", {
         caption: "Set your direction, then press Generate. Nothing has been generated yet.",
       });

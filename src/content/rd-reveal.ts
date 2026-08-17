@@ -84,6 +84,9 @@ import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
+import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
+import { defaultVideoTitle, cleanAddressText } from "@/lib/property-address";
+import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
 
@@ -507,7 +510,19 @@ function newWizard(seed = {}) {
     musicQ: "",
     addrTab: "address",
     listingUrl: "",
-    address: "",
+    /* Optional property address. Never required to save a draft, and never a
+       reason to invent a placeholder property. */
+    address: seed.address || seed.listingAddress || (seed.propertyId || seed.versionId ? seed.propertyLabel || "" : ""),
+    addressSource:
+      seed.addressSource ||
+      (seed.listingAddress || seed.from === "listing" ? "listing_import"
+        : seed.propertyId ? "existing_property"
+        : seed.versionId ? "inherited"
+        : "unknown"),
+    addressStructured: null,
+    addressMatch: null,
+    addressMatchDismissed: false,
+    addressSaveState: "",
     candidates: [],
     pop: null,
     popQ: "",
@@ -543,6 +558,7 @@ async function loadWizardAssets() {
   const prop = S.tree.find((p) => p.id === w.propertyId) || null;
   if (prop) {
     w.propertyLabel = prop.address;
+    if (!cleanAddressText(w.address)) applyAddress(w, prop.address, "existing_property");
     for (const pr of prop.projects || []) {
       for (const r of pr.rooms || []) {
         if (r.before_path) out.push({ key: "o-" + r.id, path: r.before_path, room: r.name, kind: "Original", group: groupFor(r.name, r.room_type), version_id: r.version_id, disclosure: null });
@@ -748,6 +764,7 @@ function wizardHtml() {
   const orient = orientationOf(w);
   const headTools = w.step === 2
     ? `<div class="rv-head-tools">
+        ${addressBarHtml(w, S.tree || [], "rvAddrBar")}
         <div class="rv-orient"><span>Video Format</span>
           <div class="rv-seg">${VIDEO_FORMATS.map((f) => `<button class="${w.primaryFormat === f.id ? "on" : ""}" data-primaryfmt="${f.id}">${f.label} ${f.note}</button>`).join("")}</div>
         </div>
@@ -960,10 +977,110 @@ function selectSceneKeys(w, keys) {
 
 
 
+
+/* ---------- Property address (optional, autosaved) ---------- */
+let addrTimer = null;
+
+function addrDraftPayload(w) {
+  return {
+    id: w.editingId || undefined,
+    property_id: w.propertyId || null,
+    property_label: w.propertyLabel || null,
+    ...addressColumns(w),
+    title_touched: !!w.titleTouched,
+    design_version_id: w.versionId || null,
+    title: defaultTitle(w),
+    video_type: w.videoType,
+    source_type: w.sourceType || "upload",
+    status: "draft",
+    formats: outputFormats(w),
+    length_preset: w.length,
+    transition: w.transition,
+    motion: w.motion,
+    brand_kit_id: w.brandKitId || null,
+    branding: w.branding,
+    disclosure: { mode: w.disclosureMode },
+    settings: { quality: w.quality || "standard", primaryFormat: w.primaryFormat || DEFAULT_FORMAT, additionalFormats: w.additionalFormats || [] },
+  };
+}
+
+/** Address edits ride the shared draft autosave. No success toast per edit. */
+async function autosaveAddress(w) {
+  if (!w.editingId && !(w.scenes || []).length) { w.addressSaveState = ""; return; }
+  w.addressSaveState = "saving";
+  paintSaveState(w);
+  try {
+    const saved = await saveVideo({ project: addrDraftPayload(w) });
+    if (saved?.id) w.editingId = saved.id;
+    w.addressSaveState = "saved";
+  } catch (_) {
+    w.addressSaveState = "error";
+  }
+  paintSaveState(w);
+}
+
+function paintSaveState(w) {
+  if (S.wizard !== w) return;
+  document.querySelectorAll(".rv-save").forEach((n) => n.remove());
+  const host = document.querySelector(".rd-addr-bar") || document.querySelector(".rd-addrf");
+  if (!host) return;
+  const span = document.createElement("span");
+  span.className = "rv-save mono" + (w.addressSaveState === "saved" ? " ok" : w.addressSaveState === "error" ? " bad" : "");
+  span.textContent = w.addressSaveState === "saving" ? "Saving\u2026" : w.addressSaveState === "saved" ? "Saved" : w.addressSaveState === "error" ? "Couldn\u2019t Save \u2014 Retry" : "";
+  if (!span.textContent) return;
+  if (w.addressSaveState === "error") span.onclick = () => autosaveAddress(w);
+  host.appendChild(span);
+}
+
+async function lookupAddressMatch(w) {
+  const text = cleanAddressText(w.address);
+  if (text.length < 8 || w.propertyId) { w.addressMatch = null; return; }
+  try {
+    const res = await matchPropertyAddress({ data: { address: text } });
+    if (S.wizard !== w) return;
+    w.addressMatch = res?.match || null;
+    if (w.addressMatch) render();
+  } catch (_) {}
+}
+
+function bindAddressInputs(el, w) {
+  el.querySelectorAll("#rvAddr, #rvAddrBar").forEach((input) => {
+    input.addEventListener("input", (ev) => {
+      applyAddress(w, ev.target.value, "manual");
+      w.addressMatchDismissed = false;
+      /* Keep the sibling copy of the field in sync without a full repaint. */
+      el.querySelectorAll("#rvAddr, #rvAddrBar").forEach((other) => { if (other !== input) other.value = w.address; });
+      const t = el.querySelector("#rvTitle");
+      if (t && !w.titleTouched) t.value = defaultTitle(w);
+      clearTimeout(addrTimer);
+      addrTimer = setTimeout(() => { autosaveAddress(w); lookupAddressMatch(w); }, 900);
+    });
+  });
+  el.querySelectorAll("[data-addr-use]").forEach((b) => (b.onclick = async () => {
+    const id = b.dataset.addrUse;
+    w.propertyId = id;
+    w.propertyLabel = w.addressMatch?.address || w.address;
+    w.address = w.addressMatch?.address || w.address;
+    applyAddress(w, w.address, "existing_property");
+    w.addressMatch = null;
+    render();
+    autosaveAddress(w);
+  }));
+  el.querySelectorAll("[data-addr-sep]").forEach((b) => (b.onclick = () => {
+    /* Keep Separate preserves the typed address as project metadata only. */
+    w.addressMatchDismissed = true;
+    w.propertyId = null;
+    render();
+    autosaveAddress(w);
+  }));
+  el.querySelectorAll("[data-addr-retry]").forEach((b) => (b.onclick = () => autosaveAddress(w)));
+}
+
 /** Title the user never has to type: address, property or design name. */
 
 function defaultTitle(w) {
-  return w.title || w.propertyLabel || "Untitled Video";
+  if (w.titleTouched && w.title) return w.title;
+  return defaultVideoTitle(w.address || w.propertyLabel, w.titleTouched, w.title);
 }
 
 /* Step 1 is the shared source picker, mounted after render. Nothing about
@@ -973,6 +1090,7 @@ function stepPhotos() {
   const chosen = w.propertyId ? (S.tree.find((p) => p.id === w.propertyId)?.address || w.propertyLabel) : "";
   const failed = w.uploadFails || [];
   return `<label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
+  ${addressFieldHtml(w, S.tree || [], { id: "rvAddr" })}
   <div id="rvPicker"></div>
   ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
   ${w.uploadPrep && w.uploadPrep.length ? `<div class="rv-prep">${w.uploadPrep
@@ -1957,8 +2075,10 @@ async function generate() {
       project: {
         property_id: w.propertyId || null,
         property_label: w.propertyLabel || null,
+        ...addressColumns(w),
+        title_touched: !!w.titleTouched,
         design_version_id: w.versionId || null,
-        title: w.title || w.propertyLabel || "Untitled Video",
+        title: defaultTitle(w),
         video_type: w.videoType,
         source_type: w.sourceType || "property",
         status: "queued",
@@ -2519,6 +2639,7 @@ function bind() {
 
   const titleIn = el.querySelector("#rvTitle");
   if (titleIn) titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
+  bindAddressInputs(el, w);
   on("[data-rmup]", "click", (e) => {
     const id = e.currentTarget.dataset.rmup;
     const gone = (w.uploads || []).find((u) => u.id === id);
@@ -2586,6 +2707,8 @@ function bind() {
     w.sourceType = "design";
     w.propertyId = d.propertyId;
     w.propertyLabel = d.propertyLabel;
+    /* A design carries its property association into the video. */
+    if (d.propertyLabel) applyAddress(w, d.propertyLabel, "inherited");
     w.versionId = d.versionId;
     if (!w.titleTouched) w.title = `${d.room} Design`;
     if (d.before && !w.typeTouched) w.videoType = "before_after";
@@ -2635,7 +2758,10 @@ function bind() {
         const p = S.tree.find((x) => x.address === address);
         w.propertyLabel = address;
         if (p) w.propertyId = p.id;
-        if (!w.titleTouched) w.title = address;
+        /* Starting from an existing property prefills its address. */
+        applyAddress(w, address, "existing_property");
+        w.addressMatch = null;
+        if (!w.titleTouched) w.title = defaultTitle(w);
         render();
       },
       onDesign: (id) => useDesign(id),
@@ -3201,6 +3327,9 @@ function editExisting(d) {
   });
   const w = S.wizard;
   w.editingId = p.id;
+  w.address = cleanAddressText(p.property_address || "");
+  w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
+  w.titleTouched = !!p.title_touched;
   {
     /* Older projects saved a flat formats[]; normalise into the canonical pair. */
     const saved = p.settings || {};

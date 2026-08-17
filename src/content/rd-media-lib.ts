@@ -10,6 +10,7 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { updateMediaAssets, deleteMediaAssets, listMediaProperties, createMediaProperty } from "@/lib/property-media.functions";
 import { assignMediaToProperty } from "@/lib/media-assign.functions";
+import { addressDisplay, buildAddress } from "@/lib/property-address";
 import { filterMedia, propertyOptions, assignKind, isAssignable } from "@/lib/media-view";
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
@@ -418,7 +419,7 @@ function card(m) {
     </div>
     <div class="ml-body">
       <div class="ml-t"><b>${esc(m.title)}</b><span class="pill st-${m.status}">${STATUS_LABEL[m.status] || m.status}</span></div>
-      <div class="mono ml-sub">${esc(m.property || "Unsorted Uploads")}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
+      <div class="mono ml-sub">${esc(addressDisplay({ property_address: m.address, property_label: m.property, property_id: m.propertyId }).text)}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
       <div class="ml-acts">${actions(m, g)}</div>
     </div>
   </div>`;
@@ -508,6 +509,8 @@ function moreItems(m) {
     out.push({ icon: "home", label: m.propertyId ? "Move To Another Property" : "Assign To A Property", fn: () => openAssign([m]) });
   if (isAssignable(m) && m.propertyId)
     out.push({ icon: "unlink", label: "Remove From Property", fn: () => doAssign([m], null) });
+  if (m.type === "generated_video")
+    out.push({ icon: "map-pin", label: m.address ? "Change Address" : "Add An Address", fn: () => changeAddress(m) });
   out.push({ icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") });
   out.push({ icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
   out.push({ icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
@@ -792,6 +795,28 @@ async function renameItem(m) {
     toast("Renamed.");
   } catch (e) {
     window.alert("Could not rename: " + (e && e.message ? e.message : "try again"));
+  }
+  await load(true);
+}
+
+/** Edit the optional property address on a video project. */
+async function changeAddress(m) {
+  const next = window.prompt("Property Address", m.address || "");
+  if (next === null) return;
+  const built = buildAddress({ property_address: next });
+  try {
+    const cur = await getVideo({ data: { id: m.refId } });
+    const project = {};
+    PROJECT_KEYS.forEach((k) => {
+      if (cur.project[k] !== null && cur.project[k] !== undefined) project[k] = cur.project[k];
+    });
+    project.property_address = built.property_address;
+    project.normalized_address = built.normalized_address;
+    project.address_source = built.property_address ? "manual" : "unknown";
+    await saveVideo({ data: { project } });
+    toast(built.property_address ? "Address Saved." : "Address Removed.");
+  } catch (e) {
+    window.alert("Could not save that address: " + (e && e.message ? e.message : "try again"));
   }
   await load(true);
 }

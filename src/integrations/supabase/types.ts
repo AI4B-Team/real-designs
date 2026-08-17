@@ -1067,31 +1067,67 @@ export type Database = {
       }
       projects: {
         Row: {
+          address_line_1: string | null
+          address_line_2: string | null
+          address_source: string
+          address_verified_at: string | null
           budget_band: string
           budget_target: number | null
+          city: string | null
+          country: string | null
           created_at: string
           finish_grade: string
           id: string
+          latitude: number | null
+          longitude: number | null
           name: string
+          normalized_address: string | null
+          postal_code: string | null
+          property_address: string | null
           property_id: string
+          state: string | null
         }
         Insert: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          address_source?: string
+          address_verified_at?: string | null
           budget_band?: string
           budget_target?: number | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           finish_grade?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name: string
+          normalized_address?: string | null
+          postal_code?: string | null
+          property_address?: string | null
           property_id: string
+          state?: string | null
         }
         Update: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          address_source?: string
+          address_verified_at?: string | null
           budget_band?: string
           budget_target?: number | null
+          city?: string | null
+          country?: string | null
           created_at?: string
           finish_grade?: string
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           name?: string
+          normalized_address?: string | null
+          postal_code?: string | null
+          property_address?: string | null
           property_id?: string
+          state?: string | null
         }
         Relationships: [
           {
@@ -1111,6 +1147,7 @@ export type Database = {
           design_dna: Json
           id: string
           market_id: string | null
+          normalized_address: string | null
           owner_id: string
           postal_code: string | null
           state: string | null
@@ -1122,6 +1159,7 @@ export type Database = {
           design_dna?: Json
           id?: string
           market_id?: string | null
+          normalized_address?: string | null
           owner_id?: string
           postal_code?: string | null
           state?: string | null
@@ -1133,6 +1171,7 @@ export type Database = {
           design_dna?: Json
           id?: string
           market_id?: string | null
+          normalized_address?: string | null
           owner_id?: string
           postal_code?: string | null
           state?: string | null
@@ -1931,69 +1970,108 @@ export type Database = {
       }
       video_projects: {
         Row: {
+          address_line_1: string | null
+          address_line_2: string | null
+          address_source: string
+          address_verified_at: string | null
           brand_kit_id: string | null
           branding: Json
+          city: string | null
+          country: string | null
           created_at: string
           design_version_id: string | null
           disclosure: Json
           error_message: string | null
           formats: Json
           id: string
+          latitude: number | null
           length_preset: string
+          longitude: number | null
           motion: string
+          normalized_address: string | null
+          postal_code: string | null
+          property_address: string | null
           property_id: string | null
           property_label: string | null
           room_id: string | null
           settings: Json
           source_type: string
+          state: string | null
           status: string
           title: string
+          title_touched: boolean
           transition: string
           updated_at: string
           user_id: string
           video_type: string
         }
         Insert: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          address_source?: string
+          address_verified_at?: string | null
           brand_kit_id?: string | null
           branding?: Json
+          city?: string | null
+          country?: string | null
           created_at?: string
           design_version_id?: string | null
           disclosure?: Json
           error_message?: string | null
           formats?: Json
           id?: string
+          latitude?: number | null
           length_preset?: string
+          longitude?: number | null
           motion?: string
+          normalized_address?: string | null
+          postal_code?: string | null
+          property_address?: string | null
           property_id?: string | null
           property_label?: string | null
           room_id?: string | null
           settings?: Json
           source_type?: string
+          state?: string | null
           status?: string
           title?: string
+          title_touched?: boolean
           transition?: string
           updated_at?: string
           user_id: string
           video_type?: string
         }
         Update: {
+          address_line_1?: string | null
+          address_line_2?: string | null
+          address_source?: string
+          address_verified_at?: string | null
           brand_kit_id?: string | null
           branding?: Json
+          city?: string | null
+          country?: string | null
           created_at?: string
           design_version_id?: string | null
           disclosure?: Json
           error_message?: string | null
           formats?: Json
           id?: string
+          latitude?: number | null
           length_preset?: string
+          longitude?: number | null
           motion?: string
+          normalized_address?: string | null
+          postal_code?: string | null
+          property_address?: string | null
           property_id?: string | null
           property_label?: string | null
           room_id?: string | null
           settings?: Json
           source_type?: string
+          state?: string | null
           status?: string
           title?: string
+          title_touched?: boolean
           transition?: string
           updated_at?: string
           user_id?: string
