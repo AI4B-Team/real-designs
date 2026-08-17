@@ -956,7 +956,7 @@ function tileHtml(a, seq) {
   const tools = s ? `<div class="rv-tools">
       <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Add VFX"><i data-lucide="wand-sparkles"></i><em>Add VFX</em></button>
-      <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Camera Movements"><i data-lucide="camera"></i><em>Camera Movements</em></button>
+      <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
     </div>` : "";
   return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" ${s ? `draggable="true"` : ""}>
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
