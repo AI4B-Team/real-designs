@@ -119,9 +119,11 @@ export async function runIntake(w: IntakeWizard, list: any, deps: IntakeDeps): P
 
   /* Already on the grid: show the new photos immediately, enrich after. */
   (deps.attachUploads || attachUploadAssets)(w);
+  if (deps.selectUploads) deps.selectUploads(w, added);
   w.selectGridLoading = true;
   deps.render();
   await runEnrichment(w, deps);
+
 }
 
 export const STEP_TWO_ERROR =
