@@ -397,7 +397,8 @@ function card(m) {
     ? `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || "Processing")}</span>
         <div class="ml-bar ${m.progress == null ? "ind" : ""}"><i style="width:${m.progress == null ? 40 : m.progress}%"></i></div></div>`
     : m.status === "failed"
-      ? `<div class="ml-fail"><i data-lucide="alert-triangle"></i><span>${esc(failReason(m))}</span></div>`
+      ? `${m.path ? `<img data-photo="${esc(m.path)}" alt="${esc(m.title)}"${THUMB_URLS.get(m.path) ? ` src="${esc(THUMB_URLS.get(m.path))}"` : " hidden"}>` : ""}
+         <div class="ml-fail"><i data-lucide="alert-triangle"></i><b>Needs Attention</b><span>${esc(failReason(m))}</span></div>`
 
       : `<img data-photo="${esc(m.path || "")}" alt="${esc(m.title)}"${THUMB_URLS.get(m.path) ? ` src="${esc(THUMB_URLS.get(m.path))}"` : " hidden"}>
          ${g === "videos" ? `<span class="ml-play"><i data-lucide="play"></i></span>` : ""}`;
