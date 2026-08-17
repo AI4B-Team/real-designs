@@ -21,6 +21,17 @@ import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { runIntake, runAdvanceToGrid } from "@/lib/video-upload-intake";
 import {
+  VIDEO_FORMATS,
+  DEFAULT_FORMAT,
+  formatLabel,
+  getOutputFormats,
+  normalizeFormats,
+  QUALITY_TIERS,
+  qualityTierById,
+  getQualityCompatibility,
+  lowestCompatibleQuality,
+} from "@/lib/reveal-format";
+import {
   listVideos as _listVideos,
   getVideo as _getVideo,
   saveVideo as _saveVideo,
@@ -430,7 +441,10 @@ function newWizard(seed = {}) {
     gridOrder: [],
     groupBy: true,
     scenes: [],
-    formats: ["9:16"],
+    /* One canonical format, chosen in Select & Order. Extra deliverables live
+       in additionalFormats and never overwrite the primary. */
+    primaryFormat: DEFAULT_FORMAT,
+    additionalFormats: [],
     length: "standard",
     motion: "auto",
     transition: "clean",
@@ -608,7 +622,7 @@ function wizardHtml() {
   const headTools = w.step === 2
     ? `<div class="rv-head-tools">
         <div class="rv-orient"><span>Video Format</span>
-          <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n} ${id === "portrait" ? "9:16" : "16:9"}</button>`).join("")}</div>
+          <div class="rv-seg">${VIDEO_FORMATS.map((f) => `<button class="${w.primaryFormat === f.id ? "on" : ""}" data-primaryfmt="${f.id}">${f.label} ${f.note}</button>`).join("")}</div>
         </div>
         <button class="btn btn-ghost btn-sm" id="rvHeadAdd"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rvHeadFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
@@ -633,6 +647,7 @@ function wizardHtml() {
 
   ${w.pop ? popoverHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
+  ${w.shortenModal ? shortenModalHtml() : ""}
   ${w.logoModal ? logoModalHtml() : ""}`;
 }
 
@@ -718,8 +733,8 @@ function stepReady() {
   const w = S.wizard;
   if (!w) return false;
   if (w.step === 1) return (w.uploads || []).length > 0 || !!w.versionId || !!w.propertyId;
-  if (w.step === 2) return w.scenes.length > 0 && (w.formats || []).length > 0;
-  if (w.step === 7) return (w.formats || []).length > 0;
+  if (w.step === 2) return w.scenes.length > 0;
+  if (w.step === 7) return qualityCompat(w).compatible;
   return true;
 }
 
@@ -815,7 +830,7 @@ function stepSelect() {
   }
 
   const all = w.available.length > 0 && w.scenes.length === w.available.length;
-  const why = !w.scenes.length ? "Check At Least One Photo To Continue." : !(w.formats || []).length ? "Choose A Video Format To Continue." : "";
+  const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
 
   return `<div class="rv-utility">
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
@@ -975,7 +990,7 @@ function popoverHtml() {
 
   } else if (kind === "crop") {
     body = `<div class="rv-pop-list">
-      <div class="rv-pop-h">Crop <i class="mono">${esc(w.formats[0] || "9:16")}</i></div>
+      <div class="rv-pop-h">Crop <i class="mono">${esc(w.primaryFormat || "9:16")}</i></div>
       ${CROPS.map(([id, n]) => `<button class="rv-pop-row ${(s.crop || "center") === id ? "on" : ""}" data-croppick="${id}">${n}</button>`).join("")}
     </div>`;
   } else if (kind === "cap") {
@@ -1044,12 +1059,18 @@ function popoverHtml() {
 
 /* Video format. The old step 3 folded into the grid, so the segmented control
    lives in the grid header now. */
-const ORIENTATIONS: Array<[string, string, string[]]> = [
-  ["portrait", "Portrait", ["9:16", "4:5"]],
-  ["landscape", "Landscape", ["16:9", "1:1"]],
-];
 function orientationOf(w) {
-  return (w.formats || []).some((f) => f === "16:9" || f === "1:1") ? "landscape" : "portrait";
+  const f = w?.primaryFormat || DEFAULT_FORMAT;
+  return f === "16:9" ? "landscape" : f === "1:1" ? "square" : "portrait";
+}
+/** Every deliverable this project will produce, primary first. */
+function outputFormats(w) {
+  return getOutputFormats(w?.primaryFormat, w?.additionalFormats);
+}
+/** Compatibility of the current quality tier with the selected scene count. */
+function qualityCompat(w) {
+  const wiz = w || S.wizard || {};
+  return getQualityCompatibility(wiz.quality || "standard", (wiz.scenes || []).length);
 }
 
 
@@ -1368,33 +1389,41 @@ function stepAudio() {
 }
 
 /* ======================= QUALITY ======================= */
-const QUALITY_TIERS: Array<[string, string, string, number, number]> = [
-  ["basic", "Basic", "720p, Quick Render", 8, 1],
-  ["standard", "Standard", "1080p, The Usual Choice", 20, 1.5],
-  ["high", "High", "1080p, Sharper Motion And Longer Cut", 30, 2],
-  ["ultra", "Ultra", "4K Master, Every Photo Used", 40, 3],
-];
 export function qualityTier(id: string) {
-  return QUALITY_TIERS.find((t) => t[0] === id) || QUALITY_TIERS[1];
+  return qualityTierById(id);
 }
 function qualityCost(id: string) {
-  const scenes = (S.wizard?.scenes || []).length || 0;
-  const t = qualityTier(id);
-  return Math.round(CREDIT_COSTS.video * t[4] * (scenes > t[3] ? 1 + (scenes - t[3]) / (t[3] * 2) : 1));
+  return Math.round(CREDIT_COSTS.video * qualityTierById(id).costMultiplier);
 }
 
 function stepQuality() {
   const w = S.wizard;
   const scenes = w.scenes.length;
-  return `<h3>Quality</h3>
-  <p class="rv-hint">Higher Tiers Use More Photos And More Credits. ${scenes} Photo${scenes === 1 ? "" : "s"} Selected.</p>
+  const outs = outputFormats(w);
+  const compat = qualityCompat(w);
+  const lowest = lowestCompatibleQuality(scenes);
 
-  <div class="rv-qtiers">${QUALITY_TIERS.map(([id, name, note, max]) => `
-    <button class="rv-qtier ${w.quality === id ? "on" : ""}" data-qual="${id}">
-      <b>${name}</b><em>${note}</em>
-      <span class="mono">Up To ${max} Photos · ${qualityCost(id)} Credits</span>
-      ${scenes > max ? `<i class="rv-qover">${scenes - max} Photo${scenes - max === 1 ? "" : "s"} Over, Priced Above</i>` : ""}
-    </button>`).join("")}</div>
+  return `<h3>Quality</h3>
+  <p class="rv-hint">Higher Tiers Render Sharper And Cost More Credits. ${scenes} Photo${scenes === 1 ? "" : "s"} Selected.</p>
+
+  <div class="rv-qtiers">${QUALITY_TIERS.map((t) => {
+    const c = getQualityCompatibility(t.id, scenes);
+    return `<button class="rv-qtier ${w.quality === t.id ? "on" : ""} ${c.compatible ? "" : "off"}" data-qual="${t.id}" ${c.compatible ? "" : "disabled aria-disabled=\"true\""}>
+      <b>${t.name}</b><em>${t.note}</em>
+      <span class="mono">Up To ${t.maxScenes} Scenes · ${qualityCost(t.id)} Credits</span>
+      ${c.compatible ? "" : `<i class="rv-qover">${esc(c.reason)}</i>`}
+    </button>`;
+  }).join("")}</div>
+
+  ${compat.compatible ? "" : `<div class="rv-qfix">
+    <p>${esc(compat.reason)} Nothing Is Removed Until You Choose.</p>
+    <div class="rv-qfix-a">
+      ${lowest ? `<button class="btn btn-primary btn-sm" id="rvKeepAll">Keep All ${scenes} Scenes</button>` : ""}
+      <button class="btn btn-ghost btn-sm" id="rvShorten">Shorten Video</button>
+    </div>
+    ${lowest ? `<div class="rv-note sm">Keeping Every Scene Switches Quality To ${lowest.name}.</div>`
+      : `<div class="rv-note sm">No Quality Tier Supports ${scenes} Scenes. Shorten The Video To Continue.</div>`}
+  </div>`}
 
   <div class="rv-sub">Mode</div>
   <div class="rv-seg">${[["auto", "Auto"], ["advanced", "Advanced"]]
@@ -1403,11 +1432,60 @@ function stepQuality() {
     ? "Auto Picks Motion, Transitions And Pacing For You. Everything You Set Elsewhere Still Applies."
     : "Advanced Keeps Every Per Scene Choice You Made Exactly As You Set It."}</div>
 
-  <div class="rv-sub">Formats</div>
-  <div class="rv-seg wrap">${[["9:16", "Vertical"], ["1:1", "Square"], ["16:9", "Horizontal"]]
-    .map(([id, n]) => `<button class="${w.formats.includes(id) ? "on" : ""}" data-fmt="${id}">${n}</button>`).join("")}</div>
+  <div class="rv-sub">Video Format</div>
+  <div class="rv-fmt-sum"><b>${esc(formatLabel(w.primaryFormat || DEFAULT_FORMAT))}</b>
+    <button class="fb-link" data-sec="scenes">Change In Select &amp; Order</button></div>
+
+  <div class="rv-sub">Additional Versions</div>
+  <div class="rv-seg wrap">${VIDEO_FORMATS.filter((f) => f.id !== (w.primaryFormat || DEFAULT_FORMAT))
+    .map((f) => `<button class="${(w.additionalFormats || []).includes(f.id) ? "on" : ""}" data-addfmt="${f.id}">Also Create ${f.label}</button>`).join("")}</div>
+  <div class="rv-note sm">Rendering ${outs.length} Version${outs.length === 1 ? "" : "s"}: ${esc(outs.join(", "))}.</div>
 
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button></div>`;
+}
+
+/* Scenes the shorten flow suggests dropping first: flagged photos, then
+   near-duplicates, then the trailing scenes. Order is never rearranged. */
+function recommendedRemovals(w, max) {
+  const scenes = w.scenes || [];
+  const over = scenes.length - max;
+  if (over <= 0) return [];
+  const scored = scenes.map((s, i) => {
+    const a = (w.available || []).find((x) => x.key === s.key) || {};
+    let penalty = 0;
+    if ((a.flags || []).length) penalty += 100;
+    if (a.dup) penalty += 50;
+    return { key: s.key, i, penalty };
+  });
+  scored.sort((a, b) => b.penalty - a.penalty || b.i - a.i);
+  return scored.slice(0, over).map((x) => x.key);
+}
+
+function shortenModalHtml() {
+  const w = S.wizard;
+  const max = qualityTierById(w.quality).maxScenes;
+  const drop = new Set(w.shortenPicks || recommendedRemovals(w, max));
+  const keep = w.scenes.length - drop.size;
+  const ok = keep > 0 && keep <= max;
+  return `<div class="rv-modal on" id="rvShortWrap"><div class="rv-modal-in rv-modal-lg" role="dialog" aria-label="Shorten video">
+    <div class="rv-modal-h"><b>Shorten Video</b><button class="icon-btn" id="rvShortX"><i data-lucide="x"></i></button></div>
+    <div class="rv-modal-b">
+      <p>Your Video Contains <b class="mono">${w.scenes.length}</b> Scenes. ${esc(qualityTierById(w.quality).name)} Allows <b class="mono">${max}</b>.
+      Scenes Marked Below Are Recommended For Removal. Nothing Is Removed Until You Confirm.</p>
+      <div class="rv-shortlist">${w.scenes.map((s, i) => `
+        <label class="rv-shortrow ${drop.has(s.key) ? "drop" : ""}">
+          <input type="checkbox" data-shortkeep="${esc(s.key)}" ${drop.has(s.key) ? "" : "checked"}>
+          <span class="mono">${i + 1}</span>
+          <b>${esc(s.room || "Scene")}</b>
+          <em>${drop.has(s.key) ? "Recommended For Removal" : "Keep"}</em>
+        </label>`).join("")}</div>
+      <div class="rv-note sm">Final Video: <b class="mono">${keep}</b> Scene${keep === 1 ? "" : "s"}${ok ? "" : keep > max ? ` — Still ${keep - max} Over The Limit.` : " — Keep At Least One Scene."}</div>
+    </div>
+    <div class="rv-modal-f">
+      <button class="btn btn-ghost" id="rvShortCancel">Cancel</button>
+      <button class="btn btn-primary" id="rvShortSave" ${ok ? "" : "disabled"}>Save ${keep} Scene${keep === 1 ? "" : "s"}</button>
+    </div>
+  </div></div>`;
 }
 
 function plannedVariants() {
@@ -1417,7 +1495,7 @@ function plannedVariants() {
   if (mode === "unbranded" || mode === "both") versions.push("clean");
   if (mode === "branded" || mode === "both") versions.push("branded");
   const out = [];
-  for (const f of w.formats) {
+  for (const f of outputFormats(w)) {
     for (const v of versions) out.push({ aspect_ratio: f, version_type: v, brand_kit_id: v === "branded" ? w.brandKitId || null : null });
   }
   return out;
@@ -1447,6 +1525,7 @@ function previewPanel() {
     <div class="rv-vars">${vs.length ? vs.map((v) => `<div><span class="mono">${esc(v.aspect_ratio)}</span><i>${v.version_type === "clean" ? "Unbranded" : v.version_type === "branded" ? "Branded" : "Disclosure Ready"}</i><b>Queued</b></div>`).join("") : `<div class="rv-note sm">Pick A Format.</div>`}</div>
     <div class="rv-cost mono">${cost} Credits</div>
     ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
+    ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
     ${!block && typeof MediaRecorder === "undefined" ? `<div class="rv-note sm">This Browser Cannot Record Video. Open REAL DESIGNS In Chrome Or Edge On A Computer To Render.</div>` : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
@@ -1455,7 +1534,7 @@ function previewPanel() {
       : w.step === 7
         ? block
           ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
-          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && typeof MediaRecorder !== "undefined" ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && typeof MediaRecorder !== "undefined" ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
 
         : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
 
@@ -1503,6 +1582,16 @@ async function generate() {
   const w = S.wizard;
   const vs = plannedVariants();
 
+  // A quality tier can never quietly drop selected scenes: block the render
+  // and send the user back to the choice instead.
+  const compat = qualityCompat(w);
+  if (!compat.compatible) {
+    w.step = 7;
+    render();
+    toast(compat.reason);
+    return;
+  }
+
   // Preflight. Entitlement is decided before any row or render job exists, so
   // a render we already know cannot run never leaves a failed card behind.
   try {
@@ -1535,14 +1624,14 @@ async function generate() {
         video_type: w.videoType,
         source_type: w.sourceType || "property",
         status: "queued",
-        formats: w.formats,
+        formats: outputFormats(w),
         length_preset: w.length,
         transition: w.transition,
         motion: w.motion,
         brand_kit_id: w.brandKitId || null,
         branding: w.branding,
         disclosure: { mode: w.disclosureMode },
-        settings: { baTransition: w.baTransition || "match", quality: w.quality || "standard", mode: w.mode || "auto", titles: w.titles || null },
+        settings: { baTransition: w.baTransition || "match", quality: w.quality || "standard", primaryFormat: w.primaryFormat || DEFAULT_FORMAT, additionalFormats: w.additionalFormats || [], mode: w.mode || "auto", titles: w.titles || null },
       },
       scenes: w.scenes.map((s, i) => ({
         source_asset_id: s.asset_id || null,
@@ -1577,7 +1666,7 @@ async function generate() {
     projectId = saved.id;
 
     const started = await startRender({ id: projectId, variants: vs });
-    track?.("reveal_generate", { formats: w.formats.join(","), scenes: w.scenes.length });
+    track?.("reveal_generate", { formats: outputFormats(w).join(","), scenes: w.scenes.length });
     await renderAllVariants(projectId, started.variants, w);
     await setVideoStatus({ id: projectId, status: "ready" });
     toast("Your Video Is Ready.");
@@ -1999,7 +2088,47 @@ function bind() {
     render();
   });
   /* Quality section */
-  on("[data-qual]", "click", (e) => { w.quality = e.currentTarget.dataset.qual; render(); });
+  on("[data-qual]", "click", (e) => {
+    const id = e.currentTarget.dataset.qual;
+    if (!getQualityCompatibility(id, w.scenes.length).compatible) return;
+    w.quality = id;
+    render();
+  });
+  on("#rvKeepAll", "click", () => {
+    const t = lowestCompatibleQuality(w.scenes.length);
+    if (!t) return;
+    w.quality = t.id;
+    toast(`Quality Set To ${t.name} So All ${w.scenes.length} Scenes Are Kept.`);
+    render();
+  });
+  on("#rvShorten", "click", () => {
+    w.shortenPicks = recommendedRemovals(w, qualityTierById(w.quality).maxScenes);
+    w.shortenModal = true;
+    render();
+  });
+  const closeShorten = () => { w.shortenModal = false; w.shortenPicks = null; render(); };
+  on("#rvShortX", "click", closeShorten);
+  on("#rvShortCancel", "click", closeShorten);
+  el.querySelectorAll("[data-shortkeep]").forEach((box) =>
+    box.addEventListener("change", (ev) => {
+      const key = ev.target.dataset.shortkeep;
+      const picks = new Set(w.shortenPicks || []);
+      if (ev.target.checked) picks.delete(key);
+      else picks.add(key);
+      w.shortenPicks = Array.from(picks);
+      render();
+    }));
+  on("#rvShortSave", "click", () => {
+    const drop = new Set(w.shortenPicks || []);
+    if (!drop.size) { closeShorten(); return; }
+    w.scenes = w.scenes.filter((s) => !drop.has(s.key));
+    syncSceneOrder();
+    w.shortenModal = false;
+    w.shortenPicks = null;
+    w.step = 2;
+    toast(`Video Shortened To ${w.scenes.length} Scene${w.scenes.length === 1 ? "" : "s"}.`);
+    render();
+  });
   on("[data-mode]", "click", (e) => { w.mode = e.currentTarget.dataset.mode; render(); });
 
   on("#rvLowX", "click", () => { w.lowModal = false; render(); });
@@ -2203,14 +2332,16 @@ function bind() {
   });
 
   /* setup */
-  on("[data-fmt]", "click", (e) => {
-    const f = e.currentTarget.dataset.fmt;
-    w.formats = w.formats.includes(f) ? w.formats.filter((x) => x !== f) : w.formats.concat(f);
+  on("[data-primaryfmt]", "click", (e) => {
+    const f = e.currentTarget.dataset.primaryfmt;
+    w.primaryFormat = f;
+    w.additionalFormats = (w.additionalFormats || []).filter((x) => x !== f);
     render();
   });
-  on("[data-orient]", "click", (e) => {
-    const o = ORIENTATIONS.find(([id]) => id === e.currentTarget.dataset.orient);
-    if (o) w.formats = o[2].slice();
+  on("[data-addfmt]", "click", (e) => {
+    const f = e.currentTarget.dataset.addfmt;
+    const list = (w.additionalFormats || []).filter((x) => x !== w.primaryFormat);
+    w.additionalFormats = list.includes(f) ? list.filter((x) => x !== f) : list.concat(f);
     render();
   });
   on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
@@ -2561,7 +2692,15 @@ function editExisting(d) {
   });
   const w = S.wizard;
   w.editingId = p.id;
-  w.formats = p.formats || ["9:16"];
+  {
+    /* Older projects saved a flat formats[]; normalise into the canonical pair. */
+    const saved = p.settings || {};
+    const norm = normalizeFormats(
+      saved.primaryFormat ? [saved.primaryFormat].concat(saved.additionalFormats || []) : p.formats,
+    );
+    w.primaryFormat = norm.primaryFormat;
+    w.additionalFormats = norm.additionalFormats;
+  }
   w.length = p.length_preset;
   w.transition = p.transition;
   w.motion = p.motion;
