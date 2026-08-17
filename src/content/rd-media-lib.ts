@@ -500,7 +500,10 @@ function moreItems(m) {
   out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
   if (g === "images") out.push({ icon: "layers", label: "Create Variations", fn: () => S.go("studio") });
   if (m.sourcePath) out.push({ icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
-  out.push({ icon: "home", label: "Add To Property", fn: () => S.go("props") });
+  if (isAssignable(m))
+    out.push({ icon: "home", label: m.propertyId ? "Move To Another Property" : "Assign To A Property", fn: () => openAssign([m]) });
+  if (isAssignable(m) && m.propertyId)
+    out.push({ icon: "unlink", label: "Remove From Property", fn: () => doAssign([m], null) });
   out.push({ icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") });
   out.push({ icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
   out.push({ icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
