@@ -421,16 +421,16 @@ export const updateRenderJob = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const patch: Record<string, unknown> = { heartbeat_at: new Date().toISOString() };
-    if (data.status) patch.status = data.status;
-    if (data.progress != null) patch.progress = data.progress;
-    if (data.stage !== undefined) patch.stage = data.stage;
-    if (data.error_message !== undefined) patch.error_message = data.error_message;
-    if (data.provider_job_id !== undefined) patch.provider_job_id = data.provider_job_id;
+    if (data.status) patch['status'] = data.status;
+    if (data.progress != null) patch['progress'] = data.progress;
+    if (data.stage !== undefined) patch['stage'] = data.stage;
+    if (data.error_message !== undefined) patch['error_message'] = data.error_message;
+    if (data.provider_job_id !== undefined) patch['provider_job_id'] = data.provider_job_id;
     if (data.status === "completed") {
-      patch.completed_at = new Date().toISOString();
-      patch.progress = 1;
+      patch['completed_at'] = new Date().toISOString();
+      patch['progress'] = 1;
     }
-    if (data.status === "failed" || data.status === "cancelled") patch.completed_at = new Date().toISOString();
+    if (data.status === "failed" || data.status === "cancelled") patch['completed_at'] = new Date().toISOString();
 
     const { data: row, error } = await context.supabase
       .from("video_render_jobs")
