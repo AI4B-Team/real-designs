@@ -553,6 +553,7 @@ async function loadWizardAssets() {
   const prop = S.tree.find((p) => p.id === w.propertyId) || null;
   if (prop) {
     w.propertyLabel = prop.address;
+    if (!cleanAddressText(w.address)) applyAddress(w, prop.address, "existing_property");
     for (const pr of prop.projects || []) {
       for (const r of pr.rooms || []) {
         if (r.before_path) out.push({ key: "o-" + r.id, path: r.before_path, room: r.name, kind: "Original", group: groupFor(r.name, r.room_type), version_id: r.version_id, disclosure: null });
@@ -2701,6 +2702,8 @@ function bind() {
     w.sourceType = "design";
     w.propertyId = d.propertyId;
     w.propertyLabel = d.propertyLabel;
+    /* A design carries its property association into the video. */
+    if (d.propertyLabel) applyAddress(w, d.propertyLabel, "inherited");
     w.versionId = d.versionId;
     if (!w.titleTouched) w.title = `${d.room} Design`;
     if (d.before && !w.typeTouched) w.videoType = "before_after";
@@ -2750,7 +2753,10 @@ function bind() {
         const p = S.tree.find((x) => x.address === address);
         w.propertyLabel = address;
         if (p) w.propertyId = p.id;
-        if (!w.titleTouched) w.title = address;
+        /* Starting from an existing property prefills its address. */
+        applyAddress(w, address, "existing_property");
+        w.addressMatch = null;
+        if (!w.titleTouched) w.title = defaultTitle(w);
         render();
       },
       onDesign: (id) => useDesign(id),
