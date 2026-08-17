@@ -133,6 +133,10 @@ function shell() {
 
   <div class="ml-bar">
     <label class="ml-search"><i data-lucide="search"></i><input id="mlQ" placeholder="Search property, project, room or filename"></label>
+    <label class="ml-sel"><span class="sr-only">Property</span><select id="mlProp">
+      <option value="all">All Properties</option>
+      <option value="none">Unassigned</option>
+    </select></label>
     <label class="ml-sel"><span class="sr-only">Status</span><select id="mlStatus">
       <option value="all">All Statuses</option>
       <option value="draft">Draft</option>
@@ -142,6 +146,7 @@ function shell() {
       <option value="shared">Shared</option>
       <option value="archived">Archived</option>
     </select></label>
+
     <label class="ml-sel"><span class="sr-only">Sort</span><select id="mlSort">
       <option value="new">Newest</option>
       <option value="old">Oldest</option>
