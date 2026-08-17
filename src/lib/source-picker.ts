@@ -466,7 +466,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (t.id === "spUrl") state.url = t.value;
   }
 
-  function onClick(e: Event) {
+  async function onClick(e: Event) {
     const t = e.target as HTMLElement;
     const tab = t.closest("[data-sp-tab]") as HTMLElement | null;
     if (tab) {
