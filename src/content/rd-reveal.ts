@@ -622,7 +622,7 @@ function wizardHtml() {
   const headTools = w.step === 2
     ? `<div class="rv-head-tools">
         <div class="rv-orient"><span>Video Format</span>
-          <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n} ${id === "portrait" ? "9:16" : "16:9"}</button>`).join("")}</div>
+          <div class="rv-seg">${VIDEO_FORMATS.map((f) => `<button class="${w.primaryFormat === f.id ? "on" : ""}" data-primaryfmt="${f.id}">${f.label} ${f.note}</button>`).join("")}</div>
         </div>
         <button class="btn btn-ghost btn-sm" id="rvHeadAdd"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rvHeadFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
@@ -732,8 +732,8 @@ function stepReady() {
   const w = S.wizard;
   if (!w) return false;
   if (w.step === 1) return (w.uploads || []).length > 0 || !!w.versionId || !!w.propertyId;
-  if (w.step === 2) return w.scenes.length > 0 && (w.formats || []).length > 0;
-  if (w.step === 7) return (w.formats || []).length > 0;
+  if (w.step === 2) return w.scenes.length > 0;
+  if (w.step === 7) return qualityCompat(w).compatible;
   return true;
 }
 
@@ -829,7 +829,7 @@ function stepSelect() {
   }
 
   const all = w.available.length > 0 && w.scenes.length === w.available.length;
-  const why = !w.scenes.length ? "Check At Least One Photo To Continue." : !(w.formats || []).length ? "Choose A Video Format To Continue." : "";
+  const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
 
   return `<div class="rv-utility">
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
@@ -989,7 +989,7 @@ function popoverHtml() {
 
   } else if (kind === "crop") {
     body = `<div class="rv-pop-list">
-      <div class="rv-pop-h">Crop <i class="mono">${esc(w.formats[0] || "9:16")}</i></div>
+      <div class="rv-pop-h">Crop <i class="mono">${esc(w.primaryFormat || "9:16")}</i></div>
       ${CROPS.map(([id, n]) => `<button class="rv-pop-row ${(s.crop || "center") === id ? "on" : ""}" data-croppick="${id}">${n}</button>`).join("")}
     </div>`;
   } else if (kind === "cap") {
@@ -1058,12 +1058,18 @@ function popoverHtml() {
 
 /* Video format. The old step 3 folded into the grid, so the segmented control
    lives in the grid header now. */
-const ORIENTATIONS: Array<[string, string, string[]]> = [
-  ["portrait", "Portrait", ["9:16", "4:5"]],
-  ["landscape", "Landscape", ["16:9", "1:1"]],
-];
 function orientationOf(w) {
-  return (w.formats || []).some((f) => f === "16:9" || f === "1:1") ? "landscape" : "portrait";
+  const f = w?.primaryFormat || DEFAULT_FORMAT;
+  return f === "16:9" ? "landscape" : f === "1:1" ? "square" : "portrait";
+}
+/** Every deliverable this project will produce, primary first. */
+function outputFormats(w) {
+  return getOutputFormats(w?.primaryFormat, w?.additionalFormats);
+}
+/** Compatibility of the current quality tier with the selected scene count. */
+function qualityCompat(w) {
+  const wiz = w || S.wizard || {};
+  return getQualityCompatibility(wiz.quality || "standard", (wiz.scenes || []).length);
 }
 
 
@@ -1382,19 +1388,11 @@ function stepAudio() {
 }
 
 /* ======================= QUALITY ======================= */
-const QUALITY_TIERS: Array<[string, string, string, number, number]> = [
-  ["basic", "Basic", "720p, Quick Render", 8, 1],
-  ["standard", "Standard", "1080p, The Usual Choice", 20, 1.5],
-  ["high", "High", "1080p, Sharper Motion And Longer Cut", 30, 2],
-  ["ultra", "Ultra", "4K Master, Every Photo Used", 40, 3],
-];
 export function qualityTier(id: string) {
-  return QUALITY_TIERS.find((t) => t[0] === id) || QUALITY_TIERS[1];
+  return qualityTierById(id);
 }
 function qualityCost(id: string) {
-  const scenes = (S.wizard?.scenes || []).length || 0;
-  const t = qualityTier(id);
-  return Math.round(CREDIT_COSTS.video * t[4] * (scenes > t[3] ? 1 + (scenes - t[3]) / (t[3] * 2) : 1));
+  return Math.round(CREDIT_COSTS.video * qualityTierById(id).costMultiplier);
 }
 
 function stepQuality() {
