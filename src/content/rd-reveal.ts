@@ -264,6 +264,7 @@ let S = {
   tree: [],
   kits: [],
   jobs: [],
+  renderJobId: null,
   credits: null,
 
   screen: "library", // library | wizard | design | detail
@@ -1556,7 +1557,7 @@ function previewPanel() {
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
-      <div class="rv-note sm">Keep This Tab Open And Visible Until The Render Finishes. Switching Away Can Stall It.</div></div>`
+      <div class="rv-note sm">${esc(renderProvider("browser").runningNotice)} Your Video Is Created In This Browser, So Closing Or Refreshing This Tab Stops It — Your Project And Progress Are Saved And You Can Start Again.</div></div>`
       : w.step === 7
         ? block
           ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
@@ -1691,9 +1692,28 @@ async function generate() {
     });
     projectId = saved.id;
 
-    const started = await startRender({ id: projectId, variants: vs });
+    const started = await startRender({
+      id: projectId,
+      variants: vs,
+      quality: w.quality || "standard",
+      scene_count: w.scenes.length,
+      output_formats: outputFormats(w),
+    });
+    if (started.reused) {
+      // A live job already owns this video: never charge or render twice.
+      w.busy = false;
+      toast("This Video Is Already Being Created In Another Tab.");
+      await loadLibrary();
+      S.screen = "library";
+      render();
+      return;
+    }
+    S.renderJobId = started.job?.id || null;
+    await jobUpdate({ status: "rendering", progress: 0, stage: "Preparing scenes" });
     track?.("reveal_generate", { formats: outputFormats(w).join(","), scenes: w.scenes.length });
     await renderAllVariants(projectId, started.variants, w);
+    await jobUpdate({ status: "completed", progress: 1, stage: "Finished" });
+    S.renderJobId = null;
     await setVideoStatus({ id: projectId, status: "ready" });
     toast("Your Video Is Ready.");
     await loadLibrary();
@@ -1712,6 +1732,13 @@ async function generate() {
         try { await setVideoStatus({ id: projectId, status: "failed", error_message: (msg || "The render did not finish.").slice(0, 300) }); } catch (_) {}
       }
     }
+    if (S.renderJobId) {
+      await jobUpdate({
+        status: entitlement ? "cancelled" : "failed",
+        error_message: (msg || "The render did not finish.").slice(0, 300),
+      });
+      S.renderJobId = null;
+    }
     toast(msg || "The render failed. Your selections were saved.");
     if (entitlement) openUpgrade(msg);
     w.busy = false;
@@ -1720,6 +1747,22 @@ async function generate() {
     render();
   }
 
+}
+
+/* The job row is the durable record of a render. Progress is written through
+   a throttled heartbeat: it keeps the status honest after a refresh and marks
+   the job interrupted if this tab goes away mid-render. */
+let JOB_BEAT = 0;
+async function jobUpdate(patch, throttleMs = 0) {
+  if (!S.renderJobId) return;
+  if (throttleMs) {
+    const now = Date.now();
+    if (now - JOB_BEAT < throttleMs) return;
+    JOB_BEAT = now;
+  }
+  try {
+    await updateRenderJob({ id: S.renderJobId, ...patch });
+  } catch (_) {}
 }
 
 const STAGES = ["Preparing scenes", "Creating motion", "Building transitions", "Adding audio and captions", "Applying branding", "Finalizing formats"];
@@ -1785,6 +1828,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
         const lab = host()?.querySelector(".rv-proc span");
         if (bar) bar.style.width = Math.round(S.wizard.progress * 100) + "%";
         if (lab) lab.textContent = S.wizard.stage;
+        void jobUpdate({ status: "rendering", progress: Math.min(1, S.wizard.progress), stage: S.wizard.stage }, 5000);
       },
     });
 
