@@ -68,7 +68,7 @@ export const QUALITY_TIERS: QualityTier[] = [
 ];
 
 export function qualityTierById(id: unknown): QualityTier {
-  return QUALITY_TIERS.find((t) => t.id === id) || QUALITY_TIERS[1];
+  return QUALITY_TIERS.find((t) => t.id === id) || (QUALITY_TIERS[1] as QualityTier);
 }
 
 export type QualityCompatibility = {
