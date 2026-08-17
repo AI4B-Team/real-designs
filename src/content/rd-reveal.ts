@@ -1568,8 +1568,20 @@ function stepQuality() {
   const compat = qualityCompat(w);
   const lowest = lowestCompatibleQuality(scenes);
 
-  return `<h3>Quality</h3>
-  <p class="rv-hint">Higher Tiers Render Sharper And Cost More Credits. ${scenes} Photo${scenes === 1 ? "" : "s"} Selected.</p>
+  const per = sceneDurations(scenes, w.length);
+  const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
+  const rows = [
+    ["Scenes", `${scenes} · ${Math.round(per * scenes)}s`, "scenes"],
+    ["Format", formatLabel(w.primaryFormat || DEFAULT_FORMAT), "scenes"],
+    ["Titles", w.titles?.property === false ? "No Opening Title" : "Opening Title On", "titles"],
+    ["Audio", w.music && w.music !== "none" ? "Music On" : w.narration && w.narration !== "none" ? "Narration Only" : "No Audio", "audio"],
+    ["Brand", kit ? kit.name : "No Brand Kit", "brand"],
+  ];
+  return `<h3>Review &amp; Generate</h3>
+  <p class="rv-hint">Everything Below Is What Will Be Created. Change Anything Before You Render.</p>
+  <div class="rv-rev">${rows.map(([k, v, sec]) => `<div class="rv-rev-r"><span>${k}</span><b>${esc(String(v))}</b><button class="fb-link" data-sec="${sec}">Change</button></div>`).join("")}</div>
+  <div class="rv-sub">Quality</div>
+  <p class="rv-hint">Higher Tiers Render Sharper And Cost More Credits.</p>
 
   <div class="rv-qtiers">${QUALITY_TIERS.map((t) => {
     const c = getQualityCompatibility(t.id, scenes);
@@ -2791,11 +2803,52 @@ function bind() {
   on("[data-label-pos]", "change", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelPos); s.labels[j].position = e.currentTarget.value; });
 
 
+  /* ---- shared canvas + panel controls ---- */
+  on("[data-tlpick]", "click", (e) => { w.activeIdx = Number(e.currentTarget.dataset.tlpick); render(); });
+  on("#rvPrevScene", "click", () => { w.activeIdx = Math.max(0, activeIndex() - 1); render(); });
+  on("#rvNextScene", "click", () => { w.activeIdx = Math.min(w.scenes.length - 1, activeIndex() + 1); render(); });
+  on("#rvPlay", "click", () => {
+    w.playing = !w.playing; render();
+    if (w.playing) {
+      clearInterval(w.playTimer);
+      w.playTimer = setInterval(() => {
+        const cur = S.wizard;
+        if (!cur || !cur.playing) { clearInterval(w.playTimer); return; }
+        cur.activeIdx = (Number(cur.activeIdx) || 0) + 1;
+        if (cur.activeIdx >= cur.scenes.length) { cur.activeIdx = 0; cur.playing = false; clearInterval(w.playTimer); }
+        render();
+      }, Math.max(700, sceneDurations(w.scenes.length, w.length) * 1000));
+    } else clearInterval(w.playTimer);
+  });
+  const pb = el.querySelector("#rvPrevBrand");
+  if (pb) pb.addEventListener("change", (e) => { w.previewBrand = e.target.checked; render(); });
+  on("#rvTlAdd", "click", () => el.querySelector("#rvTlFile")?.click());
+  const tlf = el.querySelector("#rvTlFile");
+  if (tlf) tlf.addEventListener("change", async (e) => { const f = [...(e.target.files || [])]; if (f.length) await addUploads(f); });
+  on("[data-sec]", "click", (e) => { goSection(e.currentTarget.dataset.sec); });
+
+  /* titles */
+  on("[data-tfont]", "click", (e) => { w.titleFont = e.currentTarget.dataset.tfont; render(); });
+  on("[data-tpos]", "click", (e) => { w.titlePos = e.currentTarget.dataset.tpos; render(); });
+  const stx = el.querySelector("#rvSceneText");
+  if (stx) stx.addEventListener("input", (e) => { const sc = activeScene(); if (sc) { sc.caption = e.target.value; paintCanvasText(); } });
+  on("#rvCapAll", "click", () => { w.scenes.forEach((sc) => { if (!sc.caption) sc.caption = sc.room || ""; }); render(); });
+
+  /* audio */
+  on("[data-atab]", "click", (e) => { w.audioTab = e.currentTarget.dataset.atab; render(); });
+  on("#rvMusicOff", "click", () => { w.music = "none"; render(); });
+  on("#rvPresOn", "click", () => { w.avatar = w.avatar || blankAvatarConfig(); w.avatar.enabled = true; render(); });
+
+  /* brand placement */
+  on("[data-logopos]", "click", (e) => { w.logoPos = e.currentTarget.dataset.logopos; render(); });
+  const lop = el.querySelector("#rvLogoOp");
+  if (lop) lop.addEventListener("input", (e) => { w.logoOpacity = Number(e.target.value) / 100; });
+
   /* branding */
   on("[data-kit]", "click", (e) => { w.brandKitId = e.currentTarget.dataset.kit || null; render(); });
   on("#rvKitNew", "click", () => openBrandKit(null));
   on("#rvKitEdit", "click", () => openBrandKit(S.kits.find((k) => k.id === w.brandKitId)));
-  on("[data-br]", "change", (e) => { w.branding[e.currentTarget.dataset.br] = e.currentTarget.checked; });
+  on("[data-br]", "change", (e) => { w.branding[e.currentTarget.dataset.br] = e.currentTarget.checked; render(); });
   on("[data-ver]", "change", (e) => { w.versions[e.currentTarget.dataset.ver] = e.currentTarget.checked; });
   on("[data-disc]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.disc)].disclosure = e.currentTarget.value; });
   on("[data-dmode]", "click", (e) => { w.disclosureMode = e.currentTarget.dataset.dmode; render(); });
