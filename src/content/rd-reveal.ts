@@ -581,17 +581,17 @@ const WIZ_SECTIONS: Array<[string, string, string, number]> = [
   ["titles", "Titles", "type", 5],
   ["audio", "Audio", "music", 6],
   ["brand", "Brand", "palette", 4],
-  ["quality", "Quality", "sparkles", 7],
+  ["quality", "Review", "circle-check", 7],
 ];
 /* Each step owns the page-level title so the white workspace stays free of
    duplicated headings. */
 const STEP_TITLES: Record<number, [string, string]> = {
   1: ["Add Photos", "Upload property photos or choose media you already have."],
   2: ["Select & Order Photos", "Choose what to include, then drag photos into the order viewers should see them."],
-  5: ["Add Titles", "Add the on-screen text that introduces the property."],
-  6: ["Choose Audio", "Pick the music or narration that carries the video."],
-  4: ["Apply Branding", "Apply your brand kit, logo and contact details."],
-  7: ["Review Quality", "Check the output settings, then render the video."],
+  5: ["Add Titles", "Add the text viewers will see throughout the video."],
+  6: ["Choose Audio", "Choose the sound that carries the video."],
+  4: ["Apply Branding", "Add your brand without overpowering the property."],
+  7: ["Review & Generate", "Check the final details before creating your video."],
 };
 
 /* Step 3 folded into step 2. Old links resolving to 3 are normalised in render(). */
@@ -622,6 +622,100 @@ function sectionReady(key: string) {
 function stepForSection(key: string) {
   if (key === "scenes") return 2;
   return (WIZ_SECTIONS.find((x) => x[0] === key) || [null, null, null, 1])[3];
+}
+
+const EDITOR_STEPS = [5, 6, 4];
+
+/* ================= SHARED EDITING CANVAS =================
+   One preview and one timeline for Titles, Audio, Brand and Review. Every
+   control in the right panel writes to wizard state and repaints this. */
+function fmtClock(sec) {
+  const s = Math.max(0, Math.round(sec));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+function activeIndex() {
+  const w = S.wizard;
+  const n = (w?.scenes || []).length;
+  if (!n) return 0;
+  const i = Math.min(Math.max(Number(w.activeIdx) || 0, 0), n - 1);
+  w.activeIdx = i;
+  return i;
+}
+function activeScene() {
+  const w = S.wizard;
+  return (w?.scenes || [])[activeIndex()] || null;
+}
+function previewBrandOn() {
+  const w = S.wizard;
+  if (w.previewBrand === false) return false;
+  return (w.outputMode || "both") !== "unbranded";
+}
+function waveBars(seed) {
+  let x = seed || 7;
+  return Array.from({ length: 60 }, () => {
+    x = (x * 1103515245 + 12345) % 2147483648;
+    return 18 + (x % 70);
+  });
+}
+function canvasHtml(compact = false) {
+  const w = S.wizard;
+  const list = w.scenes || [];
+  const per = sceneDurations(list.length, w.length);
+  const total = Math.round(per * list.length);
+  const i = activeIndex();
+  const sc = list[i] || null;
+  const fmt = w.primaryFormat || DEFAULT_FORMAT;
+  const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
+  const t = w.titles || {};
+  const d = titleDefaults();
+  const openOn = i === 0 && t.property !== false;
+  const closeOn = i === list.length - 1 && !!w.branding?.outro;
+  const cap = w.captions && sc ? sc.caption || sc.room : "";
+  const brandOn = previewBrandOn();
+  const musicOn = w.music && w.music !== "none";
+  const narrOn = w.narration && w.narration !== "none";
+  const audioOn = musicOn || narrOn || w.avatar?.enabled;
+
+  return `<div class="rv-cv">
+    <div class="rv-cv-stage fmt-${fmt.replace(":", "x")}">
+      <div class="rv-cv-img" data-img="${esc(sc?.path || "")}">
+        ${sc ? "" : `<span class="rv-note sm">No Scenes Selected Yet.</span>`}
+        ${brandOn && kit?.logo_path && (w.branding?.watermark || w.logoBranding) ? `<span class="rv-ov-logo" data-img="${esc(kit.logo_path)}"></span>` : ""}
+        ${openOn ? `<div class="rv-ov-title pos-${esc(w.titlePos || "bottom")} f-${esc(w.titleFont || "editorial")}">
+          <b>${esc(t.headline == null ? d.headline : t.headline)}</b>
+          ${(t.sub == null ? "For Sale" : t.sub) ? `<span>${esc(t.sub == null ? "For Sale" : t.sub)}</span>` : ""}</div>` : ""}
+        ${cap ? `<div class="rv-ov-cap">${esc(cap)}</div>` : ""}
+        ${closeOn && brandOn ? `<div class="rv-ov-close">
+          <b>${esc(kit?.company_name || kit?.contact_name || d.company || "Your Brand")}</b>
+          ${w.branding?.cta && kit?.default_cta ? `<span>${esc(kit.default_cta)}</span>` : ""}
+          ${w.branding?.contact ? `<em>${esc([d.contactPhone, d.contactEmail].filter(Boolean).join(" · "))}</em>` : ""}</div>` : ""}
+        ${sc?.disclosure ? `<span class="rv-ov-disc">${esc(DISCLOSURE_LABEL[sc.disclosure] || "Digitally Altered")}</span>` : ""}
+      </div>
+    </div>
+    <div class="rv-cv-bar">
+      <button class="icon-btn sm" id="rvPrevScene" aria-label="Previous Scene" ${i > 0 ? "" : "disabled"}><i data-lucide="skip-back"></i></button>
+      <button class="icon-btn sm" id="rvPlay" aria-label="${w.playing ? "Pause" : "Play"}"><i data-lucide="${w.playing ? "pause" : "play"}"></i></button>
+      <button class="icon-btn sm" id="rvNextScene" aria-label="Next Scene" ${i < list.length - 1 ? "" : "disabled"}><i data-lucide="skip-forward"></i></button>
+      <span class="mono sm">${fmtClock(i * per)} / ${fmtClock(total)}</span>
+      <span class="rv-cv-sp"></span>
+      <span class="mono sm">${esc(formatLabel(fmt))}</span>
+      <label class="rv-toggle sm"><input type="checkbox" id="rvPrevBrand" ${brandOn ? "checked" : ""}><span>Branded</span></label>
+    </div>
+    <div class="rv-tl">${list.map((s2, n) => `<button class="rv-tl-i ${n === i ? "on" : ""}" data-tlpick="${n}" data-key="${esc(s2.key)}" draggable="true">
+      <span class="rv-tl-th" data-img="${esc(s2.path)}"></span>
+      <em class="mono">${n + 1}</em>
+      ${(s2.caption && w.captions) || (n === 0 && openOn) ? `<i class="rv-tl-mark" data-lucide="type"></i>` : ""}
+      <b>${esc(s2.room || "Scene")}</b><span class="mono">${per.toFixed(1)}s</span>
+    </button>`).join("") || `<div class="rv-note sm">Add Photos To Build The Timeline.</div>`}
+      <button class="rv-tl-add" id="rvTlAdd" aria-label="Add Photos"><i data-lucide="plus"></i><b>Add</b></button>
+      <input type="file" id="rvTlFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
+    </div>
+    ${audioOn ? `<div class="rv-wave" aria-hidden="true">${waveBars(list.length + 3).map((h) => `<i style="height:${h}%"></i>`).join("")}</div>` : ""}
+    <div class="rv-tl-foot">
+      <span class="mono">${list.length} ${list.length === 1 ? "Scene" : "Scenes"} · ${total}s${musicOn ? " · Music" : ""}${narrOn ? " · Narration" : ""}</span>
+      <button class="fb-link" data-sec="scenes">Back To Select &amp; Order</button>
+    </div>
+  </div>`;
 }
 
 function wizardHtml() {
@@ -660,17 +754,38 @@ function wizardHtml() {
      only appears once photos are in play; the builder's own step navigation
      stays visible from Select & Order onward. */
   const wide = w.step === 1;
+  const editor = EDITOR_STEPS.includes(w.step);
+  /* Titles, Audio and Brand share one editing canvas: the preview and the
+     scene timeline stay put and only the right-hand tools change. */
+  const shell = editor
+    ? `<div class="rv-layout rv-editor">
+        ${rail}
+        <div class="rv-canvas">${canvasHtml()}</div>
+        <aside class="rv-panel">
+          <div class="rv-panel-b">${body}</div>
+          <div class="rv-panel-f">
+            <button class="btn btn-ghost btn-sm" id="rvBack">Back</button>
+            <button class="btn btn-primary btn-sm" id="rvNext">Continue</button>
+          </div>
+        </aside>
+      </div>`
+    : w.step === 7
+      ? `<div class="rv-layout rv-editor rv-review">
+          ${rail}
+          <div class="rv-canvas">${canvasHtml(true)}${body}</div>
+          <aside class="rv-panel">${previewPanel()}</aside>
+        </div>`
+      : `<div class="rv-layout ${wide ? "rv-wide" : "rv-railed"}">
+          ${wide ? "" : rail}
+          <div class="rv-wiz">${body}</div>
+        </div>`;
   return `<div class="rv-head">
     <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
     ${headTools}
     <button class="btn btn-ghost btn-sm" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
   ${w.step === 2 ? frameNotice() : ""}
-  <div class="rv-layout ${wide ? "rv-wide" : "rv-railed"} ${w.step > 2 ? "with-side" : ""}">
-    ${wide ? "" : rail}
-    <div class="rv-wiz">${body}</div>
-    ${w.step > 2 ? `<aside class="rv-side">${previewPanel()}</aside>` : ""}
-  </div>
+  ${shell}
 
   ${w.pop ? popoverHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
