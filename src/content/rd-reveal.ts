@@ -263,6 +263,7 @@ let S = {
   shares: [],
   tree: [],
   kits: [],
+  jobs: [],
   credits: null,
 
   screen: "library", // library | wizard | design | detail
