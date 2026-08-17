@@ -276,6 +276,9 @@ async function load(quiet) {
   } catch (_) {
     S.items = [];
   }
+  try {
+    S.propList = await listMediaProperties();
+  } catch (_) {}
   S.loading = false;
   render();
 }
