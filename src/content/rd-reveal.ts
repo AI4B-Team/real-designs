@@ -16,7 +16,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
-import { FLAG_LABEL, recommendations, missingSpaces } from "@/lib/media-analysis";
+import { FLAG_LABEL, recommendations } from "@/lib/media-analysis";
+import {
+  PHOTO_CATEGORIES, UNSORTED_LABEL, arrangeRank, missingRecommendation, normalizeCategory,
+  noticeSignature, resolvePhoto, thumbDataUrl,
+} from "@/lib/photo-classify";
+import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { runIntake, runAdvanceToGrid, attachUploadAssets } from "@/lib/video-upload-intake";
@@ -794,23 +799,101 @@ function wizardHtml() {
   ${w.logoModal ? logoModalHtml() : ""}`;
 }
 
-/** Compact inline notice, shown only when neither a front-exterior nor a
-    living-room photo is present. Re-evaluated on every paint, so it clears
-    itself once photos are added or relabelled. */
+/** Photo-set recommendation strip.
+
+    This never reads a bare room label any more: it works off resolved
+    classifications, so an unanalysed or low-confidence photo can no longer be
+    read as proof that a space is missing. Silent while analysis runs, silent
+    when analysis failed, and silent while any photo is still unresolved. */
 function frameNotice() {
   const w = S.wizard;
-  if (!w || w.frameNoticeDismissed || !(w.available || []).length) return "";
-  const missing = missingSpaces(analysisAssets());
-  const gone = missing.includes("Front Exterior") && missing.includes("Living Room");
-  if (!gone) return "";
+  if (!w || !(w.available || []).length) return "";
+  const photos = resolvedPhotos();
+  const rec = missingRecommendation(photos, w.analysisStatus || "pending");
+  if (!rec.show) return "";
+  /* A dismissal only holds while the set and its labels are unchanged. */
+  if (w.frameNoticeDismissed && w.frameNoticeSig === noticeSignature(photos)) return "";
   return `<div class="rv-notice">
     <i data-lucide="info"></i>
-    <span>No front exterior or living-room photo detected.</span>
+    <span><b>Recommended photo missing</b> ${esc(rec.message)}</span>
     <button class="btn btn-ghost btn-sm" id="rvNoticeAdd">Add Photos</button>
     <button class="fb-link" id="rvNoticeX">Dismiss</button>
   </div>`;
 }
 
+/** Every grid photo with its manual label, AI guess and trust band applied. */
+export function resolvedPhotos() {
+  const w = S.wizard;
+  if (!w) return [];
+  const guesses = w.roomGuess || {};
+  return (w.available || []).map((a) => {
+    const g = guesses[a.key] || {};
+    /* A label already carried by a library asset or a hand-typed rename is a
+       confirmed answer; only untouched uploads wait for the classifier. */
+    const manual = a.roomManual || (!a.uploaded && a.room && a.room !== UNSORTED_LABEL ? a.room : null);
+    return resolvePhoto({ id: a.key, manual, label: g.label ?? null, confidence: g.confidence ?? 0 });
+  });
+}
+
+/** Classify uploaded photos from their pixels, after the grid is already up. */
+export async function classifyUploads() {
+  const w = S.wizard;
+  if (!w) return;
+  w.roomGuess = w.roomGuess || {};
+  const todo = (w.uploads || []).filter(
+    (u) => u.file && !u.roomManual && !w.roomGuess["u-" + u.id],
+  );
+  if (!todo.length) {
+    if (w.analysisStatus !== "completed") w.analysisStatus = (w.available || []).length ? "completed" : "pending";
+    render();
+    return;
+  }
+  w.analysisStatus = "running";
+  render();
+
+  let ok = 0;
+  let failed = 0;
+  for (let i = 0; i < todo.length; i += 4) {
+    const batch = todo.slice(i, i + 4);
+    try {
+      const images = [];
+      for (const u of batch) {
+        const image = await thumbDataUrl(u.file);
+        images.push({ id: "u-" + u.id, image });
+      }
+      const out = await classifyPhotoRooms({ data: { images } });
+      if (S.wizard !== w) return;
+      for (const r of out.results || []) {
+        w.roomGuess[r.id] = { label: r.label, confidence: r.confidence };
+        applyGuess(r.id);
+        ok++;
+      }
+      /* Anything the model skipped stays unresolved, never "missing". */
+      for (const u of batch) if (!w.roomGuess["u-" + u.id]) failed++;
+    } catch (_) {
+      if (S.wizard !== w) return;
+      failed += batch.length;
+    }
+    render();
+  }
+  if (S.wizard !== w) return;
+  w.analysisStatus = failed === 0 ? "completed" : ok === 0 ? "failed" : "partial";
+  if (!w.manualOrder) autoArrange();
+  render();
+}
+
+/** Push a confident guess onto the grid asset, the upload and any scene. */
+function applyGuess(key) {
+  const w = S.wizard;
+  const photo = resolvedPhotos().find((p) => p.id === key);
+  if (!photo || photo.state === "unsorted") return;
+  const label = photo.state === "review" ? photo.label : photo.label;
+  const a = (w.available || []).find((x) => x.key === key);
+  if (a) { a.room = label; a.roomState = photo.state; a.group = groupFor(label, ""); }
+  const up = (w.uploads || []).find((u) => "u-" + u.id === key);
+  if (up) up.room = label;
+  (w.scenes || []).filter((x) => x.key === key).forEach((x) => { x.room = label; });
+}
 
 /* ======================= STEP 1, PHOTOS ======================= */
 /** Every finished design in the workspace, newest property first. */
@@ -843,6 +926,8 @@ export async function advanceToGrid(w) {
     autoArrange,
     render,
   });
+  /* Classification runs after the grid is visible, never before it. */
+  classifyUploads().catch(() => { if (S.wizard === w) { w.analysisStatus = "failed"; render(); } });
 }
 
 /** Uploaded photos are the user's explicit choice: select them by default. */
@@ -932,7 +1017,8 @@ function analysisAssets() {
 function nameCell(value, attr) {
   const w = S.wizard;
   if (w.renaming === attr) {
-    return `<input class="rv-nameedit" data-nameinput="${esc(attr)}" value="${esc(value)}" maxlength="60">`;
+    return `<input class="rv-nameedit" data-nameinput="${esc(attr)}" value="${esc(value)}" maxlength="60" list="rvRoomList" autocomplete="off">
+    <datalist id="rvRoomList">${PHOTO_CATEGORIES.filter((c) => c !== "Uncertain").map((c) => `<option value="${esc(c)}"></option>`).join("")}</datalist>`;
   }
   return `<b class="rv-editname" data-rename="${esc(attr)}" title="Click To Rename">${esc(value)}</b>`;
 }
@@ -1008,7 +1094,8 @@ function stepSelect() {
   const all = w.available.length > 0 && w.scenes.length === w.available.length;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
 
-  return `${w.selectGridLoading ? `<div class="rv-organizing sm"><i data-lucide="loader"></i>Organizing your photos…</div>` : ""}
+  const organizing = w.selectGridLoading || w.analysisStatus === "running";
+  return `${organizing ? `<div class="rv-organizing sm"><i data-lucide="loader"></i>Organizing photos…</div>` : ""}
   ${w.enrichNotice ? `<div class="rv-notice"><i data-lucide="info"></i><span>${esc(w.enrichNotice)}</span><button class="fb-link" id="rvEnrichX">Dismiss</button></div>` : ""}
   <div class="rv-utility">
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
@@ -1809,9 +1896,18 @@ function autoArrange() {
   /* The grid is the order, so arranging sorts gridOrder and lets the scenes
      follow. Unselected photos travel with their room group. */
   const byKey = new Map((w.available || []).map((a) => [a.key, a]));
+  /* Confirmed categories drive the order; unknown rooms keep their group rank
+     and sort after the rooms we can actually name. */
   (w.gridOrder || []).sort((ka, kb) => {
     const a = byKey.get(ka);
     const b = byKey.get(kb);
+    const ca = normalizeCategory(a?.room);
+    const cb = normalizeCategory(b?.room);
+    if (ca || cb) {
+      const ra = arrangeRank(a?.room);
+      const rb = arrangeRank(b?.room);
+      if (ra !== rb) return ra - rb;
+    }
     const ga = orderRank(a?.group || groupFor(a?.room || ""));
     const gb = orderRank(b?.group || groupFor(b?.room || ""));
     return ga - gb || String(a?.room || "").localeCompare(String(b?.room || ""));
@@ -2448,7 +2544,7 @@ function bind() {
       selectKeys: selectSceneKeys,
       autoArrange,
       render,
-    });
+    }).then(() => classifyUploads().catch(() => {}));
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
   on("[data-failretry]", "click", (e) => {
     const i = Number(e.currentTarget.dataset.failretry);
@@ -2586,7 +2682,7 @@ function bind() {
     addUploads(files).catch(() => { w.uploadError = "Those photos could not be added. Please try again."; render(); });
   });
   on("#rvEnrichX", "click", () => { delete w.enrichNotice; render(); });
-  on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
+  on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; w.frameNoticeSig = noticeSignature(resolvedPhotos()); render(); });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
   on(".rv-tile-th", "keydown", (e) => {
@@ -2822,12 +2918,12 @@ function bind() {
         if (attr.startsWith("a:")) {
           const key = attr.slice(2);
           const a = w.available.find((x) => x.key === key);
-          if (a) a.room = val;
+          if (a) { a.room = val; a.roomManual = val === UNSORTED ? null : val; a.roomState = val === UNSORTED ? "unsorted" : "confirmed"; a.group = groupFor(val === UNSORTED ? "" : val, ""); }
           /* Uploads are rebuilt from w.uploads on every asset load, so the
              label has to live on the upload record to survive. */
           if (key.startsWith("u-")) {
             const up = (w.uploads || []).find((u) => "u-" + u.id === key);
-            if (up) up.room = val;
+            if (up) { up.room = val; up.roomManual = val === UNSORTED ? null : val; }
           }
           w.scenes.filter((x) => x.key === key).forEach((x) => { x.room = val; });
         } else {
