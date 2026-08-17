@@ -4,6 +4,11 @@
  * Kept out of the view module so the Step 1 -> Step 2 transition can be tested
  * without a DOM: every side effect (object URLs, ids, asset loading, render)
  * arrives as an injected dependency.
+ *
+ * Navigation never waits on remote work. Uploaded files become grid assets
+ * synchronously, Step 2 renders immediately, and the optional enrichment pass
+ * (media library, room detection, duplicate and quality analysis) merges in
+ * afterwards.
  */
 
 export type IntakeWizard = {
@@ -12,6 +17,9 @@ export type IntakeWizard = {
   uploadFails?: any[];
   uploadPrep?: any[];
   uploadError?: string;
+  enrichNotice?: string;
+  selectGridLoading?: boolean;
+  manualOrder?: boolean;
   advancingToGrid?: boolean;
   [k: string]: any;
 };
@@ -22,10 +30,59 @@ export type IntakeDeps = {
   uuid: () => string;
   /** Shared Step 1 -> Step 2 transition; must handle its own errors. */
   advance: (w: IntakeWizard) => Promise<void>;
+  /** Optional enrichment; never blocks navigation. */
   loadAssets: () => Promise<void>;
   isCurrent: (w: IntakeWizard) => boolean;
   render: () => void;
+  attachUploads?: (w: IntakeWizard) => string[];
+  selectUploads?: (w: IntakeWizard) => void;
+  /** Add specific asset keys to the current selection without clearing it. */
+  selectKeys?: (w: IntakeWizard, keys: string[]) => void;
+
+  autoArrange?: () => void;
+  timeoutMs?: number;
 };
+
+export const ENRICH_TIMEOUT_MS = 8000;
+export const ENRICH_NOTICE =
+  "Your photos are ready. Some automatic organization is still unavailable.";
+
+/**
+ * Turn every attached upload into a usable grid asset, synchronously.
+ * Returns the keys newly added to gridOrder. Safe to call repeatedly.
+ */
+export function attachUploadAssets(w: IntakeWizard): string[] {
+  if (!w) return [];
+  const available: any[] = Array.isArray(w['available']) ? w['available'] : [];
+  const gridOrder: string[] = Array.isArray(w['gridOrder']) ? w['gridOrder'] : [];
+  w['available'] = available;
+  w['gridOrder'] = gridOrder;
+  const have = new Set(available.map((a: any) => a.key));
+  const ordered = new Set(gridOrder);
+  const added: string[] = [];
+  for (const u of w.uploads || []) {
+    const key = "u-" + u.id;
+    if (!have.has(key)) {
+      available.push({
+        key,
+        path: u.url,
+        room: u.room || "Unsorted",
+        kind: "Original",
+        group: "Unsorted",
+        disclosure: null,
+        uploaded: true,
+        flags: [],
+      });
+      have.add(key);
+    }
+    if (!ordered.has(key)) {
+      gridOrder.push(key);
+      ordered.add(key);
+      added.push(key);
+    }
+  }
+  return added;
+}
 
 /** Validate and attach every selected file, then transition exactly once. */
 export async function runIntake(w: IntakeWizard, list: any, deps: IntakeDeps): Promise<void> {
@@ -52,58 +109,103 @@ export async function runIntake(w: IntakeWizard, list: any, deps: IntakeDeps): P
   }
   w.uploadPrep = [];
 
-  if (added.length && w.step === 1) {
+  /* No valid file: stay where we are and show the failures. */
+  if (!added.length) {
+    deps.render();
+    return;
+  }
+
+  /* New photos are an explicit choice: keep them selected wherever we land. */
+  const newKeys = added.map((u) => "u-" + u.id);
+
+  if (w.step === 1) {
     await deps.advance(w);
-    return;
-  }
-  if (added.length) {
-    try {
-      await deps.loadAssets();
-    } catch {
-      /* the photos are already attached; a stale asset list is recoverable */
+    if (!deps.isCurrent || deps.isCurrent(w)) {
+      deps.selectKeys?.(w, newKeys);
+      deps.render();
     }
-    if (deps.isCurrent(w)) deps.render();
     return;
   }
+
+  /* Already on the grid: show the new photos immediately, enrich after. */
+  (deps.attachUploads || attachUploadAssets)(w);
+  deps.selectKeys?.(w, newKeys);
+  w.selectGridLoading = true;
   deps.render();
+  await runEnrichment(w, deps);
 }
+
 
 export const STEP_TWO_ERROR =
   "Your photos were added, but the next step could not load. Please try again.";
 
 /**
- * Shared Step 1 -> Step 2 transition. Guarded against duplicate runs and
- * always leaves the user on a usable step with their photos intact.
+ * Optional, non-blocking enrichment of an already-visible Step 2 grid.
+ * Timeouts and failures never navigate the user away or drop uploads.
+ */
+export async function runEnrichment(w: IntakeWizard, deps: Partial<IntakeDeps>): Promise<void> {
+  const attach = deps.attachUploads || attachUploadAssets;
+  const limit = deps.timeoutMs ?? ENRICH_TIMEOUT_MS;
+  let timer: any = null;
+  try {
+    await Promise.race([
+      deps.loadAssets ? deps.loadAssets() : Promise.resolve(),
+      new Promise((_r, reject) => { timer = setTimeout(() => reject(new Error("enrich-timeout")), limit); }),
+    ]);
+    if (deps.isCurrent && !deps.isCurrent(w)) return;
+    attach(w);
+    if (!(w['scenes'] || []).length && deps.selectUploads) deps.selectUploads(w);
+    if (!w.manualOrder && deps.autoArrange) deps.autoArrange();
+  } catch {
+    if (deps.isCurrent && !deps.isCurrent(w)) return;
+    /* Optional analysis failing is not a navigation failure. */
+    attach(w);
+    if (!(w['scenes'] || []).length && deps.selectUploads) deps.selectUploads(w);
+    w.enrichNotice = ENRICH_NOTICE;
+  } finally {
+    if (timer) clearTimeout(timer);
+    if (!deps.isCurrent || deps.isCurrent(w)) {
+      w.selectGridLoading = false;
+      deps.render?.();
+    }
+  }
+}
+
+/**
+ * Shared Step 1 -> Step 2 transition.
+ *
+ * Order matters: guard, set step 2, attach uploaded assets, select them,
+ * render — all synchronously — and only then await optional enrichment.
  */
 export async function runAdvanceToGrid(
   w: IntakeWizard,
   deps: {
     loadAssets: () => Promise<void>;
     isCurrent: (w: IntakeWizard) => boolean;
-    selectRecommended: () => void;
-    autoArrange: () => void;
+    selectRecommended?: () => void;
+    selectUploads?: (w: IntakeWizard) => void;
+    attachUploads?: (w: IntakeWizard) => string[];
+    autoArrange?: () => void;
     render: () => void;
+    timeoutMs?: number;
   },
 ): Promise<void> {
   if (!w || w.advancingToGrid) return;
   w.advancingToGrid = true;
-  const from = w.step;
+  const attach = deps.attachUploads || attachUploadAssets;
   try {
-    w.step = 2;
     delete w.uploadError;
-    await deps.loadAssets();
-    if (!deps.isCurrent(w)) return;
+    delete w.enrichNotice;
+    w.step = 2;
+    attach(w);
     if (!(w['scenes'] || []).length) {
-      deps.selectRecommended();
-      deps.autoArrange();
+      if (deps.selectUploads) deps.selectUploads(w);
+      else deps.selectRecommended?.();
     }
-    deps.render();
-  } catch {
-    if (!deps.isCurrent(w)) return;
-    w.step = from === 2 ? 1 : from;
-    w.uploadError = STEP_TWO_ERROR;
+    w.selectGridLoading = true;
     deps.render();
   } finally {
     w.advancingToGrid = false;
   }
+  await runEnrichment(w, deps as Partial<IntakeDeps>);
 }
