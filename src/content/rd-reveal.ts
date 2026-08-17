@@ -816,7 +816,9 @@ function stepSelect() {
     <div class="rv-count">
       <span>${w.scenes.length} ${w.scenes.length === 1 ? "scene" : "scenes"} · ${total} sec · ${creditTotal()} credits</span>
       ${imm > 4 ? `<div class="rv-note sm">Immersive movement is on for ${imm} scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} extra credits.</div>` : ""}
-
+    </div>
+    <div class="rv-gridfoot-a">
+      <button class="btn btn-ghost" id="rvBack">Back</button>
       <button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : `disabled title="${esc(why)}"`}>Continue</button>
     </div>
   </div>`;
