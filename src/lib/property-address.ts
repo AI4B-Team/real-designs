@@ -117,14 +117,14 @@ export function parseAddress(raw: unknown): Partial<ProjectAddress> {
   if (!text) return {};
   const bits = text.split(",").map((b) => b.trim()).filter(Boolean);
   const out: Partial<ProjectAddress> = { address_line_1: bits[0] || text };
-  if (bits.length >= 2) out.city = bits[1];
-  const tail = bits.length >= 3 ? bits[bits.length - 1] : "";
+  if (bits.length >= 2) out.city = bits[1] ?? null;
+  const tail = (bits.length >= 3 ? bits[bits.length - 1] : "") || "";
   const m = tail.match(/^([A-Za-z .]{2,20})?\s*([0-9]{5}(?:-[0-9]{4})?)?$/);
   if (m) {
     if (m[1]) out.state = m[1].trim();
     if (m[2]) out.postal_code = m[2];
   }
-  if (bits.length > 3) out.city = bits[bits.length - 2];
+  if (bits.length > 3) out.city = bits[bits.length - 2] ?? null;
   const unit = text.match(/\b(?:apt|unit|ste|suite|#)\s*([\w-]+)/i);
   if (unit) out.address_line_2 = unit[0];
   return out;
