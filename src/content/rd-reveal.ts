@@ -518,7 +518,7 @@ async function loadWizardAssets() {
       }
     } catch (_) {}
   }
-  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.name || UNSORTED, kind: "Original", group: "Other", disclosure: null, uploaded: true, flags: [] });
+  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
   w.available = out;
   /* The grid is the order. Build it in room group order; new uploads append. */
   const keep = new Set(out.map((a) => a.key));
@@ -534,13 +534,24 @@ async function loadWizardAssets() {
    the wizard still tracks a step number, so every existing deep link, modal
    and shortcut keeps working. */
 const WIZ_SECTIONS: Array<[string, string, string, number]> = [
-  ["photos", "Photos", "image", 1],
-  ["scenes", "Scenes", "layout-grid", 2],
+  ["photos", "Add Photos", "image", 1],
+  ["scenes", "Select & Order", "layout-grid", 2],
   ["titles", "Titles", "type", 5],
   ["audio", "Audio", "music", 6],
   ["brand", "Brand", "palette", 4],
   ["quality", "Quality", "sparkles", 7],
 ];
+/* Each step owns the page-level title so the white workspace stays free of
+   duplicated headings. */
+const STEP_TITLES: Record<number, [string, string]> = {
+  1: ["Add Photos", "Upload property photos or choose media you already have."],
+  2: ["Select & Order Photos", "Choose what to include, then drag photos into the order viewers should see them."],
+  5: ["Add Titles", "Add the on-screen text that introduces the property."],
+  6: ["Choose Audio", "Pick the music or narration that carries the video."],
+  4: ["Apply Branding", "Apply your brand kit, logo and contact details."],
+  7: ["Review Quality", "Check the output settings, then render the video."],
+};
+
 /* Step 3 folded into step 2. Old links resolving to 3 are normalised in render(). */
 const FLOW = [1, 2, 5, 6, 4, 7];
 function nextStep(n: number) {
@@ -591,10 +602,24 @@ function wizardHtml() {
   if (w.step === 6) body = stepAudio();
   if (w.step === 7) body = stepQuality();
 
+  const [pageTitle, pageSub] = STEP_TITLES[w.step] || STEP_TITLES[1];
+  const orient = orientationOf(w);
+  const headTools = w.step === 2
+    ? `<div class="rv-head-tools">
+        <div class="rv-orient"><span>Video Format</span>
+          <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n} ${id === "portrait" ? "9:16" : "16:9"}</button>`).join("")}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="rvHeadAdd"><i data-lucide="plus"></i>Add Photos</button>
+        <input type="file" id="rvHeadFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
+      </div>`
+    : "";
+
   return `<div class="rv-head">
-    <div><h2>Create A Property Video</h2><p>${esc(w.propertyLabel || "Build a video from content you already have.")}</p></div>
+    <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
+    ${headTools}
     <button class="btn btn-ghost" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
   </div>
+  ${w.step === 2 ? frameNotice() : ""}
   <div class="rv-layout rv-railed ${w.step > 2 ? "with-side" : ""}">
     ${rail}
     <div class="rv-wiz">${body}</div>
@@ -604,6 +629,24 @@ function wizardHtml() {
   ${w.lowModal ? lowSceneModal() : ""}
   ${w.logoModal ? logoModalHtml() : ""}`;
 }
+
+/** Compact inline notice, shown only when neither a front-exterior nor a
+    living-room photo is present. Re-evaluated on every paint, so it clears
+    itself once photos are added or relabelled. */
+function frameNotice() {
+  const w = S.wizard;
+  if (!w || w.frameNoticeDismissed || !(w.available || []).length) return "";
+  const missing = missingSpaces(analysisAssets());
+  const gone = missing.includes("Front Exterior") && missing.includes("Living Room");
+  if (!gone) return "";
+  return `<div class="rv-notice">
+    <i data-lucide="info"></i>
+    <span>No front exterior or living-room photo detected.</span>
+    <button class="btn btn-ghost btn-sm" id="rvNoticeAdd">Add Photos</button>
+    <button class="fb-link" id="rvNoticeX">Dismiss</button>
+  </div>`;
+}
+
 
 /* ======================= STEP 1, PHOTOS ======================= */
 /** Every finished design in the workspace, newest property first. */
@@ -633,15 +676,19 @@ function defaultTitle(w) {
 function stepPhotos() {
   const w = S.wizard;
   const chosen = w.propertyId ? (S.tree.find((p) => p.id === w.propertyId)?.address || w.propertyLabel) : "";
-  return `<h3>Where Are The Photos?</h3>
-  <label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
+  const failed = w.uploadFails || [];
+  return `<label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
   <div id="rvPicker"></div>
   ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
-  ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
-    .map((u) => `<div class="rv-thumb" draggable="true" data-upload-id="${u.id}" style="background-image:url('${esc(u.url)}')"><span>${esc(u.originalName || u.name)}</span><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
-    .join("")}</div>
-  <div class="rv-upload"><span class="mono">${w.uploads.length} ${w.uploads.length === 1 ? "Photo" : "Photos"} Added</span></div>` : ""}
-  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Review Photos</button></div>`;
+  ${w.uploadPrep && w.uploadPrep.length ? `<div class="rv-prep">${w.uploadPrep
+    .map((f) => `<div class="rv-prep-r"><span>${esc(f.name)}</span><i class="rv-prep-bar"><em style="width:${f.pct}%"></em></i></div>`)
+    .join("")}</div>` : ""}
+  ${w.uploads.length ? `<div class="rv-added"><i data-lucide="check"></i>${w.uploads.length} ${w.uploads.length === 1 ? "photo" : "photos"} added</div>` : ""}
+  ${failed.length ? `<div class="rv-fails">${failed
+    .map((f, i) => `<div class="rv-fail-r"><i data-lucide="triangle-alert"></i><span>${esc(f.name)}</span><em>${esc(f.why)}</em>
+      <button class="fb-link" data-failretry="${i}">Retry</button><button class="fb-link" data-failrm="${i}">Remove</button></div>`)
+    .join("")}</div>` : ""}
+  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button></div>`;
 }
 
 /* The preview panel renders its own Continue, so readiness lives in one place
@@ -726,10 +773,6 @@ function stepSelect() {
   const seqOf = new Map(w.scenes.map((s, i) => [s.key, i + 1]));
 
   const dupCount = w.available.filter((a) => a.dup).length;
-  const assets = analysisAssets();
-  const flagged = w.available.filter((a) => (a.flags || []).length);
-  const recs = recommendations(assets).filter((r) => r.op);
-  const missing = missingSpaces(assets);
   const orient = orientationOf(w);
   const per = sceneDurations(w.scenes.length, w.length);
   const total = Math.round(per * w.scenes.length);
@@ -739,54 +782,41 @@ function stepSelect() {
   if (w.groupBy !== false) {
     const groups = new Map();
     for (const a of ordered) {
-      const g = a.group || UNSORTED;
+      const g = a.group && a.group !== "Other" ? a.group : UNSORTED;
       if (!groups.has(g)) groups.set(g, []);
       groups.get(g).push(a);
     }
     grid = Array.from(groups.entries())
-      .map(([g, list]) => `<div class="rv-g-head">${esc(g)} <i class="mono">${list.length}</i></div>${list.map((a) => tileHtml(a, seqOf.get(a.key))).join("")}`)
+      .map(([g, list]) => `<div class="rv-g-head">${esc(g)}</div>${list.map((a) => tileHtml(a, seqOf.get(a.key))).join("")}`)
       .join("");
   } else {
     grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
   }
 
-
-  const pct = w.available.length ? Math.round((w.scenes.length / w.available.length) * 100) : 0;
+  const all = w.available.length > 0 && w.scenes.length === w.available.length;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : !(w.formats || []).length ? "Choose A Video Format To Continue." : "";
 
-  const advisories = [
-    dupCount ? `${dupCount} Similar Angles` : "",
-    flagged.length ? `${flagged.length} Photos With Issues` : "",
-    recs.length ? `${recs.reduce((n, r) => n + r.ids.length, 0)} Photos We Can Improve` : "",
-    missing.length ? `No ${missing.slice(0, 2).join(" Or ")}` : "",
-  ].filter(Boolean);
-
-  return `<div class="rv-head-row">
-    <div><h3>Select The Photos</h3><p class="rv-hint">Check The Photos You Want. Drag To Reorder.</p></div>
-    <div class="rv-orient"><span>Video Format</span>
-      <div class="rv-seg">${ORIENTATIONS.map(([id, n]) => `<button class="${orient === id ? "on" : ""}" data-orient="${id}">${n}</button>`).join("")}</div>
+  return `<div class="rv-utility">
+    <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
+    <div class="rv-utility-a">
+      <button class="btn btn-ghost btn-sm" id="rvAuto"><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
+      <label class="rv-toggle"><input type="checkbox" id="rvGroupBy" ${w.groupBy !== false ? "checked" : ""}><span>Group By Room</span></label>
+      <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+        <div class="rv-more-m">
+          <button id="rvRecommend">Select Recommended</button>
+          <button id="rvClear">Clear Selection</button>
+          <button id="rvReverse">Reverse Order</button>
+          <button id="rvResetOrder">Reset Original Order</button>
+          ${dupCount ? `<button id="rvKeepBest">Keep Best Of Similar</button>` : ""}
+        </div>
+      </details>
     </div>
-  </div>
-  ${advisories.length && !w.enhanceDismissed ? `<div class="rv-advise">
-    <i data-lucide="info"></i><b>${esc(advisories.join(" · "))}</b>
-    ${recs.length ? `<button class="fb-link" id="rvFixAll">Fix All</button>` : ""}
-    <button class="fb-link" data-goto="media">Review</button>
-    <button class="icon-btn sm" id="rvFixSkip" aria-label="Dismiss"><i data-lucide="x"></i></button>
-  </div>` : ""}
-  <div class="rv-gridbar">
-    <button class="btn btn-ghost btn-sm" id="rvRecommend">Select All Recommended</button>
-    <button class="btn btn-ghost btn-sm" id="rvClear">Clear</button>
-    <button class="btn btn-ghost btn-sm" id="rvAuto">Auto Arrange</button>
-    <button class="btn btn-ghost btn-sm ${w.groupBy !== false ? "on" : ""}" id="rvGroupBy">Group By Room</button>
-    ${dupCount ? `<button class="btn btn-ghost btn-sm" id="rvKeepBest">Keep Best</button>` : ""}
   </div>
   <div class="rv-grid ${orient}">${grid || `<div class="rv-note">No Content Found For This Source.</div>`}</div>
   <div class="rv-gridfoot">
     <div class="rv-count">
-      <span><i data-lucide="images"></i> <b>${w.scenes.length} / ${w.available.length}</b> Photos Selected</span>
-      <div class="rv-bar"><i style="width:${pct}%"></i></div>
-      <div class="rv-meta mono">${w.scenes.length} Scenes · ${total}s · ${creditTotal()} Credits</div>
-      ${imm > 4 ? `<div class="rv-note sm">Immersive Movement Is On For ${imm} Scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} Extra Credits. Most Videos Only Need It On Two Or Three.</div>` : ""}
+      <span>${w.scenes.length} ${w.scenes.length === 1 ? "scene" : "scenes"} · ${total} sec · ${creditTotal()} credits</span>
+      ${imm > 4 ? `<div class="rv-note sm">Immersive movement is on for ${imm} scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} extra credits.</div>` : ""}
     </div>
     <div class="rv-gridfoot-a">
       <button class="btn btn-ghost" id="rvBack">Back</button>
@@ -1963,12 +1993,23 @@ function bind() {
     w.scenes = (w.scenes || []).filter((scene) => scene.key !== "u-" + id);
     render();
   });
+  /* Move from step 1 to the grid without a click once photos are ready. */
+  const advanceToGrid = async () => {
+    w.step = 2;
+    await loadWizardAssets();
+    if (S.wizard !== w) return;
+    if (!w.scenes.length) { selectRecommended(); autoArrange(); }
+    render();
+  };
   const addUploads = (list) => {
-    const rejects = [];
+    const files = Array.from(list || []);
     const added = [];
-    for (const f of Array.from(list || [])) {
+    w.uploadFails = w.uploadFails || [];
+    w.uploadPrep = files.map((f) => ({ name: f.name, pct: 0 }));
+    render();
+    for (const f of files) {
       const why = rejectReason(f);
-      if (why) { rejects.push(f.name + ": " + why); continue; }
+      if (why) { w.uploadFails.push({ name: f.name, why, file: f }); continue; }
       /* Object URLs are available synchronously and remain valid until they
          are explicitly revoked. This makes even a large property shoot appear
          immediately instead of waiting for sequential base64 conversions. */
@@ -1977,10 +2018,19 @@ function bind() {
       w.uploads.push(upload);
       added.push(upload);
     }
-    if (rejects.length) toast(rejects.length === 1 ? rejects[0] : rejects.length + " Files Could Not Be Added. " + rejects[0]);
-    if (added.length) toast(`${added.length} ${added.length === 1 ? "Photo" : "Photos"} Added.`);
+    w.uploadPrep = [];
+    if (added.length && w.step === 1) { void advanceToGrid(); return; }
+    if (added.length) { void loadWizardAssets().then(() => { if (S.wizard === w) render(); }); return; }
     render();
   };
+  on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
+  on("[data-failretry]", "click", (e) => {
+    const i = Number(e.currentTarget.dataset.failretry);
+    const entry = (w.uploadFails || [])[i];
+    if (!entry) return;
+    w.uploadFails.splice(i, 1);
+    addUploads(entry.file ? [entry.file] : []);
+  });
   el.querySelectorAll(".rv-thumb[draggable='true']").forEach((thumb) => {
     thumb.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/rd-upload", thumb.dataset.uploadId));
     thumb.addEventListener("dragover", (e) => { e.preventDefault(); thumb.classList.add("drop-l"); });
@@ -2076,7 +2126,26 @@ function bind() {
     render();
   });
   on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); syncSceneOrder(); render(); });
-  on("#rvGroupBy", "click", () => { w.groupBy = w.groupBy === false; render(); });
+  on("#rvGroupBy", "change", () => { w.groupBy = w.groupBy === false; render(); });
+  on("#rvSelAll", "change", (e) => {
+    if (e.currentTarget.checked) w.scenes = (w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean).map(assetToScene);
+    else w.scenes = [];
+    syncSceneOrder();
+    render();
+  });
+  on("#rvReverse", "click", () => { w.gridOrder = (w.gridOrder || []).slice().reverse(); syncSceneOrder(); render(); });
+  on("#rvResetOrder", "click", () => {
+    const list = (w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean);
+    list.sort((a, b) => orderRank(a.group) - orderRank(b.group) || String(a.room || "").localeCompare(String(b.room || "")));
+    w.gridOrder = list.map((a) => a.key);
+    syncSceneOrder();
+    render();
+  });
+  /* Header and notice shortcuts both reopen the picker step without losing work. */
+  on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+  on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+  on("#rvHeadFile", "change", (e) => { addUploads(e.currentTarget.files); e.currentTarget.value = ""; });
+  on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
   on(".rv-tile-th", "keydown", (e) => {
@@ -2261,6 +2330,12 @@ function bind() {
           const key = attr.slice(2);
           const a = w.available.find((x) => x.key === key);
           if (a) a.room = val;
+          /* Uploads are rebuilt from w.uploads on every asset load, so the
+             label has to live on the upload record to survive. */
+          if (key.startsWith("u-")) {
+            const up = (w.uploads || []).find((u) => "u-" + u.id === key);
+            if (up) up.room = val;
+          }
           w.scenes.filter((x) => x.key === key).forEach((x) => { x.room = val; });
         } else {
           const sc = w.scenes[Number(attr.slice(2))];
