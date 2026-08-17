@@ -2697,6 +2697,16 @@ function bind() {
   };
   on("#rvPopX, #rvPopCancel", "click", () => closeFx(false));
   on("#rvPopDone", "click", () => closeFx(true));
+  const popWrap = el.querySelector("#rvPopWrap");
+  if (popWrap) {
+    popWrap.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape") { ev.preventDefault(); closeFx(false); return; }
+      if ((ev.key === "Enter" || ev.key === " ") && ev.target?.classList?.contains("fx-card")) {
+        ev.preventDefault(); ev.target.click();
+      }
+    });
+    if (w.pop?.kind === "look") setTimeout(() => popWrap.querySelector(".fx-card.on, .fx-card")?.focus?.({ preventScroll: true }), 0);
+  }
   const pq = el.querySelector("#rvPopQ");
   if (pq) pq.addEventListener("input", (ev) => { w.popQ = ev.target.value; render(); el.querySelector("#rvPopQ")?.focus(); });
   on("[data-motionpick]", "click", (e) => {
