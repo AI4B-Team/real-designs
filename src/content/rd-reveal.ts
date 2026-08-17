@@ -1525,6 +1525,7 @@ function previewPanel() {
     <div class="rv-vars">${vs.length ? vs.map((v) => `<div><span class="mono">${esc(v.aspect_ratio)}</span><i>${v.version_type === "clean" ? "Unbranded" : v.version_type === "branded" ? "Branded" : "Disclosure Ready"}</i><b>Queued</b></div>`).join("") : `<div class="rv-note sm">Pick A Format.</div>`}</div>
     <div class="rv-cost mono">${cost} Credits</div>
     ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
+    ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
     ${!block && typeof MediaRecorder === "undefined" ? `<div class="rv-note sm">This Browser Cannot Record Video. Open REAL DESIGNS In Chrome Or Edge On A Computer To Render.</div>` : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
@@ -1533,7 +1534,7 @@ function previewPanel() {
       : w.step === 7
         ? block
           ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
-          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && typeof MediaRecorder !== "undefined" ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && typeof MediaRecorder !== "undefined" ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
 
         : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
 
@@ -1580,6 +1581,16 @@ function autoArrange() {
 async function generate() {
   const w = S.wizard;
   const vs = plannedVariants();
+
+  // A quality tier can never quietly drop selected scenes: block the render
+  // and send the user back to the choice instead.
+  const compat = qualityCompat(w);
+  if (!compat.compatible) {
+    w.step = 7;
+    render();
+    toast(compat.reason);
+    return;
+  }
 
   // Preflight. Entitlement is decided before any row or render job exists, so
   // a render we already know cannot run never leaves a failed card behind.
