@@ -268,21 +268,31 @@ async function load(quiet) {
 }
 
 function filtered() {
-  const q = S.q.trim().toLowerCase();
-  let list = S.items.filter((m) => {
-    if (S.tab !== "all" && typeGroup(m.type) !== S.tab) return false;
-    if (S.status !== "all" && m.status !== S.status) return false;
-    if (S.status === "all" && m.status === "archived") return false;
-    if (S.favOnly && !isFav(m.id)) return false;
-    if (q && ((m.title || "") + " " + (m.property || "") + " " + (m.project || "") + " " + (m.room || "")).toLowerCase().indexOf(q) < 0)
-      return false;
-    return true;
+  return filterMedia(S.items, {
+    tab: S.tab,
+    status: S.status,
+    property: S.prop,
+    q: S.q,
+    favOnly: S.favOnly,
+    sort: S.sort,
+    isFav,
   });
-  if (S.sort === "old") list = list.slice().reverse();
-  else if (S.sort === "name") list = list.slice().sort((a, b) => String(a.title).localeCompare(String(b.title)));
-  else if (S.sort === "prop") list = list.slice().sort((a, b) => String(a.property || "zzz").localeCompare(String(b.property || "zzz")));
-  return list;
 }
+
+/** Keep the property picker in step with what actually exists. */
+function paintPropFilter() {
+  const sel = document.getElementById("mlProp");
+  if (!sel) return;
+  const { properties, unassigned } = propertyOptions(S.items, S.propList);
+  const cur = S.prop;
+  sel.innerHTML =
+    `<option value="all">All Properties</option>` +
+    `<option value="none">Unassigned${unassigned ? " (" + unassigned + ")" : ""}</option>` +
+    properties.map((p) => `<option value="${esc(p.id)}">${esc(p.label)}${p.count ? " (" + p.count + ")" : ""}</option>`).join("");
+  sel.value = [...sel.options].some((o) => o.value === cur) ? cur : "all";
+  S.prop = sel.value;
+}
+
 
 function counts() {
   const live = S.items.filter((m) => m.status !== "archived");
