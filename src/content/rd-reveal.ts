@@ -401,6 +401,19 @@ async function paintThumbs() {
 }
 
 /* ======================= WIZARD ======================= */
+function seededUploads(files) {
+  if (typeof URL === "undefined" || typeof URL.createObjectURL !== "function") return [];
+  return Array.from(files || []).flatMap((file) => {
+    if (!(file instanceof File) || rejectReason(file)) return [];
+    return [{
+      id: crypto.randomUUID(),
+      name: file.name.replace(/\.[a-z0-9]+$/i, ""),
+      url: URL.createObjectURL(file),
+      file,
+    }];
+  });
+}
+
 function newWizard(seed = {}) {
   return {
     step: seed.propertyId || seed.versionId ? 2 : 1,
@@ -452,7 +465,10 @@ function newWizard(seed = {}) {
     lowModal: false,
     lowWarned: false,
     disclosureMode: "altered",
-    uploads: [],
+    /* Studio's Make A Video picker hands the selected files to this entry
+       point. Seed them synchronously so the first Video Builder paint already
+       contains the previews instead of silently discarding the handoff. */
+    uploads: seededUploads(seed.files),
     mode: "auto",
     quality: "standard",
     titles: { property: true, contact: true, custom: [] },
