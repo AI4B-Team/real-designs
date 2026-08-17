@@ -990,7 +990,9 @@ function stepSelect() {
   const all = w.available.length > 0 && w.scenes.length === w.available.length;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
 
-  return `<div class="rv-utility">
+  return `${w.selectGridLoading ? `<div class="rv-organizing sm"><i data-lucide="loader"></i>Organizing your photos…</div>` : ""}
+  ${w.enrichNotice ? `<div class="rv-notice"><i data-lucide="info"></i><span>${esc(w.enrichNotice)}</span><button class="fb-link" id="rvEnrichX">Dismiss</button></div>` : ""}
+  <div class="rv-utility">
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
     <div class="rv-utility-a">
       <button class="btn btn-ghost btn-sm" id="rvAuto"><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
@@ -2535,6 +2537,7 @@ function bind() {
     e.currentTarget.value = "";
     addUploads(files).catch(() => { w.uploadError = "Those photos could not be added. Please try again."; render(); });
   });
+  on("#rvEnrichX", "click", () => { delete w.enrichNotice; render(); });
   on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());

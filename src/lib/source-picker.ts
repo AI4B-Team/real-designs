@@ -95,7 +95,7 @@ export type PickerOptions = {
   initialTab?: SourceId;
   onTab?: (tab: SourceId) => void;
   /** Called with everything the user picked, after measurement. */
-  onPick: (picked: PickedFile[]) => void;
+  onPick: (picked: PickedFile[]) => void | Promise<void>;
   /** Called when the user chooses an existing property instead of files. */
   onProperty?: (address: string) => void;
   /** Called when the user chooses a finished design. */
@@ -173,7 +173,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
        property shoot wait for a sequential image-analysis pass. */
     if (opts.context === "video") {
       state.busy = false;
-      opts.onPick(ok.map((file) => ({ file, flags: [] })));
+      await opts.onPick(ok.map((file) => ({ file, flags: [] })));
       return;
     }
 
@@ -193,7 +193,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
       return;
     }
-    opts.onPick(measured);
+    await opts.onPick(measured);
   }
 
   async function importCloud(raw: string) {
@@ -492,7 +492,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       const picked = state.choose[Number(choice.dataset["spChoice"])];
       state.choose = [];
       render();
-      if (picked) opts.onPick([picked]);
+      if (picked) await opts.onPick([picked]);
       return;
     }
     const act = t.closest("[data-sp]") as HTMLElement | null;

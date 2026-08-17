@@ -737,3 +737,7 @@
   .rv-layout.rv-editor{grid-template-columns:1fr}
   .rv-cv-stage.fmt-9x16 .rv-cv-img,.rv-cv-stage.fmt-1x1 .rv-cv-img{height:auto;width:100%}
 }
+
+.rv-organizing{display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;opacity:.75}
+.rv-organizing i{width:14px;height:14px;animation:rv-spin 1s linear infinite}
+@keyframes rv-spin{to{transform:rotate(360deg)}}
