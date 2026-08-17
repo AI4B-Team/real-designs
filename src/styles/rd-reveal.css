@@ -657,3 +657,14 @@
 .rv-shortrow { display: grid; grid-template-columns: auto 26px 1fr auto; align-items: center; gap: 10px; padding: 7px 10px; border: 1px solid var(--line, #eee); border-radius: 10px; font-size: .86rem; }
 .rv-shortrow.drop { border-color: #e6c9c9; background: #fff7f7; }
 .rv-shortrow em { font-style: normal; font-size: .76rem; color: #8a8a92; }
+
+/* Persistent render-job badge on library cards */
+.rd-app .rv-jobb{
+  border-color:color-mix(in srgb,var(--rd-red,#c00) 40%,transparent);
+  color:var(--rd-red,#c00);
+  font-variant-numeric:tabular-nums;
+}
+.rd-app .rv-jobb.bad{
+  border-color:color-mix(in srgb,var(--rd-ink,#111) 25%,transparent);
+  color:color-mix(in srgb,var(--rd-ink,#111) 70%,transparent);
+}
