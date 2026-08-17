@@ -915,6 +915,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           }
           return;
         }
+        /* Many photos go to the staging review grid; one photo stays inline. */
+        if (picked.length > 1) {
+          openStagingReview({ files: picked.map((p) => p.file), address: state.property || state.address || "" });
+          return;
+        }
         openSetup("upload");
         takeFile(first.file);
       },
