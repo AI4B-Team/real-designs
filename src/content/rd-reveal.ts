@@ -84,6 +84,9 @@ import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
+import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
+import { defaultVideoTitle, cleanAddressText } from "@/lib/property-address";
+import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
 
@@ -507,7 +510,14 @@ function newWizard(seed = {}) {
     musicQ: "",
     addrTab: "address",
     listingUrl: "",
-    address: "",
+    /* Optional property address. Never required to save a draft, and never a
+       reason to invent a placeholder property. */
+    address: seed.address || "",
+    addressSource: seed.addressSource || (seed.propertyId ? "existing_property" : seed.versionId ? "inherited" : "unknown"),
+    addressStructured: null,
+    addressMatch: null,
+    addressMatchDismissed: false,
+    addressSaveState: "",
     candidates: [],
     pop: null,
     popQ: "",
@@ -748,6 +758,7 @@ function wizardHtml() {
   const orient = orientationOf(w);
   const headTools = w.step === 2
     ? `<div class="rv-head-tools">
+        ${addressBarHtml(w, S.tree || [], "rvAddrBar")}
         <div class="rv-orient"><span>Video Format</span>
           <div class="rv-seg">${VIDEO_FORMATS.map((f) => `<button class="${w.primaryFormat === f.id ? "on" : ""}" data-primaryfmt="${f.id}">${f.label} ${f.note}</button>`).join("")}</div>
         </div>
@@ -963,7 +974,8 @@ function selectSceneKeys(w, keys) {
 /** Title the user never has to type: address, property or design name. */
 
 function defaultTitle(w) {
-  return w.title || w.propertyLabel || "Untitled Video";
+  if (w.titleTouched && w.title) return w.title;
+  return defaultVideoTitle(w.address || w.propertyLabel, w.titleTouched, w.title);
 }
 
 /* Step 1 is the shared source picker, mounted after render. Nothing about
@@ -973,6 +985,7 @@ function stepPhotos() {
   const chosen = w.propertyId ? (S.tree.find((p) => p.id === w.propertyId)?.address || w.propertyLabel) : "";
   const failed = w.uploadFails || [];
   return `<label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
+  ${addressFieldHtml(w, S.tree || [], { id: "rvAddr" })}
   <div id="rvPicker"></div>
   ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
   ${w.uploadPrep && w.uploadPrep.length ? `<div class="rv-prep">${w.uploadPrep
@@ -1957,8 +1970,9 @@ async function generate() {
       project: {
         property_id: w.propertyId || null,
         property_label: w.propertyLabel || null,
+        ...addressColumns(w),
         design_version_id: w.versionId || null,
-        title: w.title || w.propertyLabel || "Untitled Video",
+        title: defaultTitle(w),
         video_type: w.videoType,
         source_type: w.sourceType || "property",
         status: "queued",
@@ -2519,6 +2533,7 @@ function bind() {
 
   const titleIn = el.querySelector("#rvTitle");
   if (titleIn) titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
+  bindAddressInputs(el, w);
   on("[data-rmup]", "click", (e) => {
     const id = e.currentTarget.dataset.rmup;
     const gone = (w.uploads || []).find((u) => u.id === id);
@@ -3201,6 +3216,9 @@ function editExisting(d) {
   });
   const w = S.wizard;
   w.editingId = p.id;
+  w.address = cleanAddressText(p.property_address || "");
+  w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
+  w.titleTouched = !!p.title_touched;
   {
     /* Older projects saved a flat formats[]; normalise into the canonical pair. */
     const saved = p.settings || {};
