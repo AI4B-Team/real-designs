@@ -56,8 +56,8 @@ export async function checkStorageHealth(force = false): Promise<StorageHealth> 
   if (missing.length) {
     parts.push(
       `Missing required storage bucket(s): ${missing.join(", ")}. ` +
-        `Create them as PRIVATE buckets, then re-run the storage bucket migration ` +
-        `(supabase/migrations — "ensure storage buckets"), which is idempotent and preserves existing objects.`,
+        `Create each one as a PRIVATE bucket with the same id; the storage.objects policies already in the ` +
+        `database then apply unchanged. Creating a bucket never touches objects that already exist.`,
     );
   }
   if (publicBuckets.length) {
