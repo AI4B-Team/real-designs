@@ -21,6 +21,17 @@ import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { runIntake, runAdvanceToGrid } from "@/lib/video-upload-intake";
 import {
+  VIDEO_FORMATS,
+  DEFAULT_FORMAT,
+  formatLabel,
+  getOutputFormats,
+  normalizeFormats,
+  QUALITY_TIERS,
+  qualityTierById,
+  getQualityCompatibility,
+  lowestCompatibleQuality,
+} from "@/lib/reveal-format";
+import {
   listVideos as _listVideos,
   getVideo as _getVideo,
   saveVideo as _saveVideo,
