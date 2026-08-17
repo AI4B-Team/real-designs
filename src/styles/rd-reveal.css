@@ -583,7 +583,8 @@
 
 /* ---- Property Video: redesigned steps 1 & 2 ---- */
 .rd-app .rv-head { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
-.rd-app .rv-head-tools { display: flex; align-items: center; gap: 14px; margin-left: auto; flex-wrap: wrap; }
+.rd-app .rv-head-tools { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-wrap: wrap; min-width: 0; }
+@media (min-width: 1000px) { .rd-app .rv-head { flex-wrap: nowrap; } }
 .rd-app .rv-head-tools .rv-orient { display: flex; align-items: center; gap: 8px; }
 .rd-app .rv-head-tools .rv-orient > span {
   font-family: "DM Mono", monospace; font-size: .58rem; letter-spacing: .12em;

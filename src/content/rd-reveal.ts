@@ -518,7 +518,7 @@ async function loadWizardAssets() {
       }
     } catch (_) {}
   }
-  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.name || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
+  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
   w.available = out;
   /* The grid is the order. Build it in room group order; new uploads append. */
   const keep = new Set(out.map((a) => a.key));
