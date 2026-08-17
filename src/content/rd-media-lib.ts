@@ -8,7 +8,9 @@ import { createIcons, icons } from "lucide";
 import { loadMediaLibrary, onMediaChange, stageLabel, typeGroup, emitMediaChange } from "@/lib/media-library";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
-import { updateMediaAssets, deleteMediaAssets } from "@/lib/property-media.functions";
+import { updateMediaAssets, deleteMediaAssets, listMediaProperties, createMediaProperty } from "@/lib/property-media.functions";
+import { assignMediaToProperty } from "@/lib/media-assign.functions";
+import { filterMedia, propertyOptions, assignKind, isAssignable } from "@/lib/media-view";
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
@@ -53,6 +55,8 @@ const S = {
   items: [],
   tab: "all",
   status: "all",
+  prop: "all",
+  propList: [],
   q: "",
   sort: "new",
   favOnly: false,
@@ -133,6 +137,10 @@ function shell() {
 
   <div class="ml-bar">
     <label class="ml-search"><i data-lucide="search"></i><input id="mlQ" placeholder="Search property, project, room or filename"></label>
+    <label class="ml-sel"><span class="sr-only">Property</span><select id="mlProp">
+      <option value="all">All Properties</option>
+      <option value="none">Unassigned</option>
+    </select></label>
     <label class="ml-sel"><span class="sr-only">Status</span><select id="mlStatus">
       <option value="all">All Statuses</option>
       <option value="draft">Draft</option>
@@ -142,6 +150,7 @@ function shell() {
       <option value="shared">Shared</option>
       <option value="archived">Archived</option>
     </select></label>
+
     <label class="ml-sel"><span class="sr-only">Sort</span><select id="mlSort">
       <option value="new">Newest</option>
       <option value="old">Oldest</option>
@@ -215,6 +224,10 @@ function bind(view) {
     S.status = e.target.value;
     render();
   };
+  $("mlProp").onchange = (e) => {
+    S.prop = e.target.value;
+    render();
+  };
   $("mlSort").onchange = (e) => {
     S.sort = e.target.value;
     render();
@@ -263,26 +276,39 @@ async function load(quiet) {
   } catch (_) {
     S.items = [];
   }
+  try {
+    S.propList = await listMediaProperties();
+  } catch (_) {}
   S.loading = false;
   render();
 }
 
 function filtered() {
-  const q = S.q.trim().toLowerCase();
-  let list = S.items.filter((m) => {
-    if (S.tab !== "all" && typeGroup(m.type) !== S.tab) return false;
-    if (S.status !== "all" && m.status !== S.status) return false;
-    if (S.status === "all" && m.status === "archived") return false;
-    if (S.favOnly && !isFav(m.id)) return false;
-    if (q && ((m.title || "") + " " + (m.property || "") + " " + (m.project || "") + " " + (m.room || "")).toLowerCase().indexOf(q) < 0)
-      return false;
-    return true;
+  return filterMedia(S.items, {
+    tab: S.tab,
+    status: S.status,
+    property: S.prop,
+    q: S.q,
+    favOnly: S.favOnly,
+    sort: S.sort,
+    isFav,
   });
-  if (S.sort === "old") list = list.slice().reverse();
-  else if (S.sort === "name") list = list.slice().sort((a, b) => String(a.title).localeCompare(String(b.title)));
-  else if (S.sort === "prop") list = list.slice().sort((a, b) => String(a.property || "zzz").localeCompare(String(b.property || "zzz")));
-  return list;
 }
+
+/** Keep the property picker in step with what actually exists. */
+function paintPropFilter() {
+  const sel = document.getElementById("mlProp");
+  if (!sel) return;
+  const { properties, unassigned } = propertyOptions(S.items, S.propList);
+  const cur = S.prop;
+  sel.innerHTML =
+    `<option value="all">All Properties</option>` +
+    `<option value="none">Unassigned${unassigned ? " (" + unassigned + ")" : ""}</option>` +
+    properties.map((p) => `<option value="${esc(p.id)}">${esc(p.label)}${p.count ? " (" + p.count + ")" : ""}</option>`).join("");
+  sel.value = [...sel.options].some((o) => o.value === cur) ? cur : "all";
+  S.prop = sel.value;
+}
+
 
 function counts() {
   const live = S.items.filter((m) => m.status !== "archived");
@@ -311,6 +337,7 @@ function emptyState() {
 function render() {
   const grid = document.getElementById("mlGrid");
   if (!grid) return;
+  paintPropFilter();
   const c = counts();
   ["All", "Images", "Videos", "Uploads"].forEach((k) => {
     const el = document.getElementById("mlc" + k);
@@ -370,7 +397,8 @@ function card(m) {
     ? `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || "Processing")}</span>
         <div class="ml-bar ${m.progress == null ? "ind" : ""}"><i style="width:${m.progress == null ? 40 : m.progress}%"></i></div></div>`
     : m.status === "failed"
-      ? `<div class="ml-fail"><i data-lucide="alert-triangle"></i><span>${esc(failReason(m))}</span></div>`
+      ? `${m.path ? `<img data-photo="${esc(m.path)}" alt="${esc(m.title)}"${THUMB_URLS.get(m.path) ? ` src="${esc(THUMB_URLS.get(m.path))}"` : " hidden"}>` : ""}
+         <div class="ml-fail"><i data-lucide="alert-triangle"></i><b>Needs Attention</b><span>${esc(failReason(m))}</span></div>`
 
       : `<img data-photo="${esc(m.path || "")}" alt="${esc(m.title)}"${THUMB_URLS.get(m.path) ? ` src="${esc(THUMB_URLS.get(m.path))}"` : " hidden"}>
          ${g === "videos" ? `<span class="ml-play"><i data-lucide="play"></i></span>` : ""}`;
@@ -434,6 +462,9 @@ function actions(m, g) {
   if (m.status === "processing" || m.status === "queued")
     return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open Details</button>
       ${m.job ? `<button class="btn btn-ghost btn-xs" data-cancel="${m.id}">Cancel</button>` : ""}`;
+  if (m.status === "draft" && g === "videos")
+    return `<button class="btn btn-primary btn-xs" data-cont="${m.id}" style="flex:1"><i data-lucide="play"></i>Continue</button>
+      <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open</button>
     <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download" aria-label="Download"><i data-lucide="download"></i></button>
     <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
@@ -473,7 +504,10 @@ function moreItems(m) {
   out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
   if (g === "images") out.push({ icon: "layers", label: "Create Variations", fn: () => S.go("studio") });
   if (m.sourcePath) out.push({ icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
-  out.push({ icon: "home", label: "Add To Property", fn: () => S.go("props") });
+  if (isAssignable(m))
+    out.push({ icon: "home", label: m.propertyId ? "Move To Another Property" : "Assign To A Property", fn: () => openAssign([m]) });
+  if (isAssignable(m) && m.propertyId)
+    out.push({ icon: "unlink", label: "Remove From Property", fn: () => doAssign([m], null) });
   out.push({ icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") });
   out.push({ icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
   out.push({ icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
@@ -605,6 +639,7 @@ function wireCards(grid, list) {
   grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
   grid.querySelectorAll("[data-upg]").forEach((b) => (b.onclick = () => openUpgrade(find(b.dataset.upg))));
   grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
+  grid.querySelectorAll("[data-cont]").forEach((b) => (b.onclick = () => openVideo(find(b.dataset.cont))));
 }
 
 /* ---------------- workflow bridges ---------------- */
@@ -874,7 +909,7 @@ async function bulk(action, anchor) {
   }
   if (action === "video") return videoFrom(list);
   if (action === "restyle") return restyleFrom(list);
-  if (action === "prop") return S.go("props");
+  if (action === "prop") return openAssign(list);
   if (action === "pres") return S.go("present");
   if (action === "more")
     return popMenu(anchor, [
@@ -1010,5 +1045,86 @@ function drawerActions(m, g, proc) {
     <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
 }
 
+
+/* ---------------- assign to a property ---------------- */
+
+/** Point records at a property (or clear it). One row, no copies. */
+async function doAssign(items, propertyId) {
+  const payload = (items || [])
+    .map((m) => ({ kind: assignKind(m), id: m.refId, m }))
+    .filter((x) => x.kind && x.id);
+  const skipped = (items || []).length - payload.length;
+  if (!payload.length) {
+    toast("Designs Follow Their Room's Property. Move The Project Instead.");
+    return;
+  }
+  try {
+    await assignMediaToProperty({ data: { items: payload.map(({ kind, id }) => ({ kind, id })), property_id: propertyId || null } });
+  } catch (e) {
+    window.alert("Could not update: " + (e && e.message ? e.message : "try again"));
+    return;
+  }
+  toast(
+    (propertyId ? "Moved " : "Removed From Property: ") + payload.length + " Item" + (payload.length === 1 ? "" : "s") +
+      (skipped ? " · " + skipped + " Design" + (skipped === 1 ? "" : "s") + " Skipped" : ""),
+  );
+  S.sel.clear();
+  await load(true);
+  emitMediaChange();
+}
+
+function openAssign(items) {
+  const list = (items || []).filter(Boolean);
+  if (!list.length) return;
+  const usable = list.filter(isAssignable);
+  const host = document.createElement("div");
+  host.className = "ml-assign";
+  host.innerHTML = `<div class="ml-assign-bg" data-x></div>
+    <div class="ml-assign-w" role="dialog" aria-label="Assign To A Property">
+      <h3>Assign To A Property</h3>
+      <p>${usable.length} Item${usable.length === 1 ? "" : "s"} Will Move. Nothing Is Copied — The Same Record Shows In Media And Under The Property.</p>
+      ${list.length !== usable.length ? `<p class="ml-assign-note">${list.length - usable.length} Design${list.length - usable.length === 1 ? "" : "s"} Stay With Their Room's Property.</p>` : ""}
+      <label class="ml-assign-f"><span>Existing Property</span>
+        <select id="maSel"><option value="">Choose A Property</option>${S.propList
+          .map((p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`)
+          .join("")}</select></label>
+      <label class="ml-assign-f"><span>Or Add A New Address</span>
+        <input id="maNew" placeholder="123 Main Street, Austin TX"></label>
+      <div class="ml-assign-a">
+        <button class="btn btn-ghost btn-sm" data-x>Cancel</button>
+        <button class="btn btn-ghost btn-sm" id="maNone">Remove From Property</button>
+        <button class="btn btn-primary btn-sm" id="maGo">Assign</button>
+      </div>
+    </div>`;
+  document.body.appendChild(host);
+  paint();
+  const close = () => host.remove();
+  host.querySelectorAll("[data-x]").forEach((b) => (b.onclick = close));
+  host.querySelector("#maNone").onclick = async () => {
+    close();
+    await doAssign(usable, null);
+  };
+  host.querySelector("#maGo").onclick = async () => {
+    const sel = host.querySelector("#maSel").value;
+    const fresh = String(host.querySelector("#maNew").value || "").trim();
+    let id = sel;
+    if (fresh) {
+      try {
+        const row = await createMediaProperty({ data: { address: fresh } });
+        id = row && row.id;
+        S.propList = await listMediaProperties();
+      } catch (e) {
+        window.alert("Could not add that property: " + (e && e.message ? e.message : "try again"));
+        return;
+      }
+    }
+    if (!id) {
+      window.alert("Choose a property or type a new address.");
+      return;
+    }
+    close();
+    await doAssign(usable, id);
+  };
+}
 
 export default mountMediaLibrary;

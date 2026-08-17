@@ -17,6 +17,7 @@ import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSumm
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { mountReports } from "@/content/rd-reports";
+import { mountPropertyDetail } from "@/content/rd-property-detail";
 import { mountBudgetComingSoon, budgetAvailability } from "@/lib/budget-coming-soon";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded, listShareableVersions } from "@/lib/presentations.functions";
@@ -853,6 +854,7 @@ function paintTree(){
   }));
   lucide.createIcons();
   paintRooms();
+  try{ mountPropertyDetail(PROP_TREE[SEL.p]||null); }catch(_){}
   paintStudioSub();
 }
 
