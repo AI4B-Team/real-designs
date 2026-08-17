@@ -68,7 +68,7 @@ export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
 
 /** Browsers other than Safari cannot decode HEIC. Convert once, on the way in,
     so every downstream preview, thumbnail and upload is a normal JPEG. */
-async function normalize(f: File): Promise<File> {
+export async function normalizeImageFile(f: File): Promise<File> {
   const isHeic = /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || "");
   if (!isHeic) return f;
   try {
