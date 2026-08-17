@@ -462,6 +462,9 @@ function actions(m, g) {
   if (m.status === "processing" || m.status === "queued")
     return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open Details</button>
       ${m.job ? `<button class="btn btn-ghost btn-xs" data-cancel="${m.id}">Cancel</button>` : ""}`;
+  if (m.status === "draft" && g === "videos")
+    return `<button class="btn btn-primary btn-xs" data-open="${m.id}" style="flex:1"><i data-lucide="play"></i>Continue</button>
+      <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open</button>
     <button class="btn btn-ghost btn-xs" data-dl="${m.id}" title="Download" aria-label="Download"><i data-lucide="download"></i></button>
     <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
