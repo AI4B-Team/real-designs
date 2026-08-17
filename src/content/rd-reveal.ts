@@ -926,6 +926,8 @@ export async function advanceToGrid(w) {
     autoArrange,
     render,
   });
+  /* Classification runs after the grid is visible, never before it. */
+  classifyUploads().catch(() => { if (S.wizard === w) { w.analysisStatus = "failed"; render(); } });
 }
 
 /** Uploaded photos are the user's explicit choice: select them by default. */
@@ -1015,7 +1017,8 @@ function analysisAssets() {
 function nameCell(value, attr) {
   const w = S.wizard;
   if (w.renaming === attr) {
-    return `<input class="rv-nameedit" data-nameinput="${esc(attr)}" value="${esc(value)}" maxlength="60">`;
+    return `<input class="rv-nameedit" data-nameinput="${esc(attr)}" value="${esc(value)}" maxlength="60" list="rvRoomList" autocomplete="off">
+    <datalist id="rvRoomList">${PHOTO_CATEGORIES.filter((c) => c !== "Uncertain").map((c) => `<option value="${esc(c)}"></option>`).join("")}</datalist>`;
   }
   return `<b class="rv-editname" data-rename="${esc(attr)}" title="Click To Rename">${esc(value)}</b>`;
 }
@@ -1091,7 +1094,8 @@ function stepSelect() {
   const all = w.available.length > 0 && w.scenes.length === w.available.length;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
 
-  return `${w.selectGridLoading ? `<div class="rv-organizing sm"><i data-lucide="loader"></i>Organizing your photos…</div>` : ""}
+  const organizing = w.selectGridLoading || w.analysisStatus === "running";
+  return `${organizing ? `<div class="rv-organizing sm"><i data-lucide="loader"></i>Organizing photos…</div>` : ""}
   ${w.enrichNotice ? `<div class="rv-notice"><i data-lucide="info"></i><span>${esc(w.enrichNotice)}</span><button class="fb-link" id="rvEnrichX">Dismiss</button></div>` : ""}
   <div class="rv-utility">
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
@@ -2540,7 +2544,7 @@ function bind() {
       selectKeys: selectSceneKeys,
       autoArrange,
       render,
-    });
+    }).then(() => classifyUploads().catch(() => {}));
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
   on("[data-failretry]", "click", (e) => {
     const i = Number(e.currentTarget.dataset.failretry);
@@ -2914,12 +2918,12 @@ function bind() {
         if (attr.startsWith("a:")) {
           const key = attr.slice(2);
           const a = w.available.find((x) => x.key === key);
-          if (a) a.room = val;
+          if (a) { a.room = val; a.roomManual = val === UNSORTED ? null : val; a.roomState = val === UNSORTED ? "unsorted" : "confirmed"; a.group = groupFor(val === UNSORTED ? "" : val, ""); }
           /* Uploads are rebuilt from w.uploads on every asset load, so the
              label has to live on the upload record to survive. */
           if (key.startsWith("u-")) {
             const up = (w.uploads || []).find((u) => "u-" + u.id === key);
-            if (up) up.room = val;
+            if (up) { up.room = val; up.roomManual = val === UNSORTED ? null : val; }
           }
           w.scenes.filter((x) => x.key === key).forEach((x) => { x.room = val; });
         } else {
