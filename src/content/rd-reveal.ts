@@ -577,7 +577,7 @@ async function loadWizardAssets() {
    and shortcut keeps working. */
 const WIZ_SECTIONS: Array<[string, string, string, number]> = [
   ["photos", "Add Photos", "image", 1],
-  ["scenes", "Select & Order", "layout-grid", 2],
+  ["scenes", "Scenes", "layout-grid", 2],
   ["titles", "Titles", "type", 5],
   ["audio", "Audio", "music", 6],
   ["brand", "Brand", "palette", 4],
