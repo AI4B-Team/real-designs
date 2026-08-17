@@ -858,6 +858,22 @@ function selectUploadedScenes(w) {
   selectRecommended();
 }
 
+/** Add just-added photos to the selection without disturbing existing scenes. */
+function selectSceneKeys(w, keys) {
+  if (!w || !keys?.length) return;
+  const have = new Set((w.scenes || []).map((s) => s.key));
+  const add = keys
+    .filter((k) => !have.has(k))
+    .map((k) => (w.available || []).find((a) => a.key === k))
+    .filter(Boolean)
+    .map(assetToScene);
+  if (!add.length) return;
+  w.scenes = (w.scenes || []).concat(add);
+  syncSceneOrder();
+}
+
+
+
 /** Title the user never has to type: address, property or design name. */
 
 function defaultTitle(w) {
