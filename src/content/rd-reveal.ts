@@ -408,6 +408,7 @@ function seededUploads(files) {
     return [{
       id: crypto.randomUUID(),
       name: file.name.replace(/\.[a-z0-9]+$/i, ""),
+      originalName: file.name,
       url: URL.createObjectURL(file),
       file,
     }];
@@ -415,9 +416,10 @@ function seededUploads(files) {
 }
 
 function newWizard(seed = {}) {
+  const uploads = seededUploads(seed.files);
   return {
     step: seed.propertyId || seed.versionId ? 2 : 1,
-    sourceType: seed.sourceType || (seed.versionId ? "design" : seed.propertyId ? "property" : ""),
+    sourceType: uploads.length ? "upload" : seed.sourceType || (seed.versionId ? "design" : seed.propertyId ? "property" : ""),
     propertyId: seed.propertyId || null,
     propertyLabel: seed.propertyLabel || null,
     versionId: seed.versionId || null,
@@ -468,7 +470,7 @@ function newWizard(seed = {}) {
     /* Studio's Make A Video picker hands the selected files to this entry
        point. Seed them synchronously so the first Video Builder paint already
        contains the previews instead of silently discarding the handoff. */
-    uploads: seededUploads(seed.files),
+    uploads,
     mode: "auto",
     quality: "standard",
     titles: { property: true, contact: true, custom: [] },
@@ -476,6 +478,13 @@ function newWizard(seed = {}) {
     progress: 0,
     stage: "",
   };
+}
+
+function revokeUploadUrls(wizard) {
+  for (const upload of wizard?.uploads || []) {
+    if (typeof upload?.url !== "string" || !upload.url.startsWith("blob:")) continue;
+    try { URL.revokeObjectURL(upload.url); } catch (_) {}
+  }
 }
 
 /** Build the available asset list from what the property already holds. */
@@ -629,10 +638,10 @@ function stepPhotos() {
   <div id="rvPicker"></div>
   ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
   ${w.uploads.length ? `<div class="rv-thumbs">${w.uploads
-    .map((u) => `<div class="rv-thumb" style="background-image:url('${esc(u.url)}')"><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
+    .map((u) => `<div class="rv-thumb" draggable="true" data-upload-id="${u.id}" style="background-image:url('${esc(u.url)}')"><span>${esc(u.originalName || u.name)}</span><button data-rmup="${u.id}" title="Remove"><i data-lucide="x"></i></button></div>`)
     .join("")}</div>
   <div class="rv-upload"><span class="mono">${w.uploads.length} ${w.uploads.length === 1 ? "Photo" : "Photos"} Added</span></div>` : ""}
-  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button></div>`;
+  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Review Photos</button></div>`;
 }
 
 /* The preview panel renders its own Continue, so readiness lives in one place
@@ -1879,12 +1888,14 @@ function bind() {
   /* wizard */
   const w = S.wizard;
   if (w) {
-  on("#rvCancel", "click", () => { S.screen = "library"; S.wizard = null; render(); });
+  on("#rvCancel", "click", () => { revokeUploadUrls(w); S.screen = "library"; S.wizard = null; render(); });
   on("#rvBack", "click", () => { w.step = prevStep(w.step); render(); });
-  on(".rv-rail-i", "click", (e) => {
+  on(".rv-rail-i", "click", async (e) => {
     const key = e.currentTarget.dataset.sec;
     if (!key || !sectionReady(key)) return;
     w.step = stepForSection(key);
+    if (key === "scenes") await loadWizardAssets();
+    if (S.wizard !== w) return;
     render();
   });
   on("#rvNext", "click", async () => {
@@ -1945,8 +1956,11 @@ function bind() {
   on("[data-rmup]", "click", (e) => {
     const id = e.currentTarget.dataset.rmup;
     const gone = (w.uploads || []).find((u) => u.id === id);
-    if (gone?.url) { try { URL.revokeObjectURL(gone.url); } catch (_) {} }
+    if (gone?.url?.startsWith?.("blob:")) { try { URL.revokeObjectURL(gone.url); } catch (_) {} }
     w.uploads = w.uploads.filter((u) => u.id !== id);
+    w.available = (w.available || []).filter((a) => a.key !== "u-" + id);
+    w.gridOrder = (w.gridOrder || []).filter((key) => key !== "u-" + id);
+    w.scenes = (w.scenes || []).filter((scene) => scene.key !== "u-" + id);
     render();
   });
   const addUploads = (list) => {
@@ -1959,7 +1973,7 @@ function bind() {
          are explicitly revoked. This makes even a large property shoot appear
          immediately instead of waiting for sequential base64 conversions. */
       const url = URL.createObjectURL(f);
-      const upload = { id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), url, file: f };
+      const upload = { id: crypto.randomUUID(), name: f.name.replace(/\.[a-z0-9]+$/i, ""), originalName: f.name, url, file: f };
       w.uploads.push(upload);
       added.push(upload);
     }
@@ -1967,6 +1981,24 @@ function bind() {
     if (added.length) toast(`${added.length} ${added.length === 1 ? "Photo" : "Photos"} Added.`);
     render();
   };
+  el.querySelectorAll(".rv-thumb[draggable='true']").forEach((thumb) => {
+    thumb.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/rd-upload", thumb.dataset.uploadId));
+    thumb.addEventListener("dragover", (e) => { e.preventDefault(); thumb.classList.add("drop-l"); });
+    thumb.addEventListener("dragleave", () => thumb.classList.remove("drop-l"));
+    thumb.addEventListener("dragend", () => thumb.classList.remove("drop-l"));
+    thumb.addEventListener("drop", (e) => {
+      e.preventDefault();
+      thumb.classList.remove("drop-l");
+      const from = e.dataTransfer.getData("text/rd-upload");
+      const to = thumb.dataset.uploadId;
+      const fromIndex = w.uploads.findIndex((upload) => upload.id === from);
+      const toIndex = w.uploads.findIndex((upload) => upload.id === to);
+      if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+      const [moved] = w.uploads.splice(fromIndex, 1);
+      w.uploads.splice(toIndex, 0, moved);
+      render();
+    });
+  });
   /* A stray drop outside a dropzone must never navigate away from the app. */
   if (!window.__rvDropGuard) {
     window.__rvDropGuard = true;
@@ -2718,6 +2750,7 @@ function renderTour(wrap, done, i = 0) {
 
 /* ======================= PUBLIC API ======================= */
 export function startWizard(seed = {}) {
+  revokeUploadUrls(S.wizard);
   S.wizard = newWizard(seed);
   S.screen = "wizard";
   if (S.wizard.propertyId) loadWizardAssets().then(render);
@@ -2844,6 +2877,7 @@ try { (window as any).__rdRevealBusy = revealBusy; } catch (_) {}
 
 export function resetReveal() {
   stopAvatarVoice(); // never let a voice sample keep playing after navigation
+  revokeUploadUrls(S.wizard);
   S.screen = "library";
   S.wizard = null;
   S.detail = null;
