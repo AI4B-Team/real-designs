@@ -253,6 +253,9 @@ export const startRender = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().uuid(),
+        quality: z.string().max(30).optional(),
+        scene_count: z.number().int().min(0).max(400).optional(),
+        output_formats: z.array(z.string().max(10)).max(6).optional(),
         variants: z
           .array(
             z.object({
@@ -268,6 +271,32 @@ export const startRender = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
+    const { isJobStale, DEFAULT_RENDER_PROVIDER } = await import("@/lib/render-providers");
+
+    // One live job per video. A duplicate request while a render is genuinely
+    // running is returned as-is so the user is never charged twice; a job whose
+    // owner stopped reporting progress (tab closed, crash) is retired first.
+    const { data: live } = await supabase
+      .from("video_render_jobs")
+      .select("*")
+      .eq("video_project_id", data.id)
+      .in("status", ["queued", "rendering"])
+      .maybeSingle();
+    if (live) {
+      if (!isJobStale(live as any)) {
+        const { data: existing } = await supabase.from("video_variants").select("*").eq("video_project_id", data.id);
+        return { variants: existing ?? [], balance: null, job: live, reused: true };
+      }
+      await supabase
+        .from("video_render_jobs")
+        .update({
+          status: "failed",
+          error_message: "The render stopped before it finished.",
+          completed_at: new Date().toISOString(),
+        })
+        .eq("id", (live as any).id);
+    }
+
     const { charge, chargeErrorMessage, CREDIT_COSTS } = await import("@/lib/credits.server");
     const charged = await charge(userId, "video", "REAL REVEAL render");
     if (!charged.ok)
@@ -317,7 +346,100 @@ export const startRender = createServerFn({ method: "POST" })
       .from("video_projects")
       .update({ status: "processing", error_message: null, updated_at: new Date().toISOString() })
       .eq("id", data.id);
-    return { variants: out ?? [], balance };
+
+    const nowIso = new Date().toISOString();
+    const { data: job, error: jobErr } = await supabase
+      .from("video_render_jobs")
+      .insert({
+        user_id: userId,
+        video_project_id: data.id,
+        provider: DEFAULT_RENDER_PROVIDER,
+        status: "queued",
+        progress: 0,
+        stage: "Preparing scenes",
+        output_formats: data.output_formats ?? Array.from(new Set(data.variants.map((v) => v.aspect_ratio))),
+        quality: data.quality ?? null,
+        scene_count: data.scene_count ?? 0,
+        credits_charged: spent,
+        heartbeat_at: nowIso,
+        started_at: nowIso,
+      })
+      .select("*")
+      .single();
+    if (jobErr) throw new Error(jobErr.message);
+
+    return { variants: out ?? [], balance, job, reused: false };
+  });
+
+/* ===================== PERSISTENT RENDER JOBS =====================
+   The job row is the truth about a render: it survives refreshes, keeps the
+   stage and progress, and is provider-agnostic so a server-side renderer can
+   take over later without touching this shape. */
+
+/** Every job that still matters to the user: live ones plus recent outcomes. */
+export const listRenderJobs = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("video_render_jobs")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const getRenderJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid().optional(), video_project_id: z.string().uuid().optional() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    let q = context.supabase.from("video_render_jobs").select("*");
+    if (data.id) q = q.eq("id", data.id);
+    else if (data.video_project_id) q = q.eq("video_project_id", data.video_project_id);
+    else throw new Error("A job id or video is required.");
+    const { data: rows, error } = await q.order("created_at", { ascending: false }).limit(1);
+    if (error) throw new Error(error.message);
+    return rows?.[0] ?? null;
+  });
+
+/** Progress, stage and terminal states. Also doubles as the heartbeat. */
+export const updateRenderJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        status: z.enum(["queued", "rendering", "completed", "failed", "cancelled"]).optional(),
+        progress: z.number().min(0).max(1).optional(),
+        stage: z.string().max(120).nullable().optional(),
+        error_message: z.string().max(400).nullable().optional(),
+        provider_job_id: z.string().max(200).nullable().optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: Record<string, unknown> = { heartbeat_at: new Date().toISOString() };
+    if (data.status) patch.status = data.status;
+    if (data.progress != null) patch.progress = data.progress;
+    if (data.stage !== undefined) patch.stage = data.stage;
+    if (data.error_message !== undefined) patch.error_message = data.error_message;
+    if (data.provider_job_id !== undefined) patch.provider_job_id = data.provider_job_id;
+    if (data.status === "completed") {
+      patch.completed_at = new Date().toISOString();
+      patch.progress = 1;
+    }
+    if (data.status === "failed" || data.status === "cancelled") patch.completed_at = new Date().toISOString();
+
+    const { data: row, error } = await context.supabase
+      .from("video_render_jobs")
+      .update(patch as any)
+      .eq("id", data.id)
+      .select("*")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return row;
   });
 
 /** Mark one rendered output complete (or failed) once the browser finishes it. */
