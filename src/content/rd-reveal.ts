@@ -2330,6 +2330,12 @@ function bind() {
           const key = attr.slice(2);
           const a = w.available.find((x) => x.key === key);
           if (a) a.room = val;
+          /* Uploads are rebuilt from w.uploads on every asset load, so the
+             label has to live on the upload record to survive. */
+          if (key.startsWith("u-")) {
+            const up = (w.uploads || []).find((u) => "u-" + u.id === key);
+            if (up) up.room = val;
+          }
           w.scenes.filter((x) => x.key === key).forEach((x) => { x.room = val; });
         } else {
           const sc = w.scenes[Number(attr.slice(2))];
