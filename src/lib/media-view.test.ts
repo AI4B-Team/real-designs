@@ -33,6 +33,6 @@ describe("media view model", () => {
     expect(b.photos.map((m) => m.id)).toEqual(["a"]);
     expect(b.videos.map((m) => m.id)).toEqual(["b"]);
     expect(b.drafts.map((m) => m.id)).toEqual(["b"]);
-    expect(propertyBuckets(items, null).map((m: any) => m.id)).toEqual(undefined);
+    expect(propertyBuckets(items, null).all.map((m: any) => m.id)).toEqual(["c"]);
   });
 });
