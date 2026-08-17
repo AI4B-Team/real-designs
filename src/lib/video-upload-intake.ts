@@ -36,6 +36,9 @@ export type IntakeDeps = {
   render: () => void;
   attachUploads?: (w: IntakeWizard) => string[];
   selectUploads?: (w: IntakeWizard) => void;
+  /** Add specific asset keys to the current selection without clearing it. */
+  selectKeys?: (w: IntakeWizard, keys: string[]) => void;
+
   autoArrange?: () => void;
   timeoutMs?: number;
 };
