@@ -2533,7 +2533,7 @@ function bind() {
   on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvHeadFile", "change", (e) => {
-    const files = e.currentTarget.files;
+    const files = Array.from(e.currentTarget.files || []);
     e.currentTarget.value = "";
     addUploads(files).catch(() => { w.uploadError = "Those photos could not be added. Please try again."; render(); });
   });
