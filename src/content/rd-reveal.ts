@@ -671,7 +671,32 @@ function designChoices() {
   return out;
 }
 
+/* Single shared Step 1 -> Step 2 transition, used by both the automatic
+   post-upload advance and the manual Continue button. Never fire-and-forget:
+   a failure must leave the photos intact and the user on a usable Step 1. */
+export async function advanceToGrid(w) {
+  if (!w || w.advancingToGrid) return;
+  w.advancingToGrid = true;
+  const from = w.step;
+  try {
+    w.step = 2;
+    delete w.uploadError;
+    await loadWizardAssets();
+    if (S.wizard !== w) return;
+    if (!w.scenes.length) { selectRecommended(); autoArrange(); }
+    render();
+  } catch (_) {
+    if (S.wizard !== w) return;
+    w.step = from === 2 ? 1 : from;
+    w.uploadError = "Your photos were added, but the next step could not load. Please try again.";
+    render();
+  } finally {
+    w.advancingToGrid = false;
+  }
+}
+
 /** Title the user never has to type: address, property or design name. */
+
 function defaultTitle(w) {
   return w.title || w.propertyLabel || "Untitled Video";
 }
@@ -689,6 +714,7 @@ function stepPhotos() {
     .map((f) => `<div class="rv-prep-r"><span>${esc(f.name)}</span><i class="rv-prep-bar"><em style="width:${f.pct}%"></em></i></div>`)
     .join("")}</div>` : ""}
   ${w.uploads.length ? `<div class="rv-added"><i data-lucide="check"></i>${w.uploads.length} ${w.uploads.length === 1 ? "photo" : "photos"} added</div>` : ""}
+  ${w.uploadError ? `<div class="rv-fails"><div class="rv-fail-r"><i data-lucide="triangle-alert"></i><span>${esc(w.uploadError)}</span></div></div>` : ""}
   ${failed.length ? `<div class="rv-fails">${failed
     .map((f, i) => `<div class="rv-fail-r"><i data-lucide="triangle-alert"></i><span>${esc(f.name)}</span><em>${esc(f.why)}</em>
       <button class="fb-link" data-failretry="${i}">Retry</button><button class="fb-link" data-failrm="${i}">Remove</button></div>`)
@@ -1947,12 +1973,7 @@ function bind() {
     const t = el.querySelector("#rvTitle");
     if (t) w.title = t.value;
     if (w.step === 1) {
-      w.step = 2;
-      await loadWizardAssets();
-      /* The user can leave the builder mid-load; never touch a discarded wizard. */
-      if (S.wizard !== w) return;
-      if (!w.scenes.length) { selectRecommended(); autoArrange(); }
-      render();
+      await advanceToGrid(w);
       return;
     }
     if (w.step === 2) {
@@ -2008,20 +2029,13 @@ function bind() {
     w.scenes = (w.scenes || []).filter((scene) => scene.key !== "u-" + id);
     render();
   });
-  /* Move from step 1 to the grid without a click once photos are ready. */
-  const advanceToGrid = async () => {
-    w.step = 2;
-    await loadWizardAssets();
-    if (S.wizard !== w) return;
-    if (!w.scenes.length) { selectRecommended(); autoArrange(); }
-    render();
-  };
-  const addUploads = (list) => {
+  const addUploads = async (list) => {
     const files = Array.from(list || []);
+    if (!files.length) return;
     const added = [];
     w.uploadFails = w.uploadFails || [];
-    w.uploadPrep = files.map((f) => ({ name: f.name, pct: 0 }));
-    render();
+    /* Validate and add every file first: no render() mid-processing, so the
+       DOM is never rebuilt while the batch is still being handled. */
     for (const f of files) {
       const why = rejectReason(f);
       if (why) { w.uploadFails.push({ name: f.name, why, file: f }); continue; }
@@ -2034,9 +2048,14 @@ function bind() {
       added.push(upload);
     }
     w.uploadPrep = [];
-    if (added.length && w.step === 1) { void advanceToGrid(); return; }
-    if (added.length) { void loadWizardAssets().then(() => { if (S.wizard === w) render(); }); return; }
+    if (added.length && w.step === 1) { await advanceToGrid(w); return; }
+    if (added.length) {
+      try { await loadWizardAssets(); } catch (_) {}
+      if (S.wizard === w) render();
+      return;
+    }
     render();
+
   };
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
   on("[data-failretry]", "click", (e) => {
@@ -2044,7 +2063,7 @@ function bind() {
     const entry = (w.uploadFails || [])[i];
     if (!entry) return;
     w.uploadFails.splice(i, 1);
-    addUploads(entry.file ? [entry.file] : []);
+    void addUploads(entry.file ? [entry.file] : []);
   });
   el.querySelectorAll(".rv-thumb[draggable='true']").forEach((thumb) => {
     thumb.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/rd-upload", thumb.dataset.uploadId));
@@ -2113,7 +2132,7 @@ function bind() {
           label: d.room,
           sub: `${d.propertyLabel} · ${d.before ? "Before And After" : "Design"}`,
         })),
-      onPick: (picked) => { addUploads(picked.map((p) => p.file)); },
+      onPick: (picked) => { void addUploads(picked.map((p) => p.file).filter(Boolean)); },
       onProperty: (address) => {
         const p = S.tree.find((x) => x.address === address);
         w.propertyLabel = address;
@@ -2159,7 +2178,7 @@ function bind() {
   /* Header and notice shortcuts both reopen the picker step without losing work. */
   on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-  on("#rvHeadFile", "change", (e) => { addUploads(e.currentTarget.files); e.currentTarget.value = ""; });
+  on("#rvHeadFile", "change", (e) => { void addUploads(e.currentTarget.files); e.currentTarget.value = ""; });
   on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; render(); });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
