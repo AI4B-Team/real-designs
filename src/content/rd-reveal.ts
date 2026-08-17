@@ -614,9 +614,10 @@ function wizardHtml() {
       </div>`
     : "";
 
-  /* Steps 1 and 2 run full width: the grid is the whole job, so the step rail
-     only appears once the later configuration sections unlock. */
-  const wide = w.step <= 2;
+  /* Step 1 runs full width: the grid is the whole job, so the step rail
+     only appears once photos are in play; the builder's own step navigation
+     stays visible from Select & Order onward. */
+  const wide = w.step === 1;
   return `<div class="rv-head">
     <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
     ${headTools}
