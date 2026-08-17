@@ -78,7 +78,8 @@ import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvata
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { VFX_LOOKS, VFX_CATEGORIES, lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
-import { VFX_TILE_CATEGORIES, tileById, tilesForCat } from "@/lib/rd-vfx-tiles";
+import { tileById } from "@/lib/rd-vfx-tiles";
+import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
@@ -2660,11 +2661,41 @@ function bind() {
     const key = e.currentTarget.dataset.key || null;
     const i = key ? w.scenes.findIndex((s) => s.key === key) : Number(e.currentTarget.dataset.i);
     if (i < 0) return;
-    w.pop = { kind: e.currentTarget.dataset.pop, i, key };
+    const kind = e.currentTarget.dataset.pop;
+    w.pop = { kind, i, key };
     w.popQ = ""; w.popHover = null;
+    if (kind === "look") {
+      /* Snapshot so Cancel and Escape can put the scene back exactly. */
+      const sc = w.scenes[i];
+      w.pop.snap = fxSnap(sc);
+      w.popTab = sc && sc.vfx && sc.vfx !== "none" ? "effects" : "looks";
+      w.popCat = "all"; w.popAll = false; w.popConfirm = false;
+    }
     render();
   });
-  on("#rvPopX, #rvPopDone", "click", () => { w.pop = null; render(); });
+  const closeFx = (commit) => {
+    const s = cur();
+    if (w.pop?.kind === "look") {
+      if (commit) {
+        if (w.popAll && s) {
+          w.scenes.forEach((t) => {
+            if (t === s) return;
+            t.look = s.look || null; t.look_amount = s.look_amount ?? null;
+            t.vfx = s.vfx || "none"; t.vfx_gen = s.vfx_gen || null;
+            if (s.vfx_gen) { const tl = tileById(s.vfx_gen); if (tl?.disclosure) t.disclosure = tl.disclosure; }
+            else if (w.pop.snap && !w.pop.snap.vfx_gen) t.disclosure = t.disclosure && tileById(t.vfx_gen || "") ? null : t.disclosure;
+          });
+          toast("Effect Applied To Every Scene.");
+        }
+      } else {
+        fxRestore(s, w.pop.snap);
+      }
+    }
+    w.pop = null; w.popAll = false; w.popConfirm = false;
+    render();
+  };
+  on("#rvPopX, #rvPopCancel", "click", () => closeFx(false));
+  on("#rvPopDone", "click", () => closeFx(true));
   const pq = el.querySelector("#rvPopQ");
   if (pq) pq.addEventListener("input", (ev) => { w.popQ = ev.target.value; render(); el.querySelector("#rvPopQ")?.focus(); });
   on("[data-motionpick]", "click", (e) => {
@@ -2692,11 +2723,15 @@ function bind() {
   });
   on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
   on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
-  on("[data-lookcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.lookcat; render(); });
-  on("[data-gradecat]", "click", (e) => { w.popGrade = e.currentTarget.dataset.gradecat; render(); });
+  on("[data-fxtab]", "click", (e) => { w.popTab = e.currentTarget.dataset.fxtab; w.popCat = "all"; render(); });
+  on("[data-fxcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.fxcat; render(); });
+  /* Base disclosure the scene carried before any generative effect. */
+  const baseDisc = () => (w.pop?.snap && !w.pop.snap.vfx_gen ? w.pop.snap.disclosure : null);
   on("[data-lookpick]", "click", (e) => {
     const s = cur(); if (!s) return;
     s.look = e.currentTarget.dataset.lookpick || null;
+    s.vfx = "none"; s.vfx_gen = null; s.disclosure = baseDisc();
+    if (s.look && s.look_amount == null) s.look_amount = DEFAULT_INTENSITY;
     render();
   });
   on("[data-vfxpick]", "click", (e) => {
@@ -2706,26 +2741,31 @@ function bind() {
     s.look = t?.look || null;
     s.vfx_gen = t?.gen ? t.id : null;
     if (t?.gen && t.disclosure) s.disclosure = t.disclosure;
+    else s.disclosure = baseDisc();
+    if (s.look && s.look_amount == null) s.look_amount = DEFAULT_INTENSITY;
     render();
   });
   const amt = el.querySelector("#rvLookAmt");
-  if (amt) amt.addEventListener("change", (ev) => { const s = cur(); if (s) s.look_amount = Number(ev.target.value); render(); });
+  if (amt) amt.addEventListener("input", (ev) => {
+    const s = cur(); if (!s) return;
+    s.look_amount = Number(ev.target.value);
+    render();
+    const again = el.querySelector("#rvLookAmt"); if (again) again.focus();
+  });
   on("#rvAllMotion", "change", (e) => {
     if (!e.currentTarget.checked) return;
     const src = cur(); if (!src) return;
     w.scenes.forEach((s) => { s.motion = src.motion || "auto"; s.motion_level = src.motion_level || "standard"; s.immersive_effect = src.immersive_effect || null; });
     toast("Motion Applied To Every Scene.");
   });
-  on("#rvAllLook", "change", (e) => {
-    if (!e.currentTarget.checked) return;
+  on("#rvAllLook", "click", () => {
     const src = cur(); if (!src) return;
-    w.scenes.forEach((s) => {
-      s.look = src.look || null; s.look_amount = src.look_amount ?? 100;
-      s.vfx = src.vfx || "none"; s.vfx_gen = src.vfx_gen || null;
-      if (src.vfx_gen) { const t = tileById(src.vfx_gen); if (t?.disclosure) s.disclosure = t.disclosure; }
-    });
-    toast("VFX Applied To Every Scene.");
+    /* Paid effects confirm first; free looks apply straight away. */
+    if (sceneEffectCredits(src) > 0) { w.popConfirm = true; render(); return; }
+    w.popAll = true; render();
   });
+  on("#rvAllNo", "click", () => { w.popConfirm = false; render(); });
+  on("#rvAllYes", "click", () => { w.popAll = true; w.popConfirm = false; render(); });
   on("[data-tpl]", "click", (e) => { w.template = e.currentTarget.dataset.tpl; render(); });
   on("[data-out]", "click", (e) => {
     w.outputMode = e.currentTarget.dataset.out;
