@@ -41,7 +41,8 @@ const IMAGE_ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.heif";
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
     sources: ["upload", "cloud", "property"],
-    multiple: false,
+    /* Many photos are handed to the staging review grid, never dropped. */
+    multiple: true,
     accept: IMAGE_ACCEPT + ",application/pdf,.pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
