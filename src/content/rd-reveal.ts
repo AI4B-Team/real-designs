@@ -2132,7 +2132,7 @@ function bind() {
           label: d.room,
           sub: `${d.propertyLabel} · ${d.before ? "Before And After" : "Design"}`,
         })),
-      onPick: (picked) => { void addUploads(picked.map((p) => p.file)); },
+      onPick: (picked) => { void addUploads(picked.map((p) => p.file).filter(Boolean)); },
       onProperty: (address) => {
         const p = S.tree.find((x) => x.address === address);
         w.propertyLabel = address;
