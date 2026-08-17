@@ -119,7 +119,7 @@ export async function runIntake(w: IntakeWizard, list: any, deps: IntakeDeps): P
 
   /* Already on the grid: show the new photos immediately, enrich after. */
   (deps.attachUploads || attachUploadAssets)(w);
-  if (deps.selectUploads) deps.selectUploads(w, added);
+  if (deps.selectUploads) deps.selectUploads(w);
   w.selectGridLoading = true;
   deps.render();
   await runEnrichment(w, deps);
