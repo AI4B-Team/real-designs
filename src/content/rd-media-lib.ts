@@ -11,6 +11,8 @@ import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions"
 import { updateMediaAssets, deleteMediaAssets, listMediaProperties, createMediaProperty } from "@/lib/property-media.functions";
 import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
+import { setHandoff } from "@/lib/handoff";
+import { openStagingReview } from "@/content/rd-staging";
 import { openAddressModal } from "@/lib/address-modal";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL, mediaTypeLabel } from "@/lib/media-view";
@@ -178,6 +180,7 @@ function shell() {
   <div class="ml-bulk" id="mlBulk">
     <span id="mlSelCount">0 Selected</span>
     <button class="btn btn-primary btn-xs" data-b="video" id="mlBulkVideo"><i data-lucide="clapperboard"></i>Create Video</button>
+    <button class="btn btn-ghost btn-xs" data-b="design"><i data-lucide="wand-sparkles"></i>Design</button>
     <button class="btn btn-ghost btn-xs" data-b="restyle" id="mlBulkRestyle"><i data-lucide="wand-2"></i>Redesign</button>
     <button class="btn btn-ghost btn-xs" data-b="prop"><i data-lucide="home"></i>Add To Property</button>
     <button class="btn btn-ghost btn-xs" data-b="pres"><i data-lucide="presentation"></i>Add To Presentation</button>
@@ -1148,14 +1151,14 @@ async function bulk(action, anchor) {
     return;
   }
   if (action === "video") return videoFrom(list);
+  if (action === "design") return designFrom(list);
   if (action === "restyle") return restyleFrom(list);
   if (action === "prop") return openAssign(list);
   if (action === "pres") return S.go("present");
   if (action === "more")
     return popMenu(anchor, [
       { icon: "heart", label: "Favorite", fn: () => bulk("fav") },
-      { icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") },
-      { icon: "wand-2", label: "Use In Studio", fn: () => S.go("studio") },
+      { icon: "wand-sparkles", label: "Design These Photos", fn: () => bulk("design") },
     ]);
   if (action === "download") {
     for (const m of list) await download(m);
