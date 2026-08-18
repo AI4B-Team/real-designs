@@ -88,11 +88,15 @@ function render() {
   el.hidden = false;
   const b = propertyBuckets(P.items, P.propertyId);
   const pk = pkgsForProperty();
-  const count = { overview: b.all.length, photos: b.photos.length, designs: b.designs.length, videos: b.videos.length, presentations: pk.length };
+  /* Presentations are saved work too: the headline total and the Overview
+     badge count them, so the tabs never contradict the header. */
+  const total = b.all.length + pk.length;
+  const count = { overview: total, photos: b.photos.length, designs: b.designs.length, videos: b.videos.length, presentations: pk.length };
 
   el.innerHTML = `<div class="card-h">
       <div><h3>${esc(P.label || "This Property")}</h3>
-        <div class="sub">${P.loading ? "Loading This Property&rsquo;s Work&hellip;" : b.all.length + (b.all.length === 1 ? " Item" : " Items") + " Saved To This Address"}</div></div>
+        <div class="sub">${P.loading ? "Loading This Property&rsquo;s Work&hellip;" : total + (total === 1 ? " Item" : " Items") + " Saved To This Address"}</div></div>
+
     </div>
     <div class="pd-tabs" role="tablist">${TABS.map(
       ([k, label, icon]) =>
@@ -145,8 +149,13 @@ function overview(b, pk) {
     ${
       recent.length
         ? `<div class="pd-sub">Recent Work</div><div class="pd-grid">${recent.map(tile).join("")}</div>`
-        : empty("images", "Nothing Saved Here Yet", "Photos, designs, videos and presentations for this address will collect here.", "media", "Open Media")
+        : pk.length
+          ? /* Media is empty but presentations exist — show them instead of
+               telling the user nothing is saved here. */
+            `<div class="pd-sub">Recent Work</div><div class="pd-list">${pk.slice(0, 6).map(pkgRow).join("")}</div>`
+          : empty("images", "Nothing Saved Here Yet", "Photos, designs, videos and presentations for this address will collect here.", "media", "Open Media")
     }`;
+
 }
 
 function tile(m) {
