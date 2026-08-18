@@ -3294,6 +3294,18 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       enhance: s.enhance || null,
     });
   }
+  /* The configured move between each consecutive pair, in render order. */
+  const sceneTransitions = w.scenes.slice(0, -1).map((sc, n) => {
+    const nxt = w.scenes[n + 1];
+    const row = transitions.get(sc.key, nxt.key);
+    const type = resolveTransition(row?.type || "auto", sceneShape(sc), sceneShape(nxt));
+    return {
+      type,
+      ms: typeof row?.duration_ms === "number" ? row.duration_ms : DEFAULT_TRANSITION_MS,
+      clipUrl: row?.generated_clip_path && row.status === "completed" ? await_none(row) : null,
+    };
+  });
+
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
   const avTitle = w.title || w.propertyLabel || "";
@@ -3321,6 +3333,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
         : null,
       title: w.title || w.propertyLabel || "",
       transition: w.transition,
+      sceneTransitions,
       captionsEnabled: !!w.captions,
       music: w.music && w.music !== "none" ? w.music : null,
       narrationUrl,
