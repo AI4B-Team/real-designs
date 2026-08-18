@@ -34,6 +34,7 @@ import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
 import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
+import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { listMediaProperties } from "@/lib/property-media.functions";
@@ -281,14 +282,67 @@ function restoreScroll() {
   requestAnimationFrame(() => { try { el.scrollTop = scrollY; } catch (_) {} });
 }
 
-function exitAll() {
+/* Leaving the builder never loses work: the draft is flushed first, then the
+   session is torn down and Studio is returned to its starting page. */
+function leaveStaging() {
   hide();
-  try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
-  /* Leaving the screen is not losing the work: flush whatever is queued. */
+  endBuilderHistory("design");
   if (saver) { void saver.flush(); saver.destroy(); saver = null; }
   if (S) S.items.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
   S = null;
   removeStrip();
+  resetStudioSurface();
+  try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
+}
+
+let exiting = false;
+/** "Save & Exit": persist the draft and its step, then return to Studio. */
+async function saveExit() {
+  if (exiting) return;
+  exiting = true;
+  try { saveDraft(); } catch (_) {}
+  try { if (saver) await saver.flush(); } catch (_) {}
+  exiting = false;
+  leaveStaging();
+}
+
+function exitAll() {
+  void saveExit();
+}
+
+/* The global Studio navigation must behave like "Save & Exit" while a
+   project is open, so the shell asks the builder to handle the jump. */
+try {
+  (window as any).__rdBuilderSaveExit = ((prev) => () => {
+    if (S) { void saveExit(); return true; }
+    return typeof prev === "function" ? !!prev() : false;
+  })((window as any).__rdBuilderSaveExit);
+} catch (_) {}
+
+/** "Start Over": the draft is kept, only the live session ends. */
+function openStartOver() {
+  if (!S) return;
+  S.startOver = { busy: false };
+  render();
+}
+async function confirmStartOver() {
+  if (!S || (S.startOver && S.startOver.busy)) return;
+  S.startOver = { busy: true };
+  render();
+  await saveExit();
+}
+
+function startOverLayer() {
+  if (!S || !S.startOver) return "";
+  return startOverModalHtml({ wrap: "rdsSoWrap", keep: "rdsSoKeep", go: "rdsSoGo", busy: !!S.startOver.busy });
+}
+
+function bindStartOver(el) {
+  const keep = el.querySelector("#rdsSoKeep");
+  if (keep) keep.onclick = () => { if (S) { S.startOver = null; render(); } };
+  const go = el.querySelector("#rdsSoGo");
+  if (go) go.onclick = () => { void confirmStartOver(); };
+  el.querySelectorAll("#rdsStartOver").forEach((b) => (b.onclick = openStartOver));
 }
 
 /* ------------------------------------------------------------------ entry */
@@ -619,17 +673,38 @@ function stepRailHtml(active) {
 function render() {
   const el = host();
   if (!el || !S) return;
+  /* Browser Back walks the builder steps; Back from the first step asks
+     before leaving instead of quietly dropping the project. */
+  trackBuilderStep("design", S.step, {
+    onStep: (step) => {
+      if (!S) return;
+      S.step = step === "add" ? "add" : "review";
+      render();
+    },
+    onExit: () => {
+      if (!S) return false;
+      if (!S.startOver) openStartOver();
+      return true;
+    },
+  });
   if (S.step === "add") {
     /* Step 1 runs full width in both builders: the picker is the whole job. */
     el.innerHTML = `<section class="rds-page">
       <div class="rv-head">
         <div><h2>Add Photos</h2><p>Add every photo you want to design. We'll sort them by room on the next screen.</p></div>
-        <button class="btn btn-ghost btn-sm" id="rdsClose"><i data-lucide="x"></i>Exit</button>
+        <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+          <div class="rv-more-m">
+            <button id="rdsClose">Save &amp; Exit</button>
+            <button id="rdsStartOver">Start Over</button>
+          </div>
+        </details>
       </div>
       <div class="rds-add"><div id="rdsPicker"></div></div>
+      ${startOverLayer()}
     </section>`;
     paint();
-    el.querySelector("#rdsClose").onclick = exitAll;
+    el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
+    bindStartOver(el);
     bindRail(el);
     mountPicker(el.querySelector("#rdsPicker"));
     railForStep();
@@ -652,7 +727,8 @@ function render() {
             <button data-act="all">Select All</button>
             <button data-act="none">Clear Selection</button>
             <button data-act="del">Remove Selected</button>
-            <button id="rdsClose">Exit Project</button>
+            <button id="rdsClose">Save &amp; Exit</button>
+            <button id="rdsStartOver">Start Over</button>
           </div>
         </details>
       </div>
@@ -686,10 +762,12 @@ function render() {
         </div>
       </div>
     </div>
+    ${startOverLayer()}
   </section>`;
 
   paint();
   bindReview(el);
+  bindStartOver(el);
   bindRail(el);
   syncSelection();
   railForStep();
@@ -1275,7 +1353,13 @@ function mountStrip() {
   head.id = "rdsCanvasHead";
   head.className = "rds-chead";
   head.innerHTML = `<button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>All Rooms</button>
-    <span class="rds-chead-t" id="rdsCanvasTitle"></span>`;
+    <span class="rds-chead-t" id="rdsCanvasTitle"></span>
+    <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+      <div class="rv-more-m">
+        <button id="rdsClose">Save &amp; Exit</button>
+        <button id="rdsStartOver">Start Over</button>
+      </div>
+    </details>`;
   if (view && board) view.insertBefore(head, board);
 
   strip = document.createElement("div");
@@ -1284,6 +1368,13 @@ function mountStrip() {
   else if (view) view.appendChild(strip);
   else document.body.appendChild(strip);
 
+  head.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
+  head.querySelectorAll("#rdsStartOver").forEach((b) => (b.onclick = () => {
+    /* The confirmation lives in the builder screen, so go back to it first. */
+    markCurrentDone();
+    reopenStaging();
+    openStartOver();
+  }));
   const back = head.querySelector("#rdsAllRooms");
   if (back)
     back.onclick = () => {

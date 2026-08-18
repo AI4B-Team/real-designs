@@ -117,6 +117,7 @@ import {
   RENDER_CANCELLED,
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
+import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
@@ -887,6 +888,25 @@ function wizardHtml() {
     })),
   });
 
+  /* Browser Back walks the builder steps; Back from the first step asks
+     before leaving instead of quietly dropping the project. */
+  trackBuilderStep("video", w.step, {
+    onStep: (step) => {
+      if (S.wizard !== w) return;
+      w.step = Number(step) || 1;
+      render();
+    },
+    onExit: () => {
+      if (S.wizard !== w) return false;
+      if (!w.startOverModal && !w.exitModal) {
+        w.exitConfirm = true;
+        w.startOverModal = { busy: false };
+        render();
+      }
+      return true;
+    },
+  });
+
   let body = "";
   if (w.step === 1) body = stepPhotos();
   if (w.step === 2) body = stepSelect();
@@ -952,7 +972,8 @@ function wizardHtml() {
     ${headTools}
     <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
       <div class="rv-more-m">
-        <button id="rvExitBuilder">Exit Builder</button>
+        <button id="rvExitBuilder">Save &amp; Exit</button>
+        <button id="rvStartOver">Start Over</button>
         <button id="rvDeleteDraft" class="danger">Delete Draft</button>
       </div>
     </details>
@@ -968,6 +989,7 @@ function wizardHtml() {
   ${w.shortenModal ? shortenModalHtml() : ""}
   ${w.logoModal ? logoModalHtml() : ""}
   ${w.exitModal ? exitModalHtml() : ""}
+  ${w.startOverModal ? startOverModalHtml({ wrap: "rvStartOverWrap", keep: "rvStartOverKeep", go: "rvStartOverGo", busy: !!w.startOverModal.busy }) : ""}
   ${w.deleteModal ? deleteModalHtml() : ""}`;
 }
 
@@ -2213,18 +2235,24 @@ function deleteModalHtml() {
   </div></div>`;
 }
 
-/** Leave the builder for Media without touching saved work. */
+/** Leave the builder for the Studio start page without touching saved work. */
 function leaveBuilder(w) {
   stopWizardAutosave();
   revokeUploadUrls(w);
   forgetActiveBuilder();
+  endBuilderHistory("video");
   S.screen = "library";
   S.wizard = null;
   render();
-  goTo("v-media");
+  resetStudioSurface();
+  goTo("studio");
 }
 
+/* Save the draft, then return to Studio. Clicking twice must never save two
+   drafts or leave twice, so the in-flight exit is tracked on the session. */
 async function exitBuilder(w) {
+  if (w.exiting) return;
+  w.exiting = true;
   w.exitModal = { state: "saving" };
   render();
   autosaveWizard(w);
@@ -2233,12 +2261,37 @@ async function exitBuilder(w) {
   } catch (_) {}
   if (S.wizard !== w) return;
   if (wizSaver && wizSaver.state === "error") {
+    w.exiting = false;
     w.exitModal = { state: "error" };
     render();
     return;
   }
   w.exitModal = null;
   leaveBuilder(w);
+}
+
+/* Start Over keeps every saved thing — draft, photos, property — and only
+   drops the live builder session so the next project starts clean. */
+async function startOverBuilder(w) {
+  if (w.startOverModal && w.startOverModal.busy) return;
+  w.startOverModal = { busy: true };
+  render();
+  autosaveWizard(w);
+  try {
+    if (wizSaver) await wizSaver.flush();
+  } catch (_) {}
+  if (S.wizard !== w) return;
+  if (wizSaver && wizSaver.state === "error") {
+    w.startOverModal = null;
+    w.exitModal = { state: "error" };
+    render();
+    return;
+  }
+  w.startOverModal = null;
+  /* A fresh session id for whatever is created next. */
+  try { sessionStorage.removeItem("rd_reveal_session"); } catch (_) {}
+  leaveBuilder(w);
+  toast("Draft Saved. Studio Is Ready For A New Project.");
 }
 
 async function confirmDeleteDraft(w) {
@@ -3937,6 +3990,9 @@ function bind() {
   on("#rvExitRetry", "click", () => { void exitBuilder(w); });
   on("#rvExitLeave", "click", () => { w.exitModal = null; leaveBuilder(w); });
   on("#rvExitX", "click", () => { w.exitModal = null; render(); });
+  on("#rvStartOver", "click", () => { w.startOverModal = { busy: false }; render(); });
+  on("#rvStartOverKeep", "click", () => { w.startOverModal = null; render(); });
+  on("#rvStartOverGo", "click", () => { void startOverBuilder(w); });
   on("#rvDeleteDraft", "click", () => { w.deleteModal = { alsoPhotos: false, busy: false }; render(); });
   on("#rvDelX, #rvDelKeep", "click", () => { w.deleteModal = null; render(); });
   on("#rvDelPhotos", "change", (e) => { w.deleteModal = { ...(w.deleteModal || {}), alsoPhotos: !!e.currentTarget.checked }; });
@@ -5570,6 +5626,15 @@ export function revealBusy() {
   return !!(S.wizard || S.detail || S.detailId);
 }
 try { (window as any).__rdRevealBusy = revealBusy; } catch (_) {}
+
+/* The global Studio navigation saves and exits instead of abandoning the
+   builder session. */
+try {
+  (window as any).__rdBuilderSaveExit = ((prev) => () => {
+    if (S.wizard) { void exitBuilder(S.wizard); return true; }
+    return typeof prev === "function" ? !!prev() : false;
+  })((window as any).__rdBuilderSaveExit);
+} catch (_) {}
 
 export function resetReveal() {
   stopAvatarVoice(); // never let a voice sample keep playing after navigation
