@@ -501,6 +501,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /* ---------- finished designs ---------- */
 
+  let designToken = 0;
+
   /** Loads real, completed designs once per tab visit. Nothing is shown as
       empty until the request has actually succeeded. */
   function loadDesigns(force = false) {
