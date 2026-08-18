@@ -515,20 +515,29 @@ function hydrate(draft) {
  * Reopen the most recent staging draft for this account. Called after sign-in
  * and on app boot, so a refresh, a new browser or another device all land back
  * on the same work.
+ *
+ * The result distinguishes the three outcomes that matter to routing:
+ *   "restored" — a draft was hydrated and is on screen
+ *   "none"     — the server answered and there is genuinely no draft
+ *   "error"    — network/auth failure; nothing is known, so nothing may move
  */
-export async function resumeStagingDraft(id) {
+export async function resumeStagingDraftResult(id?): Promise<"restored" | "none" | "error"> {
   try {
     /* One-time lift of any legacy browser-only draft, server-confirmed first. */
     await migrateLegacyStagingDraft({ save: (payload) => saveProjectDraft({ data: payload }) });
   } catch (_) {}
+  let draft = null;
   try {
-    let draft = null;
     if (id) draft = (await getProjectDraft({ id })).draft;
     else {
       const res = await listProjectDrafts({ project_type: "photo_staging", scope: "drafts", limit: 1 });
       draft = (res.drafts || [])[0] || null;
     }
-    if (!draft || !(draft.assets || []).length) return false;
+  } catch (_) {
+    return "error";
+  }
+  if (!draft || !(draft.assets || []).length) return "none";
+  try {
     hydrate(draft);
     show();
     /* A draft saved on the canvas reopens on that exact photo. */
@@ -537,11 +546,16 @@ export async function resumeStagingDraft(id) {
       S.resumeKey = null;
       void openInCanvas(key);
     }
-    return true;
+    return "restored";
   } catch (_) {
-    return false;
+    return "error";
   }
 }
+
+export async function resumeStagingDraft(id?) {
+  return (await resumeStagingDraftResult(id)) === "restored";
+}
+
 
 /** Reopen the review grid from the canvas strip. */
 export function reopenStaging() {
