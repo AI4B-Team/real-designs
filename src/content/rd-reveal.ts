@@ -2660,6 +2660,24 @@ function creditTotal() {
   return qualityCost(S.wizard?.quality || "standard") + immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE + vfxGenCredits();
 }
 
+/* Itemized cost so the number in the footer is never a mystery. AI clips are
+   charged when they are generated, so they are listed as already paid rather
+   than added to the render total again. */
+function creditBreakdown() {
+  const w = S.wizard || {};
+  const rows = [];
+  rows.push(["Video Render", qualityCost(w.quality || "standard")]);
+  const imm = immersiveCount();
+  if (imm) rows.push([`Immersive Motion · ${imm} ${imm === 1 ? "Scene" : "Scenes"}`, imm * IMMERSIVE_CREDITS_PER_SCENE]);
+  const gen = vfxGenCredits();
+  if (gen) {
+    const n = (w.scenes || []).filter((x) => x.vfx_gen).length;
+    rows.push([`AI Effects · ${n} ${n === 1 ? "Scene" : "Scenes"}`, gen]);
+  }
+  const clips = (w.scenes || []).filter((x) => x.use_clip && x.clip_id).length;
+  return { rows, clips, clipCost: clips * ANIMATE_CREDITS_PER_CLIP, total: rows.reduce((n, r) => n + r[1], 0) };
+}
+
 /* ======================= PERSISTENT PREVIEW PANEL ======================= */
 function previewPanel() {
   const w = S.wizard;
@@ -2675,8 +2693,13 @@ function previewPanel() {
     <div class="mono rv-meta">Scene 1 Of ${w.scenes.length || 0} · ${per ? per.toFixed(1) : "0.0"}s · ${total}s Total</div>
     <div class="rv-sub sm">Variants</div>
     <div class="rv-vars">${vs.length ? vs.map((v) => `<div><span class="mono">${esc(v.aspect_ratio)}</span><i>${v.version_type === "clean" ? "Unbranded" : v.version_type === "branded" ? "Branded" : "Disclosure Ready"}</i><b>Queued</b></div>`).join("") : `<div class="rv-note sm">Pick A Format.</div>`}</div>
-    <div class="rv-cost mono">${cost} Credits</div>
-    ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
+    <div class="rv-bill">
+      ${creditBreakdown().rows.map(([n, v]) => `<div><span>${esc(n)}</span><b class="mono">${v}</b></div>`).join("")}
+      <div class="rv-bill-t"><span>Total To Render</span><b class="mono">${cost} Credits</b></div>
+      ${creditBreakdown().clips ? `<div class="rv-bill-n">${creditBreakdown().clips} AI ${creditBreakdown().clips === 1 ? "Clip" : "Clips"} · ${creditBreakdown().clipCost} Credits Already Charged</div>` : ""}
+      ${bal != null ? `<div class="rv-bill-n">Balance ${bal}${bal >= cost ? ` · ${bal - cost} After This Render` : ""}</div>` : ""}
+    </div>
+    ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">You Need ${cost - bal} More Credits To Render This Video.</div><button class="btn btn-ghost btn-sm" id="rvAddCredits2"><i data-lucide="zap"></i>Add Credits</button>` : ""}
     ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
     ${!block && !browserRenderSupport().ok ? `<div class="rv-note sm">${esc(browserRenderSupport().reason)} Nothing Is Charged Until A Render Actually Starts.</div>` : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
@@ -4037,6 +4060,7 @@ function bind() {
   /* review */
   on("#rvGen", "click", () => generate());
   on("#rvCancelRender", "click", () => cancelRender());
+  on("#rvAddCredits2", "click", () => openUpgrade("You need more credits to render this video."));
   on("#rvAddCredits", "click", () => openUpgrade(videoCreditBlock(creditTotal()) || "You need more credits to render this video."));
 
   } // end wizard bindings (S.wizard may be null on the library screen)
