@@ -2919,6 +2919,16 @@ function popoverHtml() {
       </div></div>
       <button class="fb-link" id="rvCapClear" ${s.caption ? "" : "disabled"}>Clear Text</button>
     </div>`;
+  } else if (kind === "ending") {
+    const st = endingState(w);
+    const opts = ENDING_OPTIONS.filter((o) => o.id !== "brand_end_card" || hasBrandEndCard(w));
+    body = `<div class="rv-endrow">
+      <p class="rv-note">Choose what happens after the final scene.</p>
+      ${opts.map((o) => `<button class="rv-pop-row ${st.type === o.id ? "on" : ""}" data-endpick="${o.id}">
+        <b>${esc(o.label)}</b><em class="rv-note sm"> ${esc(o.blurb)}</em></button>`).join("")}
+      ${st.type === "none" ? "" : `<label class="rv-f">Ending Duration
+        <input id="rvEndDur" type="number" min="0.5" max="3" step="0.5" value="${st.duration}"> seconds</label>`}
+    </div>`;
   } else if (kind === "recap") {
     /* Everything applied to this scene, with a way to change or undo each
        one. Reads the same list the card badges read. */
@@ -3070,14 +3080,17 @@ function popoverHtml() {
   const isFx = kind === "look";
   const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
     : kind === "recap" ? "Scene Settings"
+    : kind === "ending" ? "Video Ending"
     : kind === "trans" ? `Transition: Scene ${i + 1} → Scene ${i + 2}` : "Effects";
-  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : kind === "trans" ? "wide" : "xwide";
+  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" || kind === "ending" ? "compact" : kind === "trans" ? "wide" : "xwide";
   const foot = isFx && w.popTab === "frames"
     ? seFooter(w, s)
     : isFx
     ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
     : kind === "recap"
     ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
+    : kind === "ending"
+    ? `<button class="btn btn-primary" id="rvPopCancel">Done</button>`
     : kind === "trans"
     ? `${transitions.get(s.key, w.scenes[i + 1]?.key) && !transitions.get(s.key, w.scenes[i + 1]?.key)?.settings?.mode?.includes("auto") ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto Select</button>` : ""}
        <button class="btn btn-primary" id="rvTransDone">Done</button>`
@@ -4854,6 +4867,17 @@ function bind() {
     }
     render();
   });
+  on("[data-endpick]", "click", (e) => {
+    setEnding(w, { endingType: e.currentTarget.dataset.endpick });
+    render();
+  });
+  {
+    const ed = el.querySelector("#rvEndDur");
+    if (ed) ed.addEventListener("change", (ev) => {
+      setEnding(w, { duration: Math.min(3, Math.max(0.5, Number(ev.target.value) || 1)) });
+      render();
+    });
+  }
   on("#rvTransAi", "click", () => toast("AI Transitions Are Not Available Yet. Choose Cut, Dissolve Or Fade."));
   {
     const du = el.querySelector("#rvTransDur");
