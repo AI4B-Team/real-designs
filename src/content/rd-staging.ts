@@ -1605,6 +1605,7 @@ registerCardMenu("photo", {
       });
       /* Route through the shell so this counts as one intentional
          navigation instead of a raw hash write the router has to react to. */
+      try { (window as any).__rdNewVideo && (window as any).__rdNewVideo(); } catch (_) {}
       goApp("lvideo");
       return void cmToast("Sent To The Video Builder.");
     }
