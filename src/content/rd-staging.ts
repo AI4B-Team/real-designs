@@ -1850,9 +1850,17 @@ async function openInCanvas(key) {
       });
   } catch (_) {}
   applyRoom(it);
-  try {
-    if (location.hash !== "#studio") location.hash = "#studio";
-  } catch (_) {}
+  /* Never touch location.hash here. A raw hash write routes through the
+     generic Studio branch, which re-initialises a blank session and throws
+     the Canvas away. Open an explicit Photo Design Canvas context instead. */
+  openPhotoDesignCanvas({
+    draftId: (S && S.id) || "",
+    photoKey: key,
+    assetPath: it.path || null,
+    roomType: it.room || null,
+    propertyId: (S && S.propertyId) || null,
+    propertyAddress: (S && S.address) || null,
+  });
   mountStrip();
   saveDraft();
 }
@@ -1930,9 +1938,20 @@ function mountStrip() {
   window.addEventListener("hashchange", stripGuard);
 }
 
+/** True while the canonical Studio route is showing this Photo Design Canvas. */
+function onCanvasRoute() {
+  try {
+    const isView = (window as any).__rdIsView;
+    if (typeof isView === "function") return !!isView("studio");
+  } catch (_) {}
+  /* Migration fallback: accept both the canonical and the legacy hash. */
+  const raw = (location.hash || "").replace(/^#/, "").replace(/^v-/, "");
+  return raw === "studio";
+}
+
 function stripGuard() {
   if (!strip) return;
-  const onStudio = (location.hash || "").replace(/^#/, "") === "studio";
+  const onStudio = onCanvasRoute();
   strip.classList.toggle("hide", !onStudio);
   const head = document.getElementById("rdsCanvasHead");
   if (head) head.classList.toggle("hide", !onStudio);
