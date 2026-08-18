@@ -427,7 +427,8 @@ function card(m) {
     </div>
     <div class="ml-body">
       <div class="ml-t"><b>${esc(m.title)}</b><span class="pill st-${m.status}">${STATUS_LABEL[m.status] || m.status}</span></div>
-      <div class="mono ml-sub">${esc(addressDisplay({ property_address: m.address, property_label: m.property, property_id: m.propertyId }).text)}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
+      <div class="mono ml-sub">${esc(addressDisplay({ property_address: m.address, property_label: m.property, property_id: m.propertyId }).text)}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.updatedAt || m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
+      ${m.draft ? `<div class="mono ml-sub">${esc(m.draftTypeLabel || DRAFT_TYPE_LABEL[m.draftType] || "Project")}${m.photoCount ? " &middot; " + m.photoCount + " Photo" + (m.photoCount === 1 ? "" : "s") : ""} &middot; Last Edited ${esc(fmtDate(m.updatedAt || m.createdAt))}</div>` : ""}
       <div class="ml-acts">${actions(m, g)}</div>
     </div>
   </div>`;
@@ -471,6 +472,9 @@ function actions(m, g) {
   if (m.status === "processing" || m.status === "queued")
     return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open Details</button>
       ${m.job ? `<button class="btn btn-ghost btn-xs" data-cancel="${m.id}">Cancel</button>` : ""}`;
+  if (m.draft)
+    return `<button class="btn btn-primary btn-xs" data-cont="${m.id}" style="flex:1"><i data-lucide="play"></i>Continue Editing</button>
+      <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   if (m.status === "draft" && g === "videos")
     return `<button class="btn btn-primary btn-xs" data-cont="${m.id}" style="flex:1"><i data-lucide="play"></i>Continue</button>
       <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
@@ -849,9 +853,34 @@ async function changeAddress(m) {
   });
 }
 
+/**
+ * Deleting a project and deleting a single asset are different actions, so the
+ * confirmation says exactly which one is about to happen.
+ */
 async function del(m) {
   if (!m) return;
-  if (!window.confirm("Delete “" + m.title + "”? This cannot be undone.")) return;
+  if (m.draft && m.draftId) {
+    const label = m.draftTypeLabel || DRAFT_TYPE_LABEL[m.draftType] || "Project";
+    const msg =
+      "Delete the whole project “" +
+      m.title +
+      "” (" +
+      label +
+      ")?\n\nThis removes the project and its saved progress. Photos already uploaded to this account stay in Media.";
+    if (!window.confirm(msg)) return;
+    try {
+      await deleteProjectDraft({ data: { id: m.draftId } });
+      if (m.videoProjectId) await deleteVideo({ data: { id: m.videoProjectId } });
+    } catch (e) {
+      window.alert("Could not delete this project: " + (e && e.message ? e.message : "try again"));
+      return;
+    }
+    closeDrawer();
+    await load(true);
+    return;
+  }
+  const what = m.type === "generated_video" ? "video" : m.type === "generated_image" ? "design" : "photo";
+  if (!window.confirm("Delete this " + what + ", “" + m.title + "”? Only this one file is deleted. This cannot be undone.")) return;
   try {
     if (m.type === "generated_video") await deleteVideo({ data: { id: m.refId } });
     else if (m.type === "generated_image") await deleteVersions({ data: { version_ids: [m.refId] } });
