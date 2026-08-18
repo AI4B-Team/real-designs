@@ -888,6 +888,25 @@ function wizardHtml() {
     })),
   });
 
+  /* Browser Back walks the builder steps; Back from the first step asks
+     before leaving instead of quietly dropping the project. */
+  trackBuilderStep("video", w.step, {
+    onStep: (step) => {
+      if (S.wizard !== w) return;
+      w.step = Number(step) || 1;
+      render();
+    },
+    onExit: () => {
+      if (S.wizard !== w) return false;
+      if (!w.startOverModal && !w.exitModal) {
+        w.exitConfirm = true;
+        w.startOverModal = { busy: false };
+        render();
+      }
+      return true;
+    },
+  });
+
   let body = "";
   if (w.step === 1) body = stepPhotos();
   if (w.step === 2) body = stepSelect();
