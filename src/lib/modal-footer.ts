@@ -48,7 +48,7 @@ const esc = (s: unknown) =>
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
   );
 
-function btn(a: ModalAction, kind: "primary" | "danger" | "ghost", loading = false) {
+function btn(a: ModalAction, kind: "primary" | "danger" | "ghost" | "outline", loading = false) {
   const label = loading && a.loadingLabel ? a.loadingLabel : a.label;
   const dis = a.disabled || loading;
   return `<button type="button" class="rdm-btn rdm-${kind}${loading ? " is-loading" : ""}"
