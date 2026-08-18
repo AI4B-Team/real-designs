@@ -1603,7 +1603,9 @@ registerCardMenu("photo", {
         propertyAddress: S.address || null,
         assets: [{ path: it.path, name: it.name, room: it.room || null }],
       });
-      try { location.hash = "#v-lvideo"; } catch (_) {}
+      /* Route through the shell so this counts as one intentional
+         navigation instead of a raw hash write the router has to react to. */
+      goApp("lvideo");
       return void cmToast("Sent To The Video Builder.");
     }
     if (action === "versions") {
@@ -1927,7 +1929,7 @@ export function openPhotoDesignCanvas(ctx: PhotoCanvasHandoff): StudioContext {
   }
   /* No shell yet (tests, cold boot): still land on the canonical route. */
   try {
-    if (location.hash !== "#v-studio") location.hash = "#v-studio";
+    if (location.hash !== STUDIO_HASH) location.hash = STUDIO_HASH;
   } catch (_) {}
   return { type: "photo-design-canvas", draftId: ctx.draftId, photoKey: ctx.photoKey };
 }
@@ -2062,6 +2064,15 @@ function mountStrip() {
 
   drawStrip();
   window.addEventListener("hashchange", stripGuard);
+}
+
+/** Navigate through the app shell; a bare hash write is the fallback only. */
+function goApp(view) {
+  try {
+    const fn = (window as any).__rdGo;
+    if (typeof fn === "function") { fn(view); return; }
+  } catch (_) {}
+  try { location.hash = "#v-" + view; } catch (_) {}
 }
 
 /** True while the canonical Studio route is showing this Photo Design Canvas. */
