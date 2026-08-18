@@ -83,7 +83,10 @@ export function filterMedia(items: any[], f: MediaFilter = {}) {
     if (property !== "all" && property !== "none" && m.propertyId !== property) return false;
     if (f.favOnly && !fav(m.id)) return false;
     if (q) {
-      const hay = [m.title, m.property, m.project, m.room, m.type, m.status].filter(Boolean).join(" ").toLowerCase();
+      const hay = [m.title, m.property, m.project, m.address, m.city, m.room, m.fileName, m.type, m.status]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
       if (hay.indexOf(q) < 0) return false;
     }
     return true;
