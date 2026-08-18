@@ -196,6 +196,27 @@ let STUDIO_MODE:any=GENERIC_STUDIO;
 /* Every navigation bumps this token, so a delayed startup callback can tell
    whether the route it was queued for is still the one on screen. */
 let __navSeq=0;
+let __navView='';
+/**
+ * One monotonic navigation sequence for the whole app.
+ *
+ * Every intentional navigation bumps it and records the destination. Any
+ * asynchronous work (startup routing, builder restoration, preference loads,
+ * summaries) captures the token it was queued under and must check it again
+ * before it is allowed to move the user. An older callback simply does
+ * nothing instead of yanking the page away from where the user went.
+ */
+function beginNavigation(view){
+  __navSeq+=1;
+  __navView=String(view||'');
+  return __navSeq;
+}
+/** True while the newest navigation intent is the video builder itself. */
+function inBuilderRoute(){ return __navView==='lvideo'||__navView==='reveal'; }
+function isCurrentNavigation(sequence,view){
+  if(sequence!==__navSeq) return false;
+  return view===undefined||view===null||String(view)===__navView;
+}
 function studioMode(){ return STUDIO_MODE; }
 function inPhotoCanvas(){ return isPhotoCanvas(STUDIO_MODE); }
 /** Canonical route test: tolerates the legacy "#studio" form during migration. */
@@ -208,7 +229,14 @@ try{
   (window as any).__rdIsView=(v:string)=>isCurrentView(v);
   (window as any).__rdStudioMode=()=>studioMode();
   (window as any).__rdNavToken=()=>__navSeq;
-  (window as any).__rdNavCurrent=(tok:number)=>tok===__navSeq;
+  (window as any).__rdNavCurrent=(tok:number,view?:string)=>isCurrentNavigation(tok,view);
+  /* The canonical destination, for asynchronous workflows to compare against. */
+  (window as any).__rdNavView=()=>__navView;
+  (window as any).__rdNav={
+    token:()=>__navSeq,
+    view:()=>__navView,
+    current:(tok:number,view?:string)=>isCurrentNavigation(tok,view),
+  };
   (window as any).__rdClearStudioMode=()=>{ STUDIO_MODE=GENERIC_STUDIO; };
   /* The one way to open a Photo Design Canvas. It routes through the same
      navigation everything else uses, with the context set first, so no
@@ -232,7 +260,7 @@ function go(v,fromHash){
       if(typeof ex==='function' && ex()) return;
     }catch(_){}
   }
-  __navSeq++;
+  beginNavigation(v);
   /* Any route that is not the Studio view ends the Canvas context. */
   if(v!=='studio' && inPhotoCanvas()) STUDIO_MODE=GENERIC_STUDIO;
   const acctAlias = ACCT_ALIAS[v] ? v : '';
@@ -263,6 +291,9 @@ function go(v,fromHash){
     let saved=''; try{ saved=localStorage.getItem('rd_reveal_active')||''; }catch(_){ }
     if(bootRoute && saved){ v='lvideo'; }
     else { (window as any).__rdMediaTab='videos'; v='media'; }
+    /* The recorded destination must name the view that actually opens, so a
+       guard comparing against it agrees with what the user sees. */
+    __navView=v;
   }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
      keys like lvideo) must never leave the content area blank. Home and the
@@ -276,7 +307,15 @@ function go(v,fromHash){
     const api=(window as any).rdStaging;
     if(!api){
       let tries=0;
-      const wait=()=>{ if((window as any).rdStaging){ go('staging',true); } else if(++tries<60) window.setTimeout(wait,50); else go('dash'); };
+      /* If the user navigates while we wait for the module, this loop dies
+         instead of pulling them back onto Photo Design. */
+      const tok=__navSeq;
+      const wait=()=>{
+        if(!isCurrentNavigation(tok,'staging')) return;
+        if((window as any).rdStaging){ go('staging',true); }
+        else if(++tries<60) window.setTimeout(wait,50);
+        else go('dash');
+      };
       window.setTimeout(wait,50);
       return;
     }
@@ -302,7 +341,23 @@ function go(v,fromHash){
     /* A refresh lands here with work already saved on the server: reopen that
        project instead of dropping the user into an empty builder. */
     if(!bootRoute){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
-    else{ void (async()=>{ try{ if(!(await resumeActiveBuilder())) createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){} } })(); }
+    else{
+      /* Restoration is asynchronous: by the time it resolves the user may
+         already be somewhere else, and it must not reopen the builder. */
+      const tok=__navSeq;
+      void (async()=>{
+        try{
+          const ok=await resumeActiveBuilder({ stillCurrent:()=>isCurrentNavigation(tok,'lvideo') });
+          /* Restoration navigates to the builder itself, so the check here is
+             "is a builder route still the destination", not the old token. */
+          if(ok||!inBuilderRoute()) return;
+          createVideoFrom({ sourceType:'address', from:'menu' });
+        }catch(_){
+          if(!inBuilderRoute()) return;
+          try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){}
+        }
+      })();
+    }
   }
 
   if(v==='studio'){
@@ -4916,15 +4971,18 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   try{
     /* Startup routing is only allowed to move the user while the route it was
        queued against is still current and no Photo Design Canvas is open. */
-    const fuToken=(window as any).__rdNavToken?(window as any).__rdNavToken():0;
-    const fuGo=(v)=>{
-      const cur=(window as any).__rdNavToken?(window as any).__rdNavToken():0;
-      if(cur!==fuToken) return;
+    const fuToken=__navSeq;
+    /* A click inside first-use is an intentional navigation and always wins.
+       The asynchronous start-page decision is different: it may only move the
+       user while the route it was queued against is still the visible one and
+       no Photo Design Canvas has been opened in the meantime. */
+    const fuStartGo=(v)=>{
+      if(!isCurrentNavigation(fuToken)) return;
       if(inPhotoCanvas()) return;
       go(v);
     };
     mountFirstUse({
-      go:fuGo, lucide, esc, photos:PHOTOS, uid:fuUid, track,
+      go, startGo:fuStartGo, startCurrent:()=>isCurrentNavigation(fuToken)&&!inPhotoCanvas(), lucide, esc, photos:PHOTOS, uid:fuUid, track,
       getSummary:()=>getWorkspaceSummary(),
       uploadPhoto:(f)=>uploadRoomPhoto(f),
       prefsStart:async()=>{ try{ const p=await getPrefs(); return (p&&p.start&&p.start.page)||'smart'; }catch(_){ return 'smart'; } },

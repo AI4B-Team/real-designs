@@ -129,12 +129,27 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
+    // A reload is the most disruptive thing this app can do, so it happens at
+    // most once per browser session, only for a genuine stale-chunk failure,
+    // and only while nothing else is already recovering. Everything else just
+    // shows the message below with a manual Refresh.
     if (isChunkLoadError(error) && typeof window !== "undefined") {
       const key = "rd:chunk-reload";
-      const last = Number(sessionStorage.getItem(key) || 0);
-      // Allow another one-shot reload if the last attempt was a while ago.
-      if (!last || Date.now() - last > 20000) {
-        sessionStorage.setItem(key, String(Date.now()));
+      let reloaded = "1";
+      try {
+        reloaded = sessionStorage.getItem(key) || "";
+      } catch {
+        reloaded = "1";
+      }
+      if (!reloaded) {
+        try {
+          sessionStorage.setItem(key, String(Date.now()));
+        } catch {
+          /* private mode: skip the reload rather than risk a loop */
+          reportLovableError(error, { boundary: "tanstack_root_error_component" });
+          return;
+        }
+        // Keep the exact URL, including the in-app hash route.
         window.location.reload();
         return;
       }
