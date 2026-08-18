@@ -246,11 +246,14 @@ function exitAll() {
 
 export function openStagingReview(seed = {}) {
   const files = (seed.files || []).filter(Boolean);
+  const existing = (seed.photos || []).filter((p) => p && p.path);
   if (!S) S = newSession(seed);
   if (seed.address) S.address = seed.address;
   if (seed.propertyId) S.propertyId = seed.propertyId;
   if (files.length) {
     addFiles(files);
+  } else if (existing.length) {
+    addExisting(existing);
   } else {
     S.step = S.items.length ? "review" : "add";
   }
@@ -344,6 +347,38 @@ function addFiles(files) {
   render();
   fresh.forEach(uploadOne);
   detectRooms(fresh);
+  saveDraft();
+}
+
+/** Photos already stored for a property: no upload, no re-detection. */
+function addExisting(photos) {
+  const fresh = photos.map((p, i) => ({
+    key: "x" + Date.now().toString(36) + i,
+    name: p.name || "Photo",
+    file: null,
+    previewUrl: "",
+    path: p.path,
+    signed: null,
+    status: "ready",
+    error: "",
+    room: p.room || "",
+    roomSource: p.room ? "manual" : "none",
+    confidence: 0,
+    detect: "done",
+    selected: true,
+    done: false,
+  }));
+  const have = new Set(S.items.map((i) => i.path).filter(Boolean));
+  const add = fresh.filter((i) => !have.has(i.path));
+  S.items = S.items.concat(add);
+  S.step = "review";
+  render();
+  add.forEach(async (it) => {
+    try {
+      it.signed = await roomPhotoUrl(it.path);
+      patchCard(it);
+    } catch (_) {}
+  });
   saveDraft();
 }
 
