@@ -278,3 +278,41 @@ select:not([multiple]) {
   background-repeat: no-repeat !important;
   background-position: right 11px center !important;
 }
+
+/* ---------------------------------------------------------------- modal actions
+   One footer system for every confirmation, picker, warning and editor modal.
+   Deliberately unscoped: modals portalled to <body> sit outside `.rd-app`, and
+   that is exactly why primary actions used to render as plain text. */
+.rdm-foot{display:flex;align-items:center;justify-content:flex-end;gap:10px;margin-top:18px}
+.rdm-foot.between{justify-content:space-between}
+.rdm-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;
+  padding:0 18px;min-width:96px;border:1px solid transparent;border-radius:999px;cursor:pointer;
+  font:600 14px/1 'DM Sans',system-ui,sans-serif;transition:background .15s ease,border-color .15s ease,color .15s ease}
+.rdm-btn i,.rdm-btn svg{width:16px;height:16px}
+.rdm-btn:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px #CC0000}
+.rdm-primary,.rdm-danger{background:#CC0000;color:#fff}
+.rdm-primary:hover:not(:disabled),.rdm-danger:hover:not(:disabled){background:#A80000}
+.rdm-ghost{background:transparent;color:#3A3A42;border-color:rgba(17,17,17,.16)}
+.rdm-ghost:hover:not(:disabled){background:rgba(17,17,17,.06);color:#141414}
+.rdm-btn:disabled{cursor:not-allowed;opacity:.7}
+.rdm-primary:disabled,.rdm-danger:disabled{background:#E39A9A;color:#fff;opacity:1}
+.rdm-ghost:disabled{color:#8A8A90;border-color:rgba(17,17,17,.1)}
+.rdm-btn.is-loading{pointer-events:none}
+.rdm-spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(255,255,255,.45);
+  border-top-color:#fff;animation:rdm-spin .7s linear infinite}
+.rdm-ghost .rdm-spin{border-color:rgba(17,17,17,.25);border-top-color:#141414}
+@keyframes rdm-spin{to{transform:rotate(360deg)}}
+@media (max-width:560px){
+  .rdm-foot.stackable{flex-direction:column-reverse;align-items:stretch;gap:8px}
+  .rdm-foot.stackable .rdm-btn{width:100%}
+}
+
+/* Legacy footers inside portalled dialogs pick up the same treatment so no
+   modal is left with unstyled text buttons. */
+:where(.bx-cdlg,.ml-assign) .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  height:42px;padding:0 18px;min-width:96px;border:1px solid transparent;border-radius:999px;cursor:pointer;
+  font:600 14px/1 'DM Sans',system-ui,sans-serif}
+:where(.bx-cdlg,.ml-assign) .btn-primary,:where(.bx-cdlg,.ml-assign) .btn-danger{background:#CC0000;color:#fff}
+:where(.bx-cdlg,.ml-assign) .btn-primary:hover,:where(.bx-cdlg,.ml-assign) .btn-danger:hover{background:#A80000}
+:where(.bx-cdlg,.ml-assign) .btn-ghost{background:transparent;color:#3A3A42;border-color:rgba(17,17,17,.16)}
+:where(.bx-cdlg,.ml-assign) .btn-ghost:hover{background:rgba(17,17,17,.06);color:#141414}
