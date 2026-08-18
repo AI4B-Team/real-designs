@@ -128,6 +128,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     address: "",
     url: "",
     prompt: "",
+    describeBusy: false,
+
     dragging: false,
     busyLabel: "Adding Photos",
     /** Many photos landed in a single-image context: let the user choose one. */
