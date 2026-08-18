@@ -1535,7 +1535,9 @@ function startDesigning() {
     window.alert("Select at least one photo to design.");
     return;
   }
-  const unsure = sel.filter((i) => stateOf(i).cls === "warn");
+  /* stateOf() returns null once a room is settled, so read it defensively and
+     treat a missing room type as the real blocker. */
+  const unsure = sel.filter((i) => !String(i.room || "").trim() || stateOf(i)?.cls === "warn");
   if (unsure.length) {
     window.alert("Set a room type for every selected photo first. " + unsure.length + " still need one.");
     return;
