@@ -1864,3 +1864,58 @@
 .rd-app .wt-meta{grid-column:1;font-size:.78rem;color:#6b6b72}
 .rd-app .wt-row-item button{grid-column:2;grid-row:1}
 .rd-app .wt-empty{font-size:.86rem;color:#6b6b72;padding:12px 0}
+
+
+/* ---------- Photo Design canvas workspace: fixed center, scrolling sides ----------
+   Only the individual Studio editor view (source chosen). Review Rooms grid and the
+   Video Builder are untouched. */
+.rd-app{--app-header-height:58px}
+
+@media (min-width:1241px){
+  .rd-app:has(#v-studio.on .studio:not(.st-empty)) .main{height:100dvh;min-height:0;overflow:hidden}
+  .rd-app:has(#v-studio.on .studio:not(.st-empty)) .content{
+    height:calc(100dvh - var(--app-header-height));
+    min-height:0;overflow:hidden;display:flex;flex-direction:column;
+  }
+  .rd-app #v-studio.view.on{display:flex;flex-direction:column;min-height:0;flex:1}
+  .rd-app #v-studio.on .studio:not(.st-empty){
+    height:100%;min-height:0;overflow:hidden;align-items:stretch;
+  }
+
+  /* Left Setup panel: fixed heading, internal scroll */
+  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child{
+    height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .card-h{flex:none}
+  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .card-b{
+    flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;
+  }
+
+  /* Center canvas column: never scrolls */
+  .rd-app #v-studio.on .studio:not(.st-empty) > div:nth-child(2){
+    height:100%;min-height:0;overflow:hidden;position:relative;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard{
+    height:100%;min-height:0;display:flex;flex-direction:column;overflow:hidden;position:relative;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-h{flex:none}
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b{
+    flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;
+    padding-bottom:14px;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > *{flex:none}
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvas{
+    flex:1 1 auto;min-height:0;aspect-ratio:auto;margin-bottom:12px;background:#EFEDE8;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvas img{
+    width:100%;height:100%;max-width:100%;max-height:100%;object-fit:contain;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard .vars{
+    max-height:96px;overflow-y:auto;overscroll-behavior:contain;
+  }
+
+  /* Right column: Object Controls + Version History scroll together */
+  .rd-app #v-studio.on .studio:not(.st-empty) > .right{
+    height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;
+  }
+}
