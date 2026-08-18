@@ -392,6 +392,7 @@ const acctBtn=document.getElementById('acctBtn'),acctMenu=document.getElementByI
 function closeAcct(){acctMenu.classList.remove('on');acctBtn.setAttribute('aria-expanded','false')}
 acctBtn.addEventListener('click',e=>{
   e.stopPropagation();
+  try{window.rdCloseCreateMenu&&window.rdCloseCreateMenu();}catch(_){}
   const open=!acctMenu.classList.contains('on');
   acctMenu.classList.toggle('on',open);acctBtn.setAttribute('aria-expanded',String(open));
 });
@@ -478,7 +479,7 @@ function updateSearchMeta(){
 }
 if(schBtn&&schMenu){
   schBtn.addEventListener('click',e=>{
-    e.stopPropagation(); closeAcct(); closeSchRes();
+    e.stopPropagation(); closeAcct(); closeSchRes(); try{window.rdCloseCreateMenu&&window.rdCloseCreateMenu();}catch(_){}
     const open=!schMenu.classList.contains('on');
     schMenu.classList.toggle('on',open); schBtn.setAttribute('aria-expanded',String(open));
   });
@@ -3347,7 +3348,7 @@ loadPrefs();
 const helpBtn=document.getElementById('helpBtn'),helpMenu=document.getElementById('helpMenu');
 function closeHelp(){ if(helpMenu){helpMenu.classList.remove('on');helpBtn.setAttribute('aria-expanded','false');} }
 if(helpBtn&&helpMenu){
-  helpBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();
+  helpBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();try{window.rdCloseCreateMenu&&window.rdCloseCreateMenu();}catch(_){}
     const open=!helpMenu.classList.contains('on');helpMenu.classList.toggle('on',open);helpBtn.setAttribute('aria-expanded',String(open));});
   helpMenu.addEventListener('click',e=>{ if(e.target.closest('.acct-i')) closeHelp(); });
   document.addEventListener('click',e=>{ if(!e.target.closest('.help-wrap')) closeHelp(); });
@@ -3678,7 +3679,7 @@ function renderNotifs(){
 const notifBtn=document.getElementById('notifBtn'),notifMenu=document.getElementById('notifMenu');
 function closeNotif(){ if(notifMenu){notifMenu.classList.remove('on');notifBtn.setAttribute('aria-expanded','false');} }
 if(notifBtn&&notifMenu){
-  notifBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();closeHelp();
+  notifBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();closeHelp();try{window.rdCloseCreateMenu&&window.rdCloseCreateMenu();}catch(_){}
     const open=!notifMenu.classList.contains('on');notifMenu.classList.toggle('on',open);
     notifBtn.setAttribute('aria-expanded',String(open)); if(open) buildNotifs();});
   document.addEventListener('click',e=>{ if(!e.target.closest('.notif-wrap')) closeNotif(); });
