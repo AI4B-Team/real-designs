@@ -684,7 +684,13 @@ function openCanvasFor(key) {
   if (el) el.click();
 }
 
+/** Card shape follows the ratio the photo will actually render at. */
+function ratioClass(r) {
+  return r === "4:3" ? "rt-43" : r === "4:5" ? "rt-45" : r === "1:1" ? "rt-11" : "rt-orig";
+}
+
 function cardHtml(it, seq) {
+
   const st = stateOf(it);
   const ws = workState(it);
   const label = it.room || "Choose Room";
