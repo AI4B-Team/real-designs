@@ -66,6 +66,8 @@ export function roomSelectHtml(opts = {}) {
 export function roomBadge(state = {}) {
   if (state.detect === "running" || state.detect === "pending") return { cls: "wait", label: "Detecting" };
   if (state.source === "manual") return { cls: "ok", label: state.custom ? "Custom" : "Changed" };
+  /* A label carried in from an already-saved photo was not changed here. */
+  if (state.source === "library") return { cls: "ok", label: "Saved" };
   if (state.source === "ai" && state.confident) return { cls: "ok", label: "Detected" };
   if (state.source === "ai") return { cls: "warn", label: "Needs Review" };
   return { cls: "warn", label: "Unassigned" };

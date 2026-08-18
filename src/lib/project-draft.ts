@@ -220,7 +220,12 @@ export async function migrateLegacyStagingDraft(deps: MigrationDeps): Promise<{ 
       path: i.path,
       name: i.name || null,
       room: i.room || null,
-      room_source: i.roomSource === "manual" ? "manual" : i.room ? "ai" : "none",
+      room_source:
+        i.roomSource === "manual" || i.roomSource === "library"
+          ? i.roomSource
+          : i.room
+            ? "ai"
+            : "none",
       confidence: Number(i.confidence || 0),
       selected: i.selected !== false,
       done: !!i.done,

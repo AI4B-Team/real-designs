@@ -21,7 +21,7 @@ const DraftAsset = z.object({
   name: z.string().max(300).nullable().optional(),
   room: z.string().max(120).nullable().optional(),
   /** Who put the room label there: the classifier, the user, or nobody. */
-  room_source: z.enum(["ai", "manual", "none"]).default("none"),
+  room_source: z.enum(["ai", "manual", "library", "none"]).default("none"),
   confidence: z.number().min(0).max(1).default(0),
   selected: z.boolean().default(true),
   done: z.boolean().default(false),

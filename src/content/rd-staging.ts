@@ -123,7 +123,8 @@ function draftPayload() {
         path: i.path,
         name: i.name,
         room: i.room || null,
-        room_source: i.roomSource === "manual" ? "manual" : i.roomSource === "ai" ? "ai" : "none",
+        room_source:
+          i.roomSource === "manual" || i.roomSource === "ai" || i.roomSource === "library" ? i.roomSource : "none",
         confidence: Number(i.confidence || 0),
         selected: !!i.selected,
         done: !!i.done,
@@ -375,7 +376,7 @@ function addExisting(photos) {
     status: "ready",
     error: "",
     room: p.room || "",
-    roomSource: p.room ? "manual" : "none",
+    roomSource: p.roomSource || p.room_source || (p.room ? "library" : "none"),
     confidence: 0,
     detect: "done",
     selected: true,
@@ -465,7 +466,7 @@ async function detectRooms(list) {
 function stateOf(it) {
   /* Wording lives in the shared builder chrome so both builders agree. */
   return roomBadge({
-    detect: it.roomSource === "manual" ? "done" : it.detect,
+    detect: it.roomSource === "manual" || it.roomSource === "library" ? "done" : it.detect,
     source: it.roomSource,
     confident: Number(it.confidence || 0) >= ACCEPT_CONFIDENCE,
     custom: !!it.room && !ROOM_OPTIONS.some((r) => r.label === it.room),
