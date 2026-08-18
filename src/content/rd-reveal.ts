@@ -1132,11 +1132,29 @@ function bindAddressInputs(el, w) {
   el.querySelectorAll("[data-addr-retry]").forEach((b) => (b.onclick = () => autosaveAddress(w)));
 }
 
-/** Title the user never has to type: address, property or design name. */
+/* Title and address are independent. The title only follows the address while
+   the user has not typed one of their own (titleTouched). */
 
 function defaultTitle(w) {
-  if (w.titleTouched && w.title) return w.title;
-  return defaultVideoTitle(w.address || w.propertyLabel, w.titleTouched, w.title);
+  return resolveProjectTitle({
+    kind: "video",
+    title: w.title ?? null,
+    titleTouched: !!w.titleTouched,
+    address: w.address || w.propertyLabel,
+  });
+}
+
+/** The address-based suggestion, when it differs from the current title. */
+function titleSuggestion(w) {
+  const s = suggestVideoTitle(w.address || w.propertyLabel);
+  if (!s) return "";
+  return sanitizeTitle(defaultTitle(w)) === s ? "" : s;
+}
+
+function titleFieldHtml(w) {
+  const sug = titleSuggestion(w);
+  return `<label class="rv-f">Video Title<input id="rvTitle" maxlength="160" placeholder="Untitled Video" value="${esc(defaultTitle(w))}"></label>
+  ${sug ? `<div class="rv-note rv-sugt">Suggested: ${esc(sug)} <button class="fb-link" data-usetitle="1">Use Suggested Title</button></div>` : ""}`;
 }
 
 /* Step 1 is the shared source picker, mounted after render. Nothing about
@@ -1145,8 +1163,9 @@ function stepPhotos() {
   const w = S.wizard;
   const chosen = w.propertyId ? (S.tree.find((p) => p.id === w.propertyId)?.address || w.propertyLabel) : "";
   const failed = w.uploadFails || [];
-  return `<label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
+  return `${titleFieldHtml(w)}
   ${addressFieldHtml(w, S.tree || [], { id: "rvAddr" })}
+
   <div id="rvPicker"></div>
   ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
   ${w.uploadPrep && w.uploadPrep.length ? `<div class="rv-prep">${w.uploadPrep
