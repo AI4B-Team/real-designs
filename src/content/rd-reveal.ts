@@ -18,6 +18,11 @@ import {
   sceneFrames,
   SE_TRANSITIONS,
   SE_CROPS,
+  SE_MOTIONS,
+  SE_CREDITS,
+  SE_DURATIONS,
+  seMotion,
+  seMotionLabel,
   seTransitionName,
   frameConfigured,
   AI_TRANSITION_AVAILABLE,
@@ -1838,7 +1843,7 @@ function sceneSettings(s, clip) {
   else if (clip && clip.status === "completed" && clip.approved && s.use_clip)
     add({ id: "clip", icon: "clapperboard", label: "AI Clip", value: "In Use", cls: "ai", pop: null, primary: true, locked: true });
   if (frameConfigured(fr))
-    add({ id: "frames", icon: "arrow-left-right", label: "Start / End", value: seTransitionName(fr.transition_type), pop: "frames", primary: true });
+    add({ id: "frames", icon: "arrow-left-right", label: "Start / End", value: seFrameStatusText(fr), pop: "look:frames", primary: true });
   if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive"))
     add({ id: "motion", icon: "camera", label: "Motion", value: motionLabel(s), pop: "motion", primary: true });
   if (s.vfx && s.vfx !== "none")
@@ -1877,7 +1882,15 @@ function primaryTreatment(s, clip) {
   if (busy)
     return { id: "generating", label: "Generating", cls: "busy", icon: "loader", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Generating AI motion. Open job status." };
   if (frameConfigured(fr))
-    return { id: "frames", label: "Start / End", cls: "", icon: "arrow-left-right", motion: "static", open: `data-pop="frames" data-key="${esc(s.key)}"`, name: `Motion: Start and End frames, ${seTransitionName(fr.transition_type)}. Open start and end settings.` };
+    return {
+      id: "frames",
+      label: fr.status === "failed" ? "Failed" : "Start/End",
+      cls: fr.status === "failed" ? "bad" : fr.status === "queued" || fr.status === "processing" ? "busy" : fr.status === "completed" ? "ai" : "",
+      icon: fr.status === "failed" ? "triangle-alert" : "arrow-left-right",
+      motion: "static",
+      open: `data-pop="look" data-fxtab="frames" data-key="${esc(s.key)}"`,
+      name: `Start / End: ${seFrameStatusText(fr)}. Open the saved Start / End settings.`,
+    };
   if (clip && clip.status === "completed" && clip.approved && s.use_clip)
     return { id: "ai", label: "AI Motion", cls: "ai", icon: "clapperboard", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Motion: AI Motion. Open animate settings." };
   if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive")) {
