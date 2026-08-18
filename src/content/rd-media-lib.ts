@@ -1184,7 +1184,7 @@ async function openDetail(m, opts) {
     ["Status", m.draft ? "Draft" : STATUS_LABEL[m.status] || m.status],
     ["Type", mediaTypeLabel(m)],
     m.room && m.room !== "Needs Review" ? ["Room", m.room] : null,
-    ["Property", m.property ? addressDisplay(m.property) : "Unassigned"],
+    ["Property", propText(m)],
     m.photoCount ? ["Photos", String(m.photoCount)] : null,
     ["Created", fmtDate(m.createdAt)],
     m.updatedAt && m.updatedAt !== m.createdAt ? ["Last Updated", fmtDate(m.updatedAt)] : null,
@@ -1278,11 +1278,15 @@ async function openDetail(m, opts) {
   first && first.focus();
 }
 
-/** Address first, room second — never a raw record id. */
+/** A clean address, or an honest "Unassigned" — never a raw record id. */
+function propText(m) {
+  return addressDisplay({ property_address: m.property || m.address || null, property_id: m.propertyId || null }).text;
+}
+
+/** Address first, room second. */
 function drawerSub(m) {
-  const addr = m.property ? addressDisplay(m.property) : "Unassigned";
   const room = m.room && m.room !== "Needs Review" ? " · " + m.room : "";
-  return addr + room;
+  return propText(m) + room;
 }
 
 const STEP_LABEL = { intake: "Add Photos", photos: "Add Photos", scenes: "Scenes", motion: "Motion", effects: "Effects", audio: "Audio", branding: "Branding", review: "Review", canvas: "Design Canvas", rooms: "Review Rooms" };
