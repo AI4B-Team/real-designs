@@ -2823,6 +2823,8 @@ function render() {
   paint();
   paintAssetThumbs();
 
+  if (S.screen === "wizard" && S.wizard) autosaveWizard(S.wizard);
+  if (S.screen !== "wizard") stopWizardAutosave();
   if (S.screen === "library") paintThumbs();
   if (S.screen === "detail" && S.detail) mountPlayer();
   bind();
@@ -2846,7 +2848,7 @@ function bind() {
   /* wizard */
   const w = S.wizard;
   if (w) {
-  on("#rvCancel", "click", () => { revokeUploadUrls(w); S.screen = "library"; S.wizard = null; render(); });
+  on("#rvCancel", "click", () => { stopWizardAutosave(); revokeUploadUrls(w); S.screen = "library"; S.wizard = null; render(); });
   on("#rvBack", "click", () => { w.step = prevStep(w.step); render(); });
   on(".rv-rail-i", "click", async (e) => {
     const key = e.currentTarget.dataset.sec;
@@ -3694,6 +3696,35 @@ function editExisting(d) {
     version_id: s.source_version_id,
   }));
   w.step = 3;
+  /* Resume an unfinished builder exactly where it was left, from the stored
+     draft state rather than from anything cached in this browser. */
+  const ds = p.draft_state || null;
+  if (ds && p.status === "draft") {
+    w.gridOrder = Array.isArray(ds.gridOrder) ? ds.gridOrder : w.gridOrder;
+    w.uploads = (ds.uploads || []).map((u) => ({
+      id: u.id, name: u.name, originalName: u.name, url: "", file: null,
+      storagePath: u.path, room: u.room || "Unsorted", roomSource: u.room_source || "ai",
+    }));
+    if (ds.scenes?.length && !w.scenes.length) w.scenes = ds.scenes;
+    if (ds.titles) w.titles = ds.titles;
+    if (ds.audio) {
+      w.presentation = ds.audio.presentation ?? w.presentation;
+      w.music = ds.audio.music ?? w.music;
+      w.volume = ds.audio.volume ?? w.volume;
+      w.beatSync = ds.audio.beatSync ?? w.beatSync;
+      w.narration = ds.audio.narration ?? w.narration;
+      w.script = ds.audio.script ?? w.script;
+      w.voice = ds.audio.voice ?? w.voice;
+      w.captions = ds.audio.captions ?? w.captions;
+    }
+    w.quality = ds.quality || w.quality;
+    const step = Number(p.builder_step || ds.step || 2);
+    w.step = Number.isFinite(step) && step >= 1 ? step : 2;
+    /* Storage paths become viewable URLs for this session only. */
+    Promise.all(
+      w.uploads.map(async (u) => { try { u.url = await roomPhotoUrl(u.storagePath); } catch (_) {} }),
+    ).then(() => { attachUploads(w); render(); });
+  }
   S.screen = "wizard";
   loadWizardAssets().then(render);
   render();
