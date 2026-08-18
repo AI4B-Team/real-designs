@@ -560,12 +560,12 @@ function render() {
   const el = host();
   if (!el || !S) return;
   if (S.step === "add") {
+    /* Step 1 runs full width in both builders: the picker is the whole job. */
     el.innerHTML = `<section class="rds-page">
-      ${stepRailHtml("add")}
-      <header class="rds-ph">
+      <div class="rv-head">
         <div><h2>Add Photos</h2><p>Add every photo you want to design. We'll sort them by room on the next screen.</p></div>
         <button class="btn btn-ghost btn-sm" id="rdsClose"><i data-lucide="x"></i>Exit</button>
-      </header>
+      </div>
       <div class="rds-add"><div id="rdsPicker"></div></div>
     </section>`;
     paint();
@@ -576,44 +576,55 @@ function render() {
     return;
   }
 
+  const sel = selectedCount();
+  const all = S.items.length > 0 && sel === S.items.length;
   el.innerHTML = `<section class="rds-page">
-    ${stepRailHtml("review")}
-    <header class="rds-ph">
-      <div class="rds-ph-l">
+    <div class="rv-head">
+      <div>
         <h2>Review Rooms</h2>
         <p>Confirm the room type for each photo.</p>
       </div>
-      <div class="rds-ph-r">
-        ${addressBarHtml(S, PROPS || [], "rdsAddr")}
-        <span id="rdsStatus">${esc(statusText())}</span>
+      <div class="rv-head-tools">
+        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
+        <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
+        <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+          <div class="rv-more-m">
+            <button data-act="all">Select All</button>
+            <button data-act="none">Clear Selection</button>
+            <button data-act="del">Remove Selected</button>
+            <button id="rdsClose">Exit Project</button>
+          </div>
+        </details>
       </div>
-    </header>
-    <div class="rds-bar">
-      <div class="rds-bar-l">
-        <button class="btn btn-dark btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room For Selected</button>
-        <div class="rds-menu-wrap">
-          <button class="btn btn-ghost btn-sm" id="rdsMoreBtn" aria-haspopup="true" aria-expanded="false"><i data-lucide="more-horizontal"></i>More</button>
-          <div class="rds-menu" id="rdsMoreMenu" role="menu">
-            <button class="rds-menu-i" data-act="all"><i data-lucide="check-square"></i>Select All</button>
-            <button class="rds-menu-i" data-act="none"><i data-lucide="square"></i>Clear Selection</button>
-            <button class="rds-menu-i" data-act="room"><i data-lucide="tag"></i>Apply Room Type</button>
-            <button class="rds-menu-i" data-act="del"><i data-lucide="trash-2"></i>Remove Selected</button>
+    </div>
+    <div class="rv-layout rv-railed">
+      ${stepRailHtml("review")}
+      <div class="rv-wiz bx-work">
+        <div class="rv-utility">
+          <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
+          <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}<span class="rds-save" id="rdsStatus">${esc(statusText())}</span></div>
+          <div class="rv-utility-a">
+            <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room</button>
+            <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+              <div class="rv-more-m">
+                <button data-act="all">Select All</button>
+                <button data-act="none">Clear Selection</button>
+                <button data-act="room">Apply Room Type</button>
+                <button data-act="del">Remove Selected</button>
+              </div>
+            </details>
+          </div>
+        </div>
+        ${gridHtml()}
+        <div class="rv-gridfoot">
+          <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "room" : "rooms"} selected</span></div>
+          <div class="rv-gridfoot-a">
+            <button class="btn btn-ghost" id="rdsBack">Back</button>
+            <button class="btn btn-primary" id="rdsGo">Continue</button>
           </div>
         </div>
       </div>
-      <div class="rds-bar-r">
-        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
-        <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
-      </div>
     </div>
-    <div class="rds-b" id="rdsBody">${gridHtml()}</div>
-    <footer class="rds-foot">
-      <button class="btn btn-ghost btn-sm" id="rdsBack"><i data-lucide="arrow-left"></i>Back</button>
-      <div class="rds-foot-r">
-        <button class="btn btn-ghost btn-sm" id="rdsClose">Exit</button>
-        <button class="btn btn-primary btn-sm" id="rdsGo"><i data-lucide="wand-2"></i>Start Designing</button>
-      </div>
-    </footer>
   </section>`;
 
   paint();
@@ -637,7 +648,7 @@ function bindRail(el) {
 
 function patchCard(it) {
   if (!wrap || !S || S.step !== "review") return;
-  const el = wrap.querySelector('.rds-card[data-k="' + it.key + '"]');
+  const el = wrap.querySelector('.rv-tile[data-k="' + it.key + '"]');
   if (!el) return;
   const next = document.createElement("div");
   next.innerHTML = cardHtml(it);
@@ -650,19 +661,28 @@ function patchCard(it) {
 /** One authoritative selection state: the item drives the box and the border. */
 function syncCard(it) {
   if (!wrap) return;
-  const card = wrap.querySelector('.rds-card[data-k="' + it.key + '"]');
+  const card = wrap.querySelector('.rv-tile[data-k="' + it.key + '"]');
   if (!card) return;
-  card.classList.toggle("sel", !!it.selected);
+  card.classList.toggle("on", !!it.selected);
   card.classList.toggle("active", S.activeKey === it.key);
-  const box = card.querySelector('input[data-sel="' + it.key + '"]');
-  if (box) box.checked = !!it.selected;
+  const box = card.querySelector('[data-sel="' + it.key + '"]');
+  if (box) box.setAttribute("aria-checked", it.selected ? "true" : "false");
 }
 
 function syncSelection() {
   if (!S || !wrap) return;
   S.items.forEach(syncCard);
+  const sel = selectedCount();
   const set = wrap.querySelector("#rdsSetRoom");
-  if (set) set.disabled = !S.items.some((i) => i.selected);
+  if (set) set.disabled = !sel;
+  const count = wrap.querySelector("#rdsSelCount");
+  if (count) count.textContent = `${sel} of ${S.items.length} selected`;
+  const foot = wrap.querySelector("#rdsFootCount");
+  if (foot) foot.textContent = `${sel} ${sel === 1 ? "room" : "rooms"} selected`;
+  const all = wrap.querySelector("#rdsSelAll");
+  if (all) all.checked = S.items.length > 0 && sel === S.items.length;
+  const badge = wrap.querySelector('.rv-rail-i[data-step="review"] .bx-badge');
+  if (badge) badge.textContent = String(sel);
   patchStatus();
 }
 
