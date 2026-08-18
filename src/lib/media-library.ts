@@ -178,7 +178,11 @@ export async function loadMediaLibrary() {
   (videos.projects || []).forEach((p: any) => {
     const vs = variantsBy.get(p.id) || [];
     const sc = (scenesBy.get(p.id) || []).sort((a, b) => (a.sequence || 0) - (b.sequence || 0));
+    /* A draft video project with no scenes and no rendered variant holds no
+       work yet: it would show as a blank, unopenable tile. Skip it. */
+    if (!sc.length && !vs.length && String(p.status || "draft").toLowerCase() === "draft") return;
     const done = vs.find((v) => ["done", "complete", "ready"].includes(String(v.render_status || "").toLowerCase()));
+
     const dur = done?.duration || sc.reduce((n, s) => n + Number(s.duration || 0), 0);
     const shared = (videos.shares || []).some((s: any) => s.video_project_id === p.id);
     const st = videoStatus(p, vs);
