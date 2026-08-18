@@ -1125,6 +1125,18 @@ function applyRatiosLive() {
   paint();
 }
 
+/** Every entry point into the format control, rebound after a header swap. */
+function bindRatioControls(el) {
+  el.querySelectorAll("[data-ratio]").forEach((b) =>
+    b.addEventListener("click", () => void setProjectRatio(b.getAttribute("data-ratio"))),
+  );
+  el.querySelectorAll("[data-ratiomore]").forEach((b) =>
+    b.addEventListener("click", () => openProjectRatioMore()),
+  );
+  const ratioSel = el.querySelector("[data-ratiosel]");
+  if (ratioSel) ratioSel.onchange = () => void setProjectRatio(ratioSel.value);
+}
+
 /** Re-render only the header format control (custom chip appears/disappears). */
 function renderHeaderFormat(el, project) {
   const host_ = el.querySelector(".bx-fmtsel");
@@ -1284,9 +1296,6 @@ function bindReview(el) {
     }),
   );
   bindRatioControls(el);
-  el.querySelectorAll("[data-ratiomore]").forEach((b) => b.addEventListener("click", () => openProjectRatioMore()));
-  const ratioSel = el.querySelector("[data-ratiosel]");
-  if (ratioSel) ratioSel.onchange = () => void setProjectRatio(ratioSel.value);
   bindAddress(el);
 
   /* Add Photos stays on this page: the picker adds straight into the grid. */
