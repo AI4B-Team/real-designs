@@ -324,6 +324,7 @@ export function reopenStaging() {
   if (!S || !S.items.length) return false;
   S.step = "review";
   show();
+  restoreScroll();
   return true;
 }
 
