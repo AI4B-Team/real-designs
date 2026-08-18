@@ -1163,7 +1163,7 @@ function studioDraftTitle(){
 }
 
 /** Saves or refreshes the draft row for whatever source is on the canvas. */
-async function saveStudioDraft(path){
+async function saveStudioDraft(path,extra){
   const p=path||STUDIO_DRAFT_PATH;
   if(!p||/^(blob:|data:)/i.test(p)) return;
   STUDIO_DRAFT_PATH=p;
@@ -1177,9 +1177,10 @@ async function saveStudioDraft(path){
       property_address:(STUDIO_CTX&&STUDIO_CTX.address)||null,
       builder_step:'canvas',
       assets:[{key:'source',path:p}],
-      settings:{room:(STUDIO_CTX&&STUDIO_CTX.room)||null,style:(document.getElementById('fStyle')||{}).value||null},
+      settings:Object.assign({room:(STUDIO_CTX&&STUDIO_CTX.room)||null,style:(document.getElementById('fStyle')||{}).value||null},extra||{}),
     }});
   }catch(_){}
+
 }
 
 /** A finished render retires the draft; the saved design is the durable record. */
