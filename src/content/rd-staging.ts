@@ -453,7 +453,7 @@ async function detectRooms(list) {
 /* --------------------------------------------------------------- renderers */
 
 function stateOf(it) {
-  if (it.roomSource === "manual") return { cls: "ok", label: "Confirmed" };
+  if (it.roomSource === "manual") return { cls: "ok", label: "Edited" };
   if (it.detect === "running" || it.detect === "pending") return { cls: "wait", label: "Detecting" };
   if (it.roomSource === "ai" && it.confidence >= ACCEPT_CONFIDENCE) return { cls: "ok", label: "Detected" };
   if (it.roomSource === "ai") return { cls: "warn", label: "Needs Review" };
@@ -470,7 +470,7 @@ function ordered() {
 function cardHtml(it) {
   const st = stateOf(it);
   const label = it.room || UNASSIGNED_LABEL;
-  return `<article class="rds-card${it.selected ? " sel" : ""}${it.done ? " done" : ""}" data-k="${it.key}">
+  return `<article class="rds-card${it.selected ? " sel" : ""}${it.done ? " done" : ""}" data-k="${it.key}" data-pick="${it.key}">
     <label class="rds-pick"><input type="checkbox" data-sel="${it.key}" ${it.selected ? "checked" : ""} aria-label="Select ${esc(it.name)}"></label>
     <button class="rds-thumb" data-open="${it.key}" aria-label="Open ${esc(it.name)} in the canvas">
       <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
@@ -493,6 +493,7 @@ function cardHtml(it) {
     </div>
   </article>`;
 }
+
 
 function gridHtml() {
   return `<div class="rds-grid">${ordered().map(cardHtml).join("")}</div>`;
