@@ -6,6 +6,7 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { STUDIO_HASH } from "@/lib/studio-context";
 
 export const EXIT_LABELS = {
   save: "Save & Exit",
