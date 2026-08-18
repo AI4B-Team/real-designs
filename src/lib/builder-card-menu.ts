@@ -10,6 +10,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { modalFooterHtml } from "@/lib/modal-footer";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
@@ -202,7 +203,11 @@ if (typeof document !== "undefined" && !document.__bxCardMenu) {
 
 /* --------------------------------------------------------------- dialogs */
 
-/** Shared confirmation sheet. Resolves true only on the confirm button. */
+/**
+ * Shared confirmation sheet. One dominant action on the far right, the neutral
+ * Cancel to its left, both built by the shared modal footer so a confirmation
+ * here looks exactly like one anywhere else in the product.
+ */
 export function confirmDialog(opts = {}) {
   return new Promise((resolve) => {
     if (typeof document === "undefined") return resolve(false);
@@ -213,24 +218,30 @@ export function confirmDialog(opts = {}) {
       <h3>${esc(opts.title || "Are You Sure?")}</h3>
       <p>${esc(opts.body || "")}</p>
       ${(opts.notes || []).map((n) => `<p class="bx-cdlg-note">${esc(n)}</p>`).join("")}
-      <div class="bx-cdlg-a">
-        <button type="button" class="btn btn-ghost" data-cd="no">${esc(opts.cancelLabel || "Cancel")}</button>
-        <button type="button" class="btn ${opts.danger ? "btn-danger" : "btn-primary"}" data-cd="yes">${esc(opts.confirmLabel || "Confirm")}</button>
-      </div>
+      ${modalFooterHtml({
+        secondary: { label: opts.cancelLabel || "Cancel", value: "no" },
+        primary: { label: opts.confirmLabel || "Confirm", value: "yes", icon: opts.confirmIcon },
+        destructive: !!opts.danger,
+      })}
     </div>`;
     document.body.appendChild(wrap);
+    paint(wrap);
     const done = (v) => {
       wrap.remove();
       try { prev && prev.focus && prev.focus(); } catch (_) {}
       resolve(v);
     };
     wrap.addEventListener("click", (e) => {
-      const b = e.target.closest("[data-cd]");
-      if (b) return done(b.getAttribute("data-cd") === "yes");
+      const b = e.target.closest("[data-mfa]");
+      if (b) return done(b.getAttribute("data-mfa") === "yes");
       if (e.target === wrap) done(false);
     });
     wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") done(false); });
-    wrap.querySelector('[data-cd="yes"]')?.focus();
+    /* Focus lands on the safe action; a destructive confirm is never one
+       stray Enter away. */
+    const safe = wrap.querySelector('[data-mfa="no"]');
+    const go = wrap.querySelector('[data-mfa="yes"]');
+    ((opts.danger ? safe : go) || safe)?.focus();
   });
 }
 
@@ -243,15 +254,16 @@ export function detailsDialog(opts = {}) {
   wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="${esc(opts.title || "Details")}">
     <h3>${esc(opts.title || "Photo Details")}</h3>
     <dl class="bx-cdlg-dl">${rows.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl>
-    <div class="bx-cdlg-a"><button type="button" class="btn btn-primary" data-cd="no">Close</button></div>
+    ${modalFooterHtml({ primary: { label: "Done", value: "no" } })}
   </div>`;
   document.body.appendChild(wrap);
   wrap.addEventListener("click", (e) => {
-    if (e.target.closest("[data-cd]") || e.target === wrap) wrap.remove();
+    if (e.target.closest("[data-mfa]") || e.target === wrap) wrap.remove();
   });
   wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") wrap.remove(); });
-  wrap.querySelector("[data-cd]")?.focus();
+  wrap.querySelector("[data-mfa]")?.focus();
 }
+
 
 /** A removal is always reversible for a few seconds. */
 export function undoToast(message, onUndo) {
