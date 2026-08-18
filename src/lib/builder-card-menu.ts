@@ -10,6 +10,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
+import { modalFooterHtml } from "@/lib/modal-footer";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
