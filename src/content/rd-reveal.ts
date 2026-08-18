@@ -76,6 +76,7 @@ import {
   getQualityCompatibility,
   lowestCompatibleQuality,
 } from "@/lib/reveal-format";
+import { formatSelectorHtml } from "@/lib/builder-format-selector";
 import {
   listVideos as _listVideos,
   getVideo as _getVideo,
@@ -4705,6 +4706,12 @@ function bind() {
   });
 
   /* setup */
+  on("[data-primaryfmtsel]", "change", (e) => {
+    const f = e.currentTarget.value;
+    w.primaryFormat = f;
+    w.additionalFormats = (w.additionalFormats || []).filter((x) => x !== f);
+    render();
+  });
   on("[data-primaryfmt]", "click", (e) => {
     const f = e.currentTarget.dataset.primaryfmt;
     w.primaryFormat = f;
