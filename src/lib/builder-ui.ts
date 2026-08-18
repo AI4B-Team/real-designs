@@ -119,9 +119,30 @@ if (typeof document !== "undefined" && !document.__rdToolbarKeys) {
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     const tools = e.target && e.target.closest && e.target.closest(".rv-tools");
-    if (!tools) return;
+    if (!tools) {
+      document.querySelectorAll(".rv-tile.tools-open").forEach((t) => t.classList.remove("tools-open"));
+      return;
+    }
     const card = tools.closest(".rv-tile");
     const th = card && card.querySelector(".rv-tile-th");
     if (th) { e.stopPropagation(); th.focus(); }
   });
+
+  /* Touch has no hover: tapping a photo reveals the same toolbar, and tapping
+     anywhere else dismisses it. Mouse and keyboard keep the hover/focus path. */
+  document.addEventListener(
+    "pointerdown",
+    (e) => {
+      if (e.pointerType !== "touch") return;
+      const t = e.target;
+      const inTools = t && t.closest && t.closest(".rv-tools, .rv-tools-more");
+      const tile = t && t.closest && t.closest(".rv-tile");
+      document.querySelectorAll(".rv-tile.tools-open").forEach((x) => {
+        if (x !== tile) x.classList.remove("tools-open");
+      });
+      if (tile && !inTools) tile.classList.add("tools-open");
+    },
+    true,
+  );
 }
+
