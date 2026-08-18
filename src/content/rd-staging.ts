@@ -459,6 +459,12 @@ export async function resumeStagingDraft(id) {
     if (!draft || !(draft.assets || []).length) return false;
     hydrate(draft);
     show();
+    /* A draft saved on the canvas reopens on that exact photo. */
+    if (S && S.resumeKey) {
+      const key = S.resumeKey;
+      S.resumeKey = null;
+      void openInCanvas(key);
+    }
     return true;
   } catch (_) {
     return false;
