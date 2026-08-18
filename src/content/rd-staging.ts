@@ -849,6 +849,13 @@ function bindReview(el) {
       if (tile) tile.classList.toggle("tools-open");
       return;
     }
+    const retry = t.closest("[data-retry]");
+    if (retry) {
+      e.stopPropagation();
+      const it = S.items.find((i) => i.key === retry.getAttribute("data-retry"));
+      if (it) startBulkDesign([it], true);
+      return;
+    }
     const del = t.closest("[data-del]");
     if (del) { e.stopPropagation(); removeOne(del.getAttribute("data-del")); return; }
     const room = t.closest("[data-room]");
