@@ -32,7 +32,12 @@ export function formatSelectorHtml(opts = {}) {
   const value = opts.value;
   const attr = opts.attr || "fmt";
   const base = opts.id || "bxfmt-" + attr;
-  const current = options.find((o) => o.id === value) || options[0] || { id: "", label: "" };
+  /* Some surfaces (Photo Design) keep extra ratios behind "More Ratios". The
+     header still shows only the primary buttons; a value picked from the extra
+     list is shown as a compact custom chip instead of a fourth button. */
+  const more = opts.more || null; // { label, value: "__more" } | null
+  const custom = more && value && !options.some((o) => o.id === value) ? opts.customLabel || String(value) : "";
+  const current = options.find((o) => o.id === value) || (custom ? { id: "", label: "" } : options[0] || { id: "", label: "" });
   return `<div class="rv-orient bx-fmtsel">
     <span id="${esc(base)}-lbl">${esc(label)}</span>
     <div class="rv-seg bx-fmtseg" role="group" aria-labelledby="${esc(base)}-lbl">${options
@@ -41,6 +46,7 @@ export function formatSelectorHtml(opts = {}) {
         aria-pressed="${o.id === current.id ? "true" : "false"}">${esc(optLabel(o))}</button>`,
       )
       .join("")}</div>
+    ${custom ? `<button type="button" class="bx-fmtcustom" data-${esc(attr)}more>Custom: ${esc(custom)}</button>` : ""}
     <label class="bx-fmtsel-c">
       <span>${esc(label)}:</span>
       <select data-${esc(attr)}sel aria-label="${esc(label)}">${options
@@ -48,7 +54,9 @@ export function formatSelectorHtml(opts = {}) {
           (o) =>
             `<option value="${esc(o.id)}"${o.id === current.id ? " selected" : ""}>${esc(optLabel(o))}</option>`,
         )
-        .join("")}</select>
+        .join("")}${
+          custom ? `<option value="${esc(value)}" selected>${esc(custom)}</option>` : ""
+        }${more ? `<option value="__more">${esc(more.label || "More Ratios")}</option>` : ""}</select>
     </label>
   </div>`;
 }
