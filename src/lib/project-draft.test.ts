@@ -65,7 +65,7 @@ describe("draft autosave", () => {
     const a = new DraftAutosaver("d1", { save: (p) => server.save(p), debounceMs: 0, storage: store, onState: (s) => states.push(s) });
     a.queue(base("d1"));
     await a.flush();
-    expect(server.rows.get("d1")?.builder_step).toBe("review");
+    expect(server.rows.get("d1")?.['builder_step']).toBe("review");
     expect(store.getItem(cacheKey("d1"))).toBeNull();
     expect(states).toEqual(["saving", "saved"]);
   });
@@ -80,8 +80,8 @@ describe("draft autosave", () => {
     /* Refresh: nothing left in the browser at all. */
     store.removeItem(cacheKey("d2"));
     const reloaded = server.list().find((r) => r.id === "d2");
-    expect(reloaded?.builder_step).toBe("canvas");
-    expect(reloaded?.assets?.[0].path).toBe("u1/a.jpg");
+    expect(reloaded?.['builder_step']).toBe("canvas");
+    expect(reloaded?.['assets']?.[0].path).toBe("u1/a.jpg");
   });
 
   it("survives sign-out and sign-in, and is retrievable on another device", async () => {
@@ -128,7 +128,7 @@ describe("draft autosave", () => {
     await a.flush();
     expect(server.rows.size).toBe(1);
     expect(server.calls).toBe(8);
-    expect(server.rows.get("d5")?.title).toBe("Kitchen Refresh 7");
+    expect(server.rows.get("d5")?.['title']).toBe("Kitchen Refresh 7");
   });
 });
 
@@ -144,8 +144,8 @@ describe("legacy localStorage migration", () => {
     expect(out.migrated).toBe(true);
     expect(store.getItem(LEGACY_STAGING_KEY)).toBeNull();
     const row = server.rows.get("11111111-1111-1111-1111-111111111111")!;
-    expect(row.property_address).toBe("12 Oak St");
-    expect(row.assets[0].room_source).toBe("manual");
+    expect(row['property_address']).toBe("12 Oak St");
+    expect(row['assets'][0].room_source).toBe("manual");
   });
 
   it("keeps the local copy when the server rejects the migration", async () => {
