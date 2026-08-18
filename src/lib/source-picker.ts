@@ -720,7 +720,17 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   function photoPanel() {
     const id = state.propSel;
     if (!id || !opts.loadPropertyPhotos) return "";
-    if (state.propLoading) return '<div class="sp-photos"><p class="sp-note">Loading Photos…</p></div>';
+    if (state.propLoading) {
+      /* Skeletons, not a bare sentence: the grid keeps its shape while photos load. */
+      return (
+        '<div class="sp-photos"><div class="sp-photos-h"><b>Loading Photos…</b></div>' +
+        '<div class="sp-photo-grid">' +
+        Array.from({ length: 6 })
+          .map(() => '<span class="sp-photo is-skel"><span class="sp-th-i is-load"></span></span>')
+          .join("") +
+        "</div></div>"
+      );
+    }
     const photos = state.propPhotos;
     if (!photos.length) return '<div class="sp-photos"><p class="sp-note">This Property Has No Photos Yet.</p></div>';
     const n = state.propChecked.size;
@@ -728,15 +738,21 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '<div class="sp-photos"><div class="sp-photos-h"><b>' + esc(n + " Of " + photos.length + " Selected") + "</b>" +
       '<span><button type="button" class="btn btn-ghost btn-sm" data-sp="pall">Select All</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-sp="pnone">Clear</button>' +
-      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' + (n ? "" : " disabled") + ">Add Selected Photos</button></span></div>" +
+      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' + (n ? "" : " disabled") + ">" +
+      esc(n ? "Add " + n + " Photo" + (n === 1 ? "" : "s") : "Add Photos") + "</button></span></div>" +
       '<div class="sp-photo-grid">' +
       photos
         .map((ph) => {
           const on = state.propChecked.has(ph.id);
+          const label = String(ph.room || ph.name || "Photo");
           return (
             '<button type="button" class="sp-photo' + (on ? " is-sel" : "") + '" aria-pressed="' + (on ? "true" : "false") +
-            '" data-sp-photo="' + esc(ph.id) + '"><span class="sp-prop-th" data-sp-thumb="' + esc(ph.path) + '"></span>' +
-            '<i data-lucide="' + (on ? "circle-check-big" : "circle") + '"></i></button>'
+            '" data-sp-photo="' + esc(ph.id) + '" aria-label="' + esc(label) + '">' +
+            '<span class="sp-th-i is-load" data-sp-thumb="' + esc(ph.path) + '" data-sp-thumb-id="' + esc(ph.id) + '"' +
+            ' data-sp-thumb-alt="' + esc(label) + '"><i data-lucide="image"></i></span>' +
+            '<span class="sp-photo-x" aria-hidden="true"><i data-lucide="' + (on ? "check" : "circle") + '"></i></span>' +
+            '<span class="sp-photo-l">' + esc(label) + "</span>" +
+            "</button>"
           );
         })
         .join("") +
