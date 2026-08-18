@@ -136,8 +136,8 @@ export function openAddressModal(opts: AddressModalOptions) {
     if (e.key === "Tab") {
       const items = Array.from(host.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null || true);
       if (!items.length) return;
-      const first = items[0];
-      const last = items[items.length - 1];
+      const first = items[0]!;
+      const last = items[items.length - 1]!;
       if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
     }
