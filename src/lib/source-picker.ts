@@ -106,7 +106,7 @@ export type PickerProperty = {
   line2?: string;
 };
 
-export type PickerPhoto = { id: string; path: string; name?: string };
+export type PickerPhoto = { id: string; path: string; name?: string; room?: string };
 
 /** One completed, generated design that can become a video scene. */
 export type PickerDesign = {
