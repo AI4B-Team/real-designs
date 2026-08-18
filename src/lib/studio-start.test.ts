@@ -59,7 +59,7 @@ describe("studio start source picker", () => {
     const onDescribe = vi.fn();
     const { host } = mount("design", { onDescribe });
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
-    const ta = host.querySelector("#spPrompt") as HTMLTextAreaElement;
+    const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     expect(ta).toBeTruthy();
     expect(ta.placeholder.startsWith("Describe the space you want to create")).toBe(true);
     const cta = () => host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
@@ -82,7 +82,7 @@ describe("studio start source picker", () => {
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
     const chip = host.querySelector('[data-sp-ex="Coastal Backyard"]') as HTMLElement;
     chip.click();
-    expect((host.querySelector("#spPrompt") as HTMLTextAreaElement).value).toBe("Coastal Backyard");
+    expect((host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement).value).toBe("Coastal Backyard");
     expect(onDescribe).not.toHaveBeenCalled();
   });
 
@@ -91,7 +91,7 @@ describe("studio start source picker", () => {
     const onDescribe = vi.fn(() => new Promise<void>((r) => (release = () => r())));
     const { host } = mount("design", { onDescribe });
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
-    const ta = host.querySelector("#spPrompt") as HTMLTextAreaElement;
+    const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     ta.value = "A coastal backyard with a plunge pool";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, bubbles: true }));
@@ -110,7 +110,7 @@ describe("studio start source picker", () => {
     const onDescribe = vi.fn();
     const { host } = mount("design", { onDescribe });
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
-    const ta = host.querySelector("#spPrompt") as HTMLTextAreaElement;
+    const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     ta.value = "Line one";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
