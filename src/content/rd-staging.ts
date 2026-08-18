@@ -668,7 +668,7 @@ function designFeatures(it) {
   if (d && touched && d.notes)
     out.push({ id: "notes", icon: "pencil-line", label: "Design Instructions", value: d.notes, removable: false });
   if (it.ratio)
-    out.push({ id: "ratio", icon: "crop", label: "Output Ratio", value: ratioLabel(it.ratio), removable: false });
+    out.push({ id: "ratio", icon: "crop", label: "Photo Format", value: ratioLabel(it.ratio), removable: false });
   if (it.resultPath)
     out.push({ id: "version", icon: "layers", label: "Generated Version", value: "Ready", removable: false });
   else if (it.state === "generating")
@@ -1099,8 +1099,8 @@ function openRatioOverride(it) {
   );
   const wrap = document.createElement("div");
   wrap.className = "bx-cdlg";
-  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Output Ratio">
-    <h3>Output Ratio</h3>
+  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Photo Format">
+    <h3>Photo Format</h3>
     <p>${esc(it.name || "This Photo")}</p>
     <div class="rv-seg wrap" style="margin:10px 0 4px">${opts
       .map(
@@ -1149,11 +1149,13 @@ function bindReview(el) {
       if (act === "none") { S.items.forEach((i) => (i.selected = false)); saveDraft(); syncSelection(); return; }
       if (act === "room") { applyRoomToSelected(el.querySelector("#rdsSetRoom") || b); return; }
       if (act === "del") { removeSelected(); return; }
+      if (act === "moreratios") { openProjectRatioMore(); return; }
     }),
   );
   el.querySelectorAll("[data-ratio]").forEach((b) =>
     b.addEventListener("click", () => void setProjectRatio(b.getAttribute("data-ratio"))),
   );
+  el.querySelectorAll("[data-ratiomore]").forEach((b) => b.addEventListener("click", () => openProjectRatioMore()));
   const ratioSel = el.querySelector("[data-ratiosel]");
   if (ratioSel) ratioSel.onchange = () => void setProjectRatio(ratioSel.value);
   bindAddress(el);
