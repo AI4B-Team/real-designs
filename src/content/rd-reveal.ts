@@ -18,6 +18,11 @@ import {
   sceneFrames,
   SE_TRANSITIONS,
   SE_CROPS,
+  SE_MOTIONS,
+  SE_CREDITS,
+  SE_DURATIONS,
+  seMotion,
+  seMotionLabel,
   seTransitionName,
   frameConfigured,
   AI_TRANSITION_AVAILABLE,
@@ -1838,7 +1843,7 @@ function sceneSettings(s, clip) {
   else if (clip && clip.status === "completed" && clip.approved && s.use_clip)
     add({ id: "clip", icon: "clapperboard", label: "AI Clip", value: "In Use", cls: "ai", pop: null, primary: true, locked: true });
   if (frameConfigured(fr))
-    add({ id: "frames", icon: "arrow-left-right", label: "Start / End", value: seTransitionName(fr.transition_type), pop: "frames", primary: true });
+    add({ id: "frames", icon: "arrow-left-right", label: "Start / End", value: seFrameStatusText(fr), pop: "look:frames", primary: true });
   if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive"))
     add({ id: "motion", icon: "camera", label: "Motion", value: motionLabel(s), pop: "motion", primary: true });
   if (s.vfx && s.vfx !== "none")
@@ -1877,7 +1882,15 @@ function primaryTreatment(s, clip) {
   if (busy)
     return { id: "generating", label: "Generating", cls: "busy", icon: "loader", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Generating AI motion. Open job status." };
   if (frameConfigured(fr))
-    return { id: "frames", label: "Start / End", cls: "", icon: "arrow-left-right", motion: "static", open: `data-pop="frames" data-key="${esc(s.key)}"`, name: `Motion: Start and End frames, ${seTransitionName(fr.transition_type)}. Open start and end settings.` };
+    return {
+      id: "frames",
+      label: fr.status === "failed" ? "Failed" : "Start/End",
+      cls: fr.status === "failed" ? "bad" : fr.status === "queued" || fr.status === "processing" ? "busy" : fr.status === "completed" ? "ai" : "",
+      icon: fr.status === "failed" ? "triangle-alert" : "arrow-left-right",
+      motion: "static",
+      open: `data-pop="look" data-fxtab="frames" data-key="${esc(s.key)}"`,
+      name: `Start / End: ${seFrameStatusText(fr)}. Open the saved Start / End settings.`,
+    };
   if (clip && clip.status === "completed" && clip.approved && s.use_clip)
     return { id: "ai", label: "AI Motion", cls: "ai", icon: "clapperboard", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Motion: AI Motion. Open animate settings." };
   if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive")) {
@@ -2192,6 +2205,109 @@ function motionLabel(s) {
   return m ? m[1] : "Auto";
 }
 
+/* ------------------------------------------------------------ start / end */
+
+/** Plain-language state of one saved Start / End configuration. */
+function seFrameStatusText(fr) {
+  if (!fr) return "Not Set";
+  if (fr.status === "queued") return "Queued";
+  if (fr.status === "processing") return `Generating${fr.progress ? ` ${Math.round(fr.progress)}%` : ""}`;
+  if (fr.status === "failed") return "Failed";
+  if (fr.status === "completed") return `${seMotionLabel(fr.motion_preset)} Clip`;
+  return `${seMotionLabel(fr.motion_preset)}, Not Generated`;
+}
+
+/**
+ * The Start / End workspace, shown as the third tab of the Effects modal.
+ * It stays deliberately compact: two frames, a motion preset, an optional
+ * direction and the output settings. Nothing here is a separate builder step.
+ */
+function seWorkspace(w, s) {
+  const d = w.seDraft || {};
+  const fr = sceneFrames.get(s.key);
+  const byKey = new Map(w.available.map((a) => [a.key, a]));
+  const startA = byKey.get(d.start_key) || byKey.get(s.key) || null;
+  const endA = d.end_key ? byKey.get(d.end_key) : null;
+  const busy = fr && (fr.status === "queued" || fr.status === "processing");
+  const failed = fr && fr.status === "failed";
+  const done = fr && fr.status === "completed" && fr.clip_path;
+  const seconds = Number(d.seconds || 8);
+  const fmt = w.primaryFormat || DEFAULT_FORMAT;
+
+  const slot = (which, a, label, hint) => `<div class="se-slot ${a ? "on" : ""}">
+    <b>${label}</b>
+    <div class="se-th" ${a ? `data-img="${esc(a.path)}"` : ""}>${a ? "" : `<i data-lucide="image-plus"></i><em>${esc(hint)}</em>`}</div>
+    <span class="se-cap">${a ? esc(which === "start" && a.key === s.key ? "Current Scene" : a.room || "Untitled") : esc(hint)}</span>
+    <button class="fb-link" data-sepick="${which}">${a ? "Replace" : "Choose"}</button>
+  </div>`;
+
+  const picker = d.picking
+    ? `<div class="se-picker">
+        <div class="se-picker-h">
+          <b>${d.picking === "start" ? "Choose A Start Frame" : "Choose An End Frame"}</b>
+          <div class="se-picker-a">
+            <button class="btn btn-ghost btn-sm" id="rvSeUpload"><i data-lucide="upload"></i>Upload</button>
+            <button class="icon-btn" id="rvSePickX" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+        </div>
+        <span class="rv-note sm">Project photos, media and generated designs already loaded into this video.</span>
+        <div class="se-grid">${w.available.map((a) => `<button class="se-pick ${(d.picking === "start" ? d.start_key : d.end_key) === a.key ? "on" : ""}"
+          data-sepicked="${esc(a.key)}" title="${esc(a.room || "Untitled")}"><span data-img="${esc(a.path)}"></span></button>`).join("")}</div>
+        <input type="file" id="rvSeFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
+      </div>`
+    : "";
+
+  const status = busy
+    ? `<div class="se-status busy"><i data-lucide="loader"></i>
+        <span><b>Generating This Clip</b><em>${Math.round(fr.progress || 0)}% Complete. You can leave this page — it keeps running.</em></span>
+        <button class="fb-link danger" id="rvSeCancel">Cancel</button></div>`
+    : failed
+    ? `<div class="se-status bad"><i data-lucide="triangle-alert"></i>
+        <span><b>Generation Failed</b><em>${esc(fr.error_message || "The clip could not be generated. No credits were charged.")}</em></span>
+        <button class="fb-link" id="rvSeRetry">Retry</button></div>`
+    : done
+    ? `<div class="se-status ok"><i data-lucide="clapperboard"></i>
+        <span><b>Start / End Clip In Use</b><em>This scene plays the generated clip. The original photo is kept for editing.</em></span></div>`
+    : "";
+
+  return `<div class="se-wrap">
+    <div class="se-frames">
+      ${slot("start", startA, "Start Frame", "Current Scene")}
+      <button class="icon-btn se-swap" id="rvSeSwap" aria-label="Swap Frames" title="Swap Frames" ${endA ? "" : "disabled"}><i data-lucide="arrow-left-right"></i></button>
+      ${slot("end", endA, "End Frame", "Choose End Frame")}
+    </div>
+    ${picker}
+    ${status}
+    <div class="rv-pop-h">Motion</div>
+    <div class="se-motions">${SE_MOTIONS.map((m) => `<button class="se-motion ${(d.motion_preset || "auto") === m.id ? "on" : ""}"
+      data-semotion="${m.id}" title="${esc(m.blurb)}"><b>${esc(m.label)}</b><em>${esc(m.blurb)}</em></button>`).join("")}</div>
+    <label class="rv-f">Prompt, Optional
+      <input id="rvSePrompt" maxlength="400" value="${esc(d.prompt || "")}"
+        placeholder="Describe How The Scene Should Move From The Start Frame To The End Frame"></label>
+    <div class="se-out">
+      <div class="se-out-i"><em>Duration</em>
+        <div class="rv-seg sm">${SE_DURATIONS.map((n) => `<button class="${seconds === n ? "on" : ""}" data-sesec="${n}">${n}s</button>`).join("")}</div>
+      </div>
+      <div class="se-out-i"><em>Aspect Ratio</em><b class="mono">${esc(fmt)}</b><span class="rv-note sm">From The Project</span></div>
+      <div class="se-out-i"><em>Estimated Cost</em><b class="mono">${SE_CREDITS} Credits</b><span class="rv-note sm">Charged Once The Job Starts</span></div>
+    </div>
+    <p class="rv-note sm">Start / End makes one generated clip that begins on the start frame and finishes on the end frame. It is not a transition between two scene cards and not a single-image animation.</p>
+  </div>`;
+}
+
+/** Footer actions for the Start / End tab. */
+function seFooter(w, s) {
+  const d = w.seDraft || {};
+  const fr = sceneFrames.get(s.key);
+  const busy = !!fr && (fr.status === "queued" || fr.status === "processing");
+  const ready = !!d.end_key && !!d.start_key && !w.seBusy && !busy;
+  return `${fr ? `<button class="btn btn-ghost danger" id="rvSeRemove" ${busy ? "disabled" : ""}>Remove Start / End</button>` : ""}
+    <button class="btn btn-ghost" id="rvPopCancel">Close</button>
+    <button class="btn btn-ghost" id="rvSeSave" ${ready ? "" : "disabled"}>${w.seBusy === "save" ? "Saving…" : "Save"}</button>
+    <button class="btn btn-primary" id="rvSeGenerate" ${ready ? "" : "disabled"}>
+      ${busy ? "Generating…" : w.seBusy === "gen" ? "Starting…" : `Generate · ${SE_CREDITS} Credits`}</button>`;
+}
+
 function popoverHtml() {
   const w = S.wizard;
   const { kind } = w.pop;
@@ -2269,45 +2385,7 @@ function popoverHtml() {
           </div>`).join("")}
         </div>`
       : `<p class="rv-note">Nothing has been applied to this scene yet. It will play with the automatic camera move.</p>`;
-  } else if (kind === "frames") {
-    /* Start / End is a scene mode: this scene begins on one frame and ends on
-       another. Standard transitions render in the browser and cost nothing. */
-    const d = w.seDraft || {};
-    const byKey = new Map(w.available.map((a) => [a.key, a]));
-    const startA = byKey.get(d.start_key) || byKey.get(s.key) || null;
-    const endA = d.end_key ? byKey.get(d.end_key) : null;
-    const slot = (label, a, cropVal, cropAttr) => `<div class="rv-se-slot ${a ? "on" : ""}">
-      <b>${label}</b>
-      <div class="rv-se-th" ${a ? `data-img="${esc(a.path)}"` : ""}>${a ? "" : `<i data-lucide="image-plus"></i><em>Choose A Photo</em>`}</div>
-      <div class="rv-seg sm">${SE_CROPS.map(([id, n]) => `<button class="${cropVal === id ? "on" : ""}" data-${cropAttr}="${id}">${n}</button>`).join("")}</div>
-      <span class="rv-note sm">${a ? esc(a.room || "Untitled") : "Pick a photo below."}</span>
-    </div>`;
-    const pick = (a) => `<button class="rv-se-pick ${d.end_key === a.key ? "on" : ""} ${d.start_key === a.key ? "dim" : ""}"
-      data-endpick="${esc(a.key)}" title="${esc(a.room || "Untitled")}">
-      <span data-img="${esc(a.path)}"></span>${d.end_key === a.key ? `<i data-lucide="check"></i>` : ""}</button>`;
-    body = `<div class="rv-se">
-      <div class="rv-se-frames">
-        ${slot("Start Frame", startA, d.start_crop || "center", "secropstart")}
-        <button class="icon-btn rv-se-swap" id="rvSeSwap" aria-label="Swap Frames" title="Swap Frames" ${endA ? "" : "disabled"}><i data-lucide="arrow-left-right"></i></button>
-        ${slot("End Frame", endA, d.end_crop || "center", "secropend")}
-      </div>
-      <div class="rv-pop-h">End Frame</div>
-      <div class="rv-se-grid">${w.available.map(pick).join("")}</div>
-      <div class="rv-pop-h">Transition</div>
-      <div class="rv-se-trans">
-        ${SE_TRANSITIONS.map(([id, n, blurb]) => {
-          const ai = id === "ai";
-          const off = ai && !AI_TRANSITION_AVAILABLE;
-          return `<button class="rv-se-tr ${d.transition_type === id ? "on" : ""} ${off ? "off" : ""}"
-            ${off ? "disabled" : `data-setrans="${id}"`} title="${esc(off ? AI_TRANSITION_UNAVAILABLE_REASON : blurb)}">
-            <b>${esc(n)}</b><em>${esc(off ? "Unavailable" : ai ? "40 Credits" : "Included")}</em><span>${esc(blurb)}</span></button>`;
-        }).join("")}
-      </div>
-      ${AI_TRANSITION_AVAILABLE ? "" : `<div class="rv-notice sm"><i data-lucide="info"></i><span>${esc(AI_TRANSITION_UNAVAILABLE_REASON)}</span></div>`}
-      <label class="rv-f">Transition Length <i class="mono">${Number(d.transition_duration || 3).toFixed(1)}s</i>
-        <input type="range" id="rvSeDur" min="10" max="80" step="5" value="${Math.round((d.transition_duration || 3) * 10)}"></label>
-    </div>`;
-  } else if (kind === "trans") {
+    } else if (kind === "trans") {
     /* The move between this scene and the next one. Standard transitions are
        included and render in the browser; the AI bridge is a generated clip
        and is priced up front. */
@@ -2356,8 +2434,8 @@ function popoverHtml() {
     /* Effects modal. Two tabs — Looks (colour and presentation, free) and
        Effects (adds or animates content, costs credits). Display grouping
        only: every picked option still writes the same stored ids. */
-    const tab = w.popTab === "effects" ? "effects" : "looks";
-    const cats = tab === "looks" ? lookCats() : fxCats();
+    const tab = w.popTab === "effects" ? "effects" : w.popTab === "frames" ? "frames" : "looks";
+    const cats = tab === "effects" ? fxCats() : lookCats();
     const catId = cats.some(([id]) => id === w.popCat) ? w.popCat : cats[0][0];
     const amt = s.look_amount ?? DEFAULT_INTENSITY;
     const activeLook = s.look ? lookById(s.look) : null;
@@ -2403,8 +2481,9 @@ function popoverHtml() {
       <div class="fx-tabs" role="tablist">
         <button role="tab" aria-selected="${tab === "looks"}" class="${tab === "looks" ? "on" : ""}" data-fxtab="looks">Looks</button>
         <button role="tab" aria-selected="${tab === "effects"}" class="${tab === "effects" ? "on" : ""}" data-fxtab="effects">Effects</button>
+        <button role="tab" aria-selected="${tab === "frames"}" class="${tab === "frames" ? "on" : ""}" data-fxtab="frames">Start / End</button>
       </div>
-      <div class="fx-body">
+      ${tab === "frames" ? seWorkspace(w, s) : `<div class="fx-body">
         <nav class="fx-cats" aria-label="Categories">
           ${cats.map(([id, n]) => `<button class="${catId === id ? "on" : ""}" data-fxcat="${id}">${esc(n)}</button>`).join("")}
         </nav>
@@ -2423,12 +2502,9 @@ function popoverHtml() {
           <button class="btn btn-ghost btn-sm fx-all" id="rvAllLook" ${canAll ? "" : "disabled"}>
             <i data-lucide="copy"></i>Apply to All${plan.targets ? ` (${plan.targets + 1} Scenes)` : ""}</button>
           ${w.popAll ? `<span class="fx-ok"><i data-lucide="check"></i>Will Apply To All ${plan.total} Scenes</span>` : ""}
-          <button class="btn btn-ghost btn-sm fx-all" data-pop="frames" data-key="${esc(s.key)}">
-            <i data-lucide="arrow-left-right"></i>${frameConfigured(sceneFrames.get(s.key)) ? "Edit Start / End Frames" : "Set Start / End Frames"}</button>
           ${needsDisclosure(s) ? `<span class="rv-pop-tip">Generated effects may require an AI-modified disclosure.</span>` : ""}
-
         </aside>
-      </div>
+      </div>`}
       ${w.popConfirm ? `<div class="fx-confirm"><div>
         <b>Apply this effect to ${plan.total} scenes${plan.credits ? ` for an estimated ${plan.credits} additional credits` : ""}?</b>
         ${plan.perScene && plan.credits !== plan.perScene * plan.targets ? `<span>${Math.round(plan.credits / plan.perScene)} of ${plan.targets} other scenes still need it.</span>` : ""}
@@ -2440,20 +2516,18 @@ function popoverHtml() {
 
   const isFx = kind === "look";
   const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
-    : kind === "recap" ? "Scene Settings" : kind === "frames" ? "Start And End Frames"
+    : kind === "recap" ? "Scene Settings"
     : kind === "trans" ? "Transition" : "Effects";
   const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : kind === "trans" ? "wide" : "xwide";
-  const foot = isFx
+  const foot = isFx && w.popTab === "frames"
+    ? seFooter(w, s)
+    : isFx
     ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
     : kind === "recap"
     ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
     : kind === "trans"
     ? `${transitions.get(s.key, w.scenes[i + 1]?.key) ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto</button>` : ""}
        <button class="btn btn-primary" id="rvPopCancel">Done</button>`
-    : kind === "frames"
-    ? `${frameConfigured(sceneFrames.get(s.key)) ? `<button class="btn btn-ghost danger" id="rvSeRemove">Remove Start / End</button>` : ""}
-       <button class="btn btn-ghost" id="rvPopCancel">Cancel</button>
-       <button class="btn btn-primary" id="rvSeSave" ${w.seDraft?.end_key && !w.seBusy ? "" : "disabled"}>${w.seBusy ? "Saving…" : "Save Start / End"}</button>`
     : `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone">Save</button>`;
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${width} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="${esc(title)}">
     <div class="rv-modal-h"><b>${esc(title)}</b><button class="icon-btn" id="rvPopX" aria-label="Close"><i data-lucide="x"></i></button></div>
@@ -3288,11 +3362,16 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
     /* An approved AI clip replaces the still for this scene, and its real
        duration wins so the video never cuts a generated clip mid-move. */
     const clip = s.use_clip ? sceneClips.get(s.key) : null;
-    const clipUrl = clip && clip.status === "completed" ? sceneClips.url(clip) : null;
+    /* A generated Start / End clip wins over the still and over a plain
+       single-image animation: it is the scene the user approved. */
+    const seFr = sceneFrames.get(s.key);
+    const seUrl = seFr && seFr.status === "completed" ? sceneFrames.clipUrl(s.key) : null;
+    const clipUrl = seUrl || (clip && clip.status === "completed" ? sceneClips.url(clip) : null);
+    const clipSecs = seUrl ? Number(seFr?.seconds || 8) : clip?.seconds || null;
     urls.push({
       url: await resolvePhotoUrl(s.path),
       clipUrl,
-      clipSeconds: clipUrl ? clip?.seconds || null : null,
+      clipSeconds: clipUrl ? clipSecs : null,
       compareUrl: s.compare ? await resolvePhotoUrl(s.compare) : null,
       /* Standard Start/End: this scene genuinely ends on a second frame. */
       ...(await (async () => {
@@ -3308,7 +3387,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       crop: s.crop || null,
       room_name: s.room,
       scene_type: s.scene_type,
-      duration: clipUrl && clip?.seconds ? clip.seconds : per,
+      duration: clipUrl && clipSecs ? clipSecs : per,
       motion: s.motion || "auto",
       transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
       caption: w.captions ? s.caption || s.room : null,
@@ -4066,9 +4145,9 @@ function bind() {
         ? { caption: sc.caption ?? "", caption_pos: sc.caption_pos || "bottom", caption_style: sc.caption_style || "brand" }
         : { motion: sc.motion || "auto", motion_level: sc.motion_level || "standard", immersive_effect: sc.immersive_effect || null };
     }
-    if (kind === "frames") {
-      /* Seed the editor from what is already stored, so reopening shows the
-         real configuration rather than a blank form. */
+    if (kind === "look") {
+      /* Seed the Start / End tab from what is already stored, so reopening
+         shows the real configuration rather than a blank form. */
       const sc = w.scenes[i] || {};
       const saved = sceneFrames.get(sc.key);
       const endKey = saved?.end_path ? (w.available.find((a) => a.path === saved.end_path)?.key || null) : null;
@@ -4077,10 +4156,14 @@ function bind() {
         start_crop: saved?.start_crop || sc.crop || "center",
         end_key: endKey,
         end_crop: saved?.end_crop || "center",
-        transition_type: saved?.transition_type || "blend",
-        transition_duration: Number(saved?.transition_duration || 3),
+        motion_preset: saved?.motion_preset || "auto",
+        prompt: saved?.prompt || "",
+        seconds: Number(saved?.seconds || 8),
+        picking: null,
       };
       w.seBusy = false;
+      w.popTab = e.currentTarget?.dataset?.fxtab || w.popTabPending || (w.popTab === "frames" ? "looks" : w.popTab) || "looks";
+      w.popTabPending = null;
     }
     render();
   });
@@ -4226,9 +4309,9 @@ function bind() {
 
   /* ---- scene settings summary ---- */
   on("[data-sumedit]", "click", (e) => {
-    const kind = e.currentTarget.dataset.sumedit;
+    const [kind, tab] = String(e.currentTarget.dataset.sumedit).split(":");
     const key = w.pop?.key;
-    w.pop = null; render();
+    w.pop = null; w.popTabPending = tab || null; render();
     el.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
   });
   on("[data-sumreset]", "click", (e) => {
@@ -4244,74 +4327,112 @@ function bind() {
     render();
   });
 
-  /* ---- start / end frames ---- */
-  on("[data-endpick]", "click", (e) => {
+  /* ---- start / end frames, inside the Effects modal ---- */
+  const seSave = async (opts = {}) => {
+    const s = cur(); const d = w.seDraft;
+    if (!s || !d?.end_key || !d?.start_key) return null;
+    const startA = w.available.find((a) => a.key === d.start_key);
+    const endA = w.available.find((a) => a.key === d.end_key);
+    if (!startA || !endA) return null;
+    const pid = await ensureVideoProjectId(w);
+    sceneFrames.setProject(pid);
+    await sceneFrames.save({
+      video_project_id: pid,
+      scene_key: s.key,
+      start_path: startA.path,
+      end_path: endA.path,
+      start_asset_id: uuidOrNull(startA.asset_id || s.asset_id),
+      end_asset_id: uuidOrNull(endA.asset_id),
+      start_crop: d.start_crop || "center",
+      end_crop: d.end_crop || "center",
+      motion_preset: d.motion_preset || "auto",
+      prompt: d.prompt || null,
+      seconds: Number(d.seconds || 8),
+    });
+    if (!opts.quiet) toast("Start And End Saved.");
+    return { pid, s, endA };
+  };
+  on("[data-sepick]", "click", (e) => {
     if (!w.seDraft) return;
-    const k = e.currentTarget.dataset.endpick;
-    w.seDraft.end_key = w.seDraft.end_key === k ? null : k;
+    const which = e.currentTarget.dataset.sepick;
+    w.seDraft.picking = w.seDraft.picking === which ? null : which;
     render();
   });
-  on("[data-secropstart]", "click", (e) => { if (!w.seDraft) return; w.seDraft.start_crop = e.currentTarget.dataset.secropstart; render(); });
-  on("[data-secropend]", "click", (e) => { if (!w.seDraft) return; w.seDraft.end_crop = e.currentTarget.dataset.secropend; render(); });
-  on("[data-setrans]", "click", (e) => { if (!w.seDraft) return; w.seDraft.transition_type = e.currentTarget.dataset.setrans; render(); });
+  on("#rvSePickX", "click", () => { if (w.seDraft) { w.seDraft.picking = null; render(); } });
+  on("#rvSeUpload", "click", () => el.querySelector("#rvSeFile")?.click());
+  on("#rvSeFile", "change", (e) => {
+    const files = Array.from(e.currentTarget.files || []);
+    e.currentTarget.value = "";
+    addUploads(files).catch(() => toast("Those photos could not be added."));
+  });
+  on("[data-sepicked]", "click", (e) => {
+    const d = w.seDraft; if (!d?.picking) return;
+    const k = e.currentTarget.dataset.sepicked;
+    if (d.picking === "start") d.start_key = k;
+    else d.end_key = d.end_key === k ? null : k;
+    d.picking = null;
+    render();
+  });
+  on("[data-semotion]", "click", (e) => {
+    if (!w.seDraft) return;
+    const id = e.currentTarget.dataset.semotion;
+    w.seDraft.motion_preset = id;
+    const m = seMotion(id);
+    if (m?.seconds) w.seDraft.seconds = m.seconds;
+    render();
+  });
+  on("[data-sesec]", "click", (e) => { if (!w.seDraft) return; w.seDraft.seconds = Number(e.currentTarget.dataset.sesec); render(); });
+  {
+    const pr = el.querySelector("#rvSePrompt");
+    if (pr) pr.addEventListener("input", (ev) => { if (w.seDraft) w.seDraft.prompt = ev.target.value; });
+  }
   on("#rvSeSwap", "click", () => {
     const d = w.seDraft; if (!d || !d.end_key) return;
-    /* Swapping changes which photo the scene starts on, so the scene's own
-       source follows the start frame. */
-    const s = cur();
     const start = d.start_key;
     d.start_key = d.end_key; d.end_key = start;
     const c = d.start_crop; d.start_crop = d.end_crop; d.end_crop = c;
-    if (s) {
-      const a = w.available.find((x) => x.key === d.start_key);
-      if (a) { s.path = a.path; s.room = a.room || s.room; }
-    }
     render();
   });
-  {
-    const dur = el.querySelector("#rvSeDur");
-    if (dur) dur.addEventListener("input", (ev) => {
-      if (!w.seDraft) return;
-      w.seDraft.transition_duration = Number(ev.target.value) / 10;
-      const out = el.querySelector("#rvSeDur")?.previousElementSibling;
-      if (out) out.textContent = `${w.seDraft.transition_duration.toFixed(1)}s`;
-    });
-  }
   on("#rvSeRemove", "click", async () => {
     const s = cur(); if (!s) return;
     try { await sceneFrames.clear(s.key); } catch (_) { toast("That could not be removed just now."); return; }
-    w.pop = null; w.seDraft = null;
+    w.seDraft = { start_key: s.key, start_crop: s.crop || "center", end_key: null, end_crop: "center", motion_preset: "auto", prompt: "", seconds: 8, picking: null };
     toast("Start And End Removed.");
     render();
   });
   on("#rvSeSave", "click", async () => {
+    if (w.seBusy) return;
+    w.seBusy = "save"; render();
+    try { await seSave(); } catch (err) { toast(err?.message || "That could not be saved just now."); }
+    w.seBusy = false; render();
+  });
+  const seGenerate = async () => {
+    if (w.seBusy) return;
     const s = cur(); const d = w.seDraft;
-    if (!s || !d?.end_key || w.seBusy) return;
-    const startA = w.available.find((a) => a.key === d.start_key);
-    const endA = w.available.find((a) => a.key === d.end_key);
-    if (!startA || !endA) return;
-    w.seBusy = true; render();
+    if (!s || !d?.end_key) return;
+    w.seBusy = "gen"; render();
     try {
-      const pid = await ensureVideoProjectId(w);
-      sceneFrames.setProject(pid);
-      await sceneFrames.save({
-        video_project_id: pid,
+      const saved = await seSave({ quiet: true });
+      if (!saved) throw new Error("Choose both frames first.");
+      const endA = saved.endA;
+      await sceneFrames.generate({
         scene_key: s.key,
-        start_path: startA.path,
-        end_path: endA.path,
-        start_asset_id: uuidOrNull(startA.asset_id || s.asset_id),
-        end_asset_id: uuidOrNull(endA.asset_id),
-        start_crop: d.start_crop || "center",
-        end_crop: d.end_crop || "center",
-        transition_type: d.transition_type || "blend",
-        transition_duration: Number(d.transition_duration || 3),
+        orientation: (w.primaryFormat || DEFAULT_FORMAT).startsWith("9") ? "portrait" : "landscape",
+        room_name: s.room || null,
+        end_room: endA.room || null,
       });
-      w.pop = null; w.seDraft = null;
-      toast("Start And End Saved.");
+      toast(`Generating This Clip. ${SE_CREDITS} Credits Reserved.`);
     } catch (err) {
-      toast(err?.message || "That could not be saved just now.");
+      toast(err?.message || "That could not be started just now.");
     }
-    w.seBusy = false;
+    w.seBusy = false; render();
+  };
+  on("#rvSeGenerate", "click", seGenerate);
+  on("#rvSeRetry", "click", seGenerate);
+  on("#rvSeCancel", "click", async () => {
+    const s = cur(); if (!s) return;
+    try { await sceneFrames.cancel(s.key); toast("Generation Canceled. Reserved Credits Were Returned."); }
+    catch (err) { toast(err?.message || "That could not be canceled just now."); }
     render();
   });
   on("[data-fxtab]", "click", (e) => { w.popTab = e.currentTarget.dataset.fxtab; w.popCat = "all"; render(); });
@@ -4699,6 +4820,7 @@ function editExisting(d) {
   /* Clips generated in an earlier session (or on another device) come back
      with the project, and any job still running keeps polling. */
   sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
+  sceneFrames.onChange = () => { if (S.screen === "wizard") render(); };
   void sceneClips.load(p.id);
   /* Start/End pairs are durable too: reload them with the project. */
   void sceneFrames.load(p.id).then(() => { if (S.screen === "wizard") render(); });
@@ -5055,6 +5177,7 @@ export function startWizard(seed = {}) {
   S.wizard = w;
   S.screen = "wizard";
   sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
+  sceneFrames.onChange = () => { if (S.screen === "wizard") render(); };
   sceneClips.setProject(w.editingId || null);
   logVideoEvent("video_builder_started", {
     seedFileCount: Array.from(seed.files || []).length,

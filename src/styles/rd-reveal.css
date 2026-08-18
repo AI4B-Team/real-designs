@@ -1129,3 +1129,40 @@
 .rv-tr-more summary{cursor:pointer;font-size:12px;font-weight:700;margin-bottom:8px}
 .rv-tr-tmpl{display:flex;flex-wrap:wrap;gap:6px}
 .rv-tr-foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+
+/* ---- Start / End workspace, third tab of the Effects modal ---- */
+.rd-app .se-wrap { display: grid; gap: 14px; }
+.rd-app .se-frames { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 12px; align-items: center; }
+.rd-app .se-slot { display: grid; gap: 6px; border: 1px solid #e6e6e6; border-radius: 14px; padding: 10px; background: #fff; }
+.rd-app .se-slot.on { border-color: #d0d0d0; }
+.rd-app .se-slot > b { font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #6b6b6b; }
+.rd-app .se-th { position: relative; aspect-ratio: 16/10; border-radius: 10px; background: #f4f4f4 center/cover no-repeat; display: grid; place-items: center; gap: 4px; color: #8a8a8a; }
+.rd-app .se-th i { width: 20px; height: 20px; }
+.rd-app .se-th em { font-style: normal; font-size: 11.5px; }
+.rd-app .se-cap { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-app .se-swap { align-self: center; }
+.rd-app .se-picker { border: 1px solid #e6e6e6; border-radius: 14px; padding: 12px; display: grid; gap: 8px; background: #fafafa; }
+.rd-app .se-picker-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rd-app .se-picker-a { display: flex; align-items: center; gap: 6px; }
+.rd-app .se-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: 8px; max-height: 240px; overflow: auto; }
+.rd-app .se-pick { border: 2px solid transparent; border-radius: 10px; padding: 0; background: none; cursor: pointer; }
+.rd-app .se-pick span { display: block; aspect-ratio: 1; border-radius: 8px; background: #eee center/cover no-repeat; }
+.rd-app .se-pick.on { border-color: #cc0000; }
+.rd-app .se-motions { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+.rd-app .se-motion { text-align: left; border: 1px solid #e6e6e6; border-radius: 12px; padding: 8px 10px; background: #fff; cursor: pointer; display: grid; gap: 2px; }
+.rd-app .se-motion b { font-size: 13px; }
+.rd-app .se-motion em { font-style: normal; font-size: 11.5px; color: #6b6b6b; }
+.rd-app .se-motion.on { border-color: #cc0000; box-shadow: inset 0 0 0 1px #cc0000; }
+.rd-app .se-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; border-top: 1px solid #eee; padding-top: 12px; }
+.rd-app .se-out-i { display: grid; gap: 4px; }
+.rd-app .se-out-i em { font-style: normal; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #6b6b6b; }
+.rd-app .se-status { display: flex; align-items: center; gap: 10px; border-radius: 12px; padding: 10px 12px; background: #f6f6f6; border: 1px solid #e6e6e6; }
+.rd-app .se-status span { display: grid; gap: 2px; flex: 1; }
+.rd-app .se-status em { font-style: normal; font-size: 12px; color: #6b6b6b; }
+.rd-app .se-status.bad { background: #fff5f5; border-color: #f2c7c7; }
+.rd-app .se-status.ok { background: #f4faf5; border-color: #cfe6d3; }
+.rd-app .se-status.busy i { animation: rv-spin 1.1s linear infinite; }
+@media (max-width: 640px) {
+  .rd-app .se-frames { grid-template-columns: minmax(0,1fr); }
+  .rd-app .se-swap { justify-self: center; }
+}

@@ -59,6 +59,14 @@ export type SceneFrameRow = {
   status: string;
   credit_cost: number;
   disclosure: string | null;
+  motion_preset?: string;
+  prompt?: string | null;
+  seconds?: number;
+  progress?: number;
+  error_message?: string | null;
+  clip_path?: string | null;
+  credits_reserved?: number;
+  credits_charged?: number;
 };
 
 /** A Start/End scene is only real once both frames exist. */
@@ -66,7 +74,14 @@ export function frameConfigured(row?: SceneFrameRow | null): boolean {
   return !!row && !!row.start_path && !!row.end_path;
 }
 
-import { listSceneFrames, saveSceneFrames, clearSceneFrames } from "@/lib/scene-frames.functions";
+import {
+  listSceneFrames,
+  saveSceneFrames,
+  clearSceneFrames,
+  generateSceneFrames,
+  cancelSceneFrames,
+} from "@/lib/scene-frames.functions";
+export { SE_MOTIONS, SE_CREDITS, SE_DURATIONS, seMotion, seMotionLabel, seBusy, seDone } from "@/lib/scene-frames-presets";
 
 /**
  * Browser cache of the durable rows. Nothing important lives here: every
@@ -75,11 +90,16 @@ import { listSceneFrames, saveSceneFrames, clearSceneFrames } from "@/lib/scene-
 export class SceneFrameStore {
   projectId: string | null = null;
   byKey = new Map<string, SceneFrameRow>();
+  /** Signed URLs for finished Start/End clips, refreshed on every load. */
+  urls = new Map<string, string>();
+  onChange: () => void = () => {};
+  private timer: any = null;
 
   setProject(id: string | null) {
     if (this.projectId === id) return;
     this.projectId = id;
     this.byKey.clear();
+    this.urls.clear();
   }
 
   get(key?: string | null): SceneFrameRow | null {
@@ -94,11 +114,58 @@ export class SceneFrameStore {
     this.setProject(projectId);
     if (!projectId) return;
     try {
-      const res: any = await listSceneFrames({ data: { video_project_id: projectId } });
+      const res: any = await listSceneFrames({ data: { video_project_id: projectId, reconcile: true } });
       for (const r of res.frames || []) this.byKey.set(r.scene_key, r as SceneFrameRow);
+      for (const [k, u] of Object.entries(res.urls || {})) if (u) this.urls.set(k, u as string);
+      this.onChange();
+      this.schedule();
     } catch (_) {
       /* a transient read failure must not wipe what the user configured */
     }
+  }
+
+  /** URL of the finished clip for a scene, if there is one. */
+  clipUrl(key?: string | null): string | null {
+    return key ? this.urls.get(key) || null : null;
+  }
+
+  anyBusy(): boolean {
+    return this.all().some((r) => r.status === "queued" || r.status === "processing");
+  }
+
+  /** Poll only while a job is unfinished; the server owns the real state. */
+  private schedule() {
+    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+    if (!this.anyBusy() || !this.projectId) return;
+    this.timer = setTimeout(() => { void this.load(this.projectId); }, 7000);
+  }
+
+  stop() {
+    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+  }
+
+  async generate(input: { orientation: string; room_name?: string | null; end_room?: string | null; scene_key: string }): Promise<SceneFrameRow> {
+    if (!this.projectId) throw new Error("Save this video project first.");
+    const res: any = await generateSceneFrames({
+      data: {
+        video_project_id: this.projectId,
+        scene_key: input.scene_key,
+        orientation: input.orientation === "portrait" ? "portrait" : "landscape",
+        room_name: input.room_name ?? null,
+        end_room: input.end_room ?? null,
+      },
+    });
+    this.byKey.set(res.frame.scene_key, res.frame);
+    this.onChange();
+    this.schedule();
+    return res.frame;
+  }
+
+  async cancel(scene_key: string): Promise<void> {
+    if (!this.projectId) return;
+    const res: any = await cancelSceneFrames({ data: { video_project_id: this.projectId, scene_key } });
+    if (res.frame) this.byKey.set(res.frame.scene_key, res.frame);
+    this.onChange();
   }
 
   async save(input: {
@@ -111,8 +178,9 @@ export class SceneFrameStore {
     end_asset_id?: string | null;
     start_crop?: string;
     end_crop?: string;
-    transition_type?: string;
-    transition_duration?: number;
+    motion_preset?: string;
+    prompt?: string | null;
+    seconds?: number;
   }): Promise<SceneFrameRow> {
     const res: any = await saveSceneFrames({ data: input });
     this.byKey.set(res.frame.scene_key, res.frame);
