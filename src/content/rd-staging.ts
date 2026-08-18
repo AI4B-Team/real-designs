@@ -82,18 +82,65 @@ function mkItem(file) {
   };
 }
 
+/* ------------------------------------------------------------- persistence
+   The draft is a database row, not a browser cache. It is created as soon as
+   the first photo is safely in private storage, then autosaved on every
+   meaningful change with a short debounce. */
+
+function draftPayload() {
+  return {
+    id: S.draftId,
+    project_type: "photo_staging",
+    status: "draft",
+    builder_step: S.step === "add" ? "add" : S.current ? "canvas" : "review",
+    property_id: S.propertyId || null,
+    property_address: S.address || null,
+    title: S.title || null,
+    assets: S.items
+      .filter((i) => i.path)
+      .map((i) => ({
+        key: i.key,
+        path: i.path,
+        name: i.name,
+        room: i.room || null,
+        room_source: i.roomSource === "manual" ? "manual" : i.roomSource === "ai" ? "ai" : "none",
+        confidence: Number(i.confidence || 0),
+        selected: !!i.selected,
+        done: !!i.done,
+        status: i.status || "ready",
+      })),
+    selected: S.items.filter((i) => i.selected && i.path).map((i) => i.key),
+    item_order: ordered().filter((i) => i.path).map((i) => i.key),
+    settings: { group: !!S.group, current: S.current || null },
+  };
+}
+
+function setSaveState(state) {
+  if (!S) return;
+  S.saveState = state;
+  patchStatus();
+}
+
+function ensureSaver() {
+  if (saver) return saver;
+  if (!S.draftId) S.draftId = newDraftId();
+  saver = new DraftAutosaver(S.draftId, {
+    save: (payload) => saveProjectDraft({ data: payload }),
+    debounceMs: 700,
+    onState: (state) => setSaveState(state),
+  });
+  return saver;
+}
+
 function saveDraft() {
   if (!S) return;
-  try {
-    localStorage.setItem(
-      DRAFT_KEY,
-      JSON.stringify({
-        at: Date.now(),
-        address: S.address,
-        items: S.items.map((i) => ({ name: i.name, path: i.path, room: i.room, roomSource: i.roomSource, done: i.done })),
-      }),
-    );
-  } catch (_) {}
+  /* Nothing durable to write until at least one photo has a storage path. */
+  if (!S.items.some((i) => i.path)) return;
+  ensureSaver().queue(draftPayload());
+}
+
+export function retryDraftSave() {
+  if (saver) void saver.retryNow();
 }
 
 /* ------------------------------------------------------------------ shell */
