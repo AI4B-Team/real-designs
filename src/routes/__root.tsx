@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initAnalytics, trackPageview } from "../lib/analytics";
+import { shouldRecoverFromChunkError, clearChunkRecovery, currentBuildId } from "../lib/chunk-recovery";
 
 export function NotFoundComponent() {
   return (
