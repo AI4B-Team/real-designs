@@ -1007,6 +1007,23 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       },
 
       onSample: () => {
+        if (isVideo) {
+          /* A genuine sample video project: real photos, real builder. */
+          const picks = SAMPLE_KEYS.slice(0, 6);
+          try {
+            (window as any).rdListingVideo?.({
+              from: "studio",
+              sourceType: "design",
+              title: "Sample Property Video",
+              propertyLabel: "",
+              paths: picks.map((s) => s.photo),
+              designs: picks.map((s) => ({ id: "sample-" + s.key, path: s.photo, room: s.name })),
+            });
+          } catch (_) {
+            ctx.go("studio");
+          }
+          return;
+        }
         state.samples = true;
         render();
       },
