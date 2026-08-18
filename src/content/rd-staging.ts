@@ -231,6 +231,7 @@ function restoreScroll() {
 
 function exitAll() {
   hide();
+  try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
   /* Leaving the screen is not losing the work: flush whatever is queued. */
   if (saver) { void saver.flush(); saver.destroy(); saver = null; }
   if (S) S.items.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
@@ -777,6 +778,7 @@ async function openInCanvas(key) {
   const it = list.find((i) => i.key === key);
   if (!it) return;
   S.current = key;
+  rememberScroll();
   hide();
 
   /* Mark the previous photo designed if the canvas produced a result. */
@@ -915,5 +917,5 @@ try {
 } catch (_) {}
 
 try {
-  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft };
+  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft, mount: mountStagingView, detach: detachStagingView };
 } catch (_) {}
