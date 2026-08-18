@@ -31,6 +31,9 @@ import {
   searchRooms,
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
+import { openAddressModal } from "@/lib/address-modal";
+import { suggestAddresses } from "@/lib/property-address.functions";
+import { listMediaProperties } from "@/lib/property-media.functions";
 import {
   saveProjectDraft as _saveProjectDraft,
   listProjectDrafts as _listProjectDrafts,
@@ -567,6 +570,7 @@ function render() {
         </div>
       </div>
       <div class="rds-bar-r">
+        <button class="btn btn-ghost btn-sm" id="rdsAddr"><i data-lucide="map-pin"></i><span id="rdsAddrTxt">${esc(S.address ? S.address : "Add Property Address")}</span></button>
         <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
       </div>
     </div>
@@ -657,6 +661,7 @@ function bindReview(el) {
       render();
     }),
   );
+  el.querySelector("#rdsAddr").onclick = () => openAddressEditor();
   el.querySelector("#rdsMore").onclick = () => {
     S.step = "add";
     render();
@@ -678,41 +683,80 @@ function bindReview(el) {
     if (first) openInCanvas(first.key);
   };
 
-  el.querySelectorAll("[data-sel]").forEach((c) =>
-    c.addEventListener("change", () => {
-      const it = S.items.find((i) => i.key === c.getAttribute("data-sel"));
-      if (!it) return;
-      it.selected = c.checked;
-      c.closest(".rds-card")?.classList.toggle("sel", c.checked);
-      patchStatus();
-    }),
-  );
-  el.querySelectorAll("[data-open]").forEach((b) =>
-    b.addEventListener("click", () => openInCanvas(b.getAttribute("data-open"))),
-  );
-  el.querySelectorAll("[data-del]").forEach((b) =>
-    b.addEventListener("click", () => {
-      const k = b.getAttribute("data-del");
+  /* Cards are re-rendered in place as uploads and detection land, so the card
+     controls are delegated from the page instead of bound per element. */
+  el.addEventListener("change", (e) => {
+    const c = e.target.closest && e.target.closest("[data-sel]");
+    if (!c) return;
+    const it = S.items.find((i) => i.key === c.getAttribute("data-sel"));
+    if (!it) return;
+    it.selected = c.checked;
+    c.closest(".rds-card")?.classList.toggle("sel", c.checked);
+    patchStatus();
+    saveDraft();
+  });
+  el.addEventListener("click", (e) => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    const open = t.closest("[data-open]");
+    if (open) { openInCanvas(open.getAttribute("data-open")); return; }
+    const del = t.closest("[data-del]");
+    if (del) {
+      const k = del.getAttribute("data-del");
       const it = S.items.find((i) => i.key === k);
-      if (it) { try { URL.revokeObjectURL(it.previewUrl); } catch (_) {} }
+      if (!it) return;
+      try { URL.revokeObjectURL(it.previewUrl); } catch (_) {}
       S.items = S.items.filter((i) => i.key !== k);
       if (!S.items.length) S.step = "add";
       saveDraft();
       render();
-    }),
-  );
-  el.querySelectorAll("[data-room]").forEach((b) =>
-    b.addEventListener("click", () => {
-      const it = S.items.find((i) => i.key === b.getAttribute("data-room"));
+      return;
+    }
+    const room = t.closest("[data-room]");
+    if (room) {
+      const it = S.items.find((i) => i.key === room.getAttribute("data-room"));
       if (!it) return;
-      openRoomPopover(b, (label) => {
+      openRoomPopover(room, (label) => {
         it.room = label;
         it.roomSource = "manual";
         saveDraft();
         patchCard(it);
       });
-    }),
-  );
+    }
+  });
+}
+
+/* ------------------------------------------------------ property address
+   Optional on every staging project. The address never renames the project
+   and can be cleared again from the same modal. */
+let PROPS = null;
+async function openAddressEditor() {
+  if (!PROPS) {
+    try { PROPS = await listMediaProperties(); } catch (_) { PROPS = []; }
+  }
+  openAddressModal({
+    address: S.address || "",
+    propertyId: S.propertyId || null,
+    properties: PROPS || [],
+    subtitle: "Optional. Adding an address never renames your project.",
+    suggest: async (q) => {
+      try {
+        const res = await suggestAddresses({ data: { q } });
+        return (res && res.suggestions) || [];
+      } catch (_) {
+        return (PROPS || []).filter((p) => !q || String(p.address || "").toLowerCase().includes(String(q).toLowerCase()));
+      }
+    },
+    onSave: async (r) => {
+      S.address = r.address || "";
+      if (r.assignmentChanged) S.propertyId = r.propertyId || null;
+      saveDraft();
+    },
+    onDone: () => {
+      const txt = wrap && wrap.querySelector("#rdsAddrTxt");
+      if (txt) txt.textContent = S.address || "Add Property Address";
+    },
+  });
 }
 
 /* ------------------------------------------------------- room combobox */
