@@ -8,6 +8,9 @@ import { resolveProjectTitle } from "@/lib/property-address";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listVideos } from "@/lib/reveal.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
+import { listProjectDrafts } from "@/lib/drafts.functions";
+import { listRenderJobs } from "@/lib/reveal.functions";
+import { mergeDrafts, mergeRenderJobs } from "@/lib/media-view";
 import * as UM from "@/lib/upload-manager";
 import { propLabel } from "@/lib/property-label";
 
@@ -120,10 +123,12 @@ function videoStatus(project: any, variants: any[]): MediaStatus {
 /* ---------------- unified read ---------------- */
 
 export async function loadMediaLibrary() {
-  const [tree, videos, assets] = await Promise.all([
+  const [tree, videos, assets, drafts, jobs] = await Promise.all([
     getPropertyTree().catch(() => []),
     listVideos().catch(() => ({ projects: [], variants: [], scenes: [], shares: [] })),
     listMediaAssets({ data: { property_id: null } }).catch(() => ({ assets: [], versions: [] })),
+    listProjectDrafts({ data: { scope: "all", limit: 100 } }).then((r: any) => r.drafts || []).catch(() => []),
+    listRenderJobs().catch(() => []),
   ]);
 
   const out: any[] = [];
@@ -251,8 +256,14 @@ export async function loadMediaLibrary() {
     pending: true,
   }));
 
-  out.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")));
-  return out;
+  /* Durable drafts and persisted render jobs: one card per project, never one
+     per photo, and never a duplicate of a card that already exists. */
+  const merged = mergeRenderJobs(mergeDrafts(out, drafts), jobs);
+
+  merged.sort((a, b) =>
+    String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")),
+  );
+  return merged;
 }
 
 export function typeGroup(t: MediaType) {
