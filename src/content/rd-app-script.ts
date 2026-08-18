@@ -196,6 +196,25 @@ let STUDIO_MODE:any=GENERIC_STUDIO;
 /* Every navigation bumps this token, so a delayed startup callback can tell
    whether the route it was queued for is still the one on screen. */
 let __navSeq=0;
+let __navView='';
+/**
+ * One monotonic navigation sequence for the whole app.
+ *
+ * Every intentional navigation bumps it and records the destination. Any
+ * asynchronous work (startup routing, builder restoration, preference loads,
+ * summaries) captures the token it was queued under and must check it again
+ * before it is allowed to move the user. An older callback simply does
+ * nothing instead of yanking the page away from where the user went.
+ */
+function beginNavigation(view){
+  __navSeq+=1;
+  __navView=String(view||'');
+  return __navSeq;
+}
+function isCurrentNavigation(sequence,view){
+  if(sequence!==__navSeq) return false;
+  return view===undefined||view===null||String(view)===__navView;
+}
 function studioMode(){ return STUDIO_MODE; }
 function inPhotoCanvas(){ return isPhotoCanvas(STUDIO_MODE); }
 /** Canonical route test: tolerates the legacy "#studio" form during migration. */
@@ -208,7 +227,14 @@ try{
   (window as any).__rdIsView=(v:string)=>isCurrentView(v);
   (window as any).__rdStudioMode=()=>studioMode();
   (window as any).__rdNavToken=()=>__navSeq;
-  (window as any).__rdNavCurrent=(tok:number)=>tok===__navSeq;
+  (window as any).__rdNavCurrent=(tok:number,view?:string)=>isCurrentNavigation(tok,view);
+  /* The canonical destination, for asynchronous workflows to compare against. */
+  (window as any).__rdNavView=()=>__navView;
+  (window as any).__rdNav={
+    token:()=>__navSeq,
+    view:()=>__navView,
+    current:(tok:number,view?:string)=>isCurrentNavigation(tok,view),
+  };
   (window as any).__rdClearStudioMode=()=>{ STUDIO_MODE=GENERIC_STUDIO; };
   /* The one way to open a Photo Design Canvas. It routes through the same
      navigation everything else uses, with the context set first, so no
@@ -232,7 +258,7 @@ function go(v,fromHash){
       if(typeof ex==='function' && ex()) return;
     }catch(_){}
   }
-  __navSeq++;
+  beginNavigation(v);
   /* Any route that is not the Studio view ends the Canvas context. */
   if(v!=='studio' && inPhotoCanvas()) STUDIO_MODE=GENERIC_STUDIO;
   const acctAlias = ACCT_ALIAS[v] ? v : '';
