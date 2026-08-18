@@ -656,6 +656,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       /* icons are cosmetic */
     }
     if (state.tab === "describe") syncComposer();
+    if (state.tab === "property") hydrateThumbs();
   }
 
   function wireDrag(el: HTMLElement) {
@@ -693,6 +694,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         e.preventDefault();
         submitDescribe();
       }
+      return;
+    }
+    const card = t.closest?.("[data-sp-prop]") as HTMLElement | null;
+    if (card) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      selectProperty(card.dataset["spProp"]!);
       return;
     }
     if (!t.closest?.("[data-sp-drop]")) return;
@@ -752,7 +760,15 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     }
     const prop = t.closest("[data-sp-prop]") as HTMLElement | null;
     if (prop) {
-      opts.onProperty?.(prop.dataset["spProp"]!);
+      await selectProperty(prop.dataset["spProp"]!);
+      return;
+    }
+    const photo = t.closest("[data-sp-photo]") as HTMLElement | null;
+    if (photo) {
+      const id = photo.dataset["spPhoto"]!;
+      if (state.propChecked.has(id)) state.propChecked.delete(id);
+      else state.propChecked.add(id);
+      render();
       return;
     }
     const ex = t.closest("[data-sp-ex]") as HTMLElement | null;
@@ -793,7 +809,17 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
-    else if (k === "closechoose") {
+    else if (k === "pall") {
+      state.propChecked = new Set(state.propPhotos.map((x) => x.id));
+      render();
+    } else if (k === "pnone") {
+      state.propChecked = new Set();
+      render();
+    } else if (k === "padd") {
+      const p = properties().find((x) => x.id === state.propSel);
+      const photos = state.propPhotos.filter((x) => state.propChecked.has(x.id));
+      if (p && photos.length) await opts.onPropertyPhotos?.(p, photos);
+    } else if (k === "closechoose") {
       state.choose = [];
       render();
     }
