@@ -1419,8 +1419,15 @@
   background: #fff; color: #111; font-size: 12.5px; font-weight: 600; padding: 0 10px; cursor: pointer;
 }
 .rd-app .bx-fmtsel .bx-fmtsel-c select:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
+.rd-app .bx-fmtsel .bx-fmtcustom {
+  height: 32px; border: 1px dashed var(--red, #CC0000); border-radius: 999px; background: #fff;
+  color: var(--red, #CC0000); font-size: 12px; font-weight: 600; padding: 0 12px; cursor: pointer; white-space: nowrap;
+}
+.rd-app .bx-fmtsel .bx-fmtcustom:hover { background: #fff5f5; }
+.rd-app .bx-fmtsel .bx-fmtcustom:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
 @media (max-width: 1180px) {
   .rd-app .bx-fmtsel > span,
+  .rd-app .bx-fmtsel .bx-fmtcustom,
   .rd-app .bx-fmtsel .bx-fmtseg { display: none; }
   .rd-app .bx-fmtsel .bx-fmtsel-c { display: inline-flex; }
 }
