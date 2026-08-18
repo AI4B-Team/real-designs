@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   ACCEPT_CONFIDENCE, arrangeRank, missingRecommendation, normalizeCategory,
-  noticeSignature, recommendationCopy, resolvePhoto,
+  noticeSignature, recommendationCopy, resolvePhoto, UNCONFIRMED_COPY,
 } from "@/lib/photo-classify";
 
 const p = (id: string, label: string | null, confidence = 0.95, manual: string | null = null) =>
@@ -49,15 +49,54 @@ describe("missing-photo recommendation", () => {
     expect(missingRecommendation(pend, "running").show).toBe(false);
   });
 
-  it("stays silent when analysis failed", () => {
-    expect(missingRecommendation([p("1", null, 0)], "failed").show).toBe(false);
+  it("never claims a room is missing when classification failed", () => {
+    const r = missingRecommendation([p("1", null, 0)], "failed");
+    expect(r.kind).toBe("unconfirmed");
+    expect(r.missing).toEqual([]);
+    expect(r.message).toBe(UNCONFIRMED_COPY);
   });
 
-  it("stays silent while any photo is unresolved", () => {
+  it("uses neutral wording while any photo is unresolved", () => {
     const mixed = [p("1", "Kitchen"), p("2", null, 0.2)];
     const r = missingRecommendation(mixed, "completed");
-    expect(r.show).toBe(false);
     expect(r.reason).toBe("unresolved");
+    expect(r.kind).toBe("unconfirmed");
+    expect(r.message).toBe(UNCONFIRMED_COPY);
+  });
+
+  it("treats a low-confidence guess as Needs Review, not as absence", () => {
+    const low = [p("1", "Front Exterior"), p("2", "Living Room", 0.5)];
+    expect(low[1].label).toBe("Needs Review");
+    const r = missingRecommendation(low, "completed");
+    expect(r.kind).toBe("unconfirmed");
+    expect(r.missing).toEqual([]);
+  });
+
+  it("accepts synonyms as satisfying the recommendation", () => {
+    const syn = [p("1", "Facade"), p("2", "Great Room")];
+    expect(missingRecommendation(syn, "completed").show).toBe(false);
+    const syn2 = [p("1", "Front Elevation"), p("2", "Family Room")];
+    expect(missingRecommendation(syn2, "completed").show).toBe(false);
+  });
+
+  it("offers selection when the photo exists but is unchecked", () => {
+    const sel = [
+      resolvePhoto({ id: "1", label: "Front Exterior", confidence: 0.95, selected: true }),
+      resolvePhoto({ id: "2", label: "Living Room", confidence: 0.95, selected: false }),
+    ];
+    const r = missingRecommendation(sel, "completed");
+    expect(r.kind).toBe("unselected");
+    expect(r.unselected).toEqual(["Living Room"]);
+    expect(r.missing).toEqual([]);
+
+    const both = sel.map((x) => ({ ...x, selected: true }));
+    expect(missingRecommendation(both, "completed").show).toBe(false);
+  });
+
+  it("reopens a dismissal when selection changes", () => {
+    const on = resolvePhoto({ id: "1", label: "Kitchen", confidence: 0.9, selected: true });
+    const off = { ...on, selected: false };
+    expect(noticeSignature([on])).not.toBe(noticeSignature([off]));
   });
 
   it("says nothing when both recommended spaces are present", () => {
