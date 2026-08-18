@@ -1105,20 +1105,10 @@
 .rv-cv-stage.fmt-1x1 .rv-cv-img{height:min(52vh,620px);max-height:none}
 .rv-cv-stage.fmt-16x9 .rv-cv-img{max-height:min(52vh,620px)}
 
-/* ---- transition control between scenes ----
+/* ---- transition control ----
    A transition is the change BETWEEN two scenes, so it is never a badge on a
-   photo: one small icon-only control sits in the gutter on the seam and is
-   revealed on hover / focus of the card. */
+   photo: it is one more button inside the temporary hover toolbar. */
 .rd-app .rv-tile { position: relative; }
-.rd-app .rv-conn{position:absolute;right:-16px;top:calc(50% - 10px);z-index:6;display:grid;place-items:center;
-  width:20px;height:20px;padding:0;border:1px solid #e6e6e6;border-radius:999px;background:#fff;color:#555;
-  cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.14);opacity:0;visibility:hidden;transition:opacity .12s ease}
-.rd-app .rv-tile:hover .rv-conn,.rd-app .rv-conn:focus-visible,.rd-app .rv-conn.bad,.rd-app .rv-conn.busy{opacity:1;visibility:visible}
-.rd-app .rv-conn:hover{border-color:var(--red,#CC0000);color:var(--red,#CC0000)}
-.rd-app .rv-conn i,.rd-app .rv-conn svg{width:11px;height:11px}
-.rd-app .rv-conn.busy i{animation:rv-spin 1s linear infinite}
-.rd-app .rv-conn.bad{border-color:#CC0000;color:#CC0000}
-@media (max-width: 720px){ .rd-app .rv-conn{right:-14px} }
 
 /* transition popover */
 .rv-tr{display:flex;flex-direction:column;gap:14px}
