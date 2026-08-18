@@ -1021,7 +1021,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
                   from: "studio",
                   sourceType: "design",
                   propertyLabel: designs[0]?.address || "",
-                  propertyId: designs[0]?.propertyId || "",
                   paths: designs.map((d) => d.path),
                   rooms: designs.map((d) => d.room || ""),
                 });
