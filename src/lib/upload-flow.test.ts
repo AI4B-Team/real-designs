@@ -213,7 +213,7 @@ describe("photo staging: add photos -> review rooms", () => {
     expect(hostEl.closest(".content")).toBeTruthy();
     expect(hostEl.querySelector('[role="dialog"]')).toBeNull();
     expect(document.body.style.overflow).toBe("");
-    expect(hostEl.querySelector(".rds-rail")).toBeTruthy();
+    expect(hostEl.querySelector(".rv-rail")).toBeTruthy();
     expect(hostEl.querySelector(".rv-gridfoot")).toBeTruthy();
     expect(hostEl.textContent).toContain("Confirm the room type for each photo.");
     /* Bulk actions collapse into a More menu. */
