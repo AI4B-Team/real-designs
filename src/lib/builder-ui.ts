@@ -138,8 +138,11 @@ if (typeof document !== "undefined" && !document.__rdToolbarKeys) {
     if (th) { e.stopPropagation(); th.focus(); }
   });
 
-  /* Touch has no hover: tapping a photo reveals the same toolbar, and tapping
-     anywhere else dismisses it. Mouse and keyboard keep the hover/focus path. */
+  /* Touch has no hover: the first tap on a photo only reveals the toolbar, and
+     tapping anywhere else dismisses it. That first tap must not also open the
+     canvas or the room selector, so it is swallowed. Mouse and keyboard keep
+     the hover/focus path untouched. */
+  let touchArm = 0;
   document.addEventListener(
     "pointerdown",
     (e) => {
@@ -150,9 +153,24 @@ if (typeof document !== "undefined" && !document.__rdToolbarKeys) {
       document.querySelectorAll(".rv-tile.tools-open").forEach((x) => {
         if (x !== tile) x.classList.remove("tools-open");
       });
-      if (tile && !inTools) tile.classList.add("tools-open");
+      if (tile && !inTools && !tile.classList.contains("tools-open")) {
+        tile.classList.add("tools-open");
+        touchArm = Date.now();
+      }
     },
     true,
   );
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!touchArm || Date.now() - touchArm > 700) { touchArm = 0; return; }
+      touchArm = 0;
+      const t = e.target;
+      if (t && t.closest && t.closest(".rv-tools, .rv-tools-more")) return;
+      if (t && t.closest && t.closest(".rv-tile")) { e.preventDefault(); e.stopPropagation(); }
+    },
+    true,
+  );
+
 }
 
