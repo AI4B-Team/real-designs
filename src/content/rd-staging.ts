@@ -155,27 +155,78 @@ export function retryDraftSave() {
 
 /* ------------------------------------------------------------------ shell */
 
+/* Review Rooms is an ordinary application page: it lives in the content
+   area next to every other view, keeps the top bar and the app rail, and
+   never locks document scrolling or claims a dialog role. */
+
 function host() {
-  if (wrap && document.body.contains(wrap)) return wrap;
+  const existing = document.getElementById("v-staging");
+  if (existing) { wrap = existing; return wrap; }
+  const content = document.querySelector(".rd-app .content") || document.querySelector(".content");
+  if (!content) return null;
   wrap = document.createElement("div");
-  /* The overlay lives on <body>, so it must carry the app scope itself or
-     every .rd-app .btn / token rule silently drops out. */
-  wrap.className = "rd-app rds-wrap";
-  wrap.id = "rdStagingWrap";
-  document.body.appendChild(wrap);
+  wrap.className = "view";
+  wrap.id = "v-staging";
+  content.appendChild(wrap);
   return wrap;
 }
 
+/** Collapse the global menu from Review Rooms onward, release it on exit. */
+function railForStep() {
+  try {
+    const rail = window.__rdRailBorrow;
+    if (!rail) return;
+    if (S && S.step === "review") rail.collapse();
+    else rail.release();
+  } catch (_) {}
+}
+
 function show() {
-  host().classList.add("on");
-  document.body.style.overflow = "hidden";
+  host();
+  /* Navigating through the router keeps the hash, the browser history and a
+     refresh all pointing at the same page. */
+  try { window.__rdGo && window.__rdGo("staging"); } catch (_) {}
   render();
+  railForStep();
 }
 
 function hide() {
-  if (wrap) wrap.classList.remove("on");
-  document.body.style.overflow = "";
   closePopover();
+  try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
+}
+
+/** Router hook: the staging view became visible again (back button, refresh). */
+export function mountStagingView() {
+  if (!S || !S.items.length) {
+    /* Nothing in flight: try the saved draft, otherwise hand the user back. */
+    void resumeStagingDraft().then((ok) => {
+      if (!ok) { try { window.__rdGo && window.__rdGo("studio"); } catch (_) {} }
+    });
+    return;
+  }
+  render();
+  railForStep();
+  restoreScroll();
+}
+
+export function detachStagingView() {
+  closePopover();
+  try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
+}
+
+/* Scroll position survives a trip into the canvas and back. */
+let scrollY = 0;
+function scroller() {
+  return document.querySelector(".rd-app .content") || document.scrollingElement || document.documentElement;
+}
+function rememberScroll() {
+  const el = scroller();
+  scrollY = el ? el.scrollTop || window.scrollY || 0 : 0;
+}
+function restoreScroll() {
+  const el = scroller();
+  if (!el) return;
+  requestAnimationFrame(() => { try { el.scrollTop = scrollY; } catch (_) {} });
 }
 
 function exitAll() {
