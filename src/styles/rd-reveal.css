@@ -1126,8 +1126,8 @@
 .rd-app .rv-conn.busy i { animation: rv-spin 1s linear infinite; }
 .rd-app .rv-conn.bad { opacity: 1; border-color: #CC0000; color: #CC0000; }
 /* last card of a visual row: no seam, so the same control tucks inside it */
-.rd-app .rv-conn.wrap { right: 6px; top: auto; bottom: 6px; margin-top: 0; }
-.rd-app .rv-grid.landscape .rv-conn.wrap { top: auto; }
+.rd-app .rv-conn.wrap { right: 6px; top: calc(133.2cqw - 30px); margin-top: 0; }
+.rd-app .rv-grid.landscape .rv-conn.wrap { top: calc(75cqw - 30px); }
 @media (max-width: 720px) {
   .rd-app .rv-conn { opacity: 0; visibility: hidden; }
   .rd-app .rv-tile:hover .rv-conn, .rd-app .rv-tile:focus-within .rv-conn,
