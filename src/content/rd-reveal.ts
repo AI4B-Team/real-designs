@@ -1873,13 +1873,13 @@ function primaryTreatment(s, clip) {
   const fr = sceneFrames.get(s.key);
   const busy = clip && (clip.status === "queued" || clip.status === "processing");
   if (clip && clip.status === "failed")
-    return { id: "failed", label: "Failed", cls: "bad", icon: "triangle-alert", motion: "static", open: `data-clip="open"`, name: "AI motion failed. Open failure details and retry." };
+    return { id: "failed", label: "Failed", cls: "bad", icon: "triangle-alert", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "AI motion failed. Open failure details and retry." };
   if (busy)
-    return { id: "generating", label: "Generating", cls: "busy", icon: "loader", motion: "static", open: `data-clip="open"`, name: "Generating AI motion. Open job status." };
+    return { id: "generating", label: "Generating", cls: "busy", icon: "loader", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Generating AI motion. Open job status." };
   if (frameConfigured(fr))
     return { id: "frames", label: "Start / End", cls: "", icon: "arrow-left-right", motion: "static", open: `data-pop="frames" data-key="${esc(s.key)}"`, name: `Motion: Start and End frames, ${seTransitionName(fr.transition_type)}. Open start and end settings.` };
   if (clip && clip.status === "completed" && clip.approved && s.use_clip)
-    return { id: "ai", label: "AI Motion", cls: "ai", icon: "clapperboard", motion: "static", open: `data-clip="open"`, name: "Motion: AI Motion. Open animate settings." };
+    return { id: "ai", label: "AI Motion", cls: "ai", icon: "clapperboard", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Motion: AI Motion. Open animate settings." };
   if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive")) {
     const lbl = motionLabel(s);
     const m = s.motion_level === "immersive" ? (MOTION_PREVIEW[s.immersive_effect] || "static") : (MOTION_PREVIEW[s.motion] || s.motion || "auto");
