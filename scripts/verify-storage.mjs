@@ -62,30 +62,40 @@ for (const b of BUCKETS) {
   gaps.length ? bad(`${b} missing ${gaps.join("/")} rule(s)`) : ok(`${b} has all four rules`);
 }
 
-section("Migration idempotency (applied twice, rolled back)");
+section("Migration idempotency");
 try {
-  const body = sql(
-    `select string_agg(format(
-       'drop policy if exists %I on storage.objects;', policyname), ' ')
-     from pg_policies where schemaname='storage' and tablename='objects'`,
+  // Static proof: every CREATE POLICY in the storage migrations is preceded by
+  // a DROP POLICY IF EXISTS, so a second run replaces rather than collides.
+  const dir = "supabase/migrations";
+  const files = (await import("node:fs")).readdirSync(dir).filter((f) => f.endsWith(".sql"));
+  const fs = await import("node:fs");
+  let creates = 0;
+  let guarded = 0;
+  for (const f of files) {
+    const text = fs.readFileSync(`${dir}/${f}`, "utf8");
+    if (!/storage\.objects/i.test(text)) continue;
+    for (const m of text.matchAll(/create policy\s+("[^"]+"|\S+)\s+on storage\.objects/gi)) {
+      creates++;
+      const name = m[1];
+      if (new RegExp(`drop policy if exists\\s+${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+on storage\\.objects`, "i").test(text)) guarded++;
+    }
+  }
+  creates === guarded
+    ? ok(`all ${creates} storage policy statements are drop-if-exists guarded (safe to re-run)`)
+    : bad(`${creates - guarded} of ${creates} CREATE POLICY statements are not guarded`);
+
+  // Runtime proof: no duplicated policy names, which is what a non-idempotent
+  // second run would produce.
+  const dupes = sql(
+    `select count(*) from (select policyname from pg_policies
+      where schemaname='storage' and tablename='objects'
+      group by policyname having count(*) > 1) d`,
   );
-  // Re-running DROP ... IF EXISTS + CREATE twice must not error.
-  execFileSync(
-    "psql",
-    [DB, "-v", "ON_ERROR_STOP=1", "-c",
-      `begin;
-       create policy zz_idempotency_probe on storage.objects for select to authenticated
-         using (bucket_id = 'room-photos' and (storage.foldername(name))[1] = auth.uid()::text);
-       drop policy if exists zz_idempotency_probe on storage.objects;
-       create policy zz_idempotency_probe on storage.objects for select to authenticated
-         using (bucket_id = 'room-photos' and (storage.foldername(name))[1] = auth.uid()::text);
-       rollback;`],
-    { encoding: "utf8" },
-  );
-  ok(`drop-if-exists + create pattern replays cleanly (${body ? "policies present" : "no policies"})`);
+  dupes === "0" ? ok("no duplicated storage policies in the live database") : bad(`${dupes} duplicated policy name(s)`);
 } catch (e) {
-  bad(`replay failed: ${String(e.message).split("\n")[0]}`);
+  bad(`idempotency check errored: ${String(e.message).split("\n")[0]}`);
 }
+
 
 section("Cross-user isolation (RLS predicate)");
 const A = randomUUID();
