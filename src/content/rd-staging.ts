@@ -609,7 +609,7 @@ function mountStrip() {
   if (!S || !S.items.length) return;
   removeStrip();
   strip = document.createElement("div");
-  strip.className = "rds-strip";
+  strip.className = "rd-app rds-strip";
   document.body.appendChild(strip);
   drawStrip();
   window.addEventListener("hashchange", stripGuard);
