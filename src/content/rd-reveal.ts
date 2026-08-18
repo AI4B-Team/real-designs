@@ -4229,7 +4229,7 @@ function bind() {
     const kind = e.currentTarget.dataset.sumedit;
     const key = w.pop?.key;
     w.pop = null; render();
-    el.querySelector(`.rv-tool[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
+    el.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
   });
   on("[data-sumreset]", "click", (e) => {
     const s = cur(); if (!s) return;
