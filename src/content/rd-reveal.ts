@@ -636,7 +636,7 @@ async function loadWizardAssets() {
       }
     } catch (_) {}
   }
-  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
+  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.storagePath || u.url, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
   /* Designs chosen in Studio are real assets even when no property is set. */
   for (const d of w.seedDesigns || []) {
     if (!d || !d.path) continue;
