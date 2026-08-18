@@ -97,6 +97,9 @@ export type PickerProperty = {
   count?: number | null;
   /** Storage path of a representative photo. */
   thumb?: string | null;
+  /** Up to four storage paths, used for the Unassigned mosaic. */
+  thumbs?: string[] | null;
+
   unassigned?: boolean;
   /** Filled in by the picker. */
   line1?: string;
