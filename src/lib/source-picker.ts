@@ -463,7 +463,129 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
+  /* ---------- existing properties ---------- */
+
+  function properties(): PickerProperty[] {
+    let list: PickerProperty[] = [];
+    try {
+      list = (opts.properties ? opts.properties() : []) as PickerProperty[];
+    } catch (_) {
+      list = [];
+    }
+    return list.slice(0, 30).map((p, i) => {
+      const unassigned = !!p.unassigned || /^unsorted uploads$/i.test(String(p.address || "")) || /^unassigned photos$/i.test(String(p.address || ""));
+      const lines = unassigned
+        ? { line1: "Unassigned Photos", line2: "Photos not assigned to a property" }
+        : splitAddressLines(p.address, p.parts);
+      const count = p.count == null ? countFromMeta(p.meta) : Math.max(0, Math.floor(Number(p.count) || 0));
+      return { ...p, id: p.id || p.address || "p" + i, unassigned, line1: lines.line1 || p.address || "Property", line2: lines.line2, count };
+    });
+  }
+
+  function countFromMeta(meta?: string): number | null {
+    const m = /(\d+)/.exec(String(meta || ""));
+    return m ? Number(m[1]) : null;
+  }
+
+  function propCard(p: PickerProperty) {
+    const selected = state.propSel === p.id;
+    const empty = p.count === 0;
+    const cls = ["sp-prop", p.unassigned ? "is-util" : "", selected ? "is-sel" : "", empty ? "is-empty" : ""].filter(Boolean).join(" ");
+    const thumb = p.thumb
+      ? '<span class="sp-prop-th" data-sp-thumb="' + esc(p.thumb) + '"><i data-lucide="' + (p.unassigned ? "images" : "home") + '"></i></span>'
+      : '<span class="sp-prop-th"><i data-lucide="' + (p.unassigned ? "images" : "home") + '"></i></span>';
+    const count = empty ? "No Photos Available" : photoCountLabel(p.count == null ? "" : p.count);
+    return (
+      '<div class="' + cls + '" role="option" aria-selected="' + (selected ? "true" : "false") + '"' +
+      (empty ? ' aria-disabled="true"' : ' tabindex="0" data-sp-prop="' + esc(p.id!) + '"') + ">" +
+      thumb +
+      '<span class="sp-prop-b"><b>' + esc(p.line1 || "") + "</b>" +
+      (p.line2 ? "<span>" + esc(p.line2) + "</span>" : "") +
+      '<em class="sp-prop-c">' + esc(count) +
+      '<i data-lucide="' + (selected ? "circle-check-big" : "circle") + '"></i></em></span></div>'
+    );
+  }
+
+  function photoPanel() {
+    const id = state.propSel;
+    if (!id || !opts.loadPropertyPhotos) return "";
+    if (state.propLoading) return '<div class="sp-photos"><p class="sp-note">Loading Photos…</p></div>';
+    const photos = state.propPhotos;
+    if (!photos.length) return '<div class="sp-photos"><p class="sp-note">This Property Has No Photos Yet.</p></div>';
+    const n = state.propChecked.size;
+    return (
+      '<div class="sp-photos"><div class="sp-photos-h"><b>' + esc(n + " Of " + photos.length + " Selected") + "</b>" +
+      '<span><button type="button" class="btn btn-ghost btn-sm" data-sp="pall">Select All</button>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-sp="pnone">Clear</button>' +
+      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' + (n ? "" : " disabled") + ">Add Selected Photos</button></span></div>" +
+      '<div class="sp-photo-grid">' +
+      photos
+        .map((ph) => {
+          const on = state.propChecked.has(ph.id);
+          return (
+            '<button type="button" class="sp-photo' + (on ? " is-sel" : "") + '" aria-pressed="' + (on ? "true" : "false") +
+            '" data-sp-photo="' + esc(ph.id) + '"><span class="sp-prop-th" data-sp-thumb="' + esc(ph.path) + '"></span>' +
+            '<i data-lucide="' + (on ? "circle-check-big" : "circle") + '"></i></button>'
+          );
+        })
+        .join("") +
+      "</div></div>"
+    );
+  }
+
+  async function selectProperty(id: string) {
+    const p = properties().find((x) => x.id === id);
+    if (!p || p.count === 0) return;
+    if (!opts.loadPropertyPhotos) {
+      opts.onProperty?.(p.address);
+      return;
+    }
+    state.propSel = id;
+    state.propPhotos = [];
+    state.propChecked = new Set();
+    state.propLoading = true;
+    render();
+    try {
+      const photos = (await opts.loadPropertyPhotos(p)) || [];
+      if (state.propSel !== id) return;
+      state.propPhotos = photos;
+      state.propChecked = new Set(photos.map((x) => x.id));
+    } catch (err: any) {
+      alert((err && err.message) || "Those Photos Could Not Be Loaded.");
+    } finally {
+      state.propLoading = false;
+      render();
+    }
+  }
+
+  /** Thumbnails resolve after paint so the grid never waits on signed URLs. */
+  const thumbCache = new Map<string, string>();
+  function hydrateThumbs() {
+    if (!body || !opts.resolvePhoto) return;
+    const nodes = Array.from(body.querySelectorAll<HTMLElement>("[data-sp-thumb]"));
+    for (const el of nodes) {
+      const path = el.dataset["spThumb"]!;
+      const hit = thumbCache.get(path);
+      if (hit) {
+        el.style.backgroundImage = 'url("' + hit + '")';
+        el.classList.add("has-img");
+        continue;
+      }
+      opts
+        .resolvePhoto(path)
+        .then((url) => {
+          if (!url) return;
+          thumbCache.set(path, url);
+          if (!el.isConnected) return;
+          el.style.backgroundImage = 'url("' + url + '")';
+          el.classList.add("has-img");
+        })
+        .catch(() => {});
+    }
+  }
+
   function html() {
+
     return (
       '<div class="sp">' +
       tabs() +
