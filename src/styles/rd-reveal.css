@@ -1295,3 +1295,34 @@
   display:flex;align-items:center;gap:14px;background:#141414;color:#fff;border-radius:999px;
   padding:11px 12px 11px 18px;font:500 13.5px 'DM Sans',system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.28)}
 .bx-undo button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:999px;padding:7px 14px;cursor:pointer;font:600 13px 'DM Sans',system-ui,sans-serif}
+
+/* ---- Add More Photos action card (Photo Design + Video Builder) ---- */
+.rd-app .rv-grid .rv-addcard { min-width: 0; max-width: 100%; box-sizing: border-box; display: flex; }
+.rd-app .rv-addcard-b {
+  width: 100%; min-width: 0; aspect-ratio: 3 / 4; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 14px;
+  background: #fcfcfc; border: 1.5px dashed var(--line, #e3e3e3); border-radius: 12px;
+  cursor: pointer; color: var(--ink, #111); transition: border-color .12s, background .12s;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+.rd-app .rv-grid.landscape .rv-addcard-b { aspect-ratio: 4 / 3; }
+.rd-app .rv-addcard-b:hover { background: #fff; border-color: var(--red, #CC0000); }
+.rd-app .rv-addcard-b:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
+.rd-app .rv-addcard-b svg { width: 26px; height: 26px; color: var(--red, #CC0000); }
+.rd-app .rv-addcard-b b { font-size: 13.5px; font-weight: 600; }
+.rd-app .rv-addcard-b em { font-style: normal; font-size: 11.5px; color: var(--mute-2, #767676); line-height: 1.35; }
+.rd-app .rv-addcard-b[disabled] { opacity: .55; cursor: not-allowed; }
+
+/* ---- Video ending control on the final actual scene ---- */
+.rd-app .rv-end {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%); z-index: 5;
+  display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px;
+  border-radius: 999px; border: 1px solid rgba(0,0,0,.08); background: #fff; cursor: pointer;
+  font: 600 11px 'DM Sans', system-ui, sans-serif; color: #111; box-shadow: 0 2px 8px rgba(0,0,0,.16);
+  max-width: calc(100% - 16px);
+}
+.rd-app .rv-end svg { width: 14px; height: 14px; color: var(--red, #CC0000); }
+.rd-app .rv-end:hover { border-color: var(--red, #CC0000); }
+.rd-app .rv-end:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
+.rd-app .rv-endrow { display: grid; gap: 8px; }
+.rd-app .rv-endrow .rv-pop-row { text-align: left; }
