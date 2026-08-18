@@ -920,9 +920,8 @@ function wizardHtml() {
   const orient = orientationOf(w);
   const headTools = w.step === 2
     ? `<div class="rv-head-tools">
-        <div class="rv-orient"><span>Video Format</span>
-          <div class="rv-seg">${VIDEO_FORMATS.map((f) => `<button class="${w.primaryFormat === f.id ? "on" : ""}" data-primaryfmt="${f.id}">${f.label} ${f.note}</button>`).join("")}</div>
-        </div>
+        ${formatSelectorHtml({ label: "Video Format", options: VIDEO_FORMATS, value: w.primaryFormat, attr: "primaryfmt", id: "rv-vfmt" })}
+
         <button class="btn btn-ghost btn-sm" id="rvHeadAdd"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rvHeadFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
       </div>`
