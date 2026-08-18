@@ -3835,6 +3835,22 @@ function bind() {
         ? { caption: sc.caption ?? "", caption_pos: sc.caption_pos || "bottom", caption_style: sc.caption_style || "brand" }
         : { motion: sc.motion || "auto", motion_level: sc.motion_level || "standard", immersive_effect: sc.immersive_effect || null };
     }
+    if (kind === "frames") {
+      /* Seed the editor from what is already stored, so reopening shows the
+         real configuration rather than a blank form. */
+      const sc = w.scenes[i] || {};
+      const saved = sceneFrames.get(sc.key);
+      const endKey = saved?.end_path ? (w.available.find((a) => a.path === saved.end_path)?.key || null) : null;
+      w.seDraft = {
+        start_key: sc.key,
+        start_crop: saved?.start_crop || sc.crop || "center",
+        end_key: endKey,
+        end_crop: saved?.end_crop || "center",
+        transition_type: saved?.transition_type || "blend",
+        transition_duration: Number(saved?.transition_duration || 3),
+      };
+      w.seBusy = false;
+    }
     render();
   });
   const closeFx = (commit) => {
