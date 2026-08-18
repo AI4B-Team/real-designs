@@ -78,6 +78,7 @@ function newSession(seed = {}) {
     saveState: "idle",
     detect: "pending",
     current: -1,
+    activeKey: null,
     busy: false,
   };
 }
@@ -651,6 +652,7 @@ function syncCard(it) {
   const card = wrap.querySelector('.rds-card[data-k="' + it.key + '"]');
   if (!card) return;
   card.classList.toggle("sel", !!it.selected);
+  card.classList.toggle("active", S.activeKey === it.key);
   const box = card.querySelector('input[data-sel="' + it.key + '"]');
   if (box) box.checked = !!it.selected;
 }
@@ -750,7 +752,7 @@ function bindReview(el) {
         it.roomSource = "manual";
         saveDraft();
         patchCard(it);
-      });
+      }, it.key);
       return;
     }
     /* Anywhere else on the card toggles selection. The checkbox handles
@@ -917,9 +919,15 @@ async function openAddressEditor() {
 function closePopover() {
   if (popover) popover.remove();
   popover = null;
+  if (S && S.activeKey) {
+    const prev = S.activeKey;
+    S.activeKey = null;
+    const it = S.items.find((i) => i.key === prev);
+    if (it) syncCard(it);
+  }
 }
 
-function openRoomPopover(anchor, onPick) {
+function openRoomPopover(anchor, onPick, key) {
   closePopover();
   popover = document.createElement("div");
   popover.className = "rds-pop";
@@ -974,6 +982,11 @@ function openRoomPopover(anchor, onPick) {
   draw();
   paint();
   input.focus();
+  if (key && S) {
+    S.activeKey = key;
+    const it = S.items.find((i) => i.key === key);
+    if (it) syncCard(it);
+  }
   setTimeout(() => {
     const away = (e) => {
       if (popover && !popover.contains(e.target)) {
