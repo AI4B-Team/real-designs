@@ -125,17 +125,19 @@ export function animateOptionsHtml(
     cat === "recommended"
       ? rec.map((id) => animateOption(id)).filter(Boolean)
       : ANIMATE_OPTIONS.filter((o) => animateCategory(o.id) === cat);
-  if (!list.length) return `<p class="an-empty">No Options In This Category.</p>`;
+  if (!list.length) return `<p class="an-empty">No options in this category.</p>`;
   return list
     .map((o) => {
       const opt = o!;
+      const on = selected === opt.id;
       const warn = animateWarning(opt.id, room);
-      return `<button class="an-card ${selected === opt.id ? "on" : ""}${warn ? " warn" : ""}" data-animate="${esc(opt.id)}" role="option"
-      aria-selected="${selected === opt.id}">
+      return `<button type="button" class="an-card ${on ? "on" : ""}${warn ? " warn" : ""}" data-animate="${esc(opt.id)}" role="radio"
+      tabindex="${on ? 0 : -1}" aria-checked="${on}"
+      aria-label="${esc(opt.label)}, ${opt.seconds} second clip, ${ANIMATE_CREDITS_PER_CLIP} credits${on ? ", selected" : ""}">
       <b>${esc(opt.label)}</b>
       <span>${esc(opt.sub)}</span>
-      <em class="an-meta"><i class="mono">${opt.seconds}s</i><i class="mono">${ANIMATE_CREDITS_PER_CLIP} Credits</i></em>
-      <i class="an-disc">${esc(disclosureLabel(opt.disclosure))}</i>
+      <em class="an-meta">${opt.seconds} sec · ${ANIMATE_CREDITS_PER_CLIP} credits</em>
+      ${on ? `<span class="an-sel"><i data-lucide="check"></i>Selected</span>` : ""}
       ${rec.includes(opt.id) && cat !== "recommended" ? `<span class="an-rec">Recommended</span>` : ""}
       ${warn ? `<span class="an-warn" title="${esc(warn)}"><i data-lucide="triangle-alert"></i></span>` : ""}
       ${opt.beta ? `<span class="an-beta">Beta</span>` : ""}
@@ -149,50 +151,55 @@ export function animateModalHtml(ctx: AnimateModalCtx): string {
   const cost = ANIMATE_CREDITS_PER_CLIP;
   const short = ctx.balance < cost;
   const cat = ctx.cat || "recommended";
-  const orientation = ctx.orientation === "portrait" ? "Portrait" : ctx.orientation === "square" ? "Square" : "Landscape";
   const warn = opt ? animateWarning(opt.id, ctx.room) : "";
   const notices = opt
-    ? [
-        warn,
-        ARCHITECTURE_NOTICE,
-        opt.lifestyle ? LIFESTYLE_NOTICE : "",
-        opt.id === "aerial_reveal" ? AERIAL_NOTICE : "",
-      ].filter(Boolean)
+    ? [warn, ARCHITECTURE_NOTICE, opt.lifestyle ? LIFESTYLE_NOTICE : "", opt.id === "aerial_reveal" ? AERIAL_NOTICE : ""].filter(
+        Boolean,
+      )
     : [];
 
   const detail = opt
     ? `<div class="an-detail">
         <b>${esc(opt.label)}</b>
-        <p class="an-prompt">${esc(opt.sub)}. ${esc(opt.prompt)}</p>
-        <p class="an-swap">${cost} credits · ${opt.seconds}-second AI clip. Replaces standard motion for this scene.</p>
-        <dl>
-          <div><dt>Duration</dt><dd class="mono">${opt.seconds}s</dd></div>
-          <div><dt>Output</dt><dd>${esc(orientation)}</dd></div>
-          <div><dt>Processing</dt><dd>${esc(CLIP_ETA)}</dd></div>
-          <div><dt>Cost</dt><dd class="mono">${cost} Credits</dd></div>
-          <div><dt>Balance After</dt><dd class="mono">${Math.max(0, ctx.balance - cost)}</dd></div>
-          <div><dt>Disclosure</dt><dd>${esc(disclosureLabel(opt.disclosure))}</dd></div>
-        </dl>
+        <p class="an-swap">${opt.seconds}-second AI clip · ${cost} credits · replaces standard motion for this scene.</p>
+        <p class="an-prompt">${esc(opt.sub)}</p>
         ${notices.map((n) => `<p class="an-note">${esc(n)}</p>`).join("")}
       </div>`
-    : `<div class="an-detail empty"><p>Choose An Animation To See Its Cost And Disclosure.</p></div>`;
+    : `<div class="an-detail empty"><p>Select an animation to continue.</p></div>`;
 
+  const working = ctx.clip && (ctx.clip.status === "queued" || ctx.clip.status === "processing");
   const status = ctx.clip
-    ? `<p class="an-status">AI Clip · ${esc(clipStatusLabel(ctx.clip.status, Number(ctx.clip.progress || 0) / 100))}</p>`
+    ? `<p class="an-status">AI clip · ${esc(clipStatusLabel(ctx.clip.status, Number(ctx.clip.progress || 0) / 100))}</p>`
     : "";
 
   const action = ctx.confirm
     ? `<div class="an-confirm">
         <b>Generate this clip for ${cost} credits?</b>
         <div class="an-confirm-a">
-          <button class="btn btn-ghost btn-sm" id="rvAnimNo">Cancel</button>
-          <button class="btn btn-primary btn-sm" id="rvAnimYes" ${ctx.busy ? "disabled" : ""}>${ctx.busy ? "Starting…" : "Confirm"}</button>
+          <button type="button" class="rdm-btn rdm-ghost" id="rvAnimNo"><span>Cancel</span></button>
+          <button type="button" class="rdm-btn rdm-primary${ctx.busy ? " is-loading" : ""}" id="rvAnimYes" ${ctx.busy ? "disabled" : ""}>
+            ${ctx.busy ? '<span class="rdm-spin" aria-hidden="true"></span>' : ""}<span>${ctx.busy ? "Generating clip…" : "Confirm"}</span></button>
         </div>
       </div>`
     : "";
 
-  return `<div class="rv-modal on" id="rvAnimWrap"><div class="rv-modal-in xwide" role="dialog" aria-label="AI Animate">
-    <div class="rv-modal-h"><div><b>AI Animate</b><span class="rv-modal-sub">Turn this photo into a genuine AI-generated video clip.</span></div>
+  const remaining = Math.max(0, ctx.balance - cost);
+  const credits = `<div class="an-credits">
+      <span>Available: <b>${ctx.balance} credits</b></span>
+      <span>This clip: <b>${cost} credits</b></span>
+      ${short
+        ? `<span class="an-short">Not enough credits — you need ${cost - ctx.balance} more.</span>`
+        : `<span>Remaining after generation: <b>${remaining} credits</b></span>`}
+    </div>`;
+
+  const hint = !opt
+    ? `<span class="an-hint">Select an animation first.</span>`
+    : short
+      ? `<a class="an-hint link" href="/pricing/credits">Add credits</a>`
+      : "";
+
+  return `<div class="rv-modal on" id="rvAnimWrap"><div class="rv-modal-in an-modal" role="dialog" aria-modal="true" aria-label="Animate photo">
+    <div class="rv-modal-h"><div><b>Animate Photo</b><span class="rv-modal-sub">Turn this photo into an AI-generated video clip.</span></div>
       <button class="icon-btn" id="rvAnimX" aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b an-body">
       <aside class="an-src">
@@ -200,24 +207,26 @@ export function animateModalHtml(ctx: AnimateModalCtx): string {
         <b>${esc(ctx.room || "Unassigned")}</b>
         <span>Scene ${ctx.position ?? 1}${ctx.total ? ` of ${ctx.total}` : ""}</span>
         ${status}
+        ${working ? `<p class="an-note">${BACKGROUND_NOTICE}</p>` : ""}
       </aside>
       <div class="an-main">
         <nav class="an-cats" aria-label="Animation categories">
-          ${ANIMATE_CATEGORIES.map(([id, label]) => `<button class="${cat === id ? "on" : ""}" data-animcat="${esc(id)}">${esc(label)}</button>`).join("")}
+          ${ANIMATE_CATEGORIES.map(([id, label]) => `<button type="button" class="${cat === id ? "on" : ""}" data-animcat="${esc(id)}" aria-pressed="${cat === id}">${esc(label)}</button>`).join("")}
         </nav>
-        <div class="an-grid" role="listbox" aria-label="AI Animate options">${animateOptionsHtml(ctx.selected, cat, ctx.room)}</div>
+        <div class="an-grid" role="radiogroup" aria-label="Animation templates">${animateOptionsHtml(ctx.selected, cat, ctx.room)}</div>
         ${detail}
       </div>
     </div>
 
     ${action}
-    <div class="rv-modal-f">
-      <span class="an-bal mono">${ctx.balance} Credits Available</span>
-      <button class="btn btn-ghost" id="rvAnimCancel">Cancel</button>
-      <button class="btn btn-primary" id="rvAnimGo" ${!opt || short || ctx.busy ? "disabled" : ""}>
-        ${ctx.busy ? "Starting…" : `Generate AI Clip · ${cost} Credits`}</button>
+    <div class="rv-modal-f an-foot">
+      ${hint}
+      ${credits}
+      <button type="button" class="rdm-btn rdm-ghost" id="rvAnimCancel"><span>Cancel</span></button>
+      <button type="button" class="rdm-btn rdm-primary${ctx.busy ? " is-loading" : ""}" id="rvAnimGo" ${!opt || short || ctx.busy ? "disabled" : ""}
+        ${!opt ? 'title="Select an animation first."' : short ? 'title="Not enough credits."' : ""}>
+        ${ctx.busy ? '<span class="rdm-spin" aria-hidden="true"></span>' : ""}<span>${ctx.busy ? "Generating clip…" : `Generate AI Clip · ${cost} Credits`}</span></button>
     </div>
-    ${short ? `<p class="an-short">Not Enough Credits. This Clip Costs ${cost}.</p>` : ""}
   </div></div>`;
 }
 
