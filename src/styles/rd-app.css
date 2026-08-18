@@ -1759,8 +1759,8 @@
 @keyframes spThumb{0%{background-position:120% 0}100%{background-position:-120% 0}}
 .sp-th-i.is-fail,.sp-th-i.is-none{background:color-mix(in oklab,var(--mute-2) 8%,var(--bg))}
 .sp-th-i.is-fail{flex-direction:column;gap:6px}
-.sp-th-i.is-fail b{font-size:.74rem;font-weight:600;color:var(--mute-2)}
-.sp-th-mosaic .sp-th-i.is-fail b{display:none}
+.sp-th-i.is-fail .sp-th-msg{font-size:.74rem;font-weight:600;color:var(--mute-2)}
+.sp-th-mosaic .sp-th-i.is-fail .sp-th-msg{display:none}
 .sp-th-mosaic{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;width:100%;height:100%}
 .sp-th-mosaic .sp-th-i{border-radius:0}
 /* Selection control sits on the photo, never beside the count. */
