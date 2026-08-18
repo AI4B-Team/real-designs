@@ -1655,18 +1655,27 @@ export type Database = {
       }
       scene_start_end: {
         Row: {
+          aspect: string | null
           clip_id: string | null
+          clip_path: string | null
           created_at: string
           credit_cost: number
+          credits_charged: number
+          credits_reserved: number
           disclosure: string | null
           end_asset_id: string | null
           end_crop: string
           end_path: string | null
+          error_message: string | null
           generation_mode: string
           id: string
+          motion_preset: string
+          progress: number
+          prompt: string | null
           provider_job_id: string | null
           scene_id: string | null
           scene_key: string
+          seconds: number
           start_asset_id: string | null
           start_crop: string
           start_path: string
@@ -1678,18 +1687,27 @@ export type Database = {
           video_project_id: string
         }
         Insert: {
+          aspect?: string | null
           clip_id?: string | null
+          clip_path?: string | null
           created_at?: string
           credit_cost?: number
+          credits_charged?: number
+          credits_reserved?: number
           disclosure?: string | null
           end_asset_id?: string | null
           end_crop?: string
           end_path?: string | null
+          error_message?: string | null
           generation_mode?: string
           id?: string
+          motion_preset?: string
+          progress?: number
+          prompt?: string | null
           provider_job_id?: string | null
           scene_id?: string | null
           scene_key: string
+          seconds?: number
           start_asset_id?: string | null
           start_crop?: string
           start_path: string
@@ -1701,18 +1719,27 @@ export type Database = {
           video_project_id: string
         }
         Update: {
+          aspect?: string | null
           clip_id?: string | null
+          clip_path?: string | null
           created_at?: string
           credit_cost?: number
+          credits_charged?: number
+          credits_reserved?: number
           disclosure?: string | null
           end_asset_id?: string | null
           end_crop?: string
           end_path?: string | null
+          error_message?: string | null
           generation_mode?: string
           id?: string
+          motion_preset?: string
+          progress?: number
+          prompt?: string | null
           provider_job_id?: string | null
           scene_id?: string | null
           scene_key?: string
+          seconds?: number
           start_asset_id?: string | null
           start_crop?: string
           start_path?: string
