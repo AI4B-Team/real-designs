@@ -3808,7 +3808,7 @@ if(scopeGrid && !document.getElementById('scSave')){
   saveCard.innerHTML='<div class="card-h"><div><h3>Save This Room</h3><div class="sub">Your photo and priced scope are stored on your account</div></div></div>'
     +'<div class="card-b"><div class="save-form">'
     +'<label>Property Address<input id="svAddress" type="text" placeholder="206 N MacDill Ave, Tampa FL"></label>'
-    +'<label>Project Name<input id="svProject" type="text" placeholder="Retail Flip"></label>'
+    +'<label>Project Title<input id="svProject" type="text" maxlength="160" placeholder="Living Room Staging"></label>'
     +'<label>Room Name<input id="svRoom" type="text" placeholder="Living Room"></label>'
     +'<label>Room Type<input id="svType" type="text" placeholder="living room"></label>'
     +'</div>'
@@ -3883,8 +3883,10 @@ if(scopeGrid && !document.getElementById('scSave')){
     const note=document.getElementById('scopeNote');
     if(!lastScope){ note.textContent='Price the scope first, then save it.'; return; }
     const address=($('svAddress').value||'').trim();
-    const project=($('svProject').value||'').trim()||'Untitled Project';
     const room=($('svRoom').value||'').trim()||'Living Room';
+    /* The title answers "which project?"; only suggest one when it is blank. */
+    const project=($('svProject').value||'').trim().slice(0,160)
+      ||suggestDesignTitle(address,room)||'Untitled Design';
     const type=($('svType').value||'').trim()||'living room';
     if(address.length<3){ note.textContent='Add the property address before saving.'; $('svAddress').focus(); return; }
     const srcPath=uploadPath||window.rdPendingPhotoPath||null;
