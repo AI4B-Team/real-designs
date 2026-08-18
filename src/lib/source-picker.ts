@@ -108,6 +108,20 @@ export type PickerProperty = {
 
 export type PickerPhoto = { id: string; path: string; name?: string };
 
+/** One completed, generated design that can become a video scene. */
+export type PickerDesign = {
+  id: string;
+  /** Storage path or displayable URL of the generated image. */
+  path: string;
+  /** Source photo, when the design was staged from one. */
+  beforePath?: string | null;
+  room: string;
+  address?: string | null;
+  propertyId?: string | null;
+  createdAt?: string | null;
+  versionId?: string | null;
+};
+
 export type PickerOptions = {
   context: PickerContext;
   esc: (s: string) => string;
