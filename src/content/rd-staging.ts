@@ -1062,7 +1062,7 @@ async function setProjectRatio(next) {
       title: "Update Photo Format?",
       body: "Some photos use a custom output ratio.",
     });
-    if (choice === "cancel") { render(); return; }
+    if (choice === "cancel") return;
     if (choice === "all") overrides.forEach((i) => (i.ratio = null));
   }
   S.outputRatio = ratio;
@@ -1185,9 +1185,9 @@ function openProjectRatioMore() {
   wrap.addEventListener("click", (e) => {
     const b = e.target.closest("[data-rdsmoreratio]");
     if (b) { close(); void setProjectRatio(b.getAttribute("data-rdsmoreratio")); return; }
-    if (e.target.closest("[data-mfa]") || e.target === wrap) { close(); render(); }
+    if (e.target.closest("[data-mfa]") || e.target === wrap) { close(); applyRatiosLive(); }
   });
-  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); render(); } });
+  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); applyRatiosLive(); } });
 }
 
 /**
@@ -1224,7 +1224,7 @@ function openBulkFormatPicker(refresh) {
     if (b) {
       S.outputRatio = normalizeOutputRatio(b.getAttribute("data-rdsbfmt"));
       saveDraft();
-      render();
+      applyRatiosLive();
       done();
       return;
     }
