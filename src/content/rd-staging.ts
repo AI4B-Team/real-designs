@@ -531,7 +531,7 @@ function ordered() {
 function cardHtml(it) {
   const st = stateOf(it);
   const ws = workState(it);
-  const label = it.room || UNASSIGNED_LABEL;
+  const label = it.room || "Choose Room";
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
