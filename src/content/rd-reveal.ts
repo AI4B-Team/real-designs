@@ -3362,11 +3362,16 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
     /* An approved AI clip replaces the still for this scene, and its real
        duration wins so the video never cuts a generated clip mid-move. */
     const clip = s.use_clip ? sceneClips.get(s.key) : null;
-    const clipUrl = clip && clip.status === "completed" ? sceneClips.url(clip) : null;
+    /* A generated Start / End clip wins over the still and over a plain
+       single-image animation: it is the scene the user approved. */
+    const seFr = sceneFrames.get(s.key);
+    const seUrl = seFr && seFr.status === "completed" ? sceneFrames.clipUrl(s.key) : null;
+    const clipUrl = seUrl || (clip && clip.status === "completed" ? sceneClips.url(clip) : null);
+    const clipSecs = seUrl ? Number(seFr?.seconds || 8) : clip?.seconds || null;
     urls.push({
       url: await resolvePhotoUrl(s.path),
       clipUrl,
-      clipSeconds: clipUrl ? clip?.seconds || null : null,
+      clipSeconds: clipUrl ? clipSecs : null,
       compareUrl: s.compare ? await resolvePhotoUrl(s.compare) : null,
       /* Standard Start/End: this scene genuinely ends on a second frame. */
       ...(await (async () => {
@@ -3382,7 +3387,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       crop: s.crop || null,
       room_name: s.room,
       scene_type: s.scene_type,
-      duration: clipUrl && clip?.seconds ? clip.seconds : per,
+      duration: clipUrl && clipSecs ? clipSecs : per,
       motion: s.motion || "auto",
       transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
       caption: w.captions ? s.caption || s.room : null,
