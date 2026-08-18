@@ -1251,14 +1251,39 @@ function applyRoom(it) {
 function removeStrip() {
   if (strip) strip.remove();
   strip = null;
+  const head = document.getElementById("rdsCanvasHead");
+  if (head) head.remove();
 }
 
+/* The canvas belongs to the same builder as the grid, so its navigation lives
+   inside the Studio view: a compact "All Rooms" control in the header and the
+   room filmstrip directly beneath the canvas — not a floating bar. */
 function mountStrip() {
   if (!S || !S.items.length) return;
   removeStrip();
+  const view = document.getElementById("v-studio");
+  const board = view && view.querySelector(".studio");
+
+  const head = document.createElement("div");
+  head.id = "rdsCanvasHead";
+  head.className = "rds-chead";
+  head.innerHTML = `<button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>All Rooms</button>
+    <span class="rds-chead-t" id="rdsCanvasTitle"></span>`;
+  if (view && board) view.insertBefore(head, board);
+
   strip = document.createElement("div");
-  strip.className = "rd-app rds-strip";
-  document.body.appendChild(strip);
+  strip.className = "rds-strip";
+  if (view && board && board.nextSibling) view.insertBefore(strip, board.nextSibling);
+  else if (view) view.appendChild(strip);
+  else document.body.appendChild(strip);
+
+  const back = head.querySelector("#rdsAllRooms");
+  if (back)
+    back.onclick = () => {
+      markCurrentDone();
+      reopenStaging();
+    };
+
   drawStrip();
   window.addEventListener("hashchange", stripGuard);
 }
@@ -1267,24 +1292,37 @@ function stripGuard() {
   if (!strip) return;
   const onStudio = (location.hash || "").replace(/^#/, "") === "studio";
   strip.classList.toggle("hide", !onStudio);
+  const head = document.getElementById("rdsCanvasHead");
+  if (head) head.classList.toggle("hide", !onStudio);
 }
 
 function drawStrip() {
   if (!strip || !S) return;
   const list = designSet();
   const i = list.findIndex((x) => x.key === S.current);
-  strip.innerHTML = `<button class="rds-strip-b" id="rdsRooms"><i data-lucide="layout-grid"></i>Back To Rooms</button>
-    <button class="rds-strip-i" id="rdsPrev" aria-label="Previous photo" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
+  const cur = i >= 0 ? list[i] : null;
+  const nxt = i >= 0 && i < list.length - 1 ? list[i + 1] : null;
+  const title = document.getElementById("rdsCanvasTitle");
+  if (title)
+    title.textContent = cur
+      ? `${cur.room || cur.name}${list.length > 1 ? ` · ${i + 1} of ${list.length}` : ""}`
+      : "";
+
+  strip.innerHTML = `<button class="rds-strip-i" id="rdsPrev" aria-label="Previous room" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
     <div class="rds-strip-l">${list
-      .map(
-        (x) =>
-          `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${x.done ? " done" : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
-            <img src="${esc(x.signed || x.previewUrl)}" alt="${esc(x.name)}">${x.done ? '<i data-lucide="check"></i>' : ""}</button>`,
-      )
+      .map((x) => {
+        const ws = workState(x);
+        return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
+            <img src="${esc(x.resultUrl || x.signed || x.previewUrl)}" alt="${esc(x.name)}">
+            ${ws ? `<i data-lucide="${ws.icon}"></i>` : ""}
+            <em>${esc(x.room || x.name)}</em></button>`;
+      })
       .join("")}</div>
-    <button class="rds-strip-i" id="rdsNext" aria-label="Next photo" ${i < 0 || i >= list.length - 1 ? "disabled" : ""}><i data-lucide="chevron-right"></i></button>
-    <span class="rds-strip-c">${i < 0 ? "" : `Photo ${i + 1} Of ${list.length}`}</span>
+    <button class="rds-strip-i" id="rdsNext" aria-label="Next room" ${i < 0 || i >= list.length - 1 ? "disabled" : ""}><i data-lucide="chevron-right"></i></button>
+    <span class="rds-strip-c">${i < 0 ? "" : `Room ${i + 1} Of ${list.length}`}</span>
+    ${cur && cur.done && nxt ? `<button class="rds-strip-n" id="rdsNextRoom">Next Room<i data-lucide="arrow-right"></i></button>` : ""}
     <button class="rds-strip-i" id="rdsStripX" aria-label="Close the photo set"><i data-lucide="x"></i></button>`;
+
   paint();
   strip.querySelector("#rdsRooms").onclick = () => {
     markCurrentDone();
