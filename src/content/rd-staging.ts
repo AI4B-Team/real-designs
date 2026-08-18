@@ -35,6 +35,7 @@ import { openAddressModal } from "@/lib/address-modal";
 import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
+import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { listMediaProperties } from "@/lib/property-media.functions";
@@ -78,7 +79,9 @@ function newSession(seed = {}) {
     draftId: seed.draftId || null,
     saveState: "idle",
     detect: "pending",
-    current: -1,
+    /* The key of the photo open on the canvas — never an index sentinel. */
+    current: null,
+    lastOpened: null,
     activeKey: null,
     busy: false,
   };
@@ -128,12 +131,25 @@ function workState(it) {
    the first photo is safely in private storage, then autosaved on every
    meaningful change with a short debounce. */
 
+/* One description of "where am I", shared by the rail, the draft row and the
+   restore path, so the three can never disagree. */
+function stepState() {
+  return {
+    keys: S.items.filter((i) => i.path).map((i) => i.key),
+    activeKey: S.current || null,
+    lastOpened: S.lastOpened || null,
+    adding: S.step === "add",
+    reviewing: S.step === "final",
+    completed: S.items.filter((i) => i.state === "complete" || i.done).map((i) => i.key),
+  };
+}
+
 function draftPayload() {
   return {
     id: S.draftId,
     project_type: "photo_staging",
     status: "draft",
-    builder_step: S.step === "add" ? "add" : S.current ? "canvas" : "review",
+    builder_step: durableStep(stepState()),
     property_id: S.propertyId || null,
     property_address: S.address || null,
     title: S.title || null,
@@ -400,7 +416,17 @@ function hydrate(draft) {
       err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
     };
   });
-  S.step = draft.builder_step === "add" ? "add" : "review";
+  /* Where the user left off, validated against the photos that still exist. */
+  const back = restoreStep({
+    builder_step: draft.builder_step,
+    keys: S.items.map((i) => i.key),
+    activeKey: (draft.settings && draft.settings.current) || null,
+    completed: S.items.filter((i) => i.state === "complete" || i.done).map((i) => i.key),
+  });
+  S.step = back.step === "add" ? "add" : "review";
+  S.current = null;
+  S.lastOpened = back.activeKey;
+  S.resumeKey = back.step === "design" ? back.activeKey : null;
 
   ensureSaver();
   /* Signed URLs are minted per session; the row only ever stores paths. */
@@ -433,6 +459,12 @@ export async function resumeStagingDraft(id) {
     if (!draft || !(draft.assets || []).length) return false;
     hydrate(draft);
     show();
+    /* A draft saved on the canvas reopens on that exact photo. */
+    if (S && S.resumeKey) {
+      const key = S.resumeKey;
+      S.resumeKey = null;
+      void openInCanvas(key);
+    }
     return true;
   } catch (_) {
     return false;
@@ -653,11 +685,13 @@ function selectedCount() {
    classes, same collapse behaviour) — only the step data differs. */
 function stepRailHtml(active) {
   const has = S.items.length > 0;
+  const st = stepState();
+  const done = st.completed.length;
   const steps = [
     { key: "add", label: "Add Photos", icon: "image-plus", done: has },
     { key: "review", label: "Rooms", icon: "layout-grid", ready: has, badge: has ? String(selectedCount()) : "" },
-    { key: "design", label: "Design", icon: "wand-sparkles", ready: false },
-    { key: "final", label: "Review", icon: "circle-check", ready: false },
+    { key: "design", label: "Design", icon: "wand-sparkles", ready: has, done: !!done },
+    { key: "final", label: "Review", icon: "circle-check", ready: !!done, badge: done ? String(done) : "" },
   ];
   return builderRailHtml({
     steps,
@@ -774,11 +808,26 @@ function render() {
 
 }
 
+/* Every rail step is a real destination: nothing in the rail is decorative. */
 function bindRail(el) {
   el.querySelectorAll("[data-step]").forEach((b) =>
     b.addEventListener("click", () => {
       const k = b.getAttribute("data-step");
-      if (k === "design" || k === S.step) return;
+      if (k === S.step && k !== "design") return;
+      if (k === "design") {
+        const st = stepState();
+        const next = navigateTo("design", st);
+        if (next.step === "design" && next.activeKey) { void openInCanvas(next.activeKey); return; }
+        const first = designSet()[0];
+        if (first) { void openInCanvas(first.key); return; }
+        return;
+      }
+      if (k === "final") {
+        /* Finished designs live in Media, where they can be shared and reused. */
+        saveDraft();
+        try { window.__rdGo && window.__rdGo("media"); } catch (_) {}
+        return;
+      }
       S.step = k;
       render();
     }),

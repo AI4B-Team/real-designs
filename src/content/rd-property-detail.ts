@@ -8,6 +8,9 @@ import { loadMediaLibrary, onMediaChange, typeGroup, stageLabel } from "@/lib/me
 import { propertyBuckets } from "@/lib/media-view";
 import { listPackages } from "@/lib/presentation-packages.functions";
 import { resolvePhotoUrl } from "@/lib/room-photos";
+import { setHandoff } from "@/lib/handoff";
+import { openStagingReview } from "@/content/rd-staging";
+import { openVideoWorkflow } from "@/content/rd-media-lib";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -111,6 +114,11 @@ function render() {
     };
   });
   hydrate(el);
+  /* Property pages start builders through the same handoff every other
+     surface uses, so the address and photos always travel with the project. */
+  el.querySelectorAll("[data-build]").forEach((btn) => {
+    btn.onclick = () => startBuild(btn.dataset.build, b);
+  });
   el.querySelectorAll("[data-go]").forEach((btn) => {
     btn.onclick = () => {
       try {
@@ -118,6 +126,49 @@ function render() {
       } catch (_) {}
     };
   });
+}
+
+function startBuild(target, b) {
+  const photos = (b.photos || []).filter((m) => m.path && m.status !== "failed");
+  const h = setHandoff({
+    target,
+    origin: "property",
+    propertyId: P.propertyId,
+    propertyAddress: P.label || null,
+    assets: photos.map((m) => ({
+      path: m.path,
+      name: m.title,
+      room: m.room && m.room !== "Needs Review" ? m.room : null,
+      id: m.refId || m.id,
+    })),
+  });
+  if (!h) {
+    try { window.__rdGo && window.__rdGo("media"); } catch (_) {}
+    return;
+  }
+  if (target === "video") {
+    try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+    openVideoWorkflow({
+      from: "property",
+      propertyId: h.propertyId,
+      propertyAddress: h.propertyAddress,
+      assets: h.assets.map((a, i) => ({
+        id: a.id,
+        storage_path: a.path,
+        file_name: a.name,
+        original_filename: a.name,
+        room_group: a.room || a.name,
+        sort_order: i,
+      })),
+    });
+    return;
+  }
+  openStagingReview({
+    photos: h.assets.map((a) => ({ path: a.path, name: a.name, room: a.room })),
+    address: h.propertyAddress || "",
+    propertyId: h.propertyId,
+  });
+  try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
 }
 
 function body(b, pk) {
@@ -135,7 +186,14 @@ function body(b, pk) {
       return empty("wand-2", "No Designs Yet", "Redesign a room from this property and it appears here.", "studio", "Open Studio");
     return empty("clapperboard", "No Videos Yet", "Turn this property's photos into a listing video.", "reveal", "Create A Video");
   }
-  return `<div class="pd-grid">${list.map(tile).join("")}</div>`;
+  const bar =
+    P.tab === "photos"
+      ? `<div class="pd-actions">
+          <button class="btn btn-primary btn-sm" data-build="design"><i data-lucide="wand-sparkles"></i>Design These Photos</button>
+          <button class="btn btn-ghost btn-sm" data-build="video"><i data-lucide="clapperboard"></i>Create A Video</button>
+        </div>`
+      : "";
+  return `${bar}<div class="pd-grid">${list.map(tile).join("")}</div>`;
 }
 
 function overview(b, pk) {

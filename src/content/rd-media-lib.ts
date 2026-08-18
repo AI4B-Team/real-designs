@@ -11,6 +11,8 @@ import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions"
 import { updateMediaAssets, deleteMediaAssets, listMediaProperties, createMediaProperty } from "@/lib/property-media.functions";
 import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
+import { setHandoff } from "@/lib/handoff";
+import { openStagingReview } from "@/content/rd-staging";
 import { openAddressModal } from "@/lib/address-modal";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL, mediaTypeLabel } from "@/lib/media-view";
@@ -178,6 +180,7 @@ function shell() {
   <div class="ml-bulk" id="mlBulk">
     <span id="mlSelCount">0 Selected</span>
     <button class="btn btn-primary btn-xs" data-b="video" id="mlBulkVideo"><i data-lucide="clapperboard"></i>Create Video</button>
+    <button class="btn btn-ghost btn-xs" data-b="design"><i data-lucide="wand-sparkles"></i>Design</button>
     <button class="btn btn-ghost btn-xs" data-b="restyle" id="mlBulkRestyle"><i data-lucide="wand-2"></i>Redesign</button>
     <button class="btn btn-ghost btn-xs" data-b="prop"><i data-lucide="home"></i>Add To Property</button>
     <button class="btn btn-ghost btn-xs" data-b="pres"><i data-lucide="presentation"></i>Add To Presentation</button>
@@ -733,6 +736,44 @@ function editImage(m) {
   S.go("studio");
 }
 
+/* Every builder launch from Media goes through the one handoff contract, so
+   the property, the photos and the origin arrive intact. */
+function publishHandoff(target, items) {
+  const withProp = items.find((m) => m.propertyId) || items[0] || {};
+  return setHandoff({
+    target,
+    origin: "media",
+    propertyId: withProp.propertyId || null,
+    propertyAddress: withProp.address || withProp.property || null,
+    assets: items.map((m) => ({
+      path: m.assetPath || m.path,
+      name: m.title,
+      room: m.room && m.room !== "Needs Review" ? m.room : null,
+      id: m.refId || m.id,
+    })),
+  });
+}
+
+/** Send the selected photos into the Photo Design builder with their property. */
+function designFrom(items) {
+  const usable = items.filter((m) => canEditImage(m) && (m.assetPath || m.path));
+  if (!usable.length) {
+    toast("Select At Least One Uploaded Photo To Design.");
+    return;
+  }
+  const h = publishHandoff("design", usable);
+  if (!h) {
+    toast("Those Photos Aren't Ready Yet.");
+    return;
+  }
+  openStagingReview({
+    photos: h.assets.map((a) => ({ path: a.path, name: a.name, room: a.room })),
+    address: h.propertyAddress || "",
+    propertyId: h.propertyId,
+  });
+  try { (window as any).__rdGo && (window as any).__rdGo("studio"); } catch (_) {}
+}
+
 /** Seed the listing-video workflow from one or many ready images. */
 function videoFrom(items) {
   const usable = items.filter(videoReady);
@@ -741,8 +782,11 @@ function videoFrom(items) {
     return;
   }
   try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  const h = publishHandoff("video", usable);
   openVideoWorkflow({
     from: "media",
+    propertyId: (h && h.propertyId) || null,
+    propertyAddress: (h && h.propertyAddress) || null,
     assets: usable.map((x, i) => ({
       id: x.refId || x.id,
       storage_path: x.assetPath || x.path,
@@ -1107,14 +1151,14 @@ async function bulk(action, anchor) {
     return;
   }
   if (action === "video") return videoFrom(list);
+  if (action === "design") return designFrom(list);
   if (action === "restyle") return restyleFrom(list);
   if (action === "prop") return openAssign(list);
   if (action === "pres") return S.go("present");
   if (action === "more")
     return popMenu(anchor, [
       { icon: "heart", label: "Favorite", fn: () => bulk("fav") },
-      { icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") },
-      { icon: "wand-2", label: "Use In Studio", fn: () => S.go("studio") },
+      { icon: "wand-sparkles", label: "Design These Photos", fn: () => bulk("design") },
     ]);
   if (action === "download") {
     for (const m of list) await download(m);
