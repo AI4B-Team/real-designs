@@ -1040,12 +1040,13 @@ function ratioChoiceDialog(opts) {
 
 /** Change the project default; never silently discard a per-photo override. */
 async function setProjectRatio(next) {
+  if (next === "__more") { openProjectRatioMore(); return; }
   const ratio = normalizeOutputRatio(next);
   if (ratio === normalizeOutputRatio(S.outputRatio)) return;
   const overrides = overriddenItems();
   if (overrides.length) {
     const choice = await ratioChoiceDialog({
-      title: "Update Output Ratio?",
+      title: "Update Photo Format?",
       body: "Some photos use a custom output ratio.",
     });
     if (choice === "cancel") { render(); return; }
@@ -1056,11 +1057,44 @@ async function setProjectRatio(next) {
   render();
 }
 
+/**
+ * The ratios that stay out of the header: Original and the classic print
+ * shapes. Chosen here, the header shows a compact "Custom:" chip instead of a
+ * fourth button.
+ */
+function openProjectRatioMore() {
+  if (typeof document === "undefined") return;
+  const cur = normalizeOutputRatio(S.outputRatio);
+  const wrap = document.createElement("div");
+  wrap.className = "bx-cdlg";
+  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="More Ratios">
+    <h3>More Ratios</h3>
+    <p>These apply to every photo that has no override of its own.</p>
+    <div class="rv-seg wrap" style="margin:10px 0 4px">${MORE_OUTPUT_RATIOS.concat(PRIMARY_OUTPUT_RATIOS)
+      .map(
+        (o) => `<button type="button" class="${cur === o.id ? "on" : ""}" data-rdsmoreratio="${o.id}">${esc(
+          o.note ? o.label + " " + o.note : o.label,
+        )}</button>`,
+      )
+      .join("")}</div>
+    ${modalFooterHtml({ primary: { label: "Done", value: "done" } })}
+  </div>`;
+  document.body.appendChild(wrap);
+  paint();
+  const close = () => wrap.remove();
+  wrap.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rdsmoreratio]");
+    if (b) { close(); void setProjectRatio(b.getAttribute("data-rdsmoreratio")); return; }
+    if (e.target.closest("[data-mfa]") || e.target === wrap) { close(); render(); }
+  });
+  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); render(); } });
+}
+
 /** Per-photo override, offered from the card menu and the canvas. */
 function openRatioOverride(it) {
   if (typeof document === "undefined") return;
   const cur = normalizeOverride(it.ratio);
-  const opts = [{ id: "", label: "Use Project Default", note: ratioLabel(S.outputRatio) }].concat(
+  const opts = [{ id: "", label: "Use Project Format", note: ratioLabel(S.outputRatio) }].concat(
     OUTPUT_RATIOS.map((o) => ({ id: o.id, label: o.label, note: o.note || "" })),
   );
   const wrap = document.createElement("div");
