@@ -870,7 +870,7 @@ function selectRecommendedGap() {
     const hit = photos.find((p) => p.category === cat && p.state === "confirmed" && p.selected === false);
     if (!hit) continue;
     const a = (w.available || []).find((x) => x.key === hit.id);
-    if (a && !w.scenes.some((x) => x.key === a.key)) w.scenes.push(newScene(a));
+    if (a && !w.scenes.some((x) => x.key === a.key)) w.scenes.push(assetToScene(a));
   }
   syncSceneOrder();
 }
