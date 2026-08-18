@@ -66,7 +66,6 @@ function newSession(seed = {}) {
     propertyId: seed.propertyId || null,
     draftId: seed.draftId || null,
     saveState: "idle",
-    group: true,
     detect: "pending",
     current: -1,
     busy: false,
@@ -121,7 +120,7 @@ function draftPayload() {
       })),
     selected: S.items.filter((i) => i.selected && i.path).map((i) => i.key),
     item_order: ordered().filter((i) => i.path).map((i) => i.key),
-    settings: { group: !!S.group, current: S.current || null },
+    settings: { current: S.current || null },
   };
 }
 
@@ -267,7 +266,6 @@ function hydrate(draft) {
     propertyId: draft.property_id || null,
     draftId: draft.id,
   });
-  S.group = draft.settings?.group !== false;
   const order = Array.isArray(draft.item_order) ? draft.item_order : [];
   const assets = (draft.assets || []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   S.items = assets.map((a) => ({
@@ -425,10 +423,11 @@ function stateOf(it) {
   return { cls: "warn", label: "Unassigned" };
 }
 
+/* Review Rooms is one continuous grid in upload order. Detection writes a
+   label under a photo and never moves it, so the row a user was looking at
+   stays where they left it. */
 function ordered() {
-  const list = S.items.slice();
-  if (!S.group) return list;
-  return list.sort((a, b) => roomRank(a.room) - roomRank(b.room));
+  return S.items.slice();
 }
 
 function cardHtml(it) {
@@ -459,22 +458,7 @@ function cardHtml(it) {
 }
 
 function gridHtml() {
-  const list = ordered();
-  if (!S.group) return `<div class="rds-grid">${list.map(cardHtml).join("")}</div>`;
-  const groups = [];
-  list.forEach((it) => {
-    const key = it.room || UNASSIGNED_LABEL;
-    const g = groups.find((x) => x.key === key);
-    if (g) g.items.push(it);
-    else groups.push({ key, items: [it] });
-  });
-  return groups
-    .map(
-      (g) =>
-        `<section class="rds-group"><h3><i data-lucide="${roomIcon(g.key === UNASSIGNED_LABEL ? "" : g.key)}"></i>${esc(g.key)}<b>${g.items.length}</b></h3>
-        <div class="rds-grid">${g.items.map(cardHtml).join("")}</div></section>`,
-    )
-    .join("");
+  return `<div class="rds-grid">${ordered().map(cardHtml).join("")}</div>`;
 }
 
 function statusText() {
@@ -544,7 +528,6 @@ function render() {
           <div class="rds-menu" id="rdsMoreMenu" role="menu">
             <button class="rds-menu-i" data-act="all"><i data-lucide="check-square"></i>Select All</button>
             <button class="rds-menu-i" data-act="none"><i data-lucide="square"></i>Clear Selection</button>
-            <button class="rds-menu-i" data-act="group"><i data-lucide="${S.group ? "check" : "list"}"></i>Group By Room</button>
             <button class="rds-menu-i" data-act="del"><i data-lucide="trash-2"></i>Remove Selected</button>
           </div>
         </div>
@@ -629,7 +612,6 @@ function bindReview(el) {
       closeMenu();
       if (act === "all") S.items.forEach((i) => (i.selected = true));
       if (act === "none") S.items.forEach((i) => (i.selected = false));
-      if (act === "group") S.group = !S.group;
       if (act === "del") {
         const keep = S.items.filter((i) => !i.selected);
         if (keep.length === S.items.length) return;
@@ -693,8 +675,7 @@ function bindReview(el) {
         it.room = label;
         it.roomSource = "manual";
         saveDraft();
-        if (S.group) render();
-        else patchCard(it);
+        patchCard(it);
       });
     }),
   );
