@@ -36,6 +36,7 @@ import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { roomIcon, searchRooms } from "@/lib/staging-rooms";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
+import { dedupeScenes, mergeScenes, reconcileScenes, uniqueIds } from "@/lib/scene-dedupe";
 import { runAdvanceToGrid, attachUploadAssets, initialWizardStep, hydrateSeededWizard, ensureStepInvariant, acceptVideoPhotos, runEnrichment, logVideoEvent } from "@/lib/video-upload-intake";
 import { normalizeImageFile } from "@/lib/source-picker";
 import {
@@ -636,7 +637,13 @@ async function loadWizardAssets() {
       }
     } catch (_) {}
   }
-  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.storagePath || u.url, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
+  for (const u of w.uploads) {
+    const path = u.storagePath || u.url;
+    /* Same stored object twice = one photo: a duplicate upload record never
+       becomes a second grid asset. */
+    if (path && out.some((a) => a.path === path)) continue;
+    out.push({ key: "u-" + u.id, path, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
+  }
   /* Designs chosen in Studio are real assets even when no property is set. */
   for (const d of w.seedDesigns || []) {
     if (!d || !d.path) continue;
@@ -661,7 +668,7 @@ async function loadWizardAssets() {
       .map((k) => out.find((a) => a.key === k))
       .filter((a) => a && want.has(a.path));
     if (picks.length) {
-      w.scenes = picks.map(assetToScene);
+      w.scenes = dedupeScenes(picks.map(assetToScene));
       if (w.step < 2) w.step = 2;
     }
     w.seedPaths = null;
@@ -955,7 +962,7 @@ function selectRecommendedGap() {
     const hit = photos.find((p) => p.category === cat && p.state === "confirmed" && p.selected === false);
     if (!hit) continue;
     const a = (w.available || []).find((x) => x.key === hit.id);
-    if (a && !w.scenes.some((x) => x.key === a.key)) w.scenes.push(assetToScene(a));
+    if (a) w.scenes = mergeScenes(w.scenes || [], [assetToScene(a)]);
   }
   syncSceneOrder();
 }
@@ -1242,7 +1249,7 @@ function wizardDraftBody(w) {
         uploads: (w.uploads || [])
           .filter((u) => u.storagePath)
           .map((u) => ({ id: u.id, name: u.name, path: u.storagePath, room: u.room || null, room_source: u.roomSource || "ai" })),
-        scenes: (w.scenes || []).map((sc) => ({
+        scenes: dedupeScenes(w.scenes || []).map((sc) => ({
           key: sc.key, path: sc.path, compare: sc.compare || null, room: sc.room, kind: sc.kind,
           scene_type: sc.scene_type, duration: sc.duration, motion: sc.motion, crop: sc.crop || null,
           caption: sc.caption || null, disclosure: sc.disclosure || null, motion_level: sc.motion_level || "standard",
@@ -1325,7 +1332,7 @@ function selectUploadedScenes(w) {
     .map((k) => (w.available || []).find((a) => a.key === k))
     .filter((a) => a && a.uploaded);
   if (ups.length) {
-    w.scenes = ups.map(assetToScene);
+    w.scenes = dedupeScenes(ups.map(assetToScene));
     syncSceneOrder();
     return;
   }
@@ -1335,14 +1342,15 @@ function selectUploadedScenes(w) {
 /** Add just-added photos to the selection without disturbing existing scenes. */
 function selectSceneKeys(w, keys) {
   if (!w || !keys?.length) return;
-  const have = new Set((w.scenes || []).map((s) => s.key));
-  const add = keys
-    .filter((k) => !have.has(k))
+  /* Dedupe on the stable asset id, never on array position or object identity:
+     a repeated callback, a Strict-Mode double effect or a double click all
+     hand us the same ids again. */
+  const add = uniqueIds(keys)
     .map((k) => (w.available || []).find((a) => a.key === k))
     .filter(Boolean)
     .map(assetToScene);
   if (!add.length) return;
-  w.scenes = (w.scenes || []).concat(add);
+  w.scenes = mergeScenes(w.scenes || [], add);
   syncSceneOrder();
 }
 
@@ -1664,7 +1672,7 @@ async function startAnimate(w) {
   w.animate.busy = true; render();
   try {
     /* Selecting a photo first keeps the clip attached to a real scene. */
-    if (!src.scene && src.asset) { w.scenes.push(assetToScene(src.asset)); syncSceneOrder(); }
+    if (!src.scene && src.asset) { w.scenes = mergeScenes(w.scenes || [], [assetToScene(src.asset)]); syncSceneOrder(); }
     const projectId = await ensureVideoProjectId(w);
     await sceneClips.start({
       video_project_id: projectId,
@@ -1792,8 +1800,10 @@ function bindAnimate(el, w, render) {
 function syncSceneOrder() {
   const w = S.wizard;
   if (!w || !w.scenes) return;
-  const pos = new Map((w.gridOrder || []).map((k, i) => [k, i]));
-  w.scenes.sort((a, b) => (pos.get(a.key) ?? 1e9) - (pos.get(b.key) ?? 1e9));
+  /* One authoritative list: deduplicated by stable asset identity, stripped of
+     scenes whose asset left the grid, ordered by the grid. Every count, badge,
+     timeline, duration, credit estimate and render manifest reads this. */
+  w.scenes = reconcileScenes(w.scenes, w.available || [], w.gridOrder || []);
 }
 
 /**
@@ -3015,7 +3025,7 @@ async function generate() {
         disclosure: { mode: w.disclosureMode },
         settings: { baTransition: w.baTransition || "match", quality: w.quality || "standard", primaryFormat: w.primaryFormat || DEFAULT_FORMAT, additionalFormats: w.additionalFormats || [], mode: w.mode || "auto", titles: w.titles || null },
       },
-      scenes: w.scenes.map((s, i) => ({
+      scenes: dedupeScenes(w.scenes).map((s, i) => ({
         source_asset_id: s.asset_id || null,
         source_version_id: s.version_id || null,
         source_path: s.path,
@@ -3761,14 +3771,14 @@ function bind() {
     if (i >= 0) w.scenes.splice(i, 1);
     else {
       const a = w.available.find((x) => x.key === key);
-      if (a) w.scenes.push(assetToScene(a));
+      if (a) w.scenes = mergeScenes(w.scenes || [], [assetToScene(a)]);
     }
     syncSceneOrder();
     render();
   });
   on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); syncSceneOrder(); render(); });
   on("#rvSelAll", "change", (e) => {
-    if (e.currentTarget.checked) w.scenes = (w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean).map(assetToScene);
+    if (e.currentTarget.checked) w.scenes = uniqueIds(w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean).map(assetToScene);
     else w.scenes = [];
     syncSceneOrder();
     render();
@@ -3877,7 +3887,7 @@ function bind() {
     if (i < 0 && key) {
       const a = w.available.find((x) => x.key === key);
       if (!a) return;
-      w.scenes.push(assetToScene(a));
+      w.scenes = mergeScenes(w.scenes || [], [assetToScene(a)]);
       syncSceneOrder();
       i = w.scenes.findIndex((s) => s.key === key);
     }
@@ -4436,7 +4446,7 @@ function selectRecommended() {
     }
   }
   const chosen = (picked.length ? picked : pool).slice(0, 12);
-  w.scenes = chosen.map(assetToScene);
+  w.scenes = dedupeScenes(chosen.map(assetToScene));
   syncSceneOrder();
 }
 
@@ -4478,7 +4488,7 @@ function editExisting(d) {
   w.branding = p.branding || w.branding;
   w.disclosureMode = p.disclosure?.mode || "altered";
   w.captions = !!d.audio?.captions_enabled;
-  w.scenes = d.scenes.map((s) => ({
+  w.scenes = dedupeScenes(d.scenes.map((s) => ({
     key: s.id,
     path: s.source_path,
     compare: s.compare_path,
@@ -4498,7 +4508,7 @@ function editExisting(d) {
     labels: Array.isArray(s.labels) ? s.labels : [],
     asset_id: s.source_asset_id,
     version_id: s.source_version_id,
-  }));
+  })));
   w.step = 3;
   /* Resume an unfinished builder exactly where it was left, from the stored
      draft state rather than from anything cached in this browser. */
@@ -4509,7 +4519,9 @@ function editExisting(d) {
       id: u.id, name: u.name, originalName: u.name, url: "", file: null,
       storagePath: u.path, room: u.room || "Unsorted", roomSource: u.room_source || "ai",
     }));
-    if (ds.scenes?.length && !w.scenes.length) w.scenes = ds.scenes;
+    /* Draft state and database rows describe the same scenes: reconcile them
+       by asset identity rather than letting both add their own copies. */
+    if (ds.scenes?.length) w.scenes = mergeScenes(w.scenes || [], ds.scenes);
     if (ds.titles) w.titles = ds.titles;
     if (ds.audio) {
       w.presentation = ds.audio.presentation ?? w.presentation;

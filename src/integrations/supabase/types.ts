@@ -2532,6 +2532,7 @@ export type Database = {
           motion_level: string
           original_path: string | null
           room_name: string | null
+          scene_role: string | null
           scene_type: string
           sequence: number
           source_asset_id: string | null
@@ -2565,6 +2566,7 @@ export type Database = {
           motion_level?: string
           original_path?: string | null
           room_name?: string | null
+          scene_role?: string | null
           scene_type?: string
           sequence?: number
           source_asset_id?: string | null
@@ -2598,6 +2600,7 @@ export type Database = {
           motion_level?: string
           original_path?: string | null
           room_name?: string | null
+          scene_role?: string | null
           scene_type?: string
           sequence?: number
           source_asset_id?: string | null

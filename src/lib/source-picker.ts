@@ -196,6 +196,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
     propPhotos: [] as PickerPhoto[],
     propChecked: new Set<string>(),
+    /* Guards double submission: a second click while the add is in flight is
+       the classic way the same photos land in the project twice. */
+    adding: false,
     propLoading: false,
     /** Finished designs, their load state and the selection order. */
     designs: [] as PickerDesign[],
@@ -738,8 +741,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '<div class="sp-photos"><div class="sp-photos-h"><b>' + esc(n + " Of " + photos.length + " Selected") + "</b>" +
       '<span><button type="button" class="btn btn-ghost btn-sm" data-sp="pall">Select All</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-sp="pnone">Clear</button>' +
-      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' + (n ? "" : " disabled") + ">" +
-      esc(n ? "Add " + n + " Photo" + (n === 1 ? "" : "s") : "Add Photos") + "</button></span></div>" +
+      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' + (n && !state.adding ? "" : " disabled") + ">" +
+      esc(state.adding ? "Adding…" : n ? "Add " + n + " Photo" + (n === 1 ? "" : "s") : "Add Photos") + "</button></span></div>" +
       '<div class="sp-photo-grid">' +
       photos
         .map((ph) => {
@@ -1080,9 +1083,15 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       opts.onTab?.(state.tab);
       render();
     } else if (k === "dcontinue") {
+      if (state.adding) return;
       const byId = new Map(state.designs.map((d) => [d.id, d]));
-      const picked = state.designSel.map((id) => byId.get(id)).filter(Boolean) as PickerDesign[];
-      if (picked.length) await opts.onDesigns?.(picked);
+      const ids = [...new Set(state.designSel)];
+      const picked = ids.map((id) => byId.get(id)).filter(Boolean) as PickerDesign[];
+      if (!picked.length) return;
+      state.adding = true;
+      render();
+      try { await opts.onDesigns?.(picked); }
+      finally { state.adding = false; render(); }
     }
 
 
@@ -1093,9 +1102,21 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       state.propChecked = new Set();
       render();
     } else if (k === "padd") {
+      if (state.adding) return;
       const p = properties().find((x) => x.id === state.propSel);
-      const photos = state.propPhotos.filter((x) => state.propChecked.has(x.id));
-      if (p && photos.length) await opts.onPropertyPhotos?.(p, photos);
+      /* Unique asset ids only, whatever the selection state contains. */
+      const ids = new Set(state.propChecked);
+      const seen = new Set<string>();
+      const photos = state.propPhotos.filter((x) => {
+        if (!ids.has(x.id) || seen.has(x.id)) return false;
+        seen.add(x.id);
+        return true;
+      });
+      if (!p || !photos.length) return;
+      state.adding = true;
+      render();
+      try { await opts.onPropertyPhotos?.(p, photos); }
+      finally { state.adding = false; render(); }
     } else if (k === "closechoose") {
       state.choose = [];
       render();
