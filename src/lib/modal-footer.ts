@@ -26,6 +26,8 @@ export type ModalAction = {
 
 export type ModalFooterOptions = {
   primary?: ModalAction | null;
+  /** Optional third, neutral action placed left of the secondary action. */
+  extra?: ModalAction | null;
   secondary?: ModalAction | null;
   /** true => the dominant action is a destructive confirmation. */
   destructive?: boolean;
@@ -63,6 +65,7 @@ export function modalFooterHtml(opts: ModalFooterOptions = {}) {
     .filter(Boolean)
     .join(" ");
   const parts: string[] = [];
+  if (opts.extra) parts.push(btn(opts.extra, "ghost"));
   if (opts.secondary) parts.push(btn(opts.secondary, "ghost"));
   if (opts.primary) parts.push(btn(opts.primary, opts.destructive ? "danger" : "primary", !!opts.loading));
   return `<div class="${cls}">${parts.join("")}</div>`;
