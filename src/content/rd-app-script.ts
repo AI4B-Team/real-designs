@@ -1061,6 +1061,21 @@ function studioStart(){
         if(d&&d.room) openInStudio(d.room);
       }catch(_){} },
       resolvePhoto:(p)=>resolvePhotoUrl(p),
+      /* Only finished work: a real generated image, never a sample or draft. */
+      getFinishedDesigns:async()=>{
+        const out=[];
+        (PROP_TREE||[]).forEach(p=>(p.projects||[]).forEach(pr=>(pr.rooms||[]).forEach(r=>{
+          if(!r.after_path) return;
+          if(r.status==='archived') return;
+          out.push({
+            id:String(r.id), path:r.after_path, beforePath:r.before_path||null,
+            room:r.name||pr.name||'Design', address:p.address||null,
+            propertyId:p.id||null, createdAt:r.created_at||null, versionId:r.version_id||null,
+          });
+        })));
+        out.sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
+        return out;
+      },
       setContext:(c)=>{
         STUDIO_CTX={room:(c&&c.room)||null,address:(c&&c.address)||null,project:(c&&c.project)||null};
         paintStudioSub();

@@ -1782,6 +1782,31 @@
 .sp-photo>i{position:absolute;right:6px;top:6px;width:18px;height:18px;color:var(--card);filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
 .sp-photo.is-sel>i{color:var(--red);background:var(--card);border-radius:50%}
 
+/* finished designs */
+.sp-dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.sp-dcard{position:relative;display:flex;flex-direction:column;padding:0;text-align:left;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card);cursor:pointer}
+.sp-dcard:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+.sp-dcard.is-sel{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
+.sp-dth{display:block;width:100%;aspect-ratio:16/10;background:var(--bg) center/cover no-repeat;border-bottom:1px solid var(--line)}
+.sp-db{display:flex;flex-direction:column;gap:3px;padding:9px 11px 11px}
+.sp-db b{font-size:.82rem;color:var(--ink)}
+.sp-db span{font-size:.72rem;color:var(--mute-2)}
+.sp-dpick{position:absolute;right:8px;top:8px;display:inline-flex;align-items:center;gap:3px;justify-content:center;min-width:22px;height:22px;padding:0 5px;border-radius:999px;border:1px solid var(--line);background:var(--card)}
+.sp-dpick.on{background:var(--red);border-color:var(--red);color:#fff}
+.sp-dpick i,.sp-dpick svg{width:13px;height:13px}
+.sp-dn{font-size:.68rem;font-style:normal;font-weight:600}
+.sp-dcard.is-skel{pointer-events:none}
+.sp-dcard.is-skel .sp-dth,.sp-dcard.is-skel .sp-db i{background:linear-gradient(90deg,var(--bg),#eee,var(--bg));animation:spSkel 1.2s linear infinite}
+.sp-dcard.is-skel .sp-db i{display:block;height:9px;border-radius:5px}
+.sp-dcard.is-skel .sp-db i:last-child{width:60%}
+@keyframes spSkel{0%{opacity:.65}50%{opacity:1}100%{opacity:.65}}
+.sp-dempty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:7px;padding:26px 18px}
+.sp-dempty i,.sp-dempty svg{width:22px;height:22px;color:var(--mute-2)}
+.sp-dempty b{font-size:.95rem}
+.sp-dempty span{font-size:.8rem;color:var(--mute-2)}
+.sp-dacts{display:flex;gap:8px;margin-top:6px}
+.sp-dfoot{display:flex;justify-content:flex-end;margin-top:12px}
+
 .sp-modal{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:24px}
 .sp-scrim{position:absolute;inset:0;background:rgba(12,12,14,.55)}
 .sp-choose{position:relative;width:min(760px,100%);max-height:82vh;overflow:auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}

@@ -51,10 +51,23 @@ export type StudioStartCtx = {
   openRecent?: (id: string) => void;
   /** Resolves a stored photo path into a displayable URL. */
   resolvePhoto?: (path: string) => Promise<string | null>;
+  /** Completed designs (generated image ready), for the video source picker. */
+  getFinishedDesigns?: () => Promise<
+    Array<{
+      id: string;
+      path: string;
+      beforePath?: string | null;
+      room: string;
+      address?: string | null;
+      propertyId?: string | null;
+      createdAt?: string | null;
+      versionId?: string | null;
+    }>
+  >;
   fileToDataUrl: (file: File) => Promise<string>;
 };
 
-import { mountSourcePicker } from "@/lib/source-picker";
+import { mountSourcePicker, type PickerDesign } from "@/lib/source-picker";
 import { cleanAddressText } from "@/lib/property-address";
 import { openStagingReview } from "@/content/rd-staging";
 
@@ -827,12 +840,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       (state.door === "video" ? "Add Photos To Your Video" : "Add Photos To Design") +
       "</h3><span>" +
       (state.door === "video"
-        ? "Upload a complete property shoot. You can select and reorder scenes next."
+        ? "Add a complete property shoot. You can choose and reorder the scenes next."
         : "Upload one or more spaces. We\u2019ll help identify each room.") +
       "</span></div>" +
       '<div id="stSource"></div>' +
       '<p class="stw-secondary stw-doorfoot">' +
-      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      '<button class="stw-samplelink" data-sts="sample">' +
+      (state.door === "video" ? "Try A Sample Video" : "Try A Sample Space") +
+      "</button></p>" +
       "</div>" +
 
       recentHtml() +
@@ -992,9 +1007,49 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       },
 
       onSample: () => {
+        if (isVideo) {
+          /* A genuine sample video project: real photos, real builder. */
+          const picks = SAMPLE_KEYS.slice(0, 6);
+          try {
+            (window as any).rdListingVideo?.({
+              from: "studio",
+              sourceType: "design",
+              title: "Sample Property Video",
+              propertyLabel: "",
+              paths: picks.map((s) => s.photo),
+              designs: picks.map((s) => ({ id: "sample-" + s.key, path: s.photo, room: s.name })),
+            });
+          } catch (_) {
+            ctx.go("studio");
+          }
+          return;
+        }
         state.samples = true;
         render();
       },
+
+      ...(isVideo && ctx.getFinishedDesigns
+        ? {
+            loadDesigns: () => ctx.getFinishedDesigns!(),
+            onDesigns: (designs: PickerDesign[]) => {
+              /* Finished designs become the video's scenes, in pick order. */
+              try {
+                (window as any).rdListingVideo?.({
+                  from: "studio",
+                  sourceType: "design",
+                  propertyLabel: designs[0]?.address || "",
+                  paths: designs.map((d) => d.path),
+                  designs: designs.map((d) => ({
+                    id: d.id, path: d.path, beforePath: d.beforePath || null,
+                    room: d.room || "", versionId: d.versionId || null,
+                  })),
+                });
+              } catch (_) {
+                ctx.go("studio");
+              }
+            },
+          }
+        : {}),
     });
 
   }

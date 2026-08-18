@@ -512,6 +512,8 @@ function newWizard(seed = {}) {
     propertyLabel: seed.propertyLabel || null,
     /* Only these stored photos should be selected once assets load. */
     seedPaths: Array.isArray(seed.paths) && seed.paths.length ? seed.paths.slice() : null,
+    /* Finished designs handed over from Studio, used as scenes directly. */
+    seedDesigns: Array.isArray(seed.designs) && seed.designs.length ? seed.designs.slice() : null,
     versionId: seed.versionId || null,
     title: seed.title || "",
     videoType: seed.videoType || "property_tour",
@@ -624,6 +626,16 @@ async function loadWizardAssets() {
     } catch (_) {}
   }
   for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
+  /* Designs chosen in Studio are real assets even when no property is set. */
+  for (const d of w.seedDesigns || []) {
+    if (!d || !d.path) continue;
+    if (out.some((a) => a.path === d.path)) continue;
+    out.push({
+      key: "sd-" + (d.id || d.path), path: d.path, compare: d.beforePath || null,
+      room: d.room || UNSORTED, kind: "Design", group: groupFor(d.room || "", ""),
+      version_id: d.versionId || null, disclosure: "proposed", flags: [],
+    });
+  }
   w.available = out;
   /* The grid is the order. Build it in room group order; new uploads append. */
   const keep = new Set(out.map((a) => a.key));

@@ -26,7 +26,7 @@ export const SOURCE_META: Record<SourceId, { icon: string; label: string; tab: s
   address: { icon: "map-pin", label: "Property Address", tab: "Address", desc: "Fills in address and listing details." },
   url: { icon: "link", label: "Listing URL", tab: "Import", desc: "Reads listing text, no media." },
   property: { icon: "home", label: "Existing Property", tab: "Property", desc: "Reuse photos already uploaded." },
-  design: { icon: "images", label: "Existing Design", tab: "Design", desc: "Start from a finished design." },
+  design: { icon: "images", label: "Finished Designs", tab: "Finished Designs", desc: "Start from designs you have already generated." },
   describe: { icon: "message-square-text", label: "Describe", tab: "Describe", desc: "No photo yet: describe the space instead." },
 };
 
@@ -108,6 +108,20 @@ export type PickerProperty = {
 
 export type PickerPhoto = { id: string; path: string; name?: string };
 
+/** One completed, generated design that can become a video scene. */
+export type PickerDesign = {
+  id: string;
+  /** Storage path or displayable URL of the generated image. */
+  path: string;
+  /** Source photo, when the design was staged from one. */
+  beforePath?: string | null;
+  room: string;
+  address?: string | null;
+  propertyId?: string | null;
+  createdAt?: string | null;
+  versionId?: string | null;
+};
+
 export type PickerOptions = {
   context: PickerContext;
   esc: (s: string) => string;
@@ -122,8 +136,12 @@ export type PickerOptions = {
   /** Called with the photos the user confirmed for a property. */
   onPropertyPhotos?: (p: PickerProperty, photos: PickerPhoto[]) => void | Promise<void>;
 
-  /** Finished designs, for the design source. */
+  /** Finished designs, for the design source (legacy synchronous list). */
   designs?: () => Array<{ id: string; label: string; sub?: string; badge?: string }>;
+  /** Finished designs read from the database, for the design source. */
+  loadDesigns?: () => Promise<PickerDesign[]>;
+  /** Called with the finished designs the user selected, in order. */
+  onDesigns?: (designs: PickerDesign[]) => void | Promise<void>;
   /** Which source opens first, so a host can remember the tab across renders. */
   initialTab?: SourceId;
   onTab?: (tab: SourceId) => void;
@@ -179,6 +197,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     propPhotos: [] as PickerPhoto[],
     propChecked: new Set<string>(),
     propLoading: false,
+    /** Finished designs, their load state and the selection order. */
+    designs: [] as PickerDesign[],
+    designState: "idle" as "idle" | "loading" | "ready" | "error",
+    designSel: [] as string[],
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
   };
@@ -353,13 +375,16 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   function tabs() {
     return (
-      '<div class="sp-tabs">' +
+      '<div class="sp-tabs" role="tablist" aria-label="Photo source">' +
       cfg.sources
         .map((s) => {
           const m = SOURCE_META[s];
+          const on = state.tab === s;
           return (
-            '<button type="button" class="sp-tab' + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s +
-            '" aria-pressed="' + (state.tab === s ? "true" : "false") + '" title="' + esc(m.desc) + '">' +
+            '<button type="button" role="tab" class="sp-tab' + (on ? " on" : "") + '" data-sp-tab="' + s +
+            '" id="spTab-' + s + '" aria-selected="' + (on ? "true" : "false") + '" aria-controls="spPanel"' +
+            ' tabindex="' + (on ? "0" : "-1") + '" aria-pressed="' + (on ? "true" : "false") +
+            '" title="' + esc(m.desc) + '">' +
             (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
             esc(m.tab) +
             "</button>"
@@ -469,25 +494,119 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       );
     }
 
-    if (state.tab === "design") {
-      const list = (opts.designs ? opts.designs() : []).slice(0, 40);
-      if (!list.length)
-        return '<div class="sp-pane"><p class="sp-note">No Finished Designs Yet. Start From Photos Instead.</p></div>';
+    if (state.tab === "design") return designPanel();
+    return "";
+
+  }
+
+  /* ---------- finished designs ---------- */
+
+  let designToken = 0;
+
+  /** Loads real, completed designs once per tab visit. Nothing is shown as
+      empty until the request has actually succeeded. */
+  function loadDesigns(force = false) {
+    if (!opts.loadDesigns) {
+      /* Legacy synchronous hosts. */
+      const legacy = (opts.designs ? opts.designs() : []).map((d) => ({
+        id: d.id, path: "", room: d.label, address: d.sub || null,
+      })) as PickerDesign[];
+      state.designs = legacy;
+      state.designState = "ready";
+      return;
+    }
+    if (!force && (state.designState === "loading" || state.designState === "ready")) return;
+    state.designState = "loading";
+    render();
+    const token = ++designToken;
+    opts
+      .loadDesigns()
+      .then((list) => {
+        if (token !== designToken) return;
+        state.designs = (list || []).filter((d) => d && d.path);
+        state.designState = "ready";
+        render();
+      })
+      .catch((err) => {
+        if (token !== designToken) return;
+        console.warn("[source-picker] finished designs failed to load", err);
+        state.designState = "error";
+        render();
+      });
+  }
+
+  function designDate(iso?: string | null) {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  }
+
+  function designPanel() {
+    if (state.designState === "loading" || state.designState === "idle") {
       return (
-        '<div class="sp-pane"><div class="sp-props">' +
-        list
-          .map(
-            (d) =>
-              '<button type="button" class="sp-prop" data-sp-design="' + esc(d.id) + '"><i data-lucide="images"></i><b>' +
-              esc(d.label) + '</b><span class="mono">' + esc(d.sub || d.badge || "") + "</span></button>",
-          )
+        '<div class="sp-pane"><div class="sp-dgrid" aria-busy="true" aria-live="polite" aria-label="Loading your finished designs">' +
+        Array.from({ length: 6 })
+          .map(() => '<div class="sp-dcard is-skel"><span class="sp-dth"></span><span class="sp-db"><i></i><i></i></span></div>')
           .join("") +
         "</div></div>"
       );
     }
-    return "";
-
+    if (state.designState === "error") {
+      return (
+        '<div class="sp-pane sp-dempty" role="alert">' +
+        '<i data-lucide="triangle-alert"></i>' +
+        "<b>We Couldn\u2019t Load Your Designs</b>" +
+        "<span>Something went wrong reading your library.</span>" +
+        '<span class="sp-dacts"><button type="button" class="btn btn-primary btn-sm" data-sp="dretry">Retry</button></span>' +
+        "</div>"
+      );
+    }
+    if (!state.designs.length) {
+      return (
+        '<div class="sp-pane sp-dempty">' +
+        '<i data-lucide="images"></i>' +
+        "<b>No Finished Designs Yet</b>" +
+        "<span>Create a design first, or start your video with property photos.</span>" +
+        '<span class="sp-dacts">' +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="dupload" aria-label="Upload photos for your video">Upload Photos</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-sp="dproperty" aria-label="Choose an existing property">Choose Property</button>' +
+        "</span></div>"
+      );
+    }
+    const n = state.designSel.length;
+    return (
+      '<div class="sp-pane">' +
+      '<div class="sp-dgrid" role="group" aria-label="Your Finished Designs">' +
+      state.designs.map(designCard).join("") +
+      "</div>" +
+      (n
+        ? '<div class="sp-dfoot"><button type="button" class="btn btn-primary btn-sm" data-sp="dcontinue">' +
+          "Continue With " + n + " Design" + (n === 1 ? "" : "s") +
+          "</button></div>"
+        : "") +
+      "</div>"
+    );
   }
+
+  function designCard(d: PickerDesign) {
+    const i = state.designSel.indexOf(d.id);
+    const on = i > -1;
+    const meta = [d.address || "", designDate(d.createdAt)].filter(Boolean);
+    return (
+      '<button type="button" class="sp-dcard' + (on ? " is-sel" : "") + '" data-sp-design="' + esc(d.id) + '"' +
+      ' role="checkbox" aria-checked="' + (on ? "true" : "false") + '"' +
+      ' aria-label="' + esc((on ? "Selected: " : "") + (d.room || "Design") + (d.address ? ", " + d.address : "")) + '">' +
+      '<span class="sp-dth" data-sp-thumb="' + esc(d.path) + '"></span>' +
+      '<span class="sp-dpick' + (on ? " on" : "") + '">' + (on ? '<i data-lucide="check"></i>' : "") +
+      (on ? '<em class="sp-dn">' + (i + 1) + "</em>" : "") + "</span>" +
+      '<span class="sp-db"><b>' + esc(d.room || "Design") + "</b>" +
+      (meta.length ? "<span>" + esc(meta.join(" \u00b7 ")) + "</span>" : "") +
+      "</span></button>"
+    );
+  }
+
+
 
   function chooser() {
     if (!state.choose.length) return "";
@@ -734,7 +853,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       /* icons are cosmetic */
     }
     if (state.tab === "describe") syncComposer();
-    if (state.tab === "property") hydrateThumbs();
+    if (state.tab === "property" || state.tab === "design") hydrateThumbs();
+    if (state.tab === "design" && state.designState === "idle") loadDesigns();
   }
 
   function wireDrag(el: HTMLElement) {
@@ -863,9 +983,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     }
     const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
     if (dsn) {
-      opts.onDesign?.(dsn.dataset["spDesign"]!);
+      const id = dsn.dataset["spDesign"]!;
+      if (opts.onDesigns || opts.loadDesigns) {
+        const i = state.designSel.indexOf(id);
+        if (i > -1) state.designSel.splice(i, 1);
+        else state.designSel.push(id);
+        render();
+        return;
+      }
+      opts.onDesign?.(id);
       return;
     }
+
 
     const choice = t.closest("[data-sp-choice]") as HTMLElement | null;
     if (choice) {
@@ -890,7 +1019,22 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     else if (k === "emptytoggle") {
       state.showEmpty = !state.showEmpty;
       render();
+    } else if (k === "dretry") loadDesigns(true);
+    else if (k === "dupload") {
+      state.tab = "upload";
+      opts.onTab?.(state.tab);
+      render();
+      input.click();
+    } else if (k === "dproperty") {
+      state.tab = "property";
+      opts.onTab?.(state.tab);
+      render();
+    } else if (k === "dcontinue") {
+      const byId = new Map(state.designs.map((d) => [d.id, d]));
+      const picked = state.designSel.map((id) => byId.get(id)).filter(Boolean) as PickerDesign[];
+      if (picked.length) await opts.onDesigns?.(picked);
     }
+
 
     else if (k === "pall") {
       state.propChecked = new Set(state.propPhotos.map((x) => x.id));
