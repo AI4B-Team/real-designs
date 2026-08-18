@@ -35,6 +35,7 @@ import { openAddressModal } from "@/lib/address-modal";
 import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
+import { durableStep, restoreStep } from "@/lib/builder-step";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { listMediaProperties } from "@/lib/property-media.functions";
