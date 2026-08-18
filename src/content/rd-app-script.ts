@@ -1168,7 +1168,18 @@ function studioStart(){
   }catch(e){ STUDIO_START=null; }
   return STUDIO_START;
 }
-window.rdStudioStart=(method)=>{ const s=studioStart(); if(s&&s.open) s.open(method); };
+/* The source chooser belongs to a generic Studio session only. */
+window.rdStudioStart=(method)=>{ if(inPhotoCanvas()) return; const s=studioStart(); if(s&&s.open) s.open(method); };
+
+/** The single Canvas subtitle. One line, driven by the real source state. */
+function canvasSubtitle(){
+  if(STUDIO_SRC===SRC_EMPTY) return 'Add A Source To Begin';
+  if(STUDIO_SRC==='processing') return 'Generating your design\u2026';
+  if(STUDIO_SRC==='error') return 'Generation failed. Try again.';
+  if(STUDIO_RESULT) return 'Review your generated design';
+  return 'Your source photo';
+}
+try{ (window as any).__rdCanvasSubtitle=()=>canvasSubtitle(); }catch(_){}
 
 function paintStudioState(){
   if(studioWrap){
