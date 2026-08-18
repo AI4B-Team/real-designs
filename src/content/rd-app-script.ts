@@ -170,14 +170,15 @@ staging:['Photo Staging','Add photos, confirm rooms, then design']};
 const ACCT_ALIAS={account:'profile',team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
-/* Only the very first route after a page load may reopen a saved builder
-   session; later in-app navigation always starts a fresh project. */
+/* The first route after a page load may reopen a saved builder session. */
 let __bootRoute=true;
 /* Opening the video workspace is explicit intent, not a timing window: the
    flag is set immediately before navigating and consumed by that navigation. */
-let __revealIntent:''|'open'|'new'=''; 
+let __revealIntent:''|'open'|'new'='';
 try{ (window as any).__rdAllowReveal=()=>{ __revealIntent='open'; }; }catch(_){}
 try{ (window as any).__rdNewVideo=()=>{ __revealIntent='new'; }; }catch(_){}
+try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
+
 
 /* Views mount their content asynchronously, and the browser's scroll
    anchoring pulls the page back to roughly where it was once that content
