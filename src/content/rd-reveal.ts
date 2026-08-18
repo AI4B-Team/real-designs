@@ -980,11 +980,39 @@ function intakeDeps() {
   };
 }
 
-/** Canonical accept for every entry path (picker, drop, handoff, retry). */
-export function acceptPhotos(w, files, source) {
-  return acceptVideoPhotos({ wizard: w, files, source, deps: intakeDeps() })
-    .then(() => classifyUploads().catch(() => {}));
+const isHeicFile = (f) =>
+  /\.(heic|heif)$/i.test(f?.name || "") || /image\/hei[cf]/i.test(f?.type || "");
+
+/**
+ * Canonical accept for every entry path (picker, drop, step-2 inputs, retry).
+ *
+ * HEIC is converted here rather than only inside the source picker, so the
+ * "Add Photos" inputs on Scenes accept iPhone photos exactly like Step 1 does.
+ */
+export async function acceptPhotos(w, files, source) {
+  const list = Array.from(files || []).filter(Boolean);
+  if (!list.length) return;
+  const ready = [];
+  if (list.some(isHeicFile)) {
+    /* Only paint a converting state when there is something to convert. */
+    w.uploadPrep = list.map((f) => ({ name: f.name }));
+    render();
+  }
+  for (const f of list) {
+    try {
+      ready.push(await normalizeImageFile(f));
+    } catch (_) {
+      w.uploadFails = w.uploadFails || [];
+      w.uploadFails.push({ name: f.name, why: "HEIC Could Not Be Converted", file: f });
+    }
+  }
+  w.uploadPrep = [];
+  if (S.wizard && S.wizard !== w) return;
+  if (!ready.length) { render(); return; }
+  await acceptVideoPhotos({ wizard: w, files: ready, source, deps: intakeDeps() });
+  classifyUploads().catch(() => {});
 }
+
 
 /** Seeded HEIC files: convert with the shared picker rules, then accept. */
 async function drainSeedPending(w) {
