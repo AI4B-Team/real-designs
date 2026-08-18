@@ -874,6 +874,21 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     hydrateRecent();
   }
 
+  /** Every stored photo of one property, in project order. */
+  function photosOfProperty(p: any): Array<{ id: string; path: string; name?: string; room?: string }> {
+    const out: Array<{ id: string; path: string; name?: string; room?: string }> = [];
+    const seen = new Set<string>();
+    for (const pr of (p?.projects || []) as any[]) {
+      for (const r of (pr?.rooms || []) as any[]) {
+        const path = r?.before_path;
+        if (!path || seen.has(path)) continue;
+        seen.add(path);
+        out.push({ id: path, path, name: r.name || r.room || pr.name || "Photo", room: r.room || r.name || "" });
+      }
+    }
+    return out;
+  }
+
   /** The one shared source picker, configured for the design context. */
   let picker: { destroy: () => void } | null = null;
   function mountPicker() {
@@ -898,7 +913,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
             thumb: photos[0]?.path || null,
           };
         }),
-      resolvePhoto: ctx.resolvePhoto,
+      ...(ctx.resolvePhoto ? { resolvePhoto: ctx.resolvePhoto } : {}),
       loadPropertyPhotos: async (p) => {
         const src = (ctx.getProperties ? ctx.getProperties() : []).find(
           (x) => ((x as any).id || x.address) === p.id,
