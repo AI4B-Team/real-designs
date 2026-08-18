@@ -288,58 +288,182 @@
 .rds-opt svg { width: 15px; height: 15px; }
 .rds-opt.custom { font-weight: 600; color: #cc0000; }
 
-/* Canvas thumbnail strip */
-.rds-strip {
-  position: fixed;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  z-index: 2400;
+/* Canvas navigation: header back control + room filmstrip under the canvas */
+.rds-chead {
   display: flex;
   align-items: center;
-  gap: 8px;
-  max-width: min(1080px, calc(100vw - 40px));
-  padding: 8px 10px;
-  border-radius: 999px;
-  background: rgba(17, 17, 20, 0.94);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
-  color: #fff;
+  gap: 10px;
+  margin: 0 0 10px;
 }
-.rds-strip.hide { display: none; }
-.rds-strip-b, .rds-strip-i {
+.rds-chead.hide, .rds-strip.hide { display: none; }
+.rds-chead-b {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 7px 12px;
+  gap: 4px;
+  padding: 6px 12px 6px 8px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: transparent;
-  color: #fff;
-  font-size: 0.8rem;
+  border: 1px solid var(--line, #e5e5ea);
+  background: #fff;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
 }
-.rds-strip-i { padding: 7px; }
-.rds-strip-b svg, .rds-strip-i svg { width: 15px; height: 15px; }
-.rds-strip-b:disabled, .rds-strip-i:disabled { opacity: 0.35; cursor: default; }
-.rds-strip-l { display: flex; gap: 6px; overflow: auto; padding: 2px; }
+.rds-chead-b svg { width: 15px; height: 15px; }
+.rds-chead-b:hover { border-color: #cc0000; color: #cc0000; }
+.rds-chead-t { font-size: 0.8rem; color: var(--mute-2, #6b6b74); font-weight: 600; }
+
+.rds-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #e5e5ea);
+  border-radius: 14px;
+  background: #fff;
+}
+.rds-strip-i, .rds-strip-n {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line, #e5e5ea);
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rds-strip-n { padding: 7px 12px; border-color: #cc0000; color: #cc0000; }
+.rds-strip-i svg, .rds-strip-n svg { width: 15px; height: 15px; }
+.rds-strip-i:disabled { opacity: 0.35; cursor: default; }
+.rds-strip-l { display: flex; gap: 8px; overflow: auto; padding: 2px; flex: 1; }
 .rds-strip-t {
   position: relative;
-  width: 54px;
-  height: 40px;
+  width: 84px;
   flex: 0 0 auto;
-  padding: 0;
+  padding: 0 0 3px;
   border: 2px solid transparent;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
-  background: #2a2a30;
+  background: #f4f4f6;
+  text-align: left;
 }
-.rds-strip-t img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.rds-strip-t img { width: 100%; height: 56px; object-fit: cover; display: block; }
+.rds-strip-t em {
+  display: block;
+  padding: 3px 6px 0;
+  font-style: normal;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--mute-2, #6b6b74);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .rds-strip-t.on { border-color: #cc0000; }
-.rds-strip-t.done svg { position: absolute; right: 2px; bottom: 2px; width: 13px; height: 13px; color: #fff; background: #10794a; border-radius: 999px; }
-.rds-strip-c { font-size: 0.76rem; color: rgba(255, 255, 255, 0.72); white-space: nowrap; }
+.rds-strip-t.on em { color: #111; }
+.rds-strip-t > svg {
+  position: absolute;
+  right: 3px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  padding: 2px;
+  color: #fff;
+  background: #6b6b74;
+  border-radius: 999px;
+}
+.rds-strip-t.ws-ok > svg { background: #10794a; }
+.rds-strip-t.ws-bad > svg { background: #cc0000; }
+.rds-strip-t.ws-run > svg { background: #b06a00; animation: rds-spin 1s linear infinite; }
+.rds-strip-c { font-size: 0.76rem; color: var(--mute-2, #6b6b74); white-space: nowrap; }
 @media (max-width: 700px) { .rds-strip-c { display: none; } }
+
+@keyframes rds-spin { to { transform: rotate(360deg); } }
+
+/* Restrained per-card work state */
+.rds-work { display: inline-flex; align-items: center; gap: 4px; }
+.rds-work svg { width: 12px; height: 12px; }
+.rds-work.ok { color: #10794a; }
+.rds-work.bad { color: #cc0000; }
+.rds-work.run { color: #b06a00; }
+.rds-work.run svg { animation: rds-spin 1s linear infinite; }
+.rds-run {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(17, 17, 20, 0.82);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.rds-run svg { width: 12px; height: 12px; animation: rds-spin 1s linear infinite; }
+
+/* Bulk design drawer */
+.up-card.rdsb { max-width: 620px; text-align: left; }
+.rdsb-f { display: block; margin-top: 10px; }
+.rdsb-f > label { display: block; font-size: 0.72rem; font-weight: 700; margin-bottom: 4px; }
+.rdsb-f > label em { font-style: normal; font-weight: 500; color: var(--mute-2, #6b6b74); }
+.rdsb-f select, .rdsb-f textarea {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #e5e5ea);
+  border-radius: 10px;
+  font: inherit;
+  background: #fff;
+}
+.rdsb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.rdsb-chk { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.78rem; font-weight: 600; }
+.rdsb-groups { margin-top: 12px; display: grid; gap: 10px; max-height: 260px; overflow: auto; }
+.rdsb-g { border: 1px solid var(--line, #e5e5ea); border-radius: 12px; padding: 10px; }
+.rdsb-g > b { display: block; font-size: 0.78rem; }
+.rdsb-g > span { display: block; font-size: 0.72rem; color: var(--mute-2, #6b6b74); margin-bottom: 6px; }
+.rdsb-th { display: flex; gap: 8px; flex-wrap: wrap; }
+.rdsb-t { position: relative; width: 76px; }
+.rdsb-t img { width: 76px; height: 52px; object-fit: cover; border-radius: 8px; display: block; }
+.rdsb-t em {
+  display: block;
+  font-style: normal;
+  font-size: 0.64rem;
+  color: var(--mute-2, #6b6b74);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rdsb-t button {
+  position: absolute;
+  right: -4px;
+  top: -4px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 1px solid var(--line, #e5e5ea);
+  background: #fff;
+  cursor: pointer;
+  padding: 0;
+}
+.rdsb-t button svg { width: 11px; height: 11px; }
+.rdsb-cost {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: #f7f7f9;
+  font-size: 0.76rem;
+}
+.rdsb-cost svg { width: 15px; height: 15px; color: #cc0000; }
+.rdsb-cost span { color: var(--mute-2, #6b6b74); }
 
 /* The overlay carries the .rd-app scope, whose `.rd-app button` reset (0,1,1)
    outranks these single-class rules. Re-assert the control surfaces. */

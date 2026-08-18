@@ -31,6 +31,7 @@ import {
   searchRooms,
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
+import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
 import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel } from "@/lib/builder-ui";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
@@ -99,8 +100,28 @@ function mkItem(file) {
     detect: "pending",
     selected: true,
     done: false,
+    /* Design work state, independent of the upload state. */
+    state: "none",
+    resultPath: null,
+    resultUrl: null,
+    err: "",
   };
 }
+
+/* One restrained status per card, shown in the card footer and the filmstrip. */
+const WORK_STATES = {
+  generating: { label: "Generating", cls: "run", icon: "loader" },
+  complete: { label: "Complete", cls: "ok", icon: "check" },
+  failed: { label: "Failed", cls: "bad", icon: "alert-triangle" },
+  draft: { label: "Draft", cls: "dim", icon: "pencil-line" },
+};
+
+function workState(it) {
+  if (it.state && WORK_STATES[it.state]) return WORK_STATES[it.state];
+  if (it.done) return WORK_STATES.complete;
+  return null;
+}
+
 
 /* ------------------------------------------------------------- persistence
    The draft is a database row, not a browser cache. It is created as soon as
@@ -132,7 +153,22 @@ function draftPayload() {
       })),
     selected: S.items.filter((i) => i.selected && i.path).map((i) => i.key),
     item_order: ordered().filter((i) => i.path).map((i) => i.key),
-    settings: { current: S.current || null },
+    /* Per-room work survives a refresh: state, result and the direction that
+       produced it, keyed by photo. */
+    settings: {
+      current: S.current || null,
+      direction: S.direction || null,
+      rooms: S.items.reduce((m, i) => {
+        m[i.key] = {
+          room: i.room || null,
+          state: i.state || (i.done ? "complete" : "none"),
+          result_path: i.resultPath || null,
+          error: i.err || "",
+        };
+        return m;
+      }, {}),
+    },
+
   };
 }
 
@@ -284,23 +320,35 @@ function hydrate(draft) {
   });
   const order = Array.isArray(draft.item_order) ? draft.item_order : [];
   const assets = (draft.assets || []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-  S.items = assets.map((a) => ({
-    key: a.key,
-    name: a.name || "Photo",
-    file: null,
-    previewUrl: "",
-    path: a.path,
-    signed: null,
-    status: "ready",
-    error: "",
-    room: a.room || "",
-    roomSource: a.room_source || "none",
-    confidence: Number(a.confidence || 0),
-    detect: "done",
-    selected: a.selected !== false,
-    done: !!a.done,
-  }));
+  const rooms = (draft.settings && draft.settings.rooms) || {};
+  S.direction = (draft.settings && draft.settings.direction) || null;
+  S.items = assets.map((a) => {
+    const saved = rooms[a.key] || {};
+    return {
+      key: a.key,
+      name: a.name || "Photo",
+      file: null,
+      previewUrl: "",
+      path: a.path,
+      signed: null,
+      status: "ready",
+      error: "",
+      room: a.room || "",
+      roomSource: a.room_source || "none",
+      confidence: Number(a.confidence || 0),
+      detect: "done",
+      selected: a.selected !== false,
+      done: !!a.done,
+      /* A run that was interrupted comes back as a retryable failure, never
+         as a phantom "generating" that can never finish. */
+      state: saved.state === "generating" ? "failed" : saved.state || (a.done ? "complete" : "none"),
+      resultPath: saved.result_path || null,
+      resultUrl: null,
+      err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
+    };
+  });
   S.step = draft.builder_step === "add" ? "add" : "review";
+
   ensureSaver();
   /* Signed URLs are minted per session; the row only ever stores paths. */
   S.items.forEach(async (it) => {
@@ -482,23 +530,26 @@ function ordered() {
 
 function cardHtml(it) {
   const st = stateOf(it);
+  const ws = workState(it);
   const label = it.room || UNASSIGNED_LABEL;
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
-  return `<div class="rv-tile ${it.selected ? "on" : ""}" data-k="${it.key}">
+  return `<div class="rv-tile ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Open ${esc(it.name)} in the design canvas">
-      <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
+      <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
-      ${it.done ? '<span class="rds-done"><i data-lucide="check"></i>Designed</span>' : ""}
+      ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
       <div class="rv-tools">
         <button class="rv-tool" data-open="${it.key}" aria-label="Design"><i data-lucide="wand-sparkles"></i><em>Design</em></button>
+        ${it.state === "failed" ? `<button class="rv-tool" data-retry="${it.key}" aria-label="Retry"><i data-lucide="rotate-ccw"></i><em>Retry</em></button>` : ""}
         <button class="rv-tool" data-del="${it.key}" aria-label="Remove"><i data-lucide="trash-2"></i><em>Remove</em></button>
       </div>
       <button class="rv-tools-more" data-toolsmore="1" aria-label="Photo Actions"><i data-lucide="ellipsis"></i></button>
     </div>
+
     <div class="rv-tile-foot">
       ${roomSelectHtml({
         attr: "room",
@@ -510,7 +561,11 @@ function cardHtml(it) {
         variant: "inline",
         className: "rv-room",
       })}
-      <em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>
+      ${
+        ws
+          ? `<em class="rv-tile-kind rds-work ${ws.cls}" title="${esc(it.err || ws.label)}"><i data-lucide="${ws.icon}"></i>${ws.label}</em>`
+          : `<em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>`
+      }
     </div>
   </div>`;
 }
@@ -604,6 +659,7 @@ function render() {
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a">
+            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 1 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Design Selected</button>
             <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
               <div class="rv-more-m">
@@ -675,6 +731,13 @@ function syncSelection() {
   const sel = selectedCount();
   const set = wrap.querySelector("#rdsSetRoom");
   if (set) set.disabled = !sel;
+  /* Bulk design is a real batch: it only makes sense from two photos up. */
+  const bulk = wrap.querySelector("#rdsBulk");
+  if (bulk) {
+    bulk.disabled = sel < 2 || S.busy;
+    const lab = bulk.lastChild;
+    if (lab && lab.nodeType === 3) lab.textContent = sel > 1 ? `Design Selected · ${sel}` : "Design Selected";
+  }
   const count = wrap.querySelector("#rdsSelCount");
   if (count) count.textContent = `${sel} of ${S.items.length} selected`;
   const foot = wrap.querySelector("#rdsFootCount");
@@ -757,6 +820,9 @@ function bindReview(el) {
 
   el.querySelector("#rdsSetRoom").onclick = (e) => applyRoomToSelected(e.currentTarget);
   el.querySelector("#rdsGo").onclick = startDesigning;
+  const bulk = el.querySelector("#rdsBulk");
+  if (bulk) bulk.onclick = () => startBulkDesign();
+
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
      controls are delegated from the page instead of bound per element. The
@@ -781,6 +847,13 @@ function bindReview(el) {
       e.stopPropagation();
       const tile = more.closest(".rv-tile");
       if (tile) tile.classList.toggle("tools-open");
+      return;
+    }
+    const retry = t.closest("[data-retry]");
+    if (retry) {
+      e.stopPropagation();
+      const it = S.items.find((i) => i.key === retry.getAttribute("data-retry"));
+      if (it) startBulkDesign([it], true);
       return;
     }
     const del = t.closest("[data-del]");
@@ -822,6 +895,60 @@ function toggleSelect(it, next) {
   syncSelection();
   saveDraft();
 }
+
+/* -------------------------------------------------------- bulk designing
+   One shared direction, one render per photo. Every photo is charged on its
+   own and a failure only ever fails that photo, so the rest of the batch
+   still finishes and only the failed ones offer a retry. */
+
+function runBatch(batch, direction) {
+  S.busy = true;
+  S.direction = direction;
+  syncSelection();
+  batch.forEach((it) => {
+    it.state = "generating";
+    it.err = "";
+    patchCard(it);
+  });
+  runBulkDesign(batch, direction, {
+    onUpdate: (it) => {
+      patchCard(it);
+      saveDraft();
+    },
+    onDone: () => {
+      S.busy = false;
+      syncSelection();
+      saveDraft();
+      const failed = batch.filter((i) => i.state === "failed").length;
+      if (failed) {
+        try {
+          window.rdToast && window.rdToast(`${failed} photo${failed === 1 ? "" : "s"} did not render. Retry them from the card.`);
+        } catch (_) {}
+      }
+    },
+  });
+}
+
+function startBulkDesign(list, reuseDirection) {
+  if (!S || S.busy) return;
+  const items = (list && list.length ? list : S.items.filter((i) => i.selected)).filter(
+    (i) => i.status !== "uploading",
+  );
+  if (!items.length) return;
+  if (reuseDirection && S.direction) {
+    runBatch(items, S.direction);
+    return;
+  }
+  openBulkDesign({
+    items,
+    onEdit: () => {
+      S.step = "review";
+      render();
+    },
+    onStart: (batch, direction) => runBatch(batch, direction),
+  });
+}
+
 
 function applyRoomToSelected(anchor) {
   const sel = S.items.filter((i) => i.selected);
@@ -1124,14 +1251,39 @@ function applyRoom(it) {
 function removeStrip() {
   if (strip) strip.remove();
   strip = null;
+  const head = document.getElementById("rdsCanvasHead");
+  if (head) head.remove();
 }
 
+/* The canvas belongs to the same builder as the grid, so its navigation lives
+   inside the Studio view: a compact "All Rooms" control in the header and the
+   room filmstrip directly beneath the canvas — not a floating bar. */
 function mountStrip() {
   if (!S || !S.items.length) return;
   removeStrip();
+  const view = document.getElementById("v-studio");
+  const board = view && view.querySelector(".studio");
+
+  const head = document.createElement("div");
+  head.id = "rdsCanvasHead";
+  head.className = "rds-chead";
+  head.innerHTML = `<button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>All Rooms</button>
+    <span class="rds-chead-t" id="rdsCanvasTitle"></span>`;
+  if (view && board) view.insertBefore(head, board);
+
   strip = document.createElement("div");
-  strip.className = "rd-app rds-strip";
-  document.body.appendChild(strip);
+  strip.className = "rds-strip";
+  if (view && board && board.nextSibling) view.insertBefore(strip, board.nextSibling);
+  else if (view) view.appendChild(strip);
+  else document.body.appendChild(strip);
+
+  const back = head.querySelector("#rdsAllRooms");
+  if (back)
+    back.onclick = () => {
+      markCurrentDone();
+      reopenStaging();
+    };
+
   drawStrip();
   window.addEventListener("hashchange", stripGuard);
 }
@@ -1140,42 +1292,51 @@ function stripGuard() {
   if (!strip) return;
   const onStudio = (location.hash || "").replace(/^#/, "") === "studio";
   strip.classList.toggle("hide", !onStudio);
+  const head = document.getElementById("rdsCanvasHead");
+  if (head) head.classList.toggle("hide", !onStudio);
 }
 
 function drawStrip() {
   if (!strip || !S) return;
   const list = designSet();
   const i = list.findIndex((x) => x.key === S.current);
-  strip.innerHTML = `<button class="rds-strip-b" id="rdsRooms"><i data-lucide="layout-grid"></i>Back To Rooms</button>
-    <button class="rds-strip-i" id="rdsPrev" aria-label="Previous photo" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
+  const cur = i >= 0 ? list[i] : null;
+  const nxt = i >= 0 && i < list.length - 1 ? list[i + 1] : null;
+  const title = document.getElementById("rdsCanvasTitle");
+  if (title)
+    title.textContent = cur
+      ? `${cur.room || cur.name}${list.length > 1 ? ` · ${i + 1} of ${list.length}` : ""}`
+      : "";
+
+  strip.innerHTML = `<button class="rds-strip-i" id="rdsPrev" aria-label="Previous room" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
     <div class="rds-strip-l">${list
-      .map(
-        (x) =>
-          `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${x.done ? " done" : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
-            <img src="${esc(x.signed || x.previewUrl)}" alt="${esc(x.name)}">${x.done ? '<i data-lucide="check"></i>' : ""}</button>`,
-      )
+      .map((x) => {
+        const ws = workState(x);
+        return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
+            <img src="${esc(x.resultUrl || x.signed || x.previewUrl)}" alt="${esc(x.name)}">
+            ${ws ? `<i data-lucide="${ws.icon}"></i>` : ""}
+            <em>${esc(x.room || x.name)}</em></button>`;
+      })
       .join("")}</div>
-    <button class="rds-strip-i" id="rdsNext" aria-label="Next photo" ${i < 0 || i >= list.length - 1 ? "disabled" : ""}><i data-lucide="chevron-right"></i></button>
-    <span class="rds-strip-c">${i < 0 ? "" : `Photo ${i + 1} Of ${list.length}`}</span>
+    <button class="rds-strip-i" id="rdsNext" aria-label="Next room" ${i < 0 || i >= list.length - 1 ? "disabled" : ""}><i data-lucide="chevron-right"></i></button>
+    <span class="rds-strip-c">${i < 0 ? "" : `Room ${i + 1} Of ${list.length}`}</span>
+    ${cur && cur.done && nxt ? `<button class="rds-strip-n" id="rdsNextRoom">Next Room<i data-lucide="arrow-right"></i></button>` : ""}
     <button class="rds-strip-i" id="rdsStripX" aria-label="Close the photo set"><i data-lucide="x"></i></button>`;
+
   paint();
-  strip.querySelector("#rdsRooms").onclick = () => {
-    markCurrentDone();
-    reopenStaging();
-  };
   strip.querySelector("#rdsStripX").onclick = exitAll;
-  strip.querySelector("#rdsPrev").onclick = () => {
+  const step = (dir) => {
     markCurrentDone();
     const l = designSet();
     const n = l.findIndex((x) => x.key === S.current);
-    if (n > 0) openInCanvas(l[n - 1].key);
+    const t = n + dir;
+    if (n >= 0 && t >= 0 && t < l.length) openInCanvas(l[t].key);
   };
-  strip.querySelector("#rdsNext").onclick = () => {
-    markCurrentDone();
-    const l = designSet();
-    const n = l.findIndex((x) => x.key === S.current);
-    if (n >= 0 && n < l.length - 1) openInCanvas(l[n + 1].key);
-  };
+  strip.querySelector("#rdsPrev").onclick = () => step(-1);
+  strip.querySelector("#rdsNext").onclick = () => step(1);
+  const nextRoom = strip.querySelector("#rdsNextRoom");
+  if (nextRoom) nextRoom.onclick = () => step(1);
+
   strip.querySelectorAll("[data-go]").forEach((b) =>
     b.addEventListener("click", () => {
       markCurrentDone();
@@ -1189,7 +1350,10 @@ function markCurrentDone() {
   try {
     if (window.rdStudioSourceState && window.rdStudioSourceState() === "generated") {
       const cur = S.items.find((i) => i.key === S.current);
-      if (cur) cur.done = true;
+      if (cur) {
+        cur.done = true;
+        cur.state = "complete";
+      }
       saveDraft();
     }
   } catch (_) {}
