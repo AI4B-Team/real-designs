@@ -484,48 +484,92 @@ function statusText() {
   return parts.join(" · ");
 }
 
+function stepRailHtml(active) {
+  const steps = [
+    { k: "add", n: 1, label: "Add Photos", icon: "image-plus" },
+    { k: "review", n: 2, label: "Review Rooms", icon: "layout-grid" },
+    { k: "design", n: 3, label: "Design", icon: "wand-2" },
+  ];
+  return `<nav class="rds-rail" aria-label="Staging steps">${steps
+    .map(
+      (st) =>
+        `<button class="rds-rail-i${st.k === active ? " on" : ""}" data-step="${st.k}"${st.k === "design" ? " disabled" : ""}>
+          <i data-lucide="${st.icon}"></i><span><b>Step ${st.n}</b>${esc(st.label)}</span>
+        </button>`,
+    )
+    .join("")}</nav>`;
+}
+
 function render() {
   const el = host();
-  if (!S) return;
+  if (!el || !S) return;
   if (S.step === "add") {
-    el.innerHTML = `<div class="rds" role="dialog" aria-label="Add photos">
-      <header class="rds-h">
-        <div><b>Add Photos</b><span>Add every photo you want to design. We'll sort them by room on the next screen.</span></div>
-        <button class="icon-btn" id="rdsClose" aria-label="Close"><i data-lucide="x"></i></button>
+    el.innerHTML = `<section class="rds-page">
+      ${stepRailHtml("add")}
+      <header class="rds-ph">
+        <div><h2>Add Photos</h2><p>Add every photo you want to design. We'll sort them by room on the next screen.</p></div>
+        <button class="btn btn-ghost btn-sm" id="rdsClose"><i data-lucide="x"></i>Exit</button>
       </header>
       <div class="rds-add"><div id="rdsPicker"></div></div>
-    </div>`;
+    </section>`;
     paint();
     el.querySelector("#rdsClose").onclick = exitAll;
+    bindRail(el);
     mountPicker(el.querySelector("#rdsPicker"));
+    railForStep();
     return;
   }
 
-  el.innerHTML = `<div class="rds" role="dialog" aria-label="Review rooms">
-    <header class="rds-h">
-      <div class="rds-title">
-        <button class="icon-btn" id="rdsBack" aria-label="Back to add photos"><i data-lucide="arrow-left"></i></button>
-        <div><b>Review Rooms</b><span id="rdsStatus">${esc(statusText())}</span></div>
+  el.innerHTML = `<section class="rds-page">
+    ${stepRailHtml("review")}
+    <header class="rds-ph">
+      <div>
+        <h2>Review Rooms</h2>
+        <p>Confirm the room type for each photo.</p>
       </div>
-      <button class="icon-btn" id="rdsClose" aria-label="Close"><i data-lucide="x"></i></button>
+      <div class="rds-ph-r"><span id="rdsStatus">${esc(statusText())}</span></div>
     </header>
     <div class="rds-bar">
       <div class="rds-bar-l">
-        <button class="btn btn-ghost btn-sm" id="rdsAll"><i data-lucide="check-square"></i>Select All</button>
-        <button class="btn btn-ghost btn-sm" id="rdsNone"><i data-lucide="square"></i>Clear</button>
-        <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room For Selected</button>
-        <button class="btn btn-ghost btn-sm" id="rdsDel"><i data-lucide="trash-2"></i>Remove Selected</button>
+        <button class="btn btn-dark btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room For Selected</button>
+        <div class="rds-menu-wrap">
+          <button class="btn btn-ghost btn-sm" id="rdsMoreBtn" aria-haspopup="true" aria-expanded="false"><i data-lucide="more-horizontal"></i>More</button>
+          <div class="rds-menu" id="rdsMoreMenu" role="menu">
+            <button class="rds-menu-i" data-act="all"><i data-lucide="check-square"></i>Select All</button>
+            <button class="rds-menu-i" data-act="none"><i data-lucide="square"></i>Clear Selection</button>
+            <button class="rds-menu-i" data-act="group"><i data-lucide="${S.group ? "check" : "list"}"></i>Group By Room</button>
+            <button class="rds-menu-i" data-act="del"><i data-lucide="trash-2"></i>Remove Selected</button>
+          </div>
+        </div>
       </div>
       <div class="rds-bar-r">
-        <label class="rds-toggle"><input type="checkbox" id="rdsGroup" ${S.group ? "checked" : ""}>Group By Room</label>
-        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add More Photos</button>
-        <button class="btn btn-primary btn-sm" id="rdsGo"><i data-lucide="wand-2"></i>Start Designing</button>
+        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
       </div>
     </div>
     <div class="rds-b" id="rdsBody">${gridHtml()}</div>
-  </div>`;
+    <footer class="rds-foot">
+      <button class="btn btn-ghost btn-sm" id="rdsBack"><i data-lucide="arrow-left"></i>Back</button>
+      <div class="rds-foot-r">
+        <button class="btn btn-ghost btn-sm" id="rdsClose">Exit</button>
+        <button class="btn btn-primary btn-sm" id="rdsGo"><i data-lucide="wand-2"></i>Start Designing</button>
+      </div>
+    </footer>
+  </section>`;
   paint();
   bindReview(el);
+  bindRail(el);
+  railForStep();
+}
+
+function bindRail(el) {
+  el.querySelectorAll("[data-step]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const k = b.getAttribute("data-step");
+      if (k === "design" || k === S.step) return;
+      S.step = k;
+      render();
+    }),
+  );
 }
 
 function patchCard(it) {
@@ -562,27 +606,34 @@ function bindReview(el) {
     S.step = "add";
     render();
   };
-  el.querySelector("#rdsAll").onclick = () => {
-    S.items.forEach((i) => (i.selected = true));
-    render();
+  const menu = el.querySelector("#rdsMoreMenu");
+  const moreBtn = el.querySelector("#rdsMoreBtn");
+  const closeMenu = () => { menu.classList.remove("on"); moreBtn.setAttribute("aria-expanded", "false"); };
+  moreBtn.onclick = (e) => {
+    e.stopPropagation();
+    const open = !menu.classList.contains("on");
+    menu.classList.toggle("on", open);
+    moreBtn.setAttribute("aria-expanded", String(open));
   };
-  el.querySelector("#rdsNone").onclick = () => {
-    S.items.forEach((i) => (i.selected = false));
-    render();
-  };
-  el.querySelector("#rdsDel").onclick = () => {
-    const keep = S.items.filter((i) => !i.selected);
-    if (keep.length === S.items.length) return;
-    S.items.filter((i) => i.selected).forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
-    S.items = keep;
-    if (!S.items.length) S.step = "add";
-    saveDraft();
-    render();
-  };
-  el.querySelector("#rdsGroup").onchange = (e) => {
-    S.group = !!e.target.checked;
-    render();
-  };
+  document.addEventListener("click", closeMenu, { once: true });
+  menu.querySelectorAll("[data-act]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const act = b.getAttribute("data-act");
+      closeMenu();
+      if (act === "all") S.items.forEach((i) => (i.selected = true));
+      if (act === "none") S.items.forEach((i) => (i.selected = false));
+      if (act === "group") S.group = !S.group;
+      if (act === "del") {
+        const keep = S.items.filter((i) => !i.selected);
+        if (keep.length === S.items.length) return;
+        S.items.filter((i) => i.selected).forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
+        S.items = keep;
+        if (!S.items.length) S.step = "add";
+        saveDraft();
+      }
+      render();
+    }),
+  );
   el.querySelector("#rdsMore").onclick = () => {
     S.step = "add";
     render();
