@@ -23,7 +23,6 @@ import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
   ROOM_OPTIONS,
-  UNASSIGNED_LABEL,
   groupRooms,
   roomFromCategory,
   roomIcon,
