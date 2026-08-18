@@ -230,9 +230,9 @@ html:not(.dark) select, html:not(.dark) option, html:not(.dark) optgroup { color
   transform: translateY(3px); transition: opacity .12s ease, transform .12s ease;
   background: #fff; color: #14110F; border: 1px solid rgba(20,17,15,.12);
   font-size: .74rem; font-weight: 600; letter-spacing: -.01em; line-height: 1.4;
-  padding: 6px 10px; border-radius: 7px; max-width: 280px;
+  padding: 6px 10px; border-radius: 7px;
   box-shadow: 0 8px 22px rgba(20,18,15,.14);
-  font-family: inherit; white-space: normal;
+  font-family: inherit; white-space: nowrap;
 }
 .rd-tt.on { opacity: 1; transform: translateY(0); }
 .rd-tt.short { white-space: nowrap; font-weight: 600; }
