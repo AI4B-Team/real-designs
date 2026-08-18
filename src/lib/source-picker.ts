@@ -97,6 +97,9 @@ export type PickerProperty = {
   count?: number | null;
   /** Storage path of a representative photo. */
   thumb?: string | null;
+  /** Up to four storage paths, used for the Unassigned mosaic. */
+  thumbs?: string[] | null;
+
   unassigned?: boolean;
   /** Filled in by the picker. */
   line1?: string;
@@ -170,6 +173,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     busyLabel: "Adding Photos",
     /** Existing-property selection and its photo panel. */
     propSel: null as string | null,
+    /** Zero-photo properties are hidden until the user asks for them. */
+    showEmpty: false,
+
     propPhotos: [] as PickerPhoto[],
     propChecked: new Set<string>(),
     propLoading: false,
@@ -418,9 +424,21 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (state.tab === "property") {
       const list = properties();
       if (!list.length) return '<div class="sp-pane"><p class="sp-note">No Properties Yet. Upload Photos To Start.</p></div>';
+      /* Properties with nothing to select stay out of the way by default. */
+      const withPhotos = list.filter((p) => p.count !== 0);
+      const emptyCount = list.length - withPhotos.length;
+      const shown = state.showEmpty ? list : withPhotos;
+      const toggle = emptyCount
+        ? '<button type="button" class="sp-link sp-empty-t" data-sp="emptytoggle">' +
+          (state.showEmpty ? "Hide Properties Without Photos" : "Show Properties Without Photos (" + emptyCount + ")") +
+          "</button>"
+        : "";
+      if (!shown.length)
+        return '<div class="sp-pane"><p class="sp-note">No Properties With Photos Yet.</p>' + toggle + "</div>";
       return '<div class="sp-pane"><div class="sp-props" role="listbox" aria-label="Your Properties">' +
-        list.map(propCard).join("") + "</div>" + photoPanel() + "</div>";
+        shown.map(propCard).join("") + "</div>" + toggle + photoPanel() + "</div>";
     }
+
 
     if (state.tab === "describe") {
       const ready = state.prompt.trim().length > 0 && !state.describeBusy;
@@ -520,24 +538,60 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return m ? Number(m[1]) : null;
   }
 
+  /** Up to four thumbnail paths for the card's photo area. */
+  function thumbsOf(p: PickerProperty): string[] {
+    const out: string[] = [];
+    for (const t of (p.thumbs || []) as string[]) {
+      if (t && !out.includes(t)) out.push(t);
+      if (out.length === 4) break;
+    }
+    if (!out.length && p.thumb) out.push(p.thumb);
+    return out;
+  }
+
+  /** One photo area: skeleton first, real image when the signed URL resolves,
+      deliberate fallback when it fails. Never a permanent blank panel. */
+  function thumbArea(p: PickerProperty) {
+    const icon = p.unassigned ? "images" : "home";
+    const list = thumbsOf(p);
+    const tile = (path: string) =>
+      '<span class="sp-th-i is-load" data-sp-thumb="' + esc(path) + '"><i data-lucide="' + icon + '"></i></span>';
+    const inner = !list.length
+      ? '<span class="sp-th-i is-none"><i data-lucide="' + icon + '"></i></span>'
+      : list.length >= 2 && p.unassigned
+        ? '<span class="sp-th-mosaic">' + list.slice(0, 4).map(tile).join("") + "</span>"
+        : tile(list[0]!);
+    return '<span class="sp-prop-th">' + inner + "</span>";
+  }
+
   function propCard(p: PickerProperty) {
     const selected = state.propSel === p.id;
     const empty = p.count === 0;
     const cls = ["sp-prop", p.unassigned ? "is-util" : "", selected ? "is-sel" : "", empty ? "is-empty" : ""].filter(Boolean).join(" ");
-    const thumb = p.thumb
-      ? '<span class="sp-prop-th" data-sp-thumb="' + esc(p.thumb) + '"><i data-lucide="' + (p.unassigned ? "images" : "home") + '"></i></span>'
-      : '<span class="sp-prop-th"><i data-lucide="' + (p.unassigned ? "images" : "home") + '"></i></span>';
-    const count = empty ? "No Photos Available" : photoCountLabel(p.count == null ? "" : p.count);
+    const count = empty ? "No Photos Yet" : photoCountLabel(p.count == null ? "" : p.count);
+    if (empty) {
+      /* Kept out of the way: nothing to select, so the card offers photos. */
+      return (
+        '<div class="' + cls + '" role="option" aria-selected="false" aria-disabled="true">' +
+        '<span class="sp-prop-th"><span class="sp-th-i is-none"><i data-lucide="image-off"></i></span></span>' +
+        '<span class="sp-prop-b"><b>' + esc(p.line1 || "") + "</b>" +
+        (p.line2 ? "<span>" + esc(p.line2) + "</span>" : "") +
+        '<em class="sp-prop-c">' + esc(count) +
+        '<button type="button" class="sp-link" data-sp="browse">Upload Photos</button></em></span></div>'
+      );
+    }
     return (
       '<div class="' + cls + '" role="option" aria-selected="' + (selected ? "true" : "false") + '"' +
-      (empty ? ' aria-disabled="true"' : ' tabindex="0" data-sp-prop="' + esc(p.id!) + '"') + ">" +
-      thumb +
+      ' tabindex="0" data-sp-prop="' + esc(p.id!) + '">' +
+      thumbArea(p) +
+      '<span class="sp-pick' + (selected ? " on" : "") + '" aria-hidden="true">' +
+      (selected ? '<i data-lucide="check"></i>' : "") + "</span>" +
       '<span class="sp-prop-b"><b>' + esc(p.line1 || "") + "</b>" +
       (p.line2 ? "<span>" + esc(p.line2) + "</span>" : "") +
-      '<em class="sp-prop-c">' + esc(count) +
-      '<i data-lucide="' + (selected ? "circle-check-big" : "circle") + '"></i></em></span></div>'
+      '<em class="sp-prop-c">' + esc(count) + "</em></span></div>"
     );
   }
+
 
   function photoPanel() {
     const id = state.propSel;
@@ -594,28 +648,52 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   /** Thumbnails resolve after paint so the grid never waits on signed URLs. */
   const thumbCache = new Map<string, string>();
   function hydrateThumbs() {
-    if (!body || !opts.resolvePhoto) return;
+    if (!body) return;
     const nodes = Array.from(body.querySelectorAll<HTMLElement>("[data-sp-thumb]"));
     for (const el of nodes) {
       const path = el.dataset["spThumb"]!;
+      if (el.dataset["spThumbDone"] === "1") continue;
+      const paint = (url: string) => {
+        el.dataset["spThumbDone"] = "1";
+        el.style.backgroundImage = 'url("' + url + '")';
+        el.classList.remove("is-load", "is-fail");
+        el.classList.add("has-img");
+        /* Lucide swaps the <i> for an <svg>, so drop the placeholder outright. */
+        el.querySelector("i, svg")?.remove();
+      };
+      const fail = (err: unknown) => {
+        el.dataset["spThumbDone"] = "1";
+        el.classList.remove("is-load");
+        el.classList.add("is-fail");
+        /* The real storage / signed-URL error, not a silent blank panel. */
+        console.warn("[source-picker] thumbnail failed for " + path, err);
+      };
       const hit = thumbCache.get(path);
       if (hit) {
-        el.style.backgroundImage = 'url("' + hit + '")';
-        el.classList.add("has-img");
+        paint(hit);
+        continue;
+      }
+      if (!opts.resolvePhoto) {
+        fail(new Error("No resolvePhoto helper was provided."));
         continue;
       }
       opts
         .resolvePhoto(path)
         .then((url) => {
-          if (!url) return;
+          if (!url) {
+            fail(new Error("No signed URL was returned."));
+            return;
+          }
           thumbCache.set(path, url);
           if (!el.isConnected) return;
-          el.style.backgroundImage = 'url("' + url + '")';
-          el.classList.add("has-img");
+          paint(url);
         })
-        .catch(() => {});
+        .catch((err) => {
+          if (el.isConnected) fail(err);
+        });
     }
   }
+
 
   function html() {
 
@@ -809,6 +887,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
+    else if (k === "emptytoggle") {
+      state.showEmpty = !state.showEmpty;
+      render();
+    }
+
     else if (k === "pall") {
       state.propChecked = new Set(state.propPhotos.map((x) => x.id));
       render();

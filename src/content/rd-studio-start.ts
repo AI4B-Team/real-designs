@@ -874,7 +874,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     hydrateRecent();
   }
 
-  /** Every stored photo of one property, in project order. */
+  /** Every stored photo of one property: saved rooms first, then the
+      property's uploaded media assets (upload-only properties have no rooms,
+      which is why their cards used to render empty). */
   function photosOfProperty(p: any): Array<{ id: string; path: string; name?: string; room?: string }> {
     const out: Array<{ id: string; path: string; name?: string; room?: string }> = [];
     const seen = new Set<string>();
@@ -885,6 +887,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         seen.add(path);
         out.push({ id: path, path, name: r.name || r.room || pr.name || "Photo", room: r.room || r.name || "" });
       }
+    }
+    for (const a of (p?.assets || []) as any[]) {
+      const path = a?.path;
+      if (!path || seen.has(path)) continue;
+      seen.add(path);
+      out.push({ id: a.id || path, path, name: a.name || "Photo", room: a.room || "" });
     }
     return out;
   }
@@ -911,8 +919,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
             address: p.address,
             count: photos.length || Number((p as any).asset_count || 0),
             thumb: photos[0]?.path || null,
+            thumbs: photos.slice(0, 4).map((x) => x.path),
           };
         }),
+
       ...(ctx.resolvePhoto ? { resolvePhoto: ctx.resolvePhoto } : {}),
       loadPropertyPhotos: async (p) => {
         const src = (ctx.getProperties ? ctx.getProperties() : []).find(
