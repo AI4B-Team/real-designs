@@ -66,19 +66,40 @@ export async function uploadRoomPhoto(file: File): Promise<string> {
 
 /* Signed URLs are memoized per path (until shortly before they expire) so that
    re-rendering a gallery reuses the same URL instead of re-signing every tile,
-   which made thumbnails blank out for a moment on each repaint. */
+   which made thumbnails blank out for a moment on each repaint.
+   Concurrent callers share one in-flight request, and a path that storage
+   cannot sign (deleted or missing object) is remembered for a short while so a
+   gallery does not fire the same failing request once per tile. */
 const SIGNED = new Map<string, { url: string; exp: number }>();
+const PENDING = new Map<string, Promise<string | null>>();
+const MISSING = new Map<string, number>();
+const MISS_TTL = 60_000;
 
 export async function roomPhotoUrl(path: string, expiresIn = 3600): Promise<string | null> {
   if (!isStoredPhoto(path)) return path;
   const hit = SIGNED.get(path);
   if (hit && hit.exp > Date.now()) return hit.url;
-  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, expiresIn);
-  if (error) return null;
-  const url = data?.signedUrl ?? null;
-  if (url) SIGNED.set(path, { url, exp: Date.now() + Math.max(30, expiresIn - 60) * 1000 });
-  return url;
+  const missed = MISSING.get(path);
+  if (missed && missed > Date.now()) return null;
+  const inflight = PENDING.get(path);
+  if (inflight) return inflight;
+
+  const req = (async () => {
+    const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, expiresIn);
+    const url = error ? null : (data?.signedUrl ?? null);
+    if (url) {
+      MISSING.delete(path);
+      SIGNED.set(path, { url, exp: Date.now() + Math.max(30, expiresIn - 60) * 1000 });
+    } else {
+      MISSING.set(path, Date.now() + MISS_TTL);
+    }
+    return url;
+  })().finally(() => PENDING.delete(path));
+
+  PENDING.set(path, req);
+  return req;
 }
+
 
 export async function deleteRoomPhoto(path: string): Promise<void> {
   if (!isStoredPhoto(path)) return;
