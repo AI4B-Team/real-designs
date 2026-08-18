@@ -687,9 +687,17 @@ function openCanvasFor(key) {
   if (el) el.click();
 }
 
-/* Management cards keep one shape whatever the output ratio is: the chosen
-   format defines the generated image, not the grid. */
-const CARD_RATIO_CLASS = "rt-43";
+/**
+ * Every card previews the shape it will actually be generated at. The class
+ * lands on the tile and only the image frame inside it carries the aspect
+ * ratio, so the room selector always stays beneath a correctly shaped photo.
+ */
+function tileRatio(it) {
+  return effectiveRatio(S && S.outputRatio, it && it.ratio);
+}
+function tileRatioClass(it) {
+  return ratioClass(tileRatio(it));
+}
 
 function cardHtml(it, seq) {
 
@@ -700,7 +708,8 @@ function cardHtml(it, seq) {
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
-  const rc = CARD_RATIO_CLASS;
+  const rc = tileRatioClass(it);
+  const override = normalizeOverride(it.ratio);
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
@@ -712,6 +721,7 @@ function cardHtml(it, seq) {
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
+      ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
         [
           { label: "Design", icon: "wand-sparkles", attrs: { "data-open": it.key } },
@@ -749,13 +759,14 @@ function cardHtml(it, seq) {
    selector, no menu, no credits — it only opens the existing Add Photos
    picker, and it always stays the final grid item. */
 function addCardHtml() {
-  return `<div class="rv-addcard">
+  return `<div class="rv-addcard ${ratioClass(S && S.outputRatio)}">
     <button type="button" class="rv-addcard-b" id="rdsAddCard" aria-label="Add More Photos">
       <i data-lucide="image-plus"></i>
       <b>Add More Photos</b>
       <em>Upload, Import, or Use Media</em>
       <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
     </button>
+    <div class="rv-addcard-pad" aria-hidden="true"></div>
   </div>`;
 }
 
