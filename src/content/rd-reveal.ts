@@ -4033,6 +4033,7 @@ function bind() {
         if (label) { applyAddress(w, label, "existing_property"); w.addressMatch = null; }
         if (!w.titleTouched) w.title = defaultTitle(w);
         /* Only the chosen photos become scenes; the grid then opens on Scenes. */
+        w.seedPhotos = photos.filter((x) => x && x.path);
         w.seedPaths = photos.map((x) => x.path).filter(Boolean);
         await loadWizardAssets();
         if (w.step < 2) w.step = 2;
