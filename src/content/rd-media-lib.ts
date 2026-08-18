@@ -483,55 +483,67 @@ function actions(m, g) {
     <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
 }
 
-/** Every secondary action for one asset. Only implemented workflows appear. */
-function moreItems(m) {
+/**
+ * Every secondary action for one asset, grouped so the list scans quickly.
+ * Only workflows this record can actually run appear, and nothing that is
+ * already a primary button is repeated here.
+ */
+function moreItems(m, opts = {} as any) {
   const g = typeGroup(m.type);
-  const fav = { icon: "heart", label: isFav(m.id) ? "Unfavorite" : "Favorite", fn: () => { toggleFav(m.id); render(); } };
+  const skip = new Set(opts.skip || []);
+  const fav = { group: "Organize", icon: "heart", label: isFav(m.id) ? "Remove From Favorites" : "Add To Favorites", fn: () => { toggleFav(m.id); render(); } };
+  const organize = () => {
+    const out = [fav];
+    if (isAssignable(m))
+      out.push({ group: "Organize", icon: "home", label: m.propertyId ? "Move To Another Property" : "Assign To A Property", fn: () => openAssign([m]) });
+    if (isAssignable(m) && m.propertyId)
+      out.push({ group: "Organize", icon: "unlink", label: "Remove From Property", fn: () => doAssign([m], null) });
+    if (m.type === "generated_video" || m.draft)
+      out.push({ group: "Organize", icon: "map-pin", label: m.address ? "Change Address" : "Add An Address", fn: () => changeAddress(m) });
+    if (canRename(m)) out.push({ group: "Organize", icon: "type", label: "Rename", fn: () => renameItem(m) });
+    return out;
+  };
+  const manage = () => [
+    ...(m.draft ? [] : [{ group: "Manage", icon: "archive", label: "Archive", fn: () => archive([m]) }]),
+    { group: "Manage", icon: "trash-2", label: m.draft ? "Delete Project" : "Delete", danger: true, fn: () => del(m) },
+  ];
+
   if (m.status === "failed")
     return [
-      { icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
-      ...(planBlocked(m) ? [{ icon: "zap", label: "Add Credits", fn: () => openUpgrade(m) }] : []),
-      { icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
-      { icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) },
-    ];
+      { group: "Create", icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
+      ...(planBlocked(m) ? [{ group: "Create", icon: "zap", label: "Add Credits", fn: () => openUpgrade(m) }] : []),
+      { group: "Create", icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
+      ...organize(),
+      ...manage(),
+    ].filter((it) => !skip.has(it.label));
 
-  if (g === "videos")
+  if (g === "videos" && !m.draft)
     return [
-      { icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
-      { icon: "copy", label: "Duplicate", fn: () => dupVideo(m, false) },
-      { icon: "scissors", label: "Create Short Version", fn: () => dupVideo(m, true) },
-      { icon: "ratio", label: "Change Format", fn: () => openVideo(m, "video") },
-      { icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") },
-      { icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) },
-      { icon: "type", label: "Rename", fn: () => renameItem(m) },
-      fav,
-      { icon: "archive", label: "Archive", fn: () => archive([m]) },
-      { icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) },
-    ];
-  const out = [];
-  if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
-  if (m.draft || isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => continueProject(m) });
-  if (canEditImage(m)) out.push({ icon: "wand-2", label: "Redesign In A Style", fn: () => restyleFrom([m]) });
-  out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
-  if (videoReady(m)) out.push({ icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
-  out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
-  if (g === "images") out.push({ icon: "layers", label: "Create Variations", fn: () => S.go("studio") });
-  if (m.sourcePath) out.push({ icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
-  if (isAssignable(m))
-    out.push({ icon: "home", label: m.propertyId ? "Move To Another Property" : "Assign To A Property", fn: () => openAssign([m]) });
-  if (isAssignable(m) && m.propertyId)
-    out.push({ icon: "unlink", label: "Remove From Property", fn: () => doAssign([m], null) });
-  if (m.type === "generated_video")
-    out.push({ icon: "map-pin", label: m.address ? "Change Address" : "Add An Address", fn: () => changeAddress(m) });
-  out.push({ icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") });
-  out.push({ icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
-  out.push({ icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
-  if (m.type === "uploaded_image" && !m.job) out.push({ icon: "type", label: "Rename", fn: () => renameItem(m) });
-  out.push(fav);
-  out.push({ icon: "archive", label: "Archive", fn: () => archive([m]) });
-  out.push({ icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) });
-  return out;
+      { group: "Create", icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
+      { group: "Create", icon: "copy", label: "Duplicate", fn: () => dupVideo(m, false) },
+      { group: "Create", icon: "scissors", label: "Create Short Version", fn: () => dupVideo(m, true) },
+      { group: "Create", icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") },
+      { group: "Create", icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) },
+      ...organize(),
+      ...manage(),
+    ].filter((it) => !skip.has(it.label));
+
+  const out = [] as any[];
+  if (m.draft || isDesignDraft(m)) out.push({ group: "Create", icon: "play", label: "Continue Editing", fn: () => continueProject(m) });
+  if (canEditImage(m)) out.push({ group: "Create", icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
+  if (canEditImage(m)) out.push({ group: "Create", icon: "wand-2", label: "Redesign In A Style", fn: () => restyleFrom([m]) });
+  if (videoReady(m)) out.push({ group: "Create", icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
+  if (videoReady(m)) out.push({ group: "Create", icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
+  if (m.sourcePath) out.push({ group: "Create", icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
+  if (!m.draft) out.push({ group: "Create", icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
+  if (!m.draft) out.push({ group: "Create", icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
+  return [...out, ...organize(), ...manage()].filter((it) => !skip.has(it.label));
 }
+
+/** Renaming writes to a real row: a project draft, a video, or an upload. */
+const canRename = (m) =>
+  !!m && (!!m.draftId || m.type === "generated_video" || (m.type === "uploaded_image" && !m.job && !!m.refId));
+
 
 /* ---------------- popup menu ---------------- */
 
