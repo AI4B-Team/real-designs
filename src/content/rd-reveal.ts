@@ -2077,7 +2077,7 @@ function tileHtml(a, seq) {
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
-      ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
+      ${s ? sceneNumberHtml(seq) : ""}
       ${sceneTreatment(s, clip, a)}
 
       ${tools}
