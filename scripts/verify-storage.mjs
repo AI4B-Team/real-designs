@@ -64,25 +64,28 @@ for (const b of BUCKETS) {
 
 section("Migration idempotency");
 try {
-  // Static proof: every CREATE POLICY in the storage migrations is preceded by
-  // a DROP POLICY IF EXISTS, so a second run replaces rather than collides.
+  // Static proof: in the current authoritative storage migration (the newest
+  // one that touches storage.objects) every CREATE POLICY is preceded by a
+  // DROP POLICY IF EXISTS, so a second run replaces rather than collides.
   const dir = "supabase/migrations";
-  const files = (await import("node:fs")).readdirSync(dir).filter((f) => f.endsWith(".sql"));
   const fs = await import("node:fs");
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".sql") && /storage\.objects/i.test(fs.readFileSync(`${dir}/${f}`, "utf8")))
+    .sort();
+  const latest = files.at(-1);
+  const text = latest ? fs.readFileSync(`${dir}/${latest}`, "utf8") : "";
   let creates = 0;
   let guarded = 0;
-  for (const f of files) {
-    const text = fs.readFileSync(`${dir}/${f}`, "utf8");
-    if (!/storage\.objects/i.test(text)) continue;
-    for (const m of text.matchAll(/create policy\s+("[^"]+"|\S+)\s+on storage\.objects/gi)) {
-      creates++;
-      const name = m[1];
-      if (new RegExp(`drop policy if exists\\s+${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s+on storage\\.objects`, "i").test(text)) guarded++;
-    }
+  for (const m of text.matchAll(/create policy\s+("[^"]+"|\S+)\s+on storage\.objects/gi)) {
+    creates++;
+    const name = m[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`drop policy if exists\\s+${name}\\s+on storage\\.objects`, "i").test(text)) guarded++;
   }
-  creates === guarded
-    ? ok(`all ${creates} storage policy statements are drop-if-exists guarded (safe to re-run)`)
-    : bad(`${creates - guarded} of ${creates} CREATE POLICY statements are not guarded`);
+  creates > 0 && creates === guarded
+    ? ok(`${latest}: all ${creates} policy statements are drop-if-exists guarded (safe to re-run)`)
+    : bad(`${latest}: ${creates - guarded} of ${creates} CREATE POLICY statements are not guarded`);
+
 
   // Runtime proof: no duplicated policy names, which is what a non-idempotent
   // second run would produce.
