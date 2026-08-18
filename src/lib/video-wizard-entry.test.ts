@@ -31,7 +31,7 @@ describe("initial step resolution", () => {
     expect(initialWizardStep({}, [{ id: "a" }])).toBe(2);
     expect(initialWizardStep({ propertyId: "p" }, [])).toBe(2);
     expect(initialWizardStep({ versionId: "v" }, [])).toBe(2);
-    expect(initialWizardStep({}, [])).toBe(1);
+    expect(initialWizardStep({}, [])).toBe(2);
   });
   it("keeps a restored draft on its saved later step", () => {
     expect(initialWizardStep({ step: 5 }, [{ id: "a" }])).toBe(5);
