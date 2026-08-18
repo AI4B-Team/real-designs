@@ -310,6 +310,15 @@ function exitAll() {
   void saveExit();
 }
 
+/* The global Studio navigation must behave like "Save & Exit" while a
+   project is open, so the shell asks the builder to handle the jump. */
+try {
+  (window as any).__rdBuilderSaveExit = ((prev) => () => {
+    if (S) { void saveExit(); return true; }
+    return typeof prev === "function" ? !!prev() : false;
+  })((window as any).__rdBuilderSaveExit);
+} catch (_) {}
+
 /** "Start Over": the draft is kept, only the live session ends. */
 function openStartOver() {
   if (!S) return;

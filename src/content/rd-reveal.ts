@@ -5627,6 +5627,15 @@ export function revealBusy() {
 }
 try { (window as any).__rdRevealBusy = revealBusy; } catch (_) {}
 
+/* The global Studio navigation saves and exits instead of abandoning the
+   builder session. */
+try {
+  (window as any).__rdBuilderSaveExit = ((prev) => () => {
+    if (S.wizard) { void exitBuilder(S.wizard); return true; }
+    return typeof prev === "function" ? !!prev() : false;
+  })((window as any).__rdBuilderSaveExit);
+} catch (_) {}
+
 export function resetReveal() {
   stopAvatarVoice(); // never let a voice sample keep playing after navigation
   revokeUploadUrls(S.wizard);

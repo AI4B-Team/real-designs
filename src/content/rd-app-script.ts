@@ -182,6 +182,14 @@ function scrollTopHard(){
 }
 let __paneSeq=0;
 function go(v,fromHash){
+  /* Leaving a live builder through the global Studio navigation saves the
+     draft first; the builder re-issues this navigation once it is safe. */
+  if(v==='studio' && !fromHash){
+    try{
+      const ex=(window as any).__rdBuilderSaveExit;
+      if(typeof ex==='function' && ex()) return;
+    }catch(_){}
+  }
   const acctAlias = ACCT_ALIAS[v] ? v : '';
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
