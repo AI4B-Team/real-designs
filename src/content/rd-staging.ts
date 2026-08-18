@@ -562,6 +562,9 @@ function render() {
       <div>
         <h2>Review Rooms</h2>
         <p>Confirm the room type for each photo.</p>
+        <button class="rds-addr${S.address ? " on" : ""}" id="rdsAddr">
+          <i data-lucide="map-pin"></i><span id="rdsAddrTxt">${esc(S.address || "Add Property Address")}</span>
+        </button>
       </div>
       <div class="rds-ph-r"><span id="rdsStatus">${esc(statusText())}</span></div>
     </header>
@@ -573,13 +576,14 @@ function render() {
           <div class="rds-menu" id="rdsMoreMenu" role="menu">
             <button class="rds-menu-i" data-act="all"><i data-lucide="check-square"></i>Select All</button>
             <button class="rds-menu-i" data-act="none"><i data-lucide="square"></i>Clear Selection</button>
+            <button class="rds-menu-i" data-act="room"><i data-lucide="tag"></i>Apply Room Type</button>
             <button class="rds-menu-i" data-act="del"><i data-lucide="trash-2"></i>Remove Selected</button>
           </div>
         </div>
       </div>
       <div class="rds-bar-r">
-        <button class="btn btn-ghost btn-sm" id="rdsAddr"><i data-lucide="map-pin"></i><span id="rdsAddrTxt">${esc(S.address ? S.address : "Add Property Address")}</span></button>
         <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
+        <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
       </div>
     </div>
     <div class="rds-b" id="rdsBody">${gridHtml()}</div>
@@ -591,6 +595,7 @@ function render() {
       </div>
     </footer>
   </section>`;
+
   paint();
   bindReview(el);
   bindRail(el);
