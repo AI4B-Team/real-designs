@@ -853,7 +853,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       /* icons are cosmetic */
     }
     if (state.tab === "describe") syncComposer();
-    if (state.tab === "property") hydrateThumbs();
+    if (state.tab === "property" || state.tab === "design") hydrateThumbs();
+    if (state.tab === "design" && state.designState === "idle") loadDesigns();
   }
 
   function wireDrag(el: HTMLElement) {
