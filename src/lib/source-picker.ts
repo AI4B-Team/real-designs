@@ -657,12 +657,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return m ? Number(m[1]) : null;
   }
 
-  /** Up to four thumbnail paths for the card's photo area. */
+  /** Up to six candidate thumbnail paths; extras act as fallbacks when one fails. */
   function thumbsOf(p: PickerProperty): string[] {
     const out: string[] = [];
     for (const t of (p.thumbs || []) as string[]) {
       if (t && !out.includes(t)) out.push(t);
-      if (out.length === 4) break;
+      if (out.length === 6) break;
     }
     if (!out.length && p.thumb) out.push(p.thumb);
     return out;
