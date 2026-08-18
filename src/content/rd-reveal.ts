@@ -4820,6 +4820,7 @@ function editExisting(d) {
   /* Clips generated in an earlier session (or on another device) come back
      with the project, and any job still running keeps polling. */
   sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
+  sceneFrames.onChange = () => { if (S.screen === "wizard") render(); };
   void sceneClips.load(p.id);
   /* Start/End pairs are durable too: reload them with the project. */
   void sceneFrames.load(p.id).then(() => { if (S.screen === "wizard") render(); });
@@ -5176,6 +5177,7 @@ export function startWizard(seed = {}) {
   S.wizard = w;
   S.screen = "wizard";
   sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
+  sceneFrames.onChange = () => { if (S.screen === "wizard") render(); };
   sceneClips.setProject(w.editingId || null);
   logVideoEvent("video_builder_started", {
     seedFileCount: Array.from(seed.files || []).length,
