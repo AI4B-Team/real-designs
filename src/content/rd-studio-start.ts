@@ -117,7 +117,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   const state = {
     method: "upload" as Method,
     /** Which door the user opened on the start screen: "" (none yet) or "design". */
-    door: "" as "" | "design" | "video",
+    door: "design" as "" | "design" | "video",
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
@@ -799,54 +799,44 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
   function chooserHtml() {
+    const doorCard = (id: "design" | "video", icon: string, title: string, sub: string) =>
+      '<button type="button" class="stw-door' + (state.door === id ? " on" : "") + '" data-sts="door-' + id + '" aria-pressed="' + (state.door === id ? "true" : "false") + '">' +
+      '<span class="stw-door-check"><i data-lucide="check"></i></span>' +
+      '<i data-lucide="' + icon + '"></i>' +
+      "<b>" + title + "</b>" +
+      "<span>" + sub + "</span>" +
+      "</button>";
+
     return (
       '<div class="stw">' +
       '<header class="stw-head">' +
       '<div class="stw-head-l">' +
       '<span class="stw-eyebrow">Studio</span>' +
-      '<div class="stw-title"><h2>How Would You Like To Start?</h2></div>' +
-      "<p>Choose a path below. You can switch between them anytime.</p>" +
+      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
+      "<p>Choose a project type, then add your photos.</p>" +
       "</div></header>" +
       '<div class="stw-rule"></div>' +
       styleBanner() +
-      '<div class="stw-doorwrap' + (state.door ? "" : " center") + '">' +
+      '<div class="stw-doorwrap">' +
       '<div class="stw-doors">' +
-      '<button type="button" class="stw-door' + (state.door === "design" ? " on" : "") + '" data-sts="door-design">' +
-      '<i data-lucide="wand-sparkles"></i>' +
-      "<b>Design A Space</b>" +
-      "<span>Restyle, stage or plan a room from a photo, sketch or floor plan.</span>" +
-      '<span class="stw-door-cta">Start Designing<i data-lucide="arrow-right"></i></span>' +
-      "</button>" +
-      '<button type="button" class="stw-door' + (state.door === "video" ? " on" : "") + '" data-sts="door-video">' +
-      '<i data-lucide="clapperboard"></i>' +
-      "<b>Make A Video</b>" +
-      "<span>Turn property photos into a listing video.</span>" +
-      '<span class="stw-door-cta">Start A Video<i data-lucide="arrow-right"></i></span>' +
-      "</button>" +
-      "</div>" +
-      (state.door
-        ? ""
-        : '<p class="stw-secondary stw-doorfoot">No Photo Yet? ' +
-          '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>') +
-      "</div>" +
+      doorCard("design", "wand-sparkles", "Design A Space", "Stage, redesign or plan a space.") +
+      doorCard("video", "clapperboard", "Create A Video", "Turn listing photos into a property video.") +
+      "</div></div>" +
 
-      (state.door
-        ? '<div class="stw-source"><div class="stw-sec-h"><h3>' +
-          (state.door === "design" ? "Choose Your Starting Point" : "Where Are Your Property Photos?") +
-          "</h3></div>" +
-          '<div id="stSource"></div>' +
-          (state.door === "design"
-            ? '<p class="stw-secondary">No Photo Yet? ' +
-              '<button class="stw-seclink" data-sts="c-describe">Describe An Idea Instead</button></p>'
-            : "") +
-          "</div>"
-        : "") +
+      '<div class="stw-source"><div class="stw-sec-h"><h3>' +
+      (state.door === "video" ? "Add Photos To Your Video" : "Add Photos To Design") +
+      "</h3></div>" +
+      '<div id="stSource"></div>' +
+      '<p class="stw-secondary stw-doorfoot">' +
+      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      "</div>" +
 
       recentHtml() +
       "</div>" +
       (state.samples ? samplesHtml() : "")
     );
   }
+
 
   /* ---------- render + wiring ---------- */
 
@@ -890,7 +880,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     const isVideo = state.door === "video";
     picker = mountSourcePicker(slot, {
       context: isVideo ? "video" : "design",
-      esc,
+      /* Local escape: the shell helper is not always initialized this early. */
+      esc: escLocal,
       lucide,
       showAlert: ctx.showAlert,
       properties: () =>
@@ -937,6 +928,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.property = address;
         state.address = address;
         openSetup("property");
+      },
+      onDescribe: () => {
+        openSetup("describe");
       },
       onSample: () => {
         state.samples = true;
