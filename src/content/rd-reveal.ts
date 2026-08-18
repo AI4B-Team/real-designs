@@ -2034,6 +2034,7 @@ function tileHtml(a, seq) {
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
       <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
+      ${s && S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1] ? transitionTool(s) : ""}
     </div>
     <button class="rv-tools-more" data-toolsmore="1" aria-label="Scene Tools" title="Scene Tools"><i data-lucide="ellipsis"></i></button>`;
   return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" draggable="true">
@@ -2045,7 +2046,6 @@ function tileHtml(a, seq) {
 
       ${tools}
     </div>
-    ${s ? connectorHtml(s, S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1] || null) : ""}
     <div class="rv-tile-foot">
       ${roomCell(a)}
     </div>
