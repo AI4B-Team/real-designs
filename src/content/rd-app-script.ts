@@ -198,7 +198,7 @@ let STUDIO_MODE:any=GENERIC_STUDIO;
 let __navSeq=0;
 let __navView='';
 /**
- * One monotonic navigation sequence for the whole app.
+ * One monotonic navigation sequence for the whole app (see src/lib/app-nav.ts).
  *
  * Every intentional navigation bumps it and records the destination. Any
  * asynchronous work (startup routing, builder restoration, preference loads,
@@ -206,17 +206,22 @@ let __navView='';
  * before it is allowed to move the user. An older callback simply does
  * nothing instead of yanking the page away from where the user went.
  */
-function beginNavigation(view){
-  __navSeq+=1;
-  __navView=String(view||'');
+function beginNavigation(view,reason?,source?){
+  __navSeq=navBegin(view,{reason:reason||'user',source:source||'app_router',userInitiated:reason!=='startup_preference'});
+  __navView=navViewName();
   return __navSeq;
 }
-/** True while the newest navigation intent is the video builder itself. */
-function inBuilderRoute(){ return __navView==='lvideo'||__navView==='reveal'; }
-function isCurrentNavigation(sequence,view){
-  if(sequence!==__navSeq) return false;
-  return view===undefined||view===null||String(view)===__navView;
+/** The router remapped the destination; keep the recorded route truthful. */
+function retargetNavigation(view){
+  navRetarget(view,'unknown');
+  __navView=navViewName();
 }
+/** True while the newest navigation intent is the video builder itself. */
+function inBuilderRoute(){ return navViewName()==='lvideo'||navViewName()==='reveal'; }
+function isCurrentNavigation(sequence,view){
+  return navIsCurrent(sequence,view===undefined?null:view);
+}
+
 function studioMode(){ return STUDIO_MODE; }
 function inPhotoCanvas(){ return isPhotoCanvas(STUDIO_MODE); }
 /** Canonical route test: tolerates the legacy "#studio" form during migration. */
