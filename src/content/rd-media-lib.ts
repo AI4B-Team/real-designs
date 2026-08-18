@@ -427,8 +427,8 @@ function card(m) {
     </div>
     <div class="ml-body">
       <div class="ml-t"><b>${esc(m.title)}</b><span class="pill st-${m.status}">${STATUS_LABEL[m.status] || m.status}</span></div>
-      <div class="mono ml-sub">${esc(addressDisplay({ property_address: m.address, property_label: m.property, property_id: m.propertyId }).text)}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.updatedAt || m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
-      ${m.draft ? `<div class="mono ml-sub">${esc(m.draftTypeLabel || DRAFT_TYPE_LABEL[m.draftType] || "Project")}${m.photoCount ? " &middot; " + m.photoCount + " Photo" + (m.photoCount === 1 ? "" : "s") : ""} &middot; Last Edited ${esc(fmtDate(m.updatedAt || m.createdAt))}</div>` : ""}
+      <div class="ml-sub">${esc(addressDisplay({ property_address: m.address, property_label: m.property, property_id: m.propertyId }).text)}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.updatedAt || m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
+      ${m.draft ? `<div class="ml-sub">${esc(m.draftTypeLabel || DRAFT_TYPE_LABEL[m.draftType] || "Project")}${m.photoCount ? " &middot; " + m.photoCount + " Photo" + (m.photoCount === 1 ? "" : "s") : ""} &middot; Last Edited ${esc(fmtDate(m.updatedAt || m.createdAt))}</div>` : ""}
       <div class="ml-acts">${actions(m, g)}</div>
     </div>
   </div>`;
@@ -1053,7 +1053,7 @@ async function openDetail(m, opts) {
   d.hidden = false;
   d.innerHTML = `<div class="ml-dr-bg" data-close></div>
   <aside class="ml-dr" role="dialog" aria-label="${esc(m.title)}">
-    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span class="mono">${esc(m.property || "Unsorted Uploads")}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</span></div>
+    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span>${esc(m.property || "Unsorted Uploads")}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</span></div>
       <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="ml-dr-b">
       <div class="ml-dr-prev">${
