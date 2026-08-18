@@ -1189,6 +1189,8 @@ function wizardDraftBody(w) {
           caption: sc.caption || null, disclosure: sc.disclosure || null, motion_level: sc.motion_level || "standard",
           immersive_effect: sc.immersive_effect || null, exterior_effect: sc.exterior_effect || null,
           labels: sc.labels || [], asset_id: sc.asset_id || null, version_id: sc.version_id || null,
+          clip_id: sc.clip_id || null, use_clip: !!sc.use_clip, animate_id: sc.animate_id || null,
+          enhancement_level: sc.enhancement_level || null, clip_seconds: sc.clip_seconds || null,
         })),
         titles: w.titles || null,
         audio: { presentation: w.presentation, music: w.music, volume: w.volume, beatSync: w.beatSync, narration: w.narration, script: w.script, voice: w.voice, captions: w.captions },
