@@ -1,8 +1,6 @@
 /* Multi-photo staging workflow: Add Photos, Review Rooms, canvas strip. */
 
 /* Review Rooms is an in-page builder view, not an overlay. */
-.rd-app.rds-strip { background: transparent; }
-
 .rds-page { display: flex; flex-direction: column; min-height: 0; }
 
 .rds-rail {
