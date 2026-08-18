@@ -318,14 +318,7 @@ export const startRender = createServerFn({ method: "POST" })
         const { data: existing } = await supabase.from("video_variants").select("*").eq("video_project_id", data.id);
         return { variants: existing ?? [], balance: null, job: live, reused: true };
       }
-      await supabase
-        .from("video_render_jobs")
-        .update({
-          status: "failed",
-          error_message: "The render stopped before it finished.",
-          completed_at: new Date().toISOString(),
-        })
-        .eq("id", (live as any).id);
+      await retireJob(supabase, userId, live, "failed", "The render stopped before it finished.");
     }
 
     const { charge, chargeErrorMessage, CREDIT_COSTS } = await import("@/lib/credits.server");
@@ -402,6 +395,35 @@ export const startRender = createServerFn({ method: "POST" })
     return { variants: out ?? [], balance, job, reused: false };
   });
 
+/**
+ * Ends a job that produced no video and gives its credits back exactly once.
+ * Used for stale jobs, failures and cancellations, so no path can leave a
+ * user charged for a render they never received.
+ */
+async function retireJob(
+  supabase: any,
+  userId: string,
+  job: any,
+  status: "failed" | "cancelled",
+  message: string,
+) {
+  const { creditRelease } = await import("@/lib/render-providers");
+  const rel = creditRelease(job, status);
+  const patch: Record<string, unknown> = {
+    status,
+    error_message: message,
+    completed_at: new Date().toISOString(),
+    cancel_requested: false,
+  };
+  if (rel.release) {
+    const { refund } = await import("@/lib/credits.server");
+    await refund(userId, rel.amount, status === "cancelled" ? "REAL REVEAL render cancelled" : "REAL REVEAL render failed");
+    patch['credits_refunded'] = (Number(job.credits_refunded) || 0) + rel.amount;
+  }
+  const { data: row } = await supabase.from("video_render_jobs").update(patch).eq("id", job.id).select("*").maybeSingle();
+  return { job: row, released: rel.release ? rel.amount : 0 };
+}
+
 /* ===================== PERSISTENT RENDER JOBS =====================
    The job row is the truth about a render: it survives refreshes, keeps the
    stage and progress, and is provider-agnostic so a server-side renderer can
@@ -451,6 +473,23 @@ export const updateRenderJob = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
+    if (data.status === "failed" || data.status === "cancelled") {
+      const { data: current } = await context.supabase
+        .from("video_render_jobs")
+        .select("*")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (current) {
+        const out = await retireJob(
+          context.supabase,
+          context.userId,
+          current,
+          data.status,
+          data.error_message || (data.status === "cancelled" ? "You stopped this render." : "The render did not finish."),
+        );
+        return out.job;
+      }
+    }
     const patch: Record<string, unknown> = { heartbeat_at: new Date().toISOString() };
     if (data.status) patch['status'] = data.status;
     if (data.progress != null) patch['progress'] = data.progress;
@@ -470,6 +509,36 @@ export const updateRenderJob = createServerFn({ method: "POST" })
       .select("*")
       .maybeSingle();
     if (error) throw new Error(error.message);
+    return row;
+  });
+
+/**
+ * Asks a running render to stop. The browser renderer polls this flag and ends
+ * the encode; if the tab is already gone the job is retired straight away and
+ * its credits are released.
+ */
+export const cancelRenderJob = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), force: z.boolean().optional() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { isJobStale } = await import("@/lib/render-providers");
+    const { data: job } = await context.supabase
+      .from("video_render_jobs")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!job) throw new Error("That render is no longer available.");
+    if (job.status !== "queued" && job.status !== "rendering") return job;
+    if (data.force || isJobStale(job as any)) {
+      const out = await retireJob(context.supabase, context.userId, job, "cancelled", "You stopped this render.");
+      return out.job;
+    }
+    const { data: row } = await context.supabase
+      .from("video_render_jobs")
+      .update({ cancel_requested: true } as any)
+      .eq("id", data.id)
+      .select("*")
+      .maybeSingle();
     return row;
   });
 

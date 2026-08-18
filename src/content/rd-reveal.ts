@@ -53,8 +53,9 @@ import {
   saveShareLink as _saveShareLink,
   listRenderJobs as _listRenderJobs,
   updateRenderJob as _updateRenderJob,
+  cancelRenderJob as _cancelRenderJob,
 } from "@/lib/reveal.functions";
-import { jobStatusLabel, isJobStale, renderProvider } from "@/lib/render-providers";
+import { jobStatusLabel, isJobStale, renderProvider, activeRenderProvider, runsInBackground } from "@/lib/render-providers";
 /* Server functions take a single { data } envelope; these thin wrappers let
    call sites keep passing plain arguments. */
 const listVideos = (d) => _listVideos(d === undefined ? undefined : { data: d });
@@ -70,6 +71,7 @@ const saveBrandKit = (d) => _saveBrandKit(d === undefined ? undefined : { data: 
 const saveShareLink = (d) => _saveShareLink(d === undefined ? undefined : { data: d });
 const listRenderJobs = (d) => _listRenderJobs(d === undefined ? undefined : { data: d });
 const updateRenderJob = (d) => _updateRenderJob(d === undefined ? undefined : { data: d });
+const cancelRenderJob = (d) => _cancelRenderJob(d === undefined ? undefined : { data: d });
 import {
   renderReveal,
   sceneDurations,
@@ -80,6 +82,9 @@ import {
   EXTERIOR_DISCLOSURE,
   IMMERSIVE_CREDITS_PER_SCENE,
   suggestLabels,
+  browserRenderSupport,
+  isRenderCancelled,
+  RENDER_CANCELLED,
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
@@ -304,6 +309,19 @@ async function loadLibrary() {
       listRenderJobs().catch(() => []),
     ]);
     S.jobs = jobs || [];
+    /* A job whose tab went away is not still running. Retire it on sight so the
+       library shows the interruption and the held credits come back. */
+    for (const j of S.jobs) {
+      if (!isJobStale(j) || j.id === S.renderJobId) continue;
+      try {
+        const fixed = await updateRenderJob({
+          id: j.id,
+          status: "failed",
+          error_message: "The render stopped when its browser tab closed. Your credits were returned.",
+        });
+        if (fixed) Object.assign(j, fixed);
+      } catch (_) {}
+    }
     S.credits = credits;
     S.projects = lib.projects;
     S.variants = lib.variants;
@@ -2280,15 +2298,20 @@ function previewPanel() {
     <div class="rv-cost mono">${cost} Credits</div>
     ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
     ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
-    ${!block && typeof MediaRecorder === "undefined" ? `<div class="rv-note sm">This Browser Cannot Record Video. Open REAL DESIGNS In Chrome Or Edge On A Computer To Render.</div>` : ""}
+    ${!block && !browserRenderSupport().ok ? `<div class="rv-note sm">${esc(browserRenderSupport().reason)} Nothing Is Charged Until A Render Actually Starts.</div>` : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
-      <div class="rv-note sm">${esc(renderProvider("browser").runningNotice)} Your Video Is Created In This Browser, So Closing Or Refreshing This Tab Stops It — Your Project And Progress Are Saved And You Can Start Again.</div></div>`
+      <div class="rv-note sm">${esc(activeRenderProvider().runningNotice)}${
+        runsInBackground()
+          ? ""
+          : " Your Video Is Created In This Browser Tab. Closing Or Refreshing This Tab Stops The Render — Your Project Is Saved And Your Credits Are Returned."
+      }</div>
+      <button class="btn btn-ghost btn-xs" id="rvCancelRender"${w.cancelling ? " disabled" : ""}><i data-lucide="x"></i>${w.cancelling ? "Stopping…" : "Stop Render"}</button></div>`
       : w.step === 7
         ? block
           ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
-          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && typeof MediaRecorder !== "undefined" ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && browserRenderSupport().ok ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
 
         : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
 
@@ -2355,6 +2378,14 @@ async function generate() {
     return;
   }
 
+  // The renderer runs in this tab: if this browser cannot encode, stop here.
+  // Nothing is created and no credits are charged for a render that cannot run.
+  const support = browserRenderSupport();
+  if (!support.ok) {
+    toast(support.reason);
+    return;
+  }
+
   // Preflight. Entitlement is decided before any row or render job exists, so
   // a render we already know cannot run never leaves a failed card behind.
   try {
@@ -2370,8 +2401,10 @@ async function generate() {
   }
 
   w.busy = true;
+  w.cancelling = false;
   w.progress = 0;
   w.stage = "Preparing scenes";
+  RENDER_ABORT = typeof AbortController !== "undefined" ? new AbortController() : null;
   render();
 
 
@@ -2449,7 +2482,7 @@ async function generate() {
     S.renderJobId = started.job?.id || null;
     await jobUpdate({ status: "rendering", progress: 0, stage: "Preparing scenes" });
     track?.("reveal_generate", { formats: outputFormats(w).join(","), scenes: w.scenes.length });
-    await renderAllVariants(projectId, started.variants, w);
+    await renderAllVariants(projectId, started.variants, w, null, RENDER_ABORT?.signal || null);
     await jobUpdate({ status: "completed", progress: 1, stage: "Finished" });
     S.renderJobId = null;
     await setVideoStatus({ id: projectId, status: "ready" });
@@ -2459,12 +2492,13 @@ async function generate() {
     S.detailId = projectId;
     await openDetail(projectId);
   } catch (e) {
-    const msg = String(e?.message || e || "");
+    const cancelled = isRenderCancelled(e);
+    const msg = cancelled ? "You stopped this render. Your credits were returned." : String(e?.message || e || "");
     const entitlement = isPlanBlocked(msg);
     if (projectId) {
-      if (entitlement) {
-        // The server refused before rendering anything, so nothing was spent
-        // and nothing should stay in the library.
+      if (entitlement || cancelled) {
+        // Nothing was produced: no half-finished card is left behind, and the
+        // job row releases whatever was charged.
         try { await deleteVideo({ id: projectId }); } catch (_) {}
       } else {
         try { await setVideoStatus({ id: projectId, status: "failed", error_message: (msg || "The render did not finish.").slice(0, 300) }); } catch (_) {}
@@ -2472,14 +2506,16 @@ async function generate() {
     }
     if (S.renderJobId) {
       await jobUpdate({
-        status: entitlement ? "cancelled" : "failed",
+        status: entitlement || cancelled ? "cancelled" : "failed",
         error_message: (msg || "The render did not finish.").slice(0, 300),
       });
       S.renderJobId = null;
     }
-    toast(msg || "The render failed. Your selections were saved.");
+    toast(msg || "The render failed. Your credits were returned and your selections were saved.");
     if (entitlement) openUpgrade(msg);
     w.busy = false;
+    w.cancelling = false;
+    RENDER_ABORT = null;
     await loadLibrary();
     S.screen = entitlement ? "wizard" : "library";
     render();
@@ -2491,6 +2527,20 @@ async function generate() {
    a throttled heartbeat: it keeps the status honest after a refresh and marks
    the job interrupted if this tab goes away mid-render. */
 let JOB_BEAT = 0;
+/** Set while this tab owns a render, so the user can stop it. */
+let RENDER_ABORT = null;
+
+/** Stops the encode in this tab and releases the credits held by the job. */
+async function cancelRender() {
+  const w = S.wizard;
+  if (!w || !w.busy || w.cancelling) return;
+  w.cancelling = true;
+  render();
+  try { RENDER_ABORT?.abort(); } catch (_) {}
+  if (S.renderJobId) {
+    try { await cancelRenderJob({ id: S.renderJobId, force: true }); } catch (_) {}
+  }
+}
 async function jobUpdate(patch, throttleMs = 0) {
   if (!S.renderJobId) return;
   if (throttleMs) {
@@ -2505,7 +2555,7 @@ async function jobUpdate(patch, throttleMs = 0) {
 
 const STAGES = ["Preparing scenes", "Creating motion", "Building transitions", "Adding audio and captions", "Applying branding", "Finalizing formats"];
 
-async function renderAllVariants(projectId, variants, cfg, perOverride) {
+async function renderAllVariants(projectId, variants, cfg, perOverride, signal) {
   const w = cfg;
   const per = perOverride || sceneDurations(w.scenes.length, w.length);
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
@@ -2537,7 +2587,9 @@ async function renderAllVariants(projectId, variants, cfg, perOverride) {
 
   let done = 0;
   for (const v of variants) {
+    if (signal?.aborted) throw new Error(RENDER_CANCELLED);
     const out = await renderReveal(urls, {
+      signal: signal || null,
       aspect: v.aspect_ratio,
       versionType: v.version_type,
       brand: v.version_type === "branded" && kit
@@ -3560,6 +3612,7 @@ function bind() {
 
   /* review */
   on("#rvGen", "click", () => generate());
+  on("#rvCancelRender", "click", () => cancelRender());
   on("#rvAddCredits", "click", () => openUpgrade(videoCreditBlock(creditTotal()) || "You need more credits to render this video."));
 
   } // end wizard bindings (S.wizard may be null on the library screen)

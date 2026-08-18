@@ -2207,9 +2207,11 @@ export type Database = {
       }
       video_render_jobs: {
         Row: {
+          cancel_requested: boolean
           completed_at: string | null
           created_at: string
           credits_charged: number
+          credits_refunded: number
           error_message: string | null
           heartbeat_at: string
           id: string
@@ -2227,9 +2229,11 @@ export type Database = {
           video_project_id: string
         }
         Insert: {
+          cancel_requested?: boolean
           completed_at?: string | null
           created_at?: string
           credits_charged?: number
+          credits_refunded?: number
           error_message?: string | null
           heartbeat_at?: string
           id?: string
@@ -2247,9 +2251,11 @@ export type Database = {
           video_project_id: string
         }
         Update: {
+          cancel_requested?: boolean
           completed_at?: string | null
           created_at?: string
           credits_charged?: number
+          credits_refunded?: number
           error_message?: string | null
           heartbeat_at?: string
           id?: string
