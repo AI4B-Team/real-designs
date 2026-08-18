@@ -36,7 +36,7 @@ export const SE_MOTIONS: SeMotion[] = [
 ];
 
 export function seMotion(id?: string | null): SeMotion {
-  return SE_MOTIONS.find((m) => m.id === id) || SE_MOTIONS[0];
+  return SE_MOTIONS.find((m) => m.id === id) || (SE_MOTIONS[0] as SeMotion);
 }
 
 export function seMotionLabel(id?: string | null): string {
