@@ -140,7 +140,7 @@ function rowsHtml(features) {
 
 function bodyHtml(features, title) {
   const n = features.length;
-  return `<div class="bx-cstat-h"><b>${esc(title || "Scene enhancements")}</b><em>${n} active</em></div>
+  return `<div class="bx-cstat-h"><b>${esc(title || "Scene Enhancements")}</b><em>${n} Active</em></div>
     <div class="bx-cstat-list${n > 5 ? " scroll" : ""}">${rowsHtml(features)}</div>
     <i class="bx-cstat-caret" aria-hidden="true"></i>`;
 }
@@ -188,7 +188,7 @@ function openPop(btn) {
   const el = document.createElement("div");
   el.className = "bx-cstatpop";
   el.setAttribute("role", "dialog");
-  el.setAttribute("aria-label", api.title || "Scene enhancements");
+  el.setAttribute("aria-label", api.title || "Scene Enhancements");
   el.innerHTML = bodyHtml(features, api.title);
   document.body.appendChild(el);
   paint(el);
