@@ -605,9 +605,9 @@
   /* Touch has no hover: every card shows the ellipsis and opens a popover. */
   .rd-app .rv-tools-more { display: grid; }
   .rd-app .rv-tile:hover .rv-tools,
-  .rd-app .rv-tile:focus-within .rv-tools { opacity: 0; pointer-events: none; }
+  .rd-app .rv-tile:focus-within .rv-tools { opacity: 0; visibility: hidden; pointer-events: none; }
   .rd-app .rv-tile.tools-open .rv-tools,
-  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 52px; left: 50%; max-width: calc(100% - 16px); transform: translateX(-50%); }
+  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; visibility: visible; pointer-events: auto; top: auto; bottom: 52px; left: 50%; max-width: calc(100% - 16px); transform: translateX(-50%); }
   .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .rd-app .rv-gridfoot { flex-wrap: wrap; }
 }
