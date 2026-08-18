@@ -22,6 +22,12 @@ export type ModalAction = {
   hint?: string;
   /** Reserved width label used while loading ("Deleting…"). */
   loadingLabel?: string;
+  /**
+   * Neutral actions default to a quiet ghost. "outline" gives the same
+   * geometry a white background and a visible neutral border, for a secondary
+   * action that still needs to read as a real button (never solid black).
+   */
+  variant?: "ghost" | "outline";
 };
 
 export type ModalFooterOptions = {
@@ -42,7 +48,7 @@ const esc = (s: unknown) =>
     (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
   );
 
-function btn(a: ModalAction, kind: "primary" | "danger" | "ghost", loading = false) {
+function btn(a: ModalAction, kind: "primary" | "danger" | "ghost" | "outline", loading = false) {
   const label = loading && a.loadingLabel ? a.loadingLabel : a.label;
   const dis = a.disabled || loading;
   return `<button type="button" class="rdm-btn rdm-${kind}${loading ? " is-loading" : ""}"
@@ -65,8 +71,8 @@ export function modalFooterHtml(opts: ModalFooterOptions = {}) {
     .filter(Boolean)
     .join(" ");
   const parts: string[] = [];
-  if (opts.extra) parts.push(btn(opts.extra, "ghost"));
-  if (opts.secondary) parts.push(btn(opts.secondary, "ghost"));
+  if (opts.extra) parts.push(btn(opts.extra, opts.extra.variant === "outline" ? "outline" : "ghost"));
+  if (opts.secondary) parts.push(btn(opts.secondary, opts.secondary.variant === "outline" ? "outline" : "ghost"));
   if (opts.primary) parts.push(btn(opts.primary, opts.destructive ? "danger" : "primary", !!opts.loading));
   return `<div class="${cls}">${parts.join("")}</div>`;
 }
