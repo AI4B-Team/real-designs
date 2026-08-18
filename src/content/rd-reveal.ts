@@ -96,6 +96,9 @@ import { tileById } from "@/lib/rd-vfx-tiles";
 import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
 import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
+import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip-ui";
+import { sceneClips } from "@/lib/scene-clip-client";
+import { ANIMATE_CREDITS_PER_CLIP } from "@/lib/scene-enhancement";
 import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
 
@@ -865,6 +868,8 @@ function wizardHtml() {
   ${shell}
 
   ${w.pop ? popoverHtml() : ""}
+  ${w.animate ? animateModalFor(w) : ""}
+  ${w.clipReview ? clipReviewFor(w) : ""}
   ${w.roomPick ? roomPickerHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
   ${w.shortenModal ? shortenModalHtml() : ""}
@@ -1509,6 +1514,8 @@ function tileHtml(a, seq) {
   const vfxHot = s && ((s.vfx && s.vfx !== "none") || s.look);
   const camHot = s && ((s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect);
   const cap = s ? String(s.caption || "") : "";
+  const clip = sceneClips.get(a.key);
+  const clipHot = !!clip && clip.status !== "cancelled" && clip.status !== "failed";
   /* Every card carries the same actions; using one on an unselected photo
      selects it first, so the tools never disappear on the user. */
   const tools = `<div class="rv-tools">
@@ -1516,6 +1523,7 @@ function tileHtml(a, seq) {
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
+      <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="AI Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
     </div>`;
   return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" draggable="true">
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
@@ -1530,6 +1538,7 @@ function tileHtml(a, seq) {
         ? `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}" title="${esc(cap)}">${esc(cap.length > 18 ? cap.slice(0, 18) + "…" : cap)}</button>`
         : `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}">Add Text</button>`}
     </div>
+    ${clipCardHtml(a.key, clip)}
   </div>`;
 }
 
