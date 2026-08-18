@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 /**
  * Studio start page contract.
  *
