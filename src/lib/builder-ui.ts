@@ -64,15 +64,16 @@ export function roomSelectHtml(opts = {}) {
   </button>`;
 }
 
-/** Shared room-state badge wording used under a photo in either builder. */
+/** Shared room-state badge used under a photo in either builder.
+   Settled results (confident AI, manual, custom, saved) show nothing at all —
+   the selector already carries the value. Only transient or uncertain states
+   earn a line of text. Detection source/confidence stay in state for logic. */
 export function roomBadge(state = {}) {
-  if (state.detect === "running" || state.detect === "pending") return { cls: "wait", label: "Detecting" };
-  if (state.source === "manual") return { cls: "ok", label: state.custom ? "Custom" : "Changed" };
-  /* A label carried in from an already-saved photo was not changed here. */
-  if (state.source === "library") return { cls: "ok", label: "Saved" };
-  if (state.source === "ai" && state.confident) return { cls: "ok", label: "Detected" };
-  if (state.source === "ai") return { cls: "warn", label: "Needs Review" };
-  return { cls: "warn", label: "Unassigned" };
+  if (state.detect === "running" || state.detect === "pending") return { cls: "wait", label: "Detecting…" };
+  if (state.detect === "failed") return { cls: "warn", label: "Couldn’t detect" };
+  if (state.source === "manual" || state.source === "library") return null;
+  if (state.source === "ai") return state.confident ? null : { cls: "warn", label: "Review" };
+  return null;
 }
 
 /** Shared selection chip: a dark check tile, identical in both builders. */

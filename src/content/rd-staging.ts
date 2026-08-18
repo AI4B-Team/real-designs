@@ -23,7 +23,6 @@ import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
   ROOM_OPTIONS,
-  UNASSIGNED_LABEL,
   groupRooms,
   roomFromCategory,
   roomIcon,
@@ -531,7 +530,7 @@ function ordered() {
 function cardHtml(it) {
   const st = stateOf(it);
   const ws = workState(it);
-  const label = it.room || UNASSIGNED_LABEL;
+  const label = it.room || "Choose Room";
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
@@ -564,7 +563,9 @@ function cardHtml(it) {
       ${
         ws
           ? `<em class="rv-tile-kind rds-work ${ws.cls}" title="${esc(it.err || ws.label)}"><i data-lucide="${ws.icon}"></i>${ws.label}</em>`
-          : `<em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>`
+          : st
+            ? `<em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>`
+            : ""
       }
     </div>
   </div>`;
