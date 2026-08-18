@@ -364,6 +364,11 @@ function viewFromHash(){
 }
 window.addEventListener('hashchange',()=>{
   const v=viewFromHash();
+  /* Legacy hashes are rewritten to the canonical form once, in place, so the
+     address bar and the router agree and nothing re-navigates. */
+  if(v && needsNormalize(location.hash)){
+    try{ history.replaceState(null,'',location.pathname+location.search+canonicalHash(location.hash)); }catch(_){}
+  }
   if(v){ go(v,true); return; }
   /* An unknown hash arriving mid session must not sit in the address bar
      while a different view is on screen. Point it at what is rendered. */
