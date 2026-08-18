@@ -759,6 +759,7 @@ function bindReview(el) {
     /* The check tile owns selection; the photo itself opens the canvas. */
     const pick = t.closest("[data-sel]");
     if (pick) {
+      console.log("RDSDBG pick", pick.getAttribute("data-sel"), S && S.items.length);
       e.preventDefault();
       e.stopPropagation();
       const it = S.items.find((i) => i.key === pick.getAttribute("data-sel"));
