@@ -31,6 +31,8 @@ type Ctx = {
    * load can never redirect them after the fact.
    */
   startGo?: (view: string) => void;
+  /** False once a newer navigation has taken over the page. */
+  startCurrent?: () => boolean;
   lucide: { createIcons: (o?: any) => void };
   esc: (s: string) => string;
   photos: Record<string, string>;
@@ -975,30 +977,36 @@ export function mountFirstUse(ctx: Ctx) {
       /* default smart */
     }
 
-    if (deepLink) {
-      // explicit deep link always wins
+    /* Everything above is data loading. Everything below moves the user, so
+       it only runs while this startup decision is still the newest intent:
+       a deep link, or any navigation the user made while we were loading,
+       wins outright. */
+    const startupOwnsRoute = !deepLink && (ctx.startCurrent ? ctx.startCurrent() : true);
+
+    if (!startupOwnsRoute) {
+      // explicit deep link or a newer user navigation already owns the page
     } else if (back) {
       track("checkout_context_restored", { reason: back.reason || null });
       if (back.intent) applyIntent(back.intent);
-      go(back.view || "studio");
+      startGo(back.view || "studio");
       showPlanNote();
     } else if (intent) {
       applyIntent(intent);
-      go("studio");
+      startGo("studio");
       if (fresh && !intent.sample) openFirstUse();
     } else if (fresh) {
-      go("studio");
+      startGo("studio");
       openFirstUse();
     } else if (pref === "studio") {
       openChooser();
-      go("studio");
+      startGo("studio");
     } else if (pref === "last") {
       const last = getLastView(uid);
-      if (last) go(last);
+      if (last) startGo(last);
     } else if (pref === "dashboard") {
-      go("dash");
+      startGo("dash");
     } else if (session) {
-      go("dash");
+      startGo("dash");
       resumeCard(session);
     }
 

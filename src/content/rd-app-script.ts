@@ -4975,7 +4975,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
       go(v);
     };
     mountFirstUse({
-      go, startGo:fuStartGo, lucide, esc, photos:PHOTOS, uid:fuUid, track,
+      go, startGo:fuStartGo, startCurrent:()=>isCurrentNavigation(fuToken)&&!inPhotoCanvas(), lucide, esc, photos:PHOTOS, uid:fuUid, track,
       getSummary:()=>getWorkspaceSummary(),
       uploadPhoto:(f)=>uploadRoomPhoto(f),
       prefsStart:async()=>{ try{ const p=await getPrefs(); return (p&&p.start&&p.start.page)||'smart'; }catch(_){ return 'smart'; } },
