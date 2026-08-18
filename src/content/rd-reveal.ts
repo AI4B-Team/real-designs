@@ -1997,6 +1997,68 @@ const TRANS_ICON = {
   zoom_match: "scan-search", match_move: "move-3d",
 };
 
+/* ------------------------------------------------------- the video ending
+
+   The ending is what happens AFTER the last scene, so it belongs to the
+   project, never to a scene pair: there is no second scene to point at. It
+   travels with the draft and simply renders on whichever scene is last. */
+
+const ENDING_OPTIONS = [
+  { id: "none", label: "None", blurb: "End immediately after the final frame.", icon: "square" },
+  { id: "fade_black", label: "Fade to Black", blurb: "Gradually fade the final scene to black.", icon: "circle" },
+  { id: "fade_white", label: "Fade to White", blurb: "Gradually fade the final scene to white.", icon: "circle-dashed" },
+  { id: "brand_end_card", label: "Brand End Card", blurb: "Show the configured logo, colors and call to action.", icon: "badge-check" },
+];
+
+/** Brand end card is offered only when the project actually has branding. */
+function hasBrandEndCard(w) {
+  return !!(w && (w.brandKitId || (w.branding && (w.branding.logo_url || w.branding.logo || w.branding.primary_color))));
+}
+
+function endingState(w) {
+  const e = (w && w.ending) || {};
+  let type = ENDING_OPTIONS.some((o) => o.id === e.endingType) ? e.endingType : "none";
+  if (type === "brand_end_card" && !hasBrandEndCard(w)) type = "none";
+  const duration = Math.min(3, Math.max(0.5, Number(e.duration) > 0 ? Number(e.duration) : 1));
+  return { type, duration, label: (ENDING_OPTIONS.find((o) => o.id === type) || ENDING_OPTIONS[0]).label };
+}
+
+function setEnding(w, patch) {
+  const cur = endingState(w);
+  w.ending = { endingType: patch.endingType ?? cur.type, duration: Number(patch.duration ?? cur.duration), updatedAt: new Date().toISOString() };
+  autosaveWizard(w);
+}
+
+/** Seconds the ending adds to the finished video. */
+function endingSeconds(w) {
+  const st = endingState(w);
+  return st.type === "none" ? 0 : st.duration;
+}
+
+/** Rendered inside the final actual scene's image, never in a gutter. */
+function endingControlHtml(w, s) {
+  const scenes = w.scenes || [];
+  if (!scenes.length || scenes[scenes.length - 1].key !== s.key) return "";
+  const st = endingState(w);
+  const tip = `Ending: ${st.label}`;
+  const icon = st.type === "none" ? "square" : st.type === "brand_end_card" ? "badge-check" : "circle";
+  return `<button class="rv-end" data-pop="ending" data-key="${esc(s.key)}" title="${esc(tip)}" aria-label="${esc(tip)}. After The Final Scene.">
+    <i data-lucide="${icon}"></i><span>${esc(st.label)}</span>
+  </button>`;
+}
+
+/** The permanent action card that closes every card grid. */
+function addCardHtml(id) {
+  return `<div class="rv-addcard">
+    <button type="button" class="rv-addcard-b" id="${id}" aria-label="Add More Photos">
+      <i data-lucide="image-plus"></i>
+      <b>Add More Photos</b>
+      <em>Upload, import, or choose from Media</em>
+    </button>
+  </div>`;
+}
+
+
 /**
  * A transition connects Scene A to Scene B, so its trigger sits in the gutter
  * on the seam between the two cards — never as a badge over a photo. One 24px
