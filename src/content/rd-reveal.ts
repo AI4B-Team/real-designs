@@ -1817,6 +1817,9 @@ function syncSceneOrder() {
      scenes whose asset left the grid, ordered by the grid. Every count, badge,
      timeline, duration, credit estimate and render manifest reads this. */
   w.scenes = reconcileScenes(w.scenes, w.available || [], w.gridOrder || []);
+  /* A reorder or removal keeps the transitions whose two scenes are still
+     neighbours and drops the rest. */
+  void transitions.reconcile(w.scenes).catch(() => {});
 }
 
 /**
@@ -4087,6 +4090,80 @@ function bind() {
   on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
   on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
 
+  /* ---- transitions between scenes ----
+     Every change writes to the project immediately, so the move survives
+     navigation, refresh and reopening the draft. */
+  const transPair = () => {
+    const s = cur(); if (!s) return null;
+    const i = w.scenes.indexOf(s);
+    const nxt = w.scenes[i + 1]; if (!nxt) return null;
+    return { s, nxt };
+  };
+  on("[data-transpick]", "click", async (e) => {
+    const pair = transPair(); if (!pair) return;
+    const type = e.currentTarget.dataset.transpick;
+    if (type === "ai") {
+      w.transDraft = { ...(w.transDraft || {}), ai: true, template: w.transDraft?.template || "room_to_room" };
+      render();
+      return;
+    }
+    w.transDraft = null;
+    const prev = transitions.get(pair.s.key, pair.nxt.key);
+    try {
+      await transitions.set(pair.s.key, pair.nxt.key, type, prev?.duration_ms);
+    } catch (_) {
+      toast("We Could Not Save That Transition. Try Again.");
+    }
+    render();
+  });
+  on("[data-transtmpl]", "click", (e) => {
+    w.transDraft = { ...(w.transDraft || {}), ai: true, template: e.currentTarget.dataset.transtmpl };
+    render();
+  });
+  {
+    const pr = el.querySelector("#rvTransPrompt");
+    if (pr) pr.addEventListener("input", (ev) => { w.transDraft = { ...(w.transDraft || {}), ai: true, prompt: ev.target.value }; });
+    const du = el.querySelector("#rvTransDur");
+    if (du) du.addEventListener("change", async (ev) => {
+      const pair = transPair(); if (!pair) return;
+      const row = transitions.get(pair.s.key, pair.nxt.key);
+      try {
+        await transitions.set(pair.s.key, pair.nxt.key, row?.type || "auto", Number(ev.target.value));
+      } catch (_) { toast("We Could Not Save That Length."); }
+      render();
+    });
+  }
+  on("#rvTransAll", "click", async () => {
+    const pair = transPair(); if (!pair) return;
+    const row = transitions.get(pair.s.key, pair.nxt.key);
+    try {
+      await transitions.applyAll(w.scenes, row?.type || "auto", row?.duration_ms);
+      toast("Transition Applied To Every Scene Change.");
+    } catch (_) { toast("We Could Not Apply That To Every Scene."); }
+    render();
+  });
+  on("#rvTransSmart", "click", async () => {
+    /* Smart Timing sets a length that suits each pair rather than one number
+       for the whole video. */
+    const per = sceneDurations(w.scenes.length, w.length) * 1000;
+    for (let n = 0; n < w.scenes.length - 1; n++) {
+      const a = w.scenes[n], b = w.scenes[n + 1];
+      const row = transitions.get(a.key, b.key);
+      const type = row?.type || "auto";
+      if (type === "cut") continue;
+      const t = smartTiming({ from: sceneShape(a), to: sceneShape(b), type, sceneMs: per });
+      try { await transitions.set(a.key, b.key, type, t.ms); } catch (_) {}
+    }
+    toast("Smart Timing Applied.");
+    render();
+  });
+  on("#rvTransReset", "click", async () => {
+    const pair = transPair(); if (!pair) return;
+    try { await transitions.clear(pair.s.key, pair.nxt.key); } catch (_) {}
+    w.pop = null; w.transDraft = null;
+    render();
+  });
+
   /* ---- scene settings summary ---- */
   on("[data-sumedit]", "click", (e) => {
     const kind = e.currentTarget.dataset.sumedit;
@@ -4565,6 +4642,8 @@ function editExisting(d) {
   void sceneClips.load(p.id);
   /* Start/End pairs are durable too: reload them with the project. */
   void sceneFrames.load(p.id).then(() => { if (S.screen === "wizard") render(); });
+  /* Transitions belong to the project, so they come back with it. */
+  void transitions.load(p.id).then(() => { if (S.screen === "wizard") render(); });
   w.address = cleanAddressText(p.property_address || "");
   w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
   w.titleTouched = !!p.title_touched;
