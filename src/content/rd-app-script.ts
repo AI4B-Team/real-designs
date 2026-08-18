@@ -1428,16 +1428,26 @@ document.getElementById('clearLocks')?.addEventListener('click',startNewDesignFl
   const btn=document.getElementById('newDesignBtn'), menu=document.getElementById('createMenu');
   if(!btn) return;
   function close(){ if(menu){ menu.classList.remove('on'); btn.setAttribute('aria-expanded','false'); } }
+  /* Sibling topbar menus stopPropagation on their own button, so a plain
+     document click listener never sees them: expose the close so every other
+     menu can dismiss this one and only one popup is ever open. */
+  window.rdCloseCreateMenu=close;
   if(!menu){ btn.addEventListener('click',()=>{ go('studio'); startNewDesignFlow(); }); return; }
   btn.addEventListener('click',e=>{ e.stopPropagation();
+    try{ closeAcct(); }catch(_){}
+    try{ closeSch(); }catch(_){}
+    try{ closeHelp(); }catch(_){}
+    try{ closeNotif(); }catch(_){}
     const open=!menu.classList.contains('on'); menu.classList.toggle('on',open); btn.setAttribute('aria-expanded',String(open)); });
-  document.addEventListener('click',close);
+  document.addEventListener('click',e=>{ if(!e.target.closest||!e.target.closest('.create-wrap')) close(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
   menu.addEventListener('click',e=>{
     const it=e.target.closest('[data-create]'); if(!it) return;
     close(); go('studio');
     try{ window.rdStudioStart && window.rdStudioStart(it.getAttribute('data-create')); }catch(_){}
   });
 })();
+
 
 /** Shown when Generate is pressed with no valid source. No credit is charged. */
 function needSourceModal(){
