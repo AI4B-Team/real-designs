@@ -145,9 +145,20 @@ function styleOptions() {
 /**
  * Bulk setup drawer: one shared direction, the exact credit cost, the photos
  * that will run (each removable), and an escape hatch back to the grid.
+ *
+ * The modal is the last thing a user sees before credits are spent, so what it
+ * shows has to be exactly what runs: the same output format, the same room
+ * types, the same photo count. Unassigned photos block the run rather than
+ * being quietly rendered as generic interiors.
  */
 export function openBulkDesign(opts) {
   const items = opts.items.slice();
+  const readRatio = () => normalizeOutputRatio(typeof opts.ratio === "function" ? opts.ratio() : opts.ratio);
+  let allowGeneric = false;
+  let submitted = false;
+  let credits = null; // { balance } once the account answers
+  const returnFocus = document.activeElement;
+
   let node = document.getElementById("rdsBulk");
   if (node) node.remove();
   node = document.createElement("div");
@@ -155,80 +166,215 @@ export function openBulkDesign(opts) {
   node.className = "rd-app up-modal on";
   document.body.appendChild(node);
 
+  const onKey = (e) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      close();
+    }
+  };
+  document.addEventListener("keydown", onKey, true);
+
   const close = () => {
+    document.removeEventListener("keydown", onKey, true);
     node.remove();
+    /* Draft settings live in the caller's state, so closing loses nothing. */
+    try {
+      returnFocus && returnFocus.focus && returnFocus.focus();
+    } catch (_) {}
+  };
+
+  /* Field values survive every redraw (removing a photo, changing format). */
+  const form = { styleId: STYLES[0] && STYLES[0].id, intensity: "Makeover", grade: "Retail Grade", preserve: true, notes: "" };
+  const readForm = () => {
+    const q = (id) => node.querySelector(id);
+    if (!q("#rdsbStyle")) return;
+    form.styleId = q("#rdsbStyle").value;
+    form.intensity = q("#rdsbInt").value;
+    form.grade = q("#rdsbGrade").value;
+    form.preserve = q("#rdsbPreserve").checked;
+    form.notes = q("#rdsbNotes").value;
+  };
+
+  const styleName = () => {
+    const rec = STYLES.find((s) => s.id === form.styleId);
+    return rec ? rec.displayName : "Warm Minimal";
   };
 
   const draw = () => {
     const groups = groupBySpace(items);
-    const cost = items.length * BULK_CREDIT_PER_PHOTO;
+    const n = items.length;
+    const cost = n * BULK_CREDIT_PER_PHOTO;
+    const ratio = readRatio();
+    const missing = items.filter((i) => !i.room).length;
+    const bal = credits && !credits.unavailable ? credits.balance : null;
+    const short = bal != null && cost > bal ? cost - bal : 0;
+
+    let block = "";
+    if (!n) block = "Add at least one photo to generate a design.";
+    else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
+    else if (short) block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
+
+    const sum = [
+      ["Photos", String(n)],
+      ["Style", styleName()],
+      ["Intensity", form.intensity],
+      ["Finish", form.grade],
+      ["Output", ratioLabel(ratio)],
+      ["Cost", `${cost} credit${cost === 1 ? "" : "s"}`],
+    ];
+
     node.innerHTML = `<div class="up-scrim" data-close></div>
-      <div class="up-card rdsb" role="dialog" aria-modal="true" aria-label="Design Selected Photos">
-        <h3>Design ${items.length} Photo${items.length === 1 ? "" : "s"}</h3>
-        <p>One shared direction, applied photo by photo. Each room keeps its own layout and gets furniture and finishes that suit it.</p>
-        <div class="rdsb-f">
-          <label>Style</label>
-          <select id="rdsbStyle">${styleOptions()}</select>
+      <div class="up-card rdsb" role="dialog" aria-modal="true" aria-labelledby="rdsbTitle">
+        <div class="rdsb-head">
+          <h3 id="rdsbTitle">Design ${n} photo${n === 1 ? "" : "s"}</h3>
+          <p>One shared direction, applied photo by photo. Each room keeps its own layout and gets furniture and finishes that suit it.</p>
         </div>
-        <div class="rdsb-row">
-          <div class="rdsb-f"><label>Intensity</label>
-            <select id="rdsbInt"><option>Refresh</option><option selected>Makeover</option><option>Full Remodel</option></select></div>
-          <div class="rdsb-f"><label>Finish Grade</label>
-            <select id="rdsbGrade"><option>Rental Grade</option><option selected>Retail Grade</option><option>Luxury Grade</option></select></div>
+        <div class="rdsb-body">
+          <div class="rdsb-f">
+            <label for="rdsbStyle">Style</label>
+            <select id="rdsbStyle">${styleOptions(form.styleId)}</select>
+          </div>
+          <div class="rdsb-row">
+            <div class="rdsb-f"><label for="rdsbInt">Intensity</label>
+              <select id="rdsbInt">${["Refresh", "Makeover", "Full Remodel"]
+                .map((o) => `<option${o === form.intensity ? " selected" : ""}>${o}</option>`)
+                .join("")}</select></div>
+            <div class="rdsb-f"><label for="rdsbGrade">Finish grade</label>
+              <select id="rdsbGrade">${["Rental Grade", "Retail Grade", "Luxury Grade"]
+                .map((o) => `<option${o === form.grade ? " selected" : ""}>${o}</option>`)
+                .join("")}</select></div>
+          </div>
+          <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve"${form.preserve ? " checked" : ""}> Keep walls, windows, and layout exactly as they are</label>
+          <div class="rdsb-f"><label for="rdsbNotes">Shared instructions <em>Optional</em></label>
+            <textarea id="rdsbNotes" rows="2" placeholder="Light oak floors, warm neutral palette, no bold colors">${esc(form.notes)}</textarea></div>
+
+          <div class="rdsb-groups">
+            ${groups
+              .map(
+                (g) => `<div class="rdsb-g${g.space === "unassigned" ? " warn" : ""}">
+                <b>${esc(g.label)} · ${g.items.length}</b>
+                <span>${
+                  g.space === "unassigned"
+                    ? "These photos still need a room type before they can be designed."
+                    : "These photos share the direction, adapted to each space."
+                }</span>
+                <div class="rdsb-th">${g.items
+                  .map(
+                    (it) => `<span class="rdsb-t">
+                      <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}">
+                      <button type="button" data-drop="${esc(it.key)}" title="Remove from this batch"
+                        aria-label="Remove ${esc(it.name)} from this batch. The photo stays in Media."><i data-lucide="x"></i></button>
+                      <em title="${esc(it.room || "Room type needed")}">${esc(it.room || "Room type needed")}</em></span>`,
+                  )
+                  .join("")}</div>
+              </div>`,
+              )
+              .join("")}
+          </div>
+
+          ${
+            missing
+              ? `<label class="rdsb-chk gen"><input type="checkbox" id="rdsbGeneric"${allowGeneric ? " checked" : ""}> Generate as generic interior <em>Uses a neutral interior direction for the ${missing} unassigned photo${missing === 1 ? "" : "s"}</em></label>`
+              : ""
+          }
+
+          <div class="rdsb-sum">
+            ${sum.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
+            <button type="button" class="rdsb-editfmt" id="rdsbFmt">Edit output format</button>
+          </div>
+
+          <div class="rdsb-cost" role="status" aria-live="polite">
+            <i data-lucide="zap"></i>
+            <div>
+              <b>${n} photo${n === 1 ? "" : "s"} × 1 credit each = ${cost} credit${cost === 1 ? "" : "s"}</b>
+              <span>${
+                bal == null
+                  ? "Failed generations are not charged."
+                  : `Available: ${bal} credit${bal === 1 ? "" : "s"} · Remaining after generation: ${Math.max(bal - cost, 0)} credit${Math.max(bal - cost, 0) === 1 ? "" : "s"}. Failed generations are not charged.`
+              }</span>
+            </div>
+          </div>
+          ${block ? `<p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : ""}
+          ${
+            short
+              ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>`
+              : ""
+          }
         </div>
-        <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve" checked> Keep Walls, Windows And Layout Exactly As They Are</label>
-        <div class="rdsb-f"><label>Shared Instructions <em>Optional</em></label>
-          <textarea id="rdsbNotes" rows="2" placeholder="Light oak floors, warm neutral palette, no bold colour"></textarea></div>
-        <div class="rdsb-groups">
-          ${groups
-            .map(
-              (g) => `<div class="rdsb-g">
-              <b>${esc(g.label)} · ${g.items.length}</b>
-              <span>These photos share the direction, adapted to each space.</span>
-              <div class="rdsb-th">${g.items
-                .map(
-                  (it) => `<span class="rdsb-t" title="${esc(it.room || it.name)}">
-                    <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}">
-                    <button data-drop="${it.key}" aria-label="Remove ${esc(it.name)} from this batch"><i data-lucide="x"></i></button>
-                    <em>${esc(it.room || "Unassigned")}</em></span>`,
-                )
-                .join("")}</div>
-            </div>`,
-            )
-            .join("")}
-        </div>
-        <div class="rdsb-cost"><i data-lucide="zap"></i><b>${cost} Credit${cost === 1 ? "" : "s"}</b><span>1 credit per photo. Failed photos are never charged.</span></div>
-        <div class="up-act">
-          <button class="btn btn-primary" id="rdsbGo"${items.length ? "" : " disabled"}>Generate ${items.length} Design${items.length === 1 ? "" : "s"} · ${cost} Credit${cost === 1 ? "" : "s"}</button>
-          <button class="btn btn-dark" id="rdsbEdit">Edit Rooms</button>
-          <button class="btn btn-ghost" data-close>Cancel</button>
-        </div>
+        ${modalFooterHtml({
+          extra: { label: "Cancel", value: "cancel" },
+          secondary: { label: "Edit rooms", value: "edit", variant: "outline" },
+          primary: {
+            label: `Generate ${n} design${n === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}`,
+            value: "go",
+            disabled: !!block || submitted,
+            hint: block || "",
+            loadingLabel: `Generating ${n} design${n === 1 ? "" : "s"}…`,
+          },
+        })}
       </div>`;
     paint();
+
     node.querySelectorAll("[data-close]").forEach((b) => (b.onclick = close));
+    node.querySelector('[data-mfa="cancel"]').onclick = close;
+    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve").forEach(
+      (el) =>
+        (el.onchange = () => {
+          readForm();
+          draw();
+        }),
+    );
+    const notes = node.querySelector("#rdsbNotes");
+    if (notes) notes.oninput = () => (form.notes = notes.value);
+    const generic = node.querySelector("#rdsbGeneric");
+    if (generic)
+      generic.onchange = () => {
+        readForm();
+        allowGeneric = generic.checked;
+        draw();
+      };
     node.querySelectorAll("[data-drop]").forEach(
       (b) =>
         (b.onclick = () => {
+          readForm();
           const k = b.getAttribute("data-drop");
-          const i = items.findIndex((x) => x.key === k);
+          const i = items.findIndex((x) => String(x.key) === k);
+          /* Selection only. The source photo and its Media entry are untouched. */
           if (i >= 0) items.splice(i, 1);
           draw();
         }),
     );
-    node.querySelector("#rdsbEdit").onclick = () => {
+    const addc = node.querySelector("#rdsbAdd");
+    if (addc) addc.onclick = () => openUpgrade(block, "Add Credits To Design These Photos");
+    node.querySelector("#rdsbFmt").onclick = () => {
+      readForm();
+      /* Keeps this modal open: the caller reopens/refreshes it with the new ratio. */
+      if (opts.onEditFormat) opts.onEditFormat(() => draw());
+      else {
+        close();
+        opts.onEdit && opts.onEdit();
+      }
+    };
+    node.querySelector('[data-mfa="edit"]').onclick = () => {
       close();
       opts.onEdit && opts.onEdit();
     };
-    node.querySelector("#rdsbGo").onclick = () => {
-      const styleSel = node.querySelector("#rdsbStyle");
-      const rec = STYLES.find((s) => s.id === styleSel.value);
+    const go = node.querySelector('[data-mfa="go"]');
+    go.onclick = () => {
+      if (submitted || go.disabled) return;
+      readForm();
+      submitted = true;
+      setModalButtonLoading(go, true, `Generating ${items.length} design${items.length === 1 ? "" : "s"}…`);
+      const rec = STYLES.find((s) => s.id === form.styleId);
       const direction = {
         styleId: rec ? rec.id : null,
         direction: rec ? rec.displayName : "Warm Minimal",
-        intensity: node.querySelector("#rdsbInt").value,
-        grade: node.querySelector("#rdsbGrade").value,
-        preserve: node.querySelector("#rdsbPreserve").checked,
-        notes: node.querySelector("#rdsbNotes").value.trim() || null,
+        intensity: form.intensity,
+        grade: form.grade,
+        preserve: form.preserve,
+        notes: (form.notes || "").trim() || null,
+        /* Exactly the format the summary just showed. */
+        outputRatio: readRatio(),
       };
       close();
       opts.onStart && opts.onStart(items, direction);
@@ -236,5 +382,12 @@ export function openBulkDesign(opts) {
   };
 
   draw();
-  return { close };
+  /* Balance arrives after first paint so the modal never blocks on the network. */
+  getMyCredits()
+    .then((c) => {
+      credits = c;
+      if (document.body.contains(node) && !submitted) draw();
+    })
+    .catch(() => {});
+  return { close, refresh: () => draw() };
 }
