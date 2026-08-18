@@ -100,28 +100,55 @@ export type AnimateModalCtx = {
   clip?: ClipView | null;
   busy?: boolean;
   confirm?: boolean;
+  /** Active category filter. "recommended" is the default view. */
+  cat?: string | null;
 };
 
-export function animateOptionsHtml(selected?: string | null): string {
-  return ANIMATE_OPTIONS.map(
-    (o) => `<button class="an-card ${selected === o.id ? "on" : ""}" data-animate="${esc(o.id)}" role="option"
-      aria-selected="${selected === o.id}">
-      <b>${esc(o.label)}</b>
-      <span>${esc(o.sub)}</span>
-      <em class="an-meta"><i class="mono">${o.seconds}s</i><i class="mono">${ANIMATE_CREDITS_PER_CLIP} Credits</i></em>
-      <i class="an-disc">${esc(disclosureLabel(o.disclosure))}</i>
-      ${o.beta ? `<span class="an-beta">Beta</span>` : ""}
-    </button>`,
-  ).join("");
+/**
+ * Option list for one category. "Recommended" is filtered by the detected room
+ * type; every other tab shows all options in that category, because the user
+ * is always allowed to browse — incompatible picks are warned about, not
+ * hidden.
+ */
+export function animateOptionsHtml(
+  selected?: string | null,
+  cat: string = "recommended",
+  room?: string | null,
+): string {
+  const rec = recommendedAnimateIds(room);
+  const list =
+    cat === "recommended"
+      ? rec.map((id) => animateOption(id)).filter(Boolean)
+      : ANIMATE_OPTIONS.filter((o) => animateCategory(o.id) === cat);
+  if (!list.length) return `<p class="an-empty">No Options In This Category.</p>`;
+  return list
+    .map((o) => {
+      const opt = o!;
+      const warn = animateWarning(opt.id, room);
+      return `<button class="an-card ${selected === opt.id ? "on" : ""}${warn ? " warn" : ""}" data-animate="${esc(opt.id)}" role="option"
+      aria-selected="${selected === opt.id}">
+      <b>${esc(opt.label)}</b>
+      <span>${esc(opt.sub)}</span>
+      <em class="an-meta"><i class="mono">${opt.seconds}s</i><i class="mono">${ANIMATE_CREDITS_PER_CLIP} Credits</i></em>
+      <i class="an-disc">${esc(disclosureLabel(opt.disclosure))}</i>
+      ${rec.includes(opt.id) && cat !== "recommended" ? `<span class="an-rec">Recommended</span>` : ""}
+      ${warn ? `<span class="an-warn" title="${esc(warn)}"><i data-lucide="triangle-alert"></i></span>` : ""}
+      ${opt.beta ? `<span class="an-beta">Beta</span>` : ""}
+    </button>`;
+    })
+    .join("");
 }
 
 export function animateModalHtml(ctx: AnimateModalCtx): string {
   const opt = ctx.selected ? animateOption(ctx.selected) : null;
   const cost = ANIMATE_CREDITS_PER_CLIP;
   const short = ctx.balance < cost;
+  const cat = ctx.cat || "recommended";
   const orientation = ctx.orientation === "portrait" ? "Portrait" : ctx.orientation === "square" ? "Square" : "Landscape";
+  const warn = opt ? animateWarning(opt.id, ctx.room) : "";
   const notices = opt
     ? [
+        warn,
         ARCHITECTURE_NOTICE,
         opt.lifestyle ? LIFESTYLE_NOTICE : "",
         opt.id === "aerial_reveal" ? AERIAL_NOTICE : "",
@@ -132,6 +159,7 @@ export function animateModalHtml(ctx: AnimateModalCtx): string {
     ? `<div class="an-detail">
         <b>${esc(opt.label)}</b>
         <p class="an-prompt">${esc(opt.sub)}. ${esc(opt.prompt)}</p>
+        <p class="an-swap">${cost} credits · ${opt.seconds}-second AI clip. Replaces standard motion for this scene.</p>
         <dl>
           <div><dt>Duration</dt><dd class="mono">${opt.seconds}s</dd></div>
           <div><dt>Output</dt><dd>${esc(orientation)}</dd></div>
@@ -169,10 +197,14 @@ export function animateModalHtml(ctx: AnimateModalCtx): string {
         ${status}
       </aside>
       <div class="an-main">
-        <div class="an-grid" role="listbox" aria-label="AI Animate options">${animateOptionsHtml(ctx.selected)}</div>
+        <nav class="an-cats" aria-label="Animation categories">
+          ${ANIMATE_CATEGORIES.map(([id, label]) => `<button class="${cat === id ? "on" : ""}" data-animcat="${esc(id)}">${esc(label)}</button>`).join("")}
+        </nav>
+        <div class="an-grid" role="listbox" aria-label="AI Animate options">${animateOptionsHtml(ctx.selected, cat, ctx.room)}</div>
         ${detail}
       </div>
     </div>
+
     ${action}
     <div class="rv-modal-f">
       <span class="an-bal mono">${ctx.balance} Credits Available</span>
