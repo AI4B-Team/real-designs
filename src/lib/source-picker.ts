@@ -13,6 +13,7 @@
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { MAX_FILE_MB, rejectReason } from "@/lib/upload-manager";
+import { splitAddressLines, photoCountLabel, type ProjectAddress } from "@/lib/property-address";
 
 export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design" | "describe";
 export type PickerContext = "design" | "video" | "property-media" | "batch";
@@ -167,6 +168,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
     dragging: false,
     busyLabel: "Adding Photos",
+    /** Existing-property selection and its photo panel. */
+    propSel: null as string | null,
+    propPhotos: [] as PickerPhoto[],
+    propChecked: new Set<string>(),
+    propLoading: false,
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
   };
