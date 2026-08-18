@@ -599,7 +599,9 @@ function render() {
   paint();
   bindReview(el);
   bindRail(el);
+  syncSelection();
   railForStep();
+
 }
 
 function bindRail(el) {
