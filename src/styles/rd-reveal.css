@@ -871,3 +871,16 @@
   .rd-app .rd-addr-bar { min-width: 0; }
   .rd-app .rd-addr-bar input { font-size: 12px; }
 }
+
+/* ---- Builder header menu (replaces the old Cancel button) ---- */
+.rd-app .rv-head .rv-headmore { margin-left: auto; align-self: flex-start; }
+.rd-app .rv-head .rv-head-tools + .rv-headmore { margin-left: 0; }
+.rd-app .rv-more-m button.danger { color: var(--red, #cc0000); }
+.rd-app .rv-modal .btn-danger {
+  background: var(--red, #cc0000); border-color: var(--red, #cc0000); color: #fff;
+}
+.rd-app .rv-modal .btn-danger:disabled { opacity: .6; }
+@media (max-width: 720px) {
+  .rd-app .rv-head .rv-headmore { position: absolute; top: 0; right: 0; }
+  .rd-app .rv-head { position: relative; padding-right: 40px; }
+}
