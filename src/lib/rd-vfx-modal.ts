@@ -81,9 +81,11 @@ export function lookCats(): Array<[string, string]> {
 export function fxCats(): Array<[string, string]> {
   const used = new Set<string>();
   VFX_TILES.forEach((t) => t.cats.forEach((c) => used.add(c)));
-  return Object.keys(FX_CAT_LABEL)
-    .filter((k) => used.has(k))
-    .map((k) => [k, FX_CAT_LABEL[k]!] as [string, string]);
+  return [["all", "All"] as [string, string]].concat(
+    Object.keys(FX_CAT_LABEL)
+      .filter((k) => k !== "all" && used.has(k))
+      .map((k) => [k, FX_CAT_LABEL[k]!] as [string, string]),
+  );
 }
 
 export function looksForCat(cat: string) {
