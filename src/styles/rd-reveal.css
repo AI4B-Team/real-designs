@@ -551,9 +551,12 @@
 .rd-app .rv-tools { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%) translateY(4px); display: flex; gap: 2px; padding: 4px; background: #fff; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,.18); opacity: 0; pointer-events: none; transition: opacity .12s, transform .12s; }
 .rd-app .rv-tile.on:hover .rv-tools,
 .rd-app .rv-tile.on:focus-within .rv-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
-.rd-app .rv-tool { position: relative; width: 34px; height: 34px; border: 0; border-radius: 999px; background: transparent; display: grid; place-items: center; cursor: pointer; }
+.rd-app .rv-tool { position: relative; width: 28px; height: 28px; border: 0; border-radius: 999px; background: transparent; display: grid; place-items: center; cursor: pointer; }
 .rd-app .rv-tool:hover { background: #f2f2f4; }
-.rd-app .rv-tool svg { width: 16px; height: 16px; }
+.rd-app .rv-tool svg { width: 14px; height: 14px; }
+/* Edge tooltips anchor inward so the tile's clipped bounds never cut them off. */
+.rd-app .rv-tools > .rv-tool:first-child em { left: 0; transform: none; }
+.rd-app .rv-tools > .rv-tool:last-child em { left: auto; right: 0; transform: none; }
 .rd-app .rv-tool.hot::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 999px; background: var(--red, #CC0000); }
 .rd-app .rv-tool em { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 11.5px; font-weight: 600; color: #fff; background: #111; border-radius: 6px; padding: 3px 8px; opacity: 0; pointer-events: none; transition: opacity .1s; }
 .rd-app .rv-tool:hover em, .rd-app .rv-tool:focus-visible em { opacity: 1; }
