@@ -111,3 +111,17 @@ export function imageToolbarHtml(actions = [], opts = {}) {
   return `<div class="rv-tools" role="toolbar" aria-label="${esc(opts.label || "Photo actions")}">${buttons}</div>
     <button type="button" class="rv-tools-more" data-toolsmore="1" aria-label="${esc(opts.label || "Photo actions")}" title="${esc(opts.label || "Photo actions")}"><i data-lucide="ellipsis"></i></button>`;
 }
+
+/* Escape inside the toolbar hands focus back to the photo card it belongs to,
+   so keyboard users are never stranded inside the temporary controls. */
+if (typeof document !== "undefined" && !document.__rdToolbarKeys) {
+  document.__rdToolbarKeys = true;
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const tools = e.target && e.target.closest && e.target.closest(".rv-tools");
+    if (!tools) return;
+    const card = tools.closest(".rv-tile");
+    const th = card && card.querySelector(".rv-tile-th");
+    if (th) { e.stopPropagation(); th.focus(); }
+  });
+}
