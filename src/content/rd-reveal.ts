@@ -33,7 +33,6 @@ import {
   aiTemplateLabel,
   resolveTransition,
   transitionLabel,
-  smartTiming,
 } from "@/lib/transitions";
 import { transitions } from "@/lib/transition-store";
 import { DraftAutosaver, newDraftId } from "@/lib/project-draft";
@@ -1913,7 +1912,7 @@ function connectorHtml(s, nextScene) {
 
 /** The minimal shape the Auto rule needs to choose a restrained move. */
 function sceneShape(s) {
-  return s ? { key: s.key, room: s.room || null, scene_type: s.scene_type || null } : null;
+  return s ? { key: s.key, room_name: s.room || null, use_clip: !!s.use_clip, motion: s.motion || null } : null;
 }
 
 function tileHtml(a, seq) {
@@ -4163,16 +4162,18 @@ function bind() {
     render();
   });
   on("#rvTransSmart", "click", async () => {
-    /* Smart Timing sets a length that suits each pair rather than one number
-       for the whole video. */
-    const per = sceneDurations(w.scenes.length, w.length) * 1000;
+    /* Smart Timing gives each pair a length that suits it: quick scenes get a
+       shorter move, and cuts stay instant. */
+    const perMs = sceneDurations(w.scenes.length, w.length) * 1000;
     for (let n = 0; n < w.scenes.length - 1; n++) {
       const a = w.scenes[n], b = w.scenes[n + 1];
       const row = transitions.get(a.key, b.key);
       const type = row?.type || "auto";
       if (type === "cut") continue;
-      const t = smartTiming({ from: sceneShape(a), to: sceneShape(b), type, sceneMs: per });
-      try { await transitions.set(a.key, b.key, type, t.ms); } catch (_) {}
+      const eff = resolveTransition(type, sceneShape(a), sceneShape(b));
+      const base = eff === "fade" ? 900 : eff === "match_move" || eff === "zoom_match" ? 800 : 600;
+      const ms = Math.max(250, Math.min(base, Math.round(perMs * 0.28)));
+      try { await transitions.set(a.key, b.key, type, ms); } catch (_) {}
     }
     toast("Smart Timing Applied.");
     render();
