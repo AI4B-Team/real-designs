@@ -775,47 +775,59 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (!body) return;
     const nodes = Array.from(body.querySelectorAll<HTMLElement>("[data-sp-thumb]"));
     for (const el of nodes) {
-      const path = el.dataset["spThumb"]!;
       if (el.dataset["spThumbDone"] === "1") continue;
-      const paint = (url: string) => {
-        el.dataset["spThumbDone"] = "1";
-        el.style.backgroundImage = 'url("' + url + '")';
-        el.classList.remove("is-load", "is-fail");
-        el.classList.add("has-img");
-        /* Lucide swaps the <i> for an <svg>, so drop the placeholder outright. */
-        el.querySelector("i, svg")?.remove();
-      };
-      const fail = (err: unknown) => {
-        el.dataset["spThumbDone"] = "1";
-        el.classList.remove("is-load");
-        el.classList.add("is-fail");
+      el.dataset["spThumbDone"] = "1";
+      const first = el.dataset["spThumb"]!;
+      const alts = (el.dataset["spAlt"] || "").split("|").filter(Boolean);
+      void loadThumb(el, [first, ...alts]);
+    }
+  }
+
+  /** Walks the candidate paths until one signed URL actually decodes. */
+  async function loadThumb(el: HTMLElement, paths: string[]) {
+    const paint = (url: string) => {
+      el.style.backgroundImage = 'url("' + url + '")';
+      el.classList.remove("is-load", "is-fail");
+      el.classList.add("has-img");
+      /* Lucide swaps the <i> for an <svg>, so drop the placeholder outright. */
+      el.querySelector("i, svg")?.remove();
+    };
+    for (const path of paths) {
+      if (!el.isConnected) return;
+      try {
+        let url = thumbCache.get(path);
+        if (!url) {
+          if (!opts.resolvePhoto) throw new Error("No resolvePhoto helper was provided.");
+          url = (await opts.resolvePhoto(path)) || "";
+          if (!url) throw new Error("No signed URL was returned.");
+          await decode(url);
+          thumbCache.set(path, url);
+        }
+        if (!el.isConnected) return;
+        paint(url);
+        return;
+      } catch (err) {
         /* The real storage / signed-URL error, not a silent blank panel. */
         console.warn("[source-picker] thumbnail failed for " + path, err);
-      };
-      const hit = thumbCache.get(path);
-      if (hit) {
-        paint(hit);
-        continue;
+        thumbCache.delete(path);
       }
-      if (!opts.resolvePhoto) {
-        fail(new Error("No resolvePhoto helper was provided."));
-        continue;
-      }
-      opts
-        .resolvePhoto(path)
-        .then((url) => {
-          if (!url) {
-            fail(new Error("No signed URL was returned."));
-            return;
-          }
-          thumbCache.set(path, url);
-          if (!el.isConnected) return;
-          paint(url);
-        })
-        .catch((err) => {
-          if (el.isConnected) fail(err);
-        });
     }
+    if (!el.isConnected) return;
+    el.classList.remove("is-load");
+    el.classList.add("is-fail");
+    el.innerHTML = '<i data-lucide="image-off"></i><b>Preview Unavailable</b>';
+    try {
+      opts.lucide?.();
+    } catch (_) {}
+  }
+
+  function decode(url: string) {
+    return new Promise<void>((res, rej) => {
+      const img = new Image();
+      img.onload = () => res();
+      img.onerror = () => rej(new Error("The image could not be loaded: " + url.split("?")[0]));
+      img.src = url;
+    });
   }
 
 
