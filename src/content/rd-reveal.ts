@@ -799,7 +799,6 @@ function wizardHtml() {
   const orient = orientationOf(w);
   const headTools = w.step === 2
     ? `<div class="rv-head-tools">
-        ${addressBarHtml(w, S.tree || [], "rvAddrBar")}
         <div class="rv-orient"><span>Video Format</span>
           <div class="rv-seg">${VIDEO_FORMATS.map((f) => `<button class="${w.primaryFormat === f.id ? "on" : ""}" data-primaryfmt="${f.id}">${f.label} ${f.note}</button>`).join("")}</div>
         </div>
@@ -807,6 +806,7 @@ function wizardHtml() {
         <input type="file" id="rvHeadFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
       </div>`
     : "";
+
 
   /* Step 1 runs full width: the grid is the whole job, so the step rail
      only appears once photos are in play; the builder's own step navigation
