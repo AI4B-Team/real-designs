@@ -2713,7 +2713,21 @@ function bind() {
 
 
   const titleIn = el.querySelector("#rvTitle");
-  if (titleIn) titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
+  if (titleIn) {
+    /* Typing marks the title as user-owned; the address can never overwrite it
+       again. A blank field never blocks saving — the fallback covers it. */
+    titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
+    titleIn.addEventListener("blur", () => { w.title = sanitizeTitle(w.title); titleIn.value = defaultTitle(w); });
+  }
+  on("[data-usetitle]", "click", () => {
+    const s = titleSuggestion(w);
+    if (!s) return;
+    w.title = s;
+    w.titleTouched = true;
+    render();
+    autosaveAddress(w);
+  });
+
   bindAddressInputs(el, w);
   on("[data-rmup]", "click", (e) => {
     const id = e.currentTarget.dataset.rmup;
