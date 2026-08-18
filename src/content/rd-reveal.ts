@@ -2007,9 +2007,10 @@ function transitionConn(s) {
   const failed = row?.status === "failed";
   const label = type === "auto" ? transitionLabel(eff) : transitionLabel(type);
   const tip = failed ? `Transition Failed: ${label}` : `Transition: ${label}`;
+  const a11y = failed ? tip : type === "auto" ? `Transition: ${label}` : `Custom transition: ${label}`;
   return `<button class="rv-conn ${type === "auto" ? "auto" : "set"} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
     data-pop="trans" data-key="${esc(s.key)}" title="${esc(tip)}"
-    aria-label="${esc(`${tip}. Between Scene ${idx + 1} And Scene ${idx + 2}.`)}">
+    aria-label="${esc(`${a11y}. Between Scene ${idx + 1} And Scene ${idx + 2}.`)}">
     <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "between-horizontal-start"}"></i>
   </button>`;
 }

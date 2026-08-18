@@ -1102,32 +1102,36 @@
 
 /* ---- transition connector ----
    A transition is the change BETWEEN two scenes, so it is never a badge on a
-   photo. One 24px circle straddles the gutter on the seam between the pair,
-   vertically centred on the images (the thumb is 3:4, so its middle sits at
-   two thirds of the card's width from the top). */
+   photo. One 30px white circle with a red icon straddles the gutter on the
+   seam between the pair, vertically centred on the images (the thumb is 3:4,
+   so its middle sits at two thirds of the card's width from the top). */
 .rd-app .rv-tile { position: relative; }
-.rd-app .rv-conn { position: absolute; right: -18px; top: 66.6cqw; z-index: 7; display: grid; place-items: center;
-  width: 24px; height: 24px; margin-top: -12px; padding: 0; border: 1px solid #e2e2e4; border-radius: 999px;
-  background: #fff; color: #555; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.12);
-  opacity: .45; transition: opacity .12s ease, border-color .12s ease; }
+.rd-app .rv-conn { position: absolute; right: -22px; top: 66.6cqw; z-index: 20; display: grid; place-items: center;
+  width: 30px; height: 30px; margin-top: -15px; padding: 0; border: 1px solid rgba(204,0,0,.28); border-radius: 999px;
+  background: #fff; color: var(--red, #CC0000); cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18), 0 0 0 1px rgba(255,255,255,.7);
+  opacity: 1; transition: background .12s ease, color .12s ease, border-color .12s ease, box-shadow .12s ease; }
+/* invisible 40px hit area without enlarging the visible circle */
+.rd-app .rv-conn::before { content: ""; position: absolute; top: 50%; left: 50%; width: 40px; height: 40px;
+  transform: translate(-50%, -50%); border-radius: 999px; }
 .rd-app .rv-grid.landscape .rv-conn { top: 37.5cqw; }
-.rd-app .rv-conn i, .rd-app .rv-conn svg { width: 12px; height: 12px; }
-.rd-app .rv-conn:hover, .rd-app .rv-conn:focus-visible { opacity: 1; border-color: #bdbdc2; }
-/* a pair the user chose themselves stays identifiable without shouting */
-.rd-app .rv-conn.set { opacity: .9; border-color: #cfcfd4; }
-.rd-app .rv-conn.set::after { content: ""; position: absolute; right: -1px; top: -1px; width: 6px; height: 6px;
-  border-radius: 999px; background: var(--red, #CC0000); box-shadow: 0 0 0 1.5px #fff; }
-.rd-app .rv-conn.busy { opacity: 1; }
+.rd-app .rv-conn i, .rd-app .rv-conn svg { width: 15px; height: 15px; }
+.rd-app .rv-conn:hover, .rd-app .rv-conn:focus-visible,
+.rd-app .rv-conn.set {
+  background: var(--red, #CC0000); border-color: var(--red, #CC0000); color: #fff;
+  box-shadow: 0 4px 14px rgba(204,0,0,.32), 0 0 0 1px rgba(255,255,255,.7); }
+.rd-app .rv-conn:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
 .rd-app .rv-conn.busy i { animation: rv-spin 1s linear infinite; }
-.rd-app .rv-conn.bad { opacity: 1; border-color: #CC0000; color: #CC0000; }
+.rd-app .rv-conn.bad { background: #fff; border-color: #CC0000; color: #CC0000; }
 /* last card of a visual row: no seam, so the same control tucks inside it */
-.rd-app .rv-conn.wrap { right: 6px; top: calc(133.2cqw - 30px); margin-top: 0; }
-.rd-app .rv-grid.landscape .rv-conn.wrap { top: calc(75cqw - 30px); }
+.rd-app .rv-conn.wrap { right: 8px; top: calc(133.2cqw - 34px); margin-top: 0; }
+.rd-app .rv-grid.landscape .rv-conn.wrap { top: calc(75cqw - 34px); }
 @media (max-width: 720px) {
-  .rd-app .rv-conn { opacity: 0; visibility: hidden; }
-  .rd-app .rv-tile:hover .rv-conn, .rd-app .rv-tile:focus-within .rv-conn,
-  .rd-app .rv-tile.on .rv-conn:focus-visible { opacity: 1; visibility: visible; }
+  /* stacked cards: the control sits on the seam beneath the card */
+  .rd-app .rv-conn, .rd-app .rv-conn.wrap { right: 50%; margin-right: -15px; top: auto; bottom: -21px;
+    margin-top: 0; opacity: 1; visibility: visible; }
 }
+
 
 
 /* transition popover */
