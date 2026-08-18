@@ -19,14 +19,14 @@ export type PickerContext = "design" | "video" | "property-media" | "batch";
 
 export type PickedFile = { file: File; flags: string[] };
 
-export const SOURCE_META: Record<SourceId, { icon: string; label: string; desc: string }> = {
-  upload: { icon: "upload-cloud", label: "Upload", desc: "Drag and drop or browse." },
-  cloud: { icon: "cloud", label: "Cloud", desc: "Paste a Google Drive or Dropbox share link." },
-  address: { icon: "map-pin", label: "Property Address", desc: "Fills in address and listing details." },
-  url: { icon: "link", label: "Listing URL", desc: "Reads listing text, no media." },
-  property: { icon: "home", label: "Existing Property", desc: "Reuse photos already uploaded." },
-  design: { icon: "images", label: "Existing Design", desc: "Start from a finished design." },
-  describe: { icon: "pen-line", label: "Describe", desc: "No photo yet: describe the space instead." },
+export const SOURCE_META: Record<SourceId, { icon: string; label: string; tab: string; desc: string }> = {
+  upload: { icon: "upload-cloud", label: "Upload", tab: "Upload", desc: "Drag and drop or browse." },
+  cloud: { icon: "cloud", label: "Cloud", tab: "Cloud", desc: "Paste a Google Drive or Dropbox share link." },
+  address: { icon: "map-pin", label: "Property Address", tab: "Address", desc: "Fills in address and listing details." },
+  url: { icon: "link", label: "Listing URL", tab: "Import", desc: "Reads listing text, no media." },
+  property: { icon: "home", label: "Existing Property", tab: "Property", desc: "Reuse photos already uploaded." },
+  design: { icon: "images", label: "Existing Design", tab: "Design", desc: "Start from a finished design." },
+  describe: { icon: "message-square-text", label: "Describe", tab: "Describe", desc: "No photo yet: describe the space instead." },
 };
 
 export type ContextConfig = {
@@ -105,8 +105,8 @@ export type PickerOptions = {
   onProperty?: (address: string) => void;
   /** Called when the user chooses a finished design. */
   onDesign?: (id: string) => void;
-  /** Called when the user picks the Describe tab instead of adding photos. */
-  onDescribe?: () => void;
+  /** Called when the user writes an idea instead of adding photos. */
+  onDescribe?: (prompt?: string) => void;
   /** Optional "Try A Sample Space" affordance under the dropzone. */
   onSample?: () => void;
   showAlert?: (msg: string) => void;
@@ -127,6 +127,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     note: "",
     address: "",
     url: "",
+    prompt: "",
     dragging: false,
     busyLabel: "Adding Photos",
     /** Many photos landed in a single-image context: let the user choose one. */
@@ -308,9 +309,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         .map((s) => {
           const m = SOURCE_META[s];
           return (
-            '<button type="button" class="sp-tab' + (s === "upload" && state.tab === "upload" ? " sp-primary" : "") + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s + '">' +
+            '<button type="button" class="sp-tab' + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s +
+            '" aria-pressed="' + (state.tab === s ? "true" : "false") + '" title="' + esc(m.desc) + '">' +
             (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
-            esc(m.label) +
+            esc(m.tab) +
             "</button>"
           );
         })
@@ -331,9 +333,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         );
       }
       return (
-        '<div class="sp-drop' + (state.dragging ? " over" : "") + '" data-sp-drop="1">' +
+        '<div class="sp-drop' + (state.dragging ? " over" : "") + '" data-sp-drop="1" role="button" tabindex="0" ' +
+        'aria-label="Add photos: drop them here or choose files">' +
         '<i data-lucide="upload-cloud"></i>' +
         "<b>" + (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") + "</b>" +
+        '<span class="sp-hint">Drag and drop, or</span>' +
         '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Choose Photos</button>' +
         '<span class="sp-hint">' + esc(cfg.acceptHint) + " \u00b7 " + MAX_MB + "MB each</span>" +
         "</div>"
@@ -386,8 +390,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (state.tab === "describe") {
       return (
         '<div class="sp-pane sp-describe">' +
-        "<p>No photo yet? Describe the space in words and we build a concept from your description.</p>" +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="describe">Describe A Space</button>' +
+        '<label class="sp-f" for="spPrompt">Describe the space you want to create</label>' +
+        '<textarea id="spPrompt" rows="4" placeholder="A warm modern living room with oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
+        esc(state.prompt) + "</textarea>" +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="describe">Create Concept</button>' +
         "</div>"
       );
     }
@@ -456,6 +462,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       host.appendChild(body);
       body.addEventListener("click", onClick);
       body.addEventListener("input", onInput);
+      body.addEventListener("keydown", onKey);
       wireDrag(body);
     }
     /* A host helper that fails must never leave an empty picker behind. */
@@ -500,10 +507,21 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     });
   }
 
+  /** The dropzone is clickable and keyboard-operable, not only its button. */
+  function onKey(e: KeyboardEvent) {
+    const t = e.target as HTMLElement;
+    if (!t.closest?.("[data-sp-drop]")) return;
+    if (t.closest("button")) return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    e.preventDefault();
+    input.click();
+  }
+
   function onInput(e: Event) {
     const t = e.target as HTMLInputElement;
     if (t.id === "spAddr") state.address = t.value;
     if (t.id === "spUrl") state.url = t.value;
+    if (t.id === "spPrompt") state.prompt = t.value;
   }
 
   async function onClick(e: Event) {
@@ -536,11 +554,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return;
     }
     const act = t.closest("[data-sp]") as HTMLElement | null;
-    if (!act) return;
+    if (!act) {
+      if (t.closest("[data-sp-drop]")) input.click();
+      return;
+    }
     const k = act.dataset["sp"];
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
-    else if (k === "describe") opts.onDescribe?.();
+    else if (k === "describe") opts.onDescribe?.(state.prompt.trim());
     else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
