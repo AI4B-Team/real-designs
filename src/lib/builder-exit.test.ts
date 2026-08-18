@@ -14,13 +14,23 @@ describe("property video builder header controls", () => {
     }
   });
 
-  it("offers Exit Builder and Delete Draft in the header More menu", () => {
-    expect(src).toMatch(/rv-headmore[\s\S]*rvExitBuilder[\s\S]*rvDeleteDraft/);
+  it("offers Save & Exit, Start Over and Delete Draft in the header More menu", () => {
+    expect(src).toMatch(/rv-headmore[\s\S]*rvExitBuilder[\s\S]*rvStartOver[\s\S]*rvDeleteDraft/);
   });
 
-  it("exits through an autosave flush and returns to Media", () => {
+  it("exits through an autosave flush and returns to Studio", () => {
     expect(src).toMatch(/async function exitBuilder[\s\S]*wizSaver\.flush\(\)/);
-    expect(src).toMatch(/function leaveBuilder[\s\S]*goTo\("v-media"\)/);
+    expect(src).toMatch(/function leaveBuilder[\s\S]*goTo\("studio"\)/);
+  });
+
+  it("confirms before starting over, saving the draft first", () => {
+    const staging = readFileSync("src/content/rd-staging.ts", "utf8");
+    for (const file of [src, staging]) {
+      expect(file).toContain("startOverModalHtml");
+      expect(file).toContain("Start Over");
+    }
+    expect(src).toMatch(/async function startOverBuilder[\s\S]*wizSaver\.flush\(\)/);
+    expect(staging).toMatch(/async function saveExit[\s\S]*saver\.flush\(\)/);
   });
 
   it("warns with Retry or Leave Anyway when the save failed", () => {
