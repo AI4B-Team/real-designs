@@ -383,20 +383,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       );
     }
     if (state.tab === "property") {
-      const list = (opts.properties ? opts.properties() : []).slice(0, 30);
+      const list = properties();
       if (!list.length) return '<div class="sp-pane"><p class="sp-note">No Properties Yet. Upload Photos To Start.</p></div>';
-      return (
-        '<div class="sp-pane"><div class="sp-props">' +
-        list
-          .map(
-            (p) =>
-              '<button type="button" class="sp-prop" data-sp-prop="' + esc(p.address) + '"><i data-lucide="home"></i><b>' +
-              esc(p.address) + "</b><span class=\"mono\">" + esc(p.meta || "") + "</span></button>",
-          )
-          .join("") +
-        "</div></div>"
-      );
+      return '<div class="sp-pane"><div class="sp-props" role="listbox" aria-label="Your Properties">' +
+        list.map(propCard).join("") + "</div>" + photoPanel() + "</div>";
     }
+
     if (state.tab === "describe") {
       const ready = state.prompt.trim().length > 0 && !state.describeBusy;
       return (
