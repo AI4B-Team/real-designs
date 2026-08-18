@@ -1154,21 +1154,48 @@ export async function acceptPhotos(w, files, source) {
 
 let wizSaver = null;
 
+/**
+ * Swap every session-only object URL for the durable storage path it was
+ * uploaded to. Object URLs die with the tab, so a scene saved with one
+ * reopens as a black tile — this keeps the draft referencing real objects.
+ */
+function reconcileUploadPaths(w) {
+  if (!w) return false;
+  const map = new Map();
+  for (const u of w.uploads || []) {
+    if (u.storagePath && u.url && u.url !== u.storagePath) map.set(u.url, u.storagePath);
+    if (u.storagePath) map.set("u-" + u.id, u.storagePath);
+  }
+  if (!map.size) return false;
+  let changed = false;
+  const fix = (obj, key, sceneKey) => {
+    const cur = obj?.[key];
+    if (typeof cur !== "string" || !cur) return;
+    const next = map.get(cur) || (/^blob:/.test(cur) && sceneKey ? map.get(sceneKey) : null);
+    if (next && next !== cur) { obj[key] = next; changed = true; }
+  };
+  for (const a of w.available || []) fix(a, "path", a.key);
+  for (const s of w.scenes || []) { fix(s, "path", s.key); fix(s, "compare", null); }
+  return changed;
+}
+
 /** Push every attached upload into private storage, then autosave the draft. */
 async function storeUploads(w) {
   const pending = (w.uploads || []).filter((u) => u.file && !u.storagePath && !u.storing);
-  if (!pending.length) { autosaveWizard(w); return; }
+  if (!pending.length) { reconcileUploadPaths(w); autosaveWizard(w); return; }
   for (const u of pending) {
     u.storing = true;
     try {
       u.storagePath = await uploadRoomPhoto(u.file);
       /* First photo safely stored: the draft row exists from here on. */
+      if (reconcileUploadPaths(w)) render();
       autosaveWizard(w);
     } catch (_) {
       u.storeFailed = true;
     }
     u.storing = false;
   }
+  reconcileUploadPaths(w);
   autosaveWizard(w);
 }
 
