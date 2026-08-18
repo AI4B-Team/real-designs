@@ -55,19 +55,68 @@ describe("studio start source picker", () => {
     expect(click).toHaveBeenCalled();
   });
 
-  it("Describe is a real tab with a prompt and one Create Concept action", () => {
+  it("Describe is one composer with a disabled-until-valid Create action", () => {
     const onDescribe = vi.fn();
     const { host } = mount("design", { onDescribe });
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
     const ta = host.querySelector("#spPrompt") as HTMLTextAreaElement;
     expect(ta).toBeTruthy();
+    expect(ta.placeholder.startsWith("Describe the space you want to create")).toBe(true);
+    const cta = () => host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
+    expect(cta().disabled).toBe(true);
+    expect(cta().textContent).toContain("Create");
+    /* whitespace only stays disabled */
+    ta.value = "   ";
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(cta().disabled).toBe(true);
     ta.value = "A warm modern living room";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
-    const cta = host.querySelector('[data-sp="describe"]') as HTMLElement;
-    expect(cta.textContent).toBe("Create Concept");
-    cta.click();
+    expect(cta().disabled).toBe(false);
+    cta().click();
     expect(onDescribe).toHaveBeenCalledWith("A warm modern living room");
   });
+
+  it("example chips fill the prompt without submitting", () => {
+    const onDescribe = vi.fn();
+    const { host } = mount("design", { onDescribe });
+    (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
+    const chip = host.querySelector('[data-sp-ex="Coastal Backyard"]') as HTMLElement;
+    chip.click();
+    expect((host.querySelector("#spPrompt") as HTMLTextAreaElement).value).toBe("Coastal Backyard");
+    expect(onDescribe).not.toHaveBeenCalled();
+  });
+
+  it("Cmd/Ctrl+Enter submits and duplicate submits are ignored while busy", async () => {
+    let release: () => void = () => {};
+    const onDescribe = vi.fn(() => new Promise<void>((r) => (release = () => r())));
+    const { host } = mount("design", { onDescribe });
+    (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
+    const ta = host.querySelector("#spPrompt") as HTMLTextAreaElement;
+    ta.value = "A coastal backyard with a plunge pool";
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, bubbles: true }));
+    await Promise.resolve();
+    const cta = host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
+    expect(cta.textContent).toContain("Creating");
+    expect(cta.disabled).toBe(true);
+    cta.click();
+    expect(onDescribe).toHaveBeenCalledTimes(1);
+    release();
+    await new Promise((r) => setTimeout(r, 0));
+    expect((host.querySelector('[data-sp="describe"]') as HTMLButtonElement).textContent).toContain("Create");
+  });
+
+  it("plain Enter does not submit", () => {
+    const onDescribe = vi.fn();
+    const { host } = mount("design", { onDescribe });
+    (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
+    const ta = host.querySelector("#spPrompt") as HTMLTextAreaElement;
+    ta.value = "Line one";
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    expect(onDescribe).not.toHaveBeenCalled();
+  });
+
 
   it("marks the active tab with an accessible pressed state", () => {
     const { host } = mount("design");
