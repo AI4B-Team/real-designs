@@ -88,3 +88,26 @@ export function saveLabel(state) {
   if (state === "error") return "Couldn’t Save — Retry";
   return "";
 }
+
+/**
+ * One image hover toolbar for every editable photo grid.
+ *
+ * actions: [{ attr, value, label, icon, hot?, extraAttrs? }]
+ * Rendered as a single white pill centered near the bottom of the image; the
+ * markup and classes are identical in both builders so one stylesheet rule
+ * governs placement, motion, tooltips and focus behaviour.
+ */
+export function imageToolbarHtml(actions = [], opts = {}) {
+  const items = (actions || []).filter(Boolean);
+  if (!items.length) return "";
+  const buttons = items
+    .map((a) => {
+      const attrs = Object.entries(a.attrs || {})
+        .map(([k, v]) => ` ${esc(k)}="${esc(v)}"`)
+        .join("");
+      return `<button type="button" class="rv-tool${a.hot ? " hot" : ""}"${attrs} aria-label="${esc(a.label)}"><i data-lucide="${esc(a.icon)}"></i><em>${esc(a.label)}</em></button>`;
+    })
+    .join("");
+  return `<div class="rv-tools" role="toolbar" aria-label="${esc(opts.label || "Photo actions")}">${buttons}</div>
+    <button type="button" class="rv-tools-more" data-toolsmore="1" aria-label="${esc(opts.label || "Photo actions")}" title="${esc(opts.label || "Photo actions")}"><i data-lucide="ellipsis"></i></button>`;
+}
