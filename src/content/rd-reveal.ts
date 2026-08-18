@@ -53,8 +53,10 @@ import {
   saveShareLink as _saveShareLink,
   listRenderJobs as _listRenderJobs,
   updateRenderJob as _updateRenderJob,
+  cancelRenderJob as _cancelRenderJob,
 } from "@/lib/reveal.functions";
-import { jobStatusLabel, isJobStale, renderProvider } from "@/lib/render-providers";
+import { jobStatusLabel, isJobStale, renderProvider, activeRenderProvider, runsInBackground } from "@/lib/render-providers";
+import { browserRenderSupport, isRenderCancelled, RENDER_CANCELLED } from "@/lib/reveal-render";
 /* Server functions take a single { data } envelope; these thin wrappers let
    call sites keep passing plain arguments. */
 const listVideos = (d) => _listVideos(d === undefined ? undefined : { data: d });
@@ -70,6 +72,7 @@ const saveBrandKit = (d) => _saveBrandKit(d === undefined ? undefined : { data: 
 const saveShareLink = (d) => _saveShareLink(d === undefined ? undefined : { data: d });
 const listRenderJobs = (d) => _listRenderJobs(d === undefined ? undefined : { data: d });
 const updateRenderJob = (d) => _updateRenderJob(d === undefined ? undefined : { data: d });
+const cancelRenderJob = (d) => _cancelRenderJob(d === undefined ? undefined : { data: d });
 import {
   renderReveal,
   sceneDurations,
@@ -2280,15 +2283,20 @@ function previewPanel() {
     <div class="rv-cost mono">${cost} Credits</div>
     ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
     ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
-    ${!block && typeof MediaRecorder === "undefined" ? `<div class="rv-note sm">This Browser Cannot Record Video. Open REAL DESIGNS In Chrome Or Edge On A Computer To Render.</div>` : ""}
+    ${!block && !browserRenderSupport().ok ? `<div class="rv-note sm">${esc(browserRenderSupport().reason)} Nothing Is Charged Until A Render Actually Starts.</div>` : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
-      <div class="rv-note sm">${esc(renderProvider("browser").runningNotice)} Your Video Is Created In This Browser, So Closing Or Refreshing This Tab Stops It — Your Project And Progress Are Saved And You Can Start Again.</div></div>`
+      <div class="rv-note sm">${esc(activeRenderProvider().runningNotice)}${
+        runsInBackground()
+          ? ""
+          : " Your Video Is Created In This Browser Tab. Closing Or Refreshing This Tab Stops The Render — Your Project Is Saved And Your Credits Are Returned."
+      }</div>
+      <button class="btn btn-ghost btn-xs" id="rvCancelRender"${w.cancelling ? " disabled" : ""}><i data-lucide="x"></i>${w.cancelling ? "Stopping…" : "Stop Render"}</button></div>`
       : w.step === 7
         ? block
           ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
-          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && typeof MediaRecorder !== "undefined" ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && browserRenderSupport().ok ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
 
         : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
 
