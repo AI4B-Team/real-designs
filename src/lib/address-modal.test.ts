@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { openAddressModal } from "@/lib/address-modal";
 
+const arg = (fn: any, i = 0): any => fn.mock.calls[i][0];
+
 const settle = (ms = 20) => new Promise((r) => setTimeout(r, ms));
 
 const PROPS = [
@@ -50,8 +52,8 @@ describe("property address modal", () => {
     expect(q<HTMLButtonElement>("#addrmSave").disabled).toBe(true);
     resolve();
     await settle(10);
-    expect(onSave.mock.calls[0][0].address).toBe("9 Cedar Lane, Reno NV");
-    expect(onSave.mock.calls[0][0].columns.property_address).toBe("9 Cedar Lane, Reno NV");
+    expect(arg(onSave).address).toBe("9 Cedar Lane, Reno NV");
+    expect(arg(onSave).columns.property_address).toBe("9 Cedar Lane, Reno NV");
     expect(q("#addrmMsg").textContent).toContain("Saved");
     await settle(600);
     expect(document.querySelector(".addrm")).toBeNull();
@@ -83,7 +85,7 @@ describe("property address modal", () => {
     expect(input.value).toBe("123 Main Street, Austin TX");
     q<HTMLButtonElement>("#addrmSave").click();
     await settle(20);
-    const res = onSave.mock.calls[0][0];
+    const res = arg(onSave);
     expect(res.propertyId).toBe("p1");
     expect(res.assignmentChanged).toBe(true);
   });
@@ -99,7 +101,7 @@ describe("property address modal", () => {
     q<HTMLButtonElement>("#addrmUse").click();
     q<HTMLButtonElement>("#addrmSave").click();
     await settle(20);
-    expect(onSave.mock.calls[0][0].propertyId).toBe("p1");
+    expect(arg(onSave).propertyId).toBe("p1");
 
     /* Keep Separate leaves the project unassigned. */
     document.body.innerHTML = "";
@@ -108,8 +110,8 @@ describe("property address modal", () => {
     q<HTMLButtonElement>("#addrmSep").click();
     q<HTMLButtonElement>("#addrmSave").click();
     await settle(20);
-    expect(onSave2.mock.calls[0][0].propertyId).toBeNull();
-    expect(onSave2.mock.calls[0][0].assignmentChanged).toBe(true);
+    expect(arg(onSave2).propertyId).toBeNull();
+    expect(arg(onSave2).assignmentChanged).toBe(true);
   });
 
   it("clears the address and the assignment", async () => {
@@ -117,7 +119,7 @@ describe("property address modal", () => {
     openAddressModal({ properties: PROPS, address: "123 Main Street, Austin TX", propertyId: "p1", onSave });
     q<HTMLButtonElement>("#addrmClearBtn").click();
     await settle(20);
-    const res = onSave.mock.calls[0][0];
+    const res = arg(onSave);
     expect(res.address).toBe("");
     expect(res.columns.property_address).toBeNull();
     expect(res.propertyId).toBeNull();
@@ -129,7 +131,7 @@ describe("property address modal", () => {
     openAddressModal({ properties: [], address: "5 Pine", onSave });
     q<HTMLButtonElement>("#addrmSave").click();
     await settle(20);
-    const res = onSave.mock.calls[0][0];
+    const res = arg(onSave);
     expect(Object.keys(res)).not.toContain("title");
     expect(JSON.stringify(res.columns)).not.toContain("title");
   });
