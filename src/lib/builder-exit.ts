@@ -6,6 +6,7 @@
  */
 /* eslint-disable */
 // @ts-nocheck
+import { STUDIO_HASH } from "@/lib/studio-context";
 
 export const EXIT_LABELS = {
   save: "Save & Exit",
@@ -21,12 +22,16 @@ export function resetStudioSurface() {
   } catch (_) {}
 }
 
-/** Navigate to the main Studio starting page. */
+/** Navigate to the main Studio starting page, on the canonical route. */
 export function goStudio(go?: (v: string) => void) {
   const fn = go || (typeof window !== "undefined" ? (window as any).__rdGo : null);
   try {
+    /* Leaving a builder always ends any Photo Design Canvas context. */
+    (window as any).__rdClearStudioMode && (window as any).__rdClearStudioMode();
+  } catch (_) {}
+  try {
     if (fn) fn("studio");
-    else if (typeof location !== "undefined") location.hash = "#studio";
+    else if (typeof location !== "undefined") location.hash = STUDIO_HASH;
   } catch (_) {}
 }
 

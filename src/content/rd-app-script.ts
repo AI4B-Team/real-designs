@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { saveProjectDraft, getProjectDraft, deleteProjectDraft } from "@/lib/drafts.functions";
 import { newDraftId } from "@/lib/project-draft";
+import { GENERIC_STUDIO, canonicalHash, canvasSubtitle as studioSubtitle, isPhotoCanvas, needsNormalize, photoCanvasContext } from "@/lib/studio-context";
 import { mountReports } from "@/content/rd-reports";
 import { mountPropertyDetail } from "@/content/rd-property-detail";
 import { mountBudgetComingSoon, budgetAvailability } from "@/lib/budget-coming-soon";
@@ -184,7 +185,45 @@ function scrollTopHard(){
   [60,160,320,600].forEach(ms=>window.setTimeout(top,ms));
 }
 let __paneSeq=0;
+
+/* ---- studio context -------------------------------------------------------
+   The Studio view hosts two different things. A generic session may open the
+   source chooser and start a brand new project. A Photo Design Canvas belongs
+   to an existing Photo Design draft and must never be re-initialised as a
+   blank Studio session. The context is explicit state, never inferred from
+   whatever happens to be in the DOM. */
+let STUDIO_MODE:any=GENERIC_STUDIO;
+/* Every navigation bumps this token, so a delayed startup callback can tell
+   whether the route it was queued for is still the one on screen. */
+let __navSeq=0;
+function studioMode(){ return STUDIO_MODE; }
+function inPhotoCanvas(){ return isPhotoCanvas(STUDIO_MODE); }
+/** Canonical route test: tolerates the legacy "#studio" form during migration. */
+function isCurrentView(v){
+  const raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
+  if(!raw) return false;
+  return (viewFromHash()||raw)===v;
+}
+try{
+  (window as any).__rdIsView=(v:string)=>isCurrentView(v);
+  (window as any).__rdStudioMode=()=>studioMode();
+  (window as any).__rdNavToken=()=>__navSeq;
+  (window as any).__rdNavCurrent=(tok:number)=>tok===__navSeq;
+  (window as any).__rdClearStudioMode=()=>{ STUDIO_MODE=GENERIC_STUDIO; };
+  /* The one way to open a Photo Design Canvas. It routes through the same
+     navigation everything else uses, with the context set first, so no
+     generic Studio startup logic can run against it. */
+  (window as any).__rdOpenPhotoCanvas=(ctx:any)=>{
+    STUDIO_MODE=photoCanvasContext((ctx&&ctx.draftId)||'',(ctx&&ctx.photoKey)||'');
+    go('studio',true);
+    return STUDIO_MODE;
+  };
+}catch(_){}
+
 function go(v,fromHash){
+  /* A stale startup callback must never drop a live Canvas back on the
+     generic Studio page. */
+  if(v==='studio' && !fromHash && inPhotoCanvas() && document.querySelector('#v-studio.on')) return;
   /* Leaving a live builder through the global Studio navigation saves the
      draft first; the builder re-issues this navigation once it is safe. */
   if(v==='studio' && !fromHash){
@@ -193,6 +232,9 @@ function go(v,fromHash){
       if(typeof ex==='function' && ex()) return;
     }catch(_){}
   }
+  __navSeq++;
+  /* Any route that is not the Studio view ends the Canvas context. */
+  if(v!=='studio' && inPhotoCanvas()) STUDIO_MODE=GENERIC_STUDIO;
   const acctAlias = ACCT_ALIAS[v] ? v : '';
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
@@ -264,12 +306,16 @@ function go(v,fromHash){
   }
 
   if(v==='studio'){
+    /* Repainting the controls is safe in both contexts. Anything that could
+       start a new generic session is skipped while a Canvas is active. */
     try{ paintStudioSub(); paintStudioState(); }catch(_){}
-    /* Media hands a draft id over the window so Studio reopens the real work. */
-    try{
-      const did=(window as any).__rdStudioDraft;
-      if(did){ (window as any).__rdStudioDraft=null; resumeStudioDraft(did); }
-    }catch(_){}
+    if(!inPhotoCanvas()){
+      /* Media hands a draft id over the window so Studio reopens the real work. */
+      try{
+        const did=(window as any).__rdStudioDraft;
+        if(did){ (window as any).__rdStudioDraft=null; resumeStudioDraft(did); }
+      }catch(_){}
+    }
   }
   /* Photo staging is a normal page: mount it on entry, hand the rail back on
      exit, so browser Back and a refresh both behave like every other view. */
@@ -318,6 +364,11 @@ function viewFromHash(){
 }
 window.addEventListener('hashchange',()=>{
   const v=viewFromHash();
+  /* Legacy hashes are rewritten to the canonical form once, in place, so the
+     address bar and the router agree and nothing re-navigates. */
+  if(v && needsNormalize(location.hash)){
+    try{ history.replaceState(null,'',location.pathname+location.search+canonicalHash(location.hash)); }catch(_){}
+  }
   if(v){ go(v,true); return; }
   /* An unknown hash arriving mid session must not sit in the address bar
      while a different view is on screen. Point it at what is rendered. */
@@ -1042,15 +1093,12 @@ function setC(v){cAfter.style.clipPath=`inset(0 0 0 ${v}%)`;cHnd.style.left=v+'%
 cRng.addEventListener('input',e=>setC(e.target.value));setC(50);
 
 /** Caption shown over an uploaded source before anything has been generated. */
-function sourceCaption(on,text){
-  const host=document.querySelector('#canvasCard .card-b'); if(!host) return;
-  let cap=document.getElementById('srcCap');
-  if(!on){ if(cap) cap.remove(); return; }
-  if(!cap){
-    cap=document.createElement('div'); cap.id='srcCap'; cap.className='src-cap';
-    host.insertBefore(cap,host.firstChild);
-  }
-  cap.innerHTML='<b>Your Source Photo</b><span>'+esc(text||'Choose what you want to create, then generate your first version.')+'</span>';
+/* The Canvas carries exactly one title and one dynamic subtitle, in its card
+   header. The old inset "Your Source Photo" panel repeated both, so it is
+   gone; this only clears any copy left over from an earlier session. */
+function sourceCaption(_on?:any,_text?:any){
+  const cap=document.getElementById('srcCap');
+  if(cap) cap.remove();
 }
 
 /* The single Studio start experience: in-canvas empty state plus the compact
@@ -1126,7 +1174,18 @@ function studioStart(){
   }catch(e){ STUDIO_START=null; }
   return STUDIO_START;
 }
-window.rdStudioStart=(method)=>{ const s=studioStart(); if(s&&s.open) s.open(method); };
+/* The source chooser belongs to a generic Studio session only. */
+window.rdStudioStart=(method)=>{ if(inPhotoCanvas()) return; const s=studioStart(); if(s&&s.open) s.open(method); };
+
+/** '' | 'generating' | 'error' — drives the one dynamic Canvas subtitle. */
+let CANVAS_PHASE='';
+function setCanvasPhase(ph){ CANVAS_PHASE=ph||''; const sub=document.querySelector('#canvasCard .card-h .sub'); if(sub) sub.textContent=canvasSubtitle(); }
+
+/** The single Canvas subtitle. One line, driven by the real source state. */
+function canvasSubtitle(){
+  return studioSubtitle({empty:STUDIO_SRC===SRC_EMPTY,result:!!STUDIO_RESULT,phase:CANVAS_PHASE as any});
+}
+try{ (window as any).__rdCanvasSubtitle=()=>canvasSubtitle(); }catch(_){}
 
 function paintStudioState(){
   if(studioWrap){
@@ -1153,9 +1212,7 @@ function paintStudioState(){
   const canvas=document.getElementById('canvas');
   if(canvas) canvas.classList.toggle('has-result',STUDIO_RESULT);
   const csub=document.querySelector('#canvasCard .card-h .sub');
-  if(csub) csub.textContent=STUDIO_SRC===SRC_EMPTY
-    ? 'Add A Source To Begin'
-    : (STUDIO_RESULT?'Click any object to keep, replace or remove it':'Your source photo, nothing generated yet');
+  if(csub) csub.textContent=canvasSubtitle();
   const s=studioStart();
   if(s&&s.paint) s.paint(STUDIO_SRC===SRC_EMPTY);
   if(STUDIO_SRC!==SRC_EMPTY){ try{ populateStyleSelect(); syncStudioStyleChoice(); }catch(_){} }
@@ -1183,6 +1240,7 @@ function setStudioSource(kind,src,alt,opts){
   STUDIO_SRC=kind||'user_upload';
   if(kind!=='existing_design'&&kind!=='existing_property') STUDIO_CTX={room:null,address:null,project:null};
   STUDIO_RESULT=false;
+  CANVAS_PHASE='';
   lastRender=null; lastRenderPath=o.afterPath||null;
   if(cBefore&&src) cBefore.innerHTML=photo(src,alt||'Your source photo');
   if(cAfter) cAfter.innerHTML='';
@@ -1369,6 +1427,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
   if(STUDIO_SRC===SRC_EMPTY||!srcImg||!srcImg.src){ needSourceModal(); return; }   // never spends a credit
   if(!ensureCredits(1,'A Design Render')) return;
   busy=true;
+  setCanvasPhase('generating');
   const btn=document.getElementById('genBtn'); btn.disabled=true;
   const ov=document.getElementById('cGen'),bar=document.getElementById('cBar'),st=document.getElementById('cStep');
   ov.classList.add('on');bar.style.width='0%';st.textContent=gsteps[0];
@@ -1401,6 +1460,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
     try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,'Redesigned space, AI render');
     addRenderVariant(r.image,(document.getElementById('fStyle')||{}).value||'Your Render',lastRenderPath);
+    setCanvasPhase('');
     markStudioResult();
     paintStudioSummary(currentBand());
     window.dispatchEvent(new Event('rd:credits-changed'));
@@ -1410,6 +1470,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
     setTimeout(()=>{let v=100;const b2=setInterval(()=>{v-=2.6;cRng.value=v;setC(v);if(v<=44)clearInterval(b2)},20)},600);
   }catch(e){
     finish();
+    setCanvasPhase('error');
     if(!creditGate(e)) showAlert('Could not render this design. '+((e&&e.message)||'Try again in a moment.'));
   }
 });
@@ -4853,8 +4914,17 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   let fuUid='anon';
   try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) fuUid=data.user.id; }catch(_){}
   try{
+    /* Startup routing is only allowed to move the user while the route it was
+       queued against is still current and no Photo Design Canvas is open. */
+    const fuToken=(window as any).__rdNavToken?(window as any).__rdNavToken():0;
+    const fuGo=(v)=>{
+      const cur=(window as any).__rdNavToken?(window as any).__rdNavToken():0;
+      if(cur!==fuToken) return;
+      if(inPhotoCanvas()) return;
+      go(v);
+    };
     mountFirstUse({
-      go, lucide, esc, photos:PHOTOS, uid:fuUid, track,
+      go:fuGo, lucide, esc, photos:PHOTOS, uid:fuUid, track,
       getSummary:()=>getWorkspaceSummary(),
       uploadPhoto:(f)=>uploadRoomPhoto(f),
       prefsStart:async()=>{ try{ const p=await getPrefs(); return (p&&p.start&&p.start.page)||'smart'; }catch(_){ return 'smart'; } },

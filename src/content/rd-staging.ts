@@ -1806,6 +1806,37 @@ function openRoomPopover(anchor, onPick, key) {
 
 /* --------------------------------------------------------- canvas handoff */
 
+export type StudioContext =
+  | { type: "generic" }
+  | { type: "photo-design-canvas"; draftId: string; photoKey: string };
+
+export type PhotoCanvasHandoff = {
+  draftId: string;
+  photoKey: string;
+  assetPath?: string | null;
+  roomType?: string | null;
+  propertyId?: string | null;
+  propertyAddress?: string | null;
+};
+
+/**
+ * The one way into a Photo Design Canvas. It sets an explicit Studio context
+ * and routes through the shell's navigation on the canonical #v-studio route,
+ * so no generic Studio startup logic (source chooser, new project, source
+ * reset) can run against the photo the user just opened.
+ */
+export function openPhotoDesignCanvas(ctx: PhotoCanvasHandoff): StudioContext {
+  const open = (window as any).__rdOpenPhotoCanvas;
+  if (typeof open === "function") {
+    return open({ draftId: ctx.draftId, photoKey: ctx.photoKey }) as StudioContext;
+  }
+  /* No shell yet (tests, cold boot): still land on the canonical route. */
+  try {
+    if (location.hash !== "#v-studio") location.hash = "#v-studio";
+  } catch (_) {}
+  return { type: "photo-design-canvas", draftId: ctx.draftId, photoKey: ctx.photoKey };
+}
+
 /** The canvas only walks the photos the user chose on Review Rooms. */
 function designSet() {
   const sel = ordered().filter((i) => i.selected);
@@ -1850,9 +1881,17 @@ async function openInCanvas(key) {
       });
   } catch (_) {}
   applyRoom(it);
-  try {
-    if (location.hash !== "#studio") location.hash = "#studio";
-  } catch (_) {}
+  /* Never touch location.hash here. A raw hash write routes through the
+     generic Studio branch, which re-initialises a blank session and throws
+     the Canvas away. Open an explicit Photo Design Canvas context instead. */
+  openPhotoDesignCanvas({
+    draftId: (S && S.id) || "",
+    photoKey: key,
+    assetPath: it.path || null,
+    roomType: it.room || null,
+    propertyId: (S && S.propertyId) || null,
+    propertyAddress: (S && S.address) || null,
+  });
   mountStrip();
   saveDraft();
 }
@@ -1930,9 +1969,20 @@ function mountStrip() {
   window.addEventListener("hashchange", stripGuard);
 }
 
+/** True while the canonical Studio route is showing this Photo Design Canvas. */
+function onCanvasRoute() {
+  try {
+    const isView = (window as any).__rdIsView;
+    if (typeof isView === "function") return !!isView("studio");
+  } catch (_) {}
+  /* Migration fallback: accept both the canonical and the legacy hash. */
+  const raw = (location.hash || "").replace(/^#/, "").replace(/^v-/, "");
+  return raw === "studio";
+}
+
 function stripGuard() {
   if (!strip) return;
-  const onStudio = (location.hash || "").replace(/^#/, "") === "studio";
+  const onStudio = onCanvasRoute();
   strip.classList.toggle("hide", !onStudio);
   const head = document.getElementById("rdsCanvasHead");
   if (head) head.classList.toggle("hide", !onStudio);
