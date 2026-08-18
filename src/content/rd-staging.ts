@@ -564,7 +564,9 @@ function cardHtml(it) {
       ${
         ws
           ? `<em class="rv-tile-kind rds-work ${ws.cls}" title="${esc(it.err || ws.label)}"><i data-lucide="${ws.icon}"></i>${ws.label}</em>`
-          : `<em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>`
+          : st
+            ? `<em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>`
+            : ""
       }
     </div>
   </div>`;
