@@ -453,7 +453,7 @@ async function detectRooms(list) {
 /* --------------------------------------------------------------- renderers */
 
 function stateOf(it) {
-  if (it.roomSource === "manual") return { cls: "ok", label: "Confirmed" };
+  if (it.roomSource === "manual") return { cls: "ok", label: "Edited" };
   if (it.detect === "running" || it.detect === "pending") return { cls: "wait", label: "Detecting" };
   if (it.roomSource === "ai" && it.confidence >= ACCEPT_CONFIDENCE) return { cls: "ok", label: "Detected" };
   if (it.roomSource === "ai") return { cls: "warn", label: "Needs Review" };
@@ -470,7 +470,7 @@ function ordered() {
 function cardHtml(it) {
   const st = stateOf(it);
   const label = it.room || UNASSIGNED_LABEL;
-  return `<article class="rds-card${it.selected ? " sel" : ""}${it.done ? " done" : ""}" data-k="${it.key}">
+  return `<article class="rds-card${it.selected ? " sel" : ""}${it.done ? " done" : ""}" data-k="${it.key}" data-pick="${it.key}">
     <label class="rds-pick"><input type="checkbox" data-sel="${it.key}" ${it.selected ? "checked" : ""} aria-label="Select ${esc(it.name)}"></label>
     <button class="rds-thumb" data-open="${it.key}" aria-label="Open ${esc(it.name)} in the canvas">
       <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
@@ -494,23 +494,31 @@ function cardHtml(it) {
   </article>`;
 }
 
+
 function gridHtml() {
   return `<div class="rds-grid">${ordered().map(cardHtml).join("")}</div>`;
 }
 
 function statusText() {
   const total = S.items.length;
-  const sel = S.items.filter((i) => i.selected).length;
-  const need = S.items.filter((i) => stateOf(i).cls === "warn").length;
+  const selected = S.items.filter((i) => i.selected);
+  const sel = selected.length;
+  const need = selected.filter((i) => stateOf(i).cls === "warn").length;
   const detecting = S.items.some((i) => i.detect === "running" || i.detect === "pending");
   const parts = [`${total} Photo${total === 1 ? "" : "s"}`, `${sel} Selected`];
   if (detecting) parts.push("Detecting Rooms…");
-  else if (need) parts.push(`${need} Need${need === 1 ? "s" : ""} A Room`);
+  else if (need) parts.push("Rooms Need Review");
   else parts.push("All Rooms Confirmed");
-  const save = { saving: "Saving…", saved: "Saved", error: "Couldn't Save" }[S.saveState];
-  if (save) parts.push(save);
+  /* "Saved" is only honest once every photo is stored and the row is written. */
+  const uploading = S.items.some((i) => i.status === "uploading");
+  const failed = S.items.some((i) => i.status === "failed");
+  if (S.saveState === "saving" || uploading) parts.push("Saving…");
+  else if (S.saveState === "error") parts.push("Save Failed · Retry");
+  else if (failed) parts.push("Some Uploads Failed");
+  else if (S.saveState === "saved") parts.push("Saved");
   return parts.join(" · ");
 }
+
 
 function stepRailHtml(active) {
   const steps = [
@@ -554,6 +562,9 @@ function render() {
       <div>
         <h2>Review Rooms</h2>
         <p>Confirm the room type for each photo.</p>
+        <button class="rds-addr${S.address ? " on" : ""}" id="rdsAddr">
+          <i data-lucide="map-pin"></i><span id="rdsAddrTxt">${esc(S.address || "Add Property Address")}</span>
+        </button>
       </div>
       <div class="rds-ph-r"><span id="rdsStatus">${esc(statusText())}</span></div>
     </header>
@@ -565,13 +576,14 @@ function render() {
           <div class="rds-menu" id="rdsMoreMenu" role="menu">
             <button class="rds-menu-i" data-act="all"><i data-lucide="check-square"></i>Select All</button>
             <button class="rds-menu-i" data-act="none"><i data-lucide="square"></i>Clear Selection</button>
+            <button class="rds-menu-i" data-act="room"><i data-lucide="tag"></i>Apply Room Type</button>
             <button class="rds-menu-i" data-act="del"><i data-lucide="trash-2"></i>Remove Selected</button>
           </div>
         </div>
       </div>
       <div class="rds-bar-r">
-        <button class="btn btn-ghost btn-sm" id="rdsAddr"><i data-lucide="map-pin"></i><span id="rdsAddrTxt">${esc(S.address ? S.address : "Add Property Address")}</span></button>
         <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
+        <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
       </div>
     </div>
     <div class="rds-b" id="rdsBody">${gridHtml()}</div>
@@ -583,10 +595,13 @@ function render() {
       </div>
     </footer>
   </section>`;
+
   paint();
   bindReview(el);
   bindRail(el);
+  syncSelection();
   railForStep();
+
 }
 
 function bindRail(el) {
@@ -608,6 +623,25 @@ function patchCard(it) {
   next.innerHTML = cardHtml(it);
   el.replaceWith(next.firstElementChild);
   paint();
+  syncCard(it);
+  patchStatus();
+}
+
+/** One authoritative selection state: the item drives the box and the border. */
+function syncCard(it) {
+  if (!wrap) return;
+  const card = wrap.querySelector('.rds-card[data-k="' + it.key + '"]');
+  if (!card) return;
+  card.classList.toggle("sel", !!it.selected);
+  const box = card.querySelector('input[data-sel="' + it.key + '"]');
+  if (box) box.checked = !!it.selected;
+}
+
+function syncSelection() {
+  if (!S || !wrap) return;
+  S.items.forEach(syncCard);
+  const set = wrap.querySelector("#rdsSetRoom");
+  if (set) set.disabled = !S.items.some((i) => i.selected);
   patchStatus();
 }
 
@@ -615,6 +649,7 @@ function patchStatus() {
   const s = wrap && wrap.querySelector("#rdsStatus");
   if (s && S) s.textContent = statusText();
 }
+
 
 /* ------------------------------------------------------------------ wiring */
 
@@ -631,6 +666,8 @@ function mountPicker(slot) {
 function bindReview(el) {
   el.querySelector("#rdsClose").onclick = exitAll;
   el.querySelector("#rdsBack").onclick = () => {
+    /* Back keeps every photo, room and selection: only the step changes. */
+    saveDraft();
     S.step = "add";
     render();
   };
@@ -648,40 +685,27 @@ function bindReview(el) {
     b.addEventListener("click", () => {
       const act = b.getAttribute("data-act");
       closeMenu();
-      if (act === "all") S.items.forEach((i) => (i.selected = true));
-      if (act === "none") S.items.forEach((i) => (i.selected = false));
-      if (act === "del") {
-        const keep = S.items.filter((i) => !i.selected);
-        if (keep.length === S.items.length) return;
-        S.items.filter((i) => i.selected).forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
-        S.items = keep;
-        if (!S.items.length) S.step = "add";
-        saveDraft();
-      }
-      render();
+      if (act === "all") { S.items.forEach((i) => (i.selected = true)); saveDraft(); syncSelection(); return; }
+      if (act === "none") { S.items.forEach((i) => (i.selected = false)); saveDraft(); syncSelection(); return; }
+      if (act === "room") { applyRoomToSelected(el.querySelector("#rdsSetRoom") || b); return; }
+      if (act === "del") { removeSelected(); return; }
     }),
   );
   el.querySelector("#rdsAddr").onclick = () => openAddressEditor();
-  el.querySelector("#rdsMore").onclick = () => {
-    S.step = "add";
-    render();
-  };
-  el.querySelector("#rdsSetRoom").onclick = (e) => {
-    const sel = S.items.filter((i) => i.selected);
-    if (!sel.length) return;
-    openRoomPopover(e.currentTarget, (label) => {
-      sel.forEach((i) => {
-        i.room = label;
-        i.roomSource = "manual";
-      });
-      saveDraft();
-      render();
-    });
-  };
-  el.querySelector("#rdsGo").onclick = () => {
-    const first = ordered().find((i) => i.selected && !i.done) || ordered().find((i) => i.selected) || S.items[0];
-    if (first) openInCanvas(first.key);
-  };
+
+  /* Add Photos stays on this page: the picker adds straight into the grid. */
+  const file = el.querySelector("#rdsFile");
+  el.querySelector("#rdsMore").onclick = () => file && file.click();
+  if (file) {
+    file.onchange = () => {
+      const picked = Array.from(file.files || []);
+      file.value = "";
+      if (picked.length) addFiles(picked);
+    };
+  }
+
+  el.querySelector("#rdsSetRoom").onclick = (e) => applyRoomToSelected(e.currentTarget);
+  el.querySelector("#rdsGo").onclick = startDesigning;
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
      controls are delegated from the page instead of bound per element. */
@@ -690,10 +714,7 @@ function bindReview(el) {
     if (!c) return;
     const it = S.items.find((i) => i.key === c.getAttribute("data-sel"));
     if (!it) return;
-    it.selected = c.checked;
-    c.closest(".rds-card")?.classList.toggle("sel", c.checked);
-    patchStatus();
-    saveDraft();
+    toggleSelect(it, c.checked);
   });
   el.addEventListener("click", (e) => {
     const t = e.target;
@@ -701,17 +722,7 @@ function bindReview(el) {
     const open = t.closest("[data-open]");
     if (open) { openInCanvas(open.getAttribute("data-open")); return; }
     const del = t.closest("[data-del]");
-    if (del) {
-      const k = del.getAttribute("data-del");
-      const it = S.items.find((i) => i.key === k);
-      if (!it) return;
-      try { URL.revokeObjectURL(it.previewUrl); } catch (_) {}
-      S.items = S.items.filter((i) => i.key !== k);
-      if (!S.items.length) S.step = "add";
-      saveDraft();
-      render();
-      return;
-    }
+    if (del) { removeOne(del.getAttribute("data-del")); return; }
     const room = t.closest("[data-room]");
     if (room) {
       const it = S.items.find((i) => i.key === room.getAttribute("data-room"));
@@ -722,9 +733,83 @@ function bindReview(el) {
         saveDraft();
         patchCard(it);
       });
+      return;
+    }
+    /* Anywhere else on the card toggles selection. The checkbox handles
+       itself through the change event above. */
+    if (t.closest("[data-sel]") || t.closest(".rds-pick")) return;
+    const card = t.closest("[data-pick]");
+    if (card) {
+      const it = S.items.find((i) => i.key === card.getAttribute("data-pick"));
+      if (it) toggleSelect(it, !it.selected);
     }
   });
 }
+
+function toggleSelect(it, next) {
+  it.selected = !!next;
+  syncCard(it);
+  syncSelection();
+  saveDraft();
+}
+
+function applyRoomToSelected(anchor) {
+  const sel = S.items.filter((i) => i.selected);
+  if (!sel.length || !anchor) return;
+  openRoomPopover(anchor, (label) => {
+    sel.forEach((i) => {
+      i.room = label;
+      i.roomSource = "manual";
+    });
+    saveDraft();
+    sel.forEach(patchCard);
+    syncSelection();
+  });
+}
+
+function removeOne(key) {
+  const it = S.items.find((i) => i.key === key);
+  if (!it) return;
+  if (!window.confirm("Remove “" + it.name + "” from this project? The original photo stays in your library.")) return;
+  try { URL.revokeObjectURL(it.previewUrl); } catch (_) {}
+  S.items = S.items.filter((i) => i.key !== key);
+  if (!S.items.length) S.step = "add";
+  saveDraft();
+  render();
+}
+
+function removeSelected() {
+  const gone = S.items.filter((i) => i.selected);
+  if (!gone.length) return;
+  const msg =
+    gone.length === 1
+      ? "Remove 1 photo from this project? The original photo stays in your library."
+      : "Remove " + gone.length + " photos from this project? The originals stay in your library.";
+  if (!window.confirm(msg)) return;
+  gone.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
+  S.items = S.items.filter((i) => !i.selected);
+  if (!S.items.length) S.step = "add";
+  saveDraft();
+  render();
+}
+
+/** Step 3 takes only the selected photos, and only once their rooms are set. */
+function startDesigning() {
+  const sel = ordered().filter((i) => i.selected);
+  if (!sel.length) {
+    window.alert("Select at least one photo to design.");
+    return;
+  }
+  const unsure = sel.filter((i) => stateOf(i).cls === "warn");
+  if (unsure.length) {
+    window.alert("Set a room type for every selected photo first. " + unsure.length + " still need one.");
+    return;
+  }
+  saveDraft();
+  const first = sel.find((i) => !i.done) || sel[0];
+  openInCanvas(first.key);
+}
+
 
 /* ------------------------------------------------------ property address
    Optional on every staging project. The address never renames the project
@@ -834,14 +919,20 @@ function openRoomPopover(anchor, onPick) {
 
 /* --------------------------------------------------------- canvas handoff */
 
+/** The canvas only walks the photos the user chose on Review Rooms. */
+function designSet() {
+  const sel = ordered().filter((i) => i.selected);
+  return sel.length ? sel : ordered();
+}
+
 function idxOf(key) {
-  return ordered().findIndex((i) => i.key === key);
+  return designSet().findIndex((i) => i.key === key);
 }
 
 async function openInCanvas(key) {
-  const list = ordered();
-  const it = list.find((i) => i.key === key);
+  const it = S.items.find((i) => i.key === key);
   if (!it) return;
+
   S.current = key;
   rememberScroll();
   hide();
@@ -922,7 +1013,7 @@ function stripGuard() {
 
 function drawStrip() {
   if (!strip || !S) return;
-  const list = ordered();
+  const list = designSet();
   const i = list.findIndex((x) => x.key === S.current);
   strip.innerHTML = `<button class="rds-strip-b" id="rdsRooms"><i data-lucide="layout-grid"></i>Back To Rooms</button>
     <button class="rds-strip-i" id="rdsPrev" aria-label="Previous photo" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
@@ -944,13 +1035,13 @@ function drawStrip() {
   strip.querySelector("#rdsStripX").onclick = exitAll;
   strip.querySelector("#rdsPrev").onclick = () => {
     markCurrentDone();
-    const l = ordered();
+    const l = designSet();
     const n = l.findIndex((x) => x.key === S.current);
     if (n > 0) openInCanvas(l[n - 1].key);
   };
   strip.querySelector("#rdsNext").onclick = () => {
     markCurrentDone();
-    const l = ordered();
+    const l = designSet();
     const n = l.findIndex((x) => x.key === S.current);
     if (n >= 0 && n < l.length - 1) openInCanvas(l[n + 1].key);
   };
