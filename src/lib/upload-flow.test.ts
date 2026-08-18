@@ -172,6 +172,8 @@ describe("property video: add photos -> scenes", () => {
 describe("photo staging: add photos -> review rooms", () => {
   const openStaging = async () => {
     const mod = await import("@/content/rd-staging");
+    /* The module keeps one live session; close any leftover overlay first. */
+    (document.querySelector("#rdsClose") as HTMLElement | null)?.click();
     document.body.innerHTML = "";
     mod.openStagingReview({});
     await settle(10);
