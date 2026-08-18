@@ -2380,11 +2380,24 @@ async function buildNarration(type: string, script: string | null | undefined, v
 function defaultScript() {
   const w = S.wizard;
   const rooms = Array.from(new Set(w.scenes.map((s) => s.room).filter(Boolean))).slice(0, 6);
+  const addr = cleanAddressText(w.address) || w.propertyLabel || "";
   const lines = [];
-  if (w.propertyLabel) lines.push(`A look at ${w.propertyLabel}.`);
-  if (rooms.length) lines.push(`This video covers ${rooms.join(", ")}.`);
-  if (w.scenes.some((s) => s.scene_type === "before_after")) lines.push("Each space is shown as it is today, then as the proposed design.");
-  lines.push("Every design shown is a proposed concept created in REAL DESIGNS.");
+  /* Marketing narration, not a room manifest: only facts the draft actually
+     holds are ever spoken. */
+  lines.push(addr ? `Welcome to ${addr}.` : "Welcome home.");
+  const highlights = rooms.filter((r) => !/^unsorted$/i.test(r)).slice(0, 3);
+  if (highlights.length) {
+    const list = highlights.length === 1
+      ? highlights[0].toLowerCase()
+      : highlights.slice(0, -1).map((r) => r.toLowerCase()).join(", ") + " and " + highlights[highlights.length - 1].toLowerCase();
+    lines.push(`Step inside, where the ${list} come together in bright, welcoming spaces.`);
+  } else {
+    lines.push("Step inside and take in bright, welcoming spaces made for everyday living.");
+  }
+  if (w.scenes.some((s) => s.scene_type === "before_after")) lines.push("See each space as it is today, then as it could be.");
+  lines.push(addr ? `Book your private tour of ${addr} today.` : "Book your private tour today.");
+  /* Only claim AI involvement when a scene truly carries a disclosure. */
+  if (w.scenes.some((s) => s.disclosure)) lines.push("Some images shown are digitally altered concepts.");
   return lines.join(" ");
 }
 
@@ -2575,7 +2588,7 @@ function stepBrand() {
 function titleDefaults() {
   const w = S.wizard;
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
-  const addr = w.propertyLabel || w.address || w.title || "Your Property";
+  const addr = cleanAddressText(w.address) || w.propertyLabel || w.title || "Welcome Home";
   return {
     address: addr,
     headline: w.titlesHeadline || addr,
