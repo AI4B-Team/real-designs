@@ -545,7 +545,9 @@
 .rd-app .rv-tile.on .rv-tile-check { background: #111; border-color: #111; }
 .rd-app .rv-tile-check svg { width: 17px; height: 17px; color: #fff; opacity: 0; }
 .rd-app .rv-tile.on .rv-tile-check svg { opacity: 1; }
-.rd-app .rv-tile .rv-flag { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: #fff3d6; color: #9a6300; border: 0; cursor: pointer; }
+/* The warning flag sits beside the checkbox: the upper-right corner is
+   reserved for the single treatment indicator. */
+.rd-app .rv-tile .rv-flag { position: absolute; top: 12px; left: 46px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: #fff3d6; color: #9a6300; border: 0; cursor: pointer; z-index: 5; }
 .rd-app .rv-tile .rv-flag svg { width: 14px; height: 14px; }
 .rd-app .rv-tile-seq { position: absolute; left: 10px; bottom: 10px; z-index: 6; font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; color: #fff; background: rgba(0,0,0,.66); border-radius: 6px; padding: 1px 7px; }
 /* The hover toolbar lives at the bottom-right, clear of the permanent scene
@@ -1021,22 +1023,31 @@
 .rv-bill .rv-bill-t{font-weight:600;color:#111;border-top:1px dashed #e4e4e4;padding-top:6px}
 .rv-bill .rv-bill-n{display:block;font-size:12px;color:#777}
 
-/* ---- persistent scene recap (upper-right of each scene image) ---- */
-.rv-recap{position:absolute;top:6px;right:6px;display:flex;flex-direction:column;align-items:flex-end;gap:4px;z-index:3;pointer-events:none;max-width:78%}
-.rv-recap-chip{display:inline-flex;align-items:center;gap:5px;max-width:100%;padding:3px 7px;border-radius:999px;
-  background:rgba(12,12,12,.82);color:#fff;font-size:10.5px;font-weight:600;line-height:1.2;backdrop-filter:blur(4px)}
-.rv-recap-chip i{width:12px;height:12px;flex:0 0 auto}
-.rv-recap-chip b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
-.rv-recap-chip.ai{background:rgba(204,0,0,.9)}
-.rv-recap-chip.bad{background:rgba(155,26,26,.92)}
-.rv-recap-chip.busy i{animation:rv-spin 1s linear infinite}
-.rv-recap-dots{display:flex;gap:3px}
-.rv-recap-dot{display:grid;place-items:center;width:19px;height:19px;border-radius:999px;background:rgba(12,12,12,.78);color:#fff}
-.rv-recap-dot i{width:11px;height:11px}
-.rv-recap-all{pointer-events:auto;display:grid;place-items:center;width:22px;height:22px;border:0;border-radius:999px;
-  background:rgba(12,12,12,.82);color:#fff;cursor:pointer}
-.rv-recap-all i{width:12px;height:12px}
-.rv-recap-all:hover{background:var(--rd-accent,#c00)}
+/* ---- one persistent treatment indicator (upper-right of each scene image) ---- */
+.rv-treat{position:absolute;top:10px;right:10px;z-index:5;display:inline-flex;align-items:center;gap:6px;
+  max-width:92px;padding:3px 7px 3px 3px;border:1px solid rgba(0,0,0,.10);border-radius:10px;
+  background:rgba(255,255,255,.94);box-shadow:0 2px 6px rgba(0,0,0,.16);cursor:pointer;text-align:left}
+.rv-treat:hover{background:#fff}
+.rv-treat:focus-visible{outline:2px solid var(--rd-accent,#c00);outline-offset:2px}
+.rv-treat-th{position:relative;flex:0 0 auto;width:36px;height:36px;border-radius:8px;overflow:hidden;
+  background:#e9e9ec center/cover no-repeat;display:grid;place-items:center}
+.rv-treat-th i,.rv-treat-th svg{width:13px;height:13px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
+.rv-treat em{font-style:normal;font-size:11px;font-weight:700;line-height:1.15;color:#111;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rv-treat.ai .rv-treat-th{box-shadow:inset 0 0 0 2px var(--rd-accent,#c00)}
+.rv-treat.bad .rv-treat-th{box-shadow:inset 0 0 0 2px #9b1a1a}
+.rv-treat.busy .rv-treat-th i,.rv-treat.busy .rv-treat-th svg{animation:rv-spin 1s linear infinite}
+.rv-treat-th.m-push{animation:rv-tz-in 6s ease-in-out infinite alternate}
+.rv-treat-th.m-pull{animation:rv-tz-out 6s ease-in-out infinite alternate}
+/* Narrow cards: preview tile only, name moves to the tooltip. */
+@container (max-width: 210px){
+  .rv-treat{max-width:none;padding:3px;gap:0}
+  .rv-treat em{display:none}
+  .rv-treat-th{width:32px;height:32px}
+}
+@keyframes rv-tz-in{from{background-size:100%}to{background-size:126%}}
+@keyframes rv-tz-out{from{background-size:126%}to{background-size:100%}}
+
 
 /* ---- scene settings summary ---- */
 .rv-sum{display:flex;flex-direction:column;gap:2px}

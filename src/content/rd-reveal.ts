@@ -1864,23 +1864,48 @@ function resetSceneSetting(s, id) {
 }
 
 /**
- * Persistent recap in the upper-right corner of the scene image. It stays
- * visible without hovering, so a user scanning the grid can see what each
- * scene will do.
+ * One derived value describes the scene's primary visual treatment. The card
+ * renders exactly one indicator from it — never one badge per setting. Text,
+ * crop, captions and room type deliberately produce nothing here.
  */
-function sceneRecap(s, clip) {
-  if (!s) return "";
-  const items = sceneSettings(s, clip);
-  if (!items.length) return "";
-  const primary = items.filter((it) => it.primary).slice(0, 2);
-  const rest = items.filter((it) => !primary.includes(it));
-  return `<div class="rv-recap">
-    ${primary.map((it) => `<em class="rv-recap-chip ${it.cls || ""}" title="${esc(`${it.label}: ${it.value}`)}">
-      <i data-lucide="${it.icon}"></i><b>${esc(it.value)}</b></em>`).join("")}
-    ${rest.length ? `<div class="rv-recap-dots">${rest.map((it) => `<em class="rv-recap-dot" title="${esc(`${it.label}: ${it.value}`)}"><i data-lucide="${it.icon}"></i></em>`).join("")}</div>` : ""}
-    <button class="rv-recap-all" data-pop="recap" data-key="${esc(s.key)}" aria-label="Scene Settings" title="Scene Settings"><i data-lucide="sliders-horizontal"></i></button>
-  </div>`;
+function primaryTreatment(s, clip) {
+  if (!s) return null;
+  const fr = sceneFrames.get(s.key);
+  const busy = clip && (clip.status === "queued" || clip.status === "processing");
+  if (clip && clip.status === "failed")
+    return { id: "failed", label: "Failed", cls: "bad", icon: "triangle-alert", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "AI motion failed. Open failure details and retry." };
+  if (busy)
+    return { id: "generating", label: "Generating", cls: "busy", icon: "loader", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Generating AI motion. Open job status." };
+  if (frameConfigured(fr))
+    return { id: "frames", label: "Start / End", cls: "", icon: "arrow-left-right", motion: "static", open: `data-pop="frames" data-key="${esc(s.key)}"`, name: `Motion: Start and End frames, ${seTransitionName(fr.transition_type)}. Open start and end settings.` };
+  if (clip && clip.status === "completed" && clip.approved && s.use_clip)
+    return { id: "ai", label: "AI Motion", cls: "ai", icon: "clapperboard", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Motion: AI Motion. Open animate settings." };
+  if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive")) {
+    const lbl = motionLabel(s);
+    const m = s.motion_level === "immersive" ? (MOTION_PREVIEW[s.immersive_effect] || "static") : (MOTION_PREVIEW[s.motion] || s.motion || "auto");
+    return { id: "motion", label: lbl, cls: "", icon: "camera", motion: m, open: `data-pop="motion" data-key="${esc(s.key)}"`, name: `Motion: ${lbl}. Open motion settings.` };
+  }
+  if ((s.vfx && s.vfx !== "none") || s.look) {
+    const lbl = s.vfx && s.vfx !== "none" ? (tileById(s.vfx)?.label || "Effect") : (lookById(s.look)?.label || "Look");
+    return { id: "vfx", label: lbl, cls: "", icon: "wand-sparkles", motion: "static", open: `data-pop="look" data-key="${esc(s.key)}"`, name: `Effect: ${lbl}. Open effect settings.` };
+  }
+  return null;
 }
+
+/**
+ * The single persistent overlay in the upper-right corner: a small preview
+ * tile plus a short label. A default scene renders nothing at all.
+ */
+function sceneTreatment(s, clip, asset) {
+  const t = primaryTreatment(s, clip);
+  if (!t) return "";
+  const path = asset?.path || s?.path || "";
+  return `<button class="rv-treat ${t.cls}" ${t.open} aria-label="${esc(t.name)}" title="${esc(t.label)}">
+    <span class="rv-treat-th m-${esc(t.motion)}" ${path ? `data-img="${esc(path)}"` : ""}><i data-lucide="${t.icon}"></i></span>
+    <em>${esc(t.label)}</em>
+  </button>`;
+}
+
 
 const TRANS_ICON = {
   auto: "sparkles", cut: "scissors", dissolve: "blend", fade: "circle-dashed", ai: "wand-sparkles",
@@ -1925,14 +1950,13 @@ function tileHtml(a, seq) {
   const cap = s ? String(s.caption || "") : "";
   const clip = sceneClips.get(a.key);
   const clipHot = !!clip && clip.status !== "cancelled" && clip.status !== "failed";
-  const frHot = s && frameConfigured(sceneFrames.get(s.key));
   /* Every card carries the same actions; using one on an unselected photo
-     selects it first, so the tools never disappear on the user. */
+     selects it first, so the tools never disappear on the user. Start / End
+     is not a toolbar button: it lives inside the Effects modal. */
   const tools = `<div class="rv-tools">
       <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
-      <button class="rv-tool ${frHot ? "hot" : ""}" data-pop="frames" data-key="${esc(a.key)}" aria-label="Frames"><i data-lucide="arrow-left-right"></i><em>Frames</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
       <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
     </div>
@@ -1942,7 +1966,8 @@ function tileHtml(a, seq) {
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
       ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
-      ${sceneRecap(s, clip)}
+      ${sceneTreatment(s, clip, a)}
+
       ${tools}
     </div>
     ${s ? connectorHtml(s, S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1] || null) : ""}
@@ -2398,7 +2423,10 @@ function popoverHtml() {
           <button class="btn btn-ghost btn-sm fx-all" id="rvAllLook" ${canAll ? "" : "disabled"}>
             <i data-lucide="copy"></i>Apply to All${plan.targets ? ` (${plan.targets + 1} Scenes)` : ""}</button>
           ${w.popAll ? `<span class="fx-ok"><i data-lucide="check"></i>Will Apply To All ${plan.total} Scenes</span>` : ""}
+          <button class="btn btn-ghost btn-sm fx-all" data-pop="frames" data-key="${esc(s.key)}">
+            <i data-lucide="arrow-left-right"></i>${frameConfigured(sceneFrames.get(s.key)) ? "Edit Start / End Frames" : "Set Start / End Frames"}</button>
           ${needsDisclosure(s) ? `<span class="rv-pop-tip">Generated effects may require an AI-modified disclosure.</span>` : ""}
+
         </aside>
       </div>
       ${w.popConfirm ? `<div class="fx-confirm"><div>
@@ -4201,7 +4229,7 @@ function bind() {
     const kind = e.currentTarget.dataset.sumedit;
     const key = w.pop?.key;
     w.pop = null; render();
-    el.querySelector(`.rv-tool[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
+    el.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
   });
   on("[data-sumreset]", "click", (e) => {
     const s = cur(); if (!s) return;
