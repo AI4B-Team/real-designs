@@ -347,6 +347,7 @@ function drawMotion(
   H: number,
   motion: string,
   t: number,
+  crop?: string | null,
 ) {
   let zoom = 1.04;
   let dx = 0;
