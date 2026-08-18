@@ -1463,7 +1463,7 @@ function setupDirty(){
 function paintClearBtn(){
   const b=document.getElementById('clearLocks');
   if(!b) return;
-  const off=STUDIO_SRC===SRC_EMPTY||!setupDirty();
+  const off=!setupDirty();
   b.disabled=off;
   b.title=off?'Nothing To Clear':'Clear Current Setup';
 }
@@ -1486,7 +1486,6 @@ function resetCanvasSetup(){
   try{ window.rdToast&&window.rdToast('Setup Cleared'); }catch(_){}
 }
 function confirmClearSetup(){
-  if(STUDIO_SRC===SRC_EMPTY) return;
   if(!setupDirty()){ resetCanvasSetup(); return; }
   let m=document.getElementById('clearSetupModal');
   if(!m){
