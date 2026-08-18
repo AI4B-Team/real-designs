@@ -1984,18 +1984,21 @@ function sceneTreatment(s, clip, asset) {
 
 
 const TRANS_ICON = {
-  auto: "sparkles", cut: "scissors", dissolve: "blend", fade: "circle-dashed", ai: "wand-sparkles",
+  auto: "between-horizontal-start", cut: "scissors", dissolve: "blend", fade: "circle-dashed", ai: "wand-sparkles",
   slide_left: "arrow-left", slide_right: "arrow-right", push: "chevrons-right", wipe: "columns-2",
   zoom_match: "scan-search", match_move: "move-3d",
 };
 
 /**
- * A transition belongs between two scenes, never on a scene card. This is a
- * tiny icon-only control that lives in the gutter on the seam of the grid and
- * only appears on hover / focus. It is never a badge over the photo.
+ * A transition connects Scene A to Scene B, so its trigger sits in the gutter
+ * on the seam between the two cards — never as a badge over a photo. One 24px
+ * circular connector, quiet for Auto, marked with a small red dot once the
+ * user picks something. The last card of a visual row keeps its connector
+ * tucked inside its own lower-right corner (see layoutConnectors).
  */
-function transitionTool(s) {
-  const nextScene = S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1];
+function transitionConn(s) {
+  const idx = S.wizard.scenes.indexOf(s);
+  const nextScene = idx < 0 ? null : S.wizard.scenes[idx + 1];
   if (!s || !nextScene) return "";
   const row = transitions.get(s.key, nextScene.key);
   const type = row?.type || "auto";
@@ -2003,11 +2006,30 @@ function transitionTool(s) {
   const busy = row?.status === "queued" || row?.status === "running" || row?.status === "reserved";
   const failed = row?.status === "failed";
   const label = type === "auto" ? transitionLabel(eff) : transitionLabel(type);
-  return `<button class="rv-tool ${type !== "auto" || failed ? "hot" : ""}"
-    data-pop="trans" data-key="${esc(s.key)}"
-    aria-label="Transition Into ${esc(nextScene.room || "The Next Scene")}: ${esc(label)}">
-    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "blend"}"></i><em>Transition</em>
+  const tip = failed ? `Transition Failed: ${label}` : `Transition: ${label}`;
+  return `<button class="rv-conn ${type === "auto" ? "auto" : "set"} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
+    data-pop="trans" data-key="${esc(s.key)}" title="${esc(tip)}"
+    aria-label="${esc(`${tip}. Between Scene ${idx + 1} And Scene ${idx + 2}.`)}">
+    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "between-horizontal-start"}"></i>
   </button>`;
+}
+
+/**
+ * A connector normally straddles the gutter to the card on its right. When the
+ * next scene wraps onto the following row there is no seam, so the same 24px
+ * control moves inside the card's lower-right corner instead.
+ */
+function layoutConnectors() {
+  const grid = document.querySelector("#v-reveal .rv-grid");
+  if (!grid) return;
+  const tiles = Array.from(grid.querySelectorAll(".rv-tile"));
+  tiles.forEach((tile, n) => {
+    const conn = tile.querySelector(":scope > .rv-conn");
+    if (!conn) return;
+    const next = tiles[n + 1];
+    const wraps = !next || Math.abs(next.offsetTop - tile.offsetTop) > 4;
+    conn.classList.toggle("wrap", wraps);
+  });
 }
 
 /** The minimal shape the Auto rule needs to choose a restrained move. */
