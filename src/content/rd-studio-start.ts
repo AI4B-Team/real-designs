@@ -889,17 +889,43 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       lucide,
       showAlert: ctx.showAlert,
       properties: () =>
-        (ctx.getProperties ? ctx.getProperties() : []).map((p) => ({
-          address: p.address,
-          meta: (() => {
-            const n =
-              (p.projects || []).reduce(
-                (t, pr) => t + (((pr as any).rooms || []) as any[]).filter((r: any) => !!r.before_path).length,
-                0,
-              ) || Number((p as any).asset_count || 0);
-            return n === 1 ? "1 Photo" : n + " Photos";
-          })(),
-        })),
+        (ctx.getProperties ? ctx.getProperties() : []).map((p) => {
+          const photos = photosOfProperty(p);
+          return {
+            id: (p as any).id || p.address,
+            address: p.address,
+            count: photos.length || Number((p as any).asset_count || 0),
+            thumb: photos[0]?.path || null,
+          };
+        }),
+      resolvePhoto: ctx.resolvePhoto,
+      loadPropertyPhotos: async (p) => {
+        const src = (ctx.getProperties ? ctx.getProperties() : []).find(
+          (x) => ((x as any).id || x.address) === p.id,
+        );
+        return src ? photosOfProperty(src) : [];
+      },
+      onPropertyPhotos: (p, photos) => {
+        if (isVideo) {
+          try {
+            (window as any).rdListingVideo?.({
+              from: "studio",
+              sourceType: "property",
+              propertyId: p.id,
+              propertyLabel: p.unassigned ? "" : p.address,
+              paths: photos.map((x) => x.path),
+            });
+          } catch (_) {
+            ctx.go("studio");
+          }
+          return;
+        }
+        openStagingReview({
+          photos: photos.map((x) => ({ path: x.path, name: x.name, room: (x as any).room || "" })),
+          address: p.unassigned ? "" : p.address,
+        });
+      },
+
       onPick: (picked) => {
         const first = picked[0];
         if (!first) return;
