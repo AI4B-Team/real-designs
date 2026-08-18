@@ -51,6 +51,19 @@ export type StudioStartCtx = {
   openRecent?: (id: string) => void;
   /** Resolves a stored photo path into a displayable URL. */
   resolvePhoto?: (path: string) => Promise<string | null>;
+  /** Completed designs (generated image ready), for the video source picker. */
+  getFinishedDesigns?: () => Promise<
+    Array<{
+      id: string;
+      path: string;
+      beforePath?: string | null;
+      room: string;
+      address?: string | null;
+      propertyId?: string | null;
+      createdAt?: string | null;
+      versionId?: string | null;
+    }>
+  >;
   fileToDataUrl: (file: File) => Promise<string>;
 };
 
