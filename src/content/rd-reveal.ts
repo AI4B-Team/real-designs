@@ -2282,45 +2282,7 @@ function popoverHtml() {
           </div>`).join("")}
         </div>`
       : `<p class="rv-note">Nothing has been applied to this scene yet. It will play with the automatic camera move.</p>`;
-  } else if (kind === "frames") {
-    /* Start / End is a scene mode: this scene begins on one frame and ends on
-       another. Standard transitions render in the browser and cost nothing. */
-    const d = w.seDraft || {};
-    const byKey = new Map(w.available.map((a) => [a.key, a]));
-    const startA = byKey.get(d.start_key) || byKey.get(s.key) || null;
-    const endA = d.end_key ? byKey.get(d.end_key) : null;
-    const slot = (label, a, cropVal, cropAttr) => `<div class="rv-se-slot ${a ? "on" : ""}">
-      <b>${label}</b>
-      <div class="rv-se-th" ${a ? `data-img="${esc(a.path)}"` : ""}>${a ? "" : `<i data-lucide="image-plus"></i><em>Choose A Photo</em>`}</div>
-      <div class="rv-seg sm">${SE_CROPS.map(([id, n]) => `<button class="${cropVal === id ? "on" : ""}" data-${cropAttr}="${id}">${n}</button>`).join("")}</div>
-      <span class="rv-note sm">${a ? esc(a.room || "Untitled") : "Pick a photo below."}</span>
-    </div>`;
-    const pick = (a) => `<button class="rv-se-pick ${d.end_key === a.key ? "on" : ""} ${d.start_key === a.key ? "dim" : ""}"
-      data-endpick="${esc(a.key)}" title="${esc(a.room || "Untitled")}">
-      <span data-img="${esc(a.path)}"></span>${d.end_key === a.key ? `<i data-lucide="check"></i>` : ""}</button>`;
-    body = `<div class="rv-se">
-      <div class="rv-se-frames">
-        ${slot("Start Frame", startA, d.start_crop || "center", "secropstart")}
-        <button class="icon-btn rv-se-swap" id="rvSeSwap" aria-label="Swap Frames" title="Swap Frames" ${endA ? "" : "disabled"}><i data-lucide="arrow-left-right"></i></button>
-        ${slot("End Frame", endA, d.end_crop || "center", "secropend")}
-      </div>
-      <div class="rv-pop-h">End Frame</div>
-      <div class="rv-se-grid">${w.available.map(pick).join("")}</div>
-      <div class="rv-pop-h">Transition</div>
-      <div class="rv-se-trans">
-        ${SE_TRANSITIONS.map(([id, n, blurb]) => {
-          const ai = id === "ai";
-          const off = ai && !AI_TRANSITION_AVAILABLE;
-          return `<button class="rv-se-tr ${d.transition_type === id ? "on" : ""} ${off ? "off" : ""}"
-            ${off ? "disabled" : `data-setrans="${id}"`} title="${esc(off ? AI_TRANSITION_UNAVAILABLE_REASON : blurb)}">
-            <b>${esc(n)}</b><em>${esc(off ? "Unavailable" : ai ? "40 Credits" : "Included")}</em><span>${esc(blurb)}</span></button>`;
-        }).join("")}
-      </div>
-      ${AI_TRANSITION_AVAILABLE ? "" : `<div class="rv-notice sm"><i data-lucide="info"></i><span>${esc(AI_TRANSITION_UNAVAILABLE_REASON)}</span></div>`}
-      <label class="rv-f">Transition Length <i class="mono">${Number(d.transition_duration || 3).toFixed(1)}s</i>
-        <input type="range" id="rvSeDur" min="10" max="80" step="5" value="${Math.round((d.transition_duration || 3) * 10)}"></label>
-    </div>`;
-  } else if (kind === "trans") {
+    } else if (kind === "trans") {
     /* The move between this scene and the next one. Standard transitions are
        included and render in the browser; the AI bridge is a generated clip
        and is priced up front. */
@@ -2369,8 +2331,8 @@ function popoverHtml() {
     /* Effects modal. Two tabs — Looks (colour and presentation, free) and
        Effects (adds or animates content, costs credits). Display grouping
        only: every picked option still writes the same stored ids. */
-    const tab = w.popTab === "effects" ? "effects" : "looks";
-    const cats = tab === "looks" ? lookCats() : fxCats();
+    const tab = w.popTab === "effects" ? "effects" : w.popTab === "frames" ? "frames" : "looks";
+    const cats = tab === "effects" ? fxCats() : lookCats();
     const catId = cats.some(([id]) => id === w.popCat) ? w.popCat : cats[0][0];
     const amt = s.look_amount ?? DEFAULT_INTENSITY;
     const activeLook = s.look ? lookById(s.look) : null;
@@ -2416,8 +2378,9 @@ function popoverHtml() {
       <div class="fx-tabs" role="tablist">
         <button role="tab" aria-selected="${tab === "looks"}" class="${tab === "looks" ? "on" : ""}" data-fxtab="looks">Looks</button>
         <button role="tab" aria-selected="${tab === "effects"}" class="${tab === "effects" ? "on" : ""}" data-fxtab="effects">Effects</button>
+        <button role="tab" aria-selected="${tab === "frames"}" class="${tab === "frames" ? "on" : ""}" data-fxtab="frames">Start / End</button>
       </div>
-      <div class="fx-body">
+      ${tab === "frames" ? seWorkspace(w, s) : `<div class="fx-body">
         <nav class="fx-cats" aria-label="Categories">
           ${cats.map(([id, n]) => `<button class="${catId === id ? "on" : ""}" data-fxcat="${id}">${esc(n)}</button>`).join("")}
         </nav>
@@ -2436,12 +2399,9 @@ function popoverHtml() {
           <button class="btn btn-ghost btn-sm fx-all" id="rvAllLook" ${canAll ? "" : "disabled"}>
             <i data-lucide="copy"></i>Apply to All${plan.targets ? ` (${plan.targets + 1} Scenes)` : ""}</button>
           ${w.popAll ? `<span class="fx-ok"><i data-lucide="check"></i>Will Apply To All ${plan.total} Scenes</span>` : ""}
-          <button class="btn btn-ghost btn-sm fx-all" data-pop="frames" data-key="${esc(s.key)}">
-            <i data-lucide="arrow-left-right"></i>${frameConfigured(sceneFrames.get(s.key)) ? "Edit Start / End Frames" : "Set Start / End Frames"}</button>
           ${needsDisclosure(s) ? `<span class="rv-pop-tip">Generated effects may require an AI-modified disclosure.</span>` : ""}
-
         </aside>
-      </div>
+      </div>`}
       ${w.popConfirm ? `<div class="fx-confirm"><div>
         <b>Apply this effect to ${plan.total} scenes${plan.credits ? ` for an estimated ${plan.credits} additional credits` : ""}?</b>
         ${plan.perScene && plan.credits !== plan.perScene * plan.targets ? `<span>${Math.round(plan.credits / plan.perScene)} of ${plan.targets} other scenes still need it.</span>` : ""}
@@ -2453,20 +2413,18 @@ function popoverHtml() {
 
   const isFx = kind === "look";
   const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
-    : kind === "recap" ? "Scene Settings" : kind === "frames" ? "Start And End Frames"
+    : kind === "recap" ? "Scene Settings"
     : kind === "trans" ? "Transition" : "Effects";
   const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : kind === "trans" ? "wide" : "xwide";
-  const foot = isFx
+  const foot = isFx && w.popTab === "frames"
+    ? seFooter(w, s)
+    : isFx
     ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
     : kind === "recap"
     ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
     : kind === "trans"
     ? `${transitions.get(s.key, w.scenes[i + 1]?.key) ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto</button>` : ""}
        <button class="btn btn-primary" id="rvPopCancel">Done</button>`
-    : kind === "frames"
-    ? `${frameConfigured(sceneFrames.get(s.key)) ? `<button class="btn btn-ghost danger" id="rvSeRemove">Remove Start / End</button>` : ""}
-       <button class="btn btn-ghost" id="rvPopCancel">Cancel</button>
-       <button class="btn btn-primary" id="rvSeSave" ${w.seDraft?.end_key && !w.seBusy ? "" : "disabled"}>${w.seBusy ? "Saving…" : "Save Start / End"}</button>`
     : `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone">Save</button>`;
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${width} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="${esc(title)}">
     <div class="rv-modal-h"><b>${esc(title)}</b><button class="icon-btn" id="rvPopX" aria-label="Close"><i data-lucide="x"></i></button></div>
