@@ -1010,6 +1010,27 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.samples = true;
         render();
       },
+
+      ...(isVideo && ctx.getFinishedDesigns
+        ? {
+            loadDesigns: () => ctx.getFinishedDesigns!(),
+            onDesigns: (designs: PickerDesign[]) => {
+              /* Finished designs become the video's scenes, in pick order. */
+              try {
+                (window as any).rdListingVideo?.({
+                  from: "studio",
+                  sourceType: "design",
+                  propertyLabel: designs[0]?.address || "",
+                  propertyId: designs[0]?.propertyId || "",
+                  paths: designs.map((d) => d.path),
+                  rooms: designs.map((d) => d.room || ""),
+                });
+              } catch (_) {
+                ctx.go("studio");
+              }
+            },
+          }
+        : {}),
     });
 
   }
