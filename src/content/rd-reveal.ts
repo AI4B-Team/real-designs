@@ -13,8 +13,9 @@ import { voiceRequest } from "@/lib/rd-voice";
 import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
-import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl } from "@/lib/room-photos";
+import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { DraftAutosaver, newDraftId } from "@/lib/project-draft";
+import { deleteProjectDraft } from "@/lib/drafts.functions";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations } from "@/lib/media-analysis";
@@ -840,7 +841,12 @@ function wizardHtml() {
   return `<div class="rv-head">
     <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
     ${headTools}
-    <button class="btn btn-ghost btn-sm" id="rvCancel"><i data-lucide="x"></i>Cancel</button>
+    <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+      <div class="rv-more-m">
+        <button id="rvExitBuilder">Exit Builder</button>
+        <button id="rvDeleteDraft" class="danger">Delete Draft</button>
+      </div>
+    </details>
   </div>
   ${w.step === 2 ? frameNotice() : ""}
   ${shell}
@@ -849,7 +855,9 @@ function wizardHtml() {
   ${w.roomPick ? roomPickerHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
   ${w.shortenModal ? shortenModalHtml() : ""}
-  ${w.logoModal ? logoModalHtml() : ""}`;
+  ${w.logoModal ? logoModalHtml() : ""}
+  ${w.exitModal ? exitModalHtml() : ""}
+  ${w.deleteModal ? deleteModalHtml() : ""}`;
 }
 
 /** Photo-set recommendation strip.
@@ -1564,6 +1572,94 @@ function stepSelect() {
       <button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : `disabled title="${esc(why)}"`}>Continue</button>
     </div>
   </div>`;
+}
+
+/* ---------- leaving and deleting a draft ----------
+
+   The builder autosaves, so there is no Cancel here. Exit Builder saves and
+   leaves; Delete Draft is explicitly destructive and keeps uploaded source
+   photos unless the user asks for those too. */
+function exitModalHtml() {
+  const m = S.wizard.exitModal || {};
+  if (m.state === "error") {
+    return `<div class="rv-modal on" id="rvExitWrap"><div class="rv-modal-in" role="dialog" aria-label="Changes not saved">
+      <div class="rv-modal-h"><b>Your Latest Changes Are Not Saved</b><button class="icon-btn" id="rvExitX"><i data-lucide="x"></i></button></div>
+      <div class="rv-modal-b"><p>We could not save this draft just now. Leaving may lose your most recent edits.</p></div>
+      <div class="rv-modal-f"><button class="btn btn-ghost" id="rvExitLeave">Leave Anyway</button><button class="btn btn-primary" id="rvExitRetry">Retry Saving</button></div>
+    </div></div>`;
+  }
+  return `<div class="rv-modal on" id="rvExitWrap"><div class="rv-modal-in" role="dialog" aria-label="Saving your draft">
+    <div class="rv-modal-h"><b>Saving Your Draft</b></div>
+    <div class="rv-modal-b"><p>Saving your project before you leave…</p></div>
+  </div></div>`;
+}
+
+function deleteModalHtml() {
+  const w = S.wizard;
+  const m = w.deleteModal || {};
+  const photos = (w.uploads || []).filter((u) => u.storagePath).length;
+  return `<div class="rv-modal on" id="rvDelWrap"><div class="rv-modal-in" role="dialog" aria-label="Delete this draft">
+    <div class="rv-modal-h"><b>Delete This Video Draft?</b><button class="icon-btn" id="rvDelX"><i data-lucide="x"></i></button></div>
+    <div class="rv-modal-b">
+      <p>This removes the video project and its scene setup. This cannot be undone.</p>
+      <p>Your uploaded source photos stay in your library and will not be deleted${photos ? ` (${photos})` : ""}, unless you choose to delete them too.</p>
+      <label class="rv-check"><input type="checkbox" id="rvDelPhotos" ${m.alsoPhotos ? "checked" : ""}><span>Also Delete The Uploaded Photos For This Project</span></label>
+    </div>
+    <div class="rv-modal-f"><button class="btn btn-ghost" id="rvDelKeep">Keep Draft</button>
+      <button class="btn btn-danger" id="rvDelGo"${m.busy ? " disabled" : ""}>${m.busy ? "Deleting…" : "Delete Draft"}</button></div>
+  </div></div>`;
+}
+
+/** Leave the builder for Media without touching saved work. */
+function leaveBuilder(w) {
+  stopWizardAutosave();
+  revokeUploadUrls(w);
+  forgetActiveBuilder();
+  S.screen = "library";
+  S.wizard = null;
+  render();
+  goTo("v-media");
+}
+
+async function exitBuilder(w) {
+  w.exitModal = { state: "saving" };
+  render();
+  autosaveWizard(w);
+  try {
+    if (wizSaver) await wizSaver.flush();
+  } catch (_) {}
+  if (S.wizard !== w) return;
+  if (wizSaver && wizSaver.state === "error") {
+    w.exitModal = { state: "error" };
+    render();
+    return;
+  }
+  w.exitModal = null;
+  leaveBuilder(w);
+}
+
+async function confirmDeleteDraft(w) {
+  const m = w.deleteModal || {};
+  if (m.busy) return;
+  w.deleteModal = { ...m, busy: true };
+  render();
+  const paths = m.alsoPhotos ? (w.uploads || []).map((u) => u.storagePath).filter(Boolean) : [];
+  try {
+    if (w.editingId) await deleteProjectDraft({ data: { id: w.editingId } });
+    for (const path of paths) {
+      try { await deleteRoomPhoto(path); } catch (_) {}
+    }
+  } catch (e) {
+    w.deleteModal = { ...m, busy: false };
+    render();
+    toast(e?.message || "Could not delete this draft.");
+    return;
+  }
+  if (S.wizard !== w) return;
+  w.deleteModal = null;
+  stopWizardAutosave();
+  toast(paths.length ? "Draft And Photos Deleted." : "Draft Deleted. Your Photos Were Kept.");
+  leaveBuilder(w);
 }
 
 function lowSceneModal() {
@@ -2914,7 +3010,14 @@ function bind() {
   /* wizard */
   const w = S.wizard;
   if (w) {
-  on("#rvCancel", "click", () => { stopWizardAutosave(); revokeUploadUrls(w); S.screen = "library"; S.wizard = null; render(); });
+  on("#rvExitBuilder", "click", () => { void exitBuilder(w); });
+  on("#rvExitRetry", "click", () => { void exitBuilder(w); });
+  on("#rvExitLeave", "click", () => { w.exitModal = null; leaveBuilder(w); });
+  on("#rvExitX", "click", () => { w.exitModal = null; render(); });
+  on("#rvDeleteDraft", "click", () => { w.deleteModal = { alsoPhotos: false, busy: false }; render(); });
+  on("#rvDelX, #rvDelKeep", "click", () => { w.deleteModal = null; render(); });
+  on("#rvDelPhotos", "change", (e) => { w.deleteModal = { ...(w.deleteModal || {}), alsoPhotos: !!e.currentTarget.checked }; });
+  on("#rvDelGo", "click", () => { void confirmDeleteDraft(w); });
   on("#rvBack", "click", () => { w.step = prevStep(w.step); render(); });
   on(".rv-rail-i", "click", async (e) => {
     const key = e.currentTarget.dataset.sec;
