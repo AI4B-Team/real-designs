@@ -2423,7 +2423,10 @@ function popoverHtml() {
           <button class="btn btn-ghost btn-sm fx-all" id="rvAllLook" ${canAll ? "" : "disabled"}>
             <i data-lucide="copy"></i>Apply to All${plan.targets ? ` (${plan.targets + 1} Scenes)` : ""}</button>
           ${w.popAll ? `<span class="fx-ok"><i data-lucide="check"></i>Will Apply To All ${plan.total} Scenes</span>` : ""}
+          <button class="btn btn-ghost btn-sm fx-all" data-pop="frames" data-key="${esc(s.key)}">
+            <i data-lucide="arrow-left-right"></i>${frameConfigured(sceneFrames.get(s.key)) ? "Edit Start / End Frames" : "Set Start / End Frames"}</button>
           ${needsDisclosure(s) ? `<span class="rv-pop-tip">Generated effects may require an AI-modified disclosure.</span>` : ""}
+
         </aside>
       </div>
       ${w.popConfirm ? `<div class="fx-confirm"><div>
