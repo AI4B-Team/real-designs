@@ -299,13 +299,14 @@ export function openBulkDesign(opts) {
               }</span>
             </div>
           </div>
-          ${block ? `<p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : ""}
-          ${
-            short
-              ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>`
-              : ""
-          }
         </div>
+        ${
+          block
+            ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(block)}</p>${
+                short ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>` : ""
+              }</div>`
+            : ""
+        }
         ${modalFooterHtml({
           extra: { label: "Cancel", value: "cancel" },
           secondary: { label: "Edit rooms", value: "edit", variant: "outline" },

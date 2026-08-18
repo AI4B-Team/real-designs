@@ -450,6 +450,7 @@
   text-decoration: underline;
 }
 .rdsb-g.warn { border-color: rgba(204, 0, 0, 0.4); background: rgba(204, 0, 0, 0.03); }
+.rdsb-blockbar { flex: 0 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .rdsb-block {
   display: flex;
   align-items: center;
