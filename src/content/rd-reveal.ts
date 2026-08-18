@@ -3295,16 +3295,23 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
     });
   }
   /* The configured move between each consecutive pair, in render order. */
-  const sceneTransitions = w.scenes.slice(0, -1).map((sc, n) => {
+  const sceneTransitions = [];
+  for (let n = 0; n < w.scenes.length - 1; n++) {
+    const sc = w.scenes[n];
     const nxt = w.scenes[n + 1];
     const row = transitions.get(sc.key, nxt.key);
     const type = resolveTransition(row?.type || "auto", sceneShape(sc), sceneShape(nxt));
-    return {
+    /* An approved AI bridge plays as the transition itself; otherwise the
+       deterministic effect renders in the browser. */
+    const clipUrl = row?.generated_clip_path && row.status === "completed"
+      ? await resolvePhotoUrl(row.generated_clip_path).catch(() => null)
+      : null;
+    sceneTransitions.push({
       type,
       ms: typeof row?.duration_ms === "number" ? row.duration_ms : DEFAULT_TRANSITION_MS,
-      clipUrl: row?.generated_clip_path && row.status === "completed" ? await_none(row) : null,
-    };
-  });
+      clipUrl,
+    });
+  }
 
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
