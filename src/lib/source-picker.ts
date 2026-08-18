@@ -421,9 +421,21 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (state.tab === "property") {
       const list = properties();
       if (!list.length) return '<div class="sp-pane"><p class="sp-note">No Properties Yet. Upload Photos To Start.</p></div>';
+      /* Properties with nothing to select stay out of the way by default. */
+      const withPhotos = list.filter((p) => p.count !== 0);
+      const emptyCount = list.length - withPhotos.length;
+      const shown = state.showEmpty ? list : withPhotos;
+      const toggle = emptyCount
+        ? '<button type="button" class="sp-link sp-empty-t" data-sp="emptytoggle">' +
+          (state.showEmpty ? "Hide Properties Without Photos" : "Show Properties Without Photos (" + emptyCount + ")") +
+          "</button>"
+        : "";
+      if (!shown.length)
+        return '<div class="sp-pane"><p class="sp-note">No Properties With Photos Yet.</p>' + toggle + "</div>";
       return '<div class="sp-pane"><div class="sp-props" role="listbox" aria-label="Your Properties">' +
-        list.map(propCard).join("") + "</div>" + photoPanel() + "</div>";
+        shown.map(propCard).join("") + "</div>" + toggle + photoPanel() + "</div>";
     }
+
 
     if (state.tab === "describe") {
       const ready = state.prompt.trim().length > 0 && !state.describeBusy;
