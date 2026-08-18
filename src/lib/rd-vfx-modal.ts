@@ -16,12 +16,12 @@ export const LOOK_CAT_LABEL: Record<string, string> = {
 };
 
 export const FX_CAT_LABEL: Record<string, string> = {
-  all: "All",
-  outdoor: "Exterior",
-  indoor: "Interior",
+  recommended: "Recommended",
+  exterior: "Exterior",
+  interior: "Interior",
   timelapse: "Timelapse",
-  fan: "Ceiling Fan",
-  word: "Word Drop",
+  environment: "Environment",
+  transformation: "Transformation",
 };
 
 /** Intensity presets. Balanced is the default for a freshly picked look. */
@@ -80,12 +80,10 @@ export function lookCats(): Array<[string, string]> {
 
 export function fxCats(): Array<[string, string]> {
   const used = new Set<string>();
-  VFX_TILES.forEach((t) => t.cats.forEach((c) => c !== "all" && used.add(c)));
-  return [["all", FX_CAT_LABEL['all']] as [string, string]].concat(
-    Object.keys(FX_CAT_LABEL)
-      .filter((k) => k !== "all" && used.has(k))
-      .map((k) => [k, FX_CAT_LABEL[k]!] as [string, string]),
-  );
+  VFX_TILES.forEach((t) => t.cats.forEach((c) => used.add(c)));
+  return Object.keys(FX_CAT_LABEL)
+    .filter((k) => used.has(k))
+    .map((k) => [k, FX_CAT_LABEL[k]!] as [string, string]);
 }
 
 export function looksForCat(cat: string) {
@@ -96,6 +94,11 @@ export function looksForCat(cat: string) {
 export function effectTiles(cat: string) {
   const list = VFX_TILES.filter((t) => t.id !== "none");
   return cat === "all" ? list : list.filter((t) => t.cats.includes(cat));
+}
+
+/** Generative tiles are real image generation, never a CSS filter. */
+export function isGenerativeTile(id?: string | null): boolean {
+  return !!tileById(id)?.gen;
 }
 
 /** Intensity only applies when a color grade is actually painted. */
