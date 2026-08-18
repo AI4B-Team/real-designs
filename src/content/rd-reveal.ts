@@ -507,6 +507,8 @@ function newWizard(seed = {}) {
     sourceType: uploads.length ? "upload" : seed.sourceType || (seed.versionId ? "design" : seed.propertyId ? "property" : ""),
     propertyId: seed.propertyId || null,
     propertyLabel: seed.propertyLabel || null,
+    /* Only these stored photos should be selected once assets load. */
+    seedPaths: Array.isArray(seed.paths) && seed.paths.length ? seed.paths.slice() : null,
     versionId: seed.versionId || null,
     title: seed.title || "",
     videoType: seed.videoType || "property_tour",
@@ -627,6 +629,17 @@ async function loadWizardAssets() {
   const fresh = out.filter((a) => !seen.has(a.key));
   fresh.sort((a, b) => orderRank(a.group) - orderRank(b.group) || String(a.room || "").localeCompare(String(b.room || "")));
   w.gridOrder = prev.concat(fresh.map((a) => a.key));
+  if (w.seedPaths && w.seedPaths.length) {
+    const want = new Set(w.seedPaths);
+    const picks = w.gridOrder
+      .map((k) => out.find((a) => a.key === k))
+      .filter((a) => a && want.has(a.path));
+    if (picks.length) {
+      w.scenes = picks.map(assetToScene);
+      if (w.step < 2) w.step = 2;
+    }
+    w.seedPaths = null;
+  }
   syncSceneOrder();
 }
 
