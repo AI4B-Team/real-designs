@@ -1106,7 +1106,7 @@
    seam between the pair, vertically centred on the images (the thumb is 3:4,
    so its middle sits at two thirds of the card's width from the top). */
 .rd-app .rv-tile { position: relative; }
-.rd-app .rv-conn { position: absolute; right: -21px; top: 66.6cqw; z-index: 20; display: grid; place-items: center;
+.rd-app .rv-conn { position: absolute; right: -22px; top: 66.6cqw; z-index: 20; display: grid; place-items: center;
   width: 30px; height: 30px; margin-top: -15px; padding: 0; border: 1px solid rgba(204,0,0,.28); border-radius: 999px;
   background: #fff; color: var(--red, #CC0000); cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,.18), 0 0 0 1px rgba(255,255,255,.7);
