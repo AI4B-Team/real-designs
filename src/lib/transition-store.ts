@@ -49,20 +49,36 @@ export class TransitionStore {
   }
 
   /** Optimistic local write so the badge updates instantly, then persist. */
-  async set(fromKey: string, toKey: string, type: string, durationMs?: number): Promise<TransitionRow> {
+  async set(
+    fromKey: string,
+    toKey: string,
+    type: string,
+    durationMs?: number,
+    settings?: Record<string, any>,
+  ): Promise<TransitionRow> {
     const ms = transitionDurationMs(type, durationMs);
+    const prev = this.get(fromKey, toKey);
+    const merged = { ...(prev?.settings || {}), ...(settings || {}) };
     const local: TransitionRow = {
-      ...(this.get(fromKey, toKey) || {}),
+      ...(prev || {}),
       from_key: fromKey,
       to_key: toKey,
       type,
       duration_ms: ms,
+      settings: merged,
       status: "configured",
     };
     this.byConn.set(connectionKey(fromKey, toKey), local);
     if (!this.projectId) return local;
     const res: any = await saveTransition({
-      data: { video_project_id: this.projectId, from_key: fromKey, to_key: toKey, type: type as any, duration_ms: ms },
+      data: {
+        video_project_id: this.projectId,
+        from_key: fromKey,
+        to_key: toKey,
+        type: type as any,
+        duration_ms: ms,
+        settings: merged,
+      },
     });
     this.byConn.set(connectionKey(fromKey, toKey), res.transition);
     return res.transition;
@@ -75,11 +91,17 @@ export class TransitionStore {
   }
 
   /** Apply one style to every live connection. */
-  async applyAll(scenes: Array<{ key: string }>, type: string, durationMs?: number): Promise<void> {
+  async applyAll(
+    scenes: Array<{ key: string }>,
+    type: string,
+    durationMs?: number,
+    settings?: Record<string, any>,
+  ): Promise<void> {
     const conns = connectionsFor(scenes);
     const ms = transitionDurationMs(type, durationMs);
+    const st = settings || {};
     for (const c of conns) {
-      this.byConn.set(c.key, { from_key: c.from, to_key: c.to, type, duration_ms: ms, status: "configured" });
+      this.byConn.set(c.key, { from_key: c.from, to_key: c.to, type, duration_ms: ms, settings: st, status: "configured" });
     }
     if (!this.projectId || !conns.length) return;
     const res: any = await applyTransitions({
@@ -88,13 +110,14 @@ export class TransitionStore {
         connections: conns.map((c) => ({ from_key: c.from, to_key: c.to })),
         type: type as any,
         duration_ms: ms,
+        settings: st,
       },
     });
     for (const r of res.transitions || []) this.byConn.set(connectionKey(r.from_key, r.to_key), r);
   }
 
   async removeAll(scenes: Array<{ key: string }>): Promise<void> {
-    await this.applyAll(scenes, "cut", 0);
+    await this.applyAll(scenes, "cut", 0, { mode: "manual" });
   }
 
   /** After a reorder or deletion: keep configured pairs, drop stale ones. */

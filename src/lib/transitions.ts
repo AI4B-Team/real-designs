@@ -129,6 +129,24 @@ export function resolveTransition(
   return resolveAuto(from, to);
 }
 
+/** The three transitions offered as primary choices, with their descriptions. */
+export const OFFERED_TRANSITIONS: Array<[["cut", "dissolve", "fade"][number], string, string]> = [
+  ["cut", "Cut", "An instant change with no blend."],
+  ["dissolve", "Dissolve", "One scene blends softly into the next."],
+  ["fade", "Fade", "The scene fades out and the next fades in."],
+];
+
+/**
+ * Auto Select is a recommendation mode, not a transition of its own: it always
+ * resolves to one of the three transitions a user can pick by hand.
+ */
+export function autoPick(from?: SceneShape | null, to?: SceneShape | null): "cut" | "dissolve" | "fade" {
+  const t = resolveAuto(from, to);
+  if (t === "cut" || t === "fade") return t;
+  if (t === "match_move" || t === "zoom_match") return "cut";
+  return "dissolve";
+}
+
 /* ---------- connections ---------- */
 
 export type TransitionRow = {
