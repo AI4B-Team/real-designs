@@ -292,11 +292,17 @@ select:not([multiple]) {
 .rdm-btn:focus-visible{outline:none;box-shadow:0 0 0 2px #fff,0 0 0 4px #CC0000}
 .rdm-primary,.rdm-danger{background:#CC0000;color:#fff}
 .rdm-primary:hover:not(:disabled),.rdm-danger:hover:not(:disabled){background:#A80000}
-.rdm-ghost{background:transparent;color:#3A3A42;border-color:rgba(17,17,17,.16)}
-.rdm-ghost:hover:not(:disabled){background:rgba(17,17,17,.06);color:#141414}
+/* Quiet dismissal: no border, so it never competes with the outlined
+   secondary action sitting next to it. */
+.rd-app .rdm-ghost,.rdm-ghost{background:transparent;color:#3A3A42;border-color:transparent}
+.rd-app .rdm-ghost:hover:not(:disabled),.rdm-ghost:hover:not(:disabled){background:rgba(17,17,17,.06);color:#141414}
+/* Real secondary button: white, neutral border, dark text — never solid black. */
+.rd-app .rdm-outline,.rdm-outline{background:#fff;color:#1B1B20;border-color:rgba(17,17,17,.18)}
+.rd-app .rdm-outline:hover:not(:disabled),.rdm-outline:hover:not(:disabled){background:#F5F5F7;border-color:rgba(17,17,17,.3)}
 .rdm-btn:disabled{cursor:not-allowed;opacity:.7}
 .rdm-primary:disabled,.rdm-danger:disabled{background:#E39A9A;color:#fff;opacity:1}
-.rdm-ghost:disabled{color:#8A8A90;border-color:rgba(17,17,17,.1)}
+.rdm-ghost:disabled,.rdm-outline:disabled{color:#8A8A90;border-color:rgba(17,17,17,.1)}
+.rdm-outline .rdm-spin{border-color:rgba(17,17,17,.25);border-top-color:#141414}
 .rdm-btn.is-loading{pointer-events:none}
 .rdm-spin{width:15px;height:15px;border-radius:50%;border:2px solid rgba(255,255,255,.45);
   border-top-color:#fff;animation:rdm-spin .7s linear infinite}
