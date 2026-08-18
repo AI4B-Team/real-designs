@@ -2020,14 +2020,24 @@ function transitionConn(s) {
  * control moves inside the card's lower-right corner instead.
  */
 let connResizeBound = false;
+let connObserver = null;
 function layoutConnectors() {
   const grid = document.querySelector("#v-reveal .rv-grid");
   if (!grid) return;
-  /* the row a scene lands on changes with the viewport, so the seam / corner
-     decision is re-taken on resize rather than only at render time. */
+  /* The row a scene lands on changes with the workspace width — a collapsed
+     sidebar or a zoom step, not only a window resize — so the seam / row-end
+     decision is re-taken whenever the grid itself changes size. */
   if (!connResizeBound && typeof window !== "undefined") {
     connResizeBound = true;
     window.addEventListener("resize", () => layoutConnectors());
+  }
+  if (!connObserver && typeof ResizeObserver !== "undefined") {
+    connObserver = new ResizeObserver(() => layoutConnectors());
+  }
+  if (connObserver && connObserver.__grid !== grid) {
+    connObserver.disconnect();
+    connObserver.observe(grid);
+    connObserver.__grid = grid;
   }
   const tiles = Array.from(grid.querySelectorAll(".rv-tile"));
   tiles.forEach((tile, n) => {
