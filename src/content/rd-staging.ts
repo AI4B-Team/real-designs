@@ -731,6 +731,13 @@ function syncSelection() {
   const sel = selectedCount();
   const set = wrap.querySelector("#rdsSetRoom");
   if (set) set.disabled = !sel;
+  /* Bulk design is a real batch: it only makes sense from two photos up. */
+  const bulk = wrap.querySelector("#rdsBulk");
+  if (bulk) {
+    bulk.disabled = sel < 2 || S.busy;
+    const lab = bulk.lastChild;
+    if (lab && lab.nodeType === 3) lab.textContent = sel > 1 ? `Design Selected · ${sel}` : "Design Selected";
+  }
   const count = wrap.querySelector("#rdsSelCount");
   if (count) count.textContent = `${sel} of ${S.items.length} selected`;
   const foot = wrap.querySelector("#rdsFootCount");
