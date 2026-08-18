@@ -1382,3 +1382,34 @@
 .rd-app .rv-end:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
 .rd-app .rv-endrow { display: grid; gap: 8px; }
 .rd-app .rv-endrow .rv-pop-row { text-align: left; }
+
+/* ---- Shared builder format selector (Video Format / Output Ratio) ---- */
+.rd-app .bx-fmtsel { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rd-app .bx-fmtsel > span {
+  font-family: "DM Mono", monospace; font-size: .58rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mute-2, #6b6b6b); white-space: nowrap;
+}
+.rd-app .bx-fmtsel .bx-fmtseg { flex-wrap: nowrap; }
+.rd-app .bx-fmtsel .bx-fmtseg button {
+  height: 32px; display: inline-flex; align-items: center; white-space: nowrap;
+  transition: background .12s ease, border-color .12s ease, color .12s ease;
+}
+.rd-app .bx-fmtsel .bx-fmtseg button:hover { border-color: #111; }
+.rd-app .bx-fmtsel .bx-fmtseg button.on:hover { background: #000; }
+.rd-app .bx-fmtsel .bx-fmtseg button:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
+.rd-app .bx-fmtsel .bx-fmtsel-c { display: none; align-items: center; gap: 6px; }
+.rd-app .bx-fmtsel .bx-fmtsel-c > span {
+  font-family: "DM Mono", monospace; font-size: .58rem; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--mute-2, #6b6b6b); white-space: nowrap;
+}
+.rd-app .bx-fmtsel .bx-fmtsel-c select {
+  height: 32px; border: 1px solid var(--line, #e6e6e6); border-radius: 999px;
+  background: #fff; color: #111; font-size: 12.5px; font-weight: 600; padding: 0 10px; cursor: pointer;
+}
+.rd-app .bx-fmtsel .bx-fmtsel-c select:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
+@media (max-width: 1180px) {
+  .rd-app .bx-fmtsel > span,
+  .rd-app .bx-fmtsel .bx-fmtseg { display: none; }
+  .rd-app .bx-fmtsel .bx-fmtsel-c { display: inline-flex; }
+}
+.rd-app .rv-head-tools { overflow: visible; }
