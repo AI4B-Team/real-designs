@@ -1362,7 +1362,8 @@ function mountStrip() {
   head.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
   head.querySelectorAll("#rdsStartOver").forEach((b) => (b.onclick = () => {
     /* The confirmation lives in the builder screen, so go back to it first. */
-    exitCanvasToGrid();
+    markCurrentDone();
+    reopenStaging();
     openStartOver();
   }));
   const back = head.querySelector("#rdsAllRooms");
