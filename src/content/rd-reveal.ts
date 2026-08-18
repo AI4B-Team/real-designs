@@ -2006,7 +2006,7 @@ function transitionConn(s) {
   const label = transitionLabel(st.type);
   const tip = failed
     ? `Transition Failed: ${label}`
-    : st.auto ? `Transition: ${label} · Auto selected` : `Transition: ${label}`;
+    : st.auto ? `Transition: ${label} · Auto Selected` : `Transition: ${label}`;
   return `<button class="rv-conn ${st.auto ? "auto" : "set"} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
     data-pop="trans" data-key="${esc(s.key)}" title="${esc(tip)}"
     aria-label="${esc(`${tip}. Between Scene ${idx + 1} And Scene ${idx + 2}.`)}">
