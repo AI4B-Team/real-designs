@@ -48,7 +48,7 @@ import {
   noticeSignature, resolvePhoto, thumbDataUrl,
 } from "@/lib/photo-classify";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
-import { roomIcon, searchRooms } from "@/lib/staging-rooms";
+import { roomIcon, searchRooms, groupRooms } from "@/lib/staging-rooms";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { dedupeScenes, mergeScenes, reconcileScenes, uniqueIds } from "@/lib/scene-dedupe";

@@ -1413,3 +1413,9 @@
   .rd-app .bx-fmtsel .bx-fmtsel-c { display: inline-flex; }
 }
 .rd-app .rv-head-tools { overflow: visible; }
+
+.rd-app .rv-roomgrp {
+  font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+  color: #8a8a94; padding: 10px 8px 4px; font-weight: 700;
+}
+.rd-app .rv-roomlist .rv-roomgrp:first-child { padding-top: 4px; }
