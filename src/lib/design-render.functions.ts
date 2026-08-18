@@ -26,6 +26,8 @@ const Input = z.object({
   style_id: z.string().max(80).nullable().optional(),
   project_type: z.enum(["interior", "exterior", "garden", "virtual-staging", "concept"]).default("interior"),
   preserve_architecture: z.boolean().default(true),
+  /* Photo Design output ratio. "original" keeps the source aspect ratio. */
+  aspect_ratio: z.enum(["original", "4:3", "4:5", "1:1"]).default("original"),
 });
 
 const MODEL = "google/gemini-2.5-flash-image";
@@ -54,6 +56,9 @@ function buildPrompt(d: z.infer<typeof Input>): string {
     lines.push("Refresh intensity: cosmetic only — paint, textiles, decor and lighting fixtures. Keep flooring, cabinetry and fixtures in place.");
   if (d.intensity.toLowerCase().includes("full"))
     lines.push("Full remodel intensity: finishes, cabinetry, flooring and fixtures may all change, but the structural shell stays identical.");
+  if (d.aspect_ratio && d.aspect_ratio !== "original")
+    lines.push(`Output framing: return the image with a ${d.aspect_ratio} aspect ratio, recomposing the same view without distorting or stretching it.`);
+  else lines.push("Output framing: keep the original aspect ratio and framing of the source photograph.");
   if (d.notes) lines.push(`Owner instructions: ${d.notes}`);
   return lines.join("\n");
 }

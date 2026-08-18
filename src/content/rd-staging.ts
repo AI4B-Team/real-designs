@@ -34,6 +34,7 @@ import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/pro
 import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
 import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
+import { modalFooterHtml } from "@/lib/modal-footer";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import {
   cardMenuButtonHtml,
@@ -45,6 +46,15 @@ import {
   pickOneImage,
 } from "@/lib/builder-card-menu";
 import { cardStatusHtml, registerCardStatus } from "@/lib/builder-card-status";
+import { formatSelectorHtml } from "@/lib/builder-format-selector";
+import {
+  OUTPUT_RATIOS,
+  DEFAULT_OUTPUT_RATIO,
+  normalizeOutputRatio,
+  normalizeOverride,
+  ratioLabel,
+  effectiveRatio,
+} from "@/lib/output-ratio";
 import { setHandoff } from "@/lib/handoff";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
@@ -97,6 +107,9 @@ function newSession(seed = {}) {
     lastOpened: null,
     activeKey: null,
     busy: false,
+    /* Project-level Photo Design output ratio. "original" keeps every photo's
+       native aspect; a photo may still carry its own override. */
+    outputRatio: normalizeOutputRatio(seed.outputRatio),
   };
 }
 
@@ -121,6 +134,10 @@ function mkItem(file) {
     resultPath: null,
     resultUrl: null,
     err: "",
+    /* null = follow the project default. */
+    ratio: null,
+    /* The ratio a finished design was actually rendered at. */
+    resultRatio: null,
   };
 }
 
@@ -187,12 +204,15 @@ function draftPayload() {
     settings: {
       current: S.current || null,
       direction: S.direction || null,
+      output_ratio: normalizeOutputRatio(S.outputRatio),
       rooms: S.items.reduce((m, i) => {
         m[i.key] = {
           room: i.room || null,
           state: i.state || (i.done ? "complete" : "none"),
           result_path: i.resultPath || null,
           error: i.err || "",
+          ratio: normalizeOverride(i.ratio),
+          result_ratio: i.resultRatio || null,
         };
         return m;
       }, {}),
@@ -405,6 +425,7 @@ function hydrate(draft) {
   const assets = (draft.assets || []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   const rooms = (draft.settings && draft.settings.rooms) || {};
   S.direction = (draft.settings && draft.settings.direction) || null;
+  S.outputRatio = normalizeOutputRatio(draft.settings && draft.settings.output_ratio);
   S.items = assets.map((a) => {
     const saved = rooms[a.key] || {};
     return {
@@ -427,6 +448,8 @@ function hydrate(draft) {
       state: saved.state === "generating" ? "failed" : saved.state || (a.done ? "complete" : "none"),
       resultPath: saved.result_path || null,
       resultUrl: null,
+      ratio: normalizeOverride(saved.ratio),
+      resultRatio: saved.result_ratio || null,
       err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
     };
   });
@@ -641,6 +664,8 @@ function designFeatures(it) {
     out.push({ id: "style", icon: "palette", label: "Style", value: d.direction, removable: false });
   if (d && touched && d.notes)
     out.push({ id: "notes", icon: "pencil-line", label: "Design Instructions", value: d.notes, removable: false });
+  if (it.ratio)
+    out.push({ id: "ratio", icon: "crop", label: "Output Ratio", value: ratioLabel(it.ratio), removable: false });
   if (it.resultPath)
     out.push({ id: "version", icon: "layers", label: "Generated Version", value: "Ready", removable: false });
   else if (it.state === "generating")
@@ -803,6 +828,13 @@ function render() {
         <p>Confirm the room type for each photo.</p>
       </div>
       <div class="rv-head-tools">
+        ${formatSelectorHtml({
+          label: "Output Ratio",
+          options: OUTPUT_RATIOS,
+          value: normalizeOutputRatio(S.outputRatio),
+          attr: "ratio",
+          id: "rds-ratio",
+        })}
         <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
         <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
@@ -958,6 +990,98 @@ function mountPicker(slot) {
   });
 }
 
+/* --------------------------------------------------- output ratio control */
+
+/** Photos that carry their own ratio, i.e. ignore the project default. */
+function overriddenItems() {
+  return S.items.filter((i) => normalizeOverride(i.ratio));
+}
+
+/** Small three-action sheet built from the shared modal footer. */
+function ratioChoiceDialog(opts) {
+  return new Promise((resolve) => {
+    if (typeof document === "undefined") return resolve("cancel");
+    const wrap = document.createElement("div");
+    wrap.className = "bx-cdlg";
+    wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="${esc(opts.title)}">
+      <h3>${esc(opts.title)}</h3>
+      <p>${esc(opts.body)}</p>
+      ${modalFooterHtml({
+        extra: { label: "Cancel", value: "cancel" },
+        secondary: { label: "Apply To Photos Without Overrides", value: "keep" },
+        primary: { label: "Apply To All Photos", value: "all" },
+      })}
+    </div>`;
+    document.body.appendChild(wrap);
+    paint();
+    const done = (v) => { wrap.remove(); resolve(v); };
+    wrap.addEventListener("click", (e) => {
+      const b = e.target.closest("[data-mfa]");
+      if (b) return done(b.getAttribute("data-mfa"));
+      if (e.target === wrap) done("cancel");
+    });
+    wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") done("cancel"); });
+    wrap.querySelector('[data-mfa="cancel"]')?.focus();
+  });
+}
+
+/** Change the project default; never silently discard a per-photo override. */
+async function setProjectRatio(next) {
+  const ratio = normalizeOutputRatio(next);
+  if (ratio === normalizeOutputRatio(S.outputRatio)) return;
+  const overrides = overriddenItems();
+  if (overrides.length) {
+    const choice = await ratioChoiceDialog({
+      title: "Update Output Ratio?",
+      body: "Some photos use a custom output ratio.",
+    });
+    if (choice === "cancel") { render(); return; }
+    if (choice === "all") overrides.forEach((i) => (i.ratio = null));
+  }
+  S.outputRatio = ratio;
+  saveDraft();
+  render();
+}
+
+/** Per-photo override, offered from the card menu and the canvas. */
+function openRatioOverride(it) {
+  if (typeof document === "undefined") return;
+  const cur = normalizeOverride(it.ratio);
+  const opts = [{ id: "", label: "Use Project Default", note: ratioLabel(S.outputRatio) }].concat(
+    OUTPUT_RATIOS.map((o) => ({ id: o.id, label: o.label, note: o.note || "" })),
+  );
+  const wrap = document.createElement("div");
+  wrap.className = "bx-cdlg";
+  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Output Ratio">
+    <h3>Output Ratio</h3>
+    <p>${esc(it.name || "This Photo")}</p>
+    <div class="rv-seg wrap" style="margin:10px 0 4px">${opts
+      .map(
+        (o) => `<button type="button" class="${(cur || "") === o.id ? "on" : ""}" data-rdsratio="${o.id}">${esc(
+          o.note ? o.label + " " + o.note : o.label,
+        )}</button>`,
+      )
+      .join("")}</div>
+    ${modalFooterHtml({ primary: { label: "Done", value: "done" } })}
+  </div>`;
+  document.body.appendChild(wrap);
+  paint();
+  const close = () => wrap.remove();
+  wrap.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rdsratio]");
+    if (b) {
+      const v = b.getAttribute("data-rdsratio");
+      it.ratio = v ? v : null;
+      saveDraft();
+      close();
+      render();
+      return;
+    }
+    if (e.target.closest("[data-mfa]") || e.target === wrap) close();
+  });
+  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+}
+
 function bindReview(el) {
   el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
   el.querySelector("#rdsBack").onclick = () => {
@@ -980,6 +1104,11 @@ function bindReview(el) {
       if (act === "del") { removeSelected(); return; }
     }),
   );
+  el.querySelectorAll("[data-ratio]").forEach((b) =>
+    b.addEventListener("click", () => void setProjectRatio(b.getAttribute("data-ratio"))),
+  );
+  const ratioSel = el.querySelector("[data-ratiosel]");
+  if (ratioSel) ratioSel.onchange = () => void setProjectRatio(ratioSel.value);
   bindAddress(el);
 
   /* Add Photos stays on this page: the picker adds straight into the grid. */
@@ -1109,7 +1238,7 @@ function runBatch(batch, direction) {
     it.err = "";
     patchCard(it);
   });
-  runBulkDesign(batch, direction, {
+  runBulkDesign(batch, { ...direction, outputRatio: normalizeOutputRatio(S.outputRatio) }, {
     onUpdate: (it) => {
       patchCard(it);
       saveDraft();
@@ -1246,6 +1375,7 @@ registerCardMenu("photo", {
         items: [
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
           { action: "room", label: "Change Room", icon: "door-open" },
+          { action: "ratio", label: "Output Ratio", icon: "crop" },
           { action: "tovideo", label: "Create Video From Photo", icon: "clapperboard", hidden: !stored },
           { action: "versions", label: "View Versions", icon: "history", hidden: !it.resultPath && it.state !== "complete" },
           { action: "download", label: "Download Original", icon: "download", hidden: !stored && !it.previewUrl },
@@ -1269,6 +1399,7 @@ registerCardMenu("photo", {
       cmToast("New Variation Added. Your Saved Versions Are Untouched.");
       return void openInCanvas(clone.key);
     }
+    if (action === "ratio") return void openRatioOverride(it);
     if (action === "room") {
       const btn = document.querySelector('.rv-tile[data-k="' + (window.CSS?.escape ? CSS.escape(key) : key) + '"] [data-room]');
       if (btn) btn.click();

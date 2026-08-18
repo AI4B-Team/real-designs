@@ -12,6 +12,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
+import { effectiveRatio } from "@/lib/output-ratio";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
 import { STYLES } from "@/lib/style-catalog";
@@ -88,6 +89,8 @@ export async function runBulkDesign(items, direction, hooks = {}) {
       hooks.onUpdate && hooks.onUpdate(it);
       try {
         const image = await toDataUrl(await sourceUrl(it));
+        /* Project default unless this photo carries its own override. */
+        const ratio = effectiveRatio(direction.outputRatio, it.ratio);
         const r = await renderDesign({
           data: {
             image,
@@ -99,6 +102,7 @@ export async function runBulkDesign(items, direction, hooks = {}) {
             grade: direction.grade,
             notes: direction.notes || null,
             preserve_architecture: direction.preserve !== false,
+            aspect_ratio: ratio,
           },
         });
         let path = null;
@@ -106,6 +110,7 @@ export async function runBulkDesign(items, direction, hooks = {}) {
           path = await uploadRenderDataUrl(r.image);
         } catch (_) {}
         it.resultPath = path;
+        it.resultRatio = ratio;
         it.resultUrl = r.image;
         it.state = "complete";
         it.done = true;
