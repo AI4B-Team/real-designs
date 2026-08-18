@@ -280,7 +280,7 @@ export type RenderManifest = {
 export function buildRenderManifest(input: {
   scenes: ManifestScene[];
   rows: TransitionRow[];
-  sceneMeta?: Record<string, SceneShape>;
+  sceneMeta?: Record<string, SceneShape> | undefined;
   audio?: RenderManifest["audio"];
   titles?: RenderManifest["titles"];
   projectDefault?: string;
@@ -317,7 +317,7 @@ export function buildRenderManifest(input: {
 export type SmartTimingInput = {
   scenes: ManifestScene[];
   rows: TransitionRow[];
-  sceneMeta?: Record<string, SceneShape>;
+  sceneMeta?: Record<string, SceneShape> | undefined;
   targetMs?: number | null;
   narrationMs?: number | null;
   beatMs?: number | null;
