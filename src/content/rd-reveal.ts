@@ -1345,6 +1345,7 @@ function wizardDraftBody(w) {
       },
       draft_state: {
         step: w.step,
+        ending: w.ending || null,
         gridOrder: w.gridOrder || [],
         uploads: (w.uploads || [])
           .filter((u) => u.storagePath)
@@ -2210,6 +2211,7 @@ function tileHtml(a, seq) {
       ${s ? sceneNumberHtml(seq) : ""}
       ${sceneTreatment(s, clip, a)}
       ${cardMenuButtonHtml({ flow: "video", key: a.key, label: s ? "Scene " + (seq || "") : (a.room ? a.room + " photo" : "this photo") })}
+      ${s ? endingControlHtml(w, s) : ""}
 
       ${tools}
     </div>
@@ -2451,7 +2453,7 @@ function stepSelect() {
   const dupCount = w.available.filter((a) => a.dup).length;
   const orient = orientationOf(w);
   const per = sceneDurations(w.scenes.length, w.length);
-  const total = Math.round(per * w.scenes.length);
+  const total = Math.round(per * w.scenes.length + endingSeconds(w));
   const imm = immersiveCount();
 
   /* One continuous grid, in the user's own scene order. Room type is metadata
@@ -2493,7 +2495,7 @@ function stepSelect() {
     </div>
   </div>
 
-  <div class="rv-grid ${orient}">${grid}</div>
+  <div class="rv-grid ${orient}">${grid}${totalCount ? addCardHtml("rvGridAdd") : ""}</div>
   ${!totalCount && !organizing ? `<div class="rv-empty"><i data-lucide="images"></i><h3>No Photos In This Video Yet</h3><p>Add photos to begin building your scenes.</p><div class="rv-empty-a"><button class="btn btn-primary" id="rvEmptyAdd"><i data-lucide="plus"></i>Add Photos</button></div></div>` : ""}
   <div class="rv-gridfoot">
     <div class="rv-count">
@@ -4598,6 +4600,7 @@ function bind() {
   });
   /* Header and notice shortcuts both reopen the picker step without losing work. */
   on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+  on("#rvGridAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvEmptyAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvHeadFile", "change", (e) => {
@@ -5520,6 +5523,7 @@ function editExisting(d) {
   const ds = p.draft_state || null;
   if (ds && p.status === "draft") {
     w.gridOrder = Array.isArray(ds.gridOrder) ? ds.gridOrder : w.gridOrder;
+    if (ds.ending && typeof ds.ending === "object") w.ending = ds.ending;
     w.uploads = (ds.uploads || []).map((u) => ({
       id: u.id, name: u.name, originalName: u.name, url: "", file: null,
       storagePath: u.path, room: u.room || "Unsorted", roomSource: u.room_source || "ai",
