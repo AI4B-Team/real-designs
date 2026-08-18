@@ -817,12 +817,19 @@
 @keyframes rv-spin{to{transform:rotate(360deg)}}
 
 /* ---------- Effects modal: Looks / Effects, category rail, preview ---------- */
-.rd-app .rv-modal-in.fx-modal { width: min(1080px, 100%); max-width: 1080px; }
+.rd-app .rv-modal-in.fx-modal { width: min(1040px, calc(100vw - 48px)); max-width: min(1040px, calc(100vw - 48px));
+  max-height: calc(100vh - 64px); border-radius: 16px; }
+.rd-app .rv-modal-in.fx-modal .rv-modal-b { overflow: auto; overscroll-behavior: contain; }
+.rd-app .rv-modal-in.fx-modal .rv-modal-h,
+.rd-app .rv-modal-in.fx-modal .rv-modal-f { flex: 0 0 auto; }
 .rd-app .fx-wrap { position: relative; }
-.rd-app .fx-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line, #e6e6e6); margin: -4px 0 12px; }
+/* Tabs stay with the header: they must never scroll out of the modal. */
+.rd-app .fx-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line, #e6e6e6); margin: 0 0 12px;
+  position: sticky; top: 0; z-index: 4; background: #fff; padding-top: 6px; }
 .rd-app .fx-tabs button { border: 0; background: none; padding: 8px 14px; font-size: 13px; font-weight: 600; color: #6b6b6b;
   cursor: pointer; border-bottom: 2px solid transparent; }
 .rd-app .fx-tabs button.on { color: #111; border-bottom-color: var(--red, #CC0000); }
+
 .rd-app .fx-body { display: grid; grid-template-columns: 132px minmax(0, 1fr) minmax(0, 36%); gap: 16px; align-items: start; }
 .rd-app .fx-cats { display: grid; gap: 2px; align-content: start; }
 .rd-app .fx-cats button { text-align: left; border: 0; background: none; border-radius: 8px; padding: 7px 10px; font-size: 12.5px;
@@ -1143,13 +1150,25 @@
 
 /* ---- Start / End workspace, third tab of the Effects modal ---- */
 .rd-app .se-wrap { display: grid; gap: 14px; }
-.rd-app .se-frames { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 12px; align-items: center; }
+.rd-app .se-lede { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4b4b4b; margin: 0; }
+.rd-app .se-info { border: 0; background: none; padding: 0; line-height: 0; color: #8a8a8a; cursor: help; }
+.rd-app .se-info i { width: 15px; height: 15px; }
+.rd-app .se-frames { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 20px; align-items: center; }
 .rd-app .se-slot { display: grid; gap: 6px; border: 1px solid #e6e6e6; border-radius: 14px; padding: 10px; background: #fff; }
 .rd-app .se-slot.on { border-color: #d0d0d0; }
-.rd-app .se-slot > b { font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #6b6b6b; }
-.rd-app .se-th { position: relative; aspect-ratio: 16/10; border-radius: 10px; background: #f4f4f4 center/cover no-repeat; display: grid; place-items: center; gap: 4px; color: #8a8a8a; }
+.rd-app .se-slot.empty { cursor: pointer; border-style: dashed; }
+.rd-app .se-slot.empty:hover { border-color: #cc0000; }
+.rd-app .se-slot-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.rd-app .se-slot-h b { font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #6b6b6b; }
+.rd-app .se-th { position: relative; aspect-ratio: 16/10; max-height: 250px; border-radius: 10px;
+  background: #f4f4f4 center/cover no-repeat; display: grid; place-items: center; gap: 4px; color: #8a8a8a; overflow: hidden; }
 .rd-app .se-th i { width: 20px; height: 20px; }
 .rd-app .se-th em { font-style: normal; font-size: 11.5px; }
+.rd-app .se-th .rv-noimg-i { display: none; }
+/* The broken state only shows once the painter could not resolve the source. */
+.rd-app .se-broken { display: none; text-align: center; gap: 4px; padding: 8px; }
+.rd-app .se-broken span { display: flex; gap: 10px; justify-content: center; }
+.rd-app .se-th.rv-noimg .se-broken { display: grid; place-items: center; }
 .rd-app .se-cap { font-size: 12.5px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd-app .se-swap { align-self: center; }
 .rd-app .se-picker { border: 1px solid #e6e6e6; border-radius: 14px; padding: 12px; display: grid; gap: 8px; background: #fafafa; }
@@ -1159,11 +1178,17 @@
 .rd-app .se-pick { border: 2px solid transparent; border-radius: 10px; padding: 0; background: none; cursor: pointer; }
 .rd-app .se-pick span { display: block; aspect-ratio: 1; border-radius: 8px; background: #eee center/cover no-repeat; }
 .rd-app .se-pick.on { border-color: #cc0000; }
-.rd-app .se-motions { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
-.rd-app .se-motion { text-align: left; border: 1px solid #e6e6e6; border-radius: 12px; padding: 8px 10px; background: #fff; cursor: pointer; display: grid; gap: 2px; }
+.rd-app .se-motions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.rd-app .se-motion { text-align: left; border: 1px solid #e6e6e6; border-radius: 12px; padding: 8px 10px; background: #fff;
+  cursor: pointer; display: grid; gap: 2px; align-content: start; min-height: 62px; }
 .rd-app .se-motion b { font-size: 13px; }
 .rd-app .se-motion em { font-style: normal; font-size: 11.5px; color: #6b6b6b; }
 .rd-app .se-motion.on { border-color: #cc0000; box-shadow: inset 0 0 0 1px #cc0000; }
+/* Start / End footer: cost or validation on the left, actions on the right. */
+.rd-app .se-foot-l { flex: 1; font-size: 12.5px; color: #4b4b4b; }
+.rd-app .se-foot-l .warn { color: #a33; }
+.rd-app .se-foot-r { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+
 .rd-app .se-out { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; border-top: 1px solid #eee; padding-top: 12px; }
 .rd-app .se-out-i { display: grid; gap: 4px; }
 .rd-app .se-out-i em { font-style: normal; font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #6b6b6b; }
@@ -1173,7 +1198,11 @@
 .rd-app .se-status.bad { background: #fff5f5; border-color: #f2c7c7; }
 .rd-app .se-status.ok { background: #f4faf5; border-color: #cfe6d3; }
 .rd-app .se-status.busy i { animation: rv-spin 1.1s linear infinite; }
+@media (max-width: 900px) {
+  .rd-app .se-motions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 @media (max-width: 640px) {
   .rd-app .se-frames { grid-template-columns: minmax(0,1fr); }
   .rd-app .se-swap { justify-self: center; }
+
 }

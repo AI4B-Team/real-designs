@@ -81,7 +81,7 @@ import {
   generateSceneFrames,
   cancelSceneFrames,
 } from "@/lib/scene-frames.functions";
-export { SE_MOTIONS, SE_CREDITS, SE_DURATIONS, seMotion, seMotionLabel, seBusy, seDone } from "@/lib/scene-frames-presets";
+export { SE_MOTIONS, SE_CREDITS, SE_DURATIONS, seMotion, seMotionLabel, seBusy, seDone, seCost } from "@/lib/scene-frames-presets";
 
 /**
  * Browser cache of the durable rows. Nothing important lives here: every
