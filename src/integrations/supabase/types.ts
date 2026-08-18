@@ -1065,6 +1065,108 @@ export type Database = {
           },
         ]
       }
+      project_drafts: {
+        Row: {
+          assets: Json
+          audio: Json
+          branding: Json
+          builder_step: string | null
+          created_at: string
+          crop: Json
+          effects: Json
+          id: string
+          item_order: Json
+          last_opened_at: string
+          motion: Json
+          project_type: string
+          property_address: string | null
+          property_id: string | null
+          quality: string | null
+          revision: number
+          rooms: Json
+          selected: Json
+          settings: Json
+          status: string
+          title: string | null
+          titles: Json
+          updated_at: string
+          user_id: string
+          video_format: string | null
+          video_project_id: string | null
+        }
+        Insert: {
+          assets?: Json
+          audio?: Json
+          branding?: Json
+          builder_step?: string | null
+          created_at?: string
+          crop?: Json
+          effects?: Json
+          id?: string
+          item_order?: Json
+          last_opened_at?: string
+          motion?: Json
+          project_type: string
+          property_address?: string | null
+          property_id?: string | null
+          quality?: string | null
+          revision?: number
+          rooms?: Json
+          selected?: Json
+          settings?: Json
+          status?: string
+          title?: string | null
+          titles?: Json
+          updated_at?: string
+          user_id: string
+          video_format?: string | null
+          video_project_id?: string | null
+        }
+        Update: {
+          assets?: Json
+          audio?: Json
+          branding?: Json
+          builder_step?: string | null
+          created_at?: string
+          crop?: Json
+          effects?: Json
+          id?: string
+          item_order?: Json
+          last_opened_at?: string
+          motion?: Json
+          project_type?: string
+          property_address?: string | null
+          property_id?: string | null
+          quality?: string | null
+          revision?: number
+          rooms?: Json
+          selected?: Json
+          settings?: Json
+          status?: string
+          title?: string | null
+          titles?: Json
+          updated_at?: string
+          user_id?: string
+          video_format?: string | null
+          video_project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_drafts_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_drafts_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           address_line_1: string | null
@@ -1976,14 +2078,17 @@ export type Database = {
           address_verified_at: string | null
           brand_kit_id: string | null
           branding: Json
+          builder_step: string | null
           city: string | null
           country: string | null
           created_at: string
           design_version_id: string | null
           disclosure: Json
+          draft_state: Json
           error_message: string | null
           formats: Json
           id: string
+          last_opened_at: string
           latitude: number | null
           length_preset: string
           longitude: number | null
@@ -2012,14 +2117,17 @@ export type Database = {
           address_verified_at?: string | null
           brand_kit_id?: string | null
           branding?: Json
+          builder_step?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
           design_version_id?: string | null
           disclosure?: Json
+          draft_state?: Json
           error_message?: string | null
           formats?: Json
           id?: string
+          last_opened_at?: string
           latitude?: number | null
           length_preset?: string
           longitude?: number | null
@@ -2048,14 +2156,17 @@ export type Database = {
           address_verified_at?: string | null
           brand_kit_id?: string | null
           branding?: Json
+          builder_step?: string | null
           city?: string | null
           country?: string | null
           created_at?: string
           design_version_id?: string | null
           disclosure?: Json
+          draft_state?: Json
           error_message?: string | null
           formats?: Json
           id?: string
+          last_opened_at?: string
           latitude?: number | null
           length_preset?: string
           longitude?: number | null
