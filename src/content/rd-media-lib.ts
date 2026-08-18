@@ -1134,21 +1134,70 @@ function closeDrawer() {
 
 /* ---------------- detail drawer ---------------- */
 
+/* Only the newest open request may paint, so fast clicking never leaves the
+   drawer showing a previous asset. */
+let DRAWER_SEQ = 0;
+
 async function openDetail(m, opts) {
   if (!m) return;
   const d = document.getElementById("mlDrawer");
   if (!d) return;
+  const seq = ++DRAWER_SEQ;
+  d.hidden = false;
+  d.innerHTML = `<div class="ml-dr-bg" data-close></div>
+  <aside class="ml-dr" role="dialog" aria-modal="true" aria-label="${esc(m.title)}">
+    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span>${esc(drawerSub(m))}</span></div>
+      <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="ml-dr-b"><div class="ml-dr-prev sk"></div>
+      <div class="ml-dr-meta">${'<div class="sk-row"></div>'.repeat(4)}</div></div>
+  </aside>`;
+  paint();
+  d.querySelectorAll("[data-close]").forEach((b: any) => (b.onclick = () => closeDrawer()));
+
+  let url = null;
+  let srcUrl = null;
+  try {
+    url = await resolvePhotoUrl(m.assetPath || m.path);
+    srcUrl = m.sourcePath ? await resolvePhotoUrl(m.sourcePath) : null;
+  } catch (_) {
+    if (seq !== DRAWER_SEQ) return;
+    const body = d.querySelector(".ml-dr-b");
+    if (body)
+      body.innerHTML = `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>Could Not Load This Item</b>
+        <span>The preview did not come back. Check your connection and try again.</span></div></div>
+        <div class="ml-dr-a"><button class="btn btn-primary btn-sm" data-again><i data-lucide="rotate-ccw"></i>Try Again</button>
+        <button class="btn btn-ghost btn-sm" data-close>Close</button></div>`;
+    paint();
+    d.querySelectorAll("[data-close]").forEach((b: any) => (b.onclick = () => closeDrawer()));
+    const again = d.querySelector("[data-again]") as any;
+    if (again) again.onclick = () => openDetail(m, opts);
+    return;
+  }
+  if (seq !== DRAWER_SEQ) return;
+
   const g = typeGroup(m.type);
   const proc = m.status === "processing" || m.status === "queued";
   const related = S.items.filter((x) => x.id !== m.id && x.property && x.property === m.property).slice(0, 6);
-  const url = await resolvePhotoUrl(m.assetPath || m.path);
-  const srcUrl = m.sourcePath ? await resolvePhotoUrl(m.sourcePath) : null;
   const compare = !!(opts && opts.compare && srcUrl);
-  d.hidden = false;
+  const settings = Object.entries(m.settings || {}).filter(([, v]) => v);
+  const rows = [
+    ["Status", m.draft ? "Draft" : STATUS_LABEL[m.status] || m.status],
+    ["Type", mediaTypeLabel(m)],
+    m.room && m.room !== "Needs Review" ? ["Room", m.room] : null,
+    ["Property", m.property ? addressDisplay(m.property) : "Unassigned"],
+    m.photoCount ? ["Photos", String(m.photoCount)] : null,
+    ["Created", fmtDate(m.createdAt)],
+    m.updatedAt && m.updatedAt !== m.createdAt ? ["Last Updated", fmtDate(m.updatedAt)] : null,
+    m.duration ? ["Duration", m.duration + "s"] : null,
+    m.aspect && g === "videos" ? ["Format", m.aspect] : null,
+    m.versions ? ["Versions", String(m.versions)] : null,
+  ].filter(Boolean) as any[];
+
   d.innerHTML = `<div class="ml-dr-bg" data-close></div>
-  <aside class="ml-dr" role="dialog" aria-label="${esc(m.title)}">
-    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span>${esc(m.property || "Unsorted Uploads")}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</span></div>
-      <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+  <aside class="ml-dr" role="dialog" aria-modal="true" aria-label="${esc(m.title)}">
+    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span>${esc(drawerSub(m))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</span></div>
+      <div class="ml-dr-hb">${canRename(m) ? `<button class="icon-btn" data-ren aria-label="Rename" title="Rename"><i data-lucide="type"></i></button>` : ""}
+      <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div></div>
     <div class="ml-dr-b">
       <div class="ml-dr-prev">${
         compare
@@ -1157,7 +1206,7 @@ async function openDetail(m, opts) {
             ? `<video src="${url}" controls playsinline style="width:100%;border-radius:10px"></video>`
             : url
               ? `<img src="${url}" alt="${esc(m.title)}">`
-              : `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || STATUS_LABEL[m.status])}</span></div>`
+              : `<div class="ml-proc"><i data-lucide="${m.draft ? "pencil-ruler" : "loader"}"></i><span>${esc(m.draft ? "No Preview Saved Yet" : stageLabel(m.stage) || STATUS_LABEL[m.status])}</span></div>`
       }</div>
       ${
         proc
@@ -1166,30 +1215,31 @@ async function openDetail(m, opts) {
           : ""
       }
       ${
+        m.draft
+          ? `<div class="ml-dr-note"><i data-lucide="pencil-ruler"></i><div><b>Unfinished Project</b><span>Saved at the ${esc(stepLabel(m.builderStep))} step. Pick up where you left off.</span></div></div>`
+          : ""
+      }
+      ${
         m.status === "failed"
           ? `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>${planBlocked(m) ? "Not Enough Credits" : "Render Failed"}</b><span>${esc(failReason(m))}</span></div></div>`
           : ""
       }
-      <div class="ml-dr-meta">
-        <div><span>Status</span><b>${STATUS_LABEL[m.status] || m.status}</b></div>
-        <div><span>Type</span><b>${g === "videos" ? "Listing Video" : g === "images" ? "Generated Image" : "Uploaded File"}</b></div>
-        <div><span>Created</span><b>${esc(fmtDate(m.createdAt))}</b></div>
-        ${m.duration ? `<div><span>Duration</span><b>${m.duration}s</b></div>` : ""}
-        ${m.aspect && g === "videos" ? `<div><span>Format</span><b>${esc(m.aspect)}</b></div>` : ""}
-        ${m.versions ? `<div><span>Versions</span><b>${m.versions}</b></div>` : ""}
-      </div>
+      <div class="ml-dr-meta">${rows.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div>
       ${srcUrl && !compare ? `<div class="ml-dr-sec"><b>Source Image</b><img src="${srcUrl}" alt="Source photo"></div>` : ""}
       ${
         g === "videos" && m.scenes && m.scenes.length
           ? `<div class="ml-dr-sec"><b>Scenes</b><ol class="ml-scenes">${m.scenes
-              .map((s) => `<li>${esc(s.room_name || "Scene")} <em class="mono">${Number(s.duration || 0)}s</em></li>`)
+              .map((s) => `<li>${esc(s.room_name || "Scene")} <em>${Number(s.duration || 0)}s</em></li>`)
               .join("")}</ol></div>`
           : ""
       }
-      <div class="ml-dr-sec"><b>Settings</b><div class="ml-kv">${Object.entries(m.settings || {})
-        .filter(([, v]) => v)
-        .map(([k, v]) => `<span>${esc(k)}</span><em>${esc(v)}</em>`)
-        .join("") || "<span>None recorded</span>"}</div></div>
+      ${
+        settings.length
+          ? `<div class="ml-dr-sec"><b>Settings</b><div class="ml-kv">${settings
+              .map(([k, v]) => `<span>${esc(k)}</span><em>${esc(v)}</em>`)
+              .join("")}</div></div>`
+          : ""
+      }
       ${
         related.length
           ? `<div class="ml-dr-sec"><b>Related Assets</b><div class="ml-rel">${related
@@ -1202,22 +1252,41 @@ async function openDetail(m, opts) {
   </aside>`;
   paint();
   hydrateThumbs(d);
-  d.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => closeDrawer()));
-  const bind = (sel, fn) => { const el = d.querySelector(sel); if (el) el.onclick = fn; };
+  d.querySelectorAll("[data-close]").forEach((b: any) => (b.onclick = () => closeDrawer()));
+  const bind = (sel, fn) => { const el = d.querySelector(sel) as any; if (el) el.onclick = fn; };
+  bind("[data-ren]", () => renameItem(m));
   bind("[data-dld]", () => download(m));
   bind("[data-shr]", () => openVideo(m, "share"));
   bind("[data-arc]", async () => { closeDrawer(); await archive([m]); });
   bind("[data-edit-img]", () => { closeDrawer(); editImage(m); });
   bind("[data-mkvid]", () => { closeDrawer(); videoFrom([m]); });
-  bind("[data-studio]", () => { closeDrawer(); S.go("studio"); });
+  bind("[data-cont]", () => { closeDrawer(); continueProject(m); });
   bind("[data-editvid]", () => { closeDrawer(); openVideo(m, "video"); });
   bind("[data-retry]", () => retry(m));
   bind("[data-upg]", () => openUpgrade(m));
   bind("[data-cancel]", () => cancelItem(m));
-  const more = d.querySelector("[data-more-dr]");
-  if (more) more.onclick = (ev) => { ev.stopPropagation(); popMenu(more, moreItems(m)); };
-  d.querySelectorAll("[data-rel]").forEach((b) => (b.onclick = () => openDetail(S.items.find((x) => x.id === b.dataset.rel))));
+  const more = d.querySelector("[data-more-dr]") as any;
+  if (more)
+    more.onclick = (ev) => {
+      ev.stopPropagation();
+      /* Never repeat what is already a button on this drawer. */
+      const skip = Array.from(d.querySelectorAll(".ml-dr-a button")).map((b: any) => b.textContent.trim());
+      popMenu(more, moreItems(m, { skip }));
+    };
+  d.querySelectorAll("[data-rel]").forEach((b: any) => (b.onclick = () => openDetail(S.items.find((x) => x.id === b.dataset.rel))));
+  const first = d.querySelector(".ml-dr-a button, .ml-dr-h .icon-btn") as any;
+  first && first.focus();
 }
+
+/** Address first, room second — never a raw record id. */
+function drawerSub(m) {
+  const addr = m.property ? addressDisplay(m.property) : "Unassigned";
+  const room = m.room && m.room !== "Needs Review" ? " · " + m.room : "";
+  return addr + room;
+}
+
+const STEP_LABEL = { intake: "Add Photos", photos: "Add Photos", scenes: "Scenes", motion: "Motion", effects: "Effects", audio: "Audio", branding: "Branding", review: "Review", canvas: "Design Canvas", rooms: "Review Rooms" };
+const stepLabel = (s) => STEP_LABEL[String(s || "")] || "first";
 
 /** Primary actions in the drawer differ by asset type and status. */
 function drawerActions(m, g, proc) {
@@ -1232,17 +1301,21 @@ function drawerActions(m, g, proc) {
   if (proc)
     return `${m.job ? `<button class="btn btn-ghost btn-sm" data-cancel><i data-lucide="x"></i>Cancel</button>` : ""}
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+  if (m.draft || isDesignDraft(m))
+    return `<button class="btn btn-primary btn-sm" data-cont><i data-lucide="play"></i>Continue Editing</button>
+      ${m.path ? `<button class="btn btn-ghost btn-sm" data-dld><i data-lucide="download"></i>Download</button>` : ""}
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
   if (g === "videos")
     return `<button class="btn btn-primary btn-sm" data-dld><i data-lucide="download"></i>Download</button>
       <button class="btn btn-ghost btn-sm" data-editvid><i data-lucide="pencil"></i>Edit Video</button>
       <button class="btn btn-ghost btn-sm" data-shr><i data-lucide="share-2"></i>Share</button>
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
   return `${canEditImage(m) ? `<button class="btn btn-primary btn-sm" data-edit-img><i data-lucide="sliders-horizontal"></i>Edit Image</button>` : ""}
-    <button class="btn btn-${canEditImage(m) ? "ghost" : "primary"} btn-sm" data-mkvid><i data-lucide="clapperboard"></i>Create Video</button>
-    <button class="btn btn-ghost btn-sm" data-studio><i data-lucide="wand-2"></i>Use In Studio</button>
+    ${videoReady(m) ? `<button class="btn btn-${canEditImage(m) ? "ghost" : "primary"} btn-sm" data-mkvid><i data-lucide="clapperboard"></i>Create Video</button>` : ""}
     <button class="btn btn-ghost btn-sm" data-dld><i data-lucide="download"></i>Download</button>
     <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
 }
+
 
 
 /* ---------------- assign to a property ---------------- */
