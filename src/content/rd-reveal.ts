@@ -2724,7 +2724,13 @@ function bind() {
     /* Typing marks the title as user-owned; the address can never overwrite it
        again. A blank field never blocks saving — the fallback covers it. */
     titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
-    titleIn.addEventListener("blur", () => { w.title = sanitizeTitle(w.title); titleIn.value = defaultTitle(w); });
+    titleIn.addEventListener("blur", () => {
+      w.title = sanitizeTitle(w.title);
+      titleIn.value = defaultTitle(w);
+      const note = titleIn.closest(".rv-sec, .rv-f")?.parentElement?.querySelector?.(".rv-sugt");
+      if (note && !titleSuggestion(w)) note.remove();
+      autosaveAddress(w);
+    });
   }
   on("[data-usetitle]", "click", () => {
     const s = titleSuggestion(w);
