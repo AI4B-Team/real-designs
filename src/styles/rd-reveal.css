@@ -681,7 +681,7 @@
    width of the workspace (container queries), never the viewport and never
    browser zoom: six complete cards on a desktop workspace, degrading cleanly
    to five, four, three, two and one. */
-.rd-app #v-reveal .rv-wiz { container-type: inline-size; container-name: rvwork; }
+.rd-app #v-reveal .rv-wiz, .rd-app .bx-work { container-type: inline-size; container-name: rvwork; }
 .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px 12px; }
 .rd-app .rv-grid > * { min-width: 0; }
 .rd-app .rv-grid .rv-tile-th img { width: 100%; height: 100%; object-fit: cover; }
@@ -692,7 +692,7 @@
 @container rvwork (min-width: 1120px) { .rd-app .rv-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
 @container rvwork (max-width: 359px) { .rd-app .rv-grid { grid-template-columns: minmax(0, 1fr); } }
 /* Give the grid more of the workspace at wide widths without shrinking chrome. */
-@media (min-width: 1440px) { .rd-app #v-reveal .rv-wiz { padding: 18px 14px 20px; } }
+@media (min-width: 1440px) { .rd-app #v-reveal .rv-wiz, .rd-app .bx-work { padding: 18px 14px 20px; } }
 
 
 

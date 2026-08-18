@@ -385,3 +385,21 @@
 /* Header: title left, property address and autosave status right. */
 .rds-ph-r { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; min-width: min(340px, 100%); }
 .rd-app .rds-ph-r .rd-addr-bar { width: 100%; flex: 1 1 auto; margin-right: 0; }
+
+
+/* ---- Review Rooms on the shared builder shell ----
+   The page borrows the video builder's rail, workspace panel, selection bar,
+   grid and sticky footer; only these few staging-specific bits are local. */
+.rd-app #v-staging .bx-work { padding: 16px 18px 18px; }
+.rd-app #v-staging .rds-save { font-size: .78rem; color: var(--mute-2, #6b6b76); margin-left: 10px; white-space: nowrap; }
+.rd-app #v-staging .rv-tile-kind.rds-state.warn { color: #9a6300; }
+.rd-app #v-staging .rv-tile-kind.rds-state.ok { color: #2f7d4f; }
+.rd-app #v-staging .rv-tile-th .rds-up,
+.rd-app #v-staging .rv-tile-th .rds-done {
+  position: absolute; left: 10px; bottom: 10px; z-index: 5; display: inline-flex; align-items: center; gap: 5px;
+  font-size: 11px; font-weight: 700; color: #fff; background: rgba(0,0,0,.66); border-radius: 6px; padding: 3px 8px;
+}
+.rd-app #v-staging .rv-tile-th .rds-up.bad { background: var(--red, #cc0000); }
+.rd-app #v-staging .rv-tile-th .rds-up svg,
+.rd-app #v-staging .rv-tile-th .rds-done svg { width: 12px; height: 12px; }
+.rd-app #v-staging .rv-tile.active .rv-tile-th { outline: 2px solid var(--red, #cc0000); outline-offset: 2px; }
