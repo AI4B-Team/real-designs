@@ -2299,6 +2299,9 @@ function previewPanel() {
     ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
     ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
     ${!block && !browserRenderSupport().ok ? `<div class="rv-note sm">${esc(browserRenderSupport().reason)} Nothing Is Charged Until A Render Actually Starts.</div>` : ""}
+    ${!w.busy && w.step === 7 && !runsInBackground() && browserRenderSupport().ok
+      ? `<div class="rv-note sm" id="rvTabNote"><i data-lucide="monitor"></i> Your Video Is Created In This Browser Tab. Keep This Tab Open Until It Finishes — Closing Or Refreshing Stops The Render And Returns Your Credits.</div>`
+      : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
