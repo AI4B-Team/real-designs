@@ -1178,6 +1178,7 @@ function ensureWizSaver(w) {
       else delete body.project.id;
       const saved = await saveVideo(body);
       w.editingId = saved.id;
+      rememberActiveBuilder(saved.id);
       return saved;
     },
     onState: (state) => {
@@ -3964,6 +3965,32 @@ export async function startDesignVideo(design = {}) {
 }
 
 /** Continue a saved design-video draft from Media or the library. */
+const ACTIVE_KEY = "rd_reveal_active";
+
+/* A refresh mid-build must come back to the same project, so the id of the
+   project currently open in the builder is remembered locally. The work
+   itself lives on the server; this is only a pointer. */
+function rememberActiveBuilder(id) {
+  try { if (id) localStorage.setItem(ACTIVE_KEY, String(id)); } catch (_) {}
+}
+export function forgetActiveBuilder() {
+  try { localStorage.removeItem(ACTIVE_KEY); } catch (_) {}
+}
+
+/** Reopen the project that was open in the builder before a refresh. */
+export async function resumeActiveBuilder() {
+  let id = "";
+  try { id = localStorage.getItem(ACTIVE_KEY) || ""; } catch (_) { return false; }
+  if (!id) return false;
+  try {
+    await continueDesignVideo(id);
+    return true;
+  } catch (_) {
+    forgetActiveBuilder();
+    return false;
+  }
+}
+
 export async function continueDesignVideo(id) {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");

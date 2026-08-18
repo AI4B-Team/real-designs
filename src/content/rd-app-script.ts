@@ -105,7 +105,7 @@ try{
   setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
 }catch(_){}
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
-import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo, resetReveal } from "@/content/rd-reveal";
+import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo, resetReveal, resumeActiveBuilder, forgetActiveBuilder } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
@@ -221,7 +221,13 @@ function go(v,fromHash){
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
-  if(v==='lvideo'){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
+  if(v==='lvideo'){
+    /* A refresh lands here with work already saved on the server: reopen that
+       project instead of dropping the user into an empty builder. */
+    const fresh=!!(window as any).__rdFreshBuilder; (window as any).__rdFreshBuilder=false;
+    if(fresh){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
+    else{ void (async()=>{ try{ if(!(await resumeActiveBuilder())) createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){} } })(); }
+  }
 
   if(v==='studio'){
     try{ paintStudioSub(); paintStudioState(); }catch(_){}
@@ -249,7 +255,7 @@ function go(v,fromHash){
      when a deep link was redirected (stale #v-reveal, unknown keys), so a
      refresh or a copied link never lands somewhere else. */
   try{
-    const h='#v-'+(acctAlias && viewId==='account' ? acctAlias : viewId);
+    const h='#v-'+(acctAlias && viewId==='account' ? acctAlias : v==='lvideo' ? 'lvideo' : viewId);
     if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
   }catch(_){}
 
