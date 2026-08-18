@@ -4,14 +4,27 @@
  * The buckets are infrastructure, not user data: when one is missing every
  * upload fails with a raw "Bucket not found" from the storage API, which tells
  * an end user nothing and an administrator almost as little. This check runs
- * server-side, logs a precise administrator message naming the missing bucket
- * and the migration that creates it, and hands the caller a short, non
- * technical sentence to show in the UI.
+ * server-side and reports one stage per bucket so an operator can tell the
+ * four incidents apart:
+ *
+ *   bucket missing | policy/access failure | upload failure | signed URL failure
+ *
+ * The deep probe writes a few bytes to "_healthcheck/<uuid>" inside the bucket
+ * and removes it again; it never reads, rewrites or deletes stored user files.
  */
 
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import {
+  REQUIRED_BUCKETS,
+  classifyStorageError,
+  missingCommands,
+  stageDetail,
+  userMessageFor,
+  type BucketStage,
+  type PolicyRow,
+} from "@/lib/storage-health-stages";
 
-export const REQUIRED_BUCKETS = ["room-photos", "reveal-videos", "user-audio"] as const;
+export { REQUIRED_BUCKETS };
 
 export type StorageHealth = {
   ok: boolean;
@@ -21,9 +34,9 @@ export type StorageHealth = {
   adminMessage: string | null;
   missing: string[];
   publicBuckets: string[];
+  /** One entry per required bucket, naming the precise failing stage. */
+  stages: BucketStage[];
 };
-
-const HEALTHY: StorageHealth = { ok: true, userMessage: null, adminMessage: null, missing: [], publicBuckets: [] };
 
 /* A healthy result is cached briefly so the check can sit in front of upload
    paths without adding a round trip to every request. Failures are not cached,
@@ -31,50 +44,90 @@ const HEALTHY: StorageHealth = { ok: true, userMessage: null, adminMessage: null
 let cached: { at: number; value: StorageHealth } | null = null;
 const TTL_MS = 5 * 60 * 1000;
 
-export async function checkStorageHealth(force = false): Promise<StorageHealth> {
-  if (!force && cached && Date.now() - cached.at < TTL_MS) return cached.value;
+export type HealthOptions = { force?: boolean; deep?: boolean };
+
+export async function checkStorageHealth(opts: boolean | HealthOptions = {}): Promise<StorageHealth> {
+  const { force = false, deep = false } = typeof opts === "boolean" ? { force: opts } : opts;
+  if (!force && !deep && cached && Date.now() - cached.at < TTL_MS) return cached.value;
 
   const { data, error } = await supabaseAdmin.storage.listBuckets();
   if (error) {
-    const admin = `Storage is unreachable: ${error.message}. Verify the backend is running and the service role key is valid.`;
-    console.error("[storage-health] " + admin);
-    return { ok: false, userMessage: genericFailure(), adminMessage: admin, missing: [], publicBuckets: [] };
+    return finish(
+      REQUIRED_BUCKETS.map((b) => ({ bucket: b, kind: "unreachable" as const, detail: stageDetail("unreachable", b, error.message) })),
+      false,
+    );
   }
 
   const byId = new Map((data ?? []).map((b) => [b.id, b]));
-  const missing = REQUIRED_BUCKETS.filter((b) => !byId.has(b));
-  /* These buckets hold private client property media; a public one is a
-     misconfiguration worth reporting even though it does not break uploads. */
-  const publicBuckets = REQUIRED_BUCKETS.filter((b) => byId.get(b)?.public === true);
+  const policies = await loadPolicies();
+  const stages: BucketStage[] = [];
 
-  if (!missing.length && !publicBuckets.length) {
-    cached = { at: Date.now(), value: HEALTHY };
-    return HEALTHY;
+  for (const bucket of REQUIRED_BUCKETS) {
+    const row = byId.get(bucket);
+    if (!row) {
+      stages.push({ bucket, kind: "bucket_missing", detail: stageDetail("bucket_missing", bucket) });
+      continue;
+    }
+    if (row.public === true) {
+      stages.push({ bucket, kind: "bucket_public", detail: stageDetail("bucket_public", bucket) });
+      continue;
+    }
+    if (policies) {
+      const gaps = missingCommands(bucket, policies);
+      if (gaps.length) {
+        stages.push({ bucket, kind: "policy_failure", detail: stageDetail("policy_failure", bucket, `no ${gaps.join("/")} rule`) });
+        continue;
+      }
+    }
+    stages.push(deep ? await probe(bucket) : { bucket, kind: "ok", detail: stageDetail("ok", bucket) });
   }
 
-  const parts: string[] = [];
-  if (missing.length) {
-    parts.push(
-      `Missing required storage bucket(s): ${missing.join(", ")}. ` +
-        `Create each one as a PRIVATE bucket with the same id; the storage.objects policies already in the ` +
-        `database then apply unchanged. Creating a bucket never touches objects that already exist.`,
-    );
-  }
-  if (publicBuckets.length) {
-    parts.push(`Bucket(s) ${publicBuckets.join(", ")} are PUBLIC but must be private; property media is served through signed URLs only.`);
-  }
-  const adminMessage = parts.join(" ");
-  console.error("[storage-health] " + adminMessage);
-
-  return { ok: false, userMessage: missing.length ? genericFailure() : null, adminMessage, missing, publicBuckets };
+  return finish(stages, !deep);
 }
 
-function genericFailure(): string {
-  return "Uploads are temporarily unavailable. Please try again shortly — our team has been notified.";
+/** Write-read-delete round trip against a disposable path inside the bucket. */
+async function probe(bucket: string): Promise<BucketStage> {
+  const path = `_healthcheck/${crypto.randomUUID()}.txt`;
+  const body = new Blob(["ok"], { type: "text/plain" });
+
+  const up = await supabaseAdmin.storage.from(bucket).upload(path, body, { contentType: "text/plain", upsert: false });
+  if (up.error) {
+    const kind = classifyStorageError(up.error.message, "upload_failure");
+    return { bucket, kind, detail: stageDetail(kind, bucket, up.error.message) };
+  }
+
+  const signed = await supabaseAdmin.storage.from(bucket).createSignedUrl(path, 60);
+  await supabaseAdmin.storage.from(bucket).remove([path]);
+
+  if (signed.error || !signed.data?.signedUrl) {
+    const msg = signed.error?.message ?? "no url returned";
+    return { bucket, kind: "signed_url_failure", detail: stageDetail("signed_url_failure", bucket, msg) };
+  }
+  return { bucket, kind: "ok", detail: stageDetail("ok", bucket) };
+}
+
+async function loadPolicies(): Promise<PolicyRow[] | null> {
+  const { data, error } = await supabaseAdmin.rpc("storage_policy_report" as never);
+  if (error || !Array.isArray(data)) return null; // report unavailable — skip this stage rather than guess
+  return data as PolicyRow[];
+}
+
+function finish(stages: BucketStage[], cacheable: boolean): StorageHealth {
+  const missing = stages.filter((s) => s.kind === "bucket_missing").map((s) => s.bucket);
+  const publicBuckets = stages.filter((s) => s.kind === "bucket_public").map((s) => s.bucket);
+  const bad = stages.filter((s) => s.kind !== "ok");
+  const ok = bad.length === 0;
+  const adminMessage = ok ? null : bad.map((s) => s.detail).join(" ");
+  if (adminMessage) console.error("[storage-health] " + adminMessage);
+
+  const value: StorageHealth = { ok, userMessage: userMessageFor(stages), adminMessage, missing, publicBuckets, stages };
+  if (ok && cacheable) cached = { at: Date.now(), value };
+  return value;
 }
 
 /** Throw the user-safe message when storage cannot accept files. */
 export async function assertStorageReady(): Promise<void> {
   const health = await checkStorageHealth();
-  if (!health.ok && health.missing.length) throw new Error(health.userMessage ?? genericFailure());
+  const blocking = health.stages.some((s) => s.kind === "bucket_missing" || s.kind === "policy_failure" || s.kind === "unreachable");
+  if (blocking) throw new Error(health.userMessage ?? "Uploads are temporarily unavailable. Please try again shortly.");
 }

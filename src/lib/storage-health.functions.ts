@@ -23,6 +23,9 @@ export const getStorageHealth = createServerFn({ method: "GET" })
     return {
       ok: health.ok,
       message: health.userMessage,
-      ...(isAdmin ? { adminMessage: health.adminMessage, missing: health.missing, publicBuckets: health.publicBuckets } : {}),
+      ...(isAdmin
+        ? { adminMessage: health.adminMessage, missing: health.missing, publicBuckets: health.publicBuckets, stages: health.stages }
+        : {}),
     };
+
   });
