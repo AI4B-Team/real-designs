@@ -288,6 +288,23 @@ export const getPropertyTree = createServerFn({ method: "GET" })
       asset_count: Number(
         Array.isArray(p.property_media_assets) ? (p.property_media_assets[0]?.count ?? 0) : 0,
       ),
+      /* Upload-only properties keep their photos here, not under rooms, so the
+         source picker can show real thumbnails and a real photo list. */
+      assets: (Array.isArray(p.media) ? p.media : [])
+        .filter((a: any) => a && a.storage_path && !a.hidden)
+        .slice()
+        .sort(
+          (a: any, b: any) =>
+            (a.sort_order ?? 0) - (b.sort_order ?? 0) ||
+            String(a.created_at).localeCompare(String(b.created_at)),
+        )
+        .map((a: any) => ({
+          id: a.id as string,
+          path: a.storage_path as string,
+          name: (a.original_filename ?? null) as string | null,
+          room: (a.room_group ?? null) as string | null,
+        })),
+
 
       has_dna: Array.isArray(p.design_dna?.items) && p.design_dna.items.length > 0,
       dna: (Array.isArray(p.design_dna?.items) ? p.design_dna.items : []) as {
