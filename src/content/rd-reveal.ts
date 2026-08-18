@@ -2077,7 +2077,7 @@ function addCardHtml(id) {
     <button type="button" class="rv-addcard-b" id="${id}" aria-label="Add More Photos">
       <i data-lucide="image-plus"></i>
       <b>Add More Photos</b>
-      <em>Upload, import, or choose from Media</em>
+      <em>Upload, Import, or Use Media</em>
       <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
     </button>
   </div>`;
