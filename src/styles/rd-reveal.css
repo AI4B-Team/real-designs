@@ -848,7 +848,9 @@
 }
 
 /* ---------- Optional Property Address ---------- */
-.rd-app .rv-head-tools { flex: 1 1 auto; }
+/* Header tools hug the right edge, sitting just left of the More menu. */
+.rd-app .rv-head-tools { flex: 1 1 auto; justify-content: flex-end; align-items: center; }
+.rd-app .rv-headmore { align-self: center; margin-left: 4px; }
 .rd-app .rd-addr-bar { display: flex; align-items: center; gap: 8px; margin-right: auto; min-width: 220px; flex: 0 1 380px; }
 .rd-app .rd-addr-in { position: relative; display: flex; align-items: center; width: 100%; }
 .rd-app .rd-addr-in i { position: absolute; left: 10px; width: 15px; height: 15px; color: var(--muted); pointer-events: none; }
