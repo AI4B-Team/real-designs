@@ -10,7 +10,9 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
 import { updateMediaAssets, deleteMediaAssets, listMediaProperties, createMediaProperty } from "@/lib/property-media.functions";
 import { assignMediaToProperty } from "@/lib/media-assign.functions";
-import { addressDisplay, buildAddress } from "@/lib/property-address";
+import { addressDisplay } from "@/lib/property-address";
+import { openAddressModal } from "@/lib/address-modal";
+import { suggestAddresses } from "@/lib/property-address.functions";
 import { filterMedia, propertyOptions, assignKind, isAssignable } from "@/lib/media-view";
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
@@ -799,26 +801,46 @@ async function renameItem(m) {
   await load(true);
 }
 
-/** Edit the optional property address on a video project. */
+/** Edit the optional property address on a video project.
+    Uses the shared address modal: no native prompt, title untouched. */
 async function changeAddress(m) {
-  const next = window.prompt("Property Address", m.address || "");
-  if (next === null) return;
-  const built = buildAddress({ property_address: next });
-  try {
-    const cur = await getVideo({ data: { id: m.refId } });
-    const project = {};
-    PROJECT_KEYS.forEach((k) => {
-      if (cur.project[k] !== null && cur.project[k] !== undefined) project[k] = cur.project[k];
-    });
-    project.property_address = built.property_address;
-    project.normalized_address = built.normalized_address;
-    project.address_source = built.property_address ? "manual" : "unknown";
-    await saveVideo({ data: { project } });
-    toast(built.property_address ? "Address Saved." : "Address Removed.");
-  } catch (e) {
-    window.alert("Could not save that address: " + (e && e.message ? e.message : "try again"));
-  }
-  await load(true);
+  openAddressModal({
+    address: m.address || "",
+    propertyId: m.propertyId || null,
+    properties: S.propList || [],
+    subtitle: "Optional. Changing the address never renames your project.",
+    suggest: async (q) => {
+      try {
+        const res = await suggestAddresses({ data: { q } });
+        return (res && res.suggestions) || [];
+      } catch (_) {
+        return (S.propList || []).filter((p) => !q || String(p.address || "").toLowerCase().includes(String(q).toLowerCase()));
+      }
+    },
+    onSave: async (r) => {
+      const cur = await getVideo({ data: { id: m.refId } });
+      const project = {};
+      PROJECT_KEYS.forEach((k) => {
+        if (cur.project[k] !== null && cur.project[k] !== undefined) project[k] = cur.project[k];
+      });
+      /* Title is a separate field and is never derived from the address here. */
+      project.property_address = r.columns.property_address;
+      project.normalized_address = r.columns.normalized_address;
+      project.address_source = r.columns.address_source;
+      if (r.assignmentChanged) project.property_id = r.propertyId;
+      await saveVideo({ data: { project } });
+      /* Assignment moves the record into the property's tab, or back to
+         Unassigned — the draft and its media are never deleted. */
+      if (r.assignmentChanged && isAssignable(m)) {
+        await assignMediaToProperty({ data: { items: [{ kind: assignKind(m), id: m.refId }], property_id: r.propertyId || null } });
+      }
+    },
+    onDone: async (r) => {
+      toast(r.address ? "Address Saved." : "Address Removed.");
+      await load(true);
+      emitMediaChange();
+    },
+  });
 }
 
 async function del(m) {
