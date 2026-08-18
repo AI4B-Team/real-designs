@@ -703,7 +703,65 @@ async function loadWizardAssets() {
     }
     w.seedPaths = null;
   }
+  /* Saved scenes are part of the grid, always. */
+  adoptSavedScenes(w);
   syncSceneOrder();
+}
+
+/**
+ * One authoritative grid collection.
+ *
+ * Scenes hydrated from the database carry their own row id as key and their
+ * source photo may come from a property, an upload, a design or a picker.
+ * The asset loaders above only rebuild what the *current* sources expose, so a
+ * saved project could end up with selected scenes and an empty grid
+ * ("8 of 0 selected"). Every saved scene is therefore adopted into
+ * `w.available` / `w.gridOrder`: matched to an existing asset by storage path
+ * when possible (the asset takes the scene's identity so clips, frames and
+ * transitions keep pointing at the same key), otherwise reconstructed from the
+ * scene record itself. Nothing is ever filtered out for a missing room type,
+ * a custom room type or an unfamiliar source.
+ */
+function adoptSavedScenes(w) {
+  if (!w) return false;
+  const out = w.available || [];
+  const order = Array.isArray(w.gridOrder) ? w.gridOrder : [];
+  const keys = new Set(out.map((a) => a.key));
+  const inOrder = new Set(order);
+  const byPath = new Map();
+  for (const a of out) if (a.path && !byPath.has(a.path)) byPath.set(a.path, a);
+  let changed = false;
+  const place = (key) => { if (key && !inOrder.has(key)) { order.push(key); inOrder.add(key); changed = true; } };
+  for (const s of w.scenes || []) {
+    if (!s || !s.key) continue;
+    if (keys.has(s.key)) { place(s.key); continue; }
+    const hit = s.path ? byPath.get(s.path) : null;
+    if (hit) {
+      /* Same photo, one card: the grid asset adopts the saved scene identity. */
+      const from = hit.key;
+      hit.key = s.key;
+      keys.delete(from); keys.add(s.key);
+      const i = order.indexOf(from);
+      if (i >= 0) { order[i] = s.key; inOrder.delete(from); inOrder.add(s.key); }
+      place(s.key);
+      changed = true;
+      continue;
+    }
+    const room = s.room || UNSORTED;
+    const a = {
+      key: s.key, path: s.path || "", compare: s.compare || null, room,
+      kind: s.kind || (s.scene_type === "design" ? "Design" : "Original"),
+      group: groupFor(room === UNSORTED ? "" : room, ""),
+      asset_id: s.asset_id || null, version_id: s.version_id || null,
+      disclosure: s.disclosure || null, flags: [], saved: true,
+    };
+    out.push(a); keys.add(a.key); if (a.path) byPath.set(a.path, a);
+    place(a.key);
+    changed = true;
+  }
+  w.available = out;
+  w.gridOrder = order;
+  return changed;
 }
 
 /* The builder is organised as six named sections in a left rail. Internally
@@ -2120,7 +2178,12 @@ function stepSelect() {
      under each photo and never splits the layout into sections. */
   const grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
 
-  const all = w.available.length > 0 && w.scenes.length === w.available.length;
+  /* Every count on this page reads the same ordered collection. */
+  const projectScenes = ordered;
+  const selectedKeys = new Set(w.scenes.map((s) => s.key));
+  const totalCount = projectScenes.length;
+  const selectedCount = projectScenes.filter((a) => selectedKeys.has(a.key)).length;
+  const all = totalCount > 0 && selectedCount === totalCount;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
 
   /* "Organizing photos" means work is genuinely running. A stale flag can
@@ -2133,7 +2196,7 @@ function stepSelect() {
   ${organizeFailed ? `<div class="rv-notice"><i data-lucide="triangle-alert"></i><span>Photos could not be organized automatically. Your photos are all here — you can arrange them yourself.</span><button class="fb-link" id="rvRetryOrg">Try Again</button></div>` : ""}
   ${w.enrichNotice ? `<div class="rv-notice"><i data-lucide="info"></i><span>${esc(w.enrichNotice)}</span><button class="fb-link" id="rvEnrichX">Dismiss</button></div>` : ""}
   <div class="rv-utility">
-    <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
+    <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${selectedCount} of ${totalCount} selected</b></label>
     <div class="rv-utility-m">${addressBarHtml(w, S.tree || [], "rvAddrBar")}</div>
     <div class="rv-utility-a">
       <button class="btn btn-ghost btn-sm" id="rvAuto"><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
@@ -2150,7 +2213,8 @@ function stepSelect() {
     </div>
   </div>
 
-  <div class="rv-grid ${orient}">${grid || `<div class="rv-note">No Content Found For This Source.</div>`}</div>
+  <div class="rv-grid ${orient}">${grid}</div>
+  ${!totalCount && !organizing ? `<div class="rv-empty"><i data-lucide="images"></i><h3>No Photos In This Video Yet</h3><p>Add photos to begin building your scenes.</p><div class="rv-empty-a"><button class="btn btn-primary" id="rvEmptyAdd"><i data-lucide="plus"></i>Add Photos</button></div></div>` : ""}
   <div class="rv-gridfoot">
     <div class="rv-count">
       <span>${w.scenes.length} ${w.scenes.length === 1 ? "scene" : "scenes"} · ${total} sec · ${creditTotal()} credits</span>
