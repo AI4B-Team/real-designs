@@ -86,7 +86,7 @@ import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
 import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
-import { defaultVideoTitle, cleanAddressText } from "@/lib/property-address";
+import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
