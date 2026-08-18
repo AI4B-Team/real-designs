@@ -14,7 +14,20 @@ export const CLIP_MODEL = "google/veo-3.1-lite";
 export const CLIP_BUCKET = "reveal-videos";
 const SOURCE_BUCKET = "room-photos";
 
-export type ClipRow = Record<string, any>;
+export type ClipRow = {
+  id: string;
+  user_id: string;
+  video_project_id: string;
+  scene_key: string | null;
+  status: string;
+  progress: number | null;
+  provider_job_id: string | null;
+  storage_path: string | null;
+  credits_charged: number;
+  credits_refunded: number;
+  completed_at: string | null;
+  [key: string]: any;
+};
 
 function apiKey(): string {
   const k = process.env["LOVABLE_API_KEY"];
