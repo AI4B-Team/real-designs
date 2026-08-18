@@ -1693,20 +1693,22 @@
 .rd-app .sp-composer{position:relative;width:100%;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px 14px 52px;transition:border-color .15s ease,box-shadow .15s ease}
 .rd-app .sp-composer:focus-within{border-color:var(--red,#c00);box-shadow:0 0 0 3px rgba(204,0,0,.10)}
 .rd-app .sp-composer.is-busy{opacity:.9}
-.rd-app .sp-describe textarea{width:100%;min-height:76px;max-height:260px;padding:0;border:0;background:transparent;font:inherit;font-size:.92rem;line-height:1.5;resize:none;outline:none;overflow-y:auto}
+.rd-app .sp-describe textarea{width:100%;min-height:82px;max-height:260px;padding:0;border:0;background:transparent;font:inherit;font-size:.92rem;line-height:1.5;resize:none;outline:none;overflow-y:auto;overflow-wrap:break-word;word-break:normal}
 .rd-app .sp-composer-a{position:absolute;right:12px;bottom:11px}
 .rd-app .sp-create{display:inline-flex;align-items:center;gap:7px}
 .rd-app .sp-create i{width:15px;height:15px}
-.rd-app .sp-create em{font-style:normal;opacity:.72;font-size:.76rem}
-.rd-app .sp-create[disabled]{opacity:.45;cursor:not-allowed}
+.rd-app .sp-create em{font-style:normal;opacity:.8;font-size:.76rem}
+.rd-app .sp-create:not([disabled]){background:var(--red,#c00);border-color:var(--red,#c00);color:#fff;opacity:1}
+.rd-app .sp-create[disabled]{background:rgba(204,0,0,.30);border-color:transparent;color:#fff;opacity:1;cursor:not-allowed}
 .rd-app .sp-spin{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:sp-spin .7s linear infinite}
 @keyframes sp-spin{to{transform:rotate(360deg)}}
 .rd-app .sp-chips{display:flex;flex-wrap:wrap;gap:8px}
-.rd-app .sp-chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:.79rem;color:var(--mute-2);cursor:pointer}
-.rd-app .sp-chip:hover{border-color:var(--red,#c00);color:var(--ink,inherit)}
+.rd-app .sp-chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:.79rem;font-weight:500;color:var(--ink,#111);cursor:pointer}
+.rd-app .sp-chip:hover{border-color:var(--red,#c00);color:var(--red,#c00)}
 .rd-app .sp-describe p{margin:0;font-size:.82rem;color:var(--mute-2)}
 @media (max-width:560px){
-  .rd-app .sp-composer{padding-bottom:56px}
+  .rd-app .sp-composer{padding:12px 12px 52px}
+  .rd-app .sp-describe textarea{font-size:.88rem;min-height:88px}
   .rd-app .sp-composer-a{right:10px;bottom:10px}
 }
 
