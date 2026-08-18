@@ -302,12 +302,37 @@ export function ensureStagingView() {
   return !!host();
 }
 
+/* Every mount of the staging view gets a generation. Restoration started
+   under an older generation may not move the user: by the time it resolves
+   they may be in Media, Properties or the video builder. */
+let mountGen = 0;
+let restoring: Promise<"restored" | "none" | "error"> | null = null;
+
+/** True while the canonical Photo Design route is still the visible page. */
+function onStagingRoute() {
+  try {
+    const isView = (window as any).__rdIsView;
+    if (typeof isView === "function") return !!isView("staging");
+  } catch (_) {}
+  const raw = (location.hash || "").replace(/^#/, "").replace(/^v-/, "");
+  return raw === "staging";
+}
+
 /** Router hook: the staging view became visible again (back button, refresh). */
 export function mountStagingView() {
+  const gen = ++mountGen;
   if (!S) {
-    /* Nothing in flight: try the saved draft, otherwise hand the user back. */
-    void resumeStagingDraft().then((ok) => {
-      if (!ok) { try { window.__rdGo && window.__rdGo("studio"); } catch (_) {} }
+    /* Nothing in flight: try the saved draft, otherwise hand the user back.
+       Only one restoration runs at a time, and only a confirmed "no draft
+       exists while Photo Design is still the active page" returns to Studio.
+       A network or auth failure leaves the user exactly where they are. */
+    if (!restoring) restoring = resumeStagingDraftResult().finally(() => { restoring = null; });
+    void restoring.then((result) => {
+      if (result !== "none") return;
+      if (gen !== mountGen) return;
+      if (hasStagingSession()) return;
+      if (!onStagingRoute()) return;
+      try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
     });
     return;
   }
@@ -317,9 +342,12 @@ export function mountStagingView() {
 }
 
 export function detachStagingView() {
+  /* Anything restoring for the page we are leaving is now stale. */
+  mountGen++;
   closePopover();
   try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
 }
+
 
 /* Scroll position survives a trip into the canvas and back. */
 let scrollY = 0;
@@ -487,20 +515,29 @@ function hydrate(draft) {
  * Reopen the most recent staging draft for this account. Called after sign-in
  * and on app boot, so a refresh, a new browser or another device all land back
  * on the same work.
+ *
+ * The result distinguishes the three outcomes that matter to routing:
+ *   "restored" — a draft was hydrated and is on screen
+ *   "none"     — the server answered and there is genuinely no draft
+ *   "error"    — network/auth failure; nothing is known, so nothing may move
  */
-export async function resumeStagingDraft(id) {
+export async function resumeStagingDraftResult(id?): Promise<"restored" | "none" | "error"> {
   try {
     /* One-time lift of any legacy browser-only draft, server-confirmed first. */
     await migrateLegacyStagingDraft({ save: (payload) => saveProjectDraft({ data: payload }) });
   } catch (_) {}
+  let draft = null;
   try {
-    let draft = null;
     if (id) draft = (await getProjectDraft({ id })).draft;
     else {
       const res = await listProjectDrafts({ project_type: "photo_staging", scope: "drafts", limit: 1 });
       draft = (res.drafts || [])[0] || null;
     }
-    if (!draft || !(draft.assets || []).length) return false;
+  } catch (_) {
+    return "error";
+  }
+  if (!draft || !(draft.assets || []).length) return "none";
+  try {
     hydrate(draft);
     show();
     /* A draft saved on the canvas reopens on that exact photo. */
@@ -509,11 +546,16 @@ export async function resumeStagingDraft(id) {
       S.resumeKey = null;
       void openInCanvas(key);
     }
-    return true;
+    return "restored";
   } catch (_) {
-    return false;
+    return "error";
   }
 }
+
+export async function resumeStagingDraft(id?) {
+  return (await resumeStagingDraftResult(id)) === "restored";
+}
+
 
 /** Reopen the review grid from the canvas strip. */
 export function reopenStaging() {
@@ -1605,6 +1647,7 @@ registerCardMenu("photo", {
       });
       /* Route through the shell so this counts as one intentional
          navigation instead of a raw hash write the router has to react to. */
+      try { (window as any).__rdNewVideo && (window as any).__rdNewVideo(); } catch (_) {}
       goApp("lvideo");
       return void cmToast("Sent To The Video Builder.");
     }

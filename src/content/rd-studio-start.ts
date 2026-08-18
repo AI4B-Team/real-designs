@@ -1195,6 +1195,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       return;
     }
     try {
+      (window as any).__rdNewVideo?.();
       (window as any).__rdGo?.("lvideo");
     } catch (_) {
       window.location.href = "/app/media/video/new?source=listing";

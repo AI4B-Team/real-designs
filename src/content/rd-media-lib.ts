@@ -277,6 +277,7 @@ export function openVideoWorkflow(seed = {}) {
     return;
   }
   try {
+    (window as any).__rdNewVideo && (window as any).__rdNewVideo();
     (window as any).__rdGo && (window as any).__rdGo("lvideo");
   } catch (_) {}
 }

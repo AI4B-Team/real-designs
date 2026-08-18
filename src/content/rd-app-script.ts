@@ -109,6 +109,8 @@ try{
   setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
 }catch(_){}
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
+import { beginNavigation as navBegin, retargetNavigation as navRetarget, isCurrentNavigation as navIsCurrent, navView as navViewName } from "@/lib/app-nav";
+
 import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo, resetReveal, resumeActiveBuilder, forgetActiveBuilder } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountSourcePicker } from "@/lib/source-picker";
@@ -168,12 +170,16 @@ staging:['Photo Staging','Add photos, confirm rooms, then design']};
 const ACCT_ALIAS={account:'profile',team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
-/* Only the very first route after a page load may reopen a saved builder
-   session; later in-app navigation always starts a fresh project. */
+/* The first route after a page load may reopen a saved builder session. */
 let __bootRoute=true;
-let __allowReveal=0;
-try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
+/* Opening the video workspace is explicit intent, not a timing window: the
+   flag is set immediately before navigating and consumed by that navigation. */
+let __revealIntent:''|'open'|'new'='';
+try{ (window as any).__rdAllowReveal=()=>{ __revealIntent='open'; }; }catch(_){}
+try{ (window as any).__rdNewVideo=()=>{ __revealIntent='new'; }; }catch(_){}
 try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
+
+
 /* Views mount their content asynchronously, and the browser's scroll
    anchoring pulls the page back to roughly where it was once that content
    lands. Pinning the top on the next few frames keeps every page open at
@@ -198,7 +204,7 @@ let STUDIO_MODE:any=GENERIC_STUDIO;
 let __navSeq=0;
 let __navView='';
 /**
- * One monotonic navigation sequence for the whole app.
+ * One monotonic navigation sequence for the whole app (see src/lib/app-nav.ts).
  *
  * Every intentional navigation bumps it and records the destination. Any
  * asynchronous work (startup routing, builder restoration, preference loads,
@@ -206,17 +212,22 @@ let __navView='';
  * before it is allowed to move the user. An older callback simply does
  * nothing instead of yanking the page away from where the user went.
  */
-function beginNavigation(view){
-  __navSeq+=1;
-  __navView=String(view||'');
+function beginNavigation(view,reason?,source?){
+  __navSeq=navBegin(view,{reason:reason||'user',source:source||'app_router',userInitiated:reason!=='startup_preference'});
+  __navView=navViewName();
   return __navSeq;
 }
-/** True while the newest navigation intent is the video builder itself. */
-function inBuilderRoute(){ return __navView==='lvideo'||__navView==='reveal'; }
-function isCurrentNavigation(sequence,view){
-  if(sequence!==__navSeq) return false;
-  return view===undefined||view===null||String(view)===__navView;
+/** The router remapped the destination; keep the recorded route truthful. */
+function retargetNavigation(view){
+  navRetarget(view,'unknown');
+  __navView=navViewName();
 }
+/** True while the newest navigation intent is the video builder itself. */
+function inBuilderRoute(){ return navViewName()==='lvideo'||navViewName()==='reveal'; }
+function isCurrentNavigation(sequence,view){
+  return navIsCurrent(sequence,view===undefined?null:view);
+}
+
 function studioMode(){ return STUDIO_MODE; }
 function inPhotoCanvas(){ return isPhotoCanvas(STUDIO_MODE); }
 /** Canonical route test: tolerates the legacy "#studio" form during migration. */
@@ -284,17 +295,20 @@ function go(v,fromHash){
     window.setTimeout(applyPane,0);
   }else if(v!=='account'){ __paneSeq++; }
   const bootRoute=__bootRoute; __bootRoute=false;
+  /* One-shot: the intent belongs to this navigation only. */
+  const intent=__revealIntent; __revealIntent='';
   const revealLive=(()=>{ try{ return !!((window as any).__rdRevealBusy && (window as any).__rdRevealBusy()); }catch(_){ return false; } })();
-  if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){
-    /* On the first route after a page load, a remembered builder session wins:
-       a refresh mid-build returns to that project instead of the library. */
+  if(v==='reveal' && !revealLive && !intent){
+    /* Nobody asked for the workspace: a remembered builder session reopens on
+       the first route after a page load, otherwise Media's Videos tab shows. */
     let saved=''; try{ saved=localStorage.getItem('rd_reveal_active')||''; }catch(_){ }
     if(bootRoute && saved){ v='lvideo'; }
     else { (window as any).__rdMediaTab='videos'; v='media'; }
     /* The recorded destination must name the view that actually opens, so a
        guard comparing against it agrees with what the user sees. */
-    __navView=v;
+    retargetNavigation(v);
   }
+
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
      keys like lvideo) must never leave the content area blank. Home and the
      dashboard are one view now, reachable only as dash. */
@@ -338,13 +352,16 @@ function go(v,fromHash){
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
   if(v==='lvideo'){
-    /* A refresh lands here with work already saved on the server: reopen that
-       project instead of dropping the user into an empty builder. */
-    if(!bootRoute){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
+    /* Mounting the view never destroys a project. A brand new project is only
+       created when the user explicitly asked for one; otherwise the persisted
+       active project is restored, and only a confirmed "nothing saved" result
+       falls back to a fresh builder. */
+    const wantNew=intent==='new';
+    const tok=__navSeq;
+    if(wantNew){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
     else{
       /* Restoration is asynchronous: by the time it resolves the user may
          already be somewhere else, and it must not reopen the builder. */
-      const tok=__navSeq;
       void (async()=>{
         try{
           const ok=await resumeActiveBuilder({ stillCurrent:()=>isCurrentNavigation(tok,'lvideo') });
@@ -353,12 +370,13 @@ function go(v,fromHash){
           if(ok||!inBuilderRoute()) return;
           createVideoFrom({ sourceType:'address', from:'menu' });
         }catch(_){
-          if(!inBuilderRoute()) return;
-          try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){}
+          /* A failed restore is not a reason to throw work away or to move the
+             user: leave the persisted pointer intact and stay put. */
         }
       })();
     }
   }
+
 
   if(v==='studio'){
     /* Repainting the controls is safe in both contexts. Anything that could
@@ -3411,7 +3429,9 @@ async function paintTeam(){
 
   list.querySelectorAll('[data-accept]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await acceptInvite({data:{id:b.dataset.accept}}); }catch(_){}
-    paintTeam(); paintInviteBanner(); setTimeout(()=>window.location.reload(),400);
+    /* Joining a workspace changes the data, not the page: refresh what the
+       accepted invite affects instead of reloading the whole app. */
+    paintTeam(); paintInviteBanner(); refreshAfterInvite();
   }));
   list.querySelectorAll('[data-decline]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await declineInvite({data:{id:b.dataset.decline}}); }catch(_){}
@@ -3433,6 +3453,12 @@ async function paintTeam(){
 paintTeam();
 window.addEventListener('rd:credits-changed',()=>paintTeam());
 
+/** Refresh workspace-scoped data after an invite is accepted. */
+function refreshAfterInvite(){
+  try{ reloadTree(); }catch(_){}
+  try{ window.dispatchEvent(new CustomEvent('rd:credits-changed')); }catch(_){}
+}
+
 /* Pending workspace invites: shown at the top of the app until answered. */
 async function paintInviteBanner(){
   const host=document.querySelector('.content')||document.querySelector('.main'); if(!host) return;
@@ -3448,7 +3474,7 @@ async function paintInviteBanner(){
     +'<button class="btn btn-ghost btn-xs" id="ibNo">Decline</button>'
     +'<button class="btn btn-primary btn-xs" id="ibYes">Accept Invite</button>';
   lucide.createIcons();
-  const done=()=>{ paintInviteBanner(); paintTeam(); setTimeout(()=>window.location.reload(),400); };
+  const done=()=>{ paintInviteBanner(); paintTeam(); refreshAfterInvite(); };
   const yes=document.getElementById('ibYes'), no=document.getElementById('ibNo');
   if(yes) yes.addEventListener('click',async()=>{ yes.disabled=true; try{ await acceptInvite({data:{id:i.id}}); }catch(_){} done(); });
   if(no) no.addEventListener('click',async()=>{ no.disabled=true; try{ await declineInvite({data:{id:i.id}}); }catch(_){} paintInviteBanner(); });

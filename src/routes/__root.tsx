@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initAnalytics, trackPageview } from "../lib/analytics";
+import { shouldRecoverFromChunkError, clearChunkRecovery, currentBuildId } from "../lib/chunk-recovery";
 
 export function NotFoundComponent() {
   return (
@@ -130,25 +131,18 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   const router = useRouter();
   useEffect(() => {
     // A reload is the most disruptive thing this app can do, so it happens at
-    // most once per browser session, only for a genuine stale-chunk failure,
-    // and only while nothing else is already recovering. Everything else just
-    // shows the message below with a manual Refresh.
+    // most once per build + failing chunk, and only for a genuine stale-chunk
+    // failure. Anything else (including a repeat of the same chunk failure)
+    // shows the message below with a manual Retry.
     if (isChunkLoadError(error) && typeof window !== "undefined") {
-      const key = "rd:chunk-reload";
-      let reloaded = "1";
+      let store: Storage | null = null;
       try {
-        reloaded = sessionStorage.getItem(key) || "";
+        store = window.sessionStorage;
       } catch {
-        reloaded = "1";
+        store = null;
       }
-      if (!reloaded) {
-        try {
-          sessionStorage.setItem(key, String(Date.now()));
-        } catch {
-          /* private mode: skip the reload rather than risk a loop */
-          reportLovableError(error, { boundary: "tanstack_root_error_component" });
-          return;
-        }
+      const message = error instanceof Error ? error.message : String(error);
+      if (shouldRecoverFromChunkError(message, store, currentBuildId())) {
         // Keep the exact URL, including the in-app hash route.
         window.location.reload();
         return;
@@ -156,6 +150,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
+
 
 
 
@@ -239,14 +234,18 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
-  // The app mounted fine, so allow a future one-shot chunk reload again.
+  // The app mounted fine on this build, so a future one-shot chunk reload is
+  // allowed again.
   useEffect(() => {
+    let store: Storage | null = null;
     try {
-      sessionStorage.removeItem("rd:chunk-reload");
+      store = window.sessionStorage;
     } catch {
-      /* private mode */
+      store = null;
     }
+    clearChunkRecovery(store);
   }, []);
+
 
 
   // Global: white dropdown menus and white tooltips on every route.
