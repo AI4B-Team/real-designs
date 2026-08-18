@@ -1183,7 +1183,7 @@ export async function renderReveal(
 
         if (avBubble && avImg) {
           const fade = Math.min(1, ts / 500) * Math.min(1, (sceneEnd - ts) / 500);
-          presenterBubble(c, W, H, avImg, av?.corner || "bottom_right", avAccent, t, Math.max(0, fade));
+          presenterBubble(c, W, H, avImg, av?.corner || "bottom_right", avAccent, ts, Math.max(0, fade));
         }
 
         // transition fades between scenes
