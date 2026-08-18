@@ -28,6 +28,9 @@ export type RevealScene = {
   immersive_effect?: string | null;
   exterior_effect?: string | null;
   labels?: SceneLabel[];
+  /** Signed URL of an approved AI-generated clip used instead of the photo. */
+  clipUrl?: string | null;
+  clipSeconds?: number | null;
 };
 
 /** Standard camera moves. */
@@ -263,6 +266,35 @@ function loadImage(url: string): Promise<HTMLImageElement> {
     img.onerror = () => reject(new Error("One of the scene images could not be loaded."));
     img.src = url;
   });
+}
+
+/** An approved AI clip plays as real video frames, not a simulated pan. */
+function loadClip(url: string): Promise<HTMLVideoElement | null> {
+  return new Promise((resolve) => {
+    const v = document.createElement("video");
+    v.crossOrigin = "anonymous";
+    v.muted = true;
+    v.playsInline = true;
+    v.preload = "auto";
+    v.loop = false;
+    const ok = () => resolve(v);
+    v.onloadeddata = ok;
+    v.oncanplaythrough = ok;
+    v.onerror = () => resolve(null);
+    v.src = url;
+    /* A clip that never loads must not stall the render. */
+    setTimeout(() => resolve(v.readyState >= 2 ? v : null), 15000);
+  });
+}
+
+/** Cover-draw one video frame. The clip already carries its own motion. */
+function drawClipFrame(ctx: CanvasRenderingContext2D, v: HTMLVideoElement, W: number, H: number) {
+  const vw = v.videoWidth || W;
+  const vh = v.videoHeight || H;
+  const scale = Math.max(W / vw, H / vh);
+  const w = vw * scale;
+  const h = vh * scale;
+  ctx.drawImage(v, (W - w) / 2, (H - h) / 2, w, h);
 }
 
 function pickMime(withAudio = false): string {
@@ -770,6 +802,11 @@ export async function renderReveal(
   if (!ctx) throw new Error("Canvas is unavailable in this browser.");
 
   const imgs = await Promise.all(scenes.map((s) => loadImage(s.url)));
+  /* Approved clips are loaded up front; a clip that fails falls back to the
+     still photo rather than failing the whole render. */
+  const clips = await Promise.all(
+    scenes.map((s) => (s.clipUrl ? loadClip(s.clipUrl) : Promise.resolve(null))),
+  );
   const compares = await Promise.all(
     scenes.map((s) => (s.compareUrl ? loadImage(s.compareUrl).catch(() => null) : Promise.resolve(null))),
   );
@@ -928,6 +965,13 @@ export async function renderReveal(
             pill(ctx, lab, W * 0.06, H * 0.14, Math.round(W * 0.03), "rgba(10,10,10,.8)", "#fff");
             ctx.restore();
           }
+        } else if (clips[idx]) {
+          const v = clips[idx]!;
+          const dur = v.duration && isFinite(v.duration) ? v.duration : durations[idx]! / 1000;
+          const want = Math.min(dur - 0.02, (local / 1000) % Math.max(dur, 0.1));
+          if (v.paused) { v.currentTime = Math.max(0, want); void v.play().catch(() => {}); }
+          if (v.readyState >= 2) drawClipFrame(ctx, v, W, H);
+          else drawMotion(ctx, img, W, H, motion, p);
         } else {
           drawMotion(ctx, img, W, H, motion, p);
         }
@@ -950,6 +994,12 @@ export async function renderReveal(
         }
         if (showDisclosure && scene.disclosure_type) {
           disclosureNote(ctx, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
+        }
+        if (showDisclosure && clips[idx]) {
+          ctx.save();
+          ctx.globalAlpha = 0.9;
+          pill(ctx, "AI-Generated Video", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
+          ctx.restore();
         }
         if (showDisclosure && scene.motion_level === "immersive") {
           ctx.save();

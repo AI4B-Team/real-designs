@@ -96,6 +96,9 @@ import { tileById } from "@/lib/rd-vfx-tiles";
 import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
 import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
+import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip-ui";
+import { sceneClips } from "@/lib/scene-clip-client";
+import { ANIMATE_CREDITS_PER_CLIP } from "@/lib/scene-enhancement";
 import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
 
@@ -751,6 +754,14 @@ function canvasHtml(compact = false) {
     <div class="rv-cv-stage fmt-${fmt.replace(":", "x")}">
       <div class="rv-cv-img" data-img="${esc(sc?.path || "")}">
         ${sc ? "" : `<span class="rv-note sm">No Scenes Selected Yet.</span>`}
+        ${(() => {
+          /* The storyboard shows the real clip whenever the scene uses one. */
+          const c = sc && sc.use_clip ? sceneClips.get(sc.key) : null;
+          const u = c && c.status === "completed" ? sceneClips.url(c) : null;
+          return u
+            ? `<video class="rv-cv-clip" src="${esc(u)}" autoplay muted loop playsinline></video><span class="rv-cv-aitag">AI Clip</span>`
+            : "";
+        })()}
         ${brandOn && kit?.logo_path && (w.branding?.watermark || w.logoBranding) ? `<span class="rv-ov-logo" data-img="${esc(kit.logo_path)}"></span>` : ""}
         ${openOn ? `<div class="rv-ov-title pos-${esc(w.titlePos || "bottom")} f-${esc(w.titleFont || "editorial")}">
           <b>${esc(t.headline == null ? d.headline : t.headline)}</b>
@@ -865,6 +876,8 @@ function wizardHtml() {
   ${shell}
 
   ${w.pop ? popoverHtml() : ""}
+  ${w.animate ? animateModalFor(w) : ""}
+  ${w.clipReview ? clipReviewFor(w) : ""}
   ${w.roomPick ? roomPickerHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
   ${w.shortenModal ? shortenModalHtml() : ""}
@@ -1176,6 +1189,8 @@ function wizardDraftBody(w) {
           caption: sc.caption || null, disclosure: sc.disclosure || null, motion_level: sc.motion_level || "standard",
           immersive_effect: sc.immersive_effect || null, exterior_effect: sc.exterior_effect || null,
           labels: sc.labels || [], asset_id: sc.asset_id || null, version_id: sc.version_id || null,
+          clip_id: sc.clip_id || null, use_clip: !!sc.use_clip, animate_id: sc.animate_id || null,
+          enhancement_level: sc.enhancement_level || null, clip_seconds: sc.clip_seconds || null,
         })),
         titles: w.titles || null,
         audio: { presentation: w.presentation, music: w.music, volume: w.volume, beatSync: w.beatSync, narration: w.narration, script: w.script, voice: w.voice, captions: w.captions },
@@ -1492,6 +1507,220 @@ function roomPickerHtml() {
   </div></div>`;
 }
 
+
+/* ======================= AI ANIMATE =======================
+   One scene, one genuine AI-generated clip. Everything durable (price,
+   provider job, storage, refunds) lives server-side in `scene_clips`; the
+   builder only opens the modal, shows the row and approves the result. */
+
+/** The clip service needs a real project row, so make sure the draft has one. */
+async function ensureVideoProjectId(w) {
+  if (w.editingId) return w.editingId;
+  const body = wizardDraftBody(w);
+  delete body.project.id;
+  const saved = await saveVideo(body);
+  if (!saved?.id) throw new Error("This draft could not be saved. Try again.");
+  w.editingId = saved.id;
+  rememberActiveBuilder(saved.id);
+  sceneClips.setProject(saved.id);
+  return saved.id;
+}
+
+function animateSource(w, key) {
+  const a = (w.available || []).find((x) => x.key === key) || null;
+  const sc = (w.scenes || []).find((x) => x.key === key) || null;
+  if (!a && !sc) return null;
+  return {
+    asset: a,
+    scene: sc,
+    path: (sc && sc.path) || (a && a.path) || "",
+    room: (sc && sc.room) || (a && a.room) || null,
+    version: sc?.version_id ? String(sc.version_id) : "original",
+  };
+}
+
+function animateModalFor(w) {
+  const src = animateSource(w, w.animate.key);
+  const idx = (w.scenes || []).findIndex((x) => x.key === w.animate.key);
+  return animateModalHtml({
+    key: w.animate.key,
+    room: src?.room || null,
+    position: idx >= 0 ? idx + 1 : (w.scenes || []).length + 1,
+    total: (w.scenes || []).length || null,
+    thumb: src?.path || null,
+    selected: w.animate.sel || null,
+    orientation: orientationOf(w),
+    balance: S.credits?.balance ?? 0,
+    clip: sceneClips.get(w.animate.key),
+    busy: !!w.animate.busy,
+    confirm: !!w.animate.confirm,
+  });
+}
+
+function clipReviewFor(w) {
+  const clip = sceneClips.get(w.clipReview.key);
+  if (!clip) return "";
+  const src = animateSource(w, w.clipReview.key);
+  return clipReviewHtml({
+    clip,
+    url: sceneClips.url(clip),
+    photo: src?.path || null,
+    room: src?.room || null,
+    busy: !!w.clipReview.busy,
+  });
+}
+
+/** Approving a clip is what makes the final video use it, never generation. */
+function markSceneClip(w, key, clip, use) {
+  const sc = (w.scenes || []).find((x) => x.key === key);
+  if (!sc) return;
+  if (use && clip) {
+    sc.clip_id = clip.id;
+    sc.use_clip = true;
+    sc.animate_id = clip.animate_id || null;
+    sc.enhancement_level = "animate";
+    sc.clip_seconds = clip.seconds || null;
+    if (clip.disclosure) sc.disclosure = clip.disclosure;
+  } else {
+    sc.clip_id = null;
+    sc.use_clip = false;
+    sc.enhancement_level = sc.vfx_gen ? "effects" : "motion";
+    sc.clip_seconds = null;
+  }
+  autosaveWizard(w);
+}
+
+async function startAnimate(w) {
+  const key = w.animate?.key;
+  const animate_id = w.animate?.sel;
+  const src = animateSource(w, key);
+  if (!key || !animate_id || !src?.path) return;
+  const bal = S.credits?.balance;
+  if (bal != null && bal < ANIMATE_CREDITS_PER_CLIP) {
+    toast(`This Clip Costs ${ANIMATE_CREDITS_PER_CLIP} Credits And Your Balance Is ${bal}.`);
+    return;
+  }
+  w.animate.busy = true; render();
+  try {
+    /* Selecting a photo first keeps the clip attached to a real scene. */
+    if (!src.scene && src.asset) { w.scenes.push(assetToScene(src.asset)); syncSceneOrder(); }
+    const projectId = await ensureVideoProjectId(w);
+    await sceneClips.start({
+      video_project_id: projectId,
+      scene_key: key,
+      animate_id,
+      source_path: src.path,
+      source_version: src.version,
+      orientation: orientationOf(w),
+      room_name: src.room,
+      style: w.styleId || null,
+    });
+    S.credits = await getMyCredits().catch(() => S.credits);
+    w.animate = null;
+    toast("Generating Your AI Clip. You Can Keep Working.");
+  } catch (e) {
+    toast(e?.message || "That clip could not be started.");
+    if (w.animate) { w.animate.busy = false; w.animate.confirm = false; }
+  }
+  render();
+}
+
+function bindAnimate(el, w, render) {
+  const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
+  const clipOf = (key) => sceneClips.get(key);
+
+  on("[data-clip]", "click", async (e) => {
+    e.stopPropagation();
+    const t = e.currentTarget;
+    const action = t.dataset.clip;
+    const key = t.dataset.key;
+    const id = t.dataset.id;
+    const clip = clipOf(key);
+    try {
+      if (action === "open") {
+        w.animate = { key, sel: clip?.animate_id || null, busy: false, confirm: false };
+      } else if (action === "view") {
+        w.animate = { key, sel: clip?.animate_id || null };
+      } else if (action === "review") {
+        w.clipReview = { key };
+      } else if (action === "cancel" && id) {
+        await sceneClips.cancel(id);
+        S.credits = await getMyCredits().catch(() => S.credits);
+        toast("Clip Cancelled. Your Credits Were Returned.");
+      } else if (action === "retry" && id) {
+        await sceneClips.retry(id);
+        S.credits = await getMyCredits().catch(() => S.credits);
+        toast("Generating Your AI Clip Again.");
+      } else if (action === "use" && id) {
+        const updated = await sceneClips.use(id, true);
+        markSceneClip(w, key, updated, true);
+        toast("This Scene Will Use The AI Clip.");
+      } else if (action === "revert" && id) {
+        const updated = await sceneClips.use(id, false);
+        markSceneClip(w, key, updated, false);
+        toast("This Scene Will Use The Photo.");
+      } else if (action === "delete" && id) {
+        await sceneClips.remove(id);
+        markSceneClip(w, key, null, false);
+      } else if (action === "download") {
+        const url = sceneClips.url(clip);
+        if (url) window.open(url, "_blank", "noopener");
+      }
+    } catch (err) {
+      toast(err?.message || "That did not work. Try again.");
+    }
+    render();
+  });
+
+  on("[data-animate]", "click", (e) => {
+    if (!w.animate) return;
+    w.animate.sel = e.currentTarget.dataset.animate;
+    w.animate.confirm = false;
+    render();
+  });
+  const closeAnim = () => { w.animate = null; render(); };
+  on("#rvAnimX, #rvAnimCancel, #rvAnimNo", "click", closeAnim);
+  on("#rvAnimGo", "click", () => { if (w.animate) { w.animate.confirm = true; render(); } });
+  on("#rvAnimYes", "click", () => void startAnimate(w));
+
+  /* Clip review */
+  const closeRev = () => { w.clipReview = null; render(); };
+  on("#rvClipX", "click", closeRev);
+  on("#rvClipKeep", "click", async () => {
+    const key = w.clipReview?.key; const clip = clipOf(key);
+    if (clip) { try { markSceneClip(w, key, await sceneClips.use(clip.id, false), false); } catch (_) {} }
+    closeRev();
+  });
+  on("#rvClipUse", "click", async () => {
+    const key = w.clipReview?.key; const clip = clipOf(key);
+    if (!clip) return closeRev();
+    try {
+      markSceneClip(w, key, await sceneClips.use(clip.id, true), true);
+      toast("This Scene Will Use The AI Clip.");
+    } catch (err) { toast(err?.message || "That clip could not be used."); }
+    closeRev();
+  });
+  on("#rvClipRegen", "click", async () => {
+    const key = w.clipReview?.key; const clip = clipOf(key);
+    w.clipReview = null;
+    if (clip) { try { await sceneClips.retry(clip.id); S.credits = await getMyCredits().catch(() => S.credits); } catch (err) { toast(err?.message || "That clip could not be regenerated."); } }
+    render();
+  });
+  on("#rvClipDl", "click", () => {
+    const clip = clipOf(w.clipReview?.key);
+    const url = sceneClips.url(clip);
+    if (url) window.open(url, "_blank", "noopener");
+  });
+  on("[data-clipctl]", "click", (e) => {
+    const v = el.querySelector("#rvClipVid");
+    if (!v) return;
+    const a = e.currentTarget.dataset.clipctl;
+    if (a === "play") { v.paused ? v.play() : v.pause(); }
+    else if (a === "mute") { v.muted = !v.muted; }
+    else { v.currentTime = 0; v.play(); }
+  });
+}
+
 /** The grid is the order. w.scenes is always the selected subset of
     w.gridOrder, in gridOrder sequence. Call after every mutation. */
 function syncSceneOrder() {
@@ -1509,6 +1738,8 @@ function tileHtml(a, seq) {
   const vfxHot = s && ((s.vfx && s.vfx !== "none") || s.look);
   const camHot = s && ((s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect);
   const cap = s ? String(s.caption || "") : "";
+  const clip = sceneClips.get(a.key);
+  const clipHot = !!clip && clip.status !== "cancelled" && clip.status !== "failed";
   /* Every card carries the same actions; using one on an unselected photo
      selects it first, so the tools never disappear on the user. */
   const tools = `<div class="rv-tools">
@@ -1516,6 +1747,7 @@ function tileHtml(a, seq) {
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
+      <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="AI Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
     </div>`;
   return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" draggable="true">
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
@@ -1530,6 +1762,7 @@ function tileHtml(a, seq) {
         ? `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}" title="${esc(cap)}">${esc(cap.length > 18 ? cap.slice(0, 18) + "…" : cap)}</button>`
         : `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}">Add Text</button>`}
     </div>
+    ${clipCardHtml(a.key, clip)}
   </div>`;
 }
 
@@ -2684,12 +2917,18 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
   const urls = [];
   for (const s of w.scenes) {
+    /* An approved AI clip replaces the still for this scene, and its real
+       duration wins so the video never cuts a generated clip mid-move. */
+    const clip = s.use_clip ? sceneClips.get(s.key) : null;
+    const clipUrl = clip && clip.status === "completed" ? sceneClips.url(clip) : null;
     urls.push({
       url: await resolvePhotoUrl(s.path),
+      clipUrl,
+      clipSeconds: clipUrl ? clip?.seconds || null : null,
       compareUrl: s.compare ? await resolvePhotoUrl(s.compare) : null,
       room_name: s.room,
       scene_type: s.scene_type,
-      duration: per,
+      duration: clipUrl && clip?.seconds ? clip.seconds : per,
       motion: s.motion || "auto",
       transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
       caption: w.captions ? s.caption || s.room : null,
@@ -3010,6 +3249,7 @@ function bind() {
   const el = host();
   if (!el) return;
   const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
+  if (S.screen === "wizard" && S.wizard) bindAnimate(el, S.wizard, render);
 
   /* library */
   on("#rvNew, #rvNew2", "click", () => startWizard({}));
@@ -3841,6 +4081,10 @@ function editExisting(d) {
   });
   const w = S.wizard;
   w.editingId = p.id;
+  /* Clips generated in an earlier session (or on another device) come back
+     with the project, and any job still running keeps polling. */
+  sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
+  void sceneClips.load(p.id);
   w.address = cleanAddressText(p.property_address || "");
   w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
   w.titleTouched = !!p.title_touched;
@@ -4183,6 +4427,8 @@ export function startWizard(seed = {}) {
   const w = newWizard(seed);
   S.wizard = w;
   S.screen = "wizard";
+  sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
+  sceneClips.setProject(w.editingId || null);
   logVideoEvent("video_builder_started", {
     seedFileCount: Array.from(seed.files || []).length,
     uploadCount: (w.uploads || []).length,

@@ -1530,6 +1530,9 @@ export type Database = {
       scene_clips: {
         Row: {
           animate_id: string
+          approved: boolean
+          approved_at: string | null
+          cancelled_at: string | null
           completed_at: string | null
           created_at: string
           credits_charged: number
@@ -1538,22 +1541,34 @@ export type Database = {
           error_message: string | null
           heartbeat_at: string
           id: string
+          idempotency_key: string | null
+          last_checked_at: string | null
+          orientation: string
           progress: number
           prompt: string
           provider: string
           provider_job_id: string | null
+          provider_payload: Json
+          retry_count: number
+          room_name: string | null
           scene_id: string | null
+          scene_key: string | null
           seconds: number
           size: string
           source_path: string | null
+          source_version: string
           status: string
           storage_path: string | null
+          thumbnail_path: string | null
           updated_at: string
           user_id: string
           video_project_id: string | null
         }
         Insert: {
           animate_id: string
+          approved?: boolean
+          approved_at?: string | null
+          cancelled_at?: string | null
           completed_at?: string | null
           created_at?: string
           credits_charged?: number
@@ -1562,22 +1577,34 @@ export type Database = {
           error_message?: string | null
           heartbeat_at?: string
           id?: string
+          idempotency_key?: string | null
+          last_checked_at?: string | null
+          orientation?: string
           progress?: number
           prompt: string
           provider?: string
           provider_job_id?: string | null
+          provider_payload?: Json
+          retry_count?: number
+          room_name?: string | null
           scene_id?: string | null
+          scene_key?: string | null
           seconds?: number
           size?: string
           source_path?: string | null
+          source_version?: string
           status?: string
           storage_path?: string | null
+          thumbnail_path?: string | null
           updated_at?: string
           user_id: string
           video_project_id?: string | null
         }
         Update: {
           animate_id?: string
+          approved?: boolean
+          approved_at?: string | null
+          cancelled_at?: string | null
           completed_at?: string | null
           created_at?: string
           credits_charged?: number
@@ -1586,16 +1613,25 @@ export type Database = {
           error_message?: string | null
           heartbeat_at?: string
           id?: string
+          idempotency_key?: string | null
+          last_checked_at?: string | null
+          orientation?: string
           progress?: number
           prompt?: string
           provider?: string
           provider_job_id?: string | null
+          provider_payload?: Json
+          retry_count?: number
+          room_name?: string | null
           scene_id?: string | null
+          scene_key?: string | null
           seconds?: number
           size?: string
           source_path?: string | null
+          source_version?: string
           status?: string
           storage_path?: string | null
+          thumbnail_path?: string | null
           updated_at?: string
           user_id?: string
           video_project_id?: string | null
