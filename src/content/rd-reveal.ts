@@ -969,6 +969,7 @@ function wizardHtml() {
   ${w.shortenModal ? shortenModalHtml() : ""}
   ${w.logoModal ? logoModalHtml() : ""}
   ${w.exitModal ? exitModalHtml() : ""}
+  ${w.startOverModal ? startOverModalHtml({ wrap: "rvStartOverWrap", keep: "rvStartOverKeep", go: "rvStartOverGo", busy: !!w.startOverModal.busy }) : ""}
   ${w.deleteModal ? deleteModalHtml() : ""}`;
 }
 
