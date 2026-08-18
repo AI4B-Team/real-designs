@@ -106,14 +106,22 @@ export type PickerOptions = {
   /** Called when the user chooses a finished design. */
   onDesign?: (id: string) => void;
   /** Called when the user writes an idea instead of adding photos. */
-  onDescribe?: (prompt?: string) => void;
+  onDescribe?: (prompt?: string) => void | Promise<void>;
   /** Optional "Try A Sample Space" affordance under the dropzone. */
   onSample?: () => void;
   showAlert?: (msg: string) => void;
 };
 
+/** Quiet starting points under the describe composer. */
+export const DESCRIBE_EXAMPLES: string[] = [
+  "Warm Modern Living Room",
+  "Luxury Primary Bathroom",
+  "Coastal Backyard",
+];
+
 const esc0 = (v: string) =>
   String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+
 
 export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const cfg = CONTEXT_CONFIG[opts.context];
@@ -128,6 +136,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     address: "",
     url: "",
     prompt: "",
+    describeBusy: false,
+
     dragging: false,
     busyLabel: "Adding Photos",
     /** Many photos landed in a single-image context: let the user choose one. */
@@ -388,15 +398,34 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       );
     }
     if (state.tab === "describe") {
+      const ready = state.prompt.trim().length > 0 && !state.describeBusy;
       return (
         '<div class="sp-pane sp-describe">' +
-        '<label class="sp-f" for="spPrompt">Describe the space you want to create</label>' +
-        '<textarea id="spPrompt" rows="4" placeholder="A warm modern living room with oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
+        '<div class="sp-composer' + (state.describeBusy ? " is-busy" : "") + '">' +
+        '<textarea id="spPrompt" aria-label="Describe the space you want to create" ' +
+        (state.describeBusy ? "disabled " : "") +
+        'placeholder="Describe the space you want to create. Include the room, style, colors, materials and anything you want included.">' +
         esc(state.prompt) + "</textarea>" +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="describe">Create Concept</button>' +
+        '<div class="sp-composer-a">' +
+        '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" ' +
+        'aria-label="Create an AI concept from your description"' +
+        (ready ? "" : " disabled") + ">" +
+        (state.describeBusy
+          ? '<span class="sp-spin" aria-hidden="true"></span>Creating…'
+          : '<i data-lucide="sparkles"></i>Create <em>1 Credit</em>') +
+        "</button>" +
+        "</div>" +
+        "</div>" +
+        '<p class="sp-note">Be specific for better results.</p>' +
+        '<div class="sp-chips">' +
+        DESCRIBE_EXAMPLES.map(
+          (x) => '<button type="button" class="sp-chip" data-sp-ex="' + esc(x) + '">' + esc(x) + "</button>",
+        ).join("") +
+        "</div>" +
         "</div>"
       );
     }
+
     if (state.tab === "design") {
       const list = (opts.designs ? opts.designs() : []).slice(0, 40);
       if (!list.length)
@@ -479,6 +508,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     } catch (_) {
       /* icons are cosmetic */
     }
+    if (state.tab === "describe") syncComposer();
   }
 
   function wireDrag(el: HTMLElement) {
@@ -510,6 +540,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   /** The dropzone is clickable and keyboard-operable, not only its button. */
   function onKey(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
+    if ((t as HTMLElement).id === "spPrompt") {
+      /* Enter still writes a new line; only the shortcut submits. */
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        submitDescribe();
+      }
+      return;
+    }
     if (!t.closest?.("[data-sp-drop]")) return;
     if (t.closest("button")) return;
     if (e.key !== "Enter" && e.key !== " ") return;
@@ -517,12 +555,43 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     input.click();
   }
 
+  /** Grows the composer with the text and keeps the submit state honest. */
+  function syncComposer() {
+    const ta = document.getElementById("spPrompt") as HTMLTextAreaElement | null;
+    if (ta) {
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight, 260) + "px";
+    }
+    const btn = body?.querySelector(".sp-create") as HTMLButtonElement | null;
+    if (btn) btn.disabled = !(state.prompt.trim().length > 0) || state.describeBusy;
+  }
+
+  async function submitDescribe() {
+    if (state.describeBusy) return;
+    const prompt = state.prompt.trim();
+    if (!prompt) return;
+    state.describeBusy = true;
+    render();
+    try {
+      await opts.onDescribe?.(prompt);
+    } catch (err: any) {
+      alert((err && err.message) || "Could not create that concept.");
+    } finally {
+      state.describeBusy = false;
+      render();
+    }
+  }
+
   function onInput(e: Event) {
     const t = e.target as HTMLInputElement;
     if (t.id === "spAddr") state.address = t.value;
     if (t.id === "spUrl") state.url = t.value;
-    if (t.id === "spPrompt") state.prompt = t.value;
+    if (t.id === "spPrompt") {
+      state.prompt = t.value;
+      syncComposer();
+    }
   }
+
 
   async function onClick(e: Event) {
     const t = e.target as HTMLElement;
@@ -537,6 +606,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const prop = t.closest("[data-sp-prop]") as HTMLElement | null;
     if (prop) {
       opts.onProperty?.(prop.dataset["spProp"]!);
+      return;
+    }
+    const ex = t.closest("[data-sp-ex]") as HTMLElement | null;
+    if (ex) {
+      /* Examples fill the prompt; the user still presses Create. */
+      state.prompt = ex.dataset["spEx"] || "";
+      render();
+      const ta = document.getElementById("spPrompt") as HTMLTextAreaElement | null;
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+      }
       return;
     }
     const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
@@ -561,7 +642,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const k = act.dataset["sp"];
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
-    else if (k === "describe") opts.onDescribe?.(state.prompt.trim());
+    else if (k === "describe") await submitDescribe();
     else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
