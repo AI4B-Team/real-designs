@@ -839,16 +839,19 @@ function render() {
       </div>
       <div class="rv-head-tools">
         ${formatSelectorHtml({
-          label: "Output Ratio",
-          options: OUTPUT_RATIOS,
+          label: "Photo Format",
+          options: PRIMARY_OUTPUT_RATIOS,
           value: normalizeOutputRatio(S.outputRatio),
           attr: "ratio",
           id: "rds-ratio",
+          more: { label: "More Ratios", value: "__more" },
+          customLabel: ratioLabel(S.outputRatio),
         })}
         <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
         <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
           <div class="rv-more-m">
+            <button data-act="moreratios">More Ratios</button>
             <button data-act="all">Select All</button>
             <button data-act="none">Clear Selection</button>
             <button data-act="del">Remove Selected</button>
