@@ -1099,6 +1099,16 @@ function paintStudioState(){
     studioWrap.classList.toggle('st-empty',STUDIO_SRC===SRC_EMPTY);
     studioWrap.classList.toggle('st-result',STUDIO_RESULT);
   }
+  /* The canvas is a workspace: it borrows the left menu as a rail by default,
+     and hands it straight back on the way out. */
+  try{
+    const onCanvas=STUDIO_SRC!==SRC_EMPTY && !!document.querySelector('#v-studio.on');
+    const rail=(window as any).__rdRailBorrow;
+    if(rail && onCanvas!==(window as any).__rdCanvasRail){
+      (window as any).__rdCanvasRail=onCanvas;
+      if(onCanvas) rail.collapse(); else rail.release();
+    }
+  }catch(_){}
   const gen=document.getElementById('genBtn');
   if(gen) gen.classList.toggle('is-disabled',STUDIO_SRC===SRC_EMPTY);
   const canvas=document.getElementById('canvas');
