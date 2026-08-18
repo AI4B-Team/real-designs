@@ -363,6 +363,9 @@ try{ mountUploadDock(go); }catch(_){}
     /* stop the moment the user navigates away, so this loop can never
        drag an old view or account pane back on screen */
     if(location.hash!==startHash) return;
+    /* Staging owns a lazily created container, so a cold boot straight to
+       #v-staging has to build it before this loop can find the view. */
+    if(v==='staging'){ try{ (window as any).rdStaging && (window as any).rdStaging.ensure(); }catch(_){} }
     const target=document.getElementById(want);
     if(target && !target.classList.contains('on')) go(v,true);
     /* A friendly alias such as #dashboard that already matches the mounted
