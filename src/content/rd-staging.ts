@@ -501,17 +501,24 @@ function gridHtml() {
 
 function statusText() {
   const total = S.items.length;
-  const sel = S.items.filter((i) => i.selected).length;
-  const need = S.items.filter((i) => stateOf(i).cls === "warn").length;
+  const selected = S.items.filter((i) => i.selected);
+  const sel = selected.length;
+  const need = selected.filter((i) => stateOf(i).cls === "warn").length;
   const detecting = S.items.some((i) => i.detect === "running" || i.detect === "pending");
   const parts = [`${total} Photo${total === 1 ? "" : "s"}`, `${sel} Selected`];
   if (detecting) parts.push("Detecting Rooms…");
-  else if (need) parts.push(`${need} Need${need === 1 ? "s" : ""} A Room`);
+  else if (need) parts.push("Rooms Need Review");
   else parts.push("All Rooms Confirmed");
-  const save = { saving: "Saving…", saved: "Saved", error: "Couldn't Save" }[S.saveState];
-  if (save) parts.push(save);
+  /* "Saved" is only honest once every photo is stored and the row is written. */
+  const uploading = S.items.some((i) => i.status === "uploading");
+  const failed = S.items.some((i) => i.status === "failed");
+  if (S.saveState === "saving" || uploading) parts.push("Saving…");
+  else if (S.saveState === "error") parts.push("Save Failed · Retry");
+  else if (failed) parts.push("Some Uploads Failed");
+  else if (S.saveState === "saved") parts.push("Saved");
   return parts.join(" · ");
 }
+
 
 function stepRailHtml(active) {
   const steps = [
