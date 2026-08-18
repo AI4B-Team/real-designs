@@ -3233,6 +3233,7 @@ function bind() {
   const el = host();
   if (!el) return;
   const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
+  if (S.screen === "wizard" && S.wizard) bindAnimate(el, S.wizard, render);
 
   /* library */
   on("#rvNew, #rvNew2", "click", () => startWizard({}));
@@ -4064,6 +4065,10 @@ function editExisting(d) {
   });
   const w = S.wizard;
   w.editingId = p.id;
+  /* Clips generated in an earlier session (or on another device) come back
+     with the project, and any job still running keeps polling. */
+  sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
+  void sceneClips.load(p.id);
   w.address = cleanAddressText(p.property_address || "");
   w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
   w.titleTouched = !!p.title_touched;
