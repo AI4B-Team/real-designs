@@ -3723,7 +3723,7 @@ function editExisting(d) {
     /* Storage paths become viewable URLs for this session only. */
     Promise.all(
       w.uploads.map(async (u) => { try { u.url = await roomPhotoUrl(u.storagePath); } catch (_) {} }),
-    ).then(() => { attachUploads(w); render(); });
+    ).then(() => { attachUploadAssets(w); render(); });
   }
   S.screen = "wizard";
   loadWizardAssets().then(render);
