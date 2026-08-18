@@ -1019,7 +1019,22 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     else if (k === "emptytoggle") {
       state.showEmpty = !state.showEmpty;
       render();
+    } else if (k === "dretry") loadDesigns(true);
+    else if (k === "dupload") {
+      state.tab = "upload";
+      opts.onTab?.(state.tab);
+      render();
+      input.click();
+    } else if (k === "dproperty") {
+      state.tab = "property";
+      opts.onTab?.(state.tab);
+      render();
+    } else if (k === "dcontinue") {
+      const byId = new Map(state.designs.map((d) => [d.id, d]));
+      const picked = state.designSel.map((id) => byId.get(id)).filter(Boolean) as PickerDesign[];
+      if (picked.length) await opts.onDesigns?.(picked);
     }
+
 
     else if (k === "pall") {
       state.propChecked = new Set(state.propPhotos.map((x) => x.id));
