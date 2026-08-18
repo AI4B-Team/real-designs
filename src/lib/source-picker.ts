@@ -457,7 +457,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       body.addEventListener("input", onInput);
       wireDrag(body);
     }
-    body.innerHTML = html();
+    try {
+      body.innerHTML = html();
+    } catch (err) {
+      console.error("[source-picker] render failed", err);
+      throw err;
+    }
+
     try {
       opts.lucide?.createIcons();
     } catch (_) {
