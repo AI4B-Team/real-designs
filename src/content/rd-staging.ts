@@ -423,7 +423,7 @@ function hydrate(draft) {
     activeKey: (draft.settings && draft.settings.current) || null,
     completed: S.items.filter((i) => i.state === "complete" || i.done).map((i) => i.key),
   });
-  S.step = back.step === "add" ? "add" : back.step === "review" ? "final" : "review";
+  S.step = back.step === "add" ? "add" : "review";
   S.current = null;
   S.lastOpened = back.activeKey;
   S.resumeKey = back.step === "design" ? back.activeKey : null;
