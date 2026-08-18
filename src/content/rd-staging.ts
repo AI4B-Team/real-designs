@@ -27,7 +27,6 @@ import {
   groupRooms,
   roomFromCategory,
   roomIcon,
-  roomRank,
   roomSpace,
   searchRooms,
 } from "@/lib/staging-rooms";
