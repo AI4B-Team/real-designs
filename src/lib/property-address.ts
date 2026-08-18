@@ -193,9 +193,58 @@ export function streetOf(address: unknown): string {
   return (text.split(",")[0] || "").trim();
 }
 
+/** Common USPS street-suffix abbreviations, expanded for display only. */
+const SUFFIX: Record<string, string> = {
+  st: "Street", str: "Street", ave: "Avenue", av: "Avenue", blvd: "Boulevard", blv: "Boulevard",
+  rd: "Road", dr: "Drive", ln: "Lane", ct: "Court", cir: "Circle", pl: "Place", pkwy: "Parkway",
+  pky: "Parkway", hwy: "Highway", ter: "Terrace", trl: "Trail", way: "Way", sq: "Square",
+  loop: "Loop", run: "Run", cv: "Cove", pt: "Point", bnd: "Bend", xing: "Crossing",
+};
+
+const DIRECTION: Record<string, string> = {
+  n: "N", s: "S", e: "E", w: "W", ne: "NE", nw: "NW", se: "SE", sw: "SW",
+};
+
+/** Expand a trailing street suffix ("Blvd" -> "Boulevard"). Nothing is guessed:
+    a word that is not a known abbreviation is left exactly as written. */
+export function expandStreet(line: string): string {
+  const words = String(line || "").trim().split(/\s+/).filter(Boolean);
+  if (words.length < 2) return words.join(" ");
+  return words
+    .map((w, i) => {
+      const bare = w.replace(/\.$/, "");
+      const key = bare.toLowerCase();
+      if (i > 0 && DIRECTION[key] && i === words.length - 1) return DIRECTION[key]!;
+      if (i === 0) return w;
+      const hit = SUFFIX[key];
+      /* Only the last or second-to-last word is treated as the suffix, so
+         "St Charles Place" keeps its saint. */
+      if (hit && i >= words.length - 2) return hit;
+      return w;
+    })
+    .join(" ");
+}
+
+/** Conservatively split an unstructured one-line address such as
+    "1420 Bayshore Blvd Tampa FL 33606" into street and "City, ST ZIP".
+    Returns null unless a state and ZIP are both clearly present. */
+export function parseLooseAddress(value: unknown): { line1: string; line2: string } | null {
+  const text = cleanAddressText(value);
+  if (!text || text.includes(",")) return null;
+  const m = /^(.+?)\s+([A-Za-z][A-Za-z .'-]*?)\s+([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$/.exec(text);
+  if (!m) return null;
+  const street = m[1]!.trim();
+  const city = m[2]!.trim();
+  const st = m[3]!.toUpperCase();
+  const zip = m[4]!;
+  /* A street needs at least a number and a name; otherwise we are guessing. */
+  if (!/^\d/.test(street) || street.split(/\s+/).length < 2) return null;
+  return { line1: expandStreet(street), line2: city + ", " + st + " " + zip };
+}
+
 /** Two display lines for a property card: street, then city/state/ZIP.
-    Structured fields win; an unstructured string is only split on its own
-    commas so we never invent or reformat a city, state or ZIP. */
+    Structured fields win; an unstructured string is split on its own commas,
+    or conservatively parsed when it clearly ends in "City ST ZIP". */
 export function splitAddressLines(
   value: unknown,
   parts?: Partial<ProjectAddress> | null,
@@ -207,7 +256,7 @@ export function splitAddressLines(
   const zip = cleanAddressText(p.postal_code, 20);
   if (l1 || city || state || zip) {
     const unit = cleanAddressText(p.address_line_2, 60);
-    const line1 = [l1, unit].filter(Boolean).join(" ");
+    const line1 = [expandStreet(l1), unit].filter(Boolean).join(" ");
     const region = [/^[A-Za-z]{2}$/.test(state) ? state.toUpperCase() : state, zip].filter(Boolean).join(" ");
     const line2 = [city, region].filter(Boolean).join(", ");
     if (line1 || line2) return { line1: line1 || line2, line2: line1 ? line2 : "" };
@@ -215,9 +264,10 @@ export function splitAddressLines(
   const text = cleanAddressText(value);
   if (!text) return { line1: "", line2: "" };
   const bits = text.split(",").map((b) => b.trim()).filter(Boolean);
-  if (bits.length < 2) return { line1: text, line2: "" };
-  return { line1: bits[0]!, line2: bits.slice(1).join(", ") };
+  if (bits.length < 2) return parseLooseAddress(text) || { line1: text, line2: "" };
+  return { line1: expandStreet(bits[0]!), line2: bits.slice(1).join(", ") };
 }
+
 
 /** "No Photos" / "1 Photo" / "n Photos" — never "0 Photos". */
 export function photoCountLabel(n: unknown): string {
