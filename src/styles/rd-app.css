@@ -1775,7 +1775,7 @@
 .sp-prop-c i{width:17px;height:17px;color:var(--mute-2);flex:0 0 auto}
 .sp-empty-t{display:inline-block;margin-top:12px}
 
-.sp-photos{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.sp-photos{width:100%;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
 .sp-photos-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .sp-photos-h b{font-size:.86rem}
 .sp-photos-h span{display:flex;gap:8px;align-items:center}
