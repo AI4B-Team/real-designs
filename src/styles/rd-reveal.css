@@ -550,45 +550,38 @@
 .rd-app .rv-tile .rv-flag { position: absolute; top: 12px; left: 46px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: #fff3d6; color: #9a6300; border: 0; cursor: pointer; z-index: 5; }
 .rd-app .rv-tile .rv-flag svg { width: 14px; height: 14px; }
 .rd-app .rv-tile-seq { position: absolute; left: 10px; bottom: 10px; z-index: 6; font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; color: #fff; background: rgba(0,0,0,.66); border-radius: 6px; padding: 1px 7px; }
-/* The hover toolbar lives at the bottom-right, clear of the permanent scene
-   number at the bottom-left. Narrow cards move it to the right edge, and the
-   narrowest collapse it into one ellipsis button. */
-.rd-app .rv-tools { position: absolute; right: 10px; bottom: 10px; left: auto; transform: translateY(4px); display: flex; gap: 2px; padding: 3px; max-width: calc(100% - 76px); background: #fff; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,.18); opacity: 0; pointer-events: none; transition: opacity .12s, transform .12s; z-index: 4; }
-.rd-app .rv-tile.on:hover .rv-tools,
-.rd-app .rv-tile.on:focus-within .rv-tools { opacity: 1; pointer-events: auto; transform: translateY(0); }
-.rd-app .rv-tools-more { position: absolute; right: 10px; bottom: 10px; display: none; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 999px; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18); cursor: pointer; z-index: 5; }
-.rd-app .rv-tools-more svg { width: 15px; height: 15px; }
-.rd-app .rv-tool { position: relative; width: 28px; height: 28px; border: 0; border-radius: 999px; background: transparent; display: grid; place-items: center; cursor: pointer; }
+/* One shared image hover toolbar (see imageToolbarHtml): a single white pill
+   centered near the bottom edge of the photo, inside the image bounds and
+   clear of the selection tile, the scene number and the room selector. */
+.rd-app .rv-tools { position: absolute; left: 50%; right: auto; bottom: 14px; transform: translateX(-50%) translateY(4px); display: flex; align-items: center; gap: 6px; height: 38px; padding: 0 6px; max-width: calc(100% - 16px); background: #fff; border: 1px solid rgba(0,0,0,.08); border-radius: 999px; box-shadow: 0 6px 18px rgba(0,0,0,.16); opacity: 0; pointer-events: none; transition: opacity .14s ease, transform .14s ease; z-index: 6; }
+.rd-app .rv-tile:hover .rv-tools,
+.rd-app .rv-tile:focus-within .rv-tools,
+.rd-app .rv-tools:hover { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.rd-app .rv-tools-more { position: absolute; left: 50%; transform: translateX(-50%); bottom: 14px; display: none; place-items: center; width: 32px; height: 32px; border: 1px solid rgba(0,0,0,.08); border-radius: 999px; background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.16); cursor: pointer; z-index: 5; }
+.rd-app .rv-tools-more svg { width: 16px; height: 16px; }
+.rd-app .rv-tool { position: relative; flex: 0 0 auto; width: 30px; height: 30px; border: 0; border-radius: 999px; background: transparent; color: #141414; display: grid; place-items: center; cursor: pointer; }
 .rd-app .rv-tool:hover { background: #f2f2f4; }
-.rd-app .rv-tool svg { width: 14px; height: 14px; }
+.rd-app .rv-tool:focus-visible { outline: 2px solid #141414; outline-offset: 1px; }
+.rd-app .rv-tool svg { width: 16px; height: 16px; }
 /* Edge tooltips anchor inward so the tile's clipped bounds never cut them off. */
 .rd-app .rv-tools > .rv-tool:first-child em { left: 0; transform: none; }
 .rd-app .rv-tools > .rv-tool:last-child em { left: auto; right: 0; transform: none; }
-.rd-app .rv-tool.hot::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 999px; background: var(--red, #CC0000); }
-.rd-app .rv-tool em { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 11.5px; font-weight: 600; color: #fff; background: #111; border-radius: 6px; padding: 3px 8px; opacity: 0; pointer-events: none; transition: opacity .1s; z-index: 6; }
+.rd-app .rv-tool.hot::after { content: ""; position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; border-radius: 999px; background: var(--red, #CC0000); }
+.rd-app .rv-tool em { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 11.5px; font-weight: 600; color: #fff; background: #111; border-radius: 6px; padding: 3px 8px; opacity: 0; pointer-events: none; transition: opacity .1s; z-index: 7; }
 .rd-app .rv-tool:hover em, .rd-app .rv-tool:focus-visible em { opacity: 1; }
 
-/* Too narrow for a row beside the scene number: run the row along the bottom
-   edge, left aligned so a wrapped-row transition connector keeps its corner. */
+/* Narrow cards: tighten the pill before collapsing it. */
 @container (max-width: 258px) {
-  .rd-app .rv-tools { left: 6px; right: auto; bottom: 8px; top: auto; max-width: calc(100% - 42px);
-    transform: translateY(4px); }
-  .rd-app .rv-tile.on:hover .rv-tools,
-  .rd-app .rv-tile.on:focus-within .rv-tools { transform: translateY(0); }
-  .rd-app .rv-tool { width: 26px; height: 26px; }
-  /* the toolbar is temporary, the number is permanent: the number steps aside
-     for the moment the row is on screen rather than the two colliding. */
-  .rd-app .rv-tile.on:hover .rv-tile-seq,
-  .rd-app .rv-tile.on:focus-within .rv-tile-seq { opacity: 0; }
-  .rd-app .rv-tile-seq { transition: opacity .12s; }
+  .rd-app .rv-tools { gap: 4px; padding: 0 5px; height: 34px; }
+  .rd-app .rv-tool { width: 28px; height: 28px; }
 }
 /* Compact cards: one ellipsis button opening the same actions. */
 @container (max-width: 178px) {
   .rd-app .rv-tools-more { display: grid; }
-  .rd-app .rv-tile.on:hover .rv-tools,
-  .rd-app .rv-tile.on:focus-within .rv-tools { opacity: 0; pointer-events: none; }
+  .rd-app .rv-tile:hover .rv-tools,
+  .rd-app .rv-tile:focus-within .rv-tools { opacity: 0; pointer-events: none; }
   .rd-app .rv-tile.tools-open .rv-tools,
-  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 46px; right: 8px; transform: none; }
+  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 52px; transform: translateX(-50%); }
 }
 .rd-app .rv-tile-foot { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 7px 2px 0; font-size: 12px; }
 .rd-app .rv-tile-foot b { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -606,11 +599,10 @@
 @media (max-width: 900px) {
   /* Touch has no hover: every card shows the ellipsis and opens a popover. */
   .rd-app .rv-tools-more { display: grid; }
-  .rd-app .rv-tile.on:hover .rv-tools,
-  .rd-app .rv-tile.on:focus-within .rv-tools { opacity: 0; pointer-events: none; }
+  .rd-app .rv-tile:hover .rv-tools,
+  .rd-app .rv-tile:focus-within .rv-tools { opacity: 0; pointer-events: none; }
   .rd-app .rv-tile.tools-open .rv-tools,
-  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 46px; right: 8px; left: auto; flex-direction: column; max-width: none; border-radius: 22px; transform: none; }
-  .rd-app .rv-tile.tools-open .rv-tool em { bottom: auto; top: 50%; left: auto; right: calc(100% + 8px); transform: translateY(-50%); }
+  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 52px; left: 50%; max-width: calc(100% - 16px); transform: translateX(-50%); }
   .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .rd-app .rv-gridfoot { flex-wrap: wrap; }
 }

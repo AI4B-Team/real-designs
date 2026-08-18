@@ -122,7 +122,7 @@ import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
 import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
-import { builderRailHtml, roomSelectHtml } from "@/lib/builder-ui";
+import { builderRailHtml, roomSelectHtml, imageToolbarHtml } from "@/lib/builder-ui";
 import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip-ui";
@@ -2063,14 +2063,16 @@ function tileHtml(a, seq) {
   /* Every card carries the same actions; using one on an unselected photo
      selects it first, so the tools never disappear on the user. Start / End
      is not a toolbar button: it lives inside the Effects modal. */
-  const tools = `<div class="rv-tools">
-      <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
-      <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
-      <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
-      <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
-      <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
-    </div>
-    <button class="rv-tools-more" data-toolsmore="1" aria-label="Scene Tools" title="Scene Tools"><i data-lucide="ellipsis"></i></button>`;
+  const tools = imageToolbarHtml(
+    [
+      { label: "Crop", icon: "crop", hot: cropHot, attrs: { "data-pop": "crop", "data-key": a.key } },
+      { label: "Effects", icon: "wand-sparkles", hot: vfxHot, attrs: { "data-pop": "look", "data-key": a.key } },
+      { label: "Motion", icon: "camera", hot: camHot, attrs: { "data-pop": "motion", "data-key": a.key } },
+      { label: "Text", icon: "type", hot: !!cap, attrs: { "data-pop": "cap", "data-key": a.key } },
+      { label: "Animate", icon: "clapperboard", hot: clipHot, attrs: { "data-clip": "open", "data-key": a.key } },
+    ],
+    { label: "Scene Tools" },
+  );
   return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" draggable="true">
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
