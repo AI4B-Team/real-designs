@@ -820,6 +820,9 @@ function bindReview(el) {
 
   el.querySelector("#rdsSetRoom").onclick = (e) => applyRoomToSelected(e.currentTarget);
   el.querySelector("#rdsGo").onclick = startDesigning;
+  const bulk = el.querySelector("#rdsBulk");
+  if (bulk) bulk.onclick = () => startBulkDesign();
+
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
      controls are delegated from the page instead of bound per element. The
