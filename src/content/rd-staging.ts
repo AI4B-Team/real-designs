@@ -687,10 +687,9 @@ function openCanvasFor(key) {
   if (el) el.click();
 }
 
-/** Card shape follows the ratio the photo will actually render at. */
-function ratioClass(r) {
-  return r === "4:3" ? "rt-43" : r === "4:5" ? "rt-45" : r === "1:1" ? "rt-11" : "rt-orig";
-}
+/* Management cards keep one shape whatever the output ratio is: the chosen
+   format defines the generated image, not the grid. */
+const CARD_RATIO_CLASS = "rt-43";
 
 function cardHtml(it, seq) {
 
@@ -701,7 +700,7 @@ function cardHtml(it, seq) {
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
-  const rc = ratioClass(effectiveRatio(S.outputRatio, it.ratio));
+  const rc = CARD_RATIO_CLASS;
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
