@@ -2559,6 +2559,14 @@ export type Database = {
         }
         Returns: Json
       }
+      storage_policy_report: {
+        Args: never
+        Returns: {
+          bucket: string
+          cmd: string
+          policyname: string
+        }[]
+      }
       sync_subscription: { Args: never; Returns: Json }
     }
     Enums: {
