@@ -162,6 +162,9 @@ staging:['Photo Staging','Add photos, confirm rooms, then design']};
 const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
+/* Only the very first route after a page load may reopen a saved builder
+   session; later in-app navigation always starts a fresh project. */
+let __bootRoute=true;
 let __allowReveal=0;
 try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
 try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
@@ -197,6 +200,7 @@ function go(v,fromHash){
     };
     window.setTimeout(applyPane,0);
   }else if(v!=='account'){ __paneSeq++; }
+  const bootRoute=__bootRoute; __bootRoute=false;
   const revealLive=(()=>{ try{ return !!((window as any).__rdRevealBusy && (window as any).__rdRevealBusy()); }catch(_){ return false; } })();
   if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
@@ -224,8 +228,7 @@ function go(v,fromHash){
   if(v==='lvideo'){
     /* A refresh lands here with work already saved on the server: reopen that
        project instead of dropping the user into an empty builder. */
-    const fresh=!!(window as any).__rdFreshBuilder; (window as any).__rdFreshBuilder=false;
-    if(fresh){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
+    if(!bootRoute){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
     else{ void (async()=>{ try{ if(!(await resumeActiveBuilder())) createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){} } })(); }
   }
 
