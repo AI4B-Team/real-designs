@@ -216,3 +216,123 @@ export async function clipSignedUrl(path?: string | null, expiresIn = 3600): Pro
 }
 
 export { patch as patchClip };
+
+/* ------------------------------------------------------------ start */
+
+export type StartParams = {
+  video_project_id: string;
+  scene_key: string;
+  scene_id?: string | null;
+  animate_id: string;
+  source_path: string;
+  source_version: string;
+  orientation: string;
+  room_name?: string | null;
+  style?: string | null;
+  idempotency_key: string;
+};
+
+/**
+ * Create (or return) the durable clip row and start the provider job.
+ * Charges exactly once: the same idempotency key, or an already-active job for
+ * the same scene, returns the existing row without touching credits.
+ */
+export async function createAndStartClip(userId: string, p: StartParams): Promise<ClipRow> {
+  const opt = animateOption(p.animate_id);
+  if (!opt) throw new Error("That animation is not available.");
+
+  const prior = await supabaseAdmin
+    .from("scene_clips")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("idempotency_key", p.idempotency_key)
+    .maybeSingle();
+  if (prior.data) return reconcileClip(prior.data as ClipRow);
+
+  const active = await supabaseAdmin
+    .from("scene_clips")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("video_project_id", p.video_project_id)
+    .eq("scene_key", p.scene_key)
+    .in("status", ["queued", "processing"])
+    .maybeSingle();
+  if (active.data) return reconcileClip(active.data as ClipRow);
+
+  const built = buildClipPrompt(p.animate_id, { room: p.room_name ?? null, style: p.style ?? null });
+  const size = clipSize(p.orientation);
+
+  const insert = await supabaseAdmin
+    .from("scene_clips")
+    .insert({
+      user_id: userId,
+      video_project_id: p.video_project_id,
+      scene_id: p.scene_id ?? null,
+      scene_key: p.scene_key,
+      room_name: p.room_name ?? null,
+      source_path: p.source_path,
+      source_version: p.source_version,
+      orientation: p.orientation,
+      animate_id: p.animate_id,
+      prompt: built.prompt,
+      seconds: built.seconds,
+      size,
+      provider: "veo",
+      status: "queued",
+      progress: 0,
+      disclosure: built.disclosure,
+      idempotency_key: p.idempotency_key,
+    })
+    .select("*")
+    .single();
+  if (insert.error) throw new Error(insert.error.message);
+  let clip = insert.data as ClipRow;
+
+  // Charge before the provider call, refund if the provider refuses.
+  const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
+  const charged = await charge(userId, "video", `AI clip ${clip.id}`);
+  if (!charged.ok) {
+    await supabaseAdmin.from("scene_clips").delete().eq("id", clip.id);
+    throw new Error(chargeErrorMessage(charged));
+  }
+  clip = await patch(clip.id, { credits_charged: charged.charged });
+
+  try {
+    const image = await sourceDataUrl(p.source_path);
+    const job = await startProviderJob({ prompt: built.prompt, seconds: built.seconds, size, image });
+    return patch(clip.id, {
+      provider_job_id: job.id,
+      status: "processing",
+      progress: Math.max(0, Math.min(100, job.progress)),
+      last_checked_at: new Date().toISOString(),
+      provider_payload: { model: CLIP_MODEL, size, seconds: built.seconds },
+    });
+  } catch (err) {
+    await refundClipOnce(clip, `AI clip could not start ${clip.id}`);
+    await patch(clip.id, {
+      status: "failed",
+      error_message: String((err as Error)?.message || "The clip could not be started.").slice(0, 400),
+    });
+    throw err;
+  }
+}
+
+/** Bring every active clip of a user (optionally one project) up to date. */
+export async function reconcileUserClips(userId: string, projectId?: string | null): Promise<ClipRow[]> {
+  let q = supabaseAdmin
+    .from("scene_clips")
+    .select("*")
+    .eq("user_id", userId)
+    .in("status", ["queued", "processing"]);
+  if (projectId) q = q.eq("video_project_id", projectId);
+  const { data } = await q;
+  const out: ClipRow[] = [];
+  for (const row of (data ?? []) as ClipRow[]) {
+    try {
+      out.push(await reconcileClip(row));
+    } catch (_) {
+      out.push(row);
+    }
+  }
+  return out;
+}
