@@ -87,6 +87,8 @@ export type ClassifiedPhoto = {
   /** manual always wins over ai, ai over an untouched upload. */
   source: "manual" | "ai" | "none";
   state: "confirmed" | "review" | "unsorted";
+  /** Whether the photo is currently checked into the tour. Defaults to true. */
+  selected?: boolean;
 };
 
 /** Decide the label and the trust band for one photo. */
@@ -96,21 +98,25 @@ export function resolvePhoto(input: {
   label?: string | null;
   confidence?: number | null;
   source?: "manual" | "ai" | "none";
+  selected?: boolean;
 }): ClassifiedPhoto {
+  const sel = input.selected === undefined ? true : !!input.selected;
   const manual = normalizeCategory(input.manual) ?? (String(input.manual || "").trim() || null);
   if (manual) {
     const cat = normalizeCategory(manual);
-    return { id: input.id, label: String(manual), category: cat, confidence: 1, source: "manual", state: cat ? "confirmed" : "unsorted" };
+    return { id: input.id, label: String(manual), category: cat, confidence: 1, source: "manual", state: cat ? "confirmed" : "unsorted", selected: sel };
   }
   const conf = Number(input.confidence ?? 0);
   const cat = normalizeCategory(input.label);
   if (cat && conf >= ACCEPT_CONFIDENCE) {
-    return { id: input.id, label: cat, category: cat, confidence: conf, source: "ai", state: "confirmed" };
+    return { id: input.id, label: cat, category: cat, confidence: conf, source: "ai", state: "confirmed", selected: sel };
   }
   if (cat && conf >= REVIEW_CONFIDENCE) {
-    return { id: input.id, label: cat, category: cat, confidence: conf, source: "ai", state: "review" };
+    /* A low-confidence guess is never presented as a fact: the grid shows
+       "Needs Review" and presence checks ignore it. */
+    return { id: input.id, label: REVIEW_LABEL, category: cat, confidence: conf, source: "ai", state: "review", selected: sel };
   }
-  return { id: input.id, label: UNSORTED_LABEL, category: null, confidence: conf, source: input.source || "none", state: "unsorted" };
+  return { id: input.id, label: UNSORTED_LABEL, category: null, confidence: conf, source: input.source || "none", state: "unsorted", selected: sel };
 }
 
 /** Categories we recommend every listing tour contains. */
@@ -118,40 +124,84 @@ export const RECOMMENDED_CATEGORIES: PhotoCategory[] = ["Front Exterior", "Livin
 
 export type NoticeResult = {
   show: boolean;
+  /** Recommended categories with no photo at all. */
   missing: PhotoCategory[];
+  /** Recommended categories that exist but are currently unchecked. */
+  unselected: PhotoCategory[];
   message: string;
+  title: string;
+  kind: "none" | "missing" | "unselected" | "unconfirmed";
   reason: "ok" | "analyzing" | "unresolved" | "unreliable" | "complete";
 };
+
+export const UNCONFIRMED_COPY = "Some room types could not be confirmed.";
 
 /**
  * Missing-photo recommendation.
  *
- * Silent while analysis is pending, running or failed, and silent whenever an
- * unresolved photo could still turn out to be the category in question — a low
- * confidence result is never treated as proof of absence.
+ * Never speaks while analysis is pending or running. Presence is decided from
+ * confirmed classifications and manual corrections only, so a low-confidence
+ * guess is neither proof of presence nor proof of absence. When the answer is
+ * not knowable — failed or partial analysis, or a photo still unresolved — the
+ * notice falls back to neutral wording instead of naming a room. A recommended
+ * space that exists but is unchecked asks to be selected, not re-uploaded.
  */
 export function missingRecommendation(
   photos: ClassifiedPhoto[],
   status: AnalysisStatus,
 ): NoticeResult {
-  const none = (reason: NoticeResult["reason"]): NoticeResult => ({ show: false, missing: [], message: "", reason });
+  const base = { show: false, missing: [] as PhotoCategory[], unselected: [] as PhotoCategory[], message: "", title: "", kind: "none" as const };
+  const none = (reason: NoticeResult["reason"]): NoticeResult => ({ ...base, reason });
   if (!photos.length) return none("ok");
   if (status === "pending" || status === "running") return none("analyzing");
-  if (status === "failed") return none("unreliable");
 
-  const present = new Set(photos.filter((p) => p.state === "confirmed" && p.category).map((p) => p.category as PhotoCategory));
-  const missing = RECOMMENDED_CATEGORIES.filter((c) => !present.has(c));
-  if (!missing.length) return none("complete");
+  const confirmed = photos.filter((p) => p.state === "confirmed" && p.category);
+  const present = new Set(confirmed.filter((p) => p.selected !== false).map((p) => p.category as PhotoCategory));
+  const offGrid = new Set(confirmed.filter((p) => p.selected === false).map((p) => p.category as PhotoCategory));
 
-  /* Anything still unsorted or awaiting review could be the missing space. */
+  const gaps = RECOMMENDED_CATEGORIES.filter((c) => !present.has(c));
+  if (!gaps.length) return { ...base, reason: "complete" };
+
+  /* A recommended space sitting unchecked is a selection problem, not a
+     missing photo, and it is reported first. */
+  const unselected = gaps.filter((c) => offGrid.has(c));
+  if (unselected.length) {
+    return {
+      show: true,
+      missing: [],
+      unselected,
+      title: "Recommended photo not selected",
+      message: `A ${categoryWords(unselected).join(" and ")} photo is already uploaded but not selected.`,
+      kind: "unselected",
+      reason: "ok",
+    };
+  }
+
+  /* Anything unresolved, failed or partial could still be the missing space,
+     so the notice stays neutral rather than naming a room. */
   const unresolved = photos.some((p) => p.state !== "confirmed");
-  if (unresolved) return none("unresolved");
+  if (status === "failed" || status === "partial" || unresolved) {
+    return {
+      show: true,
+      missing: [],
+      unselected: [],
+      title: "Room types unconfirmed",
+      message: UNCONFIRMED_COPY,
+      kind: "unconfirmed",
+      reason: status === "failed" || status === "partial" ? "unreliable" : "unresolved",
+    };
+  }
 
-  return { show: true, missing, message: recommendationCopy(missing), reason: "ok" };
+  return { show: true, missing: gaps, unselected: [], title: "Recommended photo missing", message: recommendationCopy(gaps), kind: "missing", reason: "ok" };
+}
+
+/** Human wording for a category inside a sentence. */
+function categoryWords(list: PhotoCategory[]): string[] {
+  return list.map((m) => (m === "Front Exterior" ? "front exterior" : m.toLowerCase().replace("living room", "living-room")));
 }
 
 export function recommendationCopy(missing: PhotoCategory[]): string {
-  const words = missing.map((m) => (m === "Front Exterior" ? "front exterior" : m.toLowerCase().replace("living room", "living-room")));
+  const words = categoryWords(missing);
   if (!words.length) return "";
   if (words.length === 1) return `Consider adding a ${words[0]} photo for a more complete tour.`;
   return `Consider adding ${words.slice(0, -1).join(", ")} and ${words[words.length - 1]} photos for a more complete tour.`;
@@ -160,7 +210,7 @@ export function recommendationCopy(missing: PhotoCategory[]): string {
 /** A fingerprint of the photo set + labels; a dismissal only holds while it matches. */
 export function noticeSignature(photos: ClassifiedPhoto[]): string {
   return photos
-    .map((p) => `${p.id}:${p.category || "?"}:${p.state}`)
+    .map((p) => `${p.id}:${p.category || "?"}:${p.state}:${p.selected === false ? 0 : 1}`)
     .sort()
     .join("|");
 }
