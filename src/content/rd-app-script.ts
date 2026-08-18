@@ -19,6 +19,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { saveProjectDraft, getProjectDraft, deleteProjectDraft } from "@/lib/drafts.functions";
 import { newDraftId } from "@/lib/project-draft";
+import { GENERIC_STUDIO, canonicalHash, canvasSubtitle as studioSubtitle, isPhotoCanvas, needsNormalize, photoCanvasContext } from "@/lib/studio-context";
 import { mountReports } from "@/content/rd-reports";
 import { mountPropertyDetail } from "@/content/rd-property-detail";
 import { mountBudgetComingSoon, budgetAvailability } from "@/lib/budget-coming-soon";
@@ -191,12 +192,12 @@ let __paneSeq=0;
    to an existing Photo Design draft and must never be re-initialised as a
    blank Studio session. The context is explicit state, never inferred from
    whatever happens to be in the DOM. */
-let STUDIO_MODE:any={type:'generic'};
+let STUDIO_MODE:any=GENERIC_STUDIO;
 /* Every navigation bumps this token, so a delayed startup callback can tell
    whether the route it was queued for is still the one on screen. */
 let __navSeq=0;
 function studioMode(){ return STUDIO_MODE; }
-function inPhotoCanvas(){ return STUDIO_MODE && STUDIO_MODE.type==='photo-design-canvas'; }
+function inPhotoCanvas(){ return isPhotoCanvas(STUDIO_MODE); }
 /** Canonical route test: tolerates the legacy "#studio" form during migration. */
 function isCurrentView(v){
   const raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
@@ -208,12 +209,12 @@ try{
   (window as any).__rdStudioMode=()=>studioMode();
   (window as any).__rdNavToken=()=>__navSeq;
   (window as any).__rdNavCurrent=(tok:number)=>tok===__navSeq;
-  (window as any).__rdClearStudioMode=()=>{ STUDIO_MODE={type:'generic'}; };
+  (window as any).__rdClearStudioMode=()=>{ STUDIO_MODE=GENERIC_STUDIO; };
   /* The one way to open a Photo Design Canvas. It routes through the same
      navigation everything else uses, with the context set first, so no
      generic Studio startup logic can run against it. */
   (window as any).__rdOpenPhotoCanvas=(ctx:any)=>{
-    STUDIO_MODE={type:'photo-design-canvas',draftId:String((ctx&&ctx.draftId)||''),photoKey:String((ctx&&ctx.photoKey)||'')};
+    STUDIO_MODE=photoCanvasContext((ctx&&ctx.draftId)||'',(ctx&&ctx.photoKey)||'');
     go('studio',true);
     return STUDIO_MODE;
   };
@@ -233,7 +234,7 @@ function go(v,fromHash){
   }
   __navSeq++;
   /* Any route that is not the Studio view ends the Canvas context. */
-  if(v!=='studio' && inPhotoCanvas()) STUDIO_MODE={type:'generic'};
+  if(v!=='studio' && inPhotoCanvas()) STUDIO_MODE=GENERIC_STUDIO;
   const acctAlias = ACCT_ALIAS[v] ? v : '';
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
@@ -1177,11 +1178,7 @@ function setCanvasPhase(ph){ CANVAS_PHASE=ph||''; const sub=document.querySelect
 
 /** The single Canvas subtitle. One line, driven by the real source state. */
 function canvasSubtitle(){
-  if(CANVAS_PHASE==='generating') return 'Generating your design\u2026';
-  if(STUDIO_SRC===SRC_EMPTY) return 'Add A Source To Begin';
-  if(CANVAS_PHASE==='error') return 'Generation failed. Try again.';
-  if(STUDIO_RESULT) return 'Review your generated design';
-  return 'Your source photo';
+  return studioSubtitle({empty:STUDIO_SRC===SRC_EMPTY,result:!!STUDIO_RESULT,phase:CANVAS_PHASE as any});
 }
 try{ (window as any).__rdCanvasSubtitle=()=>canvasSubtitle(); }catch(_){}
 
