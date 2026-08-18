@@ -97,6 +97,9 @@ export type PickerOptions = {
   onTab?: (tab: SourceId) => void;
   /** Called with everything the user picked, after measurement. */
   onPick: (picked: PickedFile[]) => void | Promise<void>;
+  /** Advisory quality flags, measured after onPick so intake never blocks. */
+  onFlags?: (picked: PickedFile[]) => void;
+
   /** Called when the user chooses an existing property instead of files. */
   onProperty?: (address: string) => void;
   /** Called when the user chooses a finished design. */
