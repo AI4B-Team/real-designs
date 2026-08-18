@@ -3290,7 +3290,7 @@ loadPrefs();
   tog.addEventListener('click',toggle);
   /* leaving the workflow via the main menu also hands the rail back */
   document.addEventListener('click',(e)=>{
-    if(borrowed && e.target.closest && e.target.closest('.rd-app .nav-i')) window.__rdRailBorrow.release();
+    if(e.target.closest && e.target.closest('.rd-app .nav-i')){ window.__rdCanvasRail=false; if(borrowed) window.__rdRailBorrow.release(); }
   },true);
   const brand=document.querySelector('.rd-app .side-top .logo');
   if(brand){
