@@ -57,7 +57,9 @@ describe("property cards", () => {
     expect(cards[2]!.className).toContain("is-util");
     expect(cards[2]!.querySelector("b")!.textContent).toBe("Unassigned Photos");
     /* Selection control lives on the thumbnail, not beside the count. */
-    expect(cards[0]!.querySelector(".sp-prop-th .sp-pick")).toBeTruthy();
+    expect(cards[0]!.querySelector(".sp-pick")).toBeTruthy();
+    expect(cards[0]!.querySelector(".sp-prop-c i")).toBe(null);
+
   });
 
   it("reveals zero-photo properties only through the quiet toggle", () => {
