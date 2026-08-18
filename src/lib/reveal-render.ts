@@ -33,6 +33,14 @@ export type RevealScene = {
   /** Signed URL of an approved AI-generated clip used instead of the photo. */
   clipUrl?: string | null;
   clipSeconds?: number | null;
+  /** Focal crop of the still frame: center, top or bottom. */
+  crop?: string | null;
+  /* Standard Start/End: the scene starts on `url` and ends on `endUrl`,
+     rendered deterministically with the chosen transition. */
+  endUrl?: string | null;
+  startCrop?: string | null;
+  endCrop?: string | null;
+  seTransition?: string | null;
 };
 
 /** Standard camera moves. */
