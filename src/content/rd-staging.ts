@@ -32,7 +32,7 @@ import {
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
-import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml } from "@/lib/builder-ui";
+import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
@@ -577,7 +577,7 @@ function cardHtml(it, seq) {
 
 
 function gridHtml() {
-  return `<div class="rv-grid" id="rdsBody">${ordered().map(cardHtml).join("")}</div>`;
+  return `<div class="rv-grid" id="rdsBody">${ordered().map((it, i) => cardHtml(it, i + 1)).join("")}</div>`;
 }
 
 /* The counts live in the selection bar and the footer, so the only thing left
