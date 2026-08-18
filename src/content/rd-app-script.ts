@@ -41,6 +41,9 @@ import { mountWatch } from "@/content/rd-watch";
 import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
 import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
+import { setHandoff } from "@/lib/handoff";
+import { openStagingReview } from "@/content/rd-staging";
+import { openVideoWorkflow } from "@/content/rd-media-lib";
 
 /** Mirrors an Explore style choice into the Studio controls once per selection. */
 let STYLE_CHOICE_TS=0;
@@ -2060,6 +2063,7 @@ document.querySelectorAll('#designTabs button').forEach((b,i)=>b.addEventListene
 
 /* ---------- batch ---------- */
 let BATCH_ROOMS=[];
+let BATCH_PROP=null;
 let batchBusy=false;
 function batchStateEl(){ return document.getElementById('batchState'); }
 function paintBatch(){
@@ -2071,6 +2075,8 @@ function paintBatch(){
     sel.innerHTML='<option value="">No Properties Yet</option>';
     list.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Add a property and upload room photos to build a batch.</p>';
     BATCH_ROOMS=[];
+    BATCH_PROP=null;
+    batchLaunchState();
     const st0=batchStateEl(); if(st0){ st0.className='pill p-gray'; st0.textContent='Nothing To Run'; }
     if(runBtn) runBtn.disabled=true;
     return;
@@ -2085,6 +2091,12 @@ function paintBatch(){
   if(sel.dataset.selSync!==prop.id){ sel.dataset.selSync=prop.id; sel.dispatchEvent(new Event('change',{bubbles:true})); }
   const rooms=[]; prop.projects.forEach(pr=>pr.rooms.forEach(r=>rooms.push(r)));
   BATCH_ROOMS=rooms.filter(r=>!!r.before_path);
+  BATCH_PROP=prop;
+  /* Batch shares the app's one selected property, so Properties, Media and the
+     builders all stay on the same address the user is batching. */
+  const pi=PROP_TREE.indexOf(prop);
+  if(pi>-1&&SEL.p!==pi) SEL={p:pi,pr:0};
+  batchLaunchState();
   const sub=document.getElementById('batchSub');
   if(sub) sub.textContent=rooms.length?(rooms.length+(rooms.length===1?' room':' rooms')+' on file, '+BATCH_ROOMS.length+' with a photo'):'No Rooms On This Property Yet';
   const st=batchStateEl();
@@ -2124,6 +2136,47 @@ function mountBatchSource(){
 const batchProp=document.getElementById('batchProp');
 if(batchProp) batchProp.addEventListener('change',paintBatch);
 
+/* Batch starts builders through the one handoff contract every other surface
+   uses, so the property and its photos travel with the project. */
+function batchLaunchState(){
+  const ready=BATCH_ROOMS.length&&!batchBusy;
+  ['batchDesign','batchVideo'].forEach(id=>{ const b=document.getElementById(id); if(b) b.disabled=!ready; });
+}
+function batchHandoff(target){
+  if(!BATCH_ROOMS.length||!BATCH_PROP) return null;
+  return setHandoff({
+    target,
+    origin:'batch',
+    propertyId:BATCH_PROP.id||null,
+    propertyAddress:BATCH_PROP.address||null,
+    assets:BATCH_ROOMS.map(r=>({path:r.before_path,name:r.name,room:r.room_type||r.name,id:r.id})),
+  });
+}
+function batchBuild(target){
+  const h=batchHandoff(target);
+  if(!h){ try{ window.rdToast&&window.rdToast('Add Photos To This Property First.'); }catch(_){} return; }
+  if(target==='video'){
+    try{ window.__rdAllowReveal&&window.__rdAllowReveal(); }catch(_){}
+    openVideoWorkflow({
+      from:'batch',
+      propertyId:h.propertyId,
+      propertyAddress:h.propertyAddress,
+      assets:h.assets.map((a,i)=>({id:a.id,storage_path:a.path,file_name:a.name,original_filename:a.name,room_group:a.room||a.name,sort_order:i})),
+    });
+    return;
+  }
+  openStagingReview({
+    photos:h.assets.map(a=>({path:a.path,name:a.name,room:a.room})),
+    address:h.propertyAddress||'',
+    propertyId:h.propertyId,
+  });
+  try{ window.__rdGo&&window.__rdGo('studio'); }catch(_){}
+}
+const batchDesignBtn=document.getElementById('batchDesign');
+if(batchDesignBtn) batchDesignBtn.addEventListener('click',()=>batchBuild('design'));
+const batchVideoBtn=document.getElementById('batchVideo');
+if(batchVideoBtn) batchVideoBtn.addEventListener('click',()=>batchBuild('video'));
+
 function batchRowSet(roomId,pillCls,pillText,msg){
   const row=document.querySelector(`[data-broom="${roomId}"]`); if(!row) return;
   const pill=row.querySelector('[data-bpill]'), m=row.querySelector('[data-bmsg]');
@@ -2134,6 +2187,7 @@ function batchRowSet(roomId,pillCls,pillText,msg){
 async function runBatch(){
   if(batchBusy||!BATCH_ROOMS.length) return;
   batchBusy=true;
+  batchLaunchState();
   const runBtn=document.getElementById('batchRun');
   const dirSel=document.querySelector('#v-listings select:not(#batchProp)');
   const direction=((dirSel&&dirSel.value)||'Warm Minimal').replace(/,.*$/,'');
@@ -2173,6 +2227,7 @@ async function runBatch(){
   if(st){ st.className='pill '+(failed?'p-amb':'p-ok'); st.textContent=done+' Staged'+(failed?', '+failed+' Skipped':''); }
   if(runBtn){ runBtn.disabled=false; runBtn.innerHTML='<i data-lucide="play"></i>Run Batch'; lucide.createIcons(); }
   batchBusy=false;
+  batchLaunchState();
   try{ window.dispatchEvent(new CustomEvent('rd:saved')); }catch(e){}
   try{ PROP_TREE=await getPropertyTree(); }catch(e){}
 }
