@@ -658,6 +658,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         el.style.backgroundImage = 'url("' + url + '")';
         el.classList.remove("is-load", "is-fail");
         el.classList.add("has-img");
+        /* Lucide swaps the <i> for an <svg>, so drop the placeholder outright. */
+        el.querySelector("i, svg")?.remove();
       };
       const fail = (err: unknown) => {
         el.dataset["spThumbDone"] = "1";
