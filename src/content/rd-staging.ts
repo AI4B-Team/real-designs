@@ -685,11 +685,13 @@ function selectedCount() {
    classes, same collapse behaviour) — only the step data differs. */
 function stepRailHtml(active) {
   const has = S.items.length > 0;
+  const st = stepState();
+  const done = st.completed.length;
   const steps = [
     { key: "add", label: "Add Photos", icon: "image-plus", done: has },
     { key: "review", label: "Rooms", icon: "layout-grid", ready: has, badge: has ? String(selectedCount()) : "" },
-    { key: "design", label: "Design", icon: "wand-sparkles", ready: false },
-    { key: "final", label: "Review", icon: "circle-check", ready: false },
+    { key: "design", label: "Design", icon: "wand-sparkles", ready: has, done: !!done },
+    { key: "final", label: "Review", icon: "circle-check", ready: !!done, badge: done ? String(done) : "" },
   ];
   return builderRailHtml({
     steps,
