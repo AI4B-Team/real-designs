@@ -2007,8 +2007,12 @@ function transitionConn(s) {
   const tip = failed
     ? `Transition Failed: ${label}`
     : st.auto ? `Transition: ${label} · Auto Selected` : `Transition: ${label}`;
+  const pairTip = failed
+    ? `Transition Failed: Scene ${idx + 1} → Scene ${idx + 2} · ${label}`
+    : `Transition: Scene ${idx + 1} → Scene ${idx + 2} · ${label}${st.auto ? " · Auto Selected" : ""}`;
   return `<button class="rv-conn ${st.auto ? "auto" : "set"} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
     data-pop="trans" data-key="${esc(s.key)}" title="${esc(tip)}"
+    data-seam-tip="${esc(tip)}" data-pair-tip="${esc(pairTip)}"
     aria-label="${esc(`${tip}. Between Scene ${idx + 1} And Scene ${idx + 2}.`)}">
     <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[st.type] || "between-horizontal-start"}"></i>
   </button>`;
