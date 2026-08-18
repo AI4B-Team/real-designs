@@ -117,7 +117,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   const state = {
     method: "upload" as Method,
     /** Which door the user opened on the start screen: "" (none yet) or "design". */
-    door: "" as "" | "design" | "video",
+    door: "design" as "" | "design" | "video",
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
@@ -927,6 +927,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.property = address;
         state.address = address;
         openSetup("property");
+      },
+      onDescribe: () => {
+        openSetup("describe");
       },
       onSample: () => {
         state.samples = true;
