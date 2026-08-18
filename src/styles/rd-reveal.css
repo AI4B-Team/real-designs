@@ -537,7 +537,7 @@
 .rd-app .rv-advise b { font-weight: 600; }
 .rd-app .rv-advise .icon-btn { margin-left: auto; }
 .rd-app .rv-grid.landscape .rv-tile-th { aspect-ratio: 4 / 3; }
-.rd-app .rv-tile { border-radius: 12px; }
+.rd-app .rv-tile { border-radius: 12px; container-type: inline-size; }
 .rd-app .rv-tile-th { position: relative; aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; background: #f2f2f2 center/cover no-repeat; cursor: pointer; opacity: .5; transition: opacity .12s; }
 .rd-app .rv-tile.on .rv-tile-th { opacity: 1; }
 .rd-app .rv-tile-th:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
@@ -547,10 +547,15 @@
 .rd-app .rv-tile.on .rv-tile-check svg { opacity: 1; }
 .rd-app .rv-tile .rv-flag { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: #fff3d6; color: #9a6300; border: 0; cursor: pointer; }
 .rd-app .rv-tile .rv-flag svg { width: 14px; height: 14px; }
-.rd-app .rv-tile-seq { position: absolute; left: 10px; bottom: 10px; font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; color: #fff; background: rgba(0,0,0,.66); border-radius: 6px; padding: 1px 7px; }
-.rd-app .rv-tools { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%) translateY(4px); display: flex; gap: 2px; padding: 3px; max-width: calc(100% - 16px); background: #fff; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,.18); opacity: 0; pointer-events: none; transition: opacity .12s, transform .12s; }
+.rd-app .rv-tile-seq { position: absolute; left: 10px; bottom: 10px; z-index: 6; font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; color: #fff; background: rgba(0,0,0,.66); border-radius: 6px; padding: 1px 7px; }
+/* The hover toolbar lives at the bottom-right, clear of the permanent scene
+   number at the bottom-left. Narrow cards move it to the right edge, and the
+   narrowest collapse it into one ellipsis button. */
+.rd-app .rv-tools { position: absolute; right: 10px; bottom: 10px; left: auto; transform: translateY(4px); display: flex; gap: 2px; padding: 3px; max-width: calc(100% - 76px); background: #fff; border-radius: 999px; box-shadow: 0 4px 14px rgba(0,0,0,.18); opacity: 0; pointer-events: none; transition: opacity .12s, transform .12s; z-index: 4; }
 .rd-app .rv-tile.on:hover .rv-tools,
-.rd-app .rv-tile.on:focus-within .rv-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%) translateY(0); }
+.rd-app .rv-tile.on:focus-within .rv-tools { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.rd-app .rv-tools-more { position: absolute; right: 10px; bottom: 10px; display: none; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 999px; background: #fff; box-shadow: 0 4px 14px rgba(0,0,0,.18); cursor: pointer; z-index: 5; }
+.rd-app .rv-tools-more svg { width: 15px; height: 15px; }
 .rd-app .rv-tool { position: relative; width: 28px; height: 28px; border: 0; border-radius: 999px; background: transparent; display: grid; place-items: center; cursor: pointer; }
 .rd-app .rv-tool:hover { background: #f2f2f4; }
 .rd-app .rv-tool svg { width: 14px; height: 14px; }
@@ -558,8 +563,26 @@
 .rd-app .rv-tools > .rv-tool:first-child em { left: 0; transform: none; }
 .rd-app .rv-tools > .rv-tool:last-child em { left: auto; right: 0; transform: none; }
 .rd-app .rv-tool.hot::after { content: ""; position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 999px; background: var(--red, #CC0000); }
-.rd-app .rv-tool em { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 11.5px; font-weight: 600; color: #fff; background: #111; border-radius: 6px; padding: 3px 8px; opacity: 0; pointer-events: none; transition: opacity .1s; }
+.rd-app .rv-tool em { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 11.5px; font-weight: 600; color: #fff; background: #111; border-radius: 6px; padding: 3px 8px; opacity: 0; pointer-events: none; transition: opacity .1s; z-index: 6; }
 .rd-app .rv-tool:hover em, .rd-app .rv-tool:focus-visible em { opacity: 1; }
+
+/* Too narrow for a row beside the scene number: stack along the right edge. */
+@container (max-width: 258px) {
+  .rd-app .rv-tools { top: 50%; bottom: auto; right: 8px; flex-direction: column; max-width: none; border-radius: 22px; transform: translateY(calc(-50% + 4px)); }
+  .rd-app .rv-tile.on:hover .rv-tools,
+  .rd-app .rv-tile.on:focus-within .rv-tools { transform: translateY(-50%); }
+  .rd-app .rv-tools > .rv-tool em,
+  .rd-app .rv-tools > .rv-tool:first-child em,
+  .rd-app .rv-tools > .rv-tool:last-child em { bottom: auto; top: 50%; left: auto; right: calc(100% + 8px); transform: translateY(-50%); }
+}
+/* Compact cards: one ellipsis button opening the same actions. */
+@container (max-width: 178px) {
+  .rd-app .rv-tools-more { display: grid; }
+  .rd-app .rv-tile.on:hover .rv-tools,
+  .rd-app .rv-tile.on:focus-within .rv-tools { opacity: 0; pointer-events: none; }
+  .rd-app .rv-tile.tools-open .rv-tools,
+  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 46px; right: 8px; transform: none; }
+}
 .rd-app .rv-tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 2px 0; font-size: 12px; }
 .rd-app .rv-tile-foot b { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd-app .rv-tile-kind { font-style: normal; font-size: 11.5px; color: var(--muted, #6a6a6a); }
@@ -574,7 +597,13 @@
 .rd-app .rv-bar { height: 4px; border-radius: 999px; background: #eee; margin: 6px 0 4px; max-width: 260px; }
 .rd-app .rv-bar i { display: block; height: 100%; border-radius: 999px; background: #111; }
 @media (max-width: 900px) {
-  .rd-app .rv-tools { opacity: 1; pointer-events: auto; transform: translateX(-50%); }
+  /* Touch has no hover: every card shows the ellipsis and opens a popover. */
+  .rd-app .rv-tools-more { display: grid; }
+  .rd-app .rv-tile.on:hover .rv-tools,
+  .rd-app .rv-tile.on:focus-within .rv-tools { opacity: 0; pointer-events: none; }
+  .rd-app .rv-tile.tools-open .rv-tools,
+  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 46px; right: 8px; left: auto; flex-direction: column; max-width: none; border-radius: 22px; transform: none; }
+  .rd-app .rv-tile.tools-open .rv-tool em { bottom: auto; top: 50%; left: auto; right: calc(100% + 8px); transform: translateY(-50%); }
   .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
   .rd-app .rv-gridfoot { flex-wrap: wrap; }
 }

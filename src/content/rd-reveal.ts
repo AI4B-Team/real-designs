@@ -1932,10 +1932,11 @@ function tileHtml(a, seq) {
       <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
-      <button class="rv-tool ${frHot ? "hot" : ""}" data-pop="frames" data-key="${esc(a.key)}" aria-label="Start And End"><i data-lucide="arrow-left-right"></i><em>Start / End</em></button>
+      <button class="rv-tool ${frHot ? "hot" : ""}" data-pop="frames" data-key="${esc(a.key)}" aria-label="Frames"><i data-lucide="arrow-left-right"></i><em>Frames</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
-      <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="AI Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
-    </div>`;
+      <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
+    </div>
+    <button class="rv-tools-more" data-toolsmore="1" aria-label="Scene Tools" title="Scene Tools"><i data-lucide="ellipsis"></i></button>`;
   return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" draggable="true">
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
@@ -3997,6 +3998,16 @@ function bind() {
     if (w.pop.key) return w.scenes.find((s) => s.key === w.pop.key) || null;
     return w.scenes[w.pop.i] || null;
   };
+  /* Compact and touch cards collapse the toolbar behind one ellipsis; the
+     popover holds the same buttons, so no action is lost at small widths. */
+  on("[data-toolsmore]", "click", (e) => {
+    e.stopPropagation();
+    const tile = e.currentTarget.closest(".rv-tile");
+    if (!tile) return;
+    const open = tile.classList.contains("tools-open");
+    document.querySelectorAll(".rv-tile.tools-open").forEach((t) => t.classList.remove("tools-open"));
+    if (!open) tile.classList.add("tools-open");
+  });
   on("[data-pop]", "click", (e) => {
     e.stopPropagation();
     const key = e.currentTarget.dataset.key || null;
