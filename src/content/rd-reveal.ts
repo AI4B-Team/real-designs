@@ -1757,19 +1757,65 @@ function syncSceneOrder() {
   w.scenes.sort((a, b) => (pos.get(a.key) ?? 1e9) - (pos.get(b.key) ?? 1e9));
 }
 
-/** Compact state indicators. Icon plus tooltip only — never a full label. */
-function sceneBadges(s, clip) {
-  if (!s) return "";
+/**
+ * Everything applied to one scene, in one list. This is the single source the
+ * recap badges, the summary popover and the reset actions all read, so the
+ * card can never disagree with what will actually render.
+ */
+function sceneSettings(s, clip) {
+  if (!s) return [];
   const out = [];
-  const add = (icon, tip, cls = "") => out.push(`<em class="rv-badge ${cls}" title="${esc(tip)}"><i data-lucide="${icon}"></i></em>`);
-  if (clip && (clip.status === "queued" || clip.status === "processing")) add("loader", "AI Clip Processing", "busy");
-  else if (clip && clip.status === "failed") add("triangle-alert", "AI Clip Failed", "bad");
-  else if (clip && clip.status === "completed" && clip.approved) add("clapperboard", "Using AI Clip", "ai");
-  if (s.caption) add("type", `Text: ${s.caption}`);
-  if ((s.motion || "auto") !== "auto" && !s.use_clip) add("camera", `Motion: ${motionLabel(s)}`);
-  if (s.look) add("palette", "Look Applied");
-  if (s.vfx && s.vfx !== "none") add("wand-sparkles", "Effect Applied");
-  return out.length ? `<div class="rv-badges">${out.join("")}</div>` : "";
+  const fr = sceneFrames.get(s.key);
+  const add = (o) => out.push(o);
+  if (clip && (clip.status === "queued" || clip.status === "processing"))
+    add({ id: "clip", icon: "loader", label: "AI Clip", value: "Generating", cls: "busy", pop: null, primary: true, locked: true });
+  else if (clip && clip.status === "failed")
+    add({ id: "clip", icon: "triangle-alert", label: "AI Clip", value: "Failed", cls: "bad", pop: null, primary: true, locked: true });
+  else if (clip && clip.status === "completed" && clip.approved && s.use_clip)
+    add({ id: "clip", icon: "clapperboard", label: "AI Clip", value: "In Use", cls: "ai", pop: null, primary: true, locked: true });
+  if (frameConfigured(fr))
+    add({ id: "frames", icon: "arrow-left-right", label: "Start / End", value: seTransitionName(fr.transition_type), pop: "frames", primary: true });
+  if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive"))
+    add({ id: "motion", icon: "camera", label: "Motion", value: motionLabel(s), pop: "motion", primary: true });
+  if (s.vfx && s.vfx !== "none")
+    add({ id: "vfx", icon: "wand-sparkles", label: "Effect", value: tileById(s.vfx)?.label || "Applied", pop: "look", primary: true });
+  else if (s.look)
+    add({ id: "look", icon: "palette", label: "Look", value: lookById(s.look)?.label || "Applied", pop: "look", primary: true });
+  if (s.caption) add({ id: "cap", icon: "type", label: "Text", value: s.caption, pop: "cap" });
+  if (s.crop && s.crop !== "center") add({ id: "crop", icon: "crop", label: "Crop", value: s.crop === "top" ? "Top" : "Bottom", pop: "crop" });
+  if (s.exterior_effect) add({ id: "ext", icon: "sun", label: "Exterior", value: "Applied", pop: "motion" });
+  return out;
+}
+
+/** Reset one setting back to its default. Mirrors sceneSettings ids. */
+function resetSceneSetting(s, id) {
+  if (!s) return;
+  if (id === "motion") { s.motion = "auto"; s.motion_level = "standard"; s.immersive_effect = null; }
+  else if (id === "vfx") { s.vfx = "none"; s.vfx_gen = null; }
+  else if (id === "look") { s.look = null; s.look_amount = null; }
+  else if (id === "cap") { s.caption = ""; }
+  else if (id === "crop") { s.crop = "center"; }
+  else if (id === "ext") { s.exterior_effect = null; }
+  else if (id === "frames") { void sceneFrames.clear(s.key).catch(() => {}); }
+}
+
+/**
+ * Persistent recap in the upper-right corner of the scene image. It stays
+ * visible without hovering, so a user scanning the grid can see what each
+ * scene will do.
+ */
+function sceneRecap(s, clip) {
+  if (!s) return "";
+  const items = sceneSettings(s, clip);
+  if (!items.length) return "";
+  const primary = items.filter((it) => it.primary).slice(0, 2);
+  const rest = items.filter((it) => !primary.includes(it));
+  return `<div class="rv-recap">
+    ${primary.map((it) => `<em class="rv-recap-chip ${it.cls || ""}" title="${esc(`${it.label}: ${it.value}`)}">
+      <i data-lucide="${it.icon}"></i><b>${esc(it.value)}</b></em>`).join("")}
+    ${rest.length ? `<div class="rv-recap-dots">${rest.map((it) => `<em class="rv-recap-dot" title="${esc(`${it.label}: ${it.value}`)}"><i data-lucide="${it.icon}"></i></em>`).join("")}</div>` : ""}
+    <button class="rv-recap-all" data-pop="recap" data-key="${esc(s.key)}" aria-label="Scene Settings" title="Scene Settings"><i data-lucide="sliders-horizontal"></i></button>
+  </div>`;
 }
 
 function tileHtml(a, seq) {
@@ -1782,12 +1828,14 @@ function tileHtml(a, seq) {
   const cap = s ? String(s.caption || "") : "";
   const clip = sceneClips.get(a.key);
   const clipHot = !!clip && clip.status !== "cancelled" && clip.status !== "failed";
+  const frHot = s && frameConfigured(sceneFrames.get(s.key));
   /* Every card carries the same actions; using one on an unselected photo
      selects it first, so the tools never disappear on the user. */
   const tools = `<div class="rv-tools">
       <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
+      <button class="rv-tool ${frHot ? "hot" : ""}" data-pop="frames" data-key="${esc(a.key)}" aria-label="Start And End"><i data-lucide="arrow-left-right"></i><em>Start / End</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
       <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="AI Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
     </div>`;
