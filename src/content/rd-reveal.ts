@@ -117,6 +117,7 @@ import {
   RENDER_CANCELLED,
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
+import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
@@ -3970,6 +3971,9 @@ function bind() {
   on("#rvExitRetry", "click", () => { void exitBuilder(w); });
   on("#rvExitLeave", "click", () => { w.exitModal = null; leaveBuilder(w); });
   on("#rvExitX", "click", () => { w.exitModal = null; render(); });
+  on("#rvStartOver", "click", () => { w.startOverModal = { busy: false }; render(); });
+  on("#rvStartOverKeep", "click", () => { w.startOverModal = null; render(); });
+  on("#rvStartOverGo", "click", () => { void startOverBuilder(w); });
   on("#rvDeleteDraft", "click", () => { w.deleteModal = { alsoPhotos: false, busy: false }; render(); });
   on("#rvDelX, #rvDelKeep", "click", () => { w.deleteModal = null; render(); });
   on("#rvDelPhotos", "change", (e) => { w.deleteModal = { ...(w.deleteModal || {}), alsoPhotos: !!e.currentTarget.checked }; });
