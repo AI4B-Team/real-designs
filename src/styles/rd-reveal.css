@@ -612,12 +612,18 @@
 .rd-app .rv-fail-r em { flex: 1; font-style: normal; color: var(--mute-2); }
 
 .rd-app .rv-utility {
-  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  display: flex; align-items: center; gap: 12px;
   flex-wrap: wrap; padding: 0 0 10px; border-bottom: 1px solid var(--line); margin-bottom: 12px;
 }
-.rd-app .rv-selall, .rd-app .rv-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; cursor: pointer; }
+.rd-app .rv-selall, .rd-app .rv-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; cursor: pointer; flex: 0 0 auto; }
 .rd-app .rv-selall input, .rd-app .rv-toggle input { width: 15px; height: 15px; }
-.rd-app .rv-utility-a { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.rd-app .rv-utility-m { flex: 1 1 260px; min-width: 220px; max-width: 520px; display: flex; align-items: center; }
+.rd-app .rv-utility-m .rd-addr-bar { flex: 1 1 auto; margin-right: 0; min-width: 0; }
+.rd-app .rv-utility-a { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 0 0 auto; margin-left: auto; }
+@media (max-width: 900px) {
+  .rd-app .rv-utility-m { flex: 1 1 100%; order: 3; }
+}
+
 .rd-app .rv-more { position: relative; }
 .rd-app .rv-more > summary { list-style: none; cursor: pointer; }
 .rd-app .rv-more > summary::-webkit-details-marker { display: none; }
@@ -632,11 +638,22 @@
 }
 .rd-app .rv-more-m button:hover { background: #f6f6f6; }
 
-/* One continuous grid: as many photos per row as the width allows. */
-.rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px 12px; }
-@media (min-width: 1500px) { .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(184px, 1fr)); } }
-@media (max-width: 900px) { .rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } }
+/* One continuous grid. Column count follows the available content width,
+   never browser zoom: six complete cards at desktop widths, degrading
+   cleanly to five, four, three, two and one. */
+.rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px 12px; }
+.rd-app .rv-grid > * { min-width: 0; }
+.rd-app .rv-grid .rv-tile-th img { width: 100%; height: 100%; object-fit: cover; }
+@media (min-width: 1180px) { .rd-app .rv-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 1380px) { .rd-app .rv-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@media (min-width: 1600px) { .rd-app .rv-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 12px; } }
+@media (max-width: 900px) { .rd-app .rv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 700px) { .rd-app .rv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .rd-app .rv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; } }
+@media (max-width: 420px) { .rd-app .rv-grid { grid-template-columns: minmax(0, 1fr); } }
+/* Give the grid more of the workspace at wide widths without shrinking chrome. */
+@media (min-width: 1600px) { .rd-app #v-reveal .rv-wiz { padding: 18px 14px 20px; } }
+
 
 /* Room type under each photo, plus its compact searchable selector. */
 .rd-app .rv-room {
@@ -848,7 +865,7 @@
 }
 .rd-app .rd-addr-match i { width: 16px; height: 16px; color: var(--brand); }
 @media (max-width: 1040px) {
-  .rd-app .rd-addr-bar { flex: 1 1 100%; order: -1; margin-bottom: 8px; }
+  .rd-app .rv-head-tools .rd-addr-bar { flex: 1 1 100%; order: -1; margin-bottom: 8px; }
 }
 @media (max-width: 640px) {
   .rd-app .rd-addr-bar { min-width: 0; }
