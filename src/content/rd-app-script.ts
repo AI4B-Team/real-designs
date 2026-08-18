@@ -1033,13 +1033,23 @@ function studioStart(){
         return url||URL.createObjectURL(f);
       },
       setSource:(kind,src,alt,opts)=>setStudioSource(kind,src,alt,opts),
-      showConcept:async(image,label)=>{
+      showConcept:async(image,label,prompt)=>{
         setStudioSource('user_upload',image,'Design concept',{caption:'Concept design. Attach a real photo, sketch or plan for a true-to-space result.'});
         cAfter.innerHTML=photo(image,(label||'Concept')+' design');
-        addRenderVariant(image,label||'Concept',null);
+        /* A concept is real work: store it privately so it lands in Media. */
+        let path=null;
+        try{ path=await uploadRenderDataUrl(image); }catch(_){ path=null; }
+        lastRender=image; lastRenderPath=path;
+        addRenderVariant(image,label||'Concept',path);
         markStudioResult();
+        if(path){
+          STUDIO_DRAFT_ID=null; STUDIO_DRAFT_PATH=null;
+          try{ await saveStudioDraft(path,{prompt:prompt||null,concept:true}); }catch(_){}
+        }
+        try{ window.dispatchEvent(new Event('rd:photo')); }catch(_){}
         try{ window.dispatchEvent(new Event('rd:credits-changed')); }catch(_){}
       },
+
       getProperties:()=>{ try{ return PROP_TREE||[]; }catch(_){ return []; } },
       getRecent:()=>{ try{
         return designItems().filter(d=>!d.sample).slice(0,4).map(d=>({
