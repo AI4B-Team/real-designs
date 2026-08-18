@@ -801,12 +801,19 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /** Walks the candidate paths until one signed URL actually decodes. */
   async function loadThumb(el: HTMLElement, paths: string[]) {
+    /* A real <img> with object-fit, not a background: it scales predictably in
+       every tile size and never renders a mis-sized band of colour. */
     const paint = (url: string) => {
-      el.style.backgroundImage = 'url("' + url + '")';
       el.classList.remove("is-load", "is-fail");
       el.classList.add("has-img");
-      /* Lucide swaps the <i> for an <svg>, so drop the placeholder outright. */
-      el.querySelector("i, svg")?.remove();
+      el.innerHTML = "";
+      const img = document.createElement("img");
+      img.className = "sp-th-img";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.alt = el.dataset["spThumbAlt"] || "";
+      img.src = url;
+      el.appendChild(img);
     };
     for (const path of paths) {
       if (!el.isConnected) return;
