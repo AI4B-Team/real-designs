@@ -1819,6 +1819,12 @@ function stepTitles() {
 
   return `
   <section class="rv-sec">
+    <div class="rv-sec-h"><h4>Video Title</h4></div>
+    ${titleFieldHtml(w, { label: "Project Title" })}
+    <div class="rv-note sm">This Names The Project. It Is Not Shown In The Video.</div>
+  </section>
+
+  <section class="rv-sec">
     <div class="rv-sec-h"><h4>Opening Title</h4>
       <label class="rv-switch sm"><input type="checkbox" data-tt="property" ${t.property ? "checked" : ""}><i></i></label></div>
     ${t.property ? `
