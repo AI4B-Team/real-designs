@@ -22,6 +22,8 @@ export type RevealScene = {
   motion?: string;
   transition?: string;
   caption?: string | null;
+  captionPos?: "top" | "center" | "bottom" | null;
+  captionStyle?: "brand" | "minimal" | null;
   disclosure_type?: string | null;
   /** "standard" = camera motion only. "immersive" = AI-animated movement. */
   motion_level?: "standard" | "immersive";
@@ -446,22 +448,40 @@ function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number,
   return w;
 }
 
-function caption(ctx: CanvasRenderingContext2D, W: number, H: number, text: string, alpha: number) {
+function caption(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  text: string,
+  alpha: number,
+  pos: "top" | "center" | "bottom" = "bottom",
+  style: "brand" | "minimal" = "brand",
+) {
   if (!text || alpha <= 0.01) return;
   ctx.save();
   ctx.globalAlpha = alpha;
-  const grad = ctx.createLinearGradient(0, H - H * 0.28, 0, H);
-  grad.addColorStop(0, "rgba(0,0,0,0)");
-  grad.addColorStop(1, "rgba(0,0,0,.72)");
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, H - H * 0.28, W, H * 0.28);
-  const size = Math.round(W * 0.042);
-  ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
+  const band = H * 0.28;
+  /* The scrim keeps text legible over a bright photo; minimal skips it and
+     leans on a text shadow so the photo stays fully visible. */
+  if (style === "brand") {
+    const top = pos === "top" ? 0 : pos === "center" ? (H - band) / 2 : H - band;
+    const grad = ctx.createLinearGradient(0, pos === "top" ? band : top, 0, pos === "top" ? 0 : top + band);
+    grad.addColorStop(0, "rgba(0,0,0,0)");
+    grad.addColorStop(1, "rgba(0,0,0,.72)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, top, W, band);
+  } else {
+    ctx.shadowColor = "rgba(0,0,0,.65)";
+    ctx.shadowBlur = Math.round(W * 0.012);
+  }
+  const size = Math.round(W * (style === "minimal" ? 0.036 : 0.042));
+  ctx.font = `${style === "minimal" ? 600 : 700} ${size}px Inter, system-ui, sans-serif`;
   ctx.fillStyle = "#fff";
   ctx.textAlign = "left";
   ctx.textBaseline = "alphabetic";
+  const y = pos === "top" ? H * 0.12 : pos === "center" ? H / 2 + size * 0.35 : H - H * 0.09;
   const max = 34;
-  ctx.fillText(text.length > max ? text.slice(0, max - 1) + "…" : text, W * 0.07, H - H * 0.09);
+  ctx.fillText(text.length > max ? text.slice(0, max - 1) + "…" : text, W * 0.07, y);
   ctx.restore();
 }
 
@@ -986,7 +1006,7 @@ export async function renderReveal(
         if (opts.captionsEnabled !== false) {
           const text = scene.caption || scene.room_name || "";
           const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
-          caption(ctx, W, H, text, a);
+          caption(ctx, W, H, text, a, scene.captionPos || "bottom", scene.captionStyle || "brand");
         }
         {
           const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
