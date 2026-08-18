@@ -13,7 +13,8 @@ import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
 import { openAddressModal } from "@/lib/address-modal";
 import { suggestAddresses } from "@/lib/property-address.functions";
-import { filterMedia, propertyOptions, assignKind, isAssignable } from "@/lib/media-view";
+import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL } from "@/lib/media-view";
+import { deleteProjectDraft } from "@/lib/drafts.functions";
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
@@ -80,6 +81,17 @@ const STATUS_LABEL = {
   shared: "Shared",
   archived: "Archived",
 };
+const TABS = [
+  ["all", "All"],
+  ["images", "Images"],
+  ["videos", "Videos"],
+  ["drafts", "Drafts"],
+  ["processing", "Processing"],
+  ["completed", "Completed"],
+  ["failed", "Failed"],
+  ["unassigned", "Unassigned"],
+];
+
 const TYPE_ICON = {
   generated_image: "image",
   generated_video: "clapperboard",
@@ -132,10 +144,7 @@ function shell() {
   </div>
 
   <div class="ml-tabs" id="mlTabs" role="tablist">
-    <button class="on" data-t="all" role="tab">All <em id="mlcAll"></em></button>
-    <button data-t="images" role="tab">Images <em id="mlcImages"></em></button>
-    <button data-t="videos" role="tab">Videos <em id="mlcVideos"></em></button>
-    <button data-t="uploads" role="tab">Uploads <em id="mlcUploads"></em></button>
+    ${TABS.map(([k, label]) => `<button class="${k === "all" ? "on" : ""}" data-t="${k}" role="tab">${label} <em id="mlc-${k}"></em></button>`).join("")}
   </div>
 
   <div class="ml-bar">
@@ -315,12 +324,9 @@ function paintPropFilter() {
 
 function counts() {
   const live = S.items.filter((m) => m.status !== "archived");
-  return {
-    all: live.length,
-    images: live.filter((m) => typeGroup(m.type) === "images").length,
-    videos: live.filter((m) => typeGroup(m.type) === "videos").length,
-    uploads: live.filter((m) => typeGroup(m.type) === "uploads").length,
-  };
+  const out = {};
+  TABS.forEach(([k]) => (out[k] = live.filter((m) => matchesTab(m, k)).length));
+  return out;
 }
 
 function emptyState() {
@@ -342,9 +348,9 @@ function render() {
   if (!grid) return;
   paintPropFilter();
   const c = counts();
-  ["All", "Images", "Videos", "Uploads"].forEach((k) => {
-    const el = document.getElementById("mlc" + k);
-    if (el) el.textContent = String(c[k.toLowerCase()] || 0);
+  TABS.forEach(([k]) => {
+    const el = document.getElementById("mlc-" + k);
+    if (el) el.textContent = String(c[k] || 0);
   });
   const bulk = document.getElementById("mlBulk");
   const allBtn = document.getElementById("mlAll") as HTMLButtonElement | null;
