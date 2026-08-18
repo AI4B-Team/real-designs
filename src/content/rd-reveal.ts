@@ -4411,6 +4411,8 @@ export function startWizard(seed = {}) {
   const w = newWizard(seed);
   S.wizard = w;
   S.screen = "wizard";
+  sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
+  sceneClips.setProject(w.editingId || null);
   logVideoEvent("video_builder_started", {
     seedFileCount: Array.from(seed.files || []).length,
     uploadCount: (w.uploads || []).length,
