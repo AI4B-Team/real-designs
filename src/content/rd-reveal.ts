@@ -672,6 +672,18 @@ async function loadWizardAssets() {
       version_id: d.versionId || null, disclosure: "proposed", flags: [],
     });
   }
+  /* Photos chosen from the picker (including the unassigned bucket, which has
+     no property row) are real assets even when nothing else loaded them. */
+  for (const ph of w.seedPhotos || []) {
+    if (!ph || !ph.path) continue;
+    if (out.some((a) => a.path === ph.path)) continue;
+    const room = ph.room || UNSORTED;
+    out.push({
+      key: "sp-" + (ph.id || ph.path), path: ph.path, room,
+      kind: "Original", group: groupFor(room === UNSORTED ? "" : room, ""),
+      disclosure: null, flags: [],
+    });
+  }
   w.available = out;
   /* The grid is the order. Build it in room group order; new uploads append. */
   const keep = new Set(out.map((a) => a.key));
