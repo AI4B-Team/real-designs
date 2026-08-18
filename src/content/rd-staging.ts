@@ -302,12 +302,37 @@ export function ensureStagingView() {
   return !!host();
 }
 
+/* Every mount of the staging view gets a generation. Restoration started
+   under an older generation may not move the user: by the time it resolves
+   they may be in Media, Properties or the video builder. */
+let mountGen = 0;
+let restoring: Promise<"restored" | "none" | "error"> | null = null;
+
+/** True while the canonical Photo Design route is still the visible page. */
+function onStagingRoute() {
+  try {
+    const isView = (window as any).__rdIsView;
+    if (typeof isView === "function") return !!isView("staging");
+  } catch (_) {}
+  const raw = (location.hash || "").replace(/^#/, "").replace(/^v-/, "");
+  return raw === "staging";
+}
+
 /** Router hook: the staging view became visible again (back button, refresh). */
 export function mountStagingView() {
+  const gen = ++mountGen;
   if (!S) {
-    /* Nothing in flight: try the saved draft, otherwise hand the user back. */
-    void resumeStagingDraft().then((ok) => {
-      if (!ok) { try { window.__rdGo && window.__rdGo("studio"); } catch (_) {} }
+    /* Nothing in flight: try the saved draft, otherwise hand the user back.
+       Only one restoration runs at a time, and only a confirmed "no draft
+       exists while Photo Design is still the active page" returns to Studio.
+       A network or auth failure leaves the user exactly where they are. */
+    if (!restoring) restoring = resumeStagingDraftResult().finally(() => { restoring = null; });
+    void restoring.then((result) => {
+      if (result !== "none") return;
+      if (gen !== mountGen) return;
+      if (hasStagingSession()) return;
+      if (!onStagingRoute()) return;
+      try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
     });
     return;
   }
@@ -317,9 +342,12 @@ export function mountStagingView() {
 }
 
 export function detachStagingView() {
+  /* Anything restoring for the page we are leaving is now stale. */
+  mountGen++;
   closePopover();
   try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
 }
+
 
 /* Scroll position survives a trip into the canvas and back. */
 let scrollY = 0;
