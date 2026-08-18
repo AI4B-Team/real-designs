@@ -3680,7 +3680,14 @@ function bind() {
       const sc = w.scenes[i];
       w.pop.snap = fxSnap(sc);
       w.popTab = sc && sc.vfx && sc.vfx !== "none" ? "effects" : "looks";
-      w.popCat = "all"; w.popAll = false; w.popConfirm = false;
+      w.popCat = "recommended"; w.popAll = false; w.popConfirm = false;
+    }
+    if (kind === "cap" || kind === "motion") {
+      /* Snapshot so Cancel restores exactly what the scene had. */
+      const sc = w.scenes[i] || {};
+      w.pop.snap = kind === "cap"
+        ? { caption: sc.caption ?? "", caption_pos: sc.caption_pos || "bottom", caption_style: sc.caption_style || "brand" }
+        : { motion: sc.motion || "auto", motion_level: sc.motion_level || "standard", immersive_effect: sc.immersive_effect || null };
     }
     render();
   });
@@ -3701,6 +3708,8 @@ function bind() {
       } else {
         fxRestore(s, w.pop.snap);
       }
+    } else if ((w.pop?.kind === "cap" || w.pop?.kind === "motion") && !commit && s && w.pop.snap) {
+      Object.assign(s, w.pop.snap);
     }
     w.pop = null; w.popAll = false; w.popConfirm = false;
     render();
@@ -3928,7 +3937,16 @@ function bind() {
   const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
   if (w.avatar) bindAvatar(el, w.avatar, render, toast);
 
-  on("[data-cap]", "input", (e) => { w.scenes[Number(e.currentTarget.dataset.cap)].caption = e.currentTarget.value; });
+  on("[data-cap]", "input", (e) => {
+    const sc = w.scenes[Number(e.currentTarget.dataset.cap)];
+    if (!sc) return;
+    sc.caption = e.currentTarget.value;
+    const clear = el.querySelector("#rvCapClear");
+    if (clear) clear.disabled = !sc.caption;
+  });
+  on("[data-cappos]", "click", (e) => { const sc = cur(); if (!sc) return; sc.caption_pos = e.currentTarget.dataset.cappos; render(); });
+  on("[data-capstyle]", "click", (e) => { const sc = cur(); if (!sc) return; sc.caption_style = e.currentTarget.dataset.capstyle; render(); });
+  on("#rvCapClear", "click", () => { const sc = cur(); if (!sc) return; sc.caption = ""; render(); });
 
   /* scene labels */
   const lref = (v) => { const [i, j] = String(v).split(":").map(Number); return { s: w.scenes[i], j }; };
