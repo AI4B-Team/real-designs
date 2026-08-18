@@ -156,6 +156,24 @@
 .ml-pop button.danger { color:#b91c1c; }
 .ml-pop button[disabled] { opacity:.45; cursor:default; }
 .ml-pop svg { width:15px; height:15px; }
+.ml-pop button:focus-visible { background:#f3f4f6; outline:2px solid #cc0000; outline-offset:-2px; }
+.ml-pop-g { padding:8px 10px 4px; font-size:10px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:#9ca3af; }
+.ml-pop-g:first-child { padding-top:4px; }
+.ml-pop-g + button { margin-top:0; }
+.ml-pop { max-height:min(70vh,520px); overflow:auto; }
+
+/* Drawer header actions and loading skeleton */
+.ml-dr-hb { display:flex; gap:4px; align-items:center; flex:0 0 auto; }
+.ml-dr-prev.sk, .ml-dr-meta .sk-row { background:linear-gradient(90deg,#f1f2f4 25%,#e7e9ec 37%,#f1f2f4 63%);
+  background-size:400% 100%; animation:mlSk 1.2s ease infinite; border-radius:10px; }
+.ml-dr-meta .sk-row { height:48px; }
+@keyframes mlSk { 0% { background-position:100% 50%; } 100% { background-position:0 50%; } }
+@media (max-width:560px) {
+  .ml-dr { width:100%; top:auto; height:92vh; border-radius:16px 16px 0 0; }
+  .ml-dr-meta { grid-template-columns:1fr; }
+  .ml-dr-a .btn { flex:1 1 auto; }
+}
+
 
 /* Drawer status context + compare */
 .ml-dr-note { display:flex; gap:10px; align-items:flex-start; padding:10px 12px; border-radius:10px; background:#f3f4f6;
