@@ -1324,23 +1324,19 @@ function drawStrip() {
     <button class="rds-strip-i" id="rdsStripX" aria-label="Close the photo set"><i data-lucide="x"></i></button>`;
 
   paint();
-  strip.querySelector("#rdsRooms").onclick = () => {
-    markCurrentDone();
-    reopenStaging();
-  };
   strip.querySelector("#rdsStripX").onclick = exitAll;
-  strip.querySelector("#rdsPrev").onclick = () => {
+  const step = (dir) => {
     markCurrentDone();
     const l = designSet();
     const n = l.findIndex((x) => x.key === S.current);
-    if (n > 0) openInCanvas(l[n - 1].key);
+    const t = n + dir;
+    if (n >= 0 && t >= 0 && t < l.length) openInCanvas(l[t].key);
   };
-  strip.querySelector("#rdsNext").onclick = () => {
-    markCurrentDone();
-    const l = designSet();
-    const n = l.findIndex((x) => x.key === S.current);
-    if (n >= 0 && n < l.length - 1) openInCanvas(l[n + 1].key);
-  };
+  strip.querySelector("#rdsPrev").onclick = () => step(-1);
+  strip.querySelector("#rdsNext").onclick = () => step(1);
+  const nextRoom = strip.querySelector("#rdsNextRoom");
+  if (nextRoom) nextRoom.onclick = () => step(1);
+
   strip.querySelectorAll("[data-go]").forEach((b) =>
     b.addEventListener("click", () => {
       markCurrentDone();
