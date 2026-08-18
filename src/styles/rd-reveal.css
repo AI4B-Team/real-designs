@@ -696,17 +696,8 @@
 
 
 
-/* Room type under each photo, plus its compact searchable selector. */
-.rd-app .rv-room {
-  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%;
-  border: 0; background: transparent; padding: 0; cursor: pointer;
-  font: inherit; font-size: 12px; font-weight: 700; color: #111;
-}
-.rd-app .rv-room span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rd-app .rv-room.muted { color: var(--mute-2, #8a8a8a); font-weight: 600; }
-.rd-app .rv-room svg { width: 14px; height: 14px; flex: 0 0 auto; color: var(--mute-2, #8a8a8a); }
-.rd-app .rv-room em[data-lucide] { display: none; }
-.rd-app .rv-room:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+/* Room type under each photo. The control itself is the shared .bx-room
+   selector defined in rd-staging.css; only its searchable sheet lives here. */
 .rd-app .rv-roomsheet { width: min(420px, 94vw); }
 .rd-app .rv-roomsearch { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line, #f0f0f0); }
 .rd-app .rv-roomsearch svg { width: 15px; height: 15px; color: var(--mute-2, #8a8a8a); }
