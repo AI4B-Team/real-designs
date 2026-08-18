@@ -993,7 +993,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const t = e.target as HTMLElement;
     const tab = t.closest("[data-sp-tab]") as HTMLElement | null;
     if (tab) {
-      state.tab = tab.dataset["spTab"] as SourceId;
+      const next = tab.dataset["spTab"] as SourceId;
+      if (next !== state.tab) {
+        /* Changing source starts a clean selection. */
+        state.propSel = null;
+        state.propPhotos = [];
+        state.propChecked = new Set();
+      }
+      state.tab = next;
       state.note = "";
       opts.onTab?.(state.tab);
       render();
