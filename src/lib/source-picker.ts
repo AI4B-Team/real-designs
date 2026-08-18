@@ -172,8 +172,19 @@ const esc0 = (v: string) =>
   String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
 
 
+let pickerSeq = 0;
+
 export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const cfg = CONTEXT_CONFIG[opts.context];
+  /* Several pickers can live in the DOM at once (Studio, Video, Listings).
+     Element ids must stay unique per instance, and every lookup must be
+     scoped to this picker, or a hidden picker answers for the visible one. */
+  const uid = "p" + ++pickerSeq;
+  const pid = (name: string) => name + "-" + uid;
+  /* Field lookups go through data attributes inside this picker only. */
+  const field = (name: string) =>
+    (body?.querySelector('[data-sp-f="' + name + '"]') as HTMLInputElement | HTMLTextAreaElement | null) || null;
+  const fieldName = (t: Element | null) => (t as HTMLElement | null)?.dataset?.["spF"] || "";
   let escFail = false;
   const esc = (v: string) => (escFail || !opts.esc ? esc0(v) : (() => { try { return opts.esc!(v); } catch { escFail = true; return esc0(v); } })());
   const alert = opts.showAlert || ((m: string) => console.warn(m));
@@ -385,7 +396,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           const on = state.tab === s;
           return (
             '<button type="button" role="tab" class="sp-tab' + (on ? " on" : "") + '" data-sp-tab="' + s +
-            '" id="spTab-' + s + '" aria-selected="' + (on ? "true" : "false") + '" aria-controls="spPanel"' +
+            '" id="' + pid("spTab-" + s) + '" aria-selected="' + (on ? "true" : "false") + '" aria-controls="' + pid("spPanel") + '"' +
             ' tabindex="' + (on ? "0" : "-1") + '" aria-pressed="' + (on ? "true" : "false") +
             '" title="' + esc(m.desc) + '">' +
             (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
@@ -424,7 +435,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return (
         '<div class="sp-pane">' +
         '<div class="sp-cloudrow"><span>' + DRIVE_ICON + "Google Drive</span><span>" + DROPBOX_ICON + "Dropbox</span></div>" +
-        '<label class="sp-f">Public Share Link<input type="text" id="spCloud" placeholder="https://drive.google.com/file/d/..."></label>' +
+        '<label class="sp-f">Public Share Link<input type="text" data-sp-f="cloud" id="' + pid("spCloud") + '" placeholder="https://drive.google.com/file/d/..."></label>' +
         '<button type="button" class="btn btn-primary btn-sm" data-sp="cloudgo">' + (state.busy ? "Importing" : "Import Photos") + "</button>" +
         '<p class="sp-note">The link must be shared publicly so we can read it.</p>' +
         "</div>"
@@ -434,7 +445,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return (
         '<div class="sp-pane">' +
         '<label class="sp-f sp-search">Property Address<span><i data-lucide="search"></i>' +
-        '<input type="text" id="spAddr" placeholder="3417 Hoover Dr, Holiday, FL 34691" value="' + esc(state.address) + '"></span></label>' +
+        '<input type="text" data-sp-f="addr" id="' + pid("spAddr") + '" placeholder="3417 Hoover Dr, Holiday, FL 34691" value="' + esc(state.address) + '"></span></label>' +
         '<button type="button" class="btn btn-primary btn-sm" data-sp="addrgo">' + (state.busy ? "Looking Up" : "Look Up Address") + "</button>" +
         '<p class="sp-note">An address lookup files your work under that property and fills in listing details such as beds, baths and square footage. It does not download photos from a listing — add those from Upload.</p>' +
         "</div>"
@@ -443,7 +454,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (state.tab === "url") {
       return (
         '<div class="sp-pane">' +
-        '<label class="sp-f">Listing Link<input type="text" id="spUrl" placeholder="https://www.zillow.com/homedetails/..." value="' + esc(state.url) + '"></label>' +
+        '<label class="sp-f">Listing Link<input type="text" data-sp-f="url" id="' + pid("spUrl") + '" placeholder="https://www.zillow.com/homedetails/..." value="' + esc(state.url) + '"></label>' +
         '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' + (state.busy ? "Reading Link" : "Import Listing Details") + "</button>" +
         '<p class="sp-note">Listing links are read as text only. No photos or media are imported from a public listing page.</p>' +
         "</div>"
@@ -473,7 +484,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return (
         '<div class="sp-pane sp-describe">' +
         '<div class="sp-composer' + (state.describeBusy ? " is-busy" : "") + '">' +
-        '<textarea id="spPrompt" aria-label="Describe the space you want to create" ' +
+        '<textarea data-sp-f="prompt" id="' + pid("spPrompt") + '" aria-label="Describe the space you want to create" ' +
         (state.describeBusy ? "disabled " : "") +
         'placeholder="Describe the space you want to create. Include the room, style, colors, materials and anything you want included.">' +
         esc(state.prompt) + "</textarea>" +
@@ -865,7 +876,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return (
       '<div class="sp">' +
       tabs() +
+      /* The tablist's aria-controls needs a real panel to point at. */
+      '<div id="' + pid("spPanel") + '" role="tabpanel" aria-labelledby="' + pid("spTab-" + state.tab) + '">' +
       panel() +
+      "</div>" +
       (state.note ? '<div class="sp-msg">' + esc(state.note) + "</div>" : "") +
       "</div>" +
       chooser()
@@ -932,7 +946,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   /** The dropzone is clickable and keyboard-operable, not only its button. */
   function onKey(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
-    if ((t as HTMLElement).id === "spPrompt") {
+    if (fieldName(t) === "prompt") {
       /* Enter still writes a new line; only the shortcut submits. */
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -956,7 +970,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /** Grows the composer with the text and keeps the submit state honest. */
   function syncComposer() {
-    const ta = document.getElementById("spPrompt") as HTMLTextAreaElement | null;
+    const ta = field("prompt") as HTMLTextAreaElement | null;
     if (ta) {
       ta.style.height = "auto";
       ta.style.height = Math.min(ta.scrollHeight, 260) + "px";
@@ -983,9 +997,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   function onInput(e: Event) {
     const t = e.target as HTMLInputElement;
-    if (t.id === "spAddr") state.address = t.value;
-    if (t.id === "spUrl") state.url = t.value;
-    if (t.id === "spPrompt") {
+    const f = fieldName(t);
+    if (f === "addr") state.address = t.value;
+    if (f === "url") state.url = t.value;
+    if (f === "prompt") {
       state.prompt = t.value;
       syncComposer();
     }
@@ -1027,7 +1042,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       /* Examples fill the prompt; the user still presses Create. */
       state.prompt = ex.dataset["spEx"] || "";
       render();
-      const ta = document.getElementById("spPrompt") as HTMLTextAreaElement | null;
+      const ta = field("prompt") as HTMLTextAreaElement | null;
       if (ta) {
         ta.focus();
         ta.setSelectionRange(ta.value.length, ta.value.length);
@@ -1066,7 +1081,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
     else if (k === "describe") await submitDescribe();
-    else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
+    else if (k === "cloudgo") importCloud(field("cloud")?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
     else if (k === "emptytoggle") {
