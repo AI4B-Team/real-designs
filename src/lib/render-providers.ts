@@ -23,6 +23,8 @@ export type RenderProvider = {
   reportsProgress: boolean;
   /** Whether the provider is wired up, authenticated and usable right now. */
   configured: boolean;
+  /** True when this renderer is only a stopgap until a real server encoder runs. */
+  fallback?: boolean;
   /** Copy shown while a job of this provider is running. */
   runningNotice: string;
 };
@@ -35,9 +37,11 @@ export const RENDER_PROVIDERS: Record<string, RenderProvider> = {
     survivesTabClose: false,
     reportsProgress: true,
     configured: true,
+    fallback: true,
     runningNotice: "Keep this tab open while your video is created.",
   },
 };
+
 
 /**
  * Registers a server-side encoder (Creatomate, Shotstack, Remotion Lambda, an
