@@ -268,6 +268,7 @@ export const getPropertyTree = createServerFn({ method: "GET" })
         .select(
           `id, address, design_dna, created_at,
          property_media_assets ( count ),
+         media:property_media_assets ( id, storage_path, original_filename, room_group, hidden, sort_order, created_at ),
          projects ( id, name, finish_grade, budget_target, created_at,
            rooms ( id, name, room_type, created_at,
              versions ( id, version_no, status, before_path, after_path, created_at,
