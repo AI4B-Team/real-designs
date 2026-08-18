@@ -1171,11 +1171,15 @@ function studioStart(){
 /* The source chooser belongs to a generic Studio session only. */
 window.rdStudioStart=(method)=>{ if(inPhotoCanvas()) return; const s=studioStart(); if(s&&s.open) s.open(method); };
 
+/** '' | 'generating' | 'error' — drives the one dynamic Canvas subtitle. */
+let CANVAS_PHASE='';
+function setCanvasPhase(ph){ CANVAS_PHASE=ph||''; const sub=document.querySelector('#canvasCard .card-h .sub'); if(sub) sub.textContent=canvasSubtitle(); }
+
 /** The single Canvas subtitle. One line, driven by the real source state. */
 function canvasSubtitle(){
+  if(CANVAS_PHASE==='generating') return 'Generating your design\u2026';
   if(STUDIO_SRC===SRC_EMPTY) return 'Add A Source To Begin';
-  if(STUDIO_SRC==='processing') return 'Generating your design\u2026';
-  if(STUDIO_SRC==='error') return 'Generation failed. Try again.';
+  if(CANVAS_PHASE==='error') return 'Generation failed. Try again.';
   if(STUDIO_RESULT) return 'Review your generated design';
   return 'Your source photo';
 }
@@ -1420,6 +1424,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
   if(STUDIO_SRC===SRC_EMPTY||!srcImg||!srcImg.src){ needSourceModal(); return; }   // never spends a credit
   if(!ensureCredits(1,'A Design Render')) return;
   busy=true;
+  setCanvasPhase('generating');
   const btn=document.getElementById('genBtn'); btn.disabled=true;
   const ov=document.getElementById('cGen'),bar=document.getElementById('cBar'),st=document.getElementById('cStep');
   ov.classList.add('on');bar.style.width='0%';st.textContent=gsteps[0];
@@ -1452,6 +1457,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
     try{ lastRenderPath=await uploadRenderDataUrl(r.image); }catch(e0){ lastRenderPath=null; }
     cAfter.innerHTML=photo(r.image,'Redesigned space, AI render');
     addRenderVariant(r.image,(document.getElementById('fStyle')||{}).value||'Your Render',lastRenderPath);
+    setCanvasPhase('');
     markStudioResult();
     paintStudioSummary(currentBand());
     window.dispatchEvent(new Event('rd:credits-changed'));
@@ -1461,6 +1467,7 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
     setTimeout(()=>{let v=100;const b2=setInterval(()=>{v-=2.6;cRng.value=v;setC(v);if(v<=44)clearInterval(b2)},20)},600);
   }catch(e){
     finish();
+    setCanvasPhase('error');
     if(!creditGate(e)) showAlert('Could not render this design. '+((e&&e.message)||'Try again in a moment.'));
   }
 });
