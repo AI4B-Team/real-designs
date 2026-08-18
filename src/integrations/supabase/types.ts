@@ -1653,6 +1653,100 @@ export type Database = {
           },
         ]
       }
+      scene_start_end: {
+        Row: {
+          clip_id: string | null
+          created_at: string
+          credit_cost: number
+          disclosure: string | null
+          end_asset_id: string | null
+          end_crop: string
+          end_path: string | null
+          generation_mode: string
+          id: string
+          provider_job_id: string | null
+          scene_id: string | null
+          scene_key: string
+          start_asset_id: string | null
+          start_crop: string
+          start_path: string
+          status: string
+          transition_duration: number
+          transition_type: string
+          updated_at: string
+          user_id: string
+          video_project_id: string
+        }
+        Insert: {
+          clip_id?: string | null
+          created_at?: string
+          credit_cost?: number
+          disclosure?: string | null
+          end_asset_id?: string | null
+          end_crop?: string
+          end_path?: string | null
+          generation_mode?: string
+          id?: string
+          provider_job_id?: string | null
+          scene_id?: string | null
+          scene_key: string
+          start_asset_id?: string | null
+          start_crop?: string
+          start_path: string
+          status?: string
+          transition_duration?: number
+          transition_type?: string
+          updated_at?: string
+          user_id: string
+          video_project_id: string
+        }
+        Update: {
+          clip_id?: string | null
+          created_at?: string
+          credit_cost?: number
+          disclosure?: string | null
+          end_asset_id?: string | null
+          end_crop?: string
+          end_path?: string | null
+          generation_mode?: string
+          id?: string
+          provider_job_id?: string | null
+          scene_id?: string | null
+          scene_key?: string
+          start_asset_id?: string | null
+          start_crop?: string
+          start_path?: string
+          status?: string
+          transition_duration?: number
+          transition_type?: string
+          updated_at?: string
+          user_id?: string
+          video_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_start_end_clip_id_fkey"
+            columns: ["clip_id"]
+            isOneToOne: false
+            referencedRelation: "scene_clips"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_start_end_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "video_scenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_start_end_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scope_lines: {
         Row: {
           change_item_id: string | null
