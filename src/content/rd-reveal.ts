@@ -1151,9 +1151,10 @@ function titleSuggestion(w) {
   return sanitizeTitle(defaultTitle(w)) === s ? "" : s;
 }
 
-function titleFieldHtml(w) {
+function titleFieldHtml(w, opts = {}) {
   const sug = titleSuggestion(w);
-  return `<label class="rv-f">Video Title<input id="rvTitle" maxlength="160" placeholder="Untitled Video" value="${esc(defaultTitle(w))}"></label>
+  const label = opts.label || "Video Title";
+  return `<label class="rv-f">${esc(label)}<input id="rvTitle" maxlength="160" placeholder="Untitled Video" value="${esc(defaultTitle(w))}"></label>
   ${sug ? `<div class="rv-note rv-sugt">Suggested: ${esc(sug)} <button class="fb-link" data-usetitle="1">Use Suggested Title</button></div>` : ""}`;
 }
 
