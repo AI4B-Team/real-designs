@@ -173,6 +173,16 @@ const BUCKET = "reveal-videos";
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const goTo = (v) => { const fn = S.go || (typeof window !== "undefined" && window.__rdGo); if (fn) fn(v); else if (typeof location !== "undefined") location.hash = "#" + v; };
+
+/**
+ * Navigation token helpers.
+ *
+ * Builder restoration is asynchronous. It captures the token of the
+ * navigation it belongs to and stops the moment the user goes somewhere
+ * else, so a slow load can never reopen a builder over the page they chose.
+ */
+const navToken = () => { try { return window.__rdNavToken ? window.__rdNavToken() : 0; } catch (_) { return 0; } };
+const navIs = (tok, view) => { try { return window.__rdNavCurrent ? !!window.__rdNavCurrent(tok, view) : true; } catch (_) { return true; } };
 const paint = () => { try { createIcons({ icons }); } catch (_) {} };
 /** Only real asset ids belong in the database columns. */
 const uuidOrNull = (v) => (typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) ? v : null);
@@ -5798,25 +5808,31 @@ export function forgetActiveBuilder() {
 }
 
 /** Reopen the project that was open in the builder before a refresh. */
-export async function resumeActiveBuilder() {
+export async function resumeActiveBuilder(opts = {}) {
+  const stillCurrent = typeof opts.stillCurrent === "function" ? opts.stillCurrent : () => true;
   let id = "";
   try { id = localStorage.getItem(ACTIVE_KEY) || ""; } catch (_) { return false; }
-  if (!id) return false;
+  if (!id || !stillCurrent()) return false;
   try {
-    await continueDesignVideo(id);
-    return true;
+    return await continueDesignVideo(id, { stillCurrent });
   } catch (_) {
     forgetActiveBuilder();
     return false;
   }
 }
 
-export async function continueDesignVideo(id) {
+export async function continueDesignVideo(id, opts = {}) {
+  const stillCurrent = typeof opts.stillCurrent === "function" ? opts.stillCurrent : () => true;
+  if (!stillCurrent()) return false;
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
   const full = await getVideo({ id });
+  /* The fetch is slow enough for the user to leave: never mount a builder
+     onto a page they have already navigated away from. */
+  if (!stillCurrent()) return false;
   editExisting(full);
+  return true;
 }
 
 
@@ -5940,10 +5956,11 @@ export async function createVideoFrom(seed = {}) {
   goTo("reveal");
   /* Build immediately, before the first await, so navigation never exposes
      stale library markup while property and media data are loading. */
+  const tok = navToken();
   startWizard(seed);
   const wizard = S.wizard;
   if (!S.tree.length) await loadLibrary();
-  if (S.wizard === wizard) render();
+  if (S.wizard === wizard && navIs(tok, "reveal")) render();
 }
 
 export async function mountReveal(go, _opts = {}) {
