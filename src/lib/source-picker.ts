@@ -831,7 +831,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         return;
       } catch (err) {
         /* The real storage / signed-URL error, not a silent blank panel. */
-        console.warn("[source-picker] thumbnail failed for " + path, err);
+        console.warn(
+          "[source-picker] thumbnail failed — id=" + (el.dataset["spThumbId"] || "?") + " path=" + path,
+          err,
+        );
         thumbCache.delete(path);
       }
     }
