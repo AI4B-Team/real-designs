@@ -18,7 +18,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
-import { n as rejectReason } from "@/lib/upload-manager";
+import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl } from "@/lib/room-photos";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
@@ -938,7 +938,7 @@ function bindReview(el) {
       for (const f of raw) {
         try {
           const norm = await normalizeImageFile(f);
-          const why = rejectReason(norm);
+          const why = typeof rejectReason === "function" ? rejectReason(norm) : null;
           if (why) { alert(norm.name + ": " + why); continue; }
           picked.push(norm);
         } catch (error) {
