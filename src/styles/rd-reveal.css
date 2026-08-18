@@ -617,7 +617,7 @@
 }
 .rd-app .rv-selall, .rd-app .rv-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: .82rem; cursor: pointer; flex: 0 0 auto; }
 .rd-app .rv-selall input, .rd-app .rv-toggle input { width: 15px; height: 15px; }
-.rd-app .rv-utility-m { flex: 1 1 260px; min-width: 220px; display: flex; align-items: center; }
+.rd-app .rv-utility-m { flex: 1 1 260px; min-width: 220px; max-width: 520px; display: flex; align-items: center; }
 .rd-app .rv-utility-m .rd-addr-bar { flex: 1 1 auto; margin-right: 0; min-width: 0; }
 .rd-app .rv-utility-a { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 0 0 auto; margin-left: auto; }
 @media (max-width: 900px) {
