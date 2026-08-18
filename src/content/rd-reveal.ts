@@ -1961,8 +1961,18 @@ function sceneTreatment(s, clip) {
   });
 }
 
+/** Everything one reset touches, so Undo can put it back exactly. */
+const SETTING_FIELDS = {
+  motion: ["motion", "motion_level", "immersive_effect"],
+  vfx: ["vfx", "vfx_gen"],
+  look: ["look", "look_amount"],
+  cap: ["caption"],
+  crop: ["crop"],
+  ext: ["exterior_effect"],
+};
+
 registerCardStatus("video", {
-  title: "Scene Enhancements",
+  title: "Scene enhancements",
   features(key) {
     const s = cmScene(key);
     if (!s) return [];
@@ -1981,14 +1991,28 @@ registerCardStatus("video", {
       document.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key)}"]`)?.click();
     }, 0);
   },
+  /* Reset and Remove both clear one setting only: the scene, its source photo,
+     its transitions and every other enhancement stay exactly as they were. */
   remove(key, id) {
     const s = cmScene(key);
     if (!s) return;
+    const label = (sceneSettings(s, sceneClips.get(key)).find((f) => f.id === id) || {}).label || "Setting";
+    const before = {};
+    (SETTING_FIELDS[id] || []).forEach((k) => { before[k] = s[k]; });
     resetSceneSetting(s, id);
     try { autosaveWizard(S.wizard); } catch (_) {}
     try { render(); } catch (_) {}
+    if (id === "frames" || id === "clip") return;
+    undoToast(`${label} Removed From This Scene.`, () => {
+      const cur = cmScene(key);
+      if (!cur) return;
+      Object.keys(before).forEach((k) => { cur[k] = before[k]; });
+      try { autosaveWizard(S.wizard); } catch (_) {}
+      try { render(); } catch (_) {}
+    });
   },
 });
+
 
 
 const TRANS_ICON = {
