@@ -79,7 +79,9 @@ function newSession(seed = {}) {
     draftId: seed.draftId || null,
     saveState: "idle",
     detect: "pending",
-    current: -1,
+    /* The key of the photo open on the canvas — never an index sentinel. */
+    current: null,
+    lastOpened: null,
     activeKey: null,
     busy: false,
   };
