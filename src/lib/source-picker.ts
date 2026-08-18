@@ -983,9 +983,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     }
     const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
     if (dsn) {
-      opts.onDesign?.(dsn.dataset["spDesign"]!);
+      const id = dsn.dataset["spDesign"]!;
+      if (opts.onDesigns || opts.loadDesigns) {
+        const i = state.designSel.indexOf(id);
+        if (i > -1) state.designSel.splice(i, 1);
+        else state.designSel.push(id);
+        render();
+        return;
+      }
+      opts.onDesign?.(id);
       return;
     }
+
 
     const choice = t.closest("[data-sp-choice]") as HTMLElement | null;
     if (choice) {
