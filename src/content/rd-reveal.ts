@@ -30,13 +30,10 @@ import {
   AI_TRANSITION_UNAVAILABLE_REASON,
 } from "@/lib/scene-frames";
 import {
-  ALL_TRANSITIONS,
-  PRIMARY_TRANSITIONS,
-  MORE_TRANSITIONS,
-  AI_TRANSITION_CREDITS,
-  AI_TRANSITION_TEMPLATES,
+  
+  OFFERED_TRANSITIONS,
   DEFAULT_TRANSITION_MS,
-  aiTemplateLabel,
+  autoPick,
   resolveTransition,
   transitionLabel,
 } from "@/lib/transitions";
@@ -1375,6 +1372,7 @@ function ensureWizSaver(w) {
       const saved = await saveVideo(body);
       w.editingId = saved.id;
       rememberActiveBuilder(saved.id);
+      void transitions.adopt(saved.id);
       return saved;
     },
     onState: (state) => {
@@ -1484,7 +1482,7 @@ async function autosaveAddress(w) {
   paintSaveState(w);
   try {
     const saved = await saveVideo({ project: addrDraftPayload(w) });
-    if (saved?.id) w.editingId = saved.id;
+    if (saved?.id) { w.editingId = saved.id; void transitions.adopt(saved.id); }
     w.addressSaveState = "saved";
   } catch (_) {
     w.addressSaveState = "error";
@@ -1670,6 +1668,7 @@ async function ensureVideoProjectId(w) {
   rememberActiveBuilder(saved.id);
   sceneClips.setProject(saved.id);
   sceneFrames.setProject(saved.id);
+  await transitions.adopt(saved.id);
   return saved.id;
 }
 
@@ -2000,18 +1999,18 @@ function transitionConn(s) {
   const idx = S.wizard.scenes.indexOf(s);
   const nextScene = idx < 0 ? null : S.wizard.scenes[idx + 1];
   if (!s || !nextScene) return "";
-  const row = transitions.get(s.key, nextScene.key);
-  const type = row?.type || "auto";
-  const eff = resolveTransition(type, sceneShape(s), sceneShape(nextScene));
+  const st = transState(s, nextScene);
+  const row = st.row;
   const busy = row?.status === "queued" || row?.status === "running" || row?.status === "reserved";
   const failed = row?.status === "failed";
-  const label = type === "auto" ? transitionLabel(eff) : transitionLabel(type);
-  const tip = failed ? `Transition Failed: ${label}` : `Transition: ${label}`;
-  const a11y = failed ? tip : type === "auto" ? `Transition: ${label}` : `Custom transition: ${label}`;
-  return `<button class="rv-conn ${type === "auto" ? "auto" : "set"} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
+  const label = transitionLabel(st.type);
+  const tip = failed
+    ? `Transition Failed: ${label}`
+    : st.auto ? `Transition: ${label} · Auto selected` : `Transition: ${label}`;
+  return `<button class="rv-conn ${st.auto ? "auto" : "set"} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
     data-pop="trans" data-key="${esc(s.key)}" title="${esc(tip)}"
-    aria-label="${esc(`${a11y}. Between Scene ${idx + 1} And Scene ${idx + 2}.`)}">
-    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "between-horizontal-start"}"></i>
+    aria-label="${esc(`${tip}. Between Scene ${idx + 1} And Scene ${idx + 2}.`)}">
+    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[st.type] || "between-horizontal-start"}"></i>
   </button>`;
 }
 
@@ -2043,6 +2042,27 @@ function layoutConnectors() {
 /** The minimal shape the Auto rule needs to choose a restrained move. */
 function sceneShape(s) {
   return s ? { key: s.key, room_name: s.room || null, use_clip: !!s.use_clip, motion: s.motion || null } : null;
+}
+
+/** Everything outside Cut, Dissolve and Fade folds onto the nearest of them. */
+function offeredType(t) {
+  if (t === "cut" || t === "dissolve" || t === "fade") return t;
+  if (t === "match_move" || t === "zoom_match") return "cut";
+  return "dissolve";
+}
+
+/**
+ * The state of one connection: whether REAL DESIGNS is choosing it, and the
+ * transition that will actually play. Auto is a recommendation mode, so the
+ * effective type is always one a user could have picked by hand.
+ */
+function transState(s, nxt) {
+  const row = s && nxt ? transitions.get(s.key, nxt.key) : null;
+  const mode = row?.settings?.mode;
+  const auto = !row || row.type === "auto" || mode === "auto";
+  const type = auto ? autoPick(sceneShape(s), sceneShape(nxt)) : offeredType(row.type);
+  const stored = typeof row?.duration_ms === "number" && row.duration_ms > 0 ? row.duration_ms : DEFAULT_TRANSITION_MS;
+  return { row, auto, type, durationMs: type === "cut" ? 0 : Math.min(2000, Math.max(200, stored)) };
 }
 
 function tileHtml(a, seq) {
@@ -2598,49 +2618,52 @@ function popoverHtml() {
         </div>`
       : `<p class="rv-note">Nothing has been applied to this scene yet. It will play with the automatic camera move.</p>`;
     } else if (kind === "trans") {
-    /* The move between this scene and the next one. Standard transitions are
-       included and render in the browser; the AI bridge is a generated clip
-       and is priced up front. */
+    /* The move between this scene and the next one. Cut, Dissolve and Fade are
+       the working choices and are included; Auto Select is a recommendation
+       mode that picks one of them and always stores the real transition. */
     const nxt = w.scenes[i + 1] || null;
-    const row = nxt ? transitions.get(s.key, nxt.key) : null;
-    const type = row?.type || "auto";
-    const eff = resolveTransition(type, sceneShape(s), sceneShape(nxt));
-    const ms = typeof row?.duration_ms === "number" ? row.duration_ms : DEFAULT_TRANSITION_MS;
-    const tmpl = w.transDraft?.template || "room_to_room";
-    const opt = ([id, n]) => `<button class="rv-tr-opt ${type === id ? "on" : ""} ${id === "ai" && !AI_TRANSITION_AVAILABLE ? "off" : ""}"
-      ${id === "ai" && !AI_TRANSITION_AVAILABLE ? "disabled" : `data-transpick="${id}"`}
-      title="${esc(id === "ai" && !AI_TRANSITION_AVAILABLE ? AI_TRANSITION_UNAVAILABLE_REASON : n)}">
+    const st = transState(s, nxt);
+    const ms = st.durationMs;
+    const opt = ([id, n, blurb]) => `<button class="rv-tr-opt ${st.type === id ? "on" : ""}" data-transpick="${id}"
+      role="radio" aria-checked="${st.type === id ? "true" : "false"}">
+      <span class="rv-tr-mark"><i data-lucide="check"></i></span>
       <i data-lucide="${TRANS_ICON[id] || "blend"}"></i><b>${esc(n)}</b>
-      <em>${id === "ai" ? `${AI_TRANSITION_CREDITS} Credits` : id === "auto" ? `${transitionLabel(eff)} Selected For This Pair` : "Included"}</em></button>`;
+      <em>${esc(blurb)}</em></button>`;
     body = `<div class="rv-tr">
       <div class="rv-tr-head">
         <span class="rv-tr-th" data-img="${esc(s.path)}"></span>
         <i data-lucide="arrow-right"></i>
         <span class="rv-tr-th" data-img="${esc(nxt?.path || s.path)}"></span>
         <div class="rv-tr-cap"><b>${esc(s.room || "This Scene")} → ${esc(nxt?.room || "Next Scene")}</b>
-          <em>${esc(type === "auto" ? `Auto Chooses ${transitionLabel(eff)} For This Pair` : transitionLabel(type))}</em></div>
+          <em>${esc(st.auto ? `Recommended: ${transitionLabel(st.type)}` : `Using ${transitionLabel(st.type)}`)}</em></div>
       </div>
-      <div class="rv-pop-h">Transition</div>
-      <div class="rv-tr-grid">${PRIMARY_TRANSITIONS.map(opt).join("")}</div>
-      <details class="rv-tr-more" ${MORE_TRANSITIONS.some(([id]) => id === type) ? "open" : ""}>
+      <div class="rv-tr-auto">
+        <button class="rv-switch ${st.auto ? "on" : ""}" id="rvTransAuto" role="switch" aria-checked="${st.auto ? "true" : "false"}">
+          <span></span></button>
+        <div><b>Auto Select</b><em>Let REAL DESIGNS choose</em></div>
+        <i class="rv-tr-rec">${esc(st.auto ? `Recommended: ${transitionLabel(st.type)}` : `Using ${transitionLabel(st.type)}`)}</i>
+      </div>
+      <div class="rv-tr-grid" role="radiogroup" aria-label="Transition">${OFFERED_TRANSITIONS.map(opt).join("")}</div>
+      <details class="rv-tr-more">
         <summary>More Transitions</summary>
-        <div class="rv-tr-grid">${MORE_TRANSITIONS.map(opt).join("")}</div>
+        <button class="rv-tr-soon" id="rvTransAi" type="button">
+          <i data-lucide="wand-sparkles"></i><b>AI Transition</b><span class="rv-tr-badge">Coming Soon</span>
+          <em>A generated move between the two scenes.</em></button>
       </details>
-      ${type === "ai" || w.transDraft?.ai ? `<div class="rv-tr-ai">
-        <div class="rv-pop-h">AI Bridge</div>
-        <div class="rv-tr-tmpl">${AI_TRANSITION_TEMPLATES.map(([id, n, blurb]) => `<button class="rv-pop-row ${tmpl === id ? "on" : ""}" data-transtmpl="${id}" title="${esc(blurb)}">${esc(n)}</button>`).join("")}</div>
-        <label class="rv-f">Direction, Optional
-          <input id="rvTransPrompt" maxlength="200" value="${esc(w.transDraft?.prompt || "")}" placeholder="Walk Through The Doorway Into The Kitchen"></label>
-        <div class="rv-note sm">${AI_TRANSITION_CREDITS} credits, charged only if the bridge is generated. A failed generation costs nothing.</div>
-        ${AI_TRANSITION_AVAILABLE ? "" : `<div class="rv-notice sm"><i data-lucide="info"></i><span>${esc(AI_TRANSITION_UNAVAILABLE_REASON)}</span></div>`}
-      </div>` : ""}
-      ${row?.status === "failed" && row?.error_message ? `<div class="rv-notice sm bad"><i data-lucide="triangle-alert"></i><span>${esc(row.error_message)}</span></div>` : ""}
-      <label class="rv-f">Length <i class="mono">${(ms / 1000).toFixed(2)}s</i>
-        <input type="range" id="rvTransDur" min="0" max="2000" step="50" value="${ms}" ${type === "cut" ? "disabled" : ""}></label>
+      ${st.type === "cut" ? `<p class="rv-note sm">A cut is instant, so it has no duration.</p>`
+        : `<label class="rv-f" for="rvTransDur">Duration: <i class="mono">${(ms / 1000).toFixed(1)}</i> seconds
+        <input type="range" id="rvTransDur" min="200" max="2000" step="100" value="${ms}"
+          aria-label="Transition duration in seconds"></label>`}
       <div class="rv-tr-foot">
         <button class="btn btn-ghost btn-sm" id="rvTransAll"><i data-lucide="copy"></i>Apply To All Transitions</button>
         <button class="fb-link" id="rvTransSmart">Smart Timing</button>
       </div>
+      ${w.transAllConfirm ? `<div class="fx-confirm"><div>
+        <b>Replace Custom Transitions?</b>
+        <span>This will apply ${esc(transitionLabel(st.type))} to every scene transition and replace any custom transition settings.</span>
+        <div class="fx-confirm-a"><button class="btn btn-ghost btn-sm" id="rvTransAllNo">Cancel</button>
+        <button class="btn btn-primary btn-sm" id="rvTransAllYes">Apply to All</button></div>
+      </div></div>` : ""}
     </div>`;
   } else {
     /* Effects modal. Two tabs — Looks (colour and presentation, free) and
@@ -2729,7 +2752,7 @@ function popoverHtml() {
   const isFx = kind === "look";
   const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
     : kind === "recap" ? "Scene Settings"
-    : kind === "trans" ? `Transition Between Scenes ${i + 1} And ${i + 2}` : "Effects";
+    : kind === "trans" ? `Transition: Scene ${i + 1} → Scene ${i + 2}` : "Effects";
   const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : kind === "trans" ? "wide" : "xwide";
   const foot = isFx && w.popTab === "frames"
     ? seFooter(w, s)
@@ -2738,8 +2761,8 @@ function popoverHtml() {
     : kind === "recap"
     ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
     : kind === "trans"
-    ? `${transitions.get(s.key, w.scenes[i + 1]?.key) ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto</button>` : ""}
-       <button class="btn btn-primary" id="rvPopCancel">Done</button>`
+    ? `${transitions.get(s.key, w.scenes[i + 1]?.key) && !transitions.get(s.key, w.scenes[i + 1]?.key)?.settings?.mode?.includes("auto") ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto Select</button>` : ""}
+       <button class="btn btn-primary" id="rvTransDone">Done</button>`
     : `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone">Save</button>`;
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${width} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="${esc(title)}">
     <div class="rv-modal-h"><b>${esc(title)}</b><button class="icon-btn" id="rvPopX" aria-label="Close"><i data-lucide="x"></i></button></div>
@@ -4484,70 +4507,107 @@ function bind() {
     const nxt = w.scenes[i + 1]; if (!nxt) return null;
     return { s, nxt };
   };
-  on("[data-transpick]", "click", async (e) => {
-    const pair = transPair(); if (!pair) return;
-    const type = e.currentTarget.dataset.transpick;
-    if (type === "ai") {
-      w.transDraft = { ...(w.transDraft || {}), ai: true, template: w.transDraft?.template || "room_to_room" };
-      render();
-      return;
-    }
-    w.transDraft = null;
-    const prev = transitions.get(pair.s.key, pair.nxt.key);
+  /** Persist one connection as an explicit transition plus how it was chosen. */
+  const writeTrans = async (pair, type, ms, mode) => {
     try {
-      await transitions.set(pair.s.key, pair.nxt.key, type, prev?.duration_ms);
+      await transitions.set(pair.s.key, pair.nxt.key, type, type === "cut" ? 0 : ms, { mode });
+      autosaveWizard(w);
     } catch (_) {
       toast("We Could Not Save That Transition. Try Again.");
     }
+  };
+  on("[data-transpick]", "click", async (e) => {
+    const pair = transPair(); if (!pair) return;
+    const type = e.currentTarget.dataset.transpick;
+    const st = transState(pair.s, pair.nxt);
+    await writeTrans(pair, type, st.durationMs || DEFAULT_TRANSITION_MS, "manual");
     render();
   });
-  on("[data-transtmpl]", "click", (e) => {
-    w.transDraft = { ...(w.transDraft || {}), ai: true, template: e.currentTarget.dataset.transtmpl };
+  on("#rvTransAuto", "click", async () => {
+    const pair = transPair(); if (!pair) return;
+    const st = transState(pair.s, pair.nxt);
+    if (st.auto) {
+      /* Turning Auto Select off keeps exactly what is playing right now. */
+      await writeTrans(pair, st.type, st.durationMs || DEFAULT_TRANSITION_MS, "manual");
+    } else {
+      const pick = autoPick(sceneShape(pair.s), sceneShape(pair.nxt));
+      await writeTrans(pair, pick, DEFAULT_TRANSITION_MS, "auto");
+    }
     render();
   });
+  on("#rvTransAi", "click", () => toast("AI Transitions Are Not Available Yet. Choose Cut, Dissolve Or Fade."));
   {
-    const pr = el.querySelector("#rvTransPrompt");
-    if (pr) pr.addEventListener("input", (ev) => { w.transDraft = { ...(w.transDraft || {}), ai: true, prompt: ev.target.value }; });
     const du = el.querySelector("#rvTransDur");
     if (du) du.addEventListener("change", async (ev) => {
       const pair = transPair(); if (!pair) return;
-      const row = transitions.get(pair.s.key, pair.nxt.key);
-      try {
-        await transitions.set(pair.s.key, pair.nxt.key, row?.type || "auto", Number(ev.target.value));
-      } catch (_) { toast("We Could Not Save That Length."); }
+      const st = transState(pair.s, pair.nxt);
+      await writeTrans(pair, st.type, Number(ev.target.value), st.auto ? "auto" : "manual");
       render();
     });
   }
-  on("#rvTransAll", "click", async () => {
-    const pair = transPair(); if (!pair) return;
-    const row = transitions.get(pair.s.key, pair.nxt.key);
-    try {
-      await transitions.applyAll(w.scenes, row?.type || "auto", row?.duration_ms);
-      toast("Transition Applied To Every Scene Change.");
-    } catch (_) { toast("We Could Not Apply That To Every Scene."); }
+  on("#rvTransDone", "click", async () => {
+    /* Done always writes the transition that will actually play, so an
+       untouched Auto Select recommendation is stored too. */
+    const pair = transPair();
+    if (pair) {
+      const st = transState(pair.s, pair.nxt);
+      await writeTrans(pair, st.type, st.durationMs || DEFAULT_TRANSITION_MS, st.auto ? "auto" : "manual");
+    }
+    w.pop = null; w.transAllConfirm = false;
     render();
   });
+  const applyTransAll = async () => {
+    const pair = transPair(); if (!pair) return;
+    const st = transState(pair.s, pair.nxt);
+    const count = Math.max(0, w.scenes.length - 1);
+    try {
+      await transitions.applyAll(w.scenes, st.type, st.durationMs || DEFAULT_TRANSITION_MS, {
+        mode: st.auto ? "auto" : "manual",
+      });
+      autosaveWizard(w);
+      toast(`${transitionLabel(st.type)} Applied To All ${count} Transitions.`);
+    } catch (_) { toast("We Could Not Apply That To Every Scene."); }
+    w.transAllConfirm = false;
+    render();
+  };
+  on("#rvTransAll", "click", async () => {
+    const pair = transPair(); if (!pair) return;
+    /* Anything another connection was set to by hand is only replaced with a
+       clear confirmation first. */
+    const custom = w.scenes.slice(0, -1).some((a, n) => {
+      const b = w.scenes[n + 1];
+      if (a.key === pair.s.key && b?.key === pair.nxt.key) return false;
+      const r = b ? transitions.get(a.key, b.key) : null;
+      return !!r && r.type !== "auto" && r.settings?.mode !== "auto";
+    });
+    if (custom) { w.transAllConfirm = true; render(); return; }
+    await applyTransAll();
+  });
+  on("#rvTransAllYes", "click", applyTransAll);
+  on("#rvTransAllNo", "click", () => { w.transAllConfirm = false; render(); });
   on("#rvTransSmart", "click", async () => {
     /* Smart Timing gives each pair a length that suits it: quick scenes get a
        shorter move, and cuts stay instant. */
     const perMs = sceneDurations(w.scenes.length, w.length) * 1000;
     for (let n = 0; n < w.scenes.length - 1; n++) {
       const a = w.scenes[n], b = w.scenes[n + 1];
-      const row = transitions.get(a.key, b.key);
-      const type = row?.type || "auto";
-      if (type === "cut") continue;
-      const eff = resolveTransition(type, sceneShape(a), sceneShape(b));
-      const base = eff === "fade" ? 900 : eff === "match_move" || eff === "zoom_match" ? 800 : 600;
-      const ms = Math.max(250, Math.min(base, Math.round(perMs * 0.28)));
-      try { await transitions.set(a.key, b.key, type, ms); } catch (_) {}
+      const st = transState(a, b);
+      if (st.type === "cut") continue;
+      const base = st.type === "fade" ? 900 : 600;
+      const ms = Math.max(300, Math.min(base, Math.round(perMs * 0.28)));
+      try { await transitions.set(a.key, b.key, st.type, ms, { mode: st.auto ? "auto" : "manual" }); } catch (_) {}
     }
+    autosaveWizard(w);
     toast("Smart Timing Applied.");
     render();
   });
   on("#rvTransReset", "click", async () => {
     const pair = transPair(); if (!pair) return;
-    try { await transitions.clear(pair.s.key, pair.nxt.key); } catch (_) {}
-    w.pop = null; w.transDraft = null;
+    const pick = autoPick(sceneShape(pair.s), sceneShape(pair.nxt));
+    try {
+      await transitions.set(pair.s.key, pair.nxt.key, pick, DEFAULT_TRANSITION_MS, { mode: "auto" });
+      autosaveWizard(w);
+    } catch (_) { toast("We Could Not Reset That Transition."); }
     render();
   });
 

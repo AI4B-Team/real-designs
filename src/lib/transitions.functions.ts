@@ -97,6 +97,7 @@ export const applyTransitions = createServerFn({ method: "POST" })
         connections: z.array(z.object({ from_key: z.string().min(1), to_key: z.string().min(1) })).max(400),
         type: z.enum(TYPES),
         duration_ms: z.number().int().min(0).max(2000).default(600),
+        settings: z.record(z.string(), z.any()).optional(),
       })
       .parse(input),
   )
@@ -112,6 +113,7 @@ export const applyTransitions = createServerFn({ method: "POST" })
       to_key: c.to_key,
       type: data.type,
       duration_ms: data.type === "cut" ? 0 : data.duration_ms,
+      settings: data.settings ?? {},
       status: "configured",
       updated_at: now,
     }));
