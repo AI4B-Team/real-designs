@@ -118,6 +118,12 @@ export type RevealOptions = {
     corner?: "bottom_left" | "bottom_right" | "top_left" | "top_right";
     greeting?: string | null;
   } | null;
+  /**
+   * One entry per gap between consecutive scenes (length = scenes - 1).
+   * The transition overlaps the two scenes, so it reads as a real move between
+   * them instead of a fade to black.
+   */
+  sceneTransitions?: Array<{ type: string; ms: number; clipUrl?: string | null }> | null;
   onProgress?: (pct: number) => void;
   /** Aborting stops the encode; the render then rejects with RENDER_CANCELLED. */
   signal?: AbortSignal | null;
@@ -874,6 +880,103 @@ export function estimateDuration(scenes: RevealScene[], lengthPreset: string): n
 export function sceneDurations(count: number, lengthPreset: string): number {
   const target = lengthPreset === "quick" ? 15 : lengthPreset === "full" ? 60 : 30;
   return Math.max(1.6, Math.min(6, target / Math.max(count, 1)));
+}
+
+/**
+ * Composite two neighbouring scenes for the configured transition. Both scenes
+ * are painted to their own buffer first, so the effect genuinely moves from one
+ * room into the next rather than dipping through black.
+ */
+function compositeTransition(
+  ctx: CanvasRenderingContext2D,
+  a: HTMLCanvasElement,
+  b: HTMLCanvasElement,
+  W: number,
+  H: number,
+  type: string,
+  qRaw: number,
+) {
+  const q = Math.min(Math.max(qRaw, 0), 1);
+  const e = q * q * (3 - 2 * q);
+
+  switch (type) {
+    case "cut":
+      ctx.drawImage(q < 0.5 ? a : b, 0, 0, W, H);
+      return;
+
+    case "fade": {
+      // Through black: the outgoing room darkens, the next one lifts out of it.
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, W, H);
+      ctx.save();
+      if (e < 0.5) {
+        ctx.globalAlpha = 1 - e * 2;
+        ctx.drawImage(a, 0, 0, W, H);
+      } else {
+        ctx.globalAlpha = (e - 0.5) * 2;
+        ctx.drawImage(b, 0, 0, W, H);
+      }
+      ctx.restore();
+      return;
+    }
+
+    case "slide_left":
+    case "slide_right": {
+      const dir = type === "slide_left" ? 1 : -1;
+      ctx.drawImage(a, -dir * W * e, 0, W, H);
+      ctx.drawImage(b, dir * W * (1 - e), 0, W, H);
+      return;
+    }
+
+    case "push": {
+      // The outgoing room drifts back while the next one advances over it.
+      const s = 1 + 0.12 * e;
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.drawImage(a, (W - W * s) / 2, (H - H * s) / 2, W * s, H * s);
+      ctx.globalAlpha = e;
+      const sb = 1.12 - 0.12 * e;
+      ctx.drawImage(b, (W - W * sb) / 2, (H - H * sb) / 2, W * sb, H * sb);
+      ctx.restore();
+      return;
+    }
+
+    case "wipe": {
+      ctx.drawImage(a, 0, 0, W, H);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W * e, H);
+      ctx.clip();
+      ctx.drawImage(b, 0, 0, W, H);
+      ctx.restore();
+      if (e > 0 && e < 1) {
+        ctx.fillStyle = ACCENT;
+        ctx.fillRect(W * e - 3, 0, 6, H);
+      }
+      return;
+    }
+
+    case "zoom_match":
+    case "match_move": {
+      const sa = 1 + 0.25 * e;
+      const sb = 1.25 - 0.25 * e;
+      ctx.drawImage(a, (W - W * sa) / 2, (H - H * sa) / 2, W * sa, H * sa);
+      ctx.save();
+      ctx.globalAlpha = e;
+      ctx.drawImage(b, (W - W * sb) / 2, (H - H * sb) / 2, W * sb, H * sb);
+      ctx.restore();
+      return;
+    }
+
+    default: {
+      // dissolve / auto / ai fallback
+      ctx.drawImage(a, 0, 0, W, H);
+      ctx.save();
+      ctx.globalAlpha = e;
+      ctx.drawImage(b, 0, 0, W, H);
+      ctx.restore();
+    }
+  }
 }
 
 export async function renderReveal(
