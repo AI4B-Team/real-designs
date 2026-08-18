@@ -621,6 +621,25 @@ function patchCard(it) {
   next.innerHTML = cardHtml(it);
   el.replaceWith(next.firstElementChild);
   paint();
+  syncCard(it);
+  patchStatus();
+}
+
+/** One authoritative selection state: the item drives the box and the border. */
+function syncCard(it) {
+  if (!wrap) return;
+  const card = wrap.querySelector('.rds-card[data-k="' + it.key + '"]');
+  if (!card) return;
+  card.classList.toggle("sel", !!it.selected);
+  const box = card.querySelector('input[data-sel="' + it.key + '"]');
+  if (box) box.checked = !!it.selected;
+}
+
+function syncSelection() {
+  if (!S || !wrap) return;
+  S.items.forEach(syncCard);
+  const set = wrap.querySelector("#rdsSetRoom");
+  if (set) set.disabled = !S.items.some((i) => i.selected);
   patchStatus();
 }
 
@@ -628,6 +647,7 @@ function patchStatus() {
   const s = wrap && wrap.querySelector("#rdsStatus");
   if (s && S) s.textContent = statusText();
 }
+
 
 /* ------------------------------------------------------------------ wiring */
 
