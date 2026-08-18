@@ -912,6 +912,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     return out;
   }
 
+  /** A front-exterior shot makes the best property cover; otherwise keep upload order. */
+  function coverOrder<T extends { room?: string; name?: string }>(list: T[]): T[] {
+    const front = /front|exterior|facade|curb|street/i;
+    const hit = list.findIndex((x) => front.test(String(x.room || x.name || "")));
+    if (hit <= 0) return list;
+    return [list[hit]!, ...list.filter((_, i) => i !== hit)];
+  }
+
   /** The one shared source picker, configured for the design context. */
   let picker: { destroy: () => void } | null = null;
   function mountPicker() {
