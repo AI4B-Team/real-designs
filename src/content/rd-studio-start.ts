@@ -554,9 +554,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<i data-lucide="' + icon + '"></i>' +
       "<b>" + copy + "</b>" +
       '<span class="stw-types">Drag and drop, or</span>' +
-      '<button class="btn btn-dark btn-sm" data-sts="browse">Browse Files</button>' +
+      '<button class="btn btn-dark btn-sm" data-sts="browse">Choose Photos</button>' +
       '<span class="stw-types">Supported files: ' + types + "</span>" +
-      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button>' +
       "</div>"
     );
   }
@@ -800,7 +799,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
 
   function chooserHtml() {
     const doorCard = (id: "design" | "video", icon: string, title: string, sub: string) =>
-      '<button type="button" class="stw-door' + (state.door === id ? " on" : "") + '" data-sts="door-' + id + '" aria-pressed="' + (state.door === id ? "true" : "false") + '">' +
+      '<button type="button" class="stw-door' + (state.door === id ? " on" : "") + '" data-sts="door-' + id +
+      '" role="radio" aria-checked="' + (state.door === id ? "true" : "false") + '" aria-pressed="' + (state.door === id ? "true" : "false") + '">' +
       '<span class="stw-door-check"><i data-lucide="check"></i></span>' +
       '<i data-lucide="' + icon + '"></i>' +
       "<b>" + title + "</b>" +
@@ -818,14 +818,18 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       '<div class="stw-rule"></div>' +
       styleBanner() +
       '<div class="stw-doorwrap">' +
-      '<div class="stw-doors">' +
-      doorCard("design", "wand-sparkles", "Design A Space", "Stage, redesign or plan a space.") +
-      doorCard("video", "clapperboard", "Create A Video", "Turn listing photos into a property video.") +
+      '<div class="stw-doors" role="radiogroup" aria-label="Project type">' +
+      doorCard("design", "wand-sparkles", "Design A Space", "Stage, redesign or plan a space from a photo, sketch or floor plan.") +
+      doorCard("video", "clapperboard", "Create A Video", "Turn property photos into a polished listing video.") +
       "</div></div>" +
 
       '<div class="stw-source"><div class="stw-sec-h"><h3>' +
       (state.door === "video" ? "Add Photos To Your Video" : "Add Photos To Design") +
-      "</h3></div>" +
+      "</h3><span>" +
+      (state.door === "video"
+        ? "Upload a complete property shoot. You can select and reorder scenes next."
+        : "Upload one or more spaces. We\u2019ll help identify each room.") +
+      "</span></div>" +
       '<div id="stSource"></div>' +
       '<p class="stw-secondary stw-doorfoot">' +
       '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
@@ -907,13 +911,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           }
           return;
         }
-        /* Many photos go to the staging review grid; one photo stays inline. */
-        if (picked.length > 1) {
-          openStagingReview({ files: picked.map((p) => p.file), address: state.property || state.address || "" });
-          return;
-        }
-        openSetup("upload");
-        takeFile(first.file);
+        /* Every design upload lands in Review Rooms with the photos already
+           visible; detection and upload continue in the background. */
+        openStagingReview({ files: picked.map((p) => p.file), address: state.property || state.address || "" });
       },
       onProperty: (address) => {
         if (isVideo) {
@@ -929,7 +929,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.address = address;
         openSetup("property");
       },
-      onDescribe: () => {
+      onDescribe: (prompt) => {
+        if (prompt) state.prompt = prompt;
         openSetup("describe");
       },
       onSample: () => {
