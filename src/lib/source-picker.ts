@@ -173,6 +173,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     busyLabel: "Adding Photos",
     /** Existing-property selection and its photo panel. */
     propSel: null as string | null,
+    /** Zero-photo properties are hidden until the user asks for them. */
+    showEmpty: false,
+
     propPhotos: [] as PickerPhoto[],
     propChecked: new Set<string>(),
     propLoading: false,
