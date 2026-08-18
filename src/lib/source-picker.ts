@@ -68,7 +68,7 @@ export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
 
 /** Browsers other than Safari cannot decode HEIC. Convert once, on the way in,
     so every downstream preview, thumbnail and upload is a normal JPEG. */
-async function normalize(f: File): Promise<File> {
+export async function normalizeImageFile(f: File): Promise<File> {
   const isHeic = /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || "");
   if (!isHeic) return f;
   try {
@@ -149,7 +149,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     render();
     for (const file of raw) {
       try {
-        files.push(await normalize(file));
+        files.push(await normalizeImageFile(file));
       } catch (error) {
         alert(error instanceof Error ? error.message : file.name + ": This Photo Could Not Be Added.");
       }
