@@ -74,6 +74,10 @@ const ProjectInput = z.object({
   branding: z.record(z.string(), z.any()).default({}),
   disclosure: z.record(z.string(), z.any()).default({}),
   settings: z.record(z.string(), z.any()).default({}),
+  /* Draft resume: which builder step the user was on, plus the in-progress
+     builder state (uploads by storage path, ordering, per-scene settings). */
+  builder_step: z.string().max(40).nullable().optional(),
+  draft_state: z.record(z.string(), z.any()).optional(),
 });
 
 const AudioInput = z.object({
@@ -153,7 +157,12 @@ export const saveVideo = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const p: any = { ...data.project, user_id: userId, updated_at: new Date().toISOString() };
+    const p: any = {
+      ...data.project,
+      user_id: userId,
+      updated_at: new Date().toISOString(),
+      last_opened_at: new Date().toISOString(),
+    };
     /* Never trust a client-supplied property_id: confirm the signed-in user can
        actually read that property before linking the project to it. */
     if (p.property_id) {

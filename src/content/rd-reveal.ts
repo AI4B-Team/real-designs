@@ -13,7 +13,8 @@ import { voiceRequest } from "@/lib/rd-voice";
 import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
-import { resolvePhotoUrl } from "@/lib/room-photos";
+import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl } from "@/lib/room-photos";
+import { DraftAutosaver, newDraftId } from "@/lib/project-draft";
 import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations } from "@/lib/media-analysis";
@@ -1070,6 +1071,119 @@ export async function acceptPhotos(w, files, source) {
   if (!ready.length) { render(); return; }
   await acceptVideoPhotos({ wizard: w, files: ready, source, deps: intakeDeps() });
   classifyUploads().catch(() => {});
+  /* Photos only count as a draft once they are in private storage. */
+  storeUploads(w);
+}
+
+/* ------------------------------------------------- durable builder drafts */
+
+let wizSaver = null;
+
+/** Push every attached upload into private storage, then autosave the draft. */
+async function storeUploads(w) {
+  const pending = (w.uploads || []).filter((u) => u.file && !u.storagePath && !u.storing);
+  if (!pending.length) { autosaveWizard(w); return; }
+  for (const u of pending) {
+    u.storing = true;
+    try {
+      u.storagePath = await uploadRoomPhoto(u.file);
+      /* First photo safely stored: the draft row exists from here on. */
+      autosaveWizard(w);
+    } catch (_) {
+      u.storeFailed = true;
+    }
+    u.storing = false;
+  }
+  autosaveWizard(w);
+}
+
+function wizardDraftBody(w) {
+  return {
+    project: {
+      id: w.editingId || undefined,
+      property_id: w.propertyId || null,
+      property_label: w.propertyLabel || null,
+      ...addressColumns(w),
+      title_touched: !!w.titleTouched,
+      design_version_id: w.versionId || null,
+      title: sanitizeTitle(defaultTitle(w)),
+      video_type: w.videoType,
+      source_type: w.sourceType || "property",
+      status: "draft",
+      formats: outputFormats(w),
+      length_preset: w.length,
+      transition: w.transition,
+      motion: w.motion,
+      brand_kit_id: w.brandKitId || null,
+      branding: w.branding,
+      disclosure: { mode: w.disclosureMode },
+      builder_step: String(w.step || 1),
+      settings: {
+        quality: w.quality || "standard",
+        primaryFormat: w.primaryFormat || DEFAULT_FORMAT,
+        additionalFormats: w.additionalFormats || [],
+        mode: w.mode || "auto",
+        titles: w.titles || null,
+      },
+      draft_state: {
+        step: w.step,
+        gridOrder: w.gridOrder || [],
+        uploads: (w.uploads || [])
+          .filter((u) => u.storagePath)
+          .map((u) => ({ id: u.id, name: u.name, path: u.storagePath, room: u.room || null, room_source: u.roomSource || "ai" })),
+        scenes: (w.scenes || []).map((sc) => ({
+          key: sc.key, path: sc.path, compare: sc.compare || null, room: sc.room, kind: sc.kind,
+          scene_type: sc.scene_type, duration: sc.duration, motion: sc.motion, crop: sc.crop || null,
+          caption: sc.caption || null, disclosure: sc.disclosure || null, motion_level: sc.motion_level || "standard",
+          immersive_effect: sc.immersive_effect || null, exterior_effect: sc.exterior_effect || null,
+          labels: sc.labels || [], asset_id: sc.asset_id || null, version_id: sc.version_id || null,
+        })),
+        titles: w.titles || null,
+        audio: { presentation: w.presentation, music: w.music, volume: w.volume, beatSync: w.beatSync, narration: w.narration, script: w.script, voice: w.voice, captions: w.captions },
+        branding: w.branding,
+        quality: w.quality || "standard",
+        format: w.primaryFormat || DEFAULT_FORMAT,
+      },
+    },
+  };
+}
+
+function ensureWizSaver(w) {
+  if (wizSaver) return wizSaver;
+  wizSaver = new DraftAutosaver(w.draftKey || (w.draftKey = newDraftId()), {
+    debounceMs: 900,
+    save: async (payload) => {
+      const body = payload.body;
+      /* Resolve the id at write time so a save queued before the first insert
+         finished can never create a second project. */
+      if (w.editingId) body.project.id = w.editingId;
+      else delete body.project.id;
+      const saved = await saveVideo(body);
+      w.editingId = saved.id;
+      return saved;
+    },
+    onState: (state) => {
+      w.saveState = state;
+      const el = document.getElementById("rvSaveState");
+      if (el) el.textContent = { saving: "Saving…", saved: "Saved", error: "Couldn't Save" }[state] || "";
+    },
+  });
+  return wizSaver;
+}
+
+/** Autosave meaningful builder changes. Safe to call from render(). */
+export function autosaveWizard(w) {
+  if (!w || w.busy) return;
+  const hasWork = (w.uploads || []).some((u) => u.storagePath) || (w.scenes || []).length > 0 || !!w.editingId;
+  if (!hasWork) return;
+  ensureWizSaver(w).queue({ id: w.draftKey, project_type: "property_video", body: wizardDraftBody(w) });
+}
+
+export function stopWizardAutosave() {
+  if (!wizSaver) return;
+  void wizSaver.flush();
+  wizSaver.destroy();
+  wizSaver = null;
 }
 
 
@@ -2709,6 +2823,8 @@ function render() {
   paint();
   paintAssetThumbs();
 
+  if (S.screen === "wizard" && S.wizard) autosaveWizard(S.wizard);
+  if (S.screen !== "wizard") stopWizardAutosave();
   if (S.screen === "library") paintThumbs();
   if (S.screen === "detail" && S.detail) mountPlayer();
   bind();
@@ -2732,7 +2848,7 @@ function bind() {
   /* wizard */
   const w = S.wizard;
   if (w) {
-  on("#rvCancel", "click", () => { revokeUploadUrls(w); S.screen = "library"; S.wizard = null; render(); });
+  on("#rvCancel", "click", () => { stopWizardAutosave(); revokeUploadUrls(w); S.screen = "library"; S.wizard = null; render(); });
   on("#rvBack", "click", () => { w.step = prevStep(w.step); render(); });
   on(".rv-rail-i", "click", async (e) => {
     const key = e.currentTarget.dataset.sec;
@@ -3580,6 +3696,35 @@ function editExisting(d) {
     version_id: s.source_version_id,
   }));
   w.step = 3;
+  /* Resume an unfinished builder exactly where it was left, from the stored
+     draft state rather than from anything cached in this browser. */
+  const ds = p.draft_state || null;
+  if (ds && p.status === "draft") {
+    w.gridOrder = Array.isArray(ds.gridOrder) ? ds.gridOrder : w.gridOrder;
+    w.uploads = (ds.uploads || []).map((u) => ({
+      id: u.id, name: u.name, originalName: u.name, url: "", file: null,
+      storagePath: u.path, room: u.room || "Unsorted", roomSource: u.room_source || "ai",
+    }));
+    if (ds.scenes?.length && !w.scenes.length) w.scenes = ds.scenes;
+    if (ds.titles) w.titles = ds.titles;
+    if (ds.audio) {
+      w.presentation = ds.audio.presentation ?? w.presentation;
+      w.music = ds.audio.music ?? w.music;
+      w.volume = ds.audio.volume ?? w.volume;
+      w.beatSync = ds.audio.beatSync ?? w.beatSync;
+      w.narration = ds.audio.narration ?? w.narration;
+      w.script = ds.audio.script ?? w.script;
+      w.voice = ds.audio.voice ?? w.voice;
+      w.captions = ds.audio.captions ?? w.captions;
+    }
+    w.quality = ds.quality || w.quality;
+    const step = Number(p.builder_step || ds.step || 2);
+    w.step = Number.isFinite(step) && step >= 1 ? step : 2;
+    /* Storage paths become viewable URLs for this session only. */
+    Promise.all(
+      w.uploads.map(async (u) => { try { u.url = await roomPhotoUrl(u.storagePath); } catch (_) {} }),
+    ).then(() => { attachUploadAssets(w); render(); });
+  }
   S.screen = "wizard";
   loadWizardAssets().then(render);
   render();

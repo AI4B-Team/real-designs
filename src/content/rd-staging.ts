@@ -31,6 +31,16 @@ import {
   roomSpace,
   searchRooms,
 } from "@/lib/staging-rooms";
+import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
+import {
+  saveProjectDraft as _saveProjectDraft,
+  listProjectDrafts as _listProjectDrafts,
+  getProjectDraft as _getProjectDraft,
+} from "@/lib/drafts.functions";
+
+const saveProjectDraft = (d) => _saveProjectDraft(d);
+const listProjectDrafts = (d) => _listProjectDrafts({ data: d || {} });
+const getProjectDraft = (d) => _getProjectDraft({ data: d });
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -39,12 +49,11 @@ const paint = () => {
     createIcons({ icons });
   } catch (_) {}
 };
-const DRAFT_KEY = "rd.staging.draft";
-
 let S = null; /* live session */
 let wrap = null;
 let strip = null;
 let popover = null;
+let saver = null; /* DraftAutosaver, created with the first stored photo */
 
 /* ------------------------------------------------------------------ state */
 
@@ -53,6 +62,10 @@ function newSession(seed = {}) {
     step: "add",
     items: [],
     address: seed.address || "",
+    title: seed.title || "",
+    propertyId: seed.propertyId || null,
+    draftId: seed.draftId || null,
+    saveState: "idle",
     group: true,
     detect: "pending",
     current: -1,
@@ -79,18 +92,65 @@ function mkItem(file) {
   };
 }
 
+/* ------------------------------------------------------------- persistence
+   The draft is a database row, not a browser cache. It is created as soon as
+   the first photo is safely in private storage, then autosaved on every
+   meaningful change with a short debounce. */
+
+function draftPayload() {
+  return {
+    id: S.draftId,
+    project_type: "photo_staging",
+    status: "draft",
+    builder_step: S.step === "add" ? "add" : S.current ? "canvas" : "review",
+    property_id: S.propertyId || null,
+    property_address: S.address || null,
+    title: S.title || null,
+    assets: S.items
+      .filter((i) => i.path)
+      .map((i) => ({
+        key: i.key,
+        path: i.path,
+        name: i.name,
+        room: i.room || null,
+        room_source: i.roomSource === "manual" ? "manual" : i.roomSource === "ai" ? "ai" : "none",
+        confidence: Number(i.confidence || 0),
+        selected: !!i.selected,
+        done: !!i.done,
+        status: i.status || "ready",
+      })),
+    selected: S.items.filter((i) => i.selected && i.path).map((i) => i.key),
+    item_order: ordered().filter((i) => i.path).map((i) => i.key),
+    settings: { group: !!S.group, current: S.current || null },
+  };
+}
+
+function setSaveState(state) {
+  if (!S) return;
+  S.saveState = state;
+  patchStatus();
+}
+
+function ensureSaver() {
+  if (saver) return saver;
+  if (!S.draftId) S.draftId = newDraftId();
+  saver = new DraftAutosaver(S.draftId, {
+    save: (payload) => saveProjectDraft({ data: payload }),
+    debounceMs: 700,
+    onState: (state) => setSaveState(state),
+  });
+  return saver;
+}
+
 function saveDraft() {
   if (!S) return;
-  try {
-    localStorage.setItem(
-      DRAFT_KEY,
-      JSON.stringify({
-        at: Date.now(),
-        address: S.address,
-        items: S.items.map((i) => ({ name: i.name, path: i.path, room: i.room, roomSource: i.roomSource, done: i.done })),
-      }),
-    );
-  } catch (_) {}
+  /* Nothing durable to write until at least one photo has a storage path. */
+  if (!S.items.some((i) => i.path)) return;
+  ensureSaver().queue(draftPayload());
+}
+
+export function retryDraftSave() {
+  if (saver) void saver.retryNow();
 }
 
 /* ------------------------------------------------------------------ shell */
@@ -120,6 +180,8 @@ function hide() {
 
 function exitAll() {
   hide();
+  /* Leaving the screen is not losing the work: flush whatever is queued. */
+  if (saver) { void saver.flush(); saver.destroy(); saver = null; }
   if (S) S.items.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
   S = null;
   removeStrip();
@@ -131,12 +193,78 @@ export function openStagingReview(seed = {}) {
   const files = (seed.files || []).filter(Boolean);
   if (!S) S = newSession(seed);
   if (seed.address) S.address = seed.address;
+  if (seed.propertyId) S.propertyId = seed.propertyId;
   if (files.length) {
     addFiles(files);
   } else {
     S.step = S.items.length ? "review" : "add";
   }
   show();
+}
+
+/** Rebuild a session from a saved database draft. */
+function hydrate(draft) {
+  S = newSession({
+    address: draft.property_address || "",
+    title: draft.title || "",
+    propertyId: draft.property_id || null,
+    draftId: draft.id,
+  });
+  S.group = draft.settings?.group !== false;
+  const order = Array.isArray(draft.item_order) ? draft.item_order : [];
+  const assets = (draft.assets || []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+  S.items = assets.map((a) => ({
+    key: a.key,
+    name: a.name || "Photo",
+    file: null,
+    previewUrl: "",
+    path: a.path,
+    signed: null,
+    status: "ready",
+    error: "",
+    room: a.room || "",
+    roomSource: a.room_source || "none",
+    confidence: Number(a.confidence || 0),
+    detect: "done",
+    selected: a.selected !== false,
+    done: !!a.done,
+  }));
+  S.step = draft.builder_step === "add" ? "add" : "review";
+  ensureSaver();
+  /* Signed URLs are minted per session; the row only ever stores paths. */
+  S.items.forEach(async (it) => {
+    if (!it.path) return;
+    try {
+      it.signed = await roomPhotoUrl(it.path);
+      patchCard(it);
+    } catch (_) {}
+  });
+}
+
+/**
+ * Reopen the most recent staging draft for this account. Called after sign-in
+ * and on app boot, so a refresh, a new browser or another device all land back
+ * on the same work.
+ */
+export async function resumeStagingDraft(id) {
+  try {
+    /* One-time lift of any legacy browser-only draft, server-confirmed first. */
+    await migrateLegacyStagingDraft({ save: (payload) => saveProjectDraft({ data: payload }) });
+  } catch (_) {}
+  try {
+    let draft = null;
+    if (id) draft = (await getProjectDraft({ id })).draft;
+    else {
+      const res = await listProjectDrafts({ project_type: "photo_staging", scope: "drafts", limit: 1 });
+      draft = (res.drafts || [])[0] || null;
+    }
+    if (!draft || !(draft.assets || []).length) return false;
+    hydrate(draft);
+    show();
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 /** Reopen the review grid from the canvas strip. */
@@ -300,6 +428,8 @@ function statusText() {
   if (detecting) parts.push("Detecting Rooms…");
   else if (need) parts.push(`${need} Need${need === 1 ? "s" : ""} A Room`);
   else parts.push("All Rooms Confirmed");
+  const save = { saving: "Saving…", saved: "Saved", error: "Couldn't Save" }[S.saveState];
+  if (save) parts.push(save);
   return parts.join(" · ");
 }
 
@@ -683,5 +813,5 @@ try {
 } catch (_) {}
 
 try {
-  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession };
+  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft };
 } catch (_) {}
