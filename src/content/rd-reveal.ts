@@ -1972,7 +1972,7 @@ const SETTING_FIELDS = {
 };
 
 registerCardStatus("video", {
-  title: "Scene enhancements",
+  title: "Scene Enhancements",
   features(key) {
     const s = cmScene(key);
     if (!s) return [];
