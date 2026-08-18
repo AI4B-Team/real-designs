@@ -3998,6 +3998,16 @@ function bind() {
     if (w.pop.key) return w.scenes.find((s) => s.key === w.pop.key) || null;
     return w.scenes[w.pop.i] || null;
   };
+  /* Compact and touch cards collapse the toolbar behind one ellipsis; the
+     popover holds the same buttons, so no action is lost at small widths. */
+  on("[data-toolsmore]", "click", (e) => {
+    e.stopPropagation();
+    const tile = e.currentTarget.closest(".rv-tile");
+    if (!tile) return;
+    const open = tile.classList.contains("tools-open");
+    document.querySelectorAll(".rv-tile.tools-open").forEach((t) => t.classList.remove("tools-open"));
+    if (!open) tile.classList.add("tools-open");
+  });
   on("[data-pop]", "click", (e) => {
     e.stopPropagation();
     const key = e.currentTarget.dataset.key || null;
