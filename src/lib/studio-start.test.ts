@@ -32,7 +32,7 @@ describe("studio start source picker", () => {
   it("uses compact tab labels with Lucide icons", () => {
     const { host } = mount("video");
     const labels = [...host.querySelectorAll(".sp-tab")].map((t) => t.textContent?.trim());
-    expect(labels).toEqual(["Upload", "Cloud", "Property", "Finished Designs"]);
+    expect(labels).toEqual(["Upload", "Cloud", "Property", "Designs"]);
     expect(SOURCE_META.describe.icon).toBe("message-square-text");
   });
 
