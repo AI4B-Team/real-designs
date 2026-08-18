@@ -1994,7 +1994,8 @@ const TRANS_ICON = {
  * tiny icon-only control that lives in the gutter on the seam of the grid and
  * only appears on hover / focus. It is never a badge over the photo.
  */
-function connectorHtml(s, nextScene) {
+function transitionTool(s) {
+  const nextScene = S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1];
   if (!s || !nextScene) return "";
   const row = transitions.get(s.key, nextScene.key);
   const type = row?.type || "auto";
@@ -2002,11 +2003,10 @@ function connectorHtml(s, nextScene) {
   const busy = row?.status === "queued" || row?.status === "running" || row?.status === "reserved";
   const failed = row?.status === "failed";
   const label = type === "auto" ? transitionLabel(eff) : transitionLabel(type);
-  return `<button class="rv-conn ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
+  return `<button class="rv-tool ${type !== "auto" || failed ? "hot" : ""}"
     data-pop="trans" data-key="${esc(s.key)}"
-    aria-label="Transition Into ${esc(nextScene.room || "The Next Scene")}: ${esc(label)}"
-    title="${esc(`Transition: ${label}`)}">
-    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "blend"}"></i>
+    aria-label="Transition Into ${esc(nextScene.room || "The Next Scene")}: ${esc(label)}">
+    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "blend"}"></i><em>Transition</em>
   </button>`;
 }
 
