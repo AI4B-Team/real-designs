@@ -121,6 +121,7 @@ import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
 import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
+import { builderRailHtml, roomSelectHtml } from "@/lib/builder-ui";
 import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip-ui";
@@ -850,13 +851,24 @@ function canvasHtml(compact = false) {
 function wizardHtml() {
   const w = S.wizard;
   const cur = sectionOf(w.step);
-  const rail = `<nav class="rv-rail">${WIZ_SECTIONS
-    .map(([key, name, icon]) => {
-      const ok = sectionReady(key);
-      return `<button class="rv-rail-i ${cur === key ? "on" : ""} ${ok ? "" : "off"}" data-sec="${key}" ${ok ? "" : "disabled"}>
-        <i data-lucide="${icon}"></i><span>${name}</span>${key === "scenes" && w.scenes.length ? `<i class="rv-badge mono">${w.scenes.length}</i>` : ""}</button>`;
-    })
-    .join("")}</nav>`;
+  /* Shared builder rail: same component the photo-staging builder uses. */
+  const curIdx = WIZ_SECTIONS.findIndex(([k]) => k === cur);
+  const rail = builderRailHtml({
+    active: cur,
+    attr: "sec",
+    variant: "col",
+    label: "Video builder steps",
+    navClass: "rv-rail",
+    itemClass: "rv-rail-i",
+    steps: WIZ_SECTIONS.map(([key, name, icon], i) => ({
+      key,
+      label: name,
+      icon,
+      ready: sectionReady(key),
+      done: i < curIdx && sectionReady(key),
+      badge: key === "scenes" && w.scenes.length ? String(w.scenes.length) : "",
+    })),
+  });
 
   let body = "";
   if (w.step === 1) body = stepPhotos();
@@ -1554,12 +1566,16 @@ export const NEEDS_REVIEW = "Needs Review";
 function roomCell(a) {
   const label = a.room || UNSORTED;
   const unknown = !label || label === UNSORTED || label === NEEDS_REVIEW;
-  return `<button class="rv-room ${unknown ? "muted" : ""} ${a.roomManual ? "set" : ""}"
-    data-roompick="${esc(a.key)}" title="Click To Change Room Type">
-    <i data-lucide="${esc(roomIcon(unknown ? "" : label))}"></i>
-    <span>${esc(label)}</span>
-    <em data-lucide="chevron-down"></em>
-  </button>`;
+  return roomSelectHtml({
+    attr: "roompick",
+    key: a.key,
+    label,
+    icon: roomIcon(unknown ? "" : label),
+    unknown,
+    manual: !!a.roomManual,
+    variant: "inline",
+    className: "rv-room",
+  });
 }
 
 /** Compact searchable room selector, anchored over the grid. */

@@ -137,6 +137,7 @@ function draftPayload() {
 function setSaveState(state) {
   if (!S) return;
   S.saveState = state;
+  S.addressSaveState = state === "saving" ? "saving" : state === "error" ? "error" : state === "saved" ? "saved" : "";
   patchStatus();
 }
 
