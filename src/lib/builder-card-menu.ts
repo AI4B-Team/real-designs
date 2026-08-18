@@ -115,6 +115,7 @@ function openMenu(btn) {
   if (!itemsOf(groups).length) return;
 
   closeCardMenu(false);
+  try { window.__bxCloseCardStatus && window.__bxCloseCardStatus(false); } catch (_) {}
 
   const el = document.createElement("div");
   el.className = "bx-cmenu";
@@ -194,6 +195,7 @@ if (typeof document !== "undefined" && !document.__bxCardMenu) {
     }
   });
   document.addEventListener("dragstart", () => closeCardMenu(false), true);
+  window.__bxCloseCardMenu = closeCardMenu;
   window.addEventListener("resize", () => closeCardMenu(false));
   window.addEventListener("scroll", () => { if (openState) place(openState.el, openState.btn); }, true);
 }

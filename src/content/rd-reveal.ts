@@ -64,6 +64,7 @@ import {
   downloadOriginal,
   pickOneImage,
 } from "@/lib/builder-card-menu";
+import { cardStatusHtml, registerCardStatus } from "@/lib/builder-card-status";
 import {
   VIDEO_FORMATS,
   DEFAULT_FORMAT,
@@ -1940,56 +1941,54 @@ function resetSceneSetting(s, id) {
 }
 
 /**
- * One derived value describes the scene's primary visual treatment. The card
- * renders exactly one indicator from it — never one badge per setting. Text,
- * crop, captions and room type deliberately produce nothing here.
+ * The single persistent status indicator in the upper-right corner, rendered
+ * immediately to the left of the bare three-dot menu. One active enhancement
+ * shows its own icon; two or more collapse into one Layers count. A default,
+ * untouched scene renders nothing at all. Selection, room type, scene number,
+ * transitions and the video ending are never counted.
  */
-function primaryTreatment(s, clip) {
-  if (!s) return null;
-  const fr = sceneFrames.get(s.key);
-  const busy = clip && (clip.status === "queued" || clip.status === "processing");
-  if (clip && clip.status === "failed")
-    return { id: "failed", label: "Failed", cls: "bad", icon: "triangle-alert", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "AI motion failed. Open failure details and retry." };
-  if (busy)
-    return { id: "generating", label: "Generating", cls: "busy", icon: "loader", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Generating AI motion. Open job status." };
-  if (frameConfigured(fr))
-    return {
-      id: "frames",
-      label: fr.status === "failed" ? "Failed" : "Start/End",
-      cls: fr.status === "failed" ? "bad" : fr.status === "queued" || fr.status === "processing" ? "busy" : fr.status === "completed" ? "ai" : "",
-      icon: fr.status === "failed" ? "triangle-alert" : "arrow-left-right",
-      motion: "static",
-      open: `data-pop="look" data-fxtab="frames" data-key="${esc(s.key)}"`,
-      name: `Start / End: ${seFrameStatusText(fr)}. Open the saved Start / End settings.`,
-    };
-  if (clip && clip.status === "completed" && clip.approved && s.use_clip)
-    return { id: "ai", label: "AI Motion", cls: "ai", icon: "clapperboard", motion: "static", open: `data-clip="open" data-key="${esc(s.key)}"`, name: "Motion: AI Motion. Open animate settings." };
-  if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive")) {
-    const lbl = motionLabel(s);
-    const m = s.motion_level === "immersive" ? (MOTION_PREVIEW[s.immersive_effect] || "static") : (MOTION_PREVIEW[s.motion] || s.motion || "auto");
-    return { id: "motion", label: lbl, cls: "", icon: "camera", motion: m, open: `data-pop="motion" data-key="${esc(s.key)}"`, name: `Motion: ${lbl}. Open motion settings.` };
-  }
-  if ((s.vfx && s.vfx !== "none") || s.look) {
-    const lbl = s.vfx && s.vfx !== "none" ? (tileById(s.vfx)?.label || "Effect") : (lookById(s.look)?.label || "Look");
-    return { id: "vfx", label: lbl, cls: "", icon: "wand-sparkles", motion: "static", open: `data-pop="look" data-key="${esc(s.key)}"`, name: `Effect: ${lbl}. Open effect settings.` };
-  }
-  return null;
+function sceneTreatment(s, clip) {
+  if (!s) return "";
+  const list = sceneSettings(s, clip);
+  if (!list.length) return "";
+  const tone = list.some((f) => f.cls === "bad") ? "bad" : list.some((f) => f.cls === "busy") ? "busy" : "";
+  return cardStatusHtml({
+    flow: "video",
+    key: s.key,
+    tone,
+    noun: "enhancements",
+    features: list.map((f) => ({ id: f.id, icon: f.icon, label: f.label, value: f.value, removable: !f.locked })),
+  });
 }
 
-/**
- * The single persistent overlay in the upper-right corner: one compact 38px
- * preview tile. The name is a small label revealed on hover / focus only.
- * A default, untouched scene renders nothing at all.
- */
-function sceneTreatment(s, clip, asset) {
-  const t = primaryTreatment(s, clip);
-  if (!t) return "";
-  const path = asset?.path || s?.path || "";
-  return `<button class="rv-treat ${t.cls}" ${t.open} aria-label="${esc(t.name)}">
-    <span class="rv-treat-th m-${esc(t.motion)}" ${path ? `data-img="${esc(path)}"` : ""}><i data-lucide="${t.icon}"></i></span>
-    <em>${esc(t.label)}</em>
-  </button>`;
-}
+registerCardStatus("video", {
+  title: "Scene Enhancements",
+  features(key) {
+    const s = cmScene(key);
+    if (!s) return [];
+    return sceneSettings(s, sceneClips.get(key)).map((f) => ({
+      id: f.id, icon: f.icon, label: f.label, value: f.value, removable: !f.locked, pop: f.pop,
+    }));
+  },
+  edit(key, id) {
+    const w = S.wizard;
+    const f = (this.features(key) || []).find((x) => x.id === id);
+    if (!f || !f.pop) { document.querySelector(`[data-clip="open"][data-key="${CSS.escape(key)}"]`)?.click(); return; }
+    const [kind, tab] = String(f.pop).split(":");
+    if (w) { w.pop = null; w.popTabPending = tab || null; }
+    try { render(); } catch (_) {}
+    setTimeout(() => {
+      document.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key)}"]`)?.click();
+    }, 0);
+  },
+  remove(key, id) {
+    const s = cmScene(key);
+    if (!s) return;
+    resetSceneSetting(s, id);
+    try { autosaveWizard(S.wizard); } catch (_) {}
+    try { render(); } catch (_) {}
+  },
+});
 
 
 const TRANS_ICON = {
@@ -2209,7 +2208,7 @@ function tileHtml(a, seq) {
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
       ${s ? sceneNumberHtml(seq) : ""}
-      ${sceneTreatment(s, clip, a)}
+      ${sceneTreatment(s, clip)}
       ${cardMenuButtonHtml({ flow: "video", key: a.key, label: s ? "Scene " + (seq || "") : (a.room ? a.room + " photo" : "this photo") })}
       ${s ? endingControlHtml(w, s) : ""}
 
