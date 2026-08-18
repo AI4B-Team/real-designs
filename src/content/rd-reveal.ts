@@ -1497,6 +1497,220 @@ function roomPickerHtml() {
   </div></div>`;
 }
 
+
+/* ======================= AI ANIMATE =======================
+   One scene, one genuine AI-generated clip. Everything durable (price,
+   provider job, storage, refunds) lives server-side in `scene_clips`; the
+   builder only opens the modal, shows the row and approves the result. */
+
+/** The clip service needs a real project row, so make sure the draft has one. */
+async function ensureVideoProjectId(w) {
+  if (w.editingId) return w.editingId;
+  const body = wizardDraftBody(w);
+  delete body.project.id;
+  const saved = await saveVideo(body);
+  if (!saved?.id) throw new Error("This draft could not be saved. Try again.");
+  w.editingId = saved.id;
+  rememberActiveBuilder(saved.id);
+  sceneClips.setProject(saved.id);
+  return saved.id;
+}
+
+function animateSource(w, key) {
+  const a = (w.available || []).find((x) => x.key === key) || null;
+  const sc = (w.scenes || []).find((x) => x.key === key) || null;
+  if (!a && !sc) return null;
+  return {
+    asset: a,
+    scene: sc,
+    path: (sc && sc.path) || (a && a.path) || "",
+    room: (sc && sc.room) || (a && a.room) || null,
+    version: sc?.version_id ? String(sc.version_id) : "original",
+  };
+}
+
+function animateModalFor(w) {
+  const src = animateSource(w, w.animate.key);
+  const idx = (w.scenes || []).findIndex((x) => x.key === w.animate.key);
+  return animateModalHtml({
+    key: w.animate.key,
+    room: src?.room || null,
+    position: idx >= 0 ? idx + 1 : (w.scenes || []).length + 1,
+    total: (w.scenes || []).length || null,
+    thumb: src?.path || null,
+    selected: w.animate.sel || null,
+    orientation: orientationOf(w),
+    balance: S.credits?.balance ?? 0,
+    clip: sceneClips.get(w.animate.key),
+    busy: !!w.animate.busy,
+    confirm: !!w.animate.confirm,
+  });
+}
+
+function clipReviewFor(w) {
+  const clip = sceneClips.get(w.clipReview.key);
+  if (!clip) return "";
+  const src = animateSource(w, w.clipReview.key);
+  return clipReviewHtml({
+    clip,
+    url: sceneClips.url(clip),
+    photo: src?.path || null,
+    room: src?.room || null,
+    busy: !!w.clipReview.busy,
+  });
+}
+
+/** Approving a clip is what makes the final video use it, never generation. */
+function markSceneClip(w, key, clip, use) {
+  const sc = (w.scenes || []).find((x) => x.key === key);
+  if (!sc) return;
+  if (use && clip) {
+    sc.clip_id = clip.id;
+    sc.use_clip = true;
+    sc.animate_id = clip.animate_id || null;
+    sc.enhancement_level = "animate";
+    sc.clip_seconds = clip.seconds || null;
+    if (clip.disclosure) sc.disclosure = clip.disclosure;
+  } else {
+    sc.clip_id = null;
+    sc.use_clip = false;
+    sc.enhancement_level = sc.vfx_gen ? "effects" : "motion";
+    sc.clip_seconds = null;
+  }
+  autosaveWizard(w);
+}
+
+async function startAnimate(w) {
+  const key = w.animate?.key;
+  const animate_id = w.animate?.sel;
+  const src = animateSource(w, key);
+  if (!key || !animate_id || !src?.path) return;
+  const bal = S.credits?.balance;
+  if (bal != null && bal < ANIMATE_CREDITS_PER_CLIP) {
+    toast(`This Clip Costs ${ANIMATE_CREDITS_PER_CLIP} Credits And Your Balance Is ${bal}.`);
+    return;
+  }
+  w.animate.busy = true; render();
+  try {
+    /* Selecting a photo first keeps the clip attached to a real scene. */
+    if (!src.scene && src.asset) { w.scenes.push(assetToScene(src.asset)); syncSceneOrder(); }
+    const projectId = await ensureVideoProjectId(w);
+    await sceneClips.start({
+      video_project_id: projectId,
+      scene_key: key,
+      animate_id,
+      source_path: src.path,
+      source_version: src.version,
+      orientation: orientationOf(w),
+      room_name: src.room,
+      style: w.styleId || null,
+    });
+    S.credits = await getMyCredits().catch(() => S.credits);
+    w.animate = null;
+    toast("Generating Your AI Clip. You Can Keep Working.");
+  } catch (e) {
+    toast(e?.message || "That clip could not be started.");
+    if (w.animate) { w.animate.busy = false; w.animate.confirm = false; }
+  }
+  render();
+}
+
+function bindAnimate(el, w, render) {
+  const on = (sel, ev, fn) => el.querySelectorAll(sel).forEach((n) => n.addEventListener(ev, fn));
+  const clipOf = (key) => sceneClips.get(key);
+
+  on("[data-clip]", "click", async (e) => {
+    e.stopPropagation();
+    const t = e.currentTarget;
+    const action = t.dataset.clip;
+    const key = t.dataset.key;
+    const id = t.dataset.id;
+    const clip = clipOf(key);
+    try {
+      if (action === "open") {
+        w.animate = { key, sel: clip?.animate_id || null, busy: false, confirm: false };
+      } else if (action === "view") {
+        w.animate = { key, sel: clip?.animate_id || null };
+      } else if (action === "review") {
+        w.clipReview = { key };
+      } else if (action === "cancel" && id) {
+        await sceneClips.cancel(id);
+        S.credits = await getMyCredits().catch(() => S.credits);
+        toast("Clip Cancelled. Your Credits Were Returned.");
+      } else if (action === "retry" && id) {
+        await sceneClips.retry(id);
+        S.credits = await getMyCredits().catch(() => S.credits);
+        toast("Generating Your AI Clip Again.");
+      } else if (action === "use" && id) {
+        const updated = await sceneClips.use(id, true);
+        markSceneClip(w, key, updated, true);
+        toast("This Scene Will Use The AI Clip.");
+      } else if (action === "revert" && id) {
+        const updated = await sceneClips.use(id, false);
+        markSceneClip(w, key, updated, false);
+        toast("This Scene Will Use The Photo.");
+      } else if (action === "delete" && id) {
+        await sceneClips.remove(id);
+        markSceneClip(w, key, null, false);
+      } else if (action === "download") {
+        const url = sceneClips.url(clip);
+        if (url) window.open(url, "_blank", "noopener");
+      }
+    } catch (err) {
+      toast(err?.message || "That did not work. Try again.");
+    }
+    render();
+  });
+
+  on("[data-animate]", "click", (e) => {
+    if (!w.animate) return;
+    w.animate.sel = e.currentTarget.dataset.animate;
+    w.animate.confirm = false;
+    render();
+  });
+  const closeAnim = () => { w.animate = null; render(); };
+  on("#rvAnimX, #rvAnimCancel, #rvAnimNo", "click", closeAnim);
+  on("#rvAnimGo", "click", () => { if (w.animate) { w.animate.confirm = true; render(); } });
+  on("#rvAnimYes", "click", () => void startAnimate(w));
+
+  /* Clip review */
+  const closeRev = () => { w.clipReview = null; render(); };
+  on("#rvClipX", "click", closeRev);
+  on("#rvClipKeep", "click", async () => {
+    const key = w.clipReview?.key; const clip = clipOf(key);
+    if (clip) { try { markSceneClip(w, key, await sceneClips.use(clip.id, false), false); } catch (_) {} }
+    closeRev();
+  });
+  on("#rvClipUse", "click", async () => {
+    const key = w.clipReview?.key; const clip = clipOf(key);
+    if (!clip) return closeRev();
+    try {
+      markSceneClip(w, key, await sceneClips.use(clip.id, true), true);
+      toast("This Scene Will Use The AI Clip.");
+    } catch (err) { toast(err?.message || "That clip could not be used."); }
+    closeRev();
+  });
+  on("#rvClipRegen", "click", async () => {
+    const key = w.clipReview?.key; const clip = clipOf(key);
+    w.clipReview = null;
+    if (clip) { try { await sceneClips.retry(clip.id); S.credits = await getMyCredits().catch(() => S.credits); } catch (err) { toast(err?.message || "That clip could not be regenerated."); } }
+    render();
+  });
+  on("#rvClipDl", "click", () => {
+    const clip = clipOf(w.clipReview?.key);
+    const url = sceneClips.url(clip);
+    if (url) window.open(url, "_blank", "noopener");
+  });
+  on("[data-clipctl]", "click", (e) => {
+    const v = el.querySelector("#rvClipVid");
+    if (!v) return;
+    const a = e.currentTarget.dataset.clipctl;
+    if (a === "play") { v.paused ? v.play() : v.pause(); }
+    else if (a === "mute") { v.muted = !v.muted; }
+    else { v.currentTime = 0; v.play(); }
+  });
+}
+
 /** The grid is the order. w.scenes is always the selected subset of
     w.gridOrder, in gridOrder sequence. Call after every mutation. */
 function syncSceneOrder() {
