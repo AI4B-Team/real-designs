@@ -122,7 +122,7 @@ import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
 import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
-import { builderRailHtml, roomSelectHtml, imageToolbarHtml } from "@/lib/builder-ui";
+import { builderRailHtml, roomSelectHtml, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
 import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip-ui";
@@ -2077,7 +2077,7 @@ function tileHtml(a, seq) {
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
-      ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
+      ${s ? sceneNumberHtml(seq) : ""}
       ${sceneTreatment(s, clip, a)}
 
       ${tools}
