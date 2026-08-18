@@ -13,8 +13,9 @@ import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
 import { openAddressModal } from "@/lib/address-modal";
 import { suggestAddresses } from "@/lib/property-address.functions";
-import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL } from "@/lib/media-view";
-import { deleteProjectDraft } from "@/lib/drafts.functions";
+import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL, mediaTypeLabel } from "@/lib/media-view";
+import { deleteProjectDraft, renameProjectDraft, assignProjectDraft } from "@/lib/drafts.functions";
+
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
