@@ -54,6 +54,7 @@ import { roomIcon, searchRooms } from "@/lib/staging-rooms";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { dedupeScenes, mergeScenes, reconcileScenes, uniqueIds } from "@/lib/scene-dedupe";
+import { adoptSavedScenes } from "@/lib/scene-adopt";
 import { runAdvanceToGrid, attachUploadAssets, initialWizardStep, hydrateSeededWizard, ensureStepInvariant, acceptVideoPhotos, runEnrichment, logVideoEvent } from "@/lib/video-upload-intake";
 import { normalizeImageFile } from "@/lib/source-picker";
 import {
@@ -703,8 +704,11 @@ async function loadWizardAssets() {
     }
     w.seedPaths = null;
   }
+  /* Saved scenes are part of the grid, always. */
+  adoptSavedScenes(w, { unsorted: UNSORTED, groupFor });
   syncSceneOrder();
 }
+
 
 /* The builder is organised as six named sections in a left rail. Internally
    the wizard still tracks a step number, so every existing deep link, modal
@@ -2120,7 +2124,12 @@ function stepSelect() {
      under each photo and never splits the layout into sections. */
   const grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
 
-  const all = w.available.length > 0 && w.scenes.length === w.available.length;
+  /* Every count on this page reads the same ordered collection. */
+  const projectScenes = ordered;
+  const selectedKeys = new Set(w.scenes.map((s) => s.key));
+  const totalCount = projectScenes.length;
+  const selectedCount = projectScenes.filter((a) => selectedKeys.has(a.key)).length;
+  const all = totalCount > 0 && selectedCount === totalCount;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
 
   /* "Organizing photos" means work is genuinely running. A stale flag can
@@ -2133,7 +2142,7 @@ function stepSelect() {
   ${organizeFailed ? `<div class="rv-notice"><i data-lucide="triangle-alert"></i><span>Photos could not be organized automatically. Your photos are all here — you can arrange them yourself.</span><button class="fb-link" id="rvRetryOrg">Try Again</button></div>` : ""}
   ${w.enrichNotice ? `<div class="rv-notice"><i data-lucide="info"></i><span>${esc(w.enrichNotice)}</span><button class="fb-link" id="rvEnrichX">Dismiss</button></div>` : ""}
   <div class="rv-utility">
-    <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
+    <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${selectedCount} of ${totalCount} selected</b></label>
     <div class="rv-utility-m">${addressBarHtml(w, S.tree || [], "rvAddrBar")}</div>
     <div class="rv-utility-a">
       <button class="btn btn-ghost btn-sm" id="rvAuto"><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
@@ -2150,7 +2159,8 @@ function stepSelect() {
     </div>
   </div>
 
-  <div class="rv-grid ${orient}">${grid || `<div class="rv-note">No Content Found For This Source.</div>`}</div>
+  <div class="rv-grid ${orient}">${grid}</div>
+  ${!totalCount && !organizing ? `<div class="rv-empty"><i data-lucide="images"></i><h3>No Photos In This Video Yet</h3><p>Add photos to begin building your scenes.</p><div class="rv-empty-a"><button class="btn btn-primary" id="rvEmptyAdd"><i data-lucide="plus"></i>Add Photos</button></div></div>` : ""}
   <div class="rv-gridfoot">
     <div class="rv-count">
       <span>${w.scenes.length} ${w.scenes.length === 1 ? "scene" : "scenes"} · ${total} sec · ${creditTotal()} credits</span>
@@ -4157,6 +4167,7 @@ function bind() {
   });
   /* Header and notice shortcuts both reopen the picker step without losing work. */
   on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+  on("#rvEmptyAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvHeadFile", "change", (e) => {
     const files = Array.from(e.currentTarget.files || []);
@@ -5041,7 +5052,9 @@ function editExisting(d) {
     ).then(() => { attachUploadAssets(w); reconcileUploadPaths(w); render(); });
   }
   S.screen = "wizard";
-  loadWizardAssets().then(render);
+  /* No empty state while the grid is still hydrating. */
+  w.selectGridLoading = true;
+  loadWizardAssets().finally(() => { w.selectGridLoading = false; render(); });
   render();
 }
 

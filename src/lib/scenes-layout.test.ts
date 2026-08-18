@@ -12,7 +12,7 @@ describe("Scenes toolbar", () => {
   it("puts the address field inside the workspace toolbar row", () => {
     const bar = src.slice(src.indexOf(`<div class="rv-utility">`), src.indexOf(`<div class="rv-grid`));
     expect(bar).toContain("rvSelAll");
-    expect(bar).toContain("of ${w.available.length} selected");
+    expect(bar).toContain("${selectedCount} of ${totalCount} selected");
     expect(bar).toContain(`rv-utility-m`);
     expect(bar).toContain(`addressBarHtml(w, S.tree || [], "rvAddrBar")`);
     expect(bar).toContain("rvAuto");
