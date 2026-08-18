@@ -388,15 +388,34 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       );
     }
     if (state.tab === "describe") {
+      const ready = state.prompt.trim().length > 0 && !state.describeBusy;
       return (
         '<div class="sp-pane sp-describe">' +
-        '<label class="sp-f" for="spPrompt">Describe the space you want to create</label>' +
-        '<textarea id="spPrompt" rows="4" placeholder="A warm modern living room with oak floors, a cream sectional, built-in shelving and soft indirect lighting.">' +
+        '<div class="sp-composer' + (state.describeBusy ? " is-busy" : "") + '">' +
+        '<textarea id="spPrompt" aria-label="Describe the space you want to create" ' +
+        (state.describeBusy ? "disabled " : "") +
+        'placeholder="Describe the space you want to create. Include the room, style, colors, materials and anything you want included.">' +
         esc(state.prompt) + "</textarea>" +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="describe">Create Concept</button>' +
+        '<div class="sp-composer-a">' +
+        '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" ' +
+        'aria-label="Create an AI concept from your description"' +
+        (ready ? "" : " disabled") + ">" +
+        (state.describeBusy
+          ? '<span class="sp-spin" aria-hidden="true"></span>Creating…'
+          : '<i data-lucide="sparkles"></i>Create <em>1 Credit</em>') +
+        "</button>" +
+        "</div>" +
+        "</div>" +
+        '<p class="sp-note">Be specific for better results.</p>' +
+        '<div class="sp-chips">' +
+        DESCRIBE_EXAMPLES.map(
+          (x) => '<button type="button" class="sp-chip" data-sp-ex="' + esc(x) + '">' + esc(x) + "</button>",
+        ).join("") +
+        "</div>" +
         "</div>"
       );
     }
+
     if (state.tab === "design") {
       const list = (opts.designs ? opts.designs() : []).slice(0, 40);
       if (!list.length)
