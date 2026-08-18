@@ -112,8 +112,16 @@ export type PickerOptions = {
   showAlert?: (msg: string) => void;
 };
 
+/** Quiet starting points under the describe composer. */
+export const DESCRIBE_EXAMPLES: string[] = [
+  "Warm Modern Living Room",
+  "Luxury Primary Bathroom",
+  "Coastal Backyard",
+];
+
 const esc0 = (v: string) =>
   String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+
 
 export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const cfg = CONTEXT_CONFIG[opts.context];
