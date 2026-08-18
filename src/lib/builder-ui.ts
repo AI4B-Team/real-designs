@@ -81,6 +81,16 @@ export function selectCheckHtml(opts = {}) {
   return `<span class="bx-check"${opts.hidden ? ' aria-hidden="true"' : ""}><i data-lucide="check"></i></span>`;
 }
 
+/** Shared sequence badge: presentation order only, never a stable id.
+   Hidden while the hover/focus toolbar is open (see .rv-tile-seq rules); the
+   order still reaches assistive tech through the card's aria-label. */
+export function sceneNumberHtml(n) {
+  const num = Number(n);
+  if (!num || num < 1) return "";
+  return `<span class="rv-tile-seq mono" aria-hidden="true">${esc(num)}</span>`;
+}
+
+
 /** Shared autosave status wording. */
 export function saveLabel(state) {
   if (state === "saving") return "Saving…";
