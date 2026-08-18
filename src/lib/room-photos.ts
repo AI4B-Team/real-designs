@@ -104,6 +104,7 @@ export async function roomPhotoUrl(path: string, expiresIn = 3600): Promise<stri
 export async function deleteRoomPhoto(path: string): Promise<void> {
   if (!isStoredPhoto(path)) return;
   SIGNED.delete(path);
+  MISSING.delete(path);
   await supabase.storage.from(BUCKET).remove([path]);
 }
 
