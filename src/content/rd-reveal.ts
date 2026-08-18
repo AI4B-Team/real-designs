@@ -14,6 +14,15 @@ import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
+import {
+  sceneFrames,
+  SE_TRANSITIONS,
+  SE_CROPS,
+  seTransitionName,
+  frameConfigured,
+  AI_TRANSITION_AVAILABLE,
+  AI_TRANSITION_UNAVAILABLE_REASON,
+} from "@/lib/scene-frames";
 import { DraftAutosaver, newDraftId } from "@/lib/project-draft";
 import { deleteProjectDraft } from "@/lib/drafts.functions";
 import { getPropertyTree } from "@/lib/workspace.functions";
