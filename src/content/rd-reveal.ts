@@ -2029,7 +2029,7 @@ const TRANS_ICON = {
 
 const ENDING_OPTIONS = [
   { id: "none", label: "None", blurb: "End immediately after the final frame.", icon: "square" },
-  { id: "fade_black", label: "Fade to Black", blurb: "Gradually fade the final scene to black.", icon: "circle" },
+  { id: "fade_black", label: "Fade To Black", blurb: "Gradually fade the final scene to black.", icon: "circle" },
   { id: "fade_white", label: "Fade to White", blurb: "Gradually fade the final scene to white.", icon: "circle-dashed" },
   { id: "brand_end_card", label: "Brand End Card", blurb: "Show the configured logo, colors and call to action.", icon: "badge-check" },
 ];
