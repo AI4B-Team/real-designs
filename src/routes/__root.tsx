@@ -13,7 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initAnalytics, trackPageview } from "../lib/analytics";
 
-function NotFoundComponent() {
+export function NotFoundComponent() {
   return (
     <div
       className="flex min-h-screen items-center justify-center px-4"
