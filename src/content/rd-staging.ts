@@ -416,7 +416,17 @@ function hydrate(draft) {
       err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
     };
   });
-  S.step = draft.builder_step === "add" ? "add" : "review";
+  /* Where the user left off, validated against the photos that still exist. */
+  const back = restoreStep({
+    builder_step: draft.builder_step,
+    keys: S.items.map((i) => i.key),
+    activeKey: (draft.settings && draft.settings.current) || null,
+    completed: S.items.filter((i) => i.state === "complete" || i.done).map((i) => i.key),
+  });
+  S.step = back.step === "add" ? "add" : back.step === "review" ? "final" : "review";
+  S.current = null;
+  S.lastOpened = back.activeKey;
+  S.resumeKey = back.step === "design" ? back.activeKey : null;
 
   ensureSaver();
   /* Signed URLs are minted per session; the row only ever stores paths. */
