@@ -24,7 +24,26 @@ import {
 import { ARCHITECTURE_GUARD, NO_PEOPLE_GUARD } from "@/lib/scene-enhancement";
 import { SE_CREDITS, seMotion } from "@/lib/scene-frames-presets";
 
-export type FrameRow = Record<string, any>;
+export type FrameRow = {
+  id: string;
+  user_id: string;
+  video_project_id: string;
+  scene_key: string;
+  scene_id: string | null;
+  start_path: string;
+  end_path: string | null;
+  motion_preset: string;
+  prompt: string | null;
+  seconds: number;
+  status: string;
+  progress: number;
+  clip_id: string | null;
+  clip_path: string | null;
+  provider_job_id: string | null;
+  error_message: string | null;
+  credits_reserved: number;
+  credits_charged: number;
+} & Record<string, any>;
 
 /** The full instruction sent to the provider for one Start/End clip. */
 export function buildSePrompt(input: {
