@@ -155,7 +155,8 @@ team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit
 account:['Account','Profile, security, subscription and billing'],
 help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
-notifications:['Notifications','Activity, mentions and alerts']};
+notifications:['Notifications','Activity, mentions and alerts'],
+staging:['Photo Staging','Add photos, confirm rooms, then design']};
 const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
@@ -200,6 +201,9 @@ function go(v,fromHash){
      keys like lvideo) must never leave the content area blank. Home and the
      dashboard are one view now, reachable only as dash. */
   let viewId = v==='lvideo' ? 'reveal' : (v==='home' ? 'dash' : v);
+  /* The staging page mounts on demand; make sure its container exists before
+     the unknown-view fallback runs. */
+  if(viewId==='staging'){ try{ (window as any).rdStaging && (window as any).rdStaging.ensure(); }catch(_){} }
   if(!document.getElementById('v-'+viewId)) viewId='dash';
   const navId = (v==='lvideo') ? 'lvideo' : (viewId==='reveal') ? 'media' : viewId;
 
@@ -218,6 +222,10 @@ function go(v,fromHash){
   if(v==='lvideo'){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
 
   if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
+  /* Photo staging is a normal page: mount it on entry, hand the rail back on
+     exit, so browser Back and a refresh both behave like every other view. */
+  if(viewId==='staging'){ try{ (window as any).rdStaging && (window as any).rdStaging.mount(); }catch(_){} }
+  else { try{ (window as any).rdStaging && (window as any).rdStaging.detach(); }catch(_){} }
   if(v==='reports'){ try{ mountReports(go); }catch(_){} }
   if(v==='scope'){ try{ paintBudgetGate(); }catch(_){} }
   

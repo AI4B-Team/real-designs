@@ -155,31 +155,88 @@ export function retryDraftSave() {
 
 /* ------------------------------------------------------------------ shell */
 
+/* Review Rooms is an ordinary application page: it lives in the content
+   area next to every other view, keeps the top bar and the app rail, and
+   never locks document scrolling or claims a dialog role. */
+
 function host() {
-  if (wrap && document.body.contains(wrap)) return wrap;
+  const existing = document.getElementById("v-staging");
+  if (existing) { wrap = existing; return wrap; }
+  const content = document.querySelector(".rd-app .content") || document.querySelector(".content");
+  if (!content) return null;
   wrap = document.createElement("div");
-  /* The overlay lives on <body>, so it must carry the app scope itself or
-     every .rd-app .btn / token rule silently drops out. */
-  wrap.className = "rd-app rds-wrap";
-  wrap.id = "rdStagingWrap";
-  document.body.appendChild(wrap);
+  wrap.className = "view";
+  wrap.id = "v-staging";
+  content.appendChild(wrap);
   return wrap;
 }
 
+/** Collapse the global menu from Review Rooms onward, release it on exit. */
+function railForStep() {
+  try {
+    const rail = window.__rdRailBorrow;
+    if (!rail) return;
+    if (S && S.step === "review") rail.collapse();
+    else rail.release();
+  } catch (_) {}
+}
+
 function show() {
-  host().classList.add("on");
-  document.body.style.overflow = "hidden";
+  host();
+  /* Navigating through the router keeps the hash, the browser history and a
+     refresh all pointing at the same page. */
+  try { window.__rdGo && window.__rdGo("staging"); } catch (_) {}
   render();
+  railForStep();
 }
 
 function hide() {
-  if (wrap) wrap.classList.remove("on");
-  document.body.style.overflow = "";
   closePopover();
+  try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
+}
+
+/** Make sure the page container exists before the router toggles views. */
+export function ensureStagingView() {
+  return !!host();
+}
+
+/** Router hook: the staging view became visible again (back button, refresh). */
+export function mountStagingView() {
+  if (!S) {
+    /* Nothing in flight: try the saved draft, otherwise hand the user back. */
+    void resumeStagingDraft().then((ok) => {
+      if (!ok) { try { window.__rdGo && window.__rdGo("studio"); } catch (_) {} }
+    });
+    return;
+  }
+  render();
+  railForStep();
+  restoreScroll();
+}
+
+export function detachStagingView() {
+  closePopover();
+  try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
+}
+
+/* Scroll position survives a trip into the canvas and back. */
+let scrollY = 0;
+function scroller() {
+  return document.querySelector(".rd-app .content") || document.scrollingElement || document.documentElement;
+}
+function rememberScroll() {
+  const el = scroller();
+  scrollY = el ? el.scrollTop || window.scrollY || 0 : 0;
+}
+function restoreScroll() {
+  const el = scroller();
+  if (!el) return;
+  requestAnimationFrame(() => { try { el.scrollTop = scrollY; } catch (_) {} });
 }
 
 function exitAll() {
   hide();
+  try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
   /* Leaving the screen is not losing the work: flush whatever is queued. */
   if (saver) { void saver.flush(); saver.destroy(); saver = null; }
   if (S) S.items.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
@@ -272,6 +329,7 @@ export function reopenStaging() {
   if (!S || !S.items.length) return false;
   S.step = "review";
   show();
+  restoreScroll();
   return true;
 }
 
@@ -433,48 +491,92 @@ function statusText() {
   return parts.join(" · ");
 }
 
+function stepRailHtml(active) {
+  const steps = [
+    { k: "add", n: 1, label: "Add Photos", icon: "image-plus" },
+    { k: "review", n: 2, label: "Review Rooms", icon: "layout-grid" },
+    { k: "design", n: 3, label: "Design", icon: "wand-2" },
+  ];
+  return `<nav class="rds-rail" aria-label="Staging steps">${steps
+    .map(
+      (st) =>
+        `<button class="rds-rail-i${st.k === active ? " on" : ""}" data-step="${st.k}"${st.k === "design" ? " disabled" : ""}>
+          <i data-lucide="${st.icon}"></i><span><b>Step ${st.n}</b>${esc(st.label)}</span>
+        </button>`,
+    )
+    .join("")}</nav>`;
+}
+
 function render() {
   const el = host();
-  if (!S) return;
+  if (!el || !S) return;
   if (S.step === "add") {
-    el.innerHTML = `<div class="rds" role="dialog" aria-label="Add photos">
-      <header class="rds-h">
-        <div><b>Add Photos</b><span>Add every photo you want to design. We'll sort them by room on the next screen.</span></div>
-        <button class="icon-btn" id="rdsClose" aria-label="Close"><i data-lucide="x"></i></button>
+    el.innerHTML = `<section class="rds-page">
+      ${stepRailHtml("add")}
+      <header class="rds-ph">
+        <div><h2>Add Photos</h2><p>Add every photo you want to design. We'll sort them by room on the next screen.</p></div>
+        <button class="btn btn-ghost btn-sm" id="rdsClose"><i data-lucide="x"></i>Exit</button>
       </header>
       <div class="rds-add"><div id="rdsPicker"></div></div>
-    </div>`;
+    </section>`;
     paint();
     el.querySelector("#rdsClose").onclick = exitAll;
+    bindRail(el);
     mountPicker(el.querySelector("#rdsPicker"));
+    railForStep();
     return;
   }
 
-  el.innerHTML = `<div class="rds" role="dialog" aria-label="Review rooms">
-    <header class="rds-h">
-      <div class="rds-title">
-        <button class="icon-btn" id="rdsBack" aria-label="Back to add photos"><i data-lucide="arrow-left"></i></button>
-        <div><b>Review Rooms</b><span id="rdsStatus">${esc(statusText())}</span></div>
+  el.innerHTML = `<section class="rds-page">
+    ${stepRailHtml("review")}
+    <header class="rds-ph">
+      <div>
+        <h2>Review Rooms</h2>
+        <p>Confirm the room type for each photo.</p>
       </div>
-      <button class="icon-btn" id="rdsClose" aria-label="Close"><i data-lucide="x"></i></button>
+      <div class="rds-ph-r"><span id="rdsStatus">${esc(statusText())}</span></div>
     </header>
     <div class="rds-bar">
       <div class="rds-bar-l">
-        <button class="btn btn-ghost btn-sm" id="rdsAll"><i data-lucide="check-square"></i>Select All</button>
-        <button class="btn btn-ghost btn-sm" id="rdsNone"><i data-lucide="square"></i>Clear</button>
-        <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room For Selected</button>
-        <button class="btn btn-ghost btn-sm" id="rdsDel"><i data-lucide="trash-2"></i>Remove Selected</button>
+        <button class="btn btn-dark btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room For Selected</button>
+        <div class="rds-menu-wrap">
+          <button class="btn btn-ghost btn-sm" id="rdsMoreBtn" aria-haspopup="true" aria-expanded="false"><i data-lucide="more-horizontal"></i>More</button>
+          <div class="rds-menu" id="rdsMoreMenu" role="menu">
+            <button class="rds-menu-i" data-act="all"><i data-lucide="check-square"></i>Select All</button>
+            <button class="rds-menu-i" data-act="none"><i data-lucide="square"></i>Clear Selection</button>
+            <button class="rds-menu-i" data-act="group"><i data-lucide="${S.group ? "check" : "list"}"></i>Group By Room</button>
+            <button class="rds-menu-i" data-act="del"><i data-lucide="trash-2"></i>Remove Selected</button>
+          </div>
+        </div>
       </div>
       <div class="rds-bar-r">
-        <label class="rds-toggle"><input type="checkbox" id="rdsGroup" ${S.group ? "checked" : ""}>Group By Room</label>
-        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add More Photos</button>
-        <button class="btn btn-primary btn-sm" id="rdsGo"><i data-lucide="wand-2"></i>Start Designing</button>
+        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
       </div>
     </div>
     <div class="rds-b" id="rdsBody">${gridHtml()}</div>
-  </div>`;
+    <footer class="rds-foot">
+      <button class="btn btn-ghost btn-sm" id="rdsBack"><i data-lucide="arrow-left"></i>Back</button>
+      <div class="rds-foot-r">
+        <button class="btn btn-ghost btn-sm" id="rdsClose">Exit</button>
+        <button class="btn btn-primary btn-sm" id="rdsGo"><i data-lucide="wand-2"></i>Start Designing</button>
+      </div>
+    </footer>
+  </section>`;
   paint();
   bindReview(el);
+  bindRail(el);
+  railForStep();
+}
+
+function bindRail(el) {
+  el.querySelectorAll("[data-step]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const k = b.getAttribute("data-step");
+      if (k === "design" || k === S.step) return;
+      S.step = k;
+      render();
+    }),
+  );
 }
 
 function patchCard(it) {
@@ -511,27 +613,34 @@ function bindReview(el) {
     S.step = "add";
     render();
   };
-  el.querySelector("#rdsAll").onclick = () => {
-    S.items.forEach((i) => (i.selected = true));
-    render();
+  const menu = el.querySelector("#rdsMoreMenu");
+  const moreBtn = el.querySelector("#rdsMoreBtn");
+  const closeMenu = () => { menu.classList.remove("on"); moreBtn.setAttribute("aria-expanded", "false"); };
+  moreBtn.onclick = (e) => {
+    e.stopPropagation();
+    const open = !menu.classList.contains("on");
+    menu.classList.toggle("on", open);
+    moreBtn.setAttribute("aria-expanded", String(open));
   };
-  el.querySelector("#rdsNone").onclick = () => {
-    S.items.forEach((i) => (i.selected = false));
-    render();
-  };
-  el.querySelector("#rdsDel").onclick = () => {
-    const keep = S.items.filter((i) => !i.selected);
-    if (keep.length === S.items.length) return;
-    S.items.filter((i) => i.selected).forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
-    S.items = keep;
-    if (!S.items.length) S.step = "add";
-    saveDraft();
-    render();
-  };
-  el.querySelector("#rdsGroup").onchange = (e) => {
-    S.group = !!e.target.checked;
-    render();
-  };
+  document.addEventListener("click", closeMenu, { once: true });
+  menu.querySelectorAll("[data-act]").forEach((b) =>
+    b.addEventListener("click", () => {
+      const act = b.getAttribute("data-act");
+      closeMenu();
+      if (act === "all") S.items.forEach((i) => (i.selected = true));
+      if (act === "none") S.items.forEach((i) => (i.selected = false));
+      if (act === "group") S.group = !S.group;
+      if (act === "del") {
+        const keep = S.items.filter((i) => !i.selected);
+        if (keep.length === S.items.length) return;
+        S.items.filter((i) => i.selected).forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
+        S.items = keep;
+        if (!S.items.length) S.step = "add";
+        saveDraft();
+      }
+      render();
+    }),
+  );
   el.querySelector("#rdsMore").onclick = () => {
     S.step = "add";
     render();
@@ -675,6 +784,7 @@ async function openInCanvas(key) {
   const it = list.find((i) => i.key === key);
   if (!it) return;
   S.current = key;
+  rememberScroll();
   hide();
 
   /* Mark the previous photo designed if the canvas produced a result. */
@@ -813,5 +923,5 @@ try {
 } catch (_) {}
 
 try {
-  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft };
+  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft, ensure: ensureStagingView, mount: mountStagingView, detach: detachStagingView };
 } catch (_) {}

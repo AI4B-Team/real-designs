@@ -174,12 +174,12 @@ describe("property video: add photos -> scenes", () => {
 describe("photo staging: add photos -> review rooms", () => {
   const openStaging = async () => {
     const mod = await import("@/content/rd-staging");
-    document.body.innerHTML = "";
+    document.body.innerHTML = '<div class="rd-app"><div class="content"></div></div>';
     mod.openStagingReview({});
     await settle(10);
     return mod;
   };
-  const stagingHost = () => document.querySelector(".rds-wrap") as HTMLElement;
+  const stagingHost = () => document.querySelector("#v-staging") as HTMLElement;
   const pickerInput = () => stagingHost().querySelector("input[type=file]") as HTMLInputElement;
 
   const pick = async (files: File[]) => {
@@ -203,6 +203,22 @@ describe("photo staging: add photos -> review rooms", () => {
     expect(stagingHost().textContent).toContain("Review Rooms");
     expect(stagingHost().querySelector("#rdsMore")).toBeTruthy();
     expect(stagingHost().querySelectorAll(".rds-card")).toHaveLength(1);
+  });
+
+  it("renders Review Rooms as a page, not a modal", async () => {
+    await openStaging();
+    await pick([jpeg("a.jpg")]);
+    const hostEl = stagingHost();
+    /* In the content area, no dialog role, no locked document scrolling. */
+    expect(hostEl.closest(".content")).toBeTruthy();
+    expect(hostEl.querySelector('[role="dialog"]')).toBeNull();
+    expect(document.body.style.overflow).toBe("");
+    expect(hostEl.querySelector(".rds-rail")).toBeTruthy();
+    expect(hostEl.querySelector(".rds-foot")).toBeTruthy();
+    expect(hostEl.textContent).toContain("Confirm the room type for each photo.");
+    /* Bulk actions collapse into a More menu. */
+    expect(hostEl.querySelector("#rdsMoreMenu")).toBeTruthy();
+    expect(hostEl.textContent).not.toContain("Remove All Items");
   });
 
   it("keeps the grid visible when an upload fails", async () => {
