@@ -314,7 +314,11 @@ async function loadLibrary() {
     for (const j of S.jobs) {
       if (!isJobStale(j) || j.id === S.renderJobId) continue;
       try {
-        const fixed = await cancelRenderJob({ id: j.id, force: true });
+        const fixed = await updateRenderJob({
+          id: j.id,
+          status: "failed",
+          error_message: "The render stopped when its browser tab closed. Your credits were returned.",
+        });
         if (fixed) Object.assign(j, fixed);
       } catch (_) {}
     }
