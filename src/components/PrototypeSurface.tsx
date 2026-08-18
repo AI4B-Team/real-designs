@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { initTooltips } from "@/lib/tooltips";
 import { initSelects } from "@/lib/selects";
+import { initDatalists } from "@/lib/datalists";
 
 
 type Props = {
@@ -21,7 +22,8 @@ export function PrototypeSurface({ className, html, init }: Props) {
     const cleanup = init();
     const stopTips = initTooltips(document);
     const stopSelects = initSelects(document);
-    return () => { stopSelects(); stopTips(); cleanup(); };
+    const stopLists = initDatalists(document);
+    return () => { stopLists(); stopSelects(); stopTips(); cleanup(); };
   }, [init]);
 
 
