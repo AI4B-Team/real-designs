@@ -1131,13 +1131,23 @@
 .rd-app .rv-conn:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
 .rd-app .rv-conn.busy i { animation: rv-spin 1s linear infinite; }
 .rd-app .rv-conn.bad { background: #fff; border-color: #CC0000; color: #CC0000; }
-/* Row break: the pair is vertical, not horizontal. The control is moved into
-   the FIRST card of the new row and centred above it inside the row gap, so
-   nothing hangs past the panel edge and no card control is covered. */
-.rd-app .rv-conn.wrap { right: auto; left: 50%; transform: translateX(-50%);
-  top: -21px; margin-top: 0; }
-.rd-app .rv-grid.landscape .rv-conn.wrap { top: -21px; }
-.rd-app .rv-conn.wrap:hover, .rd-app .rv-conn.wrap:focus-visible { transform: translateX(-50%); }
+/* Row break: the pair is vertical, not horizontal, so the control leaves both
+   cards entirely and becomes a full-width separator row of its own between the
+   two rendered rows — never on a card edge, never over a room selector. */
+.rd-app .rv-rowconn { grid-column: 1 / -1; display: flex; align-items: center; justify-content: center;
+  gap: 10px; min-width: 0; margin: 2px 0; }
+.rd-app .rv-rowconn::before, .rd-app .rv-rowconn::after { content: ""; flex: 0 1 64px; height: 1px;
+  background: var(--line, #e6e6e6); }
+.rd-app .rv-conn.wrap { position: static; right: auto; top: auto; margin: 0; transform: none;
+  width: auto; min-width: 62px; max-width: 78px; height: 28px; padding: 0 10px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  font: 600 11px/1 var(--font-sans, inherit); letter-spacing: .01em; }
+.rd-app .rv-conn.wrap::before { display: none; }
+.rd-app .rv-conn.wrap:hover, .rd-app .rv-conn.wrap:focus-visible { transform: none; }
+.rd-app .rv-conn .rv-conn-lb { display: none; }
+.rd-app .rv-conn.wrap .rv-conn-lb { display: inline; white-space: nowrap; }
+.rd-app .rv-conn.wrap i, .rd-app .rv-conn.wrap svg { width: 13px; height: 13px; }
+
 
 
 
