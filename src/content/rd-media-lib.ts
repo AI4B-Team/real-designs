@@ -733,6 +733,44 @@ function editImage(m) {
   S.go("studio");
 }
 
+/* Every builder launch from Media goes through the one handoff contract, so
+   the property, the photos and the origin arrive intact. */
+function publishHandoff(target, items) {
+  const withProp = items.find((m) => m.propertyId) || items[0] || {};
+  return setHandoff({
+    target,
+    origin: "media",
+    propertyId: withProp.propertyId || null,
+    propertyAddress: withProp.address || withProp.property || null,
+    assets: items.map((m) => ({
+      path: m.assetPath || m.path,
+      name: m.title,
+      room: m.room && m.room !== "Needs Review" ? m.room : null,
+      id: m.refId || m.id,
+    })),
+  });
+}
+
+/** Send the selected photos into the Photo Design builder with their property. */
+function designFrom(items) {
+  const usable = items.filter((m) => canEditImage(m) && (m.assetPath || m.path));
+  if (!usable.length) {
+    toast("Select At Least One Uploaded Photo To Design.");
+    return;
+  }
+  const h = publishHandoff("design", usable);
+  if (!h) {
+    toast("Those Photos Aren't Ready Yet.");
+    return;
+  }
+  openStagingReview({
+    photos: h.assets.map((a) => ({ path: a.path, name: a.name, room: a.room })),
+    address: h.propertyAddress || "",
+    propertyId: h.propertyId,
+  });
+  try { (window as any).__rdGo && (window as any).__rdGo("studio"); } catch (_) {}
+}
+
 /** Seed the listing-video workflow from one or many ready images. */
 function videoFrom(items) {
   const usable = items.filter(videoReady);
@@ -741,8 +779,11 @@ function videoFrom(items) {
     return;
   }
   try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  const h = publishHandoff("video", usable);
   openVideoWorkflow({
     from: "media",
+    propertyId: (h && h.propertyId) || null,
+    propertyAddress: (h && h.propertyAddress) || null,
     assets: usable.map((x, i) => ({
       id: x.refId || x.id,
       storage_path: x.assetPath || x.path,
