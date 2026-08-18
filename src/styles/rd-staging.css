@@ -263,5 +263,5 @@
 .rd-app .rds-thumb { background: #f1f1f4; border: 0; }
 .rd-app .rds-opt { background: transparent; }
 .rd-app .rds-opt:hover { background: #f4f4f6; }
-.rd-app .rds-strip-b, .rd-app .rds-strip-i { background: rgba(255, 255, 255, 0.1); color: #fff; }
+.rd-app .rds-strip-b, .rd-app .rds-strip-i { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.18); }
 .rd-app .rds-strip-t { background: #2a2a30; }
