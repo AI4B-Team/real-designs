@@ -30,17 +30,22 @@ const PROJECT_TYPE = { interior: "interior", exterior: "exterior", landscape: "g
 
 export const BULK_CREDIT_PER_PHOTO = 1;
 
-/** Groups photos by space type so incompatible spaces are never mixed silently. */
+/**
+ * Groups photos by space type so incompatible spaces are never mixed silently.
+ * A photo with no confirmed room type is NOT assumed to be an interior: it
+ * lands in its own "Room type needed" group so the label can never contradict
+ * the thumbnails underneath it.
+ */
 export function groupBySpace(items) {
   const out = new Map();
   items.forEach((it) => {
-    const s = it.room ? roomSpace(it.room) : "interior";
+    const s = it.room ? roomSpace(it.room) : "unassigned";
     if (!out.has(s)) out.set(s, []);
     out.get(s).push(it);
   });
   return Array.from(out.entries()).map(([space, list]) => ({
     space,
-    label: SPACE_LABEL[space] || "Interior",
+    label: space === "unassigned" ? "Room type needed" : SPACE_LABEL[space] || "Interior",
     items: list,
   }));
 }
