@@ -1950,14 +1950,13 @@ function tileHtml(a, seq) {
   const cap = s ? String(s.caption || "") : "";
   const clip = sceneClips.get(a.key);
   const clipHot = !!clip && clip.status !== "cancelled" && clip.status !== "failed";
-  const frHot = s && frameConfigured(sceneFrames.get(s.key));
   /* Every card carries the same actions; using one on an unselected photo
-     selects it first, so the tools never disappear on the user. */
+     selects it first, so the tools never disappear on the user. Start / End
+     is not a toolbar button: it lives inside the Effects modal. */
   const tools = `<div class="rv-tools">
       <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
-      
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
       <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
     </div>
@@ -1967,7 +1966,8 @@ function tileHtml(a, seq) {
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
       ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
-      ${sceneRecap(s, clip)}
+      ${sceneTreatment(s, clip, a)}
+
       ${tools}
     </div>
     ${s ? connectorHtml(s, S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1] || null) : ""}
