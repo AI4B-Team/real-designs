@@ -3916,6 +3916,97 @@ function bind() {
   });
   on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
   on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
+
+  /* ---- scene settings summary ---- */
+  on("[data-sumedit]", "click", (e) => {
+    const kind = e.currentTarget.dataset.sumedit;
+    const key = w.pop?.key;
+    w.pop = null; render();
+    el.querySelector(`.rv-tool[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
+  });
+  on("[data-sumreset]", "click", (e) => {
+    const s = cur(); if (!s) return;
+    resetSceneSetting(s, e.currentTarget.dataset.sumreset);
+    render();
+  });
+  on("#rvSumResetAll", "click", () => {
+    const s = cur(); if (!s) return;
+    sceneSettings(s, sceneClips.get(s.key)).forEach((it) => { if (!it.locked) resetSceneSetting(s, it.id); });
+    w.pop = null;
+    toast("Scene Settings Reset.");
+    render();
+  });
+
+  /* ---- start / end frames ---- */
+  on("[data-endpick]", "click", (e) => {
+    if (!w.seDraft) return;
+    const k = e.currentTarget.dataset.endpick;
+    w.seDraft.end_key = w.seDraft.end_key === k ? null : k;
+    render();
+  });
+  on("[data-secropstart]", "click", (e) => { if (!w.seDraft) return; w.seDraft.start_crop = e.currentTarget.dataset.secropstart; render(); });
+  on("[data-secropend]", "click", (e) => { if (!w.seDraft) return; w.seDraft.end_crop = e.currentTarget.dataset.secropend; render(); });
+  on("[data-setrans]", "click", (e) => { if (!w.seDraft) return; w.seDraft.transition_type = e.currentTarget.dataset.setrans; render(); });
+  on("#rvSeSwap", "click", () => {
+    const d = w.seDraft; if (!d || !d.end_key) return;
+    /* Swapping changes which photo the scene starts on, so the scene's own
+       source follows the start frame. */
+    const s = cur();
+    const start = d.start_key;
+    d.start_key = d.end_key; d.end_key = start;
+    const c = d.start_crop; d.start_crop = d.end_crop; d.end_crop = c;
+    if (s) {
+      const a = w.available.find((x) => x.key === d.start_key);
+      if (a) { s.path = a.path; s.room = a.room || s.room; }
+    }
+    render();
+  });
+  {
+    const dur = el.querySelector("#rvSeDur");
+    if (dur) dur.addEventListener("input", (ev) => {
+      if (!w.seDraft) return;
+      w.seDraft.transition_duration = Number(ev.target.value) / 10;
+      const out = el.querySelector("#rvSeDur")?.previousElementSibling;
+      if (out) out.textContent = `${w.seDraft.transition_duration.toFixed(1)}s`;
+    });
+  }
+  on("#rvSeRemove", "click", async () => {
+    const s = cur(); if (!s) return;
+    try { await sceneFrames.clear(s.key); } catch (_) { toast("That could not be removed just now."); return; }
+    w.pop = null; w.seDraft = null;
+    toast("Start And End Removed.");
+    render();
+  });
+  on("#rvSeSave", "click", async () => {
+    const s = cur(); const d = w.seDraft;
+    if (!s || !d?.end_key || w.seBusy) return;
+    const startA = w.available.find((a) => a.key === d.start_key);
+    const endA = w.available.find((a) => a.key === d.end_key);
+    if (!startA || !endA) return;
+    w.seBusy = true; render();
+    try {
+      const pid = await ensureVideoProjectId(w);
+      sceneFrames.setProject(pid);
+      await sceneFrames.save({
+        video_project_id: pid,
+        scene_key: s.key,
+        start_path: startA.path,
+        end_path: endA.path,
+        start_asset_id: startA.assetId || s.asset_id || null,
+        end_asset_id: endA.assetId || null,
+        start_crop: d.start_crop || "center",
+        end_crop: d.end_crop || "center",
+        transition_type: d.transition_type || "blend",
+        transition_duration: Number(d.transition_duration || 3),
+      });
+      w.pop = null; w.seDraft = null;
+      toast("Start And End Saved.");
+    } catch (err) {
+      toast(err?.message || "That could not be saved just now.");
+    }
+    w.seBusy = false;
+    render();
+  });
   on("[data-fxtab]", "click", (e) => { w.popTab = e.currentTarget.dataset.fxtab; w.popCat = "all"; render(); });
   on("[data-fxcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.fxcat; render(); });
   /* Base disclosure the scene carried before any generative effect. */
