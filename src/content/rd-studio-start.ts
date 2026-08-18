@@ -929,10 +929,17 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.address = address;
         openSetup("property");
       },
-      onDescribe: (prompt) => {
+      onDescribe: async (prompt) => {
         if (prompt) state.prompt = prompt;
-        openSetup("describe");
+        state.method = "describe";
+        /* Very short ideas go to the detailed setup; anything usable renders now. */
+        if (state.prompt.trim().length < 12) {
+          openSetup("describe");
+          return;
+        }
+        await generateConcept();
       },
+
       onSample: () => {
         state.samples = true;
         render();
