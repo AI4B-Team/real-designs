@@ -428,6 +428,8 @@ function statusText() {
   if (detecting) parts.push("Detecting Rooms…");
   else if (need) parts.push(`${need} Need${need === 1 ? "s" : ""} A Room`);
   else parts.push("All Rooms Confirmed");
+  const save = { saving: "Saving…", saved: "Saved", error: "Couldn't Save" }[S.saveState];
+  if (save) parts.push(save);
   return parts.join(" · ");
 }
 
