@@ -202,7 +202,7 @@ export function ensureStagingView() {
 
 /** Router hook: the staging view became visible again (back button, refresh). */
 export function mountStagingView() {
-  if (!S || !S.items.length) {
+  if (!S) {
     /* Nothing in flight: try the saved draft, otherwise hand the user back. */
     void resumeStagingDraft().then((ok) => {
       if (!ok) { try { window.__rdGo && window.__rdGo("studio"); } catch (_) {} }
