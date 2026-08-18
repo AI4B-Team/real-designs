@@ -1238,6 +1238,7 @@ function setStudioSource(kind,src,alt,opts){
   STUDIO_SRC=kind||'user_upload';
   if(kind!=='existing_design'&&kind!=='existing_property') STUDIO_CTX={room:null,address:null,project:null};
   STUDIO_RESULT=false;
+  CANVAS_PHASE='';
   lastRender=null; lastRenderPath=o.afterPath||null;
   if(cBefore&&src) cBefore.innerHTML=photo(src,alt||'Your source photo');
   if(cAfter) cAfter.innerHTML='';
