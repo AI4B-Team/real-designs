@@ -1441,7 +1441,72 @@ function startNewDesignFlow(){
   m.classList.add('on');
   lucide.createIcons();
 }
-document.getElementById('clearLocks')?.addEventListener('click',startNewDesignFlow);
+/* Clear resets only the unsaved setup for the room currently on the canvas.
+   It never navigates, never drops the source photo, its room/property context
+   or any saved version, and never spends a credit. */
+function setupDirty(){
+  if(Object.keys(locks).length) return true;
+  const note=document.getElementById('agentNote');
+  if(note&&note.value.trim()) return true;
+  const tool=document.querySelector('#fTool .toolrow.on');
+  if(tool&&tool.getAttribute('data-tool')!=='Redesign') return true;
+  const band=document.querySelector('.bchip.on');
+  if(band&&band.dataset.b!=='1') return true;
+  const grade=document.querySelector('#gradeChips .chip.on');
+  if(grade&&grade.dataset.g!=='retail') return true;
+  const style=document.getElementById('fStyle');
+  if(style&&style.selectedIndex>0) return true;
+  return false;
+}
+function paintClearBtn(){
+  const b=document.getElementById('clearLocks');
+  if(!b) return;
+  const off=STUDIO_SRC===SRC_EMPTY||!setupDirty();
+  b.disabled=off;
+  b.title=off?'Nothing To Clear':'Clear Current Setup';
+}
+function resetCanvasSetup(){
+  Object.keys(locks).forEach(k=>delete locks[k]);
+  document.querySelectorAll('.hot').forEach(h=>h.className='hot');
+  mode='keep';
+  document.querySelectorAll('[data-mode]').forEach(x=>x.classList.toggle('on',x.dataset.mode==='keep'));
+  const note=document.getElementById('agentNote'); if(note) note.value='';
+  const tool=document.querySelector('#fTool .toolrow[data-tool="Redesign"]');
+  if(tool&&!tool.classList.contains('on')) tool.click();
+  const band=document.querySelector('.bchip[data-b="1"]');
+  if(band&&!band.classList.contains('on')) band.click();
+  const grade=document.querySelector('#gradeChips .chip[data-g="retail"]');
+  if(grade&&!grade.classList.contains('on')) grade.click();
+  const style=document.getElementById('fStyle');
+  if(style&&style.selectedIndex>0){ style.selectedIndex=0; style.dispatchEvent(new Event('change',{bubbles:true})); }
+  drawLocks();
+  paintClearBtn();
+  try{ showToast&&showToast('Setup Cleared'); }catch(_){}
+}
+function confirmClearSetup(){
+  if(STUDIO_SRC===SRC_EMPTY) return;
+  if(!setupDirty()){ resetCanvasSetup(); return; }
+  let m=document.getElementById('clearSetupModal');
+  if(!m){
+    m=document.createElement('div'); m.id='clearSetupModal'; m.className='up-modal';
+    m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'
+      +'<h3>Clear Current Setup?</h3>'
+      +'<p>This will remove your unsaved selections and instructions for this room. Your source photo and saved versions will remain.</p>'
+      +'<div class="up-act"><button class="btn btn-dark" id="csKeep">Keep Editing</button>'
+      +'<button class="btn btn-primary" id="csGo">Clear Setup</button></div></div>';
+    (document.querySelector('.rd-app')||document.body).appendChild(m);
+    m.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('[data-close]')) m.classList.remove('on'); });
+    m.querySelector('#csKeep').addEventListener('click',()=>m.classList.remove('on'));
+    m.querySelector('#csGo').addEventListener('click',()=>{ m.classList.remove('on'); resetCanvasSetup(); });
+  }
+  m.classList.add('on');
+  lucide.createIcons();
+}
+document.getElementById('clearLocks')?.addEventListener('click',confirmClearSetup);
+document.getElementById('v-studio')?.addEventListener('input',paintClearBtn);
+document.getElementById('v-studio')?.addEventListener('click',()=>setTimeout(paintClearBtn,0));
+window.rdPaintClearBtn=paintClearBtn;
+paintClearBtn();
 (function(){
   const btn=document.getElementById('newDesignBtn'), menu=document.getElementById('createMenu');
   if(!btn) return;
