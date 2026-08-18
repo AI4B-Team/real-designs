@@ -2044,12 +2044,25 @@ function layoutConnectors() {
     connObserver.__grid = grid;
   }
   const tiles = Array.from(grid.querySelectorAll(".rv-tile"));
+  /* A connector may already have been relocated into the FOLLOWING tile by an
+     earlier pass, so ownership is resolved through its own data-key, never by
+     where it currently happens to live in the DOM. */
+  const conns = new Map();
+  grid.querySelectorAll(".rv-conn").forEach((c) => conns.set(c.getAttribute("data-key"), c));
   tiles.forEach((tile, n) => {
-    const conn = tile.querySelector(":scope > .rv-conn");
+    const conn = conns.get(tile.getAttribute("data-key"));
     if (!conn) return;
     const next = tiles[n + 1];
-    const wraps = !next || Math.abs(next.offsetTop - tile.offsetTop) > 4;
+    if (!next) { conn.remove(); return; }
+    const wraps = Math.abs(next.offsetTop - tile.offsetTop) > 4;
     conn.classList.toggle("wrap", wraps);
+    /* Same row → the control straddles the seam inside its own tile.
+       New row → the pair is vertical, so the control moves above the FIRST
+       card of the new row, centred in the row gap. */
+    const host = wraps ? next : tile;
+    if (conn.parentElement !== host) host.appendChild(conn);
+    const tip = (wraps ? conn.getAttribute("data-pair-tip") : conn.getAttribute("data-seam-tip")) || "";
+    if (tip) { conn.setAttribute("title", tip); conn.setAttribute("aria-label", tip); }
   });
 }
 
