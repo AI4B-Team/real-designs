@@ -49,7 +49,10 @@ import { cardStatusHtml, registerCardStatus } from "@/lib/builder-card-status";
 import { formatSelectorHtml } from "@/lib/builder-format-selector";
 import {
   OUTPUT_RATIOS,
+  PRIMARY_OUTPUT_RATIOS,
+  MORE_OUTPUT_RATIOS,
   DEFAULT_OUTPUT_RATIO,
+  isPrimaryRatio,
   normalizeOutputRatio,
   normalizeOverride,
   ratioLabel,
@@ -665,7 +668,7 @@ function designFeatures(it) {
   if (d && touched && d.notes)
     out.push({ id: "notes", icon: "pencil-line", label: "Design Instructions", value: d.notes, removable: false });
   if (it.ratio)
-    out.push({ id: "ratio", icon: "crop", label: "Output Ratio", value: ratioLabel(it.ratio), removable: false });
+    out.push({ id: "ratio", icon: "crop", label: "Photo Format", value: ratioLabel(it.ratio), removable: false });
   if (it.resultPath)
     out.push({ id: "version", icon: "layers", label: "Generated Version", value: "Ready", removable: false });
   else if (it.state === "generating")
@@ -684,10 +687,9 @@ function openCanvasFor(key) {
   if (el) el.click();
 }
 
-/** Card shape follows the ratio the photo will actually render at. */
-function ratioClass(r) {
-  return r === "4:3" ? "rt-43" : r === "4:5" ? "rt-45" : r === "1:1" ? "rt-11" : "rt-orig";
-}
+/* Management cards keep one shape whatever the output ratio is: the chosen
+   format defines the generated image, not the grid. */
+const CARD_RATIO_CLASS = "rt-43";
 
 function cardHtml(it, seq) {
 
@@ -698,7 +700,7 @@ function cardHtml(it, seq) {
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
-  const rc = ratioClass(effectiveRatio(S.outputRatio, it.ratio));
+  const rc = CARD_RATIO_CLASS;
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
@@ -837,16 +839,19 @@ function render() {
       </div>
       <div class="rv-head-tools">
         ${formatSelectorHtml({
-          label: "Output Ratio",
-          options: OUTPUT_RATIOS,
+          label: "Photo Format",
+          options: PRIMARY_OUTPUT_RATIOS,
           value: normalizeOutputRatio(S.outputRatio),
           attr: "ratio",
           id: "rds-ratio",
+          more: { label: "More Ratios", value: "__more" },
+          customLabel: ratioLabel(S.outputRatio),
         })}
         <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
         <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
           <div class="rv-more-m">
+            <button data-act="moreratios">More Ratios</button>
             <button data-act="all">Select All</button>
             <button data-act="none">Clear Selection</button>
             <button data-act="del">Remove Selected</button>
@@ -1035,12 +1040,13 @@ function ratioChoiceDialog(opts) {
 
 /** Change the project default; never silently discard a per-photo override. */
 async function setProjectRatio(next) {
+  if (next === "__more") { openProjectRatioMore(); return; }
   const ratio = normalizeOutputRatio(next);
   if (ratio === normalizeOutputRatio(S.outputRatio)) return;
   const overrides = overriddenItems();
   if (overrides.length) {
     const choice = await ratioChoiceDialog({
-      title: "Update Output Ratio?",
+      title: "Update Photo Format?",
       body: "Some photos use a custom output ratio.",
     });
     if (choice === "cancel") { render(); return; }
@@ -1051,17 +1057,50 @@ async function setProjectRatio(next) {
   render();
 }
 
+/**
+ * The ratios that stay out of the header: Original and the classic print
+ * shapes. Chosen here, the header shows a compact "Custom:" chip instead of a
+ * fourth button.
+ */
+function openProjectRatioMore() {
+  if (typeof document === "undefined") return;
+  const cur = normalizeOutputRatio(S.outputRatio);
+  const wrap = document.createElement("div");
+  wrap.className = "bx-cdlg";
+  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="More Ratios">
+    <h3>More Ratios</h3>
+    <p>These apply to every photo that has no override of its own.</p>
+    <div class="rv-seg wrap" style="margin:10px 0 4px">${MORE_OUTPUT_RATIOS.concat(PRIMARY_OUTPUT_RATIOS)
+      .map(
+        (o) => `<button type="button" class="${cur === o.id ? "on" : ""}" data-rdsmoreratio="${o.id}">${esc(
+          o.note ? o.label + " " + o.note : o.label,
+        )}</button>`,
+      )
+      .join("")}</div>
+    ${modalFooterHtml({ primary: { label: "Done", value: "done" } })}
+  </div>`;
+  document.body.appendChild(wrap);
+  paint();
+  const close = () => wrap.remove();
+  wrap.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rdsmoreratio]");
+    if (b) { close(); void setProjectRatio(b.getAttribute("data-rdsmoreratio")); return; }
+    if (e.target.closest("[data-mfa]") || e.target === wrap) { close(); render(); }
+  });
+  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); render(); } });
+}
+
 /** Per-photo override, offered from the card menu and the canvas. */
 function openRatioOverride(it) {
   if (typeof document === "undefined") return;
   const cur = normalizeOverride(it.ratio);
-  const opts = [{ id: "", label: "Use Project Default", note: ratioLabel(S.outputRatio) }].concat(
+  const opts = [{ id: "", label: "Use Project Format", note: ratioLabel(S.outputRatio) }].concat(
     OUTPUT_RATIOS.map((o) => ({ id: o.id, label: o.label, note: o.note || "" })),
   );
   const wrap = document.createElement("div");
   wrap.className = "bx-cdlg";
-  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Output Ratio">
-    <h3>Output Ratio</h3>
+  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Photo Format">
+    <h3>Photo Format</h3>
     <p>${esc(it.name || "This Photo")}</p>
     <div class="rv-seg wrap" style="margin:10px 0 4px">${opts
       .map(
@@ -1110,11 +1149,13 @@ function bindReview(el) {
       if (act === "none") { S.items.forEach((i) => (i.selected = false)); saveDraft(); syncSelection(); return; }
       if (act === "room") { applyRoomToSelected(el.querySelector("#rdsSetRoom") || b); return; }
       if (act === "del") { removeSelected(); return; }
+      if (act === "moreratios") { openProjectRatioMore(); return; }
     }),
   );
   el.querySelectorAll("[data-ratio]").forEach((b) =>
     b.addEventListener("click", () => void setProjectRatio(b.getAttribute("data-ratio"))),
   );
+  el.querySelectorAll("[data-ratiomore]").forEach((b) => b.addEventListener("click", () => openProjectRatioMore()));
   const ratioSel = el.querySelector("[data-ratiosel]");
   if (ratioSel) ratioSel.onchange = () => void setProjectRatio(ratioSel.value);
   bindAddress(el);
@@ -1383,7 +1424,7 @@ registerCardMenu("photo", {
         items: [
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
           { action: "room", label: "Change Room", icon: "door-open" },
-          { action: "ratio", label: "Output Ratio", icon: "crop" },
+          { action: "ratio", label: "Photo Format", icon: "crop" },
           { action: "tovideo", label: "Create Video From Photo", icon: "clapperboard", hidden: !stored },
           { action: "versions", label: "View Versions", icon: "history", hidden: !it.resultPath && it.state !== "complete" },
           { action: "download", label: "Download Original", icon: "download", hidden: !stored && !it.previewUrl },
