@@ -12,7 +12,10 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
-import { effectiveRatio } from "@/lib/output-ratio";
+import { getMyCredits } from "@/lib/credits.functions";
+import { modalFooterHtml, setModalButtonLoading } from "@/lib/modal-footer";
+import { effectiveRatio, normalizeOutputRatio, ratioLabel } from "@/lib/output-ratio";
+import { openUpgrade } from "@/lib/rd-upgrade";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
 import { STYLES } from "@/lib/style-catalog";
@@ -138,8 +141,10 @@ export async function runBulkDesign(items, direction, hooks = {}) {
 
 /* ----------------------------------------------------------------- modal */
 
-function styleOptions() {
-  return STYLES.map((s) => `<option value="${esc(s.id)}">${esc(s.displayName)}</option>`).join("");
+function styleOptions(selected) {
+  return STYLES.map(
+    (s) => `<option value="${esc(s.id)}"${s.id === selected ? " selected" : ""}>${esc(s.displayName)}</option>`,
+  ).join("");
 }
 
 /**
