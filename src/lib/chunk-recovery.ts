@@ -18,7 +18,7 @@ const KEY = "rd:chunk-recovery";
 /** Normalized signature of the failing import, without query cache-busters. */
 export function chunkSignature(message: string) {
   const url = /(https?:\/\/[^\s'")]+)/.exec(message || "");
-  const raw = url ? url[1] : (message || "").slice(0, 120);
+  const raw = (url && url[1]) || (message || "").slice(0, 120);
   return raw.replace(/[?&]t=\d+/g, "").replace(/[?&]v=[^&]*/g, "");
 }
 
