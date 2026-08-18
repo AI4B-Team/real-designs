@@ -233,7 +233,7 @@ function go(v,fromHash){
   }
   __navSeq++;
   /* Any route that is not the Studio view ends the Canvas context. */
-  if(v!=='studio' && v!=='staging' && inPhotoCanvas()) STUDIO_MODE={type:'generic'};
+  if(v!=='studio' && inPhotoCanvas()) STUDIO_MODE={type:'generic'};
   const acctAlias = ACCT_ALIAS[v] ? v : '';
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
