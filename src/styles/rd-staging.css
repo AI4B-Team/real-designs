@@ -531,3 +531,11 @@
 .rd-app #v-staging .rv-tile-th .rds-up svg,
 .rd-app #v-staging .rv-tile-th .rds-done svg { width: 12px; height: 12px; }
 .rd-app #v-staging .rv-tile.active .rv-tile-th { outline: 2px solid var(--red, #cc0000); outline-offset: 2px; }
+
+/* Card shape follows the selected output ratio, exactly like the video
+   builder's format buttons reshape its scene tiles. */
+.rd-app .rv-tile.rt-43 .rv-tile-th { aspect-ratio: 4 / 3; }
+.rd-app .rv-tile.rt-45 .rv-tile-th { aspect-ratio: 4 / 5; }
+.rd-app .rv-tile.rt-11 .rv-tile-th { aspect-ratio: 1 / 1; }
+.rd-app .rv-tile.rt-orig .rv-tile-th { aspect-ratio: auto; min-height: 120px; }
+.rd-app .rv-tile.rt-orig .rv-tile-th img { height: auto; object-fit: contain; }
