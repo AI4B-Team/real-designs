@@ -109,6 +109,8 @@ try{
   setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
 }catch(_){}
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
+import { beginNavigation as navBegin, retargetNavigation as navRetarget, isCurrentNavigation as navIsCurrent, navView as navViewName } from "@/lib/app-nav";
+
 import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo, resetReveal, resumeActiveBuilder, forgetActiveBuilder } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountSourcePicker } from "@/lib/source-picker";
@@ -171,9 +173,12 @@ const ACCT_ALIAS={account:'profile',team:'team',settings:'brand',branding:'brand
 /* Only the very first route after a page load may reopen a saved builder
    session; later in-app navigation always starts a fresh project. */
 let __bootRoute=true;
-let __allowReveal=0;
-try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
-try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
+/* Opening the video workspace is explicit intent, not a timing window: the
+   flag is set immediately before navigating and consumed by that navigation. */
+let __revealIntent:''|'open'|'new'=''; 
+try{ (window as any).__rdAllowReveal=()=>{ __revealIntent='open'; }; }catch(_){}
+try{ (window as any).__rdNewVideo=()=>{ __revealIntent='new'; }; }catch(_){}
+
 /* Views mount their content asynchronously, and the browser's scroll
    anchoring pulls the page back to roughly where it was once that content
    lands. Pinning the top on the next few frames keeps every page open at
