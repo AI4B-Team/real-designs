@@ -23,6 +23,19 @@ import {
   AI_TRANSITION_AVAILABLE,
   AI_TRANSITION_UNAVAILABLE_REASON,
 } from "@/lib/scene-frames";
+import {
+  ALL_TRANSITIONS,
+  PRIMARY_TRANSITIONS,
+  MORE_TRANSITIONS,
+  AI_TRANSITION_CREDITS,
+  AI_TRANSITION_TEMPLATES,
+  DEFAULT_TRANSITION_MS,
+  aiTemplateLabel,
+  resolveTransition,
+  transitionLabel,
+  smartTiming,
+} from "@/lib/transitions";
+import { transitions } from "@/lib/transition-store";
 import { DraftAutosaver, newDraftId } from "@/lib/project-draft";
 import { deleteProjectDraft } from "@/lib/drafts.functions";
 import { getPropertyTree } from "@/lib/workspace.functions";
@@ -1867,6 +1880,39 @@ function sceneRecap(s, clip) {
   </div>`;
 }
 
+const TRANS_ICON = {
+  auto: "sparkles", cut: "scissors", dissolve: "blend", fade: "circle-dashed", ai: "wand-sparkles",
+  slide_left: "arrow-left", slide_right: "arrow-right", push: "chevrons-right", wipe: "columns-2",
+  zoom_match: "scan-search", match_move: "move-3d",
+};
+
+/**
+ * The connector between two consecutive scenes. It sits on the seam of the
+ * grid so a user reads the move from one room to the next without the
+ * six-column layout changing.
+ */
+function connectorHtml(s, nextScene) {
+  if (!s || !nextScene) return "";
+  const row = transitions.get(s.key, nextScene.key);
+  const type = row?.type || "auto";
+  const eff = resolveTransition(type, sceneShape(s), sceneShape(nextScene));
+  const busy = row?.status === "queued" || row?.status === "running" || row?.status === "reserved";
+  const failed = row?.status === "failed";
+  const label = type === "auto" ? `Auto · ${transitionLabel(eff)}` : transitionLabel(type);
+  return `<button class="rv-conn ${type === "cut" ? "cut" : ""} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
+    data-pop="trans" data-key="${esc(s.key)}"
+    aria-label="Transition Into ${esc(nextScene.room || "The Next Scene")}: ${esc(label)}"
+    title="${esc(`Transition: ${label}`)}">
+    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "blend"}"></i>
+    <em>${esc(label)}</em>
+  </button>`;
+}
+
+/** The minimal shape the Auto rule needs to choose a restrained move. */
+function sceneShape(s) {
+  return s ? { key: s.key, room: s.room || null, scene_type: s.scene_type || null } : null;
+}
+
 function tileHtml(a, seq) {
   const w = S.wizard;
   const s = w.scenes.find((x) => x.key === a.key) || null;
@@ -1896,6 +1942,7 @@ function tileHtml(a, seq) {
       ${sceneRecap(s, clip)}
       ${tools}
     </div>
+    ${s ? connectorHtml(s, S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1] || null) : ""}
     <div class="rv-tile-foot">
       ${roomCell(a)}
     </div>
