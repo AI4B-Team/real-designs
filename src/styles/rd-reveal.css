@@ -638,21 +638,23 @@
 }
 .rd-app .rv-more-m button:hover { background: #f6f6f6; }
 
-/* One continuous grid. Column count follows the available content width,
-   never browser zoom: six complete cards at desktop widths, degrading
-   cleanly to five, four, three, two and one. */
-.rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px 12px; }
+/* One continuous grid. Column count follows the ACTUAL available content
+   width of the workspace (container queries), never the viewport and never
+   browser zoom: six complete cards on a desktop workspace, degrading cleanly
+   to five, four, three, two and one. */
+.rd-app #v-reveal .rv-wiz { container-type: inline-size; container-name: rvwork; }
+.rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px 12px; }
 .rd-app .rv-grid > * { min-width: 0; }
 .rd-app .rv-grid .rv-tile-th img { width: 100%; height: 100%; object-fit: cover; }
-@media (min-width: 1180px) { .rd-app .rv-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-@media (min-width: 1380px) { .rd-app .rv-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-@media (min-width: 1600px) { .rd-app .rv-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px 12px; } }
-@media (max-width: 900px) { .rd-app .rv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .rd-app .rv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 560px) { .rd-app .rv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 10px; } }
-@media (max-width: 420px) { .rd-app .rv-grid { grid-template-columns: minmax(0, 1fr); } }
+@container rvwork (min-width: 360px) { .rd-app .rv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@container rvwork (min-width: 560px) { .rd-app .rv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@container rvwork (min-width: 760px) { .rd-app .rv-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@container rvwork (min-width: 960px) { .rd-app .rv-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+@container rvwork (min-width: 1120px) { .rd-app .rv-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@container rvwork (max-width: 359px) { .rd-app .rv-grid { grid-template-columns: minmax(0, 1fr); } }
 /* Give the grid more of the workspace at wide widths without shrinking chrome. */
-@media (min-width: 1600px) { .rd-app #v-reveal .rv-wiz { padding: 18px 14px 20px; } }
+@media (min-width: 1440px) { .rd-app #v-reveal .rv-wiz { padding: 18px 14px 20px; } }
+
 
 
 /* Room type under each photo, plus its compact searchable selector. */

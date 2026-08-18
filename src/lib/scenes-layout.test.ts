@@ -39,25 +39,42 @@ describe("Scenes toolbar", () => {
 });
 
 describe("Scenes grid columns", () => {
-  it("uses six equal fractional columns on wide desktops", () => {
-    expect(css).toMatch(/@media \(min-width: 1600px\) \{ \.rd-app \.rv-grid \{ grid-template-columns: repeat\(6, minmax\(0, 1fr\)\)/);
+  it("measures the real workspace width with a container query, not the viewport", () => {
+    expect(css).toMatch(/#v-reveal \.rv-wiz \{ container-type: inline-size; container-name: rvwork/);
+    /* Zoom changes the viewport, not the content-relative container width. */
+    expect(css).not.toMatch(/@media \(min-width: 1600px\) \{ \.rd-app \.rv-grid \{ grid-template-columns/);
   });
 
-  it("falls back cleanly at narrower widths", () => {
-    for (const [q, n] of [
-      ["min-width: 1380px", 5],
-      ["min-width: 1180px", 4],
-      ["max-width: 900px", 3],
-      ["max-width: 700px", 2],
+  it("uses six equal fractional columns once the workspace is wide enough", () => {
+    expect(css).toContain(
+      "@container rvwork (min-width: 1120px) { .rd-app .rv-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); } }",
+    );
+  });
+
+  it("falls back cleanly at narrower content widths", () => {
+    for (const [w, n] of [
+      [960, 5],
+      [760, 4],
+      [560, 3],
+      [360, 2],
     ] as const) {
-      expect(css).toContain(`@media (${q}) { .rd-app .rv-grid { grid-template-columns: repeat(${n}, minmax(0, 1fr)); } }`);
+      expect(css).toContain(
+        `@container rvwork (min-width: ${w}px) { .rd-app .rv-grid { grid-template-columns: repeat(${n}, minmax(0, 1fr)); } }`,
+      );
     }
-    expect(css).toContain("@media (max-width: 420px) { .rd-app .rv-grid { grid-template-columns: minmax(0, 1fr); } }");
+    expect(css).toContain(
+      "@container rvwork (max-width: 359px) { .rd-app .rv-grid { grid-template-columns: minmax(0, 1fr); } }",
+    );
+  });
+
+  it("keeps a reasonable gap and no fixed card widths", () => {
+    expect(css).toMatch(/\.rd-app \.rv-grid \{ grid-template-columns: repeat\(auto-fill, minmax\(180px, 1fr\)\); gap: 14px 12px/);
+    expect(css).not.toMatch(/\.rv-tile \{[^}]*width: \d+px/);
   });
 
   it("keeps grid children shrinkable and images cover-fitted", () => {
     expect(css).toContain(".rd-app .rv-grid > * { min-width: 0; }");
     expect(css).toMatch(/\.rv-grid \.rv-tile-th img \{[^}]*object-fit: cover/);
-    expect(css).not.toMatch(/\.rv-grid \{[^}]*grid-template-columns: repeat\(auto-fill, minmax\(200px/);
   });
 });
+
