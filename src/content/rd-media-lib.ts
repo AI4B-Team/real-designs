@@ -438,8 +438,8 @@ function card(m) {
 /* ---------------- action model ---------------- */
 
 const READY = (m) => ["ready", "shared", "draft"].includes(m.status);
-const videoReady = (m) => READY(m) && typeGroup(m.type) !== "videos" && !!m.path;
-const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !!m.refId && READY(m);
+const videoReady = (m) => READY(m) && !m.draft && typeGroup(m.type) !== "videos" && !!m.path;
+const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !m.draft && !!m.refId && READY(m);
 const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
 const planBlocked = (m) => isPlanBlocked((m && m.error) || "");
