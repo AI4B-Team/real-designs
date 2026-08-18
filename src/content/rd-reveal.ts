@@ -122,7 +122,7 @@ import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
 import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
-import { builderRailHtml, roomSelectHtml, imageToolbarHtml } from "@/lib/builder-ui";
+import { builderRailHtml, roomSelectHtml, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
 import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip-ui";
