@@ -57,7 +57,7 @@ export function roomSelectHtml(opts = {}) {
     .join(" ");
   const name = label || "Not Set";
   return `<button type="button" class="${cls}" data-${esc(opts.attr || "room")}="${esc(opts.key || "")}"
-    aria-haspopup="listbox" aria-expanded="false" aria-label="Change room type. Current room: ${esc(name)}"
+    aria-haspopup="listbox" aria-expanded="${opts.expanded ? "true" : "false"}" aria-label="Change room type. Current room: ${esc(name)}"
     title="Change Room Type">
     <i data-lucide="${esc(opts.icon || "circle-dashed")}"></i><span>${esc(label)}</span>
     <i data-lucide="chevron-down" class="bx-caret"></i>
