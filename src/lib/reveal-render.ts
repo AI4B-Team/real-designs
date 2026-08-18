@@ -901,6 +901,10 @@ export async function renderReveal(
   const compares = await Promise.all(
     scenes.map((s) => (s.compareUrl ? loadImage(s.compareUrl).catch(() => null) : Promise.resolve(null))),
   );
+  /* End frames for standard Start/End scenes. */
+  const endFrames = await Promise.all(
+    scenes.map((s) => (s.endUrl ? loadImage(s.endUrl).catch(() => null) : Promise.resolve(null))),
+  );
 
   const brand = opts.brand ?? null;
   const showBrand = opts.versionType === "branded" && !!brand;
