@@ -952,7 +952,8 @@ function wizardHtml() {
     ${headTools}
     <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
       <div class="rv-more-m">
-        <button id="rvExitBuilder">Exit Builder</button>
+        <button id="rvExitBuilder">Save &amp; Exit</button>
+        <button id="rvStartOver">Start Over</button>
         <button id="rvDeleteDraft" class="danger">Delete Draft</button>
       </div>
     </details>
