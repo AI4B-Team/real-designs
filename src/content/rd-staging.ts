@@ -17,7 +17,8 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { mountSourcePicker } from "@/lib/source-picker";
+import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
+import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl } from "@/lib/room-photos";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
@@ -36,6 +37,7 @@ import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel,
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
+import { PHOTO_RAIL, backFromPhotoStep, normalizePhotoStep } from "@/lib/builder-nav";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { listMediaProperties } from "@/lib/property-media.functions";
@@ -66,7 +68,7 @@ let saver = null; /* DraftAutosaver, created with the first stored photo */
 
 function newSession(seed = {}) {
   return {
-    step: "add",
+    step: "review",
     items: [],
     address: seed.address || "",
     title: seed.title || "",
@@ -374,7 +376,8 @@ export function openStagingReview(seed = {}) {
   } else if (existing.length) {
     addExisting(existing);
   } else {
-    S.step = S.items.length ? "review" : "add";
+    /* Studio owns photo selection, so the builder always opens on Rooms. */
+    S.step = "review";
   }
   show();
 }
@@ -423,7 +426,9 @@ function hydrate(draft) {
     activeKey: (draft.settings && draft.settings.current) || null,
     completed: S.items.filter((i) => i.state === "complete" || i.done).map((i) => i.key),
   });
-  S.step = back.step === "add" ? "add" : "review";
+  /* Add Photos is no longer a builder step: a saved "add" draft opens Rooms.
+     The canvas is reopened separately through resumeKey. */
+  S.step = "review";
   S.current = null;
   S.lastOpened = back.activeKey;
   S.resumeKey = back.step === "design" ? back.activeKey : null;
@@ -687,12 +692,12 @@ function stepRailHtml(active) {
   const has = S.items.length > 0;
   const st = stepState();
   const done = st.completed.length;
-  const steps = [
-    { key: "add", label: "Add Photos", icon: "image-plus", done: has },
-    { key: "review", label: "Rooms", icon: "layout-grid", ready: has, badge: has ? String(selectedCount()) : "" },
-    { key: "design", label: "Design", icon: "wand-sparkles", ready: has, done: !!done },
-    { key: "final", label: "Review", icon: "circle-check", ready: !!done, badge: done ? String(done) : "" },
-  ];
+  const extra = {
+    review: { ready: has, badge: has ? String(selectedCount()) : "" },
+    design: { ready: has, done: !!done },
+    final: { ready: !!done, badge: done ? String(done) : "" },
+  };
+  const steps = PHOTO_RAIL.map((s) => ({ ...s, ...(extra[s.key] || {}) }));
   return builderRailHtml({
     steps,
     active,
@@ -707,43 +712,30 @@ function stepRailHtml(active) {
 function render() {
   const el = host();
   if (!el || !S) return;
+  /* Add Photos is not a builder step any more: Studio is the shared photo
+     source, so any legacy "add" state resolves to Rooms (or back to Studio
+     when the project holds no photos at all). */
+  if (S.step === "add") {
+    if (!S.items.length) { leaveStaging(); return; }
+    S.step = "review";
+  }
   /* Browser Back walks the builder steps; Back from the first step asks
      before leaving instead of quietly dropping the project. */
   trackBuilderStep("design", S.step, {
     onStep: (step) => {
       if (!S) return;
-      S.step = step === "add" ? "add" : "review";
+      S.step = normalizePhotoStep(step);
       render();
     },
     onExit: () => {
       if (!S) return false;
-      if (!S.startOver) openStartOver();
-      return true;
+      /* First builder step: Back means "leave for Studio", and the draft is
+         saved on the way out — work is never silently discarded. */
+      void saveExit();
+      return false;
     },
   });
-  if (S.step === "add") {
-    /* Step 1 runs full width in both builders: the picker is the whole job. */
-    el.innerHTML = `<section class="rds-page">
-      <div class="rv-head">
-        <div><h2>Add Photos</h2><p>Add every photo you want to design. We'll sort them by room on the next screen.</p></div>
-        <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
-          <div class="rv-more-m">
-            <button id="rdsClose">Save &amp; Exit</button>
-            <button id="rdsStartOver">Start Over</button>
-          </div>
-        </details>
-      </div>
-      <div class="rds-add"><div id="rdsPicker"></div></div>
-      ${startOverLayer()}
-    </section>`;
-    paint();
-    el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
-    bindStartOver(el);
-    bindRail(el);
-    mountPicker(el.querySelector("#rdsPicker"));
-    railForStep();
-    return;
-  }
+
 
   const sel = selectedCount();
   const all = S.items.length > 0 && sel === S.items.length;
@@ -912,9 +904,12 @@ function mountPicker(slot) {
 function bindReview(el) {
   el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
   el.querySelector("#rdsBack").onclick = () => {
-    /* Back keeps every photo, room and selection: only the step changes. */
+    /* Rooms is the first builder step, so Back returns to Studio. The draft,
+       its photos, rooms and selections are saved on the way out. */
+    const back = backFromPhotoStep(S.step);
+    if (back.exit) { void saveExit(); return; }
     saveDraft();
-    S.step = "add";
+    S.step = back.step;
     render();
   };
   /* Same overflow menus as the video builder: a native <details> popover. */
@@ -934,9 +929,22 @@ function bindReview(el) {
   const file = el.querySelector("#rdsFile");
   el.querySelector("#rdsMore").onclick = () => file && file.click();
   if (file) {
-    file.onchange = () => {
-      const picked = Array.from(file.files || []);
+    file.onchange = async () => {
+      const raw = Array.from(file.files || []);
       file.value = "";
+      /* Same validation the Studio picker applies: unsupported or oversized
+         files never reach the grid. */
+      const picked = [];
+      for (const f of raw) {
+        try {
+          const norm = await normalizeImageFile(f);
+          const why = typeof rejectReason === "function" ? rejectReason(norm) : null;
+          if (why) { alert(norm.name + ": " + why); continue; }
+          picked.push(norm);
+        } catch (error) {
+          alert(error instanceof Error ? error.message : f.name + ": This Photo Could Not Be Added.");
+        }
+      }
       if (picked.length) addFiles(picked);
     };
   }

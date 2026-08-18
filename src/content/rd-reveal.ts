@@ -118,6 +118,7 @@ import {
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
+import { VIDEO_RAIL, VIDEO_FLOW, backFromVideoStep, normalizeVideoStep } from "@/lib/builder-nav";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
@@ -715,18 +716,14 @@ async function loadWizardAssets() {
 /* The builder is organised as six named sections in a left rail. Internally
    the wizard still tracks a step number, so every existing deep link, modal
    and shortcut keeps working. */
-const WIZ_SECTIONS: Array<[string, string, string, number]> = [
-  ["photos", "Add Photos", "image", 1],
-  ["scenes", "Scenes", "layout-grid", 2],
-  ["titles", "Titles", "type", 5],
-  ["audio", "Audio", "music", 6],
-  ["brand", "Brand", "palette", 4],
-  ["quality", "Review", "circle-check", 7],
-];
+/* Studio is the shared photo-source step, so the builder rail starts at
+   Scenes: there is no second Add Photos page inside the builder. */
+const WIZ_SECTIONS: Array<[string, string, string, number]> = VIDEO_RAIL.map(
+  (s) => [s.key, s.label, s.icon, s.step] as [string, string, string, number],
+);
 /* Each step owns the page-level title so the white workspace stays free of
    duplicated headings. */
 const STEP_TITLES: Record<number, [string, string]> = {
-  1: ["Add Photos", "Upload property photos or choose media you already have."],
   2: ["Select & Order Photos", "Choose what to include, then drag photos into the order viewers should see them."],
   5: ["Add Titles", "Add the text viewers will see throughout the video."],
   6: ["Choose Audio", "Choose the sound that carries the video."],
@@ -734,19 +731,19 @@ const STEP_TITLES: Record<number, [string, string]> = {
   7: ["Review & Generate", "Check the final details before creating your video."],
 };
 
-/* Step 3 folded into step 2. Old links resolving to 3 are normalised in render(). */
-const FLOW = [1, 2, 5, 6, 4, 7];
+/* Step 3 folded into step 2, step 1 (Add Photos) folded into Studio.
+   Old links resolving to 1 or 3 are normalised in render(). */
+const FLOW = VIDEO_FLOW.slice() as number[];
 function nextStep(n: number) {
   const i = FLOW.indexOf(n);
   return i < 0 || i === FLOW.length - 1 ? n : FLOW[i + 1];
 }
 function prevStep(n: number) {
   const i = FLOW.indexOf(n);
-  return i <= 0 ? 1 : FLOW[i - 1];
+  return i <= 0 ? FLOW[0] : FLOW[i - 1];
 }
 function sectionOf(step: number) {
-  if (step === 1) return "photos";
-  if (step === 2 || step === 3) return "scenes";
+  if (step === 1 || step === 2 || step === 3) return "scenes";
   if (step === 5) return "titles";
   if (step === 6) return "audio";
   if (step === 4) return "brand";
@@ -755,13 +752,12 @@ function sectionOf(step: number) {
 /** A section is reachable once the user has photos selected. */
 function sectionReady(key: string) {
   const w = S.wizard;
-  if (key === "photos") return true;
   if (key === "scenes") return (w.uploads || []).length > 0 || !!w.propertyId || !!w.versionId;
   return (w.scenes || []).length > 0;
 }
 function stepForSection(key: string) {
   if (key === "scenes") return 2;
-  return (WIZ_SECTIONS.find((x) => x[0] === key) || [null, null, null, 1])[3];
+  return (WIZ_SECTIONS.find((x) => x[0] === key) || [null, null, null, 2])[3];
 }
 
 const EDITOR_STEPS = [5, 6, 4];
@@ -893,22 +889,19 @@ function wizardHtml() {
   trackBuilderStep("video", w.step, {
     onStep: (step) => {
       if (S.wizard !== w) return;
-      w.step = Number(step) || 1;
+      w.step = normalizeVideoStep(step);
       render();
     },
     onExit: () => {
       if (S.wizard !== w) return false;
-      if (!w.startOverModal && !w.exitModal) {
-        w.exitConfirm = true;
-        w.startOverModal = { busy: false };
-        render();
-      }
-      return true;
+      /* First builder step: Back leaves for Studio and the draft is saved on
+         the way out — work is never silently discarded. */
+      void exitBuilder(w);
+      return false;
     },
   });
 
   let body = "";
-  if (w.step === 1) body = stepPhotos();
   if (w.step === 2) body = stepSelect();
   
   if (w.step === 4) body = stepBrand();
@@ -916,7 +909,7 @@ function wizardHtml() {
   if (w.step === 6) body = stepAudio();
   if (w.step === 7) body = stepQuality();
 
-  const [pageTitle, pageSub] = STEP_TITLES[w.step] || STEP_TITLES[1];
+  const [pageTitle, pageSub] = STEP_TITLES[w.step] || STEP_TITLES[2];
   const orient = orientationOf(w);
   const headTools = w.step === 2
     ? `<div class="rv-head-tools">
@@ -929,10 +922,9 @@ function wizardHtml() {
     : "";
 
 
-  /* Step 1 runs full width: the grid is the whole job, so the step rail
-     only appears once photos are in play; the builder's own step navigation
-     stays visible from Select & Order onward. */
-  const wide = w.step === 1;
+  /* Every builder step shows the rail: Studio owns photo selection, so the
+     first builder step is already Scenes. */
+  const wide = false;
   const editor = EDITOR_STEPS.includes(w.step);
   /* Titles, Audio and Brand share one editing canvas: the preview and the
      scene timeline stay put and only the right-hand tools change. */
@@ -1583,35 +1575,14 @@ function titleFieldHtml(w, opts = {}) {
   ${sug ? `<div class="rv-note rv-sugt">Suggested: ${esc(sug)} <button class="fb-link" data-usetitle="1">Use Suggested Title</button></div>` : ""}`;
 }
 
-/* Step 1 is the shared source picker, mounted after render. Nothing about
-   uploading, dropping, cloud links or address lookup lives in this file. */
-function stepPhotos() {
-  const w = S.wizard;
-  const chosen = w.propertyId ? (S.tree.find((p) => p.id === w.propertyId)?.address || w.propertyLabel) : "";
-  const failed = w.uploadFails || [];
-  return `${titleFieldHtml(w)}
-  ${addressFieldHtml(w, S.tree || [], { id: "rvAddr" })}
-
-  <div id="rvPicker"></div>
-  ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
-  ${w.uploadPrep && w.uploadPrep.length ? `<div class="rv-prep">${w.uploadPrep
-    .map((f) => `<div class="rv-prep-r"><span>${esc(f.name)}</span><i class="rv-prep-bar"><em style="width:${f.pct}%"></em></i></div>`)
-    .join("")}</div>` : ""}
-  ${w.uploads.length ? `<div class="rv-added"><i data-lucide="check"></i>${w.uploads.length} ${w.uploads.length === 1 ? "photo" : "photos"} added</div>` : ""}
-  ${w.uploadError ? `<div class="rv-fails"><div class="rv-fail-r"><i data-lucide="triangle-alert"></i><span>${esc(w.uploadError)}</span></div></div>` : ""}
-  ${failed.length ? `<div class="rv-fails">${failed
-    .map((f, i) => `<div class="rv-fail-r"><i data-lucide="triangle-alert"></i><span>${esc(f.name)}</span><em>${esc(f.why)}</em>
-      <button class="fb-link" data-failretry="${i}">Retry</button><button class="fb-link" data-failrm="${i}">Remove</button></div>`)
-    .join("")}</div>` : ""}
-  <div class="rv-foot"><button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button></div>`;
-}
+/* The internal Add Photos panel was removed: Studio is the shared photo
+   source step for both builders. */
 
 /* The preview panel renders its own Continue, so readiness lives in one place
    and both buttons stay in sync. */
 function stepReady() {
   const w = S.wizard;
   if (!w) return false;
-  if (w.step === 1) return (w.uploads || []).length > 0 || !!w.versionId || !!w.propertyId;
   if (w.step === 2) return w.scenes.length > 0;
   if (w.step === 7) return qualityCompat(w).compatible;
   return true;
@@ -3943,8 +3914,9 @@ function render() {
   if (S.screen === "wizard" && !S.wizard) S.screen = "library";
   if (S.screen === "design") S.screen = "library";
   if (S.screen === "detail" && !S.detail) S.screen = "library";
-  /* Step 3 folded into step 2; old deep links must not land on nothing. */
-  if (S.wizard && S.wizard.step === 3) S.wizard.step = 2;
+  /* Step 3 folded into step 2 and Add Photos moved to Studio; old deep links
+     (steps 1 and 3) must not land on nothing. */
+  if (S.wizard) S.wizard.step = normalizeVideoStep(S.wizard.step);
   /* The builder has its own step navigation, so from Select & Order onward the
      main app rail is borrowed (collapsed without touching the saved
      preference) and released when the workflow closes. */
@@ -3997,7 +3969,13 @@ function bind() {
   on("#rvDelX, #rvDelKeep", "click", () => { w.deleteModal = null; render(); });
   on("#rvDelPhotos", "change", (e) => { w.deleteModal = { ...(w.deleteModal || {}), alsoPhotos: !!e.currentTarget.checked }; });
   on("#rvDelGo", "click", () => { void confirmDeleteDraft(w); });
-  on("#rvBack", "click", () => { w.step = prevStep(w.step); render(); });
+  on("#rvBack", "click", () => {
+    /* Scenes is the first builder step, so Back saves and returns to Studio. */
+    const back = backFromVideoStep(w.step);
+    if (back.exit) { void exitBuilder(w); return; }
+    w.step = back.step;
+    render();
+  });
   on(".rv-rail-i", "click", async (e) => {
     const key = e.currentTarget.dataset.sec;
     if (!key || !sectionReady(key)) return;
@@ -4009,10 +3987,6 @@ function bind() {
   on("#rvNext", "click", async () => {
     const t = el.querySelector("#rvTitle");
     if (t) w.title = sanitizeTitle(t.value);
-    if (w.step === 1) {
-      await advanceToGrid(w);
-      return;
-    }
     if (w.step === 2) {
       if (w.scenes.length < 5 && !w.lowWarned) { w.lowWarned = true; w.lowModal = true; render(); return; }
       /* Video type follows the content unless the user already changed it. */
@@ -4090,7 +4064,7 @@ function bind() {
   on("[data-mode]", "click", (e) => { w.mode = e.currentTarget.dataset.mode; render(); });
 
   on("#rvLowX", "click", () => { w.lowModal = false; render(); });
-  on("#rvLowMore", "click", () => { w.lowModal = false; w.step = 1; render(); });
+  on("#rvLowMore", "click", () => { w.lowModal = false; render(); el.querySelector("#rvHeadFile")?.click(); });
   on("#rvLowGo", "click", () => { w.lowModal = false; w.step = nextStep(2); render(); });
 
 
@@ -4129,7 +4103,7 @@ function bind() {
   });
   /* Intake lives in @/lib/video-upload-intake so the Step 1 -> Step 2
      transition can be exercised without a DOM. */
-  const addUploads = (list) => acceptPhotos(w, list, w.step === 1 ? "picker" : "picker_step2");
+  const addUploads = (list) => acceptPhotos(w, list, "picker_step2");
   on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
   on("[data-failretry]", "click", (e) => {
     const i = Number(e.currentTarget.dataset.failretry);

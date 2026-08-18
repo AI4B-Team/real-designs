@@ -165,7 +165,8 @@ describe("property video: add photos -> scenes", () => {
 
   it("opens a seeded wizard directly on scenes", () => {
     expect(initialWizardStep({}, [{ id: "1" }])).toBe(2);
-    expect(initialWizardStep({}, [])).toBe(1);
+    /* Studio owns photo selection now, so the builder always opens on Scenes. */
+    expect(initialWizardStep({}, [])).toBe(2);
   });
 });
 
@@ -231,10 +232,10 @@ describe("photo staging: add photos -> review rooms", () => {
     expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(1);
   });
 
-  it("stays on Add Photos when the only file is invalid", async () => {
+  it("stays on Review Rooms with nothing added when the only file is invalid", async () => {
     await openStaging();
     await pick([bad()]);
-    expect(stagingHost().textContent).toContain("Add Photos");
+    expect(stagingHost().textContent).toContain("Review Rooms");
     expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(0);
   });
 });

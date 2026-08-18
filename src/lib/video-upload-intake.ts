@@ -244,11 +244,9 @@ export function initialWizardStep(
   uploads: any[] = [],
 ): number {
   if (seed.step && seed.step > 1) return seed.step;
-  if ((uploads || []).length > 0) return 2;
-  if (seed.propertyId || seed.versionId) return 2;
-  /* Finished designs handed over from Studio are already usable photos. */
-  if ((seed.designs || []).length > 0) return 2;
-  return 1;
+  /* Studio is the photo-source step: the builder itself always opens on
+     Scenes, never on an internal Add Photos page. */
+  return 2;
 }
 
 /**
