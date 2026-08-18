@@ -878,7 +878,11 @@ function continueProject(m) {
 function openVideo(m, tab) {
   try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
   if (isDesignDraft(m)) {
-    continueDesignVideo(m.refId).catch((e) => toast(e?.message || "Could not open that draft."));
+    /* Opening a draft is asynchronous: if the user navigates while it loads,
+       the builder must not appear over whatever they opened instead. */
+    const tok = (() => { try { return (window as any).__rdNavToken ? (window as any).__rdNavToken() : 0; } catch (_) { return 0; } })();
+    const stillCurrent = () => { try { return (window as any).__rdNavCurrent ? !!(window as any).__rdNavCurrent(tok) : true; } catch (_) { return true; } };
+    continueDesignVideo(m.refId, { stillCurrent }).catch((e) => toast(e?.message || "Could not open that draft."));
     return;
   }
   openVideoDetail(m.refId, tab || "video");

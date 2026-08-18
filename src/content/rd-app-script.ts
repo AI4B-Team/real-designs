@@ -289,6 +289,9 @@ function go(v,fromHash){
     let saved=''; try{ saved=localStorage.getItem('rd_reveal_active')||''; }catch(_){ }
     if(bootRoute && saved){ v='lvideo'; }
     else { (window as any).__rdMediaTab='videos'; v='media'; }
+    /* The recorded destination must name the view that actually opens, so a
+       guard comparing against it agrees with what the user sees. */
+    __navView=v;
   }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
      keys like lvideo) must never leave the content area blank. Home and the
