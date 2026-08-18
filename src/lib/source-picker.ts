@@ -169,43 +169,51 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return;
     }
 
-    /* Video thumbnails do not consume quality flags on the source screen.
-       Hand those files to the builder immediately instead of making a large
-       property shoot wait for a sequential image-analysis pass. */
-    if (opts.context === "video") {
-      state.busy = false;
-      try {
-        await opts.onPick(ok.map((file) => ({ file, flags: [] })));
-      } finally {
-        /* The picker may still be on screen behind a builder or overlay:
-           clear the busy card so returning here is not a frozen spinner. */
-        render();
-      }
-      return;
-    }
-
-    const measured: PickedFile[] = [];
-    for (const f of ok) {
-      let flags: string[] = [];
-      try {
-        if (/^image\//.test(f.type)) flags = classify(f.name || "", await measureImage(f)).flags || [];
-      } catch (_) {
-        /* measurement is advisory */
-      }
-      measured.push({ file: f, flags });
-    }
+    /* Navigation never waits on image decoding. Every context hands the
+       accepted files to its host immediately; advisory quality flags are
+       measured afterwards and pushed through onFlags. A large property shoot
+       used to spend seconds in a sequential measureImage() pass here, which
+       looked exactly like "nothing happened" on the Add Photos screen. */
+    const picked: PickedFile[] = ok.map((file) => ({ file, flags: [] }));
     state.busy = false;
-    if (!cfg.multiple && measured.length > 1) {
-      state.choose = measured;
+
+    if (!cfg.multiple && picked.length > 1) {
+      state.choose = picked;
       render();
+      void measureFlags(picked);
       return;
     }
     try {
-      await opts.onPick(measured);
+      await opts.onPick(picked);
     } finally {
+      /* The picker may still be on screen behind a builder or overlay:
+         clear the busy card so returning here is not a frozen spinner. */
       render();
     }
+    void measureFlags(picked);
   }
+
+  /** Advisory quality flags, measured after the files have been handed over. */
+  async function measureFlags(picked: PickedFile[]) {
+    let changed = false;
+    for (const p of picked) {
+      try {
+        if (!/^image\//.test(p.file.type)) continue;
+        const flags = classify(p.file.name || "", await measureImage(p.file)).flags || [];
+        if (flags.length) {
+          p.flags = flags;
+          changed = true;
+        }
+      } catch (_) {
+        /* measurement is advisory */
+      }
+    }
+    if (changed) {
+      try { opts.onFlags?.(picked); } catch (_) {}
+      if (state.choose.length) render();
+    }
+  }
+
 
   async function importCloud(raw: string) {
     const urls = raw.split(/[\s,]+/).map((u) => u.trim()).filter(Boolean);
