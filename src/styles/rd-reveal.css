@@ -1334,12 +1334,12 @@
 .rd-app .rv-addcard-b {
   width: 100%; min-width: 0; aspect-ratio: 3 / 4; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 14px;
-  background: #fcfcfc; border: 1.5px dashed var(--line, #e3e3e3); border-radius: 12px;
+  background: #fcfcfc; border: 1.5px dashed var(--red, #CC0000); border-radius: 12px;
   cursor: pointer; color: var(--ink, #111); transition: border-color .12s, background .12s;
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 .rd-app .rv-grid.landscape .rv-addcard-b { aspect-ratio: 4 / 3; }
-.rd-app .rv-addcard-b:hover { background: #fff; border-color: var(--red, #CC0000); }
+.rd-app .rv-addcard-b:hover { background: rgba(204,0,0,.06); border-style: solid; border-color: var(--red, #CC0000); }
 .rd-app .rv-addcard-b:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
 .rd-app .rv-addcard-b svg { width: 26px; height: 26px; color: var(--red, #CC0000); }
 .rd-app .rv-addcard-b b { font-size: 13.5px; font-weight: 600; }
