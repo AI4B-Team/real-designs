@@ -916,8 +916,8 @@
 }
 
 /* ---- Builder header menu (replaces the old Cancel button) ---- */
-.rd-app .rv-head .rv-headmore { margin-left: auto; align-self: flex-start; }
-.rd-app .rv-head .rv-head-tools + .rv-headmore { margin-left: 0; }
+.rd-app .rv-head > .rv-headmore { margin-left: auto; align-self: flex-start; }
+.rd-app .rv-head .rv-head-tools .rv-headmore { margin-left: 4px; align-self: center; }
 .rd-app .rv-more-m button.danger { color: var(--red, #cc0000); }
 .rd-app .rv-modal .btn-danger {
   background: var(--red, #cc0000); border-color: var(--red, #cc0000); color: #fff;
