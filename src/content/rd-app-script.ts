@@ -159,7 +159,9 @@ help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts'],
 staging:['Photo Staging','Add photos, confirm rooms, then design']};
-const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
+/* "account" itself must resolve to a pane: without it the account view opens
+   with no rail item selected and no pane on screen. */
+const ACCT_ALIAS={account:'profile',team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
 /* Only the very first route after a page load may reopen a saved builder
@@ -392,6 +394,7 @@ const acctBtn=document.getElementById('acctBtn'),acctMenu=document.getElementByI
 function closeAcct(){acctMenu.classList.remove('on');acctBtn.setAttribute('aria-expanded','false')}
 acctBtn.addEventListener('click',e=>{
   e.stopPropagation();
+  try{window.rdCloseCreateMenu&&window.rdCloseCreateMenu();}catch(_){}
   const open=!acctMenu.classList.contains('on');
   acctMenu.classList.toggle('on',open);acctBtn.setAttribute('aria-expanded',String(open));
 });
@@ -478,7 +481,7 @@ function updateSearchMeta(){
 }
 if(schBtn&&schMenu){
   schBtn.addEventListener('click',e=>{
-    e.stopPropagation(); closeAcct(); closeSchRes();
+    e.stopPropagation(); closeAcct(); closeSchRes(); try{window.rdCloseCreateMenu&&window.rdCloseCreateMenu();}catch(_){}
     const open=!schMenu.classList.contains('on');
     schMenu.classList.toggle('on',open); schBtn.setAttribute('aria-expanded',String(open));
   });
@@ -1428,16 +1431,26 @@ document.getElementById('clearLocks')?.addEventListener('click',startNewDesignFl
   const btn=document.getElementById('newDesignBtn'), menu=document.getElementById('createMenu');
   if(!btn) return;
   function close(){ if(menu){ menu.classList.remove('on'); btn.setAttribute('aria-expanded','false'); } }
+  /* Sibling topbar menus stopPropagation on their own button, so a plain
+     document click listener never sees them: expose the close so every other
+     menu can dismiss this one and only one popup is ever open. */
+  window.rdCloseCreateMenu=close;
   if(!menu){ btn.addEventListener('click',()=>{ go('studio'); startNewDesignFlow(); }); return; }
   btn.addEventListener('click',e=>{ e.stopPropagation();
+    try{ closeAcct(); }catch(_){}
+    try{ closeSch(); }catch(_){}
+    try{ closeHelp(); }catch(_){}
+    try{ closeNotif(); }catch(_){}
     const open=!menu.classList.contains('on'); menu.classList.toggle('on',open); btn.setAttribute('aria-expanded',String(open)); });
-  document.addEventListener('click',close);
+  document.addEventListener('click',e=>{ if(!e.target.closest||!e.target.closest('.create-wrap')) close(); });
+  document.addEventListener('keydown',e=>{ if(e.key==='Escape') close(); });
   menu.addEventListener('click',e=>{
     const it=e.target.closest('[data-create]'); if(!it) return;
     close(); go('studio');
     try{ window.rdStudioStart && window.rdStudioStart(it.getAttribute('data-create')); }catch(_){}
   });
 })();
+
 
 /** Shown when Generate is pressed with no valid source. No credit is charged. */
 function needSourceModal(){
@@ -3337,7 +3350,7 @@ loadPrefs();
 const helpBtn=document.getElementById('helpBtn'),helpMenu=document.getElementById('helpMenu');
 function closeHelp(){ if(helpMenu){helpMenu.classList.remove('on');helpBtn.setAttribute('aria-expanded','false');} }
 if(helpBtn&&helpMenu){
-  helpBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();
+  helpBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();try{window.rdCloseCreateMenu&&window.rdCloseCreateMenu();}catch(_){}
     const open=!helpMenu.classList.contains('on');helpMenu.classList.toggle('on',open);helpBtn.setAttribute('aria-expanded',String(open));});
   helpMenu.addEventListener('click',e=>{ if(e.target.closest('.acct-i')) closeHelp(); });
   document.addEventListener('click',e=>{ if(!e.target.closest('.help-wrap')) closeHelp(); });
@@ -3668,7 +3681,7 @@ function renderNotifs(){
 const notifBtn=document.getElementById('notifBtn'),notifMenu=document.getElementById('notifMenu');
 function closeNotif(){ if(notifMenu){notifMenu.classList.remove('on');notifBtn.setAttribute('aria-expanded','false');} }
 if(notifBtn&&notifMenu){
-  notifBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();closeHelp();
+  notifBtn.addEventListener('click',e=>{e.stopPropagation();closeAcct();closeSch();closeHelp();try{window.rdCloseCreateMenu&&window.rdCloseCreateMenu();}catch(_){}
     const open=!notifMenu.classList.contains('on');notifMenu.classList.toggle('on',open);
     notifBtn.setAttribute('aria-expanded',String(open)); if(open) buildNotifs();});
   document.addEventListener('click',e=>{ if(!e.target.closest('.notif-wrap')) closeNotif(); });
