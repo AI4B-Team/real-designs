@@ -302,7 +302,15 @@ function go(v,fromHash){
     const api=(window as any).rdStaging;
     if(!api){
       let tries=0;
-      const wait=()=>{ if((window as any).rdStaging){ go('staging',true); } else if(++tries<60) window.setTimeout(wait,50); else go('dash'); };
+      /* If the user navigates while we wait for the module, this loop dies
+         instead of pulling them back onto Photo Design. */
+      const tok=__navSeq;
+      const wait=()=>{
+        if(!isCurrentNavigation(tok,'staging')) return;
+        if((window as any).rdStaging){ go('staging',true); }
+        else if(++tries<60) window.setTimeout(wait,50);
+        else go('dash');
+      };
       window.setTimeout(wait,50);
       return;
     }
@@ -328,7 +336,21 @@ function go(v,fromHash){
     /* A refresh lands here with work already saved on the server: reopen that
        project instead of dropping the user into an empty builder. */
     if(!bootRoute){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
-    else{ void (async()=>{ try{ if(!(await resumeActiveBuilder())) createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){} } })(); }
+    else{
+      /* Restoration is asynchronous: by the time it resolves the user may
+         already be somewhere else, and it must not reopen the builder. */
+      const tok=__navSeq;
+      void (async()=>{
+        try{
+          const ok=await resumeActiveBuilder({ stillCurrent:()=>isCurrentNavigation(tok,'lvideo') });
+          if(!isCurrentNavigation(tok,'lvideo')) return;
+          if(!ok) createVideoFrom({ sourceType:'address', from:'menu' });
+        }catch(_){
+          if(!isCurrentNavigation(tok,'lvideo')) return;
+          try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){}
+        }
+      })();
+    }
   }
 
   if(v==='studio'){
@@ -4942,15 +4964,18 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   try{
     /* Startup routing is only allowed to move the user while the route it was
        queued against is still current and no Photo Design Canvas is open. */
-    const fuToken=(window as any).__rdNavToken?(window as any).__rdNavToken():0;
-    const fuGo=(v)=>{
-      const cur=(window as any).__rdNavToken?(window as any).__rdNavToken():0;
-      if(cur!==fuToken) return;
+    const fuToken=__navSeq;
+    /* A click inside first-use is an intentional navigation and always wins.
+       The asynchronous start-page decision is different: it may only move the
+       user while the route it was queued against is still the visible one and
+       no Photo Design Canvas has been opened in the meantime. */
+    const fuStartGo=(v)=>{
+      if(!isCurrentNavigation(fuToken)) return;
       if(inPhotoCanvas()) return;
       go(v);
     };
     mountFirstUse({
-      go:fuGo, lucide, esc, photos:PHOTOS, uid:fuUid, track,
+      go, startGo:fuStartGo, lucide, esc, photos:PHOTOS, uid:fuUid, track,
       getSummary:()=>getWorkspaceSummary(),
       uploadPhoto:(f)=>uploadRoomPhoto(f),
       prefsStart:async()=>{ try{ const p=await getPrefs(); return (p&&p.start&&p.start.page)||'smart'; }catch(_){ return 'smart'; } },
