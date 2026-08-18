@@ -371,13 +371,16 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   function tabs() {
     return (
-      '<div class="sp-tabs">' +
+      '<div class="sp-tabs" role="tablist" aria-label="Photo source">' +
       cfg.sources
         .map((s) => {
           const m = SOURCE_META[s];
+          const on = state.tab === s;
           return (
-            '<button type="button" class="sp-tab' + (state.tab === s ? " on" : "") + '" data-sp-tab="' + s +
-            '" aria-pressed="' + (state.tab === s ? "true" : "false") + '" title="' + esc(m.desc) + '">' +
+            '<button type="button" role="tab" class="sp-tab' + (on ? " on" : "") + '" data-sp-tab="' + s +
+            '" id="spTab-' + s + '" aria-selected="' + (on ? "true" : "false") + '" aria-controls="spPanel"' +
+            ' tabindex="' + (on ? "0" : "-1") + '" aria-pressed="' + (on ? "true" : "false") +
+            '" title="' + esc(m.desc) + '">' +
             (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
             esc(m.tab) +
             "</button>"
