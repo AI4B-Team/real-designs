@@ -1844,7 +1844,7 @@ function tileHtml(a, seq) {
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
       ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
-      ${sceneBadges(s, clip)}
+      ${sceneRecap(s, clip)}
       ${tools}
     </div>
     <div class="rv-tile-foot">
