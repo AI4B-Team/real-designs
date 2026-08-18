@@ -558,26 +558,40 @@ try {
 
 } catch (_) {}
 
+/**
+ * One compact action menu. Items may carry a `group` label; the first item of
+ * each group prints a heading so long lists stay readable. The menu flips above
+ * its anchor when there is no room below and is fully keyboard operable.
+ */
 function popMenu(anchor, items) {
   closePop();
   const list = items.filter(Boolean);
   const el = document.createElement("div");
   el.className = "ml-pop";
   el.setAttribute("role", "menu");
+  let seen = "";
   el.innerHTML = list
-    .map(
-      (it, i) =>
-        `<button role="menuitem" data-i="${i}" class="${it.danger ? "danger" : ""}"${it.disabled ? " disabled" : ""}><i data-lucide="${it.icon}"></i>${esc(it.label)}</button>`,
-    )
+    .map((it, i) => {
+      let head = "";
+      if (it.group && it.group !== seen) {
+        head = `<div class="ml-pop-g" role="presentation">${esc(it.group)}</div>`;
+        seen = it.group;
+      }
+      return `${head}<button role="menuitem" tabindex="-1" data-i="${i}" class="${it.danger ? "danger" : ""}"${it.disabled ? " disabled" : ""}><i data-lucide="${it.icon}"></i>${esc(it.label)}</button>`;
+    })
     .join("");
   document.body.appendChild(el);
   paint();
   const r = anchor.getBoundingClientRect();
   const h = el.offsetHeight;
   const w = el.offsetWidth;
-  el.style.top = Math.max(10, Math.min(window.innerHeight - h - 10, r.bottom + 6)) + "px";
+  /* Flip above the trigger when the menu would run off the bottom. */
+  const below = window.innerHeight - r.bottom;
+  const top = below < h + 12 && r.top > h + 12 ? r.top - h - 6 : r.bottom + 6;
+  el.style.top = Math.max(10, Math.min(window.innerHeight - h - 10, top)) + "px";
   el.style.left = Math.max(10, Math.min(window.innerWidth - w - 10, r.right - w)) + "px";
-  el.querySelectorAll("[data-i]").forEach(
+  const btns = Array.from(el.querySelectorAll("button[data-i]:not([disabled])")) as any[];
+  btns.forEach(
     (b) =>
       (b.onclick = (ev) => {
         ev.stopPropagation();
@@ -586,8 +600,22 @@ function popMenu(anchor, items) {
         if (it && !it.disabled && it.fn) it.fn();
       }),
   );
+  el.addEventListener("keydown", (ev: any) => {
+    const i = btns.indexOf(document.activeElement);
+    if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+      ev.preventDefault();
+      const n = ev.key === "ArrowDown" ? i + 1 : i - 1;
+      const next = btns[(n + btns.length) % btns.length];
+      next && next.focus();
+    } else if (ev.key === "Home") { ev.preventDefault(); btns[0] && btns[0].focus(); }
+    else if (ev.key === "End") { ev.preventDefault(); btns[btns.length - 1] && btns[btns.length - 1].focus(); }
+    else if (ev.key === "Tab") { closePop(); }
+  });
   POP = el;
+  POP.__anchor = anchor;
+  btns[0] && btns[0].focus();
 }
+
 
 
 function fmtDate(d) {
