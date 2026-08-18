@@ -4261,7 +4261,6 @@ function paintBilling(c){
   const lab=document.getElementById('billMeterLab'), val=document.getElementById('billMeterVal'),
         bar=document.getElementById('billMeterBar'), note=document.getElementById('billMeterNote');
   if(c.plan==='free'){
-    lab.textContent='Free Designs Left Today';
     const leftToday=Math.max(0,Math.min(5,c.remainingToday??5));
     lab.textContent='Free Designs Used Today';
     val.textContent=(5-leftToday)+' / 5 Used';
@@ -4272,7 +4271,7 @@ function paintBilling(c){
     lab.textContent='Credit Balance';
     val.textContent=c.balance.toLocaleString();
     const pctLeft=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100);
-    bar.style.width=(100-pctLeft)+'%';
+    bar.style.width=pctLeft+'%';
     bar.className=pctLeft<=10?'low':'';
     note.textContent='One balance across every tool. Credits refresh each billing cycle.';
   }
