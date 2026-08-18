@@ -4502,10 +4502,13 @@ function editExisting(d) {
     w.quality = ds.quality || w.quality;
     const step = Number(p.builder_step || ds.step || 2);
     w.step = Number.isFinite(step) && step >= 1 ? step : 2;
+    /* Older drafts stored a dead object URL on the scene; repair them from the
+       upload's storage path before anything tries to paint them. */
+    reconcileUploadPaths(w);
     /* Storage paths become viewable URLs for this session only. */
     Promise.all(
       w.uploads.map(async (u) => { try { u.url = await roomPhotoUrl(u.storagePath); } catch (_) {} }),
-    ).then(() => { attachUploadAssets(w); render(); });
+    ).then(() => { attachUploadAssets(w); reconcileUploadPaths(w); render(); });
   }
   S.screen = "wizard";
   loadWizardAssets().then(render);
