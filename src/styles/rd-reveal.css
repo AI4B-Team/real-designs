@@ -547,7 +547,7 @@
 .rd-app .rv-tile.on .rv-tile-check svg { opacity: 1; }
 .rd-app .rv-tile .rv-flag { position: absolute; top: 10px; right: 10px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 999px; background: #fff3d6; color: #9a6300; border: 0; cursor: pointer; }
 .rd-app .rv-tile .rv-flag svg { width: 14px; height: 14px; }
-.rd-app .rv-tile-seq { position: absolute; left: 10px; bottom: 10px; font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; color: #fff; background: rgba(0,0,0,.66); border-radius: 6px; padding: 1px 7px; }
+.rd-app .rv-tile-seq { position: absolute; left: 10px; bottom: 10px; z-index: 6; font-family: "DM Mono", ui-monospace, monospace; font-size: 12px; color: #fff; background: rgba(0,0,0,.66); border-radius: 6px; padding: 1px 7px; }
 /* The hover toolbar lives at the bottom-right, clear of the permanent scene
    number at the bottom-left. Narrow cards move it to the right edge, and the
    narrowest collapse it into one ellipsis button. */
