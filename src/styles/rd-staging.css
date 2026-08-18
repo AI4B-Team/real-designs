@@ -606,10 +606,40 @@
 .rd-app #v-staging .rv-tile-th .rds-done svg { width: 12px; height: 12px; }
 .rd-app #v-staging .rv-tile.active .rv-tile-th { outline: 2px solid var(--red, #cc0000); outline-offset: 2px; }
 
-/* Card shape follows the selected output ratio, exactly like the video
-   builder's format buttons reshape its scene tiles. */
-.rd-app .rv-tile.rt-43 .rv-tile-th { aspect-ratio: 4 / 3; }
-.rd-app .rv-tile.rt-45 .rv-tile-th { aspect-ratio: 4 / 5; }
-.rd-app .rv-tile.rt-11 .rv-tile-th { aspect-ratio: 1 / 1; }
+/* The image frame previews the real output shape. The grid still owns the
+   card width: only the frame's height changes, so no ratio can widen a card,
+   clip the first or last one, or introduce horizontal scrolling. */
+.rd-app #v-staging .rv-tile,
+.rd-app #v-staging .rv-addcard { min-width: 0; max-width: 100%; }
+.rd-app #v-staging .rv-tile-th,
+.rd-app #v-staging .rv-addcard-b { width: 100%; max-width: 100%; transition: aspect-ratio 180ms ease, height 180ms ease; }
+.rd-app #v-staging .rv-tile-th img { width: 100%; height: 100%; object-fit: cover; }
+
+.rd-app .rv-tile.rt-916 .rv-tile-th, .rd-app #v-staging .rv-addcard.rt-916 .rv-addcard-b { aspect-ratio: 9 / 16; }
+.rd-app .rv-tile.rt-169 .rv-tile-th, .rd-app #v-staging .rv-addcard.rt-169 .rv-addcard-b { aspect-ratio: 16 / 9; }
+.rd-app .rv-tile.rt-11 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-11 .rv-addcard-b  { aspect-ratio: 1 / 1; }
+.rd-app .rv-tile.rt-43 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-43 .rv-addcard-b  { aspect-ratio: 4 / 3; }
+.rd-app .rv-tile.rt-45 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-45 .rv-addcard-b  { aspect-ratio: 4 / 5; }
+.rd-app .rv-tile.rt-32 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-32 .rv-addcard-b  { aspect-ratio: 3 / 2; }
+.rd-app .rv-tile.rt-23 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-23 .rv-addcard-b  { aspect-ratio: 2 / 3; }
+/* Original keeps the photo's own shape and never crops it. */
 .rd-app .rv-tile.rt-orig .rv-tile-th { aspect-ratio: auto; min-height: 120px; }
 .rd-app .rv-tile.rt-orig .rv-tile-th img { height: auto; object-fit: contain; }
+.rd-app #v-staging .rv-addcard.rt-orig .rv-addcard-b { aspect-ratio: 4 / 3; }
+
+/* The action card has no room selector, so a neutral spacer keeps its frame
+   aligned with the photo frames beside it. */
+.rd-app #v-staging .rv-addcard { display: flex; flex-direction: column; }
+.rd-app #v-staging .rv-addcard-pad { height: 38px; margin-top: 8px; }
+
+/* A photo that overrides the project format says so, on the frame. */
+.rd-app #v-staging .rv-tile-fmt {
+  position: absolute; right: 8px; bottom: 8px; z-index: 6; display: inline-flex; align-items: center; gap: 4px;
+  height: 20px; padding: 0 7px; border-radius: 999px; background: rgba(0,0,0,.66); color: #fff;
+  font: 600 10px 'DM Mono', monospace; letter-spacing: .02em; pointer-events: auto;
+}
+.rd-app #v-staging .rv-tile-fmt svg { width: 11px; height: 11px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rd-app #v-staging .rv-tile-th, .rd-app #v-staging .rv-addcard-b { transition: none; }
+}

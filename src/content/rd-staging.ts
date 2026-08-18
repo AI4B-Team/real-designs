@@ -57,6 +57,8 @@ import {
   normalizeOverride,
   ratioLabel,
   effectiveRatio,
+  ratioClass,
+  RATIO_CLASSES,
 } from "@/lib/output-ratio";
 import { setHandoff } from "@/lib/handoff";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
@@ -687,9 +689,17 @@ function openCanvasFor(key) {
   if (el) el.click();
 }
 
-/* Management cards keep one shape whatever the output ratio is: the chosen
-   format defines the generated image, not the grid. */
-const CARD_RATIO_CLASS = "rt-43";
+/**
+ * Every card previews the shape it will actually be generated at. The class
+ * lands on the tile and only the image frame inside it carries the aspect
+ * ratio, so the room selector always stays beneath a correctly shaped photo.
+ */
+function tileRatio(it) {
+  return effectiveRatio(S && S.outputRatio, it && it.ratio);
+}
+function tileRatioClass(it) {
+  return ratioClass(tileRatio(it));
+}
 
 function cardHtml(it, seq) {
 
@@ -700,7 +710,8 @@ function cardHtml(it, seq) {
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
-  const rc = CARD_RATIO_CLASS;
+  const rc = tileRatioClass(it);
+  const override = normalizeOverride(it.ratio);
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
@@ -712,6 +723,7 @@ function cardHtml(it, seq) {
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
+      ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
         [
           { label: "Design", icon: "wand-sparkles", attrs: { "data-open": it.key } },
@@ -749,13 +761,14 @@ function cardHtml(it, seq) {
    selector, no menu, no credits — it only opens the existing Add Photos
    picker, and it always stays the final grid item. */
 function addCardHtml() {
-  return `<div class="rv-addcard">
+  return `<div class="rv-addcard ${ratioClass(S && S.outputRatio)}">
     <button type="button" class="rv-addcard-b" id="rdsAddCard" aria-label="Add More Photos">
       <i data-lucide="image-plus"></i>
       <b>Add More Photos</b>
       <em>Upload, Import, or Use Media</em>
       <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
     </button>
+    <div class="rv-addcard-pad" aria-hidden="true"></div>
   </div>`;
 }
 
@@ -1049,12 +1062,99 @@ async function setProjectRatio(next) {
       title: "Update Photo Format?",
       body: "Some photos use a custom output ratio.",
     });
-    if (choice === "cancel") { render(); return; }
+    if (choice === "cancel") return;
     if (choice === "all") overrides.forEach((i) => (i.ratio = null));
   }
   S.outputRatio = ratio;
   saveDraft();
-  render();
+  applyRatiosLive();
+}
+
+/**
+ * Reshape the grid in place.
+ *
+ * A format change is a local visual update: no navigation, no remount, no
+ * draft restoration, no scroll jump. Only the ratio classes, the header
+ * selected state and the custom-format badges change.
+ */
+function applyRatiosLive() {
+  if (typeof document === "undefined") return;
+  const el = host();
+  if (!el || !S) return;
+  const project = normalizeOutputRatio(S.outputRatio);
+
+  el.querySelectorAll(".rv-tile[data-k]").forEach((tile) => {
+    const it = itemAt(tile.getAttribute("data-k"));
+    if (!it) return;
+    const want = tileRatioClass(it);
+    RATIO_CLASSES.forEach((c) => tile.classList.toggle(c, c === want));
+    /* The badge only exists while the photo genuinely overrides the project. */
+    const frame = tile.querySelector(".rv-tile-th");
+    const badge = tile.querySelector(".rv-tile-fmt");
+    const override = normalizeOverride(it.ratio);
+    if (override && !badge && frame) {
+      const b = document.createElement("span");
+      b.className = "rv-tile-fmt";
+      b.title = "Custom format: " + ratioLabel(override);
+      b.innerHTML = '<i data-lucide="crop"></i>' + esc(ratioLabel(override));
+      frame.appendChild(b);
+    } else if (override && badge) {
+      badge.title = "Custom format: " + ratioLabel(override);
+      badge.innerHTML = '<i data-lucide="crop"></i>' + esc(ratioLabel(override));
+    } else if (!override && badge) {
+      badge.remove();
+    }
+  });
+
+  const add = el.querySelector(".rv-addcard");
+  if (add) {
+    const want = ratioClass(project);
+    RATIO_CLASSES.forEach((c) => add.classList.toggle(c, c === want));
+  }
+
+  /* Header: the selected button can never disagree with the card shapes. */
+  el.querySelectorAll("[data-ratio]").forEach((b) => {
+    const on = b.getAttribute("data-ratio") === project;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  const sel = el.querySelector("[data-ratiosel]");
+  if (sel && sel.value !== project) sel.value = project;
+  /* A ratio outside the three primaries shows as the compact custom chip. */
+  if (!isPrimaryRatio(project)) renderHeaderFormat(el, project);
+  paint();
+}
+
+/** Every entry point into the format control, rebound after a header swap. */
+function bindRatioControls(el) {
+  el.querySelectorAll("[data-ratio]").forEach((b) =>
+    b.addEventListener("click", () => void setProjectRatio(b.getAttribute("data-ratio"))),
+  );
+  el.querySelectorAll("[data-ratiomore]").forEach((b) =>
+    b.addEventListener("click", () => openProjectRatioMore()),
+  );
+  const ratioSel = el.querySelector("[data-ratiosel]");
+  if (ratioSel) ratioSel.onchange = () => void setProjectRatio(ratioSel.value);
+}
+
+/** Re-render only the header format control (custom chip appears/disappears). */
+function renderHeaderFormat(el, project) {
+  const host_ = el.querySelector(".bx-fmtsel");
+  if (!host_ || !host_.parentElement) return;
+  const wrap = document.createElement("div");
+  wrap.innerHTML = formatSelectorHtml({
+    label: "Photo Format",
+    options: PRIMARY_OUTPUT_RATIOS,
+    value: project,
+    attr: "ratio",
+    id: "rds-ratio",
+    more: { label: "More Ratios", value: "__more" },
+    customLabel: ratioLabel(project),
+  });
+  const next = wrap.firstElementChild;
+  if (!next) return;
+  host_.replaceWith(next);
+  bindRatioControls(el);
 }
 
 /**
@@ -1085,9 +1185,9 @@ function openProjectRatioMore() {
   wrap.addEventListener("click", (e) => {
     const b = e.target.closest("[data-rdsmoreratio]");
     if (b) { close(); void setProjectRatio(b.getAttribute("data-rdsmoreratio")); return; }
-    if (e.target.closest("[data-mfa]") || e.target === wrap) { close(); render(); }
+    if (e.target.closest("[data-mfa]") || e.target === wrap) { close(); applyRatiosLive(); }
   });
-  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); render(); } });
+  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); applyRatiosLive(); } });
 }
 
 /**
@@ -1124,7 +1224,7 @@ function openBulkFormatPicker(refresh) {
     if (b) {
       S.outputRatio = normalizeOutputRatio(b.getAttribute("data-rdsbfmt"));
       saveDraft();
-      render();
+      applyRatiosLive();
       done();
       return;
     }
@@ -1164,7 +1264,7 @@ function openRatioOverride(it) {
       it.ratio = v ? v : null;
       saveDraft();
       close();
-      render();
+      applyRatiosLive();
       return;
     }
     if (e.target.closest("[data-mfa]") || e.target === wrap) close();
@@ -1195,12 +1295,7 @@ function bindReview(el) {
       if (act === "moreratios") { openProjectRatioMore(); return; }
     }),
   );
-  el.querySelectorAll("[data-ratio]").forEach((b) =>
-    b.addEventListener("click", () => void setProjectRatio(b.getAttribute("data-ratio"))),
-  );
-  el.querySelectorAll("[data-ratiomore]").forEach((b) => b.addEventListener("click", () => openProjectRatioMore()));
-  const ratioSel = el.querySelector("[data-ratiosel]");
-  if (ratioSel) ratioSel.onchange = () => void setProjectRatio(ratioSel.value);
+  bindRatioControls(el);
   bindAddress(el);
 
   /* Add Photos stays on this page: the picker adds straight into the grid. */

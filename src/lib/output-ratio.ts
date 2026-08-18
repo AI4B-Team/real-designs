@@ -75,3 +75,36 @@ export function effectiveRatio(projectDefault: unknown, override: unknown): Outp
 export function ratioMatchesFormat(ratio: unknown, format: unknown): boolean {
   return isPrimaryRatio(ratio) && ratio === format;
 }
+
+/* ------------------------------------------------------------ card preview */
+
+/**
+ * The class that gives a card's image frame the shape of its output.
+ *
+ * Photo Design and the Video Builder both preview the real output shape, so
+ * the mapping lives here and neither surface invents its own.
+ */
+const RATIO_CLASS: Record<OutputRatio, string> = {
+  "9:16": "rt-916",
+  "16:9": "rt-169",
+  "1:1": "rt-11",
+  "4:3": "rt-43",
+  "4:5": "rt-45",
+  "3:2": "rt-32",
+  "2:3": "rt-23",
+  original: "rt-orig",
+};
+
+export const RATIO_CLASSES: string[] = Object.values(RATIO_CLASS);
+
+export function ratioClass(id: unknown): string {
+  const r = normalizeOutputRatio(id);
+  return RATIO_CLASS[r];
+}
+
+/** The css aspect-ratio value, or null for Original (intrinsic). */
+export function ratioAspect(id: unknown): string | null {
+  const r = normalizeOutputRatio(id);
+  if (r === "original") return null;
+  return r.replace(":", " / ");
+}
