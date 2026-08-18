@@ -865,7 +865,7 @@
 }
 .rd-app .rd-addr-match i { width: 16px; height: 16px; color: var(--brand); }
 @media (max-width: 1040px) {
-  .rd-app .rd-addr-bar { flex: 1 1 100%; order: -1; margin-bottom: 8px; }
+  .rd-app .rv-head-tools .rd-addr-bar { flex: 1 1 100%; order: -1; margin-bottom: 8px; }
 }
 @media (max-width: 640px) {
   .rd-app .rd-addr-bar { min-width: 0; }
