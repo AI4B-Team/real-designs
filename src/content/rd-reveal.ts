@@ -14,6 +14,15 @@ import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
+import {
+  sceneFrames,
+  SE_TRANSITIONS,
+  SE_CROPS,
+  seTransitionName,
+  frameConfigured,
+  AI_TRANSITION_AVAILABLE,
+  AI_TRANSITION_UNAVAILABLE_REASON,
+} from "@/lib/scene-frames";
 import { DraftAutosaver, newDraftId } from "@/lib/project-draft";
 import { deleteProjectDraft } from "@/lib/drafts.functions";
 import { getPropertyTree } from "@/lib/workspace.functions";
@@ -134,6 +143,8 @@ const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const goTo = (v) => { const fn = S.go || (typeof window !== "undefined" && window.__rdGo); if (fn) fn(v); else if (typeof location !== "undefined") location.hash = "#" + v; };
 const paint = () => { try { createIcons({ icons }); } catch (_) {} };
+/** Only real asset ids belong in the database columns. */
+const uuidOrNull = (v) => (typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) ? v : null);
 const toast = (m) => { try { window.rdToast ? window.rdToast(m) : console.log(m); } catch (_) {} };
 
 export const VIDEO_TYPES = [
@@ -1535,6 +1546,7 @@ async function ensureVideoProjectId(w) {
   w.editingId = saved.id;
   rememberActiveBuilder(saved.id);
   sceneClips.setProject(saved.id);
+  sceneFrames.setProject(saved.id);
   return saved.id;
 }
 
@@ -1748,19 +1760,65 @@ function syncSceneOrder() {
   w.scenes.sort((a, b) => (pos.get(a.key) ?? 1e9) - (pos.get(b.key) ?? 1e9));
 }
 
-/** Compact state indicators. Icon plus tooltip only — never a full label. */
-function sceneBadges(s, clip) {
-  if (!s) return "";
+/**
+ * Everything applied to one scene, in one list. This is the single source the
+ * recap badges, the summary popover and the reset actions all read, so the
+ * card can never disagree with what will actually render.
+ */
+function sceneSettings(s, clip) {
+  if (!s) return [];
   const out = [];
-  const add = (icon, tip, cls = "") => out.push(`<em class="rv-badge ${cls}" title="${esc(tip)}"><i data-lucide="${icon}"></i></em>`);
-  if (clip && (clip.status === "queued" || clip.status === "processing")) add("loader", "AI Clip Processing", "busy");
-  else if (clip && clip.status === "failed") add("triangle-alert", "AI Clip Failed", "bad");
-  else if (clip && clip.status === "completed" && clip.approved) add("clapperboard", "Using AI Clip", "ai");
-  if (s.caption) add("type", `Text: ${s.caption}`);
-  if ((s.motion || "auto") !== "auto" && !s.use_clip) add("camera", `Motion: ${motionLabel(s)}`);
-  if (s.look) add("palette", "Look Applied");
-  if (s.vfx && s.vfx !== "none") add("wand-sparkles", "Effect Applied");
-  return out.length ? `<div class="rv-badges">${out.join("")}</div>` : "";
+  const fr = sceneFrames.get(s.key);
+  const add = (o) => out.push(o);
+  if (clip && (clip.status === "queued" || clip.status === "processing"))
+    add({ id: "clip", icon: "loader", label: "AI Clip", value: "Generating", cls: "busy", pop: null, primary: true, locked: true });
+  else if (clip && clip.status === "failed")
+    add({ id: "clip", icon: "triangle-alert", label: "AI Clip", value: "Failed", cls: "bad", pop: null, primary: true, locked: true });
+  else if (clip && clip.status === "completed" && clip.approved && s.use_clip)
+    add({ id: "clip", icon: "clapperboard", label: "AI Clip", value: "In Use", cls: "ai", pop: null, primary: true, locked: true });
+  if (frameConfigured(fr))
+    add({ id: "frames", icon: "arrow-left-right", label: "Start / End", value: seTransitionName(fr.transition_type), pop: "frames", primary: true });
+  if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive"))
+    add({ id: "motion", icon: "camera", label: "Motion", value: motionLabel(s), pop: "motion", primary: true });
+  if (s.vfx && s.vfx !== "none")
+    add({ id: "vfx", icon: "wand-sparkles", label: "Effect", value: tileById(s.vfx)?.label || "Applied", pop: "look", primary: true });
+  else if (s.look)
+    add({ id: "look", icon: "palette", label: "Look", value: lookById(s.look)?.label || "Applied", pop: "look", primary: true });
+  if (s.caption) add({ id: "cap", icon: "type", label: "Text", value: s.caption, pop: "cap" });
+  if (s.crop && s.crop !== "center") add({ id: "crop", icon: "crop", label: "Crop", value: s.crop === "top" ? "Top" : "Bottom", pop: "crop" });
+  if (s.exterior_effect) add({ id: "ext", icon: "sun", label: "Exterior", value: "Applied", pop: "motion" });
+  return out;
+}
+
+/** Reset one setting back to its default. Mirrors sceneSettings ids. */
+function resetSceneSetting(s, id) {
+  if (!s) return;
+  if (id === "motion") { s.motion = "auto"; s.motion_level = "standard"; s.immersive_effect = null; }
+  else if (id === "vfx") { s.vfx = "none"; s.vfx_gen = null; }
+  else if (id === "look") { s.look = null; s.look_amount = null; }
+  else if (id === "cap") { s.caption = ""; }
+  else if (id === "crop") { s.crop = "center"; }
+  else if (id === "ext") { s.exterior_effect = null; }
+  else if (id === "frames") { void sceneFrames.clear(s.key).catch(() => {}); }
+}
+
+/**
+ * Persistent recap in the upper-right corner of the scene image. It stays
+ * visible without hovering, so a user scanning the grid can see what each
+ * scene will do.
+ */
+function sceneRecap(s, clip) {
+  if (!s) return "";
+  const items = sceneSettings(s, clip);
+  if (!items.length) return "";
+  const primary = items.filter((it) => it.primary).slice(0, 2);
+  const rest = items.filter((it) => !primary.includes(it));
+  return `<div class="rv-recap">
+    ${primary.map((it) => `<em class="rv-recap-chip ${it.cls || ""}" title="${esc(`${it.label}: ${it.value}`)}">
+      <i data-lucide="${it.icon}"></i><b>${esc(it.value)}</b></em>`).join("")}
+    ${rest.length ? `<div class="rv-recap-dots">${rest.map((it) => `<em class="rv-recap-dot" title="${esc(`${it.label}: ${it.value}`)}"><i data-lucide="${it.icon}"></i></em>`).join("")}</div>` : ""}
+    <button class="rv-recap-all" data-pop="recap" data-key="${esc(s.key)}" aria-label="Scene Settings" title="Scene Settings"><i data-lucide="sliders-horizontal"></i></button>
+  </div>`;
 }
 
 function tileHtml(a, seq) {
@@ -1773,12 +1831,14 @@ function tileHtml(a, seq) {
   const cap = s ? String(s.caption || "") : "";
   const clip = sceneClips.get(a.key);
   const clipHot = !!clip && clip.status !== "cancelled" && clip.status !== "failed";
+  const frHot = s && frameConfigured(sceneFrames.get(s.key));
   /* Every card carries the same actions; using one on an unselected photo
      selects it first, so the tools never disappear on the user. */
   const tools = `<div class="rv-tools">
       <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
+      <button class="rv-tool ${frHot ? "hot" : ""}" data-pop="frames" data-key="${esc(a.key)}" aria-label="Start And End"><i data-lucide="arrow-left-right"></i><em>Start / End</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
       <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="AI Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
     </div>`;
@@ -1787,7 +1847,7 @@ function tileHtml(a, seq) {
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
       ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
-      ${sceneBadges(s, clip)}
+      ${sceneRecap(s, clip)}
       ${tools}
     </div>
     <div class="rv-tile-foot">
@@ -2072,6 +2132,60 @@ function popoverHtml() {
       </div></div>
       <button class="fb-link" id="rvCapClear" ${s.caption ? "" : "disabled"}>Clear Text</button>
     </div>`;
+  } else if (kind === "recap") {
+    /* Everything applied to this scene, with a way to change or undo each
+       one. Reads the same list the card badges read. */
+    const items = sceneSettings(s, sceneClips.get(s.key));
+    body = items.length
+      ? `<div class="rv-sum">
+          ${items.map((it) => `<div class="rv-sum-row">
+            <i data-lucide="${it.icon}"></i>
+            <span><b>${esc(it.label)}</b><em>${esc(it.value)}</em></span>
+            <span class="rv-sum-a">
+              ${it.pop ? `<button class="fb-link" data-sumedit="${esc(it.pop)}">Edit</button>` : ""}
+              ${it.locked ? "" : `<button class="fb-link danger" data-sumreset="${esc(it.id)}">Reset</button>`}
+            </span>
+          </div>`).join("")}
+        </div>`
+      : `<p class="rv-note">Nothing has been applied to this scene yet. It will play with the automatic camera move.</p>`;
+  } else if (kind === "frames") {
+    /* Start / End is a scene mode: this scene begins on one frame and ends on
+       another. Standard transitions render in the browser and cost nothing. */
+    const d = w.seDraft || {};
+    const byKey = new Map(w.available.map((a) => [a.key, a]));
+    const startA = byKey.get(d.start_key) || byKey.get(s.key) || null;
+    const endA = d.end_key ? byKey.get(d.end_key) : null;
+    const slot = (label, a, cropVal, cropAttr) => `<div class="rv-se-slot ${a ? "on" : ""}">
+      <b>${label}</b>
+      <div class="rv-se-th" ${a ? `data-img="${esc(a.path)}"` : ""}>${a ? "" : `<i data-lucide="image-plus"></i><em>Choose A Photo</em>`}</div>
+      <div class="rv-seg sm">${SE_CROPS.map(([id, n]) => `<button class="${cropVal === id ? "on" : ""}" data-${cropAttr}="${id}">${n}</button>`).join("")}</div>
+      <span class="rv-note sm">${a ? esc(a.room || "Untitled") : "Pick a photo below."}</span>
+    </div>`;
+    const pick = (a) => `<button class="rv-se-pick ${d.end_key === a.key ? "on" : ""} ${d.start_key === a.key ? "dim" : ""}"
+      data-endpick="${esc(a.key)}" title="${esc(a.room || "Untitled")}">
+      <span data-img="${esc(a.path)}"></span>${d.end_key === a.key ? `<i data-lucide="check"></i>` : ""}</button>`;
+    body = `<div class="rv-se">
+      <div class="rv-se-frames">
+        ${slot("Start Frame", startA, d.start_crop || "center", "secropstart")}
+        <button class="icon-btn rv-se-swap" id="rvSeSwap" aria-label="Swap Frames" title="Swap Frames" ${endA ? "" : "disabled"}><i data-lucide="arrow-left-right"></i></button>
+        ${slot("End Frame", endA, d.end_crop || "center", "secropend")}
+      </div>
+      <div class="rv-pop-h">End Frame</div>
+      <div class="rv-se-grid">${w.available.map(pick).join("")}</div>
+      <div class="rv-pop-h">Transition</div>
+      <div class="rv-se-trans">
+        ${SE_TRANSITIONS.map(([id, n, blurb]) => {
+          const ai = id === "ai";
+          const off = ai && !AI_TRANSITION_AVAILABLE;
+          return `<button class="rv-se-tr ${d.transition_type === id ? "on" : ""} ${off ? "off" : ""}"
+            ${off ? "disabled" : `data-setrans="${id}"`} title="${esc(off ? AI_TRANSITION_UNAVAILABLE_REASON : blurb)}">
+            <b>${esc(n)}</b><em>${esc(off ? "Unavailable" : ai ? "40 Credits" : "Included")}</em><span>${esc(blurb)}</span></button>`;
+        }).join("")}
+      </div>
+      ${AI_TRANSITION_AVAILABLE ? "" : `<div class="rv-notice sm"><i data-lucide="info"></i><span>${esc(AI_TRANSITION_UNAVAILABLE_REASON)}</span></div>`}
+      <label class="rv-f">Transition Length <i class="mono">${Number(d.transition_duration || 3).toFixed(1)}s</i>
+        <input type="range" id="rvSeDur" min="10" max="80" step="5" value="${Math.round((d.transition_duration || 3) * 10)}"></label>
+    </div>`;
   } else {
     /* Effects modal. Two tabs — Looks (colour and presentation, free) and
        Effects (adds or animates content, costs credits). Display grouping
@@ -2156,10 +2270,17 @@ function popoverHtml() {
   }
 
   const isFx = kind === "look";
-  const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text" : "Effects";
-  const width = kind === "crop" ? "wide" : kind === "cap" ? "compact" : "xwide";
+  const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
+    : kind === "recap" ? "Scene Settings" : kind === "frames" ? "Start And End Frames" : "Effects";
+  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : "xwide";
   const foot = isFx
     ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
+    : kind === "recap"
+    ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
+    : kind === "frames"
+    ? `${frameConfigured(sceneFrames.get(s.key)) ? `<button class="btn btn-ghost danger" id="rvSeRemove">Remove Start / End</button>` : ""}
+       <button class="btn btn-ghost" id="rvPopCancel">Cancel</button>
+       <button class="btn btn-primary" id="rvSeSave" ${w.seDraft?.end_key && !w.seBusy ? "" : "disabled"}>${w.seBusy ? "Saving…" : "Save Start / End"}</button>`
     : `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone">Save</button>`;
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${width} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="${esc(title)}">
     <div class="rv-modal-h"><b>${esc(title)}</b><button class="icon-btn" id="rvPopX" aria-label="Close"><i data-lucide="x"></i></button></div>
@@ -2987,6 +3108,18 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       clipUrl,
       clipSeconds: clipUrl ? clip?.seconds || null : null,
       compareUrl: s.compare ? await resolvePhotoUrl(s.compare) : null,
+      /* Standard Start/End: this scene genuinely ends on a second frame. */
+      ...(await (async () => {
+        const fr = sceneFrames.get(s.key);
+        if (!frameConfigured(fr) || clipUrl) return {};
+        return {
+          endUrl: await resolvePhotoUrl(fr.end_path),
+          startCrop: fr.start_crop,
+          endCrop: fr.end_crop,
+          seTransition: fr.transition_type,
+        };
+      })()),
+      crop: s.crop || null,
       room_name: s.room,
       scene_type: s.scene_type,
       duration: clipUrl && clip?.seconds ? clip.seconds : per,
@@ -3717,6 +3850,22 @@ function bind() {
         ? { caption: sc.caption ?? "", caption_pos: sc.caption_pos || "bottom", caption_style: sc.caption_style || "brand" }
         : { motion: sc.motion || "auto", motion_level: sc.motion_level || "standard", immersive_effect: sc.immersive_effect || null };
     }
+    if (kind === "frames") {
+      /* Seed the editor from what is already stored, so reopening shows the
+         real configuration rather than a blank form. */
+      const sc = w.scenes[i] || {};
+      const saved = sceneFrames.get(sc.key);
+      const endKey = saved?.end_path ? (w.available.find((a) => a.path === saved.end_path)?.key || null) : null;
+      w.seDraft = {
+        start_key: sc.key,
+        start_crop: saved?.start_crop || sc.crop || "center",
+        end_key: endKey,
+        end_crop: saved?.end_crop || "center",
+        transition_type: saved?.transition_type || "blend",
+        transition_duration: Number(saved?.transition_duration || 3),
+      };
+      w.seBusy = false;
+    }
     render();
   });
   const closeFx = (commit) => {
@@ -3739,7 +3888,7 @@ function bind() {
     } else if ((w.pop?.kind === "cap" || w.pop?.kind === "motion") && !commit && s && w.pop.snap) {
       Object.assign(s, w.pop.snap);
     }
-    w.pop = null; w.popAll = false; w.popConfirm = false;
+    w.pop = null; w.popAll = false; w.popConfirm = false; w.seDraft = null;
     render();
   };
   on("#rvPopX, #rvPopCancel", "click", () => closeFx(false));
@@ -3782,6 +3931,97 @@ function bind() {
   });
   on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
   on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
+
+  /* ---- scene settings summary ---- */
+  on("[data-sumedit]", "click", (e) => {
+    const kind = e.currentTarget.dataset.sumedit;
+    const key = w.pop?.key;
+    w.pop = null; render();
+    el.querySelector(`.rv-tool[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
+  });
+  on("[data-sumreset]", "click", (e) => {
+    const s = cur(); if (!s) return;
+    resetSceneSetting(s, e.currentTarget.dataset.sumreset);
+    render();
+  });
+  on("#rvSumResetAll", "click", () => {
+    const s = cur(); if (!s) return;
+    sceneSettings(s, sceneClips.get(s.key)).forEach((it) => { if (!it.locked) resetSceneSetting(s, it.id); });
+    w.pop = null;
+    toast("Scene Settings Reset.");
+    render();
+  });
+
+  /* ---- start / end frames ---- */
+  on("[data-endpick]", "click", (e) => {
+    if (!w.seDraft) return;
+    const k = e.currentTarget.dataset.endpick;
+    w.seDraft.end_key = w.seDraft.end_key === k ? null : k;
+    render();
+  });
+  on("[data-secropstart]", "click", (e) => { if (!w.seDraft) return; w.seDraft.start_crop = e.currentTarget.dataset.secropstart; render(); });
+  on("[data-secropend]", "click", (e) => { if (!w.seDraft) return; w.seDraft.end_crop = e.currentTarget.dataset.secropend; render(); });
+  on("[data-setrans]", "click", (e) => { if (!w.seDraft) return; w.seDraft.transition_type = e.currentTarget.dataset.setrans; render(); });
+  on("#rvSeSwap", "click", () => {
+    const d = w.seDraft; if (!d || !d.end_key) return;
+    /* Swapping changes which photo the scene starts on, so the scene's own
+       source follows the start frame. */
+    const s = cur();
+    const start = d.start_key;
+    d.start_key = d.end_key; d.end_key = start;
+    const c = d.start_crop; d.start_crop = d.end_crop; d.end_crop = c;
+    if (s) {
+      const a = w.available.find((x) => x.key === d.start_key);
+      if (a) { s.path = a.path; s.room = a.room || s.room; }
+    }
+    render();
+  });
+  {
+    const dur = el.querySelector("#rvSeDur");
+    if (dur) dur.addEventListener("input", (ev) => {
+      if (!w.seDraft) return;
+      w.seDraft.transition_duration = Number(ev.target.value) / 10;
+      const out = el.querySelector("#rvSeDur")?.previousElementSibling;
+      if (out) out.textContent = `${w.seDraft.transition_duration.toFixed(1)}s`;
+    });
+  }
+  on("#rvSeRemove", "click", async () => {
+    const s = cur(); if (!s) return;
+    try { await sceneFrames.clear(s.key); } catch (_) { toast("That could not be removed just now."); return; }
+    w.pop = null; w.seDraft = null;
+    toast("Start And End Removed.");
+    render();
+  });
+  on("#rvSeSave", "click", async () => {
+    const s = cur(); const d = w.seDraft;
+    if (!s || !d?.end_key || w.seBusy) return;
+    const startA = w.available.find((a) => a.key === d.start_key);
+    const endA = w.available.find((a) => a.key === d.end_key);
+    if (!startA || !endA) return;
+    w.seBusy = true; render();
+    try {
+      const pid = await ensureVideoProjectId(w);
+      sceneFrames.setProject(pid);
+      await sceneFrames.save({
+        video_project_id: pid,
+        scene_key: s.key,
+        start_path: startA.path,
+        end_path: endA.path,
+        start_asset_id: uuidOrNull(startA.asset_id || s.asset_id),
+        end_asset_id: uuidOrNull(endA.asset_id),
+        start_crop: d.start_crop || "center",
+        end_crop: d.end_crop || "center",
+        transition_type: d.transition_type || "blend",
+        transition_duration: Number(d.transition_duration || 3),
+      });
+      w.pop = null; w.seDraft = null;
+      toast("Start And End Saved.");
+    } catch (err) {
+      toast(err?.message || "That could not be saved just now.");
+    }
+    w.seBusy = false;
+    render();
+  });
   on("[data-fxtab]", "click", (e) => { w.popTab = e.currentTarget.dataset.fxtab; w.popCat = "all"; render(); });
   on("[data-fxcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.fxcat; render(); });
   /* Base disclosure the scene carried before any generative effect. */
@@ -4168,6 +4408,8 @@ function editExisting(d) {
      with the project, and any job still running keeps polling. */
   sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
   void sceneClips.load(p.id);
+  /* Start/End pairs are durable too: reload them with the project. */
+  void sceneFrames.load(p.id).then(() => { if (S.screen === "wizard") render(); });
   w.address = cleanAddressText(p.property_address || "");
   w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
   w.titleTouched = !!p.title_touched;

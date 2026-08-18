@@ -33,6 +33,14 @@ export type RevealScene = {
   /** Signed URL of an approved AI-generated clip used instead of the photo. */
   clipUrl?: string | null;
   clipSeconds?: number | null;
+  /** Focal crop of the still frame: center, top or bottom. */
+  crop?: string | null;
+  /* Standard Start/End: the scene starts on `url` and ends on `endUrl`,
+     rendered deterministically with the chosen transition. */
+  endUrl?: string | null;
+  startCrop?: string | null;
+  endCrop?: string | null;
+  seTransition?: string | null;
 };
 
 /** Standard camera moves. */
@@ -339,6 +347,7 @@ function drawMotion(
   H: number,
   motion: string,
   t: number,
+  crop?: string | null,
 ) {
   let zoom = 1.04;
   let dx = 0;
@@ -430,7 +439,69 @@ function drawMotion(
   const scale = Math.max(W / img.width, H / img.height) * zoom;
   const w = img.width * scale;
   const h = img.height * scale;
-  ctx.drawImage(img, (W - w) / 2 + dx, (H - h) / 2 + dy, w, h);
+  /* Focal crop: anchor the cover-fill to the top or bottom of the photo
+     instead of its middle, so the configured framing survives the export. */
+  const slackY = Math.max(0, h - H) / 2;
+  const anchor = crop === "top" ? -slackY : crop === "bottom" ? slackY : 0;
+  ctx.drawImage(img, (W - w) / 2 + dx, (H - h) / 2 + dy + anchor, w, h);
+}
+
+/**
+ * Standard Start/End: one scene that genuinely begins on the start frame and
+ * ends on the end frame. Deterministic — no model, no credits.
+ */
+function drawStartEnd(
+  ctx: CanvasRenderingContext2D,
+  a: HTMLImageElement,
+  b: HTMLImageElement,
+  W: number,
+  H: number,
+  style: string,
+  t: number,
+  cropA?: string | null,
+  cropB?: string | null,
+) {
+  /* Hold each frame briefly so the export unmistakably starts on the start
+     frame and lands on the end frame. */
+  const HOLD = 0.22;
+  const mix = Math.min(Math.max((t - HOLD) / Math.max(1 - HOLD * 2, 0.01), 0), 1);
+  const ease = mix * mix * (3 - 2 * mix);
+
+  if (style === "match") {
+    // One shared camera move across both frames: the space changes in place.
+    drawMotion(ctx, a, W, H, "push", t, cropA);
+    if (ease > 0) {
+      ctx.save();
+      ctx.globalAlpha = ease;
+      drawMotion(ctx, b, W, H, "push", t, cropB);
+      ctx.restore();
+    }
+    return;
+  }
+
+  if (style === "slide_left" || style === "slide_right") {
+    const dir = style === "slide_left" ? 1 : -1;
+    ctx.save();
+    ctx.translate(-dir * W * ease, 0);
+    drawMotion(ctx, a, W, H, "static", t, cropA);
+    ctx.restore();
+    if (ease > 0) {
+      ctx.save();
+      ctx.translate(dir * W * (1 - ease), 0);
+      drawMotion(ctx, b, W, H, "static", t, cropB);
+      ctx.restore();
+    }
+    return;
+  }
+
+  const motion = style === "push" ? "push" : style === "pull" ? "pull" : "drift_in";
+  drawMotion(ctx, a, W, H, motion, t, cropA);
+  if (ease > 0) {
+    ctx.save();
+    ctx.globalAlpha = ease;
+    drawMotion(ctx, b, W, H, motion, t, cropB);
+    ctx.restore();
+  }
 }
 
 function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, bg: string, fg: string) {
@@ -830,6 +901,10 @@ export async function renderReveal(
   const compares = await Promise.all(
     scenes.map((s) => (s.compareUrl ? loadImage(s.compareUrl).catch(() => null) : Promise.resolve(null))),
   );
+  /* End frames for standard Start/End scenes. */
+  const endFrames = await Promise.all(
+    scenes.map((s) => (s.endUrl ? loadImage(s.endUrl).catch(() => null) : Promise.resolve(null))),
+  );
 
   const brand = opts.brand ?? null;
   const showBrand = opts.versionType === "branded" && !!brand;
@@ -991,9 +1066,14 @@ export async function renderReveal(
           const want = Math.min(dur - 0.02, (local / 1000) % Math.max(dur, 0.1));
           if (v.paused) { v.currentTime = Math.max(0, want); void v.play().catch(() => {}); }
           if (v.readyState >= 2) drawClipFrame(ctx, v, W, H);
-          else drawMotion(ctx, img, W, H, motion, p);
+          else drawMotion(ctx, img, W, H, motion, p, scene.crop);
+        } else if (endFrames[idx]) {
+          drawStartEnd(
+            ctx, img, endFrames[idx]!, W, H,
+            scene.seTransition || "blend", p, scene.startCrop || scene.crop, scene.endCrop,
+          );
         } else {
-          drawMotion(ctx, img, W, H, motion, p);
+          drawMotion(ctx, img, W, H, motion, p, scene.crop);
         }
 
         if (scene.motion_level === "immersive") {
