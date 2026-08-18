@@ -1012,6 +1012,8 @@ export async function renderReveal(
   music?.stop();
   stream.getTracks().forEach((tr) => tr.stop());
   const blob = await done;
+  // A cancelled encode throws away its partial recording; nothing is uploaded.
+  if (cancelled) throw new Error(RENDER_CANCELLED);
 
   // poster from the first scene
   ctx.fillStyle = "#0a0a0a";
