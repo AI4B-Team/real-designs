@@ -541,12 +541,14 @@ function cardHtml(it) {
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
-      <div class="rv-tools">
-        <button class="rv-tool" data-open="${it.key}" aria-label="Design"><i data-lucide="wand-sparkles"></i><em>Design</em></button>
-        ${it.state === "failed" ? `<button class="rv-tool" data-retry="${it.key}" aria-label="Retry"><i data-lucide="rotate-ccw"></i><em>Retry</em></button>` : ""}
-        <button class="rv-tool" data-del="${it.key}" aria-label="Remove"><i data-lucide="trash-2"></i><em>Remove</em></button>
-      </div>
-      <button class="rv-tools-more" data-toolsmore="1" aria-label="Photo Actions"><i data-lucide="ellipsis"></i></button>
+      ${imageToolbarHtml(
+        [
+          { label: "Design", icon: "wand-sparkles", attrs: { "data-open": it.key } },
+          it.state === "failed" ? { label: "Retry", icon: "rotate-ccw", attrs: { "data-retry": it.key } } : null,
+          { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
+        ],
+        { label: "Photo Actions" },
+      )}
     </div>
 
     <div class="rv-tile-foot">
