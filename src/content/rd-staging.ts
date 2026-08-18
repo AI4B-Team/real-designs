@@ -808,11 +808,26 @@ function render() {
 
 }
 
+/* Every rail step is a real destination: nothing in the rail is decorative. */
 function bindRail(el) {
   el.querySelectorAll("[data-step]").forEach((b) =>
     b.addEventListener("click", () => {
       const k = b.getAttribute("data-step");
-      if (k === "design" || k === S.step) return;
+      if (k === S.step && k !== "design") return;
+      if (k === "design") {
+        const st = stepState();
+        const next = navigateTo("design", st);
+        if (next.step === "design" && next.activeKey) { void openInCanvas(next.activeKey); return; }
+        const first = designSet()[0];
+        if (first) { void openInCanvas(first.key); return; }
+        return;
+      }
+      if (k === "final") {
+        /* Finished designs live in Media, where they can be shared and reused. */
+        saveDraft();
+        try { window.__rdGo && window.__rdGo("media"); } catch (_) {}
+        return;
+      }
       S.step = k;
       render();
     }),
