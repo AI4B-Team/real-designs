@@ -1566,6 +1566,7 @@ function animateModalFor(w) {
     clip: sceneClips.get(w.animate.key),
     busy: !!w.animate.busy,
     confirm: !!w.animate.confirm,
+    cat: w.animate.cat || "recommended",
   });
 }
 
@@ -1684,6 +1685,11 @@ function bindAnimate(el, w, render) {
     render();
   });
 
+  on("[data-animcat]", "click", (e) => {
+    if (!w.animate) return;
+    w.animate.cat = e.currentTarget.dataset.animcat;
+    render();
+  });
   on("[data-animate]", "click", (e) => {
     if (!w.animate) return;
     w.animate.sel = e.currentTarget.dataset.animate;
@@ -2072,7 +2078,7 @@ function popoverHtml() {
        only: every picked option still writes the same stored ids. */
     const tab = w.popTab === "effects" ? "effects" : "looks";
     const cats = tab === "looks" ? lookCats() : fxCats();
-    const catId = cats.some(([id]) => id === w.popCat) ? w.popCat : "all";
+    const catId = cats.some(([id]) => id === w.popCat) ? w.popCat : cats[0][0];
     const amt = s.look_amount ?? DEFAULT_INTENSITY;
     const activeLook = s.look ? lookById(s.look) : null;
     const activeTile = s.vfx && s.vfx !== "none" ? tileById(s.vfx) : null;
@@ -2080,12 +2086,16 @@ function popoverHtml() {
     const plan = applyAllPlan(w.scenes, s);
     const canAll = !nothing && plan.targets > 0;
 
+    /* A tile shows the real treatment when we can paint it. Generated effects
+       cannot be previewed before they are made, so they say so instead of
+       showing an unchanged photo and pretending. */
     const card = (o) => `<button class="fx-card ${o.on ? "on" : ""}" ${o.attr} role="option"
       aria-selected="${o.on ? "true" : "false"}" title="${esc(o.blurb || o.name)}">
-      <span class="fx-th ${o.blank ? "blank" : ""}" ${o.blank ? "" : `data-img="${esc(s.path)}"`}>${o.blank ? `<i data-lucide="ban"></i>` : o.overlay || ""}
+      <span class="fx-th ${o.blank ? "blank" : ""} ${o.pending ? "pending" : ""}" ${o.blank || o.pending ? "" : `data-img="${esc(s.path)}"`}>${
+        o.blank ? `<i data-lucide="ban"></i>` : o.pending ? `<i data-lucide="sparkles"></i><em>Preview After Generating</em>` : o.overlay || ""}
         ${o.on ? `<i class="fx-ck" data-lucide="check"></i>` : ""}</span>
       <span class="fx-nm">${esc(o.name)}</span>
-      ${o.credits ? `<em class="fx-cost">${o.credits} Credits</em>` : ""}
+      ${o.gen ? `<em class="fx-cost gen">AI Image · ${o.credits} Credits</em>` : o.credits ? `<em class="fx-cost">${o.credits} Credits</em>` : ""}
       ${o.beta ? `<em class="fx-beta">Beta</em>` : ""}
     </button>`;
 
@@ -2099,7 +2109,8 @@ function popoverHtml() {
         effectTiles(catId).map((t) => {
           const lk = t.look ? lookById(t.look) : null;
           return card({
-            name: t.label, blurb: t.sub, on: s.vfx === t.id, credits: t.credits || 0, beta: !!t.gen,
+            name: t.label, blurb: t.sub, on: s.vfx === t.id, credits: t.credits || 0,
+            gen: !!t.gen, pending: !!t.gen,
             overlay: lk ? lookOverlayHTML(lk, amt) : "", attr: `data-vfxpick="${esc(t.id)}"`,
           });
         }).join("");
@@ -2123,7 +2134,8 @@ function popoverHtml() {
             <div class="rv-pop-clip m-static" data-img="${esc(s.path)}">${activeLook ? lookOverlayHTML(activeLook, amt) : ""}</div>
             <span class="rv-pop-live"><i></i>Live Preview</span>
           </div>
-          <b>${esc(selName)}${cost ? ` <em class="fx-cost inline">${cost} Credits</em>` : ""}</b>
+          <b>${esc(selName)}${cost ? ` <em class="fx-cost inline">AI Image · ${cost} Credits</em>` : ""}</b>
+          ${cost ? `<span class="rv-note sm">This is generated as a new image version. Your original photo is kept.</span>` : ""}
           <span>${esc(selCopy)}</span>
           ${supportsIntensity(s) ? `<label class="rv-f">Intensity <i class="fx-amt">${esc(intensityWord(amt))}</i>
             <input type="range" id="rvLookAmt" min="10" max="100" value="${amt}">
@@ -3711,6 +3723,7 @@ function bind() {
     const s = cur(); if (!s) return;
     s.motion = e.currentTarget.dataset.motionpick;
     s.motion_level = "standard";
+    s.immersive_effect = null;
     render();
   });
   on("[data-hover]", "mouseenter", (e) => {
