@@ -23,6 +23,18 @@ import {
   AI_TRANSITION_AVAILABLE,
   AI_TRANSITION_UNAVAILABLE_REASON,
 } from "@/lib/scene-frames";
+import {
+  ALL_TRANSITIONS,
+  PRIMARY_TRANSITIONS,
+  MORE_TRANSITIONS,
+  AI_TRANSITION_CREDITS,
+  AI_TRANSITION_TEMPLATES,
+  DEFAULT_TRANSITION_MS,
+  aiTemplateLabel,
+  resolveTransition,
+  transitionLabel,
+} from "@/lib/transitions";
+import { transitions } from "@/lib/transition-store";
 import { DraftAutosaver, newDraftId } from "@/lib/project-draft";
 import { deleteProjectDraft } from "@/lib/drafts.functions";
 import { getPropertyTree } from "@/lib/workspace.functions";
@@ -1804,6 +1816,9 @@ function syncSceneOrder() {
      scenes whose asset left the grid, ordered by the grid. Every count, badge,
      timeline, duration, credit estimate and render manifest reads this. */
   w.scenes = reconcileScenes(w.scenes, w.available || [], w.gridOrder || []);
+  /* A reorder or removal keeps the transitions whose two scenes are still
+     neighbours and drops the rest. */
+  void transitions.reconcile(w.scenes).catch(() => {});
 }
 
 /**
@@ -1867,6 +1882,39 @@ function sceneRecap(s, clip) {
   </div>`;
 }
 
+const TRANS_ICON = {
+  auto: "sparkles", cut: "scissors", dissolve: "blend", fade: "circle-dashed", ai: "wand-sparkles",
+  slide_left: "arrow-left", slide_right: "arrow-right", push: "chevrons-right", wipe: "columns-2",
+  zoom_match: "scan-search", match_move: "move-3d",
+};
+
+/**
+ * The connector between two consecutive scenes. It sits on the seam of the
+ * grid so a user reads the move from one room to the next without the
+ * six-column layout changing.
+ */
+function connectorHtml(s, nextScene) {
+  if (!s || !nextScene) return "";
+  const row = transitions.get(s.key, nextScene.key);
+  const type = row?.type || "auto";
+  const eff = resolveTransition(type, sceneShape(s), sceneShape(nextScene));
+  const busy = row?.status === "queued" || row?.status === "running" || row?.status === "reserved";
+  const failed = row?.status === "failed";
+  const label = type === "auto" ? `Auto · ${transitionLabel(eff)}` : transitionLabel(type);
+  return `<button class="rv-conn ${type === "cut" ? "cut" : ""} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
+    data-pop="trans" data-key="${esc(s.key)}"
+    aria-label="Transition Into ${esc(nextScene.room || "The Next Scene")}: ${esc(label)}"
+    title="${esc(`Transition: ${label}`)}">
+    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "blend"}"></i>
+    <em>${esc(label)}</em>
+  </button>`;
+}
+
+/** The minimal shape the Auto rule needs to choose a restrained move. */
+function sceneShape(s) {
+  return s ? { key: s.key, room_name: s.room || null, use_clip: !!s.use_clip, motion: s.motion || null } : null;
+}
+
 function tileHtml(a, seq) {
   const w = S.wizard;
   const s = w.scenes.find((x) => x.key === a.key) || null;
@@ -1896,6 +1944,7 @@ function tileHtml(a, seq) {
       ${sceneRecap(s, clip)}
       ${tools}
     </div>
+    ${s ? connectorHtml(s, S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1] || null) : ""}
     <div class="rv-tile-foot">
       ${roomCell(a)}
     </div>
@@ -2232,6 +2281,51 @@ function popoverHtml() {
       <label class="rv-f">Transition Length <i class="mono">${Number(d.transition_duration || 3).toFixed(1)}s</i>
         <input type="range" id="rvSeDur" min="10" max="80" step="5" value="${Math.round((d.transition_duration || 3) * 10)}"></label>
     </div>`;
+  } else if (kind === "trans") {
+    /* The move between this scene and the next one. Standard transitions are
+       included and render in the browser; the AI bridge is a generated clip
+       and is priced up front. */
+    const nxt = w.scenes[i + 1] || null;
+    const row = nxt ? transitions.get(s.key, nxt.key) : null;
+    const type = row?.type || "auto";
+    const eff = resolveTransition(type, sceneShape(s), sceneShape(nxt));
+    const ms = typeof row?.duration_ms === "number" ? row.duration_ms : DEFAULT_TRANSITION_MS;
+    const tmpl = w.transDraft?.template || "room_to_room";
+    const opt = ([id, n]) => `<button class="rv-tr-opt ${type === id ? "on" : ""} ${id === "ai" && !AI_TRANSITION_AVAILABLE ? "off" : ""}"
+      ${id === "ai" && !AI_TRANSITION_AVAILABLE ? "disabled" : `data-transpick="${id}"`}
+      title="${esc(id === "ai" && !AI_TRANSITION_AVAILABLE ? AI_TRANSITION_UNAVAILABLE_REASON : n)}">
+      <i data-lucide="${TRANS_ICON[id] || "blend"}"></i><b>${esc(n)}</b>
+      <em>${id === "ai" ? `${AI_TRANSITION_CREDITS} Credits` : id === "auto" ? transitionLabel(eff) : "Included"}</em></button>`;
+    body = `<div class="rv-tr">
+      <div class="rv-tr-head">
+        <span class="rv-tr-th" data-img="${esc(s.path)}"></span>
+        <i data-lucide="arrow-right"></i>
+        <span class="rv-tr-th" data-img="${esc(nxt?.path || s.path)}"></span>
+        <div class="rv-tr-cap"><b>${esc(s.room || "This Scene")} → ${esc(nxt?.room || "Next Scene")}</b>
+          <em>${esc(type === "auto" ? `Auto Chooses ${transitionLabel(eff)} For This Pair` : transitionLabel(type))}</em></div>
+      </div>
+      <div class="rv-pop-h">Transition</div>
+      <div class="rv-tr-grid">${PRIMARY_TRANSITIONS.map(opt).join("")}</div>
+      <details class="rv-tr-more" ${MORE_TRANSITIONS.some(([id]) => id === type) ? "open" : ""}>
+        <summary>More Transitions</summary>
+        <div class="rv-tr-grid">${MORE_TRANSITIONS.map(opt).join("")}</div>
+      </details>
+      ${type === "ai" || w.transDraft?.ai ? `<div class="rv-tr-ai">
+        <div class="rv-pop-h">AI Bridge</div>
+        <div class="rv-tr-tmpl">${AI_TRANSITION_TEMPLATES.map(([id, n, blurb]) => `<button class="rv-pop-row ${tmpl === id ? "on" : ""}" data-transtmpl="${id}" title="${esc(blurb)}">${esc(n)}</button>`).join("")}</div>
+        <label class="rv-f">Direction, Optional
+          <input id="rvTransPrompt" maxlength="200" value="${esc(w.transDraft?.prompt || "")}" placeholder="Walk Through The Doorway Into The Kitchen"></label>
+        <div class="rv-note sm">${AI_TRANSITION_CREDITS} credits, charged only if the bridge is generated. A failed generation costs nothing.</div>
+        ${AI_TRANSITION_AVAILABLE ? "" : `<div class="rv-notice sm"><i data-lucide="info"></i><span>${esc(AI_TRANSITION_UNAVAILABLE_REASON)}</span></div>`}
+      </div>` : ""}
+      ${row?.status === "failed" && row?.error_message ? `<div class="rv-notice sm bad"><i data-lucide="triangle-alert"></i><span>${esc(row.error_message)}</span></div>` : ""}
+      <label class="rv-f">Length <i class="mono">${(ms / 1000).toFixed(2)}s</i>
+        <input type="range" id="rvTransDur" min="0" max="2000" step="50" value="${ms}" ${type === "cut" ? "disabled" : ""}></label>
+      <div class="rv-tr-foot">
+        <button class="btn btn-ghost btn-sm" id="rvTransAll"><i data-lucide="copy"></i>Apply To All Transitions</button>
+        <button class="fb-link" id="rvTransSmart">Smart Timing</button>
+      </div>
+    </div>`;
   } else {
     /* Effects modal. Two tabs — Looks (colour and presentation, free) and
        Effects (adds or animates content, costs credits). Display grouping
@@ -2317,12 +2411,16 @@ function popoverHtml() {
 
   const isFx = kind === "look";
   const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
-    : kind === "recap" ? "Scene Settings" : kind === "frames" ? "Start And End Frames" : "Effects";
-  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : "xwide";
+    : kind === "recap" ? "Scene Settings" : kind === "frames" ? "Start And End Frames"
+    : kind === "trans" ? "Transition" : "Effects";
+  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : kind === "trans" ? "wide" : "xwide";
   const foot = isFx
     ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
     : kind === "recap"
     ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
+    : kind === "trans"
+    ? `${transitions.get(s.key, w.scenes[i + 1]?.key) ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto</button>` : ""}
+       <button class="btn btn-primary" id="rvPopCancel">Done</button>`
     : kind === "frames"
     ? `${frameConfigured(sceneFrames.get(s.key)) ? `<button class="btn btn-ghost danger" id="rvSeRemove">Remove Start / End</button>` : ""}
        <button class="btn btn-ghost" id="rvPopCancel">Cancel</button>
@@ -3195,6 +3293,25 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       enhance: s.enhance || null,
     });
   }
+  /* The configured move between each consecutive pair, in render order. */
+  const sceneTransitions = [];
+  for (let n = 0; n < w.scenes.length - 1; n++) {
+    const sc = w.scenes[n];
+    const nxt = w.scenes[n + 1];
+    const row = transitions.get(sc.key, nxt.key);
+    const type = resolveTransition(row?.type || "auto", sceneShape(sc), sceneShape(nxt));
+    /* An approved AI bridge plays as the transition itself; otherwise the
+       deterministic effect renders in the browser. */
+    const clipUrl = row?.generated_clip_path && row.status === "completed"
+      ? await resolvePhotoUrl(row.generated_clip_path).catch(() => null)
+      : null;
+    sceneTransitions.push({
+      type,
+      ms: typeof row?.duration_ms === "number" ? row.duration_ms : DEFAULT_TRANSITION_MS,
+      clipUrl,
+    });
+  }
+
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
   const avTitle = w.title || w.propertyLabel || "";
@@ -3222,6 +3339,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
         : null,
       title: w.title || w.propertyLabel || "",
       transition: w.transition,
+      sceneTransitions,
       captionsEnabled: !!w.captions,
       music: w.music && w.music !== "none" ? w.music : null,
       narrationUrl,
@@ -3991,6 +4109,82 @@ function bind() {
   on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
   on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
 
+  /* ---- transitions between scenes ----
+     Every change writes to the project immediately, so the move survives
+     navigation, refresh and reopening the draft. */
+  const transPair = () => {
+    const s = cur(); if (!s) return null;
+    const i = w.scenes.indexOf(s);
+    const nxt = w.scenes[i + 1]; if (!nxt) return null;
+    return { s, nxt };
+  };
+  on("[data-transpick]", "click", async (e) => {
+    const pair = transPair(); if (!pair) return;
+    const type = e.currentTarget.dataset.transpick;
+    if (type === "ai") {
+      w.transDraft = { ...(w.transDraft || {}), ai: true, template: w.transDraft?.template || "room_to_room" };
+      render();
+      return;
+    }
+    w.transDraft = null;
+    const prev = transitions.get(pair.s.key, pair.nxt.key);
+    try {
+      await transitions.set(pair.s.key, pair.nxt.key, type, prev?.duration_ms);
+    } catch (_) {
+      toast("We Could Not Save That Transition. Try Again.");
+    }
+    render();
+  });
+  on("[data-transtmpl]", "click", (e) => {
+    w.transDraft = { ...(w.transDraft || {}), ai: true, template: e.currentTarget.dataset.transtmpl };
+    render();
+  });
+  {
+    const pr = el.querySelector("#rvTransPrompt");
+    if (pr) pr.addEventListener("input", (ev) => { w.transDraft = { ...(w.transDraft || {}), ai: true, prompt: ev.target.value }; });
+    const du = el.querySelector("#rvTransDur");
+    if (du) du.addEventListener("change", async (ev) => {
+      const pair = transPair(); if (!pair) return;
+      const row = transitions.get(pair.s.key, pair.nxt.key);
+      try {
+        await transitions.set(pair.s.key, pair.nxt.key, row?.type || "auto", Number(ev.target.value));
+      } catch (_) { toast("We Could Not Save That Length."); }
+      render();
+    });
+  }
+  on("#rvTransAll", "click", async () => {
+    const pair = transPair(); if (!pair) return;
+    const row = transitions.get(pair.s.key, pair.nxt.key);
+    try {
+      await transitions.applyAll(w.scenes, row?.type || "auto", row?.duration_ms);
+      toast("Transition Applied To Every Scene Change.");
+    } catch (_) { toast("We Could Not Apply That To Every Scene."); }
+    render();
+  });
+  on("#rvTransSmart", "click", async () => {
+    /* Smart Timing gives each pair a length that suits it: quick scenes get a
+       shorter move, and cuts stay instant. */
+    const perMs = sceneDurations(w.scenes.length, w.length) * 1000;
+    for (let n = 0; n < w.scenes.length - 1; n++) {
+      const a = w.scenes[n], b = w.scenes[n + 1];
+      const row = transitions.get(a.key, b.key);
+      const type = row?.type || "auto";
+      if (type === "cut") continue;
+      const eff = resolveTransition(type, sceneShape(a), sceneShape(b));
+      const base = eff === "fade" ? 900 : eff === "match_move" || eff === "zoom_match" ? 800 : 600;
+      const ms = Math.max(250, Math.min(base, Math.round(perMs * 0.28)));
+      try { await transitions.set(a.key, b.key, type, ms); } catch (_) {}
+    }
+    toast("Smart Timing Applied.");
+    render();
+  });
+  on("#rvTransReset", "click", async () => {
+    const pair = transPair(); if (!pair) return;
+    try { await transitions.clear(pair.s.key, pair.nxt.key); } catch (_) {}
+    w.pop = null; w.transDraft = null;
+    render();
+  });
+
   /* ---- scene settings summary ---- */
   on("[data-sumedit]", "click", (e) => {
     const kind = e.currentTarget.dataset.sumedit;
@@ -4469,6 +4663,8 @@ function editExisting(d) {
   void sceneClips.load(p.id);
   /* Start/End pairs are durable too: reload them with the project. */
   void sceneFrames.load(p.id).then(() => { if (S.screen === "wizard") render(); });
+  /* Transitions belong to the project, so they come back with it. */
+  void transitions.load(p.id).then(() => { if (S.screen === "wizard") render(); });
   w.address = cleanAddressText(p.property_address || "");
   w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
   w.titleTouched = !!p.title_touched;

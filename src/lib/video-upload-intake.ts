@@ -60,13 +60,16 @@ export function attachUploadAssets(w: IntakeWizard): string[] {
   const have = new Set(available.map((a: any) => a.key));
   /* Two upload records pointing at the same stored object are the same photo
      (a retried or double-fired ingest), so only the first becomes an asset. */
-  const havePath = new Set(available.map((a: any) => a.path).filter(Boolean));
+  /* Only a durable storage path identifies a photo. A transient object URL
+     can repeat across genuinely different files, so it never merges two. */
+  const durable = (p: any) => !!p && typeof p === "string" && !p.startsWith("blob:") && !p.startsWith("data:");
+  const havePath = new Set(available.map((a: any) => a.path).filter(durable));
   const ordered = new Set(gridOrder);
   const added: string[] = [];
   for (const u of w.uploads || []) {
     const key = "u-" + u.id;
     const path = (u as any).storagePath || u.url;
-    if (!have.has(key) && !(path && havePath.has(path))) {
+    if (!have.has(key) && !(durable(path) && havePath.has(path))) {
       available.push({
         key,
         /* Durable storage path wins: an object URL dies with the tab, so a
@@ -80,7 +83,7 @@ export function attachUploadAssets(w: IntakeWizard): string[] {
         flags: [],
       });
       have.add(key);
-      if (path) havePath.add(path);
+      if (durable(path)) havePath.add(path);
     }
     if (have.has(key) && !ordered.has(key)) {
       gridOrder.push(key);

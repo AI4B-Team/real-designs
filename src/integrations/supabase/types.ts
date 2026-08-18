@@ -2708,6 +2708,103 @@ export type Database = {
           },
         ]
       }
+      video_transitions: {
+        Row: {
+          created_at: string
+          credits_charged: number
+          credits_released: number
+          credits_reserved: number
+          duration_ms: number
+          error_message: string | null
+          from_key: string
+          from_scene_id: string | null
+          generated_clip_path: string | null
+          generation_job_id: string | null
+          id: string
+          progress: number
+          provider: string | null
+          provider_job_id: string | null
+          settings: Json
+          status: string
+          to_key: string
+          to_scene_id: string | null
+          type: string
+          updated_at: string
+          user_id: string
+          video_project_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_charged?: number
+          credits_released?: number
+          credits_reserved?: number
+          duration_ms?: number
+          error_message?: string | null
+          from_key: string
+          from_scene_id?: string | null
+          generated_clip_path?: string | null
+          generation_job_id?: string | null
+          id?: string
+          progress?: number
+          provider?: string | null
+          provider_job_id?: string | null
+          settings?: Json
+          status?: string
+          to_key: string
+          to_scene_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id: string
+          video_project_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_charged?: number
+          credits_released?: number
+          credits_reserved?: number
+          duration_ms?: number
+          error_message?: string | null
+          from_key?: string
+          from_scene_id?: string | null
+          generated_clip_path?: string | null
+          generation_job_id?: string | null
+          id?: string
+          progress?: number
+          provider?: string | null
+          provider_job_id?: string | null
+          settings?: Json
+          status?: string
+          to_key?: string
+          to_scene_id?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+          video_project_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_transitions_from_scene_id_fkey"
+            columns: ["from_scene_id"]
+            isOneToOne: false
+            referencedRelation: "video_scenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_transitions_to_scene_id_fkey"
+            columns: ["to_scene_id"]
+            isOneToOne: false
+            referencedRelation: "video_scenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "video_transitions_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       video_variants: {
         Row: {
           aspect_ratio: string

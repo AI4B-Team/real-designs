@@ -118,6 +118,12 @@ export type RevealOptions = {
     corner?: "bottom_left" | "bottom_right" | "top_left" | "top_right";
     greeting?: string | null;
   } | null;
+  /**
+   * One entry per gap between consecutive scenes (length = scenes - 1).
+   * The transition overlaps the two scenes, so it reads as a real move between
+   * them instead of a fade to black.
+   */
+  sceneTransitions?: Array<{ type: string; ms: number; clipUrl?: string | null }> | null;
   onProgress?: (pct: number) => void;
   /** Aborting stops the encode; the render then rejects with RENDER_CANCELLED. */
   signal?: AbortSignal | null;
@@ -876,6 +882,103 @@ export function sceneDurations(count: number, lengthPreset: string): number {
   return Math.max(1.6, Math.min(6, target / Math.max(count, 1)));
 }
 
+/**
+ * Composite two neighbouring scenes for the configured transition. Both scenes
+ * are painted to their own buffer first, so the effect genuinely moves from one
+ * room into the next rather than dipping through black.
+ */
+function compositeTransition(
+  ctx: CanvasRenderingContext2D,
+  a: HTMLCanvasElement,
+  b: HTMLCanvasElement,
+  W: number,
+  H: number,
+  type: string,
+  qRaw: number,
+) {
+  const q = Math.min(Math.max(qRaw, 0), 1);
+  const e = q * q * (3 - 2 * q);
+
+  switch (type) {
+    case "cut":
+      ctx.drawImage(q < 0.5 ? a : b, 0, 0, W, H);
+      return;
+
+    case "fade": {
+      // Through black: the outgoing room darkens, the next one lifts out of it.
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, W, H);
+      ctx.save();
+      if (e < 0.5) {
+        ctx.globalAlpha = 1 - e * 2;
+        ctx.drawImage(a, 0, 0, W, H);
+      } else {
+        ctx.globalAlpha = (e - 0.5) * 2;
+        ctx.drawImage(b, 0, 0, W, H);
+      }
+      ctx.restore();
+      return;
+    }
+
+    case "slide_left":
+    case "slide_right": {
+      const dir = type === "slide_left" ? 1 : -1;
+      ctx.drawImage(a, -dir * W * e, 0, W, H);
+      ctx.drawImage(b, dir * W * (1 - e), 0, W, H);
+      return;
+    }
+
+    case "push": {
+      // The outgoing room drifts back while the next one advances over it.
+      const s = 1 + 0.12 * e;
+      ctx.save();
+      ctx.globalAlpha = 1;
+      ctx.drawImage(a, (W - W * s) / 2, (H - H * s) / 2, W * s, H * s);
+      ctx.globalAlpha = e;
+      const sb = 1.12 - 0.12 * e;
+      ctx.drawImage(b, (W - W * sb) / 2, (H - H * sb) / 2, W * sb, H * sb);
+      ctx.restore();
+      return;
+    }
+
+    case "wipe": {
+      ctx.drawImage(a, 0, 0, W, H);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(0, 0, W * e, H);
+      ctx.clip();
+      ctx.drawImage(b, 0, 0, W, H);
+      ctx.restore();
+      if (e > 0 && e < 1) {
+        ctx.fillStyle = ACCENT;
+        ctx.fillRect(W * e - 3, 0, 6, H);
+      }
+      return;
+    }
+
+    case "zoom_match":
+    case "match_move": {
+      const sa = 1 + 0.25 * e;
+      const sb = 1.25 - 0.25 * e;
+      ctx.drawImage(a, (W - W * sa) / 2, (H - H * sa) / 2, W * sa, H * sa);
+      ctx.save();
+      ctx.globalAlpha = e;
+      ctx.drawImage(b, (W - W * sb) / 2, (H - H * sb) / 2, W * sb, H * sb);
+      ctx.restore();
+      return;
+    }
+
+    default: {
+      // dissolve / auto / ai fallback
+      ctx.drawImage(a, 0, 0, W, H);
+      ctx.save();
+      ctx.globalAlpha = e;
+      ctx.drawImage(b, 0, 0, W, H);
+      ctx.restore();
+    }
+  }
+}
+
 export async function renderReveal(
   scenes: RevealScene[],
   opts: RevealOptions,
@@ -934,8 +1037,171 @@ export async function renderReveal(
   const avIntro = avFull ? 3000 : 0;
   const avOutro = avFull ? 2600 : 0;
   const outro = showBrand ? 2600 : 0;
-  const total = avIntro + durations.reduce((a, b) => a + b, 0) + avOutro + outro;
 
+
+  /* Transitions overlap the scenes they join, so the tour keeps its length and
+     each move reads as one continuous camera. */
+  const transitionsIn = (opts.sceneTransitions ?? []).slice(0, Math.max(scenes.length - 1, 0));
+  const hasTransitions = transitionsIn.some((x) => x && x.type && x.type !== "none");
+  const overlaps = scenes.slice(0, -1).map((_, i) => {
+    const tr = transitionsIn[i];
+    if (!tr || tr.type === "cut" || tr.type === "none") return 0;
+    return Math.max(0, Math.min(tr.ms || 600, (durations[i]! + durations[i + 1]!) * 0.35));
+  });
+  const starts: number[] = [];
+  for (let i = 0; i < durations.length; i++) {
+    starts[i] = i === 0 ? 0 : starts[i - 1]! + durations[i - 1]! - (overlaps[i - 1] ?? 0);
+  }
+  const sceneEnd = durations.length ? starts[durations.length - 1]! + durations[durations.length - 1]! : 0;
+  const transitionClips = await Promise.all(
+    transitionsIn.map((tr) => (tr?.clipUrl ? loadClip(tr.clipUrl).catch(() => null) : Promise.resolve(null))),
+  );
+
+
+  /* One scene painted to any target surface, so a transition can composite two
+     of them at once without duplicating the drawing rules. */
+  const cvA = document.createElement("canvas");
+  const cvB = document.createElement("canvas");
+  cvA.width = cvB.width = W;
+  cvA.height = cvB.height = H;
+  const bufA = cvA.getContext("2d")!;
+  const bufB = cvB.getContext("2d")!;
+
+  const paintScene = (c: CanvasRenderingContext2D, idx: number, local: number, ts: number) => {
+    c.fillStyle = "#0a0a0a";
+    c.fillRect(0, 0, W, H);
+        const scene = scenes[idx]!;
+        const img = imgs[idx]!;
+        const cmp = compares[idx];
+        const p = local / durations[idx]!;
+        const motion = scene.exterior_effect
+          ? scene.exterior_effect
+          : scene.motion && scene.motion !== "auto"
+            ? scene.motion
+            : "auto";
+        const transition = scene.transition || opts.transition || "clean";
+        const vfxOn = vfxEnter(c, W, H, transition, local, durations[idx]!);
+
+
+        if (cmp && scene.scene_type === "before_after") {
+          // Match Frame: same camera, original holds then the design takes over.
+          const mix = Math.min(Math.max((p - 0.42) / 0.22, 0), 1);
+          drawMotion(c, cmp, W, H, motion, p);
+          if (mix > 0) {
+            if (transition === "slider" || transition === "wipe") {
+              c.save();
+              c.beginPath();
+              c.rect(0, 0, W * mix, H);
+              c.clip();
+              drawMotion(c, img, W, H, motion, p);
+              c.restore();
+              if (mix < 1) {
+                c.fillStyle = ACCENT;
+                c.fillRect(W * mix - 3, 0, 6, H);
+              }
+            } else {
+              c.save();
+              c.globalAlpha = mix;
+              drawMotion(c, img, W, H, motion, p);
+              c.restore();
+            }
+          }
+          if (opts.captionsEnabled !== false) {
+            const lab = mix > 0.5 ? "After" : "Before";
+            c.save();
+            pill(c, lab, W * 0.06, H * 0.14, Math.round(W * 0.03), "rgba(10,10,10,.8)", "#fff");
+            c.restore();
+          }
+        } else if (clips[idx]) {
+          const v = clips[idx]!;
+          const dur = v.duration && isFinite(v.duration) ? v.duration : durations[idx]! / 1000;
+          const want = Math.min(dur - 0.02, (local / 1000) % Math.max(dur, 0.1));
+          if (v.paused) { v.currentTime = Math.max(0, want); void v.play().catch(() => {}); }
+          if (v.readyState >= 2) drawClipFrame(c, v, W, H);
+          else drawMotion(c, img, W, H, motion, p, scene.crop);
+        } else if (endFrames[idx]) {
+          drawStartEnd(
+            c, img, endFrames[idx]!, W, H,
+            scene.seTransition || "blend", p, scene.startCrop || scene.crop, scene.endCrop,
+          );
+        } else {
+          drawMotion(c, img, W, H, motion, p, scene.crop);
+        }
+
+        if (scene.motion_level === "immersive") {
+          immersiveLayer(c, W, H, scene.immersive_effect || "light", p);
+        }
+        if (vfxOn) c.restore();
+        vfxOverlay(c, W, H, transition, local, durations[idx]!);
+
+
+        if (opts.captionsEnabled !== false) {
+          const text = scene.caption || scene.room_name || "";
+          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
+          caption(c, W, H, text, a, scene.captionPos || "bottom", scene.captionStyle || "brand");
+        }
+        {
+          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
+          sceneLabels(c, W, H, scene.labels ?? [], a);
+        }
+        if (showDisclosure && scene.disclosure_type) {
+          disclosureNote(c, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
+        }
+        if (showDisclosure && clips[idx]) {
+          c.save();
+          c.globalAlpha = 0.9;
+          pill(c, "AI-Generated Video", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
+          c.restore();
+        }
+        if (showDisclosure && scene.motion_level === "immersive") {
+          c.save();
+          c.globalAlpha = 0.9;
+          pill(c, "AI-Animated", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
+          c.restore();
+        }
+        if (showDisclosure && scene.exterior_effect) {
+          c.save();
+          c.globalAlpha = 0.72;
+          c.font = `600 ${Math.round(W * 0.018)}px Inter, system-ui, sans-serif`;
+          c.fillStyle = "rgba(255,255,255,.9)";
+          c.textAlign = "left";
+          c.textBaseline = "alphabetic";
+          c.fillText("Simulated camera movement — not drone footage", W * 0.06, H * 0.955);
+          c.restore();
+        }
+        if (showBrand && brand?.company_name) {
+          c.save();
+          c.globalAlpha = 0.8;
+          c.font = `800 ${Math.round(W * 0.024)}px Inter, system-ui, sans-serif`;
+          c.textAlign = "right";
+          c.textBaseline = "alphabetic";
+          c.fillStyle = "rgba(255,255,255,.9)";
+          c.fillText(brand.company_name, W - W * 0.06, H * 0.075);
+          c.restore();
+        }
+
+        if (avBubble && avImg) {
+          const fade = Math.min(1, ts / 500) * Math.min(1, (sceneEnd - ts) / 500);
+          presenterBubble(c, W, H, avImg, av?.corner || "bottom_right", avAccent, ts, Math.max(0, fade));
+        }
+
+        // transition fades between scenes
+
+        if (!hasTransitions && transition !== "none" && !VIRAL_TRANSITIONS.has(transition)) {
+          const fadeIn = local < FADE ? 1 - local / FADE : 0;
+          const fadeOut = durations[idx]! - local < FADE ? 1 - (durations[idx]! - local) / FADE : 0;
+          const f = Math.max(fadeIn, fadeOut) * (transition === "cinematic" ? 1 : transition === "smooth" ? 0.8 : 0.6);
+          if (f > 0) {
+            c.save();
+            c.globalAlpha = f;
+            c.fillStyle = "#0a0a0a";
+            c.fillRect(0, 0, W, H);
+            c.restore();
+          }
+        }
+  };
+
+  const total = avIntro + sceneEnd + avOutro + outro;
 
   rec.start();
   const start = performance.now();
@@ -976,20 +1242,14 @@ export async function renderReveal(
       }
 
       const ts = t - avIntro;
-      const sceneEnd = durations.reduce((a, b) => a + b, 0);
 
-      // find the active scene
-      let acc = 0;
+      // find the active scene on the overlapped timeline
       let idx = -1;
-      let local = 0;
       for (let i = 0; i < durations.length; i++) {
-        if (ts < acc + durations[i]!) {
-          idx = i;
-          local = ts - acc;
-          break;
-        }
-        acc += durations[i]!;
+        if (ts >= starts[i]! && ts < starts[i]! + durations[i]!) idx = i;
       }
+      if (idx === -1 && ts >= sceneEnd - 1 && durations.length) idx = -1;
+      const local = idx >= 0 ? ts - starts[idx]! : 0;
 
       if (idx === -1 && avFull && avImg && ts < sceneEnd + avOutro) {
         // AI presenter closing card
@@ -1016,136 +1276,28 @@ export async function renderReveal(
         // branded closing scene
         const p = Math.min((t - (total - outro)) / Math.max(outro, 1), 1);
         if (brand) brandOutro(ctx, W, H, brand, opts.title ?? "", Math.min(1, p * 3));
-
       } else {
-        const scene = scenes[idx]!;
-        const img = imgs[idx]!;
-        const cmp = compares[idx];
-        const p = local / durations[idx]!;
-        const motion = scene.exterior_effect
-          ? scene.exterior_effect
-          : scene.motion && scene.motion !== "auto"
-            ? scene.motion
-            : "auto";
-        const transition = scene.transition || opts.transition || "clean";
-        const vfxOn = vfxEnter(ctx, W, H, transition, local, durations[idx]!);
+        const next = idx + 1;
+        const ov = overlaps[idx] ?? 0;
+        const inTransition = ov > 0 && next < scenes.length && ts >= starts[next]!;
 
-
-        if (cmp && scene.scene_type === "before_after") {
-          // Match Frame: same camera, original holds then the design takes over.
-          const mix = Math.min(Math.max((p - 0.42) / 0.22, 0), 1);
-          drawMotion(ctx, cmp, W, H, motion, p);
-          if (mix > 0) {
-            if (transition === "slider" || transition === "wipe") {
-              ctx.save();
-              ctx.beginPath();
-              ctx.rect(0, 0, W * mix, H);
-              ctx.clip();
-              drawMotion(ctx, img, W, H, motion, p);
-              ctx.restore();
-              if (mix < 1) {
-                ctx.fillStyle = ACCENT;
-                ctx.fillRect(W * mix - 3, 0, 6, H);
-              }
-            } else {
-              ctx.save();
-              ctx.globalAlpha = mix;
-              drawMotion(ctx, img, W, H, motion, p);
-              ctx.restore();
-            }
+        if (inTransition) {
+          const tr = transitionsIn[idx]!;
+          const q = (ts - starts[next]!) / ov;
+          const clip = transitionClips[idx];
+          if (clip && clip.readyState >= 2) {
+            /* An approved AI transition clip plays as the bridge itself. */
+            const dur = clip.duration && isFinite(clip.duration) ? clip.duration : ov / 1000;
+            const want = Math.min(Math.max(dur - 0.02, 0), q * dur);
+            if (clip.paused) { clip.currentTime = want; void clip.play().catch(() => {}); }
+            drawClipFrame(ctx, clip, W, H);
+          } else {
+            paintScene(bufA, idx, local, ts);
+            paintScene(bufB, next, ts - starts[next]!, ts);
+            compositeTransition(ctx, cvA, cvB, W, H, tr.type, q);
           }
-          if (opts.captionsEnabled !== false) {
-            const lab = mix > 0.5 ? "After" : "Before";
-            ctx.save();
-            pill(ctx, lab, W * 0.06, H * 0.14, Math.round(W * 0.03), "rgba(10,10,10,.8)", "#fff");
-            ctx.restore();
-          }
-        } else if (clips[idx]) {
-          const v = clips[idx]!;
-          const dur = v.duration && isFinite(v.duration) ? v.duration : durations[idx]! / 1000;
-          const want = Math.min(dur - 0.02, (local / 1000) % Math.max(dur, 0.1));
-          if (v.paused) { v.currentTime = Math.max(0, want); void v.play().catch(() => {}); }
-          if (v.readyState >= 2) drawClipFrame(ctx, v, W, H);
-          else drawMotion(ctx, img, W, H, motion, p, scene.crop);
-        } else if (endFrames[idx]) {
-          drawStartEnd(
-            ctx, img, endFrames[idx]!, W, H,
-            scene.seTransition || "blend", p, scene.startCrop || scene.crop, scene.endCrop,
-          );
         } else {
-          drawMotion(ctx, img, W, H, motion, p, scene.crop);
-        }
-
-        if (scene.motion_level === "immersive") {
-          immersiveLayer(ctx, W, H, scene.immersive_effect || "light", p);
-        }
-        if (vfxOn) ctx.restore();
-        vfxOverlay(ctx, W, H, transition, local, durations[idx]!);
-
-
-        if (opts.captionsEnabled !== false) {
-          const text = scene.caption || scene.room_name || "";
-          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
-          caption(ctx, W, H, text, a, scene.captionPos || "bottom", scene.captionStyle || "brand");
-        }
-        {
-          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
-          sceneLabels(ctx, W, H, scene.labels ?? [], a);
-        }
-        if (showDisclosure && scene.disclosure_type) {
-          disclosureNote(ctx, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
-        }
-        if (showDisclosure && clips[idx]) {
-          ctx.save();
-          ctx.globalAlpha = 0.9;
-          pill(ctx, "AI-Generated Video", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
-          ctx.restore();
-        }
-        if (showDisclosure && scene.motion_level === "immersive") {
-          ctx.save();
-          ctx.globalAlpha = 0.9;
-          pill(ctx, "AI-Animated", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
-          ctx.restore();
-        }
-        if (showDisclosure && scene.exterior_effect) {
-          ctx.save();
-          ctx.globalAlpha = 0.72;
-          ctx.font = `600 ${Math.round(W * 0.018)}px Inter, system-ui, sans-serif`;
-          ctx.fillStyle = "rgba(255,255,255,.9)";
-          ctx.textAlign = "left";
-          ctx.textBaseline = "alphabetic";
-          ctx.fillText("Simulated camera movement — not drone footage", W * 0.06, H * 0.955);
-          ctx.restore();
-        }
-        if (showBrand && brand?.company_name) {
-          ctx.save();
-          ctx.globalAlpha = 0.8;
-          ctx.font = `800 ${Math.round(W * 0.024)}px Inter, system-ui, sans-serif`;
-          ctx.textAlign = "right";
-          ctx.textBaseline = "alphabetic";
-          ctx.fillStyle = "rgba(255,255,255,.9)";
-          ctx.fillText(brand.company_name, W - W * 0.06, H * 0.075);
-          ctx.restore();
-        }
-
-        if (avBubble && avImg) {
-          const fade = Math.min(1, ts / 500) * Math.min(1, (sceneEnd - ts) / 500);
-          presenterBubble(ctx, W, H, avImg, av?.corner || "bottom_right", avAccent, t, Math.max(0, fade));
-        }
-
-        // transition fades between scenes
-
-        if (transition !== "none" && !VIRAL_TRANSITIONS.has(transition)) {
-          const fadeIn = local < FADE ? 1 - local / FADE : 0;
-          const fadeOut = durations[idx]! - local < FADE ? 1 - (durations[idx]! - local) / FADE : 0;
-          const f = Math.max(fadeIn, fadeOut) * (transition === "cinematic" ? 1 : transition === "smooth" ? 0.8 : 0.6);
-          if (f > 0) {
-            ctx.save();
-            ctx.globalAlpha = f;
-            ctx.fillStyle = "#0a0a0a";
-            ctx.fillRect(0, 0, W, H);
-            ctx.restore();
-          }
+          paintScene(ctx, idx, local, ts);
         }
       }
 
