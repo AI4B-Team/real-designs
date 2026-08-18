@@ -37,6 +37,39 @@ export class TransitionStore {
     return [...this.byConn.values()];
   }
 
+  /**
+   * The project row is created lazily, after a user may already have picked
+   * transitions. Adopting the new id keeps those choices and writes them out
+   * instead of dropping them on the floor.
+   */
+  async adopt(projectId: string | null): Promise<void> {
+    if (!projectId || this.projectId === projectId) return;
+    if (this.projectId) {
+      this.setProject(projectId);
+      await this.load(projectId);
+      return;
+    }
+    const pending = this.all();
+    this.projectId = projectId;
+    for (const r of pending) {
+      try {
+        const res: any = await saveTransition({
+          data: {
+            video_project_id: projectId,
+            from_key: r.from_key,
+            to_key: r.to_key,
+            type: r.type as any,
+            duration_ms: r.duration_ms,
+            settings: r.settings ?? undefined,
+          },
+        });
+        if (res?.transition) this.byConn.set(connectionKey(r.from_key, r.to_key), res.transition);
+      } catch (_) {
+        /* the local choice stays; the next save re-syncs it */
+      }
+    }
+  }
+
   async load(projectId: string | null): Promise<void> {
     this.setProject(projectId);
     if (!projectId) return;
