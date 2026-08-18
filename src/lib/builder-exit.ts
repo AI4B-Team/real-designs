@@ -11,7 +11,7 @@ export const EXIT_LABELS = {
   save: "Save & Exit",
   startOver: "Start Over",
   keep: "Keep Editing",
-  confirm: "Save Draft & Start Over",
+  confirm: "Start Over",
 };
 
 /** Return Studio to its initial, unselected state before a new project. */
@@ -34,10 +34,10 @@ export function goStudio(go?: (v: string) => void) {
 export function startOverModalHtml(ids: { wrap?: string; keep: string; go: string; busy?: boolean } ) {
   return `<div class="rv-modal on" id="${ids.wrap || "rdStartOverWrap"}"><div class="rv-modal-in" role="dialog" aria-label="Start over">
     <div class="rv-modal-h"><b>Start over?</b></div>
-    <div class="rv-modal-b"><p>Your current project is saved as a draft. Starting over will return you to Studio so you can begin a new project.</p></div>
+    <div class="rv-modal-b"><p>Your current draft settings will be cleared. Uploaded photos will remain in Media.</p></div>
     <div class="rv-modal-f">
       <button class="btn btn-ghost" id="${ids.keep}">${EXIT_LABELS.keep}</button>
-      <button class="btn btn-primary" id="${ids.go}"${ids.busy ? " disabled" : ""}>${ids.busy ? "Saving…" : EXIT_LABELS.confirm}</button>
+      <button class="btn btn-danger" id="${ids.go}"${ids.busy ? " disabled" : ""}>${ids.busy ? "Clearing…" : EXIT_LABELS.confirm}</button>
     </div>
   </div></div>`;
 }
