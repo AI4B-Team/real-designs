@@ -36,6 +36,8 @@ const bad = (name = "notes.txt") => new File([new Uint8Array(16)], name, { type:
 
 let host: HTMLElement;
 beforeEach(() => {
+  /* Modules keep one live session: close any overlay before wiping the DOM. */
+  (document.querySelector("#rdsClose") as HTMLElement | null)?.click();
   document.body.innerHTML = "";
   host = document.createElement("div");
   document.body.appendChild(host);
@@ -172,8 +174,6 @@ describe("property video: add photos -> scenes", () => {
 describe("photo staging: add photos -> review rooms", () => {
   const openStaging = async () => {
     const mod = await import("@/content/rd-staging");
-    /* The module keeps one live session; close any leftover overlay first. */
-    (document.querySelector("#rdsClose") as HTMLElement | null)?.click();
     document.body.innerHTML = "";
     mod.openStagingReview({});
     await settle(10);
