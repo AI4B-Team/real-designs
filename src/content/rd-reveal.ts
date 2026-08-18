@@ -48,7 +48,7 @@ import {
   noticeSignature, resolvePhoto, thumbDataUrl,
 } from "@/lib/photo-classify";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
-import { roomIcon, searchRooms } from "@/lib/staging-rooms";
+import { roomIcon, searchRooms, groupRooms } from "@/lib/staging-rooms";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { dedupeScenes, mergeScenes, reconcileScenes, uniqueIds } from "@/lib/scene-dedupe";
@@ -1650,11 +1650,12 @@ function roomPickerHtml() {
       <input id="rvRoomQ" value="${esc(q)}" placeholder="Search Room Types" autocomplete="off" maxlength="60">
     </div>
     <div class="rv-roomlist">
-      ${found.map((r) => `<button class="rv-roomopt ${cur === r.label ? "on" : ""}" data-roomset="${esc(r.label)}">
-        <i data-lucide="${esc(r.icon)}"></i><span>${esc(r.label)}</span>${cur === r.label ? `<em data-lucide="check"></em>` : ""}</button>`).join("")}
+      ${groupRooms(found).map((g) => `<div class="rv-roomgrp">${esc(g.group)}</div>` + g.rooms.map((r) => `<button class="rv-roomopt ${cur === r.label ? "on" : ""}" data-roomset="${esc(r.label)}">
+        <i data-lucide="${esc(r.icon)}"></i><span>${esc(r.label)}</span>${cur === r.label ? `<em data-lucide="check"></em>` : ""}</button>`).join("")).join("")}
       ${custom ? `<button class="rv-roomopt custom" data-roomset="${esc(q.trim())}"><i data-lucide="plus"></i><span>Use “${esc(q.trim())}”</span></button>` : ""}
       ${found.length || custom ? "" : `<div class="rv-note sm">No Room Types Match That Search.</div>`}
     </div>
+
     <div class="rv-roomfoot">
       <button class="rv-roomopt ${cur === UNSORTED ? "on" : ""}" data-roomset="${esc(UNSORTED)}"><i data-lucide="circle-dashed"></i><span>Unassigned</span></button>
       <button class="rv-roomopt ${cur === NEEDS_REVIEW ? "on" : ""}" data-roomset="${esc(NEEDS_REVIEW)}"><i data-lucide="circle-help"></i><span>Needs Review</span></button>
