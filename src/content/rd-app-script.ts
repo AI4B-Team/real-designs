@@ -305,12 +305,16 @@ function go(v,fromHash){
   }
 
   if(v==='studio'){
+    /* Repainting the controls is safe in both contexts. Anything that could
+       start a new generic session is skipped while a Canvas is active. */
     try{ paintStudioSub(); paintStudioState(); }catch(_){}
-    /* Media hands a draft id over the window so Studio reopens the real work. */
-    try{
-      const did=(window as any).__rdStudioDraft;
-      if(did){ (window as any).__rdStudioDraft=null; resumeStudioDraft(did); }
-    }catch(_){}
+    if(!inPhotoCanvas()){
+      /* Media hands a draft id over the window so Studio reopens the real work. */
+      try{
+        const did=(window as any).__rdStudioDraft;
+        if(did){ (window as any).__rdStudioDraft=null; resumeStudioDraft(did); }
+      }catch(_){}
+    }
   }
   /* Photo staging is a normal page: mount it on entry, hand the rail back on
      exit, so browser Back and a refresh both behave like every other view. */
