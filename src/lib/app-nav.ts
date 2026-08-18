@@ -27,7 +27,7 @@ export interface NavEntry {
   from: string;
   to: string;
   reason: NavReason;
-  source?: string;
+  source?: string | undefined;
   userInitiated: boolean;
 }
 
