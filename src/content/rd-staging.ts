@@ -44,6 +44,7 @@ import {
   downloadOriginal,
   pickOneImage,
 } from "@/lib/builder-card-menu";
+import { cardStatusHtml, registerCardStatus } from "@/lib/builder-card-status";
 import { setHandoff } from "@/lib/handoff";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
@@ -628,6 +629,36 @@ function ordered() {
   return S.items.slice();
 }
 
+/* Active design settings for one photo. Passive metadata — room type, the
+   property it belongs to, the selection state — is never counted here; only
+   things the user actually applied show up. */
+function designFeatures(it) {
+  if (!it) return [];
+  const d = S.direction || null;
+  const touched = !!(it.resultPath || it.state === "generating" || it.state === "complete" || it.done);
+  const out = [];
+  if (d && touched && d.direction)
+    out.push({ id: "style", icon: "palette", label: "Style", value: d.direction, removable: false });
+  if (d && touched && d.notes)
+    out.push({ id: "notes", icon: "pencil-line", label: "Design Instructions", value: d.notes, removable: false });
+  if (it.resultPath)
+    out.push({ id: "version", icon: "layers", label: "Generated Version", value: "Ready", removable: false });
+  else if (it.state === "generating")
+    out.push({ id: "version", icon: "loader", label: "Design", value: "Generating", removable: false });
+  return out;
+}
+
+registerCardStatus("photo", {
+  title: "Design Settings",
+  features(key) { return designFeatures(itemAt(key)); },
+  edit(key) { openCanvasFor(key); },
+});
+
+function openCanvasFor(key) {
+  const el = document.querySelector(`[data-open="${CSS.escape(String(key))}"]`);
+  if (el) el.click();
+}
+
 function cardHtml(it, seq) {
   const st = stateOf(it);
   const ws = workState(it);
@@ -641,6 +672,7 @@ function cardHtml(it, seq) {
       <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
+      ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
       ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: (it.room ? it.room + " photo" : "Photo " + n) })}
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
