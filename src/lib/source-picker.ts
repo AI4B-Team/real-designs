@@ -122,8 +122,12 @@ export type PickerOptions = {
   /** Called with the photos the user confirmed for a property. */
   onPropertyPhotos?: (p: PickerProperty, photos: PickerPhoto[]) => void | Promise<void>;
 
-  /** Finished designs, for the design source. */
+  /** Finished designs, for the design source (legacy synchronous list). */
   designs?: () => Array<{ id: string; label: string; sub?: string; badge?: string }>;
+  /** Finished designs read from the database, for the design source. */
+  loadDesigns?: () => Promise<PickerDesign[]>;
+  /** Called with the finished designs the user selected, in order. */
+  onDesigns?: (designs: PickerDesign[]) => void | Promise<void>;
   /** Which source opens first, so a host can remember the tab across renders. */
   initialTab?: SourceId;
   onTab?: (tab: SourceId) => void;
