@@ -1356,10 +1356,13 @@ function openAssign(items) {
       <h3>Assign To A Property</h3>
       <p>${usable.length} Item${usable.length === 1 ? "" : "s"} Will Move. Nothing Is Copied — The Same Record Shows In Media And Under The Property.</p>
       ${list.length !== usable.length ? `<p class="ml-assign-note">${list.length - usable.length} Design${list.length - usable.length === 1 ? "" : "s"} Stay With Their Room's Property.</p>` : ""}
+      <label class="ml-assign-f"><span>Search Your Properties</span>
+        <input id="maFind" placeholder="Start typing an address" autocomplete="off"></label>
       <label class="ml-assign-f"><span>Existing Property</span>
-        <select id="maSel"><option value="">Choose A Property</option>${S.propList
+        <select id="maSel" size="1"><option value="">Choose A Property</option>${S.propList
           .map((p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`)
           .join("")}</select></label>
+
       <label class="ml-assign-f"><span>Or Add A New Address</span>
         <input id="maNew" placeholder="123 Main Street, Austin TX"></label>
       <div class="ml-assign-a">
