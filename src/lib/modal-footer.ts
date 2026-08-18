@@ -22,6 +22,12 @@ export type ModalAction = {
   hint?: string;
   /** Reserved width label used while loading ("Deleting…"). */
   loadingLabel?: string;
+  /**
+   * Neutral actions default to a quiet ghost. "outline" gives the same
+   * geometry a white background and a visible neutral border, for a secondary
+   * action that still needs to read as a real button (never solid black).
+   */
+  variant?: "ghost" | "outline";
 };
 
 export type ModalFooterOptions = {
