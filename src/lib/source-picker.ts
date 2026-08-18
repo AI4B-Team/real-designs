@@ -14,18 +14,19 @@ import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { MAX_FILE_MB, rejectReason } from "@/lib/upload-manager";
 
-export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design";
+export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design" | "describe";
 export type PickerContext = "design" | "video" | "property-media" | "batch";
 
 export type PickedFile = { file: File; flags: string[] };
 
 export const SOURCE_META: Record<SourceId, { icon: string; label: string; desc: string }> = {
   upload: { icon: "upload-cloud", label: "Upload", desc: "Drag and drop or browse." },
-  cloud: { icon: "cloud", label: "Google Drive Or Dropbox", desc: "Paste a public share link." },
+  cloud: { icon: "cloud", label: "Cloud", desc: "Paste a Google Drive or Dropbox share link." },
   address: { icon: "map-pin", label: "Property Address", desc: "Fills in address and listing details." },
   url: { icon: "link", label: "Listing URL", desc: "Reads listing text, no media." },
   property: { icon: "home", label: "Existing Property", desc: "Reuse photos already uploaded." },
   design: { icon: "images", label: "Existing Design", desc: "Start from a finished design." },
+  describe: { icon: "pen-line", label: "Describe", desc: "No photo yet: describe the space instead." },
 };
 
 export type ContextConfig = {
@@ -40,7 +41,7 @@ const IMAGE_ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.heif";
 
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
-    sources: ["upload", "cloud", "property"],
+    sources: ["upload", "cloud", "property", "describe"],
     /* Many photos are handed to the staging review grid, never dropped. */
     multiple: true,
     accept: IMAGE_ACCEPT + ",application/pdf,.pdf",
@@ -104,6 +105,8 @@ export type PickerOptions = {
   onProperty?: (address: string) => void;
   /** Called when the user chooses a finished design. */
   onDesign?: (id: string) => void;
+  /** Called when the user picks the Describe tab instead of adding photos. */
+  onDescribe?: () => void;
   /** Optional "Try A Sample Space" affordance under the dropzone. */
   onSample?: () => void;
   showAlert?: (msg: string) => void;
@@ -330,10 +333,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         '<div class="sp-drop' + (state.dragging ? " over" : "") + '" data-sp-drop="1">' +
         '<i data-lucide="upload-cloud"></i>' +
         "<b>" + (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") + "</b>" +
-        '<span class="sp-or">Drag and drop, or</span>' +
-        '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Browse Files</button>' +
-        '<span class="sp-hint">Supported files: ' + esc(cfg.acceptHint) + ' · Up to ' + MAX_MB + " MB each</span>" +
-        (opts.onSample ? '<button type="button" class="sp-link" data-sp="sample">Not Ready To Upload? Try A Sample Space</button>' : "") +
+        '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Choose Photos</button>' +
+        '<span class="sp-hint">' + esc(cfg.acceptHint) + " \u00b7 " + MAX_MB + "MB each</span>" +
         "</div>"
       );
     }
@@ -379,6 +380,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           )
           .join("") +
         "</div></div>"
+      );
+    }
+    if (state.tab === "describe") {
+      return (
+        '<div class="sp-pane sp-describe">' +
+        "<p>No photo yet? Describe the space in words and we build a concept from your description.</p>" +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="describe">Describe A Space</button>' +
+        "</div>"
       );
     }
     if (state.tab === "design") {
@@ -522,6 +531,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const k = act.dataset["sp"];
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
+    else if (k === "describe") opts.onDescribe?.();
     else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
