@@ -81,7 +81,7 @@
 .ml-body { padding:12px 14px 14px; display:flex; flex-direction:column; flex:1; gap:6px; }
 .ml-t { display:flex; align-items:center; gap:8px; justify-content:space-between; }
 .ml-t b { font-size:13.5px; line-height:1.3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.ml-sub { font-size:11px; color:#6b7280; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.ml-sub { font-family:inherit; font-size:11.5px; letter-spacing:0; color:#6b7280; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .ml-acts { display:flex; flex-wrap:wrap; gap:6px; margin-top:auto; padding-top:10px; min-width:0; }
 .ml-acts > * { min-width:0; }
 .ml .pill { display:inline-flex; align-items:center; gap:5px; font-family:'Inter',system-ui,sans-serif;
