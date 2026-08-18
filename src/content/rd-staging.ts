@@ -45,6 +45,15 @@ import {
   pickOneImage,
 } from "@/lib/builder-card-menu";
 import { cardStatusHtml, registerCardStatus } from "@/lib/builder-card-status";
+import { formatSelectorHtml } from "@/lib/builder-format-selector";
+import {
+  OUTPUT_RATIOS,
+  DEFAULT_OUTPUT_RATIO,
+  normalizeOutputRatio,
+  normalizeOverride,
+  ratioLabel,
+  effectiveRatio,
+} from "@/lib/output-ratio";
 import { setHandoff } from "@/lib/handoff";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
@@ -97,6 +106,9 @@ function newSession(seed = {}) {
     lastOpened: null,
     activeKey: null,
     busy: false,
+    /* Project-level Photo Design output ratio. "original" keeps every photo's
+       native aspect; a photo may still carry its own override. */
+    outputRatio: normalizeOutputRatio(seed.outputRatio),
   };
 }
 
@@ -121,6 +133,10 @@ function mkItem(file) {
     resultPath: null,
     resultUrl: null,
     err: "",
+    /* null = follow the project default. */
+    ratio: null,
+    /* The ratio a finished design was actually rendered at. */
+    resultRatio: null,
   };
 }
 
@@ -187,12 +203,15 @@ function draftPayload() {
     settings: {
       current: S.current || null,
       direction: S.direction || null,
+      output_ratio: normalizeOutputRatio(S.outputRatio),
       rooms: S.items.reduce((m, i) => {
         m[i.key] = {
           room: i.room || null,
           state: i.state || (i.done ? "complete" : "none"),
           result_path: i.resultPath || null,
           error: i.err || "",
+          ratio: normalizeOverride(i.ratio),
+          result_ratio: i.resultRatio || null,
         };
         return m;
       }, {}),
@@ -405,6 +424,7 @@ function hydrate(draft) {
   const assets = (draft.assets || []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   const rooms = (draft.settings && draft.settings.rooms) || {};
   S.direction = (draft.settings && draft.settings.direction) || null;
+  S.outputRatio = normalizeOutputRatio(draft.settings && draft.settings.output_ratio);
   S.items = assets.map((a) => {
     const saved = rooms[a.key] || {};
     return {
@@ -427,6 +447,8 @@ function hydrate(draft) {
       state: saved.state === "generating" ? "failed" : saved.state || (a.done ? "complete" : "none"),
       resultPath: saved.result_path || null,
       resultUrl: null,
+      ratio: normalizeOverride(saved.ratio),
+      resultRatio: saved.result_ratio || null,
       err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
     };
   });
@@ -641,6 +663,8 @@ function designFeatures(it) {
     out.push({ id: "style", icon: "palette", label: "Style", value: d.direction, removable: false });
   if (d && touched && d.notes)
     out.push({ id: "notes", icon: "pencil-line", label: "Design Instructions", value: d.notes, removable: false });
+  if (it.ratio)
+    out.push({ id: "ratio", icon: "crop", label: "Output Ratio", value: ratioLabel(it.ratio), removable: false });
   if (it.resultPath)
     out.push({ id: "version", icon: "layers", label: "Generated Version", value: "Ready", removable: false });
   else if (it.state === "generating")
@@ -803,6 +827,13 @@ function render() {
         <p>Confirm the room type for each photo.</p>
       </div>
       <div class="rv-head-tools">
+        ${formatSelectorHtml({
+          label: "Output Ratio",
+          options: OUTPUT_RATIOS,
+          value: normalizeOutputRatio(S.outputRatio),
+          attr: "ratio",
+          id: "rds-ratio",
+        })}
         <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
         <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
@@ -1246,6 +1277,7 @@ registerCardMenu("photo", {
         items: [
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
           { action: "room", label: "Change Room", icon: "door-open" },
+          { action: "ratio", label: "Output Ratio", icon: "crop" },
           { action: "tovideo", label: "Create Video From Photo", icon: "clapperboard", hidden: !stored },
           { action: "versions", label: "View Versions", icon: "history", hidden: !it.resultPath && it.state !== "complete" },
           { action: "download", label: "Download Original", icon: "download", hidden: !stored && !it.previewUrl },
@@ -1269,6 +1301,7 @@ registerCardMenu("photo", {
       cmToast("New Variation Added. Your Saved Versions Are Untouched.");
       return void openInCanvas(clone.key);
     }
+    if (action === "ratio") return void openRatioOverride(it);
     if (action === "room") {
       const btn = document.querySelector('.rv-tile[data-k="' + (window.CSS?.escape ? CSS.escape(key) : key) + '"] [data-room]');
       if (btn) btn.click();
