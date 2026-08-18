@@ -1066,9 +1066,14 @@ export async function renderReveal(
           const want = Math.min(dur - 0.02, (local / 1000) % Math.max(dur, 0.1));
           if (v.paused) { v.currentTime = Math.max(0, want); void v.play().catch(() => {}); }
           if (v.readyState >= 2) drawClipFrame(ctx, v, W, H);
-          else drawMotion(ctx, img, W, H, motion, p);
+          else drawMotion(ctx, img, W, H, motion, p, scene.crop);
+        } else if (endFrames[idx]) {
+          drawStartEnd(
+            ctx, img, endFrames[idx]!, W, H,
+            scene.seTransition || "blend", p, scene.startCrop || scene.crop, scene.endCrop,
+          );
         } else {
-          drawMotion(ctx, img, W, H, motion, p);
+          drawMotion(ctx, img, W, H, motion, p, scene.crop);
         }
 
         if (scene.motion_level === "immersive") {
