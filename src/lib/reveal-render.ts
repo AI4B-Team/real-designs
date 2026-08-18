@@ -439,7 +439,69 @@ function drawMotion(
   const scale = Math.max(W / img.width, H / img.height) * zoom;
   const w = img.width * scale;
   const h = img.height * scale;
-  ctx.drawImage(img, (W - w) / 2 + dx, (H - h) / 2 + dy, w, h);
+  /* Focal crop: anchor the cover-fill to the top or bottom of the photo
+     instead of its middle, so the configured framing survives the export. */
+  const slackY = Math.max(0, h - H) / 2;
+  const anchor = crop === "top" ? -slackY : crop === "bottom" ? slackY : 0;
+  ctx.drawImage(img, (W - w) / 2 + dx, (H - h) / 2 + dy + anchor, w, h);
+}
+
+/**
+ * Standard Start/End: one scene that genuinely begins on the start frame and
+ * ends on the end frame. Deterministic — no model, no credits.
+ */
+function drawStartEnd(
+  ctx: CanvasRenderingContext2D,
+  a: HTMLImageElement,
+  b: HTMLImageElement,
+  W: number,
+  H: number,
+  style: string,
+  t: number,
+  cropA?: string | null,
+  cropB?: string | null,
+) {
+  /* Hold each frame briefly so the export unmistakably starts on the start
+     frame and lands on the end frame. */
+  const HOLD = 0.22;
+  const mix = Math.min(Math.max((t - HOLD) / Math.max(1 - HOLD * 2, 0.01), 0), 1);
+  const ease = mix * mix * (3 - 2 * mix);
+
+  if (style === "match") {
+    // One shared camera move across both frames: the space changes in place.
+    drawMotion(ctx, a, W, H, "push", t, cropA);
+    if (ease > 0) {
+      ctx.save();
+      ctx.globalAlpha = ease;
+      drawMotion(ctx, b, W, H, "push", t, cropB);
+      ctx.restore();
+    }
+    return;
+  }
+
+  if (style === "slide_left" || style === "slide_right") {
+    const dir = style === "slide_left" ? 1 : -1;
+    ctx.save();
+    ctx.translate(-dir * W * ease, 0);
+    drawMotion(ctx, a, W, H, "static", t, cropA);
+    ctx.restore();
+    if (ease > 0) {
+      ctx.save();
+      ctx.translate(dir * W * (1 - ease), 0);
+      drawMotion(ctx, b, W, H, "static", t, cropB);
+      ctx.restore();
+    }
+    return;
+  }
+
+  const motion = style === "push" ? "push" : style === "pull" ? "pull" : "drift_in";
+  drawMotion(ctx, a, W, H, motion, t, cropA);
+  if (ease > 0) {
+    ctx.save();
+    ctx.globalAlpha = ease;
+    drawMotion(ctx, b, W, H, motion, t, cropB);
+    ctx.restore();
+  }
 }
 
 function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, bg: string, fg: string) {
