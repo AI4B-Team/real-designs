@@ -58,6 +58,126 @@ export function propertyBuckets(items: any[], propertyId: string | null) {
   };
 }
 
+/* ------------------------------------------------------------------ drafts */
+
+export const DRAFT_TYPE_LABEL: Record<string, string> = {
+  photo_staging: "Photo Staging",
+  photo_redesign: "Image Design",
+  property_video: "Property Video",
+};
+
+/** Which media group a draft belongs to, expressed as a normal media type. */
+const DRAFT_MEDIA_TYPE: Record<string, string> = {
+  photo_staging: "uploaded_image",
+  photo_redesign: "generated_image",
+  property_video: "generated_video",
+};
+
+const draftAssets = (d: any) => (Array.isArray(d?.assets) ? d.assets : []);
+
+/** One durable draft row becomes exactly one project card, never one per photo. */
+export function draftRecord(d: any) {
+  const assets = draftAssets(d);
+  const preview = assets.map((a: any) => a && a.path).find((p: any) => p && !/^(blob:|data:)/i.test(p)) || "";
+  const type = DRAFT_MEDIA_TYPE[d.project_type] || "uploaded_image";
+  return {
+    id: "draft_" + d.id,
+    refId: d.id,
+    draftId: d.id,
+    draft: true,
+    draftType: d.project_type,
+    draftTypeLabel: DRAFT_TYPE_LABEL[d.project_type] || "Project",
+    videoProjectId: d.video_project_id || null,
+    type,
+    status: "draft",
+    title: d.title || DRAFT_TYPE_LABEL[d.project_type] || "Untitled Project",
+    propertyId: d.property_id || null,
+    property: d.property_address || null,
+    address: d.property_address || null,
+    room: null,
+    path: preview,
+    photoCount: assets.length,
+    builderStep: d.builder_step || null,
+    createdAt: d.created_at || d.updated_at || null,
+    updatedAt: d.updated_at || d.created_at || null,
+    settings: {},
+  };
+}
+
+/**
+ * Fold durable drafts into the canonical records. A video draft already has a
+ * `video_projects` row on screen, so it enriches that card instead of adding a
+ * second one — one project, one card.
+ */
+export function mergeDrafts(items: any[], drafts: any[] = []) {
+  const out = (items || []).slice();
+  const byVideo = new Map<string, any>();
+  out.forEach((m) => {
+    if (m && m.type === "generated_video" && m.refId) byVideo.set(String(m.refId), m);
+  });
+  (drafts || []).forEach((d: any) => {
+    if (!d || !d.id) return;
+    if (d.status && d.status !== "draft" && d.status !== "active") return;
+    const linked = d.video_project_id ? byVideo.get(String(d.video_project_id)) : null;
+    if (linked) {
+      linked.draft = true;
+      linked.draftId = d.id;
+      linked.draftType = d.project_type;
+      linked.draftTypeLabel = DRAFT_TYPE_LABEL[d.project_type] || "Property Video";
+      linked.builderStep = d.builder_step || linked.builderStep || null;
+      linked.updatedAt = d.updated_at || linked.updatedAt || linked.createdAt;
+      if (!linked.propertyId && d.property_id) linked.propertyId = d.property_id;
+      return;
+    }
+    out.push(draftRecord(d));
+  });
+  return out;
+}
+
+/**
+ * Render jobs that no longer have a visible project card still need to be
+ * visible as processing or failed work.
+ */
+export function mergeRenderJobs(items: any[], jobs: any[] = []) {
+  const out = (items || []).slice();
+  const byVideo = new Map<string, any>();
+  out.forEach((m) => {
+    if (m && m.type === "generated_video" && m.refId) byVideo.set(String(m.refId), m);
+  });
+  (jobs || []).forEach((j: any) => {
+    if (!j || !j.id) return;
+    const st = String(j.status || "").toLowerCase();
+    const live = st === "queued" || st === "rendering";
+    if (!live && st !== "failed") return;
+    const card = j.video_project_id ? byVideo.get(String(j.video_project_id)) : null;
+    if (card) {
+      card.status = live ? "processing" : "failed";
+      card.progress = j.progress == null ? card.progress : Math.round(Number(j.progress) * 100);
+      card.stage = j.stage || card.stage || (live ? "rendering" : null);
+      if (!live) card.error = j.error_message || card.error || null;
+      card.jobId = j.id;
+      return;
+    }
+    out.push({
+      id: "job_" + j.id,
+      refId: j.video_project_id || j.id,
+      jobId: j.id,
+      type: "generated_video",
+      status: live ? "processing" : "failed",
+      title: "Video Render",
+      propertyId: null,
+      property: null,
+      path: "",
+      progress: j.progress == null ? null : Math.round(Number(j.progress) * 100),
+      stage: j.stage || (live ? "rendering" : null),
+      error: j.error_message || null,
+      createdAt: j.created_at || null,
+      settings: {},
+    });
+  });
+  return out;
+}
+
 export type MediaFilter = {
   tab?: string;
   status?: string;
@@ -68,6 +188,25 @@ export type MediaFilter = {
   isFav?: (id: string) => boolean;
 };
 
+/** Tabs that select by media group rather than by lifecycle state. */
+const TAB_GROUPS: Record<string, string[]> = {
+  images: ["images", "uploads"],
+  uploads: ["uploads"],
+  videos: ["videos"],
+};
+
+export function matchesTab(m: any, tab: string) {
+  if (!tab || tab === "all") return true;
+  const groups = TAB_GROUPS[tab];
+  if (groups) return groups.indexOf(typeGroup(m.type)) > -1;
+  if (tab === "drafts") return m.status === "draft";
+  if (tab === "processing") return m.status === "processing" || m.status === "queued";
+  if (tab === "completed") return m.status === "ready" || m.status === "shared";
+  if (tab === "failed") return m.status === "failed";
+  if (tab === "unassigned") return !m.propertyId;
+  return true;
+}
+
 export function filterMedia(items: any[], f: MediaFilter = {}) {
   const tab = f.tab || "all";
   const status = f.status || "all";
@@ -76,14 +215,14 @@ export function filterMedia(items: any[], f: MediaFilter = {}) {
   const fav = f.isFav || (() => false);
 
   let list = (items || []).filter((m) => {
-    if (tab !== "all" && typeGroup(m.type) !== tab) return false;
+    if (!matchesTab(m, tab)) return false;
     if (status !== "all" && m.status !== status) return false;
     if (status === "all" && m.status === "archived") return false;
     if (property === "none" && m.propertyId) return false;
     if (property !== "all" && property !== "none" && m.propertyId !== property) return false;
     if (f.favOnly && !fav(m.id)) return false;
     if (q) {
-      const hay = [m.title, m.property, m.project, m.address, m.city, m.room, m.fileName, m.type, m.status]
+      const hay = [m.title, m.property, m.project, m.address, m.city, m.room, m.fileName, m.type, m.status, m.draftTypeLabel]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -91,6 +230,7 @@ export function filterMedia(items: any[], f: MediaFilter = {}) {
     }
     return true;
   });
+
 
   if (f.sort === "old") list = list.slice().reverse();
   else if (f.sort === "name") list = list.slice().sort((a, b) => String(a.title).localeCompare(String(b.title)));
