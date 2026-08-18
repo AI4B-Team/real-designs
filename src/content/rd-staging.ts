@@ -896,6 +896,60 @@ function toggleSelect(it, next) {
   saveDraft();
 }
 
+/* -------------------------------------------------------- bulk designing
+   One shared direction, one render per photo. Every photo is charged on its
+   own and a failure only ever fails that photo, so the rest of the batch
+   still finishes and only the failed ones offer a retry. */
+
+function runBatch(batch, direction) {
+  S.busy = true;
+  S.direction = direction;
+  syncSelection();
+  batch.forEach((it) => {
+    it.state = "generating";
+    it.err = "";
+    patchCard(it);
+  });
+  runBulkDesign(batch, direction, {
+    onUpdate: (it) => {
+      patchCard(it);
+      saveDraft();
+    },
+    onDone: () => {
+      S.busy = false;
+      syncSelection();
+      saveDraft();
+      const failed = batch.filter((i) => i.state === "failed").length;
+      if (failed) {
+        try {
+          window.rdToast && window.rdToast(`${failed} photo${failed === 1 ? "" : "s"} did not render. Retry them from the card.`);
+        } catch (_) {}
+      }
+    },
+  });
+}
+
+function startBulkDesign(list, reuseDirection) {
+  if (!S || S.busy) return;
+  const items = (list && list.length ? list : S.items.filter((i) => i.selected)).filter(
+    (i) => i.status !== "uploading",
+  );
+  if (!items.length) return;
+  if (reuseDirection && S.direction) {
+    runBatch(items, S.direction);
+    return;
+  }
+  openBulkDesign({
+    items,
+    onEdit: () => {
+      S.step = "review";
+      render();
+    },
+    onStart: (batch, direction) => runBatch(batch, direction),
+  });
+}
+
+
 function applyRoomToSelected(anchor) {
   const sel = S.items.filter((i) => i.selected);
   if (!sel.length || !anchor) return;
