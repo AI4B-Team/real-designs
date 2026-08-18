@@ -3429,7 +3429,9 @@ async function paintTeam(){
 
   list.querySelectorAll('[data-accept]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await acceptInvite({data:{id:b.dataset.accept}}); }catch(_){}
-    paintTeam(); paintInviteBanner(); setTimeout(()=>window.location.reload(),400);
+    /* Joining a workspace changes the data, not the page: refresh what the
+       accepted invite affects instead of reloading the whole app. */
+    paintTeam(); paintInviteBanner(); refreshAfterInvite();
   }));
   list.querySelectorAll('[data-decline]').forEach(b=>b.addEventListener('click',async()=>{
     b.disabled=true; try{ await declineInvite({data:{id:b.dataset.decline}}); }catch(_){}
@@ -3451,6 +3453,12 @@ async function paintTeam(){
 paintTeam();
 window.addEventListener('rd:credits-changed',()=>paintTeam());
 
+/** Refresh workspace-scoped data after an invite is accepted. */
+function refreshAfterInvite(){
+  try{ reloadTree(); }catch(_){}
+  try{ window.dispatchEvent(new CustomEvent('rd:credits-changed')); }catch(_){}
+}
+
 /* Pending workspace invites: shown at the top of the app until answered. */
 async function paintInviteBanner(){
   const host=document.querySelector('.content')||document.querySelector('.main'); if(!host) return;
@@ -3466,7 +3474,7 @@ async function paintInviteBanner(){
     +'<button class="btn btn-ghost btn-xs" id="ibNo">Decline</button>'
     +'<button class="btn btn-primary btn-xs" id="ibYes">Accept Invite</button>';
   lucide.createIcons();
-  const done=()=>{ paintInviteBanner(); paintTeam(); setTimeout(()=>window.location.reload(),400); };
+  const done=()=>{ paintInviteBanner(); paintTeam(); refreshAfterInvite(); };
   const yes=document.getElementById('ibYes'), no=document.getElementById('ibNo');
   if(yes) yes.addEventListener('click',async()=>{ yes.disabled=true; try{ await acceptInvite({data:{id:i.id}}); }catch(_){} done(); });
   if(no) no.addEventListener('click',async()=>{ no.disabled=true; try{ await declineInvite({data:{id:i.id}}); }catch(_){} paintInviteBanner(); });
