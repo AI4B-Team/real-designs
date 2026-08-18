@@ -1132,8 +1132,8 @@
    hang outside the panel, so the same control tucks just inside the card's
    right edge at the SAME vertical centre — clear of the bottom hover toolbar. */
 .rd-app .rv-conn.wrap { right: 8px; }
-@media (max-width: 720px) {
-  /* stacked cards: the control sits on the seam beneath the card */
+@container rvwork (max-width: 359px) {
+  /* one card per row: the seam is horizontal, so the control sits on it */
   .rd-app .rv-conn, .rd-app .rv-conn.wrap { right: 50%; margin-right: -15px; top: auto; bottom: -21px;
     margin-top: 0; opacity: 1; visibility: visible; }
 }
