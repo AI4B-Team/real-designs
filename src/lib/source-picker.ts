@@ -85,12 +85,39 @@ export async function normalizeImageFile(f: File): Promise<File> {
 
 export const MAX_MB = MAX_FILE_MB;
 
+/** One selectable property (or the Unassigned Photos utility card). */
+export type PickerProperty = {
+  id?: string;
+  address: string;
+  /** Legacy free-text meta such as "12 Photos"; prefer count. */
+  meta?: string;
+  /** Structured address fields, used before the free-text address. */
+  parts?: Partial<ProjectAddress> | null;
+  count?: number | null;
+  /** Storage path of a representative photo. */
+  thumb?: string | null;
+  unassigned?: boolean;
+  /** Filled in by the picker. */
+  line1?: string;
+  line2?: string;
+};
+
+export type PickerPhoto = { id: string; path: string; name?: string };
+
 export type PickerOptions = {
   context: PickerContext;
   esc: (s: string) => string;
   lucide?: { createIcons: (o?: any) => void };
   /** Properties already in the workspace, for the property source. */
-  properties?: () => Array<{ address: string; meta?: string }>;
+  properties?: () => Array<PickerProperty>;
+  /** Photos of one property. When present, choosing a property opens a
+      selection panel instead of importing everything. */
+  loadPropertyPhotos?: (p: PickerProperty) => Promise<PickerPhoto[]>;
+  /** Resolves a storage path into a displayable URL (signed, cached). */
+  resolvePhoto?: (path: string) => Promise<string | null>;
+  /** Called with the photos the user confirmed for a property. */
+  onPropertyPhotos?: (p: PickerProperty, photos: PickerPhoto[]) => void | Promise<void>;
+
   /** Finished designs, for the design source. */
   designs?: () => Array<{ id: string; label: string; sub?: string; badge?: string }>;
   /** Which source opens first, so a host can remember the tab across renders. */
