@@ -705,27 +705,18 @@ function mountPicker(slot) {
 }
 
 function bindReview(el) {
-  el.querySelector("#rdsClose").onclick = exitAll;
+  el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
   el.querySelector("#rdsBack").onclick = () => {
     /* Back keeps every photo, room and selection: only the step changes. */
     saveDraft();
     S.step = "add";
     render();
   };
-  const menu = el.querySelector("#rdsMoreMenu");
-  const moreBtn = el.querySelector("#rdsMoreBtn");
-  const closeMenu = () => { menu.classList.remove("on"); moreBtn.setAttribute("aria-expanded", "false"); };
-  moreBtn.onclick = (e) => {
-    e.stopPropagation();
-    const open = !menu.classList.contains("on");
-    menu.classList.toggle("on", open);
-    moreBtn.setAttribute("aria-expanded", String(open));
-  };
-  document.addEventListener("click", closeMenu, { once: true });
-  menu.querySelectorAll("[data-act]").forEach((b) =>
+  /* Same overflow menus as the video builder: a native <details> popover. */
+  el.querySelectorAll("[data-act]").forEach((b) =>
     b.addEventListener("click", () => {
       const act = b.getAttribute("data-act");
-      closeMenu();
+      el.querySelectorAll("details.rv-more[open]").forEach((d) => d.removeAttribute("open"));
       if (act === "all") { S.items.forEach((i) => (i.selected = true)); saveDraft(); syncSelection(); return; }
       if (act === "none") { S.items.forEach((i) => (i.selected = false)); saveDraft(); syncSelection(); return; }
       if (act === "room") { applyRoomToSelected(el.querySelector("#rdsSetRoom") || b); return; }
@@ -745,25 +736,42 @@ function bindReview(el) {
     };
   }
 
+  const selAll = el.querySelector("#rdsSelAll");
+  if (selAll) {
+    selAll.onchange = () => {
+      S.items.forEach((i) => (i.selected = selAll.checked));
+      saveDraft();
+      syncSelection();
+    };
+  }
+
   el.querySelector("#rdsSetRoom").onclick = (e) => applyRoomToSelected(e.currentTarget);
   el.querySelector("#rdsGo").onclick = startDesigning;
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
      controls are delegated from the page instead of bound per element. */
-  el.addEventListener("change", (e) => {
-    const c = e.target.closest && e.target.closest("[data-sel]");
-    if (!c) return;
-    const it = S.items.find((i) => i.key === c.getAttribute("data-sel"));
-    if (!it) return;
-    toggleSelect(it, c.checked);
-  });
   el.addEventListener("click", (e) => {
     const t = e.target;
     if (!t || !t.closest) return;
-    const open = t.closest("[data-open]");
-    if (open) { openInCanvas(open.getAttribute("data-open")); return; }
+    /* The check tile owns selection; the photo itself opens the canvas. */
+    const pick = t.closest("[data-sel]");
+    if (pick) {
+      e.preventDefault();
+      e.stopPropagation();
+      const it = S.items.find((i) => i.key === pick.getAttribute("data-sel"));
+      if (it) toggleSelect(it, !it.selected);
+      return;
+    }
+    const more = t.closest("[data-toolsmore]");
+    if (more) {
+      e.preventDefault();
+      e.stopPropagation();
+      const tile = more.closest(".rv-tile");
+      if (tile) tile.classList.toggle("tools-open");
+      return;
+    }
     const del = t.closest("[data-del]");
-    if (del) { removeOne(del.getAttribute("data-del")); return; }
+    if (del) { e.stopPropagation(); removeOne(del.getAttribute("data-del")); return; }
     const room = t.closest("[data-room]");
     if (room) {
       const it = S.items.find((i) => i.key === room.getAttribute("data-room"));
@@ -776,14 +784,22 @@ function bindReview(el) {
       }, it.key);
       return;
     }
-    /* Anywhere else on the card toggles selection. The checkbox handles
-       itself through the change event above. */
-    if (t.closest("[data-sel]") || t.closest(".rds-pick")) return;
-    const card = t.closest("[data-pick]");
-    if (card) {
-      const it = S.items.find((i) => i.key === card.getAttribute("data-pick"));
+    const open = t.closest("[data-open]");
+    if (open) { openInCanvas(open.getAttribute("data-open")); return; }
+  });
+  el.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const t = e.target;
+    if (!t || !t.closest) return;
+    const pick = t.closest("[data-sel]");
+    if (pick) {
+      e.preventDefault();
+      const it = S.items.find((i) => i.key === pick.getAttribute("data-sel"));
       if (it) toggleSelect(it, !it.selected);
+      return;
     }
+    const open = t.closest(".rv-tile-th[data-open]");
+    if (open) { e.preventDefault(); openInCanvas(open.getAttribute("data-open")); }
   });
 }
 
