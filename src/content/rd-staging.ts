@@ -749,7 +749,10 @@ function bindReview(el) {
   el.querySelector("#rdsGo").onclick = startDesigning;
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
-     controls are delegated from the page instead of bound per element. */
+     controls are delegated from the page instead of bound per element. The
+     page element survives re-renders, so delegation is attached only once. */
+  if (el.__rdsDelegated) return;
+  el.__rdsDelegated = true;
   el.addEventListener("click", (e) => {
     const t = e.target;
     if (!t || !t.closest) return;
