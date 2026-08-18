@@ -930,9 +930,9 @@ function idxOf(key) {
 }
 
 async function openInCanvas(key) {
-  const list = designSet();
-  const it = list.find((i) => i.key === key);
+  const it = S.items.find((i) => i.key === key);
   if (!it) return;
+
   S.current = key;
   rememberScroll();
   hide();
