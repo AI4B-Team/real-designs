@@ -13,8 +13,9 @@ import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
 import { openAddressModal } from "@/lib/address-modal";
 import { suggestAddresses } from "@/lib/property-address.functions";
-import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL } from "@/lib/media-view";
-import { deleteProjectDraft } from "@/lib/drafts.functions";
+import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL, mediaTypeLabel } from "@/lib/media-view";
+import { deleteProjectDraft, renameProjectDraft, assignProjectDraft } from "@/lib/drafts.functions";
+
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
@@ -437,8 +438,8 @@ function card(m) {
 /* ---------------- action model ---------------- */
 
 const READY = (m) => ["ready", "shared", "draft"].includes(m.status);
-const videoReady = (m) => READY(m) && typeGroup(m.type) !== "videos" && !!m.path;
-const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !!m.refId && READY(m);
+const videoReady = (m) => READY(m) && !m.draft && typeGroup(m.type) !== "videos" && !!m.path;
+const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !m.draft && !!m.refId && READY(m);
 const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
 const planBlocked = (m) => isPlanBlocked((m && m.error) || "");
@@ -483,65 +484,81 @@ function actions(m, g) {
     <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
 }
 
-/** Every secondary action for one asset. Only implemented workflows appear. */
-function moreItems(m) {
+/**
+ * Every secondary action for one asset, grouped so the list scans quickly.
+ * Only workflows this record can actually run appear, and nothing that is
+ * already a primary button is repeated here.
+ */
+function moreItems(m, opts = {} as any) {
   const g = typeGroup(m.type);
-  const fav = { icon: "heart", label: isFav(m.id) ? "Unfavorite" : "Favorite", fn: () => { toggleFav(m.id); render(); } };
+  const skip = new Set(opts.skip || []);
+  const fav = { group: "Organize", icon: "heart", label: isFav(m.id) ? "Remove From Favorites" : "Add To Favorites", fn: () => { toggleFav(m.id); render(); } };
+  const organize = () => {
+    const out = [fav];
+    if (isAssignable(m))
+      out.push({ group: "Organize", icon: "home", label: m.propertyId ? "Move To Another Property" : "Assign To A Property", fn: () => openAssign([m]) });
+    if (isAssignable(m) && m.propertyId)
+      out.push({ group: "Organize", icon: "unlink", label: "Remove From Property", fn: () => doAssign([m], null) });
+    if (m.type === "generated_video" || m.draft)
+      out.push({ group: "Organize", icon: "map-pin", label: m.address ? "Change Address" : "Add An Address", fn: () => changeAddress(m) });
+    if (canRename(m)) out.push({ group: "Organize", icon: "type", label: "Rename", fn: () => renameItem(m) });
+    return out;
+  };
+  const manage = () => [
+    ...(m.draft ? [] : [{ group: "Manage", icon: "archive", label: "Archive", fn: () => archive([m]) }]),
+    { group: "Manage", icon: "trash-2", label: m.draft ? "Delete Project" : "Delete", danger: true, fn: () => del(m) },
+  ];
+
   if (m.status === "failed")
     return [
-      { icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
-      ...(planBlocked(m) ? [{ icon: "zap", label: "Add Credits", fn: () => openUpgrade(m) }] : []),
-      { icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
-      { icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) },
-    ];
+      { group: "Create", icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
+      ...(planBlocked(m) ? [{ group: "Create", icon: "zap", label: "Add Credits", fn: () => openUpgrade(m) }] : []),
+      { group: "Create", icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
+      ...organize(),
+      ...manage(),
+    ].filter((it) => !skip.has(it.label));
 
-  if (g === "videos")
+  if (g === "videos" && !m.draft)
     return [
-      { icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
-      { icon: "copy", label: "Duplicate", fn: () => dupVideo(m, false) },
-      { icon: "scissors", label: "Create Short Version", fn: () => dupVideo(m, true) },
-      { icon: "ratio", label: "Change Format", fn: () => openVideo(m, "video") },
-      { icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") },
-      { icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) },
-      { icon: "type", label: "Rename", fn: () => renameItem(m) },
-      fav,
-      { icon: "archive", label: "Archive", fn: () => archive([m]) },
-      { icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) },
-    ];
-  const out = [];
-  if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
-  if (m.draft || isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => continueProject(m) });
-  if (canEditImage(m)) out.push({ icon: "wand-2", label: "Redesign In A Style", fn: () => restyleFrom([m]) });
-  out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
-  if (videoReady(m)) out.push({ icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
-  out.push({ icon: "wand-2", label: g === "uploads" ? "Create A Design" : "Use In Studio", fn: () => S.go("studio") });
-  if (g === "images") out.push({ icon: "layers", label: "Create Variations", fn: () => S.go("studio") });
-  if (m.sourcePath) out.push({ icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
-  if (isAssignable(m))
-    out.push({ icon: "home", label: m.propertyId ? "Move To Another Property" : "Assign To A Property", fn: () => openAssign([m]) });
-  if (isAssignable(m) && m.propertyId)
-    out.push({ icon: "unlink", label: "Remove From Property", fn: () => doAssign([m], null) });
-  if (m.type === "generated_video")
-    out.push({ icon: "map-pin", label: m.address ? "Change Address" : "Add An Address", fn: () => changeAddress(m) });
-  out.push({ icon: "layout-grid", label: "Add To Design", fn: () => S.go("designs") });
-  out.push({ icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
-  out.push({ icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
-  if (m.type === "uploaded_image" && !m.job) out.push({ icon: "type", label: "Rename", fn: () => renameItem(m) });
-  out.push(fav);
-  out.push({ icon: "archive", label: "Archive", fn: () => archive([m]) });
-  out.push({ icon: "trash-2", label: "Delete", danger: true, fn: () => del(m) });
-  return out;
+      { group: "Create", icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
+      { group: "Create", icon: "copy", label: "Duplicate", fn: () => dupVideo(m, false) },
+      { group: "Create", icon: "scissors", label: "Create Short Version", fn: () => dupVideo(m, true) },
+      { group: "Create", icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") },
+      { group: "Create", icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) },
+      ...organize(),
+      ...manage(),
+    ].filter((it) => !skip.has(it.label));
+
+  const out = [] as any[];
+  if (m.draft || isDesignDraft(m)) out.push({ group: "Create", icon: "play", label: "Continue Editing", fn: () => continueProject(m) });
+  if (canEditImage(m)) out.push({ group: "Create", icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
+  if (canEditImage(m)) out.push({ group: "Create", icon: "wand-2", label: "Redesign In A Style", fn: () => restyleFrom([m]) });
+  if (videoReady(m)) out.push({ group: "Create", icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
+  if (videoReady(m)) out.push({ group: "Create", icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
+  if (m.sourcePath) out.push({ group: "Create", icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
+  if (!m.draft) out.push({ group: "Create", icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
+  if (!m.draft) out.push({ group: "Create", icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
+  return [...out, ...organize(), ...manage()].filter((it) => !skip.has(it.label));
 }
+
+/** Renaming writes to a real row: a project draft, a video, or an upload. */
+const canRename = (m) =>
+  !!m && (!!m.draftId || m.type === "generated_video" || (m.type === "uploaded_image" && !m.job && !!m.refId));
+
 
 /* ---------------- popup menu ---------------- */
 
 let POP = null;
 function closePop() {
   if (POP) {
+    const a = POP.__anchor;
     POP.remove();
     POP = null;
+    /* Send focus back where it came from so keyboard users keep their place. */
+    try { a && a.isConnected && a.focus(); } catch (_) {}
   }
 }
+
 try {
   document.addEventListener("click", (e) => {
     if (POP && !POP.contains(e.target)) closePop();
@@ -558,26 +575,40 @@ try {
 
 } catch (_) {}
 
+/**
+ * One compact action menu. Items may carry a `group` label; the first item of
+ * each group prints a heading so long lists stay readable. The menu flips above
+ * its anchor when there is no room below and is fully keyboard operable.
+ */
 function popMenu(anchor, items) {
   closePop();
   const list = items.filter(Boolean);
   const el = document.createElement("div");
   el.className = "ml-pop";
   el.setAttribute("role", "menu");
+  let seen = "";
   el.innerHTML = list
-    .map(
-      (it, i) =>
-        `<button role="menuitem" data-i="${i}" class="${it.danger ? "danger" : ""}"${it.disabled ? " disabled" : ""}><i data-lucide="${it.icon}"></i>${esc(it.label)}</button>`,
-    )
+    .map((it, i) => {
+      let head = "";
+      if (it.group && it.group !== seen) {
+        head = `<div class="ml-pop-g" role="presentation">${esc(it.group)}</div>`;
+        seen = it.group;
+      }
+      return `${head}<button role="menuitem" tabindex="-1" data-i="${i}" class="${it.danger ? "danger" : ""}"${it.disabled ? " disabled" : ""}><i data-lucide="${it.icon}"></i>${esc(it.label)}</button>`;
+    })
     .join("");
   document.body.appendChild(el);
   paint();
   const r = anchor.getBoundingClientRect();
   const h = el.offsetHeight;
   const w = el.offsetWidth;
-  el.style.top = Math.max(10, Math.min(window.innerHeight - h - 10, r.bottom + 6)) + "px";
+  /* Flip above the trigger when the menu would run off the bottom. */
+  const below = window.innerHeight - r.bottom;
+  const top = below < h + 12 && r.top > h + 12 ? r.top - h - 6 : r.bottom + 6;
+  el.style.top = Math.max(10, Math.min(window.innerHeight - h - 10, top)) + "px";
   el.style.left = Math.max(10, Math.min(window.innerWidth - w - 10, r.right - w)) + "px";
-  el.querySelectorAll("[data-i]").forEach(
+  const btns = Array.from(el.querySelectorAll("button[data-i]:not([disabled])")) as any[];
+  btns.forEach(
     (b) =>
       (b.onclick = (ev) => {
         ev.stopPropagation();
@@ -586,8 +617,22 @@ function popMenu(anchor, items) {
         if (it && !it.disabled && it.fn) it.fn();
       }),
   );
+  el.addEventListener("keydown", (ev: any) => {
+    const i = btns.indexOf(document.activeElement);
+    if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+      ev.preventDefault();
+      const n = ev.key === "ArrowDown" ? i + 1 : i - 1;
+      const next = btns[(n + btns.length) % btns.length];
+      next && next.focus();
+    } else if (ev.key === "Home") { ev.preventDefault(); btns[0] && btns[0].focus(); }
+    else if (ev.key === "End") { ev.preventDefault(); btns[btns.length - 1] && btns[btns.length - 1].focus(); }
+    else if (ev.key === "Tab") { closePop(); }
+  });
   POP = el;
+  POP.__anchor = anchor;
+  btns[0] && btns[0].focus();
 }
+
 
 
 function fmtDate(d) {
@@ -812,11 +857,18 @@ async function dupVideo(m, short) {
 
 const PROJECT_KEYS = ["id","property_id","property_label","room_id","design_version_id","title","video_type","source_type","status","formats","length_preset","transition","motion","brand_kit_id","branding","disclosure","settings"];
 
+/** Rename in a small dialog, never a native prompt. Drafts rename too. */
 async function renameItem(m) {
-  const name = window.prompt("Rename", m.title);
-  if (!name || name.trim() === "" || name === m.title) return;
+  if (!canRename(m)) {
+    toast("This Item Cannot Be Renamed.");
+    return;
+  }
+  const name = await promptText({ title: "Rename", label: "Project Name", value: m.title, confirm: "Save Name" });
+  if (name === null || !name.trim() || name.trim() === m.title) return;
   try {
-    if (m.type === "generated_video") {
+    if (m.draftId) {
+      await renameProjectDraft({ data: { id: m.draftId, title: name.trim() } });
+    } else if (m.type === "generated_video") {
       const cur = await getVideo({ data: { id: m.refId } });
       const project = {};
       PROJECT_KEYS.forEach((k) => {
@@ -832,9 +884,43 @@ async function renameItem(m) {
     window.alert("Could not rename: " + (e && e.message ? e.message : "try again"));
   }
   await load(true);
+  const d = document.getElementById("mlDrawer");
+  if (d && !d.hidden) {
+    const fresh = S.items.find((x) => x.id === m.id);
+    if (fresh) openDetail(fresh);
+  }
 }
 
-/** Edit the optional property address on a video project.
+/** A tiny in-app text dialog: focus-trapped, Enter saves, Escape cancels. */
+function promptText({ title, label, value, confirm }): Promise<string | null> {
+  return new Promise((resolve) => {
+    const host = document.createElement("div");
+    host.className = "ml-assign";
+    host.innerHTML = `<div class="ml-assign-bg" data-x></div>
+      <div class="ml-assign-w" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <h3>${esc(title)}</h3>
+        <label class="ml-assign-f"><span>${esc(label)}</span><input id="mlTxt" maxlength="200" value="${esc(value || "")}"></label>
+        <div class="ml-assign-a">
+          <button class="btn btn-ghost btn-sm" data-x>Cancel</button>
+          <button class="btn btn-primary btn-sm" id="mlTxtGo">${esc(confirm || "Save")}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(host);
+    paint();
+    const input = host.querySelector("#mlTxt") as any;
+    const done = (v) => { host.remove(); resolve(v); };
+    host.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = () => done(null)));
+    (host.querySelector("#mlTxtGo") as any).onclick = () => done(input.value);
+    host.addEventListener("keydown", (e: any) => {
+      if (e.key === "Escape") done(null);
+      if (e.key === "Enter") done(input.value);
+    });
+    input.focus();
+    input.select();
+  });
+}
+
+/** Edit the optional property address on a project or video.
     Uses the shared address modal: no native prompt, title untouched. */
 async function changeAddress(m) {
   openAddressModal({
@@ -851,6 +937,13 @@ async function changeAddress(m) {
       }
     },
     onSave: async (r) => {
+      if (m.draftId) {
+        /* A draft keeps its own address column; the title is untouched. */
+        await assignProjectDraft({
+          data: { id: m.draftId, property_id: r.propertyId || null, property_address: r.columns.property_address || null },
+        });
+        return;
+      }
       const cur = await getVideo({ data: { id: m.refId } });
       const project = {};
       PROJECT_KEYS.forEach((k) => {
@@ -875,6 +968,7 @@ async function changeAddress(m) {
     },
   });
 }
+
 
 /**
  * Deleting a project and deleting a single asset are different actions, so the
@@ -1040,21 +1134,70 @@ function closeDrawer() {
 
 /* ---------------- detail drawer ---------------- */
 
+/* Only the newest open request may paint, so fast clicking never leaves the
+   drawer showing a previous asset. */
+let DRAWER_SEQ = 0;
+
 async function openDetail(m, opts) {
   if (!m) return;
   const d = document.getElementById("mlDrawer");
   if (!d) return;
+  const seq = ++DRAWER_SEQ;
+  d.hidden = false;
+  d.innerHTML = `<div class="ml-dr-bg" data-close></div>
+  <aside class="ml-dr" role="dialog" aria-modal="true" aria-label="${esc(m.title)}">
+    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span>${esc(drawerSub(m))}</span></div>
+      <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="ml-dr-b"><div class="ml-dr-prev sk"></div>
+      <div class="ml-dr-meta">${'<div class="sk-row"></div>'.repeat(4)}</div></div>
+  </aside>`;
+  paint();
+  d.querySelectorAll("[data-close]").forEach((b: any) => (b.onclick = () => closeDrawer()));
+
+  let url = null;
+  let srcUrl = null;
+  try {
+    url = await resolvePhotoUrl(m.assetPath || m.path);
+    srcUrl = m.sourcePath ? await resolvePhotoUrl(m.sourcePath) : null;
+  } catch (_) {
+    if (seq !== DRAWER_SEQ) return;
+    const body = d.querySelector(".ml-dr-b");
+    if (body)
+      body.innerHTML = `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>Could Not Load This Item</b>
+        <span>The preview did not come back. Check your connection and try again.</span></div></div>
+        <div class="ml-dr-a"><button class="btn btn-primary btn-sm" data-again><i data-lucide="rotate-ccw"></i>Try Again</button>
+        <button class="btn btn-ghost btn-sm" data-close>Close</button></div>`;
+    paint();
+    d.querySelectorAll("[data-close]").forEach((b: any) => (b.onclick = () => closeDrawer()));
+    const again = d.querySelector("[data-again]") as any;
+    if (again) again.onclick = () => openDetail(m, opts);
+    return;
+  }
+  if (seq !== DRAWER_SEQ) return;
+
   const g = typeGroup(m.type);
   const proc = m.status === "processing" || m.status === "queued";
   const related = S.items.filter((x) => x.id !== m.id && x.property && x.property === m.property).slice(0, 6);
-  const url = await resolvePhotoUrl(m.assetPath || m.path);
-  const srcUrl = m.sourcePath ? await resolvePhotoUrl(m.sourcePath) : null;
   const compare = !!(opts && opts.compare && srcUrl);
-  d.hidden = false;
+  const settings = Object.entries(m.settings || {}).filter(([, v]) => v);
+  const rows = [
+    ["Status", m.draft ? "Draft" : STATUS_LABEL[m.status] || m.status],
+    ["Type", mediaTypeLabel(m)],
+    m.room && m.room !== "Needs Review" ? ["Room", m.room] : null,
+    ["Property", propText(m)],
+    m.photoCount ? ["Photos", String(m.photoCount)] : null,
+    ["Created", fmtDate(m.createdAt)],
+    m.updatedAt && m.updatedAt !== m.createdAt ? ["Last Updated", fmtDate(m.updatedAt)] : null,
+    m.duration ? ["Duration", m.duration + "s"] : null,
+    m.aspect && g === "videos" ? ["Format", m.aspect] : null,
+    m.versions ? ["Versions", String(m.versions)] : null,
+  ].filter(Boolean) as any[];
+
   d.innerHTML = `<div class="ml-dr-bg" data-close></div>
-  <aside class="ml-dr" role="dialog" aria-label="${esc(m.title)}">
-    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span>${esc(m.property || "Unsorted Uploads")}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</span></div>
-      <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div>
+  <aside class="ml-dr" role="dialog" aria-modal="true" aria-label="${esc(m.title)}">
+    <div class="ml-dr-h"><div><b>${esc(m.title)}</b><span>${esc(drawerSub(m))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</span></div>
+      <div class="ml-dr-hb">${canRename(m) ? `<button class="icon-btn" data-ren aria-label="Rename" title="Rename"><i data-lucide="type"></i></button>` : ""}
+      <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div></div>
     <div class="ml-dr-b">
       <div class="ml-dr-prev">${
         compare
@@ -1063,7 +1206,7 @@ async function openDetail(m, opts) {
             ? `<video src="${url}" controls playsinline style="width:100%;border-radius:10px"></video>`
             : url
               ? `<img src="${url}" alt="${esc(m.title)}">`
-              : `<div class="ml-proc"><i data-lucide="loader"></i><span>${esc(stageLabel(m.stage) || STATUS_LABEL[m.status])}</span></div>`
+              : `<div class="ml-proc"><i data-lucide="${m.draft ? "pencil-ruler" : "loader"}"></i><span>${esc(m.draft ? "No Preview Saved Yet" : stageLabel(m.stage) || STATUS_LABEL[m.status])}</span></div>`
       }</div>
       ${
         proc
@@ -1072,30 +1215,31 @@ async function openDetail(m, opts) {
           : ""
       }
       ${
+        m.draft
+          ? `<div class="ml-dr-note"><i data-lucide="pencil-ruler"></i><div><b>Unfinished Project</b><span>Saved at the ${esc(stepLabel(m.builderStep))} step. Pick up where you left off.</span></div></div>`
+          : ""
+      }
+      ${
         m.status === "failed"
           ? `<div class="ml-dr-note bad"><i data-lucide="alert-triangle"></i><div><b>${planBlocked(m) ? "Not Enough Credits" : "Render Failed"}</b><span>${esc(failReason(m))}</span></div></div>`
           : ""
       }
-      <div class="ml-dr-meta">
-        <div><span>Status</span><b>${STATUS_LABEL[m.status] || m.status}</b></div>
-        <div><span>Type</span><b>${g === "videos" ? "Listing Video" : g === "images" ? "Generated Image" : "Uploaded File"}</b></div>
-        <div><span>Created</span><b>${esc(fmtDate(m.createdAt))}</b></div>
-        ${m.duration ? `<div><span>Duration</span><b>${m.duration}s</b></div>` : ""}
-        ${m.aspect && g === "videos" ? `<div><span>Format</span><b>${esc(m.aspect)}</b></div>` : ""}
-        ${m.versions ? `<div><span>Versions</span><b>${m.versions}</b></div>` : ""}
-      </div>
+      <div class="ml-dr-meta">${rows.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}</div>
       ${srcUrl && !compare ? `<div class="ml-dr-sec"><b>Source Image</b><img src="${srcUrl}" alt="Source photo"></div>` : ""}
       ${
         g === "videos" && m.scenes && m.scenes.length
           ? `<div class="ml-dr-sec"><b>Scenes</b><ol class="ml-scenes">${m.scenes
-              .map((s) => `<li>${esc(s.room_name || "Scene")} <em class="mono">${Number(s.duration || 0)}s</em></li>`)
+              .map((s) => `<li>${esc(s.room_name || "Scene")} <em>${Number(s.duration || 0)}s</em></li>`)
               .join("")}</ol></div>`
           : ""
       }
-      <div class="ml-dr-sec"><b>Settings</b><div class="ml-kv">${Object.entries(m.settings || {})
-        .filter(([, v]) => v)
-        .map(([k, v]) => `<span>${esc(k)}</span><em>${esc(v)}</em>`)
-        .join("") || "<span>None recorded</span>"}</div></div>
+      ${
+        settings.length
+          ? `<div class="ml-dr-sec"><b>Settings</b><div class="ml-kv">${settings
+              .map(([k, v]) => `<span>${esc(k)}</span><em>${esc(v)}</em>`)
+              .join("")}</div></div>`
+          : ""
+      }
       ${
         related.length
           ? `<div class="ml-dr-sec"><b>Related Assets</b><div class="ml-rel">${related
@@ -1108,22 +1252,45 @@ async function openDetail(m, opts) {
   </aside>`;
   paint();
   hydrateThumbs(d);
-  d.querySelectorAll("[data-close]").forEach((b) => (b.onclick = () => closeDrawer()));
-  const bind = (sel, fn) => { const el = d.querySelector(sel); if (el) el.onclick = fn; };
+  d.querySelectorAll("[data-close]").forEach((b: any) => (b.onclick = () => closeDrawer()));
+  const bind = (sel, fn) => { const el = d.querySelector(sel) as any; if (el) el.onclick = fn; };
+  bind("[data-ren]", () => renameItem(m));
   bind("[data-dld]", () => download(m));
   bind("[data-shr]", () => openVideo(m, "share"));
   bind("[data-arc]", async () => { closeDrawer(); await archive([m]); });
   bind("[data-edit-img]", () => { closeDrawer(); editImage(m); });
   bind("[data-mkvid]", () => { closeDrawer(); videoFrom([m]); });
-  bind("[data-studio]", () => { closeDrawer(); S.go("studio"); });
+  bind("[data-cont]", () => { closeDrawer(); continueProject(m); });
   bind("[data-editvid]", () => { closeDrawer(); openVideo(m, "video"); });
   bind("[data-retry]", () => retry(m));
   bind("[data-upg]", () => openUpgrade(m));
   bind("[data-cancel]", () => cancelItem(m));
-  const more = d.querySelector("[data-more-dr]");
-  if (more) more.onclick = (ev) => { ev.stopPropagation(); popMenu(more, moreItems(m)); };
-  d.querySelectorAll("[data-rel]").forEach((b) => (b.onclick = () => openDetail(S.items.find((x) => x.id === b.dataset.rel))));
+  const more = d.querySelector("[data-more-dr]") as any;
+  if (more)
+    more.onclick = (ev) => {
+      ev.stopPropagation();
+      /* Never repeat what is already a button on this drawer. */
+      const skip = Array.from(d.querySelectorAll(".ml-dr-a button")).map((b: any) => b.textContent.trim());
+      popMenu(more, moreItems(m, { skip }));
+    };
+  d.querySelectorAll("[data-rel]").forEach((b: any) => (b.onclick = () => openDetail(S.items.find((x) => x.id === b.dataset.rel))));
+  const first = d.querySelector(".ml-dr-a button, .ml-dr-h .icon-btn") as any;
+  first && first.focus();
 }
+
+/** A clean address, or an honest "Unassigned" — never a raw record id. */
+function propText(m) {
+  return addressDisplay({ property_address: m.property || m.address || null, property_id: m.propertyId || null }).text;
+}
+
+/** Address first, room second. */
+function drawerSub(m) {
+  const room = m.room && m.room !== "Needs Review" ? " · " + m.room : "";
+  return propText(m) + room;
+}
+
+const STEP_LABEL = { intake: "Add Photos", photos: "Add Photos", scenes: "Scenes", motion: "Motion", effects: "Effects", audio: "Audio", branding: "Branding", review: "Review", canvas: "Design Canvas", rooms: "Review Rooms" };
+const stepLabel = (s) => STEP_LABEL[String(s || "")] || "first";
 
 /** Primary actions in the drawer differ by asset type and status. */
 function drawerActions(m, g, proc) {
@@ -1138,17 +1305,21 @@ function drawerActions(m, g, proc) {
   if (proc)
     return `${m.job ? `<button class="btn btn-ghost btn-sm" data-cancel><i data-lucide="x"></i>Cancel</button>` : ""}
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
+  if (m.draft || isDesignDraft(m))
+    return `<button class="btn btn-primary btn-sm" data-cont><i data-lucide="play"></i>Continue Editing</button>
+      ${m.path ? `<button class="btn btn-ghost btn-sm" data-dld><i data-lucide="download"></i>Download</button>` : ""}
+      <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
   if (g === "videos")
     return `<button class="btn btn-primary btn-sm" data-dld><i data-lucide="download"></i>Download</button>
       <button class="btn btn-ghost btn-sm" data-editvid><i data-lucide="pencil"></i>Edit Video</button>
       <button class="btn btn-ghost btn-sm" data-shr><i data-lucide="share-2"></i>Share</button>
       <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
   return `${canEditImage(m) ? `<button class="btn btn-primary btn-sm" data-edit-img><i data-lucide="sliders-horizontal"></i>Edit Image</button>` : ""}
-    <button class="btn btn-${canEditImage(m) ? "ghost" : "primary"} btn-sm" data-mkvid><i data-lucide="clapperboard"></i>Create Video</button>
-    <button class="btn btn-ghost btn-sm" data-studio><i data-lucide="wand-2"></i>Use In Studio</button>
+    ${videoReady(m) ? `<button class="btn btn-${canEditImage(m) ? "ghost" : "primary"} btn-sm" data-mkvid><i data-lucide="clapperboard"></i>Create Video</button>` : ""}
     <button class="btn btn-ghost btn-sm" data-dld><i data-lucide="download"></i>Download</button>
     <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
 }
+
 
 
 /* ---------------- assign to a property ---------------- */
@@ -1189,10 +1360,13 @@ function openAssign(items) {
       <h3>Assign To A Property</h3>
       <p>${usable.length} Item${usable.length === 1 ? "" : "s"} Will Move. Nothing Is Copied — The Same Record Shows In Media And Under The Property.</p>
       ${list.length !== usable.length ? `<p class="ml-assign-note">${list.length - usable.length} Design${list.length - usable.length === 1 ? "" : "s"} Stay With Their Room's Property.</p>` : ""}
+      <label class="ml-assign-f"><span>Search Your Properties</span>
+        <input id="maFind" placeholder="Start typing an address" autocomplete="off"></label>
       <label class="ml-assign-f"><span>Existing Property</span>
-        <select id="maSel"><option value="">Choose A Property</option>${S.propList
+        <select id="maSel" size="1"><option value="">Choose A Property</option>${S.propList
           .map((p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`)
           .join("")}</select></label>
+
       <label class="ml-assign-f"><span>Or Add A New Address</span>
         <input id="maNew" placeholder="123 Main Street, Austin TX"></label>
       <div class="ml-assign-a">
@@ -1205,6 +1379,21 @@ function openAssign(items) {
   paint();
   const close = () => host.remove();
   host.querySelectorAll("[data-x]").forEach((b) => (b.onclick = close));
+  /* Long property lists get a plain filter box rather than endless scrolling. */
+  const find = host.querySelector("#maFind") as any;
+  const sel = host.querySelector("#maSel") as any;
+  if (find && sel) {
+    find.oninput = () => {
+      const q = find.value.trim().toLowerCase();
+      const hits = S.propList.filter((p) => !q || String(p.address || "").toLowerCase().includes(q));
+      sel.innerHTML =
+        `<option value="">${hits.length ? "Choose A Property" : "No Matches"}</option>` +
+        hits.map((p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`).join("");
+      if (hits.length === 1) sel.value = hits[0].id;
+    };
+    find.focus();
+  }
+
   host.querySelector("#maNone").onclick = async () => {
     close();
     await doAssign(usable, null);

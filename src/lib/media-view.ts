@@ -75,11 +75,20 @@ const DRAFT_MEDIA_TYPE: Record<string, string> = {
 
 const draftAssets = (d: any) => (Array.isArray(d?.assets) ? d.assets : []);
 
+/** The room a draft is about, when every photo agrees or only one is named. */
+function draftRoom(assets: any[]) {
+  const names = assets.map((a: any) => a && a.room).filter(Boolean);
+  if (!names.length) return null;
+  const uniq = Array.from(new Set(names.map((n: any) => String(n))));
+  return uniq.length === 1 ? uniq[0] : null;
+}
+
 /** One durable draft row becomes exactly one project card, never one per photo. */
 export function draftRecord(d: any) {
   const assets = draftAssets(d);
   const preview = assets.map((a: any) => a && a.path).find((p: any) => p && !/^(blob:|data:)/i.test(p)) || "";
   const type = DRAFT_MEDIA_TYPE[d.project_type] || "uploaded_image";
+  const s = d.settings && typeof d.settings === "object" ? d.settings : {};
   return {
     id: "draft_" + d.id,
     refId: d.id,
@@ -94,15 +103,31 @@ export function draftRecord(d: any) {
     propertyId: d.property_id || null,
     property: d.property_address || null,
     address: d.property_address || null,
-    room: null,
+    room: draftRoom(assets),
     path: preview,
     photoCount: assets.length,
     builderStep: d.builder_step || null,
     createdAt: d.created_at || d.updated_at || null,
     updatedAt: d.updated_at || d.created_at || null,
-    settings: {},
+    settings: {
+      style: s.style || null,
+      quality: d.quality || null,
+      format: d.video_format || null,
+      prompt: s.prompt || null,
+    },
   };
 }
+
+/** What this record actually is, in the user's words. */
+export function mediaTypeLabel(m: any) {
+  if (!m) return "";
+  if (m.draft) return m.draftTypeLabel || DRAFT_TYPE_LABEL[m.draftType] || "Project";
+  if (m.type === "generated_video") return "Listing Video";
+  if (m.type === "generated_image") return "Generated Design";
+  if (m.type === "uploaded_document") return "Document";
+  return "Original Upload";
+}
+
 
 /**
  * Fold durable drafts into the canonical records. A video draft already has a

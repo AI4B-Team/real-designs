@@ -155,6 +155,22 @@ export const deleteProjectDraft = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Rename a project. The address is a separate field and is never touched. */
+export const renameProjectDraft = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), title: z.string().trim().min(1).max(200) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await (context.supabase as any)
+      .from("project_drafts")
+      .update({ title: data.title, updated_at: new Date().toISOString() })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+
 /** Attach an unassigned draft to a property, keeping the title untouched. */
 export const assignProjectDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
