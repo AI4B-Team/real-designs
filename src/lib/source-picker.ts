@@ -817,7 +817,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     el.classList.add("is-fail");
     el.innerHTML = '<i data-lucide="image-off"></i><b>Preview Unavailable</b>';
     try {
-      opts.lucide?.();
+      opts.lucide?.createIcons();
     } catch (_) {}
   }
 
