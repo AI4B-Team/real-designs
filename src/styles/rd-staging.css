@@ -410,6 +410,7 @@
 /* Confirmation modal: content-driven height, header and footer always visible,
    only the middle scrolls on short viewports. */
 .up-card.rdsb {
+  width: min(620px, calc(100vw - 32px));
   max-width: 620px;
   text-align: left;
   display: flex;
@@ -421,7 +422,8 @@
 .rdsb-head h3 { margin-bottom: 6px; }
 .rdsb-head p { margin-bottom: 4px; }
 .rdsb-body { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding-right: 2px; }
-.rdsb .rdm-foot { flex: 0 0 auto; }
+.rdsb .rdm-foot { flex: 0 0 auto; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line, #e5e5ea); }
+.rdsb .rdm-btn { white-space: nowrap; }
 .rdsb-sum {
   margin-top: 12px;
   display: grid;
