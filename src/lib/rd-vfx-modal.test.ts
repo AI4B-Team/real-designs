@@ -10,15 +10,15 @@ describe("effects modal view model", () => {
   it("only lists categories that hold options, All first", () => {
     expect(lookCats()[0]).toEqual(["all", "All"]);
     expect(fxCats()[0]).toEqual(["all", "All"]);
-    expect(fxCats().map(([id]) => id)).toContain("outdoor");
-    expect(fxCats().find(([id]) => id === "outdoor")?.[1]).toBe("Exterior");
+    expect(fxCats().map(([id]) => id)).toContain("exterior");
+    expect(fxCats().find(([id]) => id === "exterior")?.[1]).toBe("Exterior");
     lookCats().slice(1).forEach(([id]) => expect(looksForCat(id).length).toBeGreaterThan(0));
     fxCats().slice(1).forEach(([id]) => expect(effectTiles(id).length).toBeGreaterThan(0));
   });
 
   it("keeps None out of the effects grid but keeps stored ids intact", () => {
     expect(effectTiles("all").some((t) => t.id === "none")).toBe(false);
-    expect(effectTiles("indoor").map((t) => t.id)).toContain("virtual_staging");
+    expect(effectTiles("interior").map((t) => t.id)).toContain("virtual_staging");
   });
 
   it("snapshots and restores a scene so Cancel is lossless", () => {

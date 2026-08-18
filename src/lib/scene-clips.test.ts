@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { clipCardHtml, animateModalHtml, clipReviewHtml, ARCHITECTURE_NOTICE, LIFESTYLE_NOTICE } from "@/lib/scene-clip-ui";
-import { ANIMATE_CREDITS_PER_CLIP, ANIMATE_OPTIONS, animatePrompt } from "@/lib/scene-enhancement";
+import { ANIMATE_CREDITS_PER_CLIP, ANIMATE_OPTIONS, animateCategory, animatePrompt } from "@/lib/scene-enhancement";
 import { clipSize, clipStoragePath, clipPrice } from "@/lib/scene-clips.server";
 
 const clip = (over: Record<string, unknown> = {}) =>
@@ -60,9 +60,11 @@ describe("animate modal", () => {
     expect(animateModalHtml({ ...base, selected: "lifestyle" })).toContain(LIFESTYLE_NOTICE);
   });
 
-  it("lists every animation option", () => {
-    const html = animateModalHtml({ ...base });
-    for (const o of ANIMATE_OPTIONS) expect(html).toContain(`data-animate="${o.id}"`);
+  it("makes every animation option reachable through its category tab", () => {
+    for (const o of ANIMATE_OPTIONS) {
+      const html = animateModalHtml({ ...base, cat: animateCategory(o.id) });
+      expect(html).toContain(`data-animate="${o.id}"`);
+    }
   });
 });
 
