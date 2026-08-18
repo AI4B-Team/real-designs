@@ -2516,7 +2516,7 @@ function popoverHtml() {
       ${id === "ai" && !AI_TRANSITION_AVAILABLE ? "disabled" : `data-transpick="${id}"`}
       title="${esc(id === "ai" && !AI_TRANSITION_AVAILABLE ? AI_TRANSITION_UNAVAILABLE_REASON : n)}">
       <i data-lucide="${TRANS_ICON[id] || "blend"}"></i><b>${esc(n)}</b>
-      <em>${id === "ai" ? `${AI_TRANSITION_CREDITS} Credits` : id === "auto" ? transitionLabel(eff) : "Included"}</em></button>`;
+      <em>${id === "ai" ? `${AI_TRANSITION_CREDITS} Credits` : id === "auto" ? `${transitionLabel(eff)} Selected For This Pair` : "Included"}</em></button>`;
     body = `<div class="rv-tr">
       <div class="rv-tr-head">
         <span class="rv-tr-th" data-img="${esc(s.path)}"></span>
@@ -2634,7 +2634,7 @@ function popoverHtml() {
   const isFx = kind === "look";
   const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
     : kind === "recap" ? "Scene Settings"
-    : kind === "trans" ? "Transition" : "Effects";
+    : kind === "trans" ? `Transition Between Scenes ${i + 1} And ${i + 2}` : "Effects";
   const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : kind === "trans" ? "wide" : "xwide";
   const foot = isFx && w.popTab === "frames"
     ? seFooter(w, s)
