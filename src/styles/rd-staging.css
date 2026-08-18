@@ -634,11 +634,10 @@
 
 /* A photo that overrides the project format says so, on the frame. */
 .rd-app #v-staging .rv-tile-fmt {
-  position: absolute; left: 8px; top: 8px; z-index: 6; display: inline-flex; align-items: center; gap: 4px;
+  position: absolute; right: 8px; bottom: 8px; z-index: 6; display: inline-flex; align-items: center; gap: 4px;
   height: 20px; padding: 0 7px; border-radius: 999px; background: rgba(0,0,0,.66); color: #fff;
   font: 600 10px 'DM Mono', monospace; letter-spacing: .02em; pointer-events: auto;
 }
-.rd-app #v-staging .rv-tile.on .rv-tile-fmt { left: 36px; }
 .rd-app #v-staging .rv-tile-fmt svg { width: 11px; height: 11px; }
 
 @media (prefers-reduced-motion: reduce) {
