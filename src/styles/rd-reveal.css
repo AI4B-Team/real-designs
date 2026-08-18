@@ -1105,10 +1105,35 @@
 .rv-cv-stage.fmt-1x1 .rv-cv-img{height:min(52vh,620px);max-height:none}
 .rv-cv-stage.fmt-16x9 .rv-cv-img{max-height:min(52vh,620px)}
 
-/* ---- transition control ----
+/* ---- transition connector ----
    A transition is the change BETWEEN two scenes, so it is never a badge on a
-   photo: it is one more button inside the temporary hover toolbar. */
+   photo. One 24px circle straddles the gutter on the seam between the pair,
+   vertically centred on the images (the thumb is 3:4, so its middle sits at
+   two thirds of the card's width from the top). */
 .rd-app .rv-tile { position: relative; }
+.rd-app .rv-conn { position: absolute; right: -18px; top: 66.6cqw; z-index: 7; display: grid; place-items: center;
+  width: 24px; height: 24px; margin-top: -12px; padding: 0; border: 1px solid #e2e2e4; border-radius: 999px;
+  background: #fff; color: #555; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,.12);
+  opacity: .45; transition: opacity .12s ease, border-color .12s ease; }
+.rd-app .rv-grid.landscape .rv-conn { top: 37.5cqw; }
+.rd-app .rv-conn i, .rd-app .rv-conn svg { width: 12px; height: 12px; }
+.rd-app .rv-conn:hover, .rd-app .rv-conn:focus-visible { opacity: 1; border-color: #bdbdc2; }
+/* a pair the user chose themselves stays identifiable without shouting */
+.rd-app .rv-conn.set { opacity: .9; border-color: #cfcfd4; }
+.rd-app .rv-conn.set::after { content: ""; position: absolute; right: -1px; top: -1px; width: 6px; height: 6px;
+  border-radius: 999px; background: var(--red, #CC0000); box-shadow: 0 0 0 1.5px #fff; }
+.rd-app .rv-conn.busy { opacity: 1; }
+.rd-app .rv-conn.busy i { animation: rv-spin 1s linear infinite; }
+.rd-app .rv-conn.bad { opacity: 1; border-color: #CC0000; color: #CC0000; }
+/* last card of a visual row: no seam, so the same control tucks inside it */
+.rd-app .rv-conn.wrap { right: 6px; top: auto; bottom: 6px; margin-top: 0; }
+.rd-app .rv-grid.landscape .rv-conn.wrap { top: auto; }
+@media (max-width: 720px) {
+  .rd-app .rv-conn { opacity: 0; visibility: hidden; }
+  .rd-app .rv-tile:hover .rv-conn, .rd-app .rv-tile:focus-within .rv-conn,
+  .rd-app .rv-tile.on .rv-conn:focus-visible { opacity: 1; visibility: visible; }
+}
+
 
 /* transition popover */
 .rv-tr{display:flex;flex-direction:column;gap:14px}
