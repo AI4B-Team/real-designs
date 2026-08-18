@@ -539,6 +539,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   /** The dropzone is clickable and keyboard-operable, not only its button. */
   function onKey(e: KeyboardEvent) {
     const t = e.target as HTMLElement;
+    if ((t as HTMLElement).id === "spPrompt") {
+      /* Enter still writes a new line; only the shortcut submits. */
+      if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        submitDescribe();
+      }
+      return;
+    }
     if (!t.closest?.("[data-sp-drop]")) return;
     if (t.closest("button")) return;
     if (e.key !== "Enter" && e.key !== " ") return;
@@ -546,12 +554,43 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     input.click();
   }
 
+  /** Grows the composer with the text and keeps the submit state honest. */
+  function syncComposer() {
+    const ta = document.getElementById("spPrompt") as HTMLTextAreaElement | null;
+    if (ta) {
+      ta.style.height = "auto";
+      ta.style.height = Math.min(ta.scrollHeight, 260) + "px";
+    }
+    const btn = body?.querySelector(".sp-create") as HTMLButtonElement | null;
+    if (btn) btn.disabled = !(state.prompt.trim().length > 0) || state.describeBusy;
+  }
+
+  async function submitDescribe() {
+    if (state.describeBusy) return;
+    const prompt = state.prompt.trim();
+    if (!prompt) return;
+    state.describeBusy = true;
+    render();
+    try {
+      await opts.onDescribe?.(prompt);
+    } catch (err: any) {
+      alert((err && err.message) || "Could not create that concept.");
+    } finally {
+      state.describeBusy = false;
+      render();
+    }
+  }
+
   function onInput(e: Event) {
     const t = e.target as HTMLInputElement;
     if (t.id === "spAddr") state.address = t.value;
     if (t.id === "spUrl") state.url = t.value;
-    if (t.id === "spPrompt") state.prompt = t.value;
+    if (t.id === "spPrompt") {
+      state.prompt = t.value;
+      syncComposer();
+    }
   }
+
 
   async function onClick(e: Event) {
     const t = e.target as HTMLElement;
