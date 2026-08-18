@@ -214,9 +214,21 @@ function go(v,fromHash){
      dashboard are one view now, reachable only as dash. */
   let viewId = v==='lvideo' ? 'reveal' : (v==='home' ? 'dash' : v);
   /* The staging page mounts on demand; make sure its container exists before
-     the unknown-view fallback runs. */
-  if(viewId==='staging'){ try{ (window as any).rdStaging && (window as any).rdStaging.ensure(); }catch(_){} }
+     the unknown-view fallback runs. On a cold boot straight to #v-staging the
+     staging module can still be initialising, so wait for it instead of
+     dropping the user on the dashboard and losing the saved draft. */
+  if(viewId==='staging'){
+    const api=(window as any).rdStaging;
+    if(!api){
+      let tries=0;
+      const wait=()=>{ if((window as any).rdStaging){ go('staging',true); } else if(++tries<60) window.setTimeout(wait,50); else go('dash'); };
+      window.setTimeout(wait,50);
+      return;
+    }
+    try{ api.ensure(); }catch(_){}
+  }
   if(!document.getElementById('v-'+viewId)) viewId='dash';
+
   const navId = (v==='lvideo') ? 'lvideo' : (viewId==='reveal') ? 'media' : viewId;
 
   /* Drop any half-finished video builder before showing another view, so a
