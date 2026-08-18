@@ -2034,14 +2034,9 @@ function layoutConnectors() {
   tiles.forEach((tile, n) => {
     const conn = tile.querySelector(":scope > .rv-conn");
     if (!conn) return;
-    /* The control belongs in the gutter between this card and the NEXT
-       SELECTED card. That is only a real seam when the next selected card is
-       the immediate neighbour on the same visual row; otherwise (row wrap, or
-       unselected photos in between) the control hugs this card's edge. */
     const next = tiles[n + 1];
-    const nextSel = tiles.slice(n + 1).find((t) => t.classList.contains("on"));
-    const seam = !!next && next === nextSel && Math.abs(next.offsetTop - tile.offsetTop) <= 4;
-    conn.classList.toggle("wrap", !seam);
+    const wraps = !next || Math.abs(next.offsetTop - tile.offsetTop) > 4;
+    conn.classList.toggle("wrap", wraps);
   });
 }
 
