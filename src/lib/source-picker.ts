@@ -657,12 +657,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return m ? Number(m[1]) : null;
   }
 
-  /** Up to four thumbnail paths for the card's photo area. */
+  /** Up to six candidate thumbnail paths; extras act as fallbacks when one fails. */
   function thumbsOf(p: PickerProperty): string[] {
     const out: string[] = [];
     for (const t of (p.thumbs || []) as string[]) {
       if (t && !out.includes(t)) out.push(t);
-      if (out.length === 4) break;
+      if (out.length === 6) break;
     }
     if (!out.length && p.thumb) out.push(p.thumb);
     return out;
@@ -673,13 +673,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   function thumbArea(p: PickerProperty) {
     const icon = p.unassigned ? "images" : "home";
     const list = thumbsOf(p);
-    const tile = (path: string) =>
-      '<span class="sp-th-i is-load" data-sp-thumb="' + esc(path) + '"><i data-lucide="' + icon + '"></i></span>';
+    /* Spare paths ride along so a dead file or expired URL falls forward to the next photo. */
+    const tile = (path: string, alts: string[] = []) =>
+      '<span class="sp-th-i is-load" data-sp-thumb="' + esc(path) + '"' +
+      (alts.length ? ' data-sp-alt="' + esc(alts.join("|")) + '"' : "") +
+      '><i data-lucide="' + icon + '"></i></span>';
     const inner = !list.length
       ? '<span class="sp-th-i is-none"><i data-lucide="' + icon + '"></i></span>'
       : list.length >= 2 && p.unassigned
-        ? '<span class="sp-th-mosaic">' + list.slice(0, 4).map(tile).join("") + "</span>"
-        : tile(list[0]!);
+        ? '<span class="sp-th-mosaic">' +
+          list.slice(0, 4).map((t, i) => tile(t, list.slice(4).concat(list.slice(0, 4).filter((_, j) => j !== i)))).join("") +
+          "</span>"
+        : tile(list[0]!, list.slice(1));
     return '<span class="sp-prop-th">' + inner + "</span>";
   }
 
@@ -770,47 +775,59 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (!body) return;
     const nodes = Array.from(body.querySelectorAll<HTMLElement>("[data-sp-thumb]"));
     for (const el of nodes) {
-      const path = el.dataset["spThumb"]!;
       if (el.dataset["spThumbDone"] === "1") continue;
-      const paint = (url: string) => {
-        el.dataset["spThumbDone"] = "1";
-        el.style.backgroundImage = 'url("' + url + '")';
-        el.classList.remove("is-load", "is-fail");
-        el.classList.add("has-img");
-        /* Lucide swaps the <i> for an <svg>, so drop the placeholder outright. */
-        el.querySelector("i, svg")?.remove();
-      };
-      const fail = (err: unknown) => {
-        el.dataset["spThumbDone"] = "1";
-        el.classList.remove("is-load");
-        el.classList.add("is-fail");
+      el.dataset["spThumbDone"] = "1";
+      const first = el.dataset["spThumb"]!;
+      const alts = (el.dataset["spAlt"] || "").split("|").filter(Boolean);
+      void loadThumb(el, [first, ...alts]);
+    }
+  }
+
+  /** Walks the candidate paths until one signed URL actually decodes. */
+  async function loadThumb(el: HTMLElement, paths: string[]) {
+    const paint = (url: string) => {
+      el.style.backgroundImage = 'url("' + url + '")';
+      el.classList.remove("is-load", "is-fail");
+      el.classList.add("has-img");
+      /* Lucide swaps the <i> for an <svg>, so drop the placeholder outright. */
+      el.querySelector("i, svg")?.remove();
+    };
+    for (const path of paths) {
+      if (!el.isConnected) return;
+      try {
+        let url = thumbCache.get(path);
+        if (!url) {
+          if (!opts.resolvePhoto) throw new Error("No resolvePhoto helper was provided.");
+          url = (await opts.resolvePhoto(path)) || "";
+          if (!url) throw new Error("No signed URL was returned.");
+          await decode(url);
+          thumbCache.set(path, url);
+        }
+        if (!el.isConnected) return;
+        paint(url);
+        return;
+      } catch (err) {
         /* The real storage / signed-URL error, not a silent blank panel. */
         console.warn("[source-picker] thumbnail failed for " + path, err);
-      };
-      const hit = thumbCache.get(path);
-      if (hit) {
-        paint(hit);
-        continue;
+        thumbCache.delete(path);
       }
-      if (!opts.resolvePhoto) {
-        fail(new Error("No resolvePhoto helper was provided."));
-        continue;
-      }
-      opts
-        .resolvePhoto(path)
-        .then((url) => {
-          if (!url) {
-            fail(new Error("No signed URL was returned."));
-            return;
-          }
-          thumbCache.set(path, url);
-          if (!el.isConnected) return;
-          paint(url);
-        })
-        .catch((err) => {
-          if (el.isConnected) fail(err);
-        });
     }
+    if (!el.isConnected) return;
+    el.classList.remove("is-load");
+    el.classList.add("is-fail");
+    el.innerHTML = '<i data-lucide="image-off"></i><span class="sp-th-msg">Preview Unavailable</span>';
+    try {
+      opts.lucide?.createIcons();
+    } catch (_) {}
+  }
+
+  function decode(url: string) {
+    return new Promise<void>((res, rej) => {
+      const img = new Image();
+      img.onload = () => res();
+      img.onerror = () => rej(new Error("The image could not be loaded: " + url.split("?")[0]));
+      img.src = url;
+    });
   }
 
 

@@ -912,6 +912,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     return out;
   }
 
+  /** A front-exterior shot makes the best property cover; otherwise keep upload order. */
+  function coverOrder<T extends { room?: string; name?: string }>(list: T[]): T[] {
+    const front = /front|exterior|facade|curb|street/i;
+    const hit = list.findIndex((x) => front.test(String(x.room || x.name || "")));
+    if (hit <= 0) return list;
+    return [list[hit]!, ...list.filter((_, i) => i !== hit)];
+  }
+
   /** The one shared source picker, configured for the design context. */
   let picker: { destroy: () => void } | null = null;
   function mountPicker() {
@@ -928,13 +936,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       showAlert: ctx.showAlert,
       properties: () =>
         (ctx.getProperties ? ctx.getProperties() : []).map((p) => {
-          const photos = photosOfProperty(p);
+          const photos = coverOrder(photosOfProperty(p));
           return {
             id: (p as any).id || p.address,
             address: p.address,
             count: photos.length || Number((p as any).asset_count || 0),
             thumb: photos[0]?.path || null,
-            thumbs: photos.slice(0, 4).map((x) => x.path),
+            thumbs: photos.slice(0, 6).map((x) => x.path),
           };
         }),
 
