@@ -159,7 +159,9 @@ help:['Help Center','Guides, answers and support'],
 tutorials:['Tutorials','Short walkthroughs, five minutes or less'],
 notifications:['Notifications','Activity, mentions and alerts'],
 staging:['Photo Staging','Add photos, confirm rooms, then design']};
-const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
+/* "account" itself must resolve to a pane: without it the account view opens
+   with no rail item selected and no pane on screen. */
+const ACCT_ALIAS={account:'profile',team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
 /* Only the very first route after a page load may reopen a saved builder
