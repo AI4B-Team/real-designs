@@ -417,8 +417,8 @@ async function retireJob(
   };
   if (rel.release) {
     const { refund } = await import("@/lib/credits.server");
-    const ok = await refund(userId, rel.amount, status === "cancelled" ? "REAL REVEAL render cancelled" : "REAL REVEAL render failed");
-    if (ok !== false) patch['credits_refunded'] = (Number(job.credits_refunded) || 0) + rel.amount;
+    await refund(userId, rel.amount, status === "cancelled" ? "REAL REVEAL render cancelled" : "REAL REVEAL render failed");
+    patch['credits_refunded'] = (Number(job.credits_refunded) || 0) + rel.amount;
   }
   const { data: row } = await supabase.from("video_render_jobs").update(patch).eq("id", job.id).select("*").maybeSingle();
   return { job: row, released: rel.release ? rel.amount : 0 };
