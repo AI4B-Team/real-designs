@@ -230,12 +230,14 @@ export function logVideoEvent(event: string, data: Record<string, any>): void {
  * Photos always win: a wizard holding uploads can never open on Add Photos.
  */
 export function initialWizardStep(
-  seed: { propertyId?: any; versionId?: any; step?: number } = {},
+  seed: { propertyId?: any; versionId?: any; step?: number; designs?: any[] } = {},
   uploads: any[] = [],
 ): number {
   if (seed.step && seed.step > 1) return seed.step;
   if ((uploads || []).length > 0) return 2;
   if (seed.propertyId || seed.versionId) return 2;
+  /* Finished designs handed over from Studio are already usable photos. */
+  if ((seed.designs || []).length > 0) return 2;
   return 1;
 }
 
