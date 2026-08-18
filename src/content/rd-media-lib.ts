@@ -856,11 +856,18 @@ async function dupVideo(m, short) {
 
 const PROJECT_KEYS = ["id","property_id","property_label","room_id","design_version_id","title","video_type","source_type","status","formats","length_preset","transition","motion","brand_kit_id","branding","disclosure","settings"];
 
+/** Rename in a small dialog, never a native prompt. Drafts rename too. */
 async function renameItem(m) {
-  const name = window.prompt("Rename", m.title);
-  if (!name || name.trim() === "" || name === m.title) return;
+  if (!canRename(m)) {
+    toast("This Item Cannot Be Renamed.");
+    return;
+  }
+  const name = await promptText({ title: "Rename", label: "Project Name", value: m.title, confirm: "Save Name" });
+  if (name === null || !name.trim() || name.trim() === m.title) return;
   try {
-    if (m.type === "generated_video") {
+    if (m.draftId) {
+      await renameProjectDraft({ data: { id: m.draftId, title: name.trim() } });
+    } else if (m.type === "generated_video") {
       const cur = await getVideo({ data: { id: m.refId } });
       const project = {};
       PROJECT_KEYS.forEach((k) => {
@@ -876,9 +883,43 @@ async function renameItem(m) {
     window.alert("Could not rename: " + (e && e.message ? e.message : "try again"));
   }
   await load(true);
+  const d = document.getElementById("mlDrawer");
+  if (d && !d.hidden) {
+    const fresh = S.items.find((x) => x.id === m.id);
+    if (fresh) openDetail(fresh);
+  }
 }
 
-/** Edit the optional property address on a video project.
+/** A tiny in-app text dialog: focus-trapped, Enter saves, Escape cancels. */
+function promptText({ title, label, value, confirm }): Promise<string | null> {
+  return new Promise((resolve) => {
+    const host = document.createElement("div");
+    host.className = "ml-assign";
+    host.innerHTML = `<div class="ml-assign-bg" data-x></div>
+      <div class="ml-assign-w" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+        <h3>${esc(title)}</h3>
+        <label class="ml-assign-f"><span>${esc(label)}</span><input id="mlTxt" maxlength="200" value="${esc(value || "")}"></label>
+        <div class="ml-assign-a">
+          <button class="btn btn-ghost btn-sm" data-x>Cancel</button>
+          <button class="btn btn-primary btn-sm" id="mlTxtGo">${esc(confirm || "Save")}</button>
+        </div>
+      </div>`;
+    document.body.appendChild(host);
+    paint();
+    const input = host.querySelector("#mlTxt") as any;
+    const done = (v) => { host.remove(); resolve(v); };
+    host.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = () => done(null)));
+    (host.querySelector("#mlTxtGo") as any).onclick = () => done(input.value);
+    host.addEventListener("keydown", (e: any) => {
+      if (e.key === "Escape") done(null);
+      if (e.key === "Enter") done(input.value);
+    });
+    input.focus();
+    input.select();
+  });
+}
+
+/** Edit the optional property address on a project or video.
     Uses the shared address modal: no native prompt, title untouched. */
 async function changeAddress(m) {
   openAddressModal({
@@ -895,6 +936,13 @@ async function changeAddress(m) {
       }
     },
     onSave: async (r) => {
+      if (m.draftId) {
+        /* A draft keeps its own address column; the title is untouched. */
+        await assignProjectDraft({
+          data: { id: m.draftId, property_id: r.propertyId || null, property_address: r.columns.property_address || null },
+        });
+        return;
+      }
       const cur = await getVideo({ data: { id: m.refId } });
       const project = {};
       PROJECT_KEYS.forEach((k) => {
@@ -919,6 +967,7 @@ async function changeAddress(m) {
     },
   });
 }
+
 
 /**
  * Deleting a project and deleting a single asset are different actions, so the
