@@ -2205,6 +2205,109 @@ function motionLabel(s) {
   return m ? m[1] : "Auto";
 }
 
+/* ------------------------------------------------------------ start / end */
+
+/** Plain-language state of one saved Start / End configuration. */
+function seFrameStatusText(fr) {
+  if (!fr) return "Not Set";
+  if (fr.status === "queued") return "Queued";
+  if (fr.status === "processing") return `Generating${fr.progress ? ` ${Math.round(fr.progress)}%` : ""}`;
+  if (fr.status === "failed") return "Failed";
+  if (fr.status === "completed") return `${seMotionLabel(fr.motion_preset)} Clip`;
+  return `${seMotionLabel(fr.motion_preset)}, Not Generated`;
+}
+
+/**
+ * The Start / End workspace, shown as the third tab of the Effects modal.
+ * It stays deliberately compact: two frames, a motion preset, an optional
+ * direction and the output settings. Nothing here is a separate builder step.
+ */
+function seWorkspace(w, s) {
+  const d = w.seDraft || {};
+  const fr = sceneFrames.get(s.key);
+  const byKey = new Map(w.available.map((a) => [a.key, a]));
+  const startA = byKey.get(d.start_key) || byKey.get(s.key) || null;
+  const endA = d.end_key ? byKey.get(d.end_key) : null;
+  const busy = fr && (fr.status === "queued" || fr.status === "processing");
+  const failed = fr && fr.status === "failed";
+  const done = fr && fr.status === "completed" && fr.clip_path;
+  const seconds = Number(d.seconds || 8);
+  const fmt = w.primaryFormat || DEFAULT_FORMAT;
+
+  const slot = (which, a, label, hint) => `<div class="se-slot ${a ? "on" : ""}">
+    <b>${label}</b>
+    <div class="se-th" ${a ? `data-img="${esc(a.path)}"` : ""}>${a ? "" : `<i data-lucide="image-plus"></i><em>${esc(hint)}</em>`}</div>
+    <span class="se-cap">${a ? esc(which === "start" && a.key === s.key ? "Current Scene" : a.room || "Untitled") : esc(hint)}</span>
+    <button class="fb-link" data-sepick="${which}">${a ? "Replace" : "Choose"}</button>
+  </div>`;
+
+  const picker = d.picking
+    ? `<div class="se-picker">
+        <div class="se-picker-h">
+          <b>${d.picking === "start" ? "Choose A Start Frame" : "Choose An End Frame"}</b>
+          <div class="se-picker-a">
+            <button class="btn btn-ghost btn-sm" id="rvSeUpload"><i data-lucide="upload"></i>Upload</button>
+            <button class="icon-btn" id="rvSePickX" aria-label="Close"><i data-lucide="x"></i></button>
+          </div>
+        </div>
+        <span class="rv-note sm">Project photos, media and generated designs already loaded into this video.</span>
+        <div class="se-grid">${w.available.map((a) => `<button class="se-pick ${(d.picking === "start" ? d.start_key : d.end_key) === a.key ? "on" : ""}"
+          data-sepicked="${esc(a.key)}" title="${esc(a.room || "Untitled")}"><span data-img="${esc(a.path)}"></span></button>`).join("")}</div>
+        <input type="file" id="rvSeFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
+      </div>`
+    : "";
+
+  const status = busy
+    ? `<div class="se-status busy"><i data-lucide="loader"></i>
+        <span><b>Generating This Clip</b><em>${Math.round(fr.progress || 0)}% Complete. You can leave this page — it keeps running.</em></span>
+        <button class="fb-link danger" id="rvSeCancel">Cancel</button></div>`
+    : failed
+    ? `<div class="se-status bad"><i data-lucide="triangle-alert"></i>
+        <span><b>Generation Failed</b><em>${esc(fr.error_message || "The clip could not be generated. No credits were charged.")}</em></span>
+        <button class="fb-link" id="rvSeRetry">Retry</button></div>`
+    : done
+    ? `<div class="se-status ok"><i data-lucide="clapperboard"></i>
+        <span><b>Start / End Clip In Use</b><em>This scene plays the generated clip. The original photo is kept for editing.</em></span></div>`
+    : "";
+
+  return `<div class="se-wrap">
+    <div class="se-frames">
+      ${slot("start", startA, "Start Frame", "Current Scene")}
+      <button class="icon-btn se-swap" id="rvSeSwap" aria-label="Swap Frames" title="Swap Frames" ${endA ? "" : "disabled"}><i data-lucide="arrow-left-right"></i></button>
+      ${slot("end", endA, "End Frame", "Choose End Frame")}
+    </div>
+    ${picker}
+    ${status}
+    <div class="rv-pop-h">Motion</div>
+    <div class="se-motions">${SE_MOTIONS.map((m) => `<button class="se-motion ${(d.motion_preset || "auto") === m.id ? "on" : ""}"
+      data-semotion="${m.id}" title="${esc(m.blurb)}"><b>${esc(m.label)}</b><em>${esc(m.blurb)}</em></button>`).join("")}</div>
+    <label class="rv-f">Prompt, Optional
+      <input id="rvSePrompt" maxlength="400" value="${esc(d.prompt || "")}"
+        placeholder="Describe How The Scene Should Move From The Start Frame To The End Frame"></label>
+    <div class="se-out">
+      <div class="se-out-i"><em>Duration</em>
+        <div class="rv-seg sm">${SE_DURATIONS.map((n) => `<button class="${seconds === n ? "on" : ""}" data-sesec="${n}">${n}s</button>`).join("")}</div>
+      </div>
+      <div class="se-out-i"><em>Aspect Ratio</em><b class="mono">${esc(fmt)}</b><span class="rv-note sm">From The Project</span></div>
+      <div class="se-out-i"><em>Estimated Cost</em><b class="mono">${SE_CREDITS} Credits</b><span class="rv-note sm">Charged Once The Job Starts</span></div>
+    </div>
+    <p class="rv-note sm">Start / End makes one generated clip that begins on the start frame and finishes on the end frame. It is not a transition between two scene cards and not a single-image animation.</p>
+  </div>`;
+}
+
+/** Footer actions for the Start / End tab. */
+function seFooter(w, s) {
+  const d = w.seDraft || {};
+  const fr = sceneFrames.get(s.key);
+  const busy = !!fr && (fr.status === "queued" || fr.status === "processing");
+  const ready = !!d.end_key && !!d.start_key && !w.seBusy && !busy;
+  return `${fr ? `<button class="btn btn-ghost danger" id="rvSeRemove" ${busy ? "disabled" : ""}>Remove Start / End</button>` : ""}
+    <button class="btn btn-ghost" id="rvPopCancel">Close</button>
+    <button class="btn btn-ghost" id="rvSeSave" ${ready ? "" : "disabled"}>${w.seBusy === "save" ? "Saving…" : "Save"}</button>
+    <button class="btn btn-primary" id="rvSeGenerate" ${ready ? "" : "disabled"}>
+      ${busy ? "Generating…" : w.seBusy === "gen" ? "Starting…" : `Generate · ${SE_CREDITS} Credits`}</button>`;
+}
+
 function popoverHtml() {
   const w = S.wizard;
   const { kind } = w.pop;
