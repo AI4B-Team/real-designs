@@ -919,12 +919,18 @@ function openRoomPopover(anchor, onPick) {
 
 /* --------------------------------------------------------- canvas handoff */
 
+/** The canvas only walks the photos the user chose on Review Rooms. */
+function designSet() {
+  const sel = ordered().filter((i) => i.selected);
+  return sel.length ? sel : ordered();
+}
+
 function idxOf(key) {
-  return ordered().findIndex((i) => i.key === key);
+  return designSet().findIndex((i) => i.key === key);
 }
 
 async function openInCanvas(key) {
-  const list = ordered();
+  const list = designSet();
   const it = list.find((i) => i.key === key);
   if (!it) return;
   S.current = key;
@@ -1007,7 +1013,7 @@ function stripGuard() {
 
 function drawStrip() {
   if (!strip || !S) return;
-  const list = ordered();
+  const list = designSet();
   const i = list.findIndex((x) => x.key === S.current);
   strip.innerHTML = `<button class="rds-strip-b" id="rdsRooms"><i data-lucide="layout-grid"></i>Back To Rooms</button>
     <button class="rds-strip-i" id="rdsPrev" aria-label="Previous photo" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
@@ -1029,13 +1035,13 @@ function drawStrip() {
   strip.querySelector("#rdsStripX").onclick = exitAll;
   strip.querySelector("#rdsPrev").onclick = () => {
     markCurrentDone();
-    const l = ordered();
+    const l = designSet();
     const n = l.findIndex((x) => x.key === S.current);
     if (n > 0) openInCanvas(l[n - 1].key);
   };
   strip.querySelector("#rdsNext").onclick = () => {
     markCurrentDone();
-    const l = ordered();
+    const l = designSet();
     const n = l.findIndex((x) => x.key === S.current);
     if (n >= 0 && n < l.length - 1) openInCanvas(l[n + 1].key);
   };
