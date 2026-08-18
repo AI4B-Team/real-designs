@@ -1087,15 +1087,12 @@ function setC(v){cAfter.style.clipPath=`inset(0 0 0 ${v}%)`;cHnd.style.left=v+'%
 cRng.addEventListener('input',e=>setC(e.target.value));setC(50);
 
 /** Caption shown over an uploaded source before anything has been generated. */
-function sourceCaption(on,text){
-  const host=document.querySelector('#canvasCard .card-b'); if(!host) return;
-  let cap=document.getElementById('srcCap');
-  if(!on){ if(cap) cap.remove(); return; }
-  if(!cap){
-    cap=document.createElement('div'); cap.id='srcCap'; cap.className='src-cap';
-    host.insertBefore(cap,host.firstChild);
-  }
-  cap.innerHTML='<b>Your Source Photo</b><span>'+esc(text||'Choose what you want to create, then generate your first version.')+'</span>';
+/* The Canvas carries exactly one title and one dynamic subtitle, in its card
+   header. The old inset "Your Source Photo" panel repeated both, so it is
+   gone; this only clears any copy left over from an earlier session. */
+function sourceCaption(_on?:any,_text?:any){
+  const cap=document.getElementById('srcCap');
+  if(cap) cap.remove();
 }
 
 /* The single Studio start experience: in-canvas empty state plus the compact
