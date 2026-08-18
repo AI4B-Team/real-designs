@@ -4912,8 +4912,17 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   let fuUid='anon';
   try{ const {data}=await supabase.auth.getUser(); if(data&&data.user) fuUid=data.user.id; }catch(_){}
   try{
+    /* Startup routing is only allowed to move the user while the route it was
+       queued against is still current and no Photo Design Canvas is open. */
+    const fuToken=(window as any).__rdNavToken?(window as any).__rdNavToken():0;
+    const fuGo=(v)=>{
+      const cur=(window as any).__rdNavToken?(window as any).__rdNavToken():0;
+      if(cur!==fuToken) return;
+      if(inPhotoCanvas()) return;
+      go(v);
+    };
     mountFirstUse({
-      go, lucide, esc, photos:PHOTOS, uid:fuUid, track,
+      go:fuGo, lucide, esc, photos:PHOTOS, uid:fuUid, track,
       getSummary:()=>getWorkspaceSummary(),
       uploadPhoto:(f)=>uploadRoomPhoto(f),
       prefsStart:async()=>{ try{ const p=await getPrefs(); return (p&&p.start&&p.start.page)||'smart'; }catch(_){ return 'smart'; } },
