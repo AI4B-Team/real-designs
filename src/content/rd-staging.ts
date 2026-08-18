@@ -32,7 +32,7 @@ import {
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
-import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel } from "@/lib/builder-ui";
+import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml } from "@/lib/builder-ui";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
