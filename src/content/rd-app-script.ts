@@ -202,7 +202,13 @@ function go(v,fromHash){
   }else if(v!=='account'){ __paneSeq++; }
   const bootRoute=__bootRoute; __bootRoute=false;
   const revealLive=(()=>{ try{ return !!((window as any).__rdRevealBusy && (window as any).__rdRevealBusy()); }catch(_){ return false; } })();
-  if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
+  if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){
+    /* On the first route after a page load, a remembered builder session wins:
+       a refresh mid-build returns to that project instead of the library. */
+    let saved=''; try{ saved=localStorage.getItem('rd_reveal_active')||''; }catch(_){ }
+    if(bootRoute && saved){ v='lvideo'; }
+    else { (window as any).__rdMediaTab='videos'; v='media'; }
+  }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
      keys like lvideo) must never leave the content area blank. Home and the
      dashboard are one view now, reachable only as dash. */
