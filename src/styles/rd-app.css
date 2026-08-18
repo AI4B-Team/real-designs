@@ -1689,10 +1689,27 @@
 .rd-app .stw-door.on .stw-door-check i,.rd-app .stw-door.on .stw-door-check svg{opacity:1}
 .rd-app .stw-door.on .stw-door-check{opacity:1}
 .rd-app .stw-door-check i,.rd-app .stw-door-check svg{width:13px;height:13px;color:#fff;stroke:#fff;stroke-width:3}
-.rd-app .sp-describe{display:flex;flex-direction:column;align-items:stretch;gap:10px}
-.rd-app .sp-describe textarea{width:100%;min-height:104px;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);font:inherit;font-size:.88rem;resize:vertical}
-.rd-app .sp-describe .btn{align-self:flex-start}
-.rd-app .sp-describe p{margin:0;font-size:.84rem;color:var(--mute-2)}
+.rd-app .sp-describe{display:flex;flex-direction:column;align-items:stretch;gap:10px;width:100%}
+.rd-app .sp-composer{position:relative;width:100%;border:1px solid var(--line);border-radius:16px;background:var(--card);padding:14px 14px 52px;transition:border-color .15s ease,box-shadow .15s ease}
+.rd-app .sp-composer:focus-within{border-color:var(--red,#c00);box-shadow:0 0 0 3px rgba(204,0,0,.10)}
+.rd-app .sp-composer.is-busy{opacity:.9}
+.rd-app .sp-describe textarea{width:100%;min-height:76px;max-height:260px;padding:0;border:0;background:transparent;font:inherit;font-size:.92rem;line-height:1.5;resize:none;outline:none;overflow-y:auto}
+.rd-app .sp-composer-a{position:absolute;right:12px;bottom:11px}
+.rd-app .sp-create{display:inline-flex;align-items:center;gap:7px}
+.rd-app .sp-create i{width:15px;height:15px}
+.rd-app .sp-create em{font-style:normal;opacity:.72;font-size:.76rem}
+.rd-app .sp-create[disabled]{opacity:.45;cursor:not-allowed}
+.rd-app .sp-spin{width:13px;height:13px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:sp-spin .7s linear infinite}
+@keyframes sp-spin{to{transform:rotate(360deg)}}
+.rd-app .sp-chips{display:flex;flex-wrap:wrap;gap:8px}
+.rd-app .sp-chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font:inherit;font-size:.79rem;color:var(--mute-2);cursor:pointer}
+.rd-app .sp-chip:hover{border-color:var(--red,#c00);color:var(--ink,inherit)}
+.rd-app .sp-describe p{margin:0;font-size:.82rem;color:var(--mute-2)}
+@media (max-width:560px){
+  .rd-app .sp-composer{padding-bottom:56px}
+  .rd-app .sp-composer-a{right:10px;bottom:10px}
+}
+
 
 .stw-source{margin-top:18px}
 .sp{margin-top:10px}
