@@ -38,6 +38,23 @@ describe("property address lines", () => {
       line2: "Tampa, FL 33606",
     });
   });
+  it("parses a comma-free address that clearly ends in City ST ZIP", () => {
+    expect(splitAddressLines("1420 Bayshore Blvd Tampa FL 33606")).toEqual({
+      line1: "1420 Bayshore Boulevard",
+      line2: "Tampa, FL 33606",
+    });
+    expect(splitAddressLines("7006 Orvicti Ct New Port Richey FL 34652")).toEqual({
+      line1: "7006 Orvicti Court",
+      line2: "New Port Richey, FL 34652",
+    });
+  });
+  it("never guesses when there is no recognisable suffix", () => {
+    expect(splitAddressLines("Some Place Nobody Knows")).toEqual({
+      line1: "Some Place Nobody Knows",
+      line2: "",
+    });
+  });
+
   it("counts photos without ever saying 0 Photos", () => {
     expect(photoCountLabel(0)).toBe("No Photos");
     expect(photoCountLabel(1)).toBe("1 Photo");
