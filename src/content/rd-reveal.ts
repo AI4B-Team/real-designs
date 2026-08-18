@@ -143,6 +143,8 @@ const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const goTo = (v) => { const fn = S.go || (typeof window !== "undefined" && window.__rdGo); if (fn) fn(v); else if (typeof location !== "undefined") location.hash = "#" + v; };
 const paint = () => { try { createIcons({ icons }); } catch (_) {} };
+/** Only real asset ids belong in the database columns. */
+const uuidOrNull = (v) => (typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) ? v : null);
 const toast = (m) => { try { window.rdToast ? window.rdToast(m) : console.log(m); } catch (_) {} };
 
 export const VIDEO_TYPES = [
@@ -1544,6 +1546,7 @@ async function ensureVideoProjectId(w) {
   w.editingId = saved.id;
   rememberActiveBuilder(saved.id);
   sceneClips.setProject(saved.id);
+  sceneFrames.setProject(saved.id);
   return saved.id;
 }
 
@@ -3105,6 +3108,18 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       clipUrl,
       clipSeconds: clipUrl ? clip?.seconds || null : null,
       compareUrl: s.compare ? await resolvePhotoUrl(s.compare) : null,
+      /* Standard Start/End: this scene genuinely ends on a second frame. */
+      ...(await (async () => {
+        const fr = sceneFrames.get(s.key);
+        if (!frameConfigured(fr) || clipUrl) return {};
+        return {
+          endUrl: await resolvePhotoUrl(fr.end_path),
+          startCrop: fr.start_crop,
+          endCrop: fr.end_crop,
+          seTransition: fr.transition_type,
+        };
+      })()),
+      crop: s.crop || null,
       room_name: s.room,
       scene_type: s.scene_type,
       duration: clipUrl && clip?.seconds ? clip.seconds : per,
@@ -3873,7 +3888,7 @@ function bind() {
     } else if ((w.pop?.kind === "cap" || w.pop?.kind === "motion") && !commit && s && w.pop.snap) {
       Object.assign(s, w.pop.snap);
     }
-    w.pop = null; w.popAll = false; w.popConfirm = false;
+    w.pop = null; w.popAll = false; w.popConfirm = false; w.seDraft = null;
     render();
   };
   on("#rvPopX, #rvPopCancel", "click", () => closeFx(false));
@@ -4393,6 +4408,8 @@ function editExisting(d) {
      with the project, and any job still running keeps polling. */
   sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
   void sceneClips.load(p.id);
+  /* Start/End pairs are durable too: reload them with the project. */
+  void sceneFrames.load(p.id).then(() => { if (S.screen === "wizard") render(); });
   w.address = cleanAddressText(p.property_address || "");
   w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
   w.titleTouched = !!p.title_touched;
