@@ -2267,10 +2267,17 @@ function popoverHtml() {
   }
 
   const isFx = kind === "look";
-  const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text" : "Effects";
-  const width = kind === "crop" ? "wide" : kind === "cap" ? "compact" : "xwide";
+  const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
+    : kind === "recap" ? "Scene Settings" : kind === "frames" ? "Start And End Frames" : "Effects";
+  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : "xwide";
   const foot = isFx
     ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
+    : kind === "recap"
+    ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
+    : kind === "frames"
+    ? `${frameConfigured(sceneFrames.get(s.key)) ? `<button class="btn btn-ghost danger" id="rvSeRemove">Remove Start / End</button>` : ""}
+       <button class="btn btn-ghost" id="rvPopCancel">Cancel</button>
+       <button class="btn btn-primary" id="rvSeSave" ${w.seDraft?.end_key && !w.seBusy ? "" : "disabled"}>${w.seBusy ? "Saving…" : "Save Start / End"}</button>`
     : `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone">Save</button>`;
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${width} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="${esc(title)}">
     <div class="rv-modal-h"><b>${esc(title)}</b><button class="icon-btn" id="rvPopX" aria-label="Close"><i data-lucide="x"></i></button></div>
