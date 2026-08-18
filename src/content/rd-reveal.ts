@@ -512,6 +512,8 @@ function newWizard(seed = {}) {
     propertyLabel: seed.propertyLabel || null,
     /* Only these stored photos should be selected once assets load. */
     seedPaths: Array.isArray(seed.paths) && seed.paths.length ? seed.paths.slice() : null,
+    /* Finished designs handed over from Studio, used as scenes directly. */
+    seedDesigns: Array.isArray(seed.designs) && seed.designs.length ? seed.designs.slice() : null,
     versionId: seed.versionId || null,
     title: seed.title || "",
     videoType: seed.videoType || "property_tour",
