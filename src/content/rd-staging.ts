@@ -195,6 +195,11 @@ function hide() {
   try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
 }
 
+/** Make sure the page container exists before the router toggles views. */
+export function ensureStagingView() {
+  return !!host();
+}
+
 /** Router hook: the staging view became visible again (back button, refresh). */
 export function mountStagingView() {
   if (!S || !S.items.length) {
@@ -918,5 +923,5 @@ try {
 } catch (_) {}
 
 try {
-  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft, mount: mountStagingView, detach: detachStagingView };
+  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft, ensure: ensureStagingView, mount: mountStagingView, detach: detachStagingView };
 } catch (_) {}

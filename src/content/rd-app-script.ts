@@ -201,6 +201,9 @@ function go(v,fromHash){
      keys like lvideo) must never leave the content area blank. Home and the
      dashboard are one view now, reachable only as dash. */
   let viewId = v==='lvideo' ? 'reveal' : (v==='home' ? 'dash' : v);
+  /* The staging page mounts on demand; make sure its container exists before
+     the unknown-view fallback runs. */
+  if(viewId==='staging'){ try{ (window as any).rdStaging && (window as any).rdStaging.ensure(); }catch(_){} }
   if(!document.getElementById('v-'+viewId)) viewId='dash';
   const navId = (v==='lvideo') ? 'lvideo' : (viewId==='reveal') ? 'media' : viewId;
 
