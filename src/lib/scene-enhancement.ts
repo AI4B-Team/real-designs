@@ -333,3 +333,92 @@ export function clipStatusLabel(status?: string | null, progress?: number | null
 export function clipUsable(clip: { status?: string | null; storage_path?: string | null } | null | undefined) {
   return !!clip && clip.status === "completed" && !!clip.storage_path;
 }
+
+/* ------------------------------------------- animate taxonomy & fitness */
+
+export type AnimateCategory = "camera" | "environment" | "transformation" | "lifestyle";
+
+export const ANIMATE_CATEGORIES: Array<[string, string]> = [
+  ["recommended", "Recommended"],
+  ["camera", "Camera"],
+  ["environment", "Environment"],
+  ["transformation", "Transformation"],
+  ["lifestyle", "Lifestyle"],
+];
+
+const ANIMATE_CATEGORY_OF: Record<string, AnimateCategory> = {
+  cinematic_walkthrough: "camera",
+  dolly_in: "camera",
+  dolly_out: "camera",
+  enter_room: "camera",
+  approach_property: "camera",
+  aerial_reveal: "camera",
+  luxury_reveal: "camera",
+  day_to_dusk: "environment",
+  twilight_reveal: "environment",
+  fireplace: "environment",
+  pool_water: "environment",
+  curtains: "environment",
+  foliage: "environment",
+  empty_to_staged: "transformation",
+  before_after_reno: "transformation",
+  construction: "transformation",
+  lifestyle: "lifestyle",
+};
+
+export function animateCategory(id: string): AnimateCategory {
+  return ANIMATE_CATEGORY_OF[id] || "camera";
+}
+
+const EXTERIOR_RE = /exterior|front|facade|curb|yard|patio|deck|pool|garden|landscape|backyard|outdoor|driveway|porch|balcony/i;
+const ENTRY_RE = /entry|foyer|hall|stair|closet|laundry|garage|utility/i;
+
+function isExteriorRoom(room?: string | null) {
+  return EXTERIOR_RE.test(String(room || ""));
+}
+
+/**
+ * Options we actively recommend for a detected room type. Everything else
+ * stays browsable — the UI only warns, it never hides.
+ */
+export function recommendedAnimateIds(room?: string | null): string[] {
+  const r = String(room || "").toLowerCase();
+  if (isExteriorRoom(r)) {
+    const out = ["approach_property", "aerial_reveal", "twilight_reveal", "day_to_dusk", "foliage"];
+    if (/pool/.test(r)) out.unshift("pool_water");
+    return out;
+  }
+  if (ENTRY_RE.test(r)) return ["enter_room", "dolly_in", "cinematic_walkthrough"];
+  if (!r || /unassigned|needs review/.test(r)) return ["dolly_in", "cinematic_walkthrough", "dolly_out"];
+  const out = ["enter_room", "dolly_in", "cinematic_walkthrough", "luxury_reveal"];
+  if (/living|family|great|den/.test(r)) out.push("fireplace", "curtains");
+  if (/bedroom|primary|master/.test(r)) out.push("curtains");
+  if (/empty|vacant|unfurnished/.test(r)) out.unshift("empty_to_staged");
+  return out;
+}
+
+/**
+ * A plain warning when the picked option needs something the photo may not
+ * contain. Empty string means nothing to warn about.
+ */
+export function animateWarning(id: string, room?: string | null): string {
+  const r = String(room || "").toLowerCase();
+  const exterior = isExteriorRoom(r);
+  if (id === "pool_water" && !/pool/.test(r))
+    return "This animates water in an existing pool. Pick it only if a pool is visible in this photo.";
+  if (id === "fireplace" && exterior)
+    return "This animates an existing fireplace. Pick it only if a fireplace is visible in this photo.";
+  if (id === "fireplace" && !/living|family|great|den|bedroom|lounge/.test(r))
+    return "This animates an existing fireplace. Pick it only if a fireplace is visible in this photo.";
+  if (id === "curtains" && exterior)
+    return "This animates existing curtains, which are usually only visible indoors.";
+  if (id === "approach_property" && r && !exterior)
+    return "This is written for a front exterior. Indoors it may invent space beyond the frame.";
+  if (id === "aerial_reveal" && r && !exterior)
+    return "Simulated aerial movement suits exteriors. Indoors the result is often unusable.";
+  if (id === "enter_room" && exterior)
+    return "This crosses an interior threshold. On an exterior photo the result may be unpredictable.";
+  if (id === "foliage" && r && !exterior)
+    return "This animates planting that is already in the frame.";
+  return "";
+}

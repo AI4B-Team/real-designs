@@ -1566,6 +1566,7 @@ function animateModalFor(w) {
     clip: sceneClips.get(w.animate.key),
     busy: !!w.animate.busy,
     confirm: !!w.animate.confirm,
+    cat: w.animate.cat || "recommended",
   });
 }
 
@@ -1684,6 +1685,11 @@ function bindAnimate(el, w, render) {
     render();
   });
 
+  on("[data-animcat]", "click", (e) => {
+    if (!w.animate) return;
+    w.animate.cat = e.currentTarget.dataset.animcat;
+    render();
+  });
   on("[data-animate]", "click", (e) => {
     if (!w.animate) return;
     w.animate.sel = e.currentTarget.dataset.animate;
@@ -1742,6 +1748,21 @@ function syncSceneOrder() {
   w.scenes.sort((a, b) => (pos.get(a.key) ?? 1e9) - (pos.get(b.key) ?? 1e9));
 }
 
+/** Compact state indicators. Icon plus tooltip only — never a full label. */
+function sceneBadges(s, clip) {
+  if (!s) return "";
+  const out = [];
+  const add = (icon, tip, cls = "") => out.push(`<em class="rv-badge ${cls}" title="${esc(tip)}"><i data-lucide="${icon}"></i></em>`);
+  if (clip && (clip.status === "queued" || clip.status === "processing")) add("loader", "AI Clip Processing", "busy");
+  else if (clip && clip.status === "failed") add("triangle-alert", "AI Clip Failed", "bad");
+  else if (clip && clip.status === "completed" && clip.approved) add("clapperboard", "Using AI Clip", "ai");
+  if (s.caption) add("type", `Text: ${s.caption}`);
+  if ((s.motion || "auto") !== "auto" && !s.use_clip) add("camera", `Motion: ${motionLabel(s)}`);
+  if (s.look) add("palette", "Look Applied");
+  if (s.vfx && s.vfx !== "none") add("wand-sparkles", "Effect Applied");
+  return out.length ? `<div class="rv-badges">${out.join("")}</div>` : "";
+}
+
 function tileHtml(a, seq) {
   const w = S.wizard;
   const s = w.scenes.find((x) => x.key === a.key) || null;
@@ -1766,13 +1787,11 @@ function tileHtml(a, seq) {
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
       ${s ? `<span class="rv-tile-seq mono">${seq}</span>` : ""}
+      ${sceneBadges(s, clip)}
       ${tools}
     </div>
     <div class="rv-tile-foot">
       ${roomCell(a)}
-      ${cap
-        ? `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}" title="${esc(cap)}">${esc(cap.length > 18 ? cap.slice(0, 18) + "…" : cap)}</button>`
-        : `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}">Add Text</button>`}
     </div>
     ${clipCardHtml(a.key, clip)}
   </div>`;
@@ -2005,33 +2024,19 @@ function popoverHtml() {
     const q = (w.popQ || "").toLowerCase();
     const match = (n) => !q || n.toLowerCase().includes(q);
     const rows = STANDARD_MOTIONS.filter(([, n]) => match(n));
-    const imms = IMMERSIVE_EFFECTS.filter(([, n]) => match(n));
-    const exts = EXTERIOR_EFFECTS.filter(([, n]) => match(n));
-    const sel = s.motion_level === "immersive" ? s.immersive_effect || "light" : s.motion || "auto";
+    const sel = s.motion || "auto";
     const hov = w.popHover || sel;
     body = `<div class="rv-pop-two">
       <div class="rv-pop-side">
-        <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Search Camera Motions">
+        <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Search Motions">
         <div class="rv-pop-scroll">
           <div class="rv-pop-h">Camera Moves</div>
           ${rows.some(([id]) => id === "auto") ? `<button class="rv-pop-auto ${s.motion_level !== "immersive" && (s.motion || "auto") === "auto" ? "on" : ""}" data-motionpick="auto" data-hover="auto">
-            <span><b>Auto, Recommended</b><em>We Pick The Best Move For Each Room</em></span><i data-lucide="sparkles"></i>
+            <span><b>Auto, Recommended</b><em>We’ll Choose A Natural Movement For This Scene</em></span><i data-lucide="sparkles"></i>
           </button>` : ""}
           <div class="rv-pop-grid">
             ${rows.filter(([id]) => id !== "auto").map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && s.motion === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${esc(n)}</button>`).join("")}
           </div>
-          ${imms.length ? `<div class="rv-pop-sep"></div>
-          <div class="rv-pop-h">Immersive Movement <i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE} Each</i></div>
-          <div class="rv-pop-grid">
-            ${imms.map(([id, n]) => `<button class="rv-pop-row ${s.motion_level === "immersive" && (s.immersive_effect || "light") === id ? "on" : ""}" data-immpick="${id}" data-hover="${id}">${esc(n)}<i class="mono">+${IMMERSIVE_CREDITS_PER_SCENE}</i></button>`).join("")}
-          </div>
-          <div class="rv-note sm">Only movement is animated. Walls, windows and furniture stay exactly as designed.</div>` : ""}
-          ${isExterior(s) && exts.length ? `<div class="rv-pop-sep"></div><div class="rv-pop-h">Cinematic Exterior</div>
-          <div class="rv-pop-grid">
-            <button class="rv-pop-row ${s.exterior_effect ? "" : "on"}" data-extpick="">None</button>
-            ${exts.map(([id, n]) => `<button class="rv-pop-row ${s.exterior_effect === id ? "on" : ""}" data-extpick="${id}" data-hover="${id}">${esc(n)}</button>`).join("")}
-          </div>
-          ${s.exterior_effect ? `<div class="rv-note sm">${esc(EXTERIOR_DISCLOSURE)}</div>` : ""}` : ""}
         </div>
         <label class="rv-check"><input type="checkbox" id="rvAllMotion"> Apply To All Scenes</label>
       </div>
@@ -2053,10 +2058,19 @@ function popoverHtml() {
       ${CROPS.map(([id, n]) => `<button class="rv-pop-row ${(s.crop || "center") === id ? "on" : ""}" data-croppick="${id}">${n}</button>`).join("")}
     </div>`;
   } else if (kind === "cap") {
-    body = `<div class="rv-pop-list">
-      <div class="rv-pop-h">On Screen Text</div>
-      <label class="rv-f">${esc(s.room || "Scene")}<input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" placeholder="Add Text, Optional"></label>
-      <div class="rv-note sm">Shown over this photo while it plays.</div>
+    const pos = s.caption_pos || "bottom";
+    const sty = s.caption_style || "brand";
+    body = `<div class="rv-textbox">
+      <label class="rv-f">On-Screen Text
+        <input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" maxlength="60" placeholder="Kitchen With Quartz Island" autofocus></label>
+      <div class="rv-note sm">Shown over this scene while it plays.</div>
+      <div class="rv-textrow"><span>Position</span><div class="rv-seg">
+        ${[["bottom", "Bottom"], ["center", "Center"], ["top", "Top"]].map(([id, n]) => `<button class="${pos === id ? "on" : ""}" data-cappos="${id}">${n}</button>`).join("")}
+      </div></div>
+      <div class="rv-textrow"><span>Text Style</span><div class="rv-seg">
+        ${[["brand", "Brand Default"], ["minimal", "Minimal"]].map(([id, n]) => `<button class="${sty === id ? "on" : ""}" data-capstyle="${id}">${n}</button>`).join("")}
+      </div></div>
+      <button class="fb-link" id="rvCapClear" ${s.caption ? "" : "disabled"}>Clear Text</button>
     </div>`;
   } else {
     /* Effects modal. Two tabs — Looks (colour and presentation, free) and
@@ -2064,7 +2078,7 @@ function popoverHtml() {
        only: every picked option still writes the same stored ids. */
     const tab = w.popTab === "effects" ? "effects" : "looks";
     const cats = tab === "looks" ? lookCats() : fxCats();
-    const catId = cats.some(([id]) => id === w.popCat) ? w.popCat : "all";
+    const catId = cats.some(([id]) => id === w.popCat) ? w.popCat : cats[0][0];
     const amt = s.look_amount ?? DEFAULT_INTENSITY;
     const activeLook = s.look ? lookById(s.look) : null;
     const activeTile = s.vfx && s.vfx !== "none" ? tileById(s.vfx) : null;
@@ -2072,12 +2086,16 @@ function popoverHtml() {
     const plan = applyAllPlan(w.scenes, s);
     const canAll = !nothing && plan.targets > 0;
 
+    /* A tile shows the real treatment when we can paint it. Generated effects
+       cannot be previewed before they are made, so they say so instead of
+       showing an unchanged photo and pretending. */
     const card = (o) => `<button class="fx-card ${o.on ? "on" : ""}" ${o.attr} role="option"
       aria-selected="${o.on ? "true" : "false"}" title="${esc(o.blurb || o.name)}">
-      <span class="fx-th ${o.blank ? "blank" : ""}" ${o.blank ? "" : `data-img="${esc(s.path)}"`}>${o.blank ? `<i data-lucide="ban"></i>` : o.overlay || ""}
+      <span class="fx-th ${o.blank ? "blank" : ""} ${o.pending ? "pending" : ""}" ${o.blank || o.pending ? "" : `data-img="${esc(s.path)}"`}>${
+        o.blank ? `<i data-lucide="ban"></i>` : o.pending ? `<i data-lucide="sparkles"></i><em>Preview After Generating</em>` : o.overlay || ""}
         ${o.on ? `<i class="fx-ck" data-lucide="check"></i>` : ""}</span>
       <span class="fx-nm">${esc(o.name)}</span>
-      ${o.credits ? `<em class="fx-cost">${o.credits} Credits</em>` : ""}
+      ${o.gen ? `<em class="fx-cost gen">AI Image · ${o.credits} Credits</em>` : o.credits ? `<em class="fx-cost">${o.credits} Credits</em>` : ""}
       ${o.beta ? `<em class="fx-beta">Beta</em>` : ""}
     </button>`;
 
@@ -2091,7 +2109,8 @@ function popoverHtml() {
         effectTiles(catId).map((t) => {
           const lk = t.look ? lookById(t.look) : null;
           return card({
-            name: t.label, blurb: t.sub, on: s.vfx === t.id, credits: t.credits || 0, beta: !!t.gen,
+            name: t.label, blurb: t.sub, on: s.vfx === t.id, credits: t.credits || 0,
+            gen: !!t.gen, pending: !!t.gen,
             overlay: lk ? lookOverlayHTML(lk, amt) : "", attr: `data-vfxpick="${esc(t.id)}"`,
           });
         }).join("");
@@ -2115,7 +2134,8 @@ function popoverHtml() {
             <div class="rv-pop-clip m-static" data-img="${esc(s.path)}">${activeLook ? lookOverlayHTML(activeLook, amt) : ""}</div>
             <span class="rv-pop-live"><i></i>Live Preview</span>
           </div>
-          <b>${esc(selName)}${cost ? ` <em class="fx-cost inline">${cost} Credits</em>` : ""}</b>
+          <b>${esc(selName)}${cost ? ` <em class="fx-cost inline">AI Image · ${cost} Credits</em>` : ""}</b>
+          ${cost ? `<span class="rv-note sm">This is generated as a new image version. Your original photo is kept.</span>` : ""}
           <span>${esc(selCopy)}</span>
           ${supportsIntensity(s) ? `<label class="rv-f">Intensity <i class="fx-amt">${esc(intensityWord(amt))}</i>
             <input type="range" id="rvLookAmt" min="10" max="100" value="${amt}">
@@ -2136,12 +2156,15 @@ function popoverHtml() {
   }
 
   const isFx = kind === "look";
-  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${kind === "crop" ? "wide" : "xwide"} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="Scene options">
-    <div class="rv-modal-h"><b>${kind === "motion" ? "Camera Motion" : kind === "crop" ? "Crop" : "Effects"}</b><button class="icon-btn" id="rvPopX"><i data-lucide="x"></i></button></div>
+  const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text" : "Effects";
+  const width = kind === "crop" ? "wide" : kind === "cap" ? "compact" : "xwide";
+  const foot = isFx
+    ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
+    : `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone">Save</button>`;
+  return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${width} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="${esc(title)}">
+    <div class="rv-modal-h"><b>${esc(title)}</b><button class="icon-btn" id="rvPopX" aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">${body}</div>
-    <div class="rv-modal-f">${isFx
-      ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
-      : `<button class="btn btn-primary" id="rvPopDone">Done</button>`}</div>
+    <div class="rv-modal-f">${foot}</div>
   </div></div>`;
 }
 
@@ -2637,6 +2660,24 @@ function creditTotal() {
   return qualityCost(S.wizard?.quality || "standard") + immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE + vfxGenCredits();
 }
 
+/* Itemized cost so the number in the footer is never a mystery. AI clips are
+   charged when they are generated, so they are listed as already paid rather
+   than added to the render total again. */
+function creditBreakdown() {
+  const w = S.wizard || {};
+  const rows = [];
+  rows.push(["Video Render", qualityCost(w.quality || "standard")]);
+  const imm = immersiveCount();
+  if (imm) rows.push([`Immersive Motion · ${imm} ${imm === 1 ? "Scene" : "Scenes"}`, imm * IMMERSIVE_CREDITS_PER_SCENE]);
+  const gen = vfxGenCredits();
+  if (gen) {
+    const n = (w.scenes || []).filter((x) => x.vfx_gen).length;
+    rows.push([`AI Effects · ${n} ${n === 1 ? "Scene" : "Scenes"}`, gen]);
+  }
+  const clips = (w.scenes || []).filter((x) => x.use_clip && x.clip_id).length;
+  return { rows, clips, clipCost: clips * ANIMATE_CREDITS_PER_CLIP, total: rows.reduce((n, r) => n + r[1], 0) };
+}
+
 /* ======================= PERSISTENT PREVIEW PANEL ======================= */
 function previewPanel() {
   const w = S.wizard;
@@ -2652,8 +2693,13 @@ function previewPanel() {
     <div class="mono rv-meta">Scene 1 Of ${w.scenes.length || 0} · ${per ? per.toFixed(1) : "0.0"}s · ${total}s Total</div>
     <div class="rv-sub sm">Variants</div>
     <div class="rv-vars">${vs.length ? vs.map((v) => `<div><span class="mono">${esc(v.aspect_ratio)}</span><i>${v.version_type === "clean" ? "Unbranded" : v.version_type === "branded" ? "Branded" : "Disclosure Ready"}</i><b>Queued</b></div>`).join("") : `<div class="rv-note sm">Pick A Format.</div>`}</div>
-    <div class="rv-cost mono">${cost} Credits</div>
-    ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
+    <div class="rv-bill">
+      ${creditBreakdown().rows.map(([n, v]) => `<div><span>${esc(n)}</span><b class="mono">${v}</b></div>`).join("")}
+      <div class="rv-bill-t"><span>Total To Render</span><b class="mono">${cost} Credits</b></div>
+      ${creditBreakdown().clips ? `<div class="rv-bill-n">${creditBreakdown().clips} AI ${creditBreakdown().clips === 1 ? "Clip" : "Clips"} · ${creditBreakdown().clipCost} Credits Already Charged</div>` : ""}
+      ${bal != null ? `<div class="rv-bill-n">Balance ${bal}${bal >= cost ? ` · ${bal - cost} After This Render` : ""}</div>` : ""}
+    </div>
+    ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">You Need ${cost - bal} More Credits To Render This Video.</div><button class="btn btn-ghost btn-sm" id="rvAddCredits2"><i data-lucide="zap"></i>Add Credits</button>` : ""}
     ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
     ${!block && !browserRenderSupport().ok ? `<div class="rv-note sm">${esc(browserRenderSupport().reason)} Nothing Is Charged Until A Render Actually Starts.</div>` : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
@@ -2811,6 +2857,9 @@ async function generate() {
         motion: s.motion || "auto",
         transition: w.transition,
         caption: w.captions ? s.caption || s.room : null,
+        /* Text placement rides along in crop_data so it survives a reload
+           without a schema change. */
+        crop_data: { ...(s.crop_data || {}), caption_pos: s.caption_pos || "bottom", caption_style: s.caption_style || "brand" },
         disclosure_type: s.disclosure || null,
         motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
         immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
@@ -2944,6 +2993,8 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       motion: s.motion || "auto",
       transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
       caption: w.captions ? s.caption || s.room : null,
+      captionPos: s.caption_pos || "bottom",
+      captionStyle: s.caption_style || "brand",
       disclosure_type: s.disclosure || null,
       motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
       immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
@@ -3657,7 +3708,14 @@ function bind() {
       const sc = w.scenes[i];
       w.pop.snap = fxSnap(sc);
       w.popTab = sc && sc.vfx && sc.vfx !== "none" ? "effects" : "looks";
-      w.popCat = "all"; w.popAll = false; w.popConfirm = false;
+      w.popCat = "recommended"; w.popAll = false; w.popConfirm = false;
+    }
+    if (kind === "cap" || kind === "motion") {
+      /* Snapshot so Cancel restores exactly what the scene had. */
+      const sc = w.scenes[i] || {};
+      w.pop.snap = kind === "cap"
+        ? { caption: sc.caption ?? "", caption_pos: sc.caption_pos || "bottom", caption_style: sc.caption_style || "brand" }
+        : { motion: sc.motion || "auto", motion_level: sc.motion_level || "standard", immersive_effect: sc.immersive_effect || null };
     }
     render();
   });
@@ -3678,6 +3736,8 @@ function bind() {
       } else {
         fxRestore(s, w.pop.snap);
       }
+    } else if ((w.pop?.kind === "cap" || w.pop?.kind === "motion") && !commit && s && w.pop.snap) {
+      Object.assign(s, w.pop.snap);
     }
     w.pop = null; w.popAll = false; w.popConfirm = false;
     render();
@@ -3700,6 +3760,7 @@ function bind() {
     const s = cur(); if (!s) return;
     s.motion = e.currentTarget.dataset.motionpick;
     s.motion_level = "standard";
+    s.immersive_effect = null;
     render();
   });
   on("[data-hover]", "mouseenter", (e) => {
@@ -3904,7 +3965,16 @@ function bind() {
   const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
   if (w.avatar) bindAvatar(el, w.avatar, render, toast);
 
-  on("[data-cap]", "input", (e) => { w.scenes[Number(e.currentTarget.dataset.cap)].caption = e.currentTarget.value; });
+  on("[data-cap]", "input", (e) => {
+    const sc = w.scenes[Number(e.currentTarget.dataset.cap)];
+    if (!sc) return;
+    sc.caption = e.currentTarget.value;
+    const clear = el.querySelector("#rvCapClear");
+    if (clear) clear.disabled = !sc.caption;
+  });
+  on("[data-cappos]", "click", (e) => { const sc = cur(); if (!sc) return; sc.caption_pos = e.currentTarget.dataset.cappos; render(); });
+  on("[data-capstyle]", "click", (e) => { const sc = cur(); if (!sc) return; sc.caption_style = e.currentTarget.dataset.capstyle; render(); });
+  on("#rvCapClear", "click", () => { const sc = cur(); if (!sc) return; sc.caption = ""; render(); });
 
   /* scene labels */
   const lref = (v) => { const [i, j] = String(v).split(":").map(Number); return { s: w.scenes[i], j }; };
@@ -3995,6 +4065,7 @@ function bind() {
   /* review */
   on("#rvGen", "click", () => generate());
   on("#rvCancelRender", "click", () => cancelRender());
+  on("#rvAddCredits2", "click", () => openUpgrade("You need more credits to render this video."));
   on("#rvAddCredits", "click", () => openUpgrade(videoCreditBlock(creditTotal()) || "You need more credits to render this video."));
 
   } // end wizard bindings (S.wizard may be null on the library screen)
@@ -4126,6 +4197,9 @@ function editExisting(d) {
     duration: Number(s.duration),
     motion: s.motion,
     caption: s.caption,
+    caption_pos: s.crop_data?.caption_pos || "bottom",
+    caption_style: s.crop_data?.caption_style || "brand",
+    crop_data: s.crop_data || {},
     disclosure: s.disclosure_type,
     motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
     immersive_effect: s.immersive_effect || null,
