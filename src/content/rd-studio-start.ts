@@ -880,7 +880,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     const isVideo = state.door === "video";
     picker = mountSourcePicker(slot, {
       context: isVideo ? "video" : "design",
-      esc,
+      /* Local escape: the shell helper is not always initialized this early. */
+      esc: escLocal,
       lucide,
       showAlert: ctx.showAlert,
       properties: () =>

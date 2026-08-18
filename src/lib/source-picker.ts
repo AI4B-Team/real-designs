@@ -117,7 +117,8 @@ const esc0 = (v: string) =>
 
 export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const cfg = CONTEXT_CONFIG[opts.context];
-  const esc = opts.esc || esc0;
+  let escFail = false;
+  const esc = (v: string) => (escFail || !opts.esc ? esc0(v) : (() => { try { return opts.esc!(v); } catch { escFail = true; return esc0(v); } })());
   const alert = opts.showAlert || ((m: string) => console.warn(m));
 
   const state = {
@@ -457,11 +458,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       body.addEventListener("input", onInput);
       wireDrag(body);
     }
+    /* A host helper that fails must never leave an empty picker behind. */
     try {
       body.innerHTML = html();
     } catch (err) {
       console.error("[source-picker] render failed", err);
-      throw err;
+      escFail = true;
+      body.innerHTML = html();
     }
 
     try {
