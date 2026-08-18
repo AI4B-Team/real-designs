@@ -1022,7 +1022,10 @@ export function mountStudioStart(ctx: StudioStartCtx) {
                   sourceType: "design",
                   propertyLabel: designs[0]?.address || "",
                   paths: designs.map((d) => d.path),
-                  rooms: designs.map((d) => d.room || ""),
+                  designs: designs.map((d) => ({
+                    id: d.id, path: d.path, beforePath: d.beforePath || null,
+                    room: d.room || "", versionId: d.versionId || null,
+                  })),
                 });
               } catch (_) {
                 ctx.go("studio");
