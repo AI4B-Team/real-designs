@@ -1238,7 +1238,7 @@ function runBatch(batch, direction) {
     it.err = "";
     patchCard(it);
   });
-  runBulkDesign(batch, direction, {
+  runBulkDesign(batch, { ...direction, outputRatio: normalizeOutputRatio(S.outputRatio) }, {
     onUpdate: (it) => {
       patchCard(it);
       saveDraft();
