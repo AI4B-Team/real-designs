@@ -193,6 +193,40 @@ export function streetOf(address: unknown): string {
   return (text.split(",")[0] || "").trim();
 }
 
+/** Two display lines for a property card: street, then city/state/ZIP.
+    Structured fields win; an unstructured string is only split on its own
+    commas so we never invent or reformat a city, state or ZIP. */
+export function splitAddressLines(
+  value: unknown,
+  parts?: Partial<ProjectAddress> | null,
+): { line1: string; line2: string } {
+  const p = parts || {};
+  const l1 = cleanAddressText(p.address_line_1);
+  const city = cleanAddressText(p.city, 80);
+  const state = cleanAddressText(p.state, 40);
+  const zip = cleanAddressText(p.postal_code, 20);
+  if (l1 || city || state || zip) {
+    const unit = cleanAddressText(p.address_line_2, 60);
+    const line1 = [l1, unit].filter(Boolean).join(" ");
+    const region = [/^[A-Za-z]{2}$/.test(state) ? state.toUpperCase() : state, zip].filter(Boolean).join(" ");
+    const line2 = [city, region].filter(Boolean).join(", ");
+    if (line1 || line2) return { line1: line1 || line2, line2: line1 ? line2 : "" };
+  }
+  const text = cleanAddressText(value);
+  if (!text) return { line1: "", line2: "" };
+  const bits = text.split(",").map((b) => b.trim()).filter(Boolean);
+  if (bits.length < 2) return { line1: text, line2: "" };
+  return { line1: bits[0]!, line2: bits.slice(1).join(", ") };
+}
+
+/** "No Photos" / "1 Photo" / "n Photos" — never "0 Photos". */
+export function photoCountLabel(n: unknown): string {
+  const count = Math.max(0, Math.floor(Number(n) || 0));
+  if (!count) return "No Photos";
+  return count === 1 ? "1 Photo" : count + " Photos";
+}
+
+
 /* ---------- Project titles ----------
    The address answers "which property?"; the title answers "which project?".
    They are independent: a suggestion is only ever offered while the user has
