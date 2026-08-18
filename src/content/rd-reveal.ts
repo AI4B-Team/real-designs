@@ -2857,8 +2857,9 @@ async function generate() {
         motion: s.motion || "auto",
         transition: w.transition,
         caption: w.captions ? s.caption || s.room : null,
-      captionPos: s.caption_pos || "bottom",
-      captionStyle: s.caption_style || "brand",
+        /* Text placement rides along in crop_data so it survives a reload
+           without a schema change. */
+        crop_data: { ...(s.crop_data || {}), caption_pos: s.caption_pos || "bottom", caption_style: s.caption_style || "brand" },
         disclosure_type: s.disclosure || null,
         motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
         immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
