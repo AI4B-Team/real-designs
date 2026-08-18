@@ -2129,6 +2129,60 @@ function popoverHtml() {
       </div></div>
       <button class="fb-link" id="rvCapClear" ${s.caption ? "" : "disabled"}>Clear Text</button>
     </div>`;
+  } else if (kind === "recap") {
+    /* Everything applied to this scene, with a way to change or undo each
+       one. Reads the same list the card badges read. */
+    const items = sceneSettings(s, sceneClips.get(s.key));
+    body = items.length
+      ? `<div class="rv-sum">
+          ${items.map((it) => `<div class="rv-sum-row">
+            <i data-lucide="${it.icon}"></i>
+            <span><b>${esc(it.label)}</b><em>${esc(it.value)}</em></span>
+            <span class="rv-sum-a">
+              ${it.pop ? `<button class="fb-link" data-sumedit="${esc(it.pop)}">Edit</button>` : ""}
+              ${it.locked ? "" : `<button class="fb-link danger" data-sumreset="${esc(it.id)}">Reset</button>`}
+            </span>
+          </div>`).join("")}
+        </div>`
+      : `<p class="rv-note">Nothing has been applied to this scene yet. It will play with the automatic camera move.</p>`;
+  } else if (kind === "frames") {
+    /* Start / End is a scene mode: this scene begins on one frame and ends on
+       another. Standard transitions render in the browser and cost nothing. */
+    const d = w.seDraft || {};
+    const byKey = new Map(w.available.map((a) => [a.key, a]));
+    const startA = byKey.get(d.start_key) || byKey.get(s.key) || null;
+    const endA = d.end_key ? byKey.get(d.end_key) : null;
+    const slot = (label, a, cropVal, cropAttr) => `<div class="rv-se-slot ${a ? "on" : ""}">
+      <b>${label}</b>
+      <div class="rv-se-th" ${a ? `data-img="${esc(a.path)}"` : ""}>${a ? "" : `<i data-lucide="image-plus"></i><em>Choose A Photo</em>`}</div>
+      <div class="rv-seg sm">${SE_CROPS.map(([id, n]) => `<button class="${cropVal === id ? "on" : ""}" data-${cropAttr}="${id}">${n}</button>`).join("")}</div>
+      <span class="rv-note sm">${a ? esc(a.room || "Untitled") : "Pick a photo below."}</span>
+    </div>`;
+    const pick = (a) => `<button class="rv-se-pick ${d.end_key === a.key ? "on" : ""} ${d.start_key === a.key ? "dim" : ""}"
+      data-endpick="${esc(a.key)}" title="${esc(a.room || "Untitled")}">
+      <span data-img="${esc(a.path)}"></span>${d.end_key === a.key ? `<i data-lucide="check"></i>` : ""}</button>`;
+    body = `<div class="rv-se">
+      <div class="rv-se-frames">
+        ${slot("Start Frame", startA, d.start_crop || "center", "secropstart")}
+        <button class="icon-btn rv-se-swap" id="rvSeSwap" aria-label="Swap Frames" title="Swap Frames" ${endA ? "" : "disabled"}><i data-lucide="arrow-left-right"></i></button>
+        ${slot("End Frame", endA, d.end_crop || "center", "secropend")}
+      </div>
+      <div class="rv-pop-h">End Frame</div>
+      <div class="rv-se-grid">${w.available.map(pick).join("")}</div>
+      <div class="rv-pop-h">Transition</div>
+      <div class="rv-se-trans">
+        ${SE_TRANSITIONS.map(([id, n, blurb]) => {
+          const ai = id === "ai";
+          const off = ai && !AI_TRANSITION_AVAILABLE;
+          return `<button class="rv-se-tr ${d.transition_type === id ? "on" : ""} ${off ? "off" : ""}"
+            ${off ? "disabled" : `data-setrans="${id}"`} title="${esc(off ? AI_TRANSITION_UNAVAILABLE_REASON : blurb)}">
+            <b>${esc(n)}</b><em>${esc(off ? "Unavailable" : ai ? "40 Credits" : "Included")}</em><span>${esc(blurb)}</span></button>`;
+        }).join("")}
+      </div>
+      ${AI_TRANSITION_AVAILABLE ? "" : `<div class="rv-notice sm"><i data-lucide="info"></i><span>${esc(AI_TRANSITION_UNAVAILABLE_REASON)}</span></div>`}
+      <label class="rv-f">Transition Length <i class="mono">${Number(d.transition_duration || 3).toFixed(1)}s</i>
+        <input type="range" id="rvSeDur" min="10" max="80" step="5" value="${Math.round((d.transition_duration || 3) * 10)}"></label>
+    </div>`;
   } else {
     /* Effects modal. Two tabs — Looks (colour and presentation, free) and
        Effects (adds or animates content, costs credits). Display grouping
