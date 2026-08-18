@@ -3778,11 +3778,11 @@ async function paintAcctSide(){
       /* Server returns remainingToday, not a used-count. */
       const left=Math.max(0,Math.min(5,c.remainingToday??5));
       if(sc) sc.textContent=left+' Of 5 Free Designs Left Today';
-      if(sb){ sb.style.width=((5-left)/5*100)+'%'; sb.className=left<=1?'low':''; }
+      if(sb){ sb.style.width=(left/5*100)+'%'; sb.className=left<=1?'low':''; }
       if(ss) ss.textContent='Free Plan Resets Every Day';
     } else {
       if(sc) sc.textContent=c.balance+(c.balance===1?' Credit':' Credits')+' Available';
-      if(sb){ const pl=Math.min(100,(c.balance/200)*100); sb.style.width=(100-pl)+'%'; sb.className=pl<=10?'low':''; }
+      if(sb){ const pl=Math.min(100,(c.balance/200)*100); sb.style.width=pl+'%'; sb.className=pl<=10?'low':''; }
       if(ss) ss.textContent='One Balance Covers Designs, Budgets, Plans And Video';
     }
   }catch(_){}
@@ -4261,7 +4261,6 @@ function paintBilling(c){
   const lab=document.getElementById('billMeterLab'), val=document.getElementById('billMeterVal'),
         bar=document.getElementById('billMeterBar'), note=document.getElementById('billMeterNote');
   if(c.plan==='free'){
-    lab.textContent='Free Designs Left Today';
     const leftToday=Math.max(0,Math.min(5,c.remainingToday??5));
     lab.textContent='Free Designs Used Today';
     val.textContent=(5-leftToday)+' / 5 Used';
@@ -4272,7 +4271,7 @@ function paintBilling(c){
     lab.textContent='Credit Balance';
     val.textContent=c.balance.toLocaleString();
     const pctLeft=Math.min(100,(c.balance/(PLAN_CAP[c.plan]||2000))*100);
-    bar.style.width=(100-pctLeft)+'%';
+    bar.style.width=pctLeft+'%';
     bar.className=pctLeft<=10?'low':'';
     note.textContent='One balance across every tool. Credits refresh each billing cycle.';
   }
