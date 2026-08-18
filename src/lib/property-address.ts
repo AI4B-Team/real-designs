@@ -193,14 +193,82 @@ export function streetOf(address: unknown): string {
   return (text.split(",")[0] || "").trim();
 }
 
+/* ---------- Project titles ----------
+   The address answers "which property?"; the title answers "which project?".
+   They are independent: a suggestion is only ever offered while the user has
+   not typed a title of their own. */
+
+export const TITLE_MAX = 160;
+
+/** Generic fallbacks that stay eligible for an address-based suggestion. */
+const GENERIC_TITLES = [
+  "untitled",
+  "untitled project",
+  "untitled video",
+  "untitled design",
+  "untitled reveal",
+  "new video",
+  "new design",
+];
+
+/** Trim, collapse whitespace and cap length before saving a title. */
+export function sanitizeTitle(value: unknown): string {
+  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, TITLE_MAX);
+}
+
+/** True when a stored title carries no user intent. */
+export function isGenericTitle(title: unknown): boolean {
+  const t = sanitizeTitle(title).toLowerCase();
+  return !t || GENERIC_TITLES.includes(t);
+}
+
+/** "456 Lakeview Ln Property Video" — street only, never the full address. */
+export function suggestVideoTitle(address: unknown): string {
+  const street = streetOf(address);
+  return street ? `${street} Property Video` : "";
+}
+
+/** "456 Lakeview Ln Living Room Design" — street plus room when known. */
+export function suggestDesignTitle(address: unknown, room?: unknown): string {
+  const street = streetOf(address);
+  const r = String(room ?? "").trim();
+  if (street && r) return `${street} ${r} Design`;
+  if (street) return `${street} Design`;
+  if (r) return `${r} Design`;
+  return "";
+}
+
+export function suggestProjectTitle(kind: "video" | "design", address: unknown, room?: unknown): string {
+  return kind === "design" ? suggestDesignTitle(address, room) : suggestVideoTitle(address);
+}
+
+export function fallbackTitle(kind: "video" | "design" | "project"): string {
+  return kind === "video" ? "Untitled Video" : kind === "design" ? "Untitled Design" : "Untitled Project";
+}
+
+/**
+ * The title to show/save. A user-edited title always wins; otherwise a
+ * complete address produces a suggestion, and failing that a safe fallback.
+ */
+export function resolveProjectTitle(opts: {
+  kind?: "video" | "design";
+  title?: string | null;
+  titleTouched?: boolean;
+  address?: unknown;
+  room?: unknown;
+}): string {
+  const kind = opts.kind || "video";
+  const cur = sanitizeTitle(opts.title);
+  if (opts.titleTouched && cur) return cur;
+  if (cur && !isGenericTitle(cur)) return cur;
+  return suggestProjectTitle(kind, opts.address, opts.room) || cur || fallbackTitle(kind);
+}
+
 /** Title default that never overwrites what the user typed. */
 export function defaultVideoTitle(address: unknown, titleTouched?: boolean, current?: string | null): string {
-  const cur = String(current ?? "").trim();
-  if (titleTouched && cur) return cur;
-  const street = streetOf(address);
-  if (street) return `${street} Property Video`;
-  return cur || "Untitled Video";
+  return resolveProjectTitle({ kind: "video", address, titleTouched: !!titleTouched, title: current ?? null });
 }
+
 
 /** What a card shows under the title. */
 export function addressDisplay(record: { property_address?: string | null; property_label?: string | null; property_id?: string | null }): {

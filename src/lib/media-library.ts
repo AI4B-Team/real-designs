@@ -1,4 +1,5 @@
 // Unified media library service. One read path for every visual asset in
+import { resolveProjectTitle } from "@/lib/property-address";
 // REAL DESIGNS: generated design images, generated listing videos, uploaded
 // source photos and documents, plus in-flight generations that have not been
 // written to the database yet.
@@ -181,10 +182,11 @@ export async function loadMediaLibrary() {
       refId: p.id,
       type: "generated_video",
       status: shared && st === "ready" ? "shared" : st,
-      title: p.title || "Untitled Reveal",
+      title: resolveProjectTitle({ kind: "video", title: p.title ?? null, titleTouched: !!p.title_touched, address: p.property_address || p.property_label }),
       propertyId: p.property_id || null,
       property: p.property_label ? propLabel(p.property_label) : null,
       address: p.property_address || null,
+      city: p.city || null,
       room: null,
       path: done?.thumbnail_path || sc[0]?.source_path || "",
       assetPath: done?.output_path || null,
@@ -207,6 +209,7 @@ export async function loadMediaLibrary() {
       type: "uploaded_image",
       status: a.hidden ? "archived" : "ready",
       title: a.original_filename || a.file_name || a.room_group || "Uploaded Photo",
+      fileName: a.original_filename || a.file_name || null,
       propertyId: a.property_id || null,
       property: a.property_label ? propLabel(a.property_label) : null,
       address: a.property_label || null,

@@ -86,7 +86,7 @@ import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
 import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
-import { defaultVideoTitle, cleanAddressText } from "@/lib/property-address";
+import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
 
@@ -1045,7 +1045,7 @@ function addrDraftPayload(w) {
     ...addressColumns(w),
     title_touched: !!w.titleTouched,
     design_version_id: w.versionId || null,
-    title: defaultTitle(w),
+    title: sanitizeTitle(defaultTitle(w)),
     video_type: w.videoType,
     source_type: w.sourceType || "upload",
     status: "draft",
@@ -1132,11 +1132,29 @@ function bindAddressInputs(el, w) {
   el.querySelectorAll("[data-addr-retry]").forEach((b) => (b.onclick = () => autosaveAddress(w)));
 }
 
-/** Title the user never has to type: address, property or design name. */
+/* Title and address are independent. The title only follows the address while
+   the user has not typed one of their own (titleTouched). */
 
 function defaultTitle(w) {
-  if (w.titleTouched && w.title) return w.title;
-  return defaultVideoTitle(w.address || w.propertyLabel, w.titleTouched, w.title);
+  return resolveProjectTitle({
+    kind: "video",
+    title: w.title ?? null,
+    titleTouched: !!w.titleTouched,
+    address: w.address || w.propertyLabel,
+  });
+}
+
+/** The address-based suggestion, when it differs from the current title. */
+function titleSuggestion(w) {
+  const s = suggestVideoTitle(w.address || w.propertyLabel);
+  if (!s) return "";
+  return sanitizeTitle(defaultTitle(w)) === s ? "" : s;
+}
+
+function titleFieldHtml(w) {
+  const sug = titleSuggestion(w);
+  return `<label class="rv-f">Video Title<input id="rvTitle" maxlength="160" placeholder="Untitled Video" value="${esc(defaultTitle(w))}"></label>
+  ${sug ? `<div class="rv-note rv-sugt">Suggested: ${esc(sug)} <button class="fb-link" data-usetitle="1">Use Suggested Title</button></div>` : ""}`;
 }
 
 /* Step 1 is the shared source picker, mounted after render. Nothing about
@@ -1145,8 +1163,9 @@ function stepPhotos() {
   const w = S.wizard;
   const chosen = w.propertyId ? (S.tree.find((p) => p.id === w.propertyId)?.address || w.propertyLabel) : "";
   const failed = w.uploadFails || [];
-  return `<label class="rv-f">Video Title<input id="rvTitle" value="${esc(defaultTitle(w))}"></label>
+  return `${titleFieldHtml(w)}
   ${addressFieldHtml(w, S.tree || [], { id: "rvAddr" })}
+
   <div id="rvPicker"></div>
   ${chosen ? `<div class="rv-note">Using ${esc(chosen)}.</div>` : ""}
   ${w.uploadPrep && w.uploadPrep.length ? `<div class="rv-prep">${w.uploadPrep
@@ -2134,7 +2153,7 @@ async function generate() {
         ...addressColumns(w),
         title_touched: !!w.titleTouched,
         design_version_id: w.versionId || null,
-        title: defaultTitle(w),
+        title: sanitizeTitle(defaultTitle(w)),
         video_type: w.videoType,
         source_type: w.sourceType || "property",
         status: "queued",
@@ -2607,7 +2626,7 @@ function bind() {
   });
   on("#rvNext", "click", async () => {
     const t = el.querySelector("#rvTitle");
-    if (t) w.title = t.value;
+    if (t) w.title = sanitizeTitle(t.value);
     if (w.step === 1) {
       await advanceToGrid(w);
       return;
@@ -2694,7 +2713,21 @@ function bind() {
 
 
   const titleIn = el.querySelector("#rvTitle");
-  if (titleIn) titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
+  if (titleIn) {
+    /* Typing marks the title as user-owned; the address can never overwrite it
+       again. A blank field never blocks saving — the fallback covers it. */
+    titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
+    titleIn.addEventListener("blur", () => { w.title = sanitizeTitle(w.title); titleIn.value = defaultTitle(w); });
+  }
+  on("[data-usetitle]", "click", () => {
+    const s = titleSuggestion(w);
+    if (!s) return;
+    w.title = s;
+    w.titleTouched = true;
+    render();
+    autosaveAddress(w);
+  });
+
   bindAddressInputs(el, w);
   on("[data-rmup]", "click", (e) => {
     const id = e.currentTarget.dataset.rmup;
@@ -2753,7 +2786,7 @@ function bind() {
     /* A design carries its property association into the video. */
     if (d.propertyLabel) applyAddress(w, d.propertyLabel, "inherited");
     w.versionId = d.versionId;
-    if (!w.titleTouched) w.title = `${d.room} Design`;
+    if (!w.titleTouched) w.title = defaultTitle(w) || `${d.room} Design`;
     if (d.before && !w.typeTouched) w.videoType = "before_after";
     await loadWizardAssets();
     const a = w.available.find((x) => x.key === "d-" + d.roomId) || w.available.find((x) => x.path === d.after);
