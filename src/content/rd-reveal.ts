@@ -636,7 +636,7 @@ async function loadWizardAssets() {
       }
     } catch (_) {}
   }
-  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.url, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
+  for (const u of w.uploads) out.push({ key: "u-" + u.id, path: u.storagePath || u.url, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
   /* Designs chosen in Studio are real assets even when no property is set. */
   for (const d of w.seedDesigns || []) {
     if (!d || !d.path) continue;
@@ -885,8 +885,17 @@ function wizardHtml() {
           ${wide ? "" : rail}
           <div class="rv-wiz">${body}</div>
         </div>`;
+  /* Property context follows the builder: the address stays visible on every
+     editing step, not just Select & Order. */
+  const addrText = cleanAddressText(w.address) || w.propertyLabel || "";
+  const addrChip = editor || w.step === 7
+    ? `<div class="rv-head-addr">${addrText
+        ? `<i data-lucide="map-pin"></i><span>${esc(addrText)}</span>`
+        : `<button class="fb-link" data-sec="scenes"><i data-lucide="map-pin"></i>Add Property Address</button>`}</div>`
+    : "";
+
   return `<div class="rv-head">
-    <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
+    <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p>${addrChip}</div>
     ${headTools}
     <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
       <div class="rv-more-m">
@@ -1154,21 +1163,48 @@ export async function acceptPhotos(w, files, source) {
 
 let wizSaver = null;
 
+/**
+ * Swap every session-only object URL for the durable storage path it was
+ * uploaded to. Object URLs die with the tab, so a scene saved with one
+ * reopens as a black tile — this keeps the draft referencing real objects.
+ */
+function reconcileUploadPaths(w) {
+  if (!w) return false;
+  const map = new Map();
+  for (const u of w.uploads || []) {
+    if (u.storagePath && u.url && u.url !== u.storagePath) map.set(u.url, u.storagePath);
+    if (u.storagePath) map.set("u-" + u.id, u.storagePath);
+  }
+  if (!map.size) return false;
+  let changed = false;
+  const fix = (obj, key, sceneKey) => {
+    const cur = obj?.[key];
+    if (typeof cur !== "string" || !cur) return;
+    const next = map.get(cur) || (/^blob:/.test(cur) && sceneKey ? map.get(sceneKey) : null);
+    if (next && next !== cur) { obj[key] = next; changed = true; }
+  };
+  for (const a of w.available || []) fix(a, "path", a.key);
+  for (const s of w.scenes || []) { fix(s, "path", s.key); fix(s, "compare", null); }
+  return changed;
+}
+
 /** Push every attached upload into private storage, then autosave the draft. */
 async function storeUploads(w) {
   const pending = (w.uploads || []).filter((u) => u.file && !u.storagePath && !u.storing);
-  if (!pending.length) { autosaveWizard(w); return; }
+  if (!pending.length) { reconcileUploadPaths(w); autosaveWizard(w); return; }
   for (const u of pending) {
     u.storing = true;
     try {
       u.storagePath = await uploadRoomPhoto(u.file);
       /* First photo safely stored: the draft row exists from here on. */
+      if (reconcileUploadPaths(w)) render();
       autosaveWizard(w);
     } catch (_) {
       u.storeFailed = true;
     }
     u.storing = false;
   }
+  reconcileUploadPaths(w);
   autosaveWizard(w);
 }
 
@@ -2344,11 +2380,24 @@ async function buildNarration(type: string, script: string | null | undefined, v
 function defaultScript() {
   const w = S.wizard;
   const rooms = Array.from(new Set(w.scenes.map((s) => s.room).filter(Boolean))).slice(0, 6);
+  const addr = cleanAddressText(w.address) || w.propertyLabel || "";
   const lines = [];
-  if (w.propertyLabel) lines.push(`A look at ${w.propertyLabel}.`);
-  if (rooms.length) lines.push(`This video covers ${rooms.join(", ")}.`);
-  if (w.scenes.some((s) => s.scene_type === "before_after")) lines.push("Each space is shown as it is today, then as the proposed design.");
-  lines.push("Every design shown is a proposed concept created in REAL DESIGNS.");
+  /* Marketing narration, not a room manifest: only facts the draft actually
+     holds are ever spoken. */
+  lines.push(addr ? `Welcome to ${addr}.` : "Welcome home.");
+  const highlights = rooms.filter((r) => !/^unsorted$/i.test(r)).slice(0, 3);
+  if (highlights.length) {
+    const list = highlights.length === 1
+      ? highlights[0].toLowerCase()
+      : highlights.slice(0, -1).map((r) => r.toLowerCase()).join(", ") + " and " + highlights[highlights.length - 1].toLowerCase();
+    lines.push(`Step inside, where the ${list} come together in bright, welcoming spaces.`);
+  } else {
+    lines.push("Step inside and take in bright, welcoming spaces made for everyday living.");
+  }
+  if (w.scenes.some((s) => s.scene_type === "before_after")) lines.push("See each space as it is today, then as it could be.");
+  lines.push(addr ? `Book your private tour of ${addr} today.` : "Book your private tour today.");
+  /* Only claim AI involvement when a scene truly carries a disclosure. */
+  if (w.scenes.some((s) => s.disclosure)) lines.push("Some images shown are digitally altered concepts.");
   return lines.join(" ");
 }
 
@@ -2539,7 +2588,7 @@ function stepBrand() {
 function titleDefaults() {
   const w = S.wizard;
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
-  const addr = w.propertyLabel || w.address || w.title || "Your Property";
+  const addr = cleanAddressText(w.address) || w.propertyLabel || w.title || "Welcome Home";
   return {
     address: addr,
     headline: w.titlesHeadline || addr,
@@ -4475,10 +4524,13 @@ function editExisting(d) {
     w.quality = ds.quality || w.quality;
     const step = Number(p.builder_step || ds.step || 2);
     w.step = Number.isFinite(step) && step >= 1 ? step : 2;
+    /* Older drafts stored a dead object URL on the scene; repair them from the
+       upload's storage path before anything tries to paint them. */
+    reconcileUploadPaths(w);
     /* Storage paths become viewable URLs for this session only. */
     Promise.all(
       w.uploads.map(async (u) => { try { u.url = await roomPhotoUrl(u.storagePath); } catch (_) {} }),
-    ).then(() => { attachUploadAssets(w); render(); });
+    ).then(() => { attachUploadAssets(w); reconcileUploadPaths(w); render(); });
   }
   S.screen = "wizard";
   loadWizardAssets().then(render);

@@ -65,7 +65,9 @@ export function attachUploadAssets(w: IntakeWizard): string[] {
     if (!have.has(key)) {
       available.push({
         key,
-        path: u.url,
+        /* Durable storage path wins: an object URL dies with the tab, so a
+           draft saved with one reopens as a black tile. */
+        path: (u as any).storagePath || u.url,
         room: u.room || "Unsorted",
         kind: "Original",
         group: "Unsorted",

@@ -1044,3 +1044,15 @@
 .rv-se-tr.off{opacity:.5;cursor:not-allowed}
 .rv-seg.sm button{font-size:11px;padding:4px 8px}
 @keyframes rv-spin{to{transform:rotate(360deg)}}
+
+/* Property context on every editing step. */
+.rv-head-addr{display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--muted);font-size:12.5px}
+.rv-head-addr i{width:14px;height:14px}
+.rv-head-addr .fb-link{display:inline-flex;align-items:center;gap:6px}
+
+/* The preview frame follows the chosen output format instead of sitting in a
+   wide black letterbox for every aspect ratio. */
+.rv-cv-stage{background:#0b0b0c}
+.rv-cv-stage.fmt-9x16 .rv-cv-img{height:min(68vh,720px);max-height:none}
+.rv-cv-stage.fmt-1x1 .rv-cv-img{height:min(52vh,620px);max-height:none}
+.rv-cv-stage.fmt-16x9 .rv-cv-img{max-height:min(52vh,620px)}
