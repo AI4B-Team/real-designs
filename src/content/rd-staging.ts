@@ -19,7 +19,7 @@
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
-import { uploadRoomPhoto, roomPhotoUrl } from "@/lib/room-photos";
+import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
@@ -35,6 +35,16 @@ import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
 import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
+import {
+  cardMenuButtonHtml,
+  registerCardMenu,
+  confirmDialog,
+  detailsDialog,
+  undoToast,
+  downloadOriginal,
+  pickOneImage,
+} from "@/lib/builder-card-menu";
+import { setHandoff } from "@/lib/handoff";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
 import { PHOTO_RAIL, backFromPhotoStep, normalizePhotoStep } from "@/lib/builder-nav";
@@ -631,6 +641,7 @@ function cardHtml(it, seq) {
       <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
+      ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: (it.room ? it.room + " photo" : "Photo " + n) })}
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
@@ -1114,6 +1125,206 @@ function removeOne(key) {
   saveDraft();
   render();
 }
+
+/* ------------------------------------------------- shared card overflow menu
+   Photo Design cards and Video scene cards use the same component; only the
+   action list and these handlers differ. Every action here works on the
+   project's reference to a photo — the uploaded media file itself is only ever
+   touched by "Delete From Media". */
+
+const cmToast = (m) => { try { window.rdToast ? window.rdToast(m) : console.log(m); } catch (_) {} };
+
+function itemAt(key) {
+  return S && S.items ? S.items.find((i) => i.key === key) : null;
+}
+
+function insertAfter(it, clone) {
+  const i = S.items.findIndex((x) => x.key === it.key);
+  S.items.splice(i < 0 ? S.items.length : i + 1, 0, clone);
+}
+
+/** A duplicate is a second project reference to the same stored photo. */
+function duplicateItem(it, extra) {
+  const clone = {
+    ...it,
+    ...(extra || {}),
+    key: "p" + Math.random().toString(36).slice(2, 9),
+    file: null,
+    selected: true,
+    done: false,
+    state: "none",
+    resultPath: null,
+    resultUrl: null,
+    err: "",
+  };
+  insertAfter(it, clone);
+  saveDraft();
+  render();
+  return clone;
+}
+
+async function originalUrl(it) {
+  if (!it) return null;
+  if (it.path) {
+    try { return (await roomPhotoUrl(it.path)) || it.signed || it.previewUrl || null; } catch (_) {}
+  }
+  return it.signed || it.previewUrl || null;
+}
+
+function dropItem(key) {
+  const i = S.items.findIndex((x) => x.key === key);
+  if (i < 0) return null;
+  const [gone] = S.items.splice(i, 1);
+  if (!S.items.length) S.step = "add";
+  saveDraft();
+  render();
+  return { gone, i };
+}
+
+registerCardMenu("photo", {
+  items(key) {
+    const it = itemAt(key);
+    if (!it) return [];
+    const stored = !!it.path;
+    return [
+      {
+        items: [
+          { action: "open", label: "Open Canvas", icon: "wand-sparkles" },
+          { action: "variation", label: "Create Variation", icon: "git-branch", hidden: !stored },
+          { action: "duplicate", label: "Duplicate", icon: "copy", hidden: !stored },
+        ],
+      },
+      {
+        items: [
+          { action: "replace", label: "Replace Photo", icon: "image-plus" },
+          { action: "room", label: "Change Room", icon: "door-open" },
+          { action: "tovideo", label: "Create Video From Photo", icon: "clapperboard", hidden: !stored },
+          { action: "versions", label: "View Versions", icon: "history", hidden: !it.resultPath && it.state !== "complete" },
+          { action: "download", label: "Download Original", icon: "download", hidden: !stored && !it.previewUrl },
+          { action: "details", label: "View Details", icon: "info" },
+        ],
+      },
+      { items: [{ action: "removeproj", label: "Remove From Project", icon: "circle-minus" }] },
+      {
+        danger: true,
+        items: [{ action: "deletemedia", label: "Delete From Media", icon: "trash-2", danger: true, hidden: !stored }],
+      },
+    ];
+  },
+  async run(action, key) {
+    const it = itemAt(key);
+    if (!it) return;
+    if (action === "open") return void openInCanvas(key);
+    if (action === "duplicate") { duplicateItem(it); return cmToast("Photo Duplicated In This Project."); }
+    if (action === "variation") {
+      const clone = duplicateItem(it, { variationOf: it.key, room: it.room, roomSource: it.roomSource });
+      cmToast("New Variation Added. Your Saved Versions Are Untouched.");
+      return void openInCanvas(clone.key);
+    }
+    if (action === "room") {
+      const btn = document.querySelector('.rv-tile[data-k="' + (window.CSS?.escape ? CSS.escape(key) : key) + '"] [data-room]');
+      if (btn) btn.click();
+      return;
+    }
+    if (action === "tovideo") {
+      setHandoff({
+        target: "video",
+        origin: "studio",
+        propertyId: S.propertyId || null,
+        propertyAddress: S.address || null,
+        assets: [{ path: it.path, name: it.name, room: it.room || null }],
+      });
+      try { location.hash = "#v-lvideo"; } catch (_) {}
+      return void cmToast("Sent To The Video Builder.");
+    }
+    if (action === "versions") {
+      await openInCanvas(key);
+      return void cmToast("Version History Is In The Canvas Panel.");
+    }
+    if (action === "download") {
+      const url = await originalUrl(it);
+      return void downloadOriginal(url, it.name || "photo.jpg");
+    }
+    if (action === "details") {
+      const url = await originalUrl(it);
+      const dims = await new Promise((res) => {
+        if (!url) return res("");
+        const img = new Image();
+        img.onload = () => res(img.naturalWidth + " x " + img.naturalHeight + " px");
+        img.onerror = () => res("");
+        img.src = url;
+      });
+      return void detailsDialog({
+        title: "Photo Details",
+        rows: [
+          ["File", it.name || "Photo"],
+          ["Property", S.address || "Not Assigned"],
+          ["Room Type", it.room || "Not Set"],
+          ["Added", new Date(it.addedAt || Date.now()).toLocaleString()],
+          ["Dimensions", dims],
+          ["Versions", it.resultPath ? "1 Saved Design" : "No Saved Designs Yet"],
+        ],
+      });
+    }
+    if (action === "replace") {
+      const ok = await confirmDialog({
+        title: "Replace This Photo?",
+        body: "This card keeps its position and property, but points at a new source photo.",
+        notes: it.resultPath ? ["Designs already generated from the old photo stay in Media and are no longer shown on this card."] : [],
+        confirmLabel: "Choose Photo",
+      });
+      if (!ok) return;
+      const file = await pickOneImage();
+      if (!file) return;
+      try {
+        const norm = await normalizeImageFile(file);
+        const path = await uploadRoomPhoto(norm || file);
+        it.path = path;
+        it.name = (norm || file).name || it.name;
+        it.signed = await roomPhotoUrl(path).catch(() => null);
+        it.previewUrl = it.signed || it.previewUrl;
+        it.status = "ready";
+        it.state = "none";
+        it.resultPath = null;
+        it.resultUrl = null;
+        saveDraft();
+        render();
+        cmToast("Photo Replaced.");
+      } catch (e) {
+        cmToast(e?.message || "That photo could not be replaced.");
+      }
+      return;
+    }
+    if (action === "removeproj") {
+      const res = dropItem(key);
+      if (!res) return;
+      return void undoToast("Removed From This Project. The Photo Stays In Media.", () => {
+        S.items.splice(Math.min(res.i, S.items.length), 0, res.gone);
+        if (S.step === "add" && S.items.length) S.step = "review";
+        saveDraft();
+        render();
+      });
+    }
+    if (action === "deletemedia") {
+      const uses = S.items.filter((x) => x.path && x.path === it.path).length;
+      const ok = await confirmDialog({
+        title: "Delete This Photo From Media?",
+        body: "This permanently removes the source photo from Media. It may also become unavailable in other drafts. Completed exports will remain unchanged.",
+        notes: uses > 1 ? ["This photo is used by " + uses + " cards in this project. All of them will be removed."] : [],
+        confirmLabel: "Delete Photo",
+        danger: true,
+      });
+      if (!ok) return;
+      const path = it.path;
+      try { await deleteRoomPhoto(path); } catch (e) { return void cmToast(e?.message || "That photo could not be deleted."); }
+      S.items = S.items.filter((x) => x.path !== path);
+      if (!S.items.length) S.step = "add";
+      saveDraft();
+      render();
+      cmToast("Photo Deleted From Media.");
+    }
+  },
+});
 
 function removeSelected() {
   const gone = S.items.filter((i) => i.selected);

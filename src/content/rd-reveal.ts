@@ -56,6 +56,15 @@ import { adoptSavedScenes } from "@/lib/scene-adopt";
 import { runAdvanceToGrid, attachUploadAssets, initialWizardStep, hydrateSeededWizard, ensureStepInvariant, acceptVideoPhotos, runEnrichment, logVideoEvent } from "@/lib/video-upload-intake";
 import { normalizeImageFile } from "@/lib/source-picker";
 import {
+  cardMenuButtonHtml,
+  registerCardMenu,
+  confirmDialog,
+  detailsDialog,
+  undoToast,
+  downloadOriginal,
+  pickOneImage,
+} from "@/lib/builder-card-menu";
+import {
   VIDEO_FORMATS,
   DEFAULT_FORMAT,
   formatLabel,
@@ -2121,6 +2130,7 @@ function tileHtml(a, seq) {
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
       ${s ? sceneNumberHtml(seq) : ""}
       ${sceneTreatment(s, clip, a)}
+      ${cardMenuButtonHtml({ flow: "video", key: a.key, label: s ? "Scene " + (seq || "") : (a.room ? a.room + " photo" : "this photo") })}
 
       ${tools}
     </div>
@@ -2133,6 +2143,206 @@ function tileHtml(a, seq) {
   </div>`;
 }
 
+
+/* ------------------------------------------------- shared card overflow menu
+   Same component as the Photo Design grid. A scene card acts on the project's
+   reference to a photo; the uploaded file itself is only touched by
+   "Delete From Media". */
+
+function cmAsset(key) {
+  const w = S.wizard;
+  return w && w.available ? w.available.find((a) => a.key === key) : null;
+}
+
+function cmScene(key) {
+  const w = S.wizard;
+  return w && w.scenes ? w.scenes.find((s) => s.key === key) : null;
+}
+
+function cmPop(key, kind, extra) {
+  const el = document.querySelector("#v-reveal") || document;
+  const k = window.CSS?.escape ? CSS.escape(key) : key;
+  const btn = el.querySelector(`[data-pop="${kind}"][data-key="${k}"]`);
+  if (btn) btn.click();
+  else if (extra) toast(extra);
+}
+
+/** A duplicate scene is a new scene id pointing at the same stored photo. */
+function duplicateSceneCard(key) {
+  const w = S.wizard;
+  const a = cmAsset(key);
+  if (!a) return;
+  const nk = a.key + "~d" + Math.random().toString(36).slice(2, 6);
+  const clone = { ...a, key: nk, dup: null };
+  const ai = w.available.findIndex((x) => x.key === key);
+  w.available.splice(ai < 0 ? w.available.length : ai + 1, 0, clone);
+  const gi = (w.gridOrder || []).indexOf(key);
+  w.gridOrder.splice(gi < 0 ? w.gridOrder.length : gi + 1, 0, nk);
+  const s = cmScene(key);
+  if (s) {
+    const si = w.scenes.indexOf(s);
+    /* Scene-level settings are copied; transitions are not — they are
+       recalculated from the new neighbour order. */
+    w.scenes.splice(si + 1, 0, { ...s, key: nk });
+  }
+  syncSceneOrder();
+  autosaveWizard(w);
+  render();
+  toast("Scene Duplicated.");
+}
+
+function dropSceneCard(key) {
+  const w = S.wizard;
+  const ai = w.available.findIndex((x) => x.key === key);
+  if (ai < 0) return null;
+  const asset = w.available[ai];
+  const gi = (w.gridOrder || []).indexOf(key);
+  const si = w.scenes.findIndex((s) => s.key === key);
+  const scene = si >= 0 ? w.scenes[si] : null;
+  w.available.splice(ai, 1);
+  if (gi >= 0) w.gridOrder.splice(gi, 1);
+  if (si >= 0) w.scenes.splice(si, 1);
+  syncSceneOrder();
+  autosaveWizard(w);
+  render();
+  return { asset, ai, gi, scene, si };
+}
+
+registerCardMenu("video", {
+  items(key) {
+    const a = cmAsset(key);
+    if (!a) return [];
+    const s = cmScene(key);
+    return [
+      {
+        items: [
+          { action: "edit", label: "Edit Scene", icon: "sliders-horizontal" },
+          { action: "duplicate", label: "Duplicate Scene", icon: "copy" },
+        ],
+      },
+      {
+        items: [
+          { action: "replace", label: "Replace Photo", icon: "image-plus" },
+          { action: "room", label: "Change Room", icon: "door-open" },
+          { action: "duration", label: "Set Duration", icon: "timer", tip: "Scene Length Comes From The Video Length Setting." },
+          { action: "motion", label: "Motion", icon: "camera", hidden: !s },
+          { action: "vfx", label: "VFX", icon: "wand-sparkles", hidden: !s },
+          { action: "text", label: "Text", icon: "type", hidden: !s },
+        ],
+      },
+      {
+        items: [
+          { action: "download", label: "Download Original", icon: "download", hidden: !a.path },
+          { action: "details", label: "View Details", icon: "info" },
+          { action: "removevideo", label: "Remove From Video", icon: "circle-minus" },
+        ],
+      },
+      {
+        danger: true,
+        items: [{ action: "deletemedia", label: "Delete From Media", icon: "trash-2", danger: true, hidden: !a.path }],
+      },
+    ];
+  },
+  async run(action, key) {
+    const w = S.wizard;
+    const a = cmAsset(key);
+    if (!a) return;
+    if (action === "edit") return void cmPop(key, "look", "Open This Scene From The Grid.");
+    if (action === "motion") return void cmPop(key, "motion");
+    if (action === "vfx") return void cmPop(key, "look");
+    if (action === "text") return void cmPop(key, "cap");
+    if (action === "duplicate") return void duplicateSceneCard(key);
+    if (action === "room") {
+      const k = window.CSS?.escape ? CSS.escape(key) : key;
+      document.querySelector(`[data-roompick="${k}"]`)?.click();
+      return;
+    }
+    if (action === "duration") {
+      document.querySelector('[data-sec="review"]')?.click();
+      return void toast("Scene Length Is Set By The Video Length.");
+    }
+    if (action === "download") {
+      const url = await resolvePhotoUrl(a.path).catch(() => null);
+      return void downloadOriginal(url, a.name || "photo.jpg");
+    }
+    if (action === "details") {
+      const url = await resolvePhotoUrl(a.path).catch(() => null);
+      const dims = await new Promise((res) => {
+        if (!url) return res("");
+        const img = new Image();
+        img.onload = () => res(img.naturalWidth + " x " + img.naturalHeight + " px");
+        img.onerror = () => res("");
+        img.src = url;
+      });
+      return void detailsDialog({
+        title: "Scene Details",
+        rows: [
+          ["File", a.name || "Photo"],
+          ["Property", w.address || "Not Assigned"],
+          ["Room Type", a.room || "Not Set"],
+          ["Dimensions", dims],
+          ["In This Video", cmScene(key) ? "Yes" : "Not Selected"],
+        ],
+      });
+    }
+    if (action === "replace") {
+      const ok = await confirmDialog({
+        title: "Replace This Photo?",
+        body: "The scene keeps its position, property and settings, but points at a new source photo.",
+        notes: ["Any AI clip or Start / End frames generated from the old photo will no longer apply to this scene."],
+        confirmLabel: "Choose Photo",
+      });
+      if (!ok) return;
+      const file = await pickOneImage();
+      if (!file) return;
+      try {
+        const norm = await normalizeImageFile(file);
+        const path = await uploadRoomPhoto(norm || file);
+        a.path = path;
+        a.name = (norm || file).name || a.name;
+        const s = cmScene(key);
+        if (s) { s.path = path; s.use_clip = false; }
+        autosaveWizard(w);
+        render();
+        toast("Photo Replaced.");
+      } catch (e) {
+        toast(e?.message || "That photo could not be replaced.");
+      }
+      return;
+    }
+    if (action === "removevideo") {
+      const res = dropSceneCard(key);
+      if (!res) return;
+      return void undoToast("Removed From This Video. The Photo Stays In Media.", () => {
+        w.available.splice(Math.min(res.ai, w.available.length), 0, res.asset);
+        if (res.gi >= 0) w.gridOrder.splice(Math.min(res.gi, w.gridOrder.length), 0, res.asset.key);
+        if (res.scene) w.scenes.splice(Math.min(res.si, w.scenes.length), 0, res.scene);
+        syncSceneOrder();
+        autosaveWizard(w);
+        render();
+      });
+    }
+    if (action === "deletemedia") {
+      const uses = (w.available || []).filter((x) => x.path && x.path === a.path).length;
+      const ok = await confirmDialog({
+        title: "Delete This Photo From Media?",
+        body: "This permanently removes the source photo from Media. It may also become unavailable in other drafts. Completed exports will remain unchanged.",
+        notes: uses > 1 ? ["This photo is used by " + uses + " scenes here. All of them will be removed."] : [],
+        confirmLabel: "Delete Photo",
+        danger: true,
+      });
+      if (!ok) return;
+      const path = a.path;
+      try { await deleteRoomPhoto(path); } catch (e) { return void toast(e?.message || "That photo could not be deleted."); }
+      w.available = w.available.filter((x) => x.path !== path);
+      w.gridOrder = (w.gridOrder || []).filter((k) => w.available.some((x) => x.key === k));
+      syncSceneOrder();
+      autosaveWizard(w);
+      render();
+      toast("Photo Deleted From Media.");
+    }
+  },
+});
 
 /**
  * Safety net for the "Organizing photos" message: whatever happens to the
