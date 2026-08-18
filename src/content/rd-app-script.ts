@@ -1195,9 +1195,7 @@ function paintStudioState(){
   const canvas=document.getElementById('canvas');
   if(canvas) canvas.classList.toggle('has-result',STUDIO_RESULT);
   const csub=document.querySelector('#canvasCard .card-h .sub');
-  if(csub) csub.textContent=STUDIO_SRC===SRC_EMPTY
-    ? 'Add A Source To Begin'
-    : (STUDIO_RESULT?'Click any object to keep, replace or remove it':'Your source photo, nothing generated yet');
+  if(csub) csub.textContent=canvasSubtitle();
   const s=studioStart();
   if(s&&s.paint) s.paint(STUDIO_SRC===SRC_EMPTY);
   if(STUDIO_SRC!==SRC_EMPTY){ try{ populateStyleSelect(); syncStudioStyleChoice(); }catch(_){} }
