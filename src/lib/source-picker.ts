@@ -455,7 +455,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         (ready ? "" : " disabled") + ">" +
         (state.describeBusy
           ? '<span class="sp-spin" aria-hidden="true"></span>Creating…'
-          : '<i data-lucide="sparkles"></i>Create <em>1 Credit</em>') +
+          : '<i data-lucide="sparkles"></i>Create <em><span aria-hidden="true">·</span> 1 Credit</em>') +
         "</button>" +
         "</div>" +
         "</div>" +
