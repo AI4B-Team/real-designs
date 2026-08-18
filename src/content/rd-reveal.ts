@@ -2019,9 +2019,16 @@ function transitionConn(s) {
  * next scene wraps onto the following row there is no seam, so the same 24px
  * control moves inside the card's lower-right corner instead.
  */
+let connResizeBound = false;
 function layoutConnectors() {
   const grid = document.querySelector("#v-reveal .rv-grid");
   if (!grid) return;
+  /* the row a scene lands on changes with the viewport, so the seam / corner
+     decision is re-taken on resize rather than only at render time. */
+  if (!connResizeBound && typeof window !== "undefined") {
+    connResizeBound = true;
+    window.addEventListener("resize", () => layoutConnectors());
+  }
   const tiles = Array.from(grid.querySelectorAll(".rv-tile"));
   tiles.forEach((tile, n) => {
     const conn = tile.querySelector(":scope > .rv-conn");
