@@ -31,6 +31,7 @@ import {
   searchRooms,
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
+import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
 import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel } from "@/lib/builder-ui";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
@@ -99,8 +100,28 @@ function mkItem(file) {
     detect: "pending",
     selected: true,
     done: false,
+    /* Design work state, independent of the upload state. */
+    state: "none",
+    resultPath: null,
+    resultUrl: null,
+    err: "",
   };
 }
+
+/* One restrained status per card, shown in the card footer and the filmstrip. */
+const WORK_STATES = {
+  generating: { label: "Generating", cls: "run", icon: "loader" },
+  complete: { label: "Complete", cls: "ok", icon: "check" },
+  failed: { label: "Failed", cls: "bad", icon: "alert-triangle" },
+  draft: { label: "Draft", cls: "dim", icon: "pencil-line" },
+};
+
+function workState(it) {
+  if (it.state && WORK_STATES[it.state]) return WORK_STATES[it.state];
+  if (it.done) return WORK_STATES.complete;
+  return null;
+}
+
 
 /* ------------------------------------------------------------- persistence
    The draft is a database row, not a browser cache. It is created as soon as
@@ -132,7 +153,22 @@ function draftPayload() {
       })),
     selected: S.items.filter((i) => i.selected && i.path).map((i) => i.key),
     item_order: ordered().filter((i) => i.path).map((i) => i.key),
-    settings: { current: S.current || null },
+    /* Per-room work survives a refresh: state, result and the direction that
+       produced it, keyed by photo. */
+    settings: {
+      current: S.current || null,
+      direction: S.direction || null,
+      rooms: S.items.reduce((m, i) => {
+        m[i.key] = {
+          room: i.room || null,
+          state: i.state || (i.done ? "complete" : "none"),
+          result_path: i.resultPath || null,
+          error: i.err || "",
+        };
+        return m;
+      }, {}),
+    },
+
   };
 }
 
@@ -284,23 +320,35 @@ function hydrate(draft) {
   });
   const order = Array.isArray(draft.item_order) ? draft.item_order : [];
   const assets = (draft.assets || []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
-  S.items = assets.map((a) => ({
-    key: a.key,
-    name: a.name || "Photo",
-    file: null,
-    previewUrl: "",
-    path: a.path,
-    signed: null,
-    status: "ready",
-    error: "",
-    room: a.room || "",
-    roomSource: a.room_source || "none",
-    confidence: Number(a.confidence || 0),
-    detect: "done",
-    selected: a.selected !== false,
-    done: !!a.done,
-  }));
+  const rooms = (draft.settings && draft.settings.rooms) || {};
+  S.direction = (draft.settings && draft.settings.direction) || null;
+  S.items = assets.map((a) => {
+    const saved = rooms[a.key] || {};
+    return {
+      key: a.key,
+      name: a.name || "Photo",
+      file: null,
+      previewUrl: "",
+      path: a.path,
+      signed: null,
+      status: "ready",
+      error: "",
+      room: a.room || "",
+      roomSource: a.room_source || "none",
+      confidence: Number(a.confidence || 0),
+      detect: "done",
+      selected: a.selected !== false,
+      done: !!a.done,
+      /* A run that was interrupted comes back as a retryable failure, never
+         as a phantom "generating" that can never finish. */
+      state: saved.state === "generating" ? "failed" : saved.state || (a.done ? "complete" : "none"),
+      resultPath: saved.result_path || null,
+      resultUrl: null,
+      err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
+    };
+  });
   S.step = draft.builder_step === "add" ? "add" : "review";
+
   ensureSaver();
   /* Signed URLs are minted per session; the row only ever stores paths. */
   S.items.forEach(async (it) => {
@@ -482,23 +530,26 @@ function ordered() {
 
 function cardHtml(it) {
   const st = stateOf(it);
+  const ws = workState(it);
   const label = it.room || UNASSIGNED_LABEL;
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
-  return `<div class="rv-tile ${it.selected ? "on" : ""}" data-k="${it.key}">
+  return `<div class="rv-tile ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Open ${esc(it.name)} in the design canvas">
-      <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
+      <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
-      ${it.done ? '<span class="rds-done"><i data-lucide="check"></i>Designed</span>' : ""}
+      ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
       <div class="rv-tools">
         <button class="rv-tool" data-open="${it.key}" aria-label="Design"><i data-lucide="wand-sparkles"></i><em>Design</em></button>
+        ${it.state === "failed" ? `<button class="rv-tool" data-retry="${it.key}" aria-label="Retry"><i data-lucide="rotate-ccw"></i><em>Retry</em></button>` : ""}
         <button class="rv-tool" data-del="${it.key}" aria-label="Remove"><i data-lucide="trash-2"></i><em>Remove</em></button>
       </div>
       <button class="rv-tools-more" data-toolsmore="1" aria-label="Photo Actions"><i data-lucide="ellipsis"></i></button>
     </div>
+
     <div class="rv-tile-foot">
       ${roomSelectHtml({
         attr: "room",
@@ -510,7 +561,11 @@ function cardHtml(it) {
         variant: "inline",
         className: "rv-room",
       })}
-      <em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>
+      ${
+        ws
+          ? `<em class="rv-tile-kind rds-work ${ws.cls}" title="${esc(it.err || ws.label)}"><i data-lucide="${ws.icon}"></i>${ws.label}</em>`
+          : `<em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>`
+      }
     </div>
   </div>`;
 }
@@ -604,6 +659,7 @@ function render() {
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a">
+            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 1 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Design Selected</button>
             <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
               <div class="rv-more-m">
