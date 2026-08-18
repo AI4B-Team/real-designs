@@ -1778,12 +1778,21 @@
 .sp-photos-h{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
 .sp-photos-h b{font-size:.86rem}
 .sp-photos-h span{display:flex;gap:8px;align-items:center}
-.sp-photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+/* Six across on wide screens, degrading to two on phones. */
+.sp-photo-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:700px){.sp-photo-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:1100px){.sp-photo-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(min-width:1440px){.sp-photo-grid{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(min-width:1700px){.sp-photo-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
 .sp-photo{position:relative;display:block;aspect-ratio:4/3;padding:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--bg);cursor:pointer}
+.sp-photo.is-skel{cursor:default}
 .sp-photo.is-sel{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
-.sp-photo .sp-prop-th{border-bottom:0}
-.sp-photo>i{position:absolute;right:6px;top:6px;width:18px;height:18px;color:var(--card);filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
-.sp-photo.is-sel>i{color:var(--red);background:var(--card);border-radius:50%}
+.sp-photo .sp-prop-th,.sp-photo .sp-th-i{border-bottom:0}
+.sp-photo-x{position:absolute;right:6px;top:6px;z-index:2;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--card);border:1px solid color-mix(in oklab,var(--mute-2) 45%,transparent);box-shadow:0 1px 4px rgba(0,0,0,.22)}
+.sp-photo-x i,.sp-photo-x svg{width:13px;height:13px;color:transparent;stroke-width:3}
+.sp-photo.is-sel .sp-photo-x{background:var(--red);border-color:var(--red)}
+.sp-photo.is-sel .sp-photo-x i,.sp-photo.is-sel .sp-photo-x svg{color:var(--card)}
+.sp-photo-l{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:14px 8px 6px;font-size:.72rem;font-weight:600;color:#fff;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:linear-gradient(to top,rgba(0,0,0,.62),rgba(0,0,0,0))}
 
 /* finished designs */
 .sp-dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
