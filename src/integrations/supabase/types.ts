@@ -1527,6 +1527,96 @@ export type Database = {
           },
         ]
       }
+      scene_clips: {
+        Row: {
+          animate_id: string
+          completed_at: string | null
+          created_at: string
+          credits_charged: number
+          credits_refunded: number
+          disclosure: string | null
+          error_message: string | null
+          heartbeat_at: string
+          id: string
+          progress: number
+          prompt: string
+          provider: string
+          provider_job_id: string | null
+          scene_id: string | null
+          seconds: number
+          size: string
+          source_path: string | null
+          status: string
+          storage_path: string | null
+          updated_at: string
+          user_id: string
+          video_project_id: string | null
+        }
+        Insert: {
+          animate_id: string
+          completed_at?: string | null
+          created_at?: string
+          credits_charged?: number
+          credits_refunded?: number
+          disclosure?: string | null
+          error_message?: string | null
+          heartbeat_at?: string
+          id?: string
+          progress?: number
+          prompt: string
+          provider?: string
+          provider_job_id?: string | null
+          scene_id?: string | null
+          seconds?: number
+          size?: string
+          source_path?: string | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          user_id: string
+          video_project_id?: string | null
+        }
+        Update: {
+          animate_id?: string
+          completed_at?: string | null
+          created_at?: string
+          credits_charged?: number
+          credits_refunded?: number
+          disclosure?: string | null
+          error_message?: string | null
+          heartbeat_at?: string
+          id?: string
+          progress?: number
+          prompt?: string
+          provider?: string
+          provider_job_id?: string | null
+          scene_id?: string | null
+          seconds?: number
+          size?: string
+          source_path?: string | null
+          status?: string
+          storage_path?: string | null
+          updated_at?: string
+          user_id?: string
+          video_project_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scene_clips_scene_id_fkey"
+            columns: ["scene_id"]
+            isOneToOne: false
+            referencedRelation: "video_scenes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scene_clips_video_project_id_fkey"
+            columns: ["video_project_id"]
+            isOneToOne: false
+            referencedRelation: "video_projects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scope_lines: {
         Row: {
           change_item_id: string | null
@@ -2092,6 +2182,7 @@ export type Database = {
           latitude: number | null
           length_preset: string
           longitude: number | null
+          modification_log: Json
           motion: string
           normalized_address: string | null
           postal_code: string | null
@@ -2103,6 +2194,7 @@ export type Database = {
           source_type: string
           state: string | null
           status: string
+          template_id: string | null
           title: string
           title_touched: boolean
           transition: string
@@ -2131,6 +2223,7 @@ export type Database = {
           latitude?: number | null
           length_preset?: string
           longitude?: number | null
+          modification_log?: Json
           motion?: string
           normalized_address?: string | null
           postal_code?: string | null
@@ -2142,6 +2235,7 @@ export type Database = {
           source_type?: string
           state?: string | null
           status?: string
+          template_id?: string | null
           title?: string
           title_touched?: boolean
           transition?: string
@@ -2170,6 +2264,7 @@ export type Database = {
           latitude?: number | null
           length_preset?: string
           longitude?: number | null
+          modification_log?: Json
           motion?: string
           normalized_address?: string | null
           postal_code?: string | null
@@ -2181,6 +2276,7 @@ export type Database = {
           source_type?: string
           state?: string | null
           status?: string
+          template_id?: string | null
           title?: string
           title_touched?: boolean
           transition?: string
@@ -2284,19 +2380,27 @@ export type Database = {
       }
       video_scenes: {
         Row: {
+          animate_id: string | null
           caption: string | null
+          clip_id: string | null
           compare_path: string | null
           created_at: string
           crop_data: Json
           disclosure_type: string | null
+          disclosures: Json
           duration: number
+          effect_id: string | null
+          effect_intensity: number
+          enhancement_level: string
           exterior_effect: string | null
           generation_status: string
           id: string
           immersive_effect: string | null
           labels: Json
+          look: string | null
           motion: string
           motion_level: string
+          original_path: string | null
           room_name: string | null
           scene_type: string
           sequence: number
@@ -2304,23 +2408,32 @@ export type Database = {
           source_path: string | null
           source_version_id: string | null
           transition: string
+          use_clip: boolean
           user_id: string
           video_project_id: string
         }
         Insert: {
+          animate_id?: string | null
           caption?: string | null
+          clip_id?: string | null
           compare_path?: string | null
           created_at?: string
           crop_data?: Json
           disclosure_type?: string | null
+          disclosures?: Json
           duration?: number
+          effect_id?: string | null
+          effect_intensity?: number
+          enhancement_level?: string
           exterior_effect?: string | null
           generation_status?: string
           id?: string
           immersive_effect?: string | null
           labels?: Json
+          look?: string | null
           motion?: string
           motion_level?: string
+          original_path?: string | null
           room_name?: string | null
           scene_type?: string
           sequence?: number
@@ -2328,23 +2441,32 @@ export type Database = {
           source_path?: string | null
           source_version_id?: string | null
           transition?: string
+          use_clip?: boolean
           user_id: string
           video_project_id: string
         }
         Update: {
+          animate_id?: string | null
           caption?: string | null
+          clip_id?: string | null
           compare_path?: string | null
           created_at?: string
           crop_data?: Json
           disclosure_type?: string | null
+          disclosures?: Json
           duration?: number
+          effect_id?: string | null
+          effect_intensity?: number
+          enhancement_level?: string
           exterior_effect?: string | null
           generation_status?: string
           id?: string
           immersive_effect?: string | null
           labels?: Json
+          look?: string | null
           motion?: string
           motion_level?: string
+          original_path?: string | null
           room_name?: string | null
           scene_type?: string
           sequence?: number
@@ -2352,10 +2474,18 @@ export type Database = {
           source_path?: string | null
           source_version_id?: string | null
           transition?: string
+          use_clip?: boolean
           user_id?: string
           video_project_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "video_scenes_clip_id_fkey"
+            columns: ["clip_id"]
+            isOneToOne: false
+            referencedRelation: "scene_clips"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "video_scenes_video_project_id_fkey"
             columns: ["video_project_id"]

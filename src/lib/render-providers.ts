@@ -23,6 +23,8 @@ export type RenderProvider = {
   reportsProgress: boolean;
   /** Whether the provider is wired up, authenticated and usable right now. */
   configured: boolean;
+  /** True when this renderer is only a stopgap until a real server encoder runs. */
+  fallback?: boolean;
   /** Copy shown while a job of this provider is running. */
   runningNotice: string;
 };
@@ -35,9 +37,11 @@ export const RENDER_PROVIDERS: Record<string, RenderProvider> = {
     survivesTabClose: false,
     reportsProgress: true,
     configured: true,
+    fallback: true,
     runningNotice: "Keep this tab open while your video is created.",
   },
 };
+
 
 /**
  * Registers a server-side encoder (Creatomate, Shotstack, Remotion Lambda, an
@@ -127,4 +131,22 @@ export function jobStatusLabel(job: { status?: string | null; progress?: number 
     default:
       return "";
   }
+}
+
+/* ------------------------------------------------------------ honesty */
+
+/**
+ * True while the only renderer available is the labelled fallback. The UI must
+ * say so plainly instead of implying background rendering exists.
+ */
+export function isFallbackRenderer(id?: unknown) {
+  const p = renderProvider(id ?? activeRenderProvider().id);
+  return !!p.fallback && !p.serverSide;
+}
+
+/** One honest sentence about where the render happens. */
+export function renderModeNotice(id?: unknown): string {
+  const p = renderProvider(id ?? activeRenderProvider().id);
+  if (runsInBackground(p.id)) return "Rendering continues after you close this tab.";
+  return `${p.runningNotice} Background rendering is not available yet.`;
 }
