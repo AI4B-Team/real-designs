@@ -672,6 +672,18 @@ async function loadWizardAssets() {
       version_id: d.versionId || null, disclosure: "proposed", flags: [],
     });
   }
+  /* Photos chosen from the picker (including the unassigned bucket, which has
+     no property row) are real assets even when nothing else loaded them. */
+  for (const ph of w.seedPhotos || []) {
+    if (!ph || !ph.path) continue;
+    if (out.some((a) => a.path === ph.path)) continue;
+    const room = ph.room || UNSORTED;
+    out.push({
+      key: "sp-" + (ph.id || ph.path), path: ph.path, room,
+      kind: "Original", group: groupFor(room === UNSORTED ? "" : room, ""),
+      disclosure: null, flags: [],
+    });
+  }
   w.available = out;
   /* The grid is the order. Build it in room group order; new uploads append. */
   const keep = new Set(out.map((a) => a.key));
@@ -1125,6 +1137,40 @@ function designChoices() {
   }
   return out;
 }
+
+/** Every stored photo of one property: saved room photos first, then the
+    property's uploaded media assets. Upload-only properties have no rooms,
+    which is why their picker cards used to render empty. */
+function photosOfProperty(p) {
+  const out = [];
+  const seen = new Set();
+  for (const pr of p?.projects || []) {
+    for (const r of pr?.rooms || []) {
+      const path = r?.before_path;
+      if (!path || seen.has(path)) continue;
+      seen.add(path);
+      out.push({ id: path, path, name: r.name || pr.name || "Photo", room: r.room_type || r.name || "" });
+    }
+  }
+  for (const a of p?.assets || []) {
+    const path = a?.path;
+    if (!path || seen.has(path)) continue;
+    seen.add(path);
+    out.push({ id: a.id || path, path, name: a.name || "Photo", room: a.room || "" });
+  }
+  return out;
+}
+
+/** A front-exterior shot makes the best property cover; otherwise keep order. */
+function coverOrder(list) {
+  const front = /front|exterior|facade|curb|street/i;
+  const hit = list.findIndex((x) => front.test(String(x.room || x.name || "")));
+  if (hit <= 0) return list;
+  return [list[hit], ...list.filter((_, i) => i !== hit)];
+}
+
+/* The catch-all bucket is not a property, so it never becomes an address. */
+const isUnsortedLabel = (s) => /^(unsorted uploads|unassigned photos)$/i.test(String(s || "").trim());
 
 /* Single shared Step 1 -> Step 2 transition, used by both the automatic
    post-upload advance and the manual Continue button. Never fire-and-forget:
@@ -3965,16 +4011,34 @@ function bind() {
       onTab: (t) => { w.sourceType = t; },
       properties: () =>
         S.tree.map((p) => {
-          const rooms = (p.projects || []).reduce(
-            (a, pr) => a + ((pr.rooms || []) as any[]).filter((r: any) => !!r.before_path).length,
-            0,
-          );
-          const assets = Number(p.asset_count || 0);
+          const photos = coverOrder(photosOfProperty(p));
           return {
+            id: p.id || p.address,
             address: p.address,
-            meta: (() => { const n = rooms || assets; return n ? `${n} ${n === 1 ? "Photo" : "Photos"}` : "No Photos Yet"; })(),
+            count: photos.length || Number(p.asset_count || 0),
+            thumb: photos[0]?.path || null,
+            thumbs: photos.slice(0, 6).map((x) => x.path),
           };
         }),
+      resolvePhoto: (path) => resolvePhotoUrl(path),
+      loadPropertyPhotos: async (p) => {
+        const src = S.tree.find((x) => (x.id || x.address) === p.id);
+        return src ? photosOfProperty(src) : [];
+      },
+      onPropertyPhotos: async (p, photos) => {
+        const label = p.unassigned || isUnsortedLabel(p.address) ? "" : p.address;
+        w.sourceType = "property";
+        w.propertyId = p.unassigned ? null : (S.tree.find((x) => (x.id || x.address) === p.id)?.id || null);
+        w.propertyLabel = label || null;
+        if (label) { applyAddress(w, label, "existing_property"); w.addressMatch = null; }
+        if (!w.titleTouched) w.title = defaultTitle(w);
+        /* Only the chosen photos become scenes; the grid then opens on Scenes. */
+        w.seedPhotos = photos.filter((x) => x && x.path);
+        w.seedPaths = photos.map((x) => x.path).filter(Boolean);
+        await loadWizardAssets();
+        if (w.step < 2) w.step = 2;
+        render();
+      },
       designs: () =>
         designChoices().map((d) => ({
           id: d.roomId,
@@ -3991,10 +4055,12 @@ function bind() {
       },
       onProperty: (address) => {
         const p = S.tree.find((x) => x.address === address);
-        w.propertyLabel = address;
-        if (p) w.propertyId = p.id;
-        /* Starting from an existing property prefills its address. */
-        applyAddress(w, address, "existing_property");
+        const label = isUnsortedLabel(address) ? "" : address;
+        w.propertyLabel = label || null;
+        if (p && label) w.propertyId = p.id;
+        /* Starting from an existing property prefills its address; the
+           unsorted bucket is not a property, so it never fills the field. */
+        if (label) applyAddress(w, label, "existing_property");
         w.addressMatch = null;
         if (!w.titleTouched) w.title = defaultTitle(w);
         render();

@@ -45,7 +45,13 @@ export const Route = createFileRoute("/sitemap.xml")({
         ];
 
 
-        const urls = entries.map((e) =>
+        // One <loc> per path: duplicates split crawl signals.
+        const seen = new Set<string>();
+        const unique = entries.filter((e) =>
+          seen.has(e.path) ? false : (seen.add(e.path), true),
+        );
+
+        const urls = unique.map((e) =>
           [
             `  <url>`,
             `    <loc>${BASE_URL}${e.path}</loc>`,
