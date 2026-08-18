@@ -43,3 +43,21 @@ describe("consumeHandoff", () => {
     expect(peekHandoff("video")).not.toBeNull();
   });
 });
+
+describe("batch launches", () => {
+  it("carries the batched property and its rooms", () => {
+    const h = setHandoff({
+      target: "video",
+      origin: "batch",
+      propertyId: "p9",
+      propertyAddress: "44 Pine Ave",
+      assets: [
+        { path: "u/a.jpg", room: "Kitchen", id: "r1" },
+        { path: "u/b.jpg", room: "Living Room", id: "r2" },
+      ],
+    });
+    expect(h?.origin).toBe("batch");
+    expect(h?.propertyAddress).toBe("44 Pine Ave");
+    expect(h?.assets.map((a) => a.id)).toEqual(["r1", "r2"]);
+  });
+});
