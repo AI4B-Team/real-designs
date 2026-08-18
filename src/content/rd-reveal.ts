@@ -845,14 +845,34 @@ function frameNotice() {
   const photos = resolvedPhotos();
   const rec = missingRecommendation(photos, w.analysisStatus || "pending");
   if (!rec.show) return "";
-  /* A dismissal only holds while the set and its labels are unchanged. */
+  /* A dismissal only holds while the set, its labels and its selection are unchanged. */
   if (w.frameNoticeDismissed && w.frameNoticeSig === noticeSignature(photos)) return "";
+  const action = rec.kind === "unselected"
+    ? `<button class="btn btn-ghost btn-sm" id="rvNoticeSelect">Select Existing Photo</button>`
+    : rec.kind === "missing"
+      ? `<button class="btn btn-ghost btn-sm" id="rvNoticeAdd">Add Photos</button>`
+      : `<button class="btn btn-ghost btn-sm" id="rvNoticeReview">Review Room Types</button>`;
   return `<div class="rv-notice">
     <i data-lucide="info"></i>
-    <span><b>Recommended photo missing</b> ${esc(rec.message)}</span>
-    <button class="btn btn-ghost btn-sm" id="rvNoticeAdd">Add Photos</button>
+    <span><b>${esc(rec.title)}</b> ${esc(rec.message)}</span>
+    ${action}
     <button class="fb-link" id="rvNoticeX">Dismiss</button>
   </div>`;
+}
+
+/** Check in the uploaded photos that satisfy an unselected recommendation. */
+function selectRecommendedGap() {
+  const w = S.wizard;
+  if (!w) return;
+  const photos = resolvedPhotos();
+  const rec = missingRecommendation(photos, w.analysisStatus || "pending");
+  for (const cat of rec.unselected || []) {
+    const hit = photos.find((p) => p.category === cat && p.state === "confirmed" && p.selected === false);
+    if (!hit) continue;
+    const a = (w.available || []).find((x) => x.key === hit.id);
+    if (a && !w.scenes.some((x) => x.key === a.key)) w.scenes.push(newScene(a));
+  }
+  syncSceneOrder();
 }
 
 /** Every grid photo with its manual label, AI guess and trust band applied. */
@@ -865,7 +885,8 @@ export function resolvedPhotos() {
     /* A label already carried by a library asset or a hand-typed rename is a
        confirmed answer; only untouched uploads wait for the classifier. */
     const manual = a.roomManual || (!a.uploaded && a.room && a.room !== UNSORTED_LABEL ? a.room : null);
-    return resolvePhoto({ id: a.key, manual, label: g.label ?? null, confidence: g.confidence ?? 0 });
+    const selected = (w.scenes || []).some((x) => x.key === a.key);
+    return resolvePhoto({ id: a.key, manual, label: g.label ?? null, confidence: g.confidence ?? 0, selected });
   });
 }
 
@@ -2986,6 +3007,8 @@ function bind() {
     addUploads(files).catch(() => { w.uploadError = "Those photos could not be added. Please try again."; render(); });
   });
   on("#rvEnrichX", "click", () => { delete w.enrichNotice; render(); });
+  on("#rvNoticeSelect", "click", () => { selectRecommendedGap(); render(); });
+  on("#rvNoticeReview", "click", () => { document.querySelector(".rv-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
   on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; w.frameNoticeSig = noticeSignature(resolvedPhotos()); render(); });
   /* The warning pip is its own action; it must not toggle the tile under it. */
   on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
