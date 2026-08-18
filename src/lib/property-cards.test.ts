@@ -49,16 +49,29 @@ describe("property cards", () => {
   it("renders two-line addresses, counts and a distinct unassigned card", () => {
     const host = mount({ properties: () => props });
     const cards = host.querySelectorAll(".sp-prop");
-    expect(cards.length).toBe(4);
+    /* Zero-photo properties are hidden until asked for. */
+    expect(cards.length).toBe(3);
     expect(cards[0]!.querySelector("b")!.textContent).toBe("7006 Orvicti Court");
     expect(cards[0]!.querySelector(".sp-prop-b > span")!.textContent).toBe("Wesley Chapel, FL 33544");
     expect(cards[1]!.textContent).toContain("1 Photo");
-    expect(cards[2]!.className).toContain("is-empty");
-    expect(cards[2]!.getAttribute("data-sp-prop")).toBe(null);
-    expect(cards[2]!.textContent).toContain("No Photos Available");
-    expect(cards[3]!.className).toContain("is-util");
-    expect(cards[3]!.querySelector("b")!.textContent).toBe("Unassigned Photos");
+    expect(cards[2]!.className).toContain("is-util");
+    expect(cards[2]!.querySelector("b")!.textContent).toBe("Unassigned Photos");
+    /* Selection control lives on the thumbnail, not beside the count. */
+    expect(cards[0]!.querySelector(".sp-prop-th .sp-pick")).toBeTruthy();
   });
+
+  it("reveals zero-photo properties only through the quiet toggle", () => {
+    const host = mount({ properties: () => props });
+    const toggle = host.querySelector('[data-sp="emptytoggle"]') as HTMLElement;
+    expect(toggle.textContent).toContain("Show Properties Without Photos");
+    toggle.click();
+    const cards = host.querySelectorAll(".sp-prop");
+    expect(cards.length).toBe(4);
+    const empty = host.querySelector(".sp-prop.is-empty")!;
+    expect(empty.getAttribute("data-sp-prop")).toBe(null);
+    expect(empty.textContent).toContain("Upload Photos");
+  });
+
 
   it("opens a photo selection panel and hands back only the checked photos", async () => {
     const onPropertyPhotos = vi.fn();
