@@ -1280,6 +1280,7 @@ function markStudioResult(){
   sourceCaption(false);
   paintStudioState();
   paintVersions();
+  try{ window.rdPaintClearBtn&&window.rdPaintClearBtn(); }catch(_){}
 }
 
 /** Returns Studio to the clean welcome state. */
@@ -1300,6 +1301,7 @@ function clearStudioSource(){
   drawLocks();
   paintStudioState();
   paintStudioSub();
+  try{ window.rdPaintClearBtn&&window.rdPaintClearBtn(); }catch(_){}
 }
 window.rdSetStudioSource=setStudioSource;
 window.rdClearStudioSource=clearStudioSource;
@@ -1481,7 +1483,7 @@ function resetCanvasSetup(){
   if(style&&style.selectedIndex>0){ style.selectedIndex=0; style.dispatchEvent(new Event('change',{bubbles:true})); }
   drawLocks();
   paintClearBtn();
-  try{ showToast&&showToast('Setup Cleared'); }catch(_){}
+  try{ window.rdToast&&window.rdToast('Setup Cleared'); }catch(_){}
 }
 function confirmClearSetup(){
   if(STUDIO_SRC===SRC_EMPTY) return;
