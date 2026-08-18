@@ -2907,12 +2907,18 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
   const urls = [];
   for (const s of w.scenes) {
+    /* An approved AI clip replaces the still for this scene, and its real
+       duration wins so the video never cuts a generated clip mid-move. */
+    const clip = s.use_clip ? sceneClips.get(s.key) : null;
+    const clipUrl = clip && clip.status === "completed" ? sceneClips.url(clip) : null;
     urls.push({
       url: await resolvePhotoUrl(s.path),
+      clipUrl,
+      clipSeconds: clipUrl ? clip?.seconds || null : null,
       compareUrl: s.compare ? await resolvePhotoUrl(s.compare) : null,
       room_name: s.room,
       scene_type: s.scene_type,
-      duration: per,
+      duration: clipUrl && clip?.seconds ? clip.seconds : per,
       motion: s.motion || "auto",
       transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
       caption: w.captions ? s.caption || s.room : null,
