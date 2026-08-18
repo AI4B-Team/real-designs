@@ -2299,9 +2299,6 @@ function previewPanel() {
     ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">Your Balance Is ${bal}. Add Credits Before Rendering.</div>` : ""}
     ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
     ${!block && !browserRenderSupport().ok ? `<div class="rv-note sm">${esc(browserRenderSupport().reason)} Nothing Is Charged Until A Render Actually Starts.</div>` : ""}
-    ${!w.busy && w.step === 7 && !runsInBackground() && browserRenderSupport().ok
-      ? `<div class="rv-note sm" id="rvTabNote"><i data-lucide="monitor"></i> Your Video Is Created In This Browser Tab. Keep This Tab Open Until It Finishes — Closing Or Refreshing Stops The Render And Returns Your Credits.</div>`
-      : ""}
     ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
@@ -2311,10 +2308,10 @@ function previewPanel() {
           : " Your Video Is Created In This Browser Tab. Closing Or Refreshing This Tab Stops The Render — Your Project Is Saved And Your Credits Are Returned."
       }</div>
       <button class="btn btn-ghost btn-xs" id="rvCancelRender"${w.cancelling ? " disabled" : ""}><i data-lucide="x"></i>${w.cancelling ? "Stopping…" : "Stop Render"}</button></div>`
-      : w.step === 7
+      : atReview(w)
         ? block
           ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
-          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && browserRenderSupport().ok ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+          : `${tabNoticeHtml()}<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && browserRenderSupport().ok ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
 
         : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
 
@@ -2323,6 +2320,17 @@ function previewPanel() {
 
 
 /* ======================= SCENE HELPERS ======================= */
+/** True on the final Review step, whatever internal step number it carries. */
+function atReview(w) {
+  return Number(w?.step) === 7;
+}
+
+/** The browser renderer needs this tab: say so before the user commits. */
+function tabNoticeHtml() {
+  if (runsInBackground() || !browserRenderSupport().ok) return "";
+  return `<div class="rv-note sm" id="rvTabNote">Your Video Is Created In This Browser Tab. Keep This Tab Open Until It Finishes — Closing Or Refreshing Stops The Render And Returns Your Credits.</div>`;
+}
+
 function assetToScene(a) {
   const w = S.wizard || {};
   const isBA = w.videoType === "before_after" || w.videoType === "renovation_vision";
