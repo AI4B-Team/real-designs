@@ -31,6 +31,16 @@ import {
   roomSpace,
   searchRooms,
 } from "@/lib/staging-rooms";
+import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
+import {
+  saveProjectDraft as _saveProjectDraft,
+  listProjectDrafts as _listProjectDrafts,
+  getProjectDraft as _getProjectDraft,
+} from "@/lib/drafts.functions";
+
+const saveProjectDraft = (d) => _saveProjectDraft(d);
+const listProjectDrafts = (d) => _listProjectDrafts({ data: d || {} });
+const getProjectDraft = (d) => _getProjectDraft({ data: d });
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
