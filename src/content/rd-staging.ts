@@ -98,7 +98,9 @@ function saveDraft() {
 function host() {
   if (wrap && document.body.contains(wrap)) return wrap;
   wrap = document.createElement("div");
-  wrap.className = "rds-wrap";
+  /* The overlay lives on <body>, so it must carry the app scope itself or
+     every .rd-app .btn / token rule silently drops out. */
+  wrap.className = "rd-app rds-wrap";
   wrap.id = "rdStagingWrap";
   document.body.appendChild(wrap);
   return wrap;
@@ -607,7 +609,7 @@ function mountStrip() {
   if (!S || !S.items.length) return;
   removeStrip();
   strip = document.createElement("div");
-  strip.className = "rds-strip";
+  strip.className = "rd-app rds-strip";
   document.body.appendChild(strip);
   drawStrip();
   window.addEventListener("hashchange", stripGuard);

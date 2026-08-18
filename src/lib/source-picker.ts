@@ -174,7 +174,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
        property shoot wait for a sequential image-analysis pass. */
     if (opts.context === "video") {
       state.busy = false;
-      await opts.onPick(ok.map((file) => ({ file, flags: [] })));
+      try {
+        await opts.onPick(ok.map((file) => ({ file, flags: [] })));
+      } finally {
+        /* The picker may still be on screen behind a builder or overlay:
+           clear the busy card so returning here is not a frozen spinner. */
+        render();
+      }
       return;
     }
 
@@ -194,7 +200,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
       return;
     }
-    await opts.onPick(measured);
+    try {
+      await opts.onPick(measured);
+    } finally {
+      render();
+    }
   }
 
   async function importCloud(raw: string) {
