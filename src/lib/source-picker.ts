@@ -106,7 +106,7 @@ export type PickerOptions = {
   /** Called when the user chooses a finished design. */
   onDesign?: (id: string) => void;
   /** Called when the user writes an idea instead of adding photos. */
-  onDescribe?: (prompt?: string) => void;
+  onDescribe?: (prompt?: string) => void | Promise<void>;
   /** Optional "Try A Sample Space" affordance under the dropzone. */
   onSample?: () => void;
   showAlert?: (msg: string) => void;
@@ -508,6 +508,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     } catch (_) {
       /* icons are cosmetic */
     }
+    if (state.tab === "describe") syncComposer();
   }
 
   function wireDrag(el: HTMLElement) {
@@ -607,6 +608,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       opts.onProperty?.(prop.dataset["spProp"]!);
       return;
     }
+    const ex = t.closest("[data-sp-ex]") as HTMLElement | null;
+    if (ex) {
+      /* Examples fill the prompt; the user still presses Create. */
+      state.prompt = ex.dataset["spEx"] || "";
+      render();
+      const ta = document.getElementById("spPrompt") as HTMLTextAreaElement | null;
+      if (ta) {
+        ta.focus();
+        ta.setSelectionRange(ta.value.length, ta.value.length);
+      }
+      return;
+    }
     const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
     if (dsn) {
       opts.onDesign?.(dsn.dataset["spDesign"]!);
@@ -629,7 +642,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const k = act.dataset["sp"];
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
-    else if (k === "describe") opts.onDescribe?.(state.prompt.trim());
+    else if (k === "describe") await submitDescribe();
     else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
