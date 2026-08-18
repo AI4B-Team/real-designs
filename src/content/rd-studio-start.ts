@@ -1315,7 +1315,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         },
       });
       ctx.track("concept_generated", { space: state.space });
-      await ctx.showConcept(r.image, "Concept");
+      await ctx.showConcept(r.image, "Concept", state.prompt.trim());
     } catch (err: any) {
       if (isPlanBlocked(err)) openUpgrade(err);
       else ctx.showAlert("Could not create that concept. " + ((err && err.message) || "Try again in a moment."));
