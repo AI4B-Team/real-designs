@@ -31,10 +31,11 @@ export type ClipView = {
 };
 
 export const ARCHITECTURE_NOTICE =
-  "AI will animate this photo while attempting to preserve the property. Review the finished clip before including it in your video.";
+  "AI-generated results may vary. You can review the clip before using it.";
 export const LIFESTYLE_NOTICE =
   "This option adds AI-generated people who were not present at the property.";
 export const AERIAL_NOTICE = "Simulated aerial movement generated from a still photo.";
+export const BACKGROUND_NOTICE = "Your clip is generating. You can safely close this window.";
 
 function esc(s: unknown): string {
   return String(s ?? "").replace(/[&<>"']/g, (c) =>
