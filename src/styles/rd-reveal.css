@@ -679,14 +679,15 @@
    browser zoom: six complete cards on a desktop workspace, degrading cleanly
    to five, four, three, two and one. */
 .rd-app #v-reveal .rv-wiz, .rd-app .bx-work { container-type: inline-size; container-name: rvwork; }
-.rd-app .rv-grid { --rv-cgap: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  /* rows carry an extra gap so a wrapped pair's transition control sits in a
-     dedicated band above the new row, clear of every card control */
-  gap: 42px var(--rv-cgap); width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
-  /* the connectors are overlays inside the gutters, so the row can never grow
-     wider than the panel: the column count drops instead of scrolling */
-  overflow-x: hidden; overscroll-behavior-x: none; }
-.rd-app .rv-grid > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px 12px; }
+/* the connectors are overlays inside the gutters (or their own full-width row),
+   so the grid can never grow wider than the panel: the column count drops
+   instead of scrolling */
+.rd-app .rv-grid { --rv-cgap: 12px; column-gap: var(--rv-cgap); width: 100%; max-width: 100%; min-width: 0;
+  box-sizing: border-box; overflow-x: hidden; overscroll-behavior-x: none; }
+.rd-app .rv-grid > * { min-width: 0; }
+.rd-app .rv-grid > * { max-width: 100%; box-sizing: border-box; }
+
 .rd-app .rv-grid .rv-tile-th img { width: 100%; height: 100%; object-fit: cover; }
 @container rvwork (min-width: 360px) { .rd-app .rv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @container rvwork (min-width: 560px) { .rd-app .rv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
