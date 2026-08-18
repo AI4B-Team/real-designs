@@ -8,7 +8,11 @@
 import {
   ANIMATE_OPTIONS,
   ANIMATE_CREDITS_PER_CLIP,
+  ANIMATE_CATEGORIES,
+  animateCategory,
   animateOption,
+  animateWarning,
+  recommendedAnimateIds,
   clipStatusLabel,
   disclosureLabel,
 } from "@/lib/scene-enhancement";
