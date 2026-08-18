@@ -1636,10 +1636,16 @@ async function paintVersions(){
   let list=[];
   try{ list=await listSavedEstimates(); }catch(e){ list=[]; }
   SAVED_EST=list; updateSearchMeta();
-  /* only the active room's real versions, never an unrelated project's history */
-  if(STUDIO_CTX.room) list=list.filter(v=>v.room_name===STUDIO_CTX.room);
+  /* only the active room's real versions, never an unrelated project's history.
+     The room comes from the opened design when there is one, otherwise from the
+     Setup room selector, so a design started from an upload still shows history. */
+  const setupRoom=((document.getElementById('fRoom')||{}).value||'').trim();
+  const activeRoom=(STUDIO_CTX&&STUDIO_CTX.room)||setupRoom||'';
+  const norm=(s)=>String(s||'').trim().toLowerCase();
+  if(activeRoom) list=list.filter(v=>norm(v.room_name)===norm(activeRoom));
   else list=[];
-  if(sub) sub.textContent=STUDIO_CTX.room||'This Design';
+  if(sub) sub.textContent=activeRoom||'This Design';
+
   list=list.slice(0,6);
   if(!list.length){
     el.innerHTML='<div style="padding:6px 0"><b style="font-size:.85rem">No Versions Yet</b>'
@@ -1658,6 +1664,8 @@ async function paintVersions(){
 
 paintVersions();
 window.addEventListener('rd:saved', paintVersions);
+document.getElementById('fRoom')?.addEventListener('change', ()=>{ paintVersions(); });
+
 
 /* ---------- designs: real saved versions plus sample gallery ---------- */
 let DESIGN_FILTER='all', DESIGN_CAT='all', DESIGN_Q='', DESIGN_SORT='recent';
