@@ -568,13 +568,13 @@
 .rd-app .rv-tool em { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 11.5px; font-weight: 600; color: #fff; background: #111; border-radius: 6px; padding: 3px 8px; opacity: 0; pointer-events: none; transition: opacity .1s; z-index: 6; }
 .rd-app .rv-tool:hover em, .rd-app .rv-tool:focus-visible em { opacity: 1; }
 
-/* Too narrow for a row beside the scene number: centre the row along the
-   bottom edge instead, clear of the scene number and the treatment tile. */
+/* Too narrow for a row beside the scene number: run the row along the bottom
+   edge, left aligned so a wrapped-row transition connector keeps its corner. */
 @container (max-width: 258px) {
-  .rd-app .rv-tools { left: 50%; right: auto; bottom: 8px; top: auto; max-width: calc(100% - 12px);
-    transform: translate(-50%, 4px); }
+  .rd-app .rv-tools { left: 6px; right: auto; bottom: 8px; top: auto; max-width: calc(100% - 42px);
+    transform: translateY(4px); }
   .rd-app .rv-tile.on:hover .rv-tools,
-  .rd-app .rv-tile.on:focus-within .rv-tools { transform: translate(-50%, 0); }
+  .rd-app .rv-tile.on:focus-within .rv-tools { transform: translateY(0); }
   .rd-app .rv-tool { width: 26px; height: 26px; }
   /* the toolbar is temporary, the number is permanent: the number steps aside
      for the moment the row is on screen rather than the two colliding. */
