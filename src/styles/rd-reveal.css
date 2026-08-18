@@ -568,14 +568,19 @@
 .rd-app .rv-tool em { position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%); white-space: nowrap; font-style: normal; font-size: 11.5px; font-weight: 600; color: #fff; background: #111; border-radius: 6px; padding: 3px 8px; opacity: 0; pointer-events: none; transition: opacity .1s; z-index: 6; }
 .rd-app .rv-tool:hover em, .rd-app .rv-tool:focus-visible em { opacity: 1; }
 
-/* Too narrow for a row beside the scene number: stack along the right edge. */
+/* Too narrow for a row beside the scene number: centre the row along the
+   bottom edge instead, clear of the scene number and the treatment tile. */
 @container (max-width: 258px) {
-  .rd-app .rv-tools { top: 50%; bottom: auto; right: 8px; flex-direction: column; max-width: none; border-radius: 22px; transform: translateY(calc(-50% + 4px)); }
+  .rd-app .rv-tools { left: 50%; right: auto; bottom: 8px; top: auto; max-width: calc(100% - 12px);
+    transform: translate(-50%, 4px); }
   .rd-app .rv-tile.on:hover .rv-tools,
-  .rd-app .rv-tile.on:focus-within .rv-tools { transform: translateY(-50%); }
-  .rd-app .rv-tools > .rv-tool em,
-  .rd-app .rv-tools > .rv-tool:first-child em,
-  .rd-app .rv-tools > .rv-tool:last-child em { bottom: auto; top: 50%; left: auto; right: calc(100% + 8px); transform: translateY(-50%); }
+  .rd-app .rv-tile.on:focus-within .rv-tools { transform: translate(-50%, 0); }
+  .rd-app .rv-tool { width: 26px; height: 26px; }
+  /* the toolbar is temporary, the number is permanent: the number steps aside
+     for the moment the row is on screen rather than the two colliding. */
+  .rd-app .rv-tile.on:hover .rv-tile-seq,
+  .rd-app .rv-tile.on:focus-within .rv-tile-seq { opacity: 0; }
+  .rd-app .rv-tile-seq { transition: opacity .12s; }
 }
 /* Compact cards: one ellipsis button opening the same actions. */
 @container (max-width: 178px) {
@@ -1023,28 +1028,31 @@
 .rv-bill .rv-bill-t{font-weight:600;color:#111;border-top:1px dashed #e4e4e4;padding-top:6px}
 .rv-bill .rv-bill-n{display:block;font-size:12px;color:#777}
 
-/* ---- one persistent treatment indicator (upper-right of each scene image) ---- */
-.rv-treat{position:absolute;top:10px;right:10px;z-index:5;display:inline-flex;align-items:center;gap:6px;
-  max-width:92px;padding:3px 7px 3px 3px;border:1px solid rgba(0,0,0,.10);border-radius:10px;
-  background:rgba(255,255,255,.94);box-shadow:0 2px 6px rgba(0,0,0,.16);cursor:pointer;text-align:left}
-.rv-treat:hover{background:#fff}
-.rv-treat:focus-visible{outline:2px solid var(--rd-accent,#c00);outline-offset:2px}
-.rv-treat-th{position:relative;flex:0 0 auto;width:36px;height:36px;border-radius:8px;overflow:hidden;
-  background:#e9e9ec center/cover no-repeat;display:grid;place-items:center}
-.rv-treat-th i,.rv-treat-th svg{width:13px;height:13px;color:#fff;filter:drop-shadow(0 1px 2px rgba(0,0,0,.6))}
-.rv-treat em{font-style:normal;font-size:11px;font-weight:700;line-height:1.15;color:#111;
-  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rv-treat.ai .rv-treat-th{box-shadow:inset 0 0 0 2px var(--rd-accent,#c00)}
-.rv-treat.bad .rv-treat-th{box-shadow:inset 0 0 0 2px #9b1a1a}
+/* ---- one compact treatment preview, anchored inside the photo's top-right ----
+   38px tile, entirely inside the card. The name is a small dark label that is
+   revealed under the tile on hover / focus / while the card is being edited. */
+.rv-treat{position:absolute;top:10px;right:10px;z-index:5;width:38px;height:38px;padding:0;
+  border:0;background:none;cursor:pointer;line-height:0}
+.rv-treat:focus-visible{outline:none}
+.rv-treat-th{position:relative;display:grid;place-items:center;width:38px;height:38px;
+  border-radius:8px;overflow:hidden;border:2px solid #fff;box-sizing:border-box;
+  background:#3a3a40 center/cover no-repeat;box-shadow:0 2px 6px rgba(0,0,0,.28)}
+.rv-treat-th::after{content:"";position:absolute;inset:0;background:rgba(0,0,0,.34)}
+.rv-treat-th i,.rv-treat-th svg{position:relative;z-index:1;width:15px;height:15px;color:#fff;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.65))}
+.rv-treat:focus-visible .rv-treat-th{border-color:var(--rd-accent,#c00)}
+.rv-treat.ai .rv-treat-th{box-shadow:0 2px 6px rgba(0,0,0,.28),inset 0 0 0 2px var(--rd-accent,#c00)}
+.rv-treat.bad .rv-treat-th{background:#7d1414}
 .rv-treat.busy .rv-treat-th i,.rv-treat.busy .rv-treat-th svg{animation:rv-spin 1s linear infinite}
 .rv-treat-th.m-push{animation:rv-tz-in 6s ease-in-out infinite alternate}
 .rv-treat-th.m-pull{animation:rv-tz-out 6s ease-in-out infinite alternate}
-/* Narrow cards: preview tile only, name moves to the tooltip. */
-@container (max-width: 210px){
-  .rv-treat{max-width:none;padding:3px;gap:0}
-  .rv-treat em{display:none}
-  .rv-treat-th{width:32px;height:32px}
-}
+/* the name: hidden until hover / focus / active edit, never a permanent pill */
+.rv-treat em{position:absolute;top:42px;right:0;display:block;max-width:90px;padding:3px 6px;
+  border-radius:5px;background:#111;color:#fff;font-style:normal;font-size:10px;font-weight:600;
+  line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:0;visibility:hidden;transition:opacity .12s ease;pointer-events:none}
+.rv-treat:hover em,.rv-treat:focus-visible em,.rv-tile.active .rv-treat em{opacity:1;visibility:visible}
+
 @keyframes rv-tz-in{from{background-size:100%}to{background-size:126%}}
 @keyframes rv-tz-out{from{background-size:126%}to{background-size:100%}}
 
@@ -1097,20 +1105,10 @@
 .rv-cv-stage.fmt-1x1 .rv-cv-img{height:min(52vh,620px);max-height:none}
 .rv-cv-stage.fmt-16x9 .rv-cv-img{max-height:min(52vh,620px)}
 
-/* ---- transition connectors between scenes ----
-   The connector sits on the seam between two cards, so the grid keeps its
-   columns while the move between rooms stays visible and clickable. */
+/* ---- transition control ----
+   A transition is the change BETWEEN two scenes, so it is never a badge on a
+   photo: it is one more button inside the temporary hover toolbar. */
 .rd-app .rv-tile { position: relative; }
-.rd-app .rv-conn{position:absolute;right:-19px;top:38%;z-index:6;display:inline-flex;flex-direction:column;align-items:center;gap:2px;
-  padding:5px 6px;border:1px solid #e6e6e6;border-radius:999px;background:#fff;color:#111;cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.12);transition:border-color .12s,box-shadow .12s,transform .12s}
-.rd-app .rv-conn:hover{border-color:var(--red,#CC0000);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.16)}
-.rd-app .rv-conn i{width:14px;height:14px}
-.rd-app .rv-conn em{font-style:normal;font-size:9px;font-weight:700;letter-spacing:.02em;max-width:66px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.rd-app .rv-conn.cut{opacity:.72}
-.rd-app .rv-conn.busy i{animation:rv-spin 1s linear infinite}
-.rd-app .rv-conn.bad{border-color:#CC0000;color:#CC0000}
-@media (max-width: 720px){ .rd-app .rv-conn em{display:none} .rd-app .rv-conn{right:-15px} }
 
 /* transition popover */
 .rv-tr{display:flex;flex-direction:column;gap:14px}

@@ -1968,14 +1968,15 @@ function primaryTreatment(s, clip) {
 }
 
 /**
- * The single persistent overlay in the upper-right corner: a small preview
- * tile plus a short label. A default scene renders nothing at all.
+ * The single persistent overlay in the upper-right corner: one compact 38px
+ * preview tile. The name is a small label revealed on hover / focus only.
+ * A default, untouched scene renders nothing at all.
  */
 function sceneTreatment(s, clip, asset) {
   const t = primaryTreatment(s, clip);
   if (!t) return "";
   const path = asset?.path || s?.path || "";
-  return `<button class="rv-treat ${t.cls}" ${t.open} aria-label="${esc(t.name)}" title="${esc(t.label)}">
+  return `<button class="rv-treat ${t.cls}" ${t.open} aria-label="${esc(t.name)}">
     <span class="rv-treat-th m-${esc(t.motion)}" ${path ? `data-img="${esc(path)}"` : ""}><i data-lucide="${t.icon}"></i></span>
     <em>${esc(t.label)}</em>
   </button>`;
@@ -1989,24 +1990,23 @@ const TRANS_ICON = {
 };
 
 /**
- * The connector between two consecutive scenes. It sits on the seam of the
- * grid so a user reads the move from one room to the next without the
- * six-column layout changing.
+ * A transition belongs between two scenes, never on a scene card. This is a
+ * tiny icon-only control that lives in the gutter on the seam of the grid and
+ * only appears on hover / focus. It is never a badge over the photo.
  */
-function connectorHtml(s, nextScene) {
+function transitionTool(s) {
+  const nextScene = S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1];
   if (!s || !nextScene) return "";
   const row = transitions.get(s.key, nextScene.key);
   const type = row?.type || "auto";
   const eff = resolveTransition(type, sceneShape(s), sceneShape(nextScene));
   const busy = row?.status === "queued" || row?.status === "running" || row?.status === "reserved";
   const failed = row?.status === "failed";
-  const label = type === "auto" ? `Auto · ${transitionLabel(eff)}` : transitionLabel(type);
-  return `<button class="rv-conn ${type === "cut" ? "cut" : ""} ${busy ? "busy" : ""} ${failed ? "bad" : ""}"
+  const label = type === "auto" ? transitionLabel(eff) : transitionLabel(type);
+  return `<button class="rv-tool ${type !== "auto" || failed ? "hot" : ""}"
     data-pop="trans" data-key="${esc(s.key)}"
-    aria-label="Transition Into ${esc(nextScene.room || "The Next Scene")}: ${esc(label)}"
-    title="${esc(`Transition: ${label}`)}">
-    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "blend"}"></i>
-    <em>${esc(label)}</em>
+    aria-label="Transition Into ${esc(nextScene.room || "The Next Scene")}: ${esc(label)}">
+    <i data-lucide="${busy ? "loader" : failed ? "triangle-alert" : TRANS_ICON[type] || "blend"}"></i><em>Transition</em>
   </button>`;
 }
 
@@ -2034,6 +2034,7 @@ function tileHtml(a, seq) {
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
       <button class="rv-tool ${clipHot ? "hot" : ""}" data-clip="open" data-key="${esc(a.key)}" aria-label="Animate"><i data-lucide="clapperboard"></i><em>Animate</em></button>
+      ${s && S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1] ? transitionTool(s) : ""}
     </div>
     <button class="rv-tools-more" data-toolsmore="1" aria-label="Scene Tools" title="Scene Tools"><i data-lucide="ellipsis"></i></button>`;
   return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" draggable="true">
@@ -2045,7 +2046,6 @@ function tileHtml(a, seq) {
 
       ${tools}
     </div>
-    ${s ? connectorHtml(s, S.wizard.scenes[S.wizard.scenes.indexOf(s) + 1] || null) : ""}
     <div class="rv-tile-foot">
       ${roomCell(a)}
     </div>
@@ -2053,6 +2053,25 @@ function tileHtml(a, seq) {
   </div>`;
 }
 
+
+/**
+ * Safety net for the "Organizing photos" message: whatever happens to the
+ * enrichment promise, the message can never outlive the work by more than a
+ * few seconds while cards are already on screen.
+ */
+let __orgWatch = null;
+function armOrganizeWatchdog(w) {
+  if (__orgWatch) return;
+  __orgWatch = setTimeout(() => {
+    __orgWatch = null;
+    if (S.wizard !== w) return;
+    if (!(w.selectGridLoading || w.analysisStatus === "running")) return;
+    w.selectGridLoading = false;
+    w.organizeStalled = true;
+    if (w.analysisStatus === "running") w.analysisStatus = "failed";
+    render();
+  }, 12000);
+}
 
 function stepSelect() {
   const w = S.wizard;
@@ -2073,8 +2092,14 @@ function stepSelect() {
   const all = w.available.length > 0 && w.scenes.length === w.available.length;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
 
-  const organizing = w.selectGridLoading || w.analysisStatus === "running";
+  /* "Organizing photos" means work is genuinely running. A stale flag can
+     never keep it on screen: a watchdog clears it, and a failed organise
+     turns into a retryable message instead of an endless spinner. */
+  const organizing = (w.selectGridLoading || w.analysisStatus === "running") && !w.organizeStalled;
+  if (organizing) armOrganizeWatchdog(w);
+  const organizeFailed = !organizing && w.analysisStatus === "failed" && (w.available || []).length > 0;
   return `${organizing ? `<div class="rv-organizing sm"><i data-lucide="loader"></i>Organizing photos…</div>` : ""}
+  ${organizeFailed ? `<div class="rv-notice"><i data-lucide="triangle-alert"></i><span>Photos could not be organized automatically. Your photos are all here — you can arrange them yourself.</span><button class="fb-link" id="rvRetryOrg">Try Again</button></div>` : ""}
   ${w.enrichNotice ? `<div class="rv-notice"><i data-lucide="info"></i><span>${esc(w.enrichNotice)}</span><button class="fb-link" id="rvEnrichX">Dismiss</button></div>` : ""}
   <div class="rv-utility">
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
@@ -4108,6 +4133,7 @@ function bind() {
     addUploads(files).catch(() => { w.uploadError = "Those photos could not be added. Please try again."; render(); });
   });
   on("#rvEnrichX", "click", () => { delete w.enrichNotice; render(); });
+  on("#rvRetryOrg", "click", () => { delete w.organizeStalled; redetectRooms(); render(); });
   on("#rvNoticeSelect", "click", () => { selectRecommendedGap(); render(); });
   on("#rvNoticeReview", "click", () => { document.querySelector(".rv-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
   on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; w.frameNoticeSig = noticeSignature(resolvedPhotos()); render(); });
