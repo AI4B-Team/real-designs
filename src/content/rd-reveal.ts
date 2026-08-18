@@ -885,8 +885,17 @@ function wizardHtml() {
           ${wide ? "" : rail}
           <div class="rv-wiz">${body}</div>
         </div>`;
+  /* Property context follows the builder: the address stays visible on every
+     editing step, not just Select & Order. */
+  const addrText = cleanAddressText(w.address) || w.propertyLabel || "";
+  const addrChip = editor || w.step === 7
+    ? `<div class="rv-head-addr">${addrText
+        ? `<i data-lucide="map-pin"></i><span>${esc(addrText)}</span>`
+        : `<button class="fb-link" data-sec="scenes"><i data-lucide="map-pin"></i>Add Property Address</button>`}</div>`
+    : "";
+
   return `<div class="rv-head">
-    <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p></div>
+    <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p>${addrChip}</div>
     ${headTools}
     <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
       <div class="rv-more-m">
