@@ -194,7 +194,7 @@ describe("photo staging: add photos -> review rooms", () => {
     expect(stagingHost().textContent).toContain("Add Photos");
     await pick([jpeg("a.jpg"), jpeg("b.jpg"), jpeg("c.jpg")]);
     expect(stagingHost().textContent).toContain("Review Rooms");
-    expect(stagingHost().querySelectorAll(".rds-card")).toHaveLength(3);
+    expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(3);
   });
 
   it("advances on a single photo and keeps Add More Photos available", async () => {
@@ -202,7 +202,7 @@ describe("photo staging: add photos -> review rooms", () => {
     await pick([jpeg("only.jpg")]);
     expect(stagingHost().textContent).toContain("Review Rooms");
     expect(stagingHost().querySelector("#rdsMore")).toBeTruthy();
-    expect(stagingHost().querySelectorAll(".rds-card")).toHaveLength(1);
+    expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(1);
   });
 
   it("renders Review Rooms as a page, not a modal", async () => {
@@ -213,11 +213,11 @@ describe("photo staging: add photos -> review rooms", () => {
     expect(hostEl.closest(".content")).toBeTruthy();
     expect(hostEl.querySelector('[role="dialog"]')).toBeNull();
     expect(document.body.style.overflow).toBe("");
-    expect(hostEl.querySelector(".rds-rail")).toBeTruthy();
-    expect(hostEl.querySelector(".rds-foot")).toBeTruthy();
+    expect(hostEl.querySelector(".rv-rail")).toBeTruthy();
+    expect(hostEl.querySelector(".rv-gridfoot")).toBeTruthy();
     expect(hostEl.textContent).toContain("Confirm the room type for each photo.");
     /* Bulk actions collapse into a More menu. */
-    expect(hostEl.querySelector("#rdsMoreMenu")).toBeTruthy();
+    expect(hostEl.querySelector(".rv-utility .rv-more")).toBeTruthy();
     expect(hostEl.textContent).not.toContain("Remove All Items");
   });
 
@@ -228,13 +228,13 @@ describe("photo staging: add photos -> review rooms", () => {
     await pick([jpeg("a.jpg")]);
     await settle(30);
     expect(stagingHost().textContent).toContain("Review Rooms");
-    expect(stagingHost().querySelectorAll(".rds-card")).toHaveLength(1);
+    expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(1);
   });
 
   it("stays on Add Photos when the only file is invalid", async () => {
     await openStaging();
     await pick([bad()]);
     expect(stagingHost().textContent).toContain("Add Photos");
-    expect(stagingHost().querySelectorAll(".rds-card")).toHaveLength(0);
+    expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(0);
   });
 });

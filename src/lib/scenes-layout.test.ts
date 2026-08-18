@@ -40,7 +40,7 @@ describe("Scenes toolbar", () => {
 
 describe("Scenes grid columns", () => {
   it("measures the real workspace width with a container query, not the viewport", () => {
-    expect(css).toMatch(/#v-reveal \.rv-wiz \{ container-type: inline-size; container-name: rvwork/);
+    expect(css).toMatch(/#v-reveal \.rv-wiz, \.rd-app \.bx-work \{ container-type: inline-size; container-name: rvwork/);
     /* Zoom changes the viewport, not the content-relative container width. */
     expect(css).not.toMatch(/@media \(min-width: 1600px\) \{ \.rd-app \.rv-grid \{ grid-template-columns/);
   });

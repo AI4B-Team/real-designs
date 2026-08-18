@@ -483,15 +483,23 @@ function ordered() {
 function cardHtml(it) {
   const st = stateOf(it);
   const label = it.room || UNASSIGNED_LABEL;
-  return `<article class="rds-card${it.selected ? " sel" : ""}${it.done ? " done" : ""}" data-k="${it.key}" data-pick="${it.key}">
-    <label class="rds-pick">${selectCheckHtml()}<input type="checkbox" data-sel="${it.key}" ${it.selected ? "checked" : ""} aria-label="Select ${esc(it.name)}"></label>
-    <button class="rds-thumb" data-open="${it.key}" aria-label="Open ${esc(it.name)} in the canvas">
+  /* Same tile as the video builder's Scenes grid: image, selection tile in the
+     upper-left, a hover toolbar for the optional actions, and the shared room
+     control underneath. Clicking the photo opens it in the Design canvas. */
+  return `<div class="rv-tile ${it.selected ? "on" : ""}" data-k="${it.key}">
+    <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Open ${esc(it.name)} in the design canvas">
       <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
+      <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
       ${it.done ? '<span class="rds-done"><i data-lucide="check"></i>Designed</span>' : ""}
-    </button>
-    <div class="rds-meta">
+      <div class="rv-tools">
+        <button class="rv-tool" data-open="${it.key}" aria-label="Design"><i data-lucide="wand-sparkles"></i><em>Design</em></button>
+        <button class="rv-tool" data-del="${it.key}" aria-label="Remove"><i data-lucide="trash-2"></i><em>Remove</em></button>
+      </div>
+      <button class="rv-tools-more" data-toolsmore="1" aria-label="Photo Actions"><i data-lucide="ellipsis"></i></button>
+    </div>
+    <div class="rv-tile-foot">
       ${roomSelectHtml({
         attr: "room",
         key: it.key,
@@ -499,60 +507,52 @@ function cardHtml(it) {
         icon: roomIcon(it.room),
         unknown: !it.room,
         manual: it.roomSource === "manual",
-        className: "rds-room",
+        variant: "inline",
+        className: "rv-room",
       })}
-      <div class="rds-row">
-        <span class="rds-badge ${st.cls}">${st.label}</span>
-        <span class="rds-name" title="${esc(it.name)}">${esc(it.name)}</span>
-      </div>
+      <em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>
     </div>
-    <div class="rds-act">
-      <button class="rds-mini" data-open="${it.key}"><i data-lucide="wand-2"></i>Design</button>
-      <button class="rds-mini ghost" data-del="${it.key}" aria-label="Remove ${esc(it.name)}"><i data-lucide="trash-2"></i></button>
-    </div>
-  </article>`;
+  </div>`;
 }
 
 
 function gridHtml() {
-  return `<div class="rds-grid">${ordered().map(cardHtml).join("")}</div>`;
+  return `<div class="rv-grid" id="rdsBody">${ordered().map(cardHtml).join("")}</div>`;
 }
 
+/* The counts live in the selection bar and the footer, so the only thing left
+   to say beside the address is whether the work is safely stored. */
 function statusText() {
-  const total = S.items.length;
-  const selected = S.items.filter((i) => i.selected);
-  const sel = selected.length;
-  const need = selected.filter((i) => stateOf(i).cls === "warn").length;
-  const detecting = S.items.some((i) => i.detect === "running" || i.detect === "pending");
-  const parts = [`${total} Photo${total === 1 ? "" : "s"}`, `${sel} Selected`];
-  if (detecting) parts.push("Detecting Rooms…");
-  else if (need) parts.push("Rooms Need Review");
-  else parts.push("All Rooms Confirmed");
-  /* "Saved" is only honest once every photo is stored and the row is written. */
   const uploading = S.items.some((i) => i.status === "uploading");
-  const failed = S.items.some((i) => i.status === "failed");
-  if (S.saveState === "saving" || uploading) parts.push(saveLabel("saving"));
-  else if (S.saveState === "error") parts.push(saveLabel("error"));
-  else if (failed) parts.push("Some Uploads Failed");
-  else if (S.saveState === "saved") parts.push(saveLabel("saved"));
-  return parts.join(" · ");
+  if (S.saveState === "saving" || uploading) return saveLabel("saving");
+  if (S.saveState === "error") return saveLabel("error");
+  if (S.items.some((i) => i.status === "failed")) return "Some Uploads Failed";
+  if (S.saveState === "saved") return saveLabel("saved");
+  return "";
 }
 
+function selectedCount() {
+  return S.items.filter((i) => i.selected).length;
+}
 
+/* The one builder rail, shared with the video builder (same component, same
+   classes, same collapse behaviour) — only the step data differs. */
 function stepRailHtml(active) {
+  const has = S.items.length > 0;
   const steps = [
-    { key: "add", label: "Add Photos", icon: "image-plus", done: S.items.length > 0 },
-    { key: "review", label: "Review Rooms", icon: "layout-grid", ready: S.items.length > 0 },
-    { key: "design", label: "Design", icon: "wand-2", ready: false },
+    { key: "add", label: "Add Photos", icon: "image-plus", done: has },
+    { key: "review", label: "Rooms", icon: "layout-grid", ready: has, badge: has ? String(selectedCount()) : "" },
+    { key: "design", label: "Design", icon: "wand-sparkles", ready: false },
+    { key: "final", label: "Review", icon: "circle-check", ready: false },
   ];
   return builderRailHtml({
     steps,
     active,
     attr: "step",
-    variant: "row",
-    label: "Staging steps",
-    navClass: "rds-rail",
-    itemClass: "rds-rail-i",
+    variant: "col",
+    label: "Photo staging steps",
+    navClass: "rv-rail",
+    itemClass: "rv-rail-i",
   });
 }
 
@@ -560,12 +560,12 @@ function render() {
   const el = host();
   if (!el || !S) return;
   if (S.step === "add") {
+    /* Step 1 runs full width in both builders: the picker is the whole job. */
     el.innerHTML = `<section class="rds-page">
-      ${stepRailHtml("add")}
-      <header class="rds-ph">
+      <div class="rv-head">
         <div><h2>Add Photos</h2><p>Add every photo you want to design. We'll sort them by room on the next screen.</p></div>
         <button class="btn btn-ghost btn-sm" id="rdsClose"><i data-lucide="x"></i>Exit</button>
-      </header>
+      </div>
       <div class="rds-add"><div id="rdsPicker"></div></div>
     </section>`;
     paint();
@@ -576,44 +576,55 @@ function render() {
     return;
   }
 
+  const sel = selectedCount();
+  const all = S.items.length > 0 && sel === S.items.length;
   el.innerHTML = `<section class="rds-page">
-    ${stepRailHtml("review")}
-    <header class="rds-ph">
-      <div class="rds-ph-l">
+    <div class="rv-head">
+      <div>
         <h2>Review Rooms</h2>
         <p>Confirm the room type for each photo.</p>
       </div>
-      <div class="rds-ph-r">
-        ${addressBarHtml(S, PROPS || [], "rdsAddr")}
-        <span id="rdsStatus">${esc(statusText())}</span>
+      <div class="rv-head-tools">
+        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
+        <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
+        <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+          <div class="rv-more-m">
+            <button data-act="all">Select All</button>
+            <button data-act="none">Clear Selection</button>
+            <button data-act="del">Remove Selected</button>
+            <button id="rdsClose">Exit Project</button>
+          </div>
+        </details>
       </div>
-    </header>
-    <div class="rds-bar">
-      <div class="rds-bar-l">
-        <button class="btn btn-dark btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room For Selected</button>
-        <div class="rds-menu-wrap">
-          <button class="btn btn-ghost btn-sm" id="rdsMoreBtn" aria-haspopup="true" aria-expanded="false"><i data-lucide="more-horizontal"></i>More</button>
-          <div class="rds-menu" id="rdsMoreMenu" role="menu">
-            <button class="rds-menu-i" data-act="all"><i data-lucide="check-square"></i>Select All</button>
-            <button class="rds-menu-i" data-act="none"><i data-lucide="square"></i>Clear Selection</button>
-            <button class="rds-menu-i" data-act="room"><i data-lucide="tag"></i>Apply Room Type</button>
-            <button class="rds-menu-i" data-act="del"><i data-lucide="trash-2"></i>Remove Selected</button>
+    </div>
+    <div class="rv-layout rv-railed">
+      ${stepRailHtml("review")}
+      <div class="rv-wiz bx-work">
+        <div class="rv-utility">
+          <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
+          <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
+          <div class="rv-utility-a">
+            <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room</button>
+            <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+              <div class="rv-more-m">
+                <button data-act="all">Select All</button>
+                <button data-act="none">Clear Selection</button>
+                <button data-act="room">Apply Room Type</button>
+                <button data-act="del">Remove Selected</button>
+              </div>
+            </details>
+          </div>
+        </div>
+        ${gridHtml()}
+        <div class="rv-gridfoot">
+          <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "room" : "rooms"} selected</span></div>
+          <div class="rv-gridfoot-a">
+            <button class="btn btn-ghost" id="rdsBack">Back</button>
+            <button class="btn btn-primary" id="rdsGo">Continue</button>
           </div>
         </div>
       </div>
-      <div class="rds-bar-r">
-        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
-        <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
-      </div>
     </div>
-    <div class="rds-b" id="rdsBody">${gridHtml()}</div>
-    <footer class="rds-foot">
-      <button class="btn btn-ghost btn-sm" id="rdsBack"><i data-lucide="arrow-left"></i>Back</button>
-      <div class="rds-foot-r">
-        <button class="btn btn-ghost btn-sm" id="rdsClose">Exit</button>
-        <button class="btn btn-primary btn-sm" id="rdsGo"><i data-lucide="wand-2"></i>Start Designing</button>
-      </div>
-    </footer>
   </section>`;
 
   paint();
@@ -637,7 +648,7 @@ function bindRail(el) {
 
 function patchCard(it) {
   if (!wrap || !S || S.step !== "review") return;
-  const el = wrap.querySelector('.rds-card[data-k="' + it.key + '"]');
+  const el = wrap.querySelector('.rv-tile[data-k="' + it.key + '"]');
   if (!el) return;
   const next = document.createElement("div");
   next.innerHTML = cardHtml(it);
@@ -650,25 +661,44 @@ function patchCard(it) {
 /** One authoritative selection state: the item drives the box and the border. */
 function syncCard(it) {
   if (!wrap) return;
-  const card = wrap.querySelector('.rds-card[data-k="' + it.key + '"]');
+  const card = wrap.querySelector('.rv-tile[data-k="' + it.key + '"]');
   if (!card) return;
-  card.classList.toggle("sel", !!it.selected);
+  card.classList.toggle("on", !!it.selected);
   card.classList.toggle("active", S.activeKey === it.key);
-  const box = card.querySelector('input[data-sel="' + it.key + '"]');
-  if (box) box.checked = !!it.selected;
+  const box = card.querySelector('[data-sel="' + it.key + '"]');
+  if (box) box.setAttribute("aria-checked", it.selected ? "true" : "false");
 }
 
 function syncSelection() {
   if (!S || !wrap) return;
   S.items.forEach(syncCard);
+  const sel = selectedCount();
   const set = wrap.querySelector("#rdsSetRoom");
-  if (set) set.disabled = !S.items.some((i) => i.selected);
+  if (set) set.disabled = !sel;
+  const count = wrap.querySelector("#rdsSelCount");
+  if (count) count.textContent = `${sel} of ${S.items.length} selected`;
+  const foot = wrap.querySelector("#rdsFootCount");
+  if (foot) foot.textContent = `${sel} ${sel === 1 ? "room" : "rooms"} selected`;
+  const all = wrap.querySelector("#rdsSelAll");
+  if (all) all.checked = S.items.length > 0 && sel === S.items.length;
+  const badge = wrap.querySelector('.rv-rail-i[data-step="review"] .bx-badge');
+  if (badge) badge.textContent = String(sel);
   patchStatus();
 }
 
+/* The shared address bar owns the autosave wording, so refreshing it in place
+   keeps a single "Saving…/Saved" indicator on the page. */
 function patchStatus() {
-  const s = wrap && wrap.querySelector("#rdsStatus");
-  if (s && S) s.textContent = statusText();
+  if (!wrap || !S) return;
+  const holder = wrap.querySelector(".rv-utility-m .rv-addr") || wrap.querySelector(".rv-utility-m");
+  const node = holder && holder.querySelector(".rv-save");
+  const label = statusText();
+  if (node) {
+    node.textContent = label;
+    node.classList.toggle("ok", S.saveState === "saved");
+    node.classList.toggle("bad", S.saveState === "error");
+    node.style.display = label ? "" : "none";
+  }
 }
 
 
@@ -685,27 +715,18 @@ function mountPicker(slot) {
 }
 
 function bindReview(el) {
-  el.querySelector("#rdsClose").onclick = exitAll;
+  el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
   el.querySelector("#rdsBack").onclick = () => {
     /* Back keeps every photo, room and selection: only the step changes. */
     saveDraft();
     S.step = "add";
     render();
   };
-  const menu = el.querySelector("#rdsMoreMenu");
-  const moreBtn = el.querySelector("#rdsMoreBtn");
-  const closeMenu = () => { menu.classList.remove("on"); moreBtn.setAttribute("aria-expanded", "false"); };
-  moreBtn.onclick = (e) => {
-    e.stopPropagation();
-    const open = !menu.classList.contains("on");
-    menu.classList.toggle("on", open);
-    moreBtn.setAttribute("aria-expanded", String(open));
-  };
-  document.addEventListener("click", closeMenu, { once: true });
-  menu.querySelectorAll("[data-act]").forEach((b) =>
+  /* Same overflow menus as the video builder: a native <details> popover. */
+  el.querySelectorAll("[data-act]").forEach((b) =>
     b.addEventListener("click", () => {
       const act = b.getAttribute("data-act");
-      closeMenu();
+      el.querySelectorAll("details.rv-more[open]").forEach((d) => d.removeAttribute("open"));
       if (act === "all") { S.items.forEach((i) => (i.selected = true)); saveDraft(); syncSelection(); return; }
       if (act === "none") { S.items.forEach((i) => (i.selected = false)); saveDraft(); syncSelection(); return; }
       if (act === "room") { applyRoomToSelected(el.querySelector("#rdsSetRoom") || b); return; }
@@ -725,25 +746,45 @@ function bindReview(el) {
     };
   }
 
+  const selAll = el.querySelector("#rdsSelAll");
+  if (selAll) {
+    selAll.onchange = () => {
+      S.items.forEach((i) => (i.selected = selAll.checked));
+      saveDraft();
+      syncSelection();
+    };
+  }
+
   el.querySelector("#rdsSetRoom").onclick = (e) => applyRoomToSelected(e.currentTarget);
   el.querySelector("#rdsGo").onclick = startDesigning;
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
-     controls are delegated from the page instead of bound per element. */
-  el.addEventListener("change", (e) => {
-    const c = e.target.closest && e.target.closest("[data-sel]");
-    if (!c) return;
-    const it = S.items.find((i) => i.key === c.getAttribute("data-sel"));
-    if (!it) return;
-    toggleSelect(it, c.checked);
-  });
+     controls are delegated from the page instead of bound per element. The
+     page element survives re-renders, so delegation is attached only once. */
+  if (el.__rdsDelegated) return;
+  el.__rdsDelegated = true;
   el.addEventListener("click", (e) => {
     const t = e.target;
     if (!t || !t.closest) return;
-    const open = t.closest("[data-open]");
-    if (open) { openInCanvas(open.getAttribute("data-open")); return; }
+    /* The check tile owns selection; the photo itself opens the canvas. */
+    const pick = t.closest("[data-sel]");
+    if (pick) {
+      e.preventDefault();
+      e.stopPropagation();
+      const it = S.items.find((i) => i.key === pick.getAttribute("data-sel"));
+      if (it) toggleSelect(it, !it.selected);
+      return;
+    }
+    const more = t.closest("[data-toolsmore]");
+    if (more) {
+      e.preventDefault();
+      e.stopPropagation();
+      const tile = more.closest(".rv-tile");
+      if (tile) tile.classList.toggle("tools-open");
+      return;
+    }
     const del = t.closest("[data-del]");
-    if (del) { removeOne(del.getAttribute("data-del")); return; }
+    if (del) { e.stopPropagation(); removeOne(del.getAttribute("data-del")); return; }
     const room = t.closest("[data-room]");
     if (room) {
       const it = S.items.find((i) => i.key === room.getAttribute("data-room"));
@@ -756,14 +797,22 @@ function bindReview(el) {
       }, it.key);
       return;
     }
-    /* Anywhere else on the card toggles selection. The checkbox handles
-       itself through the change event above. */
-    if (t.closest("[data-sel]") || t.closest(".rds-pick")) return;
-    const card = t.closest("[data-pick]");
-    if (card) {
-      const it = S.items.find((i) => i.key === card.getAttribute("data-pick"));
+    const open = t.closest("[data-open]");
+    if (open) { openInCanvas(open.getAttribute("data-open")); return; }
+  });
+  el.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const t = e.target;
+    if (!t || !t.closest) return;
+    const pick = t.closest("[data-sel]");
+    if (pick) {
+      e.preventDefault();
+      const it = S.items.find((i) => i.key === pick.getAttribute("data-sel"));
       if (it) toggleSelect(it, !it.selected);
+      return;
     }
+    const open = t.closest(".rv-tile-th[data-open]");
+    if (open) { e.preventDefault(); openInCanvas(open.getAttribute("data-open")); }
   });
 }
 
