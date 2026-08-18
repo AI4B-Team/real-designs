@@ -49,7 +49,10 @@ import { cardStatusHtml, registerCardStatus } from "@/lib/builder-card-status";
 import { formatSelectorHtml } from "@/lib/builder-format-selector";
 import {
   OUTPUT_RATIOS,
+  PRIMARY_OUTPUT_RATIOS,
+  MORE_OUTPUT_RATIOS,
   DEFAULT_OUTPUT_RATIO,
+  isPrimaryRatio,
   normalizeOutputRatio,
   normalizeOverride,
   ratioLabel,
