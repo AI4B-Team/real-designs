@@ -1045,7 +1045,7 @@ function addrDraftPayload(w) {
     ...addressColumns(w),
     title_touched: !!w.titleTouched,
     design_version_id: w.versionId || null,
-    title: defaultTitle(w),
+    title: sanitizeTitle(defaultTitle(w)),
     video_type: w.videoType,
     source_type: w.sourceType || "upload",
     status: "draft",
@@ -2153,7 +2153,7 @@ async function generate() {
         ...addressColumns(w),
         title_touched: !!w.titleTouched,
         design_version_id: w.versionId || null,
-        title: defaultTitle(w),
+        title: sanitizeTitle(defaultTitle(w)),
         video_type: w.videoType,
         source_type: w.sourceType || "property",
         status: "queued",
@@ -2626,7 +2626,7 @@ function bind() {
   });
   on("#rvNext", "click", async () => {
     const t = el.querySelector("#rvTitle");
-    if (t) w.title = t.value;
+    if (t) w.title = sanitizeTitle(t.value);
     if (w.step === 1) {
       await advanceToGrid(w);
       return;
@@ -2786,7 +2786,7 @@ function bind() {
     /* A design carries its property association into the video. */
     if (d.propertyLabel) applyAddress(w, d.propertyLabel, "inherited");
     w.versionId = d.versionId;
-    if (!w.titleTouched) w.title = `${d.room} Design`;
+    if (!w.titleTouched) w.title = defaultTitle(w) || `${d.room} Design`;
     if (d.before && !w.typeTouched) w.videoType = "before_after";
     await loadWizardAssets();
     const a = w.available.find((x) => x.key === "d-" + d.roomId) || w.available.find((x) => x.path === d.after);
