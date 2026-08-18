@@ -527,17 +527,19 @@ function ordered() {
   return S.items.slice();
 }
 
-function cardHtml(it) {
+function cardHtml(it, seq) {
   const st = stateOf(it);
   const ws = workState(it);
   const label = it.room || "Choose Room";
+  const n = Number(seq) || ordered().findIndex((x) => x.key === it.key) + 1;
   /* Same tile as the video builder's Scenes grid: image, selection tile in the
      upper-left, a hover toolbar for the optional actions, and the shared room
      control underneath. Clicking the photo opens it in the Design canvas. */
   return `<div class="rv-tile ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
-    <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Open ${esc(it.name)} in the design canvas">
+    <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
       <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
+      ${sceneNumberHtml(n)}
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
