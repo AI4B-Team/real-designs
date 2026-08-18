@@ -36,7 +36,7 @@ export type StudioStartCtx = {
   /** Loads a real source into the Studio canvas. */
   setSource: (kind: string, src: string, alt: string, opts?: any) => void;
   /** Places a finished concept image on the canvas as a result. */
-  showConcept: (image: string, label: string) => Promise<void> | void;
+  showConcept: (image: string, label: string, prompt?: string) => Promise<void> | void;
   /** Property tree already loaded by the app shell. */
   getProperties: () => Array<{
     address: string;
@@ -1315,7 +1315,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         },
       });
       ctx.track("concept_generated", { space: state.space });
-      await ctx.showConcept(r.image, "Concept");
+      await ctx.showConcept(r.image, "Concept", state.prompt.trim());
     } catch (err: any) {
       if (isPlanBlocked(err)) openUpgrade(err);
       else ctx.showAlert("Could not create that concept. " + ((err && err.message) || "Try again in a moment."));
