@@ -1929,7 +1929,7 @@ export function openPhotoDesignCanvas(ctx: PhotoCanvasHandoff): StudioContext {
   }
   /* No shell yet (tests, cold boot): still land on the canonical route. */
   try {
-    if (location.hash !== STUDIO_HASH) location.hash = STUDIO_HASH;
+    if (location.hash !== "#v-studio") location.hash = "#v-studio";
   } catch (_) {}
   return { type: "photo-design-canvas", draftId: ctx.draftId, photoKey: ctx.photoKey };
 }
