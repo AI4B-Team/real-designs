@@ -5826,11 +5826,14 @@ export async function continueDesignVideo(id, opts = {}) {
   if (!stillCurrent()) return false;
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");
+  /* From here the builder's own navigation is the newest intent: anything
+     that bumps the token after this point is the user going elsewhere. */
+  const tok = navToken();
   if (!S.mounted) await mountReveal(S.go, {});
   const full = await getVideo({ id });
   /* The fetch is slow enough for the user to leave: never mount a builder
      onto a page they have already navigated away from. */
-  if (!stillCurrent()) return false;
+  if (!navIs(tok)) return false;
   editExisting(full);
   return true;
 }

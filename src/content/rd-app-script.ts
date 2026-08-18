@@ -211,6 +211,8 @@ function beginNavigation(view){
   __navView=String(view||'');
   return __navSeq;
 }
+/** True while the newest navigation intent is the video builder itself. */
+function inBuilderRoute(){ return __navView==='lvideo'||__navView==='reveal'; }
 function isCurrentNavigation(sequence,view){
   if(sequence!==__navSeq) return false;
   return view===undefined||view===null||String(view)===__navView;
@@ -346,10 +348,12 @@ function go(v,fromHash){
       void (async()=>{
         try{
           const ok=await resumeActiveBuilder({ stillCurrent:()=>isCurrentNavigation(tok,'lvideo') });
-          if(!isCurrentNavigation(tok,'lvideo')) return;
-          if(!ok) createVideoFrom({ sourceType:'address', from:'menu' });
+          /* Restoration navigates to the builder itself, so the check here is
+             "is a builder route still the destination", not the old token. */
+          if(ok||!inBuilderRoute()) return;
+          createVideoFrom({ sourceType:'address', from:'menu' });
         }catch(_){
-          if(!isCurrentNavigation(tok,'lvideo')) return;
+          if(!inBuilderRoute()) return;
           try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){}
         }
       })();
