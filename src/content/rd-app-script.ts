@@ -352,13 +352,16 @@ function go(v,fromHash){
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
   if(v==='lvideo'){
-    /* A refresh lands here with work already saved on the server: reopen that
-       project instead of dropping the user into an empty builder. */
-    if(!bootRoute){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
+    /* Mounting the view never destroys a project. A brand new project is only
+       created when the user explicitly asked for one; otherwise the persisted
+       active project is restored, and only a confirmed "nothing saved" result
+       falls back to a fresh builder. */
+    const wantNew=intent==='new';
+    const tok=__navSeq;
+    if(wantNew){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
     else{
       /* Restoration is asynchronous: by the time it resolves the user may
          already be somewhere else, and it must not reopen the builder. */
-      const tok=__navSeq;
       void (async()=>{
         try{
           const ok=await resumeActiveBuilder({ stillCurrent:()=>isCurrentNavigation(tok,'lvideo') });
@@ -367,12 +370,13 @@ function go(v,fromHash){
           if(ok||!inBuilderRoute()) return;
           createVideoFrom({ sourceType:'address', from:'menu' });
         }catch(_){
-          if(!inBuilderRoute()) return;
-          try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){}
+          /* A failed restore is not a reason to throw work away or to move the
+             user: leave the persisted pointer intact and stay put. */
         }
       })();
     }
   }
+
 
   if(v==='studio'){
     /* Repainting the controls is safe in both contexts. Anything that could
