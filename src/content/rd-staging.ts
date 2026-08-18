@@ -813,5 +813,5 @@ try {
 } catch (_) {}
 
 try {
-  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession };
+  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft };
 } catch (_) {}
