@@ -1806,6 +1806,37 @@ function openRoomPopover(anchor, onPick, key) {
 
 /* --------------------------------------------------------- canvas handoff */
 
+export type StudioContext =
+  | { type: "generic" }
+  | { type: "photo-design-canvas"; draftId: string; photoKey: string };
+
+export type PhotoCanvasHandoff = {
+  draftId: string;
+  photoKey: string;
+  assetPath?: string | null;
+  roomType?: string | null;
+  propertyId?: string | null;
+  propertyAddress?: string | null;
+};
+
+/**
+ * The one way into a Photo Design Canvas. It sets an explicit Studio context
+ * and routes through the shell's navigation on the canonical #v-studio route,
+ * so no generic Studio startup logic (source chooser, new project, source
+ * reset) can run against the photo the user just opened.
+ */
+export function openPhotoDesignCanvas(ctx: PhotoCanvasHandoff): StudioContext {
+  const open = (window as any).__rdOpenPhotoCanvas;
+  if (typeof open === "function") {
+    return open({ draftId: ctx.draftId, photoKey: ctx.photoKey }) as StudioContext;
+  }
+  /* No shell yet (tests, cold boot): still land on the canonical route. */
+  try {
+    if (location.hash !== "#v-studio") location.hash = "#v-studio";
+  } catch (_) {}
+  return { type: "photo-design-canvas", draftId: ctx.draftId, photoKey: ctx.photoKey };
+}
+
 /** The canvas only walks the photos the user chose on Review Rooms. */
 function designSet() {
   const sel = ordered().filter((i) => i.selected);
