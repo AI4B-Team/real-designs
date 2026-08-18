@@ -72,6 +72,9 @@ const videoDraft = {
   updated_at: "2026-08-12T00:00:00Z",
 };
 
+/** Merges mutate the records they enrich, so each case starts from a copy. */
+const fresh = () => items.map((m) => ({ ...m }));
+
 describe("durable drafts in media", () => {
   it("builds one project card per draft, not one per photo", () => {
     const rec = draftRecord(stagingDraft);
@@ -84,7 +87,7 @@ describe("durable drafts in media", () => {
   });
 
   it("merges a video draft into its existing project card instead of duplicating it", () => {
-    const merged = mergeDrafts(items, [stagingDraft, designDraft, videoDraft]);
+    const merged = mergeDrafts(fresh(), [stagingDraft, designDraft, videoDraft]);
     expect(merged.filter((m: any) => m.refId === "v1")).toHaveLength(1);
     const video = merged.find((m: any) => m.refId === "v1") as any;
     expect(video.draft).toBe(true);
@@ -94,7 +97,7 @@ describe("durable drafts in media", () => {
   });
 
   it("routes each draft type to the tab that owns it", () => {
-    const merged = mergeDrafts(items, [stagingDraft, designDraft, videoDraft]);
+    const merged = mergeDrafts(fresh(), [stagingDraft, designDraft, videoDraft]);
     expect(filterMedia(merged, { tab: "drafts" }).map((m: any) => m.id).sort()).toEqual(
       ["b", "draft_" + designDraft.id, "draft_" + stagingDraft.id].sort(),
     );
@@ -107,7 +110,7 @@ describe("durable drafts in media", () => {
   });
 
   it("keeps completed and failed work on their own filters", () => {
-    const merged = mergeDrafts(items, [stagingDraft]);
+    const merged = mergeDrafts(fresh(), [stagingDraft]);
     expect(filterMedia(merged, { tab: "completed" }).map((m: any) => m.id)).toEqual(["a", "c"]);
     expect(filterMedia(merged, { tab: "failed" })).toHaveLength(0);
     expect(filterMedia(merged, { tab: "processing" })).toHaveLength(0);
@@ -119,7 +122,7 @@ describe("durable drafts in media", () => {
       { id: "j2", video_project_id: "v9", status: "failed", error_message: "Render timed out" },
       { id: "j3", video_project_id: "v8", status: "completed" },
     ];
-    const merged = mergeRenderJobs(items.slice(), jobs);
+    const merged = mergeRenderJobs(fresh(), jobs);
     const live = merged.find((m: any) => m.refId === "v1") as any;
     expect(live.status).toBe("processing");
     expect(live.progress).toBe(40);
@@ -131,7 +134,7 @@ describe("durable drafts in media", () => {
   });
 
   it("files drafts and completed work under the right property tabs", () => {
-    const merged = mergeRenderJobs(mergeDrafts(items, [stagingDraft, designDraft, videoDraft]), []);
+    const merged = mergeRenderJobs(mergeDrafts(fresh(), [stagingDraft, designDraft, videoDraft]), []);
     const b = propertyBuckets(merged, "p1");
     expect(b.photos.map((m: any) => m.id)).toEqual(["a", "draft_" + stagingDraft.id]);
     expect(b.videos.map((m: any) => m.id)).toEqual(["b"]);
