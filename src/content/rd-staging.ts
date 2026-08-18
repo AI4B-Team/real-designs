@@ -57,6 +57,8 @@ import {
   normalizeOverride,
   ratioLabel,
   effectiveRatio,
+  ratioClass,
+  RATIO_CLASSES,
 } from "@/lib/output-ratio";
 import { setHandoff } from "@/lib/handoff";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
