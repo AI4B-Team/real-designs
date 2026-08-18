@@ -1537,6 +1537,7 @@ function stepSelect() {
   ${w.enrichNotice ? `<div class="rv-notice"><i data-lucide="info"></i><span>${esc(w.enrichNotice)}</span><button class="fb-link" id="rvEnrichX">Dismiss</button></div>` : ""}
   <div class="rv-utility">
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
+    <div class="rv-utility-m">${addressBarHtml(w, S.tree || [], "rvAddrBar")}</div>
     <div class="rv-utility-a">
       <button class="btn btn-ghost btn-sm" id="rvAuto"><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
       <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
@@ -1551,6 +1552,7 @@ function stepSelect() {
       </details>
     </div>
   </div>
+
   <div class="rv-grid ${orient}">${grid || `<div class="rv-note">No Content Found For This Source.</div>`}</div>
   <div class="rv-gridfoot">
     <div class="rv-count">
