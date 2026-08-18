@@ -1372,6 +1372,7 @@ function ensureWizSaver(w) {
       const saved = await saveVideo(body);
       w.editingId = saved.id;
       rememberActiveBuilder(saved.id);
+      void transitions.adopt(saved.id);
       return saved;
     },
     onState: (state) => {
@@ -1481,7 +1482,7 @@ async function autosaveAddress(w) {
   paintSaveState(w);
   try {
     const saved = await saveVideo({ project: addrDraftPayload(w) });
-    if (saved?.id) w.editingId = saved.id;
+    if (saved?.id) { w.editingId = saved.id; void transitions.adopt(saved.id); }
     w.addressSaveState = "saved";
   } catch (_) {
     w.addressSaveState = "error";
@@ -1667,6 +1668,7 @@ async function ensureVideoProjectId(w) {
   rememberActiveBuilder(saved.id);
   sceneClips.setProject(saved.id);
   sceneFrames.setProject(saved.id);
+  await transitions.adopt(saved.id);
   return saved.id;
 }
 
