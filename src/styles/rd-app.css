@@ -75,6 +75,13 @@
   padding:5px 9px;border-radius:6px;z-index:130;pointer-events:none;box-shadow:0 8px 22px rgba(20,18,15,.14)}
 .rd-app .app.sidemin .side-top .logo:hover::after{content:'Expand Menu'}
 
+/* Below the tablet breakpoint the sidebar is hidden behind the header control,
+   so a collapsed rail must not keep reserving its 64px column and squeeze the
+   whole workspace. This has to sit after the rail rules above to win. */
+@media(max-width:900px){
+.rd-app .app.sidemin{grid-template-columns:minmax(0,1fr)}
+}
+
 
 
 

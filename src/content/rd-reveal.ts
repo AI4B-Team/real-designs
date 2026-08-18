@@ -18,10 +18,11 @@ import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations } from "@/lib/media-analysis";
 import {
-  PHOTO_CATEGORIES, UNSORTED_LABEL, arrangeRank, missingRecommendation, normalizeCategory,
+  UNSORTED_LABEL, arrangeRank, missingRecommendation, normalizeCategory,
   noticeSignature, resolvePhoto, thumbDataUrl,
 } from "@/lib/photo-classify";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
+import { roomIcon, searchRooms } from "@/lib/staging-rooms";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { runAdvanceToGrid, attachUploadAssets, initialWizardStep, hydrateSeededWizard, ensureStepInvariant, acceptVideoPhotos, runEnrichment, logVideoEvent } from "@/lib/video-upload-intake";
@@ -491,7 +492,6 @@ function newWizard(seed = {}) {
     videoType: seed.videoType || "property_tour",
     available: [],
     gridOrder: [],
-    groupBy: true,
     scenes: [],
     /* One canonical format, chosen in Select & Order. Extra deliverables live
        in additionalFormats and never overwrite the primary. */
@@ -827,6 +827,7 @@ function wizardHtml() {
   ${shell}
 
   ${w.pop ? popoverHtml() : ""}
+  ${w.roomPick ? roomPickerHtml() : ""}
   ${w.lowModal ? lowSceneModal() : ""}
   ${w.shortenModal ? shortenModalHtml() : ""}
   ${w.logoModal ? logoModalHtml() : ""}`;
@@ -874,7 +875,7 @@ export async function classifyUploads() {
   if (!w) return;
   w.roomGuess = w.roomGuess || {};
   const todo = (w.uploads || []).filter(
-    (u) => u.file && !u.roomManual && !w.roomGuess["u-" + u.id],
+    (u) => u.file && !u.roomManual && !u.roomLock && !w.roomGuess["u-" + u.id],
   );
   if (!todo.length) {
     if (w.analysisStatus !== "completed") w.analysisStatus = (w.available || []).length ? "completed" : "pending";
@@ -911,22 +912,59 @@ export async function classifyUploads() {
   }
   if (S.wizard !== w) return;
   w.analysisStatus = failed === 0 ? "completed" : ok === 0 ? "failed" : "partial";
-  if (!w.manualOrder) autoArrange();
+  /* Detection is metadata only. It never re-orders the grid the user is
+     already looking at; Auto Arrange is the one explicit way to reorder. */
   render();
 }
 
 /** Push a confident guess onto the grid asset, the upload and any scene. */
 function applyGuess(key) {
   const w = S.wizard;
+  const a = (w.available || []).find((x) => x.key === key);
+  /* A hand-picked room wins permanently, until detection is run again. */
+  if (a && a.roomLock) return;
   const photo = resolvedPhotos().find((p) => p.id === key);
   if (!photo || photo.state === "unsorted") return;
-  const label = photo.state === "review" ? photo.label : photo.label;
-  const a = (w.available || []).find((x) => x.key === key);
+  const label = photo.label;
   if (a) { a.room = label; a.roomState = photo.state; a.group = groupFor(label, ""); }
   const up = (w.uploads || []).find((u) => "u-" + u.id === key);
   if (up) up.room = label;
   (w.scenes || []).filter((x) => x.key === key).forEach((x) => { x.room = label; });
 }
+
+/** Write a room label chosen by hand, on the asset, its upload and its scene. */
+function setRoomLabel(key, value, manual) {
+  const w = S.wizard;
+  if (!w) return;
+  const val = String(value || "").trim() || UNSORTED;
+  const known = val !== UNSORTED && val !== NEEDS_REVIEW;
+  const a = (w.available || []).find((x) => x.key === key);
+  if (a) {
+    a.room = val;
+    a.roomManual = known ? val : null;
+    a.roomLock = !!manual;
+    a.roomState = val === NEEDS_REVIEW ? "review" : known ? "confirmed" : "unsorted";
+    a.group = groupFor(known ? val : "", "");
+  }
+  /* Uploads are rebuilt from w.uploads on every asset load, so the label has
+     to live on the upload record to survive a reload. */
+  if (String(key).startsWith("u-")) {
+    const up = (w.uploads || []).find((u) => "u-" + u.id === key);
+    if (up) { up.room = val; up.roomManual = known ? val : null; up.roomLock = !!manual; }
+  }
+  (w.scenes || []).filter((x) => x.key === key).forEach((x) => { x.room = val; });
+}
+
+/** Explicit re-run: drop every manual lock and classify the uploads again. */
+function redetectRooms() {
+  const w = S.wizard;
+  if (!w) return;
+  w.roomGuess = {};
+  (w.available || []).forEach((a) => { a.roomLock = false; a.roomManual = null; });
+  (w.uploads || []).forEach((u) => { u.roomLock = false; u.roomManual = null; });
+  classifyUploads().catch(() => { if (S.wizard === w) { w.analysisStatus = "failed"; render(); } });
+}
+
 
 /* ======================= STEP 1, PHOTOS ======================= */
 /** Every finished design in the workspace, newest property first. */
@@ -1236,13 +1274,47 @@ function analysisAssets() {
   }));
 }
 
-function nameCell(value, attr) {
+export const NEEDS_REVIEW = "Needs Review";
+
+/** Room type is metadata under the photo: an icon, the label, one click to change. */
+function roomCell(a) {
+  const label = a.room || UNSORTED;
+  const unknown = !label || label === UNSORTED || label === NEEDS_REVIEW;
+  return `<button class="rv-room ${unknown ? "muted" : ""} ${a.roomManual ? "set" : ""}"
+    data-roompick="${esc(a.key)}" title="Click To Change Room Type">
+    <i data-lucide="${esc(roomIcon(unknown ? "" : label))}"></i>
+    <span>${esc(label)}</span>
+    <em data-lucide="chevron-down"></em>
+  </button>`;
+}
+
+/** Compact searchable room selector, anchored over the grid. */
+function roomPickerHtml() {
   const w = S.wizard;
-  if (w.renaming === attr) {
-    return `<input class="rv-nameedit" data-nameinput="${esc(attr)}" value="${esc(value)}" maxlength="60" list="rvRoomList" autocomplete="off">
-    <datalist id="rvRoomList">${PHOTO_CATEGORIES.filter((c) => c !== "Uncertain").map((c) => `<option value="${esc(c)}"></option>`).join("")}</datalist>`;
-  }
-  return `<b class="rv-editname" data-rename="${esc(attr)}" title="Click To Rename">${esc(value)}</b>`;
+  const key = w.roomPick?.key;
+  const a = (w.available || []).find((x) => x.key === key);
+  if (!a) return "";
+  const q = w.roomPickQ || "";
+  const found = searchRooms(q);
+  const cur = a.room || UNSORTED;
+  const custom = q.trim() && !found.some((r) => r.label.toLowerCase() === q.trim().toLowerCase());
+  return `<div class="rv-modal on" id="rvRoomWrap"><div class="rv-modal-in rv-roomsheet" role="dialog" aria-label="Room type">
+    <div class="rv-modal-h"><b>Room Type</b><button class="icon-btn" id="rvRoomX" aria-label="Close"><i data-lucide="x"></i></button></div>
+    <div class="rv-roomsearch">
+      <i data-lucide="search"></i>
+      <input id="rvRoomQ" value="${esc(q)}" placeholder="Search Room Types" autocomplete="off" maxlength="60">
+    </div>
+    <div class="rv-roomlist">
+      ${found.map((r) => `<button class="rv-roomopt ${cur === r.label ? "on" : ""}" data-roomset="${esc(r.label)}">
+        <i data-lucide="${esc(r.icon)}"></i><span>${esc(r.label)}</span>${cur === r.label ? `<em data-lucide="check"></em>` : ""}</button>`).join("")}
+      ${custom ? `<button class="rv-roomopt custom" data-roomset="${esc(q.trim())}"><i data-lucide="plus"></i><span>Use “${esc(q.trim())}”</span></button>` : ""}
+      ${found.length || custom ? "" : `<div class="rv-note sm">No Room Types Match That Search.</div>`}
+    </div>
+    <div class="rv-roomfoot">
+      <button class="rv-roomopt ${cur === UNSORTED ? "on" : ""}" data-roomset="${esc(UNSORTED)}"><i data-lucide="circle-dashed"></i><span>Unassigned</span></button>
+      <button class="rv-roomopt ${cur === NEEDS_REVIEW ? "on" : ""}" data-roomset="${esc(NEEDS_REVIEW)}"><i data-lucide="circle-help"></i><span>Needs Review</span></button>
+    </div>
+  </div></div>`;
 }
 
 /** The grid is the order. w.scenes is always the selected subset of
@@ -1262,13 +1334,15 @@ function tileHtml(a, seq) {
   const vfxHot = s && ((s.vfx && s.vfx !== "none") || s.look);
   const camHot = s && ((s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect);
   const cap = s ? String(s.caption || "") : "";
-  const tools = s ? `<div class="rv-tools">
+  /* Every card carries the same actions; using one on an unselected photo
+     selects it first, so the tools never disappear on the user. */
+  const tools = `<div class="rv-tools">
       <button class="rv-tool ${cropHot ? "hot" : ""}" data-pop="crop" data-key="${esc(a.key)}" aria-label="Crop"><i data-lucide="crop"></i><em>Crop</em></button>
       <button class="rv-tool ${vfxHot ? "hot" : ""}" data-pop="look" data-key="${esc(a.key)}" aria-label="Effects"><i data-lucide="wand-sparkles"></i><em>Effects</em></button>
       <button class="rv-tool ${camHot ? "hot" : ""}" data-pop="motion" data-key="${esc(a.key)}" aria-label="Motion"><i data-lucide="camera"></i><em>Motion</em></button>
       <button class="rv-tool ${cap ? "hot" : ""}" data-pop="cap" data-key="${esc(a.key)}" aria-label="Text"><i data-lucide="type"></i><em>Text</em></button>
-    </div>` : "";
-  return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" ${s ? `draggable="true"` : ""}>
+    </div>`;
+  return `<div class="rv-tile ${s ? "on" : ""}" data-key="${esc(a.key)}" draggable="true">
     <div class="rv-tile-th" data-img="${esc(a.path)}" data-asset="${esc(a.key)}" role="button" tabindex="0" aria-pressed="${s ? "true" : "false"}">
       <span class="rv-tile-check"><i data-lucide="check"></i></span>
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
@@ -1276,15 +1350,14 @@ function tileHtml(a, seq) {
       ${tools}
     </div>
     <div class="rv-tile-foot">
-      ${nameCell(a.room || UNSORTED, "a:" + a.key)}
-      ${s
-        ? (cap
-          ? `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}" title="${esc(cap)}">${esc(cap.length > 18 ? cap.slice(0, 18) + "…" : cap)}</button>`
-          : `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}">Add Text</button>`)
-        : `<i class="rv-tile-kind">${esc(a.kind)}</i>`}
+      ${roomCell(a)}
+      ${cap
+        ? `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}" title="${esc(cap)}">${esc(cap.length > 18 ? cap.slice(0, 18) + "…" : cap)}</button>`
+        : `<button class="fb-link rv-cap-b" data-pop="cap" data-key="${esc(a.key)}">Add Text</button>`}
     </div>
   </div>`;
 }
+
 
 function stepSelect() {
   const w = S.wizard;
@@ -1298,20 +1371,9 @@ function stepSelect() {
   const total = Math.round(per * w.scenes.length);
   const imm = immersiveCount();
 
-  let grid = "";
-  if (w.groupBy !== false) {
-    const groups = new Map();
-    for (const a of ordered) {
-      const g = a.group && a.group !== "Other" ? a.group : UNSORTED;
-      if (!groups.has(g)) groups.set(g, []);
-      groups.get(g).push(a);
-    }
-    grid = Array.from(groups.entries())
-      .map(([g, list]) => `<div class="rv-g-head">${esc(g)}</div>${list.map((a) => tileHtml(a, seqOf.get(a.key))).join("")}`)
-      .join("");
-  } else {
-    grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
-  }
+  /* One continuous grid, in the user's own scene order. Room type is metadata
+     under each photo and never splits the layout into sections. */
+  const grid = ordered.map((a) => tileHtml(a, seqOf.get(a.key))).join("");
 
   const all = w.available.length > 0 && w.scenes.length === w.available.length;
   const why = !w.scenes.length ? "Check At Least One Photo To Continue." : "";
@@ -1323,13 +1385,13 @@ function stepSelect() {
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${w.scenes.length} of ${w.available.length} selected</b></label>
     <div class="rv-utility-a">
       <button class="btn btn-ghost btn-sm" id="rvAuto"><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
-      <label class="rv-toggle"><input type="checkbox" id="rvGroupBy" ${w.groupBy !== false ? "checked" : ""}><span>Group By Room</span></label>
       <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
         <div class="rv-more-m">
           <button id="rvRecommend">Select Recommended</button>
           <button id="rvClear">Clear Selection</button>
           <button id="rvReverse">Reverse Order</button>
           <button id="rvResetOrder">Reset Original Order</button>
+          <button id="rvRedetect">Detect Room Types Again</button>
           ${dupCount ? `<button id="rvKeepBest">Keep Best Of Similar</button>` : ""}
         </div>
       </details>
@@ -2901,7 +2963,6 @@ function bind() {
     render();
   });
   on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); syncSceneOrder(); render(); });
-  on("#rvGroupBy", "change", () => { w.groupBy = w.groupBy === false; render(); });
   on("#rvSelAll", "change", (e) => {
     if (e.currentTarget.checked) w.scenes = (w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean).map(assetToScene);
     else w.scenes = [];
@@ -2936,6 +2997,7 @@ function bind() {
   on("#rvRecommend", "click", () => { selectRecommended(); autoArrange(); render(); });
   on("#rvClear", "click", () => { w.scenes = []; syncSceneOrder(); render(); });
   on("#rvAuto", "click", () => { autoArrange(); render(); });
+  on("#rvRedetect", "click", () => { redetectRooms(); render(); });
   on("#rvKeepBest", "click", () => {
     const seen = new Set();
     w.scenes = w.scenes.filter((s) => {
@@ -2952,11 +3014,16 @@ function bind() {
   on("#rvKeepAll", "click", () => render());
 
   /* drag ordering */
+  /* Every card reorders, selected or not, and across rows in either direction. */
   el.querySelectorAll(".rv-tile[draggable='true']").forEach((n) => {
-    n.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/plain", n.dataset.key));
-    n.addEventListener("dragover", (e) => { e.preventDefault(); n.classList.add("drop-l"); });
+    n.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", n.dataset.key);
+      e.dataTransfer.effectAllowed = "move";
+      n.classList.add("drag");
+    });
+    n.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; n.classList.add("drop-l"); });
     n.addEventListener("dragleave", () => n.classList.remove("drop-l"));
-    n.addEventListener("dragend", () => n.classList.remove("drop-l"));
+    n.addEventListener("dragend", () => { n.classList.remove("drop-l"); n.classList.remove("drag"); });
     n.addEventListener("drop", (e) => {
       e.preventDefault();
       n.classList.remove("drop-l");
@@ -2999,7 +3066,15 @@ function bind() {
   on("[data-pop]", "click", (e) => {
     e.stopPropagation();
     const key = e.currentTarget.dataset.key || null;
-    const i = key ? w.scenes.findIndex((s) => s.key === key) : Number(e.currentTarget.dataset.i);
+    let i = key ? w.scenes.findIndex((s) => s.key === key) : Number(e.currentTarget.dataset.i);
+    /* Acting on an unselected photo selects it, so every card keeps its tools. */
+    if (i < 0 && key) {
+      const a = w.available.find((x) => x.key === key);
+      if (!a) return;
+      w.scenes.push(assetToScene(a));
+      syncSceneOrder();
+      i = w.scenes.findIndex((s) => s.key === key);
+    }
     if (i < 0) return;
     const kind = e.currentTarget.dataset.pop;
     w.pop = { kind, i, key };
@@ -3148,40 +3223,40 @@ function bind() {
   on("[data-tr]", "click", (e) => { w.transition = e.currentTarget.dataset.tr; render(); });
   on("[data-ba]", "click", (e) => { w.baTransition = e.currentTarget.dataset.ba; render(); });
 
-  /* inline room rename */
-  on("[data-rename]", "click", (e) => { e.preventDefault(); e.stopPropagation(); w.renaming = e.currentTarget.dataset.rename; render(); });
-  const nameIn = el.querySelector("[data-nameinput]");
-  if (nameIn) {
-    nameIn.focus(); nameIn.select();
-    const commit = (save) => {
-      const attr = nameIn.dataset.nameinput || "";
-      const val = roomLabelOf(nameIn.value);
-      w.renaming = null;
-      if (save && attr) {
-        if (attr.startsWith("a:")) {
-          const key = attr.slice(2);
-          const a = w.available.find((x) => x.key === key);
-          if (a) { a.room = val; a.roomManual = val === UNSORTED ? null : val; a.roomState = val === UNSORTED ? "unsorted" : "confirmed"; a.group = groupFor(val === UNSORTED ? "" : val, ""); }
-          /* Uploads are rebuilt from w.uploads on every asset load, so the
-             label has to live on the upload record to survive. */
-          if (key.startsWith("u-")) {
-            const up = (w.uploads || []).find((u) => "u-" + u.id === key);
-            if (up) { up.room = val; up.roomManual = val === UNSORTED ? null : val; }
-          }
-          w.scenes.filter((x) => x.key === key).forEach((x) => { x.room = val; });
-        } else {
-          const sc = w.scenes[Number(attr.slice(2))];
-          if (sc) sc.room = val;
-        }
+  /* room type selector */
+  on("[data-roompick]", "click", (e) => {
+    e.preventDefault(); e.stopPropagation();
+    w.roomPick = { key: e.currentTarget.dataset.roompick };
+    w.roomPickQ = "";
+    render();
+  });
+  const closeRoom = () => { w.roomPick = null; w.roomPickQ = ""; render(); };
+  on("#rvRoomX", "click", closeRoom);
+  on("#rvRoomWrap", "mousedown", (e) => { if (e.target.id === "rvRoomWrap") closeRoom(); });
+  const roomQ = el.querySelector("#rvRoomQ");
+  if (roomQ) {
+    roomQ.focus();
+    const caret = roomQ.value.length;
+    try { roomQ.setSelectionRange(caret, caret); } catch (_) {}
+    roomQ.addEventListener("input", () => { w.roomPickQ = roomQ.value; render(); });
+    roomQ.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") { e.preventDefault(); closeRoom(); }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        const first = el.querySelector(".rv-roomopt");
+        if (first) first.click();
       }
-      render();
-    };
-    nameIn.addEventListener("blur", () => commit(true));
-    nameIn.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") { e.preventDefault(); commit(true); }
-      if (e.key === "Escape") { e.preventDefault(); commit(false); }
     });
   }
+  on("[data-roomset]", "click", (e) => {
+    e.preventDefault(); e.stopPropagation();
+    const key = w.roomPick?.key;
+    const val = String(e.currentTarget.dataset.roomset || "").trim().slice(0, 60);
+    if (!key || !val) return closeRoom();
+    setRoomLabel(key, val, true);
+    closeRoom();
+  });
+
   const fixAll = el.querySelector("#rvFixAll");
   if (fixAll) fixAll.addEventListener("click", () => {
     const recs = recommendations(analysisAssets()).filter((r) => r.op);
