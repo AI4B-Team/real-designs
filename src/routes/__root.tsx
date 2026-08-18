@@ -237,9 +237,9 @@ function RootComponent() {
   // Global: white dropdown menus and white tooltips on every route.
   useEffect(() => {
     let stop: Array<() => void> = [];
-    void Promise.all([import("../lib/tooltips"), import("../lib/selects")]).then(
-      ([tips, sels]) => {
-        stop = [tips.initTooltips(document), sels.initSelects(document)];
+    void Promise.all([import("../lib/tooltips"), import("../lib/selects"), import("../lib/datalists")]).then(
+      ([tips, sels, lists]) => {
+        stop = [tips.initTooltips(document), sels.initSelects(document), lists.initDatalists(document)];
       },
     );
     return () => stop.forEach((fn) => fn());
