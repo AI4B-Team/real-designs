@@ -39,12 +39,11 @@ const paint = () => {
     createIcons({ icons });
   } catch (_) {}
 };
-const DRAFT_KEY = "rd.staging.draft";
-
 let S = null; /* live session */
 let wrap = null;
 let strip = null;
 let popover = null;
+let saver = null; /* DraftAutosaver, created with the first stored photo */
 
 /* ------------------------------------------------------------------ state */
 
@@ -53,6 +52,10 @@ function newSession(seed = {}) {
     step: "add",
     items: [],
     address: seed.address || "",
+    title: seed.title || "",
+    propertyId: seed.propertyId || null,
+    draftId: seed.draftId || null,
+    saveState: "idle",
     group: true,
     detect: "pending",
     current: -1,
