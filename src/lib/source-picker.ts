@@ -106,7 +106,7 @@ export type PickerProperty = {
   line2?: string;
 };
 
-export type PickerPhoto = { id: string; path: string; name?: string };
+export type PickerPhoto = { id: string; path: string; name?: string; room?: string };
 
 /** One completed, generated design that can become a video scene. */
 export type PickerDesign = {
@@ -720,7 +720,17 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   function photoPanel() {
     const id = state.propSel;
     if (!id || !opts.loadPropertyPhotos) return "";
-    if (state.propLoading) return '<div class="sp-photos"><p class="sp-note">Loading Photos…</p></div>';
+    if (state.propLoading) {
+      /* Skeletons, not a bare sentence: the grid keeps its shape while photos load. */
+      return (
+        '<div class="sp-photos"><div class="sp-photos-h"><b>Loading Photos…</b></div>' +
+        '<div class="sp-photo-grid">' +
+        Array.from({ length: 6 })
+          .map(() => '<span class="sp-photo is-skel"><span class="sp-th-i is-load"></span></span>')
+          .join("") +
+        "</div></div>"
+      );
+    }
     const photos = state.propPhotos;
     if (!photos.length) return '<div class="sp-photos"><p class="sp-note">This Property Has No Photos Yet.</p></div>';
     const n = state.propChecked.size;
@@ -728,15 +738,21 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '<div class="sp-photos"><div class="sp-photos-h"><b>' + esc(n + " Of " + photos.length + " Selected") + "</b>" +
       '<span><button type="button" class="btn btn-ghost btn-sm" data-sp="pall">Select All</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-sp="pnone">Clear</button>' +
-      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' + (n ? "" : " disabled") + ">Add Selected Photos</button></span></div>" +
+      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' + (n ? "" : " disabled") + ">" +
+      esc(n ? "Add " + n + " Photo" + (n === 1 ? "" : "s") : "Add Photos") + "</button></span></div>" +
       '<div class="sp-photo-grid">' +
       photos
         .map((ph) => {
           const on = state.propChecked.has(ph.id);
+          const label = String(ph.room || ph.name || "Photo");
           return (
             '<button type="button" class="sp-photo' + (on ? " is-sel" : "") + '" aria-pressed="' + (on ? "true" : "false") +
-            '" data-sp-photo="' + esc(ph.id) + '"><span class="sp-prop-th" data-sp-thumb="' + esc(ph.path) + '"></span>' +
-            '<i data-lucide="' + (on ? "circle-check-big" : "circle") + '"></i></button>'
+            '" data-sp-photo="' + esc(ph.id) + '" aria-label="' + esc(label) + '">' +
+            '<span class="sp-th-i is-load" data-sp-thumb="' + esc(ph.path) + '" data-sp-thumb-id="' + esc(ph.id) + '"' +
+            ' data-sp-thumb-alt="' + esc(label) + '"><i data-lucide="image"></i></span>' +
+            '<span class="sp-photo-x" aria-hidden="true"><i data-lucide="' + (on ? "check" : "circle") + '"></i></span>' +
+            '<span class="sp-photo-l">' + esc(label) + "</span>" +
+            "</button>"
           );
         })
         .join("") +
@@ -785,12 +801,19 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /** Walks the candidate paths until one signed URL actually decodes. */
   async function loadThumb(el: HTMLElement, paths: string[]) {
+    /* A real <img> with object-fit, not a background: it scales predictably in
+       every tile size and never renders a mis-sized band of colour. */
     const paint = (url: string) => {
-      el.style.backgroundImage = 'url("' + url + '")';
       el.classList.remove("is-load", "is-fail");
       el.classList.add("has-img");
-      /* Lucide swaps the <i> for an <svg>, so drop the placeholder outright. */
-      el.querySelector("i, svg")?.remove();
+      el.innerHTML = "";
+      const img = document.createElement("img");
+      img.className = "sp-th-img";
+      img.loading = "lazy";
+      img.decoding = "async";
+      img.alt = el.dataset["spThumbAlt"] || "";
+      img.src = url;
+      el.appendChild(img);
     };
     for (const path of paths) {
       if (!el.isConnected) return;
@@ -808,7 +831,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         return;
       } catch (err) {
         /* The real storage / signed-URL error, not a silent blank panel. */
-        console.warn("[source-picker] thumbnail failed for " + path, err);
+        console.warn(
+          "[source-picker] thumbnail failed — id=" + (el.dataset["spThumbId"] || "?") + " path=" + path,
+          err,
+        );
         thumbCache.delete(path);
       }
     }
@@ -967,7 +993,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const t = e.target as HTMLElement;
     const tab = t.closest("[data-sp-tab]") as HTMLElement | null;
     if (tab) {
-      state.tab = tab.dataset["spTab"] as SourceId;
+      const next = tab.dataset["spTab"] as SourceId;
+      if (next !== state.tab) {
+        /* Changing source starts a clean selection. */
+        state.propSel = null;
+        state.propPhotos = [];
+        state.propChecked = new Set();
+      }
+      state.tab = next;
       state.note = "";
       opts.onTab?.(state.tab);
       render();
