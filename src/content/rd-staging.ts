@@ -678,8 +678,21 @@ function cardHtml(it, seq) {
 }
 
 
+/* A permanent action card closes the grid. It is not a room: no number, no
+   selector, no menu, no credits — it only opens the existing Add Photos
+   picker, and it always stays the final grid item. */
+function addCardHtml() {
+  return `<div class="rv-addcard">
+    <button type="button" class="rv-addcard-b" id="rdsAddCard" aria-label="Add More Photos">
+      <i data-lucide="image-plus"></i>
+      <b>Add More Photos</b>
+      <em>Upload, import, or choose from Media</em>
+    </button>
+  </div>`;
+}
+
 function gridHtml() {
-  return `<div class="rv-grid" id="rdsBody">${ordered().map((it, i) => cardHtml(it, i + 1)).join("")}</div>`;
+  return `<div class="rv-grid" id="rdsBody">${ordered().map((it, i) => cardHtml(it, i + 1)).join("")}${addCardHtml()}</div>`;
 }
 
 /* The counts live in the selection bar and the footer, so the only thing left
@@ -939,6 +952,8 @@ function bindReview(el) {
   /* Add Photos stays on this page: the picker adds straight into the grid. */
   const file = el.querySelector("#rdsFile");
   el.querySelector("#rdsMore").onclick = () => file && file.click();
+  const addCard = el.querySelector("#rdsAddCard");
+  if (addCard) addCard.onclick = () => file && file.click();
   if (file) {
     file.onchange = async () => {
       const raw = Array.from(file.files || []);

@@ -1345,6 +1345,7 @@ function wizardDraftBody(w) {
       },
       draft_state: {
         step: w.step,
+        ending: w.ending || null,
         gridOrder: w.gridOrder || [],
         uploads: (w.uploads || [])
           .filter((u) => u.storagePath)
@@ -1997,6 +1998,68 @@ const TRANS_ICON = {
   zoom_match: "scan-search", match_move: "move-3d",
 };
 
+/* ------------------------------------------------------- the video ending
+
+   The ending is what happens AFTER the last scene, so it belongs to the
+   project, never to a scene pair: there is no second scene to point at. It
+   travels with the draft and simply renders on whichever scene is last. */
+
+const ENDING_OPTIONS = [
+  { id: "none", label: "None", blurb: "End immediately after the final frame.", icon: "square" },
+  { id: "fade_black", label: "Fade to Black", blurb: "Gradually fade the final scene to black.", icon: "circle" },
+  { id: "fade_white", label: "Fade to White", blurb: "Gradually fade the final scene to white.", icon: "circle-dashed" },
+  { id: "brand_end_card", label: "Brand End Card", blurb: "Show the configured logo, colors and call to action.", icon: "badge-check" },
+];
+
+/** Brand end card is offered only when the project actually has branding. */
+function hasBrandEndCard(w) {
+  return !!(w && (w.brandKitId || (w.branding && (w.branding.logo_url || w.branding.logo || w.branding.primary_color))));
+}
+
+function endingState(w) {
+  const e = (w && w.ending) || {};
+  let type = ENDING_OPTIONS.some((o) => o.id === e.endingType) ? e.endingType : "none";
+  if (type === "brand_end_card" && !hasBrandEndCard(w)) type = "none";
+  const duration = Math.min(3, Math.max(0.5, Number(e.duration) > 0 ? Number(e.duration) : 1));
+  return { type, duration, label: (ENDING_OPTIONS.find((o) => o.id === type) || ENDING_OPTIONS[0]).label };
+}
+
+function setEnding(w, patch) {
+  const cur = endingState(w);
+  w.ending = { endingType: patch.endingType ?? cur.type, duration: Number(patch.duration ?? cur.duration), updatedAt: new Date().toISOString() };
+  autosaveWizard(w);
+}
+
+/** Seconds the ending adds to the finished video. */
+function endingSeconds(w) {
+  const st = endingState(w);
+  return st.type === "none" ? 0 : st.duration;
+}
+
+/** Rendered inside the final actual scene's image, never in a gutter. */
+function endingControlHtml(w, s) {
+  const scenes = w.scenes || [];
+  if (!scenes.length || scenes[scenes.length - 1].key !== s.key) return "";
+  const st = endingState(w);
+  const tip = `Ending: ${st.label}`;
+  const icon = st.type === "none" ? "square" : st.type === "brand_end_card" ? "badge-check" : "circle";
+  return `<button class="rv-end" data-pop="ending" data-key="${esc(s.key)}" title="${esc(tip)}" aria-label="${esc(tip)}. After The Final Scene.">
+    <i data-lucide="${icon}"></i><span>${esc(st.label)}</span>
+  </button>`;
+}
+
+/** The permanent action card that closes every card grid. */
+function addCardHtml(id) {
+  return `<div class="rv-addcard">
+    <button type="button" class="rv-addcard-b" id="${id}" aria-label="Add More Photos">
+      <i data-lucide="image-plus"></i>
+      <b>Add More Photos</b>
+      <em>Upload, import, or choose from Media</em>
+    </button>
+  </div>`;
+}
+
+
 /**
  * A transition connects Scene A to Scene B, so its trigger sits in the gutter
  * on the seam between the two cards — never as a badge over a photo. One 24px
@@ -2148,6 +2211,7 @@ function tileHtml(a, seq) {
       ${s ? sceneNumberHtml(seq) : ""}
       ${sceneTreatment(s, clip, a)}
       ${cardMenuButtonHtml({ flow: "video", key: a.key, label: s ? "Scene " + (seq || "") : (a.room ? a.room + " photo" : "this photo") })}
+      ${s ? endingControlHtml(w, s) : ""}
 
       ${tools}
     </div>
@@ -2389,7 +2453,7 @@ function stepSelect() {
   const dupCount = w.available.filter((a) => a.dup).length;
   const orient = orientationOf(w);
   const per = sceneDurations(w.scenes.length, w.length);
-  const total = Math.round(per * w.scenes.length);
+  const total = Math.round(per * w.scenes.length + endingSeconds(w));
   const imm = immersiveCount();
 
   /* One continuous grid, in the user's own scene order. Room type is metadata
@@ -2431,7 +2495,7 @@ function stepSelect() {
     </div>
   </div>
 
-  <div class="rv-grid ${orient}">${grid}</div>
+  <div class="rv-grid ${orient}">${grid}${totalCount ? addCardHtml("rvGridAdd") : ""}</div>
   ${!totalCount && !organizing ? `<div class="rv-empty"><i data-lucide="images"></i><h3>No Photos In This Video Yet</h3><p>Add photos to begin building your scenes.</p><div class="rv-empty-a"><button class="btn btn-primary" id="rvEmptyAdd"><i data-lucide="plus"></i>Add Photos</button></div></div>` : ""}
   <div class="rv-gridfoot">
     <div class="rv-count">
@@ -2855,6 +2919,16 @@ function popoverHtml() {
       </div></div>
       <button class="fb-link" id="rvCapClear" ${s.caption ? "" : "disabled"}>Clear Text</button>
     </div>`;
+  } else if (kind === "ending") {
+    const st = endingState(w);
+    const opts = ENDING_OPTIONS.filter((o) => o.id !== "brand_end_card" || hasBrandEndCard(w));
+    body = `<div class="rv-endrow">
+      <p class="rv-note">Choose what happens after the final scene.</p>
+      ${opts.map((o) => `<button class="rv-pop-row ${st.type === o.id ? "on" : ""}" data-endpick="${o.id}">
+        <b>${esc(o.label)}</b><em class="rv-note sm"> ${esc(o.blurb)}</em></button>`).join("")}
+      ${st.type === "none" ? "" : `<label class="rv-f">Ending Duration
+        <input id="rvEndDur" type="number" min="0.5" max="3" step="0.5" value="${st.duration}"> seconds</label>`}
+    </div>`;
   } else if (kind === "recap") {
     /* Everything applied to this scene, with a way to change or undo each
        one. Reads the same list the card badges read. */
@@ -3006,14 +3080,17 @@ function popoverHtml() {
   const isFx = kind === "look";
   const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
     : kind === "recap" ? "Scene Settings"
+    : kind === "ending" ? "Video Ending"
     : kind === "trans" ? `Transition: Scene ${i + 1} → Scene ${i + 2}` : "Effects";
-  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" ? "compact" : kind === "trans" ? "wide" : "xwide";
+  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" || kind === "ending" ? "compact" : kind === "trans" ? "wide" : "xwide";
   const foot = isFx && w.popTab === "frames"
     ? seFooter(w, s)
     : isFx
     ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
     : kind === "recap"
     ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
+    : kind === "ending"
+    ? `<button class="btn btn-primary" id="rvPopCancel">Done</button>`
     : kind === "trans"
     ? `${transitions.get(s.key, w.scenes[i + 1]?.key) && !transitions.get(s.key, w.scenes[i + 1]?.key)?.settings?.mode?.includes("auto") ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto Select</button>` : ""}
        <button class="btn btn-primary" id="rvTransDone">Done</button>`
@@ -4536,6 +4613,7 @@ function bind() {
   });
   /* Header and notice shortcuts both reopen the picker step without losing work. */
   on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+  on("#rvGridAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvEmptyAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
   on("#rvHeadFile", "change", (e) => {
@@ -4789,6 +4867,17 @@ function bind() {
     }
     render();
   });
+  on("[data-endpick]", "click", (e) => {
+    setEnding(w, { endingType: e.currentTarget.dataset.endpick });
+    render();
+  });
+  {
+    const ed = el.querySelector("#rvEndDur");
+    if (ed) ed.addEventListener("change", (ev) => {
+      setEnding(w, { duration: Math.min(3, Math.max(0.5, Number(ev.target.value) || 1)) });
+      render();
+    });
+  }
   on("#rvTransAi", "click", () => toast("AI Transitions Are Not Available Yet. Choose Cut, Dissolve Or Fade."));
   {
     const du = el.querySelector("#rvTransDur");
@@ -5458,6 +5547,7 @@ function editExisting(d) {
   const ds = p.draft_state || null;
   if (ds && p.status === "draft") {
     w.gridOrder = Array.isArray(ds.gridOrder) ? ds.gridOrder : w.gridOrder;
+    if (ds.ending && typeof ds.ending === "object") w.ending = ds.ending;
     w.uploads = (ds.uploads || []).map((u) => ({
       id: u.id, name: u.name, originalName: u.name, url: "", file: null,
       storagePath: u.path, room: u.room || "Unsorted", roomSource: u.room_source || "ai",
