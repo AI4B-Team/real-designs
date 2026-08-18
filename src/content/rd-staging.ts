@@ -705,6 +705,7 @@ function mountPicker(slot) {
 }
 
 function bindReview(el) {
+  console.log("RDSDBG bindReview start");
   el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
   el.querySelector("#rdsBack").onclick = () => {
     /* Back keeps every photo, room and selection: only the step changes. */
@@ -751,6 +752,7 @@ function bindReview(el) {
   /* Cards are re-rendered in place as uploads and detection land, so the card
      controls are delegated from the page instead of bound per element. The
      page element survives re-renders, so delegation is attached only once. */
+  console.log("RDSDBG delegate", !!el.__rdsDelegated);
   if (el.__rdsDelegated) return;
   el.__rdsDelegated = true;
   el.addEventListener("click", (e) => {
