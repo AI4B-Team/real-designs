@@ -197,6 +197,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     propPhotos: [] as PickerPhoto[],
     propChecked: new Set<string>(),
     propLoading: false,
+    /** Finished designs, their load state and the selection order. */
+    designs: [] as PickerDesign[],
+    designState: "idle" as "idle" | "loading" | "ready" | "error",
+    designSel: [] as string[],
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
   };
