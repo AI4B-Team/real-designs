@@ -71,8 +71,8 @@ export function modalFooterHtml(opts: ModalFooterOptions = {}) {
     .filter(Boolean)
     .join(" ");
   const parts: string[] = [];
-  if (opts.extra) parts.push(btn(opts.extra, "ghost"));
-  if (opts.secondary) parts.push(btn(opts.secondary, "ghost"));
+  if (opts.extra) parts.push(btn(opts.extra, opts.extra.variant === "outline" ? "outline" : "ghost"));
+  if (opts.secondary) parts.push(btn(opts.secondary, opts.secondary.variant === "outline" ? "outline" : "ghost"));
   if (opts.primary) parts.push(btn(opts.primary, opts.destructive ? "danger" : "primary", !!opts.loading));
   return `<div class="${cls}">${parts.join("")}</div>`;
 }
