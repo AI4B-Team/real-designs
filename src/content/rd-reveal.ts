@@ -1151,9 +1151,10 @@ function titleSuggestion(w) {
   return sanitizeTitle(defaultTitle(w)) === s ? "" : s;
 }
 
-function titleFieldHtml(w) {
+function titleFieldHtml(w, opts = {}) {
   const sug = titleSuggestion(w);
-  return `<label class="rv-f">Video Title<input id="rvTitle" maxlength="160" placeholder="Untitled Video" value="${esc(defaultTitle(w))}"></label>
+  const label = opts.label || "Video Title";
+  return `<label class="rv-f">${esc(label)}<input id="rvTitle" maxlength="160" placeholder="Untitled Video" value="${esc(defaultTitle(w))}"></label>
   ${sug ? `<div class="rv-note rv-sugt">Suggested: ${esc(sug)} <button class="fb-link" data-usetitle="1">Use Suggested Title</button></div>` : ""}`;
 }
 
@@ -1818,6 +1819,12 @@ function stepTitles() {
   const kit = S.kits.find((k) => k.id === w.brandKitId) || null;
 
   return `
+  <section class="rv-sec">
+    <div class="rv-sec-h"><h4>Video Title</h4></div>
+    ${titleFieldHtml(w, { label: "Project Title" })}
+    <div class="rv-note sm">This Names The Project. It Is Not Shown In The Video.</div>
+  </section>
+
   <section class="rv-sec">
     <div class="rv-sec-h"><h4>Opening Title</h4>
       <label class="rv-switch sm"><input type="checkbox" data-tt="property" ${t.property ? "checked" : ""}><i></i></label></div>
@@ -2717,7 +2724,13 @@ function bind() {
     /* Typing marks the title as user-owned; the address can never overwrite it
        again. A blank field never blocks saving — the fallback covers it. */
     titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
-    titleIn.addEventListener("blur", () => { w.title = sanitizeTitle(w.title); titleIn.value = defaultTitle(w); });
+    titleIn.addEventListener("blur", () => {
+      w.title = sanitizeTitle(w.title);
+      titleIn.value = defaultTitle(w);
+      const note = titleIn.closest(".rv-sec, .rv-f")?.parentElement?.querySelector?.(".rv-sugt");
+      if (note && !titleSuggestion(w)) note.remove();
+      autosaveAddress(w);
+    });
   }
   on("[data-usetitle]", "click", () => {
     const s = titleSuggestion(w);
