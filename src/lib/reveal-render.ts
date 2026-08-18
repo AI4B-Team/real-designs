@@ -1037,7 +1037,6 @@ export async function renderReveal(
   const avIntro = avFull ? 3000 : 0;
   const avOutro = avFull ? 2600 : 0;
   const outro = showBrand ? 2600 : 0;
-  const rawSceneEnd = durations.reduce((a, b) => a + b, 0);
 
 
   /* Transitions overlap the scenes they join, so the tour keeps its length and
