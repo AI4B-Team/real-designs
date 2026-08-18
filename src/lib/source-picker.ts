@@ -673,13 +673,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   function thumbArea(p: PickerProperty) {
     const icon = p.unassigned ? "images" : "home";
     const list = thumbsOf(p);
-    const tile = (path: string) =>
-      '<span class="sp-th-i is-load" data-sp-thumb="' + esc(path) + '"><i data-lucide="' + icon + '"></i></span>';
+    /* Spare paths ride along so a dead file or expired URL falls forward to the next photo. */
+    const tile = (path: string, alts: string[] = []) =>
+      '<span class="sp-th-i is-load" data-sp-thumb="' + esc(path) + '"' +
+      (alts.length ? ' data-sp-alt="' + esc(alts.join("|")) + '"' : "") +
+      '><i data-lucide="' + icon + '"></i></span>';
     const inner = !list.length
       ? '<span class="sp-th-i is-none"><i data-lucide="' + icon + '"></i></span>'
       : list.length >= 2 && p.unassigned
-        ? '<span class="sp-th-mosaic">' + list.slice(0, 4).map(tile).join("") + "</span>"
-        : tile(list[0]!);
+        ? '<span class="sp-th-mosaic">' +
+          list.slice(0, 4).map((t, i) => tile(t, list.slice(4).concat(list.slice(0, 4).filter((_, j) => j !== i)))).join("") +
+          "</span>"
+        : tile(list[0]!, list.slice(1));
     return '<span class="sp-prop-th">' + inner + "</span>";
   }
 
