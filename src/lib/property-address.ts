@@ -266,7 +266,7 @@ export function resolveProjectTitle(opts: {
 
 /** Title default that never overwrites what the user typed. */
 export function defaultVideoTitle(address: unknown, titleTouched?: boolean, current?: string | null): string {
-  return resolveProjectTitle({ kind: "video", address, titleTouched, title: current });
+  return resolveProjectTitle({ kind: "video", address, titleTouched: !!titleTouched, title: current ?? null });
 }
 
 
