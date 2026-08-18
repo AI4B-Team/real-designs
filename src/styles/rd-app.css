@@ -1751,8 +1751,8 @@
 .sp-prop.is-empty{opacity:.7;cursor:default;grid-template-rows:96px minmax(0,1fr);min-height:190px}
 .sp-prop-th{position:relative;display:block;width:100%;height:100%;overflow:hidden;background:var(--bg);border-bottom:1px solid var(--line)}
 .sp-th-i{position:relative;display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:var(--bg);background-size:cover;background-position:center}
-.sp-th-i i{width:22px;height:22px;color:var(--mute-2)}
-.sp-th-i.has-img i,.sp-th-i.is-load i{display:none}
+.sp-th-i i,.sp-th-i svg{width:22px;height:22px;color:var(--mute-2)}
+.sp-th-i.has-img i,.sp-th-i.has-img svg,.sp-th-i.is-load i,.sp-th-i.is-load svg{display:none}
 .sp-th-i.is-load{background:linear-gradient(100deg,var(--bg) 30%,color-mix(in oklab,var(--mute-2) 14%,var(--bg)) 50%,var(--bg) 70%);background-size:220% 100%;animation:spThumb 1.1s linear infinite}
 @keyframes spThumb{0%{background-position:120% 0}100%{background-position:-120% 0}}
 .sp-th-i.is-fail,.sp-th-i.is-none{background:color-mix(in oklab,var(--mute-2) 8%,var(--bg))}
