@@ -754,6 +754,14 @@ function canvasHtml(compact = false) {
     <div class="rv-cv-stage fmt-${fmt.replace(":", "x")}">
       <div class="rv-cv-img" data-img="${esc(sc?.path || "")}">
         ${sc ? "" : `<span class="rv-note sm">No Scenes Selected Yet.</span>`}
+        ${(() => {
+          /* The storyboard shows the real clip whenever the scene uses one. */
+          const c = sc && sc.use_clip ? sceneClips.get(sc.key) : null;
+          const u = c && c.status === "completed" ? sceneClips.url(c) : null;
+          return u
+            ? `<video class="rv-cv-clip" src="${esc(u)}" autoplay muted loop playsinline></video><span class="rv-cv-aitag">AI Clip</span>`
+            : "";
+        })()}
         ${brandOn && kit?.logo_path && (w.branding?.watermark || w.logoBranding) ? `<span class="rv-ov-logo" data-img="${esc(kit.logo_path)}"></span>` : ""}
         ${openOn ? `<div class="rv-ov-title pos-${esc(w.titlePos || "bottom")} f-${esc(w.titleFont || "editorial")}">
           <b>${esc(t.headline == null ? d.headline : t.headline)}</b>

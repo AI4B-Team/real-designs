@@ -939,3 +939,5 @@
 .rd-app .rv-clip .fb-link { background: none; border: 0; padding: 0; cursor: pointer; color: #444; text-decoration: underline; font-size: 11px; }
 .rd-app .rv-clip .fb-link.strong { color: #cc0000; font-weight: 600; }
 @keyframes rd-spin { to { transform: rotate(360deg); } }
+.rd-app .rv-cv-clip { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.rd-app .rv-cv-aitag { position: absolute; left: 10px; top: 10px; z-index: 2; background: rgba(10,10,10,.72); color: #fff; font-size: 11px; padding: 2px 8px; border-radius: 999px; }
