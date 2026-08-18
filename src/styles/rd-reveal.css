@@ -1032,7 +1032,7 @@
 /* ---- one compact treatment preview, anchored inside the photo's top-right ----
    38px tile, entirely inside the card. The name is a small dark label that is
    revealed under the tile on hover / focus / while the card is being edited. */
-.rv-treat{position:absolute;top:10px;right:10px;z-index:5;width:38px;height:38px;padding:0;
+.rv-treat{position:absolute;top:10px;right:52px;z-index:5;width:38px;height:38px;padding:0;
   border:0;background:none;cursor:pointer;line-height:0}
 .rv-treat:focus-visible{outline:none}
 .rv-treat-th{position:relative;display:grid;place-items:center;width:38px;height:38px;
@@ -1233,3 +1233,54 @@
   .rd-app .se-swap { justify-self: center; }
 
 }
+
+
+/* ---- shared card overflow menu (Photo Design + Video Builder) ----
+   Always visible, always the far top-right of the image; the scene-status
+   indicator sits immediately to its left in the same horizontal row. The
+   dropdown itself is portalled to <body>, so no card or grid ever widens. */
+.rd-app .bx-cardmenu{position:absolute;top:4px;right:4px;z-index:6;width:40px;height:40px;
+  display:grid;place-items:center;padding:0;border:0;background:none;cursor:pointer}
+.rd-app .bx-cardmenu::before{content:"";position:absolute;top:6px;right:6px;width:32px;height:32px;
+  border-radius:9px;background:rgba(255,255,255,.92);border:1px solid rgba(17,17,17,.14);
+  box-shadow:0 2px 6px rgba(0,0,0,.18);transition:border-color .15s ease,box-shadow .15s ease,background .15s ease}
+.rd-app .bx-cardmenu i,.rd-app .bx-cardmenu svg{position:relative;z-index:1;width:17px;height:17px;color:#3a3a40}
+.rd-app .bx-cardmenu:hover::before{border-color:rgba(17,17,17,.28);box-shadow:0 4px 10px rgba(0,0,0,.24)}
+.rd-app .bx-cardmenu:focus-visible{outline:none}
+.rd-app .bx-cardmenu:focus-visible::before{border-color:var(--rd-accent,#c00);box-shadow:0 0 0 3px rgba(204,0,0,.22)}
+.rd-app .bx-cardmenu.on::before{background:rgba(204,0,0,.12);border-color:var(--rd-accent,#c00)}
+.rd-app .bx-cardmenu.on i,.rd-app .bx-cardmenu.on svg{color:var(--rd-accent,#c00)}
+
+.bx-cmenu{position:fixed;z-index:100000;min-width:236px;max-width:min(92vw,290px);
+  background:#fff;border:1px solid rgba(17,17,17,.12);border-radius:12px;padding:6px;
+  box-shadow:0 18px 46px rgba(0,0,0,.22);font:500 13.5px/1.3 'DM Sans',system-ui,sans-serif;color:#141414}
+.bx-cmenu-g{display:flex;flex-direction:column}
+.bx-cmenu-sep{height:1px;margin:5px 4px;background:rgba(17,17,17,.10)}
+.bx-cmenu-i{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:0;border-radius:8px;
+  background:none;cursor:pointer;text-align:left;color:inherit;font:inherit;min-height:38px}
+.bx-cmenu-i i,.bx-cmenu-i svg{width:16px;height:16px;color:#5b5b62;flex:none}
+.bx-cmenu-i em{margin-left:auto;font-style:normal;font-size:11.5px;color:#8a8a90}
+.bx-cmenu-i:hover,.bx-cmenu-i:focus-visible{background:rgba(17,17,17,.06);outline:none}
+.bx-cmenu-i:focus-visible{box-shadow:inset 0 0 0 2px var(--rd-accent,#c00)}
+.bx-cmenu-i[disabled]{opacity:.45;cursor:not-allowed}
+.bx-cmenu-i.bad,.bx-cmenu-i.bad i,.bx-cmenu-i.bad svg{color:var(--rd-accent,#c00)}
+.bx-cmenu-i.bad:hover,.bx-cmenu-i.bad:focus-visible{background:rgba(204,0,0,.08)}
+.bx-cmenu-warn{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.bx-cdlg{position:fixed;inset:0;z-index:100001;background:rgba(10,10,12,.44);display:grid;place-items:center;padding:20px}
+.bx-cdlg-in{width:min(94vw,440px);background:#fff;border-radius:16px;padding:22px;
+  box-shadow:0 26px 70px rgba(0,0,0,.3);font:400 14px/1.5 'DM Sans',system-ui,sans-serif;color:#141414}
+.bx-cdlg-in h3{margin:0 0 8px;font:700 18px/1.25 'DM Sans',system-ui,sans-serif}
+.bx-cdlg-in p{margin:0 0 8px;color:#4a4a52}
+.bx-cdlg-note{font-size:13px;color:#77777f}
+.bx-cdlg-dl{margin:6px 0 14px;display:flex;flex-direction:column;gap:8px}
+.bx-cdlg-dl>div{display:flex;gap:12px;justify-content:space-between;border-bottom:1px solid rgba(17,17,17,.07);padding-bottom:6px}
+.bx-cdlg-dl dt{color:#77777f;font-size:13px}
+.bx-cdlg-dl dd{margin:0;text-align:right;word-break:break-word}
+.bx-cdlg-a{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+.bx-cdlg-a .btn-danger{background:var(--rd-accent,#c00);color:#fff;border:0;border-radius:999px;padding:10px 18px;cursor:pointer;font:600 14px 'DM Sans',system-ui,sans-serif}
+
+.bx-undo{position:fixed;z-index:100000;bottom:22px;left:50%;transform:translateX(-50%);
+  display:flex;align-items:center;gap:14px;background:#141414;color:#fff;border-radius:999px;
+  padding:11px 12px 11px 18px;font:500 13.5px 'DM Sans',system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.bx-undo button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:999px;padding:7px 14px;cursor:pointer;font:600 13px 'DM Sans',system-ui,sans-serif}
