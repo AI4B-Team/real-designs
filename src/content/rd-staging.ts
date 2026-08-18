@@ -602,7 +602,7 @@ function render() {
       <div class="rv-wiz bx-work">
         <div class="rv-utility">
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
-          <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}<span class="rds-save" id="rdsStatus">${esc(statusText())}</span></div>
+          <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a">
             <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
@@ -686,9 +686,19 @@ function syncSelection() {
   patchStatus();
 }
 
+/* The shared address bar owns the autosave wording, so refreshing it in place
+   keeps a single "Saving…/Saved" indicator on the page. */
 function patchStatus() {
-  const s = wrap && wrap.querySelector("#rdsStatus");
-  if (s && S) s.textContent = statusText();
+  if (!wrap || !S) return;
+  const holder = wrap.querySelector(".rv-utility-m .rv-addr") || wrap.querySelector(".rv-utility-m");
+  const node = holder && holder.querySelector(".rv-save");
+  const label = statusText();
+  if (node) {
+    node.textContent = label;
+    node.classList.toggle("ok", S.saveState === "saved");
+    node.classList.toggle("bad", S.saveState === "error");
+    node.style.display = label ? "" : "none";
+  }
 }
 
 
