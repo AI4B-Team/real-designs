@@ -23,7 +23,14 @@ import {
 } from "@/lib/onboarding";
 
 type Ctx = {
+  /** Intentional navigation from a click. Always allowed. */
   go: (view: string, fromHash?: boolean) => void;
+  /**
+   * The asynchronous start-page decision. The shell drops it when the user
+   * has already navigated somewhere else, so a slow summary or preference
+   * load can never redirect them after the fact.
+   */
+  startGo?: (view: string) => void;
   lucide: { createIcons: (o?: any) => void };
   esc: (s: string) => string;
   photos: Record<string, string>;
@@ -79,6 +86,7 @@ const BANDS = ["Refresh", "Makeover", "Renovation", "Full Remodel"];
 
 export function mountFirstUse(ctx: Ctx) {
   const { go, lucide, esc, photos, uid, track } = ctx;
+  const startGo = ctx.startGo || go;
   const studio = document.getElementById("v-studio");
   const dash = document.getElementById("v-dash");
   if (!studio || !dash) return;
