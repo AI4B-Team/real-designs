@@ -4140,9 +4140,9 @@ function bind() {
         ? { caption: sc.caption ?? "", caption_pos: sc.caption_pos || "bottom", caption_style: sc.caption_style || "brand" }
         : { motion: sc.motion || "auto", motion_level: sc.motion_level || "standard", immersive_effect: sc.immersive_effect || null };
     }
-    if (kind === "frames") {
-      /* Seed the editor from what is already stored, so reopening shows the
-         real configuration rather than a blank form. */
+    if (kind === "look") {
+      /* Seed the Start / End tab from what is already stored, so reopening
+         shows the real configuration rather than a blank form. */
       const sc = w.scenes[i] || {};
       const saved = sceneFrames.get(sc.key);
       const endKey = saved?.end_path ? (w.available.find((a) => a.path === saved.end_path)?.key || null) : null;
@@ -4151,10 +4151,14 @@ function bind() {
         start_crop: saved?.start_crop || sc.crop || "center",
         end_key: endKey,
         end_crop: saved?.end_crop || "center",
-        transition_type: saved?.transition_type || "blend",
-        transition_duration: Number(saved?.transition_duration || 3),
+        motion_preset: saved?.motion_preset || "auto",
+        prompt: saved?.prompt || "",
+        seconds: Number(saved?.seconds || 8),
+        picking: null,
       };
       w.seBusy = false;
+      w.popTab = e.currentTarget?.dataset?.fxtab || w.popTabPending || (w.popTab === "frames" ? "looks" : w.popTab) || "looks";
+      w.popTabPending = null;
     }
     render();
   });
@@ -4300,9 +4304,9 @@ function bind() {
 
   /* ---- scene settings summary ---- */
   on("[data-sumedit]", "click", (e) => {
-    const kind = e.currentTarget.dataset.sumedit;
+    const [kind, tab] = String(e.currentTarget.dataset.sumedit).split(":");
     const key = w.pop?.key;
-    w.pop = null; render();
+    w.pop = null; w.popTabPending = tab || null; render();
     el.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
   });
   on("[data-sumreset]", "click", (e) => {
@@ -4318,74 +4322,112 @@ function bind() {
     render();
   });
 
-  /* ---- start / end frames ---- */
-  on("[data-endpick]", "click", (e) => {
+  /* ---- start / end frames, inside the Effects modal ---- */
+  const seSave = async (opts = {}) => {
+    const s = cur(); const d = w.seDraft;
+    if (!s || !d?.end_key || !d?.start_key) return null;
+    const startA = w.available.find((a) => a.key === d.start_key);
+    const endA = w.available.find((a) => a.key === d.end_key);
+    if (!startA || !endA) return null;
+    const pid = await ensureVideoProjectId(w);
+    sceneFrames.setProject(pid);
+    await sceneFrames.save({
+      video_project_id: pid,
+      scene_key: s.key,
+      start_path: startA.path,
+      end_path: endA.path,
+      start_asset_id: uuidOrNull(startA.asset_id || s.asset_id),
+      end_asset_id: uuidOrNull(endA.asset_id),
+      start_crop: d.start_crop || "center",
+      end_crop: d.end_crop || "center",
+      motion_preset: d.motion_preset || "auto",
+      prompt: d.prompt || null,
+      seconds: Number(d.seconds || 8),
+    });
+    if (!opts.quiet) toast("Start And End Saved.");
+    return { pid, s, endA };
+  };
+  on("[data-sepick]", "click", (e) => {
     if (!w.seDraft) return;
-    const k = e.currentTarget.dataset.endpick;
-    w.seDraft.end_key = w.seDraft.end_key === k ? null : k;
+    const which = e.currentTarget.dataset.sepick;
+    w.seDraft.picking = w.seDraft.picking === which ? null : which;
     render();
   });
-  on("[data-secropstart]", "click", (e) => { if (!w.seDraft) return; w.seDraft.start_crop = e.currentTarget.dataset.secropstart; render(); });
-  on("[data-secropend]", "click", (e) => { if (!w.seDraft) return; w.seDraft.end_crop = e.currentTarget.dataset.secropend; render(); });
-  on("[data-setrans]", "click", (e) => { if (!w.seDraft) return; w.seDraft.transition_type = e.currentTarget.dataset.setrans; render(); });
+  on("#rvSePickX", "click", () => { if (w.seDraft) { w.seDraft.picking = null; render(); } });
+  on("#rvSeUpload", "click", () => el.querySelector("#rvSeFile")?.click());
+  on("#rvSeFile", "change", (e) => {
+    const files = Array.from(e.currentTarget.files || []);
+    e.currentTarget.value = "";
+    addUploads(files).catch(() => toast("Those photos could not be added."));
+  });
+  on("[data-sepicked]", "click", (e) => {
+    const d = w.seDraft; if (!d?.picking) return;
+    const k = e.currentTarget.dataset.sepicked;
+    if (d.picking === "start") d.start_key = k;
+    else d.end_key = d.end_key === k ? null : k;
+    d.picking = null;
+    render();
+  });
+  on("[data-semotion]", "click", (e) => {
+    if (!w.seDraft) return;
+    const id = e.currentTarget.dataset.semotion;
+    w.seDraft.motion_preset = id;
+    const m = seMotion(id);
+    if (m?.seconds) w.seDraft.seconds = m.seconds;
+    render();
+  });
+  on("[data-sesec]", "click", (e) => { if (!w.seDraft) return; w.seDraft.seconds = Number(e.currentTarget.dataset.sesec); render(); });
+  {
+    const pr = el.querySelector("#rvSePrompt");
+    if (pr) pr.addEventListener("input", (ev) => { if (w.seDraft) w.seDraft.prompt = ev.target.value; });
+  }
   on("#rvSeSwap", "click", () => {
     const d = w.seDraft; if (!d || !d.end_key) return;
-    /* Swapping changes which photo the scene starts on, so the scene's own
-       source follows the start frame. */
-    const s = cur();
     const start = d.start_key;
     d.start_key = d.end_key; d.end_key = start;
     const c = d.start_crop; d.start_crop = d.end_crop; d.end_crop = c;
-    if (s) {
-      const a = w.available.find((x) => x.key === d.start_key);
-      if (a) { s.path = a.path; s.room = a.room || s.room; }
-    }
     render();
   });
-  {
-    const dur = el.querySelector("#rvSeDur");
-    if (dur) dur.addEventListener("input", (ev) => {
-      if (!w.seDraft) return;
-      w.seDraft.transition_duration = Number(ev.target.value) / 10;
-      const out = el.querySelector("#rvSeDur")?.previousElementSibling;
-      if (out) out.textContent = `${w.seDraft.transition_duration.toFixed(1)}s`;
-    });
-  }
   on("#rvSeRemove", "click", async () => {
     const s = cur(); if (!s) return;
     try { await sceneFrames.clear(s.key); } catch (_) { toast("That could not be removed just now."); return; }
-    w.pop = null; w.seDraft = null;
+    w.seDraft = { start_key: s.key, start_crop: s.crop || "center", end_key: null, end_crop: "center", motion_preset: "auto", prompt: "", seconds: 8, picking: null };
     toast("Start And End Removed.");
     render();
   });
   on("#rvSeSave", "click", async () => {
+    if (w.seBusy) return;
+    w.seBusy = "save"; render();
+    try { await seSave(); } catch (err) { toast(err?.message || "That could not be saved just now."); }
+    w.seBusy = false; render();
+  });
+  const seGenerate = async () => {
+    if (w.seBusy) return;
     const s = cur(); const d = w.seDraft;
-    if (!s || !d?.end_key || w.seBusy) return;
-    const startA = w.available.find((a) => a.key === d.start_key);
-    const endA = w.available.find((a) => a.key === d.end_key);
-    if (!startA || !endA) return;
-    w.seBusy = true; render();
+    if (!s || !d?.end_key) return;
+    w.seBusy = "gen"; render();
     try {
-      const pid = await ensureVideoProjectId(w);
-      sceneFrames.setProject(pid);
-      await sceneFrames.save({
-        video_project_id: pid,
+      const saved = await seSave({ quiet: true });
+      if (!saved) throw new Error("Choose both frames first.");
+      const endA = saved.endA;
+      await sceneFrames.generate({
         scene_key: s.key,
-        start_path: startA.path,
-        end_path: endA.path,
-        start_asset_id: uuidOrNull(startA.asset_id || s.asset_id),
-        end_asset_id: uuidOrNull(endA.asset_id),
-        start_crop: d.start_crop || "center",
-        end_crop: d.end_crop || "center",
-        transition_type: d.transition_type || "blend",
-        transition_duration: Number(d.transition_duration || 3),
+        orientation: (w.primaryFormat || DEFAULT_FORMAT).startsWith("9") ? "portrait" : "landscape",
+        room_name: s.room || null,
+        end_room: endA.room || null,
       });
-      w.pop = null; w.seDraft = null;
-      toast("Start And End Saved.");
+      toast(`Generating This Clip. ${SE_CREDITS} Credits Reserved.`);
     } catch (err) {
-      toast(err?.message || "That could not be saved just now.");
+      toast(err?.message || "That could not be started just now.");
     }
-    w.seBusy = false;
+    w.seBusy = false; render();
+  };
+  on("#rvSeGenerate", "click", seGenerate);
+  on("#rvSeRetry", "click", seGenerate);
+  on("#rvSeCancel", "click", async () => {
+    const s = cur(); if (!s) return;
+    try { await sceneFrames.cancel(s.key); toast("Generation Canceled. Reserved Credits Were Returned."); }
+    catch (err) { toast(err?.message || "That could not be canceled just now."); }
     render();
   });
   on("[data-fxtab]", "click", (e) => { w.popTab = e.currentTarget.dataset.fxtab; w.popCat = "all"; render(); });
