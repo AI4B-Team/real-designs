@@ -21,7 +21,11 @@ export const SE_TRANSITIONS: Array<[string, string, string]> = [
   ["pull", "Pull", "The camera pulls back as the frames change."],
   ["slide_left", "Slide Left", "The end frame slides in from the right."],
   ["slide_right", "Slide Right", "The end frame slides in from the left."],
-  ["match", "Match Move", "Both frames share one camera move, so the space appears to change in place."],
+  [
+    "match",
+    "Match Move",
+    "Both frames share one camera move, so the space appears to change in place.",
+  ],
   ["ai", "AI Transition", "A model generates a real clip between the two frames."],
 ];
 
@@ -36,7 +40,9 @@ export function seTransitionName(id?: string | null): string {
   return hit ? hit[1] : "Smooth Blend";
 }
 
-export function isAiTransition(row?: { generation_mode?: string | null; transition_type?: string | null } | null) {
+export function isAiTransition(
+  row?: { generation_mode?: string | null; transition_type?: string | null } | null,
+) {
   return !!row && (row.generation_mode === "ai" || row.transition_type === "ai");
 }
 
@@ -81,7 +87,16 @@ import {
   generateSceneFrames,
   cancelSceneFrames,
 } from "@/lib/scene-frames.functions";
-export { SE_MOTIONS, SE_CREDITS, SE_DURATIONS, seMotion, seMotionLabel, seBusy, seDone } from "@/lib/scene-frames-presets";
+export {
+  SE_MOTIONS,
+  SE_CREDITS,
+  SE_DURATIONS,
+  seMotion,
+  seMotionLabel,
+  seBusy,
+  seDone,
+  seCost,
+} from "@/lib/scene-frames-presets";
 
 /**
  * Browser cache of the durable rows. Nothing important lives here: every
@@ -114,7 +129,9 @@ export class SceneFrameStore {
     this.setProject(projectId);
     if (!projectId) return;
     try {
-      const res: any = await listSceneFrames({ data: { video_project_id: projectId, reconcile: true } });
+      const res: any = await listSceneFrames({
+        data: { video_project_id: projectId, reconcile: true },
+      });
       for (const r of res.frames || []) this.byKey.set(r.scene_key, r as SceneFrameRow);
       for (const [k, u] of Object.entries(res.urls || {})) if (u) this.urls.set(k, u as string);
       this.onChange();
@@ -135,16 +152,29 @@ export class SceneFrameStore {
 
   /** Poll only while a job is unfinished; the server owns the real state. */
   private schedule() {
-    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
     if (!this.anyBusy() || !this.projectId) return;
-    this.timer = setTimeout(() => { void this.load(this.projectId); }, 7000);
+    this.timer = setTimeout(() => {
+      void this.load(this.projectId);
+    }, 7000);
   }
 
   stop() {
-    if (this.timer) { clearTimeout(this.timer); this.timer = null; }
+    if (this.timer) {
+      clearTimeout(this.timer);
+      this.timer = null;
+    }
   }
 
-  async generate(input: { orientation: string; room_name?: string | null; end_room?: string | null; scene_key: string }): Promise<SceneFrameRow> {
+  async generate(input: {
+    orientation: string;
+    room_name?: string | null;
+    end_room?: string | null;
+    scene_key: string;
+  }): Promise<SceneFrameRow> {
     if (!this.projectId) throw new Error("Save this video project first.");
     const res: any = await generateSceneFrames({
       data: {
@@ -163,7 +193,9 @@ export class SceneFrameStore {
 
   async cancel(scene_key: string): Promise<void> {
     if (!this.projectId) return;
-    const res: any = await cancelSceneFrames({ data: { video_project_id: this.projectId, scene_key } });
+    const res: any = await cancelSceneFrames({
+      data: { video_project_id: this.projectId, scene_key },
+    });
     if (res.frame) this.byKey.set(res.frame.scene_key, res.frame);
     this.onChange();
   }

@@ -19,9 +19,10 @@ import {
   SE_TRANSITIONS,
   SE_CROPS,
   SE_MOTIONS,
-  SE_CREDITS,
   SE_DURATIONS,
   seMotion,
+  seCost,
+
   seMotionLabel,
   seTransitionName,
   frameConfigured,
@@ -2338,6 +2339,46 @@ function motionLabel(s) {
 
 /* ------------------------------------------------------------ start / end */
 
+/**
+ * Resolve the picture that represents the current scene, in the order the
+ * scene actually stores its media: the persisted scene preview, the source
+ * media path, a generated design, the property photo, then a temporary object
+ * URL from an upload that has not been stored yet.
+ */
+function seSceneImage(w, s) {
+  const byKey = new Map((w.available || []).map((a) => [a.key, a]));
+  const asset = byKey.get(s?.key) || (w.available || []).find((a) => a.path === s?.path) || null;
+  const path =
+    s?.preview_path ||
+    asset?.path ||
+    s?.path ||
+    s?.source_path ||
+    s?.after_path ||
+    s?.before_path ||
+    s?.url ||
+    null;
+  if (!path) return null;
+  return { key: s?.key || path, path, room: asset?.room || s?.room || null, asset_id: asset?.asset_id || null };
+}
+
+/** Validation for the Generate button, in the order the user can fix them. */
+function seReady(w, s) {
+  const d = w.seDraft || {};
+  const fr = sceneFrames.get(s?.key);
+  const busy = !!fr && (fr.status === "queued" || fr.status === "processing");
+  const start = seSceneImage(w, s);
+  const cost = seCost(Number(d.seconds || 8));
+  const bal = S.credits?.balance;
+  if (busy) return { ok: false, cost, why: "A clip is already generating for this scene." };
+  if (w.seBusy) return { ok: false, cost, why: "Working…" };
+  if (!start) return { ok: false, cost, why: "This scene has no usable start image." };
+  if (!d.end_key) return { ok: false, cost, why: "Choose an end frame to generate." };
+  if (!d.motion_preset) return { ok: false, cost, why: "Choose a motion." };
+  if (typeof bal === "number" && bal < cost)
+    return { ok: false, cost, why: `This costs ${cost} credits and your balance is ${bal}.` };
+  return { ok: true, cost, why: "" };
+}
+
 /** Plain-language state of one saved Start / End configuration. */
 function seFrameStatusText(fr) {
   if (!fr) return "Not Set";
@@ -2357,7 +2398,7 @@ function seWorkspace(w, s) {
   const d = w.seDraft || {};
   const fr = sceneFrames.get(s.key);
   const byKey = new Map(w.available.map((a) => [a.key, a]));
-  const startA = byKey.get(d.start_key) || byKey.get(s.key) || null;
+  const startA = byKey.get(d.start_key) || seSceneImage(w, s);
   const endA = d.end_key ? byKey.get(d.end_key) : null;
   const busy = fr && (fr.status === "queued" || fr.status === "processing");
   const failed = fr && fr.status === "failed";
@@ -2365,11 +2406,17 @@ function seWorkspace(w, s) {
   const seconds = Number(d.seconds || 8);
   const fmt = w.primaryFormat || DEFAULT_FORMAT;
 
-  const slot = (which, a, label, hint) => `<div class="se-slot ${a ? "on" : ""}">
-    <b>${label}</b>
-    <div class="se-th" ${a ? `data-img="${esc(a.path)}"` : ""}>${a ? "" : `<i data-lucide="image-plus"></i><em>${esc(hint)}</em>`}</div>
+  const slot = (which, a, label, hint) => `<div class="se-slot ${a ? "on" : ""} ${!a && which === "end" ? "empty" : ""}"
+    ${!a && which === "end" ? `role="button" tabindex="0" data-sepick="end"` : ""}>
+    <div class="se-slot-h"><b>${label}</b><button class="fb-link" data-sepick="${which}">${a ? "Replace" : "Choose"}</button></div>
+    <div class="se-th" ${a ? `data-img="${esc(a.path)}"` : ""} ${a ? `data-sesrc="${esc(a.path)}"` : ""}>${
+      a
+        ? `<div class="se-broken"><i data-lucide="image-off"></i><em>Couldn’t load current scene</em>
+             <span><button class="fb-link" data-seretryimg="${esc(a.path)}">Retry</button>
+             <button class="fb-link" data-sepick="${which}">Replace</button></span></div>`
+        : `<i data-lucide="image-plus"></i><em>${esc(hint)}</em>`
+    }</div>
     <span class="se-cap">${a ? esc(which === "start" && a.key === s.key ? "Current Scene" : a.room || "Untitled") : esc(hint)}</span>
-    <button class="fb-link" data-sepick="${which}">${a ? "Replace" : "Choose"}</button>
   </div>`;
 
   const picker = d.picking
@@ -2377,11 +2424,11 @@ function seWorkspace(w, s) {
         <div class="se-picker-h">
           <b>${d.picking === "start" ? "Choose A Start Frame" : "Choose An End Frame"}</b>
           <div class="se-picker-a">
-            <button class="btn btn-ghost btn-sm" id="rvSeUpload"><i data-lucide="upload"></i>Upload</button>
+            <button class="btn btn-ghost btn-sm" id="rvSeUpload"><i data-lucide="upload"></i>Upload New</button>
             <button class="icon-btn" id="rvSePickX" aria-label="Close"><i data-lucide="x"></i></button>
           </div>
         </div>
-        <span class="rv-note sm">Project photos, media and generated designs already loaded into this video.</span>
+        <span class="rv-note sm">Photos in this project, generated designs and uploaded media.</span>
         <div class="se-grid">${w.available.map((a) => `<button class="se-pick ${(d.picking === "start" ? d.start_key : d.end_key) === a.key ? "on" : ""}"
           data-sepicked="${esc(a.key)}" title="${esc(a.room || "Untitled")}"><span data-img="${esc(a.path)}"></span></button>`).join("")}</div>
         <input type="file" id="rvSeFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
@@ -2401,7 +2448,11 @@ function seWorkspace(w, s) {
         <span><b>Start / End Clip In Use</b><em>This scene plays the generated clip. The original photo is kept for editing.</em></span></div>`
     : "";
 
+  const custom = (d.motion_preset || "auto") === "custom";
   return `<div class="se-wrap">
+    <p class="se-lede">Generate one motion clip between these two frames.
+      <button class="se-info" type="button" aria-label="About Start / End"
+        title="Start / End makes one generated clip that begins on the start frame and finishes on the end frame. It is not a transition between two scene cards and not a single-image animation."><i data-lucide="info"></i></button></p>
     <div class="se-frames">
       ${slot("start", startA, "Start Frame", "Current Scene")}
       <button class="icon-btn se-swap" id="rvSeSwap" aria-label="Swap Frames" title="Swap Frames" ${endA ? "" : "disabled"}><i data-lucide="arrow-left-right"></i></button>
@@ -2412,32 +2463,37 @@ function seWorkspace(w, s) {
     <div class="rv-pop-h">Motion</div>
     <div class="se-motions">${SE_MOTIONS.map((m) => `<button class="se-motion ${(d.motion_preset || "auto") === m.id ? "on" : ""}"
       data-semotion="${m.id}" title="${esc(m.blurb)}"><b>${esc(m.label)}</b><em>${esc(m.blurb)}</em></button>`).join("")}</div>
-    <label class="rv-f">Prompt, Optional
+    <label class="rv-f">${custom ? "Describe Your Movement" : "Prompt, Optional"}
       <input id="rvSePrompt" maxlength="400" value="${esc(d.prompt || "")}"
-        placeholder="Describe How The Scene Should Move From The Start Frame To The End Frame"></label>
+        placeholder="${custom ? "Describe The Camera Move You Want" : "Add Any Direction For This Move"}"></label>
     <div class="se-out">
       <div class="se-out-i"><em>Duration</em>
         <div class="rv-seg sm">${SE_DURATIONS.map((n) => `<button class="${seconds === n ? "on" : ""}" data-sesec="${n}">${n}s</button>`).join("")}</div>
       </div>
       <div class="se-out-i"><em>Aspect Ratio</em><b class="mono">${esc(fmt)}</b><span class="rv-note sm">From The Project</span></div>
-      <div class="se-out-i"><em>Estimated Cost</em><b class="mono">${SE_CREDITS} Credits</b><span class="rv-note sm">Charged Once The Job Starts</span></div>
+      <div class="se-out-i"><em>Estimated Cost</em><b class="mono">${seCost(seconds)} credits</b><span class="rv-note sm">Charged Once The Job Starts</span></div>
     </div>
-    <p class="rv-note sm">Start / End makes one generated clip that begins on the start frame and finishes on the end frame. It is not a transition between two scene cards and not a single-image animation.</p>
   </div>`;
 }
 
 /** Footer actions for the Start / End tab. */
 function seFooter(w, s) {
-  const d = w.seDraft || {};
   const fr = sceneFrames.get(s.key);
   const busy = !!fr && (fr.status === "queued" || fr.status === "processing");
-  const ready = !!d.end_key && !!d.start_key && !w.seBusy && !busy;
-  return `${fr ? `<button class="btn btn-ghost danger" id="rvSeRemove" ${busy ? "disabled" : ""}>Remove Start / End</button>` : ""}
-    <button class="btn btn-ghost" id="rvPopCancel">Close</button>
-    <button class="btn btn-ghost" id="rvSeSave" ${ready ? "" : "disabled"}>${w.seBusy === "save" ? "Saving…" : "Save"}</button>
-    <button class="btn btn-primary" id="rvSeGenerate" ${ready ? "" : "disabled"}>
-      ${busy ? "Generating…" : w.seBusy === "gen" ? "Starting…" : `Generate · ${SE_CREDITS} Credits`}</button>`;
+  const v = seReady(w, s);
+  const canSave = !!w.seDirty && !busy && !w.seBusy;
+  return `<div class="se-foot-l">${v.ok
+      ? `<span>Estimated cost <b class="mono">${v.cost} credits</b></span>`
+      : `<span class="warn">${esc(v.why)}</span>`}</div>
+    <div class="se-foot-r">
+      ${fr ? `<button class="btn btn-ghost danger" id="rvSeRemove" ${busy ? "disabled" : ""}>Remove Start / End</button>` : ""}
+      <button class="btn btn-ghost" id="rvPopCancel">Cancel</button>
+      <button class="btn btn-ghost" id="rvSeSave" ${canSave ? "" : "disabled"}>${w.seBusy === "save" ? "Saving…" : "Save Draft"}</button>
+      <button class="btn btn-primary" id="rvSeGenerate" ${v.ok ? "" : "disabled"} title="${esc(v.ok ? "" : v.why)}">
+        ${busy ? "Generating…" : w.seBusy === "gen" ? "Starting…" : `Generate · ${v.cost} Credits`}</button>
+    </div>`;
 }
+
 
 function popoverHtml() {
   const w = S.wizard;
@@ -3799,7 +3855,9 @@ async function paintOneThumb(el) {
   if (!el.querySelector(".rv-noimg-i")) {
     el.insertAdjacentHTML("beforeend", `<i class="rv-noimg-i" data-lucide="image-off"></i>`);
   }
+  console.warn("[thumb] could not resolve image source", path);
   el.classList.add("rv-noimg");
+
   paint();
   return false;
 }
@@ -4315,6 +4373,8 @@ function bind() {
         picking: null,
       };
       w.seBusy = false;
+      w.seDirty = false;
+
       w.popTab = e.currentTarget?.dataset?.fxtab || w.popTabPending || (w.popTab === "frames" ? "looks" : w.popTab) || "looks";
       w.popTabPending = null;
     }
@@ -4481,32 +4541,39 @@ function bind() {
   });
 
   /* ---- start / end frames, inside the Effects modal ---- */
+  /* Save what is configured, even when the pair is not complete yet: Save
+     Draft never charges and must not lose the user's settings. */
   const seSave = async (opts = {}) => {
     const s = cur(); const d = w.seDraft;
-    if (!s || !d?.end_key || !d?.start_key) return null;
-    const startA = w.available.find((a) => a.key === d.start_key);
-    const endA = w.available.find((a) => a.key === d.end_key);
-    if (!startA || !endA) return null;
+    if (!s || !d) return null;
+    const startA = w.available.find((a) => a.key === d.start_key) || seSceneImage(w, s);
+    const endA = d.end_key ? w.available.find((a) => a.key === d.end_key) || null : null;
+    if (!startA) return null;
+    if (opts.requireEnd && !endA) return null;
     const pid = await ensureVideoProjectId(w);
     sceneFrames.setProject(pid);
     await sceneFrames.save({
       video_project_id: pid,
       scene_key: s.key,
       start_path: startA.path,
-      end_path: endA.path,
+      end_path: endA?.path || null,
       start_asset_id: uuidOrNull(startA.asset_id || s.asset_id),
-      end_asset_id: uuidOrNull(endA.asset_id),
+      end_asset_id: uuidOrNull(endA?.asset_id),
       start_crop: d.start_crop || "center",
       end_crop: d.end_crop || "center",
       motion_preset: d.motion_preset || "auto",
       prompt: d.prompt || null,
       seconds: Number(d.seconds || 8),
     });
+    w.seDirty = false;
     if (!opts.quiet) toast("Start And End Saved.");
     return { pid, s, endA };
   };
   on("[data-sepick]", "click", (e) => {
     if (!w.seDraft) return;
+    /* The empty End panel is clickable as a whole; its own button already
+       handled the click, so the panel must not toggle it straight back. */
+    if (e.currentTarget.classList.contains("se-slot") && e.target.closest("button[data-sepick]")) return;
     const which = e.currentTarget.dataset.sepick;
     w.seDraft.picking = w.seDraft.picking === which ? null : which;
     render();
@@ -4518,12 +4585,22 @@ function bind() {
     e.currentTarget.value = "";
     addUploads(files).catch(() => toast("Those photos could not be added."));
   });
+  /* One failed signed URL must be retryable without reopening the modal. */
+  on("[data-seretryimg]", "click", (e) => {
+    e.stopPropagation();
+    const path = e.currentTarget.dataset.seretryimg;
+    console.warn("[start/end] retrying frame preview", path);
+    const th = e.currentTarget.closest(".se-th");
+    if (th) { delete th.dataset.painted; th.classList.remove("rv-noimg"); }
+    paintAssetThumbs();
+  });
   on("[data-sepicked]", "click", (e) => {
     const d = w.seDraft; if (!d?.picking) return;
     const k = e.currentTarget.dataset.sepicked;
     if (d.picking === "start") d.start_key = k;
     else d.end_key = d.end_key === k ? null : k;
     d.picking = null;
+    w.seDirty = true;
     render();
   });
   on("[data-semotion]", "click", (e) => {
@@ -4532,24 +4609,33 @@ function bind() {
     w.seDraft.motion_preset = id;
     const m = seMotion(id);
     if (m?.seconds) w.seDraft.seconds = m.seconds;
+    w.seDirty = true;
     render();
   });
-  on("[data-sesec]", "click", (e) => { if (!w.seDraft) return; w.seDraft.seconds = Number(e.currentTarget.dataset.sesec); render(); });
+  on("[data-sesec]", "click", (e) => {
+    if (!w.seDraft) return;
+    w.seDraft.seconds = Number(e.currentTarget.dataset.sesec);
+    w.seDirty = true;
+    render();
+  });
   {
     const pr = el.querySelector("#rvSePrompt");
-    if (pr) pr.addEventListener("input", (ev) => { if (w.seDraft) w.seDraft.prompt = ev.target.value; });
+    if (pr) pr.addEventListener("input", (ev) => { if (w.seDraft) { w.seDraft.prompt = ev.target.value; w.seDirty = true; } });
   }
+
   on("#rvSeSwap", "click", () => {
     const d = w.seDraft; if (!d || !d.end_key) return;
     const start = d.start_key;
     d.start_key = d.end_key; d.end_key = start;
     const c = d.start_crop; d.start_crop = d.end_crop; d.end_crop = c;
+    w.seDirty = true;
     render();
   });
   on("#rvSeRemove", "click", async () => {
     const s = cur(); if (!s) return;
     try { await sceneFrames.clear(s.key); } catch (_) { toast("That could not be removed just now."); return; }
     w.seDraft = { start_key: s.key, start_crop: s.crop || "center", end_key: null, end_crop: "center", motion_preset: "auto", prompt: "", seconds: 8, picking: null };
+    w.seDirty = false;
     toast("Start And End Removed.");
     render();
   });
@@ -4565,19 +4651,21 @@ function bind() {
     if (!s || !d?.end_key) return;
     w.seBusy = "gen"; render();
     try {
-      const saved = await seSave({ quiet: true });
+      const saved = await seSave({ quiet: true, requireEnd: true });
       if (!saved) throw new Error("Choose both frames first.");
       const endA = saved.endA;
       await sceneFrames.generate({
         scene_key: s.key,
         orientation: (w.primaryFormat || DEFAULT_FORMAT).startsWith("9") ? "portrait" : "landscape",
         room_name: s.room || null,
-        end_room: endA.room || null,
+        end_room: endA?.room || null,
       });
-      toast(`Generating This Clip. ${SE_CREDITS} Credits Reserved.`);
+      S.credits = await getMyCredits().catch(() => S.credits);
+      toast(`Generating This Clip. ${seCost(Number(d.seconds || 8))} Credits Reserved.`);
     } catch (err) {
       toast(err?.message || "That could not be started just now.");
     }
+
     w.seBusy = false; render();
   };
   on("#rvSeGenerate", "click", seGenerate);
