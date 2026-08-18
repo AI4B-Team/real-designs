@@ -294,6 +294,12 @@ explore:'explore',designs:'designs',media:'media',watch:'watch',monitor:'watch',
 function viewFromHash(){
   let raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
   if(!raw) return '';
+  /* Path style deep links such as #account/billing resolve to the section. */
+  if(raw.indexOf('/')>-1){
+    const parts=raw.split('/').filter(Boolean);
+    const tail=parts[parts.length-1];
+    raw=(titles[tail]||ACCT_ALIAS[tail]||VIEW_ALIAS[tail])?tail:parts[0];
+  }
   if(!titles[raw] && !ACCT_ALIAS[raw] && VIEW_ALIAS[raw]) raw=VIEW_ALIAS[raw];
   return (titles[raw]||ACCT_ALIAS[raw])?raw:'';
 }
