@@ -17,7 +17,8 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { mountSourcePicker } from "@/lib/source-picker";
+import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
+import { n as rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl } from "@/lib/room-photos";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
@@ -928,9 +929,22 @@ function bindReview(el) {
   const file = el.querySelector("#rdsFile");
   el.querySelector("#rdsMore").onclick = () => file && file.click();
   if (file) {
-    file.onchange = () => {
-      const picked = Array.from(file.files || []);
+    file.onchange = async () => {
+      const raw = Array.from(file.files || []);
       file.value = "";
+      /* Same validation the Studio picker applies: unsupported or oversized
+         files never reach the grid. */
+      const picked = [];
+      for (const f of raw) {
+        try {
+          const norm = await normalizeImageFile(f);
+          const why = rejectReason(norm);
+          if (why) { alert(norm.name + ": " + why); continue; }
+          picked.push(norm);
+        } catch (error) {
+          alert(error instanceof Error ? error.message : f.name + ": This Photo Could Not Be Added.");
+        }
+      }
       if (picked.length) addFiles(picked);
     };
   }
