@@ -234,14 +234,18 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
 
-  // The app mounted fine, so allow a future one-shot chunk reload again.
+  // The app mounted fine on this build, so a future one-shot chunk reload is
+  // allowed again.
   useEffect(() => {
+    let store: Storage | null = null;
     try {
-      sessionStorage.removeItem("rd:chunk-reload");
+      store = window.sessionStorage;
     } catch {
-      /* private mode */
+      store = null;
     }
+    clearChunkRecovery(store);
   }, []);
+
 
 
   // Global: white dropdown menus and white tooltips on every route.
