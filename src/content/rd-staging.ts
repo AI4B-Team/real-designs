@@ -131,12 +131,25 @@ function workState(it) {
    the first photo is safely in private storage, then autosaved on every
    meaningful change with a short debounce. */
 
+/* One description of "where am I", shared by the rail, the draft row and the
+   restore path, so the three can never disagree. */
+function stepState() {
+  return {
+    keys: S.items.filter((i) => i.path).map((i) => i.key),
+    activeKey: S.current || null,
+    lastOpened: S.lastOpened || null,
+    adding: S.step === "add",
+    reviewing: S.step === "final",
+    completed: S.items.filter((i) => i.state === "complete" || i.done).map((i) => i.key),
+  };
+}
+
 function draftPayload() {
   return {
     id: S.draftId,
     project_type: "photo_staging",
     status: "draft",
-    builder_step: S.step === "add" ? "add" : S.current ? "canvas" : "review",
+    builder_step: durableStep(stepState()),
     property_id: S.propertyId || null,
     property_address: S.address || null,
     title: S.title || null,
