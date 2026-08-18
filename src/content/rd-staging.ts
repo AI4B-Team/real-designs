@@ -483,15 +483,23 @@ function ordered() {
 function cardHtml(it) {
   const st = stateOf(it);
   const label = it.room || UNASSIGNED_LABEL;
-  return `<article class="rds-card${it.selected ? " sel" : ""}${it.done ? " done" : ""}" data-k="${it.key}" data-pick="${it.key}">
-    <label class="rds-pick">${selectCheckHtml()}<input type="checkbox" data-sel="${it.key}" ${it.selected ? "checked" : ""} aria-label="Select ${esc(it.name)}"></label>
-    <button class="rds-thumb" data-open="${it.key}" aria-label="Open ${esc(it.name)} in the canvas">
+  /* Same tile as the video builder's Scenes grid: image, selection tile in the
+     upper-left, a hover toolbar for the optional actions, and the shared room
+     control underneath. Clicking the photo opens it in the Design canvas. */
+  return `<div class="rv-tile ${it.selected ? "on" : ""}" data-k="${it.key}">
+    <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Open ${esc(it.name)} in the design canvas">
       <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
+      <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
       ${it.done ? '<span class="rds-done"><i data-lucide="check"></i>Designed</span>' : ""}
-    </button>
-    <div class="rds-meta">
+      <div class="rv-tools">
+        <button class="rv-tool" data-open="${it.key}" aria-label="Design"><i data-lucide="wand-sparkles"></i><em>Design</em></button>
+        <button class="rv-tool" data-del="${it.key}" aria-label="Remove"><i data-lucide="trash-2"></i><em>Remove</em></button>
+      </div>
+      <button class="rv-tools-more" data-toolsmore="1" aria-label="Photo Actions"><i data-lucide="ellipsis"></i></button>
+    </div>
+    <div class="rv-tile-foot">
       ${roomSelectHtml({
         attr: "room",
         key: it.key,
@@ -499,60 +507,52 @@ function cardHtml(it) {
         icon: roomIcon(it.room),
         unknown: !it.room,
         manual: it.roomSource === "manual",
-        className: "rds-room",
+        variant: "inline",
+        className: "rv-room",
       })}
-      <div class="rds-row">
-        <span class="rds-badge ${st.cls}">${st.label}</span>
-        <span class="rds-name" title="${esc(it.name)}">${esc(it.name)}</span>
-      </div>
+      <em class="rv-tile-kind rds-state ${st.cls}">${st.label}</em>
     </div>
-    <div class="rds-act">
-      <button class="rds-mini" data-open="${it.key}"><i data-lucide="wand-2"></i>Design</button>
-      <button class="rds-mini ghost" data-del="${it.key}" aria-label="Remove ${esc(it.name)}"><i data-lucide="trash-2"></i></button>
-    </div>
-  </article>`;
+  </div>`;
 }
 
 
 function gridHtml() {
-  return `<div class="rds-grid">${ordered().map(cardHtml).join("")}</div>`;
+  return `<div class="rv-grid" id="rdsBody">${ordered().map(cardHtml).join("")}</div>`;
 }
 
+/* The counts live in the selection bar and the footer, so the only thing left
+   to say beside the address is whether the work is safely stored. */
 function statusText() {
-  const total = S.items.length;
-  const selected = S.items.filter((i) => i.selected);
-  const sel = selected.length;
-  const need = selected.filter((i) => stateOf(i).cls === "warn").length;
-  const detecting = S.items.some((i) => i.detect === "running" || i.detect === "pending");
-  const parts = [`${total} Photo${total === 1 ? "" : "s"}`, `${sel} Selected`];
-  if (detecting) parts.push("Detecting Rooms…");
-  else if (need) parts.push("Rooms Need Review");
-  else parts.push("All Rooms Confirmed");
-  /* "Saved" is only honest once every photo is stored and the row is written. */
   const uploading = S.items.some((i) => i.status === "uploading");
-  const failed = S.items.some((i) => i.status === "failed");
-  if (S.saveState === "saving" || uploading) parts.push(saveLabel("saving"));
-  else if (S.saveState === "error") parts.push(saveLabel("error"));
-  else if (failed) parts.push("Some Uploads Failed");
-  else if (S.saveState === "saved") parts.push(saveLabel("saved"));
-  return parts.join(" · ");
+  if (S.saveState === "saving" || uploading) return saveLabel("saving");
+  if (S.saveState === "error") return saveLabel("error");
+  if (S.items.some((i) => i.status === "failed")) return "Some Uploads Failed";
+  if (S.saveState === "saved") return saveLabel("saved");
+  return "";
 }
 
+function selectedCount() {
+  return S.items.filter((i) => i.selected).length;
+}
 
+/* The one builder rail, shared with the video builder (same component, same
+   classes, same collapse behaviour) — only the step data differs. */
 function stepRailHtml(active) {
+  const has = S.items.length > 0;
   const steps = [
-    { key: "add", label: "Add Photos", icon: "image-plus", done: S.items.length > 0 },
-    { key: "review", label: "Review Rooms", icon: "layout-grid", ready: S.items.length > 0 },
-    { key: "design", label: "Design", icon: "wand-2", ready: false },
+    { key: "add", label: "Add Photos", icon: "image-plus", done: has },
+    { key: "review", label: "Rooms", icon: "layout-grid", ready: has, badge: has ? String(selectedCount()) : "" },
+    { key: "design", label: "Design", icon: "wand-sparkles", ready: false },
+    { key: "final", label: "Review", icon: "circle-check", ready: false },
   ];
   return builderRailHtml({
     steps,
     active,
     attr: "step",
-    variant: "row",
-    label: "Staging steps",
-    navClass: "rds-rail",
-    itemClass: "rds-rail-i",
+    variant: "col",
+    label: "Photo staging steps",
+    navClass: "rv-rail",
+    itemClass: "rv-rail-i",
   });
 }
 
