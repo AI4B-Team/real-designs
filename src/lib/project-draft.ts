@@ -143,7 +143,7 @@ export class DraftAutosaver {
       const steps = this.opt.retryMs ?? [1000, 3000, 8000];
       this.emit("error", { error: (e && e.message) || "Couldn't save", attempt: this.attempt });
       if (this.attempt <= steps.length) {
-        const wait = steps[Math.min(this.attempt - 1, steps.length - 1)];
+        const wait = steps[Math.min(this.attempt - 1, steps.length - 1)] ?? 3000;
         const { set } = this.timers();
         this.timer = set(() => {
           this.timer = null;
