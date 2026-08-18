@@ -48,15 +48,17 @@ export function builderRailHtml(opts = {}) {
     .join("")}</nav>`;
 }
 
-/** One room-type control for both builders. */
+/** One room-type control for both builders: a compact select-style button. */
 export function roomSelectHtml(opts = {}) {
   const label = opts.label || "";
   const unknown = !!opts.unknown;
   const cls = ["bx-room", opts.variant === "inline" ? "inline" : "boxed", opts.className || "", unknown ? "muted" : "", opts.manual ? "set" : ""]
     .filter(Boolean)
     .join(" ");
-  return `<button class="${cls}" data-${esc(opts.attr || "room")}="${esc(opts.key || "")}"
-    aria-haspopup="listbox" title="Click To Change Room Type">
+  const name = label || "Not Set";
+  return `<button type="button" class="${cls}" data-${esc(opts.attr || "room")}="${esc(opts.key || "")}"
+    aria-haspopup="listbox" aria-expanded="${opts.expanded ? "true" : "false"}" aria-label="Change room type. Current room: ${esc(name)}"
+    title="Change Room Type">
     <i data-lucide="${esc(opts.icon || "circle-dashed")}"></i><span>${esc(label)}</span>
     <i data-lucide="chevron-down" class="bx-caret"></i>
   </button>`;

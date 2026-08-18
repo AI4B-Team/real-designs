@@ -590,9 +590,9 @@
   .rd-app .rv-tile.tools-open .rv-tools,
   .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 46px; right: 8px; transform: none; }
 }
-.rd-app .rv-tile-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 2px 0; font-size: 12px; }
+.rd-app .rv-tile-foot { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 7px 2px 0; font-size: 12px; }
 .rd-app .rv-tile-foot b { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rd-app .rv-tile-kind { font-style: normal; font-size: 11.5px; color: var(--muted, #6a6a6a); }
+.rd-app .rv-tile-kind { font-style: normal; font-size: 11.5px; color: var(--muted, #6a6a6a); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd-app .rv-cap-b { max-width: 50%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rd-app .rv-tile.drop-l .rv-tile-th::before { content: ""; position: absolute; inset: 0 auto 0 -8px; width: 3px; background: var(--red, #CC0000); border-radius: 2px; z-index: 3; }
 .rd-app .rv-gridfoot { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 18px; padding: 12px 2px; background: #fff; border-top: 1px solid var(--line, #f0f0f0); }
@@ -696,17 +696,8 @@
 
 
 
-/* Room type under each photo, plus its compact searchable selector. */
-.rd-app .rv-room {
-  display: inline-flex; align-items: center; gap: 5px; min-width: 0; max-width: 100%;
-  border: 0; background: transparent; padding: 0; cursor: pointer;
-  font: inherit; font-size: 12px; font-weight: 700; color: #111;
-}
-.rd-app .rv-room span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rd-app .rv-room.muted { color: var(--mute-2, #8a8a8a); font-weight: 600; }
-.rd-app .rv-room svg { width: 14px; height: 14px; flex: 0 0 auto; color: var(--mute-2, #8a8a8a); }
-.rd-app .rv-room em[data-lucide] { display: none; }
-.rd-app .rv-room:hover { text-decoration: underline dotted; text-underline-offset: 3px; }
+/* Room type under each photo. The control itself is the shared .bx-room
+   selector defined in rd-staging.css; only its searchable sheet lives here. */
 .rd-app .rv-roomsheet { width: min(420px, 94vw); }
 .rd-app .rv-roomsearch { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line, #f0f0f0); }
 .rd-app .rv-roomsearch svg { width: 15px; height: 15px; color: var(--mute-2, #8a8a8a); }
