@@ -648,28 +648,50 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   /** Thumbnails resolve after paint so the grid never waits on signed URLs. */
   const thumbCache = new Map<string, string>();
   function hydrateThumbs() {
-    if (!body || !opts.resolvePhoto) return;
+    if (!body) return;
     const nodes = Array.from(body.querySelectorAll<HTMLElement>("[data-sp-thumb]"));
     for (const el of nodes) {
       const path = el.dataset["spThumb"]!;
+      if (el.dataset["spThumbDone"] === "1") continue;
+      const paint = (url: string) => {
+        el.dataset["spThumbDone"] = "1";
+        el.style.backgroundImage = 'url("' + url + '")';
+        el.classList.remove("is-load", "is-fail");
+        el.classList.add("has-img");
+      };
+      const fail = (err: unknown) => {
+        el.dataset["spThumbDone"] = "1";
+        el.classList.remove("is-load");
+        el.classList.add("is-fail");
+        /* The real storage / signed-URL error, not a silent blank panel. */
+        console.warn("[source-picker] thumbnail failed for " + path, err);
+      };
       const hit = thumbCache.get(path);
       if (hit) {
-        el.style.backgroundImage = 'url("' + hit + '")';
-        el.classList.add("has-img");
+        paint(hit);
+        continue;
+      }
+      if (!opts.resolvePhoto) {
+        fail(new Error("No resolvePhoto helper was provided."));
         continue;
       }
       opts
         .resolvePhoto(path)
         .then((url) => {
-          if (!url) return;
+          if (!url) {
+            fail(new Error("No signed URL was returned."));
+            return;
+          }
           thumbCache.set(path, url);
           if (!el.isConnected) return;
-          el.style.backgroundImage = 'url("' + url + '")';
-          el.classList.add("has-img");
+          paint(url);
         })
-        .catch(() => {});
+        .catch((err) => {
+          if (el.isConnected) fail(err);
+        });
     }
   }
+
 
   function html() {
 
