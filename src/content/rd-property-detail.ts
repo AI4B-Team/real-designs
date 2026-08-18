@@ -149,8 +149,13 @@ function overview(b, pk) {
     ${
       recent.length
         ? `<div class="pd-sub">Recent Work</div><div class="pd-grid">${recent.map(tile).join("")}</div>`
-        : empty("images", "Nothing Saved Here Yet", "Photos, designs, videos and presentations for this address will collect here.", "media", "Open Media")
+        : pk.length
+          ? /* Media is empty but presentations exist — show them instead of
+               telling the user nothing is saved here. */
+            `<div class="pd-sub">Recent Work</div><div class="pd-list">${pk.slice(0, 6).map(pkgRow).join("")}</div>`
+          : empty("images", "Nothing Saved Here Yet", "Photos, designs, videos and presentations for this address will collect here.", "media", "Open Media")
     }`;
+
 }
 
 function tile(m) {
