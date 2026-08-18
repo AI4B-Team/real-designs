@@ -17,6 +17,8 @@ import { saveEstimate, listSavedEstimates, deleteSavedEstimate, getWorkspaceSumm
 import { suggestDesignTitle } from "@/lib/property-address";
 import { supabase } from "@/integrations/supabase/client";
 import { uploadRoomPhoto, roomPhotoUrl, resolvePhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
+import { saveProjectDraft, getProjectDraft, deleteProjectDraft } from "@/lib/drafts.functions";
+import { newDraftId } from "@/lib/project-draft";
 import { mountReports } from "@/content/rd-reports";
 import { mountPropertyDetail } from "@/content/rd-property-detail";
 import { mountBudgetComingSoon, budgetAvailability } from "@/lib/budget-coming-soon";
@@ -221,7 +223,14 @@ function go(v,fromHash){
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
   if(v==='lvideo'){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
 
-  if(v==='studio'){ try{ paintStudioSub(); paintStudioState(); }catch(_){} }
+  if(v==='studio'){
+    try{ paintStudioSub(); paintStudioState(); }catch(_){}
+    /* Media hands a draft id over the window so Studio reopens the real work. */
+    try{
+      const did=(window as any).__rdStudioDraft;
+      if(did){ (window as any).__rdStudioDraft=null; resumeStudioDraft(did); }
+    }catch(_){}
+  }
   /* Photo staging is a normal page: mount it on entry, hand the rail back on
      exit, so browser Back and a refresh both behave like every other view. */
   if(viewId==='staging'){ try{ (window as any).rdStaging && (window as any).rdStaging.mount(); }catch(_){} }
@@ -1107,13 +1116,76 @@ function setStudioSource(kind,src,alt,opts){
   analyzeObjects();
   paintStudioState();
   paintStudioSub();
-  
+
+  /* Persist the in-progress design as soon as a durable source exists. */
+  if(kind!=='saved_draft'){
+    STUDIO_DRAFT_ID=null; STUDIO_DRAFT_PATH=null;
+    const srcPath=o.srcPath||(typeof window!=='undefined'?window.rdPendingPhotoPath:null)||null;
+    if(kind!=='intentional_sample'&&srcPath) { try{ saveStudioDraft(srcPath); }catch(_){} }
+  }
+
   cRng.value=50; setC(50);
 }
+
+/* ---- durable image-design drafts ----------------------------------------
+   An in-progress Studio design is real work: it survives a refresh, another
+   device and a sign-out, and shows up in Media and under its property. */
+let STUDIO_DRAFT_ID=null, STUDIO_DRAFT_PATH=null;
+
+function studioDraftTitle(){
+  const room=(STUDIO_CTX&&STUDIO_CTX.room)||((document.getElementById('fRoom')||{}).value||'').trim();
+  return (STUDIO_CTX&&STUDIO_CTX.project)||suggestDesignTitle((STUDIO_CTX&&STUDIO_CTX.address)||'',room)||'Untitled Design';
+}
+
+/** Saves or refreshes the draft row for whatever source is on the canvas. */
+async function saveStudioDraft(path){
+  const p=path||STUDIO_DRAFT_PATH;
+  if(!p||/^(blob:|data:)/i.test(p)) return;
+  STUDIO_DRAFT_PATH=p;
+  if(!STUDIO_DRAFT_ID) STUDIO_DRAFT_ID=newDraftId();
+  try{
+    await saveProjectDraft({data:{
+      id:STUDIO_DRAFT_ID,
+      project_type:'photo_redesign',
+      status:'draft',
+      title:studioDraftTitle(),
+      property_address:(STUDIO_CTX&&STUDIO_CTX.address)||null,
+      builder_step:'canvas',
+      assets:[{key:'source',path:p}],
+      settings:{room:(STUDIO_CTX&&STUDIO_CTX.room)||null,style:(document.getElementById('fStyle')||{}).value||null},
+    }});
+  }catch(_){}
+}
+
+/** A finished render retires the draft; the saved design is the durable record. */
+async function clearStudioDraft(){
+  const id=STUDIO_DRAFT_ID;
+  STUDIO_DRAFT_ID=null; STUDIO_DRAFT_PATH=null;
+  if(!id) return;
+  try{ await deleteProjectDraft({data:{id}}); }catch(_){}
+}
+
+/** Reopens an image-design draft picked from Media. */
+async function resumeStudioDraft(id){
+  try{
+    const d=await getProjectDraft({data:{id}});
+    const assets=(d&&d.assets)||[];
+    const path=(assets.find(a=>a&&a.path)||{}).path;
+    if(!path) return false;
+    const url=await resolvePhotoUrl(path);
+    if(!url) return false;
+    STUDIO_CTX={room:(d.settings&&d.settings.room)||null,address:d.property_address||null,project:d.title||null};
+    setStudioSource('saved_draft',url,'Your source photo',{draftId:d.id,srcPath:path});
+    STUDIO_DRAFT_ID=d.id; STUDIO_DRAFT_PATH=path;
+    return true;
+  }catch(_){ return false; }
+}
+window.rdStudioResumeDraft=(id)=>resumeStudioDraft(id);
 
 /** Called once a real generated result lands on the canvas. */
 function markStudioResult(){
   STUDIO_RESULT=true;
+  try{ clearStudioDraft(); }catch(_){}
   if(STUDIO_SRC!=='intentional_sample') STUDIO_SRC='generated';
   sourceCaption(false);
   paintStudioState();
