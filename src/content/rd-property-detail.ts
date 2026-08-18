@@ -158,9 +158,17 @@ function tile(m) {
       ? `<div class="pd-state bad"><i data-lucide="alert-triangle"></i><span>Needs Attention</span></div>`
       : `<img data-photo="${esc(m.path || "")}" alt="${esc(m.title)}" hidden>${g === "videos" ? `<span class="pd-play"><i data-lucide="play"></i></span>` : ""}`;
   return `<figure class="pd-tile"><div class="pd-th">${inner}</div>
-    <figcaption><b>${esc(m.title)}</b><span class="mono">${esc(m.room && m.room !== "Needs Review" ? m.room : g === "videos" ? "Video" : g === "images" ? "Design" : "Photo")}${
-      m.status === "draft" ? " &middot; Draft" : ""
-    }</span></figcaption></figure>`;
+    <figcaption><b>${esc(m.title)}</b><span class="mono">${esc(
+      m.draft
+        ? m.draftTypeLabel || "Project"
+        : m.room && m.room !== "Needs Review"
+          ? m.room
+          : g === "videos"
+            ? "Video"
+            : g === "images"
+              ? "Design"
+              : "Photo",
+    )}${m.status === "draft" ? " &middot; Draft" : ""}</span></figcaption></figure>`;
 }
 
 function pkgRow(p) {

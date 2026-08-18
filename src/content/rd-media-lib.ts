@@ -13,7 +13,8 @@ import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
 import { openAddressModal } from "@/lib/address-modal";
 import { suggestAddresses } from "@/lib/property-address.functions";
-import { filterMedia, propertyOptions, assignKind, isAssignable } from "@/lib/media-view";
+import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL } from "@/lib/media-view";
+import { deleteProjectDraft } from "@/lib/drafts.functions";
 import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
@@ -80,6 +81,17 @@ const STATUS_LABEL = {
   shared: "Shared",
   archived: "Archived",
 };
+const TABS = [
+  ["all", "All"],
+  ["images", "Images"],
+  ["videos", "Videos"],
+  ["drafts", "Drafts"],
+  ["processing", "Processing"],
+  ["completed", "Completed"],
+  ["failed", "Failed"],
+  ["unassigned", "Unassigned"],
+];
+
 const TYPE_ICON = {
   generated_image: "image",
   generated_video: "clapperboard",
@@ -132,10 +144,7 @@ function shell() {
   </div>
 
   <div class="ml-tabs" id="mlTabs" role="tablist">
-    <button class="on" data-t="all" role="tab">All <em id="mlcAll"></em></button>
-    <button data-t="images" role="tab">Images <em id="mlcImages"></em></button>
-    <button data-t="videos" role="tab">Videos <em id="mlcVideos"></em></button>
-    <button data-t="uploads" role="tab">Uploads <em id="mlcUploads"></em></button>
+    ${TABS.map(([k, label]) => `<button class="${k === "all" ? "on" : ""}" data-t="${k}" role="tab">${label} <em id="mlc-${k}"></em></button>`).join("")}
   </div>
 
   <div class="ml-bar">
@@ -315,12 +324,9 @@ function paintPropFilter() {
 
 function counts() {
   const live = S.items.filter((m) => m.status !== "archived");
-  return {
-    all: live.length,
-    images: live.filter((m) => typeGroup(m.type) === "images").length,
-    videos: live.filter((m) => typeGroup(m.type) === "videos").length,
-    uploads: live.filter((m) => typeGroup(m.type) === "uploads").length,
-  };
+  const out = {};
+  TABS.forEach(([k]) => (out[k] = live.filter((m) => matchesTab(m, k)).length));
+  return out;
 }
 
 function emptyState() {
@@ -342,9 +348,9 @@ function render() {
   if (!grid) return;
   paintPropFilter();
   const c = counts();
-  ["All", "Images", "Videos", "Uploads"].forEach((k) => {
-    const el = document.getElementById("mlc" + k);
-    if (el) el.textContent = String(c[k.toLowerCase()] || 0);
+  TABS.forEach(([k]) => {
+    const el = document.getElementById("mlc-" + k);
+    if (el) el.textContent = String(c[k] || 0);
   });
   const bulk = document.getElementById("mlBulk");
   const allBtn = document.getElementById("mlAll") as HTMLButtonElement | null;
@@ -421,7 +427,8 @@ function card(m) {
     </div>
     <div class="ml-body">
       <div class="ml-t"><b>${esc(m.title)}</b><span class="pill st-${m.status}">${STATUS_LABEL[m.status] || m.status}</span></div>
-      <div class="mono ml-sub">${esc(addressDisplay({ property_address: m.address, property_label: m.property, property_id: m.propertyId }).text)}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
+      <div class="mono ml-sub">${esc(addressDisplay({ property_address: m.address, property_label: m.property, property_id: m.propertyId }).text)}${m.room && m.room !== "Needs Review" ? " &middot; " + esc(m.room) : ""} &middot; ${esc(fmtDate(m.updatedAt || m.createdAt))}${m.room === "Needs Review" ? ` <span class="ml-unsorted">Needs Sorting</span>` : ""}</div>
+      ${m.draft ? `<div class="mono ml-sub">${esc(m.draftTypeLabel || DRAFT_TYPE_LABEL[m.draftType] || "Project")}${m.photoCount ? " &middot; " + m.photoCount + " Photo" + (m.photoCount === 1 ? "" : "s") : ""} &middot; Last Edited ${esc(fmtDate(m.updatedAt || m.createdAt))}</div>` : ""}
       <div class="ml-acts">${actions(m, g)}</div>
     </div>
   </div>`;
@@ -465,6 +472,9 @@ function actions(m, g) {
   if (m.status === "processing" || m.status === "queued")
     return `<button class="btn btn-ghost btn-xs" data-open="${m.id}" style="flex:1">Open Details</button>
       ${m.job ? `<button class="btn btn-ghost btn-xs" data-cancel="${m.id}">Cancel</button>` : ""}`;
+  if (m.draft)
+    return `<button class="btn btn-primary btn-xs" data-cont="${m.id}" style="flex:1"><i data-lucide="play"></i>Continue Editing</button>
+      <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
   if (m.status === "draft" && g === "videos")
     return `<button class="btn btn-primary btn-xs" data-cont="${m.id}" style="flex:1"><i data-lucide="play"></i>Continue</button>
       <button class="btn btn-ghost btn-xs" data-more="${m.id}" title="More Actions" aria-label="More Actions"><i data-lucide="more-horizontal"></i></button>`;
@@ -500,7 +510,7 @@ function moreItems(m) {
     ];
   const out = [];
   if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
-  if (isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => openVideo(m) });
+  if (m.draft || isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => continueProject(m) });
   if (canEditImage(m)) out.push({ icon: "wand-2", label: "Redesign In A Style", fn: () => restyleFrom([m]) });
   out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
   if (videoReady(m)) out.push({ icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
@@ -644,7 +654,7 @@ function wireCards(grid, list) {
   grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
   grid.querySelectorAll("[data-upg]").forEach((b) => (b.onclick = () => openUpgrade(find(b.dataset.upg))));
   grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
-  grid.querySelectorAll("[data-cont]").forEach((b) => (b.onclick = () => openVideo(find(b.dataset.cont))));
+  grid.querySelectorAll("[data-cont]").forEach((b) => (b.onclick = () => continueProject(find(b.dataset.cont))));
 }
 
 /* ---------------- workflow bridges ---------------- */
@@ -753,6 +763,29 @@ function isDesignDraft(m) {
 }
 
 
+/** Reopen a durable draft in the builder that owns it. */
+function continueProject(m) {
+  if (!m) return;
+  if (!m.draft) return openVideo(m);
+  if (m.draftType === "photo_staging") {
+    const st = (window as any).rdStaging;
+    if (st && st.resume) {
+      st.resume(m.draftId).then((ok) => {
+        if (!ok) toast("That project could not be reopened. Its photos may have been removed.");
+      });
+      return;
+    }
+    S.go("staging");
+    return;
+  }
+  if (m.draftType === "photo_redesign") {
+    try { (window as any).__rdStudioDraft = m.draftId; } catch (_) {}
+    S.go("studio");
+    return;
+  }
+  openVideo(m);
+}
+
 function openVideo(m, tab) {
   try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
   if (isDesignDraft(m)) {
@@ -843,9 +876,34 @@ async function changeAddress(m) {
   });
 }
 
+/**
+ * Deleting a project and deleting a single asset are different actions, so the
+ * confirmation says exactly which one is about to happen.
+ */
 async function del(m) {
   if (!m) return;
-  if (!window.confirm("Delete “" + m.title + "”? This cannot be undone.")) return;
+  if (m.draft && m.draftId) {
+    const label = m.draftTypeLabel || DRAFT_TYPE_LABEL[m.draftType] || "Project";
+    const msg =
+      "Delete the whole project “" +
+      m.title +
+      "” (" +
+      label +
+      ")?\n\nThis removes the project and its saved progress. Photos already uploaded to this account stay in Media.";
+    if (!window.confirm(msg)) return;
+    try {
+      await deleteProjectDraft({ data: { id: m.draftId } });
+      if (m.videoProjectId) await deleteVideo({ data: { id: m.videoProjectId } });
+    } catch (e) {
+      window.alert("Could not delete this project: " + (e && e.message ? e.message : "try again"));
+      return;
+    }
+    closeDrawer();
+    await load(true);
+    return;
+  }
+  const what = m.type === "generated_video" ? "video" : m.type === "generated_image" ? "design" : "photo";
+  if (!window.confirm("Delete this " + what + ", “" + m.title + "”? Only this one file is deleted. This cannot be undone.")) return;
   try {
     if (m.type === "generated_video") await deleteVideo({ data: { id: m.refId } });
     else if (m.type === "generated_image") await deleteVersions({ data: { version_ids: [m.refId] } });
