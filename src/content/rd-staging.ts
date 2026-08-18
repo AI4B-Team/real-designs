@@ -32,6 +32,9 @@ import {
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { openAddressModal } from "@/lib/address-modal";
+import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel } from "@/lib/builder-ui";
+import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
+import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
 import { listMediaProperties } from "@/lib/property-media.functions";
 import {
@@ -66,6 +69,11 @@ function newSession(seed = {}) {
     address: seed.address || "",
     title: seed.title || "",
     propertyId: seed.propertyId || null,
+    addressSource: seed.addressSource || "unknown",
+    addressStructured: null,
+    addressMatch: null,
+    addressMatchDismissed: false,
+    addressSaveState: "",
     draftId: seed.draftId || null,
     saveState: "idle",
     detect: "pending",
@@ -129,6 +137,7 @@ function draftPayload() {
 function setSaveState(state) {
   if (!S) return;
   S.saveState = state;
+  S.addressSaveState = state === "saving" ? "saving" : state === "error" ? "error" : state === "saved" ? "saved" : "";
   patchStatus();
 }
 
@@ -453,11 +462,13 @@ async function detectRooms(list) {
 /* --------------------------------------------------------------- renderers */
 
 function stateOf(it) {
-  if (it.roomSource === "manual") return { cls: "ok", label: "Edited" };
-  if (it.detect === "running" || it.detect === "pending") return { cls: "wait", label: "Detecting" };
-  if (it.roomSource === "ai" && it.confidence >= ACCEPT_CONFIDENCE) return { cls: "ok", label: "Detected" };
-  if (it.roomSource === "ai") return { cls: "warn", label: "Needs Review" };
-  return { cls: "warn", label: "Unassigned" };
+  /* Wording lives in the shared builder chrome so both builders agree. */
+  return roomBadge({
+    detect: it.roomSource === "manual" ? "done" : it.detect,
+    source: it.roomSource,
+    confident: Number(it.confidence || 0) >= ACCEPT_CONFIDENCE,
+    custom: !!it.room && !ROOM_OPTIONS.some((r) => r.label === it.room),
+  });
 }
 
 /* Review Rooms is one continuous grid in upload order. Detection writes a
@@ -471,7 +482,7 @@ function cardHtml(it) {
   const st = stateOf(it);
   const label = it.room || UNASSIGNED_LABEL;
   return `<article class="rds-card${it.selected ? " sel" : ""}${it.done ? " done" : ""}" data-k="${it.key}" data-pick="${it.key}">
-    <label class="rds-pick"><input type="checkbox" data-sel="${it.key}" ${it.selected ? "checked" : ""} aria-label="Select ${esc(it.name)}"></label>
+    <label class="rds-pick">${selectCheckHtml()}<input type="checkbox" data-sel="${it.key}" ${it.selected ? "checked" : ""} aria-label="Select ${esc(it.name)}"></label>
     <button class="rds-thumb" data-open="${it.key}" aria-label="Open ${esc(it.name)} in the canvas">
       <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}" loading="lazy">
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
@@ -479,9 +490,15 @@ function cardHtml(it) {
       ${it.done ? '<span class="rds-done"><i data-lucide="check"></i>Designed</span>' : ""}
     </button>
     <div class="rds-meta">
-      <button class="rds-room" data-room="${it.key}" aria-haspopup="listbox">
-        <i data-lucide="${roomIcon(it.room)}"></i><span>${esc(label)}</span><i data-lucide="chevron-down" class="rds-caret"></i>
-      </button>
+      ${roomSelectHtml({
+        attr: "room",
+        key: it.key,
+        label,
+        icon: roomIcon(it.room),
+        unknown: !it.room,
+        manual: it.roomSource === "manual",
+        className: "rds-room",
+      })}
       <div class="rds-row">
         <span class="rds-badge ${st.cls}">${st.label}</span>
         <span class="rds-name" title="${esc(it.name)}">${esc(it.name)}</span>
@@ -512,28 +529,29 @@ function statusText() {
   /* "Saved" is only honest once every photo is stored and the row is written. */
   const uploading = S.items.some((i) => i.status === "uploading");
   const failed = S.items.some((i) => i.status === "failed");
-  if (S.saveState === "saving" || uploading) parts.push("Saving…");
-  else if (S.saveState === "error") parts.push("Save Failed · Retry");
+  if (S.saveState === "saving" || uploading) parts.push(saveLabel("saving"));
+  else if (S.saveState === "error") parts.push(saveLabel("error"));
   else if (failed) parts.push("Some Uploads Failed");
-  else if (S.saveState === "saved") parts.push("Saved");
+  else if (S.saveState === "saved") parts.push(saveLabel("saved"));
   return parts.join(" · ");
 }
 
 
 function stepRailHtml(active) {
   const steps = [
-    { k: "add", n: 1, label: "Add Photos", icon: "image-plus" },
-    { k: "review", n: 2, label: "Review Rooms", icon: "layout-grid" },
-    { k: "design", n: 3, label: "Design", icon: "wand-2" },
+    { key: "add", label: "Add Photos", icon: "image-plus", done: S.items.length > 0 },
+    { key: "review", label: "Review Rooms", icon: "layout-grid", ready: S.items.length > 0 },
+    { key: "design", label: "Design", icon: "wand-2", ready: false },
   ];
-  return `<nav class="rds-rail" aria-label="Staging steps">${steps
-    .map(
-      (st) =>
-        `<button class="rds-rail-i${st.k === active ? " on" : ""}" data-step="${st.k}"${st.k === "design" ? " disabled" : ""}>
-          <i data-lucide="${st.icon}"></i><span><b>Step ${st.n}</b>${esc(st.label)}</span>
-        </button>`,
-    )
-    .join("")}</nav>`;
+  return builderRailHtml({
+    steps,
+    active,
+    attr: "step",
+    variant: "row",
+    label: "Staging steps",
+    navClass: "rds-rail",
+    itemClass: "rds-rail-i",
+  });
 }
 
 function render() {
@@ -559,14 +577,14 @@ function render() {
   el.innerHTML = `<section class="rds-page">
     ${stepRailHtml("review")}
     <header class="rds-ph">
-      <div>
+      <div class="rds-ph-l">
         <h2>Review Rooms</h2>
         <p>Confirm the room type for each photo.</p>
-        <button class="rds-addr${S.address ? " on" : ""}" id="rdsAddr">
-          <i data-lucide="map-pin"></i><span id="rdsAddrTxt">${esc(S.address || "Add Property Address")}</span>
-        </button>
       </div>
-      <div class="rds-ph-r"><span id="rdsStatus">${esc(statusText())}</span></div>
+      <div class="rds-ph-r">
+        ${addressBarHtml(S, PROPS || [], "rdsAddr")}
+        <span id="rdsStatus">${esc(statusText())}</span>
+      </div>
     </header>
     <div class="rds-bar">
       <div class="rds-bar-l">
@@ -691,7 +709,7 @@ function bindReview(el) {
       if (act === "del") { removeSelected(); return; }
     }),
   );
-  el.querySelector("#rdsAddr").onclick = () => openAddressEditor();
+  bindAddress(el);
 
   /* Add Photos stays on this page: the picker adds straight into the grid. */
   const file = el.querySelector("#rdsFile");
@@ -815,6 +833,56 @@ function startDesigning() {
    Optional on every staging project. The address never renames the project
    and can be cleared again from the same modal. */
 let PROPS = null;
+let addrTimer = null;
+
+/** Load the workspace's properties once so the field can suggest addresses. */
+async function loadProps() {
+  if (PROPS) return PROPS;
+  try { PROPS = await listMediaProperties(); } catch (_) { PROPS = []; }
+  if (S && S.step === "review") render();
+  return PROPS;
+}
+
+/** Inline, autosaved property address — the same control the video builder uses. */
+function bindAddress(el) {
+  void loadProps();
+  const input = el.querySelector("#rdsAddr");
+  if (input) {
+    input.addEventListener("input", (ev) => {
+      applyAddress(S, ev.target.value, "manual");
+      S.addressMatchDismissed = false;
+      clearTimeout(addrTimer);
+      addrTimer = setTimeout(() => { saveDraft(); void lookupAddress(); }, 700);
+    });
+  }
+  el.querySelectorAll("[data-addr-use]").forEach((b) => (b.onclick = () => {
+    S.propertyId = b.getAttribute("data-addr-use");
+    S.address = (S.addressMatch && S.addressMatch.address) || S.address;
+    applyAddress(S, S.address, "existing_property");
+    S.addressMatch = null;
+    saveDraft();
+    render();
+  }));
+  el.querySelectorAll("[data-addr-sep]").forEach((b) => (b.onclick = () => {
+    S.addressMatchDismissed = true;
+    S.propertyId = null;
+    saveDraft();
+    render();
+  }));
+  el.querySelectorAll("[data-addr-retry]").forEach((b) => (b.onclick = () => retryDraftSave()));
+}
+
+/** Offer the existing property instead of quietly creating a duplicate. */
+async function lookupAddress() {
+  const text = cleanAddressText(S.address);
+  if (text.length < 8 || S.propertyId) { S.addressMatch = null; return; }
+  try {
+    const res = await matchPropertyAddress({ data: { address: text } });
+    if (!S) return;
+    S.addressMatch = (res && res.match) || null;
+    if (S.addressMatch) render();
+  } catch (_) {}
+}
 async function openAddressEditor() {
   if (!PROPS) {
     try { PROPS = await listMediaProperties(); } catch (_) { PROPS = []; }
