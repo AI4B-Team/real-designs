@@ -56,7 +56,6 @@ import {
   cancelRenderJob as _cancelRenderJob,
 } from "@/lib/reveal.functions";
 import { jobStatusLabel, isJobStale, renderProvider, activeRenderProvider, runsInBackground } from "@/lib/render-providers";
-import { browserRenderSupport, isRenderCancelled, RENDER_CANCELLED } from "@/lib/reveal-render";
 /* Server functions take a single { data } envelope; these thin wrappers let
    call sites keep passing plain arguments. */
 const listVideos = (d) => _listVideos(d === undefined ? undefined : { data: d });
@@ -83,6 +82,9 @@ import {
   EXTERIOR_DISCLOSURE,
   IMMERSIVE_CREDITS_PER_SCENE,
   suggestLabels,
+  browserRenderSupport,
+  isRenderCancelled,
+  RENDER_CANCELLED,
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
 import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
@@ -307,6 +309,15 @@ async function loadLibrary() {
       listRenderJobs().catch(() => []),
     ]);
     S.jobs = jobs || [];
+    /* A job whose tab went away is not still running. Retire it on sight so the
+       library shows the interruption and the held credits come back. */
+    for (const j of S.jobs) {
+      if (!isJobStale(j) || j.id === S.renderJobId) continue;
+      try {
+        const fixed = await cancelRenderJob({ id: j.id, force: true });
+        if (fixed) Object.assign(j, fixed);
+      } catch (_) {}
+    }
     S.credits = credits;
     S.projects = lib.projects;
     S.variants = lib.variants;
