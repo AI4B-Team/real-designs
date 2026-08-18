@@ -520,24 +520,60 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return m ? Number(m[1]) : null;
   }
 
+  /** Up to four thumbnail paths for the card's photo area. */
+  function thumbsOf(p: PickerProperty): string[] {
+    const out: string[] = [];
+    for (const t of (p.thumbs || []) as string[]) {
+      if (t && !out.includes(t)) out.push(t);
+      if (out.length === 4) break;
+    }
+    if (!out.length && p.thumb) out.push(p.thumb);
+    return out;
+  }
+
+  /** One photo area: skeleton first, real image when the signed URL resolves,
+      deliberate fallback when it fails. Never a permanent blank panel. */
+  function thumbArea(p: PickerProperty) {
+    const icon = p.unassigned ? "images" : "home";
+    const list = thumbsOf(p);
+    const tile = (path: string) =>
+      '<span class="sp-th-i is-load" data-sp-thumb="' + esc(path) + '"><i data-lucide="' + icon + '"></i></span>';
+    const inner = !list.length
+      ? '<span class="sp-th-i is-none"><i data-lucide="' + icon + '"></i></span>'
+      : list.length >= 2 && p.unassigned
+        ? '<span class="sp-th-mosaic">' + list.slice(0, 4).map(tile).join("") + "</span>"
+        : tile(list[0]!);
+    return '<span class="sp-prop-th">' + inner + "</span>";
+  }
+
   function propCard(p: PickerProperty) {
     const selected = state.propSel === p.id;
     const empty = p.count === 0;
     const cls = ["sp-prop", p.unassigned ? "is-util" : "", selected ? "is-sel" : "", empty ? "is-empty" : ""].filter(Boolean).join(" ");
-    const thumb = p.thumb
-      ? '<span class="sp-prop-th" data-sp-thumb="' + esc(p.thumb) + '"><i data-lucide="' + (p.unassigned ? "images" : "home") + '"></i></span>'
-      : '<span class="sp-prop-th"><i data-lucide="' + (p.unassigned ? "images" : "home") + '"></i></span>';
-    const count = empty ? "No Photos Available" : photoCountLabel(p.count == null ? "" : p.count);
+    const count = empty ? "No Photos Yet" : photoCountLabel(p.count == null ? "" : p.count);
+    if (empty) {
+      /* Kept out of the way: nothing to select, so the card offers photos. */
+      return (
+        '<div class="' + cls + '" role="option" aria-selected="false" aria-disabled="true">' +
+        '<span class="sp-prop-th"><span class="sp-th-i is-none"><i data-lucide="image-off"></i></span></span>' +
+        '<span class="sp-prop-b"><b>' + esc(p.line1 || "") + "</b>" +
+        (p.line2 ? "<span>" + esc(p.line2) + "</span>" : "") +
+        '<em class="sp-prop-c">' + esc(count) +
+        '<button type="button" class="sp-link" data-sp="browse">Upload Photos</button></em></span></div>'
+      );
+    }
     return (
       '<div class="' + cls + '" role="option" aria-selected="' + (selected ? "true" : "false") + '"' +
-      (empty ? ' aria-disabled="true"' : ' tabindex="0" data-sp-prop="' + esc(p.id!) + '"') + ">" +
-      thumb +
+      ' tabindex="0" data-sp-prop="' + esc(p.id!) + '">' +
+      thumbArea(p) +
+      '<span class="sp-pick' + (selected ? " on" : "") + '" aria-hidden="true">' +
+      (selected ? '<i data-lucide="check"></i>' : "") + "</span>" +
       '<span class="sp-prop-b"><b>' + esc(p.line1 || "") + "</b>" +
       (p.line2 ? "<span>" + esc(p.line2) + "</span>" : "") +
-      '<em class="sp-prop-c">' + esc(count) +
-      '<i data-lucide="' + (selected ? "circle-check-big" : "circle") + '"></i></em></span></div>'
+      '<em class="sp-prop-c">' + esc(count) + "</em></span></div>"
     );
   }
+
 
   function photoPanel() {
     const id = state.propSel;
