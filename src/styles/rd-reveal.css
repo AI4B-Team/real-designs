@@ -886,3 +886,56 @@
   .rd-app .rv-head .rv-headmore { position: absolute; top: 0; right: 0; }
   .rd-app .rv-head { position: relative; padding-right: 40px; }
 }
+
+/* ---------------------------------------------------------- AI Animate */
+.rd-app .rv-modal-sub { display: block; font-size: 12px; color: #6b6b6b; font-weight: 400; margin-top: 2px; }
+.rd-app .an-body { display: grid; grid-template-columns: 220px 1fr; gap: 18px; padding-top: 14px; }
+.rd-app .an-src img, .rd-app .an-src-ph { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; background: #f2f2f2; display: block; }
+.rd-app .an-src b { display: block; margin-top: 10px; font-size: 14px; }
+.rd-app .an-src span { display: block; font-size: 12px; color: #6b6b6b; }
+.rd-app .an-status { margin-top: 8px; font-size: 12px; color: #cc0000; }
+.rd-app .an-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.rd-app .an-card { text-align: left; background: #fff; border: 1px solid #e6e6e6; border-radius: 12px; padding: 10px 12px; cursor: pointer; position: relative; }
+.rd-app .an-card:hover { border-color: #cfcfcf; }
+.rd-app .an-card.on { border-color: #cc0000; box-shadow: inset 0 0 0 1px #cc0000; }
+.rd-app .an-card b { display: block; font-size: 13px; }
+.rd-app .an-card span { display: block; font-size: 12px; color: #6b6b6b; margin-top: 2px; }
+.rd-app .an-meta { display: flex; gap: 8px; margin-top: 8px; font-style: normal; font-size: 11px; color: #444; }
+.rd-app .an-disc { display: block; margin-top: 4px; font-style: normal; font-size: 11px; color: #8a8a8a; }
+.rd-app .an-beta { position: absolute; top: 8px; right: 8px; font-size: 10px; background: #f4f4f4; border-radius: 999px; padding: 1px 7px; color: #555; }
+.rd-app .an-detail { margin-top: 14px; border-top: 1px solid #eee; padding-top: 12px; }
+.rd-app .an-detail.empty p { font-size: 13px; color: #6b6b6b; }
+.rd-app .an-prompt { font-size: 12px; color: #555; margin: 4px 0 10px; }
+.rd-app .an-detail dl { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 8px 14px; margin: 0; }
+.rd-app .an-detail dt { font-size: 11px; color: #8a8a8a; }
+.rd-app .an-detail dd { margin: 0; font-size: 13px; }
+.rd-app .an-note { margin: 10px 0 0; font-size: 12px; color: #6b6b6b; }
+.rd-app .an-bal { margin-right: auto; font-size: 12px; color: #555; }
+.rd-app .an-short { margin: 0; padding: 0 18px 14px; font-size: 12px; color: #cc0000; }
+.rd-app .an-confirm { border-top: 1px solid #eee; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.rd-app .an-confirm b { font-size: 13px; }
+.rd-app .an-confirm-a { display: flex; gap: 8px; }
+@media (max-width: 760px) { .rd-app .an-body { grid-template-columns: 1fr; } }
+
+/* clip review */
+.rd-app .cl-body { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding-top: 14px; }
+.rd-app .cl-body figure { margin: 0; }
+.rd-app .cl-body figcaption { font-size: 11px; color: #8a8a8a; margin-bottom: 6px; }
+.rd-app .cl-body img, .rd-app .cl-body video { width: 100%; border-radius: 12px; background: #111; display: block; }
+.rd-app .cl-ctrl { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.rd-app .cl-disc { margin: 0; padding: 0 18px 12px; font-size: 12px; color: #6b6b6b; display: flex; gap: 6px; align-items: center; }
+@media (max-width: 720px) { .rd-app .cl-body { grid-template-columns: 1fr; } }
+
+/* scene card clip strip */
+.rd-app .rv-clip { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 6px 8px; border-top: 1px solid #eee; font-size: 11px; }
+.rd-app .rv-clip .rv-clip-b { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; }
+.rd-app .rv-clip em { font-style: normal; color: #6b6b6b; }
+.rd-app .rv-clip i[data-lucide] { width: 13px; height: 13px; }
+.rd-app .rv-clip.busy .rv-clip-b { color: #444; }
+.rd-app .rv-clip.busy i[data-lucide="loader"] { animation: rd-spin 1s linear infinite; }
+.rd-app .rv-clip.bad .rv-clip-b { color: #cc0000; }
+.rd-app .rv-clip.on { background: #fff5f5; }
+.rd-app .rv-clip.on .rv-clip-b { color: #cc0000; }
+.rd-app .rv-clip .fb-link { background: none; border: 0; padding: 0; cursor: pointer; color: #444; text-decoration: underline; font-size: 11px; }
+.rd-app .rv-clip .fb-link.strong { color: #cc0000; font-weight: 600; }
+@keyframes rd-spin { to { transform: rotate(360deg); } }
