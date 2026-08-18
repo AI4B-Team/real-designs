@@ -550,10 +550,14 @@ const canRename = (m) =>
 let POP = null;
 function closePop() {
   if (POP) {
+    const a = POP.__anchor;
     POP.remove();
     POP = null;
+    /* Send focus back where it came from so keyboard users keep their place. */
+    try { a && a.isConnected && a.focus(); } catch (_) {}
   }
 }
+
 try {
   document.addEventListener("click", (e) => {
     if (POP && !POP.contains(e.target)) closePop();
