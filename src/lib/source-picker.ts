@@ -885,6 +885,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     else if (k === "cloudgo") importCloud((document.getElementById("spCloud") as HTMLInputElement | null)?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
+    else if (k === "emptytoggle") {
+      state.showEmpty = !state.showEmpty;
+      render();
+    }
+
     else if (k === "pall") {
       state.propChecked = new Set(state.propPhotos.map((x) => x.id));
       render();
