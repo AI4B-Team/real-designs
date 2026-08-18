@@ -1096,6 +1096,7 @@ async function openAddressEditor() {
 function closePopover() {
   if (popover) popover.remove();
   popover = null;
+  document.querySelectorAll('.bx-room[aria-expanded="true"]').forEach((b) => b.setAttribute("aria-expanded", "false"));
   if (S && S.activeKey) {
     const prev = S.activeKey;
     S.activeKey = null;
@@ -1106,6 +1107,7 @@ function closePopover() {
 
 function openRoomPopover(anchor, onPick, key) {
   closePopover();
+  if (anchor && anchor.setAttribute) anchor.setAttribute("aria-expanded", "true");
   popover = document.createElement("div");
   popover.className = "rds-pop";
   popover.innerHTML = `<div class="rds-pop-s"><i data-lucide="search"></i><input id="rdsSearch" placeholder="Search Rooms" aria-label="Search rooms"></div><div class="rds-pop-l" id="rdsList"></div>`;
