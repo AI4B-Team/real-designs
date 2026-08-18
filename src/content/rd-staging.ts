@@ -180,6 +180,8 @@ function hide() {
 
 function exitAll() {
   hide();
+  /* Leaving the screen is not losing the work: flush whatever is queued. */
+  if (saver) { void saver.flush(); saver.destroy(); saver = null; }
   if (S) S.items.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
   S = null;
   removeStrip();
@@ -191,12 +193,78 @@ export function openStagingReview(seed = {}) {
   const files = (seed.files || []).filter(Boolean);
   if (!S) S = newSession(seed);
   if (seed.address) S.address = seed.address;
+  if (seed.propertyId) S.propertyId = seed.propertyId;
   if (files.length) {
     addFiles(files);
   } else {
     S.step = S.items.length ? "review" : "add";
   }
   show();
+}
+
+/** Rebuild a session from a saved database draft. */
+function hydrate(draft) {
+  S = newSession({
+    address: draft.property_address || "",
+    title: draft.title || "",
+    propertyId: draft.property_id || null,
+    draftId: draft.id,
+  });
+  S.group = draft.settings?.group !== false;
+  const order = Array.isArray(draft.item_order) ? draft.item_order : [];
+  const assets = (draft.assets || []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+  S.items = assets.map((a) => ({
+    key: a.key,
+    name: a.name || "Photo",
+    file: null,
+    previewUrl: "",
+    path: a.path,
+    signed: null,
+    status: "ready",
+    error: "",
+    room: a.room || "",
+    roomSource: a.room_source || "none",
+    confidence: Number(a.confidence || 0),
+    detect: "done",
+    selected: a.selected !== false,
+    done: !!a.done,
+  }));
+  S.step = draft.builder_step === "add" ? "add" : "review";
+  ensureSaver();
+  /* Signed URLs are minted per session; the row only ever stores paths. */
+  S.items.forEach(async (it) => {
+    if (!it.path) return;
+    try {
+      it.signed = await roomPhotoUrl(it.path);
+      patchCard(it);
+    } catch (_) {}
+  });
+}
+
+/**
+ * Reopen the most recent staging draft for this account. Called after sign-in
+ * and on app boot, so a refresh, a new browser or another device all land back
+ * on the same work.
+ */
+export async function resumeStagingDraft(id) {
+  try {
+    /* One-time lift of any legacy browser-only draft, server-confirmed first. */
+    await migrateLegacyStagingDraft({ save: (payload) => saveProjectDraft({ data: payload }) });
+  } catch (_) {}
+  try {
+    let draft = null;
+    if (id) draft = (await getProjectDraft({ id })).draft;
+    else {
+      const res = await listProjectDrafts({ project_type: "photo_staging", scope: "drafts", limit: 1 });
+      draft = (res.drafts || [])[0] || null;
+    }
+    if (!draft || !(draft.assets || []).length) return false;
+    hydrate(draft);
+    show();
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 /** Reopen the review grid from the canvas strip. */
