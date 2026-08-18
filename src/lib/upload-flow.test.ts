@@ -217,7 +217,7 @@ describe("photo staging: add photos -> review rooms", () => {
     expect(hostEl.querySelector(".rv-gridfoot")).toBeTruthy();
     expect(hostEl.textContent).toContain("Confirm the room type for each photo.");
     /* Bulk actions collapse into a More menu. */
-    expect(hostEl.querySelector("#rdsMoreMenu")).toBeTruthy();
+    expect(hostEl.querySelector(".rv-utility .rv-more")).toBeTruthy();
     expect(hostEl.textContent).not.toContain("Remove All Items");
   });
 
