@@ -890,7 +890,7 @@
 /* ---------------------------------------------------------- AI Animate */
 .rd-app .rv-modal-sub { display: block; font-size: 12px; color: #6b6b6b; font-weight: 400; margin-top: 2px; }
 .rd-app .an-body { display: grid; grid-template-columns: 220px 1fr; gap: 18px; padding-top: 14px; }
-.rd-app .an-src img, .rd-app .an-src-ph { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 12px; background: #f2f2f2; display: block; }
+.rd-app .an-src-ph { width: 100%; aspect-ratio: 4 / 3; border-radius: 12px; background: #f2f2f2 center/cover no-repeat; display: block; }
 .rd-app .an-src b { display: block; margin-top: 10px; font-size: 14px; }
 .rd-app .an-src span { display: block; font-size: 12px; color: #6b6b6b; }
 .rd-app .an-status { margin-top: 8px; font-size: 12px; color: #cc0000; }

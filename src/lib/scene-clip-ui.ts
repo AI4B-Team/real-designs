@@ -163,7 +163,7 @@ export function animateModalHtml(ctx: AnimateModalCtx): string {
       <button class="icon-btn" id="rvAnimX" aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b an-body">
       <aside class="an-src">
-        ${ctx.thumb ? `<img src="${esc(ctx.thumb)}" alt="Scene photo">` : `<div class="an-src-ph"></div>`}
+        <div class="an-src-ph" ${ctx.thumb ? `data-img="${esc(ctx.thumb)}"` : ""} role="img" aria-label="Scene photo"></div>
         <b>${esc(ctx.room || "Unassigned")}</b>
         <span>Scene ${ctx.position ?? 1}${ctx.total ? ` of ${ctx.total}` : ""}</span>
         ${status}
@@ -200,7 +200,7 @@ export function clipReviewHtml(ctx: {
       <button class="icon-btn" id="rvClipX" aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b cl-body">
       <figure><figcaption>Original Photo</figcaption>
-        ${ctx.photo ? `<img src="${esc(ctx.photo)}" alt="Original photo">` : `<div class="an-src-ph"></div>`}</figure>
+        <div class="an-src-ph" ${ctx.photo ? `data-img="${esc(ctx.photo)}"` : ""} role="img" aria-label="Original photo"></div></figure>
       <figure><figcaption>Generated Clip</figcaption>
         ${ctx.url
           ? `<video id="rvClipVid" src="${esc(ctx.url)}" playsinline controls loop muted></video>`
