@@ -3669,7 +3669,7 @@ function previewPanel() {
       ${creditBreakdown().rows.map(([n, v]) => `<div><span>${esc(n)}</span><b class="mono">${v}</b></div>`).join("")}
       <div class="rv-bill-t"><span>Total To Render</span><b class="mono">${cost} Credits</b></div>
       ${creditBreakdown().clips ? `<div class="rv-bill-n">${creditBreakdown().clips} AI ${creditBreakdown().clips === 1 ? "Clip" : "Clips"} · ${creditBreakdown().clipCost} Credits Already Charged</div>` : ""}
-      ${bal != null ? `<div class="rv-bill-n">Balance ${bal}${bal >= cost ? ` · ${bal - cost} After This Render` : ""}</div>` : ""}
+      ${bal != null ? `<div class="rv-bill-n">Balance ${bal}${!block && bal >= cost ? ` · ${bal - cost} After This Render` : ""}</div>` : ""}
     </div>
     ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">You Need ${cost - bal} More Credits To Render This Video.</div><button class="btn btn-ghost btn-sm" id="rvAddCredits2"><i data-lucide="zap"></i>Add Credits</button>` : ""}
     ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
