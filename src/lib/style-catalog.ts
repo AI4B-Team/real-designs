@@ -8,6 +8,7 @@
  */
 
 import { PHOTOS } from "@/content/rd-photos";
+import { STYLE_PHOTOS } from "@/content/rd-style-photos";
 
 export type ProjectType = "interior" | "exterior" | "garden" | "virtual-staging" | "concept";
 
@@ -387,7 +388,7 @@ function build(row: Row): StyleRecord {
     mood: row.mood || moodFor(row),
     generationPrompt: prompt,
     negativePrompt: NEG_BASE + (row.neg ? ", " + row.neg : ""),
-    previewImage: pick(row.img),
+    previewImage: STYLE_PHOTOS[row.id] || pick(row.img),
     featuredRank: row.rank || 900,
     isFeatured: !!row.rank,
     isActive: true,
