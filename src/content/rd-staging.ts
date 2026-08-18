@@ -666,6 +666,8 @@ function mountPicker(slot) {
 function bindReview(el) {
   el.querySelector("#rdsClose").onclick = exitAll;
   el.querySelector("#rdsBack").onclick = () => {
+    /* Back keeps every photo, room and selection: only the step changes. */
+    saveDraft();
     S.step = "add";
     render();
   };
@@ -683,40 +685,27 @@ function bindReview(el) {
     b.addEventListener("click", () => {
       const act = b.getAttribute("data-act");
       closeMenu();
-      if (act === "all") S.items.forEach((i) => (i.selected = true));
-      if (act === "none") S.items.forEach((i) => (i.selected = false));
-      if (act === "del") {
-        const keep = S.items.filter((i) => !i.selected);
-        if (keep.length === S.items.length) return;
-        S.items.filter((i) => i.selected).forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
-        S.items = keep;
-        if (!S.items.length) S.step = "add";
-        saveDraft();
-      }
-      render();
+      if (act === "all") { S.items.forEach((i) => (i.selected = true)); saveDraft(); syncSelection(); return; }
+      if (act === "none") { S.items.forEach((i) => (i.selected = false)); saveDraft(); syncSelection(); return; }
+      if (act === "room") { applyRoomToSelected(el.querySelector("#rdsSetRoom") || b); return; }
+      if (act === "del") { removeSelected(); return; }
     }),
   );
   el.querySelector("#rdsAddr").onclick = () => openAddressEditor();
-  el.querySelector("#rdsMore").onclick = () => {
-    S.step = "add";
-    render();
-  };
-  el.querySelector("#rdsSetRoom").onclick = (e) => {
-    const sel = S.items.filter((i) => i.selected);
-    if (!sel.length) return;
-    openRoomPopover(e.currentTarget, (label) => {
-      sel.forEach((i) => {
-        i.room = label;
-        i.roomSource = "manual";
-      });
-      saveDraft();
-      render();
-    });
-  };
-  el.querySelector("#rdsGo").onclick = () => {
-    const first = ordered().find((i) => i.selected && !i.done) || ordered().find((i) => i.selected) || S.items[0];
-    if (first) openInCanvas(first.key);
-  };
+
+  /* Add Photos stays on this page: the picker adds straight into the grid. */
+  const file = el.querySelector("#rdsFile");
+  el.querySelector("#rdsMore").onclick = () => file && file.click();
+  if (file) {
+    file.onchange = () => {
+      const picked = Array.from(file.files || []);
+      file.value = "";
+      if (picked.length) addFiles(picked);
+    };
+  }
+
+  el.querySelector("#rdsSetRoom").onclick = (e) => applyRoomToSelected(e.currentTarget);
+  el.querySelector("#rdsGo").onclick = startDesigning;
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
      controls are delegated from the page instead of bound per element. */
@@ -725,10 +714,7 @@ function bindReview(el) {
     if (!c) return;
     const it = S.items.find((i) => i.key === c.getAttribute("data-sel"));
     if (!it) return;
-    it.selected = c.checked;
-    c.closest(".rds-card")?.classList.toggle("sel", c.checked);
-    patchStatus();
-    saveDraft();
+    toggleSelect(it, c.checked);
   });
   el.addEventListener("click", (e) => {
     const t = e.target;
@@ -736,17 +722,7 @@ function bindReview(el) {
     const open = t.closest("[data-open]");
     if (open) { openInCanvas(open.getAttribute("data-open")); return; }
     const del = t.closest("[data-del]");
-    if (del) {
-      const k = del.getAttribute("data-del");
-      const it = S.items.find((i) => i.key === k);
-      if (!it) return;
-      try { URL.revokeObjectURL(it.previewUrl); } catch (_) {}
-      S.items = S.items.filter((i) => i.key !== k);
-      if (!S.items.length) S.step = "add";
-      saveDraft();
-      render();
-      return;
-    }
+    if (del) { removeOne(del.getAttribute("data-del")); return; }
     const room = t.closest("[data-room]");
     if (room) {
       const it = S.items.find((i) => i.key === room.getAttribute("data-room"));
@@ -757,9 +733,83 @@ function bindReview(el) {
         saveDraft();
         patchCard(it);
       });
+      return;
+    }
+    /* Anywhere else on the card toggles selection. The checkbox handles
+       itself through the change event above. */
+    if (t.closest("[data-sel]") || t.closest(".rds-pick")) return;
+    const card = t.closest("[data-pick]");
+    if (card) {
+      const it = S.items.find((i) => i.key === card.getAttribute("data-pick"));
+      if (it) toggleSelect(it, !it.selected);
     }
   });
 }
+
+function toggleSelect(it, next) {
+  it.selected = !!next;
+  syncCard(it);
+  syncSelection();
+  saveDraft();
+}
+
+function applyRoomToSelected(anchor) {
+  const sel = S.items.filter((i) => i.selected);
+  if (!sel.length || !anchor) return;
+  openRoomPopover(anchor, (label) => {
+    sel.forEach((i) => {
+      i.room = label;
+      i.roomSource = "manual";
+    });
+    saveDraft();
+    sel.forEach(patchCard);
+    syncSelection();
+  });
+}
+
+function removeOne(key) {
+  const it = S.items.find((i) => i.key === key);
+  if (!it) return;
+  if (!window.confirm("Remove “" + it.name + "” from this project? The original photo stays in your library.")) return;
+  try { URL.revokeObjectURL(it.previewUrl); } catch (_) {}
+  S.items = S.items.filter((i) => i.key !== key);
+  if (!S.items.length) S.step = "add";
+  saveDraft();
+  render();
+}
+
+function removeSelected() {
+  const gone = S.items.filter((i) => i.selected);
+  if (!gone.length) return;
+  const msg =
+    gone.length === 1
+      ? "Remove 1 photo from this project? The original photo stays in your library."
+      : "Remove " + gone.length + " photos from this project? The originals stay in your library.";
+  if (!window.confirm(msg)) return;
+  gone.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
+  S.items = S.items.filter((i) => !i.selected);
+  if (!S.items.length) S.step = "add";
+  saveDraft();
+  render();
+}
+
+/** Step 3 takes only the selected photos, and only once their rooms are set. */
+function startDesigning() {
+  const sel = ordered().filter((i) => i.selected);
+  if (!sel.length) {
+    window.alert("Select at least one photo to design.");
+    return;
+  }
+  const unsure = sel.filter((i) => stateOf(i).cls === "warn");
+  if (unsure.length) {
+    window.alert("Set a room type for every selected photo first. " + unsure.length + " still need one.");
+    return;
+  }
+  saveDraft();
+  const first = sel.find((i) => !i.done) || sel[0];
+  openInCanvas(first.key);
+}
+
 
 /* ------------------------------------------------------ property address
    Optional on every staging project. The address never renames the project
