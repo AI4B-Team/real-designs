@@ -231,16 +231,25 @@ export function expandStreet(line: string): string {
 export function parseLooseAddress(value: unknown): { line1: string; line2: string } | null {
   const text = cleanAddressText(value);
   if (!text || text.includes(",")) return null;
-  const m = /^(.+?)\s+([A-Za-z][A-Za-z .'-]*?)\s+([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$/.exec(text);
+  const m = /^(.+?)\s+([A-Za-z]{2})\s+(\d{5}(?:-\d{4})?)$/.exec(text);
   if (!m) return null;
-  const street = m[1]!.trim();
-  const city = m[2]!.trim();
-  const st = m[3]!.toUpperCase();
-  const zip = m[4]!;
-  /* A street needs at least a number and a name; otherwise we are guessing. */
-  if (!/^\d/.test(street) || street.split(/\s+/).length < 2) return null;
+  const st = m[2]!.toUpperCase();
+  const zip = m[3]!;
+  const words = m[1]!.trim().split(/\s+/);
+  /* The street ends at the last recognised suffix ("Blvd", "Court", …); every
+     word after it is the city. Without a suffix we would be guessing. */
+  let cut = -1;
+  for (let i = 1; i < words.length - 1; i++) {
+    const key = words[i]!.replace(/\.$/, "").toLowerCase();
+    if (SUFFIX[key] || Object.values(SUFFIX).some((v) => v.toLowerCase() === key)) cut = i;
+  }
+  if (cut < 1) return null;
+  const street = words.slice(0, cut + 1).join(" ");
+  const city = words.slice(cut + 1).join(" ");
+  if (!/^\d/.test(street) || !city) return null;
   return { line1: expandStreet(street), line2: city + ", " + st + " " + zip };
 }
+
 
 /** Two display lines for a property card: street, then city/state/ZIP.
     Structured fields win; an unstructured string is split on its own commas,
