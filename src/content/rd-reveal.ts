@@ -1614,8 +1614,9 @@ export const NEEDS_REVIEW = "Needs Review";
 
 /** Room type is metadata under the photo: an icon, the label, one click to change. */
 function roomCell(a) {
-  const label = a.room || UNSORTED;
-  const unknown = !label || label === UNSORTED || label === NEEDS_REVIEW;
+  const raw = a.room || UNSORTED;
+  const unknown = !raw || raw === UNSORTED || raw === NEEDS_REVIEW;
+  const label = unknown ? "Choose Room" : raw;
   return roomSelectHtml({
     attr: "roompick",
     key: a.key,
