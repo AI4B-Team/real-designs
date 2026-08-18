@@ -188,14 +188,14 @@ async function mirrorClip(frame: FrameRow, clip: ClipRow): Promise<FrameRow> {
     status,
     progress: Number(clip.progress || 0),
     provider_job_id: clip.provider_job_id,
-    error_message: clip.error_message ?? null,
+    error_message: (clip['error_message'] as string | null) ?? null,
     credits_charged: Number(clip.credits_charged || 0) - Number(clip.credits_refunded || 0),
   };
   if (clip.status === "completed" && clip.storage_path) {
-    values.clip_path = clip.storage_path;
-    values.credits_reserved = 0;
+    values['clip_path'] = clip.storage_path;
+    values['credits_reserved'] = 0;
     // A finished Start/End clip is the scene's media: adopt it straight away.
-    if (!clip.approved) {
+    if (!clip['approved']) {
       await patchClip(clip.id, { approved: true, approved_at: new Date().toISOString() });
       await supabaseAdmin
         .from("video_scenes")
@@ -204,7 +204,7 @@ async function mirrorClip(frame: FrameRow, clip: ClipRow): Promise<FrameRow> {
         .eq("source_path", clip.scene_key as string);
     }
   }
-  if (clip.status === "failed" || clip.status === "cancelled") values.credits_reserved = 0;
+  if (clip.status === "failed" || clip.status === "cancelled") values['credits_reserved'] = 0;
   return patchFrame(frame.id, values);
 }
 
