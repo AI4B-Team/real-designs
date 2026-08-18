@@ -2078,6 +2078,7 @@ function addCardHtml(id) {
       <i data-lucide="image-plus"></i>
       <b>Add More Photos</b>
       <em>Upload, import, or choose from Media</em>
+      <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
     </button>
   </div>`;
 }

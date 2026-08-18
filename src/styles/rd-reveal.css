@@ -1366,6 +1366,7 @@
 .rd-app .rv-addcard-b svg { width: 26px; height: 26px; color: var(--red, #CC0000); }
 .rd-app .rv-addcard-b b { font-size: 13.5px; font-weight: 600; }
 .rd-app .rv-addcard-b em { font-style: normal; font-size: 11.5px; color: var(--mute-2, #767676); line-height: 1.35; }
+.rd-app .rv-addcard-b .rv-addcard-types { font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--mute-3, #9a9a9a); font-family: 'DM Mono', monospace; text-transform: uppercase; }
 .rd-app .rv-addcard-b[disabled] { opacity: .55; cursor: not-allowed; }
 
 /* ---- Video ending control on the final actual scene ---- */
