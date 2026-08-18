@@ -26,7 +26,7 @@ export const SOURCE_META: Record<SourceId, { icon: string; label: string; tab: s
   address: { icon: "map-pin", label: "Property Address", tab: "Address", desc: "Fills in address and listing details." },
   url: { icon: "link", label: "Listing URL", tab: "Import", desc: "Reads listing text, no media." },
   property: { icon: "home", label: "Existing Property", tab: "Property", desc: "Reuse photos already uploaded." },
-  design: { icon: "images", label: "Existing Design", tab: "Design", desc: "Start from a finished design." },
+  design: { icon: "images", label: "Finished Designs", tab: "Finished Designs", desc: "Start from designs you have already generated." },
   describe: { icon: "message-square-text", label: "Describe", tab: "Describe", desc: "No photo yet: describe the space instead." },
 };
 
