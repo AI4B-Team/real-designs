@@ -106,7 +106,33 @@ export type RevealOptions = {
     greeting?: string | null;
   } | null;
   onProgress?: (pct: number) => void;
+  /** Aborting stops the encode; the render then rejects with RENDER_CANCELLED. */
+  signal?: AbortSignal | null;
 };
+
+export const RENDER_CANCELLED = "RENDER_CANCELLED";
+
+export function isRenderCancelled(e: unknown) {
+  return String((e as any)?.message || e || "") === RENDER_CANCELLED;
+}
+
+/**
+ * Can this browser actually encode a video? Checked before any credits are
+ * charged, so an unsupported browser costs the user nothing.
+ */
+export function browserRenderSupport(): { ok: boolean; reason: string } {
+  if (typeof window === "undefined" || typeof document === "undefined")
+    return { ok: false, reason: "Video creation runs in your browser and is not available here." };
+  if (typeof MediaRecorder === "undefined")
+    return { ok: false, reason: "This browser cannot record video. Try Chrome or Edge on a desktop." };
+  const canvas = document.createElement("canvas");
+  if (typeof (canvas as any).captureStream !== "function")
+    return { ok: false, reason: "This browser cannot capture the video canvas. Try Chrome or Edge on a desktop." };
+  if (!canvas.getContext("2d")) return { ok: false, reason: "Canvas is unavailable in this browser." };
+  if (!pickMime(true) && !pickMime(false))
+    return { ok: false, reason: "This browser has no supported video format. Try Chrome or Edge." };
+  return { ok: true, reason: "" };
+}
 
 
 export const DISCLOSURE_LABEL: Record<string, string> = {
@@ -731,8 +757,10 @@ export async function renderReveal(
   scenes: RevealScene[],
   opts: RevealOptions,
 ): Promise<{ blob: Blob; ext: string; duration: number; poster: string }> {
-  if (typeof MediaRecorder === "undefined") throw new Error("This browser cannot record video. Try Chrome or Edge.");
+  const support = browserRenderSupport();
+  if (!support.ok) throw new Error(support.reason);
   if (!scenes.length) throw new Error("Add at least one scene first.");
+  if (opts.signal?.aborted) throw new Error(RENDER_CANCELLED);
 
   const [W, H] = SIZES[opts.aspect];
   const canvas = document.createElement("canvas");
@@ -780,8 +808,14 @@ export async function renderReveal(
   rec.start();
   const start = performance.now();
 
+  let cancelled = false;
   await new Promise<void>((resolve) => {
     const frame = () => {
+      if (opts.signal?.aborted) {
+        cancelled = true;
+        resolve();
+        return;
+      }
       const t = performance.now() - start;
       opts.onProgress?.(Math.min(t / total, 1));
 
