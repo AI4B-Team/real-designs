@@ -66,7 +66,7 @@ describe("missing-photo recommendation", () => {
 
   it("treats a low-confidence guess as Needs Review, not as absence", () => {
     const low = [p("1", "Front Exterior"), p("2", "Living Room", 0.5)];
-    expect(low[1].label).toBe("Needs Review");
+    expect(low[1]?.label).toBe("Needs Review");
     const r = missingRecommendation(low, "completed");
     expect(r.kind).toBe("unconfirmed");
     expect(r.missing).toEqual([]);
