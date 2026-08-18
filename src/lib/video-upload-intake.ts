@@ -58,16 +58,20 @@ export function attachUploadAssets(w: IntakeWizard): string[] {
   w['available'] = available;
   w['gridOrder'] = gridOrder;
   const have = new Set(available.map((a: any) => a.key));
+  /* Two upload records pointing at the same stored object are the same photo
+     (a retried or double-fired ingest), so only the first becomes an asset. */
+  const havePath = new Set(available.map((a: any) => a.path).filter(Boolean));
   const ordered = new Set(gridOrder);
   const added: string[] = [];
   for (const u of w.uploads || []) {
     const key = "u-" + u.id;
-    if (!have.has(key)) {
+    const path = (u as any).storagePath || u.url;
+    if (!have.has(key) && !(path && havePath.has(path))) {
       available.push({
         key,
         /* Durable storage path wins: an object URL dies with the tab, so a
            draft saved with one reopens as a black tile. */
-        path: (u as any).storagePath || u.url,
+        path,
         room: u.room || "Unsorted",
         kind: "Original",
         group: "Unsorted",
@@ -76,8 +80,9 @@ export function attachUploadAssets(w: IntakeWizard): string[] {
         flags: [],
       });
       have.add(key);
+      if (path) havePath.add(path);
     }
-    if (!ordered.has(key)) {
+    if (have.has(key) && !ordered.has(key)) {
       gridOrder.push(key);
       ordered.add(key);
       added.push(key);
