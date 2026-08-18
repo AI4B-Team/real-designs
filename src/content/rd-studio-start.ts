@@ -827,12 +827,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       (state.door === "video" ? "Add Photos To Your Video" : "Add Photos To Design") +
       "</h3><span>" +
       (state.door === "video"
-        ? "Upload a complete property shoot. You can select and reorder scenes next."
+        ? "Add a complete property shoot. You can choose and reorder the scenes next."
         : "Upload one or more spaces. We\u2019ll help identify each room.") +
       "</span></div>" +
       '<div id="stSource"></div>' +
       '<p class="stw-secondary stw-doorfoot">' +
-      '<button class="stw-samplelink" data-sts="sample">Try A Sample Space</button></p>' +
+      '<button class="stw-samplelink" data-sts="sample">' +
+      (state.door === "video" ? "Try A Sample Video" : "Try A Sample Space") +
+      "</button></p>" +
       "</div>" +
 
       recentHtml() +
