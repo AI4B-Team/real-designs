@@ -584,9 +584,9 @@
 @container (max-width: 178px) {
   .rd-app .rv-tools-more { display: grid; }
   .rd-app .rv-tile:hover .rv-tools,
-  .rd-app .rv-tile:focus-within .rv-tools { opacity: 0; pointer-events: none; }
+  .rd-app .rv-tile:focus-within .rv-tools { opacity: 0; visibility: hidden; pointer-events: none; }
   .rd-app .rv-tile.tools-open .rv-tools,
-  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; pointer-events: auto; top: auto; bottom: 52px; transform: translateX(-50%); }
+  .rd-app .rv-tile.tools-open:hover .rv-tools { opacity: 1; visibility: visible; pointer-events: auto; top: auto; bottom: 52px; transform: translateX(-50%); }
 }
 .rd-app .rv-tile-foot { display: flex; flex-direction: column; align-items: stretch; gap: 4px; padding: 7px 2px 0; font-size: 12px; }
 .rd-app .rv-tile-foot b { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
