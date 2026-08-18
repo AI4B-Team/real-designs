@@ -510,7 +510,7 @@ function moreItems(m) {
     ];
   const out = [];
   if (canEditImage(m)) out.push({ icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
-  if (isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => openVideo(m) });
+  if (m.draft || isDesignDraft(m)) out.push({ icon: "pencil", label: "Continue Editing", fn: () => continueProject(m) });
   if (canEditImage(m)) out.push({ icon: "wand-2", label: "Redesign In A Style", fn: () => restyleFrom([m]) });
   out.push({ icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
   if (videoReady(m)) out.push({ icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
@@ -654,7 +654,7 @@ function wireCards(grid, list) {
   grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
   grid.querySelectorAll("[data-upg]").forEach((b) => (b.onclick = () => openUpgrade(find(b.dataset.upg))));
   grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
-  grid.querySelectorAll("[data-cont]").forEach((b) => (b.onclick = () => openVideo(find(b.dataset.cont))));
+  grid.querySelectorAll("[data-cont]").forEach((b) => (b.onclick = () => continueProject(find(b.dataset.cont))));
 }
 
 /* ---------------- workflow bridges ---------------- */
@@ -762,6 +762,29 @@ function isDesignDraft(m) {
   return m && m.type === "generated_video" && m.status === "draft";
 }
 
+
+/** Reopen a durable draft in the builder that owns it. */
+function continueProject(m) {
+  if (!m) return;
+  if (!m.draft) return openVideo(m);
+  if (m.draftType === "photo_staging") {
+    const st = (window as any).rdStaging;
+    if (st && st.resume) {
+      st.resume(m.draftId).then((ok) => {
+        if (!ok) toast("That project could not be reopened. Its photos may have been removed.");
+      });
+      return;
+    }
+    S.go("staging");
+    return;
+  }
+  if (m.draftType === "photo_redesign") {
+    try { (window as any).__rdStudioDraft = m.draftId; } catch (_) {}
+    S.go("studio");
+    return;
+  }
+  openVideo(m);
+}
 
 function openVideo(m, tab) {
   try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
