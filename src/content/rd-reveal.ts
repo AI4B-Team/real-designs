@@ -2215,18 +2215,24 @@ function deleteModalHtml() {
   </div></div>`;
 }
 
-/** Leave the builder for Media without touching saved work. */
+/** Leave the builder for the Studio start page without touching saved work. */
 function leaveBuilder(w) {
   stopWizardAutosave();
   revokeUploadUrls(w);
   forgetActiveBuilder();
+  endBuilderHistory("video");
   S.screen = "library";
   S.wizard = null;
   render();
-  goTo("v-media");
+  resetStudioSurface();
+  goTo("studio");
 }
 
+/* Save the draft, then return to Studio. Clicking twice must never save two
+   drafts or leave twice, so the in-flight exit is tracked on the session. */
 async function exitBuilder(w) {
+  if (w.exiting) return;
+  w.exiting = true;
   w.exitModal = { state: "saving" };
   render();
   autosaveWizard(w);
@@ -2235,12 +2241,37 @@ async function exitBuilder(w) {
   } catch (_) {}
   if (S.wizard !== w) return;
   if (wizSaver && wizSaver.state === "error") {
+    w.exiting = false;
     w.exitModal = { state: "error" };
     render();
     return;
   }
   w.exitModal = null;
   leaveBuilder(w);
+}
+
+/* Start Over keeps every saved thing — draft, photos, property — and only
+   drops the live builder session so the next project starts clean. */
+async function startOverBuilder(w) {
+  if (w.startOverModal && w.startOverModal.busy) return;
+  w.startOverModal = { busy: true };
+  render();
+  autosaveWizard(w);
+  try {
+    if (wizSaver) await wizSaver.flush();
+  } catch (_) {}
+  if (S.wizard !== w) return;
+  if (wizSaver && wizSaver.state === "error") {
+    w.startOverModal = null;
+    w.exitModal = { state: "error" };
+    render();
+    return;
+  }
+  w.startOverModal = null;
+  /* A fresh session id for whatever is created next. */
+  try { sessionStorage.removeItem("rd_reveal_session"); } catch (_) {}
+  leaveBuilder(w);
+  toast("Draft Saved. Studio Is Ready For A New Project.");
 }
 
 async function confirmDeleteDraft(w) {
