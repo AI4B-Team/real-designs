@@ -1350,7 +1350,10 @@ function markCurrentDone() {
   try {
     if (window.rdStudioSourceState && window.rdStudioSourceState() === "generated") {
       const cur = S.items.find((i) => i.key === S.current);
-      if (cur) cur.done = true;
+      if (cur) {
+        cur.done = true;
+        cur.state = "complete";
+      }
       saveDraft();
     }
   } catch (_) {}
