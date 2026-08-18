@@ -184,7 +184,45 @@ function scrollTopHard(){
   [60,160,320,600].forEach(ms=>window.setTimeout(top,ms));
 }
 let __paneSeq=0;
+
+/* ---- studio context -------------------------------------------------------
+   The Studio view hosts two different things. A generic session may open the
+   source chooser and start a brand new project. A Photo Design Canvas belongs
+   to an existing Photo Design draft and must never be re-initialised as a
+   blank Studio session. The context is explicit state, never inferred from
+   whatever happens to be in the DOM. */
+let STUDIO_MODE:any={type:'generic'};
+/* Every navigation bumps this token, so a delayed startup callback can tell
+   whether the route it was queued for is still the one on screen. */
+let __navSeq=0;
+function studioMode(){ return STUDIO_MODE; }
+function inPhotoCanvas(){ return STUDIO_MODE && STUDIO_MODE.type==='photo-design-canvas'; }
+/** Canonical route test: tolerates the legacy "#studio" form during migration. */
+function isCurrentView(v){
+  const raw=(location.hash||'').replace(/^#/,'').replace(/^v-/,'');
+  if(!raw) return false;
+  return (viewFromHash()||raw)===v;
+}
+try{
+  (window as any).__rdIsView=(v:string)=>isCurrentView(v);
+  (window as any).__rdStudioMode=()=>studioMode();
+  (window as any).__rdNavToken=()=>__navSeq;
+  (window as any).__rdNavCurrent=(tok:number)=>tok===__navSeq;
+  (window as any).__rdClearStudioMode=()=>{ STUDIO_MODE={type:'generic'}; };
+  /* The one way to open a Photo Design Canvas. It routes through the same
+     navigation everything else uses, with the context set first, so no
+     generic Studio startup logic can run against it. */
+  (window as any).__rdOpenPhotoCanvas=(ctx:any)=>{
+    STUDIO_MODE={type:'photo-design-canvas',draftId:String((ctx&&ctx.draftId)||''),photoKey:String((ctx&&ctx.photoKey)||'')};
+    go('studio',true);
+    return STUDIO_MODE;
+  };
+}catch(_){}
+
 function go(v,fromHash){
+  /* A stale startup callback must never drop a live Canvas back on the
+     generic Studio page. */
+  if(v==='studio' && !fromHash && inPhotoCanvas() && document.querySelector('#v-studio.on')) return;
   /* Leaving a live builder through the global Studio navigation saves the
      draft first; the builder re-issues this navigation once it is safe. */
   if(v==='studio' && !fromHash){
@@ -193,6 +231,9 @@ function go(v,fromHash){
       if(typeof ex==='function' && ex()) return;
     }catch(_){}
   }
+  __navSeq++;
+  /* Any route that is not the Studio view ends the Canvas context. */
+  if(v!=='studio' && v!=='staging' && inPhotoCanvas()) STUDIO_MODE={type:'generic'};
   const acctAlias = ACCT_ALIAS[v] ? v : '';
   if(ACCT_ALIAS[v]){
     const pane=ACCT_ALIAS[v]; v='account';
