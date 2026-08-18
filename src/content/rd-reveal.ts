@@ -1178,6 +1178,7 @@ function ensureWizSaver(w) {
       else delete body.project.id;
       const saved = await saveVideo(body);
       w.editingId = saved.id;
+      rememberActiveBuilder(saved.id);
       return saved;
     },
     onState: (state) => {
@@ -2308,10 +2309,10 @@ function previewPanel() {
           : " Your Video Is Created In This Browser Tab. Closing Or Refreshing This Tab Stops The Render — Your Project Is Saved And Your Credits Are Returned."
       }</div>
       <button class="btn btn-ghost btn-xs" id="rvCancelRender"${w.cancelling ? " disabled" : ""}><i data-lucide="x"></i>${w.cancelling ? "Stopping…" : "Stop Render"}</button></div>`
-      : w.step === 7
+      : atReview(w)
         ? block
           ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
-          : `<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && browserRenderSupport().ok ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+          : `${tabNoticeHtml()}<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && browserRenderSupport().ok ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
 
         : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
 
@@ -2320,6 +2321,17 @@ function previewPanel() {
 
 
 /* ======================= SCENE HELPERS ======================= */
+/** True on the final Review step, whatever internal step number it carries. */
+function atReview(w) {
+  return Number(w?.step) === 7;
+}
+
+/** The browser renderer needs this tab: say so before the user commits. */
+function tabNoticeHtml() {
+  if (runsInBackground() || !browserRenderSupport().ok) return "";
+  return `<div class="rv-note sm" id="rvTabNote">Your Video Is Created In This Browser Tab. Keep This Tab Open Until It Finishes — Closing Or Refreshing Stops The Render And Returns Your Credits.</div>`;
+}
+
 function assetToScene(a) {
   const w = S.wizard || {};
   const isBA = w.videoType === "before_after" || w.videoType === "renovation_vision";
@@ -3953,6 +3965,32 @@ export async function startDesignVideo(design = {}) {
 }
 
 /** Continue a saved design-video draft from Media or the library. */
+const ACTIVE_KEY = "rd_reveal_active";
+
+/* A refresh mid-build must come back to the same project, so the id of the
+   project currently open in the builder is remembered locally. The work
+   itself lives on the server; this is only a pointer. */
+function rememberActiveBuilder(id) {
+  try { if (id) localStorage.setItem(ACTIVE_KEY, String(id)); } catch (_) {}
+}
+export function forgetActiveBuilder() {
+  try { localStorage.removeItem(ACTIVE_KEY); } catch (_) {}
+}
+
+/** Reopen the project that was open in the builder before a refresh. */
+export async function resumeActiveBuilder() {
+  let id = "";
+  try { id = localStorage.getItem(ACTIVE_KEY) || ""; } catch (_) { return false; }
+  if (!id) return false;
+  try {
+    await continueDesignVideo(id);
+    return true;
+  } catch (_) {
+    forgetActiveBuilder();
+    return false;
+  }
+}
+
 export async function continueDesignVideo(id) {
   try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
   goTo("reveal");

@@ -105,7 +105,7 @@ try{
   setTimeout(()=>{ try{ populateStyleSelect(); }catch(_){} },600);
 }catch(_){}
 import { openShop, renderSelectedProducts } from "@/content/rd-shop";
-import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo, resetReveal } from "@/content/rd-reveal";
+import { mountReveal, createVideoFrom, startDesignVideo, continueDesignVideo, resetReveal, resumeActiveBuilder, forgetActiveBuilder } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountSourcePicker } from "@/lib/source-picker";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
@@ -162,6 +162,9 @@ staging:['Photo Staging','Add photos, confirm rooms, then design']};
 const ACCT_ALIAS={team:'team',settings:'brand',branding:'brand',brand:'brand',billing:'billing',invoices:'invoices',api:'api',profile:'profile',security:'security',crm:'integrations',integrations:'integrations',watch:'watch',monitor:'watch',sites:'watch'};
 /* Video lives inside Media now. Only the video workspace itself may open
    the reveal view, and it flags that intent right before navigating. */
+/* Only the very first route after a page load may reopen a saved builder
+   session; later in-app navigation always starts a fresh project. */
+let __bootRoute=true;
 let __allowReveal=0;
 try{ (window as any).__rdAllowReveal=()=>{ __allowReveal=Date.now(); }; }catch(_){}
 try{ (window as any).__rdGo=(x:string)=>go(x); }catch(_){}
@@ -197,8 +200,15 @@ function go(v,fromHash){
     };
     window.setTimeout(applyPane,0);
   }else if(v!=='account'){ __paneSeq++; }
+  const bootRoute=__bootRoute; __bootRoute=false;
   const revealLive=(()=>{ try{ return !!((window as any).__rdRevealBusy && (window as any).__rdRevealBusy()); }catch(_){ return false; } })();
-  if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){ (window as any).__rdMediaTab='videos'; v='media'; }
+  if(v==='reveal' && !revealLive && Date.now()-__allowReveal>4000){
+    /* On the first route after a page load, a remembered builder session wins:
+       a refresh mid-build returns to that project instead of the library. */
+    let saved=''; try{ saved=localStorage.getItem('rd_reveal_active')||''; }catch(_){ }
+    if(bootRoute && saved){ v='lvideo'; }
+    else { (window as any).__rdMediaTab='videos'; v='media'; }
+  }
   /* Unknown or legacy view keys (old bookmarks, stale hashes, builder-only
      keys like lvideo) must never leave the content area blank. Home and the
      dashboard are one view now, reachable only as dash. */
@@ -221,7 +231,12 @@ function go(v,fromHash){
   if(v==='explore'){ try{ mountExplore(go,{curProp:()=>curProp(),setPropertyDna,reloadTree:()=>reloadTree()}); }catch(_){} }
   if(v==='media'){ try{ mountMediaLibrary(go,{}); }catch(_){} }
   if(v==='reveal'){ try{ mountReveal(go,{}); }catch(_){} }
-  if(v==='lvideo'){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
+  if(v==='lvideo'){
+    /* A refresh lands here with work already saved on the server: reopen that
+       project instead of dropping the user into an empty builder. */
+    if(!bootRoute){ try{ forgetActiveBuilder(); createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){} }
+    else{ void (async()=>{ try{ if(!(await resumeActiveBuilder())) createVideoFrom({ sourceType:'address', from:'menu' }); }catch(_){ try{ createVideoFrom({ sourceType:'address', from:'menu' }); }catch(__){} } })(); }
+  }
 
   if(v==='studio'){
     try{ paintStudioSub(); paintStudioState(); }catch(_){}
@@ -249,7 +264,7 @@ function go(v,fromHash){
      when a deep link was redirected (stale #v-reveal, unknown keys), so a
      refresh or a copied link never lands somewhere else. */
   try{
-    const h='#v-'+(acctAlias && viewId==='account' ? acctAlias : viewId);
+    const h='#v-'+(acctAlias && viewId==='account' ? acctAlias : v==='lvideo' ? 'lvideo' : viewId);
     if(location.hash!==h) history.replaceState(null,'',location.pathname+location.search+h);
   }catch(_){}
 
