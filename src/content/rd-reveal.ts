@@ -2650,7 +2650,7 @@ function popoverHtml() {
       <div class="rv-tr-auto">
         <button class="rv-switch ${st.auto ? "on" : ""}" id="rvTransAuto" role="switch" aria-checked="${st.auto ? "true" : "false"}">
           <span></span></button>
-        <div><b>Auto Select</b><em>Let REAL DESIGNS choose</em></div>
+        <div><b>Auto Select</b><em>Let REAL DESIGNS Choose</em></div>
         <i class="rv-tr-rec">${esc(st.auto ? `Recommended: ${transitionLabel(st.type)}` : `Using ${transitionLabel(st.type)}`)}</i>
       </div>
       <div class="rv-tr-grid" role="radiogroup" aria-label="Transition">${OFFERED_TRANSITIONS.map(opt).join("")}</div>
