@@ -25,7 +25,7 @@ const paint = () => {
   } catch (_) {}
 };
 
-const SPACE_LABEL = { interior: "Interior", exterior: "Exterior", landscape: "Garden" };
+const SPACE_LABEL = { interior: "Interior", exterior: "Exterior", landscape: "Garden", unassigned: "Unassigned" };
 const PROJECT_TYPE = { interior: "interior", exterior: "exterior", landscape: "garden" };
 
 export const BULK_CREDIT_PER_PHOTO = 1;
