@@ -3833,7 +3833,7 @@ function render() {
   if (S.screen === "library") paintThumbs();
   if (S.screen === "detail" && S.detail) mountPlayer();
   bind();
-
+  layoutConnectors();
 }
 
 function bind() {
