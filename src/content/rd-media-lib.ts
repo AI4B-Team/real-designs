@@ -1375,6 +1375,21 @@ function openAssign(items) {
   paint();
   const close = () => host.remove();
   host.querySelectorAll("[data-x]").forEach((b) => (b.onclick = close));
+  /* Long property lists get a plain filter box rather than endless scrolling. */
+  const find = host.querySelector("#maFind") as any;
+  const sel = host.querySelector("#maSel") as any;
+  if (find && sel) {
+    find.oninput = () => {
+      const q = find.value.trim().toLowerCase();
+      const hits = S.propList.filter((p) => !q || String(p.address || "").toLowerCase().includes(q));
+      sel.innerHTML =
+        `<option value="">${hits.length ? "Choose A Property" : "No Matches"}</option>` +
+        hits.map((p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`).join("");
+      if (hits.length === 1) sel.value = hits[0].id;
+    };
+    find.focus();
+  }
+
   host.querySelector("#maNone").onclick = async () => {
     close();
     await doAssign(usable, null);
