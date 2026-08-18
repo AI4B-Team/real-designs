@@ -53,7 +53,7 @@ describe("animate modal", () => {
   it("blocks generation and says why when credits are short", () => {
     const html = animateModalHtml({ ...base, balance: 3, selected: "dolly_in" });
     expect(html).toContain('id="rvAnimGo" disabled');
-    expect(html).toContain("Not Enough Credits");
+    expect(html).toContain("Not enough credits");
   });
 
   it("discloses added people for lifestyle animation", () => {
