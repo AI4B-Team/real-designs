@@ -1128,9 +1128,10 @@
 .rd-app .rv-conn:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
 .rd-app .rv-conn.busy i { animation: rv-spin 1s linear infinite; }
 .rd-app .rv-conn.bad { background: #fff; border-color: #CC0000; color: #CC0000; }
-/* last card of a visual row: no seam, so the same control tucks inside it */
-.rd-app .rv-conn.wrap { right: 8px; top: calc(133.2cqw - 34px); margin-top: 0; }
-.rd-app .rv-grid.landscape .rv-conn.wrap { top: calc(75cqw - 34px); }
+/* Last card of a visual row: there is no seam to its right and nothing may
+   hang outside the panel, so the same control tucks just inside the card's
+   right edge at the SAME vertical centre — clear of the bottom hover toolbar. */
+.rd-app .rv-conn.wrap { right: 8px; }
 @media (max-width: 720px) {
   /* stacked cards: the control sits on the seam beneath the card */
   .rd-app .rv-conn, .rd-app .rv-conn.wrap { right: 50%; margin-right: -15px; top: auto; bottom: -21px;
