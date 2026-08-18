@@ -1067,7 +1067,82 @@ async function setProjectRatio(next) {
   }
   S.outputRatio = ratio;
   saveDraft();
-  render();
+  applyRatiosLive();
+}
+
+/**
+ * Reshape the grid in place.
+ *
+ * A format change is a local visual update: no navigation, no remount, no
+ * draft restoration, no scroll jump. Only the ratio classes, the header
+ * selected state and the custom-format badges change.
+ */
+function applyRatiosLive() {
+  if (typeof document === "undefined") return;
+  const el = host();
+  if (!el || !S) return;
+  const project = normalizeOutputRatio(S.outputRatio);
+
+  el.querySelectorAll(".rv-tile[data-k]").forEach((tile) => {
+    const it = itemAt(tile.getAttribute("data-k"));
+    if (!it) return;
+    const want = tileRatioClass(it);
+    RATIO_CLASSES.forEach((c) => tile.classList.toggle(c, c === want));
+    /* The badge only exists while the photo genuinely overrides the project. */
+    const frame = tile.querySelector(".rv-tile-th");
+    const badge = tile.querySelector(".rv-tile-fmt");
+    const override = normalizeOverride(it.ratio);
+    if (override && !badge && frame) {
+      const b = document.createElement("span");
+      b.className = "rv-tile-fmt";
+      b.title = "Custom format: " + ratioLabel(override);
+      b.innerHTML = '<i data-lucide="crop"></i>' + esc(ratioLabel(override));
+      frame.appendChild(b);
+    } else if (override && badge) {
+      badge.title = "Custom format: " + ratioLabel(override);
+      badge.innerHTML = '<i data-lucide="crop"></i>' + esc(ratioLabel(override));
+    } else if (!override && badge) {
+      badge.remove();
+    }
+  });
+
+  const add = el.querySelector(".rv-addcard");
+  if (add) {
+    const want = ratioClass(project);
+    RATIO_CLASSES.forEach((c) => add.classList.toggle(c, c === want));
+  }
+
+  /* Header: the selected button can never disagree with the card shapes. */
+  el.querySelectorAll("[data-ratio]").forEach((b) => {
+    const on = b.getAttribute("data-ratio") === project;
+    b.classList.toggle("on", on);
+    b.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+  const sel = el.querySelector("[data-ratiosel]");
+  if (sel && sel.value !== project) sel.value = project;
+  /* A ratio outside the three primaries shows as the compact custom chip. */
+  if (!isPrimaryRatio(project)) renderHeaderFormat(el, project);
+  paint();
+}
+
+/** Re-render only the header format control (custom chip appears/disappears). */
+function renderHeaderFormat(el, project) {
+  const host_ = el.querySelector(".bx-fmtsel");
+  if (!host_ || !host_.parentElement) return;
+  const wrap = document.createElement("div");
+  wrap.innerHTML = formatSelectorHtml({
+    label: "Photo Format",
+    options: PRIMARY_OUTPUT_RATIOS,
+    value: project,
+    attr: "ratio",
+    id: "rds-ratio",
+    more: { label: "More Ratios", value: "__more" },
+    customLabel: ratioLabel(project),
+  });
+  const next = wrap.firstElementChild;
+  if (!next) return;
+  host_.replaceWith(next);
+  bindRatioControls(el);
 }
 
 /**
@@ -1177,7 +1252,7 @@ function openRatioOverride(it) {
       it.ratio = v ? v : null;
       saveDraft();
       close();
-      render();
+      applyRatiosLive();
       return;
     }
     if (e.target.closest("[data-mfa]") || e.target === wrap) close();
@@ -1208,9 +1283,7 @@ function bindReview(el) {
       if (act === "moreratios") { openProjectRatioMore(); return; }
     }),
   );
-  el.querySelectorAll("[data-ratio]").forEach((b) =>
-    b.addEventListener("click", () => void setProjectRatio(b.getAttribute("data-ratio"))),
-  );
+  bindRatioControls(el);
   el.querySelectorAll("[data-ratiomore]").forEach((b) => b.addEventListener("click", () => openProjectRatioMore()));
   const ratioSel = el.querySelector("[data-ratiosel]");
   if (ratioSel) ratioSel.onchange = () => void setProjectRatio(ratioSel.value);
