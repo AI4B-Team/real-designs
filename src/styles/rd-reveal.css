@@ -679,8 +679,12 @@
    browser zoom: six complete cards on a desktop workspace, degrading cleanly
    to five, four, three, two and one. */
 .rd-app #v-reveal .rv-wiz, .rd-app .bx-work { container-type: inline-size; container-name: rvwork; }
-.rd-app .rv-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px 12px; }
-.rd-app .rv-grid > * { min-width: 0; }
+.rd-app .rv-grid { --rv-cgap: 12px; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px var(--rv-cgap); width: 100%; max-width: 100%; min-width: 0; box-sizing: border-box;
+  /* the connectors are overlays inside the gutters, so the row can never grow
+     wider than the panel: the column count drops instead of scrolling */
+  overflow-x: hidden; overscroll-behavior-x: none; }
+.rd-app .rv-grid > * { min-width: 0; max-width: 100%; box-sizing: border-box; }
 .rd-app .rv-grid .rv-tile-th img { width: 100%; height: 100%; object-fit: cover; }
 @container rvwork (min-width: 360px) { .rd-app .rv-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @container rvwork (min-width: 560px) { .rd-app .rv-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
@@ -1106,7 +1110,8 @@
    seam between the pair, vertically centred on the images (the thumb is 3:4,
    so its middle sits at two thirds of the card's width from the top). */
 .rd-app .rv-tile { position: relative; }
-.rd-app .rv-conn { position: absolute; right: -22px; top: 66.6cqw; z-index: 20; display: grid; place-items: center;
+.rd-app .rv-conn { position: absolute; right: calc(-1 * (var(--rv-cgap, 12px) / 2) - 15px); top: 66.6cqw;
+  z-index: 20; display: grid; place-items: center;
   width: 30px; height: 30px; margin-top: -15px; padding: 0; border: 1px solid rgba(204,0,0,.28); border-radius: 999px;
   background: #fff; color: var(--red, #CC0000); cursor: pointer;
   box-shadow: 0 2px 8px rgba(0,0,0,.18), 0 0 0 1px rgba(255,255,255,.7);
@@ -1123,11 +1128,12 @@
 .rd-app .rv-conn:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
 .rd-app .rv-conn.busy i { animation: rv-spin 1s linear infinite; }
 .rd-app .rv-conn.bad { background: #fff; border-color: #CC0000; color: #CC0000; }
-/* last card of a visual row: no seam, so the same control tucks inside it */
-.rd-app .rv-conn.wrap { right: 8px; top: calc(133.2cqw - 34px); margin-top: 0; }
-.rd-app .rv-grid.landscape .rv-conn.wrap { top: calc(75cqw - 34px); }
-@media (max-width: 720px) {
-  /* stacked cards: the control sits on the seam beneath the card */
+/* Last card of a visual row: there is no seam to its right and nothing may
+   hang outside the panel, so the same control tucks just inside the card's
+   right edge at the SAME vertical centre — clear of the bottom hover toolbar. */
+.rd-app .rv-conn.wrap { right: 8px; }
+@container rvwork (max-width: 359px) {
+  /* one card per row: the seam is horizontal, so the control sits on it */
   .rd-app .rv-conn, .rd-app .rv-conn.wrap { right: 50%; margin-right: -15px; top: auto; bottom: -21px;
     margin-top: 0; opacity: 1; visibility: visible; }
 }
