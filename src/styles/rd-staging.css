@@ -656,3 +656,75 @@
 .rdsb-mixed { margin: 0 0 12px; font-size: .78rem; font-weight: 600; color: var(--mute-2, #6b6b74); }
 .rdsb-help { display: block; margin-top: 6px; font-style: normal; font-size: .72rem; font-weight: 500; color: var(--mute-2, #6b6b74); }
 .rdsb-hidden { display: none !important; }
+
+/* Bulk modal footer: one full-width bar pinned under the scrolling body, with
+   the credit summary on its own line so no label is ever squeezed or clipped. */
+.rdsb .rdsb-foot {
+  flex: 0 0 auto;
+  margin: 14px -24px -24px;
+  padding: 18px 24px;
+  background: #fff;
+  border-top: 1px solid var(--line, #e5e5ea);
+  border-radius: 0 0 18px 18px;
+  display: grid;
+  gap: 12px;
+}
+.rdsb-foot-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.rdsb-foot-cost {
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--mute-2, #6b6b74);
+  white-space: nowrap;
+}
+.rdsb-foot-a { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.rdsb .rdsb-foot .rdm-btn {
+  height: 46px;
+  padding: 0 22px;
+  min-width: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.rdsb .rdsb-foot .rdm-primary:disabled { background: #EDEDF0; color: #6E6E77; border-color: rgba(17, 17, 17, 0.1); opacity: 1; }
+@media (max-width: 640px) {
+  .rdsb-foot-row { flex-direction: column; align-items: stretch; }
+  .rdsb-foot-a { flex-direction: column-reverse; align-items: stretch; }
+  .rdsb .rdsb-foot .rdm-btn { width: 100%; }
+}
+
+/* Advisory (not blocking): an unusual style is still the user's call. */
+.rdsb-g.advise { border-color: rgba(204, 0, 0, 0.22); }
+.rdsb-advise {
+  margin: 8px 0 6px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: rgba(204, 0, 0, 0.05);
+  border: 1px solid rgba(204, 0, 0, 0.16);
+}
+.rdsb-advise p { display: flex; gap: 7px; align-items: flex-start; margin: 0 0 8px; font-size: 0.76rem; color: #4A4A52; }
+.rdsb-advise svg { width: 14px; height: 14px; flex: none; color: #cc0000; margin-top: 1px; }
+.rdsb-advise-a { display: flex; gap: 8px; flex-wrap: wrap; }
+.rdsb-ab {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(17, 17, 17, 0.18);
+  background: #fff;
+  color: #1B1B20;
+  font: 600 0.76rem/1 'DM Sans', system-ui, sans-serif;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rdsb-ab.primary { background: #cc0000; border-color: #cc0000; color: #fff; }
+.rdsb-ab:hover { background: #F5F5F7; }
+.rdsb-ab.primary:hover { background: #A80000; }
+
+/* One concise validation line, under the field that needs attention. */
+.rdsb-fielderr { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 0.74rem; font-weight: 600; color: #B00000; }
+.rdsb-fielderr svg { width: 13px; height: 13px; flex: none; }
