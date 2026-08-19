@@ -968,11 +968,10 @@ function bindRail(el) {
       const k = b.getAttribute("data-step");
       if (k === S.step && k !== "design") return;
       if (k === "design") {
-        const st = stepState();
-        const next = navigateTo("design", st);
-        if (next.step === "design" && next.activeKey) { void openInCanvas(next.activeKey); return; }
-        const first = designSet()[0];
-        if (first) { void openInCanvas(first.key); return; }
+        /* The Design step is the bulk direction interface for the current
+           selection, not the single-photo canvas. */
+        const sel = ordered().filter((i) => i.selected);
+        startBulkDesign(sel.length ? sel : designSet());
         return;
       }
       if (k === "final") {
