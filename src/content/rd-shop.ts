@@ -17,6 +17,13 @@ import {
   priceOf,
   rankMatches,
   PRODUCT_CATEGORIES,
+  PRICE_TIERS,
+  productionProducts,
+  createManualProduct,
+  parseProductCsv,
+  lastCheckedLabel,
+  isPriceStale,
+  AFFILIATE_DISCLOSURE,
 } from "@/lib/product-catalog";
 import {
   addProduct,
@@ -25,7 +32,9 @@ import {
   setStatus,
   roomSelections,
   lockedCategories,
-  budgetRollup,
+  shoppingTotal,
+  listManualProducts,
+  saveManualProducts,
   STATUS_LABEL,
 } from "@/lib/project-products";
 import { track } from "@/lib/analytics";
@@ -36,7 +45,7 @@ const money = (n) =>
   n == null ? "Price Unavailable" : "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: n < 20 ? 2 : 0 });
 
 const PHASES = ["Design", "Demo", "Rough In", "Finishes", "Furnishing", "Punch List"];
-const BUDGET_CATS = ["Furniture", "Lighting", "Textiles", "Décor", "Fixtures", "Finishes", "Appliances", "Outdoor"];
+const BUDGET_CATS = PRICE_TIERS;
 const SEGS = [
   ["all", "Best Matches"],
   ["close", "Closest Match"],
@@ -214,7 +223,7 @@ function mount(ctx) {
     `<span><i data-lucide="sofa"></i>${esc(design.roomLabel)}</span>` +
     (isProductSearchConfigured()
       ? ""
-      : `<span class="shop-warn"><i data-lucide="triangle-alert"></i>Sample Product Data, No Retailer Feed Connected</span>`);
+      : `<span class="shop-warn"><i data-lucide="triangle-alert"></i>No Retailer Feed Connected, Saved Links Only</span>`);
   const img = $("shopImg");
   if (design.image) img.src = design.image;
   else img.replaceWith(Object.assign(document.createElement("div"), { className: "shop-noimg", textContent: "No Design Image Available" }));
@@ -434,12 +443,17 @@ function mount(ctx) {
   async function matchesFor(o) {
     const key = design.designId + "::" + o.id;
     if (matchCache[key]) return matchCache[key];
-    const list = await visualSearchProvider().search({
-      imageUrl: design.image,
-      crop: o.box,
-      category: o.category,
-      traits: { colors: design.colors, materials: design.materials },
-    });
+    const provider = visualSearchProvider();
+    const found = provider.configured
+      ? await provider.search({
+          imageUrl: design.image,
+          crop: o.box,
+          category: o.category,
+          traits: { colors: design.colors, materials: design.materials },
+        })
+      : [];
+    // Nothing that is sample, mock or demo data may ever reach the workspace.
+    const list = productionProducts(found).concat(manualFor(o));
     list.forEach((p) => (p.__objId = o.id));
     matchCache[key] = list;
     return list;
@@ -780,14 +794,15 @@ function mount(ctx) {
     const matchLabel = mt === "exact" && p.verifiedSku ? "Exact Product" : mt === "close" ? "Close Match" : "Similar Match";
     const dims = [p.width && p.width + '" W', p.depth && p.depth + '" D'].filter(Boolean).join(" × ");
     return `<div class="shop-card${big ? " big" : ""}" data-open="${p.id}">
-      <div class="shop-card-img">${thumb(p)}${p.sample ? '<span class="shop-sample">Sample Data</span>' : ""}${saveBtn(p)}</div>
+      <div class="shop-card-img">${thumb(p)}${saveBtn(p)}</div>
       <div class="shop-card-b">
-        <div class="shop-card-t"><b>${esc(p.name)}</b><span class="shop-price">${money(priceOf(p))}${p.salePrice ? `<s>${money(p.regularPrice)}</s>` : ""}</span></div>
+        <div class="shop-card-t"><b>${esc(p.name)}</b><span class="shop-price">${money(priceOf(p))}${p.salePrice && p.regularPrice && p.regularPrice > p.salePrice ? `<s>${money(p.regularPrice)}</s>` : ""}</span></div>
         <div class="shop-meta">${esc(p.brand)} &middot; ${esc(p.merchant)}${dims ? " &middot; " + dims : ""}</div>
         <div class="shop-tagrow">
           <span class="shop-tag ${mt === "exact" ? "ok" : "amb"}">${matchLabel}</span>
-          <span class="shop-tag ${p.availability === "in_stock" ? "ok" : p.availability === "unavailable" ? "bad" : "amb"}">${p.availability === "in_stock" ? "In Stock" : p.availability === "limited" ? "Low Stock" : availabilityLabel(p.availability)}</span>
+          ${availabilityTag(p)}
         </div>
+        <div class="shop-checked">${esc(checkedLabel(p))}</div>
         <div class="shop-why">${esc(p.matchNotes[0] || "Matched on category and palette.")}</div>
         <div class="shop-card-a">
           ${
@@ -878,7 +893,8 @@ function mount(ctx) {
           <div><dt>Delivery</dt><dd>${esc(p.delivery || "Not Listed")}</dd></div>
           <div><dt>Verified With Retailer</dt><dd>${p.verifiedSku ? "Yes" : '<span class="shop-tag amb">Not Yet Connected</span>'}</dd></div>
         </dl></div>
-        ${p.sample ? `<div class="shop-disc"><i data-lucide="triangle-alert"></i><span>This is sample development data. Live retailer pricing and stock are not connected yet.</span></div>` : ""}
+        <div class="shop-disc"><i data-lucide="clock"></i><span>${esc(checkedLabel(p))} Confirm the current price and availability on the retailer page before buying.</span></div>
+        <div class="shop-disc"><i data-lucide="badge-percent"></i><span>${esc(AFFILIATE_DISCLOSURE)}</span></div>
         <div class="shop-disc"><i data-lucide="info"></i><span>${DISCLOSURE}</span></div>
       </div>
       <div class="shop-dr-f">
@@ -964,7 +980,7 @@ function mount(ctx) {
         hotspotId: active ? active.id : "",
         detectedCategory: active ? active.category : p.category,
         phase: $("afPhase").value,
-        budgetCategory: $("afCat").value,
+        priceTier: $("afCat").value,
         notes: $("afNote").value.trim(),
         dnaScope: "none",
       });
@@ -981,7 +997,7 @@ function mount(ctx) {
   /* ---------------- selected products + compare ---------------- */
   function openSelected() {
     const list = roomSelections(design.roomId);
-    const roll = budgetRollup((r) => r.roomId === design.roomId);
+    const roll = shoppingTotal((r) => r.roomId === design.roomId);
     const d = $("shopDrawer");
     d.hidden = false;
     d.innerHTML = `<div class="shop-dr">
@@ -997,12 +1013,10 @@ function mount(ctx) {
                 .join("")
             : `<div class="shop-empty"><b>Nothing Selected Yet</b><span>Add products from the matches panel and they appear here and on the Products page.</span></div>`
         }
-        <div class="shop-roll"><div><span>Product Subtotal</span><b>${money(roll.subtotal)}</b></div>
-          <div><span>Estimated Tax</span><b>${money(roll.tax)}</b></div>
-          <div><span>Estimated Delivery</span><b>${money(roll.delivery)}</b></div>
-          <div><span>Contingency</span><b>${money(roll.contingency)}</b></div>
-          <div class="tot"><span>Estimated Product Total</span><b>${money(roll.total)}</b></div></div>
-        <div class="shop-disc"><i data-lucide="info"></i><span>Product totals reflect real prices from your selections. They do not include labor or materials, and are not a complete renovation estimate.</span></div>
+        <div class="shop-roll"><div><span>Products</span><b>${roll.count}</b></div>
+          ${roll.unpriced ? `<div><span>Without A Saved Price</span><b>${roll.unpriced}</b></div>` : ""}
+          <div class="tot"><span>Shopping Total</span><b>${money(roll.subtotal)}</b></div></div>
+        <div class="shop-disc"><i data-lucide="info"></i><span>This is a shopping total for the products you saved. It is not a renovation budget or project cost estimate, and excludes tax, delivery, labor and materials.</span></div>
       </div>
       <div class="shop-dr-f"><button class="btn btn-dark btn-xs" id="selGo"><i data-lucide="shopping-bag"></i>Open Products Page</button></div>
     </div>`;
@@ -1179,7 +1193,7 @@ function mount(ctx) {
 export function renderSelectedProducts(mountEl, go) {
   if (!mountEl) return;
   const list = listProducts();
-  const roll = budgetRollup();
+  const roll = shoppingTotal();
   if (!list.length) {
     mountEl.innerHTML = `<div class="card"><div class="card-b"><b style="display:block;margin-bottom:5px">No Products Selected Yet</b>
       <span style="font-size:.8rem;color:var(--mute-2)">Open any saved design and choose Shop This Design to source real products from the image. Everything you add lands here.</span></div></div>`;
@@ -1197,7 +1211,7 @@ export function renderSelectedProducts(mountEl, go) {
     ${groups[k]
       .map(
         (r) => `<div class="sp-row">${spThumb(r)}
-      <div class="sp-main"><b>${esc(r.name)}</b><span>${esc(r.brand)} &middot; ${esc(r.merchant)} &middot; ${esc(r.budgetCategory)} &middot; ${esc(r.phase)}</span></div>
+      <div class="sp-main"><b>${esc(r.name)}</b><span>${esc(r.brand)} &middot; ${esc(r.merchant)} &middot; ${esc(r.priceTier || "Unassigned Price Tier")} &middot; ${esc(r.phase)}</span></div>
       <span class="shop-tag">${STATUS_LABEL[r.status]}</span>
       <span class="sp-price">${money(priceOf(r))}${r.quantity > 1 ? ` &times; ${r.quantity}` : ""}</span>
       <a class="btn btn-ghost btn-xs" href="${esc(r.affiliateUrl || r.productUrl)}" target="_blank" rel="nofollow sponsored noopener"><i data-lucide="external-link"></i>Retailer</a>
