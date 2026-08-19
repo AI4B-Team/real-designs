@@ -160,13 +160,19 @@ function AuthPage() {
         <section>
           <p className="eyebrow">REAL DESIGNS</p>
 
-          <h1>{mode === "signin" ? "Sign In" : "Create Your Account"}</h1>
+          <h1 data-testid="auth-title">{mode === "signin" ? "Sign In" : "Create Your Account"}</h1>
           <p className="lede">
             Pick up where you left off. Your properties, designs and presentations stay
             together in one workspace.
           </p>
 
-          <button type="button" className="google" onClick={google} disabled={busy}>
+          <button
+            type="button"
+            className="google"
+            onClick={google}
+            disabled={busy}
+            data-testid="auth-google"
+          >
             <GoogleMark />
             Continue With Google
           </button>
@@ -175,10 +181,11 @@ function AuthPage() {
             <span>Or Use Email</span>
           </div>
 
-          <form onSubmit={submit}>
+          <form onSubmit={submit} data-testid="auth-form">
             <label htmlFor="rd-email">Email</label>
             <input
               id="rd-email"
+              data-testid="auth-email"
               type="email"
               autoComplete="email"
               required
@@ -188,7 +195,7 @@ function AuthPage() {
             <div className="labelrow">
               <label htmlFor="rd-password">Password</label>
               {mode === "signin" ? (
-                <button type="button" onClick={forgot} disabled={busy}>
+                <button type="button" onClick={forgot} disabled={busy} data-testid="auth-forgot">
                   Forgot Password?
                 </button>
               ) : null}
@@ -196,6 +203,7 @@ function AuthPage() {
             <div className="pw">
               <input
                 id="rd-password"
+                data-testid="auth-password"
                 type={showPw ? "text" : "password"}
                 autoComplete={mode === "signin" ? "current-password" : "new-password"}
                 required
@@ -212,19 +220,28 @@ function AuthPage() {
                 {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
               </button>
             </div>
-            <button type="submit" className="primary" disabled={busy}>
+            <button type="submit" className="primary" disabled={busy} data-testid="auth-submit">
               {busy ? "Working…" : mode === "signin" ? "Sign In" : "Create Account"}
             </button>
           </form>
 
-          {msg ? <p className="msg">{msg}</p> : null}
+          {msg ? (
+            <p className="msg" data-testid="auth-message">
+              {msg}
+            </p>
+          ) : null}
 
           <p className="alt">
             {mode === "signin" ? "New to REAL DESIGNS?" : "Already have an account?"}{" "}
-            <button type="button" onClick={() => setMode(mode === "signin" ? "signup" : "signin")}>
+            <button
+              type="button"
+              onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
+              data-testid="auth-mode-toggle"
+            >
               {mode === "signin" ? "Create A Free Account" : "Sign In"}
             </button>
           </p>
+
           <p className="alt quiet">
             <a href="/"><ArrowLeft size={14} /> Back To Home</a>
           </p>
