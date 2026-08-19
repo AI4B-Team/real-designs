@@ -7452,51 +7452,100 @@ ${picks
     renderTuts();
 
     /* ---------- feedback modal ---------- */
-    const FB_CATS = [
-      "Bug",
-      "Design Quality",
-      "Scope Accuracy",
-      "Feature Request",
-      "Billing",
-      "Something Else",
-    ];
+    const FB_CATS = ["Bug", "Design", "Accuracy", "Feature Request", "Billing", "Other"];
     const fbModal = document.getElementById("fbModal");
-    document.getElementById("fbCats").innerHTML = FB_CATS.map(
-      (c) => `<span class="fb-cat">${c}</span>`,
+    const fbEl = (id) => document.getElementById(id);
+    fbEl("fbCats").innerHTML = FB_CATS.map(
+      (c) =>
+        `<button type="button" class="fb-cat" role="radio" aria-checked="false" data-cat="${c}">${c}</button>`,
     ).join("");
-    document.getElementById("fbCats").addEventListener("click", (e) => {
+    let fbAttachPath = null;
+    let fbAttachMeta = null;
+    let fbOriginalBody = null;
+    let fbPolishedBody = null;
+    let fbSending = false;
+    let fbLastFocus = null;
+
+    function fbSelectedCat() {
+      const el = document.querySelector("#fbCats .fb-cat.on");
+      return el ? el.getAttribute("data-cat") : null;
+    }
+    function fbBodyOk() {
+      return fbEl("fbBody").value.replace(/\s/g, "").length >= 10;
+    }
+    function fbSync() {
+      const body = fbEl("fbBody").value;
+      fbEl("fbCount").textContent =
+        body.trim().length + (body.trim().length === 1 ? " Character" : " Characters");
+      fbEl("fbPolish").disabled = !body.trim().length || fbSending;
+      const ok = !!fbSelectedCat() && fbBodyOk();
+      fbEl("fbSend").disabled = !ok || fbSending;
+    }
+    fbEl("fbCats").addEventListener("click", (e) => {
       const c = e.target.closest(".fb-cat");
       if (!c) return;
-      const on = c.classList.contains("on");
-      document.querySelectorAll("#fbCats .fb-cat").forEach((x) => x.classList.remove("on"));
-      if (!on) c.classList.add("on");
+      document.querySelectorAll("#fbCats .fb-cat").forEach((x) => {
+        x.classList.remove("on");
+        x.setAttribute("aria-checked", "false");
+      });
+      c.classList.add("on");
+      c.setAttribute("aria-checked", "true");
+      fbEl("fbCatErr").hidden = true;
+      fbSync();
     });
-    let fbAttachPath = null;
-    function openFb() {
-      document.getElementById("fbForm").hidden = false;
-      document.getElementById("fbDone").hidden = true;
-      document.getElementById("fbBody").value = "";
-      const ff = document.getElementById("fbFile");
-      ff.hidden = true;
-      ff.textContent = "";
+    fbEl("fbBody").addEventListener("input", () => {
+      if (fbBodyOk()) fbEl("fbBodyErr").hidden = true;
+      fbSync();
+    });
+
+    function fbClearAttachment() {
       fbAttachPath = null;
-      const send = document.getElementById("fbSend");
-      send.disabled = false;
-      send.textContent = "Send Feedback";
-      document.querySelectorAll("#fbCats .fb-cat").forEach((x) => x.classList.remove("on"));
+      fbAttachMeta = null;
+      fbEl("fbAttachRow").hidden = true;
+      fbEl("fbFileName").textContent = "";
+      fbEl("fbFileSize").textContent = "";
+    }
+    function fbFileError(msg) {
+      const f = fbEl("fbFile");
+      f.hidden = false;
+      f.textContent = msg;
+    }
+    function openFb() {
+      fbLastFocus = document.activeElement;
+      fbEl("fbForm").hidden = false;
+      fbEl("fbDone").hidden = true;
+      fbEl("fbBody").value = "";
+      fbEl("fbBodyErr").hidden = true;
+      fbEl("fbCatErr").hidden = true;
+      fbEl("fbSendErr").hidden = true;
+      fbEl("fbFile").hidden = true;
+      fbClearAttachment();
+      fbOriginalBody = null;
+      fbPolishedBody = null;
+      fbSending = false;
+      const send = fbEl("fbSend");
+      send.innerHTML = '<i data-lucide="send"></i>Send Feedback';
+      document.querySelectorAll("#fbCats .fb-cat").forEach((x) => {
+        x.classList.remove("on");
+        x.setAttribute("aria-checked", "false");
+      });
       const ctx = feedbackContext();
-      const ctxEl = document.getElementById("fbCtx");
+      const ctxEl = fbEl("fbCtx");
       if (ctxEl) {
-        ctxEl.textContent =
-          "Attached automatically: Page " +
-          ctx.page +
-          " \u00b7 Workflow " +
-          ctx.workflow +
-          " \u00b7 Diagnostic ID " +
-          ctx.diagnosticId;
+        ctxEl.innerHTML = [
+          ["Page", ctx.page],
+          ["Workflow", ctx.workflow],
+          ["Diagnostic ID", ctx.diagnosticId],
+          ["App Version", ctx.appVersion],
+          ["Timestamp", new Date(ctx.timestamp).toLocaleString()],
+        ]
+          .map(([k, v]) => `<div><span>${k}</span><b>${v}</b></div>`)
+          .join("");
       }
       fbModal.classList.add("on");
+      fbSync();
       lucide.createIcons();
+      setTimeout(() => fbEl("fbBody").focus(), 30);
     }
     function feedbackContext() {
       const view = ((document.querySelector(".view.on") || {}).id || "").replace(/^v-/, "") || "app";
@@ -7509,110 +7558,181 @@ ${picks
         present: "Presentations",
       };
       const workflow = window.rdWorkflow || WF[view] || "General";
-      return { page: view, workflow: workflow, diagnosticId: diagnosticId() };
+      let appVersion = "Beta";
+      try {
+        appVersion = "Beta \u00b7 " + (navigator.userAgentData?.platform || navigator.platform || "Web");
+      } catch (_) {}
+      return {
+        page: view,
+        workflow: workflow,
+        diagnosticId: diagnosticId(),
+        appVersion: appVersion,
+        timestamp: new Date().toISOString(),
+      };
     }
     function closeFb() {
+      if (fbSending) return;
       fbModal.classList.remove("on");
+      try {
+        if (fbLastFocus && document.contains(fbLastFocus)) fbLastFocus.focus();
+      } catch (_) {}
     }
-    document.getElementById("fbBtn").addEventListener("click", () => {
+    fbEl("fbBtn").addEventListener("click", () => {
       closeHelp();
       openFb();
     });
-    document.getElementById("helpFbBtn").addEventListener("click", openFb);
-    document.getElementById("fbClose").addEventListener("click", closeFb);
-    document.getElementById("fbDoneClose").addEventListener("click", closeFb);
+    fbEl("helpFbBtn").addEventListener("click", openFb);
+    fbEl("fbClose").addEventListener("click", closeFb);
+    fbEl("fbDoneClose").addEventListener("click", () => {
+      fbModal.classList.remove("on");
+      try {
+        if (fbLastFocus && document.contains(fbLastFocus)) fbLastFocus.focus();
+      } catch (_) {}
+    });
     fbModal.addEventListener("click", (e) => {
       if (e.target === fbModal) closeFb();
     });
-    document.getElementById("fbAttach").addEventListener("click", () => {
+    fbModal.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        closeFb();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const f = fbModal.querySelectorAll(
+        'button:not([disabled]), textarea, summary, [href], input, select',
+      );
+      if (!f.length) return;
+      const first = f[0],
+        last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
+    const FB_TYPES = ["image/png", "image/jpeg", "image/webp", "image/heic", "image/heif"];
+    const FB_MAX = 10 * 1024 * 1024;
+    function fbSize(n) {
+      return n < 1024 * 1024
+        ? Math.max(1, Math.round(n / 1024)) + " KB"
+        : (n / (1024 * 1024)).toFixed(1) + " MB";
+    }
+    fbEl("fbRemove").addEventListener("click", () => {
+      fbClearAttachment();
+      fbEl("fbFile").hidden = true;
+    });
+    fbEl("fbAttach").addEventListener("click", () => {
       const inp = document.createElement("input");
       inp.type = "file";
-      inp.accept = "image/*";
+      inp.accept = "image/png,image/jpeg,image/webp,image/heic,image/heif";
       inp.addEventListener("change", async () => {
         const file = inp.files && inp.files[0];
         if (!file) return;
-        const f = document.getElementById("fbFile");
-        f.hidden = false;
-        f.textContent = "Uploading " + file.name + "…";
+        fbEl("fbFile").hidden = true;
+        if (!FB_TYPES.includes(file.type)) {
+          fbFileError("That file type is not supported. Use a JPG, PNG, WebP or HEIC image.");
+          return;
+        }
+        if (file.size > FB_MAX) {
+          fbFileError("That image is larger than 10 MB. Try a smaller screenshot.");
+          return;
+        }
+        const row = fbEl("fbAttachRow");
+        row.hidden = false;
+        fbEl("fbFileName").textContent = file.name;
+        fbEl("fbFileSize").textContent = "Uploading\u2026";
         try {
           fbAttachPath = await uploadRoomPhoto(file);
-          f.textContent = file.name;
-        } catch (err) {
-          fbAttachPath = null;
-          f.textContent =
-            (err && err.message) || "We could not attach that file. Try a smaller image.";
+          fbAttachMeta = { name: file.name, size: file.size };
+          fbEl("fbFileSize").textContent = fbSize(file.size);
+        } catch (_) {
+          fbClearAttachment();
+          fbFileError("We could not attach that screenshot. Try again or send without it.");
         }
       });
       inp.click();
     });
-    document.getElementById("fbPolish").addEventListener("click", async () => {
-      const b = document.getElementById("fbBody");
-      const f = document.getElementById("fbFile");
-      if (b.value.trim().length < 3) {
-        b.focus();
-        b.style.borderColor = "var(--red)";
-        return;
-      }
-      b.style.borderColor = "";
-      const btn = document.getElementById("fbPolish");
+
+    fbEl("fbPolish").addEventListener("click", async () => {
+      const b = fbEl("fbBody");
+      if (!b.value.trim()) return;
+      const btn = fbEl("fbPolish");
       const prev = btn.innerHTML;
       btn.disabled = true;
-      btn.textContent = "Improving…";
-      const cat = (document.querySelector("#fbCats .fb-cat.on") || {}).textContent || null;
+      btn.textContent = "Polishing\u2026";
+      fbEl("fbFile").hidden = true;
       try {
-        const res = await polishFeedback({ data: { body: b.value, category: cat } });
+        const res = await polishFeedback({
+          data: { body: b.value, category: fbSelectedCat() },
+        });
         if (res && res.text) {
+          fbOriginalBody = b.value;
+          fbPolishedBody = res.text;
           b.value = res.text;
         } else {
-          f.hidden = false;
-          f.textContent = "Couldn't improve that right now.";
+          fbFileError("We could not polish that right now. Your text is unchanged.");
         }
-      } catch (err) {
-        f.hidden = false;
-        f.textContent = (err && err.message) || "Couldn't improve that right now.";
+      } catch (_) {
+        fbFileError("We could not polish that right now. Your text is unchanged.");
       } finally {
-        btn.disabled = false;
         btn.innerHTML = prev;
+        fbSync();
         lucide.createIcons();
       }
     });
-    document.getElementById("fbSend").addEventListener("click", async () => {
-      const b = document.getElementById("fbBody");
-      if (b.value.trim().length < 3) {
-        b.focus();
-        b.style.borderColor = "var(--red)";
+
+    fbEl("fbSend").addEventListener("click", async () => {
+      if (fbSending) return;
+      const b = fbEl("fbBody");
+      const cat = fbSelectedCat();
+      if (!cat) {
+        fbEl("fbCatErr").hidden = false;
         return;
       }
-      b.style.borderColor = "";
-      const send = document.getElementById("fbSend");
+      if (!fbBodyOk()) {
+        fbEl("fbBodyErr").hidden = false;
+        b.focus();
+        return;
+      }
+      fbEl("fbSendErr").hidden = true;
+      const send = fbEl("fbSend");
+      fbSending = true;
       send.disabled = true;
-      send.textContent = "Sending…";
-      const cat =
-        (document.querySelector("#fbCats .fb-cat.on") || {}).textContent || "Something Else";
-      const view = (document.querySelector(".view.on") || {}).id || "";
+      send.innerHTML = '<span class="fb-spin"></span>Sending\u2026';
       try {
         const fctx = feedbackContext();
         await submitFeedback({
           category: cat,
           body: b.value,
-          viewContext: view.replace(/^v-/, ""),
+          originalBody: fbPolishedBody ? fbOriginalBody : null,
+          polishedBody: fbPolishedBody && b.value === fbPolishedBody ? fbPolishedBody : null,
+          viewContext: fctx.page,
           attachmentPath: fbAttachPath,
           page: fctx.page,
           workflow: fctx.workflow,
           diagnosticId: fctx.diagnosticId,
+          appVersion: fctx.appVersion,
+          clientTimestamp: fctx.timestamp,
         });
-        document.getElementById("fbForm").hidden = true;
-        document.getElementById("fbDone").hidden = false;
+        fbSending = false;
+        fbEl("fbForm").hidden = true;
+        fbEl("fbDone").hidden = false;
         lucide.createIcons();
-      } catch (err) {
-        send.disabled = false;
-        send.textContent = "Send Feedback";
-        b.style.borderColor = "var(--red)";
-        const f = document.getElementById("fbFile");
-        f.hidden = false;
-        f.textContent = (err && err.message) || "Could not send feedback.";
+      } catch (_) {
+        fbSending = false;
+        send.innerHTML = '<i data-lucide="send"></i>Retry Sending Feedback';
+        const e = fbEl("fbSendErr");
+        e.hidden = false;
+        e.textContent = "We could not send that just now. Your message is still here—try again.";
+        fbSync();
+        lucide.createIcons();
       }
     });
+
 
     /* ---------- product tour ---------- */
     const TOUR = [
