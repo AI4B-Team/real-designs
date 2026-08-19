@@ -439,13 +439,13 @@ export function openBulkDesign(opts) {
           <div class="rdsb-f"><label for="rdsbNotes">Shared Instructions <em>Optional</em></label>
             <textarea id="rdsbNotes" rows="2" placeholder="Example: Light oak floors, warm neutral palette, no bold colors">${esc(form.notes)}</textarea></div>
 
-          <details class="rdsb-photos"${photosOpen ? " open" : ""}>
-            <summary>
-              <span class="rdsb-photos-t">Selected Photos · ${n}</span>
-              <span class="rdsb-photos-s">${esc(groupSummary)}</span>
-              <i data-lucide="chevron-down"></i>
-            </summary>
+          <section class="rdsb-photos" aria-labelledby="rdsbPhotosT">
+            <div class="rdsb-photos-h">
+              <span class="rdsb-photos-t" id="rdsbPhotosT">Selected Photos</span>
+              <span class="rdsb-photos-c">${n}</span>
+            </div>
             <div class="rdsb-groups">
+
             ${groups
               .map((g) => {
                 const level = levelFor(g);
