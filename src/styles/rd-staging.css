@@ -310,7 +310,8 @@
 }
 .rds-chead-b svg { width: 15px; height: 15px; }
 .rds-chead-b:hover { border-color: #cc0000; color: #cc0000; }
-.rds-chead-t { font-size: 0.8rem; color: var(--mute-2, #6b6b74); font-weight: 600; }
+.rds-chead-t { font-size: 0.9rem; color: var(--ink, #16161a); font-weight: 700; }
+.rds-chead-s { font-size: 0.78rem; color: var(--mute-2, #6b6b74); font-weight: 600; }
 
 .rds-strip {
   display: flex;
