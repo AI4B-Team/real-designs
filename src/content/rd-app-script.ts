@@ -22,7 +22,7 @@ import { newDraftId } from "@/lib/project-draft";
 import { GENERIC_STUDIO, canonicalHash, canvasSubtitle as studioSubtitle, isPhotoCanvas, needsNormalize, photoCanvasContext } from "@/lib/studio-context";
 import { mountReports } from "@/content/rd-reports";
 import { mountPropertyDetail } from "@/content/rd-property-detail";
-import { mountBudgetComingSoon, budgetAvailability } from "@/lib/budget-coming-soon";
+import { mountBudgetComingSoon, budgetAvailability, budgetsLive } from "@/lib/budget-coming-soon";
 import { loadSampleWorkspace, removeSampleWorkspace, hasSampleWorkspace } from "@/lib/sample.functions";
 import { listPresentations, createPresentation, deletePresentation, getPresentationPackage, listPresentationActivity, markPresentationReminded, listShareableVersions } from "@/lib/presentations.functions";
 import { buildSocialReel } from "@/lib/social-reel";
@@ -1105,6 +1105,77 @@ async function paintBudgetGate(){
     b.appendChild(s);
   }catch(_){}
 })();
+
+/* Single runtime switch for every other Budget surface in the shell. Static
+   markup always ships in the "coming soon" shape; this turns pieces back on
+   once budgetAvailability() resolves true, so nothing has to be duplicated. */
+async function applyBudgetGating(){
+  let live=false;
+  try{ live=!!(await budgetAvailability()).available; }catch(_){}
+
+  /* search: scope entry + index rows */
+  try{
+    const schBudgetsBtn=document.querySelector('#schMenu [data-scope="Budgets"]');
+    if(schBudgetsBtn) schBudgetsBtn.remove();
+  }catch(_){}
+
+  /* dashboard: budget KPI + budget vs estimate table */
+  try{
+    const kpi=document.getElementById('kpiBudget');
+    if(kpi&&!live){
+      kpi.querySelector('.t').innerHTML='<i data-lucide="sparkles"></i>Recent Generations';
+      kpi.dataset.rebalanced='1';
+    }
+  }catch(_){}
+  try{
+    const card=document.getElementById('budgetVsEstimateCard');
+    if(card) card.hidden=!live;
+  }catch(_){}
+
+  /* studio: build budget action + tool row */
+  try{
+    const bb=document.getElementById('studioBuildBudget');
+    if(bb) bb.hidden=!live;
+  }catch(_){}
+  try{
+    const row=document.getElementById('toolrowBudget');
+    if(row&&!live){
+      row.setAttribute('aria-disabled','true');
+      row.classList.add('is-disabled');
+      row.title='Budget is coming soon. Turns on once verified local contractor cost data is licensed for your market.';
+      const pill=row.querySelector('.plan-pill');
+      if(pill){ pill.className='pill p-gray'; pill.textContent='Coming Soon'; }
+      delete TOOL_COST['Budget'];
+    }
+  }catch(_){}
+
+  /* team: permission copy + usage column */
+  try{
+    const perm=document.getElementById('permRunBudgets');
+    if(perm) perm.textContent=live?'Run Budgets, Videos And Presentations':'Run Videos And Presentations';
+  }catch(_){}
+  try{
+    const head=document.getElementById('usageBudgetsHead');
+    const tbl=head&&head.closest('table');
+    if(tbl) tbl.classList.toggle('no-budgets-col',!live);
+  }catch(_){}
+
+  /* account defaults: market for labor pricing + default budget band */
+  try{
+    const mf=document.getElementById('dfMarketField'); if(mf) mf.hidden=!live;
+    const bf=document.getElementById('dfBandField'); if(bf) bf.hidden=!live;
+  }catch(_){}
+
+  /* help, tutorials, faq and shortcuts read live budget state directly */
+  try{ renderCats(document.getElementById('helpQ')?.value||''); renderFaq(document.getElementById('helpQ')?.value||''); }catch(_){}
+  try{ renderTuts(); }catch(_){}
+  try{ renderShortcutList(); }catch(_){}
+
+  return live;
+}
+applyBudgetGating();
+window.addEventListener('rd:prefs',()=>{ try{ applyBudgetGating(); }catch(_){} });
+
 function progressiveNav(){
   const {props,designs}=workspaceCounts();
   const rule={designs:designs>0,scope:designs>0,products:designs>0,

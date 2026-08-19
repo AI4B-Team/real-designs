@@ -8,6 +8,7 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { getPropertyTree, listSavedEstimates } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { listVideos } from "@/lib/reveal.functions";
+import { budgetsLive, budgetAvailability } from "@/lib/budget-coming-soon";
 import {
   listPackages,
   getPackage,
@@ -58,6 +59,10 @@ export const PRES_SECTIONS = [
   { key: "next", title: "Next Steps" },
 ];
 
+function visibleSections() {
+  return budgetsLive() ? PRES_SECTIONS : PRES_SECTIONS.filter((s) => s.key !== "budget");
+}
+
 const STATUS = {
   draft: ["p-gray", "Draft"],
   shared: ["p-blue", "Shared"],
@@ -101,7 +106,7 @@ function libraryHtml() {
     return `<div class="pk-empty">
       <i data-lucide="presentation"></i>
       <b>No Presentations Yet</b>
-      <span>Build a client-ready package from a property's designs, photos, video and budget. Share one branded link, then track every view and decision.</span>
+      <span>Build a client-ready package from a property's designs, photos and video. Share one branded link, then track every view and decision.</span>
       <button class="btn btn-primary btn-sm" data-pk="new"><i data-lucide="plus"></i>New Presentation</button>
     </div>`;
   }
@@ -211,7 +216,7 @@ function sourceItems(propertyId) {
       kind: "video",
     });
   });
-  (src.estimates || [])
+  (budgetsLive() ? src.estimates || [] : [])
     .filter((e) => !propertyId || true)
     .slice(0, 30)
     .forEach((e) =>
@@ -242,7 +247,7 @@ function newDraft() {
     accent: "#CC0000",
     logo_url: "",
     settings: { allow_comments: true, allow_approve: true, allow_changes: true },
-    sections: PRES_SECTIONS.map((s, i) => ({ ...s, hidden: false, sort_order: i })),
+    sections: visibleSections().map((s, i) => ({ ...s, hidden: false, sort_order: i })),
     picked: {},
     access_code: "",
     expires_days: null,
@@ -283,17 +288,21 @@ function step1() {
   </div>`;
 }
 
-const TABS = [
+const TABS_ALL = [
   ["designs", "Designs"],
   ["photos", "Photos"],
   ["videos", "Videos"],
   ["budget", "Budget"],
 ];
+function tabs() {
+  return budgetsLive() ? TABS_ALL : TABS_ALL.filter(([k]) => k !== "budget");
+}
 
 function step2() {
   const d = S.draft;
   const items = sourceItems(d.property_id);
   // Land on a tab that actually has something instead of an empty "Designs".
+  const TABS = tabs();
   if (!d.tab) d.tab = (TABS.find(([k]) => (items[k] || []).length) || TABS[0])[0];
 
   const tab = d.tab || "designs";
@@ -323,7 +332,7 @@ function step2() {
         </button>`;
             })
             .join("")
-        : `<p class="pk-note">Nothing Here Yet. Create designs, upload photos or run a budget first.</p>`
+        : `<p class="pk-note">Nothing Here Yet. Create designs or upload photos first.</p>`
     }</div>
   </div>`;
 }
@@ -489,7 +498,9 @@ async function saveDraft() {
   }
   S.busy = true;
   renderBuilder();
-  const assets = Object.entries(d.picked).map(([sid, a], i) => ({
+  const assets = Object.entries(d.picked)
+    .filter(([, a]) => budgetsLive() || a.section_key !== "budget")
+    .map(([sid, a], i) => ({
     section_key: a.section_key,
     kind: a.kind,
     title: a.title || null,
@@ -513,12 +524,14 @@ async function saveDraft() {
         logo_url: d.logo_url || null,
         accent: d.accent,
         settings: d.settings,
-        sections: d.sections.map((s, i) => ({
-          section_key: s.key,
-          title: s.title,
-          hidden: !!s.hidden,
-          sort_order: i,
-        })),
+        sections: d.sections
+          .filter((s) => budgetsLive() || s.key !== "budget")
+          .map((s, i) => ({
+            section_key: s.key,
+            title: s.title,
+            hidden: !!s.hidden,
+            sort_order: i,
+          })),
         assets,
       },
     });
@@ -637,7 +650,7 @@ async function exportPdf(id) {
       if (a.url) urls[a.url] = (await resolvePhotoUrl(a.url)) || "";
     }),
   );
-  const secs = (p.sections || []).filter((s) => !s.hidden);
+  const secs = (p.sections || []).filter((s) => !s.hidden && (budgetsLive() || s.section_key !== "budget"));
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(pk.title)}</title>
   <style>
     body{font-family:'DM Sans',system-ui,sans-serif;color:#111;margin:38px}
@@ -703,6 +716,7 @@ let PENDING_OPEN = null;
 export function mountPresent() {
   const host = document.getElementById("presRoot");
   if (!host) return;
+  budgetAvailability().catch(() => {});
   if (!document.getElementById("pkModal")) {
     const m = document.createElement("div");
     m.id = "pkModal";

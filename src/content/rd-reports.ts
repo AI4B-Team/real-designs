@@ -5,6 +5,7 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { getWorkspaceReport } from "@/lib/reports.functions";
+import { budgetAvailability, budgetsLive } from "@/lib/budget-coming-soon";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -153,7 +154,7 @@ function filteredRows() {
   if (!d) return [];
   const q = S.q.trim().toLowerCase();
   let rows = d.rows.filter((r) => {
-    if (S.fit !== "all" && r.budget_fit !== S.fit) return false;
+    if (budgetsLive() && S.fit !== "all" && r.budget_fit !== S.fit) return false;
     if (!q) return true;
     return (
       String(r.property).toLowerCase().includes(q) ||
@@ -212,6 +213,7 @@ export function mountReports(nav) {
       }
     });
   }
+  budgetAvailability().finally(render);
   if (!S.data && !S.loading) load(false);
   else render();
 }
@@ -243,7 +245,7 @@ function headHtml() {
   return `<div class="rp-head">
     <div>
       <h2>Reports</h2>
-      <p>Track project progress, budgets, design activity and client decisions across your workspace.</p>
+      <p>Track project progress, design activity and client decisions across your workspace${budgetsLive() ? ", and budgets" : ""}.</p>
     </div>
     <div class="rp-tools">
       <select id="rpRange" aria-label="Date range">${RANGES.map(
@@ -277,6 +279,16 @@ function cardsHtml() {
       S.error,
     )}</span><button class="btn btn-ghost btn-xs" data-a="refresh">Retry</button></div></div></div>`;
   const s = S.data.summary;
+  const fourthCard = budgetsLive()
+    ? [
+        "wallet",
+        "Planned Budget",
+        s.plannedBudget ? money(s.plannedBudget) : "Not Set",
+        s.budgetedProjects
+          ? s.budgetedProjects + (s.budgetedProjects === 1 ? " project has" : " projects have") + " a saved budget"
+          : "Add a budget target to a project",
+      ]
+    : ["activity", "Credits Used", String(S.data.credits.used), rangeLabel()];
   const cards = [
     ["folder-kanban", "Active Projects", String(s.activeProjects), s.properties + (s.properties === 1 ? " property" : " properties") + " in the workspace"],
     ["images", "Designs Created", String(s.designsCreated), rangeLabel()],
@@ -286,14 +298,7 @@ function cardsHtml() {
       String(s.approvedDesigns),
       s.designsCreated ? s.approvalRate + "% of designs in this period" : "No designs in this period",
     ],
-    [
-      "wallet",
-      "Planned Budget",
-      s.plannedBudget ? money(s.plannedBudget) : "Not Set",
-      s.budgetedProjects
-        ? s.budgetedProjects + (s.budgetedProjects === 1 ? " project has" : " projects have") + " a saved budget"
-        : "Add a budget target to a project",
-    ],
+    fourthCard,
   ];
   return `<div class="rp-cards">${cards
     .map(
@@ -325,21 +330,20 @@ function rollupHtml() {
       </div>`;
     const rows = filteredRows();
     if (!rows.length)
-      return `<div class="rp-empty"><h4>No Matching Projects</h4><p>Adjust the search or budget filter to see more rows.</p>
+      return `<div class="rp-empty"><h4>No Matching Projects</h4><p>Adjust the search${budgetsLive() ? " or budget filter" : ""} to see more rows.</p>
         <div class="row"><button class="btn btn-ghost btn-xs" data-a="clearfilters">Clear Filters</button></div></div>`;
     const pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
     if (S.page > pages) S.page = pages;
     const slice = rows.slice((S.page - 1) * PER_PAGE, S.page * PER_PAGE);
     const t = totalsOf(rows);
+    const live = budgetsLive();
     const head = [
       ["property", "Property", ""],
       ["project", "Project", ""],
       ["rooms", "Rooms", "n"],
       ["designs", "Designs", "n"],
       ["approved", "Approved", "n"],
-      ["scope", "Budget Range", "n"],
-      ["budget_target", "Planned Budget", "n"],
-      ["budget_fit", "Budget Fit", ""],
+      ...(live ? [["scope", "Budget Range", "n"], ["budget_target", "Planned Budget", "n"], ["budget_fit", "Budget Fit", ""]] : []),
       ["last_activity", "Last Activity", ""],
     ];
     return `<div class="rp-tw"><table class="rp-tbl">
@@ -356,17 +360,14 @@ function rollupHtml() {
             <td class="n">${r.rooms}</td>
             <td class="n">${r.designs}</td>
             <td class="n">${r.approved}/${r.designs}</td>
-            <td class="n">${scope}</td>
-            <td class="n">${r.budget_target != null ? money(r.budget_target) : '<span class="mut">—</span>'}</td>
-            <td><span class="rp-pill ${f[0]}">${f[1]}</span></td>
+            ${live ? `<td class="n">${scope}</td><td class="n">${r.budget_target != null ? money(r.budget_target) : '<span class="mut">—</span>'}</td><td><span class="rp-pill ${f[0]}">${f[1]}</span></td>` : ""}
             <td>${fmtDate(r.last_activity)}</td>
           </tr>`;
         })
         .join("")}</tbody>
       <tfoot><tr><td>Totals</td><td>${rows.length} ${rows.length === 1 ? "row" : "rows"}</td>
         <td class="n">${t.rooms}</td><td class="n">${t.designs}</td><td class="n">${t.approved}/${t.designs}</td>
-        <td class="n">${t.high ? money(t.low) + " – " + money(t.high) : "—"}</td>
-        <td class="n">${t.budget ? money(t.budget) : "—"}</td><td></td><td></td></tr></tfoot>
+        ${live ? `<td class="n">${t.high ? money(t.low) + " – " + money(t.high) : "—"}</td><td class="n">${t.budget ? money(t.budget) : "—"}</td><td></td>` : ""}<td></td></tr></tfoot>
     </table></div>
     ${
       pages > 1
@@ -378,16 +379,16 @@ function rollupHtml() {
   };
   return `<div class="rp-sec">
     <div class="rp-sec-h">
-      <div><h3>Portfolio Rollup</h3><div class="sub">Every property and project, with priced budget and fit</div></div>
+      <div><h3>Portfolio Rollup</h3><div class="sub">Every property and project${budgetsLive() ? ", with priced budget and fit" : ""}</div></div>
       <div class="rp-filters">
         <div class="rp-search"><i data-lucide="search"></i><input id="rpSearch" type="text" placeholder="Search Property, Project Or Client" value="${esc(S.q)}"></div>
-        <select id="rpFit" aria-label="Budget fit filter">
+        ${budgetsLive() ? `<select id="rpFit" aria-label="Budget fit filter">
           <option value="all"${S.fit === "all" ? " selected" : ""}>All Budget Fits</option>
           <option value="on_track"${S.fit === "on_track" ? " selected" : ""}>On Track</option>
           <option value="near_limit"${S.fit === "near_limit" ? " selected" : ""}>Near Limit</option>
           <option value="over"${S.fit === "over" ? " selected" : ""}>Over Budget</option>
           <option value="unset"${S.fit === "unset" ? " selected" : ""}>Not Set</option>
-        </select>
+        </select>` : ""}
       </div>
     </div>
     <div class="rp-sec-b flush">${body()}</div>
@@ -658,6 +659,7 @@ function csvCell(v) {
 function exportCsv() {
   const rows = filteredRows();
   if (!rows.length) return toast("No Records To Export");
+  const live = budgetsLive();
   const head = [
     "Property",
     "Project",
@@ -666,11 +668,7 @@ function exportCsv() {
     "Designs",
     "Approved Designs",
     "Approval Rate",
-    "Budget Minimum",
-    "Budget Maximum",
-    "Planned Budget",
-    "Budget Variance",
-    "Budget Fit",
+    ...(live ? ["Budget Minimum", "Budget Maximum", "Planned Budget", "Budget Variance", "Budget Fit"] : []),
     "Last Activity",
   ];
   const lines = [head.map(csvCell).join(",")].concat(
@@ -683,11 +681,15 @@ function exportCsv() {
         r.designs,
         r.approved,
         r.designs ? Math.round((r.approved / r.designs) * 100) + "%" : "0%",
-        r.priced ? Math.round(r.low) : "",
-        r.priced ? Math.round(r.high) : "",
-        r.budget_target == null ? "" : Math.round(r.budget_target),
-        r.budget_target == null || !r.priced ? "" : Math.round(r.budget_target - r.high),
-        (FIT[r.budget_fit] || FIT.unset)[1],
+        ...(live
+          ? [
+              r.priced ? Math.round(r.low) : "",
+              r.priced ? Math.round(r.high) : "",
+              r.budget_target == null ? "" : Math.round(r.budget_target),
+              r.budget_target == null || !r.priced ? "" : Math.round(r.budget_target - r.high),
+              (FIT[r.budget_fit] || FIT.unset)[1],
+            ]
+          : []),
         r.last_activity || "",
       ]
         .map(csvCell)
@@ -729,15 +731,16 @@ function exportPdf() {
   for (let i = 0; i < rows.length; i += 18) chunks.push(rows.slice(i, i + 18));
   const totalPages = 1 + chunks.length;
 
+  const live = budgetsLive();
   const summary = `<h1>Workspace Report</h1>
-    <p class="meta">Period: ${esc(rangeLabel())} · Property: ${esc(propName)} · Budget Fit: ${esc(
-      S.fit === "all" ? "All" : (FIT[S.fit] || FIT.unset)[1],
-    )}${S.q ? " · Search: " + esc(S.q) : ""}</p>
+    <p class="meta">Period: ${esc(rangeLabel())} · Property: ${esc(propName)}${
+      live ? ` · Budget Fit: ${esc(S.fit === "all" ? "All" : (FIT[S.fit] || FIT.unset)[1])}` : ""
+    }${S.q ? " · Search: " + esc(S.q) : ""}</p>
     <div class="cards">
       <div><span>Active Projects</span><b>${s.activeProjects}</b></div>
       <div><span>Designs Created</span><b>${s.designsCreated}</b></div>
       <div><span>Approved Designs</span><b>${s.approvedDesigns} (${s.approvalRate}%)</b></div>
-      <div><span>Planned Budget</span><b>${s.plannedBudget ? money(s.plannedBudget) : "Not Set"}</b></div>
+      ${live ? `<div><span>Planned Budget</span><b>${s.plannedBudget ? money(s.plannedBudget) : "Not Set"}</b></div>` : `<div><span>Credits Used</span><b>${d.credits.used}</b></div>`}
     </div>
     <h2>Design Progress</h2>
     <table><thead><tr><th>Draft</th><th>In Review</th><th>Approved</th><th>Archived</th></tr></thead>
@@ -751,7 +754,9 @@ function exportPdf() {
     <table><thead><tr><th>Links Shared</th><th>Viewed</th><th>Changes Requested</th><th>Approved</th></tr></thead>
     <tbody><tr><td>${d.clients.shared}</td><td>${d.clients.viewed}</td><td>${d.clients.changes}</td><td>${d.clients.approved}</td></tr></tbody></table>`;
 
-  const tableHead = `<tr><th>Property</th><th>Project</th><th>Rooms</th><th>Designs</th><th>Approved</th><th>Budget Range</th><th>Budget</th><th>Fit</th><th>Last Activity</th></tr>`;
+  const tableHead = `<tr><th>Property</th><th>Project</th><th>Rooms</th><th>Designs</th><th>Approved</th>${
+    live ? "<th>Budget Range</th><th>Budget</th><th>Fit</th>" : ""
+  }<th>Last Activity</th></tr>`;
   const pages = [pdfPage(summary, 1, totalPages)].concat(
     chunks.map((ch, i) =>
       pdfPage(
@@ -759,17 +764,21 @@ function exportPdf() {
         <table><thead>${tableHead}</thead><tbody>${ch
           .map(
             (r) =>
-              `<tr><td>${esc(r.property)}</td><td>${esc(r.project)}</td><td>${r.rooms}</td><td>${r.designs}</td><td>${r.approved}</td><td>${
-                r.priced ? money(r.low) + " – " + money(r.high) : "Not Priced"
-              }</td><td>${r.budget_target != null ? money(r.budget_target) : "—"}</td><td>${
-                (FIT[r.budget_fit] || FIT.unset)[1]
-              }</td><td>${fmtDate(r.last_activity)}</td></tr>`,
+              `<tr><td>${esc(r.property)}</td><td>${esc(r.project)}</td><td>${r.rooms}</td><td>${r.designs}</td><td>${r.approved}</td>${
+                live
+                  ? `<td>${r.priced ? money(r.low) + " – " + money(r.high) : "Not Priced"}</td><td>${
+                      r.budget_target != null ? money(r.budget_target) : "—"
+                    }</td><td>${(FIT[r.budget_fit] || FIT.unset)[1]}</td>`
+                  : ""
+              }<td>${fmtDate(r.last_activity)}</td></tr>`,
           )
           .join("")}${
           i === chunks.length - 1
-            ? `<tr class="tot"><td>Totals</td><td>${rows.length} rows</td><td>${t.rooms}</td><td>${t.designs}</td><td>${t.approved}</td><td>${
-                t.high ? money(t.low) + " – " + money(t.high) : "—"
-              }</td><td>${t.budget ? money(t.budget) : "—"}</td><td></td><td></td></tr>`
+            ? `<tr class="tot"><td>Totals</td><td>${rows.length} rows</td><td>${t.rooms}</td><td>${t.designs}</td><td>${t.approved}</td>${
+                live
+                  ? `<td>${t.high ? money(t.low) + " – " + money(t.high) : "—"}</td><td>${t.budget ? money(t.budget) : "—"}</td><td></td>`
+                  : ""
+              }<td></td></tr>`
             : ""
         }</tbody></table>`,
         i + 2,

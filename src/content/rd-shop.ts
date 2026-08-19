@@ -926,7 +926,7 @@ function mount(ctx) {
         <div class="shop-mini">${thumb(p, "mini")}<div><b>${esc(p.name)}</b><span>${esc(p.merchant)} &middot; ${money(priceOf(p))}</span></div></div>
         <label class="shop-f"><span>Quantity</span><input id="afQty" type="number" min="1" value="1"></label>
         <label class="shop-f"><span>Room</span><input id="afRoom" type="text" value="${esc(design.roomLabel)}" readonly></label>
-        <label class="shop-f"><span>Budget Category</span><select id="afCat">${BUDGET_CATS.map((x) => `<option>${x}</option>`).join("")}</select></label>
+        <label class="shop-f"><span>Price Tier</span><select id="afCat">${BUDGET_CATS.map((x) => `<option>${x}</option>`).join("")}</select></label>
         <div class="shop-adv">
           <button type="button" class="shop-adv-t" id="afMore" aria-expanded="false">More Options<i data-lucide="chevron-down"></i></button>
           <div class="shop-adv-b" id="afMoreB" hidden>
@@ -1002,7 +1002,7 @@ function mount(ctx) {
           <div><span>Estimated Delivery</span><b>${money(roll.delivery)}</b></div>
           <div><span>Contingency</span><b>${money(roll.contingency)}</b></div>
           <div class="tot"><span>Estimated Product Total</span><b>${money(roll.total)}</b></div></div>
-        <div class="shop-disc"><i data-lucide="info"></i><span>Product totals are planning estimates and roll into Budget alongside the labor and materials estimate.</span></div>
+        <div class="shop-disc"><i data-lucide="info"></i><span>Product totals reflect real prices from your selections. They do not include labor or materials, and are not a complete renovation estimate.</span></div>
       </div>
       <div class="shop-dr-f"><button class="btn btn-dark btn-xs" id="selGo"><i data-lucide="shopping-bag"></i>Open Products Page</button></div>
     </div>`;
