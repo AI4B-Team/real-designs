@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["scope", "budget-mode", "arv", "grades"],
 
-  scopeTitle: "BRRRR Rehab Scope & Planning Range",
-  scopeIntro: "Line items for a moderate rental-grade rehab on a typical 3 bedroom, 2 bath single family property.",
-  scopeLines: [
-    { item: "Interior Paint, Whole House", qty: "1,400 SF", trade: "Painting", low: 2800, high: 5200 },
-    { item: "Flooring, LVP Throughout", qty: "1,200 SF", trade: "Flooring", low: 4800, high: 8400 },
-    { item: "Kitchen Refresh, Cabinets & Counters", qty: "1 kitchen", trade: "Cabinetry", low: 5500, high: 12000 },
-    { item: "Bathroom Refresh, 2 Baths", qty: "2 bathrooms", trade: "Plumbing", low: 4000, high: 9000 },
-    { item: "HVAC Service Or Replacement", qty: "1 system", trade: "HVAC", low: 2500, high: 7500 },
-    { item: "Roof Repair Or Patch", qty: "As needed", trade: "Roofing", low: 1500, high: 6500 },
-    { item: "Electrical Panel & Fixture Updates", qty: "1 panel, 8 fixtures", trade: "Electrical", low: 1800, high: 4500 },
-    { item: "Exterior Paint & Landscaping Cleanup", qty: "1 exterior", trade: "Exterior", low: 2200, high: 5800 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for rental-grade single family rehabs, not a contractor bid.",
-  confidence: "Medium",
 
   sections: [
     {

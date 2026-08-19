@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["grades", "scope", "budget-mode", "brief"],
 
-  scopeTitle: "Sample Bedroom Finish Comparison Cost Table",
-  scopeIntro: "Planning range comparing rental grade and retail grade finishes for a single 150 square foot bedroom, medium confidence pending local material pricing.",
-  scopeLines: [
-    { item: "Flooring, Rental Grade LVP", qty: "150 SF", trade: "Flooring", low: 750, high: 1200 },
-    { item: "Flooring, Retail Grade Engineered Wood", qty: "150 SF", trade: "Flooring", low: 1500, high: 2700 },
-    { item: "Paint, Rental Grade Flat", qty: "150 SF Wall", trade: "Paint", low: 250, high: 400 },
-    { item: "Paint, Retail Grade Eggshell", qty: "150 SF Wall", trade: "Paint", low: 350, high: 550 },
-    { item: "Closet Hardware, Rental Grade", qty: "1 LS", trade: "Carpentry", low: 80, high: 150 },
-    { item: "Closet Hardware, Retail Grade", qty: "1 LS", trade: "Carpentry", low: 200, high: 450 },
-    { item: "Light Fixture, Rental Grade", qty: "2 EA", trade: "Electrical", low: 60, high: 120 },
-    { item: "Light Fixture, Retail Grade", qty: "2 EA", trade: "Electrical", low: 180, high: 400 },
-  ],
-  scopeBasis: "Published unit rates for common rental and retail grade material choices, single bedroom scope, adjust for local material and labor pricing.",
-  confidence: "Medium",
 
   sections: [
     {

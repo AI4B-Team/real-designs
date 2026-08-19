@@ -34,19 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["grades", "scope", "brief", "interior"],
 
-  scopeTitle: "Sample Standard Unit Turn Scope",
-  scopeIntro: "A representative turn scope for a mid-tier rental unit, sized for durability and turnaround speed rather than resale-level finish.",
-  scopeLines: [
-    { item: "Interior Paint, Full Unit", qty: "900 SF", trade: "Painting", low: 900, high: 1800 },
-    { item: "Carpet Or LVP Flooring Replacement", qty: "700 SF", trade: "Flooring", low: 2100, high: 4200 },
-    { item: "Cabinet Touch-Up Or Hardware Swap", qty: "1 Kitchen", trade: "Cabinetry", low: 250, high: 900 },
-    { item: "Appliance Cleaning Or Replacement", qty: "4 Appliances", trade: "Appliances", low: 400, high: 2400 },
-    { item: "Plumbing Fixture Check & Repair", qty: "2 Baths", trade: "Plumbing", low: 300, high: 900 },
-    { item: "Blind & Fixture Replacement", qty: "6 Windows", trade: "Electrical", low: 350, high: 700 },
-    { item: "Deep Clean & Pest Treatment", qty: "1 Unit", trade: "Cleaning", low: 200, high: 450 },
-  ],
-  scopeBasis: "Ranges reflect national averages for a standard rental turn at durable, mid-tier finish, before local vendor pricing is applied.",
-  confidence: "Medium",
 
   sections: [
     {

@@ -66,10 +66,19 @@ export const getPackage = createServerFn({ method: "POST" })
         .order("created_at", { ascending: false })
         .limit(60),
     ]);
+
+    // Budget/scope sections and assets carry priced numbers; drop them
+    // server-side whenever pricing is not live so nothing invented reaches
+    // the client, even for the owner's own preview.
+    const { isBudgetSectionKey, checkBudgetsAvailable } = await import("@/lib/budget.server");
+    const budgetsAvailable = await checkBudgetsAvailable();
+    const sections = budgetsAvailable ? (s.data ?? []) : (s.data ?? []).filter((row: any) => !isBudgetSectionKey(row?.section_key));
+    const assets = budgetsAvailable ? (a.data ?? []) : (a.data ?? []).filter((row: any) => !isBudgetSectionKey(row?.section_key));
+
     return {
       package: pkg,
-      sections: s.data ?? [],
-      assets: a.data ?? [],
+      sections,
+      assets,
       links: l.data ?? [],
       comments: c.data ?? [],
       activity: act.data ?? [],
@@ -220,13 +229,21 @@ export const getSharedPackage = createServerFn({ method: "POST" })
     if (p.error) return p as { error: string };
     await supabaseAdmin.rpc("record_presentation_share_view", { _token: data.token } as never);
     const { signRoomPhoto } = await import("@/lib/presentations.server");
+    const { isBudgetSectionKey, checkBudgetsAvailable } = await import("@/lib/budget.server");
+    const budgetsAvailable = await checkBudgetsAvailable();
+
+    const rawAssets = Array.isArray(p.assets) ? p.assets : [];
+    const visibleAssets = budgetsAvailable ? rawAssets : rawAssets.filter((a: any) => !isBudgetSectionKey(a?.section_key));
     p.assets = await Promise.all(
-      (Array.isArray(p.assets) ? p.assets : []).map(async (a: any) => ({
+      visibleAssets.map(async (a: any) => ({
         ...a,
         url: await signRoomPhoto(a.url ?? null),
         compare_url: await signRoomPhoto(a.compare_url ?? null),
       })),
     );
+    if (Array.isArray(p.sections) && !budgetsAvailable) {
+      p.sections = p.sections.filter((sec: any) => !isBudgetSectionKey(sec?.section_key));
+    }
     return p;
 
   });

@@ -24,3 +24,9 @@ export async function assertBudgetsAvailable(): Promise<void> {
   const available = await checkBudgetsAvailable();
   if (!available) throw new Error(BUDGET_UNAVAILABLE_MESSAGE);
 }
+
+/** Section/asset keys that carry priced budget content in presentation payloads. */
+export function isBudgetSectionKey(key: unknown): boolean {
+  const k = String(key ?? "").toLowerCase();
+  return k.includes("budget") || k.includes("scope") || k.includes("price") || k.includes("pricing");
+}

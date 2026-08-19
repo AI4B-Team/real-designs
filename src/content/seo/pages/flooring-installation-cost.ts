@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["scope", "interior", "budget-mode", "shop"],
 
-  scopeTitle: "Flooring Installation Scope & Planning Range",
-  scopeIntro: "Line items for a 300 square foot living room, luxury vinyl plank at a mid-range price point.",
-  scopeLines: [
-    { item: "Demo & Haul Away, Existing Flooring", qty: "300 SF", trade: "Flooring", low: 450, high: 900 },
-    { item: "Subfloor Repair & Leveling", qty: "300 SF", trade: "Flooring", low: 300, high: 900 },
-    { item: "Luxury Vinyl Plank, Material", qty: "300 SF", trade: "Flooring", low: 900, high: 2100 },
-    { item: "Underlayment", qty: "300 SF", trade: "Flooring", low: 150, high: 400 },
-    { item: "Installation Labor", qty: "300 SF", trade: "Flooring", low: 750, high: 1500 },
-    { item: "Baseboard Removal & Reinstall", qty: "70 LF", trade: "Carpentry", low: 280, high: 700 },
-    { item: "Transition Strips & Trim", qty: "3 doorways", trade: "Flooring", low: 120, high: 300 },
-    { item: "Furniture Move & Setup", qty: "1 room", trade: "General", low: 100, high: 300 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for mid-range residential flooring installation, not a contractor bid.",
-  confidence: "High",
 
   sections: [
     {

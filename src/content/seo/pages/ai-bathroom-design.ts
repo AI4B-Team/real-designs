@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["scope", "brief", "reality-lock", "grades"],
 
-  scopeTitle: "Bathroom Remodel Scope & Planning Range",
-  scopeIntro: "Line items for a standard 5 by 8 foot, roughly 40 square foot, full bathroom remodel.",
-  scopeLines: [
-    { item: "Waterproofing Membrane, Shower Pan & Walls", qty: "60 SF", trade: "Waterproofing", low: 1200, high: 2800 },
-    { item: "Tile, Floor & Shower Walls", qty: "150 SF", trade: "Tile", low: 3000, high: 7500 },
-    { item: "Vanity & Countertop", qty: "1 vanity, 36 in", trade: "Cabinetry", low: 900, high: 2800 },
-    { item: "Tub To Shower Conversion", qty: "1 conversion", trade: "Plumbing", low: 3500, high: 8500 },
-    { item: "Toilet Replacement", qty: "1 unit", trade: "Plumbing", low: 400, high: 1100 },
-    { item: "Exhaust Fan & Ventilation", qty: "1 fan, ducted", trade: "Electrical", low: 350, high: 900 },
-    { item: "Lighting & Electrical", qty: "4 fixtures", trade: "Electrical", low: 700, high: 1800 },
-    { item: "Glass Shower Enclosure", qty: "1 enclosure", trade: "Glass", low: 900, high: 2600 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for a standard size residential bathroom remodel, not a contractor bid.",
-  confidence: "Medium",
 
   sections: [
     {

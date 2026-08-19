@@ -8,7 +8,7 @@ import "@/styles/rd-site.css";
 
 const TITLE = "Compare Every Feature | REAL DESIGNS Plans";
 const DESC =
-  "Full feature comparison of the Free, Starter, Pro and Studio plans: downloads, licensing, budgets, floor plans, walkthroughs, team seats and client delivery.";
+  "Full feature comparison of Free, Starter, Pro and Studio: downloads, licensing, floor plans, walkthroughs, team seats and delivery.";
 
 export const Route = createFileRoute("/pricing_/compare")({
   head: () => ({
@@ -51,21 +51,17 @@ const GROUPS: { title: string; rows: Row[] }[] = [
   {
     title: "Planning",
     rows: [
-      ["Typical budget range by room type", true, true, true, true],
-      ["Scope and budget from your photo", false, true, true, true],
       ["Shopping list with live pricing", false, true, true, true],
-      ["Contractor brief PDF", false, false, true, true],
-      ["ARV impact range", false, false, true, true],
+      ["Before and after presentation", false, true, true, true],
       ["2D to 3D floor plans", false, false, false, true],
       ["Video walkthroughs", false, false, false, true],
+      ["Client approval portal", false, false, false, true],
     ],
   },
   {
     title: "Delivery & Teams",
     rows: [
-      ["Before and after presentation", false, true, true, true],
       ["Batch listing staging with MLS disclosure", false, false, true, true],
-      ["Client approval portal", false, false, false, true],
       ["Brand presets and white label decks", false, false, false, true],
       ["Priority render queue", false, false, false, true],
       ["Team seats", "1", "1", "5", "Unlimited"],

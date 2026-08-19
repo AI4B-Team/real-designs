@@ -34,22 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["scope", "budget-mode", "brief", "grades", "reality-lock"],
 
-  scopeTitle: "Sample Whole Home Rehab Scope",
-  scopeIntro: "A 1,500 square foot retail grade rehab, dated but not distressed, with kitchen and one bathroom included.",
-  scopeLines: [
-    { item: "Demolition & Disposal", qty: "1,500 SF", trade: "Demolition", low: 3400, high: 5200 },
-    { item: "Flooring Throughout", qty: "1,500 SF", trade: "Flooring", low: 10500, high: 17250 },
-    { item: "Interior Paint", qty: "1,500 SF", trade: "Paint", low: 4650, high: 7050 },
-    { item: "Kitchen Allowance", qty: "1 LS", trade: "Cabinetry", low: 12000, high: 26000 },
-    { item: "Bathroom Allowance", qty: "1 LS", trade: "Plumbing", low: 7500, high: 16000 },
-    { item: "Interior Doors & Trim", qty: "1,500 SF", trade: "Carpentry", low: 3300, high: 5400 },
-    { item: "Electrical Refresh", qty: "1,500 SF", trade: "Electrical", low: 3900, high: 6600 },
-    { item: "HVAC Service Or Replacement", qty: "1 LS", trade: "Mechanical", low: 1200, high: 8500 },
-    { item: "Exterior Touch Up", qty: "1 LS", trade: "Paint", low: 900, high: 2400 },
-    { item: "Contingency", qty: "10 Pct", trade: "Reserve", low: 4735, high: 9440 },
-  ],
-  scopeBasis: "Published unit rates times measured square footage, adjusted for retail grade finish and a 10 percent contingency.",
-  confidence: "Medium",
 
   sections: [
     {

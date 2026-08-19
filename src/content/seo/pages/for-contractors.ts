@@ -34,19 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["reality-lock", "scope", "brief", "interior"],
 
-  scopeTitle: "Sample Kitchen Remodel Scope",
-  scopeIntro: "A representative mid-range kitchen scope generated alongside the design, ready to attach to a client proposal or adjust to your own pricing.",
-  scopeLines: [
-    { item: "Cabinet Replacement, Base & Upper", qty: "26 LF", trade: "Cabinetry", low: 9800, high: 18500 },
-    { item: "Quartz Countertops With Sink Cutout", qty: "42 SF", trade: "Countertops", low: 3100, high: 5600 },
-    { item: "Tile Backsplash Installation", qty: "34 SF", trade: "Tile", low: 1400, high: 2900 },
-    { item: "Undercabinet & Recessed Lighting", qty: "12 Fixtures", trade: "Electrical", low: 1800, high: 3400 },
-    { item: "Plumbing Rough-In For Relocated Sink", qty: "1 Sink", trade: "Plumbing", low: 1200, high: 2600 },
-    { item: "Luxury Vinyl Plank Flooring", qty: "280 SF", trade: "Flooring", low: 1900, high: 3400 },
-    { item: "Demo & Haul-Away", qty: "1 Kitchen", trade: "Demolition", low: 900, high: 1800 },
-  ],
-  scopeBasis: "Ranges reflect national material and labor averages for a mid-range kitchen remodel, to be adjusted to your own supplier and crew pricing before quoting.",
-  confidence: "Medium",
 
   sections: [
     {

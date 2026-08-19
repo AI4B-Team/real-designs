@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["exterior", "reality-lock", "scope", "brief", "arv"],
 
-  scopeTitle: "Curb Appeal Makeover Budget",
-  scopeIntro: "A cosmetic exterior refresh on a roughly 1,800 SF single story house, roof and structure untouched.",
-  scopeLines: [
-    { item: "Exterior Paint, Body & Trim", qty: "1,800 SF Elevation", trade: "Painting", low: 3200, high: 6500 },
-    { item: "Front Door Replacement", qty: "1 Unit", trade: "Carpentry", low: 600, high: 1800 },
-    { item: "Shutters & Trim Accents", qty: "8 Shutters", trade: "Carpentry", low: 400, high: 1000 },
-    { item: "Garage Door Refresh Or Replace", qty: "1 Unit", trade: "Doors", low: 900, high: 2800 },
-    { item: "Exterior Lighting, Sconces & Path", qty: "6 Fixtures", trade: "Electrical", low: 400, high: 1200 },
-    { item: "Roof Spot Repair & Gutter Cleanout", qty: "Allowance", trade: "Roofing", low: 400, high: 2500 },
-    { item: "Foundation Bed Landscaping", qty: "60 LF", trade: "Landscaping", low: 500, high: 1600 },
-    { item: "Driveway & Walkway Pressure Wash", qty: "800 SF", trade: "Cleaning", low: 200, high: 500 },
-  ],
-  scopeBasis: "Ranges reflect national averages for exterior cosmetic work, adjusted for a single story elevation with no siding tear-off.",
-  confidence: "Medium",
 
   sections: [
     {

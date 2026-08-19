@@ -34,18 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["declutter", "staging", "mls", "reality-lock"],
 
-  scopeTitle: "Sample Per-Photo Decluttering Cost Table",
-  scopeIntro: "Planning range for decluttering a set of occupied room photos for a listing, high confidence because these are per-photo software costs.",
-  scopeLines: [
-    { item: "Occupied Room Photography", qty: "6 Rooms", trade: "Photography", low: 150, high: 300 },
-    { item: "Digital Decluttering", qty: "6 Photos", trade: "Editing", low: 60, high: 180 },
-    { item: "Disclosure Labeling", qty: "6 Photos", trade: "Labeling", low: 0, high: 30 },
-    { item: "Reflection & Shadow Cleanup", qty: "2 Photos", trade: "Editing", low: 20, high: 60 },
-    { item: "Reshoot Allowance", qty: "1 Visit", trade: "Photography", low: 100, high: 250 },
-    { item: "Optional Virtual Staging After Declutter", qty: "3 Rooms", trade: "Staging", low: 90, high: 240 },
-  ],
-  scopeBasis: "Typical vendor pricing for decluttering a small occupied listing photo set. Confirm your MLS's disclosure requirement for edited photos.",
-  confidence: "High",
 
   sections: [
     {

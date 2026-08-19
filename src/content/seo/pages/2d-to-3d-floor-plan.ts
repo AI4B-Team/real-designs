@@ -34,19 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["walkthrough", "sketch", "brief", "reality-lock"],
 
-  scopeTitle: "Sample 2D To 3D Conversion Cost Table",
-  scopeIntro: "Planning range for converting a flat plan into a furnished 3D view and walkthrough, high confidence because these are software costs.",
-  scopeLines: [
-    { item: "2D To 3D Conversion", qty: "1 Floor", trade: "Rendering", low: 25, high: 75 },
-    { item: "Additional Style Pass", qty: "2 Variants", trade: "Rendering", low: 20, high: 50 },
-    { item: "Walkthrough Video", qty: "1 LS", trade: "Rendering", low: 20, high: 60 },
-    { item: "Furniture Shopping List Export", qty: "1 LS", trade: "Sourcing", low: 0, high: 25 },
-    { item: "Printable Marketing Set", qty: "1 LS", trade: "Presentation", low: 0, high: 20 },
-    { item: "Professional Site Survey", qty: "1 Property", trade: "Surveying", low: 400, high: 1200 },
-    { item: "Architectural Drawing Set", qty: "1 Property", trade: "Architecture", low: 1500, high: 6000 },
-  ],
-  scopeBasis: "Software conversion costs are per plan, survey and architectural figures shown separately as an illustrative planning range only.",
-  confidence: "High",
 
   sections: [
     {

@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["scope", "brief", "budget-mode", "shop", "reality-lock"],
 
-  scopeTitle: "Kitchen Remodel Scope & Planning Range",
-  scopeIntro: "Line items for a mid-size kitchen, roughly 150 to 200 square feet, keeping the existing footprint unless noted.",
-  scopeLines: [
-    { item: "Cabinetry, New Fronts & Boxes", qty: "28 LF", trade: "Cabinetry", low: 9000, high: 22000 },
-    { item: "Countertops, Quartz", qty: "45 SF", trade: "Countertop", low: 3200, high: 6800 },
-    { item: "Backsplash Tile & Install", qty: "35 SF", trade: "Tile", low: 900, high: 2400 },
-    { item: "Appliance Package", qty: "4 appliances", trade: "Appliances", low: 3500, high: 9500 },
-    { item: "Kitchen Sink Relocation", qty: "1 relocation", trade: "Plumbing", low: 1800, high: 4200 },
-    { item: "Electrical, New Circuits & Fixtures", qty: "6 fixtures", trade: "Electrical", low: 1500, high: 3800 },
-    { item: "Flooring", qty: "180 SF", trade: "Flooring", low: 2200, high: 5400 },
-    { item: "Island Addition", qty: "1 island, 6 ft", trade: "Cabinetry", low: 3800, high: 9000 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for mid-range residential kitchen remodels, not a contractor bid.",
-  confidence: "Medium",
 
   sections: [
     {

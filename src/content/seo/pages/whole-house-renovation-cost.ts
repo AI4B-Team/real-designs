@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["scope", "budget-mode", "interior", "brief", "grades"],
 
-  scopeTitle: "Whole House Renovation Scope & Planning Range",
-  scopeIntro: "Line items for a full renovation of an average 2,000 square foot, three bedroom, two bathroom home.",
-  scopeLines: [
-    { item: "Kitchen Remodel", qty: "1 kitchen, 180 SF", trade: "General", low: 35000, high: 75000 },
-    { item: "Primary Bathroom Remodel", qty: "1 bath, 80 SF", trade: "General", low: 15000, high: 32000 },
-    { item: "Secondary Bathroom Remodel", qty: "1 bath, 45 SF", trade: "General", low: 9000, high: 18000 },
-    { item: "Flooring Throughout", qty: "1,600 SF", trade: "Flooring", low: 12000, high: 28000 },
-    { item: "Interior Paint, Whole House", qty: "2,000 SF", trade: "Painting", low: 6000, high: 13000 },
-    { item: "Electrical Updates & Fixtures", qty: "24 fixtures", trade: "Electrical", low: 8000, high: 18000 },
-    { item: "HVAC System Updates", qty: "1 system", trade: "Mechanical", low: 9000, high: 20000 },
-    { item: "Windows & Trim", qty: "16 windows", trade: "Carpentry", low: 14000, high: 32000 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for mid-range residential whole house renovations, not a contractor bid.",
-  confidence: "Medium",
 
   sections: [
     {

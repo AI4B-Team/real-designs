@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["landscape", "reality-lock", "scope", "brief"],
 
-  scopeTitle: "Backyard Redesign Materials Budget",
-  scopeIntro: "A mid-range backyard refresh on a roughly 30x40 yard, existing fence and grade kept as is.",
-  scopeLines: [
-    { item: "Paver Patio", qty: "200 SF", trade: "Hardscape", low: 2400, high: 5000 },
-    { item: "Planting Beds, Shrubs & Perennials", qty: "120 SF Bed Area", trade: "Landscaping", low: 800, high: 2200 },
-    { item: "Shade Tree, 15 Gallon", qty: "2 Trees", trade: "Landscaping", low: 300, high: 900 },
-    { item: "Sod Or Seed Replacement", qty: "600 SF", trade: "Landscaping", low: 400, high: 1200 },
-    { item: "Drip Irrigation, Beds & Trees", qty: "1 Zone", trade: "Irrigation", low: 600, high: 1800 },
-    { item: "Grading & Drainage Correction", qty: "Allowance", trade: "Grading", low: 500, high: 2500 },
-    { item: "Low Voltage Path & Bed Lighting", qty: "10 Fixtures", trade: "Electrical", low: 600, high: 1600 },
-    { item: "Mulch & Edging", qty: "120 SF Bed Area", trade: "Landscaping", low: 200, high: 500 },
-  ],
-  scopeBasis: "Ranges reflect typical regional material and installed labor costs and assume no major slope or drainage rework beyond the stated allowance.",
-  confidence: "Medium",
 
   sections: [
     {

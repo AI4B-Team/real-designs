@@ -35,23 +35,6 @@ export const page: LandingPage = {
 
   showcase: ["scope", "budget-mode", "reality-lock", "shop", "grades"],
 
-  scopeTitle: "Mid-Range Kitchen Remodel Scope, 180 SF",
-  scopeIntro:
-    "This is the tier most homeowners mean when they say 'remodel the kitchen': new cabinetry and counters, no layout change, no moved plumbing.",
-  scopeLines: [
-    { item: "Demolition & Disposal", qty: "180 SF", trade: "Demolition", low: 580, high: 790 },
-    { item: "Cabinetry, Base & Wall", qty: "24 LF", trade: "Cabinetry", low: 7900, high: 11900 },
-    { item: "Countertops, Quartz", qty: "42 SF", trade: "Countertops", low: 2600, high: 3900 },
-    { item: "Tile Backsplash", qty: "30 SF", trade: "Tile", low: 1200, high: 1750 },
-    { item: "Flooring, LVP Or Tile", qty: "180 SF", trade: "Flooring", low: 1500, high: 2300 },
-    { item: "Paint, Walls & Ceiling", qty: "180 SF", trade: "Paint", low: 750, high: 1100 },
-    { item: "Plumbing, Sink & Faucet", qty: "1 LS", trade: "Plumbing", low: 900, high: 1500 },
-    { item: "Electrical & Lighting", qty: "1 LS", trade: "Electrical", low: 1100, high: 1900 },
-    { item: "Appliance Set, Mid Range", qty: "1 LS", trade: "Appliances", low: 2400, high: 4600 },
-    { item: "Permits & Inspection", qty: "1 LS", trade: "General", low: 350, high: 900 },
-  ],
-  scopeBasis: "Based on a 180 SF kitchen, retail finish grade, no layout change and no relocated plumbing or gas lines.",
-  confidence: "Medium",
 
   sections: [
     {
