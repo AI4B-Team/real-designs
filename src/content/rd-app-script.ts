@@ -1292,16 +1292,21 @@ function paintStudioState(){
 }
 
 
-/** Object controls only appear once a source exists and analysis has finished. */
+/**
+ * Object Controls stay disabled until real per-photo detection exists. A timer
+ * is not an analysis pass, and hotspots from one image must never be shown
+ * over another, so nothing is claimed here that the app cannot back up.
+ */
+let DETECTED_OBJECTS=[];
+function objectControlsReady(){ return DETECTED_OBJECTS.length>0; }
 function analyzeObjects(){
-  const sub=document.getElementById('lockCount');
   if(studioAnalyzeTimer){ clearTimeout(studioAnalyzeTimer); studioAnalyzeTimer=null; }
-  if(studioWrap) studioWrap.classList.add('st-analyzing');
-  if(sub) sub.textContent='Finding Editable Elements\u2026';
-  studioAnalyzeTimer=setTimeout(()=>{
-    if(studioWrap) studioWrap.classList.remove('st-analyzing');
-    drawLocks();
-  },900);
+  if(studioWrap) studioWrap.classList.remove('st-analyzing');
+  /* Detections are per photo: never carry them across sources. */
+  DETECTED_OBJECTS=[];
+  try{ Object.keys(locks).forEach(k=>{ delete locks[k]; }); }catch(_){}
+  try{ document.querySelectorAll('.hot').forEach(h=>{ h.className='hot'; h.hidden=true; }); }catch(_){}
+  drawLocks();
 }
 
 /**
