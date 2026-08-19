@@ -6,9 +6,9 @@
  * ranking/labelling rules used by the shopping workspace.
  *
  * IMPORTANT: no live retailer feed or visual-search provider is configured in
- * this environment. Everything returned by `sampleVisualSearch` is clearly
- * flagged with `sample: true` and `source: "sample"` and must be rendered as
- * SAMPLE DEVELOPMENT DATA, never as live pricing, availability or inventory.
+ * this environment. There is NO sample catalog: the provider returns nothing
+ * and the workspace shows an honest empty state where users save real
+ * retailer links or import a CSV of real products.
  */
 
 export type MatchType = "similar" | "close" | "inspired" | "exact";
@@ -48,7 +48,11 @@ export interface NormalizedProduct {
   productUrl: string;
   affiliateUrl?: undefined | string;
   lastVerified?: undefined | string;
-  source: "visual_search" | "retailer_feed" | "brand_catalog" | "user_upload" | "sample";
+  source: "visual_search" | "retailer_feed" | "brand_catalog" | "user_upload" | "manual_link" | "csv_import";
+  /** provider id the record came from (e.g. "manual_link", "csv_import", a feed id) */
+  provider?: string | undefined;
+  /** provider-scoped product id */
+  externalId?: string | undefined;
   matchType: MatchType;
   matchStrength: MatchStrength;
   matchNotes: string[];
@@ -176,168 +180,223 @@ function score(p: NormalizedProduct, ctx: RankContext): number {
 }
 
 /* ------------------------------------------------------------------ *
- * SAMPLE DEVELOPMENT DATA BELOW
- * Replaced by real adapters once retailer feeds / visual search exist.
+ * MANUAL / IMPORTED PRODUCT SOURCES
+ * There is no sample catalog. Until a real provider is connected the
+ * workspace shows an honest empty state and users add real retailer links.
  * ------------------------------------------------------------------ */
 
-const SAMPLE_MERCHANTS = [
-  { m: "Wayfair", host: "wayfair.com" },
-  { m: "West Elm", host: "westelm.com" },
-  { m: "Article", host: "article.com" },
-  { m: "CB2", host: "cb2.com" },
-  { m: "Home Depot", host: "homedepot.com" },
-  { m: "Rejuvenation", host: "rejuvenation.com" },
-  { m: "Floor & Decor", host: "flooranddecor.com" },
+export const PRODUCT_CATEGORIES: string[] = [
+  "Sofa",
+  "Chair",
+  "Coffee Table",
+  "Side Table",
+  "Rug",
+  "Lamp",
+  "Chandelier",
+  "Artwork",
+  "Plant",
+  "Cabinet",
+  "Vanity",
+  "Faucet",
+  "Flooring",
+  "Tile",
+  "Countertop",
+  "Paint Color",
 ];
 
-type Seed = {
-  name: string;
-  brand: string;
-  price: number;
-  was?: number;
-  w?: number;
-  d?: number;
-  h?: number;
-  colors: string[];
-  materials: string[];
-  avail: Availability;
-  strength: MatchStrength;
-  type: MatchType;
-  notes: string[];
-};
+export const PRICE_TIERS = ["Furniture", "Lighting", "Textiles", "Décor", "Fixtures", "Finishes", "Appliances", "Outdoor"];
 
-const SEEDS: Record<string, Seed[]> = {
-  Sofa: [
-    { name: "Low Profile Track Arm Sofa, 88 Inch", brand: "Halden", price: 1499, was: 1799, w: 88, d: 37, h: 31, colors: ["Oatmeal"], materials: ["Performance Linen", "Kiln Dried Hardwood"], avail: "in_stock", strength: "strong", type: "close", notes: ["Similar shape and material", "Within two inches of the detected width"] },
-    { name: "Slipcovered Three Seat Sofa", brand: "Marlow", price: 1149, w: 84, d: 38, h: 33, colors: ["Sand"], materials: ["Cotton Blend"], avail: "limited", strength: "good", type: "similar", notes: ["Similar color, different upholstery", "Exact SKU not verified"] },
-    { name: "Modular Two Piece Sofa", brand: "Kembi", price: 2290, w: 96, d: 40, h: 30, colors: ["Bone"], materials: ["Boucle"], avail: "in_stock", strength: "alternative", type: "similar", notes: ["Different dimensions", "Similar palette"] },
-    { name: "Budget Fabric Sofa, 80 Inch", brand: "Corliving", price: 649, w: 80, d: 35, h: 34, colors: ["Beige"], materials: ["Polyester"], avail: "in_stock", strength: "alternative", type: "similar", notes: ["Lower price tier", "Different leg profile"] },
-  ],
-  Chair: [
-    { name: "Sculpted Oak Lounge Chair", brand: "Norda", price: 899, w: 30, d: 32, h: 29, colors: ["Natural Oak"], materials: ["White Oak", "Wool"], avail: "in_stock", strength: "strong", type: "close", notes: ["Similar frame and seat material"] },
-    { name: "Upholstered Accent Chair", brand: "Marlow", price: 429, w: 29, d: 31, h: 32, colors: ["Ivory"], materials: ["Linen"], avail: "backorder", strength: "good", type: "similar", notes: ["Similar silhouette", "Backordered at this retailer"] },
-  ],
-  "Coffee Table": [
-    { name: "Round Oak Coffee Table, 42 Inch", brand: "Norda", price: 649, was: 749, w: 42, d: 42, h: 16, colors: ["Natural Oak"], materials: ["Solid Oak"], avail: "in_stock", strength: "strong", type: "close", notes: ["Similar shape and material"] },
-    { name: "Travertine Plinth Table", brand: "Sable", price: 1195, w: 40, d: 40, h: 14, colors: ["Cream"], materials: ["Travertine"], avail: "limited", strength: "good", type: "inspired", notes: ["Different material", "Similar proportion"] },
-    { name: "Value Round Wood Table", brand: "Basics", price: 219, w: 36, d: 36, h: 17, colors: ["Light Wood"], materials: ["Engineered Wood"], avail: "in_stock", strength: "alternative", type: "similar", notes: ["Smaller than detected footprint"] },
-  ],
-  "Side Table": [
-    { name: "Pedestal Side Table", brand: "Sable", price: 279, w: 18, d: 18, h: 22, colors: ["Cream"], materials: ["Stone Composite"], avail: "in_stock", strength: "good", type: "similar", notes: ["Similar color, different base"] },
-  ],
-  Rug: [
-    { name: "Hand Loomed Wool Rug, 8x10", brand: "Loomwell", price: 899, was: 1099, w: 96, d: 120, colors: ["Ivory", "Taupe"], materials: ["Wool"], avail: "in_stock", strength: "strong", type: "close", notes: ["Similar pile and palette"] },
-    { name: "Flatweave Jute Rug, 8x10", brand: "Loomwell", price: 349, w: 96, d: 120, colors: ["Natural"], materials: ["Jute"], avail: "in_stock", strength: "good", type: "similar", notes: ["Different texture, similar tone"] },
-  ],
-  Lamp: [
-    { name: "Arc Floor Lamp, Brushed Brass", brand: "Rejuv", price: 389, h: 62, colors: ["Brass"], materials: ["Metal", "Linen Shade"], avail: "in_stock", strength: "strong", type: "close", notes: ["Similar arm profile and finish"] },
-    { name: "Tripod Floor Lamp", brand: "Basics", price: 129, h: 58, colors: ["Black"], materials: ["Metal"], avail: "in_stock", strength: "alternative", type: "similar", notes: ["Different base, similar height"] },
-  ],
-  Chandelier: [
-    { name: "Six Light Linear Chandelier", brand: "Rejuv", price: 749, w: 38, h: 20, colors: ["Aged Brass"], materials: ["Metal", "Glass"], avail: "limited", strength: "good", type: "close", notes: ["Similar fixture family"] },
-  ],
-  Artwork: [
-    { name: "Framed Abstract Print, 36x48", brand: "Studio Co", price: 289, w: 36, h: 48, colors: ["Ochre", "Cream"], materials: ["Paper", "Oak Frame"], avail: "in_stock", strength: "good", type: "inspired", notes: ["Composition inspired by the render, not the same artwork"] },
-  ],
-  Plant: [
-    { name: "Faux Olive Tree, 6 Foot", brand: "Verd", price: 219, h: 72, colors: ["Green"], materials: ["Polyester", "Ceramic Pot"], avail: "in_stock", strength: "good", type: "similar", notes: ["Similar scale and leaf tone"] },
-  ],
-  Cabinet: [
-    { name: "Shaker Base Cabinet, 36 Inch", brand: "Hampton", price: 428, w: 36, d: 24, h: 34, colors: ["Warm White"], materials: ["Plywood", "Painted MDF"], avail: "in_stock", strength: "good", type: "similar", notes: ["Similar door style", "Verify cabinet layout"] },
-  ],
-  Vanity: [
-    { name: "Floating Oak Vanity, 48 Inch", brand: "Hampton", price: 1099, w: 48, d: 21, h: 20, colors: ["Natural Oak"], materials: ["Oak Veneer", "Quartz Top"], avail: "in_stock", strength: "strong", type: "close", notes: ["Similar float mount and top"] },
-  ],
-  Faucet: [
-    { name: "Single Handle Bridge Faucet", brand: "Fergus", price: 349, colors: ["Brushed Nickel"], materials: ["Brass"], avail: "in_stock", strength: "good", type: "similar", notes: ["Similar finish family"] },
-  ],
-  Flooring: [
-    { name: "White Oak Engineered Plank, 7.5 Inch", brand: "Timberline", price: 6.29, colors: ["Natural Oak"], materials: ["Engineered Oak"], avail: "in_stock", strength: "strong", type: "close", notes: ["Similar plank width and tone", "Priced per square foot"] },
-    { name: "Rigid Core LVP, Oak Look", brand: "Basics", price: 2.99, colors: ["Light Oak"], materials: ["Vinyl"], avail: "in_stock", strength: "alternative", type: "similar", notes: ["Different material", "Priced per square foot"] },
-  ],
-  Tile: [
-    { name: "Matte Porcelain Tile, 12x24", brand: "Timberline", price: 3.49, colors: ["Greige"], materials: ["Porcelain"], avail: "in_stock", strength: "good", type: "similar", notes: ["Priced per square foot"] },
-  ],
-  Countertop: [
-    { name: "Quartz Slab, Soft White", brand: "Stonecraft", price: 62, colors: ["White"], materials: ["Quartz"], avail: "limited", strength: "good", type: "similar", notes: ["Priced per square foot, fabrication not included"] },
-  ],
-  "Paint Color": [
-    { name: "Interior Matte Paint, Warm White", brand: "Hue Co", price: 58, colors: ["Warm White"], materials: ["Acrylic Latex"], avail: "in_stock", strength: "good", type: "inspired", notes: ["Color read from the render, confirm with a sample"] },
-  ],
-};
-
-const GENERIC: Seed[] = [
-  { name: "Coordinating Décor Piece", brand: "Studio Co", price: 149, colors: ["Neutral"], materials: ["Mixed"], avail: "unknown", strength: "alternative", type: "similar", notes: ["Category match only"] },
-];
-
-function slug(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-}
-
-function toProduct(seed: Seed, category: string, i: number): NormalizedProduct {
-  const merch = SAMPLE_MERCHANTS[(category.length + i) % SAMPLE_MERCHANTS.length]!;
-  const id = `sample-${slug(category)}-${i}`;
-  return {
-    id,
-    merchant: merch.m,
-    merchantProductId: id.toUpperCase(),
-    brand: seed.brand,
-    sku: undefined,
-    name: seed.name,
-    category,
-    description:
-      "Sample development record used to build the sourcing workflow. Product data, price and availability are placeholders until a retailer feed is connected.",
-    images: [],
-    width: seed.w,
-    depth: seed.d,
-    height: seed.h,
-    unit: "in",
-    colors: seed.colors,
-    materials: seed.materials,
-    finish: seed.materials[0],
-    regularPrice: seed.was ?? seed.price,
-    salePrice: seed.was ? seed.price : undefined,
-    currency: "USD",
-    availability: seed.avail,
-    delivery: seed.avail === "in_stock" ? "Estimated delivery, 1 to 3 weeks" : undefined,
-    productUrl: `https://www.${merch.host}/search?q=${encodeURIComponent(seed.name)}`,
-    affiliateUrl: undefined,
-    lastVerified: undefined,
-    source: "sample",
-    matchType: seed.type,
-    matchStrength: seed.strength,
-    matchNotes: seed.notes,
-    verifiedSku: false,
-    sample: true,
-  };
-}
-
-/** SAMPLE provider. Returns clearly flagged development records only. */
-export const sampleVisualSearch: VisualSearchProvider = {
-  id: "sample",
-  name: "Sample Catalog (Development)",
+/** No provider is connected: return nothing rather than invented inventory. */
+export const unconnectedVisualSearch: VisualSearchProvider = {
+  id: "none",
+  name: "No Product Provider Connected",
   configured: false,
-  async search(req) {
-    await new Promise((r) => setTimeout(r, 550));
-    const seeds = SEEDS[req.category] ?? GENERIC;
-    const list = seeds.map((s, i) => toProduct(s, req.category, i));
-    if (req.query) {
-      const q = req.query.toLowerCase();
-      const hit = list.filter((p) => (p.name + " " + p.brand + " " + p.materials.join(" ")).toLowerCase().includes(q));
-      if (hit.length) return rankMatches(hit, { category: req.category });
-    }
-    return rankMatches(list, { category: req.category, colors: req.traits?.colors, materials: req.traits?.materials });
+  async search() {
+    return [];
   },
 };
 
 /** Active provider. Swap for a live adapter once one is configured. */
 export function visualSearchProvider(): VisualSearchProvider {
-  return sampleVisualSearch;
+  return unconnectedVisualSearch;
 }
 
-/* ---------------- object detection (real vision) ---------------- */
+/** True when a record is development sample/mock data and must never render. */
+export function isSampleRecord(p: Partial<NormalizedProduct> | null | undefined): boolean {
+  if (!p) return false;
+  if (p.sample === true) return true;
+  const src = String(p.source ?? "");
+  return src === "sample" || src === "mock" || src === "demo" || src === "placeholder";
+}
 
-export const PRODUCT_CATEGORIES = Object.keys(SEEDS);
+/** Production guard: strips any sample/mock record before it reaches the UI. */
+export function productionProducts<T extends Partial<NormalizedProduct>>(list: T[]): T[] {
+  return (list || []).filter((p) => !isSampleRecord(p as never));
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+export function isValidProductUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" || u.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+export interface ManualProductInput {
+  url: string;
+  title?: string | undefined;
+  image?: string | undefined;
+  price?: number | null | undefined;
+  currency?: string | undefined;
+  merchant?: string | undefined;
+  category?: string | undefined;
+  externalId?: string | undefined;
+  provider?: string | undefined;
+}
+
+/**
+ * Builds a normalized record from a real retailer link the user supplied.
+ * Nothing is invented: no availability, no discount, no delivery estimate,
+ * and price stays null unless the user typed one.
+ */
+export function createManualProduct(input: ManualProductInput): NormalizedProduct {
+  const url = String(input.url || "").trim();
+  if (!isValidProductUrl(url)) throw new Error("Enter a valid product link starting with https://");
+  const merchant = (input.merchant || hostOf(url) || "Retailer").trim();
+  const price = typeof input.price === "number" && isFinite(input.price) && input.price >= 0 ? input.price : undefined;
+  return {
+    id: "manual-" + Math.random().toString(36).slice(2, 10),
+    merchant,
+    merchantProductId: String(input.externalId || url),
+    brand: merchant,
+    name: (input.title || "").trim() || url,
+    category: input.category || "Other",
+    description: "",
+    images: input.image ? [input.image] : [],
+    unit: "in",
+    colors: [],
+    materials: [],
+    regularPrice: price,
+    salePrice: undefined,
+    currency: (input.currency || "USD").toUpperCase(),
+    availability: "unknown",
+    productUrl: url,
+    affiliateUrl: undefined,
+    lastVerified: price != null ? new Date().toISOString() : undefined,
+    source: input.provider === "csv_import" ? "csv_import" : "manual_link",
+    provider: input.provider || "manual_link",
+    externalId: input.externalId || "",
+    matchType: "similar",
+    matchStrength: "alternative",
+    matchNotes: ["Added manually from a retailer link."],
+    verifiedSku: false,
+    sample: false,
+  };
+}
+
+export interface CsvParseResult {
+  products: NormalizedProduct[];
+  errors: string[];
+}
+
+function splitCsvLine(line: string): string[] {
+  const out: string[] = [];
+  let cur = "";
+  let q = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (q) {
+      if (c === '"' && line[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else if (c === '"') q = false;
+      else cur += c;
+    } else if (c === '"') q = true;
+    else if (c === ",") {
+      out.push(cur);
+      cur = "";
+    } else cur += c;
+  }
+  out.push(cur);
+  return out.map((v) => v.trim());
+}
+
+/** Parses a user CSV of real products. Header: url,title,price,currency,image,category,merchant */
+export function parseProductCsv(text: string): CsvParseResult {
+  const rows = String(text || "")
+    .split(/\r?\n/)
+    .filter((r) => r.trim().length);
+  const products: NormalizedProduct[] = [];
+  const errors: string[] = [];
+  if (!rows.length) return { products, errors: ["The file is empty."] };
+  const header = splitCsvLine(rows[0]!).map((h) => h.toLowerCase());
+  const idx = (name: string) => header.indexOf(name);
+  if (idx("url") < 0) return { products, errors: ["The CSV needs a url column."] };
+  rows.slice(1).forEach((raw, i) => {
+    const cells = splitCsvLine(raw);
+    const at = (n: string) => (idx(n) >= 0 ? cells[idx(n)] : undefined);
+    const rawPrice = at("price");
+    const price = rawPrice && rawPrice.replace(/[^0-9.]/g, "") ? Number(rawPrice.replace(/[^0-9.]/g, "")) : undefined;
+    try {
+      products.push(
+        createManualProduct({
+          url: String(at("url") || ""),
+          title: at("title"),
+          image: at("image"),
+          price,
+          currency: at("currency"),
+          merchant: at("merchant"),
+          category: at("category"),
+          provider: "csv_import",
+        }),
+      );
+    } catch (e) {
+      errors.push(`Row ${i + 2}: ${(e as Error).message}`);
+    }
+  });
+  return { products, errors };
+}
+
+/** Human label for when price and availability were last checked. */
+export function lastCheckedLabel(iso?: string | null): string {
+  if (!iso) return "Price And Availability Not Checked Yet";
+  const t = Date.parse(iso);
+  if (!isFinite(t)) return "Price And Availability Not Checked Yet";
+  const mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+  if (mins < 60) return `Price Checked ${mins || 1} Minute${mins === 1 ? "" : "s"} Ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `Price Checked ${hrs} Hour${hrs === 1 ? "" : "s"} Ago`;
+  const days = Math.round(hrs / 24);
+  return `Price Checked ${days} Day${days === 1 ? "" : "s"} Ago`;
+}
+
+const STALE_HOURS = 24;
+
+/** Price data older than a day is not presented as current. */
+export function isPriceStale(iso?: string | null, now: number = Date.now()): boolean {
+  if (!iso) return true;
+  const t = Date.parse(iso);
+  if (!isFinite(t)) return true;
+  return now - t > STALE_HOURS * 3600 * 1000;
+}
+
+export function isUnavailable(p: Pick<NormalizedProduct, "availability">): boolean {
+  return p.availability === "unavailable";
+}
+
+export const AFFILIATE_DISCLOSURE =
+  "Some retailer links may be affiliate links. REAL DESIGNS can earn a commission at no extra cost to you.";
+
+/* ---------------- object detection (real vision) ---------------- */
 
 /** Lucide glyph per category, used for product image empty states. */
 export const CATEGORY_ICON: Record<string, string> = {

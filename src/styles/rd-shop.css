@@ -264,3 +264,18 @@
 .shop-adv-b{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:6px}
 .shop-adv-b .shop-f.col{grid-column:1/-1}
 .shop-toast.on{pointer-events:auto}
+
+/* Price / availability freshness and disclosure text */
+.shop-checked {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.68rem;
+  color: var(--mute-2);
+  font-style: normal;
+}
+.shop-disc-s {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.68rem;
+  color: var(--mute-2);
+}
