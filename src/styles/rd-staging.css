@@ -436,19 +436,19 @@
 .rdsb-body > * + * { margin-top: 16px; }
 .rdsb-f.bad select, .rdsb-f.bad textarea { border-color: rgba(204, 0, 0, .55); }
 
-/* Selected photos: compact and collapsed until the user asks for them. */
-.rdsb-photos { border: 1px solid var(--line, #e5e5ea); border-radius: 12px; }
-.rdsb-photos > summary {
-  display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-  cursor: pointer; list-style: none; font-size: 0.78rem;
+/* Selected photos: always visible, compact, never a hidden accordion. */
+.rdsb-photos { display: block; }
+.rdsb-photos-h {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
 }
-.rdsb-photos > summary::-webkit-details-marker { display: none; }
-.rdsb-photos-t { font-weight: 700; }
-.rdsb-photos-s { color: var(--mute-2, #6b6b74); font-size: 0.72rem; }
-.rdsb-photos > summary svg { width: 15px; height: 15px; margin-left: auto; transition: transform .15s ease; }
-.rdsb-photos[open] > summary svg { transform: rotate(180deg); }
-.rdsb-photos[open] > summary { border-bottom: 1px solid var(--line, #e5e5ea); }
-.rdsb-photos .rdsb-groups { margin: 0; padding: 10px 12px; max-height: 300px; }
+.rdsb-photos-t { font-size: 0.72rem; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--mute-2, #6b6b74); }
+.rdsb-photos-c {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px;
+  background: #F0F0F3; color: #17171b; font-size: 0.7rem; font-weight: 700;
+}
+.rdsb-photos .rdsb-groups { margin: 0; max-height: 260px; }
+
 
 /* One combined output + cost card. */
 .rdsb-out { border: 1px solid var(--line, #e5e5ea); border-radius: 12px; padding: 12px; }
