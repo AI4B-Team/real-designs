@@ -10236,7 +10236,16 @@ ${picks
     const stApprove = document.getElementById("stApprove");
     if (stApprove)
       stApprove.addEventListener("click", async () => {
-        const room = latestRoom();
+        /* Approval always targets the version actually on the canvas; only when
+           nothing was generated this session does it fall back to the latest. */
+        if (window.rdVersionSaving && window.rdVersionSaving()) {
+          showAlert("That design is still saving. Try again in a moment.");
+          return;
+        }
+        const shown = window.rdDisplayedVersion && window.rdDisplayedVersion();
+        const room = shown
+          ? { version_id: shown.id, version_no: shown.version_no, status: "draft" }
+          : latestRoom();
         if (!room) {
           showAlert("Save a room first. Approval applies to a saved version.");
           return;
@@ -10251,6 +10260,7 @@ ${picks
           stApprove.innerHTML =
             '<i data-lucide="check"></i>' +
             (approved ? "Approve Latest Version" : "v" + (room.version_no || 1) + " Approved");
+
           lucide.createIcons();
           try {
             window.dispatchEvent(new CustomEvent("rd:saved"));
