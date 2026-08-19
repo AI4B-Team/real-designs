@@ -759,7 +759,7 @@ function cardHtml(it, seq) {
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
       <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}"${it.path && !it.resultUrl ? ` data-photo-path="${esc(it.path)}"` : ""} alt="${esc(it.name)}" loading="lazy">
-      <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
+      <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
       ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: (it.room ? it.room + " photo" : "Photo " + n) })}
