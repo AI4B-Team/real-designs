@@ -70,7 +70,7 @@ function openBrowser(o: BrowseOpts) {
   const pool = stylesForNeed(STYLES, o.need, o.ctx.projectType);
   const recs = recommendStyles({
     projectType: (o.need === "stage" ? "virtual-staging" : o.ctx.projectType) as any,
-    roomType: o.ctx.room || undefined,
+    ...(o.ctx.room ? { roomType: o.ctx.room } : {}),
   }, 4).map((r) => r.style).filter((s) => pool.some((p) => p.id === s.id));
 
   let picked = o.currentId || "";
