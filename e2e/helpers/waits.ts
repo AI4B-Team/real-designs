@@ -34,6 +34,13 @@ export async function waitForAsyncJob(page: Page, timeout = 45_000): Promise<voi
   await expect
     .poll(async () => await busy.count(), { message: "async job to finish", timeout })
     .toBe(0);
+  /* Uploads keep working after the spinner clears: the builder shows a
+     "Saving…"/"Detecting…" status until the photo is durable, and card
+     actions stay disabled until then. */
+  const saving = page.getByText(/saving…|detecting…/i);
+  await expect
+    .poll(async () => await saving.count(), { message: "photos to finish saving", timeout })
+    .toBe(0);
 }
 
 /** Waits for a locator's count to reach `n`. */

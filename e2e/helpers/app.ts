@@ -37,7 +37,8 @@ export async function chooseDoor(page: Page, door: "design" | "video"): Promise<
 
 /** Photo cards used by both the Photo Design and Video builders. */
 export function photoCards(page: Page): Locator {
-  return page.locator(".rv-tile[data-k]");
+  /* Photo Design cards carry data-k, Video scene cards carry data-key. */
+  return page.locator(".rv-tile[data-k], .rv-tile[data-key]");
 }
 
 /** The overflow (three-dot) menu trigger on a card. */
@@ -61,7 +62,8 @@ export async function clickMenuItem(menu: Locator, label: RegExp | string): Prom
 
 /** The currently open modal card, if any. */
 export function openModal(page: Page): Locator {
-  return page.locator('.rd-modal-card, [role="dialog"], .modal.on').first();
+  /* Closed modals stay in the DOM, so only visible cards count as open. */
+  return page.locator('.rd-modal-card:visible, [role="dialog"]:visible, .modal.on:visible').first();
 }
 
 /** Closes the topmost modal with Escape and asserts it is gone. */
