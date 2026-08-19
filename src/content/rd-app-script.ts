@@ -8028,7 +8028,8 @@ ${picks
     };
     toolRows.forEach((r) => {
       const nm = r.getAttribute("data-tool") || "";
-      const c = TOOL_COST[nm];
+      /* Budget is Coming Soon, so it never advertises a credit price. */
+      const c = nm === "Budget" && !budgetsLive() ? 0 : TOOL_COST[nm];
       r.title =
         nm +
         (c ? " \u00b7 " + c + " credit" + (c > 1 ? "s" : "") : "") +
