@@ -44,7 +44,7 @@ function read(): ProjectProduct[] {
   if (!Array.isArray(v)) return [];
   // Legacy records used budgetCategory; sample/mock records must never surface.
   return (v as Array<ProjectProduct & { budgetCategory?: string }>)
-    .filter((r) => r && !isSampleRecord(r as never))
+    .filter((r) => r && !isSampleRecord(r))
     .map((r) => (r.priceTier ? r : { ...r, priceTier: r.budgetCategory || "" }));
 }
 

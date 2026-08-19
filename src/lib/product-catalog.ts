@@ -222,7 +222,7 @@ export function visualSearchProvider(): VisualSearchProvider {
 }
 
 /** True when a record is development sample/mock data and must never render. */
-export function isSampleRecord(p: Partial<NormalizedProduct> & Record<string, unknown>): boolean {
+export function isSampleRecord(p: Partial<NormalizedProduct> | null | undefined): boolean {
   if (!p) return false;
   if (p.sample === true) return true;
   const src = String(p.source ?? "");
