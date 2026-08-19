@@ -356,10 +356,10 @@ export function openBulkDesign(opts) {
     } else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
     else if (unsupported.length) {
       block = "STYLE_UNFIT";
-    } else if (unusual.length) {
-      block = "STYLE_UNUSUAL";
     } else if (short)
       block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
+    /* An unusual style is advice, never a blocker: the group shows the
+       recommendation, but the primary action stays available. */
 
     /* Style feedback is explained once, inside the group that needs it. */
     const barMsg = block === "STYLE_UNFIT" || block === "STYLE_UNUSUAL" || blockField ? "" : block;
