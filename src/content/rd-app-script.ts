@@ -9469,6 +9469,11 @@ ${picks
             state.photo = true;
             changed = true;
           }
+          if (st.designs > 0 && !state.design) {
+            state.design = true;
+            changed = true;
+          }
+
         } catch (e) {}
         if (changed) {
           save();
