@@ -373,9 +373,27 @@ export function openBulkDesign(opts) {
       ["Style", styleName() || "Not selected"],
       ["Intensity", form.intensity || "Not selected"],
       ["Finish", form.grade || "Not selected"],
-      ["Output", ratioLabel(ratio)],
       ["Cost", `${cost} credit${cost === 1 ? "" : "s"}`],
     ];
+
+    /* One source of truth for the format: the project ratio chosen on Prepare
+       Your Photos, edited inline here — never in a second stacked modal. */
+    const fmtBlock = `<div class="rdsb-fmt">
+      <div class="rdsb-fmt-h">
+        <div><span>Output Format</span><b>${esc(ratioLabel(ratio))}</b></div>
+        <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change"}</button>
+      </div>
+      ${
+        fmtOpen
+          ? `<div class="rdsb-fmt-seg">${PRIMARY_OUTPUT_RATIOS.map(
+              (o) =>
+                `<button type="button" class="${ratio === o.id ? "on" : ""}" data-rdsbratio="${esc(o.id)}">${esc(
+                  o.note ? o.label + " " + o.note : o.label,
+                )}</button>`,
+            ).join("")}</div>`
+          : ""
+      }
+    </div>`;
 
     node.innerHTML = `<div class="up-scrim" data-close></div>
       <div class="up-card rdsb" role="dialog" aria-modal="true" aria-labelledby="rdsbTitle">
