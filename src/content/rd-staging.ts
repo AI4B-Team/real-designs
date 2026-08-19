@@ -2678,18 +2678,29 @@ function paintCanvasSave() {
   const node = document.getElementById("rdsCanvasSave");
   if (!node || !S) return;
   const st = S.saveState;
+  /* "Saved" must say WHAT is saved: an uploaded source is not a design. */
+  const cur = S.items.find((i) => i.key === S.current);
+  const hasDesign = !!(cur && (cur.resultPath || cur.resultUrl));
+  const designStored = !!(cur && cur.resultPath);
   const label =
     st === "saving"
-      ? "Saving…"
+      ? hasDesign
+        ? "Saving Design…"
+        : "Saving…"
       : st === "error"
-        ? "Save Failed — Retry"
+        ? (hasDesign ? "Design Not Saved" : "Save Failed") + " — Retry Save"
         : st === "saved"
-          ? "Saved"
+          ? hasDesign
+            ? designStored
+              ? "Design Saved"
+              : "Design Not Saved"
+            : "Source Saved"
           : "";
+  const bad = st === "error" || (st === "saved" && hasDesign && !designStored);
   node.textContent = label;
-  node.className = "rds-chead-save" + (st === "error" ? " bad" : st === "saved" ? " ok" : "");
+  node.className = "rds-chead-save" + (bad ? " bad" : st === "saved" ? " ok" : "");
   node.style.display = label ? "" : "none";
-  (node as HTMLElement).onclick = st === "error" ? () => retryDraftSave() : null;
+  (node as HTMLElement).onclick = bad ? () => retryDraftSave() : null;
 }
 
 /* The canvas overflow menu: anchored under its trigger, right aligned, and

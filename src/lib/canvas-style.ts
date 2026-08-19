@@ -12,6 +12,7 @@
  */
 
 import { styleById, type StyleRecord } from "@/lib/style-catalog";
+import { normalizeSpace, styleCompatible, styleProjectType, styleSectionLabel } from "@/lib/space-tools";
 
 /** Which kind of style a tool requires, or null when it needs none. */
 export type StyleNeed = "design" | "stage";
@@ -48,16 +49,26 @@ export function styleNeedForTool(tool?: string | null): StyleNeed | null {
   return null;
 }
 
-export function sectionTitle(need: StyleNeed): string {
-  return need === "stage" ? "Staging Style" : "Design Direction";
+/** Space-aware section label: "Staging Style" only ever on an interior. */
+export function sectionTitle(need: StyleNeed, space?: string | null): string {
+  return styleSectionLabel(need, space || "interior");
 }
 
-export function browserTitle(need: StyleNeed): string {
-  return need === "stage" ? "Choose A Staging Style" : "Choose A Design Direction";
+export function browserTitle(need: StyleNeed, space?: string | null): string {
+  return "Choose A " + sectionTitle(need, space);
 }
 
-export function browserSubtitle(need: StyleNeed, room?: string | null): string {
-  const where = room ? `this ${String(room).toLowerCase()}` : "the room on the canvas";
+export function browserSubtitle(
+  need: StyleNeed,
+  room?: string | null,
+  space?: string | null,
+): string {
+  const sp = normalizeSpace(space || "interior");
+  const where = room ? `this ${String(room).toLowerCase()}` : "the space on the canvas";
+  if (sp === "exterior")
+    return `Landscaping, exterior decor, lighting and finishes — the selected style is adapted to ${where}, and the building structure, windows, doors, roofline and lot boundaries stay exactly as photographed. No indoor furniture is ever added.`;
+  if (sp === "garden")
+    return `Planting, hardscaping, lighting and outdoor features — the selected style is adapted to ${where}, and mature trees, grade and lot boundaries stay exactly as photographed. No indoor furniture is ever added.`;
   return need === "stage"
     ? `Furniture and decor only — the selected style is adapted to ${where}, and walls, windows and permanent architecture stay exactly as photographed.`
     : `Finishes, colors and architectural styling — the selected direction is adapted to ${where} rather than copied onto it.`;
@@ -191,7 +202,11 @@ export function stylesForNeed(
   need: StyleNeed,
   projectType: string,
 ): StyleRecord[] {
-  const wanted = need === "stage" ? "virtual-staging" : projectType || "interior";
+  const raw = String(projectType || "interior").toLowerCase();
+  const wanted =
+    raw === "virtual-staging" || raw === "concept"
+      ? raw
+      : styleProjectType(need, normalizeSpace(raw));
   const pool = all.filter((s) => s.isActive && !s.isAuto);
   const fit = pool.filter((s) => s.compatibleProjectTypes.indexOf(wanted as any) > -1);
   return fit.length ? fit : pool;
@@ -257,4 +272,14 @@ export function saveDirections(store: DirectionStore): void {
   } catch (_) {
     /* storage may be blocked; the in-memory selection still works this session */
   }
+}
+
+/** Is this style submittable for the active tool and space? */
+export function directionCompatible(
+  style: StyleRecord | null | undefined,
+  need: StyleNeed,
+  space: string,
+): boolean {
+  if (!style) return false;
+  return styleCompatible(style.compatibleProjectTypes, need, space);
 }

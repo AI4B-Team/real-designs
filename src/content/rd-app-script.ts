@@ -89,6 +89,17 @@ import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
 import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 import { mountCanvasStyle } from "@/lib/canvas-style-ui";
 import { styleNeedForTool, sectionTitle } from "@/lib/canvas-style";
+import {
+  costLabel,
+  fallbackTool,
+  instructionPlaceholder,
+  normalizeSpace,
+  spacePromptRules,
+  toolCost,
+  toolDescription,
+  toolLabel,
+  toolSupport,
+} from "@/lib/space-tools";
 import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
 import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
@@ -2840,8 +2851,22 @@ export function initApp(): () => void {
       c.addEventListener("click", () => {
         c.parentElement.querySelectorAll(".chip").forEach((x) => x.classList.remove("on"));
         c.classList.add("on");
+        /* Space changed: recalculate tools, styles, labels and the gate.
+           Intensity, finish grade and instructions are deliberately kept. */
+        try {
+          (window as any).__rdPaintSpaceTools && (window as any).__rdPaintSpaceTools();
+        } catch (_) {}
       }),
     );
+    try {
+      const rsel = document.getElementById("fRoom");
+      rsel &&
+        rsel.addEventListener("change", () => {
+          try {
+            (window as any).__rdPaintSpaceTools && (window as any).__rdPaintSpaceTools();
+          } catch (_) {}
+        });
+    } catch (_) {}
     paintStudioState();
 
     const gsteps = [
@@ -2916,6 +2941,8 @@ export function initApp(): () => void {
             direction: (document.getElementById("fStyle") || {}).value || "Warm Minimal",
             style_id: currentStyleId(),
             project_type: currentProjectType(),
+            tool: activeToolName(),
+            preserve_architecture: true,
             intensity: band ? band.querySelector("b").textContent : "Makeover",
             grade: grade ? grade.textContent : "Retail Grade",
             notes: (document.getElementById("agentNote") || {}).value || null,
@@ -8032,20 +8059,94 @@ ${picks
     function paintGenGate() {
       const btn = document.getElementById("genBtn") as any;
       if (!btn) return;
-      const need = styleNeedForTool(activeToolName());
-      const missing = !!need && !canvasStyleSelected();
+      const tool = activeToolName();
+      const space = currentSpace();
+      const need = styleNeedForTool(tool);
+      const support = toolSupport(tool, space);
+      const missing = (!!need && !canvasStyleSelected()) || !support.ok;
+      const hint = document.getElementById("genHint");
+      /* The cost chip always states the real price of this run. */
+      const cost = document.getElementById("genCost");
+      if (cost) cost.textContent = costLabel(toolCost(tool));
       if (missing) {
         btn.disabled = true;
         btn.dataset.csGate = "1";
-        btn.title = "Choose A " + sectionTitle(need as any) + " First";
+        btn.title = support.ok
+          ? "Choose " + sectionTitle(need as any, space) + " First"
+          : (support.reason as string);
         btn.setAttribute("aria-disabled", "true");
-      } else if (btn.dataset.csGate === "1") {
-        btn.dataset.csGate = "";
-        btn.disabled = !!busy;
-        btn.title = "";
-        btn.setAttribute("aria-disabled", "false");
+        if (hint) {
+          hint.textContent = support.ok
+            ? "Choose " + sectionTitle(need as any, space) + " First"
+            : (support.reason as string);
+          (hint as any).hidden = false;
+        }
+      } else {
+        if (btn.dataset.csGate === "1") {
+          btn.dataset.csGate = "";
+          btn.disabled = !!busy;
+          btn.title = "";
+          btn.setAttribute("aria-disabled", "false");
+        }
+        if (hint) (hint as any).hidden = true;
       }
     }
+
+    /** Canonical space for the Studio chips. */
+    function currentSpace() {
+      return normalizeSpace(currentProjectType());
+    }
+
+    /**
+     * Space-aware tool interface. One pass repaints every label, description,
+     * disabled state and tooltip; nothing is decided in a click handler.
+     */
+    function paintSpaceTools() {
+      const space = currentSpace();
+      toolRows.forEach((r: any) => {
+        const nm = r.getAttribute("data-tool") || "";
+        const support = toolSupport(nm, space);
+        const label = toolLabel(nm, space);
+        const desc = toolDescription(nm, space);
+        const b = r.querySelector("b");
+        if (b) b.textContent = label;
+        r.setAttribute("data-desc", desc);
+        r.disabled = !support.ok;
+        r.classList.toggle("off", !support.ok);
+        r.setAttribute("aria-disabled", support.ok ? "false" : "true");
+        const c = toolCost(nm);
+        r.title = support.ok
+          ? label + " \u00b7 " + costLabel(c) + "\n" + desc
+          : (support.reason as string);
+        if (!support.ok) r.classList.remove("on");
+      });
+      if (!document.querySelector("#fTool .toolrow.on")) {
+        const fb = document.querySelector(
+          '#fTool .toolrow[data-tool="' + fallbackTool(space) + '"]',
+        ) as any;
+        if (fb) fb.classList.add("on");
+      }
+      const note = document.getElementById("agentNote") as any;
+      if (note) note.placeholder = instructionPlaceholder(space);
+      const ctx = document.getElementById("setupCtx");
+      if (ctx) {
+        (ctx as any).hidden = false;
+        const sp = document.getElementById("setupCtxSpace");
+        const rm = document.getElementById("setupCtxRoom");
+        const tl = document.getElementById("setupCtxTool");
+        if (sp)
+          sp.textContent = space === "garden" ? "Garden" : space === "exterior" ? "Exterior" : "Interior";
+        if (rm)
+          rm.textContent = String(currentRoomType() || "")
+            .replace(/\b\w/g, (m) => m.toUpperCase());
+        if (tl) tl.textContent = toolLabel(activeToolName(), space);
+      }
+      try {
+        CANVAS_STYLE && CANVAS_STYLE.refresh();
+      } catch (_) {}
+      paintGenGate();
+    }
+    (window as any).__rdPaintSpaceTools = paintSpaceTools;
     function promptForStyle(tool: string) {
       const need = styleNeedForTool(tool);
       const host = document.getElementById("canvasStyleField");
@@ -8107,6 +8208,7 @@ ${picks
         } catch (_) {}
       });
       paintGenGate();
+      paintSpaceTools();
     } catch (_) {}
 
     /* The Studio attribute is deliberately NOT data-plan: that name belongs to
@@ -8132,8 +8234,15 @@ ${picks
     }
     toolRows.forEach((r) =>
       r.addEventListener("click", () => {
+        const nm0 = r.getAttribute("data-tool") || "";
+        const sup = toolSupport(nm0, currentSpace());
+        if (!sup.ok) {
+          window.rdToast && window.rdToast(sup.reason as string);
+          return;
+        }
         toolRows.forEach((x) => x.classList.remove("on"));
         r.classList.add("on");
+        paintSpaceTools();
         const name = r.getAttribute("data-tool");
         const need = requiredPlanFor(r);
         try {
@@ -9173,7 +9282,7 @@ ${picks
         const c = await getMyCredits();
         const title = box && box.querySelector(".lab span");
         const gc = document.getElementById("genCost");
-        if (gc) gc.textContent = c.plan === "free" ? "Free" : "1";
+        if (gc && !gc.textContent) gc.textContent = "1 Credit";
         if (c.plan === "free") {
           if (title) title.textContent = "Free Designs Today";
           const left = Math.max(0, Math.min(5, c.remainingToday ?? 5));

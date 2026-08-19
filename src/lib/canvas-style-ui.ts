@@ -17,6 +17,7 @@ import {
   browserSubtitle,
   browserTitle,
   clearDirection,
+  directionCompatible,
   loadDirections,
   propertyDirection,
   resolveDirection,
@@ -32,6 +33,7 @@ import {
   type ResolvedDirection,
   type StyleNeed,
 } from "@/lib/canvas-style";
+import { styleSectionHint } from "@/lib/space-tools";
 
 export type CanvasStyleContext = {
   tool: string;
@@ -132,10 +134,10 @@ function openBrowser(o: BrowseOpts) {
     '<div class="up-card cs-card" role="dialog" aria-modal="true" aria-labelledby="csTitle">' +
     '<div class="cs-head">' +
     '<div><h3 id="csTitle">' +
-    esc(browserTitle(o.need)) +
+    esc(browserTitle(o.need, o.ctx.projectType)) +
     "</h3>" +
     "<p>" +
-    esc(browserSubtitle(o.need, o.ctx.room)) +
+    esc(browserSubtitle(o.need, o.ctx.room, o.ctx.projectType)) +
     "</p></div>" +
     '<button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button>' +
     "</div>" +
@@ -352,10 +354,19 @@ export function mountCanvasStyle(
     }
     el.hidden = false;
 
+    /* A selection only survives a space change while the catalog still says it
+       fits: an interior staging style is not offered on an exterior photo. */
+    const raw = selection();
+    if (raw && !directionCompatible(raw.style, need, c.projectType)) {
+      const dctx = ctxFor(need, c);
+      store = clearDirection(store, "photo", dctx);
+      store = clearDirection(store, "project", dctx);
+      saveDirections(store);
+    }
     const sel = selection();
     const propId = propertyDirection(store, ctxFor(need, c));
     const propRec = propId ? styleById(propId) : null;
-    const title = sectionTitle(need);
+    const title = sectionTitle(need, c.projectType);
 
     if (!sel) {
       el.innerHTML =
@@ -366,8 +377,8 @@ export function mountCanvasStyle(
         "<p>" +
         esc(
           need === "stage"
-            ? "Pick the furniture and decor style this empty room should be staged in."
-            : "Pick the direction this room should be redesigned in. Nothing is chosen for you.",
+            ? styleSectionHint(need, c.projectType)
+            : styleSectionHint(need, c.projectType),
         ) +
         "</p>" +
         '<button class="btn btn-primary btn-sm cs-browse" type="button"><i data-lucide="layout-grid"></i>Browse Styles</button>' +
