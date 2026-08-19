@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { assertUploadAllowed, buildObjectPath } from "@/lib/storage-paths";
+
 
 /**
  * Room photo storage (private bucket "room-photos").
