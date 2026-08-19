@@ -55,7 +55,12 @@ export async function photoSrc(path: string, force = false): Promise<string | nu
   if (running) return running;
 
   const req = (async () => {
-    const url = await resolvePhotoUrl(path, { expiresIn: TTL_SEC, force }).catch(() => null);
+    let url: string | null = null;
+    try {
+      url = await resolvePhotoUrl(path, { expiresIn: TTL_SEC, force });
+    } catch (_) {
+      url = null;
+    }
     if (url) {
       const perm = !isStoredPhoto(path);
       CACHE.set(path, { url, exp: perm ? Infinity : Date.now() + (TTL_SEC * 1000 - MARGIN_MS) });
