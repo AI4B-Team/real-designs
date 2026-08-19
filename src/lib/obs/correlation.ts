@@ -29,9 +29,7 @@ export function isCorrelationId(value: unknown): value is string {
 }
 
 /** Reuse an inbound ID when it is well formed, otherwise mint a fresh one. */
-export function correlationIdFrom(headers: {
-  get(name: string): string | null;
-}): string {
+export function correlationIdFrom(headers: { get(name: string): string | null }): string {
   const inbound = headers.get(CORRELATION_HEADER);
   return isCorrelationId(inbound) ? inbound : newCorrelationId();
 }

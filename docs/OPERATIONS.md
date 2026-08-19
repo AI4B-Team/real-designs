@@ -4,18 +4,18 @@ Production monitoring, alerting, recovery and incident response.
 
 ## 1. Observability Building Blocks
 
-| Concern | Module |
-| --- | --- |
-| Redaction (secrets, tokens, cards, signed URLs) | `src/lib/obs/redact.ts` |
-| Correlation IDs | `src/lib/obs/correlation.ts` |
-| Structured error reporting | `src/lib/obs/report.server.ts` |
-| Provider definitions & classification | `src/lib/obs/providers.ts` |
-| Provider probes | `src/lib/obs/health.server.ts` |
-| AI job lifecycle | `src/lib/obs/jobs.ts`, `jobs.server.ts` |
-| Retry policy | `src/lib/obs/retry.ts` |
-| Duplicate protection | `src/lib/obs/idempotency.server.ts` |
-| Alert rules | `src/lib/obs/alerts.ts` |
-| User-facing failure copy | `src/lib/obs/messages.ts` |
+| Concern                                         | Module                                  |
+| ----------------------------------------------- | --------------------------------------- |
+| Redaction (secrets, tokens, cards, signed URLs) | `src/lib/obs/redact.ts`                 |
+| Correlation IDs                                 | `src/lib/obs/correlation.ts`            |
+| Structured error reporting                      | `src/lib/obs/report.server.ts`          |
+| Provider definitions & classification           | `src/lib/obs/providers.ts`              |
+| Provider probes                                 | `src/lib/obs/health.server.ts`          |
+| AI job lifecycle                                | `src/lib/obs/jobs.ts`, `jobs.server.ts` |
+| Retry policy                                    | `src/lib/obs/retry.ts`                  |
+| Duplicate protection                            | `src/lib/obs/idempotency.server.ts`     |
+| Alert rules                                     | `src/lib/obs/alerts.ts`                 |
+| User-facing failure copy                        | `src/lib/obs/messages.ts`               |
 
 ### Error record shape
 
@@ -87,35 +87,40 @@ charged. Keys expire after one hour and expired rows are reclaimed automatically
 
 ## 5. Alerts
 
-| Alert | Window | Threshold | Severity |
-| --- | --- | --- | --- |
-| High failure rate | 15 min | ≥20% of ≥20 operations | Critical |
-| Upload failures | 15 min | ≥25% of ≥10 uploads | Critical |
-| Generation timeouts | 30 min | ≥5 | Critical |
-| Webhook failures | 30 min | ≥3 | Critical |
-| Credit-ledger mismatch | 60 min | ≥1 | Critical |
-| Unusual authentication failures | 10 min | ≥25 | Warning |
+| Alert                           | Window | Threshold              | Severity |
+| ------------------------------- | ------ | ---------------------- | -------- |
+| High failure rate               | 15 min | ≥20% of ≥20 operations | Critical |
+| Upload failures                 | 15 min | ≥25% of ≥10 uploads    | Critical |
+| Generation timeouts             | 30 min | ≥5                     | Critical |
+| Webhook failures                | 30 min | ≥3                     | Critical |
+| Credit-ledger mismatch          | 60 min | ≥1                     | Critical |
+| Unusual authentication failures | 10 min | ≥25                    | Warning  |
 
 ### High Failure Rate
+
 Check `/api/public/health`. If one provider is down, follow that provider's section. If all
 providers are healthy, inspect the top `code` values in `ops_error_events` for the window
 and roll back the most recent deploy if the spike aligns with it.
 
 ### Upload Failures
+
 Confirm the storage probe. Verify buckets `room-photos`, `reveal-videos`, `user-audio`
 exist and are private, and that their policies are intact. Uploads retry safely; no credits
 are charged for a failed upload.
 
 ### Generation Timeouts
+
 Check the AI provider probe and the queued/running counts on the health endpoint. Run the
 stuck-job sweep, confirm refunds landed in `credit_ledger`, and post to the status page if
 the backlog exceeds 15 minutes.
 
 ### Webhook Failures
+
 Inspect `ops_error_events` where `operation = 'webhook_deliver'`. Webhooks are never
 auto-retried; replay them from the provider dashboard after the root cause is fixed.
 
 ### Credit Ledger Mismatch
+
 ```sql
 select ca.user_id, ca.balance, coalesce(sum(cl.delta), 0) as ledger_sum
 from public.credit_accounts ca
@@ -123,10 +128,12 @@ left join public.credit_ledger cl on cl.user_id = ca.user_id
 group by ca.user_id, ca.balance
 having ca.balance <> coalesce(sum(cl.delta), 0);
 ```
+
 Any row is an incident. Freeze grants, capture the rows, and correct via
 `grant_credits` with an explicit note — never by editing `credit_accounts` directly.
 
 ### Authentication Failures
+
 A spike usually means credential stuffing. Confirm the source spread, then tighten auth
 rate limits. Never log the attempted email or password.
 

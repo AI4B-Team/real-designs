@@ -27,7 +27,10 @@ export function isTransient(code: string | number | undefined): boolean {
   if (code == null) return false;
   const n = typeof code === "number" ? code : Number(code.replace(/\D+/g, ""));
   if (Number.isFinite(n) && n >= 400 && n < 500 && n !== 408 && n !== 429) return false;
-  if (typeof code === "string" && /timeout|econnreset|etimedout|upstream|network|fetch failed/i.test(code))
+  if (
+    typeof code === "string" &&
+    /timeout|econnreset|etimedout|upstream|network|fetch failed/i.test(code)
+  )
     return true;
   return Number.isFinite(n) ? n >= 500 || n === 408 || n === 429 : false;
 }
@@ -49,7 +52,10 @@ export async function retrySafe<T>(
       return await run();
     } catch (e) {
       last = e;
-      const code = (e as { status?: number; code?: string })?.status ?? (e as { code?: string })?.code ?? (e as Error)?.message;
+      const code =
+        (e as { status?: number; code?: string })?.status ??
+        (e as { code?: string })?.code ??
+        (e as Error)?.message;
       if (i === max - 1 || !isTransient(code)) break;
       await sleep(backoffMs(i));
     }

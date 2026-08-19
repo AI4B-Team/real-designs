@@ -55,7 +55,13 @@ export function isStuck(
 /** Rough progress wording, no fake percentages. */
 export function jobStatusMessage(kind: JobKind, state: JobState): string {
   const noun =
-    kind === "design" ? "design" : kind === "video" ? "video" : kind === "plan_3d" ? "3D plan" : "scope";
+    kind === "design"
+      ? "design"
+      : kind === "video"
+        ? "video"
+        : kind === "plan_3d"
+          ? "3D plan"
+          : "scope";
   switch (state) {
     case "queued":
       return `Your ${noun} is queued and will start shortly.`;

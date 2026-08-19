@@ -13,7 +13,9 @@ export type ClaimResult =
   | { claimed: false; key: string; correlationId: string; jobId: string | null; state: string };
 
 /** Stable fingerprint of the inputs that define one generation. */
-export async function fingerprint(parts: Array<string | number | null | undefined>): Promise<string> {
+export async function fingerprint(
+  parts: Array<string | number | null | undefined>,
+): Promise<string> {
   const input = parts.map((p) => String(p ?? "")).join("|");
   const bytes = new TextEncoder().encode(input);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -52,7 +54,12 @@ export async function claim(
   if (data && new Date(String(data.expires_at)).getTime() < Date.now()) {
     await supabaseAdmin
       .from("ops_idempotency")
-      .update({ correlation_id: correlationId, state: "in_progress", job_id: null, expires_at: expires })
+      .update({
+        correlation_id: correlationId,
+        state: "in_progress",
+        job_id: null,
+        expires_at: expires,
+      })
       .eq("key", key);
     return { claimed: true, key, correlationId };
   }

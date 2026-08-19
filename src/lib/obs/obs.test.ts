@@ -26,10 +26,11 @@ describe("redaction", () => {
   });
 
   it("redacts secret-looking object keys", () => {
-    const out = redactValue({ apiKey: "x", password: "y", nested: { authorization: "z", safe: 1 } }) as Record<
-      string,
-      unknown
-    >;
+    const out = redactValue({
+      apiKey: "x",
+      password: "y",
+      nested: { authorization: "z", safe: 1 },
+    }) as Record<string, unknown>;
     expect(out["apiKey"]).toBe("[redacted]");
     expect(out["password"]).toBe("[redacted]");
     expect((out["nested"] as Record<string, unknown>)["authorization"]).toBe("[redacted]");
@@ -67,7 +68,9 @@ describe("provider health", () => {
     expect(classifyProbe({ key: "ai", configured: true, ok: true, latencyMs: 9999 }).state).toBe(
       "degraded",
     );
-    expect(classifyProbe({ key: "ai", configured: true, ok: false, latencyMs: 20 }).state).toBe("down");
+    expect(classifyProbe({ key: "ai", configured: true, ok: false, latencyMs: 20 }).state).toBe(
+      "down",
+    );
   });
 
   it("treats a critical outage as an outage overall", () => {

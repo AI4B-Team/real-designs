@@ -48,7 +48,11 @@ export async function setJobState(
   opts: { code?: string; note?: string } = {},
 ): Promise<boolean> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data } = await supabaseAdmin.from("ops_jobs").select("state").eq("id", jobId).maybeSingle();
+  const { data } = await supabaseAdmin
+    .from("ops_jobs")
+    .select("state")
+    .eq("id", jobId)
+    .maybeSingle();
   const current = (data?.state as JobState | undefined) ?? "queued";
   if (!canTransition(current, next)) return false;
   await supabaseAdmin
@@ -72,7 +76,9 @@ export async function sweepStuckJobs(now = Date.now()): Promise<JobRow[]> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin
     .from("ops_jobs")
-    .select("id, workspace_id, kind, state, correlation_id, started_at, expected_ms, provider, code")
+    .select(
+      "id, workspace_id, kind, state, correlation_id, started_at, expected_ms, provider, code",
+    )
     .in("state", ["queued", "running"])
     .limit(200);
   const rows = (data ?? []) as unknown as JobRow[];

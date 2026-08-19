@@ -39,7 +39,8 @@ export interface ErrorRecord {
 
 /** Map an unknown throw onto a short, stable, non-revealing code. */
 export function safeErrorCode(error: unknown): string {
-  const status = (error as { status?: number; statusCode?: number })?.status ??
+  const status =
+    (error as { status?: number; statusCode?: number })?.status ??
     (error as { statusCode?: number })?.statusCode;
   if (typeof status === "number") return `http_${status}`;
   const raw = String((error as { code?: string })?.code ?? (error as Error)?.message ?? "");

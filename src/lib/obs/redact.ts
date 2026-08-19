@@ -12,7 +12,8 @@ const SECRET_KEY_PATTERN =
 
 const SIGNED_URL_PATTERN = /https?:\/\/[^\s"']+/gi;
 const JWT_PATTERN = /\beyJ[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\.[A-Za-z0-9_-]{6,}\b/g;
-const KEYLIKE_PATTERN = /\b(sb_(?:secret|publishable)_[A-Za-z0-9_-]{8,}|sk_[a-z]+_[A-Za-z0-9]{8,}|whsec_[A-Za-z0-9]{8,}|re_[A-Za-z0-9]{8,})\b/g;
+const KEYLIKE_PATTERN =
+  /\b(sb_(?:secret|publishable)_[A-Za-z0-9_-]{8,}|sk_[a-z]+_[A-Za-z0-9]{8,}|whsec_[A-Za-z0-9]{8,}|re_[A-Za-z0-9]{8,})\b/g;
 const CARD_PATTERN = /\b(?:\d[ -]?){13,19}\b/g;
 
 export const REDACTED = "[redacted]";
@@ -23,7 +24,8 @@ export function redactUrl(value: string): string {
     const url = new URL(value);
     const signed = url.searchParams.has("token") || url.searchParams.has("X-Amz-Signature");
     const isStorage = /\/storage\/v1\/object\//.test(url.pathname);
-    if (signed || isStorage) return `${url.origin}${url.pathname.split("/").slice(0, 5).join("/")}/[object]`;
+    if (signed || isStorage)
+      return `${url.origin}${url.pathname.split("/").slice(0, 5).join("/")}/[object]`;
     url.search = "";
     url.username = "";
     url.password = "";

@@ -6,7 +6,14 @@
  * took and a short classification code.
  */
 
-import { classifyProbe, overallState, PROVIDERS, type OverallState, type ProviderProbe, type ProviderStatus } from "./providers";
+import {
+  classifyProbe,
+  overallState,
+  PROVIDERS,
+  type OverallState,
+  type ProviderProbe,
+  type ProviderStatus,
+} from "./providers";
 import { safeErrorCode } from "./report.server";
 
 const PROBE_TIMEOUT_MS = 4000;
@@ -18,13 +25,18 @@ function configured(...names: string[]): boolean {
   });
 }
 
-async function timed(run: () => Promise<void>): Promise<{ ok: boolean; latencyMs: number; code?: string }> {
+async function timed(
+  run: () => Promise<void>,
+): Promise<{ ok: boolean; latencyMs: number; code?: string }> {
   const started = Date.now();
   try {
     await Promise.race([
       run(),
       new Promise<never>((_, reject) =>
-        setTimeout(() => reject(Object.assign(new Error("timeout"), { code: "timeout" })), PROBE_TIMEOUT_MS),
+        setTimeout(
+          () => reject(Object.assign(new Error("timeout"), { code: "timeout" })),
+          PROBE_TIMEOUT_MS,
+        ),
       ),
     ]);
     return { ok: true, latencyMs: Date.now() - started };
@@ -59,7 +71,8 @@ async function probeStorage(): Promise<ProviderProbe> {
   const result = await timed(async () => {
     const { checkStorageHealth } = await import("@/lib/storage-health.server");
     const health = await checkStorageHealth({ deep: false });
-    if (!health.ok) throw Object.assign(new Error("bucket_check_failed"), { code: "storage_unhealthy" });
+    if (!health.ok)
+      throw Object.assign(new Error("bucket_check_failed"), { code: "storage_unhealthy" });
   });
   return { key: "storage", configured: true, ...result };
 }
@@ -123,7 +136,9 @@ export async function healthReport(force = false): Promise<HealthReport> {
   ]);
   const byKey = new Map(probes.map((p) => [p.key, p]));
   const providers = PROVIDERS.map((def) =>
-    classifyProbe(byKey.get(def.key) ?? { key: def.key, configured: false, ok: false, latencyMs: 0 }),
+    classifyProbe(
+      byKey.get(def.key) ?? { key: def.key, configured: false, ok: false, latencyMs: 0 },
+    ),
   );
 
   let jobs: HealthReport["jobs"] = null;
@@ -138,7 +153,8 @@ export async function healthReport(force = false): Promise<HealthReport> {
     jobs = {
       queued: rows.filter((r) => r.state === "queued").length,
       running: rows.filter((r) => r.state === "running").length,
-      stuck: rows.filter((r) => Date.now() - new Date(r.started_at).getTime() > r.expected_ms * 2).length,
+      stuck: rows.filter((r) => Date.now() - new Date(r.started_at).getTime() > r.expected_ms * 2)
+        .length,
     };
   } catch {
     jobs = null;

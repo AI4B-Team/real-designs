@@ -112,7 +112,8 @@ export interface AlertEvaluation {
 
 export function evaluateAlert(rule: AlertRule, counters: WindowCounters): AlertEvaluation {
   const total = counters.total ?? 0;
-  const value = rule.mode === "ratio" ? (total > 0 ? counters.failures / total : 0) : counters.failures;
+  const value =
+    rule.mode === "ratio" ? (total > 0 ? counters.failures / total : 0) : counters.failures;
   const enoughSamples = rule.mode === "ratio" ? total >= rule.minSamples : true;
   const firing = enoughSamples && value >= rule.threshold;
   const detail =
@@ -131,6 +132,10 @@ export function evaluateAlert(rule: AlertRule, counters: WindowCounters): AlertE
   };
 }
 
-export function evaluateAll(counters: Partial<Record<AlertKey, WindowCounters>>): AlertEvaluation[] {
-  return ALERT_RULES.map((rule) => evaluateAlert(rule, counters[rule.key] ?? { failures: 0, total: 0 }));
+export function evaluateAll(
+  counters: Partial<Record<AlertKey, WindowCounters>>,
+): AlertEvaluation[] {
+  return ALERT_RULES.map((rule) =>
+    evaluateAlert(rule, counters[rule.key] ?? { failures: 0, total: 0 }),
+  );
 }
