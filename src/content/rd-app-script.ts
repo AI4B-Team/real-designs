@@ -3686,8 +3686,40 @@ export function initApp(): () => void {
        is still running. Approval may only ever target a saved version. */
     let DISPLAYED_VERSION = null;
     let VERSION_SAVING = false;
+    /** A render that reached storage but whose version row still has to be written. */
+    let PENDING_VERSION = null;
     window.rdDisplayedVersion = () => DISPLAYED_VERSION;
     window.rdVersionSaving = () => VERSION_SAVING;
+
+    /** Intensity and finish grade exactly as the user set them. */
+    function currentBandLabel() {
+      const b = document.querySelector(".bchip.on b");
+      return b ? b.textContent.trim() : null;
+    }
+    function currentGradeLabel() {
+      const g = document.querySelector("#gradeChips .chip.on");
+      return g ? g.textContent.trim() : null;
+    }
+
+    /** Approval only ever offers itself for a version that already exists. */
+    function paintApproveBtn() {
+      const b = document.getElementById("stApprove");
+      if (!b) return;
+      const unsaved = VERSION_SAVING || (!!lastRenderPath && !DISPLAYED_VERSION) || !!PENDING_VERSION;
+      b.disabled = !!VERSION_SAVING;
+      b.setAttribute(
+        "data-tt",
+        VERSION_SAVING
+          ? "This Design Is Still Saving"
+          : unsaved
+            ? "Save This Version Before Approving"
+            : DISPLAYED_VERSION
+              ? "Approve Version " + DISPLAYED_VERSION.version_no
+              : "Approve The Latest Saved Version",
+      );
+    }
+    window.rdPaintApproveBtn = paintApproveBtn;
+
 
     /** Paints "Saving…" / "Saved as Version N" on the tile for one render. */
     function paintVersionBadge(path, text, cls) {
