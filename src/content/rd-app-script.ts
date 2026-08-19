@@ -564,11 +564,15 @@ function searchIndex(){
     out.push({kind:'Presentations',ic:'presentation',t:pr.title||'Client link',
       s:(pr.status==='approved'?'Approved':pr.status==='viewed'?'Opened':pr.status==='changes'?'Changes requested':'Sent'),view:'present',pres:pr.id});
   });
+  /* Saved budget records are preserved, but while budgets are coming soon they
+     are never surfaced as searchable budget results. */
   SAVED_EST.forEach(e=>{
-    out.push({kind:'Budgets',ic:'calculator',t:(e.name||'Saved room')+' budget',
-      s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Budget')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
+    if(budgetsLive()){
+      out.push({kind:'Budgets',ic:'calculator',t:(e.name||'Saved room')+' budget',
+        s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Budget')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
+    }
     out.push({kind:'Products',ic:'shopping-bag',t:(e.name||'Saved room')+' product board',
-      s:'Allowances from the saved budget',view:'products'});
+      s:budgetsLive()?'Allowances from the saved budget':'Saved product board',view:'products'});
   });
   return out;
 }
@@ -597,7 +601,7 @@ function updateSearchMeta(){
   const set=(sc,v)=>{const b=schMenu.querySelector('[data-scope="'+sc+'"] .mv'); if(b) b.textContent=String(v);};
   set('Properties',PROP_TREE.length); set('Rooms',rooms); set('Designs',designs);
   set('Presentations',(typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).length);
-  set('Budgets',SAVED_EST.length); set('Products',SAVED_EST.length);
+  set('Budgets',budgetsLive()?SAVED_EST.length:0); set('Products',SAVED_EST.length);
   const recents=searchIndex().filter(r=>r.kind==='Designs').slice(0,3);
   const groups=schMenu.querySelectorAll('.acct-group');
   const recHead=groups[groups.length-1];
@@ -832,10 +836,10 @@ async function paintSample(s){
     host.insertBefore(bar,host.firstChild);
   }
   bar.innerHTML = present
-    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data for exploring Properties, Budget and Reports.</span>'
+    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data for exploring Properties, Designs and Reports.</span>'
       +'<button class="btn btn-ghost btn-xs" id="sampleGo" style="margin-left:auto"><i data-lucide="map-pin"></i>Open It</button>'
       +'<button class="btn btn-ghost btn-xs" id="sampleOff"><i data-lucide="trash-2"></i>Remove Sample</button>'
-    : '<i data-lucide="flask-conical"></i><span><b>Nothing Saved Yet.</b> Load a sample property with three rooms and a budget target to see how the workspace fits together. No credits are used.</span>'
+    : '<i data-lucide="flask-conical"></i><span><b>Nothing Saved Yet.</b> Load a sample property with three rooms to see how the workspace fits together. No credits are used.</span>'
       +'<button class="btn btn-primary btn-xs" id="sampleOn" style="margin-left:auto"><i data-lucide="download"></i>Load Sample Property</button>';
   try{ lucide.createIcons(); }catch(_){}
 
