@@ -622,7 +622,13 @@ export function openBulkDesign(opts) {
     };
     const go = node.querySelector('[data-mfa="go"]');
     go.onclick = () => {
-      if (submitted || go.disabled) return;
+      if (submitted) return;
+      if (go.disabled) {
+        attempted = true;
+        draw();
+        return;
+      }
+
       readForm();
       submitted = true;
       setModalButtonLoading(go, true, `Generating ${items.length} Design${items.length === 1 ? "" : "s"}…`);
