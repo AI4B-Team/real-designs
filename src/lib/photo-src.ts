@@ -154,6 +154,11 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
   if (!p) return true;
   const mine = ++seq;
   el.__rdPhotoSeq = mine;
+  /* Only skeleton a frame that is not already showing a usable image. */
+  const showing = el instanceof HTMLImageElement ? !!el.getAttribute("src") : !!el.style.backgroundImage;
+  if (!showing) loadingOn(el);
+
+
 
   const url = await photoSrc(p, force);
   if (el.__rdPhotoSeq !== mine) return true; // a newer request already won
