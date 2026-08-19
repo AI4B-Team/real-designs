@@ -369,15 +369,13 @@ export function openBulkDesign(opts) {
         : block === "STYLE_UNUSUAL"
           ? `Review the recommendation on the ${unusual.map((g) => g.label.toLowerCase()).join(" and ")} group.`
           : block;
-    /* One concise message, shown under the field that needs attention. */
+    /* One concise message, shown under the field that needs attention — but
+       only once that field has been engaged, or the user tried to generate. */
+    const showErr = (name) => blockField === name && (attempted || !!touched[name]);
     const fieldMsg = (name) =>
-      blockField === name ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : "";
+      showErr(name) ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : "";
+    const badCls = (name) => (showErr(name) ? " bad" : "");
 
-
-    /* Group summary for the collapsed photo section: "1 Exterior · 7 Interior". */
-    const groupSummary = groups.map((g) => `${g.items.length} ${g.label}`).join(" · ");
-    /* The photo list only opens itself when a group genuinely needs attention. */
-    const photosOpen = !!(missing || perSpaceMode || unsupported.length || unusual.length);
 
     /* One source of truth for the format: the project ratio chosen on Prepare
        Your Photos, edited inline here — never in a second stacked modal. */
