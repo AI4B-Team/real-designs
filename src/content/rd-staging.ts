@@ -2045,15 +2045,17 @@ function mountStrip() {
   const head = document.createElement("div");
   head.id = "rdsCanvasHead";
   head.className = "rds-chead";
-  head.innerHTML = `<button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>Back To All Photos</button>
+  head.innerHTML = `<button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>Back to All Photos</button>
     <span class="rds-chead-t" id="rdsCanvasTitle"></span>
     <span class="rds-chead-s" id="rdsCanvasPos"></span>
-    <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
-      <div class="rv-more-m">
-        <button id="rdsClose">Save &amp; Exit</button>
-        <button id="rdsStartOver">Start Over</button>
+    <span class="rds-chead-save" id="rdsCanvasSave"></span>
+    <div class="rds-cmenu-wrap">
+      <button class="icon-btn sm" id="rdsCanvasMore" aria-label="More Actions" aria-haspopup="menu" aria-expanded="false"><i data-lucide="ellipsis-vertical"></i></button>
+      <div class="rds-cmenu" id="rdsCanvasMenu" role="menu" hidden>
+        <button role="menuitem" id="rdsClose"><i data-lucide="arrow-left"></i>Return to Photos</button>
+        <button role="menuitem" class="danger" id="rdsResetDesign"><i data-lucide="rotate-ccw"></i>Reset This Design…</button>
       </div>
-    </details>`;
+    </div>`;
   if (view && board) view.insertBefore(head, board);
 
   strip = document.createElement("div");
@@ -2062,19 +2064,17 @@ function mountStrip() {
   else if (view) view.appendChild(strip);
   else document.body.appendChild(strip);
 
-  head.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
-  head.querySelectorAll("#rdsStartOver").forEach((b) => (b.onclick = () => {
-    /* The confirmation lives in the builder screen, so go back to it first. */
+  /* Autosave already persists every edit, so the menu only navigates. */
+  const backToPhotos = () => {
     markCurrentDone();
+    saveDraft();
     reopenStaging();
-    openStartOver();
-  }));
+  };
+  bindCanvasMenu(head, backToPhotos);
   const back = head.querySelector("#rdsAllRooms");
-  if (back)
-    back.onclick = () => {
-      markCurrentDone();
-      reopenStaging();
-    };
+  if (back) (back as HTMLButtonElement).onclick = backToPhotos;
+  paintCanvasSave();
+
 
   drawStrip();
   window.addEventListener("hashchange", stripGuard);
