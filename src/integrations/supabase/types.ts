@@ -50,6 +50,27 @@ export type Database = {
         }
         Relationships: []
       }
+      beta_allowlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          note: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          note?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          note?: string | null
+        }
+        Relationships: []
+      }
       billing_events: {
         Row: {
           created_at: string
@@ -472,30 +493,39 @@ export type Database = {
           body: string
           category: string
           created_at: string
+          diagnostic_id: string | null
           id: string
+          page: string | null
           status: string
           user_id: string
           view_context: string | null
+          workflow: string | null
         }
         Insert: {
           attachment_path?: string | null
           body: string
           category?: string
           created_at?: string
+          diagnostic_id?: string | null
           id?: string
+          page?: string | null
           status?: string
           user_id: string
           view_context?: string | null
+          workflow?: string | null
         }
         Update: {
           attachment_path?: string | null
           body?: string
           category?: string
           created_at?: string
+          diagnostic_id?: string | null
           id?: string
+          page?: string | null
           status?: string
           user_id?: string
           view_context?: string | null
+          workflow?: string | null
         }
         Relationships: []
       }
