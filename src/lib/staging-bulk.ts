@@ -500,7 +500,7 @@ export function openBulkDesign(opts) {
       });
       const direction = {
         styleId: rec ? rec.id : null,
-        direction: rec ? rec.displayName : "Warm Minimal",
+        direction: rec ? rec.displayName : null,
         styleBySpace,
         intensity: form.intensity,
         grade: form.grade,
