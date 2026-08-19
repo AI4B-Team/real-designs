@@ -3318,12 +3318,9 @@ export function initApp(): () => void {
     } catch (_) {}
 
     function addRenderVariant(src, label, path) {
-      /* Saved room on the canvas => this render becomes one of its versions. */
-      if (path) {
-        try {
-          attachVersionToRoom(path);
-        } catch (_) {}
-      }
+      /* Persisting a render is the caller's job (finalizeGeneratedDesign), so
+         reopening a saved version never writes a duplicate version row. */
+
       /* Version History shows this render immediately, before any save. */
       try {
         SESSION_VERSIONS.unshift({
