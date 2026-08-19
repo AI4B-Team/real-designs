@@ -3479,6 +3479,15 @@ export function initApp(): () => void {
 
     let STUDIO_CTX = { room: null, address: null, project: null };
 
+    /* Renders produced in this session appear in Version History right away,
+       before any save round-trip completes. */
+    const SESSION_VERSIONS = [];
+    function activeStudioRoom() {
+      const setupRoom = ((document.getElementById("fRoom") || {}).value || "").trim();
+      return (STUDIO_CTX && STUDIO_CTX.room) || setupRoom || "";
+    }
+
+
     async function paintVersions() {
       const el = document.getElementById("verList");
       if (!el) return;
