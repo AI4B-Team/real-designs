@@ -1926,3 +1926,48 @@
 
 /* Small "Coming Soon" badge used on gated rows/pills outside the nav (nav-soon covers the nav item itself). */
 .rd-app .coming-soon-badge{display:inline-flex;align-items:center;margin-left:8px;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase;color:var(--mute-2);border:1px solid var(--line,#e5e5e5);border-radius:999px;padding:1px 7px}
+
+/* ---------- canvas style selection ---------- */
+#canvasStyleField.cs-flash{outline:2px solid var(--red);outline-offset:6px;border-radius:12px}
+.cs-sec{display:flex;flex-direction:column;gap:10px}
+.cs-sec-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cs-sec-h label{margin:0}
+.cs-req{font-size:.68rem;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--red)}
+.cs-scope{font-size:.68rem;font-weight:600;color:var(--muted);background:var(--chip,#f2f2f2);border-radius:999px;padding:3px 9px}
+.cs-empty-state p,.cs-inherit{margin:0;font-size:.76rem;line-height:1.45;color:var(--muted)}
+.cs-empty-state{gap:9px}
+.cs-empty-state .btn{width:100%;justify-content:center}
+.cs-picked{display:flex;gap:11px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:9px}
+.cs-picked-th{width:62px;height:46px;border-radius:8px;overflow:hidden;flex:0 0 auto;background:var(--chip,#eee)}
+.cs-picked-th img{width:100%;height:100%;object-fit:cover;display:block}
+.cs-picked-t{min-width:0;display:flex;flex-direction:column;gap:2px}
+.cs-picked-t b{font-size:.86rem}
+.cs-picked-t em{font-style:normal;font-size:.74rem;color:var(--muted);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.cs-picked-act{display:flex;align-items:center;justify-content:space-between;gap:8px}
+
+.cs-modal .cs-card{width:min(1040px,94vw);max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden}
+.cs-head{display:flex;gap:14px;align-items:flex-start;justify-content:space-between;padding:18px 20px 12px;border-bottom:1px solid var(--line)}
+.cs-head h3{margin:0 0 4px}
+.cs-head p{margin:0;font-size:.8rem;color:var(--muted);max-width:74ch;line-height:1.5}
+.cs-filters{display:flex;flex-direction:column;gap:10px;padding:12px 20px;border-bottom:1px solid var(--line)}
+.cs-search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:999px;padding:7px 13px}
+.cs-search input{border:0;outline:0;flex:1;font:inherit;background:transparent}
+.cs-search i{width:15px;height:15px;color:var(--muted)}
+.cs-cats{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px}
+.cs-cats .chip{white-space:nowrap}
+.cs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(184px,1fr));gap:14px;padding:16px 20px;overflow:auto;flex:1}
+.cs-tile{display:flex;flex-direction:column;gap:5px;text-align:left;background:transparent;border:1px solid transparent;border-radius:12px;padding:6px;cursor:pointer}
+.cs-tile:hover{border-color:var(--line)}
+.cs-tile.on{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
+.cs-th{position:relative;display:block;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:var(--chip,#eee)}
+.cs-th img{width:100%;height:100%;object-fit:cover;display:block}
+.cs-tick{position:absolute;top:7px;right:7px;width:24px;height:24px;border-radius:999px;background:var(--red);color:#fff;display:flex;align-items:center;justify-content:center}
+.cs-tick i{width:14px;height:14px}
+.cs-lock{position:absolute;left:7px;bottom:7px;display:flex;align-items:center;gap:5px;font-size:.66rem;font-weight:700;background:rgba(0,0,0,.72);color:#fff;border-radius:999px;padding:3px 8px}
+.cs-lock i{width:12px;height:12px}
+.cs-tn{font-size:.82rem;font-weight:700}
+.cs-td{font-size:.72rem;color:var(--muted);line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cs-empty{grid-column:1/-1;padding:38px 0;text-align:center;color:var(--muted);font-size:.84rem}
+.cs-foot{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 20px;border-top:1px solid var(--line);background:var(--card,#fff)}
+.cs-all{display:flex;align-items:center;gap:8px;font-size:.78rem;color:var(--muted)}
+.cs-foot-act{display:flex;gap:9px;margin-left:auto}

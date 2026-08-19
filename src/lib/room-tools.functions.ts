@@ -7,6 +7,7 @@ const Input = z.object({
   image: z.string().min(16),
   room_type: z.string().max(60).default("living room"),
   direction: z.string().max(60).default("Warm Minimal"),
+  style_id: z.string().max(80).nullable().optional(),
   grade: z.string().max(40).default("Retail Grade"),
   notes: z.string().max(600).nullable().optional(),
 });
