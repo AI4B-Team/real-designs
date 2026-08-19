@@ -1237,49 +1237,6 @@ function openProjectRatioMore() {
   wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); applyRatiosLive(); } });
 }
 
-/**
- * Output format, edited from inside the design confirmation modal. The
- * confirmation stays open underneath and refreshes when this closes, so no
- * selection or typed instruction is lost.
- */
-function openBulkFormatPicker(refresh) {
-  if (typeof document === "undefined") return;
-  const cur = normalizeOutputRatio(S.outputRatio);
-  const wrap = document.createElement("div");
-  wrap.className = "bx-cdlg";
-  wrap.style.zIndex = "260";
-  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Photo Format">
-    <h3>Photo Format</h3>
-    <p>Applies to every photo in this run that has no override of its own.</p>
-    <div class="rv-seg wrap" style="margin:10px 0 4px">${PRIMARY_OUTPUT_RATIOS.concat(MORE_OUTPUT_RATIOS)
-      .map(
-        (o) => `<button type="button" class="${cur === o.id ? "on" : ""}" data-rdsbfmt="${o.id}">${esc(
-          o.note ? o.label + " " + o.note : o.label,
-        )}</button>`,
-      )
-      .join("")}</div>
-    ${modalFooterHtml({ primary: { label: "Done", value: "done" } })}
-  </div>`;
-  document.body.appendChild(wrap);
-  paint();
-  const done = () => {
-    wrap.remove();
-    refresh && refresh();
-  };
-  wrap.addEventListener("click", (e) => {
-    const b = e.target.closest("[data-rdsbfmt]");
-    if (b) {
-      S.outputRatio = normalizeOutputRatio(b.getAttribute("data-rdsbfmt"));
-      saveDraft();
-      applyRatiosLive();
-      done();
-      return;
-    }
-    if (e.target.closest("[data-mfa]") || e.target === wrap) done();
-  });
-  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") done(); });
-}
-
 /** Per-photo override, offered from the card menu and the canvas. */
 function openRatioOverride(it) {
   if (typeof document === "undefined") return;
@@ -1514,7 +1471,8 @@ function startBulkDesign(list, reuseDirection) {
       S.step = "review";
       render();
     },
-    onEditFormat: (refresh) => openBulkFormatPicker(refresh),
+    /* Inline three-option format control inside the modal — no stacked modal. */
+    onRatioChange: (id) => { void setProjectRatio(id); },
     onStart: (batch, direction) => runBatch(batch, direction),
   });
 }
