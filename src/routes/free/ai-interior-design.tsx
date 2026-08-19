@@ -52,7 +52,7 @@ function FreeInteriorTool() {
       lede="One photo in. A redesigned room and a planning range out. No account for your first design."
       intro={[
         "Upload a photo of a real room and get back a redesign of that same room, not a stock image of somebody else's house. The walls, windows, doors and ceiling height stay exactly where they are, because Reality Lock treats them as fixed. What changes is what you can actually change: paint, flooring, cabinetry, lighting, tile, fixtures and furniture.",
-        "Your first design is free and needs no account. You will see the redesigned room at full size and a planning range for the work it implies, so the picture and the cost arrive together instead of the cost arriving later from a contractor.",
+        "Your first design is free and needs no account. You will see the redesigned room at full size, with your walls, windows and layout held exactly as they are, so what you are looking at is your own space rather than a stock room.",
         "This tool is built for people about to spend money. A pretty render that quietly moves a load bearing wall is not a plan, it is a distraction. Everything here is anchored to the room you photographed.",
       ]}
       tool={
@@ -85,13 +85,13 @@ function FreeInteriorTool() {
           body: [
             "Intensity is the single most important control on this page and the one most people skip. It decides whether you are looking at a weekend of painting or a permit.",
             "Refresh keeps everything structural and everything expensive. Paint, textiles, lighting and furniture change. Makeover adds flooring and fixtures. Renovation puts cabinetry, tile and plumbing fixtures in play, which is where kitchens and bathrooms get real. Reimagine is the only setting that treats the layout itself as negotiable, and it is the only one that should ever be shown to a structural engineer.",
-            "Because the intensity is a control rather than a guess, the same room can be priced four ways in a few minutes. That is usually more useful than one beautiful answer, especially when you are deciding how much of your budget a single room deserves.",
+            "Because the intensity is a control rather than a guess, the same room can be explored four ways in a few minutes. That is usually more useful than one beautiful answer, especially when you are deciding how far to take a single room.",
           ],
         },
         {
           h2: "Why The Cost Arrives With The Picture",
           body: [
-            "Design tools traditionally stop at the image. The number shows up weeks later, from a contractor, and it is usually a multiple of what the picture implied. That gap is where most projects die.",
+            "Design tools traditionally give you one polished image and no way to compare directions. Seeing a refresh, a makeover and a full remodel of the same room side by side is what actually makes the decision easy.",
             "Here the design is read as a list of work. Square feet of flooring, linear feet of cabinet run, number of fixtures, area of wall to be painted. Those quantities are multiplied against published unit rates for the finish grade you selected, and the result is presented as a planning range with a confidence level.",
             "It is a planning range and not a bid. It does not know your local labor market, your building's access restrictions, what is behind your walls or what your city charges for a permit. It is the number you use to decide whether to have the conversation, not the number you sign.",
           ],
