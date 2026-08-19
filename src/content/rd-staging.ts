@@ -1739,8 +1739,10 @@ function startDesigning() {
     return;
   }
   saveDraft();
-  const first = sel.find((i) => !i.done) || sel[0];
-  openInCanvas(first.key);
+  /* Continue advances the bulk workflow: it opens the shared design-direction
+     interface for every selected photo. It never routes into the single-photo
+     Studio canvas — that is an explicit per-result action. */
+  startBulkDesign(sel);
 }
 
 
