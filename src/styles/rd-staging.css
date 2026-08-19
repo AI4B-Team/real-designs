@@ -693,8 +693,8 @@
    the credit summary on its own line so no label is ever squeezed or clipped. */
 .rdsb .rdsb-foot {
   flex: 0 0 auto;
-  margin: 14px -24px -24px;
-  padding: 18px 24px;
+  margin: 16px -28px -24px;
+  padding: 16px 28px;
   background: #fff;
   border-top: 1px solid var(--line, #e5e5ea);
   border-radius: 0 0 18px 18px;
@@ -728,6 +728,7 @@
   .rdsb-foot-row { flex-direction: column; align-items: stretch; }
   .rdsb-foot-a { flex-direction: column-reverse; align-items: stretch; }
   .rdsb .rdsb-foot .rdm-btn { width: 100%; }
+  .rdsb .rdsb-foot { margin: 16px -16px -20px; padding: 14px 16px; }
 }
 
 /* Advisory (not blocking): an unusual style is still the user's call. */
