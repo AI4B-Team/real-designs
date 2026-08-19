@@ -2913,7 +2913,7 @@ export function initApp(): () => void {
         });
         track("design_rendered", { surface: "studio", room_type: currentRoomType() });
         lastRender = r.image;
-        lastRenderPath = await persistRender(r.image, label || "Your Render");
+        lastRenderPath = await persistRender(r.image, "Your Render");
         cAfter.innerHTML = photo(r.image, "Redesigned space, AI render");
         addRenderVariant(
           r.image,
@@ -3303,7 +3303,7 @@ export function initApp(): () => void {
           },
         });
         lastRender = r.image;
-        lastRenderPath = await persistRender(r.image, label || "Your Render");
+        lastRenderPath = await persistRender(r.image, "3D Plan");
         cAfter.innerHTML = photo(r.image, "Furnished 3D plan of the same room");
         addRenderVariant(r.image, "3D Plan", lastRenderPath);
         window.dispatchEvent(new Event("rd:credits-changed"));
