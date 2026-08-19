@@ -23,7 +23,12 @@ export interface ErrorContext {
   meta?: Record<string, unknown>;
 }
 
-export interface ErrorRecord extends Omit<ErrorContext, "meta"> {
+export interface ErrorRecord {
+  route: string;
+  operation: Operation | string;
+  workspaceId: string | null;
+  requestId: string | null;
+  provider: ProviderKey | null;
   correlationId: string;
   code: string;
   message: string;
