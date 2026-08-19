@@ -596,8 +596,11 @@ function mount(ctx) {
     const list = all.slice(0, 3);
     const box = $("shopResults");
     if (!list.length) {
-      box.innerHTML = `<div class="shop-empty"><b>No Matches In This View</b><span>Widen the price range, clear a filter, or search by keyword to find a stand-in for this item.</span><button class="btn btn-ghost btn-xs" id="shopClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
+      box.innerHTML = !visualSearchProvider().configured && !activeFilterCount() && !query
+        ? noProviderBlock()
+        : `<div class="shop-empty"><b>No Matches In This View</b><span>Widen the price range, clear a filter, or search by keyword to find a stand-in for this item.</span><button class="btn btn-ghost btn-xs" id="shopClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
       paintIcons();
+      wireNoProvider();
       const c = $("shopClear");
       if (c) c.addEventListener("click", resetAllFilters);
       paintCatalog();
@@ -758,8 +761,11 @@ function mount(ctx) {
     });
     const list = filtered(tab === "saved" ? savedLater : pool);
     if (!list.length) {
-      grid.innerHTML = `<div class="shop-empty"><b>No Products In This View</b><span>Clear a filter or search by keyword to see more products for this room.</span><button class="btn btn-ghost btn-xs" id="shopCatClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
+      grid.innerHTML = !visualSearchProvider().configured && !activeFilterCount() && !query
+        ? noProviderBlock()
+        : `<div class="shop-empty"><b>No Products In This View</b><span>Clear a filter or search by keyword to see more products for this room.</span><button class="btn btn-ghost btn-xs" id="shopCatClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
       paintIcons();
+      wireNoProvider();
       const c = $("shopCatClear");
       if (c) c.addEventListener("click", resetAllFilters);
       return;
@@ -784,6 +790,116 @@ function mount(ctx) {
   }
   function closeSheet() {
     host.classList.remove("sheet-on");
+  }
+
+  /** Real retailer links the user saved for this room, matched to the object. */
+  function manualFor(o) {
+    return listManualProducts(design.roomId).filter((p) => !o || !p.category || p.category === "Other" || p.category === o.category);
+  }
+
+  function checkedLabel(p) {
+    if (p.availability === "unavailable") return "No Longer Available At This Retailer.";
+    if (priceOf(p) == null) return "No Price Saved For This Product.";
+    return lastCheckedLabel(p.lastVerified) + (isPriceStale(p.lastVerified) ? ", Verify On The Retailer Page." : ".");
+  }
+
+  /** Availability is only shown when a connected source actually reported it. */
+  function availabilityTag(p) {
+    if (p.availability === "unknown") return `<span class="shop-tag amb">Availability Not Checked</span>`;
+    if (p.availability === "unavailable") return `<span class="shop-tag bad">No Longer Available</span>`;
+    return `<span class="shop-tag ${p.availability === "in_stock" ? "ok" : "amb"}">${availabilityLabel(p.availability)}</span>`;
+  }
+
+  /** Honest empty state used whenever no product provider is connected. */
+  function noProviderBlock() {
+    return `<div class="shop-empty"><b>No Product Provider Connected Yet</b>
+      <span>We do not show sample or placeholder inventory. Save a real retailer link for this item, or import a CSV of products you already sourced.</span>
+      <button class="btn btn-dark btn-xs" id="shopAddLink"><i data-lucide="link"></i>Save Product Link</button>
+      <button class="btn btn-ghost btn-xs" id="shopImportCsv"><i data-lucide="upload"></i>Import CSV</button>
+      <span class="shop-disc-s">${esc(AFFILIATE_DISCLOSURE)}</span></div>`;
+  }
+
+  function wireNoProvider() {
+    paintIcons();
+    const a = $("shopAddLink");
+    if (a) a.addEventListener("click", openLinkForm);
+    const c = $("shopImportCsv");
+    if (c) c.addEventListener("click", openCsvForm);
+  }
+
+  function openLinkForm() {
+    const d = $("shopDrawer");
+    d.hidden = false;
+    d.innerHTML = `<div class="shop-dr">
+      <div class="shop-dr-h"><b>Save Product Link</b><button class="icon-btn" id="drClose" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="shop-dr-b">
+        <label class="shop-f col"><span>Retailer Link</span><input id="mlUrl" type="url" placeholder="https://retailer.com/product"></label>
+        <label class="shop-f col"><span>Product Title</span><input id="mlTitle" type="text" placeholder="What is it?"></label>
+        <label class="shop-f col"><span>Price You Saw (Optional)</span><input id="mlPrice" type="number" min="0" step="0.01" placeholder="Leave blank if unknown"></label>
+        <label class="shop-f col"><span>Image URL (Optional)</span><input id="mlImg" type="url" placeholder="https://"></label>
+        <div class="shop-disc"><i data-lucide="info"></i><span>We store only what you enter. We never invent price, stock, shipping or discounts.</span></div>
+      </div>
+      <div class="shop-dr-f"><button class="btn btn-dark btn-xs" id="mlGo"><i data-lucide="check"></i>Save Product</button><button class="btn btn-ghost btn-xs" id="mlCancel">Cancel</button></div>
+    </div>`;
+    paintIcons();
+    $("drClose").addEventListener("click", () => (d.hidden = true));
+    $("mlCancel").addEventListener("click", () => (d.hidden = true));
+    $("mlGo").addEventListener("click", () => {
+      try {
+        const price = $("mlPrice").value.trim();
+        const product = createManualProduct({
+          url: $("mlUrl").value.trim(),
+          title: $("mlTitle").value.trim(),
+          image: $("mlImg").value.trim(),
+          price: price ? Number(price) : undefined,
+          category: active ? active.category : "Other",
+        });
+        saveManualProducts(design.roomId, [product]);
+        d.hidden = true;
+        toast("Product Link Saved");
+        if (active) selectObject(active);
+        else paintResults();
+      } catch (e) {
+        toast(e && e.message ? String(e.message) : "That Link Could Not Be Saved");
+      }
+    });
+  }
+
+  function openCsvForm() {
+    const d = $("shopDrawer");
+    d.hidden = false;
+    d.innerHTML = `<div class="shop-dr">
+      <div class="shop-dr-h"><b>Import Products From CSV</b><button class="icon-btn" id="drClose" aria-label="Close"><i data-lucide="x"></i></button></div>
+      <div class="shop-dr-b">
+        <div class="shop-disc"><i data-lucide="info"></i><span>Columns: url, title, price, currency, image, category, merchant. Only the url column is required.</span></div>
+        <label class="shop-f col"><span>Paste CSV</span><textarea id="csvText" rows="8" placeholder="url,title,price"></textarea></label>
+        <input id="csvFile" type="file" accept=".csv,text/csv">
+        <div id="csvErr" class="shop-disc" hidden></div>
+      </div>
+      <div class="shop-dr-f"><button class="btn btn-dark btn-xs" id="csvGo"><i data-lucide="check"></i>Import Products</button><button class="btn btn-ghost btn-xs" id="csvCancel">Cancel</button></div>
+    </div>`;
+    paintIcons();
+    $("drClose").addEventListener("click", () => (d.hidden = true));
+    $("csvCancel").addEventListener("click", () => (d.hidden = true));
+    $("csvFile").addEventListener("change", async (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (f) $("csvText").value = await f.text();
+    });
+    $("csvGo").addEventListener("click", () => {
+      const res = parseProductCsv($("csvText").value);
+      if (!res.products.length) {
+        const box = $("csvErr");
+        box.hidden = false;
+        box.innerHTML = `<i data-lucide="triangle-alert"></i><span>${esc(res.errors[0] || "No products were found in that file.")}</span>`;
+        paintIcons();
+        return;
+      }
+      const added = saveManualProducts(design.roomId, res.products);
+      d.hidden = true;
+      toast(added + (added === 1 ? " Product Imported" : " Products Imported"));
+      if (active) selectObject(active);
+      else paintResults();
+    });
   }
 
   function card(p, big) {
@@ -1213,7 +1329,7 @@ export function renderSelectedProducts(mountEl, go) {
         (r) => `<div class="sp-row">${spThumb(r)}
       <div class="sp-main"><b>${esc(r.name)}</b><span>${esc(r.brand)} &middot; ${esc(r.merchant)} &middot; ${esc(r.priceTier || "Unassigned Price Tier")} &middot; ${esc(r.phase)}</span></div>
       <span class="shop-tag">${STATUS_LABEL[r.status]}</span>
-      <span class="sp-price">${money(priceOf(r))}${r.quantity > 1 ? ` &times; ${r.quantity}` : ""}</span>
+      <span class="sp-price">${money(priceOf(r))}${r.quantity > 1 ? ` &times; ${r.quantity}` : ""}<em class="shop-checked">${esc(lastCheckedLabel(r.lastVerified))}</em></span>
       <a class="btn btn-ghost btn-xs" href="${esc(r.affiliateUrl || r.productUrl)}" target="_blank" rel="nofollow sponsored noopener"><i data-lucide="external-link"></i>Retailer</a>
       <button class="btn btn-ghost btn-xs" data-sp-approve="${r.recordId}"><i data-lucide="check"></i>Approve</button>
       <button class="icon-btn" data-sp-rm="${r.recordId}" aria-label="Remove product"><i data-lucide="trash-2"></i></button></div>`,
@@ -1221,11 +1337,10 @@ export function renderSelectedProducts(mountEl, go) {
       .join("")}</div>`,
       )
       .join("") +
-    `<div class="shop-roll"><div><span>Product Subtotal</span><b>${money(roll.subtotal)}</b></div>
-    <div><span>Estimated Tax</span><b>${money(roll.tax)}</b></div>
-    <div><span>Estimated Delivery</span><b>${money(roll.delivery)}</b></div>
-    <div><span>Contingency</span><b>${money(roll.contingency)}</b></div>
-    <div class="tot"><span>Estimated Product Total</span><b>${money(roll.total)}</b></div></div>
+    `<div class="shop-roll"><div><span>Products</span><b>${roll.count}</b></div>
+    ${roll.unpriced ? `<div><span>Without A Saved Price</span><b>${roll.unpriced}</b></div>` : ""}
+    <div class="tot"><span>Shopping Total</span><b>${money(roll.subtotal)}</b></div></div>
+    <div class="shop-disc"><i data-lucide="info"></i><span>This is a shopping total for the products you saved. It is not a renovation budget or project cost estimate.</span></div>
     <div class="shop-disc"><i data-lucide="info"></i><span>${DISCLOSURE}</span></div>`;
   try {
     createIcons({ icons });
