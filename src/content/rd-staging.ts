@@ -2110,8 +2110,18 @@ function bindCanvasRoomSync() {
 function removeStrip() {
   if (strip) strip.remove();
   strip = null;
-  const head = document.getElementById("rdsCanvasHead");
-  if (head) head.remove();
+  /* Every listener the canvas adds has a matching removal, so re-opening
+     photo after photo can never stack duplicates. */
+  try {
+    window.removeEventListener("hashchange", stripGuard);
+  } catch (_) {}
+  try {
+    closeCanvasMenu?.();
+  } catch (_) {}
+  closeCanvasMenu = null;
+  /* Defensive: only ever one header in the document. */
+  document.querySelectorAll("#rdsCanvasHead").forEach((n) => n.remove());
+  document.querySelectorAll(".rds-strip").forEach((n) => n.remove());
 }
 
 /* The canvas belongs to the same builder as the grid, so its navigation lives
