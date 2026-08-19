@@ -769,15 +769,16 @@
 /* Confirmation modal: content-driven height, header and footer always visible,
    only the middle scrolls on short viewports. */
 .up-card.rdsb {
-  width: min(900px, calc(100vw - 32px));
-  max-width: 900px;
+  width: min(1000px, calc(100vw - 64px));
+  max-width: 1000px;
   text-align: left;
   display: flex;
   flex-direction: column;
-  max-height: 88vh;
+  max-height: calc(100vh - 64px);
   overflow: hidden;
   padding: 24px 28px;
 }
+
 .rdsb-body > * + * {
   margin-top: 16px;
 }
