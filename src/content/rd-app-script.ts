@@ -8071,9 +8071,12 @@ ${picks
       if (missing) {
         btn.disabled = true;
         btn.dataset.csGate = "1";
-        btn.title = support.ok
-          ? "Choose " + sectionTitle(need as any, space) + " First"
-          : (support.reason as string);
+        btn.setAttribute(
+          "data-tt",
+          support.ok
+            ? "Choose " + sectionTitle(need as any, space) + " First"
+            : (support.reason as string),
+        );
         btn.setAttribute("aria-disabled", "true");
         if (hint) {
           hint.textContent = support.ok
@@ -8085,7 +8088,7 @@ ${picks
         if (btn.dataset.csGate === "1") {
           btn.dataset.csGate = "";
           btn.disabled = !!busy;
-          btn.title = "";
+          btn.removeAttribute("data-tt");
           btn.setAttribute("aria-disabled", "false");
         }
         if (hint) (hint as any).hidden = true;
@@ -8121,9 +8124,13 @@ ${picks
         r.classList.toggle("off", !support.ok);
         r.setAttribute("aria-disabled", support.ok ? "false" : "true");
         const c = toolCost(nm);
-        r.title = support.ok
-          ? label + " \u00b7 " + costLabel(c) + "\n" + desc
-          : (support.reason as string);
+        /* Branded tooltips read data-tt; a title attribute is stripped at
+           init, so setting one here would show nothing. */
+        r.setAttribute(
+          "data-tt",
+          support.ok ? label + " \u00b7 " + costLabel(c) : (support.reason as string),
+        );
+        r.removeAttribute("title");
         if (!support.ok) r.classList.remove("on");
       });
       if (!document.querySelector("#fTool .toolrow.on")) {
