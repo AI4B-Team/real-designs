@@ -603,6 +603,11 @@
 .rd-app .rds-opt:hover { background: #f4f4f6; }
 .rd-app .rds-strip-b, .rd-app .rds-strip-i { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.18); }
 .rd-app .rds-strip-t { background: #2a2a30; }
+/* The strip sits on the dark canvas shell, so the selected tile's label must
+   stay light — the shared light-theme rule paints it near-black. */
+.rd-app .rds-strip-t em { color: rgba(255,255,255,.72); }
+.rd-app .rds-strip-t.on em { color: #fff; }
+
 
 /* ---------------- Shared builder chrome (see src/lib/builder-ui.ts) -------- */
 .bx-rail.row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; }
