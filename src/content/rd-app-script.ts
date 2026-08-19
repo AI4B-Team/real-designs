@@ -2742,16 +2742,30 @@ export function initApp(): () => void {
         el.innerHTML = "";
         return;
       }
-      el.innerHTML = summaryHTML({
-        primaryLabel: "Design Intensity",
-        primaryValue: d.name,
-        metrics: [
-          metric("What Changes", d.scope),
-          metric("Reality Lock", "Geometry Held", "positive"),
-          metric("Structure", "No Changes", "positive"),
-        ],
-      });
+      const grade = document.querySelector("#gradeChips .chip.on");
+      const gradeTxt = grade ? grade.textContent.trim() : "Retail Grade";
+      const wasOpen = el.querySelector("details")?.open ? " open" : "";
+      /* Compact by default: the image viewer stays the largest thing on the
+         Canvas and the full detail grid is one click away. */
+      el.innerHTML =
+        `<details class="gen-details"${wasOpen}><summary><span class="gd-k">Generation Details</span>` +
+        `<span class="gd-sum">${d.name} &middot; ${gradeTxt} &middot; Geometry Preserved</span>` +
+        `<i data-lucide="chevron-down"></i></summary><div class="gd-body">` +
+        summaryHTML({
+          primaryLabel: "Design Intensity",
+          primaryValue: d.name,
+          metrics: [
+            metric("What Changes", d.scope),
+            metric("Reality Lock", "Geometry Held", "positive"),
+            metric("Structure", "No Changes", "positive"),
+          ],
+        }) +
+        `</div></details>`;
+      try {
+        lucide.createIcons();
+      } catch (_) {}
     }
+
     function currentBand() {
       const b = document.querySelector(".bchip.on");
       return BANDS[b ? +b.dataset.b : 1];
