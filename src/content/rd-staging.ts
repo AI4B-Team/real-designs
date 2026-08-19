@@ -924,8 +924,8 @@ function render() {
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a">
-            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 1 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Design Selected</button>
-            <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room</button>
+            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Design ${sel} ${sel === 1 ? "Photo" : "Photos"}</button>
+            <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room Type</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
               <div class="rv-more-m">
                 <button data-act="all">Select All</button>
