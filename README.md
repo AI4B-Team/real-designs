@@ -1,6 +1,6 @@
 # REAL DESIGNS
 
-REAL DESIGNS is a property visualization workspace for real estate agents, investors and renovators. It turns photographs of a space into redesigned and virtually staged images, prices the work into a scope and budget, assembles marketing videos and presentations, and shares the result with clients through branded links. Everything is organized around a property, so rooms, designs, media, budgets and presentations for one address stay together.
+REAL DESIGNS is a property visualization workspace for real estate agents, investors and renovators. It turns photographs of a space into redesigned and virtually staged images, assembles marketing videos and presentations, and shares the result with clients through branded links. Everything is organized around a property, so rooms, designs, media and presentations for one address stay together. Budget and contractor scope are Coming Soon: they turn on only once verified local cost data is licensed for a market, and no estimated numbers are shown in the meantime.
 
 ## Architecture
 
@@ -73,7 +73,7 @@ The dev server runs on port 8080.
 |---|---|
 | Design generation | Live |
 | Virtual staging | Live |
-| Scope and budget | Live |
+| Budget and contractor scope | Coming Soon |
 | Presentations and share links | Live |
 | Media library | Live |
 | Video builder | Live |
