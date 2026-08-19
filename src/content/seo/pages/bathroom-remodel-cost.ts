@@ -28,7 +28,7 @@ export const page: LandingPage = {
   afterCaption: "The same footprint with new tile, a tub-to-shower conversion and updated fixtures.",
 
   steps: [
-    { title: "Photograph Your Bathroom", text: "One photo captures the fixture layout Reality Lock uses to size tile and plumbing quantities." },
+    { title: "Pick Your Bathroom Type", text: "Powder room, hall bath or primary suite sets the fixture count baseline for the planning range." },
     { title: "Choose Your Room Type", text: "Powder room, hall bath or primary suite, each with a different scope and planning range." },
     { title: "Review The Trade Breakdown", text: "See tile, plumbing and waterproofing priced separately so you know exactly what is driving the total." },
   ],
@@ -122,7 +122,7 @@ export const page: LandingPage = {
   ],
 
   relatedSlugs: [
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/kitchen-remodel-cost",
     "/free/rehab-cost-calculator",
     "/ai-bathroom-design",
@@ -131,6 +131,6 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Get A Trade-By-Trade Bathroom Estimate",
-  ctaBody: "Upload a photo of your bathroom and see exactly which trade lines are driving your total.",
-  ctaLabel: "Estimate My Bathroom",
+  ctaBody: "Try the free rehab calculator to see which trade lines drive your total, or start an AI redesign of your bathroom.",
+  ctaLabel: "Try The Free Calculator",
 };

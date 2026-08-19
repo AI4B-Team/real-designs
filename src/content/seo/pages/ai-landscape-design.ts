@@ -95,7 +95,7 @@ export const page: LandingPage = {
 
   relatedSlugs: [
     "/renovation-cost-estimator",
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/for-property-managers",
     "/ai-design-for-house-flippers",
     "/sketch-to-render",

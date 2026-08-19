@@ -108,7 +108,7 @@ export const page: LandingPage = {
   ],
 
   relatedSlugs: [
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/kitchen-remodel-cost",
     "/renovation-cost-estimator",
     "/bathroom-remodel-cost",

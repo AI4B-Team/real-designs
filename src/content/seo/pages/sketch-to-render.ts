@@ -112,7 +112,7 @@ export const page: LandingPage = {
     "/2d-to-3d-floor-plan",
     "/ai-interior-design",
     "/declutter-photo",
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/for-interior-designers",
     "/renovation-cost-estimator",
   ],

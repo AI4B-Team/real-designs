@@ -123,7 +123,7 @@ function FreeRehabTool() {
         "/renovation-cost-estimator",
         "/rental-grade-vs-retail-grade",
         "/ai-design-for-house-flippers",
-        "/contractor-scope-generator",
+        "/renovation-cost-estimator",
       ]}
       ctaTitle="Price The Rehab Before You Make The Offer."
       ctaBody="Room by room, grade by grade, with a range you can take into a negotiation."

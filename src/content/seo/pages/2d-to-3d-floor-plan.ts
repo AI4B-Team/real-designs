@@ -113,7 +113,7 @@ export const page: LandingPage = {
     "/ai-interior-design",
     "/for-real-estate-agents",
     "/for-property-managers",
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/renovation-cost-estimator",
   ],
 

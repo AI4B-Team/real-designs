@@ -27,7 +27,7 @@ export const page: LandingPage = {
   afterCaption: "Same living room, finishes, lighting and flooring updated as part of a whole house pass.",
 
   steps: [
-    { title: "Upload Photos From Every Room", text: "Each room is scoped individually, kitchen, bathrooms, bedrooms and living spaces, so the whole house total is a sum of real line items, not a square footage guess." },
+    { title: "List Every Room", text: "Kitchen, bathrooms, bedrooms and living spaces are priced individually so the whole house total is a sum of real rooms, not a square footage guess." },
     { title: "Set A Whole House Budget Band", text: "Choose cosmetic, mid-range or full gut and every room in the plan generates finishes that match that spend level consistently across the house." },
     { title: "Get A Trade By Trade Scope", text: "Export a combined scope with cabinetry, flooring, plumbing, electrical and paint broken out by room and by trade so subcontractors can bid off the same document." },
   ],
@@ -117,6 +117,6 @@ export const page: LandingPage = {
   },
 
   ctaTitle: "Plan Your Whole House Renovation Budget",
-  ctaBody: "Upload photos from every room and get a combined scope and planning range for the whole house.",
-  ctaLabel: "Start Whole House Plan",
+  ctaBody: "Use the free rehab calculator room by room to build a combined planning range for the whole house.",
+  ctaLabel: "Try The Free Calculator",
 };

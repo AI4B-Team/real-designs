@@ -28,7 +28,7 @@ export const page: LandingPage = {
   afterCaption: "The same footprint after a mid-range remodel: new cabinetry, quartz counters and updated lighting.",
 
   steps: [
-    { title: "Photograph Your Kitchen", text: "One photo gives Reality Lock the wall lengths and cabinet run needed to size a real scope." },
+    { title: "Pick Your Kitchen Size", text: "Typical cabinet run and square footage set the baseline for the planning range below." },
     { title: "Pick A Tier", text: "Cosmetic refresh, mid-range remodel, or full gut with layout change, each with its own planning range." },
     { title: "Get The Line-Item Breakdown", text: "Every trade priced separately so you can see exactly where your budget is going." },
   ],
@@ -116,7 +116,7 @@ export const page: LandingPage = {
   ],
 
   relatedSlugs: [
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/free/rehab-cost-calculator",
     "/renovation-cost-estimator",
     "/ai-kitchen-design",
@@ -125,6 +125,6 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Price Your Own Kitchen In Minutes",
-  ctaBody: "Upload a photo of your kitchen and get a tier-specific planning range broken down by trade.",
-  ctaLabel: "Estimate My Kitchen",
+  ctaBody: "Try the free rehab calculator for a tier-specific planning range, or start an AI redesign of your kitchen.",
+  ctaLabel: "Try The Free Calculator",
 };

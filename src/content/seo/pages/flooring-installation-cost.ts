@@ -27,7 +27,7 @@ export const page: LandingPage = {
   afterCaption: "Same living room, new flooring installed with baseboards and transitions finished.",
 
   steps: [
-    { title: "Upload Your Room Photo", text: "The room dimensions and existing flooring condition anchor the square footage and demo scope so the estimate matches what a flooring contractor will actually quote." },
+    { title: "Measure Your Room", text: "Square footage and existing flooring condition anchor the demo scope so the estimate is grounded in real numbers." },
     { title: "Choose A Flooring Material", text: "Compare laminate, vinyl, hardwood and tile against your actual square footage to see the installed cost difference between materials in dollars, not just per square foot." },
     { title: "Get A Line Item Scope", text: "Export a scope with square footage, material, underlayment, transitions and baseboard reinstall broken out so a contractor can quote against a fixed list." },
   ],
@@ -117,6 +117,6 @@ export const page: LandingPage = {
   },
 
   ctaTitle: "Get Your Flooring Installation Estimate",
-  ctaBody: "Upload your room and compare flooring materials against your actual square footage and a planning range.",
-  ctaLabel: "Start Flooring Estimate",
+  ctaBody: "Try the free rehab calculator to compare flooring materials against your square footage and a planning range.",
+  ctaLabel: "Try The Free Calculator",
 };

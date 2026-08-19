@@ -111,7 +111,7 @@ export const page: LandingPage = {
     "/renovation-cost-estimator",
     "/rental-grade-vs-retail-grade",
     "/rehab-cost-calculator",
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/ai-kitchen-design",
     "/ai-bathroom-design",
   ],

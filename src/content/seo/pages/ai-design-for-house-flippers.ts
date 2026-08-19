@@ -119,7 +119,7 @@ export const page: LandingPage = {
     "/rehab-cost-calculator",
     "/arv-calculator",
     "/rental-grade-vs-retail-grade",
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/renovation-cost-estimator",
     "/ai-kitchen-design",
   ],
