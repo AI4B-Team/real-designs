@@ -153,11 +153,11 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
       probe.src = url;
     });
     if (img.src !== url) {
-      if ((el.__rdPhotoTries || 0) < 1) {
-        el.__rdPhotoTries = 1;
-        return paintPhotoEl(el, p, true);
+      if ((img.__rdPhotoTries || 0) < 1) {
+        img.__rdPhotoTries = 1;
+        return paintPhotoEl(img, p, true);
       }
-      failState(el, p);
+      failState(img, p);
       return false;
     }
   } else {
