@@ -254,9 +254,14 @@ export function openBulkDesign(opts) {
     const bal = credits && !credits.unavailable ? credits.balance : null;
     const short = bal != null && cost > bal ? cost - bal : 0;
 
+    /* A group whose space the shared style cannot carry must pick its own. */
+    const unfit = groups.filter((g) => !styleFitsSpace(form.styleId, g.space) && !form.spaceStyles[g.space]);
+
     let block = "";
     if (!n) block = "Add at least one photo to generate a design.";
     else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
+    else if (unfit.length)
+      block = `${styleName()} does not suit ${unfit.map((g) => g.label).join(" and ")}. Choose a compatible style for that group.`;
     else if (short) block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
 
     const sum = [
