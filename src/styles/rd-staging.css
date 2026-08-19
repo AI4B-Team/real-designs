@@ -292,9 +292,22 @@
 .rds-chead {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 16px;
+  min-height: 52px;
   margin: 0 0 10px;
 }
+.rds-chead-l, .rds-chead-c, .rds-chead-r { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.rds-chead-r { margin-left: auto; gap: 4px; }
+.rds-chead-div { width: 1px; height: 20px; background: var(--line, #e5e5ea); flex: 0 0 auto; }
+.rd-app .rds-chead-i {
+  display: inline-grid; place-items: center; width: 40px; height: 40px;
+  border: 0; border-radius: 10px; background: transparent; color: var(--ink, #16161a); cursor: pointer;
+}
+.rd-app .rds-chead-i svg { width: 18px; height: 18px; }
+.rd-app .rds-chead-i:hover:not(:disabled) { background: #f2f2f5; }
+.rd-app .rds-chead-i:focus-visible { outline: 2px solid rgba(204, 0, 0, .45); outline-offset: 1px; }
+.rd-app .rds-chead-i:disabled { opacity: .35; cursor: default; }
+@media (max-width: 720px) { .rds-chead { gap: 10px; flex-wrap: wrap; } .rds-chead-div { display: none; } }
 .rds-chead.hide, .rds-strip.hide { display: none; }
 .rds-chead-b {
   display: inline-flex;
@@ -310,7 +323,7 @@
 }
 .rds-chead-b svg { width: 15px; height: 15px; }
 .rds-chead-b:hover { border-color: #cc0000; color: #cc0000; }
-.rds-chead-t { font-size: 0.9rem; color: var(--ink, #16161a); font-weight: 700; }
+.rds-chead-t { font-size: 0.95rem; color: var(--ink, #16161a); font-weight: 700; }
 .rds-chead-s { font-size: 0.78rem; color: var(--mute-2, #6b6b74); font-weight: 600; }
 
 .rds-strip {
@@ -789,7 +802,7 @@
 .rds-chead-save { font-size: 0.75rem; font-weight: 600; color: var(--mute-2, #6b6b74); }
 .rds-chead-save.ok { color: #157347; }
 .rds-chead-save.bad { color: #cc0000; cursor: pointer; text-decoration: underline; }
-.rds-cmenu-wrap { position: relative; margin-left: auto; }
+.rds-cmenu-wrap { position: relative; }
 .rds-cmenu {
   position: absolute; top: calc(100% + 6px); right: 0; z-index: 60;
   width: 236px; max-width: calc(100vw - 24px);
