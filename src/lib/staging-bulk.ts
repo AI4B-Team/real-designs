@@ -386,11 +386,15 @@ export function openBulkDesign(opts) {
           <span>Output Format</span>
           <b>${esc(ratioLabel(ratio))}</b>
           <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change Format"}</button>
-
         </div>
         <div class="rdsb-out-c right">
           <span>Generation Cost</span>
           <b>${cost} credit${cost === 1 ? "" : "s"}</b>
+          ${
+            bal == null
+              ? `<em class="rdsb-out-credits">Failed generations are not charged.</em>`
+              : `<em class="rdsb-out-credits">${bal} credit${bal === 1 ? "" : "s"} available · ${remaining} remaining after generation</em>`
+          }
         </div>
       </div>
       ${
@@ -403,11 +407,6 @@ export function openBulkDesign(opts) {
             ).join("")}</div>`
           : ""
       }
-      <p class="rdsb-out-n" role="status" aria-live="polite">${
-        bal == null
-          ? "Failed generations are not charged."
-          : `${bal} credit${bal === 1 ? "" : "s"} available · ${remaining} remaining after generation`
-      }</p>
     </div>`;
 
     node.innerHTML = `<div class="up-scrim" data-close></div>
@@ -423,17 +422,18 @@ export function openBulkDesign(opts) {
               : `<div class="rdsb-f${badCls("style")}">
             <label for="rdsbStyle">Style</label>
             <select id="rdsbStyle">${styleOptions(form.styleId, spaces)}</select>
-            ${mixed && form.styleId ? `<em class="rdsb-help">Adapted to each space — modern finishes indoors, modern materials and landscaping outdoors.</em>` : ""}
+            ${mixed && form.styleId ? `<em class="rdsb-help">Adapted to each space — modern finishes indoors, modern materials and landscaping outdoors.</em>` : `<em class="rdsb-help">Choose the overall design direction.</em>`}
             ${fieldMsg("style")}
           </div>`
           }
           ${perSpaceMode ? `<select id="rdsbStyle" class="rdsb-hidden" aria-hidden="true" tabindex="-1"><option value=""></option></select>` : ""}
           <div class="rdsb-row">
             <div class="rdsb-f${badCls("intensity")}"><label for="rdsbInt">Intensity</label>
-              <select id="rdsbInt">${pickOptions(["Refresh", "Makeover", "Full Remodel"], form.intensity, "Choose intensity")}</select>${fieldMsg("intensity")}</div>
+              <select id="rdsbInt">${pickOptions(["Refresh", "Makeover", "Full Remodel"], form.intensity, "Choose intensity")}</select>
+              <em class="rdsb-help">Controls how much of the space should visually change.</em>${fieldMsg("intensity")}</div>
             <div class="rdsb-f${badCls("grade")}"><label for="rdsbGrade">Finish Grade</label>
-
-              <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select>${fieldMsg("grade")}</div>
+              <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select>
+              <em class="rdsb-help">Controls the quality level of materials and finishes.</em>${fieldMsg("grade")}</div>
           </div>
           <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve"${form.preserve ? " checked" : ""}> Keep walls, windows, and layout exactly as they are</label>
           <div class="rdsb-f"><label for="rdsbNotes">Shared Instructions <em>Optional</em></label>
