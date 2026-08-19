@@ -2121,9 +2121,6 @@ export function currentCanvasEntry(): CanvasEntry | null {
 async function openInCanvas(key) {
   const it = S.items.find((i) => i.key === key);
   if (!it) return;
-  if (isDuplicateOpen(canvasOpens, key, "loading") && canvasOpens.key === String(key)) {
-    /* Already resolving this exact photo: let that open finish. */
-  }
   const token = beginCanvasOpen(canvasOpens, key);
 
   /* Resolve first: the Photos page stays visible until a real source exists,
