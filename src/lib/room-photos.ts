@@ -32,10 +32,13 @@ export function bundledPhotoUrl(path: string | null | undefined): string | null 
 }
 
 /** Resolve any stored photo reference to a displayable URL. */
-export async function resolvePhotoUrl(path: string | null | undefined): Promise<string | null> {
+export async function resolvePhotoUrl(
+  path: string | null | undefined,
+  opts?: { expiresIn?: number; force?: boolean },
+): Promise<string | null> {
   if (!path) return null;
   if (/^\/(?:src\/)?assets\//.test(path)) return bundledPhotoUrl(path) ?? path;
-  if (isStoredPhoto(path)) return roomPhotoUrl(path);
+  if (isStoredPhoto(path)) return roomPhotoUrl(path, opts?.expiresIn ?? 3600, opts?.force);
   return path;
 }
 
@@ -75,14 +78,18 @@ const PENDING = new Map<string, Promise<string | null>>();
 const MISSING = new Map<string, number>();
 const MISS_TTL = 60_000;
 
-export async function roomPhotoUrl(path: string, expiresIn = 3600): Promise<string | null> {
+export async function roomPhotoUrl(path: string, expiresIn = 3600, force = false): Promise<string | null> {
   if (!isStoredPhoto(path)) return path;
+  if (force) {
+    SIGNED.delete(path);
+    MISSING.delete(path);
+  }
   const hit = SIGNED.get(path);
-  if (hit && hit.exp > Date.now()) return hit.url;
+  if (!force && hit && hit.exp > Date.now()) return hit.url;
   const missed = MISSING.get(path);
-  if (missed && missed > Date.now()) return null;
+  if (!force && missed && missed > Date.now()) return null;
   const inflight = PENDING.get(path);
-  if (inflight) return inflight;
+  if (inflight && !force) return inflight;
 
   const req = (async () => {
     const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, expiresIn);
