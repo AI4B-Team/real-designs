@@ -2525,6 +2525,13 @@ export function initApp(): () => void {
       CANVAS_PHASE = "";
       lastRender = null;
       lastRenderPath = o.afterPath || null;
+      /* Switching photos must not carry another photo's unsaved render or its
+         session versions onto this canvas. */
+      dropPendingSave();
+      try {
+        SESSION_VERSIONS.length = 0;
+      } catch (_) {}
+
       if (cBefore && src) cBefore.innerHTML = photo(src, alt || "Your source photo");
       setCanvasRatio(o.ratio, src);
 
@@ -2673,6 +2680,12 @@ export function initApp(): () => void {
       STUDIO_CTX = { room: null, address: null, project: null };
       lastRender = null;
       lastRenderPath = null;
+      /* A discarded design must not leave an unsaved-render banner, a retry that
+         would upload an image the user threw away, or its versions in the list. */
+      dropPendingSave();
+      try {
+        SESSION_VERSIONS.length = 0;
+      } catch (_) {}
       if (cBefore) cBefore.innerHTML = "";
       if (cAfter) cAfter.innerHTML = "";
       const vars = document.getElementById("vars");
@@ -3173,6 +3186,10 @@ export function initApp(): () => void {
     function paintSaveWarn() {
       const w = document.getElementById("studioSaveWarn");
       if (w) w.hidden = !PENDING_SAVE;
+    }
+    function dropPendingSave() {
+      PENDING_SAVE = null;
+      paintSaveWarn();
     }
     async function persistRender(image, label) {
       /* One quiet second attempt absorbs a blip; after that we tell the user. */

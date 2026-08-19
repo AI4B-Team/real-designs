@@ -1749,10 +1749,17 @@ function runBatch(batch, direction) {
 
 function startBulkDesign(list, reuseDirection) {
   if (!S || S.busy) return;
-  const items = (list && list.length ? list : S.items.filter((i) => i.selected)).filter(
-    (i) => i.status !== "uploading",
-  );
-  if (!items.length) return;
+  const chosen = list && list.length ? list : S.items.filter((i) => i.selected);
+  const items = chosen.filter((i) => i.status !== "uploading");
+  if (!items.length) {
+    /* Silently doing nothing looked like a broken button while photos saved. */
+    cmToast(
+      chosen.length
+        ? "Still Saving Your Photos. Try Again In A Moment."
+        : "Select At Least One Photo First.",
+    );
+    return;
+  }
   if (reuseDirection && S.direction) {
     runBatch(items, S.direction);
     return;
@@ -1927,7 +1934,13 @@ registerCardMenu("photo", {
       { items: [{ action: "open", label: "Open Canvas", icon: "wand-sparkles" }] },
       {
         items: [
-          { action: "duplicate", label: "Duplicate", icon: "copy", hidden: !stored },
+          {
+            action: "duplicate",
+            label: "Duplicate",
+            icon: "copy",
+            disabled: !stored,
+            note: stored ? "" : "Saving…",
+          },
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
           { action: "room", label: "Change Room Type", icon: "door-open" },
           {
@@ -1941,7 +1954,13 @@ registerCardMenu("photo", {
       },
       {
         items: [
-          { action: "tovideo", label: "Create Video", icon: "clapperboard", hidden: !stored },
+          {
+            action: "tovideo",
+            label: "Create Video",
+            icon: "clapperboard",
+            disabled: !stored,
+            note: stored ? "" : "Saving…",
+          },
           dl,
         ],
       },
@@ -1954,7 +1973,8 @@ registerCardMenu("photo", {
             label: "Delete From Media",
             icon: "trash-2",
             danger: true,
-            hidden: !stored,
+            disabled: !stored,
+            note: stored ? "" : "Saving…",
           },
         ],
       },

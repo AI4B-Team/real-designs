@@ -58,13 +58,14 @@ test.describe("Photo management", () => {
     const card = photoCards(appPage).first();
     const menu = await openCardMenu(appPage, card);
     await clickMenuItem(menu, /change room type/i);
-    const dialog = openModal(appPage);
-    await expect(dialog).toBeVisible();
-    await dialog
+    /* The room picker is an anchored popover, not a modal dialog. */
+    const picker = appPage.locator(".rds-pop");
+    await expect(picker).toBeVisible();
+    await picker
       .getByText(/^kitchen$/i)
       .first()
       .click();
-    await expect(card).toContainText(/kitchen/i);
+    await expect(card.locator("..")).toContainText(/kitchen/i);
   });
 
   test("changes the project photo format", async ({ appPage }) => {
@@ -99,7 +100,15 @@ test.describe("Photo management", () => {
     await startWithPhotos(appPage, [validPhoto("a.jpg"), validPhotoPng("b.png")]);
     const cards = photoCards(appPage);
     const firstKey = await cards.first().getAttribute("data-k");
-    await cards.nth(1).dragTo(cards.first());
+    /* Playwright's dragTo does not fire the HTML5 drag events the grid uses. */
+    await cards.first().evaluate((target, from) => {
+      const dt = new DataTransfer();
+      const source = document.querySelectorAll(".rv-tile[data-k]")[from] as HTMLElement;
+      source.dispatchEvent(new DragEvent("dragstart", { bubbles: true, dataTransfer: dt }));
+      target.dispatchEvent(new DragEvent("dragover", { bubbles: true, dataTransfer: dt }));
+      target.dispatchEvent(new DragEvent("drop", { bubbles: true, dataTransfer: dt }));
+      source.dispatchEvent(new DragEvent("dragend", { bubbles: true, dataTransfer: dt }));
+    }, 1);
     await expect.poll(async () => await cards.first().getAttribute("data-k")).not.toBe(firstKey);
   });
 
