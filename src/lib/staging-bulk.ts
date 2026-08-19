@@ -236,33 +236,39 @@ export function openBulkDesign(opts) {
     } catch (_) {}
   };
 
-  /* Field values survive every redraw (removing a photo, changing format).
-     spaceStyles holds the per-group fallback when the shared style cannot
-     legitimately carry a space (an interior-only look on an exterior). */
+  /* Nothing creative is chosen for the user. Every field starts null and only
+     holds a value the user picked, or one they picked earlier in this same
+     session (the caller hands it back through opts.settings). Preserve walls
+     is the one default, because it is a safety constraint, not a look. */
+  const saved = (opts.settings && typeof opts.settings === "object" && opts.settings) || {};
   const form = {
-    styleId: STYLES[0] && STYLES[0].id,
-    intensity: "Makeover",
-    grade: "Retail Grade",
-    preserve: true,
-    notes: "",
-    spaceStyles: {},
+    styleId: saved.styleId || null,
+    intensity: saved.intensity || null,
+    grade: saved.grade || null,
+    preserve: saved.preserve !== false,
+    notes: saved.notes || "",
+    spaceStyles: Object.assign({}, saved.spaceStyles || {}),
   };
+  /* Session memory: reopening the modal for this project restores what the
+     user actually chose, never a demo or another project's direction. */
+  const remember = () => opts.onSettingsChange && opts.onSettingsChange(Object.assign({}, form));
   const readForm = () => {
     const q = (id) => node.querySelector(id);
     if (!q("#rdsbStyle")) return;
-    form.styleId = q("#rdsbStyle").value;
-    form.intensity = q("#rdsbInt").value;
-    form.grade = q("#rdsbGrade").value;
+    form.styleId = q("#rdsbStyle").value || null;
+    form.intensity = q("#rdsbInt").value || null;
+    form.grade = q("#rdsbGrade").value || null;
     form.preserve = q("#rdsbPreserve").checked;
     form.notes = q("#rdsbNotes").value;
     node.querySelectorAll("[data-spacestyle]").forEach((el) => {
       form.spaceStyles[el.getAttribute("data-spacestyle")] = el.value || "";
     });
+    remember();
   };
 
   const styleName = () => {
     const rec = STYLES.find((s) => s.id === form.styleId);
-    return rec ? rec.displayName : "Warm Minimal";
+    return rec ? rec.displayName : "";
   };
 
   const draw = () => {
@@ -274,20 +280,44 @@ export function openBulkDesign(opts) {
     const bal = credits && !credits.unavailable ? credits.balance : null;
     const short = bal != null && cost > bal ? cost - bal : 0;
 
-    /* A group whose space the shared style cannot carry must pick its own. */
-    const unfit = groups.filter((g) => !styleFitsSpace(form.styleId, g.space) && !form.spaceStyles[g.space]);
+    /* Spaces actually present, so the shared picker only offers looks that can
+       carry all of them (a mixed batch never starts out incompatible). */
+    const spaces = groups.map((g) => g.space).filter((s) => s && s !== "unassigned");
+    const universal = STYLES.filter(
+      (s) => s.isActive !== false && spaces.every((sp) => styleFitsSpace(s.id, sp)),
+    );
+    const mixed = spaces.filter((s, i) => spaces.indexOf(s) === i).length > 1;
+    /* No universal look for this mix: fall back to a style per space group. */
+    const perSpaceMode = mixed && !universal.length;
+
+    /* Compatibility is only ever judged against a style the user chose. */
+    const unfit = form.styleId
+      ? groups.filter((g) => !styleFitsSpace(form.styleId, g.space) && !form.spaceStyles[g.space])
+      : [];
 
     let block = "";
     if (!n) block = "Add at least one photo to generate a design.";
+    else if (!form.styleId && !perSpaceMode) block = "Choose a style to continue.";
+    else if (perSpaceMode && groups.some((g) => g.space !== "unassigned" && !form.spaceStyles[g.space]))
+      block = "Choose a style for each group to continue.";
+    else if (!form.intensity) block = "Choose an intensity to continue.";
+    else if (!form.grade) block = "Choose a finish grade to continue.";
     else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
-    else if (unfit.length)
-      block = `${styleName()} does not suit ${unfit.map((g) => g.label).join(" and ")}. Choose a compatible style for that group.`;
+    else if (unfit.length) block = "STYLE_UNFIT";
     else if (short) block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
+
+    /* The incompatibility is explained once, inside the group that needs it,
+       so the bar below never repeats the same sentence. */
+    const barMsg = block === "STYLE_UNFIT" ? "" : block;
+    const hint =
+      block === "STYLE_UNFIT"
+        ? `${styleName()} does not suit ${unfit.map((g) => g.label.toLowerCase()).join(" and ")}. Choose a compatible style for that group.`
+        : block;
 
     const sum = [
       ["Photos", String(n)],
-      ["Style", styleName()],
-      ["Intensity", form.intensity],
+      ["Style", styleName() || "Not selected"],
+      ["Intensity", form.intensity || "Not selected"],
       ["Finish", form.grade],
       ["Output", ratioLabel(ratio)],
       ["Cost", `${cost} credit${cost === 1 ? "" : "s"}`],
