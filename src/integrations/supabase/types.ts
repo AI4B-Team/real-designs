@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      account_deletions: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          email_hash: string | null
+          errors: Json
+          id: string
+          purged: Json
+          requested_at: string
+          retained: Json
+          user_ref: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          email_hash?: string | null
+          errors?: Json
+          id?: string
+          purged?: Json
+          requested_at?: string
+          retained?: Json
+          user_ref: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          email_hash?: string | null
+          errors?: Json
+          id?: string
+          purged?: Json
+          requested_at?: string
+          retained?: Json
+          user_ref?: string
+        }
+        Relationships: []
+      }
       billing_events: {
         Row: {
           created_at: string
@@ -38,6 +74,42 @@ export type Database = {
           kind?: string
           meta?: Json
           user_id?: string
+        }
+        Relationships: []
+      }
+      billing_retention: {
+        Row: {
+          created_at: string
+          detail: string | null
+          id: string
+          kind: string
+          meta: Json
+          occurred_at: string
+          plan: string | null
+          retain_until: string | null
+          user_ref: string
+        }
+        Insert: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind: string
+          meta?: Json
+          occurred_at?: string
+          plan?: string | null
+          retain_until?: string | null
+          user_ref: string
+        }
+        Update: {
+          created_at?: string
+          detail?: string | null
+          id?: string
+          kind?: string
+          meta?: Json
+          occurred_at?: string
+          plan?: string | null
+          retain_until?: string | null
+          user_ref?: string
         }
         Relationships: []
       }
@@ -3040,6 +3112,10 @@ export type Database = {
         Returns: undefined
       }
       record_presentation_view: { Args: { _token: string }; Returns: undefined }
+      replace_presentation_children: {
+        Args: { _assets: Json; _package_id: string; _sections: Json }
+        Returns: Json
+      }
       request_plan_change: {
         Args: { _plan: Database["public"]["Enums"]["plan_tier"] }
         Returns: Json
