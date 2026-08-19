@@ -1701,6 +1701,13 @@ registerCardMenu("photo", {
       const url = await originalUrl(it);
       return void downloadOriginal(url, it.name || "photo.jpg");
     }
+    if (action === "downloadlatest") {
+      let url = it.resultUrl || null;
+      if (!url && it.resultPath) url = await photoSrc(it.resultPath).catch(() => null);
+      if (!url) return void cmToast("That Design Is Not Ready Yet.");
+      return void downloadOriginal(url, "design-" + (it.name || "photo.jpg"));
+    }
+
     if (action === "details") {
       const url = await originalUrl(it);
       const dims = await new Promise((res) => {
