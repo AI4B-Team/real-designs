@@ -469,6 +469,18 @@ export function initApp(): () => void {
     } catch (_) {}
 
     function go(v, fromHash) {
+      /* Project Budget is a roadmap feature: no navigation path, including a
+     bookmarked hash, may reach the unfinished Budget view. Clicking it only
+     explains what is coming. */
+      if (v === "scope" && !budgetsLive()) {
+        try {
+          const anchor =
+            (document.activeElement as HTMLElement) ||
+            (document.querySelector('.nav-i[data-v="scope"]') as HTMLElement);
+          if (anchor && anchor.getBoundingClientRect) openBudgetPopover(anchor);
+        } catch (_) {}
+        return;
+      }
       /* A stale startup callback must never drop a live Canvas back on the
      generic Studio page. */
       if (v === "studio" && !fromHash && inPhotoCanvas() && document.querySelector("#v-studio.on"))
