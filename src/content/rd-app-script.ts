@@ -1170,10 +1170,14 @@ async function applyBudgetGating(){
     const bf=document.getElementById('dfBandField'); if(bf) bf.hidden=!live;
   }catch(_){}
 
-  /* help, tutorials, faq and shortcuts read live budget state directly */
-  try{ renderCats(document.getElementById('helpQ')?.value||''); renderFaq(document.getElementById('helpQ')?.value||''); }catch(_){}
-  try{ renderTuts(); }catch(_){}
-  try{ renderShortcutList(); }catch(_){}
+  /* help, tutorials and faq read live budget state directly */
+  try{
+    BUDGET_LIVE=live;
+    renderCats(document.getElementById('helpQ')?.value||'');
+    renderFaq(document.getElementById('helpQ')?.value||'');
+    renderTuts();
+  }catch(_){}
+  try{ window.rdBudgetShortcutLive=live; }catch(_){}
 
   return live;
 }
@@ -3733,35 +3737,45 @@ document.getElementById('helpQuick').innerHTML=[
  .map(([n,t,b])=>`<div class="qs-card"><span class="n">STEP ${n}</span><b>${t}</b><span>${b}</span></div>`).join('');
 
 /* Each article is real written help. [icon, title, body, optional view to open] */
-const HELP_CATS=[
- ['rocket','Getting Started',[
-  ['image-up','Upload Room Photos','Use a straight-on shot of the room with the widest angle you can get, taken in daylight if possible. JPG or PNG up to about 10MB. Photos are stored privately against your account and are only visible to you until you share a client link.','studio'],
-  ['map-pin','Add A Property','Properties are created from the work you save. Save a room version in Studio with an address and the property, project and room records appear in the Properties tree.','props'],
-  ['wand-sparkles','Your First Design','In Studio choose a style direction and an intensity (Refresh, Makeover, Renovation, Reimagine), then generate. Each design render costs 1 credit and lands beside the original photo.','studio'],
-  ['coins','How Credits Work','One balance covers everything: a design render is 1 credit, a 2D to 3D plan is 6 and a walkthrough video is 40. If a job fails, the credits are returned automatically. Your balance and every charge are listed in Billing And Credits.','billing']]],
- ['palette','Designing',[
-  ['lock','Reality Lock Explained','Reality Lock holds the walls, window and door openings, ceiling line and floor plane from your photo in place, so a version is a redesign of the same room rather than a new room. Finishes, fixtures, furniture and paint change; the building does not.'],
-  ['layers','Styles And Intensity','Style sets the look (for example Japandi, Coastal, Midcentury). Intensity sets how far the work goes, from a Refresh that is paint and styling through a Reimagine that assumes full replacement. Intensity is what moves the budget most.','studio'],
-  ['history','Versions','Every generation is saved as a numbered version on the room, so you can compare, keep several options alive, and send the one the client approved.','designs'],
-  ['images','Listing Batch','Listing Batch runs every room on a property through the same direction in one pass, one credit per room, and saves each result to its room.','listings']]],
- ['calculator','Budget & Pricing',[
-  ['clock','Budget & Scope — Coming Soon','Budgeting is paused for now while we finish licensing verified local contractor cost data for your market. Nothing is priced or estimated in the meantime; this turns on automatically once that data is in place.']]],
- ['share-2','Client Delivery',[
-  ['presentation','Building A Presentation','Pick a version, add a title and the client name, and generate a link. The client sees the before and after, the change list and the planning range on a branded page.','present'],
-  ['link','Approval Links','Links are read-only for the client and can be opened without an account. Approvals and decision notes come back into Presentations, and view counts update as the link is opened.','present'],
-  ['printer','PDF And Board Exports','Presentations export a print-ready branded PDF, and the product board prints separately for a contractor or supplier.','present'],
-  ['palette','Brand Kit','Company name, accent color and watermark from Account, Brand Kit are applied to client pages and exports.','account']]],
- ['user-round','Account & Workspace',[
-  ['bell','Notifications','Notifications are in-app. The three toggles in Account, Notifications control which categories reach your feed. We do not send marketing email.','notifications'],
-  ['sliders-horizontal','Defaults','Finish grade and disclosure ruleset set the starting point for every new design. They are saved to your account.','account'],
-  ['users','Team Seats','Invite teammates from Account, Team. They accept the invite with their own login and then share your properties, designs, budgets and presentations. You can copy an invite link to send it yourself, and revoke access at any time.','team'],
-  ['download','Export And Delete','You can download a JSON of every property, room, version, budget and credit entry, or delete the account and all of its data, from Account, Data And Privacy.','account']]]];
+let BUDGET_LIVE=false;
+function helpCatsData(){
+  const budgetCat = BUDGET_LIVE
+    ? ['calculator','Budget & Pricing',[
+       ['dollar-sign','How Pricing Is Built','A budget compares the original photo to the approved version, lists what actually changed, then prices those lines by trade at your market and finish grade. It returns a low to high planning range with a contingency, not a bid.','scope'],
+       ['sliders-horizontal','Budget Bands And Grades','Finish grade (rental, retail, premium) and budget band set the allowance level used for every line. Change either and the range recalculates against the same change list.','scope'],
+       ['shopping-bag','Product Board','The Products board turns each material line into a card with quantity, allowance range and a search link at the right retailer for that trade. Links are searches, not quoted prices.','products'],
+       ['triangle-alert','What A Budget Is Not','Every figure is a planning estimate. Subcontractor pricing governs. Always confirm with a bid before committing a client to a number.']]]
+    : ['calculator','Budget & Pricing',[
+       ['clock','Budget & Scope — Coming Soon','Budgeting is paused for now while we finish licensing verified local contractor cost data for your market. Nothing is priced or estimated in the meantime; this turns on automatically once that data is in place.']]];
+  return [
+   ['rocket','Getting Started',[
+    ['image-up','Upload Room Photos','Use a straight-on shot of the room with the widest angle you can get, taken in daylight if possible. JPG or PNG up to about 10MB. Photos are stored privately against your account and are only visible to you until you share a client link.','studio'],
+    ['map-pin','Add A Property','Properties are created from the work you save. Save a room version in Studio with an address and the property, project and room records appear in the Properties tree.','props'],
+    ['wand-sparkles','Your First Design','In Studio choose a style direction and an intensity (Refresh, Makeover, Renovation, Reimagine), then generate. Each design render costs 1 credit and lands beside the original photo.','studio'],
+    ['coins','How Credits Work',BUDGET_LIVE?'One balance covers everything: a design render is 1 credit, a priced budget is 3, a 2D to 3D plan is 6 and a walkthrough video is 40. If a job fails, the credits are returned automatically. Your balance and every charge are listed in Billing And Credits.':'One balance covers everything: a design render is 1 credit, a 2D to 3D plan is 6 and a walkthrough video is 40. If a job fails, the credits are returned automatically. Your balance and every charge are listed in Billing And Credits.','billing']]],
+   ['palette','Designing',[
+    ['lock','Reality Lock Explained','Reality Lock holds the walls, window and door openings, ceiling line and floor plane from your photo in place, so a version is a redesign of the same room rather than a new room. Finishes, fixtures, furniture and paint change; the building does not.'],
+    ['layers','Styles And Intensity','Style sets the look (for example Japandi, Coastal, Midcentury). Intensity sets how far the work goes, from a Refresh that is paint and styling through a Reimagine that assumes full replacement. Intensity is what moves the budget most.','studio'],
+    ['history','Versions','Every generation is saved as a numbered version on the room, so you can compare, keep several options alive, and send the one the client approved.','designs'],
+    ['images','Listing Batch','Listing Batch runs every room on a property through the same direction in one pass, one credit per room, and saves each result to its room.','listings']]],
+   budgetCat,
+   ['share-2','Client Delivery',[
+    ['presentation','Building A Presentation','Pick a version, add a title and the client name, and generate a link. The client sees the before and after, the change list and the planning range on a branded page.','present'],
+    ['link','Approval Links','Links are read-only for the client and can be opened without an account. Approvals and decision notes come back into Presentations, and view counts update as the link is opened.','present'],
+    ['printer','PDF And Board Exports','Presentations export a print-ready branded PDF, and the product board prints separately for a contractor or supplier.','present'],
+    ['palette','Brand Kit','Company name, accent color and watermark from Account, Brand Kit are applied to client pages and exports.','account']]],
+   ['user-round','Account & Workspace',[
+    ['bell','Notifications','Notifications are in-app. The three toggles in Account, Notifications control which categories reach your feed. We do not send marketing email.','notifications'],
+    ['sliders-horizontal','Defaults',BUDGET_LIVE?'Market, finish grade, budget band and disclosure ruleset set the starting point for every new budget. They are saved to your account.':'Finish grade and disclosure ruleset set the starting point for every new design. They are saved to your account.','account'],
+    ['users','Team Seats','Invite teammates from Account, Team. They accept the invite with their own login and then share your properties, designs, budgets and presentations. You can copy an invite link to send it yourself, and revoke access at any time.','team'],
+    ['download','Export And Delete','You can download a JSON of every property, room, version, budget and credit entry, or delete the account and all of its data, from Account, Data And Privacy.','account']]]];
+}
 
 const helpCatsEl=document.getElementById('helpCats');
 function renderCats(q){
   const s=(q||'').trim().toLowerCase();
   const match=(a,name)=>!s||name.toLowerCase().includes(s)||(a[1]+' '+a[2]).toLowerCase().includes(s);
-  const list=HELP_CATS.map(([ic,name,arts])=>[ic,name,arts.filter(a=>match(a,name))]).filter(c=>c[2].length);
+  const list=helpCatsData().map(([ic,name,arts])=>[ic,name,arts.filter(a=>match(a,name))]).filter(c=>c[2].length);
   helpCatsEl.innerHTML=list.length?list.map(([ic,name,arts])=>`<div class="card"><div class="card-b">
     <div class="help-cat"><i data-lucide="${ic}"></i>${name}</div>
     ${arts.map(([ai,label,body,view])=>`<button class="help-a" type="button"><i data-lucide="${ai}"></i>${label}</button>
@@ -3779,17 +3793,25 @@ document.addEventListener('click',e=>{
   const ans=b.nextElementSibling;
   if(ans&&ans.classList.contains('help-ans')) ans.classList.toggle('on');
 });
-const HELP_FAQ=[
- ['Do The Designs Change The Structure Of The Room?','No. Reality Lock holds walls, windows, ceiling lines and the floor plane in place, so every version is a redesign of the same space.'],
- ['Can I Upload My Own Photos?','Yes. Any straight-on room photo works. Better light and a wider angle produce better versions.'],
- ['What Does Each Action Cost?','Design render 1 credit, 2D to 3D plan 6, walkthrough video 40. Failed jobs are refunded automatically.'],
- ['What Happens When I Run Out Of Credits?','Nothing is deleted. New generations pause until your allowance resets or you top up, and all existing work stays available.'],
- ['Can Clients See My Work Before I Share It?','No. Photos, versions and scopes are private to your account until you create a client link for a specific version.'],
- ['When Will Budgets Be Available?','Budgeting is paused until verified local contractor cost data is licensed for your market. It will turn on automatically once that data is in place.']];
+function helpFaqData(){
+  const list=[
+   ['Do The Designs Change The Structure Of The Room?','No. Reality Lock holds walls, windows, ceiling lines and the floor plane in place, so every version is a redesign of the same space.'],
+   ['Can I Upload My Own Photos?','Yes. Any straight-on room photo works. Better light and a wider angle produce better versions.']];
+  if(BUDGET_LIVE){
+    list.splice(1,0,['How Accurate Is The Budget?','A budget is a planning range built from the change list, your market and your finish grade. It is not a bid, and subcontractor pricing governs.']);
+    list.push(['What Does Each Action Cost?','Design render 1 credit, priced budget 3, 2D to 3D plan 6, walkthrough video 40. Failed jobs are refunded automatically.']);
+  }else{
+    list.push(['What Does Each Action Cost?','Design render 1 credit, 2D to 3D plan 6, walkthrough video 40. Failed jobs are refunded automatically.']);
+    list.push(['When Will Budgets Be Available?','Budgeting is paused until verified local contractor cost data is licensed for your market. It will turn on automatically once that data is in place.']);
+  }
+  list.push(['What Happens When I Run Out Of Credits?','Nothing is deleted. New generations pause until your allowance resets or you top up, and all existing work stays available.']);
+  list.push(['Can Clients See My Work Before I Share It?','No. Photos, versions and scopes are private to your account until you create a client link for a specific version.']);
+  return list;
+}
 const helpFaqEl=document.getElementById('helpFaq');
 function renderFaq(q){
   const s=(q||'').trim().toLowerCase();
-  const list=HELP_FAQ.filter(f=>!s||(f[0]+f[1]).toLowerCase().includes(s));
+  const list=helpFaqData().filter(f=>!s||(f[0]+f[1]).toLowerCase().includes(s));
   helpFaqEl.innerHTML=list.length?list.map(([q2,a],i)=>`<button class="help-q" data-f="${i}">${q2}<i data-lucide="chevron-down"></i></button><div class="help-ans" data-a="${i}">${a}</div>`).join(''):`<div class="sub">Nothing matches that search.</div>`;
   lucide.createIcons();
 }
@@ -3807,26 +3829,40 @@ document.getElementById('helpPop').addEventListener('click',e=>{
 
 /* ---------- walkthroughs ---------- */
 /* Written step-by-step guides that open the matching view. No Video Library Yet. */
-const TUTS=[
- ['Add Your First Property','Getting Started','studio',['Open Studio and upload a straight-on photo of the room.','Enter the address so the room is filed under a property.','Generate a version and save it. The property, project and room appear in Properties.']],
- ['Photos That Render Well','Getting Started','studio',['Shoot from a doorway or corner so two walls and the floor are visible.','Turn on the lights and open the blinds. Avoid heavy backlight.','Keep the camera level. Tilted shots distort the ceiling line.']],
- ['Reality Lock In Practice','Designing','studio',['Generate a version, then flip between before and after.','Check the window and door openings line up. They should not move.','If a version drifts, regenerate. Only finishes and furnishings should change.']],
- ['Choosing Style And Intensity','Designing','studio',['Pick a style for the look.','Pick an intensity: Refresh, Makeover, Renovation or Reimagine.','Intensity drives the budget more than direction does, so set it against the money first.']],
- ['Staging A Whole Listing','Listing Batch','listings',['Open Listing Batch and select the property.','Choose one direction for the whole listing.','Run the batch. Each room costs 1 credit and saves to its own room record.']],
- ['Working The Product Board','Products','products',['Open Products after a budget has been priced.','Each material line becomes a card with quantity and allowance range.','Use Shop On to search the right retailer, or export the board as CSV or print.']],
- ['Sending A Client Link','Delivery','present',['Open Presentations and pick an approved version.','Add a title and the client name, then generate the link.','Share the link. Views, approvals and notes come back into the same row.']],
- ['Tracking Approvals','Delivery','present',['Watch the status pill on each presentation row.','View counts update as the client opens the link.','Approval decisions and client notes appear inline and in your notification feed.']]];
-document.getElementById('tutGrid').innerHTML=TUTS.map(([t,tag,view,steps],i)=>`<div class="card"><div class="card-b">
+function tutsData(){
+  const list=[
+   ['Add Your First Property','Getting Started','studio',['Open Studio and upload a straight-on photo of the room.','Enter the address so the room is filed under a property.','Generate a version and save it. The property, project and room appear in Properties.']],
+   ['Photos That Render Well','Getting Started','studio',['Shoot from a doorway or corner so two walls and the floor are visible.','Turn on the lights and open the blinds. Avoid heavy backlight.','Keep the camera level. Tilted shots distort the ceiling line.']],
+   ['Reality Lock In Practice','Designing','studio',['Generate a version, then flip between before and after.','Check the window and door openings line up. They should not move.','If a version drifts, regenerate. Only finishes and furnishings should change.']],
+   ['Choosing Style And Intensity','Designing','studio',['Pick a style for the look.','Pick an intensity: Refresh, Makeover, Renovation or Reimagine.','Intensity drives the budget more than direction does, so set it against the money first.']],
+   ['Staging A Whole Listing','Listing Batch','listings',['Open Listing Batch and select the property.','Choose one direction for the whole listing.','Run the batch. Each room costs 1 credit and saves to its own room record.']]];
+  if(BUDGET_LIVE) list.push(['Building A Budget','Budget','scope',['Open a saved version and request a budget for 3 credits.','Set market, finish grade and budget band.','Review the change list and the low to high planning range, then export or share it.']]);
+  list.push(['Working The Product Board','Products','products',['Open Products after a budget has been priced.','Each material line becomes a card with quantity and allowance range.','Use Shop On to search the right retailer, or export the board as CSV or print.']]);
+  list.push(['Sending A Client Link','Delivery','present',['Open Presentations and pick an approved version.','Add a title and the client name, then generate the link.','Share the link. Views, approvals and notes come back into the same row.']]);
+  list.push(['Tracking Approvals','Delivery','present',['Watch the status pill on each presentation row.','View counts update as the client opens the link.','Approval decisions and client notes appear inline and in your notification feed.']]);
+  return list;
+}
+function tutPathsData(){
+  const list=[['Agent Fast Track','Photo to client link for one listing','studio']];
+  if(BUDGET_LIVE) list.push(['Investor Scope Deep Dive','Version to priced scope to product board','scope']);
+  list.push(['Delivery And Approvals','Presentations, PDF export and approval tracking','present']);
+  return list;
+}
+function renderTuts(){
+  const grid=document.getElementById('tutGrid');
+  if(grid) grid.innerHTML=tutsData().map(([t,tag,view,steps])=>`<div class="card"><div class="card-b">
   <div class="help-cat"><i data-lucide="list-checks"></i>${t}</div>
   <div class="sub" style="margin:-4px 0 8px">${tag}</div>
   <ol style="margin:0 0 10px 18px;padding:0;list-style:decimal;font-size:.83rem;color:var(--mute);line-height:1.55">${steps.map(s=>`<li style="margin-bottom:4px">${s}</li>`).join('')}</ol>
   <button class="btn btn-ghost btn-xs" data-open="${view}"><i data-lucide="arrow-right"></i>Open ${tag==='Getting Started'?'Studio':''}</button>
 </div></div>`).join('');
-document.getElementById('tutPaths').innerHTML=[
- ['Agent Fast Track','Photo to client link for one listing','studio'],
- ['Delivery And Approvals','Presentations, PDF export and approval tracking','present']]
- .map(([n,m,v])=>`<div class="rowi"><div class="rowt"><b>${n}</b><span>${m}</span></div>
+  const paths=document.getElementById('tutPaths');
+  if(paths) paths.innerHTML=tutPathsData()
+    .map(([n,m,v])=>`<div class="rowi"><div class="rowt"><b>${n}</b><span>${m}</span></div>
 <button class="btn btn-ghost btn-xs" data-open="${v}"><i data-lucide="arrow-right"></i>Start</button></div>`).join('');
+  try{ lucide.createIcons(); }catch(_){}
+}
+renderTuts();
 
 
 /* ---------- feedback modal ---------- */

@@ -98,7 +98,7 @@ function ExplorePage() {
           <p>
             Explore curated directions for interiors, exteriors and landscapes.
             <br />
-            Start with one you love, then customize the materials, colors and budget around your
+            Start with one you love, then customize the materials and colors around your
             actual space.
           </p>
           <div className="dir-cta">
@@ -306,9 +306,9 @@ function ExplorePage() {
               </div>
 
               <div className="dir-spec">
-                <b>Budget & Finish Grade</b>
+                <b>Finish Grade</b>
                 <div>
-                  {[...open.budgets, ...open.grades].map((b) => (
+                  {open.grades.map((b) => (
                     <span className="dir-tag" key={b}>
                       {b}
                     </span>
