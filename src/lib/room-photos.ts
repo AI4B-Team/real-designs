@@ -53,11 +53,12 @@ export async function uploadRoomPhoto(file: File): Promise<string> {
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
   if (!uid) throw new Error("Sign in to upload photos.");
-  if (!file.type.startsWith("image/")) throw new Error("That file is not an image.");
-  if (file.size > 15 * 1024 * 1024) throw new Error("Photos must be under 15 MB.");
+  assertUploadAllowed("room-photos", file);
 
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-  const path = `${uid}/${crypto.randomUUID()}.${ext}`;
+  // Sanitized original name + UUID: readable in the bucket, impossible to
+  // collide, and nothing from the filename can act as path structure.
+  const path = buildObjectPath(uid, file.name, { fallbackExt: "jpg" });
+
 
   const { error } = await supabase.storage
     .from(BUCKET)
