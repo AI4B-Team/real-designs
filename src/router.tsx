@@ -14,5 +14,8 @@ export const getRouter = () => {
     defaultNotFoundComponent: NotFoundComponent,
   });
 
+  // Debug: inspect router stores
+  console.log("[DEBUG-ROUTER] stores:", router.stores, "matchesId:", router.stores?.matchesId);
+
   return router;
 };
