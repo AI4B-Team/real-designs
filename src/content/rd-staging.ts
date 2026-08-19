@@ -1543,9 +1543,9 @@ function duplicateItem(it, extra) {
 
 async function originalUrl(it) {
   if (!it) return null;
-  if (it.path) {
-    try { return (await roomPhotoUrl(it.path)) || it.signed || it.previewUrl || null; } catch (_) {}
-  }
+  try {
+    return await resolveItemUrl(it);
+  } catch (_) {}
   return it.signed || it.previewUrl || null;
 }
 
