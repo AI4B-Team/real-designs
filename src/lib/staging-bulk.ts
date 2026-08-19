@@ -310,8 +310,8 @@ export function openBulkDesign(opts) {
     const bal = credits && !credits.unavailable ? credits.balance : null;
     const short = bal != null && cost > bal ? cost - bal : 0;
 
-    /* Spaces actually present, so the shared picker only offers looks that can
-       carry all of them (a mixed batch never starts out incompatible). */
+    /* Spaces actually present. Only a genuinely unsupported operation removes
+       a style from the shared picker — an unusual look stays available. */
     const spaces = groups.map((g) => g.space).filter((s) => s && s !== "unassigned");
     const universal = STYLES.filter(
       (s) => s.isActive !== false && spaces.every((sp) => styleFitsSpace(s.id, sp)),
@@ -320,29 +320,48 @@ export function openBulkDesign(opts) {
     /* No universal look for this mix: fall back to a style per space group. */
     const perSpaceMode = mixed && !universal.length;
 
-    /* Compatibility is only ever judged against a style the user chose. */
-    const unfit = form.styleId
-      ? groups.filter((g) => !styleFitsSpace(form.styleId, g.space) && !form.spaceStyles[g.space])
-      : [];
+    /* The style that actually drives each group. */
+    const styleFor = (g) => form.spaceStyles[g.space] || (perSpaceMode ? "" : form.styleId || "");
+    const levelFor = (g) => (styleFor(g) ? styleCompatibility(styleFor(g), g.space) : "compatible");
+    const unsupported = groups.filter((g) => levelFor(g) === "unsupported");
+    const unusual = groups.filter(
+      (g) => levelFor(g) === "unusual" && !ackUnusual[styleFor(g) + ":" + g.space],
+    );
 
     let block = "";
+    let blockField = "";
     if (!n) block = "Add at least one photo to generate a design.";
-    else if (!form.styleId && !perSpaceMode) block = "Choose a style to continue.";
-    else if (perSpaceMode && groups.some((g) => g.space !== "unassigned" && !form.spaceStyles[g.space]))
+    else if (!form.styleId && !perSpaceMode) {
+      block = "Choose a style to continue.";
+      blockField = "style";
+    } else if (perSpaceMode && groups.some((g) => g.space !== "unassigned" && !form.spaceStyles[g.space])) {
       block = "Choose a style for each group to continue.";
-    else if (!form.intensity) block = "Choose an intensity to continue.";
-    else if (!form.grade) block = "Choose a finish grade to continue.";
-    else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
-    else if (unfit.length) block = "STYLE_UNFIT";
-    else if (short) block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
+    } else if (!form.intensity) {
+      block = "Choose an intensity to continue.";
+      blockField = "intensity";
+    } else if (!form.grade) {
+      block = "Choose a finish grade to continue.";
+      blockField = "grade";
+    } else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
+    else if (unsupported.length) {
+      block = "STYLE_UNFIT";
+    } else if (unusual.length) {
+      block = "STYLE_UNUSUAL";
+    } else if (short)
+      block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
 
-    /* The incompatibility is explained once, inside the group that needs it,
-       so the bar below never repeats the same sentence. */
-    const barMsg = block === "STYLE_UNFIT" ? "" : block;
+    /* Style feedback is explained once, inside the group that needs it. */
+    const barMsg = block === "STYLE_UNFIT" || block === "STYLE_UNUSUAL" || blockField ? "" : block;
     const hint =
       block === "STYLE_UNFIT"
-        ? `${styleName()} does not suit ${unfit.map((g) => g.label.toLowerCase()).join(" and ")}. Choose a compatible style for that group.`
-        : block;
+        ? `${styleName()} cannot be applied to ${unsupported.map((g) => g.label.toLowerCase()).join(" and ")} photos. Choose a compatible style for that group.`
+        : block === "STYLE_UNUSUAL"
+          ? `Review the recommendation on the ${unusual.map((g) => g.label.toLowerCase()).join(" and ")} group.`
+          : block;
+    /* One concise message, shown under the field that needs attention. */
+    const fieldMsg = (name) =>
+      blockField === name ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : "";
+
 
     const sum = [
       ["Photos", String(n)],
