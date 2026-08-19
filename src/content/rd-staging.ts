@@ -955,6 +955,9 @@ function render() {
   bindRail(el);
   syncSelection();
   railForStep();
+  /* Card images are bound to their storage path, so an expiring signed URL is
+     refreshed in place instead of leaving a blank frame behind. */
+  mountPhotoImages(el);
 
 }
 
@@ -991,6 +994,7 @@ function patchCard(it) {
   const next = document.createElement("div");
   next.innerHTML = cardHtml(it);
   el.replaceWith(next.firstElementChild);
+  mountPhotoImages(wrap);
   paint();
   syncCard(it);
   patchStatus();
