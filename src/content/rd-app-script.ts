@@ -41,6 +41,8 @@ import { mountExplore } from "@/content/rd-explore";
 import { mountWatch } from "@/content/rd-watch";
 import { STYLES, STYLE_CATEGORIES, resolveStyle } from "@/lib/style-catalog";
 import { getStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
+import { mountCanvasStyle } from "@/lib/canvas-style-ui";
+import { styleNeedForTool, sectionTitle } from "@/lib/canvas-style";
 import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
 import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
@@ -1595,6 +1597,9 @@ document.getElementById('genBtn').addEventListener('click',async ()=>{
   if(busy)return;
   const srcImg=document.querySelector('#cBefore img');
   if(STUDIO_SRC===SRC_EMPTY||!srcImg||!srcImg.src){ needSourceModal(); return; }   // never spends a credit
+  const gTool=activeToolName();
+  if(styleNeedForTool(gTool)&&!canvasStyleSelected()){ promptForStyle(gTool); return; }
+  if(LIVE_TOOLS[gTool]){ LIVE_TOOLS[gTool](); return; }
   if(!ensureCredits(1,'A Design Render')) return;
   busy=true;
   setCanvasPhase('generating');
@@ -4125,13 +4130,74 @@ toolRows.forEach((r)=>{
   const c=TOOL_COST[nm];
   r.title = nm + (c?(' \u00b7 ' + c + ' credit' + (c>1?'s':'')):'') + '\n' + (r.getAttribute('data-desc')||'');
 });
+
+/* ---------- studio: visual style selection ---------- */
+let CANVAS_STYLE:any=null;
+function activeToolName(){
+  const r=document.querySelector('#fTool .toolrow.on') as any;
+  return (r&&r.getAttribute('data-tool'))||'Redesign';
+}
+function canvasStyleSelected(){
+  try{ return !!(CANVAS_STYLE&&CANVAS_STYLE.selection()); }catch(_){ return false; }
+}
+/** Mirror the chosen style into the legacy control every payload already reads. */
+function syncStyleControl(sel:any){
+  const el=document.getElementById('fStyle') as any;
+  if(!el) return;
+  if(!sel){ return; }
+  const name=sel.style.displayName;
+  let opt:any=Array.from(el.options).find((o:any)=>o.value===name||(o.dataset&&o.dataset.styleId===sel.style.id));
+  if(!opt){ opt=document.createElement('option'); opt.value=name; opt.textContent=name; opt.dataset.styleId=sel.style.id; el.insertBefore(opt,el.firstChild); }
+  opt.dataset.styleId=sel.style.id;
+  if(el.value!==opt.value){ el.value=opt.value; el.dispatchEvent(new Event('change',{bubbles:true})); }
+}
+function paintGenGate(){
+  const btn=document.getElementById('genBtn') as any;
+  if(!btn) return;
+  const need=styleNeedForTool(activeToolName());
+  const missing=!!need&&!canvasStyleSelected();
+  btn.disabled=missing||busy;
+  btn.title=missing?('Choose A '+sectionTitle(need as any)+' First'):'';
+  btn.setAttribute('aria-disabled',missing?'true':'false');
+}
+function promptForStyle(tool:string){
+  const need=styleNeedForTool(tool);
+  const host=document.getElementById('canvasStyleField');
+  try{ CANVAS_STYLE&&CANVAS_STYLE.refresh(); }catch(_){}
+  if(host){ host.scrollIntoView({behavior:'smooth',block:'center'}); host.classList.add('cs-flash'); setTimeout(()=>host.classList.remove('cs-flash'),1200); }
+  try{ window.rdToast&&window.rdToast('Choose A '+sectionTitle((need||'design') as any)+' First'); }catch(_){}
+  try{ CANVAS_STYLE&&CANVAS_STYLE.open(); }catch(_){}
+}
+try{
+  CANVAS_STYLE=mountCanvasStyle('canvasStyleField',()=>{
+    const m:any=(()=>{ try{ return (window as any).__rdStudioMode&&(window as any).__rdStudioMode(); }catch(_){ return null; } })();
+    return {
+      tool:activeToolName(),
+      projectType:currentProjectType(),
+      room:currentRoomType(),
+      draftId:(m&&m.draftId)||null,
+      photoKey:(m&&m.photoKey)||null,
+      propertyId:(STUDIO_CTX&&STUDIO_CTX.address)||null,
+      photoKeys:(()=>{ try{ return ((window as any).__rdCanvasPhotoKeys&&(window as any).__rdCanvasPhotoKeys())||[]; }catch(_){ return []; } })(),
+    };
+  },(sel)=>{ syncStyleControl(sel); paintGenGate(); });
+  (window as any).__rdCanvasStyle=CANVAS_STYLE;
+  window.addEventListener('rd:photo',()=>{ try{ CANVAS_STYLE.refresh(); }catch(_){} });
+  paintGenGate();
+}catch(_){}
+
 toolRows.forEach((r) => r.addEventListener('click', () => {
   toolRows.forEach((x) => x.classList.remove('on'));
   r.classList.add('on');
   const name = r.getAttribute('data-tool');
   const plan = r.getAttribute('data-plan');
+  try{ CANVAS_STYLE&&CANVAS_STYLE.refresh(); }catch(_){}
+  paintGenGate();
   if (LIVE_TOOLS[name]) {
     if (toolInfo) toolInfo.hidden = true;
+    /* A style-driven tool never spends a credit before the user has chosen
+       a look: the Setup panel asks for it first. */
+    if (styleNeedForTool(name) && !canvasStyleSelected()) { promptForStyle(name); return; }
     LIVE_TOOLS[name]();
     return;
   }
