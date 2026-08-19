@@ -9,7 +9,7 @@
  * only then show a small "Image unavailable — Retry" state. Card metadata
  * (selection, room, effects, order) is never touched by any of it.
  */
-import { isStoredPhoto, resolvePhotoUrl } from "@/lib/room-photos";
+import { isStoredPhoto, resolvePhotoUrl, signedPhotoExpiry } from "@/lib/room-photos";
 
 /** Signed-URL lifetime we ask storage for, and how early we re-sign. */
 const TTL_SEC = 6 * 3600;
