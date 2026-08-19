@@ -10,6 +10,7 @@ const resolve = vi.fn();
 vi.mock("@/lib/room-photos", () => ({
   resolvePhotoUrl: (...a: any[]) => resolve(...a),
   isStoredPhoto: (p: string) => !/^(https?:|blob:|\/|data:)/.test(p),
+  signedPhotoExpiry: () => null,
 }));
 
 const load = async () => {
