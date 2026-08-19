@@ -1489,3 +1489,23 @@
 }
 @keyframes rdImgShimmer { from { background-position: 120% 0; } to { background-position: -120% 0; } }
 @media (prefers-reduced-motion: reduce) { .rd-app .rd-img-load { animation: none; } }
+
+/* ---- Shared right-edge alignment for the two action rows ----
+   The header action group (Format · Add Photos · More) and the inner
+   utility row (Auto Arrange / Set Design Direction · More) hug the same
+   right boundary: the work panel's content edge. One variable drives the
+   panel padding and the header inset, so the two three-dot triggers stay
+   centred on the same vertical line at every desktop width. */
+.rd-app { --rd-work-pad-x: 22px; --rd-work-edge: calc(var(--rd-work-pad-x) + 1px); }
+@media (min-width: 1440px) { .rd-app { --rd-work-pad-x: 14px; } }
+.rd-app #v-reveal .rv-wiz { padding: 20px var(--rd-work-pad-x) 22px; }
+.rd-app .bx-work { padding: 20px var(--rd-work-pad-x) 22px; }
+@media (min-width: 1440px) {
+  .rd-app #v-reveal .rv-wiz, .rd-app .bx-work { padding: 18px var(--rd-work-pad-x) 20px; }
+}
+/* Shift the whole top action group left as one unit — spacing inside it is
+   untouched — so its More button lines up with the one below. */
+.rd-app .rv-head > .rv-head-tools { padding-right: var(--rd-work-edge); box-sizing: border-box; }
+@media (max-width: 720px) {
+  .rd-app .rv-head > .rv-head-tools { padding-right: 0; }
+}
