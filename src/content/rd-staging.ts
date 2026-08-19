@@ -2046,15 +2046,24 @@ function mountStrip() {
   const head = document.createElement("div");
   head.id = "rdsCanvasHead";
   head.className = "rds-chead";
-  head.innerHTML = `<button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>Back to All Photos</button>
-    <span class="rds-chead-t" id="rdsCanvasTitle"></span>
-    <span class="rds-chead-s" id="rdsCanvasPos"></span>
-    <span class="rds-chead-save" id="rdsCanvasSave"></span>
-    <div class="rds-cmenu-wrap">
-      <button class="icon-btn sm" id="rdsCanvasMore" aria-label="More Actions" aria-haspopup="menu" aria-expanded="false"><i data-lucide="ellipsis-vertical"></i></button>
-      <div class="rds-cmenu" id="rdsCanvasMenu" role="menu" hidden>
-        <button role="menuitem" id="rdsClose"><i data-lucide="arrow-left"></i>Return to Photos</button>
-        <button role="menuitem" class="danger" id="rdsResetDesign"><i data-lucide="rotate-ccw"></i>Reset This Design…</button>
+  head.innerHTML = `<div class="rds-chead-l">
+      <button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>Back to All Photos</button>
+    </div>
+    <span class="rds-chead-div" aria-hidden="true"></span>
+    <div class="rds-chead-c">
+      <span class="rds-chead-t" id="rdsCanvasTitle"></span>
+      <span class="rds-chead-s" id="rdsCanvasPos"></span>
+      <span class="rds-chead-save" id="rdsCanvasSave"></span>
+    </div>
+    <div class="rds-chead-r">
+      <button class="rds-chead-i" id="rdsHeadPrev" title="Previous Photo" aria-label="Previous Photo"><i data-lucide="chevron-left"></i></button>
+      <button class="rds-chead-i" id="rdsHeadNext" title="Next Photo" aria-label="Next Photo"><i data-lucide="chevron-right"></i></button>
+      <div class="rds-cmenu-wrap">
+        <button class="rds-chead-i" id="rdsCanvasMore" title="More Options" aria-label="More Options" aria-haspopup="menu" aria-expanded="false"><i data-lucide="ellipsis-vertical"></i></button>
+        <div class="rds-cmenu" id="rdsCanvasMenu" role="menu" hidden>
+          <button role="menuitem" id="rdsClose"><i data-lucide="arrow-left"></i>Return to Photos</button>
+          <button role="menuitem" class="danger" id="rdsResetDesign"><i data-lucide="rotate-ccw"></i>Reset This Design…</button>
+        </div>
       </div>
     </div>`;
   if (view && board) view.insertBefore(head, board);
@@ -2234,6 +2243,17 @@ function drawStrip() {
   };
   strip.querySelector("#rdsPrev").onclick = () => step(-1);
   strip.querySelector("#rdsNext").onclick = () => step(1);
+  /* Same in-place photo switch from the page-level header toolbar. */
+  const hp = document.getElementById("rdsHeadPrev") as HTMLButtonElement | null;
+  const hn = document.getElementById("rdsHeadNext") as HTMLButtonElement | null;
+  if (hp) {
+    hp.disabled = i <= 0;
+    hp.onclick = () => step(-1);
+  }
+  if (hn) {
+    hn.disabled = i < 0 || i >= list.length - 1;
+    hn.onclick = () => step(1);
+  }
   const nextRoom = strip.querySelector("#rdsNextRoom");
   if (nextRoom) nextRoom.onclick = () => step(1);
 
