@@ -561,13 +561,25 @@ export function openBulkDesign(opts) {
         }),
     );
 
-    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach(
-      (el) =>
-        (el.onchange = () => {
-          readForm();
-          draw();
-        }),
-    );
+    const FIELD_OF = { rdsbStyle: "style", rdsbInt: "intensity", rdsbGrade: "grade" };
+    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach((el) => {
+      const field = FIELD_OF[el.id];
+      el.onchange = () => {
+        if (field) touched[field] = true;
+        readForm();
+        draw();
+      };
+      /* Engaged and left empty: only then does the field earn a red state. */
+      if (field)
+        el.onblur = () => {
+          if (!el.value && !touched[field]) {
+            touched[field] = true;
+            readForm();
+            draw();
+          }
+        };
+    });
+
     const notes = node.querySelector("#rdsbNotes");
     if (notes) notes.oninput = () => (form.notes = notes.value);
     const generic = node.querySelector("#rdsbGeneric");
