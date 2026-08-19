@@ -403,26 +403,41 @@ export function openBulkDesign(opts) {
           <div class="rdsb-groups">
             ${groups
               .map((g) => {
-                /* Only a style the user actually chose can be "unfit". */
-                const fits = !form.styleId || styleFitsSpace(form.styleId, g.space);
+                const level = levelFor(g);
                 const needsOwn = perSpaceMode && g.space !== "unassigned";
                 const pick = form.spaceStyles[g.space] || "";
-                const bad = g.space === "unassigned" || (!fits && !pick);
-                return `<div class="rdsb-g${bad ? " warn" : ""}">
+                const acked = !!ackUnusual[styleFor(g) + ":" + g.space];
+                const name = STYLES.find((s) => s.id === styleFor(g));
+                const label = name ? name.displayName : styleName();
+                const bad = g.space === "unassigned" || level === "unsupported";
+                const advise = level === "unusual" && !acked;
+                return `<div class="rdsb-g${bad ? " warn" : ""}${advise ? " advise" : ""}">
                 <b>${esc(g.label)} · ${g.items.length}</b>
                 <span>${esc(
                   needsOwn
                     ? `Choose the direction for these ${g.label.toLowerCase()} photos.`
-                    : fits
-                      ? groupNote(g.space)
-                      : `${styleName()} is not suited to ${g.label.toLowerCase()} photos. Choose a compatible style for this group.`,
+                    : level === "unsupported"
+                      ? unsupportedNote(label, g.space)
+                      : groupNote(g.space),
                 )}</span>
                 ${
-                  fits && !needsOwn
+                  advise
+                    ? `<div class="rdsb-advise" role="status">
+                        <p><i data-lucide="info"></i>${esc(label)} is an unconventional choice for this ${esc(g.label.toLowerCase())}, but it can still be applied.</p>
+                        <div class="rdsb-advise-a">
+                          <button type="button" class="rdsb-ab primary" data-ack="${esc(g.space)}">Use Anyway</button>
+                          <button type="button" class="rdsb-ab" data-restyle="${esc(g.space)}">Choose Another Style</button>
+                        </div>
+                      </div>`
+                    : ""
+                }
+                ${
+                  level !== "unsupported" && !needsOwn
                     ? ""
                     : `<select class="rdsb-gstyle" data-spacestyle="${esc(g.space)}" aria-label="Style for ${esc(g.label)} photos">
                         <option value="">${needsOwn ? esc(`Choose ${g.label} Style…`) : "Choose A Compatible Style…"}</option>
                         ${stylesForSpace(g.space)
+                          .filter((s) => styleCompatibility(s.id, g.space) === "compatible")
                           .map(
                             (s) =>
                               `<option value="${esc(s.id)}"${s.id === pick ? " selected" : ""}>${esc(s.displayName)}</option>`,
