@@ -103,9 +103,8 @@ const TOUR=[
   lab:'Whole Property',est:'4 Rooms Approved',fit:'4 Rooms Approved',mets:[['Rooms Approved','4 of 4','neutral'],['Layout','Preserved','positive'],['Status','Approved','positive']]}
 ];
 
-const CHAPTERS
-
 const CHAPTERS=['Exterior','Interior','Empty Room','Virtual Staging','Shop','Landscape','Video','3D Plan'];
+
 
 const showStage=document.getElementById('showStage'),lockPill=document.getElementById('lockPill'),
       modePill=document.getElementById('modePill'),styleChip=document.getElementById('styleChip'),
