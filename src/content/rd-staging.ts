@@ -942,7 +942,7 @@ function render() {
           <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "photo" : "photos"} selected</span></div>
           <div class="rv-gridfoot-a">
             <button class="btn btn-ghost" id="rdsBack">Back</button>
-            <button class="btn btn-primary" id="rdsGo">Continue</button>
+            <button class="btn btn-primary" id="rdsGo">Next: Design Direction</button>
           </div>
         </div>
       </div>
