@@ -1453,8 +1453,17 @@ document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',(
 function drawLocks(){
   const k=Object.keys(locks);
   const sub=document.getElementById('lockCount');
+  const list=document.getElementById('lockList');
+  const ready=objectControlsReady();
+  document.querySelectorAll('[data-mode]').forEach(b=>{ b.disabled=!ready; b.classList.toggle('is-disabled',!ready); });
+  if(!ready){
+    if(sub) sub.textContent='Analysis Pending';
+    if(list) list.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Object Controls will become available after this photo has been analyzed.</p>';
+    try{ lucide.createIcons(); }catch(_){}
+    return;
+  }
   if(sub) sub.textContent=k.length?`${k.length} Object${k.length>1?'s':''} Locked`:'Click Objects On The Canvas';
-  document.getElementById('lockList').innerHTML=k.length?k.map(o=>{
+  if(list) list.innerHTML=k.length?k.map(o=>{
     const cls={keep:'p-ok',replace:'p-blue',remove:'p-red'}[locks[o]];
     return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${o}</b></div>
     <span class="pill ${cls}">${locks[o]}</span>
@@ -1467,12 +1476,13 @@ function drawLocks(){
   }));
 }
 document.querySelectorAll('.hot').forEach(h=>h.addEventListener('click',()=>{
-  if(STUDIO_SRC===SRC_EMPTY) return;
+  if(STUDIO_SRC===SRC_EMPTY||!objectControlsReady()) return;
   const o=h.dataset.o;
   if(locks[o]===mode){delete locks[o];h.className='hot'}
   else{locks[o]=mode;h.className='hot set '+mode}
   drawLocks();
 }));
+try{ window.rdObjectControlsReady=()=>objectControlsReady(); }catch(_){}
 drawLocks();
 
 /* budget bands: a band is a target, the planning range only appears with a result */
