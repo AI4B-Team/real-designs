@@ -194,14 +194,14 @@ describe("photo staging: add photos -> review rooms", () => {
     await openStaging();
     expect(stagingHost().textContent).toContain("Add Photos");
     await pick([jpeg("a.jpg"), jpeg("b.jpg"), jpeg("c.jpg")]);
-    expect(stagingHost().textContent).toContain("Review Rooms");
+    expect(stagingHost().textContent).toContain("Prepare Your Photos");
     expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(3);
   });
 
   it("advances on a single photo and keeps Add More Photos available", async () => {
     await openStaging();
     await pick([jpeg("only.jpg")]);
-    expect(stagingHost().textContent).toContain("Review Rooms");
+    expect(stagingHost().textContent).toContain("Prepare Your Photos");
     expect(stagingHost().querySelector("#rdsMore")).toBeTruthy();
     expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(1);
   });
@@ -228,14 +228,14 @@ describe("photo staging: add photos -> review rooms", () => {
     await openStaging();
     await pick([jpeg("a.jpg")]);
     await settle(30);
-    expect(stagingHost().textContent).toContain("Review Rooms");
+    expect(stagingHost().textContent).toContain("Prepare Your Photos");
     expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(1);
   });
 
   it("stays on Review Rooms with nothing added when the only file is invalid", async () => {
     await openStaging();
     await pick([bad()]);
-    expect(stagingHost().textContent).toContain("Review Rooms");
+    expect(stagingHost().textContent).toContain("Prepare Your Photos");
     expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(0);
   });
 });

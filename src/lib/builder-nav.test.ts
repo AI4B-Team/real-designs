@@ -20,7 +20,7 @@ const reveal = readFileSync("src/content/rd-reveal.ts", "utf8");
 
 describe("shared builder navigation contract", () => {
   it("photo design rail is Rooms, Design, Review — no Add Photos", () => {
-    expect(PHOTO_RAIL.map((s) => s.label)).toEqual(["Rooms", "Design", "Review"]);
+    expect(PHOTO_RAIL.map((s) => s.label)).toEqual(["Photos", "Design", "Review"]);
     expect(PHOTO_FLOW).toEqual(["review", "design", "final"]);
   });
 
