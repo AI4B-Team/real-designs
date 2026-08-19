@@ -157,7 +157,7 @@ dash:['Dashboard','Your workspace at a glance'],props:['Properties','Property, p
 studio:['Studio','Price a room and save it to a project'],explore:['Explore','Discover design directions before you start a project'],watch:['Site Watch','Monitor a listing site you own and prepare videos for new properties'],media:['Media','Property photos, enhancements and listing packages'],lvideo:['Create A Property Video','Turn your property photos into a polished listing video'],reveal:['Property Videos','Turn your property photos and completed designs into polished videos, reveals and marketing content'],designs:['Designs','Saved versions across your properties'],
 listings:['Listing Batch','Stage a whole property in one direction'],scope:['Budget','Planning estimates from approved designs'],
 products:['Products','Shop the design, three price tiers per item'],present:['Presentations','Client ready packages and approval links'],
-reports:['Reports','Portfolio rollup, budget fit and credit spend'],
+reports:['Reports','Portfolio rollup and credit spend'],
 crm:['CRM Sync','Connect your CRM, sync contacts and push finished work'],
 team:['Team','Unlimited seats on Pro and above'],settings:['Settings','Brand kit, defaults and integrations'],
 account:['Account','Profile, security, subscription and billing'],
@@ -564,11 +564,15 @@ function searchIndex(){
     out.push({kind:'Presentations',ic:'presentation',t:pr.title||'Client link',
       s:(pr.status==='approved'?'Approved':pr.status==='viewed'?'Opened':pr.status==='changes'?'Changes requested':'Sent'),view:'present',pres:pr.id});
   });
+  /* Saved budget records are preserved, but while budgets are coming soon they
+     are never surfaced as searchable budget results. */
   SAVED_EST.forEach(e=>{
-    out.push({kind:'Budgets',ic:'calculator',t:(e.name||'Saved room')+' budget',
-      s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Budget')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
+    if(budgetsLive()){
+      out.push({kind:'Budgets',ic:'calculator',t:(e.name||'Saved room')+' budget',
+        s:(e.grade?e.grade[0].toUpperCase()+e.grade.slice(1)+' grade':'Budget')+(e.total_low?' \u00b7 $'+Math.round(e.total_low/1000)+'k+':''),view:'scope'});
+    }
     out.push({kind:'Products',ic:'shopping-bag',t:(e.name||'Saved room')+' product board',
-      s:'Allowances from the saved budget',view:'products'});
+      s:budgetsLive()?'Allowances from the saved budget':'Saved product board',view:'products'});
   });
   return out;
 }
@@ -597,7 +601,7 @@ function updateSearchMeta(){
   const set=(sc,v)=>{const b=schMenu.querySelector('[data-scope="'+sc+'"] .mv'); if(b) b.textContent=String(v);};
   set('Properties',PROP_TREE.length); set('Rooms',rooms); set('Designs',designs);
   set('Presentations',(typeof PRES_ROWS!=='undefined'?PRES_ROWS:[]).length);
-  set('Budgets',SAVED_EST.length); set('Products',SAVED_EST.length);
+  set('Budgets',budgetsLive()?SAVED_EST.length:0); set('Products',SAVED_EST.length);
   const recents=searchIndex().filter(r=>r.kind==='Designs').slice(0,3);
   const groups=schMenu.querySelectorAll('.acct-group');
   const recHead=groups[groups.length-1];
@@ -832,10 +836,10 @@ async function paintSample(s){
     host.insertBefore(bar,host.firstChild);
   }
   bar.innerHTML = present
-    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data for exploring Properties, Budget and Reports.</span>'
+    ? '<i data-lucide="flask-conical"></i><span><b>Sample Property Loaded.</b> 1420 Bayshore Boulevard is example data for exploring Properties, Designs and Reports.</span>'
       +'<button class="btn btn-ghost btn-xs" id="sampleGo" style="margin-left:auto"><i data-lucide="map-pin"></i>Open It</button>'
       +'<button class="btn btn-ghost btn-xs" id="sampleOff"><i data-lucide="trash-2"></i>Remove Sample</button>'
-    : '<i data-lucide="flask-conical"></i><span><b>Nothing Saved Yet.</b> Load a sample property with three rooms and a budget target to see how the workspace fits together. No credits are used.</span>'
+    : '<i data-lucide="flask-conical"></i><span><b>Nothing Saved Yet.</b> Load a sample property with three rooms to see how the workspace fits together. No credits are used.</span>'
       +'<button class="btn btn-primary btn-xs" id="sampleOn" style="margin-left:auto"><i data-lucide="download"></i>Load Sample Property</button>';
   try{ lucide.createIcons(); }catch(_){}
 
@@ -1563,15 +1567,15 @@ document.querySelectorAll('.hot').forEach(h=>h.addEventListener('click',()=>{
 try{ window.rdObjectControlsReady=()=>objectControlsReady(); }catch(_){}
 drawLocks();
 
-/* budget bands: a band is a target, the planning range only appears with a result */
-const BANDS=[{lo:3200,hi:5000,fit:'Well Within Target',c:'c-hi'},{lo:11400,hi:14900,fit:'Within Target',c:'c-hi'},
-{lo:26000,hi:35000,fit:'Within Target',c:'c-hi'},{lo:41000,hi:62000,fit:'Above Band, Review',c:'c-md'}];
-const m=n=>'$'+n.toLocaleString();
+/* Design Intensity: how far the redesign goes. It shapes the generated image
+   and carries no dollar figures while budgets are coming soon. */
+const BANDS=[{name:'Refresh',scope:'Paint & Styling'},{name:'Makeover',scope:'Furnishings & Finishes'},
+{name:'Renovation',scope:'Cabinetry & Surfaces'},{name:'Full Remodel',scope:'Full Replacement'}];
 function paintStudioSummary(d){
   const el=document.getElementById('studioSummary'); if(!el) return;
-  if(!STUDIO_RESULT){ el.innerHTML=''; return; }
-  el.innerHTML=summaryHTML({primaryLabel:'Planning Range',primaryValue:`${m(d.lo)}–${m(d.hi)}`,
-    metrics:[metric('Budget Fit',d.fit),metric('Pricing','Medium Confidence','warning'),
+  if(!STUDIO_RESULT||!d){ el.innerHTML=''; return; }
+  el.innerHTML=summaryHTML({primaryLabel:'Design Intensity',primaryValue:d.name,
+    metrics:[metric('What Changes',d.scope),metric('Reality Lock','Geometry Held','positive'),
              metric('Structure','No Changes','positive')]});
 }
 function currentBand(){ const b=document.querySelector('.bchip.on'); return BANDS[b?+b.dataset.b:1]; }
@@ -1585,7 +1589,7 @@ document.querySelectorAll('#gradeChips .chip, #spChips .chip').forEach(c=>c.addE
 paintStudioState();
 
 
-const gsteps=['Reading room geometry','Applying object locks','Fitting design to budget band','Selecting retail grade finishes','Rendering the space','Finishing the image'];
+const gsteps=['Reading room geometry','Applying object locks','Applying design intensity','Selecting retail grade finishes','Rendering the space','Finishing the image'];
 let busy=false, lastRender=null, lastRenderPath=null;
 document.getElementById('genBtn').addEventListener('click',async ()=>{
   if(busy)return;

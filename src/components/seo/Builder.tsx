@@ -23,7 +23,7 @@ const SPACES = [
 const STEP_TEXT = [
   "Reading room geometry",
   "Locking walls, windows and doors",
-  "Selecting finishes inside your budget",
+  "Selecting materials and finishes",
   "Pricing the scope against local rates",
 ];
 

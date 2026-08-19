@@ -107,7 +107,9 @@ export async function loadPresentation(key: string, password: string | null) {
 
   // Budget only exists when the video is tied to a saved design version.
   let budget: { low: number; high: number; lines: Array<{ description: string; trade: string; low: number; high: number }> } | null = null;
-  if (sections["budget"] && p.design_version_id) {
+  const { checkBudgetsAvailable } = await import("@/lib/budget.server");
+  const budgetsAvailable = await checkBudgetsAvailable();
+  if (budgetsAvailable && sections["budget"] && p.design_version_id) {
     const { data: scope } = await supabaseAdmin
       .from("scopes")
       .select("id, total_low, total_high")

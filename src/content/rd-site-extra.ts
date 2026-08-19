@@ -30,14 +30,14 @@ export function initExtra(timers: number[], lucide: any) {
     redesign: {
       before: PHOTOS.before, after: PHOTOS.after,
       cap: ["Reality Lock On", "Walls, windows and layout preserved"],
-      est: "$11,400 to $14,900",
+      est: "Makeover Intensity",
       meta: [["Room", "Living Room"], ["Direction", "Warm Minimal"], ["Intensity", "Makeover"]],
       tags: ["Before", "After"],
     },
     empty: {
       before: PHOTOS.clutter, after: PHOTOS.empty,
       cap: ["Declutter to Empty", "Architecture kept, contents removed"],
-      est: "$0 to $340",
+      est: "Contents Removed",
       meta: [["Room", "Living Room"], ["Step", "Declutter, Empty"], ["Next", "Stage"]],
       tags: ["Occupied", "Emptied"],
     },
@@ -50,9 +50,9 @@ export function initExtra(timers: number[], lucide: any) {
     },
     plan: {
       before: PHOTOS.kitchenBefore, after: PHOTOS.kitchen,
-      cap: ["Scope Of Work Built", "18 line items, 6 trades, local rates"],
-      est: "$26,200 to $34,100",
-      meta: [["Room", "Kitchen"], ["Band", "Renovation"], ["Trades", "6"]],
+      cap: ["Kitchen Redesigned", "Cabinet fronts, counters, backsplash and flooring"],
+      est: "Renovation Intensity",
+      meta: [["Room", "Kitchen"], ["Intensity", "Renovation"], ["Structure", "Held"]],
       tags: ["Before", "Planned"],
     },
   };
@@ -103,89 +103,89 @@ export function initExtra(timers: number[], lucide: any) {
 
   const INTERIOR_SUBS: [string, GView][] = [
     ["Living Room", V("Living Room", PHOTOS.wfOriginal, PHOTOS.wfDesigned,
-      "Warm Minimal \u00b7 $11.4K to $14.9K", "Before", "After", "Within Target",
-      ["Reality Lock On", "Makeover \u00b7 Under $15K", "Design DNA \u00b7 Warm Minimal"],
+      "Warm Minimal", "Before", "After", "Reality Lock On",
+      ["Reality Lock On", "Makeover", "Design DNA \u00b7 Warm Minimal"],
       [ARCH,
        ["paintbrush", "Finishes Updated", "Flooring, paint, furniture, drapery and lighting"],
-       ["wallet", "Planning Range", "$11,400 to $14,900 \u00b7 within target"]])],
+       ["layers", "Design Intensity", "Furnishings and finishes"]])],
     ["Kitchen", V("Kitchen", PHOTOS.kitchenBefore, PHOTOS.kitchenAfter,
-      "Warm Shaker \u00b7 $26.2K to $34.1K", "Before", "After", "Within Target",
-      ["Reality Lock On", "Renovation \u00b7 Under $35K", "Design DNA \u00b7 Warm Shaker"],
+      "Warm Shaker", "Before", "After", "Reality Lock On",
+      ["Reality Lock On", "Renovation", "Design DNA \u00b7 Warm Shaker"],
       [["ruler", "Architecture Preserved", "Same footprint, appliance and window locations"],
        ["paintbrush", "Finishes Updated", "Cabinet fronts, counters, backsplash, flooring"],
-       ["wallet", "Planning Range", "$26,200 to $34,100 \u00b7 cabinetry led"]])],
+       ["layers", "Design Intensity", "Cabinetry led"]])],
     ["Bathroom", V("Bathroom", PHOTOS.bathBefore, PHOTOS.bath,
-      "Quiet Luxury \u00b7 $8.9K to $12.4K", "Before", "After", "Within Target",
-      ["Reality Lock On", "Renovation \u00b7 Under $15K", "Design DNA \u00b7 Quiet Luxury"],
+      "Quiet Luxury", "Before", "After", "Reality Lock On",
+      ["Reality Lock On", "Renovation", "Design DNA \u00b7 Quiet Luxury"],
       [["ruler", "Architecture Preserved", "Tub, toilet and vanity stay exactly where they are"],
        ["paintbrush", "Finishes Updated", "Tile, vanity, mirror, lighting and flooring"],
-       ["wallet", "Planning Range", "$8,900 to $12,400 \u00b7 no wall moves"]])],
+       ["layers", "Design Intensity", "No wall moves"]])],
     ["Bedroom", V("Bedroom", PHOTOS.bedroomBefore, PHOTOS.bedroomAfter,
-      "Warm Minimal \u00b7 $7.8K to $10.6K", "Before", "After", "Within Target",
-      ["Reality Lock On", "Makeover \u00b7 Under $15K", "Design DNA \u00b7 Warm Minimal"],
+      "Warm Minimal", "Before", "After", "Reality Lock On",
+      ["Reality Lock On", "Makeover", "Design DNA \u00b7 Warm Minimal"],
       [["ruler", "Architecture Preserved", "Window, closet doors and ceiling unchanged"],
        ["paintbrush", "Finishes Updated", "Carpet to oak, paint, bed, case goods, drapery"],
-       ["wallet", "Planning Range", "$7,800 to $10,600 \u00b7 furniture led"]])],
+       ["layers", "Design Intensity", "Furniture led"]])],
     ["Office", V("Office", PHOTOS.officeBefore, PHOTOS.officeAfter,
-      "Quiet Modern \u00b7 $5.2K to $7.4K", "Before", "After", "Within Target",
-      ["Reality Lock On", "Refresh \u00b7 Under $8K", "Design DNA \u00b7 Quiet Modern"],
+      "Quiet Modern", "Before", "After", "Reality Lock On",
+      ["Reality Lock On", "Refresh", "Design DNA \u00b7 Quiet Modern"],
       [["ruler", "Architecture Preserved", "Window, door and outlet positions unchanged"],
        ["paintbrush", "Finishes Updated", "Flooring, paint, desk, seating and shelving"],
-       ["wallet", "Planning Range", "$5,200 to $7,400 \u00b7 light scope"]])],
+       ["layers", "Design Intensity", "Light scope"]])],
   ];
 
   const EXT = (name: string, cap: string, budget: string, strength: [string,string,string][]): [string, GView] =>
-    [name, V(name, PHOTOS.exteriorBefore, PHOTOS.exteriorAfter, cap, "Before", "After", "Within Target",
+    [name, V(name, PHOTOS.exteriorBefore, PHOTOS.exteriorAfter, cap, "Before", "After", "Reality Lock On",
       ["Reality Lock On", budget, "Design DNA \u00b7 Modern Classic"], strength)];
 
   const EXTERIOR_SUBS: [string, GView][] = [
-    EXT("Front Elevation", "Front Elevation \u00b7 Modern Classic \u00b7 $11.9K to $16.8K", "Makeover \u00b7 Under $20K",
+    EXT("Front Elevation", "Front Elevation \u00b7 Modern Classic", "Makeover",
       [["ruler", "Architecture Preserved", "Rooflines, windows and perspective unchanged"],
        ["paintbrush", "Finishes Updated", "Siding color, trim, door, porch light"],
-       ["wallet", "Planning Range", "$11,900 to $16,800 \u00b7 within target"]]),
-    EXT("Rear Elevation", "Rear Elevation \u00b7 Modern Classic \u00b7 $9.4K to $13.2K", "Makeover \u00b7 Under $15K",
+       ["layers", "Design Intensity", "Furnishings and finishes"]]),
+    EXT("Rear Elevation", "Rear Elevation \u00b7 Modern Classic", "Makeover",
       [["ruler", "Architecture Preserved", "Door and window openings stay exactly as built"],
        ["paintbrush", "Finishes Updated", "Paint, deck stain, railings and rear lighting"],
-       ["wallet", "Planning Range", "$9,400 to $13,200 \u00b7 within target"]]),
-    EXT("Siding", "Siding \u00b7 Warm White Lap \u00b7 $7.6K to $10.9K", "Refresh \u00b7 Under $12K",
+       ["layers", "Design Intensity", "Furnishings and finishes"]]),
+    EXT("Siding", "Siding \u00b7 Warm White Lap", "Refresh",
       [["ruler", "Architecture Preserved", "Same lap profile, same wall planes"],
        ["layers", "Finishes Updated", "Repaint in warm white with black trim"],
-       ["wallet", "Planning Range", "$7,600 to $10,900 \u00b7 paint led"]]),
-    EXT("Roofing", "Roofing \u00b7 Charcoal Architectural \u00b7 $14.2K to $19.5K", "Renovation \u00b7 Under $20K",
+       ["layers", "Design Intensity", "Paint led"]]),
+    EXT("Roofing", "Roofing \u00b7 Charcoal Architectural", "Renovation",
       [["ruler", "Architecture Preserved", "Same pitch, ridge height and roofline"],
        ["home", "Finishes Updated", "Architectural shingle in charcoal, new drip edge"],
-       ["wallet", "Planning Range", "$14,200 to $19,500 \u00b7 tear-off included"]]),
-    EXT("Curb Appeal", "Curb Appeal \u00b7 Modern Classic \u00b7 $5.8K to $8.3K", "Refresh \u00b7 Under $9K",
+       ["layers", "Design Intensity", "Tear-off included"]]),
+    EXT("Curb Appeal", "Curb Appeal \u00b7 Modern Classic", "Refresh",
       [["ruler", "Architecture Preserved", "House footprint and driveway untouched"],
        ["sprout", "Finishes Updated", "Front beds, walkway, house numbers and lighting"],
-       ["wallet", "Planning Range", "$5,800 to $8,300 \u00b7 highest resale return"]]),
+       ["layers", "Design Intensity", "Highest resale return"]]),
   ];
 
   const LND = (name: string, cap: string, budget: string, strength: [string,string,string][]): [string, GView] =>
-    [name, V(name, PHOTOS.yardBefore, PHOTOS.yardAfter, cap, "Before", "After", "Within Target",
+    [name, V(name, PHOTOS.yardBefore, PHOTOS.yardAfter, cap, "Before", "After", "Reality Lock On",
       ["Reality Lock On", budget, "Design DNA \u00b7 Layered Modern"], strength)];
 
   const LANDSCAPE_SUBS: [string, GView][] = [
-    LND("Front Yard", "Front Yard \u00b7 Layered Modern \u00b7 $8.9K to $12.6K", "Makeover \u00b7 Under $15K",
+    LND("Front Yard", "Front Yard \u00b7 Layered Modern", "Makeover",
       [["ruler", "Architecture Preserved", "Property lines, walkway and grade unchanged"],
        ["sprout", "Planting Updated", "Ornamental grasses, boxwood and lawn repair"],
-       ["wallet", "Planning Range", "$8,900 to $12,600 \u00b7 within target"]]),
-    LND("Backyard", "Backyard \u00b7 Layered Modern \u00b7 $18.4K to $24.2K", "Renovation \u00b7 Under $25K",
+       ["layers", "Design Intensity", "Furnishings and finishes"]]),
+    LND("Backyard", "Backyard \u00b7 Layered Modern", "Renovation",
       [["ruler", "Architecture Preserved", "House, fence line and grade unchanged"],
        ["squircle", "Hardscape Updated", "Concrete paver patio and connecting path"],
-       ["wallet", "Planning Range", "$18,400 to $24,200 \u00b7 pergola included"]]),
-    LND("Pool Area", "Pool Area \u00b7 Resort Calm \u00b7 $22.8K to $31.4K", "Renovation \u00b7 Under $35K",
+       ["layers", "Design Intensity", "Pergola included"]]),
+    LND("Pool Area", "Pool Area \u00b7 Resort Calm", "Renovation",
       [["ruler", "Architecture Preserved", "Pool shell, coping line and setbacks unchanged"],
        ["squircle", "Hardscape Updated", "Deck resurfacing, planters and shade structure"],
-       ["wallet", "Planning Range", "$22,800 to $31,400 \u00b7 surround only"]]),
-    LND("Patio", "Patio \u00b7 Layered Modern \u00b7 $11.2K to $15.7K", "Makeover \u00b7 Under $16K",
+       ["layers", "Design Intensity", "Surround only"]]),
+    LND("Patio", "Patio \u00b7 Layered Modern", "Makeover",
       [["ruler", "Architecture Preserved", "Rear wall openings and grade unchanged"],
        ["squircle", "Hardscape Updated", "Paver terrace, edging, low seat wall"],
-       ["wallet", "Planning Range", "$11,200 to $15,700 \u00b7 furniture excluded"]]),
-    LND("Garden", "Garden \u00b7 Layered Modern \u00b7 $6.4K to $9.1K", "Refresh \u00b7 Under $10K",
+       ["layers", "Design Intensity", "Furniture excluded"]]),
+    LND("Garden", "Garden \u00b7 Layered Modern", "Refresh",
       [["ruler", "Architecture Preserved", "Bed locations and mature trees retained"],
        ["sprout", "Planting Updated", "Perennial layers, mulch, drip irrigation"],
-       ["wallet", "Planning Range", "$6,400 to $9,100 \u00b7 planting led"]]),
+       ["layers", "Design Intensity", "Planting led"]]),
   ];
 
   const GAL: [string, GView | null][] = [
@@ -203,13 +203,13 @@ export function initExtra(timers: number[], lucide: any) {
       ["Reality Lock On", "Plan Accurate \u00b7 To Scale", "Design DNA \u00b7 Warm Minimal"],
       [["ruler", "Dimensions Held", "Every wall, opening and room size matches the plan"],
        ["box", "Consistent 3D", "Same layout rendered room by room, not reinvented"],
-       ["list-checks", "Plan To Scope", "Room areas feed material takeoffs and quantities"]])],
+       ["list-checks", "Room By Room", "Every room carries the same plan and design direction"]])],
     ["Sketch to Render", V("Sketch to Render", PHOTOS.sketchHand, PHOTOS.sketchRender,
       "Hand Sketch \u00b7 Photoreal Concept \u00b7 Warm Minimal", "Sketch", "Render", "Design Complete",
-      ["Reality Lock On", "Concept \u00b7 Under $15K", "Design DNA \u00b7 Warm Minimal"],
+      ["Reality Lock On", "Concept", "Design DNA \u00b7 Warm Minimal"],
       [["pencil", "Sketch Read", "Perspective, window and furniture placement interpreted"],
        ["image", "Photoreal Concept", "Materials and daylight applied to your own drawing"],
-       ["wallet", "Costed Concept", "Concept carries straight into a planning range"]])],
+       ["layers", "Design Ready", "Concept carries straight into the full design workflow"]])],
   ];
 
   const SUBS: Record<number, [string, GView][]> = {
@@ -589,23 +589,23 @@ export function initExtra(timers: number[], lucide: any) {
        ["mouse-pointer-click", "Precision Controls", "Keep, replace, remove or lock individual objects before regenerating."],
        ["messages-square", "Client-Ready Options", "Present alternatives, collect feedback and return to previous versions."]],
       "Build A Client Concept"],
-    ["Contractor", PHOTOS.kitchen, "Start With A Clearer Scope Before Work Begins.",
-      "Turn the approved design into an organized starting point for work items, quantities, trades and client handoff.",
-      [["hammer", "Scope From The Design", "Translate proposed changes into work items organized by trade."],
-       ["file-text", "Quote-Ready Starting Point", "Replace planning assumptions with supplier and subcontractor quotes."],
-       ["git-compare", "Fewer Handoff Gaps", "Keep the approved image, scope and change history connected."]],
-      "Build A Project Scope"],
+    ["Contractor", PHOTOS.kitchen, "Show Clients The Finished Result Before Work Begins.",
+      "Turn the approved design into a clear visual reference your client and crew can agree on before demolition day.",
+      [["hammer", "Show The Proposed Work", "Visualize the finished result of the changes you are proposing."],
+       ["file-text", "Fewer Change Orders", "Align the client on materials and finishes before work starts."],
+       ["git-compare", "Fewer Handoff Gaps", "Keep the approved image, revisions and change history connected."]],
+      "Visualize The Finished Job"],
     ["Builder", PHOTOS.craftsman, "Help Buyers Decide Before Changes Reach The Field.",
-      "Visualize finish packages and upgrades early, then keep selections, approvals and planning ranges connected to the correct home.",
+      "Visualize finish packages and upgrades early, then keep selections and approvals connected to the correct home.",
       [["layers", "Visualize The Options", "Show base, upgraded and premium packages inside the actual floor plan."],
        ["copy-check", "Repeat Proven Packages", "Reuse coordinated materials and finish sets across homes or communities."],
        ["file-check", "Document Every Decision", "Keep selections, approvals and versions tied to the correct property."]],
       "Create A Finish Package"],
     ["Landscaper", PHOTOS.resortYard, "Turn An Unfinished Yard Into A Plan Clients Can Approve.",
-      "Show planting, hardscape, lighting and outdoor living ideas on the actual property, with preliminary scope and planning ranges attached.",
+      "Show planting, hardscape, lighting and outdoor living ideas on the actual property, rendered from your own site photo.",
       [["trees", "Design On The Real Site", "Preserve the house and existing features while redesigning the surrounding space."],
        ["sliders-horizontal", "Compare Outdoor Scenarios", "Present a simple refresh, entertaining upgrade and full transformation."],
-       ["calculator", "Plan The Build", "Organize proposed materials, trades and preliminary cost ranges."]],
+       ["layers", "Show The Materials", "Present the proposed planting, hardscape and lighting choices visually."]],
       "Design An Outdoor Space"],
   ];
 
@@ -616,12 +616,12 @@ export function initExtra(timers: number[], lucide: any) {
       /* Investor: scenario comparison + deal numbers */
       `<div class="pv pv-scen">
         <div class="pv-row">
-          ${[["Refresh", PHOTOS.neutral, "Light Scope"], ["Makeover", PHOTOS.after, "Balanced Scope"], ["Renovation", PHOTOS.kitchen, "Full Scope"]]
+          ${[["Refresh", PHOTOS.neutral, "Paint & Styling"], ["Makeover", PHOTOS.after, "Furnishings"], ["Renovation", PHOTOS.kitchen, "Cabinetry"]]
             .map(([l, s, p]: any, j) => `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " scenario")}<figcaption><b>${l}</b><em class="mono">${p}</em></figcaption></figure>`).join("")}
         </div>
         <div class="pv-nums">
           <div><span class="mono">Comparable Listings</span><b class="mono">12 Nearby</b></div>
-          <div><span class="mono">Scope Level</span><b class="mono">Full Renovation</b></div>
+          <div><span class="mono">Design Intensity</span><b class="mono">Full Remodel</b></div>
           <div><span class="mono">Rooms Covered</span><b class="mono">6 Of 6</b></div>
         </div>
       </div>`,
@@ -650,7 +650,7 @@ export function initExtra(timers: number[], lucide: any) {
           ${[["Cabinetry, Shaker", "24 LF", "Carpentry"], ["Quartz Countertops", "38 SF", "Countertops"], ["Tile Backsplash", "32 SF", "Tile"], ["LVP Flooring", "210 SF", "Flooring"]]
             .map(([a, b, c]) => `<div class="pv-tr"><span>${a}</span><em class="mono">${b}</em><b class="mono">${c}</b></div>`).join("")}
         </div>
-        <div class="pv-cap mono">Contractor Planning Brief &middot; Quantities To Verify On Site</div>
+        <div class="pv-cap mono">Approved Finish Schedule &middot; Visual Reference Only</div>
       </div>`,
       /* Builder: one home, three finish packages */
       `<div class="pv pv-pack">
@@ -734,7 +734,7 @@ export function initExtra(timers: number[], lucide: any) {
       </article>
       <article class="wc">
         <div class="wc-vis wc-out">
-          <span class="wco"><i data-lucide="file-text"></i>Contractor Brief</span>
+          <span class="wco"><i data-lucide="file-text"></i>Before And After</span>
           <span class="wco"><i data-lucide="shopping-bag"></i>Shopping List</span>
           <span class="wco"><i data-lucide="link"></i>Client Link</span>
           <span class="wc-cap mono">7 Work Items Identified</span>
@@ -838,7 +838,7 @@ export function initExtra(timers: number[], lucide: any) {
          standing in the living room, looking into the kitchen. */
       short: "Photoreal View", icon: "image", title: "Photoreal View",
       copy: "The same room rendered from the living room looking into the kitchen.",
-      src: PHOTOS.sketchRender, outLabel: "Planning Range", outValue: "$49.4K\u2013$63.2K",
+      src: PHOTOS.sketchRender, outLabel: "Layout", outValue: "Preserved",
       cta: "Try It With Your Sketch",
       geometryId: PROJECT.geometryId, cameraId: CAMERA_ID,
     },

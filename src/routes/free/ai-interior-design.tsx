@@ -8,7 +8,7 @@ import { absoluteUrl } from "@/lib/site";
 
 const TITLE = "Free AI Interior Design From A Photo | REAL DESIGNS";
 const DESC =
-  "Redesign a room from one photo, free and with no signup. Keep the walls where they are and see a planning range for the work before you commit.";
+  "Redesign a room from one photo, free and with no signup. Keep the walls, windows and layout exactly where they are and compare four design intensities.";
 
 export const Route = createFileRoute("/free/ai-interior-design")({
   head: () => ({
@@ -35,7 +35,7 @@ export const Route = createFileRoute("/free/ai-interior-design")({
             { "@type": "HowToStep", position: 1, name: "Upload One Photo", text: "Take a wide shot from a corner of the room so two walls and the floor are visible." },
             { "@type": "HowToStep", position: 2, name: "Choose An Intensity", text: "Refresh keeps the layout and changes surfaces. Renovation allows cabinetry, tile and fixtures to move." },
             { "@type": "HowToStep", position: 3, name: "Generate The Design", text: "Reality Lock holds the walls, windows and doors in place while finishes change." },
-            { "@type": "HowToStep", position: 4, name: "Read The Planning Range", text: "Every design carries a cost range built from the work visible in the image." },
+            { "@type": "HowToStep", position: 4, name: "Compare The Directions", text: "Regenerate at another intensity or style and compare the versions side by side." },
           ],
         }),
       },
@@ -49,10 +49,10 @@ function FreeInteriorTool() {
     <FreeToolTemplate
       eyebrow="Free Tool"
       h1="Free AI Interior Design From A Photo"
-      lede="One photo in. A redesigned room and a planning range out. No account for your first design."
+      lede="One photo in. A photoreal redesign of that same room out. No account for your first design."
       intro={[
         "Upload a photo of a real room and get back a redesign of that same room, not a stock image of somebody else's house. The walls, windows, doors and ceiling height stay exactly where they are, because Reality Lock treats them as fixed. What changes is what you can actually change: paint, flooring, cabinetry, lighting, tile, fixtures and furniture.",
-        "Your first design is free and needs no account. You will see the redesigned room at full size and a planning range for the work it implies, so the picture and the cost arrive together instead of the cost arriving later from a contractor.",
+        "Your first design is free and needs no account. You will see the redesigned room at full size, with your walls, windows and layout held exactly as they are, so what you are looking at is your own space rather than a stock room.",
         "This tool is built for people about to spend money. A pretty render that quietly moves a load bearing wall is not a plan, it is a distraction. Everything here is anchored to the room you photographed.",
       ]}
       tool={
@@ -71,13 +71,13 @@ function FreeInteriorTool() {
           body: [
             "Stand in a corner and shoot the opposite corner. That single habit fixes most bad results. A corner shot gives two wall planes, a floor plane and usually a window, which is everything needed to understand the geometry of the room and the direction the light comes from.",
             "Shoot in daylight with the room lights on and the blinds open. Avoid flash, which flattens the shadows that describe depth. Hold the camera at chest height and keep it level. Tilting up makes the walls converge and stretches the ceiling, and a stretched ceiling produces furniture at the wrong scale.",
-            "You do not need to tidy the room first. Clutter can be removed as part of the design. What you should not do is hide a defect you intend to keep hidden, because the planning range prices what it can see and a covered up water stain becomes a surprise later.",
+            "You do not need to tidy the room first. Clutter can be removed as part of the design. What you should not do is hide a defect you intend to keep, because the design only works with what the camera can see and a covered up water stain becomes a surprise later.",
           ],
           bullets: [
             "Shoot from a corner, camera level, at chest height",
             "Daylight plus interior lights, no flash",
             "One room per photo, not a hallway view through three doorways",
-            "Include the floor. Flooring is usually the largest single surface cost",
+            "Include the floor. Flooring is usually the largest single surface in the frame",
           ],
         },
         {
@@ -85,15 +85,15 @@ function FreeInteriorTool() {
           body: [
             "Intensity is the single most important control on this page and the one most people skip. It decides whether you are looking at a weekend of painting or a permit.",
             "Refresh keeps everything structural and everything expensive. Paint, textiles, lighting and furniture change. Makeover adds flooring and fixtures. Renovation puts cabinetry, tile and plumbing fixtures in play, which is where kitchens and bathrooms get real. Reimagine is the only setting that treats the layout itself as negotiable, and it is the only one that should ever be shown to a structural engineer.",
-            "Because the intensity is a control rather than a guess, the same room can be priced four ways in a few minutes. That is usually more useful than one beautiful answer, especially when you are deciding how much of your budget a single room deserves.",
+            "Because the intensity is a control rather than a guess, the same room can be explored four ways in a few minutes. That is usually more useful than one beautiful answer, especially when you are deciding how far to take a single room.",
           ],
         },
         {
-          h2: "Why The Cost Arrives With The Picture",
+          h2: "Why Comparing Versions Beats One Render",
           body: [
-            "Design tools traditionally stop at the image. The number shows up weeks later, from a contractor, and it is usually a multiple of what the picture implied. That gap is where most projects die.",
-            "Here the design is read as a list of work. Square feet of flooring, linear feet of cabinet run, number of fixtures, area of wall to be painted. Those quantities are multiplied against published unit rates for the finish grade you selected, and the result is presented as a planning range with a confidence level.",
-            "It is a planning range and not a bid. It does not know your local labor market, your building's access restrictions, what is behind your walls or what your city charges for a permit. It is the number you use to decide whether to have the conversation, not the number you sign.",
+            "Design tools traditionally give you one polished image and no way to compare directions. Seeing a refresh, a makeover and a full remodel of the same room side by side is what actually makes the decision easy.",
+            "Every version is anchored to the same geometry, so the differences you see between them are real design differences and not a different room. Flooring, cabinetry, fixtures and furniture change while the walls, windows and ceiling stay put.",
+            "Budget and contractor scope are coming soon. They will turn on only in markets where we have licensed verified local cost data, because a made up number is worse than no number when you are about to spend money.",
           ],
         },
         {
@@ -115,8 +115,8 @@ function FreeInteriorTool() {
           a: "Photos are processed to produce your design and are attached to your project if you create an account. You can delete a project and its images at any time. Do not upload photos containing other people's private information, since a listing photo and a personal photo are not the same thing.",
         },
         {
-          q: "How accurate is the planning range?",
-          a: "It is accurate enough to plan with and never accurate enough to sign. Ranges are built from published unit rates and the quantities visible in your photo, then presented with a confidence level. Local labor rates, hidden conditions and permit costs move real bids well outside the range, in both directions.",
+          q: "Do you show what the work will cost?",
+          a: "Not yet. Budget and contractor scope are coming soon and will only switch on in markets with verified local cost data behind them. Until then REAL DESIGNS shows you the design and stays quiet about the price rather than guessing.",
         },
         {
           q: "Can I use the images in a listing or an advertisement?",
@@ -136,7 +136,7 @@ function FreeInteriorTool() {
         "/free/rehab-cost-calculator",
       ]}
       ctaTitle="Redesign The Room You Are Standing In."
-      ctaBody="One photo, four intensities, a cost range on every version. No account needed for the first one."
+      ctaBody="One photo, four intensities, your own walls held in place. No account needed for the first one."
     />
   );
 }

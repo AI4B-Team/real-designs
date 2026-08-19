@@ -18,7 +18,7 @@ export const Route = createFileRoute("/v/$slug")({
     const title = deck && !deck.locked && deck.title ? `${deck.title} | REAL DESIGNS` : "Property Presentation | REAL DESIGNS";
     const description =
       deck && !deck.locked
-        ? `${deck.address ? deck.address + " — " : ""}Video walkthrough, before and after photos and a planning range, shared through REAL DESIGNS.`
+        ? `${deck.address ? deck.address + " — " : ""}Video walkthrough plus before and after photos, shared through REAL DESIGNS.`
         : "A private property presentation shared through REAL DESIGNS.";
     return {
       meta: [
