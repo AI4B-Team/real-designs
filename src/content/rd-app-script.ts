@@ -3165,6 +3165,17 @@ export function initApp(): () => void {
     }
 
     function addRenderVariant(src, label, path) {
+      /* Version History shows this render immediately, before any save. */
+      try {
+        SESSION_VERSIONS.unshift({
+          src,
+          path: path || null,
+          label: label || "Your Render",
+          at: Date.now(),
+          room: activeStudioRoom(),
+        });
+        paintVersions();
+      } catch (_) {}
       const wrap = document.getElementById("vars");
       if (!wrap) return;
       const d = document.createElement("div");
@@ -3182,6 +3193,7 @@ export function initApp(): () => void {
         lastRenderPath = d.dataset.path || null;
       });
     }
+
 
     /* ---------- studio tools: 3D plan and walkthrough video ---------- */
     function toolOverlay(steps) {
