@@ -8,6 +8,21 @@ import { getBudgetAvailability, requestBudgetMarket, myBudgetRequests } from "@/
 
 let cached: { available: boolean; markets: string[]; headline: string; detail: string } | null = null;
 
+/**
+ * Synchronous read of the single source of truth. Defaults to "not available"
+ * so nothing budget related can render optimistically before the check lands.
+ */
+export function budgetsLive() {
+  return !!cached?.available;
+}
+
+/** Reflect availability on <html data-budgets="off|on"> so CSS can gate too. */
+function reflect(available: boolean) {
+  try {
+    document.documentElement.dataset["budgets"] = available ? "on" : "off";
+  } catch (_) {}
+}
+
 export async function budgetAvailability() {
   if (cached) return cached;
   try {
@@ -15,8 +30,10 @@ export async function budgetAvailability() {
   } catch (_) {
     cached = { available: false, markets: [], headline: "Budgets Are Coming Soon", detail: "" };
   }
+  reflect(!!cached!.available);
   return cached!;
 }
+
 
 function esc(s: any) {
   return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
