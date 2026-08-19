@@ -65,6 +65,13 @@ import {
 
 } from "@/lib/output-ratio";
 import { setHandoff } from "@/lib/handoff";
+import {
+  beginCanvasOpen,
+  canvasEntryFrom,
+  canvasOpenIsCurrent,
+  createOpenStore,
+  type CanvasEntry,
+} from "@/lib/canvas-route";
 import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
 import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
 import { PHOTO_RAIL, backFromPhotoStep, normalizePhotoStep } from "@/lib/builder-nav";
