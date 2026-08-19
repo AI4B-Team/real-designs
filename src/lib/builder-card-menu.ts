@@ -33,6 +33,18 @@ export function registerCardMenu(flow, api) {
 }
 
 /**
+ * Run one card action outside the menu, e.g. the "Replace Photo" affordance a
+ * card shows when its image cannot be resolved.
+ */
+export function runCardAction(flow, action, key) {
+  const api = FLOWS.get(flow);
+  if (!api || typeof api.run !== "function") return false;
+  try { void api.run(action, key); } catch (_) { return false; }
+  return true;
+}
+
+
+/**
  * The persistent three-dot button. Always visible, always the far top-right of
  * the image; any scene-status indicator sits to its left (see the CSS).
  */
