@@ -2350,6 +2350,9 @@ function drawStrip() {
     <button class="rds-strip-i" id="rdsStripX" aria-label="Close the photo set"><i data-lucide="x"></i></button>`;
 
   paint();
+  /* Thumbnails follow their storage path, so an expired signed URL re-signs
+     in place instead of leaving blank frames in the filmstrip. */
+  mountPhotoImages(strip);
   strip.querySelector("#rdsStripX").onclick = exitAll;
   const step = (dir) => {
     markCurrentDone();
