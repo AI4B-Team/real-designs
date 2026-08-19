@@ -775,7 +775,7 @@ function cardHtml(it, seq) {
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
-      <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}"${it.path && !it.resultUrl ? ` data-photo-path="${esc(it.path)}"` : ""} alt="${esc(it.name)}" loading="lazy">
+      <img${imgAttrs(it)} alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
@@ -2434,7 +2434,7 @@ function drawStrip() {
       .map((x) => {
         const ws = workState(x);
         return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
-            <img src="${esc(x.resultUrl || x.signed || x.previewUrl || "")}"${x.path && !x.resultUrl ? ` data-photo-path="${esc(x.path)}"` : ""} alt="${esc(x.name)}">
+            <img${imgAttrs(x)} alt="${esc(x.name)}">
             ${ws ? `<i data-lucide="${ws.icon}"></i>` : ""}
             <em>${esc(roomLabel(x))}</em></button>`;
       })
