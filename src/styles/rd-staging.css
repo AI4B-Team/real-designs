@@ -441,7 +441,16 @@
   box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
   overflow: hidden;
 }
+.rds-pop-scope {
+  padding: 8px 11px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #6b6b74;
+  background: #f6f6f8;
+  border-bottom: 1px solid var(--line, #e6e6ea);
+}
 .rds-pop-s {
+
   display: flex;
   align-items: center;
   gap: 7px;
