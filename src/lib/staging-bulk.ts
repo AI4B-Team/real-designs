@@ -576,7 +576,9 @@ export function openBulkDesign(opts) {
               : ""
           }
           <div class="rdsb-foot-row">
+            <p class="rdsb-foot-cost">${n} photo${n === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}</p>
             <div class="rdsb-foot-a">
+
 
               <button type="button" class="rdm-btn rdm-ghost" data-mfa="cancel">Cancel</button>
               <button type="button" class="rdm-btn rdm-outline" data-mfa="edit">Edit Room Types</button>

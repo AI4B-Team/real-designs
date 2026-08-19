@@ -769,15 +769,16 @@
 /* Confirmation modal: content-driven height, header and footer always visible,
    only the middle scrolls on short viewports. */
 .up-card.rdsb {
-  width: min(900px, calc(100vw - 32px));
-  max-width: 900px;
+  width: min(1000px, calc(100vw - 64px));
+  max-width: 1000px;
   text-align: left;
   display: flex;
   flex-direction: column;
-  max-height: 88vh;
+  max-height: calc(100vh - 64px);
   overflow: hidden;
   padding: 24px 28px;
 }
+
 .rdsb-body > * + * {
   margin-top: 16px;
 }
@@ -1087,38 +1088,42 @@
 }
 .rdsb-th {
   display: flex;
-  gap: 10px;
+  gap: 14px;
   flex-wrap: wrap;
   min-width: 0;
-  padding: 5px 5px 0 0;
+  overflow: visible;
+  padding: 8px 8px 0 0;
 }
 .rdsb-t {
   position: relative;
-  width: 78px;
+  width: 116px;
 }
 .rdsb-t img {
-  width: 78px;
-  height: 56px;
+  width: 116px;
+  height: 84px;
   object-fit: cover;
-  border-radius: 9px;
+  border-radius: 10px;
   display: block;
+  background: #f0f0f3;
 }
 
 .rdsb-t em {
   display: block;
+  margin-top: 4px;
   font-style: normal;
-  font-size: 0.64rem;
-  color: var(--mute-2, #6b6b74);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #17171b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .rdsb-t button {
   position: absolute;
-  right: -4px;
-  top: -4px;
-  width: 18px;
-  height: 18px;
+  right: -8px;
+  top: -8px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border-radius: 999px;
@@ -1129,9 +1134,22 @@
   box-shadow: 0 1px 3px rgba(17, 17, 17, 0.18);
 }
 .rdsb-t button svg {
-  width: 11px;
-  height: 11px;
+  width: 14px;
+  height: 14px;
 }
+@media (max-width: 720px) {
+  .rdsb-t,
+  .rdsb-t img {
+    width: 92px;
+  }
+  .rdsb-t img {
+    height: 68px;
+  }
+  .rdsb-th {
+    gap: 12px;
+  }
+}
+
 .rdsb-cost {
   display: flex;
   align-items: center;
@@ -1505,9 +1523,12 @@
 .rdsb-foot-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   flex-wrap: nowrap;
-  gap: 12px;
+  gap: 16px;
+}
+.rdsb-foot-a {
+  margin-left: auto;
 }
 
 .rdsb-foot-cost {
