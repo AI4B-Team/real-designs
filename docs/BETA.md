@@ -6,18 +6,18 @@ credits, and the checklist that must pass before paid public access opens.
 
 ## 1. Beta Scope (Genuinely Working)
 
-| Feature                     | Where                                |
-| --------------------------- | ------------------------------------ |
-| Account Authentication      | `/auth`, Supabase email + Google     |
-| Photo Upload                | Studio, Media, Add More Photos        |
-| Room Classification         | Upload pipeline, Change Room Type     |
-| Photo Design                | Studio bulk + Canvas                  |
-| Canvas Editing              | Studio Canvas                         |
-| Video Builder               | Video workflow, scenes, transitions   |
-| Media                       | Media library                         |
-| Saved Properties / Projects | Properties, Designs                   |
-| Presentations               | Presentations                         |
-| Share Links                 | Presentation and video share links    |
+| Feature                     | Where                               |
+| --------------------------- | ----------------------------------- |
+| Account Authentication      | `/auth`, Supabase email + Google    |
+| Photo Upload                | Studio, Media, Add More Photos      |
+| Room Classification         | Upload pipeline, Change Room Type   |
+| Photo Design                | Studio bulk + Canvas                |
+| Canvas Editing              | Studio Canvas                       |
+| Video Builder               | Video workflow, scenes, transitions |
+| Media                       | Media library                       |
+| Saved Properties / Projects | Properties, Designs                 |
+| Presentations               | Presentations                       |
+| Share Links                 | Presentation and video share links  |
 
 ## 2. Held Back (Hidden Or Labeled Coming Soon)
 
@@ -80,8 +80,8 @@ Full incident handling: `docs/OPERATIONS.md`.
 
 ## 7. Beta Success Metrics
 
-| Metric                    | Definition                                              | Target |
-| ------------------------- | ------------------------------------------------------- | ------ |
+| Metric                    | Definition                                               | Target |
+| ------------------------- | -------------------------------------------------------- | ------ |
 | Upload Completion         | Sessions reaching at least one stored photo              | ≥ 90%  |
 | First Design Completion   | New accounts producing a first design within session one | ≥ 70%  |
 | Saved-Project Return Rate | Testers returning to a saved project within 7 days       | ≥ 40%  |

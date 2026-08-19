@@ -5,7 +5,12 @@
  * feedback link in the topbar, "Coming Soon" pills on held-back navigation,
  * and a diagnostic ID that the feedback form attaches to every report.
  */
-import { resolveFeatures, unavailableMessage, type FeatureKey, type FeatureState } from "./features";
+import {
+  resolveFeatures,
+  unavailableMessage,
+  type FeatureKey,
+  type FeatureState,
+} from "./features";
 import { getBetaState } from "./beta.functions";
 import { newCorrelationId } from "@/lib/obs/correlation";
 
@@ -30,7 +35,12 @@ export function diagnosticId(): string {
 
 /** Optimistic default keeps held-back features off until the server answers. */
 function fallback() {
-  return resolveFeatures({ betaMode: true, allowlisted: true, stripeReady: false, emailReady: false });
+  return resolveFeatures({
+    betaMode: true,
+    allowlisted: true,
+    stripeReady: false,
+    emailReady: false,
+  });
 }
 
 export function betaFeature(key: FeatureKey): FeatureState {

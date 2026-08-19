@@ -53,7 +53,13 @@ export const FEATURES: FeatureDef[] = [
   { key: "canvas", name: "Canvas Editing", inBeta: true, offMode: "hidden" },
   { key: "video_builder", name: "Video Builder", inBeta: true, offMode: "hidden" },
   { key: "media", name: "Media", inBeta: true, offMode: "hidden", view: "media" },
-  { key: "projects", name: "Saved Properties And Projects", inBeta: true, offMode: "hidden", view: "props" },
+  {
+    key: "projects",
+    name: "Saved Properties And Projects",
+    inBeta: true,
+    offMode: "hidden",
+    view: "props",
+  },
   { key: "presentations", name: "Presentations", inBeta: true, offMode: "hidden", view: "present" },
   { key: "share_links", name: "Share Links", inBeta: true, offMode: "hidden" },
   {

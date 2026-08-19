@@ -19,14 +19,14 @@ Date: 2026-08-19 · Decision: **GO for controlled closed beta (allowlist only)**
 
 ## Blockers For Paid Public Access
 
-| # | Blocker | Owner action |
-| - | ------- | ------------ |
-| 1 | Stripe billing is not connected; checkout and credit purchase do not exist | Enable Stripe, then flip `billing` to in-beta |
-| 2 | No transactional email provider/sender domain; no receipts, resets or job notices | Connect sender domain, then flip `automated_email` |
-| 3 | Budget and contractor scope are unpriced | Verify a market before exposing any number |
-| 4 | Automated listing import has no compliant provider | Keep server guard on |
-| 5 | Manual beta test matrix (`docs/BETA-CHECKLIST.md`) not yet executed end to end on new accounts | Run all rows at all widths |
-| 6 | Public API and white label incomplete | Keep hidden |
+| #   | Blocker                                                                                        | Owner action                                       |
+| --- | ---------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1   | Stripe billing is not connected; checkout and credit purchase do not exist                     | Enable Stripe, then flip `billing` to in-beta      |
+| 2   | No transactional email provider/sender domain; no receipts, resets or job notices              | Connect sender domain, then flip `automated_email` |
+| 3   | Budget and contractor scope are unpriced                                                       | Verify a market before exposing any number         |
+| 4   | Automated listing import has no compliant provider                                             | Keep server guard on                               |
+| 5   | Manual beta test matrix (`docs/BETA-CHECKLIST.md`) not yet executed end to end on new accounts | Run all rows at all widths                         |
+| 6   | Public API and white label incomplete                                                          | Keep hidden                                        |
 
 ## Known Limitations Communicated To Testers
 

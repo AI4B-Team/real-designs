@@ -39,7 +39,6 @@ export async function submitFeedback(input: FeedbackInput): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-
 export type FeedbackRow = {
   id: string;
   category: string;
