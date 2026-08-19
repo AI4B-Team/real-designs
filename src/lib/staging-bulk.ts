@@ -289,7 +289,7 @@ export function openBulkDesign(opts) {
               <select id="rdsbInt">${["Refresh", "Makeover", "Full Remodel"]
                 .map((o) => `<option${o === form.intensity ? " selected" : ""}>${o}</option>`)
                 .join("")}</select></div>
-            <div class="rdsb-f"><label for="rdsbGrade">Finish grade</label>
+            <div class="rdsb-f"><label for="rdsbGrade">Finish Grade</label>
               <select id="rdsbGrade">${["Rental Grade", "Retail Grade", "Luxury Grade"]
                 .map((o) => `<option${o === form.grade ? " selected" : ""}>${o}</option>`)
                 .join("")}</select></div>
