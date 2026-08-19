@@ -9422,7 +9422,11 @@ ${picks
         state.saved = true;
         state.photo = true;
       }
-      if (stats.designs > 0) state.photo = true;
+      if (stats.designs > 0) {
+        state.photo = true;
+        state.design = true;
+      }
+
       save();
       card.hidden = false;
       const dup = document.getElementById("obCard");
