@@ -2639,7 +2639,10 @@ function allowanceCsv(){
 let scopeBusy=false;
 async function runScope(){
   if(scopeBusy) return;
+  /* Budgets are gated: never call the priced preview while it is coming soon. */
+  try{ if(!(await budgetAvailability()).available) return; }catch(_){ return; }
   scopeBusy=true;
+
   const sel=document.getElementById('scMarket');
   const runBtn=document.getElementById('scRun');
   const val=(id,d)=>{const v=parseFloat((document.getElementById(id)||{}).value);return Number.isFinite(v)&&v>0?v:d;};
