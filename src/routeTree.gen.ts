@@ -46,6 +46,7 @@ import { Route as PricingCompareRouteImport } from './routes/pricing_.compare'
 import { Route as PricingCreditsRouteImport } from './routes/pricing_.credits'
 import { Route as VSlugRouteImport } from './routes/v.$slug'
 import { Route as ApiPublicFoundingRouteImport } from './routes/api/public/founding'
+import { Route as ApiPublicHealthRouteImport } from './routes/api/public/health'
 import { Route as AuthenticatedAppMediaVideoNewRouteImport } from './routes/_authenticated/app_.media.video.new'
 
 const IndexRoute = IndexRouteImport.update({
@@ -232,6 +233,11 @@ const ApiPublicFoundingRoute = ApiPublicFoundingRouteImport.update({
   path: '/api/public/founding',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicHealthRoute = ApiPublicHealthRouteImport.update({
+  id: '/api/public/health',
+  path: '/api/public/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAppMediaVideoNewRoute =
   AuthenticatedAppMediaVideoNewRouteImport.update({
     id: '/app_/media/video/new',
@@ -276,6 +282,7 @@ export interface FileRoutesByFullPath {
   '/v/$slug': typeof VSlugRoute
   '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/app/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRoutesByTo {
@@ -315,6 +322,7 @@ export interface FileRoutesByTo {
   '/v/$slug': typeof VSlugRoute
   '/free': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/app/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRoutesById {
@@ -356,6 +364,7 @@ export interface FileRoutesById {
   '/v/$slug': typeof VSlugRoute
   '/free/': typeof FreeIndexRoute
   '/api/public/founding': typeof ApiPublicFoundingRoute
+  '/api/public/health': typeof ApiPublicHealthRoute
   '/_authenticated/app_/media/video/new': typeof AuthenticatedAppMediaVideoNewRoute
 }
 export interface FileRouteTypes {
@@ -397,6 +406,7 @@ export interface FileRouteTypes {
     | '/v/$slug'
     | '/free/'
     | '/api/public/founding'
+    | '/api/public/health'
     | '/app/media/video/new'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -436,6 +446,7 @@ export interface FileRouteTypes {
     | '/v/$slug'
     | '/free'
     | '/api/public/founding'
+    | '/api/public/health'
     | '/app/media/video/new'
   id:
     | '__root__'
@@ -476,6 +487,7 @@ export interface FileRouteTypes {
     | '/v/$slug'
     | '/free/'
     | '/api/public/founding'
+    | '/api/public/health'
     | '/_authenticated/app_/media/video/new'
   fileRoutesById: FileRoutesById
 }
@@ -515,6 +527,7 @@ export interface RootRouteChildren {
   VSlugRoute: typeof VSlugRoute
   FreeIndexRoute: typeof FreeIndexRoute
   ApiPublicFoundingRoute: typeof ApiPublicFoundingRoute
+  ApiPublicHealthRoute: typeof ApiPublicHealthRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -778,6 +791,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicFoundingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/health': {
+      id: '/api/public/health'
+      path: '/api/public/health'
+      fullPath: '/api/public/health'
+      preLoaderRoute: typeof ApiPublicHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/app_/media/video/new': {
       id: '/_authenticated/app_/media/video/new'
       path: '/app/media/video/new'
@@ -839,6 +859,7 @@ const rootRouteChildren: RootRouteChildren = {
   VSlugRoute: VSlugRoute,
   FreeIndexRoute: FreeIndexRoute,
   ApiPublicFoundingRoute: ApiPublicFoundingRoute,
+  ApiPublicHealthRoute: ApiPublicHealthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
