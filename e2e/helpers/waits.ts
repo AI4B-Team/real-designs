@@ -53,8 +53,8 @@ export async function expectNoRedirect(page: Page, path: string): Promise<void> 
  * Server-rendered markup is clickable before hydration, but those clicks are
  * dropped on the floor, so acting too early makes a working UI look broken.
  */
-export async function gotoHydrated(page: Page, path: string): Promise<void> {
-  await page.goto(path);
+export async function gotoHydrated(page: Page, path: string) {
+  const response = await page.goto(path);
   await page.waitForFunction(
     () => {
       const nodes = document.querySelectorAll("body *");
@@ -66,4 +66,5 @@ export async function gotoHydrated(page: Page, path: string): Promise<void> {
     undefined,
     { timeout: 30_000 },
   );
+  return response;
 }
