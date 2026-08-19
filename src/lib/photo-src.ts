@@ -204,8 +204,10 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
     el.style.backgroundImage = `url("${url}")`;
   }
   el.dataset["painted"] = "1";
+  loadingOff(el);
   return true;
 }
+
 
 /* One sweeper for the whole app: re-signs any tracked, still-mounted element
    whose URL is about to expire. Nothing else in the card is touched. */
