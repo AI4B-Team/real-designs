@@ -14,7 +14,7 @@ import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
 import { getMyCredits } from "@/lib/credits.functions";
 import { setModalButtonLoading } from "@/lib/modal-footer";
-import { effectiveRatio, normalizeOutputRatio, ratioLabel } from "@/lib/output-ratio";
+import { PRIMARY_OUTPUT_RATIOS, effectiveRatio, normalizeOutputRatio, ratioLabel } from "@/lib/output-ratio";
 import { openUpgrade } from "@/lib/rd-upgrade";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
