@@ -3515,7 +3515,11 @@ export function initApp(): () => void {
       if (sub) sub.textContent = activeRoom || "This Design";
 
       list = list.slice(0, 6);
-      if (!list.length) {
+      const norm2 = norm;
+      const session = SESSION_VERSIONS.filter(
+        (v) => !activeRoom || !v.room || norm2(v.room) === norm2(activeRoom),
+      ).slice(0, 6);
+      if (!list.length && !session.length) {
         el.innerHTML =
           '<div style="padding:6px 0"><b style="font-size:.85rem">No Versions Yet</b>' +
           '<p style="font-size:.78rem;color:var(--mute-2);margin-top:4px">Your generated and approved versions will appear here.</p></div>';
@@ -3528,20 +3532,42 @@ export function initApp(): () => void {
         if (s < 172800) return Math.round(s / 3600) + "h ago";
         return Math.round(s / 86400) + "d ago";
       };
-      el.innerHTML = list
-        .map((v, i) => {
-          const st =
-            v.status === "approved"
-              ? ["p-ok", "Live"]
-              : v.status === "review"
-                ? ["p-amb", "Review"]
-                : ["p-gray", i === 0 ? "Latest" : "Past"];
-          const lab =
-            (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
-          return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v.room_name} v${v.version_no || 1}</b><span>${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
-        })
+      const sessionHTML = session
+        .map(
+          (v, i) =>
+            `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, v.label + " render")}</span>` +
+            `<span class="rowt"><b>${v.label}</b><span>${ago(new Date(v.at).toISOString())}</span></span>` +
+            `<span class="pill ${i === 0 ? "p-ok" : "p-gray"}">${i === 0 ? "Latest" : "Past"}</span></button>`,
+        )
         .join("");
+      el.innerHTML =
+        sessionHTML +
+        list
+          .map((v, i) => {
+            const st =
+              v.status === "approved"
+                ? ["p-ok", "Live"]
+                : v.status === "review"
+                  ? ["p-amb", "Review"]
+                  : ["p-gray", !session.length && i === 0 ? "Latest" : "Past"];
+            const lab =
+              (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
+            return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v.room_name} v${v.version_no || 1}</b><span>${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
+          })
+          .join("");
+      el.querySelectorAll(".ver-row").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const v = session[+btn.dataset.vi];
+          if (!v || !cAfter) return;
+          el.querySelectorAll(".ver-row").forEach((x) => x.classList.remove("on"));
+          btn.classList.add("on");
+          cAfter.innerHTML = photo(v.src, v.label + " render");
+          lastRender = v.src;
+          lastRenderPath = v.path || null;
+        });
+      });
     }
+
 
     paintVersions();
     window.addEventListener("rd:saved", paintVersions);
