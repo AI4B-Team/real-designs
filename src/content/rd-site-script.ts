@@ -60,8 +60,13 @@ export function initSite(): () => void {
     };
     document.querySelectorAll(".samp").forEach((s, i) => {
       const pals = [PHOTOS.before, PALS.coastal, PALS.farm, PALS.green];
-      s.innerHTML = room(i === 0 ? "before" : "after", pals[i]);
+      const sample = HERO_SAMPLES[i];
+      s.innerHTML =
+        room(i === 0 ? "before" : "after", pals[i]) +
+        '<span class="samp-zoom" aria-hidden="true"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4M11 8.5v5M8.5 11h5"/></svg></span>';
+      if (sample) s.setAttribute("aria-label", "Preview " + sample.name);
     });
+
 
     /* ---------- hero: one continuous property tour ---------- */
     let budgetTouched = false;
