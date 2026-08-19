@@ -493,7 +493,7 @@
 }
 .rdsb-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .rdsb-chk { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.78rem; font-weight: 600; }
-.rdsb-groups { margin-top: 12px; display: grid; gap: 10px; max-height: 260px; overflow: auto; }
+.rdsb-groups { margin-top: 12px; display: grid; gap: 10px; max-height: 320px; overflow: auto; padding-right: 4px; padding-bottom: 4px; }
 .rdsb-g { border: 1px solid var(--line, #e5e5ea); border-radius: 12px; padding: 10px; }
 .rdsb-g > b { display: block; font-size: 0.78rem; }
 .rdsb-g > span { display: block; font-size: 0.72rem; color: var(--mute-2, #6b6b74); margin-bottom: 6px; }
