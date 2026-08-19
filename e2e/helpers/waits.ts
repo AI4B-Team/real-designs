@@ -46,3 +46,24 @@ export async function expectNoRedirect(page: Page, path: string): Promise<void> 
   await page.waitForLoadState("networkidle");
   expect(new URL(page.url()).pathname).toBe(path);
 }
+
+/**
+ * Navigates and waits until React has hydrated the page.
+ *
+ * Server-rendered markup is clickable before hydration, but those clicks are
+ * dropped on the floor, so acting too early makes a working UI look broken.
+ */
+export async function gotoHydrated(page: Page, path: string): Promise<void> {
+  await page.goto(path);
+  await page.waitForFunction(
+    () => {
+      const nodes = document.querySelectorAll("body *");
+      for (const n of nodes) {
+        for (const k in n) if (k.startsWith("__reactFiber$")) return true;
+      }
+      return false;
+    },
+    undefined,
+    { timeout: 30_000 },
+  );
+}
