@@ -450,7 +450,7 @@
   .rdsb-out-row { flex-direction: column; }
   .rdsb-out-c.right { text-align: left; align-items: flex-start; }
 }
-.rdsb-head { flex: 0 0 auto; }
+.rdsb-head { flex: 0 0 auto; margin-bottom: 14px; }
 .rdsb-head h3 { margin-bottom: 6px; }
 .rdsb-head p { margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rdsb-body { flex: 1 1 auto; overflow-y: auto; overflow-x: hidden; padding-right: 2px; }
