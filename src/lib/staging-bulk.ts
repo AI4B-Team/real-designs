@@ -483,29 +483,51 @@ export function openBulkDesign(opts) {
             </div>
           </div>
         </div>
-        ${
-          barMsg
-            ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(barMsg)}</p>${
-                short ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>` : ""
-              }</div>`
-            : ""
-        }
-        ${modalFooterHtml({
-          extra: { label: "Cancel", value: "cancel" },
-          secondary: { label: "Edit Room Types", value: "edit", variant: "outline" },
-          primary: {
-            label: `Generate ${n} Design${n === 1 ? "" : "s"} · ${cost} Credit${cost === 1 ? "" : "s"}`,
-            value: "go",
-            disabled: !!block || submitted,
-            hint: hint || "",
-            loadingLabel: `Generating ${n} Design${n === 1 ? "" : "s"}…`,
-          },
-        })}
+        <div class="rdsb-foot">
+          ${
+            barMsg
+              ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(barMsg)}</p>${
+                  short ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>` : ""
+                }</div>`
+              : ""
+          }
+          <div class="rdsb-foot-row">
+            <p class="rdsb-foot-cost">${n} photo${n === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}</p>
+            <div class="rdsb-foot-a">
+              <button type="button" class="rdm-btn rdm-ghost" data-mfa="cancel">Cancel</button>
+              <button type="button" class="rdm-btn rdm-outline" data-mfa="edit">Edit Room Types</button>
+              <button type="button" class="rdm-btn rdm-primary" data-mfa="go"${block || submitted ? ' disabled aria-disabled="true"' : ""}${hint ? ` title="${esc(hint)}"` : ""}>Generate ${n} Design${n === 1 ? "" : "s"}</button>
+            </div>
+          </div>
+        </div>
       </div>`;
     paint();
 
     node.querySelectorAll("[data-close]").forEach((b) => (b.onclick = close));
     node.querySelector('[data-mfa="cancel"]').onclick = close;
+    node.querySelectorAll("[data-ack]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          readForm();
+          const space = b.getAttribute("data-ack");
+          const id = form.spaceStyles[space] || form.styleId || "";
+          /* Acknowledged once: the same recommendation never returns. */
+          ackUnusual[id + ":" + space] = true;
+          draw();
+        }),
+    );
+    node.querySelectorAll("[data-restyle]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          readForm();
+          const space = b.getAttribute("data-restyle");
+          const sel = node.querySelector(
+            form.spaceStyles[space] ? `[data-spacestyle="${space}"]` : "#rdsbStyle",
+          );
+          if (sel && sel.focus) sel.focus();
+        }),
+    );
+
     node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach(
       (el) =>
         (el.onchange = () => {
