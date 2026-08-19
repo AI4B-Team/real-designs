@@ -3254,6 +3254,13 @@ export function initApp(): () => void {
        the upload fails we keep the preview, say so plainly, and offer a retry
        that re-uploads the SAME image (no second generation, no second charge). */
     let PENDING_SAVE = null;
+    /* The persistent version currently shown on the canvas, and whether a save
+       is still running. Approval may only ever target a saved version. */
+    let DISPLAYED_VERSION = null;
+    let VERSION_SAVING = false;
+    /** A render that reached storage but whose version row still has to be written. */
+    let PENDING_VERSION = null;
+
     function paintSaveWarn() {
       const w = document.getElementById("studioSaveWarn");
       if (w) w.hidden = !(PENDING_SAVE || PENDING_VERSION);
