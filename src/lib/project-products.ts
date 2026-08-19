@@ -8,7 +8,7 @@
  * Storage is per device (localStorage) until a products table is provisioned.
  */
 
-import type { NormalizedProduct, ProductStatus } from "@/lib/product-catalog";
+import { isSampleRecord, type NormalizedProduct, type ProductStatus } from "@/lib/product-catalog";
 
 export interface ProjectProduct extends NormalizedProduct {
   recordId: string;
@@ -23,7 +23,8 @@ export interface ProjectProduct extends NormalizedProduct {
   hotspotId: string;
   detectedCategory: string;
   phase: string;
-  budgetCategory: string;
+  /** Renamed from budgetCategory: shopping price tier, not a renovation budget line. */
+  priceTier: string;
   notes: string;
   dnaScope: "none" | "property" | "rooms" | "room";
   addedAt: string;
@@ -34,12 +35,17 @@ export interface ProjectProduct extends NormalizedProduct {
 const KEY = "rd.projectProducts.v1";
 
 function read(): ProjectProduct[] {
+  let v: unknown = [];
   try {
-    const v = JSON.parse(localStorage.getItem(KEY) || "[]");
-    return Array.isArray(v) ? v : [];
+    v = JSON.parse(localStorage.getItem(KEY) || "[]");
   } catch {
     return [];
   }
+  if (!Array.isArray(v)) return [];
+  // Legacy records used budgetCategory; sample/mock records must never surface.
+  return (v as Array<ProjectProduct & { budgetCategory?: string }>)
+    .filter((r) => r && !isSampleRecord(r as never))
+    .map((r) => (r.priceTier ? r : { ...r, priceTier: r.budgetCategory || "" }));
 }
 
 function write(list: ProjectProduct[]) {
@@ -72,7 +78,8 @@ export interface AddInput {
   hotspotId: string;
   detectedCategory: string;
   phase: string;
-  budgetCategory: string;
+  /** Renamed from budgetCategory: shopping price tier, not a renovation budget line. */
+  priceTier: string;
   notes: string;
   dnaScope: ProjectProduct["dnaScope"];
 }
@@ -98,7 +105,7 @@ export function addProduct(input: AddInput): { record: ProjectProduct; duplicate
     existing.status = input.status;
     existing.notes = input.notes || existing.notes;
     existing.phase = input.phase;
-    existing.budgetCategory = input.budgetCategory;
+    existing.priceTier = input.priceTier;
     existing.dnaScope = input.dnaScope;
     existing.priceHistory.push({ at: now, price });
     write(list);
@@ -118,7 +125,7 @@ export function addProduct(input: AddInput): { record: ProjectProduct; duplicate
     hotspotId: input.hotspotId,
     detectedCategory: input.detectedCategory,
     phase: input.phase,
-    budgetCategory: input.budgetCategory,
+    priceTier: input.priceTier,
     notes: input.notes,
     dnaScope: input.dnaScope,
     addedAt: now,
@@ -153,23 +160,30 @@ export function lockedCategories(roomId: string): string[] {
   return Array.from(new Set(roomSelections(roomId).map((r) => r.detectedCategory)));
 }
 
-export interface BudgetRollup {
+export interface ShoppingTotal {
   subtotal: number;
-  tax: number;
-  delivery: number;
-  contingency: number;
-  total: number;
   count: number;
+  /** products with no known price, excluded from the subtotal */
+  unpriced: number;
 }
 
-/** Estimated rollup. Tax and delivery are estimates until a retailer quote exists. */
-export function budgetRollup(filter?: (r: ProjectProduct) => boolean): BudgetRollup {
-  const list = read().filter((r) => (filter ? filter(r) : true)).filter((r) => r.status !== "saved");
-  const subtotal = list.reduce((n, r) => n + (r.salePrice ?? r.regularPrice ?? 0) * (r.quantity || 1), 0);
-  const tax = subtotal * 0.08;
-  const delivery = list.length ? Math.min(750, 45 * list.length) : 0;
-  const contingency = subtotal * 0.1;
-  return { subtotal, tax, delivery, contingency, total: subtotal + tax + delivery + contingency, count: list.length };
+/**
+ * Shopping total only: the sum of real prices the user actually saved.
+ * No invented tax, delivery or contingency, and never presented as a
+ * renovation budget.
+ */
+export function shoppingTotal(filter?: (r: ProjectProduct) => boolean): ShoppingTotal {
+  const list = read()
+    .filter((r) => (filter ? filter(r) : true))
+    .filter((r) => r.status !== "saved");
+  let subtotal = 0;
+  let unpriced = 0;
+  list.forEach((r) => {
+    const price = r.salePrice ?? r.regularPrice;
+    if (typeof price === "number") subtotal += price * (r.quantity || 1);
+    else unpriced++;
+  });
+  return { subtotal, count: list.length, unpriced };
 }
 
 export const STATUS_LABEL: Record<ProductStatus, string> = {
