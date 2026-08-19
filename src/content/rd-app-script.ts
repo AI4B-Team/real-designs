@@ -8136,7 +8136,9 @@ ${picks
         const tl = document.getElementById("setupCtxTool");
         if (sp)
           sp.textContent = space === "garden" ? "Garden" : space === "exterior" ? "Exterior" : "Interior";
-        if (rm) rm.textContent = currentRoomType();
+        if (rm)
+          rm.textContent = String(currentRoomType() || "")
+            .replace(/\b\w/g, (m) => m.toUpperCase());
         if (tl) tl.textContent = toolLabel(activeToolName(), space);
       }
       try {
