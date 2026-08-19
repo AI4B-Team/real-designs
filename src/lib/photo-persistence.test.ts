@@ -7,12 +7,14 @@
  * expiring URLs, refreshes, leaving and returning, draft restoration, partial
  * API failures, a second tab, and deleting one photo.
  */
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const resolve = vi.fn();
+const signedExp = vi.fn<(p: string) => number | null>(() => null);
 vi.mock("@/lib/room-photos", () => ({
   resolvePhotoUrl: (...a: any[]) => resolve(...a),
   isStoredPhoto: (p: string) => !/^(https?:|blob:|\/|data:)/.test(p),
+  signedPhotoExpiry: (p: string) => signedExp(p),
 }));
 
 const load = async () => {
@@ -37,6 +39,8 @@ function card(key: string, path: string, src = "") {
 
 beforeEach(() => {
   resolve.mockReset();
+  signedExp.mockReset();
+  signedExp.mockReturnValue(null);
   document.body.innerHTML = "";
   /* jsdom never actually loads an image; the probe resolves immediately. */
   class OkImage {
@@ -210,5 +214,65 @@ describe("draft restoration", () => {
       out.push(x);
     }
     expect(out.map((o) => o.path)).toEqual(["u/a.jpg", "u/b.jpg"]);
+  });
+});
+
+describe("signed URL lifetime", () => {
+  it("caches against the signature it actually holds, not the lifetime it asked for", async () => {
+    /* Another caller already signed this object for one hour, so a six hour
+       request reuses that short URL. Caching the optimistic figure is what
+       let every tile in a grid go gray at the same moment. */
+    resolve.mockResolvedValue("https://cdn.test/a.jpg?token=short");
+    signedExp.mockReturnValue(Date.now() + 60 * 60 * 1000);
+    const { photoSrc, photoSrcStale } = await load();
+    await photoSrc("u/a.jpg");
+    expect(photoSrcStale("u/a.jpg")).toBe(false);
+    vi.setSystemTime(new Date(Date.now() + 55 * 60 * 1000));
+    expect(photoSrcStale("u/a.jpg")).toBe(true);
+    vi.useRealTimers();
+  });
+
+  it("keeps a background tile visible and recovers it after one refresh", async () => {
+    resolve
+      .mockResolvedValueOnce("https://cdn.test/a.jpg?token=dead")
+      .mockResolvedValueOnce("https://cdn.test/a.jpg?token=fresh");
+    let attempt = 0;
+    class FlakyImage {
+      onload: null | (() => void) = null;
+      onerror: null | (() => void) = null;
+      set src(v: string) {
+        const bad = v.includes("dead");
+        attempt += 1;
+        setTimeout(() => (bad ? this.onerror && this.onerror() : this.onload && this.onload()), 0);
+      }
+    }
+    (globalThis as any).Image = FlakyImage as any;
+    document.body.insertAdjacentHTML("beforeend", `<div class="rv-tile-th" data-img="u/a.jpg"></div>`);
+    const el = document.querySelector<HTMLElement>("[data-img]")!;
+    const { paintPhotoEl } = await load();
+    const ok = await paintPhotoEl(el, "u/a.jpg");
+    expect(ok).toBe(true);
+    expect(attempt).toBe(2);
+    expect(el.style.backgroundImage).toContain("token=fresh");
+    expect(el.classList.contains("rd-img-fail")).toBe(false);
+  });
+
+  it("shows a retryable message instead of a silent gray background tile", async () => {
+    resolve.mockResolvedValue("https://cdn.test/a.jpg?token=dead");
+    class DeadImage {
+      onload: null | (() => void) = null;
+      onerror: null | (() => void) = null;
+      set src(_v: string) {
+        setTimeout(() => this.onerror && this.onerror(), 0);
+      }
+    }
+    (globalThis as any).Image = DeadImage as any;
+    document.body.insertAdjacentHTML("beforeend", `<div class="rv-tile-th" data-img="u/b.jpg"></div>`);
+    const el = document.querySelector<HTMLElement>("[data-img]")!;
+    const { paintPhotoEl } = await load();
+    const ok = await paintPhotoEl(el, "u/b.jpg");
+    expect(ok).toBe(false);
+    expect(el.classList.contains("rd-img-fail")).toBe(true);
+    expect(el.querySelector("[data-photo-retry]")).toBeTruthy();
   });
 });
