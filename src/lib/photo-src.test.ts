@@ -21,6 +21,16 @@ const load = async () => {
 beforeEach(() => {
   resolve.mockReset();
   document.body.innerHTML = "";
+  /* jsdom never fetches, so stand in for a frame that loads successfully —
+     every URL here is a healthy one. */
+  class OkImage {
+    onload: null | (() => void) = null;
+    onerror: null | (() => void) = null;
+    set src(_v: string) {
+      setTimeout(() => this.onload && this.onload(), 0);
+    }
+  }
+  (globalThis as any).Image = OkImage as any;
 });
 
 describe("resilient photo source", () => {
