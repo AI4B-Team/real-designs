@@ -53,19 +53,49 @@ export function groupBySpace(items) {
   }));
 }
 
-/** Can this style legitimately drive that space, or would it be a wrong result? */
-export function styleFitsSpace(styleId, space) {
-  if (!space || space === "unassigned") return true;
+/**
+ * Three-level style guidance.
+ *
+ * "compatible"  — the style adapts cleanly to that space.
+ * "unusual"     — technically possible, just an unconventional look. Advisory
+ *                 only: the user keeps creative control.
+ * "unsupported" — the operation itself cannot run on that space (a landscaping
+ *                 style has no ground plane indoors, an empty-room staging
+ *                 style has no room to stage on a facade).
+ */
+export function styleCompatibility(styleId, space) {
+  if (!space || space === "unassigned") return "compatible";
   const rec = STYLES.find((s) => s.id === styleId);
+  if (!rec) return "compatible";
+  const types = (rec.compatibleProjectTypes || []).filter((t) => t !== "concept");
   const want = PROJECT_TYPE[space] || "interior";
-  if (!rec || !rec.compatibleProjectTypes || !rec.compatibleProjectTypes.length) return true;
-  return rec.compatibleProjectTypes.indexOf(want) !== -1;
+  if (!types.length || types.indexOf(want) !== -1) return "compatible";
+  const only = (t) => types.every((x) => x === t);
+  /* Operation-bound styles: genuinely impossible, not merely unusual. */
+  if (only("garden") && want !== "garden") return "unsupported";
+  if (only("virtual-staging") && want !== "interior") return "unsupported";
+  return "unusual";
+}
+
+/** Only a genuine technical limitation blocks a run. */
+export function styleFitsSpace(styleId, space) {
+  return styleCompatibility(styleId, space) !== "unsupported";
 }
 
 /** Styles that can carry a given space, for the per-group fallback picker. */
 export function stylesForSpace(space) {
   return STYLES.filter((s) => s.isActive !== false && styleFitsSpace(s.id, space));
 }
+
+/** Why an operation cannot run on that space, in plain terms. */
+function unsupportedNote(styleName, space) {
+  if (space === "interior")
+    return `${styleName} is a landscaping direction — it works on outdoor ground, so it cannot be applied to an indoor room. Choose an interior direction for this group.`;
+  if (space === "exterior")
+    return `${styleName} is an empty-room staging direction — there is no room to furnish on a building exterior. Choose an exterior direction for this group.`;
+  return `${styleName} cannot be applied to these photos. Choose a compatible direction for this group.`;
+}
+
 
 /** How the shared direction is described for each space type. */
 function groupNote(space) {
