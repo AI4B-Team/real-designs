@@ -62,7 +62,10 @@ export function betaBlockedMessage(key: FeatureKey): string {
 export async function loadBetaState() {
   if (loaded) return state;
   try {
-    const res = (await getBetaState()) as any;
+    const res = (await getBetaState()) as {
+      features: Record<FeatureKey, FeatureState>;
+      betaMode: boolean;
+    };
     state = res.features;
     betaMode = !!res.betaMode;
   } catch (_) {
@@ -74,7 +77,7 @@ export async function loadBetaState() {
 
 function toast(msg: string) {
   try {
-    const t = (window as any).rdToast;
+    const t = (window as unknown as { rdToast?: (m: string) => void }).rdToast;
     if (typeof t === "function") t(msg);
     else console.warn(msg);
   } catch (_) {

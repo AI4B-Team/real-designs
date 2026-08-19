@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import type { Json } from "@/integrations/supabase/types";
 
 /**
  * Listing import API contract.
@@ -26,7 +27,10 @@ export const startListingImport = createServerFn({ method: "POST" })
     // Closed beta: automated listing import is held back, and hidden navigation
     // is not protection. Refuse the action itself.
     const { assertBetaFeature } = await import("@/lib/beta/guard.server");
-    await assertBetaFeature("listing_import", (context.claims as any)?.email ?? null);
+    await assertBetaFeature(
+      "listing_import",
+      (context.claims as { email?: string } | null)?.email ?? null,
+    );
     const { checkListingUrl, fetchListing } = await import("@/lib/listing-import.server");
     const supabase = context.supabase;
     const userId = context.userId;
@@ -109,8 +113,8 @@ export const startListingImport = createServerFn({ method: "POST" })
       .update({
         status: "ready",
         stage: "ready",
-        listing: result.listing as any,
-        photos: result.photos as any,
+        listing: result.listing as unknown as Json,
+        photos: result.photos as unknown as Json,
         photo_count: result.photos.length,
         error_code: null,
         error_message: null,
@@ -182,7 +186,10 @@ export const lookupListingByAddress = createServerFn({ method: "POST" })
   .inputValidator((d) => z.object({ address: z.string().min(3).max(300) }).parse(d))
   .handler(async ({ data, context }) => {
     const { assertBetaFeature } = await import("@/lib/beta/guard.server");
-    await assertBetaFeature("listing_import", (context.claims as any)?.email ?? null);
+    await assertBetaFeature(
+      "listing_import",
+      (context.claims as { email?: string } | null)?.email ?? null,
+    );
     const { fetchListingByAddress } = await import("@/lib/listing-import.server");
     const r = await fetchListingByAddress(data.address.trim());
     if (!r.ok)
@@ -190,14 +197,14 @@ export const lookupListingByAddress = createServerFn({ method: "POST" })
         ok: false as const,
         code: r.code,
         message: r.message,
-        listing: null as any,
-        photos: [] as any,
+        listing: null as Json,
+        photos: [] as Json[],
       };
     return {
       ok: true as const,
       code: null,
       message: "",
-      listing: r.listing as any,
-      photos: r.photos as any,
+      listing: r.listing as Json,
+      photos: r.photos as Json[],
     };
   });

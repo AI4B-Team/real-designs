@@ -397,8 +397,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       const { lookupListingByAddress } = await import("@/lib/listing-import.functions");
       const r = await lookupListingByAddress({ data: { address: v } });
       if (r?.ok && r.listing) {
-        opts.onProperty?.(r.listing.address || v);
-        const photos = (r.photos || []).map((p: any) => p.url || p.path).filter(Boolean);
+        const listing = (r.listing || {}) as Record<string, unknown>;
+        opts.onProperty?.(String(listing["address"] || v));
+        const photos = ((r.photos || []) as Array<Record<string, unknown>>)
+          .map((p) => String(p["url"] || p["path"] || ""))
+          .filter(Boolean);
         state.note = photos.length
           ? photos.length + " Listing Photos Found."
           : "Listing Found. Upload The Photos To Continue.";

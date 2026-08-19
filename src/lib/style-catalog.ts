@@ -20,6 +20,12 @@ export type StyleRecord = {
   category: string;
   aliases: string[];
   compatibleProjectTypes: ProjectType[];
+  /**
+   * Space types this style CAN be adapted to, but rarely is. Purely advisory —
+   * an empty list (the default) means no warning is ever shown. Nothing may
+   * invent an advisory at runtime: it has to be declared here.
+   */
+  uncommonProjectTypes?: ProjectType[];
   compatibleRoomTypes: string[];
   palette: string[];
   swatches: string[];
@@ -1224,6 +1230,7 @@ function build(row: Row): StyleRecord {
     category: row.cat,
     aliases: row.al || [],
     compatibleProjectTypes: types.concat(["concept"]),
+    uncommonProjectTypes: uncommonFor(row, types),
     compatibleRoomTypes:
       row.rooms || (types.includes("interior") ? ALL_ROOMS : ["Yard", "Front Elevation"]),
     palette: pal.names,
@@ -1239,6 +1246,16 @@ function build(row: Row): StyleRecord {
     isFeatured: !!row.rank,
     isActive: true,
   };
+}
+
+/**
+ * The only place an advisory can come from. One declared rule: an architectural
+ * exterior direction can be adapted indoors, but it is an uncommon choice.
+ * Everything else adapts across spaces without any warning at all.
+ */
+function uncommonFor(row: Row, types: ProjectType[]): ProjectType[] {
+  if (row.cat === "Exterior Architecture" && !types.includes("interior")) return ["interior"];
+  return [];
 }
 
 function moodFor(row: Row): string[] {
