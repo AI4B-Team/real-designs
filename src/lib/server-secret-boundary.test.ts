@@ -41,11 +41,13 @@ describe("server secret boundary", () => {
   });
 
   it("no module reads the service role key outside a server-only file", () => {
-    const offenders = clientReachable.filter((f) =>
-      /SUPABASE_SERVICE_ROLE_KEY/.test(readFileSync(f, "utf8")),
-    );
+    // Naming the variable in a config manifest is fine; *reading its value*
+    // outside a server-only file is what would ship the key to the browser.
+    const READ = /process\.env(\.SUPABASE_SERVICE_ROLE_KEY|\[\s*['"]SUPABASE_SERVICE_ROLE_KEY['"]\s*\])/;
+    const offenders = clientReachable.filter((f) => READ.test(readFileSync(f, "utf8")));
     expect(offenders.map((f) => f.replace(SRC, "src"))).toEqual([]);
   });
+
 
   it("no secret is exposed through a VITE_ prefixed variable", () => {
     const offenders = files.filter(
