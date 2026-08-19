@@ -616,13 +616,13 @@ export function initExtra(timers: number[], lucide: any) {
       /* Investor: scenario comparison + deal numbers */
       `<div class="pv pv-scen">
         <div class="pv-row">
-          ${[["Refresh", PHOTOS.neutral, "$8K–$12K"], ["Makeover", PHOTOS.after, "$18K–$26K"], ["Renovation", PHOTOS.kitchen, "$34K–$48K"]]
+          ${[["Refresh", PHOTOS.neutral, "Light Scope"], ["Makeover", PHOTOS.after, "Balanced Scope"], ["Renovation", PHOTOS.kitchen, "Full Scope"]]
             .map(([l, s, p]: any, j) => `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " scenario")}<figcaption><b>${l}</b><em class="mono">${p}</em></figcaption></figure>`).join("")}
         </div>
         <div class="pv-nums">
-          <div><span class="mono">Purchase</span><b class="mono">$285,000</b></div>
-          <div><span class="mono">Rehab Range</span><b class="mono">$18K–$26K</b></div>
-          <div><span class="mono">Potential ARV</span><b class="mono">$372,000</b></div>
+          <div><span class="mono">Comparable Listings</span><b class="mono">12 Nearby</b></div>
+          <div><span class="mono">Scope Level</span><b class="mono">Full Renovation</b></div>
+          <div><span class="mono">Rooms Covered</span><b class="mono">6 Of 6</b></div>
         </div>
       </div>`,
       /* Agent: listing photo set + staging disclosure */
@@ -674,7 +674,7 @@ export function initExtra(timers: number[], lucide: any) {
           ${[["Paver Patio", "420 SF", "Hardscape"], ["Planting Beds", "160 SF", "Planting"], ["Landscape Lighting", "9 Fixtures", "Electrical"]]
             .map(([a, b, c]) => `<div class="pv-tr"><span>${a}</span><em class="mono">${b}</em><b class="mono">${c}</b></div>`).join("")}
         </div>
-        <div class="pv-cap mono">Preliminary Materials &middot; Planning Range $14K–$22K</div>
+        <div class="pv-cap mono">Preliminary Materials &middot; 3 Categories</div>
       </div>`,
     ];
     return V[i];
@@ -723,36 +723,31 @@ export function initExtra(timers: number[], lucide: any) {
         <p>Preserve walls, windows, camera angle and selected objects with Reality Lock.</p>
       </article>
       <article class="wc">
-        <div class="wc-vis wc-band">
-          ${[["Refresh", "$5K"], ["Makeover", "$15K"], ["Renovation", "$35K"]]
-            .map(([l, v], j) => `<button type="button" class="wcb${j === 1 ? " on" : ""}" data-w="${j}"><b>${l}</b><em class="mono">${v}</em></button>`).join("")}
-          <span class="wc-cap mono" id="wcCap">Target: $15K &middot; Furniture &amp; Materials</span>
+        <div class="wc-vis wc-out">
+          <span class="wco"><i data-lucide="wand-2"></i>AI Redesign</span>
+          <span class="wco"><i data-lucide="image"></i>Photo Enhancement</span>
+          <span class="wco"><i data-lucide="video"></i>Listing Video</span>
+          <span class="wc-cap mono">Available Now &middot; One Upload</span>
         </div>
-        <h3>Design Around Your Budget</h3>
-        <p>Choose a target before generating and compare what $5K, $15K or $35K can realistically change.</p>
+        <h3>One Photo, Every Output</h3>
+        <p>Generate redesigns, virtual staging, enhanced photos and listing video from the same upload.</p>
       </article>
       <article class="wc">
         <div class="wc-vis wc-out">
           <span class="wco"><i data-lucide="file-text"></i>Contractor Brief</span>
           <span class="wco"><i data-lucide="shopping-bag"></i>Shopping List</span>
           <span class="wco"><i data-lucide="link"></i>Client Link</span>
-          <span class="wc-cap mono">Planning Range $12K&ndash;$16K &middot; 7 Work Items</span>
+          <span class="wc-cap mono">7 Work Items Identified</span>
         </div>
         <h3>Turn The Look Into A Plan</h3>
-        <p>Generate planning ranges, work items, product matches, contractor briefs and client approvals.</p>
+        <p>Generate work items, product matches, contractor briefs and client approvals.</p>
       </article>`;
-    const CAPS = ["Target: $5K &middot; Finishes &amp; Decor", "Target: $15K &middot; Furniture &amp; Materials", "Target: $35K &middot; Cabinetry &amp; Built-Ins"];
-    w3.querySelectorAll(".wcb").forEach((b: any) => b.addEventListener("click", () => {
-      w3.querySelectorAll(".wcb").forEach((x: any) => x.classList.toggle("on", x === b));
-      const c = $("wcCap"); if (c) c.innerHTML = CAPS[+b.dataset.w];
-    }));
     lucide.createIcons();
   }
 
   /* ---------- comparison table ---------- */
   const CMP: [string, string, string, string, string][] = [
     ["Preserves architecture and selected objects", "yes", "limited", "limited", "manual"],
-    ["Designs around a target budget", "yes", "no", "no", "manual"],
     ["Creates line-item planning ranges", "yes", "no", "no", "manual"],
     ["Produces shopping and contractor-ready outputs", "yes", "limited", "no", "manual"],
     ["Property-wide Design DNA", "yes", "no", "no", "manual"],
@@ -940,196 +935,6 @@ export function initExtra(timers: number[], lucide: any) {
     const el = $(id);
     if (el) el.style.backgroundImage = `url(${src})`;
   });
-
-
-  /* ---------- budget bands -> scope of work ---------- */
-  const BANDS = [
-    { sub: "Living Room &middot; Warm Minimal &middot; Refresh Band", total: "$3.2K to $5K", rows: [
-      ["Paint, Walls & Ceiling", "Painter", "1 rm", "$580 to $760"],
-      ["Cabinet Refacing, Doors", "Carpentry", "18 ea", "$1,150 to $1,700"],
-      ["Hardware & Fixtures", "Carpentry", "22 ea", "$240 to $360"],
-      ["Lighting Swap, Surface", "Electrical", "4 ea", "$380 to $560"],
-      ["Styling Package", "Furnishings", "1 set", "$850 to $1,120"],
-    ]},
-    { sub: "Living Room &middot; Warm Minimal &middot; Makeover Band", total: "$11.4K to $14.9K", rows: [
-      ["LVP Flooring, Installed", "Flooring", "340 sf", "$1,700 to $2,100"],
-      ["Paint, Walls & Ceiling", "Painter", "1 rm", "$580 to $760"],
-      ["Recessed Lighting, 6 Cans", "Electrical", "6 ea", "$1,020 to $1,380"],
-      ["Baseboard & Casing", "Carpentry", "76 lf", "$430 to $620"],
-      ["Drywall Repair & Texture", "Drywall", "1 rm", "$340 to $520"],
-      ["Furnishing Package", "Furnishings", "1 set", "$2,900 to $3,800"],
-    ]},
-    { sub: "Living Room &middot; Warm Minimal &middot; Renovation Band", total: "$26K to $35K", rows: [
-      ["Demolition & Haul Off", "General", "1 lot", "$1,200 to $1,800"],
-      ["Cabinetry, New Boxes", "Carpentry", "24 lf", "$8,400 to $11,200"],
-      ["Island With Counter", "Carpentry", "1 ea", "$3,100 to $4,300"],
-      ["Appliance Package", "Appliances", "4 ea", "$4,200 to $6,000"],
-      ["Electrical Rough & Trim", "Electrical", "1 lot", "$2,300 to $3,100"],
-      ["Flooring & Trim", "Flooring", "340 sf", "$2,600 to $3,400"],
-    ]},
-  ];
-  const BFC = [
-    { range: "$3.2K&ndash;$5K", items: "5", status: "At Or Under Target", img: PHOTOS.bfdRefresh,
-      scope: [["Paint", "1 room"], ["Cabinet Refacing", "18 doors"], ["Lighting Swap", "4 fixtures"]] },
-    { range: "$11.4K&ndash;$14.9K", items: "6", status: "At Or Under Target", img: PHOTOS.bfdMakeover,
-      scope: [["Flooring", "340 sf"], ["Paint", "1 room"], ["Lighting", "6 cans"]] },
-    { range: "$26K&ndash;$35K", items: "6", status: "At Or Under Target", img: PHOTOS.bfdRenovation,
-      scope: [["Cabinetry", "24 lf"], ["Built-Ins", "1 wall"], ["Flooring", "340 sf"]] },
-    { range: "Your Number", items: "&mdash;", status: "Priced To Fit", img: PHOTOS.bfdMakeover,
-      scope: [["Flooring", "Optional"], ["Paint", "Optional"], ["Lighting", "Optional"]] },
-  ];
-  const OUT_LABS = [["Refresh", "Target $5K"], ["Makeover", "Target $15K"], ["Renovation", "Target $35K"]];
-  const bfSeg = $("bfSeg"), bfImg = $("bfImg"), bfScope = $("bfScope");
-  if (bfSeg && bfImg && bfScope) {
-    const bfOuts = $("bfOuts");
-    const bfOutCard = document.querySelector<HTMLElement>(".bfd-out-wrap");
-    if (bfOuts)
-      bfOuts.innerHTML = OUT_LABS.map(([lab, cost], i) =>
-        `<button class="bfd-outc${i === 1 ? " on" : ""}" data-b="${i}">
-           <span class="bfd-outc-img">${photo(BFC[i]!.img, `${lab} outcome for the same room`)}</span>
-           <b>${lab}</b><em class="mono">${cost}</em>
-         </button>`).join("");
-    const paintBFC = (n: number) => {
-      const b = BFC[n]; if (!b) return;
-      bfImg.innerHTML = photo(b.img, "Room designed to a target budget");
-      const r = $("bfRange"), it = $("bfItems"), st = $("bfStatus"), ct = $("bfCount");
-      if (r) r.innerHTML = b.range;
-      if (it) it.innerHTML = b.items;
-      if (ct) ct.innerHTML = b.items;
-      if (st) st.innerHTML = b.status;
-      bfScope.innerHTML = b.scope.map(([n2, q]) =>
-        `<li><span>${n2}</span><em class="mono">${q}</em></li>`).join("");
-      bfSeg.querySelectorAll("button").forEach((o: any) =>
-        o.classList.toggle("on", Number(o.dataset.b) === n));
-      bfOuts?.querySelectorAll("button").forEach((o: any) =>
-        o.classList.toggle("on", Number(o.dataset.b) === n));
-      if (bfOutCard) bfOutCard.style.display = n === 3 ? "none" : "";
-      lucide?.createIcons?.();
-    };
-    bfSeg.querySelectorAll("button").forEach((b: any) =>
-      b.addEventListener("click", () => paintBFC(Number(b.dataset.b))));
-    bfOuts?.querySelectorAll("button").forEach((b: any) =>
-      b.addEventListener("click", () => paintBFC(Number(b.dataset.b))));
-    paintBFC(1);
-
-
-
-    /* ----- action footer: outputs + simulated previews ----- */
-    const bfBtns = $("bfBtns"), bfPrev = $("bfPrev"), bfView = $("bfView");
-    const ACTS: Record<string, [string, string, string][]> = {
-      pro: [
-        ["brief", "file-text", "Contractor Brief"],
-        ["shop", "shopping-bag", "Product Schedule"],
-        ["share", "send", "Send To Client"],
-      ],
-      home: [
-        ["brief", "file-text", "Project Checklist"],
-        ["shop", "shopping-bag", "Shopping List"],
-        ["share", "send", "Share Project"],
-      ],
-    };
-    const docVis = (title: string, sub: string) => `
-      <div class="bfp-vis"><div class="bfp-doc">
-        <span class="bfp-doc-tag mono">PDF</span>
-        <b>${title}</b><em class="mono">${sub}</em>
-        <i></i><i></i><i class="short"></i><i></i><i class="short"></i>
-      </div></div>`;
-    const shopVis = () => `
-      <div class="bfp-vis"><div class="bfp-shop">
-        ${[PHOTOS.bfdMakeover, PHOTOS.bfdRefresh, PHOTOS.bfdRenovation, PHOTOS.after]
-          .map((p) => `<span>${photo(p, "Matched product")}</span>`).join("")}
-      </div></div>`;
-    const linkVis = () => `
-      <div class="bfp-vis"><div class="bfp-mock">
-        <span class="bfp-mock-bar"><i></i><i></i><i></i></span>
-        ${photo(PHOTOS.bfdMakeover, "Client link preview")}
-        <span class="bfp-mock-foot mono">Client View</span>
-      </div></div>`;
-    const PREV: Record<string, Record<string, string>> = {
-      pro: {
-        brief: `${docVis("Contractor Brief", "6 Work Items")}<div class="bfp-body">
-          <div class="bfp-head"><b>Contractor Brief</b><span class="mono">Preview</span></div>
-          <ul class="bfp-rows">
-            <li><span>Project Summary</span><em>Living Room &middot; Warm Minimal</em></li>
-            <li><span>Work Items</span><em>6 Items</em></li>
-            <li><span>Required Trades</span><em>Flooring, Paint, Electrical</em></li>
-            <li><span>Planning Range</span><em>$11.4K&ndash;$14.9K</em></li>
-          </ul>
-          <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="download"></i>Download PDF</a></div>`,
-        shop: `${shopVis()}<div class="bfp-body">
-          <div class="bfp-head"><b>Product Schedule</b><span class="mono">8 Of 11 Products Matched</span></div>
-          <ul class="bfp-rows">
-            <li><span>Sofa, Cream Upholstered</span><em>Trade Pricing</em></li>
-            <li><span>Coffee Table, Oak</span><em>Lead Time 2 Weeks</em></li>
-            <li><span>Recessed Cans, 6</span><em>Supplier Matched</em></li>
-          </ul>
-          <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="shopping-bag"></i>View Product Schedule</a></div>`,
-        share: `${linkVis()}<div class="bfp-body">
-          <div class="bfp-head"><b>Send To Client</b><span class="mono ok">Ready To Send</span></div>
-          <div class="bfp-link"><i data-lucide="link"></i><span>realdesigns.ai/p/bayshore-living</span></div>
-          <ul class="bfp-rows">
-            <li><span>View Only</span><em>Anyone With The Link</em></li>
-            <li><span>Approval Access</span><em>Client Can Approve Items</em></li>
-          </ul>
-          <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="copy"></i>Copy Link</a></div>`,
-      },
-      home: {
-        brief: `${docVis("Project Checklist", "6 Tasks")}<div class="bfp-body">
-          <div class="bfp-head"><b>Project Checklist</b><span class="mono">Preview</span></div>
-          <ul class="bfp-rows">
-            <li><span>What You Are Changing</span><em>Living Room &middot; Warm Minimal</em></li>
-            <li><span>Tasks To Complete</span><em>6 Tasks</em></li>
-            <li><span>Who You Will Need</span><em>Flooring, Paint, Electrical</em></li>
-            <li><span>What To Budget</span><em>$11.4K&ndash;$14.9K</em></li>
-          </ul>
-          <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="download"></i>Download Checklist</a></div>`,
-        shop: `${shopVis()}<div class="bfp-body">
-          <div class="bfp-head"><b>Shopping List</b><span class="mono">8 Of 11 Products Matched</span></div>
-          <ul class="bfp-rows">
-            <li><span>Sofa</span><em>Closest Match</em></li>
-            <li><span>Coffee Table</span><em>Best Price</em></li>
-            <li><span>Floor Lamp</span><em>Premium</em></li>
-          </ul>
-          <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="shopping-bag"></i>View Shopping List</a></div>`,
-        share: `${linkVis()}<div class="bfp-body">
-          <div class="bfp-head"><b>Share Project</b><span class="mono ok">Ready To Share</span></div>
-          <div class="bfp-link"><i data-lucide="link"></i><span>realdesigns.ai/p/my-living-room</span></div>
-          <ul class="bfp-rows">
-            <li><span>View Only</span><em>Anyone With The Link</em></li>
-            <li><span>Feedback</span><em>Family Can Comment</em></li>
-          </ul>
-          <a href="/auth" class="btn btn-primary btn-sm"><i data-lucide="copy"></i>Copy Link</a></div>`,
-      },
-    };
-    if (bfBtns && bfPrev && bfView) {
-      let mode = "pro", open = "brief";
-      const paintPrev = () => {
-        if (!open) { bfPrev.className = "bfc-prev"; bfPrev.innerHTML = ""; return; }
-        bfPrev.className = "bfc-prev on";
-        bfPrev.innerHTML = PREV[mode]![open] || "";
-        lucide?.createIcons?.();
-      };
-
-      const paintBtns = () => {
-        bfBtns.innerHTML = ACTS[mode].map(([k, ic, lab]) =>
-          `<button class="bfc-out${open === k ? " on" : ""}" data-k="${k}"><i data-lucide="${ic}"></i>${lab}</button>`).join("");
-        bfBtns.querySelectorAll("button").forEach((b: any) =>
-          b.addEventListener("click", () => {
-            open = open === b.dataset.k ? "" : b.dataset.k;
-            paintBtns(); paintPrev();
-          }));
-        lucide?.createIcons?.();
-      };
-      bfView.querySelectorAll("button").forEach((b: any) =>
-        b.addEventListener("click", () => {
-          bfView.querySelectorAll("button").forEach((o: any) => o.classList.remove("on"));
-          b.classList.add("on"); mode = b.dataset.v; paintBtns(); paintPrev();
-        }));
-      paintBtns(); paintPrev();
-
-    }
-  }
-
 
 
 }

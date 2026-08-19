@@ -28,13 +28,6 @@ function card(n: number, cat: string, title: string, body: string, media: string
   </article>`;
 }
 
-const SCOPE_ROWS: [string, string, string][] = [
-  ["LVP Flooring, Installed", "340 sf", "$1,700 to $2,100"],
-  ["Paint, Walls & Ceiling", "1 rm", "$580 to $760"],
-  ["Recessed Lighting", "6 ea", "$1,020 to $1,380"],
-  ["Baseboard & Casing", "76 lf", "$430 to $620"],
-  ["Drywall Repair", "1 rm", "$340 to $520"],
-];
 
 const BOXES: [string, string][] = [
   ["Sofa", "left:33%;top:53%;width:37%;height:20%"],
@@ -45,12 +38,6 @@ const BOXES: [string, string][] = [
   ["Potted Tree", "left:66%;top:38%;width:12%;height:39%"],
 ];
 
-const BUDGETS: [string, string, string][] = [
-  ["Refresh", "$3.2K to $5K", PHOTOS.neutral],
-  ["Makeover", "$11.4K to $14.9K", PHOTOS.after],
-  ["Renovation", "$26K to $35K", PHOTOS.luxury],
-  ["Reimagine", "$41K to $62K", PHOTOS.midcentury],
-];
 
 
 export const showcaseHtml = `
@@ -60,7 +47,7 @@ export const showcaseHtml = `
     <div class="sec-head rv">
       <span class="eyebrow">Twelve Tools, One Running Total</span>
       <h2>Every Tool Feeds <em class="ann-underline">The Same Number.</em></h2>
-      <p class="lede">Restyle, stage, price, shop, film and plan. Each one runs on the photo you uploaded, and each one adds to a single project budget you can review with a contractor.</p>
+      <p class="lede">Restyle, stage, enhance, shop, film and present. Each one runs on the photo you uploaded, ready to review or send to a client.</p>
     </div>
     <div class="sc-grid" id="scGrid">
 
@@ -103,24 +90,20 @@ export const showcaseHtml = `
           ${cursor}
         </div>`)}
 
-      ${card(7, "Scope And Budget", "Price The Job, Not Just The Furniture",
-        "Line items, quantities, trades and local labour rates. A planning range you can review with a contractor, not a ballpark.", `
-        <div class="sc-scope">
-          <div class="sc-lyr">${im(PHOTOS.after, "Priced room")}</div>
-          <div class="sc-panel">
-            ${SCOPE_ROWS.map(([d, q, p], i) =>
-              `<div class="sc-row" style="--d:${0.25 + i * 0.2}s"><span>${d}</span><i class="mono">${q}</i><b class="mono">${p}</b></div>`).join("")}
-            <div class="sc-total" style="--d:1.45s"><span class="mono">Planning Range</span><b class="mono">$11.4K to $14.9K</b></div>
-            <span class="sc-ok mono" style="--d:1.75s">Within Target</span>
-          </div>
+      ${card(7, "Client Presentation", "Send A Link, Not A Zip File",
+        "Branded before-and-after pages clients can open, favorite and approve without an account.", `
+        <div class="sc-mls">
+          <div class="sc-lyr">${im(PHOTOS.japandi, "Branded presentation preview")}</div>
+          <span class="sc-vs mono">Client View</span>
+          <span class="sc-shield mono">Shareable &middot; No Login Required</span>
         </div>`)}
 
-      ${card(8, "Budget Mode", "Design To The Money You Have",
-        "Set the number before you generate. The AI only proposes work that plausibly fits it.", `
-        <div class="sc-budget">
-          ${BUDGETS.map(([n, , src], i) => `<div class="sc-lyr sc-b${i}">${im(src, n + " finish level")}</div>`).join("")}
-          <div class="sc-chips">${BUDGETS.map(([n], i) => `<span class="sc-chip sc-c${i}">${n}</span>`).join("")}</div>
-          <div class="sc-range mono">${BUDGETS.map(([, r], i) => `<b class="sc-r${i}">${r}</b>`).join("")}</div>
+      ${card(8, "Photo Enhancement", "Make Every Listing Photo Look Its Best",
+        "Fix lighting, color and clarity on real photos without touching the walls, windows or layout.", `
+        <div class="sc-fade">
+          <div class="sc-lyr">${im(PHOTOS.exteriorBefore, "Original photo")}</div>
+          <div class="sc-lyr sc-f2">${im(PHOTOS.exteriorAfter, "Enhanced photo")}</div>
+          <span class="sc-lab l">Original</span><span class="sc-lab r">Enhanced</span>
         </div>`)}
 
       ${card(9, "Shop The Design", "Every Piece Priced Three Ways",

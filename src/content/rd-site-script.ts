@@ -509,10 +509,6 @@ drawPlans();
 
 /* ---------- checkout, one order bump, no countdown ---------- */
 const coMask=document.getElementById('coMask');
-(function fixFoundingBonus(){
-  const b=Array.from(coMask.querySelectorAll('.co-line b')).find(x=>/Planning Pack/i.test(x.textContent||''));
-  if(b) b.textContent='Priority Render Queue Included';
-})();
 function coRender(name){
   const p=P.find(x=>x.n===name);if(!p)return;
   const base=p[bill];
