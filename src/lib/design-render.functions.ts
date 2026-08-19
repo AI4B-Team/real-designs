@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildStylePayload, providerStyleName, type ProjectType } from "@/lib/style-catalog";
+import { spacePromptIntro, spacePromptRules } from "@/lib/space-tools";
 
 /**
  * Real redesign rendering.
@@ -24,6 +25,8 @@ const Input = z.object({
   replace: z.array(z.string().max(40)).max(20).default([]),
   remove: z.array(z.string().max(40)).max(20).default([]),
   style_id: z.string().max(80).nullable().optional(),
+  /* Internal tool identifier, e.g. "Redesign" or "Virtual Stage". */
+  tool: z.string().max(40).default("Redesign"),
   project_type: z
     .enum(["interior", "exterior", "garden", "virtual-staging", "concept"])
     .default("interior"),
@@ -46,9 +49,11 @@ function buildPrompt(d: z.infer<typeof Input>): string {
   });
   const providerName = providerStyleName(style.styleId, "gemini") || style.styleName;
   const lines = [
-    `Redesign this ${d.room_type} photograph in the ${providerName} style at "${d.intensity}" intensity with ${d.grade} finishes.`,
+    spacePromptIntro(d.project_type, d.tool, d.room_type, providerName) +
+      ` Work at "${d.intensity}" intensity with ${d.grade} finishes.`,
     `Style definition: ${style.stylePrompt}.`,
     `Avoid: ${style.styleNegativePrompt}.`,
+    ...spacePromptRules(d.project_type),
     "Hard rules: keep the exact same camera angle, focal length, perspective, room proportions, window and door positions, ceiling height and natural light direction. This is a redesign of a real space, not a new room. Do not move or resize architecture. Do not add rooms, windows or walls. Photorealistic result, no text, no watermarks, no labels.",
   ];
   if (d.keep.length) lines.push(`Keep these existing objects unchanged: ${d.keep.join(", ")}.`);

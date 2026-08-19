@@ -8085,3 +8085,85 @@
   font-weight: 700;
   vertical-align: middle;
 }
+
+/* ---------------------------------------------------------------
+   Space-aware Studio Setup panel
+   The Setup card owns its own scroll: the card header and the compact
+   context summary stay put while only the controls move, so the Canvas
+   and Object Controls never shift and the page height never grows.
+   --------------------------------------------------------------- */
+@media (min-width: 1241px) {
+  .rd-app .studio > .card:first-child {
+    position: sticky;
+    top: 12px;
+    max-height: calc(100vh - var(--topbar-h, 56px) - 40px);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .rd-app .studio > .card:first-child > .card-h {
+    flex: none;
+  }
+  .rd-app .studio > .card:first-child > .card-b {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    /* the last instruction field is never clipped */
+    padding-bottom: 18px;
+  }
+}
+.rd-app .setup-ctx {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: -4px -2px 12px;
+  padding: 7px 2px 8px;
+  background: var(--card, #fff);
+  border-bottom: 1px solid var(--line, #e9e6e0);
+  font-size: 0.72rem;
+  color: var(--mute);
+}
+.rd-app .setup-ctx b {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.rd-app .setup-ctx span::before,
+.rd-app .setup-ctx em::before {
+  content: "·";
+  margin-right: 6px;
+  color: var(--line, #d9d5cd);
+}
+.rd-app .setup-ctx em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--red);
+}
+.rd-app .toolrow.on b,
+.rd-app .toolrow.on i {
+  color: var(--ink);
+}
+.rd-app .toolrow.on i {
+  color: var(--red);
+}
+.rd-app .toolrow:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 1px;
+}
+.rd-app .toolrow.off {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.rd-app .toolrow.off:hover {
+  background: none;
+}
+.rd-app .gen-hint {
+  font-size: 0.72rem;
+  color: var(--mute);
+  margin-right: 8px;
+}
