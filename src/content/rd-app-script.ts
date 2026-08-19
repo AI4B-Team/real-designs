@@ -3057,14 +3057,23 @@ export function initApp(): () => void {
         m.addEventListener("click", (e) => {
           if (e.target.closest && e.target.closest("[data-close]")) m.classList.remove("on");
         });
-        m.querySelector("#ndSave").addEventListener("click", () => {
+        m.querySelector("#ndSave").addEventListener("click", async () => {
           m.classList.remove("on");
-          go("scope");
-          setTimeout(() => {
-            const a = document.getElementById("svAddress");
-            if (a) a.scrollIntoView({ block: "center" });
-          }, 140);
+          /* Save really saves: the room (and anything generated on it) is
+             written to the account, then Studio starts clean. No navigation. */
+          try {
+            const saved =
+              STUDIO_CTX && STUDIO_CTX.roomId
+                ? await window.rdStudioBackfill()
+                : await openStudioSaveRoom();
+            if (!saved && !(STUDIO_CTX && STUDIO_CTX.roomId)) return;
+          } catch (_) {
+            return;
+          }
+          window.rdToast && window.rdToast("Room Saved");
+          clearStudioSource();
         });
+
         m.querySelector("#ndDiscard").addEventListener("click", () => {
           m.classList.remove("on");
           clearStudioSource();
