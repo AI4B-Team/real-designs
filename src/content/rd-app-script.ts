@@ -1901,6 +1901,7 @@ async function runRoomToolFlow(tool,label,useRender){
       image,
       room_type:currentRoomType(),
       direction:(document.getElementById('fStyle')||{}).value||'Warm Minimal',
+      style_id:currentStyleId(),
       grade:grade?grade.textContent:'Retail Grade',
       notes:(document.getElementById('agentNote')||{}).value||null
     }});

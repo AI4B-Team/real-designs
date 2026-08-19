@@ -1,5 +1,9 @@
 /** Prompt building and model call for the one-credit Studio room tools. */
 
+import { styleById } from "@/lib/style-catalog";
+
+const STYLE_LOOKUP = (id: string) => styleById(id);
+
 export type RoomTool = "stage" | "declutter" | "materials" | "sketch" | "angle";
 
 export type RoomToolInput = {
@@ -7,6 +11,7 @@ export type RoomToolInput = {
   image: string;
   room_type: string;
   direction: string;
+  style_id?: string | null | undefined;
   grade: string;
   notes?: string | null | undefined;
 };
@@ -60,6 +65,15 @@ export function buildToolPrompt(d: RoomToolInput): string {
       break;
   }
   lines.push(BASE);
+  /* The catalog prompt is the authoritative description of the chosen style;
+     the display name alone is too thin for the model. */
+  if (d.style_id) {
+    const rec = STYLE_LOOKUP(d.style_id);
+    if (rec) {
+      lines.push(`Style direction (${rec.displayName}): ${rec.generationPrompt}`);
+      if (rec.negativePrompt) lines.push(`Avoid: ${rec.negativePrompt}`);
+    }
+  }
   if (d.notes) lines.push(`Owner instructions: ${d.notes}`);
   return lines.join("\n");
 }
