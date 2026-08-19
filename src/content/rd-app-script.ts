@@ -3001,6 +3001,8 @@ export function initApp(): () => void {
         );
         setCanvasPhase("");
         markStudioResult();
+        finalizeGeneratedDesign(lastRenderPath);
+
         paintStudioSummary(currentBand());
         window.dispatchEvent(new Event("rd:credits-changed"));
         window.dispatchEvent(new Event("rd:photo"));
