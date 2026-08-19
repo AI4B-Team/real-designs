@@ -48,7 +48,12 @@ import {
 } from "@/lib/studio-context";
 import { mountReports } from "@/content/rd-reports";
 import { mountPropertyDetail } from "@/content/rd-property-detail";
-import { mountBudgetComingSoon, budgetAvailability, budgetsLive } from "@/lib/budget-coming-soon";
+import {
+  mountBudgetComingSoon,
+  budgetAvailability,
+  budgetsLive,
+  openBudgetPopover,
+} from "@/lib/budget-coming-soon";
 import {
   loadSampleWorkspace,
   removeSampleWorkspace,
@@ -8260,6 +8265,11 @@ ${picks
     toolRows.forEach((r) =>
       r.addEventListener("click", () => {
         const nm0 = r.getAttribute("data-tool") || "";
+        /* Budget never selects, never checks credits and never generates. */
+        if (nm0 === "Budget" && !budgetsLive()) {
+          openBudgetPopover(r as HTMLElement);
+          return;
+        }
         const sup = toolSupport(nm0, currentSpace());
         if (!sup.ok) {
           window.rdToast && window.rdToast(sup.reason as string);
