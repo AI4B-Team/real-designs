@@ -525,8 +525,8 @@ export function openBulkDesign(opts) {
               : ""
           }
           <div class="rdsb-foot-row">
-            <p class="rdsb-foot-cost">${n} selected</p>
             <div class="rdsb-foot-a">
+
               <button type="button" class="rdm-btn rdm-ghost" data-mfa="cancel">Cancel</button>
               <button type="button" class="rdm-btn rdm-outline" data-mfa="edit">Edit Room Types</button>
               <button type="button" class="rdm-btn rdm-primary" data-mfa="go"${block || submitted ? ' disabled aria-disabled="true"' : ""}${hint ? ` title="${esc(hint)}"` : ""}>Generate ${n} Design${n === 1 ? "" : "s"}</button>
