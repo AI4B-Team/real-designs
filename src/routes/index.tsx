@@ -8,9 +8,9 @@ import { FAQ } from "@/content/rd-faq";
 import "@/styles/rd-site.css";
 import { absoluteUrl } from "@/lib/site";
 
-const title = "AI Home Design and Renovation Planning | REAL DESIGNS";
+const title = "AI Home Design & Virtual Staging | REAL DESIGNS";
 const description =
-  "Turn one photo into a photoreal redesign of your real space, plus a planning budget range, shopping list and contractor planning brief.";
+  "Turn one photo into a photoreal redesign of your real space, plus a shopping list and shareable presentation.";
 
 
 export const Route = createFileRoute("/")({
