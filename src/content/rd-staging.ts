@@ -2045,8 +2045,9 @@ function mountStrip() {
   const head = document.createElement("div");
   head.id = "rdsCanvasHead";
   head.className = "rds-chead";
-  head.innerHTML = `<button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>All Rooms</button>
+  head.innerHTML = `<button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>Back To All Photos</button>
     <span class="rds-chead-t" id="rdsCanvasTitle"></span>
+    <span class="rds-chead-s" id="rdsCanvasPos"></span>
     <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
       <div class="rv-more-m">
         <button id="rdsClose">Save &amp; Exit</button>
@@ -2107,6 +2108,12 @@ function stripGuard() {
   if (head) head.classList.toggle("hide", !onStudio);
 }
 
+/** Human room label for a photo; raw filenames never reach the canvas UI. */
+function roomLabel(it) {
+  const r = String((it && it.room) || "").trim();
+  return r || "Unassigned Room";
+}
+
 function drawStrip() {
   if (!strip || !S) return;
   const list = designSet();
@@ -2114,10 +2121,9 @@ function drawStrip() {
   const cur = i >= 0 ? list[i] : null;
   const nxt = i >= 0 && i < list.length - 1 ? list[i + 1] : null;
   const title = document.getElementById("rdsCanvasTitle");
-  if (title)
-    title.textContent = cur
-      ? `${cur.room || cur.name}${list.length > 1 ? ` · ${i + 1} of ${list.length}` : ""}`
-      : "";
+  if (title) title.textContent = cur ? roomLabel(cur) : "";
+  const pos = document.getElementById("rdsCanvasPos");
+  if (pos) pos.textContent = cur && list.length > 1 ? `Photo ${i + 1} of ${list.length}` : "";
 
   strip.innerHTML = `<button class="rds-strip-i" id="rdsPrev" aria-label="Previous room" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
     <div class="rds-strip-l">${list
@@ -2126,11 +2132,10 @@ function drawStrip() {
         return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
             <img src="${esc(x.resultUrl || x.signed || x.previewUrl)}" alt="${esc(x.name)}">
             ${ws ? `<i data-lucide="${ws.icon}"></i>` : ""}
-            <em>${esc(x.room || x.name)}</em></button>`;
+            <em>${esc(roomLabel(x))}</em></button>`;
       })
       .join("")}</div>
     <button class="rds-strip-i" id="rdsNext" aria-label="Next room" ${i < 0 || i >= list.length - 1 ? "disabled" : ""}><i data-lucide="chevron-right"></i></button>
-    <span class="rds-strip-c">${i < 0 ? "" : `Room ${i + 1} Of ${list.length}`}</span>
     ${cur && cur.done && nxt ? `<button class="rds-strip-n" id="rdsNextRoom">Next Room<i data-lucide="arrow-right"></i></button>` : ""}
     <button class="rds-strip-i" id="rdsStripX" aria-label="Close the photo set"><i data-lucide="x"></i></button>`;
 
