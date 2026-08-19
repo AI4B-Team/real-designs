@@ -491,8 +491,9 @@ export function openBulkDesign(opts) {
 
           <div class="rdsb-sum">
             ${sum.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
-            <button type="button" class="rdsb-editfmt" id="rdsbFmt">Edit output format</button>
           </div>
+
+          ${fmtBlock}
 
           <div class="rdsb-cost" role="status" aria-live="polite">
             <i data-lucide="zap"></i>
