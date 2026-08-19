@@ -11396,11 +11396,13 @@ p.cmp-note {
   position: relative;
   width: min(900px, 100%);
   max-height: 90vh;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: var(--white);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 18px;
+  padding: 18px 18px 16px;
   box-shadow: 0 24px 70px rgba(17, 17, 19, 0.28);
 }
 
@@ -11409,7 +11411,8 @@ p.cmp-note {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  flex: none;
 }
 
 .rd-site .rdsg-name {
@@ -11417,8 +11420,8 @@ p.cmp-note {
   margin: 0;
 }
 
-.rd-site .rdsg-room {
-  margin: 3px 0 0;
+.rd-site .rdsg-meta {
+  margin: 4px 0 0;
   font-size: 0.74rem;
   color: var(--mute-2);
 }
@@ -11436,10 +11439,16 @@ p.cmp-note {
   cursor: pointer;
 }
 
+.rd-site .rdsg-body {
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .rd-site .rdsg-stage {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-height: 0;
 }
 
 .rd-site .rdsg-frame {
@@ -11457,8 +11466,9 @@ p.cmp-note {
 .rd-site .rdsg-img {
   display: block;
   width: 100%;
-  max-height: 56vh;
+  max-height: min(58vh, 520px);
   object-fit: contain;
+  margin: 0 auto;
 }
 
 .rd-site .rdsg-fallback {
@@ -11478,8 +11488,8 @@ p.cmp-note {
 }
 
 .rd-site .rdsg-arrow {
-  width: 42px;
-  height: 42px;
+  width: 44px;
+  height: 44px;
   flex: none;
   border-radius: 999px;
   border: 1px solid var(--line);
@@ -11496,31 +11506,35 @@ p.cmp-note {
   color: var(--red);
 }
 
-.rd-site .rdsg-pos {
-  margin: 10px 0 0;
-  text-align: center;
-  font-size: 0.72rem;
-  color: var(--mute-2);
-}
-
 .rd-site .rdsg-strip {
   display: flex;
-  gap: 8px;
-  margin-top: 10px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 12px;
+  margin-top: 22px;
   overflow-x: auto;
-  padding-bottom: 4px;
+  padding-bottom: 2px;
 }
 
 .rd-site .rdsg-thumb {
-  width: 74px;
-  height: 54px;
+  width: 92px;
   flex: none;
-  border-radius: 7px;
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-align: center;
+}
+
+.rd-site .rdsg-thumb-img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 64px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--line);
   background: #efede8;
-  padding: 0;
-  cursor: pointer;
 }
 
 .rd-site .rdsg-thumb img {
@@ -11530,16 +11544,78 @@ p.cmp-note {
   display: block;
 }
 
-.rd-site .rdsg-thumb.on {
+.rd-site .rdsg-thumb-name {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: var(--mute-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rd-site .rdsg-thumb.on .rdsg-thumb-img {
   border-color: var(--red);
   box-shadow: 0 0 0 1px var(--red);
+}
+
+.rd-site .rdsg-thumb.on .rdsg-thumb-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.rd-site .rdsg-thumb-check {
+  display: none;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: var(--red);
+  color: #fff;
+  align-items: center;
+  justify-content: center;
+}
+
+.rd-site .rdsg-thumb.committed .rdsg-thumb-check {
+  display: flex;
 }
 
 .rd-site .rdsg-foot {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 10px;
-  margin-top: 16px;
+  margin-top: 22px;
+  flex: none;
+}
+
+.rd-site .rdsg-use[disabled] {
+  cursor: default;
+  opacity: 1;
+  background: #f4f2ee;
+  color: #4a4a4a;
+  border: 1px solid var(--line);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.rd-site .rdsg-spin {
+  width: 13px;
+  height: 13px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  display: inline-block;
+  animation: rdsg-spin 0.7s linear infinite;
+}
+
+@keyframes rdsg-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .rd-site .rdsg-x:focus-visible,
@@ -11557,17 +11633,21 @@ p.cmp-note {
 
   .rd-site .rdsg-card {
     width: 100%;
-    max-height: 94vh;
+    max-height: 90vh;
     padding: 14px;
   }
 
   .rd-site .rdsg-arrow {
-    width: 46px;
-    height: 46px;
+    width: 44px;
+    height: 44px;
   }
 
   .rd-site .rdsg-img {
-    max-height: 44vh;
+    max-height: 40vh;
+  }
+
+  .rd-site .rdsg-strip {
+    justify-content: flex-start;
   }
 
   .rd-site .rdsg-foot {
@@ -11576,6 +11656,7 @@ p.cmp-note {
 
   .rd-site .rdsg-foot .btn {
     width: 100%;
+    justify-content: center;
   }
 }
 

@@ -87,13 +87,14 @@ export function openSampleGallery(opts: GalleryOptions): () => void {
   <div class="rdsg-card" role="dialog" aria-modal="true" aria-labelledby="rdsg-title">
     <div class="rdsg-head">
       <div>
-        <h3 id="rdsg-title" class="rdsg-name"></h3>
-        <p class="rdsg-room mono"></p>
+        <h3 id="rdsg-title" class="rdsg-name">Choose a Sample Photo</h3>
+        <p class="rdsg-meta mono" aria-live="polite"></p>
       </div>
       <button type="button" class="rdsg-x" data-close aria-label="Close Preview">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
+    <div class="rdsg-body">
     <div class="rdsg-stage">
       <button type="button" class="rdsg-arrow rdsg-prev" aria-label="Previous Sample">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
@@ -103,8 +104,8 @@ export function openSampleGallery(opts: GalleryOptions): () => void {
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
       </button>
     </div>
-    <p class="rdsg-pos mono" aria-live="polite"></p>
     <div class="rdsg-strip" role="tablist" aria-label="All Samples"></div>
+    </div>
     <div class="rdsg-foot">
       <button type="button" class="btn btn-ghost rdsg-cancel" data-close>Cancel</button>
       <button type="button" class="btn btn-primary rdsg-use">Use This Sample</button>
@@ -115,16 +116,14 @@ export function openSampleGallery(opts: GalleryOptions): () => void {
   const card = el.querySelector(".rdsg-card") as HTMLElement;
   const img = el.querySelector(".rdsg-img") as HTMLImageElement;
   const frame = el.querySelector(".rdsg-frame") as HTMLElement;
-  const nameEl = el.querySelector(".rdsg-name") as HTMLElement;
-  const roomEl = el.querySelector(".rdsg-room") as HTMLElement;
-  const posEl = el.querySelector(".rdsg-pos") as HTMLElement;
+  const metaEl = el.querySelector(".rdsg-meta") as HTMLElement;
   const strip = el.querySelector(".rdsg-strip") as HTMLElement;
   const useBtn = el.querySelector(".rdsg-use") as HTMLButtonElement;
 
   strip.innerHTML = items
     .map(
       (s, i) =>
-        `<button type="button" class="rdsg-thumb" role="tab" data-i="${i}" aria-label="Preview ${s.name}"><img src="${s.src}" alt="" loading="lazy"></button>`,
+        `<button type="button" class="rdsg-thumb" role="tab" data-i="${i}" aria-label="Preview ${s.name}" title="${s.name}"><span class="rdsg-thumb-img"><img src="${s.src}" alt="" loading="lazy"><span class="rdsg-thumb-check" aria-hidden="true"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></span></span><span class="rdsg-thumb-name">${s.name}</span></button>`,
     )
     .join("");
   const thumbs = Array.from(strip.querySelectorAll<HTMLButtonElement>(".rdsg-thumb"));
@@ -141,16 +140,19 @@ export function openSampleGallery(opts: GalleryOptions): () => void {
     frame.classList.remove("failed");
     img.alt = s.alt;
     img.src = s.src;
-    nameEl.textContent = s.name;
-    roomEl.textContent = s.room;
-    posEl.textContent = `${cur + 1} Of ${items.length}`;
+    const roomType = (s.room.split("·")[0] || s.room).trim();
+    metaEl.textContent = `${s.name} · ${roomType} · ${cur + 1} of ${items.length}`;
     thumbs.forEach((t, i) => {
       t.classList.toggle("on", i === cur);
+      t.classList.toggle("committed", items[i]!.index === opts.selected);
       t.setAttribute("aria-selected", i === cur ? "true" : "false");
     });
-    const isSelected = items[cur]!.index === opts.selected;
-    useBtn.textContent = isSelected ? "Selected" : "Use This Sample";
+    const isSelected = s.index === opts.selected;
+    useBtn.disabled = isSelected;
     useBtn.classList.toggle("is-selected", isSelected);
+    useBtn.innerHTML = isSelected
+      ? `<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg><span>Currently Selected</span>`
+      : `<span>Use This Sample</span>`;
     preload(cur + 1);
     preload(cur - 1);
   }
@@ -215,9 +217,15 @@ export function openSampleGallery(opts: GalleryOptions): () => void {
     }),
   );
   useBtn.addEventListener("click", () => {
+    if (useBtn.disabled) return;
     const s = items[cur]!;
-    close();
-    opts.onSelect(s.index);
+    useBtn.disabled = true;
+    useBtn.classList.add("is-busy");
+    useBtn.innerHTML = `<span class="rdsg-spin" aria-hidden="true"></span><span>Selecting…</span>`;
+    window.setTimeout(() => {
+      close();
+      opts.onSelect(s.index);
+    }, 220);
   });
 
   // Swipe on touch devices.
