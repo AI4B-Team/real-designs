@@ -37,6 +37,8 @@ URLs are signed on demand and renewed automatically (`src/lib/photo-src.ts`,
 | `reveal-videos` | Rendered videos and clips | `<userId>/...` | video/\*, 200 MB |
 | `user-audio` | Voiceover and music uploads | `<userId>/...` | audio/\*, 25 MB |
 
+Bucket limits are enforced in application code (`assertUploadAllowed`) because the hosted bucket settings are managed by the platform.
+
 Each bucket has SELECT/INSERT/UPDATE/DELETE policies restricting objects to
 the owner's first path segment. `src/lib/storage-paths.ts` is the only place
 object names are built: it sanitizes the original filename, forces a UUID and
