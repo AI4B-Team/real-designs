@@ -97,7 +97,7 @@ export async function reportServerError(
       code: record.code,
       message: record.message,
       severity: record.severity,
-      meta: record.meta,
+      meta: record.meta as never,
     });
   } catch {
     /* persistence is best effort; the log line is the source of truth */
