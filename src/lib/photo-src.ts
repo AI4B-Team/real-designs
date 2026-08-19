@@ -180,7 +180,8 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
     return false;
   }
 
-  el.__rdPhotoTries = 0;
+  /* The retry budget is only cleared once a frame actually paints: clearing
+     it here made a URL that resolves but never loads retry forever. */
   el.classList.remove("rd-img-fail");
   el.querySelector(".rd-img-fail-b")?.remove();
   el.dataset["photoPath"] = p;
