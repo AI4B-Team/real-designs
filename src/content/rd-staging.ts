@@ -20,7 +20,7 @@ import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
-import { mountPhotoImages, invalidatePhotoSrc } from "@/lib/photo-src";
+import { mountPhotoImages } from "@/lib/photo-src";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
