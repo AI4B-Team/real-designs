@@ -1160,8 +1160,17 @@ function syncSelection() {
   S.items.forEach(syncCard);
   const sel = selectedCount();
   const set = wrap.querySelector("#rdsSetRoom");
-  if (set) set.disabled = !sel;
-  /* Bulk design acts on the photos the user selected. */
+  if (set) {
+    /* The label carries its own scope: bulk edits always show the count. */
+    set.disabled = !sel;
+    const lab = set.lastChild;
+    if (lab && lab.nodeType === 3) lab.textContent = `Set Room Type${sel > 1 ? ` · ${sel}` : ""}`;
+    set.title =
+      sel > 1
+        ? `Applies one room type to all ${sel} selected photos`
+        : "Sets the room type for the selected photo";
+  }
+
   const bulk = wrap.querySelector("#rdsBulk");
   if (bulk) {
     bulk.disabled = sel < 1 || S.busy;
