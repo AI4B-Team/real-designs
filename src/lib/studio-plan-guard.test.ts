@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { APP_HTML } from "@/content/rd-app-html";
-import { APP_SCRIPT } from "@/content/rd-app-script";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { html as APP_HTML } from "@/content/rd-app-html";
 import { normalizePlan, planAllows } from "@/lib/plan";
 
 /**
@@ -11,7 +13,7 @@ import { normalizePlan, planAllows } from "@/lib/plan";
  */
 
 const html = String(APP_HTML);
-const script = String(APP_SCRIPT);
+const script = readFileSync(resolve(process.cwd(), "src/content/rd-app-script.ts"), "utf8");
 
 const toolRows = Array.from(html.matchAll(/data-tool="([^"]+)"([^>]*)/g)).map((m) => ({
   name: m[1],
