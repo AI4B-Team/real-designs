@@ -32,10 +32,13 @@ export function bundledPhotoUrl(path: string | null | undefined): string | null 
 }
 
 /** Resolve any stored photo reference to a displayable URL. */
-export async function resolvePhotoUrl(path: string | null | undefined): Promise<string | null> {
+export async function resolvePhotoUrl(
+  path: string | null | undefined,
+  opts?: { expiresIn?: number; force?: boolean },
+): Promise<string | null> {
   if (!path) return null;
   if (/^\/(?:src\/)?assets\//.test(path)) return bundledPhotoUrl(path) ?? path;
-  if (isStoredPhoto(path)) return roomPhotoUrl(path);
+  if (isStoredPhoto(path)) return roomPhotoUrl(path, opts?.expiresIn ?? 3600, opts?.force);
   return path;
 }
 
