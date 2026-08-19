@@ -2340,7 +2340,7 @@ registerCardMenu("video", {
       {
         items: [
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
-          { action: "room", label: "Change Room", icon: "door-open" },
+          { action: "room", label: "Change Room Type", icon: "door-open" },
           { action: "duration", label: "Set Duration", icon: "timer", tip: "Scene Length Comes From The Video Length Setting." },
           { action: "motion", label: "Motion", icon: "camera", hidden: !s },
           { action: "vfx", label: "VFX", icon: "wand-sparkles", hidden: !s },
@@ -2349,11 +2349,11 @@ registerCardMenu("video", {
       },
       {
         items: [
-          { action: "download", label: "Download Original", icon: "download", hidden: !a.path },
-          { action: "details", label: "View Details", icon: "info" },
+          { action: "download", label: "Download", icon: "download", hidden: !a.path },
           { action: "removevideo", label: "Remove From Video", icon: "circle-minus" },
         ],
       },
+
       {
         danger: true,
         items: [{ action: "deletemedia", label: "Delete From Media", icon: "trash-2", danger: true, hidden: !a.path }],
