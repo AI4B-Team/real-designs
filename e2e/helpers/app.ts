@@ -56,11 +56,7 @@ export async function openCardMenu(page: Page, card: Locator): Promise<Locator> 
 
 /** Clicks a menu item by visible label. */
 export async function clickMenuItem(menu: Locator, label: RegExp | string): Promise<void> {
-  await menu
-    .getByRole("menuitem", { name: label })
-    .or(menu.getByText(label))
-    .first()
-    .click();
+  await menu.getByRole("menuitem", { name: label }).or(menu.getByText(label)).first().click();
 }
 
 /** The currently open modal card, if any. */

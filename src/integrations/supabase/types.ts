@@ -1,3303 +1,3276 @@
-export type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[]
+export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.15"
-  }
+    PostgrestVersion: "14.15";
+  };
   public: {
     Tables: {
       account_deletions: {
         Row: {
-          completed_at: string | null
-          created_at: string
-          email_hash: string | null
-          errors: Json
-          id: string
-          purged: Json
-          requested_at: string
-          retained: Json
-          user_ref: string
-        }
+          completed_at: string | null;
+          created_at: string;
+          email_hash: string | null;
+          errors: Json;
+          id: string;
+          purged: Json;
+          requested_at: string;
+          retained: Json;
+          user_ref: string;
+        };
         Insert: {
-          completed_at?: string | null
-          created_at?: string
-          email_hash?: string | null
-          errors?: Json
-          id?: string
-          purged?: Json
-          requested_at?: string
-          retained?: Json
-          user_ref: string
-        }
+          completed_at?: string | null;
+          created_at?: string;
+          email_hash?: string | null;
+          errors?: Json;
+          id?: string;
+          purged?: Json;
+          requested_at?: string;
+          retained?: Json;
+          user_ref: string;
+        };
         Update: {
-          completed_at?: string | null
-          created_at?: string
-          email_hash?: string | null
-          errors?: Json
-          id?: string
-          purged?: Json
-          requested_at?: string
-          retained?: Json
-          user_ref?: string
-        }
-        Relationships: []
-      }
+          completed_at?: string | null;
+          created_at?: string;
+          email_hash?: string | null;
+          errors?: Json;
+          id?: string;
+          purged?: Json;
+          requested_at?: string;
+          retained?: Json;
+          user_ref?: string;
+        };
+        Relationships: [];
+      };
       billing_events: {
         Row: {
-          created_at: string
-          detail: string | null
-          id: string
-          kind: string
-          meta: Json
-          user_id: string
-        }
+          created_at: string;
+          detail: string | null;
+          id: string;
+          kind: string;
+          meta: Json;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          detail?: string | null
-          id?: string
-          kind: string
-          meta?: Json
-          user_id: string
-        }
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          kind: string;
+          meta?: Json;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          detail?: string | null
-          id?: string
-          kind?: string
-          meta?: Json
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          kind?: string;
+          meta?: Json;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       billing_retention: {
         Row: {
-          created_at: string
-          detail: string | null
-          id: string
-          kind: string
-          meta: Json
-          occurred_at: string
-          plan: string | null
-          retain_until: string | null
-          user_ref: string
-        }
+          created_at: string;
+          detail: string | null;
+          id: string;
+          kind: string;
+          meta: Json;
+          occurred_at: string;
+          plan: string | null;
+          retain_until: string | null;
+          user_ref: string;
+        };
         Insert: {
-          created_at?: string
-          detail?: string | null
-          id?: string
-          kind: string
-          meta?: Json
-          occurred_at?: string
-          plan?: string | null
-          retain_until?: string | null
-          user_ref: string
-        }
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          kind: string;
+          meta?: Json;
+          occurred_at?: string;
+          plan?: string | null;
+          retain_until?: string | null;
+          user_ref: string;
+        };
         Update: {
-          created_at?: string
-          detail?: string | null
-          id?: string
-          kind?: string
-          meta?: Json
-          occurred_at?: string
-          plan?: string | null
-          retain_until?: string | null
-          user_ref?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          kind?: string;
+          meta?: Json;
+          occurred_at?: string;
+          plan?: string | null;
+          retain_until?: string | null;
+          user_ref?: string;
+        };
+        Relationships: [];
+      };
       brand_kits: {
         Row: {
-          colors: Json
-          company_name: string | null
-          contact_name: string | null
-          created_at: string
-          default_cta: string | null
-          email: string | null
-          font: string | null
-          id: string
-          intro_enabled: boolean
-          is_default: boolean
-          kit_type: string
-          logo_url: string | null
-          name: string
-          outro_enabled: boolean
-          phone: string | null
-          profile_photo_url: string | null
-          social_links: Json
-          updated_at: string
-          user_id: string
-          website: string | null
-        }
+          colors: Json;
+          company_name: string | null;
+          contact_name: string | null;
+          created_at: string;
+          default_cta: string | null;
+          email: string | null;
+          font: string | null;
+          id: string;
+          intro_enabled: boolean;
+          is_default: boolean;
+          kit_type: string;
+          logo_url: string | null;
+          name: string;
+          outro_enabled: boolean;
+          phone: string | null;
+          profile_photo_url: string | null;
+          social_links: Json;
+          updated_at: string;
+          user_id: string;
+          website: string | null;
+        };
         Insert: {
-          colors?: Json
-          company_name?: string | null
-          contact_name?: string | null
-          created_at?: string
-          default_cta?: string | null
-          email?: string | null
-          font?: string | null
-          id?: string
-          intro_enabled?: boolean
-          is_default?: boolean
-          kit_type?: string
-          logo_url?: string | null
-          name?: string
-          outro_enabled?: boolean
-          phone?: string | null
-          profile_photo_url?: string | null
-          social_links?: Json
-          updated_at?: string
-          user_id: string
-          website?: string | null
-        }
+          colors?: Json;
+          company_name?: string | null;
+          contact_name?: string | null;
+          created_at?: string;
+          default_cta?: string | null;
+          email?: string | null;
+          font?: string | null;
+          id?: string;
+          intro_enabled?: boolean;
+          is_default?: boolean;
+          kit_type?: string;
+          logo_url?: string | null;
+          name?: string;
+          outro_enabled?: boolean;
+          phone?: string | null;
+          profile_photo_url?: string | null;
+          social_links?: Json;
+          updated_at?: string;
+          user_id: string;
+          website?: string | null;
+        };
         Update: {
-          colors?: Json
-          company_name?: string | null
-          contact_name?: string | null
-          created_at?: string
-          default_cta?: string | null
-          email?: string | null
-          font?: string | null
-          id?: string
-          intro_enabled?: boolean
-          is_default?: boolean
-          kit_type?: string
-          logo_url?: string | null
-          name?: string
-          outro_enabled?: boolean
-          phone?: string | null
-          profile_photo_url?: string | null
-          social_links?: Json
-          updated_at?: string
-          user_id?: string
-          website?: string | null
-        }
-        Relationships: []
-      }
+          colors?: Json;
+          company_name?: string | null;
+          contact_name?: string | null;
+          created_at?: string;
+          default_cta?: string | null;
+          email?: string | null;
+          font?: string | null;
+          id?: string;
+          intro_enabled?: boolean;
+          is_default?: boolean;
+          kit_type?: string;
+          logo_url?: string | null;
+          name?: string;
+          outro_enabled?: boolean;
+          phone?: string | null;
+          profile_photo_url?: string | null;
+          social_links?: Json;
+          updated_at?: string;
+          user_id?: string;
+          website?: string | null;
+        };
+        Relationships: [];
+      };
       change_items: {
         Row: {
-          action: string
-          created_at: string
-          csi_division: string | null
-          grade: string | null
-          id: string
-          label: string
-          material: string | null
-          qty: number | null
-          qty_source: string | null
-          uom: string | null
-          version_id: string
-        }
+          action: string;
+          created_at: string;
+          csi_division: string | null;
+          grade: string | null;
+          id: string;
+          label: string;
+          material: string | null;
+          qty: number | null;
+          qty_source: string | null;
+          uom: string | null;
+          version_id: string;
+        };
         Insert: {
-          action: string
-          created_at?: string
-          csi_division?: string | null
-          grade?: string | null
-          id?: string
-          label: string
-          material?: string | null
-          qty?: number | null
-          qty_source?: string | null
-          uom?: string | null
-          version_id: string
-        }
+          action: string;
+          created_at?: string;
+          csi_division?: string | null;
+          grade?: string | null;
+          id?: string;
+          label: string;
+          material?: string | null;
+          qty?: number | null;
+          qty_source?: string | null;
+          uom?: string | null;
+          version_id: string;
+        };
         Update: {
-          action?: string
-          created_at?: string
-          csi_division?: string | null
-          grade?: string | null
-          id?: string
-          label?: string
-          material?: string | null
-          qty?: number | null
-          qty_source?: string | null
-          uom?: string | null
-          version_id?: string
-        }
+          action?: string;
+          created_at?: string;
+          csi_division?: string | null;
+          grade?: string | null;
+          id?: string;
+          label?: string;
+          material?: string | null;
+          qty?: number | null;
+          qty_source?: string | null;
+          uom?: string | null;
+          version_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "change_items_version_id_fkey"
-            columns: ["version_id"]
-            isOneToOne: false
-            referencedRelation: "versions"
-            referencedColumns: ["id"]
+            foreignKeyName: "change_items_version_id_fkey";
+            columns: ["version_id"];
+            isOneToOne: false;
+            referencedRelation: "versions";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       cost_mappings: {
         Row: {
-          grade: string
-          id: string
-          label: string
-          material: string | null
-          qty_formula: string
-          unit_cost_id: string
-        }
+          grade: string;
+          id: string;
+          label: string;
+          material: string | null;
+          qty_formula: string;
+          unit_cost_id: string;
+        };
         Insert: {
-          grade: string
-          id?: string
-          label: string
-          material?: string | null
-          qty_formula: string
-          unit_cost_id: string
-        }
+          grade: string;
+          id?: string;
+          label: string;
+          material?: string | null;
+          qty_formula: string;
+          unit_cost_id: string;
+        };
         Update: {
-          grade?: string
-          id?: string
-          label?: string
-          material?: string | null
-          qty_formula?: string
-          unit_cost_id?: string
-        }
+          grade?: string;
+          id?: string;
+          label?: string;
+          material?: string | null;
+          qty_formula?: string;
+          unit_cost_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "cost_mappings_unit_cost_id_fkey"
-            columns: ["unit_cost_id"]
-            isOneToOne: false
-            referencedRelation: "unit_costs"
-            referencedColumns: ["id"]
+            foreignKeyName: "cost_mappings_unit_cost_id_fkey";
+            columns: ["unit_cost_id"];
+            isOneToOne: false;
+            referencedRelation: "unit_costs";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       credit_accounts: {
         Row: {
-          balance: number
-          created_at: string
-          free_day: string
-          free_used_today: number
-          plan: Database["public"]["Enums"]["plan_tier"]
-          updated_at: string
-          user_id: string
-        }
+          balance: number;
+          created_at: string;
+          free_day: string;
+          free_used_today: number;
+          plan: Database["public"]["Enums"]["plan_tier"];
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          balance?: number
-          created_at?: string
-          free_day?: string
-          free_used_today?: number
-          plan?: Database["public"]["Enums"]["plan_tier"]
-          updated_at?: string
-          user_id: string
-        }
+          balance?: number;
+          created_at?: string;
+          free_day?: string;
+          free_used_today?: number;
+          plan?: Database["public"]["Enums"]["plan_tier"];
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          balance?: number
-          created_at?: string
-          free_day?: string
-          free_used_today?: number
-          plan?: Database["public"]["Enums"]["plan_tier"]
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          balance?: number;
+          created_at?: string;
+          free_day?: string;
+          free_used_today?: number;
+          plan?: Database["public"]["Enums"]["plan_tier"];
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       credit_ledger: {
         Row: {
-          action: Database["public"]["Enums"]["credit_action"]
-          balance_after: number
-          created_at: string
-          delta: number
-          id: string
-          note: string | null
-          user_id: string
-        }
+          action: Database["public"]["Enums"]["credit_action"];
+          balance_after: number;
+          created_at: string;
+          delta: number;
+          id: string;
+          note: string | null;
+          user_id: string;
+        };
         Insert: {
-          action: Database["public"]["Enums"]["credit_action"]
-          balance_after: number
-          created_at?: string
-          delta: number
-          id?: string
-          note?: string | null
-          user_id: string
-        }
+          action: Database["public"]["Enums"]["credit_action"];
+          balance_after: number;
+          created_at?: string;
+          delta: number;
+          id?: string;
+          note?: string | null;
+          user_id: string;
+        };
         Update: {
-          action?: Database["public"]["Enums"]["credit_action"]
-          balance_after?: number
-          created_at?: string
-          delta?: number
-          id?: string
-          note?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
+          action?: Database["public"]["Enums"]["credit_action"];
+          balance_after?: number;
+          created_at?: string;
+          delta?: number;
+          id?: string;
+          note?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       crm_connections: {
         Row: {
-          account_name: string | null
-          auto_push: boolean
-          created_at: string
-          credential: string
-          endpoint: string | null
-          id: string
-          label: string | null
-          last_error: string | null
-          last_synced_at: string | null
-          provider: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
+          account_name: string | null;
+          auto_push: boolean;
+          created_at: string;
+          credential: string;
+          endpoint: string | null;
+          id: string;
+          label: string | null;
+          last_error: string | null;
+          last_synced_at: string | null;
+          provider: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          account_name?: string | null
-          auto_push?: boolean
-          created_at?: string
-          credential: string
-          endpoint?: string | null
-          id?: string
-          label?: string | null
-          last_error?: string | null
-          last_synced_at?: string | null
-          provider: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
+          account_name?: string | null;
+          auto_push?: boolean;
+          created_at?: string;
+          credential: string;
+          endpoint?: string | null;
+          id?: string;
+          label?: string | null;
+          last_error?: string | null;
+          last_synced_at?: string | null;
+          provider: string;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          account_name?: string | null
-          auto_push?: boolean
-          created_at?: string
-          credential?: string
-          endpoint?: string | null
-          id?: string
-          label?: string | null
-          last_error?: string | null
-          last_synced_at?: string | null
-          provider?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          account_name?: string | null;
+          auto_push?: boolean;
+          created_at?: string;
+          credential?: string;
+          endpoint?: string | null;
+          id?: string;
+          label?: string | null;
+          last_error?: string | null;
+          last_synced_at?: string | null;
+          provider?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       crm_contacts: {
         Row: {
-          connection_id: string
-          created_at: string
-          email: string | null
-          external_id: string
-          id: string
-          last_activity_at: string | null
-          name: string | null
-          phone: string | null
-          stage: string | null
-          tags: string[]
-          updated_at: string
-          user_id: string
-        }
+          connection_id: string;
+          created_at: string;
+          email: string | null;
+          external_id: string;
+          id: string;
+          last_activity_at: string | null;
+          name: string | null;
+          phone: string | null;
+          stage: string | null;
+          tags: string[];
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          connection_id: string
-          created_at?: string
-          email?: string | null
-          external_id: string
-          id?: string
-          last_activity_at?: string | null
-          name?: string | null
-          phone?: string | null
-          stage?: string | null
-          tags?: string[]
-          updated_at?: string
-          user_id: string
-        }
+          connection_id: string;
+          created_at?: string;
+          email?: string | null;
+          external_id: string;
+          id?: string;
+          last_activity_at?: string | null;
+          name?: string | null;
+          phone?: string | null;
+          stage?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          connection_id?: string
-          created_at?: string
-          email?: string | null
-          external_id?: string
-          id?: string
-          last_activity_at?: string | null
-          name?: string | null
-          phone?: string | null
-          stage?: string | null
-          tags?: string[]
-          updated_at?: string
-          user_id?: string
-        }
+          connection_id?: string;
+          created_at?: string;
+          email?: string | null;
+          external_id?: string;
+          id?: string;
+          last_activity_at?: string | null;
+          name?: string | null;
+          phone?: string | null;
+          stage?: string | null;
+          tags?: string[];
+          updated_at?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "crm_contacts_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "crm_connections"
-            referencedColumns: ["id"]
+            foreignKeyName: "crm_contacts_connection_id_fkey";
+            columns: ["connection_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_connections";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       crm_sync_log: {
         Row: {
-          action: string
-          connection_id: string | null
-          created_at: string
-          detail: string | null
-          id: string
-          status: string
-          user_id: string
-        }
+          action: string;
+          connection_id: string | null;
+          created_at: string;
+          detail: string | null;
+          id: string;
+          status: string;
+          user_id: string;
+        };
         Insert: {
-          action: string
-          connection_id?: string | null
-          created_at?: string
-          detail?: string | null
-          id?: string
-          status: string
-          user_id: string
-        }
+          action: string;
+          connection_id?: string | null;
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          status: string;
+          user_id: string;
+        };
         Update: {
-          action?: string
-          connection_id?: string | null
-          created_at?: string
-          detail?: string | null
-          id?: string
-          status?: string
-          user_id?: string
-        }
+          action?: string;
+          connection_id?: string | null;
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          status?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "crm_sync_log_connection_id_fkey"
-            columns: ["connection_id"]
-            isOneToOne: false
-            referencedRelation: "crm_connections"
-            referencedColumns: ["id"]
+            foreignKeyName: "crm_sync_log_connection_id_fkey";
+            columns: ["connection_id"];
+            isOneToOne: false;
+            referencedRelation: "crm_connections";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       feedback: {
         Row: {
-          attachment_path: string | null
-          body: string
-          category: string
-          created_at: string
-          id: string
-          status: string
-          user_id: string
-          view_context: string | null
-        }
+          attachment_path: string | null;
+          body: string;
+          category: string;
+          created_at: string;
+          id: string;
+          status: string;
+          user_id: string;
+          view_context: string | null;
+        };
         Insert: {
-          attachment_path?: string | null
-          body: string
-          category?: string
-          created_at?: string
-          id?: string
-          status?: string
-          user_id: string
-          view_context?: string | null
-        }
+          attachment_path?: string | null;
+          body: string;
+          category?: string;
+          created_at?: string;
+          id?: string;
+          status?: string;
+          user_id: string;
+          view_context?: string | null;
+        };
         Update: {
-          attachment_path?: string | null
-          body?: string
-          category?: string
-          created_at?: string
-          id?: string
-          status?: string
-          user_id?: string
-          view_context?: string | null
-        }
-        Relationships: []
-      }
+          attachment_path?: string | null;
+          body?: string;
+          category?: string;
+          created_at?: string;
+          id?: string;
+          status?: string;
+          user_id?: string;
+          view_context?: string | null;
+        };
+        Relationships: [];
+      };
       founding_members: {
         Row: {
-          claimed_at: string
-          id: string
-          plan: string
-          user_id: string
-        }
+          claimed_at: string;
+          id: string;
+          plan: string;
+          user_id: string;
+        };
         Insert: {
-          claimed_at?: string
-          id?: string
-          plan?: string
-          user_id: string
-        }
+          claimed_at?: string;
+          id?: string;
+          plan?: string;
+          user_id: string;
+        };
         Update: {
-          claimed_at?: string
-          id?: string
-          plan?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          claimed_at?: string;
+          id?: string;
+          plan?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       listing_imports: {
         Row: {
-          created_at: string
-          error_code: string | null
-          error_message: string | null
-          id: string
-          listing: Json
-          normalized_url: string
-          photo_count: number
-          photos: Json
-          property_id: string | null
-          provider_id: string
-          provider_name: string
-          source_url: string
-          stage: string
-          status: string
-          updated_at: string
-          user_id: string
-          video_project_id: string | null
-        }
+          created_at: string;
+          error_code: string | null;
+          error_message: string | null;
+          id: string;
+          listing: Json;
+          normalized_url: string;
+          photo_count: number;
+          photos: Json;
+          property_id: string | null;
+          provider_id: string;
+          provider_name: string;
+          source_url: string;
+          stage: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          video_project_id: string | null;
+        };
         Insert: {
-          created_at?: string
-          error_code?: string | null
-          error_message?: string | null
-          id?: string
-          listing?: Json
-          normalized_url: string
-          photo_count?: number
-          photos?: Json
-          property_id?: string | null
-          provider_id: string
-          provider_name: string
-          source_url: string
-          stage?: string
-          status?: string
-          updated_at?: string
-          user_id: string
-          video_project_id?: string | null
-        }
+          created_at?: string;
+          error_code?: string | null;
+          error_message?: string | null;
+          id?: string;
+          listing?: Json;
+          normalized_url: string;
+          photo_count?: number;
+          photos?: Json;
+          property_id?: string | null;
+          provider_id: string;
+          provider_name: string;
+          source_url: string;
+          stage?: string;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          video_project_id?: string | null;
+        };
         Update: {
-          created_at?: string
-          error_code?: string | null
-          error_message?: string | null
-          id?: string
-          listing?: Json
-          normalized_url?: string
-          photo_count?: number
-          photos?: Json
-          property_id?: string | null
-          provider_id?: string
-          provider_name?: string
-          source_url?: string
-          stage?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-          video_project_id?: string | null
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          error_code?: string | null;
+          error_message?: string | null;
+          id?: string;
+          listing?: Json;
+          normalized_url?: string;
+          photo_count?: number;
+          photos?: Json;
+          property_id?: string | null;
+          provider_id?: string;
+          provider_name?: string;
+          source_url?: string;
+          stage?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          video_project_id?: string | null;
+        };
+        Relationships: [];
+      };
       market_requests: {
         Row: {
-          created_at: string
-          email: string | null
-          id: string
-          note: string | null
-          region: string
-          user_id: string
-        }
+          created_at: string;
+          email: string | null;
+          id: string;
+          note: string | null;
+          region: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          email?: string | null
-          id?: string
-          note?: string | null
-          region: string
-          user_id: string
-        }
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          note?: string | null;
+          region: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          email?: string | null
-          id?: string
-          note?: string | null
-          region?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          email?: string | null;
+          id?: string;
+          note?: string | null;
+          region?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       markets: {
         Row: {
-          cbsa_code: string | null
-          id: string
-          labor_factor: number
-          material_factor: number
-          name: string
-          source: string | null
-          updated_at: string
-          verified_at: string | null
-        }
+          cbsa_code: string | null;
+          id: string;
+          labor_factor: number;
+          material_factor: number;
+          name: string;
+          source: string | null;
+          updated_at: string;
+          verified_at: string | null;
+        };
         Insert: {
-          cbsa_code?: string | null
-          id?: string
-          labor_factor?: number
-          material_factor?: number
-          name: string
-          source?: string | null
-          updated_at?: string
-          verified_at?: string | null
-        }
+          cbsa_code?: string | null;
+          id?: string;
+          labor_factor?: number;
+          material_factor?: number;
+          name: string;
+          source?: string | null;
+          updated_at?: string;
+          verified_at?: string | null;
+        };
         Update: {
-          cbsa_code?: string | null
-          id?: string
-          labor_factor?: number
-          material_factor?: number
-          name?: string
-          source?: string | null
-          updated_at?: string
-          verified_at?: string | null
-        }
-        Relationships: []
-      }
+          cbsa_code?: string | null;
+          id?: string;
+          labor_factor?: number;
+          material_factor?: number;
+          name?: string;
+          source?: string | null;
+          updated_at?: string;
+          verified_at?: string | null;
+        };
+        Relationships: [];
+      };
       plan_requests: {
         Row: {
-          created_at: string
-          current_plan: Database["public"]["Enums"]["plan_tier"]
-          decided_at: string | null
-          id: string
-          note: string | null
-          requested_plan: Database["public"]["Enums"]["plan_tier"]
-          status: string
-          user_id: string
-        }
+          created_at: string;
+          current_plan: Database["public"]["Enums"]["plan_tier"];
+          decided_at: string | null;
+          id: string;
+          note: string | null;
+          requested_plan: Database["public"]["Enums"]["plan_tier"];
+          status: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          current_plan: Database["public"]["Enums"]["plan_tier"]
-          decided_at?: string | null
-          id?: string
-          note?: string | null
-          requested_plan: Database["public"]["Enums"]["plan_tier"]
-          status?: string
-          user_id: string
-        }
+          created_at?: string;
+          current_plan: Database["public"]["Enums"]["plan_tier"];
+          decided_at?: string | null;
+          id?: string;
+          note?: string | null;
+          requested_plan: Database["public"]["Enums"]["plan_tier"];
+          status?: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          current_plan?: Database["public"]["Enums"]["plan_tier"]
-          decided_at?: string | null
-          id?: string
-          note?: string | null
-          requested_plan?: Database["public"]["Enums"]["plan_tier"]
-          status?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          current_plan?: Database["public"]["Enums"]["plan_tier"];
+          decided_at?: string | null;
+          id?: string;
+          note?: string | null;
+          requested_plan?: Database["public"]["Enums"]["plan_tier"];
+          status?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       presentation_activity: {
         Row: {
-          created_at: string
-          detail: string | null
-          id: string
-          kind: string
-          meta: Json
-          package_id: string
-          user_id: string
-        }
+          created_at: string;
+          detail: string | null;
+          id: string;
+          kind: string;
+          meta: Json;
+          package_id: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          detail?: string | null
-          id?: string
-          kind: string
-          meta?: Json
-          package_id: string
-          user_id: string
-        }
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          kind: string;
+          meta?: Json;
+          package_id: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          detail?: string | null
-          id?: string
-          kind?: string
-          meta?: Json
-          package_id?: string
-          user_id?: string
-        }
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          kind?: string;
+          meta?: Json;
+          package_id?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentation_activity_package_id_fkey"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_packages"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_activity_package_id_fkey";
+            columns: ["package_id"];
+            isOneToOne: false;
+            referencedRelation: "presentation_packages";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       presentation_assets: {
         Row: {
-          caption: string | null
-          compare_url: string | null
-          created_at: string
-          id: string
-          kind: string
-          meta: Json
-          package_id: string
-          section_key: string
-          sort_order: number
-          source_id: string | null
-          title: string | null
-          url: string | null
-          user_id: string
-        }
+          caption: string | null;
+          compare_url: string | null;
+          created_at: string;
+          id: string;
+          kind: string;
+          meta: Json;
+          package_id: string;
+          section_key: string;
+          sort_order: number;
+          source_id: string | null;
+          title: string | null;
+          url: string | null;
+          user_id: string;
+        };
         Insert: {
-          caption?: string | null
-          compare_url?: string | null
-          created_at?: string
-          id?: string
-          kind: string
-          meta?: Json
-          package_id: string
-          section_key: string
-          sort_order?: number
-          source_id?: string | null
-          title?: string | null
-          url?: string | null
-          user_id: string
-        }
+          caption?: string | null;
+          compare_url?: string | null;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          meta?: Json;
+          package_id: string;
+          section_key: string;
+          sort_order?: number;
+          source_id?: string | null;
+          title?: string | null;
+          url?: string | null;
+          user_id: string;
+        };
         Update: {
-          caption?: string | null
-          compare_url?: string | null
-          created_at?: string
-          id?: string
-          kind?: string
-          meta?: Json
-          package_id?: string
-          section_key?: string
-          sort_order?: number
-          source_id?: string | null
-          title?: string | null
-          url?: string | null
-          user_id?: string
-        }
+          caption?: string | null;
+          compare_url?: string | null;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          meta?: Json;
+          package_id?: string;
+          section_key?: string;
+          sort_order?: number;
+          source_id?: string | null;
+          title?: string | null;
+          url?: string | null;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentation_assets_package_id_fkey"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_packages"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_assets_package_id_fkey";
+            columns: ["package_id"];
+            isOneToOne: false;
+            referencedRelation: "presentation_packages";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       presentation_comments: {
         Row: {
-          author_name: string | null
-          body: string
-          created_at: string
-          id: string
-          link_id: string | null
-          package_id: string
-          section_key: string | null
-          user_id: string
-        }
+          author_name: string | null;
+          body: string;
+          created_at: string;
+          id: string;
+          link_id: string | null;
+          package_id: string;
+          section_key: string | null;
+          user_id: string;
+        };
         Insert: {
-          author_name?: string | null
-          body: string
-          created_at?: string
-          id?: string
-          link_id?: string | null
-          package_id: string
-          section_key?: string | null
-          user_id: string
-        }
+          author_name?: string | null;
+          body: string;
+          created_at?: string;
+          id?: string;
+          link_id?: string | null;
+          package_id: string;
+          section_key?: string | null;
+          user_id: string;
+        };
         Update: {
-          author_name?: string | null
-          body?: string
-          created_at?: string
-          id?: string
-          link_id?: string | null
-          package_id?: string
-          section_key?: string | null
-          user_id?: string
-        }
+          author_name?: string | null;
+          body?: string;
+          created_at?: string;
+          id?: string;
+          link_id?: string | null;
+          package_id?: string;
+          section_key?: string | null;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentation_comments_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_links"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_comments_link_id_fkey";
+            columns: ["link_id"];
+            isOneToOne: false;
+            referencedRelation: "presentation_links";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "presentation_comments_package_id_fkey"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_packages"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_comments_package_id_fkey";
+            columns: ["package_id"];
+            isOneToOne: false;
+            referencedRelation: "presentation_packages";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       presentation_decisions: {
         Row: {
-          client_name: string | null
-          created_at: string
-          decision: string
-          id: string
-          link_id: string | null
-          note: string | null
-          package_id: string
-          user_id: string
-        }
+          client_name: string | null;
+          created_at: string;
+          decision: string;
+          id: string;
+          link_id: string | null;
+          note: string | null;
+          package_id: string;
+          user_id: string;
+        };
         Insert: {
-          client_name?: string | null
-          created_at?: string
-          decision: string
-          id?: string
-          link_id?: string | null
-          note?: string | null
-          package_id: string
-          user_id: string
-        }
+          client_name?: string | null;
+          created_at?: string;
+          decision: string;
+          id?: string;
+          link_id?: string | null;
+          note?: string | null;
+          package_id: string;
+          user_id: string;
+        };
         Update: {
-          client_name?: string | null
-          created_at?: string
-          decision?: string
-          id?: string
-          link_id?: string | null
-          note?: string | null
-          package_id?: string
-          user_id?: string
-        }
+          client_name?: string | null;
+          created_at?: string;
+          decision?: string;
+          id?: string;
+          link_id?: string | null;
+          note?: string | null;
+          package_id?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentation_decisions_link_id_fkey"
-            columns: ["link_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_links"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_decisions_link_id_fkey";
+            columns: ["link_id"];
+            isOneToOne: false;
+            referencedRelation: "presentation_links";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "presentation_decisions_package_id_fkey"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_packages"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_decisions_package_id_fkey";
+            columns: ["package_id"];
+            isOneToOne: false;
+            referencedRelation: "presentation_packages";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       presentation_events: {
         Row: {
-          created_at: string
-          detail: string | null
-          id: string
-          kind: string
-          meta: Json
-          presentation_id: string
-        }
+          created_at: string;
+          detail: string | null;
+          id: string;
+          kind: string;
+          meta: Json;
+          presentation_id: string;
+        };
         Insert: {
-          created_at?: string
-          detail?: string | null
-          id?: string
-          kind: string
-          meta?: Json
-          presentation_id: string
-        }
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          kind: string;
+          meta?: Json;
+          presentation_id: string;
+        };
         Update: {
-          created_at?: string
-          detail?: string | null
-          id?: string
-          kind?: string
-          meta?: Json
-          presentation_id?: string
-        }
+          created_at?: string;
+          detail?: string | null;
+          id?: string;
+          kind?: string;
+          meta?: Json;
+          presentation_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentation_events_presentation_id_fkey"
-            columns: ["presentation_id"]
-            isOneToOne: false
-            referencedRelation: "presentations"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_events_presentation_id_fkey";
+            columns: ["presentation_id"];
+            isOneToOne: false;
+            referencedRelation: "presentations";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       presentation_links: {
         Row: {
-          access_code: string | null
-          created_at: string
-          expires_at: string | null
-          id: string
-          last_viewed_at: string | null
-          package_id: string
-          revoked: boolean
-          token: string
-          user_id: string
-          view_count: number
-        }
+          access_code: string | null;
+          created_at: string;
+          expires_at: string | null;
+          id: string;
+          last_viewed_at: string | null;
+          package_id: string;
+          revoked: boolean;
+          token: string;
+          user_id: string;
+          view_count: number;
+        };
         Insert: {
-          access_code?: string | null
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          last_viewed_at?: string | null
-          package_id: string
-          revoked?: boolean
-          token?: string
-          user_id: string
-          view_count?: number
-        }
+          access_code?: string | null;
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          last_viewed_at?: string | null;
+          package_id: string;
+          revoked?: boolean;
+          token?: string;
+          user_id: string;
+          view_count?: number;
+        };
         Update: {
-          access_code?: string | null
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          last_viewed_at?: string | null
-          package_id?: string
-          revoked?: boolean
-          token?: string
-          user_id?: string
-          view_count?: number
-        }
+          access_code?: string | null;
+          created_at?: string;
+          expires_at?: string | null;
+          id?: string;
+          last_viewed_at?: string | null;
+          package_id?: string;
+          revoked?: boolean;
+          token?: string;
+          user_id?: string;
+          view_count?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentation_links_package_id_fkey"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_packages"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_links_package_id_fkey";
+            columns: ["package_id"];
+            isOneToOne: false;
+            referencedRelation: "presentation_packages";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       presentation_packages: {
         Row: {
-          accent: string
-          archived: boolean
-          client_email: string | null
-          client_name: string | null
-          cover_url: string | null
-          created_at: string
-          id: string
-          intro: string | null
-          last_activity: string | null
-          last_activity_at: string | null
-          last_viewed_at: string | null
-          logo_url: string | null
-          project_name: string | null
-          property_id: string | null
-          property_label: string | null
-          settings: Json
-          status: string
-          title: string
-          updated_at: string
-          user_id: string
-          view_count: number
-        }
+          accent: string;
+          archived: boolean;
+          client_email: string | null;
+          client_name: string | null;
+          cover_url: string | null;
+          created_at: string;
+          id: string;
+          intro: string | null;
+          last_activity: string | null;
+          last_activity_at: string | null;
+          last_viewed_at: string | null;
+          logo_url: string | null;
+          project_name: string | null;
+          property_id: string | null;
+          property_label: string | null;
+          settings: Json;
+          status: string;
+          title: string;
+          updated_at: string;
+          user_id: string;
+          view_count: number;
+        };
         Insert: {
-          accent?: string
-          archived?: boolean
-          client_email?: string | null
-          client_name?: string | null
-          cover_url?: string | null
-          created_at?: string
-          id?: string
-          intro?: string | null
-          last_activity?: string | null
-          last_activity_at?: string | null
-          last_viewed_at?: string | null
-          logo_url?: string | null
-          project_name?: string | null
-          property_id?: string | null
-          property_label?: string | null
-          settings?: Json
-          status?: string
-          title: string
-          updated_at?: string
-          user_id: string
-          view_count?: number
-        }
+          accent?: string;
+          archived?: boolean;
+          client_email?: string | null;
+          client_name?: string | null;
+          cover_url?: string | null;
+          created_at?: string;
+          id?: string;
+          intro?: string | null;
+          last_activity?: string | null;
+          last_activity_at?: string | null;
+          last_viewed_at?: string | null;
+          logo_url?: string | null;
+          project_name?: string | null;
+          property_id?: string | null;
+          property_label?: string | null;
+          settings?: Json;
+          status?: string;
+          title: string;
+          updated_at?: string;
+          user_id: string;
+          view_count?: number;
+        };
         Update: {
-          accent?: string
-          archived?: boolean
-          client_email?: string | null
-          client_name?: string | null
-          cover_url?: string | null
-          created_at?: string
-          id?: string
-          intro?: string | null
-          last_activity?: string | null
-          last_activity_at?: string | null
-          last_viewed_at?: string | null
-          logo_url?: string | null
-          project_name?: string | null
-          property_id?: string | null
-          property_label?: string | null
-          settings?: Json
-          status?: string
-          title?: string
-          updated_at?: string
-          user_id?: string
-          view_count?: number
-        }
+          accent?: string;
+          archived?: boolean;
+          client_email?: string | null;
+          client_name?: string | null;
+          cover_url?: string | null;
+          created_at?: string;
+          id?: string;
+          intro?: string | null;
+          last_activity?: string | null;
+          last_activity_at?: string | null;
+          last_viewed_at?: string | null;
+          logo_url?: string | null;
+          project_name?: string | null;
+          property_id?: string | null;
+          property_label?: string | null;
+          settings?: Json;
+          status?: string;
+          title?: string;
+          updated_at?: string;
+          user_id?: string;
+          view_count?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentation_packages_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_packages_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       presentation_sections: {
         Row: {
-          created_at: string
-          hidden: boolean
-          id: string
-          package_id: string
-          section_key: string
-          sort_order: number
-          title: string
-          user_id: string
-        }
+          created_at: string;
+          hidden: boolean;
+          id: string;
+          package_id: string;
+          section_key: string;
+          sort_order: number;
+          title: string;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          hidden?: boolean
-          id?: string
-          package_id: string
-          section_key: string
-          sort_order?: number
-          title: string
-          user_id: string
-        }
+          created_at?: string;
+          hidden?: boolean;
+          id?: string;
+          package_id: string;
+          section_key: string;
+          sort_order?: number;
+          title: string;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          hidden?: boolean
-          id?: string
-          package_id?: string
-          section_key?: string
-          sort_order?: number
-          title?: string
-          user_id?: string
-        }
+          created_at?: string;
+          hidden?: boolean;
+          id?: string;
+          package_id?: string;
+          section_key?: string;
+          sort_order?: number;
+          title?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentation_sections_package_id_fkey"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "presentation_packages"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentation_sections_package_id_fkey";
+            columns: ["package_id"];
+            isOneToOne: false;
+            referencedRelation: "presentation_packages";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       presentations: {
         Row: {
-          brand_accent: string | null
-          brand_name: string | null
-          client_email: string | null
-          client_name: string | null
-          created_at: string
-          decided_at: string | null
-          decision_note: string | null
-          excluded_lines: Json
-          id: string
-          last_viewed_at: string | null
-          line_notes: Json
-          reminded_at: string | null
-          reminder_count: number
-          status: string
-          title: string
-          token: string
-          version_id: string
-          view_count: number
-        }
+          brand_accent: string | null;
+          brand_name: string | null;
+          client_email: string | null;
+          client_name: string | null;
+          created_at: string;
+          decided_at: string | null;
+          decision_note: string | null;
+          excluded_lines: Json;
+          id: string;
+          last_viewed_at: string | null;
+          line_notes: Json;
+          reminded_at: string | null;
+          reminder_count: number;
+          status: string;
+          title: string;
+          token: string;
+          version_id: string;
+          view_count: number;
+        };
         Insert: {
-          brand_accent?: string | null
-          brand_name?: string | null
-          client_email?: string | null
-          client_name?: string | null
-          created_at?: string
-          decided_at?: string | null
-          decision_note?: string | null
-          excluded_lines?: Json
-          id?: string
-          last_viewed_at?: string | null
-          line_notes?: Json
-          reminded_at?: string | null
-          reminder_count?: number
-          status?: string
-          title: string
-          token?: string
-          version_id: string
-          view_count?: number
-        }
+          brand_accent?: string | null;
+          brand_name?: string | null;
+          client_email?: string | null;
+          client_name?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          decision_note?: string | null;
+          excluded_lines?: Json;
+          id?: string;
+          last_viewed_at?: string | null;
+          line_notes?: Json;
+          reminded_at?: string | null;
+          reminder_count?: number;
+          status?: string;
+          title: string;
+          token?: string;
+          version_id: string;
+          view_count?: number;
+        };
         Update: {
-          brand_accent?: string | null
-          brand_name?: string | null
-          client_email?: string | null
-          client_name?: string | null
-          created_at?: string
-          decided_at?: string | null
-          decision_note?: string | null
-          excluded_lines?: Json
-          id?: string
-          last_viewed_at?: string | null
-          line_notes?: Json
-          reminded_at?: string | null
-          reminder_count?: number
-          status?: string
-          title?: string
-          token?: string
-          version_id?: string
-          view_count?: number
-        }
+          brand_accent?: string | null;
+          brand_name?: string | null;
+          client_email?: string | null;
+          client_name?: string | null;
+          created_at?: string;
+          decided_at?: string | null;
+          decision_note?: string | null;
+          excluded_lines?: Json;
+          id?: string;
+          last_viewed_at?: string | null;
+          line_notes?: Json;
+          reminded_at?: string | null;
+          reminder_count?: number;
+          status?: string;
+          title?: string;
+          token?: string;
+          version_id?: string;
+          view_count?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "presentations_version_id_fkey"
-            columns: ["version_id"]
-            isOneToOne: false
-            referencedRelation: "versions"
-            referencedColumns: ["id"]
+            foreignKeyName: "presentations_version_id_fkey";
+            columns: ["version_id"];
+            isOneToOne: false;
+            referencedRelation: "versions";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       project_drafts: {
         Row: {
-          assets: Json
-          audio: Json
-          branding: Json
-          builder_step: string | null
-          created_at: string
-          crop: Json
-          effects: Json
-          id: string
-          item_order: Json
-          last_opened_at: string
-          motion: Json
-          project_type: string
-          property_address: string | null
-          property_id: string | null
-          quality: string | null
-          revision: number
-          rooms: Json
-          selected: Json
-          settings: Json
-          status: string
-          title: string | null
-          titles: Json
-          updated_at: string
-          user_id: string
-          video_format: string | null
-          video_project_id: string | null
-        }
+          assets: Json;
+          audio: Json;
+          branding: Json;
+          builder_step: string | null;
+          created_at: string;
+          crop: Json;
+          effects: Json;
+          id: string;
+          item_order: Json;
+          last_opened_at: string;
+          motion: Json;
+          project_type: string;
+          property_address: string | null;
+          property_id: string | null;
+          quality: string | null;
+          revision: number;
+          rooms: Json;
+          selected: Json;
+          settings: Json;
+          status: string;
+          title: string | null;
+          titles: Json;
+          updated_at: string;
+          user_id: string;
+          video_format: string | null;
+          video_project_id: string | null;
+        };
         Insert: {
-          assets?: Json
-          audio?: Json
-          branding?: Json
-          builder_step?: string | null
-          created_at?: string
-          crop?: Json
-          effects?: Json
-          id?: string
-          item_order?: Json
-          last_opened_at?: string
-          motion?: Json
-          project_type: string
-          property_address?: string | null
-          property_id?: string | null
-          quality?: string | null
-          revision?: number
-          rooms?: Json
-          selected?: Json
-          settings?: Json
-          status?: string
-          title?: string | null
-          titles?: Json
-          updated_at?: string
-          user_id: string
-          video_format?: string | null
-          video_project_id?: string | null
-        }
+          assets?: Json;
+          audio?: Json;
+          branding?: Json;
+          builder_step?: string | null;
+          created_at?: string;
+          crop?: Json;
+          effects?: Json;
+          id?: string;
+          item_order?: Json;
+          last_opened_at?: string;
+          motion?: Json;
+          project_type: string;
+          property_address?: string | null;
+          property_id?: string | null;
+          quality?: string | null;
+          revision?: number;
+          rooms?: Json;
+          selected?: Json;
+          settings?: Json;
+          status?: string;
+          title?: string | null;
+          titles?: Json;
+          updated_at?: string;
+          user_id: string;
+          video_format?: string | null;
+          video_project_id?: string | null;
+        };
         Update: {
-          assets?: Json
-          audio?: Json
-          branding?: Json
-          builder_step?: string | null
-          created_at?: string
-          crop?: Json
-          effects?: Json
-          id?: string
-          item_order?: Json
-          last_opened_at?: string
-          motion?: Json
-          project_type?: string
-          property_address?: string | null
-          property_id?: string | null
-          quality?: string | null
-          revision?: number
-          rooms?: Json
-          selected?: Json
-          settings?: Json
-          status?: string
-          title?: string | null
-          titles?: Json
-          updated_at?: string
-          user_id?: string
-          video_format?: string | null
-          video_project_id?: string | null
-        }
+          assets?: Json;
+          audio?: Json;
+          branding?: Json;
+          builder_step?: string | null;
+          created_at?: string;
+          crop?: Json;
+          effects?: Json;
+          id?: string;
+          item_order?: Json;
+          last_opened_at?: string;
+          motion?: Json;
+          project_type?: string;
+          property_address?: string | null;
+          property_id?: string | null;
+          quality?: string | null;
+          revision?: number;
+          rooms?: Json;
+          selected?: Json;
+          settings?: Json;
+          status?: string;
+          title?: string | null;
+          titles?: Json;
+          updated_at?: string;
+          user_id?: string;
+          video_format?: string | null;
+          video_project_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "project_drafts_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            foreignKeyName: "project_drafts_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "project_drafts_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: false
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "project_drafts_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: false;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       projects: {
         Row: {
-          address_line_1: string | null
-          address_line_2: string | null
-          address_source: string
-          address_verified_at: string | null
-          budget_band: string
-          budget_target: number | null
-          city: string | null
-          country: string | null
-          created_at: string
-          finish_grade: string
-          id: string
-          latitude: number | null
-          longitude: number | null
-          name: string
-          normalized_address: string | null
-          postal_code: string | null
-          property_address: string | null
-          property_id: string
-          state: string | null
-        }
+          address_line_1: string | null;
+          address_line_2: string | null;
+          address_source: string;
+          address_verified_at: string | null;
+          budget_band: string;
+          budget_target: number | null;
+          city: string | null;
+          country: string | null;
+          created_at: string;
+          finish_grade: string;
+          id: string;
+          latitude: number | null;
+          longitude: number | null;
+          name: string;
+          normalized_address: string | null;
+          postal_code: string | null;
+          property_address: string | null;
+          property_id: string;
+          state: string | null;
+        };
         Insert: {
-          address_line_1?: string | null
-          address_line_2?: string | null
-          address_source?: string
-          address_verified_at?: string | null
-          budget_band?: string
-          budget_target?: number | null
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          finish_grade?: string
-          id?: string
-          latitude?: number | null
-          longitude?: number | null
-          name: string
-          normalized_address?: string | null
-          postal_code?: string | null
-          property_address?: string | null
-          property_id: string
-          state?: string | null
-        }
+          address_line_1?: string | null;
+          address_line_2?: string | null;
+          address_source?: string;
+          address_verified_at?: string | null;
+          budget_band?: string;
+          budget_target?: number | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          finish_grade?: string;
+          id?: string;
+          latitude?: number | null;
+          longitude?: number | null;
+          name: string;
+          normalized_address?: string | null;
+          postal_code?: string | null;
+          property_address?: string | null;
+          property_id: string;
+          state?: string | null;
+        };
         Update: {
-          address_line_1?: string | null
-          address_line_2?: string | null
-          address_source?: string
-          address_verified_at?: string | null
-          budget_band?: string
-          budget_target?: number | null
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          finish_grade?: string
-          id?: string
-          latitude?: number | null
-          longitude?: number | null
-          name?: string
-          normalized_address?: string | null
-          postal_code?: string | null
-          property_address?: string | null
-          property_id?: string
-          state?: string | null
-        }
+          address_line_1?: string | null;
+          address_line_2?: string | null;
+          address_source?: string;
+          address_verified_at?: string | null;
+          budget_band?: string;
+          budget_target?: number | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          finish_grade?: string;
+          id?: string;
+          latitude?: number | null;
+          longitude?: number | null;
+          name?: string;
+          normalized_address?: string | null;
+          postal_code?: string | null;
+          property_address?: string | null;
+          property_id?: string;
+          state?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "projects_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            foreignKeyName: "projects_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       properties: {
         Row: {
-          address: string
-          city: string | null
-          created_at: string
-          design_dna: Json
-          id: string
-          market_id: string | null
-          normalized_address: string | null
-          owner_id: string
-          postal_code: string | null
-          state: string | null
-        }
+          address: string;
+          city: string | null;
+          created_at: string;
+          design_dna: Json;
+          id: string;
+          market_id: string | null;
+          normalized_address: string | null;
+          owner_id: string;
+          postal_code: string | null;
+          state: string | null;
+        };
         Insert: {
-          address: string
-          city?: string | null
-          created_at?: string
-          design_dna?: Json
-          id?: string
-          market_id?: string | null
-          normalized_address?: string | null
-          owner_id?: string
-          postal_code?: string | null
-          state?: string | null
-        }
+          address: string;
+          city?: string | null;
+          created_at?: string;
+          design_dna?: Json;
+          id?: string;
+          market_id?: string | null;
+          normalized_address?: string | null;
+          owner_id?: string;
+          postal_code?: string | null;
+          state?: string | null;
+        };
         Update: {
-          address?: string
-          city?: string | null
-          created_at?: string
-          design_dna?: Json
-          id?: string
-          market_id?: string | null
-          normalized_address?: string | null
-          owner_id?: string
-          postal_code?: string | null
-          state?: string | null
-        }
+          address?: string;
+          city?: string | null;
+          created_at?: string;
+          design_dna?: Json;
+          id?: string;
+          market_id?: string | null;
+          normalized_address?: string | null;
+          owner_id?: string;
+          postal_code?: string | null;
+          state?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "properties_market_id_fkey"
-            columns: ["market_id"]
-            isOneToOne: false
-            referencedRelation: "markets"
-            referencedColumns: ["id"]
+            foreignKeyName: "properties_market_id_fkey";
+            columns: ["market_id"];
+            isOneToOne: false;
+            referencedRelation: "markets";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       property_media_assets: {
         Row: {
-          angle_group: string | null
-          approved_version_id: string | null
-          batch_id: string | null
-          created_at: string
-          dup_group: string | null
-          file_size: number | null
-          file_type: string | null
-          flags: string[]
-          hdr_group: string | null
-          height: number | null
-          hidden: boolean
-          id: string
-          modification_class: string
-          original_filename: string | null
-          property_id: string | null
-          property_label: string | null
-          quality: Json
-          recommended: boolean
-          room_confidence: number
-          room_group: string
-          sort_order: number
-          source_type: string
-          storage_path: string
-          updated_at: string
-          user_id: string
-          width: number | null
-        }
+          angle_group: string | null;
+          approved_version_id: string | null;
+          batch_id: string | null;
+          created_at: string;
+          dup_group: string | null;
+          file_size: number | null;
+          file_type: string | null;
+          flags: string[];
+          hdr_group: string | null;
+          height: number | null;
+          hidden: boolean;
+          id: string;
+          modification_class: string;
+          original_filename: string | null;
+          property_id: string | null;
+          property_label: string | null;
+          quality: Json;
+          recommended: boolean;
+          room_confidence: number;
+          room_group: string;
+          sort_order: number;
+          source_type: string;
+          storage_path: string;
+          updated_at: string;
+          user_id: string;
+          width: number | null;
+        };
         Insert: {
-          angle_group?: string | null
-          approved_version_id?: string | null
-          batch_id?: string | null
-          created_at?: string
-          dup_group?: string | null
-          file_size?: number | null
-          file_type?: string | null
-          flags?: string[]
-          hdr_group?: string | null
-          height?: number | null
-          hidden?: boolean
-          id?: string
-          modification_class?: string
-          original_filename?: string | null
-          property_id?: string | null
-          property_label?: string | null
-          quality?: Json
-          recommended?: boolean
-          room_confidence?: number
-          room_group?: string
-          sort_order?: number
-          source_type?: string
-          storage_path: string
-          updated_at?: string
-          user_id: string
-          width?: number | null
-        }
+          angle_group?: string | null;
+          approved_version_id?: string | null;
+          batch_id?: string | null;
+          created_at?: string;
+          dup_group?: string | null;
+          file_size?: number | null;
+          file_type?: string | null;
+          flags?: string[];
+          hdr_group?: string | null;
+          height?: number | null;
+          hidden?: boolean;
+          id?: string;
+          modification_class?: string;
+          original_filename?: string | null;
+          property_id?: string | null;
+          property_label?: string | null;
+          quality?: Json;
+          recommended?: boolean;
+          room_confidence?: number;
+          room_group?: string;
+          sort_order?: number;
+          source_type?: string;
+          storage_path: string;
+          updated_at?: string;
+          user_id: string;
+          width?: number | null;
+        };
         Update: {
-          angle_group?: string | null
-          approved_version_id?: string | null
-          batch_id?: string | null
-          created_at?: string
-          dup_group?: string | null
-          file_size?: number | null
-          file_type?: string | null
-          flags?: string[]
-          hdr_group?: string | null
-          height?: number | null
-          hidden?: boolean
-          id?: string
-          modification_class?: string
-          original_filename?: string | null
-          property_id?: string | null
-          property_label?: string | null
-          quality?: Json
-          recommended?: boolean
-          room_confidence?: number
-          room_group?: string
-          sort_order?: number
-          source_type?: string
-          storage_path?: string
-          updated_at?: string
-          user_id?: string
-          width?: number | null
-        }
+          angle_group?: string | null;
+          approved_version_id?: string | null;
+          batch_id?: string | null;
+          created_at?: string;
+          dup_group?: string | null;
+          file_size?: number | null;
+          file_type?: string | null;
+          flags?: string[];
+          hdr_group?: string | null;
+          height?: number | null;
+          hidden?: boolean;
+          id?: string;
+          modification_class?: string;
+          original_filename?: string | null;
+          property_id?: string | null;
+          property_label?: string | null;
+          quality?: Json;
+          recommended?: boolean;
+          room_confidence?: number;
+          room_group?: string;
+          sort_order?: number;
+          source_type?: string;
+          storage_path?: string;
+          updated_at?: string;
+          user_id?: string;
+          width?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "property_media_assets_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            foreignKeyName: "property_media_assets_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       property_media_exports: {
         Row: {
-          created_at: string
-          file_count: number
-          id: string
-          label: string
-          options: Json
-          preset: string
-          property_id: string | null
-          property_label: string | null
-          user_id: string
-        }
+          created_at: string;
+          file_count: number;
+          id: string;
+          label: string;
+          options: Json;
+          preset: string;
+          property_id: string | null;
+          property_label: string | null;
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          file_count?: number
-          id?: string
-          label: string
-          options?: Json
-          preset: string
-          property_id?: string | null
-          property_label?: string | null
-          user_id: string
-        }
+          created_at?: string;
+          file_count?: number;
+          id?: string;
+          label: string;
+          options?: Json;
+          preset: string;
+          property_id?: string | null;
+          property_label?: string | null;
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          file_count?: number
-          id?: string
-          label?: string
-          options?: Json
-          preset?: string
-          property_id?: string | null
-          property_label?: string | null
-          user_id?: string
-        }
+          created_at?: string;
+          file_count?: number;
+          id?: string;
+          label?: string;
+          options?: Json;
+          preset?: string;
+          property_id?: string | null;
+          property_label?: string | null;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "property_media_exports_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            foreignKeyName: "property_media_exports_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       property_media_versions: {
         Row: {
-          approved: boolean
-          archived: boolean
-          asset_id: string
-          created_at: string
-          id: string
-          kind: string
-          label: string
-          modification_class: string
-          ops: Json
-          storage_path: string
-          user_id: string
-        }
+          approved: boolean;
+          archived: boolean;
+          asset_id: string;
+          created_at: string;
+          id: string;
+          kind: string;
+          label: string;
+          modification_class: string;
+          ops: Json;
+          storage_path: string;
+          user_id: string;
+        };
         Insert: {
-          approved?: boolean
-          archived?: boolean
-          asset_id: string
-          created_at?: string
-          id?: string
-          kind?: string
-          label: string
-          modification_class?: string
-          ops?: Json
-          storage_path: string
-          user_id: string
-        }
+          approved?: boolean;
+          archived?: boolean;
+          asset_id: string;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          label: string;
+          modification_class?: string;
+          ops?: Json;
+          storage_path: string;
+          user_id: string;
+        };
         Update: {
-          approved?: boolean
-          archived?: boolean
-          asset_id?: string
-          created_at?: string
-          id?: string
-          kind?: string
-          label?: string
-          modification_class?: string
-          ops?: Json
-          storage_path?: string
-          user_id?: string
-        }
+          approved?: boolean;
+          archived?: boolean;
+          asset_id?: string;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          label?: string;
+          modification_class?: string;
+          ops?: Json;
+          storage_path?: string;
+          user_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "property_media_versions_asset_id_fkey"
-            columns: ["asset_id"]
-            isOneToOne: false
-            referencedRelation: "property_media_assets"
-            referencedColumns: ["id"]
+            foreignKeyName: "property_media_versions_asset_id_fkey";
+            columns: ["asset_id"];
+            isOneToOne: false;
+            referencedRelation: "property_media_assets";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       rooms: {
         Row: {
-          ceiling_ht_in: number | null
-          created_at: string
-          dims_confirmed_at: string | null
-          dims_source: string | null
-          floor_area_sf: number | null
-          id: string
-          name: string
-          perimeter_lf: number | null
-          project_id: string
-          room_type: string
-          wall_area_sf: number | null
-        }
+          ceiling_ht_in: number | null;
+          created_at: string;
+          dims_confirmed_at: string | null;
+          dims_source: string | null;
+          floor_area_sf: number | null;
+          id: string;
+          name: string;
+          perimeter_lf: number | null;
+          project_id: string;
+          room_type: string;
+          wall_area_sf: number | null;
+        };
         Insert: {
-          ceiling_ht_in?: number | null
-          created_at?: string
-          dims_confirmed_at?: string | null
-          dims_source?: string | null
-          floor_area_sf?: number | null
-          id?: string
-          name: string
-          perimeter_lf?: number | null
-          project_id: string
-          room_type: string
-          wall_area_sf?: number | null
-        }
+          ceiling_ht_in?: number | null;
+          created_at?: string;
+          dims_confirmed_at?: string | null;
+          dims_source?: string | null;
+          floor_area_sf?: number | null;
+          id?: string;
+          name: string;
+          perimeter_lf?: number | null;
+          project_id: string;
+          room_type: string;
+          wall_area_sf?: number | null;
+        };
         Update: {
-          ceiling_ht_in?: number | null
-          created_at?: string
-          dims_confirmed_at?: string | null
-          dims_source?: string | null
-          floor_area_sf?: number | null
-          id?: string
-          name?: string
-          perimeter_lf?: number | null
-          project_id?: string
-          room_type?: string
-          wall_area_sf?: number | null
-        }
+          ceiling_ht_in?: number | null;
+          created_at?: string;
+          dims_confirmed_at?: string | null;
+          dims_source?: string | null;
+          floor_area_sf?: number | null;
+          id?: string;
+          name?: string;
+          perimeter_lf?: number | null;
+          project_id?: string;
+          room_type?: string;
+          wall_area_sf?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "rooms_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "rooms_project_id_fkey";
+            columns: ["project_id"];
+            isOneToOne: false;
+            referencedRelation: "projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       scene_clips: {
         Row: {
-          animate_id: string
-          approved: boolean
-          approved_at: string | null
-          cancelled_at: string | null
-          completed_at: string | null
-          created_at: string
-          credits_charged: number
-          credits_refunded: number
-          disclosure: string | null
-          error_message: string | null
-          heartbeat_at: string
-          id: string
-          idempotency_key: string | null
-          last_checked_at: string | null
-          orientation: string
-          progress: number
-          prompt: string
-          provider: string
-          provider_job_id: string | null
-          provider_payload: Json
-          retry_count: number
-          room_name: string | null
-          scene_id: string | null
-          scene_key: string | null
-          seconds: number
-          size: string
-          source_path: string | null
-          source_version: string
-          status: string
-          storage_path: string | null
-          thumbnail_path: string | null
-          updated_at: string
-          user_id: string
-          video_project_id: string | null
-        }
+          animate_id: string;
+          approved: boolean;
+          approved_at: string | null;
+          cancelled_at: string | null;
+          completed_at: string | null;
+          created_at: string;
+          credits_charged: number;
+          credits_refunded: number;
+          disclosure: string | null;
+          error_message: string | null;
+          heartbeat_at: string;
+          id: string;
+          idempotency_key: string | null;
+          last_checked_at: string | null;
+          orientation: string;
+          progress: number;
+          prompt: string;
+          provider: string;
+          provider_job_id: string | null;
+          provider_payload: Json;
+          retry_count: number;
+          room_name: string | null;
+          scene_id: string | null;
+          scene_key: string | null;
+          seconds: number;
+          size: string;
+          source_path: string | null;
+          source_version: string;
+          status: string;
+          storage_path: string | null;
+          thumbnail_path: string | null;
+          updated_at: string;
+          user_id: string;
+          video_project_id: string | null;
+        };
         Insert: {
-          animate_id: string
-          approved?: boolean
-          approved_at?: string | null
-          cancelled_at?: string | null
-          completed_at?: string | null
-          created_at?: string
-          credits_charged?: number
-          credits_refunded?: number
-          disclosure?: string | null
-          error_message?: string | null
-          heartbeat_at?: string
-          id?: string
-          idempotency_key?: string | null
-          last_checked_at?: string | null
-          orientation?: string
-          progress?: number
-          prompt: string
-          provider?: string
-          provider_job_id?: string | null
-          provider_payload?: Json
-          retry_count?: number
-          room_name?: string | null
-          scene_id?: string | null
-          scene_key?: string | null
-          seconds?: number
-          size?: string
-          source_path?: string | null
-          source_version?: string
-          status?: string
-          storage_path?: string | null
-          thumbnail_path?: string | null
-          updated_at?: string
-          user_id: string
-          video_project_id?: string | null
-        }
+          animate_id: string;
+          approved?: boolean;
+          approved_at?: string | null;
+          cancelled_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          credits_charged?: number;
+          credits_refunded?: number;
+          disclosure?: string | null;
+          error_message?: string | null;
+          heartbeat_at?: string;
+          id?: string;
+          idempotency_key?: string | null;
+          last_checked_at?: string | null;
+          orientation?: string;
+          progress?: number;
+          prompt: string;
+          provider?: string;
+          provider_job_id?: string | null;
+          provider_payload?: Json;
+          retry_count?: number;
+          room_name?: string | null;
+          scene_id?: string | null;
+          scene_key?: string | null;
+          seconds?: number;
+          size?: string;
+          source_path?: string | null;
+          source_version?: string;
+          status?: string;
+          storage_path?: string | null;
+          thumbnail_path?: string | null;
+          updated_at?: string;
+          user_id: string;
+          video_project_id?: string | null;
+        };
         Update: {
-          animate_id?: string
-          approved?: boolean
-          approved_at?: string | null
-          cancelled_at?: string | null
-          completed_at?: string | null
-          created_at?: string
-          credits_charged?: number
-          credits_refunded?: number
-          disclosure?: string | null
-          error_message?: string | null
-          heartbeat_at?: string
-          id?: string
-          idempotency_key?: string | null
-          last_checked_at?: string | null
-          orientation?: string
-          progress?: number
-          prompt?: string
-          provider?: string
-          provider_job_id?: string | null
-          provider_payload?: Json
-          retry_count?: number
-          room_name?: string | null
-          scene_id?: string | null
-          scene_key?: string | null
-          seconds?: number
-          size?: string
-          source_path?: string | null
-          source_version?: string
-          status?: string
-          storage_path?: string | null
-          thumbnail_path?: string | null
-          updated_at?: string
-          user_id?: string
-          video_project_id?: string | null
-        }
+          animate_id?: string;
+          approved?: boolean;
+          approved_at?: string | null;
+          cancelled_at?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          credits_charged?: number;
+          credits_refunded?: number;
+          disclosure?: string | null;
+          error_message?: string | null;
+          heartbeat_at?: string;
+          id?: string;
+          idempotency_key?: string | null;
+          last_checked_at?: string | null;
+          orientation?: string;
+          progress?: number;
+          prompt?: string;
+          provider?: string;
+          provider_job_id?: string | null;
+          provider_payload?: Json;
+          retry_count?: number;
+          room_name?: string | null;
+          scene_id?: string | null;
+          scene_key?: string | null;
+          seconds?: number;
+          size?: string;
+          source_path?: string | null;
+          source_version?: string;
+          status?: string;
+          storage_path?: string | null;
+          thumbnail_path?: string | null;
+          updated_at?: string;
+          user_id?: string;
+          video_project_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "scene_clips_scene_id_fkey"
-            columns: ["scene_id"]
-            isOneToOne: false
-            referencedRelation: "video_scenes"
-            referencedColumns: ["id"]
+            foreignKeyName: "scene_clips_scene_id_fkey";
+            columns: ["scene_id"];
+            isOneToOne: false;
+            referencedRelation: "video_scenes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "scene_clips_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: false
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "scene_clips_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: false;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       scene_start_end: {
         Row: {
-          aspect: string | null
-          clip_id: string | null
-          clip_path: string | null
-          created_at: string
-          credit_cost: number
-          credits_charged: number
-          credits_reserved: number
-          disclosure: string | null
-          end_asset_id: string | null
-          end_crop: string
-          end_path: string | null
-          error_message: string | null
-          generation_mode: string
-          id: string
-          motion_preset: string
-          progress: number
-          prompt: string | null
-          provider_job_id: string | null
-          scene_id: string | null
-          scene_key: string
-          seconds: number
-          start_asset_id: string | null
-          start_crop: string
-          start_path: string
-          status: string
-          transition_duration: number
-          transition_type: string
-          updated_at: string
-          user_id: string
-          video_project_id: string
-        }
+          aspect: string | null;
+          clip_id: string | null;
+          clip_path: string | null;
+          created_at: string;
+          credit_cost: number;
+          credits_charged: number;
+          credits_reserved: number;
+          disclosure: string | null;
+          end_asset_id: string | null;
+          end_crop: string;
+          end_path: string | null;
+          error_message: string | null;
+          generation_mode: string;
+          id: string;
+          motion_preset: string;
+          progress: number;
+          prompt: string | null;
+          provider_job_id: string | null;
+          scene_id: string | null;
+          scene_key: string;
+          seconds: number;
+          start_asset_id: string | null;
+          start_crop: string;
+          start_path: string;
+          status: string;
+          transition_duration: number;
+          transition_type: string;
+          updated_at: string;
+          user_id: string;
+          video_project_id: string;
+        };
         Insert: {
-          aspect?: string | null
-          clip_id?: string | null
-          clip_path?: string | null
-          created_at?: string
-          credit_cost?: number
-          credits_charged?: number
-          credits_reserved?: number
-          disclosure?: string | null
-          end_asset_id?: string | null
-          end_crop?: string
-          end_path?: string | null
-          error_message?: string | null
-          generation_mode?: string
-          id?: string
-          motion_preset?: string
-          progress?: number
-          prompt?: string | null
-          provider_job_id?: string | null
-          scene_id?: string | null
-          scene_key: string
-          seconds?: number
-          start_asset_id?: string | null
-          start_crop?: string
-          start_path: string
-          status?: string
-          transition_duration?: number
-          transition_type?: string
-          updated_at?: string
-          user_id: string
-          video_project_id: string
-        }
+          aspect?: string | null;
+          clip_id?: string | null;
+          clip_path?: string | null;
+          created_at?: string;
+          credit_cost?: number;
+          credits_charged?: number;
+          credits_reserved?: number;
+          disclosure?: string | null;
+          end_asset_id?: string | null;
+          end_crop?: string;
+          end_path?: string | null;
+          error_message?: string | null;
+          generation_mode?: string;
+          id?: string;
+          motion_preset?: string;
+          progress?: number;
+          prompt?: string | null;
+          provider_job_id?: string | null;
+          scene_id?: string | null;
+          scene_key: string;
+          seconds?: number;
+          start_asset_id?: string | null;
+          start_crop?: string;
+          start_path: string;
+          status?: string;
+          transition_duration?: number;
+          transition_type?: string;
+          updated_at?: string;
+          user_id: string;
+          video_project_id: string;
+        };
         Update: {
-          aspect?: string | null
-          clip_id?: string | null
-          clip_path?: string | null
-          created_at?: string
-          credit_cost?: number
-          credits_charged?: number
-          credits_reserved?: number
-          disclosure?: string | null
-          end_asset_id?: string | null
-          end_crop?: string
-          end_path?: string | null
-          error_message?: string | null
-          generation_mode?: string
-          id?: string
-          motion_preset?: string
-          progress?: number
-          prompt?: string | null
-          provider_job_id?: string | null
-          scene_id?: string | null
-          scene_key?: string
-          seconds?: number
-          start_asset_id?: string | null
-          start_crop?: string
-          start_path?: string
-          status?: string
-          transition_duration?: number
-          transition_type?: string
-          updated_at?: string
-          user_id?: string
-          video_project_id?: string
-        }
+          aspect?: string | null;
+          clip_id?: string | null;
+          clip_path?: string | null;
+          created_at?: string;
+          credit_cost?: number;
+          credits_charged?: number;
+          credits_reserved?: number;
+          disclosure?: string | null;
+          end_asset_id?: string | null;
+          end_crop?: string;
+          end_path?: string | null;
+          error_message?: string | null;
+          generation_mode?: string;
+          id?: string;
+          motion_preset?: string;
+          progress?: number;
+          prompt?: string | null;
+          provider_job_id?: string | null;
+          scene_id?: string | null;
+          scene_key?: string;
+          seconds?: number;
+          start_asset_id?: string | null;
+          start_crop?: string;
+          start_path?: string;
+          status?: string;
+          transition_duration?: number;
+          transition_type?: string;
+          updated_at?: string;
+          user_id?: string;
+          video_project_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "scene_start_end_clip_id_fkey"
-            columns: ["clip_id"]
-            isOneToOne: false
-            referencedRelation: "scene_clips"
-            referencedColumns: ["id"]
+            foreignKeyName: "scene_start_end_clip_id_fkey";
+            columns: ["clip_id"];
+            isOneToOne: false;
+            referencedRelation: "scene_clips";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "scene_start_end_scene_id_fkey"
-            columns: ["scene_id"]
-            isOneToOne: false
-            referencedRelation: "video_scenes"
-            referencedColumns: ["id"]
+            foreignKeyName: "scene_start_end_scene_id_fkey";
+            columns: ["scene_id"];
+            isOneToOne: false;
+            referencedRelation: "video_scenes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "scene_start_end_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: false
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "scene_start_end_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: false;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       scope_lines: {
         Row: {
-          change_item_id: string | null
-          csi_division: string | null
-          description: string
-          id: string
-          is_fallback: boolean
-          labor_high: number | null
-          labor_low: number | null
-          line_high: number
-          line_low: number
-          material_high: number | null
-          material_low: number | null
-          price_source: string
-          qty: number
-          scope_id: string
-          trade: string | null
-          uom: string
-        }
+          change_item_id: string | null;
+          csi_division: string | null;
+          description: string;
+          id: string;
+          is_fallback: boolean;
+          labor_high: number | null;
+          labor_low: number | null;
+          line_high: number;
+          line_low: number;
+          material_high: number | null;
+          material_low: number | null;
+          price_source: string;
+          qty: number;
+          scope_id: string;
+          trade: string | null;
+          uom: string;
+        };
         Insert: {
-          change_item_id?: string | null
-          csi_division?: string | null
-          description: string
-          id?: string
-          is_fallback?: boolean
-          labor_high?: number | null
-          labor_low?: number | null
-          line_high: number
-          line_low: number
-          material_high?: number | null
-          material_low?: number | null
-          price_source: string
-          qty: number
-          scope_id: string
-          trade?: string | null
-          uom: string
-        }
+          change_item_id?: string | null;
+          csi_division?: string | null;
+          description: string;
+          id?: string;
+          is_fallback?: boolean;
+          labor_high?: number | null;
+          labor_low?: number | null;
+          line_high: number;
+          line_low: number;
+          material_high?: number | null;
+          material_low?: number | null;
+          price_source: string;
+          qty: number;
+          scope_id: string;
+          trade?: string | null;
+          uom: string;
+        };
         Update: {
-          change_item_id?: string | null
-          csi_division?: string | null
-          description?: string
-          id?: string
-          is_fallback?: boolean
-          labor_high?: number | null
-          labor_low?: number | null
-          line_high?: number
-          line_low?: number
-          material_high?: number | null
-          material_low?: number | null
-          price_source?: string
-          qty?: number
-          scope_id?: string
-          trade?: string | null
-          uom?: string
-        }
+          change_item_id?: string | null;
+          csi_division?: string | null;
+          description?: string;
+          id?: string;
+          is_fallback?: boolean;
+          labor_high?: number | null;
+          labor_low?: number | null;
+          line_high?: number;
+          line_low?: number;
+          material_high?: number | null;
+          material_low?: number | null;
+          price_source?: string;
+          qty?: number;
+          scope_id?: string;
+          trade?: string | null;
+          uom?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "scope_lines_change_item_id_fkey"
-            columns: ["change_item_id"]
-            isOneToOne: false
-            referencedRelation: "change_items"
-            referencedColumns: ["id"]
+            foreignKeyName: "scope_lines_change_item_id_fkey";
+            columns: ["change_item_id"];
+            isOneToOne: false;
+            referencedRelation: "change_items";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "scope_lines_scope_id_fkey"
-            columns: ["scope_id"]
-            isOneToOne: false
-            referencedRelation: "scopes"
-            referencedColumns: ["id"]
+            foreignKeyName: "scope_lines_scope_id_fkey";
+            columns: ["scope_id"];
+            isOneToOne: false;
+            referencedRelation: "scopes";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       scopes: {
         Row: {
-          budget_fit: string | null
-          computed_at: string
-          contingency_pct: number
-          id: string
-          layout_conf: string
-          market_id: string
-          matched_pct: number | null
-          pricing_conf: string
-          total_high: number
-          total_low: number
-          version_id: string
-        }
+          budget_fit: string | null;
+          computed_at: string;
+          contingency_pct: number;
+          id: string;
+          layout_conf: string;
+          market_id: string;
+          matched_pct: number | null;
+          pricing_conf: string;
+          total_high: number;
+          total_low: number;
+          version_id: string;
+        };
         Insert: {
-          budget_fit?: string | null
-          computed_at?: string
-          contingency_pct?: number
-          id?: string
-          layout_conf: string
-          market_id: string
-          matched_pct?: number | null
-          pricing_conf: string
-          total_high: number
-          total_low: number
-          version_id: string
-        }
+          budget_fit?: string | null;
+          computed_at?: string;
+          contingency_pct?: number;
+          id?: string;
+          layout_conf: string;
+          market_id: string;
+          matched_pct?: number | null;
+          pricing_conf: string;
+          total_high: number;
+          total_low: number;
+          version_id: string;
+        };
         Update: {
-          budget_fit?: string | null
-          computed_at?: string
-          contingency_pct?: number
-          id?: string
-          layout_conf?: string
-          market_id?: string
-          matched_pct?: number | null
-          pricing_conf?: string
-          total_high?: number
-          total_low?: number
-          version_id?: string
-        }
+          budget_fit?: string | null;
+          computed_at?: string;
+          contingency_pct?: number;
+          id?: string;
+          layout_conf?: string;
+          market_id?: string;
+          matched_pct?: number | null;
+          pricing_conf?: string;
+          total_high?: number;
+          total_low?: number;
+          version_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "scopes_market_id_fkey"
-            columns: ["market_id"]
-            isOneToOne: false
-            referencedRelation: "markets"
-            referencedColumns: ["id"]
+            foreignKeyName: "scopes_market_id_fkey";
+            columns: ["market_id"];
+            isOneToOne: false;
+            referencedRelation: "markets";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "scopes_version_id_fkey"
-            columns: ["version_id"]
-            isOneToOne: false
-            referencedRelation: "versions"
-            referencedColumns: ["id"]
+            foreignKeyName: "scopes_version_id_fkey";
+            columns: ["version_id"];
+            isOneToOne: false;
+            referencedRelation: "versions";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       signup_profiles: {
         Row: {
-          company: string | null
-          completed: boolean
-          created_at: string
-          crm_pushed_at: string | null
-          email: string | null
-          full_name: string | null
-          how_heard: string | null
-          how_heard_detail: string | null
-          listings_per_year: string | null
-          marketing_opt_in: boolean
-          phone: string | null
-          primary_goal: string | null
-          role: string | null
-          skipped: boolean
-          team_size: string | null
-          updated_at: string
-          user_id: string
-        }
+          company: string | null;
+          completed: boolean;
+          created_at: string;
+          crm_pushed_at: string | null;
+          email: string | null;
+          full_name: string | null;
+          how_heard: string | null;
+          how_heard_detail: string | null;
+          listings_per_year: string | null;
+          marketing_opt_in: boolean;
+          phone: string | null;
+          primary_goal: string | null;
+          role: string | null;
+          skipped: boolean;
+          team_size: string | null;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          company?: string | null
-          completed?: boolean
-          created_at?: string
-          crm_pushed_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          how_heard?: string | null
-          how_heard_detail?: string | null
-          listings_per_year?: string | null
-          marketing_opt_in?: boolean
-          phone?: string | null
-          primary_goal?: string | null
-          role?: string | null
-          skipped?: boolean
-          team_size?: string | null
-          updated_at?: string
-          user_id: string
-        }
+          company?: string | null;
+          completed?: boolean;
+          created_at?: string;
+          crm_pushed_at?: string | null;
+          email?: string | null;
+          full_name?: string | null;
+          how_heard?: string | null;
+          how_heard_detail?: string | null;
+          listings_per_year?: string | null;
+          marketing_opt_in?: boolean;
+          phone?: string | null;
+          primary_goal?: string | null;
+          role?: string | null;
+          skipped?: boolean;
+          team_size?: string | null;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          company?: string | null
-          completed?: boolean
-          created_at?: string
-          crm_pushed_at?: string | null
-          email?: string | null
-          full_name?: string | null
-          how_heard?: string | null
-          how_heard_detail?: string | null
-          listings_per_year?: string | null
-          marketing_opt_in?: boolean
-          phone?: string | null
-          primary_goal?: string | null
-          role?: string | null
-          skipped?: boolean
-          team_size?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          company?: string | null;
+          completed?: boolean;
+          created_at?: string;
+          crm_pushed_at?: string | null;
+          email?: string | null;
+          full_name?: string | null;
+          how_heard?: string | null;
+          how_heard_detail?: string | null;
+          listings_per_year?: string | null;
+          marketing_opt_in?: boolean;
+          phone?: string | null;
+          primary_goal?: string | null;
+          role?: string | null;
+          skipped?: boolean;
+          team_size?: string | null;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       style_overrides: {
         Row: {
-          aliases: string[] | null
-          category: string | null
-          created_at: string
-          display_name: string | null
-          generation_prompt: string | null
-          is_custom: boolean
-          is_featured: boolean | null
-          is_hidden: boolean
-          negative_prompt: string | null
-          preview_image: string | null
-          project_types: string[] | null
-          provider_map: Json
-          short_description: string | null
-          sort_order: number | null
-          style_id: string
-          updated_at: string
-        }
+          aliases: string[] | null;
+          category: string | null;
+          created_at: string;
+          display_name: string | null;
+          generation_prompt: string | null;
+          is_custom: boolean;
+          is_featured: boolean | null;
+          is_hidden: boolean;
+          negative_prompt: string | null;
+          preview_image: string | null;
+          project_types: string[] | null;
+          provider_map: Json;
+          short_description: string | null;
+          sort_order: number | null;
+          style_id: string;
+          updated_at: string;
+        };
         Insert: {
-          aliases?: string[] | null
-          category?: string | null
-          created_at?: string
-          display_name?: string | null
-          generation_prompt?: string | null
-          is_custom?: boolean
-          is_featured?: boolean | null
-          is_hidden?: boolean
-          negative_prompt?: string | null
-          preview_image?: string | null
-          project_types?: string[] | null
-          provider_map?: Json
-          short_description?: string | null
-          sort_order?: number | null
-          style_id: string
-          updated_at?: string
-        }
+          aliases?: string[] | null;
+          category?: string | null;
+          created_at?: string;
+          display_name?: string | null;
+          generation_prompt?: string | null;
+          is_custom?: boolean;
+          is_featured?: boolean | null;
+          is_hidden?: boolean;
+          negative_prompt?: string | null;
+          preview_image?: string | null;
+          project_types?: string[] | null;
+          provider_map?: Json;
+          short_description?: string | null;
+          sort_order?: number | null;
+          style_id: string;
+          updated_at?: string;
+        };
         Update: {
-          aliases?: string[] | null
-          category?: string | null
-          created_at?: string
-          display_name?: string | null
-          generation_prompt?: string | null
-          is_custom?: boolean
-          is_featured?: boolean | null
-          is_hidden?: boolean
-          negative_prompt?: string | null
-          preview_image?: string | null
-          project_types?: string[] | null
-          provider_map?: Json
-          short_description?: string | null
-          sort_order?: number | null
-          style_id?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
+          aliases?: string[] | null;
+          category?: string | null;
+          created_at?: string;
+          display_name?: string | null;
+          generation_prompt?: string | null;
+          is_custom?: boolean;
+          is_featured?: boolean | null;
+          is_hidden?: boolean;
+          negative_prompt?: string | null;
+          preview_image?: string | null;
+          project_types?: string[] | null;
+          provider_map?: Json;
+          short_description?: string | null;
+          sort_order?: number | null;
+          style_id?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       subscriptions: {
         Row: {
-          cancel_at_period_end: boolean
-          created_at: string
-          last_refill_on: string | null
-          next_refill_on: string | null
-          period_end: string | null
-          period_start: string | null
-          plan: Database["public"]["Enums"]["plan_tier"]
-          source: string
-          status: string
-          updated_at: string
-          user_id: string
-        }
+          cancel_at_period_end: boolean;
+          created_at: string;
+          last_refill_on: string | null;
+          next_refill_on: string | null;
+          period_end: string | null;
+          period_start: string | null;
+          plan: Database["public"]["Enums"]["plan_tier"];
+          source: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+        };
         Insert: {
-          cancel_at_period_end?: boolean
-          created_at?: string
-          last_refill_on?: string | null
-          next_refill_on?: string | null
-          period_end?: string | null
-          period_start?: string | null
-          plan?: Database["public"]["Enums"]["plan_tier"]
-          source?: string
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
+          cancel_at_period_end?: boolean;
+          created_at?: string;
+          last_refill_on?: string | null;
+          next_refill_on?: string | null;
+          period_end?: string | null;
+          period_start?: string | null;
+          plan?: Database["public"]["Enums"]["plan_tier"];
+          source?: string;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+        };
         Update: {
-          cancel_at_period_end?: boolean
-          created_at?: string
-          last_refill_on?: string | null
-          next_refill_on?: string | null
-          period_end?: string | null
-          period_start?: string | null
-          plan?: Database["public"]["Enums"]["plan_tier"]
-          source?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
+          cancel_at_period_end?: boolean;
+          created_at?: string;
+          last_refill_on?: string | null;
+          next_refill_on?: string | null;
+          period_end?: string | null;
+          period_start?: string | null;
+          plan?: Database["public"]["Enums"]["plan_tier"];
+          source?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       team_invites: {
         Row: {
-          accepted_at: string | null
-          accepted_user_id: string | null
-          created_at: string
-          email: string
-          id: string
-          owner_id: string
-          role: string
-          status: string
-        }
+          accepted_at: string | null;
+          accepted_user_id: string | null;
+          created_at: string;
+          email: string;
+          id: string;
+          owner_id: string;
+          role: string;
+          status: string;
+        };
         Insert: {
-          accepted_at?: string | null
-          accepted_user_id?: string | null
-          created_at?: string
-          email: string
-          id?: string
-          owner_id: string
-          role?: string
-          status?: string
-        }
+          accepted_at?: string | null;
+          accepted_user_id?: string | null;
+          created_at?: string;
+          email: string;
+          id?: string;
+          owner_id: string;
+          role?: string;
+          status?: string;
+        };
         Update: {
-          accepted_at?: string | null
-          accepted_user_id?: string | null
-          created_at?: string
-          email?: string
-          id?: string
-          owner_id?: string
-          role?: string
-          status?: string
-        }
-        Relationships: []
-      }
+          accepted_at?: string | null;
+          accepted_user_id?: string | null;
+          created_at?: string;
+          email?: string;
+          id?: string;
+          owner_id?: string;
+          role?: string;
+          status?: string;
+        };
+        Relationships: [];
+      };
       unit_costs: {
         Row: {
-          csi_division: string
-          description: string
-          effective_on: string
-          grade: string
-          id: string
-          item_code: string
-          labor_high: number | null
-          labor_low: number | null
-          material_high: number | null
-          material_low: number | null
-          n_samples: number | null
-          source: string
-          source_ref: string | null
-          uom: string
-        }
+          csi_division: string;
+          description: string;
+          effective_on: string;
+          grade: string;
+          id: string;
+          item_code: string;
+          labor_high: number | null;
+          labor_low: number | null;
+          material_high: number | null;
+          material_low: number | null;
+          n_samples: number | null;
+          source: string;
+          source_ref: string | null;
+          uom: string;
+        };
         Insert: {
-          csi_division: string
-          description: string
-          effective_on?: string
-          grade?: string
-          id?: string
-          item_code: string
-          labor_high?: number | null
-          labor_low?: number | null
-          material_high?: number | null
-          material_low?: number | null
-          n_samples?: number | null
-          source: string
-          source_ref?: string | null
-          uom: string
-        }
+          csi_division: string;
+          description: string;
+          effective_on?: string;
+          grade?: string;
+          id?: string;
+          item_code: string;
+          labor_high?: number | null;
+          labor_low?: number | null;
+          material_high?: number | null;
+          material_low?: number | null;
+          n_samples?: number | null;
+          source: string;
+          source_ref?: string | null;
+          uom: string;
+        };
         Update: {
-          csi_division?: string
-          description?: string
-          effective_on?: string
-          grade?: string
-          id?: string
-          item_code?: string
-          labor_high?: number | null
-          labor_low?: number | null
-          material_high?: number | null
-          material_low?: number | null
-          n_samples?: number | null
-          source?: string
-          source_ref?: string | null
-          uom?: string
-        }
-        Relationships: []
-      }
+          csi_division?: string;
+          description?: string;
+          effective_on?: string;
+          grade?: string;
+          id?: string;
+          item_code?: string;
+          labor_high?: number | null;
+          labor_low?: number | null;
+          material_high?: number | null;
+          material_low?: number | null;
+          n_samples?: number | null;
+          source?: string;
+          source_ref?: string | null;
+          uom?: string;
+        };
+        Relationships: [];
+      };
       user_roles: {
         Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          created_at: string;
+          id: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
-        }
+          created_at?: string;
+          id?: string;
+          role: Database["public"]["Enums"]["app_role"];
+          user_id: string;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
+          created_at?: string;
+          id?: string;
+          role?: Database["public"]["Enums"]["app_role"];
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       versions: {
         Row: {
-          after_path: string | null
-          before_path: string
-          created_at: string
-          created_by: string | null
-          gen_model: string | null
-          gen_params: Json | null
-          id: string
-          room_id: string
-          status: string
-          style: string | null
-          version_no: number
-        }
+          after_path: string | null;
+          before_path: string;
+          created_at: string;
+          created_by: string | null;
+          gen_model: string | null;
+          gen_params: Json | null;
+          id: string;
+          room_id: string;
+          status: string;
+          style: string | null;
+          version_no: number;
+        };
         Insert: {
-          after_path?: string | null
-          before_path: string
-          created_at?: string
-          created_by?: string | null
-          gen_model?: string | null
-          gen_params?: Json | null
-          id?: string
-          room_id: string
-          status?: string
-          style?: string | null
-          version_no: number
-        }
+          after_path?: string | null;
+          before_path: string;
+          created_at?: string;
+          created_by?: string | null;
+          gen_model?: string | null;
+          gen_params?: Json | null;
+          id?: string;
+          room_id: string;
+          status?: string;
+          style?: string | null;
+          version_no: number;
+        };
         Update: {
-          after_path?: string | null
-          before_path?: string
-          created_at?: string
-          created_by?: string | null
-          gen_model?: string | null
-          gen_params?: Json | null
-          id?: string
-          room_id?: string
-          status?: string
-          style?: string | null
-          version_no?: number
-        }
+          after_path?: string | null;
+          before_path?: string;
+          created_at?: string;
+          created_by?: string | null;
+          gen_model?: string | null;
+          gen_params?: Json | null;
+          id?: string;
+          room_id?: string;
+          status?: string;
+          style?: string | null;
+          version_no?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "versions_room_id_fkey"
-            columns: ["room_id"]
-            isOneToOne: false
-            referencedRelation: "rooms"
-            referencedColumns: ["id"]
+            foreignKeyName: "versions_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: false;
+            referencedRelation: "rooms";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       video_audio: {
         Row: {
-          beat_sync: boolean
-          captions_enabled: boolean
-          created_at: string
-          id: string
-          music_track_id: string | null
-          music_volume: number
-          narration_script: string | null
-          narration_type: string
-          narration_url: string | null
-          presentation_style: string
-          updated_at: string
-          user_id: string
-          video_project_id: string
-          voice_id: string | null
-        }
+          beat_sync: boolean;
+          captions_enabled: boolean;
+          created_at: string;
+          id: string;
+          music_track_id: string | null;
+          music_volume: number;
+          narration_script: string | null;
+          narration_type: string;
+          narration_url: string | null;
+          presentation_style: string;
+          updated_at: string;
+          user_id: string;
+          video_project_id: string;
+          voice_id: string | null;
+        };
         Insert: {
-          beat_sync?: boolean
-          captions_enabled?: boolean
-          created_at?: string
-          id?: string
-          music_track_id?: string | null
-          music_volume?: number
-          narration_script?: string | null
-          narration_type?: string
-          narration_url?: string | null
-          presentation_style?: string
-          updated_at?: string
-          user_id: string
-          video_project_id: string
-          voice_id?: string | null
-        }
+          beat_sync?: boolean;
+          captions_enabled?: boolean;
+          created_at?: string;
+          id?: string;
+          music_track_id?: string | null;
+          music_volume?: number;
+          narration_script?: string | null;
+          narration_type?: string;
+          narration_url?: string | null;
+          presentation_style?: string;
+          updated_at?: string;
+          user_id: string;
+          video_project_id: string;
+          voice_id?: string | null;
+        };
         Update: {
-          beat_sync?: boolean
-          captions_enabled?: boolean
-          created_at?: string
-          id?: string
-          music_track_id?: string | null
-          music_volume?: number
-          narration_script?: string | null
-          narration_type?: string
-          narration_url?: string | null
-          presentation_style?: string
-          updated_at?: string
-          user_id?: string
-          video_project_id?: string
-          voice_id?: string | null
-        }
+          beat_sync?: boolean;
+          captions_enabled?: boolean;
+          created_at?: string;
+          id?: string;
+          music_track_id?: string | null;
+          music_volume?: number;
+          narration_script?: string | null;
+          narration_type?: string;
+          narration_url?: string | null;
+          presentation_style?: string;
+          updated_at?: string;
+          user_id?: string;
+          video_project_id?: string;
+          voice_id?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "video_audio_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: true
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_audio_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: true;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       video_presentation_feedback: {
         Row: {
-          created_at: string
-          id: string
-          kind: string
-          note: string | null
-          share_link_id: string
-          user_id: string
-          visitor_email: string | null
-          visitor_name: string | null
-        }
+          created_at: string;
+          id: string;
+          kind: string;
+          note: string | null;
+          share_link_id: string;
+          user_id: string;
+          visitor_email: string | null;
+          visitor_name: string | null;
+        };
         Insert: {
-          created_at?: string
-          id?: string
-          kind?: string
-          note?: string | null
-          share_link_id: string
-          user_id: string
-          visitor_email?: string | null
-          visitor_name?: string | null
-        }
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          note?: string | null;
+          share_link_id: string;
+          user_id: string;
+          visitor_email?: string | null;
+          visitor_name?: string | null;
+        };
         Update: {
-          created_at?: string
-          id?: string
-          kind?: string
-          note?: string | null
-          share_link_id?: string
-          user_id?: string
-          visitor_email?: string | null
-          visitor_name?: string | null
-        }
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          note?: string | null;
+          share_link_id?: string;
+          user_id?: string;
+          visitor_email?: string | null;
+          visitor_name?: string | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "video_presentation_feedback_share_link_id_fkey"
-            columns: ["share_link_id"]
-            isOneToOne: false
-            referencedRelation: "video_share_links"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_presentation_feedback_share_link_id_fkey";
+            columns: ["share_link_id"];
+            isOneToOne: false;
+            referencedRelation: "video_share_links";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       video_projects: {
         Row: {
-          address_line_1: string | null
-          address_line_2: string | null
-          address_source: string
-          address_verified_at: string | null
-          brand_kit_id: string | null
-          branding: Json
-          builder_step: string | null
-          city: string | null
-          country: string | null
-          created_at: string
-          design_version_id: string | null
-          disclosure: Json
-          draft_state: Json
-          error_message: string | null
-          formats: Json
-          id: string
-          last_opened_at: string
-          latitude: number | null
-          length_preset: string
-          longitude: number | null
-          modification_log: Json
-          motion: string
-          normalized_address: string | null
-          postal_code: string | null
-          property_address: string | null
-          property_id: string | null
-          property_label: string | null
-          room_id: string | null
-          settings: Json
-          source_type: string
-          state: string | null
-          status: string
-          template_id: string | null
-          title: string
-          title_touched: boolean
-          transition: string
-          updated_at: string
-          user_id: string
-          video_type: string
-        }
+          address_line_1: string | null;
+          address_line_2: string | null;
+          address_source: string;
+          address_verified_at: string | null;
+          brand_kit_id: string | null;
+          branding: Json;
+          builder_step: string | null;
+          city: string | null;
+          country: string | null;
+          created_at: string;
+          design_version_id: string | null;
+          disclosure: Json;
+          draft_state: Json;
+          error_message: string | null;
+          formats: Json;
+          id: string;
+          last_opened_at: string;
+          latitude: number | null;
+          length_preset: string;
+          longitude: number | null;
+          modification_log: Json;
+          motion: string;
+          normalized_address: string | null;
+          postal_code: string | null;
+          property_address: string | null;
+          property_id: string | null;
+          property_label: string | null;
+          room_id: string | null;
+          settings: Json;
+          source_type: string;
+          state: string | null;
+          status: string;
+          template_id: string | null;
+          title: string;
+          title_touched: boolean;
+          transition: string;
+          updated_at: string;
+          user_id: string;
+          video_type: string;
+        };
         Insert: {
-          address_line_1?: string | null
-          address_line_2?: string | null
-          address_source?: string
-          address_verified_at?: string | null
-          brand_kit_id?: string | null
-          branding?: Json
-          builder_step?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          design_version_id?: string | null
-          disclosure?: Json
-          draft_state?: Json
-          error_message?: string | null
-          formats?: Json
-          id?: string
-          last_opened_at?: string
-          latitude?: number | null
-          length_preset?: string
-          longitude?: number | null
-          modification_log?: Json
-          motion?: string
-          normalized_address?: string | null
-          postal_code?: string | null
-          property_address?: string | null
-          property_id?: string | null
-          property_label?: string | null
-          room_id?: string | null
-          settings?: Json
-          source_type?: string
-          state?: string | null
-          status?: string
-          template_id?: string | null
-          title?: string
-          title_touched?: boolean
-          transition?: string
-          updated_at?: string
-          user_id: string
-          video_type?: string
-        }
+          address_line_1?: string | null;
+          address_line_2?: string | null;
+          address_source?: string;
+          address_verified_at?: string | null;
+          brand_kit_id?: string | null;
+          branding?: Json;
+          builder_step?: string | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          design_version_id?: string | null;
+          disclosure?: Json;
+          draft_state?: Json;
+          error_message?: string | null;
+          formats?: Json;
+          id?: string;
+          last_opened_at?: string;
+          latitude?: number | null;
+          length_preset?: string;
+          longitude?: number | null;
+          modification_log?: Json;
+          motion?: string;
+          normalized_address?: string | null;
+          postal_code?: string | null;
+          property_address?: string | null;
+          property_id?: string | null;
+          property_label?: string | null;
+          room_id?: string | null;
+          settings?: Json;
+          source_type?: string;
+          state?: string | null;
+          status?: string;
+          template_id?: string | null;
+          title?: string;
+          title_touched?: boolean;
+          transition?: string;
+          updated_at?: string;
+          user_id: string;
+          video_type?: string;
+        };
         Update: {
-          address_line_1?: string | null
-          address_line_2?: string | null
-          address_source?: string
-          address_verified_at?: string | null
-          brand_kit_id?: string | null
-          branding?: Json
-          builder_step?: string | null
-          city?: string | null
-          country?: string | null
-          created_at?: string
-          design_version_id?: string | null
-          disclosure?: Json
-          draft_state?: Json
-          error_message?: string | null
-          formats?: Json
-          id?: string
-          last_opened_at?: string
-          latitude?: number | null
-          length_preset?: string
-          longitude?: number | null
-          modification_log?: Json
-          motion?: string
-          normalized_address?: string | null
-          postal_code?: string | null
-          property_address?: string | null
-          property_id?: string | null
-          property_label?: string | null
-          room_id?: string | null
-          settings?: Json
-          source_type?: string
-          state?: string | null
-          status?: string
-          template_id?: string | null
-          title?: string
-          title_touched?: boolean
-          transition?: string
-          updated_at?: string
-          user_id?: string
-          video_type?: string
-        }
+          address_line_1?: string | null;
+          address_line_2?: string | null;
+          address_source?: string;
+          address_verified_at?: string | null;
+          brand_kit_id?: string | null;
+          branding?: Json;
+          builder_step?: string | null;
+          city?: string | null;
+          country?: string | null;
+          created_at?: string;
+          design_version_id?: string | null;
+          disclosure?: Json;
+          draft_state?: Json;
+          error_message?: string | null;
+          formats?: Json;
+          id?: string;
+          last_opened_at?: string;
+          latitude?: number | null;
+          length_preset?: string;
+          longitude?: number | null;
+          modification_log?: Json;
+          motion?: string;
+          normalized_address?: string | null;
+          postal_code?: string | null;
+          property_address?: string | null;
+          property_id?: string | null;
+          property_label?: string | null;
+          room_id?: string | null;
+          settings?: Json;
+          source_type?: string;
+          state?: string | null;
+          status?: string;
+          template_id?: string | null;
+          title?: string;
+          title_touched?: boolean;
+          transition?: string;
+          updated_at?: string;
+          user_id?: string;
+          video_type?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "video_projects_brand_kit_id_fkey"
-            columns: ["brand_kit_id"]
-            isOneToOne: false
-            referencedRelation: "brand_kits"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_projects_brand_kit_id_fkey";
+            columns: ["brand_kit_id"];
+            isOneToOne: false;
+            referencedRelation: "brand_kits";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "video_projects_property_id_fkey"
-            columns: ["property_id"]
-            isOneToOne: false
-            referencedRelation: "properties"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_projects_property_id_fkey";
+            columns: ["property_id"];
+            isOneToOne: false;
+            referencedRelation: "properties";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       video_render_jobs: {
         Row: {
-          cancel_requested: boolean
-          completed_at: string | null
-          created_at: string
-          credits_charged: number
-          credits_refunded: number
-          error_message: string | null
-          heartbeat_at: string
-          id: string
-          output_formats: string[]
-          progress: number
-          provider: string
-          provider_job_id: string | null
-          quality: string | null
-          scene_count: number
-          stage: string | null
-          started_at: string | null
-          status: string
-          updated_at: string
-          user_id: string
-          video_project_id: string
-        }
+          cancel_requested: boolean;
+          completed_at: string | null;
+          created_at: string;
+          credits_charged: number;
+          credits_refunded: number;
+          error_message: string | null;
+          heartbeat_at: string;
+          id: string;
+          output_formats: string[];
+          progress: number;
+          provider: string;
+          provider_job_id: string | null;
+          quality: string | null;
+          scene_count: number;
+          stage: string | null;
+          started_at: string | null;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          video_project_id: string;
+        };
         Insert: {
-          cancel_requested?: boolean
-          completed_at?: string | null
-          created_at?: string
-          credits_charged?: number
-          credits_refunded?: number
-          error_message?: string | null
-          heartbeat_at?: string
-          id?: string
-          output_formats?: string[]
-          progress?: number
-          provider?: string
-          provider_job_id?: string | null
-          quality?: string | null
-          scene_count?: number
-          stage?: string | null
-          started_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-          video_project_id: string
-        }
+          cancel_requested?: boolean;
+          completed_at?: string | null;
+          created_at?: string;
+          credits_charged?: number;
+          credits_refunded?: number;
+          error_message?: string | null;
+          heartbeat_at?: string;
+          id?: string;
+          output_formats?: string[];
+          progress?: number;
+          provider?: string;
+          provider_job_id?: string | null;
+          quality?: string | null;
+          scene_count?: number;
+          stage?: string | null;
+          started_at?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          video_project_id: string;
+        };
         Update: {
-          cancel_requested?: boolean
-          completed_at?: string | null
-          created_at?: string
-          credits_charged?: number
-          credits_refunded?: number
-          error_message?: string | null
-          heartbeat_at?: string
-          id?: string
-          output_formats?: string[]
-          progress?: number
-          provider?: string
-          provider_job_id?: string | null
-          quality?: string | null
-          scene_count?: number
-          stage?: string | null
-          started_at?: string | null
-          status?: string
-          updated_at?: string
-          user_id?: string
-          video_project_id?: string
-        }
+          cancel_requested?: boolean;
+          completed_at?: string | null;
+          created_at?: string;
+          credits_charged?: number;
+          credits_refunded?: number;
+          error_message?: string | null;
+          heartbeat_at?: string;
+          id?: string;
+          output_formats?: string[];
+          progress?: number;
+          provider?: string;
+          provider_job_id?: string | null;
+          quality?: string | null;
+          scene_count?: number;
+          stage?: string | null;
+          started_at?: string | null;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          video_project_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "video_render_jobs_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: false
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_render_jobs_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: false;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       video_scenes: {
         Row: {
-          animate_id: string | null
-          caption: string | null
-          clip_id: string | null
-          compare_path: string | null
-          created_at: string
-          crop_data: Json
-          disclosure_type: string | null
-          disclosures: Json
-          duration: number
-          effect_id: string | null
-          effect_intensity: number
-          enhancement_level: string
-          exterior_effect: string | null
-          generation_status: string
-          id: string
-          immersive_effect: string | null
-          labels: Json
-          look: string | null
-          motion: string
-          motion_level: string
-          original_path: string | null
-          room_name: string | null
-          scene_role: string | null
-          scene_type: string
-          sequence: number
-          source_asset_id: string | null
-          source_path: string | null
-          source_version_id: string | null
-          transition: string
-          use_clip: boolean
-          user_id: string
-          video_project_id: string
-        }
+          animate_id: string | null;
+          caption: string | null;
+          clip_id: string | null;
+          compare_path: string | null;
+          created_at: string;
+          crop_data: Json;
+          disclosure_type: string | null;
+          disclosures: Json;
+          duration: number;
+          effect_id: string | null;
+          effect_intensity: number;
+          enhancement_level: string;
+          exterior_effect: string | null;
+          generation_status: string;
+          id: string;
+          immersive_effect: string | null;
+          labels: Json;
+          look: string | null;
+          motion: string;
+          motion_level: string;
+          original_path: string | null;
+          room_name: string | null;
+          scene_role: string | null;
+          scene_type: string;
+          sequence: number;
+          source_asset_id: string | null;
+          source_path: string | null;
+          source_version_id: string | null;
+          transition: string;
+          use_clip: boolean;
+          user_id: string;
+          video_project_id: string;
+        };
         Insert: {
-          animate_id?: string | null
-          caption?: string | null
-          clip_id?: string | null
-          compare_path?: string | null
-          created_at?: string
-          crop_data?: Json
-          disclosure_type?: string | null
-          disclosures?: Json
-          duration?: number
-          effect_id?: string | null
-          effect_intensity?: number
-          enhancement_level?: string
-          exterior_effect?: string | null
-          generation_status?: string
-          id?: string
-          immersive_effect?: string | null
-          labels?: Json
-          look?: string | null
-          motion?: string
-          motion_level?: string
-          original_path?: string | null
-          room_name?: string | null
-          scene_role?: string | null
-          scene_type?: string
-          sequence?: number
-          source_asset_id?: string | null
-          source_path?: string | null
-          source_version_id?: string | null
-          transition?: string
-          use_clip?: boolean
-          user_id: string
-          video_project_id: string
-        }
+          animate_id?: string | null;
+          caption?: string | null;
+          clip_id?: string | null;
+          compare_path?: string | null;
+          created_at?: string;
+          crop_data?: Json;
+          disclosure_type?: string | null;
+          disclosures?: Json;
+          duration?: number;
+          effect_id?: string | null;
+          effect_intensity?: number;
+          enhancement_level?: string;
+          exterior_effect?: string | null;
+          generation_status?: string;
+          id?: string;
+          immersive_effect?: string | null;
+          labels?: Json;
+          look?: string | null;
+          motion?: string;
+          motion_level?: string;
+          original_path?: string | null;
+          room_name?: string | null;
+          scene_role?: string | null;
+          scene_type?: string;
+          sequence?: number;
+          source_asset_id?: string | null;
+          source_path?: string | null;
+          source_version_id?: string | null;
+          transition?: string;
+          use_clip?: boolean;
+          user_id: string;
+          video_project_id: string;
+        };
         Update: {
-          animate_id?: string | null
-          caption?: string | null
-          clip_id?: string | null
-          compare_path?: string | null
-          created_at?: string
-          crop_data?: Json
-          disclosure_type?: string | null
-          disclosures?: Json
-          duration?: number
-          effect_id?: string | null
-          effect_intensity?: number
-          enhancement_level?: string
-          exterior_effect?: string | null
-          generation_status?: string
-          id?: string
-          immersive_effect?: string | null
-          labels?: Json
-          look?: string | null
-          motion?: string
-          motion_level?: string
-          original_path?: string | null
-          room_name?: string | null
-          scene_role?: string | null
-          scene_type?: string
-          sequence?: number
-          source_asset_id?: string | null
-          source_path?: string | null
-          source_version_id?: string | null
-          transition?: string
-          use_clip?: boolean
-          user_id?: string
-          video_project_id?: string
-        }
+          animate_id?: string | null;
+          caption?: string | null;
+          clip_id?: string | null;
+          compare_path?: string | null;
+          created_at?: string;
+          crop_data?: Json;
+          disclosure_type?: string | null;
+          disclosures?: Json;
+          duration?: number;
+          effect_id?: string | null;
+          effect_intensity?: number;
+          enhancement_level?: string;
+          exterior_effect?: string | null;
+          generation_status?: string;
+          id?: string;
+          immersive_effect?: string | null;
+          labels?: Json;
+          look?: string | null;
+          motion?: string;
+          motion_level?: string;
+          original_path?: string | null;
+          room_name?: string | null;
+          scene_role?: string | null;
+          scene_type?: string;
+          sequence?: number;
+          source_asset_id?: string | null;
+          source_path?: string | null;
+          source_version_id?: string | null;
+          transition?: string;
+          use_clip?: boolean;
+          user_id?: string;
+          video_project_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "video_scenes_clip_id_fkey"
-            columns: ["clip_id"]
-            isOneToOne: false
-            referencedRelation: "scene_clips"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_scenes_clip_id_fkey";
+            columns: ["clip_id"];
+            isOneToOne: false;
+            referencedRelation: "scene_clips";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "video_scenes_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: false
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_scenes_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: false;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       video_share_links: {
         Row: {
-          allow_download: boolean
-          approval_enabled: boolean
-          comments_enabled: boolean
-          created_at: string
-          expires_at: string | null
-          headline: string | null
-          id: string
-          mobile_layout: string
-          page_title: string | null
-          password_hash: string | null
-          presentation_type: string
-          privacy_type: string
-          sections: Json
-          show_budget: boolean
-          show_products: boolean
-          show_project_details: boolean
-          slug: string | null
-          token: string
-          user_id: string
-          video_project_id: string
-          view_count: number
-        }
+          allow_download: boolean;
+          approval_enabled: boolean;
+          comments_enabled: boolean;
+          created_at: string;
+          expires_at: string | null;
+          headline: string | null;
+          id: string;
+          mobile_layout: string;
+          page_title: string | null;
+          password_hash: string | null;
+          presentation_type: string;
+          privacy_type: string;
+          sections: Json;
+          show_budget: boolean;
+          show_products: boolean;
+          show_project_details: boolean;
+          slug: string | null;
+          token: string;
+          user_id: string;
+          video_project_id: string;
+          view_count: number;
+        };
         Insert: {
-          allow_download?: boolean
-          approval_enabled?: boolean
-          comments_enabled?: boolean
-          created_at?: string
-          expires_at?: string | null
-          headline?: string | null
-          id?: string
-          mobile_layout?: string
-          page_title?: string | null
-          password_hash?: string | null
-          presentation_type?: string
-          privacy_type?: string
-          sections?: Json
-          show_budget?: boolean
-          show_products?: boolean
-          show_project_details?: boolean
-          slug?: string | null
-          token: string
-          user_id: string
-          video_project_id: string
-          view_count?: number
-        }
+          allow_download?: boolean;
+          approval_enabled?: boolean;
+          comments_enabled?: boolean;
+          created_at?: string;
+          expires_at?: string | null;
+          headline?: string | null;
+          id?: string;
+          mobile_layout?: string;
+          page_title?: string | null;
+          password_hash?: string | null;
+          presentation_type?: string;
+          privacy_type?: string;
+          sections?: Json;
+          show_budget?: boolean;
+          show_products?: boolean;
+          show_project_details?: boolean;
+          slug?: string | null;
+          token: string;
+          user_id: string;
+          video_project_id: string;
+          view_count?: number;
+        };
         Update: {
-          allow_download?: boolean
-          approval_enabled?: boolean
-          comments_enabled?: boolean
-          created_at?: string
-          expires_at?: string | null
-          headline?: string | null
-          id?: string
-          mobile_layout?: string
-          page_title?: string | null
-          password_hash?: string | null
-          presentation_type?: string
-          privacy_type?: string
-          sections?: Json
-          show_budget?: boolean
-          show_products?: boolean
-          show_project_details?: boolean
-          slug?: string | null
-          token?: string
-          user_id?: string
-          video_project_id?: string
-          view_count?: number
-        }
+          allow_download?: boolean;
+          approval_enabled?: boolean;
+          comments_enabled?: boolean;
+          created_at?: string;
+          expires_at?: string | null;
+          headline?: string | null;
+          id?: string;
+          mobile_layout?: string;
+          page_title?: string | null;
+          password_hash?: string | null;
+          presentation_type?: string;
+          privacy_type?: string;
+          sections?: Json;
+          show_budget?: boolean;
+          show_products?: boolean;
+          show_project_details?: boolean;
+          slug?: string | null;
+          token?: string;
+          user_id?: string;
+          video_project_id?: string;
+          view_count?: number;
+        };
         Relationships: [
           {
-            foreignKeyName: "video_share_links_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: false
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_share_links_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: false;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       video_transitions: {
         Row: {
-          created_at: string
-          credits_charged: number
-          credits_released: number
-          credits_reserved: number
-          duration_ms: number
-          error_message: string | null
-          from_key: string
-          from_scene_id: string | null
-          generated_clip_path: string | null
-          generation_job_id: string | null
-          id: string
-          progress: number
-          provider: string | null
-          provider_job_id: string | null
-          settings: Json
-          status: string
-          to_key: string
-          to_scene_id: string | null
-          type: string
-          updated_at: string
-          user_id: string
-          video_project_id: string
-        }
+          created_at: string;
+          credits_charged: number;
+          credits_released: number;
+          credits_reserved: number;
+          duration_ms: number;
+          error_message: string | null;
+          from_key: string;
+          from_scene_id: string | null;
+          generated_clip_path: string | null;
+          generation_job_id: string | null;
+          id: string;
+          progress: number;
+          provider: string | null;
+          provider_job_id: string | null;
+          settings: Json;
+          status: string;
+          to_key: string;
+          to_scene_id: string | null;
+          type: string;
+          updated_at: string;
+          user_id: string;
+          video_project_id: string;
+        };
         Insert: {
-          created_at?: string
-          credits_charged?: number
-          credits_released?: number
-          credits_reserved?: number
-          duration_ms?: number
-          error_message?: string | null
-          from_key: string
-          from_scene_id?: string | null
-          generated_clip_path?: string | null
-          generation_job_id?: string | null
-          id?: string
-          progress?: number
-          provider?: string | null
-          provider_job_id?: string | null
-          settings?: Json
-          status?: string
-          to_key: string
-          to_scene_id?: string | null
-          type?: string
-          updated_at?: string
-          user_id: string
-          video_project_id: string
-        }
+          created_at?: string;
+          credits_charged?: number;
+          credits_released?: number;
+          credits_reserved?: number;
+          duration_ms?: number;
+          error_message?: string | null;
+          from_key: string;
+          from_scene_id?: string | null;
+          generated_clip_path?: string | null;
+          generation_job_id?: string | null;
+          id?: string;
+          progress?: number;
+          provider?: string | null;
+          provider_job_id?: string | null;
+          settings?: Json;
+          status?: string;
+          to_key: string;
+          to_scene_id?: string | null;
+          type?: string;
+          updated_at?: string;
+          user_id: string;
+          video_project_id: string;
+        };
         Update: {
-          created_at?: string
-          credits_charged?: number
-          credits_released?: number
-          credits_reserved?: number
-          duration_ms?: number
-          error_message?: string | null
-          from_key?: string
-          from_scene_id?: string | null
-          generated_clip_path?: string | null
-          generation_job_id?: string | null
-          id?: string
-          progress?: number
-          provider?: string | null
-          provider_job_id?: string | null
-          settings?: Json
-          status?: string
-          to_key?: string
-          to_scene_id?: string | null
-          type?: string
-          updated_at?: string
-          user_id?: string
-          video_project_id?: string
-        }
+          created_at?: string;
+          credits_charged?: number;
+          credits_released?: number;
+          credits_reserved?: number;
+          duration_ms?: number;
+          error_message?: string | null;
+          from_key?: string;
+          from_scene_id?: string | null;
+          generated_clip_path?: string | null;
+          generation_job_id?: string | null;
+          id?: string;
+          progress?: number;
+          provider?: string | null;
+          provider_job_id?: string | null;
+          settings?: Json;
+          status?: string;
+          to_key?: string;
+          to_scene_id?: string | null;
+          type?: string;
+          updated_at?: string;
+          user_id?: string;
+          video_project_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "video_transitions_from_scene_id_fkey"
-            columns: ["from_scene_id"]
-            isOneToOne: false
-            referencedRelation: "video_scenes"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_transitions_from_scene_id_fkey";
+            columns: ["from_scene_id"];
+            isOneToOne: false;
+            referencedRelation: "video_scenes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "video_transitions_to_scene_id_fkey"
-            columns: ["to_scene_id"]
-            isOneToOne: false
-            referencedRelation: "video_scenes"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_transitions_to_scene_id_fkey";
+            columns: ["to_scene_id"];
+            isOneToOne: false;
+            referencedRelation: "video_scenes";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "video_transitions_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: false
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_transitions_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: false;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       video_variants: {
         Row: {
-          aspect_ratio: string
-          brand_kit_id: string | null
-          created_at: string
-          credit_cost: number
-          duration: number | null
-          id: string
-          output_path: string | null
-          render_status: string
-          resolution: string | null
-          thumbnail_path: string | null
-          user_id: string
-          version_type: string
-          video_project_id: string
-        }
+          aspect_ratio: string;
+          brand_kit_id: string | null;
+          created_at: string;
+          credit_cost: number;
+          duration: number | null;
+          id: string;
+          output_path: string | null;
+          render_status: string;
+          resolution: string | null;
+          thumbnail_path: string | null;
+          user_id: string;
+          version_type: string;
+          video_project_id: string;
+        };
         Insert: {
-          aspect_ratio?: string
-          brand_kit_id?: string | null
-          created_at?: string
-          credit_cost?: number
-          duration?: number | null
-          id?: string
-          output_path?: string | null
-          render_status?: string
-          resolution?: string | null
-          thumbnail_path?: string | null
-          user_id: string
-          version_type?: string
-          video_project_id: string
-        }
+          aspect_ratio?: string;
+          brand_kit_id?: string | null;
+          created_at?: string;
+          credit_cost?: number;
+          duration?: number | null;
+          id?: string;
+          output_path?: string | null;
+          render_status?: string;
+          resolution?: string | null;
+          thumbnail_path?: string | null;
+          user_id: string;
+          version_type?: string;
+          video_project_id: string;
+        };
         Update: {
-          aspect_ratio?: string
-          brand_kit_id?: string | null
-          created_at?: string
-          credit_cost?: number
-          duration?: number | null
-          id?: string
-          output_path?: string | null
-          render_status?: string
-          resolution?: string | null
-          thumbnail_path?: string | null
-          user_id?: string
-          version_type?: string
-          video_project_id?: string
-        }
+          aspect_ratio?: string;
+          brand_kit_id?: string | null;
+          created_at?: string;
+          credit_cost?: number;
+          duration?: number | null;
+          id?: string;
+          output_path?: string | null;
+          render_status?: string;
+          resolution?: string | null;
+          thumbnail_path?: string | null;
+          user_id?: string;
+          version_type?: string;
+          video_project_id?: string;
+        };
         Relationships: [
           {
-            foreignKeyName: "video_variants_brand_kit_id_fkey"
-            columns: ["brand_kit_id"]
-            isOneToOne: false
-            referencedRelation: "brand_kits"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_variants_brand_kit_id_fkey";
+            columns: ["brand_kit_id"];
+            isOneToOne: false;
+            referencedRelation: "brand_kits";
+            referencedColumns: ["id"];
           },
           {
-            foreignKeyName: "video_variants_video_project_id_fkey"
-            columns: ["video_project_id"]
-            isOneToOne: false
-            referencedRelation: "video_projects"
-            referencedColumns: ["id"]
+            foreignKeyName: "video_variants_video_project_id_fkey";
+            columns: ["video_project_id"];
+            isOneToOne: false;
+            referencedRelation: "video_projects";
+            referencedColumns: ["id"];
           },
-        ]
-      }
+        ];
+      };
       watched_sites: {
         Row: {
-          attestation_text: string
-          attestation_version: string
-          attested_at: string
-          created_at: string
-          host: string
-          id: string
-          last_checked_at: string | null
-          new_listing_mode: string
-          period: string
-          robots_ok: boolean
-          site_url: string
-          status: string
-          updated_at: string
-          user_id: string
-          video_type: string
-          watch_since: string | null
-        }
+          attestation_text: string;
+          attestation_version: string;
+          attested_at: string;
+          created_at: string;
+          host: string;
+          id: string;
+          last_checked_at: string | null;
+          new_listing_mode: string;
+          period: string;
+          robots_ok: boolean;
+          site_url: string;
+          status: string;
+          updated_at: string;
+          user_id: string;
+          video_type: string;
+          watch_since: string | null;
+        };
         Insert: {
-          attestation_text: string
-          attestation_version?: string
-          attested_at?: string
-          created_at?: string
-          host: string
-          id?: string
-          last_checked_at?: string | null
-          new_listing_mode?: string
-          period?: string
-          robots_ok?: boolean
-          site_url: string
-          status?: string
-          updated_at?: string
-          user_id: string
-          video_type?: string
-          watch_since?: string | null
-        }
+          attestation_text: string;
+          attestation_version?: string;
+          attested_at?: string;
+          created_at?: string;
+          host: string;
+          id?: string;
+          last_checked_at?: string | null;
+          new_listing_mode?: string;
+          period?: string;
+          robots_ok?: boolean;
+          site_url: string;
+          status?: string;
+          updated_at?: string;
+          user_id: string;
+          video_type?: string;
+          watch_since?: string | null;
+        };
         Update: {
-          attestation_text?: string
-          attestation_version?: string
-          attested_at?: string
-          created_at?: string
-          host?: string
-          id?: string
-          last_checked_at?: string | null
-          new_listing_mode?: string
-          period?: string
-          robots_ok?: boolean
-          site_url?: string
-          status?: string
-          updated_at?: string
-          user_id?: string
-          video_type?: string
-          watch_since?: string | null
-        }
-        Relationships: []
-      }
-    }
+          attestation_text?: string;
+          attestation_version?: string;
+          attested_at?: string;
+          created_at?: string;
+          host?: string;
+          id?: string;
+          last_checked_at?: string | null;
+          new_listing_mode?: string;
+          period?: string;
+          robots_ok?: boolean;
+          site_url?: string;
+          status?: string;
+          updated_at?: string;
+          user_id?: string;
+          video_type?: string;
+          watch_since?: string | null;
+        };
+        Relationships: [];
+      };
+    };
     Views: {
-      [_ in never]: never
-    }
+      [_ in never]: never;
+    };
     Functions: {
       activate_plan_request: {
         Args: {
-          _plan: Database["public"]["Enums"]["plan_tier"]
-          _user_id: string
-        }
-        Returns: Json
-      }
+          _plan: Database["public"]["Enums"]["plan_tier"];
+          _user_id: string;
+        };
+        Returns: Json;
+      };
       add_presentation_comment: {
-        Args: { _body: string; _name: string; _section: string; _token: string }
-        Returns: Json
-      }
-      cancel_plan_request: { Args: never; Returns: Json }
+        Args: { _body: string; _name: string; _section: string; _token: string };
+        Returns: Json;
+      };
+      cancel_plan_request: { Args: never; Returns: Json };
       credit_cost: {
-        Args: { _action: Database["public"]["Enums"]["credit_action"] }
-        Returns: number
-      }
+        Args: { _action: Database["public"]["Enums"]["credit_action"] };
+        Returns: number;
+      };
       decide_presentation_share: {
         Args: {
-          _decision: string
-          _name: string
-          _note: string
-          _token: string
-        }
-        Returns: Json
-      }
+          _decision: string;
+          _name: string;
+          _note: string;
+          _token: string;
+        };
+        Returns: Json;
+      };
       ensure_credit_account: {
-        Args: { _user_id: string }
+        Args: { _user_id: string };
         Returns: {
-          balance: number
-          created_at: string
-          free_day: string
-          free_used_today: number
-          plan: Database["public"]["Enums"]["plan_tier"]
-          updated_at: string
-          user_id: string
-        }
+          balance: number;
+          created_at: string;
+          free_day: string;
+          free_used_today: number;
+          plan: Database["public"]["Enums"]["plan_tier"];
+          updated_at: string;
+          user_id: string;
+        };
         SetofOptions: {
-          from: "*"
-          to: "credit_accounts"
-          isOneToOne: true
-          isSetofReturn: false
-        }
-      }
-      founding_members_claimed: { Args: never; Returns: number }
+          from: "*";
+          to: "credit_accounts";
+          isOneToOne: true;
+          isSetofReturn: false;
+        };
+      };
+      founding_members_claimed: { Args: never; Returns: number };
       get_presentation_share: {
-        Args: { _code?: string; _token: string }
-        Returns: Json
-      }
-      get_shared_presentation: { Args: { _token: string }; Returns: Json }
+        Args: { _code?: string; _token: string };
+        Returns: Json;
+      };
+      get_shared_presentation: { Args: { _token: string }; Returns: Json };
       grant_credits: {
         Args: {
-          _action?: Database["public"]["Enums"]["credit_action"]
-          _amount: number
-          _note?: string
-          _user_id: string
-        }
-        Returns: Json
-      }
+          _action?: Database["public"]["Enums"]["credit_action"];
+          _amount: number;
+          _note?: string;
+          _user_id: string;
+        };
+        Returns: Json;
+      };
       has_role: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
-        }
-        Returns: boolean
-      }
-      has_workspace_access: { Args: { _owner: string }; Returns: boolean }
+          _role: Database["public"]["Enums"]["app_role"];
+          _user_id: string;
+        };
+        Returns: boolean;
+      };
+      has_workspace_access: { Args: { _owner: string }; Returns: boolean };
       plan_monthly_credits: {
-        Args: { _plan: Database["public"]["Enums"]["plan_tier"] }
-        Returns: number
-      }
+        Args: { _plan: Database["public"]["Enums"]["plan_tier"] };
+        Returns: number;
+      };
       plan_rank: {
-        Args: { _plan: Database["public"]["Enums"]["plan_tier"] }
-        Returns: number
-      }
+        Args: { _plan: Database["public"]["Enums"]["plan_tier"] };
+        Returns: number;
+      };
       record_presentation_reminder: {
-        Args: { _id: string }
-        Returns: undefined
-      }
+        Args: { _id: string };
+        Returns: undefined;
+      };
       record_presentation_share_view: {
-        Args: { _token: string }
-        Returns: undefined
-      }
-      record_presentation_view: { Args: { _token: string }; Returns: undefined }
+        Args: { _token: string };
+        Returns: undefined;
+      };
+      record_presentation_view: { Args: { _token: string }; Returns: undefined };
       replace_presentation_children: {
-        Args: { _assets: Json; _package_id: string; _sections: Json }
-        Returns: Json
-      }
+        Args: { _assets: Json; _package_id: string; _sections: Json };
+        Returns: Json;
+      };
       request_plan_change: {
-        Args: { _plan: Database["public"]["Enums"]["plan_tier"] }
-        Returns: Json
-      }
+        Args: { _plan: Database["public"]["Enums"]["plan_tier"] };
+        Returns: Json;
+      };
       respond_to_presentation: {
         Args: {
-          _decision: string
-          _excluded?: Json
-          _line_notes?: Json
-          _note?: string
-          _token: string
-        }
-        Returns: Json
-      }
-      set_subscription_cancel: { Args: { _cancel: boolean }; Returns: Json }
+          _decision: string;
+          _excluded?: Json;
+          _line_notes?: Json;
+          _note?: string;
+          _token: string;
+        };
+        Returns: Json;
+      };
+      set_subscription_cancel: { Args: { _cancel: boolean }; Returns: Json };
       spend_credits: {
         Args: {
-          _action: Database["public"]["Enums"]["credit_action"]
-          _note?: string
-          _user_id: string
-        }
-        Returns: Json
-      }
+          _action: Database["public"]["Enums"]["credit_action"];
+          _note?: string;
+          _user_id: string;
+        };
+        Returns: Json;
+      };
       storage_policy_report: {
-        Args: never
+        Args: never;
         Returns: {
-          bucket: string
-          cmd: string
-          policyname: string
-        }[]
-      }
-      sync_subscription: { Args: never; Returns: Json }
-    }
+          bucket: string;
+          cmd: string;
+          policyname: string;
+        }[];
+      };
+      sync_subscription: { Args: never; Returns: Json };
+    };
     Enums: {
-      app_role: "admin" | "moderator" | "user"
-      credit_action:
-        | "design"
-        | "scope"
-        | "plan_3d"
-        | "video"
-        | "topup"
-        | "grant"
-        | "refund"
-      plan_tier: "free" | "starter" | "pro" | "studio"
-    }
+      app_role: "admin" | "moderator" | "user";
+      credit_action: "design" | "scope" | "plan_3d" | "video" | "topup" | "grant" | "refund";
+      plan_tier: "free" | "starter" | "pro" | "studio";
+    };
     CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-}
+      [_ in never]: never;
+    };
+  };
+};
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">;
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">];
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
       DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
+      Row: infer R;
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+        Row: infer R;
       }
       ? R
       : never
-    : never
+    : never;
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
+      Insert: infer I;
     }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
+        Insert: infer I;
       }
       ? I
       : never
-    : never
+    : never;
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
-    | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Tables"] | { schema: keyof DatabaseWithoutInternals },
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
+      Update: infer U;
     }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
     ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
+        Update: infer U;
       }
       ? U
       : never
-    : never
+    : never;
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
-    | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["Enums"] | { schema: keyof DatabaseWithoutInternals },
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
     ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+    : never;
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
-    | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
+    keyof DefaultSchema["CompositeTypes"] | { schema: keyof DatabaseWithoutInternals },
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
+    schema: keyof DatabaseWithoutInternals;
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
+  schema: keyof DatabaseWithoutInternals;
 }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
     ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+    : never;
 
 export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "moderator", "user"],
-      credit_action: [
-        "design",
-        "scope",
-        "plan_3d",
-        "video",
-        "topup",
-        "grant",
-        "refund",
-      ],
+      credit_action: ["design", "scope", "plan_3d", "video", "topup", "grant", "refund"],
       plan_tier: ["free", "starter", "pro", "studio"],
     },
   },
-} as const
+} as const;

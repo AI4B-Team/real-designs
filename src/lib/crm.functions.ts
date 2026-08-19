@@ -31,7 +31,11 @@ export const listCrm = createServerFn({ method: "GET" })
     const { supabase } = context;
     const [conns, contacts, log] = await Promise.all([
       supabase.from("crm_connections").select("*").order("created_at", { ascending: true }),
-      supabase.from("crm_contacts").select("*").order("last_activity_at", { ascending: false }).limit(200),
+      supabase
+        .from("crm_contacts")
+        .select("*")
+        .order("last_activity_at", { ascending: false })
+        .limit(200),
       supabase.from("crm_sync_log").select("*").order("created_at", { ascending: false }).limit(25),
     ]);
     if (conns.error) throw new Error(conns.error.message);
@@ -96,7 +100,9 @@ export const disconnectCrm = createServerFn({ method: "POST" })
 
 export const setCrmAutoPush = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), auto_push: z.boolean() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), auto_push: z.boolean() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("crm_connections")
@@ -111,19 +117,34 @@ export const syncCrmContacts = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: conn, error } = await supabase.from("crm_connections").select("*").eq("id", data.id).single();
+    const { data: conn, error } = await supabase
+      .from("crm_connections")
+      .select("*")
+      .eq("id", data.id)
+      .single();
     if (error || !conn) throw new Error("That CRM connection is no longer available.");
     const { fetchCrmContacts } = await import("@/lib/crm.server");
     try {
       const people = await fetchCrmContacts(conn.provider as any, conn.credential as string, 100);
       if (people.length) {
-        const rows = people.map((p) => ({ ...p, user_id: userId, connection_id: conn.id, updated_at: new Date().toISOString() }));
-        const up = await supabase.from("crm_contacts").upsert(rows as any, { onConflict: "connection_id,external_id" });
+        const rows = people.map((p) => ({
+          ...p,
+          user_id: userId,
+          connection_id: conn.id,
+          updated_at: new Date().toISOString(),
+        }));
+        const up = await supabase
+          .from("crm_contacts")
+          .upsert(rows as any, { onConflict: "connection_id,external_id" });
         if (up.error) throw new Error(up.error.message);
       }
       await supabase
         .from("crm_connections")
-        .update({ last_synced_at: new Date().toISOString(), last_error: null, status: "connected" } as any)
+        .update({
+          last_synced_at: new Date().toISOString(),
+          last_error: null,
+          status: "connected",
+        } as any)
         .eq("id", conn.id);
       await supabase.from("crm_sync_log").insert({
         user_id: userId,
@@ -135,7 +156,10 @@ export const syncCrmContacts = createServerFn({ method: "POST" })
       return { synced: people.length };
     } catch (e: any) {
       const msg = String(e?.message || e).slice(0, 300);
-      await supabase.from("crm_connections").update({ status: "error", last_error: msg } as any).eq("id", conn.id);
+      await supabase
+        .from("crm_connections")
+        .update({ status: "error", last_error: msg } as any)
+        .eq("id", conn.id);
       await supabase.from("crm_sync_log").insert({
         user_id: userId,
         connection_id: conn.id,
@@ -162,7 +186,11 @@ export const pushToCrm = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: conn, error } = await supabase.from("crm_connections").select("*").eq("id", data.connectionId).single();
+    const { data: conn, error } = await supabase
+      .from("crm_connections")
+      .select("*")
+      .eq("id", data.connectionId)
+      .single();
     if (error || !conn) throw new Error("That CRM connection is no longer available.");
     let contact: any = null;
     if (data.contactId) {

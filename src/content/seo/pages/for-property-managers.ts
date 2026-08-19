@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/for-property-managers",
   tier: "C",
-  intent: "Property managers standardizing turn budgets and finishes across a portfolio, and needing owner sign-off documentation for capital work.",
+  intent:
+    "Property managers standardizing turn budgets and finishes across a portfolio, and needing owner sign-off documentation for capital work.",
 
   metaTitle: "AI Turn Budgeting For Property Managers",
-  metaDescription: "Standardize finishes and price unit turns across your portfolio with a documented condition record and owner-ready planning ranges.",
+  metaDescription:
+    "Standardize finishes and price unit turns across your portfolio with a documented condition record and owner-ready planning ranges.",
 
   eyebrow: "For Property Managers",
   h1: "Standardize The Turn Across Every Unit You Manage",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Standardized turn finish applied consistently across the portfolio",
 
   steps: [
-    { title: "Document Condition At Move-Out", text: "Photograph the unit as it sits, creating a timestamped condition record before any turn work begins." },
-    { title: "Apply Your Standard Finish Package", text: "Generate the turn design against your portfolio's standard finish level, not a one-off decision per unit." },
-    { title: "Send Owners A Scoped, Priced Turn Plan", text: "Attach the planning-range budget to the condition photos for owner approval, with a consistent format across every unit and every owner." },
+    {
+      title: "Document Condition At Move-Out",
+      text: "Photograph the unit as it sits, creating a timestamped condition record before any turn work begins.",
+    },
+    {
+      title: "Apply Your Standard Finish Package",
+      text: "Generate the turn design against your portfolio's standard finish level, not a one-off decision per unit.",
+    },
+    {
+      title: "Send Owners A Scoped, Priced Turn Plan",
+      text: "Attach the planning-range budget to the condition photos for owner approval, with a consistent format across every unit and every owner.",
+    },
   ],
 
   showcase: ["grades", "scope", "brief", "interior"],
-
 
   sections: [
     {
@@ -104,6 +114,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Standardize Your Next Turn Before It Starts",
-  ctaBody: "Photograph the unit, apply your standard finish package, and send owners a documented, priced turn plan.",
+  ctaBody:
+    "Photograph the unit, apply your standard finish package, and send owners a documented, priced turn plan.",
   ctaLabel: "Build A Turn Plan",
 };

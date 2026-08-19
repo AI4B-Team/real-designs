@@ -16,7 +16,10 @@ import { STYLES, STYLE_CATEGORIES, styleById } from "@/lib/style-catalog";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 
 const esc = (s: any) =>
-  String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+  String(s ?? "").replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+  );
 
 const INTENSITIES = ["Refresh", "Makeover", "Full Remodel"];
 const GRADES = ["Builder Grade", "Retail Grade", "Designer Grade"];
@@ -74,8 +77,12 @@ export function openBulkRestyle(input: BulkRestyleInput) {
   const inCat = () => {
     const q = state.q.trim().toLowerCase();
     let list = featured;
-    if (q) list = list.filter((s) => (s.displayName + " " + s.category + " " + s.aliases.join(" ")).toLowerCase().includes(q));
-    else if (state.category === "Most Popular") list = list.filter((s) => s.isFeatured).sort((a, b) => a.featuredRank - b.featuredRank);
+    if (q)
+      list = list.filter((s) =>
+        (s.displayName + " " + s.category + " " + s.aliases.join(" ")).toLowerCase().includes(q),
+      );
+    else if (state.category === "Most Popular")
+      list = list.filter((s) => s.isFeatured).sort((a, b) => a.featuredRank - b.featuredRank);
     else list = list.filter((s) => s.category === state.category);
     return list.slice(0, 60);
   };
@@ -122,7 +129,12 @@ export function openBulkRestyle(input: BulkRestyleInput) {
     const list = inCat();
     if (!list.some((s) => s.id === state.styleId) && list.length) state.styleId = list[0].id;
     box.innerHTML = list.length
-      ? list.map((s) => `<button type="button" data-s="${esc(s.id)}" class="${s.id === state.styleId ? "on" : ""}">${esc(s.displayName)}</button>`).join("")
+      ? list
+          .map(
+            (s) =>
+              `<button type="button" data-s="${esc(s.id)}" class="${s.id === state.styleId ? "on" : ""}">${esc(s.displayName)}</button>`,
+          )
+          .join("")
       : `<span class="mono" style="color:var(--mute-2)">No Styles Match That Search.</span>`;
     box.querySelectorAll("[data-s]").forEach((b) => {
       (b as HTMLElement).onclick = () => {
@@ -132,7 +144,9 @@ export function openBulkRestyle(input: BulkRestyleInput) {
     });
   }
   paintStyles();
-  try { createIcons({ icons, root: wrap } as any); } catch (_) {}
+  try {
+    createIcons({ icons, root: wrap } as any);
+  } catch (_) {}
 
   const close = () => {
     if (state.busy) return;
@@ -207,12 +221,19 @@ export function openBulkRestyle(input: BulkRestyleInput) {
             kind: "design",
             modification_class: "Proposed Design",
             storage_path: path,
-            ops: { bulk_restyle: true, style: style.id, intensity: state.intensity, grade: state.grade },
+            ops: {
+              bulk_restyle: true,
+              style: style.id,
+              intensity: state.intensity,
+              grade: state.grade,
+            },
             approve: false,
           },
         });
         done++;
-        try { window.dispatchEvent(new Event("rd:credits-changed")); } catch (_) {}
+        try {
+          window.dispatchEvent(new Event("rd:credits-changed"));
+        } catch (_) {}
       } catch (e: any) {
         failed++;
         if (isPlanBlocked(e?.message || "")) {
@@ -229,7 +250,11 @@ export function openBulkRestyle(input: BulkRestyleInput) {
     state.busy = false;
     wrap.remove();
     document.removeEventListener("keydown", onKey);
-    note(done ? `${done} Photo${done === 1 ? "" : "s"} Redesigned In ${style.displayName}${failed ? `, ${failed} Skipped` : ""}.` : "None Of The Photos Could Be Redesigned.");
+    note(
+      done
+        ? `${done} Photo${done === 1 ? "" : "s"} Redesigned In ${style.displayName}${failed ? `, ${failed} Skipped` : ""}.`
+        : "None Of The Photos Could Be Redesigned.",
+    );
     if (input.onDone) input.onDone();
   };
 }

@@ -28,17 +28,26 @@ test.describe("Session lifecycle", () => {
     await expect(page).toHaveURL(/\/auth/);
   });
 
-  test("signing out returns to sign in and protected routes stay closed", async ({ context, page }) => {
+  test("signing out returns to sign in and protected routes stay closed", async ({
+    context,
+    page,
+  }) => {
     test.skip(!(await authenticate(context, page)), "no test session available");
 
     await page.goto("/app");
-    await page.evaluate((key) => window.localStorage.removeItem(key as string), SESSION_STORAGE_KEY);
+    await page.evaluate(
+      (key) => window.localStorage.removeItem(key as string),
+      SESSION_STORAGE_KEY,
+    );
     await page.goto("/app");
     await expect(page).toHaveURL(/\/auth/, { timeout: 20_000 });
   });
 
   test("an expired session is treated as signed out", async ({ context, page }) => {
-    test.skip(!(await authenticate(context, page)) || !SESSION_STORAGE_KEY, "no test session available");
+    test.skip(
+      !(await authenticate(context, page)) || !SESSION_STORAGE_KEY,
+      "no test session available",
+    );
 
     await page.goto("/");
     await page.evaluate((key) => {
@@ -55,13 +64,19 @@ test.describe("Session lifecycle", () => {
   });
 
   test("signing out in one tab locks the other tab", async ({ context, page }) => {
-    test.skip(!(await authenticate(context, page)) || !SESSION_STORAGE_KEY, "no test session available");
+    test.skip(
+      !(await authenticate(context, page)) || !SESSION_STORAGE_KEY,
+      "no test session available",
+    );
 
     const second = await context.newPage();
     await second.goto("/app");
     await page.goto("/app");
 
-    await page.evaluate((key) => window.localStorage.removeItem(key as string), SESSION_STORAGE_KEY);
+    await page.evaluate(
+      (key) => window.localStorage.removeItem(key as string),
+      SESSION_STORAGE_KEY,
+    );
     await second.reload();
     await expect(second).toHaveURL(/\/auth/, { timeout: 20_000 });
     await second.close();

@@ -3,7 +3,8 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/bathroom-remodel-cost",
   tier: "B",
-  intent: "What a bathroom remodel actually costs by room type, and why the smallest room in the house is the most expensive per square foot.",
+  intent:
+    "What a bathroom remodel actually costs by room type, and why the smallest room in the house is the most expensive per square foot.",
 
   metaTitle: "What A Bathroom Remodel Actually Costs | Real Designs",
   metaDescription:
@@ -11,8 +12,7 @@ export const page: LandingPage = {
 
   eyebrow: "Bathroom Cost",
   h1: "What A Bathroom Remodel Actually Costs",
-  lede:
-    "A bathroom is the most expensive room in the house per square foot, and the reason is almost always tile labor and what is found once the demo starts.",
+  lede: "A bathroom is the most expensive room in the house per square foot, and the reason is almost always tile labor and what is found once the demo starts.",
 
   spaceType: "interior",
   roomType: "bathroom",
@@ -25,16 +25,25 @@ export const page: LandingPage = {
   beforePhoto: "bathBefore",
   afterPhoto: "bath",
   beforeCaption: "A dated hall bathroom with original tile, tub and vanity.",
-  afterCaption: "The same footprint with new tile, a tub-to-shower conversion and updated fixtures.",
+  afterCaption:
+    "The same footprint with new tile, a tub-to-shower conversion and updated fixtures.",
 
   steps: [
-    { title: "Pick Your Bathroom Type", text: "Powder room, hall bath or primary suite sets the fixture count baseline for the planning range." },
-    { title: "Choose Your Room Type", text: "Powder room, hall bath or primary suite, each with a different scope and planning range." },
-    { title: "Review The Trade Breakdown", text: "See tile, plumbing and waterproofing priced separately so you know exactly what is driving the total." },
+    {
+      title: "Pick Your Bathroom Type",
+      text: "Powder room, hall bath or primary suite sets the fixture count baseline for the planning range.",
+    },
+    {
+      title: "Choose Your Room Type",
+      text: "Powder room, hall bath or primary suite, each with a different scope and planning range.",
+    },
+    {
+      title: "Review The Trade Breakdown",
+      text: "See tile, plumbing and waterproofing priced separately so you know exactly what is driving the total.",
+    },
   ],
 
   showcase: ["scope", "reality-lock", "budget-mode", "grades"],
-
 
   sections: [
     {
@@ -114,6 +123,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Get A Trade-By-Trade Bathroom Estimate",
-  ctaBody: "Try the free rehab calculator to see which trade lines drive your total, or start an AI redesign of your bathroom.",
+  ctaBody:
+    "Try the free rehab calculator to see which trade lines drive your total, or start an AI redesign of your bathroom.",
   ctaLabel: "Try The Free Calculator",
 };

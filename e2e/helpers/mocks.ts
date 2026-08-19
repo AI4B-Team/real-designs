@@ -28,7 +28,9 @@ const OK_PAYLOAD = {
       url: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
     },
   ],
-  choices: [{ message: { role: "assistant", content: '{"room_type":"living","confidence":0.98}' } }],
+  choices: [
+    { message: { role: "assistant", content: '{"room_type":"living","confidence":0.98}' } },
+  ],
 };
 
 async function fulfilJson(route: Route, status: number, body: unknown): Promise<void> {

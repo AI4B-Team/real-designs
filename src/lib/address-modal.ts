@@ -15,7 +15,11 @@ import {
   normalizeAddress,
 } from "@/lib/property-address";
 
-export type AddressProperty = { id: string; address?: string | null; normalized_address?: string | null };
+export type AddressProperty = {
+  id: string;
+  address?: string | null;
+  normalized_address?: string | null;
+};
 
 export type AddressModalResult = {
   /** Cleaned address text; "" when the user cleared it. */
@@ -44,15 +48,23 @@ export type AddressModalOptions = {
 };
 
 const esc = (s: unknown) =>
-  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string);
+  String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  );
 
 function paint(root: ParentNode) {
   try {
-    (window as any).lucide?.createIcons({ attrs: { "stroke-width": 1.75 }, nameAttr: "data-lucide", root });
+    (window as any).lucide?.createIcons({
+      attrs: { "stroke-width": 1.75 },
+      nameAttr: "data-lucide",
+      root,
+    });
   } catch (_) {}
 }
 
-const FOCUSABLE = 'button:not([disabled]),input,select,textarea,[href],[tabindex]:not([tabindex="-1"])';
+const FOCUSABLE =
+  'button:not([disabled]),input,select,textarea,[href],[tabindex]:not([tabindex="-1"])';
 
 export function openAddressModal(opts: AddressModalOptions) {
   const properties = (opts.properties || []).filter((p) => p && p.id);
@@ -116,13 +128,17 @@ export function openAddressModal(opts: AddressModalOptions) {
     opts.suggest ||
     (async (q: string) => {
       const key = normalizeAddress(q);
-      return properties.filter((p) => !key || normalizeAddress(p.address).includes(key)).slice(0, 8);
+      return properties
+        .filter((p) => !key || normalizeAddress(p.address).includes(key))
+        .slice(0, 8);
     });
 
   function close(cancelled: boolean) {
     document.removeEventListener("keydown", onKey, true);
     host.remove();
-    try { previouslyFocused?.focus(); } catch (_) {}
+    try {
+      previouslyFocused?.focus();
+    } catch (_) {}
     if (cancelled) opts.onCancel?.();
   }
 
@@ -134,12 +150,19 @@ export function openAddressModal(opts: AddressModalOptions) {
       return;
     }
     if (e.key === "Tab") {
-      const items = Array.from(host.querySelectorAll<HTMLElement>(FOCUSABLE)).filter((el) => el.offsetParent !== null || true);
+      const items = Array.from(host.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
+        (el) => el.offsetParent !== null || true,
+      );
       if (!items.length) return;
       const first = items[0]!;
       const last = items[items.length - 1]!;
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
   }
   document.addEventListener("keydown", onKey, true);
@@ -147,7 +170,11 @@ export function openAddressModal(opts: AddressModalOptions) {
   function drawSuggestions() {
     const items = state.suggestions;
     input.setAttribute("aria-expanded", items.length ? "true" : "false");
-    if (!items.length) { list.innerHTML = ""; list.classList.remove("on"); return; }
+    if (!items.length) {
+      list.innerHTML = "";
+      list.classList.remove("on");
+      return;
+    }
     list.classList.add("on");
     list.innerHTML = items
       .map(
@@ -180,7 +207,11 @@ export function openAddressModal(opts: AddressModalOptions) {
   function drawMatch() {
     const hit = state.text ? findMatchingProperty(state.text, properties as any) : null;
     state.match = hit || null;
-    if (!hit) { matchBox.hidden = true; matchBox.innerHTML = ""; return; }
+    if (!hit) {
+      matchBox.hidden = true;
+      matchBox.innerHTML = "";
+      return;
+    }
     const assigned = state.propertyId === hit.id;
     matchBox.hidden = false;
     matchBox.innerHTML = `<i data-lucide="info"></i>
@@ -190,20 +221,29 @@ export function openAddressModal(opts: AddressModalOptions) {
         <button class="btn btn-ghost btn-xs" id="addrmSep" ${assigned ? "" : "disabled"}>Keep Separate</button>
       </span>`;
     paint(matchBox);
-    (matchBox.querySelector("#addrmUse") as HTMLButtonElement | null)?.addEventListener("click", () => {
-      state.propertyId = hit.id;
-      drawMatch();
-    });
-    (matchBox.querySelector("#addrmSep") as HTMLButtonElement | null)?.addEventListener("click", () => {
-      state.propertyId = null;
-      drawMatch();
-    });
+    (matchBox.querySelector("#addrmUse") as HTMLButtonElement | null)?.addEventListener(
+      "click",
+      () => {
+        state.propertyId = hit.id;
+        drawMatch();
+      },
+    );
+    (matchBox.querySelector("#addrmSep") as HTMLButtonElement | null)?.addEventListener(
+      "click",
+      () => {
+        state.propertyId = null;
+        drawMatch();
+      },
+    );
   }
 
   let t: any = null;
   input.addEventListener("input", () => {
     state.text = input.value;
-    if (state.propertyId && !addressesMatch(state.text, (properties.find((p) => p.id === state.propertyId) || {}).address)) {
+    if (
+      state.propertyId &&
+      !addressesMatch(state.text, (properties.find((p) => p.id === state.propertyId) || {}).address)
+    ) {
       /* Typing a different address detaches the automatic assignment; the
          user can re-assign from the match banner. */
       state.propertyId = null;
@@ -225,12 +265,21 @@ export function openAddressModal(opts: AddressModalOptions) {
 
   input.addEventListener("keydown", (e) => {
     if (!state.suggestions.length) {
-      if (e.key === "Enter") { e.preventDefault(); void doSave(); }
+      if (e.key === "Enter") {
+        e.preventDefault();
+        void doSave();
+      }
       return;
     }
-    if (e.key === "ArrowDown") { e.preventDefault(); state.active = (state.active + 1) % state.suggestions.length; drawSuggestions(); }
-    else if (e.key === "ArrowUp") { e.preventDefault(); state.active = (state.active - 1 + state.suggestions.length) % state.suggestions.length; drawSuggestions(); }
-    else if (e.key === "Enter") {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      state.active = (state.active + 1) % state.suggestions.length;
+      drawSuggestions();
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      state.active = (state.active - 1 + state.suggestions.length) % state.suggestions.length;
+      drawSuggestions();
+    } else if (e.key === "Enter") {
       e.preventDefault();
       if (state.active >= 0) choose(state.active);
       else void doSave();
@@ -246,8 +295,16 @@ export function openAddressModal(opts: AddressModalOptions) {
     const clean = cleanAddressText(state.text);
     const source = !clean ? "unknown" : state.propertyId ? "existing_property" : "manual";
     const columns = clean
-      ? { ...buildAddress({ text: clean }, source as any), property_address: clean, normalized_address: normalizeAddress(clean) }
-      : { ...buildAddress({ text: "" }, "unknown"), property_address: null, normalized_address: null };
+      ? {
+          ...buildAddress({ text: clean }, source as any),
+          property_address: clean,
+          normalized_address: normalizeAddress(clean),
+        }
+      : {
+          ...buildAddress({ text: "" }, "unknown"),
+          property_address: null,
+          normalized_address: null,
+        };
     return {
       address: clean,
       columns,
@@ -306,7 +363,12 @@ export function openAddressModal(opts: AddressModalOptions) {
   saveBtn.addEventListener("click", () => void doSave());
 
   drawMatch();
-  setTimeout(() => { try { input.focus(); input.select(); } catch (_) {} }, 0);
+  setTimeout(() => {
+    try {
+      input.focus();
+      input.select();
+    } catch (_) {}
+  }, 0);
 
   return { close: () => close(true), host };
 }

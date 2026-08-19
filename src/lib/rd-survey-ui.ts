@@ -41,7 +41,6 @@ const GOALS = [
 ];
 const TEAMS = ["Just Me", "2 To 5", "6 To 20", "20+"];
 
-
 type Step =
   | {
       kind: "text";
@@ -50,7 +49,14 @@ type Step =
       fields: Array<{ key: string; label: string; placeholder: string; type?: string }>;
       required?: string[];
     }
-  | { kind: "choice"; title: string; hint?: string; key: string; options: string[]; required?: boolean }
+  | {
+      kind: "choice";
+      title: string;
+      hint?: string;
+      key: string;
+      options: string[];
+      required?: boolean;
+    }
   | { kind: "finish"; title: string; hint?: string };
 
 const STEPS: Step[] = [
@@ -101,12 +107,14 @@ const STEPS: Step[] = [
 const esc = (s: any) =>
   String(s ?? "").replace(
     /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string),
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
   );
 
 function toast(msg: string) {
   try {
-    (window as any).rdToast ? (window as any).rdToast(msg) : console.log(msg);
+    const t = (window as any).rdToast;
+    if (typeof t === "function") t(msg);
+    else console.log(msg);
   } catch (_) {}
 }
 
@@ -316,7 +324,6 @@ export function mountSignupSurvey(host: HTMLElement, opts: FlowOpts = {}) {
   return stop;
 }
 
-
 /** Mirrors the shared contact fields onto the account profile. */
 async function syncToAccount(fields: { full_name: string; phone: string; company: string }) {
   try {
@@ -395,8 +402,7 @@ export async function maybeOpenSignupSurvey() {
     if (row && (row.completed || row.skipped)) return;
     if (touched) return;
     /* performance.now() is time since this document started loading */
-    const sinceLoad =
-      typeof performance !== "undefined" && performance.now ? performance.now() : 0;
+    const sinceLoad = typeof performance !== "undefined" && performance.now ? performance.now() : 0;
     if (sinceLoad > 8000) return;
     try {
       localStorage.setItem(SURVEY_SENT_KEY, String(Date.now()));
@@ -409,9 +415,7 @@ export async function maybeOpenSignupSurvey() {
   }
 }
 
-
 /** Reopen for editing from the account area. */
 export async function editSignupSurvey() {
   location.assign("/welcome?edit=1");
 }
-

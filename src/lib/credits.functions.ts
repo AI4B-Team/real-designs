@@ -32,7 +32,6 @@ export const getMyCredits = createServerFn({ method: "GET" })
     }
   });
 
-
 /** Recent credit activity for the account page. */
 export const listCreditHistory = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

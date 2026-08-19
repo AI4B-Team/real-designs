@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/for-interior-designers",
   tier: "C",
-  intent: "Interior designers who need fast early concepts to align a client before committing billable hours to specification and sourcing.",
+  intent:
+    "Interior designers who need fast early concepts to align a client before committing billable hours to specification and sourcing.",
 
   metaTitle: "AI Concepting Tools For Interior Designers",
-  metaDescription: "Get a client aligned on direction before you spend billable hours on specification. Reality Lock generates early concepts from their own room.",
+  metaDescription:
+    "Get a client aligned on direction before you spend billable hours on specification. Reality Lock generates early concepts from their own room.",
 
   eyebrow: "For Interior Designers",
   h1: "Align The Client Before You Spend Billable Hours",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Early concept direction for client alignment, pre-specification",
 
   steps: [
-    { title: "Photograph The Client's Room", text: "Use a phone photo from the initial consult, no measured drawings needed for this stage of the conversation." },
-    { title: "Generate A Few Directional Concepts", text: "Produce two or three distinct style directions locked to the room's real proportions, for the client to react to." },
-    { title: "Move Into Specification With Direction Agreed", text: "Once the client has picked a direction, your billable hours go into sourcing, detailing and installation, not into guessing at their taste." },
+    {
+      title: "Photograph The Client's Room",
+      text: "Use a phone photo from the initial consult, no measured drawings needed for this stage of the conversation.",
+    },
+    {
+      title: "Generate A Few Directional Concepts",
+      text: "Produce two or three distinct style directions locked to the room's real proportions, for the client to react to.",
+    },
+    {
+      title: "Move Into Specification With Direction Agreed",
+      text: "Once the client has picked a direction, your billable hours go into sourcing, detailing and installation, not into guessing at their taste.",
+    },
   ],
 
   showcase: ["interior", "reality-lock", "shop", "sketch"],
-
 
   sections: [
     {
@@ -104,6 +114,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Get The Client Aligned Before You Specify",
-  ctaBody: "Photograph the room and generate a few concept directions to open the client conversation on the right footing.",
+  ctaBody:
+    "Photograph the room and generate a few concept directions to open the client conversation on the right footing.",
   ctaLabel: "Generate Early Concepts",
 };

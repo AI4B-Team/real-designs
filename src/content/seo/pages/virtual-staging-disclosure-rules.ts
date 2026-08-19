@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/virtual-staging-disclosure-rules",
   tier: "D",
-  intent: "Someone staging a listing photo wants to know what disclosure language they need and what edits cross the line.",
+  intent:
+    "Someone staging a listing photo wants to know what disclosure language they need and what edits cross the line.",
 
   metaTitle: "Virtual Staging Disclosure Rules By State",
-  metaDescription: "General guidance on virtual staging disclosure categories, compliant captions, and what counts as material misrepresentation. Not legal advice.",
+  metaDescription:
+    "General guidance on virtual staging disclosure categories, compliant captions, and what counts as material misrepresentation. Not legal advice.",
 
   eyebrow: "Compliance",
   h1: "Virtual Staging Disclosure Rules By State",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same room virtually staged, disclosure label attached to the file.",
 
   steps: [
-    { title: "Identify The Edit Type", text: "Decide whether the change adds furnishings, alters cosmetics, or touches a permanent feature of the room." },
-    { title: "Apply A Disclosure Label", text: "Attach language identifying the image as virtually staged or edited before it goes to the MLS." },
-    { title: "Confirm With Your Local MLS", text: "Check current wording and placement requirements with your own board before publishing." },
+    {
+      title: "Identify The Edit Type",
+      text: "Decide whether the change adds furnishings, alters cosmetics, or touches a permanent feature of the room.",
+    },
+    {
+      title: "Apply A Disclosure Label",
+      text: "Attach language identifying the image as virtually staged or edited before it goes to the MLS.",
+    },
+    {
+      title: "Confirm With Your Local MLS",
+      text: "Check current wording and placement requirements with your own board before publishing.",
+    },
   ],
 
   showcase: ["staging", "mls", "reality-lock", "declutter"],
-
 
   sections: [
     {
@@ -107,6 +117,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Stage Listing Photos With Disclosure Built In",
-  ctaBody: "Every staged image exports with a disclosure caption attached, so you are not writing that language by hand for every listing.",
+  ctaBody:
+    "Every staged image exports with a disclosure caption attached, so you are not writing that language by hand for every listing.",
   ctaLabel: "Try Virtual Staging",
 };

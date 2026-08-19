@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/rental-grade-vs-retail-grade",
   tier: "D",
-  intent: "Someone deciding on finishes for a property wants a material by material comparison of rental grade versus retail grade.",
+  intent:
+    "Someone deciding on finishes for a property wants a material by material comparison of rental grade versus retail grade.",
 
   metaTitle: "Rental Grade vs Retail Grade Finishes",
-  metaDescription: "Material by material comparison of rental grade and retail grade finishes, durability economics, and when spending more is the cheaper decision.",
+  metaDescription:
+    "Material by material comparison of rental grade and retail grade finishes, durability economics, and when spending more is the cheaper decision.",
 
   eyebrow: "Finish Grade",
   h1: "Rental Grade vs Retail Grade Finishes",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same room finished to retail grade for a resale buyer.",
 
   steps: [
-    { title: "Identify Your Exit Strategy", text: "Decide whether the property will be held as a rental or sold to an owner occupant." },
-    { title: "Compare Material By Material", text: "Weigh flooring, cabinets, counters, paint and fixtures at both grade levels for the same room." },
-    { title: "Match Spend To Turnover Timeline", text: "Choose the grade whose replacement cycle and upfront cost line up with how long you will hold the property." },
+    {
+      title: "Identify Your Exit Strategy",
+      text: "Decide whether the property will be held as a rental or sold to an owner occupant.",
+    },
+    {
+      title: "Compare Material By Material",
+      text: "Weigh flooring, cabinets, counters, paint and fixtures at both grade levels for the same room.",
+    },
+    {
+      title: "Match Spend To Turnover Timeline",
+      text: "Choose the grade whose replacement cycle and upfront cost line up with how long you will hold the property.",
+    },
   ],
 
   showcase: ["grades", "scope", "budget-mode", "brief"],
-
 
   sections: [
     {
@@ -114,6 +124,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Price The Same Room At Both Grades",
-  ctaBody: "Generate a rental grade and a retail grade scope for the same room and compare the line items side by side.",
+  ctaBody:
+    "Generate a rental grade and a retail grade scope for the same room and compare the line items side by side.",
   ctaLabel: "Compare Finish Grades",
 };

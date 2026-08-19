@@ -1,11 +1,51 @@
 import { describe, expect, it } from "vitest";
-import { assignKind, draftRecord, filterMedia, mergeDrafts, mergeRenderJobs, propertyBuckets, propertyOptions } from "@/lib/media-view";
+import {
+  assignKind,
+  draftRecord,
+  filterMedia,
+  mergeDrafts,
+  mergeRenderJobs,
+  propertyBuckets,
+  propertyOptions,
+} from "@/lib/media-view";
 
 const items = [
-  { id: "a", refId: "u1", type: "uploaded_image", status: "ready", title: "Front", propertyId: "p1", property: "12 Oak" },
-  { id: "b", refId: "v1", type: "generated_video", status: "draft", title: "Tour", propertyId: "p1", property: "12 Oak" },
-  { id: "c", refId: "u2", type: "uploaded_image", status: "ready", title: "Loose Shot", propertyId: null, property: null },
-  { id: "d", refId: "x1", type: "generated_image", status: "archived", title: "Old", propertyId: "p1", property: "12 Oak" },
+  {
+    id: "a",
+    refId: "u1",
+    type: "uploaded_image",
+    status: "ready",
+    title: "Front",
+    propertyId: "p1",
+    property: "12 Oak",
+  },
+  {
+    id: "b",
+    refId: "v1",
+    type: "generated_video",
+    status: "draft",
+    title: "Tour",
+    propertyId: "p1",
+    property: "12 Oak",
+  },
+  {
+    id: "c",
+    refId: "u2",
+    type: "uploaded_image",
+    status: "ready",
+    title: "Loose Shot",
+    propertyId: null,
+    property: null,
+  },
+  {
+    id: "d",
+    refId: "x1",
+    type: "generated_image",
+    status: "archived",
+    title: "Old",
+    propertyId: "p1",
+    property: "12 Oak",
+  },
 ];
 
 describe("media view model", () => {
@@ -98,15 +138,23 @@ describe("durable drafts in media", () => {
 
   it("routes each draft type to the tab that owns it", () => {
     const merged = mergeDrafts(fresh(), [stagingDraft, designDraft, videoDraft]);
-    expect(filterMedia(merged, { tab: "drafts" }).map((m: any) => m.id).sort()).toEqual(
-      ["b", "draft_" + designDraft.id, "draft_" + stagingDraft.id].sort(),
+    expect(
+      filterMedia(merged, { tab: "drafts" })
+        .map((m: any) => m.id)
+        .sort(),
+    ).toEqual(["b", "draft_" + designDraft.id, "draft_" + stagingDraft.id].sort());
+    expect(filterMedia(merged, { tab: "images" }).map((m: any) => m.id)).toContain(
+      "draft_" + designDraft.id,
     );
-    expect(filterMedia(merged, { tab: "images" }).map((m: any) => m.id)).toContain("draft_" + designDraft.id);
-    expect(filterMedia(merged, { tab: "images" }).map((m: any) => m.id)).toContain("draft_" + stagingDraft.id);
+    expect(filterMedia(merged, { tab: "images" }).map((m: any) => m.id)).toContain(
+      "draft_" + stagingDraft.id,
+    );
     expect(filterMedia(merged, { tab: "videos" }).map((m: any) => m.id)).toEqual(["b"]);
-    expect(filterMedia(merged, { tab: "unassigned" }).map((m: any) => m.id).sort()).toEqual(
-      ["c", "draft_" + designDraft.id].sort(),
-    );
+    expect(
+      filterMedia(merged, { tab: "unassigned" })
+        .map((m: any) => m.id)
+        .sort(),
+    ).toEqual(["c", "draft_" + designDraft.id].sort());
   });
 
   it("keeps completed and failed work on their own filters", () => {
@@ -134,7 +182,10 @@ describe("durable drafts in media", () => {
   });
 
   it("files drafts and completed work under the right property tabs", () => {
-    const merged = mergeRenderJobs(mergeDrafts(fresh(), [stagingDraft, designDraft, videoDraft]), []);
+    const merged = mergeRenderJobs(
+      mergeDrafts(fresh(), [stagingDraft, designDraft, videoDraft]),
+      [],
+    );
     const b = propertyBuckets(merged, "p1");
     expect(b.photos.map((m: any) => m.id)).toEqual(["a", "draft_" + stagingDraft.id]);
     expect(b.videos.map((m: any) => m.id)).toEqual(["b"]);

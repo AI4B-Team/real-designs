@@ -75,7 +75,8 @@ export class TransitionStore {
     if (!projectId) return;
     try {
       const res: any = await listTransitions({ data: { video_project_id: projectId } });
-      for (const r of res.transitions || []) this.byConn.set(connectionKey(r.from_key, r.to_key), r);
+      for (const r of res.transitions || [])
+        this.byConn.set(connectionKey(r.from_key, r.to_key), r);
     } catch (_) {
       /* a transient read failure must never wipe configured transitions */
     }
@@ -120,7 +121,9 @@ export class TransitionStore {
   async clear(fromKey: string, toKey: string): Promise<void> {
     this.byConn.delete(connectionKey(fromKey, toKey));
     if (!this.projectId) return;
-    await deleteTransition({ data: { video_project_id: this.projectId, from_key: fromKey, to_key: toKey } });
+    await deleteTransition({
+      data: { video_project_id: this.projectId, from_key: fromKey, to_key: toKey },
+    });
   }
 
   /** Apply one style to every live connection. */
@@ -134,7 +137,14 @@ export class TransitionStore {
     const ms = transitionDurationMs(type, durationMs);
     const st = settings || {};
     for (const c of conns) {
-      this.byConn.set(c.key, { from_key: c.from, to_key: c.to, type, duration_ms: ms, settings: st, status: "configured" });
+      this.byConn.set(c.key, {
+        from_key: c.from,
+        to_key: c.to,
+        type,
+        duration_ms: ms,
+        settings: st,
+        status: "configured",
+      });
     }
     if (!this.projectId || !conns.length) return;
     const res: any = await applyTransitions({

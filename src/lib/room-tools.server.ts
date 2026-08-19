@@ -28,11 +28,36 @@ export const TOOL_LABEL: Record<RoomTool, string> = {
 };
 
 export const TOOL_STEPS: Record<RoomTool, string[]> = {
-  stage: ["Reading the empty room", "Choosing furniture that fits", "Placing and lighting the set", "Rendering the staged room"],
-  declutter: ["Reading the room", "Marking clutter and personal items", "Filling the space naturally", "Rendering the clean room"],
-  materials: ["Reading surfaces and finishes", "Selecting the new materials", "Matching light and reflection", "Rendering the swap"],
-  sketch: ["Reading the sketch lines", "Building the geometry", "Applying real materials", "Rendering the photo"],
-  angle: ["Reading room geometry", "Moving the virtual camera", "Keeping the design consistent", "Rendering the new angle"],
+  stage: [
+    "Reading the empty room",
+    "Choosing furniture that fits",
+    "Placing and lighting the set",
+    "Rendering the staged room",
+  ],
+  declutter: [
+    "Reading the room",
+    "Marking clutter and personal items",
+    "Filling the space naturally",
+    "Rendering the clean room",
+  ],
+  materials: [
+    "Reading surfaces and finishes",
+    "Selecting the new materials",
+    "Matching light and reflection",
+    "Rendering the swap",
+  ],
+  sketch: [
+    "Reading the sketch lines",
+    "Building the geometry",
+    "Applying real materials",
+    "Rendering the photo",
+  ],
+  angle: [
+    "Reading room geometry",
+    "Moving the virtual camera",
+    "Keeping the design consistent",
+    "Rendering the new angle",
+  ],
 };
 
 export function buildToolPrompt(d: RoomToolInput): string {
@@ -78,7 +103,11 @@ export function buildToolPrompt(d: RoomToolInput): string {
   return lines.join("\n");
 }
 
-export async function callImageModel(prompt: string, image: string, apiKey: string): Promise<string> {
+export async function callImageModel(
+  prompt: string,
+  image: string,
+  apiKey: string,
+): Promise<string> {
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -86,7 +115,13 @@ export async function callImageModel(prompt: string, image: string, apiKey: stri
       model: "google/gemini-2.5-flash-image",
       modalities: ["image", "text"],
       messages: [
-        { role: "user", content: [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: image } }] },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: prompt },
+            { type: "image_url", image_url: { url: image } },
+          ],
+        },
       ],
     }),
   });
@@ -95,7 +130,8 @@ export async function callImageModel(prompt: string, image: string, apiKey: stri
   if (!res.ok) throw new Error(`Render failed (${res.status}).`);
   const payload = (await res.json()) as any;
   const msg = payload?.choices?.[0]?.message;
-  const url: string | undefined = msg?.images?.[0]?.image_url?.url ?? msg?.images?.[0]?.url ?? undefined;
+  const url: string | undefined =
+    msg?.images?.[0]?.image_url?.url ?? msg?.images?.[0]?.url ?? undefined;
   if (!url || !url.startsWith("data:image")) throw new Error("The model did not return an image.");
   return url;
 }

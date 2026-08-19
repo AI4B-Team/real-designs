@@ -9,13 +9,7 @@
 export type FinishGrade = "rental" | "retail" | "premium";
 
 export type RoomKey =
-  | "kitchen"
-  | "bathroom"
-  | "living"
-  | "bedroom"
-  | "wholeHome"
-  | "exterior"
-  | "landscape";
+  "kitchen" | "bathroom" | "living" | "bedroom" | "wholeHome" | "exterior" | "landscape";
 
 export type CalcLine = {
   item: string;

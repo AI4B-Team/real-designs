@@ -1,7 +1,11 @@
 import { expireSession } from "../helpers/auth";
 import { expect, test } from "../helpers/fixtures";
 import { chooseDoor, gotoView, photoCards } from "../helpers/app";
-import { mockAiProviderUnavailable, mockExpiredSession, mockInsufficientCredits } from "../helpers/mocks";
+import {
+  mockAiProviderUnavailable,
+  mockExpiredSession,
+  mockInsufficientCredits,
+} from "../helpers/mocks";
 import { uploadPhotos, validPhoto } from "../helpers/uploads";
 import { waitForAsyncJob } from "../helpers/waits";
 
@@ -26,18 +30,14 @@ test.describe("Failure handling", () => {
     await mockInsufficientCredits(appPage);
     const started = await startGeneration(appPage);
     test.skip(!started, "Generation entry point not available");
-    await expect(
-      appPage.getByText(/credit|not enough|top up|upgrade/i).first(),
-    ).toBeVisible();
+    await expect(appPage.getByText(/credit|not enough|top up|upgrade/i).first()).toBeVisible();
   });
 
   test("recovers from an unavailable AI provider", async ({ appPage }) => {
     await mockAiProviderUnavailable(appPage);
     const started = await startGeneration(appPage);
     test.skip(!started, "Generation entry point not available");
-    await expect(
-      appPage.getByText(/unavailable|try again|retry|couldn.t/i).first(),
-    ).toBeVisible();
+    await expect(appPage.getByText(/unavailable|try again|retry|couldn.t/i).first()).toBeVisible();
   });
 
   test("sends the user to sign in when the session expires", async ({ appPage }) => {

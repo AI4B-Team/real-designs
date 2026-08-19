@@ -14,12 +14,7 @@
 export type MatchType = "similar" | "close" | "inspired" | "exact";
 export type MatchStrength = "strong" | "good" | "alternative";
 export type Availability = "in_stock" | "limited" | "backorder" | "unavailable" | "unknown";
-export type ProductStatus =
-  | "saved"
-  | "selected"
-  | "approved"
-  | "needs_replacement"
-  | "unavailable";
+export type ProductStatus = "saved" | "selected" | "approved" | "needs_replacement" | "unavailable";
 
 /** Normalized internal product record. Every provider adapter maps into this. */
 export interface NormalizedProduct {
@@ -48,7 +43,13 @@ export interface NormalizedProduct {
   productUrl: string;
   affiliateUrl?: undefined | string;
   lastVerified?: undefined | string;
-  source: "visual_search" | "retailer_feed" | "brand_catalog" | "user_upload" | "manual_link" | "csv_import";
+  source:
+    | "visual_search"
+    | "retailer_feed"
+    | "brand_catalog"
+    | "user_upload"
+    | "manual_link"
+    | "csv_import";
   /** provider id the record came from (e.g. "manual_link", "csv_import", a feed id) */
   provider?: string | undefined;
   /** provider-scoped product id */
@@ -70,7 +71,13 @@ export interface DetectedObject {
   origin: "auto" | "manual";
   /** 0-1 model confidence for auto objects */
   confidence?: number | undefined;
-  traits?: { colors?: string[] | undefined; materials?: string[] | undefined; shape?: string | undefined } | undefined;
+  traits?:
+    | {
+        colors?: string[] | undefined;
+        materials?: string[] | undefined;
+        shape?: string | undefined;
+      }
+    | undefined;
 }
 
 export interface VisualSearchRequest {
@@ -103,7 +110,11 @@ export interface RetailerFeedProvider {
 export interface ObjectDetectionProvider {
   id: string;
   configured: boolean;
-  detect(imageUrl: string, roomType?: string, opts?: { force?: boolean }): Promise<DetectedObject[]>;
+  detect(
+    imageUrl: string,
+    roomType?: string,
+    opts?: { force?: boolean },
+  ): Promise<DetectedObject[]>;
 }
 
 export function isProductSearchConfigured(): boolean {
@@ -204,7 +215,16 @@ export const PRODUCT_CATEGORIES: string[] = [
   "Paint Color",
 ];
 
-export const PRICE_TIERS = ["Furniture", "Lighting", "Textiles", "Décor", "Fixtures", "Finishes", "Appliances", "Outdoor"];
+export const PRICE_TIERS = [
+  "Furniture",
+  "Lighting",
+  "Textiles",
+  "Décor",
+  "Fixtures",
+  "Finishes",
+  "Appliances",
+  "Outdoor",
+];
 
 /** No provider is connected: return nothing rather than invented inventory. */
 export const unconnectedVisualSearch: VisualSearchProvider = {
@@ -272,7 +292,10 @@ export function createManualProduct(input: ManualProductInput): NormalizedProduc
   const url = String(input.url || "").trim();
   if (!isValidProductUrl(url)) throw new Error("Enter a valid product link starting with https://");
   const merchant = (input.merchant || hostOf(url) || "Retailer").trim();
-  const price = typeof input.price === "number" && isFinite(input.price) && input.price >= 0 ? input.price : undefined;
+  const price =
+    typeof input.price === "number" && isFinite(input.price) && input.price >= 0
+      ? input.price
+      : undefined;
   return {
     id: "manual-" + Math.random().toString(36).slice(2, 10),
     merchant,
@@ -345,7 +368,10 @@ export function parseProductCsv(text: string): CsvParseResult {
     const cells = splitCsvLine(raw);
     const at = (n: string) => (idx(n) >= 0 ? cells[idx(n)] : undefined);
     const rawPrice = at("price");
-    const price = rawPrice && rawPrice.replace(/[^0-9.]/g, "") ? Number(rawPrice.replace(/[^0-9.]/g, "")) : undefined;
+    const price =
+      rawPrice && rawPrice.replace(/[^0-9.]/g, "")
+        ? Number(rawPrice.replace(/[^0-9.]/g, ""))
+        : undefined;
     try {
       products.push(
         createManualProduct({
@@ -432,12 +458,21 @@ const detectCache = new Map<string, DetectedObject[]>();
 export const visionDetection: ObjectDetectionProvider = {
   id: "vision",
   configured: true,
-  async detect(imageUrl: string, roomType?: string, opts?: { force?: boolean }): Promise<DetectedObject[]> {
+  async detect(
+    imageUrl: string,
+    roomType?: string,
+    opts?: { force?: boolean },
+  ): Promise<DetectedObject[]> {
     const key = String(imageUrl || "") + "::" + String(roomType || "");
-    if (!opts?.force && detectCache.has(key)) return detectCache.get(key)!.map((o) => ({ ...o, box: { ...o.box } }));
+    if (!opts?.force && detectCache.has(key))
+      return detectCache.get(key)!.map((o) => ({ ...o, box: { ...o.box } }));
     const { detectShopObjects } = await import("@/lib/shop-detect.functions");
     const res = await detectShopObjects({
-      data: { image: imageUrl, roomType: roomType || "Living Room", categories: PRODUCT_CATEGORIES },
+      data: {
+        image: imageUrl,
+        roomType: roomType || "Living Room",
+        categories: PRODUCT_CATEGORIES,
+      },
     });
     const objects: DetectedObject[] = (res.objects || []).map((o, i) => ({
       id: "auto-" + i,
@@ -447,7 +482,10 @@ export const visionDetection: ObjectDetectionProvider = {
       origin: "auto" as const,
       confidence: o.confidence,
     }));
-    detectCache.set(key, objects.map((o) => ({ ...o, box: { ...o.box } })));
+    detectCache.set(
+      key,
+      objects.map((o) => ({ ...o, box: { ...o.box } })),
+    );
     return objects;
   },
 };
@@ -455,4 +493,3 @@ export const visionDetection: ObjectDetectionProvider = {
 export function objectDetectionProvider(): ObjectDetectionProvider {
   return visionDetection;
 }
-

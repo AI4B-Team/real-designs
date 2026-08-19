@@ -42,7 +42,6 @@ export const RENDER_PROVIDERS: Record<string, RenderProvider> = {
   },
 };
 
-
 /**
  * Registers a server-side encoder (Creatomate, Shotstack, Remotion Lambda, an
  * own ffmpeg worker …). Nothing else in the app changes: the job row, credits
@@ -80,7 +79,9 @@ export function isProviderServerSide(id: unknown) {
 /** A job is only "live" while its owner keeps reporting progress. */
 export const RENDER_HEARTBEAT_STALE_MS = 120_000;
 
-export function isJobStale(job: { status?: string | null; heartbeat_at?: string | null } | null | undefined) {
+export function isJobStale(
+  job: { status?: string | null; heartbeat_at?: string | null } | null | undefined,
+) {
   if (!job || (job.status !== "queued" && job.status !== "rendering")) return false;
   const beat = job.heartbeat_at ? Date.parse(job.heartbeat_at) : 0;
   return !beat || Date.now() - beat > RENDER_HEARTBEAT_STALE_MS;
@@ -104,8 +105,14 @@ export function creditRelease(
   const charged = Number(job?.credits_charged) || 0;
   const already = Number(job?.credits_refunded) || 0;
   const amount = charged - already;
-  if (status !== "failed" && status !== "cancelled") return { release: false, amount: 0, reason: "not_terminal" };
-  if (amount <= 0) return { release: false, amount: 0, reason: already > 0 ? "already_released" : "nothing_charged" };
+  if (status !== "failed" && status !== "cancelled")
+    return { release: false, amount: 0, reason: "not_terminal" };
+  if (amount <= 0)
+    return {
+      release: false,
+      amount: 0,
+      reason: already > 0 ? "already_released" : "nothing_charged",
+    };
   return {
     release: true,
     amount,
@@ -113,10 +120,13 @@ export function creditRelease(
   };
 }
 
-export function jobStatusLabel(job: { status?: string | null; progress?: number | null } | null | undefined) {
+export function jobStatusLabel(
+  job: { status?: string | null; progress?: number | null } | null | undefined,
+) {
   if (!job) return "";
   if (isJobStale(job)) return "Render Interrupted";
-  if ((job as any).cancel_requested && (job.status === "queued" || job.status === "rendering")) return "Stopping\u2026";
+  if ((job as any).cancel_requested && (job.status === "queued" || job.status === "rendering"))
+    return "Stopping\u2026";
   switch (job.status) {
     case "queued":
       return "Queued";

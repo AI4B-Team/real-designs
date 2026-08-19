@@ -25,17 +25,23 @@ const authed = live && Boolean(email && password);
 describe.skipIf(!live)("signed-out access is closed", () => {
   const anon = () => createClient(url!, key!, { auth: { persistSession: false } });
 
-  it.each(["properties", "projects", "video_projects", "property_media_assets", "credit_accounts", "user_roles"])(
-    "cannot read %s",
-    async (table) => {
-      const { data, error } = await anon().from(table).select("*").limit(1);
-      expect(error ?? { message: "" }).toBeTruthy();
-      expect(data ?? []).toHaveLength(0);
-    },
-  );
+  it.each([
+    "properties",
+    "projects",
+    "video_projects",
+    "property_media_assets",
+    "credit_accounts",
+    "user_roles",
+  ])("cannot read %s", async (table) => {
+    const { data, error } = await anon().from(table).select("*").limit(1);
+    expect(error ?? { message: "" }).toBeTruthy();
+    expect(data ?? []).toHaveLength(0);
+  });
 
   it("cannot write to a workspace table", async () => {
-    const { error } = await anon().from("properties").insert({ address: "hack" } as never);
+    const { error } = await anon()
+      .from("properties")
+      .insert({ address: "hack" } as never);
     expect(error).toBeTruthy();
   });
 
@@ -45,7 +51,9 @@ describe.skipIf(!live)("signed-out access is closed", () => {
   });
 
   it("cannot sign a URL for someone else's object", async () => {
-    const { error } = await anon().storage.from("room-photos").createSignedUrl("00000000-0000-4000-8000-000000000000/x.jpg", 60);
+    const { error } = await anon()
+      .storage.from("room-photos")
+      .createSignedUrl("00000000-0000-4000-8000-000000000000/x.jpg", 60);
     expect(error).toBeTruthy();
   });
 });
@@ -55,7 +63,10 @@ describe.skipIf(!authed)("signed-in access is workspace scoped", () => {
   let userId = "";
 
   beforeAll(async () => {
-    const { data, error } = await client.auth.signInWithPassword({ email: email!, password: password! });
+    const { data, error } = await client.auth.signInWithPassword({
+      email: email!,
+      password: password!,
+    });
     if (error) throw error;
     userId = data.user?.id ?? "";
   });

@@ -39,8 +39,17 @@ export function clipSize(orientation: string): string {
   return orientation === "portrait" ? "720x1280" : "1280x720";
 }
 
-export function clipStoragePath(userId: string, projectId: string, sceneKey: string, clipId: string): string {
-  const slug = sceneKey.replace(/[^a-zA-Z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(-60) || "scene";
+export function clipStoragePath(
+  userId: string,
+  projectId: string,
+  sceneKey: string,
+  clipId: string,
+): string {
+  const slug =
+    sceneKey
+      .replace(/[^a-zA-Z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(-60) || "scene";
   return `${userId}/projects/${projectId}/scenes/${slug}/clips/${clipId}.mp4`;
 }
 
@@ -100,13 +109,20 @@ export async function startProviderJob(input: {
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as any;
     if (res.status === 429)
-      throw new Error(body?.message || "Another clip is still generating. Wait for it to finish, then try again.");
-    if (res.status === 402) throw new Error(body?.message || "The workspace is out of AI credits for video.");
+      throw new Error(
+        body?.message || "Another clip is still generating. Wait for it to finish, then try again.",
+      );
+    if (res.status === 402)
+      throw new Error(body?.message || "The workspace is out of AI credits for video.");
     throw new Error(body?.message || `The clip could not be started (${res.status}).`);
   }
   const job = (await res.json()) as any;
   if (!job?.id) throw new Error("The clip could not be started.");
-  return { id: String(job.id), status: String(job.status || "in_progress"), progress: Number(job.progress || 0) };
+  return {
+    id: String(job.id),
+    status: String(job.status || "in_progress"),
+    progress: Number(job.progress || 0),
+  };
 }
 
 export async function readProviderJob(jobId: string): Promise<any> {
@@ -144,7 +160,11 @@ export async function refundClipOnce(clip: ClipRow, note: string): Promise<boole
 async function patch(id: string, values: Record<string, any>): Promise<ClipRow> {
   const { data, error } = await supabaseAdmin
     .from("scene_clips")
-    .update({ ...values, updated_at: new Date().toISOString(), heartbeat_at: new Date().toISOString() })
+    .update({
+      ...values,
+      updated_at: new Date().toISOString(),
+      heartbeat_at: new Date().toISOString(),
+    })
     .eq("id", id)
     .select("*")
     .single();
@@ -159,7 +179,8 @@ async function patch(id: string, values: Record<string, any>): Promise<ClipRow> 
  */
 export async function reconcileClip(clip: ClipRow): Promise<ClipRow> {
   if (!clip) return clip;
-  if (clip.status === "completed" || clip.status === "failed" || clip.status === "cancelled") return clip;
+  if (clip.status === "completed" || clip.status === "failed" || clip.status === "cancelled")
+    return clip;
   if (!clip.provider_job_id) return clip;
 
   let job: any;
@@ -175,7 +196,10 @@ export async function reconcileClip(clip: ClipRow): Promise<ClipRow> {
     return patch(clip.id, {
       status: "failed",
       last_checked_at: new Date().toISOString(),
-      error_message: String(job?.error?.message || "The clip could not be generated.").slice(0, 400),
+      error_message: String(job?.error?.message || "The clip could not be generated.").slice(
+        0,
+        400,
+      ),
     });
   }
 
@@ -188,7 +212,9 @@ export async function reconcileClip(clip: ClipRow): Promise<ClipRow> {
   }
 
   // Completed: store the MP4 privately before the provider URL expires.
-  const path = clip.storage_path || clipStoragePath(clip.user_id, clip.video_project_id, clip.scene_key || clip.id, clip.id);
+  const path =
+    clip.storage_path ||
+    clipStoragePath(clip.user_id, clip.video_project_id, clip.scene_key || clip.id, clip.id);
   const exists = await supabaseAdmin.storage.from(CLIP_BUCKET).createSignedUrl(path, 60);
   if (!exists.data?.signedUrl) {
     const bytes = await downloadProviderClip(clip.provider_job_id);
@@ -209,7 +235,10 @@ export async function reconcileClip(clip: ClipRow): Promise<ClipRow> {
 }
 
 /** Signed URL for a stored clip, created only when the media is displayed. */
-export async function clipSignedUrl(path?: string | null, expiresIn = 3600): Promise<string | null> {
+export async function clipSignedUrl(
+  path?: string | null,
+  expiresIn = 3600,
+): Promise<string | null> {
   if (!path) return null;
   const { data } = await supabaseAdmin.storage.from(CLIP_BUCKET).createSignedUrl(path, expiresIn);
   return data?.signedUrl ?? null;
@@ -259,7 +288,10 @@ export async function createAndStartClip(userId: string, p: StartParams): Promis
     .maybeSingle();
   if (active.data) return reconcileClip(active.data as ClipRow);
 
-  const built = buildClipPrompt(p.animate_id, { room: p.room_name ?? null, style: p.style ?? null });
+  const built = buildClipPrompt(p.animate_id, {
+    room: p.room_name ?? null,
+    style: p.style ?? null,
+  });
   const size = clipSize(p.orientation);
 
   const insert = await supabaseAdmin
@@ -299,7 +331,12 @@ export async function createAndStartClip(userId: string, p: StartParams): Promis
 
   try {
     const image = await sourceDataUrl(p.source_path);
-    const job = await startProviderJob({ prompt: built.prompt, seconds: built.seconds, size, image });
+    const job = await startProviderJob({
+      prompt: built.prompt,
+      seconds: built.seconds,
+      size,
+      image,
+    });
     return patch(clip.id, {
       provider_job_id: job.id,
       status: "processing",
@@ -311,14 +348,20 @@ export async function createAndStartClip(userId: string, p: StartParams): Promis
     await refundClipOnce(clip, `AI clip could not start ${clip.id}`);
     await patch(clip.id, {
       status: "failed",
-      error_message: String((err as Error)?.message || "The clip could not be started.").slice(0, 400),
+      error_message: String((err as Error)?.message || "The clip could not be started.").slice(
+        0,
+        400,
+      ),
     });
     throw err;
   }
 }
 
 /** Bring every active clip of a user (optionally one project) up to date. */
-export async function reconcileUserClips(userId: string, projectId?: string | null): Promise<ClipRow[]> {
+export async function reconcileUserClips(
+  userId: string,
+  projectId?: string | null,
+): Promise<ClipRow[]> {
   let q = supabaseAdmin
     .from("scene_clips")
     .select("*")

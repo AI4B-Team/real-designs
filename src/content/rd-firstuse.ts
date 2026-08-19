@@ -46,25 +46,108 @@ type Ctx = {
   track: (event: string, props?: Record<string, unknown>) => void;
 };
 
-type Sample = { key: string; name: string; space: string; room: string; photo: string; alt: string };
+type Sample = {
+  key: string;
+  name: string;
+  space: string;
+  room: string;
+  photo: string;
+  alt: string;
+};
 
 const WORKFLOWS: Record<
   string,
-  { label: string; tool?: string; space?: string; room?: string; group: string; status?: string; desc: string }
+  {
+    label: string;
+    tool?: string;
+    space?: string;
+    room?: string;
+    group: string;
+    status?: string;
+    desc: string;
+  }
 > = {
-  redesign: { label: "Redesign A Space", tool: "Redesign", space: "interior", group: "design", desc: "Restyle a room while the architecture stays put." },
-  stage: { label: "Stage An Empty Room", tool: "Virtual Stage", space: "interior", group: "design", desc: "Furnish an empty room in your Design DNA." },
-  exterior: { label: "Design An Exterior", tool: "Redesign", space: "exterior", group: "design", desc: "Facade, paint, roof and entry updates." },
-  garden: { label: "Plan Landscaping", tool: "Redesign", space: "landscape", group: "design", desc: "Plantings, hardscape and yard layout." },
-  sketch: { label: "Start From A Sketch Or Plan", tool: "Sketch To Render", space: "interior", group: "design", desc: "Turn a hand sketch or floor plan into a render." },
-  enhance: { label: "Enhance Listing Photos", tool: "Redesign", space: "interior", group: "listing", desc: "Clean, bright, MLS ready photography." },
-  declutter: { label: "Declutter Or Empty", tool: "Declutter", space: "interior", group: "listing", desc: "Remove clutter and personal items." },
-  dusk: { label: "Day To Dusk", space: "exterior", group: "listing", desc: "Twilight conversion for exterior listing shots." },
-  batch: { label: "Prepare A Complete Listing", group: "listing", desc: "Stage a whole property in one direction." },
-  property: { label: "Upload A Complete Property", group: "listing", desc: "Create the property first, then add rooms." },
-  budget: { label: "Design Around A Budget", tool: "Budget", group: "plan", desc: "Hold the design to a planning range." },
-  products: { label: "Design With Products", group: "plan", desc: "Shop the design and price real products." },
-  continue: { label: "Continue An Existing Property", group: "plan", desc: "Pick up a property you already started." },
+  redesign: {
+    label: "Redesign A Space",
+    tool: "Redesign",
+    space: "interior",
+    group: "design",
+    desc: "Restyle a room while the architecture stays put.",
+  },
+  stage: {
+    label: "Stage An Empty Room",
+    tool: "Virtual Stage",
+    space: "interior",
+    group: "design",
+    desc: "Furnish an empty room in your Design DNA.",
+  },
+  exterior: {
+    label: "Design An Exterior",
+    tool: "Redesign",
+    space: "exterior",
+    group: "design",
+    desc: "Facade, paint, roof and entry updates.",
+  },
+  garden: {
+    label: "Plan Landscaping",
+    tool: "Redesign",
+    space: "landscape",
+    group: "design",
+    desc: "Plantings, hardscape and yard layout.",
+  },
+  sketch: {
+    label: "Start From A Sketch Or Plan",
+    tool: "Sketch To Render",
+    space: "interior",
+    group: "design",
+    desc: "Turn a hand sketch or floor plan into a render.",
+  },
+  enhance: {
+    label: "Enhance Listing Photos",
+    tool: "Redesign",
+    space: "interior",
+    group: "listing",
+    desc: "Clean, bright, MLS ready photography.",
+  },
+  declutter: {
+    label: "Declutter Or Empty",
+    tool: "Declutter",
+    space: "interior",
+    group: "listing",
+    desc: "Remove clutter and personal items.",
+  },
+  dusk: {
+    label: "Day To Dusk",
+    space: "exterior",
+    group: "listing",
+    desc: "Twilight conversion for exterior listing shots.",
+  },
+  batch: {
+    label: "Prepare A Complete Listing",
+    group: "listing",
+    desc: "Stage a whole property in one direction.",
+  },
+  property: {
+    label: "Upload A Complete Property",
+    group: "listing",
+    desc: "Create the property first, then add rooms.",
+  },
+  budget: {
+    label: "Design Around A Budget",
+    tool: "Budget",
+    group: "plan",
+    desc: "Hold the design to a planning range.",
+  },
+  products: {
+    label: "Design With Products",
+    group: "plan",
+    desc: "Shop the design and price real products.",
+  },
+  continue: {
+    label: "Continue An Existing Property",
+    group: "plan",
+    desc: "Pick up a property you already started.",
+  },
 };
 
 const GOALS = [
@@ -78,9 +161,21 @@ const GOALS = [
 ];
 
 const LOCK_LEVELS = [
-  { key: "most", label: "Keep Most Of The Space", note: "Keep the layout, walls, windows and flooring. Update styling only." },
-  { key: "finishes", label: "Update Finishes & Furnishings", note: "Keep the architecture, replace finishes and furniture." },
-  { key: "major", label: "Make Major Changes", note: "Open up the space, replace cabinetry, finishes and layout where needed." },
+  {
+    key: "most",
+    label: "Keep Most Of The Space",
+    note: "Keep the layout, walls, windows and flooring. Update styling only.",
+  },
+  {
+    key: "finishes",
+    label: "Update Finishes & Furnishings",
+    note: "Keep the architecture, replace finishes and furniture.",
+  },
+  {
+    key: "major",
+    label: "Make Major Changes",
+    note: "Open up the space, replace cabinetry, finishes and layout where needed.",
+  },
   { key: "custom", label: "Custom", note: "" },
 ];
 
@@ -93,11 +188,46 @@ export function mountFirstUse(ctx: Ctx) {
   if (document.getElementById("fuPanel")) return;
 
   const SAMPLES: Sample[] = [
-    { key: "living", name: "Empty Living Room", space: "interior", room: "Living Room", photo: photos["empty"] || photos["before"] || "", alt: "Sample empty living room with bare walls and wood flooring" },
-    { key: "kitchen", name: "Outdated Kitchen", space: "interior", room: "Kitchen", photo: photos["kitchenBefore"] || photos["kitchen"] || "", alt: "Sample dated kitchen with oak cabinets" },
-    { key: "bath", name: "Primary Bathroom", space: "interior", room: "Primary Bath", photo: photos["bathBefore"] || photos["bath"] || "", alt: "Sample primary bathroom before renovation" },
-    { key: "exterior", name: "Home Exterior", space: "exterior", room: "Living Room", photo: photos["paintedBrick"] || photos["ranch"] || "", alt: "Sample single family home exterior" },
-    { key: "yard", name: "Backyard Or Landscape", space: "landscape", room: "Living Room", photo: photos["resortYard"] || photos["after"] || "", alt: "Sample backyard before landscaping" },
+    {
+      key: "living",
+      name: "Empty Living Room",
+      space: "interior",
+      room: "Living Room",
+      photo: photos["empty"] || photos["before"] || "",
+      alt: "Sample empty living room with bare walls and wood flooring",
+    },
+    {
+      key: "kitchen",
+      name: "Outdated Kitchen",
+      space: "interior",
+      room: "Kitchen",
+      photo: photos["kitchenBefore"] || photos["kitchen"] || "",
+      alt: "Sample dated kitchen with oak cabinets",
+    },
+    {
+      key: "bath",
+      name: "Primary Bathroom",
+      space: "interior",
+      room: "Primary Bath",
+      photo: photos["bathBefore"] || photos["bath"] || "",
+      alt: "Sample primary bathroom before renovation",
+    },
+    {
+      key: "exterior",
+      name: "Home Exterior",
+      space: "exterior",
+      room: "Living Room",
+      photo: photos["paintedBrick"] || photos["ranch"] || "",
+      alt: "Sample single family home exterior",
+    },
+    {
+      key: "yard",
+      name: "Backyard Or Landscape",
+      space: "landscape",
+      room: "Living Room",
+      photo: photos["resortYard"] || photos["after"] || "",
+      alt: "Sample backyard before landscaping",
+    },
   ];
 
   /* ---------- panel shell ---------- */
@@ -133,7 +263,8 @@ export function mountFirstUse(ctx: Ctx) {
     thumb: "",
   };
 
-  const q = <T extends Element = HTMLElement>(sel: string) => document.querySelector(sel) as T | null;
+  const q = <T extends Element = HTMLElement>(sel: string) =>
+    document.querySelector(sel) as T | null;
 
   /* ---------- writing into the real Studio controls ---------- */
   function applySpace(space: string) {
@@ -231,7 +362,10 @@ export function mountFirstUse(ctx: Ctx) {
 
   function pickFile(kind: "photo" | "sketch") {
     state.sourceKind = kind;
-    fileInput.accept = kind === "sketch" ? "image/jpeg,image/png,image/heic,image/webp,application/pdf" : "image/jpeg,image/png,image/heic,image/webp";
+    fileInput.accept =
+      kind === "sketch"
+        ? "image/jpeg,image/png,image/heic,image/webp,application/pdf"
+        : "image/jpeg,image/png,image/heic,image/webp";
     fileInput.value = "";
     fileInput.click();
   }
@@ -285,7 +419,7 @@ export function mountFirstUse(ctx: Ctx) {
             (done ? '<i data-lucide="check"></i>' : String(i + 1)) +
             "</span>" +
             s +
-            (done ? " <span class=\"sr-only\">completed</span>" : "") +
+            (done ? ' <span class="sr-only">completed</span>' : "") +
             "</li>"
           );
         })
@@ -293,8 +427,6 @@ export function mountFirstUse(ctx: Ctx) {
       "</ol>"
     );
   }
-
-
 
   function guideHtml() {
     const src = state.sourceKind || "photo";
@@ -336,13 +468,19 @@ export function mountFirstUse(ctx: Ctx) {
           ]
             .map(
               ([k, l]) =>
-                '<button class="fu-opt' + (state.space === k ? " on" : "") + '" data-fu-space="' + k + '">' + l + "</button>",
+                '<button class="fu-opt' +
+                (state.space === k ? " on" : "") +
+                '" data-fu-space="' +
+                k +
+                '">' +
+                l +
+                "</button>",
             )
             .join("") +
           "</div>" +
           '<label class="fu-field"><span>Room Or Space Type</span><select id="fuRoom">' +
           ["Living Room", "Kitchen", "Primary Bedroom", "Primary Bath", "Dining Room"]
-            .map((r) => '<option' + (state.room === r ? " selected" : "") + ">" + r + "</option>")
+            .map((r) => "<option" + (state.room === r ? " selected" : "") + ">" + r + "</option>")
             .join("") +
           "</select></label></section>",
       );
@@ -352,7 +490,13 @@ export function mountFirstUse(ctx: Ctx) {
           ["Warm Minimal", "Modern Farmhouse", "Coastal", "Transitional", "Investor Neutral"]
             .map(
               (d) =>
-                '<button class="fu-opt' + (state.direction === d ? " on" : "") + '" data-fu-dir="' + d + '">' + d + "</button>",
+                '<button class="fu-opt' +
+                (state.direction === d ? " on" : "") +
+                '" data-fu-dir="' +
+                d +
+                '">' +
+                d +
+                "</button>",
             )
             .join("") +
           '</div><div class="fu-subacts">' +
@@ -365,7 +509,13 @@ export function mountFirstUse(ctx: Ctx) {
         '<section class="fu-step" aria-labelledby="fuLockH"><h3 id="fuLockH">Choose What Changes</h3><div class="fu-opts">' +
           LOCK_LEVELS.map(
             (l) =>
-              '<button class="fu-opt' + (state.lock === l.key ? " on" : "") + '" data-fu-lock="' + l.key + '">' + l.label + "</button>",
+              '<button class="fu-opt' +
+              (state.lock === l.key ? " on" : "") +
+              '" data-fu-lock="' +
+              l.key +
+              '">' +
+              l.label +
+              "</button>",
           ).join("") +
           '</div><div class="fu-subacts"><button class="fu-link" data-fu-act="customize">Customize What Changes</button></div></section>',
       );
@@ -377,7 +527,14 @@ export function mountFirstUse(ctx: Ctx) {
 
       const summary: Array<[string, string]> = [
         ["Goal", GOALS.find((g) => g.key === goal)?.label || "\u2014"],
-        ["Space Type", state.space === "landscape" ? "Garden" : state.space === "exterior" ? "Exterior" : "Interior"],
+        [
+          "Space Type",
+          state.space === "landscape"
+            ? "Garden"
+            : state.space === "exterior"
+              ? "Exterior"
+              : "Interior",
+        ],
         ["Room", state.room],
         ["Design Style", state.direction || "Not Chosen"],
         ["Reality Lock", LOCK_LEVELS.find((l) => l.key === state.lock)?.label || "Default"],
@@ -391,12 +548,13 @@ export function mountFirstUse(ctx: Ctx) {
           '<button class="fu-link" data-fu-act="skip">Skip Onboarding</button></div></section>',
       );
     } else {
-      blocks.push('<div class="fu-alt"><button class="fu-link" data-fu-act="back">Back</button>' +
-        '<button class="fu-link" data-fu-act="skip">Skip Onboarding</button></div>');
+      blocks.push(
+        '<div class="fu-alt"><button class="fu-link" data-fu-act="back">Back</button>' +
+          '<button class="fu-link" data-fu-act="skip">Skip Onboarding</button></div>',
+      );
     }
     return blocks.join("");
   }
-
 
   function successHtml() {
     const sample = !!state.sample;
@@ -565,9 +723,11 @@ export function mountFirstUse(ctx: Ctx) {
       }),
     );
 
-    panel.querySelectorAll("[data-fu-act]").forEach((b) =>
-      b.addEventListener("click", () => act((b as HTMLElement).dataset["fuAct"] || "")),
-    );
+    panel
+      .querySelectorAll("[data-fu-act]")
+      .forEach((b) =>
+        b.addEventListener("click", () => act((b as HTMLElement).dataset["fuAct"] || "")),
+      );
   }
 
   function scrollTo(sel: string) {
@@ -630,7 +790,9 @@ export function mountFirstUse(ctx: Ctx) {
         go("explore");
         break;
       case "recommend": {
-        const pick = ["Warm Minimal", "Transitional", "Coastal"][Math.floor(Math.random() * 3)] as string;
+        const pick = ["Warm Minimal", "Transitional", "Coastal"][
+          Math.floor(Math.random() * 3)
+        ] as string;
         state.direction = pick;
         applyDirection(pick);
         state.step = Math.max(state.step, 3);
@@ -730,7 +892,8 @@ export function mountFirstUse(ctx: Ctx) {
 
   (window as any).rdStudioWelcome = (kind?: string) => {
     const open = (window as any).rdStudioStart;
-    if (typeof open === "function") open(kind === "sample" ? "sample" : kind === "upload" ? "upload" : undefined);
+    if (typeof open === "function")
+      open(kind === "sample" ? "sample" : kind === "upload" ? "upload" : undefined);
   };
   (window as any).rdStudioHideWelcome = () => {};
 
@@ -760,11 +923,21 @@ export function mountFirstUse(ctx: Ctx) {
       esc(WORKFLOWS[session.workflow || ""]?.label || "Studio Session") +
       (when ? " · Last updated " + esc(when) : "") +
       '</div></div></div><div class="card-b fu-resume-b">' +
-      (session.thumb ? '<img src="' + session.thumb + '" alt="Thumbnail of the space in your unfinished session">' : "") +
+      (session.thumb
+        ? '<img src="' +
+          session.thumb +
+          '" alt="Thumbnail of the space in your unfinished session">'
+        : "") +
       "<div><b>" +
       esc(session.room || "Untitled Room") +
       "</b><span>" +
-      esc(session.space === "landscape" ? "Garden" : session.space === "exterior" ? "Exterior" : "Interior") +
+      esc(
+        session.space === "landscape"
+          ? "Garden"
+          : session.space === "exterior"
+            ? "Exterior"
+            : "Interior",
+      ) +
       (session.direction ? " · " + esc(session.direction) : "") +
       '</span></div><div class="fu-resume-a">' +
       '<button class="btn btn-primary btn-xs" id="fuResumeGo"><i data-lucide="play"></i>Continue Design</button>' +
@@ -802,7 +975,8 @@ export function mountFirstUse(ctx: Ctx) {
       const bn = document.createElement("div");
       bn.id = "fuRestored";
       bn.className = "note";
-      bn.innerHTML = '<i data-lucide="history"></i><span>Your last Studio session was restored.</span>';
+      bn.innerHTML =
+        '<i data-lucide="history"></i><span>Your last Studio session was restored.</span>';
       card.parentElement?.insertBefore(bn, card);
       lucide.createIcons();
     }
@@ -903,7 +1077,11 @@ export function mountFirstUse(ctx: Ctx) {
       const wf = WORKFLOWS[intent.workflow];
       if (wf) applyTool(wf.tool);
       if (wf?.space) applySpace(wf.space);
-      saveStudioSession(uid, { workflow: intent.workflow, space: intent.space, direction: intent.direction });
+      saveStudioSession(uid, {
+        workflow: intent.workflow,
+        space: intent.space,
+        direction: intent.direction,
+      });
     }
     if (intent.sample) {
       const s = SAMPLES.find((x) => x.key === intent.sample);
@@ -913,7 +1091,10 @@ export function mountFirstUse(ctx: Ctx) {
         sampleBanner(true, s.name);
       }
     }
-    track("cta_context_restored", { workflow: intent.workflow || null, source: intent.source || null });
+    track("cta_context_restored", {
+      workflow: intent.workflow || null,
+      source: intent.source || null,
+    });
   }
 
   /* ---------- route decision ---------- */
@@ -1006,7 +1187,18 @@ export function mountFirstUse(ctx: Ctx) {
   }
 
   /* remember the last opened view for the Last Opened start preference */
-  const rememberable = ["dash", "studio", "props", "designs", "explore", "scope", "products", "listings", "present", "reports"];
+  const rememberable = [
+    "dash",
+    "studio",
+    "props",
+    "designs",
+    "explore",
+    "scope",
+    "products",
+    "listings",
+    "present",
+    "reports",
+  ];
   const remember = () => {
     const v = (location.hash || "").replace(/^#/, "").replace(/^v-/, "");
     if (rememberable.includes(v)) setLastView(uid, v);
@@ -1035,7 +1227,7 @@ function mountStartPref(ctx: Ctx) {
   const field = document.createElement("div");
   field.className = "field";
   field.innerHTML =
-    "<label for=\"dfStart\">Start Page</label><select id=\"dfStart\">" +
+    '<label for="dfStart">Start Page</label><select id="dfStart">' +
     '<option value="smart">Smart</option><option value="dashboard">Dashboard</option>' +
     '<option value="studio">Studio</option><option value="last">Last Opened</option></select>' +
     '<p class="fu-help">Choose where REAL DESIGNS opens after a normal login. Links to a specific tool or project will still open their intended destination.</p>';

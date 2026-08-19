@@ -61,18 +61,27 @@ export const saveStyleOverride = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
     const row: Record<string, unknown> = { updated_at: new Date().toISOString() };
-    Object.entries(data).forEach(([k, v]) => { if (v !== undefined) row[k] = v; });
-    const { error } = await context.supabase.from("style_overrides").upsert(row as never, { onConflict: "style_id" });
+    Object.entries(data).forEach(([k, v]) => {
+      if (v !== undefined) row[k] = v;
+    });
+    const { error } = await context.supabase
+      .from("style_overrides")
+      .upsert(row as never, { onConflict: "style_id" });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
 
 export const deleteStyleOverride = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ style_id: z.string().min(1).max(80) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ style_id: z.string().min(1).max(80) }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     await assertAdmin(context as any);
-    const { error } = await context.supabase.from("style_overrides").delete().eq("style_id", data.style_id);
+    const { error } = await context.supabase
+      .from("style_overrides")
+      .delete()
+      .eq("style_id", data.style_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });

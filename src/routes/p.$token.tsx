@@ -7,13 +7,18 @@ import "@/styles/rd-site.css";
 export const Route = createFileRoute("/p/$token")({
   loader: async ({ params }) => {
     try {
-      return { token: params.token, deck: await getSharedPresentation({ data: { token: params.token } }) };
+      return {
+        token: params.token,
+        deck: await getSharedPresentation({ data: { token: params.token } }),
+      };
     } catch {
       return { token: params.token, deck: null };
     }
   },
   head: ({ loaderData }) => {
-    const title = loaderData?.deck ? `${loaderData.deck.title} | REAL DESIGNS` : "Design Package | REAL DESIGNS";
+    const title = loaderData?.deck
+      ? `${loaderData.deck.title} | REAL DESIGNS`
+      : "Design Package | REAL DESIGNS";
     const description = loaderData?.deck
       ? `${loaderData.deck.room_name} at ${loaderData.deck.address} — before and after design views.`
       : "A private design package shared with you through REAL DESIGNS.";
@@ -29,8 +34,16 @@ export const Route = createFileRoute("/p/$token")({
       ],
     };
   },
-  errorComponent: () => <Shell><p>This link could not be opened. Ask the sender for a fresh one.</p></Shell>,
-  notFoundComponent: () => <Shell><p>This link is no longer active.</p></Shell>,
+  errorComponent: () => (
+    <Shell>
+      <p>This link could not be opened. Ask the sender for a fresh one.</p>
+    </Shell>
+  ),
+  notFoundComponent: () => (
+    <Shell>
+      <p>This link is no longer active.</p>
+    </Shell>
+  ),
   component: SharedPresentation,
 });
 
@@ -64,7 +77,12 @@ function SharedPresentation() {
     if (deck) document.title = `${deck.title} | REAL DESIGNS`;
   }, [deck]);
 
-  if (!deck) return <Shell><p>This link is no longer active.</p></Shell>;
+  if (!deck)
+    return (
+      <Shell>
+        <p>This link is no longer active.</p>
+      </Shell>
+    );
 
   const decided = status === "approved" || status === "changes";
   const hasCompare = Boolean(deck.after_url && deck.before_url);
@@ -76,7 +94,8 @@ function SharedPresentation() {
   const keptHigh = kept.reduce((s, l) => s + Number(l.high || 0), 0);
   const trimmed = excluded.length > 0 && deck.lines.length > 0;
   const noteCount = Object.values(lineNotes).filter((v) => (v || "").trim().length > 0).length;
-  const setLineNote = (id: string, v: string) => setLineNotes((cur) => ({ ...cur, [id]: v.slice(0, 400) }));
+  const setLineNote = (id: string, v: string) =>
+    setLineNotes((cur) => ({ ...cur, [id]: v.slice(0, 400) }));
 
   function moveSplit(clientX: number, el: HTMLElement) {
     const r = el.getBoundingClientRect();
@@ -101,7 +120,9 @@ function SharedPresentation() {
     }
   }
 
-  const accent = /^#[0-9a-f]{6}$/i.test(deck.brand_accent || "") ? (deck.brand_accent as string) : "#CC0000";
+  const accent = /^#[0-9a-f]{6}$/i.test(deck.brand_accent || "")
+    ? (deck.brand_accent as string)
+    : "#CC0000";
   const brandName = (deck.brand_name || "").trim();
 
   async function downloadCopy() {
@@ -125,7 +146,11 @@ function SharedPresentation() {
           org: brandName || "REAL DESIGNS",
           accent,
           metaRight: [
-            new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }),
+            new Date().toLocaleDateString("en-US", {
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            }),
             "Prepared For " + (deck!.client_name || "You"),
           ],
           images,
@@ -172,17 +197,25 @@ function SharedPresentation() {
     <main className="pp-wrap" style={{ "--pp-accent": accent } as Record<string, string>}>
       <header className="pp-head">
         <span className="pp-brand">
-          {brandName || (<>REAL <b>DESIGNS</b></>)}
+          {brandName || (
+            <>
+              REAL <b>DESIGNS</b>
+            </>
+          )}
           {brandName ? <span className="pp-via">via Real Designs</span> : null}
         </span>
         <span className="pp-head-right">
           <span className="pp-kicker">Prepared For {deck.client_name || "You"}</span>
-          <button type="button" className="pp-btn pp-btn-ghost" onClick={downloadCopy} disabled={pdfBusy}>
+          <button
+            type="button"
+            className="pp-btn pp-btn-ghost"
+            onClick={downloadCopy}
+            disabled={pdfBusy}
+          >
             {pdfBusy ? "Preparing…" : "Download PDF"}
           </button>
         </span>
       </header>
-
 
       <section className="pp-card">
         <h1 className="pp-title">{deck.title}</h1>
@@ -193,19 +226,32 @@ function SharedPresentation() {
 
         {deck.after_url || deck.before_url ? (
           <div
-            className={"pp-compare" + (hasCompare ? " is-compare" : "") + (dragging ? " is-drag" : "")}
-            onPointerDown={hasCompare ? (e) => {
-              (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-              setDragging(true);
-              moveSplit(e.clientX, e.currentTarget);
-            } : undefined}
-            onPointerMove={hasCompare ? (e) => {
-              if (dragging) moveSplit(e.clientX, e.currentTarget);
-            } : undefined}
+            className={
+              "pp-compare" + (hasCompare ? " is-compare" : "") + (dragging ? " is-drag" : "")
+            }
+            onPointerDown={
+              hasCompare
+                ? (e) => {
+                    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+                    setDragging(true);
+                    moveSplit(e.clientX, e.currentTarget);
+                  }
+                : undefined
+            }
+            onPointerMove={
+              hasCompare
+                ? (e) => {
+                    if (dragging) moveSplit(e.clientX, e.currentTarget);
+                  }
+                : undefined
+            }
             onPointerUp={hasCompare ? () => setDragging(false) : undefined}
             onPointerCancel={hasCompare ? () => setDragging(false) : undefined}
           >
-            <img src={deck.before_url ?? deck.after_url ?? ""} alt={`${deck.room_name} before the redesign`} />
+            <img
+              src={deck.before_url ?? deck.after_url ?? ""}
+              alt={`${deck.room_name} before the redesign`}
+            />
             {hasCompare ? (
               <>
                 <span className="pp-tag pp-tag-before">Before</span>
@@ -230,7 +276,9 @@ function SharedPresentation() {
           </div>
         ) : null}
 
-        {hasCompare ? <p className="pp-hint">Drag across the photo to reveal the redesign.</p> : null}
+        {hasCompare ? (
+          <p className="pp-hint">Drag across the photo to reveal the redesign.</p>
+        ) : null}
 
         {deck.total_low != null && deck.total_high != null ? (
           <div className={"pp-range-box" + (trimmed ? " is-trimmed" : "")}>
@@ -238,11 +286,15 @@ function SharedPresentation() {
             <b>
               {trimmed ? (
                 <>
-                  <s>{money(deck.total_low)} to {money(deck.total_high)}</s>{" "}
+                  <s>
+                    {money(deck.total_low)} to {money(deck.total_high)}
+                  </s>{" "}
                   {money(keptLow)} to {money(keptHigh)}
                 </>
               ) : (
-                <>{money(deck.total_low)} to {money(deck.total_high)}</>
+                <>
+                  {money(deck.total_low)} to {money(deck.total_high)}
+                </>
               )}
             </b>
           </div>
@@ -275,78 +327,99 @@ function SharedPresentation() {
               </tr>
             </thead>
             <tbody>
-              {deck.lines.map((l: { id: string; description: string; trade: string; qty: number; uom: string; low: number; high: number }, i: number) => {
-                const saved = (lineNotes[l.id] || "").trim();
-                const open = openNote === l.id;
-                const cols = (decided ? 5 : 7);
-                return (
-                <React.Fragment key={l.id || i}>
-                <tr className={isOut(l.id) ? "is-out" : ""}>
-                  {!decided ? (
-                    <td className="c" data-l="Keep">
-                      <input
-                        type="checkbox"
-                        className="pp-check"
-                        checked={!isOut(l.id)}
-                        aria-label={`Keep ${l.description}`}
-                        onChange={() => toggleLine(l.id)}
-                      />
-                    </td>
-                  ) : null}
-                  <td data-l="Line Item">{l.description}</td>
-                  <td data-l="Trade">{l.trade}</td>
-                  <td className="n" data-l="Qty">
-                    {l.qty} {l.uom}
-                  </td>
-                  <td className="n" data-l="Low">{money(l.low)}</td>
-                  <td className="n" data-l="High">{money(l.high)}</td>
-                  {!decided ? (
-                    <td className="c" data-l="Note">
-                      <button
-                        type="button"
-                        className={"pp-note-btn" + (saved ? " has-note" : "")}
-                        aria-expanded={open}
-                        aria-label={`${saved ? "Edit" : "Add"} A Comment On ${l.description}`}
-                        onClick={() => setOpenNote(open ? null : l.id)}
-                      >
-                        {saved ? "Edit Note" : "Add Note"}
-                      </button>
-                    </td>
-                  ) : null}
-                </tr>
-                {!decided && open ? (
-                  <tr className="pp-note-row">
-                    <td colSpan={cols}>
-                      <textarea
-                        className="pp-note-in pp-note-line"
-                        rows={2}
-                        maxLength={400}
-                        autoFocus
-                        placeholder={`Comment on ${l.description}`}
-                        value={lineNotes[l.id] || ""}
-                        onChange={(e) => setLineNote(l.id, e.target.value)}
-                      />
-                    </td>
-                  </tr>
-                ) : null}
-                {!decided && !open && saved ? (
-                  <tr className="pp-note-row">
-                    <td colSpan={cols}><span className="pp-line-note">“{saved}”</span></td>
-                  </tr>
-                ) : null}
-                {decided && saved ? (
-                  <tr className="pp-note-row">
-                    <td colSpan={cols}><span className="pp-line-note">“{saved}”</span></td>
-                  </tr>
-                ) : null}
-                </React.Fragment>
-                );
-              })}
+              {deck.lines.map(
+                (
+                  l: {
+                    id: string;
+                    description: string;
+                    trade: string;
+                    qty: number;
+                    uom: string;
+                    low: number;
+                    high: number;
+                  },
+                  i: number,
+                ) => {
+                  const saved = (lineNotes[l.id] || "").trim();
+                  const open = openNote === l.id;
+                  const cols = decided ? 5 : 7;
+                  return (
+                    <React.Fragment key={l.id || i}>
+                      <tr className={isOut(l.id) ? "is-out" : ""}>
+                        {!decided ? (
+                          <td className="c" data-l="Keep">
+                            <input
+                              type="checkbox"
+                              className="pp-check"
+                              checked={!isOut(l.id)}
+                              aria-label={`Keep ${l.description}`}
+                              onChange={() => toggleLine(l.id)}
+                            />
+                          </td>
+                        ) : null}
+                        <td data-l="Line Item">{l.description}</td>
+                        <td data-l="Trade">{l.trade}</td>
+                        <td className="n" data-l="Qty">
+                          {l.qty} {l.uom}
+                        </td>
+                        <td className="n" data-l="Low">
+                          {money(l.low)}
+                        </td>
+                        <td className="n" data-l="High">
+                          {money(l.high)}
+                        </td>
+                        {!decided ? (
+                          <td className="c" data-l="Note">
+                            <button
+                              type="button"
+                              className={"pp-note-btn" + (saved ? " has-note" : "")}
+                              aria-expanded={open}
+                              aria-label={`${saved ? "Edit" : "Add"} A Comment On ${l.description}`}
+                              onClick={() => setOpenNote(open ? null : l.id)}
+                            >
+                              {saved ? "Edit Note" : "Add Note"}
+                            </button>
+                          </td>
+                        ) : null}
+                      </tr>
+                      {!decided && open ? (
+                        <tr className="pp-note-row">
+                          <td colSpan={cols}>
+                            <textarea
+                              className="pp-note-in pp-note-line"
+                              rows={2}
+                              maxLength={400}
+                              autoFocus
+                              placeholder={`Comment on ${l.description}`}
+                              value={lineNotes[l.id] || ""}
+                              onChange={(e) => setLineNote(l.id, e.target.value)}
+                            />
+                          </td>
+                        </tr>
+                      ) : null}
+                      {!decided && !open && saved ? (
+                        <tr className="pp-note-row">
+                          <td colSpan={cols}>
+                            <span className="pp-line-note">“{saved}”</span>
+                          </td>
+                        </tr>
+                      ) : null}
+                      {decided && saved ? (
+                        <tr className="pp-note-row">
+                          <td colSpan={cols}>
+                            <span className="pp-line-note">“{saved}”</span>
+                          </td>
+                        </tr>
+                      ) : null}
+                    </React.Fragment>
+                  );
+                },
+              )}
             </tbody>
           </table>
           <p className="pp-note">
-            Planning estimate, not a construction bid. Quantities are derived from the photo and should be field
-            verified.
+            Planning estimate, not a construction bid. Quantities are derived from the photo and
+            should be field verified.
           </p>
         </section>
       ) : null}
@@ -372,7 +445,11 @@ function SharedPresentation() {
               onChange={(e) => setNote(e.target.value)}
             />
             <div className="pp-actions">
-              <button className="pp-btn pp-btn-primary" disabled={busy} onClick={() => decide("approved")}>
+              <button
+                className="pp-btn pp-btn-primary"
+                disabled={busy}
+                onClick={() => decide("approved")}
+              >
                 {busy ? "Sending…" : "Approve This Design"}
               </button>
               <button className="pp-btn" disabled={busy} onClick={() => decide("changes")}>
@@ -387,10 +464,11 @@ function SharedPresentation() {
 
       {!decided ? (
         <div className="pp-sticky">
-          <a className="pp-btn pp-btn-primary" href="#decision">Approve Or Request Changes</a>
+          <a className="pp-btn pp-btn-primary" href="#decision">
+            Approve Or Request Changes
+          </a>
         </div>
       ) : null}
     </main>
   );
 }
-

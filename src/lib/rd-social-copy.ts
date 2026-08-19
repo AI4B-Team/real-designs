@@ -19,7 +19,10 @@ const TONES: [string, string][] = [
 ];
 
 function esc(s: unknown) {
-  return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+  return String(s ?? "").replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+  );
 }
 
 export type SocialCopyInput = {
@@ -61,16 +64,22 @@ export function openSocialCopy(item: SocialCopyInput) {
     </div>
   </div>`;
   host.appendChild(wrap);
-  try { createIcons({ icons, root: wrap } as any); } catch (_) {}
+  try {
+    createIcons({ icons, root: wrap } as any);
+  } catch (_) {}
 
   const close = () => {
     if (state.busy) return;
     wrap.remove();
     document.removeEventListener("keydown", onKey);
   };
-  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") close();
+  };
   document.addEventListener("keydown", onKey);
-  wrap.addEventListener("click", (e) => { if (e.target === wrap) close(); });
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap) close();
+  });
   wrap.querySelectorAll("[data-x]").forEach((b) => ((b as HTMLElement).onclick = close));
 
   wrap.querySelectorAll(".sc-chips").forEach((g) => {
@@ -89,7 +98,10 @@ export function openSocialCopy(item: SocialCopyInput) {
 
   (wrap.querySelector("[data-copy]") as HTMLButtonElement).onclick = async () => {
     const text = out.value.trim();
-    if (!text) { rdToast("Generate A Caption First.", "error"); return; }
+    if (!text) {
+      rdToast("Generate A Caption First.", "error");
+      return;
+    }
     try {
       await navigator.clipboard.writeText(text);
       rdToast("Caption Copied.");
@@ -118,7 +130,13 @@ export function openSocialCopy(item: SocialCopyInput) {
         },
       });
       const tags = (res.hashtags || []).map((h: string) => `#${h}`).join(" ");
-      out.value = [res.hook, "", res.caption, res.cta ? `\n${res.cta}` : "", tags ? `\n${tags}` : ""]
+      out.value = [
+        res.hook,
+        "",
+        res.caption,
+        res.cta ? `\n${res.cta}` : "",
+        tags ? `\n${tags}` : "",
+      ]
         .filter((x) => x !== undefined)
         .join("\n")
         .replace(/\n{3,}/g, "\n\n")
@@ -130,7 +148,9 @@ export function openSocialCopy(item: SocialCopyInput) {
       state.busy = false;
       goBtn.disabled = false;
       goBtn.innerHTML = label;
-      try { createIcons({ icons, root: goBtn } as any); } catch (_) {}
+      try {
+        createIcons({ icons, root: goBtn } as any);
+      } catch (_) {}
     }
   };
 }

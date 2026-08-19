@@ -52,12 +52,18 @@ export class SceneClipStore {
     const key = clip.scene_key || "";
     if (!key) return;
     const cur = this.byKey.get(key);
-    if (!cur || cur.id === clip.id || String((clip as any).created_at || "") >= String((cur as any).created_at || ""))
+    if (
+      !cur ||
+      cur.id === clip.id ||
+      String((clip as any).created_at || "") >= String((cur as any).created_at || "")
+    )
       this.byKey.set(key, clip);
   }
 
   private active(): Clip[] {
-    return [...this.byKey.values()].filter((c) => c.status === "queued" || c.status === "processing");
+    return [...this.byKey.values()].filter(
+      (c) => c.status === "queued" || c.status === "processing",
+    );
   }
 
   private schedule() {
@@ -87,7 +93,9 @@ export class SceneClipStore {
     this.setProject(projectId);
     if (!projectId) return;
     try {
-      const res: any = await listProjectSceneClips({ data: { video_project_id: projectId, reconcile: true } });
+      const res: any = await listProjectSceneClips({
+        data: { video_project_id: projectId, reconcile: true },
+      });
       for (const c of res.clips || []) this.absorb(c, res.urls?.[c.id] || null);
     } catch (_) {
       return;
@@ -141,7 +149,8 @@ export class SceneClipStore {
     const clip = this.byId.get(id);
     this.byId.delete(id);
     this.urls.delete(id);
-    if (clip?.scene_key && this.byKey.get(clip.scene_key)?.id === id) this.byKey.delete(clip.scene_key);
+    if (clip?.scene_key && this.byKey.get(clip.scene_key)?.id === id)
+      this.byKey.delete(clip.scene_key);
     this.onChange();
   }
 }

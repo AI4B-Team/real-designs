@@ -26,10 +26,26 @@ async function referencedPaths(userId: string): Promise<Set<string>> {
 
   const [versions, media, scenes, clips, frames] = await Promise.all([
     supabaseAdmin.from("versions").select("before_path, after_path").limit(5000),
-    supabaseAdmin.from("property_media_assets").select("storage_path").eq("user_id", userId).limit(5000),
-    supabaseAdmin.from("video_scenes").select("source_path, compare_path, original_path").eq("user_id", userId).limit(5000),
-    supabaseAdmin.from("scene_clips").select("storage_path, source_path, thumbnail_path").eq("user_id", userId).limit(5000),
-    supabaseAdmin.from("scene_start_end").select("start_path, end_path, clip_path").eq("user_id", userId).limit(5000),
+    supabaseAdmin
+      .from("property_media_assets")
+      .select("storage_path")
+      .eq("user_id", userId)
+      .limit(5000),
+    supabaseAdmin
+      .from("video_scenes")
+      .select("source_path, compare_path, original_path")
+      .eq("user_id", userId)
+      .limit(5000),
+    supabaseAdmin
+      .from("scene_clips")
+      .select("storage_path, source_path, thumbnail_path")
+      .eq("user_id", userId)
+      .limit(5000),
+    supabaseAdmin
+      .from("scene_start_end")
+      .select("start_path, end_path, clip_path")
+      .eq("user_id", userId)
+      .limit(5000),
   ]);
 
   for (const row of versions.data ?? []) {

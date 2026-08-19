@@ -27,9 +27,14 @@ export const listPackages = createServerFn({ method: "GET" })
       const [l, a] = await Promise.all([
         context.supabase
           .from("presentation_links")
-          .select("id, package_id, token, revoked, view_count, last_viewed_at, expires_at, access_code, created_at")
+          .select(
+            "id, package_id, token, revoked, view_count, last_viewed_at, expires_at, access_code, created_at",
+          )
           .in("package_id", ids),
-        context.supabase.from("presentation_assets").select("id, package_id, section_key").in("package_id", ids),
+        context.supabase
+          .from("presentation_assets")
+          .select("id, package_id, section_key")
+          .in("package_id", ids),
       ]);
       links = l.data ?? [];
       assets = a.data ?? [];
@@ -55,10 +60,26 @@ export const getPackage = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!pkg) throw new Error("That presentation is not available.");
     const [s, a, l, c, act] = await Promise.all([
-      supabase.from("presentation_sections").select("*").eq("package_id", data.id).order("sort_order"),
-      supabase.from("presentation_assets").select("*").eq("package_id", data.id).order("sort_order"),
-      supabase.from("presentation_links").select("*").eq("package_id", data.id).order("created_at", { ascending: false }),
-      supabase.from("presentation_comments").select("*").eq("package_id", data.id).order("created_at"),
+      supabase
+        .from("presentation_sections")
+        .select("*")
+        .eq("package_id", data.id)
+        .order("sort_order"),
+      supabase
+        .from("presentation_assets")
+        .select("*")
+        .eq("package_id", data.id)
+        .order("sort_order"),
+      supabase
+        .from("presentation_links")
+        .select("*")
+        .eq("package_id", data.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("presentation_comments")
+        .select("*")
+        .eq("package_id", data.id)
+        .order("created_at"),
       supabase
         .from("presentation_activity")
         .select("*")
@@ -72,8 +93,12 @@ export const getPackage = createServerFn({ method: "POST" })
     // the client, even for the owner's own preview.
     const { isBudgetSectionKey, checkBudgetsAvailable } = await import("@/lib/budget.server");
     const budgetsAvailable = await checkBudgetsAvailable();
-    const sections = budgetsAvailable ? (s.data ?? []) : (s.data ?? []).filter((row: any) => !isBudgetSectionKey(row?.section_key));
-    const assets = budgetsAvailable ? (a.data ?? []) : (a.data ?? []).filter((row: any) => !isBudgetSectionKey(row?.section_key));
+    const sections = budgetsAvailable
+      ? (s.data ?? [])
+      : (s.data ?? []).filter((row: any) => !isBudgetSectionKey(row?.section_key));
+    const assets = budgetsAvailable
+      ? (a.data ?? [])
+      : (a.data ?? []).filter((row: any) => !isBudgetSectionKey(row?.section_key));
 
     return {
       package: pkg,
@@ -112,13 +137,20 @@ export const savePackage = createServerFn({ method: "POST" })
       const { error } = await supabase.from("presentation_packages").update(meta).eq("id", id);
       if (error) throw new Error(error.message);
     } else {
-      const { data: row, error } = await supabase.from("presentation_packages").insert(meta).select("id").single();
+      const { data: row, error } = await supabase
+        .from("presentation_packages")
+        .insert(meta)
+        .select("id")
+        .single();
       if (error) throw new Error(error.message);
 
       id = row.id as string;
-      await supabase
-        .from("presentation_activity")
-        .insert({ package_id: id, user_id: userId, kind: "created", detail: "Presentation created" });
+      await supabase.from("presentation_activity").insert({
+        package_id: id,
+        user_id: userId,
+        kind: "created",
+        detail: "Presentation created",
+      });
     }
 
     // Sections and assets are replaced wholesale. That is two deletes and two
@@ -152,7 +184,6 @@ export const savePackage = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
     }
 
-
     await supabase
       .from("presentation_packages")
       .update({ last_activity: "Presentation updated", last_activity_at: new Date().toISOString() })
@@ -166,7 +197,10 @@ export const deletePackage = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => pkgIdSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("presentation_packages").delete().eq("id", data.id);
+    const { error } = await context.supabase
+      .from("presentation_packages")
+      .delete()
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -178,7 +212,9 @@ export const createPackageLink = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const expires =
-      data.expires_days == null ? null : new Date(Date.now() + data.expires_days * 86400000).toISOString();
+      data.expires_days == null
+        ? null
+        : new Date(Date.now() + data.expires_days * 86400000).toISOString();
     const { data: row, error } = await supabase
       .from("presentation_links")
       .insert({
@@ -192,11 +228,18 @@ export const createPackageLink = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await supabase
       .from("presentation_packages")
-      .update({ status: "shared", last_activity: "Share link created", last_activity_at: new Date().toISOString() })
+      .update({
+        status: "shared",
+        last_activity: "Share link created",
+        last_activity_at: new Date().toISOString(),
+      })
       .eq("id", data.package_id);
-    await supabase
-      .from("presentation_activity")
-      .insert({ package_id: data.package_id, user_id: userId, kind: "shared", detail: "Share link created" });
+    await supabase.from("presentation_activity").insert({
+      package_id: data.package_id,
+      user_id: userId,
+      kind: "shared",
+      detail: "Share link created",
+    });
     return row;
   });
 
@@ -205,7 +248,10 @@ export const revokePackageLink = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => pkgIdSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("presentation_links").update({ revoked: true }).eq("id", data.id);
+    const { error } = await context.supabase
+      .from("presentation_links")
+      .update({ revoked: true })
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -228,7 +274,9 @@ export const getSharedPackage = createServerFn({ method: "POST" })
     const budgetsAvailable = await checkBudgetsAvailable();
 
     const rawAssets = Array.isArray(p.assets) ? p.assets : [];
-    const visibleAssets = budgetsAvailable ? rawAssets : rawAssets.filter((a: any) => !isBudgetSectionKey(a?.section_key));
+    const visibleAssets = budgetsAvailable
+      ? rawAssets
+      : rawAssets.filter((a: any) => !isBudgetSectionKey(a?.section_key));
     p.assets = await Promise.all(
       visibleAssets.map(async (a: any) => ({
         ...a,
@@ -240,7 +288,6 @@ export const getSharedPackage = createServerFn({ method: "POST" })
       p.sections = p.sections.filter((sec: any) => !isBudgetSectionKey(sec?.section_key));
     }
     return p;
-
   });
 
 /** Public: a client comment on one section of a shared package. */

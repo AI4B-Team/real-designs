@@ -85,9 +85,7 @@ function ComparePage() {
           <div className="sec-head center">
             <span className="eyebrow">Compare</span>
             <h1>Every Feature, Side By Side.</h1>
-            <p className="lede lede-wide">
-              The complete breakdown of what each plan includes.
-            </p>
+            <p className="lede lede-wide">The complete breakdown of what each plan includes.</p>
           </div>
 
           <div className="cmp-wrap">

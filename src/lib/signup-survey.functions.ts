@@ -149,7 +149,9 @@ export const autoPushSignupToCrm = createServerFn({ method: "POST" })
       p.phone ? `Phone: ${p.phone}` : null,
       p.company ? `Company: ${p.company}` : null,
       p.role ? `Role: ${p.role}` : null,
-      p.how_heard ? `Heard Via: ${p.how_heard}${p.how_heard_detail ? ` (${p.how_heard_detail})` : ""}` : null,
+      p.how_heard
+        ? `Heard Via: ${p.how_heard}${p.how_heard_detail ? ` (${p.how_heard_detail})` : ""}`
+        : null,
       p.listings_per_year ? `Listings Per Year: ${p.listings_per_year}` : null,
       Array.isArray(p.goals) && p.goals.length ? `Goals: ${p.goals.join(", ")}` : null,
     ]

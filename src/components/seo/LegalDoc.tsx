@@ -80,7 +80,9 @@ export function LegalDoc({
                   </a>
                   {s.counsel && <span className="rd-legal-tag">Counsel Review</span>}
                 </h2>
-                {s.body?.map((p, j) => <p key={j}>{p}</p>)}
+                {s.body?.map((p, j) => (
+                  <p key={j}>{p}</p>
+                ))}
                 {s.bullets && (
                   <ul>
                     {s.bullets.map((b) => (
@@ -88,7 +90,9 @@ export function LegalDoc({
                     ))}
                   </ul>
                 )}
-                {s.after?.map((p, j) => <p key={`a${j}`}>{p}</p>)}
+                {s.after?.map((p, j) => (
+                  <p key={`a${j}`}>{p}</p>
+                ))}
               </section>
             ))}
             {footNote && <p className="rd-legal-foot">{footNote}</p>}

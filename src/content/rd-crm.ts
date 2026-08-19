@@ -4,11 +4,25 @@
  * out to the CRM timeline.
  */
 import { createIcons, icons } from "lucide";
-import { listCrm, connectCrm, disconnectCrm, setCrmAutoPush, syncCrmContacts, pushToCrm } from "@/lib/crm.functions";
+import {
+  listCrm,
+  connectCrm,
+  disconnectCrm,
+  setCrmAutoPush,
+  syncCrmContacts,
+  pushToCrm,
+} from "@/lib/crm.functions";
 import { isSignupAdmin, listSignupSurveys, markSignupPushed } from "@/lib/signup-survey.functions";
 
-
-const PROVIDERS: Array<{ id: string; name: string; icon: string; blurb: string; keyLabel: string; keyHelp: string; needsUrl?: boolean }> = [
+const PROVIDERS: Array<{
+  id: string;
+  name: string;
+  icon: string;
+  blurb: string;
+  keyLabel: string;
+  keyHelp: string;
+  needsUrl?: boolean;
+}> = [
   {
     id: "followupboss",
     name: "Follow Up Boss",
@@ -36,7 +50,15 @@ const PROVIDERS: Array<{ id: string; name: string; icon: string; blurb: string; 
   },
 ];
 
-const S: any = { data: null, loading: true, busy: "", picked: "", error: "", admin: false, signups: null };
+const S: any = {
+  data: null,
+  loading: true,
+  busy: "",
+  picked: "",
+  error: "",
+  admin: false,
+  signups: null,
+};
 let GO: any = null;
 
 /** Back office: signup questionnaire answers, admin only. */
@@ -62,7 +84,9 @@ function signupPanel() {
               ${rows
                 .slice(0, 100)
                 .map(
-                  (r: any) => `<tr><td><b>${esc(r.full_name || "Unnamed")}</b>${r.company ? `<span class="sub"> · ${esc(r.company)}</span>` : ""}</td>
+                  (
+                    r: any,
+                  ) => `<tr><td><b>${esc(r.full_name || "Unnamed")}</b>${r.company ? `<span class="sub"> · ${esc(r.company)}</span>` : ""}</td>
                   <td class="mono">${esc(r.email || "—")}</td><td class="mono">${esc(r.phone || "—")}</td>
                   <td>${esc(r.role || "—")}</td><td>${esc(r.how_heard || "—")}${r.how_heard_detail ? ` · ${esc(r.how_heard_detail)}` : ""}</td>
                   <td class="mono">${esc(r.listings_per_year || "—")}</td>
@@ -82,9 +106,24 @@ function signupPanel() {
 
 function signupCsv() {
   const rows = (S.signups?.rows || []) as any[];
-  const cols = ["full_name", "email", "phone", "company", "role", "how_heard", "how_heard_detail", "listings_per_year", "team_size", "primary_goal", "marketing_opt_in", "created_at"];
+  const cols = [
+    "full_name",
+    "email",
+    "phone",
+    "company",
+    "role",
+    "how_heard",
+    "how_heard_detail",
+    "listings_per_year",
+    "team_size",
+    "primary_goal",
+    "marketing_opt_in",
+    "created_at",
+  ];
   const cell = (v: any) => `"${String(v ?? "").replace(/"/g, '""')}"`;
-  const csv = [cols.join(","), ...rows.map((r) => cols.map((c) => cell(r[c])).join(","))].join("\n");
+  const csv = [cols.join(","), ...rows.map((r) => cols.map((c) => cell(r[c])).join(","))].join(
+    "\n",
+  );
   const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
   const a = document.createElement("a");
   a.href = url;
@@ -107,7 +146,9 @@ async function pushSignup(userId: string) {
       r.phone ? `Phone: ${r.phone}` : "",
       r.company ? `Company: ${r.company}` : "",
       r.role ? `Role: ${r.role}` : "",
-      r.how_heard ? `Heard Via: ${r.how_heard}${r.how_heard_detail ? ` (${r.how_heard_detail})` : ""}` : "",
+      r.how_heard
+        ? `Heard Via: ${r.how_heard}${r.how_heard_detail ? ` (${r.how_heard_detail})` : ""}`
+        : "",
       r.listings_per_year ? `Listings Per Year: ${r.listings_per_year}` : "",
       r.primary_goal ? `Goal: ${r.primary_goal}` : "",
       r.marketing_opt_in ? "Marketing Opt-In: Yes" : "Marketing Opt-In: No",
@@ -123,22 +164,31 @@ async function pushSignup(userId: string) {
   });
 }
 
-
 function esc(s: any) {
-  return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+  return String(s ?? "").replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+  );
 }
 function host() {
   return document.getElementById("p-crm") || document.getElementById("v-crm");
 }
 function toast(msg: string) {
   try {
-    (window as any).rdToast ? (window as any).rdToast(msg) : console.log(msg);
+    const t = (window as any).rdToast;
+    if (typeof t === "function") t(msg);
+    else console.log(msg);
   } catch (_) {}
 }
 function fmt(d: any) {
   if (!d) return "Never";
   try {
-    return new Date(d).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    return new Date(d).toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
   } catch (_) {
     return "—";
   }
@@ -170,7 +220,6 @@ async function load() {
   S.loading = false;
   render();
 }
-
 
 function connectionFor(id: string) {
   return (S.data?.connections || []).find((c: any) => c.provider === id) || null;
@@ -206,7 +255,9 @@ function render() {
                   ${contacts
                     .slice(0, 25)
                     .map(
-                      (c: any) => `<tr><td><b>${esc(c.name || "Unnamed")}</b></td><td class="mono">${esc(c.email || "—")}</td>
+                      (
+                        c: any,
+                      ) => `<tr><td><b>${esc(c.name || "Unnamed")}</b></td><td class="mono">${esc(c.email || "—")}</td>
                       <td>${esc(c.stage || "—")}</td><td style="text-align:right" class="mono">${esc(fmt(c.last_activity_at))}</td></tr>`,
                     )
                     .join("")}
@@ -224,7 +275,9 @@ function render() {
               ? log
                   .slice(0, 25)
                   .map(
-                    (l: any) => `<div class="rowi"><div class="rowt"><b>${esc(actionLabel(l.action))}</b><span>${esc(l.detail || "")}</span></div>
+                    (
+                      l: any,
+                    ) => `<div class="rowi"><div class="rowt"><b>${esc(actionLabel(l.action))}</b><span>${esc(l.detail || "")}</span></div>
                     <span class="pill ${l.status === "ok" ? "p-ok" : "p-warn"}">${l.status === "ok" ? "Done" : "Failed"}</span></div>`,
                   )
                   .join("")
@@ -237,7 +290,6 @@ function render() {
     ${S.admin ? signupPanel() : ""}
   </div>`;
 
-
   bind();
   try {
     createIcons({ icons, root: el } as any);
@@ -245,7 +297,11 @@ function render() {
 }
 
 function actionLabel(a: string) {
-  return a === "connect" ? "Connection Verified" : a === "sync_contacts" ? "Contacts Synced" : "Content Pushed";
+  return a === "connect"
+    ? "Connection Verified"
+    : a === "sync_contacts"
+      ? "Contacts Synced"
+      : "Content Pushed";
 }
 
 function card(p: any) {
@@ -295,25 +351,48 @@ function form(p: any) {
 function bind() {
   const el = host();
   if (!el) return;
-  el.querySelectorAll("[data-open]").forEach((b: any) => (b.onclick = () => { S.picked = b.dataset.open; render(); }));
-  el.querySelectorAll("[data-test]").forEach((b: any) => (b.onclick = () => { S.picked = b.dataset.test; render(); }));
-  el.querySelectorAll("[data-cancel]").forEach((b: any) => (b.onclick = () => { S.picked = ""; render(); }));
+  el.querySelectorAll("[data-open]").forEach(
+    (b: any) =>
+      (b.onclick = () => {
+        S.picked = b.dataset.open;
+        render();
+      }),
+  );
+  el.querySelectorAll("[data-test]").forEach(
+    (b: any) =>
+      (b.onclick = () => {
+        S.picked = b.dataset.test;
+        render();
+      }),
+  );
+  el.querySelectorAll("[data-cancel]").forEach(
+    (b: any) =>
+      (b.onclick = () => {
+        S.picked = "";
+        render();
+      }),
+  );
   el.querySelectorAll("[data-save]").forEach((b: any) => (b.onclick = () => save(b.dataset.save)));
   el.querySelectorAll("[data-sync]").forEach((b: any) => (b.onclick = () => sync(b.dataset.sync)));
   el.querySelectorAll("[data-off]").forEach((b: any) => (b.onclick = () => drop(b.dataset.off)));
-  el.querySelectorAll("[data-auto]").forEach((b: any) => (b.onchange = () => auto(b.dataset.auto, b.checked)));
+  el.querySelectorAll("[data-auto]").forEach(
+    (b: any) => (b.onchange = () => auto(b.dataset.auto, b.checked)),
+  );
   const push = el.querySelector("[data-push]") as HTMLElement | null;
   if (push) push.onclick = () => openPush();
   const csv = el.querySelector("[data-sigcsv]") as HTMLElement | null;
   if (csv) csv.onclick = () => signupCsv();
-  el.querySelectorAll("[data-sigpush]").forEach((b: any) => (b.onclick = () => pushSignup(b.dataset.sigpush)));
+  el.querySelectorAll("[data-sigpush]").forEach(
+    (b: any) => (b.onclick = () => pushSignup(b.dataset.sigpush)),
+  );
 }
-
 
 async function save(provider: string) {
   const el = host();
-  const key = (el?.querySelector('.crm-form [data-f="key"]') as HTMLInputElement)?.value?.trim() || "";
-  const url = (el?.querySelector('.crm-form [data-f="url"]') as HTMLInputElement)?.value?.trim() || "";
+  const key =
+    (el?.querySelector('.crm-form [data-f="key"]') as HTMLInputElement)?.value?.trim() || "";
+  const url =
+    (el?.querySelector('.crm-form [data-f="url"]') as HTMLInputElement)?.value?.trim() || "";
   if (key.length < 6) {
     toast("Paste A Valid Key First.");
     return;
@@ -321,7 +400,9 @@ async function save(provider: string) {
   S.busy = provider;
   render();
   try {
-    await connectCrm({ data: { provider: provider as any, credential: key, endpoint: url || null } });
+    await connectCrm({
+      data: { provider: provider as any, credential: key, endpoint: url || null },
+    });
     S.picked = "";
     S.busy = "";
     toast("CRM Connected.");
@@ -365,7 +446,12 @@ async function auto(id: string, on: boolean) {
 }
 
 /** Send a link (video, presentation, design) into the CRM timeline. */
-export function openPush(seed?: { title?: string; body?: string; link?: string; onSent?: () => void }) {
+export function openPush(seed?: {
+  title?: string;
+  body?: string;
+  link?: string;
+  onSent?: () => void;
+}) {
   const conns = S.data?.connections || [];
   const contacts = S.data?.contacts || [];
   if (!conns.length) {
@@ -392,13 +478,23 @@ export function openPush(seed?: { title?: string; body?: string; link?: string; 
     </div>
   </div>`;
   (document.querySelector(".rd-app") || document.body).appendChild(wrap);
-  try { createIcons({ icons, root: wrap } as any); } catch (_) {}
-  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
-  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+  try {
+    createIcons({ icons, root: wrap } as any);
+  } catch (_) {}
+  const close = () => {
+    wrap.remove();
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") close();
+  };
   document.addEventListener("keydown", onKey);
-  wrap.addEventListener("click", (e) => { if (e.target === wrap) close(); });
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap) close();
+  });
   wrap.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = close));
-  const val = (k: string) => (wrap.querySelector(`[data-f="${k}"]`) as HTMLInputElement)?.value?.trim() || "";
+  const val = (k: string) =>
+    (wrap.querySelector(`[data-f="${k}"]`) as HTMLInputElement)?.value?.trim() || "";
   (wrap.querySelector("[data-send]") as HTMLButtonElement).onclick = async (ev) => {
     const btn = ev.currentTarget as HTMLButtonElement;
     btn.disabled = true;
@@ -414,7 +510,9 @@ export function openPush(seed?: { title?: string; body?: string; link?: string; 
       });
       close();
       toast(out.detail || "Sent To Your CRM.");
-      try { seed?.onSent?.(); } catch (_) {}
+      try {
+        seed?.onSent?.();
+      } catch (_) {}
       await load();
     } catch (e: any) {
       btn.disabled = false;

@@ -61,7 +61,7 @@ const MODEL = "google/gemini-2.5-flash";
 
 const INSTRUCTION = [
   "Classify this uploaded file for an architectural design tool.",
-  "Answer with strict JSON only: {\"sourceType\":\"...\",\"confidence\":0.0}",
+  'Answer with strict JSON only: {"sourceType":"...","confidence":0.0}',
   "sourceType must be exactly one of: interior_photo, exterior_photo, landscape_photo, sketch, floor_plan, uncertain, unsupported.",
   "interior_photo: a photograph taken inside a building.",
   "exterior_photo: a photograph of a building from outside.",
@@ -109,7 +109,11 @@ export const detectSource = createServerFn({ method: "POST" })
     } else if (/^image\//.test(data.mimeType)) {
       content.push({ type: "image_url", image_url: { url: data.file } });
     } else {
-      return { sourceType: "unsupported", confidence: 1, suggestedWorkflow: WORKFLOW_BY_TYPE.unsupported };
+      return {
+        sourceType: "unsupported",
+        confidence: 1,
+        suggestedWorkflow: WORKFLOW_BY_TYPE.unsupported,
+      };
     }
 
     try {

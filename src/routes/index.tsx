@@ -12,7 +12,6 @@ const title = "AI Home Design & Virtual Staging | REAL DESIGNS";
 const description =
   "Turn one photo into a photoreal redesign of your real space, plus a shopping list and shareable presentation.";
 
-
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
@@ -82,4 +81,3 @@ function SitePage() {
     </>
   );
 }
-

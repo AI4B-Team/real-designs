@@ -7,7 +7,14 @@
 // (422 TS2339, 206 TS18047, 203 TS7006). Removal needs a dedicated pass that
 // types the module state object first; do not blanket-suppress.
 import { createIcons, icons } from "lucide";
-import { toggleMusic, stopMusic, playingId, addCustomTrack, getCustomTracks, loadCustomTracks } from "@/lib/rd-music";
+import {
+  toggleMusic,
+  stopMusic,
+  playingId,
+  addCustomTrack,
+  getCustomTracks,
+  loadCustomTracks,
+} from "@/lib/rd-music";
 import { stopAvatarVoice } from "@/lib/rd-avatar-voice";
 import { voiceRequest } from "@/lib/rd-voice";
 import { openSocialCopy } from "@/lib/rd-social-copy";
@@ -23,7 +30,6 @@ import {
   SE_DURATIONS,
   seMotion,
   seCost,
-
   seMotionLabel,
   seTransitionName,
   frameConfigured,
@@ -31,7 +37,6 @@ import {
   AI_TRANSITION_UNAVAILABLE_REASON,
 } from "@/lib/scene-frames";
 import {
-  
   OFFERED_TRANSITIONS,
   DEFAULT_TRANSITION_MS,
   autoPick,
@@ -45,8 +50,13 @@ import { getPropertyTree } from "@/lib/workspace.functions";
 import { listMediaAssets } from "@/lib/property-media.functions";
 import { FLAG_LABEL, recommendations } from "@/lib/media-analysis";
 import {
-  UNSORTED_LABEL, arrangeRank, missingRecommendation, normalizeCategory,
-  noticeSignature, resolvePhoto, thumbDataUrl,
+  UNSORTED_LABEL,
+  arrangeRank,
+  missingRecommendation,
+  normalizeCategory,
+  noticeSignature,
+  resolvePhoto,
+  thumbDataUrl,
 } from "@/lib/photo-classify";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { roomIcon, searchRooms, groupRooms } from "@/lib/staging-rooms";
@@ -54,7 +64,16 @@ import { mountSourcePicker } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { dedupeScenes, mergeScenes, reconcileScenes, uniqueIds } from "@/lib/scene-dedupe";
 import { adoptSavedScenes } from "@/lib/scene-adopt";
-import { runAdvanceToGrid, attachUploadAssets, initialWizardStep, hydrateSeededWizard, ensureStepInvariant, acceptVideoPhotos, runEnrichment, logVideoEvent } from "@/lib/video-upload-intake";
+import {
+  runAdvanceToGrid,
+  attachUploadAssets,
+  initialWizardStep,
+  hydrateSeededWizard,
+  ensureStepInvariant,
+  acceptVideoPhotos,
+  runEnrichment,
+  logVideoEvent,
+} from "@/lib/video-upload-intake";
 import { normalizeImageFile } from "@/lib/source-picker";
 import {
   cardMenuButtonHtml,
@@ -94,7 +113,13 @@ import {
   updateRenderJob as _updateRenderJob,
   cancelRenderJob as _cancelRenderJob,
 } from "@/lib/reveal.functions";
-import { jobStatusLabel, isJobStale, renderProvider, activeRenderProvider, runsInBackground } from "@/lib/render-providers";
+import {
+  jobStatusLabel,
+  isJobStale,
+  renderProvider,
+  activeRenderProvider,
+  runsInBackground,
+} from "@/lib/render-providers";
 /* Server functions take a single { data } envelope; these thin wrappers let
    call sites keep passing plain arguments. */
 const listVideos = (d) => _listVideos(d === undefined ? undefined : { data: d });
@@ -126,22 +151,61 @@ import {
   RENDER_CANCELLED,
 } from "@/lib/reveal-render";
 import { track } from "@/lib/analytics";
-import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
+import {
+  startOverModalHtml,
+  resetStudioSurface,
+  trackBuilderStep,
+  endBuilderHistory,
+} from "@/lib/builder-exit";
 import { VIDEO_RAIL, VIDEO_FLOW, backFromVideoStep, normalizeVideoStep } from "@/lib/builder-nav";
-import { avatarSection, bindAvatar, avatarRenderOption, avatarScript, blankAvatarConfig } from "@/lib/rd-avatar-ui";
+import {
+  avatarSection,
+  bindAvatar,
+  avatarRenderOption,
+  avatarScript,
+  blankAvatarConfig,
+} from "@/lib/rd-avatar-ui";
 import { getMyCredits, CREDIT_COSTS } from "@/lib/credits.functions";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { lookById, lookOverlayHTML } from "@/lib/rd-vfx-looks";
 import { tileById } from "@/lib/rd-vfx-tiles";
-import { addressBarHtml, addressColumns, addressFieldHtml, applyAddress } from "@/lib/address-field";
-import { builderRailHtml, roomSelectHtml, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
-import { cleanAddressText, resolveProjectTitle, sanitizeTitle, suggestVideoTitle } from "@/lib/property-address";
+import {
+  addressBarHtml,
+  addressColumns,
+  addressFieldHtml,
+  applyAddress,
+} from "@/lib/address-field";
+import {
+  builderRailHtml,
+  roomSelectHtml,
+  imageToolbarHtml,
+  sceneNumberHtml,
+} from "@/lib/builder-ui";
+import {
+  cleanAddressText,
+  resolveProjectTitle,
+  sanitizeTitle,
+  suggestVideoTitle,
+} from "@/lib/property-address";
 import { matchPropertyAddress, createPropertyFromAddress } from "@/lib/property-address.functions";
 import { animateModalHtml, clipCardHtml, clipReviewHtml } from "@/lib/scene-clip-ui";
 import { sceneClips } from "@/lib/scene-clip-client";
 import { ANIMATE_CREDITS_PER_CLIP } from "@/lib/scene-enhancement";
-import { lookCats, fxCats, looksForCat, effectTiles, fxSnap, fxRestore, fxDirty, supportsIntensity, sceneEffectCredits, applyAllPlan, needsDisclosure, intensityWord, DEFAULT_INTENSITY } from "@/lib/rd-vfx-modal";
-
+import {
+  lookCats,
+  fxCats,
+  looksForCat,
+  effectTiles,
+  fxSnap,
+  fxRestore,
+  fxDirty,
+  supportsIntensity,
+  sceneEffectCredits,
+  applyAllPlan,
+  needsDisclosure,
+  intensityWord,
+  DEFAULT_INTENSITY,
+} from "@/lib/rd-vfx-modal";
 
 /** True when a failed render was refused for plan/credit reasons, not a bug. */
 function planBlockedMsg(p) {
@@ -169,11 +233,17 @@ function videoCreditBlock(cost) {
   return null;
 }
 
-
 const BUCKET = "reveal-videos";
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const goTo = (v) => { const fn = S.go || (typeof window !== "undefined" && window.__rdGo); if (fn) fn(v); else if (typeof location !== "undefined") location.hash = "#" + v; };
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
+const goTo = (v) => {
+  const fn = S.go || (typeof window !== "undefined" && window.__rdGo);
+  if (fn) fn(v);
+  else if (typeof location !== "undefined") location.hash = "#" + v;
+};
 
 /**
  * Navigation token helpers.
@@ -182,20 +252,67 @@ const goTo = (v) => { const fn = S.go || (typeof window !== "undefined" && windo
  * navigation it belongs to and stops the moment the user goes somewhere
  * else, so a slow load can never reopen a builder over the page they chose.
  */
-const navToken = () => { try { return window.__rdNavToken ? window.__rdNavToken() : 0; } catch (_) { return 0; } };
-const navIs = (tok, view) => { try { return window.__rdNavCurrent ? !!window.__rdNavCurrent(tok, view) : true; } catch (_) { return true; } };
-const paint = () => { try { createIcons({ icons }); } catch (_) {} };
+const navToken = () => {
+  try {
+    return window.__rdNavToken ? window.__rdNavToken() : 0;
+  } catch (_) {
+    return 0;
+  }
+};
+const navIs = (tok, view) => {
+  try {
+    return window.__rdNavCurrent ? !!window.__rdNavCurrent(tok, view) : true;
+  } catch (_) {
+    return true;
+  }
+};
+const paint = () => {
+  try {
+    createIcons({ icons });
+  } catch (_) {}
+};
 /** Only real asset ids belong in the database columns. */
-const uuidOrNull = (v) => (typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v) ? v : null);
-const toast = (m) => { try { window.rdToast ? window.rdToast(m) : console.log(m); } catch (_) {} };
+const uuidOrNull = (v) =>
+  typeof v === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v)
+    ? v
+    : null;
+const toast = (m) => {
+  try {
+    window.rdToast ? window.rdToast(m) : console.log(m);
+  } catch (_) {}
+};
 
 export const VIDEO_TYPES = [
-  { id: "property_tour", name: "Property Tour", d: "Create a smooth tour using selected property photos and room designs." },
-  { id: "before_after", name: "Before & After", d: "Show the original space transitioning into the completed design." },
-  { id: "design_reveal", name: "Design Reveal", d: "Present one finished design with cinematic motion and close-up details." },
-  { id: "renovation_vision", name: "Renovation Vision", d: "Show current conditions, proposed designs, major changes and estimated budget." },
-  { id: "social_reel", name: "Social Reel", d: "Create a faster vertical video designed for social media." },
-  { id: "client_presentation", name: "Client Presentation", d: "Create a slower, polished design presentation with project details." },
+  {
+    id: "property_tour",
+    name: "Property Tour",
+    d: "Create a smooth tour using selected property photos and room designs.",
+  },
+  {
+    id: "before_after",
+    name: "Before & After",
+    d: "Show the original space transitioning into the completed design.",
+  },
+  {
+    id: "design_reveal",
+    name: "Design Reveal",
+    d: "Present one finished design with cinematic motion and close-up details.",
+  },
+  {
+    id: "renovation_vision",
+    name: "Renovation Vision",
+    d: "Show current conditions, proposed designs, major changes and estimated budget.",
+  },
+  {
+    id: "social_reel",
+    name: "Social Reel",
+    d: "Create a faster vertical video designed for social media.",
+  },
+  {
+    id: "client_presentation",
+    name: "Client Presentation",
+    d: "Create a slower, polished design presentation with project details.",
+  },
 ];
 
 const FORMATS = [
@@ -210,7 +327,6 @@ const LENGTHS = [
   ["standard", "Standard, About 30s"],
   ["full", "Full, About 60s"],
 ];
-
 
 const MUSIC = [
   { id: "none", group: "No Music", genre: "all", name: "No Music", dur: "0:00" },
@@ -227,10 +343,26 @@ const MUSIC = [
   { id: "stringlight", group: "Classical", genre: "classical", name: "String Light", dur: "2:44" },
 ];
 
-const MUSIC_GENRES = [["all", "All"], ["dance", "Dance"], ["indie", "Indie"], ["pop", "Pop"], ["classical", "Classical"], ["country", "Country"], ["mine", "My Tracks"]];
+const MUSIC_GENRES = [
+  ["all", "All"],
+  ["dance", "Dance"],
+  ["indie", "Indie"],
+  ["pop", "Pop"],
+  ["classical", "Classical"],
+  ["country", "Country"],
+  ["mine", "My Tracks"],
+];
 
 function musicList() {
-  return MUSIC.concat(getCustomTracks().map((t) => ({ id: t.id, group: "My Tracks", genre: "mine", name: t.name, dur: "" })));
+  return MUSIC.concat(
+    getCustomTracks().map((t) => ({
+      id: t.id,
+      group: "My Tracks",
+      genre: "mine",
+      name: t.name,
+      dur: "",
+    })),
+  );
 }
 
 /** Browsable music library: search, genre tabs and a play button per track. */
@@ -238,7 +370,9 @@ function musicPicker(id, sel) {
   const w = S.wizard || {};
   const g = MUSIC_GENRES.some(([k]) => k === w.musicGenre) ? w.musicGenre : "all";
   const q = (w.musicQ || "").toLowerCase();
-  const rows = musicList().filter((m) => (g === "all" ? true : m.genre === g) && (!q || m.name.toLowerCase().includes(q)));
+  const rows = musicList().filter(
+    (m) => (g === "all" ? true : m.genre === g) && (!q || m.name.toLowerCase().includes(q)),
+  );
   const cur = playingId();
   return `<div class="rv-music">
     <div class="rv-music-top">
@@ -247,15 +381,21 @@ function musicPicker(id, sel) {
       <input type="file" accept="audio/*" class="rv-music-file" data-musicfile="${id}" hidden>
     </div>
     <div class="rv-seg tiny">${MUSIC_GENRES.map(([k, n]) => `<button type="button" class="${g === k ? "on" : ""}" data-musicgenre="${k}">${n}</button>`).join("")}</div>
-    <div class="rv-tracks">${rows.length ? rows.map((m) => {
-      const on = cur === m.id;
-      return `<div class="rv-track ${sel === m.id ? "on" : ""} ${on ? "playing" : ""}" data-track="${esc(m.id)}">
+    <div class="rv-tracks">${
+      rows.length
+        ? rows
+            .map((m) => {
+              const on = cur === m.id;
+              return `<div class="rv-track ${sel === m.id ? "on" : ""} ${on ? "playing" : ""}" data-track="${esc(m.id)}">
         <button type="button" class="icon-btn xs" data-trackplay="${esc(m.id)}" title="${on ? "Pause" : "Play"}" ${m.id === "none" ? "disabled" : ""}><i data-lucide="${on ? "pause" : "play"}"></i></button>
         <b>${esc(m.name)}</b>
         <span class="mono">${esc(m.dur || "")}</span>
         ${sel === m.id ? `<em><i data-lucide="check"></i></em>` : ""}
       </div>`;
-    }).join("") : `<div class="rv-note sm">No Tracks Match That Search.</div>`}</div>
+            })
+            .join("")
+        : `<div class="rv-note sm">No Tracks Match That Search.</div>`
+    }</div>
   </div>`;
 }
 
@@ -263,36 +403,58 @@ let musicLoadedOnce = false;
 function bindMusicControls(el, setTrack, getTrack) {
   if (!musicLoadedOnce) {
     musicLoadedOnce = true;
-    loadCustomTracks().then((list) => { if (list.length) render(); });
+    loadCustomTracks().then((list) => {
+      if (list.length) render();
+    });
   }
 
-  el.querySelectorAll("[data-musicplay]").forEach((b) => b.addEventListener("click", (e) => {
-    e.preventDefault();
-    const id = getTrack();
-    if (!id || id === "none") return toast("Choose A Track First.");
-    toggleMusic(id);
-    render();
-  }));
-  el.querySelectorAll("[data-musicup]").forEach((b) => b.addEventListener("click", (e) => {
-    e.preventDefault();
-    const input = el.querySelector(`[data-musicfile="${b.dataset.musicup}"]`);
-    if (input) input.click();
-  }));
-  el.querySelectorAll("[data-musicfile]").forEach((inp) => inp.addEventListener("change", (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    if (f.size > 20 * 1024 * 1024) return toast("Audio Files Must Be Under 20MB.");
-    const t = addCustomTrack(f);
-    stopMusic();
-    setTrack(t.id);
-    toast("Track Uploaded.");
-  }));
+  el.querySelectorAll("[data-musicplay]").forEach((b) =>
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      const id = getTrack();
+      if (!id || id === "none") return toast("Choose A Track First.");
+      toggleMusic(id);
+      render();
+    }),
+  );
+  el.querySelectorAll("[data-musicup]").forEach((b) =>
+    b.addEventListener("click", (e) => {
+      e.preventDefault();
+      const input = el.querySelector(`[data-musicfile="${b.dataset.musicup}"]`);
+      if (input) input.click();
+    }),
+  );
+  el.querySelectorAll("[data-musicfile]").forEach((inp) =>
+    inp.addEventListener("change", (e) => {
+      const f = e.target.files && e.target.files[0];
+      if (!f) return;
+      if (f.size > 20 * 1024 * 1024) return toast("Audio Files Must Be Under 20MB.");
+      const t = addCustomTrack(f);
+      stopMusic();
+      setTrack(t.id);
+      toast("Track Uploaded.");
+    }),
+  );
 }
 
 const ORDER = [
-  "Front Exterior", "Exterior", "Entry", "Living", "Living Areas", "Kitchen", "Dining",
-  "Primary Bedroom", "Primary Bathroom", "Bedrooms", "Bathrooms", "Specialty",
-  "Outdoor Areas", "Backyard", "Floor Plans", "Concepts", "Unsorted",
+  "Front Exterior",
+  "Exterior",
+  "Entry",
+  "Living",
+  "Living Areas",
+  "Kitchen",
+  "Dining",
+  "Primary Bedroom",
+  "Primary Bathroom",
+  "Bedrooms",
+  "Bathrooms",
+  "Specialty",
+  "Outdoor Areas",
+  "Backyard",
+  "Floor Plans",
+  "Concepts",
+  "Unsorted",
 ];
 
 /* A photo with no confident room stays Unsorted. Quality flags such as
@@ -374,7 +536,8 @@ async function loadLibrary() {
         const fixed = await updateRenderJob({
           id: j.id,
           status: "failed",
-          error_message: "The render stopped when its browser tab closed. Your credits were returned.",
+          error_message:
+            "The render stopped when its browser tab closed. Your credits were returned.",
         });
         if (fixed) Object.assign(j, fixed);
       } catch (_) {}
@@ -392,7 +555,13 @@ async function loadLibrary() {
   S.loading = false;
 }
 
-const fmtDate = (s) => { try { return new Date(s).toLocaleDateString(); } catch (_) { return ""; } };
+const fmtDate = (s) => {
+  try {
+    return new Date(s).toLocaleDateString();
+  } catch (_) {
+    return "";
+  }
+};
 
 async function signed(path) {
   if (!path) return null;
@@ -406,7 +575,15 @@ async function signed(path) {
 const THUMBS = new Map();
 
 function statusOf(p) {
-  return p.status === "ready" ? "Ready" : p.status === "processing" ? "Processing" : p.status === "failed" ? "Failed" : p.status === "archived" ? "Archived" : "Draft";
+  return p.status === "ready"
+    ? "Ready"
+    : p.status === "processing"
+      ? "Processing"
+      : p.status === "failed"
+        ? "Failed"
+        : p.status === "archived"
+          ? "Archived"
+          : "Draft";
 }
 
 function libraryRows() {
@@ -417,7 +594,11 @@ function libraryRows() {
     if (S.filter === "ready" && p.status !== "ready") return false;
     if (S.filter === "shared" && !S.shares.some((s) => s.video_project_id === p.id)) return false;
     if (!q) return true;
-    return [p.title, p.property_label, p.video_type].filter(Boolean).join(" ").toLowerCase().includes(q);
+    return [p.title, p.property_label, p.video_type]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase()
+      .includes(q);
   });
 }
 
@@ -434,13 +615,18 @@ function libraryHtml() {
   </div>
   <div class="rv-bar">
     <div class="rv-mchips">${["all", "drafts", "processing", "ready", "shared"]
-      .map((f) => `<button class="rv-chip ${S.filter === f ? "on" : ""}" data-f="${f}">${f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}</button>`)
+      .map(
+        (f) =>
+          `<button class="rv-chip ${S.filter === f ? "on" : ""}" data-f="${f}">${f === "all" ? "All" : f[0].toUpperCase() + f.slice(1)}</button>`,
+      )
       .join("")}</div>
     <div class="rv-search"><i data-lucide="search"></i><input id="rvQ" placeholder="Search Property, Project, Room Or Title" value="${esc(S.q)}"></div>
   </div>`;
 
   if (!S.projects.length) {
-    return head + `<div class="rv-empty">
+    return (
+      head +
+      `<div class="rv-empty">
       <i data-lucide="clapperboard"></i>
       <h3>Turn A Design Into A Video</h3>
       <p>Create a polished property tour, before-and-after reveal or social video from your existing projects.</p>
@@ -448,7 +634,8 @@ function libraryHtml() {
         <button class="btn btn-primary" id="rvNew2">Create Your First Video</button>
         <button class="btn btn-ghost" data-goto="props">Open A Property</button>
       </div>
-    </div>`;
+    </div>`
+    );
   }
 
   return head + `<div class="rv-list">${cardsHtml(rows)}</div>`;
@@ -472,14 +659,15 @@ function renderJobBadge(projectId) {
 }
 
 function cardsHtml(rows) {
-  const cards = rows.map((p) => {
-    const vs = S.variants.filter((v) => v.video_project_id === p.id);
-    const sc = S.scenes.filter((s) => s.video_project_id === p.id);
-    const dur = vs[0]?.duration || sc.reduce((a, b) => a + Number(b.duration || 0), 0);
-    const shared = S.shares.some((s) => s.video_project_id === p.id);
-    const type = VIDEO_TYPES.find((t) => t.id === p.video_type)?.name || "Video";
-    const disc = p.disclosure?.mode ? "Disclosure Applied" : "No Disclosure";
-    return `<div class="rv-card" data-id="${p.id}">
+  const cards = rows
+    .map((p) => {
+      const vs = S.variants.filter((v) => v.video_project_id === p.id);
+      const sc = S.scenes.filter((s) => s.video_project_id === p.id);
+      const dur = vs[0]?.duration || sc.reduce((a, b) => a + Number(b.duration || 0), 0);
+      const shared = S.shares.some((s) => s.video_project_id === p.id);
+      const type = VIDEO_TYPES.find((t) => t.id === p.video_type)?.name || "Video";
+      const disc = p.disclosure?.mode ? "Disclosure Applied" : "No Disclosure";
+      return `<div class="rv-card" data-id="${p.id}">
       <div class="rv-thumb" data-thumb="${p.id}"${THUMBS.get(p.id) ? ` style="background-image:url('${THUMBS.get(p.id)}')"` : ""}><i data-lucide="film"></i></div>
       <div class="rv-meta">
         <b>${esc(p.title)}</b>
@@ -505,7 +693,8 @@ function cardsHtml(rows) {
         <button class="icon-btn" data-act="del" title="Delete"><i data-lucide="trash-2"></i></button>
       </div>
     </div>`;
-  }).join("");
+    })
+    .join("");
 
   return cards || `<div class="rv-note">No Videos Match That Filter.</div>`;
 }
@@ -514,15 +703,23 @@ async function paintThumbs() {
   for (const p of S.projects) {
     const el = host()?.querySelector(`[data-thumb="${p.id}"]`);
     if (!el) continue;
-    if (THUMBS.has(p.id)) { el.style.backgroundImage = `url("${THUMBS.get(p.id)}")`; continue; }
+    if (THUMBS.has(p.id)) {
+      el.style.backgroundImage = `url("${THUMBS.get(p.id)}")`;
+      continue;
+    }
     const v = S.variants.find((x) => x.video_project_id === p.id && x.thumbnail_path);
     let url = null;
     if (v?.thumbnail_path) url = await signed(v.thumbnail_path);
     if (!url) {
-      const s = S.scenes.filter((x) => x.video_project_id === p.id).sort((a, b) => a.sequence - b.sequence)[0];
+      const s = S.scenes
+        .filter((x) => x.video_project_id === p.id)
+        .sort((a, b) => a.sequence - b.sequence)[0];
       if (s?.source_path) url = await resolvePhotoUrl(s.source_path);
     }
-    if (url) { THUMBS.set(p.id, url); el.style.backgroundImage = `url("${url}")`; }
+    if (url) {
+      THUMBS.set(p.id, url);
+      el.style.backgroundImage = `url("${url}")`;
+    }
   }
 }
 
@@ -534,7 +731,10 @@ function seededUploads(files, out = {}) {
   return Array.from(files || []).flatMap((file) => {
     if (!(file instanceof File)) return [];
     const why = rejectReason(file);
-    if (why) { out.fails.push({ name: file.name, why, file }); return []; }
+    if (why) {
+      out.fails.push({ name: file.name, why, file });
+      return [];
+    }
     /* HEIC cannot be previewed by non-Safari browsers. Defer it to the same
        conversion the source picker uses, then feed it back through the
        canonical accept pipeline. Never drop it silently. */
@@ -542,13 +742,15 @@ function seededUploads(files, out = {}) {
       out.pending.push(file);
       return [];
     }
-    return [{
-      id: crypto.randomUUID(),
-      name: file.name.replace(/\.[a-z0-9]+$/i, ""),
-      originalName: file.name,
-      url: URL.createObjectURL(file),
-      file,
-    }];
+    return [
+      {
+        id: crypto.randomUUID(),
+        name: file.name.replace(/\.[a-z0-9]+$/i, ""),
+        originalName: file.name,
+        url: URL.createObjectURL(file),
+        file,
+      },
+    ];
   });
 }
 
@@ -560,7 +762,9 @@ function newWizard(seed = {}) {
     step: initialWizardStep(seed, uploads),
     uploadFails: seedOut.fails,
     seedPending: seedOut.pending,
-    sourceType: uploads.length ? "upload" : seed.sourceType || (seed.versionId ? "design" : seed.propertyId ? "property" : ""),
+    sourceType: uploads.length
+      ? "upload"
+      : seed.sourceType || (seed.versionId ? "design" : seed.propertyId ? "property" : ""),
     propertyId: seed.propertyId || null,
     propertyLabel: seed.propertyLabel || null,
     /* Only these stored photos should be selected once assets load. */
@@ -608,13 +812,19 @@ function newWizard(seed = {}) {
     listingUrl: "",
     /* Optional property address. Never required to save a draft, and never a
        reason to invent a placeholder property. */
-    address: seed.address || seed.listingAddress || (seed.propertyId || seed.versionId ? seed.propertyLabel || "" : ""),
+    address:
+      seed.address ||
+      seed.listingAddress ||
+      (seed.propertyId || seed.versionId ? seed.propertyLabel || "" : ""),
     addressSource:
       seed.addressSource ||
-      (seed.listingAddress || seed.from === "listing" ? "listing_import"
-        : seed.propertyId ? "existing_property"
-        : seed.versionId ? "inherited"
-        : "unknown"),
+      (seed.listingAddress || seed.from === "listing"
+        ? "listing_import"
+        : seed.propertyId
+          ? "existing_property"
+          : seed.versionId
+            ? "inherited"
+            : "unknown"),
     addressStructured: null,
     addressMatch: null,
     addressMatchDismissed: false,
@@ -642,7 +852,9 @@ function newWizard(seed = {}) {
 function revokeUploadUrls(wizard) {
   for (const upload of wizard?.uploads || []) {
     if (typeof upload?.url !== "string" || !upload.url.startsWith("blob:")) continue;
-    try { URL.revokeObjectURL(upload.url); } catch (_) {}
+    try {
+      URL.revokeObjectURL(upload.url);
+    } catch (_) {}
   }
 }
 
@@ -657,11 +869,26 @@ async function loadWizardAssets() {
     if (!cleanAddressText(w.address)) applyAddress(w, prop.address, "existing_property");
     for (const pr of prop.projects || []) {
       for (const r of pr.rooms || []) {
-        if (r.before_path) out.push({ key: "o-" + r.id, path: r.before_path, room: r.name, kind: "Original", group: groupFor(r.name, r.room_type), version_id: r.version_id, disclosure: null });
+        if (r.before_path)
+          out.push({
+            key: "o-" + r.id,
+            path: r.before_path,
+            room: r.name,
+            kind: "Original",
+            group: groupFor(r.name, r.room_type),
+            version_id: r.version_id,
+            disclosure: null,
+          });
         if (r.after_path)
           out.push({
-            key: "d-" + r.id, path: r.after_path, compare: r.before_path || null, room: r.name, kind: "Design",
-            group: groupFor(r.name, r.room_type), version_id: r.version_id, disclosure: "proposed",
+            key: "d-" + r.id,
+            path: r.after_path,
+            compare: r.before_path || null,
+            room: r.name,
+            kind: "Design",
+            group: groupFor(r.name, r.room_type),
+            version_id: r.version_id,
+            disclosure: "proposed",
           });
       }
     }
@@ -671,9 +898,18 @@ async function loadWizardAssets() {
         if (a.hidden) continue;
         const room = roomLabelOf(a.room_group);
         out.push({
-          key: "m-" + a.id, path: a.storage_path, room, kind: "Original",
-          group: groupFor(room === UNSORTED ? "" : room, ""), asset_id: a.id, disclosure: null, recommended: !!a.recommended,
-          dup: a.dup_group || null, hdr: a.hdr_group || null, flags: a.flags || [], quality: a.quality || {},
+          key: "m-" + a.id,
+          path: a.storage_path,
+          room,
+          kind: "Original",
+          group: groupFor(room === UNSORTED ? "" : room, ""),
+          asset_id: a.id,
+          disclosure: null,
+          recommended: !!a.recommended,
+          dup: a.dup_group || null,
+          hdr: a.hdr_group || null,
+          flags: a.flags || [],
+          quality: a.quality || {},
         });
       }
     } catch (_) {}
@@ -683,16 +919,31 @@ async function loadWizardAssets() {
     /* Same stored object twice = one photo: a duplicate upload record never
        becomes a second grid asset. */
     if (path && out.some((a) => a.path === path)) continue;
-    out.push({ key: "u-" + u.id, path, room: u.room || UNSORTED, kind: "Original", group: UNSORTED, disclosure: null, uploaded: true, flags: [] });
+    out.push({
+      key: "u-" + u.id,
+      path,
+      room: u.room || UNSORTED,
+      kind: "Original",
+      group: UNSORTED,
+      disclosure: null,
+      uploaded: true,
+      flags: [],
+    });
   }
   /* Designs chosen in Studio are real assets even when no property is set. */
   for (const d of w.seedDesigns || []) {
     if (!d || !d.path) continue;
     if (out.some((a) => a.path === d.path)) continue;
     out.push({
-      key: "sd-" + (d.id || d.path), path: d.path, compare: d.beforePath || null,
-      room: d.room || UNSORTED, kind: "Design", group: groupFor(d.room || "", ""),
-      version_id: d.versionId || null, disclosure: "proposed", flags: [],
+      key: "sd-" + (d.id || d.path),
+      path: d.path,
+      compare: d.beforePath || null,
+      room: d.room || UNSORTED,
+      kind: "Design",
+      group: groupFor(d.room || "", ""),
+      version_id: d.versionId || null,
+      disclosure: "proposed",
+      flags: [],
     });
   }
   /* Photos chosen from the picker (including the unassigned bucket, which has
@@ -702,9 +953,13 @@ async function loadWizardAssets() {
     if (out.some((a) => a.path === ph.path)) continue;
     const room = ph.room || UNSORTED;
     out.push({
-      key: "sp-" + (ph.id || ph.path), path: ph.path, room,
-      kind: "Original", group: groupFor(room === UNSORTED ? "" : room, ""),
-      disclosure: null, flags: [],
+      key: "sp-" + (ph.id || ph.path),
+      path: ph.path,
+      room,
+      kind: "Original",
+      group: groupFor(room === UNSORTED ? "" : room, ""),
+      disclosure: null,
+      flags: [],
     });
   }
   w.available = out;
@@ -713,7 +968,11 @@ async function loadWizardAssets() {
   const prev = (w.gridOrder || []).filter((k) => keep.has(k));
   const seen = new Set(prev);
   const fresh = out.filter((a) => !seen.has(a.key));
-  fresh.sort((a, b) => orderRank(a.group) - orderRank(b.group) || String(a.room || "").localeCompare(String(b.room || "")));
+  fresh.sort(
+    (a, b) =>
+      orderRank(a.group) - orderRank(b.group) ||
+      String(a.room || "").localeCompare(String(b.room || "")),
+  );
   w.gridOrder = prev.concat(fresh.map((a) => a.key));
   if (w.seedPaths && w.seedPaths.length) {
     const want = new Set(w.seedPaths);
@@ -731,7 +990,6 @@ async function loadWizardAssets() {
   syncSceneOrder();
 }
 
-
 /* The builder is organised as six named sections in a left rail. Internally
    the wizard still tracks a step number, so every existing deep link, modal
    and shortcut keeps working. */
@@ -743,7 +1001,10 @@ const WIZ_SECTIONS: Array<[string, string, string, number]> = VIDEO_RAIL.map(
 /* Each step owns the page-level title so the white workspace stays free of
    duplicated headings. */
 const STEP_TITLES: Record<number, [string, string]> = {
-  2: ["Select & Order Photos", "Choose what to include, then drag photos into the order viewers should see them."],
+  2: [
+    "Select & Order Photos",
+    "Choose what to include, then drag photos into the order viewers should see them.",
+  ],
   5: ["Add Titles", "Add the text viewers will see throughout the video."],
   6: ["Choose Audio", "Choose the sound that carries the video."],
   4: ["Apply Branding", "Add your brand without overpowering the property."],
@@ -844,14 +1105,22 @@ function canvasHtml(compact = false) {
             : "";
         })()}
         ${brandOn && kit?.logo_path && (w.branding?.watermark || w.logoBranding) ? `<span class="rv-ov-logo" data-img="${esc(kit.logo_path)}"></span>` : ""}
-        ${openOn ? `<div class="rv-ov-title pos-${esc(w.titlePos || "bottom")} f-${esc(w.titleFont || "editorial")}">
+        ${
+          openOn
+            ? `<div class="rv-ov-title pos-${esc(w.titlePos || "bottom")} f-${esc(w.titleFont || "editorial")}">
           <b>${esc(t.headline == null ? d.headline : t.headline)}</b>
-          ${(t.sub == null ? "For Sale" : t.sub) ? `<span>${esc(t.sub == null ? "For Sale" : t.sub)}</span>` : ""}</div>` : ""}
+          ${(t.sub == null ? "For Sale" : t.sub) ? `<span>${esc(t.sub == null ? "For Sale" : t.sub)}</span>` : ""}</div>`
+            : ""
+        }
         ${cap ? `<div class="rv-ov-cap">${esc(cap)}</div>` : ""}
-        ${closeOn && brandOn ? `<div class="rv-ov-close">
+        ${
+          closeOn && brandOn
+            ? `<div class="rv-ov-close">
           <b>${esc(kit?.company_name || kit?.contact_name || d.company || "Your Brand")}</b>
           ${w.branding?.cta && kit?.default_cta ? `<span>${esc(kit.default_cta)}</span>` : ""}
-          ${w.branding?.contact ? `<em>${esc([d.contactPhone, d.contactEmail].filter(Boolean).join(" · "))}</em>` : ""}</div>` : ""}
+          ${w.branding?.contact ? `<em>${esc([d.contactPhone, d.contactEmail].filter(Boolean).join(" · "))}</em>` : ""}</div>`
+            : ""
+        }
         ${sc?.disclosure ? `<span class="rv-ov-disc">${esc(DISCLOSURE_LABEL[sc.disclosure] || "Digitally Altered")}</span>` : ""}
       </div>
     </div>
@@ -864,16 +1133,31 @@ function canvasHtml(compact = false) {
       <span class="mono sm">${esc(formatLabel(fmt))}</span>
       <label class="rv-toggle sm"><input type="checkbox" id="rvPrevBrand" ${brandOn ? "checked" : ""}><span>Branded</span></label>
     </div>
-    <div class="rv-tl">${list.map((s2, n) => `<button class="rv-tl-i ${n === i ? "on" : ""}" data-tlpick="${n}" data-key="${esc(s2.key)}" draggable="true">
+    <div class="rv-tl">${
+      list
+        .map(
+          (
+            s2,
+            n,
+          ) => `<button class="rv-tl-i ${n === i ? "on" : ""}" data-tlpick="${n}" data-key="${esc(s2.key)}" draggable="true">
       <span class="rv-tl-th" data-img="${esc(s2.path)}"></span>
       <em class="mono">${n + 1}</em>
       ${(s2.caption && w.captions) || (n === 0 && openOn) ? `<i class="rv-tl-mark" data-lucide="type"></i>` : ""}
       <b>${esc(s2.room || "Scene")}</b><span class="mono">${per.toFixed(1)}s</span>
-    </button>`).join("") || `<div class="rv-note sm">Add Photos To Build The Timeline.</div>`}
+    </button>`,
+        )
+        .join("") || `<div class="rv-note sm">Add Photos To Build The Timeline.</div>`
+    }
       <button class="rv-tl-add" id="rvTlAdd" aria-label="Add Photos"><i data-lucide="plus"></i><b>Add</b></button>
       <input type="file" id="rvTlFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
     </div>
-    ${audioOn ? `<div class="rv-wave" aria-hidden="true">${waveBars(list.length + 3).map((h) => `<i style="height:${h}%"></i>`).join("")}</div>` : ""}
+    ${
+      audioOn
+        ? `<div class="rv-wave" aria-hidden="true">${waveBars(list.length + 3)
+            .map((h) => `<i style="height:${h}%"></i>`)
+            .join("")}</div>`
+        : ""
+    }
     <div class="rv-tl-foot">
       <span class="mono">${list.length} ${list.length === 1 ? "Scene" : "Scenes"} · ${total}s${musicOn ? " · Music" : ""}${narrOn ? " · Narration" : ""}</span>
       <button class="fb-link" data-sec="scenes">Back To Select &amp; Order</button>
@@ -922,7 +1206,7 @@ function wizardHtml() {
 
   let body = "";
   if (w.step === 2) body = stepSelect();
-  
+
   if (w.step === 4) body = stepBrand();
   if (w.step === 5) body = stepTitles();
   if (w.step === 6) body = stepAudio();
@@ -930,15 +1214,15 @@ function wizardHtml() {
 
   const [pageTitle, pageSub] = STEP_TITLES[w.step] || STEP_TITLES[2];
   const orient = orientationOf(w);
-  const headTools = w.step === 2
-    ? `<div class="rv-head-tools">
+  const headTools =
+    w.step === 2
+      ? `<div class="rv-head-tools">
         ${formatSelectorHtml({ label: "Video Format", options: VIDEO_FORMATS, value: w.primaryFormat, attr: "primaryfmt", id: "rv-vfmt" })}
 
         <button class="btn btn-ghost btn-sm" id="rvHeadAdd"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rvHeadFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
       </div>`
-    : "";
-
+      : "";
 
   /* Every builder step shows the rail: Studio owns photo selection, so the
      first builder step is already Scenes. */
@@ -971,11 +1255,14 @@ function wizardHtml() {
   /* Property context follows the builder: the address stays visible on every
      editing step, not just Select & Order. */
   const addrText = cleanAddressText(w.address) || w.propertyLabel || "";
-  const addrChip = editor || w.step === 7
-    ? `<div class="rv-head-addr">${addrText
-        ? `<i data-lucide="map-pin"></i><span>${esc(addrText)}</span>`
-        : `<button class="fb-link" data-sec="scenes"><i data-lucide="map-pin"></i>Add Property Address</button>`}</div>`
-    : "";
+  const addrChip =
+    editor || w.step === 7
+      ? `<div class="rv-head-addr">${
+          addrText
+            ? `<i data-lucide="map-pin"></i><span>${esc(addrText)}</span>`
+            : `<button class="fb-link" data-sec="scenes"><i data-lucide="map-pin"></i>Add Property Address</button>`
+        }</div>`
+      : "";
 
   return `<div class="rv-head">
     <div><h2>${esc(pageTitle)}</h2><p>${esc(pageSub)}</p>${addrChip}</div>
@@ -1017,11 +1304,12 @@ function frameNotice() {
   if (!rec.show) return "";
   /* A dismissal only holds while the set, its labels and its selection are unchanged. */
   if (w.frameNoticeDismissed && w.frameNoticeSig === noticeSignature(photos)) return "";
-  const action = rec.kind === "unselected"
-    ? `<button class="btn btn-ghost btn-sm" id="rvNoticeSelect">Select Existing Photo</button>`
-    : rec.kind === "missing"
-      ? `<button class="btn btn-ghost btn-sm" id="rvNoticeAdd">Add Photos</button>`
-      : `<button class="btn btn-ghost btn-sm" id="rvNoticeReview">Review Room Types</button>`;
+  const action =
+    rec.kind === "unselected"
+      ? `<button class="btn btn-ghost btn-sm" id="rvNoticeSelect">Select Existing Photo</button>`
+      : rec.kind === "missing"
+        ? `<button class="btn btn-ghost btn-sm" id="rvNoticeAdd">Add Photos</button>`
+        : `<button class="btn btn-ghost btn-sm" id="rvNoticeReview">Review Room Types</button>`;
   return `<div class="rv-notice">
     <i data-lucide="info"></i>
     <span><b>${esc(rec.title)}</b> ${esc(rec.message)}</span>
@@ -1037,7 +1325,9 @@ function selectRecommendedGap() {
   const photos = resolvedPhotos();
   const rec = missingRecommendation(photos, w.analysisStatus || "pending");
   for (const cat of rec.unselected || []) {
-    const hit = photos.find((p) => p.category === cat && p.state === "confirmed" && p.selected === false);
+    const hit = photos.find(
+      (p) => p.category === cat && p.state === "confirmed" && p.selected === false,
+    );
     if (!hit) continue;
     const a = (w.available || []).find((x) => x.key === hit.id);
     if (a) w.scenes = mergeScenes(w.scenes || [], [assetToScene(a)]);
@@ -1054,9 +1344,16 @@ export function resolvedPhotos() {
     const g = guesses[a.key] || {};
     /* A label already carried by a library asset or a hand-typed rename is a
        confirmed answer; only untouched uploads wait for the classifier. */
-    const manual = a.roomManual || (!a.uploaded && a.room && a.room !== UNSORTED_LABEL ? a.room : null);
+    const manual =
+      a.roomManual || (!a.uploaded && a.room && a.room !== UNSORTED_LABEL ? a.room : null);
     const selected = (w.scenes || []).some((x) => x.key === a.key);
-    return resolvePhoto({ id: a.key, manual, label: g.label ?? null, confidence: g.confidence ?? 0, selected });
+    return resolvePhoto({
+      id: a.key,
+      manual,
+      label: g.label ?? null,
+      confidence: g.confidence ?? 0,
+      selected,
+    });
   });
 }
 
@@ -1069,7 +1366,8 @@ export async function classifyUploads() {
     (u) => u.file && !u.roomManual && !u.roomLock && !w.roomGuess["u-" + u.id],
   );
   if (!todo.length) {
-    if (w.analysisStatus !== "completed") w.analysisStatus = (w.available || []).length ? "completed" : "pending";
+    if (w.analysisStatus !== "completed")
+      w.analysisStatus = (w.available || []).length ? "completed" : "pending";
     render();
     return;
   }
@@ -1117,10 +1415,18 @@ function applyGuess(key) {
   const photo = resolvedPhotos().find((p) => p.id === key);
   if (!photo || photo.state === "unsorted") return;
   const label = photo.label;
-  if (a) { a.room = label; a.roomState = photo.state; a.group = groupFor(label, ""); }
+  if (a) {
+    a.room = label;
+    a.roomState = photo.state;
+    a.group = groupFor(label, "");
+  }
   const up = (w.uploads || []).find((u) => "u-" + u.id === key);
   if (up) up.room = label;
-  (w.scenes || []).filter((x) => x.key === key).forEach((x) => { x.room = label; });
+  (w.scenes || [])
+    .filter((x) => x.key === key)
+    .forEach((x) => {
+      x.room = label;
+    });
 }
 
 /** Write a room label chosen by hand, on the asset, its upload and its scene. */
@@ -1141,9 +1447,17 @@ function setRoomLabel(key, value, manual) {
      to live on the upload record to survive a reload. */
   if (String(key).startsWith("u-")) {
     const up = (w.uploads || []).find((u) => "u-" + u.id === key);
-    if (up) { up.room = val; up.roomManual = known ? val : null; up.roomLock = !!manual; }
+    if (up) {
+      up.room = val;
+      up.roomManual = known ? val : null;
+      up.roomLock = !!manual;
+    }
   }
-  (w.scenes || []).filter((x) => x.key === key).forEach((x) => { x.room = val; });
+  (w.scenes || [])
+    .filter((x) => x.key === key)
+    .forEach((x) => {
+      x.room = val;
+    });
 }
 
 /** Explicit re-run: drop every manual lock and classify the uploads again. */
@@ -1151,11 +1465,21 @@ function redetectRooms() {
   const w = S.wizard;
   if (!w) return;
   w.roomGuess = {};
-  (w.available || []).forEach((a) => { a.roomLock = false; a.roomManual = null; });
-  (w.uploads || []).forEach((u) => { u.roomLock = false; u.roomManual = null; });
-  classifyUploads().catch(() => { if (S.wizard === w) { w.analysisStatus = "failed"; render(); } });
+  (w.available || []).forEach((a) => {
+    a.roomLock = false;
+    a.roomManual = null;
+  });
+  (w.uploads || []).forEach((u) => {
+    u.roomLock = false;
+    u.roomManual = null;
+  });
+  classifyUploads().catch(() => {
+    if (S.wizard === w) {
+      w.analysisStatus = "failed";
+      render();
+    }
+  });
 }
-
 
 /* ======================= STEP 1, PHOTOS ======================= */
 /** Every finished design in the workspace, newest property first. */
@@ -1166,8 +1490,13 @@ function designChoices() {
       for (const r of pr.rooms || []) {
         if (!r.after_path) continue;
         out.push({
-          roomId: r.id, versionId: r.version_id, propertyId: p.id, propertyLabel: p.address,
-          room: r.name || "Untitled Room", after: r.after_path, before: r.before_path || null,
+          roomId: r.id,
+          versionId: r.version_id,
+          propertyId: p.id,
+          propertyLabel: p.address,
+          room: r.name || "Untitled Room",
+          after: r.after_path,
+          before: r.before_path || null,
         });
       }
     }
@@ -1186,7 +1515,12 @@ function photosOfProperty(p) {
       const path = r?.before_path;
       if (!path || seen.has(path)) continue;
       seen.add(path);
-      out.push({ id: path, path, name: r.name || pr.name || "Photo", room: r.room_type || r.name || "" });
+      out.push({
+        id: path,
+        path,
+        name: r.name || pr.name || "Photo",
+        room: r.room_type || r.name || "",
+      });
     }
   }
   for (const a of p?.assets || []) {
@@ -1207,7 +1541,8 @@ function coverOrder(list) {
 }
 
 /* The catch-all bucket is not a property, so it never becomes an address. */
-const isUnsortedLabel = (s) => /^(unsorted uploads|unassigned photos)$/i.test(String(s || "").trim());
+const isUnsortedLabel = (s) =>
+  /^(unsorted uploads|unassigned photos)$/i.test(String(s || "").trim());
 
 /* Single shared Step 1 -> Step 2 transition, used by both the automatic
    post-upload advance and the manual Continue button. Never fire-and-forget:
@@ -1223,7 +1558,12 @@ export async function advanceToGrid(w) {
     render,
   });
   /* Classification runs after the grid is visible, never before it. */
-  classifyUploads().catch(() => { if (S.wizard === w) { w.analysisStatus = "failed"; render(); } });
+  classifyUploads().catch(() => {
+    if (S.wizard === w) {
+      w.analysisStatus = "failed";
+      render();
+    }
+  });
 }
 
 /** Dependency set shared by every accepted-photo entry path. */
@@ -1271,7 +1611,10 @@ export async function acceptPhotos(w, files, source) {
   }
   w.uploadPrep = [];
   if (S.wizard && S.wizard !== w) return;
-  if (!ready.length) { render(); return; }
+  if (!ready.length) {
+    render();
+    return;
+  }
   await acceptVideoPhotos({ wizard: w, files: ready, source, deps: intakeDeps() });
   classifyUploads().catch(() => {});
   /* Photos only count as a draft once they are in private storage. */
@@ -1300,17 +1643,27 @@ function reconcileUploadPaths(w) {
     const cur = obj?.[key];
     if (typeof cur !== "string" || !cur) return;
     const next = map.get(cur) || (/^blob:/.test(cur) && sceneKey ? map.get(sceneKey) : null);
-    if (next && next !== cur) { obj[key] = next; changed = true; }
+    if (next && next !== cur) {
+      obj[key] = next;
+      changed = true;
+    }
   };
   for (const a of w.available || []) fix(a, "path", a.key);
-  for (const s of w.scenes || []) { fix(s, "path", s.key); fix(s, "compare", null); }
+  for (const s of w.scenes || []) {
+    fix(s, "path", s.key);
+    fix(s, "compare", null);
+  }
   return changed;
 }
 
 /** Push every attached upload into private storage, then autosave the draft. */
 async function storeUploads(w) {
   const pending = (w.uploads || []).filter((u) => u.file && !u.storagePath && !u.storing);
-  if (!pending.length) { reconcileUploadPaths(w); autosaveWizard(w); return; }
+  if (!pending.length) {
+    reconcileUploadPaths(w);
+    autosaveWizard(w);
+    return;
+  }
   for (const u of pending) {
     u.storing = true;
     try {
@@ -1361,18 +1714,48 @@ function wizardDraftBody(w) {
         gridOrder: w.gridOrder || [],
         uploads: (w.uploads || [])
           .filter((u) => u.storagePath)
-          .map((u) => ({ id: u.id, name: u.name, path: u.storagePath, room: u.room || null, room_source: u.roomSource || "ai" })),
+          .map((u) => ({
+            id: u.id,
+            name: u.name,
+            path: u.storagePath,
+            room: u.room || null,
+            room_source: u.roomSource || "ai",
+          })),
         scenes: dedupeScenes(w.scenes || []).map((sc) => ({
-          key: sc.key, path: sc.path, compare: sc.compare || null, room: sc.room, kind: sc.kind,
-          scene_type: sc.scene_type, duration: sc.duration, motion: sc.motion, crop: sc.crop || null,
-          caption: sc.caption || null, disclosure: sc.disclosure || null, motion_level: sc.motion_level || "standard",
-          immersive_effect: sc.immersive_effect || null, exterior_effect: sc.exterior_effect || null,
-          labels: sc.labels || [], asset_id: sc.asset_id || null, version_id: sc.version_id || null,
-          clip_id: sc.clip_id || null, use_clip: !!sc.use_clip, animate_id: sc.animate_id || null,
-          enhancement_level: sc.enhancement_level || null, clip_seconds: sc.clip_seconds || null,
+          key: sc.key,
+          path: sc.path,
+          compare: sc.compare || null,
+          room: sc.room,
+          kind: sc.kind,
+          scene_type: sc.scene_type,
+          duration: sc.duration,
+          motion: sc.motion,
+          crop: sc.crop || null,
+          caption: sc.caption || null,
+          disclosure: sc.disclosure || null,
+          motion_level: sc.motion_level || "standard",
+          immersive_effect: sc.immersive_effect || null,
+          exterior_effect: sc.exterior_effect || null,
+          labels: sc.labels || [],
+          asset_id: sc.asset_id || null,
+          version_id: sc.version_id || null,
+          clip_id: sc.clip_id || null,
+          use_clip: !!sc.use_clip,
+          animate_id: sc.animate_id || null,
+          enhancement_level: sc.enhancement_level || null,
+          clip_seconds: sc.clip_seconds || null,
         })),
         titles: w.titles || null,
-        audio: { presentation: w.presentation, music: w.music, volume: w.volume, beatSync: w.beatSync, narration: w.narration, script: w.script, voice: w.voice, captions: w.captions },
+        audio: {
+          presentation: w.presentation,
+          music: w.music,
+          volume: w.volume,
+          beatSync: w.beatSync,
+          narration: w.narration,
+          script: w.script,
+          voice: w.voice,
+          captions: w.captions,
+        },
         branding: w.branding,
         quality: w.quality || "standard",
         format: w.primaryFormat || DEFAULT_FORMAT,
@@ -1400,7 +1783,8 @@ function ensureWizSaver(w) {
     onState: (state) => {
       w.saveState = state;
       const el = document.getElementById("rvSaveState");
-      if (el) el.textContent = { saving: "Saving…", saved: "Saved", error: "Couldn't Save" }[state] || "";
+      if (el)
+        el.textContent = { saving: "Saving…", saved: "Saved", error: "Couldn't Save" }[state] || "";
     },
   });
   return wizSaver;
@@ -1409,9 +1793,14 @@ function ensureWizSaver(w) {
 /** Autosave meaningful builder changes. Safe to call from render(). */
 export function autosaveWizard(w) {
   if (!w || w.busy) return;
-  const hasWork = (w.uploads || []).some((u) => u.storagePath) || (w.scenes || []).length > 0 || !!w.editingId;
+  const hasWork =
+    (w.uploads || []).some((u) => u.storagePath) || (w.scenes || []).length > 0 || !!w.editingId;
   if (!hasWork) return;
-  ensureWizSaver(w).queue({ id: w.draftKey, project_type: "property_video", body: wizardDraftBody(w) });
+  ensureWizSaver(w).queue({
+    id: w.draftKey,
+    project_type: "property_video",
+    body: wizardDraftBody(w),
+  });
 }
 
 export function stopWizardAutosave() {
@@ -1421,15 +1810,15 @@ export function stopWizardAutosave() {
   wizSaver = null;
 }
 
-
 /** Seeded HEIC files: convert with the shared picker rules, then accept. */
 async function drainSeedPending(w) {
   const pending = (w.seedPending || []).splice(0);
   if (!pending.length) return;
   const ready = [];
   for (const f of pending) {
-    try { ready.push(await normalizeImageFile(f)); }
-    catch (err) {
+    try {
+      ready.push(await normalizeImageFile(f));
+    } catch (err) {
       w.uploadFails = w.uploadFails || [];
       w.uploadFails.push({ name: f.name, why: "HEIC Could Not Be Converted", file: f });
     }
@@ -1468,9 +1857,6 @@ function selectSceneKeys(w, keys) {
   syncSceneOrder();
 }
 
-
-
-
 /* ---------- Property address (optional, autosaved) ---------- */
 let addrTimer = null;
 
@@ -1493,18 +1879,28 @@ function addrDraftPayload(w) {
     brand_kit_id: w.brandKitId || null,
     branding: w.branding,
     disclosure: { mode: w.disclosureMode },
-    settings: { quality: w.quality || "standard", primaryFormat: w.primaryFormat || DEFAULT_FORMAT, additionalFormats: w.additionalFormats || [] },
+    settings: {
+      quality: w.quality || "standard",
+      primaryFormat: w.primaryFormat || DEFAULT_FORMAT,
+      additionalFormats: w.additionalFormats || [],
+    },
   };
 }
 
 /** Address edits ride the shared draft autosave. No success toast per edit. */
 async function autosaveAddress(w) {
-  if (!w.editingId && !(w.scenes || []).length) { w.addressSaveState = ""; return; }
+  if (!w.editingId && !(w.scenes || []).length) {
+    w.addressSaveState = "";
+    return;
+  }
   w.addressSaveState = "saving";
   paintSaveState(w);
   try {
     const saved = await saveVideo({ project: addrDraftPayload(w) });
-    if (saved?.id) { w.editingId = saved.id; void transitions.adopt(saved.id); }
+    if (saved?.id) {
+      w.editingId = saved.id;
+      void transitions.adopt(saved.id);
+    }
     w.addressSaveState = "saved";
   } catch (_) {
     w.addressSaveState = "error";
@@ -1518,8 +1914,17 @@ function paintSaveState(w) {
   const host = document.querySelector(".rd-addr-bar") || document.querySelector(".rd-addrf");
   if (!host) return;
   const span = document.createElement("span");
-  span.className = "rv-save mono" + (w.addressSaveState === "saved" ? " ok" : w.addressSaveState === "error" ? " bad" : "");
-  span.textContent = w.addressSaveState === "saving" ? "Saving\u2026" : w.addressSaveState === "saved" ? "Saved" : w.addressSaveState === "error" ? "Couldn\u2019t Save \u2014 Retry" : "";
+  span.className =
+    "rv-save mono" +
+    (w.addressSaveState === "saved" ? " ok" : w.addressSaveState === "error" ? " bad" : "");
+  span.textContent =
+    w.addressSaveState === "saving"
+      ? "Saving\u2026"
+      : w.addressSaveState === "saved"
+        ? "Saved"
+        : w.addressSaveState === "error"
+          ? "Couldn\u2019t Save \u2014 Retry"
+          : "";
   if (!span.textContent) return;
   if (w.addressSaveState === "error") span.onclick = () => autosaveAddress(w);
   host.appendChild(span);
@@ -1527,7 +1932,10 @@ function paintSaveState(w) {
 
 async function lookupAddressMatch(w) {
   const text = cleanAddressText(w.address);
-  if (text.length < 8 || w.propertyId) { w.addressMatch = null; return; }
+  if (text.length < 8 || w.propertyId) {
+    w.addressMatch = null;
+    return;
+  }
   try {
     const res = await matchPropertyAddress({ data: { address: text } });
     if (S.wizard !== w) return;
@@ -1542,30 +1950,41 @@ function bindAddressInputs(el, w) {
       applyAddress(w, ev.target.value, "manual");
       w.addressMatchDismissed = false;
       /* Keep the sibling copy of the field in sync without a full repaint. */
-      el.querySelectorAll("#rvAddr, #rvAddrBar").forEach((other) => { if (other !== input) other.value = w.address; });
+      el.querySelectorAll("#rvAddr, #rvAddrBar").forEach((other) => {
+        if (other !== input) other.value = w.address;
+      });
       const t = el.querySelector("#rvTitle");
       if (t && !w.titleTouched) t.value = defaultTitle(w);
       clearTimeout(addrTimer);
-      addrTimer = setTimeout(() => { autosaveAddress(w); lookupAddressMatch(w); }, 900);
+      addrTimer = setTimeout(() => {
+        autosaveAddress(w);
+        lookupAddressMatch(w);
+      }, 900);
     });
   });
-  el.querySelectorAll("[data-addr-use]").forEach((b) => (b.onclick = async () => {
-    const id = b.dataset.addrUse;
-    w.propertyId = id;
-    w.propertyLabel = w.addressMatch?.address || w.address;
-    w.address = w.addressMatch?.address || w.address;
-    applyAddress(w, w.address, "existing_property");
-    w.addressMatch = null;
-    render();
-    autosaveAddress(w);
-  }));
-  el.querySelectorAll("[data-addr-sep]").forEach((b) => (b.onclick = () => {
-    /* Keep Separate preserves the typed address as project metadata only. */
-    w.addressMatchDismissed = true;
-    w.propertyId = null;
-    render();
-    autosaveAddress(w);
-  }));
+  el.querySelectorAll("[data-addr-use]").forEach(
+    (b) =>
+      (b.onclick = async () => {
+        const id = b.dataset.addrUse;
+        w.propertyId = id;
+        w.propertyLabel = w.addressMatch?.address || w.address;
+        w.address = w.addressMatch?.address || w.address;
+        applyAddress(w, w.address, "existing_property");
+        w.addressMatch = null;
+        render();
+        autosaveAddress(w);
+      }),
+  );
+  el.querySelectorAll("[data-addr-sep]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        /* Keep Separate preserves the typed address as project metadata only. */
+        w.addressMatchDismissed = true;
+        w.propertyId = null;
+        render();
+        autosaveAddress(w);
+      }),
+  );
   el.querySelectorAll("[data-addr-retry]").forEach((b) => (b.onclick = () => autosaveAddress(w)));
 }
 
@@ -1607,7 +2026,6 @@ function stepReady() {
   if (w.step === 7) return qualityCompat(w).compatible;
   return true;
 }
-
 
 /* ======================= STEP 2, THE PHOTO GRID ======================= */
 /** Analysis-shaped view of the wizard's available photos. */
@@ -1661,8 +2079,20 @@ function roomPickerHtml() {
       <input id="rvRoomQ" value="${esc(q)}" placeholder="Search Room Types" autocomplete="off" maxlength="60">
     </div>
     <div class="rv-roomlist">
-      ${groupRooms(found).map((g) => `<div class="rv-roomgrp">${esc(g.group)}</div>` + g.rooms.map((r) => `<button class="rv-roomopt ${cur === r.label ? "on" : ""}" data-roomset="${esc(r.label)}">
-        <i data-lucide="${esc(r.icon)}"></i><span>${esc(r.label)}</span>${cur === r.label ? `<em data-lucide="check"></em>` : ""}</button>`).join("")).join("")}
+      ${groupRooms(found)
+        .map(
+          (g) =>
+            `<div class="rv-roomgrp">${esc(g.group)}</div>` +
+            g.rooms
+              .map(
+                (
+                  r,
+                ) => `<button class="rv-roomopt ${cur === r.label ? "on" : ""}" data-roomset="${esc(r.label)}">
+        <i data-lucide="${esc(r.icon)}"></i><span>${esc(r.label)}</span>${cur === r.label ? `<em data-lucide="check"></em>` : ""}</button>`,
+              )
+              .join(""),
+        )
+        .join("")}
       ${custom ? `<button class="rv-roomopt custom" data-roomset="${esc(q.trim())}"><i data-lucide="plus"></i><span>Use “${esc(q.trim())}”</span></button>` : ""}
       ${found.length || custom ? "" : `<div class="rv-note sm">No Room Types Match That Search.</div>`}
     </div>
@@ -1673,7 +2103,6 @@ function roomPickerHtml() {
     </div>
   </div></div>`;
 }
-
 
 /* ======================= AI ANIMATE =======================
    One scene, one genuine AI-generated clip. Everything durable (price,
@@ -1770,10 +2199,14 @@ async function startAnimate(w) {
     toast(`This Clip Costs ${ANIMATE_CREDITS_PER_CLIP} Credits And Your Balance Is ${bal}.`);
     return;
   }
-  w.animate.busy = true; render();
+  w.animate.busy = true;
+  render();
   try {
     /* Selecting a photo first keeps the clip attached to a real scene. */
-    if (!src.scene && src.asset) { w.scenes = mergeScenes(w.scenes || [], [assetToScene(src.asset)]); syncSceneOrder(); }
+    if (!src.scene && src.asset) {
+      w.scenes = mergeScenes(w.scenes || [], [assetToScene(src.asset)]);
+      syncSceneOrder();
+    }
     const projectId = await ensureVideoProjectId(w);
     await sceneClips.start({
       video_project_id: projectId,
@@ -1790,7 +2223,10 @@ async function startAnimate(w) {
     toast("Generating Your AI Clip. You Can Keep Working.");
   } catch (e) {
     toast(e?.message || "That clip could not be started.");
-    if (w.animate) { w.animate.busy = false; w.animate.confirm = false; }
+    if (w.animate) {
+      w.animate.busy = false;
+      w.animate.confirm = false;
+    }
   }
   render();
 }
@@ -1853,32 +2289,59 @@ function bindAnimate(el, w, render) {
     w.animate.confirm = false;
     render();
   });
-  const closeAnim = () => { w.animate = null; render(); };
+  const closeAnim = () => {
+    w.animate = null;
+    render();
+  };
   on("#rvAnimX, #rvAnimCancel, #rvAnimNo", "click", closeAnim);
-  on("#rvAnimGo", "click", () => { if (w.animate) { w.animate.confirm = true; render(); } });
+  on("#rvAnimGo", "click", () => {
+    if (w.animate) {
+      w.animate.confirm = true;
+      render();
+    }
+  });
   on("#rvAnimYes", "click", () => void startAnimate(w));
 
   /* Clip review */
-  const closeRev = () => { w.clipReview = null; render(); };
+  const closeRev = () => {
+    w.clipReview = null;
+    render();
+  };
   on("#rvClipX", "click", closeRev);
   on("#rvClipKeep", "click", async () => {
-    const key = w.clipReview?.key; const clip = clipOf(key);
-    if (clip) { try { markSceneClip(w, key, await sceneClips.use(clip.id, false), false); } catch (_) {} }
+    const key = w.clipReview?.key;
+    const clip = clipOf(key);
+    if (clip) {
+      try {
+        markSceneClip(w, key, await sceneClips.use(clip.id, false), false);
+      } catch (_) {}
+    }
     closeRev();
   });
   on("#rvClipUse", "click", async () => {
-    const key = w.clipReview?.key; const clip = clipOf(key);
+    const key = w.clipReview?.key;
+    const clip = clipOf(key);
     if (!clip) return closeRev();
     try {
       markSceneClip(w, key, await sceneClips.use(clip.id, true), true);
       toast("This Scene Will Use The AI Clip.");
-    } catch (err) { toast(err?.message || "That clip could not be used."); }
+    } catch (err) {
+      toast(err?.message || "That clip could not be used.");
+    }
     closeRev();
   });
   on("#rvClipRegen", "click", async () => {
-    const key = w.clipReview?.key; const clip = clipOf(key);
+    const key = w.clipReview?.key;
+    const clip = clipOf(key);
     w.clipReview = null;
-    if (clip) { try { await sceneClips.retry(clip.id); S.credits = await getMyCredits().catch(() => S.credits); } catch (err) { toast(err?.message || "That clip could not be regenerated."); } }
+    if (clip) {
+      try {
+        await sceneClips.retry(clip.id);
+        S.credits = await getMyCredits().catch(() => S.credits);
+      } catch (err) {
+        toast(err?.message || "That clip could not be regenerated.");
+      }
+    }
     render();
   });
   on("#rvClipDl", "click", () => {
@@ -1890,9 +2353,14 @@ function bindAnimate(el, w, render) {
     const v = el.querySelector("#rvClipVid");
     if (!v) return;
     const a = e.currentTarget.dataset.clipctl;
-    if (a === "play") { v.paused ? v.play() : v.pause(); }
-    else if (a === "mute") { v.muted = !v.muted; }
-    else { v.currentTime = 0; v.play(); }
+    if (a === "play") {
+      v.paused ? v.play() : v.pause();
+    } else if (a === "mute") {
+      v.muted = !v.muted;
+    } else {
+      v.currentTime = 0;
+      v.play();
+    }
   });
 }
 
@@ -1921,35 +2389,110 @@ function sceneSettings(s, clip) {
   const fr = sceneFrames.get(s.key);
   const add = (o) => out.push(o);
   if (clip && (clip.status === "queued" || clip.status === "processing"))
-    add({ id: "clip", icon: "loader", label: "AI Clip", value: "Generating", cls: "busy", pop: null, primary: true, locked: true });
+    add({
+      id: "clip",
+      icon: "loader",
+      label: "AI Clip",
+      value: "Generating",
+      cls: "busy",
+      pop: null,
+      primary: true,
+      locked: true,
+    });
   else if (clip && clip.status === "failed")
-    add({ id: "clip", icon: "triangle-alert", label: "AI Clip", value: "Failed", cls: "bad", pop: null, primary: true, locked: true });
+    add({
+      id: "clip",
+      icon: "triangle-alert",
+      label: "AI Clip",
+      value: "Failed",
+      cls: "bad",
+      pop: null,
+      primary: true,
+      locked: true,
+    });
   else if (clip && clip.status === "completed" && clip.approved && s.use_clip)
-    add({ id: "clip", icon: "clapperboard", label: "AI Clip", value: "In Use", cls: "ai", pop: null, primary: true, locked: true });
+    add({
+      id: "clip",
+      icon: "clapperboard",
+      label: "AI Clip",
+      value: "In Use",
+      cls: "ai",
+      pop: null,
+      primary: true,
+      locked: true,
+    });
   if (frameConfigured(fr))
-    add({ id: "frames", icon: "arrow-left-right", label: "Start / End", value: seFrameStatusText(fr), pop: "look:frames", primary: true });
+    add({
+      id: "frames",
+      icon: "arrow-left-right",
+      label: "Start / End",
+      value: seFrameStatusText(fr),
+      pop: "look:frames",
+      primary: true,
+    });
   if (!s.use_clip && ((s.motion || "auto") !== "auto" || s.motion_level === "immersive"))
-    add({ id: "motion", icon: "camera", label: "Motion", value: motionLabel(s), pop: "motion", primary: true });
+    add({
+      id: "motion",
+      icon: "camera",
+      label: "Motion",
+      value: motionLabel(s),
+      pop: "motion",
+      primary: true,
+    });
   if (s.vfx && s.vfx !== "none")
-    add({ id: "vfx", icon: "wand-sparkles", label: "Effect", value: tileById(s.vfx)?.label || "Applied", pop: "look", primary: true });
+    add({
+      id: "vfx",
+      icon: "wand-sparkles",
+      label: "Effect",
+      value: tileById(s.vfx)?.label || "Applied",
+      pop: "look",
+      primary: true,
+    });
   else if (s.look)
-    add({ id: "look", icon: "palette", label: "Look", value: lookById(s.look)?.label || "Applied", pop: "look", primary: true });
+    add({
+      id: "look",
+      icon: "palette",
+      label: "Look",
+      value: lookById(s.look)?.label || "Applied",
+      pop: "look",
+      primary: true,
+    });
   if (s.caption) add({ id: "cap", icon: "type", label: "Text", value: s.caption, pop: "cap" });
-  if (s.crop && s.crop !== "center") add({ id: "crop", icon: "crop", label: "Crop", value: s.crop === "top" ? "Top" : "Bottom", pop: "crop" });
-  if (s.exterior_effect) add({ id: "ext", icon: "sun", label: "Exterior", value: "Applied", pop: "motion" });
+  if (s.crop && s.crop !== "center")
+    add({
+      id: "crop",
+      icon: "crop",
+      label: "Crop",
+      value: s.crop === "top" ? "Top" : "Bottom",
+      pop: "crop",
+    });
+  if (s.exterior_effect)
+    add({ id: "ext", icon: "sun", label: "Exterior", value: "Applied", pop: "motion" });
   return out;
 }
 
 /** Reset one setting back to its default. Mirrors sceneSettings ids. */
 function resetSceneSetting(s, id) {
   if (!s) return;
-  if (id === "motion") { s.motion = "auto"; s.motion_level = "standard"; s.immersive_effect = null; }
-  else if (id === "vfx") { s.vfx = "none"; s.vfx_gen = null; }
-  else if (id === "look") { s.look = null; s.look_amount = null; }
-  else if (id === "cap") { s.caption = ""; }
-  else if (id === "crop") { s.crop = "center"; }
-  else if (id === "ext") { s.exterior_effect = null; }
-  else if (id === "frames") { void sceneFrames.clear(s.key).catch(() => {}); }
+  if (id === "motion") {
+    s.motion = "auto";
+    s.motion_level = "standard";
+    s.immersive_effect = null;
+  } else if (id === "vfx") {
+    s.vfx = "none";
+    s.vfx_gen = null;
+  } else if (id === "look") {
+    s.look = null;
+    s.look_amount = null;
+  } else if (id === "cap") {
+    s.caption = "";
+  } else if (id === "crop") {
+    s.crop = "center";
+  } else if (id === "ext") {
+    s.exterior_effect = null;
+  } else if (id === "frames") {
+    void sceneFrames.clear(s.key).catch(() => {});
+  }
 }
 
 /**
@@ -1963,13 +2506,23 @@ function sceneTreatment(s, clip) {
   if (!s) return "";
   const list = sceneSettings(s, clip);
   if (!list.length) return "";
-  const tone = list.some((f) => f.cls === "bad") ? "bad" : list.some((f) => f.cls === "busy") ? "busy" : "";
+  const tone = list.some((f) => f.cls === "bad")
+    ? "bad"
+    : list.some((f) => f.cls === "busy")
+      ? "busy"
+      : "";
   return cardStatusHtml({
     flow: "video",
     key: s.key,
     tone,
     noun: "enhancements",
-    features: list.map((f) => ({ id: f.id, icon: f.icon, label: f.label, value: f.value, removable: !f.locked })),
+    features: list.map((f) => ({
+      id: f.id,
+      icon: f.icon,
+      label: f.label,
+      value: f.value,
+      removable: !f.locked,
+    })),
   });
 }
 
@@ -1989,16 +2542,29 @@ registerCardStatus("video", {
     const s = cmScene(key);
     if (!s) return [];
     return sceneSettings(s, sceneClips.get(key)).map((f) => ({
-      id: f.id, icon: f.icon, label: f.label, value: f.value, removable: !f.locked, pop: f.pop,
+      id: f.id,
+      icon: f.icon,
+      label: f.label,
+      value: f.value,
+      removable: !f.locked,
+      pop: f.pop,
     }));
   },
   edit(key, id) {
     const w = S.wizard;
     const f = (this.features(key) || []).find((x) => x.id === id);
-    if (!f || !f.pop) { document.querySelector(`[data-clip="open"][data-key="${CSS.escape(key)}"]`)?.click(); return; }
+    if (!f || !f.pop) {
+      document.querySelector(`[data-clip="open"][data-key="${CSS.escape(key)}"]`)?.click();
+      return;
+    }
     const [kind, tab] = String(f.pop).split(":");
-    if (w) { w.pop = null; w.popTabPending = tab || null; }
-    try { render(); } catch (_) {}
+    if (w) {
+      w.pop = null;
+      w.popTabPending = tab || null;
+    }
+    try {
+      render();
+    } catch (_) {}
     setTimeout(() => {
       document.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key)}"]`)?.click();
     }, 0);
@@ -2008,29 +2574,48 @@ registerCardStatus("video", {
   remove(key, id) {
     const s = cmScene(key);
     if (!s) return;
-    const label = (sceneSettings(s, sceneClips.get(key)).find((f) => f.id === id) || {}).label || "Setting";
+    const label =
+      (sceneSettings(s, sceneClips.get(key)).find((f) => f.id === id) || {}).label || "Setting";
     const before = {};
-    (SETTING_FIELDS[id] || []).forEach((k) => { before[k] = s[k]; });
+    (SETTING_FIELDS[id] || []).forEach((k) => {
+      before[k] = s[k];
+    });
     resetSceneSetting(s, id);
-    try { autosaveWizard(S.wizard); } catch (_) {}
-    try { render(); } catch (_) {}
+    try {
+      autosaveWizard(S.wizard);
+    } catch (_) {}
+    try {
+      render();
+    } catch (_) {}
     if (id === "frames" || id === "clip") return;
     undoToast(`${label} Removed From This Scene.`, () => {
       const cur = cmScene(key);
       if (!cur) return;
-      Object.keys(before).forEach((k) => { cur[k] = before[k]; });
-      try { autosaveWizard(S.wizard); } catch (_) {}
-      try { render(); } catch (_) {}
+      Object.keys(before).forEach((k) => {
+        cur[k] = before[k];
+      });
+      try {
+        autosaveWizard(S.wizard);
+      } catch (_) {}
+      try {
+        render();
+      } catch (_) {}
     });
   },
 });
 
-
-
 const TRANS_ICON = {
-  auto: "between-horizontal-start", cut: "scissors", dissolve: "blend", fade: "circle-dashed", ai: "wand-sparkles",
-  slide_left: "arrow-left", slide_right: "arrow-right", push: "chevrons-right", wipe: "columns-2",
-  zoom_match: "scan-search", match_move: "move-3d",
+  auto: "between-horizontal-start",
+  cut: "scissors",
+  dissolve: "blend",
+  fade: "circle-dashed",
+  ai: "wand-sparkles",
+  slide_left: "arrow-left",
+  slide_right: "arrow-right",
+  push: "chevrons-right",
+  wipe: "columns-2",
+  zoom_match: "scan-search",
+  match_move: "move-3d",
 };
 
 /* ------------------------------------------------------- the video ending
@@ -2041,14 +2626,33 @@ const TRANS_ICON = {
 
 const ENDING_OPTIONS = [
   { id: "none", label: "None", blurb: "End immediately after the final frame.", icon: "square" },
-  { id: "fade_black", label: "Fade To Black", blurb: "Gradually fade the final scene to black.", icon: "circle" },
-  { id: "fade_white", label: "Fade To White", blurb: "Gradually fade the final scene to white.", icon: "circle-dashed" },
-  { id: "brand_end_card", label: "Brand End Card", blurb: "Show the configured logo, colors and call to action.", icon: "badge-check" },
+  {
+    id: "fade_black",
+    label: "Fade To Black",
+    blurb: "Gradually fade the final scene to black.",
+    icon: "circle",
+  },
+  {
+    id: "fade_white",
+    label: "Fade To White",
+    blurb: "Gradually fade the final scene to white.",
+    icon: "circle-dashed",
+  },
+  {
+    id: "brand_end_card",
+    label: "Brand End Card",
+    blurb: "Show the configured logo, colors and call to action.",
+    icon: "badge-check",
+  },
 ];
 
 /** Brand end card is offered only when the project actually has branding. */
 function hasBrandEndCard(w) {
-  return !!(w && (w.brandKitId || (w.branding && (w.branding.logo_url || w.branding.logo || w.branding.primary_color))));
+  return !!(
+    w &&
+    (w.brandKitId ||
+      (w.branding && (w.branding.logo_url || w.branding.logo || w.branding.primary_color)))
+  );
 }
 
 function endingState(w) {
@@ -2056,12 +2660,20 @@ function endingState(w) {
   let type = ENDING_OPTIONS.some((o) => o.id === e.endingType) ? e.endingType : "none";
   if (type === "brand_end_card" && !hasBrandEndCard(w)) type = "none";
   const duration = Math.min(3, Math.max(0.5, Number(e.duration) > 0 ? Number(e.duration) : 1));
-  return { type, duration, label: (ENDING_OPTIONS.find((o) => o.id === type) || ENDING_OPTIONS[0]).label };
+  return {
+    type,
+    duration,
+    label: (ENDING_OPTIONS.find((o) => o.id === type) || ENDING_OPTIONS[0]).label,
+  };
 }
 
 function setEnding(w, patch) {
   const cur = endingState(w);
-  w.ending = { endingType: patch.endingType ?? cur.type, duration: Number(patch.duration ?? cur.duration), updatedAt: new Date().toISOString() };
+  w.ending = {
+    endingType: patch.endingType ?? cur.type,
+    duration: Number(patch.duration ?? cur.duration),
+    updatedAt: new Date().toISOString(),
+  };
   autosaveWizard(w);
 }
 
@@ -2077,7 +2689,8 @@ function endingControlHtml(w, s) {
   if (!scenes.length || scenes[scenes.length - 1].key !== s.key) return "";
   const st = endingState(w);
   const tip = `Ending: ${st.label}`;
-  const icon = st.type === "none" ? "square" : st.type === "brand_end_card" ? "badge-check" : "circle";
+  const icon =
+    st.type === "none" ? "square" : st.type === "brand_end_card" ? "badge-check" : "circle";
   return `<button class="rv-end" data-pop="ending" data-key="${esc(s.key)}" title="${esc(tip)}" aria-label="${esc(tip)}. After The Final Scene.">
     <i data-lucide="${icon}"></i><span>${esc(st.label)}</span>
   </button>`;
@@ -2094,7 +2707,6 @@ function addCardHtml(id) {
     </button>
   </div>`;
 }
-
 
 /**
  * A transition connects Scene A to Scene B, so its trigger sits in the gutter
@@ -2114,7 +2726,9 @@ function transitionConn(s) {
   const label = transitionLabel(st.type);
   const tip = failed
     ? `Transition Failed: ${label}`
-    : st.auto ? `Transition: ${label} · Auto Selected` : `Transition: ${label}`;
+    : st.auto
+      ? `Transition: ${label} · Auto Selected`
+      : `Transition: ${label}`;
   const pairTip = failed
     ? `Transition Failed: Scene ${idx + 1} → Scene ${idx + 2} · ${label}`
     : `Transition: Scene ${idx + 1} → Scene ${idx + 2} · ${label}${st.auto ? " · Auto Selected" : ""}`;
@@ -2174,10 +2788,17 @@ function layoutConnectors() {
       const conn = conns.get(tile.getAttribute("data-key"));
       if (!conn) return;
       const next = tiles[n + 1];
-      if (!next) { conn.remove(); return; }
+      if (!next) {
+        conn.remove();
+        return;
+      }
       const wraps = Math.abs(tops[n + 1] - tops[n]) > 4;
-      const tip = (wraps ? conn.getAttribute("data-pair-tip") : conn.getAttribute("data-seam-tip")) || "";
-      if (tip) { conn.setAttribute("title", tip); conn.setAttribute("aria-label", tip); }
+      const tip =
+        (wraps ? conn.getAttribute("data-pair-tip") : conn.getAttribute("data-seam-tip")) || "";
+      if (tip) {
+        conn.setAttribute("title", tip);
+        conn.setAttribute("aria-label", tip);
+      }
       if (!wraps) return;
       conn.classList.add("wrap");
       const band = document.createElement("div");
@@ -2190,10 +2811,11 @@ function layoutConnectors() {
   }
 }
 
-
 /** The minimal shape the Auto rule needs to choose a restrained move. */
 function sceneShape(s) {
-  return s ? { key: s.key, room_name: s.room || null, use_clip: !!s.use_clip, motion: s.motion || null } : null;
+  return s
+    ? { key: s.key, room_name: s.room || null, use_clip: !!s.use_clip, motion: s.motion || null }
+    : null;
 }
 
 /** Everything outside Cut, Dissolve and Fade folds onto the nearest of them. */
@@ -2213,8 +2835,16 @@ function transState(s, nxt) {
   const mode = row?.settings?.mode;
   const auto = !row || row.type === "auto" || mode === "auto";
   const type = auto ? autoPick(sceneShape(s), sceneShape(nxt)) : offeredType(row.type);
-  const stored = typeof row?.duration_ms === "number" && row.duration_ms > 0 ? row.duration_ms : DEFAULT_TRANSITION_MS;
-  return { row, auto, type, durationMs: type === "cut" ? 0 : Math.min(2000, Math.max(200, stored)) };
+  const stored =
+    typeof row?.duration_ms === "number" && row.duration_ms > 0
+      ? row.duration_ms
+      : DEFAULT_TRANSITION_MS;
+  return {
+    row,
+    auto,
+    type,
+    durationMs: type === "cut" ? 0 : Math.min(2000, Math.max(200, stored)),
+  };
 }
 
 function tileHtml(a, seq) {
@@ -2223,7 +2853,8 @@ function tileHtml(a, seq) {
   const flags = (a.flags || []).map((f) => FLAG_LABEL[f] || f);
   const cropHot = s && s.crop && s.crop !== "center";
   const vfxHot = s && ((s.vfx && s.vfx !== "none") || s.look);
-  const camHot = s && ((s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect);
+  const camHot =
+    s && ((s.motion && s.motion !== "auto") || s.motion_level === "immersive" || s.exterior_effect);
   const cap = s ? String(s.caption || "") : "";
   const clip = sceneClips.get(a.key);
   const clipHot = !!clip && clip.status !== "cancelled" && clip.status !== "failed";
@@ -2232,11 +2863,31 @@ function tileHtml(a, seq) {
      is not a toolbar button: it lives inside the Effects modal. */
   const tools = imageToolbarHtml(
     [
-      { label: "Crop", icon: "crop", hot: cropHot, attrs: { "data-pop": "crop", "data-key": a.key } },
-      { label: "Effects", icon: "wand-sparkles", hot: vfxHot, attrs: { "data-pop": "look", "data-key": a.key } },
-      { label: "Motion", icon: "camera", hot: camHot, attrs: { "data-pop": "motion", "data-key": a.key } },
+      {
+        label: "Crop",
+        icon: "crop",
+        hot: cropHot,
+        attrs: { "data-pop": "crop", "data-key": a.key },
+      },
+      {
+        label: "Effects",
+        icon: "wand-sparkles",
+        hot: vfxHot,
+        attrs: { "data-pop": "look", "data-key": a.key },
+      },
+      {
+        label: "Motion",
+        icon: "camera",
+        hot: camHot,
+        attrs: { "data-pop": "motion", "data-key": a.key },
+      },
       { label: "Text", icon: "type", hot: !!cap, attrs: { "data-pop": "cap", "data-key": a.key } },
-      { label: "Animate", icon: "clapperboard", hot: clipHot, attrs: { "data-clip": "open", "data-key": a.key } },
+      {
+        label: "Animate",
+        icon: "clapperboard",
+        hot: clipHot,
+        attrs: { "data-clip": "open", "data-key": a.key },
+      },
     ],
     { label: "Scene Tools" },
   );
@@ -2246,7 +2897,7 @@ function tileHtml(a, seq) {
       ${flags.length ? `<em class="rv-flag" title="${esc(flags.join(", "))}" data-goto="media"><i data-lucide="triangle-alert"></i></em>` : ""}
       ${s ? sceneNumberHtml(seq) : ""}
       ${sceneTreatment(s, clip)}
-      ${cardMenuButtonHtml({ flow: "video", key: a.key, label: s ? "Scene " + (seq || "") : (a.room ? a.room + " photo" : "this photo") })}
+      ${cardMenuButtonHtml({ flow: "video", key: a.key, label: s ? "Scene " + (seq || "") : a.room ? a.room + " photo" : "this photo" })}
       ${s ? endingControlHtml(w, s) : ""}
 
       ${tools}
@@ -2259,7 +2910,6 @@ function tileHtml(a, seq) {
     ${clipCardHtml(a.key, clip)}
   </div>`;
 }
-
 
 /* ------------------------------------------------- shared card overflow menu
    Same component as the Photo Design grid. A scene card acts on the project's
@@ -2341,7 +2991,12 @@ registerCardMenu("video", {
         items: [
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
           { action: "room", label: "Change Room Type", icon: "door-open" },
-          { action: "duration", label: "Set Duration", icon: "timer", tip: "Scene Length Comes From The Video Length Setting." },
+          {
+            action: "duration",
+            label: "Set Duration",
+            icon: "timer",
+            tip: "Scene Length Comes From The Video Length Setting.",
+          },
           { action: "motion", label: "Motion", icon: "camera", hidden: !s },
           { action: "vfx", label: "VFX", icon: "wand-sparkles", hidden: !s },
           { action: "text", label: "Text", icon: "type", hidden: !s },
@@ -2356,7 +3011,15 @@ registerCardMenu("video", {
 
       {
         danger: true,
-        items: [{ action: "deletemedia", label: "Delete From Media", icon: "trash-2", danger: true, hidden: !a.path }],
+        items: [
+          {
+            action: "deletemedia",
+            label: "Delete From Media",
+            icon: "trash-2",
+            danger: true,
+            hidden: !a.path,
+          },
+        ],
       },
     ];
   },
@@ -2406,7 +3069,9 @@ registerCardMenu("video", {
       const ok = await confirmDialog({
         title: "Replace This Photo?",
         body: "The scene keeps its position, property and settings, but points at a new source photo.",
-        notes: ["Any AI clip or Start / End frames generated from the old photo will no longer apply to this scene."],
+        notes: [
+          "Any AI clip or Start / End frames generated from the old photo will no longer apply to this scene.",
+        ],
         confirmLabel: "Choose Photo",
       });
       if (!ok) return;
@@ -2418,7 +3083,10 @@ registerCardMenu("video", {
         a.path = path;
         a.name = (norm || file).name || a.name;
         const s = cmScene(key);
-        if (s) { s.path = path; s.use_clip = false; }
+        if (s) {
+          s.path = path;
+          s.use_clip = false;
+        }
         autosaveWizard(w);
         render();
         toast("Photo Replaced.");
@@ -2444,13 +3112,20 @@ registerCardMenu("video", {
       const ok = await confirmDialog({
         title: "Delete This Photo From Media?",
         body: "This permanently removes the source photo from Media. It may also become unavailable in other drafts. Completed exports will remain unchanged.",
-        notes: uses > 1 ? ["This photo is used by " + uses + " scenes here. All of them will be removed."] : [],
+        notes:
+          uses > 1
+            ? ["This photo is used by " + uses + " scenes here. All of them will be removed."]
+            : [],
         confirmLabel: "Delete Photo",
         danger: true,
       });
       if (!ok) return;
       const path = a.path;
-      try { await deleteRoomPhoto(path); } catch (e) { return void toast(e?.message || "That photo could not be deleted."); }
+      try {
+        await deleteRoomPhoto(path);
+      } catch (e) {
+        return void toast(e?.message || "That photo could not be deleted.");
+      }
       w.available = w.available.filter((x) => x.path !== path);
       w.gridOrder = (w.gridOrder || []).filter((k) => w.available.some((x) => x.key === k));
       syncSceneOrder();
@@ -2509,7 +3184,8 @@ function stepSelect() {
      turns into a retryable message instead of an endless spinner. */
   const organizing = (w.selectGridLoading || w.analysisStatus === "running") && !w.organizeStalled;
   if (organizing) armOrganizeWatchdog(w);
-  const organizeFailed = !organizing && w.analysisStatus === "failed" && (w.available || []).length > 0;
+  const organizeFailed =
+    !organizing && w.analysisStatus === "failed" && (w.available || []).length > 0;
   return `${organizing ? `<div class="rv-organizing sm"><i data-lucide="loader"></i>Organizing photos…</div>` : ""}
   ${organizeFailed ? `<div class="rv-notice"><i data-lucide="triangle-alert"></i><span>Photos could not be organized automatically. Your photos are all here — you can arrange them yourself.</span><button class="fb-link" id="rvRetryOrg">Try Again</button></div>` : ""}
   ${w.enrichNotice ? `<div class="rv-notice"><i data-lucide="info"></i><span>${esc(w.enrichNotice)}</span><button class="fb-link" id="rvEnrichX">Dismiss</button></div>` : ""}
@@ -2635,7 +3311,9 @@ async function startOverBuilder(w) {
   }
   w.startOverModal = null;
   /* A fresh session id for whatever is created next. */
-  try { sessionStorage.removeItem("rd_reveal_session"); } catch (_) {}
+  try {
+    sessionStorage.removeItem("rd_reveal_session");
+  } catch (_) {}
   leaveBuilder(w);
   toast("Draft Saved. Studio Is Ready For A New Project.");
 }
@@ -2649,7 +3327,9 @@ async function confirmDeleteDraft(w) {
   try {
     if (w.editingId) await deleteProjectDraft({ data: { id: w.editingId } });
     for (const path of paths) {
-      try { await deleteRoomPhoto(path); } catch (_) {}
+      try {
+        await deleteRoomPhoto(path);
+      } catch (_) {}
     }
   } catch (e) {
     w.deleteModal = { ...m, busy: false };
@@ -2690,7 +3370,8 @@ const MOTION_COPY = {
   pan_left: "Pan Left glides across the room from right to left.",
   pan_right: "Pan Right glides across the room from left to right.",
   orbit_left: "Orbit Left rotates the camera counter clockwise around the focal point.",
-  orbit_right: "Orbit Right rotates the camera clockwise around the focal point, creating a sense of depth.",
+  orbit_right:
+    "Orbit Right rotates the camera clockwise around the focal point, creating a sense of depth.",
   tilt_up: "Tilt Up sweeps the frame upward, good for tall ceilings and entryways.",
   tilt_down: "Tilt Down settles the frame downward, good for stairs and open floor plans.",
   dolly_left: "Dolly Left tracks sideways to the left while easing in.",
@@ -2702,7 +3383,8 @@ const MOTION_COPY = {
   drift_in: "Slow Drift In is a barely there push, best under narration.",
   drift_out: "Slow Drift Out is a barely there pull, best under narration.",
   static: "Static holds the frame still, letting the design speak for itself.",
-  curtains: "Curtains Drifting adds a soft fabric movement near windows while the room stays exactly as designed.",
+  curtains:
+    "Curtains Drifting adds a soft fabric movement near windows while the room stays exactly as designed.",
   fire: "Fireplace Flicker animates the flame and its light spill only.",
   water: "Water Movement ripples pools, tubs and open water in the frame.",
   light: "Daylight Shift moves the natural light across the room over the length of the clip.",
@@ -2713,18 +3395,30 @@ const MOTION_COPY = {
 };
 /** Preview animation class per option. Immersive and exterior reuse the closest camera move. */
 const MOTION_PREVIEW = {
-  curtains: "drift_in", fire: "static", water: "drift_in", light: "static", foliage: "drift_in",
-  approach: "push", rise: "pull", aerial_reveal: "pull",
+  curtains: "drift_in",
+  fire: "static",
+  water: "drift_in",
+  light: "static",
+  foliage: "drift_in",
+  approach: "push",
+  rise: "pull",
+  aerial_reveal: "pull",
 };
 const FX_PREVIEW = ["curtains", "fire", "water", "light", "foliage"];
-function fxClass(id) { return FX_PREVIEW.includes(id) ? `rv-pop-fx fx-${id}` : "rv-pop-fx"; }
+function fxClass(id) {
+  return FX_PREVIEW.includes(id) ? `rv-pop-fx fx-${id}` : "rv-pop-fx";
+}
 function motionName(id) {
   const all = [...STANDARD_MOTIONS, ...IMMERSIVE_EFFECTS, ...EXTERIOR_EFFECTS];
   const hit = all.find(([i]) => i === id);
   return hit ? (id === "auto" ? "Auto, Recommended" : hit[1]) : "Auto, Recommended";
 }
 
-const CROPS = [["center", "Center"], ["top", "Top"], ["bottom", "Bottom"]];
+const CROPS = [
+  ["center", "Center"],
+  ["top", "Top"],
+  ["bottom", "Bottom"],
+];
 
 function motionLabel(s) {
   if (s.motion_level === "immersive") {
@@ -2757,7 +3451,12 @@ function seSceneImage(w, s) {
     s?.url ||
     null;
   if (!path) return null;
-  return { key: s?.key || path, path, room: asset?.room || s?.room || null, asset_id: asset?.asset_id || null };
+  return {
+    key: s?.key || path,
+    path,
+    room: asset?.room || s?.room || null,
+    asset_id: asset?.asset_id || null,
+  };
 }
 
 /** Validation for the Generate button, in the order the user can fix them. */
@@ -2782,7 +3481,8 @@ function seReady(w, s) {
 function seFrameStatusText(fr) {
   if (!fr) return "Not Set";
   if (fr.status === "queued") return "Queued";
-  if (fr.status === "processing") return `Generating${fr.progress ? ` ${Math.round(fr.progress)}%` : ""}`;
+  if (fr.status === "processing")
+    return `Generating${fr.progress ? ` ${Math.round(fr.progress)}%` : ""}`;
   if (fr.status === "failed") return "Failed";
   if (fr.status === "completed") return `${seMotionLabel(fr.motion_preset)} Clip`;
   return `${seMotionLabel(fr.motion_preset)}, Not Generated`;
@@ -2805,7 +3505,12 @@ function seWorkspace(w, s) {
   const seconds = Number(d.seconds || 8);
   const fmt = w.primaryFormat || DEFAULT_FORMAT;
 
-  const slot = (which, a, label, hint) => `<div class="se-slot ${a ? "on" : ""} ${!a && which === "end" ? "empty" : ""}"
+  const slot = (
+    which,
+    a,
+    label,
+    hint,
+  ) => `<div class="se-slot ${a ? "on" : ""} ${!a && which === "end" ? "empty" : ""}"
     ${!a && which === "end" ? `role="button" tabindex="0" data-sepick="end"` : ""}>
     <div class="se-slot-h"><b>${label}</b><button class="fb-link" data-sepick="${which}">${a ? "Replace" : "Choose"}</button></div>
     <div class="se-th" ${a ? `data-img="${esc(a.path)}"` : ""} ${a ? `data-sesrc="${esc(a.path)}"` : ""}>${
@@ -2828,8 +3533,14 @@ function seWorkspace(w, s) {
           </div>
         </div>
         <span class="rv-note sm">Photos in this project, generated designs and uploaded media.</span>
-        <div class="se-grid">${w.available.map((a) => `<button class="se-pick ${(d.picking === "start" ? d.start_key : d.end_key) === a.key ? "on" : ""}"
-          data-sepicked="${esc(a.key)}" title="${esc(a.room || "Untitled")}"><span data-img="${esc(a.path)}"></span></button>`).join("")}</div>
+        <div class="se-grid">${w.available
+          .map(
+            (
+              a,
+            ) => `<button class="se-pick ${(d.picking === "start" ? d.start_key : d.end_key) === a.key ? "on" : ""}"
+          data-sepicked="${esc(a.key)}" title="${esc(a.room || "Untitled")}"><span data-img="${esc(a.path)}"></span></button>`,
+          )
+          .join("")}</div>
         <input type="file" id="rvSeFile" multiple accept=".jpg,.jpeg,.png,.webp,.heic,.heif" hidden>
       </div>`
     : "";
@@ -2839,13 +3550,13 @@ function seWorkspace(w, s) {
         <span><b>Generating This Clip</b><em>${Math.round(fr.progress || 0)}% Complete. You can leave this page — it keeps running.</em></span>
         <button class="fb-link danger" id="rvSeCancel">Cancel</button></div>`
     : failed
-    ? `<div class="se-status bad"><i data-lucide="triangle-alert"></i>
+      ? `<div class="se-status bad"><i data-lucide="triangle-alert"></i>
         <span><b>Generation Failed</b><em>${esc(fr.error_message || "The clip could not be generated. No credits were charged.")}</em></span>
         <button class="fb-link" id="rvSeRetry">Retry</button></div>`
-    : done
-    ? `<div class="se-status ok"><i data-lucide="clapperboard"></i>
+      : done
+        ? `<div class="se-status ok"><i data-lucide="clapperboard"></i>
         <span><b>Start / End Clip In Use</b><em>This scene plays the generated clip. The original photo is kept for editing.</em></span></div>`
-    : "";
+        : "";
 
   const custom = (d.motion_preset || "auto") === "custom";
   return `<div class="se-wrap">
@@ -2860,8 +3571,10 @@ function seWorkspace(w, s) {
     ${picker}
     ${status}
     <div class="rv-pop-h">Motion</div>
-    <div class="se-motions">${SE_MOTIONS.map((m) => `<button class="se-motion ${(d.motion_preset || "auto") === m.id ? "on" : ""}"
-      data-semotion="${m.id}" title="${esc(m.blurb)}"><b>${esc(m.label)}</b><em>${esc(m.blurb)}</em></button>`).join("")}</div>
+    <div class="se-motions">${SE_MOTIONS.map(
+      (m) => `<button class="se-motion ${(d.motion_preset || "auto") === m.id ? "on" : ""}"
+      data-semotion="${m.id}" title="${esc(m.blurb)}"><b>${esc(m.label)}</b><em>${esc(m.blurb)}</em></button>`,
+    ).join("")}</div>
     <label class="rv-f">${custom ? "Describe Your Movement" : "Prompt, Optional"}
       <input id="rvSePrompt" maxlength="400" value="${esc(d.prompt || "")}"
         placeholder="${custom ? "Describe The Camera Move You Want" : "Add Any Direction For This Move"}"></label>
@@ -2881,9 +3594,11 @@ function seFooter(w, s) {
   const busy = !!fr && (fr.status === "queued" || fr.status === "processing");
   const v = seReady(w, s);
   const canSave = !!w.seDirty && !busy && !w.seBusy;
-  return `<div class="se-foot-l">${v.ok
+  return `<div class="se-foot-l">${
+    v.ok
       ? `<span>Estimated cost <b class="mono">${v.cost} credits</b></span>`
-      : `<span class="warn">${esc(v.why)}</span>`}</div>
+      : `<span class="warn">${esc(v.why)}</span>`
+  }</div>
     <div class="se-foot-r">
       ${fr ? `<button class="btn btn-ghost danger" id="rvSeRemove" ${busy ? "disabled" : ""}>Remove Start / End</button>` : ""}
       <button class="btn btn-ghost" id="rvPopCancel">Cancel</button>
@@ -2892,7 +3607,6 @@ function seFooter(w, s) {
         ${busy ? "Generating…" : w.seBusy === "gen" ? "Starting…" : `Generate · ${v.cost} Credits`}</button>
     </div>`;
 }
-
 
 function popoverHtml() {
   const w = S.wizard;
@@ -2914,11 +3628,21 @@ function popoverHtml() {
         <input id="rvPopQ" value="${esc(w.popQ || "")}" placeholder="Search Motions">
         <div class="rv-pop-scroll">
           <div class="rv-pop-h">Camera Moves</div>
-          ${rows.some(([id]) => id === "auto") ? `<button class="rv-pop-auto ${s.motion_level !== "immersive" && (s.motion || "auto") === "auto" ? "on" : ""}" data-motionpick="auto" data-hover="auto">
+          ${
+            rows.some(([id]) => id === "auto")
+              ? `<button class="rv-pop-auto ${s.motion_level !== "immersive" && (s.motion || "auto") === "auto" ? "on" : ""}" data-motionpick="auto" data-hover="auto">
             <span><b>Auto, Recommended</b><em>We’ll Choose A Natural Movement For This Scene</em></span><i data-lucide="sparkles"></i>
-          </button>` : ""}
+          </button>`
+              : ""
+          }
           <div class="rv-pop-grid">
-            ${rows.filter(([id]) => id !== "auto").map(([id, n]) => `<button class="rv-pop-row ${s.motion_level !== "immersive" && s.motion === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${esc(n)}</button>`).join("")}
+            ${rows
+              .filter(([id]) => id !== "auto")
+              .map(
+                ([id, n]) =>
+                  `<button class="rv-pop-row ${s.motion_level !== "immersive" && s.motion === id ? "on" : ""}" data-motionpick="${id}" data-hover="${id}">${esc(n)}</button>`,
+              )
+              .join("")}
           </div>
         </div>
         <label class="rv-check"><input type="checkbox" id="rvAllMotion"> Apply To All Scenes</label>
@@ -2934,7 +3658,6 @@ function popoverHtml() {
         <span class="rv-pop-tip">Hover Any Option To Preview It. The Loop Repeats Automatically.</span>
       </div>
     </div>`;
-
   } else if (kind === "crop") {
     body = `<div class="rv-pop-list">
       <div class="rv-pop-h">Crop <i class="mono">${esc(w.primaryFormat || "9:16")}</i></div>
@@ -2948,10 +3671,27 @@ function popoverHtml() {
         <input class="rv-cap" data-cap="${i}" value="${esc(s.caption ?? "")}" maxlength="60" placeholder="Kitchen With Quartz Island" autofocus></label>
       <div class="rv-note sm">Shown over this scene while it plays.</div>
       <div class="rv-textrow"><span>Position</span><div class="rv-seg">
-        ${[["bottom", "Bottom"], ["center", "Center"], ["top", "Top"]].map(([id, n]) => `<button class="${pos === id ? "on" : ""}" data-cappos="${id}">${n}</button>`).join("")}
+        ${[
+          ["bottom", "Bottom"],
+          ["center", "Center"],
+          ["top", "Top"],
+        ]
+          .map(
+            ([id, n]) =>
+              `<button class="${pos === id ? "on" : ""}" data-cappos="${id}">${n}</button>`,
+          )
+          .join("")}
       </div></div>
       <div class="rv-textrow"><span>Text Style</span><div class="rv-seg">
-        ${[["brand", "Brand Default"], ["minimal", "Minimal"]].map(([id, n]) => `<button class="${sty === id ? "on" : ""}" data-capstyle="${id}">${n}</button>`).join("")}
+        ${[
+          ["brand", "Brand Default"],
+          ["minimal", "Minimal"],
+        ]
+          .map(
+            ([id, n]) =>
+              `<button class="${sty === id ? "on" : ""}" data-capstyle="${id}">${n}</button>`,
+          )
+          .join("")}
       </div></div>
       <button class="fb-link" id="rvCapClear" ${s.caption ? "" : "disabled"}>Clear Text</button>
     </div>`;
@@ -2960,10 +3700,18 @@ function popoverHtml() {
     const opts = ENDING_OPTIONS.filter((o) => o.id !== "brand_end_card" || hasBrandEndCard(w));
     body = `<div class="rv-endrow">
       <p class="rv-note">Choose what happens after the final scene.</p>
-      ${opts.map((o) => `<button class="rv-pop-row ${st.type === o.id ? "on" : ""}" data-endpick="${o.id}">
-        <b>${esc(o.label)}</b><em class="rv-note sm"> ${esc(o.blurb)}</em></button>`).join("")}
-      ${st.type === "none" ? "" : `<label class="rv-f">Ending Duration
-        <input id="rvEndDur" type="number" min="0.5" max="3" step="0.5" value="${st.duration}"> seconds</label>`}
+      ${opts
+        .map(
+          (o) => `<button class="rv-pop-row ${st.type === o.id ? "on" : ""}" data-endpick="${o.id}">
+        <b>${esc(o.label)}</b><em class="rv-note sm"> ${esc(o.blurb)}</em></button>`,
+        )
+        .join("")}
+      ${
+        st.type === "none"
+          ? ""
+          : `<label class="rv-f">Ending Duration
+        <input id="rvEndDur" type="number" min="0.5" max="3" step="0.5" value="${st.duration}"> seconds</label>`
+      }
     </div>`;
   } else if (kind === "recap") {
     /* Everything applied to this scene, with a way to change or undo each
@@ -2971,24 +3719,32 @@ function popoverHtml() {
     const items = sceneSettings(s, sceneClips.get(s.key));
     body = items.length
       ? `<div class="rv-sum">
-          ${items.map((it) => `<div class="rv-sum-row">
+          ${items
+            .map(
+              (it) => `<div class="rv-sum-row">
             <i data-lucide="${it.icon}"></i>
             <span><b>${esc(it.label)}</b><em>${esc(it.value)}</em></span>
             <span class="rv-sum-a">
               ${it.pop ? `<button class="fb-link" data-sumedit="${esc(it.pop)}">Edit</button>` : ""}
               ${it.locked ? "" : `<button class="fb-link danger" data-sumreset="${esc(it.id)}">Reset</button>`}
             </span>
-          </div>`).join("")}
+          </div>`,
+            )
+            .join("")}
         </div>`
       : `<p class="rv-note">Nothing has been applied to this scene yet. It will play with the automatic camera move.</p>`;
-    } else if (kind === "trans") {
+  } else if (kind === "trans") {
     /* The move between this scene and the next one. Cut, Dissolve and Fade are
        the working choices and are included; Auto Select is a recommendation
        mode that picks one of them and always stores the real transition. */
     const nxt = w.scenes[i + 1] || null;
     const st = transState(s, nxt);
     const ms = st.durationMs;
-    const opt = ([id, n, blurb]) => `<button class="rv-tr-opt ${st.type === id ? "on" : ""}" data-transpick="${id}"
+    const opt = ([
+      id,
+      n,
+      blurb,
+    ]) => `<button class="rv-tr-opt ${st.type === id ? "on" : ""}" data-transpick="${id}"
       role="radio" aria-checked="${st.type === id ? "true" : "false"}">
       <span class="rv-tr-mark"><i data-lucide="check"></i></span>
       <i data-lucide="${TRANS_ICON[id] || "blend"}"></i><b>${esc(n)}</b>
@@ -3014,20 +3770,27 @@ function popoverHtml() {
           <i data-lucide="wand-sparkles"></i><b>AI Transition</b><span class="rv-tr-badge">Coming Soon</span>
           <em>A generated move between the two scenes.</em></button>
       </details>
-      ${st.type === "cut" ? `<p class="rv-note sm">A cut is instant, so it has no duration.</p>`
-        : `<label class="rv-f" for="rvTransDur">Duration: <i class="mono">${(ms / 1000).toFixed(1)}</i> seconds
+      ${
+        st.type === "cut"
+          ? `<p class="rv-note sm">A cut is instant, so it has no duration.</p>`
+          : `<label class="rv-f" for="rvTransDur">Duration: <i class="mono">${(ms / 1000).toFixed(1)}</i> seconds
         <input type="range" id="rvTransDur" min="200" max="2000" step="100" value="${ms}"
-          aria-label="Transition duration in seconds"></label>`}
+          aria-label="Transition duration in seconds"></label>`
+      }
       <div class="rv-tr-foot">
         <button class="btn btn-ghost btn-sm" id="rvTransAll"><i data-lucide="copy"></i>Apply To All Transitions</button>
         <button class="fb-link" id="rvTransSmart">Smart Timing</button>
       </div>
-      ${w.transAllConfirm ? `<div class="fx-confirm"><div>
+      ${
+        w.transAllConfirm
+          ? `<div class="fx-confirm"><div>
         <b>Replace Custom Transitions?</b>
         <span>This will apply ${esc(transitionLabel(st.type))} to every scene transition and replace any custom transition settings.</span>
         <div class="fx-confirm-a"><button class="btn btn-ghost btn-sm" id="rvTransAllNo">Cancel</button>
         <button class="btn btn-primary btn-sm" id="rvTransAllYes">Apply to All</button></div>
-      </div></div>` : ""}
+      </div></div>`
+          : ""
+      }
     </div>`;
   } else {
     /* Effects modal. Two tabs — Looks (colour and presentation, free) and
@@ -3049,31 +3812,67 @@ function popoverHtml() {
     const card = (o) => `<button class="fx-card ${o.on ? "on" : ""}" ${o.attr} role="option"
       aria-selected="${o.on ? "true" : "false"}" title="${esc(o.blurb || o.name)}">
       <span class="fx-th ${o.blank ? "blank" : ""} ${o.pending ? "pending" : ""}" ${o.blank || o.pending ? "" : `data-img="${esc(s.path)}"`}>${
-        o.blank ? `<i data-lucide="ban"></i>` : o.pending ? `<i data-lucide="sparkles"></i><em>Preview After Generating</em>` : o.overlay || ""}
+        o.blank
+          ? `<i data-lucide="ban"></i>`
+          : o.pending
+            ? `<i data-lucide="sparkles"></i><em>Preview After Generating</em>`
+            : o.overlay || ""
+      }
         ${o.on ? `<i class="fx-ck" data-lucide="check"></i>` : ""}</span>
       <span class="fx-nm">${esc(o.name)}</span>
       ${o.gen ? `<em class="fx-cost gen">AI Image · ${o.credits} Credits</em>` : o.credits ? `<em class="fx-cost">${o.credits} Credits</em>` : ""}
       ${o.beta ? `<em class="fx-beta">Beta</em>` : ""}
     </button>`;
 
-    const grid = tab === "looks"
-      ? card({ name: "None", blurb: "No Look Applied", on: !activeLook && !activeTile, blank: true, attr: `data-lookpick=""` }) +
-        looksForCat(catId).map((l) => card({
-          name: l.label, blurb: l.blurb, on: s.look === l.id && !activeTile,
-          overlay: lookOverlayHTML(l, amt), attr: `data-lookpick="${esc(l.id)}"`,
-        })).join("")
-      : card({ name: "None", blurb: "No Effect Applied", on: nothing, blank: true, attr: `data-vfxpick="none"` }) +
-        effectTiles(catId).map((t) => {
-          const lk = t.look ? lookById(t.look) : null;
-          return card({
-            name: t.label, blurb: t.sub, on: s.vfx === t.id, credits: t.credits || 0,
-            gen: !!t.gen, pending: !!t.gen,
-            overlay: lk ? lookOverlayHTML(lk, amt) : "", attr: `data-vfxpick="${esc(t.id)}"`,
-          });
-        }).join("");
+    const grid =
+      tab === "looks"
+        ? card({
+            name: "None",
+            blurb: "No Look Applied",
+            on: !activeLook && !activeTile,
+            blank: true,
+            attr: `data-lookpick=""`,
+          }) +
+          looksForCat(catId)
+            .map((l) =>
+              card({
+                name: l.label,
+                blurb: l.blurb,
+                on: s.look === l.id && !activeTile,
+                overlay: lookOverlayHTML(l, amt),
+                attr: `data-lookpick="${esc(l.id)}"`,
+              }),
+            )
+            .join("")
+        : card({
+            name: "None",
+            blurb: "No Effect Applied",
+            on: nothing,
+            blank: true,
+            attr: `data-vfxpick="none"`,
+          }) +
+          effectTiles(catId)
+            .map((t) => {
+              const lk = t.look ? lookById(t.look) : null;
+              return card({
+                name: t.label,
+                blurb: t.sub,
+                on: s.vfx === t.id,
+                credits: t.credits || 0,
+                gen: !!t.gen,
+                pending: !!t.gen,
+                overlay: lk ? lookOverlayHTML(lk, amt) : "",
+                attr: `data-vfxpick="${esc(t.id)}"`,
+              });
+            })
+            .join("");
 
     const selName = activeTile ? activeTile.label : activeLook ? activeLook.label : "None";
-    const selCopy = activeTile ? activeTile.sub : activeLook ? activeLook.blurb || "" : "No effect applied.";
+    const selCopy = activeTile
+      ? activeTile.sub
+      : activeLook
+        ? activeLook.blurb || ""
+        : "No effect applied.";
     const cost = sceneEffectCredits(s);
 
     body = `<div class="fx-wrap">
@@ -3082,7 +3881,10 @@ function popoverHtml() {
         <button role="tab" aria-selected="${tab === "effects"}" class="${tab === "effects" ? "on" : ""}" data-fxtab="effects">Effects</button>
         <button role="tab" aria-selected="${tab === "frames"}" class="${tab === "frames" ? "on" : ""}" data-fxtab="frames">Start / End</button>
       </div>
-      ${tab === "frames" ? seWorkspace(w, s) : `<div class="fx-body">
+      ${
+        tab === "frames"
+          ? seWorkspace(w, s)
+          : `<div class="fx-body">
         <nav class="fx-cats" aria-label="Categories">
           ${cats.map(([id, n]) => `<button class="${catId === id ? "on" : ""}" data-fxcat="${id}">${esc(n)}</button>`).join("")}
         </nav>
@@ -3095,42 +3897,69 @@ function popoverHtml() {
           <b>${esc(selName)}${cost ? ` <em class="fx-cost inline">AI Image · ${cost} Credits</em>` : ""}</b>
           ${cost ? `<span class="rv-note sm">This is generated as a new image version. Your original photo is kept.</span>` : ""}
           <span>${esc(selCopy)}</span>
-          ${supportsIntensity(s) ? `<label class="rv-f">Intensity <i class="fx-amt">${esc(intensityWord(amt))}</i>
+          ${
+            supportsIntensity(s)
+              ? `<label class="rv-f">Intensity <i class="fx-amt">${esc(intensityWord(amt))}</i>
             <input type="range" id="rvLookAmt" min="10" max="100" value="${amt}">
-            <span class="fx-scale"><em>Subtle</em><em>Balanced</em><em>Strong</em></span></label>` : ""}
+            <span class="fx-scale"><em>Subtle</em><em>Balanced</em><em>Strong</em></span></label>`
+              : ""
+          }
           <button class="btn btn-ghost btn-sm fx-all" id="rvAllLook" ${canAll ? "" : "disabled"}>
             <i data-lucide="copy"></i>Apply to All${plan.targets ? ` (${plan.targets + 1} Scenes)` : ""}</button>
           ${w.popAll ? `<span class="fx-ok"><i data-lucide="check"></i>Will Apply To All ${plan.total} Scenes</span>` : ""}
           ${needsDisclosure(s) ? `<span class="rv-pop-tip">Generated effects may require an AI-modified disclosure.</span>` : ""}
         </aside>
-      </div>`}
-      ${w.popConfirm ? `<div class="fx-confirm"><div>
+      </div>`
+      }
+      ${
+        w.popConfirm
+          ? `<div class="fx-confirm"><div>
         <b>Apply this effect to ${plan.total} scenes${plan.credits ? ` for an estimated ${plan.credits} additional credits` : ""}?</b>
         ${plan.perScene && plan.credits !== plan.perScene * plan.targets ? `<span>${Math.round(plan.credits / plan.perScene)} of ${plan.targets} other scenes still need it.</span>` : ""}
         <div class="fx-confirm-a"><button class="btn btn-ghost btn-sm" id="rvAllNo">Cancel</button>
         <button class="btn btn-primary btn-sm" id="rvAllYes">Apply to All</button></div>
-      </div></div>` : ""}
+      </div></div>`
+          : ""
+      }
     </div>`;
   }
 
   const isFx = kind === "look";
-  const title = kind === "motion" ? "Motion" : kind === "crop" ? "Crop" : kind === "cap" ? "Text"
-    : kind === "recap" ? "Scene Settings"
-    : kind === "ending" ? "Video Ending"
-    : kind === "trans" ? `Transition: Scene ${i + 1} → Scene ${i + 2}` : "Effects";
-  const width = kind === "crop" ? "wide" : kind === "cap" || kind === "recap" || kind === "ending" ? "compact" : kind === "trans" ? "wide" : "xwide";
-  const foot = isFx && w.popTab === "frames"
-    ? seFooter(w, s)
-    : isFx
-    ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
-    : kind === "recap"
-    ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
-    : kind === "ending"
-    ? `<button class="btn btn-primary" id="rvPopCancel">Done</button>`
-    : kind === "trans"
-    ? `${transitions.get(s.key, w.scenes[i + 1]?.key) && !transitions.get(s.key, w.scenes[i + 1]?.key)?.settings?.mode?.includes("auto") ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto Select</button>` : ""}
+  const title =
+    kind === "motion"
+      ? "Motion"
+      : kind === "crop"
+        ? "Crop"
+        : kind === "cap"
+          ? "Text"
+          : kind === "recap"
+            ? "Scene Settings"
+            : kind === "ending"
+              ? "Video Ending"
+              : kind === "trans"
+                ? `Transition: Scene ${i + 1} → Scene ${i + 2}`
+                : "Effects";
+  const width =
+    kind === "crop"
+      ? "wide"
+      : kind === "cap" || kind === "recap" || kind === "ending"
+        ? "compact"
+        : kind === "trans"
+          ? "wide"
+          : "xwide";
+  const foot =
+    isFx && w.popTab === "frames"
+      ? seFooter(w, s)
+      : isFx
+        ? `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone" ${fxDirty(s, w.pop.snap) || w.popAll ? "" : "disabled"}>Apply</button>`
+        : kind === "recap"
+          ? `<button class="btn btn-ghost" id="rvSumResetAll">Reset This Scene</button><button class="btn btn-primary" id="rvPopCancel">Done</button>`
+          : kind === "ending"
+            ? `<button class="btn btn-primary" id="rvPopCancel">Done</button>`
+            : kind === "trans"
+              ? `${transitions.get(s.key, w.scenes[i + 1]?.key) && !transitions.get(s.key, w.scenes[i + 1]?.key)?.settings?.mode?.includes("auto") ? `<button class="btn btn-ghost danger" id="rvTransReset">Reset To Auto Select</button>` : ""}
        <button class="btn btn-primary" id="rvTransDone">Done</button>`
-    : `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone">Save</button>`;
+              : `<button class="btn btn-ghost" id="rvPopCancel">Cancel</button><button class="btn btn-primary" id="rvPopDone">Save</button>`;
   return `<div class="rv-modal on" id="rvPopWrap"><div class="rv-modal-in ${width} ${isFx ? "fx-modal" : ""}" role="dialog" aria-label="${esc(title)}">
     <div class="rv-modal-h"><b>${esc(title)}</b><button class="icon-btn" id="rvPopX" aria-label="Close"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">${body}</div>
@@ -3154,16 +3983,25 @@ function qualityCompat(w) {
   return getQualityCompatibility(wiz.quality || "standard", (wiz.scenes || []).length);
 }
 
-
 /* Map friendly voice names to gateway voices. */
 const VOICE_MAP: Record<string, string> = {
-  professional: "alloy", warm: "coral", conversational: "sage", luxury: "ballad",
+  professional: "alloy",
+  warm: "coral",
+  conversational: "sage",
+  luxury: "ballad",
 };
 
 let voiceAudio: HTMLAudioElement | null = null;
 
 function stopVoicePreview() {
-  if (voiceAudio) { try { voiceAudio.pause(); } catch (_) { /* noop */ } voiceAudio = null; }
+  if (voiceAudio) {
+    try {
+      voiceAudio.pause();
+    } catch (_) {
+      /* noop */
+    }
+    voiceAudio = null;
+  }
   if (S.wizard) S.wizard.voicePreviewing = false;
 }
 
@@ -3176,7 +4014,11 @@ function fileToDataUrl(file: File): Promise<string> {
   });
 }
 
-async function buildNarration(type: string, script: string | null | undefined, voice: string | null | undefined) {
+async function buildNarration(
+  type: string,
+  script: string | null | undefined,
+  voice: string | null | undefined,
+) {
   if (type === "upload") return S.wizard?.narrationUpload || null;
   if (type !== "generate" || !script || script.trim().length < 4) return null;
   try {
@@ -3200,17 +4042,25 @@ function defaultScript() {
   lines.push(addr ? `Welcome to ${addr}.` : "Welcome home.");
   const highlights = rooms.filter((r) => !/^unsorted$/i.test(r)).slice(0, 3);
   if (highlights.length) {
-    const list = highlights.length === 1
-      ? highlights[0].toLowerCase()
-      : highlights.slice(0, -1).map((r) => r.toLowerCase()).join(", ") + " and " + highlights[highlights.length - 1].toLowerCase();
+    const list =
+      highlights.length === 1
+        ? highlights[0].toLowerCase()
+        : highlights
+            .slice(0, -1)
+            .map((r) => r.toLowerCase())
+            .join(", ") +
+          " and " +
+          highlights[highlights.length - 1].toLowerCase();
     lines.push(`Step inside, where the ${list} come together in bright, welcoming spaces.`);
   } else {
     lines.push("Step inside and take in bright, welcoming spaces made for everyday living.");
   }
-  if (w.scenes.some((s) => s.scene_type === "before_after")) lines.push("See each space as it is today, then as it could be.");
+  if (w.scenes.some((s) => s.scene_type === "before_after"))
+    lines.push("See each space as it is today, then as it could be.");
   lines.push(addr ? `Book your private tour of ${addr} today.` : "Book your private tour today.");
   /* Only claim AI involvement when a scene truly carries a disclosure. */
-  if (w.scenes.some((s) => s.disclosure)) lines.push("Some images shown are digitally altered concepts.");
+  if (w.scenes.some((s) => s.disclosure))
+    lines.push("Some images shown are digitally altered concepts.");
   return lines.join(" ");
 }
 
@@ -3233,16 +4083,18 @@ function labelEditor(s, i) {
       ${labels.length < 2 ? `<button class="btn btn-ghost btn-sm" data-label-add="${i}">Add Label</button>` : ""}
     </div>
     ${labels.length === 0 ? `<div class="rv-note sm">No Labels On This Scene.</div>` : ""}
-    ${labels.map((l, j) => `<div class="rv-labrow">
+    ${labels
+      .map(
+        (l, j) => `<div class="rv-labrow">
       <input data-label-text="${i}:${j}" value="${esc(l.text || "")}" placeholder="Label Text" maxlength="40">
       <select data-label-style="${i}:${j}">${LABEL_STYLES.map(([v, n]) => `<option value="${v}" ${(l.style || "clean") === v ? "selected" : ""}>${n}</option>`).join("")}</select>
       <select data-label-pos="${i}:${j}">${LABEL_POSITIONS.map(([v, n]) => `<option value="${v}" ${(l.position || "bottom_left") === v ? "selected" : ""}>${n}</option>`).join("")}</select>
       <button class="rv-x" data-label-del="${i}:${j}" aria-label="Remove Label"><i data-lucide="x"></i></button>
-    </div>`).join("")}
+    </div>`,
+      )
+      .join("")}
   </div>`;
 }
-
-
 
 /* ---------- Step 4 templates ---------- */
 const INTRO_TEMPLATES = [
@@ -3283,27 +4135,35 @@ function tplCtx() {
 function tplThumb(kind) {
   const c = tplCtx();
   const bg = c.photo ? ` data-img="${c.photo}"` : "";
-  const body = {
-    plain: `<span class="tp-none">No Card</span>`,
-    clean: `<span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
-    editorial: `<span class="tp-a serif">${c.a}</span><span class="tp-rule"></span><span class="tp-b">${c.b}</span>`,
-    bold: `<span class="tp-a big">${c.a}</span><span class="tp-b">${c.b}</span>`,
-    bar: `<span class="tp-lower"><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span></span>`,
-    split: `<span class="tp-half"${bg}></span><span class="tp-side"><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span></span>`,
-    stamp: `<span class="tp-stamp"><span class="tp-a">${c.a}</span></span><span class="tp-b">${c.b}</span>`,
-    dark: `<span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
-    kicker: `<span class="tp-kick">Just Listed</span><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
-    agentw: `<span class="tp-face"></span><span class="tp-a">${c.agent}</span><span class="tp-b">${c.phone}</span><span class="tp-cta">Book A Showing</span>`,
-    agentb: `<span class="tp-face"></span><span class="tp-a">${c.agent}</span><span class="tp-b">${c.phone}</span><span class="tp-cta">Book A Showing</span>`,
-  }[kind] || `<span class="tp-a">${c.a}</span>`;
+  const body =
+    {
+      plain: `<span class="tp-none">No Card</span>`,
+      clean: `<span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
+      editorial: `<span class="tp-a serif">${c.a}</span><span class="tp-rule"></span><span class="tp-b">${c.b}</span>`,
+      bold: `<span class="tp-a big">${c.a}</span><span class="tp-b">${c.b}</span>`,
+      bar: `<span class="tp-lower"><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span></span>`,
+      split: `<span class="tp-half"${bg}></span><span class="tp-side"><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span></span>`,
+      stamp: `<span class="tp-stamp"><span class="tp-a">${c.a}</span></span><span class="tp-b">${c.b}</span>`,
+      dark: `<span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
+      kicker: `<span class="tp-kick">Just Listed</span><span class="tp-a">${c.a}</span><span class="tp-b">${c.b}</span>`,
+      agentw: `<span class="tp-face"></span><span class="tp-a">${c.agent}</span><span class="tp-b">${c.phone}</span><span class="tp-cta">Book A Showing</span>`,
+      agentb: `<span class="tp-face"></span><span class="tp-a">${c.agent}</span><span class="tp-b">${c.phone}</span><span class="tp-cta">Book A Showing</span>`,
+    }[kind] || `<span class="tp-a">${c.a}</span>`;
   const photoBg = kind === "bar" ? bg : "";
   return `<span class="rv-tpl-th t-${kind}"${photoBg}>${body}</span>`;
 }
 function templateGrid(list, sel, attr) {
   return `<div class="rv-tpls">${list
-    .map(([id, name, note, kind]) => `<button class="rv-tpl ${sel === id ? "on" : ""}" data-${attr}="${id}">
+    .map(
+      ([
+        id,
+        name,
+        note,
+        kind,
+      ]) => `<button class="rv-tpl ${sel === id ? "on" : ""}" data-${attr}="${id}">
       ${tplThumb(kind)}<b>${name}</b><em>${note}</em>
-    </button>`)
+    </button>`,
+    )
     .join("")}</div>`;
 }
 
@@ -3314,11 +4174,13 @@ function logoModalHtml() {
   return `<div class="rv-modal on" id="rvLogoWrap"><div class="rv-modal-in" role="dialog" aria-label="Select logo">
     <div class="rv-modal-h"><b>Select Logo</b><button class="icon-btn" id="rvLogoX"><i data-lucide="x"></i></button></div>
     <div class="rv-modal-b">
-      ${logo
-        ? `<div class="rv-logos"><button class="rv-logo on" data-logopick="${esc(logo)}"><span class="rv-a-th" data-img="${esc(logo)}"></span><b>${esc(kit.name || "Brand Kit Logo")}</b></button></div>`
-        : `<div class="rv-note">No Images Uploaded Yet</div>
+      ${
+        logo
+          ? `<div class="rv-logos"><button class="rv-logo on" data-logopick="${esc(logo)}"><span class="rv-a-th" data-img="${esc(logo)}"></span><b>${esc(kit.name || "Brand Kit Logo")}</b></button></div>`
+          : `<div class="rv-note">No Images Uploaded Yet</div>
       <button class="btn btn-ghost btn-sm" id="rvLogoUp"><i data-lucide="upload"></i>Upload Image</button>
-      <input type="file" id="rvLogoFile" accept="image/*" hidden>`}
+      <input type="file" id="rvLogoFile" accept="image/*" hidden>`
+      }
     </div>
     <div class="rv-modal-f"><button class="btn btn-ghost" id="rvLogoCancel">Cancel</button><button class="btn btn-primary" id="rvLogoDone">Select Logo</button></div>
   </div></div>`;
@@ -3340,11 +4202,15 @@ function stepBrand() {
     <div class="rv-kits">${S.kits.map((k) => `<button class="rv-kit ${w.brandKitId === k.id ? "on" : ""}" data-kit="${k.id}"><b>${esc(k.name)}</b><span>${esc(k.company_name || k.contact_name || "No Company Name")}</span></button>`).join("")}
       <button class="rv-kit add" id="rvKitNew"><i data-lucide="plus"></i><b>New Brand Kit</b></button>
     </div>
-    ${kit ? `<div class="rv-kitface">
+    ${
+      kit
+        ? `<div class="rv-kitface">
       <span class="rv-sw">${swatches.length ? swatches.map((c) => `<i style="background:${esc(c)}"></i>`).join("") : `<em class="sm">Kit Colors Not Set</em>`}</span>
       <span class="sm">${esc(kit.font || "Default Typography")}</span>
       <button class="fb-link" id="rvKitEdit">Edit</button>
-    </div>` : `<div class="rv-note sm">Add A Brand Kit To Put Your Logo And Contact Details On The Branded Version.</div>`}
+    </div>`
+        : `<div class="rv-note sm">Add A Brand Kit To Put Your Logo And Contact Details On The Branded Version.</div>`
+    }
   </section>
 
   <section class="rv-sec">
@@ -3356,30 +4222,60 @@ function stepBrand() {
       </div>
     </div>
     <details class="rv-adv-d"><summary>Advanced Placement</summary>
-      <div class="rv-seg tiny wrap">${[["tl", "Top Left"], ["tr", "Top Right"], ["bl", "Bottom Left"], ["br", "Bottom Right"]]
-        .map(([id, n]) => `<button class="${(w.logoPos || "tr") === id ? "on" : ""}" data-logopos="${id}">${n}</button>`).join("")}</div>
+      <div class="rv-seg tiny wrap">${[
+        ["tl", "Top Left"],
+        ["tr", "Top Right"],
+        ["bl", "Bottom Left"],
+        ["br", "Bottom Right"],
+      ]
+        .map(
+          ([id, n]) =>
+            `<button class="${(w.logoPos || "tr") === id ? "on" : ""}" data-logopos="${id}">${n}</button>`,
+        )
+        .join("")}</div>
       <label class="rv-f">Opacity<input type="range" id="rvLogoOp" min="20" max="100" value="${Math.round((w.logoOpacity ?? 0.85) * 100)}"></label>
     </details>
   </section>
 
   <section class="rv-sec">
     <h4>Opening &amp; Closing Cards</h4>
-    <div class="rv-seg tiny">${[["intro", "Opening"], ["outro", "Closing"]]
-      .map(([id, n]) => `<button class="${(w.tplScope === "outro" ? "outro" : "intro") === id ? "on" : ""}" data-tplscope="${id}">${n}</button>`).join("")}</div>
-    ${w.tplScope === "outro"
-      ? templateGrid(OUTRO_TEMPLATES, w.outroTemplate || "agent_white", "tploutro")
-      : templateGrid(INTRO_TEMPLATES, w.introTemplate || "clean", "tplintro")}
-    ${kit ? `<div class="rv-checks">
+    <div class="rv-seg tiny">${[
+      ["intro", "Opening"],
+      ["outro", "Closing"],
+    ]
+      .map(
+        ([id, n]) =>
+          `<button class="${(w.tplScope === "outro" ? "outro" : "intro") === id ? "on" : ""}" data-tplscope="${id}">${n}</button>`,
+      )
+      .join("")}</div>
+    ${
+      w.tplScope === "outro"
+        ? templateGrid(OUTRO_TEMPLATES, w.outroTemplate || "agent_white", "tploutro")
+        : templateGrid(INTRO_TEMPLATES, w.introTemplate || "clean", "tplintro")
+    }
+    ${
+      kit
+        ? `<div class="rv-checks">
       <label class="rv-check"><input type="checkbox" data-br="outro" ${w.branding.outro ? "checked" : ""}> Closing Branded Scene</label>
       <label class="rv-check"><input type="checkbox" data-br="contact" ${w.branding.contact ? "checked" : ""}> Contact Information</label>
       <label class="rv-check"><input type="checkbox" data-br="cta" ${w.branding.cta ? "checked" : ""}> Call To Action${kit.default_cta ? ` — ${esc(kit.default_cta)}` : ""}</label>
-    </div>` : ""}
+    </div>`
+        : ""
+    }
   </section>
 
   <section class="rv-sec">
     <h4>Output</h4>
-    <div class="rv-seg">${[["unbranded", "Unbranded"], ["branded", "Branded"], ["both", "Both"]]
-      .map(([id, n]) => `<button class="${(w.outputMode || "both") === id ? "on" : ""}" data-out="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-seg">${[
+      ["unbranded", "Unbranded"],
+      ["branded", "Branded"],
+      ["both", "Both"],
+    ]
+      .map(
+        ([id, n]) =>
+          `<button class="${(w.outputMode || "both") === id ? "on" : ""}" data-out="${id}">${n}</button>`,
+      )
+      .join("")}</div>
     <div class="rv-note sm">Unbranded Goes To The MLS. Branded Goes Everywhere Else.</div>
   </section>
 
@@ -3388,12 +4284,34 @@ function stepBrand() {
     <div class="rv-note sm">${discScenes.length ? `${discScenes.length} ${discScenes.length === 1 ? "Scene Carries" : "Scenes Carry"} A Disclosure Label. Required Labels Cannot Be Removed.` : "No Altered Scenes Detected. Nothing To Disclose."}</div>
     <label class="rv-check"><input type="checkbox" id="rvAiDisc" ${w.aiDisclaimer ? "checked" : ""}> Digitally Altered Watermark For The Full Video</label>
     <label class="rv-check"><input type="checkbox" id="rvBurnDisc" ${w.burnDisclosure ? "checked" : ""}> Burn In Disclosure Labels</label>
-    ${discScenes.length ? `<details class="rv-adv-d"><summary>Per Scene Labels</summary>
-      ${discScenes.map((s2) => `<label class="rv-f">${esc(s2.room)}
-        <select data-disc="${w.scenes.indexOf(s2)}">${Object.keys(DISCLOSURE_LABEL).map((k) => `<option value="${k}" ${s2.disclosure === k ? "selected" : ""}>${DISCLOSURE_LABEL[k]}</option>`).join("")}</select></label>`).join("")}
-      <div class="rv-seg tiny wrap">${[["altered", "Altered Only"], ["all", "Whole Video"], ["intro", "Intro"], ["outro", "Outro"]]
-        .map(([id, n]) => `<button class="${w.disclosureMode === id ? "on" : ""}" data-dmode="${id}">${n}</button>`).join("")}</div>
-    </details>` : ""}
+    ${
+      discScenes.length
+        ? `<details class="rv-adv-d"><summary>Per Scene Labels</summary>
+      ${discScenes
+        .map(
+          (s2) => `<label class="rv-f">${esc(s2.room)}
+        <select data-disc="${w.scenes.indexOf(s2)}">${Object.keys(DISCLOSURE_LABEL)
+          .map(
+            (k) =>
+              `<option value="${k}" ${s2.disclosure === k ? "selected" : ""}>${DISCLOSURE_LABEL[k]}</option>`,
+          )
+          .join("")}</select></label>`,
+        )
+        .join("")}
+      <div class="rv-seg tiny wrap">${[
+        ["altered", "Altered Only"],
+        ["all", "Whole Video"],
+        ["intro", "Intro"],
+        ["outro", "Outro"],
+      ]
+        .map(
+          ([id, n]) =>
+            `<button class="${w.disclosureMode === id ? "on" : ""}" data-dmode="${id}">${n}</button>`,
+        )
+        .join("")}</div>
+    </details>`
+        : ""
+    }
   </section>`;
 }
 
@@ -3412,7 +4330,11 @@ function titleDefaults() {
   };
 }
 
-const TITLE_FONTS = [["editorial", "Editorial"], ["modern", "Modern"], ["bold", "Bold"]];
+const TITLE_FONTS = [
+  ["editorial", "Editorial"],
+  ["modern", "Modern"],
+  ["bold", "Bold"],
+];
 
 function stepTitles() {
   const w = S.wizard;
@@ -3434,26 +4356,52 @@ function stepTitles() {
   <section class="rv-sec">
     <div class="rv-sec-h"><h4>Opening Title</h4>
       <label class="rv-switch sm"><input type="checkbox" data-tt="property" ${t.property ? "checked" : ""}><i></i></label></div>
-    ${t.property ? `
+    ${
+      t.property
+        ? `
     <label class="rv-f">Headline<input id="rvTtHead" value="${esc(t.headline == null ? d.headline : t.headline)}" maxlength="80"></label>
     <label class="rv-f">Supporting Line<input id="rvTtSub" value="${esc(t.sub == null ? "For Sale" : t.sub)}" maxlength="80"></label>
     <div class="rv-sub">Typography</div>
     <div class="rv-seg tiny">${TITLE_FONTS.map(([id, n]) => `<button class="${(w.titleFont || "editorial") === id ? "on" : ""}" data-tfont="${id}">${n}</button>`).join("")}</div>
     <div class="rv-sub">Position</div>
-    <div class="rv-seg tiny">${[["top", "Top"], ["center", "Center"], ["bottom", "Bottom"]]
-      .map(([id, n]) => `<button class="${(w.titlePos || "bottom") === id ? "on" : ""}" data-tpos="${id}">${n}</button>`).join("")}</div>
+    <div class="rv-seg tiny">${[
+      ["top", "Top"],
+      ["center", "Center"],
+      ["bottom", "Bottom"],
+    ]
+      .map(
+        ([id, n]) =>
+          `<button class="${(w.titlePos || "bottom") === id ? "on" : ""}" data-tpos="${id}">${n}</button>`,
+      )
+      .join("")}</div>
     <details class="rv-adv-d"${t.customOn ? " open" : ""}><summary>Extra Title Cards</summary>
       <label class="rv-check"><input type="checkbox" data-tt="customOn" ${t.customOn ? "checked" : ""}> Show Custom Title Cards</label>
-      ${t.customOn ? `${custom.map((c, n) => `<div class="rv-labrow"><input data-tcustom="${n}" value="${esc(c)}" maxlength="60" placeholder="Custom Title">
-        <button class="rv-x" data-tcustom-del="${n}" aria-label="Remove Title"><i data-lucide="x"></i></button></div>`).join("")}
-      <button class="btn btn-ghost btn-sm" id="rvTtAdd"><i data-lucide="plus"></i>Add A Title</button>` : ""}
-    </details>` : `<div class="rv-note sm">No Opening Title Card.</div>`}
+      ${
+        t.customOn
+          ? `${custom
+              .map(
+                (
+                  c,
+                  n,
+                ) => `<div class="rv-labrow"><input data-tcustom="${n}" value="${esc(c)}" maxlength="60" placeholder="Custom Title">
+        <button class="rv-x" data-tcustom-del="${n}" aria-label="Remove Title"><i data-lucide="x"></i></button></div>`,
+              )
+              .join("")}
+      <button class="btn btn-ghost btn-sm" id="rvTtAdd"><i data-lucide="plus"></i>Add A Title</button>`
+          : ""
+      }
+    </details>`
+        : `<div class="rv-note sm">No Opening Title Card.</div>`
+    }
   </section>
 
   <section class="rv-sec">
     <div class="rv-sec-h"><h4>Scene Text</h4>
       <label class="rv-switch sm"><input type="checkbox" id="rvCaps" ${w.captions ? "checked" : ""}><i></i></label></div>
-    ${w.captions ? (sc ? `
+    ${
+      w.captions
+        ? sc
+          ? `
     <label class="rv-f">Scene ${i + 1} — ${esc(sc.room || "Scene")}<input id="rvSceneText" value="${esc(sc.caption || "")}" maxlength="60" placeholder="${esc(sc.room || "Scene Text")}"></label>
     <div class="rv-inline">
       <button class="btn btn-ghost btn-sm" id="rvSuggestLabels"><i data-lucide="wand"></i>Suggest Labels</button>
@@ -3461,18 +4409,23 @@ function stepTitles() {
     </div>
     <details class="rv-adv-d"><summary>On Screen Labels</summary>${labelEditor(sc, i)}</details>
     <div class="rv-note sm">Select A Thumbnail In The Timeline To Edit Another Scene.</div>`
-      : `<div class="rv-note sm">Select A Scene To Add Text.</div>`)
-      : `<div class="rv-note sm">Scene Text Is Off.</div>`}
+          : `<div class="rv-note sm">Select A Scene To Add Text.</div>`
+        : `<div class="rv-note sm">Scene Text Is Off.</div>`
+    }
   </section>
 
   <section class="rv-sec">
     <div class="rv-sec-h"><h4>Closing Title</h4>
       <label class="rv-switch sm"><input type="checkbox" data-br="outro" ${w.branding.outro ? "checked" : ""}><i></i></label></div>
-    ${w.branding.outro ? `
+    ${
+      w.branding.outro
+        ? `
     <div class="rv-note sm">${kit ? `Using ${esc(kit.name)}: ${esc([kit.contact_name, kit.phone, kit.email].filter(Boolean).join(" · ") || "No Contact Details Yet")}` : "Add A Brand Kit In Brand To Fill The Closing Card."}</div>
     <label class="rv-check"><input type="checkbox" data-br="cta" ${w.branding.cta ? "checked" : ""}> Call To Action${kit?.default_cta ? ` — ${esc(kit.default_cta)}` : ""}</label>
     <label class="rv-check"><input type="checkbox" data-br="contact" ${w.branding.contact ? "checked" : ""}> Contact Details</label>
-    <button class="fb-link" data-sec="brand">Edit In Brand</button>` : `<div class="rv-note sm">No Closing Card.</div>`}
+    <button class="fb-link" data-sec="brand">Edit In Brand</button>`
+        : `<div class="rv-note sm">No Closing Card.</div>`
+    }
   </section>`;
 }
 
@@ -3483,32 +4436,69 @@ function stepAudio() {
   const tab = w.audioTab || "music";
   const title = w.title || w.propertyLabel || "";
   return `
-  <div class="rv-seg">${[["music", "Music"], ["narration", "Narration"], ["presenter", "Presenter"]]
-    .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-atab="${id}">${n}</button>`).join("")}</div>
+  <div class="rv-seg">${[
+    ["music", "Music"],
+    ["narration", "Narration"],
+    ["presenter", "Presenter"],
+  ]
+    .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-atab="${id}">${n}</button>`)
+    .join("")}</div>
 
-  ${tab === "music" ? `<section class="rv-sec">
+  ${
+    tab === "music"
+      ? `<section class="rv-sec">
     ${musicPicker("rvMusic", w.music)}
     <label class="rv-f">Volume<input type="range" id="rvVol" min="0" max="100" value="${Math.round(w.volume * 100)}"></label>
     <label class="rv-check"><input type="checkbox" id="rvBeat" ${w.beatSync ? "checked" : ""}> Beat Sync</label>
     ${w.music && w.music !== "none" ? `<button class="fb-link" id="rvMusicOff">Remove Track</button>` : ""}
-  </section>` : ""}
+  </section>`
+      : ""
+  }
 
-  ${tab === "narration" ? `<section class="rv-sec">
-    <div class="rv-seg tiny">${[["none", "None"], ["generate", "Generate"], ["upload", "Upload"]]
-      .map(([id, n]) => `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}</button>`).join("")}</div>
-    ${w.narration === "generate" ? `<label class="rv-f">Script<textarea id="rvScript" rows="5">${esc(w.script || defaultScript())}</textarea></label>
+  ${
+    tab === "narration"
+      ? `<section class="rv-sec">
+    <div class="rv-seg tiny">${[
+      ["none", "None"],
+      ["generate", "Generate"],
+      ["upload", "Upload"],
+    ]
+      .map(
+        ([id, n]) =>
+          `<button class="${w.narration === id ? "on" : ""}" data-nar="${id}">${n}</button>`,
+      )
+      .join("")}</div>
+    ${
+      w.narration === "generate"
+        ? `<label class="rv-f">Script<textarea id="rvScript" rows="5">${esc(w.script || defaultScript())}</textarea></label>
     <label class="rv-f">Voice<select id="rvVoice">${["Professional", "Warm", "Conversational", "Luxury"].map((v) => `<option value="${v.toLowerCase()}" ${w.voice === v.toLowerCase() ? "selected" : ""}>${v}</option>`).join("")}${myVoiceOption(w.voice)}</select></label>
     <div class="rv-inline">${voiceStudioButton()}
-      <button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voice"}</button></div>` : ""}
-    ${w.narration === "upload" ? `<label class="rv-f">Voiceover File, MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
-    <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>` : ""}
+      <button class="btn btn-ghost btn-sm" id="rvVoicePrev"><i data-lucide="volume-2"></i>${w.voicePreviewing ? "Stop Preview" : "Preview Voice"}</button></div>`
+        : ""
+    }
+    ${
+      w.narration === "upload"
+        ? `<label class="rv-f">Voiceover File, MP3, M4A Or WAV<input type="file" id="rvNarFile" accept="audio/*"></label>
+    <div class="rv-note sm">${w.narrationName ? `Using ${esc(w.narrationName)}.` : "Upload a recorded voiceover to mix over your music bed."}</div>`
+        : ""
+    }
     ${w.narration === "none" ? `<div class="rv-note sm">No Narration. Music Alone Carries The Video.</div>` : ""}
-  </section>` : ""}
+  </section>`
+      : ""
+  }
 
-  ${tab === "presenter" ? `<section class="rv-sec">
-    ${w.avatar?.enabled ? avatarSection(w.avatar, title) : `<div class="rv-note sm">A Presenter Speaks Over The Video On Camera. Narration Settings Still Apply.</div>
-      <button class="btn btn-ghost btn-sm" id="rvPresOn"><i data-lucide="user-round"></i>Add A Presenter</button>`}
-  </section>` : ""}`;
+  ${
+    tab === "presenter"
+      ? `<section class="rv-sec">
+    ${
+      w.avatar?.enabled
+        ? avatarSection(w.avatar, title)
+        : `<div class="rv-note sm">A Presenter Speaks Over The Video On Camera. Narration Settings Still Apply.</div>
+      <button class="btn btn-ghost btn-sm" id="rvPresOn"><i data-lucide="user-round"></i>Add A Presenter</button>`
+    }
+  </section>`
+      : ""
+  }`;
 }
 
 /* ======================= QUALITY ======================= */
@@ -3532,7 +4522,15 @@ function stepQuality() {
     ["Scenes", `${scenes} · ${Math.round(per * scenes)}s`, "scenes"],
     ["Format", formatLabel(w.primaryFormat || DEFAULT_FORMAT), "scenes"],
     ["Titles", w.titles?.property === false ? "No Opening Title" : "Opening Title On", "titles"],
-    ["Audio", w.music && w.music !== "none" ? "Music On" : w.narration && w.narration !== "none" ? "Narration Only" : "No Audio", "audio"],
+    [
+      "Audio",
+      w.music && w.music !== "none"
+        ? "Music On"
+        : w.narration && w.narration !== "none"
+          ? "Narration Only"
+          : "No Audio",
+      "audio",
+    ],
     ["Brand", kit ? kit.name : "No Brand Kit", "brand"],
   ];
   return `<h3>Review &amp; Generate</h3>
@@ -3543,37 +4541,59 @@ function stepQuality() {
 
   <div class="rv-qtiers">${QUALITY_TIERS.map((t) => {
     const c = getQualityCompatibility(t.id, scenes);
-    return `<button class="rv-qtier ${w.quality === t.id ? "on" : ""} ${c.compatible ? "" : "off"}" data-qual="${t.id}" ${c.compatible ? "" : "disabled aria-disabled=\"true\""}>
+    return `<button class="rv-qtier ${w.quality === t.id ? "on" : ""} ${c.compatible ? "" : "off"}" data-qual="${t.id}" ${c.compatible ? "" : 'disabled aria-disabled="true"'}>
       <b>${t.name}</b><em>${t.note}</em>
       <span class="mono">Up To ${t.maxScenes} Scenes · ${qualityCost(t.id)} Credits</span>
       ${c.compatible ? "" : `<i class="rv-qover">${esc(c.reason)}</i>`}
     </button>`;
   }).join("")}</div>
 
-  ${compat.compatible ? "" : `<div class="rv-qfix">
+  ${
+    compat.compatible
+      ? ""
+      : `<div class="rv-qfix">
     <p>${esc(compat.reason)} Nothing Is Removed Until You Choose.</p>
     <div class="rv-qfix-a">
       ${lowest ? `<button class="btn btn-primary btn-sm" id="rvKeepAll">Keep All ${scenes} Scenes</button>` : ""}
       <button class="btn btn-ghost btn-sm" id="rvShorten">Shorten Video</button>
     </div>
-    ${lowest ? `<div class="rv-note sm">Keeping Every Scene Switches Quality To ${lowest.name}.</div>`
-      : `<div class="rv-note sm">No Quality Tier Supports ${scenes} Scenes. Shorten The Video To Continue.</div>`}
-  </div>`}
+    ${
+      lowest
+        ? `<div class="rv-note sm">Keeping Every Scene Switches Quality To ${lowest.name}.</div>`
+        : `<div class="rv-note sm">No Quality Tier Supports ${scenes} Scenes. Shorten The Video To Continue.</div>`
+    }
+  </div>`
+  }
 
   <div class="rv-sub">Mode</div>
-  <div class="rv-seg">${[["auto", "Auto"], ["advanced", "Advanced"]]
-    .map(([id, n]) => `<button class="${(w.mode || "auto") === id ? "on" : ""}" data-mode="${id}">${n}</button>`).join("")}</div>
-  <div class="rv-note sm">${(w.mode || "auto") === "auto"
-    ? "Auto Picks Motion, Transitions And Pacing For You. Everything You Set Elsewhere Still Applies."
-    : "Advanced Keeps Every Per Scene Choice You Made Exactly As You Set It."}</div>
+  <div class="rv-seg">${[
+    ["auto", "Auto"],
+    ["advanced", "Advanced"],
+  ]
+    .map(
+      ([id, n]) =>
+        `<button class="${(w.mode || "auto") === id ? "on" : ""}" data-mode="${id}">${n}</button>`,
+    )
+    .join("")}</div>
+  <div class="rv-note sm">${
+    (w.mode || "auto") === "auto"
+      ? "Auto Picks Motion, Transitions And Pacing For You. Everything You Set Elsewhere Still Applies."
+      : "Advanced Keeps Every Per Scene Choice You Made Exactly As You Set It."
+  }</div>
 
   <div class="rv-sub">Video Format</div>
   <div class="rv-fmt-sum"><b>${esc(formatLabel(w.primaryFormat || DEFAULT_FORMAT))}</b>
     <button class="fb-link" data-sec="scenes">Change In Select &amp; Order</button></div>
 
   <div class="rv-sub">Additional Versions</div>
-  <div class="rv-seg wrap">${VIDEO_FORMATS.filter((f) => f.id !== (w.primaryFormat || DEFAULT_FORMAT))
-    .map((f) => `<button class="${(w.additionalFormats || []).includes(f.id) ? "on" : ""}" data-addfmt="${f.id}">Also Create ${f.label}</button>`).join("")}</div>
+  <div class="rv-seg wrap">${VIDEO_FORMATS.filter(
+    (f) => f.id !== (w.primaryFormat || DEFAULT_FORMAT),
+  )
+    .map(
+      (f) =>
+        `<button class="${(w.additionalFormats || []).includes(f.id) ? "on" : ""}" data-addfmt="${f.id}">Also Create ${f.label}</button>`,
+    )
+    .join("")}</div>
   <div class="rv-note sm">Rendering ${outs.length} Version${outs.length === 1 ? "" : "s"}: ${esc(outs.join(", "))}.</div>
 
   <div class="rv-foot"><button class="btn btn-ghost" id="rvBack">Back</button></div>`;
@@ -3607,13 +4627,17 @@ function shortenModalHtml() {
     <div class="rv-modal-b">
       <p>Your Video Contains <b class="mono">${w.scenes.length}</b> Scenes. ${esc(qualityTierById(w.quality).name)} Allows <b class="mono">${max}</b>.
       Scenes Marked Below Are Recommended For Removal. Nothing Is Removed Until You Confirm.</p>
-      <div class="rv-shortlist">${w.scenes.map((s, i) => `
+      <div class="rv-shortlist">${w.scenes
+        .map(
+          (s, i) => `
         <label class="rv-shortrow ${drop.has(s.key) ? "drop" : ""}">
           <input type="checkbox" data-shortkeep="${esc(s.key)}" ${drop.has(s.key) ? "" : "checked"}>
           <span class="mono">${i + 1}</span>
           <b>${esc(s.room || "Scene")}</b>
           <em>${drop.has(s.key) ? "Recommended For Removal" : "Keep"}</em>
-        </label>`).join("")}</div>
+        </label>`,
+        )
+        .join("")}</div>
       <div class="rv-note sm">Final Video: <b class="mono">${keep}</b> Scene${keep === 1 ? "" : "s"}${ok ? "" : keep > max ? ` — Still ${keep - max} Over The Limit.` : " — Keep At Least One Scene."}</div>
     </div>
     <div class="rv-modal-f">
@@ -3631,16 +4655,28 @@ function plannedVariants() {
   if (mode === "branded" || mode === "both") versions.push("branded");
   const out = [];
   for (const f of outputFormats(w)) {
-    for (const v of versions) out.push({ aspect_ratio: f, version_type: v, brand_kit_id: v === "branded" ? w.brandKitId || null : null });
+    for (const v of versions)
+      out.push({
+        aspect_ratio: f,
+        version_type: v,
+        brand_kit_id: v === "branded" ? w.brandKitId || null : null,
+      });
   }
   return out;
 }
 
 function vfxGenCredits() {
-  return (S.wizard?.scenes || []).reduce((n, s) => n + (s.vfx_gen ? (tileById(s.vfx_gen)?.credits || 0) : 0), 0);
+  return (S.wizard?.scenes || []).reduce(
+    (n, s) => n + (s.vfx_gen ? tileById(s.vfx_gen)?.credits || 0 : 0),
+    0,
+  );
 }
 function creditTotal() {
-  return qualityCost(S.wizard?.quality || "standard") + immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE + vfxGenCredits();
+  return (
+    qualityCost(S.wizard?.quality || "standard") +
+    immersiveCount() * IMMERSIVE_CREDITS_PER_SCENE +
+    vfxGenCredits()
+  );
 }
 
 /* Itemized cost so the number in the footer is never a mystery. AI clips are
@@ -3651,14 +4687,23 @@ function creditBreakdown() {
   const rows = [];
   rows.push(["Video Render", qualityCost(w.quality || "standard")]);
   const imm = immersiveCount();
-  if (imm) rows.push([`Immersive Motion · ${imm} ${imm === 1 ? "Scene" : "Scenes"}`, imm * IMMERSIVE_CREDITS_PER_SCENE]);
+  if (imm)
+    rows.push([
+      `Immersive Motion · ${imm} ${imm === 1 ? "Scene" : "Scenes"}`,
+      imm * IMMERSIVE_CREDITS_PER_SCENE,
+    ]);
   const gen = vfxGenCredits();
   if (gen) {
     const n = (w.scenes || []).filter((x) => x.vfx_gen).length;
     rows.push([`AI Effects · ${n} ${n === 1 ? "Scene" : "Scenes"}`, gen]);
   }
   const clips = (w.scenes || []).filter((x) => x.use_clip && x.clip_id).length;
-  return { rows, clips, clipCost: clips * ANIMATE_CREDITS_PER_CLIP, total: rows.reduce((n, r) => n + r[1], 0) };
+  return {
+    rows,
+    clips,
+    clipCost: clips * ANIMATE_CREDITS_PER_CLIP,
+    total: rows.reduce((n, r) => n + r[1], 0),
+  };
 }
 
 /* ======================= PERSISTENT PREVIEW PANEL ======================= */
@@ -3677,7 +4722,9 @@ function previewPanel() {
     <div class="rv-sub sm">Variants</div>
     <div class="rv-vars">${vs.length ? vs.map((v) => `<div><span class="mono">${esc(v.aspect_ratio)}</span><i>${v.version_type === "clean" ? "Unbranded" : v.version_type === "branded" ? "Branded" : "Disclosure Ready"}</i><b>Queued</b></div>`).join("") : `<div class="rv-note sm">Pick A Format.</div>`}</div>
     <div class="rv-bill">
-      ${creditBreakdown().rows.map(([n, v]) => `<div><span>${esc(n)}</span><b class="mono">${v}</b></div>`).join("")}
+      ${creditBreakdown()
+        .rows.map(([n, v]) => `<div><span>${esc(n)}</span><b class="mono">${v}</b></div>`)
+        .join("")}
       <div class="rv-bill-t"><span>Total To Render</span><b class="mono">${cost} Credits</b></div>
       ${creditBreakdown().clips ? `<div class="rv-bill-n">${creditBreakdown().clips} AI ${creditBreakdown().clips === 1 ? "Clip" : "Clips"} · ${creditBreakdown().clipCost} Credits Already Charged</div>` : ""}
       ${bal != null ? `<div class="rv-bill-n">Balance ${bal}${!block && bal >= cost ? ` · ${bal - cost} After This Render` : ""}</div>` : ""}
@@ -3685,7 +4732,9 @@ function previewPanel() {
     ${block ? `<div class="rv-note sm">${esc(block)}</div>` : bal != null && bal < cost ? `<div class="rv-note sm">You Need ${cost - bal} More Credits To Render This Video.</div><button class="btn btn-ghost btn-sm" id="rvAddCredits2"><i data-lucide="zap"></i>Add Credits</button>` : ""}
     ${!qualityCompat(w).compatible ? `<div class="rv-note sm">${esc(qualityCompat(w).reason)} Choose A Compatible Quality Or Shorten The Video.</div>` : ""}
     ${!block && !browserRenderSupport().ok ? `<div class="rv-note sm">${esc(browserRenderSupport().reason)} Nothing Is Charged Until A Render Actually Starts.</div>` : ""}
-    ${w.busy ? `<div class="rv-proc sm"><b>Creating Your Video</b>
+    ${
+      w.busy
+        ? `<div class="rv-proc sm"><b>Creating Your Video</b>
       <div class="rv-prog"><i style="width:${Math.round(w.progress * 100)}%"></i></div>
       <span>${esc(w.stage || "Preparing scenes")}</span>
       <div class="rv-note sm">${esc(activeRenderProvider().runningNotice)}${
@@ -3694,16 +4743,15 @@ function previewPanel() {
           : " Your Video Is Created In This Browser Tab. Closing Or Refreshing This Tab Stops The Render — Your Project Is Saved And Your Credits Are Returned."
       }</div>
       <button class="btn btn-ghost btn-xs" id="rvCancelRender"${w.cancelling ? " disabled" : ""}><i data-lucide="x"></i>${w.cancelling ? "Stopping…" : "Stop Render"}</button></div>`
-      : atReview(w)
-        ? block
-          ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
-          : `${tabNoticeHtml()}<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && browserRenderSupport().ok ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
-
-        : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`}
+        : atReview(w)
+          ? block
+            ? `<button class="btn btn-primary rv-cta" id="rvAddCredits"><i data-lucide="zap"></i>Add Credits To Render</button>`
+            : `${tabNoticeHtml()}<button class="btn btn-primary rv-cta" id="rvGen" ${vs.length && qualityCompat(w).compatible && browserRenderSupport().ok ? "" : "disabled"}><i data-lucide="clapperboard"></i>Generate Video</button>`
+          : `<button class="btn btn-primary rv-cta" id="rvNext" ${stepReady() ? "" : "disabled"}>Continue</button>`
+    }
 
   </div>`;
 }
-
 
 /* ======================= SCENE HELPERS ======================= */
 /** True on the final Review step, whatever internal step number it carries. */
@@ -3804,7 +4852,6 @@ async function generate() {
   RENDER_ABORT = typeof AbortController !== "undefined" ? new AbortController() : null;
   render();
 
-
   let projectId = null;
   try {
     const per = sceneDurations(w.scenes.length, w.length);
@@ -3826,7 +4873,14 @@ async function generate() {
         brand_kit_id: w.brandKitId || null,
         branding: w.branding,
         disclosure: { mode: w.disclosureMode },
-        settings: { baTransition: w.baTransition || "match", quality: w.quality || "standard", primaryFormat: w.primaryFormat || DEFAULT_FORMAT, additionalFormats: w.additionalFormats || [], mode: w.mode || "auto", titles: w.titles || null },
+        settings: {
+          baTransition: w.baTransition || "match",
+          quality: w.quality || "standard",
+          primaryFormat: w.primaryFormat || DEFAULT_FORMAT,
+          additionalFormats: w.additionalFormats || [],
+          mode: w.mode || "auto",
+          titles: w.titles || null,
+        },
       },
       scenes: dedupeScenes(w.scenes).map((s, i) => ({
         source_asset_id: s.asset_id || null,
@@ -3842,7 +4896,11 @@ async function generate() {
         caption: w.captions ? s.caption || s.room : null,
         /* Text placement rides along in crop_data so it survives a reload
            without a schema change. */
-        crop_data: { ...(s.crop_data || {}), caption_pos: s.caption_pos || "bottom", caption_style: s.caption_style || "brand" },
+        crop_data: {
+          ...(s.crop_data || {}),
+          caption_pos: s.caption_pos || "bottom",
+          caption_style: s.caption_style || "brand",
+        },
         disclosure_type: s.disclosure || null,
         motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
         immersive_effect: s.motion_level === "immersive" ? s.immersive_effect || "light" : null,
@@ -3893,15 +4951,25 @@ async function generate() {
     await openDetail(projectId);
   } catch (e) {
     const cancelled = isRenderCancelled(e);
-    const msg = cancelled ? "You stopped this render. Your credits were returned." : String(e?.message || e || "");
+    const msg = cancelled
+      ? "You stopped this render. Your credits were returned."
+      : String(e?.message || e || "");
     const entitlement = isPlanBlocked(msg);
     if (projectId) {
       if (entitlement || cancelled) {
         // Nothing was produced: no half-finished card is left behind, and the
         // job row releases whatever was charged.
-        try { await deleteVideo({ id: projectId }); } catch (_) {}
+        try {
+          await deleteVideo({ id: projectId });
+        } catch (_) {}
       } else {
-        try { await setVideoStatus({ id: projectId, status: "failed", error_message: (msg || "The render did not finish.").slice(0, 300) }); } catch (_) {}
+        try {
+          await setVideoStatus({
+            id: projectId,
+            status: "failed",
+            error_message: (msg || "The render did not finish.").slice(0, 300),
+          });
+        } catch (_) {}
       }
     }
     if (S.renderJobId) {
@@ -3920,7 +4988,6 @@ async function generate() {
     S.screen = entitlement ? "wizard" : "library";
     render();
   }
-
 }
 
 /* The job row is the durable record of a render. Progress is written through
@@ -3936,9 +5003,13 @@ async function cancelRender() {
   if (!w || !w.busy || w.cancelling) return;
   w.cancelling = true;
   render();
-  try { RENDER_ABORT?.abort(); } catch (_) {}
+  try {
+    RENDER_ABORT?.abort();
+  } catch (_) {}
   if (S.renderJobId) {
-    try { await cancelRenderJob({ id: S.renderJobId, force: true }); } catch (_) {}
+    try {
+      await cancelRenderJob({ id: S.renderJobId, force: true });
+    } catch (_) {}
   }
 }
 async function jobUpdate(patch, throttleMs = 0) {
@@ -3953,7 +5024,14 @@ async function jobUpdate(patch, throttleMs = 0) {
   } catch (_) {}
 }
 
-const STAGES = ["Preparing scenes", "Creating motion", "Building transitions", "Adding audio and captions", "Applying branding", "Finalizing formats"];
+const STAGES = [
+  "Preparing scenes",
+  "Creating motion",
+  "Building transitions",
+  "Adding audio and captions",
+  "Applying branding",
+  "Finalizing formats",
+];
 
 async function renderAllVariants(projectId, variants, cfg, perOverride, signal) {
   const w = cfg;
@@ -3991,7 +5069,7 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       scene_type: s.scene_type,
       duration: clipUrl && clipSecs ? clipSecs : per,
       motion: s.motion || "auto",
-      transition: s.scene_type === "before_after" ? (w.baTransition || "match") : w.transition,
+      transition: s.scene_type === "before_after" ? w.baTransition || "match" : w.transition,
       caption: w.captions ? s.caption || s.room : null,
       captionPos: s.caption_pos || "bottom",
       captionStyle: s.caption_style || "brand",
@@ -4012,9 +5090,10 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
     const type = resolveTransition(row?.type || "auto", sceneShape(sc), sceneShape(nxt));
     /* An approved AI bridge plays as the transition itself; otherwise the
        deterministic effect renders in the browser. */
-    const clipUrl = row?.generated_clip_path && row.status === "completed"
-      ? await resolvePhotoUrl(row.generated_clip_path).catch(() => null)
-      : null;
+    const clipUrl =
+      row?.generated_clip_path && row.status === "completed"
+        ? await resolvePhotoUrl(row.generated_clip_path).catch(() => null)
+        : null;
     sceneTransitions.push({
       type,
       ms: typeof row?.duration_ms === "number" ? row.duration_ms : DEFAULT_TRANSITION_MS,
@@ -4025,9 +5104,12 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
   const { data: auth } = await supabase.auth.getUser();
   const uid = auth.user?.id;
   const avTitle = w.title || w.propertyLabel || "";
-  const narrationUrl = await buildNarration(w.narration, avatarScript(w.avatar, w.script || defaultScript(), avTitle), w.voice);
+  const narrationUrl = await buildNarration(
+    w.narration,
+    avatarScript(w.avatar, w.script || defaultScript(), avTitle),
+    w.voice,
+  );
   const avatar = avatarRenderOption(w.avatar, avTitle);
-
 
   let done = 0;
   for (const v of variants) {
@@ -4036,17 +5118,18 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
       signal: signal || null,
       aspect: v.aspect_ratio,
       versionType: v.version_type,
-      brand: v.version_type === "branded" && kit
-        ? {
-            company_name: kit.company_name,
-            contact_name: kit.contact_name,
-            phone: w.branding.contact ? kit.phone : null,
-            email: w.branding.contact ? kit.email : null,
-            website: w.branding.contact ? kit.website : null,
-            default_cta: w.branding.cta ? kit.default_cta : null,
-            accent: kit.colors?.primary || null,
-          }
-        : null,
+      brand:
+        v.version_type === "branded" && kit
+          ? {
+              company_name: kit.company_name,
+              contact_name: kit.contact_name,
+              phone: w.branding.contact ? kit.phone : null,
+              email: w.branding.contact ? kit.email : null,
+              website: w.branding.contact ? kit.website : null,
+              default_cta: w.branding.cta ? kit.default_cta : null,
+              accent: kit.colors?.primary || null,
+            }
+          : null,
       title: w.title || w.propertyLabel || "",
       transition: w.transition,
       sceneTransitions,
@@ -4063,7 +5146,10 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
         const lab = host()?.querySelector(".rv-proc span");
         if (bar) bar.style.width = Math.round(S.wizard.progress * 100) + "%";
         if (lab) lab.textContent = S.wizard.stage;
-        void jobUpdate({ status: "rendering", progress: Math.min(1, S.wizard.progress), stage: S.wizard.stage }, 5000);
+        void jobUpdate(
+          { status: "rendering", progress: Math.min(1, S.wizard.progress), stage: S.wizard.stage },
+          5000,
+        );
       },
     });
 
@@ -4078,8 +5164,12 @@ async function renderAllVariants(projectId, variants, cfg, perOverride, signal) 
     try {
       const posterBlob = await (await fetch(out.poster)).blob();
       thumbPath = `${base}.jpg`;
-      await supabase.storage.from(BUCKET).upload(thumbPath, posterBlob, { contentType: "image/jpeg", upsert: true });
-    } catch (_) { thumbPath = null; }
+      await supabase.storage
+        .from(BUCKET)
+        .upload(thumbPath, posterBlob, { contentType: "image/jpeg", upsert: true });
+    } catch (_) {
+      thumbPath = null;
+    }
 
     await finishVariant({
       variant_id: v.id,
@@ -4122,10 +5212,16 @@ async function mountPlayer() {
   if (!sel) return;
   const fmt = S.playFormat || d.variants[0]?.aspect_ratio;
   const ver = S.playVersion || d.variants[0]?.version_type;
-  const v = d.variants.find((x) => x.aspect_ratio === fmt && x.version_type === ver) || d.variants[0];
-  if (!v?.output_path) { sel.innerHTML = `<div class="rv-note">No Rendered Output Yet.</div>`; return; }
+  const v =
+    d.variants.find((x) => x.aspect_ratio === fmt && x.version_type === ver) || d.variants[0];
+  if (!v?.output_path) {
+    sel.innerHTML = `<div class="rv-note">No Rendered Output Yet.</div>`;
+    return;
+  }
   const url = await signed(v.output_path);
-  sel.innerHTML = url ? `<video src="${url}" controls playsinline></video>` : `<div class="rv-note">Could Not Load The Video.</div>`;
+  sel.innerHTML = url
+    ? `<video src="${url}" controls playsinline></video>`
+    : `<div class="rv-note">Could Not Load The Video.</div>`;
 }
 
 function detailHtml() {
@@ -4153,13 +5249,20 @@ function detailHtml() {
       <div><span>Video Type</span><b>${esc(VIDEO_TYPES.find((t) => t.id === p.video_type)?.name || "")}</b></div>
       <div><span>Scenes</span><b>${d.scenes.length}</b></div>
       <div><span>Formats</span><b>${esc((p.formats || []).join(", "))}</b></div>
-      <div><span>Disclosure</span><b>${esc(Array.from(new Set(d.scenes.map((s) => s.disclosure_type).filter(Boolean).map((k) => DISCLOSURE_LABEL[k]))).join(", ") || "None Required")}</b></div>
+      <div><span>Disclosure</span><b>${esc(
+        Array.from(
+          new Set(
+            d.scenes
+              .map((s) => s.disclosure_type)
+              .filter(Boolean)
+              .map((k) => DISCLOSURE_LABEL[k]),
+          ),
+        ).join(", ") || "None Required",
+      )}</b></div>
       <div><span>Created</span><b>${fmtDate(p.created_at)}</b></div>
     </div>`;
   }
   if (tab === "presentation") body = presentationHtml(d);
-
-
 
   return `<div class="rv-head">
     <div><h2>${esc(p.title)}</h2><p>${esc(p.property_label || "No Property Linked")} • ${statusOf(p)} • ${fmtDate(p.created_at)}</p></div>
@@ -4170,13 +5273,26 @@ function detailHtml() {
       <button class="btn btn-primary" id="rvEdit"><i data-lucide="pencil"></i>Edit</button>
     </div>
   </div>
-  ${p.status === "failed" ? `<div class="rv-fail"><b>${planBlockedMsg(p) ? "Not Enough Credits To Render" : "This Render Failed"}</b><span>${esc(planBlockedMsg(p) ? "This Video Was Never Rendered And Nothing Was Charged. Add Credits, Then Try Again." : p.error_message || "The render did not finish.")}</span>
-    <div>${planBlockedMsg(p)
-      ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Add Credits</button><button class="btn btn-ghost btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
-      : `<button class="btn btn-primary btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button><a class="btn btn-ghost btn-sm" href="/contact">Contact Support</a>`}</div></div>` : ""}
+  ${
+    p.status === "failed"
+      ? `<div class="rv-fail"><b>${planBlockedMsg(p) ? "Not Enough Credits To Render" : "This Render Failed"}</b><span>${esc(planBlockedMsg(p) ? "This Video Was Never Rendered And Nothing Was Charged. Add Credits, Then Try Again." : p.error_message || "The render did not finish.")}</span>
+    <div>${
+      planBlockedMsg(p)
+        ? `<button class="btn btn-primary btn-sm" id="rvUpgrade"><i data-lucide="zap"></i>Add Credits</button><button class="btn btn-ghost btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button>`
+        : `<button class="btn btn-primary btn-sm" id="rvRetry">Try Again</button><button class="btn btn-ghost btn-sm" id="rvEdit2">Change Settings</button><a class="btn btn-ghost btn-sm" href="/contact">Contact Support</a>`
+    }</div></div>`
+      : ""
+  }
 
-  <div class="rv-tabs">${[["video", "Video"], ["scenes", "Scenes"], ["captions", "Captions"], ["presentation", "Presentation"], ["details", "Details"]]
-    .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-tab="${id}">${n}</button>`).join("")}</div>
+  <div class="rv-tabs">${[
+    ["video", "Video"],
+    ["scenes", "Scenes"],
+    ["captions", "Captions"],
+    ["presentation", "Presentation"],
+    ["details", "Details"],
+  ]
+    .map(([id, n]) => `<button class="${tab === id ? "on" : ""}" data-tab="${id}">${n}</button>`)
+    .join("")}</div>
   <div class="rv-detail">${body}</div>`;
 }
 
@@ -4221,7 +5337,15 @@ function presentationHtml(d) {
     <label class="rv-check"><input type="checkbox" id="pr_appr" ${sh.approval_enabled ? "checked" : ""}> Collect Approvals & Comments</label>
 
     <div class="rv-sub">Mobile Layout</div>
-    <div class="rv-seg">${[["stacked", "Stacked"], ["compact", "Compact"]].map(([v, n]) => `<button class="${(sh.mobile_layout || "stacked") === v ? "on" : ""}" data-pmob="${v}">${n}</button>`).join("")}</div>
+    <div class="rv-seg">${[
+      ["stacked", "Stacked"],
+      ["compact", "Compact"],
+    ]
+      .map(
+        ([v, n]) =>
+          `<button class="${(sh.mobile_layout || "stacked") === v ? "on" : ""}" data-pmob="${v}">${n}</button>`,
+      )
+      .join("")}</div>
 
     ${live ? `<div class="rv-note sm">Live At <a href="/v/${esc(live)}" target="_blank" rel="noreferrer">${esc(origin)}/v/${esc(live)}</a></div>` : ""}
     <div class="rv-foot">
@@ -4230,8 +5354,6 @@ function presentationHtml(d) {
     </div>
   </div>`;
 }
-
-
 
 /* ======================= THUMB PAINTING ======================= */
 /* Signed storage URLs expire, so the path — not the URL — is the source of
@@ -4261,19 +5383,29 @@ async function paintOneThumb(el) {
    viewport ask for a URL. */
 async function paintAssetThumbs() {
   const els = Array.from(host()?.querySelectorAll("[data-img]") || []);
-  if (thumbObserver) { thumbObserver.disconnect(); thumbObserver = null; }
+  if (thumbObserver) {
+    thumbObserver.disconnect();
+    thumbObserver = null;
+  }
   if (typeof IntersectionObserver === "undefined") {
     await Promise.all(els.map((el) => paintOneThumb(el)));
     return;
   }
-  const io = new IntersectionObserver((entries) => {
-    for (const en of entries) {
-      if (!en.isIntersecting) continue;
-      paintOneThumb(en.target).then((ok) => { if (ok) io.unobserve(en.target); });
-    }
-  }, { rootMargin: "400px" });
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const en of entries) {
+        if (!en.isIntersecting) continue;
+        paintOneThumb(en.target).then((ok) => {
+          if (ok) io.unobserve(en.target);
+        });
+      }
+    },
+    { rootMargin: "400px" },
+  );
   thumbObserver = io;
-  els.forEach((el) => { if (!el.dataset.painted) io.observe(el); });
+  els.forEach((el) => {
+    if (!el.dataset.painted) io.observe(el);
+  });
 }
 
 /* ======================= RENDER + EVENTS ======================= */
@@ -4320,1134 +5452,1786 @@ function bind() {
 
   /* library */
   on("#rvNew, #rvNew2", "click", () => startWizard({}));
-  on(".rv-chip", "click", (e) => { S.filter = e.currentTarget.dataset.f; renderList(); });
+  on(".rv-chip", "click", (e) => {
+    S.filter = e.currentTarget.dataset.f;
+    renderList();
+  });
   const q = el.querySelector("#rvQ");
   /* Only the result list is repainted so the focused input and the thumbnails
      never get torn down mid-typing. */
-  if (q) q.addEventListener("input", (e) => { S.q = e.target.value; renderList(); });
+  if (q)
+    q.addEventListener("input", (e) => {
+      S.q = e.target.value;
+      renderList();
+    });
   bindCards(el);
 
   /* wizard */
   const w = S.wizard;
   if (w) {
-  on("#rvExitBuilder", "click", () => { void exitBuilder(w); });
-  on("#rvExitRetry", "click", () => { void exitBuilder(w); });
-  on("#rvExitLeave", "click", () => { w.exitModal = null; leaveBuilder(w); });
-  on("#rvExitX", "click", () => { w.exitModal = null; render(); });
-  on("#rvStartOver", "click", () => { w.startOverModal = { busy: false }; render(); });
-  on("#rvStartOverKeep", "click", () => { w.startOverModal = null; render(); });
-  on("#rvStartOverGo", "click", () => { void startOverBuilder(w); });
-  on("#rvDeleteDraft", "click", () => { w.deleteModal = { alsoPhotos: false, busy: false }; render(); });
-  on("#rvDelX, #rvDelKeep", "click", () => { w.deleteModal = null; render(); });
-  on("#rvDelPhotos", "change", (e) => { w.deleteModal = { ...(w.deleteModal || {}), alsoPhotos: !!e.currentTarget.checked }; });
-  on("#rvDelGo", "click", () => { void confirmDeleteDraft(w); });
-  on("#rvBack", "click", () => {
-    /* Scenes is the first builder step, so Back saves and returns to Studio. */
-    const back = backFromVideoStep(w.step);
-    if (back.exit) { void exitBuilder(w); return; }
-    w.step = back.step;
-    render();
-  });
-  on(".rv-rail-i", "click", async (e) => {
-    const key = e.currentTarget.dataset.sec;
-    if (!key || !sectionReady(key)) return;
-    w.step = stepForSection(key);
-    if (key === "scenes") await loadWizardAssets();
-    if (S.wizard !== w) return;
-    render();
-  });
-  on("#rvNext", "click", async () => {
-    const t = el.querySelector("#rvTitle");
-    if (t) w.title = sanitizeTitle(t.value);
-    if (w.step === 2) {
-      if (w.scenes.length < 5 && !w.lowWarned) { w.lowWarned = true; w.lowModal = true; render(); return; }
-      /* Video type follows the content unless the user already changed it. */
-      if (!w.typeTouched) {
-        const ba = w.scenes.filter((s) => s.compare).length;
-        w.videoType = ba > w.scenes.length / 2 ? "before_after" : "property_tour";
-      }
-    }
-    w.step = nextStep(w.step);
-    render();
-  });
-  /* Titles section */
-  on("[data-tt]", "change", (e) => {
-    const k = e.currentTarget.dataset.tt;
-    w.titles = w.titles || { property: true, contact: true, custom: [] };
-    w.titles[k] = !!e.currentTarget.checked;
-    render();
-  });
-  const ttHead = el.querySelector("#rvTtHead");
-  if (ttHead) ttHead.addEventListener("input", (ev) => { w.titles.headline = ev.target.value; });
-  const ttSub = el.querySelector("#rvTtSub");
-  if (ttSub) ttSub.addEventListener("input", (ev) => { w.titles.sub = ev.target.value; });
-  on("#rvTtAdd", "click", () => {
-    w.titles.custom = (w.titles.custom || []).concat("");
-    render();
-  });
-  el.querySelectorAll("[data-tcustom]").forEach((i) =>
-    i.addEventListener("input", (ev) => { w.titles.custom[Number(ev.target.dataset.tcustom)] = ev.target.value; }));
-  on("[data-tcustom-del]", "click", (e) => {
-    w.titles.custom.splice(Number(e.currentTarget.dataset.tcustomDel), 1);
-    render();
-  });
-  /* Quality section */
-  on("[data-qual]", "click", (e) => {
-    const id = e.currentTarget.dataset.qual;
-    if (!getQualityCompatibility(id, w.scenes.length).compatible) return;
-    w.quality = id;
-    render();
-  });
-  on("#rvKeepAll", "click", () => {
-    const t = lowestCompatibleQuality(w.scenes.length);
-    if (!t) return;
-    w.quality = t.id;
-    toast(`Quality Set To ${t.name} So All ${w.scenes.length} Scenes Are Kept.`);
-    render();
-  });
-  on("#rvShorten", "click", () => {
-    w.shortenPicks = recommendedRemovals(w, qualityTierById(w.quality).maxScenes);
-    w.shortenModal = true;
-    render();
-  });
-  const closeShorten = () => { w.shortenModal = false; w.shortenPicks = null; render(); };
-  on("#rvShortX", "click", closeShorten);
-  on("#rvShortCancel", "click", closeShorten);
-  el.querySelectorAll("[data-shortkeep]").forEach((box) =>
-    box.addEventListener("change", (ev) => {
-      const key = ev.target.dataset.shortkeep;
-      const picks = new Set(w.shortenPicks || []);
-      if (ev.target.checked) picks.delete(key);
-      else picks.add(key);
-      w.shortenPicks = Array.from(picks);
+    on("#rvExitBuilder", "click", () => {
+      void exitBuilder(w);
+    });
+    on("#rvExitRetry", "click", () => {
+      void exitBuilder(w);
+    });
+    on("#rvExitLeave", "click", () => {
+      w.exitModal = null;
+      leaveBuilder(w);
+    });
+    on("#rvExitX", "click", () => {
+      w.exitModal = null;
       render();
-    }));
-  on("#rvShortSave", "click", () => {
-    const drop = new Set(w.shortenPicks || []);
-    if (!drop.size) { closeShorten(); return; }
-    w.scenes = w.scenes.filter((s) => !drop.has(s.key));
-    syncSceneOrder();
-    w.shortenModal = false;
-    w.shortenPicks = null;
-    w.step = 2;
-    toast(`Video Shortened To ${w.scenes.length} Scene${w.scenes.length === 1 ? "" : "s"}.`);
-    render();
-  });
-  on("[data-mode]", "click", (e) => { w.mode = e.currentTarget.dataset.mode; render(); });
+    });
+    on("#rvStartOver", "click", () => {
+      w.startOverModal = { busy: false };
+      render();
+    });
+    on("#rvStartOverKeep", "click", () => {
+      w.startOverModal = null;
+      render();
+    });
+    on("#rvStartOverGo", "click", () => {
+      void startOverBuilder(w);
+    });
+    on("#rvDeleteDraft", "click", () => {
+      w.deleteModal = { alsoPhotos: false, busy: false };
+      render();
+    });
+    on("#rvDelX, #rvDelKeep", "click", () => {
+      w.deleteModal = null;
+      render();
+    });
+    on("#rvDelPhotos", "change", (e) => {
+      w.deleteModal = { ...(w.deleteModal || {}), alsoPhotos: !!e.currentTarget.checked };
+    });
+    on("#rvDelGo", "click", () => {
+      void confirmDeleteDraft(w);
+    });
+    on("#rvBack", "click", () => {
+      /* Scenes is the first builder step, so Back saves and returns to Studio. */
+      const back = backFromVideoStep(w.step);
+      if (back.exit) {
+        void exitBuilder(w);
+        return;
+      }
+      w.step = back.step;
+      render();
+    });
+    on(".rv-rail-i", "click", async (e) => {
+      const key = e.currentTarget.dataset.sec;
+      if (!key || !sectionReady(key)) return;
+      w.step = stepForSection(key);
+      if (key === "scenes") await loadWizardAssets();
+      if (S.wizard !== w) return;
+      render();
+    });
+    on("#rvNext", "click", async () => {
+      const t = el.querySelector("#rvTitle");
+      if (t) w.title = sanitizeTitle(t.value);
+      if (w.step === 2) {
+        if (w.scenes.length < 5 && !w.lowWarned) {
+          w.lowWarned = true;
+          w.lowModal = true;
+          render();
+          return;
+        }
+        /* Video type follows the content unless the user already changed it. */
+        if (!w.typeTouched) {
+          const ba = w.scenes.filter((s) => s.compare).length;
+          w.videoType = ba > w.scenes.length / 2 ? "before_after" : "property_tour";
+        }
+      }
+      w.step = nextStep(w.step);
+      render();
+    });
+    /* Titles section */
+    on("[data-tt]", "change", (e) => {
+      const k = e.currentTarget.dataset.tt;
+      w.titles = w.titles || { property: true, contact: true, custom: [] };
+      w.titles[k] = !!e.currentTarget.checked;
+      render();
+    });
+    const ttHead = el.querySelector("#rvTtHead");
+    if (ttHead)
+      ttHead.addEventListener("input", (ev) => {
+        w.titles.headline = ev.target.value;
+      });
+    const ttSub = el.querySelector("#rvTtSub");
+    if (ttSub)
+      ttSub.addEventListener("input", (ev) => {
+        w.titles.sub = ev.target.value;
+      });
+    on("#rvTtAdd", "click", () => {
+      w.titles.custom = (w.titles.custom || []).concat("");
+      render();
+    });
+    el.querySelectorAll("[data-tcustom]").forEach((i) =>
+      i.addEventListener("input", (ev) => {
+        w.titles.custom[Number(ev.target.dataset.tcustom)] = ev.target.value;
+      }),
+    );
+    on("[data-tcustom-del]", "click", (e) => {
+      w.titles.custom.splice(Number(e.currentTarget.dataset.tcustomDel), 1);
+      render();
+    });
+    /* Quality section */
+    on("[data-qual]", "click", (e) => {
+      const id = e.currentTarget.dataset.qual;
+      if (!getQualityCompatibility(id, w.scenes.length).compatible) return;
+      w.quality = id;
+      render();
+    });
+    on("#rvKeepAll", "click", () => {
+      const t = lowestCompatibleQuality(w.scenes.length);
+      if (!t) return;
+      w.quality = t.id;
+      toast(`Quality Set To ${t.name} So All ${w.scenes.length} Scenes Are Kept.`);
+      render();
+    });
+    on("#rvShorten", "click", () => {
+      w.shortenPicks = recommendedRemovals(w, qualityTierById(w.quality).maxScenes);
+      w.shortenModal = true;
+      render();
+    });
+    const closeShorten = () => {
+      w.shortenModal = false;
+      w.shortenPicks = null;
+      render();
+    };
+    on("#rvShortX", "click", closeShorten);
+    on("#rvShortCancel", "click", closeShorten);
+    el.querySelectorAll("[data-shortkeep]").forEach((box) =>
+      box.addEventListener("change", (ev) => {
+        const key = ev.target.dataset.shortkeep;
+        const picks = new Set(w.shortenPicks || []);
+        if (ev.target.checked) picks.delete(key);
+        else picks.add(key);
+        w.shortenPicks = Array.from(picks);
+        render();
+      }),
+    );
+    on("#rvShortSave", "click", () => {
+      const drop = new Set(w.shortenPicks || []);
+      if (!drop.size) {
+        closeShorten();
+        return;
+      }
+      w.scenes = w.scenes.filter((s) => !drop.has(s.key));
+      syncSceneOrder();
+      w.shortenModal = false;
+      w.shortenPicks = null;
+      w.step = 2;
+      toast(`Video Shortened To ${w.scenes.length} Scene${w.scenes.length === 1 ? "" : "s"}.`);
+      render();
+    });
+    on("[data-mode]", "click", (e) => {
+      w.mode = e.currentTarget.dataset.mode;
+      render();
+    });
 
-  on("#rvLowX", "click", () => { w.lowModal = false; render(); });
-  on("#rvLowMore", "click", () => { w.lowModal = false; render(); el.querySelector("#rvHeadFile")?.click(); });
-  on("#rvLowGo", "click", () => { w.lowModal = false; w.step = nextStep(2); render(); });
+    on("#rvLowX", "click", () => {
+      w.lowModal = false;
+      render();
+    });
+    on("#rvLowMore", "click", () => {
+      w.lowModal = false;
+      render();
+      el.querySelector("#rvHeadFile")?.click();
+    });
+    on("#rvLowGo", "click", () => {
+      w.lowModal = false;
+      w.step = nextStep(2);
+      render();
+    });
 
-
-  const titleIn = el.querySelector("#rvTitle");
-  if (titleIn) {
-    /* Typing marks the title as user-owned; the address can never overwrite it
+    const titleIn = el.querySelector("#rvTitle");
+    if (titleIn) {
+      /* Typing marks the title as user-owned; the address can never overwrite it
        again. A blank field never blocks saving — the fallback covers it. */
-    titleIn.addEventListener("input", (ev) => { w.title = ev.target.value; w.titleTouched = true; });
-    titleIn.addEventListener("blur", () => {
-      w.title = sanitizeTitle(w.title);
-      titleIn.value = defaultTitle(w);
-      const note = titleIn.closest(".rv-sec, .rv-f")?.parentElement?.querySelector?.(".rv-sugt");
-      if (note && !titleSuggestion(w)) note.remove();
+      titleIn.addEventListener("input", (ev) => {
+        w.title = ev.target.value;
+        w.titleTouched = true;
+      });
+      titleIn.addEventListener("blur", () => {
+        w.title = sanitizeTitle(w.title);
+        titleIn.value = defaultTitle(w);
+        const note = titleIn.closest(".rv-sec, .rv-f")?.parentElement?.querySelector?.(".rv-sugt");
+        if (note && !titleSuggestion(w)) note.remove();
+        autosaveAddress(w);
+      });
+    }
+    on("[data-usetitle]", "click", () => {
+      const s = titleSuggestion(w);
+      if (!s) return;
+      w.title = s;
+      w.titleTouched = true;
+      render();
       autosaveAddress(w);
     });
-  }
-  on("[data-usetitle]", "click", () => {
-    const s = titleSuggestion(w);
-    if (!s) return;
-    w.title = s;
-    w.titleTouched = true;
-    render();
-    autosaveAddress(w);
-  });
 
-  bindAddressInputs(el, w);
-  on("[data-rmup]", "click", (e) => {
-    const id = e.currentTarget.dataset.rmup;
-    const gone = (w.uploads || []).find((u) => u.id === id);
-    if (gone?.url?.startsWith?.("blob:")) { try { URL.revokeObjectURL(gone.url); } catch (_) {} }
-    w.uploads = w.uploads.filter((u) => u.id !== id);
-    w.available = (w.available || []).filter((a) => a.key !== "u-" + id);
-    w.gridOrder = (w.gridOrder || []).filter((key) => key !== "u-" + id);
-    w.scenes = (w.scenes || []).filter((scene) => scene.key !== "u-" + id);
-    render();
-  });
-  /* Intake lives in @/lib/video-upload-intake so the Step 1 -> Step 2
-     transition can be exercised without a DOM. */
-  const addUploads = (list) => acceptPhotos(w, list, "picker_step2");
-  on("[data-failrm]", "click", (e) => { (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1); render(); });
-  on("[data-failretry]", "click", (e) => {
-    const i = Number(e.currentTarget.dataset.failretry);
-    const entry = (w.uploadFails || [])[i];
-    if (!entry) return;
-    w.uploadFails.splice(i, 1);
-    addUploads(entry.file ? [entry.file] : []).catch(() => {
-      w.uploadError = "That photo could not be added. Please try again.";
-      render();
-    });
-  });
-  el.querySelectorAll(".rv-thumb[draggable='true']").forEach((thumb) => {
-    thumb.addEventListener("dragstart", (e) => e.dataTransfer.setData("text/rd-upload", thumb.dataset.uploadId));
-    thumb.addEventListener("dragover", (e) => { e.preventDefault(); thumb.classList.add("drop-l"); });
-    thumb.addEventListener("dragleave", () => thumb.classList.remove("drop-l"));
-    thumb.addEventListener("dragend", () => thumb.classList.remove("drop-l"));
-    thumb.addEventListener("drop", (e) => {
-      e.preventDefault();
-      thumb.classList.remove("drop-l");
-      const from = e.dataTransfer.getData("text/rd-upload");
-      const to = thumb.dataset.uploadId;
-      const fromIndex = w.uploads.findIndex((upload) => upload.id === from);
-      const toIndex = w.uploads.findIndex((upload) => upload.id === to);
-      if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
-      const [moved] = w.uploads.splice(fromIndex, 1);
-      w.uploads.splice(toIndex, 0, moved);
-      render();
-    });
-  });
-  /* A stray drop outside a dropzone must never navigate away from the app. */
-  if (!window.__rvDropGuard) {
-    window.__rvDropGuard = true;
-    window.addEventListener("dragover", (e) => e.preventDefault());
-    window.addEventListener("drop", (e) => e.preventDefault());
-  }
-  const useDesign = async (roomId) => {
-    const d = designChoices().find((x) => x.roomId === roomId);
-    if (!d) return;
-    w.sourceType = "design";
-    w.propertyId = d.propertyId;
-    w.propertyLabel = d.propertyLabel;
-    /* A design carries its property association into the video. */
-    if (d.propertyLabel) applyAddress(w, d.propertyLabel, "inherited");
-    w.versionId = d.versionId;
-    if (!w.titleTouched) w.title = defaultTitle(w) || `${d.room} Design`;
-    if (d.before && !w.typeTouched) w.videoType = "before_after";
-    await loadWizardAssets();
-    const a = w.available.find((x) => x.key === "d-" + d.roomId) || w.available.find((x) => x.path === d.after);
-    w.scenes = a ? [assetToScene(a)] : [];
-    /* One design, nothing to select, so Step 2 is skipped. */
-    w.step = 3;
-    render();
-  };
-  /* Step 1 uses the one shared source picker, mounted fresh on every paint. */
-  const slot = el.querySelector("#rvPicker");
-  if (slot) {
-    mountSourcePicker(slot, {
-      context: "video",
-      esc,
-      lucide: { createIcons: () => paint() },
-      initialTab: w.sourceType || "upload",
-      onTab: (t) => { w.sourceType = t; },
-      properties: () =>
-        S.tree.map((p) => {
-          const photos = coverOrder(photosOfProperty(p));
-          return {
-            id: p.id || p.address,
-            address: p.address,
-            count: photos.length || Number(p.asset_count || 0),
-            thumb: photos[0]?.path || null,
-            thumbs: photos.slice(0, 6).map((x) => x.path),
-          };
-        }),
-      resolvePhoto: (path) => resolvePhotoUrl(path),
-      loadPropertyPhotos: async (p) => {
-        const src = S.tree.find((x) => (x.id || x.address) === p.id);
-        return src ? photosOfProperty(src) : [];
-      },
-      onPropertyPhotos: async (p, photos) => {
-        const label = p.unassigned || isUnsortedLabel(p.address) ? "" : p.address;
-        w.sourceType = "property";
-        w.propertyId = p.unassigned ? null : (S.tree.find((x) => (x.id || x.address) === p.id)?.id || null);
-        w.propertyLabel = label || null;
-        if (label) { applyAddress(w, label, "existing_property"); w.addressMatch = null; }
-        if (!w.titleTouched) w.title = defaultTitle(w);
-        /* Only the chosen photos become scenes; the grid then opens on Scenes. */
-        w.seedPhotos = photos.filter((x) => x && x.path);
-        w.seedPaths = photos.map((x) => x.path).filter(Boolean);
-        await loadWizardAssets();
-        if (w.step < 2) w.step = 2;
-        render();
-      },
-      designs: () =>
-        designChoices().map((d) => ({
-          id: d.roomId,
-          label: d.room,
-          sub: `${d.propertyLabel} · ${d.before ? "Before And After" : "Design"}`,
-        })),
-      onPick: async (picked) => {
+    bindAddressInputs(el, w);
+    on("[data-rmup]", "click", (e) => {
+      const id = e.currentTarget.dataset.rmup;
+      const gone = (w.uploads || []).find((u) => u.id === id);
+      if (gone?.url?.startsWith?.("blob:")) {
         try {
-          await addUploads(picked.map((p) => p.file).filter(Boolean));
-        } catch (_) {
-          w.uploadError = "Your photos were added, but the next step could not load. Please try again.";
-          render();
-        }
-      },
-      onProperty: (address) => {
-        const p = S.tree.find((x) => x.address === address);
-        const label = isUnsortedLabel(address) ? "" : address;
-        w.propertyLabel = label || null;
-        if (p && label) w.propertyId = p.id;
-        /* Starting from an existing property prefills its address; the
-           unsorted bucket is not a property, so it never fills the field. */
-        if (label) applyAddress(w, label, "existing_property");
-        w.addressMatch = null;
-        if (!w.titleTouched) w.title = defaultTitle(w);
+          URL.revokeObjectURL(gone.url);
+        } catch (_) {}
+      }
+      w.uploads = w.uploads.filter((u) => u.id !== id);
+      w.available = (w.available || []).filter((a) => a.key !== "u-" + id);
+      w.gridOrder = (w.gridOrder || []).filter((key) => key !== "u-" + id);
+      w.scenes = (w.scenes || []).filter((scene) => scene.key !== "u-" + id);
+      render();
+    });
+    /* Intake lives in @/lib/video-upload-intake so the Step 1 -> Step 2
+     transition can be exercised without a DOM. */
+    const addUploads = (list) => acceptPhotos(w, list, "picker_step2");
+    on("[data-failrm]", "click", (e) => {
+      (w.uploadFails || []).splice(Number(e.currentTarget.dataset.failrm), 1);
+      render();
+    });
+    on("[data-failretry]", "click", (e) => {
+      const i = Number(e.currentTarget.dataset.failretry);
+      const entry = (w.uploadFails || [])[i];
+      if (!entry) return;
+      w.uploadFails.splice(i, 1);
+      addUploads(entry.file ? [entry.file] : []).catch(() => {
+        w.uploadError = "That photo could not be added. Please try again.";
         render();
-      },
-      onDesign: (id) => useDesign(id),
-      showAlert: toast,
+      });
     });
-  }
-  on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; w.typeTouched = true; render(); });
-
-  on("[data-type]", "click", (e) => { w.videoType = e.currentTarget.dataset.type; w.typeTouched = true; render(); });
-
-  on("[data-asset]", "click", (e) => {
-    const key = e.currentTarget.dataset.asset;
-    const i = w.scenes.findIndex((s) => s.key === key);
-    if (i >= 0) w.scenes.splice(i, 1);
-    else {
-      const a = w.available.find((x) => x.key === key);
-      if (a) w.scenes = mergeScenes(w.scenes || [], [assetToScene(a)]);
+    el.querySelectorAll(".rv-thumb[draggable='true']").forEach((thumb) => {
+      thumb.addEventListener("dragstart", (e) =>
+        e.dataTransfer.setData("text/rd-upload", thumb.dataset.uploadId),
+      );
+      thumb.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        thumb.classList.add("drop-l");
+      });
+      thumb.addEventListener("dragleave", () => thumb.classList.remove("drop-l"));
+      thumb.addEventListener("dragend", () => thumb.classList.remove("drop-l"));
+      thumb.addEventListener("drop", (e) => {
+        e.preventDefault();
+        thumb.classList.remove("drop-l");
+        const from = e.dataTransfer.getData("text/rd-upload");
+        const to = thumb.dataset.uploadId;
+        const fromIndex = w.uploads.findIndex((upload) => upload.id === from);
+        const toIndex = w.uploads.findIndex((upload) => upload.id === to);
+        if (fromIndex < 0 || toIndex < 0 || fromIndex === toIndex) return;
+        const [moved] = w.uploads.splice(fromIndex, 1);
+        w.uploads.splice(toIndex, 0, moved);
+        render();
+      });
+    });
+    /* A stray drop outside a dropzone must never navigate away from the app. */
+    if (!window.__rvDropGuard) {
+      window.__rvDropGuard = true;
+      window.addEventListener("dragover", (e) => e.preventDefault());
+      window.addEventListener("drop", (e) => e.preventDefault());
     }
-    syncSceneOrder();
-    render();
-  });
-  on("[data-drop]", "click", (e) => { e.stopPropagation(); w.scenes.splice(Number(e.currentTarget.dataset.drop), 1); syncSceneOrder(); render(); });
-  on("#rvSelAll", "change", (e) => {
-    if (e.currentTarget.checked) w.scenes = uniqueIds(w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean).map(assetToScene);
-    else w.scenes = [];
-    syncSceneOrder();
-    render();
-  });
-  on("#rvReverse", "click", () => { w.gridOrder = (w.gridOrder || []).slice().reverse(); syncSceneOrder(); render(); });
-  on("#rvResetOrder", "click", () => {
-    const list = (w.gridOrder || []).map((k) => w.available.find((a) => a.key === k)).filter(Boolean);
-    list.sort((a, b) => orderRank(a.group) - orderRank(b.group) || String(a.room || "").localeCompare(String(b.room || "")));
-    w.gridOrder = list.map((a) => a.key);
-    syncSceneOrder();
-    render();
-  });
-  /* Header and notice shortcuts both reopen the picker step without losing work. */
-  on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-  on("#rvGridAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-  on("#rvEmptyAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-  on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-  on("#rvHeadFile", "change", (e) => {
-    const files = Array.from(e.currentTarget.files || []);
-    e.currentTarget.value = "";
-    addUploads(files).catch(() => { w.uploadError = "Those photos could not be added. Please try again."; render(); });
-  });
-  on("#rvEnrichX", "click", () => { delete w.enrichNotice; render(); });
-  on("#rvRetryOrg", "click", () => { delete w.organizeStalled; redetectRooms(); render(); });
-  on("#rvNoticeSelect", "click", () => { selectRecommendedGap(); render(); });
-  on("#rvNoticeReview", "click", () => { document.querySelector(".rv-grid")?.scrollIntoView({ behavior: "smooth", block: "start" }); });
-  on("#rvNoticeX", "click", () => { w.frameNoticeDismissed = true; w.frameNoticeSig = noticeSignature(resolvedPhotos()); render(); });
-  /* The warning pip is its own action; it must not toggle the tile under it. */
-  on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
-  on(".rv-tile-th", "keydown", (e) => {
-    if (e.key !== "Enter" && e.key !== " ") return;
-    e.preventDefault();
-    e.currentTarget.click();
-  });
-  on("#rvRecommend", "click", () => { selectRecommended(); autoArrange(); render(); });
-  on("#rvClear", "click", () => { w.scenes = []; syncSceneOrder(); render(); });
-  on("#rvAuto", "click", () => { autoArrange(); render(); });
-  on("#rvRedetect", "click", () => { redetectRooms(); render(); });
-  on("#rvKeepBest", "click", () => {
-    const seen = new Set();
-    w.scenes = w.scenes.filter((s) => {
-      const a = w.available.find((x) => x.key === s.key);
-      const g = a?.dup;
-      if (!g) return true;
-      if (seen.has(g)) return false;
-      seen.add(g);
-      return true;
+    const useDesign = async (roomId) => {
+      const d = designChoices().find((x) => x.roomId === roomId);
+      if (!d) return;
+      w.sourceType = "design";
+      w.propertyId = d.propertyId;
+      w.propertyLabel = d.propertyLabel;
+      /* A design carries its property association into the video. */
+      if (d.propertyLabel) applyAddress(w, d.propertyLabel, "inherited");
+      w.versionId = d.versionId;
+      if (!w.titleTouched) w.title = defaultTitle(w) || `${d.room} Design`;
+      if (d.before && !w.typeTouched) w.videoType = "before_after";
+      await loadWizardAssets();
+      const a =
+        w.available.find((x) => x.key === "d-" + d.roomId) ||
+        w.available.find((x) => x.path === d.after);
+      w.scenes = a ? [assetToScene(a)] : [];
+      /* One design, nothing to select, so Step 2 is skipped. */
+      w.step = 3;
+      render();
+    };
+    /* Step 1 uses the one shared source picker, mounted fresh on every paint. */
+    const slot = el.querySelector("#rvPicker");
+    if (slot) {
+      mountSourcePicker(slot, {
+        context: "video",
+        esc,
+        lucide: { createIcons: () => paint() },
+        initialTab: w.sourceType || "upload",
+        onTab: (t) => {
+          w.sourceType = t;
+        },
+        properties: () =>
+          S.tree.map((p) => {
+            const photos = coverOrder(photosOfProperty(p));
+            return {
+              id: p.id || p.address,
+              address: p.address,
+              count: photos.length || Number(p.asset_count || 0),
+              thumb: photos[0]?.path || null,
+              thumbs: photos.slice(0, 6).map((x) => x.path),
+            };
+          }),
+        resolvePhoto: (path) => resolvePhotoUrl(path),
+        loadPropertyPhotos: async (p) => {
+          const src = S.tree.find((x) => (x.id || x.address) === p.id);
+          return src ? photosOfProperty(src) : [];
+        },
+        onPropertyPhotos: async (p, photos) => {
+          const label = p.unassigned || isUnsortedLabel(p.address) ? "" : p.address;
+          w.sourceType = "property";
+          w.propertyId = p.unassigned
+            ? null
+            : S.tree.find((x) => (x.id || x.address) === p.id)?.id || null;
+          w.propertyLabel = label || null;
+          if (label) {
+            applyAddress(w, label, "existing_property");
+            w.addressMatch = null;
+          }
+          if (!w.titleTouched) w.title = defaultTitle(w);
+          /* Only the chosen photos become scenes; the grid then opens on Scenes. */
+          w.seedPhotos = photos.filter((x) => x && x.path);
+          w.seedPaths = photos.map((x) => x.path).filter(Boolean);
+          await loadWizardAssets();
+          if (w.step < 2) w.step = 2;
+          render();
+        },
+        designs: () =>
+          designChoices().map((d) => ({
+            id: d.roomId,
+            label: d.room,
+            sub: `${d.propertyLabel} · ${d.before ? "Before And After" : "Design"}`,
+          })),
+        onPick: async (picked) => {
+          try {
+            await addUploads(picked.map((p) => p.file).filter(Boolean));
+          } catch (_) {
+            w.uploadError =
+              "Your photos were added, but the next step could not load. Please try again.";
+            render();
+          }
+        },
+        onProperty: (address) => {
+          const p = S.tree.find((x) => x.address === address);
+          const label = isUnsortedLabel(address) ? "" : address;
+          w.propertyLabel = label || null;
+          if (p && label) w.propertyId = p.id;
+          /* Starting from an existing property prefills its address; the
+           unsorted bucket is not a property, so it never fills the field. */
+          if (label) applyAddress(w, label, "existing_property");
+          w.addressMatch = null;
+          if (!w.titleTouched) w.title = defaultTitle(w);
+          render();
+        },
+        onDesign: (id) => useDesign(id),
+        showAlert: toast,
+      });
+    }
+    on("[data-type]", "click", (e) => {
+      w.videoType = e.currentTarget.dataset.type;
+      w.typeTouched = true;
+      render();
     });
-    syncSceneOrder();
-    render();
-  });
-  on("#rvKeepAll", "click", () => render());
 
-  /* drag ordering */
-  /* Every card reorders, selected or not, and across rows in either direction. */
-  el.querySelectorAll(".rv-tile[draggable='true']").forEach((n) => {
-    n.addEventListener("dragstart", (e) => {
-      e.dataTransfer.setData("text/plain", n.dataset.key);
-      e.dataTransfer.effectAllowed = "move";
-      n.classList.add("drag");
+    on("[data-type]", "click", (e) => {
+      w.videoType = e.currentTarget.dataset.type;
+      w.typeTouched = true;
+      render();
     });
-    n.addEventListener("dragover", (e) => { e.preventDefault(); e.dataTransfer.dropEffect = "move"; n.classList.add("drop-l"); });
-    n.addEventListener("dragleave", () => n.classList.remove("drop-l"));
-    n.addEventListener("dragend", () => { n.classList.remove("drop-l"); n.classList.remove("drag"); });
-    n.addEventListener("drop", (e) => {
-      e.preventDefault();
-      n.classList.remove("drop-l");
-      const from = e.dataTransfer.getData("text/plain");
-      const to = n.dataset.key;
-      if (!from || from === to) return;
-      const order = w.gridOrder || [];
-      const fi = order.indexOf(from);
-      const ti = order.indexOf(to);
-      if (fi < 0 || ti < 0) return;
-      order.splice(fi, 1);
-      order.splice(ti, 0, from);
-      w.manualOrder = true;
+
+    on("[data-asset]", "click", (e) => {
+      const key = e.currentTarget.dataset.asset;
+      const i = w.scenes.findIndex((s) => s.key === key);
+      if (i >= 0) w.scenes.splice(i, 1);
+      else {
+        const a = w.available.find((x) => x.key === key);
+        if (a) w.scenes = mergeScenes(w.scenes || [], [assetToScene(a)]);
+      }
       syncSceneOrder();
       render();
     });
-  });
-
-  /* setup */
-  on("[data-primaryfmtsel]", "change", (e) => {
-    const f = e.currentTarget.value;
-    w.primaryFormat = f;
-    w.additionalFormats = (w.additionalFormats || []).filter((x) => x !== f);
-    render();
-  });
-  on("[data-primaryfmt]", "click", (e) => {
-    const f = e.currentTarget.dataset.primaryfmt;
-    w.primaryFormat = f;
-    w.additionalFormats = (w.additionalFormats || []).filter((x) => x !== f);
-    render();
-  });
-  on("[data-addfmt]", "click", (e) => {
-    const f = e.currentTarget.dataset.addfmt;
-    const list = (w.additionalFormats || []).filter((x) => x !== w.primaryFormat);
-    w.additionalFormats = list.includes(f) ? list.filter((x) => x !== f) : list.concat(f);
-    render();
-  });
-  on("[data-len]", "click", (e) => { w.length = e.currentTarget.dataset.len; render(); });
-  /* scene chips and their popovers. Keyed by asset so a reorder underneath
-     the open popover never retargets it at a different scene. */
-  const cur = () => {
-    if (!w.pop) return null;
-    if (w.pop.key) return w.scenes.find((s) => s.key === w.pop.key) || null;
-    return w.scenes[w.pop.i] || null;
-  };
-  /* Compact and touch cards collapse the toolbar behind one ellipsis; the
-     popover holds the same buttons, so no action is lost at small widths. */
-  on("[data-toolsmore]", "click", (e) => {
-    e.stopPropagation();
-    const tile = e.currentTarget.closest(".rv-tile");
-    if (!tile) return;
-    const open = tile.classList.contains("tools-open");
-    document.querySelectorAll(".rv-tile.tools-open").forEach((t) => t.classList.remove("tools-open"));
-    if (!open) tile.classList.add("tools-open");
-  });
-  on("[data-pop]", "click", (e) => {
-    e.stopPropagation();
-    const key = e.currentTarget.dataset.key || null;
-    let i = key ? w.scenes.findIndex((s) => s.key === key) : Number(e.currentTarget.dataset.i);
-    /* Acting on an unselected photo selects it, so every card keeps its tools. */
-    if (i < 0 && key) {
-      const a = w.available.find((x) => x.key === key);
-      if (!a) return;
-      w.scenes = mergeScenes(w.scenes || [], [assetToScene(a)]);
+    on("[data-drop]", "click", (e) => {
+      e.stopPropagation();
+      w.scenes.splice(Number(e.currentTarget.dataset.drop), 1);
       syncSceneOrder();
-      i = w.scenes.findIndex((s) => s.key === key);
-    }
-    if (i < 0) return;
-    const kind = e.currentTarget.dataset.pop;
-    w.pop = { kind, i, key };
-    w.popQ = ""; w.popHover = null;
-    if (kind === "look") {
-      /* Snapshot so Cancel and Escape can put the scene back exactly. */
-      const sc = w.scenes[i];
-      w.pop.snap = fxSnap(sc);
-      w.popTab = sc && sc.vfx && sc.vfx !== "none" ? "effects" : "looks";
-      w.popCat = "recommended"; w.popAll = false; w.popConfirm = false;
-    }
-    if (kind === "cap" || kind === "motion") {
-      /* Snapshot so Cancel restores exactly what the scene had. */
-      const sc = w.scenes[i] || {};
-      w.pop.snap = kind === "cap"
-        ? { caption: sc.caption ?? "", caption_pos: sc.caption_pos || "bottom", caption_style: sc.caption_style || "brand" }
-        : { motion: sc.motion || "auto", motion_level: sc.motion_level || "standard", immersive_effect: sc.immersive_effect || null };
-    }
-    if (kind === "look") {
-      /* Seed the Start / End tab from what is already stored, so reopening
-         shows the real configuration rather than a blank form. */
-      const sc = w.scenes[i] || {};
-      const saved = sceneFrames.get(sc.key);
-      const endKey = saved?.end_path ? (w.available.find((a) => a.path === saved.end_path)?.key || null) : null;
-      w.seDraft = {
-        start_key: sc.key,
-        start_crop: saved?.start_crop || sc.crop || "center",
-        end_key: endKey,
-        end_crop: saved?.end_crop || "center",
-        motion_preset: saved?.motion_preset || "auto",
-        prompt: saved?.prompt || "",
-        seconds: Number(saved?.seconds || 8),
-        picking: null,
-      };
-      w.seBusy = false;
-      w.seDirty = false;
-
-      w.popTab = e.currentTarget?.dataset?.fxtab || w.popTabPending || (w.popTab === "frames" ? "looks" : w.popTab) || "looks";
-      w.popTabPending = null;
-    }
-    render();
-  });
-  const closeFx = (commit) => {
-    const s = cur();
-    if (w.pop?.kind === "look") {
-      if (commit) {
-        if (w.popAll && s) {
-          w.scenes.forEach((t) => {
-            if (t === s) return;
-            t.look = s.look || null; t.look_amount = s.look_amount ?? null;
-            t.vfx = s.vfx || "none"; t.vfx_gen = s.vfx_gen || null;
-            if (s.vfx_gen) { const tl = tileById(s.vfx_gen); if (tl?.disclosure) t.disclosure = tl.disclosure; }
-            else if (w.pop.snap && !w.pop.snap.vfx_gen) t.disclosure = t.disclosure && tileById(t.vfx_gen || "") ? null : t.disclosure;
-          });
-          toast("Effect Applied To Every Scene.");
-        }
-      } else {
-        fxRestore(s, w.pop.snap);
-      }
-    } else if ((w.pop?.kind === "cap" || w.pop?.kind === "motion") && !commit && s && w.pop.snap) {
-      Object.assign(s, w.pop.snap);
-    }
-    w.pop = null; w.popAll = false; w.popConfirm = false; w.seDraft = null;
-    render();
-  };
-  on("#rvPopX, #rvPopCancel", "click", () => closeFx(false));
-  on("#rvPopDone", "click", () => closeFx(true));
-  const popWrap = el.querySelector("#rvPopWrap");
-  if (popWrap) {
-    popWrap.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape") { ev.preventDefault(); closeFx(false); return; }
-      if ((ev.key === "Enter" || ev.key === " ") && ev.target?.classList?.contains("fx-card")) {
-        ev.preventDefault(); ev.target.click();
-      }
+      render();
     });
-    if (w.pop?.kind === "look") setTimeout(() => popWrap.querySelector(".fx-card.on, .fx-card")?.focus?.({ preventScroll: true }), 0);
-  }
-  const pq = el.querySelector("#rvPopQ");
-  if (pq) pq.addEventListener("input", (ev) => { w.popQ = ev.target.value; render(); el.querySelector("#rvPopQ")?.focus(); });
-  on("[data-motionpick]", "click", (e) => {
-    const s = cur(); if (!s) return;
-    s.motion = e.currentTarget.dataset.motionpick;
-    s.motion_level = "standard";
-    s.immersive_effect = null;
-    render();
-  });
-  on("[data-hover]", "mouseenter", (e) => {
-    const id = e.currentTarget.dataset.hover;
-    w.popHover = id;
-    const clip = el.querySelector(".rv-pop-clip");
-    if (!clip) return; // preview not mounted, nothing to repaint
-    clip.className = `rv-pop-clip m-${MOTION_PREVIEW[id] || id || "auto"}`;
-    const fx = el.querySelector(".rv-pop-fx"); if (fx) fx.className = fxClass(id);
-    const nm = el.querySelector("#rvPopName"); if (nm) nm.textContent = motionName(id);
-    const cp = el.querySelector("#rvPopCopy"); if (cp) cp.textContent = MOTION_COPY[id] || MOTION_COPY.auto;
-  });
+    on("#rvSelAll", "change", (e) => {
+      if (e.currentTarget.checked)
+        w.scenes = uniqueIds(w.gridOrder || [])
+          .map((k) => w.available.find((a) => a.key === k))
+          .filter(Boolean)
+          .map(assetToScene);
+      else w.scenes = [];
+      syncSceneOrder();
+      render();
+    });
+    on("#rvReverse", "click", () => {
+      w.gridOrder = (w.gridOrder || []).slice().reverse();
+      syncSceneOrder();
+      render();
+    });
+    on("#rvResetOrder", "click", () => {
+      const list = (w.gridOrder || [])
+        .map((k) => w.available.find((a) => a.key === k))
+        .filter(Boolean);
+      list.sort(
+        (a, b) =>
+          orderRank(a.group) - orderRank(b.group) ||
+          String(a.room || "").localeCompare(String(b.room || "")),
+      );
+      w.gridOrder = list.map((a) => a.key);
+      syncSceneOrder();
+      render();
+    });
+    /* Header and notice shortcuts both reopen the picker step without losing work. */
+    on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+    on("#rvGridAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+    on("#rvEmptyAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+    on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+    on("#rvHeadFile", "change", (e) => {
+      const files = Array.from(e.currentTarget.files || []);
+      e.currentTarget.value = "";
+      addUploads(files).catch(() => {
+        w.uploadError = "Those photos could not be added. Please try again.";
+        render();
+      });
+    });
+    on("#rvEnrichX", "click", () => {
+      delete w.enrichNotice;
+      render();
+    });
+    on("#rvRetryOrg", "click", () => {
+      delete w.organizeStalled;
+      redetectRooms();
+      render();
+    });
+    on("#rvNoticeSelect", "click", () => {
+      selectRecommendedGap();
+      render();
+    });
+    on("#rvNoticeReview", "click", () => {
+      document.querySelector(".rv-grid")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    on("#rvNoticeX", "click", () => {
+      w.frameNoticeDismissed = true;
+      w.frameNoticeSig = noticeSignature(resolvedPhotos());
+      render();
+    });
+    /* The warning pip is its own action; it must not toggle the tile under it. */
+    on(".rv-tile .rv-flag", "click", (e) => e.stopPropagation());
+    on(".rv-tile-th", "keydown", (e) => {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      e.currentTarget.click();
+    });
+    on("#rvRecommend", "click", () => {
+      selectRecommended();
+      autoArrange();
+      render();
+    });
+    on("#rvClear", "click", () => {
+      w.scenes = [];
+      syncSceneOrder();
+      render();
+    });
+    on("#rvAuto", "click", () => {
+      autoArrange();
+      render();
+    });
+    on("#rvRedetect", "click", () => {
+      redetectRooms();
+      render();
+    });
+    on("#rvKeepBest", "click", () => {
+      const seen = new Set();
+      w.scenes = w.scenes.filter((s) => {
+        const a = w.available.find((x) => x.key === s.key);
+        const g = a?.dup;
+        if (!g) return true;
+        if (seen.has(g)) return false;
+        seen.add(g);
+        return true;
+      });
+      syncSceneOrder();
+      render();
+    });
+    on("#rvKeepAll", "click", () => render());
 
-  on("[data-immpick]", "click", (e) => {
-    const s = cur(); if (!s) return;
-    s.motion_level = "immersive";
-    s.immersive_effect = e.currentTarget.dataset.immpick;
-    render();
-  });
-  on("[data-extpick]", "click", (e) => { const s = cur(); if (!s) return; s.exterior_effect = e.currentTarget.dataset.extpick || null; render(); });
-  on("[data-croppick]", "click", (e) => { const s = cur(); if (!s) return; s.crop = e.currentTarget.dataset.croppick; render(); });
+    /* drag ordering */
+    /* Every card reorders, selected or not, and across rows in either direction. */
+    el.querySelectorAll(".rv-tile[draggable='true']").forEach((n) => {
+      n.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", n.dataset.key);
+        e.dataTransfer.effectAllowed = "move";
+        n.classList.add("drag");
+      });
+      n.addEventListener("dragover", (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = "move";
+        n.classList.add("drop-l");
+      });
+      n.addEventListener("dragleave", () => n.classList.remove("drop-l"));
+      n.addEventListener("dragend", () => {
+        n.classList.remove("drop-l");
+        n.classList.remove("drag");
+      });
+      n.addEventListener("drop", (e) => {
+        e.preventDefault();
+        n.classList.remove("drop-l");
+        const from = e.dataTransfer.getData("text/plain");
+        const to = n.dataset.key;
+        if (!from || from === to) return;
+        const order = w.gridOrder || [];
+        const fi = order.indexOf(from);
+        const ti = order.indexOf(to);
+        if (fi < 0 || ti < 0) return;
+        order.splice(fi, 1);
+        order.splice(ti, 0, from);
+        w.manualOrder = true;
+        syncSceneOrder();
+        render();
+      });
+    });
 
-  /* ---- transitions between scenes ----
+    /* setup */
+    on("[data-primaryfmtsel]", "change", (e) => {
+      const f = e.currentTarget.value;
+      w.primaryFormat = f;
+      w.additionalFormats = (w.additionalFormats || []).filter((x) => x !== f);
+      render();
+    });
+    on("[data-primaryfmt]", "click", (e) => {
+      const f = e.currentTarget.dataset.primaryfmt;
+      w.primaryFormat = f;
+      w.additionalFormats = (w.additionalFormats || []).filter((x) => x !== f);
+      render();
+    });
+    on("[data-addfmt]", "click", (e) => {
+      const f = e.currentTarget.dataset.addfmt;
+      const list = (w.additionalFormats || []).filter((x) => x !== w.primaryFormat);
+      w.additionalFormats = list.includes(f) ? list.filter((x) => x !== f) : list.concat(f);
+      render();
+    });
+    on("[data-len]", "click", (e) => {
+      w.length = e.currentTarget.dataset.len;
+      render();
+    });
+    /* scene chips and their popovers. Keyed by asset so a reorder underneath
+     the open popover never retargets it at a different scene. */
+    const cur = () => {
+      if (!w.pop) return null;
+      if (w.pop.key) return w.scenes.find((s) => s.key === w.pop.key) || null;
+      return w.scenes[w.pop.i] || null;
+    };
+    /* Compact and touch cards collapse the toolbar behind one ellipsis; the
+     popover holds the same buttons, so no action is lost at small widths. */
+    on("[data-toolsmore]", "click", (e) => {
+      e.stopPropagation();
+      const tile = e.currentTarget.closest(".rv-tile");
+      if (!tile) return;
+      const open = tile.classList.contains("tools-open");
+      document
+        .querySelectorAll(".rv-tile.tools-open")
+        .forEach((t) => t.classList.remove("tools-open"));
+      if (!open) tile.classList.add("tools-open");
+    });
+    on("[data-pop]", "click", (e) => {
+      e.stopPropagation();
+      const key = e.currentTarget.dataset.key || null;
+      let i = key ? w.scenes.findIndex((s) => s.key === key) : Number(e.currentTarget.dataset.i);
+      /* Acting on an unselected photo selects it, so every card keeps its tools. */
+      if (i < 0 && key) {
+        const a = w.available.find((x) => x.key === key);
+        if (!a) return;
+        w.scenes = mergeScenes(w.scenes || [], [assetToScene(a)]);
+        syncSceneOrder();
+        i = w.scenes.findIndex((s) => s.key === key);
+      }
+      if (i < 0) return;
+      const kind = e.currentTarget.dataset.pop;
+      w.pop = { kind, i, key };
+      w.popQ = "";
+      w.popHover = null;
+      if (kind === "look") {
+        /* Snapshot so Cancel and Escape can put the scene back exactly. */
+        const sc = w.scenes[i];
+        w.pop.snap = fxSnap(sc);
+        w.popTab = sc && sc.vfx && sc.vfx !== "none" ? "effects" : "looks";
+        w.popCat = "recommended";
+        w.popAll = false;
+        w.popConfirm = false;
+      }
+      if (kind === "cap" || kind === "motion") {
+        /* Snapshot so Cancel restores exactly what the scene had. */
+        const sc = w.scenes[i] || {};
+        w.pop.snap =
+          kind === "cap"
+            ? {
+                caption: sc.caption ?? "",
+                caption_pos: sc.caption_pos || "bottom",
+                caption_style: sc.caption_style || "brand",
+              }
+            : {
+                motion: sc.motion || "auto",
+                motion_level: sc.motion_level || "standard",
+                immersive_effect: sc.immersive_effect || null,
+              };
+      }
+      if (kind === "look") {
+        /* Seed the Start / End tab from what is already stored, so reopening
+         shows the real configuration rather than a blank form. */
+        const sc = w.scenes[i] || {};
+        const saved = sceneFrames.get(sc.key);
+        const endKey = saved?.end_path
+          ? w.available.find((a) => a.path === saved.end_path)?.key || null
+          : null;
+        w.seDraft = {
+          start_key: sc.key,
+          start_crop: saved?.start_crop || sc.crop || "center",
+          end_key: endKey,
+          end_crop: saved?.end_crop || "center",
+          motion_preset: saved?.motion_preset || "auto",
+          prompt: saved?.prompt || "",
+          seconds: Number(saved?.seconds || 8),
+          picking: null,
+        };
+        w.seBusy = false;
+        w.seDirty = false;
+
+        w.popTab =
+          e.currentTarget?.dataset?.fxtab ||
+          w.popTabPending ||
+          (w.popTab === "frames" ? "looks" : w.popTab) ||
+          "looks";
+        w.popTabPending = null;
+      }
+      render();
+    });
+    const closeFx = (commit) => {
+      const s = cur();
+      if (w.pop?.kind === "look") {
+        if (commit) {
+          if (w.popAll && s) {
+            w.scenes.forEach((t) => {
+              if (t === s) return;
+              t.look = s.look || null;
+              t.look_amount = s.look_amount ?? null;
+              t.vfx = s.vfx || "none";
+              t.vfx_gen = s.vfx_gen || null;
+              if (s.vfx_gen) {
+                const tl = tileById(s.vfx_gen);
+                if (tl?.disclosure) t.disclosure = tl.disclosure;
+              } else if (w.pop.snap && !w.pop.snap.vfx_gen)
+                t.disclosure = t.disclosure && tileById(t.vfx_gen || "") ? null : t.disclosure;
+            });
+            toast("Effect Applied To Every Scene.");
+          }
+        } else {
+          fxRestore(s, w.pop.snap);
+        }
+      } else if (
+        (w.pop?.kind === "cap" || w.pop?.kind === "motion") &&
+        !commit &&
+        s &&
+        w.pop.snap
+      ) {
+        Object.assign(s, w.pop.snap);
+      }
+      w.pop = null;
+      w.popAll = false;
+      w.popConfirm = false;
+      w.seDraft = null;
+      render();
+    };
+    on("#rvPopX, #rvPopCancel", "click", () => closeFx(false));
+    on("#rvPopDone", "click", () => closeFx(true));
+    const popWrap = el.querySelector("#rvPopWrap");
+    if (popWrap) {
+      popWrap.addEventListener("keydown", (ev) => {
+        if (ev.key === "Escape") {
+          ev.preventDefault();
+          closeFx(false);
+          return;
+        }
+        if ((ev.key === "Enter" || ev.key === " ") && ev.target?.classList?.contains("fx-card")) {
+          ev.preventDefault();
+          ev.target.click();
+        }
+      });
+      if (w.pop?.kind === "look")
+        setTimeout(
+          () => popWrap.querySelector(".fx-card.on, .fx-card")?.focus?.({ preventScroll: true }),
+          0,
+        );
+    }
+    const pq = el.querySelector("#rvPopQ");
+    if (pq)
+      pq.addEventListener("input", (ev) => {
+        w.popQ = ev.target.value;
+        render();
+        el.querySelector("#rvPopQ")?.focus();
+      });
+    on("[data-motionpick]", "click", (e) => {
+      const s = cur();
+      if (!s) return;
+      s.motion = e.currentTarget.dataset.motionpick;
+      s.motion_level = "standard";
+      s.immersive_effect = null;
+      render();
+    });
+    on("[data-hover]", "mouseenter", (e) => {
+      const id = e.currentTarget.dataset.hover;
+      w.popHover = id;
+      const clip = el.querySelector(".rv-pop-clip");
+      if (!clip) return; // preview not mounted, nothing to repaint
+      clip.className = `rv-pop-clip m-${MOTION_PREVIEW[id] || id || "auto"}`;
+      const fx = el.querySelector(".rv-pop-fx");
+      if (fx) fx.className = fxClass(id);
+      const nm = el.querySelector("#rvPopName");
+      if (nm) nm.textContent = motionName(id);
+      const cp = el.querySelector("#rvPopCopy");
+      if (cp) cp.textContent = MOTION_COPY[id] || MOTION_COPY.auto;
+    });
+
+    on("[data-immpick]", "click", (e) => {
+      const s = cur();
+      if (!s) return;
+      s.motion_level = "immersive";
+      s.immersive_effect = e.currentTarget.dataset.immpick;
+      render();
+    });
+    on("[data-extpick]", "click", (e) => {
+      const s = cur();
+      if (!s) return;
+      s.exterior_effect = e.currentTarget.dataset.extpick || null;
+      render();
+    });
+    on("[data-croppick]", "click", (e) => {
+      const s = cur();
+      if (!s) return;
+      s.crop = e.currentTarget.dataset.croppick;
+      render();
+    });
+
+    /* ---- transitions between scenes ----
      Every change writes to the project immediately, so the move survives
      navigation, refresh and reopening the draft. */
-  const transPair = () => {
-    const s = cur(); if (!s) return null;
-    const i = w.scenes.indexOf(s);
-    const nxt = w.scenes[i + 1]; if (!nxt) return null;
-    return { s, nxt };
-  };
-  /** Persist one connection as an explicit transition plus how it was chosen. */
-  const writeTrans = async (pair, type, ms, mode) => {
-    try {
-      await transitions.set(pair.s.key, pair.nxt.key, type, type === "cut" ? 0 : ms, { mode });
-      autosaveWizard(w);
-    } catch (_) {
-      toast("We Could Not Save That Transition. Try Again.");
-    }
-  };
-  on("[data-transpick]", "click", async (e) => {
-    const pair = transPair(); if (!pair) return;
-    const type = e.currentTarget.dataset.transpick;
-    const st = transState(pair.s, pair.nxt);
-    await writeTrans(pair, type, st.durationMs || DEFAULT_TRANSITION_MS, "manual");
-    render();
-  });
-  on("#rvTransAuto", "click", async () => {
-    const pair = transPair(); if (!pair) return;
-    const st = transState(pair.s, pair.nxt);
-    if (st.auto) {
-      /* Turning Auto Select off keeps exactly what is playing right now. */
-      await writeTrans(pair, st.type, st.durationMs || DEFAULT_TRANSITION_MS, "manual");
-    } else {
-      const pick = autoPick(sceneShape(pair.s), sceneShape(pair.nxt));
-      await writeTrans(pair, pick, DEFAULT_TRANSITION_MS, "auto");
-    }
-    render();
-  });
-  on("[data-endpick]", "click", (e) => {
-    setEnding(w, { endingType: e.currentTarget.dataset.endpick });
-    render();
-  });
-  {
-    const ed = el.querySelector("#rvEndDur");
-    if (ed) ed.addEventListener("change", (ev) => {
-      setEnding(w, { duration: Math.min(3, Math.max(0.5, Number(ev.target.value) || 1)) });
-      render();
-    });
-  }
-  on("#rvTransAi", "click", () => toast("AI Transitions Are Not Available Yet. Choose Cut, Dissolve Or Fade."));
-  {
-    const du = el.querySelector("#rvTransDur");
-    if (du) du.addEventListener("change", async (ev) => {
-      const pair = transPair(); if (!pair) return;
+    const transPair = () => {
+      const s = cur();
+      if (!s) return null;
+      const i = w.scenes.indexOf(s);
+      const nxt = w.scenes[i + 1];
+      if (!nxt) return null;
+      return { s, nxt };
+    };
+    /** Persist one connection as an explicit transition plus how it was chosen. */
+    const writeTrans = async (pair, type, ms, mode) => {
+      try {
+        await transitions.set(pair.s.key, pair.nxt.key, type, type === "cut" ? 0 : ms, { mode });
+        autosaveWizard(w);
+      } catch (_) {
+        toast("We Could Not Save That Transition. Try Again.");
+      }
+    };
+    on("[data-transpick]", "click", async (e) => {
+      const pair = transPair();
+      if (!pair) return;
+      const type = e.currentTarget.dataset.transpick;
       const st = transState(pair.s, pair.nxt);
-      await writeTrans(pair, st.type, Number(ev.target.value), st.auto ? "auto" : "manual");
+      await writeTrans(pair, type, st.durationMs || DEFAULT_TRANSITION_MS, "manual");
       render();
     });
-  }
-  on("#rvTransDone", "click", async () => {
-    /* Done always writes the transition that will actually play, so an
+    on("#rvTransAuto", "click", async () => {
+      const pair = transPair();
+      if (!pair) return;
+      const st = transState(pair.s, pair.nxt);
+      if (st.auto) {
+        /* Turning Auto Select off keeps exactly what is playing right now. */
+        await writeTrans(pair, st.type, st.durationMs || DEFAULT_TRANSITION_MS, "manual");
+      } else {
+        const pick = autoPick(sceneShape(pair.s), sceneShape(pair.nxt));
+        await writeTrans(pair, pick, DEFAULT_TRANSITION_MS, "auto");
+      }
+      render();
+    });
+    on("[data-endpick]", "click", (e) => {
+      setEnding(w, { endingType: e.currentTarget.dataset.endpick });
+      render();
+    });
+    {
+      const ed = el.querySelector("#rvEndDur");
+      if (ed)
+        ed.addEventListener("change", (ev) => {
+          setEnding(w, { duration: Math.min(3, Math.max(0.5, Number(ev.target.value) || 1)) });
+          render();
+        });
+    }
+    on("#rvTransAi", "click", () =>
+      toast("AI Transitions Are Not Available Yet. Choose Cut, Dissolve Or Fade."),
+    );
+    {
+      const du = el.querySelector("#rvTransDur");
+      if (du)
+        du.addEventListener("change", async (ev) => {
+          const pair = transPair();
+          if (!pair) return;
+          const st = transState(pair.s, pair.nxt);
+          await writeTrans(pair, st.type, Number(ev.target.value), st.auto ? "auto" : "manual");
+          render();
+        });
+    }
+    on("#rvTransDone", "click", async () => {
+      /* Done always writes the transition that will actually play, so an
        untouched Auto Select recommendation is stored too. */
-    const pair = transPair();
-    if (pair) {
+      const pair = transPair();
+      if (pair) {
+        const st = transState(pair.s, pair.nxt);
+        await writeTrans(
+          pair,
+          st.type,
+          st.durationMs || DEFAULT_TRANSITION_MS,
+          st.auto ? "auto" : "manual",
+        );
+      }
+      w.pop = null;
+      w.transAllConfirm = false;
+      render();
+    });
+    const applyTransAll = async () => {
+      const pair = transPair();
+      if (!pair) return;
       const st = transState(pair.s, pair.nxt);
-      await writeTrans(pair, st.type, st.durationMs || DEFAULT_TRANSITION_MS, st.auto ? "auto" : "manual");
-    }
-    w.pop = null; w.transAllConfirm = false;
-    render();
-  });
-  const applyTransAll = async () => {
-    const pair = transPair(); if (!pair) return;
-    const st = transState(pair.s, pair.nxt);
-    const count = Math.max(0, w.scenes.length - 1);
-    try {
-      await transitions.applyAll(w.scenes, st.type, st.durationMs || DEFAULT_TRANSITION_MS, {
-        mode: st.auto ? "auto" : "manual",
-      });
-      autosaveWizard(w);
-      toast(`${transitionLabel(st.type)} Applied To All ${count} Transitions.`);
-    } catch (_) { toast("We Could Not Apply That To Every Scene."); }
-    w.transAllConfirm = false;
-    render();
-  };
-  on("#rvTransAll", "click", async () => {
-    const pair = transPair(); if (!pair) return;
-    /* Anything another connection was set to by hand is only replaced with a
+      const count = Math.max(0, w.scenes.length - 1);
+      try {
+        await transitions.applyAll(w.scenes, st.type, st.durationMs || DEFAULT_TRANSITION_MS, {
+          mode: st.auto ? "auto" : "manual",
+        });
+        autosaveWizard(w);
+        toast(`${transitionLabel(st.type)} Applied To All ${count} Transitions.`);
+      } catch (_) {
+        toast("We Could Not Apply That To Every Scene.");
+      }
+      w.transAllConfirm = false;
+      render();
+    };
+    on("#rvTransAll", "click", async () => {
+      const pair = transPair();
+      if (!pair) return;
+      /* Anything another connection was set to by hand is only replaced with a
        clear confirmation first. */
-    const custom = w.scenes.slice(0, -1).some((a, n) => {
-      const b = w.scenes[n + 1];
-      if (a.key === pair.s.key && b?.key === pair.nxt.key) return false;
-      const r = b ? transitions.get(a.key, b.key) : null;
-      return !!r && r.type !== "auto" && r.settings?.mode !== "auto";
-    });
-    if (custom) { w.transAllConfirm = true; render(); return; }
-    await applyTransAll();
-  });
-  on("#rvTransAllYes", "click", applyTransAll);
-  on("#rvTransAllNo", "click", () => { w.transAllConfirm = false; render(); });
-  on("#rvTransSmart", "click", async () => {
-    /* Smart Timing gives each pair a length that suits it: quick scenes get a
-       shorter move, and cuts stay instant. */
-    const perMs = sceneDurations(w.scenes.length, w.length) * 1000;
-    for (let n = 0; n < w.scenes.length - 1; n++) {
-      const a = w.scenes[n], b = w.scenes[n + 1];
-      const st = transState(a, b);
-      if (st.type === "cut") continue;
-      const base = st.type === "fade" ? 900 : 600;
-      const ms = Math.max(300, Math.min(base, Math.round(perMs * 0.28)));
-      try { await transitions.set(a.key, b.key, st.type, ms, { mode: st.auto ? "auto" : "manual" }); } catch (_) {}
-    }
-    autosaveWizard(w);
-    toast("Smart Timing Applied.");
-    render();
-  });
-  on("#rvTransReset", "click", async () => {
-    const pair = transPair(); if (!pair) return;
-    const pick = autoPick(sceneShape(pair.s), sceneShape(pair.nxt));
-    try {
-      await transitions.set(pair.s.key, pair.nxt.key, pick, DEFAULT_TRANSITION_MS, { mode: "auto" });
-      autosaveWizard(w);
-    } catch (_) { toast("We Could Not Reset That Transition."); }
-    render();
-  });
-
-  /* ---- scene settings summary ---- */
-  on("[data-sumedit]", "click", (e) => {
-    const [kind, tab] = String(e.currentTarget.dataset.sumedit).split(":");
-    const key = w.pop?.key;
-    w.pop = null; w.popTabPending = tab || null; render();
-    el.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
-  });
-  on("[data-sumreset]", "click", (e) => {
-    const s = cur(); if (!s) return;
-    resetSceneSetting(s, e.currentTarget.dataset.sumreset);
-    render();
-  });
-  on("#rvSumResetAll", "click", () => {
-    const s = cur(); if (!s) return;
-    sceneSettings(s, sceneClips.get(s.key)).forEach((it) => { if (!it.locked) resetSceneSetting(s, it.id); });
-    w.pop = null;
-    toast("Scene Settings Reset.");
-    render();
-  });
-
-  /* ---- start / end frames, inside the Effects modal ---- */
-  /* Save what is configured, even when the pair is not complete yet: Save
-     Draft never charges and must not lose the user's settings. */
-  const seSave = async (opts = {}) => {
-    const s = cur(); const d = w.seDraft;
-    if (!s || !d) return null;
-    const startA = w.available.find((a) => a.key === d.start_key) || seSceneImage(w, s);
-    const endA = d.end_key ? w.available.find((a) => a.key === d.end_key) || null : null;
-    if (!startA) return null;
-    if (opts.requireEnd && !endA) return null;
-    const pid = await ensureVideoProjectId(w);
-    sceneFrames.setProject(pid);
-    await sceneFrames.save({
-      video_project_id: pid,
-      scene_key: s.key,
-      start_path: startA.path,
-      end_path: endA?.path || null,
-      start_asset_id: uuidOrNull(startA.asset_id || s.asset_id),
-      end_asset_id: uuidOrNull(endA?.asset_id),
-      start_crop: d.start_crop || "center",
-      end_crop: d.end_crop || "center",
-      motion_preset: d.motion_preset || "auto",
-      prompt: d.prompt || null,
-      seconds: Number(d.seconds || 8),
-    });
-    w.seDirty = false;
-    if (!opts.quiet) toast("Start And End Saved.");
-    return { pid, s, endA };
-  };
-  on("[data-sepick]", "click", (e) => {
-    if (!w.seDraft) return;
-    /* The empty End panel is clickable as a whole; its own button already
-       handled the click, so the panel must not toggle it straight back. */
-    if (e.currentTarget.classList.contains("se-slot") && e.target.closest("button[data-sepick]")) return;
-    const which = e.currentTarget.dataset.sepick;
-    w.seDraft.picking = w.seDraft.picking === which ? null : which;
-    render();
-  });
-  on("#rvSePickX", "click", () => { if (w.seDraft) { w.seDraft.picking = null; render(); } });
-  on("#rvSeUpload", "click", () => el.querySelector("#rvSeFile")?.click());
-  on("#rvSeFile", "change", (e) => {
-    const files = Array.from(e.currentTarget.files || []);
-    e.currentTarget.value = "";
-    addUploads(files).catch(() => toast("Those photos could not be added."));
-  });
-  /* One failed signed URL must be retryable without reopening the modal. */
-  on("[data-seretryimg]", "click", (e) => {
-    e.stopPropagation();
-    const path = e.currentTarget.dataset.seretryimg;
-    console.warn("[start/end] retrying frame preview", path);
-    const th = e.currentTarget.closest(".se-th");
-    if (th) { delete th.dataset.painted; th.classList.remove("rv-noimg"); }
-    paintAssetThumbs();
-  });
-  on("[data-sepicked]", "click", (e) => {
-    const d = w.seDraft; if (!d?.picking) return;
-    const k = e.currentTarget.dataset.sepicked;
-    if (d.picking === "start") d.start_key = k;
-    else d.end_key = d.end_key === k ? null : k;
-    d.picking = null;
-    w.seDirty = true;
-    render();
-  });
-  on("[data-semotion]", "click", (e) => {
-    if (!w.seDraft) return;
-    const id = e.currentTarget.dataset.semotion;
-    w.seDraft.motion_preset = id;
-    const m = seMotion(id);
-    if (m?.seconds) w.seDraft.seconds = m.seconds;
-    w.seDirty = true;
-    render();
-  });
-  on("[data-sesec]", "click", (e) => {
-    if (!w.seDraft) return;
-    w.seDraft.seconds = Number(e.currentTarget.dataset.sesec);
-    w.seDirty = true;
-    render();
-  });
-  {
-    const pr = el.querySelector("#rvSePrompt");
-    if (pr) pr.addEventListener("input", (ev) => { if (w.seDraft) { w.seDraft.prompt = ev.target.value; w.seDirty = true; } });
-  }
-
-  on("#rvSeSwap", "click", () => {
-    const d = w.seDraft; if (!d || !d.end_key) return;
-    const start = d.start_key;
-    d.start_key = d.end_key; d.end_key = start;
-    const c = d.start_crop; d.start_crop = d.end_crop; d.end_crop = c;
-    w.seDirty = true;
-    render();
-  });
-  on("#rvSeRemove", "click", async () => {
-    const s = cur(); if (!s) return;
-    try { await sceneFrames.clear(s.key); } catch (_) { toast("That could not be removed just now."); return; }
-    w.seDraft = { start_key: s.key, start_crop: s.crop || "center", end_key: null, end_crop: "center", motion_preset: "auto", prompt: "", seconds: 8, picking: null };
-    w.seDirty = false;
-    toast("Start And End Removed.");
-    render();
-  });
-  on("#rvSeSave", "click", async () => {
-    if (w.seBusy) return;
-    w.seBusy = "save"; render();
-    try { await seSave(); } catch (err) { toast(err?.message || "That could not be saved just now."); }
-    w.seBusy = false; render();
-  });
-  const seGenerate = async () => {
-    if (w.seBusy) return;
-    const s = cur(); const d = w.seDraft;
-    if (!s || !d?.end_key) return;
-    w.seBusy = "gen"; render();
-    try {
-      const saved = await seSave({ quiet: true, requireEnd: true });
-      if (!saved) throw new Error("Choose both frames first.");
-      const endA = saved.endA;
-      await sceneFrames.generate({
-        scene_key: s.key,
-        orientation: (w.primaryFormat || DEFAULT_FORMAT).startsWith("9") ? "portrait" : "landscape",
-        room_name: s.room || null,
-        end_room: endA?.room || null,
+      const custom = w.scenes.slice(0, -1).some((a, n) => {
+        const b = w.scenes[n + 1];
+        if (a.key === pair.s.key && b?.key === pair.nxt.key) return false;
+        const r = b ? transitions.get(a.key, b.key) : null;
+        return !!r && r.type !== "auto" && r.settings?.mode !== "auto";
       });
-      S.credits = await getMyCredits().catch(() => S.credits);
-      toast(`Generating This Clip. ${seCost(Number(d.seconds || 8))} Credits Reserved.`);
-    } catch (err) {
-      toast(err?.message || "That could not be started just now.");
-    }
+      if (custom) {
+        w.transAllConfirm = true;
+        render();
+        return;
+      }
+      await applyTransAll();
+    });
+    on("#rvTransAllYes", "click", applyTransAll);
+    on("#rvTransAllNo", "click", () => {
+      w.transAllConfirm = false;
+      render();
+    });
+    on("#rvTransSmart", "click", async () => {
+      /* Smart Timing gives each pair a length that suits it: quick scenes get a
+       shorter move, and cuts stay instant. */
+      const perMs = sceneDurations(w.scenes.length, w.length) * 1000;
+      for (let n = 0; n < w.scenes.length - 1; n++) {
+        const a = w.scenes[n],
+          b = w.scenes[n + 1];
+        const st = transState(a, b);
+        if (st.type === "cut") continue;
+        const base = st.type === "fade" ? 900 : 600;
+        const ms = Math.max(300, Math.min(base, Math.round(perMs * 0.28)));
+        try {
+          await transitions.set(a.key, b.key, st.type, ms, { mode: st.auto ? "auto" : "manual" });
+        } catch (_) {}
+      }
+      autosaveWizard(w);
+      toast("Smart Timing Applied.");
+      render();
+    });
+    on("#rvTransReset", "click", async () => {
+      const pair = transPair();
+      if (!pair) return;
+      const pick = autoPick(sceneShape(pair.s), sceneShape(pair.nxt));
+      try {
+        await transitions.set(pair.s.key, pair.nxt.key, pick, DEFAULT_TRANSITION_MS, {
+          mode: "auto",
+        });
+        autosaveWizard(w);
+      } catch (_) {
+        toast("We Could Not Reset That Transition.");
+      }
+      render();
+    });
 
-    w.seBusy = false; render();
-  };
-  on("#rvSeGenerate", "click", seGenerate);
-  on("#rvSeRetry", "click", seGenerate);
-  on("#rvSeCancel", "click", async () => {
-    const s = cur(); if (!s) return;
-    try { await sceneFrames.cancel(s.key); toast("Generation Canceled. Reserved Credits Were Returned."); }
-    catch (err) { toast(err?.message || "That could not be canceled just now."); }
-    render();
-  });
-  on("[data-fxtab]", "click", (e) => { w.popTab = e.currentTarget.dataset.fxtab; w.popCat = "all"; render(); });
-  on("[data-fxcat]", "click", (e) => { w.popCat = e.currentTarget.dataset.fxcat; render(); });
-  /* Base disclosure the scene carried before any generative effect. */
-  const baseDisc = () => (w.pop?.snap && !w.pop.snap.vfx_gen ? w.pop.snap.disclosure : null);
-  on("[data-lookpick]", "click", (e) => {
-    const s = cur(); if (!s) return;
-    s.look = e.currentTarget.dataset.lookpick || null;
-    s.vfx = "none"; s.vfx_gen = null; s.disclosure = baseDisc();
-    if (s.look && s.look_amount == null) s.look_amount = DEFAULT_INTENSITY;
-    render();
-  });
-  on("[data-vfxpick]", "click", (e) => {
-    const s = cur(); if (!s) return;
-    const t = tileById(e.currentTarget.dataset.vfxpick);
-    s.vfx = t?.id || "none";
-    s.look = t?.look || null;
-    s.vfx_gen = t?.gen ? t.id : null;
-    if (t?.gen && t.disclosure) s.disclosure = t.disclosure;
-    else s.disclosure = baseDisc();
-    if (s.look && s.look_amount == null) s.look_amount = DEFAULT_INTENSITY;
-    render();
-  });
-  const amt = el.querySelector("#rvLookAmt");
-  if (amt) amt.addEventListener("input", (ev) => {
-    const s = cur(); if (!s) return;
-    s.look_amount = Number(ev.target.value);
-    render();
-    const again = el.querySelector("#rvLookAmt"); if (again) again.focus();
-  });
-  on("#rvAllMotion", "change", (e) => {
-    if (!e.currentTarget.checked) return;
-    const src = cur(); if (!src) return;
-    w.scenes.forEach((s) => { s.motion = src.motion || "auto"; s.motion_level = src.motion_level || "standard"; s.immersive_effect = src.immersive_effect || null; });
-    toast("Motion Applied To Every Scene.");
-  });
-  on("#rvAllLook", "click", () => {
-    const src = cur(); if (!src) return;
-    /* Paid effects confirm first; free looks apply straight away. */
-    if (sceneEffectCredits(src) > 0) { w.popConfirm = true; render(); return; }
-    w.popAll = true; render();
-  });
-  on("#rvAllNo", "click", () => { w.popConfirm = false; render(); });
-  on("#rvAllYes", "click", () => { w.popAll = true; w.popConfirm = false; render(); });
-  on("[data-tpl]", "click", (e) => { w.template = e.currentTarget.dataset.tpl; render(); });
-  on("[data-out]", "click", (e) => {
-    w.outputMode = e.currentTarget.dataset.out;
-    w.versions.clean = w.outputMode !== "branded";
-    w.versions.branded = w.outputMode !== "unbranded";
-    render();
-  });
-  on("[data-tplscope]", "click", (e) => { w.tplScope = e.currentTarget.dataset.tplscope; render(); });
-  on("[data-tplintro]", "click", (e) => { w.introTemplate = e.currentTarget.dataset.tplintro; w.template = w.introTemplate; render(); });
-  on("[data-tploutro]", "click", (e) => { w.outroTemplate = e.currentTarget.dataset.tploutro; render(); });
-  const sr = el.querySelector("#rvSpeedRamps"); if (sr) sr.addEventListener("change", (e) => { w.speedRamps = e.target.checked; });
-  const lb = el.querySelector("#rvLogoBrand");
-  if (lb) lb.addEventListener("change", (e) => { w.logoBranding = e.target.checked; w.branding.watermark = e.target.checked; });
-  const ad = el.querySelector("#rvAiDisc"); if (ad) ad.addEventListener("change", (e) => { w.aiDisclaimer = e.target.checked; });
-  const bd = el.querySelector("#rvBurnDisc"); if (bd) bd.addEventListener("change", (e) => { w.burnDisclosure = e.target.checked; });
-  const pl = el.querySelector("#rvPickLogo"); if (pl) pl.addEventListener("click", (e) => { e.preventDefault(); w.logoModal = true; render(); });
-  ["#rvLogoX", "#rvLogoCancel"].forEach((sel2) => {
-    const b = el.querySelector(sel2); if (b) b.addEventListener("click", () => { w.logoModal = false; render(); });
-  });
-  const ldone = el.querySelector("#rvLogoDone");
-  if (ldone) ldone.addEventListener("click", () => { w.logoModal = false; w.logoBranding = true; w.branding.watermark = true; render(); });
-  const lup = el.querySelector("#rvLogoUp"); if (lup) lup.addEventListener("click", () => el.querySelector("#rvLogoFile")?.click());
-  const lfile = el.querySelector("#rvLogoFile");
-  if (lfile) lfile.addEventListener("change", async (e) => {
-    const f = e.target.files?.[0]; if (!f) return;
-    w.logoDataUrl = await fileToDataUrl(f);
-    w.logoModal = false; w.logoBranding = true; w.branding.watermark = true;
-    toast("Logo Added."); render();
-  });
-  on("[data-tr]", "click", (e) => { w.transition = e.currentTarget.dataset.tr; render(); });
-  on("[data-ba]", "click", (e) => { w.baTransition = e.currentTarget.dataset.ba; render(); });
+    /* ---- scene settings summary ---- */
+    on("[data-sumedit]", "click", (e) => {
+      const [kind, tab] = String(e.currentTarget.dataset.sumedit).split(":");
+      const key = w.pop?.key;
+      w.pop = null;
+      w.popTabPending = tab || null;
+      render();
+      el.querySelector(`[data-pop="${kind}"][data-key="${CSS.escape(key || "")}"]`)?.click();
+    });
+    on("[data-sumreset]", "click", (e) => {
+      const s = cur();
+      if (!s) return;
+      resetSceneSetting(s, e.currentTarget.dataset.sumreset);
+      render();
+    });
+    on("#rvSumResetAll", "click", () => {
+      const s = cur();
+      if (!s) return;
+      sceneSettings(s, sceneClips.get(s.key)).forEach((it) => {
+        if (!it.locked) resetSceneSetting(s, it.id);
+      });
+      w.pop = null;
+      toast("Scene Settings Reset.");
+      render();
+    });
 
-  /* room type selector */
-  on("[data-roompick]", "click", (e) => {
-    e.preventDefault(); e.stopPropagation();
-    w.roomPick = { key: e.currentTarget.dataset.roompick };
-    w.roomPickQ = "";
-    render();
-  });
-  const closeRoom = () => { w.roomPick = null; w.roomPickQ = ""; render(); };
-  on("#rvRoomX", "click", closeRoom);
-  on("#rvRoomWrap", "mousedown", (e) => { if (e.target.id === "rvRoomWrap") closeRoom(); });
-  const roomQ = el.querySelector("#rvRoomQ");
-  if (roomQ) {
-    roomQ.focus();
-    const caret = roomQ.value.length;
-    try { roomQ.setSelectionRange(caret, caret); } catch (_) {}
-    roomQ.addEventListener("input", () => { w.roomPickQ = roomQ.value; render(); });
-    roomQ.addEventListener("keydown", (e) => {
-      if (e.key === "Escape") { e.preventDefault(); closeRoom(); }
-      if (e.key === "Enter") {
-        e.preventDefault();
-        const first = el.querySelector(".rv-roomopt");
-        if (first) first.click();
+    /* ---- start / end frames, inside the Effects modal ---- */
+    /* Save what is configured, even when the pair is not complete yet: Save
+     Draft never charges and must not lose the user's settings. */
+    const seSave = async (opts = {}) => {
+      const s = cur();
+      const d = w.seDraft;
+      if (!s || !d) return null;
+      const startA = w.available.find((a) => a.key === d.start_key) || seSceneImage(w, s);
+      const endA = d.end_key ? w.available.find((a) => a.key === d.end_key) || null : null;
+      if (!startA) return null;
+      if (opts.requireEnd && !endA) return null;
+      const pid = await ensureVideoProjectId(w);
+      sceneFrames.setProject(pid);
+      await sceneFrames.save({
+        video_project_id: pid,
+        scene_key: s.key,
+        start_path: startA.path,
+        end_path: endA?.path || null,
+        start_asset_id: uuidOrNull(startA.asset_id || s.asset_id),
+        end_asset_id: uuidOrNull(endA?.asset_id),
+        start_crop: d.start_crop || "center",
+        end_crop: d.end_crop || "center",
+        motion_preset: d.motion_preset || "auto",
+        prompt: d.prompt || null,
+        seconds: Number(d.seconds || 8),
+      });
+      w.seDirty = false;
+      if (!opts.quiet) toast("Start And End Saved.");
+      return { pid, s, endA };
+    };
+    on("[data-sepick]", "click", (e) => {
+      if (!w.seDraft) return;
+      /* The empty End panel is clickable as a whole; its own button already
+       handled the click, so the panel must not toggle it straight back. */
+      if (e.currentTarget.classList.contains("se-slot") && e.target.closest("button[data-sepick]"))
+        return;
+      const which = e.currentTarget.dataset.sepick;
+      w.seDraft.picking = w.seDraft.picking === which ? null : which;
+      render();
+    });
+    on("#rvSePickX", "click", () => {
+      if (w.seDraft) {
+        w.seDraft.picking = null;
+        render();
       }
     });
-  }
-  on("[data-roomset]", "click", (e) => {
-    e.preventDefault(); e.stopPropagation();
-    const key = w.roomPick?.key;
-    const val = String(e.currentTarget.dataset.roomset || "").trim().slice(0, 60);
-    if (!key || !val) return closeRoom();
-    setRoomLabel(key, val, true);
-    closeRoom();
-  });
+    on("#rvSeUpload", "click", () => el.querySelector("#rvSeFile")?.click());
+    on("#rvSeFile", "change", (e) => {
+      const files = Array.from(e.currentTarget.files || []);
+      e.currentTarget.value = "";
+      addUploads(files).catch(() => toast("Those photos could not be added."));
+    });
+    /* One failed signed URL must be retryable without reopening the modal. */
+    on("[data-seretryimg]", "click", (e) => {
+      e.stopPropagation();
+      const path = e.currentTarget.dataset.seretryimg;
+      console.warn("[start/end] retrying frame preview", path);
+      const th = e.currentTarget.closest(".se-th");
+      if (th) {
+        delete th.dataset.painted;
+        th.classList.remove("rv-noimg");
+      }
+      paintAssetThumbs();
+    });
+    on("[data-sepicked]", "click", (e) => {
+      const d = w.seDraft;
+      if (!d?.picking) return;
+      const k = e.currentTarget.dataset.sepicked;
+      if (d.picking === "start") d.start_key = k;
+      else d.end_key = d.end_key === k ? null : k;
+      d.picking = null;
+      w.seDirty = true;
+      render();
+    });
+    on("[data-semotion]", "click", (e) => {
+      if (!w.seDraft) return;
+      const id = e.currentTarget.dataset.semotion;
+      w.seDraft.motion_preset = id;
+      const m = seMotion(id);
+      if (m?.seconds) w.seDraft.seconds = m.seconds;
+      w.seDirty = true;
+      render();
+    });
+    on("[data-sesec]", "click", (e) => {
+      if (!w.seDraft) return;
+      w.seDraft.seconds = Number(e.currentTarget.dataset.sesec);
+      w.seDirty = true;
+      render();
+    });
+    {
+      const pr = el.querySelector("#rvSePrompt");
+      if (pr)
+        pr.addEventListener("input", (ev) => {
+          if (w.seDraft) {
+            w.seDraft.prompt = ev.target.value;
+            w.seDirty = true;
+          }
+        });
+    }
 
-  const fixAll = el.querySelector("#rvFixAll");
-  if (fixAll) fixAll.addEventListener("click", () => {
-    const recs = recommendations(analysisAssets()).filter((r) => r.op);
-    const byId = new Map();
-    recs.forEach((r) => r.ids.forEach((id) => byId.set(id, r.op)));
-    let n = 0;
-    w.available.forEach((a) => { if (byId.has(a.key)) { a.enhance = byId.get(a.key); n++; } });
-    w.scenes.forEach((sc) => { if (byId.has(sc.key)) sc.enhance = byId.get(sc.key); });
-    w.enhanceDismissed = true;
-    toast(`${n} ${n === 1 ? "Photo Will Be Enhanced" : "Photos Will Be Enhanced"} When The Video Renders.`);
-    render();
-  });
-  const fixSkip = el.querySelector("#rvFixSkip");
-  if (fixSkip) fixSkip.addEventListener("click", () => { w.enhanceDismissed = true; render(); });
+    on("#rvSeSwap", "click", () => {
+      const d = w.seDraft;
+      if (!d || !d.end_key) return;
+      const start = d.start_key;
+      d.start_key = d.end_key;
+      d.end_key = start;
+      const c = d.start_crop;
+      d.start_crop = d.end_crop;
+      d.end_crop = c;
+      w.seDirty = true;
+      render();
+    });
+    on("#rvSeRemove", "click", async () => {
+      const s = cur();
+      if (!s) return;
+      try {
+        await sceneFrames.clear(s.key);
+      } catch (_) {
+        toast("That could not be removed just now.");
+        return;
+      }
+      w.seDraft = {
+        start_key: s.key,
+        start_crop: s.crop || "center",
+        end_key: null,
+        end_crop: "center",
+        motion_preset: "auto",
+        prompt: "",
+        seconds: 8,
+        picking: null,
+      };
+      w.seDirty = false;
+      toast("Start And End Removed.");
+      render();
+    });
+    on("#rvSeSave", "click", async () => {
+      if (w.seBusy) return;
+      w.seBusy = "save";
+      render();
+      try {
+        await seSave();
+      } catch (err) {
+        toast(err?.message || "That could not be saved just now.");
+      }
+      w.seBusy = false;
+      render();
+    });
+    const seGenerate = async () => {
+      if (w.seBusy) return;
+      const s = cur();
+      const d = w.seDraft;
+      if (!s || !d?.end_key) return;
+      w.seBusy = "gen";
+      render();
+      try {
+        const saved = await seSave({ quiet: true, requireEnd: true });
+        if (!saved) throw new Error("Choose both frames first.");
+        const endA = saved.endA;
+        await sceneFrames.generate({
+          scene_key: s.key,
+          orientation: (w.primaryFormat || DEFAULT_FORMAT).startsWith("9")
+            ? "portrait"
+            : "landscape",
+          room_name: s.room || null,
+          end_room: endA?.room || null,
+        });
+        S.credits = await getMyCredits().catch(() => S.credits);
+        toast(`Generating This Clip. ${seCost(Number(d.seconds || 8))} Credits Reserved.`);
+      } catch (err) {
+        toast(err?.message || "That could not be started just now.");
+      }
 
-  /* audio */
-  on("[data-pres]", "click", (e) => {
-    w.presentation = e.currentTarget.dataset.pres;
-    w.captions = w.presentation === "captions" ? true : w.captions;
-    if (w.presentation === "narration" || w.presentation === "both") w.narration = w.narration === "none" ? "generate" : w.narration;
-    render();
-  });
-  el.querySelectorAll("details.rv-acc[data-acc]").forEach((d) => d.addEventListener("toggle", () => {
-    const k = d.dataset.acc;
-    if (d.open) accOpen.add(k); else accOpen.delete(k);
-  }));
-  on("[data-track]", "click", (e) => {
-    if (e.target.closest("[data-trackplay]")) return;
-    w.music = e.currentTarget.dataset.track; stopMusic(); render();
-  });
-  on("[data-trackplay]", "click", (e) => {
-    e.preventDefault(); e.stopPropagation();
-    const id = e.currentTarget.dataset.trackplay;
-    if (!id || id === "none") return;
-    toggleMusic(id); render();
-  });
-  on("[data-musicgenre]", "click", (e) => { w.musicGenre = e.currentTarget.dataset.musicgenre; render(); });
-  const mq = el.querySelector("#rvMusicQ");
-  if (mq) mq.addEventListener("input", (e) => {
-    w.musicQ = e.target.value;
-    const at = e.target.selectionStart; render();
-    const n = host()?.querySelector("#rvMusicQ"); if (n) { n.focus(); try { n.setSelectionRange(at, at); } catch (_) {} }
-  });
-  bindMusicControls(el, (v) => { w.music = v; render(); }, () => w.music);
-  const vol = el.querySelector("#rvVol"); if (vol) vol.addEventListener("input", (e) => { w.volume = Number(e.target.value) / 100; });
-  const beat = el.querySelector("#rvBeat"); if (beat) beat.addEventListener("change", (e) => { w.beatSync = e.target.checked; });
-  on("[data-nar]", "click", (e) => { stopVoicePreview(); w.narration = e.currentTarget.dataset.nar; render(); });
-  const scr = el.querySelector("#rvScript"); if (scr) scr.addEventListener("input", (e) => { w.script = e.target.value; });
-  const narFile = el.querySelector("#rvNarFile");
-  if (narFile) narFile.addEventListener("change", async (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    if (f.size > 25 * 1024 * 1024) return toast("Voiceover Must Be Under 25 MB.");
-    w.narrationName = f.name;
-    w.narrationUpload = await fileToDataUrl(f);
-    toast("Voiceover Added.");
-    render();
-  });
-  const vprev = el.querySelector("#rvVoicePrev");
-  if (vprev) vprev.addEventListener("click", async () => {
-    if (w.voicePreviewing) { stopVoicePreview(); render(); return; }
-    w.voicePreviewing = true; render();
-    const url = await buildNarration("generate", (w.script || defaultScript()).slice(0, 400), w.voice);
-    if (!url) { w.voicePreviewing = false; render(); return toast("Voiceover Preview Failed."); }
-    voiceAudio = new Audio(url);
-    voiceAudio.onended = () => { w.voicePreviewing = false; render(); };
-    voiceAudio.play().catch(() => {});
-  });
-  const voice = el.querySelector("#rvVoice"); if (voice) voice.addEventListener("change", (e) => { w.voice = e.target.value.toLowerCase(); });
-  const vstudio = el.querySelector('[data-a="voiceStudio"]');
-  if (vstudio) vstudio.addEventListener("click", () => openVoiceStudio((p) => { if (p) w.voice = "myvoice"; render(); }));
-  const caps = el.querySelector("#rvCaps"); if (caps) caps.addEventListener("change", (e) => { w.captions = e.target.checked; render(); });
-  if (w.avatar) bindAvatar(el, w.avatar, render, toast);
-
-  on("[data-cap]", "input", (e) => {
-    const sc = w.scenes[Number(e.currentTarget.dataset.cap)];
-    if (!sc) return;
-    sc.caption = e.currentTarget.value;
-    const clear = el.querySelector("#rvCapClear");
-    if (clear) clear.disabled = !sc.caption;
-  });
-  on("[data-cappos]", "click", (e) => { const sc = cur(); if (!sc) return; sc.caption_pos = e.currentTarget.dataset.cappos; render(); });
-  on("[data-capstyle]", "click", (e) => { const sc = cur(); if (!sc) return; sc.caption_style = e.currentTarget.dataset.capstyle; render(); });
-  on("#rvCapClear", "click", () => { const sc = cur(); if (!sc) return; sc.caption = ""; render(); });
-
-  /* scene labels */
-  const lref = (v) => { const [i, j] = String(v).split(":").map(Number); return { s: w.scenes[i], j }; };
-  on("#rvSuggestLabels", "click", () => {
-    w.scenes.forEach((s) => { if (!Array.isArray(s.labels) || !s.labels.length) s.labels = suggestLabels(s.room, s.caption); });
-    render();
-  });
-  on("[data-label-add]", "click", (e) => {
-    const s = w.scenes[Number(e.currentTarget.dataset.labelAdd)];
-    s.labels = Array.isArray(s.labels) ? s.labels : [];
-    s.labels.push({ text: s.room || "", style: "clean", position: "bottom_left" });
-    render();
-  });
-  on("[data-label-del]", "click", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelDel); s.labels.splice(j, 1); render(); });
-  on("[data-label-text]", "input", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelText); s.labels[j].text = e.currentTarget.value; });
-  on("[data-label-style]", "change", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelStyle); s.labels[j].style = e.currentTarget.value; });
-  on("[data-label-pos]", "change", (e) => { const { s, j } = lref(e.currentTarget.dataset.labelPos); s.labels[j].position = e.currentTarget.value; });
-
-
-  /* ---- shared canvas + panel controls ---- */
-  on("[data-tlpick]", "click", (e) => { w.activeIdx = Number(e.currentTarget.dataset.tlpick); render(); });
-  on("#rvPrevScene", "click", () => { w.activeIdx = Math.max(0, activeIndex() - 1); render(); });
-  on("#rvNextScene", "click", () => { w.activeIdx = Math.min(w.scenes.length - 1, activeIndex() + 1); render(); });
-  on("#rvPlay", "click", () => {
-    w.playing = !w.playing; render();
-    if (w.playing) {
-      clearInterval(w.playTimer);
-      w.playTimer = setInterval(() => {
-        const cur = S.wizard;
-        if (!cur || !cur.playing) { clearInterval(w.playTimer); return; }
-        cur.activeIdx = (Number(cur.activeIdx) || 0) + 1;
-        if (cur.activeIdx >= cur.scenes.length) { cur.activeIdx = 0; cur.playing = false; clearInterval(w.playTimer); }
+      w.seBusy = false;
+      render();
+    };
+    on("#rvSeGenerate", "click", seGenerate);
+    on("#rvSeRetry", "click", seGenerate);
+    on("#rvSeCancel", "click", async () => {
+      const s = cur();
+      if (!s) return;
+      try {
+        await sceneFrames.cancel(s.key);
+        toast("Generation Canceled. Reserved Credits Were Returned.");
+      } catch (err) {
+        toast(err?.message || "That could not be canceled just now.");
+      }
+      render();
+    });
+    on("[data-fxtab]", "click", (e) => {
+      w.popTab = e.currentTarget.dataset.fxtab;
+      w.popCat = "all";
+      render();
+    });
+    on("[data-fxcat]", "click", (e) => {
+      w.popCat = e.currentTarget.dataset.fxcat;
+      render();
+    });
+    /* Base disclosure the scene carried before any generative effect. */
+    const baseDisc = () => (w.pop?.snap && !w.pop.snap.vfx_gen ? w.pop.snap.disclosure : null);
+    on("[data-lookpick]", "click", (e) => {
+      const s = cur();
+      if (!s) return;
+      s.look = e.currentTarget.dataset.lookpick || null;
+      s.vfx = "none";
+      s.vfx_gen = null;
+      s.disclosure = baseDisc();
+      if (s.look && s.look_amount == null) s.look_amount = DEFAULT_INTENSITY;
+      render();
+    });
+    on("[data-vfxpick]", "click", (e) => {
+      const s = cur();
+      if (!s) return;
+      const t = tileById(e.currentTarget.dataset.vfxpick);
+      s.vfx = t?.id || "none";
+      s.look = t?.look || null;
+      s.vfx_gen = t?.gen ? t.id : null;
+      if (t?.gen && t.disclosure) s.disclosure = t.disclosure;
+      else s.disclosure = baseDisc();
+      if (s.look && s.look_amount == null) s.look_amount = DEFAULT_INTENSITY;
+      render();
+    });
+    const amt = el.querySelector("#rvLookAmt");
+    if (amt)
+      amt.addEventListener("input", (ev) => {
+        const s = cur();
+        if (!s) return;
+        s.look_amount = Number(ev.target.value);
         render();
-      }, Math.max(700, sceneDurations(w.scenes.length, w.length) * 1000));
-    } else clearInterval(w.playTimer);
-  });
-  const pb = el.querySelector("#rvPrevBrand");
-  if (pb) pb.addEventListener("change", (e) => { w.previewBrand = e.target.checked; render(); });
-  on("#rvTlAdd", "click", () => el.querySelector("#rvTlFile")?.click());
-  const tlf = el.querySelector("#rvTlFile");
-  if (tlf) tlf.addEventListener("change", async (e) => {
-    const f = [...(e.target.files || [])];
-    if (!f.length) return;
-    try { await addUploads(f); } catch (_) { toast("Those photos could not be added."); }
-  });
-  on("[data-sec]:not(.rv-rail-i)", "click", async (e) => {
-    const key = e.currentTarget.dataset.sec;
-    if (!key || !sectionReady(key)) return;
-    w.step = stepForSection(key);
-    if (key === "scenes") await loadWizardAssets();
-    if (S.wizard !== w) return;
-    render();
-  });
+        const again = el.querySelector("#rvLookAmt");
+        if (again) again.focus();
+      });
+    on("#rvAllMotion", "change", (e) => {
+      if (!e.currentTarget.checked) return;
+      const src = cur();
+      if (!src) return;
+      w.scenes.forEach((s) => {
+        s.motion = src.motion || "auto";
+        s.motion_level = src.motion_level || "standard";
+        s.immersive_effect = src.immersive_effect || null;
+      });
+      toast("Motion Applied To Every Scene.");
+    });
+    on("#rvAllLook", "click", () => {
+      const src = cur();
+      if (!src) return;
+      /* Paid effects confirm first; free looks apply straight away. */
+      if (sceneEffectCredits(src) > 0) {
+        w.popConfirm = true;
+        render();
+        return;
+      }
+      w.popAll = true;
+      render();
+    });
+    on("#rvAllNo", "click", () => {
+      w.popConfirm = false;
+      render();
+    });
+    on("#rvAllYes", "click", () => {
+      w.popAll = true;
+      w.popConfirm = false;
+      render();
+    });
+    on("[data-tpl]", "click", (e) => {
+      w.template = e.currentTarget.dataset.tpl;
+      render();
+    });
+    on("[data-out]", "click", (e) => {
+      w.outputMode = e.currentTarget.dataset.out;
+      w.versions.clean = w.outputMode !== "branded";
+      w.versions.branded = w.outputMode !== "unbranded";
+      render();
+    });
+    on("[data-tplscope]", "click", (e) => {
+      w.tplScope = e.currentTarget.dataset.tplscope;
+      render();
+    });
+    on("[data-tplintro]", "click", (e) => {
+      w.introTemplate = e.currentTarget.dataset.tplintro;
+      w.template = w.introTemplate;
+      render();
+    });
+    on("[data-tploutro]", "click", (e) => {
+      w.outroTemplate = e.currentTarget.dataset.tploutro;
+      render();
+    });
+    const sr = el.querySelector("#rvSpeedRamps");
+    if (sr)
+      sr.addEventListener("change", (e) => {
+        w.speedRamps = e.target.checked;
+      });
+    const lb = el.querySelector("#rvLogoBrand");
+    if (lb)
+      lb.addEventListener("change", (e) => {
+        w.logoBranding = e.target.checked;
+        w.branding.watermark = e.target.checked;
+      });
+    const ad = el.querySelector("#rvAiDisc");
+    if (ad)
+      ad.addEventListener("change", (e) => {
+        w.aiDisclaimer = e.target.checked;
+      });
+    const bd = el.querySelector("#rvBurnDisc");
+    if (bd)
+      bd.addEventListener("change", (e) => {
+        w.burnDisclosure = e.target.checked;
+      });
+    const pl = el.querySelector("#rvPickLogo");
+    if (pl)
+      pl.addEventListener("click", (e) => {
+        e.preventDefault();
+        w.logoModal = true;
+        render();
+      });
+    ["#rvLogoX", "#rvLogoCancel"].forEach((sel2) => {
+      const b = el.querySelector(sel2);
+      if (b)
+        b.addEventListener("click", () => {
+          w.logoModal = false;
+          render();
+        });
+    });
+    const ldone = el.querySelector("#rvLogoDone");
+    if (ldone)
+      ldone.addEventListener("click", () => {
+        w.logoModal = false;
+        w.logoBranding = true;
+        w.branding.watermark = true;
+        render();
+      });
+    const lup = el.querySelector("#rvLogoUp");
+    if (lup) lup.addEventListener("click", () => el.querySelector("#rvLogoFile")?.click());
+    const lfile = el.querySelector("#rvLogoFile");
+    if (lfile)
+      lfile.addEventListener("change", async (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        w.logoDataUrl = await fileToDataUrl(f);
+        w.logoModal = false;
+        w.logoBranding = true;
+        w.branding.watermark = true;
+        toast("Logo Added.");
+        render();
+      });
+    on("[data-tr]", "click", (e) => {
+      w.transition = e.currentTarget.dataset.tr;
+      render();
+    });
+    on("[data-ba]", "click", (e) => {
+      w.baTransition = e.currentTarget.dataset.ba;
+      render();
+    });
 
-  /* titles */
-  on("[data-tfont]", "click", (e) => { w.titleFont = e.currentTarget.dataset.tfont; render(); });
-  on("[data-tpos]", "click", (e) => { w.titlePos = e.currentTarget.dataset.tpos; render(); });
-  const stx = el.querySelector("#rvSceneText");
-  if (stx) stx.addEventListener("input", (e) => {
-    const sc = activeScene(); if (!sc) return;
-    sc.caption = e.target.value;
-    const ov = el.querySelector(".rv-ov-cap");
-    if (ov) ov.textContent = sc.caption || sc.room || "";
-    const tl = el.querySelector(`.rv-tl-i[data-tlpick="${activeIndex()}"] b`);
-    if (tl) tl.textContent = sc.room || "Scene";
-  });
-  on("#rvCapAll", "click", () => { w.scenes.forEach((sc) => { if (!sc.caption) sc.caption = sc.room || ""; }); render(); });
+    /* room type selector */
+    on("[data-roompick]", "click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      w.roomPick = { key: e.currentTarget.dataset.roompick };
+      w.roomPickQ = "";
+      render();
+    });
+    const closeRoom = () => {
+      w.roomPick = null;
+      w.roomPickQ = "";
+      render();
+    };
+    on("#rvRoomX", "click", closeRoom);
+    on("#rvRoomWrap", "mousedown", (e) => {
+      if (e.target.id === "rvRoomWrap") closeRoom();
+    });
+    const roomQ = el.querySelector("#rvRoomQ");
+    if (roomQ) {
+      roomQ.focus();
+      const caret = roomQ.value.length;
+      try {
+        roomQ.setSelectionRange(caret, caret);
+      } catch (_) {}
+      roomQ.addEventListener("input", () => {
+        w.roomPickQ = roomQ.value;
+        render();
+      });
+      roomQ.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeRoom();
+        }
+        if (e.key === "Enter") {
+          e.preventDefault();
+          const first = el.querySelector(".rv-roomopt");
+          if (first) first.click();
+        }
+      });
+    }
+    on("[data-roomset]", "click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const key = w.roomPick?.key;
+      const val = String(e.currentTarget.dataset.roomset || "")
+        .trim()
+        .slice(0, 60);
+      if (!key || !val) return closeRoom();
+      setRoomLabel(key, val, true);
+      closeRoom();
+    });
 
-  /* audio */
-  on("[data-atab]", "click", (e) => { w.audioTab = e.currentTarget.dataset.atab; render(); });
-  on("#rvMusicOff", "click", () => { w.music = "none"; render(); });
-  on("#rvPresOn", "click", () => { w.avatar = w.avatar || blankAvatarConfig(); w.avatar.enabled = true; render(); });
+    const fixAll = el.querySelector("#rvFixAll");
+    if (fixAll)
+      fixAll.addEventListener("click", () => {
+        const recs = recommendations(analysisAssets()).filter((r) => r.op);
+        const byId = new Map();
+        recs.forEach((r) => r.ids.forEach((id) => byId.set(id, r.op)));
+        let n = 0;
+        w.available.forEach((a) => {
+          if (byId.has(a.key)) {
+            a.enhance = byId.get(a.key);
+            n++;
+          }
+        });
+        w.scenes.forEach((sc) => {
+          if (byId.has(sc.key)) sc.enhance = byId.get(sc.key);
+        });
+        w.enhanceDismissed = true;
+        toast(
+          `${n} ${n === 1 ? "Photo Will Be Enhanced" : "Photos Will Be Enhanced"} When The Video Renders.`,
+        );
+        render();
+      });
+    const fixSkip = el.querySelector("#rvFixSkip");
+    if (fixSkip)
+      fixSkip.addEventListener("click", () => {
+        w.enhanceDismissed = true;
+        render();
+      });
 
-  /* brand placement */
-  on("[data-logopos]", "click", (e) => { w.logoPos = e.currentTarget.dataset.logopos; render(); });
-  const lop = el.querySelector("#rvLogoOp");
-  if (lop) lop.addEventListener("input", (e) => { w.logoOpacity = Number(e.target.value) / 100; });
+    /* audio */
+    on("[data-pres]", "click", (e) => {
+      w.presentation = e.currentTarget.dataset.pres;
+      w.captions = w.presentation === "captions" ? true : w.captions;
+      if (w.presentation === "narration" || w.presentation === "both")
+        w.narration = w.narration === "none" ? "generate" : w.narration;
+      render();
+    });
+    el.querySelectorAll("details.rv-acc[data-acc]").forEach((d) =>
+      d.addEventListener("toggle", () => {
+        const k = d.dataset.acc;
+        if (d.open) accOpen.add(k);
+        else accOpen.delete(k);
+      }),
+    );
+    on("[data-track]", "click", (e) => {
+      if (e.target.closest("[data-trackplay]")) return;
+      w.music = e.currentTarget.dataset.track;
+      stopMusic();
+      render();
+    });
+    on("[data-trackplay]", "click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const id = e.currentTarget.dataset.trackplay;
+      if (!id || id === "none") return;
+      toggleMusic(id);
+      render();
+    });
+    on("[data-musicgenre]", "click", (e) => {
+      w.musicGenre = e.currentTarget.dataset.musicgenre;
+      render();
+    });
+    const mq = el.querySelector("#rvMusicQ");
+    if (mq)
+      mq.addEventListener("input", (e) => {
+        w.musicQ = e.target.value;
+        const at = e.target.selectionStart;
+        render();
+        const n = host()?.querySelector("#rvMusicQ");
+        if (n) {
+          n.focus();
+          try {
+            n.setSelectionRange(at, at);
+          } catch (_) {}
+        }
+      });
+    bindMusicControls(
+      el,
+      (v) => {
+        w.music = v;
+        render();
+      },
+      () => w.music,
+    );
+    const vol = el.querySelector("#rvVol");
+    if (vol)
+      vol.addEventListener("input", (e) => {
+        w.volume = Number(e.target.value) / 100;
+      });
+    const beat = el.querySelector("#rvBeat");
+    if (beat)
+      beat.addEventListener("change", (e) => {
+        w.beatSync = e.target.checked;
+      });
+    on("[data-nar]", "click", (e) => {
+      stopVoicePreview();
+      w.narration = e.currentTarget.dataset.nar;
+      render();
+    });
+    const scr = el.querySelector("#rvScript");
+    if (scr)
+      scr.addEventListener("input", (e) => {
+        w.script = e.target.value;
+      });
+    const narFile = el.querySelector("#rvNarFile");
+    if (narFile)
+      narFile.addEventListener("change", async (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        if (f.size > 25 * 1024 * 1024) return toast("Voiceover Must Be Under 25 MB.");
+        w.narrationName = f.name;
+        w.narrationUpload = await fileToDataUrl(f);
+        toast("Voiceover Added.");
+        render();
+      });
+    const vprev = el.querySelector("#rvVoicePrev");
+    if (vprev)
+      vprev.addEventListener("click", async () => {
+        if (w.voicePreviewing) {
+          stopVoicePreview();
+          render();
+          return;
+        }
+        w.voicePreviewing = true;
+        render();
+        const url = await buildNarration(
+          "generate",
+          (w.script || defaultScript()).slice(0, 400),
+          w.voice,
+        );
+        if (!url) {
+          w.voicePreviewing = false;
+          render();
+          return toast("Voiceover Preview Failed.");
+        }
+        voiceAudio = new Audio(url);
+        voiceAudio.onended = () => {
+          w.voicePreviewing = false;
+          render();
+        };
+        voiceAudio.play().catch(() => {});
+      });
+    const voice = el.querySelector("#rvVoice");
+    if (voice)
+      voice.addEventListener("change", (e) => {
+        w.voice = e.target.value.toLowerCase();
+      });
+    const vstudio = el.querySelector('[data-a="voiceStudio"]');
+    if (vstudio)
+      vstudio.addEventListener("click", () =>
+        openVoiceStudio((p) => {
+          if (p) w.voice = "myvoice";
+          render();
+        }),
+      );
+    const caps = el.querySelector("#rvCaps");
+    if (caps)
+      caps.addEventListener("change", (e) => {
+        w.captions = e.target.checked;
+        render();
+      });
+    if (w.avatar) bindAvatar(el, w.avatar, render, toast);
 
-  /* branding */
-  on("[data-kit]", "click", (e) => { w.brandKitId = e.currentTarget.dataset.kit || null; render(); });
-  on("#rvKitNew", "click", () => openBrandKit(null));
-  on("#rvKitEdit", "click", () => openBrandKit(S.kits.find((k) => k.id === w.brandKitId)));
-  on("[data-br]", "change", (e) => { w.branding[e.currentTarget.dataset.br] = e.currentTarget.checked; render(); });
-  on("[data-ver]", "change", (e) => { w.versions[e.currentTarget.dataset.ver] = e.currentTarget.checked; });
-  on("[data-disc]", "change", (e) => { w.scenes[Number(e.currentTarget.dataset.disc)].disclosure = e.currentTarget.value; });
-  on("[data-dmode]", "click", (e) => { w.disclosureMode = e.currentTarget.dataset.dmode; render(); });
+    on("[data-cap]", "input", (e) => {
+      const sc = w.scenes[Number(e.currentTarget.dataset.cap)];
+      if (!sc) return;
+      sc.caption = e.currentTarget.value;
+      const clear = el.querySelector("#rvCapClear");
+      if (clear) clear.disabled = !sc.caption;
+    });
+    on("[data-cappos]", "click", (e) => {
+      const sc = cur();
+      if (!sc) return;
+      sc.caption_pos = e.currentTarget.dataset.cappos;
+      render();
+    });
+    on("[data-capstyle]", "click", (e) => {
+      const sc = cur();
+      if (!sc) return;
+      sc.caption_style = e.currentTarget.dataset.capstyle;
+      render();
+    });
+    on("#rvCapClear", "click", () => {
+      const sc = cur();
+      if (!sc) return;
+      sc.caption = "";
+      render();
+    });
 
-  /* review */
-  on("#rvGen", "click", () => generate());
-  on("#rvCancelRender", "click", () => cancelRender());
-  on("#rvAddCredits2", "click", () => openUpgrade("You need more credits to render this video."));
-  on("#rvAddCredits", "click", () => openUpgrade(videoCreditBlock(creditTotal()) || "You need more credits to render this video."));
+    /* scene labels */
+    const lref = (v) => {
+      const [i, j] = String(v).split(":").map(Number);
+      return { s: w.scenes[i], j };
+    };
+    on("#rvSuggestLabels", "click", () => {
+      w.scenes.forEach((s) => {
+        if (!Array.isArray(s.labels) || !s.labels.length)
+          s.labels = suggestLabels(s.room, s.caption);
+      });
+      render();
+    });
+    on("[data-label-add]", "click", (e) => {
+      const s = w.scenes[Number(e.currentTarget.dataset.labelAdd)];
+      s.labels = Array.isArray(s.labels) ? s.labels : [];
+      s.labels.push({ text: s.room || "", style: "clean", position: "bottom_left" });
+      render();
+    });
+    on("[data-label-del]", "click", (e) => {
+      const { s, j } = lref(e.currentTarget.dataset.labelDel);
+      s.labels.splice(j, 1);
+      render();
+    });
+    on("[data-label-text]", "input", (e) => {
+      const { s, j } = lref(e.currentTarget.dataset.labelText);
+      s.labels[j].text = e.currentTarget.value;
+    });
+    on("[data-label-style]", "change", (e) => {
+      const { s, j } = lref(e.currentTarget.dataset.labelStyle);
+      s.labels[j].style = e.currentTarget.value;
+    });
+    on("[data-label-pos]", "change", (e) => {
+      const { s, j } = lref(e.currentTarget.dataset.labelPos);
+      s.labels[j].position = e.currentTarget.value;
+    });
 
+    /* ---- shared canvas + panel controls ---- */
+    on("[data-tlpick]", "click", (e) => {
+      w.activeIdx = Number(e.currentTarget.dataset.tlpick);
+      render();
+    });
+    on("#rvPrevScene", "click", () => {
+      w.activeIdx = Math.max(0, activeIndex() - 1);
+      render();
+    });
+    on("#rvNextScene", "click", () => {
+      w.activeIdx = Math.min(w.scenes.length - 1, activeIndex() + 1);
+      render();
+    });
+    on("#rvPlay", "click", () => {
+      w.playing = !w.playing;
+      render();
+      if (w.playing) {
+        clearInterval(w.playTimer);
+        w.playTimer = setInterval(
+          () => {
+            const cur = S.wizard;
+            if (!cur || !cur.playing) {
+              clearInterval(w.playTimer);
+              return;
+            }
+            cur.activeIdx = (Number(cur.activeIdx) || 0) + 1;
+            if (cur.activeIdx >= cur.scenes.length) {
+              cur.activeIdx = 0;
+              cur.playing = false;
+              clearInterval(w.playTimer);
+            }
+            render();
+          },
+          Math.max(700, sceneDurations(w.scenes.length, w.length) * 1000),
+        );
+      } else clearInterval(w.playTimer);
+    });
+    const pb = el.querySelector("#rvPrevBrand");
+    if (pb)
+      pb.addEventListener("change", (e) => {
+        w.previewBrand = e.target.checked;
+        render();
+      });
+    on("#rvTlAdd", "click", () => el.querySelector("#rvTlFile")?.click());
+    const tlf = el.querySelector("#rvTlFile");
+    if (tlf)
+      tlf.addEventListener("change", async (e) => {
+        const f = [...(e.target.files || [])];
+        if (!f.length) return;
+        try {
+          await addUploads(f);
+        } catch (_) {
+          toast("Those photos could not be added.");
+        }
+      });
+    on("[data-sec]:not(.rv-rail-i)", "click", async (e) => {
+      const key = e.currentTarget.dataset.sec;
+      if (!key || !sectionReady(key)) return;
+      w.step = stepForSection(key);
+      if (key === "scenes") await loadWizardAssets();
+      if (S.wizard !== w) return;
+      render();
+    });
+
+    /* titles */
+    on("[data-tfont]", "click", (e) => {
+      w.titleFont = e.currentTarget.dataset.tfont;
+      render();
+    });
+    on("[data-tpos]", "click", (e) => {
+      w.titlePos = e.currentTarget.dataset.tpos;
+      render();
+    });
+    const stx = el.querySelector("#rvSceneText");
+    if (stx)
+      stx.addEventListener("input", (e) => {
+        const sc = activeScene();
+        if (!sc) return;
+        sc.caption = e.target.value;
+        const ov = el.querySelector(".rv-ov-cap");
+        if (ov) ov.textContent = sc.caption || sc.room || "";
+        const tl = el.querySelector(`.rv-tl-i[data-tlpick="${activeIndex()}"] b`);
+        if (tl) tl.textContent = sc.room || "Scene";
+      });
+    on("#rvCapAll", "click", () => {
+      w.scenes.forEach((sc) => {
+        if (!sc.caption) sc.caption = sc.room || "";
+      });
+      render();
+    });
+
+    /* audio */
+    on("[data-atab]", "click", (e) => {
+      w.audioTab = e.currentTarget.dataset.atab;
+      render();
+    });
+    on("#rvMusicOff", "click", () => {
+      w.music = "none";
+      render();
+    });
+    on("#rvPresOn", "click", () => {
+      w.avatar = w.avatar || blankAvatarConfig();
+      w.avatar.enabled = true;
+      render();
+    });
+
+    /* brand placement */
+    on("[data-logopos]", "click", (e) => {
+      w.logoPos = e.currentTarget.dataset.logopos;
+      render();
+    });
+    const lop = el.querySelector("#rvLogoOp");
+    if (lop)
+      lop.addEventListener("input", (e) => {
+        w.logoOpacity = Number(e.target.value) / 100;
+      });
+
+    /* branding */
+    on("[data-kit]", "click", (e) => {
+      w.brandKitId = e.currentTarget.dataset.kit || null;
+      render();
+    });
+    on("#rvKitNew", "click", () => openBrandKit(null));
+    on("#rvKitEdit", "click", () => openBrandKit(S.kits.find((k) => k.id === w.brandKitId)));
+    on("[data-br]", "change", (e) => {
+      w.branding[e.currentTarget.dataset.br] = e.currentTarget.checked;
+      render();
+    });
+    on("[data-ver]", "change", (e) => {
+      w.versions[e.currentTarget.dataset.ver] = e.currentTarget.checked;
+    });
+    on("[data-disc]", "change", (e) => {
+      w.scenes[Number(e.currentTarget.dataset.disc)].disclosure = e.currentTarget.value;
+    });
+    on("[data-dmode]", "click", (e) => {
+      w.disclosureMode = e.currentTarget.dataset.dmode;
+      render();
+    });
+
+    /* review */
+    on("#rvGen", "click", () => generate());
+    on("#rvCancelRender", "click", () => cancelRender());
+    on("#rvAddCredits2", "click", () => openUpgrade("You need more credits to render this video."));
+    on("#rvAddCredits", "click", () =>
+      openUpgrade(videoCreditBlock(creditTotal()) || "You need more credits to render this video."),
+    );
   } // end wizard bindings (S.wizard may be null on the library screen)
 
   /* detail */
-  on("[data-tab]", "click", (e) => { S.detailTab = e.currentTarget.dataset.tab; render(); });
-  on("[data-pf]", "click", (e) => { S.playFormat = e.currentTarget.dataset.pf; render(); });
-  on("[data-pv]", "click", (e) => { S.playVersion = e.currentTarget.dataset.pv; render(); });
-  on("#rvBackLib", "click", async () => { stopVoicePreview(); stopMusic(); await loadLibrary(); S.screen = "library"; render(); });
+  on("[data-tab]", "click", (e) => {
+    S.detailTab = e.currentTarget.dataset.tab;
+    render();
+  });
+  on("[data-pf]", "click", (e) => {
+    S.playFormat = e.currentTarget.dataset.pf;
+    render();
+  });
+  on("[data-pv]", "click", (e) => {
+    S.playVersion = e.currentTarget.dataset.pv;
+    render();
+  });
+  on("#rvBackLib", "click", async () => {
+    stopVoicePreview();
+    stopMusic();
+    await loadLibrary();
+    S.screen = "library";
+    render();
+  });
   on("#rvDl", "click", async () => {
     const v = S.detail?.variants.find((x) => x.output_path);
     if (!v) return toast("Nothing Rendered Yet.");
     const url = await signed(v.output_path);
     if (url) window.open(url, "_blank");
   });
-  on("#rvShare", "click", () => { S.detailTab = "presentation"; render(); });
+  on("#rvShare", "click", () => {
+    S.detailTab = "presentation";
+    render();
+  });
 
   /* presentation page settings */
   const share = () => (S.detail.share = S.detail.share || {});
-  on("[data-ptype]", "click", (e) => { share().presentation_type = e.currentTarget.dataset.ptype; render(); });
-  on("[data-pmob]", "click", (e) => { share().mobile_layout = e.currentTarget.dataset.pmob; render(); });
+  on("[data-ptype]", "click", (e) => {
+    share().presentation_type = e.currentTarget.dataset.ptype;
+    render();
+  });
+  on("[data-pmob]", "click", (e) => {
+    share().mobile_layout = e.currentTarget.dataset.pmob;
+    render();
+  });
   on("#prCopy", "click", async () => {
     const sh = S.detail.share || {};
-    try { await navigator.clipboard.writeText(location.origin + "/v/" + (sh.slug || sh.token)); } catch (_) {}
+    try {
+      await navigator.clipboard.writeText(location.origin + "/v/" + (sh.slug || sh.token));
+    } catch (_) {}
     toast("Presentation Link Copied.");
   });
   on("#prSave", "click", async (e) => {
     const q = (sel) => el.querySelector(sel);
     const sh = S.detail.share || {};
     const sections = {};
-    el.querySelectorAll("[data-psec]").forEach((n) => { sections[n.dataset.psec] = n.checked; });
+    el.querySelectorAll("[data-psec]").forEach((n) => {
+      sections[n.dataset.psec] = n.checked;
+    });
     const pwOn = q("#pr_pw_on")?.checked;
     const pw = q("#pr_pw")?.value || "";
     e.currentTarget.disabled = true;
@@ -5455,7 +7239,11 @@ function bind() {
       const res = await saveShareLink({
         video_project_id: S.detailId,
         presentation_type: sh.presentation_type || "listing",
-        slug: (q("#pr_slug")?.value || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-") || null,
+        slug:
+          (q("#pr_slug")?.value || "")
+            .trim()
+            .toLowerCase()
+            .replace(/[^a-z0-9-]+/g, "-") || null,
         headline: q("#pr_head")?.value || null,
         privacy_type: pwOn ? "private" : "public",
         password: pwOn && pw ? pw : null,
@@ -5468,7 +7256,12 @@ function bind() {
         mobile_layout: sh.mobile_layout || "stacked",
         sections,
       });
-      S.detail.share = { ...sh, ...res, sections, password_hash: pwOn ? (pw ? "set" : sh.password_hash) : null };
+      S.detail.share = {
+        ...sh,
+        ...res,
+        sections,
+        password_hash: pwOn ? (pw ? "set" : sh.password_hash) : null,
+      };
       toast("Presentation Page Saved.");
       render();
     } catch (err) {
@@ -5480,7 +7273,9 @@ function bind() {
   on("#rvEdit, #rvEdit2, #rvRetry", "click", () => editExisting(S.detail));
   on("#rvUpgrade", "click", () => openUpgradeFlow(S.detail));
 
-  el.querySelectorAll("[data-goto]").forEach((n) => n.addEventListener("click", () => S.go && S.go(n.dataset.goto)));
+  el.querySelectorAll("[data-goto]").forEach((n) =>
+    n.addEventListener("click", () => S.go && S.go(n.dataset.goto)),
+  );
 }
 
 function selectRecommended() {
@@ -5517,13 +7312,21 @@ function editExisting(d) {
   w.editingId = p.id;
   /* Clips generated in an earlier session (or on another device) come back
      with the project, and any job still running keeps polling. */
-  sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
-  sceneFrames.onChange = () => { if (S.screen === "wizard") render(); };
+  sceneClips.onChange = () => {
+    if (S.screen === "wizard") render();
+  };
+  sceneFrames.onChange = () => {
+    if (S.screen === "wizard") render();
+  };
   void sceneClips.load(p.id);
   /* Start/End pairs are durable too: reload them with the project. */
-  void sceneFrames.load(p.id).then(() => { if (S.screen === "wizard") render(); });
+  void sceneFrames.load(p.id).then(() => {
+    if (S.screen === "wizard") render();
+  });
   /* Transitions belong to the project, so they come back with it. */
-  void transitions.load(p.id).then(() => { if (S.screen === "wizard") render(); });
+  void transitions.load(p.id).then(() => {
+    if (S.screen === "wizard") render();
+  });
   w.address = cleanAddressText(p.property_address || "");
   w.addressSource = p.address_source || (p.property_id ? "existing_property" : "unknown");
   w.titleTouched = !!p.title_touched;
@@ -5543,27 +7346,29 @@ function editExisting(d) {
   w.branding = p.branding || w.branding;
   w.disclosureMode = p.disclosure?.mode || "altered";
   w.captions = !!d.audio?.captions_enabled;
-  w.scenes = dedupeScenes(d.scenes.map((s) => ({
-    key: s.id,
-    path: s.source_path,
-    compare: s.compare_path,
-    room: s.room_name || "Untitled",
-    kind: s.scene_type === "original" ? "Original" : "Design",
-    scene_type: s.scene_type,
-    duration: Number(s.duration),
-    motion: s.motion,
-    caption: s.caption,
-    caption_pos: s.crop_data?.caption_pos || "bottom",
-    caption_style: s.crop_data?.caption_style || "brand",
-    crop_data: s.crop_data || {},
-    disclosure: s.disclosure_type,
-    motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
-    immersive_effect: s.immersive_effect || null,
-    exterior_effect: s.exterior_effect || null,
-    labels: Array.isArray(s.labels) ? s.labels : [],
-    asset_id: s.source_asset_id,
-    version_id: s.source_version_id,
-  })));
+  w.scenes = dedupeScenes(
+    d.scenes.map((s) => ({
+      key: s.id,
+      path: s.source_path,
+      compare: s.compare_path,
+      room: s.room_name || "Untitled",
+      kind: s.scene_type === "original" ? "Original" : "Design",
+      scene_type: s.scene_type,
+      duration: Number(s.duration),
+      motion: s.motion,
+      caption: s.caption,
+      caption_pos: s.crop_data?.caption_pos || "bottom",
+      caption_style: s.crop_data?.caption_style || "brand",
+      crop_data: s.crop_data || {},
+      disclosure: s.disclosure_type,
+      motion_level: s.motion_level === "immersive" ? "immersive" : "standard",
+      immersive_effect: s.immersive_effect || null,
+      exterior_effect: s.exterior_effect || null,
+      labels: Array.isArray(s.labels) ? s.labels : [],
+      asset_id: s.source_asset_id,
+      version_id: s.source_version_id,
+    })),
+  );
   w.step = 3;
   /* Resume an unfinished builder exactly where it was left, from the stored
      draft state rather than from anything cached in this browser. */
@@ -5572,8 +7377,14 @@ function editExisting(d) {
     w.gridOrder = Array.isArray(ds.gridOrder) ? ds.gridOrder : w.gridOrder;
     if (ds.ending && typeof ds.ending === "object") w.ending = ds.ending;
     w.uploads = (ds.uploads || []).map((u) => ({
-      id: u.id, name: u.name, originalName: u.name, url: "", file: null,
-      storagePath: u.path, room: u.room || "Unsorted", roomSource: u.room_source || "ai",
+      id: u.id,
+      name: u.name,
+      originalName: u.name,
+      url: "",
+      file: null,
+      storagePath: u.path,
+      room: u.room || "Unsorted",
+      roomSource: u.room_source || "ai",
     }));
     /* Draft state and database rows describe the same scenes: reconcile them
        by asset identity rather than letting both add their own copies. */
@@ -5597,13 +7408,24 @@ function editExisting(d) {
     reconcileUploadPaths(w);
     /* Storage paths become viewable URLs for this session only. */
     Promise.all(
-      w.uploads.map(async (u) => { try { u.url = await roomPhotoUrl(u.storagePath); } catch (_) {} }),
-    ).then(() => { attachUploadAssets(w); reconcileUploadPaths(w); render(); });
+      w.uploads.map(async (u) => {
+        try {
+          u.url = await roomPhotoUrl(u.storagePath);
+        } catch (_) {}
+      }),
+    ).then(() => {
+      attachUploadAssets(w);
+      reconcileUploadPaths(w);
+      render();
+    });
   }
   S.screen = "wizard";
   /* No empty state while the grid is still hydrating. */
   w.selectGridLoading = true;
-  loadWizardAssets().finally(() => { w.selectGridLoading = false; render(); });
+  loadWizardAssets().finally(() => {
+    w.selectGridLoading = false;
+    render();
+  });
   render();
 }
 
@@ -5613,7 +7435,8 @@ function openBrandKit(kit) {
   /* Modals must live inside .rd-app: every field rule is scoped to it, so a
      body-level modal renders unstyled. */
   if (!wrap) {
-    wrap = document.createElement("div"); wrap.id = "rvKitWrap";
+    wrap = document.createElement("div");
+    wrap.id = "rvKitWrap";
     (document.querySelector(".rd-app") || document.body).appendChild(wrap);
   }
   const k = kit || {};
@@ -5671,37 +7494,55 @@ function openBrandKit(kit) {
     <div class="rv-modal-f"><button class="btn btn-ghost" id="rvKitCancel">Cancel</button><button class="btn btn-primary" id="rvKitSave">Save Brand Kit</button></div>
   </div>`;
   paint();
-  const close = () => { wrap.className = "rv-modal"; wrap.innerHTML = ""; };
+  const close = () => {
+    wrap.className = "rv-modal";
+    wrap.innerHTML = "";
+  };
   wrap.querySelector("#rvKitX").onclick = close;
   wrap.querySelector("#rvKitCancel").onclick = close;
   /* Logo upload, with the pasted-URL field kept as a hidden value so the save
      handler and existing kits keep working unchanged. */
   const hex = wrap.querySelector("#rvKitHex");
   const colorIn = wrap.querySelector("#k_color");
-  if (colorIn && hex) colorIn.addEventListener("input", () => { hex.textContent = String(colorIn.value || "").toUpperCase(); });
+  if (colorIn && hex)
+    colorIn.addEventListener("input", () => {
+      hex.textContent = String(colorIn.value || "").toUpperCase();
+    });
   const logoHidden = wrap.querySelector("#k_logo");
   const setLogo = (url) => {
     if (logoHidden) logoHidden.value = url || "";
     const th = wrap.querySelector("#rvKitLogoTh");
-    if (th) { th.className = "rv-logo-th" + (url ? " has" : ""); th.innerHTML = url ? `<img src="${esc(url)}" alt="Brand logo">` : `<i data-lucide="image"></i>`; }
+    if (th) {
+      th.className = "rv-logo-th" + (url ? " has" : "");
+      th.innerHTML = url
+        ? `<img src="${esc(url)}" alt="Brand logo">`
+        : `<i data-lucide="image"></i>`;
+    }
     paint();
   };
-  wrap.querySelector("#rvKitLogoUp")?.addEventListener("click", () => wrap.querySelector("#rvKitLogoFile")?.click());
+  wrap
+    .querySelector("#rvKitLogoUp")
+    ?.addEventListener("click", () => wrap.querySelector("#rvKitLogoFile")?.click());
   wrap.querySelector("#rvKitLogoClear")?.addEventListener("click", () => setLogo(""));
   wrap.querySelector("#rvKitLogoFile")?.addEventListener("change", async (e) => {
-    const f = (e.target as HTMLInputElement).files?.[0]; if (!f) return;
+    const f = (e.target as HTMLInputElement).files?.[0];
+    if (!f) return;
     try {
       const { data: u } = await supabase.auth.getUser();
       const uid = u?.user?.id;
       if (!uid) throw new Error("Please sign in again to upload a logo.");
       const ext = (f.name.split(".").pop() || "png").toLowerCase();
       const path = `${uid}/brand/${Date.now()}.${ext}`;
-      const up = await supabase.storage.from(BUCKET).upload(path, f, { contentType: f.type || "image/png", upsert: true });
+      const up = await supabase.storage
+        .from(BUCKET)
+        .upload(path, f, { contentType: f.type || "image/png", upsert: true });
       if (up.error) throw new Error(up.error.message);
       const url = await signed(path);
       setLogo(url || "");
       toast("Logo Uploaded.");
-    } catch (err) { toast(err?.message || "Could not upload that logo."); }
+    } catch (err) {
+      toast(err?.message || "Could not upload that logo.");
+    }
   });
 
   wrap.querySelector("#rvKitSave").onclick = async () => {
@@ -5727,11 +7568,11 @@ function openBrandKit(kit) {
       close();
       render();
       toast("Brand Kit Saved.");
-    } catch (e) { toast(e?.message || "Could not save that brand kit."); }
+    } catch (e) {
+      toast(e?.message || "Could not save that brand kit.");
+    }
   };
 }
-
-
 
 /** Entry point from a design card: seeds the design as scene one of the
     unified builder and opens it at the Edit step. */
@@ -5740,9 +7581,13 @@ export async function startDesignVideo(design = {}) {
   if (!design.path) throw new Error("That design has no image yet.");
   dvActive = true;
   [0, 300, 900, 1800, 3000].forEach((ms) => setTimeout(closeIntroNow, ms));
-  try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+  try {
+    window.__rdAllowReveal && window.__rdAllowReveal();
+  } catch (_) {}
   goTo("reveal");
-  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(String(design.id));
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    String(design.id),
+  );
   const versionId = design.sample || !isUuid ? null : design.id;
   startWizard({
     propertyId: design.property_id || null,
@@ -5753,20 +7598,22 @@ export async function startDesignVideo(design = {}) {
     title: (design.name || "Design") + " Video",
   });
   const w = S.wizard;
-  w.scenes = [{
-    key: "seed-" + design.id,
-    path: design.path,
-    compare: design.before_path || null,
-    room: design.name || "Selected Design",
-    kind: "Design",
-    scene_type: "design",
-    duration: 3,
-    motion: "auto",
-    caption: "",
-    disclosure: "proposed",
-    asset_id: null,
-    version_id: versionId,
-  }];
+  w.scenes = [
+    {
+      key: "seed-" + design.id,
+      path: design.path,
+      compare: design.before_path || null,
+      room: design.name || "Selected Design",
+      kind: "Design",
+      scene_type: "design",
+      duration: 3,
+      motion: "auto",
+      caption: "",
+      disclosure: "proposed",
+      asset_id: null,
+      version_id: versionId,
+    },
+  ];
   w.step = 3;
   render();
   closeIntroNow();
@@ -5783,17 +7630,25 @@ const ACTIVE_KEY = "rd_reveal_active";
    project currently open in the builder is remembered locally. The work
    itself lives on the server; this is only a pointer. */
 function rememberActiveBuilder(id) {
-  try { if (id) localStorage.setItem(ACTIVE_KEY, String(id)); } catch (_) {}
+  try {
+    if (id) localStorage.setItem(ACTIVE_KEY, String(id));
+  } catch (_) {}
 }
 export function forgetActiveBuilder() {
-  try { localStorage.removeItem(ACTIVE_KEY); } catch (_) {}
+  try {
+    localStorage.removeItem(ACTIVE_KEY);
+  } catch (_) {}
 }
 
 /** Reopen the project that was open in the builder before a refresh. */
 export async function resumeActiveBuilder(opts = {}) {
   const stillCurrent = typeof opts.stillCurrent === "function" ? opts.stillCurrent : () => true;
   let id = "";
-  try { id = localStorage.getItem(ACTIVE_KEY) || ""; } catch (_) { return false; }
+  try {
+    id = localStorage.getItem(ACTIVE_KEY) || "";
+  } catch (_) {
+    return false;
+  }
   if (!id || !stillCurrent()) return false;
   try {
     return await continueDesignVideo(id, { stillCurrent });
@@ -5806,7 +7661,9 @@ export async function resumeActiveBuilder(opts = {}) {
 export async function continueDesignVideo(id, opts = {}) {
   const stillCurrent = typeof opts.stillCurrent === "function" ? opts.stillCurrent : () => true;
   if (!stillCurrent()) return false;
-  try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+  try {
+    window.__rdAllowReveal && window.__rdAllowReveal();
+  } catch (_) {}
   goTo("reveal");
   /* From here the builder's own navigation is the newest intent: anything
      that bumps the token after this point is the user going elsewhere. */
@@ -5820,20 +7677,32 @@ export async function continueDesignVideo(id, opts = {}) {
   return true;
 }
 
-
 /* ======================= INTRO ======================= */
 let dvActive = false; // set while a contextual builder is being seeded
 function closeIntroNow() {
   const w = document.getElementById("rvIntroWrap");
   if (w && w.parentNode) w.parentNode.removeChild(w);
-  try { localStorage.setItem("rd_reveal_intro", "1"); } catch (_) {}
+  try {
+    localStorage.setItem("rd_reveal_intro", "1");
+  } catch (_) {}
 }
 
 function maybeIntro() {
-  if (dvActive) { closeIntroNow(); return; }
-  try { if (localStorage.getItem("rd_reveal_intro") === "1") return; } catch (_) { return; }
+  if (dvActive) {
+    closeIntroNow();
+    return;
+  }
+  try {
+    if (localStorage.getItem("rd_reveal_intro") === "1") return;
+  } catch (_) {
+    return;
+  }
   let wrap = document.getElementById("rvIntroWrap");
-  if (!wrap) { wrap = document.createElement("div"); wrap.id = "rvIntroWrap"; (document.querySelector(".rd-app") || document.body).appendChild(wrap); }
+  if (!wrap) {
+    wrap = document.createElement("div");
+    wrap.id = "rvIntroWrap";
+    (document.querySelector(".rd-app") || document.body).appendChild(wrap);
+  }
   wrap.className = "rv-modal on";
   wrap.innerHTML = `<div class="rv-modal-in sm" role="dialog" aria-label="Welcome To Property Videos">
     <div class="rv-modal-h"><b>Create Your First Property Video</b></div>
@@ -5843,17 +7712,42 @@ function maybeIntro() {
     <div class="rv-modal-f"><button class="btn btn-ghost" id="rvIntroNo">Not Now</button><button class="btn btn-ghost" id="rvIntroTour">Watch Quick Tour</button><button class="btn btn-primary" id="rvIntroGo">Create Video</button></div>
   </div>`;
   paint();
-  const done = () => { try { localStorage.setItem("rd_reveal_intro", "1"); } catch (_) {} wrap.className = "rv-modal"; wrap.innerHTML = ""; };
+  const done = () => {
+    try {
+      localStorage.setItem("rd_reveal_intro", "1");
+    } catch (_) {}
+    wrap.className = "rv-modal";
+    wrap.innerHTML = "";
+  };
   wrap.querySelector("#rvIntroNo").onclick = done;
   wrap.querySelector("#rvIntroTour").onclick = () => renderTour(wrap, done);
-  wrap.querySelector("#rvIntroGo").onclick = () => { done(); startWizard({}); };
+  wrap.querySelector("#rvIntroGo").onclick = () => {
+    done();
+    startWizard({});
+  };
 }
 
 const TOUR = [
-  { icon: "home", t: "Pick The Property", b: "Start from a property you already uploaded, a saved design, or a listing link. Every photo in that property is ready to drop into the timeline." },
-  { icon: "images", t: "Choose The Scenes", b: "Order the rooms the way a buyer would walk the home. Drag to reorder, drop weak shots, and add before and after pairs where staging tells the story." },
-  { icon: "sliders-horizontal", t: "Set The Look", b: "Choose a format for where it will post, add music or an AI voiceover, and pick transitions. Captions and your branding are applied automatically." },
-  { icon: "share-2", t: "Generate & Share", b: "Rendering runs in the background. When it finishes you can download it, share a client link, or send it straight into a presentation." },
+  {
+    icon: "home",
+    t: "Pick The Property",
+    b: "Start from a property you already uploaded, a saved design, or a listing link. Every photo in that property is ready to drop into the timeline.",
+  },
+  {
+    icon: "images",
+    t: "Choose The Scenes",
+    b: "Order the rooms the way a buyer would walk the home. Drag to reorder, drop weak shots, and add before and after pairs where staging tells the story.",
+  },
+  {
+    icon: "sliders-horizontal",
+    t: "Set The Look",
+    b: "Choose a format for where it will post, add music or an AI voiceover, and pick transitions. Captions and your branding are applied automatically.",
+  },
+  {
+    icon: "share-2",
+    t: "Generate & Share",
+    b: "Rendering runs in the background. When it finishes you can download it, share a client link, or send it straight into a presentation.",
+  },
 ];
 
 function renderTour(wrap, done, i = 0) {
@@ -5875,7 +7769,11 @@ function renderTour(wrap, done, i = 0) {
   const back = wrap.querySelector("#rvTourBack");
   if (back) back.onclick = () => renderTour(wrap, done, i - 1);
   wrap.querySelector("#rvTourNext").onclick = () => {
-    if (i === TOUR.length - 1) { done(); startWizard({}); return; }
+    if (i === TOUR.length - 1) {
+      done();
+      startWizard({});
+      return;
+    }
     renderTour(wrap, done, i + 1);
   };
 }
@@ -5886,8 +7784,12 @@ export function startWizard(seed = {}) {
   const w = newWizard(seed);
   S.wizard = w;
   S.screen = "wizard";
-  sceneClips.onChange = () => { if (S.screen === "wizard") render(); };
-  sceneFrames.onChange = () => { if (S.screen === "wizard") render(); };
+  sceneClips.onChange = () => {
+    if (S.screen === "wizard") render();
+  };
+  sceneFrames.onChange = () => {
+    if (S.screen === "wizard") render();
+  };
   sceneClips.setProject(w.editingId || null);
   logVideoEvent("video_builder_started", {
     seedFileCount: Array.from(seed.files || []).length,
@@ -5895,13 +7797,19 @@ export function startWizard(seed = {}) {
     propertyId: w.propertyId,
     versionId: w.versionId,
     resolvedInitialStep: w.step,
-    entrySource: seed.from || seed.source || (w.uploads.length ? "handoff" : w.propertyId ? "property" : "empty"),
+    entrySource:
+      seed.from ||
+      seed.source ||
+      (w.uploads.length ? "handoff" : w.propertyId ? "property" : "empty"),
   });
 
   if ((w.uploads || []).length) {
     /* Seeded / handoff photos take the same route as a direct upload:
        visible on Scenes before the first paint, enrichment afterwards. */
-    hydrateSeededWizard(w, { attachUploads: attachUploadAssets, selectUploads: selectUploadedScenes });
+    hydrateSeededWizard(w, {
+      attachUploads: attachUploadAssets,
+      selectUploads: selectUploadedScenes,
+    });
     render();
     runEnrichment(w, {
       loadAssets: loadWizardAssets,
@@ -5919,7 +7827,11 @@ export function startWizard(seed = {}) {
   } else {
     render();
   }
-  ensureStepInvariant(w, { attachUploads: attachUploadAssets, selectUploads: selectUploadedScenes, render });
+  ensureStepInvariant(w, {
+    attachUploads: attachUploadAssets,
+    selectUploads: selectUploadedScenes,
+    render,
+  });
   const focusHost = () => {
     try {
       const el = host();
@@ -5932,12 +7844,13 @@ export function startWizard(seed = {}) {
   [0, 200, 600, 1200, 2000].forEach((ms) => setTimeout(focusHost, ms));
 }
 
-
 /** Contextual entry point used from properties, designs and comparisons. */
 export async function createVideoFrom(seed = {}) {
   dvActive = true;
   [0, 300, 900, 1800].forEach((ms) => setTimeout(closeIntroNow, ms));
-  try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+  try {
+    window.__rdAllowReveal && window.__rdAllowReveal();
+  } catch (_) {}
   goTo("reveal");
   /* Build immediately, before the first await, so navigation never exposes
      stale library markup while property and media data are loading. */
@@ -5966,24 +7879,29 @@ export default mountReveal;
 
 /** Open one video's detail screen from another module (Listing Video, Media). */
 export async function openVideoDetail(id, tab = "video") {
-  try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+  try {
+    window.__rdAllowReveal && window.__rdAllowReveal();
+  } catch (_) {}
   goTo("reveal");
   if (!S.mounted) await mountReveal(S.go, {});
   S.detailTab = tab;
   await openDetail(id);
 }
 
-
 /* Repaint only the filtered result list; the toolbar, search input and any
    already-loaded thumbnails stay in the DOM so nothing flashes. */
 function renderList() {
   const el = host();
   if (!el || S.screen !== "library") return;
-  el.querySelectorAll(".rv-chip").forEach((c) => c.classList.toggle("on", c.dataset.f === S.filter));
+  el.querySelectorAll(".rv-chip").forEach((c) =>
+    c.classList.toggle("on", c.dataset.f === S.filter),
+  );
   const list = el.querySelector(".rv-list");
   if (!list) return render();
   list.innerHTML = cardsHtml(libraryRows());
-  try { window.lucide?.createIcons(); } catch (_) {}
+  try {
+    window.lucide?.createIcons();
+  } catch (_) {}
   bindCards(list);
   paintThumbs();
 }
@@ -6005,8 +7923,19 @@ function bindCards(root) {
       });
       return;
     }
-    if (act === "dupe") { await duplicateVideo({ id }); await loadLibrary(); render(); return toast("Video Duplicated."); }
-    if (act === "del") { if (!confirm("Delete this video?")) return; await deleteVideo({ id }); await loadLibrary(); render(); return; }
+    if (act === "dupe") {
+      await duplicateVideo({ id });
+      await loadLibrary();
+      render();
+      return toast("Video Duplicated.");
+    }
+    if (act === "del") {
+      if (!confirm("Delete this video?")) return;
+      await deleteVideo({ id });
+      await loadLibrary();
+      render();
+      return;
+    }
     if (act === "download") {
       const v = S.variants.find((x) => x.video_project_id === id && x.output_path);
       if (!v) return toast("Nothing Rendered Yet.");
@@ -6016,14 +7945,18 @@ function bindCards(root) {
     }
     if (act === "share") {
       const { token, slug } = await saveShareLink({ video_project_id: id });
-      try { await navigator.clipboard.writeText(location.origin + "/v/" + (slug || token)); } catch (_) {}
+      try {
+        await navigator.clipboard.writeText(location.origin + "/v/" + (slug || token));
+      } catch (_) {}
       await loadLibrary();
       S.detailTab = "presentation";
       await openDetail(id);
       return toast("Presentation Link Copied.");
     }
   });
-  on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) => openDetail(e.currentTarget.closest(".rv-card").dataset.id));
+  on(".rv-card .rv-thumb, .rv-card .rv-meta", "click", (e) =>
+    openDetail(e.currentTarget.closest(".rv-card").dataset.id),
+  );
 }
 
 /* Leaving the video workspace must not leave anything mounted in its view.
@@ -6037,13 +7970,18 @@ function bindCards(root) {
 export function revealBusy() {
   return !!(S.wizard || S.detail || S.detailId);
 }
-try { (window as any).__rdRevealBusy = revealBusy; } catch (_) {}
+try {
+  (window as any).__rdRevealBusy = revealBusy;
+} catch (_) {}
 
 /* The global Studio navigation saves and exits instead of abandoning the
    builder session. */
 try {
   (window as any).__rdBuilderSaveExit = ((prev) => () => {
-    if (S.wizard) { void exitBuilder(S.wizard); return true; }
+    if (S.wizard) {
+      void exitBuilder(S.wizard);
+      return true;
+    }
     return typeof prev === "function" ? !!prev() : false;
   })((window as any).__rdBuilderSaveExit);
 } catch (_) {}
@@ -6056,5 +7994,8 @@ export function resetReveal() {
   S.detail = null;
   S.detailId = null;
   const el = host();
-  if (el) { el.innerHTML = ""; S.mounted = false; }
+  if (el) {
+    el.innerHTML = "";
+    S.mounted = false;
+  }
 }

@@ -13,14 +13,25 @@ import { openStagingReview } from "@/content/rd-staging";
 import { openVideoWorkflow } from "@/content/rd-media-lib";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const paint = () => {
   try {
     createIcons({ icons });
   } catch (_) {}
 };
 
-const P = { propertyId: null, label: "", tab: "overview", items: [], packages: [], loading: true, off: null };
+const P = {
+  propertyId: null,
+  label: "",
+  tab: "overview",
+  items: [],
+  packages: [],
+  loading: true,
+  off: null,
+};
 
 const TABS = [
   ["overview", "Overview", "layout-dashboard"],
@@ -94,7 +105,13 @@ function render() {
   /* Presentations are saved work too: the headline total and the Overview
      badge count them, so the tabs never contradict the header. */
   const total = b.all.length + pk.length;
-  const count = { overview: total, photos: b.photos.length, designs: b.designs.length, videos: b.videos.length, presentations: pk.length };
+  const count = {
+    overview: total,
+    photos: b.photos.length,
+    designs: b.designs.length,
+    videos: b.videos.length,
+    presentations: pk.length,
+  };
 
   el.innerHTML = `<div class="card-h">
       <div><h3>${esc(P.label || "This Property")}</h3>
@@ -143,11 +160,15 @@ function startBuild(target, b) {
     })),
   });
   if (!h) {
-    try { window.__rdGo && window.__rdGo("media"); } catch (_) {}
+    try {
+      window.__rdGo && window.__rdGo("media");
+    } catch (_) {}
     return;
   }
   if (target === "video") {
-    try { window.__rdAllowReveal && window.__rdAllowReveal(); } catch (_) {}
+    try {
+      window.__rdAllowReveal && window.__rdAllowReveal();
+    } catch (_) {}
     openVideoWorkflow({
       from: "property",
       propertyId: h.propertyId,
@@ -168,7 +189,9 @@ function startBuild(target, b) {
     address: h.propertyAddress || "",
     propertyId: h.propertyId,
   });
-  try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
+  try {
+    window.__rdGo && window.__rdGo("studio");
+  } catch (_) {}
 }
 
 function body(b, pk) {
@@ -177,14 +200,38 @@ function body(b, pk) {
   if (P.tab === "presentations")
     return pk.length
       ? `<div class="pd-list">${pk.map(pkgRow).join("")}</div>`
-      : empty("presentation", "No Presentations Yet", "Package this property's designs and videos into a client-ready link.", "present", "Open Presentations");
+      : empty(
+          "presentation",
+          "No Presentations Yet",
+          "Package this property's designs and videos into a client-ready link.",
+          "present",
+          "Open Presentations",
+        );
   const list = P.tab === "photos" ? b.photos : P.tab === "designs" ? b.designs : b.videos;
   if (!list.length) {
     if (P.tab === "photos")
-      return empty("image", "No Photos Yet", "Upload the property shoot and every photo lands here.", "media", "Open Media");
+      return empty(
+        "image",
+        "No Photos Yet",
+        "Upload the property shoot and every photo lands here.",
+        "media",
+        "Open Media",
+      );
     if (P.tab === "designs")
-      return empty("wand-2", "No Designs Yet", "Redesign a room from this property and it appears here.", "studio", "Open Studio");
-    return empty("clapperboard", "No Videos Yet", "Turn this property's photos into a listing video.", "reveal", "Create A Video");
+      return empty(
+        "wand-2",
+        "No Designs Yet",
+        "Redesign a room from this property and it appears here.",
+        "studio",
+        "Open Studio",
+      );
+    return empty(
+      "clapperboard",
+      "No Videos Yet",
+      "Turn this property's photos into a listing video.",
+      "reveal",
+      "Create A Video",
+    );
   }
   const bar =
     P.tab === "photos"
@@ -211,9 +258,14 @@ function overview(b, pk) {
           ? /* Media is empty but presentations exist — show them instead of
                telling the user nothing is saved here. */
             `<div class="pd-sub">Recent Work</div><div class="pd-list">${pk.slice(0, 6).map(pkgRow).join("")}</div>`
-          : empty("images", "Nothing Saved Here Yet", "Photos, designs, videos and presentations for this address will collect here.", "media", "Open Media")
+          : empty(
+              "images",
+              "Nothing Saved Here Yet",
+              "Photos, designs, videos and presentations for this address will collect here.",
+              "media",
+              "Open Media",
+            )
     }`;
-
 }
 
 function tile(m) {

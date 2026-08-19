@@ -11,8 +11,9 @@
 // @ts-nocheck
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]),
+  String(s == null ? "" : s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   );
 
 const optLabel = (o) => (o.note ? `${o.label} ${o.note}` : o.label);
@@ -36,13 +37,18 @@ export function formatSelectorHtml(opts = {}) {
      header still shows only the primary buttons; a value picked from the extra
      list is shown as a compact custom chip instead of a fourth button. */
   const more = opts.more || null; // { label, value: "__more" } | null
-  const custom = more && value && !options.some((o) => o.id === value) ? opts.customLabel || String(value) : "";
-  const current = options.find((o) => o.id === value) || (custom ? { id: "", label: "" } : options[0] || { id: "", label: "" });
+  const custom =
+    more && value && !options.some((o) => o.id === value) ? opts.customLabel || String(value) : "";
+  const current =
+    options.find((o) => o.id === value) ||
+    (custom ? { id: "", label: "" } : options[0] || { id: "", label: "" });
   return `<div class="rv-orient bx-fmtsel">
     <span id="${esc(base)}-lbl">${esc(label)}</span>
     <div class="rv-seg bx-fmtseg" role="group" aria-labelledby="${esc(base)}-lbl">${options
       .map(
-        (o) => `<button type="button" class="${o.id === current.id ? "on" : ""}" data-${esc(attr)}="${esc(o.id)}"
+        (
+          o,
+        ) => `<button type="button" class="${o.id === current.id ? "on" : ""}" data-${esc(attr)}="${esc(o.id)}"
         aria-pressed="${o.id === current.id ? "true" : "false"}">${esc(optLabel(o))}</button>`,
       )
       .join("")}</div>
@@ -55,8 +61,8 @@ export function formatSelectorHtml(opts = {}) {
             `<option value="${esc(o.id)}"${o.id === current.id ? " selected" : ""}>${esc(optLabel(o))}</option>`,
         )
         .join("")}${
-          custom ? `<option value="${esc(value)}" selected>${esc(custom)}</option>` : ""
-        }${more ? `<option value="__more">${esc(more.label || "More Ratios")}</option>` : ""}</select>
+        custom ? `<option value="${esc(value)}" selected>${esc(custom)}</option>` : ""
+      }${more ? `<option value="__more">${esc(more.label || "More Ratios")}</option>` : ""}</select>
     </label>
   </div>`;
 }

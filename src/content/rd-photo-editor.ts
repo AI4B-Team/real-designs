@@ -17,10 +17,19 @@ import {
 import { runPhotoEdit, interpretPhotoRequest, analyzePhoto } from "@/lib/photo-edit.functions";
 import { track } from "@/lib/analytics";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
-import { VFX_LOOKS, lookById, applyLookAdjust, lookOverlayHTML, bakeLook } from "@/lib/rd-vfx-looks";
+import {
+  VFX_LOOKS,
+  lookById,
+  applyLookAdjust,
+  lookOverlayHTML,
+  bakeLook,
+} from "@/lib/rd-vfx-looks";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 
 const paint = () => {
   try {
@@ -106,11 +115,29 @@ const DISCLOSURES = [
 
 const PRESETS = {
   mls: { label: "MLS Package", w: 2048, type: "image/jpeg", q: 0.86, disclosure: true },
-  portal: { label: "Listing Portal Package", w: 1920, type: "image/jpeg", q: 0.85, disclosure: true },
+  portal: {
+    label: "Listing Portal Package",
+    w: 1920,
+    type: "image/jpeg",
+    q: 0.85,
+    disclosure: true,
+  },
   social: { label: "Social Media Package", w: 1080, type: "image/jpeg", q: 0.85, disclosure: true },
   print: { label: "Print Package", w: 3000, type: "image/jpeg", q: 0.95, disclosure: true },
-  client: { label: "Client Review Package", w: 1600, type: "image/jpeg", q: 0.85, disclosure: true },
-  contractor: { label: "Contractor Presentation", w: 1600, type: "image/jpeg", q: 0.85, disclosure: true },
+  client: {
+    label: "Client Review Package",
+    w: 1600,
+    type: "image/jpeg",
+    q: 0.85,
+    disclosure: true,
+  },
+  contractor: {
+    label: "Contractor Presentation",
+    w: 1600,
+    type: "image/jpeg",
+    q: 0.85,
+    disclosure: true,
+  },
   original: { label: "Original Resolution", w: 0, type: "image/jpeg", q: 0.95, disclosure: true },
   custom: { label: "Custom Export", w: 2048, type: "image/jpeg", q: 0.9, disclosure: true },
 };
@@ -189,7 +216,7 @@ async function renderToDataUrl(src, adj, geo, maxW, look, lookAmount) {
   ctx.filter = filterCSS(adj);
   const zoom = 1 + geo.crop / 100 + Math.abs(geo.lens) / 300;
   ctx.translate(w / 2, h / 2);
-  ctx.rotate((((geo.rotate + geo.straighten) * Math.PI) / 180));
+  ctx.rotate(((geo.rotate + geo.straighten) * Math.PI) / 180);
   ctx.scale(zoom, zoom);
   ctx.drawImage(img, -w / 2, -h / 2, w, h);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -207,7 +234,10 @@ export async function openPhotoEditor(ctx) {
   wrap.classList.add("on");
   document.body.style.overflow = "hidden";
   let assets = ctx.assets.slice();
-  let idx = Math.max(0, assets.findIndex((a) => a.id === ctx.assetId));
+  let idx = Math.max(
+    0,
+    assets.findIndex((a) => a.id === ctx.assetId),
+  );
   if (idx < 0) idx = 0;
   let tab = "analyze";
   let compare = "current";
@@ -274,7 +304,9 @@ export async function openPhotoEditor(ctx) {
     wrap.querySelectorAll("#pmeCompare button").forEach((b) => {
       b.onclick = () => {
         compare = b.dataset.c;
-        wrap.querySelectorAll("#pmeCompare button").forEach((x) => x.classList.toggle("on", x === b));
+        wrap
+          .querySelectorAll("#pmeCompare button")
+          .forEach((x) => x.classList.toggle("on", x === b));
         renderStage();
       };
     });
@@ -284,7 +316,9 @@ export async function openPhotoEditor(ctx) {
       if (el) el.style.opacity = v ? "0" : "1";
     };
     ["mousedown", "touchstart"].forEach((e) => hold.addEventListener(e, () => show(true)));
-    ["mouseup", "mouseleave", "touchend"].forEach((e) => hold.addEventListener(e, () => show(false)));
+    ["mouseup", "mouseleave", "touchend"].forEach((e) =>
+      hold.addEventListener(e, () => show(false)),
+    );
     hold.addEventListener("keydown", (e) => {
       if (e.key === " " || e.key === "Enter") {
         e.preventDefault();
@@ -328,7 +362,8 @@ export async function openPhotoEditor(ctx) {
     const a = asset();
     versions = (ctx.versions || []).filter((v) => v.asset_id === a.id && !v.archived);
     originalUrl = (await roomPhotoUrl(a.storage_path)) || "";
-    const approved = versions.find((v) => v.id === a.approved_version_id) || versions[versions.length - 1];
+    const approved =
+      versions.find((v) => v.id === a.approved_version_id) || versions[versions.length - 1];
     activeVersionId = approved ? approved.id : null;
     baseUrl = approved ? (await roomPhotoUrl(approved.storage_path)) || originalUrl : originalUrl;
     wrap.querySelector("#pmeRoom").textContent = a.room_group;
@@ -377,11 +412,12 @@ export async function openPhotoEditor(ctx) {
     s.innerHTML = assets
       .map((a, i) => {
         const an = analysis[a.id];
-        const badge = an && an.data
-          ? `<span class="pme-th-badge ${an.data.issues.length ? "warn" : "ok"}">${an.data.issues.length ? an.data.issues.length + " Fix" + (an.data.issues.length === 1 ? "" : "es") : "Clean"}</span>`
-          : an && an.loading
-            ? `<span class="pme-th-badge">Analyzing</span>`
-            : "";
+        const badge =
+          an && an.data
+            ? `<span class="pme-th-badge ${an.data.issues.length ? "warn" : "ok"}">${an.data.issues.length ? an.data.issues.length + " Fix" + (an.data.issues.length === 1 ? "" : "es") : "Clean"}</span>`
+            : an && an.loading
+              ? `<span class="pme-th-badge">Analyzing</span>`
+              : "";
         return `<div class="pme-thumb-wrap${picked.has(a.id) ? " picked" : ""}">
           <button class="pme-thumb${i === idx ? " on" : ""}" data-i="${i}" role="listitem" aria-current="${i === idx}" title="${esc(a.room_group)}"><span class="pme-th-img" data-p="${esc(a.storage_path)}"></span>${badge}<em>${esc(a.room_group)}</em></button>
           <label class="pme-th-pick" title="Select For Batch Edit"><input type="checkbox" data-pick="${esc(a.id)}" ${picked.has(a.id) ? "checked" : ""} aria-label="Select ${esc(a.room_group)} for batch edit"></label>
@@ -412,7 +448,6 @@ export async function openPhotoEditor(ctx) {
     const list = assets.filter((a) => picked.has(a.id));
     return list.length ? list : [asset()];
   }
-
 
   function sliders(list, store) {
     return list
@@ -474,7 +509,8 @@ export async function openPhotoEditor(ctx) {
         <p class="pme-note">Each AI edit uses 1 credit and is saved as a new version. ${tab === "design" ? "Design outputs are labeled as modified and cannot be exported as unmodified originals." : ""}</p>`;
       paint();
       p.querySelectorAll(".pme-op").forEach((b) => {
-        b.onclick = () => confirmSteps([{ family: tab, op: b.dataset.op, label: b.textContent }], null);
+        b.onclick = () =>
+          confirmSteps([{ family: tab, op: b.dataset.op, label: b.textContent }], null);
       });
       p.querySelectorAll(".pme-chip").forEach((b) => {
         b.onclick = () => {
@@ -548,7 +584,14 @@ export async function openPhotoEditor(ctx) {
         toast(`Applying ${look.label} — ${done + failed + 1} Of ${list.length}`);
         const url = a.id === asset().id ? baseUrl : await urlForAsset(a);
         if (!url) throw new Error("Photo unavailable.");
-        const dataUrl = await renderToDataUrl(url, blankAdjust(), blankGeometry(), 2600, look, lookAmount);
+        const dataUrl = await renderToDataUrl(
+          url,
+          blankAdjust(),
+          blankGeometry(),
+          2600,
+          look,
+          lookAmount,
+        );
         const path = await uploadRenderDataUrl(dataUrl);
         const row = await addMediaVersion({
           data: {
@@ -577,7 +620,9 @@ export async function openPhotoEditor(ctx) {
     renderStage();
     renderPane();
     track("vfx_look_batch", { look: look.id, done, failed });
-    toast(`${look.label} Applied To ${done} Photo${done === 1 ? "" : "s"}${failed ? `, ${failed} Failed` : ""}.`);
+    toast(
+      `${look.label} Applied To ${done} Photo${done === 1 ? "" : "s"}${failed ? `, ${failed} Failed` : ""}.`,
+    );
   }
 
   /* ---------------- Analyze ---------------- */
@@ -628,9 +673,10 @@ export async function openPhotoEditor(ctx) {
     } else if (state && state.error) {
       const gatedA = isPlanBlocked(state.error);
       body = `<div class="pme-review err"><b>${gatedA ? "Upgrade To Run This Review" : "Analysis Failed"}</b><span>${esc(state.error)}</span>${
-        gatedA ? `<div class="pme-review-a"><button class="btn btn-primary btn-xs" id="pmeAnUpg">Upgrade</button></div>` : ""
+        gatedA
+          ? `<div class="pme-review-a"><button class="btn btn-primary btn-xs" id="pmeAnUpg">Upgrade</button></div>`
+          : ""
       }</div>`;
-
     } else if (state && state.data) {
       const d = state.data;
       body = `<div class="pme-score"><b>${d.quality}</b><span>Listing Readiness</span><i style="width:${d.quality}%"></i></div>
@@ -664,8 +710,7 @@ export async function openPhotoEditor(ctx) {
     paint();
     p.querySelector("#pmeRun").onclick = () => runAnalysis(asset());
     const anUpg = p.querySelector("#pmeAnUpg");
-    if (anUpg)
-      anUpg.onclick = () => openUpgrade(String(analysis[asset().id]?.error || ""));
+    if (anUpg) anUpg.onclick = () => openUpgrade(String(analysis[asset().id]?.error || ""));
 
     const runAll = p.querySelector("#pmeRunAll");
     if (runAll)
@@ -690,8 +735,6 @@ export async function openPhotoEditor(ctx) {
         );
       };
   }
-
-
 
   async function interpret() {
     const t = wrap.querySelector("#pmeAsk");
@@ -821,8 +864,8 @@ export async function openPhotoEditor(ctx) {
       const gated = isPlanBlocked(msg);
       box.innerHTML = `<div class="pme-review err"><b>${gated ? "Upgrade To Apply This Edit" : "Edit Failed"}</b><span>${esc(msg)}</span><div class="pme-review-a"><button class="btn btn-${gated ? "primary" : "ghost"} btn-xs" id="pmeRetry">${gated ? "Upgrade" : "Retry"}</button></div></div>`;
       const r = box.querySelector("#pmeRetry");
-      r && (r.onclick = () => (gated ? openUpgrade(msg, "Upgrade To Apply This Edit") : applySteps()));
-
+      r &&
+        (r.onclick = () => (gated ? openUpgrade(msg, "Upgrade To Apply This Edit") : applySteps()));
     } finally {
       busy = false;
       pending = null;
@@ -841,19 +884,30 @@ export async function openPhotoEditor(ctx) {
   function renderHistory(p) {
     const a = asset();
     const rows = [
-      { id: null, label: "Original Upload", modification_class: "Unmodified Original", created_at: a.created_at },
+      {
+        id: null,
+        label: "Original Upload",
+        modification_class: "Unmodified Original",
+        created_at: a.created_at,
+      },
       ...versions,
     ];
     p.innerHTML = `<div class="pme-hist">${rows
       .map(
-        (v) => `<div class="pme-hrow${(activeVersionId || null) === v.id ? " on" : ""}" data-v="${v.id || ""}">
+        (
+          v,
+        ) => `<div class="pme-hrow${(activeVersionId || null) === v.id ? " on" : ""}" data-v="${v.id || ""}">
         <div class="pme-hmain"><b>${esc(v.label)}</b><span>${esc(v.modification_class)}${v.id === a.approved_version_id ? " · Approved" : ""}</span></div>
         <div class="pme-hact">
           <button class="icon-btn" data-a="view" title="View This Version" aria-label="View ${esc(v.label)}"><i data-lucide="eye"></i></button>
-          ${v.id ? `<button class="icon-btn" data-a="approve" title="Approve" aria-label="Approve ${esc(v.label)}"><i data-lucide="check"></i></button>
+          ${
+            v.id
+              ? `<button class="icon-btn" data-a="approve" title="Approve" aria-label="Approve ${esc(v.label)}"><i data-lucide="check"></i></button>
           <button class="icon-btn" data-a="rename" title="Rename" aria-label="Rename ${esc(v.label)}"><i data-lucide="pencil"></i></button>
           <button class="icon-btn" data-a="archive" title="Archive" aria-label="Archive ${esc(v.label)}"><i data-lucide="archive"></i></button>
-          <button class="icon-btn" data-a="delete" title="Delete" aria-label="Delete ${esc(v.label)}"><i data-lucide="trash-2"></i></button>` : ""}
+          <button class="icon-btn" data-a="delete" title="Delete" aria-label="Delete ${esc(v.label)}"><i data-lucide="trash-2"></i></button>`
+              : ""
+          }
         </div>
       </div>`,
       )
@@ -928,7 +982,11 @@ export async function openPhotoEditor(ctx) {
           kind: "enhanced",
           modification_class: "Enhanced",
           storage_path: path,
-          ops: { adjust: adj, geometry: geo, look: look ? { id: look.id, amount: lookAmount } : null },
+          ops: {
+            adjust: adj,
+            geometry: geo,
+            look: look ? { id: look.id, amount: lookAmount } : null,
+          },
           approve: false,
         },
       });
@@ -975,7 +1033,9 @@ export async function openExportDialog(ctx) {
   wrap.classList.add("on");
   document.body.style.overflow = "hidden";
   const assets = ctx.assets.filter((a) => !a.hidden);
-  let selected = new Set(ctx.selected && ctx.selected.length ? ctx.selected : assets.map((a) => a.id));
+  let selected = new Set(
+    ctx.selected && ctx.selected.length ? ctx.selected : assets.map((a) => a.id),
+  );
   let preset = "mls";
   let running = false;
 
@@ -987,7 +1047,14 @@ export async function openExportDialog(ctx) {
     opacity: 55,
     padding: 28,
   };
-  const disc = { on: true, preset: "Auto By Modification Type", text: "", position: "bottom-left", size: 22, contrast: "dark" };
+  const disc = {
+    on: true,
+    preset: "Auto By Modification Type",
+    text: "",
+    position: "bottom-left",
+    size: 22,
+    contrast: "dark",
+  };
 
   function render() {
     const p = PRESETS[preset];
@@ -1000,7 +1067,10 @@ export async function openExportDialog(ctx) {
         <div class="pmx-col">
           <div class="pmx-lab">Preset</div>
           <div class="pmx-presets">${Object.entries(PRESETS)
-            .map(([k, v]) => `<button class="pmx-p${k === preset ? " on" : ""}" data-p="${k}">${esc(v.label)}</button>`)
+            .map(
+              ([k, v]) =>
+                `<button class="pmx-p${k === preset ? " on" : ""}" data-p="${k}">${esc(v.label)}</button>`,
+            )
             .join("")}</div>
           <div class="pmx-lab">Included Photos</div>
           <div class="pmx-chips">
@@ -1012,7 +1082,13 @@ export async function openExportDialog(ctx) {
           <label class="pmx-row"><input type="checkbox" id="wmOn" ${wm.on ? "checked" : ""}> Apply Brand Watermark</label>
           <input class="pmx-in" id="wmText" value="${esc(wm.text)}" aria-label="Watermark text" placeholder="Brokerage, agent or photographer">
           <div class="pmx-grid">
-            <label>Position<select id="wmPos">${["bottom-right", "bottom-left", "top-right", "top-left", "center"]
+            <label>Position<select id="wmPos">${[
+              "bottom-right",
+              "bottom-left",
+              "top-right",
+              "top-left",
+              "center",
+            ]
               .map((v) => `<option ${v === wm.position ? "selected" : ""}>${v}</option>`)
               .join("")}</select></label>
             <label>Size<input type="range" id="wmSize" min="12" max="60" value="${wm.size}"></label>
@@ -1028,7 +1104,12 @@ export async function openExportDialog(ctx) {
           ).join("")}</select></label>
           <input class="pmx-in" id="dcText" value="${esc(disc.text)}" placeholder="Custom disclosure text" aria-label="Custom disclosure text">
           <div class="pmx-grid">
-            <label>Position<select id="dcPos">${["bottom-left", "bottom-right", "top-left", "top-right"]
+            <label>Position<select id="dcPos">${[
+              "bottom-left",
+              "bottom-right",
+              "top-left",
+              "top-right",
+            ]
               .map((v) => `<option ${v === disc.position ? "selected" : ""}>${v}</option>`)
               .join("")}</select></label>
             <label>Size<input type="range" id="dcSize" min="12" max="48" value="${disc.size}"></label>
@@ -1055,13 +1136,17 @@ export async function openExportDialog(ctx) {
     paint();
     wrap.querySelector("#pmxClose").onclick = close;
     wrap.querySelector("#pmxCancel").onclick = close;
-    wrap.querySelectorAll(".pmx-p").forEach((b) => (b.onclick = () => ((preset = b.dataset.p), render())));
+    wrap
+      .querySelectorAll(".pmx-p")
+      .forEach((b) => (b.onclick = () => ((preset = b.dataset.p), render())));
     wrap.querySelectorAll(".pmx-chip").forEach((b) => {
       b.onclick = () => {
         const k = b.dataset.sel;
         selected = new Set(
           assets
-            .filter((a) => (k === "all" ? true : k === "rec" ? a.recommended : Boolean(a.approved_version_id)))
+            .filter((a) =>
+              k === "all" ? true : k === "rec" ? a.recommended : Boolean(a.approved_version_id),
+            )
             .map((a) => a.id),
         );
         render();
@@ -1137,7 +1222,8 @@ export async function openExportDialog(ctx) {
   }
 
   function discFor(a, versions) {
-    if (disc.preset !== "Auto By Modification Type") return disc.preset === "Custom Disclosure" ? disc.text || "Custom Disclosure" : disc.preset;
+    if (disc.preset !== "Auto By Modification Type")
+      return disc.preset === "Custom Disclosure" ? disc.text || "Custom Disclosure" : disc.preset;
     const v = versions.find((x) => x.id === a.approved_version_id);
     const cls = v ? v.modification_class : a.modification_class;
     if (!cls || cls === "Unmodified Original") return "";
@@ -1179,7 +1265,14 @@ export async function openExportDialog(ctx) {
         cx.drawImage(img, 0, 0, w, h);
         if (wm.on && wm.text) stamp(cx, wm.text, { ...wm }, w, h);
         const label = disc.on ? discFor(a, ctx.versions) : "";
-        if (label) stamp(cx, label, { position: disc.position, size: disc.size, padding: 28, plate: disc.contrast }, w, h);
+        if (label)
+          stamp(
+            cx,
+            label,
+            { position: disc.position, size: disc.size, padding: 28, plate: disc.contrast },
+            w,
+            h,
+          );
         const blob = await new Promise((res) => c.toBlob(res, p.type, p.q));
         const room = safe(a.room_group);
         counters[room] = (counters[room] || 0) + 1;

@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/home-staging-cost",
   tier: "B",
-  intent: "Seller or agent wants to know what home staging costs and whether virtual staging is a credible substitute for physical staging.",
+  intent:
+    "Seller or agent wants to know what home staging costs and whether virtual staging is a credible substitute for physical staging.",
 
   metaTitle: "Home Staging Cost Vs Virtual Staging",
-  metaDescription: "See real home staging cost ranges by room and compare them against virtual staging pricing, so you know which option fits your listing budget.",
+  metaDescription:
+    "See real home staging cost ranges by room and compare them against virtual staging pricing, so you know which option fits your listing budget.",
 
   eyebrow: "Home Staging Cost",
   h1: "Home Staging Cost Vs Virtual Staging",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same room staged digitally with furniture and decor sized to the actual space.",
 
   steps: [
-    { title: "Upload Your Listing Photo", text: "The vacant or cluttered room photo becomes the base for a staged version sized to the real dimensions of the space." },
-    { title: "Choose A Staging Style", text: "Pick a style that matches your buyer pool, coastal, farmhouse, modern neutral, so the staged photo reads as move in ready rather than generic." },
-    { title: "Export MLS Ready Photos", text: "Download staged images with any required virtual staging disclosure language so the listing stays compliant in your market." },
+    {
+      title: "Upload Your Listing Photo",
+      text: "The vacant or cluttered room photo becomes the base for a staged version sized to the real dimensions of the space.",
+    },
+    {
+      title: "Choose A Staging Style",
+      text: "Pick a style that matches your buyer pool, coastal, farmhouse, modern neutral, so the staged photo reads as move in ready rather than generic.",
+    },
+    {
+      title: "Export MLS Ready Photos",
+      text: "Download staged images with any required virtual staging disclosure language so the listing stays compliant in your market.",
+    },
   ],
 
   showcase: ["staging", "declutter", "reality-lock", "scope"],
-
 
   sections: [
     {
@@ -72,12 +82,30 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "How much does home staging cost for an average house?", a: "Physical staging for a typical three bedroom home plans in the $2,500 to $6,000 range for the first two to three months, plus additional monthly fees if the listing sits longer. Virtual staging for the same number of rooms typically runs $300 to $1,500 total." },
-    { q: "Is virtual staging cheaper than physical staging?", a: "Yes, virtual staging is almost always cheaper, often by a factor of three to five times, because it is priced per photo rather than as a monthly furniture rental with delivery and pickup logistics." },
-    { q: "Do I have to disclose virtual staging on the MLS?", a: "Most MLS systems and state regulators require a disclosure, typically a watermark on the photo or a note in the listing remarks, stating the image has been virtually staged. Requirements vary by market, so check your local MLS rules." },
-    { q: "Does virtual staging help homes sell faster?", a: "Furnished listing photos, whether staged physically or virtually, tend to generate more online engagement than empty room photos. Virtual staging captures most of that photo benefit without the physical staging cost." },
-    { q: "When should I pay for physical staging instead of virtual?", a: "Physical staging tends to be worth the added cost on higher price point listings or homes with layouts that are hard to read from photos alone, where in person showings carry more weight in the sale." },
-    { q: "How long does home staging typically last on a listing?", a: "Physical staging is usually rented in one to three month blocks with extension fees if the home does not sell in that window. Virtual staging has no time based cost, the images are simply reused for as long as the listing is active." },
+    {
+      q: "How much does home staging cost for an average house?",
+      a: "Physical staging for a typical three bedroom home plans in the $2,500 to $6,000 range for the first two to three months, plus additional monthly fees if the listing sits longer. Virtual staging for the same number of rooms typically runs $300 to $1,500 total.",
+    },
+    {
+      q: "Is virtual staging cheaper than physical staging?",
+      a: "Yes, virtual staging is almost always cheaper, often by a factor of three to five times, because it is priced per photo rather than as a monthly furniture rental with delivery and pickup logistics.",
+    },
+    {
+      q: "Do I have to disclose virtual staging on the MLS?",
+      a: "Most MLS systems and state regulators require a disclosure, typically a watermark on the photo or a note in the listing remarks, stating the image has been virtually staged. Requirements vary by market, so check your local MLS rules.",
+    },
+    {
+      q: "Does virtual staging help homes sell faster?",
+      a: "Furnished listing photos, whether staged physically or virtually, tend to generate more online engagement than empty room photos. Virtual staging captures most of that photo benefit without the physical staging cost.",
+    },
+    {
+      q: "When should I pay for physical staging instead of virtual?",
+      a: "Physical staging tends to be worth the added cost on higher price point listings or homes with layouts that are hard to read from photos alone, where in person showings carry more weight in the sale.",
+    },
+    {
+      q: "How long does home staging typically last on a listing?",
+      a: "Physical staging is usually rented in one to three month blocks with extension fees if the home does not sell in that window. Virtual staging has no time based cost, the images are simply reused for as long as the listing is active.",
+    },
   ],
 
   relatedSlugs: [
@@ -90,6 +118,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Compare Staging Options For Your Listing",
-  ctaBody: "Upload your vacant room photo and see a virtually staged version before you commit to a monthly furniture rental.",
+  ctaBody:
+    "Upload your vacant room photo and see a virtually staged version before you commit to a monthly furniture rental.",
   ctaLabel: "Stage This Room",
 };

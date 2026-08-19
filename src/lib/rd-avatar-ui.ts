@@ -14,7 +14,10 @@ import {
 import { playAvatarVoice, speakingAvatar, stopAvatarVoice } from "@/lib/rd-avatar-voice";
 
 const esc = (s: unknown) =>
-  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+  String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+  );
 
 export { blankAvatarConfig } from "@/lib/rd-avatars";
 
@@ -31,7 +34,9 @@ export function avatarSection(cfg: AvatarConfig, title?: string | null): string 
       : `<div class="av-wrap">
     <div class="av-grid">${list
       .map(
-        (a) => `<button type="button" class="av-card${a.id === cfg.avatarId ? " on" : ""}" data-av="${esc(a.id)}" title="${esc(a.name)}">
+        (
+          a,
+        ) => `<button type="button" class="av-card${a.id === cfg.avatarId ? " on" : ""}" data-av="${esc(a.id)}" title="${esc(a.name)}">
         <span class="av-img" style="background-image:url('${esc(a.url)}')"></span>
         <b>${esc(a.name)}</b><em>${esc(a.blurb)}</em>
         <span class="av-play" role="button" tabindex="0" data-avplay="${esc(a.id)}" title="Hear ${esc(a.name)}'s Voice" aria-label="Hear ${esc(a.name)}'s Voice"><i data-lucide="volume-2"></i>Hear Voice</span>
@@ -46,7 +51,8 @@ export function avatarSection(cfg: AvatarConfig, title?: string | null): string 
     </div>
     <div class="rv-sub sm">Presenter Placement</div>
     <div class="rv-seg av-seg">${AVATAR_MODES.map(
-      (m) => `<button type="button" class="${cfg.mode === m.id ? "on" : ""}" data-avmode="${m.id}">${m.label}</button>`,
+      (m) =>
+        `<button type="button" class="${cfg.mode === m.id ? "on" : ""}" data-avmode="${m.id}">${m.label}</button>`,
     ).join("")}</div>
     <div class="rv-note sm">${esc(AVATAR_MODES.find((m) => m.id === cfg.mode)?.blurb || "")}</div>
     ${
@@ -57,7 +63,10 @@ export function avatarSection(cfg: AvatarConfig, title?: string | null): string 
             ["top_right", "Top Right"],
             ["top_left", "Top Left"],
           ]
-            .map(([id, n]) => `<option value="${id}" ${cfg.corner === id ? "selected" : ""}>${n}</option>`)
+            .map(
+              ([id, n]) =>
+                `<option value="${id}" ${cfg.corner === id ? "selected" : ""}>${n}</option>`,
+            )
             .join("")}</select></label>`
         : ""
     }
@@ -90,8 +99,12 @@ export function bindAvatar(
     const text = state === "playing" ? "Stop" : state === "loading" ? "Loading" : "Hear Voice";
     node.innerHTML = `<i data-lucide="${icon}"></i>${text}`;
     try {
-      (window as unknown as { lucide?: { createIcons: (o?: unknown) => void } }).lucide?.createIcons();
-    } catch (_) { /* icons refresh on next paint */ }
+      (
+        window as unknown as { lucide?: { createIcons: (o?: unknown) => void } }
+      ).lucide?.createIcons();
+    } catch (_) {
+      /* icons refresh on next paint */
+    }
   };
 
   const preview = async (id: string) => {
@@ -111,14 +124,14 @@ export function bindAvatar(
   on("[data-avplay]", "click", (e) => {
     e.preventDefault();
     e.stopPropagation();
-    void preview((e.currentTarget as HTMLElement).dataset['avplay']!);
+    void preview((e.currentTarget as HTMLElement).dataset["avplay"]!);
   });
   on("[data-avplay]", "keydown", (e) => {
     const k = (e as KeyboardEvent).key;
     if (k !== "Enter" && k !== " ") return;
     e.preventDefault();
     e.stopPropagation();
-    void preview((e.currentTarget as HTMLElement).dataset['avplay']!);
+    void preview((e.currentTarget as HTMLElement).dataset["avplay"]!);
   });
   // Only one presenter block is on screen at a time, so drop the previous
   // block's listener instead of stacking one per rerender.
@@ -134,27 +147,40 @@ export function bindAvatar(
   if (chk)
     chk.addEventListener("change", () => {
       cfg.enabled = chk.checked;
-      if (cfg.enabled && !getCustomAvatars().length) void loadCustomAvatars().then(() => rerender());
+      if (cfg.enabled && !getCustomAvatars().length)
+        void loadCustomAvatars().then(() => rerender());
       rerender();
     });
 
   on("[data-av]", "click", (e) => {
-    cfg.avatarId = (e.currentTarget as HTMLElement).dataset['av']!;
+    cfg.avatarId = (e.currentTarget as HTMLElement).dataset["av"]!;
     rerender();
   });
   on("[data-avmode]", "click", (e) => {
-    cfg.mode = (e.currentTarget as HTMLElement).dataset['avmode'] as AvatarConfig["mode"];
+    cfg.mode = (e.currentTarget as HTMLElement).dataset["avmode"] as AvatarConfig["mode"];
     rerender();
   });
 
   const corner = el.querySelector("#avCorner") as HTMLSelectElement | null;
-  if (corner) corner.addEventListener("change", () => { cfg.corner = corner.value as AvatarConfig["corner"]; });
+  if (corner)
+    corner.addEventListener("change", () => {
+      cfg.corner = corner.value as AvatarConfig["corner"];
+    });
   const name = el.querySelector("#avName") as HTMLInputElement | null;
-  if (name) name.addEventListener("input", () => { cfg.name = name.value; });
+  if (name)
+    name.addEventListener("input", () => {
+      cfg.name = name.value;
+    });
   const title = el.querySelector("#avTitle") as HTMLInputElement | null;
-  if (title) title.addEventListener("input", () => { cfg.title = title.value; });
+  if (title)
+    title.addEventListener("input", () => {
+      cfg.title = title.value;
+    });
   const greet = el.querySelector("#avGreet") as HTMLTextAreaElement | null;
-  if (greet) greet.addEventListener("input", () => { cfg.greeting = greet.value; });
+  if (greet)
+    greet.addEventListener("input", () => {
+      cfg.greeting = greet.value;
+    });
 
   const file = el.querySelector("#avFile") as HTMLInputElement | null;
   if (file)
@@ -184,7 +210,11 @@ export function avatarRenderOption(cfg: AvatarConfig | null | undefined, title?:
 }
 
 /** Prefix the narration script with the presenter's opening line. */
-export function avatarScript(cfg: AvatarConfig | null | undefined, script: string, title?: string | null) {
+export function avatarScript(
+  cfg: AvatarConfig | null | undefined,
+  script: string,
+  title?: string | null,
+) {
   if (!cfg?.enabled) return script;
   const g = avatarGreeting(cfg, title);
   return script.trim().startsWith(g) ? script : `${g} ${script}`.trim();

@@ -64,7 +64,10 @@ let hydrated = false;
 
 function emit() {
   persist();
-  const snapshot = jobs.map((j) => ({ ...j, files: j.files.map((f) => ({ ...f, file: undefined })) })) as Job[];
+  const snapshot = jobs.map((j) => ({
+    ...j,
+    files: j.files.map((f) => ({ ...f, file: undefined })),
+  })) as Job[];
   listeners.forEach((l) => {
     try {
       l(snapshot);
@@ -93,11 +96,16 @@ function hydrate() {
     const raw = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
     if (!Array.isArray(raw)) return;
     for (const j of raw) {
-      const active = ["Preparing", "Uploading", "Processing", "Organizing", "Paused"].includes(j.state);
+      const active = ["Preparing", "Uploading", "Processing", "Organizing", "Paused"].includes(
+        j.state,
+      );
       jobs.push({
         ...j,
         state: active ? "Interrupted" : j.state,
-        files: (j.files || []).map((f: JobFile) => ({ ...f, state: f.state === "done" ? "done" : "failed" })),
+        files: (j.files || []).map((f: JobFile) => ({
+          ...f,
+          state: f.state === "done" ? "done" : "failed",
+        })),
       });
     }
   } catch {
@@ -118,7 +126,11 @@ export function listJobs(): Job[] {
 }
 
 export function activeJob(): Job | null {
-  return jobs.find((j) => ["Preparing", "Uploading", "Processing", "Organizing", "Paused"].includes(j.state)) ?? null;
+  return (
+    jobs.find((j) =>
+      ["Preparing", "Uploading", "Processing", "Organizing", "Paused"].includes(j.state),
+    ) ?? null
+  );
 }
 
 export function rejectReason(file: File): string | null {
@@ -288,7 +300,9 @@ async function run(job: Job) {
 
   running++;
   try {
-    await Promise.all(Array.from({ length: Math.min(CONCURRENCY, Math.max(1, pending().length)) }, worker));
+    await Promise.all(
+      Array.from({ length: Math.min(CONCURRENCY, Math.max(1, pending().length)) }, worker),
+    );
   } finally {
     running--;
   }
@@ -299,7 +313,15 @@ async function run(job: Job) {
   if (measured.length) {
     job.state = "Organizing";
     emit();
-    const groups = groupSets(measured.map((m) => ({ id: m.id, hash: m.hash, brightness: m.brightness, room: m.room, outdoor: m.outdoor })));
+    const groups = groupSets(
+      measured.map((m) => ({
+        id: m.id,
+        hash: m.hash,
+        brightness: m.brightness,
+        room: m.room,
+        outdoor: m.outdoor,
+      })),
+    );
     const rows = measured.map((m, i) => ({
       ...m.payload,
       sort_order: i,
@@ -331,7 +353,11 @@ async function run(job: Job) {
   job.finishedAt = Date.now();
   job.state = job.failed > 0 ? (job.uploaded > 0 ? "Partially Complete" : "Failed") : "Complete";
   emit();
-  track("property_upload_completed", { uploaded: job.uploaded, failed: job.failed, state: job.state });
+  track("property_upload_completed", {
+    uploaded: job.uploaded,
+    failed: job.failed,
+    state: job.state,
+  });
 }
 
 export function isBusy(): boolean {

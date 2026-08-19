@@ -20,14 +20,47 @@ export type PickerContext = "design" | "video" | "property-media" | "batch";
 
 export type PickedFile = { file: File; flags: string[] };
 
-export const SOURCE_META: Record<SourceId, { icon: string; label: string; tab: string; desc: string }> = {
-  upload: { icon: "upload-cloud", label: "Upload", tab: "Upload", desc: "Drag and drop or browse." },
-  cloud: { icon: "cloud", label: "Cloud", tab: "Cloud", desc: "Paste a Google Drive or Dropbox share link." },
-  address: { icon: "map-pin", label: "Property Address", tab: "Address", desc: "Fills in address and listing details." },
+export const SOURCE_META: Record<
+  SourceId,
+  { icon: string; label: string; tab: string; desc: string }
+> = {
+  upload: {
+    icon: "upload-cloud",
+    label: "Upload",
+    tab: "Upload",
+    desc: "Drag and drop or browse.",
+  },
+  cloud: {
+    icon: "cloud",
+    label: "Cloud",
+    tab: "Cloud",
+    desc: "Paste a Google Drive or Dropbox share link.",
+  },
+  address: {
+    icon: "map-pin",
+    label: "Property Address",
+    tab: "Address",
+    desc: "Fills in address and listing details.",
+  },
   url: { icon: "link", label: "Listing URL", tab: "Import", desc: "Reads listing text, no media." },
-  property: { icon: "home", label: "Existing Property", tab: "Property", desc: "Reuse photos already uploaded." },
-  design: { icon: "images", label: "Designs", tab: "Designs", desc: "Start from designs you have already generated." },
-  describe: { icon: "message-square-text", label: "Describe", tab: "Describe", desc: "No photo yet: describe the space instead." },
+  property: {
+    icon: "home",
+    label: "Existing Property",
+    tab: "Property",
+    desc: "Reuse photos already uploaded.",
+  },
+  design: {
+    icon: "images",
+    label: "Designs",
+    tab: "Designs",
+    desc: "Start from designs you have already generated.",
+  },
+  describe: {
+    icon: "message-square-text",
+    label: "Describe",
+    tab: "Describe",
+    desc: "No photo yet: describe the space instead.",
+  },
 };
 
 export type ContextConfig = {
@@ -80,7 +113,9 @@ export async function normalizeImageFile(f: File): Promise<File> {
     if (!out) throw new Error("No converted image was returned.");
     return new File([out], f.name.replace(/\.(heic|heif)$/i, ".jpg"), { type: "image/jpeg" });
   } catch (_) {
-    throw new Error(f.name + ": This HEIC Photo Could Not Be Converted. Export It As JPG And Try Again.");
+    throw new Error(
+      f.name + ": This HEIC Photo Could Not Be Converted. Export It As JPG And Try Again.",
+    );
   }
 }
 
@@ -169,8 +204,10 @@ export const DESCRIBE_EXAMPLES: string[] = [
 ];
 
 const esc0 = (v: string) =>
-  String(v == null ? "" : v).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
-
+  String(v == null ? "" : v).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+  );
 
 let pickerSeq = 0;
 
@@ -183,14 +220,27 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const pid = (name: string) => name + "-" + uid;
   /* Field lookups go through data attributes inside this picker only. */
   const field = (name: string) =>
-    (body?.querySelector('[data-sp-f="' + name + '"]') as HTMLInputElement | HTMLTextAreaElement | null) || null;
+    (body?.querySelector('[data-sp-f="' + name + '"]') as
+      HTMLInputElement | HTMLTextAreaElement | null) || null;
   const fieldName = (t: Element | null) => (t as HTMLElement | null)?.dataset?.["spF"] || "";
   let escFail = false;
-  const esc = (v: string) => (escFail || !opts.esc ? esc0(v) : (() => { try { return opts.esc!(v); } catch { escFail = true; return esc0(v); } })());
+  const esc = (v: string) =>
+    escFail || !opts.esc
+      ? esc0(v)
+      : (() => {
+          try {
+            return opts.esc!(v);
+          } catch {
+            escFail = true;
+            return esc0(v);
+          }
+        })();
   const alert = opts.showAlert || ((m: string) => console.warn(m));
 
   const state = {
-    tab: (opts.initialTab && cfg.sources.includes(opts.initialTab) ? opts.initialTab : cfg.sources[0]) as SourceId,
+    tab: (opts.initialTab && cfg.sources.includes(opts.initialTab)
+      ? opts.initialTab
+      : cfg.sources[0]) as SourceId,
     busy: false,
     note: "",
     address: "",
@@ -219,7 +269,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     choose: [] as PickedFile[],
   };
 
-
   const input = document.createElement("input");
   input.type = "file";
   input.hidden = true;
@@ -234,17 +283,21 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /** One size limit, one measurement pass, one error message, every source. */
   async function intake(raw: File[]) {
-    let files: File[] = [];
+    const files: File[] = [];
     state.busy = true;
     state.note = "";
-    const hasHeic = raw.some((f) => /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || ""));
+    const hasHeic = raw.some(
+      (f) => /\.(heic|heif)$/i.test(f.name) || /image\/hei[cf]/i.test(f.type || ""),
+    );
     state.busyLabel = hasHeic ? "Converting Photos" : "Adding Photos";
     render();
     for (const file of raw) {
       try {
         files.push(await normalizeImageFile(file));
       } catch (error) {
-        alert(error instanceof Error ? error.message : file.name + ": This Photo Could Not Be Added.");
+        alert(
+          error instanceof Error ? error.message : file.name + ": This Photo Could Not Be Added.",
+        );
       }
     }
     const ok: File[] = [];
@@ -302,14 +355,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       }
     }
     if (changed) {
-      try { opts.onFlags?.(picked); } catch (_) {}
+      try {
+        opts.onFlags?.(picked);
+      } catch (_) {}
       if (state.choose.length) render();
     }
   }
 
-
   async function importCloud(raw: string) {
-    const urls = raw.split(/[\s,]+/).map((u) => u.trim()).filter(Boolean);
+    const urls = raw
+      .split(/[\s,]+/)
+      .map((u) => u.trim())
+      .filter(Boolean);
     if (!urls.length) return;
     state.busy = true;
     state.note = "";
@@ -318,9 +375,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       const { importCloudPhotos } = await import("@/lib/cloud-import.functions");
       const res = await importCloudPhotos({ data: { urls: urls.slice(0, 20) } });
       const files = (res.files || []).map((f: any) => dataUrlToFile(f.data, f.name, f.type));
-      if (res.errors?.length) state.note = res.errors[0]?.message || "Some Links Could Not Be Read.";
+      if (res.errors?.length)
+        state.note = res.errors[0]?.message || "Some Links Could Not Be Read.";
       if (files.length) await intake(files);
-      else if (!state.note) state.note = "Nothing Could Be Read From That Link. Upload The Photos Instead.";
+      else if (!state.note)
+        state.note = "Nothing Could Be Read From That Link. Upload The Photos Instead.";
     } catch (_) {
       state.note = "That Link Could Not Be Read. Upload The Photos Instead.";
     }
@@ -344,7 +403,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           ? photos.length + " Listing Photos Found."
           : "Listing Found. Upload The Photos To Continue.";
         if (photos.length) {
-          const files = await Promise.all(photos.slice(0, 40).map((u: string, i: number) => urlToFile(u, "Listing Photo " + (i + 1) + ".jpg")));
+          const files = await Promise.all(
+            photos
+              .slice(0, 40)
+              .map((u: string, i: number) => urlToFile(u, "Listing Photo " + (i + 1) + ".jpg")),
+          );
           await intake(files.filter(Boolean) as File[]);
         }
       } else {
@@ -379,7 +442,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         (r?.message || (addr ? "Listing Read: " + addr + "." : "Listing Read.")) +
         " Listing Links Are Read As Text Only. No Photos Are Imported From A Public Listing Page.";
     } catch (_) {
-      state.note = "That Link Could Not Be Read. Listing Links Are Read As Text Only, So Upload The Photos Below.";
+      state.note =
+        "That Link Could Not Be Read. Listing Links Are Read As Text Only, So Upload The Photos Below.";
     }
     state.busy = false;
     render();
@@ -395,10 +459,24 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           const m = SOURCE_META[s];
           const on = state.tab === s;
           return (
-            '<button type="button" role="tab" class="sp-tab' + (on ? " on" : "") + '" data-sp-tab="' + s +
-            '" id="' + pid("spTab-" + s) + '" aria-selected="' + (on ? "true" : "false") + '" aria-controls="' + pid("spPanel") + '"' +
-            ' tabindex="' + (on ? "0" : "-1") + '" aria-pressed="' + (on ? "true" : "false") +
-            '" title="' + esc(m.desc) + '">' +
+            '<button type="button" role="tab" class="sp-tab' +
+            (on ? " on" : "") +
+            '" data-sp-tab="' +
+            s +
+            '" id="' +
+            pid("spTab-" + s) +
+            '" aria-selected="' +
+            (on ? "true" : "false") +
+            '" aria-controls="' +
+            pid("spPanel") +
+            '"' +
+            ' tabindex="' +
+            (on ? "0" : "-1") +
+            '" aria-pressed="' +
+            (on ? "true" : "false") +
+            '" title="' +
+            esc(m.desc) +
+            '">' +
             (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
             esc(m.tab) +
             "</button>"
@@ -415,28 +493,50 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         return (
           '<div class="sp-drop" data-sp-drop="1">' +
           '<i data-lucide="loader"></i>' +
-          "<b>" + state.busyLabel + "</b>" +
-          '<span class="sp-hint">' + (state.busyLabel === "Converting Photos" ? "iPhone photos are being converted. This takes a moment." : "Preparing previews. This takes a moment.") + "</span>" +
+          "<b>" +
+          state.busyLabel +
+          "</b>" +
+          '<span class="sp-hint">' +
+          (state.busyLabel === "Converting Photos"
+            ? "iPhone photos are being converted. This takes a moment."
+            : "Preparing previews. This takes a moment.") +
+          "</span>" +
           "</div>"
         );
       }
       return (
-        '<div class="sp-drop' + (state.dragging ? " over" : "") + '" data-sp-drop="1" role="button" tabindex="0" ' +
+        '<div class="sp-drop' +
+        (state.dragging ? " over" : "") +
+        '" data-sp-drop="1" role="button" tabindex="0" ' +
         'aria-label="Add photos: drop them here or choose files">' +
         '<i data-lucide="upload-cloud"></i>' +
-        "<b>" + (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") + "</b>" +
+        "<b>" +
+        (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") +
+        "</b>" +
         '<span class="sp-hint">Drag and drop, or</span>' +
         '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Choose Photos</button>' +
-        '<span class="sp-hint">' + esc(cfg.acceptHint) + " \u00b7 " + MAX_MB + "MB each</span>" +
+        '<span class="sp-hint">' +
+        esc(cfg.acceptHint) +
+        " \u00b7 " +
+        MAX_MB +
+        "MB each</span>" +
         "</div>"
       );
     }
     if (state.tab === "cloud") {
       return (
         '<div class="sp-pane">' +
-        '<div class="sp-cloudrow"><span>' + DRIVE_ICON + "Google Drive</span><span>" + DROPBOX_ICON + "Dropbox</span></div>" +
-        '<label class="sp-f">Public Share Link<input type="text" data-sp-f="cloud" id="' + pid("spCloud") + '" placeholder="https://drive.google.com/file/d/..."></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="cloudgo">' + (state.busy ? "Importing" : "Import Photos") + "</button>" +
+        '<div class="sp-cloudrow"><span>' +
+        DRIVE_ICON +
+        "Google Drive</span><span>" +
+        DROPBOX_ICON +
+        "Dropbox</span></div>" +
+        '<label class="sp-f">Public Share Link<input type="text" data-sp-f="cloud" id="' +
+        pid("spCloud") +
+        '" placeholder="https://drive.google.com/file/d/..."></label>' +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="cloudgo">' +
+        (state.busy ? "Importing" : "Import Photos") +
+        "</button>" +
         '<p class="sp-note">The link must be shared publicly so we can read it.</p>' +
         "</div>"
       );
@@ -445,8 +545,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return (
         '<div class="sp-pane">' +
         '<label class="sp-f sp-search">Property Address<span><i data-lucide="search"></i>' +
-        '<input type="text" data-sp-f="addr" id="' + pid("spAddr") + '" placeholder="3417 Hoover Dr, Holiday, FL 34691" value="' + esc(state.address) + '"></span></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="addrgo">' + (state.busy ? "Looking Up" : "Look Up Address") + "</button>" +
+        '<input type="text" data-sp-f="addr" id="' +
+        pid("spAddr") +
+        '" placeholder="3417 Hoover Dr, Holiday, FL 34691" value="' +
+        esc(state.address) +
+        '"></span></label>' +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="addrgo">' +
+        (state.busy ? "Looking Up" : "Look Up Address") +
+        "</button>" +
         '<p class="sp-note">An address lookup files your work under that property and fills in listing details such as beds, baths and square footage. It does not download photos from a listing — add those from Upload.</p>' +
         "</div>"
       );
@@ -454,44 +560,68 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (state.tab === "url") {
       return (
         '<div class="sp-pane">' +
-        '<label class="sp-f">Listing Link<input type="text" data-sp-f="url" id="' + pid("spUrl") + '" placeholder="https://www.zillow.com/homedetails/..." value="' + esc(state.url) + '"></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' + (state.busy ? "Reading Link" : "Import Listing Details") + "</button>" +
+        '<label class="sp-f">Listing Link<input type="text" data-sp-f="url" id="' +
+        pid("spUrl") +
+        '" placeholder="https://www.zillow.com/homedetails/..." value="' +
+        esc(state.url) +
+        '"></label>' +
+        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' +
+        (state.busy ? "Reading Link" : "Import Listing Details") +
+        "</button>" +
         '<p class="sp-note">Listing links are read as text only. No photos or media are imported from a public listing page.</p>' +
         "</div>"
       );
     }
     if (state.tab === "property") {
       const list = properties();
-      if (!list.length) return '<div class="sp-pane"><p class="sp-note">No Properties Yet. Upload Photos To Start.</p></div>';
+      if (!list.length)
+        return '<div class="sp-pane"><p class="sp-note">No Properties Yet. Upload Photos To Start.</p></div>';
       /* Properties with nothing to select stay out of the way by default. */
       const withPhotos = list.filter((p) => p.count !== 0);
       const emptyCount = list.length - withPhotos.length;
       const shown = state.showEmpty ? list : withPhotos;
       const toggle = emptyCount
         ? '<button type="button" class="sp-link sp-empty-t" data-sp="emptytoggle">' +
-          (state.showEmpty ? "Hide Properties Without Photos" : "Show Properties Without Photos (" + emptyCount + ")") +
+          (state.showEmpty
+            ? "Hide Properties Without Photos"
+            : "Show Properties Without Photos (" + emptyCount + ")") +
           "</button>"
         : "";
       if (!shown.length)
-        return '<div class="sp-pane"><p class="sp-note">No Properties With Photos Yet.</p>' + toggle + "</div>";
-      return '<div class="sp-pane"><div class="sp-props" role="listbox" aria-label="Your Properties">' +
-        shown.map(propCard).join("") + "</div>" + toggle + photoPanel() + "</div>";
+        return (
+          '<div class="sp-pane"><p class="sp-note">No Properties With Photos Yet.</p>' +
+          toggle +
+          "</div>"
+        );
+      return (
+        '<div class="sp-pane"><div class="sp-props" role="listbox" aria-label="Your Properties">' +
+        shown.map(propCard).join("") +
+        "</div>" +
+        toggle +
+        photoPanel() +
+        "</div>"
+      );
     }
-
 
     if (state.tab === "describe") {
       const ready = state.prompt.trim().length > 0 && !state.describeBusy;
       return (
         '<div class="sp-pane sp-describe">' +
-        '<div class="sp-composer' + (state.describeBusy ? " is-busy" : "") + '">' +
-        '<textarea data-sp-f="prompt" id="' + pid("spPrompt") + '" aria-label="Describe the space you want to create" ' +
+        '<div class="sp-composer' +
+        (state.describeBusy ? " is-busy" : "") +
+        '">' +
+        '<textarea data-sp-f="prompt" id="' +
+        pid("spPrompt") +
+        '" aria-label="Describe the space you want to create" ' +
         (state.describeBusy ? "disabled " : "") +
         'placeholder="Describe the space you want to create. Include the room, style, colors, materials and anything you want included.">' +
-        esc(state.prompt) + "</textarea>" +
+        esc(state.prompt) +
+        "</textarea>" +
         '<div class="sp-composer-a">' +
         '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" ' +
         'aria-label="Create an AI concept from your description"' +
-        (ready ? "" : " disabled") + ">" +
+        (ready ? "" : " disabled") +
+        ">" +
         (state.describeBusy
           ? '<span class="sp-spin" aria-hidden="true"></span>Creating…'
           : '<i data-lucide="sparkles"></i>Create <em><span aria-hidden="true">·</span> 1 Credit</em>') +
@@ -501,7 +631,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         '<p class="sp-note">Be specific for better results.</p>' +
         '<div class="sp-chips">' +
         DESCRIBE_EXAMPLES.map(
-          (x) => '<button type="button" class="sp-chip" data-sp-ex="' + esc(x) + '">' + esc(x) + "</button>",
+          (x) =>
+            '<button type="button" class="sp-chip" data-sp-ex="' +
+            esc(x) +
+            '">' +
+            esc(x) +
+            "</button>",
         ).join("") +
         "</div>" +
         "</div>"
@@ -510,7 +645,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
     if (state.tab === "design") return designPanel();
     return "";
-
   }
 
   /* ---------- finished designs ---------- */
@@ -523,7 +657,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (!opts.loadDesigns) {
       /* Legacy synchronous hosts. */
       const legacy = (opts.designs ? opts.designs() : []).map((d) => ({
-        id: d.id, path: "", room: d.label, address: d.sub || null,
+        id: d.id,
+        path: "",
+        room: d.label,
+        address: d.sub || null,
       })) as PickerDesign[];
       state.designs = legacy;
       state.designState = "ready";
@@ -561,7 +698,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return (
         '<div class="sp-pane"><div class="sp-dgrid" aria-busy="true" aria-live="polite" aria-label="Loading your finished designs">' +
         Array.from({ length: 6 })
-          .map(() => '<div class="sp-dcard is-skel"><span class="sp-dth"></span><span class="sp-db"><i></i><i></i></span></div>')
+          .map(
+            () =>
+              '<div class="sp-dcard is-skel"><span class="sp-dth"></span><span class="sp-db"><i></i><i></i></span></div>',
+          )
           .join("") +
         "</div></div>"
       );
@@ -596,7 +736,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       "</div>" +
       (n
         ? '<div class="sp-dfoot"><button type="button" class="btn btn-primary btn-sm" data-sp="dcontinue">' +
-          "Continue With " + n + " Design" + (n === 1 ? "" : "s") +
+          "Continue With " +
+          n +
+          " Design" +
+          (n === 1 ? "" : "s") +
           "</button></div>"
         : "") +
       "</div>"
@@ -608,19 +751,33 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const on = i > -1;
     const meta = [d.address || "", designDate(d.createdAt)].filter(Boolean);
     return (
-      '<button type="button" class="sp-dcard' + (on ? " is-sel" : "") + '" data-sp-design="' + esc(d.id) + '"' +
-      ' role="checkbox" aria-checked="' + (on ? "true" : "false") + '"' +
-      ' aria-label="' + esc((on ? "Selected: " : "") + (d.room || "Design") + (d.address ? ", " + d.address : "")) + '">' +
-      '<span class="sp-dth" data-sp-thumb="' + esc(d.path) + '"></span>' +
-      '<span class="sp-dpick' + (on ? " on" : "") + '">' + (on ? '<i data-lucide="check"></i>' : "") +
-      (on ? '<em class="sp-dn">' + (i + 1) + "</em>" : "") + "</span>" +
-      '<span class="sp-db"><b>' + esc(d.room || "Design") + "</b>" +
+      '<button type="button" class="sp-dcard' +
+      (on ? " is-sel" : "") +
+      '" data-sp-design="' +
+      esc(d.id) +
+      '"' +
+      ' role="checkbox" aria-checked="' +
+      (on ? "true" : "false") +
+      '"' +
+      ' aria-label="' +
+      esc((on ? "Selected: " : "") + (d.room || "Design") + (d.address ? ", " + d.address : "")) +
+      '">' +
+      '<span class="sp-dth" data-sp-thumb="' +
+      esc(d.path) +
+      '"></span>' +
+      '<span class="sp-dpick' +
+      (on ? " on" : "") +
+      '">' +
+      (on ? '<i data-lucide="check"></i>' : "") +
+      (on ? '<em class="sp-dn">' + (i + 1) + "</em>" : "") +
+      "</span>" +
+      '<span class="sp-db"><b>' +
+      esc(d.room || "Design") +
+      "</b>" +
       (meta.length ? "<span>" + esc(meta.join(" \u00b7 ")) + "</span>" : "") +
       "</span></button>"
     );
   }
-
-
 
   function chooser() {
     if (!state.choose.length) return "";
@@ -628,16 +785,25 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '<div class="sp-modal" role="dialog" aria-modal="true" aria-label="Choose One Photo">' +
       '<div class="sp-scrim" data-sp="closechoose"></div>' +
       '<div class="sp-choose"><div class="sp-choose-h"><b>' +
-      state.choose.length + ' Photos Imported. Choose One To Design.</b>' +
+      state.choose.length +
+      " Photos Imported. Choose One To Design.</b>" +
       '<button type="button" class="sp-link" data-sp="closechoose">Cancel</button></div>' +
       '<div class="sp-choose-g">' +
       state.choose
         .map((p, i) => {
           const flag = p.flags.length ? FLAG_LABEL[p.flags[0]!] || "Photo Quality" : "";
           return (
-            '<button type="button" class="sp-choice" data-sp-choice="' + i + '">' +
-            '<img alt="' + esc(p.file.name) + '" src="' + URL.createObjectURL(p.file) + '">' +
-            "<b>" + esc(p.file.name) + "</b>" +
+            '<button type="button" class="sp-choice" data-sp-choice="' +
+            i +
+            '">' +
+            '<img alt="' +
+            esc(p.file.name) +
+            '" src="' +
+            URL.createObjectURL(p.file) +
+            '">' +
+            "<b>" +
+            esc(p.file.name) +
+            "</b>" +
             (flag ? '<em class="sp-flag">' + esc(flag) + "</em>" : "") +
             "</button>"
           );
@@ -657,12 +823,23 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       list = [];
     }
     return list.slice(0, 30).map((p, i) => {
-      const unassigned = !!p.unassigned || /^unsorted uploads$/i.test(String(p.address || "")) || /^unassigned photos$/i.test(String(p.address || ""));
+      const unassigned =
+        !!p.unassigned ||
+        /^unsorted uploads$/i.test(String(p.address || "")) ||
+        /^unassigned photos$/i.test(String(p.address || ""));
       const lines = unassigned
         ? { line1: "Unassigned Photos", line2: "Photos not assigned to a property" }
         : splitAddressLines(p.address, p.parts);
-      const count = p.count == null ? countFromMeta(p.meta) : Math.max(0, Math.floor(Number(p.count) || 0));
-      return { ...p, id: p.id || p.address || "p" + i, unassigned, line1: lines.line1 || p.address || "Property", line2: lines.line2, count };
+      const count =
+        p.count == null ? countFromMeta(p.meta) : Math.max(0, Math.floor(Number(p.count) || 0));
+      return {
+        ...p,
+        id: p.id || p.address || "p" + i,
+        unassigned,
+        line1: lines.line1 || p.address || "Property",
+        line2: lines.line2,
+        count,
+      };
     });
   }
 
@@ -689,14 +866,23 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const list = thumbsOf(p);
     /* Spare paths ride along so a dead file or expired URL falls forward to the next photo. */
     const tile = (path: string, alts: string[] = []) =>
-      '<span class="sp-th-i is-load" data-sp-thumb="' + esc(path) + '"' +
+      '<span class="sp-th-i is-load" data-sp-thumb="' +
+      esc(path) +
+      '"' +
       (alts.length ? ' data-sp-alt="' + esc(alts.join("|")) + '"' : "") +
-      '><i data-lucide="' + icon + '"></i></span>';
+      '><i data-lucide="' +
+      icon +
+      '"></i></span>';
     const inner = !list.length
       ? '<span class="sp-th-i is-none"><i data-lucide="' + icon + '"></i></span>'
       : list.length >= 2 && p.unassigned
         ? '<span class="sp-th-mosaic">' +
-          list.slice(0, 4).map((t, i) => tile(t, list.slice(4).concat(list.slice(0, 4).filter((_, j) => j !== i)))).join("") +
+          list
+            .slice(0, 4)
+            .map((t, i) =>
+              tile(t, list.slice(4).concat(list.slice(0, 4).filter((_, j) => j !== i))),
+            )
+            .join("") +
           "</span>"
         : tile(list[0]!, list.slice(1));
     return '<span class="sp-prop-th">' + inner + "</span>";
@@ -705,31 +891,55 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   function propCard(p: PickerProperty) {
     const selected = state.propSel === p.id;
     const empty = p.count === 0;
-    const cls = ["sp-prop", p.unassigned ? "is-util" : "", selected ? "is-sel" : "", empty ? "is-empty" : ""].filter(Boolean).join(" ");
+    const cls = [
+      "sp-prop",
+      p.unassigned ? "is-util" : "",
+      selected ? "is-sel" : "",
+      empty ? "is-empty" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
     const count = empty ? "No Photos Yet" : photoCountLabel(p.count == null ? "" : p.count);
     if (empty) {
       /* Kept out of the way: nothing to select, so the card offers photos. */
       return (
-        '<div class="' + cls + '" role="option" aria-selected="false" aria-disabled="true">' +
+        '<div class="' +
+        cls +
+        '" role="option" aria-selected="false" aria-disabled="true">' +
         '<span class="sp-prop-th"><span class="sp-th-i is-none"><i data-lucide="image-off"></i></span></span>' +
-        '<span class="sp-prop-b"><b>' + esc(p.line1 || "") + "</b>" +
+        '<span class="sp-prop-b"><b>' +
+        esc(p.line1 || "") +
+        "</b>" +
         (p.line2 ? "<span>" + esc(p.line2) + "</span>" : "") +
-        '<em class="sp-prop-c">' + esc(count) +
+        '<em class="sp-prop-c">' +
+        esc(count) +
         '<button type="button" class="sp-link" data-sp="browse">Upload Photos</button></em></span></div>'
       );
     }
     return (
-      '<div class="' + cls + '" role="option" aria-selected="' + (selected ? "true" : "false") + '"' +
-      ' tabindex="0" data-sp-prop="' + esc(p.id!) + '">' +
+      '<div class="' +
+      cls +
+      '" role="option" aria-selected="' +
+      (selected ? "true" : "false") +
+      '"' +
+      ' tabindex="0" data-sp-prop="' +
+      esc(p.id!) +
+      '">' +
       thumbArea(p) +
-      '<span class="sp-pick' + (selected ? " on" : "") + '" aria-hidden="true">' +
-      (selected ? '<i data-lucide="check"></i>' : "") + "</span>" +
-      '<span class="sp-prop-b"><b>' + esc(p.line1 || "") + "</b>" +
+      '<span class="sp-pick' +
+      (selected ? " on" : "") +
+      '" aria-hidden="true">' +
+      (selected ? '<i data-lucide="check"></i>' : "") +
+      "</span>" +
+      '<span class="sp-prop-b"><b>' +
+      esc(p.line1 || "") +
+      "</b>" +
       (p.line2 ? "<span>" + esc(p.line2) + "</span>" : "") +
-      '<em class="sp-prop-c">' + esc(count) + "</em></span></div>"
+      '<em class="sp-prop-c">' +
+      esc(count) +
+      "</em></span></div>"
     );
   }
-
 
   function photoPanel() {
     const id = state.propSel;
@@ -746,26 +956,51 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       );
     }
     const photos = state.propPhotos;
-    if (!photos.length) return '<div class="sp-photos"><p class="sp-note">This Property Has No Photos Yet.</p></div>';
+    if (!photos.length)
+      return '<div class="sp-photos"><p class="sp-note">This Property Has No Photos Yet.</p></div>';
     const n = state.propChecked.size;
     return (
-      '<div class="sp-photos"><div class="sp-photos-h"><b>' + esc(n + " Of " + photos.length + " Selected") + "</b>" +
+      '<div class="sp-photos"><div class="sp-photos-h"><b>' +
+      esc(n + " Of " + photos.length + " Selected") +
+      "</b>" +
       '<span><button type="button" class="btn btn-ghost btn-sm" data-sp="pall">Select All</button>' +
       '<button type="button" class="btn btn-ghost btn-sm" data-sp="pnone">Clear</button>' +
-      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' + (n && !state.adding ? "" : " disabled") + ">" +
-      esc(state.adding ? "Adding…" : n ? "Add " + n + " Photo" + (n === 1 ? "" : "s") : "Add Photos") + "</button></span></div>" +
+      '<button type="button" class="btn btn-primary btn-sm" data-sp="padd"' +
+      (n && !state.adding ? "" : " disabled") +
+      ">" +
+      esc(
+        state.adding ? "Adding…" : n ? "Add " + n + " Photo" + (n === 1 ? "" : "s") : "Add Photos",
+      ) +
+      "</button></span></div>" +
       '<div class="sp-photo-grid">' +
       photos
         .map((ph) => {
           const on = state.propChecked.has(ph.id);
           const label = String(ph.room || ph.name || "Photo");
           return (
-            '<button type="button" class="sp-photo' + (on ? " is-sel" : "") + '" aria-pressed="' + (on ? "true" : "false") +
-            '" data-sp-photo="' + esc(ph.id) + '" aria-label="' + esc(label) + '">' +
-            '<span class="sp-th-i is-load" data-sp-thumb="' + esc(ph.path) + '" data-sp-thumb-id="' + esc(ph.id) + '"' +
-            ' data-sp-thumb-alt="' + esc(label) + '"><i data-lucide="image"></i></span>' +
-            '<span class="sp-photo-x" aria-hidden="true"><i data-lucide="' + (on ? "check" : "circle") + '"></i></span>' +
-            '<span class="sp-photo-l">' + esc(label) + "</span>" +
+            '<button type="button" class="sp-photo' +
+            (on ? " is-sel" : "") +
+            '" aria-pressed="' +
+            (on ? "true" : "false") +
+            '" data-sp-photo="' +
+            esc(ph.id) +
+            '" aria-label="' +
+            esc(label) +
+            '">' +
+            '<span class="sp-th-i is-load" data-sp-thumb="' +
+            esc(ph.path) +
+            '" data-sp-thumb-id="' +
+            esc(ph.id) +
+            '"' +
+            ' data-sp-thumb-alt="' +
+            esc(label) +
+            '"><i data-lucide="image"></i></span>' +
+            '<span class="sp-photo-x" aria-hidden="true"><i data-lucide="' +
+            (on ? "check" : "circle") +
+            '"></i></span>' +
+            '<span class="sp-photo-l">' +
+            esc(label) +
+            "</span>" +
             "</button>"
           );
         })
@@ -846,7 +1081,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       } catch (err) {
         /* The real storage / signed-URL error, not a silent blank panel. */
         console.warn(
-          "[source-picker] thumbnail failed — id=" + (el.dataset["spThumbId"] || "?") + " path=" + path,
+          "[source-picker] thumbnail failed — id=" +
+            (el.dataset["spThumbId"] || "?") +
+            " path=" +
+            path,
           err,
         );
         thumbCache.delete(path);
@@ -855,7 +1093,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (!el.isConnected) return;
     el.classList.remove("is-load");
     el.classList.add("is-fail");
-    el.innerHTML = '<i data-lucide="image-off"></i><span class="sp-th-msg">Preview Unavailable</span>';
+    el.innerHTML =
+      '<i data-lucide="image-off"></i><span class="sp-th-msg">Preview Unavailable</span>';
     try {
       opts.lucide?.createIcons();
     } catch (_) {}
@@ -870,14 +1109,16 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     });
   }
 
-
   function html() {
-
     return (
       '<div class="sp">' +
       tabs() +
       /* The tablist's aria-controls needs a real panel to point at. */
-      '<div id="' + pid("spPanel") + '" role="tabpanel" aria-labelledby="' + pid("spTab-" + state.tab) + '">' +
+      '<div id="' +
+      pid("spPanel") +
+      '" role="tabpanel" aria-labelledby="' +
+      pid("spTab-" + state.tab) +
+      '">' +
       panel() +
       "</div>" +
       (state.note ? '<div class="sp-msg">' + esc(state.note) + "</div>" : "") +
@@ -1006,7 +1247,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     }
   }
 
-
   async function onClick(e: Event) {
     const t = e.target as HTMLElement;
     const tab = t.closest("[data-sp-tab]") as HTMLElement | null;
@@ -1063,7 +1303,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return;
     }
 
-
     const choice = t.closest("[data-sp-choice]") as HTMLElement | null;
     if (choice) {
       const picked = state.choose[Number(choice.dataset["spChoice"])];
@@ -1105,12 +1344,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       if (!picked.length) return;
       state.adding = true;
       render();
-      try { await opts.onDesigns?.(picked); }
-      finally { state.adding = false; render(); }
-    }
-
-
-    else if (k === "pall") {
+      try {
+        await opts.onDesigns?.(picked);
+      } finally {
+        state.adding = false;
+        render();
+      }
+    } else if (k === "pall") {
       state.propChecked = new Set(state.propPhotos.map((x) => x.id));
       render();
     } else if (k === "pnone") {
@@ -1130,8 +1370,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       if (!p || !photos.length) return;
       state.adding = true;
       render();
-      try { await opts.onPropertyPhotos?.(p, photos); }
-      finally { state.adding = false; render(); }
+      try {
+        await opts.onPropertyPhotos?.(p, photos);
+      } finally {
+        state.adding = false;
+        render();
+      }
     } else if (k === "closechoose") {
       state.choose = [];
       render();

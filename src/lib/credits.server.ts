@@ -21,7 +21,12 @@ export const CREDIT_COSTS: Record<CreditAction, number> = {
 
 export type ChargeResult =
   | { ok: true; charged: number; balance: number; remainingToday?: number }
-  | { ok: false; reason: "insufficient_credits" | "daily_limit" | "plan_required"; cost: number; balance?: number };
+  | {
+      ok: false;
+      reason: "insufficient_credits" | "daily_limit" | "plan_required";
+      cost: number;
+      balance?: number;
+    };
 
 /** Human wording for a refusal, safe to surface in the UI. */
 export function chargeErrorMessage(result: Extract<ChargeResult, { ok: false }>): string {
@@ -91,4 +96,3 @@ export async function readAccount(userId: string): Promise<CreditAccount> {
   }
   throw new Error(lastMessage || "Could not read credit account");
 }
-

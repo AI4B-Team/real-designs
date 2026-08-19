@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/ai-design-for-house-flippers",
   tier: "C",
-  intent: "Flippers deciding whether a property pencils out before writing an offer, and how to hold contractors to a scope after closing.",
+  intent:
+    "Flippers deciding whether a property pencils out before writing an offer, and how to hold contractors to a scope after closing.",
 
   metaTitle: "AI Design & Budgeting For House Flippers",
-  metaDescription: "Model rehab scope and cost before you offer, then hand the same scope to contractors for bids. Reality Lock keeps designs buildable at your ARV.",
+  metaDescription:
+    "Model rehab scope and cost before you offer, then hand the same scope to contractors for bids. Reality Lock keeps designs buildable at your ARV.",
 
   eyebrow: "For House Flippers",
   h1: "Model The Rehab Before You Own The House",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Redesigned to retail finish level with a priced scope attached",
 
   steps: [
-    { title: "Upload The Listing Photos", text: "Pull the photos straight from the MLS listing or your own walk-through shots. No floor plan or measurements required to start." },
-    { title: "Set The Exit Finish Level", text: "Choose rental grade or retail grade and the target neighborhood price point, and the redesign and the budget both generate to that ceiling." },
-    { title: "Compare To Your Offer Math", text: "Export the scoped budget and drop the range straight into your ARV worksheet before the offer deadline, not after you own the house." },
+    {
+      title: "Upload The Listing Photos",
+      text: "Pull the photos straight from the MLS listing or your own walk-through shots. No floor plan or measurements required to start.",
+    },
+    {
+      title: "Set The Exit Finish Level",
+      text: "Choose rental grade or retail grade and the target neighborhood price point, and the redesign and the budget both generate to that ceiling.",
+    },
+    {
+      title: "Compare To Your Offer Math",
+      text: "Export the scoped budget and drop the range straight into your ARV worksheet before the offer deadline, not after you own the house.",
+    },
   ],
 
   showcase: ["grades", "arv", "scope", "brief"],
-
 
   sections: [
     {
@@ -111,6 +121,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Price The Rehab Before You Write The Offer",
-  ctaBody: "Upload the listing photos and get a scoped, priced rehab plan you can weigh against your ARV target in minutes.",
+  ctaBody:
+    "Upload the listing photos and get a scoped, priced rehab plan you can weigh against your ARV target in minutes.",
   ctaLabel: "Start A Flip Scope",
 };

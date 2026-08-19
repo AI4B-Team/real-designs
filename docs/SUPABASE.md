@@ -6,19 +6,19 @@ Everything an operator needs to run, verify and recover the backend.
 
 ### Server (never exposed to the browser)
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `SUPABASE_URL` | yes | Backend API endpoint used by server functions. |
-| `SUPABASE_SERVICE_ROLE_KEY` | yes | Privileged key for admin-only server work. Never imported by a route or component module — always loaded inside a handler. |
-| `SUPABASE_PUBLISHABLE_KEY` | recommended | Public key for server-side anonymous reads. |
-| `LOVABLE_API_KEY` | yes | AI gateway access (design, scoring, video). |
+| Variable                    | Required    | Purpose                                                                                                                    |
+| --------------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `SUPABASE_URL`              | yes         | Backend API endpoint used by server functions.                                                                             |
+| `SUPABASE_SERVICE_ROLE_KEY` | yes         | Privileged key for admin-only server work. Never imported by a route or component module — always loaded inside a handler. |
+| `SUPABASE_PUBLISHABLE_KEY`  | recommended | Public key for server-side anonymous reads.                                                                                |
+| `LOVABLE_API_KEY`           | yes         | AI gateway access (design, scoring, video).                                                                                |
 
 ### Browser
 
-| Variable | Required | Purpose |
-| --- | --- | --- |
-| `VITE_SUPABASE_URL` | yes | Backend endpoint for the browser client. |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | yes | Public key for the browser client. |
+| Variable                        | Required | Purpose                                  |
+| ------------------------------- | -------- | ---------------------------------------- |
+| `VITE_SUPABASE_URL`             | yes      | Backend endpoint for the browser client. |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | yes      | Public key for the browser client.       |
 
 No secret may ever be given a `VITE_` prefix. `src/lib/server-config.ts`
 encodes this contract; `assertServerConfig()` fails a request with a neutral
@@ -31,11 +31,11 @@ All three buckets are **private**. Clients store the object **path**; display
 URLs are signed on demand and renewed automatically (`src/lib/photo-src.ts`,
 `src/lib/room-photos.ts`).
 
-| Bucket | Contents | Object layout | Limits |
-| --- | --- | --- | --- |
-| `room-photos` | Uploaded and generated stills | `<userId>/<name>-<uuid>.<ext>` | image/\*, 15 MB |
-| `reveal-videos` | Rendered videos and clips | `<userId>/...` | video/\*, 200 MB |
-| `user-audio` | Voiceover and music uploads | `<userId>/...` | audio/\*, 25 MB |
+| Bucket          | Contents                      | Object layout                  | Limits           |
+| --------------- | ----------------------------- | ------------------------------ | ---------------- |
+| `room-photos`   | Uploaded and generated stills | `<userId>/<name>-<uuid>.<ext>` | image/\*, 15 MB  |
+| `reveal-videos` | Rendered videos and clips     | `<userId>/...`                 | video/\*, 200 MB |
+| `user-audio`    | Voiceover and music uploads   | `<userId>/...`                 | audio/\*, 25 MB  |
 
 Bucket limits are enforced in application code (`assertUploadAllowed`) because the hosted bucket settings are managed by the platform.
 
@@ -103,8 +103,8 @@ It never writes, so it is safe to run against production.
 
 ## 6. Test coverage
 
-| Area | Command |
-| --- | --- |
-| Unit (paths, config, policies contract) | `npm test` |
-| RLS + storage policy integration | `npm run test:integration` (requires `E2E_*` credentials; skipped otherwise) |
-| Browser flows including the auth lifecycle | `npm run test:e2e` |
+| Area                                       | Command                                                                      |
+| ------------------------------------------ | ---------------------------------------------------------------------------- |
+| Unit (paths, config, policies contract)    | `npm test`                                                                   |
+| RLS + storage policy integration           | `npm run test:integration` (requires `E2E_*` credentials; skipped otherwise) |
+| Browser flows including the auth lifecycle | `npm run test:e2e`                                                           |

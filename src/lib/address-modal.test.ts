@@ -11,7 +11,8 @@ const PROPS = [
   { id: "p2", address: "88 Oak Avenue, Dallas TX" },
 ];
 
-const q = <T extends Element = HTMLElement>(sel: string) => document.querySelector(sel) as unknown as T;
+const q = <T extends Element = HTMLElement>(sel: string) =>
+  document.querySelector(sel) as unknown as T;
 
 describe("property address modal", () => {
   beforeEach(() => {
@@ -40,7 +41,9 @@ describe("property address modal", () => {
   it("saves a manually typed address with loading then success", async () => {
     let resolve: () => void = () => {};
     const gate = new Promise<void>((r) => (resolve = r));
-    const onSave = vi.fn(async () => { await gate; });
+    const onSave = vi.fn(async () => {
+      await gate;
+    });
     const onDone = vi.fn();
     openAddressModal({ properties: [], onSave, onDone });
     const input = q<HTMLInputElement>("#addrmIn");
@@ -62,7 +65,13 @@ describe("property address modal", () => {
   });
 
   it("shows an error state and stays open when saving fails", async () => {
-    openAddressModal({ properties: [], address: "1 Elm", onSave: async () => { throw new Error("network down"); } });
+    openAddressModal({
+      properties: [],
+      address: "1 Elm",
+      onSave: async () => {
+        throw new Error("network down");
+      },
+    });
     q<HTMLButtonElement>("#addrmSave").click();
     await settle(20);
     expect(q("#addrmMsg").textContent).toContain("network down");
@@ -107,7 +116,13 @@ describe("property address modal", () => {
     /* Keep Separate leaves the project unassigned. */
     document.body.innerHTML = "";
     const onSave2 = vi.fn(async () => {});
-    openAddressModal({ properties: PROPS, address: "123 Main Street, Austin TX", propertyId: "p1", onSave: onSave2, suggest: async () => [] });
+    openAddressModal({
+      properties: PROPS,
+      address: "123 Main Street, Austin TX",
+      propertyId: "p1",
+      onSave: onSave2,
+      suggest: async () => [],
+    });
     q<HTMLButtonElement>("#addrmSep").click();
     q<HTMLButtonElement>("#addrmSave").click();
     await settle(20);
@@ -117,7 +132,12 @@ describe("property address modal", () => {
 
   it("clears the address and the assignment", async () => {
     const onSave = vi.fn(async () => {});
-    openAddressModal({ properties: PROPS, address: "123 Main Street, Austin TX", propertyId: "p1", onSave });
+    openAddressModal({
+      properties: PROPS,
+      address: "123 Main Street, Austin TX",
+      propertyId: "p1",
+      onSave,
+    });
     q<HTMLButtonElement>("#addrmClearBtn").click();
     await settle(20);
     const res = arg(onSave);

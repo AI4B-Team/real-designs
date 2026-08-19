@@ -35,9 +35,15 @@ function buildPrompt(d: z.infer<typeof Input>): string {
   if (d.dimensions) lines.push(`Approximate dimensions: ${d.dimensions}.`);
   if (d.style) lines.push(`Design style: ${d.style}.`);
   if (d.mood) lines.push(`Mood: ${d.mood}.`);
-  if (d.budget) lines.push(`Furnishing and finish budget: ${d.budget}. Choose finishes that are realistic at that level.`);
+  if (d.budget)
+    lines.push(
+      `Furnishing and finish budget: ${d.budget}. Choose finishes that are realistic at that level.`,
+    );
   if (d.features) lines.push(`Must-have features: ${d.features}.`);
-  if (d.image) lines.push("Use the attached image only as stylistic inspiration, not as the architecture to reproduce.");
+  if (d.image)
+    lines.push(
+      "Use the attached image only as stylistic inspiration, not as the architecture to reproduce.",
+    );
   lines.push(
     "Photorealistic architectural photography, natural light, believable materials and proportions. No text, no watermarks, no labels, no people.",
   );
@@ -77,7 +83,8 @@ export const renderConcept = createServerFn({ method: "POST" })
       const msg = payload?.choices?.[0]?.message;
       const url: string | undefined =
         msg?.images?.[0]?.image_url?.url ?? msg?.images?.[0]?.url ?? undefined;
-      if (!url || !url.startsWith("data:image")) throw new Error("The model did not return an image.");
+      if (!url || !url.startsWith("data:image"))
+        throw new Error("The model did not return an image.");
 
       return {
         image: url,

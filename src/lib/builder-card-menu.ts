@@ -13,17 +13,26 @@ import { createIcons, icons } from "lucide";
 import { modalFooterHtml } from "@/lib/modal-footer";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]),
+  String(s == null ? "" : s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   );
 
 const paint = (root) => {
-  try { createIcons({ icons, nameAttr: "data-lucide", root: root || document }); } catch (_) {
-    try { createIcons({ icons }); } catch (_) {}
+  try {
+    createIcons({ icons, nameAttr: "data-lucide", root: root || document });
+  } catch (_) {
+    try {
+      createIcons({ icons });
+    } catch (_) {}
   }
 };
 
-const toast = (m) => { try { window.rdToast ? window.rdToast(m) : console.log(m); } catch (_) {} };
+const toast = (m) => {
+  try {
+    window.rdToast ? window.rdToast(m) : console.log(m);
+  } catch (_) {}
+};
 
 /* flow -> { items(key), run(action, key) } */
 const FLOWS = new Map();
@@ -39,10 +48,13 @@ export function registerCardMenu(flow, api) {
 export function runCardAction(flow, action, key) {
   const api = FLOWS.get(flow);
   if (!api || typeof api.run !== "function") return false;
-  try { void api.run(action, key); } catch (_) { return false; }
+  try {
+    void api.run(action, key);
+  } catch (_) {
+    return false;
+  }
   return true;
 }
-
 
 /**
  * The persistent three-dot button. Always visible, always the far top-right of
@@ -63,17 +75,27 @@ export function closeCardMenu(restoreFocus) {
   if (!openState) return;
   const { btn, el } = openState;
   openState = null;
-  try { el.remove(); } catch (_) {}
+  try {
+    el.remove();
+  } catch (_) {}
   if (btn) {
     btn.setAttribute("aria-expanded", "false");
     btn.classList.remove("on");
-    if (restoreFocus) { try { btn.focus(); } catch (_) {} }
+    if (restoreFocus) {
+      try {
+        btn.focus();
+      } catch (_) {}
+    }
   }
 }
 
 function itemsOf(groups) {
   const flat = [];
-  (groups || []).forEach((g) => (g.items || []).forEach((it) => { if (it && !it.hidden) flat.push(it); }));
+  (groups || []).forEach((g) =>
+    (g.items || []).forEach((it) => {
+      if (it && !it.hidden) flat.push(it);
+    }),
+  );
   return flat;
 }
 
@@ -86,7 +108,9 @@ function menuHtml(groups) {
         g.label ? ` aria-label="${esc(g.label)}"` : ""
       }>${list
         .map(
-          (it) => `<button type="button" role="menuitem" class="bx-cmenu-i${it.danger ? " bad" : ""}"
+          (
+            it,
+          ) => `<button type="button" role="menuitem" class="bx-cmenu-i${it.danger ? " bad" : ""}"
         data-cmact="${esc(it.action)}"${it.disabled ? ' aria-disabled="true" disabled' : ""}${
           it.tip ? ` title="${esc(it.tip)}"` : ""
         }${it.children && it.children.length ? ' aria-haspopup="menu"' : ""}${
@@ -95,7 +119,6 @@ function menuHtml(groups) {
         <i data-lucide="${esc(it.icon || "circle")}"></i><span>${esc(it.label)}</span>${
           it.note ? `<em>${esc(it.note)}</em>` : ""
         }${it.children && it.children.length ? '<i class="bx-cmenu-more" data-lucide="chevron-right"></i>' : ""}</button>`,
-
         )
         .join("")}</div>`;
     })
@@ -131,7 +154,9 @@ function openMenu(btn) {
   if (!itemsOf(groups).length) return;
 
   closeCardMenu(false);
-  try { window.__bxCloseCardStatus && window.__bxCloseCardStatus(false); } catch (_) {}
+  try {
+    window.__bxCloseCardStatus && window.__bxCloseCardStatus(false);
+  } catch (_) {}
 
   const el = document.createElement("div");
   el.className = "bx-cmenu";
@@ -147,7 +172,11 @@ function openMenu(btn) {
     place(el, btn);
     if (focusFirst !== false) {
       const f = el.querySelector(".bx-cmenu-i:not([disabled])");
-      if (f) { try { f.focus(); } catch (_) {} }
+      if (f) {
+        try {
+          f.focus();
+        } catch (_) {}
+      }
     }
   };
   render(groups);
@@ -171,21 +200,34 @@ function openMenu(btn) {
       ]);
     }
     closeCardMenu(true);
-    try { api.run && api.run(action, key); } catch (err) { toast(err?.message || "That did not work."); }
+    try {
+      api.run && api.run(action, key);
+    } catch (err) {
+      toast(err?.message || "That did not work.");
+    }
   });
-
 
   el.addEventListener("keydown", (e) => {
     const list = Array.from(el.querySelectorAll(".bx-cmenu-i:not([disabled])"));
     const i = list.indexOf(document.activeElement);
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       e.preventDefault();
-      const next = e.key === "ArrowDown" ? (i + 1) % list.length : (i - 1 + list.length) % list.length;
+      const next =
+        e.key === "ArrowDown" ? (i + 1) % list.length : (i - 1 + list.length) % list.length;
       list[next]?.focus();
-    } else if (e.key === "Home") { e.preventDefault(); list[0]?.focus(); }
-    else if (e.key === "End") { e.preventDefault(); list[list.length - 1]?.focus(); }
-    else if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeCardMenu(true); }
-    else if (e.key === "Tab") { closeCardMenu(false); }
+    } else if (e.key === "Home") {
+      e.preventDefault();
+      list[0]?.focus();
+    } else if (e.key === "End") {
+      e.preventDefault();
+      list[list.length - 1]?.focus();
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      closeCardMenu(true);
+    } else if (e.key === "Tab") {
+      closeCardMenu(false);
+    }
   });
 }
 
@@ -197,7 +239,11 @@ if (typeof document !== "undefined" && !document.__bxCardMenu) {
     "pointerdown",
     (e) => {
       const btn = e.target?.closest?.("[data-cardmenu]");
-      if (btn) { e.preventDefault(); e.stopPropagation(); return; }
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (openState && !e.target?.closest?.(".bx-cmenu")) closeCardMenu(false);
     },
     true,
@@ -210,13 +256,19 @@ if (typeof document !== "undefined" && !document.__bxCardMenu) {
       e.preventDefault();
       e.stopPropagation();
       const same = openState && openState.btn === btn;
-      if (same) { closeCardMenu(true); return; }
+      if (same) {
+        closeCardMenu(true);
+        return;
+      }
       openMenu(btn);
     },
     true,
   );
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && openState) { closeCardMenu(true); return; }
+    if (e.key === "Escape" && openState) {
+      closeCardMenu(true);
+      return;
+    }
     const btn = e.target?.closest?.("[data-cardmenu]");
     if (!btn) return;
     if (e.key === "Enter" || e.key === " " || e.key === "ArrowDown") {
@@ -229,7 +281,13 @@ if (typeof document !== "undefined" && !document.__bxCardMenu) {
   document.addEventListener("dragstart", () => closeCardMenu(false), true);
   window.__bxCloseCardMenu = closeCardMenu;
   window.addEventListener("resize", () => closeCardMenu(false));
-  window.addEventListener("scroll", () => { if (openState) place(openState.el, openState.btn); }, true);
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (openState) place(openState.el, openState.btn);
+    },
+    true,
+  );
 }
 
 /* --------------------------------------------------------------- dialogs */
@@ -259,7 +317,9 @@ export function confirmDialog(opts = {}) {
     paint(wrap);
     const done = (v) => {
       wrap.remove();
-      try { prev && prev.focus && prev.focus(); } catch (_) {}
+      try {
+        prev && prev.focus && prev.focus();
+      } catch (_) {}
       resolve(v);
     };
     wrap.addEventListener("click", (e) => {
@@ -267,7 +327,9 @@ export function confirmDialog(opts = {}) {
       if (b) return done(b.getAttribute("data-mfa") === "yes");
       if (e.target === wrap) done(false);
     });
-    wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") done(false); });
+    wrap.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") done(false);
+    });
     /* Focus lands on the safe action; a destructive confirm is never one
        stray Enter away. */
     const safe = wrap.querySelector('[data-mfa="no"]');
@@ -291,10 +353,11 @@ export function detailsDialog(opts = {}) {
   wrap.addEventListener("click", (e) => {
     if (e.target.closest("[data-mfa]") || e.target === wrap) wrap.remove();
   });
-  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") wrap.remove(); });
+  wrap.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") wrap.remove();
+  });
   wrap.querySelector("[data-mfa]")?.focus();
 }
-
 
 /** A removal is always reversible for a few seconds. */
 export function undoToast(message, onUndo) {
@@ -306,17 +369,26 @@ export function undoToast(message, onUndo) {
   el.querySelector("span").textContent = message;
   document.body.appendChild(el);
   let live = true;
-  const kill = () => { if (!live) return; live = false; el.remove(); };
+  const kill = () => {
+    if (!live) return;
+    live = false;
+    el.remove();
+  };
   el.querySelector("button").addEventListener("click", () => {
     kill();
-    try { onUndo && onUndo(); } catch (_) {}
+    try {
+      onUndo && onUndo();
+    } catch (_) {}
   });
   window.setTimeout(kill, 8000);
 }
 
 /** Download the original uploaded file, never a generated version. */
 export async function downloadOriginal(url, filename) {
-  if (!url) { toast("That Original Is Not Available."); return; }
+  if (!url) {
+    toast("That Original Is Not Available.");
+    return;
+  }
   try {
     const res = await fetch(url);
     const blob = await res.blob();

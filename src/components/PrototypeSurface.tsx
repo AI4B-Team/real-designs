@@ -3,7 +3,6 @@ import { initTooltips } from "@/lib/tooltips";
 import { initSelects } from "@/lib/selects";
 import { initDatalists } from "@/lib/datalists";
 
-
 type Props = {
   className: string;
   html: string;
@@ -23,11 +22,13 @@ export function PrototypeSurface({ className, html, init }: Props) {
     const stopTips = initTooltips(document);
     const stopSelects = initSelects(document);
     const stopLists = initDatalists(document);
-    return () => { stopLists(); stopSelects(); stopTips(); cleanup(); };
+    return () => {
+      stopLists();
+      stopSelects();
+      stopTips();
+      cleanup();
+    };
   }, [init]);
 
-
-  return (
-    <div ref={ref} className={className} dangerouslySetInnerHTML={{ __html: html }} />
-  );
+  return <div ref={ref} className={className} dangerouslySetInnerHTML={{ __html: html }} />;
 }

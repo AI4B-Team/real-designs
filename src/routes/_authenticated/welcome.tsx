@@ -54,7 +54,12 @@ function WelcomePage() {
     <main className="rd-auth rd-welcome">
       <aside className="promo">
         <a href="/" className="brand" aria-label="REAL DESIGNS Home">
-          <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
+          <span className="rd-mark">
+            <i>
+              <b>REAL</b>
+              <em>Designs</em>
+            </i>
+          </span>
         </a>
         <h2>
           Welcome To REAL DESIGNS.

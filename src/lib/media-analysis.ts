@@ -175,7 +175,8 @@ export async function measureImage(file: File): Promise<Measured> {
     hctx.drawImage(img, 0, 0, 8, 8);
     const hd = hctx.getImageData(0, 0, 8, 8).data;
     const hl: number[] = [];
-    for (let i = 0; i < hd.length; i += 4) hl.push(0.299 * hd[i]! + 0.587 * hd[i + 1]! + 0.114 * hd[i + 2]!);
+    for (let i = 0; i < hd.length; i += 4)
+      hl.push(0.299 * hd[i]! + 0.587 * hd[i + 1]! + 0.114 * hd[i + 2]!);
     const hmean = hl.reduce((a, v) => a + v, 0) / hl.length;
     const hash = hl.map((v) => (v > hmean ? "1" : "0")).join("");
 
@@ -245,7 +246,8 @@ export function classify(filename: string, m: Measured): Classified {
     }
   }
 
-  if (m.skyTop > 0.45 && m.greenBottom > 0.25) return { room: "Front Exterior", confidence: 0.58, flags, outdoor: true };
+  if (m.skyTop > 0.45 && m.greenBottom > 0.25)
+    return { room: "Front Exterior", confidence: 0.58, flags, outdoor: true };
   if (m.greenBottom > 0.45) return { room: "Garden", confidence: 0.52, flags, outdoor: true };
   if (outdoor) return { room: "Needs Review", confidence: 0.3, flags, outdoor: true };
   return { room: "Needs Review", confidence: 0.25, flags, outdoor: false };
@@ -260,7 +262,9 @@ export type GroupInput = {
 };
 
 /** Near-duplicate and exposure-bracket grouping from the perceptual hashes. */
-export function groupSets(items: GroupInput[]): Record<string, { dup?: string; hdr?: string; angle?: string }> {
+export function groupSets(
+  items: GroupInput[],
+): Record<string, { dup?: string; hdr?: string; angle?: string }> {
   const out: Record<string, { dup?: string; hdr?: string; angle?: string }> = {};
   const seen: { key: string; item: GroupInput }[] = [];
   for (const it of items) {
@@ -314,7 +318,14 @@ export function recommendations(assets: Asset[]): Recommendation[] {
   const has = (a: Asset, f: string) => (a.flags || []).includes(f);
   const live = assets.filter((a) => !a.hidden);
   const rec: Recommendation[] = [];
-  const push = (key: string, label: string, op: string | null, ids: string[], note: string, family: "property" | "design" = "property") => {
+  const push = (
+    key: string,
+    label: string,
+    op: string | null,
+    ids: string[],
+    note: string,
+    family: "property" | "design" = "property",
+  ) => {
     if (ids.length) rec.push({ key, label, family, op, ids, note });
   };
 
@@ -322,7 +333,12 @@ export function recommendations(assets: Asset[]): Recommendation[] {
     "enhance",
     "Auto Enhance",
     "auto_enhance",
-    live.filter((a) => has(a, "underexposed") || has(a, "overexposed") || (a.quality?.['contrast'] ?? 60) < 34).map((a) => a.id),
+    live
+      .filter(
+        (a) =>
+          has(a, "underexposed") || has(a, "overexposed") || (a.quality?.["contrast"] ?? 60) < 34,
+      )
+      .map((a) => a.id),
     "Exposure and contrast look off in these photos.",
   );
   push(
@@ -375,16 +391,16 @@ export function recommendations(assets: Asset[]): Recommendation[] {
  * classification, and comparable exposure. It never means the whole property.
  */
 export function similarTo(target: Asset, all: Asset[]): string[] {
-  const b = Number(target.quality?.['brightness'] ?? 0);
-  const w = Number(target.quality?.['warmth'] ?? 0);
+  const b = Number(target.quality?.["brightness"] ?? 0);
+  const w = Number(target.quality?.["warmth"] ?? 0);
   return all
     .filter(
       (a) =>
         !a.hidden &&
         a.room_group === target.room_group &&
-        Boolean(a.quality?.['outdoor']) === Boolean(target.quality?.['outdoor']) &&
-        Math.abs(Number(a.quality?.['brightness'] ?? 0) - b) <= 26 &&
-        Math.abs(Number(a.quality?.['warmth'] ?? 0) - w) <= 20,
+        Boolean(a.quality?.["outdoor"]) === Boolean(target.quality?.["outdoor"]) &&
+        Math.abs(Number(a.quality?.["brightness"] ?? 0) - b) <= 26 &&
+        Math.abs(Number(a.quality?.["warmth"] ?? 0) - w) <= 20,
     )
     .map((a) => a.id);
 }
@@ -404,9 +420,7 @@ export function pickRecommended(assets: (Asset & { quality: any })[]): Set<strin
   }
   const out = new Set<string>();
   for (const list of byGroup.values()) {
-    const best = list
-      .slice()
-      .sort((x, y) => score(y) - score(x))[0];
+    const best = list.slice().sort((x, y) => score(y) - score(x))[0];
     if (best) out.add(best.id);
   }
   return out;

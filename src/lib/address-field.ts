@@ -22,7 +22,10 @@ export type AddressState = {
 };
 
 const esc = (s: unknown) =>
-  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c] as string));
+  String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  );
 
 export function addressListHtml(id: string, properties: Array<{ address?: string | null }>) {
   const seen = new Set<string>();
@@ -38,12 +41,17 @@ export function addressListHtml(id: string, properties: Array<{ address?: string
 export function saveStatusHtml(state: string | undefined) {
   if (state === "saving") return `<span class="rv-save mono">Saving…</span>`;
   if (state === "saved") return `<span class="rv-save mono ok">Saved</span>`;
-  if (state === "error") return `<span class="rv-save mono bad">Couldn’t Save — <button class="fb-link" data-addr-retry="1">Retry</button></span>`;
+  if (state === "error")
+    return `<span class="rv-save mono bad">Couldn’t Save — <button class="fb-link" data-addr-retry="1">Retry</button></span>`;
   return "";
 }
 
 /** Full-width labelled field (Add Photos, Studio). */
-export function addressFieldHtml(s: AddressState, properties: Array<{ address?: string | null }>, opts: { id?: string; compact?: boolean } = {}) {
+export function addressFieldHtml(
+  s: AddressState,
+  properties: Array<{ address?: string | null }>,
+  opts: { id?: string; compact?: boolean } = {},
+) {
   const id = opts.id || "rdAddr";
   return `<label class="rv-f rd-addrf">Property Address
     <span class="rd-addr-in"><i data-lucide="map-pin"></i>
@@ -56,7 +64,11 @@ export function addressFieldHtml(s: AddressState, properties: Array<{ address?: 
 }
 
 /** Compact inline control for the Scenes information bar. */
-export function addressBarHtml(s: AddressState, properties: Array<{ address?: string | null }>, id = "rdAddrBar") {
+export function addressBarHtml(
+  s: AddressState,
+  properties: Array<{ address?: string | null }>,
+  id = "rdAddrBar",
+) {
   return `<div class="rd-addr-bar">
     <span class="rd-addr-in"><i data-lucide="map-pin"></i>
       <input id="${esc(id)}" list="${esc(id)}List" placeholder="Enter the property address" maxlength="200" value="${esc(s.address || "")}" aria-label="Property Address" autocomplete="off">
@@ -110,7 +122,9 @@ export function addressColumns(s: AddressState) {
       address_verified_at: null,
     };
   }
-  const built = (s.addressStructured as any) || buildAddress({ text: clean }, (s.addressSource as any) || "manual");
+  const built =
+    (s.addressStructured as any) ||
+    buildAddress({ text: clean }, (s.addressSource as any) || "manual");
   return { ...built, property_address: clean, normalized_address: normalizeAddress(clean) };
 }
 

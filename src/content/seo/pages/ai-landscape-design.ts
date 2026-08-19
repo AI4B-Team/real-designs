@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/ai-landscape-design",
   tier: "A",
-  intent: "Someone wants an AI landscape or backyard design for their actual yard with a real materials budget, not just plant inspiration.",
+  intent:
+    "Someone wants an AI landscape or backyard design for their actual yard with a real materials budget, not just plant inspiration.",
 
   metaTitle: "AI Landscape Design With A Real Materials Budget",
-  metaDescription: "Upload a yard photo and get an AI backyard design with plants, hardscape and irrigation priced separately as planning ranges.",
+  metaDescription:
+    "Upload a yard photo and get an AI backyard design with plants, hardscape and irrigation priced separately as planning ranges.",
 
   eyebrow: "AI Landscape Design",
   h1: "AI Landscape & Backyard Design With A Real Materials Budget",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same fence and grade, new patio, planting beds and path lighting.",
 
   steps: [
-    { title: "Upload A Photo Of Your Yard", text: "A photo taken from the back door or a corner of the yard, showing the fence lines and any existing trees, gives the software enough to work with." },
-    { title: "Choose A Style & Climate Zone", text: "Select a landscape style and confirm your general climate zone so plant selections are ones that will actually survive where you live." },
-    { title: "Get A Split Materials Budget", text: "Review a scope that separates plant material, hardscape, irrigation and lighting, plus an estimated ongoing maintenance cost." },
+    {
+      title: "Upload A Photo Of Your Yard",
+      text: "A photo taken from the back door or a corner of the yard, showing the fence lines and any existing trees, gives the software enough to work with.",
+    },
+    {
+      title: "Choose A Style & Climate Zone",
+      text: "Select a landscape style and confirm your general climate zone so plant selections are ones that will actually survive where you live.",
+    },
+    {
+      title: "Get A Split Materials Budget",
+      text: "Review a scope that separates plant material, hardscape, irrigation and lighting, plus an estimated ongoing maintenance cost.",
+    },
   ],
 
   showcase: ["landscape", "reality-lock", "scope", "brief"],
-
 
   sections: [
     {
@@ -72,11 +82,26 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "Can it design around existing trees I want to keep?", a: "Yes, if the trees are visible in your uploaded photo, the design keeps them in place and works the new planting beds and patio layout around their canopy and root zone rather than proposing removal." },
-    { q: "Does the budget include permits for a patio or deck?", a: "No, permit costs vary too much by city and by whether the structure is attached to the house to include in a general planning range. Check with your local building department separately for any structure requiring a permit." },
-    { q: "How accurate is the plant list for my actual climate?", a: "Plant selections are filtered by the general climate zone you provide, which improves accuracy over a generic list, but local microclimate factors like shade, wind exposure and soil type are not visible from a photo and can still affect what thrives." },
-    { q: "Can I get separate designs for the front and back yard?", a: "Yes, run each area through separately with its own photo. Front and back yards usually have different sun exposure and different design goals, curb appeal versus outdoor living, so treating them as one project tends to produce a compromised result for both." },
-    { q: "What if my yard has a significant slope?", a: "The tool will flag likely grading or drainage needs based on what is visible in the photo and include an allowance for it, but a meaningful slope should be confirmed on site before finalizing a hardscape budget, since retaining walls can add cost quickly." },
+    {
+      q: "Can it design around existing trees I want to keep?",
+      a: "Yes, if the trees are visible in your uploaded photo, the design keeps them in place and works the new planting beds and patio layout around their canopy and root zone rather than proposing removal.",
+    },
+    {
+      q: "Does the budget include permits for a patio or deck?",
+      a: "No, permit costs vary too much by city and by whether the structure is attached to the house to include in a general planning range. Check with your local building department separately for any structure requiring a permit.",
+    },
+    {
+      q: "How accurate is the plant list for my actual climate?",
+      a: "Plant selections are filtered by the general climate zone you provide, which improves accuracy over a generic list, but local microclimate factors like shade, wind exposure and soil type are not visible from a photo and can still affect what thrives.",
+    },
+    {
+      q: "Can I get separate designs for the front and back yard?",
+      a: "Yes, run each area through separately with its own photo. Front and back yards usually have different sun exposure and different design goals, curb appeal versus outdoor living, so treating them as one project tends to produce a compromised result for both.",
+    },
+    {
+      q: "What if my yard has a significant slope?",
+      a: "The tool will flag likely grading or drainage needs based on what is visible in the photo and include an allowance for it, but a meaningful slope should be confirmed on site before finalizing a hardscape budget, since retaining walls can add cost quickly.",
+    },
   ],
 
   relatedSlugs: [
@@ -89,6 +114,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Design Your Backyard With A Real Budget Behind It",
-  ctaBody: "Upload a photo of your yard and get a landscape design with plant material, hardscape and irrigation priced separately.",
+  ctaBody:
+    "Upload a photo of your yard and get a landscape design with plant material, hardscape and irrigation priced separately.",
   ctaLabel: "Start My Landscape Design",
 };

@@ -23,11 +23,24 @@ export const BUCKETS = {
 export type BucketName = (typeof BUCKETS)[keyof typeof BUCKETS];
 
 /** Per-bucket upload contract, mirrored by the bucket configuration itself. */
-export const BUCKET_LIMITS: Record<BucketName, { maxBytes: number; mime: RegExp; label: string }> = {
-  "room-photos": { maxBytes: 15 * 1024 * 1024, mime: /^image\//, label: "Photos must be an image under 15 MB." },
-  "reveal-videos": { maxBytes: 200 * 1024 * 1024, mime: /^video\//, label: "Videos must be a video file under 200 MB." },
-  "user-audio": { maxBytes: 25 * 1024 * 1024, mime: /^audio\//, label: "Audio must be an audio file under 25 MB." },
-};
+export const BUCKET_LIMITS: Record<BucketName, { maxBytes: number; mime: RegExp; label: string }> =
+  {
+    "room-photos": {
+      maxBytes: 15 * 1024 * 1024,
+      mime: /^image\//,
+      label: "Photos must be an image under 15 MB.",
+    },
+    "reveal-videos": {
+      maxBytes: 200 * 1024 * 1024,
+      mime: /^video\//,
+      label: "Videos must be a video file under 200 MB.",
+    },
+    "user-audio": {
+      maxBytes: 25 * 1024 * 1024,
+      mime: /^audio\//,
+      label: "Audio must be an audio file under 25 MB.",
+    },
+  };
 
 const MAX_STEM = 48;
 
@@ -35,10 +48,10 @@ const MAX_STEM = 48;
 export function sanitizeFileName(name: string): string {
   const base = (name.split(/[\\/]/).pop() ?? "").normalize("NFKD");
   const cleaned = base
-    // eslint-disable-next-line no-control-regex
+    // eslint-disable-next-line no-control-regex -- stripping control characters is the point
     .replace(/[\u0000-\u001f\u007f]/g, "")
     .replace(/[^A-Za-z0-9._-]+/g, "-")
-    .replace(/^[.\-]+/, "")
+    .replace(/^[.-]+/, "")
     .replace(/-{2,}/g, "-");
   return cleaned.slice(0, 120);
 }
@@ -47,21 +60,29 @@ export function sanitizeFileName(name: string): string {
 export function safeExtension(name: string, fallback = "bin"): string {
   const ext = sanitizeFileName(name).split(".").pop() ?? "";
   const clean = ext.toLowerCase().replace(/[^a-z0-9]/g, "");
-  return clean && clean.length <= 8 && clean !== sanitizeFileName(name).toLowerCase() ? clean : fallback;
+  return clean && clean.length <= 8 && clean !== sanitizeFileName(name).toLowerCase()
+    ? clean
+    : fallback;
 }
 
 /**
  * `<userId>/<sanitized-stem>-<uuid>.<ext>` — owner-scoped, readable and
  * collision resistant.
  */
-export function buildObjectPath(userId: string, fileName: string, opts?: { prefix?: string; fallbackExt?: string }): string {
-  if (!/^[0-9a-f-]{36}$/i.test(userId)) throw new Error("A signed-in user is required to upload files.");
+export function buildObjectPath(
+  userId: string,
+  fileName: string,
+  opts?: { prefix?: string; fallbackExt?: string },
+): string {
+  if (!/^[0-9a-f-]{36}$/i.test(userId))
+    throw new Error("A signed-in user is required to upload files.");
   const ext = safeExtension(fileName, opts?.fallbackExt ?? "bin");
   const stem =
     sanitizeFileName(fileName)
       .replace(/\.[^.]*$/, "")
       .slice(0, MAX_STEM) || "file";
-  const id = globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const id =
+    globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`;
   const prefix = opts?.prefix ? `${sanitizeFileName(opts.prefix)}/` : "";
   return `${userId}/${prefix}${stem}-${id}.${ext}`;
 }
@@ -73,7 +94,10 @@ export function isOwnedPath(path: string | null | undefined, userId: string): bo
 }
 
 /** Validate a file against its bucket contract before any network call. */
-export function assertUploadAllowed(bucket: BucketName, file: { type: string; size: number }): void {
+export function assertUploadAllowed(
+  bucket: BucketName,
+  file: { type: string; size: number },
+): void {
   const limit = BUCKET_LIMITS[bucket];
   if (!limit.mime.test(file.type || "")) throw new Error(limit.label);
   if (file.size > limit.maxBytes) throw new Error(limit.label);

@@ -13,7 +13,10 @@ export const BUDGET_UNAVAILABLE_MESSAGE =
 export async function checkBudgetsAvailable(): Promise<boolean> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const [{ count: verified }, { count: catalog }] = await Promise.all([
-    supabaseAdmin.from("markets").select("id", { count: "exact", head: true }).not("verified_at", "is", null),
+    supabaseAdmin
+      .from("markets")
+      .select("id", { count: "exact", head: true })
+      .not("verified_at", "is", null),
     supabaseAdmin.from("unit_costs").select("id", { count: "exact", head: true }),
   ]);
   return !!verified && !!catalog;
@@ -28,5 +31,7 @@ export async function assertBudgetsAvailable(): Promise<void> {
 /** Section/asset keys that carry priced budget content in presentation payloads. */
 export function isBudgetSectionKey(key: unknown): boolean {
   const k = String(key ?? "").toLowerCase();
-  return k.includes("budget") || k.includes("scope") || k.includes("price") || k.includes("pricing");
+  return (
+    k.includes("budget") || k.includes("scope") || k.includes("price") || k.includes("pricing")
+  );
 }

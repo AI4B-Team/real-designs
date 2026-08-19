@@ -65,7 +65,15 @@ const POSITIVE = [
   "applied",
   "on",
 ];
-const WARNING = ["medium", "measuring", "scanning", "reading", "detecting", "near target", "review"];
+const WARNING = [
+  "medium",
+  "measuring",
+  "scanning",
+  "reading",
+  "detecting",
+  "near target",
+  "review",
+];
 const NEGATIVE = ["over target", "above band", "low", "structural change", "failed"];
 
 export function shortLabel(label: string): string {

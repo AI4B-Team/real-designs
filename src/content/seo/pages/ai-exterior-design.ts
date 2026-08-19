@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/ai-exterior-design",
   tier: "A",
-  intent: "Someone wants a priced AI exterior design and curb appeal makeover for a house they own, not just a rendering.",
+  intent:
+    "Someone wants a priced AI exterior design and curb appeal makeover for a house they own, not just a rendering.",
 
   metaTitle: "AI Exterior Design & Curb Appeal, Priced",
-  metaDescription: "Upload a front elevation photo and get an AI exterior design with paint, siding, roof and door choices priced as a planning range.",
+  metaDescription:
+    "Upload a front elevation photo and get an AI exterior design with paint, siding, roof and door choices priced as a planning range.",
 
   eyebrow: "AI Exterior Design",
   h1: "AI Exterior Design & Curb Appeal, Priced Like A Job",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same structure, new paint scheme, front door and trim, roof unchanged.",
 
   steps: [
-    { title: "Upload A Front Elevation Photo", text: "Stand across the street or in the driveway and photograph the full front of the house, including the roofline and the driveway if possible." },
-    { title: "Test Paint, Siding & Door Options", text: "Generate a few exterior looks against your actual roofline and window placement, not a generic house shape." },
-    { title: "Get A Priced Curb Appeal Scope", text: "Receive a scope broken out by trade, paint, roof, siding, door and landscaping, so you can phase the work or hand it to a contractor." },
+    {
+      title: "Upload A Front Elevation Photo",
+      text: "Stand across the street or in the driveway and photograph the full front of the house, including the roofline and the driveway if possible.",
+    },
+    {
+      title: "Test Paint, Siding & Door Options",
+      text: "Generate a few exterior looks against your actual roofline and window placement, not a generic house shape.",
+    },
+    {
+      title: "Get A Priced Curb Appeal Scope",
+      text: "Receive a scope broken out by trade, paint, roof, siding, door and landscaping, so you can phase the work or hand it to a contractor.",
+    },
   ],
 
   showcase: ["exterior", "reality-lock", "scope", "brief", "arv"],
-
 
   sections: [
     {
@@ -72,11 +82,26 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "Do I need photos from multiple angles?", a: "One clear front elevation photo is enough to generate a design and a paint and trim estimate. If your house has a distinct side or rear feature you want addressed, a second photo helps, but it is not required to start." },
-    { q: "Can the tool tell me if I need a new roof?", a: "No. Roof condition depends on physical inspection, not photo analysis. The scope includes a roof allowance so the budget has a placeholder, but confirm actual condition with a roofer before relying on that number." },
-    { q: "Will the paint colors it shows me match real paint brands?", a: "Color options are generated to be close matches to common exterior paint lines, and the scope notes them as closest match rather than an exact manufacturer code, since lighting and photo color can shift slightly from the can." },
-    { q: "How is this different from a general contractor estimate?", a: "This gives you a planning range across the whole exterior scope before you call anyone, so you know roughly what paint versus siding versus a new door costs relative to each other. A contractor estimate is still the number to act on for actual bidding." },
-    { q: "Does it factor in HOA rules or paint color restrictions?", a: "No, the tool does not know your HOA's approved palette. If your neighborhood has color or material restrictions, check those separately before finalizing a design generated here." },
+    {
+      q: "Do I need photos from multiple angles?",
+      a: "One clear front elevation photo is enough to generate a design and a paint and trim estimate. If your house has a distinct side or rear feature you want addressed, a second photo helps, but it is not required to start.",
+    },
+    {
+      q: "Can the tool tell me if I need a new roof?",
+      a: "No. Roof condition depends on physical inspection, not photo analysis. The scope includes a roof allowance so the budget has a placeholder, but confirm actual condition with a roofer before relying on that number.",
+    },
+    {
+      q: "Will the paint colors it shows me match real paint brands?",
+      a: "Color options are generated to be close matches to common exterior paint lines, and the scope notes them as closest match rather than an exact manufacturer code, since lighting and photo color can shift slightly from the can.",
+    },
+    {
+      q: "How is this different from a general contractor estimate?",
+      a: "This gives you a planning range across the whole exterior scope before you call anyone, so you know roughly what paint versus siding versus a new door costs relative to each other. A contractor estimate is still the number to act on for actual bidding.",
+    },
+    {
+      q: "Does it factor in HOA rules or paint color restrictions?",
+      a: "No, the tool does not know your HOA's approved palette. If your neighborhood has color or material restrictions, check those separately before finalizing a design generated here.",
+    },
   ],
 
   relatedSlugs: [
@@ -89,6 +114,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Price Your Curb Appeal Before You Paint",
-  ctaBody: "Upload a front elevation photo and get exterior design options with a paint, door and landscaping budget attached.",
+  ctaBody:
+    "Upload a front elevation photo and get exterior design options with a paint, door and landscaping budget attached.",
   ctaLabel: "Start My Exterior Design",
 };

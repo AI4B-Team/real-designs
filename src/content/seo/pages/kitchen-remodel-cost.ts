@@ -11,8 +11,7 @@ export const page: LandingPage = {
 
   eyebrow: "Kitchen Cost",
   h1: "What A Kitchen Remodel Actually Costs",
-  lede:
-    "The same word, kitchen remodel, describes a $9,000 refresh and an $85,000 gut job. Here is how to tell which one you are actually pricing.",
+  lede: "The same word, kitchen remodel, describes a $9,000 refresh and an $85,000 gut job. Here is how to tell which one you are actually pricing.",
 
   spaceType: "interior",
   roomType: "kitchen",
@@ -24,17 +23,27 @@ export const page: LandingPage = {
 
   beforePhoto: "kitchenBefore",
   afterPhoto: "kitchenAfter",
-  beforeCaption: "A dated kitchen with original cabinetry, laminate counters and no layout changes needed.",
-  afterCaption: "The same footprint after a mid-range remodel: new cabinetry, quartz counters and updated lighting.",
+  beforeCaption:
+    "A dated kitchen with original cabinetry, laminate counters and no layout changes needed.",
+  afterCaption:
+    "The same footprint after a mid-range remodel: new cabinetry, quartz counters and updated lighting.",
 
   steps: [
-    { title: "Pick Your Kitchen Size", text: "Typical cabinet run and square footage set the baseline for the planning range below." },
-    { title: "Pick A Tier", text: "Cosmetic refresh, mid-range remodel, or full gut with layout change, each with its own planning range." },
-    { title: "Get The Line-Item Breakdown", text: "Every trade priced separately so you can see exactly where your budget is going." },
+    {
+      title: "Pick Your Kitchen Size",
+      text: "Typical cabinet run and square footage set the baseline for the planning range below.",
+    },
+    {
+      title: "Pick A Tier",
+      text: "Cosmetic refresh, mid-range remodel, or full gut with layout change, each with its own planning range.",
+    },
+    {
+      title: "Get The Line-Item Breakdown",
+      text: "Every trade priced separately so you can see exactly where your budget is going.",
+    },
   ],
 
   showcase: ["scope", "budget-mode", "reality-lock", "shop", "grades"],
-
 
   sections: [
     {
@@ -108,6 +117,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Price Your Own Kitchen In Minutes",
-  ctaBody: "Try the free rehab calculator for a tier-specific planning range, or start an AI redesign of your kitchen.",
+  ctaBody:
+    "Try the free rehab calculator for a tier-specific planning range, or start an AI redesign of your kitchen.",
   ctaLabel: "Try The Free Calculator",
 };

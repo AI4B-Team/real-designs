@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/ai-bathroom-design",
   tier: "A",
-  intent: "Buyer wants AI bathroom design plus a realistic remodel cost range and understanding of why bathrooms are so expensive per square foot.",
+  intent:
+    "Buyer wants AI bathroom design plus a realistic remodel cost range and understanding of why bathrooms are so expensive per square foot.",
 
   metaTitle: "AI Bathroom Design & Remodel Cost Planning",
-  metaDescription: "Design a bathroom with AI and see a realistic remodel cost range. Waterproofing, tile labor, tub to shower conversion and ventilation broken down.",
+  metaDescription:
+    "Design a bathroom with AI and see a realistic remodel cost range. Waterproofing, tile labor, tub to shower conversion and ventilation broken down.",
 
   eyebrow: "AI Bathroom Design",
   h1: "AI Bathroom Design & Remodel Cost",
@@ -24,16 +26,25 @@ export const page: LandingPage = {
   beforePhoto: "bathBefore",
   afterPhoto: "bath",
   beforeCaption: "Existing bathroom, dated tile and fixtures, tub in place.",
-  afterCaption: "Same bathroom, tile, vanity and fixtures redesigned within the existing footprint.",
+  afterCaption:
+    "Same bathroom, tile, vanity and fixtures redesigned within the existing footprint.",
 
   steps: [
-    { title: "Upload Your Bathroom Photo", text: "Tub, shower, vanity and toilet positions from your actual room anchor the design so waterproofing and tile scope match reality." },
-    { title: "Choose Fixtures & Tile Level", text: "Select a tub to shower conversion, vanity upgrade or full gut, and the design generates a layout that fits your budget band." },
-    { title: "Get A Waterproofing & Trade Scope", text: "Export a scope with tile square footage, waterproofing membrane area and plumbing moves flagged as their own line items." },
+    {
+      title: "Upload Your Bathroom Photo",
+      text: "Tub, shower, vanity and toilet positions from your actual room anchor the design so waterproofing and tile scope match reality.",
+    },
+    {
+      title: "Choose Fixtures & Tile Level",
+      text: "Select a tub to shower conversion, vanity upgrade or full gut, and the design generates a layout that fits your budget band.",
+    },
+    {
+      title: "Get A Waterproofing & Trade Scope",
+      text: "Export a scope with tile square footage, waterproofing membrane area and plumbing moves flagged as their own line items.",
+    },
   ],
 
   showcase: ["scope", "brief", "reality-lock", "grades"],
-
 
   sections: [
     {
@@ -72,11 +83,26 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "Why is a bathroom remodel so expensive per square foot?", a: "Nearly every surface in a bathroom is waterproofed, tiled, or plumbed, and those trades price by fixture count and tiled surface area, not by floor area. A small room still needs a full shower valve, full waterproofing membrane and full tile labor." },
-    { q: "How much does a tub to shower conversion cost?", a: "A basic conversion that reuses the existing plumbing typically plans in the $6,000 to $9,000 range. A curbless shower with a linear drain, which requires lowering the subfloor, plans closer to $9,000 to $14,000." },
-    { q: "What is the biggest hidden cost in a bathroom remodel?", a: "Waterproofing. Homeowners pricing tile and fixtures from a store receipt usually miss the membrane system behind the tile, which runs $1,200 to $2,800 and is the difference between a remodel that lasts and one that leaks within two years." },
-    { q: "Do I need a bigger exhaust fan for a remodeled bathroom?", a: "If the bathroom lacks proper exterior ducted ventilation, code generally requires adding it during a remodel. Retrofitting exterior ducting typically plans in the $350 to $900 range depending on the duct run and roof or wall penetration needed." },
-    { q: "Why does tile pattern choice change the price so much?", a: "A straight-set large format tile runs $8 to $15 per square foot installed, while small format mosaic or herringbone patterns run $18 to $30 per square foot because the layout takes far longer to set and grout correctly." },
+    {
+      q: "Why is a bathroom remodel so expensive per square foot?",
+      a: "Nearly every surface in a bathroom is waterproofed, tiled, or plumbed, and those trades price by fixture count and tiled surface area, not by floor area. A small room still needs a full shower valve, full waterproofing membrane and full tile labor.",
+    },
+    {
+      q: "How much does a tub to shower conversion cost?",
+      a: "A basic conversion that reuses the existing plumbing typically plans in the $6,000 to $9,000 range. A curbless shower with a linear drain, which requires lowering the subfloor, plans closer to $9,000 to $14,000.",
+    },
+    {
+      q: "What is the biggest hidden cost in a bathroom remodel?",
+      a: "Waterproofing. Homeowners pricing tile and fixtures from a store receipt usually miss the membrane system behind the tile, which runs $1,200 to $2,800 and is the difference between a remodel that lasts and one that leaks within two years.",
+    },
+    {
+      q: "Do I need a bigger exhaust fan for a remodeled bathroom?",
+      a: "If the bathroom lacks proper exterior ducted ventilation, code generally requires adding it during a remodel. Retrofitting exterior ducting typically plans in the $350 to $900 range depending on the duct run and roof or wall penetration needed.",
+    },
+    {
+      q: "Why does tile pattern choice change the price so much?",
+      a: "A straight-set large format tile runs $8 to $15 per square foot installed, while small format mosaic or herringbone patterns run $18 to $30 per square foot because the layout takes far longer to set and grout correctly.",
+    },
   ],
 
   relatedSlugs: [
@@ -89,6 +115,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Design Your Bathroom & See The Scope",
-  ctaBody: "Upload your bathroom and get a design with tile, waterproofing and a planning range attached.",
+  ctaBody:
+    "Upload your bathroom and get a design with tile, waterproofing and a planning range attached.",
   ctaLabel: "Start Bathroom Design",
 };

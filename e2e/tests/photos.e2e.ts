@@ -29,7 +29,9 @@ test.describe("Photo management", () => {
     await gotoView(appPage, "studio");
     await chooseDoor(appPage, "design");
     await uploadPhotos(appPage, [unsupportedFile()]);
-    await expect(appPage.getByText(/JPG|PNG|WEBP|HEIC|not supported|unsupported/i).first()).toBeVisible();
+    await expect(
+      appPage.getByText(/JPG|PNG|WEBP|HEIC|not supported|unsupported/i).first(),
+    ).toBeVisible();
     await expect(photoCards(appPage)).toHaveCount(0);
   });
 
@@ -58,7 +60,10 @@ test.describe("Photo management", () => {
     await clickMenuItem(menu, /change room type/i);
     const dialog = openModal(appPage);
     await expect(dialog).toBeVisible();
-    await dialog.getByText(/^kitchen$/i).first().click();
+    await dialog
+      .getByText(/^kitchen$/i)
+      .first()
+      .click();
     await expect(card).toContainText(/kitchen/i);
   });
 
@@ -76,7 +81,10 @@ test.describe("Photo management", () => {
     await clickMenuItem(menu, /override format/i);
     let dialog = openModal(appPage);
     await expect(dialog).toContainText(/override photo format/i);
-    await dialog.getByText(/portrait 9:16/i).first().click();
+    await dialog
+      .getByText(/portrait 9:16/i)
+      .first()
+      .click();
     await dialog.getByRole("button", { name: /^save/i }).click();
     await expect(dialog).toBeHidden();
 

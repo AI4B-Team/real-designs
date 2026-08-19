@@ -34,7 +34,10 @@ function host() {
   return document.getElementById("p-watch") || document.getElementById("v-watch");
 }
 function esc(s: any) {
-  return String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  return String(s == null ? "" : s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+  );
 }
 function toast(m: string) {
   try {
@@ -44,7 +47,11 @@ function toast(m: string) {
 function fmt(d: any) {
   if (!d) return "—";
   try {
-    return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return new Date(d).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   } catch (_) {
     return "—";
   }
@@ -73,7 +80,10 @@ async function load() {
 
 function seg(name: string, value: string, opts: Array<[string, string]>) {
   return `<div class="wt-seg">${opts
-    .map(([id, label]) => `<button class="${value === id ? "on" : ""}" data-seg="${name}" data-val="${id}">${label}</button>`)
+    .map(
+      ([id, label]) =>
+        `<button class="${value === id ? "on" : ""}" data-seg="${name}" data-val="${id}">${label}</button>`,
+    )
     .join("")}</div>`;
 }
 
@@ -93,14 +103,20 @@ function formHtml() {
       </label>
       ${chk ? `<div class="wt-check ${chk.ok && chk.robots_ok && chk.reachable ? "ok" : "bad"}"><i data-lucide="${chk.ok && chk.robots_ok && chk.reachable ? "check-circle-2" : "triangle-alert"}"></i><span>${esc(chk.reason)}</span></div>` : ""}
 
-      <label class="wt-f">Monitoring Period ${seg("period", f.period, [["weekly", "Weekly"], ["monthly", "Monthly"]])}</label>
+      <label class="wt-f">Monitoring Period ${seg("period", f.period, [
+        ["weekly", "Weekly"],
+        ["monthly", "Monthly"],
+      ])}</label>
 
       <label class="wt-f">Watch Since
         <input id="wtSince" type="date" value="${esc(f.watch_since)}">
         <em>Listings Modified On Or After This Date. Older Listings Are Recorded But Skipped.</em>
       </label>
 
-      <label class="wt-f">Video Type ${seg("video_type", f.video_type, [["listing_video", "Listing Video"], ["social_reel", "Social Reel"]])}</label>
+      <label class="wt-f">Video Type ${seg("video_type", f.video_type, [
+        ["listing_video", "Listing Video"],
+        ["social_reel", "Social Reel"],
+      ])}</label>
 
       <div class="wt-f">New Listings
         <label class="wt-radio"><input type="radio" name="wtMode" value="review" ${f.new_listing_mode === "review" ? "checked" : ""}>
@@ -125,23 +141,26 @@ function formHtml() {
 }
 
 function listHtml() {
-  if (S.loading) return `<div class="card"><div class="card-b"><div class="wt-empty">Loading Your Monitored Sites</div></div></div>`;
+  if (S.loading)
+    return `<div class="card"><div class="card-b"><div class="wt-empty">Loading Your Monitored Sites</div></div></div>`;
   const rows = S.sites || [];
   return `<div class="card wt-card">
     <div class="card-h"><div><h3>Sites You Are Watching</h3><div class="sub">${rows.length} Site${rows.length === 1 ? "" : "s"}</div></div></div>
     <div class="card-b">
-      ${rows.length
-        ? `<div class="wt-list">${rows
-            .map(
-              (r: any) => `<div class="wt-row-item">
+      ${
+        rows.length
+          ? `<div class="wt-list">${rows
+              .map(
+                (r: any) => `<div class="wt-row-item">
         <div class="wt-site"><b>${esc(r.host)}</b><span>${esc(r.site_url)}</span></div>
         <div class="wt-meta mono">${r.period === "monthly" ? "Monthly" : "Weekly"} · ${r.video_type === "social_reel" ? "Social Reel" : "Listing Video"} · ${r.new_listing_mode === "auto" ? "Auto Create" : "Review First"}</div>
         <div class="wt-meta">Since ${fmt(r.watch_since)} · Attested ${fmt(r.attested_at)}</div>
         <button class="btn btn-ghost btn-xs" data-remove="${r.id}"><i data-lucide="trash-2"></i>Remove</button>
       </div>`,
-            )
-            .join("")}</div>`
-        : `<div class="wt-empty">No Sites Yet. Add The Site You Own Above And We Will Watch It For New Listings.</div>`}
+              )
+              .join("")}</div>`
+          : `<div class="wt-empty">No Sites Yet. Add The Site You Own Above And We Will Watch It For New Listings.</div>`
+      }
     </div>
   </div>`;
 }
@@ -165,9 +184,12 @@ function wire(el: HTMLElement) {
     const btn = el.querySelector("#wtStart") as HTMLButtonElement | null;
     if (btn) btn.disabled = !(S.form.attested && S.form.site_url.trim()) || S.busy;
   });
-  (el.querySelector("#wtSince") as HTMLInputElement | null)?.addEventListener("change", (e: any) => {
-    S.form.watch_since = e.target.value;
-  });
+  (el.querySelector("#wtSince") as HTMLInputElement | null)?.addEventListener(
+    "change",
+    (e: any) => {
+      S.form.watch_since = e.target.value;
+    },
+  );
   el.querySelectorAll("[data-seg]").forEach((b: any) =>
     b.addEventListener("click", () => {
       S.form[b.dataset.seg] = b.dataset.val;
@@ -186,43 +208,56 @@ function wire(el: HTMLElement) {
     if (btn) btn.disabled = !(S.form.attested && S.form.site_url.trim()) || S.busy;
   });
 
-  (el.querySelector("#wtCheck") as HTMLButtonElement | null)?.addEventListener("click", async (e: any) => {
-    if (!S.form.site_url.trim()) return toast("Enter Your Website Address First.");
-    e.currentTarget.disabled = true;
-    try {
-      S.check = await checkWatchSite({ data: { site_url: S.form.site_url.trim() } });
-    } catch (err: any) {
-      S.check = { ok: false, reason: err?.message || "We could not check that address." };
-    }
-    render();
-  });
-
-  (el.querySelector("#wtStart") as HTMLButtonElement | null)?.addEventListener("click", async () => {
-    if (!S.form.attested) return;
-    S.busy = true;
-    render();
-    try {
-      await addWatchedSite({
-        data: {
-          site_url: S.form.site_url.trim(),
-          period: S.form.period,
-          watch_since: S.form.watch_since || null,
-          video_type: S.form.video_type,
-          new_listing_mode: S.form.new_listing_mode,
-          attested: true,
-        },
-      });
-      S.form = { site_url: "", period: "weekly", watch_since: "", video_type: "listing_video", new_listing_mode: "review", attested: false };
-      S.check = null;
-      toast("Monitoring Started.");
-      S.busy = false;
-      await load();
-    } catch (e: any) {
-      S.busy = false;
-      toast(e?.message || "We could not start monitoring that site.");
+  (el.querySelector("#wtCheck") as HTMLButtonElement | null)?.addEventListener(
+    "click",
+    async (e: any) => {
+      if (!S.form.site_url.trim()) return toast("Enter Your Website Address First.");
+      e.currentTarget.disabled = true;
+      try {
+        S.check = await checkWatchSite({ data: { site_url: S.form.site_url.trim() } });
+      } catch (err: any) {
+        S.check = { ok: false, reason: err?.message || "We could not check that address." };
+      }
       render();
-    }
-  });
+    },
+  );
+
+  (el.querySelector("#wtStart") as HTMLButtonElement | null)?.addEventListener(
+    "click",
+    async () => {
+      if (!S.form.attested) return;
+      S.busy = true;
+      render();
+      try {
+        await addWatchedSite({
+          data: {
+            site_url: S.form.site_url.trim(),
+            period: S.form.period,
+            watch_since: S.form.watch_since || null,
+            video_type: S.form.video_type,
+            new_listing_mode: S.form.new_listing_mode,
+            attested: true,
+          },
+        });
+        S.form = {
+          site_url: "",
+          period: "weekly",
+          watch_since: "",
+          video_type: "listing_video",
+          new_listing_mode: "review",
+          attested: false,
+        };
+        S.check = null;
+        toast("Monitoring Started.");
+        S.busy = false;
+        await load();
+      } catch (e: any) {
+        S.busy = false;
+        toast(e?.message || "We could not start monitoring that site.");
+        render();
+      }
+    },
+  );
 
   el.querySelectorAll("[data-remove]").forEach((b: any) =>
     b.addEventListener("click", async () => {

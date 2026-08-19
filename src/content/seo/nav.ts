@@ -171,8 +171,6 @@ export const LEGAL_LINKS: FooterLink[] = [
   { href: "/do-not-sell", label: "Do Not Sell My Info" },
 ];
 
-
-
 export const POPULAR_TOOL_LINKS: NavLink[] = [
   { href: "/free/ai-interior-design", label: "AI Redesign" },
   { href: "/free/virtual-staging", label: "Virtual Staging" },

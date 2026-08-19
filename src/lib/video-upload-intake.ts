@@ -53,16 +53,17 @@ export const ENRICH_NOTICE =
  */
 export function attachUploadAssets(w: IntakeWizard): string[] {
   if (!w) return [];
-  const available: any[] = Array.isArray(w['available']) ? w['available'] : [];
-  const gridOrder: string[] = Array.isArray(w['gridOrder']) ? w['gridOrder'] : [];
-  w['available'] = available;
-  w['gridOrder'] = gridOrder;
+  const available: any[] = Array.isArray(w["available"]) ? w["available"] : [];
+  const gridOrder: string[] = Array.isArray(w["gridOrder"]) ? w["gridOrder"] : [];
+  w["available"] = available;
+  w["gridOrder"] = gridOrder;
   const have = new Set(available.map((a: any) => a.key));
   /* Two upload records pointing at the same stored object are the same photo
      (a retried or double-fired ingest), so only the first becomes an asset. */
   /* Only a durable storage path identifies a photo. A transient object URL
      can repeat across genuinely different files, so it never merges two. */
-  const durable = (p: any) => !!p && typeof p === "string" && !p.startsWith("blob:") && !p.startsWith("data:");
+  const durable = (p: any) =>
+    !!p && typeof p === "string" && !p.startsWith("blob:") && !p.startsWith("data:");
   const havePath = new Set(available.map((a: any) => a.path).filter(durable));
   const ordered = new Set(gridOrder);
   const added: string[] = [];
@@ -145,7 +146,6 @@ export async function runIntake(w: IntakeWizard, list: any, deps: IntakeDeps): P
   await runEnrichment(w, deps);
 }
 
-
 export const STEP_TWO_ERROR =
   "Your photos were added, but the next step could not load. Please try again.";
 
@@ -160,17 +160,19 @@ export async function runEnrichment(w: IntakeWizard, deps: Partial<IntakeDeps>):
   try {
     await Promise.race([
       deps.loadAssets ? deps.loadAssets() : Promise.resolve(),
-      new Promise((_r, reject) => { timer = setTimeout(() => reject(new Error("enrich-timeout")), limit); }),
+      new Promise((_r, reject) => {
+        timer = setTimeout(() => reject(new Error("enrich-timeout")), limit);
+      }),
     ]);
     if (deps.isCurrent && !deps.isCurrent(w)) return;
     attach(w);
-    if (!(w['scenes'] || []).length && deps.selectUploads) deps.selectUploads(w);
+    if (!(w["scenes"] || []).length && deps.selectUploads) deps.selectUploads(w);
     if (!w.manualOrder && deps.autoArrange) deps.autoArrange();
   } catch {
     if (deps.isCurrent && !deps.isCurrent(w)) return;
     /* Optional analysis failing is not a navigation failure. */
     attach(w);
-    if (!(w['scenes'] || []).length && deps.selectUploads) deps.selectUploads(w);
+    if (!(w["scenes"] || []).length && deps.selectUploads) deps.selectUploads(w);
     w.enrichNotice = ENRICH_NOTICE;
   } finally {
     if (timer) clearTimeout(timer);
@@ -208,7 +210,7 @@ export async function runAdvanceToGrid(
     delete w.enrichNotice;
     w.step = 2;
     attach(w);
-    if (!(w['scenes'] || []).length) {
+    if (!(w["scenes"] || []).length) {
       if (deps.selectUploads) deps.selectUploads(w);
       else deps.selectRecommended?.();
     }
@@ -230,7 +232,9 @@ export async function runAdvanceToGrid(
 export function logVideoEvent(event: string, data: Record<string, any>): void {
   try {
     const payload = { event, ...data };
-    (globalThis as any).__rdVideoEvents = ((globalThis as any).__rdVideoEvents || []).concat(payload);
+    (globalThis as any).__rdVideoEvents = ((globalThis as any).__rdVideoEvents || []).concat(
+      payload,
+    );
     if ((globalThis as any).__rdVideoDebug) console.info("[rd]", payload);
   } catch (_) {}
 }
@@ -257,7 +261,7 @@ export function ensureStepInvariant(w: IntakeWizard, deps?: Partial<IntakeDeps>)
   if (!w || w.step !== 1 || !(w.uploads || []).length) return false;
   w.step = 2;
   (deps?.attachUploads || attachUploadAssets)(w);
-  if (!(w['scenes'] || []).length) deps?.selectUploads?.(w);
+  if (!(w["scenes"] || []).length) deps?.selectUploads?.(w);
   deps?.render?.();
   logVideoEvent("video_step_invariant_applied", { totalUploads: (w.uploads || []).length });
   return true;
@@ -272,7 +276,7 @@ export function hydrateSeededWizard(w: IntakeWizard, deps: Partial<IntakeDeps>):
   const attach = deps.attachUploads || attachUploadAssets;
   w.step = 2;
   attach(w);
-  if (!(w['scenes'] || []).length) deps.selectUploads?.(w);
+  if (!(w["scenes"] || []).length) deps.selectUploads?.(w);
   w.selectGridLoading = true;
   logVideoEvent("video_photos_accepted", {
     entrySource: "seed",
@@ -297,9 +301,15 @@ export async function acceptVideoPhotos(opts: {
   const { wizard: w, files, source, deps } = opts;
   if (!w) return;
   const before = (w.uploads || []).length;
-  const advance = opts.shouldAdvance === false
-    ? { ...deps, advance: async (x: IntakeWizard) => { x.step = Math.max(x.step, 2); } }
-    : deps;
+  const advance =
+    opts.shouldAdvance === false
+      ? {
+          ...deps,
+          advance: async (x: IntakeWizard) => {
+            x.step = Math.max(x.step, 2);
+          },
+        }
+      : deps;
   await runIntake(w, files, advance);
   ensureStepInvariant(w, deps);
   logVideoEvent("video_photos_accepted", {

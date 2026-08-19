@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/ai-kitchen-design",
   tier: "A",
-  intent: "Buyer wants AI kitchen design plus a realistic sense of what a kitchen remodel actually costs and why estimates vary so widely.",
+  intent:
+    "Buyer wants AI kitchen design plus a realistic sense of what a kitchen remodel actually costs and why estimates vary so widely.",
 
   metaTitle: "AI Kitchen Design & Remodel Cost Planning",
-  metaDescription: "Design a kitchen with AI and see a realistic remodel cost range. Cabinetry, layout changes, appliances and plumbing broken down by line item.",
+  metaDescription:
+    "Design a kitchen with AI and see a realistic remodel cost range. Cabinetry, layout changes, appliances and plumbing broken down by line item.",
 
   eyebrow: "AI Kitchen Design",
   h1: "AI Kitchen Design & Remodel Cost",
@@ -24,16 +26,25 @@ export const page: LandingPage = {
   beforePhoto: "kitchenBefore",
   afterPhoto: "kitchenAfter",
   beforeCaption: "Existing kitchen, dated cabinetry and laminate counters, footprint unchanged.",
-  afterCaption: "Same kitchen, cabinetry, counters and lighting redesigned within the existing footprint.",
+  afterCaption:
+    "Same kitchen, cabinetry, counters and lighting redesigned within the existing footprint.",
 
   steps: [
-    { title: "Upload Your Kitchen Photo", text: "The cabinet locations, window and appliance positions from your actual room anchor the design so the plan matches what a contractor will actually build." },
-    { title: "Set Budget Band & Finish Level", text: "Choose a refresh, makeover or full renovation level and the design generates cabinetry, counters and appliances that fit that spend, not an aspirational one." },
-    { title: "Get A Cabinetry & Trade Scope", text: "Export a line item scope with cabinet linear footage, counter square footage and any plumbing or electrical relocation flagged separately." },
+    {
+      title: "Upload Your Kitchen Photo",
+      text: "The cabinet locations, window and appliance positions from your actual room anchor the design so the plan matches what a contractor will actually build.",
+    },
+    {
+      title: "Set Budget Band & Finish Level",
+      text: "Choose a refresh, makeover or full renovation level and the design generates cabinetry, counters and appliances that fit that spend, not an aspirational one.",
+    },
+    {
+      title: "Get A Cabinetry & Trade Scope",
+      text: "Export a line item scope with cabinet linear footage, counter square footage and any plumbing or electrical relocation flagged separately.",
+    },
   ],
 
   showcase: ["scope", "brief", "budget-mode", "shop", "reality-lock"],
-
 
   sections: [
     {
@@ -74,11 +85,26 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "What is the average cost of a kitchen remodel?", a: "For a mid-size kitchen, a finish only refresh typically plans in the $18,000 to $35,000 range, while a full remodel that changes the layout or relocates plumbing plans in the $45,000 to $90,000 range. Actual cost depends heavily on cabinetry grade and appliance selections." },
-    { q: "Why does moving the kitchen sink cost so much?", a: "Moving a sink means rerouting the drain and supply lines, which usually requires a plumber and sometimes cutting into a slab foundation. Planning ranges for this alone run $1,800 to $4,500, separate from the sink and faucet fixtures themselves." },
-    { q: "Is a kitchen refresh worth it instead of a full remodel?", a: "If the layout works and the cabinet boxes are structurally sound, a refresh, new doors, hardware, counters and backsplash, can deliver most of the visual improvement for a fraction of the cost and time of a full remodel." },
-    { q: "How much of the budget should go to cabinets?", a: "Cabinetry typically runs 30 to 40 percent of a kitchen remodel budget. If cabinets are eating more than half the budget, it usually means the cabinet grade chosen does not match the rest of the finish level." },
-    { q: "Does AI kitchen design account for plumbing and electrical?", a: "It flags any layout change, like a moved sink or new island outlet, as a separate scope line so you can see the cost impact before committing, but the exact routing still needs to be confirmed by a licensed plumber or electrician on site." },
+    {
+      q: "What is the average cost of a kitchen remodel?",
+      a: "For a mid-size kitchen, a finish only refresh typically plans in the $18,000 to $35,000 range, while a full remodel that changes the layout or relocates plumbing plans in the $45,000 to $90,000 range. Actual cost depends heavily on cabinetry grade and appliance selections.",
+    },
+    {
+      q: "Why does moving the kitchen sink cost so much?",
+      a: "Moving a sink means rerouting the drain and supply lines, which usually requires a plumber and sometimes cutting into a slab foundation. Planning ranges for this alone run $1,800 to $4,500, separate from the sink and faucet fixtures themselves.",
+    },
+    {
+      q: "Is a kitchen refresh worth it instead of a full remodel?",
+      a: "If the layout works and the cabinet boxes are structurally sound, a refresh, new doors, hardware, counters and backsplash, can deliver most of the visual improvement for a fraction of the cost and time of a full remodel.",
+    },
+    {
+      q: "How much of the budget should go to cabinets?",
+      a: "Cabinetry typically runs 30 to 40 percent of a kitchen remodel budget. If cabinets are eating more than half the budget, it usually means the cabinet grade chosen does not match the rest of the finish level.",
+    },
+    {
+      q: "Does AI kitchen design account for plumbing and electrical?",
+      a: "It flags any layout change, like a moved sink or new island outlet, as a separate scope line so you can see the cost impact before committing, but the exact routing still needs to be confirmed by a licensed plumber or electrician on site.",
+    },
   ],
 
   relatedSlugs: [
@@ -91,6 +117,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Design Your Kitchen & See The Scope",
-  ctaBody: "Upload your kitchen and get a design with cabinetry, counters and a planning range attached.",
+  ctaBody:
+    "Upload your kitchen and get a design with cabinetry, counters and a planning range attached.",
   ctaLabel: "Start Kitchen Design",
 };

@@ -8,10 +8,20 @@ import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
 const PLANS = [
   { name: "Free", price: "$0", note: "5 credits a day, no card to start", cta: "Start Free" },
   { name: "Starter", price: "$7", note: "200 credits a month, clean HD", cta: "Choose Starter" },
-  { name: "Pro", price: "$10", note: "2,000 credits a month, commercial license", cta: "Choose Pro", pop: true },
-  { name: "Studio", price: "$13", note: "4,000 credits a month, unlimited seats", cta: "Choose Studio" },
+  {
+    name: "Pro",
+    price: "$10",
+    note: "2,000 credits a month, commercial license",
+    cta: "Choose Pro",
+    pop: true,
+  },
+  {
+    name: "Studio",
+    price: "$13",
+    note: "4,000 credits a month, unlimited seats",
+    cta: "Choose Studio",
+  },
 ];
-
 
 export function LandingTemplate({ page }: { page: LandingPage }) {
   const before = PHOTOS[page.beforePhoto];
@@ -111,8 +121,6 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
         </section>
       )}
 
-
-
       {/* 4. SHOWCASE */}
       <section className="alt">
         <div className="wrap">
@@ -185,9 +193,9 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
             <span className="eyebrow">Pricing</span>
             <h2>Pick The Plan. Keep The Number.</h2>
             <p className="lede">
-              Annual pricing shown. One credit balance across every tool, and we meter credits, not people.
+              Annual pricing shown. One credit balance across every tool, and we meter credits, not
+              people.
             </p>
-
           </div>
           <div className="lp-plans">
             {PLANS.map((p) => (
@@ -199,7 +207,10 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
                   <span>/mo</span>
                 </div>
                 <p>{p.note}</p>
-                <a href="/#pricing" className={`btn ${p.pop ? "btn-primary" : "btn-ghost"} btn-block`}>
+                <a
+                  href="/#pricing"
+                  className={`btn ${p.pop ? "btn-primary" : "btn-ghost"} btn-block`}
+                >
                   {p.cta}
                 </a>
               </div>

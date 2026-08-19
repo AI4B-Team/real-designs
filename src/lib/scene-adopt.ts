@@ -29,19 +29,31 @@ export function adoptSavedScenes(
   for (const a of out) if (a.path && !byPath.has(a.path)) byPath.set(a.path, a);
   let changed = false;
   const place = (key: string) => {
-    if (key && !inOrder.has(key)) { order.push(key); inOrder.add(key); changed = true; }
+    if (key && !inOrder.has(key)) {
+      order.push(key);
+      inOrder.add(key);
+      changed = true;
+    }
   };
   for (const s of w.scenes || []) {
     if (!s || !s.key) continue;
-    if (keys.has(s.key)) { place(s.key); continue; }
+    if (keys.has(s.key)) {
+      place(s.key);
+      continue;
+    }
     const hit = s.path ? byPath.get(s.path) : null;
     if (hit) {
       /* Same photo, one card: the grid asset adopts the saved scene identity. */
       const from = hit.key;
       hit.key = s.key;
-      keys.delete(from); keys.add(s.key);
+      keys.delete(from);
+      keys.add(s.key);
       const i = order.indexOf(from);
-      if (i >= 0) { order[i] = s.key; inOrder.delete(from); inOrder.add(s.key); }
+      if (i >= 0) {
+        order[i] = s.key;
+        inOrder.delete(from);
+        inOrder.add(s.key);
+      }
       place(s.key);
       changed = true;
       continue;
@@ -60,7 +72,9 @@ export function adoptSavedScenes(
       flags: [],
       saved: true,
     };
-    out.push(asset); keys.add(asset.key); if (asset.path) byPath.set(asset.path, asset);
+    out.push(asset);
+    keys.add(asset.key);
+    if (asset.path) byPath.set(asset.path, asset);
     place(asset.key);
     changed = true;
   }

@@ -23,13 +23,18 @@ const PRIVATE_HOST =
   /^(localhost|.*\.local|.*\.internal|0\.0\.0\.0|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?|\[?fc00:|\[?fd)/i;
 
 export type UrlCheck =
-  | { ok: false; code: "invalid_url" | "unsupported_protocol" | "blocked_host" | "unsupported_provider"; message: string }
+  | {
+      ok: false;
+      code: "invalid_url" | "unsupported_protocol" | "blocked_host" | "unsupported_provider";
+      message: string;
+    }
   | { ok: true; url: string; host: string; provider: ProviderMatch };
 
 /** Validate + normalize a pasted listing link. Pure string work — no requests. */
 export function checkListingUrl(raw: string): UrlCheck {
   const input = String(raw || "").trim();
-  if (!input) return { ok: false, code: "invalid_url", message: "Paste a listing link to continue." };
+  if (!input)
+    return { ok: false, code: "invalid_url", message: "Paste a listing link to continue." };
 
   let url: URL;
   try {
@@ -42,7 +47,11 @@ export function checkListingUrl(raw: string): UrlCheck {
   }
   const host = url.hostname.toLowerCase();
   if (PRIVATE_HOST.test(host) || !host.includes(".")) {
-    return { ok: false, code: "blocked_host", message: "That address is not a public listing link." };
+    return {
+      ok: false,
+      code: "blocked_host",
+      message: "That address is not a public listing link.",
+    };
   }
   const hit = ALLOWED.find(([re]) => re.test(host));
   if (!hit) {
@@ -72,7 +81,10 @@ export type ProviderFetch =
  * Until LISTING_DATA_API_URL / LISTING_DATA_API_KEY are configured there is no
  * compliant connector, so we report that honestly instead of inventing data.
  */
-export async function fetchListing(normalizedUrl: string, providerId: string): Promise<ProviderFetch> {
+export async function fetchListing(
+  normalizedUrl: string,
+  providerId: string,
+): Promise<ProviderFetch> {
   const base = process.env["LISTING_DATA_API_URL"];
   const key = process.env["LISTING_DATA_API_KEY"];
   if (!base || !key) {
@@ -87,17 +99,28 @@ export async function fetchListing(normalizedUrl: string, providerId: string): P
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20000);
   try {
-    const res = await fetch(`${base.replace(/\/+$/, "")}/listings?url=${encodeURIComponent(normalizedUrl)}`, {
-      headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
-      redirect: "error",
-      signal: controller.signal,
-    });
+    const res = await fetch(
+      `${base.replace(/\/+$/, "")}/listings?url=${encodeURIComponent(normalizedUrl)}`,
+      {
+        headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
+        redirect: "error",
+        signal: controller.signal,
+      },
+    );
     if (!res.ok) {
-      return { ok: false, code: "provider_error", message: `The listing provider returned ${res.status}.` };
+      return {
+        ok: false,
+        code: "provider_error",
+        message: `The listing provider returned ${res.status}.`,
+      };
     }
     const raw = await res.text();
     if (raw.length > 2_000_000) {
-      return { ok: false, code: "provider_error", message: "The listing response was too large to process." };
+      return {
+        ok: false,
+        code: "provider_error",
+        message: "The listing response was too large to process.",
+      };
     }
     const data = JSON.parse(raw) as any;
     return {
@@ -109,7 +132,10 @@ export async function fetchListing(normalizedUrl: string, providerId: string): P
     return {
       ok: false,
       code: "provider_error",
-      message: e?.name === "AbortError" ? "The listing provider timed out." : "The listing provider is unavailable.",
+      message:
+        e?.name === "AbortError"
+          ? "The listing provider timed out."
+          : "The listing provider is unavailable.",
     };
   } finally {
     clearTimeout(timer);
@@ -118,6 +144,7 @@ export async function fetchListing(normalizedUrl: string, providerId: string): P
 
 const text = (v: unknown, max = 400) =>
   String(v == null ? "" : v)
+    // eslint-disable-next-line no-control-regex -- stripping control characters is the point
     .replace(/[\u0000-\u001f\u007f]/g, " ")
     .replace(/<[^>]*>/g, "")
     .trim()
@@ -171,17 +198,31 @@ export async function fetchListingByAddress(address: string): Promise<ProviderFe
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 20000);
   try {
-    const res = await fetch(`${base.replace(/\/+$/, "")}/listings?address=${encodeURIComponent(address)}`, {
-      headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
-      redirect: "error",
-      signal: controller.signal,
-    });
-    if (!res.ok) return { ok: false, code: "provider_error", message: `The listing provider returned ${res.status}.` };
+    const res = await fetch(
+      `${base.replace(/\/+$/, "")}/listings?address=${encodeURIComponent(address)}`,
+      {
+        headers: { Authorization: `Bearer ${key}`, Accept: "application/json" },
+        redirect: "error",
+        signal: controller.signal,
+      },
+    );
+    if (!res.ok)
+      return {
+        ok: false,
+        code: "provider_error",
+        message: `The listing provider returned ${res.status}.`,
+      };
     const raw = await res.text();
-    if (raw.length > 2_000_000) return { ok: false, code: "provider_error", message: "The listing response was too large to process." };
+    if (raw.length > 2_000_000)
+      return {
+        ok: false,
+        code: "provider_error",
+        message: "The listing response was too large to process.",
+      };
     const data = JSON.parse(raw) as any;
     const first = Array.isArray(data?.listings) ? data.listings[0] : (data?.listing ?? data);
-    if (!first) return { ok: false, code: "provider_error", message: "No listing matched that address." };
+    if (!first)
+      return { ok: false, code: "provider_error", message: "No listing matched that address." };
     return {
       ok: true,
       listing: sanitizeListing(first, String(first?.provider_id || "address")),
@@ -191,7 +232,10 @@ export async function fetchListingByAddress(address: string): Promise<ProviderFe
     return {
       ok: false,
       code: "provider_error",
-      message: e?.name === "AbortError" ? "The listing provider timed out." : "The listing provider is unavailable.",
+      message:
+        e?.name === "AbortError"
+          ? "The listing provider timed out."
+          : "The listing provider is unavailable.",
     };
   } finally {
     clearTimeout(timer);

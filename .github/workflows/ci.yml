@@ -1,65 +1,82 @@
 name: CI
 
+# npm is the single source of truth for CI. `package-lock.json` is the
+# committed lockfile CI installs from; do not let Bun regenerate dependencies
+# for CI runs.
+
 on:
   push:
   pull_request:
 
 jobs:
   verify:
+    name: Test / Typecheck / Build
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set Up Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Set Up Node
+        uses: actions/setup-node@v4
         with:
-          bun-version: latest
+          node-version: 20
+          cache: npm
 
-      - name: Install
-        run: bun install --frozen-lockfile
+      - name: Install (frozen lockfile)
+        run: npm ci
 
-      # Typecheck is allowed to fail for now. The count is published to the job
-      # summary so it stays visible while it is driven down. Remove
-      # continue-on-error once the count reaches zero.
-      - name: Typecheck
-        id: typecheck
-        continue-on-error: true
+      # Blocking.
+      - name: Unit Tests
         run: |
-          set +e
-          bun run typecheck > typecheck.log 2>&1
-          status=$?
-          count=$(grep -cE "error TS[0-9]+" typecheck.log)
+          set -o pipefail
+          npm test -- --reporter=default 2>&1 | tee test.log
+        continue-on-error: false
+
+      - name: Test Summary
+        if: always()
+        run: |
           {
-            echo "### Typecheck"
+            echo "### Unit Tests"
             echo ""
-            echo "Errors: **$count**"
+            grep -E "^ *(Test Files|Tests|Duration)" test.log || echo "No test totals found."
             echo ""
-            echo "<details><summary>Top error codes</summary>"
-            echo ""
-            echo '```'
-            grep -oE "error TS[0-9]+" typecheck.log | sort | uniq -c | sort -rn | head -15
-            echo '```'
-            echo ""
-            echo "</details>"
           } >> "$GITHUB_STEP_SUMMARY"
-          exit $status
+          if grep -qE "^ *Tests .*failed" test.log; then
+            {
+              echo "<details><summary>Failures</summary>"
+              echo ""
+              echo '```'
+              grep -E "(FAIL|AssertionError|✕)" test.log | head -50
+              echo '```'
+              echo ""
+              echo "</details>"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      # Lint is also non-blocking for now for the same reason: the repo starts
-      # with a large prettier/eslint backlog. The count is published so it stays
-      # visible. Remove continue-on-error once it reaches zero.
-      - name: Lint
-        continue-on-error: true
+      # Blocking.
+      - name: Typecheck
+        run: npm run typecheck
+
+      # Formatting is separate from meaningful lint violations. Blocking.
+      - name: Format Check
+        run: npm run format:check
+
+      # Meaningful lint violations, gated against a temporary baseline: touched
+      # files may not add new violations. Blocking. Once the baseline reaches
+      # zero, replace this with `npm run lint`.
+      - name: Lint (Baseline Gate)
         run: |
-          set +e
-          bun run lint > lint.log 2>&1
-          status=$?
+          set -o pipefail
+          npm run lint:ci 2>&1 | tee lint.log
           {
             echo "### Lint"
             echo ""
-            echo "$(grep -cE '  error  ' lint.log) errors"
+            echo '```'
+            cat lint.log
+            echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          exit $status
 
-      - name: Build
-        run: bun run build
+      # Blocking.
+      - name: Production Build
+        run: npm run build

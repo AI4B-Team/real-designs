@@ -66,14 +66,18 @@ export const exportMyData = createServerFn({ method: "POST" })
     const { data: scopeLines } = scopeIds.length
       ? await supabase
           .from("scope_lines")
-          .select("id, scope_id, description, trade, csi_division, qty, uom, line_low, line_high, price_source")
+          .select(
+            "id, scope_id, description, trade, csi_division, qty, uom, line_low, line_high, price_source",
+          )
           .in("scope_id", scopeIds)
       : { data: [] as any[] };
 
     const { data: presentations } = verIds.length
       ? await supabase
           .from("presentations")
-          .select("id, version_id, title, client_name, client_email, status, view_count, decision_note, created_at")
+          .select(
+            "id, version_id, title, client_name, client_email, status, view_count, decision_note, created_at",
+          )
           .in("version_id", verIds)
       : { data: [] as any[] };
 
@@ -111,9 +115,13 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
     await supabaseAdmin.from("credit_ledger").delete().eq("user_id", userId);
     await supabaseAdmin.from("credit_accounts").delete().eq("user_id", userId);
     try {
-      const { data: files } = await supabaseAdmin.storage.from("room-photos").list(userId, { limit: 1000 });
+      const { data: files } = await supabaseAdmin.storage
+        .from("room-photos")
+        .list(userId, { limit: 1000 });
       if (files?.length) {
-        await supabaseAdmin.storage.from("room-photos").remove(files.map((f) => `${userId}/${f.name}`));
+        await supabaseAdmin.storage
+          .from("room-photos")
+          .remove(files.map((f) => `${userId}/${f.name}`));
       }
     } catch {
       // storage cleanup is best effort

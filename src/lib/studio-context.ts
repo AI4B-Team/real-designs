@@ -11,13 +11,16 @@
  */
 
 export type StudioContext =
-  | { type: "generic" }
-  | { type: "photo-design-canvas"; draftId: string; photoKey: string };
+  { type: "generic" } | { type: "photo-design-canvas"; draftId: string; photoKey: string };
 
 export const GENERIC_STUDIO: StudioContext = { type: "generic" };
 
 export function photoCanvasContext(draftId: string, photoKey: string): StudioContext {
-  return { type: "photo-design-canvas", draftId: String(draftId || ""), photoKey: String(photoKey || "") };
+  return {
+    type: "photo-design-canvas",
+    draftId: String(draftId || ""),
+    photoKey: String(photoKey || ""),
+  };
 }
 
 export function isPhotoCanvas(ctx: StudioContext | null | undefined): boolean {
@@ -31,7 +34,9 @@ export const STUDIO_HASH = "#v-studio";
 
 /** Legacy "#studio" normalizes to the canonical hash exactly once. */
 export function canonicalHash(hash: string): string {
-  const raw = String(hash || "").replace(/^#/, "").replace(/^v-/, "");
+  const raw = String(hash || "")
+    .replace(/^#/, "")
+    .replace(/^v-/, "");
   return raw ? "#v-" + raw : "";
 }
 
@@ -50,7 +55,11 @@ export function needsNormalize(hash: string): boolean {
 export type CanvasPhase = "" | "generating" | "error";
 
 /** The single dynamic Canvas subtitle. There is never a second one. */
-export function canvasSubtitle(opts: { empty: boolean; result: boolean; phase?: CanvasPhase }): string {
+export function canvasSubtitle(opts: {
+  empty: boolean;
+  result: boolean;
+  phase?: CanvasPhase;
+}): string {
   if (opts.phase === "generating") return "Generating your design\u2026";
   if (opts.empty) return "Add A Source To Begin";
   if (opts.phase === "error") return "Generation failed. Try again.";

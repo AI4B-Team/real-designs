@@ -23,7 +23,9 @@ export const speakingAvatar = () => currentId;
 export function stopAvatarVoice() {
   try {
     current?.pause();
-  } catch (_) { /* noop */ }
+  } catch (_) {
+    /* noop */
+  }
   current = null;
   currentId = "";
   emit();
@@ -32,7 +34,9 @@ export function stopAvatarVoice() {
 function emit() {
   try {
     window.dispatchEvent(new CustomEvent("rd:avatar-voice"));
-  } catch (_) { /* noop */ }
+  } catch (_) {
+    /* noop */
+  }
 }
 
 async function clipFor(id: string): Promise<string> {

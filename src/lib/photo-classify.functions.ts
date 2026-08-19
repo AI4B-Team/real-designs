@@ -55,7 +55,8 @@ export const classifyPhotoRooms = createServerFn({ method: "POST" })
           ". Return one entry per photo, using the same id.",
       },
     ];
-    for (const img of data.images) content.push({ type: "image_url", image_url: { url: img.image } });
+    for (const img of data.images)
+      content.push({ type: "image_url", image_url: { url: img.image } });
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

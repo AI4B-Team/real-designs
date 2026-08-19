@@ -63,8 +63,12 @@ export const listPresentations = createServerFn({ method: "GET" })
       last_viewed_at: (p.last_viewed_at ?? null) as string | null,
       decision_note: (p.decision_note ?? null) as string | null,
       excluded_count: Array.isArray(p.excluded_lines) ? (p.excluded_lines as any[]).length : 0,
-      line_notes: (p.line_notes && typeof p.line_notes === "object" ? p.line_notes : {}) as Record<string, string>,
-      note_count: p.line_notes && typeof p.line_notes === "object" ? Object.keys(p.line_notes).length : 0,
+      line_notes: (p.line_notes && typeof p.line_notes === "object" ? p.line_notes : {}) as Record<
+        string,
+        string
+      >,
+      note_count:
+        p.line_notes && typeof p.line_notes === "object" ? Object.keys(p.line_notes).length : 0,
       created_at: p.created_at as string,
       reminded_at: (p.reminded_at ?? null) as string | null,
       reminder_count: (p.reminder_count ?? 0) as number,
@@ -84,7 +88,6 @@ export const markPresentationReminded = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
-
 
 export const createPresentation = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -149,7 +152,9 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const client = supabaseAdmin;
-    const { data: payload, error } = await client.rpc("get_shared_presentation", { _token: data.token });
+    const { data: payload, error } = await client.rpc("get_shared_presentation", {
+      _token: data.token,
+    });
     if (error) throw new Error(error.message);
     if (!payload) return null;
 

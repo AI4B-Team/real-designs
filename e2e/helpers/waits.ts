@@ -13,7 +13,11 @@ export async function waitFor(
   timeout = 15_000,
 ): Promise<void> {
   await expect
-    .poll(async () => (await predicate()) === true, { message, timeout, intervals: [100, 250, 500] })
+    .poll(async () => (await predicate()) === true, {
+      message,
+      timeout,
+      intervals: [100, 250, 500],
+    })
     .toBe(true);
 }
 

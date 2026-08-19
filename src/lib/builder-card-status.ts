@@ -22,13 +22,18 @@
 import { createIcons, icons } from "lucide";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]),
+  String(s == null ? "" : s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   );
 
 const paint = (root) => {
-  try { createIcons({ icons, nameAttr: "data-lucide", root: root || document }); } catch (_) {
-    try { createIcons({ icons }); } catch (_) {}
+  try {
+    createIcons({ icons, nameAttr: "data-lucide", root: root || document });
+  } catch (_) {
+    try {
+      createIcons({ icons });
+    } catch (_) {}
   }
 };
 
@@ -84,11 +89,17 @@ export function closeCardStatus(restoreFocus) {
   if (!open) return;
   const { btn, el } = open;
   open = null;
-  try { el.remove(); } catch (_) {}
+  try {
+    el.remove();
+  } catch (_) {}
   if (btn) {
     btn.setAttribute("aria-expanded", "false");
     btn.classList.remove("on");
-    if (restoreFocus) { try { btn.focus(); } catch (_) {} }
+    if (restoreFocus) {
+      try {
+        btn.focus();
+      } catch (_) {}
+    }
   }
 }
 
@@ -112,8 +123,10 @@ function place(el, btn) {
   let up = false;
   if (top + h > window.innerHeight - pad) {
     const above = r.top - gap - h;
-    if (above >= pad) { top = above; up = true; }
-    else top = Math.max(pad, window.innerHeight - pad - h);
+    if (above >= pad) {
+      top = above;
+      up = true;
+    } else top = Math.max(pad, window.innerHeight - pad - h);
   }
   el.style.left = Math.round(left) + "px";
   el.style.top = Math.round(top) + "px";
@@ -146,7 +159,9 @@ function bodyHtml(features, title) {
 }
 
 function closeRowMenu(el) {
-  try { el.querySelector(".bx-cstat-rowmenu")?.remove(); } catch (_) {}
+  try {
+    el.querySelector(".bx-cstat-rowmenu")?.remove();
+  } catch (_) {}
   el.querySelectorAll("[data-cstat-more]").forEach((b) => b.setAttribute("aria-expanded", "false"));
 }
 
@@ -183,7 +198,9 @@ function openPop(btn) {
   if (!features.length) return;
 
   closeCardStatus(false);
-  try { window.__bxCloseCardMenu && window.__bxCloseCardMenu(false); } catch (_) {}
+  try {
+    window.__bxCloseCardMenu && window.__bxCloseCardMenu(false);
+  } catch (_) {}
 
   const el = document.createElement("div");
   el.className = "bx-cstatpop";
@@ -197,20 +214,27 @@ function openPop(btn) {
   btn.setAttribute("aria-expanded", "true");
   btn.classList.add("on");
   open = { btn, el, flow, key };
-  try { el.querySelector(".bx-cstat-a")?.focus(); } catch (_) {}
+  try {
+    el.querySelector(".bx-cstat-a")?.focus();
+  } catch (_) {}
 
   const run = (action, id) => {
     closeCardStatus(true);
     try {
       if (action === "edit") api.edit && api.edit(key, id);
-      else if (action === "reset") (api.reset || api.remove) && (api.reset || api.remove).call(api, key, id);
+      else if (action === "reset")
+        (api.reset || api.remove) && (api.reset || api.remove).call(api, key, id);
       else if (action === "remove") api.remove && api.remove(key, id);
     } catch (_) {}
   };
 
   el.addEventListener("click", (e) => {
     const ed = e.target.closest("[data-cstat-edit]");
-    if (ed) { e.preventDefault(); e.stopPropagation(); return run("edit", ed.getAttribute("data-cstat-edit")); }
+    if (ed) {
+      e.preventDefault();
+      e.stopPropagation();
+      return run("edit", ed.getAttribute("data-cstat-edit"));
+    }
     const more = e.target.closest("[data-cstat-more]");
     if (more) {
       e.preventDefault();
@@ -245,7 +269,11 @@ if (typeof document !== "undefined" && !document.__bxCardStatus) {
     "pointerdown",
     (e) => {
       const btn = e.target?.closest?.("[data-cardstat]");
-      if (btn) { e.preventDefault(); e.stopPropagation(); return; }
+      if (btn) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
       if (open && !e.target?.closest?.(".bx-cstatpop")) closeCardStatus(false);
     },
     true,
@@ -257,13 +285,19 @@ if (typeof document !== "undefined" && !document.__bxCardStatus) {
       if (!btn) return;
       e.preventDefault();
       e.stopPropagation();
-      if (open && open.btn === btn) { closeCardStatus(true); return; }
+      if (open && open.btn === btn) {
+        closeCardStatus(true);
+        return;
+      }
       openPop(btn);
     },
     true,
   );
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && open) { closeCardStatus(true); return; }
+    if (e.key === "Escape" && open) {
+      closeCardStatus(true);
+      return;
+    }
     const btn = e.target?.closest?.("[data-cardstat]");
     if (!btn) return;
     if (e.key === "Enter" || e.key === " ") {
@@ -275,6 +309,12 @@ if (typeof document !== "undefined" && !document.__bxCardStatus) {
   });
   document.addEventListener("dragstart", () => closeCardStatus(false), true);
   window.addEventListener("resize", () => closeCardStatus(false));
-  window.addEventListener("scroll", () => { if (open) place(open.el, open.btn); }, true);
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (open) place(open.el, open.btn);
+    },
+    true,
+  );
   window.__bxCloseCardStatus = closeCardStatus;
 }

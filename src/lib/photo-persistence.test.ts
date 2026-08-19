@@ -198,7 +198,11 @@ describe("draft restoration", () => {
     expect(items.map((i) => i.key)).toEqual(["b", "a"]);
     expect(items.every((i) => !!i.path)).toBe(true);
     expect(items.every((i) => i.signed === null)).toBe(true);
-    expect(items.find((i) => i.key === "a")).toMatchObject({ room: "Kitchen", selected: true, ratio: "4:5" });
+    expect(items.find((i) => i.key === "a")).toMatchObject({
+      room: "Kitchen",
+      selected: true,
+      ratio: "4:5",
+    });
     expect(JSON.stringify(draft)).not.toContain("token=");
   });
 
@@ -252,7 +256,10 @@ describe("signed URL lifetime", () => {
       }
     }
     (globalThis as any).Image = FlakyImage as any;
-    document.body.insertAdjacentHTML("beforeend", `<div class="rv-tile-th" data-img="u/a.jpg"></div>`);
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<div class="rv-tile-th" data-img="u/a.jpg"></div>`,
+    );
     const el = document.querySelector<HTMLElement>("[data-img]")!;
     const { paintPhotoEl } = await load();
     const ok = await paintPhotoEl(el, "u/a.jpg");
@@ -272,7 +279,10 @@ describe("signed URL lifetime", () => {
       }
     }
     (globalThis as any).Image = DeadImage as any;
-    document.body.insertAdjacentHTML("beforeend", `<div class="rv-tile-th" data-img="u/b.jpg"></div>`);
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      `<div class="rv-tile-th" data-img="u/b.jpg"></div>`,
+    );
     const el = document.querySelector<HTMLElement>("[data-img]")!;
     const { paintPhotoEl } = await load();
     const ok = await paintPhotoEl(el, "u/b.jpg");

@@ -78,9 +78,18 @@ describe("Auto Select", () => {
     const ids = OFFERED_TRANSITIONS.map(([id]) => id);
     expect(ids).toEqual(["cut", "dissolve", "fade"]);
     for (const pair of [
-      [{ key: "a", room_name: "Front Exterior" }, { key: "b", room_name: "Foyer" }],
-      [{ key: "a", room_name: "Kitchen" }, { key: "b", room_name: "Kitchen" }],
-      [{ key: "a", room_name: "Living Room" }, { key: "b", room_name: "Backyard" }],
+      [
+        { key: "a", room_name: "Front Exterior" },
+        { key: "b", room_name: "Foyer" },
+      ],
+      [
+        { key: "a", room_name: "Kitchen" },
+        { key: "b", room_name: "Kitchen" },
+      ],
+      [
+        { key: "a", room_name: "Living Room" },
+        { key: "b", room_name: "Backyard" },
+      ],
       [{ key: "a" }, { key: "b" }],
     ] as const) {
       expect(ids).toContain(autoPick(pair[0], pair[1]));
@@ -88,7 +97,10 @@ describe("Auto Select", () => {
   });
 
   it("stores the chosen transition, not the word auto", async () => {
-    const pick = autoPick({ key: "a", room_name: "Front Exterior" }, { key: "b", room_name: "Foyer" });
+    const pick = autoPick(
+      { key: "a", room_name: "Front Exterior" },
+      { key: "b", room_name: "Foyer" },
+    );
     await store.set("a", "b", pick, 600, { mode: "auto" });
     const saved = db.get("a→b")!;
     expect(saved.type).toBe(pick);

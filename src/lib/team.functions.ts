@@ -51,9 +51,7 @@ export const inviteMember = createServerFn({ method: "POST" })
 export const updateInviteRole = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) =>
-    z
-      .object({ id: z.string().uuid(), role: z.enum(["viewer", "member", "admin"]) })
-      .parse(d),
+    z.object({ id: z.string().uuid(), role: z.enum(["viewer", "member", "admin"]) }).parse(d),
   )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase

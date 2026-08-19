@@ -85,7 +85,11 @@ export const generateSocialCopy = createServerFn({ method: "POST" })
                 properties: {
                   hook: { type: "string", description: "Scroll-stopping first line." },
                   caption: { type: "string", description: "Full caption body, hashtags excluded." },
-                  hashtags: { type: "array", items: { type: "string" }, description: "Hashtags without the # symbol." },
+                  hashtags: {
+                    type: "array",
+                    items: { type: "string" },
+                    description: "Hashtags without the # symbol.",
+                  },
                   cta: { type: "string", description: "Short call to action." },
                 },
                 required: ["hook", "caption", "hashtags", "cta"],

@@ -11,7 +11,10 @@ import {
 } from "@/lib/rd-voice";
 
 const esc = (s: unknown) =>
-  String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+  String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!,
+  );
 
 export { MY_VOICE };
 
@@ -53,7 +56,14 @@ type State = {
  */
 export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
   const el = ensureHost();
-  const st: State = { step: "intro", blob: null, url: "", label: "", error: "", profile: getVoiceProfile() };
+  const st: State = {
+    step: "intro",
+    blob: null,
+    url: "",
+    label: "",
+    error: "",
+    profile: getVoiceProfile(),
+  };
 
   let rec: MediaRecorder | null = null;
   let chunks: BlobPart[] = [];
@@ -63,14 +73,25 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
   let preview: HTMLAudioElement | null = null;
 
   const stopStream = () => {
-    try { stream?.getTracks().forEach((t) => t.stop()); } catch (_) { /* noop */ }
+    try {
+      stream?.getTracks().forEach((t) => t.stop());
+    } catch (_) {
+      /* noop */
+    }
     stream = null;
-    if (timer) { window.clearInterval(timer); timer = null; }
+    if (timer) {
+      window.clearInterval(timer);
+      timer = null;
+    }
   };
 
   function close() {
     stopStream();
-    try { preview?.pause(); } catch (_) { /* noop */ }
+    try {
+      preview?.pause();
+    } catch (_) {
+      /* noop */
+    }
     if (st.url) URL.revokeObjectURL(st.url);
     el.classList.remove("on");
     el.innerHTML = "";
@@ -83,7 +104,11 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
   }
 
   function paint() {
-    try { (window as any).lucide?.createIcons?.(); } catch (_) { /* noop */ }
+    try {
+      (window as any).lucide?.createIcons?.();
+    } catch (_) {
+      /* noop */
+    }
   }
 
   async function startRecording() {
@@ -91,7 +116,8 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     } catch (_) {
-      st.error = "We could not reach your microphone. Allow microphone access, or upload an audio file instead.";
+      st.error =
+        "We could not reach your microphone. Allow microphone access, or upload an audio file instead.";
       return render();
     }
     chunks = [];
@@ -103,9 +129,13 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
       stopStream();
       return render();
     }
-    rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+    rec.ondataavailable = (e) => {
+      if (e.data && e.data.size) chunks.push(e.data);
+    };
     rec.onstop = () => {
-      const blob = new Blob(chunks, { type: rec?.mimeType || "audio/webm" }) as Blob & { name?: string };
+      const blob = new Blob(chunks, { type: rec?.mimeType || "audio/webm" }) as Blob & {
+        name?: string;
+      };
       stopStream();
       if (blob.size < 2000) {
         st.error = "That clip was too short. Read the full script, then stop the recording.";
@@ -124,13 +154,18 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
     timer = window.setInterval(() => {
       seconds += 1;
       const t = el.querySelector("#vsTimer");
-      if (t) t.textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
+      if (t)
+        t.textContent = `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
       if (seconds >= 60) stopRecording();
     }, 1000);
   }
 
   function stopRecording() {
-    try { rec?.state !== "inactive" && rec?.stop(); } catch (_) { stopStream(); }
+    try {
+      if (rec && rec.state !== "inactive") rec.stop();
+    } catch (_) {
+      stopStream();
+    }
   }
 
   async function save() {
@@ -159,10 +194,14 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
         <button class="icon-btn" data-a="close" aria-label="Close voice studio"><i data-lucide="x"></i></button>
       </div>
       <div class="vs-body">
-        ${p ? `<div class="vs-active">
+        ${
+          p
+            ? `<div class="vs-active">
           <div><b>${esc(p.label)}</b><span>${esc(p.summary || "Matched from your own recording.")}</span></div>
           <button class="btn btn-ghost btn-xs" data-a="remove"><i data-lucide="trash-2"></i>Remove</button>
-        </div>` : ""}
+        </div>`
+            : ""
+        }
         ${st.error ? `<div class="vs-err"><i data-lucide="triangle-alert"></i><span>${esc(st.error)}</span></div>` : ""}
         ${
           st.step === "working"
@@ -208,7 +247,10 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
       };
     });
     const lab = el.querySelector("#vsLabel") as HTMLInputElement | null;
-    if (lab) lab.oninput = () => { st.label = lab.value; };
+    if (lab)
+      lab.oninput = () => {
+        st.label = lab.value;
+      };
     const file = el.querySelector("#vsFile") as HTMLInputElement | null;
     if (file) {
       file.onchange = () => {

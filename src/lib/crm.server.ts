@@ -60,7 +60,11 @@ async function req(provider: CrmProvider, url: string, init: RequestInit) {
 
 function fubHeaders(key: string) {
   const basic = btoa(`${key}:`);
-  return { Authorization: `Basic ${basic}`, "Content-Type": "application/json", Accept: "application/json" };
+  return {
+    Authorization: `Basic ${basic}`,
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  };
 }
 
 /** Confirms the credential works and returns the account name when available. */
@@ -70,7 +74,9 @@ export async function verifyCrm(
   endpoint?: string | null,
 ): Promise<{ account: string | null }> {
   if (provider === "followupboss") {
-    const out: any = await req(provider, "https://api.followupboss.com/v1/identity", { headers: fubHeaders(credential) });
+    const out: any = await req(provider, "https://api.followupboss.com/v1/identity", {
+      headers: fubHeaders(credential),
+    });
     return { account: out?.account?.name || out?.name || null };
   }
   if (provider === "hubspot") {
@@ -84,7 +90,11 @@ export async function verifyCrm(
   await req(provider, url, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Real-Designs-Signature": credential },
-    body: JSON.stringify({ type: "connection.test", source: "REAL DESIGNS", sent_at: new Date().toISOString() }),
+    body: JSON.stringify({
+      type: "connection.test",
+      source: "REAL DESIGNS",
+      sent_at: new Date().toISOString(),
+    }),
   });
   return { account: new URL(url).hostname };
 }
@@ -147,7 +157,11 @@ export async function pushCrm(
     await req(provider, "https://api.followupboss.com/v1/notes", {
       method: "POST",
       headers: fubHeaders(credential),
-      body: JSON.stringify({ personId: Number(payload.contactExternalId), subject: payload.title.slice(0, 120), body: text }),
+      body: JSON.stringify({
+        personId: Number(payload.contactExternalId),
+        subject: payload.title.slice(0, 120),
+        body: text,
+      }),
     });
     return { ok: true, detail: "Note added in Follow Up Boss." };
   }
@@ -155,7 +169,9 @@ export async function pushCrm(
     const note: any = await req(provider, "https://api.hubapi.com/crm/v3/objects/notes", {
       method: "POST",
       headers: { Authorization: `Bearer ${credential}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ properties: { hs_note_body: text, hs_timestamp: new Date().toISOString() } }),
+      body: JSON.stringify({
+        properties: { hs_note_body: text, hs_timestamp: new Date().toISOString() },
+      }),
     });
     if (payload.contactExternalId && note?.id) {
       await req(

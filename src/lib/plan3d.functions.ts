@@ -35,7 +35,9 @@ export const renderPlan3d = createServerFn({ method: "POST" })
       "Render it as a clean top-down dollhouse view with cut-away walls, viewed from about 45 degrees above.",
       "Hard rules: keep the same room footprint and proportions, the same window and door positions, and the same furniture layout and placement as the photograph. Do not invent extra rooms, walls or openings.",
       `Furnishings and finishes follow a ${data.direction} direction.`,
-      data.floor_area_sf ? `The room is roughly ${Math.round(data.floor_area_sf)} square feet.` : "",
+      data.floor_area_sf
+        ? `The room is roughly ${Math.round(data.floor_area_sf)} square feet.`
+        : "",
       "Neutral studio background, soft even lighting, photoreal materials, no text, no dimensions, no labels, no watermarks.",
     ]
       .filter(Boolean)
@@ -68,7 +70,8 @@ export const renderPlan3d = createServerFn({ method: "POST" })
       const msg = payload?.choices?.[0]?.message;
       const url: string | undefined =
         msg?.images?.[0]?.image_url?.url ?? msg?.images?.[0]?.url ?? undefined;
-      if (!url || !url.startsWith("data:image")) throw new Error("The model did not return a plan image.");
+      if (!url || !url.startsWith("data:image"))
+        throw new Error("The model did not return a plan image.");
 
       return { image: url, charged: charged.charged, balance: charged.balance };
     } catch (err) {

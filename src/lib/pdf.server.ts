@@ -113,7 +113,12 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
     s: string,
     x: number,
     size: number,
-    opts: { font?: PDFFont; color?: ReturnType<typeof rgb>; align?: "left" | "right" | undefined; width?: number } = {},
+    opts: {
+      font?: PDFFont;
+      color?: ReturnType<typeof rgb>;
+      align?: "left" | "right" | undefined;
+      width?: number;
+    } = {},
   ) => {
     const f = opts.font || reg;
     const str = clean(s);
@@ -151,7 +156,9 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
   // ---- images ----
   if (doc.images?.length) {
     const imgs = await Promise.all(doc.images.map((i) => fetchImage(pdf, i.url)));
-    const shown = imgs.map((img, i) => ({ img, cap: doc.images![i]!.caption })).filter((p) => p.img);
+    const shown = imgs
+      .map((img, i) => ({ img, cap: doc.images![i]!.caption }))
+      .filter((p) => p.img);
     if (shown.length) {
       const gap = 12;
       const cw = (W - gap * (shown.length - 1)) / shown.length;
@@ -161,7 +168,8 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
       shown.forEach((p, i) => {
         const x = M + i * (cw + gap);
         page.drawImage(p.img!, { x, y: top - ch, width: cw, height: ch });
-        if (p.cap) page.drawText(clean(p.cap), { x, y: top - ch - 12, size: 8, font: reg, color: MUTED });
+        if (p.cap)
+          page.drawText(clean(p.cap), { x, y: top - ch - 12, size: 8, font: reg, color: MUTED });
       });
       y = top - ch - 28;
     }
@@ -195,7 +203,12 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
       const header = () => {
         need(22);
         sec.columns!.forEach((c, i) =>
-          text(c.label.toUpperCase(), xs[i]!, 7.5, { font: bold, color: MUTED, align: c.align, width: colW[i]! }),
+          text(c.label.toUpperCase(), xs[i]!, 7.5, {
+            font: bold,
+            color: MUTED,
+            align: c.align,
+            width: colW[i]!,
+          }),
         );
         y -= 6;
         page.drawRectangle({ x: M, y, width: W, height: 0.7, color: LINE });
@@ -211,7 +224,13 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
           header();
         }
         if (sec.emphasizeRows?.includes(ri)) {
-          page.drawRectangle({ x: M - 4, y: y - h + 8, width: W + 8, height: h, color: rgb(0.97, 0.97, 0.97) });
+          page.drawRectangle({
+            x: M - 4,
+            y: y - h + 8,
+            width: W + 8,
+            height: h,
+            color: rgb(0.97, 0.97, 0.97),
+          });
         }
         const rowTop = y;
         cells.forEach((linesArr, i) => {
@@ -235,12 +254,23 @@ export async function buildPdfBytes(doc: PdfDoc): Promise<Uint8Array> {
   // ---- totals ----
   if (doc.totals?.length) {
     need(doc.totals.length * 16 + 20);
-    page.drawRectangle({ x: M, y: y - (doc.totals.length * 16 + 10), width: W, height: doc.totals.length * 16 + 14, borderColor: LINE, borderWidth: 1 });
+    page.drawRectangle({
+      x: M,
+      y: y - (doc.totals.length * 16 + 10),
+      width: W,
+      height: doc.totals.length * 16 + 14,
+      borderColor: LINE,
+      borderWidth: 1,
+    });
     y -= 6;
     for (const t of doc.totals) {
       y -= 14;
       text(t.label, M + 10, t.strong ? 12 : 10, { font: t.strong ? bold : reg });
-      text(t.value, M, t.strong ? 12 : 10, { font: t.strong ? bold : reg, align: "right", width: W - 10 });
+      text(t.value, M, t.strong ? 12 : 10, {
+        font: t.strong ? bold : reg,
+        align: "right",
+        width: W - 10,
+      });
     }
     y -= 22;
   }

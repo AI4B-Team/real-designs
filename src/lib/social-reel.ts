@@ -50,7 +50,14 @@ function drawCover(
   ctx.drawImage(img, (W - w) / 2, (H - h) / 2 + panY, w, h);
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -94,8 +101,10 @@ function footer(ctx: CanvasRenderingContext2D, meta: ReelMeta, alpha: number) {
 
   const lines: Array<[string, string, string]> = [];
   if (meta.room) lines.push(["700 62px Inter, system-ui, sans-serif", "#ffffff", meta.room]);
-  if (meta.address) lines.push(["500 36px Inter, system-ui, sans-serif", "rgba(255,255,255,.78)", meta.address]);
-  if (meta.style) lines.push(["500 34px Inter, system-ui, sans-serif", "rgba(255,255,255,.66)", meta.style]);
+  if (meta.address)
+    lines.push(["500 36px Inter, system-ui, sans-serif", "rgba(255,255,255,.78)", meta.address]);
+  if (meta.style)
+    lines.push(["500 34px Inter, system-ui, sans-serif", "rgba(255,255,255,.66)", meta.style]);
 
   let y = H - 300;
   for (const [font, color, text] of lines) {
@@ -150,9 +159,14 @@ export async function buildSocialReel(
 
   const mime = pickMime();
   const stream = canvas.captureStream(30);
-  const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined);
+  const rec = new MediaRecorder(
+    stream,
+    mime ? { mimeType: mime, videoBitsPerSecond: 8_000_000 } : undefined,
+  );
   const chunks: BlobPart[] = [];
-  rec.ondataavailable = (e) => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.ondataavailable = (e) => {
+    if (e.data && e.data.size) chunks.push(e.data);
+  };
 
   const done = new Promise<Blob>((resolve) => {
     rec.onstop = () => resolve(new Blob(chunks, { type: mime || "video/webm" }));
@@ -203,7 +217,11 @@ export async function buildSocialReel(
 
       // fade in / out
       const fade =
-        t < FADE_IN ? 1 - t / FADE_IN : t > DURATION - 600 ? Math.min(1, (t - (DURATION - 600)) / 600) : 0;
+        t < FADE_IN
+          ? 1 - t / FADE_IN
+          : t > DURATION - 600
+            ? Math.min(1, (t - (DURATION - 600)) / 600)
+            : 0;
       if (fade > 0) {
         ctx.save();
         ctx.globalAlpha = fade;
@@ -212,7 +230,10 @@ export async function buildSocialReel(
         ctx.restore();
       }
 
-      if (p >= 1) { resolve(); return; }
+      if (p >= 1) {
+        resolve();
+        return;
+      }
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);

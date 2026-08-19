@@ -42,9 +42,18 @@ export type AnalysisStatus = "pending" | "running" | "completed" | "partial" | "
 /* Synonyms are normalized before any presence check, so "Facade", "Curb View"
    and "Front Elevation" all satisfy the front-exterior recommendation. */
 const SYNONYMS: [RegExp, PhotoCategory][] = [
-  [/^(front|exterior front|front exterior|front elevation|facade|fa[cç]ade|front view|curb (view|appeal)|street view|house exterior|exterior)$/i, "Front Exterior"],
-  [/^(rear exterior|exterior rear|back exterior|rear view|back of house|rear elevation)$/i, "Rear Exterior"],
-  [/^(living room|livingroom|family room|great room|lounge|main living area|open living area|living area|living|den)$/i, "Living Room"],
+  [
+    /^(front|exterior front|front exterior|front elevation|facade|fa[cç]ade|front view|curb (view|appeal)|street view|house exterior|exterior)$/i,
+    "Front Exterior",
+  ],
+  [
+    /^(rear exterior|exterior rear|back exterior|rear view|back of house|rear elevation)$/i,
+    "Rear Exterior",
+  ],
+  [
+    /^(living room|livingroom|family room|great room|lounge|main living area|open living area|living area|living|den)$/i,
+    "Living Room",
+  ],
   [/^(kitchen|kitchenette|pantry|breakfast nook)$/i, "Kitchen"],
   [/^(dining room|dining area|dining|formal dining)$/i, "Dining Room"],
   [/^(bedroom|primary bedroom|master bedroom|guest bedroom|bed room|bedrooms)$/i, "Bedroom"],
@@ -55,12 +64,18 @@ const SYNONYMS: [RegExp, PhotoCategory][] = [
   [/^(yard|backyard|back yard|front yard|garden|lawn|landscaping)$/i, "Yard"],
   [/^(entry|entryway|foyer|hallway|hall|mudroom|staircase|stairs)$/i, "Entry"],
   [/^(other interior|interior|laundry|basement|closet|utility|bonus room|gym)$/i, "Other Interior"],
-  [/^(other exterior|patio|deck|porch|lanai|balcony|aerial|drone|side exterior|community|view)$/i, "Other Exterior"],
+  [
+    /^(other exterior|patio|deck|porch|lanai|balcony|aerial|drone|side exterior|community|view)$/i,
+    "Other Exterior",
+  ],
 ];
 
 /** Map any label — AI, filename hint or hand typed — onto a known category. */
 export function normalizeCategory(label: unknown): PhotoCategory | null {
-  const raw = String(label ?? "").trim().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
+  const raw = String(label ?? "")
+    .trim()
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, " ");
   if (!raw) return null;
   if (/^(unsorted|uncertain|unknown|needs review|other|untitled)$/i.test(raw)) return null;
   const exact = PHOTO_CATEGORIES.find((c) => c.toLowerCase() === raw.toLowerCase());
@@ -68,7 +83,11 @@ export function normalizeCategory(label: unknown): PhotoCategory | null {
   for (const [re, cat] of SYNONYMS) if (re.test(raw)) return cat;
   /* Loose containment last, so "Sunny Living Room 2" still resolves. */
   const loose = raw.toLowerCase();
-  if (/\b(front|facade|curb|street)\b/.test(loose) && /\b(exterior|elevation|view|house|home)\b/.test(loose)) return "Front Exterior";
+  if (
+    /\b(front|facade|curb|street)\b/.test(loose) &&
+    /\b(exterior|elevation|view|house|home)\b/.test(loose)
+  )
+    return "Front Exterior";
   if (/\bliving|family room|great room|lounge\b/.test(loose)) return "Living Room";
   if (/\bkitchen\b/.test(loose)) return "Kitchen";
   if (/\bdining\b/.test(loose)) return "Dining Room";
@@ -104,19 +123,51 @@ export function resolvePhoto(input: {
   const manual = normalizeCategory(input.manual) ?? (String(input.manual || "").trim() || null);
   if (manual) {
     const cat = normalizeCategory(manual);
-    return { id: input.id, label: String(manual), category: cat, confidence: 1, source: "manual", state: cat ? "confirmed" : "unsorted", selected: sel };
+    return {
+      id: input.id,
+      label: String(manual),
+      category: cat,
+      confidence: 1,
+      source: "manual",
+      state: cat ? "confirmed" : "unsorted",
+      selected: sel,
+    };
   }
   const conf = Number(input.confidence ?? 0);
   const cat = normalizeCategory(input.label);
   if (cat && conf >= ACCEPT_CONFIDENCE) {
-    return { id: input.id, label: cat, category: cat, confidence: conf, source: "ai", state: "confirmed", selected: sel };
+    return {
+      id: input.id,
+      label: cat,
+      category: cat,
+      confidence: conf,
+      source: "ai",
+      state: "confirmed",
+      selected: sel,
+    };
   }
   if (cat && conf >= REVIEW_CONFIDENCE) {
     /* A low-confidence guess is never presented as a fact: the grid shows
        "Needs Review" and presence checks ignore it. */
-    return { id: input.id, label: REVIEW_LABEL, category: cat, confidence: conf, source: "ai", state: "review", selected: sel };
+    return {
+      id: input.id,
+      label: REVIEW_LABEL,
+      category: cat,
+      confidence: conf,
+      source: "ai",
+      state: "review",
+      selected: sel,
+    };
   }
-  return { id: input.id, label: UNSORTED_LABEL, category: null, confidence: conf, source: input.source || "none", state: "unsorted", selected: sel };
+  return {
+    id: input.id,
+    label: UNSORTED_LABEL,
+    category: null,
+    confidence: conf,
+    source: input.source || "none",
+    state: "unsorted",
+    selected: sel,
+  };
 }
 
 /** Categories we recommend every listing tour contains. */
@@ -150,14 +201,25 @@ export function missingRecommendation(
   photos: ClassifiedPhoto[],
   status: AnalysisStatus,
 ): NoticeResult {
-  const base = { show: false, missing: [] as PhotoCategory[], unselected: [] as PhotoCategory[], message: "", title: "", kind: "none" as const };
+  const base = {
+    show: false,
+    missing: [] as PhotoCategory[],
+    unselected: [] as PhotoCategory[],
+    message: "",
+    title: "",
+    kind: "none" as const,
+  };
   const none = (reason: NoticeResult["reason"]): NoticeResult => ({ ...base, reason });
   if (!photos.length) return none("ok");
   if (status === "pending" || status === "running") return none("analyzing");
 
   const confirmed = photos.filter((p) => p.state === "confirmed" && p.category);
-  const present = new Set(confirmed.filter((p) => p.selected !== false).map((p) => p.category as PhotoCategory));
-  const offGrid = new Set(confirmed.filter((p) => p.selected === false).map((p) => p.category as PhotoCategory));
+  const present = new Set(
+    confirmed.filter((p) => p.selected !== false).map((p) => p.category as PhotoCategory),
+  );
+  const offGrid = new Set(
+    confirmed.filter((p) => p.selected === false).map((p) => p.category as PhotoCategory),
+  );
 
   const gaps = RECOMMENDED_CATEGORIES.filter((c) => !present.has(c));
   if (!gaps.length) return { ...base, reason: "complete" };
@@ -192,12 +254,24 @@ export function missingRecommendation(
     };
   }
 
-  return { show: true, missing: gaps, unselected: [], title: "Recommended photo missing", message: recommendationCopy(gaps), kind: "missing", reason: "ok" };
+  return {
+    show: true,
+    missing: gaps,
+    unselected: [],
+    title: "Recommended photo missing",
+    message: recommendationCopy(gaps),
+    kind: "missing",
+    reason: "ok",
+  };
 }
 
 /** Human wording for a category inside a sentence. */
 function categoryWords(list: PhotoCategory[]): string[] {
-  return list.map((m) => (m === "Front Exterior" ? "front exterior" : m.toLowerCase().replace("living room", "living-room")));
+  return list.map((m) =>
+    m === "Front Exterior"
+      ? "front exterior"
+      : m.toLowerCase().replace("living room", "living-room"),
+  );
 }
 
 export function recommendationCopy(missing: PhotoCategory[]): string {

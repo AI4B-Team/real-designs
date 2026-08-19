@@ -5,156 +5,263 @@ import { PHOTOS } from "@/content/rd-photos";
 const P = PHOTOS;
 
 export type Direction = {
-  id: string; name: string; img: string; line: string; about: string;
-  palette: string[]; spaces: string[]; materials: string[]; finishes: string[];
-  rooms: string[]; budgets: string[]; grades: string[];
-  traits?: string[]; examples?: string[]; staging?: boolean;
+  id: string;
+  name: string;
+  img: string;
+  line: string;
+  about: string;
+  palette: string[];
+  spaces: string[];
+  materials: string[];
+  finishes: string[];
+  rooms: string[];
+  budgets: string[];
+  grades: string[];
+  traits?: string[];
+  examples?: string[];
+  staging?: boolean;
 };
 
 const BASE: Direction[] = [
   {
-    id: "warm-minimal", name: "Warm Minimal", img: P.after,
+    id: "warm-minimal",
+    name: "Warm Minimal",
+    img: P.after,
     line: "Quiet palette, warm woods, nothing extra.",
-    about: "Soft neutrals and oak warmth with very little visual noise. Reads calm on camera and photographs wide, which makes it a safe default for resale and rental listings alike.",
+    about:
+      "Soft neutrals and oak warmth with very little visual noise. Reads calm on camera and photographs wide, which makes it a safe default for resale and rental listings alike.",
     palette: ["#EFEAE2", "#D9CBB6", "#8C7A63", "#2E2A26"],
-    spaces: ["Interior"], materials: ["White oak", "Linen", "Honed quartz", "Matte brass"],
+    spaces: ["Interior"],
+    materials: ["White oak", "Linen", "Honed quartz", "Matte brass"],
     finishes: ["Wide plank oak floors", "Flat panel cabinetry", "Warm white walls"],
-    rooms: ["Living Room", "Primary Bedroom", "Kitchen"], budgets: ["Makeover", "Renovation"], grades: ["Retail Grade"],
+    rooms: ["Living Room", "Primary Bedroom", "Kitchen"],
+    budgets: ["Makeover", "Renovation"],
+    grades: ["Retail Grade"],
   },
   {
-    id: "organic-modern", name: "Organic Modern", img: P.neutral,
+    id: "organic-modern",
+    name: "Organic Modern",
+    img: P.neutral,
     line: "Rounded forms, natural texture, modern lines.",
-    about: "Modern geometry softened with plaster, boucle and stone. Works well when the architecture is plain and the space needs character without a renovation.",
+    about:
+      "Modern geometry softened with plaster, boucle and stone. Works well when the architecture is plain and the space needs character without a renovation.",
     palette: ["#F2EDE6", "#CBB9A3", "#7D7466", "#3A342C"],
-    spaces: ["Interior"], materials: ["Limewash plaster", "Boucle", "Travertine", "Blackened steel"],
+    spaces: ["Interior"],
+    materials: ["Limewash plaster", "Boucle", "Travertine", "Blackened steel"],
     finishes: ["Plaster walls", "Stone coffee table", "Curved seating"],
-    rooms: ["Living Room", "Dining Room"], budgets: ["Makeover", "Renovation"], grades: ["Retail Grade"],
+    rooms: ["Living Room", "Dining Room"],
+    budgets: ["Makeover", "Renovation"],
+    grades: ["Retail Grade"],
   },
   {
-    id: "modern-farmhouse", name: "Modern Farmhouse", img: P.farmhouse,
+    id: "modern-farmhouse",
+    name: "Modern Farmhouse",
+    img: P.farmhouse,
     line: "Painted millwork, black hardware, honest materials.",
-    about: "Shaker millwork and matte black fittings against warm white. Broad buyer appeal in suburban markets and forgiving on mid budgets.",
+    about:
+      "Shaker millwork and matte black fittings against warm white. Broad buyer appeal in suburban markets and forgiving on mid budgets.",
     palette: ["#FBF8F3", "#DAD2C4", "#4B5D53", "#1C1B19"],
-    spaces: ["Interior", "Exterior"], materials: ["Shaker doors", "Butcher block", "Matte black iron", "Shiplap"],
+    spaces: ["Interior", "Exterior"],
+    materials: ["Shaker doors", "Butcher block", "Matte black iron", "Shiplap"],
     finishes: ["Painted island", "Apron sink", "Board and batten"],
-    rooms: ["Kitchen", "Living Room", "Primary Bath"], budgets: ["Makeover", "Renovation"], grades: ["Rental Grade", "Retail Grade"],
+    rooms: ["Kitchen", "Living Room", "Primary Bath"],
+    budgets: ["Makeover", "Renovation"],
+    grades: ["Rental Grade", "Retail Grade"],
   },
   {
-    id: "quiet-luxury", name: "Quiet Luxury", img: P.luxury,
+    id: "quiet-luxury",
+    name: "Quiet Luxury",
+    img: P.luxury,
     line: "Stone slabs, deep tone, restrained detail.",
-    about: "Fewer, better materials. Full slab stone, tailored upholstery and low contrast hardware. Best on properties where the finish grade already supports the price.",
+    about:
+      "Fewer, better materials. Full slab stone, tailored upholstery and low contrast hardware. Best on properties where the finish grade already supports the price.",
     palette: ["#EDE9E3", "#B9A88F", "#5A5147", "#141210"],
-    spaces: ["Interior"], materials: ["Book matched marble", "Walnut", "Bronze", "Wool"],
+    spaces: ["Interior"],
+    materials: ["Book matched marble", "Walnut", "Bronze", "Wool"],
     finishes: ["Slab backsplash", "Integrated appliance panels", "Concealed lighting"],
-    rooms: ["Primary Bath", "Kitchen", "Living Room"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade", "Premium"],
+    rooms: ["Primary Bath", "Kitchen", "Living Room"],
+    budgets: ["Renovation", "Full Remodel"],
+    grades: ["Retail Grade", "Premium"],
   },
   {
-    id: "japandi", name: "Japandi", img: P.japandi,
+    id: "japandi",
+    name: "Japandi",
+    img: P.japandi,
     line: "Pale wood, low profiles, disciplined space.",
-    about: "Japanese restraint with Scandinavian warmth. Very few objects, strong horizontal lines and matte finishes throughout.",
+    about:
+      "Japanese restraint with Scandinavian warmth. Very few objects, strong horizontal lines and matte finishes throughout.",
     palette: ["#F4F1EA", "#CFC5B4", "#7C8579", "#26241F"],
-    spaces: ["Interior"], materials: ["Ash", "Paper shades", "Clay plaster", "Rattan"],
+    spaces: ["Interior"],
+    materials: ["Ash", "Paper shades", "Clay plaster", "Rattan"],
     finishes: ["Low bed platform", "Frameless joinery", "Matte black taps"],
-    rooms: ["Primary Bedroom", "Living Room"], budgets: ["Refresh", "Makeover"], grades: ["Retail Grade"],
+    rooms: ["Primary Bedroom", "Living Room"],
+    budgets: ["Refresh", "Makeover"],
+    grades: ["Retail Grade"],
   },
   {
-    id: "coastal", name: "Coastal", img: P.coastal,
+    id: "coastal",
+    name: "Coastal",
+    img: P.coastal,
     line: "Bright whites, soft blues, open light.",
-    about: "Light woods and washed blues that make small rooms read larger. Strong performer for short term rental photography.",
+    about:
+      "Light woods and washed blues that make small rooms read larger. Strong performer for short term rental photography.",
     palette: ["#FDFCF9", "#D7E3E6", "#8FA9B4", "#2C3A42"],
-    spaces: ["Interior", "Exterior"], materials: ["Whitewashed oak", "Cotton", "Sea grass", "Polished nickel"],
+    spaces: ["Interior", "Exterior"],
+    materials: ["Whitewashed oak", "Cotton", "Sea grass", "Polished nickel"],
     finishes: ["White trim", "Slat detail", "Woven textures"],
-    rooms: ["Living Room", "Primary Bedroom"], budgets: ["Refresh", "Makeover"], grades: ["Rental Grade", "Retail Grade"],
+    rooms: ["Living Room", "Primary Bedroom"],
+    budgets: ["Refresh", "Makeover"],
+    grades: ["Rental Grade", "Retail Grade"],
   },
   {
-    id: "mid-century", name: "Mid-Century", img: P.midcentury,
+    id: "mid-century",
+    name: "Mid-Century",
+    img: P.midcentury,
     line: "Walnut, tapered legs, graphic contrast.",
-    about: "Warm walnut, low seating and a tight accent palette. Suits post-war architecture and open plan living rooms.",
+    about:
+      "Warm walnut, low seating and a tight accent palette. Suits post-war architecture and open plan living rooms.",
     palette: ["#F0E7D8", "#C08A4E", "#3F6152", "#211C17"],
-    spaces: ["Interior"], materials: ["Walnut", "Leather", "Terrazzo", "Brass"],
+    spaces: ["Interior"],
+    materials: ["Walnut", "Leather", "Terrazzo", "Brass"],
     finishes: ["Slat room divider", "Tapered leg casegoods", "Globe lighting"],
-    rooms: ["Living Room", "Dining Room"], budgets: ["Makeover", "Renovation"], grades: ["Retail Grade"],
+    rooms: ["Living Room", "Dining Room"],
+    budgets: ["Makeover", "Renovation"],
+    grades: ["Retail Grade"],
   },
   {
-    id: "industrial", name: "Industrial", img: P.industrial,
+    id: "industrial",
+    name: "Industrial",
+    img: P.industrial,
     line: "Raw brick, steel frames, utility lighting.",
-    about: "Exposed structure treated as the finish. Cost efficient when the shell is already interesting and the budget is tight.",
+    about:
+      "Exposed structure treated as the finish. Cost efficient when the shell is already interesting and the budget is tight.",
     palette: ["#E8E4DE", "#A2764F", "#585A5C", "#171717"],
-    spaces: ["Interior"], materials: ["Brick", "Blackened steel", "Concrete", "Reclaimed oak"],
+    spaces: ["Interior"],
+    materials: ["Brick", "Blackened steel", "Concrete", "Reclaimed oak"],
     finishes: ["Steel framed glazing", "Sealed concrete floors", "Exposed conduit"],
-    rooms: ["Living Room", "Kitchen"], budgets: ["Makeover", "Renovation"], grades: ["Rental Grade", "Retail Grade"],
+    rooms: ["Living Room", "Kitchen"],
+    budgets: ["Makeover", "Renovation"],
+    grades: ["Rental Grade", "Retail Grade"],
   },
   {
-    id: "transitional", name: "Transitional", img: P.bedroomAfter,
+    id: "transitional",
+    name: "Transitional",
+    img: P.bedroomAfter,
     line: "Classic bones, current finishes, low risk.",
-    about: "The middle lane. Traditional profiles paired with modern hardware and lighting, which appraises well and dates slowly.",
+    about:
+      "The middle lane. Traditional profiles paired with modern hardware and lighting, which appraises well and dates slowly.",
     palette: ["#F6F3EE", "#CFC3B2", "#6D6A64", "#232120"],
-    spaces: ["Interior"], materials: ["Painted millwork", "Quartz", "Satin nickel", "Wool blend"],
+    spaces: ["Interior"],
+    materials: ["Painted millwork", "Quartz", "Satin nickel", "Wool blend"],
     finishes: ["Recessed panel doors", "Subtle crown", "Layered lighting"],
-    rooms: ["Primary Bedroom", "Living Room", "Dining Room"], budgets: ["Makeover", "Renovation"], grades: ["Rental Grade", "Retail Grade"],
+    rooms: ["Primary Bedroom", "Living Room", "Dining Room"],
+    budgets: ["Makeover", "Renovation"],
+    grades: ["Rental Grade", "Retail Grade"],
   },
   {
-    id: "contemporary", name: "Contemporary", img: P.officeAfter,
+    id: "contemporary",
+    name: "Contemporary",
+    img: P.officeAfter,
     line: "Flat fronts, crisp edges, controlled contrast.",
-    about: "Handleless joinery, large format tile and a tight two tone palette. Strong for newer builds and condo interiors.",
+    about:
+      "Handleless joinery, large format tile and a tight two tone palette. Strong for newer builds and condo interiors.",
     palette: ["#FFFFFF", "#D5D7D8", "#6A6E70", "#101112"],
-    spaces: ["Interior"], materials: ["Large format porcelain", "Lacquer", "Glass", "Matte aluminium"],
+    spaces: ["Interior"],
+    materials: ["Large format porcelain", "Lacquer", "Glass", "Matte aluminium"],
     finishes: ["Handleless cabinets", "Linear lighting", "Full height tile"],
-    rooms: ["Kitchen", "Primary Bath", "Home Office"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade", "Premium"],
+    rooms: ["Kitchen", "Primary Bath", "Home Office"],
+    budgets: ["Renovation", "Full Remodel"],
+    grades: ["Retail Grade", "Premium"],
   },
   {
-    id: "mediterranean", name: "Mediterranean", img: P.resortYard,
+    id: "mediterranean",
+    name: "Mediterranean",
+    img: P.resortYard,
     line: "Warm stucco, terracotta, shaded outdoor rooms.",
-    about: "Sun tolerant materials, arched openings and planted courtyards. Best used across exterior and landscape together.",
+    about:
+      "Sun tolerant materials, arched openings and planted courtyards. Best used across exterior and landscape together.",
     palette: ["#F5EDE0", "#D6A97B", "#94743F", "#3B2E22"],
-    spaces: ["Exterior", "Landscape"], materials: ["Stucco", "Terracotta", "Limestone", "Olive planting"],
+    spaces: ["Exterior", "Landscape"],
+    materials: ["Stucco", "Terracotta", "Limestone", "Olive planting"],
     finishes: ["Arched openings", "Clay tile", "Gravel courtyard"],
-    rooms: ["Backyard", "Front Elevation"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade", "Premium"],
+    rooms: ["Backyard", "Front Elevation"],
+    budgets: ["Renovation", "Full Remodel"],
+    grades: ["Retail Grade", "Premium"],
   },
   {
-    id: "scandinavian", name: "Scandinavian", img: P.stageStaged,
+    id: "scandinavian",
+    name: "Scandinavian",
+    img: P.stageStaged,
     line: "Light floors, soft contrast, functional layout.",
-    about: "Pale floors, white walls and a small number of well chosen pieces. The most economical direction for virtual staging.",
+    about:
+      "Pale floors, white walls and a small number of well chosen pieces. The most economical direction for virtual staging.",
     palette: ["#FFFFFF", "#E6DED2", "#A9AFA6", "#2B2B2B"],
-    spaces: ["Interior"], materials: ["Pale oak", "Wool", "Powder coated steel", "Cotton"],
+    spaces: ["Interior"],
+    materials: ["Pale oak", "Wool", "Powder coated steel", "Cotton"],
     finishes: ["White walls", "Light plank floors", "Simple casegoods"],
-    rooms: ["Living Room", "Primary Bedroom"], budgets: ["Refresh", "Makeover"], grades: ["Rental Grade", "Retail Grade"],
+    rooms: ["Living Room", "Primary Bedroom"],
+    budgets: ["Refresh", "Makeover"],
+    grades: ["Rental Grade", "Retail Grade"],
   },
   {
-    id: "craftsman-revival", name: "Craftsman Revival", img: P.craftsman,
+    id: "craftsman-revival",
+    name: "Craftsman Revival",
+    img: P.craftsman,
     line: "Tapered columns, deep eaves, honest woodwork.",
-    about: "Period correct porch detail, painted siding and stained timber. Restores character to post-war and bungalow elevations without changing the footprint.",
+    about:
+      "Period correct porch detail, painted siding and stained timber. Restores character to post-war and bungalow elevations without changing the footprint.",
     palette: ["#F1EBDF", "#9C6B43", "#4A5A48", "#1F1B17"],
-    spaces: ["Exterior"], materials: ["Painted siding", "Stained cedar", "Stone base", "Bronze fixtures"],
+    spaces: ["Exterior"],
+    materials: ["Painted siding", "Stained cedar", "Stone base", "Bronze fixtures"],
     finishes: ["Tapered porch columns", "Exposed rafter tails", "Divided light windows"],
-    rooms: ["Front Elevation"], budgets: ["Makeover", "Renovation"], grades: ["Retail Grade"],
+    rooms: ["Front Elevation"],
+    budgets: ["Makeover", "Renovation"],
+    grades: ["Retail Grade"],
   },
   {
-    id: "painted-brick", name: "Painted Brick", img: P.paintedBrick,
+    id: "painted-brick",
+    name: "Painted Brick",
+    img: P.paintedBrick,
     line: "One coat of paint, an entirely new elevation.",
-    about: "The highest return exterior move on dated brick. Limewash or masonry paint with refreshed trim, door and lighting.",
+    about:
+      "The highest return exterior move on dated brick. Limewash or masonry paint with refreshed trim, door and lighting.",
     palette: ["#F7F5F1", "#D8D2C8", "#6E6A64", "#1B1A18"],
-    spaces: ["Exterior"], materials: ["Masonry paint", "Limewash", "Black steel", "Composite door"],
+    spaces: ["Exterior"],
+    materials: ["Masonry paint", "Limewash", "Black steel", "Composite door"],
     finishes: ["Painted brick field", "Contrast trim", "Updated porch lighting"],
-    rooms: ["Front Elevation"], budgets: ["Refresh", "Makeover"], grades: ["Rental Grade", "Retail Grade"],
+    rooms: ["Front Elevation"],
+    budgets: ["Refresh", "Makeover"],
+    grades: ["Rental Grade", "Retail Grade"],
   },
   {
-    id: "resort-landscape", name: "Resort Landscape", img: P.resortYard,
+    id: "resort-landscape",
+    name: "Resort Landscape",
+    img: P.resortYard,
     line: "Shaded seating, layered planting, evening light.",
-    about: "Treats the yard as an outdoor room: paved living zone, structured planting and low voltage lighting for evening photography.",
+    about:
+      "Treats the yard as an outdoor room: paved living zone, structured planting and low voltage lighting for evening photography.",
     palette: ["#F2EFE7", "#C6B79A", "#4C6551", "#23231F"],
-    spaces: ["Landscape"], materials: ["Porcelain paving", "Hardwood decking", "Palm planting", "Low voltage lighting"],
+    spaces: ["Landscape"],
+    materials: ["Porcelain paving", "Hardwood decking", "Palm planting", "Low voltage lighting"],
     finishes: ["Shade structure", "Built-in seating", "Planted borders"],
-    rooms: ["Backyard"], budgets: ["Renovation", "Full Remodel"], grades: ["Retail Grade", "Premium"],
+    rooms: ["Backyard"],
+    budgets: ["Renovation", "Full Remodel"],
+    grades: ["Retail Grade", "Premium"],
   },
   {
-    id: "low-maintenance-yard", name: "Low Maintenance Yard", img: P.yardAfter,
+    id: "low-maintenance-yard",
+    name: "Low Maintenance Yard",
+    img: P.yardAfter,
     line: "Gravel, native planting, almost no upkeep.",
-    about: "Drought tolerant planting, defined edging and hard surfaces. Built for rentals and turnover properties where nobody is mowing.",
+    about:
+      "Drought tolerant planting, defined edging and hard surfaces. Built for rentals and turnover properties where nobody is mowing.",
     palette: ["#F4F1E9", "#CFC4AC", "#7C8A6C", "#2A2823"],
-    spaces: ["Landscape"], materials: ["Decomposed granite", "Native grasses", "Steel edging", "Concrete pavers"],
+    spaces: ["Landscape"],
+    materials: ["Decomposed granite", "Native grasses", "Steel edging", "Concrete pavers"],
     finishes: ["Gravel beds", "Drip irrigation", "Paver walkway"],
-    rooms: ["Backyard", "Front Elevation"], budgets: ["Refresh", "Makeover"], grades: ["Rental Grade"],
+    rooms: ["Backyard", "Front Elevation"],
+    budgets: ["Refresh", "Makeover"],
+    grades: ["Rental Grade"],
   },
 ];
 
@@ -198,7 +305,13 @@ const EXAMPLES: Record<string, string[]> = {
 };
 
 /** Directions that also work as virtual staging presets for empty rooms. */
-const STAGING = new Set(["warm-minimal", "scandinavian", "transitional", "contemporary", "coastal"]);
+const STAGING = new Set([
+  "warm-minimal",
+  "scandinavian",
+  "transitional",
+  "contemporary",
+  "coastal",
+]);
 
 export const DIRECTIONS: Direction[] = BASE.map((d) => ({
   ...d,
@@ -208,5 +321,11 @@ export const DIRECTIONS: Direction[] = BASE.map((d) => ({
 }));
 
 export const TRAIT_OPTIONS = [
-  "Warm", "Minimal", "Traditional", "Organic", "Bold", "Luxury", "Rental-Friendly",
+  "Warm",
+  "Minimal",
+  "Traditional",
+  "Organic",
+  "Bold",
+  "Luxury",
+  "Rental-Friendly",
 ] as const;

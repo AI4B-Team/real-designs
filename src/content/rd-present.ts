@@ -19,7 +19,10 @@ import {
 } from "@/lib/presentation-packages.functions";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const paint = () => {
   try {
     createIcons({ icons });
@@ -114,7 +117,10 @@ function libraryHtml() {
     .map((r) => {
       const [cls, lab] = STATUS[r.status] || STATUS.draft;
       const link = activeLink(r);
-      const ctx = [r.property_label, r.client_name ? "For " + r.client_name : null].filter(Boolean).map(esc).join(" · ");
+      const ctx = [r.property_label, r.client_name ? "For " + r.client_name : null]
+        .filter(Boolean)
+        .map(esc)
+        .join(" · ");
       return `<div class="pk-row" data-id="${r.id}">
         <div class="pk-row-t">
           <b>${esc(r.title)}</b>
@@ -207,7 +213,9 @@ function sourceItems(propertyId) {
       }),
     );
   ((src.videos && src.videos.projects) || []).slice(0, 40).forEach((v) => {
-    const variant = ((src.videos && src.videos.variants) || []).find((x) => x.video_project_id === v.id);
+    const variant = ((src.videos && src.videos.variants) || []).find(
+      (x) => x.video_project_id === v.id,
+    );
     out.videos.push({
       id: "v_" + v.id,
       title: v.title || "Listing Video",
@@ -224,7 +232,9 @@ function sourceItems(propertyId) {
         id: "b_" + e.version_id,
         title: e.room_name + " — " + e.project_name,
         caption:
-          e.total_low != null ? money(e.total_low) + " to " + money(e.total_high) : "No pricing yet",
+          e.total_low != null
+            ? money(e.total_low) + " to " + money(e.total_high)
+            : "No pricing yet",
         url: null,
         kind: "budget",
         meta: { low: e.total_low, high: e.total_high, address: e.address, room: e.room_name },
@@ -311,7 +321,8 @@ function step2() {
   const count = Object.keys(d.picked).length;
   return `<div class="pk-assets">
     <div class="pk-tabs">${TABS.map(
-      ([k, l]) => `<button class="pk-tab${tab === k ? " on" : ""}" data-pktab="${k}">${l} ${items[k].length}</button>`,
+      ([k, l]) =>
+        `<button class="pk-tab${tab === k ? " on" : ""}" data-pktab="${k}">${l} ${items[k].length}</button>`,
     ).join("")}</div>
     <p class="pk-note">${count} Item${count === 1 ? "" : "s"} Selected${
       d.property_id ? "" : " · Choose a property in step one to narrow these results"
@@ -465,9 +476,17 @@ async function openBuilder(id) {
       d.intro = p.package.intro || "";
       d.accent = p.package.accent || "#CC0000";
       d.logo_url = p.package.logo_url || "";
-      d.settings = Object.assign({ allow_comments: true, allow_approve: true, allow_changes: true }, p.package.settings || {});
+      d.settings = Object.assign(
+        { allow_comments: true, allow_approve: true, allow_changes: true },
+        p.package.settings || {},
+      );
       if (p.sections.length)
-        d.sections = p.sections.map((s, i) => ({ key: s.section_key, title: s.title, hidden: s.hidden, sort_order: i }));
+        d.sections = p.sections.map((s, i) => ({
+          key: s.section_key,
+          title: s.title,
+          hidden: s.hidden,
+          sort_order: i,
+        }));
       p.assets.forEach((a) => {
         if (!a.source_id) return;
         d.picked[a.source_id] = {
@@ -501,16 +520,16 @@ async function saveDraft() {
   const assets = Object.entries(d.picked)
     .filter(([, a]) => budgetsLive() || a.section_key !== "budget")
     .map(([sid, a], i) => ({
-    section_key: a.section_key,
-    kind: a.kind,
-    title: a.title || null,
-    caption: a.caption || null,
-    url: a.url || null,
-    compare_url: a.compare_url || null,
-    source_id: sid,
-    meta: a.meta || {},
-    sort_order: i,
-  }));
+      section_key: a.section_key,
+      kind: a.kind,
+      title: a.title || null,
+      caption: a.caption || null,
+      url: a.url || null,
+      compare_url: a.compare_url || null,
+      source_id: sid,
+      meta: a.meta || {},
+      sort_order: i,
+    }));
   try {
     const res = await savePackage({
       data: {
@@ -604,8 +623,18 @@ async function openDetail(id) {
               .map(
                 (a) =>
                   `<div class="pk-act"><i data-lucide="${
-                    a.kind === "approved" ? "check-circle-2" : a.kind === "changes" ? "refresh-cw" : a.kind === "opened" ? "eye" : a.kind === "comment" ? "message-square" : "circle-dot"
-                  }"></i><div><b>${esc(a.detail || a.kind)}</b><span>${new Date(a.created_at).toLocaleString("en-US", {
+                    a.kind === "approved"
+                      ? "check-circle-2"
+                      : a.kind === "changes"
+                        ? "refresh-cw"
+                        : a.kind === "opened"
+                          ? "eye"
+                          : a.kind === "comment"
+                            ? "message-square"
+                            : "circle-dot"
+                  }"></i><div><b>${esc(a.detail || a.kind)}</b><span>${new Date(
+                    a.created_at,
+                  ).toLocaleString("en-US", {
                     month: "short",
                     day: "numeric",
                     hour: "numeric",
@@ -650,7 +679,9 @@ async function exportPdf(id) {
       if (a.url) urls[a.url] = (await resolvePhotoUrl(a.url)) || "";
     }),
   );
-  const secs = (p.sections || []).filter((s) => !s.hidden && (budgetsLive() || s.section_key !== "budget"));
+  const secs = (p.sections || []).filter(
+    (s) => !s.hidden && (budgetsLive() || s.section_key !== "budget"),
+  );
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(pk.title)}</title>
   <style>
     body{font-family:'DM Sans',system-ui,sans-serif;color:#111;margin:38px}
@@ -753,7 +784,14 @@ async function onClick(e) {
   const id = t.getAttribute("data-id") || (row ? row.getAttribute("data-id") : null);
   const a = t.getAttribute("data-pk");
 
-  if (!S.draft && (t.hasAttribute("data-pktab") || t.hasAttribute("data-pkpick") || t.hasAttribute("data-secmove") || t.hasAttribute("data-sechide"))) return;
+  if (
+    !S.draft &&
+    (t.hasAttribute("data-pktab") ||
+      t.hasAttribute("data-pkpick") ||
+      t.hasAttribute("data-secmove") ||
+      t.hasAttribute("data-sechide"))
+  )
+    return;
   if (t.hasAttribute("data-pktab")) {
     S.draft.tab = t.getAttribute("data-pktab");
     return renderBuilder();

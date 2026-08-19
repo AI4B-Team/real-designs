@@ -16,18 +16,46 @@ export const ATTESTATION_TEXT =
 const USER_AGENT = "REAL DESIGNS Site Monitor (+https://realdesigns.ai/contact)";
 
 const PORTALS = [
-  "zillow.com", "redfin.com", "realtor.com", "trulia.com", "homes.com", "compass.com",
-  "rightmove.co.uk", "zoopla.co.uk", "onthemarket.com", "movoto.com", "point2homes.com",
-  "century21.com", "coldwellbankerhomes.com", "remax.com", "sothebysrealty.com",
-  "apartments.com", "rent.com", "loopnet.com", "har.com", "estately.com", "openhouse.com",
-  "realestate.com.au", "domain.com.au", "idealista.com", "immobilienscout24.de",
-  "facebook.com", "instagram.com", "craigslist.org", "airbnb.com", "vrbo.com",
+  "zillow.com",
+  "redfin.com",
+  "realtor.com",
+  "trulia.com",
+  "homes.com",
+  "compass.com",
+  "rightmove.co.uk",
+  "zoopla.co.uk",
+  "onthemarket.com",
+  "movoto.com",
+  "point2homes.com",
+  "century21.com",
+  "coldwellbankerhomes.com",
+  "remax.com",
+  "sothebysrealty.com",
+  "apartments.com",
+  "rent.com",
+  "loopnet.com",
+  "har.com",
+  "estately.com",
+  "openhouse.com",
+  "realestate.com.au",
+  "domain.com.au",
+  "idealista.com",
+  "immobilienscout24.de",
+  "facebook.com",
+  "instagram.com",
+  "craigslist.org",
+  "airbnb.com",
+  "vrbo.com",
 ];
 
 function hostOf(raw: string) {
   const withScheme = /^https?:\/\//i.test(raw) ? raw : "https://" + raw;
   const u = new URL(withScheme);
-  return { url: u.toString(), host: u.hostname.toLowerCase().replace(/^www\./, ""), origin: u.origin };
+  return {
+    url: u.toString(),
+    host: u.hostname.toLowerCase().replace(/^www\./, ""),
+    origin: u.origin,
+  };
 }
 
 function isPortal(host: string) {
@@ -67,10 +95,16 @@ export const checkWatchSite = createServerFn({ method: "POST" })
     try {
       parsed = hostOf(data.site_url.trim());
     } catch (_) {
-      return { ok: false, reason: "That Does Not Look Like A Web Address. Try Something Like https://your-site.com." };
+      return {
+        ok: false,
+        reason: "That Does Not Look Like A Web Address. Try Something Like https://your-site.com.",
+      };
     }
     if (isPortal(parsed.host)) {
-      return { ok: false, reason: "This Looks Like A Listing Portal, Not Your Own Site. Add A Site You Own." };
+      return {
+        ok: false,
+        reason: "This Looks Like A Listing Portal, Not Your Own Site. Add A Site You Own.",
+      };
     }
     const robots = await robotsAllows(parsed.origin);
     let reachable = true;
@@ -123,7 +157,8 @@ export const addWatchedSite = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    if (!data.attested) throw new Error("Tick The Ownership And Permission Box Before Monitoring Starts.");
+    if (!data.attested)
+      throw new Error("Tick The Ownership And Permission Box Before Monitoring Starts.");
     let parsed;
     try {
       parsed = hostOf(data.site_url.trim());
@@ -134,7 +169,10 @@ export const addWatchedSite = createServerFn({ method: "POST" })
       throw new Error("This Looks Like A Listing Portal, Not Your Own Site. Add A Site You Own.");
     }
     const robots_ok = await robotsAllows(parsed.origin);
-    if (!robots_ok) throw new Error("This Site Asks Crawlers To Stay Out In Its robots.txt. We Will Not Monitor It.");
+    if (!robots_ok)
+      throw new Error(
+        "This Site Asks Crawlers To Stay Out In Its robots.txt. We Will Not Monitor It.",
+      );
 
     const { data: row, error } = await context.supabase
       .from("watched_sites")

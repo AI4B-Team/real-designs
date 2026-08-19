@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/arv-calculator",
   tier: "B",
-  intent: "A flipper wants to know what a property will be worth after rehab, and how much they can safely pay for it today.",
+  intent:
+    "A flipper wants to know what a property will be worth after rehab, and how much they can safely pay for it today.",
 
   metaTitle: "ARV Calculator For Flippers",
-  metaDescription: "Estimate after repair value as a range, apply the 70 percent rule, and see the holding and selling costs most flippers forget to budget.",
+  metaDescription:
+    "Estimate after repair value as a range, apply the 70 percent rule, and see the holding and selling costs most flippers forget to budget.",
 
   eyebrow: "ARV Calculator",
   h1: "ARV Calculator For Flippers",
@@ -27,9 +29,18 @@ export const page: LandingPage = {
   afterCaption: "Post rehab condition matched to what nearby comps support.",
 
   steps: [
-    { title: "Enter As Is Value & Rehab", text: "Start with a current value or purchase price and your planned rehab budget." },
-    { title: "Set Condition & Comp Ceiling", text: "Condition sets the recoup multiple, and a comp ceiling caps the top of the range." },
-    { title: "Get ARV & Max Offer", text: "See an ARV range, projected lift, and the maximum offer the 70 percent rule supports." },
+    {
+      title: "Enter As Is Value & Rehab",
+      text: "Start with a current value or purchase price and your planned rehab budget.",
+    },
+    {
+      title: "Set Condition & Comp Ceiling",
+      text: "Condition sets the recoup multiple, and a comp ceiling caps the top of the range.",
+    },
+    {
+      title: "Get ARV & Max Offer",
+      text: "See an ARV range, projected lift, and the maximum offer the 70 percent rule supports.",
+    },
   ],
 
   showcase: ["arv", "scope", "grades", "budget-mode"],
@@ -110,16 +121,35 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Calculate After Repair Value",
     steps: [
-      { name: "Enter As Is Value", text: "Start with the current purchase price or as is appraised value of the property." },
-      { name: "Enter Planned Rehab Budget", text: "Add the total planned rehab spend across all rooms and systems." },
-      { name: "Select Property Condition", text: "Choose dated, worn or distressed to set the recoup multiple applied to your rehab spend." },
-      { name: "Add A Comp Ceiling", text: "Enter the highest reliable closed comparable sale on the street to cap the top of the range." },
-      { name: "Review The ARV Range", text: "Check the low and high ARV figures and whether the comp ceiling capped the result." },
-      { name: "Apply The 70 Percent Rule", text: "Multiply the low end ARV by 0.7 and subtract rehab cost to see the maximum defensible offer." },
+      {
+        name: "Enter As Is Value",
+        text: "Start with the current purchase price or as is appraised value of the property.",
+      },
+      {
+        name: "Enter Planned Rehab Budget",
+        text: "Add the total planned rehab spend across all rooms and systems.",
+      },
+      {
+        name: "Select Property Condition",
+        text: "Choose dated, worn or distressed to set the recoup multiple applied to your rehab spend.",
+      },
+      {
+        name: "Add A Comp Ceiling",
+        text: "Enter the highest reliable closed comparable sale on the street to cap the top of the range.",
+      },
+      {
+        name: "Review The ARV Range",
+        text: "Check the low and high ARV figures and whether the comp ceiling capped the result.",
+      },
+      {
+        name: "Apply The 70 Percent Rule",
+        text: "Multiply the low end ARV by 0.7 and subtract rehab cost to see the maximum defensible offer.",
+      },
     ],
   },
 
   ctaTitle: "Know Your Number Before You Offer",
-  ctaBody: "Get an ARV range built from your rehab plan and capped by real comps, plus the max offer the 70 percent rule supports.",
+  ctaBody:
+    "Get an ARV range built from your rehab plan and capped by real comps, plus the max offer the 70 percent rule supports.",
   ctaLabel: "Calculate My ARV",
 };

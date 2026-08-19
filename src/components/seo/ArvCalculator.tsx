@@ -26,8 +26,8 @@ export function ArvCalculator() {
       <div className="builder-title">
         <h3>ARV Calculator</h3>
         <p>
-          Type the as-is value and the rehab budget. No photo and no account required. The output
-          is a range, because a single ARV number is a guess wearing a suit.
+          Type the as-is value and the rehab budget. No photo and no account required. The output is
+          a range, because a single ARV number is a guess wearing a suit.
         </p>
       </div>
 

@@ -8,7 +8,12 @@ import {
   uniqueIds,
 } from "./scene-dedupe";
 
-const scene = (key: string, extra: Record<string, any> = {}): Record<string, any> => ({ key, room: "Kitchen", duration: 3, ...extra });
+const scene = (key: string, extra: Record<string, any> = {}): Record<string, any> => ({
+  key,
+  room: "Kitchen",
+  duration: 3,
+  ...extra,
+});
 const grid = ["u-1", "u-2", "u-3", "u-4", "u-5", "u-6", "u-7", "u-8"];
 const available = grid.map((key) => ({ key }));
 const eight = grid.map((k) => scene(k));
@@ -25,8 +30,8 @@ describe("scene identity and dedupe", () => {
       scene("u-2"),
     ]);
     expect(out).toHaveLength(2);
-    expect(out[0]!['caption']).toBe("Kept");
-    expect(out[0]!['motion']).toBe("pan");
+    expect(out[0]!["caption"]).toBe("Kept");
+    expect(out[0]!["motion"]).toBe("pan");
   });
 
   it("prefers the database asset id over the grid key", () => {
@@ -35,7 +40,10 @@ describe("scene identity and dedupe", () => {
   });
 
   it("allows a deliberately duplicated scene with its own role", () => {
-    const out = dedupeScenes([scene("m-a", { asset_id: "A" }), scene("m-a", { asset_id: "A", scene_role: "dup-1" })]);
+    const out = dedupeScenes([
+      scene("m-a", { asset_id: "A" }),
+      scene("m-a", { asset_id: "A", scene_role: "dup-1" }),
+    ]);
     expect(out).toHaveLength(2);
   });
 });
@@ -55,7 +63,9 @@ describe("ingestion boundaries", () => {
 
   it("a repeated Strict Mode effect is idempotent", () => {
     let scenes: any[] = [];
-    const init = () => { scenes = mergeScenes(scenes, eight); };
+    const init = () => {
+      scenes = mergeScenes(scenes, eight);
+    };
     init();
     init();
     expect(scenes).toHaveLength(8);
@@ -82,14 +92,14 @@ describe("draft rehydration", () => {
   it("reopening an existing project does not double the scenes", () => {
     const hydrated = reconcileScenes(mergeScenes(eight, eight), available, grid);
     expect(hydrated).toHaveLength(8);
-    expect(hydrated.map((s) => s['key'])).toEqual(grid);
+    expect(hydrated.map((s) => s["key"])).toEqual(grid);
   });
 
   it("orders by the grid and preserves settings", () => {
     const shuffled = [scene("u-3", { caption: "C" }), scene("u-1"), scene("u-2")];
     const out = reconcileScenes(shuffled, available, grid);
-    expect(out.map((s) => s['key'])).toEqual(["u-1", "u-2", "u-3"]);
-    expect(out[2]!['caption']).toBe("C");
+    expect(out.map((s) => s["key"])).toEqual(["u-1", "u-2", "u-3"]);
+    expect(out[2]!["caption"]).toBe("C");
   });
 });
 

@@ -14,21 +14,34 @@ import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
 import { getMyCredits } from "@/lib/credits.functions";
 import { setModalButtonLoading } from "@/lib/modal-footer";
-import { PRIMARY_OUTPUT_RATIOS, effectiveRatio, normalizeOutputRatio, ratioLabel } from "@/lib/output-ratio";
+import {
+  PRIMARY_OUTPUT_RATIOS,
+  effectiveRatio,
+  normalizeOutputRatio,
+  ratioLabel,
+} from "@/lib/output-ratio";
 import { openUpgrade } from "@/lib/rd-upgrade";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
 import { STYLES } from "@/lib/style-catalog";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const paint = () => {
   try {
     createIcons({ icons });
   } catch (_) {}
 };
 
-const SPACE_LABEL = { interior: "Interior", exterior: "Exterior", landscape: "Garden", unassigned: "Unassigned" };
+const SPACE_LABEL = {
+  interior: "Interior",
+  exterior: "Exterior",
+  landscape: "Garden",
+  unassigned: "Unassigned",
+};
 const PROJECT_TYPE = { interior: "interior", exterior: "exterior", landscape: "garden" };
 
 export const BULK_CREDIT_PER_PHOTO = 1;
@@ -96,10 +109,10 @@ function unsupportedNote(styleName, space) {
   return `${styleName} cannot be applied to these photos. Choose a compatible direction for this group.`;
 }
 
-
 /** How the shared direction is described for each space type. */
 function groupNote(space) {
-  if (space === "unassigned") return "These photos still need a room type before they can be designed.";
+  if (space === "unassigned")
+    return "These photos still need a room type before they can be designed.";
   if (space === "exterior")
     return "The shared direction is adapted to the exterior — materials, paint and curb appeal, not indoor furniture.";
   if (space === "landscape")
@@ -212,7 +225,10 @@ function styleOptions(selected, spaces) {
   return (
     `<option value=""${!selected ? " selected" : ""}>Choose a style</option>` +
     list
-      .map((s) => `<option value="${esc(s.id)}"${s.id === selected ? " selected" : ""}>${esc(s.displayName)}</option>`)
+      .map(
+        (s) =>
+          `<option value="${esc(s.id)}"${s.id === selected ? " selected" : ""}>${esc(s.displayName)}</option>`,
+      )
       .join("")
   );
 }
@@ -236,7 +252,8 @@ function pickOptions(list, selected, placeholder) {
  */
 export function openBulkDesign(opts) {
   const items = opts.items.slice();
-  const readRatio = () => normalizeOutputRatio(typeof opts.ratio === "function" ? opts.ratio() : opts.ratio);
+  const readRatio = () =>
+    normalizeOutputRatio(typeof opts.ratio === "function" ? opts.ratio() : opts.ratio);
   let allowGeneric = false;
   /* Advisory recommendations the user has explicitly accepted (styleId:space). */
   const ackUnusual = {};
@@ -345,7 +362,10 @@ export function openBulkDesign(opts) {
     else if (!form.styleId && !perSpaceMode) {
       block = "Choose a style to continue.";
       blockField = "style";
-    } else if (perSpaceMode && groups.some((g) => g.space !== "unassigned" && !form.spaceStyles[g.space])) {
+    } else if (
+      perSpaceMode &&
+      groups.some((g) => g.space !== "unassigned" && !form.spaceStyles[g.space])
+    ) {
       block = "Choose a style for each group to continue.";
     } else if (!form.intensity) {
       block = "Choose an intensity to continue.";
@@ -353,7 +373,8 @@ export function openBulkDesign(opts) {
     } else if (!form.grade) {
       block = "Choose a finish grade to continue.";
       blockField = "grade";
-    } else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
+    } else if (missing && !allowGeneric)
+      block = "Assign a room type to every selected photo before generating.";
     else if (unsupported.length) {
       block = "STYLE_UNFIT";
     } else if (short)
@@ -373,9 +394,10 @@ export function openBulkDesign(opts) {
        only once that field has been engaged, or the user tried to generate. */
     const showErr = (name) => blockField === name && (attempted || !!touched[name]);
     const fieldMsg = (name) =>
-      showErr(name) ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : "";
+      showErr(name)
+        ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>`
+        : "";
     const badCls = (name) => (showErr(name) ? " bad" : "");
-
 
     /* One source of truth for the format: the project ratio chosen on Prepare
        Your Photos, edited inline here — never in a second stacked modal. */
@@ -520,7 +542,9 @@ export function openBulkDesign(opts) {
           ${
             barMsg
               ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(barMsg)}</p>${
-                  short ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>` : ""
+                  short
+                    ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>`
+                    : ""
                 }</div>`
               : ""
           }
@@ -562,23 +586,25 @@ export function openBulkDesign(opts) {
     );
 
     const FIELD_OF = { rdsbStyle: "style", rdsbInt: "intensity", rdsbGrade: "grade" };
-    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach((el) => {
-      const field = FIELD_OF[el.id];
-      el.onchange = () => {
-        if (field) touched[field] = true;
-        readForm();
-        draw();
-      };
-      /* Engaged and left empty: only then does the field earn a red state. */
-      if (field)
-        el.onblur = () => {
-          if (!el.value && !touched[field]) {
-            touched[field] = true;
-            readForm();
-            draw();
-          }
+    node
+      .querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]")
+      .forEach((el) => {
+        const field = FIELD_OF[el.id];
+        el.onchange = () => {
+          if (field) touched[field] = true;
+          readForm();
+          draw();
         };
-    });
+        /* Engaged and left empty: only then does the field earn a red state. */
+        if (field)
+          el.onblur = () => {
+            if (!el.value && !touched[field]) {
+              touched[field] = true;
+              readForm();
+              draw();
+            }
+          };
+      });
 
     const notes = node.querySelector("#rdsbNotes");
     if (notes) notes.oninput = () => (form.notes = notes.value);
@@ -631,7 +657,11 @@ export function openBulkDesign(opts) {
 
       readForm();
       submitted = true;
-      setModalButtonLoading(go, true, `Generating ${items.length} Design${items.length === 1 ? "" : "s"}…`);
+      setModalButtonLoading(
+        go,
+        true,
+        `Generating ${items.length} Design${items.length === 1 ? "" : "s"}…`,
+      );
       const rec = STYLES.find((s) => s.id === form.styleId);
       /* Per-space fallbacks travel with the direction, so an exterior group
          renders with the style the user chose for it. */

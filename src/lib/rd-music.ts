@@ -4,77 +4,242 @@
 
 type Mood = {
   bpm: number;
-  root: number;               // Hz of the tonic
-  prog: number[][];           // chord progression, semitone offsets from the tonic
-  scale: number[];            // melodic scale over the tonic
-  lead: OscillatorType;       // melody timbre
-  padWave: OscillatorType;    // chord bed timbre
-  pad: number;                // chord bed level
-  bright: number;             // master lowpass, Hz
-  swing: number;              // 0..0.3 shuffle amount
+  root: number; // Hz of the tonic
+  prog: number[][]; // chord progression, semitone offsets from the tonic
+  scale: number[]; // melodic scale over the tonic
+  lead: OscillatorType; // melody timbre
+  padWave: OscillatorType; // chord bed timbre
+  pad: number; // chord bed level
+  bright: number; // master lowpass, Hz
+  swing: number; // 0..0.3 shuffle amount
   drums: "none" | "brush" | "soft" | "house" | "pop" | "cine";
-  bass: number;               // bass level, 0 disables
-  arp: number;                // melody level, 0 disables
-  delay: number;              // echo feedback level
+  bass: number; // bass level, 0 disables
+  arp: number; // melody level, 0 disables
+  delay: number; // echo feedback level
 };
 
 /* One preset per built-in track. Each is a short chord progression with a bass
    line, melody and its own drum feel, so the genres are actually distinct. */
 const MOODS: Record<string, Mood> = {
   modern: {
-    bpm: 104, root: 261.63, prog: [[0, 4, 7, 11], [-3, 2, 5, 9], [-5, 0, 4, 7], [-1, 2, 7, 11]],
-    scale: [0, 2, 4, 7, 9, 11], lead: "triangle", padWave: "sine", pad: 0.1, bright: 2600,
-    swing: 0.04, drums: "soft", bass: 0.16, arp: 0.09, delay: 0.22,
+    bpm: 104,
+    root: 261.63,
+    prog: [
+      [0, 4, 7, 11],
+      [-3, 2, 5, 9],
+      [-5, 0, 4, 7],
+      [-1, 2, 7, 11],
+    ],
+    scale: [0, 2, 4, 7, 9, 11],
+    lead: "triangle",
+    padWave: "sine",
+    pad: 0.1,
+    bright: 2600,
+    swing: 0.04,
+    drums: "soft",
+    bass: 0.16,
+    arp: 0.09,
+    delay: 0.22,
   },
   luxury: {
-    bpm: 74, root: 196.0, prog: [[0, 3, 7, 10], [-4, 0, 3, 7], [-7, -2, 2, 5], [-5, 0, 3, 10]],
-    scale: [0, 3, 5, 7, 10], lead: "sine", padWave: "sine", pad: 0.16, bright: 1500,
-    swing: 0.06, drums: "none", bass: 0.13, arp: 0.06, delay: 0.34,
+    bpm: 74,
+    root: 196.0,
+    prog: [
+      [0, 3, 7, 10],
+      [-4, 0, 3, 7],
+      [-7, -2, 2, 5],
+      [-5, 0, 3, 10],
+    ],
+    scale: [0, 3, 5, 7, 10],
+    lead: "sine",
+    padWave: "sine",
+    pad: 0.16,
+    bright: 1500,
+    swing: 0.06,
+    drums: "none",
+    bass: 0.13,
+    arp: 0.06,
+    delay: 0.34,
   },
   warm: {
-    bpm: 88, root: 220.0, prog: [[0, 4, 7, 9], [-3, 0, 4, 7], [-5, -1, 2, 7], [0, 4, 7, 12]],
-    scale: [0, 2, 4, 7, 9], lead: "sine", padWave: "triangle", pad: 0.14, bright: 1800,
-    swing: 0.1, drums: "brush", bass: 0.14, arp: 0.08, delay: 0.24,
+    bpm: 88,
+    root: 220.0,
+    prog: [
+      [0, 4, 7, 9],
+      [-3, 0, 4, 7],
+      [-5, -1, 2, 7],
+      [0, 4, 7, 12],
+    ],
+    scale: [0, 2, 4, 7, 9],
+    lead: "sine",
+    padWave: "triangle",
+    pad: 0.14,
+    bright: 1800,
+    swing: 0.1,
+    drums: "brush",
+    bass: 0.14,
+    arp: 0.08,
+    delay: 0.24,
   },
   cinematic: {
-    bpm: 66, root: 174.61, prog: [[0, 3, 7, 14], [-5, -1, 2, 7], [-3, 0, 4, 12], [-7, 0, 3, 10]],
-    scale: [0, 3, 5, 7, 10, 12], lead: "sawtooth", padWave: "sawtooth", pad: 0.13, bright: 1200,
-    swing: 0, drums: "cine", bass: 0.18, arp: 0.05, delay: 0.4,
+    bpm: 66,
+    root: 174.61,
+    prog: [
+      [0, 3, 7, 14],
+      [-5, -1, 2, 7],
+      [-3, 0, 4, 12],
+      [-7, 0, 3, 10],
+    ],
+    scale: [0, 3, 5, 7, 10, 12],
+    lead: "sawtooth",
+    padWave: "sawtooth",
+    pad: 0.13,
+    bright: 1200,
+    swing: 0,
+    drums: "cine",
+    bass: 0.18,
+    arp: 0.05,
+    delay: 0.4,
   },
   upbeat: {
-    bpm: 122, root: 293.66, prog: [[0, 4, 7, 11], [2, 5, 9, 12], [-3, 0, 4, 9], [-1, 4, 7, 11]],
-    scale: [0, 2, 4, 7, 9, 12], lead: "square", padWave: "triangle", pad: 0.06, bright: 3200,
-    swing: 0, drums: "pop", bass: 0.17, arp: 0.11, delay: 0.16,
+    bpm: 122,
+    root: 293.66,
+    prog: [
+      [0, 4, 7, 11],
+      [2, 5, 9, 12],
+      [-3, 0, 4, 9],
+      [-1, 4, 7, 11],
+    ],
+    scale: [0, 2, 4, 7, 9, 12],
+    lead: "square",
+    padWave: "triangle",
+    pad: 0.06,
+    bright: 3200,
+    swing: 0,
+    drums: "pop",
+    bass: 0.17,
+    arp: 0.11,
+    delay: 0.16,
   },
   minimal: {
-    bpm: 96, root: 246.94, prog: [[0, 7, 12], [-5, 2, 7], [-3, 4, 9], [0, 5, 12]],
-    scale: [0, 5, 7, 12], lead: "triangle", padWave: "sine", pad: 0.09, bright: 2200,
-    swing: 0, drums: "soft", bass: 0.1, arp: 0.08, delay: 0.3,
+    bpm: 96,
+    root: 246.94,
+    prog: [
+      [0, 7, 12],
+      [-5, 2, 7],
+      [-3, 4, 9],
+      [0, 5, 12],
+    ],
+    scale: [0, 5, 7, 12],
+    lead: "triangle",
+    padWave: "sine",
+    pad: 0.09,
+    bright: 2200,
+    swing: 0,
+    drums: "soft",
+    bass: 0.1,
+    arp: 0.08,
+    delay: 0.3,
   },
   porchlight: {
-    bpm: 92, root: 233.08, prog: [[0, 4, 7], [5, 9, 12], [-3, 0, 4], [-5, 0, 7]],
-    scale: [0, 2, 4, 5, 7, 9], lead: "triangle", padWave: "triangle", pad: 0.08, bright: 2400,
-    swing: 0.16, drums: "brush", bass: 0.16, arp: 0.12, delay: 0.14,
+    bpm: 92,
+    root: 233.08,
+    prog: [
+      [0, 4, 7],
+      [5, 9, 12],
+      [-3, 0, 4],
+      [-5, 0, 7],
+    ],
+    scale: [0, 2, 4, 5, 7, 9],
+    lead: "triangle",
+    padWave: "triangle",
+    pad: 0.08,
+    bright: 2400,
+    swing: 0.16,
+    drums: "brush",
+    bass: 0.16,
+    arp: 0.12,
+    delay: 0.14,
   },
   sunroom: {
-    bpm: 110, root: 277.18, prog: [[0, 4, 7, 11], [-2, 2, 5, 9], [-5, 0, 4, 9], [-3, 2, 5, 11]],
-    scale: [0, 2, 4, 7, 11], lead: "triangle", padWave: "sine", pad: 0.09, bright: 3000,
-    swing: 0.05, drums: "pop", bass: 0.15, arp: 0.1, delay: 0.2,
+    bpm: 110,
+    root: 277.18,
+    prog: [
+      [0, 4, 7, 11],
+      [-2, 2, 5, 9],
+      [-5, 0, 4, 9],
+      [-3, 2, 5, 11],
+    ],
+    scale: [0, 2, 4, 7, 11],
+    lead: "triangle",
+    padWave: "sine",
+    pad: 0.09,
+    bright: 3000,
+    swing: 0.05,
+    drums: "pop",
+    bass: 0.15,
+    arp: 0.1,
+    delay: 0.2,
   },
   nightdrive: {
-    bpm: 124, root: 220.0, prog: [[0, 3, 7, 10], [-2, 3, 5, 10], [-5, 0, 3, 7], [-4, 0, 5, 10]],
-    scale: [0, 3, 5, 7, 10], lead: "sawtooth", padWave: "sawtooth", pad: 0.08, bright: 2800,
-    swing: 0, drums: "house", bass: 0.2, arp: 0.1, delay: 0.28,
+    bpm: 124,
+    root: 220.0,
+    prog: [
+      [0, 3, 7, 10],
+      [-2, 3, 5, 10],
+      [-5, 0, 3, 7],
+      [-4, 0, 5, 10],
+    ],
+    scale: [0, 3, 5, 7, 10],
+    lead: "sawtooth",
+    padWave: "sawtooth",
+    pad: 0.08,
+    bright: 2800,
+    swing: 0,
+    drums: "house",
+    bass: 0.2,
+    arp: 0.1,
+    delay: 0.28,
   },
   openhouse: {
-    bpm: 100, root: 261.63, prog: [[0, 4, 9], [-3, 2, 7], [-5, 0, 4], [2, 7, 11]],
-    scale: [0, 2, 4, 7, 9], lead: "triangle", padWave: "triangle", pad: 0.1, bright: 2500,
-    swing: 0.12, drums: "brush", bass: 0.13, arp: 0.11, delay: 0.22,
+    bpm: 100,
+    root: 261.63,
+    prog: [
+      [0, 4, 9],
+      [-3, 2, 7],
+      [-5, 0, 4],
+      [2, 7, 11],
+    ],
+    scale: [0, 2, 4, 7, 9],
+    lead: "triangle",
+    padWave: "triangle",
+    pad: 0.1,
+    bright: 2500,
+    swing: 0.12,
+    drums: "brush",
+    bass: 0.13,
+    arp: 0.11,
+    delay: 0.22,
   },
   stringlight: {
-    bpm: 70, root: 207.65, prog: [[0, 4, 7, 11], [-4, 0, 5, 9], [-7, -3, 2, 7], [-2, 2, 7, 11]],
-    scale: [0, 2, 4, 7, 11, 14], lead: "sine", padWave: "sawtooth", pad: 0.15, bright: 1400,
-    swing: 0, drums: "none", bass: 0.12, arp: 0.07, delay: 0.38,
+    bpm: 70,
+    root: 207.65,
+    prog: [
+      [0, 4, 7, 11],
+      [-4, 0, 5, 9],
+      [-7, -3, 2, 7],
+      [-2, 2, 7, 11],
+    ],
+    scale: [0, 2, 4, 7, 11, 14],
+    lead: "sine",
+    padWave: "sawtooth",
+    pad: 0.15,
+    bright: 1400,
+    swing: 0,
+    drums: "none",
+    bass: 0.12,
+    arp: 0.07,
+    delay: 0.38,
   },
 };
 
@@ -98,27 +263,43 @@ export function loadCustomTracks(force = false): Promise<CustomTrack[]> {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth?.user?.id;
       if (!uid) return getCustomTracks();
-      const { data: files } = await supabase.storage.from(BUCKET).list(uid, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
+      const { data: files } = await supabase.storage
+        .from(BUCKET)
+        .list(uid, { limit: 100, sortBy: { column: "created_at", order: "desc" } });
       for (const f of files || []) {
         const id = "custom:" + f.name;
         if (customTracks.some((t) => t.id === id)) continue;
-        const { data: signed } = await supabase.storage.from(BUCKET).createSignedUrl(`${uid}/${f.name}`, 60 * 60 * 8);
+        const { data: signed } = await supabase.storage
+          .from(BUCKET)
+          .createSignedUrl(`${uid}/${f.name}`, 60 * 60 * 8);
         if (!signed?.signedUrl) continue;
-        const name = f.name.replace(/^\d+-/, "").replace(/\.[a-z0-9]+$/i, "").slice(0, 60) || "My Track";
+        const name =
+          f.name
+            .replace(/^\d+-/, "")
+            .replace(/\.[a-z0-9]+$/i, "")
+            .slice(0, 60) || "My Track";
         customTracks.push({ id, name, url: signed.signedUrl });
       }
       loaded = true;
-    } catch (_) { /* offline / signed out — session-only tracks still work */ }
+    } catch (_) {
+      /* offline / signed out — session-only tracks still work */
+    }
     return getCustomTracks();
   })();
   const p = loading;
-  p.finally(() => { loading = null; });
+  p.finally(() => {
+    loading = null;
+  });
   return p;
 }
 
 export function addCustomTrack(file: File): CustomTrack {
   const ext = (file.name.match(/\.[a-z0-9]+$/i) || [".mp3"])[0].toLowerCase();
-  const key = `${Date.now()}-${file.name.replace(/[^a-z0-9._-]+/gi, "-").slice(-48)}`.replace(/\.[a-z0-9]+$/i, "") + ext;
+  const key =
+    `${Date.now()}-${file.name.replace(/[^a-z0-9._-]+/gi, "-").slice(-48)}`.replace(
+      /\.[a-z0-9]+$/i,
+      "",
+    ) + ext;
   const t: CustomTrack = {
     id: "custom:" + key,
     name: file.name.replace(/\.[a-z0-9]+$/i, "").slice(0, 60) || "My Track",
@@ -136,11 +317,12 @@ export function addCustomTrack(file: File): CustomTrack {
         contentType: file.type || "audio/mpeg",
         upsert: true,
       });
-    } catch (_) { /* keep the local object URL */ }
+    } catch (_) {
+      /* keep the local object URL */
+    }
   })();
   return t;
 }
-
 
 /* ---------------- playback ---------------- */
 let ctx: AudioContext | null = null;
@@ -153,13 +335,34 @@ export function onMusicChange(fn: (id: string | null) => void) {
   listeners.add(fn);
   return () => listeners.delete(fn);
 }
-const emit = () => listeners.forEach((f) => { try { f(currentId); } catch (_) { /* noop */ } });
+const emit = () =>
+  listeners.forEach((f) => {
+    try {
+      f(currentId);
+    } catch (_) {
+      /* noop */
+    }
+  });
 
 export const playingId = () => currentId;
 
 export function stopMusic() {
-  if (stopFn) { try { stopFn(); } catch (_) { /* noop */ } stopFn = null; }
-  if (audioEl) { try { audioEl.pause(); } catch (_) { /* noop */ } audioEl = null; }
+  if (stopFn) {
+    try {
+      stopFn();
+    } catch (_) {
+      /* noop */
+    }
+    stopFn = null;
+  }
+  if (audioEl) {
+    try {
+      audioEl.pause();
+    } catch (_) {
+      /* noop */
+    }
+    audioEl = null;
+  }
   currentId = null;
   emit();
 }
@@ -188,8 +391,10 @@ function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
   fb.gain.value = Math.min(0.45, mood.delay);
   const wet = ac.createGain();
   wet.gain.value = mood.delay * 0.5;
-  delay.connect(fb); fb.connect(delay);
-  delay.connect(wet); wet.connect(filter);
+  delay.connect(fb);
+  fb.connect(delay);
+  delay.connect(wet);
+  wet.connect(filter);
 
   master.gain.linearRampToValueAtTime(0.55, ac.currentTime + 0.8);
 
@@ -198,7 +403,15 @@ function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
   const bar = beat * 4;
 
   /* one shot voices ------------------------------------------------------ */
-  function tone(t: number, freq: number, dur: number, level: number, type: OscillatorType, send = 0.3, detune = 0) {
+  function tone(
+    t: number,
+    freq: number,
+    dur: number,
+    level: number,
+    type: OscillatorType,
+    send = 0.3,
+    detune = 0,
+  ) {
     const o = ac.createOscillator();
     o.type = type;
     o.frequency.value = freq;
@@ -207,9 +420,16 @@ function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(Math.max(0.001, level), t + Math.min(0.08, dur * 0.2));
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g); g.connect(filter);
-    if (send > 0) { const s = ac.createGain(); s.gain.value = send; g.connect(s); s.connect(delay); }
-    o.start(t); o.stop(t + dur + 0.05);
+    o.connect(g);
+    g.connect(filter);
+    if (send > 0) {
+      const s = ac.createGain();
+      s.gain.value = send;
+      g.connect(s);
+      s.connect(delay);
+    }
+    o.start(t);
+    o.stop(t + dur + 0.05);
   }
 
   function noise(t: number, dur: number, level: number, hp: number, send = 0.1) {
@@ -224,8 +444,15 @@ function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
     bp.frequency.value = hp;
     const g = ac.createGain();
     g.gain.value = level;
-    src.connect(bp); bp.connect(g); g.connect(filter);
-    if (send > 0) { const s = ac.createGain(); s.gain.value = send; g.connect(s); s.connect(delay); }
+    src.connect(bp);
+    bp.connect(g);
+    g.connect(filter);
+    if (send > 0) {
+      const s = ac.createGain();
+      s.gain.value = send;
+      g.connect(s);
+      s.connect(delay);
+    }
     src.start(t);
   }
 
@@ -237,8 +464,10 @@ function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
     const g = ac.createGain();
     g.gain.setValueAtTime(level, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
-    o.connect(g); g.connect(master);
-    o.start(t); o.stop(t + 0.3);
+    o.connect(g);
+    g.connect(master);
+    o.start(t);
+    o.stop(t + 0.3);
   }
 
   /* the arrangement ------------------------------------------------------ */
@@ -284,7 +513,8 @@ function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
       }
       noise(t0 + beat * 2, 0.18, 0.11, 1800, 0.12);
     } else if (d === "pop") {
-      kick(t0, 0.5); kick(t0 + beat * 2.5, 0.42);
+      kick(t0, 0.5);
+      kick(t0 + beat * 2.5, 0.42);
       noise(t0 + beat, 0.16, 0.12, 1600, 0.12);
       noise(t0 + beat * 3, 0.16, 0.12, 1600, 0.12);
       for (let s = 0; s < 8; s += 1) noise(t0 + s * (beat / 2), 0.035, 0.05, 8000, 0.03);
@@ -296,7 +526,8 @@ function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
       noise(t0 + beat, 0.14, 0.07, 1400, 0.1);
       noise(t0 + beat * 3, 0.14, 0.07, 1400, 0.1);
     } else if (d === "soft") {
-      kick(t0, 0.34); kick(t0 + beat * 2, 0.28);
+      kick(t0, 0.34);
+      kick(t0 + beat * 2, 0.28);
       for (let s = 0; s < 4; s += 1) noise(t0 + s * beat + beat / 2, 0.04, 0.04, 9000, 0.04);
     } else if (d === "cine") {
       kick(t0, 0.5);
@@ -309,27 +540,48 @@ function synth(mood: Mood, out?: AudioNode, ac2?: AudioContext) {
   scheduleBar(nextBarAt, barIndex);
   barIndex += 1;
   nextBarAt += bar;
-  const timer = window.setInterval(() => {
-    while (nextBarAt < ac.currentTime + bar) {
-      scheduleBar(nextBarAt, barIndex);
-      barIndex += 1;
-      nextBarAt += bar;
-    }
-  }, Math.max(120, bar * 250));
+  const timer = window.setInterval(
+    () => {
+      while (nextBarAt < ac.currentTime + bar) {
+        scheduleBar(nextBarAt, barIndex);
+        barIndex += 1;
+        nextBarAt += bar;
+      }
+    },
+    Math.max(120, bar * 250),
+  );
 
   return () => {
     window.clearInterval(timer);
-    try { master.gain.cancelScheduledValues(ac.currentTime); } catch (_) { /* noop */ }
-    try { master.gain.setValueAtTime(master.gain.value, ac.currentTime); } catch (_) { /* noop */ }
+    try {
+      master.gain.cancelScheduledValues(ac.currentTime);
+    } catch (_) {
+      /* noop */
+    }
+    try {
+      master.gain.setValueAtTime(master.gain.value, ac.currentTime);
+    } catch (_) {
+      /* noop */
+    }
     master.gain.linearRampToValueAtTime(0.0001, ac.currentTime + 0.25);
-    try { fb.gain.value = 0; } catch (_) { /* noop */ }
+    try {
+      fb.gain.value = 0;
+    } catch (_) {
+      /* noop */
+    }
   };
 }
 
 /** Toggle preview playback for a track id. Returns true when it started playing. */
 export function toggleMusic(id: string): boolean {
-  if (!id || id === "none") { stopMusic(); return false; }
-  if (currentId === id) { stopMusic(); return false; }
+  if (!id || id === "none") {
+    stopMusic();
+    return false;
+  }
+  if (currentId === id) {
+    stopMusic();
+    return false;
+  }
   stopMusic();
 
   if (isCustom(id)) {
@@ -347,12 +599,15 @@ export function toggleMusic(id: string): boolean {
 
   const mood = MOODS[id];
   if (!mood) return false;
-  try { stopFn = synth(mood); } catch (_) { return false; }
+  try {
+    stopFn = synth(mood);
+  } catch (_) {
+    return false;
+  }
   currentId = id;
   emit();
   return true;
 }
-
 
 /* ---------------- soundtrack for rendered videos ---------------- */
 
@@ -386,28 +641,48 @@ export async function createMusicTrack(
         vsrc.connect(vgain);
         vgain.connect(dest);
         vsrc.start();
-        stopVoice = () => { try { vsrc.stop(); } catch (_) { /* noop */ } };
+        stopVoice = () => {
+          try {
+            vsrc.stop();
+          } catch (_) {
+            /* noop */
+          }
+        };
         // duck the music bed while a voice is present
         gain.gain.value = Math.min(volume, 0.22);
-      } catch (_) { /* narration is optional */ }
+      } catch (_) {
+        /* narration is optional */
+      }
     }
 
     if (!id || id === "none") {
       const track0 = dest.stream.getAudioTracks()[0];
-      if (!track0) { ac.close().catch(() => {}); return null; }
+      if (!track0) {
+        ac.close().catch(() => {});
+        return null;
+      }
       return {
         track: track0,
         stop: () => {
           stopVoice();
-          try { track0.stop(); } catch (_) { /* noop */ }
-          window.setTimeout(() => { ac.close().catch(() => {}); }, 250);
+          try {
+            track0.stop();
+          } catch (_) {
+            /* noop */
+          }
+          window.setTimeout(() => {
+            ac.close().catch(() => {});
+          }, 250);
         },
       };
     }
 
     if (isCustom(id)) {
       const t = customTracks.find((c) => c.id === id);
-      if (!t) { ac.close().catch(() => {}); return null; }
+      if (!t) {
+        ac.close().catch(() => {});
+        return null;
+      }
       const res = await fetch(t.url);
       const buf = await ac.decodeAudioData(await res.arrayBuffer());
       const src = ac.createBufferSource();
@@ -415,22 +690,48 @@ export async function createMusicTrack(
       src.loop = true;
       src.connect(gain);
       src.start();
-      stopSrc = () => { try { src.stop(); } catch (_) { /* noop */ } };
+      stopSrc = () => {
+        try {
+          src.stop();
+        } catch (_) {
+          /* noop */
+        }
+      };
     } else {
       const mood = MOODS[id];
-      if (!mood) { ac.close().catch(() => {}); return null; }
+      if (!mood) {
+        ac.close().catch(() => {});
+        return null;
+      }
       stopSrc = synth(mood, gain, ac);
     }
 
     const track = dest.stream.getAudioTracks()[0];
-    if (!track) { ac.close().catch(() => {}); return null; }
+    if (!track) {
+      ac.close().catch(() => {});
+      return null;
+    }
     return {
       track,
       stop: () => {
-        try { stopSrc(); } catch (_) { /* noop */ }
-        try { stopVoice(); } catch (_) { /* noop */ }
-        try { track.stop(); } catch (_) { /* noop */ }
-        window.setTimeout(() => { ac.close().catch(() => {}); }, 250);
+        try {
+          stopSrc();
+        } catch (_) {
+          /* noop */
+        }
+        try {
+          stopVoice();
+        } catch (_) {
+          /* noop */
+        }
+        try {
+          track.stop();
+        } catch (_) {
+          /* noop */
+        }
+        window.setTimeout(() => {
+          ac.close().catch(() => {});
+        }, 250);
       },
     };
   } catch (_) {

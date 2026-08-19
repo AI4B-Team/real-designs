@@ -109,7 +109,12 @@ function AuthPage() {
     <main className="rd-auth">
       <aside className="promo">
         <a href="/" className="brand" aria-label="REAL DESIGNS Home">
-          <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
+          <span className="rd-mark">
+            <i>
+              <b>REAL</b>
+              <em>Designs</em>
+            </i>
+          </span>
         </a>
         <h2>
           Redesign any space with AI.
@@ -117,10 +122,8 @@ function AuthPage() {
           See the design. Share it in minutes.
         </h2>
 
-
         <p className="sub">
-          Turn one photo into a photoreal redesign, a shopping list and a client-ready
-          presentation.
+          Turn one photo into a photoreal redesign, a shopping list and a client-ready presentation.
         </p>
         <ul>
           <li>
@@ -151,7 +154,12 @@ function AuthPage() {
       <div className="panel">
         <div className="mobile-head">
           <a href="/" className="brand" aria-label="REAL DESIGNS Home">
-            <span className="rd-mark"><i><b>REAL</b><em>Designs</em></i></span>
+            <span className="rd-mark">
+              <i>
+                <b>REAL</b>
+                <em>Designs</em>
+              </i>
+            </span>
           </a>
           <h2>Redesign any space with AI.</h2>
           <p>Free to start · 5 designs daily · No credit card required</p>
@@ -162,8 +170,8 @@ function AuthPage() {
 
           <h1 data-testid="auth-title">{mode === "signin" ? "Sign In" : "Create Your Account"}</h1>
           <p className="lede">
-            Pick up where you left off. Your properties, designs and presentations stay
-            together in one workspace.
+            Pick up where you left off. Your properties, designs and presentations stay together in
+            one workspace.
           </p>
 
           <button
@@ -243,7 +251,9 @@ function AuthPage() {
           </p>
 
           <p className="alt quiet">
-            <a href="/"><ArrowLeft size={14} /> Back To Home</a>
+            <a href="/">
+              <ArrowLeft size={14} /> Back To Home
+            </a>
           </p>
         </section>
       </div>
@@ -273,4 +283,3 @@ function GoogleMark() {
     </svg>
   );
 }
-

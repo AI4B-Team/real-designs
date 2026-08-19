@@ -5,25 +5,90 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import {
-  STYLES, STYLE_CATEGORIES, AUTO_STYLE, styleById, resolveStyle, recommendStyles, buildStylePayload,
+  STYLES,
+  STYLE_CATEGORIES,
+  AUTO_STYLE,
+  styleById,
+  resolveStyle,
+  recommendStyles,
+  buildStylePayload,
 } from "@/lib/style-catalog";
 import { setStudioStyle, applyStudioStyleToControls } from "@/lib/studio-style";
 
 export { DIRECTIONS } from "@/content/directions";
 
 const TABS = ["Featured", "Interior", "Exterior", "Garden", "Virtual Staging", "Saved"];
-const TAB_TYPE = { Interior: "interior", Exterior: "exterior", Garden: "garden", "Virtual Staging": "virtual-staging" };
-const SORTS = [["popular", "Popular"], ["newest", "Newest"], ["az", "A–Z"]];
+const TAB_TYPE = {
+  Interior: "interior",
+  Exterior: "exterior",
+  Garden: "garden",
+  "Virtual Staging": "virtual-staging",
+};
+const SORTS = [
+  ["popular", "Popular"],
+  ["newest", "Newest"],
+  ["az", "A–Z"],
+];
 
-const ROOMS = ["Living Room", "Kitchen", "Bedroom", "Bathroom", "Dining Room", "Office", "Entry", "Yard", "Front Elevation"];
-const PALETTES = ["Warm Neutral", "Cool Neutral", "Earth Tone", "Bright & Light", "Dark & Moody", "Bold Color"];
+const ROOMS = [
+  "Living Room",
+  "Kitchen",
+  "Bedroom",
+  "Bathroom",
+  "Dining Room",
+  "Office",
+  "Entry",
+  "Yard",
+  "Front Elevation",
+];
+const PALETTES = [
+  "Warm Neutral",
+  "Cool Neutral",
+  "Earth Tone",
+  "Bright & Light",
+  "Dark & Moody",
+  "Bold Color",
+];
 const FINISHES = ["Rental Grade", "Retail Grade", "Premium"];
-const MOODS = ["Calm", "Minimal", "Warm", "Natural", "Refined", "Formal", "Bold", "Playful", "Homely", "Classic", "Curb Appeal"];
+const MOODS = [
+  "Calm",
+  "Minimal",
+  "Warm",
+  "Natural",
+  "Refined",
+  "Formal",
+  "Bold",
+  "Playful",
+  "Homely",
+  "Classic",
+  "Curb Appeal",
+];
 
-const LS = { saved: "rd_ex_saved", quiz: "rd_ex_quiz_v3", choice: "rd_style_choice", src: "rd_last_source" };
-function read(k, f) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : f; } catch (_) { return f; } }
-function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} }
-function esc(s) { return String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])); }
+const LS = {
+  saved: "rd_ex_saved",
+  quiz: "rd_ex_quiz_v3",
+  choice: "rd_style_choice",
+  src: "rd_last_source",
+};
+function read(k, f) {
+  try {
+    const v = localStorage.getItem(k);
+    return v ? JSON.parse(v) : f;
+  } catch (_) {
+    return f;
+  }
+}
+function write(k, v) {
+  try {
+    localStorage.setItem(k, JSON.stringify(v));
+  } catch (_) {}
+}
+function esc(s) {
+  return String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
+}
 
 let saved = read(LS.saved, []);
 if (!Array.isArray(saved)) saved = [];
@@ -31,7 +96,11 @@ if (!Array.isArray(saved)) saved = [];
 /** Coarse palette bucket used by the filter drawer. */
 function paletteBucket(s) {
   const n = s.palette.join(" ").toLowerCase();
-  if (/black|onyx|soot|ink|near black|tobacco/.test(n) && /forest|jet|charcoal|espresso|sumi|shadow/.test(n)) return "Dark And Moody";
+  if (
+    /black|onyx|soot|ink|near black|tobacco/.test(n) &&
+    /forest|jet|charcoal|espresso|sumi|shadow/.test(n)
+  )
+    return "Dark And Moody";
   if (/gold|emerald|cobalt|orange|avocado|teal|primary/.test(n)) return "Bold Color";
   if (/terracotta|clay|olive|rust|sandstone|ochre|cocoa|bark/.test(n)) return "Earth Tone";
   if (/mist|slate|grey|graphite|gunmetal|concrete/.test(n)) return "Cool Neutral";
@@ -39,11 +108,24 @@ function paletteBucket(s) {
   return "Warm Neutral";
 }
 
-function swatches(s) { return '<span class="xp-sw">' + s.swatches.slice(0, 4).map((c) => `<i style="background:${c}"></i>`).join("") + "</span>"; }
+function swatches(s) {
+  return (
+    '<span class="xp-sw">' +
+    s.swatches
+      .slice(0, 4)
+      .map((c) => `<i style="background:${c}"></i>`)
+      .join("") +
+    "</span>"
+  );
+}
 
 function exToast(msg) {
   let t = document.querySelector(".rd-app .xp-toast");
-  if (!t) { t = document.createElement("div"); t.className = "xp-toast"; (document.querySelector(".rd-app") || document.body).appendChild(t); }
+  if (!t) {
+    t = document.createElement("div");
+    t.className = "xp-toast";
+    (document.querySelector(".rd-app") || document.body).appendChild(t);
+  }
   t.textContent = msg;
   t.classList.add("on");
   clearTimeout(t._h);
@@ -97,20 +179,37 @@ export function mountExplore(go, ctx) {
   const host = document.getElementById("v-explore");
   if (!host) return;
   const api = ctx || {};
-  if (host.dataset["ready"] === "1") { host._xpSync && host._xpSync(); return; }
+  if (host.dataset["ready"] === "1") {
+    host._xpSync && host._xpSync();
+    return;
+  }
   host.dataset["ready"] = "1";
   host.innerHTML = SHELL;
 
   const $ = (id) => host.querySelector("#" + id);
-  const note = (m) => { try { exToast(m); } catch (_) {} };
-  const icons_ = () => { try { createIcons({ icons }); } catch (_) {} };
+  const note = (m) => {
+    try {
+      exToast(m);
+    } catch (_) {}
+  };
+  const icons_ = () => {
+    try {
+      createIcons({ icons });
+    } catch (_) {}
+  };
 
   let tab = "Featured";
   let sort = "popular";
   let f = { family: [], type: [], room: [], palette: [], finish: [], mood: [] };
   const expanded = {};
 
-  const prop = () => { try { return (api.curProp && api.curProp()) || null; } catch (_) { return null; } };
+  const prop = () => {
+    try {
+      return (api.curProp && api.curProp()) || null;
+    } catch (_) {
+      return null;
+    }
+  };
   function propStyleName() {
     const p = prop();
     const first = p && p.dna && p.dna[0];
@@ -120,8 +219,14 @@ export function mountExplore(go, ctx) {
   }
 
   /* ---------- tabs ---------- */
-  $("xpCats").innerHTML = TABS.map((s) => `<button class="xp-cat${s === tab ? " on" : ""}" role="tab" aria-selected="${s === tab}" data-c="${s}">${s}</button>`).join("");
-  $("xpSortMenu").innerHTML = SORTS.map(([v, l]) => `<button class="xp-sortopt${v === sort ? " on" : ""}" role="menuitem" data-sort="${v}">${l}</button>`).join("");
+  $("xpCats").innerHTML = TABS.map(
+    (s) =>
+      `<button class="xp-cat${s === tab ? " on" : ""}" role="tab" aria-selected="${s === tab}" data-c="${s}">${s}</button>`,
+  ).join("");
+  $("xpSortMenu").innerHTML = SORTS.map(
+    ([v, l]) =>
+      `<button class="xp-sortopt${v === sort ? " on" : ""}" role="menuitem" data-sort="${v}">${l}</button>`,
+  ).join("");
 
   /* ---------- filtering ---------- */
   function matchesTab(s) {
@@ -132,7 +237,8 @@ export function mountExplore(go, ctx) {
   }
   function matchesFilters(s) {
     if (f.family.length && f.family.indexOf(s.category) < 0) return false;
-    if (f.type.length && !f.type.some((t) => s.compatibleProjectTypes.indexOf(t) > -1)) return false;
+    if (f.type.length && !f.type.some((t) => s.compatibleProjectTypes.indexOf(t) > -1))
+      return false;
     if (f.room.length && !f.room.some((r) => s.compatibleRoomTypes.indexOf(r) > -1)) return false;
     if (f.palette.length && f.palette.indexOf(paletteBucket(s)) < 0) return false;
     if (f.finish.length && !f.finish.some((x) => s.finishLevel.indexOf(x) > -1)) return false;
@@ -142,14 +248,29 @@ export function mountExplore(go, ctx) {
   function matches(s, q) {
     if (!s.isActive || !matchesTab(s) || !matchesFilters(s)) return false;
     if (!q) return true;
-    return [s.displayName, s.shortDescription, s.category, s.aliases.join(" "), s.materials.join(" "), s.definingFeatures.join(" "), s.palette.join(" ")]
-      .join(" ").toLowerCase().indexOf(q) > -1;
+    return (
+      [
+        s.displayName,
+        s.shortDescription,
+        s.category,
+        s.aliases.join(" "),
+        s.materials.join(" "),
+        s.definingFeatures.join(" "),
+        s.palette.join(" "),
+      ]
+        .join(" ")
+        .toLowerCase()
+        .indexOf(q) > -1
+    );
   }
   function sorted(list) {
     const a = list.slice();
     if (sort === "az") a.sort((x, y) => x.displayName.localeCompare(y.displayName));
     else if (sort === "newest") a.sort((x, y) => STYLES.indexOf(y) - STYLES.indexOf(x));
-    else a.sort((x, y) => x.featuredRank - y.featuredRank || x.displayName.localeCompare(y.displayName));
+    else
+      a.sort(
+        (x, y) => x.featuredRank - y.featuredRank || x.displayName.localeCompare(y.displayName),
+      );
     return a;
   }
   function current() {
@@ -190,12 +311,17 @@ export function mountExplore(go, ctx) {
     const list = current();
     const chips = activeChips();
     const fc = $("xpFilterCnt");
-    fc.hidden = !chips.length; fc.textContent = chips.length;
+    fc.hidden = !chips.length;
+    fc.textContent = chips.length;
     const bar = $("xpActive");
     bar.hidden = !chips.length;
     bar.innerHTML = chips.length
-      ? chips.map(([k, v]) => `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`).join("") +
-        '<button class="xp-aclear" id="xpClear">Clear All</button>'
+      ? chips
+          .map(
+            ([k, v]) =>
+              `<button class="xp-achip" data-off="${k}:${esc(v)}">${esc(v)}<i data-lucide="x"></i></button>`,
+          )
+          .join("") + '<button class="xp-aclear" id="xpClear">Clear All</button>'
       : "";
     $("xpCount").textContent = list.length + (list.length === 1 ? " style" : " styles");
     $("xpSavedCnt").textContent = saved.length;
@@ -203,7 +329,11 @@ export function mountExplore(go, ctx) {
 
     const body = $("xpBody");
     if (!list.length) {
-      body.innerHTML = emptyState(tab === "Saved" ? "Save a style from any card and it lands here." : "Try removing a filter, or describe the style you want in Studio.");
+      body.innerHTML = emptyState(
+        tab === "Saved"
+          ? "Save a style from any card and it lands here."
+          : "Try removing a filter, or describe the style you want in Studio.",
+      );
     } else if (tab === "Featured" && !($("xpQ").value || "").trim() && !chips.length) {
       const popular = list.filter((s) => s.isFeatured);
       const groups = STYLE_CATEGORIES.filter((c) => c !== "Most Popular")
@@ -235,8 +365,15 @@ export function mountExplore(go, ctx) {
     return `<label class="xp-opt${on ? " on" : ""}"><input type="checkbox" data-f="${kind}:${esc(value)}"${on ? " checked" : ""}><span class="xp-box"><i data-lucide="check"></i></span><span class="xp-optl">${esc(label)}</span></label>`;
   }
   function filterDrawerHtml() {
-    const sec = (t, rows) => `<div class="xp-fsec"><span class="xp-flab">${t}</span><div class="xp-opts">${rows}</div></div>`;
-    const types = [["interior", "Interior"], ["exterior", "Exterior"], ["garden", "Garden"], ["virtual-staging", "Virtual Staging"], ["concept", "Written Concept"]];
+    const sec = (t, rows) =>
+      `<div class="xp-fsec"><span class="xp-flab">${t}</span><div class="xp-opts">${rows}</div></div>`;
+    const types = [
+      ["interior", "Interior"],
+      ["exterior", "Exterior"],
+      ["garden", "Garden"],
+      ["virtual-staging", "Virtual Staging"],
+      ["concept", "Written Concept"],
+    ];
     return `
       <div class="xp-dh"><div><span class="xp-eyebrow">Refine</span><h3>Filters</h3><p>Narrow the catalog without leaving the page.</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
@@ -256,7 +393,8 @@ export function mountExplore(go, ctx) {
     p.querySelectorAll(".xp-opt input[data-f]").forEach((inp) => {
       const raw = String(inp.dataset.f);
       const i = raw.indexOf(":");
-      const k = raw.slice(0, i), v = raw.slice(i + 1);
+      const k = raw.slice(0, i),
+        v = raw.slice(i + 1);
       const on = (f[k] || []).indexOf(v) > -1;
       inp.checked = on;
       inp.closest(".xp-opt").classList.toggle("on", on);
@@ -270,7 +408,10 @@ export function mountExplore(go, ctx) {
     f[kind] = arr.indexOf(value) > -1 ? arr.filter((x) => x !== value) : arr.concat([value]);
     paint();
   }
-  function clearFilters() { Object.keys(f).forEach((k) => (f[k] = [])); paint(); }
+  function clearFilters() {
+    Object.keys(f).forEach((k) => (f[k] = []));
+    paint();
+  }
 
   /* ---------- drawer ---------- */
   function openDrawer(inner) {
@@ -279,15 +420,20 @@ export function mountExplore(go, ctx) {
     requestAnimationFrame(() => $("xpDrawer").classList.add("on"));
     icons_();
   }
-  function closeDrawer() { $("xpDrawer").classList.remove("on"); setTimeout(() => ($("xpDrawer").hidden = true), 200); }
+  function closeDrawer() {
+    $("xpDrawer").classList.remove("on");
+    setTimeout(() => ($("xpDrawer").hidden = true), 200);
+  }
 
   function compatLine(s) {
     const p = prop();
-    if (!p) return '<div class="xp-note"><i data-lucide="info"></i><span>Choose a style now. You can apply it to a property when you are ready.</span></div>';
+    if (!p)
+      return '<div class="xp-note"><i data-lucide="info"></i><span>Choose a style now. You can apply it to a property when you are ready.</span></div>';
     const cur = propStyleName();
     if (cur && cur !== s.displayName)
       return `<div class="xp-note warn"><i data-lucide="dna"></i><span>This property currently uses <b>${esc(cur)}</b>. Replacing the Design DNA changes the rules every room follows.</span></div>`;
-    if (cur === s.displayName) return `<div class="xp-note ok"><i data-lucide="check"></i><span>${esc(p.address)} already uses this style as its Design DNA.</span></div>`;
+    if (cur === s.displayName)
+      return `<div class="xp-note ok"><i data-lucide="check"></i><span>${esc(p.address)} already uses this style as its Design DNA.</span></div>`;
     return `<div class="xp-note"><i data-lucide="map-pin"></i><span>Previewing For ${esc(p.address)}. No Design DNA locked yet.</span></div>`;
   }
 
@@ -322,8 +468,11 @@ export function mountExplore(go, ctx) {
       <div class="xp-dh"><div><span class="xp-eyebrow">Collection</span><h3>Saved Styles</h3><p>Styles you kept for later. Generated results stay in Designs.</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
-        ${items.length ? `<div class="xp-saved">${items.map((s) => `<div class="xp-sitem"><img src="${s.previewImage}" alt="${esc(s.displayName)}"><div><b>${esc(s.displayName)}</b><span>${esc(s.shortDescription)}</span></div><button class="fb-link" data-open="${s.id}">Preview</button><button class="fb-link" data-save="${s.id}">Remove</button></div>`).join("")}</div>`
-        : '<div class="xp-note"><i data-lucide="bookmark"></i><span>Nothing saved yet. Use the bookmark on any style card.</span></div>'}
+        ${
+          items.length
+            ? `<div class="xp-saved">${items.map((s) => `<div class="xp-sitem"><img src="${s.previewImage}" alt="${esc(s.displayName)}"><div><b>${esc(s.displayName)}</b><span>${esc(s.shortDescription)}</span></div><button class="fb-link" data-open="${s.id}">Preview</button><button class="fb-link" data-save="${s.id}">Remove</button></div>`).join("")}</div>`
+            : '<div class="xp-note"><i data-lucide="bookmark"></i><span>Nothing saved yet. Use the bookmark on any style card.</span></div>'
+        }
       </div>
       <div class="xp-df"><button class="btn btn-ghost btn-sm" data-close="1">Close</button></div>`);
   }
@@ -334,7 +483,10 @@ export function mountExplore(go, ctx) {
   function applyToStudio(s, btn) {
     if (applying) return;
     const choice = setStudioStyle(s && s.id);
-    if (!choice) { note("This Style Could Not Be Loaded. Please Choose Another Style."); return; }
+    if (!choice) {
+      note("This Style Could Not Be Loaded. Please Choose Another Style.");
+      return;
+    }
     applying = true;
     let restore = null;
     if (btn) {
@@ -353,32 +505,53 @@ export function mountExplore(go, ctx) {
     } finally {
       window.setTimeout(() => {
         applying = false;
-        if (btn && restore != null) { btn.disabled = false; btn.removeAttribute("aria-busy"); btn.innerHTML = restore; icons_(); }
+        if (btn && restore != null) {
+          btn.disabled = false;
+          btn.removeAttribute("aria-busy");
+          btn.innerHTML = restore;
+          icons_();
+        }
       }, 500);
     }
   }
 
-
   async function setDna(s) {
     const p = prop();
-    if (!p) { note("Select A Property First. Open Properties And Choose One."); return; }
-    if (!api.setPropertyDna) { note("Design DNA Is Not Available Right Now."); return; }
-    const items = [{ label: s.displayName, color: s.swatches[0] }]
-      .concat(s.swatches.slice(1, 4).map((c, i) => ({ label: s.materials[i] || "Palette " + (i + 2), color: c })));
+    if (!p) {
+      note("Select A Property First. Open Properties And Choose One.");
+      return;
+    }
+    if (!api.setPropertyDna) {
+      note("Design DNA Is Not Available Right Now.");
+      return;
+    }
+    const items = [{ label: s.displayName, color: s.swatches[0] }].concat(
+      s.swatches
+        .slice(1, 4)
+        .map((c, i) => ({ label: s.materials[i] || "Palette " + (i + 2), color: c })),
+    );
     try {
       await api.setPropertyDna({ data: { property_id: p.id, items } });
       if (api.reloadTree) await api.reloadTree();
       syncProp();
       closeDrawer();
       note(s.displayName + " Is Now The Design DNA For " + p.address + ".");
-    } catch (e) { note((e && e.message) || "That Did Not Save."); }
+    } catch (e) {
+      note((e && e.message) || "That Did Not Save.");
+    }
   }
 
   function confirmDna(s) {
     const p = prop();
-    if (!p) { note("Select A Property First. Open Properties And Choose One."); return; }
+    if (!p) {
+      note("Select A Property First. Open Properties And Choose One.");
+      return;
+    }
     const cur = propStyleName();
-    if (!cur || cur === s.displayName) { setDna(s); return; }
+    if (!cur || cur === s.displayName) {
+      setDna(s);
+      return;
+    }
     openDrawer(`
       <div class="xp-dh"><div><span class="xp-eyebrow">Design DNA</span><h3>Replace Property DNA?</h3><p>This property currently uses ${esc(cur)}.</p></div>
         <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
@@ -392,35 +565,68 @@ export function mountExplore(go, ctx) {
   function paintRec() {
     const sec = $("xpRec");
     const src = read(LS.src, null);
-    if (!src) { sec.hidden = true; return; }
-    const recs = recommendStyles({
-      projectType: src.projectType || "interior",
-      roomType: src.roomType,
-      brightness: src.brightness,
-      woodTones: src.woodTones,
-      text: src.text,
-    }, 4);
-    if (!recs.length) { sec.hidden = true; return; }
+    if (!src) {
+      sec.hidden = true;
+      return;
+    }
+    const recs = recommendStyles(
+      {
+        projectType: src.projectType || "interior",
+        roomType: src.roomType,
+        brightness: src.brightness,
+        woodTones: src.woodTones,
+        text: src.text,
+      },
+      4,
+    );
+    if (!recs.length) {
+      sec.hidden = true;
+      return;
+    }
     sec.hidden = false;
     sec.innerHTML = `<div class="xp-sec-h"><h3>Recommended For Your Space</h3><span>Based On Your Last Upload</span></div>
-      <div class="xp-recrow">${recs.map(({ style, reason }) => `
+      <div class="xp-recrow">${recs
+        .map(
+          ({ style, reason }) => `
         <article class="xp-reccard" data-d="${style.id}">
           <img src="${style.previewImage}" alt="${esc(style.displayName)}" loading="lazy">
           <div><b>${esc(style.displayName)}</b><p>${esc(reason)}</p>
             <div class="xp-acts"><button class="btn btn-ghost btn-xs" data-open="${style.id}">Preview</button>
               <button class="btn btn-primary btn-xs" data-use="${style.id}">Try This Style</button></div></div>
-        </article>`).join("")}</div>`;
+        </article>`,
+        )
+        .join("")}</div>`;
   }
 
   /* ---------- five step style finder ---------- */
   /* Options inside one question must never share a preview photo, or the
      comparison shows the same room twice and the choice means nothing. */
   const QUIZ = [
-    { key: "aesthetic", q: "Which Overall Aesthetic Feels Right?", opts: ["warm-minimal", "modern-farmhouse", "industrial", "quiet-luxury"] },
-    { key: "warmth", q: "Which Color And Warmth Do You Prefer?", opts: ["organic-modern", "coastal", "dark-academia"] },
-    { key: "shape", q: "Which Furniture Shape Appeals More?", opts: ["soft-contemporary", "mid-century-modern", "neoclassical"] },
-    { key: "material", q: "Which Materials And Texture Do You Like?", opts: ["japandi", "rustic", "modern", "transitional"] },
-    { key: "detail", q: "How Much Detail Do You Want?", opts: ["minimalist", "traditional", "maximalist"] },
+    {
+      key: "aesthetic",
+      q: "Which Overall Aesthetic Feels Right?",
+      opts: ["warm-minimal", "modern-farmhouse", "industrial", "quiet-luxury"],
+    },
+    {
+      key: "warmth",
+      q: "Which Color And Warmth Do You Prefer?",
+      opts: ["organic-modern", "coastal", "dark-academia"],
+    },
+    {
+      key: "shape",
+      q: "Which Furniture Shape Appeals More?",
+      opts: ["soft-contemporary", "mid-century-modern", "neoclassical"],
+    },
+    {
+      key: "material",
+      q: "Which Materials And Texture Do You Like?",
+      opts: ["japandi", "rustic", "modern", "transitional"],
+    },
+    {
+      key: "detail",
+      q: "How Much Detail Do You Want?",
+      opts: ["minimalist", "traditional", "maximalist"],
+    },
   ];
   /** a fresh quiz has no selection anywhere: every pick is null, never the first option */
   const blankQuiz = () => ({ step: 0, picks: QUIZ.map(() => null), done: false });
@@ -458,10 +664,15 @@ export function mountExplore(go, ctx) {
 
   function qResults() {
     const score = qScores();
-    const ids = Object.keys(score).sort((a, b) => score[b] - score[a]).slice(0, 3);
+    const ids = Object.keys(score)
+      .sort((a, b) => score[b] - score[a])
+      .slice(0, 3);
     const top = score[ids[0]] || 1;
     return ids
-      .map((id) => ({ style: styleById(id), pct: Math.max(62, Math.round((score[id] / top) * 100)) }))
+      .map((id) => ({
+        style: styleById(id),
+        pct: Math.max(62, Math.round((score[id] / top) * 100)),
+      }))
       .filter((r) => r.style);
   }
 
@@ -474,15 +685,20 @@ export function mountExplore(go, ctx) {
   }
 
   function paintQuiz() {
-    const wrap = $("xpQuiz"), cardEl = $("xpQuizCard");
+    const wrap = $("xpQuiz"),
+      cardEl = $("xpQuizCard");
     if (!wrap || !cardEl) return;
     wrap.hidden = false;
     if (q.done) {
       const res = qResults();
-      cardEl.innerHTML = quizAside() + (res.length
-        ? `<div class="xp-quiz-main">
+      cardEl.innerHTML =
+        quizAside() +
+        (res.length
+          ? `<div class="xp-quiz-main">
           <div class="xp-quiz-qhead"><b>Your Style Matches</b></div>
-          <div class="xp-quiz-res-row">${res.map(({ style: s, pct }) => `
+          <div class="xp-quiz-res-row">${res
+            .map(
+              ({ style: s, pct }) => `
             <div class="xp-quiz-res-card">
               <img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy">
               <div class="xp-quiz-res-body">
@@ -490,12 +706,14 @@ export function mountExplore(go, ctx) {
                 <div class="xp-quiz-res-act">
                   <button class="btn btn-ghost btn-xs" data-open="${s.id}">Preview</button>
                   <button class="btn btn-primary btn-xs" data-use="${s.id}">Try This Style</button>
-                </div></div></div>`).join("")}</div>
+                </div></div></div>`,
+            )
+            .join("")}</div>
           <div class="xp-quiz-foot">
             <button class="fb-link" data-qretake="1">Retake Quiz</button>
             <button class="btn btn-ghost btn-xs" data-qbrowse="1">View All Matches</button>
           </div></div>`
-        : `<div class="xp-quiz-main"><div class="xp-quiz-qhead"><b>No Answers Yet</b></div>
+          : `<div class="xp-quiz-main"><div class="xp-quiz-qhead"><b>No Answers Yet</b></div>
            <p class="xp-line">You skipped every question. Retake it whenever you like.</p>
            <div class="xp-quiz-foot"><button class="fb-link" data-qretake="1">Retake Quiz</button></div></div>`);
       icons_();
@@ -514,11 +732,18 @@ export function mountExplore(go, ctx) {
       });
     })();
     const last = i === QUIZ.length - 1;
-    cardEl.innerHTML = quizAside() + `<div class="xp-quiz-main">
+    cardEl.innerHTML =
+      quizAside() +
+      `<div class="xp-quiz-main">
       <div class="xp-quiz-qhead"><b>${esc(step.q)}</b>
         <span class="xp-quiz-prognum">${i + 1} of ${QUIZ.length}</span>
         <div class="xp-quiz-prog"><span style="width:${((i + 1) / QUIZ.length) * 100}%"></span></div></div>
-      <div class="xp-quiz-opts" data-step="${i}">${opts.map((id) => { const s = styleById(id); return `<button class="xp-quiz-opt${chosen === s.id ? " on" : ""}" data-qpick="${s.id}" aria-pressed="${chosen === s.id}"><img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy"><span>${esc(s.displayName)}${chosen === s.id ? '<i data-lucide="check"></i>' : ""}</span></button>`; }).join("")}</div>
+      <div class="xp-quiz-opts" data-step="${i}">${opts
+        .map((id) => {
+          const s = styleById(id);
+          return `<button class="xp-quiz-opt${chosen === s.id ? " on" : ""}" data-qpick="${s.id}" aria-pressed="${chosen === s.id}"><img src="${s.previewImage}" alt="${esc(s.displayName)}" loading="lazy"><span>${esc(s.displayName)}${chosen === s.id ? '<i data-lucide="check"></i>' : ""}</span></button>`;
+        })
+        .join("")}</div>
       <div class="xp-quiz-foot">
         <div class="xp-quiz-nav">${i > 0 ? '<button class="fb-link" data-qback="1"><i data-lucide="chevron-left"></i>Back</button>' : ""}<button class="fb-link" data-qskip="1">Skip</button></div>
         <div class="xp-quiz-act">${!chosen ? '<span class="xp-quiz-hint">Choose one option to continue.</span>' : ""}<button class="btn btn-primary btn-xs${chosen ? "" : " is-waiting"}" data-qnext="1"${chosen ? "" : " disabled"}>${last ? "See My Styles" : "Next"}</button></div>
@@ -552,7 +777,10 @@ export function mountExplore(go, ctx) {
     if (q.done) paintQuiz();
     if (!$("xpDrawer").hidden) {
       const btn = host.querySelector('#xpDPanel [data-save="' + id + '"]');
-      if (btn && btn.classList.contains("btn")) { btn.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Style" : "Saved"); icons_(); }
+      if (btn && btn.classList.contains("btn")) {
+        btn.innerHTML = '<i data-lucide="bookmark"></i>' + (on ? "Save Style" : "Saved");
+        icons_();
+      }
     }
   }
 
@@ -561,13 +789,22 @@ export function mountExplore(go, ctx) {
     const p = prop();
     const pill = $("xpProp");
     if (!pill) return;
-    if (!p) { pill.hidden = true; return; }
+    if (!p) {
+      pill.hidden = true;
+      return;
+    }
     pill.hidden = false;
     const cur = propStyleName();
-    pill.innerHTML = '<i data-lucide="map-pin"></i>Previewing For ' + esc(p.address) + (cur ? ' <em>&middot; ' + esc(cur) + " DNA</em>" : "");
+    pill.innerHTML =
+      '<i data-lucide="map-pin"></i>Previewing For ' +
+      esc(p.address) +
+      (cur ? " <em>&middot; " + esc(cur) + " DNA</em>" : "");
     icons_();
   }
-  host._xpSync = () => { syncProp(); paintRec(); };
+  host._xpSync = () => {
+    syncProp();
+    paintRec();
+  };
 
   /* ---------- admin style library ---------- */
   async function openAdmin() {
@@ -578,7 +815,10 @@ export function mountExplore(go, ctx) {
     try {
       const { isStyleAdmin } = await import("@/lib/style-admin.functions");
       const ok = await isStyleAdmin();
-      if (ok && ok.admin) { $("xpAdminBtn").hidden = false; icons_(); }
+      if (ok && ok.admin) {
+        $("xpAdminBtn").hidden = false;
+        icons_();
+      }
     } catch (_) {}
   })();
 
@@ -589,37 +829,137 @@ export function mountExplore(go, ctx) {
     let el;
     if ((el = hit("data-c"))) {
       tab = el.dataset.c;
-      host.querySelectorAll(".xp-cat").forEach((b) => { const on = b === el; b.classList.toggle("on", on); b.setAttribute("aria-selected", String(on)); });
-      paint(); return;
+      host.querySelectorAll(".xp-cat").forEach((b) => {
+        const on = b === el;
+        b.classList.toggle("on", on);
+        b.setAttribute("aria-selected", String(on));
+      });
+      paint();
+      return;
     }
-    if ((el = hit("data-sort"))) { sort = el.dataset.sort; $("xpSortMenu").hidden = true; $("xpSortBtn").setAttribute("aria-expanded", "false");
-      host.querySelectorAll(".xp-sortopt").forEach((b) => b.classList.toggle("on", b === el)); paint(); return; }
-    if (t.closest("#xpSortBtn")) { const m = $("xpSortMenu"); m.hidden = !m.hidden; $("xpSortBtn").setAttribute("aria-expanded", String(!m.hidden)); return; }
-    if ((el = hit("data-more"))) { const k = el.dataset.more; expanded[k] = !expanded[k]; paint(); return; }
-    if ((el = hit("data-off"))) { const raw = String(el.dataset.off); const i = raw.indexOf(":"); toggleFilter(raw.slice(0, i), raw.slice(i + 1)); return; }
-    if ((el = hit("data-save"))) { toggleSave(el.dataset.save); return; }
-    if ((el = hit("data-open"))) { styleDrawer(el.dataset.open); return; }
-    if ((el = hit("data-use"))) { e.preventDefault(); const s = styleById(el.dataset.use); if (!s) { note("This Style Could Not Be Loaded. Please Choose Another Style."); return; } applyToStudio(s, el); return; }
-    if ((el = hit("data-dnago"))) { const s = styleById(el.dataset.dnago); if (s) setDna(s); return; }
-    if ((el = hit("data-dna"))) { const s = styleById(el.dataset.dna); if (s) confirmDna(s); return; }
-    if (t.closest("#xpClear")) { clearFilters(); return; }
-    if (t.closest("[data-close]") || t.closest("#xpScrim")) { closeDrawer(); return; }
-    if (t.closest("#xpSavedBtn")) { savedDrawer(); return; }
-    if (t.closest("#xpAdminBtn")) { openAdmin(); return; }
-    if (t.closest("#xpCustom")) { go("studio"); return; }
-    if (t.closest("#xpFilterBtn")) { openDrawer(filterDrawerHtml()); return; }
-    if ((el = hit("data-qpick"))) { quizPick(el.dataset.qpick); return; }
-    if (t.closest("[data-qnext]")) { if (!qBusy) quizAdvance(); return; }
-    if (t.closest("[data-qback]")) { if (q.done) { q.done = false; q.step = QUIZ.length - 1; } else if (q.step > 0) q.step--; qSave(); paintQuiz(); return; }
-    if (t.closest("[data-qskip]")) { if (!qBusy) { q.picks[qIndex()] = null; qSave(); quizAdvance(); } return; }
-    if (t.closest("[data-qbrowse]")) { const b = $("xpBody"); if (b) b.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
-    if (t.closest("[data-qretake]")) { q = blankQuiz(); qSave(); paintQuiz(); return; }
+    if ((el = hit("data-sort"))) {
+      sort = el.dataset.sort;
+      $("xpSortMenu").hidden = true;
+      $("xpSortBtn").setAttribute("aria-expanded", "false");
+      host.querySelectorAll(".xp-sortopt").forEach((b) => b.classList.toggle("on", b === el));
+      paint();
+      return;
+    }
+    if (t.closest("#xpSortBtn")) {
+      const m = $("xpSortMenu");
+      m.hidden = !m.hidden;
+      $("xpSortBtn").setAttribute("aria-expanded", String(!m.hidden));
+      return;
+    }
+    if ((el = hit("data-more"))) {
+      const k = el.dataset.more;
+      expanded[k] = !expanded[k];
+      paint();
+      return;
+    }
+    if ((el = hit("data-off"))) {
+      const raw = String(el.dataset.off);
+      const i = raw.indexOf(":");
+      toggleFilter(raw.slice(0, i), raw.slice(i + 1));
+      return;
+    }
+    if ((el = hit("data-save"))) {
+      toggleSave(el.dataset.save);
+      return;
+    }
+    if ((el = hit("data-open"))) {
+      styleDrawer(el.dataset.open);
+      return;
+    }
+    if ((el = hit("data-use"))) {
+      e.preventDefault();
+      const s = styleById(el.dataset.use);
+      if (!s) {
+        note("This Style Could Not Be Loaded. Please Choose Another Style.");
+        return;
+      }
+      applyToStudio(s, el);
+      return;
+    }
+    if ((el = hit("data-dnago"))) {
+      const s = styleById(el.dataset.dnago);
+      if (s) setDna(s);
+      return;
+    }
+    if ((el = hit("data-dna"))) {
+      const s = styleById(el.dataset.dna);
+      if (s) confirmDna(s);
+      return;
+    }
+    if (t.closest("#xpClear")) {
+      clearFilters();
+      return;
+    }
+    if (t.closest("[data-close]") || t.closest("#xpScrim")) {
+      closeDrawer();
+      return;
+    }
+    if (t.closest("#xpSavedBtn")) {
+      savedDrawer();
+      return;
+    }
+    if (t.closest("#xpAdminBtn")) {
+      openAdmin();
+      return;
+    }
+    if (t.closest("#xpCustom")) {
+      go("studio");
+      return;
+    }
+    if (t.closest("#xpFilterBtn")) {
+      openDrawer(filterDrawerHtml());
+      return;
+    }
+    if ((el = hit("data-qpick"))) {
+      quizPick(el.dataset.qpick);
+      return;
+    }
+    if (t.closest("[data-qnext]")) {
+      if (!qBusy) quizAdvance();
+      return;
+    }
+    if (t.closest("[data-qback]")) {
+      if (q.done) {
+        q.done = false;
+        q.step = QUIZ.length - 1;
+      } else if (q.step > 0) q.step--;
+      qSave();
+      paintQuiz();
+      return;
+    }
+    if (t.closest("[data-qskip]")) {
+      if (!qBusy) {
+        q.picks[qIndex()] = null;
+        qSave();
+        quizAdvance();
+      }
+      return;
+    }
+    if (t.closest("[data-qbrowse]")) {
+      const b = $("xpBody");
+      if (b) b.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (t.closest("[data-qretake]")) {
+      q = blankQuiz();
+      qSave();
+      paintQuiz();
+      return;
+    }
   });
 
   host.addEventListener("keydown", (e) => {
     if (e.target.closest && e.target.closest("button")) return;
     const cardEl = e.target.closest && e.target.closest(".xp-card");
-    if (cardEl && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); styleDrawer(cardEl.dataset.d); }
+    if (cardEl && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      styleDrawer(cardEl.dataset.d);
+    }
   });
 
   host.addEventListener("change", (e) => {
@@ -631,18 +971,28 @@ export function mountExplore(go, ctx) {
   });
 
   let qt;
-  $("xpQ").addEventListener("input", () => { clearTimeout(qt); qt = window.setTimeout(paint, 160); });
+  $("xpQ").addEventListener("input", () => {
+    clearTimeout(qt);
+    qt = window.setTimeout(paint, 160);
+  });
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
     if (!$("xpDrawer").hidden) closeDrawer();
     if (!$("xpSortMenu").hidden) $("xpSortMenu").hidden = true;
   });
-  document.addEventListener("click", (e) => {
-    if (!host.contains(e.target) || !e.target.closest(".xp-sortwrap")) {
-      const m = $("xpSortMenu");
-      if (m && !m.hidden) { m.hidden = true; $("xpSortBtn").setAttribute("aria-expanded", "false"); }
-    }
-  }, true);
+  document.addEventListener(
+    "click",
+    (e) => {
+      if (!host.contains(e.target) || !e.target.closest(".xp-sortwrap")) {
+        const m = $("xpSortMenu");
+        if (m && !m.hidden) {
+          m.hidden = true;
+          $("xpSortBtn").setAttribute("aria-expanded", "false");
+        }
+      }
+    },
+    true,
+  );
 
   syncProp();
   paintRec();

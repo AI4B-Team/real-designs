@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/for-contractors",
   tier: "C",
-  intent: "Contractors and remodelers who need to win a bid, show a client what they are paying for, and stop change orders that erode margin.",
+  intent:
+    "Contractors and remodelers who need to win a bid, show a client what they are paying for, and stop change orders that erode margin.",
 
   metaTitle: "AI Design & Scope Tools For Contractors",
-  metaDescription: "Show clients exactly what you are pricing before you break ground. Reality Lock keeps designs buildable and scoped, so bids hold and change orders drop.",
+  metaDescription:
+    "Show clients exactly what you are pricing before you break ground. Reality Lock keeps designs buildable and scoped, so bids hold and change orders drop.",
 
   eyebrow: "For Contractors",
   h1: "Show The Client What They Are Buying Before You Quote It",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Proposed design with a matching scope of work attached",
 
   steps: [
-    { title: "Photograph The Existing Space", text: "Use the same phone photos you would take for your own estimate walk-through, no measuring or CAD required." },
-    { title: "Generate The Design & Scope Together", text: "The redesign and the itemized scope of work are produced from the same job, so the picture and the price sheet always match." },
-    { title: "Attach Both To The Proposal", text: "Send the client a design they can approve and a scope they can read line by line, closing the gap between what they picture and what they are paying for." },
+    {
+      title: "Photograph The Existing Space",
+      text: "Use the same phone photos you would take for your own estimate walk-through, no measuring or CAD required.",
+    },
+    {
+      title: "Generate The Design & Scope Together",
+      text: "The redesign and the itemized scope of work are produced from the same job, so the picture and the price sheet always match.",
+    },
+    {
+      title: "Attach Both To The Proposal",
+      text: "Send the client a design they can approve and a scope they can read line by line, closing the gap between what they picture and what they are paying for.",
+    },
   ],
 
   showcase: ["reality-lock", "scope", "brief", "interior"],
-
 
   sections: [
     {
@@ -104,6 +114,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Give Every Proposal A Picture & A Scope",
-  ctaBody: "Photograph the existing space and generate a design and an itemized scope your client can approve in the same meeting.",
+  ctaBody:
+    "Photograph the existing space and generate a design and an itemized scope your client can approve in the same meeting.",
   ctaLabel: "Build A Client Proposal",
 };

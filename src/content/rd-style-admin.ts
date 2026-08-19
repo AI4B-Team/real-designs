@@ -2,9 +2,17 @@
 /* eslint-disable */
 // @ts-nocheck
 import { STYLES, STYLE_CATEGORIES, styleById, applyStyleOverrides } from "@/lib/style-catalog";
-import { listStyleOverrides, saveStyleOverride, deleteStyleOverride } from "@/lib/style-admin.functions";
+import {
+  listStyleOverrides,
+  saveStyleOverride,
+  deleteStyleOverride,
+} from "@/lib/style-admin.functions";
 
-const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const esc = (s) =>
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const TYPES = ["interior", "exterior", "garden", "virtual-staging", "concept"];
 
 export async function openStyleAdmin(openDrawer, closeDrawer, note, icons_, host) {
@@ -28,19 +36,25 @@ export async function openStyleAdmin(openDrawer, closeDrawer, note, icons_, host
   let editing = null;
 
   function listHtml() {
-    const list = STYLES.slice().sort((a, b) => a.featuredRank - b.featuredRank || a.displayName.localeCompare(b.displayName));
+    const list = STYLES.slice().sort(
+      (a, b) => a.featuredRank - b.featuredRank || a.displayName.localeCompare(b.displayName),
+    );
     return `<div class="xp-dh"><div><span class="xp-eyebrow">Admin</span><h3>Style Library</h3><p>${list.length} styles. Public IDs never change, so saved projects keep working.</p></div>
       <button class="icon-btn" data-close="1" aria-label="Close"><i data-lucide="x"></i></button></div>
       <div class="xp-db">
         <div class="xp-admin-list">
-          ${list.map((s) => `<div class="xp-admin-row${s.isActive ? "" : " off"}">
+          ${list
+            .map(
+              (s) => `<div class="xp-admin-row${s.isActive ? "" : " off"}">
             <img src="${s.previewImage}" alt="">
             <div class="xp-admin-meta"><b>${esc(s.displayName)}</b><span>${esc(s.category)} · ${esc(s.id)}${s.isFeatured ? " · Featured" : ""}${s.isActive ? "" : " · Hidden"}</span></div>
             <div class="xp-admin-acts">
               <button class="fb-link" data-aedit="${s.id}">Edit</button>
               <button class="fb-link" data-afeat="${s.id}">${s.isFeatured ? "Unfeature" : "Feature"}</button>
               <button class="fb-link" data-ahide="${s.id}">${s.isActive ? "Hide" : "Show"}</button>
-            </div></div>`).join("")}
+            </div></div>`,
+            )
+            .join("")}
         </div>
       </div>
       <div class="xp-df"><button class="fb-link" data-anew="1">Add Style</button><button class="btn btn-ghost btn-sm" data-close="1">Done</button></div>`;
@@ -69,14 +83,19 @@ export async function openStyleAdmin(openDrawer, closeDrawer, note, icons_, host
       </div>`;
   }
 
-  function paintList() { openDrawer(listHtml()); icons_(); }
+  function paintList() {
+    openDrawer(listHtml());
+    icons_();
+  }
 
   async function persist(patch) {
     try {
       await saveStyleOverride({ data: patch });
       applyStyleOverrides([patch]);
       note("Style Library Updated");
-    } catch (e) { note((e && e.message) || "Could not save that change."); }
+    } catch (e) {
+      note((e && e.message) || "Could not save that change.");
+    }
   }
 
   host.addEventListener("click", async (e) => {
@@ -84,30 +103,86 @@ export async function openStyleAdmin(openDrawer, closeDrawer, note, icons_, host
     if (!panel || !panel.contains(e.target)) return;
     const t = e.target;
     let el;
-    if ((el = t.closest("[data-aedit]"))) { editing = styleById(el.dataset.aedit); openDrawer(editHtml(editing, false)); icons_(); return; }
-    if ((el = t.closest("[data-afeat]"))) { const s = styleById(el.dataset.afeat); await persist({ style_id: s.id, is_featured: !s.isFeatured }); paintList(); return; }
-    if ((el = t.closest("[data-ahide]"))) { const s = styleById(el.dataset.ahide); await persist({ style_id: s.id, is_hidden: s.isActive }); paintList(); return; }
+    if ((el = t.closest("[data-aedit]"))) {
+      editing = styleById(el.dataset.aedit);
+      openDrawer(editHtml(editing, false));
+      icons_();
+      return;
+    }
+    if ((el = t.closest("[data-afeat]"))) {
+      const s = styleById(el.dataset.afeat);
+      await persist({ style_id: s.id, is_featured: !s.isFeatured });
+      paintList();
+      return;
+    }
+    if ((el = t.closest("[data-ahide]"))) {
+      const s = styleById(el.dataset.ahide);
+      await persist({ style_id: s.id, is_hidden: s.isActive });
+      paintList();
+      return;
+    }
     if ((el = t.closest("[data-areset]"))) {
-      try { await deleteStyleOverride({ data: { style_id: el.dataset.areset } }); note("Overrides Cleared. Reload To See Shipped Values."); } catch (err) { note((err && err.message) || "Could not reset."); }
-      paintList(); return;
+      try {
+        await deleteStyleOverride({ data: { style_id: el.dataset.areset } });
+        note("Overrides Cleared. Reload To See Shipped Values.");
+      } catch (err) {
+        note((err && err.message) || "Could not reset.");
+      }
+      paintList();
+      return;
     }
     if (t.closest("[data-anew]")) {
-      editing = { id: "", displayName: "", shortDescription: "", category: STYLE_CATEGORIES[0], aliases: [], compatibleProjectTypes: ["interior"], previewImage: "", featuredRank: 900, generationPrompt: "", negativePrompt: "" };
-      openDrawer(editHtml(editing, true)); icons_(); return;
+      editing = {
+        id: "",
+        displayName: "",
+        shortDescription: "",
+        category: STYLE_CATEGORIES[0],
+        aliases: [],
+        compatibleProjectTypes: ["interior"],
+        previewImage: "",
+        featuredRank: 900,
+        generationPrompt: "",
+        negativePrompt: "",
+      };
+      openDrawer(editHtml(editing, true));
+      icons_();
+      return;
     }
-    if (t.closest("[data-aback]")) { paintList(); return; }
+    if (t.closest("[data-aback]")) {
+      paintList();
+      return;
+    }
     if (t.closest("[data-asave]")) {
-      const v = (id) => { const n = panel.querySelector("#" + id); return n ? n.value.trim() : ""; };
-      const id = editing && editing.id ? editing.id : v("aId").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-      if (!id) { note("A Style ID Is Required."); return; }
-      const types = Array.from(panel.querySelectorAll("[data-atype]:checked")).map((x) => x.dataset.atype);
+      const v = (id) => {
+        const n = panel.querySelector("#" + id);
+        return n ? n.value.trim() : "";
+      };
+      const id =
+        editing && editing.id
+          ? editing.id
+          : v("aId")
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, "-")
+              .replace(/^-|-$/g, "");
+      if (!id) {
+        note("A Style ID Is Required.");
+        return;
+      }
+      const types = Array.from(panel.querySelectorAll("[data-atype]:checked")).map(
+        (x) => x.dataset.atype,
+      );
       const prov = v("aProv");
       const patch = {
         style_id: id,
         display_name: v("aName") || id,
         short_description: v("aDesc"),
         category: v("aCat"),
-        aliases: v("aAlias") ? v("aAlias").split(",").map((x) => x.trim()).filter(Boolean) : [],
+        aliases: v("aAlias")
+          ? v("aAlias")
+              .split(",")
+              .map((x) => x.trim())
+              .filter(Boolean)
+          : [],
         project_types: types.length ? types : ["interior"],
         preview_image: v("aImg") || null,
         generation_prompt: v("aPrompt") || null,

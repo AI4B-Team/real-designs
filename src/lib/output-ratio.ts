@@ -10,15 +10,7 @@
  * generation. The uploaded original is never rewritten.
  */
 
-export type OutputRatio =
-  | "original"
-  | "9:16"
-  | "16:9"
-  | "1:1"
-  | "4:3"
-  | "4:5"
-  | "3:2"
-  | "2:3";
+export type OutputRatio = "original" | "9:16" | "16:9" | "1:1" | "4:3" | "4:5" | "3:2" | "2:3";
 
 export type RatioOption = { id: OutputRatio; label: string; note?: string };
 

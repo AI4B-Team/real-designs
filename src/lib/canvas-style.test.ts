@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { STYLES } from "@/lib/style-catalog";
 import {
-  applyToPhotos, clearDirection, emptyStore, parseStore, photoDirectionKey, propertyDirection,
-  resolveDirection, searchStyles, sectionTitle, setDirection, styleNeedForTool, stylesForNeed,
+  applyToPhotos,
+  clearDirection,
+  emptyStore,
+  parseStore,
+  photoDirectionKey,
+  propertyDirection,
+  resolveDirection,
+  searchStyles,
+  sectionTitle,
+  setDirection,
+  styleNeedForTool,
+  stylesForNeed,
 } from "@/lib/canvas-style";
 
 const A = STYLES[0]!.id;
@@ -16,7 +26,9 @@ describe("styleNeedForTool", () => {
     expect(sectionTitle("stage")).toBe("Staging Style");
   });
   it("needs nothing for utility tools", () => {
-    ["Declutter", "Multi Angle", "Material Swap", ""].forEach((t) => expect(styleNeedForTool(t)).toBeNull());
+    ["Declutter", "Multi Angle", "Material Swap", ""].forEach((t) =>
+      expect(styleNeedForTool(t)).toBeNull(),
+    );
   });
 });
 

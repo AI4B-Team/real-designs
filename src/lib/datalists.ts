@@ -18,7 +18,9 @@ function optionsFor(input: HTMLInputElement): string[] {
   const id = input.getAttribute("data-list") || "";
   const dl = id ? (document.getElementById(id) as HTMLDataListElement | null) : null;
   if (!dl) return [];
-  return Array.from(dl.options).map((o) => o.value || o.textContent || "").filter(Boolean);
+  return Array.from(dl.options)
+    .map((o) => o.value || o.textContent || "")
+    .filter(Boolean);
 }
 
 function openMenu(input: HTMLInputElement) {
@@ -95,7 +97,10 @@ export function initDatalists(root: ParentNode = document): Cleanup {
   scan(root);
 
   const obs = new MutationObserver((muts) => {
-    for (const m of muts) m.addedNodes.forEach((n) => { if (n instanceof Element) scan(n); });
+    for (const m of muts)
+      m.addedNodes.forEach((n) => {
+        if (n instanceof Element) scan(n);
+      });
   });
   obs.observe(document.body, { childList: true, subtree: true });
 

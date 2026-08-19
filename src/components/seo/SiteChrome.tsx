@@ -12,9 +12,7 @@ function useSignedIn() {
     supabase.auth.getSession().then(({ data }) => {
       if (alive) setSignedIn(!!data.session);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) =>
-      setSignedIn(!!session),
-    );
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => setSignedIn(!!session));
     return () => {
       alive = false;
       sub.subscription.unsubscribe();
@@ -22,9 +20,6 @@ function useSignedIn() {
   }, []);
   return signedIn;
 }
-
-
-
 
 export function BrandMark() {
   return (
@@ -106,5 +101,3 @@ export function SiteHeader() {
 export function SiteFooter() {
   return <GlobalFooter />;
 }
-
-

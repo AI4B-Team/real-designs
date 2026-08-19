@@ -8,12 +8,7 @@
  * unauthorized record sends the user back.
  */
 
-export type CanvasStatus =
-  | "loading"
-  | "loaded"
-  | "missing"
-  | "unauthorized"
-  | "network-error";
+export type CanvasStatus = "loading" | "loaded" | "missing" | "unauthorized" | "network-error";
 
 export type CanvasWorkflow = "photo-design" | "video";
 
@@ -125,14 +120,22 @@ export function beginCanvasOpen(store: CanvasOpenStore, photoKey: string): numbe
 }
 
 /** True while this open is still the newest one for the same photo. */
-export function canvasOpenIsCurrent(store: CanvasOpenStore, token: number, photoKey?: string): boolean {
+export function canvasOpenIsCurrent(
+  store: CanvasOpenStore,
+  token: number,
+  photoKey?: string,
+): boolean {
   if (token !== store.token) return false;
   if (photoKey !== undefined && s(photoKey) !== store.key) return false;
   return true;
 }
 
 /** Re-clicking the photo already opening is a no-op, not a second init. */
-export function isDuplicateOpen(store: CanvasOpenStore, photoKey: string, status: CanvasStatus): boolean {
+export function isDuplicateOpen(
+  store: CanvasOpenStore,
+  photoKey: string,
+  status: CanvasStatus,
+): boolean {
   return status === "loading" && store.key === s(photoKey) && store.token > 0;
 }
 

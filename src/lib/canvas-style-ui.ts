@@ -5,12 +5,32 @@
  * the choice survives reloads at the right scope.
  */
 
-import { STYLES, STYLE_CATEGORIES, recommendStyles, styleById, type StyleRecord } from "@/lib/style-catalog";
 import {
-  applyToPhotos, browserSubtitle, browserTitle, clearDirection, loadDirections, propertyDirection,
-  resolveDirection, saveDirections, scopeLabel, searchStyles, sectionTitle, setDirection, styleNeedForTool,
-  styleRequiredPlan, stylesForNeed,
-  type DirectionContext, type ResolvedDirection, type StyleNeed,
+  STYLES,
+  STYLE_CATEGORIES,
+  recommendStyles,
+  styleById,
+  type StyleRecord,
+} from "@/lib/style-catalog";
+import {
+  applyToPhotos,
+  browserSubtitle,
+  browserTitle,
+  clearDirection,
+  loadDirections,
+  propertyDirection,
+  resolveDirection,
+  saveDirections,
+  scopeLabel,
+  searchStyles,
+  sectionTitle,
+  setDirection,
+  styleNeedForTool,
+  styleRequiredPlan,
+  stylesForNeed,
+  type DirectionContext,
+  type ResolvedDirection,
+  type StyleNeed,
 } from "@/lib/canvas-style";
 
 export type CanvasStyleContext = {
@@ -36,16 +56,35 @@ export type CanvasStyleApi = {
 };
 
 const esc = (s: unknown): string =>
-  String(s == null ? "" : s).replace(/[&<>"']/g, (c) => (
-    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" } as Record<string, string>
-  )[c] as string);
+  String(s == null ? "" : s).replace(
+    /[&<>"']/g,
+    (c) =>
+      (
+        ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }) as Record<
+          string,
+          string
+        >
+      )[c] as string,
+  );
 
 function icons(root?: Element | null) {
-  try { (window as any).lucide?.createIcons({ attrs: {}, ...(root ? { nameAttr: "data-lucide" } : {}) }); } catch (_) { /* icons are cosmetic */ }
+  try {
+    (window as any).lucide?.createIcons({
+      attrs: {},
+      ...(root ? { nameAttr: "data-lucide" } : {}),
+    });
+  } catch (_) {
+    /* icons are cosmetic */
+  }
 }
 
 function ctxFor(need: StyleNeed, c: CanvasStyleContext): DirectionContext {
-  return { need, draftId: c.draftId ?? null, photoKey: c.photoKey ?? null, propertyId: c.propertyId ?? null };
+  return {
+    need,
+    draftId: c.draftId ?? null,
+    photoKey: c.photoKey ?? null,
+    propertyId: c.propertyId ?? null,
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -68,10 +107,15 @@ function openBrowser(o: BrowseOpts) {
   m.className = "up-modal cs-modal on";
 
   const pool = stylesForNeed(STYLES, o.need, o.ctx.projectType);
-  const recs = recommendStyles({
-    projectType: (o.need === "stage" ? "virtual-staging" : o.ctx.projectType) as any,
-    ...(o.ctx.room ? { roomType: o.ctx.room } : {}),
-  }, 4).map((r) => r.style).filter((s) => pool.some((p) => p.id === s.id));
+  const recs = recommendStyles(
+    {
+      projectType: (o.need === "stage" ? "virtual-staging" : o.ctx.projectType) as any,
+      ...(o.ctx.room ? { roomType: o.ctx.room } : {}),
+    },
+    4,
+  )
+    .map((r) => r.style)
+    .filter((s) => pool.some((p) => p.id === s.id));
 
   let picked = o.currentId || "";
   let applyAll = false;
@@ -86,28 +130,43 @@ function openBrowser(o: BrowseOpts) {
   m.innerHTML =
     '<div class="up-scrim" data-close></div>' +
     '<div class="up-card cs-card" role="dialog" aria-modal="true" aria-labelledby="csTitle">' +
-      '<div class="cs-head">' +
-        '<div><h3 id="csTitle">' + esc(browserTitle(o.need)) + "</h3>" +
-        "<p>" + esc(browserSubtitle(o.need, o.ctx.room)) + "</p></div>" +
-        '<button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button>' +
-      "</div>" +
-      '<div class="cs-filters">' +
-        '<div class="cs-search"><i data-lucide="search"></i>' +
-          '<input id="csQ" type="search" placeholder="Search Styles" aria-label="Search Styles"></div>' +
-        '<div class="cs-cats" id="csCats">' +
-          cats.map((c, i) => '<button class="chip' + (i === 0 ? " on" : "") + '" data-cat="' + esc(c) + '">' + esc(c) + "</button>").join("") +
-        "</div>" +
-      "</div>" +
-      '<div class="cs-grid" id="csGrid" role="listbox" aria-label="Styles"></div>' +
-      '<div class="cs-foot">' +
-        (canApplyAll
-          ? '<label class="cs-all"><input type="checkbox" id="csAll"><span>Apply To All Photos In This Project</span></label>'
-          : '<span class="cs-foot-note" id="csNote"></span>') +
-        '<div class="cs-foot-act">' +
-          '<button class="btn btn-dark" data-close>Cancel</button>' +
-          '<button class="btn btn-primary" id="csUse" disabled>Use This Style</button>' +
-        "</div>" +
-      "</div>" +
+    '<div class="cs-head">' +
+    '<div><h3 id="csTitle">' +
+    esc(browserTitle(o.need)) +
+    "</h3>" +
+    "<p>" +
+    esc(browserSubtitle(o.need, o.ctx.room)) +
+    "</p></div>" +
+    '<button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button>' +
+    "</div>" +
+    '<div class="cs-filters">' +
+    '<div class="cs-search"><i data-lucide="search"></i>' +
+    '<input id="csQ" type="search" placeholder="Search Styles" aria-label="Search Styles"></div>' +
+    '<div class="cs-cats" id="csCats">' +
+    cats
+      .map(
+        (c, i) =>
+          '<button class="chip' +
+          (i === 0 ? " on" : "") +
+          '" data-cat="' +
+          esc(c) +
+          '">' +
+          esc(c) +
+          "</button>",
+      )
+      .join("") +
+    "</div>" +
+    "</div>" +
+    '<div class="cs-grid" id="csGrid" role="listbox" aria-label="Styles"></div>' +
+    '<div class="cs-foot">' +
+    (canApplyAll
+      ? '<label class="cs-all"><input type="checkbox" id="csAll"><span>Apply To All Photos In This Project</span></label>'
+      : '<span class="cs-foot-note" id="csNote"></span>') +
+    '<div class="cs-foot-act">' +
+    '<button class="btn btn-dark" data-close>Cancel</button>' +
+    '<button class="btn btn-primary" id="csUse" disabled>Use This Style</button>' +
+    "</div>" +
+    "</div>" +
     "</div>";
   host.appendChild(m);
 
@@ -116,30 +175,53 @@ function openBrowser(o: BrowseOpts) {
 
   function visible(): StyleRecord[] {
     let list = category === "Recommended" ? recs : pool;
-    if (category !== "All" && category !== "Recommended") list = pool.filter((s) => s.category === category);
+    if (category !== "All" && category !== "Recommended")
+      list = pool.filter((s) => s.category === category);
     return searchStyles(list, query);
   }
 
   function paint() {
     const list = visible();
     if (!list.length) {
-      grid.innerHTML = '<div class="cs-empty">No styles match that search. Try a different word or clear the filters.</div>';
+      grid.innerHTML =
+        '<div class="cs-empty">No styles match that search. Try a different word or clear the filters.</div>';
       return;
     }
-    grid.innerHTML = list.map((s) => {
-      const plan = styleRequiredPlan(s);
-      const on = s.id === picked;
-      return (
-        '<button class="cs-tile' + (on ? " on" : "") + '" role="option" aria-selected="' + (on ? "true" : "false") +
-        '" data-style="' + esc(s.id) + '" title="' + esc(s.displayName) + '">' +
-        '<span class="cs-th">' + (s.previewImage ? '<img loading="lazy" src="' + esc(s.previewImage) + '" alt="' + esc(s.displayName) + ' example">' : "") +
-        (on ? '<span class="cs-tick"><i data-lucide="check"></i></span>' : "") +
-        (plan ? '<span class="cs-lock"><i data-lucide="lock"></i>' + esc(plan) + "</span>" : "") + "</span>" +
-        '<span class="cs-tn">' + esc(s.displayName) + "</span>" +
-        '<span class="cs-td">' + esc(s.shortDescription) + "</span>" +
-        "</button>"
-      );
-    }).join("");
+    grid.innerHTML = list
+      .map((s) => {
+        const plan = styleRequiredPlan(s);
+        const on = s.id === picked;
+        return (
+          '<button class="cs-tile' +
+          (on ? " on" : "") +
+          '" role="option" aria-selected="' +
+          (on ? "true" : "false") +
+          '" data-style="' +
+          esc(s.id) +
+          '" title="' +
+          esc(s.displayName) +
+          '">' +
+          '<span class="cs-th">' +
+          (s.previewImage
+            ? '<img loading="lazy" src="' +
+              esc(s.previewImage) +
+              '" alt="' +
+              esc(s.displayName) +
+              ' example">'
+            : "") +
+          (on ? '<span class="cs-tick"><i data-lucide="check"></i></span>' : "") +
+          (plan ? '<span class="cs-lock"><i data-lucide="lock"></i>' + esc(plan) + "</span>" : "") +
+          "</span>" +
+          '<span class="cs-tn">' +
+          esc(s.displayName) +
+          "</span>" +
+          '<span class="cs-td">' +
+          esc(s.shortDescription) +
+          "</span>" +
+          "</button>"
+        );
+      })
+      .join("");
     icons(grid);
     const rec = styleById(picked);
     useBtn.disabled = !rec;
@@ -149,18 +231,33 @@ function openBrowser(o: BrowseOpts) {
   paint();
   icons(m);
 
-  const close = () => { m?.remove(); document.removeEventListener("keydown", onKey); };
+  const close = () => {
+    m?.remove();
+    document.removeEventListener("keydown", onKey);
+  };
   function onKey(e: KeyboardEvent) {
-    if (e.key === "Escape") { e.preventDefault(); close(); }
-    if (e.key === "Enter" && picked && document.activeElement && (document.activeElement as HTMLElement).closest(".cs-tile")) {
-      e.preventDefault(); useBtn.click();
+    if (e.key === "Escape") {
+      e.preventDefault();
+      close();
+    }
+    if (
+      e.key === "Enter" &&
+      picked &&
+      document.activeElement &&
+      (document.activeElement as HTMLElement).closest(".cs-tile")
+    ) {
+      e.preventDefault();
+      useBtn.click();
     }
   }
   document.addEventListener("keydown", onKey);
 
   m.addEventListener("click", (e: any) => {
     const t = e.target as HTMLElement;
-    if (t.closest("[data-close]")) { close(); return; }
+    if (t.closest("[data-close]")) {
+      close();
+      return;
+    }
     const cat = t.closest("[data-cat]") as HTMLElement | null;
     if (cat) {
       category = cat.dataset["cat"] || "All";
@@ -169,7 +266,11 @@ function openBrowser(o: BrowseOpts) {
       return;
     }
     const tile = t.closest("[data-style]") as HTMLElement | null;
-    if (tile) { picked = tile.dataset["style"] || ""; paint(); return; }
+    if (tile) {
+      picked = tile.dataset["style"] || "";
+      paint();
+      return;
+    }
     if (t.closest("#csUse")) {
       if (!picked) return;
       o.onPick(picked, applyAll);
@@ -177,10 +278,23 @@ function openBrowser(o: BrowseOpts) {
     }
   });
   const q = m.querySelector("#csQ") as HTMLInputElement | null;
-  q?.addEventListener("input", () => { query = q.value; paint(); });
+  q?.addEventListener("input", () => {
+    query = q.value;
+    paint();
+  });
   const all = m.querySelector("#csAll") as HTMLInputElement | null;
-  all?.addEventListener("change", () => { applyAll = !!all.checked; });
-  setTimeout(() => { try { (m!.querySelector(".cs-tile.on") as HTMLElement | null)?.focus() || q?.focus(); } catch (_) { /* focus is best effort */ } }, 30);
+  all?.addEventListener("change", () => {
+    applyAll = !!all.checked;
+  });
+  setTimeout(() => {
+    try {
+      const tile = m!.querySelector(".cs-tile.on") as HTMLElement | null;
+      if (tile) tile.focus();
+      else q?.focus();
+    } catch (_) {
+      /* focus is best effort */
+    }
+  }, 30);
 }
 
 /* ------------------------------------------------------------------ */
@@ -212,7 +326,11 @@ export function mountCanvasStyle(
     if (!el) return;
     const c = getContext();
     const need = needNow();
-    if (!need) { el.hidden = true; el.innerHTML = ""; return; }
+    if (!need) {
+      el.hidden = true;
+      el.innerHTML = "";
+      return;
+    }
     el.hidden = false;
 
     const sel = selection();
@@ -223,12 +341,22 @@ export function mountCanvasStyle(
     if (!sel) {
       el.innerHTML =
         '<div class="cs-sec cs-empty-state">' +
-          '<div class="cs-sec-h"><label>' + esc(title) + '</label><span class="cs-req">Required</span></div>' +
-          "<p>" + esc(need === "stage"
+        '<div class="cs-sec-h"><label>' +
+        esc(title) +
+        '</label><span class="cs-req">Required</span></div>' +
+        "<p>" +
+        esc(
+          need === "stage"
             ? "Pick the furniture and decor style this empty room should be staged in."
-            : "Pick the direction this room should be redesigned in. Nothing is chosen for you.") + "</p>" +
-          '<button class="btn btn-primary btn-sm cs-browse" type="button"><i data-lucide="layout-grid"></i>Browse Styles</button>' +
-          (propRec ? '<button class="btn btn-ghost btn-sm cs-useprop" type="button"><i data-lucide="dna"></i>Use Property Direction &middot; ' + esc(propRec.displayName) + "</button>" : "") +
+            : "Pick the direction this room should be redesigned in. Nothing is chosen for you.",
+        ) +
+        "</p>" +
+        '<button class="btn btn-primary btn-sm cs-browse" type="button"><i data-lucide="layout-grid"></i>Browse Styles</button>' +
+        (propRec
+          ? '<button class="btn btn-ghost btn-sm cs-useprop" type="button"><i data-lucide="dna"></i>Use Property Direction &middot; ' +
+            esc(propRec.displayName) +
+            "</button>"
+          : "") +
         "</div>";
       icons(el);
       onChange?.(null);
@@ -238,18 +366,32 @@ export function mountCanvasStyle(
     const s = sel.style;
     el.innerHTML =
       '<div class="cs-sec">' +
-        '<div class="cs-sec-h"><label>' + esc(title) + '</label><span class="cs-scope">' + esc(scopeLabel(sel.scope)) + "</span></div>" +
-        '<div class="cs-picked">' +
-          '<span class="cs-picked-th">' + (s.previewImage ? '<img src="' + esc(s.previewImage) + '" alt="' + esc(s.displayName) + ' example">' : "") + "</span>" +
-          '<span class="cs-picked-t"><b>' + esc(s.displayName) + "</b><em>" + esc(s.shortDescription) + "</em></span>" +
-        "</div>" +
-        '<div class="cs-picked-act">' +
-          '<button class="btn btn-ghost btn-sm cs-browse" type="button"><i data-lucide="repeat-2"></i>Change Style</button>' +
-          '<button class="fb-link cs-clear" type="button">Clear</button>' +
-        "</div>" +
-        (sel.scope !== "photo" && c.photoKey
-          ? '<p class="cs-inherit">Inherited from ' + esc(scopeLabel(sel.scope)) + ". Choosing a different style here only changes this photo.</p>"
-          : "") +
+      '<div class="cs-sec-h"><label>' +
+      esc(title) +
+      '</label><span class="cs-scope">' +
+      esc(scopeLabel(sel.scope)) +
+      "</span></div>" +
+      '<div class="cs-picked">' +
+      '<span class="cs-picked-th">' +
+      (s.previewImage
+        ? '<img src="' + esc(s.previewImage) + '" alt="' + esc(s.displayName) + ' example">'
+        : "") +
+      "</span>" +
+      '<span class="cs-picked-t"><b>' +
+      esc(s.displayName) +
+      "</b><em>" +
+      esc(s.shortDescription) +
+      "</em></span>" +
+      "</div>" +
+      '<div class="cs-picked-act">' +
+      '<button class="btn btn-ghost btn-sm cs-browse" type="button"><i data-lucide="repeat-2"></i>Change Style</button>' +
+      '<button class="fb-link cs-clear" type="button">Clear</button>' +
+      "</div>" +
+      (sel.scope !== "photo" && c.photoKey
+        ? '<p class="cs-inherit">Inherited from ' +
+          esc(scopeLabel(sel.scope)) +
+          ". Choosing a different style here only changes this photo.</p>"
+        : "") +
       "</div>";
     icons(el);
     onChange?.(sel);
@@ -272,7 +414,9 @@ export function mountCanvasStyle(
     paint();
     try {
       window.dispatchEvent(new CustomEvent("rd:canvas-style", { detail: { need, styleId } }));
-    } catch (_) { /* event is advisory */ }
+    } catch (_) {
+      /* event is advisory */
+    }
   }
 
   function open() {
@@ -287,7 +431,11 @@ export function mountCanvasStyle(
     if (!el || el.hidden) return;
     const t = e.target as HTMLElement;
     if (!t || !t.closest || !el.contains(t)) return;
-    if (t.closest(".cs-browse")) { e.preventDefault(); open(); return; }
+    if (t.closest(".cs-browse")) {
+      e.preventDefault();
+      open();
+      return;
+    }
     if (t.closest(".cs-useprop")) {
       e.preventDefault();
       const need = needNow();

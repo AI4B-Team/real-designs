@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/curb-appeal-ideas",
   tier: "B",
-  intent: "Homeowner or seller wants curb appeal ideas along with a realistic sense of what those exterior improvements cost.",
+  intent:
+    "Homeowner or seller wants curb appeal ideas along with a realistic sense of what those exterior improvements cost.",
 
   metaTitle: "Curb Appeal Ideas & Cost Planning",
-  metaDescription: "Curb appeal ideas that actually move resale value, paint, landscaping, lighting and the front door, with a realistic planning range for each.",
+  metaDescription:
+    "Curb appeal ideas that actually move resale value, paint, landscaping, lighting and the front door, with a realistic planning range for each.",
 
   eyebrow: "Curb Appeal",
   h1: "Curb Appeal Ideas & What They Cost",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same exterior after paint, landscaping and lighting updates, same footprint.",
 
   steps: [
-    { title: "Upload A Photo Of Your Front Exterior", text: "The design works from your actual siding, roofline, walkway and landscaping instead of a generic before and after." },
-    { title: "Choose A Budget Band", text: "Pick a refresh, makeover or full renovation level so the ideas generated match a spend you can actually plan around." },
-    { title: "Get A Line Item Cost Range", text: "See paint, landscaping, lighting and entry updates broken into individual line items with a planning range for each." },
+    {
+      title: "Upload A Photo Of Your Front Exterior",
+      text: "The design works from your actual siding, roofline, walkway and landscaping instead of a generic before and after.",
+    },
+    {
+      title: "Choose A Budget Band",
+      text: "Pick a refresh, makeover or full renovation level so the ideas generated match a spend you can actually plan around.",
+    },
+    {
+      title: "Get A Line Item Cost Range",
+      text: "See paint, landscaping, lighting and entry updates broken into individual line items with a planning range for each.",
+    },
   ],
 
   showcase: ["exterior", "budget-mode", "scope"],
-
 
   sections: [
     {
@@ -72,12 +82,30 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "What is the cheapest way to improve curb appeal?", a: "Fresh mulch, trimmed landscaping, a pressure washed walkway and a repainted front door typically cost under $2,000 total and deliver a noticeable change in how a house reads from the street." },
-    { q: "How much does it cost to repaint a house exterior?", a: "A full exterior repaint for an average single family front facade typically plans in the $2,200 to $5,500 range, depending on siding material, condition and the number of colors used for trim and accents." },
-    { q: "Is landscaping or a new walkway a better curb appeal investment?", a: "Landscaping, mulch and foundation plantings usually deliver more visual improvement per dollar spent, typically $800 to $2,200, compared to a new walkway or hardscaping project, which plans in the $900 to $3,200 range and is best reserved for walkways that are actually damaged." },
-    { q: "Does a new front door really make a difference?", a: "A repainted or replaced front door is one of the highest return curb appeal items, ranging from $200 for paint to $1,800 for a full replacement, because it is the visual focal point of most home facades." },
-    { q: "How much should I budget for a curb appeal refresh before selling?", a: "A refresh level project, mulch, trimmed landscaping, a repainted door, updated house numbers and a light fixture, typically plans in the $1,500 to $4,000 range and can usually be completed within a week or two before listing." },
-    { q: "Can I see curb appeal ideas on my actual house before spending money?", a: "Yes, uploading a photo of your front exterior lets you see paint colors, landscaping and lighting changes rendered against your actual siding, roofline and yard before scheduling any work." },
+    {
+      q: "What is the cheapest way to improve curb appeal?",
+      a: "Fresh mulch, trimmed landscaping, a pressure washed walkway and a repainted front door typically cost under $2,000 total and deliver a noticeable change in how a house reads from the street.",
+    },
+    {
+      q: "How much does it cost to repaint a house exterior?",
+      a: "A full exterior repaint for an average single family front facade typically plans in the $2,200 to $5,500 range, depending on siding material, condition and the number of colors used for trim and accents.",
+    },
+    {
+      q: "Is landscaping or a new walkway a better curb appeal investment?",
+      a: "Landscaping, mulch and foundation plantings usually deliver more visual improvement per dollar spent, typically $800 to $2,200, compared to a new walkway or hardscaping project, which plans in the $900 to $3,200 range and is best reserved for walkways that are actually damaged.",
+    },
+    {
+      q: "Does a new front door really make a difference?",
+      a: "A repainted or replaced front door is one of the highest return curb appeal items, ranging from $200 for paint to $1,800 for a full replacement, because it is the visual focal point of most home facades.",
+    },
+    {
+      q: "How much should I budget for a curb appeal refresh before selling?",
+      a: "A refresh level project, mulch, trimmed landscaping, a repainted door, updated house numbers and a light fixture, typically plans in the $1,500 to $4,000 range and can usually be completed within a week or two before listing.",
+    },
+    {
+      q: "Can I see curb appeal ideas on my actual house before spending money?",
+      a: "Yes, uploading a photo of your front exterior lets you see paint colors, landscaping and lighting changes rendered against your actual siding, roofline and yard before scheduling any work.",
+    },
   ],
 
   relatedSlugs: [
@@ -90,6 +118,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "See Curb Appeal Ideas On Your House",
-  ctaBody: "Upload your front exterior and get design ideas with a planning range for each improvement.",
+  ctaBody:
+    "Upload your front exterior and get design ideas with a planning range for each improvement.",
   ctaLabel: "Start Exterior Design",
 };

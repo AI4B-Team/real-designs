@@ -25,9 +25,7 @@ function walk(dir: string, out: string[] = []): string[] {
 }
 
 const files = walk(SRC);
-const clientReachable = files.filter(
-  (f) => !/\.server\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f),
-);
+const clientReachable = files.filter((f) => !/\.server\.tsx?$/.test(f) && !/\.test\.tsx?$/.test(f));
 
 describe("server secret boundary", () => {
   it("no client-reachable module imports the admin client at module scope", () => {
@@ -43,11 +41,11 @@ describe("server secret boundary", () => {
   it("no module reads the service role key outside a server-only file", () => {
     // Naming the variable in a config manifest is fine; *reading its value*
     // outside a server-only file is what would ship the key to the browser.
-    const READ = /process\.env(\.SUPABASE_SERVICE_ROLE_KEY|\[\s*['"]SUPABASE_SERVICE_ROLE_KEY['"]\s*\])/;
+    const READ =
+      /process\.env(\.SUPABASE_SERVICE_ROLE_KEY|\[\s*['"]SUPABASE_SERVICE_ROLE_KEY['"]\s*\])/;
     const offenders = clientReachable.filter((f) => READ.test(readFileSync(f, "utf8")));
     expect(offenders.map((f) => f.replace(SRC, "src"))).toEqual([]);
   });
-
 
   it("no secret is exposed through a VITE_ prefixed variable", () => {
     const offenders = files.filter(

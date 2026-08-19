@@ -80,7 +80,8 @@ export const MOTION_CREDITS = 0;
 
 /* ------------------------------------------------------------ level 2 */
 
-export type EffectCategory = "featured" | "listing" | "lighting" | "social" | "beforeafter" | "exterior";
+export type EffectCategory =
+  "featured" | "listing" | "lighting" | "social" | "beforeafter" | "exterior";
 
 export const EFFECT_CATEGORIES: Array<[EffectCategory | "all", string]> = [
   ["all", "All"],
@@ -144,30 +145,180 @@ export const EFFECT_OPTIONS: EffectOption[] = [
   { id: "none", label: "None", sub: "No Effect Applied", cats: ["featured"], credits: 0 },
 
   /* Presentation */
-  { id: "light_leak", label: "Light Leak", sub: "Animated Light Streak Across The Frame", cats: ["featured", "lighting"], credits: 0, intensity: true },
-  { id: "magazine", label: "Magazine", sub: "Editorial Type Frame Around The Photo", cats: ["featured", "social"], credits: 0 },
-  { id: "just_listed", label: "Just Listed", sub: "Animated Just Listed Banner", cats: ["listing", "social"], credits: 0 },
-  { id: "property_outline", label: "Property Outline", sub: "Traced Outline Drawn Over The Exterior", cats: ["exterior", "listing"], credits: EFFECT_PREMIUM_CREDITS },
-  { id: "room_label", label: "Room Label", sub: "Animated Room Name Card", cats: ["listing"], credits: 0 },
-  { id: "feature_callout", label: "Feature Callout", sub: "Pointer Label On A Feature You Choose", cats: ["listing"], credits: 0 },
-  { id: "price_reveal", label: "Price Reveal", sub: "Animated Price Card", cats: ["listing", "social"], credits: 0 },
-  { id: "address_reveal", label: "Address Reveal", sub: "Animated Address Card", cats: ["listing"], credits: 0 },
-  { id: "map_reveal", label: "Map Reveal", sub: "Location Map Wipe", cats: ["listing"], credits: EFFECT_PREMIUM_CREDITS },
-  { id: "before_after", label: "Before And After", sub: "Wipe Between Two Versions Of This Photo", cats: ["beforeafter", "featured"], credits: 0 },
-  { id: "empty_staged", label: "Empty To Staged Comparison", sub: "Wipe Between The Empty And Staged Versions", cats: ["beforeafter"], credits: 0, disclosure: "staged" },
-  { id: "renovation_compare", label: "Renovation Comparison", sub: "Wipe Between Existing And Proposed", cats: ["beforeafter"], credits: 0, disclosure: "proposed" },
-  { id: "construction_progress", label: "Construction Progress", sub: "Sequenced Wipe Through Progress Photos", cats: ["beforeafter"], credits: 0 },
-  { id: "blueprint_reality", label: "Blueprint To Reality", sub: "Line-Drawing Dissolve Into The Photo", cats: ["beforeafter"], credits: EFFECT_PREMIUM_CREDITS, disclosure: "proposed" },
-  { id: "photo_stack", label: "Photo Stack", sub: "Photos Stack Onto The Frame In Sequence", cats: ["social"], credits: 0 },
-  { id: "social_hook", label: "Social Hook", sub: "Opening Hook Text For Short-Form", cats: ["social"], credits: 0 },
+  {
+    id: "light_leak",
+    label: "Light Leak",
+    sub: "Animated Light Streak Across The Frame",
+    cats: ["featured", "lighting"],
+    credits: 0,
+    intensity: true,
+  },
+  {
+    id: "magazine",
+    label: "Magazine",
+    sub: "Editorial Type Frame Around The Photo",
+    cats: ["featured", "social"],
+    credits: 0,
+  },
+  {
+    id: "just_listed",
+    label: "Just Listed",
+    sub: "Animated Just Listed Banner",
+    cats: ["listing", "social"],
+    credits: 0,
+  },
+  {
+    id: "property_outline",
+    label: "Property Outline",
+    sub: "Traced Outline Drawn Over The Exterior",
+    cats: ["exterior", "listing"],
+    credits: EFFECT_PREMIUM_CREDITS,
+  },
+  {
+    id: "room_label",
+    label: "Room Label",
+    sub: "Animated Room Name Card",
+    cats: ["listing"],
+    credits: 0,
+  },
+  {
+    id: "feature_callout",
+    label: "Feature Callout",
+    sub: "Pointer Label On A Feature You Choose",
+    cats: ["listing"],
+    credits: 0,
+  },
+  {
+    id: "price_reveal",
+    label: "Price Reveal",
+    sub: "Animated Price Card",
+    cats: ["listing", "social"],
+    credits: 0,
+  },
+  {
+    id: "address_reveal",
+    label: "Address Reveal",
+    sub: "Animated Address Card",
+    cats: ["listing"],
+    credits: 0,
+  },
+  {
+    id: "map_reveal",
+    label: "Map Reveal",
+    sub: "Location Map Wipe",
+    cats: ["listing"],
+    credits: EFFECT_PREMIUM_CREDITS,
+  },
+  {
+    id: "before_after",
+    label: "Before And After",
+    sub: "Wipe Between Two Versions Of This Photo",
+    cats: ["beforeafter", "featured"],
+    credits: 0,
+  },
+  {
+    id: "empty_staged",
+    label: "Empty To Staged Comparison",
+    sub: "Wipe Between The Empty And Staged Versions",
+    cats: ["beforeafter"],
+    credits: 0,
+    disclosure: "staged",
+  },
+  {
+    id: "renovation_compare",
+    label: "Renovation Comparison",
+    sub: "Wipe Between Existing And Proposed",
+    cats: ["beforeafter"],
+    credits: 0,
+    disclosure: "proposed",
+  },
+  {
+    id: "construction_progress",
+    label: "Construction Progress",
+    sub: "Sequenced Wipe Through Progress Photos",
+    cats: ["beforeafter"],
+    credits: 0,
+  },
+  {
+    id: "blueprint_reality",
+    label: "Blueprint To Reality",
+    sub: "Line-Drawing Dissolve Into The Photo",
+    cats: ["beforeafter"],
+    credits: EFFECT_PREMIUM_CREDITS,
+    disclosure: "proposed",
+  },
+  {
+    id: "photo_stack",
+    label: "Photo Stack",
+    sub: "Photos Stack Onto The Frame In Sequence",
+    cats: ["social"],
+    credits: 0,
+  },
+  {
+    id: "social_hook",
+    label: "Social Hook",
+    sub: "Opening Hook Text For Short-Form",
+    cats: ["social"],
+    credits: 0,
+  },
 
   /* Environmental — only where compositing is convincing. */
-  { id: "fireplace_glow", label: "Fireplace Glow", sub: "Flicker Composited Onto An Existing Fireplace", cats: ["lighting"], credits: EFFECT_PREMIUM_CREDITS, disclosure: "altered", intensity: true },
-  { id: "pool_shimmer", label: "Pool Shimmer", sub: "Surface Shimmer Composited Onto An Existing Pool", cats: ["exterior"], credits: EFFECT_PREMIUM_CREDITS, disclosure: "altered", intensity: true },
-  { id: "subtle_foliage", label: "Subtle Foliage", sub: "Gentle Sway Applied To Existing Planting", cats: ["exterior"], credits: EFFECT_PREMIUM_CREDITS, disclosure: "altered", intensity: true, beta: true },
-  { id: "daylight_shift", label: "Daylight Shift", sub: "Graded Shift Through The Time Of Day", cats: ["lighting", "exterior"], credits: EFFECT_PREMIUM_CREDITS, disclosure: "altered", intensity: true },
-  { id: "window_light", label: "Window Light", sub: "Light Bloom Composited At The Windows", cats: ["lighting"], credits: EFFECT_PREMIUM_CREDITS, disclosure: "altered", intensity: true },
-  { id: "shadow_movement", label: "Shadow Movement", sub: "Cast Shadows Drift Across The Frame", cats: ["lighting", "exterior"], credits: EFFECT_PREMIUM_CREDITS, disclosure: "altered", intensity: true, beta: true },
+  {
+    id: "fireplace_glow",
+    label: "Fireplace Glow",
+    sub: "Flicker Composited Onto An Existing Fireplace",
+    cats: ["lighting"],
+    credits: EFFECT_PREMIUM_CREDITS,
+    disclosure: "altered",
+    intensity: true,
+  },
+  {
+    id: "pool_shimmer",
+    label: "Pool Shimmer",
+    sub: "Surface Shimmer Composited Onto An Existing Pool",
+    cats: ["exterior"],
+    credits: EFFECT_PREMIUM_CREDITS,
+    disclosure: "altered",
+    intensity: true,
+  },
+  {
+    id: "subtle_foliage",
+    label: "Subtle Foliage",
+    sub: "Gentle Sway Applied To Existing Planting",
+    cats: ["exterior"],
+    credits: EFFECT_PREMIUM_CREDITS,
+    disclosure: "altered",
+    intensity: true,
+    beta: true,
+  },
+  {
+    id: "daylight_shift",
+    label: "Daylight Shift",
+    sub: "Graded Shift Through The Time Of Day",
+    cats: ["lighting", "exterior"],
+    credits: EFFECT_PREMIUM_CREDITS,
+    disclosure: "altered",
+    intensity: true,
+  },
+  {
+    id: "window_light",
+    label: "Window Light",
+    sub: "Light Bloom Composited At The Windows",
+    cats: ["lighting"],
+    credits: EFFECT_PREMIUM_CREDITS,
+    disclosure: "altered",
+    intensity: true,
+  },
+  {
+    id: "shadow_movement",
+    label: "Shadow Movement",
+    sub: "Cast Shadows Drift Across The Frame",
+    cats: ["lighting", "exterior"],
+    credits: EFFECT_PREMIUM_CREDITS,
+    disclosure: "altered",
+    intensity: true,
+    beta: true,
+  },
 ];
 
 export function effectOption(id?: string | null): EffectOption {
@@ -205,23 +356,152 @@ export const ARCHITECTURE_GUARD =
 export const NO_PEOPLE_GUARD = "No people and no animals appear in the shot.";
 
 export const ANIMATE_OPTIONS: AnimateOption[] = [
-  { id: "cinematic_walkthrough", label: "Cinematic Walkthrough", sub: "Steady move through the space", prompt: "A slow, steady cinematic walkthrough moving forward at eye level through this space.", seconds: 8, disclosure: "ai_video" },
-  { id: "dolly_in", label: "Slow Dolly In", sub: "Gentle move toward the subject", prompt: "A slow dolly in toward the centre of the room at eye level.", seconds: 6, disclosure: "ai_video" },
-  { id: "dolly_out", label: "Slow Dolly Out", sub: "Gentle move away from the subject", prompt: "A slow dolly out, gradually revealing more of the space.", seconds: 6, disclosure: "ai_video" },
-  { id: "enter_room", label: "Enter The Room", sub: "Crosses the threshold into the space", prompt: "The camera moves through the existing doorway into the room, at walking pace.", seconds: 8, disclosure: "ai_video" },
-  { id: "approach_property", label: "Approach The Property", sub: "Moves toward the front elevation", prompt: "The camera approaches the front of the property along the existing path at walking pace.", seconds: 8, disclosure: "ai_video" },
-  { id: "aerial_reveal", label: "Aerial Reveal", sub: "Simulated rise above the property", prompt: "The camera rises smoothly above the property, revealing the lot from a higher vantage point.", seconds: 8, disclosure: "simulated_aerial" },
-  { id: "day_to_dusk", label: "Day To Dusk", sub: "Light falls toward evening", prompt: "The light transitions from daylight to dusk, with interior lights warming up. Nothing else changes.", seconds: 6, disclosure: "altered" },
-  { id: "fireplace", label: "Fireplace Animation", sub: "Flames move in an existing fireplace", prompt: "Flames move naturally in the fireplace already present in the image. Nothing else changes.", seconds: 4, disclosure: "altered" },
-  { id: "pool_water", label: "Pool Water", sub: "Water moves in an existing pool", prompt: "The water in the existing pool ripples gently in the light. Nothing else changes.", seconds: 4, disclosure: "altered" },
-  { id: "curtains", label: "Curtains Moving", sub: "Existing curtains drift", prompt: "The curtains already in the frame drift gently in a light breeze. Nothing else changes.", seconds: 4, disclosure: "altered" },
-  { id: "foliage", label: "Foliage Moving", sub: "Existing planting sways", prompt: "The trees and planting already in the frame sway gently in a light breeze. Nothing else changes.", seconds: 4, disclosure: "altered" },
-  { id: "empty_to_staged", label: "Empty To Staged", sub: "Furniture appears in an empty room", prompt: "Tasteful furniture and decor gradually appear in this empty room. The room itself is unchanged.", seconds: 6, disclosure: "staged" },
-  { id: "before_after_reno", label: "Before To After Renovation", sub: "Finishes update in place", prompt: "The finishes, cabinetry and fixtures update to a renovated condition while the room layout stays identical.", seconds: 6, disclosure: "proposed" },
-  { id: "construction", label: "Construction Transformation", sub: "Unfinished space becomes finished", prompt: "The unfinished space progresses to a finished condition while the structure stays identical.", seconds: 8, disclosure: "proposed" },
-  { id: "lifestyle", label: "Lifestyle Scene", sub: "Adds people enjoying the space", prompt: "People relax and move naturally through the space, enjoying it.", seconds: 6, disclosure: "lifestyle", lifestyle: true },
-  { id: "luxury_reveal", label: "Luxury Reveal", sub: "Slow, elegant reveal of the space", prompt: "A slow, elegant reveal of the space with a smooth lateral glide.", seconds: 8, disclosure: "ai_video" },
-  { id: "twilight_reveal", label: "Twilight Reveal", sub: "Exterior settles into twilight", prompt: "The exterior settles into twilight as the camera glides slowly toward the property.", seconds: 8, disclosure: "altered" },
+  {
+    id: "cinematic_walkthrough",
+    label: "Cinematic Walkthrough",
+    sub: "Steady move through the space",
+    prompt: "A slow, steady cinematic walkthrough moving forward at eye level through this space.",
+    seconds: 8,
+    disclosure: "ai_video",
+  },
+  {
+    id: "dolly_in",
+    label: "Slow Dolly In",
+    sub: "Gentle move toward the subject",
+    prompt: "A slow dolly in toward the centre of the room at eye level.",
+    seconds: 6,
+    disclosure: "ai_video",
+  },
+  {
+    id: "dolly_out",
+    label: "Slow Dolly Out",
+    sub: "Gentle move away from the subject",
+    prompt: "A slow dolly out, gradually revealing more of the space.",
+    seconds: 6,
+    disclosure: "ai_video",
+  },
+  {
+    id: "enter_room",
+    label: "Enter The Room",
+    sub: "Crosses the threshold into the space",
+    prompt: "The camera moves through the existing doorway into the room, at walking pace.",
+    seconds: 8,
+    disclosure: "ai_video",
+  },
+  {
+    id: "approach_property",
+    label: "Approach The Property",
+    sub: "Moves toward the front elevation",
+    prompt:
+      "The camera approaches the front of the property along the existing path at walking pace.",
+    seconds: 8,
+    disclosure: "ai_video",
+  },
+  {
+    id: "aerial_reveal",
+    label: "Aerial Reveal",
+    sub: "Simulated rise above the property",
+    prompt:
+      "The camera rises smoothly above the property, revealing the lot from a higher vantage point.",
+    seconds: 8,
+    disclosure: "simulated_aerial",
+  },
+  {
+    id: "day_to_dusk",
+    label: "Day To Dusk",
+    sub: "Light falls toward evening",
+    prompt:
+      "The light transitions from daylight to dusk, with interior lights warming up. Nothing else changes.",
+    seconds: 6,
+    disclosure: "altered",
+  },
+  {
+    id: "fireplace",
+    label: "Fireplace Animation",
+    sub: "Flames move in an existing fireplace",
+    prompt:
+      "Flames move naturally in the fireplace already present in the image. Nothing else changes.",
+    seconds: 4,
+    disclosure: "altered",
+  },
+  {
+    id: "pool_water",
+    label: "Pool Water",
+    sub: "Water moves in an existing pool",
+    prompt: "The water in the existing pool ripples gently in the light. Nothing else changes.",
+    seconds: 4,
+    disclosure: "altered",
+  },
+  {
+    id: "curtains",
+    label: "Curtains Moving",
+    sub: "Existing curtains drift",
+    prompt:
+      "The curtains already in the frame drift gently in a light breeze. Nothing else changes.",
+    seconds: 4,
+    disclosure: "altered",
+  },
+  {
+    id: "foliage",
+    label: "Foliage Moving",
+    sub: "Existing planting sways",
+    prompt:
+      "The trees and planting already in the frame sway gently in a light breeze. Nothing else changes.",
+    seconds: 4,
+    disclosure: "altered",
+  },
+  {
+    id: "empty_to_staged",
+    label: "Empty To Staged",
+    sub: "Furniture appears in an empty room",
+    prompt:
+      "Tasteful furniture and decor gradually appear in this empty room. The room itself is unchanged.",
+    seconds: 6,
+    disclosure: "staged",
+  },
+  {
+    id: "before_after_reno",
+    label: "Before To After Renovation",
+    sub: "Finishes update in place",
+    prompt:
+      "The finishes, cabinetry and fixtures update to a renovated condition while the room layout stays identical.",
+    seconds: 6,
+    disclosure: "proposed",
+  },
+  {
+    id: "construction",
+    label: "Construction Transformation",
+    sub: "Unfinished space becomes finished",
+    prompt:
+      "The unfinished space progresses to a finished condition while the structure stays identical.",
+    seconds: 8,
+    disclosure: "proposed",
+  },
+  {
+    id: "lifestyle",
+    label: "Lifestyle Scene",
+    sub: "Adds people enjoying the space",
+    prompt: "People relax and move naturally through the space, enjoying it.",
+    seconds: 6,
+    disclosure: "lifestyle",
+    lifestyle: true,
+  },
+  {
+    id: "luxury_reveal",
+    label: "Luxury Reveal",
+    sub: "Slow, elegant reveal of the space",
+    prompt: "A slow, elegant reveal of the space with a smooth lateral glide.",
+    seconds: 8,
+    disclosure: "ai_video",
+  },
+  {
+    id: "twilight_reveal",
+    label: "Twilight Reveal",
+    sub: "Exterior settles into twilight",
+    prompt: "The exterior settles into twilight as the camera glides slowly toward the property.",
+    seconds: 8,
+    disclosure: "altered",
+  },
 ];
 
 export function animateOption(id?: string | null): AnimateOption | null {
@@ -229,7 +509,10 @@ export function animateOption(id?: string | null): AnimateOption | null {
 }
 
 /** Full prompt for a clip, including the guards that keep the property honest. */
-export function animatePrompt(id: string, context?: { room?: string | null; style?: string | null }): string {
+export function animatePrompt(
+  id: string,
+  context?: { room?: string | null; style?: string | null },
+): string {
   const opt = animateOption(id);
   if (!opt) throw new Error(`Unknown AI Animate option: ${id}`);
   const where = context?.room ? ` Subject: ${context.room}.` : "";
@@ -292,7 +575,9 @@ export function quote(
 }
 
 /** Disclosure keys a scene has earned from what was actually applied to it. */
-export function sceneDisclosures(s: SceneEnhancement & { staged?: boolean; redesigned?: boolean }): DisclosureKey[] {
+export function sceneDisclosures(
+  s: SceneEnhancement & { staged?: boolean; redesigned?: boolean },
+): DisclosureKey[] {
   const out = new Set<DisclosureKey>();
   if (s.staged) out.add("staged");
   if (s.redesigned) out.add("proposed");
@@ -330,7 +615,9 @@ export function clipStatusLabel(status?: string | null, progress?: number | null
 }
 
 /** Only completed clips may be used in a render. */
-export function clipUsable(clip: { status?: string | null; storage_path?: string | null } | null | undefined) {
+export function clipUsable(
+  clip: { status?: string | null; storage_path?: string | null } | null | undefined,
+) {
   return !!clip && clip.status === "completed" && !!clip.storage_path;
 }
 
@@ -370,7 +657,8 @@ export function animateCategory(id: string): AnimateCategory {
   return ANIMATE_CATEGORY_OF[id] || "camera";
 }
 
-const EXTERIOR_RE = /exterior|front|facade|curb|yard|patio|deck|pool|garden|landscape|backyard|outdoor|driveway|porch|balcony/i;
+const EXTERIOR_RE =
+  /exterior|front|facade|curb|yard|patio|deck|pool|garden|landscape|backyard|outdoor|driveway|porch|balcony/i;
 const ENTRY_RE = /entry|foyer|hall|stair|closet|laundry|garage|utility/i;
 
 function isExteriorRoom(room?: string | null) {
@@ -389,7 +677,8 @@ export function recommendedAnimateIds(room?: string | null): string[] {
     return out;
   }
   if (ENTRY_RE.test(r)) return ["enter_room", "dolly_in", "cinematic_walkthrough"];
-  if (!r || /unassigned|needs review/.test(r)) return ["dolly_in", "cinematic_walkthrough", "dolly_out"];
+  if (!r || /unassigned|needs review/.test(r))
+    return ["dolly_in", "cinematic_walkthrough", "dolly_out"];
   const out = ["enter_room", "dolly_in", "cinematic_walkthrough", "luxury_reveal"];
   if (/living|family|great|den/.test(r)) out.push("fireplace", "curtains");
   if (/bedroom|primary|master/.test(r)) out.push("curtains");

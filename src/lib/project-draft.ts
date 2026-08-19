@@ -50,7 +50,8 @@ export function newDraftId(): string {
     /* Deterministic-enough fallback; the id only has to be unique per draft. */
     const hex = "0123456789abcdef";
     let s = "";
-    for (let i = 0; i < 36; i++) s += i === 8 || i === 13 || i === 18 || i === 23 ? "-" : hex[Math.floor(Math.random() * 16)];
+    for (let i = 0; i < 36; i++)
+      s += i === 8 || i === 13 || i === 18 || i === 23 ? "-" : hex[Math.floor(Math.random() * 16)];
     return s;
   }
 }
@@ -181,8 +182,15 @@ export type MigrationDeps = {
  * Move a legacy browser-only staging draft onto the server exactly once. The
  * local copy is deleted only after the server confirms the write.
  */
-export async function migrateLegacyStagingDraft(deps: MigrationDeps): Promise<{ migrated: boolean; id?: string }> {
-  const store = deps.storage !== undefined ? deps.storage : typeof localStorage === "undefined" ? null : localStorage;
+export async function migrateLegacyStagingDraft(
+  deps: MigrationDeps,
+): Promise<{ migrated: boolean; id?: string }> {
+  const store =
+    deps.storage !== undefined
+      ? deps.storage
+      : typeof localStorage === "undefined"
+        ? null
+        : localStorage;
   if (!store) return { migrated: false };
   let raw: string | null = null;
   try {
@@ -201,7 +209,9 @@ export async function migrateLegacyStagingDraft(deps: MigrationDeps): Promise<{ 
     return { migrated: false };
   }
   const items: any[] = Array.isArray(parsed?.items) ? parsed.items : [];
-  const usable = items.filter((i) => i && typeof i.path === "string" && i.path && !/^blob:/.test(i.path));
+  const usable = items.filter(
+    (i) => i && typeof i.path === "string" && i.path && !/^blob:/.test(i.path),
+  );
   if (!usable.length) {
     try {
       store.removeItem(LEGACY_STAGING_KEY);
@@ -241,8 +251,12 @@ export async function migrateLegacyStagingDraft(deps: MigrationDeps): Promise<{ 
 }
 
 /** Read an unconfirmed recovery payload, if the last session died mid-save. */
-export function readRecoveryCache(id: string, storage?: Pick<Storage, "getItem"> | null): DraftPayload | null {
-  const store = storage !== undefined ? storage : typeof localStorage === "undefined" ? null : localStorage;
+export function readRecoveryCache(
+  id: string,
+  storage?: Pick<Storage, "getItem"> | null,
+): DraftPayload | null {
+  const store =
+    storage !== undefined ? storage : typeof localStorage === "undefined" ? null : localStorage;
   if (!store) return null;
   try {
     const raw = store.getItem(cacheKey(id));

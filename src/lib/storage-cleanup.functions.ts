@@ -9,7 +9,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 export const cleanupMyUploads = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ dry_run: z.boolean().optional() }).parse(input ?? {}))
+  .inputValidator((input: unknown) =>
+    z.object({ dry_run: z.boolean().optional() }).parse(input ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const { assertServerConfig } = await import("@/lib/server-config.server");
     assertServerConfig();
