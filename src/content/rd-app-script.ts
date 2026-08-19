@@ -3877,6 +3877,8 @@ export function initApp(): () => void {
       return saved;
     }
     window.rdStudioSaveRoom = () => openStudioSaveRoom();
+    window.rdStudioBackfill = () => backfillRoomVersions();
+
     /** Starts a clean Studio session for saving a brand new room. */
     window.rdStudioNewRoom = () => {
       try {
