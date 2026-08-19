@@ -241,6 +241,12 @@ export function openBulkDesign(opts) {
   /* Advisory recommendations the user has explicitly accepted (styleId:space). */
   const ackUnusual = {};
   let submitted = false;
+  /* Validation stays quiet until the user has actually engaged: a required
+     field turns red once they have touched and left it empty, or once they
+     have tried to generate. Never on first open. */
+  const touched = {};
+  let attempted = false;
+
   let credits = null; // { balance } once the account answers
   const returnFocus = document.activeElement;
 
@@ -363,15 +369,13 @@ export function openBulkDesign(opts) {
         : block === "STYLE_UNUSUAL"
           ? `Review the recommendation on the ${unusual.map((g) => g.label.toLowerCase()).join(" and ")} group.`
           : block;
-    /* One concise message, shown under the field that needs attention. */
+    /* One concise message, shown under the field that needs attention — but
+       only once that field has been engaged, or the user tried to generate. */
+    const showErr = (name) => blockField === name && (attempted || !!touched[name]);
     const fieldMsg = (name) =>
-      blockField === name ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : "";
+      showErr(name) ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : "";
+    const badCls = (name) => (showErr(name) ? " bad" : "");
 
-
-    /* Group summary for the collapsed photo section: "1 Exterior · 7 Interior". */
-    const groupSummary = groups.map((g) => `${g.items.length} ${g.label}`).join(" · ");
-    /* The photo list only opens itself when a group genuinely needs attention. */
-    const photosOpen = !!(missing || perSpaceMode || unsupported.length || unusual.length);
 
     /* One source of truth for the format: the project ratio chosen on Prepare
        Your Photos, edited inline here — never in a second stacked modal. */
@@ -379,9 +383,10 @@ export function openBulkDesign(opts) {
     const fmtBlock = `<div class="rdsb-out">
       <div class="rdsb-out-row">
         <div class="rdsb-out-c">
-          <span>Output</span>
+          <span>Output Format</span>
           <b>${esc(ratioLabel(ratio))}</b>
-          <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change"}</button>
+          <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change Format"}</button>
+
         </div>
         <div class="rdsb-out-c right">
           <span>Generation Cost</span>
@@ -415,7 +420,7 @@ export function openBulkDesign(opts) {
           ${
             perSpaceMode
               ? `<p class="rdsb-mixed">Your selection contains interior and exterior photos, so you can choose a direction for each.</p>`
-              : `<div class="rdsb-f${blockField === "style" ? " bad" : ""}">
+              : `<div class="rdsb-f${badCls("style")}">
             <label for="rdsbStyle">Style</label>
             <select id="rdsbStyle">${styleOptions(form.styleId, spaces)}</select>
             ${mixed && form.styleId ? `<em class="rdsb-help">Adapted to each space — modern finishes indoors, modern materials and landscaping outdoors.</em>` : ""}
@@ -424,22 +429,23 @@ export function openBulkDesign(opts) {
           }
           ${perSpaceMode ? `<select id="rdsbStyle" class="rdsb-hidden" aria-hidden="true" tabindex="-1"><option value=""></option></select>` : ""}
           <div class="rdsb-row">
-            <div class="rdsb-f${blockField === "intensity" ? " bad" : ""}"><label for="rdsbInt">Intensity</label>
+            <div class="rdsb-f${badCls("intensity")}"><label for="rdsbInt">Intensity</label>
               <select id="rdsbInt">${pickOptions(["Refresh", "Makeover", "Full Remodel"], form.intensity, "Choose intensity")}</select>${fieldMsg("intensity")}</div>
-            <div class="rdsb-f${blockField === "grade" ? " bad" : ""}"><label for="rdsbGrade">Finish Grade</label>
+            <div class="rdsb-f${badCls("grade")}"><label for="rdsbGrade">Finish Grade</label>
+
               <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select>${fieldMsg("grade")}</div>
           </div>
           <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve"${form.preserve ? " checked" : ""}> Keep walls, windows, and layout exactly as they are</label>
           <div class="rdsb-f"><label for="rdsbNotes">Shared Instructions <em>Optional</em></label>
             <textarea id="rdsbNotes" rows="2" placeholder="Example: Light oak floors, warm neutral palette, no bold colors">${esc(form.notes)}</textarea></div>
 
-          <details class="rdsb-photos"${photosOpen ? " open" : ""}>
-            <summary>
-              <span class="rdsb-photos-t">Selected Photos · ${n}</span>
-              <span class="rdsb-photos-s">${esc(groupSummary)}</span>
-              <i data-lucide="chevron-down"></i>
-            </summary>
+          <section class="rdsb-photos" aria-labelledby="rdsbPhotosT">
+            <div class="rdsb-photos-h">
+              <span class="rdsb-photos-t" id="rdsbPhotosT">Selected Photos</span>
+              <span class="rdsb-photos-c">${n}</span>
+            </div>
             <div class="rdsb-groups">
+
             ${groups
               .map((g) => {
                 const level = levelFor(g);
@@ -485,19 +491,21 @@ export function openBulkDesign(opts) {
                       </select>`
                 }
                 <div class="rdsb-th">${g.items
-                  .map(
-                    (it) => `<span class="rdsb-t">
-                      <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}">
-                      <button type="button" data-drop="${esc(it.key)}" title="Remove from this batch"
-                        aria-label="Remove ${esc(it.name)} from this batch. The photo stays in Media."><i data-lucide="x"></i></button>
-                      <em title="${esc(it.room || "Room type needed")}">${esc(it.room || "Room type needed")}</em></span>`,
-                  )
+                  .map((it) => {
+                    const room = it.room || "Room type needed";
+                    return `<span class="rdsb-t">
+                      <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(room)}" loading="lazy">
+                      <button type="button" data-drop="${esc(it.key)}" title="Remove ${esc(room)} photo"
+                        aria-label="Remove ${esc(room)} photo. It stays in Media."><i data-lucide="x"></i></button>
+                      <em title="${esc(room)}">${esc(room)}</em></span>`;
+                  })
                   .join("")}</div>
               </div>`;
               })
               .join("")}
             </div>
-          </details>
+          </section>
+
 
 
           ${
@@ -517,8 +525,8 @@ export function openBulkDesign(opts) {
               : ""
           }
           <div class="rdsb-foot-row">
-            <p class="rdsb-foot-cost">${n} selected</p>
             <div class="rdsb-foot-a">
+
               <button type="button" class="rdm-btn rdm-ghost" data-mfa="cancel">Cancel</button>
               <button type="button" class="rdm-btn rdm-outline" data-mfa="edit">Edit Room Types</button>
               <button type="button" class="rdm-btn rdm-primary" data-mfa="go"${block || submitted ? ' disabled aria-disabled="true"' : ""}${hint ? ` title="${esc(hint)}"` : ""}>Generate ${n} Design${n === 1 ? "" : "s"}</button>
@@ -553,13 +561,25 @@ export function openBulkDesign(opts) {
         }),
     );
 
-    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach(
-      (el) =>
-        (el.onchange = () => {
-          readForm();
-          draw();
-        }),
-    );
+    const FIELD_OF = { rdsbStyle: "style", rdsbInt: "intensity", rdsbGrade: "grade" };
+    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach((el) => {
+      const field = FIELD_OF[el.id];
+      el.onchange = () => {
+        if (field) touched[field] = true;
+        readForm();
+        draw();
+      };
+      /* Engaged and left empty: only then does the field earn a red state. */
+      if (field)
+        el.onblur = () => {
+          if (!el.value && !touched[field]) {
+            touched[field] = true;
+            readForm();
+            draw();
+          }
+        };
+    });
+
     const notes = node.querySelector("#rdsbNotes");
     if (notes) notes.oninput = () => (form.notes = notes.value);
     const generic = node.querySelector("#rdsbGeneric");
@@ -602,7 +622,13 @@ export function openBulkDesign(opts) {
     };
     const go = node.querySelector('[data-mfa="go"]');
     go.onclick = () => {
-      if (submitted || go.disabled) return;
+      if (submitted) return;
+      if (go.disabled) {
+        attempted = true;
+        draw();
+        return;
+      }
+
       readForm();
       submitted = true;
       setModalButtonLoading(go, true, `Generating ${items.length} Design${items.length === 1 ? "" : "s"}…`);
