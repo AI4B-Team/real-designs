@@ -62,7 +62,9 @@ const improved = Object.entries(baseline).filter(([f, c]) => (current[f] ?? 0) <
 console.log(
   `ESLint: ${totalErrors} errors, ${totalWarnings} warnings across ${results.length} files.`,
 );
-console.log(`Baseline files: ${Object.keys(baseline).length}. Improved since baseline: ${improved}.`);
+console.log(
+  `Baseline files: ${Object.keys(baseline).length}. Improved since baseline: ${improved}.`,
+);
 
 if (regressions.length) {
   console.error("\nNew lint violations (not allowed):");
