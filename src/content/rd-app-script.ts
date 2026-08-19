@@ -2141,8 +2141,8 @@ export function initApp(): () => void {
         if (row && !live) {
           row.setAttribute("aria-disabled", "true");
           row.classList.add("is-disabled");
-          row.title =
-            "Budget is coming soon. Turns on once verified local contractor cost data is licensed for your market.";
+          /* Branded tooltip only: native title is stripped by the tooltip layer. */
+          row.setAttribute("data-tt", "Coming Soon \u00b7 Not Included In Any Plan Yet");
           const pill = row.querySelector(".plan-pill");
           if (pill) {
             pill.className = "pill p-gray";
