@@ -383,9 +383,10 @@ export function openBulkDesign(opts) {
     const fmtBlock = `<div class="rdsb-out">
       <div class="rdsb-out-row">
         <div class="rdsb-out-c">
-          <span>Output</span>
+          <span>Output Format</span>
           <b>${esc(ratioLabel(ratio))}</b>
-          <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change"}</button>
+          <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change Format"}</button>
+
         </div>
         <div class="rdsb-out-c right">
           <span>Generation Cost</span>
