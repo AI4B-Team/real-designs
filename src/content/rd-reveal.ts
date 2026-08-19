@@ -4233,45 +4233,25 @@ function presentationHtml(d) {
 
 
 /* ======================= THUMB PAINTING ======================= */
-/* One resolve per storage path for the whole surface: the same photo shows up
-   in Available, Scenes, the scene card, the popover preview and the stage. */
-const IMG_URLS = new Map();
-function cachedPhotoUrl(path) {
-  if (!path) return Promise.resolve(null);
-  if (IMG_URLS.has(path)) return IMG_URLS.get(path);
-  const p = Promise.resolve()
-    .then(() => resolvePhotoUrl(path))
-    .catch(() => null)
-    .then((url) => {
-      /* Never cache a failure: an expired signed URL must be retried. */
-      if (!url) IMG_URLS.delete(path);
-      return url;
-    });
-  IMG_URLS.set(path, p);
-  return p;
-}
+/* Signed storage URLs expire, so the path — not the URL — is the source of
+   truth. src/lib/photo-src.ts owns resolving, refreshing before expiry and
+   retrying once, which is why nothing here caches a URL of its own. */
+const cachedPhotoUrl = (path) => photoSrc(path);
 
 let thumbObserver: IntersectionObserver | null = null;
 
-/** Sign and paint one element. The painted guard is what stops a failed
-    tile from retrying forever. */
+/** Sign and paint one element. A tile that fails twice shows the shared
+    "Image unavailable — Retry" state instead of a silent gray card. */
 async function paintOneThumb(el) {
-  if (el.dataset.painted) return true;
+  if (el.dataset.painted && !photoSrcStale(el.getAttribute("data-img") || "")) return true;
   const path = el.getAttribute("data-img");
   if (!path) return true;
-  const url = await cachedPhotoUrl(path);
-  if (url) {
-    el.style.backgroundImage = `url("${url}")`;
+  const ok = await paintPhotoEl(el, path);
+  if (ok) {
     el.classList.remove("rv-noimg");
-    el.dataset.painted = "1";
     return true;
   }
-  if (!el.querySelector(".rv-noimg-i")) {
-    el.insertAdjacentHTML("beforeend", `<i class="rv-noimg-i" data-lucide="image-off"></i>`);
-  }
-  console.warn("[thumb] could not resolve image source", path);
   el.classList.add("rv-noimg");
-
   paint();
   return false;
 }
