@@ -357,7 +357,13 @@ export function mountCanvasStyle(
     /* A selection only survives a space change while the catalog still says it
        fits: an interior staging style is not offered on an exterior photo. */
     const raw = selection();
-    if (raw && !directionCompatible(raw.style, need, c.projectType)) {
+    /* Only drop the selection when the catalog can actually offer a
+       compatible replacement — otherwise the browser falls back to the full
+       list and the user could never keep any choice. */
+    const hasCompatible = stylesForNeed(STYLES, need, c.projectType).some((s) =>
+      directionCompatible(s, need, c.projectType),
+    );
+    if (raw && hasCompatible && !directionCompatible(raw.style, need, c.projectType)) {
       const dctx = ctxFor(need, c);
       store = clearDirection(store, "photo", dctx);
       store = clearDirection(store, "project", dctx);
