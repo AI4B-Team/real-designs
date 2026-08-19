@@ -53,6 +53,30 @@ export function groupBySpace(items) {
   }));
 }
 
+/** Can this style legitimately drive that space, or would it be a wrong result? */
+export function styleFitsSpace(styleId, space) {
+  if (!space || space === "unassigned") return true;
+  const rec = STYLES.find((s) => s.id === styleId);
+  const want = PROJECT_TYPE[space] || "interior";
+  if (!rec || !rec.compatibleProjectTypes || !rec.compatibleProjectTypes.length) return true;
+  return rec.compatibleProjectTypes.indexOf(want) !== -1;
+}
+
+/** Styles that can carry a given space, for the per-group fallback picker. */
+export function stylesForSpace(space) {
+  return STYLES.filter((s) => s.isActive !== false && styleFitsSpace(s.id, space));
+}
+
+/** How the shared direction is described for each space type. */
+function groupNote(space) {
+  if (space === "unassigned") return "These photos still need a room type before they can be designed.";
+  if (space === "exterior")
+    return "The shared direction is adapted to the exterior — materials, paint and curb appeal, not indoor furniture.";
+  if (space === "landscape")
+    return "The shared direction is adapted to the outdoor space — planting, hardscape and lighting.";
+  return "These photos share the direction, adapted to each room and its layout.";
+}
+
 /** Downscaled data URL for the render call. */
 async function toDataUrl(src, max = 1100) {
   const img = await new Promise((res, rej) => {
@@ -99,13 +123,17 @@ export async function runBulkDesign(items, direction, hooks = {}) {
         const image = await toDataUrl(await sourceUrl(it));
         /* Project default unless this photo carries its own override. */
         const ratio = effectiveRatio(direction.outputRatio, it.ratio);
+        const space = it.room ? roomSpace(it.room) : "interior";
+        /* A space the shared style cannot carry uses the style the user picked
+           for that group, so an exterior never gets an interior-only look. */
+        const perSpace = (direction.styleBySpace || {})[space];
         const r = await renderDesign({
           data: {
             image,
             room_type: it.room || "living room",
-            direction: direction.direction,
-            style_id: direction.styleId || null,
-            project_type: PROJECT_TYPE[it.room ? roomSpace(it.room) : "interior"] || "interior",
+            direction: (perSpace && perSpace.name) || direction.direction,
+            style_id: (perSpace && perSpace.id) || direction.styleId || null,
+            project_type: PROJECT_TYPE[space] || "interior",
             intensity: direction.intensity,
             grade: direction.grade,
             notes: direction.notes || null,
@@ -188,8 +216,17 @@ export function openBulkDesign(opts) {
     } catch (_) {}
   };
 
-  /* Field values survive every redraw (removing a photo, changing format). */
-  const form = { styleId: STYLES[0] && STYLES[0].id, intensity: "Makeover", grade: "Retail Grade", preserve: true, notes: "" };
+  /* Field values survive every redraw (removing a photo, changing format).
+     spaceStyles holds the per-group fallback when the shared style cannot
+     legitimately carry a space (an interior-only look on an exterior). */
+  const form = {
+    styleId: STYLES[0] && STYLES[0].id,
+    intensity: "Makeover",
+    grade: "Retail Grade",
+    preserve: true,
+    notes: "",
+    spaceStyles: {},
+  };
   const readForm = () => {
     const q = (id) => node.querySelector(id);
     if (!q("#rdsbStyle")) return;
@@ -198,6 +235,9 @@ export function openBulkDesign(opts) {
     form.grade = q("#rdsbGrade").value;
     form.preserve = q("#rdsbPreserve").checked;
     form.notes = q("#rdsbNotes").value;
+    node.querySelectorAll("[data-spacestyle]").forEach((el) => {
+      form.spaceStyles[el.getAttribute("data-spacestyle")] = el.value || "";
+    });
   };
 
   const styleName = () => {
@@ -214,9 +254,14 @@ export function openBulkDesign(opts) {
     const bal = credits && !credits.unavailable ? credits.balance : null;
     const short = bal != null && cost > bal ? cost - bal : 0;
 
+    /* A group whose space the shared style cannot carry must pick its own. */
+    const unfit = groups.filter((g) => !styleFitsSpace(form.styleId, g.space) && !form.spaceStyles[g.space]);
+
     let block = "";
     if (!n) block = "Add at least one photo to generate a design.";
     else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
+    else if (unfit.length)
+      block = `${styleName()} does not suit ${unfit.map((g) => g.label).join(" and ")}. Choose a compatible style for that group.`;
     else if (short) block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
 
     const sum = [
@@ -231,8 +276,8 @@ export function openBulkDesign(opts) {
     node.innerHTML = `<div class="up-scrim" data-close></div>
       <div class="up-card rdsb" role="dialog" aria-modal="true" aria-labelledby="rdsbTitle">
         <div class="rdsb-head">
-          <h3 id="rdsbTitle">Design ${n} photo${n === 1 ? "" : "s"}</h3>
-          <p>One shared direction, applied photo by photo. Each room keeps its own layout and gets furniture and finishes that suit it.</p>
+          <h3 id="rdsbTitle">Design ${n} Photo${n === 1 ? "" : "s"}</h3>
+          <p>Choose one design direction for the selected photos. We’ll adapt it to each room and space.</p>
         </div>
         <div class="rdsb-body">
           <div class="rdsb-f">
@@ -244,7 +289,7 @@ export function openBulkDesign(opts) {
               <select id="rdsbInt">${["Refresh", "Makeover", "Full Remodel"]
                 .map((o) => `<option${o === form.intensity ? " selected" : ""}>${o}</option>`)
                 .join("")}</select></div>
-            <div class="rdsb-f"><label for="rdsbGrade">Finish grade</label>
+            <div class="rdsb-f"><label for="rdsbGrade">Finish Grade</label>
               <select id="rdsbGrade">${["Rental Grade", "Retail Grade", "Luxury Grade"]
                 .map((o) => `<option${o === form.grade ? " selected" : ""}>${o}</option>`)
                 .join("")}</select></div>
@@ -255,14 +300,30 @@ export function openBulkDesign(opts) {
 
           <div class="rdsb-groups">
             ${groups
-              .map(
-                (g) => `<div class="rdsb-g${g.space === "unassigned" ? " warn" : ""}">
+              .map((g) => {
+                const fits = styleFitsSpace(form.styleId, g.space);
+                const pick = form.spaceStyles[g.space] || "";
+                const bad = g.space === "unassigned" || (!fits && !pick);
+                return `<div class="rdsb-g${bad ? " warn" : ""}">
                 <b>${esc(g.label)} · ${g.items.length}</b>
-                <span>${
-                  g.space === "unassigned"
-                    ? "These photos still need a room type before they can be designed."
-                    : "These photos share the direction, adapted to each space."
-                }</span>
+                <span>${esc(
+                  fits
+                    ? groupNote(g.space)
+                    : `${styleName()} is not suited to ${g.label.toLowerCase()} photos. Choose a compatible style for this group.`,
+                )}</span>
+                ${
+                  fits
+                    ? ""
+                    : `<select class="rdsb-gstyle" data-spacestyle="${esc(g.space)}" aria-label="Style for ${esc(g.label)} photos">
+                        <option value="">Choose A Compatible Style…</option>
+                        ${stylesForSpace(g.space)
+                          .map(
+                            (s) =>
+                              `<option value="${esc(s.id)}"${s.id === pick ? " selected" : ""}>${esc(s.displayName)}</option>`,
+                          )
+                          .join("")}
+                      </select>`
+                }
                 <div class="rdsb-th">${g.items
                   .map(
                     (it) => `<span class="rdsb-t">
@@ -272,8 +333,8 @@ export function openBulkDesign(opts) {
                       <em title="${esc(it.room || "Room type needed")}">${esc(it.room || "Room type needed")}</em></span>`,
                   )
                   .join("")}</div>
-              </div>`,
-              )
+              </div>`;
+              })
               .join("")}
           </div>
 
@@ -309,13 +370,13 @@ export function openBulkDesign(opts) {
         }
         ${modalFooterHtml({
           extra: { label: "Cancel", value: "cancel" },
-          secondary: { label: "Edit rooms", value: "edit", variant: "outline" },
+          secondary: { label: "Edit Room Types", value: "edit", variant: "outline" },
           primary: {
-            label: `Generate ${n} design${n === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}`,
+            label: `Generate ${n} Design${n === 1 ? "" : "s"} · ${cost} Credit${cost === 1 ? "" : "s"}`,
             value: "go",
             disabled: !!block || submitted,
             hint: block || "",
-            loadingLabel: `Generating ${n} design${n === 1 ? "" : "s"}…`,
+            loadingLabel: `Generating ${n} Design${n === 1 ? "" : "s"}…`,
           },
         })}
       </div>`;
@@ -323,7 +384,7 @@ export function openBulkDesign(opts) {
 
     node.querySelectorAll("[data-close]").forEach((b) => (b.onclick = close));
     node.querySelector('[data-mfa="cancel"]').onclick = close;
-    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve").forEach(
+    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach(
       (el) =>
         (el.onchange = () => {
           readForm();
@@ -370,11 +431,20 @@ export function openBulkDesign(opts) {
       if (submitted || go.disabled) return;
       readForm();
       submitted = true;
-      setModalButtonLoading(go, true, `Generating ${items.length} design${items.length === 1 ? "" : "s"}…`);
+      setModalButtonLoading(go, true, `Generating ${items.length} Design${items.length === 1 ? "" : "s"}…`);
       const rec = STYLES.find((s) => s.id === form.styleId);
+      /* Per-space fallbacks travel with the direction, so an exterior group
+         renders with the style the user chose for it. */
+      const styleBySpace = {};
+      Object.keys(form.spaceStyles || {}).forEach((space) => {
+        const id = form.spaceStyles[space];
+        const sr = id && STYLES.find((s) => s.id === id);
+        if (sr) styleBySpace[space] = { id: sr.id, name: sr.displayName };
+      });
       const direction = {
         styleId: rec ? rec.id : null,
         direction: rec ? rec.displayName : "Warm Minimal",
+        styleBySpace,
         intensity: form.intensity,
         grade: form.grade,
         preserve: form.preserve,
