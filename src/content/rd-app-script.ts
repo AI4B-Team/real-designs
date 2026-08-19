@@ -2482,6 +2482,8 @@ export function initApp(): () => void {
       lastRender = null;
       lastRenderPath = o.afterPath || null;
       if (cBefore && src) cBefore.innerHTML = photo(src, alt || "Your source photo");
+      setCanvasRatio(o.ratio, src);
+
       if (cAfter) cAfter.innerHTML = "";
       const vars = document.getElementById("vars");
       if (vars) vars.innerHTML = "";
