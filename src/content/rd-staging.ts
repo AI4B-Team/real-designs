@@ -20,7 +20,7 @@ import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
-import { mountPhotoImages } from "@/lib/photo-src";
+import { mountPhotoImages, photoSrc, photoSrcStale } from "@/lib/photo-src";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
@@ -942,7 +942,7 @@ function render() {
           <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "photo" : "photos"} selected</span></div>
           <div class="rv-gridfoot-a">
             <button class="btn btn-ghost" id="rdsBack">Back</button>
-            <button class="btn btn-primary" id="rdsGo">Continue</button>
+            <button class="btn btn-primary" id="rdsGo">Next: Design Direction</button>
           </div>
         </div>
       </div>
@@ -1543,9 +1543,9 @@ function duplicateItem(it, extra) {
 
 async function originalUrl(it) {
   if (!it) return null;
-  if (it.path) {
-    try { return (await roomPhotoUrl(it.path)) || it.signed || it.previewUrl || null; } catch (_) {}
-  }
+  try {
+    return await resolveItemUrl(it);
+  } catch (_) {}
   return it.signed || it.previewUrl || null;
 }
 
@@ -1958,9 +1958,56 @@ function idxOf(key) {
   return designSet().findIndex((i) => i.key === key);
 }
 
+/**
+ * Resolve a photo to a currently valid URL. The storage path is the source of
+ * truth: a remembered signed URL is only reused while it is still fresh.
+ */
+export async function resolveItemUrl(it: any): Promise<string | null> {
+  if (!it) return null;
+  if (it.path) {
+    if (it.signed && !photoSrcStale(it.path)) return it.signed;
+    const url = await photoSrc(it.path);
+    if (url) {
+      it.signed = url;
+      return url;
+    }
+    return it.previewUrl || null;
+  }
+  return it.signed || it.previewUrl || null;
+}
+
+/** Loading / failure feedback on the card the user just clicked. */
+function markCardLoading(key, state: "loading" | "failed" | "") {
+  const card = document.querySelector('.rv-tile[data-k="' + key + '"]') as HTMLElement | null;
+  if (!card) return;
+  card.classList.toggle("is-loading", state === "loading");
+  card.classList.toggle("is-failed", state === "failed");
+  card.querySelector(".rv-tile-fail")?.remove();
+  if (state === "failed") {
+    card.insertAdjacentHTML(
+      "beforeend",
+      `<span class="rv-tile-fail" role="status">Image unavailable — <button type="button" data-tile-retry>Retry</button></span>`,
+    );
+    const retry = card.querySelector("[data-tile-retry]") as HTMLButtonElement | null;
+    if (retry)
+      retry.onclick = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        void openInCanvas(key);
+      };
+  }
+}
+
 async function openInCanvas(key) {
   const it = S.items.find((i) => i.key === key);
   if (!it) return;
+
+  /* Resolve first: the Photos page stays visible until a real source exists,
+     so the Canvas never opens onto an empty gray frame. */
+  markCardLoading(key, "loading");
+  const url = await resolveItemUrl(it);
+  markCardLoading(key, url ? "" : "failed");
+  if (!url) return;
 
   S.current = key;
   rememberScroll();
@@ -1975,13 +2022,6 @@ async function openInCanvas(key) {
   } catch (_) {}
   S.lastOpened = key;
 
-  let url = it.signed || it.previewUrl;
-  if (!it.signed && it.path) {
-    try {
-      it.signed = await roomPhotoUrl(it.path);
-      url = it.signed || url;
-    } catch (_) {}
-  }
   try {
     window.rdPendingPhotoPath = it.path || null;
   } catch (_) {}
@@ -1989,6 +2029,7 @@ async function openInCanvas(key) {
     window.rdSetStudioSource &&
       window.rdSetStudioSource("user_upload", url, it.room || "Your uploaded source", {
         caption: "Set your direction, then press Generate. Nothing has been generated yet.",
+        srcPath: it.path || null,
       });
   } catch (_) {}
   applyRoom(it);
@@ -2027,11 +2068,60 @@ function applyRoom(it) {
   } catch (_) {}
 }
 
+/**
+ * One shared source of truth for a photo's room, keyed by its stable id.
+ * Changing the room inside Canvas updates the header, the filmstrip label,
+ * the Photos card, the bulk grouping and the saved draft in one pass.
+ */
+export function setPhotoRoom(key: string, room: string) {
+  if (!S) return;
+  const it = S.items.find((i) => i.key === key);
+  if (!it || !room) return;
+  if (it.room === room) return;
+  it.room = room;
+  it.space = roomSpace(room);
+  try {
+    drawStrip();
+  } catch (_) {}
+  try {
+    saveDraft();
+  } catch (_) {}
+}
+
+/** Canvas room / space controls write straight back to the shared item. */
+function bindCanvasRoomSync() {
+  const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
+  if (!sel || (sel as any).__rdRoomSync) return;
+  (sel as any).__rdRoomSync = true;
+  sel.addEventListener("change", () => {
+    if (!S || !S.current) return;
+    const room = (sel.value || sel.options[sel.selectedIndex]?.text || "").trim();
+    if (!room) return;
+    setPhotoRoom(S.current, room);
+    /* Space Type follows the room, so Exterior + Kitchen can never happen. */
+    try {
+      const chip = document.querySelector('#spChips .chip[data-sp="' + roomSpace(room) + '"]') as HTMLElement | null;
+      if (chip && !chip.classList.contains("on")) chip.click();
+    } catch (_) {}
+  });
+}
+
+
 function removeStrip() {
   if (strip) strip.remove();
   strip = null;
-  const head = document.getElementById("rdsCanvasHead");
-  if (head) head.remove();
+  /* Every listener the canvas adds has a matching removal, so re-opening
+     photo after photo can never stack duplicates. */
+  try {
+    window.removeEventListener("hashchange", stripGuard);
+  } catch (_) {}
+  try {
+    closeCanvasMenu?.();
+  } catch (_) {}
+  closeCanvasMenu = null;
+  /* Defensive: only ever one header in the document. */
+  document.querySelectorAll("#rdsCanvasHead").forEach((n) => n.remove());
+  document.querySelectorAll(".rds-strip").forEach((n) => n.remove());
 }
 
 /* The canvas belongs to the same builder as the grid, so its navigation lives
@@ -2084,7 +2174,7 @@ function mountStrip() {
   const back = head.querySelector("#rdsAllRooms");
   if (back) (back as HTMLButtonElement).onclick = backToPhotos;
   paintCanvasSave();
-
+  bindCanvasRoomSync();
 
   drawStrip();
   window.addEventListener("hashchange", stripGuard);
@@ -2103,57 +2193,84 @@ function paintCanvasSave() {
 }
 
 /* The canvas overflow menu: anchored under its trigger, right aligned, and
-   dismissed by outside click, Escape, a route change or any chosen action. */
+   dismissed by outside click, Escape, a route change or any chosen action.
+   Every document listener is removed the moment the menu closes. */
+let closeCanvasMenu: ((focus?: boolean) => void) | null = null;
+
 function bindCanvasMenu(head, backToPhotos) {
   const trigger = head.querySelector("#rdsCanvasMore") as HTMLButtonElement | null;
   const menu = head.querySelector("#rdsCanvasMenu") as HTMLElement | null;
   if (!trigger || !menu) return;
+  const onDoc = (e) => { if (!head.contains(e.target)) close(); };
+  const onKey = (e) => { if (e.key === "Escape") close(true); };
+  const onHash = () => close();
+  const detach = () => {
+    document.removeEventListener("click", onDoc);
+    document.removeEventListener("keydown", onKey);
+    window.removeEventListener("hashchange", onHash);
+  };
   const close = (focus?: boolean) => {
+    detach();
     if (menu.hidden) return;
     menu.hidden = true;
     trigger.setAttribute("aria-expanded", "false");
     if (focus) trigger.focus();
   };
-  const onDoc = (e) => { if (!head.contains(e.target)) close(); };
-  const onKey = (e) => { if (e.key === "Escape") close(true); };
+  closeCanvasMenu = close;
   trigger.onclick = (e) => {
     e.stopPropagation();
     const open = menu.hidden;
     menu.hidden = !open;
     trigger.setAttribute("aria-expanded", open ? "true" : "false");
+    detach();
     if (open) {
       document.addEventListener("click", onDoc);
       document.addEventListener("keydown", onKey);
-      window.addEventListener("hashchange", () => close(), { once: true });
-    } else {
-      document.removeEventListener("click", onDoc);
-      document.removeEventListener("keydown", onKey);
+      window.addEventListener("hashchange", onHash);
     }
   };
   const ret = head.querySelector("#rdsClose") as HTMLButtonElement | null;
   if (ret) ret.onclick = () => { close(); backToPhotos(); };
   const reset = head.querySelector("#rdsResetDesign") as HTMLButtonElement | null;
-  if (reset) reset.onclick = () => { close(true); openResetDesign(); };
+  if (reset) reset.onclick = () => { close(true); openResetDesign(trigger); };
 }
 
 /** Reset only the photo currently on the canvas — never the whole project. */
-function openResetDesign() {
+function openResetDesign(returnFocusTo?: HTMLElement | null) {
   const host = document.querySelector(".rd-app") || document.body;
   let m = document.getElementById("rdsResetModal");
   if (m) m.remove();
   m = document.createElement("div");
   m.id = "rdsResetModal";
   m.className = "up-modal on";
-  m.innerHTML = `<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">
-    <h3>Reset This Design?</h3>
-    <p>This removes the current photo’s unsaved design settings and generated drafts. The original uploaded photo and the other photos will remain unchanged.</p>
+  m.innerHTML = `<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" aria-labelledby="rdsResetTitle" aria-describedby="rdsResetDesc">
+    <h3 id="rdsResetTitle">Reset This Design?</h3>
+    <p id="rdsResetDesc">This removes the current photo’s unsaved design settings and generated drafts. The original uploaded photo and the other photos will remain unchanged.</p>
     <div class="up-act">
       <button class="btn btn-ghost" data-close>Cancel</button>
       <button class="btn btn-danger" id="rdsResetGo"><i data-lucide="rotate-ccw"></i>Reset Design</button>
     </div></div>`;
   host.appendChild(m);
-  const shut = () => m && m.remove();
+  const focusables = () =>
+    Array.from(m!.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"));
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") { e.preventDefault(); shut(); return; }
+    if (e.key !== "Tab") return;
+    const f = focusables();
+    if (!f.length) return;
+    const first = f[0]!;
+    const last = f[f.length - 1]!;
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
+  const shut = () => {
+    document.removeEventListener("keydown", onKey, true);
+    m && m.remove();
+    try { returnFocusTo?.focus(); } catch (_) {}
+  };
+  document.addEventListener("keydown", onKey, true);
   m.addEventListener("click", (e: any) => { if (e.target.closest && e.target.closest("[data-close]")) shut(); });
+  try { (m.querySelector("#rdsResetGo") as HTMLElement | null)?.focus(); } catch (_) {}
   const go = m.querySelector("#rdsResetGo") as HTMLButtonElement | null;
   if (go)
     go.onclick = () => {
@@ -2223,7 +2340,7 @@ function drawStrip() {
       .map((x) => {
         const ws = workState(x);
         return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
-            <img src="${esc(x.resultUrl || x.signed || x.previewUrl)}" alt="${esc(x.name)}">
+            <img src="${esc(x.resultUrl || x.signed || x.previewUrl || "")}"${x.path && !x.resultUrl ? ` data-photo-path="${esc(x.path)}"` : ""} alt="${esc(x.name)}">
             ${ws ? `<i data-lucide="${ws.icon}"></i>` : ""}
             <em>${esc(roomLabel(x))}</em></button>`;
       })
@@ -2233,6 +2350,9 @@ function drawStrip() {
     <button class="rds-strip-i" id="rdsStripX" aria-label="Close the photo set"><i data-lucide="x"></i></button>`;
 
   paint();
+  /* Thumbnails follow their storage path, so an expired signed URL re-signs
+     in place instead of leaving blank frames in the filmstrip. */
+  mountPhotoImages(strip);
   strip.querySelector("#rdsStripX").onclick = exitAll;
   const step = (dir) => {
     markCurrentDone();

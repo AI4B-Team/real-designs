@@ -821,3 +821,12 @@
 .rds-cmenu button.danger:hover { background: #fdeaea; }
 #rdsResetModal .btn-danger { background: #cc0000; color: #fff; border-color: #cc0000; }
 #rdsResetModal .btn-danger:hover { background: #a80000; }
+
+/* Opening a photo resolves its storage URL first: the card shows the wait and,
+   if signing fails, an inline retry instead of an empty canvas. */
+.rv-tile.is-loading{opacity:.6;pointer-events:none}
+.rv-tile.is-failed{outline:1px solid var(--danger,#cc0000)}
+.rv-tile-fail{position:absolute;left:8px;right:8px;bottom:8px;z-index:4;display:flex;gap:4px;justify-content:center;
+  align-items:center;font-size:.72rem;background:#fff;color:#111;border-radius:8px;padding:5px 8px;box-shadow:0 2px 8px rgba(0,0,0,.14)}
+.rv-tile-fail button{color:#cc0000;font-weight:600;background:none;border:0;cursor:pointer}
+[data-mode].is-disabled,[data-mode]:disabled{opacity:.45;cursor:not-allowed}

@@ -1292,16 +1292,21 @@ function paintStudioState(){
 }
 
 
-/** Object controls only appear once a source exists and analysis has finished. */
+/**
+ * Object Controls stay disabled until real per-photo detection exists. A timer
+ * is not an analysis pass, and hotspots from one image must never be shown
+ * over another, so nothing is claimed here that the app cannot back up.
+ */
+let DETECTED_OBJECTS=[];
+function objectControlsReady(){ return DETECTED_OBJECTS.length>0; }
 function analyzeObjects(){
-  const sub=document.getElementById('lockCount');
   if(studioAnalyzeTimer){ clearTimeout(studioAnalyzeTimer); studioAnalyzeTimer=null; }
-  if(studioWrap) studioWrap.classList.add('st-analyzing');
-  if(sub) sub.textContent='Finding Editable Elements\u2026';
-  studioAnalyzeTimer=setTimeout(()=>{
-    if(studioWrap) studioWrap.classList.remove('st-analyzing');
-    drawLocks();
-  },900);
+  if(studioWrap) studioWrap.classList.remove('st-analyzing');
+  /* Detections are per photo: never carry them across sources. */
+  DETECTED_OBJECTS=[];
+  try{ Object.keys(locks).forEach(k=>{ delete locks[k]; }); }catch(_){}
+  try{ document.querySelectorAll('.hot').forEach(h=>{ h.className='hot'; h.hidden=true; }); }catch(_){}
+  drawLocks();
 }
 
 /**
@@ -1448,8 +1453,17 @@ document.querySelectorAll('[data-mode]').forEach(b=>b.addEventListener('click',(
 function drawLocks(){
   const k=Object.keys(locks);
   const sub=document.getElementById('lockCount');
+  const list=document.getElementById('lockList');
+  const ready=objectControlsReady();
+  document.querySelectorAll('[data-mode]').forEach(b=>{ b.disabled=!ready; b.classList.toggle('is-disabled',!ready); });
+  if(!ready){
+    if(sub) sub.textContent='Analysis Pending';
+    if(list) list.innerHTML='<p style="font-size:.79rem;color:var(--mute-2)">Object Controls will become available after this photo has been analyzed.</p>';
+    try{ lucide.createIcons(); }catch(_){}
+    return;
+  }
   if(sub) sub.textContent=k.length?`${k.length} Object${k.length>1?'s':''} Locked`:'Click Objects On The Canvas';
-  document.getElementById('lockList').innerHTML=k.length?k.map(o=>{
+  if(list) list.innerHTML=k.length?k.map(o=>{
     const cls={keep:'p-ok',replace:'p-blue',remove:'p-red'}[locks[o]];
     return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${o}</b></div>
     <span class="pill ${cls}">${locks[o]}</span>
@@ -1462,12 +1476,13 @@ function drawLocks(){
   }));
 }
 document.querySelectorAll('.hot').forEach(h=>h.addEventListener('click',()=>{
-  if(STUDIO_SRC===SRC_EMPTY) return;
+  if(STUDIO_SRC===SRC_EMPTY||!objectControlsReady()) return;
   const o=h.dataset.o;
   if(locks[o]===mode){delete locks[o];h.className='hot'}
   else{locks[o]=mode;h.className='hot set '+mode}
   drawLocks();
 }));
+try{ window.rdObjectControlsReady=()=>objectControlsReady(); }catch(_){}
 drawLocks();
 
 /* budget bands: a band is a target, the planning range only appears with a result */
