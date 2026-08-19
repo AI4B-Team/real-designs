@@ -458,7 +458,7 @@
 .rdsb-out-c span { font-size: 0.66rem; letter-spacing: .05em; text-transform: uppercase; color: var(--mute-2, #6b6b74); }
 .rdsb-out-c b { font-size: 0.85rem; }
 .rdsb-out-n { margin-top: 8px; font-size: 0.72rem; color: var(--mute-2, #6b6b74); }
-.rdsb-out-credits { display: block; margin-top: 4px; font-style: normal; font-size: 0.72rem; font-weight: 500; color: var(--mute-2, #6b6b74); white-space: nowrap; }
+.rdsb-out-credits { display: block; margin-top: 4px; font-style: normal; font-size: 0.72rem; font-weight: 500; color: var(--mute-2, #6b6b74); line-height: 1.4; }
 @media (max-width: 560px) {
   .up-card.rdsb { padding: 20px 16px; }
   .rdsb-out-row { flex-direction: column; }
