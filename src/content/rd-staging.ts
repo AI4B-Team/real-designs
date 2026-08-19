@@ -1634,7 +1634,12 @@ registerCardMenu("photo", {
         items: [
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
           { action: "room", label: "Change Room", icon: "door-open" },
-          { action: "ratio", label: "Photo Format", icon: "crop" },
+          {
+            action: "ratio",
+            label: normalizeOverride(it.ratio) ? "Override Format · " + normalizeOverride(it.ratio) : "Override Format",
+            icon: "crop",
+          },
+
           { action: "tovideo", label: "Create Video From Photo", icon: "clapperboard", hidden: !stored },
           { action: "versions", label: "View Versions", icon: "history", hidden: !it.resultPath && it.state !== "complete" },
           { action: "download", label: "Download Original", icon: "download", hidden: !stored && !it.previewUrl },
