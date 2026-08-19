@@ -1017,17 +1017,17 @@ function syncSelection() {
   const sel = selectedCount();
   const set = wrap.querySelector("#rdsSetRoom");
   if (set) set.disabled = !sel;
-  /* Bulk design is a real batch: it only makes sense from two photos up. */
+  /* Bulk design acts on the photos the user selected. */
   const bulk = wrap.querySelector("#rdsBulk");
   if (bulk) {
-    bulk.disabled = sel < 2 || S.busy;
+    bulk.disabled = sel < 1 || S.busy;
     const lab = bulk.lastChild;
-    if (lab && lab.nodeType === 3) lab.textContent = sel > 1 ? `Design Selected · ${sel}` : "Design Selected";
+    if (lab && lab.nodeType === 3) lab.textContent = `Design ${sel} ${sel === 1 ? "Photo" : "Photos"}`;
   }
   const count = wrap.querySelector("#rdsSelCount");
   if (count) count.textContent = `${sel} of ${S.items.length} selected`;
   const foot = wrap.querySelector("#rdsFootCount");
-  if (foot) foot.textContent = `${sel} ${sel === 1 ? "room" : "rooms"} selected`;
+  if (foot) foot.textContent = `${sel} ${sel === 1 ? "photo" : "photos"} selected`;
   const all = wrap.querySelector("#rdsSelAll");
   if (all) all.checked = S.items.length > 0 && sel === S.items.length;
   const badge = wrap.querySelector('.rv-rail-i[data-step="review"] .bx-badge');
