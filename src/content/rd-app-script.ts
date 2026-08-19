@@ -3697,14 +3697,9 @@ export function initApp(): () => void {
       } catch (_) {}
     }
 
-    /* The persistent version currently shown on the canvas, and whether a save
-       is still running. Approval may only ever target a saved version. */
-    let DISPLAYED_VERSION = null;
-    let VERSION_SAVING = false;
-    /** A render that reached storage but whose version row still has to be written. */
-    let PENDING_VERSION = null;
     window.rdDisplayedVersion = () => DISPLAYED_VERSION;
     window.rdVersionSaving = () => VERSION_SAVING;
+
 
     /** Intensity and finish grade exactly as the user set them. */
     function currentBandLabel() {
