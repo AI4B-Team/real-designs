@@ -17,7 +17,7 @@ export const Route = createFileRoute("/pkg/$token")({
     const pk = loaderData?.pack && !(loaderData.pack as any).error ? (loaderData.pack as any) : null;
     const title = pk ? `${pk.title} | REAL DESIGNS` : "Client Presentation | REAL DESIGNS";
     const description = pk
-      ? `${pk.property_label || "A property presentation"} prepared for ${pk.client_name || "you"} — designs, photos, video and budget in one place.`
+      ? `${pk.property_label || "A property presentation"} prepared for ${pk.client_name || "you"} — designs, photos and video in one place.`
       : "A private presentation shared with you through REAL DESIGNS.";
     return {
       meta: [

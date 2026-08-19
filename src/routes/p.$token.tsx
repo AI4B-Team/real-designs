@@ -15,7 +15,7 @@ export const Route = createFileRoute("/p/$token")({
   head: ({ loaderData }) => {
     const title = loaderData?.deck ? `${loaderData.deck.title} | REAL DESIGNS` : "Design Package | REAL DESIGNS";
     const description = loaderData?.deck
-      ? `${loaderData.deck.room_name} at ${loaderData.deck.address} — before and after with a planning budget range.`
+      ? `${loaderData.deck.room_name} at ${loaderData.deck.address} — before and after design views.`
       : "A private design package shared with you through REAL DESIGNS.";
     return {
       meta: [
