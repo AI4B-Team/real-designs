@@ -419,8 +419,8 @@ export function openBulkDesign(opts) {
           </div>
         </div>
         ${
-          block
-            ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(block)}</p>${
+          barMsg
+            ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(barMsg)}</p>${
                 short ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>` : ""
               }</div>`
             : ""
@@ -432,7 +432,7 @@ export function openBulkDesign(opts) {
             label: `Generate ${n} Design${n === 1 ? "" : "s"} · ${cost} Credit${cost === 1 ? "" : "s"}`,
             value: "go",
             disabled: !!block || submitted,
-            hint: block || "",
+            hint: hint || "",
             loadingLabel: `Generating ${n} Design${n === 1 ? "" : "s"}…`,
           },
         })}
