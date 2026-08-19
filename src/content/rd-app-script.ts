@@ -2707,12 +2707,13 @@ export function initApp(): () => void {
     }
     window.rdStudioResumeDraft = (id) => resumeStudioDraft(id);
 
-    /** Called once a real generated result lands on the canvas. */
+    /** Called once a real generated result lands on the canvas.
+        The in-progress draft is deliberately kept here: it is only retired once
+        the render has a durable path AND a version row exists, so a failed
+        upload or a failed version insert can never lose the work. */
     function markStudioResult() {
       STUDIO_RESULT = true;
-      try {
-        clearStudioDraft();
-      } catch (_) {}
+
       if (STUDIO_SRC !== "intentional_sample") STUDIO_SRC = "generated";
       sourceCaption(false);
       paintStudioState();
