@@ -1639,10 +1639,13 @@ if (typeof document !== "undefined" && !window.__rdPhotoReplaceBound) {
   document.addEventListener("rd-photo-replace", (e) => {
     const key = e?.detail?.key;
     if (!key) return;
-    const flow = e.target?.closest?.(".rv-tile") && document.getElementById("v-staging")?.contains(e.target) ? "photo" : null;
-    runCardAction(flow || (document.getElementById("v-staging") ? "photo" : "video"), "replace", key);
+    /* The card's own menu button records which builder owns the card. */
+    const card = e.target?.closest?.("[data-k],[data-key],[data-asset]");
+    const flow = card?.querySelector?.("[data-cardflow]")?.getAttribute("data-cardflow") || "photo";
+    runCardAction(flow, "replace", key);
   });
 }
+
 
 registerCardMenu("photo", {
   items(key) {
