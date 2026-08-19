@@ -26,7 +26,7 @@ const SECTIONS = [
   {
     h2: "What We Actually Built",
     body: [
-      "A tool that reads the design it just produced, breaks it into line items with quantities and trades, and prices it against local labour and material rates. Not a ballpark. A planning range with a stated confidence level, built from twenty years of real invoices before it was ever built from a database.",
+      "A tool that reads the design it just produced and turns it into a clear change list of work items and trades. Costing is deliberately held back: budgets turn on only in markets where verified local cost data is licensed, because a guessed number is worse than none.",
       "We also made it keep your walls where they are. Every render starts from your photograph and preserves the architecture, because a design you cannot build is a screensaver.",
     ],
   },
