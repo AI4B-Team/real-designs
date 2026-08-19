@@ -640,6 +640,129 @@ export type Database = {
         }
         Relationships: []
       }
+      ops_error_events: {
+        Row: {
+          code: string
+          correlation_id: string
+          created_at: string
+          id: string
+          message: string | null
+          meta: Json
+          operation: string
+          provider: string | null
+          request_id: string | null
+          route: string
+          severity: string
+          workspace_id: string | null
+        }
+        Insert: {
+          code: string
+          correlation_id: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          meta?: Json
+          operation: string
+          provider?: string | null
+          request_id?: string | null
+          route: string
+          severity?: string
+          workspace_id?: string | null
+        }
+        Update: {
+          code?: string
+          correlation_id?: string
+          created_at?: string
+          id?: string
+          message?: string | null
+          meta?: Json
+          operation?: string
+          provider?: string | null
+          request_id?: string | null
+          route?: string
+          severity?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
+      ops_idempotency: {
+        Row: {
+          correlation_id: string
+          created_at: string
+          expires_at: string
+          job_id: string | null
+          key: string
+          note: string | null
+          state: string
+        }
+        Insert: {
+          correlation_id: string
+          created_at?: string
+          expires_at?: string
+          job_id?: string | null
+          key: string
+          note?: string | null
+          state?: string
+        }
+        Update: {
+          correlation_id?: string
+          created_at?: string
+          expires_at?: string
+          job_id?: string | null
+          key?: string
+          note?: string | null
+          state?: string
+        }
+        Relationships: []
+      }
+      ops_jobs: {
+        Row: {
+          code: string | null
+          correlation_id: string
+          created_at: string
+          expected_ms: number
+          finished_at: string | null
+          id: string
+          idempotency_key: string | null
+          kind: string
+          note: string | null
+          provider: string | null
+          started_at: string
+          state: string
+          workspace_id: string
+        }
+        Insert: {
+          code?: string | null
+          correlation_id: string
+          created_at?: string
+          expected_ms?: number
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string | null
+          kind: string
+          note?: string | null
+          provider?: string | null
+          started_at?: string
+          state?: string
+          workspace_id: string
+        }
+        Update: {
+          code?: string | null
+          correlation_id?: string
+          created_at?: string
+          expected_ms?: number
+          finished_at?: string | null
+          id?: string
+          idempotency_key?: string | null
+          kind?: string
+          note?: string | null
+          provider?: string | null
+          started_at?: string
+          state?: string
+          workspace_id?: string
+        }
+        Relationships: []
+      }
       plan_requests: {
         Row: {
           created_at: string
