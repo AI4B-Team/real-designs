@@ -216,8 +216,17 @@ export function openBulkDesign(opts) {
     } catch (_) {}
   };
 
-  /* Field values survive every redraw (removing a photo, changing format). */
-  const form = { styleId: STYLES[0] && STYLES[0].id, intensity: "Makeover", grade: "Retail Grade", preserve: true, notes: "" };
+  /* Field values survive every redraw (removing a photo, changing format).
+     spaceStyles holds the per-group fallback when the shared style cannot
+     legitimately carry a space (an interior-only look on an exterior). */
+  const form = {
+    styleId: STYLES[0] && STYLES[0].id,
+    intensity: "Makeover",
+    grade: "Retail Grade",
+    preserve: true,
+    notes: "",
+    spaceStyles: {},
+  };
   const readForm = () => {
     const q = (id) => node.querySelector(id);
     if (!q("#rdsbStyle")) return;
@@ -226,6 +235,9 @@ export function openBulkDesign(opts) {
     form.grade = q("#rdsbGrade").value;
     form.preserve = q("#rdsbPreserve").checked;
     form.notes = q("#rdsbNotes").value;
+    node.querySelectorAll("[data-spacestyle]").forEach((el) => {
+      form.spaceStyles[el.getAttribute("data-spacestyle")] = el.value || "";
+    });
   };
 
   const styleName = () => {
