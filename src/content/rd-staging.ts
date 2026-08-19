@@ -759,7 +759,7 @@ function cardHtml(it, seq) {
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
       <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}"${it.path && !it.resultUrl ? ` data-photo-path="${esc(it.path)}"` : ""} alt="${esc(it.name)}" loading="lazy">
-      <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Select ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
+      <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
       ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: (it.room ? it.room + " photo" : "Photo " + n) })}
@@ -890,8 +890,8 @@ function render() {
   el.innerHTML = `<section class="rds-page">
     <div class="rv-head">
       <div>
-        <h2>Review Rooms</h2>
-        <p>Confirm the room type for each photo.</p>
+        <h2>Prepare Your Photos</h2>
+        <p>Confirm room types, choose the photos you want to design, and set the output format.</p>
       </div>
       <div class="rv-head-tools">
         ${formatSelectorHtml({
@@ -924,8 +924,8 @@ function render() {
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a">
-            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 1 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Design Selected</button>
-            <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room</button>
+            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Design ${sel} ${sel === 1 ? "Photo" : "Photos"}</button>
+            <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room Type</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
               <div class="rv-more-m">
                 <button data-act="all">Select All</button>
@@ -938,7 +938,7 @@ function render() {
         </div>
         ${gridHtml()}
         <div class="rv-gridfoot">
-          <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "room" : "rooms"} selected</span></div>
+          <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "photo" : "photos"} selected</span></div>
           <div class="rv-gridfoot-a">
             <button class="btn btn-ghost" id="rdsBack">Back</button>
             <button class="btn btn-primary" id="rdsGo">Continue</button>
@@ -1017,17 +1017,17 @@ function syncSelection() {
   const sel = selectedCount();
   const set = wrap.querySelector("#rdsSetRoom");
   if (set) set.disabled = !sel;
-  /* Bulk design is a real batch: it only makes sense from two photos up. */
+  /* Bulk design acts on the photos the user selected. */
   const bulk = wrap.querySelector("#rdsBulk");
   if (bulk) {
-    bulk.disabled = sel < 2 || S.busy;
+    bulk.disabled = sel < 1 || S.busy;
     const lab = bulk.lastChild;
-    if (lab && lab.nodeType === 3) lab.textContent = sel > 1 ? `Design Selected · ${sel}` : "Design Selected";
+    if (lab && lab.nodeType === 3) lab.textContent = `Design ${sel} ${sel === 1 ? "Photo" : "Photos"}`;
   }
   const count = wrap.querySelector("#rdsSelCount");
   if (count) count.textContent = `${sel} of ${S.items.length} selected`;
   const foot = wrap.querySelector("#rdsFootCount");
-  if (foot) foot.textContent = `${sel} ${sel === 1 ? "room" : "rooms"} selected`;
+  if (foot) foot.textContent = `${sel} ${sel === 1 ? "photo" : "photos"} selected`;
   const all = wrap.querySelector("#rdsSelAll");
   if (all) all.checked = S.items.length > 0 && sel === S.items.length;
   const badge = wrap.querySelector('.rv-rail-i[data-step="review"] .bx-badge');

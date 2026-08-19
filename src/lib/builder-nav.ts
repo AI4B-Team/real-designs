@@ -13,7 +13,7 @@ export type PhotoStep = (typeof PHOTO_FLOW)[number];
 
 /** Photo Design rail labels, in rail order. */
 export const PHOTO_RAIL: Array<{ key: PhotoStep; label: string; icon: string }> = [
-  { key: "review", label: "Rooms", icon: "layout-grid" },
+  { key: "review", label: "Photos", icon: "images" },
   { key: "design", label: "Design", icon: "wand-sparkles" },
   { key: "final", label: "Review", icon: "circle-check" },
 ];

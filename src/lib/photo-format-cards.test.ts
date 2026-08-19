@@ -105,7 +105,7 @@ describe("photo format reshapes the review grid", () => {
     const before = location.hash;
     await chooseFormat("9:16");
     expect(location.hash).toBe(before);
-    expect(stagingHost().textContent).toContain("Review Rooms");
+    expect(stagingHost().textContent).toContain("Prepare Your Photos");
   });
 
   it("shows the Add More Photos card without a room selector", async () => {
