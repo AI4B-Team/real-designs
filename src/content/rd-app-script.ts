@@ -3003,6 +3003,7 @@ export function initApp(): () => void {
         markStudioResult();
         finalizeGeneratedDesign(lastRenderPath);
 
+
         paintStudioSummary(currentBand());
         window.dispatchEvent(new Event("rd:credits-changed"));
         window.dispatchEvent(new Event("rd:photo"));
