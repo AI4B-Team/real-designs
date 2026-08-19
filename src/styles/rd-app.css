@@ -8044,3 +8044,30 @@
   color: var(--muted);
   line-height: 1.5;
 }
+
+/* Generated-but-unsaved notice: the preview stays, the state is honest. */
+.rd-savewarn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+  margin: 12px 0 0;
+  padding: 12px 14px;
+  border: 1px solid #f0c36d;
+  background: #fdf6e6;
+  border-radius: 12px;
+}
+.rd-savewarn[hidden] {
+  display: none;
+}
+.rd-savewarn b {
+  display: block;
+  font-size: 0.86rem;
+  color: #6b4d05;
+}
+.rd-savewarn span {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.78rem;
+  color: #7a5f22;
+}
