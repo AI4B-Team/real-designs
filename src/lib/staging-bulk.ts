@@ -169,10 +169,30 @@ export async function runBulkDesign(items, direction, hooks = {}) {
 
 /* ----------------------------------------------------------------- modal */
 
-function styleOptions(selected) {
-  return STYLES.map(
-    (s) => `<option value="${esc(s.id)}"${s.id === selected ? " selected" : ""}>${esc(s.displayName)}</option>`,
-  ).join("");
+/**
+ * Style options for the shared picker. Nothing is preselected: the first entry
+ * is a placeholder so the modal never invents a creative choice for the user.
+ * When `spaces` is given, only styles that can carry every selected space are
+ * offered, so a mixed interior/exterior batch cannot start out incompatible.
+ */
+function styleOptions(selected, spaces) {
+  const list = STYLES.filter(
+    (s) => s.isActive !== false && (!spaces || spaces.every((sp) => styleFitsSpace(s.id, sp))),
+  );
+  return (
+    `<option value=""${!selected ? " selected" : ""}>Choose a style</option>` +
+    list
+      .map((s) => `<option value="${esc(s.id)}"${s.id === selected ? " selected" : ""}>${esc(s.displayName)}</option>`)
+      .join("")
+  );
+}
+
+/** Placeholder-first options for a plain text choice (intensity, grade). */
+function pickOptions(list, selected, placeholder) {
+  return (
+    `<option value=""${!selected ? " selected" : ""}>${esc(placeholder)}</option>` +
+    list.map((o) => `<option${o === selected ? " selected" : ""}>${esc(o)}</option>`).join("")
+  );
 }
 
 /**
