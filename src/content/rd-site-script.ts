@@ -8,6 +8,7 @@ import { initExtra } from "@/content/rd-site-extra";
 import { initShowcase } from "@/content/rd-showcase";
 import { track } from "@/lib/analytics";
 import { summaryHTML, metric } from "@/lib/result-summary";
+import { HERO_SAMPLES, openSampleGallery } from "@/lib/sample-gallery";
 
 export function initSite(): () => void {
   const root = document.querySelector(".rd-site") as HTMLElement | null;
