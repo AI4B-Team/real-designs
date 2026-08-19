@@ -140,7 +140,8 @@ export function openSampleGallery(opts: GalleryOptions): () => void {
     frame.classList.remove("failed");
     img.alt = s.alt;
     img.src = s.src;
-    metaEl.textContent = `${s.name} · ${s.room} · ${cur + 1} of ${items.length}`;
+    const roomType = (s.room.split("·")[0] || s.room).trim();
+    metaEl.textContent = `${s.name} · ${roomType} · ${cur + 1} of ${items.length}`;
     thumbs.forEach((t, i) => {
       t.classList.toggle("on", i === cur);
       t.classList.toggle("committed", items[i]!.index === opts.selected);
