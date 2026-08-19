@@ -30,6 +30,15 @@ function AuthenticatedLayout() {
     // a page they are working in. Only a confirmed missing session redirects;
     // a failed request is retried, and a stored session keeps them in place.
     (async () => {
+      // No stored session at all is a definitive answer, not a network problem:
+      // getSession reads local storage, so it cannot fail for connectivity.
+      const { data: first } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (!first?.session) {
+        navigate({ to: "/auth", replace: true });
+        return;
+      }
+
       let networkFailed = false;
       for (let attempt = 0; attempt < 3; attempt++) {
         const { data, error } = await supabase.auth.getUser();
@@ -39,6 +48,9 @@ function AuthenticatedLayout() {
           return;
         }
         if (!error) break; // answered cleanly: there is genuinely no user
+        // A rejected session (401/403) is an answer too — send them to sign in.
+        const status = (error as { status?: number }).status;
+        if (status === 401 || status === 403) break;
         networkFailed = true;
         const { data: s } = await supabase.auth.getSession();
         if (cancelled) return;
@@ -55,6 +67,7 @@ function AuthenticatedLayout() {
       if (networkFailed) setState("offline");
       else navigate({ to: "/auth", replace: true });
     })();
+
 
     return () => {
       cancelled = true;
