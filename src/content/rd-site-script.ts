@@ -8,6 +8,7 @@ import { initExtra } from "@/content/rd-site-extra";
 import { initShowcase } from "@/content/rd-showcase";
 import { track } from "@/lib/analytics";
 import { summaryHTML, metric } from "@/lib/result-summary";
+import { HERO_SAMPLES, openSampleGallery } from "@/lib/sample-gallery";
 
 export function initSite(): () => void {
   const root = document.querySelector(".rd-site") as HTMLElement | null;
@@ -60,8 +61,13 @@ export function initSite(): () => void {
     };
     document.querySelectorAll(".samp").forEach((s, i) => {
       const pals = [PHOTOS.before, PALS.coastal, PALS.farm, PALS.green];
-      s.innerHTML = room(i === 0 ? "before" : "after", pals[i]);
+      const sample = HERO_SAMPLES[i];
+      s.innerHTML =
+        room(i === 0 ? "before" : "after", pals[i]) +
+        '<span class="samp-zoom" aria-hidden="true"><svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4-4M11 8.5v5M8.5 11h5"/></svg></span>';
+      if (sample) s.setAttribute("aria-label", "Preview " + sample.name);
     });
+
 
     /* ---------- hero: one continuous property tour ---------- */
     let budgetTouched = false;
@@ -604,14 +610,30 @@ export function initSite(): () => void {
       document.getElementById("more").classList.add("open");
       document.getElementById("hint").classList.add("gone");
     }
+    /** Applies a sample selection through the one existing builder workflow. */
+    function pickSample(index) {
+      const all = document.querySelectorAll(".samp");
+      all.forEach((x) => x.classList.remove("on"));
+      const target = document.querySelector('.samp[data-s="' + index + '"]') || all[index];
+      if (target) target.classList.add("on");
+      UPLOAD = null;
+      unlock();
+    }
     document.querySelectorAll(".samp").forEach((s) =>
       s.addEventListener("click", () => {
-        document.querySelectorAll(".samp").forEach((x) => x.classList.remove("on"));
-        s.classList.add("on");
-        UPLOAD = null;
-        unlock();
+        const start = +(s.dataset.s || 0);
+        const selected = +(
+          document.querySelector(".samp.on") || { dataset: { s: 0 } }
+        ).dataset.s;
+        openSampleGallery({
+          start,
+          selected,
+          opener: s,
+          onSelect: (i) => pickSample(i),
+        });
       }),
     );
+
 
     const steps = [
       "Reading room geometry",

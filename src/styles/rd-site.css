@@ -11345,3 +11345,236 @@ p.cmp-note {
   opacity: 0.6;
   cursor: default;
 }
+
+/* ---------- sample thumbnail zoom affordance ---------- */
+.rd-site .samp {
+  position: relative;
+  padding: 0;
+}
+
+.rd-site .samp-zoom {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(17, 17, 19, 0.44);
+  opacity: 0;
+  transition: 0.15s;
+  pointer-events: none;
+}
+
+.rd-site .samp:hover .samp-zoom,
+.rd-site .samp:focus-visible .samp-zoom {
+  opacity: 1;
+}
+
+.rd-site .samp:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+/* ---------- sample gallery preview modal ---------- */
+.rd-site .rdsg {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+}
+
+.rd-site .rdsg-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(17, 17, 19, 0.58);
+}
+
+.rd-site .rdsg-card {
+  position: relative;
+  width: min(900px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 24px 70px rgba(17, 17, 19, 0.28);
+}
+
+.rd-site .rdsg-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rd-site .rdsg-name {
+  font-size: 1.02rem;
+  margin: 0;
+}
+
+.rd-site .rdsg-room {
+  margin: 3px 0 0;
+  font-size: 0.74rem;
+  color: var(--mute-2);
+}
+
+.rd-site .rdsg-x {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  cursor: pointer;
+}
+
+.rd-site .rdsg-stage {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.rd-site .rdsg-frame {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  background: #f2f0ec;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.rd-site .rdsg-img {
+  display: block;
+  width: 100%;
+  max-height: 56vh;
+  object-fit: contain;
+}
+
+.rd-site .rdsg-fallback {
+  display: none;
+  padding: 40px 16px;
+  font-size: 0.82rem;
+  color: var(--mute-2);
+  text-align: center;
+}
+
+.rd-site .rdsg-frame.failed .rdsg-img {
+  display: none;
+}
+
+.rd-site .rdsg-frame.failed .rdsg-fallback {
+  display: block;
+}
+
+.rd-site .rdsg-arrow {
+  width: 42px;
+  height: 42px;
+  flex: none;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--white);
+  box-shadow: 0 4px 14px rgba(17, 17, 19, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.rd-site .rdsg-arrow:hover {
+  border-color: var(--red);
+  color: var(--red);
+}
+
+.rd-site .rdsg-pos {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--mute-2);
+}
+
+.rd-site .rdsg-strip {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.rd-site .rdsg-thumb {
+  width: 74px;
+  height: 54px;
+  flex: none;
+  border-radius: 7px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #efede8;
+  padding: 0;
+  cursor: pointer;
+}
+
+.rd-site .rdsg-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.rd-site .rdsg-thumb.on {
+  border-color: var(--red);
+  box-shadow: 0 0 0 1px var(--red);
+}
+
+.rd-site .rdsg-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.rd-site .rdsg-x:focus-visible,
+.rd-site .rdsg-arrow:focus-visible,
+.rd-site .rdsg-thumb:focus-visible,
+.rd-site .rdsg-foot .btn:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .rd-site .rdsg {
+    padding: 10px;
+  }
+
+  .rd-site .rdsg-card {
+    width: 100%;
+    max-height: 94vh;
+    padding: 14px;
+  }
+
+  .rd-site .rdsg-arrow {
+    width: 46px;
+    height: 46px;
+  }
+
+  .rd-site .rdsg-img {
+    max-height: 44vh;
+  }
+
+  .rd-site .rdsg-foot {
+    flex-direction: column-reverse;
+  }
+
+  .rd-site .rdsg-foot .btn {
+    width: 100%;
+  }
+}
