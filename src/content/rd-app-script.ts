@@ -9352,12 +9352,20 @@ ${picks
           cta: "Save Room",
         },
         {
+          k: "design",
+          t: "Create Your First Design",
+          b: "Generate a design and keep it on the saved room.",
+          i: "wand-sparkles",
+          cta: "Open Studio",
+        },
+        {
           k: "brand",
           t: "Add Your Brand Kit",
           b: "Your company name and accent color on every export.",
           i: "palette",
           cta: "Set Brand",
         },
+
         {
           k: "shared",
           t: "Share A Presentation",
