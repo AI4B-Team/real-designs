@@ -747,7 +747,21 @@ function tileRatioClass(it) {
   return ratioClass(tileRatio(it));
 }
 
+/**
+ * Attributes for a card image. The storage path is always the canonical
+ * reference — a signed URL is only ever a cached hint — so every frame stays
+ * bound to a path and can re-sign itself instead of going gray.
+ */
+function imgAttrs(it) {
+  const bind = it.resultUrl || it.resultPath ? it.resultPath || it.path || "" : it.path || "";
+  const url = it.resultUrl || it.signed || it.previewUrl || "";
+  const src = url ? ` src="${esc(url)}"` : "";
+  const bound = bind ? ` data-photo-path="${esc(bind)}"` : "";
+  return src + bound;
+}
+
 function cardHtml(it, seq) {
+
 
   const st = stateOf(it);
   const ws = workState(it);
