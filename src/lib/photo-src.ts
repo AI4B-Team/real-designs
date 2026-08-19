@@ -9,7 +9,7 @@
  * only then show a small "Image unavailable — Retry" state. Card metadata
  * (selection, room, effects, order) is never touched by any of it.
  */
-import { isStoredPhoto, resolvePhotoUrl } from "@/lib/room-photos";
+import { isStoredPhoto, resolvePhotoUrl, signedPhotoExpiry } from "@/lib/room-photos";
 
 /** Signed-URL lifetime we ask storage for, and how early we re-sign. */
 const TTL_SEC = 6 * 3600;
@@ -63,7 +63,14 @@ export async function photoSrc(path: string, force = false): Promise<string | nu
     }
     if (url) {
       const perm = !isStoredPhoto(path);
-      CACHE.set(path, { url, exp: perm ? Infinity : Date.now() + (TTL_SEC * 1000 - MARGIN_MS) });
+      /* Trust the signature we actually hold, not the lifetime we asked for:
+         another caller may have signed this same object for a much shorter
+         window, and caching the optimistic figure is what let a whole grid
+         expire at once and turn gray. */
+      const real = signedPhotoExpiry(path);
+      const asked = Date.now() + (TTL_SEC * 1000 - MARGIN_MS);
+      const actual = real ? Math.max(Date.now() + 30_000, real - MARGIN_MS) : asked;
+      CACHE.set(path, { url, exp: perm ? Infinity : Math.min(asked, actual) });
       log("resolved", { path, kind: kindOf(url), url: safeUrl(url), refresh: force });
     } else {
       log("resolve failed", { path, refresh: force });
@@ -173,7 +180,8 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
     return false;
   }
 
-  el.__rdPhotoTries = 0;
+  /* The retry budget is only cleared once a frame actually paints: clearing
+     it here made a URL that resolves but never loads retry forever. */
   el.classList.remove("rd-img-fail");
   el.querySelector(".rd-img-fail-b")?.remove();
   el.dataset["photoPath"] = p;
@@ -201,8 +209,31 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
       return false;
     }
   } else {
+    /* Background tiles have no error event of their own, so a dead URL used
+       to leave a permanently gray card. Probe first: keep the frame that is
+       already showing, swap only on success, and otherwise re-sign once
+       before showing the shared unavailable state. */
+    const ok = await new Promise<boolean>((done) => {
+      const probe = new Image();
+      probe.onload = () => done(true);
+      probe.onerror = () => {
+        log("load failed", { path: p, url: safeUrl(url) });
+        done(false);
+      };
+      probe.src = url;
+    });
+    if (el.__rdPhotoSeq !== mine || !el.isConnected) return true;
+    if (!ok) {
+      if ((el.__rdPhotoTries || 0) < 1) {
+        el.__rdPhotoTries = 1;
+        return paintPhotoEl(el, p, true);
+      }
+      failState(el, p);
+      return false;
+    }
     el.style.backgroundImage = `url("${url}")`;
   }
+  el.__rdPhotoTries = 0;
   el.dataset["painted"] = "1";
   loadingOff(el);
   return true;

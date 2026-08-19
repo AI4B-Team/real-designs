@@ -107,6 +107,20 @@ export async function roomPhotoUrl(path: string, expiresIn = 3600, force = false
   return req;
 }
 
+/**
+ * When the currently memoized signed URL for a path actually stops working.
+ *
+ * A URL signed for one hour by one caller is reused by every later caller, so
+ * a caller that *asked* for six hours must not assume it holds a six hour URL:
+ * that mismatch is what made whole grids of thumbnails expire at once. Callers
+ * cache against this real expiry instead of the lifetime they requested.
+ */
+export function signedPhotoExpiry(path: string | null | undefined): number | null {
+  if (!path) return null;
+  const hit = SIGNED.get(path);
+  return hit ? hit.exp : null;
+}
+
 
 export async function deleteRoomPhoto(path: string): Promise<void> {
   if (!isStoredPhoto(path)) return;
