@@ -491,19 +491,21 @@ export function openBulkDesign(opts) {
                       </select>`
                 }
                 <div class="rdsb-th">${g.items
-                  .map(
-                    (it) => `<span class="rdsb-t">
-                      <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(it.name)}">
-                      <button type="button" data-drop="${esc(it.key)}" title="Remove from this batch"
-                        aria-label="Remove ${esc(it.name)} from this batch. The photo stays in Media."><i data-lucide="x"></i></button>
-                      <em title="${esc(it.room || "Room type needed")}">${esc(it.room || "Room type needed")}</em></span>`,
-                  )
+                  .map((it) => {
+                    const room = it.room || "Room type needed";
+                    return `<span class="rdsb-t">
+                      <img src="${esc(it.signed || it.previewUrl)}" alt="${esc(room)}" loading="lazy">
+                      <button type="button" data-drop="${esc(it.key)}" title="Remove ${esc(room)} photo"
+                        aria-label="Remove ${esc(room)} photo. It stays in Media."><i data-lucide="x"></i></button>
+                      <em title="${esc(room)}">${esc(room)}</em></span>`;
+                  })
                   .join("")}</div>
               </div>`;
               })
               .join("")}
             </div>
-          </details>
+          </section>
+
 
 
           ${
