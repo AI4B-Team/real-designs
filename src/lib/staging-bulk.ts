@@ -420,7 +420,7 @@ export function openBulkDesign(opts) {
           ${
             perSpaceMode
               ? `<p class="rdsb-mixed">Your selection contains interior and exterior photos, so you can choose a direction for each.</p>`
-              : `<div class="rdsb-f${blockField === "style" ? " bad" : ""}">
+              : `<div class="rdsb-f${badCls("style")}">
             <label for="rdsbStyle">Style</label>
             <select id="rdsbStyle">${styleOptions(form.styleId, spaces)}</select>
             ${mixed && form.styleId ? `<em class="rdsb-help">Adapted to each space — modern finishes indoors, modern materials and landscaping outdoors.</em>` : ""}
@@ -429,9 +429,10 @@ export function openBulkDesign(opts) {
           }
           ${perSpaceMode ? `<select id="rdsbStyle" class="rdsb-hidden" aria-hidden="true" tabindex="-1"><option value=""></option></select>` : ""}
           <div class="rdsb-row">
-            <div class="rdsb-f${blockField === "intensity" ? " bad" : ""}"><label for="rdsbInt">Intensity</label>
+            <div class="rdsb-f${badCls("intensity")}"><label for="rdsbInt">Intensity</label>
               <select id="rdsbInt">${pickOptions(["Refresh", "Makeover", "Full Remodel"], form.intensity, "Choose intensity")}</select>${fieldMsg("intensity")}</div>
-            <div class="rdsb-f${blockField === "grade" ? " bad" : ""}"><label for="rdsbGrade">Finish Grade</label>
+            <div class="rdsb-f${badCls("grade")}"><label for="rdsbGrade">Finish Grade</label>
+
               <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select>${fieldMsg("grade")}</div>
           </div>
           <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve"${form.preserve ? " checked" : ""}> Keep walls, windows, and layout exactly as they are</label>
