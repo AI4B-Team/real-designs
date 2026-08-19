@@ -583,13 +583,18 @@ export function openBulkDesign(opts) {
     if (addc) addc.onclick = () => openUpgrade(block, "Add Credits To Design These Photos");
     node.querySelector("#rdsbFmt").onclick = () => {
       readForm();
-      /* Keeps this modal open: the caller reopens/refreshes it with the new ratio. */
-      if (opts.onEditFormat) opts.onEditFormat(() => draw());
-      else {
-        close();
-        opts.onEdit && opts.onEdit();
-      }
+      fmtOpen = !fmtOpen;
+      draw();
     };
+    node.querySelectorAll("[data-rdsbratio]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          readForm();
+          /* Immediately updates the shared project format — one source of truth. */
+          opts.onRatioChange && opts.onRatioChange(b.getAttribute("data-rdsbratio"));
+          draw();
+        }),
+    );
     node.querySelector('[data-mfa="edit"]').onclick = () => {
       close();
       opts.onEdit && opts.onEdit();
