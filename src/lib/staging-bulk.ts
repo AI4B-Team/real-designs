@@ -368,20 +368,25 @@ export function openBulkDesign(opts) {
       blockField === name ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : "";
 
 
-    const sum = [
-      ["Photos", String(n)],
-      ["Style", styleName() || "Not selected"],
-      ["Intensity", form.intensity || "Not selected"],
-      ["Finish", form.grade || "Not selected"],
-      ["Cost", `${cost} credit${cost === 1 ? "" : "s"}`],
-    ];
+    /* Group summary for the collapsed photo section: "1 Exterior · 7 Interior". */
+    const groupSummary = groups.map((g) => `${g.items.length} ${g.label}`).join(" · ");
+    /* The photo list only opens itself when a group genuinely needs attention. */
+    const photosOpen = !!(missing || perSpaceMode || unsupported.length || unusual.length);
 
     /* One source of truth for the format: the project ratio chosen on Prepare
        Your Photos, edited inline here — never in a second stacked modal. */
-    const fmtBlock = `<div class="rdsb-fmt">
-      <div class="rdsb-fmt-h">
-        <div><span>Output Format</span><b>${esc(ratioLabel(ratio))}</b></div>
-        <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change"}</button>
+    const remaining = bal == null ? null : Math.max(bal - cost, 0);
+    const fmtBlock = `<div class="rdsb-out">
+      <div class="rdsb-out-row">
+        <div class="rdsb-out-c">
+          <span>Output</span>
+          <b>${esc(ratioLabel(ratio))}</b>
+          <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change"}</button>
+        </div>
+        <div class="rdsb-out-c right">
+          <span>Generation Cost</span>
+          <b>${cost} credit${cost === 1 ? "" : "s"}</b>
+        </div>
       </div>
       ${
         fmtOpen
@@ -393,6 +398,11 @@ export function openBulkDesign(opts) {
             ).join("")}</div>`
           : ""
       }
+      <p class="rdsb-out-n" role="status" aria-live="polite">${
+        bal == null
+          ? "Failed generations are not charged."
+          : `${bal} credit${bal === 1 ? "" : "s"} available · ${remaining} remaining after generation`
+      }</p>
     </div>`;
 
     node.innerHTML = `<div class="up-scrim" data-close></div>
@@ -405,25 +415,31 @@ export function openBulkDesign(opts) {
           ${
             perSpaceMode
               ? `<p class="rdsb-mixed">Your selection contains interior and exterior photos, so you can choose a direction for each.</p>`
-              : `<div class="rdsb-f">
+              : `<div class="rdsb-f${blockField === "style" ? " bad" : ""}">
             <label for="rdsbStyle">Style</label>
             <select id="rdsbStyle">${styleOptions(form.styleId, spaces)}</select>
-            ${mixed ? `<em class="rdsb-help">Adapted to each space — modern finishes indoors, modern materials and landscaping outdoors.</em>` : ""}
+            ${mixed && form.styleId ? `<em class="rdsb-help">Adapted to each space — modern finishes indoors, modern materials and landscaping outdoors.</em>` : ""}
             ${fieldMsg("style")}
           </div>`
           }
           ${perSpaceMode ? `<select id="rdsbStyle" class="rdsb-hidden" aria-hidden="true" tabindex="-1"><option value=""></option></select>` : ""}
           <div class="rdsb-row">
-            <div class="rdsb-f"><label for="rdsbInt">Intensity</label>
+            <div class="rdsb-f${blockField === "intensity" ? " bad" : ""}"><label for="rdsbInt">Intensity</label>
               <select id="rdsbInt">${pickOptions(["Refresh", "Makeover", "Full Remodel"], form.intensity, "Choose intensity")}</select>${fieldMsg("intensity")}</div>
-            <div class="rdsb-f"><label for="rdsbGrade">Finish Grade</label>
+            <div class="rdsb-f${blockField === "grade" ? " bad" : ""}"><label for="rdsbGrade">Finish Grade</label>
               <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select>${fieldMsg("grade")}</div>
           </div>
           <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve"${form.preserve ? " checked" : ""}> Keep walls, windows, and layout exactly as they are</label>
           <div class="rdsb-f"><label for="rdsbNotes">Shared Instructions <em>Optional</em></label>
             <textarea id="rdsbNotes" rows="2" placeholder="Example: Light oak floors, warm neutral palette, no bold colors">${esc(form.notes)}</textarea></div>
 
-          <div class="rdsb-groups">
+          <details class="rdsb-photos"${photosOpen ? " open" : ""}>
+            <summary>
+              <span class="rdsb-photos-t">Selected Photos · ${n}</span>
+              <span class="rdsb-photos-s">${esc(groupSummary)}</span>
+              <i data-lucide="chevron-down"></i>
+            </summary>
+            <div class="rdsb-groups">
             ${groups
               .map((g) => {
                 const level = levelFor(g);
@@ -480,7 +496,8 @@ export function openBulkDesign(opts) {
               </div>`;
               })
               .join("")}
-          </div>
+            </div>
+          </details>
 
 
           ${
@@ -489,23 +506,7 @@ export function openBulkDesign(opts) {
               : ""
           }
 
-          <div class="rdsb-sum">
-            ${sum.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
-          </div>
-
           ${fmtBlock}
-
-          <div class="rdsb-cost" role="status" aria-live="polite">
-            <i data-lucide="zap"></i>
-            <div>
-              <b>${n} photo${n === 1 ? "" : "s"} × 1 credit each = ${cost} credit${cost === 1 ? "" : "s"}</b>
-              <span>${
-                bal == null
-                  ? "Failed generations are not charged."
-                  : `Available: ${bal} credit${bal === 1 ? "" : "s"} · Remaining after generation: ${Math.max(bal - cost, 0)} credit${Math.max(bal - cost, 0) === 1 ? "" : "s"}. Failed generations are not charged.`
-              }</span>
-            </div>
-          </div>
         </div>
         <div class="rdsb-foot">
           ${
@@ -516,7 +517,7 @@ export function openBulkDesign(opts) {
               : ""
           }
           <div class="rdsb-foot-row">
-            <p class="rdsb-foot-cost">${n} photo${n === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}</p>
+            <p class="rdsb-foot-cost">${n} selected</p>
             <div class="rdsb-foot-a">
               <button type="button" class="rdm-btn rdm-ghost" data-mfa="cancel">Cancel</button>
               <button type="button" class="rdm-btn rdm-outline" data-mfa="edit">Edit Room Types</button>
