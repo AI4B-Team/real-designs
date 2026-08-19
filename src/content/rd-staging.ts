@@ -39,6 +39,7 @@ import { modalFooterHtml } from "@/lib/modal-footer";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import {
   cardMenuButtonHtml,
+  runCardAction,
   registerCardMenu,
   confirmDialog,
   detailsDialog,
@@ -747,7 +748,21 @@ function tileRatioClass(it) {
   return ratioClass(tileRatio(it));
 }
 
+/**
+ * Attributes for a card image. The storage path is always the canonical
+ * reference — a signed URL is only ever a cached hint — so every frame stays
+ * bound to a path and can re-sign itself instead of going gray.
+ */
+function imgAttrs(it) {
+  const bind = it.resultUrl || it.resultPath ? it.resultPath || it.path || "" : it.path || "";
+  const url = it.resultUrl || it.signed || it.previewUrl || "";
+  const src = url ? ` src="${esc(url)}"` : "";
+  const bound = bind ? ` data-photo-path="${esc(bind)}"` : "";
+  return src + bound;
+}
+
 function cardHtml(it, seq) {
+
 
   const st = stateOf(it);
   const ws = workState(it);
@@ -761,7 +776,7 @@ function cardHtml(it, seq) {
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
     <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
-      <img src="${esc(it.resultUrl || it.signed || it.previewUrl)}"${it.path && !it.resultUrl ? ` data-photo-path="${esc(it.path)}"` : ""} alt="${esc(it.name)}" loading="lazy">
+      <img${imgAttrs(it)} alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
@@ -1617,6 +1632,21 @@ function dropItem(key) {
   return { gone, i };
 }
 
+/* A card whose image cannot be resolved offers "Replace Photo"; route that
+   straight into the existing replace flow. */
+if (typeof document !== "undefined" && !window.__rdPhotoReplaceBound) {
+  window.__rdPhotoReplaceBound = true;
+  document.addEventListener("rd-photo-replace", (e) => {
+    const key = e?.detail?.key;
+    if (!key) return;
+    /* The card's own menu button records which builder owns the card. */
+    const card = e.target?.closest?.("[data-k],[data-key],[data-asset]");
+    const flow = card?.querySelector?.("[data-cardflow]")?.getAttribute("data-cardflow") || "photo";
+    runCardAction(flow, "replace", key);
+  });
+}
+
+
 registerCardMenu("photo", {
   items(key) {
     const it = itemAt(key);
@@ -2420,7 +2450,7 @@ function drawStrip() {
       .map((x) => {
         const ws = workState(x);
         return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
-            <img src="${esc(x.resultUrl || x.signed || x.previewUrl || "")}"${x.path && !x.resultUrl ? ` data-photo-path="${esc(x.path)}"` : ""} alt="${esc(x.name)}">
+            <img${imgAttrs(x)} alt="${esc(x.name)}">
             ${ws ? `<i data-lucide="${ws.icon}"></i>` : ""}
             <em>${esc(roomLabel(x))}</em></button>`;
       })

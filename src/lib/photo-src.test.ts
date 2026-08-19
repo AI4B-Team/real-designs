@@ -44,13 +44,13 @@ describe("resilient photo source", () => {
     expect(el.style.backgroundImage).toContain("b.jpg");
   });
 
-  it("shows Image unavailable — Retry when recovery fails, keeping the card", async () => {
+  it("shows a load failure with Retry when recovery fails, keeping the card", async () => {
     resolve.mockResolvedValue(null);
     const { paintPhotoEl } = await load();
     document.body.innerHTML = `<div data-img="u/3.jpg"><span class="meta">Kitchen</span></div>`;
     const el = document.querySelector("[data-img]") as HTMLElement;
     expect(await paintPhotoEl(el)).toBe(false);
-    expect(el.textContent).toContain("Image unavailable");
+    expect(el.textContent).toContain("Photo couldn’t be loaded");
     expect(el.querySelector(".meta")).toBeTruthy();
   });
 
