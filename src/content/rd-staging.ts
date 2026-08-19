@@ -2453,6 +2453,7 @@ async function openInCanvas(key) {
       window.rdSetStudioSource("user_upload", url, it.room || "Your uploaded source", {
         caption: "Set your direction, then press Generate. Nothing has been generated yet.",
         srcPath: it.path || null,
+        ratio: tileRatio(it),
       });
   } catch (_) {}
   applyRoom(it);

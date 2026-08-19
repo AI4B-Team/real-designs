@@ -2225,6 +2225,43 @@ export function initApp(): () => void {
     let STUDIO_RESULT = false;
     let studioAnalyzeTimer = null;
 
+    /**
+     * The viewer always shows the shape the design will be delivered in, so a
+     * portrait output is never squeezed into a landscape banner. Before and
+     * After share this one container, so their geometry can never drift.
+     */
+    function setCanvasRatio(ratio, src) {
+      const cv = document.getElementById("canvas");
+      if (!cv) return;
+      const map = {
+        "9:16": "9 / 16",
+        "16:9": "16 / 9",
+        "1:1": "1 / 1",
+        "4:3": "4 / 3",
+        "4:5": "4 / 5",
+        "3:2": "3 / 2",
+        "2:3": "2 / 3",
+      };
+      const ar = map[String(ratio || "")];
+      if (ar) {
+        cv.style.setProperty("--rd-canvas-ar", ar);
+        return;
+      }
+      /* "Original" or unknown: follow the source photo's own shape. */
+      cv.style.setProperty("--rd-canvas-ar", "16 / 9");
+      if (!src) return;
+      const probe = new Image();
+      probe.onload = () => {
+        if (probe.naturalWidth && probe.naturalHeight)
+          cv.style.setProperty(
+            "--rd-canvas-ar",
+            probe.naturalWidth + " / " + probe.naturalHeight,
+          );
+      };
+      probe.src = src;
+    }
+
+
     function setC(v) {
       cAfter.style.clipPath = `inset(0 0 0 ${v}%)`;
       cHnd.style.left = v + "%";
@@ -2482,6 +2519,8 @@ export function initApp(): () => void {
       lastRender = null;
       lastRenderPath = o.afterPath || null;
       if (cBefore && src) cBefore.innerHTML = photo(src, alt || "Your source photo");
+      setCanvasRatio(o.ratio, src);
+
       if (cAfter) cAfter.innerHTML = "";
       const vars = document.getElementById("vars");
       if (vars) vars.innerHTML = "";
@@ -2742,16 +2781,30 @@ export function initApp(): () => void {
         el.innerHTML = "";
         return;
       }
-      el.innerHTML = summaryHTML({
-        primaryLabel: "Design Intensity",
-        primaryValue: d.name,
-        metrics: [
-          metric("What Changes", d.scope),
-          metric("Reality Lock", "Geometry Held", "positive"),
-          metric("Structure", "No Changes", "positive"),
-        ],
-      });
+      const grade = document.querySelector("#gradeChips .chip.on");
+      const gradeTxt = grade ? grade.textContent.trim() : "Retail Grade";
+      const wasOpen = el.querySelector("details")?.open ? " open" : "";
+      /* Compact by default: the image viewer stays the largest thing on the
+         Canvas and the full detail grid is one click away. */
+      el.innerHTML =
+        `<details class="gen-details"${wasOpen}><summary><span class="gd-k">Generation Details</span>` +
+        `<span class="gd-sum">${d.name} &middot; ${gradeTxt} &middot; Geometry Preserved</span>` +
+        `<i data-lucide="chevron-down"></i></summary><div class="gd-body">` +
+        summaryHTML({
+          primaryLabel: "Design Intensity",
+          primaryValue: d.name,
+          metrics: [
+            metric("What Changes", d.scope),
+            metric("Reality Lock", "Geometry Held", "positive"),
+            metric("Structure", "No Changes", "positive"),
+          ],
+        }) +
+        `</div></details>`;
+      try {
+        lucide.createIcons();
+      } catch (_) {}
     }
+
     function currentBand() {
       const b = document.querySelector(".bchip.on");
       return BANDS[b ? +b.dataset.b : 1];
@@ -3112,6 +3165,17 @@ export function initApp(): () => void {
     }
 
     function addRenderVariant(src, label, path) {
+      /* Version History shows this render immediately, before any save. */
+      try {
+        SESSION_VERSIONS.unshift({
+          src,
+          path: path || null,
+          label: label || "Your Render",
+          at: Date.now(),
+          room: activeStudioRoom(),
+        });
+        paintVersions();
+      } catch (_) {}
       const wrap = document.getElementById("vars");
       if (!wrap) return;
       const d = document.createElement("div");
@@ -3129,6 +3193,7 @@ export function initApp(): () => void {
         lastRenderPath = d.dataset.path || null;
       });
     }
+
 
     /* ---------- studio tools: 3D plan and walkthrough video ---------- */
     function toolOverlay(steps) {
@@ -3414,6 +3479,15 @@ export function initApp(): () => void {
 
     let STUDIO_CTX = { room: null, address: null, project: null };
 
+    /* Renders produced in this session appear in Version History right away,
+       before any save round-trip completes. */
+    const SESSION_VERSIONS = [];
+    function activeStudioRoom() {
+      const setupRoom = ((document.getElementById("fRoom") || {}).value || "").trim();
+      return (STUDIO_CTX && STUDIO_CTX.room) || setupRoom || "";
+    }
+
+
     async function paintVersions() {
       const el = document.getElementById("verList");
       if (!el) return;
@@ -3441,7 +3515,11 @@ export function initApp(): () => void {
       if (sub) sub.textContent = activeRoom || "This Design";
 
       list = list.slice(0, 6);
-      if (!list.length) {
+      const norm2 = norm;
+      const session = SESSION_VERSIONS.filter(
+        (v) => !activeRoom || !v.room || norm2(v.room) === norm2(activeRoom),
+      ).slice(0, 6);
+      if (!list.length && !session.length) {
         el.innerHTML =
           '<div style="padding:6px 0"><b style="font-size:.85rem">No Versions Yet</b>' +
           '<p style="font-size:.78rem;color:var(--mute-2);margin-top:4px">Your generated and approved versions will appear here.</p></div>';
@@ -3454,20 +3532,42 @@ export function initApp(): () => void {
         if (s < 172800) return Math.round(s / 3600) + "h ago";
         return Math.round(s / 86400) + "d ago";
       };
-      el.innerHTML = list
-        .map((v, i) => {
-          const st =
-            v.status === "approved"
-              ? ["p-ok", "Live"]
-              : v.status === "review"
-                ? ["p-amb", "Review"]
-                : ["p-gray", i === 0 ? "Latest" : "Past"];
-          const lab =
-            (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
-          return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v.room_name} v${v.version_no || 1}</b><span>${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
-        })
+      const sessionHTML = session
+        .map(
+          (v, i) =>
+            `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, v.label + " render")}</span>` +
+            `<span class="rowt"><b>${v.label}</b><span>${ago(new Date(v.at).toISOString())}</span></span>` +
+            `<span class="pill ${i === 0 ? "p-ok" : "p-gray"}">${i === 0 ? "Latest" : "Past"}</span></button>`,
+        )
         .join("");
+      el.innerHTML =
+        sessionHTML +
+        list
+          .map((v, i) => {
+            const st =
+              v.status === "approved"
+                ? ["p-ok", "Live"]
+                : v.status === "review"
+                  ? ["p-amb", "Review"]
+                  : ["p-gray", !session.length && i === 0 ? "Latest" : "Past"];
+            const lab =
+              (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
+            return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v.room_name} v${v.version_no || 1}</b><span>${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
+          })
+          .join("");
+      el.querySelectorAll(".ver-row").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const v = session[+btn.dataset.vi];
+          if (!v || !cAfter) return;
+          el.querySelectorAll(".ver-row").forEach((x) => x.classList.remove("on"));
+          btn.classList.add("on");
+          cAfter.innerHTML = photo(v.src, v.label + " render");
+          lastRender = v.src;
+          lastRenderPath = v.path || null;
+        });
+      });
     }
+
 
     paintVersions();
     window.addEventListener("rd:saved", paintVersions);
