@@ -229,6 +229,6 @@ export function saveDirections(store: DirectionStore): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(store || emptyStore()));
   } catch (_) {
-    /* storage may be blocked; the in-memory选 selection still works this session */
+    /* storage may be blocked; the in-memory selection still works this session */
   }
 }
