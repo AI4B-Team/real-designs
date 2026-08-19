@@ -123,13 +123,17 @@ export async function runBulkDesign(items, direction, hooks = {}) {
         const image = await toDataUrl(await sourceUrl(it));
         /* Project default unless this photo carries its own override. */
         const ratio = effectiveRatio(direction.outputRatio, it.ratio);
+        const space = it.room ? roomSpace(it.room) : "interior";
+        /* A space the shared style cannot carry uses the style the user picked
+           for that group, so an exterior never gets an interior-only look. */
+        const perSpace = (direction.styleBySpace || {})[space];
         const r = await renderDesign({
           data: {
             image,
             room_type: it.room || "living room",
-            direction: direction.direction,
-            style_id: direction.styleId || null,
-            project_type: PROJECT_TYPE[it.room ? roomSpace(it.room) : "interior"] || "interior",
+            direction: (perSpace && perSpace.name) || direction.direction,
+            style_id: (perSpace && perSpace.id) || direction.styleId || null,
+            project_type: PROJECT_TYPE[space] || "interior",
             intensity: direction.intensity,
             grade: direction.grade,
             notes: direction.notes || null,
