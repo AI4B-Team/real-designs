@@ -77,10 +77,13 @@ function menuHtml(groups) {
           (it) => `<button type="button" role="menuitem" class="bx-cmenu-i${it.danger ? " bad" : ""}"
         data-cmact="${esc(it.action)}"${it.disabled ? ' aria-disabled="true" disabled' : ""}${
           it.tip ? ` title="${esc(it.tip)}"` : ""
-        }${it.danger ? ' aria-describedby="bx-cmenu-warn"' : ""}>
+        }${it.children && it.children.length ? ' aria-haspopup="menu"' : ""}${
+          it.danger ? ' aria-describedby="bx-cmenu-warn"' : ""
+        }>
         <i data-lucide="${esc(it.icon || "circle")}"></i><span>${esc(it.label)}</span>${
           it.note ? `<em>${esc(it.note)}</em>` : ""
-        }</button>`,
+        }${it.children && it.children.length ? '<i class="bx-cmenu-more" data-lucide="chevron-right"></i>' : ""}</button>`,
+
         )
         .join("")}</div>`;
     })
