@@ -33,7 +33,7 @@ export const MORE_OUTPUT_RATIOS: RatioOption[] = [
 export const OUTPUT_RATIOS: RatioOption[] = [...PRIMARY_OUTPUT_RATIOS, ...MORE_OUTPUT_RATIOS];
 
 /** New photo projects open in Portrait, the shape most listings publish in. */
-export const DEFAULT_OUTPUT_RATIO: OutputRatio = "9:16";
+export const DEFAULT_OUTPUT_RATIO: OutputRatio = "16:9";
 
 export function isOutputRatio(v: unknown): v is OutputRatio {
   return OUTPUT_RATIOS.some((r) => r.id === v);

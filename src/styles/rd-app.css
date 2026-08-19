@@ -6152,6 +6152,7 @@
   border-radius: 999px;
   padding: 1px 7px;
 }
+.rd-app .side.rail .nav-soon,
 .rd-app .side.mini .nav-soon,
 .rd-app .app.sidemin .nav-soon,
 .rd-app .sidemin .nav-soon {
@@ -8035,7 +8036,10 @@
   padding: 1px 6px;
   white-space: nowrap;
 }
-.side.rail .nav-i .rd-beta-soon {
+.side.rail .nav-i .rd-beta-soon,
+.side.mini .nav-i .rd-beta-soon,
+.app.sidemin .nav-i .rd-beta-soon,
+.sidemin .nav-i .rd-beta-soon {
   display: none;
 }
 .fb-ctx {

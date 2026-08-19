@@ -94,6 +94,9 @@ function labelNav() {
     btn.querySelector(".rd-beta-soon")?.remove();
     btn.dataset["rdUnavailable"] = f.available ? "" : f.key;
     if (f.available) continue;
+    /* Another system (Budget gating, integration state) may already label this
+       row. One row states its status once — never "Coming Soon Coming Soon". */
+    if (btn.querySelector(".nav-soon")) continue;
     const pill = document.createElement("span");
     pill.className = "rd-beta-soon";
     pill.textContent = "Coming Soon";
