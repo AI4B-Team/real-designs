@@ -207,11 +207,13 @@ const styleSets={
   exterior:['Modern Farmhouse','Craftsman','Painted Brick','Florida Ranch','Coastal','Surprise Me'],
   landscape:['Florida Tropical','Low Maintenance','Resort','Modern Hardscape','Cottage Garden','Surprise Me']
 };
+/* Design Intensity, not cost. Budgets are Coming Soon, so the marketing hero
+   never shows dollar figures or estimated ranges. */
 const budgets=[
-  {lo:3200,hi:5000,fit:'Well Within Target'},
-  {lo:11400,hi:14900,fit:'Within Target'},
-  {lo:26000,hi:35000,fit:'Within Target'},
-  {lo:41000,hi:62000,fit:'Above Band, Review'}
+  {name:'Refresh',scope:'Paint & Styling'},
+  {name:'Makeover',scope:'Furnishings & Finishes'},
+  {name:'Renovation',scope:'Cabinetry & Surfaces'},
+  {name:'Reimagine',scope:'Layout Changes'}
 ];
 let sp='interior',bi=1,st='Warm Minimal';
 let PREFILL=(new URLSearchParams(location.search)).get('direction');
@@ -236,12 +238,10 @@ document.querySelectorAll('#spaceChips .chip').forEach(c=>c.addEventListener('cl
   document.querySelectorAll('#spaceChips .chip').forEach(x=>x.classList.remove('on'));
   c.classList.add('on');sp=c.dataset.sp;drawStyles();
 }));
-function money(n){return '$'+n.toLocaleString()}
 function setBudget(i){
   bi=i;const b=budgets[i];
-  const txt=`${money(b.lo)}–${money(b.hi)}`;
   const model={primaryLabel:'Room',primaryValue:'Living Room',
-    metrics:[metric('Planning Range',txt,'neutral'),metric('Budget Fit',b.fit),metric('Structure','No Changes','positive')]};
+    metrics:[metric('Design Intensity',b.name,'neutral'),metric('What Changes',b.scope),metric('Structure','No Changes','positive')]};
   const bs=document.getElementById('builderSummary');
   if(bs)bs.innerHTML=summaryHTML({...model,compact:true,flush:true});
   // hero panel mirrors the builder so the two never disagree
@@ -252,7 +252,6 @@ function setBudget(i){
 document.querySelectorAll('#budgetChips .chip').forEach(c=>c.addEventListener('click',()=>{
   document.querySelectorAll('#budgetChips .chip').forEach(x=>x.classList.remove('on'));
   c.classList.add('on');budgetTouched=true;
-  const hl=document.getElementById('heroEstLab');if(hl)hl.textContent='Estimated Planning Range';
   setBudget(+c.dataset.b);
 }));
 function unlock(){
@@ -263,7 +262,7 @@ document.querySelectorAll('.samp').forEach(s=>s.addEventListener('click',()=>{
   document.querySelectorAll('.samp').forEach(x=>x.classList.remove('on'));s.classList.add('on');UPLOAD=null;unlock();
 }));
 
-const steps=['Reading room geometry','Locking walls and windows','Fitting the design to your budget','Selecting materials and finishes','Rendering at full resolution','Pricing the scope'];
+const steps=['Reading room geometry','Locking walls and windows','Matching the design intensity','Selecting materials and finishes','Rendering at full resolution','Finishing the details'];
 const OUTPAL=['warm','coastal','farm','green'];
 let busy=false;
 
@@ -471,13 +470,13 @@ document.getElementById('styleGrid').innerHTML=SL.slice(0,4).map(([n,src],i)=>`
 /* ---------- pricing ---------- */
 const P=[
 {n:'Free',mo:0,yr:0,who:'Anyone. No card to start.',cta:'Start Free',pop:false,note:'No card to start · Cancel anytime',
- f:['<b>5 credits a day</b>','No credit card to start','Interiors, exteriors and landscapes','Full style library, Reality Lock, keep/replace/remove controls','Virtual staging, declutter, material swap, style transfer','Typical budget range by room type and finish level','Watermarked, standard resolution'],
- x:['Clean HD download','Scope and budget from YOUR photo','Commercial license']},
+ f:['<b>5 credits a day</b>','No credit card to start','Interiors, exteriors and landscapes','Full style library, Reality Lock, keep/replace/remove controls','Virtual staging, declutter, material swap, style transfer','Watermarked, standard resolution'],
+ x:['Clean HD download','Commercial license','Batch listing staging']},
 {n:'Starter',mo:15,yr:7,who:'One property. Personal projects.',cta:'Choose Starter',pop:false,note:'30 day money back · Cancel anytime',
- f:['<b>200 credits a month</b>','Clean HD, no watermark','Personal use license','Scope and budget from your photo','Design DNA on one property','Shopping list with live pricing','Before and after presentation'],
- x:['Commercial license','ARV impact range','Batch listing staging']},
+ f:['<b>200 credits a month</b>','Clean HD, no watermark','Personal use license','Design DNA on one property','Shopping list with live pricing','Before and after presentation'],
+ x:['Commercial license','Batch listing staging']},
 {n:'Pro',mo:25,yr:10,who:'Investors, flippers, contractors and agents.',cta:'Choose Pro',pop:true,note:'30 day money back · Cancel anytime',
- f:['<b>2,000 credits a month</b>','Everything in Starter','Commercial license','Contractor brief PDF','ARV impact range','Rental grade vs retail grade','Batch listing staging with MLS disclosure','Design DNA across unlimited properties','5 team seats'],
+ f:['<b>2,000 credits a month</b>','Everything in Starter','Commercial license','Rental grade vs retail grade','Batch listing staging with MLS disclosure','Design DNA across unlimited properties','5 team seats'],
  x:['Video walkthroughs and 3D plans','Client approval portal']},
 {n:'Studio',mo:35,yr:13,who:'Design teams and brokerage offices.',cta:'Choose Studio',pop:false,note:'30 day money back · Cancel anytime',
  f:['<b>4,000 credits a month</b>','Everything in Pro','Video walkthroughs','2D to 3D floor plans','Client approval portal','Brand presets and white label decks','Multi angle consistency','Priority render queue','<b>Unlimited team seats</b>'],x:[]}];
