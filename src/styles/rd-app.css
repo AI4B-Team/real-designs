@@ -7585,6 +7585,113 @@
   }
 }
 
+/* ---------- generated result viewer (Studio Canvas) ----------
+   The comparison viewer is the largest element on the Canvas and always keeps
+   the selected output shape, so a portrait render is never squeezed into a
+   banner. Before and After share one container, so their geometry matches. */
+.rd-app #canvas {
+  aspect-ratio: var(--rd-canvas-ar, 16 / 9);
+}
+@media (min-width: 1100px) {
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > #canvas {
+    flex: 1 1 auto;
+    min-height: 260px;
+    aspect-ratio: var(--rd-canvas-ar, 16 / 9);
+    width: auto;
+    max-width: 100%;
+    align-self: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+.rd-app #canvas .layer img,
+.rd-app #canvas .layer > * {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+
+/* Compact, collapsible generation details beneath the viewer. */
+.rd-app .gen-details {
+  border: 1px solid #2e2e33;
+  border-radius: 8px;
+  background: #1f1f23;
+  margin: 10px 24px 0;
+}
+.rd-app .gen-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  list-style: none;
+  font-size: 0.78rem;
+  color: #fff;
+}
+.rd-app .gen-details > summary::-webkit-details-marker {
+  display: none;
+}
+.rd-app .gen-details .gd-k {
+  font-weight: 600;
+}
+.rd-app .gen-details .gd-sum {
+  color: #9a9aa2;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rd-app .gen-details > summary svg {
+  width: 15px;
+  height: 15px;
+  color: #9a9aa2;
+  flex: none;
+  transition: transform 0.15s ease;
+}
+.rd-app .gen-details[open] > summary svg {
+  transform: rotate(180deg);
+}
+.rd-app .gen-details .gd-body {
+  padding: 0 12px 12px;
+}
+
+/* Version History rows for renders made in this session. */
+.rd-app .ver-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  cursor: pointer;
+}
+.rd-app .ver-row .ver-th {
+  width: 46px;
+  height: 34px;
+  flex: none;
+  border-radius: 5px;
+  overflow: hidden;
+  background: #efede8;
+}
+.rd-app .ver-row .ver-th img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.rd-app .ver-row .rowt {
+  flex: 1;
+  min-width: 0;
+}
+.rd-app .ver-row.on {
+  background: rgba(204, 0, 0, 0.06);
+}
+
+
 /* Budget usage column: hidden entirely while Budgets are gated off (Coming Soon). */
 .rd-app table.no-budgets-col th:nth-child(4),
 .rd-app table.no-budgets-col td:nth-child(4) {
