@@ -2280,12 +2280,15 @@ function closePopover() {
   }
 }
 
-function openRoomPopover(anchor, onPick, key) {
+function openRoomPopover(anchor, onPick, key, scopeHint) {
   closePopover();
   if (anchor && anchor.setAttribute) anchor.setAttribute("aria-expanded", "true");
   popover = document.createElement("div");
   popover.className = "rds-pop";
-  popover.innerHTML = `<div class="rds-pop-s"><i data-lucide="search"></i><input id="rdsSearch" placeholder="Search Rooms" aria-label="Search rooms"></div><div class="rds-pop-l" id="rdsList"></div>`;
+  popover.innerHTML =
+    (scopeHint ? `<div class="rds-pop-scope">${esc(scopeHint)}</div>` : "") +
+    `<div class="rds-pop-s"><i data-lucide="search"></i><input id="rdsSearch" placeholder="Search Rooms" aria-label="Search rooms"></div><div class="rds-pop-l" id="rdsList"></div>`;
+
   document.body.appendChild(popover);
   const r = anchor.getBoundingClientRect();
   const top = Math.min(r.bottom + 6, window.innerHeight - 340);
