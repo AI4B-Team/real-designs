@@ -94,12 +94,36 @@ type El = HTMLElement & { __rdPhotoSeq?: number; __rdPhotoTries?: number };
 
 let seq = 0;
 
+/** Intentional loading state while a URL is being resolved. */
+function loadingOn(el: El) {
+  if (el.classList.contains("rd-img-fail")) return;
+  el.classList.add("rd-img-load");
+}
+function loadingOff(el: El) {
+  el.classList.remove("rd-img-load");
+}
+
+/**
+ * Ask the surrounding builder to replace this photo. Card modules listen for
+ * the event and open their own replace flow; the card itself is untouched.
+ */
+function requestReplace(el: El, path: string) {
+  const card = el.closest<HTMLElement>("[data-k],[data-key],[data-asset]");
+  const key =
+    card?.getAttribute("data-k") ||
+    card?.getAttribute("data-key") ||
+    card?.getAttribute("data-asset") ||
+    "";
+  el.dispatchEvent(new CustomEvent("rd-photo-replace", { bubbles: true, detail: { path, key } }));
+}
+
 function failState(el: El, path: string) {
+  loadingOff(el);
   el.classList.add("rd-img-fail");
   if (!el.querySelector(".rd-img-fail-b")) {
     el.insertAdjacentHTML(
       "beforeend",
-      `<span class="rd-img-fail-b" role="status">Image unavailable · <button type="button" data-photo-retry>Retry</button></span>`,
+      `<span class="rd-img-fail-b" role="status">Photo couldn’t be loaded · <button type="button" data-photo-retry>Retry</button> · <button type="button" data-photo-replace>Replace Photo</button></span>`,
     );
     el.querySelector("[data-photo-retry]")?.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -109,9 +133,15 @@ function failState(el: El, path: string) {
       el.__rdPhotoTries = 0;
       void paintPhotoEl(el, path, true);
     });
+    el.querySelector("[data-photo-replace]")?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      requestReplace(el, path);
+    });
   }
   log("unavailable", { path });
 }
+
 
 /**
  * Paint one element from a storage path. The element keeps whatever it is
