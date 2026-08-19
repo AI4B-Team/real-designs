@@ -384,7 +384,7 @@ export function openBulkDesign(opts) {
 
     node.querySelectorAll("[data-close]").forEach((b) => (b.onclick = close));
     node.querySelector('[data-mfa="cancel"]').onclick = close;
-    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve").forEach(
+    node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach(
       (el) =>
         (el.onchange = () => {
           readForm();
