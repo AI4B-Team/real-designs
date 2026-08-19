@@ -1505,6 +1505,11 @@ function startBulkDesign(list, reuseDirection) {
     items,
     /* Read live, so the confirmation summary always shows what will render. */
     ratio: () => normalizeOutputRatio(S.outputRatio),
+    /* Only what the user chose in this project, never a demo default. */
+    settings: S.bulkSettings || null,
+    onSettingsChange: (s) => {
+      S.bulkSettings = s;
+    },
     onEdit: () => {
       S.step = "review";
       render();
@@ -1513,6 +1518,7 @@ function startBulkDesign(list, reuseDirection) {
     onStart: (batch, direction) => runBatch(batch, direction),
   });
 }
+
 
 
 function applyRoomToSelected(anchor) {
