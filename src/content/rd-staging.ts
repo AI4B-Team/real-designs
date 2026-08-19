@@ -1069,7 +1069,7 @@ function render() {
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a">
             <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Set Design Direction · ${sel}</button>
-            <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room Type</button>
+            <button class="btn btn-ghost btn-sm" id="rdsSetRoom"${sel > 0 ? "" : " disabled"} title="${sel > 1 ? `Applies one room type to all ${sel} selected photos` : "Sets the room type for the selected photo"}"><i data-lucide="tag"></i>Set Room Type${sel > 1 ? ` · ${sel}` : ""}</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
               <div class="rv-more-m">
                 <button data-act="all">Select All</button>
@@ -1160,8 +1160,17 @@ function syncSelection() {
   S.items.forEach(syncCard);
   const sel = selectedCount();
   const set = wrap.querySelector("#rdsSetRoom");
-  if (set) set.disabled = !sel;
-  /* Bulk design acts on the photos the user selected. */
+  if (set) {
+    /* The label carries its own scope: bulk edits always show the count. */
+    set.disabled = !sel;
+    const lab = set.lastChild;
+    if (lab && lab.nodeType === 3) lab.textContent = `Set Room Type${sel > 1 ? ` · ${sel}` : ""}`;
+    set.title =
+      sel > 1
+        ? `Applies one room type to all ${sel} selected photos`
+        : "Sets the room type for the selected photo";
+  }
+
   const bulk = wrap.querySelector("#rdsBulk");
   if (bulk) {
     bulk.disabled = sel < 1 || S.busy;
@@ -1772,16 +1781,38 @@ function startBulkDesign(list, reuseDirection) {
 function applyRoomToSelected(anchor) {
   const sel = S.items.filter((i) => i.selected);
   if (!sel.length || !anchor) return;
-  openRoomPopover(anchor, (label) => {
-    sel.forEach((i) => {
-      i.room = label;
-      i.roomSource = "manual";
-    });
-    saveDraft();
-    sel.forEach(patchCard);
-    syncSelection();
-  });
+  openRoomPopover(
+    anchor,
+    (label) => {
+      /* Several photos change at once, so the user confirms the scope first. */
+      if (
+        sel.length > 1 &&
+        !window.confirm(`Apply “${label}” to ${sel.length} selected photos?`)
+      )
+        return;
+      sel.forEach((i) => {
+        i.room = label;
+        i.roomSource = "manual";
+      });
+      saveDraft();
+      sel.forEach(patchCard);
+      syncSelection();
+      try {
+        window.rdToast &&
+          window.rdToast(
+            sel.length > 1
+              ? `${label} Applied To ${sel.length} Photos`
+              : `${label} Applied To 1 Photo`,
+          );
+      } catch (_) {}
+    },
+    null,
+    sel.length > 1
+      ? `Applies to ${sel.length} selected photos`
+      : "Applies to the selected photo",
+  );
 }
+
 
 function removeOne(key) {
   const it = S.items.find((i) => i.key === key);
@@ -2249,12 +2280,15 @@ function closePopover() {
   }
 }
 
-function openRoomPopover(anchor, onPick, key) {
+function openRoomPopover(anchor, onPick, key, scopeHint) {
   closePopover();
   if (anchor && anchor.setAttribute) anchor.setAttribute("aria-expanded", "true");
   popover = document.createElement("div");
   popover.className = "rds-pop";
-  popover.innerHTML = `<div class="rds-pop-s"><i data-lucide="search"></i><input id="rdsSearch" placeholder="Search Rooms" aria-label="Search rooms"></div><div class="rds-pop-l" id="rdsList"></div>`;
+  popover.innerHTML =
+    (scopeHint ? `<div class="rds-pop-scope">${esc(scopeHint)}</div>` : "") +
+    `<div class="rds-pop-s"><i data-lucide="search"></i><input id="rdsSearch" placeholder="Search Rooms" aria-label="Search rooms"></div><div class="rds-pop-l" id="rdsList"></div>`;
+
   document.body.appendChild(popover);
   const r = anchor.getBoundingClientRect();
   const top = Math.min(r.bottom + 6, window.innerHeight - 340);
