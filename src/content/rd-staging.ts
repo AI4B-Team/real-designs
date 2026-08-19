@@ -230,6 +230,7 @@ function draftPayload() {
 function setSaveState(state) {
   if (!S) return;
   S.saveState = state;
+  paintCanvasSave();
   S.addressSaveState = state === "saving" ? "saving" : state === "error" ? "error" : state === "saved" ? "saved" : "";
   patchStatus();
 }
@@ -2078,6 +2079,89 @@ function mountStrip() {
 
   drawStrip();
   window.addEventListener("hashchange", stripGuard);
+}
+
+/** Mirror the autosave state next to the canvas header. */
+function paintCanvasSave() {
+  const node = document.getElementById("rdsCanvasSave");
+  if (!node || !S) return;
+  const st = S.saveState;
+  const label = st === "saving" ? "Saving…" : st === "error" ? "Save Failed — Retry" : st === "saved" ? "Saved" : "";
+  node.textContent = label;
+  node.className = "rds-chead-save" + (st === "error" ? " bad" : st === "saved" ? " ok" : "");
+  node.style.display = label ? "" : "none";
+  (node as HTMLElement).onclick = st === "error" ? () => retryDraftSave() : null;
+}
+
+/* The canvas overflow menu: anchored under its trigger, right aligned, and
+   dismissed by outside click, Escape, a route change or any chosen action. */
+function bindCanvasMenu(head, backToPhotos) {
+  const trigger = head.querySelector("#rdsCanvasMore") as HTMLButtonElement | null;
+  const menu = head.querySelector("#rdsCanvasMenu") as HTMLElement | null;
+  if (!trigger || !menu) return;
+  const close = (focus?: boolean) => {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    if (focus) trigger.focus();
+  };
+  const onDoc = (e) => { if (!head.contains(e.target)) close(); };
+  const onKey = (e) => { if (e.key === "Escape") close(true); };
+  trigger.onclick = (e) => {
+    e.stopPropagation();
+    const open = menu.hidden;
+    menu.hidden = !open;
+    trigger.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open) {
+      document.addEventListener("click", onDoc);
+      document.addEventListener("keydown", onKey);
+      window.addEventListener("hashchange", () => close(), { once: true });
+    } else {
+      document.removeEventListener("click", onDoc);
+      document.removeEventListener("keydown", onKey);
+    }
+  };
+  const ret = head.querySelector("#rdsClose") as HTMLButtonElement | null;
+  if (ret) ret.onclick = () => { close(); backToPhotos(); };
+  const reset = head.querySelector("#rdsResetDesign") as HTMLButtonElement | null;
+  if (reset) reset.onclick = () => { close(true); openResetDesign(); };
+}
+
+/** Reset only the photo currently on the canvas — never the whole project. */
+function openResetDesign() {
+  const host = document.querySelector(".rd-app") || document.body;
+  let m = document.getElementById("rdsResetModal");
+  if (m) m.remove();
+  m = document.createElement("div");
+  m.id = "rdsResetModal";
+  m.className = "up-modal on";
+  m.innerHTML = `<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">
+    <h3>Reset This Design?</h3>
+    <p>This removes the current photo’s unsaved design settings and generated drafts. The original uploaded photo and the other photos will remain unchanged.</p>
+    <div class="up-act">
+      <button class="btn btn-ghost" data-close>Cancel</button>
+      <button class="btn btn-danger" id="rdsResetGo"><i data-lucide="rotate-ccw"></i>Reset Design</button>
+    </div></div>`;
+  host.appendChild(m);
+  const shut = () => m && m.remove();
+  m.addEventListener("click", (e: any) => { if (e.target.closest && e.target.closest("[data-close]")) shut(); });
+  const go = m.querySelector("#rdsResetGo") as HTMLButtonElement | null;
+  if (go)
+    go.onclick = () => {
+      shut();
+      try { (window as any).rdResetCanvasDesign && (window as any).rdResetCanvasDesign(); } catch (_) {}
+      const cur = S && S.items.find((i) => i.key === S.current);
+      if (cur) {
+        cur.state = "none";
+        cur.done = false;
+        cur.err = "";
+        cur.resultUrl = null;
+        cur.resultPath = null;
+        saveDraft();
+        drawStrip();
+      }
+    };
+  paint();
 }
 
 /** Navigate through the app shell; a bare hash write is the fallback only. */

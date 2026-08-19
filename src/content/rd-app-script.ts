@@ -1641,6 +1641,7 @@ document.getElementById('clearLocks')?.addEventListener('click',confirmClearSetu
 document.getElementById('v-studio')?.addEventListener('input',paintClearBtn);
 document.getElementById('v-studio')?.addEventListener('click',()=>setTimeout(paintClearBtn,0));
 window.rdPaintClearBtn=paintClearBtn;
+window.rdResetCanvasDesign=resetCanvasSetup;
 paintClearBtn();
 (function(){
   const btn=document.getElementById('newDesignBtn'), menu=document.getElementById('createMenu');
