@@ -3414,7 +3414,7 @@ export function initApp(): () => void {
     function showToolError(msg) {
       const i = document.getElementById("toolInfo");
       if (!i) {
-        alert(msg);
+        window.rdToast && window.rdToast(msg);
         return;
       }
       document.getElementById("toolInfoName").textContent = "That Did Not Finish";
@@ -4053,7 +4053,8 @@ ${d.sample ? '<span class="pill dg-sample">Sample</span>' : ""}</div>
           await deleteVersions({ data: { version_ids: real.map((d) => d.version_id) } });
           window.dispatchEvent(new Event("rd:saved"));
         } catch (e) {
-          window.alert("Could not delete: " + (e && e.message ? e.message : "try again"));
+          console.error("[designs] bulk delete failed", e);
+          window.rdToast && window.rdToast("We Couldn't Delete Those Designs. Please Try Again.");
         }
       }
       paintDesigns();
@@ -4096,7 +4097,8 @@ ${d.sample ? '<span class="pill dg-sample">Sample</span>' : ""}</div>
           });
           window.dispatchEvent(new Event("rd:saved"));
         } catch (e) {
-          window.alert("Could not update: " + (e && e.message ? e.message : "try again"));
+          console.error("[designs] bulk status update failed", e);
+          window.rdToast && window.rdToast("We Couldn't Update Those Designs. Please Try Again.");
         }
       }
       DESIGN_SEL = [];
@@ -9284,7 +9286,7 @@ ${picks
       const rows = document.getElementById("planRows");
       if (!rows || !e.target.closest) return;
       const t = e.target.closest(
-        "#planRows [data-plan],#planCancel,#planResume,#planWithdraw",
+        "#p-billing [data-plan],#p-billing #planCancel,#p-billing #planResume,#p-billing #planWithdraw",
       );
       if (!t) return;
       t.disabled = true;
