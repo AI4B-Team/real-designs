@@ -39,6 +39,7 @@ import { modalFooterHtml } from "@/lib/modal-footer";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import {
   cardMenuButtonHtml,
+  runCardAction,
   registerCardMenu,
   confirmDialog,
   detailsDialog,
@@ -1629,6 +1630,18 @@ function dropItem(key) {
   saveDraft();
   render();
   return { gone, i };
+}
+
+/* A card whose image cannot be resolved offers "Replace Photo"; route that
+   straight into the existing replace flow. */
+if (typeof document !== "undefined" && !window.__rdPhotoReplaceBound) {
+  window.__rdPhotoReplaceBound = true;
+  document.addEventListener("rd-photo-replace", (e) => {
+    const key = e?.detail?.key;
+    if (!key) return;
+    const flow = e.target?.closest?.(".rv-tile") && document.getElementById("v-staging")?.contains(e.target) ? "photo" : null;
+    runCardAction(flow || (document.getElementById("v-staging") ? "photo" : "video"), "replace", key);
+  });
 }
 
 registerCardMenu("photo", {
