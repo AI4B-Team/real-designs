@@ -938,7 +938,7 @@ function render() {
         </div>
         ${gridHtml()}
         <div class="rv-gridfoot">
-          <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "room" : "rooms"} selected</span></div>
+          <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "photo" : "photos"} selected</span></div>
           <div class="rv-gridfoot-a">
             <button class="btn btn-ghost" id="rdsBack">Back</button>
             <button class="btn btn-primary" id="rdsGo">Continue</button>
