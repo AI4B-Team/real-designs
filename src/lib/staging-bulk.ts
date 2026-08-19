@@ -169,10 +169,30 @@ export async function runBulkDesign(items, direction, hooks = {}) {
 
 /* ----------------------------------------------------------------- modal */
 
-function styleOptions(selected) {
-  return STYLES.map(
-    (s) => `<option value="${esc(s.id)}"${s.id === selected ? " selected" : ""}>${esc(s.displayName)}</option>`,
-  ).join("");
+/**
+ * Style options for the shared picker. Nothing is preselected: the first entry
+ * is a placeholder so the modal never invents a creative choice for the user.
+ * When `spaces` is given, only styles that can carry every selected space are
+ * offered, so a mixed interior/exterior batch cannot start out incompatible.
+ */
+function styleOptions(selected, spaces) {
+  const list = STYLES.filter(
+    (s) => s.isActive !== false && (!spaces || spaces.every((sp) => styleFitsSpace(s.id, sp))),
+  );
+  return (
+    `<option value=""${!selected ? " selected" : ""}>Choose a style</option>` +
+    list
+      .map((s) => `<option value="${esc(s.id)}"${s.id === selected ? " selected" : ""}>${esc(s.displayName)}</option>`)
+      .join("")
+  );
+}
+
+/** Placeholder-first options for a plain text choice (intensity, grade). */
+function pickOptions(list, selected, placeholder) {
+  return (
+    `<option value=""${!selected ? " selected" : ""}>${esc(placeholder)}</option>` +
+    list.map((o) => `<option${o === selected ? " selected" : ""}>${esc(o)}</option>`).join("")
+  );
 }
 
 /**
@@ -216,33 +236,39 @@ export function openBulkDesign(opts) {
     } catch (_) {}
   };
 
-  /* Field values survive every redraw (removing a photo, changing format).
-     spaceStyles holds the per-group fallback when the shared style cannot
-     legitimately carry a space (an interior-only look on an exterior). */
+  /* Nothing creative is chosen for the user. Every field starts null and only
+     holds a value the user picked, or one they picked earlier in this same
+     session (the caller hands it back through opts.settings). Preserve walls
+     is the one default, because it is a safety constraint, not a look. */
+  const saved = (opts.settings && typeof opts.settings === "object" && opts.settings) || {};
   const form = {
-    styleId: STYLES[0] && STYLES[0].id,
-    intensity: "Makeover",
-    grade: "Retail Grade",
-    preserve: true,
-    notes: "",
-    spaceStyles: {},
+    styleId: saved.styleId || null,
+    intensity: saved.intensity || null,
+    grade: saved.grade || null,
+    preserve: saved.preserve !== false,
+    notes: saved.notes || "",
+    spaceStyles: Object.assign({}, saved.spaceStyles || {}),
   };
+  /* Session memory: reopening the modal for this project restores what the
+     user actually chose, never a demo or another project's direction. */
+  const remember = () => opts.onSettingsChange && opts.onSettingsChange(Object.assign({}, form));
   const readForm = () => {
     const q = (id) => node.querySelector(id);
     if (!q("#rdsbStyle")) return;
-    form.styleId = q("#rdsbStyle").value;
-    form.intensity = q("#rdsbInt").value;
-    form.grade = q("#rdsbGrade").value;
+    form.styleId = q("#rdsbStyle").value || null;
+    form.intensity = q("#rdsbInt").value || null;
+    form.grade = q("#rdsbGrade").value || null;
     form.preserve = q("#rdsbPreserve").checked;
     form.notes = q("#rdsbNotes").value;
     node.querySelectorAll("[data-spacestyle]").forEach((el) => {
       form.spaceStyles[el.getAttribute("data-spacestyle")] = el.value || "";
     });
+    remember();
   };
 
   const styleName = () => {
     const rec = STYLES.find((s) => s.id === form.styleId);
-    return rec ? rec.displayName : "Warm Minimal";
+    return rec ? rec.displayName : "";
   };
 
   const draw = () => {
@@ -254,21 +280,45 @@ export function openBulkDesign(opts) {
     const bal = credits && !credits.unavailable ? credits.balance : null;
     const short = bal != null && cost > bal ? cost - bal : 0;
 
-    /* A group whose space the shared style cannot carry must pick its own. */
-    const unfit = groups.filter((g) => !styleFitsSpace(form.styleId, g.space) && !form.spaceStyles[g.space]);
+    /* Spaces actually present, so the shared picker only offers looks that can
+       carry all of them (a mixed batch never starts out incompatible). */
+    const spaces = groups.map((g) => g.space).filter((s) => s && s !== "unassigned");
+    const universal = STYLES.filter(
+      (s) => s.isActive !== false && spaces.every((sp) => styleFitsSpace(s.id, sp)),
+    );
+    const mixed = spaces.filter((s, i) => spaces.indexOf(s) === i).length > 1;
+    /* No universal look for this mix: fall back to a style per space group. */
+    const perSpaceMode = mixed && !universal.length;
+
+    /* Compatibility is only ever judged against a style the user chose. */
+    const unfit = form.styleId
+      ? groups.filter((g) => !styleFitsSpace(form.styleId, g.space) && !form.spaceStyles[g.space])
+      : [];
 
     let block = "";
     if (!n) block = "Add at least one photo to generate a design.";
+    else if (!form.styleId && !perSpaceMode) block = "Choose a style to continue.";
+    else if (perSpaceMode && groups.some((g) => g.space !== "unassigned" && !form.spaceStyles[g.space]))
+      block = "Choose a style for each group to continue.";
+    else if (!form.intensity) block = "Choose an intensity to continue.";
+    else if (!form.grade) block = "Choose a finish grade to continue.";
     else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
-    else if (unfit.length)
-      block = `${styleName()} does not suit ${unfit.map((g) => g.label).join(" and ")}. Choose a compatible style for that group.`;
+    else if (unfit.length) block = "STYLE_UNFIT";
     else if (short) block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
+
+    /* The incompatibility is explained once, inside the group that needs it,
+       so the bar below never repeats the same sentence. */
+    const barMsg = block === "STYLE_UNFIT" ? "" : block;
+    const hint =
+      block === "STYLE_UNFIT"
+        ? `${styleName()} does not suit ${unfit.map((g) => g.label.toLowerCase()).join(" and ")}. Choose a compatible style for that group.`
+        : block;
 
     const sum = [
       ["Photos", String(n)],
-      ["Style", styleName()],
-      ["Intensity", form.intensity],
-      ["Finish", form.grade],
+      ["Style", styleName() || "Not selected"],
+      ["Intensity", form.intensity || "Not selected"],
+      ["Finish", form.grade || "Not selected"],
       ["Output", ratioLabel(ratio)],
       ["Cost", `${cost} credit${cost === 1 ? "" : "s"}`],
     ];
@@ -280,42 +330,48 @@ export function openBulkDesign(opts) {
           <p>Choose one design direction for the selected photos. We’ll adapt it to each room and space.</p>
         </div>
         <div class="rdsb-body">
-          <div class="rdsb-f">
+          ${
+            perSpaceMode
+              ? `<p class="rdsb-mixed">Your selection contains interior and exterior photos, so you can choose a direction for each.</p>`
+              : `<div class="rdsb-f">
             <label for="rdsbStyle">Style</label>
-            <select id="rdsbStyle">${styleOptions(form.styleId)}</select>
-          </div>
+            <select id="rdsbStyle">${styleOptions(form.styleId, spaces)}</select>
+            ${mixed ? `<em class="rdsb-help">Adapted to each space — modern finishes indoors, modern materials and landscaping outdoors.</em>` : ""}
+          </div>`
+          }
+          ${perSpaceMode ? `<select id="rdsbStyle" class="rdsb-hidden" aria-hidden="true" tabindex="-1"><option value=""></option></select>` : ""}
           <div class="rdsb-row">
             <div class="rdsb-f"><label for="rdsbInt">Intensity</label>
-              <select id="rdsbInt">${["Refresh", "Makeover", "Full Remodel"]
-                .map((o) => `<option${o === form.intensity ? " selected" : ""}>${o}</option>`)
-                .join("")}</select></div>
+              <select id="rdsbInt">${pickOptions(["Refresh", "Makeover", "Full Remodel"], form.intensity, "Choose intensity")}</select></div>
             <div class="rdsb-f"><label for="rdsbGrade">Finish Grade</label>
-              <select id="rdsbGrade">${["Rental Grade", "Retail Grade", "Luxury Grade"]
-                .map((o) => `<option${o === form.grade ? " selected" : ""}>${o}</option>`)
-                .join("")}</select></div>
+              <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select></div>
           </div>
           <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve"${form.preserve ? " checked" : ""}> Keep walls, windows, and layout exactly as they are</label>
           <div class="rdsb-f"><label for="rdsbNotes">Shared instructions <em>Optional</em></label>
-            <textarea id="rdsbNotes" rows="2" placeholder="Light oak floors, warm neutral palette, no bold colors">${esc(form.notes)}</textarea></div>
+            <textarea id="rdsbNotes" rows="2" placeholder="Example: Light oak floors, warm neutral palette, no bold colors">${esc(form.notes)}</textarea></div>
 
           <div class="rdsb-groups">
             ${groups
               .map((g) => {
-                const fits = styleFitsSpace(form.styleId, g.space);
+                /* Only a style the user actually chose can be "unfit". */
+                const fits = !form.styleId || styleFitsSpace(form.styleId, g.space);
+                const needsOwn = perSpaceMode && g.space !== "unassigned";
                 const pick = form.spaceStyles[g.space] || "";
                 const bad = g.space === "unassigned" || (!fits && !pick);
                 return `<div class="rdsb-g${bad ? " warn" : ""}">
                 <b>${esc(g.label)} · ${g.items.length}</b>
                 <span>${esc(
-                  fits
-                    ? groupNote(g.space)
-                    : `${styleName()} is not suited to ${g.label.toLowerCase()} photos. Choose a compatible style for this group.`,
+                  needsOwn
+                    ? `Choose the direction for these ${g.label.toLowerCase()} photos.`
+                    : fits
+                      ? groupNote(g.space)
+                      : `${styleName()} is not suited to ${g.label.toLowerCase()} photos. Choose a compatible style for this group.`,
                 )}</span>
                 ${
-                  fits
+                  fits && !needsOwn
                     ? ""
                     : `<select class="rdsb-gstyle" data-spacestyle="${esc(g.space)}" aria-label="Style for ${esc(g.label)} photos">
-                        <option value="">Choose A Compatible Style…</option>
+                        <option value="">${needsOwn ? esc(`Choose ${g.label} Style…`) : "Choose A Compatible Style…"}</option>
                         ${stylesForSpace(g.space)
                           .map(
                             (s) =>
@@ -337,6 +393,7 @@ export function openBulkDesign(opts) {
               })
               .join("")}
           </div>
+
 
           ${
             missing
@@ -362,8 +419,8 @@ export function openBulkDesign(opts) {
           </div>
         </div>
         ${
-          block
-            ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(block)}</p>${
+          barMsg
+            ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(barMsg)}</p>${
                 short ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>` : ""
               }</div>`
             : ""
@@ -375,7 +432,7 @@ export function openBulkDesign(opts) {
             label: `Generate ${n} Design${n === 1 ? "" : "s"} · ${cost} Credit${cost === 1 ? "" : "s"}`,
             value: "go",
             disabled: !!block || submitted,
-            hint: block || "",
+            hint: hint || "",
             loadingLabel: `Generating ${n} Design${n === 1 ? "" : "s"}…`,
           },
         })}
@@ -443,7 +500,7 @@ export function openBulkDesign(opts) {
       });
       const direction = {
         styleId: rec ? rec.id : null,
-        direction: rec ? rec.displayName : "Warm Minimal",
+        direction: rec ? rec.displayName : null,
         styleBySpace,
         intensity: form.intensity,
         grade: form.grade,
