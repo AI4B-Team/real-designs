@@ -2340,7 +2340,7 @@ function drawStrip() {
       .map((x) => {
         const ws = workState(x);
         return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
-            <img src="${esc(x.resultUrl || x.signed || x.previewUrl)}" alt="${esc(x.name)}">
+            <img src="${esc(x.resultUrl || x.signed || x.previewUrl || "")}"${x.path && !x.resultUrl ? ` data-photo-path="${esc(x.path)}"` : ""} alt="${esc(x.name)}">
             ${ws ? `<i data-lucide="${ws.icon}"></i>` : ""}
             <em>${esc(roomLabel(x))}</em></button>`;
       })
