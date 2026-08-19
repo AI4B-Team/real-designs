@@ -891,7 +891,7 @@ function render() {
     <div class="rv-head">
       <div>
         <h2>Prepare Your Photos</h2>
-        <p>Confirm room types, choose the photos you want to design, and set the output format.</p>
+        <p>Choose the photos you want to design, confirm their room types, and select an output format.</p>
       </div>
       <div class="rv-head-tools">
         ${formatSelectorHtml({
@@ -924,7 +924,7 @@ function render() {
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a">
-            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Design ${sel} ${sel === 1 ? "Photo" : "Photos"}</button>
+            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Set Design Direction · ${sel}</button>
             <button class="btn btn-ghost btn-sm" id="rdsSetRoom"><i data-lucide="tag"></i>Set Room Type</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
               <div class="rv-more-m">
@@ -1022,7 +1022,7 @@ function syncSelection() {
   if (bulk) {
     bulk.disabled = sel < 1 || S.busy;
     const lab = bulk.lastChild;
-    if (lab && lab.nodeType === 3) lab.textContent = `Design ${sel} ${sel === 1 ? "Photo" : "Photos"}`;
+    if (lab && lab.nodeType === 3) lab.textContent = `Set Design Direction · ${sel}`;
   }
   const count = wrap.querySelector("#rdsSelCount");
   if (count) count.textContent = `${sel} of ${S.items.length} selected`;

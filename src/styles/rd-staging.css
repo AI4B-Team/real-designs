@@ -497,6 +497,11 @@
 .rdsb-g { border: 1px solid var(--line, #e5e5ea); border-radius: 12px; padding: 10px; }
 .rdsb-g > b { display: block; font-size: 0.78rem; }
 .rdsb-g > span { display: block; font-size: 0.72rem; color: var(--mute-2, #6b6b74); margin-bottom: 6px; }
+.rdsb-gstyle {
+  display: block; width: 100%; margin: 0 0 8px; padding: 7px 9px;
+  border: 1px solid rgba(204, 0, 0, 0.4); border-radius: 9px; background: #fff;
+  font: inherit; font-size: 0.76rem; font-weight: 600;
+}
 .rdsb-th { display: flex; gap: 8px; flex-wrap: wrap; }
 .rdsb-t { position: relative; width: 104px; }
 .rdsb-t img { width: 104px; height: 72px; object-fit: cover; border-radius: 9px; display: block; }
