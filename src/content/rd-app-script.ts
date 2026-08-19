@@ -2359,6 +2359,8 @@ export function initApp(): () => void {
             lastRenderPath = path;
             addRenderVariant(image, label || "Concept", path);
             markStudioResult();
+            finalizeGeneratedDesign(path);
+
             if (path) {
               STUDIO_DRAFT_ID = null;
               STUDIO_DRAFT_PATH = null;
