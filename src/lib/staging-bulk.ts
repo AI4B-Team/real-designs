@@ -13,7 +13,7 @@
 import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
 import { getMyCredits } from "@/lib/credits.functions";
-import { modalFooterHtml, setModalButtonLoading } from "@/lib/modal-footer";
+import { setModalButtonLoading } from "@/lib/modal-footer";
 import { effectiveRatio, normalizeOutputRatio, ratioLabel } from "@/lib/output-ratio";
 import { openUpgrade } from "@/lib/rd-upgrade";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
@@ -238,6 +238,8 @@ export function openBulkDesign(opts) {
   const items = opts.items.slice();
   const readRatio = () => normalizeOutputRatio(typeof opts.ratio === "function" ? opts.ratio() : opts.ratio);
   let allowGeneric = false;
+  /* Advisory recommendations the user has explicitly accepted (styleId:space). */
+  const ackUnusual = {};
   let submitted = false;
   let credits = null; // { balance } once the account answers
   const returnFocus = document.activeElement;
