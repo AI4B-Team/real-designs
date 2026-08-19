@@ -208,6 +208,28 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
       return false;
     }
   } else {
+    /* Background tiles have no error event of their own, so a dead URL used
+       to leave a permanently gray card. Probe first: keep the frame that is
+       already showing, swap only on success, and otherwise re-sign once
+       before showing the shared unavailable state. */
+    const ok = await new Promise<boolean>((done) => {
+      const probe = new Image();
+      probe.onload = () => done(true);
+      probe.onerror = () => {
+        log("load failed", { path: p, url: safeUrl(url) });
+        done(false);
+      };
+      probe.src = url;
+    });
+    if (el.__rdPhotoSeq !== mine || !el.isConnected) return true;
+    if (!ok) {
+      if ((el.__rdPhotoTries || 0) < 1) {
+        el.__rdPhotoTries = 1;
+        return paintPhotoEl(el, p, true);
+      }
+      failState(el, p);
+      return false;
+    }
     el.style.backgroundImage = `url("${url}")`;
   }
   el.dataset["painted"] = "1";
