@@ -94,6 +94,7 @@ export function openSampleGallery(opts: GalleryOptions): () => void {
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
       </button>
     </div>
+    <div class="rdsg-body">
     <div class="rdsg-stage">
       <button type="button" class="rdsg-arrow rdsg-prev" aria-label="Previous Sample">
         <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
@@ -104,6 +105,7 @@ export function openSampleGallery(opts: GalleryOptions): () => void {
       </button>
     </div>
     <div class="rdsg-strip" role="tablist" aria-label="All Samples"></div>
+    </div>
     <div class="rdsg-foot">
       <button type="button" class="btn btn-ghost rdsg-cancel" data-close>Cancel</button>
       <button type="button" class="btn btn-primary rdsg-use">Use This Sample</button>
