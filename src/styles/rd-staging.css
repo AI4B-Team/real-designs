@@ -728,3 +728,26 @@
 /* One concise validation line, under the field that needs attention. */
 .rdsb-fielderr { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 0.74rem; font-weight: 600; color: #B00000; }
 .rdsb-fielderr svg { width: 13px; height: 13px; flex: none; }
+
+/* Output format, edited inline inside the design modal (never a second modal).
+   Exactly the three primary formats, always inside the modal width. */
+.rdsb-fmt {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line, #e5e5ea);
+  border-radius: 12px;
+}
+.rdsb-fmt-h { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.rdsb-fmt-h span { display: block; font-size: 0.66rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--mute-2, #6b6b74); }
+.rdsb-fmt-h b { display: block; font-size: 0.82rem; }
+.rdsb-fmt-x {
+  background: none; border: 0; padding: 0; font: inherit; font-size: 0.74rem; font-weight: 600;
+  color: #cc0000; cursor: pointer; text-decoration: underline; white-space: nowrap;
+}
+.rdsb-fmt-seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.rdsb-fmt-seg button {
+  min-width: 0; padding: 9px 8px; border: 1px solid var(--line, #e5e5ea); border-radius: 999px;
+  background: #fff; font: inherit; font-size: 0.76rem; font-weight: 600; cursor: pointer;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rdsb-fmt-seg button.on { background: #17171b; border-color: #17171b; color: #fff; }
