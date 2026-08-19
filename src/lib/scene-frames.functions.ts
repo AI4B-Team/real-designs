@@ -41,7 +41,9 @@ async function assertProject(supabase: any, id: string) {
 export const listSceneFrames = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ video_project_id: z.string().uuid(), reconcile: z.boolean().default(true) }).parse(input),
+    z
+      .object({ video_project_id: z.string().uuid(), reconcile: z.boolean().default(true) })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     await assertProject(context.supabase, data.video_project_id);
@@ -76,7 +78,8 @@ export const saveSceneFrames = createServerFn({ method: "POST" })
     // generation succeeds, and the row keeps reporting its real state.
     const keepClip = old?.status === "completed" && old?.clip_path;
     const busy = old?.status === "queued" || old?.status === "processing";
-    if (busy) throw new Error("This scene is still generating. Wait for it to finish or cancel it first.");
+    if (busy)
+      throw new Error("This scene is still generating. Wait for it to finish or cancel it first.");
 
     const row = {
       user_id: userId,

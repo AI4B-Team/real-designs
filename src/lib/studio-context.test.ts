@@ -38,7 +38,9 @@ describe("canvas subtitle", () => {
   it("shows exactly one line per state", () => {
     expect(canvasSubtitle({ empty: true, result: false })).toBe("Add A Source To Begin");
     expect(canvasSubtitle({ empty: false, result: false })).toBe("Your source photo");
-    expect(canvasSubtitle({ empty: false, result: false, phase: "generating" })).toContain("Generating");
+    expect(canvasSubtitle({ empty: false, result: false, phase: "generating" })).toContain(
+      "Generating",
+    );
     expect(canvasSubtitle({ empty: false, result: true })).toBe("Review your generated design");
     expect(canvasSubtitle({ empty: false, result: false, phase: "error" })).toContain("failed");
   });
@@ -52,9 +54,17 @@ describe("stale callbacks", () => {
     expect(mayGenericNavigate({ token: 3, current: 4, ctx: GENERIC_STUDIO })).toBe(false);
   });
   it("drops canvas work queued for another draft or photo", () => {
-    expect(canvasCallbackIsCurrent({ token: 4, current: 4, ctx, draftId: "d1", photoKey: "p3" })).toBe(true);
-    expect(canvasCallbackIsCurrent({ token: 4, current: 4, ctx, draftId: "d2", photoKey: "p3" })).toBe(false);
-    expect(canvasCallbackIsCurrent({ token: 4, current: 4, ctx, draftId: "d1", photoKey: "p9" })).toBe(false);
-    expect(canvasCallbackIsCurrent({ token: 4, current: 5, ctx, draftId: "d1", photoKey: "p3" })).toBe(false);
+    expect(
+      canvasCallbackIsCurrent({ token: 4, current: 4, ctx, draftId: "d1", photoKey: "p3" }),
+    ).toBe(true);
+    expect(
+      canvasCallbackIsCurrent({ token: 4, current: 4, ctx, draftId: "d2", photoKey: "p3" }),
+    ).toBe(false);
+    expect(
+      canvasCallbackIsCurrent({ token: 4, current: 4, ctx, draftId: "d1", photoKey: "p9" }),
+    ).toBe(false);
+    expect(
+      canvasCallbackIsCurrent({ token: 4, current: 5, ctx, draftId: "d1", photoKey: "p3" }),
+    ).toBe(false);
   });
 });

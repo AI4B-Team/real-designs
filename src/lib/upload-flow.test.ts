@@ -15,7 +15,11 @@ vi.mock("@/lib/room-photos", () => ({
 }));
 vi.mock("@/lib/photo-classify.functions", () => ({
   classifyPhotoRooms: vi.fn(async ({ data }: any) => ({
-    results: (data.images || []).map((i: any) => ({ id: i.id, label: "kitchen", confidence: 0.95 })),
+    results: (data.images || []).map((i: any) => ({
+      id: i.id,
+      label: "kitchen",
+      confidence: 0.95,
+    })),
   })),
 }));
 vi.mock("@/lib/photo-classify", async (orig) => {
@@ -27,11 +31,16 @@ vi.mock("heic2any", () => ({
 }));
 
 import { mountSourcePicker } from "@/lib/source-picker";
-import { attachUploadAssets, acceptVideoPhotos, initialWizardStep } from "@/lib/video-upload-intake";
+import {
+  attachUploadAssets,
+  acceptVideoPhotos,
+  initialWizardStep,
+} from "@/lib/video-upload-intake";
 
 const jpeg = (name = "a.jpg", mb = 1) =>
   new File([new Uint8Array(mb * 1024)], name, { type: "image/jpeg" });
-const heic = (name = "IMG_0001.HEIC") => new File([new Uint8Array(1024)], name, { type: "image/heic" });
+const heic = (name = "IMG_0001.HEIC") =>
+  new File([new Uint8Array(1024)], name, { type: "image/heic" });
 const bad = (name = "notes.txt") => new File([new Uint8Array(16)], name, { type: "text/plain" });
 
 let host: HTMLElement;
@@ -49,7 +58,9 @@ beforeEach(() => {
   }
 });
 
-const settle = async (n = 6) => { for (let i = 0; i < n; i++) await Promise.resolve(); };
+const settle = async (n = 6) => {
+  for (let i = 0; i < n; i++) await Promise.resolve();
+};
 
 /** Drive the picker exactly as a user does: click Browse, set files, change. */
 async function browse(files: File[]) {
@@ -81,20 +92,33 @@ function mountVideoFlow() {
         : `<h1>Select &amp; Order Photos</h1><button id="more">Add Photos</button>` +
           (w.gridOrder || []).map((k: string) => `<div class="tile" data-k="${k}"></div>`).join("");
     if (w.step === 1) view.querySelector("#sp")!.appendChild(host);
-    if (w.uploadFails?.length) view.insertAdjacentHTML("beforeend", `<p class="err">${w.uploadFails.length} could not be added</p>`);
+    if (w.uploadFails?.length)
+      view.insertAdjacentHTML(
+        "beforeend",
+        `<p class="err">${w.uploadFails.length} could not be added</p>`,
+      );
   };
   const deps: any = {
-    rejectReason: (f: File) => (/\.(jpg|jpeg|png|webp)$/i.test(f.name) ? null : "Unsupported File Type"),
+    rejectReason: (f: File) =>
+      /\.(jpg|jpeg|png|webp)$/i.test(f.name) ? null : "Unsupported File Type",
     createUrl: () => "blob:mock",
     uuid: () => "id-" + Math.random().toString(36).slice(2),
-    advance: async (x: any) => { x.step = 2; attachUploadAssets(x); render(); },
+    advance: async (x: any) => {
+      x.step = 2;
+      attachUploadAssets(x);
+      render();
+    },
     loadAssets: async () => {},
     isCurrent: () => true,
     attachUploads: attachUploadAssets,
     render,
   };
   const accept = (files: File[]) => acceptVideoPhotos({ wizard: w, files, source: "picker", deps });
-  mountSourcePicker(host, { context: "video", esc: (s: string) => s, onPick: (p) => accept(p.map((x) => x.file)) });
+  mountSourcePicker(host, {
+    context: "video",
+    esc: (s: string) => s,
+    onPick: (p) => accept(p.map((x) => x.file)),
+  });
   render();
   return { w, view, accept };
 }
@@ -216,7 +240,9 @@ describe("photo staging: add photos -> review rooms", () => {
     expect(document.body.style.overflow).toBe("");
     expect(hostEl.querySelector(".rv-rail")).toBeTruthy();
     expect(hostEl.querySelector(".rv-gridfoot")).toBeTruthy();
-    expect(hostEl.textContent).toContain("Choose the photos you want to design, confirm their room types, and select an output format.");
+    expect(hostEl.textContent).toContain(
+      "Choose the photos you want to design, confirm their room types, and select an output format.",
+    );
     /* Bulk actions collapse into a More menu. */
     expect(hostEl.querySelector(".rv-utility .rv-more")).toBeTruthy();
     expect(hostEl.textContent).not.toContain("Remove All Items");

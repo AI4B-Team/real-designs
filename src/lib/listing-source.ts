@@ -60,7 +60,8 @@ export type ListingLinkResult = {
  */
 export function identifyListing(input: string): ListingLinkResult {
   const raw = String(input || "").trim();
-  if (!raw) return { ok: false, provider: null, address: "", message: "Paste a listing link to continue." };
+  if (!raw)
+    return { ok: false, provider: null, address: "", message: "Paste a listing link to continue." };
 
   let url: URL | null = null;
   try {
@@ -69,7 +70,12 @@ export function identifyListing(input: string): ListingLinkResult {
     url = null;
   }
   if (!url) {
-    return { ok: false, provider: null, address: "", message: "That does not look like a listing link." };
+    return {
+      ok: false,
+      provider: null,
+      address: "",
+      message: "That does not look like a listing link.",
+    };
   }
   if (url.protocol !== "https:" && url.protocol !== "http:") {
     return { ok: false, provider: null, address: "", message: "Only web links are supported." };
@@ -100,8 +106,9 @@ function addressFromPath(pathname: string): string {
   const re = new RegExp(`^\\d+[-_].+[-_](${STATES})([-_]\\d{5})?$`, "i");
   const slug = parts.reverse().find((p) => re.test(p));
   if (!slug) return "";
-  const cleaned = slug.replace(new RegExp(`[-_](${STATES})([-_](\\d{5}))?$`, "i"), (_m, st, _g, zip) =>
-    ` ${String(st).toUpperCase()}${zip ? " " + zip : ""}`,
+  const cleaned = slug.replace(
+    new RegExp(`[-_](${STATES})([-_](\\d{5}))?$`, "i"),
+    (_m, st, _g, zip) => ` ${String(st).toUpperCase()}${zip ? " " + zip : ""}`,
   );
   const idx = cleaned.search(new RegExp(`\\s(${STATES})(\\s\\d{5})?$`, "i"));
   if (idx > 0) {

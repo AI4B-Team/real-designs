@@ -24,7 +24,9 @@ const Input = z.object({
   replace: z.array(z.string().max(40)).max(20).default([]),
   remove: z.array(z.string().max(40)).max(20).default([]),
   style_id: z.string().max(80).nullable().optional(),
-  project_type: z.enum(["interior", "exterior", "garden", "virtual-staging", "concept"]).default("interior"),
+  project_type: z
+    .enum(["interior", "exterior", "garden", "virtual-staging", "concept"])
+    .default("interior"),
   preserve_architecture: z.boolean().default(true),
   /* Photo Design output ratio. "original" keeps the source aspect ratio. */
   aspect_ratio: z.enum(["original", "4:3", "4:5", "1:1"]).default("original"),
@@ -50,15 +52,30 @@ function buildPrompt(d: z.infer<typeof Input>): string {
     "Hard rules: keep the exact same camera angle, focal length, perspective, room proportions, window and door positions, ceiling height and natural light direction. This is a redesign of a real space, not a new room. Do not move or resize architecture. Do not add rooms, windows or walls. Photorealistic result, no text, no watermarks, no labels.",
   ];
   if (d.keep.length) lines.push(`Keep these existing objects unchanged: ${d.keep.join(", ")}.`);
-  if (d.replace.length) lines.push(`Replace these objects with better versions in the chosen direction: ${d.replace.join(", ")}.`);
-  if (d.remove.length) lines.push(`Remove these objects entirely and fill the space naturally: ${d.remove.join(", ")}.`);
+  if (d.replace.length)
+    lines.push(
+      `Replace these objects with better versions in the chosen direction: ${d.replace.join(", ")}.`,
+    );
+  if (d.remove.length)
+    lines.push(
+      `Remove these objects entirely and fill the space naturally: ${d.remove.join(", ")}.`,
+    );
   if (d.intensity.toLowerCase().includes("refresh"))
-    lines.push("Refresh intensity: cosmetic only — paint, textiles, decor and lighting fixtures. Keep flooring, cabinetry and fixtures in place.");
+    lines.push(
+      "Refresh intensity: cosmetic only — paint, textiles, decor and lighting fixtures. Keep flooring, cabinetry and fixtures in place.",
+    );
   if (d.intensity.toLowerCase().includes("full"))
-    lines.push("Full remodel intensity: finishes, cabinetry, flooring and fixtures may all change, but the structural shell stays identical.");
+    lines.push(
+      "Full remodel intensity: finishes, cabinetry, flooring and fixtures may all change, but the structural shell stays identical.",
+    );
   if (d.aspect_ratio && d.aspect_ratio !== "original")
-    lines.push(`Output framing: return the image with a ${d.aspect_ratio} aspect ratio, recomposing the same view without distorting or stretching it.`);
-  else lines.push("Output framing: keep the original aspect ratio and framing of the source photograph.");
+    lines.push(
+      `Output framing: return the image with a ${d.aspect_ratio} aspect ratio, recomposing the same view without distorting or stretching it.`,
+    );
+  else
+    lines.push(
+      "Output framing: keep the original aspect ratio and framing of the source photograph.",
+    );
   if (d.notes) lines.push(`Owner instructions: ${d.notes}`);
   return lines.join("\n");
 }
@@ -101,7 +118,8 @@ export const renderDesign = createServerFn({ method: "POST" })
       const msg = payload?.choices?.[0]?.message;
       const url: string | undefined =
         msg?.images?.[0]?.image_url?.url ?? msg?.images?.[0]?.url ?? undefined;
-      if (!url || !url.startsWith("data:image")) throw new Error("The model did not return an image.");
+      if (!url || !url.startsWith("data:image"))
+        throw new Error("The model did not return an image.");
 
       return {
         image: url,

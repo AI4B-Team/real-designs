@@ -59,7 +59,6 @@ export const priceScopePreview = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const supabase = supabaseAdmin;
 
-
     const { data: markets, error: marketError } = await supabase
       .from("markets")
       .select("id, name, labor_factor, material_factor")
@@ -71,13 +70,11 @@ export const priceScopePreview = createServerFn({ method: "POST" })
     const laborFactor = num(market.labor_factor) || 1;
     const materialFactor = num(market.material_factor) || 1;
 
-    const { data: mappings, error: mapError } = await supabase
-      .from("cost_mappings")
-      .select(
-        `label, material, grade, qty_formula,
+    const { data: mappings, error: mapError } = await supabase.from("cost_mappings").select(
+      `label, material, grade, qty_formula,
          unit_costs!inner ( item_code, description, uom, csi_division,
                             material_low, material_high, labor_low, labor_high, source )`,
-      );
+    );
     if (mapError) throw new Error(mapError.message);
 
     const qtyFor = (formula: string) => {
@@ -123,7 +120,10 @@ export const priceScopePreview = createServerFn({ method: "POST" })
       const all = mappings ?? [];
       let mapping =
         all.find(
-          (m) => m.label === item.label && m.material === (item.material ?? null) && m.grade === data.grade,
+          (m) =>
+            m.label === item.label &&
+            m.material === (item.material ?? null) &&
+            m.grade === data.grade,
         ) ?? all.find((m) => m.label === item.label && m.grade === data.grade);
       let isFallback = false;
       if (!mapping) {

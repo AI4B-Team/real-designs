@@ -14,8 +14,10 @@ import { mergeDrafts, mergeRenderJobs } from "@/lib/media-view";
 import * as UM from "@/lib/upload-manager";
 import { propLabel } from "@/lib/property-label";
 
-export type MediaType = "uploaded_image" | "uploaded_document" | "generated_image" | "generated_video";
-export type MediaStatus = "draft" | "queued" | "processing" | "ready" | "failed" | "shared" | "archived";
+export type MediaType =
+  "uploaded_image" | "uploaded_document" | "generated_image" | "generated_video";
+export type MediaStatus =
+  "draft" | "queued" | "processing" | "ready" | "failed" | "shared" | "archived";
 
 const EVT = "rd:media-change";
 
@@ -80,7 +82,12 @@ export function listPendingMedia() {
 }
 
 try {
-  (window as any).rdMedia = { addPendingMedia, updatePendingMedia, removePendingMedia, emitMediaChange };
+  (window as any).rdMedia = {
+    addPendingMedia,
+    updatePendingMedia,
+    removePendingMedia,
+    emitMediaChange,
+  };
 } catch (_) {}
 
 /* ---------------- helpers ---------------- */
@@ -112,7 +119,8 @@ function videoStatus(project: any, variants: any[]): MediaStatus {
   if (s === "failed") return "failed";
   const rs = variants.map((v) => String(v.render_status || "").toLowerCase());
   if (rs.some((x) => x === "failed")) return "failed";
-  if (rs.some((x) => x === "queued" || x === "rendering" || x === "processing")) return "processing";
+  if (rs.some((x) => x === "queued" || x === "rendering" || x === "processing"))
+    return "processing";
   if (rs.some((x) => x === "done" || x === "complete" || x === "ready")) return "ready";
   if (s === "ready" || s === "complete") return "ready";
   if (s === "processing" || s === "rendering") return "processing";
@@ -127,7 +135,9 @@ export async function loadMediaLibrary() {
     getPropertyTree().catch(() => []),
     listVideos().catch(() => ({ projects: [], variants: [], scenes: [], shares: [] })),
     listMediaAssets({ data: { property_id: null } }).catch(() => ({ assets: [], versions: [] })),
-    listProjectDrafts({ data: { scope: "all", limit: 100 } }).then((r: any) => r.drafts || []).catch(() => []),
+    listProjectDrafts({ data: { scope: "all", limit: 100 } })
+      .then((r: any) => r.drafts || [])
+      .catch(() => []),
     listRenderJobs().catch(() => []),
   ]);
 
@@ -181,7 +191,9 @@ export async function loadMediaLibrary() {
     /* A draft video project with no scenes and no rendered variant holds no
        work yet: it would show as a blank, unopenable tile. Skip it. */
     if (!sc.length && !vs.length && String(p.status || "draft").toLowerCase() === "draft") return;
-    const done = vs.find((v) => ["done", "complete", "ready"].includes(String(v.render_status || "").toLowerCase()));
+    const done = vs.find((v) =>
+      ["done", "complete", "ready"].includes(String(v.render_status || "").toLowerCase()),
+    );
 
     const dur = done?.duration || sc.reduce((n, s) => n + Number(s.duration || 0), 0);
     const shared = (videos.shares || []).some((s: any) => s.video_project_id === p.id);
@@ -191,7 +203,12 @@ export async function loadMediaLibrary() {
       refId: p.id,
       type: "generated_video",
       status: shared && st === "ready" ? "shared" : st,
-      title: resolveProjectTitle({ kind: "video", title: p.title ?? null, titleTouched: !!p.title_touched, address: p.property_address || p.property_label }),
+      title: resolveProjectTitle({
+        kind: "video",
+        title: p.title ?? null,
+        titleTouched: !!p.title_touched,
+        address: p.property_address || p.property_label,
+      }),
       propertyId: p.property_id || null,
       property: p.property_label ? propLabel(p.property_label) : null,
       address: p.property_address || null,
@@ -204,7 +221,14 @@ export async function loadMediaLibrary() {
       aspect: (Array.isArray(p.formats) ? p.formats[0] : null) || done?.aspect_ratio || "9:16",
       scenes: sc,
       error: p.error_message || null,
-      settings: { videoType: p.video_type, length: p.length_preset, transition: p.transition, motion: p.motion, sourceType: p.source_type, builder: (p.settings || {}).builder || null },
+      settings: {
+        videoType: p.video_type,
+        length: p.length_preset,
+        transition: p.transition,
+        motion: p.motion,
+        sourceType: p.source_type,
+        builder: (p.settings || {}).builder || null,
+      },
       progress: null,
       stage: st === "processing" ? "rendering" : null,
     });
@@ -253,19 +277,23 @@ export async function loadMediaLibrary() {
     });
 
   /* pending generations -------------------------------------------------- */
-  listPendingMedia().forEach((p) => out.push({
-    ...p,
-    refId: p.projectId || p.refId,
-    path: p.thumbnailUrl || "",
-    pending: true,
-  }));
+  listPendingMedia().forEach((p) =>
+    out.push({
+      ...p,
+      refId: p.projectId || p.refId,
+      path: p.thumbnailUrl || "",
+      pending: true,
+    }),
+  );
 
   /* Durable drafts and persisted render jobs: one card per project, never one
      per photo, and never a duplicate of a card that already exists. */
   const merged = mergeRenderJobs(mergeDrafts(out, drafts), jobs);
 
   merged.sort((a, b) =>
-    String(b.updatedAt || b.createdAt || "").localeCompare(String(a.updatedAt || a.createdAt || "")),
+    String(b.updatedAt || b.createdAt || "").localeCompare(
+      String(a.updatedAt || a.createdAt || ""),
+    ),
   );
   return merged;
 }

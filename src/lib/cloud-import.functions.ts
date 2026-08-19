@@ -5,7 +5,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 /** Imports photos from public Google Drive / Dropbox share links (allowlisted hosts only). */
 export const importCloudPhotos = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ urls: z.array(z.string().min(8).max(1000)).min(1).max(20) }).parse(d))
+  .inputValidator((d) =>
+    z.object({ urls: z.array(z.string().min(8).max(1000)).min(1).max(20) }).parse(d),
+  )
   .handler(async ({ data }) => {
     const { normalizeCloudLink, fetchCloudFile } = await import("@/lib/cloud-import.server");
     const files: Array<{ name: string; type: string; size: number; data: string }> = [];

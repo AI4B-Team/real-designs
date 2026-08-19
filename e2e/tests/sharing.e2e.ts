@@ -13,9 +13,7 @@ test.describe("Presentations", () => {
 
     const nameField = appPage.locator('[role="dialog"] input, .rd-modal input').first();
     if ((await nameField.count()) > 0) await nameField.fill(testName("Presentation"));
-    const confirm = appPage
-      .getByRole("button", { name: /create|save|generate link/i })
-      .last();
+    const confirm = appPage.getByRole("button", { name: /create|save|generate link/i }).last();
     await confirm.click();
     await waitForAsyncJob(appPage);
 

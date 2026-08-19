@@ -34,7 +34,12 @@ const Input = z.object({
   propertyId: z.string().nullable().optional(),
 });
 
-function fit(low: number, high: number, priced: number, target: number | null): ReportRow["budget_fit"] {
+function fit(
+  low: number,
+  high: number,
+  priced: number,
+  target: number | null,
+): ReportRow["budget_fit"] {
   if (target == null || target <= 0 || priced === 0) return "unset";
   if (high <= target) return "on_track";
   if (low > target) return "over";
@@ -77,29 +82,55 @@ export const getWorkspaceReport = createServerFn({ method: "GET" })
     if (from) ledgerQ = ledgerQ.gte("created_at", from);
     if (to) ledgerQ = ledgerQ.lte("created_at", to);
 
-    const [propsR, projectsR, roomsR, versionsR, ledgerR, acctR, pkgR, linksR, actR, decR] = await Promise.all([
-      supabase.from("properties").select("id, address, created_at").order("created_at", { ascending: false }),
-      supabase.from("projects").select("id, property_id, name, budget_target, created_at"),
-      supabase.from("rooms").select("id, project_id, created_at"),
-      versionQ,
-      ledgerQ,
-      supabase.from("credit_accounts").select("balance, plan, free_used_today, free_day").eq("user_id", userId).maybeSingle(),
-      supabase
-        .from("presentation_packages")
-        .select("id, title, property_id, property_label, client_name, status, view_count, archived, created_at, last_activity_at"),
-      supabase.from("presentation_links").select("id, package_id, created_at, view_count, revoked"),
-      supabase
-        .from("presentation_activity")
-        .select("id, package_id, kind, detail, created_at")
-        .order("created_at", { ascending: false })
-        .limit(200),
-      supabase.from("presentation_decisions").select("id, package_id, decision, client_name, note, created_at"),
-    ]);
+    const [propsR, projectsR, roomsR, versionsR, ledgerR, acctR, pkgR, linksR, actR, decR] =
+      await Promise.all([
+        supabase
+          .from("properties")
+          .select("id, address, created_at")
+          .order("created_at", { ascending: false }),
+        supabase.from("projects").select("id, property_id, name, budget_target, created_at"),
+        supabase.from("rooms").select("id, project_id, created_at"),
+        versionQ,
+        ledgerQ,
+        supabase
+          .from("credit_accounts")
+          .select("balance, plan, free_used_today, free_day")
+          .eq("user_id", userId)
+          .maybeSingle(),
+        supabase
+          .from("presentation_packages")
+          .select(
+            "id, title, property_id, property_label, client_name, status, view_count, archived, created_at, last_activity_at",
+          ),
+        supabase
+          .from("presentation_links")
+          .select("id, package_id, created_at, view_count, revoked"),
+        supabase
+          .from("presentation_activity")
+          .select("id, package_id, kind, detail, created_at")
+          .order("created_at", { ascending: false })
+          .limit(200),
+        supabase
+          .from("presentation_decisions")
+          .select("id, package_id, decision, client_name, note, created_at"),
+      ]);
 
-    const firstError = [propsR, projectsR, roomsR, versionsR, ledgerR, pkgR, linksR, actR, decR].find((r: any) => r.error);
+    const firstError = [
+      propsR,
+      projectsR,
+      roomsR,
+      versionsR,
+      ledgerR,
+      pkgR,
+      linksR,
+      actR,
+      decR,
+    ].find((r: any) => r.error);
     if (firstError) throw new Error((firstError as any).error.message);
 
-    const properties = ((propsR.data ?? []) as any[]).filter((p) => !propertyId || p.id === propertyId);
+    const properties = ((propsR.data ?? []) as any[]).filter(
+      (p) => !propertyId || p.id === propertyId,
+    );
     const propIds = new Set(properties.map((p) => p.id));
     const projects = ((projectsR.data ?? []) as any[]).filter((p) => propIds.has(p.property_id));
     const projectById = new Map(projects.map((p) => [p.id, p]));
@@ -180,10 +211,13 @@ export const getWorkspaceReport = createServerFn({ method: "GET" })
     }
 
     /* client name comes from any package attached to the property */
-    const packages = ((pkgR.data ?? []) as any[]).filter((p) => !p.archived && (!propertyId || p.property_id === propertyId));
+    const packages = ((pkgR.data ?? []) as any[]).filter(
+      (p) => !p.archived && (!propertyId || p.property_id === propertyId),
+    );
     for (const pk of packages) {
       if (!pk.property_id || !pk.client_name) continue;
-      for (const row of rows.values()) if (row.property_id === pk.property_id && !row.client) row.client = pk.client_name;
+      for (const row of rows.values())
+        if (row.property_id === pk.property_id && !row.client) row.client = pk.client_name;
     }
 
     const outRows: ReportRow[] = Array.from(rows.values()).map(({ _rooms, ...rest }) => ({
@@ -212,13 +246,19 @@ export const getWorkspaceReport = createServerFn({ method: "GET" })
     /* ---- client activity ---- */
     const pkgIds = new Set(packages.map((p) => p.id));
     const pkgById = new Map(packages.map((p) => [p.id, p]));
-    const links = ((linksR.data ?? []) as any[]).filter((l) => pkgIds.has(l.package_id) && inRangeOrAll(l.created_at));
+    const links = ((linksR.data ?? []) as any[]).filter(
+      (l) => pkgIds.has(l.package_id) && inRangeOrAll(l.created_at),
+    );
     function inRangeOrAll(iso: string) {
       if (!from && !to) return true;
       return inRange(iso);
     }
-    const activity = ((actR.data ?? []) as any[]).filter((a) => pkgIds.has(a.package_id) && inRangeOrAll(a.created_at));
-    const decisions = ((decR.data ?? []) as any[]).filter((d) => pkgIds.has(d.package_id) && inRangeOrAll(d.created_at));
+    const activity = ((actR.data ?? []) as any[]).filter(
+      (a) => pkgIds.has(a.package_id) && inRangeOrAll(a.created_at),
+    );
+    const decisions = ((decR.data ?? []) as any[]).filter(
+      (d) => pkgIds.has(d.package_id) && inRangeOrAll(d.created_at),
+    );
 
     const viewed = activity.filter((a) => a.kind === "view").length;
     const changes = decisions.filter((d) => d.decision === "changes").length;

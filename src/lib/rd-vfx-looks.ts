@@ -242,10 +242,18 @@ export const VFX_CATEGORIES = [
 
 /* The eight originals keep their ids; category is additive. */
 const ORIGINAL_CATS = {
-  cinematic: "featured", goldenhour: "featured", leak: "featured", film35: "camera",
-  editorial: "camera", bloom: "lighting", twilight: "lighting", punch: "featured",
+  cinematic: "featured",
+  goldenhour: "featured",
+  leak: "featured",
+  film35: "camera",
+  editorial: "camera",
+  bloom: "lighting",
+  twilight: "lighting",
+  punch: "featured",
 };
-VFX_LOOKS.forEach((l) => { l.cat = ORIGINAL_CATS[l.id] || "featured"; });
+VFX_LOOKS.forEach((l) => {
+  l.cat = ORIGINAL_CATS[l.id] || "featured";
+});
 
 /* Simple tint helper for the expanded library. */
 function tint(css, stops, blend, alpha, angle) {
@@ -254,50 +262,201 @@ function tint(css, stops, blend, alpha, angle) {
 
 VFX_LOOKS.push(
   /* ---- Lighting ---- */
-  { id: "twilight_deep", cat: "lighting", label: "Twilight", blurb: "Deep dusk blues with a warm window glow.",
+  {
+    id: "twilight_deep",
+    cat: "lighting",
+    label: "Twilight",
+    blurb: "Deep dusk blues with a warm window glow.",
     adjust: { exposure: -8, temperature: -22, contrast: 12 },
-    layers: [tint("linear-gradient(180deg, rgba(30,60,140,.5), rgba(0,0,0,0) 70%)", [[0, "rgba(30,60,140,.5)"], [0.7, "rgba(0,0,0,0)"]], "soft-light", 0.9, 90), VIGNETTE(0.3)] },
-  { id: "blue_hour", cat: "lighting", label: "Blue Hour", blurb: "Even cool light just after sunset.",
+    layers: [
+      tint(
+        "linear-gradient(180deg, rgba(30,60,140,.5), rgba(0,0,0,0) 70%)",
+        [
+          [0, "rgba(30,60,140,.5)"],
+          [0.7, "rgba(0,0,0,0)"],
+        ],
+        "soft-light",
+        0.9,
+        90,
+      ),
+      VIGNETTE(0.3),
+    ],
+  },
+  {
+    id: "blue_hour",
+    cat: "lighting",
+    label: "Blue Hour",
+    blurb: "Even cool light just after sunset.",
     adjust: { temperature: -16, exposure: -3, shadows: 8 },
-    layers: [tint("linear-gradient(180deg, rgba(60,110,180,.35), rgba(0,0,0,0))", [[0, "rgba(60,110,180,.35)"], [1, "rgba(0,0,0,0)"]], "soft-light", 0.85, 90)] },
-  { id: "bright_airy", cat: "lighting", label: "Bright And Airy", blurb: "Lifted whites for listing photography.",
-    adjust: { exposure: 12, contrast: -6, blacks: 10, saturation: -4 }, layers: [] },
-  { id: "soft_daylight", cat: "lighting", label: "Soft Daylight", blurb: "Neutral window light with gentle shadows.",
-    adjust: { exposure: 6, shadows: 12, contrast: -3 }, layers: [] },
-  { id: "warm_evening", cat: "lighting", label: "Warm Evening", blurb: "Lamp-lit warmth for staged interiors.",
+    layers: [
+      tint(
+        "linear-gradient(180deg, rgba(60,110,180,.35), rgba(0,0,0,0))",
+        [
+          [0, "rgba(60,110,180,.35)"],
+          [1, "rgba(0,0,0,0)"],
+        ],
+        "soft-light",
+        0.85,
+        90,
+      ),
+    ],
+  },
+  {
+    id: "bright_airy",
+    cat: "lighting",
+    label: "Bright And Airy",
+    blurb: "Lifted whites for listing photography.",
+    adjust: { exposure: 12, contrast: -6, blacks: 10, saturation: -4 },
+    layers: [],
+  },
+  {
+    id: "soft_daylight",
+    cat: "lighting",
+    label: "Soft Daylight",
+    blurb: "Neutral window light with gentle shadows.",
+    adjust: { exposure: 6, shadows: 12, contrast: -3 },
+    layers: [],
+  },
+  {
+    id: "warm_evening",
+    cat: "lighting",
+    label: "Warm Evening",
+    blurb: "Lamp-lit warmth for staged interiors.",
     adjust: { temperature: 20, exposure: -2, highlights: -6 },
-    layers: [radial("radial-gradient(circle at 50% 60%, rgba(255,190,120,.35), rgba(0,0,0,0) 70%)", [[0, "rgba(255,190,120,.35)"], [0.7, "rgba(0,0,0,0)"]], "screen", 0.85, 0.5, 0.6, 0.8), VIGNETTE(0.24)] },
-  { id: "overcast_lift", cat: "lighting", label: "Overcast Lift", blurb: "Rescues flat grey light without going harsh.",
-    adjust: { contrast: 14, exposure: 8, saturation: 12, temperature: 8 }, layers: [] },
+    layers: [
+      radial(
+        "radial-gradient(circle at 50% 60%, rgba(255,190,120,.35), rgba(0,0,0,0) 70%)",
+        [
+          [0, "rgba(255,190,120,.35)"],
+          [0.7, "rgba(0,0,0,0)"],
+        ],
+        "screen",
+        0.85,
+        0.5,
+        0.6,
+        0.8,
+      ),
+      VIGNETTE(0.24),
+    ],
+  },
+  {
+    id: "overcast_lift",
+    cat: "lighting",
+    label: "Overcast Lift",
+    blurb: "Rescues flat grey light without going harsh.",
+    adjust: { contrast: 14, exposure: 8, saturation: 12, temperature: 8 },
+    layers: [],
+  },
   /* ---- Season ---- */
-  { id: "autumn_warmth", cat: "season", label: "Autumn Warmth", blurb: "Amber leaning grade for fall exteriors.",
+  {
+    id: "autumn_warmth",
+    cat: "season",
+    label: "Autumn Warmth",
+    blurb: "Amber leaning grade for fall exteriors.",
     adjust: { temperature: 18, saturation: 12, contrast: 8 },
-    layers: [tint("linear-gradient(160deg, rgba(255,160,60,.3), rgba(0,0,0,0) 65%)", [[0, "rgba(255,160,60,.3)"], [0.65, "rgba(0,0,0,0)"]], "soft-light", 0.85, 160)] },
-  { id: "spring_bloom", cat: "season", label: "Spring Bloom", blurb: "Fresh greens and clean, bright air.",
-    adjust: { saturation: 16, exposure: 6, temperature: -4 }, layers: [] },
-  { id: "summer_sun", cat: "season", label: "Summer Sun", blurb: "High sun, strong blues, crisp contrast.",
-    adjust: { contrast: 16, saturation: 14, whites: 8, temperature: 6 }, layers: [VIGNETTE(0.18)] },
-  { id: "winter_cool", cat: "season", label: "Winter Cool", blurb: "Cool, quiet grade for cold-weather listings.",
-    adjust: { temperature: -20, saturation: -8, contrast: 10 }, layers: [] },
+    layers: [
+      tint(
+        "linear-gradient(160deg, rgba(255,160,60,.3), rgba(0,0,0,0) 65%)",
+        [
+          [0, "rgba(255,160,60,.3)"],
+          [0.65, "rgba(0,0,0,0)"],
+        ],
+        "soft-light",
+        0.85,
+        160,
+      ),
+    ],
+  },
+  {
+    id: "spring_bloom",
+    cat: "season",
+    label: "Spring Bloom",
+    blurb: "Fresh greens and clean, bright air.",
+    adjust: { saturation: 16, exposure: 6, temperature: -4 },
+    layers: [],
+  },
+  {
+    id: "summer_sun",
+    cat: "season",
+    label: "Summer Sun",
+    blurb: "High sun, strong blues, crisp contrast.",
+    adjust: { contrast: 16, saturation: 14, whites: 8, temperature: 6 },
+    layers: [VIGNETTE(0.18)],
+  },
+  {
+    id: "winter_cool",
+    cat: "season",
+    label: "Winter Cool",
+    blurb: "Cool, quiet grade for cold-weather listings.",
+    adjust: { temperature: -20, saturation: -8, contrast: 10 },
+    layers: [],
+  },
   /* ---- Camera ---- */
-  { id: "film_grain", cat: "camera", label: "Film Grain", blurb: "Fine analog grain over a neutral base.",
-    adjust: { contrast: 6, blacks: 8 }, layers: [GRAIN(0.45)] },
-  { id: "soft_focus_edge", cat: "camera", label: "Soft Focus Edge", blurb: "Sharp center with a softened frame edge.",
+  {
+    id: "film_grain",
+    cat: "camera",
+    label: "Film Grain",
+    blurb: "Fine analog grain over a neutral base.",
+    adjust: { contrast: 6, blacks: 8 },
+    layers: [GRAIN(0.45)],
+  },
+  {
+    id: "soft_focus_edge",
+    cat: "camera",
+    label: "Soft Focus Edge",
+    blurb: "Sharp center with a softened frame edge.",
     adjust: { contrast: 4 },
-    layers: [radial("radial-gradient(circle at 50% 50%, rgba(255,255,255,0) 55%, rgba(255,255,255,.22) 100%)", [[0.55, "rgba(255,255,255,0)"], [1, "rgba(255,255,255,.22)"]], "screen", 0.9, 0.5, 0.5, 0.8)] },
-  { id: "high_contrast", cat: "camera", label: "High Contrast", blurb: "Deep blacks and clean highlights.",
-    adjust: { contrast: 28, blacks: -12, whites: 10 }, layers: [VIGNETTE(0.2)] },
-  { id: "neutral_pro", cat: "camera", label: "Neutral Pro", blurb: "Accurate color, no styling. Safe for the MLS.",
-    adjust: { contrast: 4, saturation: 2 }, layers: [] },
-  { id: "wide_vignette", cat: "camera", label: "Wide Vignette", blurb: "Broad edge falloff that centers the room.",
-    adjust: { contrast: 6 }, layers: [VIGNETTE(0.4)] },
+    layers: [
+      radial(
+        "radial-gradient(circle at 50% 50%, rgba(255,255,255,0) 55%, rgba(255,255,255,.22) 100%)",
+        [
+          [0.55, "rgba(255,255,255,0)"],
+          [1, "rgba(255,255,255,.22)"],
+        ],
+        "screen",
+        0.9,
+        0.5,
+        0.5,
+        0.8,
+      ),
+    ],
+  },
+  {
+    id: "high_contrast",
+    cat: "camera",
+    label: "High Contrast",
+    blurb: "Deep blacks and clean highlights.",
+    adjust: { contrast: 28, blacks: -12, whites: 10 },
+    layers: [VIGNETTE(0.2)],
+  },
+  {
+    id: "neutral_pro",
+    cat: "camera",
+    label: "Neutral Pro",
+    blurb: "Accurate color, no styling. Safe for the MLS.",
+    adjust: { contrast: 4, saturation: 2 },
+    layers: [],
+  },
+  {
+    id: "wide_vignette",
+    cat: "camera",
+    label: "Wide Vignette",
+    blurb: "Broad edge falloff that centers the room.",
+    adjust: { contrast: 6 },
+    layers: [VIGNETTE(0.4)],
+  },
   /* ---- Featured additions ---- */
-  { id: "listing_clean", cat: "featured", label: "Listing Clean", blurb: "The everyday grade for real estate photos.",
-    adjust: { exposure: 6, contrast: 8, saturation: 6, shadows: 8 }, layers: [] },
+  {
+    id: "listing_clean",
+    cat: "featured",
+    label: "Listing Clean",
+    blurb: "The everyday grade for real estate photos.",
+    adjust: { exposure: 6, contrast: 8, saturation: 6, shadows: 8 },
+    layers: [],
+  },
 );
 
 export const lookById = (id) => VFX_LOOKS.find((l) => l.id === id) || null;
-
 
 /** Merge a look's adjustment deltas into a copy of the manual adjust store. */
 export function applyLookAdjust(base, look, amount) {

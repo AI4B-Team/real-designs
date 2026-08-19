@@ -20,19 +20,30 @@ describe("project titles", () => {
   it("suggests a street-only title once an address exists", () => {
     expect(suggestVideoTitle(ADDR)).toBe("456 Lakeview Ln Property Video");
     expect(suggestDesignTitle(ADDR, "Living Room")).toBe("456 Lakeview Ln Living Room Design");
-    expect(resolveProjectTitle({ kind: "video", address: ADDR })).toBe("456 Lakeview Ln Property Video");
+    expect(resolveProjectTitle({ kind: "video", address: ADDR })).toBe(
+      "456 Lakeview Ln Property Video",
+    );
   });
 
   it("never overwrites a user-edited title", () => {
     const title = "Instagram Reel";
-    expect(resolveProjectTitle({ kind: "video", title, titleTouched: true, address: ADDR })).toBe(title);
+    expect(resolveProjectTitle({ kind: "video", title, titleTouched: true, address: ADDR })).toBe(
+      title,
+    );
     expect(
-      resolveProjectTitle({ kind: "video", title, titleTouched: true, address: "9 Other St, Reno, NV" }),
+      resolveProjectTitle({
+        kind: "video",
+        title,
+        titleTouched: true,
+        address: "9 Other St, Reno, NV",
+      }),
     ).toBe(title);
   });
 
   it("keeps meaningful legacy titles but re-suggests for generic ones", () => {
-    expect(resolveProjectTitle({ kind: "video", title: "MLS Listing Video", address: ADDR })).toBe("MLS Listing Video");
+    expect(resolveProjectTitle({ kind: "video", title: "MLS Listing Video", address: ADDR })).toBe(
+      "MLS Listing Video",
+    );
     expect(resolveProjectTitle({ kind: "video", title: "Untitled Video", address: ADDR })).toBe(
       "456 Lakeview Ln Property Video",
     );
@@ -47,8 +58,18 @@ describe("project titles", () => {
   });
 
   it("allows many projects to share one address and one title", () => {
-    const one = resolveProjectTitle({ kind: "video", title: "Investor Walkthrough", titleTouched: true, address: ADDR });
-    const two = resolveProjectTitle({ kind: "video", title: "Investor Walkthrough", titleTouched: true, address: ADDR });
+    const one = resolveProjectTitle({
+      kind: "video",
+      title: "Investor Walkthrough",
+      titleTouched: true,
+      address: ADDR,
+    });
+    const two = resolveProjectTitle({
+      kind: "video",
+      title: "Investor Walkthrough",
+      titleTouched: true,
+      address: ADDR,
+    });
     expect(one).toBe(two);
   });
 });

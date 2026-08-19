@@ -20,16 +20,24 @@ describe("durableStep", () => {
   });
   it("is review only when something was generated", () => {
     expect(durableStep({ keys, activeKey: null, reviewing: true })).toBe("rooms");
-    expect(durableStep({ keys, activeKey: null, reviewing: true, completed: ["a"] })).toBe("review");
+    expect(durableStep({ keys, activeKey: null, reviewing: true, completed: ["a"] })).toBe(
+      "review",
+    );
   });
 });
 
 describe("restoreStep", () => {
   it("returns to the canvas photo", () => {
-    expect(restoreStep({ builder_step: "design", keys, activeKey: "c" })).toEqual({ step: "design", activeKey: "c" });
+    expect(restoreStep({ builder_step: "design", keys, activeKey: "c" })).toEqual({
+      step: "design",
+      activeKey: "c",
+    });
   });
   it("falls back to rooms when the photo is gone", () => {
-    expect(restoreStep({ builder_step: "canvas", keys, activeKey: "gone" })).toEqual({ step: "rooms", activeKey: null });
+    expect(restoreStep({ builder_step: "canvas", keys, activeKey: "gone" })).toEqual({
+      step: "rooms",
+      activeKey: null,
+    });
   });
   it("falls back to add with no assets", () => {
     expect(restoreStep({ builder_step: "review", keys: [] }).step).toBe("add");
@@ -43,10 +51,15 @@ describe("restoreStep", () => {
 describe("rail availability", () => {
   it("gates review behind a generated design", () => {
     expect(stepAvailability("review", { keys, activeKey: null }).ready).toBe(false);
-    expect(stepAvailability("review", { keys, activeKey: null, completed: ["a"] }).ready).toBe(true);
+    expect(stepAvailability("review", { keys, activeKey: null, completed: ["a"] }).ready).toBe(
+      true,
+    );
   });
   it("design reopens the last room", () => {
-    expect(navigateTo("design", { keys, activeKey: null, lastOpened: "b" })).toEqual({ step: "design", activeKey: "b" });
+    expect(navigateTo("design", { keys, activeKey: null, lastOpened: "b" })).toEqual({
+      step: "design",
+      activeKey: "b",
+    });
   });
   it("design without history asks for a room", () => {
     expect(navigateTo("design", { keys, activeKey: null }).prompt).toBe("choose-room");

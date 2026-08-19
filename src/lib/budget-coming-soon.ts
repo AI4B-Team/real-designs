@@ -4,9 +4,14 @@
  * you can tell us which market to price first.
  */
 import { createIcons, icons } from "lucide";
-import { getBudgetAvailability, requestBudgetMarket, myBudgetRequests } from "@/lib/budget.functions";
+import {
+  getBudgetAvailability,
+  requestBudgetMarket,
+  myBudgetRequests,
+} from "@/lib/budget.functions";
 
-let cached: { available: boolean; markets: string[]; headline: string; detail: string } | null = null;
+let cached: { available: boolean; markets: string[]; headline: string; detail: string } | null =
+  null;
 
 /**
  * Synchronous read of the single source of truth. Defaults to "not available"
@@ -34,14 +39,18 @@ export async function budgetAvailability() {
   return cached!;
 }
 
-
 function esc(s: any) {
-  return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+  return String(s ?? "").replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+  );
 }
 
 function toast(msg: string) {
   try {
-    (window as any).rdToast ? (window as any).rdToast(msg) : console.log(msg);
+    const t = (window as any).rdToast;
+    if (typeof t === "function") t(msg);
+    else console.log(msg);
   } catch (_) {}
 }
 
@@ -86,11 +95,20 @@ function howModal() {
     <div class="crm-actions"><button class="btn btn-ghost btn-xs" data-x>Close</button></div>
   </div>`;
   (document.querySelector(".rd-app") || document.body).appendChild(wrap);
-  try { createIcons({ icons, root: wrap } as any); } catch (_) {}
-  const close = () => { wrap.remove(); document.removeEventListener("keydown", onKey); };
-  const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
+  try {
+    createIcons({ icons, root: wrap } as any);
+  } catch (_) {}
+  const close = () => {
+    wrap.remove();
+    document.removeEventListener("keydown", onKey);
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") close();
+  };
   document.addEventListener("keydown", onKey);
-  wrap.addEventListener("click", (e) => { if (e.target === wrap) close(); });
+  wrap.addEventListener("click", (e) => {
+    if (e.target === wrap) close();
+  });
   wrap.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = close));
 }
 
@@ -108,7 +126,8 @@ export async function mountBudgetComingSoon(host: HTMLElement, context?: string)
   try {
     const mine: any = await myBudgetRequests();
     const rows = mine?.rows || [];
-    if (rows.length && note) note.textContent = `You Asked For ${rows.map((r: any) => r.region).join(", ")}. We Will Email You The Day It Goes Live.`;
+    if (rows.length && note)
+      note.textContent = `You Asked For ${rows.map((r: any) => r.region).join(", ")}. We Will Email You The Day It Goes Live.`;
   } catch (_) {}
 
   if (send) {
@@ -122,7 +141,8 @@ export async function mountBudgetComingSoon(host: HTMLElement, context?: string)
       send.disabled = true;
       try {
         await requestBudgetMarket({ data: { region } });
-        if (note) note.textContent = `Thanks. ${region} Is On The List And We Will Email You The Day It Goes Live.`;
+        if (note)
+          note.textContent = `Thanks. ${region} Is On The List And We Will Email You The Day It Goes Live.`;
         if (input) input.value = "";
         toast("You Are On The List.");
       } catch (e: any) {
@@ -132,6 +152,8 @@ export async function mountBudgetComingSoon(host: HTMLElement, context?: string)
     };
   }
 
-  try { createIcons({ icons, root: host } as any); } catch (_) {}
+  try {
+    createIcons({ icons, root: host } as any);
+  } catch (_) {}
   return true;
 }

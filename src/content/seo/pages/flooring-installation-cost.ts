@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/flooring-installation-cost",
   tier: "B",
-  intent: "Buyer wants flooring installation cost per square foot across material types before choosing a product and getting quotes.",
+  intent:
+    "Buyer wants flooring installation cost per square foot across material types before choosing a product and getting quotes.",
 
   metaTitle: "Flooring Installation Cost Per Square Foot",
-  metaDescription: "Compare flooring installation cost per square foot for hardwood, laminate, vinyl and tile, with a planning range and a line item scope by room.",
+  metaDescription:
+    "Compare flooring installation cost per square foot for hardwood, laminate, vinyl and tile, with a planning range and a line item scope by room.",
 
   eyebrow: "Flooring Installation",
   h1: "Flooring Installation Cost Per Square Foot",
@@ -24,16 +26,25 @@ export const page: LandingPage = {
   beforePhoto: "before",
   afterPhoto: "after",
   beforeCaption: "Existing living room, worn carpet, original subfloor condition.",
-  afterCaption: "Same living room, new flooring installed with baseboards and transitions finished.",
+  afterCaption:
+    "Same living room, new flooring installed with baseboards and transitions finished.",
 
   steps: [
-    { title: "Measure Your Room", text: "Square footage and existing flooring condition anchor the demo scope so the estimate is grounded in real numbers." },
-    { title: "Choose A Flooring Material", text: "Compare laminate, vinyl, hardwood and tile against your actual square footage to see the installed cost difference between materials in dollars, not just per square foot." },
-    { title: "Get A Line Item Scope", text: "Export a scope with square footage, material, underlayment, transitions and baseboard reinstall broken out so a contractor can quote against a fixed list." },
+    {
+      title: "Measure Your Room",
+      text: "Square footage and existing flooring condition anchor the demo scope so the estimate is grounded in real numbers.",
+    },
+    {
+      title: "Choose A Flooring Material",
+      text: "Compare laminate, vinyl, hardwood and tile against your actual square footage to see the installed cost difference between materials in dollars, not just per square foot.",
+    },
+    {
+      title: "Get A Line Item Scope",
+      text: "Export a scope with square footage, material, underlayment, transitions and baseboard reinstall broken out so a contractor can quote against a fixed list.",
+    },
   ],
 
   showcase: ["scope", "interior", "budget-mode", "shop"],
-
 
   sections: [
     {
@@ -74,12 +85,30 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "What is the average cost to install flooring per square foot?", a: "Installed cost ranges from about $3 to $6 per square foot for laminate, $4 to $9 for luxury vinyl plank, $6 to $14 for hardwood, and $7 to $16 for tile, including both material and labor." },
-    { q: "Does subfloor condition really change the price that much?", a: "Yes. A subfloor that needs leveling, repair, or removal of old adhesive can add $1 to $3 per square foot before the new flooring is even installed, and this is the most common reason a quote comes in higher than the advertised per square foot price." },
-    { q: "What flooring is best for kitchens and bathrooms?", a: "Luxury vinyl plank or tile are the standard choices for kitchens and bathrooms because they resist water, while laminate and solid hardwood can warp or swell with moisture exposure over time." },
-    { q: "Is it cheaper to install flooring myself?", a: "Material cost stays the same either way, but skipping installation labor, roughly 40 to 50 percent of the installed price, can cut the total significantly if you are comfortable with the tools and the subfloor is already in good condition." },
-    { q: "Does a flooring quote usually include baseboards?", a: "Not always. Removing and reinstalling baseboards so new flooring meets the wall cleanly is a separate line item, typically $4 to $10 per linear foot, and should be confirmed as included before comparing quotes." },
-    { q: "How much does it cost to remove old flooring before installing new?", a: "Demo and haul away of existing flooring typically runs $1.50 to $3 per square foot depending on the material being removed, with multiple layers of old flooring or glued down carpet costing more to remove than a single layer." },
+    {
+      q: "What is the average cost to install flooring per square foot?",
+      a: "Installed cost ranges from about $3 to $6 per square foot for laminate, $4 to $9 for luxury vinyl plank, $6 to $14 for hardwood, and $7 to $16 for tile, including both material and labor.",
+    },
+    {
+      q: "Does subfloor condition really change the price that much?",
+      a: "Yes. A subfloor that needs leveling, repair, or removal of old adhesive can add $1 to $3 per square foot before the new flooring is even installed, and this is the most common reason a quote comes in higher than the advertised per square foot price.",
+    },
+    {
+      q: "What flooring is best for kitchens and bathrooms?",
+      a: "Luxury vinyl plank or tile are the standard choices for kitchens and bathrooms because they resist water, while laminate and solid hardwood can warp or swell with moisture exposure over time.",
+    },
+    {
+      q: "Is it cheaper to install flooring myself?",
+      a: "Material cost stays the same either way, but skipping installation labor, roughly 40 to 50 percent of the installed price, can cut the total significantly if you are comfortable with the tools and the subfloor is already in good condition.",
+    },
+    {
+      q: "Does a flooring quote usually include baseboards?",
+      a: "Not always. Removing and reinstalling baseboards so new flooring meets the wall cleanly is a separate line item, typically $4 to $10 per linear foot, and should be confirmed as included before comparing quotes.",
+    },
+    {
+      q: "How much does it cost to remove old flooring before installing new?",
+      a: "Demo and haul away of existing flooring typically runs $1.50 to $3 per square foot depending on the material being removed, with multiple layers of old flooring or glued down carpet costing more to remove than a single layer.",
+    },
   ],
 
   relatedSlugs: [
@@ -94,15 +123,31 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Estimate Flooring Installation Cost",
     steps: [
-      { name: "Measure The Room Square Footage", text: "Measure length and width of each room getting new flooring and add 10 percent for waste and cuts around edges and doorways." },
-      { name: "Choose A Material Category", text: "Pick laminate, vinyl, hardwood or tile based on room use, water exposure, and how the room needs to perform, not just appearance." },
-      { name: "Check Subfloor Condition", text: "Look for soft spots, squeaks, unevenness or water damage, since subfloor repair can add $1 to $3 per square foot to the total." },
-      { name: "Add Demo, Underlayment & Trim", text: "Include removal of old flooring, underlayment, transition strips and baseboard reinstall as separate line items, not assumed inside the material price." },
-      { name: "Compare Installed Quotes, Not Material Prices", text: "Ask for a per square foot installed price that includes labor, demo and trim so quotes from different contractors are actually comparable." },
+      {
+        name: "Measure The Room Square Footage",
+        text: "Measure length and width of each room getting new flooring and add 10 percent for waste and cuts around edges and doorways.",
+      },
+      {
+        name: "Choose A Material Category",
+        text: "Pick laminate, vinyl, hardwood or tile based on room use, water exposure, and how the room needs to perform, not just appearance.",
+      },
+      {
+        name: "Check Subfloor Condition",
+        text: "Look for soft spots, squeaks, unevenness or water damage, since subfloor repair can add $1 to $3 per square foot to the total.",
+      },
+      {
+        name: "Add Demo, Underlayment & Trim",
+        text: "Include removal of old flooring, underlayment, transition strips and baseboard reinstall as separate line items, not assumed inside the material price.",
+      },
+      {
+        name: "Compare Installed Quotes, Not Material Prices",
+        text: "Ask for a per square foot installed price that includes labor, demo and trim so quotes from different contractors are actually comparable.",
+      },
     ],
   },
 
   ctaTitle: "Get Your Flooring Installation Estimate",
-  ctaBody: "Try the free rehab calculator to compare flooring materials against your square footage and a planning range.",
+  ctaBody:
+    "Try the free rehab calculator to compare flooring materials against your square footage and a planning range.",
   ctaLabel: "Try The Free Calculator",
 };

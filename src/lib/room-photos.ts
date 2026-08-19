@@ -1,7 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { assertUploadAllowed, buildObjectPath } from "@/lib/storage-paths";
 
-
 /**
  * Room photo storage (private bucket "room-photos").
  * Objects live under `${user.id}/...` — storage RLS scopes every read and
@@ -61,7 +60,6 @@ export async function uploadRoomPhoto(file: File): Promise<string> {
   // collide, and nothing from the filename can act as path structure.
   const path = buildObjectPath(uid, file.name, { fallbackExt: "jpg" });
 
-
   const { error } = await supabase.storage
     .from(BUCKET)
     .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
@@ -81,7 +79,11 @@ const PENDING = new Map<string, Promise<string | null>>();
 const MISSING = new Map<string, number>();
 const MISS_TTL = 60_000;
 
-export async function roomPhotoUrl(path: string, expiresIn = 3600, force = false): Promise<string | null> {
+export async function roomPhotoUrl(
+  path: string,
+  expiresIn = 3600,
+  force = false,
+): Promise<string | null> {
   if (!isStoredPhoto(path)) return path;
   if (force) {
     SIGNED.delete(path);
@@ -124,7 +126,6 @@ export function signedPhotoExpiry(path: string | null | undefined): number | nul
   return hit ? hit.exp : null;
 }
 
-
 export async function deleteRoomPhoto(path: string): Promise<void> {
   if (!isStoredPhoto(path)) return;
   SIGNED.delete(path);
@@ -143,9 +144,11 @@ export async function uploadRenderDataUrl(dataUrl: string): Promise<string> {
   const ext = (blob.type.split("/")[1] || "png").replace(/[^a-z0-9]/g, "") || "png";
   const path = `${uid}/renders/${crypto.randomUUID()}.${ext}`;
 
-  const { error } = await supabase.storage
-    .from(BUCKET)
-    .upload(path, blob, { cacheControl: "3600", upsert: false, contentType: blob.type || "image/png" });
+  const { error } = await supabase.storage.from(BUCKET).upload(path, blob, {
+    cacheControl: "3600",
+    upsert: false,
+    contentType: blob.type || "image/png",
+  });
   if (error) throw new Error(error.message);
 
   return path;

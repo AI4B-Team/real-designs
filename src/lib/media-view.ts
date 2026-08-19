@@ -35,7 +35,11 @@ export function propertyOptions(items: any[], properties: any[] = []) {
       unassigned += 1;
       return;
     }
-    const cur = map.get(m.propertyId) || { id: m.propertyId, label: m.property || "Untitled Property", count: 0 };
+    const cur = map.get(m.propertyId) || {
+      id: m.propertyId,
+      label: m.property || "Untitled Property",
+      count: 0,
+    };
     cur.count += 1;
     if (!cur.label && m.property) cur.label = m.property;
     map.set(m.propertyId, cur);
@@ -46,7 +50,9 @@ export function propertyOptions(items: any[], properties: any[] = []) {
 
 /** Records that belong to one property, split by the tabs the property page shows. */
 export function propertyBuckets(items: any[], propertyId: string | null) {
-  const mine = (items || []).filter((m) => m.status !== "archived" && (m.propertyId || null) === (propertyId || null));
+  const mine = (items || []).filter(
+    (m) => m.status !== "archived" && (m.propertyId || null) === (propertyId || null),
+  );
   return {
     all: mine,
     photos: mine.filter((m) => typeGroup(m.type) === "uploads"),
@@ -86,7 +92,8 @@ function draftRoom(assets: any[]) {
 /** One durable draft row becomes exactly one project card, never one per photo. */
 export function draftRecord(d: any) {
   const assets = draftAssets(d);
-  const preview = assets.map((a: any) => a && a.path).find((p: any) => p && !/^(blob:|data:)/i.test(p)) || "";
+  const preview =
+    assets.map((a: any) => a && a.path).find((p: any) => p && !/^(blob:|data:)/i.test(p)) || "";
   const type = DRAFT_MEDIA_TYPE[d.project_type] || "uploaded_image";
   const s = d.settings && typeof d.settings === "object" ? d.settings : {};
   return {
@@ -127,7 +134,6 @@ export function mediaTypeLabel(m: any) {
   if (m.type === "uploaded_document") return "Document";
   return "Original Upload";
 }
-
 
 /**
  * Fold durable drafts into the canonical records. A video draft already has a
@@ -236,7 +242,9 @@ export function filterMedia(items: any[], f: MediaFilter = {}) {
   const tab = f.tab || "all";
   const status = f.status || "all";
   const property = f.property || "all";
-  const q = String(f.q || "").trim().toLowerCase();
+  const q = String(f.q || "")
+    .trim()
+    .toLowerCase();
   const fav = f.isFav || (() => false);
 
   let list = (items || []).filter((m) => {
@@ -247,7 +255,18 @@ export function filterMedia(items: any[], f: MediaFilter = {}) {
     if (property !== "all" && property !== "none" && m.propertyId !== property) return false;
     if (f.favOnly && !fav(m.id)) return false;
     if (q) {
-      const hay = [m.title, m.property, m.project, m.address, m.city, m.room, m.fileName, m.type, m.status, m.draftTypeLabel]
+      const hay = [
+        m.title,
+        m.property,
+        m.project,
+        m.address,
+        m.city,
+        m.room,
+        m.fileName,
+        m.type,
+        m.status,
+        m.draftTypeLabel,
+      ]
         .filter(Boolean)
         .join(" ")
         .toLowerCase();
@@ -256,10 +275,12 @@ export function filterMedia(items: any[], f: MediaFilter = {}) {
     return true;
   });
 
-
   if (f.sort === "old") list = list.slice().reverse();
-  else if (f.sort === "name") list = list.slice().sort((a, b) => String(a.title).localeCompare(String(b.title)));
+  else if (f.sort === "name")
+    list = list.slice().sort((a, b) => String(a.title).localeCompare(String(b.title)));
   else if (f.sort === "prop")
-    list = list.slice().sort((a, b) => String(a.property || "zzz").localeCompare(String(b.property || "zzz")));
+    list = list
+      .slice()
+      .sort((a, b) => String(a.property || "zzz").localeCompare(String(b.property || "zzz")));
   return list;
 }

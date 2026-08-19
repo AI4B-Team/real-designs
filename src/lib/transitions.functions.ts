@@ -47,7 +47,9 @@ async function assertProject(supabase: any, id: string) {
 
 export const listTransitions = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ video_project_id: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ video_project_id: z.string().uuid() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("video_transitions")
@@ -94,7 +96,9 @@ export const applyTransitions = createServerFn({ method: "POST" })
     z
       .object({
         video_project_id: z.string().uuid(),
-        connections: z.array(z.object({ from_key: z.string().min(1), to_key: z.string().min(1) })).max(400),
+        connections: z
+          .array(z.object({ from_key: z.string().min(1), to_key: z.string().min(1) }))
+          .max(400),
         type: z.enum(TYPES),
         duration_ms: z.number().int().min(0).max(2000).default(600),
         settings: z.record(z.string(), z.any()).optional(),
@@ -157,7 +161,9 @@ export const pruneTransitions = createServerFn({ method: "POST" })
       .eq("video_project_id", data.video_project_id);
     if (error) throw new Error(error.message);
     const live = new Set(data.keep.map((k) => `${k.from_key}→${k.to_key}`));
-    const stale = (rows ?? []).filter((r: any) => !live.has(`${r.from_key}→${r.to_key}`)).map((r: any) => r.id);
+    const stale = (rows ?? [])
+      .filter((r: any) => !live.has(`${r.from_key}→${r.to_key}`))
+      .map((r: any) => r.id);
     if (stale.length) await context.supabase.from("video_transitions").delete().in("id", stale);
     return { removed: stale.length };
   });
@@ -184,9 +190,8 @@ export const startAiTransition = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertProject(supabase, data.video_project_id);
-    const { AI_TRANSITION_CREDITS, AI_TRANSITION_AVAILABLE, AI_TRANSITION_UNAVAILABLE_REASON } = await import(
-      "@/lib/transitions"
-    );
+    const { AI_TRANSITION_CREDITS, AI_TRANSITION_AVAILABLE, AI_TRANSITION_UNAVAILABLE_REASON } =
+      await import("@/lib/transitions");
 
     const base = {
       user_id: userId,
@@ -240,7 +245,12 @@ export const startAiTransition = createServerFn({ method: "POST" })
         .eq("id", row.id)
         .select("*")
         .single();
-      return { transition: released ?? row, ok: false, reason: AI_TRANSITION_UNAVAILABLE_REASON, charged: 0 };
+      return {
+        transition: released ?? row,
+        ok: false,
+        reason: AI_TRANSITION_UNAVAILABLE_REASON,
+        charged: 0,
+      };
     }
 
     /* Reserved -> charged only once a provider accepts the job. */

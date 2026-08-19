@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/for-landlords",
   tier: "C",
-  intent: "Small and mid size landlords planning a rental turn who need to know which upgrades raise achievable rent and which just cost money.",
+  intent:
+    "Small and mid size landlords planning a rental turn who need to know which upgrades raise achievable rent and which just cost money.",
 
   metaTitle: "Rental Turn Planning For Landlords",
-  metaDescription: "Plan a durable rental turn, see which upgrades actually raise rent, and get a planning range before you spend a day of vacancy.",
+  metaDescription:
+    "Plan a durable rental turn, see which upgrades actually raise rent, and get a planning range before you spend a day of vacancy.",
 
   eyebrow: "For Landlords",
   h1: "Turn A Unit Fast Without Guessing At Finishes",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same room in a durable rental finish, ready to photograph and list",
 
   steps: [
-    { title: "Photograph The Room Between Tenants", text: "Take the room as it is, scuffed walls and all, without staging anything first." },
-    { title: "See A Durable Rental Finish Applied", text: "Generate a version of the room finished for durability and fast turnaround, not a magazine redesign." },
-    { title: "Get A Planning Range Before You Call Anyone", text: "Use the scoped range to sanity check quotes from a painter or flooring installer before you agree to a price." },
+    {
+      title: "Photograph The Room Between Tenants",
+      text: "Take the room as it is, scuffed walls and all, without staging anything first.",
+    },
+    {
+      title: "See A Durable Rental Finish Applied",
+      text: "Generate a version of the room finished for durability and fast turnaround, not a magazine redesign.",
+    },
+    {
+      title: "Get A Planning Range Before You Call Anyone",
+      text: "Use the scoped range to sanity check quotes from a painter or flooring installer before you agree to a price.",
+    },
   ],
 
   showcase: ["grades", "budget-mode", "brief", "interior"],
-
 
   sections: [
     {
@@ -112,6 +122,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "See The Turn Before You Spend A Dollar",
-  ctaBody: "Photograph the room, see it in a durable rental finish, and get a planning range to check against your quotes.",
+  ctaBody:
+    "Photograph the room, see it in a durable rental finish, and get a planning range to check against your quotes.",
   ctaLabel: "Plan This Turn",
 };

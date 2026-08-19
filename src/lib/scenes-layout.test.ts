@@ -10,7 +10,10 @@ const src = readFileSync(resolve(process.cwd(), "src/content/rd-reveal.ts"), "ut
 
 describe("Scenes toolbar", () => {
   it("puts the address field inside the workspace toolbar row", () => {
-    const bar = src.slice(src.indexOf(`<div class="rv-utility">`), src.indexOf(`<div class="rv-grid`));
+    const bar = src.slice(
+      src.indexOf(`<div class="rv-utility">`),
+      src.indexOf(`<div class="rv-grid`),
+    );
     expect(bar).toContain("rvSelAll");
     expect(bar).toContain("${selectedCount} of ${totalCount} selected");
     expect(bar).toContain(`rv-utility-m`);
@@ -34,15 +37,21 @@ describe("Scenes toolbar", () => {
   it("lets the address field wrap without shrinking to an unusable width", () => {
     expect(css).toMatch(/\.rv-utility-m \{[^}]*min-width: 220px/);
     expect(css).toMatch(/\.rv-utility-m \{[^}]*max-width: 520px/);
-    expect(css).toMatch(/@media \(max-width: 900px\) \{\s*\.rd-app \.rv-utility-m \{ flex: 1 1 100%/);
+    expect(css).toMatch(
+      /@media \(max-width: 900px\) \{\s*\.rd-app \.rv-utility-m \{ flex: 1 1 100%/,
+    );
   });
 });
 
 describe("Scenes grid columns", () => {
   it("measures the real workspace width with a container query, not the viewport", () => {
-    expect(css).toMatch(/#v-reveal \.rv-wiz, \.rd-app \.bx-work \{ container-type: inline-size; container-name: rvwork/);
+    expect(css).toMatch(
+      /#v-reveal \.rv-wiz, \.rd-app \.bx-work \{ container-type: inline-size; container-name: rvwork/,
+    );
     /* Zoom changes the viewport, not the content-relative container width. */
-    expect(css).not.toMatch(/@media \(min-width: 1600px\) \{ \.rd-app \.rv-grid \{ grid-template-columns/);
+    expect(css).not.toMatch(
+      /@media \(min-width: 1600px\) \{ \.rd-app \.rv-grid \{ grid-template-columns/,
+    );
   });
 
   it("uses six equal fractional columns once the workspace is wide enough", () => {
@@ -68,7 +77,9 @@ describe("Scenes grid columns", () => {
   });
 
   it("keeps a reasonable gap and no fixed card widths", () => {
-    expect(css).toMatch(/\.rd-app \.rv-grid \{ grid-template-columns: repeat\(auto-fill, minmax\(180px, 1fr\)\); gap: 14px 12px/);
+    expect(css).toMatch(
+      /\.rd-app \.rv-grid \{ grid-template-columns: repeat\(auto-fill, minmax\(180px, 1fr\)\); gap: 14px 12px/,
+    );
     expect(css).not.toMatch(/\.rv-tile \{[^}]*width: \d+px/);
   });
 
@@ -77,4 +88,3 @@ describe("Scenes grid columns", () => {
     expect(css).toMatch(/\.rv-grid \.rv-tile-th img \{[^}]*object-fit: cover/);
   });
 });
-

@@ -123,7 +123,9 @@ export const runPhotoEdit = createServerFn({ method: "POST" })
  */
 export const interpretPhotoRequest = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ request: z.string().min(3).max(600) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ request: z.string().min(3).max(600) }).parse(input),
+  )
   .handler(async ({ data }) => {
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured.");

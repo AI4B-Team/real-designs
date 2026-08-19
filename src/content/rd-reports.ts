@@ -8,7 +8,10 @@ import { getWorkspaceReport } from "@/lib/reports.functions";
 import { budgetAvailability, budgetsLive } from "@/lib/budget-coming-soon";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const money = (n) => "$" + Math.round(Number(n) || 0).toLocaleString("en-US");
 const paint = () => {
   try {
@@ -89,7 +92,8 @@ function bounds() {
       to: S.customTo ? new Date(S.customTo + "T23:59:59").toISOString() : null,
     };
   }
-  if (S.range === "year") return { from: new Date(now.getFullYear(), 0, 1).toISOString(), to: null };
+  if (S.range === "year")
+    return { from: new Date(now.getFullYear(), 0, 1).toISOString(), to: null };
   const days = S.range === "90d" ? 90 : 30;
   return { from: new Date(Date.now() - days * 86400000).toISOString(), to: null };
 }
@@ -108,7 +112,12 @@ function fmtDate(iso) {
 }
 function fmtDateTime(iso) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 /* ---------------- data ---------------- */
@@ -146,7 +155,6 @@ function errHtml() {
   )}</span><button class="btn btn-ghost btn-xs" data-a="refresh">Retry</button></div></div>`;
 }
 
-
 /* ---------------- rollup helpers ---------------- */
 
 function filteredRows() {
@@ -159,7 +167,9 @@ function filteredRows() {
     return (
       String(r.property).toLowerCase().includes(q) ||
       String(r.project).toLowerCase().includes(q) ||
-      String(r.client || "").toLowerCase().includes(q)
+      String(r.client || "")
+        .toLowerCase()
+        .includes(q)
     );
   });
   const key = S.sort;
@@ -264,8 +274,8 @@ function headHtml() {
       <div class="rp-exp">
         <button class="btn btn-dark btn-xs" data-a="expmenu"><i data-lucide="download"></i>Export Report<i data-lucide="chevron-down"></i></button>
         <div class="rp-menu${S.menu ? " on" : ""}" id="rpExpMenu">
-          <button data-a="csv"${canExport ? "" : " disabled title=\"No records match the current filters\""}><i data-lucide="table"></i>Export CSV</button>
-          <button data-a="pdf"${canExport ? "" : " disabled title=\"No records match the current filters\""}><i data-lucide="file-text"></i>Download PDF</button>
+          <button data-a="csv"${canExport ? "" : ' disabled title="No records match the current filters"'}><i data-lucide="table"></i>Export CSV</button>
+          <button data-a="pdf"${canExport ? "" : ' disabled title="No records match the current filters"'}><i data-lucide="file-text"></i>Download PDF</button>
         </div>
       </div>
     </div>
@@ -273,7 +283,8 @@ function headHtml() {
 }
 
 function cardsHtml() {
-  if (S.loading && !S.data) return `<div class="rp-cards">${'<div class="rp-sk card"></div>'.repeat(4)}</div>`;
+  if (S.loading && !S.data)
+    return `<div class="rp-cards">${'<div class="rp-sk card"></div>'.repeat(4)}</div>`;
   if (S.error && !S.data)
     return `<div class="rp-sec"><div class="rp-sec-b"><div class="rp-err"><i data-lucide="alert-circle"></i><span>${esc(
       S.error,
@@ -285,18 +296,27 @@ function cardsHtml() {
         "Planned Budget",
         s.plannedBudget ? money(s.plannedBudget) : "Not Set",
         s.budgetedProjects
-          ? s.budgetedProjects + (s.budgetedProjects === 1 ? " project has" : " projects have") + " a saved budget"
+          ? s.budgetedProjects +
+            (s.budgetedProjects === 1 ? " project has" : " projects have") +
+            " a saved budget"
           : "Add a budget target to a project",
       ]
     : ["activity", "Credits Used", String(S.data.credits.used), rangeLabel()];
   const cards = [
-    ["folder-kanban", "Active Projects", String(s.activeProjects), s.properties + (s.properties === 1 ? " property" : " properties") + " in the workspace"],
+    [
+      "folder-kanban",
+      "Active Projects",
+      String(s.activeProjects),
+      s.properties + (s.properties === 1 ? " property" : " properties") + " in the workspace",
+    ],
     ["images", "Designs Created", String(s.designsCreated), rangeLabel()],
     [
       "check-circle-2",
       "Approved Designs",
       String(s.approvedDesigns),
-      s.designsCreated ? s.approvalRate + "% of designs in this period" : "No designs in this period",
+      s.designsCreated
+        ? s.approvalRate + "% of designs in this period"
+        : "No designs in this period",
     ],
     fourthCard,
   ];
@@ -343,7 +363,13 @@ function rollupHtml() {
       ["rooms", "Rooms", "n"],
       ["designs", "Designs", "n"],
       ["approved", "Approved", "n"],
-      ...(live ? [["scope", "Budget Range", "n"], ["budget_target", "Planned Budget", "n"], ["budget_fit", "Budget Fit", ""]] : []),
+      ...(live
+        ? [
+            ["scope", "Budget Range", "n"],
+            ["budget_target", "Planned Budget", "n"],
+            ["budget_fit", "Budget Fit", ""],
+          ]
+        : []),
       ["last_activity", "Last Activity", ""],
     ];
     return `<div class="rp-tw"><table class="rp-tbl">
@@ -353,7 +379,9 @@ function rollupHtml() {
       <tbody>${slice
         .map((r) => {
           const f = FIT[r.budget_fit] || FIT.unset;
-          const scope = r.priced ? money(r.low) + " – " + money(r.high) : '<span class="mut">Not Priced</span>';
+          const scope = r.priced
+            ? money(r.low) + " – " + money(r.high)
+            : '<span class="mut">Not Priced</span>';
           return `<tr data-open="${esc(r.property_id)}" data-addr="${esc(r.property)}">
             <td><b>${esc(r.property)}</b></td>
             <td>${esc(r.project)}${r.client ? `<span class="mut"> · ${esc(r.client)}</span>` : ""}</td>
@@ -382,13 +410,17 @@ function rollupHtml() {
       <div><h3>Portfolio Rollup</h3><div class="sub">Every property and project${budgetsLive() ? ", with priced budget and fit" : ""}</div></div>
       <div class="rp-filters">
         <div class="rp-search"><i data-lucide="search"></i><input id="rpSearch" type="text" placeholder="Search Property, Project Or Client" value="${esc(S.q)}"></div>
-        ${budgetsLive() ? `<select id="rpFit" aria-label="Budget fit filter">
+        ${
+          budgetsLive()
+            ? `<select id="rpFit" aria-label="Budget fit filter">
           <option value="all"${S.fit === "all" ? " selected" : ""}>All Budget Fits</option>
           <option value="on_track"${S.fit === "on_track" ? " selected" : ""}>On Track</option>
           <option value="near_limit"${S.fit === "near_limit" ? " selected" : ""}>Near Limit</option>
           <option value="over"${S.fit === "over" ? " selected" : ""}>Over Budget</option>
           <option value="unset"${S.fit === "unset" ? " selected" : ""}>Not Set</option>
-        </select>` : ""}
+        </select>`
+            : ""
+        }
       </div>
     </div>
     <div class="rp-sec-b flush">${body()}</div>
@@ -419,7 +451,8 @@ function progressHtml() {
 function creditsHtml() {
   if (S.error && !S.data) return "";
   const inner = () => {
-    if (S.loading && !S.data) return `<div class="rp-sec-b">${'<div class="rp-sk line"></div>'.repeat(5)}</div>`;
+    if (S.loading && !S.data)
+      return `<div class="rp-sec-b">${'<div class="rp-sk line"></div>'.repeat(5)}</div>`;
     if (S.error) return errHtml();
     if (!S.data) return "";
     const cr = S.data.credits;
@@ -431,8 +464,13 @@ function creditsHtml() {
     const peak = series.reduce((m, d) => Math.max(m, d.credits), 0);
     const chart = series.length
       ? `<div class="rp-bars">${series
-          .map((d) => `<i class="on" style="height:${peak ? Math.max(4, (d.credits / peak) * 100) : 4}%" title="${d.date}: ${d.credits}"></i>`)
-          .join("")}</div><div class="rp-axis"><span>${series[0].date}</span><span>${series[series.length - 1].date}</span></div>`
+          .map(
+            (d) =>
+              `<i class="on" style="height:${peak ? Math.max(4, (d.credits / peak) * 100) : 4}%" title="${d.date}: ${d.credits}"></i>`,
+          )
+          .join(
+            "",
+          )}</div><div class="rp-axis"><span>${series[0].date}</span><span>${series[series.length - 1].date}</span></div>`
       : "";
     const tx = cr.tx;
     return `<div class="rp-sec-b">
@@ -473,7 +511,8 @@ function creditsHtml() {
 function clientsHtml() {
   if (S.error && !S.data) return "";
   const inner = () => {
-    if (S.loading && !S.data) return `<div class="rp-sec-b">${'<div class="rp-sk line"></div>'.repeat(5)}</div>`;
+    if (S.loading && !S.data)
+      return `<div class="rp-sec-b">${'<div class="rp-sk line"></div>'.repeat(5)}</div>`;
     if (S.error) return errHtml();
     if (!S.data) return "";
     const c = S.data.clients;
@@ -530,7 +569,6 @@ function actLabel(kind) {
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());
 }
-
 
 /* ---------------- events ---------------- */
 
@@ -645,7 +683,9 @@ function openProperty(address) {
   go("props");
   setTimeout(() => {
     const rows = Array.from(document.querySelectorAll("#propTree .tr.l1, .tr.l1"));
-    const hit = rows.find((r) => (r.getAttribute("title") || r.textContent || "").trim().startsWith(address));
+    const hit = rows.find((r) =>
+      (r.getAttribute("title") || r.textContent || "").trim().startsWith(address),
+    );
     if (hit) hit.click();
   }, 80);
 }
@@ -668,7 +708,9 @@ function exportCsv() {
     "Designs",
     "Approved Designs",
     "Approval Rate",
-    ...(live ? ["Budget Minimum", "Budget Maximum", "Planned Budget", "Budget Variance", "Budget Fit"] : []),
+    ...(live
+      ? ["Budget Minimum", "Budget Maximum", "Planned Budget", "Budget Variance", "Budget Fit"]
+      : []),
     "Last Activity",
   ];
   const lines = [head.map(csvCell).join(",")].concat(
@@ -710,11 +752,14 @@ function exportCsv() {
 function pdfPage(inner, n, total) {
   return `<section class="pg"><header><span class="brand"><b>REAL</b> DESIGNS</span><span>Workspace Report · ${esc(
     rangeLabel(),
-  )}</span></header><div class="body">${inner}</div><footer><span>Generated ${new Date().toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  })}</span><span>Page ${n} of ${total}</span></footer></section>`;
+  )}</span></header><div class="body">${inner}</div><footer><span>Generated ${new Date().toLocaleDateString(
+    "en-US",
+    {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    },
+  )}</span><span>Page ${n} of ${total}</span></footer></section>`;
 }
 
 function exportPdf() {
@@ -748,7 +793,9 @@ function exportPdf() {
     <h2>Credit Usage</h2>
     <table><thead><tr><th>Used</th><th>Remaining</th><th>Average Per Project</th><th>Top Category</th></tr></thead>
     <tbody><tr><td>${d.credits.used}</td><td>${d.credits.plan === "free" ? d.credits.freeRemainingToday + " Today" : d.credits.remaining}</td><td>${d.credits.perProject}</td><td>${esc(
-      Object.keys(d.credits.byType).sort((a, b) => d.credits.byType[b] - d.credits.byType[a]).map((k) => CREDIT_LABEL[k] || k)[0] || "None",
+      Object.keys(d.credits.byType)
+        .sort((a, b) => d.credits.byType[b] - d.credits.byType[a])
+        .map((k) => CREDIT_LABEL[k] || k)[0] || "None",
     )}</td></tr></tbody></table>
     <h2>Client Activity</h2>
     <table><thead><tr><th>Links Shared</th><th>Viewed</th><th>Changes Requested</th><th>Approved</th></tr></thead>
@@ -789,7 +836,8 @@ function exportPdf() {
 
   const w = window.open("", "_blank");
   if (!w) return toast("Allow Pop-Ups To Download The PDF");
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>REAL DESIGNS Report</title><style>
+  w.document
+    .write(`<!doctype html><html><head><meta charset="utf-8"><title>REAL DESIGNS Report</title><style>
     *{box-sizing:border-box} body{margin:0;font-family:'DM Sans',system-ui,sans-serif;color:#111827;background:#f3f4f6}
     .pg{width:8.5in;min-height:11in;margin:0 auto 16px;background:#fff;padding:0.6in;display:flex;flex-direction:column}
     header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #c00;padding-bottom:8px;font-size:11px;color:#6b7280}

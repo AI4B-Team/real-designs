@@ -12,7 +12,9 @@ test.describe("Builder workflows", () => {
     await expect.poll(async () => await photoCards(appPage).count()).toBeGreaterThan(0);
 
     const cta = appPage
-      .getByRole("button", { name: /set design direction|next: design direction|design \d+ photos?/i })
+      .getByRole("button", {
+        name: /set design direction|next: design direction|design \d+ photos?/i,
+      })
       .first();
     await expect(cta).toBeVisible();
     await cta.click();

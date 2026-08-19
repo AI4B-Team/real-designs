@@ -6,7 +6,11 @@
  * safe to repeat, so retry a couple of times with a short backoff before
  * failing.
  */
-export async function withRetry<T>(run: () => Promise<T>, attempts = 3, baseDelayMs = 250): Promise<T> {
+export async function withRetry<T>(
+  run: () => Promise<T>,
+  attempts = 3,
+  baseDelayMs = 250,
+): Promise<T> {
   let lastErr: unknown;
   for (let i = 0; i < attempts; i += 1) {
     try {

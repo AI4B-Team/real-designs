@@ -15,7 +15,11 @@ vi.mock("@/lib/room-photos", () => ({
 }));
 vi.mock("@/lib/photo-classify.functions", () => ({
   classifyPhotoRooms: vi.fn(async ({ data }: any) => ({
-    results: (data.images || []).map((i: any) => ({ id: i.id, label: "kitchen", confidence: 0.95 })),
+    results: (data.images || []).map((i: any) => ({
+      id: i.id,
+      label: "kitchen",
+      confidence: 0.95,
+    })),
   })),
 }));
 vi.mock("@/lib/photo-classify", async (orig) => {
@@ -24,7 +28,9 @@ vi.mock("@/lib/photo-classify", async (orig) => {
 });
 
 const jpeg = (name: string) => new File([new Uint8Array(1024)], name, { type: "image/jpeg" });
-const settle = async (n = 30) => { for (let i = 0; i < n; i++) await Promise.resolve(); };
+const settle = async (n = 30) => {
+  for (let i = 0; i < n; i++) await Promise.resolve();
+};
 
 beforeEach(() => {
   (document.querySelector("#rdsClose") as HTMLElement | null)?.click();
@@ -58,8 +64,8 @@ const chooseFormat = async (ratio: string) => {
 };
 
 const tileClasses = () =>
-  [...stagingHost().querySelectorAll(".rv-tile")].map((t) =>
-    ["rt-916", "rt-169", "rt-11"].find((c) => t.classList.contains(c)) || "none",
+  [...stagingHost().querySelectorAll(".rv-tile")].map(
+    (t) => ["rt-916", "rt-169", "rt-11"].find((c) => t.classList.contains(c)) || "none",
   );
 
 const addClass = () => {

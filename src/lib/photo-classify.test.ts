@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  ACCEPT_CONFIDENCE, arrangeRank, missingRecommendation, normalizeCategory,
-  noticeSignature, recommendationCopy, resolvePhoto, UNCONFIRMED_COPY,
+  ACCEPT_CONFIDENCE,
+  arrangeRank,
+  missingRecommendation,
+  normalizeCategory,
+  noticeSignature,
+  recommendationCopy,
+  resolvePhoto,
+  UNCONFIRMED_COPY,
 } from "@/lib/photo-classify";
 
 const p = (id: string, label: string | null, confidence = 0.95, manual: string | null = null) =>
@@ -9,12 +15,28 @@ const p = (id: string, label: string | null, confidence = 0.95, manual: string |
 
 describe("label normalization", () => {
   it("folds front-exterior synonyms", () => {
-    for (const s of ["Front Exterior", "exterior front", "Front Elevation", "Facade", "Front View", "Curb View", "Street View", "House Exterior"]) {
+    for (const s of [
+      "Front Exterior",
+      "exterior front",
+      "Front Elevation",
+      "Facade",
+      "Front View",
+      "Curb View",
+      "Street View",
+      "House Exterior",
+    ]) {
       expect(normalizeCategory(s)).toBe("Front Exterior");
     }
   });
   it("folds living-room synonyms", () => {
-    for (const s of ["Living Room", "Family Room", "Great Room", "Lounge", "Main Living Area", "Open Living Area"]) {
+    for (const s of [
+      "Living Room",
+      "Family Room",
+      "Great Room",
+      "Lounge",
+      "Main Living Area",
+      "Open Living Area",
+    ]) {
       expect(normalizeCategory(s)).toBe("Living Room");
     }
   });
@@ -117,7 +139,9 @@ describe("missing-photo recommendation", () => {
     const neither = [p("1", "Kitchen"), p("2", "Bedroom")];
     const r = missingRecommendation(neither, "completed");
     expect(r.missing).toEqual(["Front Exterior", "Living Room"]);
-    expect(r.message).toBe("Consider adding front exterior and living-room photos for a more complete tour.");
+    expect(r.message).toBe(
+      "Consider adding front exterior and living-room photos for a more complete tour.",
+    );
   });
 
   it("clears as soon as a manual label supplies the space", () => {
@@ -143,7 +167,14 @@ describe("auto arrange order", () => {
   it("walks the home front to back", () => {
     const order = ["Kitchen", "Front Exterior", "Bedroom", "Living Room", "Rear Exterior", "Entry"];
     const sorted = order.slice().sort((x, y) => arrangeRank(x) - arrangeRank(y));
-    expect(sorted).toEqual(["Front Exterior", "Entry", "Living Room", "Kitchen", "Bedroom", "Rear Exterior"]);
+    expect(sorted).toEqual([
+      "Front Exterior",
+      "Entry",
+      "Living Room",
+      "Kitchen",
+      "Bedroom",
+      "Rear Exterior",
+    ]);
   });
   it("puts unknown rooms last", () => {
     expect(arrangeRank("Unsorted")).toBeGreaterThan(arrangeRank("Rear Exterior"));

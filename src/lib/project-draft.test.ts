@@ -53,7 +53,18 @@ const base = (id: string, over: Record<string, any> = {}): DraftPayload => ({
   project_type: "photo_staging",
   status: "draft",
   builder_step: "review",
-  assets: [{ key: "p1", path: "u1/a.jpg", room: "Kitchen", room_source: "ai", confidence: 0.9, selected: true, done: false, status: "ready" }],
+  assets: [
+    {
+      key: "p1",
+      path: "u1/a.jpg",
+      room: "Kitchen",
+      room_source: "ai",
+      confidence: 0.9,
+      selected: true,
+      done: false,
+      status: "ready",
+    },
+  ],
   ...over,
 });
 
@@ -62,10 +73,15 @@ describe("draft autosave", () => {
     const server = fakeServer();
     const store = memStorage();
     const states: string[] = [];
-    const a = new DraftAutosaver("d1", { save: (p) => server.save(p), debounceMs: 0, storage: store, onState: (s) => states.push(s) });
+    const a = new DraftAutosaver("d1", {
+      save: (p) => server.save(p),
+      debounceMs: 0,
+      storage: store,
+      onState: (s) => states.push(s),
+    });
     a.queue(base("d1"));
     await a.flush();
-    expect(server.rows.get("d1")?.['builder_step']).toBe("review");
+    expect(server.rows.get("d1")?.["builder_step"]).toBe("review");
     expect(store.getItem(cacheKey("d1"))).toBeNull();
     expect(states).toEqual(["saving", "saved"]);
   });
@@ -73,20 +89,28 @@ describe("draft autosave", () => {
   it("survives a refresh: the row is read back from the server, not the browser", async () => {
     const server = fakeServer();
     const store = memStorage();
-    const a = new DraftAutosaver("d2", { save: (p) => server.save(p), debounceMs: 0, storage: store });
+    const a = new DraftAutosaver("d2", {
+      save: (p) => server.save(p),
+      debounceMs: 0,
+      storage: store,
+    });
     a.queue(base("d2", { builder_step: "canvas" }));
     await a.flush();
     a.destroy();
     /* Refresh: nothing left in the browser at all. */
     store.removeItem(cacheKey("d2"));
     const reloaded = server.list().find((r) => r.id === "d2");
-    expect(reloaded?.['builder_step']).toBe("canvas");
-    expect(reloaded?.['assets']?.[0].path).toBe("u1/a.jpg");
+    expect(reloaded?.["builder_step"]).toBe("canvas");
+    expect(reloaded?.["assets"]?.[0].path).toBe("u1/a.jpg");
   });
 
   it("survives sign-out and sign-in, and is retrievable on another device", async () => {
     const server = fakeServer();
-    const a = new DraftAutosaver("d3", { save: (p) => server.save(p), debounceMs: 0, storage: memStorage() });
+    const a = new DraftAutosaver("d3", {
+      save: (p) => server.save(p),
+      debounceMs: 0,
+      storage: memStorage(),
+    });
     a.queue(base("d3"));
     await a.flush();
     server.signInAs("user-2");
@@ -103,7 +127,13 @@ describe("draft autosave", () => {
     const store = memStorage();
     const states: string[] = [];
     server.failNext(2);
-    const a = new DraftAutosaver("d4", { save: (p) => server.save(p), debounceMs: 0, retryMs: [10, 10], storage: store, onState: (s) => states.push(s) });
+    const a = new DraftAutosaver("d4", {
+      save: (p) => server.save(p),
+      debounceMs: 0,
+      retryMs: [10, 10],
+      storage: store,
+      onState: (s) => states.push(s),
+    });
     a.queue(base("d4"));
     await a.flush();
     expect(states).toContain("error");
@@ -119,7 +149,11 @@ describe("draft autosave", () => {
 
   it("never creates a duplicate draft across rerenders and rapid edits", async () => {
     const server = fakeServer();
-    const a = new DraftAutosaver("d5", { save: (p) => server.save(p), debounceMs: 0, storage: memStorage() });
+    const a = new DraftAutosaver("d5", {
+      save: (p) => server.save(p),
+      debounceMs: 0,
+      storage: memStorage(),
+    });
     for (let i = 0; i < 8; i++) {
       a.queue(base("d5", { title: "Kitchen Refresh " + i }));
       await a.flush();
@@ -128,7 +162,7 @@ describe("draft autosave", () => {
     await a.flush();
     expect(server.rows.size).toBe(1);
     expect(server.calls).toBe(8);
-    expect(server.rows.get("d5")?.['title']).toBe("Kitchen Refresh 7");
+    expect(server.rows.get("d5")?.["title"]).toBe("Kitchen Refresh 7");
   });
 });
 
@@ -138,14 +172,30 @@ describe("legacy localStorage migration", () => {
     const store = memStorage();
     store.setItem(
       LEGACY_STAGING_KEY,
-      JSON.stringify({ address: "12 Oak St", items: [{ key: "p1", name: "a.jpg", path: "u1/a.jpg", room: "Kitchen", roomSource: "manual", selected: true }] }),
+      JSON.stringify({
+        address: "12 Oak St",
+        items: [
+          {
+            key: "p1",
+            name: "a.jpg",
+            path: "u1/a.jpg",
+            room: "Kitchen",
+            roomSource: "manual",
+            selected: true,
+          },
+        ],
+      }),
     );
-    const out = await migrateLegacyStagingDraft({ save: (p) => server.save(p), storage: store, newId: () => "11111111-1111-1111-1111-111111111111" });
+    const out = await migrateLegacyStagingDraft({
+      save: (p) => server.save(p),
+      storage: store,
+      newId: () => "11111111-1111-1111-1111-111111111111",
+    });
     expect(out.migrated).toBe(true);
     expect(store.getItem(LEGACY_STAGING_KEY)).toBeNull();
     const row = server.rows.get("11111111-1111-1111-1111-111111111111")!;
-    expect(row['property_address']).toBe("12 Oak St");
-    expect(row['assets'][0].room_source).toBe("manual");
+    expect(row["property_address"]).toBe("12 Oak St");
+    expect(row["assets"][0].room_source).toBe("manual");
   });
 
   it("keeps the local copy when the server rejects the migration", async () => {
@@ -153,14 +203,19 @@ describe("legacy localStorage migration", () => {
     const store = memStorage();
     server.failNext(1);
     store.setItem(LEGACY_STAGING_KEY, JSON.stringify({ items: [{ key: "p1", path: "u1/a.jpg" }] }));
-    await expect(migrateLegacyStagingDraft({ save: (p) => server.save(p), storage: store })).rejects.toThrow();
+    await expect(
+      migrateLegacyStagingDraft({ save: (p) => server.save(p), storage: store }),
+    ).rejects.toThrow();
     expect(store.getItem(LEGACY_STAGING_KEY)).not.toBeNull();
   });
 
   it("drops local entries that only ever had temporary blob URLs", async () => {
     const server = fakeServer();
     const store = memStorage();
-    store.setItem(LEGACY_STAGING_KEY, JSON.stringify({ items: [{ key: "p1", path: "blob:http://x/1" }] }));
+    store.setItem(
+      LEGACY_STAGING_KEY,
+      JSON.stringify({ items: [{ key: "p1", path: "blob:http://x/1" }] }),
+    );
     const out = await migrateLegacyStagingDraft({ save: (p) => server.save(p), storage: store });
     expect(out.migrated).toBe(false);
     expect(store.getItem(LEGACY_STAGING_KEY)).toBeNull();

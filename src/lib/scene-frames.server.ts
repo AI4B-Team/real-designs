@@ -82,7 +82,10 @@ export async function startFrameGeneration(
   // Already running: never start (or charge for) a second job.
   if (frame.clip_id && (frame.status === "queued" || frame.status === "processing")) {
     const { data: existing } = await supabaseAdmin
-      .from("scene_clips").select("*").eq("id", frame.clip_id).maybeSingle();
+      .from("scene_clips")
+      .select("*")
+      .eq("id", frame.clip_id)
+      .maybeSingle();
     if (existing) {
       const clip = await reconcileClip(existing as ClipRow);
       return { frame: await mirrorClip(frame, clip), clip };
@@ -145,7 +148,9 @@ export async function startFrameGeneration(
   if (!charged.ok) {
     await supabaseAdmin.from("scene_clips").delete().eq("id", clip.id);
     const f = await patchFrame(frame.id, {
-      status: "configured", clip_id: null, credits_reserved: 0,
+      status: "configured",
+      clip_id: null,
+      credits_reserved: 0,
       error_message: chargeErrorMessage(charged),
     });
     throw new Error(chargeErrorMessage(charged));
@@ -160,7 +165,13 @@ export async function startFrameGeneration(
       status: "processing",
       progress: Math.max(0, Math.min(100, job.progress)),
       last_checked_at: new Date().toISOString(),
-      provider_payload: { model: CLIP_MODEL, size, seconds, mode: "start_end", end_path: frame.end_path },
+      provider_payload: {
+        model: CLIP_MODEL,
+        size,
+        seconds,
+        mode: "start_end",
+        end_path: frame.end_path,
+      },
     });
     const f = await patchFrame(frame.id, {
       provider_job_id: job.id,
@@ -172,10 +183,16 @@ export async function startFrameGeneration(
   } catch (err) {
     // The provider refused the job: release the reservation immediately.
     await refundClipOnce(clip, `Start/End clip could not start ${clip.id}`);
-    const message = String((err as Error)?.message || "The clip could not be started.").slice(0, 400);
+    const message = String((err as Error)?.message || "The clip could not be started.").slice(
+      0,
+      400,
+    );
     await patchClip(clip.id, { status: "failed", error_message: message });
     await patchFrame(frame.id, {
-      status: "failed", error_message: message, credits_reserved: 0, credits_charged: 0,
+      status: "failed",
+      error_message: message,
+      credits_reserved: 0,
+      credits_charged: 0,
     });
     throw new Error(message);
   }
@@ -188,23 +205,28 @@ async function mirrorClip(frame: FrameRow, clip: ClipRow): Promise<FrameRow> {
     status,
     progress: Number(clip.progress || 0),
     provider_job_id: clip.provider_job_id,
-    error_message: (clip['error_message'] as string | null) ?? null,
+    error_message: (clip["error_message"] as string | null) ?? null,
     credits_charged: Number(clip.credits_charged || 0) - Number(clip.credits_refunded || 0),
   };
   if (clip.status === "completed" && clip.storage_path) {
-    values['clip_path'] = clip.storage_path;
-    values['credits_reserved'] = 0;
+    values["clip_path"] = clip.storage_path;
+    values["credits_reserved"] = 0;
     // A finished Start/End clip is the scene's media: adopt it straight away.
-    if (!clip['approved']) {
+    if (!clip["approved"]) {
       await patchClip(clip.id, { approved: true, approved_at: new Date().toISOString() });
       await supabaseAdmin
         .from("video_scenes")
-        .update({ clip_id: clip.id, use_clip: true, animate_id: "start_end", enhancement_level: "animate" })
+        .update({
+          clip_id: clip.id,
+          use_clip: true,
+          animate_id: "start_end",
+          enhancement_level: "animate",
+        })
         .eq("video_project_id", clip.video_project_id as string)
         .eq("source_path", clip.scene_key as string);
     }
   }
-  if (clip.status === "failed" || clip.status === "cancelled") values['credits_reserved'] = 0;
+  if (clip.status === "failed" || clip.status === "cancelled") values["credits_reserved"] = 0;
   return patchFrame(frame.id, values);
 }
 
@@ -226,7 +248,11 @@ export async function reconcileFrames(
   for (const raw of (rows ?? []) as FrameRow[]) {
     let f = raw;
     if (f.clip_id && (f.status === "queued" || f.status === "processing")) {
-      const { data: c } = await supabaseAdmin.from("scene_clips").select("*").eq("id", f.clip_id).maybeSingle();
+      const { data: c } = await supabaseAdmin
+        .from("scene_clips")
+        .select("*")
+        .eq("id", f.clip_id)
+        .maybeSingle();
       if (c) {
         const clip = await reconcileClip(c as ClipRow);
         f = await mirrorClip(f, clip);
@@ -241,7 +267,11 @@ export async function reconcileFrames(
 /** Cancel an unfinished Start/End job and release its credits. */
 export async function cancelFrameGeneration(frame: FrameRow): Promise<FrameRow> {
   if (frame.clip_id) {
-    const { data: c } = await supabaseAdmin.from("scene_clips").select("*").eq("id", frame.clip_id).maybeSingle();
+    const { data: c } = await supabaseAdmin
+      .from("scene_clips")
+      .select("*")
+      .eq("id", frame.clip_id)
+      .maybeSingle();
     if (c) {
       const clip = c as ClipRow;
       if (clip.status !== "completed") {

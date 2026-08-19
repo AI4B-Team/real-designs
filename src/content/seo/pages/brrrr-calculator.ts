@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/brrrr-calculator",
   tier: "A",
-  intent: "Investor wants a BRRRR method calculator to check rehab, refinance and holding numbers before committing to a deal.",
+  intent:
+    "Investor wants a BRRRR method calculator to check rehab, refinance and holding numbers before committing to a deal.",
 
   metaTitle: "BRRRR Calculator: Rehab & Refinance Numbers",
-  metaDescription: "Run the BRRRR method calculator, buy, rehab, rent, refinance, repeat, and see a realistic rehab budget, ARV assumption and cash-out refinance number side by side.",
+  metaDescription:
+    "Run the BRRRR method calculator, buy, rehab, rent, refinance, repeat, and see a realistic rehab budget, ARV assumption and cash-out refinance number side by side.",
 
   eyebrow: "BRRRR Calculator",
   h1: "BRRRR Calculator For Rehab & Refinance Numbers",
@@ -24,16 +26,25 @@ export const page: LandingPage = {
   beforePhoto: "before",
   afterPhoto: "after",
   beforeCaption: "Existing living room, worn flooring and dated finishes, pre-rehab condition.",
-  afterCaption: "Same room after a rental-grade rehab, refinished floors, paint and updated lighting.",
+  afterCaption:
+    "Same room after a rental-grade rehab, refinished floors, paint and updated lighting.",
 
   steps: [
-    { title: "Set The Property Condition", text: "Dated, worn or distressed sets the rehab baseline instead of an assumed per square foot number." },
-    { title: "Set Rehab Level & Budget Band", text: "Choose a rental-grade or retail-grade finish level so the rehab estimate matches the exit strategy, refinance and hold versus a flip and sell." },
-    { title: "Compare Rehab Cost To ARV & Refinance", text: "See the rehab line items next to an ARV assumption and a 70 to 75 percent cash-out refinance number to check how much cash stays in the deal." },
+    {
+      title: "Set The Property Condition",
+      text: "Dated, worn or distressed sets the rehab baseline instead of an assumed per square foot number.",
+    },
+    {
+      title: "Set Rehab Level & Budget Band",
+      text: "Choose a rental-grade or retail-grade finish level so the rehab estimate matches the exit strategy, refinance and hold versus a flip and sell.",
+    },
+    {
+      title: "Compare Rehab Cost To ARV & Refinance",
+      text: "See the rehab line items next to an ARV assumption and a 70 to 75 percent cash-out refinance number to check how much cash stays in the deal.",
+    },
   ],
 
   showcase: ["scope", "budget-mode", "arv", "grades"],
-
 
   sections: [
     {
@@ -73,12 +84,30 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "What is a good rehab budget for a BRRRR deal?", a: "A moderate rental-grade rehab on a typical single family property plans in the $25,000 to $55,000 range, while a heavier rehab touching kitchen, bathrooms, flooring and mechanicals can run $60,000 to $110,000 or more, depending on square footage and condition." },
-    { q: "How much of the ARV can I refinance out at?", a: "Most investment property cash-out refinance lenders lend 70 to 75 percent of the new appraised value, and many require a seasoning period, commonly six months of ownership, before they will lend against the post-rehab value." },
-    { q: "Should I rehab a BRRRR property to rental-grade or retail-grade finishes?", a: "Rental-grade finishes, durable LVP flooring, stock or laminate cabinets and standard fixtures, are typically the right call for a hold and rent strategy, since they cost 20 to 35 percent less than retail-grade finishes without meaningfully reducing achievable rent." },
-    { q: "Why does my BRRRR calculator always show less cash-out than expected?", a: "This usually comes from an optimistic ARV assumption, an underestimated rehab scope, or ignoring holding costs during the rehab and seasoning period. All three compress the actual cash-out refinance proceeds compared to a rough spreadsheet estimate." },
-    { q: "How long does the BRRRR cycle typically take?", a: "A full cycle, buy, rehab, rent, refinance, commonly takes eight to twelve months: two to four months for the rehab, one to two months to place a tenant, and a lender's seasoning period, often six months, before the cash-out refinance can close." },
-    { q: "Does a rehab scope tool help with the refinance appraisal?", a: "A line item rehab scope gives an appraiser concrete, verifiable improvements, flooring, cabinetry, mechanicals, to point to when supporting the after repair value, which improves the odds the refinance appraisal comes in at or near the ARV assumption used in the calculator." },
+    {
+      q: "What is a good rehab budget for a BRRRR deal?",
+      a: "A moderate rental-grade rehab on a typical single family property plans in the $25,000 to $55,000 range, while a heavier rehab touching kitchen, bathrooms, flooring and mechanicals can run $60,000 to $110,000 or more, depending on square footage and condition.",
+    },
+    {
+      q: "How much of the ARV can I refinance out at?",
+      a: "Most investment property cash-out refinance lenders lend 70 to 75 percent of the new appraised value, and many require a seasoning period, commonly six months of ownership, before they will lend against the post-rehab value.",
+    },
+    {
+      q: "Should I rehab a BRRRR property to rental-grade or retail-grade finishes?",
+      a: "Rental-grade finishes, durable LVP flooring, stock or laminate cabinets and standard fixtures, are typically the right call for a hold and rent strategy, since they cost 20 to 35 percent less than retail-grade finishes without meaningfully reducing achievable rent.",
+    },
+    {
+      q: "Why does my BRRRR calculator always show less cash-out than expected?",
+      a: "This usually comes from an optimistic ARV assumption, an underestimated rehab scope, or ignoring holding costs during the rehab and seasoning period. All three compress the actual cash-out refinance proceeds compared to a rough spreadsheet estimate.",
+    },
+    {
+      q: "How long does the BRRRR cycle typically take?",
+      a: "A full cycle, buy, rehab, rent, refinance, commonly takes eight to twelve months: two to four months for the rehab, one to two months to place a tenant, and a lender's seasoning period, often six months, before the cash-out refinance can close.",
+    },
+    {
+      q: "Does a rehab scope tool help with the refinance appraisal?",
+      a: "A line item rehab scope gives an appraiser concrete, verifiable improvements, flooring, cabinetry, mechanicals, to point to when supporting the after repair value, which improves the odds the refinance appraisal comes in at or near the ARV assumption used in the calculator.",
+    },
   ],
 
   relatedSlugs: [
@@ -93,16 +122,35 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Run BRRRR Numbers With A Rehab Scope",
     steps: [
-      { name: "Set The Property Condition", text: "Use the free rehab calculator to set condition and finish grade so the rehab total reflects more than a per square foot guess." },
-      { name: "Set The Finish Level To Rental-Grade", text: "Choose a rental-grade budget band so the rehab estimate matches materials appropriate for a hold and rent strategy." },
-      { name: "Total The Rehab Line Items", text: "Add up the scoped line items, flooring, kitchen, bathrooms, mechanicals, roof, to get a defensible rehab total." },
-      { name: "Estimate The After Repair Value", text: "Compare the scoped rehab against recent comparable rental sales or refinance appraisals in the immediate area." },
-      { name: "Apply A 70 To 75 Percent Refinance Assumption", text: "Multiply the ARV by 70 to 75 percent to estimate likely cash-out refinance proceeds from a lender." },
-      { name: "Subtract Total Cash Invested", text: "Compare refinance proceeds against purchase price, rehab cost and holding costs to see how much cash stays in the deal." },
+      {
+        name: "Set The Property Condition",
+        text: "Use the free rehab calculator to set condition and finish grade so the rehab total reflects more than a per square foot guess.",
+      },
+      {
+        name: "Set The Finish Level To Rental-Grade",
+        text: "Choose a rental-grade budget band so the rehab estimate matches materials appropriate for a hold and rent strategy.",
+      },
+      {
+        name: "Total The Rehab Line Items",
+        text: "Add up the scoped line items, flooring, kitchen, bathrooms, mechanicals, roof, to get a defensible rehab total.",
+      },
+      {
+        name: "Estimate The After Repair Value",
+        text: "Compare the scoped rehab against recent comparable rental sales or refinance appraisals in the immediate area.",
+      },
+      {
+        name: "Apply A 70 To 75 Percent Refinance Assumption",
+        text: "Multiply the ARV by 70 to 75 percent to estimate likely cash-out refinance proceeds from a lender.",
+      },
+      {
+        name: "Subtract Total Cash Invested",
+        text: "Compare refinance proceeds against purchase price, rehab cost and holding costs to see how much cash stays in the deal.",
+      },
     ],
   },
 
   ctaTitle: "Scope Your Rehab & Run The Numbers",
-  ctaBody: "Use the free rehab and ARV calculators to build a rental-grade rehab number for your BRRRR math.",
+  ctaBody:
+    "Use the free rehab and ARV calculators to build a rental-grade rehab number for your BRRRR math.",
   ctaLabel: "Try The Free Calculators",
 };

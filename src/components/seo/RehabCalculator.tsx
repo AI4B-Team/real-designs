@@ -2,15 +2,7 @@ import { useState } from "react";
 
 import { ResultSummaryPanel } from "@/components/ResultSummaryPanel";
 import { metric } from "@/lib/result-summary";
-import {
-  estimate,
-  fmt,
-  GRADES,
-  ROOMS,
-  type FinishGrade,
-  type RoomKey,
-} from "@/lib/planning-range";
-
+import { estimate, fmt, GRADES, ROOMS, type FinishGrade, type RoomKey } from "@/lib/planning-range";
 
 /**
  * Works with no image, no account and no server call: typed dimensions times
@@ -140,8 +132,7 @@ export function RehabCalculator({ defaultRoom = "kitchen" as RoomKey }) {
 
         <p className="lp-basis mono">
           {fmt(result.perSfLow)} to {fmt(result.perSfHigh)} per square foot. Planning range from
-          published unit rates and typed dimensions. Not a bid and not an engineering
-          determination.
+          published unit rates and typed dimensions. Not a bid and not an engineering determination.
         </p>
       </div>
     </div>

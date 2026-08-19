@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/2d-to-3d-floor-plan",
   tier: "D",
-  intent: "Someone has a flat 2D floor plan and wants a furnished 3D view or walkthrough of the same layout.",
+  intent:
+    "Someone has a flat 2D floor plan and wants a furnished 3D view or walkthrough of the same layout.",
 
   metaTitle: "2D Floor Plan To Furnished 3D",
-  metaDescription: "Turn a flat 2D floor plan into a furnished 3D view and walkthrough. What the plan needs to show, ceiling assumptions, and what still needs an architect.",
+  metaDescription:
+    "Turn a flat 2D floor plan into a furnished 3D view and walkthrough. What the plan needs to show, ceiling assumptions, and what still needs an architect.",
 
   eyebrow: "2D To 3D",
   h1: "2D Floor Plan To Furnished 3D",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Furnished 3D view generated from the same layout.",
 
   steps: [
-    { title: "Upload The Floor Plan", text: "Submit a scanned or exported 2D plan with legible walls, doors and windows." },
-    { title: "Set Ceiling Height & Style", text: "Confirm ceiling height if known, then choose a furnishing style and budget band." },
-    { title: "Get The 3D View & Walkthrough", text: "Review the furnished 3D render and an optional short walkthrough video of the same layout." },
+    {
+      title: "Upload The Floor Plan",
+      text: "Submit a scanned or exported 2D plan with legible walls, doors and windows.",
+    },
+    {
+      title: "Set Ceiling Height & Style",
+      text: "Confirm ceiling height if known, then choose a furnishing style and budget band.",
+    },
+    {
+      title: "Get The 3D View & Walkthrough",
+      text: "Review the furnished 3D render and an optional short walkthrough video of the same layout.",
+    },
   ],
 
   showcase: ["walkthrough", "sketch", "brief", "reality-lock"],
-
 
   sections: [
     {
@@ -107,16 +117,35 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Turn A 2D Floor Plan Into A Furnished 3D View",
     steps: [
-      { name: "Gather The 2D Plan", text: "Locate a scanned or exported floor plan with legible walls, doors and windows." },
-      { name: "Check For A Dimension String", text: "Confirm at least one dimension is marked on the plan so scale can be set correctly." },
-      { name: "Note Ceiling Height", text: "Record ceiling height for any room that is vaulted, tray or nonstandard before uploading." },
-      { name: "Upload & Choose A Style", text: "Submit the plan along with a furnishing style and budget band." },
-      { name: "Review The 3D View", text: "Check that furniture scale and room proportions match your expectations for each room." },
-      { name: "Generate A Walkthrough", text: "Produce a short walkthrough video of the same layout for a listing or client presentation." },
+      {
+        name: "Gather The 2D Plan",
+        text: "Locate a scanned or exported floor plan with legible walls, doors and windows.",
+      },
+      {
+        name: "Check For A Dimension String",
+        text: "Confirm at least one dimension is marked on the plan so scale can be set correctly.",
+      },
+      {
+        name: "Note Ceiling Height",
+        text: "Record ceiling height for any room that is vaulted, tray or nonstandard before uploading.",
+      },
+      {
+        name: "Upload & Choose A Style",
+        text: "Submit the plan along with a furnishing style and budget band.",
+      },
+      {
+        name: "Review The 3D View",
+        text: "Check that furniture scale and room proportions match your expectations for each room.",
+      },
+      {
+        name: "Generate A Walkthrough",
+        text: "Produce a short walkthrough video of the same layout for a listing or client presentation.",
+      },
     ],
   },
 
   ctaTitle: "Turn Your Floor Plan Into A Furnished 3D View",
-  ctaBody: "Upload a flat 2D plan and get a scaled, furnished 3D view with an optional walkthrough video.",
+  ctaBody:
+    "Upload a flat 2D plan and get a scaled, furnished 3D view with an optional walkthrough video.",
   ctaLabel: "Convert My Floor Plan",
 };

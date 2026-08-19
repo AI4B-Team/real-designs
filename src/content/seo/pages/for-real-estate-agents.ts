@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/for-real-estate-agents",
   tier: "C",
-  intent: "Listing agents who need to show sellers the return on a pre-list refresh and help buyers see past dated finishes, all with proper staging disclosure.",
+  intent:
+    "Listing agents who need to show sellers the return on a pre-list refresh and help buyers see past dated finishes, all with proper staging disclosure.",
 
   metaTitle: "AI Staging & Design For Real Estate Agents",
-  metaDescription: "Show sellers what a pre-list refresh could return and help buyers see past dated finishes, with disclosure-labeled staging built for MLS compliance.",
+  metaDescription:
+    "Show sellers what a pre-list refresh could return and help buyers see past dated finishes, with disclosure-labeled staging built for MLS compliance.",
 
   eyebrow: "For Real Estate Agents",
   h1: "Show A Seller What A Refresh Could Return",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Refreshed for listing photos, disclosure labeled for MLS use",
 
   steps: [
-    { title: "Photograph The Room As It Sits", text: "Use the same photos you would take for the listing itself, no separate photography session needed for the mock-up." },
-    { title: "Generate A Refresh Or A Staged Version", text: "Show a light cosmetic refresh for the seller conversation, or a furnished staged version of a vacant room for the listing photos." },
-    { title: "Export With Disclosure Labeling Attached", text: "Every generated image carries a disclosure caption automatically, so what goes on the MLS stays compliant with local staging rules." },
+    {
+      title: "Photograph The Room As It Sits",
+      text: "Use the same photos you would take for the listing itself, no separate photography session needed for the mock-up.",
+    },
+    {
+      title: "Generate A Refresh Or A Staged Version",
+      text: "Show a light cosmetic refresh for the seller conversation, or a furnished staged version of a vacant room for the listing photos.",
+    },
+    {
+      title: "Export With Disclosure Labeling Attached",
+      text: "Every generated image carries a disclosure caption automatically, so what goes on the MLS stays compliant with local staging rules.",
+    },
   ],
 
   showcase: ["staging", "mls", "interior", "grades"],
-
 
   sections: [
     {
@@ -104,6 +114,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Show Sellers The Refresh Before They Commit",
-  ctaBody: "Upload the listing photo and generate a refreshed, disclosure-labeled version to anchor your next listing presentation.",
+  ctaBody:
+    "Upload the listing photo and generate a refreshed, disclosure-labeled version to anchor your next listing presentation.",
   ctaLabel: "Build A Listing Preview",
 };

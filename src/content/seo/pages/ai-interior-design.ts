@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/ai-interior-design",
   tier: "A",
-  intent: "Someone wants to upload a photo of a room they actually own and see it redesigned with real furniture and finishes, priced.",
+  intent:
+    "Someone wants to upload a photo of a room they actually own and see it redesigned with real furniture and finishes, priced.",
 
   metaTitle: "AI Interior Design From Your Own Room Photo",
-  metaDescription: "Upload a photo of your actual living room and get a furnished redesign with Reality Lock walls, real products, and a priced scope of work.",
+  metaDescription:
+    "Upload a photo of your actual living room and get a furnished redesign with Reality Lock walls, real products, and a priced scope of work.",
 
   eyebrow: "AI Interior Design",
   h1: "AI Interior Design From A Photo Of A Room You Actually Own",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same walls and window, restyled furniture, paint and lighting.",
 
   steps: [
-    { title: "Upload Your Room Photo", text: "One photo of the actual space, taken from a normal standing position, is enough for the software to read the wall lines and window openings." },
-    { title: "Choose A Style & Budget", text: "Pick a look and a rough budget band. The system generates furniture, paint and finish choices that fit both, not a fantasy render disconnected from spend." },
-    { title: "Get A Priced Scope", text: "Review a shopping list and a scope of work with planning ranges by line item, so a designer, a spouse, or a contractor can act on it directly." },
+    {
+      title: "Upload Your Room Photo",
+      text: "One photo of the actual space, taken from a normal standing position, is enough for the software to read the wall lines and window openings.",
+    },
+    {
+      title: "Choose A Style & Budget",
+      text: "Pick a look and a rough budget band. The system generates furniture, paint and finish choices that fit both, not a fantasy render disconnected from spend.",
+    },
+    {
+      title: "Get A Priced Scope",
+      text: "Review a shopping list and a scope of work with planning ranges by line item, so a designer, a spouse, or a contractor can act on it directly.",
+    },
   ],
 
   showcase: ["interior", "reality-lock", "shop", "declutter", "brief"],
-
 
   sections: [
     {
@@ -74,11 +84,26 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "Do I need a professional photo of my room?", a: "No. A phone photo taken standing in a normal spot, with the room lit and mostly free of clutter, is enough for the software to read the wall lines and window positions accurately." },
-    { q: "Can it redesign a room with furniture already in it?", a: "Yes, though a photo of the room decluttered or lightly furnished gives a cleaner read on the actual proportions. If your room is cluttered, running it through a declutter pass first tends to improve accuracy." },
-    { q: "Will the furniture it shows me actually be purchasable?", a: "The shopping list is matched to real products and current pricing where possible. Some items are close matches rather than the exact SKU, and that is noted rather than presented as a guaranteed link." },
-    { q: "What is the difference between this and virtual staging?", a: "Virtual staging furnishes an empty room, usually for a listing photo. This tool redesigns a room you live in, keeps your existing architecture, and is meant to guide an actual purchase or renovation, not just a photo." },
-    { q: "Can I use this output to hire a contractor?", a: "For furniture-only changes you generally do not need a contractor. If your redesign includes any construction items, the scope of work list is written to be handed to a contractor for their own bid, not as a replacement for one." },
+    {
+      q: "Do I need a professional photo of my room?",
+      a: "No. A phone photo taken standing in a normal spot, with the room lit and mostly free of clutter, is enough for the software to read the wall lines and window positions accurately.",
+    },
+    {
+      q: "Can it redesign a room with furniture already in it?",
+      a: "Yes, though a photo of the room decluttered or lightly furnished gives a cleaner read on the actual proportions. If your room is cluttered, running it through a declutter pass first tends to improve accuracy.",
+    },
+    {
+      q: "Will the furniture it shows me actually be purchasable?",
+      a: "The shopping list is matched to real products and current pricing where possible. Some items are close matches rather than the exact SKU, and that is noted rather than presented as a guaranteed link.",
+    },
+    {
+      q: "What is the difference between this and virtual staging?",
+      a: "Virtual staging furnishes an empty room, usually for a listing photo. This tool redesigns a room you live in, keeps your existing architecture, and is meant to guide an actual purchase or renovation, not just a photo.",
+    },
+    {
+      q: "Can I use this output to hire a contractor?",
+      a: "For furniture-only changes you generally do not need a contractor. If your redesign includes any construction items, the scope of work list is written to be handed to a contractor for their own bid, not as a replacement for one.",
+    },
   ],
 
   relatedSlugs: [
@@ -91,6 +116,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Redesign The Room You Actually Have",
-  ctaBody: "Upload a photo of your living room and get a furnished redesign with a priced shopping list, built around walls that do not move.",
+  ctaBody:
+    "Upload a photo of your living room and get a furnished redesign with a priced shopping list, built around walls that do not move.",
   ctaLabel: "Start My Interior Design",
 };

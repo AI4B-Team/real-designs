@@ -32,10 +32,13 @@ describe("transition connections", () => {
   });
 
   it("never lets one connection hold two rows", () => {
-    const map = transitionMap([sc("a"), sc("b")], [
-      { from_key: "a", to_key: "b", type: "fade", duration_ms: 600 },
-      { from_key: "a", to_key: "b", type: "cut", duration_ms: 0 },
-    ]);
+    const map = transitionMap(
+      [sc("a"), sc("b")],
+      [
+        { from_key: "a", to_key: "b", type: "fade", duration_ms: 600 },
+        { from_key: "a", to_key: "b", type: "cut", duration_ms: 0 },
+      ],
+    );
     expect(map.size).toBe(1);
     expect(map.get("a→b")!.type).toBe("fade");
   });
@@ -43,13 +46,21 @@ describe("transition connections", () => {
 
 describe("auto and durations", () => {
   it("chooses restrained moves from the room pairing", () => {
-    expect(resolveAuto({ key: "1", room_name: "Front Exterior" }, { key: "2", room_name: "Foyer" })).toBe("push");
-    expect(resolveAuto({ key: "1", room_name: "Living Room" }, { key: "2", room_name: "Backyard" })).toBe("fade");
-    expect(resolveAuto({ key: "1", room_name: "Kitchen" }, { key: "2", room_name: "Kitchen" })).toBe("match_move");
+    expect(
+      resolveAuto({ key: "1", room_name: "Front Exterior" }, { key: "2", room_name: "Foyer" }),
+    ).toBe("push");
+    expect(
+      resolveAuto({ key: "1", room_name: "Living Room" }, { key: "2", room_name: "Backyard" }),
+    ).toBe("fade");
+    expect(
+      resolveAuto({ key: "1", room_name: "Kitchen" }, { key: "2", room_name: "Kitchen" }),
+    ).toBe("match_move");
   });
 
   it("resolves Auto to a drawable move and passes explicit picks through", () => {
-    expect(resolveTransition("auto", { key: "1", room_name: "Foyer" }, { key: "2", room_name: "Den" })).toBe("dissolve");
+    expect(
+      resolveTransition("auto", { key: "1", room_name: "Foyer" }, { key: "2", room_name: "Den" }),
+    ).toBe("dissolve");
     expect(resolveTransition("wipe")).toBe("wipe");
     expect(resolveTransition("nonsense")).toBe("dissolve");
   });

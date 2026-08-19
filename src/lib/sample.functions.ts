@@ -113,7 +113,10 @@ export const loadSampleWorkspace = createServerFn({ method: "POST" })
 
     const property = await supabase
       .from("properties")
-      .insert({ address: `1420 Bayshore Boulevard, Tampa FL ${SAMPLE_TAG}`, market_id: market.data.id })
+      .insert({
+        address: `1420 Bayshore Boulevard, Tampa FL ${SAMPLE_TAG}`,
+        market_id: market.data.id,
+      })
       .select("id")
       .single();
     if (property.error) throw new Error(property.error.message);
@@ -149,8 +152,17 @@ export const loadSampleWorkspace = createServerFn({ method: "POST" })
       if (r.error) throw new Error(r.error.message);
 
       const before =
-        room.key === "kitchen" ? photos.kitchenBefore : room.key === "bath" ? photos.bathBefore : photos.livingBefore;
-      const after = room.key === "kitchen" ? photos.kitchenAfter : room.key === "bath" ? null : photos.livingAfter;
+        room.key === "kitchen"
+          ? photos.kitchenBefore
+          : room.key === "bath"
+            ? photos.bathBefore
+            : photos.livingBefore;
+      const after =
+        room.key === "kitchen"
+          ? photos.kitchenAfter
+          : room.key === "bath"
+            ? null
+            : photos.livingAfter;
 
       const v = await supabase
         .from("versions")
@@ -186,7 +198,10 @@ export const loadSampleWorkspace = createServerFn({ method: "POST" })
 export const removeSampleWorkspace = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }: { context: Ctx }) => {
-    const { error } = await context.supabase.from("properties").delete().ilike("address", `%${SAMPLE_TAG}`);
+    const { error } = await context.supabase
+      .from("properties")
+      .delete()
+      .ilike("address", `%${SAMPLE_TAG}`);
     if (error) throw new Error(error.message);
     return { removed: true };
   });

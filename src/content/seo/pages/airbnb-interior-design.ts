@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/airbnb-interior-design",
   tier: "B",
-  intent: "Short term rental host wants interior design ideas and a realistic budget for furnishing or refreshing an Airbnb to compete for bookings.",
+  intent:
+    "Short term rental host wants interior design ideas and a realistic budget for furnishing or refreshing an Airbnb to compete for bookings.",
 
   metaTitle: "Airbnb Interior Design & Furnishing Cost",
-  metaDescription: "Design your short term rental interior and see a realistic furnishing and refresh budget, from bedding to statement pieces that drive bookings.",
+  metaDescription:
+    "Design your short term rental interior and see a realistic furnishing and refresh budget, from bedding to statement pieces that drive bookings.",
 
   eyebrow: "Airbnb Interior Design",
   h1: "Airbnb Interior Design & Furnishing Cost",
@@ -23,17 +25,27 @@ export const page: LandingPage = {
 
   beforePhoto: "before",
   afterPhoto: "after",
-  beforeCaption: "Generic furnished rental living room, builder-grade furniture, no design point of view.",
-  afterCaption: "Same room redesigned with a cohesive style and photo-ready styling for the listing.",
+  beforeCaption:
+    "Generic furnished rental living room, builder-grade furniture, no design point of view.",
+  afterCaption:
+    "Same room redesigned with a cohesive style and photo-ready styling for the listing.",
 
   steps: [
-    { title: "Upload Your Rental's Room Photo", text: "The existing layout, windows and furniture positions from your unit anchor the redesign so the plan reflects what guests will actually experience." },
-    { title: "Pick A Style That Fits Your Market", text: "Choose a design direction, coastal, mid-century, industrial loft, that matches your target guest and local competitive set of listings." },
-    { title: "Get A Furnishing & Refresh Scope", text: "Export a line item list of furniture, textiles and decor with a planning budget, sized to either a full furnish or a lighter photo refresh." },
+    {
+      title: "Upload Your Rental's Room Photo",
+      text: "The existing layout, windows and furniture positions from your unit anchor the redesign so the plan reflects what guests will actually experience.",
+    },
+    {
+      title: "Pick A Style That Fits Your Market",
+      text: "Choose a design direction, coastal, mid-century, industrial loft, that matches your target guest and local competitive set of listings.",
+    },
+    {
+      title: "Get A Furnishing & Refresh Scope",
+      text: "Export a line item list of furniture, textiles and decor with a planning budget, sized to either a full furnish or a lighter photo refresh.",
+    },
   ],
 
   showcase: ["scope", "brief", "budget-mode", "shop"],
-
 
   sections: [
     {
@@ -72,12 +84,30 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "How much does it cost to furnish an Airbnb living room?", a: "A full furnish from empty typically plans in the $4,000 to $9,000 range for a living room at a durable mid-range finish level. A lighter refresh of an already furnished space generally runs $1,200 to $3,000." },
-    { q: "Is it worth spending more on durable furniture for a rental?", a: "Yes for most hosts, durable performance fabrics and sealed finishes cost 15 to 25 percent more upfront but typically avoid a full replacement cycle within the first 12 to 18 months that lower-cost furniture often requires." },
-    { q: "Does interior design actually improve Airbnb bookings?", a: "Listings with a distinct, photogenic design point of view consistently outperform generic furnished units in the same market on booking rate and often on nightly rate as well, since most guests choose based on listing photos." },
-    { q: "Should I furnish the whole unit or just refresh it?", a: "If the layout and base furniture are functional but the photos look dated, a $1,200 to $3,000 refresh of textiles, art and lighting is usually the better return than a full re-furnish." },
-    { q: "How often should I update an Airbnb's interior design?", a: "Most hosts refresh textiles, decor and lighting every 12 to 24 months to keep listing photos current, while base furniture like sofas and case goods can typically last three to five years if chosen in durable materials." },
-    { q: "Can I use the same design across multiple rental units?", a: "Yes, standardizing a repeatable design kit across a portfolio typically saves sourcing time and improves per-unit pricing on furniture and decor, while still allowing small variations between units." },
+    {
+      q: "How much does it cost to furnish an Airbnb living room?",
+      a: "A full furnish from empty typically plans in the $4,000 to $9,000 range for a living room at a durable mid-range finish level. A lighter refresh of an already furnished space generally runs $1,200 to $3,000.",
+    },
+    {
+      q: "Is it worth spending more on durable furniture for a rental?",
+      a: "Yes for most hosts, durable performance fabrics and sealed finishes cost 15 to 25 percent more upfront but typically avoid a full replacement cycle within the first 12 to 18 months that lower-cost furniture often requires.",
+    },
+    {
+      q: "Does interior design actually improve Airbnb bookings?",
+      a: "Listings with a distinct, photogenic design point of view consistently outperform generic furnished units in the same market on booking rate and often on nightly rate as well, since most guests choose based on listing photos.",
+    },
+    {
+      q: "Should I furnish the whole unit or just refresh it?",
+      a: "If the layout and base furniture are functional but the photos look dated, a $1,200 to $3,000 refresh of textiles, art and lighting is usually the better return than a full re-furnish.",
+    },
+    {
+      q: "How often should I update an Airbnb's interior design?",
+      a: "Most hosts refresh textiles, decor and lighting every 12 to 24 months to keep listing photos current, while base furniture like sofas and case goods can typically last three to five years if chosen in durable materials.",
+    },
+    {
+      q: "Can I use the same design across multiple rental units?",
+      a: "Yes, standardizing a repeatable design kit across a portfolio typically saves sourcing time and improves per-unit pricing on furniture and decor, while still allowing small variations between units.",
+    },
   ],
 
   relatedSlugs: [

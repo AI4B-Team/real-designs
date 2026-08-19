@@ -5,20 +5,45 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { loadMediaLibrary, onMediaChange, stageLabel, typeGroup, emitMediaChange } from "@/lib/media-library";
+import {
+  loadMediaLibrary,
+  onMediaChange,
+  stageLabel,
+  typeGroup,
+  emitMediaChange,
+} from "@/lib/media-library";
 import { resolvePhotoUrl } from "@/lib/room-photos";
 import { setVersionStatusBulk, deleteVersions } from "@/lib/workspace.functions";
-import { updateMediaAssets, deleteMediaAssets, listMediaProperties, createMediaProperty } from "@/lib/property-media.functions";
+import {
+  updateMediaAssets,
+  deleteMediaAssets,
+  listMediaProperties,
+  createMediaProperty,
+} from "@/lib/property-media.functions";
 import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
 import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
 import { openAddressModal } from "@/lib/address-modal";
 import { suggestAddresses } from "@/lib/property-address.functions";
-import { filterMedia, propertyOptions, assignKind, isAssignable, matchesTab, DRAFT_TYPE_LABEL, mediaTypeLabel } from "@/lib/media-view";
+import {
+  filterMedia,
+  propertyOptions,
+  assignKind,
+  isAssignable,
+  matchesTab,
+  DRAFT_TYPE_LABEL,
+  mediaTypeLabel,
+} from "@/lib/media-view";
 import { deleteProjectDraft, renameProjectDraft, assignProjectDraft } from "@/lib/drafts.functions";
 
-import { setVideoStatus, deleteVideo, duplicateVideo, getVideo, saveVideo } from "@/lib/reveal.functions";
+import {
+  setVideoStatus,
+  deleteVideo,
+  duplicateVideo,
+  getVideo,
+  saveVideo,
+} from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
@@ -28,9 +53,11 @@ import { openSocialCopy } from "@/lib/rd-social-copy";
 import { openBulkRestyle } from "@/lib/rd-bulk-restyle";
 import { isPlanBlocked, openUpgrade as openUpgradeFlow } from "@/lib/rd-upgrade";
 
-
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const paint = () => {
   try {
     createIcons({ icons });
@@ -118,10 +145,15 @@ export async function mountMediaLibrary(go, _ctx = {}) {
   if (want) {
     S.tab = want;
     (window as any).__rdMediaTab = null;
-    view.querySelectorAll("#mlTabs button").forEach((b) => b.classList.toggle("on", b.dataset.t === S.tab));
+    view
+      .querySelectorAll("#mlTabs button")
+      .forEach((b) => b.classList.toggle("on", b.dataset.t === S.tab));
   }
   if (!S.off) S.off = onMediaChange(() => load(true));
-  if (!S.timer) S.timer = window.setInterval(() => { if (hasLive()) load(true); }, 6000);
+  if (!S.timer)
+    S.timer = window.setInterval(() => {
+      if (hasLive()) load(true);
+    }, 6000);
   await load(S.items.length > 0);
 }
 
@@ -266,7 +298,13 @@ function bind(view) {
     else list.forEach((m) => S.sel.add(m.id));
     render();
   };
-  view.querySelectorAll("#mlBulk [data-b]").forEach((b) => (b.onclick = (ev) => { ev.stopPropagation(); bulk(b.dataset.b, b); }));
+  view.querySelectorAll("#mlBulk [data-b]").forEach(
+    (b) =>
+      (b.onclick = (ev) => {
+        ev.stopPropagation();
+        bulk(b.dataset.b, b);
+      }),
+  );
 }
 
 /** Open the canonical listing-video workflow (same one Studio and Properties open). */
@@ -281,7 +319,6 @@ export function openVideoWorkflow(seed = {}) {
     (window as any).__rdGo && (window as any).__rdGo("lvideo");
   } catch (_) {}
 }
-
 
 async function load(quiet) {
   if (!quiet) {
@@ -321,11 +358,15 @@ function paintPropFilter() {
   sel.innerHTML =
     `<option value="all">All Properties</option>` +
     `<option value="none">Unassigned${unassigned ? " (" + unassigned + ")" : ""}</option>` +
-    properties.map((p) => `<option value="${esc(p.id)}">${esc(p.label)}${p.count ? " (" + p.count + ")" : ""}</option>`).join("");
+    properties
+      .map(
+        (p) =>
+          `<option value="${esc(p.id)}">${esc(p.label)}${p.count ? " (" + p.count + ")" : ""}</option>`,
+      )
+      .join("");
   sel.value = [...sel.options].some((o) => o.value === cur) ? cur : "all";
   S.prop = sel.value;
 }
-
 
 function counts() {
   const live = S.items.filter((m) => m.status !== "archived");
@@ -413,7 +454,6 @@ function card(m) {
     : m.status === "failed"
       ? `${m.path ? `<img data-photo="${esc(m.path)}" alt="${esc(m.title)}"${THUMB_URLS.get(m.path) ? ` src="${esc(THUMB_URLS.get(m.path))}"` : " hidden"}>` : ""}
          <div class="ml-fail"><i data-lucide="alert-triangle"></i><b>Needs Attention</b><span>${esc(failReason(m))}</span></div>`
-
       : `<img data-photo="${esc(m.path || "")}" alt="${esc(m.title)}"${THUMB_URLS.get(m.path) ? ` src="${esc(THUMB_URLS.get(m.path))}"` : " hidden"}>
          ${g === "videos" ? `<span class="ml-play"><i data-lucide="play"></i></span>` : ""}`;
   const badges =
@@ -443,7 +483,8 @@ function card(m) {
 
 const READY = (m) => ["ready", "shared", "draft"].includes(m.status);
 const videoReady = (m) => READY(m) && !m.draft && typeGroup(m.type) !== "videos" && !!m.path;
-const canEditImage = (m) => m.type === "uploaded_image" && !m.job && !m.draft && !!m.refId && READY(m);
+const canEditImage = (m) =>
+  m.type === "uploaded_image" && !m.job && !m.draft && !!m.refId && READY(m);
 const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
 const planBlocked = (m) => isPlanBlocked((m && m.error) || "");
@@ -458,10 +499,12 @@ function failReason(m) {
   return raw || "The Render Did Not Finish. Try Again.";
 }
 
-
 function openUpgrade(m) {
   const msg = String((m && m.error) || "") || "This action needs a paid plan.";
-  if (typeof (window as any).rdUpgradeModal === "function") { openUpgradeFlow(msg); return; }
+  if (typeof (window as any).rdUpgradeModal === "function") {
+    openUpgradeFlow(msg);
+    return;
+  }
   S.go("billing");
 }
 
@@ -496,28 +539,67 @@ function actions(m, g) {
 function moreItems(m, opts = {} as any) {
   const g = typeGroup(m.type);
   const skip = new Set(opts.skip || []);
-  const fav = { group: "Organize", icon: "heart", label: isFav(m.id) ? "Remove From Favorites" : "Add To Favorites", fn: () => { toggleFav(m.id); render(); } };
+  const fav = {
+    group: "Organize",
+    icon: "heart",
+    label: isFav(m.id) ? "Remove From Favorites" : "Add To Favorites",
+    fn: () => {
+      toggleFav(m.id);
+      render();
+    },
+  };
   const organize = () => {
     const out = [fav];
     if (isAssignable(m))
-      out.push({ group: "Organize", icon: "home", label: m.propertyId ? "Move To Another Property" : "Assign To A Property", fn: () => openAssign([m]) });
+      out.push({
+        group: "Organize",
+        icon: "home",
+        label: m.propertyId ? "Move To Another Property" : "Assign To A Property",
+        fn: () => openAssign([m]),
+      });
     if (isAssignable(m) && m.propertyId)
-      out.push({ group: "Organize", icon: "unlink", label: "Remove From Property", fn: () => doAssign([m], null) });
+      out.push({
+        group: "Organize",
+        icon: "unlink",
+        label: "Remove From Property",
+        fn: () => doAssign([m], null),
+      });
     if (m.type === "generated_video" || m.draft)
-      out.push({ group: "Organize", icon: "map-pin", label: m.address ? "Change Address" : "Add An Address", fn: () => changeAddress(m) });
-    if (canRename(m)) out.push({ group: "Organize", icon: "type", label: "Rename", fn: () => renameItem(m) });
+      out.push({
+        group: "Organize",
+        icon: "map-pin",
+        label: m.address ? "Change Address" : "Add An Address",
+        fn: () => changeAddress(m),
+      });
+    if (canRename(m))
+      out.push({ group: "Organize", icon: "type", label: "Rename", fn: () => renameItem(m) });
     return out;
   };
   const manage = () => [
-    ...(m.draft ? [] : [{ group: "Manage", icon: "archive", label: "Archive", fn: () => archive([m]) }]),
-    { group: "Manage", icon: "trash-2", label: m.draft ? "Delete Project" : "Delete", danger: true, fn: () => del(m) },
+    ...(m.draft
+      ? []
+      : [{ group: "Manage", icon: "archive", label: "Archive", fn: () => archive([m]) }]),
+    {
+      group: "Manage",
+      icon: "trash-2",
+      label: m.draft ? "Delete Project" : "Delete",
+      danger: true,
+      fn: () => del(m),
+    },
   ];
 
   if (m.status === "failed")
     return [
       { group: "Create", icon: "rotate-ccw", label: "Retry", fn: () => retry(m) },
-      ...(planBlocked(m) ? [{ group: "Create", icon: "zap", label: "Add Credits", fn: () => openUpgrade(m) }] : []),
-      { group: "Create", icon: "sliders-horizontal", label: "Edit Settings", fn: () => editSettings(m) },
+      ...(planBlocked(m)
+        ? [{ group: "Create", icon: "zap", label: "Add Credits", fn: () => openUpgrade(m) }]
+        : []),
+      {
+        group: "Create",
+        icon: "sliders-horizontal",
+        label: "Edit Settings",
+        fn: () => editSettings(m),
+      },
       ...organize(),
       ...manage(),
     ].filter((it) => !skip.has(it.label));
@@ -526,29 +608,94 @@ function moreItems(m, opts = {} as any) {
     return [
       { group: "Create", icon: "pencil", label: "Edit Video", fn: () => openVideo(m, "video") },
       { group: "Create", icon: "copy", label: "Duplicate", fn: () => dupVideo(m, false) },
-      { group: "Create", icon: "scissors", label: "Create Short Version", fn: () => dupVideo(m, true) },
-      { group: "Create", icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") },
-      { group: "Create", icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) },
+      {
+        group: "Create",
+        icon: "scissors",
+        label: "Create Short Version",
+        fn: () => dupVideo(m, true),
+      },
+      {
+        group: "Create",
+        icon: "presentation",
+        label: "Add To Presentation",
+        fn: () => S.go("present"),
+      },
+      {
+        group: "Create",
+        icon: "message-square-quote",
+        label: "Write Social Caption",
+        fn: () => socialCopy(m),
+      },
       ...organize(),
       ...manage(),
     ].filter((it) => !skip.has(it.label));
 
   const out = [] as any[];
-  if (m.draft || isDesignDraft(m)) out.push({ group: "Create", icon: "play", label: "Continue Editing", fn: () => continueProject(m) });
-  if (canEditImage(m)) out.push({ group: "Create", icon: "sliders-horizontal", label: "Edit Image", fn: () => editImage(m) });
-  if (canEditImage(m)) out.push({ group: "Create", icon: "wand-2", label: "Redesign In A Style", fn: () => restyleFrom([m]) });
-  if (videoReady(m)) out.push({ group: "Create", icon: "clapperboard", label: "Create Video", fn: () => videoFrom([m]) });
-  if (videoReady(m)) out.push({ group: "Create", icon: "film", label: "Create Motion Clip", fn: () => motionClip(m) });
-  if (m.sourcePath) out.push({ group: "Create", icon: "columns-2", label: "Compare With Source", fn: () => openDetail(m, { compare: true }) });
-  if (!m.draft) out.push({ group: "Create", icon: "presentation", label: "Add To Presentation", fn: () => S.go("present") });
-  if (!m.draft) out.push({ group: "Create", icon: "message-square-quote", label: "Write Social Caption", fn: () => socialCopy(m) });
+  if (m.draft || isDesignDraft(m))
+    out.push({
+      group: "Create",
+      icon: "play",
+      label: "Continue Editing",
+      fn: () => continueProject(m),
+    });
+  if (canEditImage(m))
+    out.push({
+      group: "Create",
+      icon: "sliders-horizontal",
+      label: "Edit Image",
+      fn: () => editImage(m),
+    });
+  if (canEditImage(m))
+    out.push({
+      group: "Create",
+      icon: "wand-2",
+      label: "Redesign In A Style",
+      fn: () => restyleFrom([m]),
+    });
+  if (videoReady(m))
+    out.push({
+      group: "Create",
+      icon: "clapperboard",
+      label: "Create Video",
+      fn: () => videoFrom([m]),
+    });
+  if (videoReady(m))
+    out.push({
+      group: "Create",
+      icon: "film",
+      label: "Create Motion Clip",
+      fn: () => motionClip(m),
+    });
+  if (m.sourcePath)
+    out.push({
+      group: "Create",
+      icon: "columns-2",
+      label: "Compare With Source",
+      fn: () => openDetail(m, { compare: true }),
+    });
+  if (!m.draft)
+    out.push({
+      group: "Create",
+      icon: "presentation",
+      label: "Add To Presentation",
+      fn: () => S.go("present"),
+    });
+  if (!m.draft)
+    out.push({
+      group: "Create",
+      icon: "message-square-quote",
+      label: "Write Social Caption",
+      fn: () => socialCopy(m),
+    });
   return [...out, ...organize(), ...manage()].filter((it) => !skip.has(it.label));
 }
 
 /** Renaming writes to a real row: a project draft, a video, or an upload. */
 const canRename = (m) =>
-  !!m && (!!m.draftId || m.type === "generated_video" || (m.type === "uploaded_image" && !m.job && !!m.refId));
-
+  !!m &&
+  (!!m.draftId ||
+    m.type === "generated_video" ||
+    (m.type === "uploaded_image" && !m.job && !!m.refId));
 
 /* ---------------- popup menu ---------------- */
 
@@ -559,7 +706,9 @@ function closePop() {
     POP.remove();
     POP = null;
     /* Send focus back where it came from so keyboard users keep their place. */
-    try { a && a.isConnected && a.focus(); } catch (_) {}
+    try {
+      a && a.isConnected && a.focus();
+    } catch (_) {}
   }
 }
 
@@ -576,7 +725,6 @@ try {
     const d = document.getElementById("mlDrawer");
     if (d && !d.hidden) closeDrawer();
   });
-
 } catch (_) {}
 
 /**
@@ -628,21 +776,29 @@ function popMenu(anchor, items) {
       const n = ev.key === "ArrowDown" ? i + 1 : i - 1;
       const next = btns[(n + btns.length) % btns.length];
       next && next.focus();
-    } else if (ev.key === "Home") { ev.preventDefault(); btns[0] && btns[0].focus(); }
-    else if (ev.key === "End") { ev.preventDefault(); btns[btns.length - 1] && btns[btns.length - 1].focus(); }
-    else if (ev.key === "Tab") { closePop(); }
+    } else if (ev.key === "Home") {
+      ev.preventDefault();
+      btns[0] && btns[0].focus();
+    } else if (ev.key === "End") {
+      ev.preventDefault();
+      btns[btns.length - 1] && btns[btns.length - 1].focus();
+    } else if (ev.key === "Tab") {
+      closePop();
+    }
   });
   POP = el;
   POP.__anchor = anchor;
   btns[0] && btns[0].focus();
 }
 
-
-
 function fmtDate(d) {
   if (!d) return "Just now";
   try {
-    return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return new Date(d).toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
   } catch (_) {
     return "";
   }
@@ -658,7 +814,13 @@ async function hydrateThumbs(root) {
     const done = () => img.closest(".ml-thumb")?.classList.remove("sk");
     const p = img.getAttribute("data-photo");
     if (!p) return done();
-    if (THUMB_URLS.has(p)) { if (!img.src) { img.src = THUMB_URLS.get(p); img.hidden = false; } return done(); }
+    if (THUMB_URLS.has(p)) {
+      if (!img.src) {
+        img.src = THUMB_URLS.get(p);
+        img.hidden = false;
+      }
+      return done();
+    }
     const url = await resolvePhotoUrl(p);
     if (!url) return done();
     THUMB_URLS.set(p, url);
@@ -671,14 +833,25 @@ async function hydrateThumbs(root) {
 
 function wireCards(grid, list) {
   const find = (id) => list.find((x) => x.id === id);
-  grid.querySelectorAll("[data-fav]").forEach((b) => (b.onclick = () => { toggleFav(b.dataset.fav); render(); }));
-  grid.querySelectorAll("[data-pick]").forEach((b) => (b.onclick = () => {
-    const id = b.dataset.pick;
-    if (S.sel.has(id)) S.sel.delete(id);
-    else S.sel.add(id);
-    render();
-  }));
-  grid.querySelectorAll("[data-open]").forEach((b) => (b.onclick = () => openDetail(find(b.dataset.open))));
+  grid.querySelectorAll("[data-fav]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        toggleFav(b.dataset.fav);
+        render();
+      }),
+  );
+  grid.querySelectorAll("[data-pick]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        const id = b.dataset.pick;
+        if (S.sel.has(id)) S.sel.delete(id);
+        else S.sel.add(id);
+        render();
+      }),
+  );
+  grid
+    .querySelectorAll("[data-open]")
+    .forEach((b) => (b.onclick = () => openDetail(find(b.dataset.open))));
   grid.querySelectorAll("[data-thumb]").forEach((el) => {
     el.onclick = (ev) => {
       if (ev.target.closest("[data-fav],[data-pick]")) return;
@@ -699,11 +872,21 @@ function wireCards(grid, list) {
         if (m) popMenu(b, moreItems(m));
       }),
   );
-  grid.querySelectorAll("[data-dl]").forEach((b) => (b.onclick = () => download(find(b.dataset.dl))));
-  grid.querySelectorAll("[data-retry]").forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
-  grid.querySelectorAll("[data-upg]").forEach((b) => (b.onclick = () => openUpgrade(find(b.dataset.upg))));
-  grid.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
-  grid.querySelectorAll("[data-cont]").forEach((b) => (b.onclick = () => continueProject(find(b.dataset.cont))));
+  grid
+    .querySelectorAll("[data-dl]")
+    .forEach((b) => (b.onclick = () => download(find(b.dataset.dl))));
+  grid
+    .querySelectorAll("[data-retry]")
+    .forEach((b) => (b.onclick = () => retry(find(b.dataset.retry))));
+  grid
+    .querySelectorAll("[data-upg]")
+    .forEach((b) => (b.onclick = () => openUpgrade(find(b.dataset.upg))));
+  grid
+    .querySelectorAll("[data-cancel]")
+    .forEach((b) => (b.onclick = () => cancelItem(find(b.dataset.cancel))));
+  grid
+    .querySelectorAll("[data-cont]")
+    .forEach((b) => (b.onclick = () => continueProject(find(b.dataset.cont))));
 }
 
 /* ---------------- workflow bridges ---------------- */
@@ -730,7 +913,13 @@ function assetRow(m) {
 /** Uploads open in the photo editor; generated designs re-open in Studio. */
 function editImage(m) {
   if (canEditImage(m)) {
-    openPhotoEditor({ assetId: m.refId, assets: [assetRow(m)], versions: [], propertyLabel: m.property || "Media", reload: () => load(true) });
+    openPhotoEditor({
+      assetId: m.refId,
+      assets: [assetRow(m)],
+      versions: [],
+      propertyLabel: m.property || "Media",
+      reload: () => load(true),
+    });
     return;
   }
   toast("Open This Design In Studio To Keep Editing It.");
@@ -772,7 +961,9 @@ function designFrom(items) {
     address: h.propertyAddress || "",
     propertyId: h.propertyId,
   });
-  try { (window as any).__rdGo && (window as any).__rdGo("studio"); } catch (_) {}
+  try {
+    (window as any).__rdGo && (window as any).__rdGo("studio");
+  } catch (_) {}
 }
 
 /** Seed the listing-video workflow from one or many ready images. */
@@ -782,7 +973,9 @@ function videoFrom(items) {
     toast("Select At Least One Ready Image To Create A Video.");
     return;
   }
-  try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  try {
+    (window as any).__rdAllowReveal && (window as any).__rdAllowReveal();
+  } catch (_) {}
   const h = publishHandoff("video", usable);
   openVideoWorkflow({
     from: "media",
@@ -852,7 +1045,6 @@ function isDesignDraft(m) {
   return m && m.type === "generated_video" && m.status === "draft";
 }
 
-
 /** Reopen a durable draft in the builder that owns it. */
 function continueProject(m) {
   if (!m) return;
@@ -869,7 +1061,9 @@ function continueProject(m) {
     return;
   }
   if (m.draftType === "photo_redesign") {
-    try { (window as any).__rdStudioDraft = m.draftId; } catch (_) {}
+    try {
+      (window as any).__rdStudioDraft = m.draftId;
+    } catch (_) {}
     S.go("studio");
     return;
   }
@@ -877,13 +1071,29 @@ function continueProject(m) {
 }
 
 function openVideo(m, tab) {
-  try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+  try {
+    (window as any).__rdAllowReveal && (window as any).__rdAllowReveal();
+  } catch (_) {}
   if (isDesignDraft(m)) {
     /* Opening a draft is asynchronous: if the user navigates while it loads,
        the builder must not appear over whatever they opened instead. */
-    const tok = (() => { try { return (window as any).__rdNavToken ? (window as any).__rdNavToken() : 0; } catch (_) { return 0; } })();
-    const stillCurrent = () => { try { return (window as any).__rdNavCurrent ? !!(window as any).__rdNavCurrent(tok) : true; } catch (_) { return true; } };
-    continueDesignVideo(m.refId, { stillCurrent }).catch((e) => toast(e?.message || "Could not open that draft."));
+    const tok = (() => {
+      try {
+        return (window as any).__rdNavToken ? (window as any).__rdNavToken() : 0;
+      } catch (_) {
+        return 0;
+      }
+    })();
+    const stillCurrent = () => {
+      try {
+        return (window as any).__rdNavCurrent ? !!(window as any).__rdNavCurrent(tok) : true;
+      } catch (_) {
+        return true;
+      }
+    };
+    continueDesignVideo(m.refId, { stillCurrent }).catch((e) =>
+      toast(e?.message || "Could not open that draft."),
+    );
     return;
   }
   openVideoDetail(m.refId, tab || "video");
@@ -896,7 +1106,9 @@ async function dupVideo(m, short) {
     await load(true);
     if (id) {
       if (short) toast("Copy Created — Trim The Scenes For A Short Version.");
-      try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+      try {
+        (window as any).__rdAllowReveal && (window as any).__rdAllowReveal();
+      } catch (_) {}
       openVideoDetail(id, "video");
     }
   } catch (e) {
@@ -904,7 +1116,25 @@ async function dupVideo(m, short) {
   }
 }
 
-const PROJECT_KEYS = ["id","property_id","property_label","room_id","design_version_id","title","video_type","source_type","status","formats","length_preset","transition","motion","brand_kit_id","branding","disclosure","settings"];
+const PROJECT_KEYS = [
+  "id",
+  "property_id",
+  "property_label",
+  "room_id",
+  "design_version_id",
+  "title",
+  "video_type",
+  "source_type",
+  "status",
+  "formats",
+  "length_preset",
+  "transition",
+  "motion",
+  "brand_kit_id",
+  "branding",
+  "disclosure",
+  "settings",
+];
 
 /** Rename in a small dialog, never a native prompt. Drafts rename too. */
 async function renameItem(m) {
@@ -912,7 +1142,12 @@ async function renameItem(m) {
     toast("This Item Cannot Be Renamed.");
     return;
   }
-  const name = await promptText({ title: "Rename", label: "Project Name", value: m.title, confirm: "Save Name" });
+  const name = await promptText({
+    title: "Rename",
+    label: "Project Name",
+    value: m.title,
+    confirm: "Save Name",
+  });
   if (name === null || !name.trim() || name.trim() === m.title) return;
   try {
     if (m.draftId) {
@@ -957,7 +1192,10 @@ function promptText({ title, label, value, confirm }): Promise<string | null> {
     document.body.appendChild(host);
     paint();
     const input = host.querySelector("#mlTxt") as any;
-    const done = (v) => { host.remove(); resolve(v); };
+    const done = (v) => {
+      host.remove();
+      resolve(v);
+    };
     host.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = () => done(null)));
     (host.querySelector("#mlTxtGo") as any).onclick = () => done(input.value);
     host.addEventListener("keydown", (e: any) => {
@@ -982,14 +1220,24 @@ async function changeAddress(m) {
         const res = await suggestAddresses({ data: { q } });
         return (res && res.suggestions) || [];
       } catch (_) {
-        return (S.propList || []).filter((p) => !q || String(p.address || "").toLowerCase().includes(String(q).toLowerCase()));
+        return (S.propList || []).filter(
+          (p) =>
+            !q ||
+            String(p.address || "")
+              .toLowerCase()
+              .includes(String(q).toLowerCase()),
+        );
       }
     },
     onSave: async (r) => {
       if (m.draftId) {
         /* A draft keeps its own address column; the title is untouched. */
         await assignProjectDraft({
-          data: { id: m.draftId, property_id: r.propertyId || null, property_address: r.columns.property_address || null },
+          data: {
+            id: m.draftId,
+            property_id: r.propertyId || null,
+            property_address: r.columns.property_address || null,
+          },
         });
         return;
       }
@@ -1007,7 +1255,12 @@ async function changeAddress(m) {
       /* Assignment moves the record into the property's tab, or back to
          Unassigned — the draft and its media are never deleted. */
       if (r.assignmentChanged && isAssignable(m)) {
-        await assignMediaToProperty({ data: { items: [{ kind: assignKind(m), id: m.refId }], property_id: r.propertyId || null } });
+        await assignMediaToProperty({
+          data: {
+            items: [{ kind: assignKind(m), id: m.refId }],
+            property_id: r.propertyId || null,
+          },
+        });
       }
     },
     onDone: async (r) => {
@@ -1017,7 +1270,6 @@ async function changeAddress(m) {
     },
   });
 }
-
 
 /**
  * Deleting a project and deleting a single asset are different actions, so the
@@ -1045,11 +1297,22 @@ async function del(m) {
     await load(true);
     return;
   }
-  const what = m.type === "generated_video" ? "video" : m.type === "generated_image" ? "design" : "photo";
-  if (!window.confirm("Delete this " + what + ", “" + m.title + "”? Only this one file is deleted. This cannot be undone.")) return;
+  const what =
+    m.type === "generated_video" ? "video" : m.type === "generated_image" ? "design" : "photo";
+  if (
+    !window.confirm(
+      "Delete this " +
+        what +
+        ", “" +
+        m.title +
+        "”? Only this one file is deleted. This cannot be undone.",
+    )
+  )
+    return;
   try {
     if (m.type === "generated_video") await deleteVideo({ data: { id: m.refId } });
-    else if (m.type === "generated_image") await deleteVersions({ data: { version_ids: [m.refId] } });
+    else if (m.type === "generated_image")
+      await deleteVersions({ data: { version_ids: [m.refId] } });
     else if (m.refId && !m.job) await deleteMediaAssets({ data: { ids: [m.refId] } });
     else {
       await remove(m);
@@ -1082,14 +1345,15 @@ function editSettings(m) {
   S.go("studio");
 }
 
-
 async function download(m) {
   if (!m) return;
   const url = await resolvePhotoUrl(m.assetPath || m.path);
   if (!url) return;
   const a = document.createElement("a");
   a.href = url;
-  a.download = String(m.title).replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+  a.download = String(m.title)
+    .replace(/[^a-z0-9]+/gi, "-")
+    .toLowerCase();
   a.target = "_blank";
   a.rel = "noopener";
   document.body.appendChild(a);
@@ -1104,7 +1368,8 @@ async function archive(items) {
   const ups = list.filter((m) => m.type === "uploaded_image" && !m.job).map((m) => m.refId);
   const vids = list.filter((m) => m.type === "generated_video").map((m) => m.refId);
   try {
-    if (vers.length) await setVersionStatusBulk({ data: { version_ids: vers, status: "archived" } });
+    if (vers.length)
+      await setVersionStatusBulk({ data: { version_ids: vers, status: "archived" } });
     if (ups.length) await updateMediaAssets({ data: { ids: ups, patch: { hidden: true } } });
     for (const id of vids) await setVideoStatus({ data: { id, status: "archived" } });
   } catch (e) {
@@ -1117,7 +1382,9 @@ async function archive(items) {
 function retry(m) {
   if (!m) return;
   if (m.type === "generated_video") {
-    try { (window as any).__rdAllowReveal && (window as any).__rdAllowReveal(); } catch (_) {}
+    try {
+      (window as any).__rdAllowReveal && (window as any).__rdAllowReveal();
+    } catch (_) {}
     openVideoDetail(m.refId, "video");
     return;
   }
@@ -1151,7 +1418,9 @@ async function bulk(action, anchor) {
   }
   if (!list.length) return;
   if (action === "fav") {
-    list.forEach((m) => { if (!isFav(m.id)) toggleFav(m.id); });
+    list.forEach((m) => {
+      if (!isFav(m.id)) toggleFav(m.id);
+    });
     render();
     return;
   }
@@ -1179,7 +1448,6 @@ function closeDrawer() {
     d.innerHTML = "";
   }
 }
-
 
 /* ---------------- detail drawer ---------------- */
 
@@ -1226,7 +1494,9 @@ async function openDetail(m, opts) {
 
   const g = typeGroup(m.type);
   const proc = m.status === "processing" || m.status === "queued";
-  const related = S.items.filter((x) => x.id !== m.id && x.property && x.property === m.property).slice(0, 6);
+  const related = S.items
+    .filter((x) => x.id !== m.id && x.property && x.property === m.property)
+    .slice(0, 6);
   const compare = !!(opts && opts.compare && srcUrl);
   const settings = Object.entries(m.settings || {}).filter(([, v]) => v);
   const rows = [
@@ -1278,7 +1548,10 @@ async function openDetail(m, opts) {
       ${
         g === "videos" && m.scenes && m.scenes.length
           ? `<div class="ml-dr-sec"><b>Scenes</b><ol class="ml-scenes">${m.scenes
-              .map((s) => `<li>${esc(s.room_name || "Scene")} <em>${Number(s.duration || 0)}s</em></li>`)
+              .map(
+                (s) =>
+                  `<li>${esc(s.room_name || "Scene")} <em>${Number(s.duration || 0)}s</em></li>`,
+              )
               .join("")}</ol></div>`
           : ""
       }
@@ -1292,7 +1565,10 @@ async function openDetail(m, opts) {
       ${
         related.length
           ? `<div class="ml-dr-sec"><b>Related Assets</b><div class="ml-rel">${related
-              .map((r) => `<button data-rel="${r.id}"><img data-photo="${esc(r.path || "")}" alt="${esc(r.title)}" hidden><span>${esc(r.title)}</span></button>`)
+              .map(
+                (r) =>
+                  `<button data-rel="${r.id}"><img data-photo="${esc(r.path || "")}" alt="${esc(r.title)}" hidden><span>${esc(r.title)}</span></button>`,
+              )
               .join("")}</div></div>`
           : ""
       }
@@ -1302,15 +1578,33 @@ async function openDetail(m, opts) {
   paint();
   hydrateThumbs(d);
   d.querySelectorAll("[data-close]").forEach((b: any) => (b.onclick = () => closeDrawer()));
-  const bind = (sel, fn) => { const el = d.querySelector(sel) as any; if (el) el.onclick = fn; };
+  const bind = (sel, fn) => {
+    const el = d.querySelector(sel) as any;
+    if (el) el.onclick = fn;
+  };
   bind("[data-ren]", () => renameItem(m));
   bind("[data-dld]", () => download(m));
   bind("[data-shr]", () => openVideo(m, "share"));
-  bind("[data-arc]", async () => { closeDrawer(); await archive([m]); });
-  bind("[data-edit-img]", () => { closeDrawer(); editImage(m); });
-  bind("[data-mkvid]", () => { closeDrawer(); videoFrom([m]); });
-  bind("[data-cont]", () => { closeDrawer(); continueProject(m); });
-  bind("[data-editvid]", () => { closeDrawer(); openVideo(m, "video"); });
+  bind("[data-arc]", async () => {
+    closeDrawer();
+    await archive([m]);
+  });
+  bind("[data-edit-img]", () => {
+    closeDrawer();
+    editImage(m);
+  });
+  bind("[data-mkvid]", () => {
+    closeDrawer();
+    videoFrom([m]);
+  });
+  bind("[data-cont]", () => {
+    closeDrawer();
+    continueProject(m);
+  });
+  bind("[data-editvid]", () => {
+    closeDrawer();
+    openVideo(m, "video");
+  });
   bind("[data-retry]", () => retry(m));
   bind("[data-upg]", () => openUpgrade(m));
   bind("[data-cancel]", () => cancelItem(m));
@@ -1319,17 +1613,24 @@ async function openDetail(m, opts) {
     more.onclick = (ev) => {
       ev.stopPropagation();
       /* Never repeat what is already a button on this drawer. */
-      const skip = Array.from(d.querySelectorAll(".ml-dr-a button")).map((b: any) => b.textContent.trim());
+      const skip = Array.from(d.querySelectorAll(".ml-dr-a button")).map((b: any) =>
+        b.textContent.trim(),
+      );
       popMenu(more, moreItems(m, { skip }));
     };
-  d.querySelectorAll("[data-rel]").forEach((b: any) => (b.onclick = () => openDetail(S.items.find((x) => x.id === b.dataset.rel))));
+  d.querySelectorAll("[data-rel]").forEach(
+    (b: any) => (b.onclick = () => openDetail(S.items.find((x) => x.id === b.dataset.rel))),
+  );
   const first = d.querySelector(".ml-dr-a button, .ml-dr-h .icon-btn") as any;
   first && first.focus();
 }
 
 /** A clean address, or an honest "Unassigned" — never a raw record id. */
 function propText(m) {
-  return addressDisplay({ property_address: m.property || m.address || null, property_id: m.propertyId || null }).text;
+  return addressDisplay({
+    property_address: m.property || m.address || null,
+    property_id: m.propertyId || null,
+  }).text;
 }
 
 /** Address first, room second. */
@@ -1338,7 +1639,18 @@ function drawerSub(m) {
   return propText(m) + room;
 }
 
-const STEP_LABEL = { intake: "Add Photos", photos: "Add Photos", scenes: "Scenes", motion: "Motion", effects: "Effects", audio: "Audio", branding: "Branding", review: "Review", canvas: "Design Canvas", rooms: "Review Rooms" };
+const STEP_LABEL = {
+  intake: "Add Photos",
+  photos: "Add Photos",
+  scenes: "Scenes",
+  motion: "Motion",
+  effects: "Effects",
+  audio: "Audio",
+  branding: "Branding",
+  review: "Review",
+  canvas: "Design Canvas",
+  rooms: "Review Rooms",
+};
 const stepLabel = (s) => STEP_LABEL[String(s || "")] || "first";
 
 /** Primary actions in the drawer differ by asset type and status. */
@@ -1369,8 +1681,6 @@ function drawerActions(m, g, proc) {
     <button class="btn btn-ghost btn-sm" data-more-dr><i data-lucide="more-horizontal"></i>More</button>`;
 }
 
-
-
 /* ---------------- assign to a property ---------------- */
 
 /** Point records at a property (or clear it). One row, no copies. */
@@ -1384,13 +1694,21 @@ async function doAssign(items, propertyId) {
     return;
   }
   try {
-    await assignMediaToProperty({ data: { items: payload.map(({ kind, id }) => ({ kind, id })), property_id: propertyId || null } });
+    await assignMediaToProperty({
+      data: {
+        items: payload.map(({ kind, id }) => ({ kind, id })),
+        property_id: propertyId || null,
+      },
+    });
   } catch (e) {
     window.alert("Could not update: " + (e && e.message ? e.message : "try again"));
     return;
   }
   toast(
-    (propertyId ? "Moved " : "Removed From Property: ") + payload.length + " Item" + (payload.length === 1 ? "" : "s") +
+    (propertyId ? "Moved " : "Removed From Property: ") +
+      payload.length +
+      " Item" +
+      (payload.length === 1 ? "" : "s") +
       (skipped ? " · " + skipped + " Design" + (skipped === 1 ? "" : "s") + " Skipped" : ""),
   );
   S.sel.clear();
@@ -1413,7 +1731,9 @@ function openAssign(items) {
         <input id="maFind" placeholder="Start typing an address" autocomplete="off"></label>
       <label class="ml-assign-f"><span>Existing Property</span>
         <select id="maSel" size="1"><option value="">Choose A Property</option>${S.propList
-          .map((p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`)
+          .map(
+            (p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`,
+          )
           .join("")}</select></label>
 
       <label class="ml-assign-f"><span>Or Add A New Address</span>
@@ -1434,10 +1754,20 @@ function openAssign(items) {
   if (find && sel) {
     find.oninput = () => {
       const q = find.value.trim().toLowerCase();
-      const hits = S.propList.filter((p) => !q || String(p.address || "").toLowerCase().includes(q));
+      const hits = S.propList.filter(
+        (p) =>
+          !q ||
+          String(p.address || "")
+            .toLowerCase()
+            .includes(q),
+      );
       sel.innerHTML =
         `<option value="">${hits.length ? "Choose A Property" : "No Matches"}</option>` +
-        hits.map((p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`).join("");
+        hits
+          .map(
+            (p) => `<option value="${esc(p.id)}">${esc(p.address || "Untitled Property")}</option>`,
+          )
+          .join("");
       if (hits.length === 1) sel.value = hits[0].id;
     };
     find.focus();

@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/declutter-photo",
   tier: "D",
-  intent: "Someone with an occupied, cluttered room needs to remove furniture and personal items from a listing photo.",
+  intent:
+    "Someone with an occupied, cluttered room needs to remove furniture and personal items from a listing photo.",
 
   metaTitle: "Remove Furniture & Clutter From A Photo",
-  metaDescription: "Clear furniture and clutter from an occupied listing photo. Privacy, defects, reflections, and when a photo cannot be cleaned. See before and after.",
+  metaDescription:
+    "Clear furniture and clutter from an occupied listing photo. Privacy, defects, reflections, and when a photo cannot be cleaned. See before and after.",
 
   eyebrow: "Declutter Photo",
   h1: "Remove Furniture & Clutter From A Photo",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same room decluttered, architecture and flooring unchanged.",
 
   steps: [
-    { title: "Upload The Occupied Photo", text: "Submit a photo of the room as it currently looks, clutter and all." },
-    { title: "Review What Gets Removed", text: "Personal items and excess furniture are cleared while fixed features stay untouched." },
-    { title: "Check For Defects & Reflections", text: "Confirm nothing that should stay visible, like a condition issue, has been hidden by the cleanup." },
+    {
+      title: "Upload The Occupied Photo",
+      text: "Submit a photo of the room as it currently looks, clutter and all.",
+    },
+    {
+      title: "Review What Gets Removed",
+      text: "Personal items and excess furniture are cleared while fixed features stay untouched.",
+    },
+    {
+      title: "Check For Defects & Reflections",
+      text: "Confirm nothing that should stay visible, like a condition issue, has been hidden by the cleanup.",
+    },
   ],
 
   showcase: ["declutter", "staging", "mls", "reality-lock"],
-
 
   sections: [
     {
@@ -107,15 +117,31 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Remove Furniture & Clutter From A Photo",
     steps: [
-      { name: "Photograph The Occupied Room", text: "Take a clear, well lit photo of the room in its current occupied state." },
-      { name: "Identify Items For Removal", text: "Flag personal items and excess furniture, leaving fixed architectural features untouched." },
-      { name: "Check For Hidden Defects", text: "Look for anything an item might be covering, like damage, and keep that visible if it appears." },
-      { name: "Generate The Cleared Photo", text: "Produce the decluttered version of the room and check reflections and shadows for consistency." },
-      { name: "Add A Disclosure Caption", text: "Attach language identifying the photo as edited before adding it to a listing." },
+      {
+        name: "Photograph The Occupied Room",
+        text: "Take a clear, well lit photo of the room in its current occupied state.",
+      },
+      {
+        name: "Identify Items For Removal",
+        text: "Flag personal items and excess furniture, leaving fixed architectural features untouched.",
+      },
+      {
+        name: "Check For Hidden Defects",
+        text: "Look for anything an item might be covering, like damage, and keep that visible if it appears.",
+      },
+      {
+        name: "Generate The Cleared Photo",
+        text: "Produce the decluttered version of the room and check reflections and shadows for consistency.",
+      },
+      {
+        name: "Add A Disclosure Caption",
+        text: "Attach language identifying the photo as edited before adding it to a listing.",
+      },
     ],
   },
 
   ctaTitle: "Clear An Occupied Room For Your Listing",
-  ctaBody: "Upload a photo of the room as it is now and get a decluttered version with the architecture unchanged.",
+  ctaBody:
+    "Upload a photo of the room as it is now and get a decluttered version with the architecture unchanged.",
   ctaLabel: "Declutter My Photo",
 };

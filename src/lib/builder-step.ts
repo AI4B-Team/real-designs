@@ -58,7 +58,9 @@ export function restoreStep(input: RestoreInput): { step: DesignStep; activeKey:
     return active ? { step: "design", activeKey: active } : { step: "rooms", activeKey: null };
   }
   if (raw === "review" || raw === "final" || raw === "results") {
-    return (input.completed || []).length ? { step: "review", activeKey: null } : { step: "rooms", activeKey: null };
+    return (input.completed || []).length
+      ? { step: "review", activeKey: null }
+      : { step: "rooms", activeKey: null };
   }
   return { step: "rooms", activeKey: null };
 }
@@ -72,7 +74,9 @@ export function stepAvailability(
   const done = (s.completed || []).length > 0;
   if (step === "add") return { ready: true, reason: "" };
   if (step === "rooms")
-    return has ? { ready: true, reason: "" } : { ready: false, reason: "Add at least one photo first." };
+    return has
+      ? { ready: true, reason: "" }
+      : { ready: false, reason: "Add at least one photo first." };
   if (step === "design")
     return has
       ? { ready: true, reason: "" }
@@ -98,7 +102,9 @@ export function navigateTo(
       : isActiveKey(s.keys, s.lastOpened)
         ? (s.lastOpened as string)
         : null;
-    return key ? { step: "design", activeKey: key } : { step: "rooms", activeKey: null, prompt: "choose-room" };
+    return key
+      ? { step: "design", activeKey: key }
+      : { step: "rooms", activeKey: null, prompt: "choose-room" };
   }
   return { step, activeKey: null };
 }

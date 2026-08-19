@@ -29,7 +29,12 @@ export const runRoomTool = createServerFn({ method: "POST" })
 
     try {
       const image = await callImageModel(buildToolPrompt(data), data.image, apiKey);
-      return { image, label, balance: charged.balance, remainingToday: charged.remainingToday ?? null };
+      return {
+        image,
+        label,
+        balance: charged.balance,
+        remainingToday: charged.remainingToday ?? null,
+      };
     } catch (err) {
       await refund(context.userId, charged.charged, `${label} failed`);
       throw err;

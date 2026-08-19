@@ -150,7 +150,10 @@ export const deleteProjectDraft = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await (context.supabase as any).from("project_drafts").delete().eq("id", data.id);
+    const { error } = await (context.supabase as any)
+      .from("project_drafts")
+      .delete()
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
@@ -169,7 +172,6 @@ export const renameProjectDraft = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
-
 
 /** Attach an unassigned draft to a property, keeping the title untouched. */
 export const assignProjectDraft = createServerFn({ method: "POST" })

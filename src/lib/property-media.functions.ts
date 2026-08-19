@@ -48,11 +48,16 @@ const AssetInput = z.object({
 
 export const createMediaAssets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ assets: z.array(AssetInput).min(1).max(50) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ assets: z.array(AssetInput).min(1).max(50) }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const rows = data.assets.map((a) => ({ ...a, user_id: userId }));
-    const { data: out, error } = await supabase.from("property_media_assets").insert(rows as any).select("id, storage_path");
+    const { data: out, error } = await supabase
+      .from("property_media_assets")
+      .insert(rows as any)
+      .select("id, storage_path");
     if (error) throw new Error(error.message);
     return out ?? [];
   });
@@ -92,7 +97,6 @@ export const listMediaAssets = createServerFn({ method: "POST" })
     return { assets: assets ?? [], versions };
   });
 
-
 export const updateMediaAssets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -117,16 +121,24 @@ export const updateMediaAssets = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    const { error } = await supabase.from("property_media_assets").update(data.patch as any).in("id", data.ids);
+    const { error } = await supabase
+      .from("property_media_assets")
+      .update(data.patch as any)
+      .in("id", data.ids);
     if (error) throw new Error(error.message);
     return { updated: data.ids.length };
   });
 
 export const deleteMediaAssets = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ ids: z.array(z.string().uuid()).min(1).max(400) }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ ids: z.array(z.string().uuid()).min(1).max(400) }).parse(input),
+  )
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("property_media_assets").delete().in("id", data.ids);
+    const { error } = await context.supabase
+      .from("property_media_assets")
+      .delete()
+      .in("id", data.ids);
     if (error) throw new Error(error.message);
     return { deleted: data.ids.length };
   });
@@ -140,7 +152,14 @@ export const addMediaVersion = createServerFn({ method: "POST" })
         label: z.string().min(1).max(80),
         kind: z.enum(["enhanced", "ai_edit", "design"]).default("enhanced"),
         modification_class: z
-          .enum(["Unmodified Original", "Enhanced", "Digitally Altered", "Virtually Staged", "AI-Generated Concept", "Proposed Design"])
+          .enum([
+            "Unmodified Original",
+            "Enhanced",
+            "Digitally Altered",
+            "Virtually Staged",
+            "AI-Generated Concept",
+            "Proposed Design",
+          ])
           .default("Enhanced"),
         storage_path: z.string().min(1).max(400),
         ops: z.record(z.string(), z.unknown()).default({}),
@@ -167,18 +186,26 @@ export const addMediaVersion = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const patch: Record<string, unknown> = { modification_class: data.modification_class };
     if (data.approve) patch["approved_version_id"] = row.id;
-    await supabase.from("property_media_assets").update(patch as any).eq("id", data.asset_id);
+    await supabase
+      .from("property_media_assets")
+      .update(patch as any)
+      .eq("id", data.asset_id);
     return row;
   });
 
 export const approveMediaVersion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ asset_id: z.string().uuid(), version_id: z.string().uuid().nullable() }).parse(input),
+    z
+      .object({ asset_id: z.string().uuid(), version_id: z.string().uuid().nullable() })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
-    await supabase.from("property_media_versions").update({ approved: false }).eq("asset_id", data.asset_id);
+    await supabase
+      .from("property_media_versions")
+      .update({ approved: false })
+      .eq("asset_id", data.asset_id);
     if (data.version_id) {
       const { error } = await supabase
         .from("property_media_versions")
@@ -207,7 +234,10 @@ export const updateMediaVersion = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { id, ...patch } = data;
-    const { error } = await context.supabase.from("property_media_versions").update(patch as any).eq("id", id);
+    const { error } = await context.supabase
+      .from("property_media_versions")
+      .update(patch as any)
+      .eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -216,7 +246,10 @@ export const deleteMediaVersion = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
-    const { error } = await context.supabase.from("property_media_versions").delete().eq("id", data.id);
+    const { error } = await context.supabase
+      .from("property_media_versions")
+      .delete()
+      .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -241,7 +274,8 @@ export const createMediaProperty = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const raw = (data.address ?? "").trim();
-    const untitled = raw === "" || /^untitled property$/i.test(raw) || /^unsorted uploads$/i.test(raw);
+    const untitled =
+      raw === "" || /^untitled property$/i.test(raw) || /^unsorted uploads$/i.test(raw);
     const address = untitled ? "Untitled Property" : raw;
 
     /* Reuse instead of forking: one shared untitled bucket per user, and one

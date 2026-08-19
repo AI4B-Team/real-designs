@@ -8,14 +8,20 @@ import "@/styles/rd-presentation.css";
 export const Route = createFileRoute("/v/$slug")({
   loader: async ({ params }) => {
     try {
-      return { key: params.slug, deck: await getRevealPresentation({ data: { key: params.slug } }) };
+      return {
+        key: params.slug,
+        deck: await getRevealPresentation({ data: { key: params.slug } }),
+      };
     } catch {
       return { key: params.slug, deck: null };
     }
   },
   head: ({ loaderData }) => {
     const deck: any = loaderData?.deck;
-    const title = deck && !deck.locked && deck.title ? `${deck.title} | REAL DESIGNS` : "Property Presentation | REAL DESIGNS";
+    const title =
+      deck && !deck.locked && deck.title
+        ? `${deck.title} | REAL DESIGNS`
+        : "Property Presentation | REAL DESIGNS";
     const description =
       deck && !deck.locked
         ? `${deck.address ? deck.address + " — " : ""}Video walkthrough plus before and after photos, shared through REAL DESIGNS.`
@@ -32,7 +38,9 @@ export const Route = createFileRoute("/v/$slug")({
       ],
     };
   },
-  errorComponent: () => <Shell>This presentation could not be opened. Ask the sender for a fresh link.</Shell>,
+  errorComponent: () => (
+    <Shell>This presentation could not be opened. Ask the sender for a fresh link.</Shell>
+  ),
   notFoundComponent: () => <Shell>This presentation is no longer active.</Shell>,
   component: PresentationPage,
 });
@@ -105,12 +113,16 @@ function PresentationPage() {
   const s = deck.sections || {};
   const accent = /^#[0-9a-f]{6}$/i.test(deck.brand?.accent || "") ? deck.brand.accent : "#CC0000";
   const beforeAfter = (deck.scenes || []).filter((x: any) => x.before_url && x.after_url);
-  const rooms = (deck.scenes || []).filter((x: any) => x.after_url && !(x.before_url && x.after_url));
+  const rooms = (deck.scenes || []).filter(
+    (x: any) => x.after_url && !(x.before_url && x.after_url),
+  );
 
   async function send(kind: "comment" | "approved" | "changes") {
     setBusy(true);
     try {
-      await submitPresentationFeedback({ data: { key, kind, name: name || null, note: note || null } });
+      await submitPresentationFeedback({
+        data: { key, kind, name: name || null, note: note || null },
+      });
       setSent(
         kind === "approved"
           ? "Thank you — your approval was sent."
@@ -193,7 +205,9 @@ function PresentationPage() {
                   </figure>
                 </div>
                 {x.disclosure_type ? (
-                  <span className="pv-disc">{DISCLOSURE_LABEL[x.disclosure_type] || "Digitally Altered"}</span>
+                  <span className="pv-disc">
+                    {DISCLOSURE_LABEL[x.disclosure_type] || "Digitally Altered"}
+                  </span>
                 ) : null}
               </div>
             ))}
@@ -212,8 +226,8 @@ function PresentationPage() {
               ))}
             </div>
             <p className="pv-note">
-              Designed views are proposed concepts created in REAL DESIGNS, not photographs of a completed
-              renovation.
+              Designed views are proposed concepts created in REAL DESIGNS, not photographs of a
+              completed renovation.
             </p>
           </section>
         ) : null}
@@ -249,7 +263,9 @@ function PresentationPage() {
                 {money(deck.budget.low)} to {money(deck.budget.high)}
               </b>
             </div>
-            <p className="pv-note">Planning estimate, not a construction bid. Field verification is required.</p>
+            <p className="pv-note">
+              Planning estimate, not a construction bid. Field verification is required.
+            </p>
           </section>
         ) : null}
 
@@ -267,7 +283,11 @@ function PresentationPage() {
             <div className="pv-actions">
               {deck.approval_enabled ? (
                 <>
-                  <button className="pv-btn pv-btn-primary" disabled={busy} onClick={() => send("approved")}>
+                  <button
+                    className="pv-btn pv-btn-primary"
+                    disabled={busy}
+                    onClick={() => send("approved")}
+                  >
                     Approve
                   </button>
                   <button className="pv-btn" disabled={busy} onClick={() => send("changes")}>
@@ -296,7 +316,9 @@ function PresentationPage() {
             <div className="pv-contact">
               {deck.brand.contact_name ? <span>{deck.brand.contact_name}</span> : null}
               {deck.brand.phone ? <a href={`tel:${deck.brand.phone}`}>{deck.brand.phone}</a> : null}
-              {deck.brand.email ? <a href={`mailto:${deck.brand.email}`}>{deck.brand.email}</a> : null}
+              {deck.brand.email ? (
+                <a href={`mailto:${deck.brand.email}`}>{deck.brand.email}</a>
+              ) : null}
               {deck.brand.website ? (
                 <a href={deck.brand.website} target="_blank" rel="noreferrer">
                   {deck.brand.website}
@@ -305,7 +327,10 @@ function PresentationPage() {
             </div>
             {deck.brand.default_cta ? (
               <div className="pv-actions" style={{ marginTop: 14 }}>
-                <a className="pv-btn pv-btn-primary" href={deck.brand.email ? `mailto:${deck.brand.email}` : "#"}>
+                <a
+                  className="pv-btn pv-btn-primary"
+                  href={deck.brand.email ? `mailto:${deck.brand.email}` : "#"}
+                >
                   {deck.brand.default_cta}
                 </a>
               </div>

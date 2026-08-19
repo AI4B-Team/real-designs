@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/sketch-to-render",
   tier: "D",
-  intent: "Someone has a hand drawing of a room or layout and wants to see it as a photoreal, furnished space.",
+  intent:
+    "Someone has a hand drawing of a room or layout and wants to see it as a photoreal, furnished space.",
 
   metaTitle: "Sketch To Photoreal Render",
-  metaDescription: "Turn a hand drawn sketch into a furnished, photoreal render. What a usable sketch needs, and why the result is a direction, not a construction drawing.",
+  metaDescription:
+    "Turn a hand drawn sketch into a furnished, photoreal render. What a usable sketch needs, and why the result is a direction, not a construction drawing.",
 
   eyebrow: "Sketch To Render",
   h1: "Sketch To Photoreal Render",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Photoreal furnished render generated from the same layout.",
 
   steps: [
-    { title: "Draw The Layout", text: "Sketch walls, door and window openings, and label rough dimensions if you have them." },
-    { title: "Set Style & Budget", text: "Pick a design style and a budget band so the render furnishes the room at the right level." },
-    { title: "Review The Render", text: "Use the photoreal result as a direction to discuss with a client or contractor before drawings are made." },
+    {
+      title: "Draw The Layout",
+      text: "Sketch walls, door and window openings, and label rough dimensions if you have them.",
+    },
+    {
+      title: "Set Style & Budget",
+      text: "Pick a design style and a budget band so the render furnishes the room at the right level.",
+    },
+    {
+      title: "Review The Render",
+      text: "Use the photoreal result as a direction to discuss with a client or contractor before drawings are made.",
+    },
   ],
 
   showcase: ["sketch", "walkthrough", "reality-lock", "brief"],
-
 
   sections: [
     {
@@ -108,16 +118,35 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Turn A Sketch Into A Photoreal Render",
     steps: [
-      { name: "Draw The Room Outline", text: "Sketch the outer walls of the room, including any interior partial walls, on paper or a tablet." },
-      { name: "Mark Doors & Windows", text: "Show every door and window opening and note its approximate width on the sketch." },
-      { name: "Add A Scale Reference", text: "Label at least one overall dimension, such as the room's total length and width." },
-      { name: "Upload The Sketch", text: "Submit the sketch along with a design style and budget band for the furnishing pass." },
-      { name: "Generate Style Variations", text: "Produce a few style options from the same layout to compare before choosing one." },
-      { name: "Move To A Licensed Drawing If Building", text: "Use the render as a direction, then commission a licensed drawing before any construction work." },
+      {
+        name: "Draw The Room Outline",
+        text: "Sketch the outer walls of the room, including any interior partial walls, on paper or a tablet.",
+      },
+      {
+        name: "Mark Doors & Windows",
+        text: "Show every door and window opening and note its approximate width on the sketch.",
+      },
+      {
+        name: "Add A Scale Reference",
+        text: "Label at least one overall dimension, such as the room's total length and width.",
+      },
+      {
+        name: "Upload The Sketch",
+        text: "Submit the sketch along with a design style and budget band for the furnishing pass.",
+      },
+      {
+        name: "Generate Style Variations",
+        text: "Produce a few style options from the same layout to compare before choosing one.",
+      },
+      {
+        name: "Move To A Licensed Drawing If Building",
+        text: "Use the render as a direction, then commission a licensed drawing before any construction work.",
+      },
     ],
   },
 
   ctaTitle: "Turn Your Sketch Into A Photoreal Room",
-  ctaBody: "Upload a hand drawn layout and see it furnished in your chosen style before you spend money on drawings.",
+  ctaBody:
+    "Upload a hand drawn layout and see it furnished in your chosen style before you spend money on drawings.",
   ctaLabel: "Render My Sketch",
 };

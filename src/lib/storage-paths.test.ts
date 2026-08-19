@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { assertUploadAllowed, buildObjectPath, isOwnedPath, safeExtension, sanitizeFileName } from "./storage-paths";
+import {
+  assertUploadAllowed,
+  buildObjectPath,
+  isOwnedPath,
+  safeExtension,
+  sanitizeFileName,
+} from "./storage-paths";
 
 const UID = "11111111-2222-4333-8444-555555555555";
 
@@ -30,7 +36,9 @@ describe("safeExtension", () => {
 
 describe("buildObjectPath", () => {
   it("scopes the object to the owner folder", () => {
-    expect(buildObjectPath(UID, "front.jpg")).toMatch(new RegExp(`^${UID}/front-[0-9a-f-]{8,}\\.jpg$`));
+    expect(buildObjectPath(UID, "front.jpg")).toMatch(
+      new RegExp(`^${UID}/front-[0-9a-f-]{8,}\\.jpg$`),
+    );
   });
 
   it("is collision resistant for identical filenames", () => {
@@ -56,12 +64,18 @@ describe("isOwnedPath", () => {
 
 describe("assertUploadAllowed", () => {
   it("rejects wrong MIME types", () => {
-    expect(() => assertUploadAllowed("room-photos", { type: "application/pdf", size: 10 })).toThrow();
+    expect(() =>
+      assertUploadAllowed("room-photos", { type: "application/pdf", size: 10 }),
+    ).toThrow();
   });
   it("rejects oversized files", () => {
-    expect(() => assertUploadAllowed("room-photos", { type: "image/jpeg", size: 40 * 1024 * 1024 })).toThrow();
+    expect(() =>
+      assertUploadAllowed("room-photos", { type: "image/jpeg", size: 40 * 1024 * 1024 }),
+    ).toThrow();
   });
   it("accepts a valid photo", () => {
-    expect(() => assertUploadAllowed("room-photos", { type: "image/jpeg", size: 1024 })).not.toThrow();
+    expect(() =>
+      assertUploadAllowed("room-photos", { type: "image/jpeg", size: 1024 }),
+    ).not.toThrow();
   });
 });

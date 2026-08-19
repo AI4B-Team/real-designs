@@ -25,13 +25,13 @@ an already-running dev server is reused.
 
 ## Environment
 
-| Variable | Purpose |
-| --- | --- |
-| `E2E_BASE_URL` | Target app (default `http://localhost:8080`) |
-| `E2E_EMAIL` / `E2E_PASSWORD` | Dedicated test account (never a real customer) |
+| Variable                                                    | Purpose                                                         |
+| ----------------------------------------------------------- | --------------------------------------------------------------- |
+| `E2E_BASE_URL`                                              | Target app (default `http://localhost:8080`)                    |
+| `E2E_EMAIL` / `E2E_PASSWORD`                                | Dedicated test account (never a real customer)                  |
 | `LOVABLE_BROWSER_SUPABASE_SESSION_JSON` / `..._STORAGE_KEY` | Pre-minted session, used instead of the login form when present |
-| `E2E_REAL_PROVIDER=1` | Skip provider mocks and run the staging smoke test |
-| `E2E_NO_SERVER=1` | Do not boot a dev server (testing a deployed URL) |
+| `E2E_REAL_PROVIDER=1`                                       | Skip provider mocks and run the staging smoke test              |
+| `E2E_NO_SERVER=1`                                           | Do not boot a dev server (testing a deployed URL)               |
 
 Without credentials the authenticated specs **skip** with a clear reason; the
 public auth/marketing specs still run.

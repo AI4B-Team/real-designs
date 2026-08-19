@@ -75,7 +75,8 @@ export const estimateDimensions = createServerFn({ method: "POST" })
                   confidence: { type: "string", enum: ["low", "medium", "high"] },
                   basis: {
                     type: "string",
-                    description: "One sentence naming the reference objects used to scale the room.",
+                    description:
+                      "One sentence naming the reference objects used to scale the room.",
                   },
                 },
                 required: ["floor_area_sf", "ceiling_ht_in", "perimeter_lf", "confidence", "basis"],

@@ -28,7 +28,10 @@ const ASSET_KEY = /^(u|m|o|d|sd)-/;
  */
 export function sceneIdentity(scene: SceneLike | null | undefined): string {
   if (!scene) return "";
-  const role = scene['scene_role'] || scene['duplicate_of'] ? String(scene['scene_role'] ?? scene['duplicate_of']) : "";
+  const role =
+    scene["scene_role"] || scene["duplicate_of"]
+      ? String(scene["scene_role"] ?? scene["duplicate_of"])
+      : "";
   const base = scene.asset_id || scene.key || scene.path || "";
   return role ? `${base}::${role}` : String(base);
 }
@@ -97,8 +100,9 @@ export function reconcileScenes<T extends SceneLike>(
   const pos = new Map((gridOrder || []).map((k, i) => [k, i] as const));
   return out
     .map((s, i) => ({ s, i }))
-    .sort((a, b) =>
-      (pos.get(String(a.s?.key)) ?? 1e9) - (pos.get(String(b.s?.key)) ?? 1e9) || a.i - b.i,
+    .sort(
+      (a, b) =>
+        (pos.get(String(a.s?.key)) ?? 1e9) - (pos.get(String(b.s?.key)) ?? 1e9) || a.i - b.i,
     )
     .map((x) => x.s);
 }

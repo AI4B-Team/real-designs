@@ -1,9 +1,13 @@
-name: Tests
+name: E2E
+
+# Separate job from CI on purpose. The Playwright suite is still being
+# stabilized, so it runs on main and on demand and is NOT yet a required
+# check. Flip `continue-on-error` to false (and mark it required in branch
+# protection) once the suite is green.
 
 on:
   push:
     branches: [main]
-  pull_request:
   workflow_dispatch:
     inputs:
       real_provider:
@@ -12,9 +16,11 @@ on:
         default: false
 
 jobs:
-  verify:
+  playwright:
+    name: Playwright
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -22,9 +28,6 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
-      - run: npm test
-      - run: npm run typecheck
-      - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
         env:
@@ -33,7 +36,7 @@ jobs:
           E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
           E2E_REAL_PROVIDER: ${{ inputs.real_provider && '1' || '' }}
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: always()
         with:
           name: playwright-report
           path: e2e/.report

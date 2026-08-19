@@ -36,20 +36,28 @@ export function saveVoiceProfile(p: VoiceProfile) {
   cached = p;
   try {
     localStorage.setItem(KEY, JSON.stringify(p));
-  } catch (_) { /* private mode — session only */ }
+  } catch (_) {
+    /* private mode — session only */
+  }
   try {
     window.dispatchEvent(new CustomEvent("rd:voice-profile"));
-  } catch (_) { /* noop */ }
+  } catch (_) {
+    /* noop */
+  }
 }
 
 export function clearVoiceProfile() {
   cached = null;
   try {
     localStorage.removeItem(KEY);
-  } catch (_) { /* noop */ }
+  } catch (_) {
+    /* noop */
+  }
   try {
     window.dispatchEvent(new CustomEvent("rd:voice-profile"));
-  } catch (_) { /* noop */ }
+  } catch (_) {
+    /* noop */
+  }
 }
 
 /** Voice id used in builder selects when the user picks their own voice. */
@@ -112,12 +120,18 @@ async function storeSample(blob: Blob, ext: string): Promise<string | undefined>
 }
 
 /** Profile a recorded or uploaded sample and save it as the active voice. */
-export async function createVoiceProfile(blob: Blob & { name?: string }, label: string): Promise<VoiceProfile> {
+export async function createVoiceProfile(
+  blob: Blob & { name?: string },
+  label: string,
+): Promise<VoiceProfile> {
   const format = audioFormat(blob);
   const audio = await blobToBase64(blob);
-  if (audio.length < 64) throw new Error("That recording is too short. Read two sentences and try again.");
+  if (audio.length < 64)
+    throw new Error("That recording is too short. Read two sentences and try again.");
   const { analyzeVoiceSample } = await import("@/lib/voice-clone.functions");
-  const out = await analyzeVoiceSample({ data: { audio, format: format as any, label: label || "My Voice" } });
+  const out = await analyzeVoiceSample({
+    data: { audio, format: format as any, label: label || "My Voice" },
+  });
   const samplePath = await storeSample(blob, format);
   const profile: VoiceProfile = {
     id: "vp-" + Date.now(),

@@ -63,7 +63,6 @@ export const buildScope = createServerFn({ method: "POST" })
     const { assertBudgetsAvailable } = await import("@/lib/budget.server");
     await assertBudgetsAvailable();
 
-
     // ---- 1. Load the version and its property hierarchy (RLS scopes this to the caller) ----
     const { data: version, error: versionError } = await supabase
       .from("versions")
@@ -92,7 +91,8 @@ export const buildScope = createServerFn({ method: "POST" })
 
     // A property without a market still gets a price: fall back to the baseline
     // market so the user sees a planning range instead of a dead end.
-    let market: { id: string; labor_factor: number | null; material_factor: number | null } | null = null;
+    let market: { id: string; labor_factor: number | null; material_factor: number | null } | null =
+      null;
     if (property.market_id) {
       const { data: m, error: marketError } = await supabaseAdmin
         .from("markets")
@@ -113,7 +113,9 @@ export const buildScope = createServerFn({ method: "POST" })
       market = fallback as any;
     }
     if (!market) {
-      throw new Error("No cost markets are set up yet, so this scope cannot be priced. Add a market with unit costs first.");
+      throw new Error(
+        "No cost markets are set up yet, so this scope cannot be priced. Add a market with unit costs first.",
+      );
     }
 
     // Metered: charge only once we know the scope can actually be priced, so a
@@ -121,7 +123,6 @@ export const buildScope = createServerFn({ method: "POST" })
     const { charge, chargeErrorMessage } = await import("@/lib/credits.server");
     const billing = await charge(context.userId, "scope", "priced scope");
     if (!billing.ok) throw new Error(chargeErrorMessage(billing));
-
 
     const laborFactor = num(market.labor_factor) || 1;
     const materialFactor = num(market.material_factor) || 1;
@@ -136,13 +137,11 @@ export const buildScope = createServerFn({ method: "POST" })
     const priceable = (changeItems ?? []).filter((c) => c.action !== "keep");
 
     // ---- 3. Cost mappings -> unit costs. A SQL join, nothing invented. ----
-    const { data: mappings, error: mapError } = await supabaseAdmin
-      .from("cost_mappings")
-      .select(
-        `label, material, grade, qty_formula,
+    const { data: mappings, error: mapError } = await supabaseAdmin.from("cost_mappings").select(
+      `label, material, grade, qty_formula,
          unit_costs!inner ( id, item_code, description, uom, csi_division, grade,
                             material_low, material_high, labor_low, labor_high, source )`,
-      );
+    );
     if (mapError) throw new Error(mapError.message);
 
     const finishGrade: string = project.finish_grade ?? "retail";
@@ -159,8 +158,7 @@ export const buildScope = createServerFn({ method: "POST" })
       let mapping =
         (mappings ?? []).find(
           (m) => m.label === item.label && m.material === item.material && m.grade === grade,
-        ) ??
-        (mappings ?? []).find((m) => m.label === item.label && m.grade === grade);
+        ) ?? (mappings ?? []).find((m) => m.label === item.label && m.grade === grade);
       let isFallback = false;
 
       if (!mapping) {
@@ -171,8 +169,7 @@ export const buildScope = createServerFn({ method: "POST" })
 
       const uc = (mapping as any).unit_costs;
 
-      const qty =
-        item.qty != null ? Number(item.qty) : qtyFromFormula(mapping.qty_formula, room);
+      const qty = item.qty != null ? Number(item.qty) : qtyFromFormula(mapping.qty_formula, room);
       if (qty == null || !Number.isFinite(qty) || qty <= 0) continue;
 
       const matLow = num(uc.material_low) * materialFactor * qty;

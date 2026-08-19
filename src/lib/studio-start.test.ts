@@ -82,7 +82,9 @@ describe("studio start source picker", () => {
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
     const chip = host.querySelector('[data-sp-ex="Coastal Backyard"]') as HTMLElement;
     chip.click();
-    expect((host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement).value).toBe("Coastal Backyard");
+    expect((host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement).value).toBe(
+      "Coastal Backyard",
+    );
     expect(onDescribe).not.toHaveBeenCalled();
   });
 
@@ -103,7 +105,9 @@ describe("studio start source picker", () => {
     expect(onDescribe).toHaveBeenCalledTimes(1);
     release();
     await new Promise((r) => setTimeout(r, 0));
-    expect((host.querySelector('[data-sp="describe"]') as HTMLButtonElement).textContent).toContain("Create");
+    expect((host.querySelector('[data-sp="describe"]') as HTMLButtonElement).textContent).toContain(
+      "Create",
+    );
   });
 
   it("plain Enter does not submit", () => {
@@ -117,12 +121,13 @@ describe("studio start source picker", () => {
     expect(onDescribe).not.toHaveBeenCalled();
   });
 
-
   it("marks the active tab with an accessible pressed state", () => {
     const { host } = mount("design");
     expect(host.querySelector('[data-sp-tab="upload"]')!.getAttribute("aria-pressed")).toBe("true");
     (host.querySelector('[data-sp-tab="cloud"]') as HTMLElement).click();
     expect(host.querySelector('[data-sp-tab="cloud"]')!.getAttribute("aria-pressed")).toBe("true");
-    expect(host.querySelector('[data-sp-tab="upload"]')!.getAttribute("aria-pressed")).toBe("false");
+    expect(host.querySelector('[data-sp-tab="upload"]')!.getAttribute("aria-pressed")).toBe(
+      "false",
+    );
   });
 });

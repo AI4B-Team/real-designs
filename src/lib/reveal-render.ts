@@ -143,16 +143,22 @@ export function browserRenderSupport(): { ok: boolean; reason: string } {
   if (typeof window === "undefined" || typeof document === "undefined")
     return { ok: false, reason: "Video creation runs in your browser and is not available here." };
   if (typeof MediaRecorder === "undefined")
-    return { ok: false, reason: "This browser cannot record video. Try Chrome or Edge on a desktop." };
+    return {
+      ok: false,
+      reason: "This browser cannot record video. Try Chrome or Edge on a desktop.",
+    };
   const canvas = document.createElement("canvas");
   if (typeof (canvas as any).captureStream !== "function")
-    return { ok: false, reason: "This browser cannot capture the video canvas. Try Chrome or Edge on a desktop." };
-  if (!canvas.getContext("2d")) return { ok: false, reason: "Canvas is unavailable in this browser." };
+    return {
+      ok: false,
+      reason: "This browser cannot capture the video canvas. Try Chrome or Edge on a desktop.",
+    };
+  if (!canvas.getContext("2d"))
+    return { ok: false, reason: "Canvas is unavailable in this browser." };
   if (!pickMime(true) && !pickMime(false))
     return { ok: false, reason: "This browser has no supported video format. Try Chrome or Edge." };
   return { ok: true, reason: "" };
 }
-
 
 export const DISCLOSURE_LABEL: Record<string, string> = {
   staged: "Virtually Staged",
@@ -273,7 +279,6 @@ function vfxOverlay(
   ctx.restore();
 }
 
-
 function loadImage(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -335,7 +340,14 @@ function pickMime(withAudio = false): string {
   return "";
 }
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+function roundRect(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
   ctx.beginPath();
   ctx.moveTo(x + r, y);
   ctx.arcTo(x + w, y, x + w, y + h, r);
@@ -510,7 +522,15 @@ function drawStartEnd(
   }
 }
 
-function pill(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: number, bg: string, fg: string) {
+function pill(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  size: number,
+  bg: string,
+  fg: string,
+) {
   ctx.font = `700 ${size}px Inter, system-ui, sans-serif`;
   const padX = size * 0.72;
   const w = ctx.measureText(text).width + padX * 2;
@@ -542,7 +562,12 @@ function caption(
      leans on a text shadow so the photo stays fully visible. */
   if (style === "brand") {
     const top = pos === "top" ? 0 : pos === "center" ? (H - band) / 2 : H - band;
-    const grad = ctx.createLinearGradient(0, pos === "top" ? band : top, 0, pos === "top" ? 0 : top + band);
+    const grad = ctx.createLinearGradient(
+      0,
+      pos === "top" ? band : top,
+      0,
+      pos === "top" ? 0 : top + band,
+    );
     grad.addColorStop(0, "rgba(0,0,0,0)");
     grad.addColorStop(1, "rgba(0,0,0,.72)");
     ctx.fillStyle = grad;
@@ -739,9 +764,13 @@ function presenterBubble(
   ctx.restore();
 }
 
-
-
-function disclosureNote(ctx: CanvasRenderingContext2D, W: number, H: number, label: string, alpha: number) {
+function disclosureNote(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  label: string,
+  alpha: number,
+) {
   if (!label) return;
   ctx.save();
   ctx.globalAlpha = alpha * 0.94;
@@ -806,7 +835,13 @@ function immersiveLayer(
 }
 
 /** Restrained scene labels: a room name, a material note or one callout. */
-function sceneLabels(ctx: CanvasRenderingContext2D, W: number, H: number, labels: SceneLabel[], alpha: number) {
+function sceneLabels(
+  ctx: CanvasRenderingContext2D,
+  W: number,
+  H: number,
+  labels: SceneLabel[],
+  alpha: number,
+) {
   if (!labels?.length || alpha <= 0.01) return;
   ctx.save();
   ctx.globalAlpha = alpha;
@@ -867,8 +902,6 @@ export function suggestLabels(roomName?: string | null, caption?: string | null)
   }
   return out;
 }
-
-
 
 export function estimateDuration(scenes: RevealScene[], lengthPreset: string): number {
   const target = lengthPreset === "quick" ? 15 : lengthPreset === "full" ? 60 : 30;
@@ -1002,7 +1035,9 @@ export async function renderReveal(
     scenes.map((s) => (s.clipUrl ? loadClip(s.clipUrl) : Promise.resolve(null))),
   );
   const compares = await Promise.all(
-    scenes.map((s) => (s.compareUrl ? loadImage(s.compareUrl).catch(() => null) : Promise.resolve(null))),
+    scenes.map((s) =>
+      s.compareUrl ? loadImage(s.compareUrl).catch(() => null) : Promise.resolve(null),
+    ),
   );
   /* End frames for standard Start/End scenes. */
   const endFrames = await Promise.all(
@@ -1019,12 +1054,18 @@ export async function renderReveal(
   const avBubble = !!avImg && (av!.mode === "bubble" || av!.mode === "intro_bubble");
   const avAccent = brand?.accent || ACCENT;
 
-
   const stream = canvas.captureStream(30);
-  const music = await createMusicTrack(opts.music, opts.musicVolume ?? 0.55, opts.narrationUrl ?? null);
+  const music = await createMusicTrack(
+    opts.music,
+    opts.musicVolume ?? 0.55,
+    opts.narrationUrl ?? null,
+  );
   if (music) stream.addTrack(music.track);
   const mime = pickMime(!!music);
-  const rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 9_000_000 } : undefined);
+  const rec = new MediaRecorder(
+    stream,
+    mime ? { mimeType: mime, videoBitsPerSecond: 9_000_000 } : undefined,
+  );
   const chunks: BlobPart[] = [];
   rec.ondataavailable = (e) => {
     if (e.data && e.data.size) chunks.push(e.data);
@@ -1037,7 +1078,6 @@ export async function renderReveal(
   const avIntro = avFull ? 3000 : 0;
   const avOutro = avFull ? 2600 : 0;
   const outro = showBrand ? 2600 : 0;
-
 
   /* Transitions overlap the scenes they join, so the tour keeps its length and
      each move reads as one continuous camera. */
@@ -1052,11 +1092,14 @@ export async function renderReveal(
   for (let i = 0; i < durations.length; i++) {
     starts[i] = i === 0 ? 0 : starts[i - 1]! + durations[i - 1]! - (overlaps[i - 1] ?? 0);
   }
-  const sceneEnd = durations.length ? starts[durations.length - 1]! + durations[durations.length - 1]! : 0;
+  const sceneEnd = durations.length
+    ? starts[durations.length - 1]! + durations[durations.length - 1]!
+    : 0;
   const transitionClips = await Promise.all(
-    transitionsIn.map((tr) => (tr?.clipUrl ? loadClip(tr.clipUrl).catch(() => null) : Promise.resolve(null))),
+    transitionsIn.map((tr) =>
+      tr?.clipUrl ? loadClip(tr.clipUrl).catch(() => null) : Promise.resolve(null),
+    ),
   );
-
 
   /* One scene painted to any target surface, so a transition can composite two
      of them at once without duplicating the drawing rules. */
@@ -1070,135 +1113,170 @@ export async function renderReveal(
   const paintScene = (c: CanvasRenderingContext2D, idx: number, local: number, ts: number) => {
     c.fillStyle = "#0a0a0a";
     c.fillRect(0, 0, W, H);
-        const scene = scenes[idx]!;
-        const img = imgs[idx]!;
-        const cmp = compares[idx];
-        const p = local / durations[idx]!;
-        const motion = scene.exterior_effect
-          ? scene.exterior_effect
-          : scene.motion && scene.motion !== "auto"
-            ? scene.motion
-            : "auto";
-        const transition = scene.transition || opts.transition || "clean";
-        const vfxOn = vfxEnter(c, W, H, transition, local, durations[idx]!);
+    const scene = scenes[idx]!;
+    const img = imgs[idx]!;
+    const cmp = compares[idx];
+    const p = local / durations[idx]!;
+    const motion = scene.exterior_effect
+      ? scene.exterior_effect
+      : scene.motion && scene.motion !== "auto"
+        ? scene.motion
+        : "auto";
+    const transition = scene.transition || opts.transition || "clean";
+    const vfxOn = vfxEnter(c, W, H, transition, local, durations[idx]!);
 
-
-        if (cmp && scene.scene_type === "before_after") {
-          // Match Frame: same camera, original holds then the design takes over.
-          const mix = Math.min(Math.max((p - 0.42) / 0.22, 0), 1);
-          drawMotion(c, cmp, W, H, motion, p);
-          if (mix > 0) {
-            if (transition === "slider" || transition === "wipe") {
-              c.save();
-              c.beginPath();
-              c.rect(0, 0, W * mix, H);
-              c.clip();
-              drawMotion(c, img, W, H, motion, p);
-              c.restore();
-              if (mix < 1) {
-                c.fillStyle = ACCENT;
-                c.fillRect(W * mix - 3, 0, 6, H);
-              }
-            } else {
-              c.save();
-              c.globalAlpha = mix;
-              drawMotion(c, img, W, H, motion, p);
-              c.restore();
-            }
+    if (cmp && scene.scene_type === "before_after") {
+      // Match Frame: same camera, original holds then the design takes over.
+      const mix = Math.min(Math.max((p - 0.42) / 0.22, 0), 1);
+      drawMotion(c, cmp, W, H, motion, p);
+      if (mix > 0) {
+        if (transition === "slider" || transition === "wipe") {
+          c.save();
+          c.beginPath();
+          c.rect(0, 0, W * mix, H);
+          c.clip();
+          drawMotion(c, img, W, H, motion, p);
+          c.restore();
+          if (mix < 1) {
+            c.fillStyle = ACCENT;
+            c.fillRect(W * mix - 3, 0, 6, H);
           }
-          if (opts.captionsEnabled !== false) {
-            const lab = mix > 0.5 ? "After" : "Before";
-            c.save();
-            pill(c, lab, W * 0.06, H * 0.14, Math.round(W * 0.03), "rgba(10,10,10,.8)", "#fff");
-            c.restore();
-          }
-        } else if (clips[idx]) {
-          const v = clips[idx]!;
-          const dur = v.duration && isFinite(v.duration) ? v.duration : durations[idx]! / 1000;
-          const want = Math.min(dur - 0.02, (local / 1000) % Math.max(dur, 0.1));
-          if (v.paused) { v.currentTime = Math.max(0, want); void v.play().catch(() => {}); }
-          if (v.readyState >= 2) drawClipFrame(c, v, W, H);
-          else drawMotion(c, img, W, H, motion, p, scene.crop);
-        } else if (endFrames[idx]) {
-          drawStartEnd(
-            c, img, endFrames[idx]!, W, H,
-            scene.seTransition || "blend", p, scene.startCrop || scene.crop, scene.endCrop,
-          );
         } else {
-          drawMotion(c, img, W, H, motion, p, scene.crop);
-        }
-
-        if (scene.motion_level === "immersive") {
-          immersiveLayer(c, W, H, scene.immersive_effect || "light", p);
-        }
-        if (vfxOn) c.restore();
-        vfxOverlay(c, W, H, transition, local, durations[idx]!);
-
-
-        if (opts.captionsEnabled !== false) {
-          const text = scene.caption || scene.room_name || "";
-          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
-          caption(c, W, H, text, a, scene.captionPos || "bottom", scene.captionStyle || "brand");
-        }
-        {
-          const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
-          sceneLabels(c, W, H, scene.labels ?? [], a);
-        }
-        if (showDisclosure && scene.disclosure_type) {
-          disclosureNote(c, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
-        }
-        if (showDisclosure && clips[idx]) {
           c.save();
-          c.globalAlpha = 0.9;
-          pill(c, "AI-Generated Video", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
+          c.globalAlpha = mix;
+          drawMotion(c, img, W, H, motion, p);
           c.restore();
         }
-        if (showDisclosure && scene.motion_level === "immersive") {
-          c.save();
-          c.globalAlpha = 0.9;
-          pill(c, "AI-Animated", W * 0.06, H * 0.105, Math.round(W * 0.022), "rgba(10,10,10,.72)", "#fff");
-          c.restore();
-        }
-        if (showDisclosure && scene.exterior_effect) {
-          c.save();
-          c.globalAlpha = 0.72;
-          c.font = `600 ${Math.round(W * 0.018)}px Inter, system-ui, sans-serif`;
-          c.fillStyle = "rgba(255,255,255,.9)";
-          c.textAlign = "left";
-          c.textBaseline = "alphabetic";
-          c.fillText("Simulated camera movement — not drone footage", W * 0.06, H * 0.955);
-          c.restore();
-        }
-        if (showBrand && brand?.company_name) {
-          c.save();
-          c.globalAlpha = 0.8;
-          c.font = `800 ${Math.round(W * 0.024)}px Inter, system-ui, sans-serif`;
-          c.textAlign = "right";
-          c.textBaseline = "alphabetic";
-          c.fillStyle = "rgba(255,255,255,.9)";
-          c.fillText(brand.company_name, W - W * 0.06, H * 0.075);
-          c.restore();
-        }
+      }
+      if (opts.captionsEnabled !== false) {
+        const lab = mix > 0.5 ? "After" : "Before";
+        c.save();
+        pill(c, lab, W * 0.06, H * 0.14, Math.round(W * 0.03), "rgba(10,10,10,.8)", "#fff");
+        c.restore();
+      }
+    } else if (clips[idx]) {
+      const v = clips[idx]!;
+      const dur = v.duration && isFinite(v.duration) ? v.duration : durations[idx]! / 1000;
+      const want = Math.min(dur - 0.02, (local / 1000) % Math.max(dur, 0.1));
+      if (v.paused) {
+        v.currentTime = Math.max(0, want);
+        void v.play().catch(() => {});
+      }
+      if (v.readyState >= 2) drawClipFrame(c, v, W, H);
+      else drawMotion(c, img, W, H, motion, p, scene.crop);
+    } else if (endFrames[idx]) {
+      drawStartEnd(
+        c,
+        img,
+        endFrames[idx]!,
+        W,
+        H,
+        scene.seTransition || "blend",
+        p,
+        scene.startCrop || scene.crop,
+        scene.endCrop,
+      );
+    } else {
+      drawMotion(c, img, W, H, motion, p, scene.crop);
+    }
 
-        if (avBubble && avImg) {
-          const fade = Math.min(1, ts / 500) * Math.min(1, (sceneEnd - ts) / 500);
-          presenterBubble(c, W, H, avImg, av?.corner || "bottom_right", avAccent, ts, Math.max(0, fade));
-        }
+    if (scene.motion_level === "immersive") {
+      immersiveLayer(c, W, H, scene.immersive_effect || "light", p);
+    }
+    if (vfxOn) c.restore();
+    vfxOverlay(c, W, H, transition, local, durations[idx]!);
 
-        // transition fades between scenes
+    if (opts.captionsEnabled !== false) {
+      const text = scene.caption || scene.room_name || "";
+      const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
+      caption(c, W, H, text, a, scene.captionPos || "bottom", scene.captionStyle || "brand");
+    }
+    {
+      const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
+      sceneLabels(c, W, H, scene.labels ?? [], a);
+    }
+    if (showDisclosure && scene.disclosure_type) {
+      disclosureNote(c, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
+    }
+    if (showDisclosure && clips[idx]) {
+      c.save();
+      c.globalAlpha = 0.9;
+      pill(
+        c,
+        "AI-Generated Video",
+        W * 0.06,
+        H * 0.105,
+        Math.round(W * 0.022),
+        "rgba(10,10,10,.72)",
+        "#fff",
+      );
+      c.restore();
+    }
+    if (showDisclosure && scene.motion_level === "immersive") {
+      c.save();
+      c.globalAlpha = 0.9;
+      pill(
+        c,
+        "AI-Animated",
+        W * 0.06,
+        H * 0.105,
+        Math.round(W * 0.022),
+        "rgba(10,10,10,.72)",
+        "#fff",
+      );
+      c.restore();
+    }
+    if (showDisclosure && scene.exterior_effect) {
+      c.save();
+      c.globalAlpha = 0.72;
+      c.font = `600 ${Math.round(W * 0.018)}px Inter, system-ui, sans-serif`;
+      c.fillStyle = "rgba(255,255,255,.9)";
+      c.textAlign = "left";
+      c.textBaseline = "alphabetic";
+      c.fillText("Simulated camera movement — not drone footage", W * 0.06, H * 0.955);
+      c.restore();
+    }
+    if (showBrand && brand?.company_name) {
+      c.save();
+      c.globalAlpha = 0.8;
+      c.font = `800 ${Math.round(W * 0.024)}px Inter, system-ui, sans-serif`;
+      c.textAlign = "right";
+      c.textBaseline = "alphabetic";
+      c.fillStyle = "rgba(255,255,255,.9)";
+      c.fillText(brand.company_name, W - W * 0.06, H * 0.075);
+      c.restore();
+    }
 
-        if (!hasTransitions && transition !== "none" && !VIRAL_TRANSITIONS.has(transition)) {
-          const fadeIn = local < FADE ? 1 - local / FADE : 0;
-          const fadeOut = durations[idx]! - local < FADE ? 1 - (durations[idx]! - local) / FADE : 0;
-          const f = Math.max(fadeIn, fadeOut) * (transition === "cinematic" ? 1 : transition === "smooth" ? 0.8 : 0.6);
-          if (f > 0) {
-            c.save();
-            c.globalAlpha = f;
-            c.fillStyle = "#0a0a0a";
-            c.fillRect(0, 0, W, H);
-            c.restore();
-          }
-        }
+    if (avBubble && avImg) {
+      const fade = Math.min(1, ts / 500) * Math.min(1, (sceneEnd - ts) / 500);
+      presenterBubble(
+        c,
+        W,
+        H,
+        avImg,
+        av?.corner || "bottom_right",
+        avAccent,
+        ts,
+        Math.max(0, fade),
+      );
+    }
+
+    // transition fades between scenes
+
+    if (!hasTransitions && transition !== "none" && !VIRAL_TRANSITIONS.has(transition)) {
+      const fadeIn = local < FADE ? 1 - local / FADE : 0;
+      const fadeOut = durations[idx]! - local < FADE ? 1 - (durations[idx]! - local) / FADE : 0;
+      const f =
+        Math.max(fadeIn, fadeOut) *
+        (transition === "cinematic" ? 1 : transition === "smooth" ? 0.8 : 0.6);
+      if (f > 0) {
+        c.save();
+        c.globalAlpha = f;
+        c.fillStyle = "#0a0a0a";
+        c.fillRect(0, 0, W, H);
+        c.restore();
+      }
+    }
   };
 
   const total = avIntro + sceneEnd + avOutro + outro;
@@ -1289,7 +1367,10 @@ export async function renderReveal(
             /* An approved AI transition clip plays as the bridge itself. */
             const dur = clip.duration && isFinite(clip.duration) ? clip.duration : ov / 1000;
             const want = Math.min(Math.max(dur - 0.02, 0), q * dur);
-            if (clip.paused) { clip.currentTime = want; void clip.play().catch(() => {}); }
+            if (clip.paused) {
+              clip.currentTime = want;
+              void clip.play().catch(() => {});
+            }
             drawClipFrame(ctx, clip, W, H);
           } else {
             paintScene(bufA, idx, local, ts);
@@ -1323,5 +1404,10 @@ export async function renderReveal(
   drawMotion(ctx, imgs[0]!, W, H, "static", 0.2);
   const poster = canvas.toDataURL("image/jpeg", 0.75);
 
-  return { blob, ext: (mime || "video/webm").includes("mp4") ? "mp4" : "webm", duration: total / 1000, poster };
+  return {
+    blob,
+    ext: (mime || "video/webm").includes("mp4") ? "mp4" : "webm",
+    duration: total / 1000,
+    poster,
+  };
 }

@@ -18,41 +18,69 @@ export function initExtra(timers: number[], lucide: any) {
 
   /* ---------- trust ribbon ---------- */
   const AUD = [
-    ["home", "Homeowners"], ["trending-up", "Investors"], ["key-round", "Agents"],
-    ["palette", "Designers"], ["hammer", "Contractors"], ["hard-hat", "Builders"],
-    ["trees", "Landscapers"], ["building-2", "Property Managers"],
+    ["home", "Homeowners"],
+    ["trending-up", "Investors"],
+    ["key-round", "Agents"],
+    ["palette", "Designers"],
+    ["hammer", "Contractors"],
+    ["hard-hat", "Builders"],
+    ["trees", "Landscapers"],
+    ["building-2", "Property Managers"],
   ];
   const rr = $("ribbonRow");
-  if (rr) rr.innerHTML = AUD.map(([i, t]) => `<span class="rb"><i data-lucide="${i}"></i>${t}</span>`).join("");
+  if (rr)
+    rr.innerHTML = AUD.map(
+      ([i, t]) => `<span class="rb"><i data-lucide="${i}"></i>${t}</span>`,
+    ).join("");
 
   /* ---------- hero demo tabs ---------- */
   const DEMOS: any = {
     redesign: {
-      before: PHOTOS.before, after: PHOTOS.after,
+      before: PHOTOS.before,
+      after: PHOTOS.after,
       cap: ["Reality Lock On", "Walls, windows and layout preserved"],
       est: "Makeover Intensity",
-      meta: [["Room", "Living Room"], ["Direction", "Warm Minimal"], ["Intensity", "Makeover"]],
+      meta: [
+        ["Room", "Living Room"],
+        ["Direction", "Warm Minimal"],
+        ["Intensity", "Makeover"],
+      ],
       tags: ["Before", "After"],
     },
     empty: {
-      before: PHOTOS.clutter, after: PHOTOS.empty,
+      before: PHOTOS.clutter,
+      after: PHOTOS.empty,
       cap: ["Declutter to Empty", "Architecture kept, contents removed"],
       est: "Contents Removed",
-      meta: [["Room", "Living Room"], ["Step", "Declutter, Empty"], ["Next", "Stage"]],
+      meta: [
+        ["Room", "Living Room"],
+        ["Step", "Declutter, Empty"],
+        ["Next", "Stage"],
+      ],
       tags: ["Occupied", "Emptied"],
     },
     shop: {
-      before: PHOTOS.empty, after: PHOTOS.after,
+      before: PHOTOS.empty,
+      after: PHOTOS.after,
       cap: ["14 Items Matched", "Best price, closest match or premium"],
       est: "Cart $6,240",
-      meta: [["Matched", "14 Items"], ["Fit Checks", "Passed"], ["Cart", "$6,240"]],
+      meta: [
+        ["Matched", "14 Items"],
+        ["Fit Checks", "Passed"],
+        ["Cart", "$6,240"],
+      ],
       tags: ["Staged", "Shoppable"],
     },
     plan: {
-      before: PHOTOS.kitchenBefore, after: PHOTOS.kitchen,
+      before: PHOTOS.kitchenBefore,
+      after: PHOTOS.kitchen,
       cap: ["Kitchen Redesigned", "Cabinet fronts, counters, backsplash and flooring"],
       est: "Renovation Intensity",
-      meta: [["Room", "Kitchen"], ["Intensity", "Renovation"], ["Structure", "Held"]],
+      meta: [
+        ["Room", "Kitchen"],
+        ["Intensity", "Renovation"],
+        ["Structure", "Held"],
+      ],
       tags: ["Before", "Planned"],
     },
   };
@@ -63,160 +91,336 @@ export function initExtra(timers: number[], lucide: any) {
         dTabs.querySelectorAll(".dtab").forEach((x: any) => x.classList.remove("on"));
         b.classList.add("on");
         const d = DEMOS[b.dataset.d];
-        const lb = $("lBefore"), la = $("lAfter");
+        const lb = $("lBefore"),
+          la = $("lAfter");
         if (lb) lb.innerHTML = photo(d.before, "Original space before redesign");
         if (la) la.innerHTML = photo(d.after, "Redesigned space, AI render");
         const cap = $("sceneCap");
         if (cap) cap.innerHTML = `<b>${d.cap[0]}</b><span>${d.cap[1]}</span>`;
-        const est = $("heroEst"); if (est) est.textContent = d.est;
+        const est = $("heroEst");
+        if (est) est.textContent = d.est;
         const meta = $("heroMeta");
-        if (meta) meta.innerHTML = d.meta.map(([k, v]: any) => `<span>${k} <b>${v}</b></span>`).join("");
-        const tl = $("tagL"), tr2 = $("tagR");
+        if (meta)
+          meta.innerHTML = d.meta.map(([k, v]: any) => `<span>${k} <b>${v}</b></span>`).join("");
+        const tl = $("tagL"),
+          tr2 = $("tagR");
         if (tl) tl.textContent = d.tags[0];
         if (tr2) tr2.textContent = d.tags[1];
         const hl = $("hotLayer");
         if (hl) {
           hl.classList.toggle("on", b.dataset.d === "shop");
-          hl.innerHTML = b.dataset.d === "shop"
-            ? [["36%", "62%", "Sofa · $1,240"], ["66%", "48%", "Floor Lamp · $180"], ["18%", "78%", "Rug · $410"]]
-                .map(([l, t, lab]) => `<span class="hs" style="left:${l};top:${t}"><i></i><b>${lab}</b></span>`).join("")
-            : "";
+          hl.innerHTML =
+            b.dataset.d === "shop"
+              ? [
+                  ["36%", "62%", "Sofa · $1,240"],
+                  ["66%", "48%", "Floor Lamp · $180"],
+                  ["18%", "78%", "Rug · $410"],
+                ]
+                  .map(
+                    ([l, t, lab]) =>
+                      `<span class="hs" style="left:${l};top:${t}"><i></i><b>${lab}</b></span>`,
+                  )
+                  .join("")
+              : "";
         }
         const scan = $("scanLine");
-        if (scan) { scan.classList.remove("run"); void (scan as any).offsetWidth; scan.classList.add("run"); }
-      })
+        if (scan) {
+          scan.classList.remove("run");
+          void (scan as any).offsetWidth;
+          scan.classList.add("run");
+        }
+      }),
     );
   }
 
   /* ---------- gallery tabs ---------- */
   type GView = {
-    name: string; before: string; after: string; cap: string;
-    bl: string; al: string; stamp: string; chips: string[]; strength: [string, string, string][];
+    name: string;
+    before: string;
+    after: string;
+    cap: string;
+    bl: string;
+    al: string;
+    stamp: string;
+    chips: string[];
+    strength: [string, string, string][];
   };
   const V = (
-    name: string, before: string, after: string, cap: string,
-    bl: string, al: string, stamp: string, chips: string[],
-    strength: [string, string, string][]
+    name: string,
+    before: string,
+    after: string,
+    cap: string,
+    bl: string,
+    al: string,
+    stamp: string,
+    chips: string[],
+    strength: [string, string, string][],
   ): GView => ({ name, before, after, cap, bl, al, stamp, chips, strength });
 
-  const ARCH: [string,string,string] = ["ruler","Architecture Preserved","Windows, ceiling and perspective unchanged"];
+  const ARCH: [string, string, string] = [
+    "ruler",
+    "Architecture Preserved",
+    "Windows, ceiling and perspective unchanged",
+  ];
 
   const INTERIOR_SUBS: [string, GView][] = [
-    ["Living Room", V("Living Room", PHOTOS.wfOriginal, PHOTOS.wfDesigned,
-      "Warm Minimal", "Before", "After", "Reality Lock On",
-      ["Reality Lock On", "Makeover", "Design DNA \u00b7 Warm Minimal"],
-      [ARCH,
-       ["paintbrush", "Finishes Updated", "Flooring, paint, furniture, drapery and lighting"],
-       ["layers", "Design Intensity", "Furnishings and finishes"]])],
-    ["Kitchen", V("Kitchen", PHOTOS.kitchenBefore, PHOTOS.kitchenAfter,
-      "Warm Shaker", "Before", "After", "Reality Lock On",
-      ["Reality Lock On", "Renovation", "Design DNA \u00b7 Warm Shaker"],
-      [["ruler", "Architecture Preserved", "Same footprint, appliance and window locations"],
-       ["paintbrush", "Finishes Updated", "Cabinet fronts, counters, backsplash, flooring"],
-       ["layers", "Design Intensity", "Cabinetry led"]])],
-    ["Bathroom", V("Bathroom", PHOTOS.bathBefore, PHOTOS.bath,
-      "Quiet Luxury", "Before", "After", "Reality Lock On",
-      ["Reality Lock On", "Renovation", "Design DNA \u00b7 Quiet Luxury"],
-      [["ruler", "Architecture Preserved", "Tub, toilet and vanity stay exactly where they are"],
-       ["paintbrush", "Finishes Updated", "Tile, vanity, mirror, lighting and flooring"],
-       ["layers", "Design Intensity", "No wall moves"]])],
-    ["Bedroom", V("Bedroom", PHOTOS.bedroomBefore, PHOTOS.bedroomAfter,
-      "Warm Minimal", "Before", "After", "Reality Lock On",
-      ["Reality Lock On", "Makeover", "Design DNA \u00b7 Warm Minimal"],
-      [["ruler", "Architecture Preserved", "Window, closet doors and ceiling unchanged"],
-       ["paintbrush", "Finishes Updated", "Carpet to oak, paint, bed, case goods, drapery"],
-       ["layers", "Design Intensity", "Furniture led"]])],
-    ["Office", V("Office", PHOTOS.officeBefore, PHOTOS.officeAfter,
-      "Quiet Modern", "Before", "After", "Reality Lock On",
-      ["Reality Lock On", "Refresh", "Design DNA \u00b7 Quiet Modern"],
-      [["ruler", "Architecture Preserved", "Window, door and outlet positions unchanged"],
-       ["paintbrush", "Finishes Updated", "Flooring, paint, desk, seating and shelving"],
-       ["layers", "Design Intensity", "Light scope"]])],
+    [
+      "Living Room",
+      V(
+        "Living Room",
+        PHOTOS.wfOriginal,
+        PHOTOS.wfDesigned,
+        "Warm Minimal",
+        "Before",
+        "After",
+        "Reality Lock On",
+        ["Reality Lock On", "Makeover", "Design DNA \u00b7 Warm Minimal"],
+        [
+          ARCH,
+          ["paintbrush", "Finishes Updated", "Flooring, paint, furniture, drapery and lighting"],
+          ["layers", "Design Intensity", "Furnishings and finishes"],
+        ],
+      ),
+    ],
+    [
+      "Kitchen",
+      V(
+        "Kitchen",
+        PHOTOS.kitchenBefore,
+        PHOTOS.kitchenAfter,
+        "Warm Shaker",
+        "Before",
+        "After",
+        "Reality Lock On",
+        ["Reality Lock On", "Renovation", "Design DNA \u00b7 Warm Shaker"],
+        [
+          ["ruler", "Architecture Preserved", "Same footprint, appliance and window locations"],
+          ["paintbrush", "Finishes Updated", "Cabinet fronts, counters, backsplash, flooring"],
+          ["layers", "Design Intensity", "Cabinetry led"],
+        ],
+      ),
+    ],
+    [
+      "Bathroom",
+      V(
+        "Bathroom",
+        PHOTOS.bathBefore,
+        PHOTOS.bath,
+        "Quiet Luxury",
+        "Before",
+        "After",
+        "Reality Lock On",
+        ["Reality Lock On", "Renovation", "Design DNA \u00b7 Quiet Luxury"],
+        [
+          ["ruler", "Architecture Preserved", "Tub, toilet and vanity stay exactly where they are"],
+          ["paintbrush", "Finishes Updated", "Tile, vanity, mirror, lighting and flooring"],
+          ["layers", "Design Intensity", "No wall moves"],
+        ],
+      ),
+    ],
+    [
+      "Bedroom",
+      V(
+        "Bedroom",
+        PHOTOS.bedroomBefore,
+        PHOTOS.bedroomAfter,
+        "Warm Minimal",
+        "Before",
+        "After",
+        "Reality Lock On",
+        ["Reality Lock On", "Makeover", "Design DNA \u00b7 Warm Minimal"],
+        [
+          ["ruler", "Architecture Preserved", "Window, closet doors and ceiling unchanged"],
+          ["paintbrush", "Finishes Updated", "Carpet to oak, paint, bed, case goods, drapery"],
+          ["layers", "Design Intensity", "Furniture led"],
+        ],
+      ),
+    ],
+    [
+      "Office",
+      V(
+        "Office",
+        PHOTOS.officeBefore,
+        PHOTOS.officeAfter,
+        "Quiet Modern",
+        "Before",
+        "After",
+        "Reality Lock On",
+        ["Reality Lock On", "Refresh", "Design DNA \u00b7 Quiet Modern"],
+        [
+          ["ruler", "Architecture Preserved", "Window, door and outlet positions unchanged"],
+          ["paintbrush", "Finishes Updated", "Flooring, paint, desk, seating and shelving"],
+          ["layers", "Design Intensity", "Light scope"],
+        ],
+      ),
+    ],
   ];
 
-  const EXT = (name: string, cap: string, budget: string, strength: [string,string,string][]): [string, GView] =>
-    [name, V(name, PHOTOS.exteriorBefore, PHOTOS.exteriorAfter, cap, "Before", "After", "Reality Lock On",
-      ["Reality Lock On", budget, "Design DNA \u00b7 Modern Classic"], strength)];
+  const EXT = (
+    name: string,
+    cap: string,
+    budget: string,
+    strength: [string, string, string][],
+  ): [string, GView] => [
+    name,
+    V(
+      name,
+      PHOTOS.exteriorBefore,
+      PHOTOS.exteriorAfter,
+      cap,
+      "Before",
+      "After",
+      "Reality Lock On",
+      ["Reality Lock On", budget, "Design DNA \u00b7 Modern Classic"],
+      strength,
+    ),
+  ];
 
   const EXTERIOR_SUBS: [string, GView][] = [
-    EXT("Front Elevation", "Front Elevation \u00b7 Modern Classic", "Makeover",
-      [["ruler", "Architecture Preserved", "Rooflines, windows and perspective unchanged"],
-       ["paintbrush", "Finishes Updated", "Siding color, trim, door, porch light"],
-       ["layers", "Design Intensity", "Furnishings and finishes"]]),
-    EXT("Rear Elevation", "Rear Elevation \u00b7 Modern Classic", "Makeover",
-      [["ruler", "Architecture Preserved", "Door and window openings stay exactly as built"],
-       ["paintbrush", "Finishes Updated", "Paint, deck stain, railings and rear lighting"],
-       ["layers", "Design Intensity", "Furnishings and finishes"]]),
-    EXT("Siding", "Siding \u00b7 Warm White Lap", "Refresh",
-      [["ruler", "Architecture Preserved", "Same lap profile, same wall planes"],
-       ["layers", "Finishes Updated", "Repaint in warm white with black trim"],
-       ["layers", "Design Intensity", "Paint led"]]),
-    EXT("Roofing", "Roofing \u00b7 Charcoal Architectural", "Renovation",
-      [["ruler", "Architecture Preserved", "Same pitch, ridge height and roofline"],
-       ["home", "Finishes Updated", "Architectural shingle in charcoal, new drip edge"],
-       ["layers", "Design Intensity", "Tear-off included"]]),
-    EXT("Curb Appeal", "Curb Appeal \u00b7 Modern Classic", "Refresh",
-      [["ruler", "Architecture Preserved", "House footprint and driveway untouched"],
-       ["sprout", "Finishes Updated", "Front beds, walkway, house numbers and lighting"],
-       ["layers", "Design Intensity", "Highest resale return"]]),
+    EXT("Front Elevation", "Front Elevation \u00b7 Modern Classic", "Makeover", [
+      ["ruler", "Architecture Preserved", "Rooflines, windows and perspective unchanged"],
+      ["paintbrush", "Finishes Updated", "Siding color, trim, door, porch light"],
+      ["layers", "Design Intensity", "Furnishings and finishes"],
+    ]),
+    EXT("Rear Elevation", "Rear Elevation \u00b7 Modern Classic", "Makeover", [
+      ["ruler", "Architecture Preserved", "Door and window openings stay exactly as built"],
+      ["paintbrush", "Finishes Updated", "Paint, deck stain, railings and rear lighting"],
+      ["layers", "Design Intensity", "Furnishings and finishes"],
+    ]),
+    EXT("Siding", "Siding \u00b7 Warm White Lap", "Refresh", [
+      ["ruler", "Architecture Preserved", "Same lap profile, same wall planes"],
+      ["layers", "Finishes Updated", "Repaint in warm white with black trim"],
+      ["layers", "Design Intensity", "Paint led"],
+    ]),
+    EXT("Roofing", "Roofing \u00b7 Charcoal Architectural", "Renovation", [
+      ["ruler", "Architecture Preserved", "Same pitch, ridge height and roofline"],
+      ["home", "Finishes Updated", "Architectural shingle in charcoal, new drip edge"],
+      ["layers", "Design Intensity", "Tear-off included"],
+    ]),
+    EXT("Curb Appeal", "Curb Appeal \u00b7 Modern Classic", "Refresh", [
+      ["ruler", "Architecture Preserved", "House footprint and driveway untouched"],
+      ["sprout", "Finishes Updated", "Front beds, walkway, house numbers and lighting"],
+      ["layers", "Design Intensity", "Highest resale return"],
+    ]),
   ];
 
-  const LND = (name: string, cap: string, budget: string, strength: [string,string,string][]): [string, GView] =>
-    [name, V(name, PHOTOS.yardBefore, PHOTOS.yardAfter, cap, "Before", "After", "Reality Lock On",
-      ["Reality Lock On", budget, "Design DNA \u00b7 Layered Modern"], strength)];
+  const LND = (
+    name: string,
+    cap: string,
+    budget: string,
+    strength: [string, string, string][],
+  ): [string, GView] => [
+    name,
+    V(
+      name,
+      PHOTOS.yardBefore,
+      PHOTOS.yardAfter,
+      cap,
+      "Before",
+      "After",
+      "Reality Lock On",
+      ["Reality Lock On", budget, "Design DNA \u00b7 Layered Modern"],
+      strength,
+    ),
+  ];
 
   const LANDSCAPE_SUBS: [string, GView][] = [
-    LND("Front Yard", "Front Yard \u00b7 Layered Modern", "Makeover",
-      [["ruler", "Architecture Preserved", "Property lines, walkway and grade unchanged"],
-       ["sprout", "Planting Updated", "Ornamental grasses, boxwood and lawn repair"],
-       ["layers", "Design Intensity", "Furnishings and finishes"]]),
-    LND("Backyard", "Backyard \u00b7 Layered Modern", "Renovation",
-      [["ruler", "Architecture Preserved", "House, fence line and grade unchanged"],
-       ["squircle", "Hardscape Updated", "Concrete paver patio and connecting path"],
-       ["layers", "Design Intensity", "Pergola included"]]),
-    LND("Pool Area", "Pool Area \u00b7 Resort Calm", "Renovation",
-      [["ruler", "Architecture Preserved", "Pool shell, coping line and setbacks unchanged"],
-       ["squircle", "Hardscape Updated", "Deck resurfacing, planters and shade structure"],
-       ["layers", "Design Intensity", "Surround only"]]),
-    LND("Patio", "Patio \u00b7 Layered Modern", "Makeover",
-      [["ruler", "Architecture Preserved", "Rear wall openings and grade unchanged"],
-       ["squircle", "Hardscape Updated", "Paver terrace, edging, low seat wall"],
-       ["layers", "Design Intensity", "Furniture excluded"]]),
-    LND("Garden", "Garden \u00b7 Layered Modern", "Refresh",
-      [["ruler", "Architecture Preserved", "Bed locations and mature trees retained"],
-       ["sprout", "Planting Updated", "Perennial layers, mulch, drip irrigation"],
-       ["layers", "Design Intensity", "Planting led"]]),
+    LND("Front Yard", "Front Yard \u00b7 Layered Modern", "Makeover", [
+      ["ruler", "Architecture Preserved", "Property lines, walkway and grade unchanged"],
+      ["sprout", "Planting Updated", "Ornamental grasses, boxwood and lawn repair"],
+      ["layers", "Design Intensity", "Furnishings and finishes"],
+    ]),
+    LND("Backyard", "Backyard \u00b7 Layered Modern", "Renovation", [
+      ["ruler", "Architecture Preserved", "House, fence line and grade unchanged"],
+      ["squircle", "Hardscape Updated", "Concrete paver patio and connecting path"],
+      ["layers", "Design Intensity", "Pergola included"],
+    ]),
+    LND("Pool Area", "Pool Area \u00b7 Resort Calm", "Renovation", [
+      ["ruler", "Architecture Preserved", "Pool shell, coping line and setbacks unchanged"],
+      ["squircle", "Hardscape Updated", "Deck resurfacing, planters and shade structure"],
+      ["layers", "Design Intensity", "Surround only"],
+    ]),
+    LND("Patio", "Patio \u00b7 Layered Modern", "Makeover", [
+      ["ruler", "Architecture Preserved", "Rear wall openings and grade unchanged"],
+      ["squircle", "Hardscape Updated", "Paver terrace, edging, low seat wall"],
+      ["layers", "Design Intensity", "Furniture excluded"],
+    ]),
+    LND("Garden", "Garden \u00b7 Layered Modern", "Refresh", [
+      ["ruler", "Architecture Preserved", "Bed locations and mature trees retained"],
+      ["sprout", "Planting Updated", "Perennial layers, mulch, drip irrigation"],
+      ["layers", "Design Intensity", "Planting led"],
+    ]),
   ];
 
   const GAL: [string, GView | null][] = [
     ["Interior", null],
     ["Exterior", null],
     ["Landscape", null],
-    ["Virtual Staging", V("Virtual Staging", PHOTOS.wfEmpty, PHOTOS.wfDesigned,
-      "Vacant Listing \u00b7 Japandi \u00b7 Staged in 40 seconds", "Empty", "Staged", "Design Complete",
-      ["Reality Lock On", "Listing Ready \u00b7 MLS Safe", "Design DNA \u00b7 Japandi"],
-      [["sofa", "Empty To Furnished", "Furniture added, nothing structural altered"],
-       ["camera", "Same Frame", "Identical perspective, walls, windows and light"],
-       ["badge-info", "Disclosure Ready", "Virtually staged label and clean export included"]])],
-    ["Floor Plan", V("Floor Plan", PHOTOS.plan2d, PHOTOS.plan3d,
-      "2D Plan to 3D Visualization \u00b7 28' x 24' footprint", "2D Plan", "3D View", "Design Complete",
-      ["Reality Lock On", "Plan Accurate \u00b7 To Scale", "Design DNA \u00b7 Warm Minimal"],
-      [["ruler", "Dimensions Held", "Every wall, opening and room size matches the plan"],
-       ["box", "Consistent 3D", "Same layout rendered room by room, not reinvented"],
-       ["list-checks", "Room By Room", "Every room carries the same plan and design direction"]])],
-    ["Sketch to Render", V("Sketch to Render", PHOTOS.sketchHand, PHOTOS.sketchRender,
-      "Hand Sketch \u00b7 Photoreal Concept \u00b7 Warm Minimal", "Sketch", "Render", "Design Complete",
-      ["Reality Lock On", "Concept", "Design DNA \u00b7 Warm Minimal"],
-      [["pencil", "Sketch Read", "Perspective, window and furniture placement interpreted"],
-       ["image", "Photoreal Concept", "Materials and daylight applied to your own drawing"],
-       ["layers", "Design Ready", "Concept carries straight into the full design workflow"]])],
+    [
+      "Virtual Staging",
+      V(
+        "Virtual Staging",
+        PHOTOS.wfEmpty,
+        PHOTOS.wfDesigned,
+        "Vacant Listing \u00b7 Japandi \u00b7 Staged in 40 seconds",
+        "Empty",
+        "Staged",
+        "Design Complete",
+        ["Reality Lock On", "Listing Ready \u00b7 MLS Safe", "Design DNA \u00b7 Japandi"],
+        [
+          ["sofa", "Empty To Furnished", "Furniture added, nothing structural altered"],
+          ["camera", "Same Frame", "Identical perspective, walls, windows and light"],
+          ["badge-info", "Disclosure Ready", "Virtually staged label and clean export included"],
+        ],
+      ),
+    ],
+    [
+      "Floor Plan",
+      V(
+        "Floor Plan",
+        PHOTOS.plan2d,
+        PHOTOS.plan3d,
+        "2D Plan to 3D Visualization \u00b7 28' x 24' footprint",
+        "2D Plan",
+        "3D View",
+        "Design Complete",
+        ["Reality Lock On", "Plan Accurate \u00b7 To Scale", "Design DNA \u00b7 Warm Minimal"],
+        [
+          ["ruler", "Dimensions Held", "Every wall, opening and room size matches the plan"],
+          ["box", "Consistent 3D", "Same layout rendered room by room, not reinvented"],
+          ["list-checks", "Room By Room", "Every room carries the same plan and design direction"],
+        ],
+      ),
+    ],
+    [
+      "Sketch to Render",
+      V(
+        "Sketch to Render",
+        PHOTOS.sketchHand,
+        PHOTOS.sketchRender,
+        "Hand Sketch \u00b7 Photoreal Concept \u00b7 Warm Minimal",
+        "Sketch",
+        "Render",
+        "Design Complete",
+        ["Reality Lock On", "Concept", "Design DNA \u00b7 Warm Minimal"],
+        [
+          ["pencil", "Sketch Read", "Perspective, window and furniture placement interpreted"],
+          ["image", "Photoreal Concept", "Materials and daylight applied to your own drawing"],
+          ["layers", "Design Ready", "Concept carries straight into the full design workflow"],
+        ],
+      ),
+    ],
   ];
 
   const SUBS: Record<number, [string, GView][]> = {
-    0: INTERIOR_SUBS, 1: EXTERIOR_SUBS, 2: LANDSCAPE_SUBS,
+    0: INTERIOR_SUBS,
+    1: EXTERIOR_SUBS,
+    2: LANDSCAPE_SUBS,
   };
 
-  const gt = $("galTabs"), gsub = $("galSubs"), gtax = $("galTax");
+  const gt = $("galTabs"),
+    gsub = $("galSubs"),
+    gtax = $("galTax");
   let gTab = 0;
   const gSubs: Record<number, number> = { 0: 0, 1: 0, 2: 0 };
 
@@ -226,20 +430,34 @@ export function initExtra(timers: number[], lucide: any) {
   }
   function galPaint() {
     const v = galView();
-    const gb = $("gsBefore"), ga = $("gsAfter"), gc = $("galCap");
+    const gb = $("gsBefore"),
+      ga = $("gsAfter"),
+      gc = $("galCap");
     if (gb) gb.innerHTML = photo(v.before, v.name + " before");
     if (ga) ga.innerHTML = photo(v.after, v.name + " after, AI render");
     if (gc) gc.innerHTML = `<b>${v.name}</b><span class="mono">${v.cap}</span>`;
-    const tl = $("galTagL"), tr = $("galTagR"), st = $("galStamp");
+    const tl = $("galTagL"),
+      tr = $("galTagR"),
+      st = $("galStamp");
     if (tl) tl.textContent = v.bl;
     if (tr) tr.textContent = v.al;
     if (st) st.textContent = v.stamp;
     const ch = $("galChips");
-    if (ch) ch.innerHTML = v.chips.map((c, i) =>
-      `<span class="gc${i === 0 ? " lock" : ""}">${i === 0 ? '<i data-lucide="lock"></i>' : ""}${c}</span>`).join("");
+    if (ch)
+      ch.innerHTML = v.chips
+        .map(
+          (c, i) =>
+            `<span class="gc${i === 0 ? " lock" : ""}">${i === 0 ? '<i data-lucide="lock"></i>' : ""}${c}</span>`,
+        )
+        .join("");
     const sr = $("galStrength");
-    if (sr) sr.innerHTML = v.strength.map(([ic, t, d]) =>
-      `<div class="gstr"><i data-lucide="${ic}"></i><div><b>${t}</b><span>${d}</span></div></div>`).join("");
+    if (sr)
+      sr.innerHTML = v.strength
+        .map(
+          ([ic, t, d]) =>
+            `<div class="gstr"><i data-lucide="${ic}"></i><div><b>${t}</b><span>${d}</span></div></div>`,
+        )
+        .join("");
     lucide?.createIcons?.();
   }
   function galPaintSubs() {
@@ -247,22 +465,42 @@ export function initExtra(timers: number[], lucide: any) {
     const subs = SUBS[gTab];
     gsub.classList.toggle("on", !!subs);
     gtax?.classList.toggle("nosubs", !subs);
-    gsub.innerHTML = !subs ? "" : subs.map(([n], i) =>
-      `<button class="gsub ${i === gSubs[gTab] ? "on" : ""}" data-s="${i}">${n}</button>`).join("");
+    gsub.innerHTML = !subs
+      ? ""
+      : subs
+          .map(
+            ([n], i) =>
+              `<button class="gsub ${i === gSubs[gTab] ? "on" : ""}" data-s="${i}">${n}</button>`,
+          )
+          .join("");
     gsub.querySelectorAll(".gsub").forEach((b: any) =>
-      b.addEventListener("click", () => { gSubs[gTab] = +b.dataset.s; galPaintSubs(); galPaint(); }));
+      b.addEventListener("click", () => {
+        gSubs[gTab] = +b.dataset.s;
+        galPaintSubs();
+        galPaint();
+      }),
+    );
   }
   if (gt) {
-    gt.innerHTML = GAL.map(([n], i) => `<button class="gtab ${i === 0 ? "on" : ""}" data-g="${i}">${n}</button>`).join("");
+    gt.innerHTML = GAL.map(
+      ([n], i) => `<button class="gtab ${i === 0 ? "on" : ""}" data-g="${i}">${n}</button>`,
+    ).join("");
     gt.querySelectorAll(".gtab").forEach((b: any) =>
       b.addEventListener("click", () => {
         gt.querySelectorAll(".gtab").forEach((x: any) => x.classList.remove("on"));
-        b.classList.add("on"); gTab = +b.dataset.g; galPaintSubs(); galPaint();
-      })
+        b.classList.add("on");
+        gTab = +b.dataset.g;
+        galPaintSubs();
+        galPaint();
+      }),
     );
-    galPaintSubs(); galPaint();
+    galPaintSubs();
+    galPaint();
   }
-  const grng = $("galRng") as any, gaf = $("gsAfter"), ghn = $("galHnd"), gstage = $("galStage");
+  const grng = $("galRng") as any,
+    gaf = $("gsAfter"),
+    ghn = $("galHnd"),
+    gstage = $("galStage");
   function setGC(v: number) {
     if (gaf) (gaf as any).style.clipPath = `inset(0 0 0 ${v}%)`;
     if (ghn) (ghn as any).style.left = v + "%";
@@ -272,18 +510,23 @@ export function initExtra(timers: number[], lucide: any) {
     const drag = (on: boolean) => {
       const v = galView();
       gstage?.classList.toggle("dragging", on);
-      const tl = $("galTagL"), tr = $("galTagR");
+      const tl = $("galTagL"),
+        tr = $("galTagR");
       if (tl) tl.textContent = on ? "Original Photo" : v.bl;
       if (tr) tr.textContent = on ? "Reality Lock On" : v.al;
     };
     grng.addEventListener("input", (e: any) => {
-      setGC(e.target.value); drag(true);
-      window.clearTimeout(t); t = window.setTimeout(() => drag(false), 420); timers.push(t);
+      setGC(e.target.value);
+      drag(true);
+      window.clearTimeout(t);
+      t = window.setTimeout(() => drag(false), 420);
+      timers.push(t);
     });
-    ["pointerup", "pointercancel", "blur"].forEach((ev) => grng.addEventListener(ev, () => drag(false)));
+    ["pointerup", "pointercancel", "blur"].forEach((ev) =>
+      grng.addEventListener(ev, () => drag(false)),
+    );
     setGC(50);
   }
-
 
   /* ---------- workflow ---------- */
   const FLOW = [
@@ -291,41 +534,67 @@ export function initExtra(timers: number[], lucide: any) {
     ["wand-2", "Redesign", "Explore design directions that preserve the real space."],
     ["sliders-horizontal", "Refine", "Keep, replace, remove and lock any object."],
     ["images", "Enhance", "Clean up, brighten and sharpen every photo in the set."],
-    ["shopping-bag", "Shop", "Match real products at best-price, closest-match and premium levels."],
+    [
+      "shopping-bag",
+      "Shop",
+      "Match real products at best-price, closest-match and premium levels.",
+    ],
     ["send", "Deliver", "Share a client presentation, listing video and approval link."],
   ];
   const fr = $("flowRow");
-  if (fr) fr.innerHTML = FLOW.map(([i, t, d], n) =>
-    `<button type="button" class="fstep" data-n="${n}" data-step="${n}"><span class="fdot" aria-hidden="true"></span>
+  if (fr)
+    fr.innerHTML = FLOW.map(
+      ([i, t, d], n) =>
+        `<button type="button" class="fstep" data-n="${n}" data-step="${n}"><span class="fdot" aria-hidden="true"></span>
      <span class="fnum mono">${String(n + 1).padStart(2, "0")}</span>
-     <div class="fic"><i data-lucide="${i}"></i></div><b>${t}</b><p>${d}</p></button>`).join("");
+     <div class="fic"><i data-lucide="${i}"></i></div><b>${t}</b><p>${d}</p></button>`,
+    ).join("");
 
   // Same room, same camera across every stage. 04-06 reuse the designed frame
   // and only layer project information on top.
   const PROG = [
     { n: "Original", src: PHOTOS.wfOriginal, d: "Uploaded Aug 7", ov: "" },
-    { n: "Empty", src: PHOTOS.wfEmpty, d: "Clean slate for staging", ov: `<span class="pbadge">14 objects removed</span>` },
-    { n: "Designed", src: PHOTOS.wfDesigned, d: "Organic Modern direction", ov: `<span class="pbadge"><i data-lucide="lock"></i>Reality Lock On</span>` },
-    { n: "Enhanced", src: PHOTOS.wfDesigned, d: "Light and color corrected", ov: `<span class="pbadge">Enhanced</span>` },
     {
-      n: "Shopped", src: PHOTOS.wfDesigned, d: "$3,284 selected",
+      n: "Empty",
+      src: PHOTOS.wfEmpty,
+      d: "Clean slate for staging",
+      ov: `<span class="pbadge">14 objects removed</span>`,
+    },
+    {
+      n: "Designed",
+      src: PHOTOS.wfDesigned,
+      d: "Organic Modern direction",
+      ov: `<span class="pbadge"><i data-lucide="lock"></i>Reality Lock On</span>`,
+    },
+    {
+      n: "Enhanced",
+      src: PHOTOS.wfDesigned,
+      d: "Light and color corrected",
+      ov: `<span class="pbadge">Enhanced</span>`,
+    },
+    {
+      n: "Shopped",
+      src: PHOTOS.wfDesigned,
+      d: "$3,284 selected",
       ov: `<span class="pshop" style="left:24%;top:62%"></span><span class="pshop" style="left:56%;top:70%"></span>
            <span class="pshop" style="left:76%;top:52%"></span><span class="pbadge">8 of 11 matched</span>`,
     },
     {
-      n: "Delivered", src: PHOTOS.wfDesigned, d: "Final &middot; Version 4",
+      n: "Delivered",
+      src: PHOTOS.wfDesigned,
+      d: "Final &middot; Version 4",
       ov: `<span class="pbadge ok top"><i data-lucide="check"></i>Client Approved</span>`,
     },
   ];
   const ps = $("progStrip");
   if (ps) {
-    ps.innerHTML = PROG.map((s, i) =>
-      `<div class="pnode" data-n="${i}" data-step="${i}" tabindex="0"><div class="pim">${photo(s.src, s.n + " stage")}${s.ov}</div>
+    ps.innerHTML = PROG.map(
+      (s, i) =>
+        `<div class="pnode" data-n="${i}" data-step="${i}" tabindex="0"><div class="pim">${photo(s.src, s.n + " stage")}${s.ov}</div>
        <span class="plab mono">${String(i + 1).padStart(2, "0")} ${s.n}</span>
-       <span class="pdet mono">${s.d}</span></div>`
+       <span class="pdet mono">${s.d}</span></div>`,
     ).join("");
   }
-
 
   /* activation: hover/click a card or node lights up the matching pair */
   const steps = () => Array.from(document.querySelectorAll(".rd-site .fstep, .rd-site .pnode"));
@@ -345,21 +614,23 @@ export function initExtra(timers: number[], lucide: any) {
   });
   activate(0);
 
-
   /* scroll-triggered walkthrough */
   const wf = document.getElementById("workflow");
   if (wf && "IntersectionObserver" in window) {
     let played = false;
-    const io = new IntersectionObserver((es) => {
-      es.forEach((e) => {
-        if (!e.isIntersecting || played) return;
-        played = true; io.disconnect();
-        FLOW.forEach((_, i) => after(() => activate(i), 420 * i + 300));
-      });
-    }, { threshold: 0.28 });
+    const io = new IntersectionObserver(
+      (es) => {
+        es.forEach((e) => {
+          if (!e.isIntersecting || played) return;
+          played = true;
+          io.disconnect();
+          FLOW.forEach((_, i) => after(() => activate(i), 420 * i + 300));
+        });
+      },
+      { threshold: 0.28 },
+    );
     io.observe(wf);
   }
-
 
   /* ---------- precision control hotspots ---------- */
   const hi = $("hotImg");
@@ -376,29 +647,46 @@ export function initExtra(timers: number[], lucide: any) {
   ];
   const ICO: any = { keep: "lock", rep: "refresh-cw", rm: "x" };
   const VERB: any = { keep: "Keep", rep: "Replace", rm: "Remove" };
-  const hd = $("hotDots"), hp = $("hotPop"), hpn = $("hotPopName");
-  const hprompt = $("hotPrompt"), hmem = $("hotMem"), hroom = $("hotRoom");
+  const hd = $("hotDots"),
+    hp = $("hotPop"),
+    hpn = $("hotPopName");
+  const hprompt = $("hotPrompt"),
+    hmem = $("hotMem"),
+    hroom = $("hotRoom");
   let active = -1;
 
-  function decided() { return HOTS.filter((h) => h.s); }
+  function decided() {
+    return HOTS.filter((h) => h.s);
+  }
   function syncMem() {
     const d = decided();
     if (hmem) {
       hmem.classList.toggle("on", d.length > 0);
       const b = hmem.querySelector("b");
-      if (b) b.textContent = d.length + (d.length === 1 ? " decision remembered" : " decisions remembered");
+      if (b)
+        b.textContent =
+          d.length + (d.length === 1 ? " decision remembered" : " decisions remembered");
     }
     if (hprompt) {
       const sp = hprompt.querySelector("span");
       if (sp) {
-        const parts = d.map((h) => (h.s === "keep" ? "Do not change the " + h.n.toLowerCase() : VERB[h.s] + " the " + h.n.toLowerCase()));
-        sp.textContent = parts.length ? parts.join(". ") + "." : "Tap any object to set what the AI may touch";
+        const parts = d.map((h) =>
+          h.s === "keep"
+            ? "Do not change the " + h.n.toLowerCase()
+            : VERB[h.s] + " the " + h.n.toLowerCase(),
+        );
+        sp.textContent = parts.length
+          ? parts.join(". ") + "."
+          : "Tap any object to set what the AI may touch";
       }
       hprompt.classList.toggle("on", d.length > 0);
     }
     hroom?.classList.toggle("show-after", d.length >= 2);
     const ps = $("presStamp");
-    ps?.classList.toggle("on", HOTS.some((h) => h.n === "Windows" && h.s === "keep"));
+    ps?.classList.toggle(
+      "on",
+      HOTS.some((h) => h.n === "Windows" && h.s === "keep"),
+    );
   }
   function paint() {
     hd?.querySelectorAll(".hdot").forEach((b: any, i: number) => {
@@ -413,9 +701,12 @@ export function initExtra(timers: number[], lucide: any) {
     if (hp) {
       const h = HOTS[i];
       if (hpn) hpn.textContent = h.n;
-      hp.style.left = h.l; hp.style.top = h.t;
+      hp.style.left = h.l;
+      hp.style.top = h.t;
       hp.classList.add("on");
-      hp.querySelectorAll("button").forEach((x: any) => x.classList.toggle("on", x.dataset.a === h.s));
+      hp.querySelectorAll("button").forEach((x: any) =>
+        x.classList.toggle("on", x.dataset.a === h.s),
+      );
     }
     paint();
   }
@@ -423,40 +714,76 @@ export function initExtra(timers: number[], lucide: any) {
     if (active < 0) return;
     HOTS[active].s = a;
     hp?.classList.remove("on");
-    paint(); syncMem();
+    paint();
+    syncMem();
   }
   if (hd) {
-    hd.innerHTML = HOTS.map((h, i) =>
-      `<button class="hdot" data-h="${i}" style="left:${h.l};top:${h.t}" aria-label="${h.n}"><i></i></button>`).join("");
+    hd.innerHTML = HOTS.map(
+      (h, i) =>
+        `<button class="hdot" data-h="${i}" style="left:${h.l};top:${h.t}" aria-label="${h.n}"><i></i></button>`,
+    ).join("");
     hd.querySelectorAll(".hdot").forEach((b: any) =>
-      b.addEventListener("click", (e: any) => { e.stopPropagation(); openPop(+b.dataset.h); }));
+      b.addEventListener("click", (e: any) => {
+        e.stopPropagation();
+        openPop(+b.dataset.h);
+      }),
+    );
   }
   hp?.querySelectorAll("button").forEach((b: any) =>
-    b.addEventListener("click", (e: any) => { e.stopPropagation(); choose(b.dataset.a); }));
-  hroom?.addEventListener("click", () => { hp?.classList.remove("on"); active = -1; paint(); });
-  syncMem(); paint();
+    b.addEventListener("click", (e: any) => {
+      e.stopPropagation();
+      choose(b.dataset.a);
+    }),
+  );
+  hroom?.addEventListener("click", () => {
+    hp?.classList.remove("on");
+    active = -1;
+    paint();
+  });
+  syncMem();
+  paint();
 
   /* scroll-triggered demo: cursor picks Replace on sofa, Keep on windows */
   if (hroom && hd) {
     const cur = document.createElement("span");
     cur.className = "hot-cursor";
     hroom.appendChild(cur);
-    const moveTo = (i: number) => { cur.style.left = HOTS[i].l; cur.style.top = HOTS[i].t; cur.classList.add("on"); };
+    const moveTo = (i: number) => {
+      cur.style.left = HOTS[i].l;
+      cur.style.top = HOTS[i].t;
+      cur.classList.add("on");
+    };
     let played = false;
     const play = () => {
-      if (played) return; played = true;
+      if (played) return;
+      played = true;
       after(() => moveTo(0), 400);
-      after(() => { cur.classList.add("tap"); openPop(0); }, 1300);
+      after(() => {
+        cur.classList.add("tap");
+        openPop(0);
+      }, 1300);
       after(() => cur.classList.remove("tap"), 1600);
       after(() => choose("rep"), 2100);
       after(() => moveTo(1), 2600);
-      after(() => { cur.classList.add("tap"); openPop(1); }, 3400);
+      after(() => {
+        cur.classList.add("tap");
+        openPop(1);
+      }, 3400);
       after(() => cur.classList.remove("tap"), 3700);
       after(() => choose("keep"), 4200);
       after(() => cur.classList.remove("on"), 4700);
     };
     if ("IntersectionObserver" in window) {
-      const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { play(); io.disconnect(); } }), { threshold: 0.4 });
+      const io = new IntersectionObserver(
+        (es) =>
+          es.forEach((e) => {
+            if (e.isIntersecting) {
+              play();
+              io.disconnect();
+            }
+          }),
+        { threshold: 0.4 },
+      );
       io.observe(hroom);
     } else play();
   }
@@ -468,25 +795,39 @@ export function initExtra(timers: number[], lucide: any) {
     ["objects", "Selected Objects", 'Anything marked "Keep"', true],
   ];
   const lr = $("lockRows");
-  if (lr) lr.innerHTML = LOCKS.map(([k, n, d, on]) =>
-    `<div class="lrow" data-k="${k}"><div><b>${n}</b><span>${d}</span></div><span class="lsw ${on ? "on" : ""}" role="switch" aria-label="${n}"></span></div>`).join("");
-  const master = $("lockMaster"), explore = $("exploreSw");
+  if (lr)
+    lr.innerHTML = LOCKS.map(
+      ([k, n, d, on]) =>
+        `<div class="lrow" data-k="${k}"><div><b>${n}</b><span>${d}</span></div><span class="lsw ${on ? "on" : ""}" role="switch" aria-label="${n}"></span></div>`,
+    ).join("");
+  const master = $("lockMaster"),
+    explore = $("exploreSw");
   const rowSw = (k: string) => lr?.querySelector(`.lrow[data-k="${k}"] .lsw`) as any;
   function syncLocks() {
     const off = !master?.classList.contains("on");
     lr?.querySelectorAll(".lrow").forEach((r: any) => r.classList.toggle("dim", off));
     const ex = explore?.classList.contains("on");
     const ls = rowSw("layout");
-    if (ls) { ls.classList.toggle("on", !off && !ex); ls.classList.toggle("locked-off", !!ex); }
+    if (ls) {
+      ls.classList.toggle("on", !off && !ex);
+      ls.classList.toggle("locked-off", !!ex);
+    }
     lr?.querySelector('.lrow[data-k="layout"]')?.classList.toggle("overridden", !!ex);
   }
   lr?.querySelectorAll(".lrow .lsw").forEach((sw: any) =>
     sw.addEventListener("click", () => {
       if (sw.classList.contains("locked-off")) return;
       sw.classList.toggle("on");
-    }));
-  master?.addEventListener("click", () => { master.classList.toggle("on"); syncLocks(); });
-  explore?.addEventListener("click", () => { explore.classList.toggle("on"); syncLocks(); });
+    }),
+  );
+  master?.addEventListener("click", () => {
+    master.classList.toggle("on");
+    syncLocks();
+  });
+  explore?.addEventListener("click", () => {
+    explore.classList.toggle("on");
+    syncLocks();
+  });
   syncLocks();
 
   /* ---------- empty room workflow ---------- */
@@ -500,113 +841,319 @@ export function initExtra(timers: number[], lucide: any) {
   const et = $("estepTabs");
   function setES(i: number) {
     const [n, src, d] = ES[i] as any;
-    const im = $("emptyImg"), cp = $("emptyCap");
+    const im = $("emptyImg"),
+      cp = $("emptyCap");
     if (im) im.innerHTML = photo(src, n + " living room");
     if (cp) cp.innerHTML = `<b>${n}</b><span>${d}</span>`;
-    et?.querySelectorAll(".estep").forEach((x: any, n2: number) => x.classList.toggle("on", n2 === i));
+    et?.querySelectorAll(".estep").forEach((x: any, n2: number) =>
+      x.classList.toggle("on", n2 === i),
+    );
   }
   if (et) {
-    et.innerHTML = ES.map(([n, , , ic], i) =>
-      `<button class="estep ${i === 0 ? "on" : ""}" data-e="${i}"><i data-lucide="${ic}"></i>${n}</button>`).join("");
-    et.querySelectorAll(".estep").forEach((b: any) => b.addEventListener("click", () => setES(+b.dataset.e)));
+    et.innerHTML = ES.map(
+      ([n, , , ic], i) =>
+        `<button class="estep ${i === 0 ? "on" : ""}" data-e="${i}"><i data-lucide="${ic}"></i>${n}</button>`,
+    ).join("");
+    et.querySelectorAll(".estep").forEach((b: any) =>
+      b.addEventListener("click", () => setES(+b.dataset.e)),
+    );
     setES(0);
-    let ei = 0, autoES = true;
+    let ei = 0,
+      autoES = true;
     et.addEventListener("click", () => (autoES = false));
-    every(() => { if (autoES) { ei = (ei + 1) % ES.length; setES(ei); } }, 2600);
+    every(() => {
+      if (autoES) {
+        ei = (ei + 1) % ES.length;
+        setES(ei);
+      }
+    }, 2600);
   }
 
   /* ---------- design DNA ring ---------- */
   const DNA = [
-    ["Kitchen", DNA_KITCHEN.url], ["Living Room", DNA_LIVING.url], ["Primary Bath", DNA_BATH.url],
-    ["Front Exterior", DNA_FRONT.url], ["Backyard", DNA_YARD.url], ["Guest Room", DNA_GUEST.url],
+    ["Kitchen", DNA_KITCHEN.url],
+    ["Living Room", DNA_LIVING.url],
+    ["Primary Bath", DNA_BATH.url],
+    ["Front Exterior", DNA_FRONT.url],
+    ["Backyard", DNA_YARD.url],
+    ["Guest Room", DNA_GUEST.url],
   ];
   const dr = $("dnaGrid");
-  if (dr) dr.innerHTML = DNA.map(([n, src]) =>
-    `<figure class="dcell">${photo(src, n + " in the property Design DNA")}<figcaption>${n}</figcaption></figure>`).join("");
+  if (dr)
+    dr.innerHTML = DNA.map(
+      ([n, src]) =>
+        `<figure class="dcell">${photo(src, n + " in the property Design DNA")}<figcaption>${n}</figcaption></figure>`,
+    ).join("");
 
   /* ---------- shop ---------- */
   const si = $("shopImg");
   if (si) si.innerHTML = photo(PHOTOS.after, "Designed living room with matched products");
   const SHOP = [
-    ["Low Profile Sofa", "92in · fits 104in wall", [["Best Price", "$690"], ["Closest Match", "$1,240"], ["Premium Pick", "$2,480"]], 1],
-    ["Wool Area Rug", "8x10 · fits seating zone", [["Best Price", "$210"], ["Closest Match", "$410"], ["Premium Pick", "$980"]], 1],
-    ["Arc Floor Lamp", "68in · matte black", [["Best Price", "$96"], ["Closest Match", "$180"], ["Premium Pick", "$430"]], 2],
+    [
+      "Low Profile Sofa",
+      "92in · fits 104in wall",
+      [
+        ["Best Price", "$690"],
+        ["Closest Match", "$1,240"],
+        ["Premium Pick", "$2,480"],
+      ],
+      1,
+    ],
+    [
+      "Wool Area Rug",
+      "8x10 · fits seating zone",
+      [
+        ["Best Price", "$210"],
+        ["Closest Match", "$410"],
+        ["Premium Pick", "$980"],
+      ],
+      1,
+    ],
+    [
+      "Arc Floor Lamp",
+      "68in · matte black",
+      [
+        ["Best Price", "$96"],
+        ["Closest Match", "$180"],
+        ["Premium Pick", "$430"],
+      ],
+      2,
+    ],
   ];
   const sl = $("shopList");
   if (sl) {
-    sl.innerHTML = SHOP.map(([n, d, opts, sel]: any, i) => `
+    sl.innerHTML =
+      SHOP.map(
+        ([n, d, opts, sel]: any, i) => `
       <div class="sitem" data-i="${i}">
         <div class="shead"><div><b>${n}</b><span class="mono">${d}</span></div><span class="match mono">98% match</span></div>
-        <div class="sopts">${opts.map(([l, p]: any, j: number) =>
-          `<button class="sopt ${j === sel ? "on" : ""}" data-j="${j}" data-p="${p.replace(/[^0-9]/g, "")}"><span>${l}</span><b>${p}</b></button>`).join("")}</div>
-      </div>`).join("") + `<div class="scart"><span>Added To Project</span><b id="cartTot">$1,830</b></div>`;
+        <div class="sopts">${opts
+          .map(
+            ([l, p]: any, j: number) =>
+              `<button class="sopt ${j === sel ? "on" : ""}" data-j="${j}" data-p="${p.replace(/[^0-9]/g, "")}"><span>${l}</span><b>${p}</b></button>`,
+          )
+          .join("")}</div>
+      </div>`,
+      ).join("") +
+      `<div class="scart"><span>Added To Project</span><b id="cartTot">$1,830</b></div>`;
     const recalc = () => {
       let t = 0;
       sl.querySelectorAll(".sopt.on").forEach((o: any) => (t += +o.dataset.p));
-      const ct = $("cartTot"); if (ct) ct.textContent = "$" + t.toLocaleString();
+      const ct = $("cartTot");
+      if (ct) ct.textContent = "$" + t.toLocaleString();
     };
     sl.querySelectorAll(".sitem").forEach((it: any) =>
       it.querySelectorAll(".sopt").forEach((o: any) =>
         o.addEventListener("click", () => {
           it.querySelectorAll(".sopt").forEach((x: any) => x.classList.remove("on"));
-          o.classList.add("on"); recalc();
-        })));
+          o.classList.add("on");
+          recalc();
+        }),
+      ),
+    );
     recalc();
   }
 
   /* ---------- present ---------- */
   const PRES = [
-    ["video", "Walkthrough Video", "5, 10 or 20 second cinematic camera move from a single still.", PHOTOS.luxury, "16:9 · 1:1 · 9:16"],
-    ["git-compare", "Before / After Reveal", "The wipe that sells the job, branded or unbranded.", PHOTOS.after, "Social ready"],
-    ["clapperboard", "Social Reel", "Original, transformation, product highlights, project range.", PHOTOS.midcentury, "Vertical 9:16"],
-    ["layout-grid", "Product Board", "Every matched piece with price, dimensions and availability.", PHOTOS.neutral, "PDF · Link"],
-    ["users", "Client Approval Link", "Clients favorite, comment and approve on a branded page.", PHOTOS.japandi, "Tracked activity"],
-    ["shield-check", "Listing Disclosure", "Staged photos labeled to MLS and state rules with an audit trail.", PHOTOS.coastal, "Compliance"],
+    [
+      "video",
+      "Walkthrough Video",
+      "5, 10 or 20 second cinematic camera move from a single still.",
+      PHOTOS.luxury,
+      "16:9 · 1:1 · 9:16",
+    ],
+    [
+      "git-compare",
+      "Before / After Reveal",
+      "The wipe that sells the job, branded or unbranded.",
+      PHOTOS.after,
+      "Social ready",
+    ],
+    [
+      "clapperboard",
+      "Social Reel",
+      "Original, transformation, product highlights, project range.",
+      PHOTOS.midcentury,
+      "Vertical 9:16",
+    ],
+    [
+      "layout-grid",
+      "Product Board",
+      "Every matched piece with price, dimensions and availability.",
+      PHOTOS.neutral,
+      "PDF · Link",
+    ],
+    [
+      "users",
+      "Client Approval Link",
+      "Clients favorite, comment and approve on a branded page.",
+      PHOTOS.japandi,
+      "Tracked activity",
+    ],
+    [
+      "shield-check",
+      "Listing Disclosure",
+      "Staged photos labeled to MLS and state rules with an audit trail.",
+      PHOTOS.coastal,
+      "Compliance",
+    ],
   ];
   const pg = $("presentGrid");
-  if (pg) pg.innerHTML = PRES.map(([ic, t, d, src, tag]) => `
+  if (pg)
+    pg.innerHTML = PRES.map(
+      ([ic, t, d, src, tag]) => `
     <div class="pcard"><div class="pim">${photo(src, t)}<span class="pplay"><i data-lucide="${ic}"></i></span><span class="ptag mono">${tag}</span></div>
-    <h3>${t}</h3><p>${d}</p></div>`).join("");
+    <h3>${t}</h3><p>${d}</p></div>`,
+    ).join("");
 
   /* ---------- pro workflows ---------- */
   type Role = [string, string, string, string, [string, string, string][], string];
   const PRO: Role[] = [
-    ["Investor", PHOTOS.neutral, "Know What The Renovation Could Return Before You Commit.",
+    [
+      "Investor",
+      PHOTOS.neutral,
+      "Know What The Renovation Could Return Before You Commit.",
       "Compare rental, resale and renovation directions for the same property, with photoreal concepts for every room in one place.",
-      [["scale", "Compare Deal Scenarios", "See what Refresh, Makeover and Renovation change in the same space."],
-       ["layout-dashboard", "See Every Room First", "Design the whole property before finalizing the deal."],
-       ["trending-up", "Plan The Exit", "Carry the approved design into listing photos and video."]],
-      "Underwrite A Property"],
-    ["Agent", PHOTOS.coastal, "Help Buyers See The Potential, And Sellers See The Strategy.",
+      [
+        [
+          "scale",
+          "Compare Deal Scenarios",
+          "See what Refresh, Makeover and Renovation change in the same space.",
+        ],
+        [
+          "layout-dashboard",
+          "See Every Room First",
+          "Design the whole property before finalizing the deal.",
+        ],
+        [
+          "trending-up",
+          "Plan The Exit",
+          "Carry the approved design into listing photos and video.",
+        ],
+      ],
+      "Underwrite A Property",
+    ],
+    [
+      "Agent",
+      PHOTOS.coastal,
+      "Help Buyers See The Potential, And Sellers See The Strategy.",
       "Turn empty, dated or cluttered rooms into realistic listing concepts while preserving the property's actual walls, windows and layout.",
-      [["sofa", "Listing-Ready Staging", "Furnish empty rooms and declutter occupied spaces across the full photo set."],
-       ["eye", "Sell The Possibility", "Help buyers understand how the home could live without misrepresenting the property."],
-       ["share-2", "Shareable Presentations", "Send branded before-and-after links that sellers and buyers can review without an account."]],
-      "Create A Listing Concept"],
-    ["Designer", PHOTOS.japandi, "Turn Client Direction Into Faster Approvals.",
+      [
+        [
+          "sofa",
+          "Listing-Ready Staging",
+          "Furnish empty rooms and declutter occupied spaces across the full photo set.",
+        ],
+        [
+          "eye",
+          "Sell The Possibility",
+          "Help buyers understand how the home could live without misrepresenting the property.",
+        ],
+        [
+          "share-2",
+          "Shareable Presentations",
+          "Send branded before-and-after links that sellers and buyers can review without an account.",
+        ],
+      ],
+      "Create A Listing Concept",
+    ],
+    [
+      "Designer",
+      PHOTOS.japandi,
+      "Turn Client Direction Into Faster Approvals.",
       "Explore alternatives, preserve what matters and keep every room coordinated without recreating the concept after every revision.",
-      [["palette", "Property-Wide Design DNA", "Apply one palette, material language and design direction throughout the property."],
-       ["mouse-pointer-click", "Precision Controls", "Keep, replace, remove or lock individual objects before regenerating."],
-       ["messages-square", "Client-Ready Options", "Present alternatives, collect feedback and return to previous versions."]],
-      "Build A Client Concept"],
-    ["Contractor", PHOTOS.kitchen, "Show Clients The Finished Result Before Work Begins.",
+      [
+        [
+          "palette",
+          "Property-Wide Design DNA",
+          "Apply one palette, material language and design direction throughout the property.",
+        ],
+        [
+          "mouse-pointer-click",
+          "Precision Controls",
+          "Keep, replace, remove or lock individual objects before regenerating.",
+        ],
+        [
+          "messages-square",
+          "Client-Ready Options",
+          "Present alternatives, collect feedback and return to previous versions.",
+        ],
+      ],
+      "Build A Client Concept",
+    ],
+    [
+      "Contractor",
+      PHOTOS.kitchen,
+      "Show Clients The Finished Result Before Work Begins.",
       "Turn the approved design into a clear visual reference your client and crew can agree on before demolition day.",
-      [["hammer", "Show The Proposed Work", "Visualize the finished result of the changes you are proposing."],
-       ["file-text", "Fewer Change Orders", "Align the client on materials and finishes before work starts."],
-       ["git-compare", "Fewer Handoff Gaps", "Keep the approved image, revisions and change history connected."]],
-      "Visualize The Finished Job"],
-    ["Builder", PHOTOS.craftsman, "Help Buyers Decide Before Changes Reach The Field.",
+      [
+        [
+          "hammer",
+          "Show The Proposed Work",
+          "Visualize the finished result of the changes you are proposing.",
+        ],
+        [
+          "file-text",
+          "Fewer Change Orders",
+          "Align the client on materials and finishes before work starts.",
+        ],
+        [
+          "git-compare",
+          "Fewer Handoff Gaps",
+          "Keep the approved image, revisions and change history connected.",
+        ],
+      ],
+      "Visualize The Finished Job",
+    ],
+    [
+      "Builder",
+      PHOTOS.craftsman,
+      "Help Buyers Decide Before Changes Reach The Field.",
       "Visualize finish packages and upgrades early, then keep selections and approvals connected to the correct home.",
-      [["layers", "Visualize The Options", "Show base, upgraded and premium packages inside the actual floor plan."],
-       ["copy-check", "Repeat Proven Packages", "Reuse coordinated materials and finish sets across homes or communities."],
-       ["file-check", "Document Every Decision", "Keep selections, approvals and versions tied to the correct property."]],
-      "Create A Finish Package"],
-    ["Landscaper", PHOTOS.resortYard, "Turn An Unfinished Yard Into A Plan Clients Can Approve.",
+      [
+        [
+          "layers",
+          "Visualize The Options",
+          "Show base, upgraded and premium packages inside the actual floor plan.",
+        ],
+        [
+          "copy-check",
+          "Repeat Proven Packages",
+          "Reuse coordinated materials and finish sets across homes or communities.",
+        ],
+        [
+          "file-check",
+          "Document Every Decision",
+          "Keep selections, approvals and versions tied to the correct property.",
+        ],
+      ],
+      "Create A Finish Package",
+    ],
+    [
+      "Landscaper",
+      PHOTOS.resortYard,
+      "Turn An Unfinished Yard Into A Plan Clients Can Approve.",
       "Show planting, hardscape, lighting and outdoor living ideas on the actual property, rendered from your own site photo.",
-      [["trees", "Design On The Real Site", "Preserve the house and existing features while redesigning the surrounding space."],
-       ["sliders-horizontal", "Compare Outdoor Scenarios", "Present a simple refresh, entertaining upgrade and full transformation."],
-       ["layers", "Show The Materials", "Present the proposed planting, hardscape and lighting choices visually."]],
-      "Design An Outdoor Space"],
+      [
+        [
+          "trees",
+          "Design On The Real Site",
+          "Preserve the house and existing features while redesigning the surrounding space.",
+        ],
+        [
+          "sliders-horizontal",
+          "Compare Outdoor Scenarios",
+          "Present a simple refresh, entertaining upgrade and full transformation.",
+        ],
+        [
+          "layers",
+          "Show The Materials",
+          "Present the proposed planting, hardscape and lighting choices visually.",
+        ],
+      ],
+      "Design An Outdoor Space",
+    ],
   ];
 
   /* Role-specific visual: each tab shows the artifact that role actually works
@@ -616,8 +1163,16 @@ export function initExtra(timers: number[], lucide: any) {
       /* Investor: scenario comparison + deal numbers */
       `<div class="pv pv-scen">
         <div class="pv-row">
-          ${[["Refresh", PHOTOS.neutral, "Paint & Styling"], ["Makeover", PHOTOS.after, "Furnishings"], ["Renovation", PHOTOS.kitchen, "Cabinetry"]]
-            .map(([l, s, p]: any, j) => `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " scenario")}<figcaption><b>${l}</b><em class="mono">${p}</em></figcaption></figure>`).join("")}
+          ${[
+            ["Refresh", PHOTOS.neutral, "Paint & Styling"],
+            ["Makeover", PHOTOS.after, "Furnishings"],
+            ["Renovation", PHOTOS.kitchen, "Cabinetry"],
+          ]
+            .map(
+              ([l, s, p]: any, j) =>
+                `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " scenario")}<figcaption><b>${l}</b><em class="mono">${p}</em></figcaption></figure>`,
+            )
+            .join("")}
         </div>
         <div class="pv-nums">
           <div><span class="mono">Comparable Listings</span><b class="mono">12 Nearby</b></div>
@@ -647,16 +1202,33 @@ export function initExtra(timers: number[], lucide: any) {
       `<div class="pv pv-scope">
         <figure class="pv-lead sm">${photo(PHOTOS.kitchen, "Approved kitchen design")}<span class="pv-disc"><i data-lucide="file-check"></i>Approved Design</span></figure>
         <div class="pv-table">
-          ${[["Cabinetry, Shaker", "24 LF", "Carpentry"], ["Quartz Countertops", "38 SF", "Countertops"], ["Tile Backsplash", "32 SF", "Tile"], ["LVP Flooring", "210 SF", "Flooring"]]
-            .map(([a, b, c]) => `<div class="pv-tr"><span>${a}</span><em class="mono">${b}</em><b class="mono">${c}</b></div>`).join("")}
+          ${[
+            ["Cabinetry, Shaker", "24 LF", "Carpentry"],
+            ["Quartz Countertops", "38 SF", "Countertops"],
+            ["Tile Backsplash", "32 SF", "Tile"],
+            ["LVP Flooring", "210 SF", "Flooring"],
+          ]
+            .map(
+              ([a, b, c]) =>
+                `<div class="pv-tr"><span>${a}</span><em class="mono">${b}</em><b class="mono">${c}</b></div>`,
+            )
+            .join("")}
         </div>
         <div class="pv-cap mono">Approved Finish Schedule &middot; Visual Reference Only</div>
       </div>`,
       /* Builder: one home, three finish packages */
       `<div class="pv pv-pack">
         <div class="pv-row">
-          ${[["Base", PHOTOS.neutral], ["Upgraded", PHOTOS.after], ["Premium", PHOTOS.luxury]]
-            .map(([l, s]: any, j) => `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " finish package")}<figcaption><b>${l}</b></figcaption></figure>`).join("")}
+          ${[
+            ["Base", PHOTOS.neutral],
+            ["Upgraded", PHOTOS.after],
+            ["Premium", PHOTOS.luxury],
+          ]
+            .map(
+              ([l, s]: any, j) =>
+                `<figure class="pv-cell${j === 1 ? " on" : ""}">${photo(s, l + " finish package")}<figcaption><b>${l}</b></figcaption></figure>`,
+            )
+            .join("")}
         </div>
         <div class="pv-sw">
           <span class="mono">Package Materials</span>
@@ -671,8 +1243,16 @@ export function initExtra(timers: number[], lucide: any) {
           <figure class="on">${photo(PHOTOS.resortYard, "Proposed outdoor design")}<figcaption class="mono">After</figcaption></figure>
         </div>
         <div class="pv-table">
-          ${[["Paver Patio", "420 SF", "Hardscape"], ["Planting Beds", "160 SF", "Planting"], ["Landscape Lighting", "9 Fixtures", "Electrical"]]
-            .map(([a, b, c]) => `<div class="pv-tr"><span>${a}</span><em class="mono">${b}</em><b class="mono">${c}</b></div>`).join("")}
+          ${[
+            ["Paver Patio", "420 SF", "Hardscape"],
+            ["Planting Beds", "160 SF", "Planting"],
+            ["Landscape Lighting", "9 Fixtures", "Electrical"],
+          ]
+            .map(
+              ([a, b, c]) =>
+                `<div class="pv-tr"><span>${a}</span><em class="mono">${b}</em><b class="mono">${c}</b></div>`,
+            )
+            .join("")}
         </div>
         <div class="pv-cap mono">Preliminary Materials &middot; 3 Categories</div>
       </div>`,
@@ -685,25 +1265,31 @@ export function initExtra(timers: number[], lucide: any) {
     const [n, , title, desc, cards, cta] = PRO[i];
     pt?.querySelectorAll(".ptab").forEach((x: any, j: number) => x.classList.toggle("on", j === i));
     const pp = $("proPanel");
-    if (pp) pp.innerHTML = `
+    if (pp)
+      pp.innerHTML = `
       <div class="pro-im">${proVisual(i)}<span class="stamp">${n.toUpperCase()}</span></div>
       <div class="pro-tx">
         <h3>${title}</h3>
         <p class="pro-desc">${desc}</p>
-        <div class="pro-mini">${cards.map(([ic, t, d]) =>
-          `<div class="pmini"><i data-lucide="${ic}"></i><b>${t}</b><span>${d}</span></div>`).join("")}</div>
+        <div class="pro-mini">${cards
+          .map(
+            ([ic, t, d]) =>
+              `<div class="pmini"><i data-lucide="${ic}"></i><b>${t}</b><span>${d}</span></div>`,
+          )
+          .join("")}</div>
         <a class="pro-cta" href="/auth">${cta}<i data-lucide="arrow-right"></i></a>
       </div>`;
     lucide.createIcons();
   }
   if (pt) {
-    pt.innerHTML = PRO.map(([n], i) => `<button class="ptab ${i === 0 ? "on" : ""}" data-p="${i}">${n}</button>`).join("");
-    pt.querySelectorAll(".ptab").forEach((b: any) => b.addEventListener("click", () => setPro(+b.dataset.p)));
+    pt.innerHTML = PRO.map(
+      ([n], i) => `<button class="ptab ${i === 0 ? "on" : ""}" data-p="${i}">${n}</button>`,
+    ).join("");
+    pt.querySelectorAll(".ptab").forEach((b: any) =>
+      b.addEventListener("click", () => setPro(+b.dataset.p)),
+    );
     setPro(0);
   }
-
-
-
 
   /* ---------- why three cards ---------- */
   const w3 = $("why3");
@@ -760,7 +1346,6 @@ export function initExtra(timers: number[], lucide: any) {
     ["Team collaboration", "yes", "no", "limited", "manual"],
   ];
 
-
   const cell = (v: string, us = false) => {
     if (us) return `<span class="cm us"><i data-lucide="check"></i></span>`;
     if (v === "yes") return `<span class="cm ok"><i data-lucide="check"></i></span>`;
@@ -768,14 +1353,17 @@ export function initExtra(timers: number[], lucide: any) {
     if (v === "no") return `<span class="cm none"><i data-lucide="minus"></i></span>`;
     return `<span class="cm soft">${v === "manual" ? "Manual" : "Not Integrated"}</span>`;
   };
-  const cmpBody = $("cmpBody"), cmpMore = $("cmpMore");
+  const cmpBody = $("cmpBody"),
+    cmpMore = $("cmpMore");
   if (cmpBody) {
-    cmpBody.innerHTML = CMP.map(([cap, a, b, c, d], i) => `
+    cmpBody.innerHTML = CMP.map(
+      ([cap, a, b, c, d], i) => `
       <tr class="${i >= 4 ? "cmp-extra" : ""}">
         <th scope="row">${cap}</th>
         <td class="cmp-us">${cell(a, true)}</td>
         <td>${cell(b)}</td><td>${cell(c)}</td><td>${cell(d)}</td>
-      </tr>`).join("");
+      </tr>`,
+    ).join("");
     cmpMore?.addEventListener("click", () => {
       const open = document.getElementById("cmpTable")?.classList.toggle("all");
       cmpMore.innerHTML = open ? "Show Fewer Rows" : "View Full Comparison &rarr;";
@@ -785,8 +1373,14 @@ export function initExtra(timers: number[], lucide: any) {
 
   /* ---------- reveal + icons for everything above ---------- */
   const io = new IntersectionObserver(
-    (e) => e.forEach((x) => { if (x.isIntersecting) { x.target.classList.add("in"); io.unobserve(x.target); } }),
-    { threshold: 0.08 }
+    (e) =>
+      e.forEach((x) => {
+        if (x.isIntersecting) {
+          x.target.classList.add("in");
+          io.unobserve(x.target);
+        }
+      }),
+    { threshold: 0.08 },
   );
   document.querySelectorAll(".rv:not(.in)").forEach((el) => io.observe(el));
   after(() => lucide.createIcons(), 0);
@@ -802,47 +1396,73 @@ export function initExtra(timers: number[], lucide: any) {
     geometryId: "RD-102",
   };
   type Stage = {
-    short: string; icon: string; title: string; copy: string;
-    src: string; outLabel: string; outValue: string; cta: string;
+    short: string;
+    icon: string;
+    title: string;
+    copy: string;
+    src: string;
+    outLabel: string;
+    outValue: string;
+    cta: string;
     /* provenance: every stage declares the geometry it was produced from, and
        the camera it was rendered with. A stage may only claim "Layout
        Preserved" when its geometryId matches the project geometry AND it
        carries a camera derived from that same model. */
-    geometryId: string | null; cameraId: string | null;
+    geometryId: string | null;
+    cameraId: string | null;
   };
   const CAMERA_ID = "CAM-102-A";
   const P3: Stage[] = [
     {
-      short: "Rough Sketch", icon: "file-pen", title: "Napkin Sketch",
+      short: "Rough Sketch",
+      icon: "file-pen",
+      title: "Napkin Sketch",
       copy: "A rough idea is enough. We identify the rooms, walls, openings and approximate dimensions.",
-      src: PHOTOS.sketchHand, outLabel: "Stage Output", outValue: "Dimensions Interpreted \u00b7 Layout Captured",
+      src: PHOTOS.sketchHand,
+      outLabel: "Stage Output",
+      outValue: "Dimensions Interpreted \u00b7 Layout Captured",
       cta: "Try It With Your Sketch",
-      geometryId: PROJECT.geometryId, cameraId: null,
+      geometryId: PROJECT.geometryId,
+      cameraId: null,
     },
     {
-      short: "Digitized Plan", icon: "ruler", title: "Digitized Plan",
+      short: "Digitized Plan",
+      icon: "ruler",
+      title: "Digitized Plan",
       copy: "The sketch geometry redrawn as a clean, structured plan.",
-      src: PHOTOS.plan2d, outLabel: "Stage Output", outValue: "Geometry Preserved",
+      src: PHOTOS.plan2d,
+      outLabel: "Stage Output",
+      outValue: "Geometry Preserved",
       cta: "Try It With Your Plan",
-      geometryId: PROJECT.geometryId, cameraId: null,
+      geometryId: PROJECT.geometryId,
+      cameraId: null,
     },
     {
-      short: "Furnished Plan", icon: "sofa", title: "Furnished Plan",
+      short: "Furnished Plan",
+      icon: "sofa",
+      title: "Furnished Plan",
       copy: "The same geometry furnished in your selected Design DNA.",
-      src: PHOTOS.plan3d, outLabel: "Stage Output", outValue: "Design DNA Applied",
+      src: PHOTOS.plan3d,
+      outLabel: "Stage Output",
+      outValue: "Design DNA Applied",
       cta: "Try It With Your Plan",
-      geometryId: PROJECT.geometryId, cameraId: null,
+      geometryId: PROJECT.geometryId,
+      cameraId: null,
     },
     {
       /* Rendered from the furnished plan model with the stored camera:
          standing in the living room, looking into the kitchen. */
-      short: "Photoreal View", icon: "image", title: "Photoreal View",
+      short: "Photoreal View",
+      icon: "image",
+      title: "Photoreal View",
       copy: "The same room rendered from the living room looking into the kitchen.",
-      src: PHOTOS.sketchRender, outLabel: "Layout", outValue: "Preserved",
+      src: PHOTOS.sketchRender,
+      outLabel: "Layout",
+      outValue: "Preserved",
       cta: "Try It With Your Sketch",
-      geometryId: PROJECT.geometryId, cameraId: CAMERA_ID,
+      geometryId: PROJECT.geometryId,
+      cameraId: CAMERA_ID,
     },
-
   ];
 
   // A stage is geometry-verified only when it comes from the project geometry
@@ -852,14 +1472,20 @@ export function initExtra(timers: number[], lucide: any) {
   const isRender = (s: Stage) => s.cameraId === CAMERA_ID;
   const camMark = `<span class="p3cam"><span class="p3cone"></span><i data-lucide="camera"></i></span>`;
 
-  const p3n = $("p3Nav"), p3s = $("p3Stage"), p3c = $("p3Cap"), p3o = $("p3Out");
+  const p3n = $("p3Nav"),
+    p3s = $("p3Stage"),
+    p3c = $("p3Cap"),
+    p3o = $("p3Out");
   if (p3n && p3s) {
-    p3n.innerHTML = P3.map((s, i) =>
-      `<button class="p3step${i === 0 ? " on" : ""}" data-n="${i}">
+    p3n.innerHTML = P3.map(
+      (s, i) =>
+        `<button class="p3step${i === 0 ? " on" : ""}" data-n="${i}">
          <i class="p3dot"><i data-lucide="${i === 0 ? s.icon : "check"}"></i></i>
          <span class="mono">0${i + 1}</span><b>${s.short}</b>
-       </button>`).join("");
-    let p3i = 0, p3t: any = null;
+       </button>`,
+    ).join("");
+    let p3i = 0,
+      p3t: any = null;
     const showP3 = (i: number) => {
       p3i = i;
       const s = P3[i];
@@ -874,22 +1500,26 @@ export function initExtra(timers: number[], lucide: any) {
         : photo(s.src, s.title);
       p3s.appendChild(layer);
       requestAnimationFrame(() => layer.classList.add("on"));
-      Array.from(p3s.children).forEach((c: any) => { if (c !== layer) setTimeout(() => c.remove(), 500); });
+      Array.from(p3s.children).forEach((c: any) => {
+        if (c !== layer) setTimeout(() => c.remove(), 500);
+      });
       const ok = verified(s);
-      if (p3c) p3c.innerHTML =
-        `<b>${s.title}</b><span>${s.copy}</span>` +
-        (ok ? "" : `<em class="p3-unver mono">Concept View &mdash; Geometry Not Verified</em>`);
+      if (p3c)
+        p3c.innerHTML =
+          `<b>${s.title}</b><span>${s.copy}</span>` +
+          (ok ? "" : `<em class="p3-unver mono">Concept View &mdash; Geometry Not Verified</em>`);
       if (p3o) p3o.innerHTML = `<span class="mono">${s.outLabel}</span><b>${s.outValue}</b>`;
       const cta = $("p3Cta");
       if (cta) cta.innerHTML = `<i data-lucide="upload"></i>${s.cta}`;
       const lay = $("p3Lay");
-      if (lay) lay.innerHTML =
-        `<span class="mono">Layout</span><b>${ok ? "Preserved" : "Not Verified"}</b>`;
+      if (lay)
+        lay.innerHTML = `<span class="mono">Layout</span><b>${ok ? "Preserved" : "Not Verified"}</b>`;
       const facts = $("p3Facts");
-      if (facts) facts.innerHTML =
-        PROJECT.facts.map((f) => `<span>${f}</span>`).join("") +
-        `<span class="p3-gid mono">Geometry ID ${s.geometryId ?? "\u2014"}</span>` +
-        `<span class="p3-gid mono">Camera ID ${s.cameraId ?? "\u2014"}</span>`;
+      if (facts)
+        facts.innerHTML =
+          PROJECT.facts.map((f) => `<span>${f}</span>`).join("") +
+          `<span class="p3-gid mono">Geometry ID ${s.geometryId ?? "\u2014"}</span>` +
+          `<span class="p3-gid mono">Camera ID ${s.cameraId ?? "\u2014"}</span>`;
       p3n.querySelectorAll(".p3step").forEach((b: any, j: number) => {
         b.classList.toggle("on", j === i);
         b.classList.toggle("done", j < i);
@@ -899,27 +1529,43 @@ export function initExtra(timers: number[], lucide: any) {
       lucide.createIcons();
     };
 
-    const loop = () => { p3t = setTimeout(() => { showP3((p3i + 1) % P3.length); loop(); }, 3600); };
+    const loop = () => {
+      p3t = setTimeout(() => {
+        showP3((p3i + 1) % P3.length);
+        loop();
+      }, 3600);
+    };
     p3n.querySelectorAll(".p3step").forEach((b: any) =>
-      b.addEventListener("click", () => { clearTimeout(p3t); showP3(Number(b.dataset.n)); loop(); }));
-    showP3(0); loop();
+      b.addEventListener("click", () => {
+        clearTimeout(p3t);
+        showP3(Number(b.dataset.n));
+        loop();
+      }),
+    );
+    showP3(0);
+    loop();
   }
-
-
-
 
   /* ---------- device switcher ---------- */
   const devSel = $("devSel");
   if (devSel) {
-    const CAPS = ["Plan the entire property", "Review designs with clients", "Capture changes on site"];
+    const CAPS = [
+      "Plan the entire property",
+      "Review designs with clients",
+      "Capture changes on site",
+    ];
     const panels = Array.from(document.querySelectorAll(".rd-site .dvp")) as any[];
     const setDev = (n: number) => {
       panels.forEach((p: any) => p.classList.toggle("on", +p.dataset.d === n));
-      devSel.querySelectorAll("button").forEach((b: any) => b.classList.toggle("on", +b.dataset.d === n));
-      const c = $("devCap"); if (c) c.textContent = CAPS[n] || "";
+      devSel
+        .querySelectorAll("button")
+        .forEach((b: any) => b.classList.toggle("on", +b.dataset.d === n));
+      const c = $("devCap");
+      if (c) c.textContent = CAPS[n] || "";
     };
-    devSel.querySelectorAll("button").forEach((b: any) =>
-      b.addEventListener("click", () => setDev(Number(b.dataset.d))));
+    devSel
+      .querySelectorAll("button")
+      .forEach((b: any) => b.addEventListener("click", () => setDev(Number(b.dataset.d))));
     setDev(0);
   }
 
@@ -935,6 +1581,4 @@ export function initExtra(timers: number[], lucide: any) {
     const el = $(id);
     if (el) el.style.backgroundImage = `url(${src})`;
   });
-
-
 }

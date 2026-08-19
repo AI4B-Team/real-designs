@@ -34,7 +34,15 @@ import {
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
-import { builderRailHtml, roomSelectHtml, roomBadge, selectCheckHtml, saveLabel, imageToolbarHtml, sceneNumberHtml } from "@/lib/builder-ui";
+import {
+  builderRailHtml,
+  roomSelectHtml,
+  roomBadge,
+  selectCheckHtml,
+  saveLabel,
+  imageToolbarHtml,
+  sceneNumberHtml,
+} from "@/lib/builder-ui";
 import { modalFooterHtml } from "@/lib/modal-footer";
 import { addressBarHtml, applyAddress, cleanAddressText } from "@/lib/address-field";
 import {
@@ -62,7 +70,6 @@ import {
   ratioClass,
   ratioAspect,
   RATIO_CLASSES,
-
 } from "@/lib/output-ratio";
 import { setHandoff } from "@/lib/handoff";
 import {
@@ -72,7 +79,12 @@ import {
   createOpenStore,
   type CanvasEntry,
 } from "@/lib/canvas-route";
-import { startOverModalHtml, resetStudioSurface, trackBuilderStep, endBuilderHistory } from "@/lib/builder-exit";
+import {
+  startOverModalHtml,
+  resetStudioSurface,
+  trackBuilderStep,
+  endBuilderHistory,
+} from "@/lib/builder-exit";
 import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
 import { PHOTO_RAIL, backFromPhotoStep, normalizePhotoStep } from "@/lib/builder-nav";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
@@ -89,7 +101,10 @@ const listProjectDrafts = (d) => _listProjectDrafts({ data: d || {} });
 const getProjectDraft = (d) => _getProjectDraft({ data: d });
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const paint = () => {
   try {
     createIcons({ icons });
@@ -171,7 +186,6 @@ function workState(it) {
   return null;
 }
 
-
 /* ------------------------------------------------------------- persistence
    The draft is a database row, not a browser cache. It is created as soon as
    the first photo is safely in private storage, then autosaved on every
@@ -207,14 +221,18 @@ function draftPayload() {
         name: i.name,
         room: i.room || null,
         room_source:
-          i.roomSource === "manual" || i.roomSource === "ai" || i.roomSource === "library" ? i.roomSource : "none",
+          i.roomSource === "manual" || i.roomSource === "ai" || i.roomSource === "library"
+            ? i.roomSource
+            : "none",
         confidence: Number(i.confidence || 0),
         selected: !!i.selected,
         done: !!i.done,
         status: i.status || "ready",
       })),
     selected: S.items.filter((i) => i.selected && i.path).map((i) => i.key),
-    item_order: ordered().filter((i) => i.path).map((i) => i.key),
+    item_order: ordered()
+      .filter((i) => i.path)
+      .map((i) => i.key),
     /* Per-room work survives a refresh: state, result and the direction that
        produced it, keyed by photo. */
     settings: {
@@ -233,7 +251,6 @@ function draftPayload() {
         return m;
       }, {}),
     },
-
   };
 }
 
@@ -241,7 +258,8 @@ function setSaveState(state) {
   if (!S) return;
   S.saveState = state;
   paintCanvasSave();
-  S.addressSaveState = state === "saving" ? "saving" : state === "error" ? "error" : state === "saved" ? "saved" : "";
+  S.addressSaveState =
+    state === "saving" ? "saving" : state === "error" ? "error" : state === "saved" ? "saved" : "";
   patchStatus();
 }
 
@@ -275,7 +293,10 @@ export function retryDraftSave() {
 
 function host() {
   const existing = document.getElementById("v-staging");
-  if (existing) { wrap = existing; return wrap; }
+  if (existing) {
+    wrap = existing;
+    return wrap;
+  }
   const content = document.querySelector(".rd-app .content") || document.querySelector(".content");
   if (!content) return null;
   wrap = document.createElement("div");
@@ -299,14 +320,18 @@ function show() {
   host();
   /* Navigating through the router keeps the hash, the browser history and a
      refresh all pointing at the same page. */
-  try { window.__rdGo && window.__rdGo("staging"); } catch (_) {}
+  try {
+    window.__rdGo && window.__rdGo("staging");
+  } catch (_) {}
   render();
   railForStep();
 }
 
 function hide() {
   closePopover();
-  try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
+  try {
+    window.__rdRailBorrow && window.__rdRailBorrow.release();
+  } catch (_) {}
 }
 
 /** Make sure the page container exists before the router toggles views. */
@@ -338,13 +363,18 @@ export function mountStagingView() {
        Only one restoration runs at a time, and only a confirmed "no draft
        exists while Photo Design is still the active page" returns to Studio.
        A network or auth failure leaves the user exactly where they are. */
-    if (!restoring) restoring = resumeStagingDraftResult().finally(() => { restoring = null; });
+    if (!restoring)
+      restoring = resumeStagingDraftResult().finally(() => {
+        restoring = null;
+      });
     void restoring.then((result) => {
       if (result !== "none") return;
       if (gen !== mountGen) return;
       if (hasStagingSession()) return;
       if (!onStagingRoute()) return;
-      try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
+      try {
+        window.__rdGo && window.__rdGo("studio");
+      } catch (_) {}
     });
     return;
   }
@@ -357,14 +387,19 @@ export function detachStagingView() {
   /* Anything restoring for the page we are leaving is now stale. */
   mountGen++;
   closePopover();
-  try { window.__rdRailBorrow && window.__rdRailBorrow.release(); } catch (_) {}
+  try {
+    window.__rdRailBorrow && window.__rdRailBorrow.release();
+  } catch (_) {}
 }
-
 
 /* Scroll position survives a trip into the canvas and back. */
 let scrollY = 0;
 function scroller() {
-  return document.querySelector(".rd-app .content") || document.scrollingElement || document.documentElement;
+  return (
+    document.querySelector(".rd-app .content") ||
+    document.scrollingElement ||
+    document.documentElement
+  );
 }
 function rememberScroll() {
   const el = scroller();
@@ -373,7 +408,11 @@ function rememberScroll() {
 function restoreScroll() {
   const el = scroller();
   if (!el) return;
-  requestAnimationFrame(() => { try { el.scrollTop = scrollY; } catch (_) {} });
+  requestAnimationFrame(() => {
+    try {
+      el.scrollTop = scrollY;
+    } catch (_) {}
+  });
 }
 
 /* Leaving the builder never loses work: the draft is flushed first, then the
@@ -381,12 +420,23 @@ function restoreScroll() {
 function leaveStaging() {
   hide();
   endBuilderHistory("design");
-  if (saver) { void saver.flush(); saver.destroy(); saver = null; }
-  if (S) S.items.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
+  if (saver) {
+    void saver.flush();
+    saver.destroy();
+    saver = null;
+  }
+  if (S)
+    S.items.forEach((i) => {
+      try {
+        URL.revokeObjectURL(i.previewUrl);
+      } catch (_) {}
+    });
   S = null;
   removeStrip();
   resetStudioSurface();
-  try { window.__rdGo && window.__rdGo("studio"); } catch (_) {}
+  try {
+    window.__rdGo && window.__rdGo("studio");
+  } catch (_) {}
 }
 
 let exiting = false;
@@ -394,8 +444,12 @@ let exiting = false;
 async function saveExit() {
   if (exiting) return;
   exiting = true;
-  try { saveDraft(); } catch (_) {}
-  try { if (saver) await saver.flush(); } catch (_) {}
+  try {
+    saveDraft();
+  } catch (_) {}
+  try {
+    if (saver) await saver.flush();
+  } catch (_) {}
   exiting = false;
   leaveStaging();
 }
@@ -408,7 +462,10 @@ function exitAll() {
    project is open, so the shell asks the builder to handle the jump. */
 try {
   (window as any).__rdBuilderSaveExit = ((prev) => () => {
-    if (S) { void saveExit(); return true; }
+    if (S) {
+      void saveExit();
+      return true;
+    }
     return typeof prev === "function" ? !!prev() : false;
   })((window as any).__rdBuilderSaveExit);
 } catch (_) {}
@@ -428,14 +485,28 @@ async function confirmStartOver() {
 
 function startOverLayer() {
   if (!S || !S.startOver) return "";
-  return startOverModalHtml({ wrap: "rdsSoWrap", keep: "rdsSoKeep", go: "rdsSoGo", busy: !!S.startOver.busy });
+  return startOverModalHtml({
+    wrap: "rdsSoWrap",
+    keep: "rdsSoKeep",
+    go: "rdsSoGo",
+    busy: !!S.startOver.busy,
+  });
 }
 
 function bindStartOver(el) {
   const keep = el.querySelector("#rdsSoKeep");
-  if (keep) keep.onclick = () => { if (S) { S.startOver = null; render(); } };
+  if (keep)
+    keep.onclick = () => {
+      if (S) {
+        S.startOver = null;
+        render();
+      }
+    };
   const go = el.querySelector("#rdsSoGo");
-  if (go) go.onclick = () => { void confirmStartOver(); };
+  if (go)
+    go.onclick = () => {
+      void confirmStartOver();
+    };
   el.querySelectorAll("#rdsStartOver").forEach((b) => (b.onclick = openStartOver));
 }
 
@@ -467,7 +538,9 @@ function hydrate(draft) {
     draftId: draft.id,
   });
   const order = Array.isArray(draft.item_order) ? draft.item_order : [];
-  const assets = (draft.assets || []).slice().sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
+  const assets = (draft.assets || [])
+    .slice()
+    .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   const rooms = (draft.settings && draft.settings.rooms) || {};
   S.direction = (draft.settings && draft.settings.direction) || null;
   S.outputRatio = normalizeOutputRatio(draft.settings && draft.settings.output_ratio);
@@ -490,7 +563,8 @@ function hydrate(draft) {
       done: !!a.done,
       /* A run that was interrupted comes back as a retryable failure, never
          as a phantom "generating" that can never finish. */
-      state: saved.state === "generating" ? "failed" : saved.state || (a.done ? "complete" : "none"),
+      state:
+        saved.state === "generating" ? "failed" : saved.state || (a.done ? "complete" : "none"),
       resultPath: saved.result_path || null,
       resultUrl: null,
       ratio: normalizeOverride(saved.ratio),
@@ -542,7 +616,11 @@ export async function resumeStagingDraftResult(id?): Promise<"restored" | "none"
   try {
     if (id) draft = (await getProjectDraft({ id })).draft;
     else {
-      const res = await listProjectDrafts({ project_type: "photo_staging", scope: "drafts", limit: 1 });
+      const res = await listProjectDrafts({
+        project_type: "photo_staging",
+        scope: "drafts",
+        limit: 1,
+      });
       draft = (res.drafts || [])[0] || null;
     }
   } catch (_) {
@@ -567,7 +645,6 @@ export async function resumeStagingDraftResult(id?): Promise<"restored" | "none"
 export async function resumeStagingDraft(id?) {
   return (await resumeStagingDraftResult(id)) === "restored";
 }
-
 
 /** Reopen the review grid from the canvas strip. */
 export function reopenStaging() {
@@ -717,25 +794,64 @@ function ordered() {
 function designFeatures(it) {
   if (!it) return [];
   const d = S.direction || null;
-  const touched = !!(it.resultPath || it.state === "generating" || it.state === "complete" || it.done);
+  const touched = !!(
+    it.resultPath ||
+    it.state === "generating" ||
+    it.state === "complete" ||
+    it.done
+  );
   const out = [];
   if (d && touched && d.direction)
-    out.push({ id: "style", icon: "palette", label: "Style", value: d.direction, removable: false });
+    out.push({
+      id: "style",
+      icon: "palette",
+      label: "Style",
+      value: d.direction,
+      removable: false,
+    });
   if (d && touched && d.notes)
-    out.push({ id: "notes", icon: "pencil-line", label: "Design Instructions", value: d.notes, removable: false });
+    out.push({
+      id: "notes",
+      icon: "pencil-line",
+      label: "Design Instructions",
+      value: d.notes,
+      removable: false,
+    });
   if (it.ratio)
-    out.push({ id: "ratio", icon: "crop", label: "Photo Format", value: ratioLabel(it.ratio), removable: false });
+    out.push({
+      id: "ratio",
+      icon: "crop",
+      label: "Photo Format",
+      value: ratioLabel(it.ratio),
+      removable: false,
+    });
   if (it.resultPath)
-    out.push({ id: "version", icon: "layers", label: "Generated Version", value: "Ready", removable: false });
+    out.push({
+      id: "version",
+      icon: "layers",
+      label: "Generated Version",
+      value: "Ready",
+      removable: false,
+    });
   else if (it.state === "generating")
-    out.push({ id: "version", icon: "loader", label: "Design", value: "Generating", removable: false });
+    out.push({
+      id: "version",
+      icon: "loader",
+      label: "Design",
+      value: "Generating",
+      removable: false,
+    });
   return out;
 }
 
 registerCardStatus("photo", {
   title: "Design Settings",
-  features(key) { return designFeatures(itemAt(key)); },
-  edit(key) { openCanvasFor(key); },
+  features(key) {
+    return designFeatures(itemAt(key));
+  },
+  edit(key) {
+    openCanvasFor(key);
+  },
 });
 
 function openCanvasFor(key) {
@@ -769,8 +885,6 @@ function imgAttrs(it) {
 }
 
 function cardHtml(it, seq) {
-
-
   const st = stateOf(it);
   const ws = workState(it);
   const label = it.room || "Choose Room";
@@ -787,7 +901,7 @@ function cardHtml(it, seq) {
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
-      ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: (it.room ? it.room + " photo" : "Photo " + n) })}
+      ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: it.room ? it.room + " photo" : "Photo " + n })}
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
       ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
@@ -795,7 +909,9 @@ function cardHtml(it, seq) {
       ${imageToolbarHtml(
         [
           { label: "Design", icon: "wand-sparkles", attrs: { "data-open": it.key } },
-          it.state === "failed" ? { label: "Retry", icon: "rotate-ccw", attrs: { "data-retry": it.key } } : null,
+          it.state === "failed"
+            ? { label: "Retry", icon: "rotate-ccw", attrs: { "data-retry": it.key } }
+            : null,
           { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
         ],
         { label: "Photo Actions" },
@@ -824,7 +940,6 @@ function cardHtml(it, seq) {
   </div>`;
 }
 
-
 /* A permanent action card closes the grid. It is not a room: no number, no
    selector, no menu, no credits — it only opens the existing Add Photos
    picker, and it always stays the final grid item. */
@@ -841,7 +956,9 @@ function addCardHtml() {
 }
 
 function gridHtml() {
-  return `<div class="rv-grid" id="rdsBody">${ordered().map((it, i) => cardHtml(it, i + 1)).join("")}${addCardHtml()}</div>`;
+  return `<div class="rv-grid" id="rdsBody">${ordered()
+    .map((it, i) => cardHtml(it, i + 1))
+    .join("")}${addCardHtml()}</div>`;
 }
 
 /* The counts live in the selection bar and the footer, so the only thing left
@@ -889,7 +1006,10 @@ function render() {
      source, so any legacy "add" state resolves to Rooms (or back to Studio
      when the project holds no photos at all). */
   if (S.step === "add") {
-    if (!S.items.length) { leaveStaging(); return; }
+    if (!S.items.length) {
+      leaveStaging();
+      return;
+    }
     S.step = "review";
   }
   /* Browser Back walks the builder steps; Back from the first step asks
@@ -908,7 +1028,6 @@ function render() {
       return false;
     },
   });
-
 
   const sel = selectedCount();
   const all = S.items.length > 0 && sel === S.items.length;
@@ -983,7 +1102,6 @@ function render() {
   /* Card images are bound to their storage path, so an expiring signed URL is
      refreshed in place instead of leaving a blank frame behind. */
   mountPhotoImages(el);
-
 }
 
 /* Every rail step is a real destination: nothing in the rail is decorative. */
@@ -1002,7 +1120,9 @@ function bindRail(el) {
       if (k === "final") {
         /* Finished designs live in Media, where they can be shared and reused. */
         saveDraft();
-        try { window.__rdGo && window.__rdGo("media"); } catch (_) {}
+        try {
+          window.__rdGo && window.__rdGo("media");
+        } catch (_) {}
         return;
       }
       S.step = k;
@@ -1063,7 +1183,8 @@ function syncSelection() {
    keeps a single "Saving…/Saved" indicator on the page. */
 function patchStatus() {
   if (!wrap || !S) return;
-  const holder = wrap.querySelector(".rv-utility-m .rv-addr") || wrap.querySelector(".rv-utility-m");
+  const holder =
+    wrap.querySelector(".rv-utility-m .rv-addr") || wrap.querySelector(".rv-utility-m");
   const node = holder && holder.querySelector(".rv-save");
   const label = statusText();
   if (node) {
@@ -1073,7 +1194,6 @@ function patchStatus() {
     node.style.display = label ? "" : "none";
   }
 }
-
 
 /* ------------------------------------------------------------------ wiring */
 
@@ -1111,20 +1231,28 @@ function ratioChoiceDialog(opts) {
     </div>`;
     document.body.appendChild(wrap);
     paint();
-    const done = (v) => { wrap.remove(); resolve(v); };
+    const done = (v) => {
+      wrap.remove();
+      resolve(v);
+    };
     wrap.addEventListener("click", (e) => {
       const b = e.target.closest("[data-mfa]");
       if (b) return done(b.getAttribute("data-mfa"));
       if (e.target === wrap) done("cancel");
     });
-    wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") done("cancel"); });
+    wrap.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") done("cancel");
+    });
     wrap.querySelector('[data-mfa="cancel"]')?.focus();
   });
 }
 
 /** Change the project default; never silently discard a per-photo override. */
 async function setProjectRatio(next) {
-  if (next === "__more") { openProjectRatioMore(); return; }
+  if (next === "__more") {
+    openProjectRatioMore();
+    return;
+  }
   const ratio = normalizeOutputRatio(next);
   if (ratio === normalizeOutputRatio(S.outputRatio)) return;
   const overrides = overriddenItems();
@@ -1241,11 +1369,14 @@ function openProjectRatioMore() {
   wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="More Ratios">
     <h3>More Ratios</h3>
     <p>These apply to every photo that has no override of its own.</p>
-    <div class="rv-seg wrap" style="margin:10px 0 4px">${MORE_OUTPUT_RATIOS.concat(PRIMARY_OUTPUT_RATIOS)
+    <div class="rv-seg wrap" style="margin:10px 0 4px">${MORE_OUTPUT_RATIOS.concat(
+      PRIMARY_OUTPUT_RATIOS,
+    )
       .map(
-        (o) => `<button type="button" class="${cur === o.id ? "on" : ""}" data-rdsmoreratio="${o.id}">${esc(
-          o.note ? o.label + " " + o.note : o.label,
-        )}</button>`,
+        (o) =>
+          `<button type="button" class="${cur === o.id ? "on" : ""}" data-rdsmoreratio="${o.id}">${esc(
+            o.note ? o.label + " " + o.note : o.label,
+          )}</button>`,
       )
       .join("")}</div>
     ${modalFooterHtml({ primary: { label: "Done", value: "done" } })}
@@ -1255,10 +1386,22 @@ function openProjectRatioMore() {
   const close = () => wrap.remove();
   wrap.addEventListener("click", (e) => {
     const b = e.target.closest("[data-rdsmoreratio]");
-    if (b) { close(); void setProjectRatio(b.getAttribute("data-rdsmoreratio")); return; }
-    if (e.target.closest("[data-mfa]") || e.target === wrap) { close(); applyRatiosLive(); }
+    if (b) {
+      close();
+      void setProjectRatio(b.getAttribute("data-rdsmoreratio"));
+      return;
+    }
+    if (e.target.closest("[data-mfa]") || e.target === wrap) {
+      close();
+      applyRatiosLive();
+    }
   });
-  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") { close(); applyRatiosLive(); } });
+  wrap.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      close();
+      applyRatiosLive();
+    }
+  });
 }
 
 /** Per-photo override, offered from the card menu and the canvas. */
@@ -1267,8 +1410,20 @@ function openRatioOverride(it) {
   const project = normalizeOutputRatio(S.outputRatio);
   const initial = normalizeOverride(it.ratio) || "";
   let pick = initial;
-  const opts = [{ id: "", label: "Use Project Format", note: "Currently " + ratioLabel(project), ratio: project }].concat(
-    OUTPUT_RATIOS.map((o) => ({ id: o.id, label: o.label, note: o.note || "Intrinsic", ratio: o.id })),
+  const opts = [
+    {
+      id: "",
+      label: "Use Project Format",
+      note: "Currently " + ratioLabel(project),
+      ratio: project,
+    },
+  ].concat(
+    OUTPUT_RATIOS.map((o) => ({
+      id: o.id,
+      label: o.label,
+      note: o.note || "Intrinsic",
+      ratio: o.id,
+    })),
   );
   const shape = (id) => {
     const a = ratioAspect(id);
@@ -1293,7 +1448,9 @@ function openRatioOverride(it) {
     <p class="rdof-meta">${esc(roomLabel(it) || "Photo")}${it.name ? " · " + esc(it.name) : ""}</p>
     <div class="rdof-grid" role="radiogroup" aria-label="Photo Format">${opts.map(cardHtml).join("")}</div>
     ${modalFooterHtml({
-      extra: initial ? { label: "Reset To Project Format", value: "reset", variant: "ghost" } : null,
+      extra: initial
+        ? { label: "Reset To Project Format", value: "reset", variant: "ghost" }
+        : null,
       secondary: { label: "Cancel", value: "cancel" },
       primary: { label: "Save Format", value: "save", disabled: true },
       alignment: initial ? "between" : "end",
@@ -1325,7 +1482,11 @@ function openRatioOverride(it) {
   syncPick();
   wrap.addEventListener("click", (e) => {
     const b = e.target.closest("[data-rdsratio]");
-    if (b) { pick = b.getAttribute("data-rdsratio"); syncPick(); return; }
+    if (b) {
+      pick = b.getAttribute("data-rdsratio");
+      syncPick();
+      return;
+    }
     const act = e.target.closest("[data-mfa]");
     if (act) {
       const v = act.getAttribute("data-mfa");
@@ -1337,7 +1498,10 @@ function openRatioOverride(it) {
     if (e.target === wrap && pick === initial) close();
   });
   wrap.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") { close(); return; }
+    if (e.key === "Escape") {
+      close();
+      return;
+    }
     const cards = Array.from(wrap.querySelectorAll("[data-rdsratio]"));
     const i = cards.indexOf(document.activeElement);
     if (i < 0) return;
@@ -1355,14 +1519,16 @@ function openRatioOverride(it) {
   if (first) first.focus();
 }
 
-
 function bindReview(el) {
   el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
   el.querySelector("#rdsBack").onclick = () => {
     /* Rooms is the first builder step, so Back returns to Studio. The draft,
        its photos, rooms and selections are saved on the way out. */
     const back = backFromPhotoStep(S.step);
-    if (back.exit) { void saveExit(); return; }
+    if (back.exit) {
+      void saveExit();
+      return;
+    }
     saveDraft();
     S.step = back.step;
     render();
@@ -1372,11 +1538,30 @@ function bindReview(el) {
     b.addEventListener("click", () => {
       const act = b.getAttribute("data-act");
       el.querySelectorAll("details.rv-more[open]").forEach((d) => d.removeAttribute("open"));
-      if (act === "all") { S.items.forEach((i) => (i.selected = true)); saveDraft(); syncSelection(); return; }
-      if (act === "none") { S.items.forEach((i) => (i.selected = false)); saveDraft(); syncSelection(); return; }
-      if (act === "room") { applyRoomToSelected(el.querySelector("#rdsSetRoom") || b); return; }
-      if (act === "del") { removeSelected(); return; }
-      if (act === "moreratios") { openProjectRatioMore(); return; }
+      if (act === "all") {
+        S.items.forEach((i) => (i.selected = true));
+        saveDraft();
+        syncSelection();
+        return;
+      }
+      if (act === "none") {
+        S.items.forEach((i) => (i.selected = false));
+        saveDraft();
+        syncSelection();
+        return;
+      }
+      if (act === "room") {
+        applyRoomToSelected(el.querySelector("#rdsSetRoom") || b);
+        return;
+      }
+      if (act === "del") {
+        removeSelected();
+        return;
+      }
+      if (act === "moreratios") {
+        openProjectRatioMore();
+        return;
+      }
     }),
   );
   bindRatioControls(el);
@@ -1398,10 +1583,15 @@ function bindReview(el) {
         try {
           const norm = await normalizeImageFile(f);
           const why = typeof rejectReason === "function" ? rejectReason(norm) : null;
-          if (why) { alert(norm.name + ": " + why); continue; }
+          if (why) {
+            alert(norm.name + ": " + why);
+            continue;
+          }
           picked.push(norm);
         } catch (error) {
-          alert(error instanceof Error ? error.message : f.name + ": This Photo Could Not Be Added.");
+          alert(
+            error instanceof Error ? error.message : f.name + ": This Photo Could Not Be Added.",
+          );
         }
       }
       if (picked.length) addFiles(picked);
@@ -1421,7 +1611,6 @@ function bindReview(el) {
   el.querySelector("#rdsGo").onclick = startDesigning;
   const bulk = el.querySelector("#rdsBulk");
   if (bulk) bulk.onclick = () => startBulkDesign();
-
 
   /* Cards are re-rendered in place as uploads and detection land, so the card
      controls are delegated from the page instead of bound per element. The
@@ -1456,21 +1645,32 @@ function bindReview(el) {
       return;
     }
     const del = t.closest("[data-del]");
-    if (del) { e.stopPropagation(); removeOne(del.getAttribute("data-del")); return; }
+    if (del) {
+      e.stopPropagation();
+      removeOne(del.getAttribute("data-del"));
+      return;
+    }
     const room = t.closest("[data-room]");
     if (room) {
       const it = S.items.find((i) => i.key === room.getAttribute("data-room"));
       if (!it) return;
-      openRoomPopover(room, (label) => {
-        it.room = label;
-        it.roomSource = "manual";
-        saveDraft();
-        patchCard(it);
-      }, it.key);
+      openRoomPopover(
+        room,
+        (label) => {
+          it.room = label;
+          it.roomSource = "manual";
+          saveDraft();
+          patchCard(it);
+        },
+        it.key,
+      );
       return;
     }
     const open = t.closest("[data-open]");
-    if (open) { openInCanvas(open.getAttribute("data-open")); return; }
+    if (open) {
+      openInCanvas(open.getAttribute("data-open"));
+      return;
+    }
   });
   el.addEventListener("keydown", (e) => {
     if (e.key !== "Enter" && e.key !== " ") return;
@@ -1484,7 +1684,10 @@ function bindReview(el) {
       return;
     }
     const open = t.closest(".rv-tile-th[data-open]");
-    if (open) { e.preventDefault(); openInCanvas(open.getAttribute("data-open")); }
+    if (open) {
+      e.preventDefault();
+      openInCanvas(open.getAttribute("data-open"));
+    }
   });
 }
 
@@ -1509,23 +1712,30 @@ function runBatch(batch, direction) {
     it.err = "";
     patchCard(it);
   });
-  runBulkDesign(batch, { ...direction, outputRatio: normalizeOutputRatio(S.outputRatio) }, {
-    onUpdate: (it) => {
-      patchCard(it);
-      saveDraft();
+  runBulkDesign(
+    batch,
+    { ...direction, outputRatio: normalizeOutputRatio(S.outputRatio) },
+    {
+      onUpdate: (it) => {
+        patchCard(it);
+        saveDraft();
+      },
+      onDone: () => {
+        S.busy = false;
+        syncSelection();
+        saveDraft();
+        const failed = batch.filter((i) => i.state === "failed").length;
+        if (failed) {
+          try {
+            window.rdToast &&
+              window.rdToast(
+                `${failed} photo${failed === 1 ? "" : "s"} did not render. Retry them from the card.`,
+              );
+          } catch (_) {}
+        }
+      },
     },
-    onDone: () => {
-      S.busy = false;
-      syncSelection();
-      saveDraft();
-      const failed = batch.filter((i) => i.state === "failed").length;
-      if (failed) {
-        try {
-          window.rdToast && window.rdToast(`${failed} photo${failed === 1 ? "" : "s"} did not render. Retry them from the card.`);
-        } catch (_) {}
-      }
-    },
-  });
+  );
 }
 
 function startBulkDesign(list, reuseDirection) {
@@ -1552,12 +1762,12 @@ function startBulkDesign(list, reuseDirection) {
       render();
     },
     /* Inline three-option format control inside the modal — no stacked modal. */
-    onRatioChange: (id) => { void setProjectRatio(id); },
+    onRatioChange: (id) => {
+      void setProjectRatio(id);
+    },
     onStart: (batch, direction) => runBatch(batch, direction),
   });
 }
-
-
 
 function applyRoomToSelected(anchor) {
   const sel = S.items.filter((i) => i.selected);
@@ -1576,8 +1786,15 @@ function applyRoomToSelected(anchor) {
 function removeOne(key) {
   const it = S.items.find((i) => i.key === key);
   if (!it) return;
-  if (!window.confirm("Remove “" + it.name + "” from this project? The original photo stays in your library.")) return;
-  try { URL.revokeObjectURL(it.previewUrl); } catch (_) {}
+  if (
+    !window.confirm(
+      "Remove “" + it.name + "” from this project? The original photo stays in your library.",
+    )
+  )
+    return;
+  try {
+    URL.revokeObjectURL(it.previewUrl);
+  } catch (_) {}
   S.items = S.items.filter((i) => i.key !== key);
   if (!S.items.length) S.step = "add";
   saveDraft();
@@ -1590,7 +1807,11 @@ function removeOne(key) {
    project's reference to a photo — the uploaded media file itself is only ever
    touched by "Delete From Media". */
 
-const cmToast = (m) => { try { window.rdToast ? window.rdToast(m) : console.log(m); } catch (_) {} };
+const cmToast = (m) => {
+  try {
+    window.rdToast ? window.rdToast(m) : console.log(m);
+  } catch (_) {}
+};
 
 function itemAt(key) {
   return S && S.items ? S.items.find((i) => i.key === key) : null;
@@ -1653,7 +1874,6 @@ if (typeof document !== "undefined" && !window.__rdPhotoReplaceBound) {
   });
 }
 
-
 registerCardMenu("photo", {
   items(key) {
     const it = itemAt(key);
@@ -1681,7 +1901,9 @@ registerCardMenu("photo", {
           { action: "room", label: "Change Room Type", icon: "door-open" },
           {
             action: "ratio",
-            label: normalizeOverride(it.ratio) ? "Override Format · " + ratioLabel(it.ratio) : "Override Format",
+            label: normalizeOverride(it.ratio)
+              ? "Override Format · " + ratioLabel(it.ratio)
+              : "Override Format",
             icon: "crop",
           },
         ],
@@ -1695,7 +1917,15 @@ registerCardMenu("photo", {
       { items: [{ action: "removeproj", label: "Remove From Project", icon: "circle-minus" }] },
       {
         danger: true,
-        items: [{ action: "deletemedia", label: "Delete From Media", icon: "trash-2", danger: true, hidden: !stored }],
+        items: [
+          {
+            action: "deletemedia",
+            label: "Delete From Media",
+            icon: "trash-2",
+            danger: true,
+            hidden: !stored,
+          },
+        ],
       },
     ];
   },
@@ -1704,15 +1934,24 @@ registerCardMenu("photo", {
     const it = itemAt(key);
     if (!it) return;
     if (action === "open") return void openInCanvas(key);
-    if (action === "duplicate") { duplicateItem(it); return cmToast("Photo Duplicated In This Project."); }
+    if (action === "duplicate") {
+      duplicateItem(it);
+      return cmToast("Photo Duplicated In This Project.");
+    }
     if (action === "variation") {
-      const clone = duplicateItem(it, { variationOf: it.key, room: it.room, roomSource: it.roomSource });
+      const clone = duplicateItem(it, {
+        variationOf: it.key,
+        room: it.room,
+        roomSource: it.roomSource,
+      });
       cmToast("New Variation Added. Your Saved Versions Are Untouched.");
       return void openInCanvas(clone.key);
     }
     if (action === "ratio") return void openRatioOverride(it);
     if (action === "room") {
-      const btn = document.querySelector('.rv-tile[data-k="' + (window.CSS?.escape ? CSS.escape(key) : key) + '"] [data-room]');
+      const btn = document.querySelector(
+        '.rv-tile[data-k="' + (window.CSS?.escape ? CSS.escape(key) : key) + '"] [data-room]',
+      );
       if (btn) btn.click();
       return;
     }
@@ -1726,7 +1965,9 @@ registerCardMenu("photo", {
       });
       /* Route through the shell so this counts as one intentional
          navigation instead of a raw hash write the router has to react to. */
-      try { (window as any).__rdNewVideo && (window as any).__rdNewVideo(); } catch (_) {}
+      try {
+        (window as any).__rdNewVideo && (window as any).__rdNewVideo();
+      } catch (_) {}
       goApp("lvideo");
       return void cmToast("Sent To The Video Builder.");
     }
@@ -1770,7 +2011,11 @@ registerCardMenu("photo", {
       const ok = await confirmDialog({
         title: "Replace This Photo?",
         body: "This card keeps its position and property, but points at a new source photo.",
-        notes: it.resultPath ? ["Designs already generated from the old photo stay in Media and are no longer shown on this card."] : [],
+        notes: it.resultPath
+          ? [
+              "Designs already generated from the old photo stay in Media and are no longer shown on this card.",
+            ]
+          : [],
         confirmLabel: "Choose Photo",
       });
       if (!ok) return;
@@ -1810,13 +2055,24 @@ registerCardMenu("photo", {
       const ok = await confirmDialog({
         title: "Delete This Photo From Media?",
         body: "This permanently removes the source photo from Media. It may also become unavailable in other drafts. Completed exports will remain unchanged.",
-        notes: uses > 1 ? ["This photo is used by " + uses + " cards in this project. All of them will be removed."] : [],
+        notes:
+          uses > 1
+            ? [
+                "This photo is used by " +
+                  uses +
+                  " cards in this project. All of them will be removed.",
+              ]
+            : [],
         confirmLabel: "Delete Photo",
         danger: true,
       });
       if (!ok) return;
       const path = it.path;
-      try { await deleteRoomPhoto(path); } catch (e) { return void cmToast(e?.message || "That photo could not be deleted."); }
+      try {
+        await deleteRoomPhoto(path);
+      } catch (e) {
+        return void cmToast(e?.message || "That photo could not be deleted.");
+      }
       S.items = S.items.filter((x) => x.path !== path);
       if (!S.items.length) S.step = "add";
       saveDraft();
@@ -1834,7 +2090,11 @@ function removeSelected() {
       ? "Remove 1 photo from this project? The original photo stays in your library."
       : "Remove " + gone.length + " photos from this project? The originals stay in your library.";
   if (!window.confirm(msg)) return;
-  gone.forEach((i) => { try { URL.revokeObjectURL(i.previewUrl); } catch (_) {} });
+  gone.forEach((i) => {
+    try {
+      URL.revokeObjectURL(i.previewUrl);
+    } catch (_) {}
+  });
   S.items = S.items.filter((i) => !i.selected);
   if (!S.items.length) S.step = "add";
   saveDraft();
@@ -1852,7 +2112,9 @@ function startDesigning() {
      treat a missing room type as the real blocker. */
   const unsure = sel.filter((i) => !String(i.room || "").trim() || stateOf(i)?.cls === "warn");
   if (unsure.length) {
-    window.alert("Set a room type for every selected photo first. " + unsure.length + " still need one.");
+    window.alert(
+      "Set a room type for every selected photo first. " + unsure.length + " still need one.",
+    );
     return;
   }
   saveDraft();
@@ -1861,7 +2123,6 @@ function startDesigning() {
      Studio canvas — that is an explicit per-result action. */
   startBulkDesign(sel);
 }
-
 
 /* ------------------------------------------------------ property address
    Optional on every staging project. The address never renames the project
@@ -1872,7 +2133,11 @@ let addrTimer = null;
 /** Load the workspace's properties once so the field can suggest addresses. */
 async function loadProps() {
   if (PROPS) return PROPS;
-  try { PROPS = await listMediaProperties(); } catch (_) { PROPS = []; }
+  try {
+    PROPS = await listMediaProperties();
+  } catch (_) {
+    PROPS = [];
+  }
   if (S && S.step === "review") render();
   return PROPS;
 }
@@ -1886,30 +2151,42 @@ function bindAddress(el) {
       applyAddress(S, ev.target.value, "manual");
       S.addressMatchDismissed = false;
       clearTimeout(addrTimer);
-      addrTimer = setTimeout(() => { saveDraft(); void lookupAddress(); }, 700);
+      addrTimer = setTimeout(() => {
+        saveDraft();
+        void lookupAddress();
+      }, 700);
     });
   }
-  el.querySelectorAll("[data-addr-use]").forEach((b) => (b.onclick = () => {
-    S.propertyId = b.getAttribute("data-addr-use");
-    S.address = (S.addressMatch && S.addressMatch.address) || S.address;
-    applyAddress(S, S.address, "existing_property");
-    S.addressMatch = null;
-    saveDraft();
-    render();
-  }));
-  el.querySelectorAll("[data-addr-sep]").forEach((b) => (b.onclick = () => {
-    S.addressMatchDismissed = true;
-    S.propertyId = null;
-    saveDraft();
-    render();
-  }));
+  el.querySelectorAll("[data-addr-use]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        S.propertyId = b.getAttribute("data-addr-use");
+        S.address = (S.addressMatch && S.addressMatch.address) || S.address;
+        applyAddress(S, S.address, "existing_property");
+        S.addressMatch = null;
+        saveDraft();
+        render();
+      }),
+  );
+  el.querySelectorAll("[data-addr-sep]").forEach(
+    (b) =>
+      (b.onclick = () => {
+        S.addressMatchDismissed = true;
+        S.propertyId = null;
+        saveDraft();
+        render();
+      }),
+  );
   el.querySelectorAll("[data-addr-retry]").forEach((b) => (b.onclick = () => retryDraftSave()));
 }
 
 /** Offer the existing property instead of quietly creating a duplicate. */
 async function lookupAddress() {
   const text = cleanAddressText(S.address);
-  if (text.length < 8 || S.propertyId) { S.addressMatch = null; return; }
+  if (text.length < 8 || S.propertyId) {
+    S.addressMatch = null;
+    return;
+  }
   try {
     const res = await matchPropertyAddress({ data: { address: text } });
     if (!S) return;
@@ -1919,7 +2196,11 @@ async function lookupAddress() {
 }
 async function openAddressEditor() {
   if (!PROPS) {
-    try { PROPS = await listMediaProperties(); } catch (_) { PROPS = []; }
+    try {
+      PROPS = await listMediaProperties();
+    } catch (_) {
+      PROPS = [];
+    }
   }
   openAddressModal({
     address: S.address || "",
@@ -1931,7 +2212,13 @@ async function openAddressEditor() {
         const res = await suggestAddresses({ data: { q } });
         return (res && res.suggestions) || [];
       } catch (_) {
-        return (PROPS || []).filter((p) => !q || String(p.address || "").toLowerCase().includes(String(q).toLowerCase()));
+        return (PROPS || []).filter(
+          (p) =>
+            !q ||
+            String(p.address || "")
+              .toLowerCase()
+              .includes(String(q).toLowerCase()),
+        );
       }
     },
     onSave: async (r) => {
@@ -1951,7 +2238,9 @@ async function openAddressEditor() {
 function closePopover() {
   if (popover) popover.remove();
   popover = null;
-  document.querySelectorAll('.bx-room[aria-expanded="true"]').forEach((b) => b.setAttribute("aria-expanded", "false"));
+  document
+    .querySelectorAll('.bx-room[aria-expanded="true"]')
+    .forEach((b) => b.setAttribute("aria-expanded", "false"));
   if (S && S.activeKey) {
     const prev = S.activeKey;
     S.activeKey = null;
@@ -1990,7 +2279,10 @@ function openRoomPopover(anchor, onPick, key) {
               (g) =>
                 `<div class="rds-pop-g">${esc(g.group)}</div>` +
                 g.rooms
-                  .map((r2) => `<button class="rds-opt" data-label="${esc(r2.label)}"><i data-lucide="${r2.icon}"></i>${esc(r2.label)}</button>`)
+                  .map(
+                    (r2) =>
+                      `<button class="rds-opt" data-label="${esc(r2.label)}"><i data-lucide="${r2.icon}"></i>${esc(r2.label)}</button>`,
+                  )
                   .join(""),
             )
             .join("")
@@ -2035,8 +2327,7 @@ function openRoomPopover(anchor, onPick, key) {
 /* --------------------------------------------------------- canvas handoff */
 
 export type StudioContext =
-  | { type: "generic" }
-  | { type: "photo-design-canvas"; draftId: string; photoKey: string };
+  { type: "generic" } | { type: "photo-design-canvas"; draftId: string; photoKey: string };
 
 export type PhotoCanvasHandoff = {
   draftId: string;
@@ -2176,7 +2467,9 @@ async function openInCanvas(key) {
     workflow: "photo-design",
     returnTo: "staging",
   });
-  try { (window as any).__rdCanvasEntry = canvasEntry; } catch (_) {}
+  try {
+    (window as any).__rdCanvasEntry = canvasEntry;
+  } catch (_) {}
   /* Never touch location.hash here. A raw hash write routes through the
      generic Studio branch, which re-initialises a blank session and throws
      the Canvas away. Open an explicit Photo Design Canvas context instead. */
@@ -2191,7 +2484,6 @@ async function openInCanvas(key) {
   mountStrip();
   saveDraft();
 }
-
 
 /** Mirror the reviewed room onto the existing Studio controls. */
 function applyRoom(it) {
@@ -2245,12 +2537,13 @@ function bindCanvasRoomSync() {
     setPhotoRoom(S.current, room);
     /* Space Type follows the room, so Exterior + Kitchen can never happen. */
     try {
-      const chip = document.querySelector('#spChips .chip[data-sp="' + roomSpace(room) + '"]') as HTMLElement | null;
+      const chip = document.querySelector(
+        '#spChips .chip[data-sp="' + roomSpace(room) + '"]',
+      ) as HTMLElement | null;
       if (chip && !chip.classList.contains("on")) chip.click();
     } catch (_) {}
   });
 }
-
 
 function removeStrip() {
   if (strip) strip.remove();
@@ -2330,7 +2623,14 @@ function paintCanvasSave() {
   const node = document.getElementById("rdsCanvasSave");
   if (!node || !S) return;
   const st = S.saveState;
-  const label = st === "saving" ? "Saving…" : st === "error" ? "Save Failed — Retry" : st === "saved" ? "Saved" : "";
+  const label =
+    st === "saving"
+      ? "Saving…"
+      : st === "error"
+        ? "Save Failed — Retry"
+        : st === "saved"
+          ? "Saved"
+          : "";
   node.textContent = label;
   node.className = "rds-chead-save" + (st === "error" ? " bad" : st === "saved" ? " ok" : "");
   node.style.display = label ? "" : "none";
@@ -2346,8 +2646,12 @@ function bindCanvasMenu(head, backToPhotos) {
   const trigger = head.querySelector("#rdsCanvasMore") as HTMLButtonElement | null;
   const menu = head.querySelector("#rdsCanvasMenu") as HTMLElement | null;
   if (!trigger || !menu) return;
-  const onDoc = (e) => { if (!head.contains(e.target)) close(); };
-  const onKey = (e) => { if (e.key === "Escape") close(true); };
+  const onDoc = (e) => {
+    if (!head.contains(e.target)) close();
+  };
+  const onKey = (e) => {
+    if (e.key === "Escape") close(true);
+  };
   const onHash = () => close();
   const detach = () => {
     document.removeEventListener("click", onDoc);
@@ -2375,9 +2679,17 @@ function bindCanvasMenu(head, backToPhotos) {
     }
   };
   const ret = head.querySelector("#rdsClose") as HTMLButtonElement | null;
-  if (ret) ret.onclick = () => { close(); backToPhotos(); };
+  if (ret)
+    ret.onclick = () => {
+      close();
+      backToPhotos();
+    };
   const reset = head.querySelector("#rdsResetDesign") as HTMLButtonElement | null;
-  if (reset) reset.onclick = () => { close(true); openResetDesign(trigger); };
+  if (reset)
+    reset.onclick = () => {
+      close(true);
+      openResetDesign(trigger);
+    };
 }
 
 /** Reset only the photo currently on the canvas — never the whole project. */
@@ -2397,30 +2709,51 @@ function openResetDesign(returnFocusTo?: HTMLElement | null) {
     </div></div>`;
   host.appendChild(m);
   const focusables = () =>
-    Array.from(m!.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"));
+    Array.from(
+      m!.querySelectorAll<HTMLElement>(
+        "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
+      ),
+    );
   const onKey = (e: KeyboardEvent) => {
-    if (e.key === "Escape") { e.preventDefault(); shut(); return; }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      shut();
+      return;
+    }
     if (e.key !== "Tab") return;
     const f = focusables();
     if (!f.length) return;
     const first = f[0]!;
     const last = f[f.length - 1]!;
-    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
+    }
   };
   const shut = () => {
     document.removeEventListener("keydown", onKey, true);
     m && m.remove();
-    try { returnFocusTo?.focus(); } catch (_) {}
+    try {
+      returnFocusTo?.focus();
+    } catch (_) {}
   };
   document.addEventListener("keydown", onKey, true);
-  m.addEventListener("click", (e: any) => { if (e.target.closest && e.target.closest("[data-close]")) shut(); });
-  try { (m.querySelector("#rdsResetGo") as HTMLElement | null)?.focus(); } catch (_) {}
+  m.addEventListener("click", (e: any) => {
+    if (e.target.closest && e.target.closest("[data-close]")) shut();
+  });
+  try {
+    (m.querySelector("#rdsResetGo") as HTMLElement | null)?.focus();
+  } catch (_) {}
   const go = m.querySelector("#rdsResetGo") as HTMLButtonElement | null;
   if (go)
     go.onclick = () => {
       shut();
-      try { (window as any).rdResetCanvasDesign && (window as any).rdResetCanvasDesign(); } catch (_) {}
+      try {
+        (window as any).rdResetCanvasDesign && (window as any).rdResetCanvasDesign();
+      } catch (_) {}
       const cur = S && S.items.find((i) => i.key === S.current);
       if (cur) {
         cur.state = "none";
@@ -2439,9 +2772,14 @@ function openResetDesign(returnFocusTo?: HTMLElement | null) {
 function goApp(view) {
   try {
     const fn = (window as any).__rdGo;
-    if (typeof fn === "function") { fn(view); return; }
+    if (typeof fn === "function") {
+      fn(view);
+      return;
+    }
   } catch (_) {}
-  try { location.hash = "#v-" + view; } catch (_) {}
+  try {
+    location.hash = "#v-" + view;
+  } catch (_) {}
 }
 
 /** True while the canonical Studio route is showing this Photo Design Canvas. */
@@ -2553,5 +2891,13 @@ try {
 } catch (_) {}
 
 try {
-  window.rdStaging = { open: openStagingReview, reopen: reopenStaging, has: hasStagingSession, resume: resumeStagingDraft, ensure: ensureStagingView, mount: mountStagingView, detach: detachStagingView };
+  window.rdStaging = {
+    open: openStagingReview,
+    reopen: reopenStaging,
+    has: hasStagingSession,
+    resume: resumeStagingDraft,
+    ensure: ensureStagingView,
+    mount: mountStagingView,
+    detach: detachStagingView,
+  };
 } catch (_) {}

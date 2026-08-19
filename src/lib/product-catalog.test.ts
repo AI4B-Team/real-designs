@@ -16,7 +16,9 @@ describe("no sample product data reaches customers", () => {
   it("ships no configured product provider and returns no invented inventory", async () => {
     const provider = visualSearchProvider();
     expect(provider.configured).toBe(false);
-    await expect(provider.search({ imageUrl: "x", crop: { x: 0, y: 0, w: 1, h: 1 }, category: "Sofa" })).resolves.toEqual([]);
+    await expect(
+      provider.search({ imageUrl: "x", crop: { x: 0, y: 0, w: 1, h: 1 }, category: "Sofa" }),
+    ).resolves.toEqual([]);
   });
 
   it("flags sample, mock, demo and placeholder records", () => {
@@ -30,7 +32,11 @@ describe("no sample product data reaches customers", () => {
 
   it("strips sample records from any list before render", () => {
     const real = createManualProduct({ url: "https://westelm.com/p/1", title: "Sofa" });
-    const list = [real, { id: "s1", sample: true } as never, { id: "s2", source: "sample" } as never];
+    const list = [
+      real,
+      { id: "s1", sample: true } as never,
+      { id: "s2", source: "sample" } as never,
+    ];
     expect(productionProducts(list).map((p) => p.id)).toEqual([real.id]);
   });
 
@@ -78,7 +84,9 @@ describe("manual product links", () => {
 
 describe("csv import", () => {
   it("imports real rows and reports bad ones", () => {
-    const res = parseProductCsv('url,title,price\nhttps://wayfair.com/a,"Chair, Oak",129.99\nnope,Bad,10');
+    const res = parseProductCsv(
+      'url,title,price\nhttps://wayfair.com/a,"Chair, Oak",129.99\nnope,Bad,10',
+    );
     expect(res.products).toHaveLength(1);
     expect(res.products[0]!.name).toBe("Chair, Oak");
     expect(res.products[0]!.regularPrice).toBeCloseTo(129.99);
@@ -94,7 +102,9 @@ describe("csv import", () => {
 describe("freshness and disclosure", () => {
   it("says when price was last checked", () => {
     expect(lastCheckedLabel(null)).toMatch(/Not Checked Yet/);
-    expect(lastCheckedLabel(new Date(Date.now() - 2 * 3600_000).toISOString())).toMatch(/2 Hours Ago/);
+    expect(lastCheckedLabel(new Date(Date.now() - 2 * 3600_000).toISOString())).toMatch(
+      /2 Hours Ago/,
+    );
   });
 
   it("treats day-old prices as stale", () => {

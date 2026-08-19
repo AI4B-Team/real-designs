@@ -13,7 +13,6 @@ import { saveVideo, startRender, finishVariant, setVideoStatus } from "@/lib/rev
 import { renderReveal } from "@/lib/reveal-render";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 
-
 const BUCKET = "reveal-videos";
 
 const MOTIONS: Array<[string, string]> = [
@@ -37,7 +36,10 @@ const LENGTHS: Array<[number, string]> = [
 ];
 
 function esc(s: any) {
-  return String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c] as string));
+  return String(s ?? "").replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c] as string,
+  );
 }
 
 export type MotionClipInput = {
@@ -58,7 +60,13 @@ export function openMotionClip(item: MotionClipInput) {
     return;
   }
 
-  const state = { motion: "push", aspect: "9:16", seconds: 5, caption: item.room || "", busy: false };
+  const state = {
+    motion: "push",
+    aspect: "9:16",
+    seconds: 5,
+    caption: item.room || "",
+    busy: false,
+  };
 
   const wrap = document.createElement("div");
   wrap.className = "rd-modal on";
@@ -90,7 +98,9 @@ export function openMotionClip(item: MotionClipInput) {
     </div>
   </div>`;
   host.appendChild(wrap);
-  try { createIcons({ icons, root: wrap } as any); } catch (_) {}
+  try {
+    createIcons({ icons, root: wrap } as any);
+  } catch (_) {}
 
   const close = () => {
     if (state.busy) return;
@@ -108,8 +118,8 @@ export function openMotionClip(item: MotionClipInput) {
   wrap.querySelectorAll(".mc-chips").forEach((g) => {
     (g as HTMLElement).querySelectorAll("button").forEach((b) => {
       b.onclick = () => {
-        const key = (g as HTMLElement).dataset['g'] as "motion" | "aspect" | "seconds";
-        const raw = (b as HTMLElement).dataset['v'] as string;
+        const key = (g as HTMLElement).dataset["g"] as "motion" | "aspect" | "seconds";
+        const raw = (b as HTMLElement).dataset["v"] as string;
         (state as any)[key] = key === "seconds" ? Number(raw) : raw;
         (g as HTMLElement).querySelectorAll("button").forEach((x) => x.classList.remove("on"));
         b.classList.add("on");
@@ -170,7 +180,10 @@ export function openMotionClip(item: MotionClipInput) {
       projectId = saved.id;
 
       const started: any = await startRender({
-        data: { id: projectId!, variants: [{ aspect_ratio: state.aspect as any, version_type: "clean" }] },
+        data: {
+          id: projectId!,
+          variants: [{ aspect_ratio: state.aspect as any, version_type: "clean" }],
+        },
       });
       const variant = started.variants[0];
 
@@ -214,7 +227,9 @@ export function openMotionClip(item: MotionClipInput) {
       try {
         const posterBlob = await (await fetch(out.poster)).blob();
         thumbPath = `${base}.jpg`;
-        await supabase.storage.from(BUCKET).upload(thumbPath, posterBlob, { contentType: "image/jpeg", upsert: true });
+        await supabase.storage
+          .from(BUCKET)
+          .upload(thumbPath, posterBlob, { contentType: "image/jpeg", upsert: true });
       } catch (_) {
         thumbPath = null;
       }
@@ -226,7 +241,12 @@ export function openMotionClip(item: MotionClipInput) {
           output_path: videoPath,
           thumbnail_path: thumbPath,
           duration: out.duration,
-          resolution: state.aspect === "16:9" ? "1920x1080" : state.aspect === "1:1" ? "1080x1080" : "1080x1920",
+          resolution:
+            state.aspect === "16:9"
+              ? "1920x1080"
+              : state.aspect === "1:1"
+                ? "1080x1080"
+                : "1080x1920",
         },
       });
       await setVideoStatus({ data: { id: projectId!, status: "ready" } });
@@ -239,7 +259,13 @@ export function openMotionClip(item: MotionClipInput) {
     } catch (e: any) {
       if (projectId) {
         try {
-          await setVideoStatus({ data: { id: projectId, status: "failed", error_message: String(e?.message || e).slice(0, 300) } });
+          await setVideoStatus({
+            data: {
+              id: projectId,
+              status: "failed",
+              error_message: String(e?.message || e).slice(0, 300),
+            },
+          });
         } catch (_) {}
       }
       state.busy = false;
@@ -254,8 +280,6 @@ export function openMotionClip(item: MotionClipInput) {
         return;
       }
       note(msg || "The Motion Clip Could Not Be Created.");
-
-
     }
   };
 }

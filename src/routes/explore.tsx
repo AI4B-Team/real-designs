@@ -33,7 +33,14 @@ export const Route = createFileRoute("/explore")({
 const SPACES = ["All", "Interior", "Exterior", "Landscape", "Virtual Staging"] as const;
 type Space = (typeof SPACES)[number];
 
-const ROOMS = ["Living Room", "Kitchen", "Primary Bedroom", "Primary Bath", "Dining Room", "Home Office"];
+const ROOMS = [
+  "Living Room",
+  "Kitchen",
+  "Primary Bedroom",
+  "Primary Bath",
+  "Dining Room",
+  "Home Office",
+];
 
 /** Deep link into the existing homepage builder with the direction preselected. */
 const builderHref = (d: Direction) => `/?direction=${encodeURIComponent(d.name)}#builder`;
@@ -98,8 +105,8 @@ function ExplorePage() {
           <p>
             Explore curated directions for interiors, exteriors and landscapes.
             <br />
-            Start with one you love, then customize the materials and colors around your
-            actual space.
+            Start with one you love, then customize the materials and colors around your actual
+            space.
           </p>
           <div className="dir-cta">
             <UploadSpaceLink className="btn btn-primary">
@@ -210,7 +217,11 @@ function ExplorePage() {
                     ))}
                   </div>
                   <div className="dir-acts">
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={() => preview(d)}>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-sm"
+                      onClick={() => preview(d)}
+                    >
                       Preview Style
                     </button>
                     <a className="btn btn-primary btn-sm" href={builderHref(d)}>
@@ -224,9 +235,7 @@ function ExplorePage() {
             {filtered.length === 0 && (
               <div className="dir-empty">
                 <b>No Exact Matches Yet.</b>
-                <p>
-                  Try removing a filter, or upload your space and describe the style you want.
-                </p>
+                <p>Try removing a filter, or upload your space and describe the style you want.</p>
                 <a href="/#builder" className="btn btn-primary btn-sm">
                   Start A Custom Design
                 </a>

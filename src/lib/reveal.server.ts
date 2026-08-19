@@ -44,7 +44,8 @@ export async function loadPresentation(key: string, password: string | null) {
   }
   if (l.password_hash) {
     const ok = password ? (await hashSharePassword(password)) === l.password_hash : false;
-    if (!ok) return { locked: true as const, title: (l.page_title as string) || "Private Presentation" };
+    if (!ok)
+      return { locked: true as const, title: (l.page_title as string) || "Private Presentation" };
   }
 
   const { data: project } = await supabaseAdmin
@@ -62,7 +63,11 @@ export async function loadPresentation(key: string, password: string | null) {
 
   let brand: any = null;
   if (p.brand_kit_id) {
-    const { data } = await supabaseAdmin.from("brand_kits").select("*").eq("id", p.brand_kit_id).maybeSingle();
+    const { data } = await supabaseAdmin
+      .from("brand_kits")
+      .select("*")
+      .eq("id", p.brand_kit_id)
+      .maybeSingle();
     brand = data ?? null;
   }
 
@@ -106,7 +111,11 @@ export async function loadPresentation(key: string, password: string | null) {
   }
 
   // Budget only exists when the video is tied to a saved design version.
-  let budget: { low: number; high: number; lines: Array<{ description: string; trade: string; low: number; high: number }> } | null = null;
+  let budget: {
+    low: number;
+    high: number;
+    lines: Array<{ description: string; trade: string; low: number; high: number }>;
+  } | null = null;
   const { checkBudgetsAvailable } = await import("@/lib/budget.server");
   const budgetsAvailable = await checkBudgetsAvailable();
   if (budgetsAvailable && sections["budget"] && p.design_version_id) {

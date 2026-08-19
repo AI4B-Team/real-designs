@@ -5,7 +5,11 @@ import type { FinishGrade } from "@/lib/planning-range";
 
 const BANDS = [
   { label: "Refresh", note: "Finishes and decor · under $5K", grade: "rental" as FinishGrade },
-  { label: "Makeover", note: "Furniture and materials · under $15K", grade: "retail" as FinishGrade },
+  {
+    label: "Makeover",
+    note: "Furniture and materials · under $15K",
+    grade: "retail" as FinishGrade,
+  },
   {
     label: "Renovation",
     note: "Cabinetry and built-ins · under $35K",
@@ -55,7 +59,12 @@ export function Builder({
   const [pct, setPct] = useState(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  useEffect(() => () => { if (timer.current) clearInterval(timer.current); }, []);
+  useEffect(
+    () => () => {
+      if (timer.current) clearInterval(timer.current);
+    },
+    [],
+  );
 
   function run() {
     if (phase === "running") return;
@@ -131,7 +140,10 @@ export function Builder({
         </div>
       </div>
 
-      <div className={`out${phase !== "idle" ? " on" : ""}`} style={{ display: phase === "idle" ? "none" : "block" }}>
+      <div
+        className={`out${phase !== "idle" ? " on" : ""}`}
+        style={{ display: phase === "idle" ? "none" : "block" }}
+      >
         <div className="out-stage">
           <div
             className="out-img"

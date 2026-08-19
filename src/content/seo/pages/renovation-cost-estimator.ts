@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/renovation-cost-estimator",
   tier: "B",
-  intent: "Someone with a limited renovation budget wants to know what each room costs and which room to do first.",
+  intent:
+    "Someone with a limited renovation budget wants to know what each room costs and which room to do first.",
 
   metaTitle: "Renovation Cost Estimator By Room",
-  metaDescription: "Compare renovation costs room by room, see what drives each number, and sequence the work when the budget will not cover the whole house.",
+  metaDescription:
+    "Compare renovation costs room by room, see what drives each number, and sequence the work when the budget will not cover the whole house.",
 
   eyebrow: "Renovation Cost Estimator",
   h1: "Renovation Cost Estimator By Room",
@@ -27,9 +29,18 @@ export const page: LandingPage = {
   afterCaption: "Refreshed flooring, paint and furnishing at retail grade.",
 
   steps: [
-    { title: "Pick A Room", text: "Kitchen, bathroom, living room, bedroom or whole home, each with its own cost drivers." },
-    { title: "Set Square Footage & Grade", text: "Room size and rental, retail or premium grade both scale the total." },
-    { title: "Compare Rooms Side By Side", text: "See which room's renovation cost is the largest share of your total budget." },
+    {
+      title: "Pick A Room",
+      text: "Kitchen, bathroom, living room, bedroom or whole home, each with its own cost drivers.",
+    },
+    {
+      title: "Set Square Footage & Grade",
+      text: "Room size and rental, retail or premium grade both scale the total.",
+    },
+    {
+      title: "Compare Rooms Side By Side",
+      text: "See which room's renovation cost is the largest share of your total budget.",
+    },
   ],
 
   showcase: ["interior", "scope", "budget-mode", "grades"],
@@ -108,16 +119,35 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Estimate Renovation Cost By Room",
     steps: [
-      { name: "List Every Room In Scope", text: "Write down each room you are considering renovating, kitchen, bathroom, living room, bedroom." },
-      { name: "Measure Or Estimate Square Footage", text: "Get an approximate square footage for each room, and linear footage of cabinetry for any kitchen." },
-      { name: "Pick A Finish Grade Per Room", text: "Assign rental, retail or premium grade to each room based on how the property will be used." },
-      { name: "Generate A Range For Each Room", text: "Run each room through the estimator separately to see its individual low and high total." },
-      { name: "Rank Rooms By Impact Per Dollar", text: "Divide each room's planning range by its impact on sale price or rent to find the best sequencing order." },
-      { name: "Confirm The Top Priority Rooms With A Contractor", text: "Take the highest priority rooms to a contractor for a walkthrough before committing the full budget." },
+      {
+        name: "List Every Room In Scope",
+        text: "Write down each room you are considering renovating, kitchen, bathroom, living room, bedroom.",
+      },
+      {
+        name: "Measure Or Estimate Square Footage",
+        text: "Get an approximate square footage for each room, and linear footage of cabinetry for any kitchen.",
+      },
+      {
+        name: "Pick A Finish Grade Per Room",
+        text: "Assign rental, retail or premium grade to each room based on how the property will be used.",
+      },
+      {
+        name: "Generate A Range For Each Room",
+        text: "Run each room through the estimator separately to see its individual low and high total.",
+      },
+      {
+        name: "Rank Rooms By Impact Per Dollar",
+        text: "Divide each room's planning range by its impact on sale price or rent to find the best sequencing order.",
+      },
+      {
+        name: "Confirm The Top Priority Rooms With A Contractor",
+        text: "Take the highest priority rooms to a contractor for a walkthrough before committing the full budget.",
+      },
     ],
   },
 
   ctaTitle: "Compare Every Room Before You Commit A Budget",
-  ctaBody: "See a planning range for each room in your home and sequence the work around what actually moves the needle.",
+  ctaBody:
+    "See a planning range for each room in your home and sequence the work around what actually moves the needle.",
   ctaLabel: "Estimate My Renovation",
 };

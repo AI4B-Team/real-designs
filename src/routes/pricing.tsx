@@ -156,7 +156,6 @@ const CHOOSER = [
   },
 ];
 
-
 function PricingPage() {
   const [bill, setBill] = useState<"mo" | "yr">("yr");
 
@@ -203,10 +202,7 @@ function PricingPage() {
                       ? `Billed $${p.yr * 12} annually`
                       : `Billed $${p.mo} monthly`}
                 </div>
-                <a
-                  href="/auth"
-                  className={`btn ${p.pop ? "btn-primary" : "btn-ghost"} btn-block`}
-                >
+                <a href="/auth" className={`btn ${p.pop ? "btn-primary" : "btn-ghost"} btn-block`}>
                   {p.cta}
                 </a>
                 <ul>
@@ -258,8 +254,8 @@ function PricingPage() {
           <div className="credit-note">
             <h3>One Balance. Every Tool.</h3>
             <p>
-              Use credits for designs, floor plans and walkthroughs. Most redesigns use one
-              credit. Your dashboard always shows the cost before you generate.
+              Use credits for designs, floor plans and walkthroughs. Most redesigns use one credit.
+              Your dashboard always shows the cost before you generate.
             </p>
             <a href="/pricing/credits" className="lnk">
               See Credit Usage <ArrowRight size={15} />
@@ -269,9 +265,7 @@ function PricingPage() {
           <div className="oneoff">
             <div>
               <h4>Only Need One Project?</h4>
-              <p>
-                Purchase a room, listing, whole home or renovation package without subscribing.
-              </p>
+              <p>Purchase a room, listing, whole home or renovation package without subscribing.</p>
             </div>
             <a href="/pricing/credits#packs" className="btn btn-ghost">
               View Project Packs

@@ -76,15 +76,25 @@ describe("job liveness and honest status", () => {
     expect(isJobStale({ status: "rendering", heartbeat_at: beat(5_000) })).toBe(false);
     expect(isJobStale({ status: "rendering", heartbeat_at: beat(300_000) })).toBe(true);
     expect(isJobStale({ status: "completed", heartbeat_at: beat(300_000) })).toBe(false);
-    expect(jobStatusLabel({ status: "rendering", heartbeat_at: beat(300_000) } as any)).toBe("Render Interrupted");
+    expect(jobStatusLabel({ status: "rendering", heartbeat_at: beat(300_000) } as any)).toBe(
+      "Render Interrupted",
+    );
   });
 
   it("shows real progress only, straight from the job row", () => {
-    expect(jobStatusLabel({ status: "rendering", progress: 0.42, heartbeat_at: beat(1000) } as any)).toBe("Rendering 42%");
+    expect(
+      jobStatusLabel({ status: "rendering", progress: 0.42, heartbeat_at: beat(1000) } as any),
+    ).toBe("Rendering 42%");
     expect(jobStatusLabel({ status: "queued", heartbeat_at: beat(1000) } as any)).toBe("Queued");
     expect(jobStatusLabel({ status: "failed" })).toBe("Failed");
     expect(jobStatusLabel({ status: "cancelled" })).toBe("Cancelled");
-    expect(jobStatusLabel({ status: "rendering", cancel_requested: true, heartbeat_at: beat(1000) } as any)).toBe("Stopping…");
+    expect(
+      jobStatusLabel({
+        status: "rendering",
+        cancel_requested: true,
+        heartbeat_at: beat(1000),
+      } as any),
+    ).toBe("Stopping…");
   });
 });
 
@@ -107,7 +117,9 @@ describe("credit release", () => {
   });
 
   it("keeps the charge for a completed render and never invents a refund", () => {
-    expect(creditRelease({ status: "rendering", credits_charged: 40 }, "completed").release).toBe(false);
+    expect(creditRelease({ status: "rendering", credits_charged: 40 }, "completed").release).toBe(
+      false,
+    );
     expect(creditRelease({ status: "failed", credits_charged: 0 }, "failed")).toEqual({
       release: false,
       amount: 0,
@@ -117,6 +129,9 @@ describe("credit release", () => {
   });
 
   it("releases only the unreturned remainder of a partly refunded job", () => {
-    expect(creditRelease({ status: "rendering", credits_charged: 52, credits_refunded: 12 }, "failed").amount).toBe(40);
+    expect(
+      creditRelease({ status: "rendering", credits_charged: 52, credits_refunded: 12 }, "failed")
+        .amount,
+    ).toBe(40);
   });
 });

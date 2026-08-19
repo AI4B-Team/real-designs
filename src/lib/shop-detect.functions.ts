@@ -61,7 +61,10 @@ export const detectShopObjects = createServerFn({ method: "POST" })
             {
               role: "user",
               content: [
-                { type: "text", text: `Room type: ${data.roomType}. Locate the shoppable objects in this image.` },
+                {
+                  type: "text",
+                  text: `Room type: ${data.roomType}. Locate the shoppable objects in this image.`,
+                },
                 { type: "image_url", image_url: { url: data.image } },
               ],
             },
@@ -145,7 +148,12 @@ export const detectShopObjects = createServerFn({ method: "POST" })
           return {
             category: match,
             label: match,
-            box: { x: clamp(x), y: clamp(y), w: Math.min(w, 1 - clamp(x)), h: Math.min(h, 1 - clamp(y)) },
+            box: {
+              x: clamp(x),
+              y: clamp(y),
+              w: Math.min(w, 1 - clamp(x)),
+              h: Math.min(h, 1 - clamp(y)),
+            },
             confidence: clamp(confidence),
           };
         })

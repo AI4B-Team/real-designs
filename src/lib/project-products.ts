@@ -84,7 +84,12 @@ export interface AddInput {
   dnaScope: ProjectProduct["dnaScope"];
 }
 
-function dedupeKey(p: { roomId: string; designId: string; merchant: string; merchantProductId: string }) {
+function dedupeKey(p: {
+  roomId: string;
+  designId: string;
+  merchant: string;
+  merchantProductId: string;
+}) {
   return [p.roomId, p.designId, p.merchant, p.merchantProductId].join("|").toLowerCase();
 }
 

@@ -16,10 +16,6 @@ export function GlobalFooter() {
       </a>
       <div className="rd-foot-wrap">
         <div className="rd-foot-grid">
-
-
-
-
           {FOOTER_COLUMNS.map((col) => (
             <details className="rd-foot-col" key={col.heading} open>
               <summary>
@@ -37,9 +33,6 @@ export function GlobalFooter() {
             </details>
           ))}
         </div>
-
-
-
 
         <div className="rd-foot-legal">
           <span className="rd-foot-copy">&copy; 2026 REAL DESIGNS. All Rights Reserved.</span>
@@ -66,8 +59,8 @@ export function GlobalFooter() {
         </div>
 
         <p className="rd-foot-disclaimer">
-          Designed Views Are Proposed Concepts, Not Photographs Of Completed Work. Verify Dimensions And
-          Local Disclosure Requirements Before Use.
+          Designed Views Are Proposed Concepts, Not Photographs Of Completed Work. Verify Dimensions
+          And Local Disclosure Requirements Before Use.
         </p>
       </div>
     </footer>

@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/whole-house-renovation-cost",
   tier: "A",
-  intent: "Buyer wants a realistic whole house renovation cost range broken down by room and trade before committing to a full gut or a phased plan.",
+  intent:
+    "Buyer wants a realistic whole house renovation cost range broken down by room and trade before committing to a full gut or a phased plan.",
 
   metaTitle: "Whole House Renovation Cost Planning Guide",
-  metaDescription: "See a realistic whole house renovation cost range by room and trade, from a cosmetic pass to a full gut, with line items you can review with a contractor.",
+  metaDescription:
+    "See a realistic whole house renovation cost range by room and trade, from a cosmetic pass to a full gut, with line items you can review with a contractor.",
 
   eyebrow: "Whole House Renovation",
   h1: "Whole House Renovation Cost",
@@ -24,16 +26,25 @@ export const page: LandingPage = {
   beforePhoto: "before",
   afterPhoto: "after",
   beforeCaption: "Existing living room, dated finishes, original layout throughout the home.",
-  afterCaption: "Same living room, finishes, lighting and flooring updated as part of a whole house pass.",
+  afterCaption:
+    "Same living room, finishes, lighting and flooring updated as part of a whole house pass.",
 
   steps: [
-    { title: "List Every Room", text: "Kitchen, bathrooms, bedrooms and living spaces are priced individually so the whole house total is a sum of real rooms, not a square footage guess." },
-    { title: "Set A Whole House Budget Band", text: "Choose cosmetic, mid-range or full gut and every room in the plan generates finishes that match that spend level consistently across the house." },
-    { title: "Get A Trade By Trade Scope", text: "Export a combined scope with cabinetry, flooring, plumbing, electrical and paint broken out by room and by trade so subcontractors can bid off the same document." },
+    {
+      title: "List Every Room",
+      text: "Kitchen, bathrooms, bedrooms and living spaces are priced individually so the whole house total is a sum of real rooms, not a square footage guess.",
+    },
+    {
+      title: "Set A Whole House Budget Band",
+      text: "Choose cosmetic, mid-range or full gut and every room in the plan generates finishes that match that spend level consistently across the house.",
+    },
+    {
+      title: "Get A Trade By Trade Scope",
+      text: "Export a combined scope with cabinetry, flooring, plumbing, electrical and paint broken out by room and by trade so subcontractors can bid off the same document.",
+    },
   ],
 
   showcase: ["scope", "budget-mode", "interior", "brief", "grades"],
-
 
   sections: [
     {
@@ -74,12 +85,30 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "What is a realistic whole house renovation cost?", a: "For an average 2,000 square foot home, a cosmetic pass plans in the $60,000 to $120,000 range, a mid-range renovation with a full kitchen and bathroom remodel plans in the $130,000 to $240,000 range, and a full gut renovation plans in the $250,000 to $450,000 range." },
-    { q: "Why do kitchens and bathrooms cost so much more than other rooms?", a: "Kitchens and bathrooms combine cabinetry, tile, plumbing and electrical in a small footprint, and can account for 50 to 60 percent of a whole house budget even though they are a fraction of the total square footage." },
-    { q: "Can I live in my house during a whole house renovation?", a: "It depends on whether a functional kitchen and at least one bathroom remain available throughout. A phased cosmetic to mid-range renovation can often be done in place, while a full simultaneous gut of every room typically requires moving out." },
-    { q: "What usually causes a whole house renovation to go over budget?", a: "System level surprises, electrical panels, plumbing repiping or HVAC replacement, discovered once walls are opened, are the most common overrun. Budgeting $8,000 to $20,000 per system as a contingency for older homes helps avoid this." },
-    { q: "How long does a whole house renovation take?", a: "A cosmetic pass typically takes four to eight weeks. A mid-range renovation with kitchen and bathroom work takes three to five months. A full gut renovation typically takes four to eight months from permit to completion." },
-    { q: "Should I renovate room by room or all at once?", a: "Sequencing kitchen and bathrooms first, then flooring, paint and lighting throughout, generally produces better trade coordination and fewer mistakes than attempting every room simultaneously, even though it extends the calendar timeline." },
+    {
+      q: "What is a realistic whole house renovation cost?",
+      a: "For an average 2,000 square foot home, a cosmetic pass plans in the $60,000 to $120,000 range, a mid-range renovation with a full kitchen and bathroom remodel plans in the $130,000 to $240,000 range, and a full gut renovation plans in the $250,000 to $450,000 range.",
+    },
+    {
+      q: "Why do kitchens and bathrooms cost so much more than other rooms?",
+      a: "Kitchens and bathrooms combine cabinetry, tile, plumbing and electrical in a small footprint, and can account for 50 to 60 percent of a whole house budget even though they are a fraction of the total square footage.",
+    },
+    {
+      q: "Can I live in my house during a whole house renovation?",
+      a: "It depends on whether a functional kitchen and at least one bathroom remain available throughout. A phased cosmetic to mid-range renovation can often be done in place, while a full simultaneous gut of every room typically requires moving out.",
+    },
+    {
+      q: "What usually causes a whole house renovation to go over budget?",
+      a: "System level surprises, electrical panels, plumbing repiping or HVAC replacement, discovered once walls are opened, are the most common overrun. Budgeting $8,000 to $20,000 per system as a contingency for older homes helps avoid this.",
+    },
+    {
+      q: "How long does a whole house renovation take?",
+      a: "A cosmetic pass typically takes four to eight weeks. A mid-range renovation with kitchen and bathroom work takes three to five months. A full gut renovation typically takes four to eight months from permit to completion.",
+    },
+    {
+      q: "Should I renovate room by room or all at once?",
+      a: "Sequencing kitchen and bathrooms first, then flooring, paint and lighting throughout, generally produces better trade coordination and fewer mistakes than attempting every room simultaneously, even though it extends the calendar timeline.",
+    },
   ],
 
   relatedSlugs: [
@@ -94,15 +123,31 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Plan A Whole House Renovation Budget",
     steps: [
-      { name: "List Every Room In Scope", text: "Note which rooms get a cosmetic pass, a mid-range remodel, or a full gut, since mixing scope levels across the house is normal and expected." },
-      { name: "Scope Wet Rooms Separately", text: "Price the kitchen and every bathroom individually first, since they drive the majority of the total and vary the most by finish level." },
-      { name: "Budget A System Contingency", text: "Set aside 10 to 15 percent of the total for electrical, plumbing or HVAC discoveries, especially in homes built before the 1990s." },
-      { name: "Sequence The Work", text: "Plan kitchen and bathrooms first, then flooring, paint and lighting throughout, to minimize how long the household is disrupted." },
-      { name: "Get A Trade By Trade Scope", text: "Export a combined room by room, trade by trade scope so every subcontractor bids off the same document instead of a vague verbal description." },
+      {
+        name: "List Every Room In Scope",
+        text: "Note which rooms get a cosmetic pass, a mid-range remodel, or a full gut, since mixing scope levels across the house is normal and expected.",
+      },
+      {
+        name: "Scope Wet Rooms Separately",
+        text: "Price the kitchen and every bathroom individually first, since they drive the majority of the total and vary the most by finish level.",
+      },
+      {
+        name: "Budget A System Contingency",
+        text: "Set aside 10 to 15 percent of the total for electrical, plumbing or HVAC discoveries, especially in homes built before the 1990s.",
+      },
+      {
+        name: "Sequence The Work",
+        text: "Plan kitchen and bathrooms first, then flooring, paint and lighting throughout, to minimize how long the household is disrupted.",
+      },
+      {
+        name: "Get A Trade By Trade Scope",
+        text: "Export a combined room by room, trade by trade scope so every subcontractor bids off the same document instead of a vague verbal description.",
+      },
     ],
   },
 
   ctaTitle: "Plan Your Whole House Renovation Budget",
-  ctaBody: "Use the free rehab calculator room by room to build a combined planning range for the whole house.",
+  ctaBody:
+    "Use the free rehab calculator room by room to build a combined planning range for the whole house.",
   ctaLabel: "Try The Free Calculator",
 };

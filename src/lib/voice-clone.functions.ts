@@ -42,7 +42,10 @@ export const analyzeVoiceSample = createServerFn({ method: "POST" })
           {
             role: "user",
             content: [
-              { type: "text", text: "Profile this speaker so synthesized narration sounds like them." },
+              {
+                type: "text",
+                text: "Profile this speaker so synthesized narration sounds like them.",
+              },
               { type: "input_audio", input_audio: { data: data.audio, format: data.format } },
             ],
           },

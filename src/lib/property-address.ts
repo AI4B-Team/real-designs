@@ -4,12 +4,7 @@
    draft from being saved, and no placeholder property is ever invented. */
 
 export type AddressSource =
-  | "manual"
-  | "autocomplete"
-  | "existing_property"
-  | "listing_import"
-  | "inherited"
-  | "unknown";
+  "manual" | "autocomplete" | "existing_property" | "listing_import" | "inherited" | "unknown";
 
 export const ADDRESS_SOURCES: AddressSource[] = [
   "manual",
@@ -65,22 +60,47 @@ export function cleanAddressText(value: unknown, max = MAX_ADDRESS_LEN): string 
 }
 
 const STREET_WORDS: Record<string, string> = {
-  street: "st", str: "st", st: "st",
-  avenue: "ave", ave: "ave", av: "ave",
-  road: "rd", rd: "rd",
-  drive: "dr", dr: "dr",
-  lane: "ln", ln: "ln",
-  boulevard: "blvd", blvd: "blvd",
-  court: "ct", ct: "ct",
-  place: "pl", pl: "pl",
-  terrace: "ter", ter: "ter",
-  circle: "cir", cir: "cir",
-  highway: "hwy", hwy: "hwy",
-  parkway: "pkwy", pkwy: "pkwy",
-  trail: "trl", trl: "trl",
-  north: "n", south: "s", east: "e", west: "w",
-  northeast: "ne", northwest: "nw", southeast: "se", southwest: "sw",
-  apartment: "apt", apt: "apt", unit: "unit", suite: "ste", ste: "ste",
+  street: "st",
+  str: "st",
+  st: "st",
+  avenue: "ave",
+  ave: "ave",
+  av: "ave",
+  road: "rd",
+  rd: "rd",
+  drive: "dr",
+  dr: "dr",
+  lane: "ln",
+  ln: "ln",
+  boulevard: "blvd",
+  blvd: "blvd",
+  court: "ct",
+  ct: "ct",
+  place: "pl",
+  pl: "pl",
+  terrace: "ter",
+  ter: "ter",
+  circle: "cir",
+  cir: "cir",
+  highway: "hwy",
+  hwy: "hwy",
+  parkway: "pkwy",
+  pkwy: "pkwy",
+  trail: "trl",
+  trl: "trl",
+  north: "n",
+  south: "s",
+  east: "e",
+  west: "w",
+  northeast: "ne",
+  northwest: "nw",
+  southeast: "se",
+  southwest: "sw",
+  apartment: "apt",
+  apt: "apt",
+  unit: "unit",
+  suite: "ste",
+  ste: "ste",
 };
 
 /** Lower-cased, punctuation-free, abbreviation-folded key used only for
@@ -115,7 +135,10 @@ export function formatAddress(parts: Partial<ProjectAddress>): string {
 export function parseAddress(raw: unknown): Partial<ProjectAddress> {
   const text = cleanAddressText(raw);
   if (!text) return {};
-  const bits = text.split(",").map((b) => b.trim()).filter(Boolean);
+  const bits = text
+    .split(",")
+    .map((b) => b.trim())
+    .filter(Boolean);
   const out: Partial<ProjectAddress> = { address_line_1: bits[0] || text };
   if (bits.length >= 2) out.city = bits[1] ?? null;
   const tail = (bits.length >= 3 ? bits[bits.length - 1] : "") || "";
@@ -137,7 +160,9 @@ export function buildAddress(
 ): ProjectAddress {
   const parsed = input.text ? parseAddress(input.text) : {};
   const merged: Partial<ProjectAddress> = { ...parsed, ...stripEmpty(input) };
-  const formatted = cleanAddressText(input.property_address || formatAddress(merged) || input.text || "");
+  const formatted = cleanAddressText(
+    input.property_address || formatAddress(merged) || input.text || "",
+  );
   if (!formatted) return emptyAddress();
   return {
     ...emptyAddress(),
@@ -174,10 +199,9 @@ export function addressesMatch(a: unknown, b: unknown): boolean {
 }
 
 /** Find the closest existing property for a typed address, if any. */
-export function findMatchingProperty<T extends { id: string; address?: string | null; normalized_address?: string | null }>(
-  address: unknown,
-  properties: T[],
-): T | null {
+export function findMatchingProperty<
+  T extends { id: string; address?: string | null; normalized_address?: string | null },
+>(address: unknown, properties: T[]): T | null {
   const key = normalizeAddress(address);
   if (!key) return null;
   for (const p of properties || []) {
@@ -195,20 +219,51 @@ export function streetOf(address: unknown): string {
 
 /** Common USPS street-suffix abbreviations, expanded for display only. */
 const SUFFIX: Record<string, string> = {
-  st: "Street", str: "Street", ave: "Avenue", av: "Avenue", blvd: "Boulevard", blv: "Boulevard",
-  rd: "Road", dr: "Drive", ln: "Lane", ct: "Court", cir: "Circle", pl: "Place", pkwy: "Parkway",
-  pky: "Parkway", hwy: "Highway", ter: "Terrace", trl: "Trail", way: "Way", sq: "Square",
-  loop: "Loop", run: "Run", cv: "Cove", pt: "Point", bnd: "Bend", xing: "Crossing",
+  st: "Street",
+  str: "Street",
+  ave: "Avenue",
+  av: "Avenue",
+  blvd: "Boulevard",
+  blv: "Boulevard",
+  rd: "Road",
+  dr: "Drive",
+  ln: "Lane",
+  ct: "Court",
+  cir: "Circle",
+  pl: "Place",
+  pkwy: "Parkway",
+  pky: "Parkway",
+  hwy: "Highway",
+  ter: "Terrace",
+  trl: "Trail",
+  way: "Way",
+  sq: "Square",
+  loop: "Loop",
+  run: "Run",
+  cv: "Cove",
+  pt: "Point",
+  bnd: "Bend",
+  xing: "Crossing",
 };
 
 const DIRECTION: Record<string, string> = {
-  n: "N", s: "S", e: "E", w: "W", ne: "NE", nw: "NW", se: "SE", sw: "SW",
+  n: "N",
+  s: "S",
+  e: "E",
+  w: "W",
+  ne: "NE",
+  nw: "NW",
+  se: "SE",
+  sw: "SW",
 };
 
 /** Expand a trailing street suffix ("Blvd" -> "Boulevard"). Nothing is guessed:
     a word that is not a known abbreviation is left exactly as written. */
 export function expandStreet(line: string): string {
-  const words = String(line || "").trim().split(/\s+/).filter(Boolean);
+  const words = String(line || "")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
   if (words.length < 2) return words.join(" ");
   return words
     .map((w, i) => {
@@ -250,7 +305,6 @@ export function parseLooseAddress(value: unknown): { line1: string; line2: strin
   return { line1: expandStreet(street), line2: city + ", " + st + " " + zip };
 }
 
-
 /** Two display lines for a property card: street, then city/state/ZIP.
     Structured fields win; an unstructured string is split on its own commas,
     or conservatively parsed when it clearly ends in "City ST ZIP". */
@@ -266,17 +320,21 @@ export function splitAddressLines(
   if (l1 || city || state || zip) {
     const unit = cleanAddressText(p.address_line_2, 60);
     const line1 = [expandStreet(l1), unit].filter(Boolean).join(" ");
-    const region = [/^[A-Za-z]{2}$/.test(state) ? state.toUpperCase() : state, zip].filter(Boolean).join(" ");
+    const region = [/^[A-Za-z]{2}$/.test(state) ? state.toUpperCase() : state, zip]
+      .filter(Boolean)
+      .join(" ");
     const line2 = [city, region].filter(Boolean).join(", ");
     if (line1 || line2) return { line1: line1 || line2, line2: line1 ? line2 : "" };
   }
   const text = cleanAddressText(value);
   if (!text) return { line1: "", line2: "" };
-  const bits = text.split(",").map((b) => b.trim()).filter(Boolean);
+  const bits = text
+    .split(",")
+    .map((b) => b.trim())
+    .filter(Boolean);
   if (bits.length < 2) return parseLooseAddress(text) || { line1: text, line2: "" };
   return { line1: expandStreet(bits[0]!), line2: bits.slice(1).join(", ") };
 }
-
 
 /** "No Photos" / "1 Photo" / "n Photos" — never "0 Photos". */
 export function photoCountLabel(n: unknown): string {
@@ -284,7 +342,6 @@ export function photoCountLabel(n: unknown): string {
   if (!count) return "No Photos";
   return count === 1 ? "1 Photo" : count + " Photos";
 }
-
 
 /* ---------- Project titles ----------
    The address answers "which property?"; the title answers "which project?".
@@ -306,7 +363,10 @@ const GENERIC_TITLES = [
 
 /** Trim, collapse whitespace and cap length before saving a title. */
 export function sanitizeTitle(value: unknown): string {
-  return String(value ?? "").replace(/\s+/g, " ").trim().slice(0, TITLE_MAX);
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, TITLE_MAX);
 }
 
 /** True when a stored title carries no user intent. */
@@ -331,12 +391,20 @@ export function suggestDesignTitle(address: unknown, room?: unknown): string {
   return "";
 }
 
-export function suggestProjectTitle(kind: "video" | "design", address: unknown, room?: unknown): string {
+export function suggestProjectTitle(
+  kind: "video" | "design",
+  address: unknown,
+  room?: unknown,
+): string {
   return kind === "design" ? suggestDesignTitle(address, room) : suggestVideoTitle(address);
 }
 
 export function fallbackTitle(kind: "video" | "design" | "project"): string {
-  return kind === "video" ? "Untitled Video" : kind === "design" ? "Untitled Design" : "Untitled Project";
+  return kind === "video"
+    ? "Untitled Video"
+    : kind === "design"
+      ? "Untitled Design"
+      : "Untitled Project";
 }
 
 /**
@@ -358,13 +426,25 @@ export function resolveProjectTitle(opts: {
 }
 
 /** Title default that never overwrites what the user typed. */
-export function defaultVideoTitle(address: unknown, titleTouched?: boolean, current?: string | null): string {
-  return resolveProjectTitle({ kind: "video", address, titleTouched: !!titleTouched, title: current ?? null });
+export function defaultVideoTitle(
+  address: unknown,
+  titleTouched?: boolean,
+  current?: string | null,
+): string {
+  return resolveProjectTitle({
+    kind: "video",
+    address,
+    titleTouched: !!titleTouched,
+    title: current ?? null,
+  });
 }
 
-
 /** What a card shows under the title. */
-export function addressDisplay(record: { property_address?: string | null; property_label?: string | null; property_id?: string | null }): {
+export function addressDisplay(record: {
+  property_address?: string | null;
+  property_label?: string | null;
+  property_id?: string | null;
+}): {
   text: string;
   unassigned: boolean;
   notLinked: boolean;

@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/ai-virtual-staging",
   tier: "A",
-  intent: "Buyer wants to know how AI virtual staging works for listing photos, what it costs per photo, and what disclosure it legally requires.",
+  intent:
+    "Buyer wants to know how AI virtual staging works for listing photos, what it costs per photo, and what disclosure it legally requires.",
 
   metaTitle: "AI Virtual Staging For Listings, Priced Per Photo",
-  metaDescription: "Furnish vacant listing photos with AI virtual staging. See cost per photo, disclosure rules, and vacant versus occupied workflow.",
+  metaDescription:
+    "Furnish vacant listing photos with AI virtual staging. See cost per photo, disclosure rules, and vacant versus occupied workflow.",
 
   eyebrow: "AI Virtual Staging",
   h1: "AI Virtual Staging For Listing Photos",
@@ -25,16 +27,25 @@ export const page: LandingPage = {
   beforePhoto: "stageEmpty",
   afterPhoto: "stageStaged",
   beforeCaption: "Vacant living room, as shot, no furniture or decor added.",
-  afterCaption: "Same room, AI virtual staging added, structure and windows unchanged, disclosure caption applied on export.",
+  afterCaption:
+    "Same room, AI virtual staging added, structure and windows unchanged, disclosure caption applied on export.",
 
   steps: [
-    { title: "Upload The Listing Photo", text: "Use the actual photo from your shoot, vacant or lightly furnished. The room's walls, windows, floor and ceiling height stay locked to what the camera captured." },
-    { title: "Choose A Style & Generate", text: "Pick a furniture style that matches the buyer pool for that price point and generate the staged version. Nothing about the architecture moves." },
-    { title: "Export With Disclosure Applied", text: "Download the image with the disclosure caption already burned in or attached as metadata, ready for MLS upload without a manual edit." },
+    {
+      title: "Upload The Listing Photo",
+      text: "Use the actual photo from your shoot, vacant or lightly furnished. The room's walls, windows, floor and ceiling height stay locked to what the camera captured.",
+    },
+    {
+      title: "Choose A Style & Generate",
+      text: "Pick a furniture style that matches the buyer pool for that price point and generate the staged version. Nothing about the architecture moves.",
+    },
+    {
+      title: "Export With Disclosure Applied",
+      text: "Download the image with the disclosure caption already burned in or attached as metadata, ready for MLS upload without a manual edit.",
+    },
   ],
 
   showcase: ["staging", "mls", "declutter", "reality-lock"],
-
 
   sections: [
     {
@@ -70,11 +81,26 @@ export const page: LandingPage = {
   ],
 
   faqs: [
-    { q: "Do I have to disclose AI virtual staging on MLS?", a: "Yes. Nearly every MLS board and most state real estate commissions require a visible caption stating the photo was virtually staged. Check your specific board's exact wording requirement, since some specify the phrase and placement." },
-    { q: "Can virtual staging make a small room look bigger than it is?", a: "It should not, and a tool that preserves the real wall positions and camera perspective will not stretch the room. If a staged photo makes a room look larger than its actual dimensions, that crosses from staging into misrepresentation." },
-    { q: "Is virtual staging cheaper than physical staging?", a: "Per photo, yes, usually $15 to $50 versus $1,500 to $3,500 a month for physical furniture rental. The tradeoff is that virtual staging only affects the photo, not what a buyer sees at an in-person showing." },
-    { q: "Can I virtually stage an occupied, cluttered room?", a: "You can, but the result is usually weaker than staging a vacant room because the tool has to remove existing furniture before adding new furniture. Declutter the photo as a separate step first for a cleaner final image." },
-    { q: "What happens if I skip the disclosure caption?", a: "Boards can pull the listing photo from the feed, issue a compliance notice, or in repeated cases restrict MLS access. It is treated as a listing accuracy violation, not a minor formatting issue." },
+    {
+      q: "Do I have to disclose AI virtual staging on MLS?",
+      a: "Yes. Nearly every MLS board and most state real estate commissions require a visible caption stating the photo was virtually staged. Check your specific board's exact wording requirement, since some specify the phrase and placement.",
+    },
+    {
+      q: "Can virtual staging make a small room look bigger than it is?",
+      a: "It should not, and a tool that preserves the real wall positions and camera perspective will not stretch the room. If a staged photo makes a room look larger than its actual dimensions, that crosses from staging into misrepresentation.",
+    },
+    {
+      q: "Is virtual staging cheaper than physical staging?",
+      a: "Per photo, yes, usually $15 to $50 versus $1,500 to $3,500 a month for physical furniture rental. The tradeoff is that virtual staging only affects the photo, not what a buyer sees at an in-person showing.",
+    },
+    {
+      q: "Can I virtually stage an occupied, cluttered room?",
+      a: "You can, but the result is usually weaker than staging a vacant room because the tool has to remove existing furniture before adding new furniture. Declutter the photo as a separate step first for a cleaner final image.",
+    },
+    {
+      q: "What happens if I skip the disclosure caption?",
+      a: "Boards can pull the listing photo from the feed, issue a compliance notice, or in repeated cases restrict MLS access. It is treated as a listing accuracy violation, not a minor formatting issue.",
+    },
   ],
 
   relatedSlugs: [

@@ -149,7 +149,6 @@ function failState(el: El, path: string) {
   log("unavailable", { path });
 }
 
-
 /**
  * Paint one element from a storage path. The element keeps whatever it is
  * already showing until the new URL is known, so a refresh never flashes an
@@ -162,10 +161,9 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
   const mine = ++seq;
   el.__rdPhotoSeq = mine;
   /* Only skeleton a frame that is not already showing a usable image. */
-  const showing = el instanceof HTMLImageElement ? !!el.getAttribute("src") : !!el.style.backgroundImage;
+  const showing =
+    el instanceof HTMLImageElement ? !!el.getAttribute("src") : !!el.style.backgroundImage;
   if (!showing) loadingOn(el);
-
-
 
   const url = await photoSrc(p, force);
   if (el.__rdPhotoSeq !== mine) return true; // a newer request already won
@@ -238,7 +236,6 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
   loadingOff(el);
   return true;
 }
-
 
 /* One sweeper for the whole app: re-signs any tracked, still-mounted element
    whose URL is about to expire. Nothing else in the card is touched. */

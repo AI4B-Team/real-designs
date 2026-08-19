@@ -40,9 +40,14 @@ import {
 import { track } from "@/lib/analytics";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const money = (n) =>
-  n == null ? "Price Unavailable" : "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: n < 20 ? 2 : 0 });
+  n == null
+    ? "Price Unavailable"
+    : "$" + Number(n).toLocaleString(undefined, { maximumFractionDigits: n < 20 ? 2 : 0 });
 
 const PHASES = ["Design", "Demo", "Rough In", "Finishes", "Furnishing", "Punch List"];
 const BUDGET_CATS = PRICE_TIERS;
@@ -104,7 +109,8 @@ function shell() {
       <button class="shop-applyall" id="shopLock" hidden><i data-lucide="layers"></i>Apply To All Views</button>
     </div>
     <div class="shop-seg" id="shopSeg" role="tablist">${SEGS.map(
-      (t, i) => `<button class="shop-segb${i === 0 ? " on" : ""}" role="tab" data-tab="${t[0]}">${t[1]}</button>`,
+      (t, i) =>
+        `<button class="shop-segb${i === 0 ? " on" : ""}" role="tab" data-tab="${t[0]}">${t[1]}</button>`,
     ).join("")}</div>
     <div class="shop-filters">
       <div class="shop-search"><i data-lucide="search"></i><input id="shopQ" type="text" placeholder="Search brand, material or product"></div>
@@ -226,7 +232,13 @@ function mount(ctx) {
       : `<span class="shop-warn"><i data-lucide="triangle-alert"></i>No Retailer Feed Connected, Saved Links Only</span>`);
   const img = $("shopImg");
   if (design.image) img.src = design.image;
-  else img.replaceWith(Object.assign(document.createElement("div"), { className: "shop-noimg", textContent: "No Design Image Available" }));
+  else
+    img.replaceWith(
+      Object.assign(document.createElement("div"), {
+        className: "shop-noimg",
+        textContent: "No Design Image Available",
+      }),
+    );
 
   paintIcons();
   syncCounts();
@@ -276,7 +288,9 @@ function mount(ctx) {
 
   function emptyObjects(msg) {
     $("shopObjs").innerHTML = `<div class="shop-empty"><b>${
-      scanFailed ? "We Could Not Scan This Image. Add Objects Manually." : "No Objects Detected Confidently. Tap Add Object To Mark One Yourself."
+      scanFailed
+        ? "We Could Not Scan This Image. Add Objects Manually."
+        : "No Objects Detected Confidently. Tap Add Object To Mark One Yourself."
     }</b><span>${esc(msg || "Draw a box around any item in the design and we will search for matching products.")}</span></div>`;
   }
 
@@ -380,13 +394,15 @@ function mount(ctx) {
     if (res) res.addEventListener("mousedown", (e) => drag(e, "resize"));
   }
 
-
   function setDrawing(v) {
     drawing = !!v;
     const b = $("shopDraw");
     if (b) b.classList.toggle("on", drawing);
     const h = $("shopHint");
-    if (h) h.textContent = drawing ? "Drag A Box Around The Item You Want To Shop" : "Tap Any Dot To Shop That Item";
+    if (h)
+      h.textContent = drawing
+        ? "Drag A Box Around The Item You Want To Shop"
+        : "Tap Any Dot To Shop That Item";
   }
   function startDrawing() {
     setDrawing(true);
@@ -464,7 +480,10 @@ function mount(ctx) {
     catCat = o.id;
     paintDots();
     $("shopObjName").textContent = o.label + " Matches";
-    $("shopObjSub").textContent = o.origin === "manual" ? "Custom object you outlined on the design." : "Detected in the design image.";
+    $("shopObjSub").textContent =
+      o.origin === "manual"
+        ? "Custom object you outlined on the design."
+        : "Detected in the design image.";
     $("shopLock").hidden = false;
     $("shopResults").innerHTML = skeleton();
     openSheet();
@@ -496,18 +515,32 @@ function mount(ctx) {
   }
 
   function activeFilterCount() {
-    return [priceRange, availFilter, merchFilter, brandFilter, materialFilter, colorFilter, dimFilter].filter(Boolean).length;
+    return [
+      priceRange,
+      availFilter,
+      merchFilter,
+      brandFilter,
+      materialFilter,
+      colorFilter,
+      dimFilter,
+    ].filter(Boolean).length;
   }
 
   function filtered(source) {
     let list = source ? source.slice() : tab === "saved" ? savedLater.slice() : results.slice();
     list = list.filter((p) => hidden.indexOf(p.id) < 0);
-    if (tab === "close") list = list.filter((p) => ["exact", "close"].indexOf(safeMatchType(p)) > -1);
+    if (tab === "close")
+      list = list.filter((p) => ["exact", "close"].indexOf(safeMatchType(p)) > -1);
     if (pref === "budget") list = list.filter((p) => (priceOf(p) || 0) <= 500);
     if (pref === "premium") list = list.filter((p) => (priceOf(p) || 0) > 500);
     if (query) {
       const q = query.toLowerCase();
-      list = list.filter((p) => (p.name + " " + p.brand + " " + p.merchant + " " + p.materials.join(" ")).toLowerCase().indexOf(q) > -1);
+      list = list.filter(
+        (p) =>
+          (p.name + " " + p.brand + " " + p.merchant + " " + p.materials.join(" "))
+            .toLowerCase()
+            .indexOf(q) > -1,
+      );
     }
     if (priceRange) {
       const [a, b] = priceRange.split("-").map(Number);
@@ -524,8 +557,16 @@ function mount(ctx) {
     if (dimFilter) list = list.filter((p) => !p.width || p.width <= Number(dimFilter));
     if (sort === "low") list.sort((a, b) => (priceOf(a) ?? 1e9) - (priceOf(b) ?? 1e9));
     else if (sort === "high") list.sort((a, b) => (priceOf(b) ?? -1) - (priceOf(a) ?? -1));
-    else if (sort === "stock") list.sort((a, b) => (a.availability === "in_stock" ? -1 : 1) - (b.availability === "in_stock" ? -1 : 1));
-    else list = rankMatches(list, { budgetMax: pref === "budget" ? 500 : design.budgetMax, category: active && active.category });
+    else if (sort === "stock")
+      list.sort(
+        (a, b) =>
+          (a.availability === "in_stock" ? -1 : 1) - (b.availability === "in_stock" ? -1 : 1),
+      );
+    else
+      list = rankMatches(list, {
+        budgetMax: pref === "budget" ? 500 : design.budgetMax,
+        category: active && active.category,
+      });
     return list;
   }
 
@@ -534,7 +575,9 @@ function mount(ctx) {
   }
 
   function opts(values, current) {
-    return values.map((v) => `<option value="${esc(v)}"${v === current ? " selected" : ""}>${esc(v)}</option>`).join("");
+    return values
+      .map((v) => `<option value="${esc(v)}"${v === current ? " selected" : ""}>${esc(v)}</option>`)
+      .join("");
   }
 
   /** Filters popover: every secondary filter lives here, never on the panel. */
@@ -550,10 +593,22 @@ function mount(ctx) {
       <label class="shop-fp"><span>Availability</span><select id="shopAvail" class="shop-sel"><option value="">Any Availability</option>
         <option value="in_stock"${availFilter === "in_stock" ? " selected" : ""}>In Stock Only</option>
         <option value="limited"${availFilter === "limited" ? " selected" : ""}>Limited Stock</option></select></label>
-      <label class="shop-fp"><span>Retailer</span><select id="shopMerch" class="shop-sel"><option value="">All Retailers</option>${opts(uniq((p) => p.merchant), merchFilter)}</select></label>
-      <label class="shop-fp"><span>Brand</span><select id="shopBrand" class="shop-sel"><option value="">All Brands</option>${opts(uniq((p) => p.brand), brandFilter)}</select></label>
-      <label class="shop-fp"><span>Material</span><select id="shopMat" class="shop-sel"><option value="">Any Material</option>${opts(uniq((p) => p.materials), materialFilter)}</select></label>
-      <label class="shop-fp"><span>Color</span><select id="shopColor" class="shop-sel"><option value="">Any Color</option>${opts(uniq((p) => p.colors), colorFilter)}</select></label>
+      <label class="shop-fp"><span>Retailer</span><select id="shopMerch" class="shop-sel"><option value="">All Retailers</option>${opts(
+        uniq((p) => p.merchant),
+        merchFilter,
+      )}</select></label>
+      <label class="shop-fp"><span>Brand</span><select id="shopBrand" class="shop-sel"><option value="">All Brands</option>${opts(
+        uniq((p) => p.brand),
+        brandFilter,
+      )}</select></label>
+      <label class="shop-fp"><span>Material</span><select id="shopMat" class="shop-sel"><option value="">Any Material</option>${opts(
+        uniq((p) => p.materials),
+        materialFilter,
+      )}</select></label>
+      <label class="shop-fp"><span>Color</span><select id="shopColor" class="shop-sel"><option value="">Any Color</option>${opts(
+        uniq((p) => p.colors),
+        colorFilter,
+      )}</select></label>
       <label class="shop-fp"><span>Dimensions</span><select id="shopDim" class="shop-sel"><option value="">Any Width</option>
         <option value="60"${dimFilter === "60" ? " selected" : ""}>Up To 60" Wide</option>
         <option value="84"${dimFilter === "84" ? " selected" : ""}>Up To 84" Wide</option>
@@ -580,7 +635,14 @@ function mount(ctx) {
   }
 
   function clearFilters() {
-    priceRange = availFilter = merchFilter = brandFilter = materialFilter = colorFilter = dimFilter = "";
+    priceRange =
+      availFilter =
+      merchFilter =
+      brandFilter =
+      materialFilter =
+      colorFilter =
+      dimFilter =
+        "";
     paintFilterPop();
     paintResults();
   }
@@ -596,9 +658,10 @@ function mount(ctx) {
     const list = all.slice(0, 3);
     const box = $("shopResults");
     if (!list.length) {
-      box.innerHTML = !visualSearchProvider().configured && !activeFilterCount() && !query
-        ? noProviderBlock()
-        : `<div class="shop-empty"><b>No Matches In This View</b><span>Widen the price range, clear a filter, or search by keyword to find a stand-in for this item.</span><button class="btn btn-ghost btn-xs" id="shopClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
+      box.innerHTML =
+        !visualSearchProvider().configured && !activeFilterCount() && !query
+          ? noProviderBlock()
+          : `<div class="shop-empty"><b>No Matches In This View</b><span>Widen the price range, clear a filter, or search by keyword to find a stand-in for this item.</span><button class="btn btn-ghost btn-xs" id="shopClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
       paintIcons();
       wireNoProvider();
       const c = $("shopClear");
@@ -631,7 +694,9 @@ function mount(ctx) {
     pref = "best";
     $("shopQ").value = "";
     $("shopPref").value = "best";
-    host.querySelectorAll(".shop-segb").forEach((t) => t.classList.toggle("on", t.getAttribute("data-tab") === "all"));
+    host
+      .querySelectorAll(".shop-segb")
+      .forEach((t) => t.classList.toggle("on", t.getAttribute("data-tab") === "all"));
     clearFilters();
   }
 
@@ -644,7 +709,9 @@ function mount(ctx) {
         if (p) toggleSaved(p);
       }),
     );
-    box.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openDetail(b.getAttribute("data-open"))));
+    box
+      .querySelectorAll("[data-open]")
+      .forEach((b) => b.addEventListener("click", () => openDetail(b.getAttribute("data-open"))));
     box.querySelectorAll("[data-add]").forEach((b) =>
       b.addEventListener("click", (e) => {
         e.stopPropagation();
@@ -715,7 +782,10 @@ function mount(ctx) {
     }
     const tabs = [["all", "All Products"]].concat(objects.map((o) => [o.id, o.label]));
     wrap.innerHTML = tabs
-      .map((t) => `<button class="shop-cattab${catCat === t[0] ? " on" : ""}" role="tab" data-cat="${esc(t[0])}">${esc(t[1])}</button>`)
+      .map(
+        (t) =>
+          `<button class="shop-cattab${catCat === t[0] ? " on" : ""}" role="tab" data-cat="${esc(t[0])}">${esc(t[1])}</button>`,
+      )
       .join("");
     wrap.querySelectorAll("[data-cat]").forEach((b) =>
       b.addEventListener("click", () => {
@@ -737,7 +807,8 @@ function mount(ctx) {
     }
     const targets = catCat === "all" ? objects : objects.filter((o) => o.id === catCat);
     const excludeIds = {};
-    if (catCat === "all" && active) (matchCache[design.designId + "::" + active.id] || []).forEach((p) => (excludeIds[p.id] = 1));
+    if (catCat === "all" && active)
+      (matchCache[design.designId + "::" + active.id] || []).forEach((p) => (excludeIds[p.id] = 1));
     if (!targets.length) return;
     const missing = targets.filter((o) => !matchCache[design.designId + "::" + o.id]);
     if (missing.length) {
@@ -761,9 +832,10 @@ function mount(ctx) {
     });
     const list = filtered(tab === "saved" ? savedLater : pool);
     if (!list.length) {
-      grid.innerHTML = !visualSearchProvider().configured && !activeFilterCount() && !query
-        ? noProviderBlock()
-        : `<div class="shop-empty"><b>No Products In This View</b><span>Clear a filter or search by keyword to see more products for this room.</span><button class="btn btn-ghost btn-xs" id="shopCatClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
+      grid.innerHTML =
+        !visualSearchProvider().configured && !activeFilterCount() && !query
+          ? noProviderBlock()
+          : `<div class="shop-empty"><b>No Products In This View</b><span>Clear a filter or search by keyword to see more products for this room.</span><button class="btn btn-ghost btn-xs" id="shopCatClear"><i data-lucide="filter-x"></i>Clear Filters</button></div>`;
       paintIcons();
       wireNoProvider();
       const c = $("shopCatClear");
@@ -794,19 +866,26 @@ function mount(ctx) {
 
   /** Real retailer links the user saved for this room, matched to the object. */
   function manualFor(o) {
-    return listManualProducts(design.roomId).filter((p) => !o || !p.category || p.category === "Other" || p.category === o.category);
+    return listManualProducts(design.roomId).filter(
+      (p) => !o || !p.category || p.category === "Other" || p.category === o.category,
+    );
   }
 
   function checkedLabel(p) {
     if (p.availability === "unavailable") return "No Longer Available At This Retailer.";
     if (priceOf(p) == null) return "No Price Saved For This Product.";
-    return lastCheckedLabel(p.lastVerified) + (isPriceStale(p.lastVerified) ? ", Verify On The Retailer Page." : ".");
+    return (
+      lastCheckedLabel(p.lastVerified) +
+      (isPriceStale(p.lastVerified) ? ", Verify On The Retailer Page." : ".")
+    );
   }
 
   /** Availability is only shown when a connected source actually reported it. */
   function availabilityTag(p) {
-    if (p.availability === "unknown") return `<span class="shop-tag amb">Availability Not Checked</span>`;
-    if (p.availability === "unavailable") return `<span class="shop-tag bad">No Longer Available</span>`;
+    if (p.availability === "unknown")
+      return `<span class="shop-tag amb">Availability Not Checked</span>`;
+    if (p.availability === "unavailable")
+      return `<span class="shop-tag bad">No Longer Available</span>`;
     return `<span class="shop-tag ${p.availability === "in_stock" ? "ok" : "amb"}">${availabilityLabel(p.availability)}</span>`;
   }
 
@@ -907,8 +986,15 @@ function mount(ctx) {
     const inCmp = !!compare.find((x) => x.id === p.id);
     const added = !!listProducts().find((r) => r.roomId === design.roomId && r.id === p.id);
     // Two status labels at most: match closeness, then availability.
-    const matchLabel = mt === "exact" && p.verifiedSku ? "Exact Product" : mt === "close" ? "Close Match" : "Similar Match";
-    const dims = [p.width && p.width + '" W', p.depth && p.depth + '" D'].filter(Boolean).join(" × ");
+    const matchLabel =
+      mt === "exact" && p.verifiedSku
+        ? "Exact Product"
+        : mt === "close"
+          ? "Close Match"
+          : "Similar Match";
+    const dims = [p.width && p.width + '" W', p.depth && p.depth + '" D']
+      .filter(Boolean)
+      .join(" × ");
     return `<div class="shop-card${big ? " big" : ""}" data-open="${p.id}">
       <div class="shop-card-img">${thumb(p)}${saveBtn(p)}</div>
       <div class="shop-card-b">
@@ -969,7 +1055,9 @@ function mount(ctx) {
       main.src = imgs[i];
       const c = $("drGalCount");
       if (c) c.textContent = `${i + 1} of ${imgs.length}`;
-      document.querySelectorAll(".shop-gal-th").forEach((b) => b.classList.toggle("on", Number(b.getAttribute("data-gal-i")) === i));
+      document
+        .querySelectorAll(".shop-gal-th")
+        .forEach((b) => b.classList.toggle("on", Number(b.getAttribute("data-gal-i")) === i));
     };
     document.querySelectorAll("[data-gal]").forEach((b) =>
       b.addEventListener("click", (e) => {
@@ -977,7 +1065,9 @@ function mount(ctx) {
         set(i + (b.getAttribute("data-gal") === "next" ? 1 : -1));
       }),
     );
-    document.querySelectorAll(".shop-gal-th").forEach((b) => b.addEventListener("click", () => set(Number(b.getAttribute("data-gal-i")))));
+    document
+      .querySelectorAll(".shop-gal-th")
+      .forEach((b) => b.addEventListener("click", () => set(Number(b.getAttribute("data-gal-i")))));
     main.addEventListener("click", () => {
       const lb = document.createElement("div");
       lb.className = "shop-lightbox";
@@ -1026,7 +1116,8 @@ function mount(ctx) {
     $("drAdd").addEventListener("click", () => openAdd(p.id));
     const syncDrSave = () => {
       const b = $("drSave");
-      if (b) b.innerHTML = `<i data-lucide="bookmark"></i>${isSaved(p.id) ? "Saved" : "Save For Later"}`;
+      if (b)
+        b.innerHTML = `<i data-lucide="bookmark"></i>${isSaved(p.id) ? "Saved" : "Save For Later"}`;
       const bm = d.querySelector("[data-bm]");
       if (bm) bm.classList.toggle("on", isSaved(p.id));
       paintIcons();
@@ -1106,7 +1197,11 @@ function mount(ctx) {
       paintDots();
       paintResults();
       toast(r.duplicate ? "Product Already On This Room, Updated Instead" : "Added To Project");
-      track("shop_product_added", { merchant: p.merchant, category: p.category, price: priceOf(p) });
+      track("shop_product_added", {
+        merchant: p.merchant,
+        category: p.category,
+        price: priceOf(p),
+      });
     });
   }
 
@@ -1123,7 +1218,9 @@ function mount(ctx) {
           list.length
             ? list
                 .map(
-                  (r) => `<div class="shop-mini">${thumb(r, "mini")}<div><b>${esc(r.name)}</b><span>${esc(r.merchant)} &middot; ${money(priceOf(r))} &times; ${r.quantity} &middot; ${STATUS_LABEL[r.status]}</span></div>
+                  (
+                    r,
+                  ) => `<div class="shop-mini">${thumb(r, "mini")}<div><b>${esc(r.name)}</b><span>${esc(r.merchant)} &middot; ${money(priceOf(r))} &times; ${r.quantity} &middot; ${STATUS_LABEL[r.status]}</span></div>
                   <button class="icon-btn" data-rm="${r.recordId}" aria-label="Remove product"><i data-lucide="trash-2"></i></button></div>`,
                 )
                 .join("")
@@ -1172,12 +1269,15 @@ function mount(ctx) {
     </div>`;
     paintIcons();
     $("drClose").addEventListener("click", () => (d.hidden = true));
-    d.querySelectorAll("[data-add]").forEach((b) => b.addEventListener("click", () => openAdd(b.getAttribute("data-add"))));
+    d.querySelectorAll("[data-add]").forEach((b) =>
+      b.addEventListener("click", () => openAdd(b.getAttribute("data-add"))),
+    );
   }
 
   function syncCounts() {
     const savedTab = host.querySelector('.shop-segb[data-tab="saved"]');
-    if (savedTab) savedTab.textContent = savedLater.length ? `Saved (${savedLater.length})` : "Saved";
+    if (savedTab)
+      savedTab.textContent = savedLater.length ? `Saved (${savedLater.length})` : "Saved";
     const s = $("shopSelCnt");
     if (s) s.textContent = String(listProducts().filter((r) => r.roomId === design.roomId).length);
     const c = $("shopCmpCnt");
@@ -1185,7 +1285,12 @@ function mount(ctx) {
     const cb = $("shopCompareBtn");
     if (cb) {
       cb.disabled = compare.length < 2;
-      cb.setAttribute("data-tip", compare.length < 2 ? "Select At Least Two Products To Compare" : "Compare " + compare.length + " Products");
+      cb.setAttribute(
+        "data-tip",
+        compare.length < 2
+          ? "Select At Least Two Products To Compare"
+          : "Compare " + compare.length + " Products",
+      );
     }
   }
 
@@ -1218,16 +1323,30 @@ function mount(ctx) {
     const r = stage.getBoundingClientRect();
     const x = (e.clientX - r.left) / r.width,
       y = (e.clientY - r.top) / r.height;
-    const box = { x: Math.min(x, start.x), y: Math.min(y, start.y), w: Math.abs(x - start.x), h: Math.abs(y - start.y) };
+    const box = {
+      x: Math.min(x, start.x),
+      y: Math.min(y, start.y),
+      w: Math.abs(x - start.x),
+      h: Math.abs(y - start.y),
+    };
     if (ghost) ghost.remove();
     ghost = null;
     start = null;
     drawing = false;
     $("shopDraw").classList.remove("on");
     if (box.w < 0.03 || box.h < 0.03) return;
-    const cat = window.prompt("What Is This Item? For example: " + PRODUCT_CATEGORIES.slice(0, 5).join(", "), "Chair");
+    const cat = window.prompt(
+      "What Is This Item? For example: " + PRODUCT_CATEGORIES.slice(0, 5).join(", "),
+      "Chair",
+    );
     if (!cat) return;
-    const o = { id: "manual-" + Date.now(), category: cat.trim(), label: cat.trim(), box, origin: "manual" };
+    const o = {
+      id: "manual-" + Date.now(),
+      category: cat.trim(),
+      label: cat.trim(),
+      box,
+      origin: "manual",
+    };
     objects.push(o);
     selectObject(o);
     track("shop_manual_object", { category: o.category });
@@ -1244,10 +1363,13 @@ function mount(ctx) {
   $("shopDots").addEventListener("click", () => {
     dotsOn = !dotsOn;
     $("shopDotLayer").classList.toggle("hide", !dotsOn);
-    $("shopDots").innerHTML = `<i data-lucide="${dotsOn ? "eye" : "eye-off"}"></i>${dotsOn ? "Hide Dots" : "Show Dots"}`;
+    $("shopDots").innerHTML =
+      `<i data-lucide="${dotsOn ? "eye" : "eye-off"}"></i>${dotsOn ? "Hide Dots" : "Show Dots"}`;
     paintIcons();
   });
-  $("shopLock").addEventListener("click", () => toast("This Selection Now Applies To Every View Of This Room"));
+  $("shopLock").addEventListener("click", () =>
+    toast("This Selection Now Applies To Every View Of This Room"),
+  );
   host.querySelectorAll(".shop-segb").forEach((b) =>
     b.addEventListener("click", () => {
       tab = b.getAttribute("data-tab");
@@ -1279,7 +1401,8 @@ function mount(ctx) {
   host.addEventListener("click", (e) => {
     const pop = $("shopFPop");
     if (pop && !pop.hidden && !e.target.closest(".shop-fwrap")) pop.hidden = true;
-    if (!e.target.closest(".shop-more")) host.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
+    if (!e.target.closest(".shop-more"))
+      host.querySelectorAll(".shop-more").forEach((m) => m.classList.remove("on"));
   });
   $("shopDiscT").addEventListener("click", () => {
     const b = $("shopDiscB");
@@ -1300,7 +1423,6 @@ function mount(ctx) {
       if (host && host.classList.contains("on")) closeShop();
     });
   }
-
 
   detect();
 }
@@ -1323,7 +1445,9 @@ export function renderSelectedProducts(mountEl, go) {
   mountEl.innerHTML =
     Object.keys(groups)
       .map(
-        (k) => `<div class="sp-group"><div class="sp-group-h"><b>${esc(k)}</b><span>${groups[k].length} Products</span></div>
+        (
+          k,
+        ) => `<div class="sp-group"><div class="sp-group-h"><b>${esc(k)}</b><span>${groups[k].length} Products</span></div>
     ${groups[k]
       .map(
         (r) => `<div class="sp-row">${spThumb(r)}

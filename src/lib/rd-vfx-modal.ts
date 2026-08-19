@@ -71,7 +71,7 @@ export function fxDirty(s: any, snap: FxSnap | null | undefined): boolean {
 /** Only categories that actually hold options, "All" first. */
 export function lookCats(): Array<[string, string]> {
   const used = new Set(VFX_LOOKS.map((l: any) => l.cat || "featured"));
-  return [["all", LOOK_CAT_LABEL['all']] as [string, string]].concat(
+  return [["all", LOOK_CAT_LABEL["all"]] as [string, string]].concat(
     Object.keys(LOOK_CAT_LABEL)
       .filter((k) => k !== "all" && used.has(k))
       .map((k) => [k, LOOK_CAT_LABEL[k]!] as [string, string]),
@@ -89,7 +89,9 @@ export function fxCats(): Array<[string, string]> {
 }
 
 export function looksForCat(cat: string) {
-  return cat === "all" ? VFX_LOOKS.slice() : VFX_LOOKS.filter((l: any) => (l.cat || "featured") === cat);
+  return cat === "all"
+    ? VFX_LOOKS.slice()
+    : VFX_LOOKS.filter((l: any) => (l.cat || "featured") === cat);
 }
 
 /** Effects tab: content-generating and animated tiles, minus the plain grades. */

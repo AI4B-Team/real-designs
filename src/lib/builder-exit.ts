@@ -36,7 +36,12 @@ export function goStudio(go?: (v: string) => void) {
 }
 
 /** The one Start Over confirmation used by both builders. */
-export function startOverModalHtml(ids: { wrap?: string; keep: string; go: string; busy?: boolean } ) {
+export function startOverModalHtml(ids: {
+  wrap?: string;
+  keep: string;
+  go: string;
+  busy?: boolean;
+}) {
   return `<div class="rv-modal on" id="${ids.wrap || "rdStartOverWrap"}"><div class="rv-modal-in" role="dialog" aria-label="Start over">
     <div class="rv-modal-h"><b>Start over?</b></div>
     <div class="rv-modal-b"><p>Your current draft settings will be cleared. Uploaded photos will remain in Media.</p></div>
@@ -54,7 +59,11 @@ export function startOverModalHtml(ids: { wrap?: string; keep: string; go: strin
    moves a step back, and Back from the first step asks before leaving. */
 const H: any = { key: null, step: null, handlers: null };
 
-export function trackBuilderStep(key: string, step: any, handlers: { onStep?: (s: any) => void; onExit?: () => void }) {
+export function trackBuilderStep(
+  key: string,
+  step: any,
+  handlers: { onStep?: (s: any) => void; onExit?: () => void },
+) {
   if (typeof history === "undefined") return;
   H.key = key;
   H.handlers = handlers;

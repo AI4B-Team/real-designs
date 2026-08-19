@@ -45,11 +45,26 @@ export const Route = createFileRoute("/founders")({
 
 type Count = { claimed: number; limit: number; remaining: number; open: boolean };
 
-
 const PLANS = [
-  { n: "Starter", p: "$7/mo", sub: "Billed yearly · $15/mo monthly", who: "One property. Personal projects." },
-  { n: "Pro", p: "$10/mo", sub: "Billed yearly · $25/mo monthly", who: "Investors, agents and contractors.", pop: true },
-  { n: "Studio", p: "$13/mo", sub: "Billed yearly · $35/mo monthly", who: "Design teams and brokerage offices." },
+  {
+    n: "Starter",
+    p: "$7/mo",
+    sub: "Billed yearly · $15/mo monthly",
+    who: "One property. Personal projects.",
+  },
+  {
+    n: "Pro",
+    p: "$10/mo",
+    sub: "Billed yearly · $25/mo monthly",
+    who: "Investors, agents and contractors.",
+    pop: true,
+  },
+  {
+    n: "Studio",
+    p: "$13/mo",
+    sub: "Billed yearly · $35/mo monthly",
+    who: "Design teams and brokerage offices.",
+  },
 ];
 
 function FoundersPage() {

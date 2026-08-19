@@ -68,7 +68,6 @@ export const saveEstimate = createServerFn({ method: "POST" })
       property = created;
     }
 
-
     const { data: project, error: prErr } = await supabase
       .from("projects")
       .insert({
@@ -172,7 +171,6 @@ export const deleteSavedEstimate = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-
 /** Dashboard rollup for the signed-in owner: counts, recent rooms, budget by property. */
 export const getWorkspaceSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -180,20 +178,24 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
     const { supabase } = context;
     const { checkBudgetsAvailable } = await import("@/lib/budget.server");
 
-    const [{ data: props, error: pErr }, { data: versions, error: vErr }, budgetsAvailable] = await Promise.all([
-      supabase.from("properties").select("id, address, created_at").order("created_at", { ascending: false }),
-      supabase
-        .from("versions")
-        .select(
-          `id, created_at, status, before_path,
+    const [{ data: props, error: pErr }, { data: versions, error: vErr }, budgetsAvailable] =
+      await Promise.all([
+        supabase
+          .from("properties")
+          .select("id, address, created_at")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("versions")
+          .select(
+            `id, created_at, status, before_path,
            rooms!inner ( id, name, room_type,
              projects!inner ( id, name, finish_grade, budget_target,
                properties!inner ( id, address ) ) ),
            scopes ( total_low, total_high, budget_fit )`,
-        )
-        .order("created_at", { ascending: false }),
-      checkBudgetsAvailable(),
-    ]);
+          )
+          .order("created_at", { ascending: false }),
+        checkBudgetsAvailable(),
+      ]);
     if (pErr) throw new Error(pErr.message);
     if (vErr) throw new Error(vErr.message);
 
@@ -289,7 +291,6 @@ export const getPropertyTree = createServerFn({ method: "GET" })
     );
     if (error) throw new Error(error.message);
 
-
     return (data ?? []).map((p: any) => ({
       id: p.id as string,
       address: propLabel(p.address),
@@ -316,7 +317,6 @@ export const getPropertyTree = createServerFn({ method: "GET" })
           room: (a.room_group ?? null) as string | null,
         })),
 
-
       has_dna: Array.isArray(p.design_dna?.items) && p.design_dna.items.length > 0,
       dna: (Array.isArray(p.design_dna?.items) ? p.design_dna.items : []) as {
         label: string;
@@ -329,7 +329,8 @@ export const getPropertyTree = createServerFn({ method: "GET" })
           id: pr.id as string,
           name: pr.name as string,
           grade: pr.finish_grade as string,
-          budget_target: budgetsAvailable && pr.budget_target != null ? Number(pr.budget_target) : null,
+          budget_target:
+            budgetsAvailable && pr.budget_target != null ? Number(pr.budget_target) : null,
           rooms: (pr.rooms ?? [])
             .slice()
             .sort((a: any, b: any) => String(a.created_at).localeCompare(String(b.created_at)))
@@ -407,9 +408,7 @@ export const saveRoomVersion = createServerFn({ method: "POST" })
 /** Design DNA is a small ordered list of finish decisions locked to a property. */
 const dnaSchema = z.object({
   property_id: z.string().uuid(),
-  items: z
-    .array(z.object({ label: z.string().min(1).max(60), color: z.string().max(24) }))
-    .max(12),
+  items: z.array(z.object({ label: z.string().min(1).max(60), color: z.string().max(24) })).max(12),
 });
 
 export const setPropertyDna = createServerFn({ method: "POST" })
@@ -477,9 +476,7 @@ export const createProject = createServerFn({ method: "POST" })
 export const setVersionStatus = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z
-      .object({ version_id: z.string().uuid(), status: z.enum(["draft", "approved"]) })
-      .parse(input),
+    z.object({ version_id: z.string().uuid(), status: z.enum(["draft", "approved"]) }).parse(input),
   )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
@@ -497,7 +494,9 @@ export const listRoomVersions = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("versions")
-      .select("id, version_no, status, style, before_path, after_path, created_at, scopes ( total_low, total_high )")
+      .select(
+        "id, version_no, status, style, before_path, after_path, created_at, scopes ( total_low, total_high )",
+      )
       .eq("room_id", data.room_id)
       .order("version_no", { ascending: false });
     if (error) throw new Error(error.message);

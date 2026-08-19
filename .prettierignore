@@ -6,3 +6,6 @@ pnpm-lock.yaml
 package-lock.json
 bun.lock
 routeTree.gen.ts
+
+# Stylesheet asserted verbatim by src/lib/scenes-layout.test.ts
+src/styles/rd-reveal.css

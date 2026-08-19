@@ -12,7 +12,11 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initAnalytics, trackPageview } from "../lib/analytics";
-import { shouldRecoverFromChunkError, clearChunkRecovery, currentBuildId } from "../lib/chunk-recovery";
+import {
+  shouldRecoverFromChunkError,
+  clearChunkRecovery,
+  currentBuildId,
+} from "../lib/chunk-recovery";
 
 export function NotFoundComponent() {
   return (
@@ -41,7 +45,9 @@ export function NotFoundComponent() {
               color: "#fff",
             }}
           >
-            <b style={{ fontWeight: 900, fontSize: 20, lineHeight: 1, letterSpacing: ".04em" }}>REAL</b>
+            <b style={{ fontWeight: 900, fontSize: 20, lineHeight: 1, letterSpacing: ".04em" }}>
+              REAL
+            </b>
             <em
               style={{
                 fontStyle: "normal",
@@ -68,7 +74,10 @@ export function NotFoundComponent() {
         >
           404
         </div>
-        <h1 className="mt-4 text-xl font-semibold" style={{ color: "#14120f", letterSpacing: "-.02em" }}>
+        <h1
+          className="mt-4 text-xl font-semibold"
+          style={{ color: "#14120f", letterSpacing: "-.02em" }}
+        >
           Page Not Found
         </h1>
         <p className="mt-2 text-sm" style={{ color: "#6b6660" }}>
@@ -114,7 +123,6 @@ export function NotFoundComponent() {
   );
 }
 
-
 // A stale/replaced build chunk makes the browser fail the route's dynamic
 // import and blanks the page. Reload once (guarded) to pick up fresh chunks.
 function isChunkLoadError(error: unknown) {
@@ -150,9 +158,6 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     }
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
-
-
-
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -229,7 +234,6 @@ function RootShell({ children }: { children: ReactNode }) {
   );
 }
 
-
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const router = useRouter();
@@ -246,16 +250,20 @@ function RootComponent() {
     clearChunkRecovery(store);
   }, []);
 
-
-
   // Global: white dropdown menus and white tooltips on every route.
   useEffect(() => {
     let stop: Array<() => void> = [];
-    void Promise.all([import("../lib/tooltips"), import("../lib/selects"), import("../lib/datalists")]).then(
-      ([tips, sels, lists]) => {
-        stop = [tips.initTooltips(document), sels.initSelects(document), lists.initDatalists(document)];
-      },
-    );
+    void Promise.all([
+      import("../lib/tooltips"),
+      import("../lib/selects"),
+      import("../lib/datalists"),
+    ]).then(([tips, sels, lists]) => {
+      stop = [
+        tips.initTooltips(document),
+        sels.initSelects(document),
+        lists.initDatalists(document),
+      ];
+    });
     return () => stop.forEach((fn) => fn());
   }, []);
 
@@ -269,7 +277,6 @@ function RootComponent() {
     });
     return () => unsub?.();
   }, [router]);
-
 
   return (
     <QueryClientProvider client={queryClient}>

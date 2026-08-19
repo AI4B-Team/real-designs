@@ -29,7 +29,13 @@ const props = [
 describe("property address lines", () => {
   it("splits structured fields into street and city/state/ZIP", () => {
     expect(
-      splitAddressLines("", { address_line_1: "7006 Orvicti Court", address_line_2: "Apt 4", city: "Wesley Chapel", state: "fl", postal_code: "33544" }),
+      splitAddressLines("", {
+        address_line_1: "7006 Orvicti Court",
+        address_line_2: "Apt 4",
+        city: "Wesley Chapel",
+        state: "fl",
+        postal_code: "33544",
+      }),
     ).toEqual({ line1: "7006 Orvicti Court Apt 4", line2: "Wesley Chapel, FL 33544" });
   });
   it("splits an unstructured string on its own commas only", () => {
@@ -69,14 +75,15 @@ describe("property cards", () => {
     /* Zero-photo properties are hidden until asked for. */
     expect(cards.length).toBe(3);
     expect(cards[0]!.querySelector("b")!.textContent).toBe("7006 Orvicti Court");
-    expect(cards[0]!.querySelector(".sp-prop-b > span")!.textContent).toBe("Wesley Chapel, FL 33544");
+    expect(cards[0]!.querySelector(".sp-prop-b > span")!.textContent).toBe(
+      "Wesley Chapel, FL 33544",
+    );
     expect(cards[1]!.textContent).toContain("1 Photo");
     expect(cards[2]!.className).toContain("is-util");
     expect(cards[2]!.querySelector("b")!.textContent).toBe("Unassigned Photos");
     /* Selection control lives on the thumbnail, not beside the count. */
     expect(cards[0]!.querySelector(".sp-pick")).toBeTruthy();
     expect(cards[0]!.querySelector(".sp-prop-c i")).toBe(null);
-
   });
 
   it("reveals zero-photo properties only through the quiet toggle", () => {
@@ -90,7 +97,6 @@ describe("property cards", () => {
     expect(empty.getAttribute("data-sp-prop")).toBe(null);
     expect(empty.textContent).toContain("Upload Photos");
   });
-
 
   it("opens a photo selection panel and hands back only the checked photos", async () => {
     const onPropertyPhotos = vi.fn();

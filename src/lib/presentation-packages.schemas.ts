@@ -31,7 +31,11 @@ export const pkgSaveSchema = z.object({
   client_email: z.string().trim().max(160).nullable().optional(),
   intro: z.string().trim().max(2000).nullable().optional(),
   logo_url: z.string().trim().max(600).nullable().optional(),
-  accent: z.string().trim().regex(/^#[0-9a-f]{6}$/i).optional(),
+  accent: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .optional(),
   cover_url: z.string().trim().max(600).nullable().optional(),
   status: z.enum(["draft", "shared", "viewed", "approved", "changes"]).optional(),
   settings: z.record(z.string(), z.any()).optional(),
@@ -46,7 +50,10 @@ export const pkgLinkSchema = z.object({
 });
 
 export const pkgShareTokenSchema = z.object({
-  token: z.string().trim().regex(/^[a-f0-9]{16,64}$/i),
+  token: z
+    .string()
+    .trim()
+    .regex(/^[a-f0-9]{16,64}$/i),
   code: z.string().trim().max(40).optional(),
 });
 

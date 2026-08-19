@@ -38,8 +38,9 @@ export const AERIAL_NOTICE = "Simulated aerial movement generated from a still p
 export const BACKGROUND_NOTICE = "Your clip is generating. You can safely close this window.";
 
 function esc(s: unknown): string {
-  return String(s ?? "").replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
+  return String(s ?? "").replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c] as string,
   );
 }
 
@@ -52,7 +53,10 @@ export const CLIP_ETA = "About 1–3 Minutes";
 export function clipCardHtml(key: string, clip: ClipView | null | undefined): string {
   if (!clip || clip.status === "deleted") return "";
   const k = esc(key);
-  const label = clipStatusLabel(clip.status, clip.status === "processing" ? Number(clip.progress || 0) / 100 : null);
+  const label = clipStatusLabel(
+    clip.status,
+    clip.status === "processing" ? Number(clip.progress || 0) / 100 : null,
+  );
   const btn = (action: string, text: string, cls = "fb-link") =>
     `<button class="${cls}" data-clip="${action}" data-key="${k}" data-id="${esc(clip.id)}">${esc(text)}</button>`;
 
@@ -153,9 +157,12 @@ export function animateModalHtml(ctx: AnimateModalCtx): string {
   const cat = ctx.cat || "recommended";
   const warn = opt ? animateWarning(opt.id, ctx.room) : "";
   const notices = opt
-    ? [warn, ARCHITECTURE_NOTICE, opt.lifestyle ? LIFESTYLE_NOTICE : "", opt.id === "aerial_reveal" ? AERIAL_NOTICE : ""].filter(
-        Boolean,
-      )
+    ? [
+        warn,
+        ARCHITECTURE_NOTICE,
+        opt.lifestyle ? LIFESTYLE_NOTICE : "",
+        opt.id === "aerial_reveal" ? AERIAL_NOTICE : "",
+      ].filter(Boolean)
     : [];
 
   const detail = opt
@@ -187,9 +194,11 @@ export function animateModalHtml(ctx: AnimateModalCtx): string {
   const credits = `<div class="an-credits">
       <span>Available: <b>${ctx.balance} credits</b></span>
       <span>This clip: <b>${cost} credits</b></span>
-      ${short
-        ? `<span class="an-short">Not enough credits — you need ${cost - ctx.balance} more.</span>`
-        : `<span>Remaining after generation: <b>${remaining} credits</b></span>`}
+      ${
+        short
+          ? `<span class="an-short">Not enough credits — you need ${cost - ctx.balance} more.</span>`
+          : `<span>Remaining after generation: <b>${remaining} credits</b></span>`
+      }
     </div>`;
 
   const hint = !opt
@@ -248,9 +257,11 @@ export function clipReviewHtml(ctx: {
       <figure><figcaption>Original Photo</figcaption>
         <div class="an-src-ph" ${ctx.photo ? `data-img="${esc(ctx.photo)}"` : ""} role="img" aria-label="Original photo"></div></figure>
       <figure><figcaption>Generated Clip</figcaption>
-        ${ctx.url
-          ? `<video id="rvClipVid" src="${esc(ctx.url)}" playsinline controls loop muted></video>`
-          : `<div class="an-src-ph">This clip could not be loaded.</div>`}
+        ${
+          ctx.url
+            ? `<video id="rvClipVid" src="${esc(ctx.url)}" playsinline controls loop muted></video>`
+            : `<div class="an-src-ph">This clip could not be loaded.</div>`
+        }
         <div class="cl-ctrl">
           <button class="btn btn-ghost btn-sm" data-clipctl="play"><i data-lucide="play"></i>Play</button>
           <button class="btn btn-ghost btn-sm" data-clipctl="mute"><i data-lucide="volume-2"></i>Mute</button>

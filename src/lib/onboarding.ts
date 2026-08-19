@@ -143,7 +143,11 @@ export function setCheckoutReturn(state: { view: string; intent?: StartIntent; r
   write(RETURN, { ...state, ts: Date.now() });
 }
 
-export function takeCheckoutReturn(): { view: string; intent?: StartIntent; reason?: string } | null {
+export function takeCheckoutReturn(): {
+  view: string;
+  intent?: StartIntent;
+  reason?: string;
+} | null {
   const r = read<{ view: string; intent?: StartIntent; reason?: string; ts?: number }>(RETURN);
   drop(RETURN);
   if (!r || Date.now() - (r.ts ?? 0) > DAY) return null;

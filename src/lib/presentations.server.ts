@@ -1,4 +1,3 @@
-
 /** Turn a stored room-photo path into a short-lived signed URL. */
 export async function signRoomPhoto(path: string | null) {
   if (!path || /^(https?:|\/|data:)/.test(path)) return path;

@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/mls-photo-rules",
   tier: "D",
-  intent: "Someone editing listing photos wants to know what kinds of edits MLS rules typically allow versus restrict.",
+  intent:
+    "Someone editing listing photos wants to know what kinds of edits MLS rules typically allow versus restrict.",
 
   metaTitle: "MLS Rules For Edited Listing Photos",
-  metaDescription: "General guidance on enhancement versus alteration, sky replacement, watermarks, and photo ownership under typical MLS photo rules. Not legal advice.",
+  metaDescription:
+    "General guidance on enhancement versus alteration, sky replacement, watermarks, and photo ownership under typical MLS photo rules. Not legal advice.",
 
   eyebrow: "Compliance",
   h1: "MLS Rules For Edited Listing Photos",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Edited exterior photo with sky replaced and vehicles removed.",
 
   steps: [
-    { title: "Sort The Edit By Type", text: "Decide whether the change is a correction, an enhancement, or an alteration of what the photo shows." },
-    { title: "Apply Any Required Label", text: "Attach disclosure language for edits your MLS treats as alterations rather than simple corrections." },
-    { title: "Confirm Ownership Before Publishing", text: "Check the photographer's license terms before an edited image goes to the MLS or a third party site." },
+    {
+      title: "Sort The Edit By Type",
+      text: "Decide whether the change is a correction, an enhancement, or an alteration of what the photo shows.",
+    },
+    {
+      title: "Apply Any Required Label",
+      text: "Attach disclosure language for edits your MLS treats as alterations rather than simple corrections.",
+    },
+    {
+      title: "Confirm Ownership Before Publishing",
+      text: "Check the photographer's license terms before an edited image goes to the MLS or a third party site.",
+    },
   ],
 
   showcase: ["mls", "exterior", "staging", "reality-lock"],
-
 
   sections: [
     {
@@ -106,6 +116,7 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Edit Listing Photos With Labels Attached",
-  ctaBody: "Sky, staging and cosmetic edits export with the metadata and captions you need to move quickly through MLS review.",
+  ctaBody:
+    "Sky, staging and cosmetic edits export with the metadata and captions you need to move quickly through MLS review.",
   ctaLabel: "Edit A Listing Photo",
 };

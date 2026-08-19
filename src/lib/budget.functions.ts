@@ -57,7 +57,8 @@ export const requestBudgetMarket = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("market_requests").insert({
       user_id: context.userId,
       region: data.region,
-      email: data.email || String((context.claims as Record<string, unknown>)["email"] ?? "") || null,
+      email:
+        data.email || String((context.claims as Record<string, unknown>)["email"] ?? "") || null,
       note: data.note || null,
     });
     if (error) throw new Error(error.message);

@@ -22,5 +22,6 @@ export function readServerConfig(): ConfigReport {
 /** Throw a user-safe error before doing work that cannot succeed without config. */
 export function assertServerConfig(): void {
   const report = readServerConfig();
-  if (!report.ok) throw new Error("This feature is temporarily unavailable. Please try again shortly.");
+  if (!report.ok)
+    throw new Error("This feature is temporarily unavailable. Please try again shortly.");
 }

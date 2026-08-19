@@ -36,7 +36,11 @@ describe("validateServerConfig", () => {
   });
 
   it("warns about a missing publishable key and a non-https url", () => {
-    const r = validateServerConfig({ SUPABASE_URL: "http://x", SUPABASE_SERVICE_ROLE_KEY: "k", LOVABLE_API_KEY: "k" });
+    const r = validateServerConfig({
+      SUPABASE_URL: "http://x",
+      SUPABASE_SERVICE_ROLE_KEY: "k",
+      LOVABLE_API_KEY: "k",
+    });
     expect(r.warnings).toHaveLength(2);
   });
 });

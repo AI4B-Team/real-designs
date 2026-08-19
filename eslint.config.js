@@ -1,5 +1,5 @@
 import js from "@eslint/js";
-import eslintPluginPrettier from "eslint-plugin-prettier/recommended";
+import eslintConfigPrettier from "eslint-config-prettier";
 import globals from "globals";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
@@ -34,7 +34,19 @@ export default tseslint.config(
       ],
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      // Deliberate best-effort `catch {}` around browser APIs is an accepted
+      // pattern here; every other empty block is still an error.
+      "no-empty": ["error", { allowEmptyCatch: true }],
     },
   },
-  eslintPluginPrettier,
+  // Formatting is Prettier's job and is checked by `npm run format:check`.
+  // ESLint only reports meaningful code violations so the two signals stay
+  // separate and reviewable.
+  {
+    // Playwright fixtures use a `use` parameter that the React hooks rule
+    // mistakes for a hook call.
+    files: ["e2e/**/*.{ts,tsx}"],
+    rules: { "react-hooks/rules-of-hooks": "off" },
+  },
+  eslintConfigPrettier,
 );

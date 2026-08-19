@@ -67,7 +67,10 @@ function show(node: EventTarget | null) {
     return;
   }
   const text = el.getAttribute("data-tt");
-  if (!text) { if (current === el) hide(); return; }
+  if (!text) {
+    if (current === el) hide();
+    return;
+  }
   // Repaint when the same element changes its hint (a toggle flipping label).
   if (el === current && bubble && bubble.textContent === text) return;
   current = el;
@@ -80,27 +83,50 @@ let lastPointer = "mouse";
 function bindBubble() {
   if (bound) return;
   bound = true;
-  document.addEventListener("pointerdown", (e) => { lastPointer = (e as PointerEvent).pointerType || "mouse"; }, true);
+  document.addEventListener(
+    "pointerdown",
+    (e) => {
+      lastPointer = (e as PointerEvent).pointerType || "mouse";
+    },
+    true,
+  );
   document.addEventListener("pointerover", (e) => show(e.target), true);
-  document.addEventListener("pointerout", (e) => {
-    const to = (e as PointerEvent).relatedTarget;
-    if (current && targetFor(to) === current) return;
-    hideTimer = window.setTimeout(hide, 60);
-  }, true);
+  document.addEventListener(
+    "pointerout",
+    (e) => {
+      const to = (e as PointerEvent).relatedTarget;
+      if (current && targetFor(to) === current) return;
+      hideTimer = window.setTimeout(hide, 60);
+    },
+    true,
+  );
   document.addEventListener("focusin", (e) => show(e.target), true);
   document.addEventListener("focusout", hide, true);
-  document.addEventListener("keydown", (e) => { if ((e as KeyboardEvent).key === "Escape") hide(); }, true);
+  document.addEventListener(
+    "keydown",
+    (e) => {
+      if ((e as KeyboardEvent).key === "Escape") hide();
+    },
+    true,
+  );
   window.addEventListener("scroll", hide, true);
   window.addEventListener("resize", hide);
   // Touch: tap an inline help icon to reveal, tap anywhere to dismiss. A mouse
   // click always dismisses, so a hint can never linger over the new UI state.
-  document.addEventListener("click", (e) => {
-    const el = targetFor(e.target);
-    if (el && lastPointer === "touch") { current = null; show(e.target); window.clearTimeout(hideTimer); hideTimer = window.setTimeout(hide, 3200); }
-    else hide();
-  }, true);
+  document.addEventListener(
+    "click",
+    (e) => {
+      const el = targetFor(e.target);
+      if (el && lastPointer === "touch") {
+        current = null;
+        show(e.target);
+        window.clearTimeout(hideTimer);
+        hideTimer = window.setTimeout(hide, 3200);
+      } else hide();
+    },
+    true,
+  );
 }
-
 
 export function initTooltips(root: ParentNode = document): () => void {
   const convert = (scope: ParentNode) => {
@@ -109,7 +135,10 @@ export function initTooltips(root: ParentNode = document): () => void {
       : [];
     nodes.forEach((el) => {
       const t = el.getAttribute("title");
-      if (!t) { el.removeAttribute("title"); return; }
+      if (!t) {
+        el.removeAttribute("title");
+        return;
+      }
       // Keep existing rail tooltips (data-tip) as the single source of truth.
       if (!el.hasAttribute("data-tip")) el.setAttribute("data-tt", t);
       el.removeAttribute("title");
@@ -123,16 +152,14 @@ export function initTooltips(root: ParentNode = document): () => void {
   const label = (scope: ParentNode) => {
     const q = (scope as Element).querySelectorAll;
     if (!q) return;
-    (scope as Element)
-      .querySelectorAll("[data-tt],[data-tip]")
-      .forEach((el) => {
-        const tag = el.tagName;
-        if (tag !== "BUTTON" && tag !== "A" && !el.hasAttribute("role")) return;
-        if (el.getAttribute("aria-label")) return;
-        if ((el as HTMLElement).textContent?.trim()) return;
-        const t = el.getAttribute("data-tt") || el.getAttribute("data-tip");
-        if (t) el.setAttribute("aria-label", t);
-      });
+    (scope as Element).querySelectorAll("[data-tt],[data-tip]").forEach((el) => {
+      const tag = el.tagName;
+      if (tag !== "BUTTON" && tag !== "A" && !el.hasAttribute("role")) return;
+      if (el.getAttribute("aria-label")) return;
+      if ((el as HTMLElement).textContent?.trim()) return;
+      const t = el.getAttribute("data-tt") || el.getAttribute("data-tip");
+      if (t) el.setAttribute("aria-label", t);
+    });
   };
 
   convert(root);
@@ -141,16 +168,28 @@ export function initTooltips(root: ParentNode = document): () => void {
   const target = (root as Document).body || (root as Element);
   const obs = new MutationObserver((muts) => {
     for (const m of muts) {
-      if (m.type === "attributes" && m.target instanceof Element) convert(m.target.parentNode || document);
+      if (m.type === "attributes" && m.target instanceof Element)
+        convert(m.target.parentNode || document);
       m.addedNodes.forEach((n) => {
         if (n instanceof Element) {
           if (n.hasAttribute("title")) convert(n.parentNode || document);
           convert(n);
         }
       });
-      m.removedNodes.forEach((n) => { if (current && n instanceof Element && (n === current || n.contains(current))) hide(); });
+      m.removedNodes.forEach((n) => {
+        if (current && n instanceof Element && (n === current || n.contains(current))) hide();
+      });
     }
   });
-  if (target) obs.observe(target, { childList: true, subtree: true, attributes: true, attributeFilter: ["title", "data-tt", "data-tip"] });
-  return () => { obs.disconnect(); hide(); };
+  if (target)
+    obs.observe(target, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["title", "data-tt", "data-tip"],
+    });
+  return () => {
+    obs.disconnect();
+    hide();
+  };
 }

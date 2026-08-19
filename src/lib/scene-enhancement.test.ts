@@ -29,7 +29,9 @@ describe("capability model", () => {
   });
 
   it("prices every AI clip and no effect at clip prices", () => {
-    ANIMATE_OPTIONS.forEach((a) => expect(costPerScene("animate", a.id)).toBe(ANIMATE_CREDITS_PER_CLIP));
+    ANIMATE_OPTIONS.forEach((a) =>
+      expect(costPerScene("animate", a.id)).toBe(ANIMATE_CREDITS_PER_CLIP),
+    );
     EFFECT_OPTIONS.forEach((e) => expect(e.credits).toBeLessThan(ANIMATE_CREDITS_PER_CLIP));
   });
 
@@ -80,7 +82,9 @@ describe("cost quotes", () => {
   });
 
   it("flags a quote the balance cannot cover", () => {
-    expect(quote([{ label: "AI Animate", kind: "animate", id: "dolly_in", scenes: 3 }], 40).affordable).toBe(false);
+    expect(
+      quote([{ label: "AI Animate", kind: "animate", id: "dolly_in", scenes: 3 }], 40).affordable,
+    ).toBe(false);
   });
 });
 
@@ -88,7 +92,10 @@ describe("disclosure", () => {
   it("labels simulated movement, not drone footage", () => {
     expect(sceneDisclosures({ motion: "push" })).toEqual(["simulated_motion"]);
     expect(sceneDisclosures({ motion: "static" })).toEqual([]);
-    expect(sceneDisclosures({ animate: "aerial_reveal" })).toEqual(["simulated_aerial", "ai_video"]);
+    expect(sceneDisclosures({ animate: "aerial_reveal" })).toEqual([
+      "simulated_aerial",
+      "ai_video",
+    ]);
   });
 
   it("records every real modification of a scene", () => {

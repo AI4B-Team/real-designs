@@ -44,7 +44,10 @@ export const MORE_TRANSITIONS: Array<[TransitionType, string]> = [
   ["match_move", "Match Move"],
 ];
 
-export const ALL_TRANSITIONS: Array<[TransitionType, string]> = [...PRIMARY_TRANSITIONS, ...MORE_TRANSITIONS];
+export const ALL_TRANSITIONS: Array<[TransitionType, string]> = [
+  ...PRIMARY_TRANSITIONS,
+  ...MORE_TRANSITIONS,
+];
 
 /** Compact badge text once a connection is configured. */
 export function transitionLabel(t?: string | null): string {
@@ -75,7 +78,8 @@ export type SceneShape = {
 
 export type RoomClass = "exterior" | "entry" | "interior" | "unknown";
 
-const EXTERIOR = /(exterior|front|back ?yard|backyard|yard|garden|landscap|pool|patio|deck|porch|driveway|street|aerial|facade|curb|balcon|terrace|outdoor)/i;
+const EXTERIOR =
+  /(exterior|front|back ?yard|backyard|yard|garden|landscap|pool|patio|deck|porch|driveway|street|aerial|facade|curb|balcon|terrace|outdoor)/i;
 const ENTRY = /(entry|entrance|foyer|hall(way)?|mudroom|stair|landing|lobby)/i;
 const INTERIOR =
   /(living|family|great|kitchen|dining|bed|primary|master|bath|office|den|study|laundry|closet|basement|attic|game|media|gym|nursery|pantry|bonus|sunroom|loft|interior)/i;
@@ -90,8 +94,12 @@ export function classifyRoom(name?: string | null): RoomClass {
 }
 
 function sameRoom(a?: string | null, b?: string | null): boolean {
-  const x = String(a || "").trim().toLowerCase();
-  const y = String(b || "").trim().toLowerCase();
+  const x = String(a || "")
+    .trim()
+    .toLowerCase();
+  const y = String(b || "")
+    .trim()
+    .toLowerCase();
   return !!x && x === y;
 }
 
@@ -100,7 +108,10 @@ function sameRoom(a?: string | null, b?: string | null): boolean {
  * chooses a novelty move: the result is always Cut, Dissolve, Fade, Push or
  * Match Move.
  */
-export function resolveAuto(from?: SceneShape | null, to?: SceneShape | null): Exclude<TransitionType, "auto" | "ai"> {
+export function resolveAuto(
+  from?: SceneShape | null,
+  to?: SceneShape | null,
+): Exclude<TransitionType, "auto" | "ai"> {
   if (!from || !to) return "dissolve";
   const a = classifyRoom(from.room_name);
   const b = classifyRoom(to.room_name);
@@ -140,7 +151,10 @@ export const OFFERED_TRANSITIONS: Array<[["cut", "dissolve", "fade"][number], st
  * Auto Select is a recommendation mode, not a transition of its own: it always
  * resolves to one of the three transitions a user can pick by hand.
  */
-export function autoPick(from?: SceneShape | null, to?: SceneShape | null): "cut" | "dissolve" | "fade" {
+export function autoPick(
+  from?: SceneShape | null,
+  to?: SceneShape | null,
+): "cut" | "dissolve" | "fade" {
   const t = resolveAuto(from, to);
   if (t === "cut" || t === "fade") return t;
   if (t === "match_move" || t === "zoom_match") return "cut";
@@ -169,7 +183,9 @@ export function connectionKey(fromKey: string, toKey: string): string {
 }
 
 /** Ordered list of connections for the current scene order. */
-export function connectionsFor(scenes: Array<{ key: string }>): Array<{ from: string; to: string; key: string }> {
+export function connectionsFor(
+  scenes: Array<{ key: string }>,
+): Array<{ from: string; to: string; key: string }> {
   const out: Array<{ from: string; to: string; key: string }> = [];
   for (let i = 0; i < scenes.length - 1; i++) {
     const a = scenes[i]?.key;
@@ -206,7 +222,10 @@ export function reconcileTransitions<T extends TransitionRow>(
 }
 
 /** Map of connection key -> row, deduped, for the current order only. */
-export function transitionMap<T extends TransitionRow>(scenes: Array<{ key: string }>, rows: T[]): Map<string, T> {
+export function transitionMap<T extends TransitionRow>(
+  scenes: Array<{ key: string }>,
+  rows: T[],
+): Map<string, T> {
   const { keep } = reconcileTransitions(scenes, rows);
   return new Map(keep.map((r) => [connectionKey(r.from_key, r.to_key), r]));
 }
@@ -288,7 +307,12 @@ export type RenderManifest = {
   transitions: ManifestTransition[];
   totalMs: number;
   audio?: { music?: string | null; narrationUrl?: string | null; narrationStartMs?: number } | null;
-  titles?: { headline?: string | null; sub?: string | null; startMs?: number; endMs?: number } | null;
+  titles?: {
+    headline?: string | null;
+    sub?: string | null;
+    startMs?: number;
+    endMs?: number;
+  } | null;
 };
 
 /**
@@ -314,7 +338,10 @@ export function buildRenderManifest(input: {
     const clipUrl = row?.status === "completed" ? row?.generated_clip_path || null : null;
     /* An AI transition with no finished clip must still render something
        deterministic, so it falls back to the Auto choice. */
-    const type = requested === "ai" && !clipUrl ? resolveAuto(from, to) : resolveTransition(requested, from, to);
+    const type =
+      requested === "ai" && !clipUrl
+        ? resolveAuto(from, to)
+        : resolveTransition(requested, from, to);
     transitions.push({
       from: c.from,
       to: c.to,
@@ -359,11 +386,13 @@ export function smartTiming(input: SmartTimingInput): {
   const free = scenes.filter((s) => !s.locked);
   const transMs = transitions.reduce((a, t) => a + t.durationMs, 0);
 
-  const target = input.narrationMs && input.narrationMs > 0 ? input.narrationMs + 1200 : input.targetMs || 0;
+  const target =
+    input.narrationMs && input.narrationMs > 0 ? input.narrationMs + 1200 : input.targetMs || 0;
   if (target > 0 && free.length) {
     const room = Math.max(free.length * 1200, target - lockedMs - transMs);
     let per = Math.round(room / free.length);
-    if (input.beatMs && input.beatMs > 200) per = Math.max(1200, Math.round(per / input.beatMs) * input.beatMs);
+    if (input.beatMs && input.beatMs > 200)
+      per = Math.max(1200, Math.round(per / input.beatMs) * input.beatMs);
     for (const s of free) s.durationMs = per;
   } else {
     for (const s of free) {

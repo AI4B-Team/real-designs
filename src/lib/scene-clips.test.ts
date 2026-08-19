@@ -1,6 +1,17 @@
 import { describe, it, expect } from "vitest";
-import { clipCardHtml, animateModalHtml, clipReviewHtml, ARCHITECTURE_NOTICE, LIFESTYLE_NOTICE } from "@/lib/scene-clip-ui";
-import { ANIMATE_CREDITS_PER_CLIP, ANIMATE_OPTIONS, animateCategory, animatePrompt } from "@/lib/scene-enhancement";
+import {
+  clipCardHtml,
+  animateModalHtml,
+  clipReviewHtml,
+  ARCHITECTURE_NOTICE,
+  LIFESTYLE_NOTICE,
+} from "@/lib/scene-clip-ui";
+import {
+  ANIMATE_CREDITS_PER_CLIP,
+  ANIMATE_OPTIONS,
+  animateCategory,
+  animatePrompt,
+} from "@/lib/scene-enhancement";
 import { clipSize, clipStoragePath, clipPrice } from "@/lib/scene-clips.server";
 
 const clip = (over: Record<string, unknown> = {}) =>
@@ -31,7 +42,10 @@ describe("clip card states", () => {
   });
 
   it("explains a failure and offers a retry", () => {
-    const html = clipCardHtml("k", clip({ status: "failed", error_message: "Safety filters blocked it." }));
+    const html = clipCardHtml(
+      "k",
+      clip({ status: "failed", error_message: "Safety filters blocked it." }),
+    );
     expect(html).toContain("Safety filters blocked it.");
     expect(html).toContain('data-clip="retry"');
   });
@@ -70,10 +84,14 @@ describe("animate modal", () => {
 
 describe("clip review", () => {
   it("cannot approve a clip with no playable media", () => {
-    expect(clipReviewHtml({ clip: clip(), url: null }).includes('id="rvClipUse" disabled')).toBe(true);
+    expect(clipReviewHtml({ clip: clip(), url: null }).includes('id="rvClipUse" disabled')).toBe(
+      true,
+    );
   });
   it("offers keeping the photo instead", () => {
-    expect(clipReviewHtml({ clip: clip(), url: "https://x/y.mp4" })).toContain("Keep Photo Instead");
+    expect(clipReviewHtml({ clip: clip(), url: "https://x/y.mp4" })).toContain(
+      "Keep Photo Instead",
+    );
   });
 });
 

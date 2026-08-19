@@ -25,7 +25,13 @@ describe("shared builder navigation contract", () => {
   });
 
   it("video rail is Scenes, Titles, Audio, Brand, Review — no Add Photos", () => {
-    expect(VIDEO_RAIL.map((s) => s.label)).toEqual(["Scenes", "Titles", "Audio", "Brand", "Review"]);
+    expect(VIDEO_RAIL.map((s) => s.label)).toEqual([
+      "Scenes",
+      "Titles",
+      "Audio",
+      "Brand",
+      "Review",
+    ]);
     expect(VIDEO_FLOW).toEqual([2, 5, 6, 4, 7]);
   });
 
@@ -95,7 +101,9 @@ describe("exit affordances", () => {
 
   it("Start Over confirms with the agreed copy and keeps photos in Media", () => {
     const modal = readFileSync("src/lib/builder-exit.ts", "utf8");
-    expect(modal).toContain("Your current draft settings will be cleared. Uploaded photos will remain in Media.");
+    expect(modal).toContain(
+      "Your current draft settings will be cleared. Uploaded photos will remain in Media.",
+    );
     expect(START_OVER_COPY).toContain("Uploaded photos will remain in Media");
   });
 
@@ -110,7 +118,7 @@ describe("exit affordances", () => {
   });
 
   it("Add Photos on Rooms and Scenes appends to the current draft", () => {
-    expect(staging).toContain('if (picked.length) addFiles(picked);');
+    expect(staging).toContain("if (picked.length) addFiles(picked);");
     expect(reveal).toContain('on("#rvHeadFile", "change"');
   });
 });

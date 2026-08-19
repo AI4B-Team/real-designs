@@ -14,7 +14,14 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export const startListingImport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d) => z.object({ url: z.string().min(4).max(1000), property_id: z.string().uuid().nullable().optional() }).parse(d))
+  .inputValidator((d) =>
+    z
+      .object({
+        url: z.string().min(4).max(1000),
+        property_id: z.string().uuid().nullable().optional(),
+      })
+      .parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { checkListingUrl, fetchListing } = await import("@/lib/listing-import.server");
     const supabase = context.supabase;
@@ -22,7 +29,13 @@ export const startListingImport = createServerFn({ method: "POST" })
 
     const check = checkListingUrl(data.url);
     if (!check.ok) {
-      return { ok: false as const, status: "failed", code: check.code, message: check.message, import: null };
+      return {
+        ok: false as const,
+        status: "failed",
+        code: check.code,
+        message: check.message,
+        import: null,
+      };
     }
 
     // Re-importing the same listing reuses the existing record instead of
@@ -56,7 +69,12 @@ export const startListingImport = createServerFn({ method: "POST" })
     } else {
       await supabase
         .from("listing_imports")
-        .update({ status: "processing", stage: "retrieving", error_code: null, error_message: null })
+        .update({
+          status: "processing",
+          stage: "retrieving",
+          error_code: null,
+          error_message: null,
+        })
         .eq("id", row.id);
     }
 
@@ -64,7 +82,12 @@ export const startListingImport = createServerFn({ method: "POST" })
     if (!result.ok) {
       const upd = await supabase
         .from("listing_imports")
-        .update({ status: "failed", stage: "failed", error_code: result.code, error_message: result.message })
+        .update({
+          status: "failed",
+          stage: "failed",
+          error_code: result.code,
+          error_message: result.message,
+        })
         .eq("id", row.id)
         .select("*")
         .single();
@@ -156,6 +179,19 @@ export const lookupListingByAddress = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { fetchListingByAddress } = await import("@/lib/listing-import.server");
     const r = await fetchListingByAddress(data.address.trim());
-    if (!r.ok) return { ok: false as const, code: r.code, message: r.message, listing: null as any, photos: [] as any };
-    return { ok: true as const, code: null, message: "", listing: r.listing as any, photos: r.photos as any };
+    if (!r.ok)
+      return {
+        ok: false as const,
+        code: r.code,
+        message: r.message,
+        listing: null as any,
+        photos: [] as any,
+      };
+    return {
+      ok: true as const,
+      code: null,
+      message: "",
+      listing: r.listing as any,
+      photos: r.photos as any,
+    };
   });

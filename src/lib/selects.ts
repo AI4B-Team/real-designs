@@ -14,7 +14,9 @@ type Cleanup = () => void;
 
 function closeMenu() {
   document.querySelectorAll(".rdsel-menu").forEach((n) => n.remove());
-  document.querySelectorAll("select." + "rdsel-open").forEach((n) => n.classList.remove("rdsel-open"));
+  document
+    .querySelectorAll("select." + "rdsel-open")
+    .forEach((n) => n.classList.remove("rdsel-open"));
 }
 
 function openMenu(sel: HTMLSelectElement) {
@@ -66,7 +68,8 @@ function openMenu(sel: HTMLSelectElement) {
 }
 
 function enhance(sel: HTMLSelectElement) {
-  if (sel.multiple || sel.size > 1 || enhanced.has(sel) || sel.hasAttribute("data-native-select")) return;
+  if (sel.multiple || sel.size > 1 || enhanced.has(sel) || sel.hasAttribute("data-native-select"))
+    return;
   enhanced.add(sel);
   sel.addEventListener("mousedown", (e) => {
     e.preventDefault();
@@ -94,7 +97,10 @@ export function initSelects(root: ParentNode = document): Cleanup {
   scan(root);
 
   const obs = new MutationObserver((muts) => {
-    for (const m of muts) m.addedNodes.forEach((n) => { if (n instanceof Element) scan(n); });
+    for (const m of muts)
+      m.addedNodes.forEach((n) => {
+        if (n instanceof Element) scan(n);
+      });
   });
   obs.observe(document.body, { childList: true, subtree: true });
 

@@ -70,7 +70,8 @@ export const listProjectSceneClips = createServerFn({ method: "POST" })
     const clips = (rows ?? []) as any[];
     const urls: Record<string, string | null> = {};
     for (const c of clips) {
-      if (c.status === "completed" && c.storage_path) urls[c.id] = await clipSignedUrl(c.storage_path);
+      if (c.status === "completed" && c.storage_path)
+        urls[c.id] = await clipSignedUrl(c.storage_path);
     }
     return { clips, urls };
   });

@@ -53,7 +53,10 @@ export const detectChanges = createServerFn({ method: "POST" })
     if (!apiKey) throw new Error("AI is not configured.");
 
     const catalogText = catalog
-      .map((c) => `- ${c.label}${c.material ? ` (${c.material})` : ""} · grade ${c.grade} · qty from ${c.qty}`)
+      .map(
+        (c) =>
+          `- ${c.label}${c.material ? ` (${c.material})` : ""} · grade ${c.grade} · qty from ${c.qty}`,
+      )
       .join("\n");
 
     const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -67,14 +70,19 @@ export const detectChanges = createServerFn({ method: "POST" })
             content:
               "You compare a BEFORE and AFTER photo of the same room and list only the construction/finish work implied by the difference. " +
               "You must never state or imply a cost. Use ONLY labels from the provided catalog. " +
-              "If a finish looks unchanged, use action \"keep\". Give qty only for countable items (fixtures, doors); leave qty null for area-driven work so the estimator derives it from room dimensions.\n\n" +
-              "Use these exact label strings only: " + [...allowed].join(", ") + "\n\nCATALOG:\n" +
+              'If a finish looks unchanged, use action "keep". Give qty only for countable items (fixtures, doors); leave qty null for area-driven work so the estimator derives it from room dimensions.\n\n' +
+              "Use these exact label strings only: " +
+              [...allowed].join(", ") +
+              "\n\nCATALOG:\n" +
               catalogText,
           },
           {
             role: "user",
             content: [
-              { type: "text", text: `Finish grade: ${data.grade}. First image is BEFORE, second is AFTER.` },
+              {
+                type: "text",
+                text: `Finish grade: ${data.grade}. First image is BEFORE, second is AFTER.`,
+              },
               { type: "image_url", image_url: { url: data.before } },
               { type: "image_url", image_url: { url: data.after } },
             ],
@@ -125,7 +133,6 @@ export const detectChanges = createServerFn({ method: "POST" })
       throw new Error(`Change detection failed (${res.status}).`);
     }
 
-
     const payload = (await res.json()) as any;
     const call = payload?.choices?.[0]?.message?.tool_calls?.[0]?.function?.arguments;
     if (!call) throw new Error("No change items were returned.");
@@ -163,7 +170,10 @@ export const detectChanges = createServerFn({ method: "POST" })
       tile: "wall_tile",
     };
     const normalize = (l: string) => {
-      const k = l.trim().toLowerCase().replace(/[\s-]+/g, "_");
+      const k = l
+        .trim()
+        .toLowerCase()
+        .replace(/[\s-]+/g, "_");
       return allowed.has(k) ? k : (SYNONYMS[k] ?? k);
     };
 

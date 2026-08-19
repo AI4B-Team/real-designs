@@ -41,15 +41,11 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/subprocessors", changefreq: "yearly", priority: "0.3" },
           { path: "/accessibility", changefreq: "yearly", priority: "0.3" },
           { path: "/do-not-sell", changefreq: "yearly", priority: "0.3" },
-
         ];
-
 
         // One <loc> per path: duplicates split crawl signals.
         const seen = new Set<string>();
-        const unique = entries.filter((e) =>
-          seen.has(e.path) ? false : (seen.add(e.path), true),
-        );
+        const unique = entries.filter((e) => (seen.has(e.path) ? false : (seen.add(e.path), true)));
 
         const urls = unique.map((e) =>
           [

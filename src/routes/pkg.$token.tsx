@@ -1,20 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { getSharedPackage, commentOnPackage, decideOnPackage } from "@/lib/presentation-packages.functions";
+import {
+  getSharedPackage,
+  commentOnPackage,
+  decideOnPackage,
+} from "@/lib/presentation-packages.functions";
 import "@/styles/rd-site.css";
 import "@/styles/rd-share-pkg.css";
 
 export const Route = createFileRoute("/pkg/$token")({
   loader: async ({ params }) => {
     try {
-      return { token: params.token, pack: await getSharedPackage({ data: { token: params.token } }) };
+      return {
+        token: params.token,
+        pack: await getSharedPackage({ data: { token: params.token } }),
+      };
     } catch {
       return { token: params.token, pack: null };
     }
   },
   head: ({ loaderData }) => {
-    const pk = loaderData?.pack && !(loaderData.pack as any).error ? (loaderData.pack as any) : null;
+    const pk =
+      loaderData?.pack && !(loaderData.pack as any).error ? (loaderData.pack as any) : null;
     const title = pk ? `${pk.title} | REAL DESIGNS` : "Client Presentation | REAL DESIGNS";
     const description = pk
       ? `${pk.property_label || "A property presentation"} prepared for ${pk.client_name || "you"} — designs, photos and video in one place.`
@@ -62,23 +70,40 @@ function SharedPackage() {
     }
   }
 
-  if (!gate) return <Shell><p>This link is no longer active. Ask the sender for a fresh one.</p></Shell>;
+  if (!gate)
+    return (
+      <Shell>
+        <p>This link is no longer active. Ask the sender for a fresh one.</p>
+      </Shell>
+    );
 
   if (gate.error === "code_required" || gate.error === "bad_code") {
     return (
       <Shell>
         <h1 className="sp-title">Enter Your Access Code</h1>
         <p className="sp-sub">
-          {gate.error === "bad_code" ? "That code did not match. Try again." : "The sender protected this presentation."}
+          {gate.error === "bad_code"
+            ? "That code did not match. Try again."
+            : "The sender protected this presentation."}
         </p>
-        <input className="sp-in" value={code} onChange={(e) => setCode(e.target.value)} placeholder="Access code" />
+        <input
+          className="sp-in"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Access code"
+        />
         <button className="sp-btn sp-btn-primary" disabled={busy || !code} onClick={unlock}>
           {busy ? "Checking…" : "Open Presentation"}
         </button>
       </Shell>
     );
   }
-  if (gate.error) return <Shell><p>This link is no longer active. Ask the sender for a fresh one.</p></Shell>;
+  if (gate.error)
+    return (
+      <Shell>
+        <p>This link is no longer active. Ask the sender for a fresh one.</p>
+      </Shell>
+    );
 
   const pk = gate;
   const accent = /^#[0-9a-f]{6}$/i.test(pk.accent || "") ? pk.accent : "#CC0000";
@@ -100,7 +125,9 @@ function SharedPackage() {
     if (!comment.trim()) return;
     setBusy(true);
     try {
-      await commentOnPackage({ data: { token, body: comment.trim(), name: pk.client_name || undefined } });
+      await commentOnPackage({
+        data: { token, body: comment.trim(), name: pk.client_name || undefined },
+      });
       setComment("");
       setSent(true);
     } finally {
@@ -114,7 +141,9 @@ function SharedPackage() {
         {pk.logo_url ? (
           <img className="sp-logo" src={pk.logo_url} alt="" />
         ) : (
-          <span className="sp-brand">REAL <b>DESIGNS</b></span>
+          <span className="sp-brand">
+            REAL <b>DESIGNS</b>
+          </span>
         )}
         <span className="sp-kicker">Prepared For {pk.client_name || "You"}</span>
       </header>
@@ -200,7 +229,11 @@ function SharedPackage() {
               />
               <div className="sp-actions">
                 {settings.allow_approve !== false ? (
-                  <button className="sp-btn sp-btn-primary" disabled={busy} onClick={() => decide("approved")}>
+                  <button
+                    className="sp-btn sp-btn-primary"
+                    disabled={busy}
+                    onClick={() => decide("approved")}
+                  >
                     {busy ? "Sending…" : "Approve This Presentation"}
                   </button>
                 ) : null}

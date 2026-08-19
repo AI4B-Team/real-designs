@@ -34,7 +34,9 @@ const SceneInput = z.object({
       z.object({
         text: z.string().max(80),
         style: z.enum(["clean", "architectural", "callout"]).default("clean"),
-        position: z.enum(["top_left", "top_right", "bottom_left", "bottom_right"]).default("bottom_left"),
+        position: z
+          .enum(["top_left", "top_right", "bottom_left", "bottom_right"])
+          .default("bottom_left"),
       }),
     )
     .max(3)
@@ -57,7 +59,9 @@ const ProjectInput = z.object({
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
   normalized_address: z.string().max(400).nullable().optional(),
-  address_source: z.enum(["manual", "autocomplete", "existing_property", "listing_import", "inherited", "unknown"]).optional(),
+  address_source: z
+    .enum(["manual", "autocomplete", "existing_property", "listing_import", "inherited", "unknown"])
+    .optional(),
   address_verified_at: z.string().max(40).nullable().optional(),
   title_touched: z.boolean().optional(),
   room_id: z.string().uuid().nullable().optional(),
@@ -113,7 +117,10 @@ export const listVideos = createServerFn({ method: "GET" })
           .from("video_scenes")
           .select("id, video_project_id, source_path, sequence, duration")
           .in("video_project_id", ids),
-        supabase.from("video_share_links").select("id, video_project_id, token").in("video_project_id", ids),
+        supabase
+          .from("video_share_links")
+          .select("id, video_project_id, token")
+          .in("video_project_id", ids),
       ]);
       variants = v.data ?? [];
       scenes = s.data ?? [];
@@ -140,7 +147,13 @@ export const getVideo = createServerFn({ method: "POST" })
       supabase.from("video_audio").select("*").eq("video_project_id", data.id).maybeSingle(),
       supabase.from("video_share_links").select("*").eq("video_project_id", data.id).maybeSingle(),
     ]);
-    return { project, scenes: s.data ?? [], variants: v.data ?? [], audio: a.data ?? null, share: sh.data ?? null };
+    return {
+      project,
+      scenes: s.data ?? [],
+      variants: v.data ?? [],
+      audio: a.data ?? null,
+      share: sh.data ?? null,
+    };
   });
 
 /** Create or update a video project together with its full scene list and audio. */
@@ -166,7 +179,11 @@ export const saveVideo = createServerFn({ method: "POST" })
     /* Never trust a client-supplied property_id: confirm the signed-in user can
        actually read that property before linking the project to it. */
     if (p.property_id) {
-      const { data: prop } = await supabase.from("properties").select("id, address").eq("id", p.property_id).maybeSingle();
+      const { data: prop } = await supabase
+        .from("properties")
+        .select("id, address")
+        .eq("id", p.property_id)
+        .maybeSingle();
       if (!prop) throw new Error("That property is not available on this account.");
       if (!p.property_label) p.property_label = (prop as any).address ?? null;
     }
@@ -178,7 +195,11 @@ export const saveVideo = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
     } else {
       delete p.id;
-      const { data: row, error } = await supabase.from("video_projects").insert(p).select("id").single();
+      const { data: row, error } = await supabase
+        .from("video_projects")
+        .insert(p)
+        .select("id")
+        .single();
       if (error) throw new Error(error.message);
       projectId = row.id as string;
     }
@@ -197,8 +218,15 @@ export const saveVideo = createServerFn({ method: "POST" })
     }
 
     if (data.audio) {
-      const row: any = { ...data.audio, user_id: userId, video_project_id: projectId, updated_at: new Date().toISOString() };
-      const { error } = await supabase.from("video_audio").upsert(row, { onConflict: "video_project_id" });
+      const row: any = {
+        ...data.audio,
+        user_id: userId,
+        video_project_id: projectId,
+        updated_at: new Date().toISOString(),
+      };
+      const { error } = await supabase
+        .from("video_audio")
+        .upsert(row, { onConflict: "video_project_id" });
       if (error) throw new Error(error.message);
     }
 
@@ -230,7 +258,11 @@ export const setVideoStatus = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("video_projects")
-      .update({ status: data.status, error_message: data.error_message ?? null, updated_at: new Date().toISOString() })
+      .update({
+        status: data.status,
+        error_message: data.error_message ?? null,
+        updated_at: new Date().toISOString(),
+      })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -251,17 +283,28 @@ export const duplicateVideo = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    const { data: src, error } = await supabase.from("video_projects").select("*").eq("id", data.id).maybeSingle();
+    const { data: src, error } = await supabase
+      .from("video_projects")
+      .select("*")
+      .eq("id", data.id)
+      .maybeSingle();
     if (error) throw new Error(error.message);
     if (!src) throw new Error("That video no longer exists.");
     const copy: any = { ...src, title: `${src.title} Copy`, status: "draft", error_message: null };
     delete copy.id;
     delete copy.created_at;
     copy.user_id = userId;
-    const { data: row, error: iErr } = await supabase.from("video_projects").insert(copy).select("id").single();
+    const { data: row, error: iErr } = await supabase
+      .from("video_projects")
+      .insert(copy)
+      .select("id")
+      .single();
     if (iErr) throw new Error(iErr.message);
 
-    const { data: scenes } = await supabase.from("video_scenes").select("*").eq("video_project_id", data.id);
+    const { data: scenes } = await supabase
+      .from("video_scenes")
+      .select("*")
+      .eq("video_project_id", data.id);
     if (scenes?.length) {
       const rows = scenes.map((s: any) => {
         const c = { ...s, video_project_id: row.id, generation_status: "pending" };
@@ -315,7 +358,10 @@ export const startRender = createServerFn({ method: "POST" })
       .maybeSingle();
     if (live) {
       if (!isJobStale(live as any)) {
-        const { data: existing } = await supabase.from("video_variants").select("*").eq("video_project_id", data.id);
+        const { data: existing } = await supabase
+          .from("video_variants")
+          .select("*")
+          .eq("video_project_id", data.id);
         return { variants: existing ?? [], balance: null, job: live, reused: true };
       }
       await retireJob(supabase, userId, live, "failed", "The render stopped before it finished.");
@@ -330,7 +376,6 @@ export const startRender = createServerFn({ method: "POST" })
           : chargeErrorMessage(charged),
       );
 
-
     // Immersive motion is animated per scene, so it is metered per scene on top
     // of the render itself. Standard motion stays inside the render charge.
     let balance = charged.balance;
@@ -341,7 +386,11 @@ export const startRender = createServerFn({ method: "POST" })
       .eq("video_project_id", data.id)
       .eq("motion_level", "immersive");
     for (const s of immersive ?? []) {
-      const extra = await charge(userId, "plan_3d", `REAL REVEAL immersive motion — ${(s as any).room_name || "Scene"}`);
+      const extra = await charge(
+        userId,
+        "plan_3d",
+        `REAL REVEAL immersive motion — ${(s as any).room_name || "Scene"}`,
+      );
       if (!extra.ok) {
         // Never keep a partial debit for a render that will not happen.
         const { refund } = await import("@/lib/credits.server");
@@ -351,8 +400,6 @@ export const startRender = createServerFn({ method: "POST" })
       spent += extra.charged;
       balance = extra.balance;
     }
-
-
 
     await supabase.from("video_variants").delete().eq("video_project_id", data.id);
     const rows = data.variants.map((v) => ({
@@ -381,7 +428,8 @@ export const startRender = createServerFn({ method: "POST" })
         status: "queued",
         progress: 0,
         stage: "Preparing scenes",
-        output_formats: data.output_formats ?? Array.from(new Set(data.variants.map((v) => v.aspect_ratio))),
+        output_formats:
+          data.output_formats ?? Array.from(new Set(data.variants.map((v) => v.aspect_ratio))),
         quality: data.quality ?? null,
         scene_count: data.scene_count ?? 0,
         credits_charged: spent,
@@ -417,10 +465,19 @@ async function retireJob(
   };
   if (rel.release) {
     const { refund } = await import("@/lib/credits.server");
-    await refund(userId, rel.amount, status === "cancelled" ? "REAL REVEAL render cancelled" : "REAL REVEAL render failed");
-    patch['credits_refunded'] = (Number(job.credits_refunded) || 0) + rel.amount;
+    await refund(
+      userId,
+      rel.amount,
+      status === "cancelled" ? "REAL REVEAL render cancelled" : "REAL REVEAL render failed",
+    );
+    patch["credits_refunded"] = (Number(job.credits_refunded) || 0) + rel.amount;
   }
-  const { data: row } = await supabase.from("video_render_jobs").update(patch).eq("id", job.id).select("*").maybeSingle();
+  const { data: row } = await supabase
+    .from("video_render_jobs")
+    .update(patch)
+    .eq("id", job.id)
+    .select("*")
+    .maybeSingle();
   return { job: row, released: rel.release ? rel.amount : 0 };
 }
 
@@ -445,7 +502,9 @@ export const listRenderJobs = createServerFn({ method: "GET" })
 export const getRenderJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
-    z.object({ id: z.string().uuid().optional(), video_project_id: z.string().uuid().optional() }).parse(input),
+    z
+      .object({ id: z.string().uuid().optional(), video_project_id: z.string().uuid().optional() })
+      .parse(input),
   )
   .handler(async ({ data, context }) => {
     let q = context.supabase.from("video_render_jobs").select("*");
@@ -485,22 +544,26 @@ export const updateRenderJob = createServerFn({ method: "POST" })
           context.userId,
           current,
           data.status,
-          data.error_message || (data.status === "cancelled" ? "You stopped this render." : "The render did not finish."),
+          data.error_message ||
+            (data.status === "cancelled"
+              ? "You stopped this render."
+              : "The render did not finish."),
         );
         return out.job;
       }
     }
     const patch: Record<string, unknown> = { heartbeat_at: new Date().toISOString() };
-    if (data.status) patch['status'] = data.status;
-    if (data.progress != null) patch['progress'] = data.progress;
-    if (data.stage !== undefined) patch['stage'] = data.stage;
-    if (data.error_message !== undefined) patch['error_message'] = data.error_message;
-    if (data.provider_job_id !== undefined) patch['provider_job_id'] = data.provider_job_id;
+    if (data.status) patch["status"] = data.status;
+    if (data.progress != null) patch["progress"] = data.progress;
+    if (data.stage !== undefined) patch["stage"] = data.stage;
+    if (data.error_message !== undefined) patch["error_message"] = data.error_message;
+    if (data.provider_job_id !== undefined) patch["provider_job_id"] = data.provider_job_id;
     if (data.status === "completed") {
-      patch['completed_at'] = new Date().toISOString();
-      patch['progress'] = 1;
+      patch["completed_at"] = new Date().toISOString();
+      patch["progress"] = 1;
     }
-    if (data.status === "failed" || data.status === "cancelled") patch['completed_at'] = new Date().toISOString();
+    if (data.status === "failed" || data.status === "cancelled")
+      patch["completed_at"] = new Date().toISOString();
 
     const { data: row, error } = await context.supabase
       .from("video_render_jobs")
@@ -519,7 +582,9 @@ export const updateRenderJob = createServerFn({ method: "POST" })
  */
 export const cancelRenderJob = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ id: z.string().uuid(), force: z.boolean().optional() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), force: z.boolean().optional() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { isJobStale } = await import("@/lib/render-providers");
     const { data: job } = await context.supabase
@@ -530,7 +595,13 @@ export const cancelRenderJob = createServerFn({ method: "POST" })
     if (!job) throw new Error("That render is no longer available.");
     if (job.status !== "queued" && job.status !== "rendering") return job;
     if (data.force || isJobStale(job as any)) {
-      const out = await retireJob(context.supabase, context.userId, job, "cancelled", "You stopped this render.");
+      const out = await retireJob(
+        context.supabase,
+        context.userId,
+        job,
+        "cancelled",
+        "You stopped this render.",
+      );
       return out.job;
     }
     const { data: row } = await context.supabase
@@ -565,7 +636,10 @@ export const finishVariant = createServerFn({ method: "POST" })
       duration: data.duration ?? null,
       resolution: data.resolution ?? null,
     };
-    const { error } = await context.supabase.from("video_variants").update(patch as any).eq("id", data.variant_id);
+    const { error } = await context.supabase
+      .from("video_variants")
+      .update(patch as any)
+      .eq("id", data.variant_id);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -615,7 +689,11 @@ export const saveBrandKit = createServerFn({ method: "POST" })
       const { error } = await supabase.from("brand_kits").update(row).eq("id", id);
       if (error) throw new Error(error.message);
     } else {
-      const { data: out, error } = await supabase.from("brand_kits").insert(row).select("id").single();
+      const { data: out, error } = await supabase
+        .from("brand_kits")
+        .insert(row)
+        .select("id")
+        .single();
       if (error) throw new Error(error.message);
       id = out.id as string;
     }
@@ -657,7 +735,9 @@ export const saveShareLink = createServerFn({ method: "POST" })
     z
       .object({
         video_project_id: z.string().uuid(),
-        presentation_type: z.enum(["listing", "design", "renovation", "portfolio"]).default("listing"),
+        presentation_type: z
+          .enum(["listing", "design", "renovation", "portfolio"])
+          .default("listing"),
         slug: z
           .string()
           .max(60)
@@ -700,11 +780,20 @@ export const saveShareLink = createServerFn({ method: "POST" })
     else if (data.password) row.password_hash = await hashSharePassword(data.password);
 
     if (existing) {
-      const { error } = await supabase.from("video_share_links").update(row).eq("id", (existing as any).id);
-      if (error) throw new Error(error.message.includes("slug") ? "That link name is already taken." : error.message);
+      const { error } = await supabase
+        .from("video_share_links")
+        .update(row)
+        .eq("id", (existing as any).id);
+      if (error)
+        throw new Error(
+          error.message.includes("slug") ? "That link name is already taken." : error.message,
+        );
     } else {
       const { error } = await supabase.from("video_share_links").insert(row);
-      if (error) throw new Error(error.message.includes("slug") ? "That link name is already taken." : error.message);
+      if (error)
+        throw new Error(
+          error.message.includes("slug") ? "That link name is already taken." : error.message,
+        );
     }
     return { token, slug: row.slug as string | null };
   });
@@ -712,7 +801,9 @@ export const saveShareLink = createServerFn({ method: "POST" })
 /** Owner: every visitor comment or decision left on their presentation page. */
 export const listPresentationFeedback = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ video_project_id: z.string().uuid() }).parse(input))
+  .inputValidator((input: unknown) =>
+    z.object({ video_project_id: z.string().uuid() }).parse(input),
+  )
   .handler(async ({ data, context }) => {
     const { data: link } = await context.supabase
       .from("video_share_links")
@@ -734,7 +825,10 @@ export const listPresentationFeedback = createServerFn({ method: "POST" })
 export const getRevealPresentation = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) =>
     z
-      .object({ key: z.string().min(6).max(80), password: z.string().max(80).nullable().optional() })
+      .object({
+        key: z.string().min(6).max(80),
+        password: z.string().max(80).nullable().optional(),
+      })
       .parse(input),
   )
   .handler(async ({ data }) => {
@@ -764,8 +858,10 @@ export const submitPresentationFeedback = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!link) throw new Error("That presentation is no longer available.");
     const l = link as any;
-    if (data.kind === "comment" && !l.comments_enabled) throw new Error("Comments are turned off for this page.");
-    if (data.kind !== "comment" && !l.approval_enabled) throw new Error("Approvals are turned off for this page.");
+    if (data.kind === "comment" && !l.comments_enabled)
+      throw new Error("Comments are turned off for this page.");
+    if (data.kind !== "comment" && !l.approval_enabled)
+      throw new Error("Approvals are turned off for this page.");
     const { error } = await supabaseAdmin.from("video_presentation_feedback").insert({
       user_id: l.user_id,
       share_link_id: l.id,

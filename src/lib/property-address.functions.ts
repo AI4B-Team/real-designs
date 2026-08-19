@@ -25,7 +25,9 @@ const AddressInput = z.object({
     nothing is ever presented as verified that was not. */
 export const suggestAddresses = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ q: z.string().max(200).default("") }).parse(input ?? {}))
+  .inputValidator((input: unknown) =>
+    z.object({ q: z.string().max(200).default("") }).parse(input ?? {}),
+  )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { data: rows } = await supabase
@@ -67,7 +69,12 @@ export const createPropertyFromAddress = createServerFn({ method: "POST" })
       .select("id, address, normalized_address")
       .limit(500);
     const existing = findMatchingProperty(addr.property_address, (rows ?? []) as any[]);
-    if (existing) return { id: existing.id, address: existing.address ?? addr.property_address, created: false };
+    if (existing)
+      return {
+        id: existing.id,
+        address: existing.address ?? addr.property_address,
+        created: false,
+      };
 
     const { data: row, error } = await supabase
       .from("properties")

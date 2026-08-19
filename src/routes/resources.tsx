@@ -11,7 +11,12 @@ const TITLE = "Resources Hub — Design & Staging Guides | REAL DESIGNS";
 const DESC =
   "Every REAL DESIGNS guide in one place: AI design pages, staging guides, disclosure rules and free planning tools.";
 
-const GROUPS: { heading: string; blurb: string; priority: number; match: (p: LandingPage) => boolean }[] = [
+const GROUPS: {
+  heading: string;
+  blurb: string;
+  priority: number;
+  match: (p: LandingPage) => boolean;
+}[] = [
   {
     heading: "Design Guides",
     blurb: "Generate a designed space from a real photo, then price what it takes to build it.",
@@ -99,7 +104,12 @@ export const Route = createFileRoute("/resources")({
           "@type": "BreadcrumbList",
           itemListElement: [
             { "@type": "ListItem", position: 1, name: "Home", item: absoluteUrl("/") },
-            { "@type": "ListItem", position: 2, name: "Resources", item: absoluteUrl("/resources") },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Resources",
+              item: absoluteUrl("/resources"),
+            },
           ],
         }),
       },
@@ -123,8 +133,8 @@ function ResourcesPage() {
             <span className="eyebrow">Resources Hub</span>
             <h1>Design & Staging Guides</h1>
             <p className="lede">
-              Every guide we publish, grouped by what you are trying to decide. Each one pairs a real
-              before and after so you can see the redesign in context.
+              Every guide we publish, grouped by what you are trying to decide. Each one pairs a
+              real before and after so you can see the redesign in context.
             </p>
           </div>
         </div>
@@ -175,8 +185,8 @@ function ResourcesPage() {
           <div className="sec-head">
             <h2>Start With Your Own Photo</h2>
             <p className="lede">
-            Upload a room and get a photoreal redesign plus a shareable presentation in the
-            same session.
+              Upload a room and get a photoreal redesign plus a shareable presentation in the same
+              session.
             </p>
             <a className="btn btn-primary" href="/#builder">
               Upload Your Space

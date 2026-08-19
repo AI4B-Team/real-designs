@@ -9,8 +9,9 @@
 // @ts-nocheck
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]),
+  String(s == null ? "" : s).replace(
+    /[&<>"']/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
   );
 
 /**
@@ -52,7 +53,13 @@ export function builderRailHtml(opts = {}) {
 export function roomSelectHtml(opts = {}) {
   const label = opts.label || "";
   const unknown = !!opts.unknown;
-  const cls = ["bx-room", opts.variant === "inline" ? "inline" : "boxed", opts.className || "", unknown ? "muted" : "", opts.manual ? "set" : ""]
+  const cls = [
+    "bx-room",
+    opts.variant === "inline" ? "inline" : "boxed",
+    opts.className || "",
+    unknown ? "muted" : "",
+    opts.manual ? "set" : "",
+  ]
     .filter(Boolean)
     .join(" ");
   const name = label || "Not Set";
@@ -69,7 +76,8 @@ export function roomSelectHtml(opts = {}) {
    the selector already carries the value. Only transient or uncertain states
    earn a line of text. Detection source/confidence stay in state for logic. */
 export function roomBadge(state = {}) {
-  if (state.detect === "running" || state.detect === "pending") return { cls: "wait", label: "Detecting…" };
+  if (state.detect === "running" || state.detect === "pending")
+    return { cls: "wait", label: "Detecting…" };
   if (state.detect === "failed") return { cls: "warn", label: "Couldn’t detect" };
   if (state.source === "manual" || state.source === "library") return null;
   if (state.source === "ai") return state.confident ? null : { cls: "warn", label: "Review" };
@@ -89,7 +97,6 @@ export function sceneNumberHtml(n) {
   if (!num || num < 1) return "";
   return `<span class="rv-tile-seq mono" aria-hidden="true">${esc(num)}</span>`;
 }
-
 
 /** Shared autosave status wording. */
 export function saveLabel(state) {
@@ -130,12 +137,17 @@ if (typeof document !== "undefined" && !document.__rdToolbarKeys) {
     if (e.key !== "Escape") return;
     const tools = e.target && e.target.closest && e.target.closest(".rv-tools");
     if (!tools) {
-      document.querySelectorAll(".rv-tile.tools-open").forEach((t) => t.classList.remove("tools-open"));
+      document
+        .querySelectorAll(".rv-tile.tools-open")
+        .forEach((t) => t.classList.remove("tools-open"));
       return;
     }
     const card = tools.closest(".rv-tile");
     const th = card && card.querySelector(".rv-tile-th");
-    if (th) { e.stopPropagation(); th.focus(); }
+    if (th) {
+      e.stopPropagation();
+      th.focus();
+    }
   });
 
   /* Touch has no hover: the first tap on a photo only reveals the toolbar, and
@@ -163,14 +175,18 @@ if (typeof document !== "undefined" && !document.__rdToolbarKeys) {
   document.addEventListener(
     "click",
     (e) => {
-      if (!touchArm || Date.now() - touchArm > 700) { touchArm = 0; return; }
+      if (!touchArm || Date.now() - touchArm > 700) {
+        touchArm = 0;
+        return;
+      }
       touchArm = 0;
       const t = e.target;
       if (t && t.closest && t.closest(".rv-tools, .rv-tools-more")) return;
-      if (t && t.closest && t.closest(".rv-tile")) { e.preventDefault(); e.stopPropagation(); }
+      if (t && t.closest && t.closest(".rv-tile")) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     },
     true,
   );
-
 }
-

@@ -71,7 +71,9 @@ try {
   const fs = await import("node:fs");
   const files = fs
     .readdirSync(dir)
-    .filter((f) => f.endsWith(".sql") && /storage\.objects/i.test(fs.readFileSync(`${dir}/${f}`, "utf8")))
+    .filter(
+      (f) => f.endsWith(".sql") && /storage\.objects/i.test(fs.readFileSync(`${dir}/${f}`, "utf8")),
+    )
     .sort();
   const latest = files.at(-1);
   const text = latest ? fs.readFileSync(`${dir}/${latest}`, "utf8") : "";
@@ -80,12 +82,12 @@ try {
   for (const m of text.matchAll(/create policy\s+("[^"]+"|\S+)\s+on storage\.objects/gi)) {
     creates++;
     const name = m[1].replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    if (new RegExp(`drop policy if exists\\s+${name}\\s+on storage\\.objects`, "i").test(text)) guarded++;
+    if (new RegExp(`drop policy if exists\\s+${name}\\s+on storage\\.objects`, "i").test(text))
+      guarded++;
   }
   creates > 0 && creates === guarded
     ? ok(`${latest}: all ${creates} policy statements are drop-if-exists guarded (safe to re-run)`)
     : bad(`${latest}: ${creates - guarded} of ${creates} CREATE POLICY statements are not guarded`);
-
 
   // Runtime proof: no duplicated policy names, which is what a non-idempotent
   // second run would produce.
@@ -94,11 +96,12 @@ try {
       where schemaname='storage' and tablename='objects'
       group by policyname having count(*) > 1) d`,
   );
-  dupes === "0" ? ok("no duplicated storage policies in the live database") : bad(`${dupes} duplicated policy name(s)`);
+  dupes === "0"
+    ? ok("no duplicated storage policies in the live database")
+    : bad(`${dupes} duplicated policy name(s)`);
 } catch (e) {
   bad(`idempotency check errored: ${String(e.message).split("\n")[0]}`);
 }
-
 
 section("Cross-user isolation (RLS predicate)");
 const A = randomUUID();
@@ -106,7 +109,9 @@ const B = randomUUID();
 for (const b of BUCKETS) {
   const own = sql(`select (storage.foldername('${A}/x/photo.jpg'))[1] = '${A}'`);
   const other = sql(`select (storage.foldername('${B}/x/photo.jpg'))[1] = '${A}'`);
-  own === "t" && other === "f" ? ok(`${b}: user A matches own folder, not user B's`) : bad(`${b}: folder predicate wrong`);
+  own === "t" && other === "f"
+    ? ok(`${b}: user A matches own folder, not user B's`)
+    : bad(`${b}: folder predicate wrong`);
 }
 const leak = sql(
   `select count(*) from pg_policies where schemaname='storage' and tablename='objects'
@@ -114,7 +119,9 @@ const leak = sql(
    and coalesce(qual,'') not like '%auth.uid()%'
    and coalesce(with_check,'') not like '%auth.uid()%'`,
 );
-leak === "0" ? ok("every authenticated policy is scoped to auth.uid()") : bad(`${leak} policy(ies) not scoped to auth.uid()`);
+leak === "0"
+  ? ok("every authenticated policy is scoped to auth.uid()")
+  : bad(`${leak} policy(ies) not scoped to auth.uid()`);
 
 /* 5 ------------------------------------------------------------------------ */
 const url = process.env.SUPABASE_URL;
@@ -127,17 +134,22 @@ if (!url || !key) {
   const admin = createClient(url, key, { auth: { persistSession: false } });
   for (const b of BUCKETS) {
     const path = `_healthcheck/${randomUUID()}.txt`;
-    const up = await admin.storage.from(b).upload(path, new Blob(["ok"]), { contentType: "text/plain" });
+    const up = await admin.storage
+      .from(b)
+      .upload(path, new Blob(["ok"]), { contentType: "text/plain" });
     if (up.error) {
       bad(`${b}: upload failed — ${up.error.message}`);
       continue;
     }
     // Fresh request, exactly what a page refresh does: the object must still be listed.
     const list = await admin.storage.from(b).list("_healthcheck", { search: path.split("/")[1] });
-    list.data?.length ? ok(`${b}: upload persists across a new request`) : bad(`${b}: uploaded file not found on re-read`);
+    list.data?.length
+      ? ok(`${b}: upload persists across a new request`)
+      : bad(`${b}: uploaded file not found on re-read`);
 
     const signed = await admin.storage.from(b).createSignedUrl(path, 60);
-    if (signed.error || !signed.data?.signedUrl) bad(`${b}: signed URL failed — ${signed.error?.message}`);
+    if (signed.error || !signed.data?.signedUrl)
+      bad(`${b}: signed URL failed — ${signed.error?.message}`);
     else {
       const res = await fetch(signed.data.signedUrl);
       res.ok ? ok(`${b}: signed URL downloads`) : bad(`${b}: signed URL returned ${res.status}`);

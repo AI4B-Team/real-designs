@@ -3,10 +3,12 @@ import type { LandingPage } from "@/content/seo/types";
 export const page: LandingPage = {
   slug: "/rehab-cost-calculator",
   tier: "B",
-  intent: "Someone wants a defensible rehab number before they write an offer or hand a job to a contractor.",
+  intent:
+    "Someone wants a defensible rehab number before they write an offer or hand a job to a contractor.",
 
   metaTitle: "Free Rehab Cost Calculator From A Photo",
-  metaDescription: "Upload a photo, get a rehab planning range built from quantities and unit rates, not a rule of thumb. See the line items before you offer.",
+  metaDescription:
+    "Upload a photo, get a rehab planning range built from quantities and unit rates, not a rule of thumb. See the line items before you offer.",
 
   eyebrow: "Rehab Cost Calculator",
   h1: "Free Rehab Cost Calculator From A Photo",
@@ -27,13 +29,21 @@ export const page: LandingPage = {
   afterCaption: "Same layout, retail grade finishes priced line by line.",
 
   steps: [
-    { title: "Pick A Room", text: "Choose the room and enter its size to set the baseline for the planning range." },
-    { title: "Pick A Grade & Budget Band", text: "Rental, retail or premium changes every unit rate in the scope at once." },
-    { title: "Get The Range", text: "A low and high total, a per square foot figure, and a printable line item table." },
+    {
+      title: "Pick A Room",
+      text: "Choose the room and enter its size to set the baseline for the planning range.",
+    },
+    {
+      title: "Pick A Grade & Budget Band",
+      text: "Rental, retail or premium changes every unit rate in the scope at once.",
+    },
+    {
+      title: "Get The Range",
+      text: "A low and high total, a per square foot figure, and a printable line item table.",
+    },
   ],
 
   showcase: ["scope", "budget-mode", "brief", "grades", "reality-lock"],
-
 
   sections: [
     {
@@ -109,16 +119,35 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Build A Rehab Cost Planning Range",
     steps: [
-      { name: "List Each Room", text: "Note each room you plan to rehab along with its approximate size." },
-      { name: "Select Space Type & Budget Band", text: "Choose interior, exterior or landscape, then pick a budget band from Refresh through Reimagine." },
-      { name: "Choose A Finish Grade", text: "Pick rental, retail or premium based on whether you are holding, flipping or building for a specific buyer." },
-      { name: "Review The Line Items", text: "Check the quantities, trades and unit rates the calculator generated against what you can see in the room." },
-      { name: "Add Contingency", text: "Apply a 10 to 20 percent contingency depending on the property's age and condition history." },
-      { name: "Confirm With A Walkthrough", text: "Use the range to screen the deal, then confirm it with a contractor's physical walkthrough before committing." },
+      {
+        name: "List Each Room",
+        text: "Note each room you plan to rehab along with its approximate size.",
+      },
+      {
+        name: "Select Space Type & Budget Band",
+        text: "Choose interior, exterior or landscape, then pick a budget band from Refresh through Reimagine.",
+      },
+      {
+        name: "Choose A Finish Grade",
+        text: "Pick rental, retail or premium based on whether you are holding, flipping or building for a specific buyer.",
+      },
+      {
+        name: "Review The Line Items",
+        text: "Check the quantities, trades and unit rates the calculator generated against what you can see in the room.",
+      },
+      {
+        name: "Add Contingency",
+        text: "Apply a 10 to 20 percent contingency depending on the property's age and condition history.",
+      },
+      {
+        name: "Confirm With A Walkthrough",
+        text: "Use the range to screen the deal, then confirm it with a contractor's physical walkthrough before committing.",
+      },
     ],
   },
 
   ctaTitle: "See Your Rehab Number Line By Line",
-  ctaBody: "Use the free rehab calculator to get a planning range with unit rates and a contingency line you can review with a contractor.",
+  ctaBody:
+    "Use the free rehab calculator to get a planning range with unit rates and a contingency line you can review with a contractor.",
   ctaLabel: "Try The Free Calculator",
 };

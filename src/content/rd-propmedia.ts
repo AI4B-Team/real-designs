@@ -19,12 +19,22 @@ import {
 import { runPhotoEdit } from "@/lib/photo-edit.functions";
 import { uploadRenderDataUrl } from "@/lib/room-photos";
 import * as UM from "@/lib/upload-manager";
-import { ROOM_GROUPS, FLAG_LABEL, recommendations, similarTo, missingSpaces, pickRecommended } from "@/lib/media-analysis";
+import {
+  ROOM_GROUPS,
+  FLAG_LABEL,
+  recommendations,
+  similarTo,
+  missingSpaces,
+  pickRecommended,
+} from "@/lib/media-analysis";
 import { openPhotoEditor, openExportDialog } from "@/content/rd-photo-editor";
 import { track } from "@/lib/analytics";
 
 const esc = (s) =>
-  String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  String(s == null ? "" : s).replace(
+    /[&<>"]/g,
+    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
+  );
 const paint = () => {
   try {
     createIcons({ icons });
@@ -85,7 +95,10 @@ export async function openPropertyUpload(opts = {}) {
           ${
             mode === "existing"
               ? `<label class="pmu-f">Select Property<select id="pmuProp">${props
-                  .map((p) => `<option value="${p.id}" ${p.id === propertyId ? "selected" : ""}>${esc(p.address)}</option>`)
+                  .map(
+                    (p) =>
+                      `<option value="${p.id}" ${p.id === propertyId ? "selected" : ""}>${esc(p.address)}</option>`,
+                  )
                   .join("")}</select></label>`
               : mode === "new"
                 ? `<label class="pmu-f">Address<input id="pmuAddr" value="${esc(pendingAddress)}" placeholder="123 Main St, Tampa FL"></label>`
@@ -135,12 +148,19 @@ export async function openPropertyUpload(opts = {}) {
         esc,
         lucide: { createIcons: () => paint() },
         initialTab: src,
-        onTab: (t) => { src = t; },
+        onTab: (t) => {
+          src = t;
+        },
         onPick: (picked) => take(picked.map((p) => p.file)),
         onProperty: (address) => {
           const found = props.find((p) => p.address === address);
-          if (found) { mode = "existing"; propertyId = found.id; }
-          else { mode = "new"; pendingAddress = address; }
+          if (found) {
+            mode = "existing";
+            propertyId = found.id;
+          } else {
+            mode = "new";
+            pendingAddress = address;
+          }
           render();
           const ai = wrap.querySelector("#pmuAddr");
           if (ai && !ai.value) ai.value = address;
@@ -160,7 +180,6 @@ export async function openPropertyUpload(opts = {}) {
     render();
   }
 
-
   function renderList() {
     const l = wrap.querySelector("#pmuList");
     if (!l) return;
@@ -173,7 +192,10 @@ export async function openPropertyUpload(opts = {}) {
     }</div>
     ${rejected
       .slice(0, 6)
-      .map((r) => `<div class="pmu-badrow"><i data-lucide="triangle-alert"></i>${esc(r.name)} — ${esc(r.reason)}</div>`)
+      .map(
+        (r) =>
+          `<div class="pmu-badrow"><i data-lucide="triangle-alert"></i>${esc(r.name)} — ${esc(r.reason)}</div>`,
+      )
       .join("")}`;
     paint();
   }
@@ -203,7 +225,10 @@ export async function openPropertyUpload(opts = {}) {
         const el = wrap.querySelector("#pmu" + k);
         if (el && el.value) details[k.toLowerCase()] = el.value;
       });
-      localStorage.setItem("rd.propmeta." + (pid || "unassigned"), JSON.stringify({ label, ...details }));
+      localStorage.setItem(
+        "rd.propmeta." + (pid || "unassigned"),
+        JSON.stringify({ label, ...details }),
+      );
     } catch (_) {}
     UM.startJob({ files, propertyId: pid, propertyLabel: label, source: "computer" });
     close();
@@ -217,7 +242,6 @@ export async function openPropertyUpload(opts = {}) {
     document.removeEventListener("keydown", onEsc);
     window.removeEventListener("hashchange", close);
   }
-
 
   render();
 }
@@ -261,7 +285,9 @@ function renderDock(dock, jobs, go) {
     .map((j) => {
       const total = j.files.length;
       const pct = total ? Math.round(((j.uploaded + j.failed) / total) * 100) : 0;
-      const done = ["Complete", "Partially Complete", "Failed", "Canceled", "Interrupted"].includes(j.state);
+      const done = ["Complete", "Partially Complete", "Failed", "Canceled", "Interrupted"].includes(
+        j.state,
+      );
       return `<div class="pmd-job" data-j="${j.id}">
       <div class="pmd-h"><b>${esc(j.propertyLabel)}</b><span class="pill ${j.state === "Complete" ? "p-grn" : j.state === "Failed" ? "p-red" : "p-amb"}">${esc(j.state)}</span></div>
       <div class="pmd-meta">${j.uploaded} Uploaded · ${Math.max(0, total - j.uploaded - j.failed)} Remaining${j.failed ? ` · ${j.failed} Failed` : ""} · ${total} File${total === 1 ? "" : "s"}</div>
@@ -301,7 +327,10 @@ function renderDock(dock, jobs, go) {
     if (["Complete", "Partially Complete"].includes(j.state) && !notified.has(j.id)) {
       notified.add(j.id);
       try {
-        window.__rdToast && window.__rdToast("Property Upload Complete. Your photos are ready to review and organize.");
+        window.__rdToast &&
+          window.__rdToast(
+            "Property Upload Complete. Your photos are ready to review and organize.",
+          );
       } catch (_) {}
     }
   });
@@ -391,8 +420,10 @@ function shell() {
 
 function bind(view) {
   const $ = (id) => view.querySelector("#" + id);
-  $("pmUpload").onclick = () => openPropertyUpload(STATE.propertyId ? { propertyId: STATE.propertyId } : {});
-  $("pmMore").onclick = () => openPropertyUpload(STATE.propertyId ? { propertyId: STATE.propertyId } : {});
+  $("pmUpload").onclick = () =>
+    openPropertyUpload(STATE.propertyId ? { propertyId: STATE.propertyId } : {});
+  $("pmMore").onclick = () =>
+    openPropertyUpload(STATE.propertyId ? { propertyId: STATE.propertyId } : {});
   $("pmProp").onchange = (e) => {
     const v = e.target.value;
     STATE.propertyId = v || null;
@@ -459,11 +490,13 @@ function renderProps() {
   sel.innerHTML =
     `<option value="">All Properties</option>` +
     STATE.properties
-      .map((p) => `<option value="${p.id}" ${p.id === STATE.propertyId ? "selected" : ""}>${esc(p.address)}</option>`)
+      .map(
+        (p) =>
+          `<option value="${p.id}" ${p.id === STATE.propertyId ? "selected" : ""}>${esc(p.address)}</option>`,
+      )
       .join("");
   const t = document.getElementById("pmTitle");
   if (t) t.textContent = STATE.propertyId ? STATE.propertyLabel : "Media";
-
 }
 
 function rooms() {
@@ -482,15 +515,21 @@ function renderStats() {
   const a = STATE.assets;
   const job = UM.activeJob();
   const visible = a.filter((x) => !x.hidden);
-  const processing = job ? (job.files || []).filter((f) => f.state === "queued" || f.state === "uploading").length : 0;
-  const needsReview = visible.filter((x) => x.room_group === "Needs Review" || (x.flags || []).length).length;
+  const processing = job
+    ? (job.files || []).filter((f) => f.state === "queued" || f.state === "uploading").length
+    : 0;
+  const needsReview = visible.filter(
+    (x) => x.room_group === "Needs Review" || (x.flags || []).length,
+  ).length;
   const cells = [
     ["Total Media", visible.length],
     ["Needs Review", needsReview],
     ["Processing", processing],
     ["Ready", Math.max(0, visible.length - needsReview - processing)],
   ];
-  el.innerHTML = cells.map(([k, v]) => `<div class="pm-stat"><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`).join("");
+  el.innerHTML = cells
+    .map(([k, v]) => `<div class="pm-stat"><b>${esc(String(v))}</b><span>${esc(k)}</span></div>`)
+    .join("");
 
   const miss = document.getElementById("pmMissing");
   if (miss) {
@@ -522,7 +561,9 @@ function renderRooms() {
     b.onclick = () => {
       STATE.room = b.dataset.r;
       if (STATE.room) STATE.tab = "room";
-      document.querySelectorAll("#pmTabs button").forEach((x) => x.classList.toggle("on", x.dataset.t === STATE.tab));
+      document
+        .querySelectorAll("#pmTabs button")
+        .forEach((x) => x.classList.toggle("on", x.dataset.t === STATE.tab));
       renderRooms();
       renderGrid();
     };
@@ -681,10 +722,23 @@ function renderBulk() {
       } else if (k === "rec") await patch(ids, { recommended: true });
       else if (k === "hide") await patch(ids, { hidden: true });
       else if (k === "edit") openScope({ ids, label: null, op: null, family: "property" });
-      else if (k === "lvideo") { try { window.rdListingVideo({ propertyId: STATE.propertyId, propertyLabel: STATE.propertyLabel, assets: STATE.assets.filter((a) => ids.includes(a.id)), from: "media" }); } catch (_) {} }
-      else if (k === "export") openExport(ids);
+      else if (k === "lvideo") {
+        try {
+          window.rdListingVideo({
+            propertyId: STATE.propertyId,
+            propertyLabel: STATE.propertyLabel,
+            assets: STATE.assets.filter((a) => ids.includes(a.id)),
+            from: "media",
+          });
+        } catch (_) {}
+      } else if (k === "export") openExport(ids);
       else if (k === "del") {
-        if (!confirm(`Delete ${ids.length} photo${ids.length === 1 ? "" : "s"}? Saved versions are removed too.`)) return;
+        if (
+          !confirm(
+            `Delete ${ids.length} photo${ids.length === 1 ? "" : "s"}? Saved versions are removed too.`,
+          )
+        )
+          return;
         await deleteMediaAssets({ data: { ids } });
         STATE.selected = new Set();
         load();
@@ -749,13 +803,17 @@ function renderPrepare(open) {
         if (a === "preview") {
           STATE.selected = new Set(rec.ids);
           STATE.tab = "all";
-          document.querySelectorAll("#pmTabs button").forEach((x) => x.classList.toggle("on", x.dataset.t === "all"));
+          document
+            .querySelectorAll("#pmTabs button")
+            .forEach((x) => x.classList.toggle("on", x.dataset.t === "all"));
           renderGrid();
         } else if (a === "ignore") {
           row.remove();
         } else if (a === "review") {
           STATE.tab = rec.key === "dupes" ? "dupes" : "quality";
-          document.querySelectorAll("#pmTabs button").forEach((x) => x.classList.toggle("on", x.dataset.t === STATE.tab));
+          document
+            .querySelectorAll("#pmTabs button")
+            .forEach((x) => x.classList.toggle("on", x.dataset.t === STATE.tab));
           renderGrid();
         } else {
           openScope({ ids: rec.ids, label: rec.label, op: rec.op, family: "property" });
@@ -828,7 +886,9 @@ function openScope(cfg) {
             const a = STATE.assets.find((x) => x.id === id) || {};
             return `<div class="pms-row"><span>${esc(a.room_group || "Photo")} · ${esc((a.original_filename || "").slice(0, 28))}</span><button class="fb-link" data-x="${id}">Remove</button></div>`;
           })
-          .join("")}${t.length > 30 ? `<div class="pms-row"><span>+ ${t.length - 30} More</span></div>` : ""}</div>
+          .join(
+            "",
+          )}${t.length > 30 ? `<div class="pms-row"><span>+ ${t.length - 30} More</span></div>` : ""}</div>
         ${t.length > 12 ? `<div class="note"><i data-lucide="triangle-alert"></i><span>This is a large batch. Confirm the count above before running.</span></div>` : ""}
         <div class="pms-act">
           <button class="btn btn-primary" id="pmsRun"><i data-lucide="play"></i>Apply To ${t.length} Photo${t.length === 1 ? "" : "s"}</button>
@@ -880,7 +940,14 @@ function openScope(cfg) {
           fr.readAsDataURL(blob);
         });
         const out = await runPhotoEdit({
-          data: { family, op, image: dataUrl, room: a.room_group, direction: "Warm Minimal", instruction: null },
+          data: {
+            family,
+            op,
+            image: dataUrl,
+            room: a.room_group,
+            direction: "Warm Minimal",
+            instruction: null,
+          },
         });
         const path = await uploadRenderDataUrl(out.image);
         const row = await addMediaVersion({
@@ -905,7 +972,8 @@ function openScope(cfg) {
       }
     }
     track("batch_edit_completed", { op, ok, failed: bad });
-    if (!bad) status.textContent = `Applied to ${ok} photo${ok === 1 ? "" : "s"}. Each result is a new version.`;
+    if (!bad)
+      status.textContent = `Applied to ${ok} photo${ok === 1 ? "" : "s"}. Each result is a new version.`;
     btn.disabled = false;
     renderGrid();
     renderStats();
@@ -954,9 +1022,10 @@ function renderExports() {
   }
   el.innerHTML = STATE.exports
     .map(
-      (x) => `<div class="rowi"><div class="rowt"><b>${esc(x.label)}</b><span>${new Date(x.created_at).toLocaleString()} · ${
-        x.options && x.options.watermark ? "Watermarked" : "No Watermark"
-      } · ${x.options && x.options.disclosure ? "Disclosure Applied" : "No Disclosure"}</span></div><span class="pill p-gray">${x.file_count} Files</span></div>`,
+      (x) =>
+        `<div class="rowi"><div class="rowt"><b>${esc(x.label)}</b><span>${new Date(x.created_at).toLocaleString()} · ${
+          x.options && x.options.watermark ? "Watermarked" : "No Watermark"
+        } · ${x.options && x.options.disclosure ? "Disclosure Applied" : "No Disclosure"}</span></div><span class="pill p-gray">${x.file_count} Files</span></div>`,
     )
     .join("");
 }

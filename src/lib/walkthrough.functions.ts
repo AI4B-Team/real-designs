@@ -68,7 +68,11 @@ export const startWalkthrough = createServerFn({ method: "POST" })
 
       const job = (await res.json()) as any;
       if (!job?.id) throw new Error("Video could not be started.");
-      return { id: String(job.id), status: String(job.status || "in_progress"), progress: Number(job.progress || 0) };
+      return {
+        id: String(job.id),
+        status: String(job.status || "in_progress"),
+        progress: Number(job.progress || 0),
+      };
     } catch (err) {
       await refund(context.userId, charged.charged, "Walkthrough video failed to start");
       throw err;
@@ -89,9 +93,12 @@ export const pollWalkthrough = createServerFn({ method: "POST" })
       return { status: "completed" as const, progress: 100, url: existing.data.signedUrl, path };
     }
 
-    const res = await fetch(`https://ai.gateway.lovable.dev/v1/videos/${encodeURIComponent(data.id)}`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-    });
+    const res = await fetch(
+      `https://ai.gateway.lovable.dev/v1/videos/${encodeURIComponent(data.id)}`,
+      {
+        headers: { Authorization: `Bearer ${apiKey}` },
+      },
+    );
     if (!res.ok) throw new Error(`Could not read the video job (${res.status}).`);
     const job = (await res.json()) as any;
 
@@ -109,7 +116,12 @@ export const pollWalkthrough = createServerFn({ method: "POST" })
     }
 
     if (job.status !== "completed") {
-      return { status: "in_progress" as const, progress: Number(job.progress || 0), url: null, path: null };
+      return {
+        status: "in_progress" as const,
+        progress: Number(job.progress || 0),
+        url: null,
+        path: null,
+      };
     }
 
     const content = await fetch(

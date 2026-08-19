@@ -39,9 +39,7 @@ function CopyrightPage() {
         {
           id: "designated-agent",
           h2: "DMCA Designated Agent",
-          body: [
-            "Notices of claimed infringement should be sent to our designated agent:",
-          ],
+          body: ["Notices of claimed infringement should be sent to our designated agent:"],
           bullets: [
             "Agent: [DESIGNATED AGENT NAME] - TO BE REGISTERED with the US Copyright Office",
             "Email: copyright@realdesigns.ai",

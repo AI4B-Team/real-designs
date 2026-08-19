@@ -52,7 +52,7 @@ function btn(a: ModalAction, kind: "primary" | "danger" | "ghost" | "outline", l
   const label = loading && a.loadingLabel ? a.loadingLabel : a.label;
   const dis = a.disabled || loading;
   return `<button type="button" class="rdm-btn rdm-${kind}${loading ? " is-loading" : ""}"
-    data-mfa="${esc(a.value || (kind === "ghost" ? "cancel" : "confirm"))}"${dis ? " disabled aria-disabled=\"true\"" : ""}${
+    data-mfa="${esc(a.value || (kind === "ghost" ? "cancel" : "confirm"))}"${dis ? ' disabled aria-disabled="true"' : ""}${
       a.hint ? ` title="${esc(a.hint)}"` : ""
     }>${loading ? '<span class="rdm-spin" aria-hidden="true"></span>' : a.icon ? `<i data-lucide="${esc(a.icon)}"></i>` : ""}<span>${esc(label)}</span></button>`;
 }
@@ -71,9 +71,12 @@ export function modalFooterHtml(opts: ModalFooterOptions = {}) {
     .filter(Boolean)
     .join(" ");
   const parts: string[] = [];
-  if (opts.extra) parts.push(btn(opts.extra, opts.extra.variant === "outline" ? "outline" : "ghost"));
-  if (opts.secondary) parts.push(btn(opts.secondary, opts.secondary.variant === "outline" ? "outline" : "ghost"));
-  if (opts.primary) parts.push(btn(opts.primary, opts.destructive ? "danger" : "primary", !!opts.loading));
+  if (opts.extra)
+    parts.push(btn(opts.extra, opts.extra.variant === "outline" ? "outline" : "ghost"));
+  if (opts.secondary)
+    parts.push(btn(opts.secondary, opts.secondary.variant === "outline" ? "outline" : "ghost"));
+  if (opts.primary)
+    parts.push(btn(opts.primary, opts.destructive ? "danger" : "primary", !!opts.loading));
   return `<div class="${cls}">${parts.join("")}</div>`;
 }
 
@@ -81,7 +84,11 @@ export function modalFooterHtml(opts: ModalFooterOptions = {}) {
  * Put a footer button into its loading state without letting it change width,
  * and block the repeat click that would submit twice.
  */
-export function setModalButtonLoading(button: HTMLButtonElement | null, loading: boolean, label?: string) {
+export function setModalButtonLoading(
+  button: HTMLButtonElement | null,
+  loading: boolean,
+  label?: string,
+) {
   if (!button) return;
   if (loading) {
     button.style.minWidth = button.offsetWidth + "px";

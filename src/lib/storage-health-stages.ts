@@ -55,7 +55,12 @@ export function missingCommands(bucket: string, rows: PolicyRow[]): string[] {
 export function classifyStorageError(message: string, fallback: StageKind): StageKind {
   const m = message.toLowerCase();
   if (m.includes("bucket not found") || m.includes("does not exist")) return "bucket_missing";
-  if (m.includes("row-level security") || m.includes("row level security") || m.includes("unauthorized") || m.includes("permission denied")) {
+  if (
+    m.includes("row-level security") ||
+    m.includes("row level security") ||
+    m.includes("unauthorized") ||
+    m.includes("permission denied")
+  ) {
     return "policy_failure";
   }
   return fallback;
@@ -63,12 +68,18 @@ export function classifyStorageError(message: string, fallback: StageKind): Stag
 
 const FIXES: Record<StageKind, (bucket: string, extra?: string) => string> = {
   ok: (b) => `${b}: healthy.`,
-  unreachable: (b, e) => `${b}: storage API unreachable (${e}). Check the backend is running and the service role key is valid.`,
-  bucket_missing: (b) => `${b}: BUCKET MISSING. Create it as a PRIVATE bucket with this exact id; the storage.objects policies already in the database then apply unchanged. Creating a bucket never touches existing objects.`,
-  bucket_public: (b) => `${b}: BUCKET IS PUBLIC. It must be private — media is served through signed URLs only. Flip it back to private.`,
-  policy_failure: (b, e) => `${b}: POLICY/ACCESS FAILURE${e ? ` (${e})` : ""}. The bucket exists but the storage.objects rules for it are missing or wrong. Re-run the storage policy migration.`,
-  upload_failure: (b, e) => `${b}: UPLOAD FAILURE${e ? ` (${e})` : ""}. The bucket and rules exist but a write was rejected — check size/MIME limits, storage quota and the service role key.`,
-  signed_url_failure: (b, e) => `${b}: SIGNED URL FAILURE${e ? ` (${e})` : ""}. Files can be written but no download link could be issued, so existing media will not display.`,
+  unreachable: (b, e) =>
+    `${b}: storage API unreachable (${e}). Check the backend is running and the service role key is valid.`,
+  bucket_missing: (b) =>
+    `${b}: BUCKET MISSING. Create it as a PRIVATE bucket with this exact id; the storage.objects policies already in the database then apply unchanged. Creating a bucket never touches existing objects.`,
+  bucket_public: (b) =>
+    `${b}: BUCKET IS PUBLIC. It must be private — media is served through signed URLs only. Flip it back to private.`,
+  policy_failure: (b, e) =>
+    `${b}: POLICY/ACCESS FAILURE${e ? ` (${e})` : ""}. The bucket exists but the storage.objects rules for it are missing or wrong. Re-run the storage policy migration.`,
+  upload_failure: (b, e) =>
+    `${b}: UPLOAD FAILURE${e ? ` (${e})` : ""}. The bucket and rules exist but a write was rejected — check size/MIME limits, storage quota and the service role key.`,
+  signed_url_failure: (b, e) =>
+    `${b}: SIGNED URL FAILURE${e ? ` (${e})` : ""}. Files can be written but no download link could be issued, so existing media will not display.`,
 };
 
 export function stageDetail(kind: StageKind, bucket: string, extra?: string): string {

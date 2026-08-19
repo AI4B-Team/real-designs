@@ -25,9 +25,21 @@ export type Avatar = {
 export type AvatarMode = "intro_bubble" | "full" | "bubble";
 
 export const AVATAR_MODES: { id: AvatarMode; label: string; blurb: string }[] = [
-  { id: "intro_bubble", label: "Intro + Corner Bubble", blurb: "Full-frame open and close, plus a small presenter bubble over the tour." },
-  { id: "full", label: "Full-Frame Only", blurb: "Presenter opens and closes the video; property scenes stay clean." },
-  { id: "bubble", label: "Corner Bubble Only", blurb: "Presenter stays in the corner while the property scenes play." },
+  {
+    id: "intro_bubble",
+    label: "Intro + Corner Bubble",
+    blurb: "Full-frame open and close, plus a small presenter bubble over the tour.",
+  },
+  {
+    id: "full",
+    label: "Full-Frame Only",
+    blurb: "Presenter opens and closes the video; property scenes stay clean.",
+  },
+  {
+    id: "bubble",
+    label: "Corner Bubble Only",
+    blurb: "Presenter stays in the corner while the property scenes play.",
+  },
 ];
 
 export type AvatarConfig = {
@@ -53,12 +65,57 @@ export function blankAvatarConfig(): AvatarConfig {
 }
 
 export const PRESET_AVATARS: Avatar[] = [
-  { id: "ava", name: "Ava", blurb: "Warm Listing Agent", url: ava, voice: "shimmer", instructions: "Warm, welcoming and upbeat, like a friendly listing agent greeting buyers at the door. Moderate pace." },
-  { id: "marcus", name: "Marcus", blurb: "Confident Closer", url: marcus, voice: "echo", instructions: "Confident and persuasive, crisp consonants, steady pace with a light smile in the voice." },
-  { id: "nia", name: "Nia", blurb: "Luxury Specialist", url: nia, voice: "coral", instructions: "Polished and refined, unhurried and elegant, the tone of a luxury property specialist." },
-  { id: "kai", name: "Kai", blurb: "Friendly Guide", url: kai, voice: "verse", instructions: "Easygoing and conversational, like a friend showing you around. Relaxed pace." },
-  { id: "sofia", name: "Sofia", blurb: "Neighborhood Expert", url: sofia, voice: "sage", instructions: "Bright, knowledgeable and neighborly, with a helpful local-expert energy." },
-  { id: "grant", name: "Grant", blurb: "Veteran Broker", url: grant, voice: "ash", instructions: "Deeper, seasoned and reassuring, measured delivery with authority." },
+  {
+    id: "ava",
+    name: "Ava",
+    blurb: "Warm Listing Agent",
+    url: ava,
+    voice: "shimmer",
+    instructions:
+      "Warm, welcoming and upbeat, like a friendly listing agent greeting buyers at the door. Moderate pace.",
+  },
+  {
+    id: "marcus",
+    name: "Marcus",
+    blurb: "Confident Closer",
+    url: marcus,
+    voice: "echo",
+    instructions:
+      "Confident and persuasive, crisp consonants, steady pace with a light smile in the voice.",
+  },
+  {
+    id: "nia",
+    name: "Nia",
+    blurb: "Luxury Specialist",
+    url: nia,
+    voice: "coral",
+    instructions:
+      "Polished and refined, unhurried and elegant, the tone of a luxury property specialist.",
+  },
+  {
+    id: "kai",
+    name: "Kai",
+    blurb: "Friendly Guide",
+    url: kai,
+    voice: "verse",
+    instructions: "Easygoing and conversational, like a friend showing you around. Relaxed pace.",
+  },
+  {
+    id: "sofia",
+    name: "Sofia",
+    blurb: "Neighborhood Expert",
+    url: sofia,
+    voice: "sage",
+    instructions: "Bright, knowledgeable and neighborly, with a helpful local-expert energy.",
+  },
+  {
+    id: "grant",
+    name: "Grant",
+    blurb: "Veteran Broker",
+    url: grant,
+    voice: "ash",
+    instructions: "Deeper, seasoned and reassuring, measured delivery with authority.",
+  },
 ];
 
 /** Sample line every presenter reads when the user previews the voice. */
@@ -78,7 +135,8 @@ const BUCKET = "room-photos";
 const custom: Avatar[] = [];
 export const getCustomAvatars = () => custom.slice();
 export const allAvatars = () => [...PRESET_AVATARS, ...custom];
-export const findAvatar = (id: string) => allAvatars().find((a) => a.id === id) || PRESET_AVATARS[0]!;
+export const findAvatar = (id: string) =>
+  allAvatars().find((a) => a.id === id) || PRESET_AVATARS[0]!;
 
 let loaded = false;
 let loading: Promise<Avatar[]> | null = null;
@@ -103,7 +161,13 @@ export function loadCustomAvatars(force = false): Promise<Avatar[]> {
           .from(BUCKET)
           .createSignedUrl(`${uid}/avatars/${f.name}`, 60 * 60 * 8);
         if (!signed?.signedUrl) continue;
-        custom.push({ id, name: "My Presenter", blurb: "Uploaded Headshot", url: signed.signedUrl, custom: true });
+        custom.push({
+          id,
+          name: "My Presenter",
+          blurb: "Uploaded Headshot",
+          url: signed.signedUrl,
+          custom: true,
+        });
       }
       loaded = true;
     } catch (_) {
@@ -152,6 +216,8 @@ export function avatarGreeting(cfg: AvatarConfig, title?: string | null): string
   if (cfg.greeting.trim()) return cfg.greeting.trim();
   const who = cfg.name.trim() || findAvatar(cfg.avatarId).name;
   const role = cfg.title.trim() ? `, ${cfg.title.trim()}` : "";
-  const what = (title || "").trim() ? ` Let me walk you through ${title!.trim()}.` : " Let me walk you through this home.";
+  const what = (title || "").trim()
+    ? ` Let me walk you through ${title!.trim()}.`
+    : " Let me walk you through this home.";
   return `Hi, I'm ${who}${role}.${what}`;
 }

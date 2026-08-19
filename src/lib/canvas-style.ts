@@ -38,7 +38,9 @@ export const STORAGE_KEY = "rd_canvas_direction";
 
 /** Tools that restyle a space need a direction; utility tools do not. */
 export function styleNeedForTool(tool?: string | null): StyleNeed | null {
-  const t = String(tool || "").trim().toLowerCase();
+  const t = String(tool || "")
+    .trim()
+    .toLowerCase();
   if (t === "redesign") return "design";
   if (t === "virtual stage" || t === "stage") return "stage";
   /* Declutter, Multi Angle and the other utility tools change the photo
@@ -68,7 +70,11 @@ export function emptyStore(): DirectionStore {
 const clean = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
 
 /** Keys carry the need so a photo can hold a design direction and a staging style. */
-export function photoDirectionKey(need: StyleNeed, draftId?: string | null, photoKey?: string | null): string {
+export function photoDirectionKey(
+  need: StyleNeed,
+  draftId?: string | null,
+  photoKey?: string | null,
+): string {
   return `${need}|${clean(draftId) || "-"}|${clean(photoKey) || "-"}`;
 }
 export function projectDirectionKey(need: StyleNeed, draftId?: string | null): string {
@@ -97,7 +103,10 @@ function validId(id?: string | null): string {
  * A per-photo override is only consulted when there is a photo to key it to,
  * so the generic canvas never inherits another photo's override.
  */
-export function resolveDirection(store: DirectionStore, ctx: DirectionContext): ResolvedDirection | null {
+export function resolveDirection(
+  store: DirectionStore,
+  ctx: DirectionContext,
+): ResolvedDirection | null {
   const s = store || emptyStore();
   const order: StyleScope[] = ["photo", "project", "property"];
   for (const scope of order) {
@@ -132,7 +141,11 @@ export function setDirection(
   return next;
 }
 
-export function clearDirection(store: DirectionStore, scope: StyleScope, ctx: DirectionContext): DirectionStore {
+export function clearDirection(
+  store: DirectionStore,
+  scope: StyleScope,
+  ctx: DirectionContext,
+): DirectionStore {
   const next: DirectionStore = {
     photo: { ...(store?.photo || {}) },
     project: { ...(store?.project || {}) },
@@ -157,9 +170,11 @@ export function applyToPhotos(
     property: { ...(store?.property || {}) },
   };
   if (!id) return next;
-  (photoKeys || []).filter((k) => clean(k)).forEach((k) => {
-    next.photo[photoDirectionKey(need, draftId, k)] = id;
-  });
+  (photoKeys || [])
+    .filter((k) => clean(k))
+    .forEach((k) => {
+      next.photo[photoDirectionKey(need, draftId, k)] = id;
+    });
   return next;
 }
 
@@ -171,7 +186,11 @@ export function scopeLabel(scope: StyleScope): string {
 }
 
 /** Styles that make sense for the current tool and space, catalog order. */
-export function stylesForNeed(all: StyleRecord[], need: StyleNeed, projectType: string): StyleRecord[] {
+export function stylesForNeed(
+  all: StyleRecord[],
+  need: StyleNeed,
+  projectType: string,
+): StyleRecord[] {
   const wanted = need === "stage" ? "virtual-staging" : projectType || "interior";
   const pool = all.filter((s) => s.isActive && !s.isAuto);
   const fit = pool.filter((s) => s.compatibleProjectTypes.indexOf(wanted as any) > -1);
@@ -183,7 +202,14 @@ export function searchStyles(list: StyleRecord[], q: string): StyleRecord[] {
   const term = clean(q).toLowerCase();
   if (!term) return list;
   return list.filter((s) =>
-    [s.displayName, s.shortDescription, s.category, ...(s.materials || []), ...(s.mood || []), ...(s.definingFeatures || [])]
+    [
+      s.displayName,
+      s.shortDescription,
+      s.category,
+      ...(s.materials || []),
+      ...(s.mood || []),
+      ...(s.definingFeatures || []),
+    ]
       .join(" ")
       .toLowerCase()
       .includes(term),

@@ -10,7 +10,9 @@ export function isPlanBlocked(msg: unknown): boolean {
 /** Headline that matches the kind of limit that was hit. */
 export function planBlockTitle(msg: unknown): string {
   const m = String((msg as any)?.message ?? msg ?? "");
-  return /free designs/i.test(m) ? "You Have Used Today\u2019s Free Designs" : "You Need More Credits";
+  return /free designs/i.test(m)
+    ? "You Have Used Today\u2019s Free Designs"
+    : "You Need More Credits";
 }
 
 /**

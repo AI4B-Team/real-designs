@@ -64,9 +64,7 @@ export const LANDING_PAGES: LandingPage[] = [
 ];
 
 /** Keyed by bare slug, without the leading slash. */
-export const PAGE_BY_SLUG = new Map(
-  LANDING_PAGES.map((p) => [p.slug.replace(/^\//, ""), p]),
-);
+export const PAGE_BY_SLUG = new Map(LANDING_PAGES.map((p) => [p.slug.replace(/^\//, ""), p]));
 
 export function getLandingPage(slug: string): LandingPage | undefined {
   return PAGE_BY_SLUG.get(slug.replace(/^\//, ""));

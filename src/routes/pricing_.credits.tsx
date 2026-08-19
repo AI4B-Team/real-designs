@@ -26,7 +26,10 @@ export const Route = createFileRoute("/pricing_/credits")({
 });
 
 const COSTS: [string, string][] = [
-  ["Design, restyle, virtual stage, declutter, material swap, sky swap, style transfer", "1 credit"],
+  [
+    "Design, restyle, virtual stage, declutter, material swap, sky swap, style transfer",
+    "1 credit",
+  ],
   ["Before and after presentation", "1 credit"],
   ["2D to 3D floor plan", "6 credits"],
   ["Video walkthrough", "40 credits"],
@@ -86,9 +89,7 @@ function CreditsPage() {
         <div className="wrap">
           <div className="sec-head center">
             <h2>Top Ups</h2>
-            <p className="lede lede-wide">
-              Available on any paid plan from your billing settings.
-            </p>
+            <p className="lede lede-wide">Available on any paid plan from your billing settings.</p>
           </div>
           <div className="pack-row">
             {TOPUPS.map(([n, p, s]) => (
