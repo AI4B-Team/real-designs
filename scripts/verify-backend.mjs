@@ -39,8 +39,11 @@ for (const file of sorted) {
   if (/ALTER\s+DATABASE/i.test(stripped)) fail(`${file}: ALTER DATABASE is not allowed.`);
   // Storage object policies are expected here; tables and triggers in managed
   // schemas are not.
-  if (/CREATE\s+(TABLE|TRIGGER)[\s\S]{0,80}\b(auth|storage|realtime|vault)\./i.test(stripped)) {
-    fail(`${file}: migrations must not create tables or triggers in managed schemas.`);
+  if (/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(auth|storage|realtime|vault)\./i.test(stripped)) {
+    fail(`${file}: migrations must not create tables in managed schemas.`);
+  }
+  if (/CREATE\s+TRIGGER[\s\S]{0,120}?\bON\s+(auth|storage|realtime|vault)\./i.test(stripped)) {
+    fail(`${file}: migrations must not create triggers in managed schemas.`);
   }
   if (/\blocalhost\b|127\.0\.0\.1|\bdev_only\b/i.test(stripped)) fail(`${file}: environment-specific value in a migration.`);
 
