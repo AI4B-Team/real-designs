@@ -14,7 +14,7 @@ import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
 import { getMyCredits } from "@/lib/credits.functions";
 import { setModalButtonLoading } from "@/lib/modal-footer";
-import { effectiveRatio, normalizeOutputRatio, ratioLabel } from "@/lib/output-ratio";
+import { PRIMARY_OUTPUT_RATIOS, effectiveRatio, normalizeOutputRatio, ratioLabel } from "@/lib/output-ratio";
 import { openUpgrade } from "@/lib/rd-upgrade";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
@@ -244,10 +244,13 @@ export function openBulkDesign(opts) {
   let credits = null; // { balance } once the account answers
   const returnFocus = document.activeElement;
 
-  let node = document.getElementById("rdsBulk");
+  /* Distinct from the page's #rdsBulk action button: reusing that id used to
+     delete "Set Design Direction" from the page the first time this opened. */
+  let fmtOpen = false;
+  let node = document.getElementById("rdsBulkModal");
   if (node) node.remove();
   node = document.createElement("div");
-  node.id = "rdsBulk";
+  node.id = "rdsBulkModal";
   node.className = "rd-app up-modal on";
   document.body.appendChild(node);
 
@@ -370,9 +373,27 @@ export function openBulkDesign(opts) {
       ["Style", styleName() || "Not selected"],
       ["Intensity", form.intensity || "Not selected"],
       ["Finish", form.grade || "Not selected"],
-      ["Output", ratioLabel(ratio)],
       ["Cost", `${cost} credit${cost === 1 ? "" : "s"}`],
     ];
+
+    /* One source of truth for the format: the project ratio chosen on Prepare
+       Your Photos, edited inline here — never in a second stacked modal. */
+    const fmtBlock = `<div class="rdsb-fmt">
+      <div class="rdsb-fmt-h">
+        <div><span>Output Format</span><b>${esc(ratioLabel(ratio))}</b></div>
+        <button type="button" class="rdsb-fmt-x" id="rdsbFmt">${fmtOpen ? "Done" : "Change"}</button>
+      </div>
+      ${
+        fmtOpen
+          ? `<div class="rdsb-fmt-seg">${PRIMARY_OUTPUT_RATIOS.map(
+              (o) =>
+                `<button type="button" class="${ratio === o.id ? "on" : ""}" data-rdsbratio="${esc(o.id)}">${esc(
+                  o.note ? o.label + " " + o.note : o.label,
+                )}</button>`,
+            ).join("")}</div>`
+          : ""
+      }
+    </div>`;
 
     node.innerHTML = `<div class="up-scrim" data-close></div>
       <div class="up-card rdsb" role="dialog" aria-modal="true" aria-labelledby="rdsbTitle">
@@ -470,8 +491,9 @@ export function openBulkDesign(opts) {
 
           <div class="rdsb-sum">
             ${sum.map(([k, v]) => `<div><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("")}
-            <button type="button" class="rdsb-editfmt" id="rdsbFmt">Edit output format</button>
           </div>
+
+          ${fmtBlock}
 
           <div class="rdsb-cost" role="status" aria-live="polite">
             <i data-lucide="zap"></i>
@@ -561,13 +583,18 @@ export function openBulkDesign(opts) {
     if (addc) addc.onclick = () => openUpgrade(block, "Add Credits To Design These Photos");
     node.querySelector("#rdsbFmt").onclick = () => {
       readForm();
-      /* Keeps this modal open: the caller reopens/refreshes it with the new ratio. */
-      if (opts.onEditFormat) opts.onEditFormat(() => draw());
-      else {
-        close();
-        opts.onEdit && opts.onEdit();
-      }
+      fmtOpen = !fmtOpen;
+      draw();
     };
+    node.querySelectorAll("[data-rdsbratio]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          readForm();
+          /* Immediately updates the shared project format — one source of truth. */
+          opts.onRatioChange && opts.onRatioChange(b.getAttribute("data-rdsbratio"));
+          draw();
+        }),
+    );
     node.querySelector('[data-mfa="edit"]').onclick = () => {
       close();
       opts.onEdit && opts.onEdit();
