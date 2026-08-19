@@ -2225,6 +2225,43 @@ export function initApp(): () => void {
     let STUDIO_RESULT = false;
     let studioAnalyzeTimer = null;
 
+    /**
+     * The viewer always shows the shape the design will be delivered in, so a
+     * portrait output is never squeezed into a landscape banner. Before and
+     * After share this one container, so their geometry can never drift.
+     */
+    function setCanvasRatio(ratio, src) {
+      const cv = document.getElementById("canvas");
+      if (!cv) return;
+      const map = {
+        "9:16": "9 / 16",
+        "16:9": "16 / 9",
+        "1:1": "1 / 1",
+        "4:3": "4 / 3",
+        "4:5": "4 / 5",
+        "3:2": "3 / 2",
+        "2:3": "2 / 3",
+      };
+      const ar = map[String(ratio || "")];
+      if (ar) {
+        cv.style.setProperty("--rd-canvas-ar", ar);
+        return;
+      }
+      /* "Original" or unknown: follow the source photo's own shape. */
+      cv.style.setProperty("--rd-canvas-ar", "16 / 9");
+      if (!src) return;
+      const probe = new Image();
+      probe.onload = () => {
+        if (probe.naturalWidth && probe.naturalHeight)
+          cv.style.setProperty(
+            "--rd-canvas-ar",
+            probe.naturalWidth + " / " + probe.naturalHeight,
+          );
+      };
+      probe.src = src;
+    }
+
+
     function setC(v) {
       cAfter.style.clipPath = `inset(0 0 0 ${v}%)`;
       cHnd.style.left = v + "%";
