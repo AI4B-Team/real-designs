@@ -489,39 +489,51 @@ export type Database = {
       }
       feedback: {
         Row: {
+          app_version: string | null
           attachment_path: string | null
           body: string
           category: string
+          client_timestamp: string | null
           created_at: string
           diagnostic_id: string | null
           id: string
+          original_body: string | null
           page: string | null
+          polished_body: string | null
           status: string
           user_id: string
           view_context: string | null
           workflow: string | null
         }
         Insert: {
+          app_version?: string | null
           attachment_path?: string | null
           body: string
           category?: string
+          client_timestamp?: string | null
           created_at?: string
           diagnostic_id?: string | null
           id?: string
+          original_body?: string | null
           page?: string | null
+          polished_body?: string | null
           status?: string
           user_id: string
           view_context?: string | null
           workflow?: string | null
         }
         Update: {
+          app_version?: string | null
           attachment_path?: string | null
           body?: string
           category?: string
+          client_timestamp?: string | null
           created_at?: string
           diagnostic_id?: string | null
           id?: string
+          original_body?: string | null
           page?: string | null
+          polished_body?: string | null
           status?: string
           user_id?: string
           view_context?: string | null
