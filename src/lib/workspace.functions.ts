@@ -212,7 +212,9 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
         before_path: (v.before_path ?? null) as string | null,
         after_path: (v.after_path ?? null) as string | null,
 
+        room_id: v.rooms.id as string,
         room_name: v.rooms.name as string,
+
         room_type: v.rooms.room_type as string,
         project_id: v.rooms.projects.id as string,
         project_name: v.rooms.projects.name as string,
@@ -261,12 +263,15 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
     return {
       counts: {
         properties: (props ?? []).length,
+        /* Saved rooms are distinct records, so count them, not their versions. */
+        rooms: new Set(flat.map((r) => r.room_id)).size,
         designs: generated.length,
         versions: flat.length,
         priced: flat.filter((r) => r.total_low != null).length,
         drafts: generated.filter((r) => r.status !== "approved").length,
         scopedTotal,
       },
+
 
       recent: flat.slice(0, 5),
       projects: Array.from(byProject.values()),

@@ -2359,6 +2359,8 @@ export function initApp(): () => void {
             lastRenderPath = path;
             addRenderVariant(image, label || "Concept", path);
             markStudioResult();
+            finalizeGeneratedDesign(path);
+
             if (path) {
               STUDIO_DRAFT_ID = null;
               STUDIO_DRAFT_PATH = null;
@@ -2707,12 +2709,13 @@ export function initApp(): () => void {
     }
     window.rdStudioResumeDraft = (id) => resumeStudioDraft(id);
 
-    /** Called once a real generated result lands on the canvas. */
+    /** Called once a real generated result lands on the canvas.
+        The in-progress draft is deliberately kept here: it is only retired once
+        the render has a durable path AND a version row exists, so a failed
+        upload or a failed version insert can never lose the work. */
     function markStudioResult() {
       STUDIO_RESULT = true;
-      try {
-        clearStudioDraft();
-      } catch (_) {}
+
       if (STUDIO_SRC !== "intentional_sample") STUDIO_SRC = "generated";
       sourceCaption(false);
       paintStudioState();
@@ -3000,6 +3003,9 @@ export function initApp(): () => void {
         );
         setCanvasPhase("");
         markStudioResult();
+        finalizeGeneratedDesign(lastRenderPath);
+
+
         paintStudioSummary(currentBand());
         window.dispatchEvent(new Event("rd:credits-changed"));
         window.dispatchEvent(new Event("rd:photo"));
@@ -3051,14 +3057,23 @@ export function initApp(): () => void {
         m.addEventListener("click", (e) => {
           if (e.target.closest && e.target.closest("[data-close]")) m.classList.remove("on");
         });
-        m.querySelector("#ndSave").addEventListener("click", () => {
+        m.querySelector("#ndSave").addEventListener("click", async () => {
           m.classList.remove("on");
-          go("scope");
-          setTimeout(() => {
-            const a = document.getElementById("svAddress");
-            if (a) a.scrollIntoView({ block: "center" });
-          }, 140);
+          /* Save really saves: the room (and anything generated on it) is
+             written to the account, then Studio starts clean. No navigation. */
+          try {
+            const saved =
+              STUDIO_CTX && STUDIO_CTX.roomId
+                ? await window.rdStudioBackfill()
+                : await openStudioSaveRoom();
+            if (!saved && !(STUDIO_CTX && STUDIO_CTX.roomId)) return;
+          } catch (_) {
+            return;
+          }
+          window.rdToast && window.rdToast("Room Saved");
+          clearStudioSource();
         });
+
         m.querySelector("#ndDiscard").addEventListener("click", () => {
           m.classList.remove("on");
           clearStudioSource();
@@ -3248,12 +3263,21 @@ export function initApp(): () => void {
        the upload fails we keep the preview, say so plainly, and offer a retry
        that re-uploads the SAME image (no second generation, no second charge). */
     let PENDING_SAVE = null;
+    /* The persistent version currently shown on the canvas, and whether a save
+       is still running. Approval may only ever target a saved version. */
+    let DISPLAYED_VERSION = null;
+    let VERSION_SAVING = false;
+    /** A render that reached storage but whose version row still has to be written. */
+    let PENDING_VERSION = null;
+
     function paintSaveWarn() {
       const w = document.getElementById("studioSaveWarn");
-      if (w) w.hidden = !PENDING_SAVE;
+      if (w) w.hidden = !(PENDING_SAVE || PENDING_VERSION);
     }
     function dropPendingSave() {
       PENDING_SAVE = null;
+      PENDING_VERSION = null;
+      DISPLAYED_VERSION = null;
       paintSaveWarn();
     }
     async function persistRender(image, label) {
@@ -3275,9 +3299,21 @@ export function initApp(): () => void {
       return null;
     }
 
+    /* Retry never regenerates and never charges again: it re-uploads the same
+       image when storage failed, or writes only the missing version row. */
     async function retryPendingSave() {
-      if (!PENDING_SAVE) return;
       const btn = document.getElementById("studioRetrySave");
+      if (!PENDING_SAVE) {
+        const path = PENDING_VERSION;
+        if (!path) return;
+        if (btn) btn.disabled = true;
+        PENDING_VERSION = null;
+        paintSaveWarn();
+        const v = await finalizeGeneratedDesign(path);
+        if (btn) btn.disabled = false;
+        if (v) window.rdToast && window.rdToast("Design Saved");
+        return;
+      }
       if (btn) btn.disabled = true;
       const { image, label } = PENDING_SAVE;
       const path = await persistRender(image, label);
@@ -3292,24 +3328,20 @@ export function initApp(): () => void {
         paintVersions();
       } catch (_) {}
       window.rdToast && window.rdToast("Design Saved");
-      try {
-        attachVersionToRoom(path);
-      } catch (_) {}
+      await finalizeGeneratedDesign(path);
       window.dispatchEvent(new Event("rd:saved"));
       window.dispatchEvent(new Event("rd:photo"));
     }
+
     try {
       const rb = document.getElementById("studioRetrySave");
       rb && rb.addEventListener("click", retryPendingSave);
     } catch (_) {}
 
     function addRenderVariant(src, label, path) {
-      /* Saved room on the canvas => this render becomes one of its versions. */
-      if (path) {
-        try {
-          attachVersionToRoom(path);
-        } catch (_) {}
-      }
+      /* Persisting a render is the caller's job (finalizeGeneratedDesign), so
+         reopening a saved version never writes a duplicate version row. */
+
       /* Version History shows this render immediately, before any save. */
       try {
         SESSION_VERSIONS.unshift({
@@ -3681,11 +3713,66 @@ export function initApp(): () => void {
       } catch (_) {}
     }
 
+    window.rdDisplayedVersion = () => DISPLAYED_VERSION;
+    window.rdVersionSaving = () => VERSION_SAVING;
+
+
+    /** Intensity and finish grade exactly as the user set them. */
+    function currentBandLabel() {
+      const b = document.querySelector(".bchip.on b");
+      return b ? b.textContent.trim() : null;
+    }
+    function currentGradeLabel() {
+      const g = document.querySelector("#gradeChips .chip.on");
+      return g ? g.textContent.trim() : null;
+    }
+
+    /** Approval only ever offers itself for a version that already exists. */
+    function paintApproveBtn() {
+      const b = document.getElementById("stApprove");
+      if (!b) return;
+      const unsaved = VERSION_SAVING || (!!lastRenderPath && !DISPLAYED_VERSION) || !!PENDING_VERSION;
+      b.disabled = !!VERSION_SAVING;
+      b.setAttribute(
+        "data-tt",
+        VERSION_SAVING
+          ? "This Design Is Still Saving"
+          : unsaved
+            ? "Save This Version Before Approving"
+            : DISPLAYED_VERSION
+              ? "Approve Version " + DISPLAYED_VERSION.version_no
+              : "Approve The Latest Saved Version",
+      );
+    }
+    window.rdPaintApproveBtn = paintApproveBtn;
+
+
+    /** Paints "Saving…" / "Saved as Version N" on the tile for one render. */
+    function paintVersionBadge(path, text, cls) {
+      if (!path) return;
+      try {
+        const tile = document.querySelector('#vars .var[data-path="' + CSS.escape(path) + '"]');
+        const lab = tile && tile.querySelector(".vl");
+        if (!lab) return;
+        const mark = lab.querySelector(".rd-unsaved,.rd-vsave");
+        if (mark) mark.remove();
+        if (!text) return;
+        const s = document.createElement("span");
+        s.className = cls || "rd-vsave";
+        s.textContent = text;
+        lab.appendChild(document.createTextNode(" "));
+        lab.appendChild(s);
+      } catch (_) {}
+    }
+
     /** Attaches one generated image to the saved room, if there is one. */
     async function attachVersionToRoom(afterPath) {
       const roomId = STUDIO_CTX && STUDIO_CTX.roomId;
       const before = studioSourcePath();
       if (!roomId || !afterPath || !before) return null;
+      VERSION_SAVING = true;
+      paintVersionBadge(afterPath, "Saving…");
+      paintApproveBtn();
       try {
         const v = await saveStudioVersion({
           data: {
@@ -3693,16 +3780,35 @@ export function initApp(): () => void {
             before_path: before,
             after_path: afterPath,
             style: currentStyleId ? String(currentStyleId() || "") || null : null,
+            intensity: currentBandLabel ? currentBandLabel() : null,
+            grade: currentGradeLabel ? currentGradeLabel() : null,
+            settings: {
+              tool: activeToolName(),
+              notes: (document.getElementById("agentNote") || {}).value || null,
+              room_type: currentRoomType(),
+            },
           },
         });
-        if (v && v.created) {
-          window.dispatchEvent(new Event("rd:saved"));
-          window.rdRefreshOnboarding && window.rdRefreshOnboarding();
-        }
+        paintVersionBadge(afterPath, "Saved As Version " + v.version_no, "rd-vsaved");
+        if (afterPath === lastRenderPath)
+          DISPLAYED_VERSION = { id: v.id, version_no: v.version_no, path: afterPath };
+        /* The temporary draft may retire only now: durable image + version row. */
+        try {
+          await clearStudioDraft();
+        } catch (_) {}
+        window.dispatchEvent(new Event("rd:saved"));
+        window.rdRefreshOnboarding && window.rdRefreshOnboarding();
         return v;
       } catch (e) {
         console.error("[studio] version save failed", e);
+        paintVersionBadge(afterPath, "Not Saved", "rd-unsaved");
+        window.rdToast && window.rdToast("Could Not Save That Version. Use Retry Save.");
+        PENDING_VERSION = afterPath;
+        paintSaveWarn();
         return null;
+      } finally {
+        VERSION_SAVING = false;
+        paintApproveBtn();
       }
     }
 
@@ -3717,6 +3823,26 @@ export function initApp(): () => void {
       }
       if (lastRenderPath && !seen.has(lastRenderPath)) await attachVersionToRoom(lastRenderPath);
     }
+
+    /**
+     * The one lifecycle a finished render follows.
+     *
+     * With a saved room the version is written immediately; without one the
+     * Save Room dialog opens over the visible result and the version is written
+     * as soon as the room exists. Nothing is discarded on failure.
+     */
+    async function finalizeGeneratedDesign(afterPath) {
+      if (!afterPath) return null; /* upload failed: Retry Save owns this case */
+      if (STUDIO_CTX && STUDIO_CTX.roomId) return attachVersionToRoom(afterPath);
+      const saved = await openStudioSaveRoom();
+      if (!saved) {
+        window.rdToast && window.rdToast("Save This Room To Keep The Design");
+        return null;
+      }
+      return DISPLAYED_VERSION;
+    }
+    window.rdFinalizeGeneratedDesign = (p) => finalizeGeneratedDesign(p);
+
 
     async function openStudioSaveRoom() {
       const path = studioSourcePath();
@@ -3751,6 +3877,8 @@ export function initApp(): () => void {
       return saved;
     }
     window.rdStudioSaveRoom = () => openStudioSaveRoom();
+    window.rdStudioBackfill = () => backfillRoomVersions();
+
     /** Starts a clean Studio session for saving a brand new room. */
     window.rdStudioNewRoom = () => {
       try {
@@ -9235,12 +9363,20 @@ ${picks
           cta: "Save Room",
         },
         {
+          k: "design",
+          t: "Create Your First Design",
+          b: "Generate a design and keep it on the saved room.",
+          i: "wand-sparkles",
+          cta: "Open Studio",
+        },
+        {
           k: "brand",
           t: "Add Your Brand Kit",
           b: "Your company name and accent color on every export.",
           i: "palette",
           cta: "Set Brand",
         },
+
         {
           k: "shared",
           t: "Share A Presentation",
@@ -9297,7 +9433,11 @@ ${picks
         state.saved = true;
         state.photo = true;
       }
-      if (stats.designs > 0) state.photo = true;
+      if (stats.designs > 0) {
+        state.photo = true;
+        state.design = true;
+      }
+
       save();
       card.hidden = false;
       const dup = document.getElementById("obCard");
@@ -9340,6 +9480,11 @@ ${picks
             state.photo = true;
             changed = true;
           }
+          if (st.designs > 0 && !state.design) {
+            state.design = true;
+            changed = true;
+          }
+
         } catch (e) {}
         if (changed) {
           save();
@@ -10091,7 +10236,16 @@ ${picks
     const stApprove = document.getElementById("stApprove");
     if (stApprove)
       stApprove.addEventListener("click", async () => {
-        const room = latestRoom();
+        /* Approval always targets the version actually on the canvas; only when
+           nothing was generated this session does it fall back to the latest. */
+        if (window.rdVersionSaving && window.rdVersionSaving()) {
+          showAlert("That design is still saving. Try again in a moment.");
+          return;
+        }
+        const shown = window.rdDisplayedVersion && window.rdDisplayedVersion();
+        const room = shown
+          ? { version_id: shown.id, version_no: shown.version_no, status: "draft" }
+          : latestRoom();
         if (!room) {
           showAlert("Save a room first. Approval applies to a saved version.");
           return;
@@ -10106,6 +10260,7 @@ ${picks
           stApprove.innerHTML =
             '<i data-lucide="check"></i>' +
             (approved ? "Approve Latest Version" : "v" + (room.version_no || 1) + " Approved");
+
           lucide.createIcons();
           try {
             window.dispatchEvent(new CustomEvent("rd:saved"));
