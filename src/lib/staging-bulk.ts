@@ -431,11 +431,20 @@ export function openBulkDesign(opts) {
       if (submitted || go.disabled) return;
       readForm();
       submitted = true;
-      setModalButtonLoading(go, true, `Generating ${items.length} design${items.length === 1 ? "" : "s"}…`);
+      setModalButtonLoading(go, true, `Generating ${items.length} Design${items.length === 1 ? "" : "s"}…`);
       const rec = STYLES.find((s) => s.id === form.styleId);
+      /* Per-space fallbacks travel with the direction, so an exterior group
+         renders with the style the user chose for it. */
+      const styleBySpace = {};
+      Object.keys(form.spaceStyles || {}).forEach((space) => {
+        const id = form.spaceStyles[space];
+        const sr = id && STYLES.find((s) => s.id === id);
+        if (sr) styleBySpace[space] = { id: sr.id, name: sr.displayName };
+      });
       const direction = {
         styleId: rec ? rec.id : null,
         direction: rec ? rec.displayName : "Warm Minimal",
+        styleBySpace,
         intensity: form.intensity,
         grade: form.grade,
         preserve: form.preserve,
