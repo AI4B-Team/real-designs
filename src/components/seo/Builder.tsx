@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { PHOTOS } from "@/content/rd-photos";
-import { estimate, fmt, type FinishGrade, type RoomKey } from "@/lib/planning-range";
-import { ResultSummaryPanel } from "@/components/ResultSummaryPanel";
-import { metric } from "@/lib/result-summary";
+import type { FinishGrade } from "@/lib/planning-range";
 
 const BANDS = [
   { label: "Refresh", note: "Finishes and decor · under $5K", grade: "rental" as FinishGrade },
@@ -21,27 +19,6 @@ const SPACES = [
   { key: "exterior", label: "Exterior" },
   { key: "landscape", label: "Landscape" },
 ] as const;
-
-const ROOM_FOR_SPACE: Record<string, RoomKey> = {
-  interior: "living",
-  exterior: "exterior",
-  landscape: "landscape",
-};
-
-const ROOM_HINT: Record<string, RoomKey> = {
-  kitchen: "kitchen",
-  bathroom: "bathroom",
-  bath: "bathroom",
-  bedroom: "bedroom",
-  living: "living",
-  "whole home": "wholeHome",
-};
-
-function roomKeyFor(spaceType: string, roomType: string): RoomKey {
-  const hit = Object.keys(ROOM_HINT).find((k) => roomType.toLowerCase().includes(k));
-  if (hit) return ROOM_HINT[hit]!;
-  return ROOM_FOR_SPACE[spaceType] ?? "living";
-}
 
 const STEP_TEXT = [
   "Reading room geometry",
@@ -79,10 +56,6 @@ export function Builder({
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => () => { if (timer.current) clearInterval(timer.current); }, []);
-
-  const room = roomKeyFor(space, roomType);
-  const sf = room === "bathroom" ? 45 : room === "kitchen" ? 180 : room === "exterior" ? 1400 : 300;
-  const result = estimate(room, sf, BANDS[band]!.grade);
 
   function run() {
     if (phase === "running") return;
@@ -192,43 +165,11 @@ export function Builder({
           )}
         </div>
 
-        <ResultSummaryPanel
-          primaryLabel="Estimated Planning Range"
-          primaryValue={`${fmt(result.totalLow)}–${fmt(result.totalHigh)}`}
-          compact
-          metrics={[
-            metric("Pricing", result.confidence),
-            { label: "Line Items", value: String(result.lines.length), plain: true },
-            { label: "Basis", value: "Planning Estimate", plain: true },
-          ]}
-        />
-
         {phase === "done" && (
-          <div className="scope-wall">
-            <div className="sw-table" aria-hidden="true">
-              <div className="sw-row sw-head">
-                <span>Line Item</span>
-                <em className="mono">Qty</em>
-                <b className="mono">Range</b>
-              </div>
-              {result.lines.slice(0, 7).map((l) => (
-                <div className="sw-row" key={l.item}>
-                  <span>{l.item}</span>
-                  <em className="mono">{l.qty}</em>
-                  <b className="mono">
-                    {fmt(l.low)} to {fmt(l.high)}
-                  </b>
-                </div>
-              ))}
-            </div>
-            <div className="sw-over">
-              <b>See How This Number Was Built</b>
-              <span>Line items, quantities, trades and local labour rates.</span>
-              <a href="/auth" className="btn btn-primary btn-sm">
-                Unlock The Scope
-              </a>
-            </div>
-          </div>
+          <p className="lp-basis mono" style={{ marginTop: 14 }}>
+            AI redesign preview only. Photo-to-budget and contractor scope generation are paused
+            pending verified local cost data. Use the free calculators for a planning range.
+          </p>
         )}
       </div>
 

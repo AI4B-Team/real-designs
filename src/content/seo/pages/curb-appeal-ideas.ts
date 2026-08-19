@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["exterior", "budget-mode", "scope"],
 
-  scopeTitle: "Curb Appeal Scope & Planning Range",
-  scopeIntro: "Line items for a typical single family front exterior refresh to makeover level project.",
-  scopeLines: [
-    { item: "Exterior Paint, Front Facade", qty: "600 SF", trade: "Painting", low: 2200, high: 5500 },
-    { item: "Front Door, Paint Or Replace", qty: "1 door", trade: "Carpentry", low: 200, high: 1800 },
-    { item: "Landscaping Beds & Mulch", qty: "200 SF", trade: "Landscaping", low: 800, high: 2200 },
-    { item: "Exterior Light Fixtures", qty: "3 fixtures", trade: "Electrical", low: 400, high: 1200 },
-    { item: "House Numbers & Mailbox", qty: "1 set", trade: "Exterior", low: 150, high: 500 },
-    { item: "Walkway Repair Or Pavers", qty: "40 SF", trade: "Hardscape", low: 900, high: 3200 },
-    { item: "Garage Door, Paint Or Replace", qty: "1 door", trade: "Exterior", low: 300, high: 3800 },
-    { item: "Pressure Washing, Siding & Walkway", qty: "1 exterior", trade: "Cleaning", low: 250, high: 700 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for exterior curb appeal projects, not a contractor bid.",
-  confidence: "Medium",
 
   sections: [
     {

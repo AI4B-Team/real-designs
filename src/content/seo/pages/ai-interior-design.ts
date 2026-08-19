@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["interior", "reality-lock", "shop", "declutter", "brief"],
 
-  scopeTitle: "Living Room Refresh Budget",
-  scopeIntro: "A furniture-forward makeover on an existing 14x18 living room, no wall moves, no electrical relocation.",
-  scopeLines: [
-    { item: "Interior Paint, Walls & Trim", qty: "320 SF", trade: "Painting", low: 600, high: 1100 },
-    { item: "Sofa & Accent Chair", qty: "2 Pieces", trade: "Furniture", low: 1400, high: 3200 },
-    { item: "Area Rug", qty: "9x12", trade: "Furniture", low: 300, high: 900 },
-    { item: "Coffee Table & Side Tables", qty: "3 Pieces", trade: "Furniture", low: 400, high: 1100 },
-    { item: "Window Treatments", qty: "2 Windows", trade: "Soft Goods", low: 250, high: 700 },
-    { item: "Lighting, Floor & Table Lamps", qty: "3 Fixtures", trade: "Electrical/Furniture", low: 200, high: 650 },
-    { item: "Art & Wall Decor", qty: "6 Pieces", trade: "Decor", low: 150, high: 600 },
-    { item: "Installation & Delivery", qty: "1 Job", trade: "Labor", low: 200, high: 500 },
-  ],
-  scopeBasis: "Ranges built from current retail furniture pricing and regional painting labor rates, not from a national construction cost index.",
-  confidence: "Medium",
 
   sections: [
     {

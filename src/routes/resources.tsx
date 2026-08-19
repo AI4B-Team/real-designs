@@ -7,9 +7,9 @@ import type { LandingPage } from "@/content/seo/types";
 import { absoluteUrl } from "@/lib/site";
 import "@/styles/rd-site.css";
 
-const TITLE = "Resources Hub — Design, Cost And Scope Guides | REAL DESIGNS";
+const TITLE = "Resources Hub — Design & Staging Guides | REAL DESIGNS";
 const DESC =
-  "Every REAL DESIGNS guide in one place: AI design pages, renovation cost breakdowns, contractor scope references and free planning tools.";
+  "Every REAL DESIGNS guide in one place: AI design pages, staging guides, disclosure rules and free planning tools.";
 
 const GROUPS: { heading: string; blurb: string; priority: number; match: (p: LandingPage) => boolean }[] = [
   {
@@ -19,9 +19,9 @@ const GROUPS: { heading: string; blurb: string; priority: number; match: (p: Lan
     priority: 4,
   },
   {
-    heading: "Cost & Scope Guides",
-    blurb: "Planning ranges, line item scopes and the decisions that actually move the number.",
-    match: (p) => /cost|calculator|estimator|scope|grade/.test(p.slug),
+    heading: "Style & Grade Guides",
+    blurb: "Finish grades, materials and the style decisions that shape your redesign.",
+    match: (p) => /calculator|estimator|grade/.test(p.slug),
     priority: 3,
   },
   {
@@ -32,7 +32,7 @@ const GROUPS: { heading: string; blurb: string; priority: number; match: (p: Lan
   },
   {
     heading: "By Role",
-    blurb: "How flippers, contractors, agents, managers, designers and landlords use the workflow.",
+    blurb: "How agents, managers, designers and landlords use the workflow.",
     match: (p) => p.slug.startsWith("/for-") || p.slug.includes("house-flippers"),
     priority: 1,
   },
@@ -54,7 +54,7 @@ function grouped() {
   if (rest.length) {
     out.push({
       heading: "More Guides",
-      blurb: "Everything else worth reading before you commit a budget.",
+      blurb: "Everything else worth reading before your next project.",
       priority: 99,
       match: () => true,
       pages: rest,
@@ -121,11 +121,10 @@ function ResourcesPage() {
           </nav>
           <div className="hero-head">
             <span className="eyebrow">Resources Hub</span>
-            <h1>Design, Cost & Scope Guides</h1>
+            <h1>Design & Staging Guides</h1>
             <p className="lede">
               Every guide we publish, grouped by what you are trying to decide. Each one pairs a real
-              before and after with a line item planning range, so the design and the budget come
-              from the same page.
+              before and after so you can see the redesign in context.
             </p>
           </div>
         </div>
@@ -176,7 +175,7 @@ function ResourcesPage() {
           <div className="sec-head">
             <h2>Start With Your Own Photo</h2>
             <p className="lede">
-            Upload a room, set a budget band and get a design plus a contractor planning brief in the
+            Upload a room and get a photoreal redesign plus a shareable presentation in the
             same session.
             </p>
             <a className="btn btn-primary" href="/#builder">

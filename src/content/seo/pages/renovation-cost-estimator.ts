@@ -32,24 +32,7 @@ export const page: LandingPage = {
     { title: "Compare Rooms Side By Side", text: "See which room's renovation cost is the largest share of your total budget." },
   ],
 
-  showcase: ["interior", "scope", "budget-mode", "grades", "reality-lock"],
-
-  scopeTitle: "Sample Living Room Renovation Scope",
-  scopeIntro: "A 300 square foot living room at retail grade, flooring, paint, trim, electrical and furnishing included.",
-  scopeLines: [
-    { item: "Demolition & Prep", qty: "300 SF", trade: "Demolition", low: 960, high: 1320 },
-    { item: "Flooring", qty: "300 SF", trade: "Flooring", low: 2250, high: 3600 },
-    { item: "Paint, Walls & Ceiling", qty: "300 SF", trade: "Paint", low: 1080, high: 1620 },
-    { item: "Trim & Baseboard", qty: "300 SF", trade: "Carpentry", low: 720, high: 1200 },
-    { item: "Lighting & Devices", qty: "300 SF", trade: "Electrical", low: 840, high: 1380 },
-    { item: "Window Trim Repair", qty: "1 LS", trade: "Carpentry", low: 400, high: 900 },
-    { item: "Ceiling Fan Or Fixture Swap", qty: "1 LS", trade: "Electrical", low: 300, high: 650 },
-    { item: "Furniture & Soft Goods", qty: "300 SF", trade: "Furnishing", low: 3300, high: 6600 },
-    { item: "Window Treatments", qty: "1 LS", trade: "Furnishing", low: 450, high: 1100 },
-    { item: "Contingency", qty: "10 Pct", trade: "Reserve", low: 1030, high: 1837 },
-  ],
-  scopeBasis: "Published unit rates for retail grade finish times measured square footage, plus a 10 percent contingency.",
-  confidence: "High",
+  showcase: ["interior", "scope", "budget-mode", "grades"],
 
   sections: [
     {

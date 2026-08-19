@@ -84,8 +84,6 @@ const LOCK_LEVELS = [
   { key: "custom", label: "Custom", note: "" },
 ];
 
-const BANDS = ["Refresh", "Makeover", "Renovation", "Full Remodel"];
-
 export function mountFirstUse(ctx: Ctx) {
   const { go, lucide, esc, photos, uid, track } = ctx;
   const startGo = ctx.startGo || go;
@@ -168,12 +166,6 @@ export function mountFirstUse(ctx: Ctx) {
       sel.value = opt.value;
       sel.dispatchEvent(new Event("change", { bubbles: true }));
     }
-  }
-  function applyBudget(band: string) {
-    const i = BANDS.indexOf(band);
-    if (i < 0) return;
-    const chip = q(`.bchip[data-b="${i}"]`);
-    if (chip) (chip as HTMLElement).click();
   }
   function applyLock(level: string) {
     const row = LOCK_LEVELS.find((l) => l.key === level);
@@ -379,12 +371,8 @@ export function mountFirstUse(ctx: Ctx) {
       );
 
       blocks.push(
-        '<section class="fu-step" aria-labelledby="fuBudH"><h3 id="fuBudH">Set An Optional Budget</h3>' +
-          '<p class="fu-p">Do you want the design to follow a budget?</p><div class="fu-opts">' +
-          BANDS.map(
-            (b) => '<button class="fu-opt' + (state.budget === b ? " on" : "") + '" data-fu-budget="' + b + '">' + b + "</button>",
-          ).join("") +
-          '<button class="fu-opt' + (state.budget === "later" ? " on" : "") + '" data-fu-budget="later">Decide Later</button></div></section>',
+        '<section class="fu-step" aria-labelledby="fuBudH"><h3 id="fuBudH">Budget</h3>' +
+          '<p class="fu-p">Budgets Are Coming Soon. Pricing Turns On Once Verified Local Cost Data Is Licensed For Your Market.</p></section>',
       );
 
       const summary: Array<[string, string]> = [
@@ -393,7 +381,7 @@ export function mountFirstUse(ctx: Ctx) {
         ["Room", state.room],
         ["Design Style", state.direction || "Not Chosen"],
         ["Reality Lock", LOCK_LEVELS.find((l) => l.key === state.lock)?.label || "Default"],
-        ["Budget", state.budget && state.budget !== "later" ? state.budget : "Decide Later"],
+        ["Budget", "Coming Soon"],
       ];
       blocks.push(
         '<section class="fu-review" aria-labelledby="fuRevH"><h3 id="fuRevH">Review & Generate</h3><dl class="fu-sum">' +
@@ -564,16 +552,6 @@ export function mountFirstUse(ctx: Ctx) {
         state.lock = (b as HTMLElement).dataset["fuLock"] || "";
         applyLock(state.lock);
         if (state.lock === "custom") scrollTo("#lockList");
-        persist();
-        render();
-      }),
-    );
-
-    panel.querySelectorAll("[data-fu-budget]").forEach((b) =>
-      b.addEventListener("click", () => {
-        state.budget = (b as HTMLElement).dataset["fuBudget"] || "";
-        if (state.budget !== "later") applyBudget(state.budget);
-        track(state.budget === "later" ? "budget_skipped" : "budget_selected", { band: state.budget });
         persist();
         render();
       }),

@@ -63,12 +63,16 @@ export type LandingPage = {
   /** Showcase card ids, 4 to 6 of them. */
   showcase: string[];
 
-  /** Budget and scope block. */
-  scopeTitle: string;
-  scopeIntro: string;
-  scopeLines: ScopeLine[];
-  scopeBasis: string;
-  confidence: "High" | "Medium" | "Low";
+  /**
+   * Budget and scope block. Retained on the type for backward compatibility
+   * with archived drafts, but no page should set these: fabricated line-item
+   * tables are not rendered anywhere in the app.
+   */
+  scopeTitle?: string;
+  scopeIntro?: string;
+  scopeLines?: ScopeLine[];
+  scopeBasis?: string;
+  confidence?: "High" | "Medium" | "Low";
 
   /** Long-form unique copy. Together with intro this carries the page. */
   sections: ProseSection[];

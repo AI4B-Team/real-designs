@@ -28,30 +28,13 @@ export const page: LandingPage = {
   afterCaption: "The same footprint with new tile, a tub-to-shower conversion and updated fixtures.",
 
   steps: [
-    { title: "Photograph Your Bathroom", text: "One photo captures the fixture layout Reality Lock uses to size tile and plumbing quantities." },
+    { title: "Pick Your Bathroom Type", text: "Powder room, hall bath or primary suite sets the fixture count baseline for the planning range." },
     { title: "Choose Your Room Type", text: "Powder room, hall bath or primary suite, each with a different scope and planning range." },
     { title: "Review The Trade Breakdown", text: "See tile, plumbing and waterproofing priced separately so you know exactly what is driving the total." },
   ],
 
   showcase: ["scope", "reality-lock", "budget-mode", "grades"],
 
-  scopeTitle: "Hall Bathroom Remodel Scope, 45 SF",
-  scopeIntro:
-    "A standard hall bath with a tub-to-shower conversion, new tile and no plumbing relocation beyond the shower valve.",
-  scopeLines: [
-    { item: "Demolition & Disposal", qty: "45 SF", trade: "Demolition", low: 360, high: 540 },
-    { item: "Shower Pan & Waterproofing Membrane", qty: "40 SF", trade: "Waterproofing", low: 900, high: 1600 },
-    { item: "Tub-To-Shower Conversion, Plumbing", qty: "1 LS", trade: "Plumbing", low: 1600, high: 3200 },
-    { item: "Wall Tile, Shower Surround", qty: "80 SF", trade: "Tile", low: 3400, high: 5400 },
-    { item: "Floor Tile", qty: "45 SF", trade: "Tile", low: 1900, high: 3100 },
-    { item: "Vanity & Countertop", qty: "1 LS", trade: "Cabinetry", low: 900, high: 2000 },
-    { item: "Toilet, Sink & Trim", qty: "1 LS", trade: "Plumbing", low: 750, high: 1400 },
-    { item: "Exhaust Fan & Lighting", qty: "1 LS", trade: "Electrical", low: 550, high: 1050 },
-    { item: "Paint & Drywall Repair", qty: "45 SF", trade: "Paint", low: 320, high: 500 },
-    { item: "Permits & Inspection", qty: "1 LS", trade: "General", low: 250, high: 600 },
-  ],
-  scopeBasis: "Based on a 45 SF hall bathroom, retail finish grade, tub replaced with a tiled shower, no wall relocation.",
-  confidence: "Medium",
 
   sections: [
     {
@@ -122,7 +105,7 @@ export const page: LandingPage = {
   ],
 
   relatedSlugs: [
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/kitchen-remodel-cost",
     "/free/rehab-cost-calculator",
     "/ai-bathroom-design",
@@ -131,6 +114,6 @@ export const page: LandingPage = {
   ],
 
   ctaTitle: "Get A Trade-By-Trade Bathroom Estimate",
-  ctaBody: "Upload a photo of your bathroom and see exactly which trade lines are driving your total.",
-  ctaLabel: "Estimate My Bathroom",
+  ctaBody: "Try the free rehab calculator to see which trade lines drive your total, or start an AI redesign of your bathroom.",
+  ctaLabel: "Try The Free Calculator",
 };

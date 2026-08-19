@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["staging", "declutter", "reality-lock", "scope"],
 
-  scopeTitle: "Physical Staging Cost By Room, Typical Monthly Range",
-  scopeIntro: "Approximate monthly rental and setup cost for professionally staging a vacant single family home, three bedroom, two bath.",
-  scopeLines: [
-    { item: "Living Room Furniture Package", qty: "1 room", trade: "Staging", low: 300, high: 900 },
-    { item: "Primary Bedroom Furniture Package", qty: "1 room", trade: "Staging", low: 250, high: 700 },
-    { item: "Dining Room Furniture Package", qty: "1 room", trade: "Staging", low: 200, high: 500 },
-    { item: "Kitchen & Counter Styling", qty: "1 room", trade: "Staging", low: 100, high: 300 },
-    { item: "Delivery & Setup Fee", qty: "1 visit", trade: "Staging", low: 300, high: 800 },
-    { item: "Monthly Rental Extension", qty: "per month after first", trade: "Staging", low: 500, high: 1500 },
-    { item: "Removal & Pickup Fee", qty: "1 visit", trade: "Staging", low: 150, high: 400 },
-    { item: "Virtual Staging, Per Photo Alternative", qty: "18 photos", trade: "Virtual Staging", low: 360, high: 1350 },
-  ],
-  scopeBasis: "Planning range built from typical national physical staging rental and virtual staging photo pricing, not a vendor quote for a specific market.",
-  confidence: "Medium",
 
   sections: [
     {

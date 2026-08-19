@@ -156,6 +156,8 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
     await client.rpc("record_presentation_view", { _token: data.token });
 
     const { signRoomPhoto } = await import("@/lib/presentations.server");
+    const { checkBudgetsAvailable } = await import("@/lib/budget.server");
+    const budgetsAvailable = await checkBudgetsAvailable();
 
     const p = payload as any;
     return {
@@ -175,17 +177,20 @@ export const getSharedPresentation = createServerFn({ method: "POST" })
       style: (p.style ?? null) as string | null,
       version_no: (p.version_no ?? 1) as number,
       created_at: p.created_at as string,
-      total_low: p.total_low == null ? null : Number(p.total_low),
-      total_high: p.total_high == null ? null : Number(p.total_high),
-      lines: ((p.lines ?? []) as any[]).map((l) => ({
-        id: String(l.id ?? ""),
-        description: String(l.description),
-        trade: String(l.trade ?? ""),
-        qty: Number(l.qty ?? 0),
-        uom: String(l.uom ?? ""),
-        low: Number(l.low ?? 0),
-        high: Number(l.high ?? 0),
-      })),
+      // Budget lines are priced data; never ship them while budgets are off.
+      total_low: budgetsAvailable && p.total_low != null ? Number(p.total_low) : null,
+      total_high: budgetsAvailable && p.total_high != null ? Number(p.total_high) : null,
+      lines: budgetsAvailable
+        ? ((p.lines ?? []) as any[]).map((l) => ({
+            id: String(l.id ?? ""),
+            description: String(l.description),
+            trade: String(l.trade ?? ""),
+            qty: Number(l.qty ?? 0),
+            uom: String(l.uom ?? ""),
+            low: Number(l.low ?? 0),
+            high: Number(l.high ?? 0),
+          }))
+        : [],
       before_url: await signRoomPhoto((p.before_path ?? null) as string | null),
       after_url: await signRoomPhoto((p.after_path ?? null) as string | null),
     };
@@ -233,6 +238,8 @@ export const getPresentationPackage = createServerFn({ method: "POST" })
     if (!payload) throw new Error("That presentation is not available.");
 
     const { signRoomPhoto } = await import("@/lib/presentations.server");
+    const { checkBudgetsAvailable } = await import("@/lib/budget.server");
+    const budgetsAvailable = await checkBudgetsAvailable();
     const p = payload as any;
     return {
       title: p.title as string,
@@ -245,16 +252,18 @@ export const getPresentationPackage = createServerFn({ method: "POST" })
       style: (p.style ?? null) as string | null,
       version_no: (p.version_no ?? 1) as number,
       created_at: p.created_at as string,
-      total_low: p.total_low == null ? null : Number(p.total_low),
-      total_high: p.total_high == null ? null : Number(p.total_high),
-      lines: ((p.lines ?? []) as any[]).map((l) => ({
-        description: String(l.description),
-        trade: String(l.trade ?? ""),
-        qty: Number(l.qty ?? 0),
-        uom: String(l.uom ?? ""),
-        low: Number(l.low ?? 0),
-        high: Number(l.high ?? 0),
-      })),
+      total_low: budgetsAvailable && p.total_low != null ? Number(p.total_low) : null,
+      total_high: budgetsAvailable && p.total_high != null ? Number(p.total_high) : null,
+      lines: budgetsAvailable
+        ? ((p.lines ?? []) as any[]).map((l) => ({
+            description: String(l.description),
+            trade: String(l.trade ?? ""),
+            qty: Number(l.qty ?? 0),
+            uom: String(l.uom ?? ""),
+            low: Number(l.low ?? 0),
+            high: Number(l.high ?? 0),
+          }))
+        : [],
       before_url: await signRoomPhoto((p.before_path ?? null) as string | null),
       after_url: await signRoomPhoto((p.after_path ?? null) as string | null),
     };

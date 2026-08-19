@@ -27,27 +27,13 @@ export const page: LandingPage = {
   afterCaption: "Same living room, finishes, lighting and flooring updated as part of a whole house pass.",
 
   steps: [
-    { title: "Upload Photos From Every Room", text: "Each room is scoped individually, kitchen, bathrooms, bedrooms and living spaces, so the whole house total is a sum of real line items, not a square footage guess." },
+    { title: "List Every Room", text: "Kitchen, bathrooms, bedrooms and living spaces are priced individually so the whole house total is a sum of real rooms, not a square footage guess." },
     { title: "Set A Whole House Budget Band", text: "Choose cosmetic, mid-range or full gut and every room in the plan generates finishes that match that spend level consistently across the house." },
     { title: "Get A Trade By Trade Scope", text: "Export a combined scope with cabinetry, flooring, plumbing, electrical and paint broken out by room and by trade so subcontractors can bid off the same document." },
   ],
 
   showcase: ["scope", "budget-mode", "interior", "brief", "grades"],
 
-  scopeTitle: "Whole House Renovation Scope & Planning Range",
-  scopeIntro: "Line items for a full renovation of an average 2,000 square foot, three bedroom, two bathroom home.",
-  scopeLines: [
-    { item: "Kitchen Remodel", qty: "1 kitchen, 180 SF", trade: "General", low: 35000, high: 75000 },
-    { item: "Primary Bathroom Remodel", qty: "1 bath, 80 SF", trade: "General", low: 15000, high: 32000 },
-    { item: "Secondary Bathroom Remodel", qty: "1 bath, 45 SF", trade: "General", low: 9000, high: 18000 },
-    { item: "Flooring Throughout", qty: "1,600 SF", trade: "Flooring", low: 12000, high: 28000 },
-    { item: "Interior Paint, Whole House", qty: "2,000 SF", trade: "Painting", low: 6000, high: 13000 },
-    { item: "Electrical Updates & Fixtures", qty: "24 fixtures", trade: "Electrical", low: 8000, high: 18000 },
-    { item: "HVAC System Updates", qty: "1 system", trade: "Mechanical", low: 9000, high: 20000 },
-    { item: "Windows & Trim", qty: "16 windows", trade: "Carpentry", low: 14000, high: 32000 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for mid-range residential whole house renovations, not a contractor bid.",
-  confidence: "Medium",
 
   sections: [
     {
@@ -117,6 +103,6 @@ export const page: LandingPage = {
   },
 
   ctaTitle: "Plan Your Whole House Renovation Budget",
-  ctaBody: "Upload photos from every room and get a combined scope and planning range for the whole house.",
-  ctaLabel: "Start Whole House Plan",
+  ctaBody: "Use the free rehab calculator room by room to build a combined planning range for the whole house.",
+  ctaLabel: "Try The Free Calculator",
 };

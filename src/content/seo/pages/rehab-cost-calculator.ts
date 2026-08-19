@@ -27,29 +27,13 @@ export const page: LandingPage = {
   afterCaption: "Same layout, retail grade finishes priced line by line.",
 
   steps: [
-    { title: "Upload The Space", text: "One photo per room is enough to measure visible finishes and flag obvious scope." },
+    { title: "Pick A Room", text: "Choose the room and enter its size to set the baseline for the planning range." },
     { title: "Pick A Grade & Budget Band", text: "Rental, retail or premium changes every unit rate in the scope at once." },
     { title: "Get The Range", text: "A low and high total, a per square foot figure, and a printable line item table." },
   ],
 
   showcase: ["scope", "budget-mode", "brief", "grades", "reality-lock"],
 
-  scopeTitle: "Sample Whole Home Rehab Scope",
-  scopeIntro: "A 1,500 square foot retail grade rehab, dated but not distressed, with kitchen and one bathroom included.",
-  scopeLines: [
-    { item: "Demolition & Disposal", qty: "1,500 SF", trade: "Demolition", low: 3400, high: 5200 },
-    { item: "Flooring Throughout", qty: "1,500 SF", trade: "Flooring", low: 10500, high: 17250 },
-    { item: "Interior Paint", qty: "1,500 SF", trade: "Paint", low: 4650, high: 7050 },
-    { item: "Kitchen Allowance", qty: "1 LS", trade: "Cabinetry", low: 12000, high: 26000 },
-    { item: "Bathroom Allowance", qty: "1 LS", trade: "Plumbing", low: 7500, high: 16000 },
-    { item: "Interior Doors & Trim", qty: "1,500 SF", trade: "Carpentry", low: 3300, high: 5400 },
-    { item: "Electrical Refresh", qty: "1,500 SF", trade: "Electrical", low: 3900, high: 6600 },
-    { item: "HVAC Service Or Replacement", qty: "1 LS", trade: "Mechanical", low: 1200, high: 8500 },
-    { item: "Exterior Touch Up", qty: "1 LS", trade: "Paint", low: 900, high: 2400 },
-    { item: "Contingency", qty: "10 Pct", trade: "Reserve", low: 4735, high: 9440 },
-  ],
-  scopeBasis: "Published unit rates times measured square footage, adjusted for retail grade finish and a 10 percent contingency.",
-  confidence: "Medium",
 
   sections: [
     {
@@ -118,23 +102,23 @@ export const page: LandingPage = {
     "/free/arv-calculator",
     "/arv-calculator",
     "/renovation-cost-estimator",
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/rental-grade-vs-retail-grade",
   ],
 
   howTo: {
     name: "How To Build A Rehab Cost Planning Range",
     steps: [
-      { name: "Photograph Each Room", text: "Take one clear photo of each room you plan to rehab, capturing flooring, walls and fixtures." },
+      { name: "List Each Room", text: "Note each room you plan to rehab along with its approximate size." },
       { name: "Select Space Type & Budget Band", text: "Choose interior, exterior or landscape, then pick a budget band from Refresh through Reimagine." },
       { name: "Choose A Finish Grade", text: "Pick rental, retail or premium based on whether you are holding, flipping or building for a specific buyer." },
-      { name: "Review The Line Items", text: "Check the quantities, trades and unit rates the calculator generated against what you can see in the photo." },
+      { name: "Review The Line Items", text: "Check the quantities, trades and unit rates the calculator generated against what you can see in the room." },
       { name: "Add Contingency", text: "Apply a 10 to 20 percent contingency depending on the property's age and condition history." },
       { name: "Confirm With A Walkthrough", text: "Use the range to screen the deal, then confirm it with a contractor's physical walkthrough before committing." },
     ],
   },
 
   ctaTitle: "See Your Rehab Number Line By Line",
-  ctaBody: "Upload a photo and get a measured scope with unit rates, a contingency line, and a range you can review with a contractor.",
-  ctaLabel: "Calculate My Rehab Cost",
+  ctaBody: "Use the free rehab calculator to get a planning range with unit rates and a contingency line you can review with a contractor.",
+  ctaLabel: "Try The Free Calculator",
 };

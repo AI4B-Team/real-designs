@@ -35,19 +35,6 @@ export const page: LandingPage = {
 
   showcase: ["staging", "mls", "declutter", "reality-lock"],
 
-  scopeTitle: "What Virtual Staging Costs Per Room",
-  scopeIntro: "Pricing scales with the number of rooms staged and the number of revision rounds, not with square footage the way construction does.",
-  scopeLines: [
-    { item: "Living Room, Single Angle", qty: "1 photo", trade: "Virtual Staging", low: 15, high: 45 },
-    { item: "Primary Bedroom, Single Angle", qty: "1 photo", trade: "Virtual Staging", low: 15, high: 40 },
-    { item: "Kitchen, Single Angle", qty: "1 photo", trade: "Virtual Staging", low: 20, high: 50 },
-    { item: "Full Listing Package", qty: "6 to 10 photos", trade: "Virtual Staging", low: 120, high: 350 },
-    { item: "Revision Round", qty: "Per photo", trade: "Virtual Staging", low: 5, high: 15 },
-    { item: "Physical Staging Comparison", qty: "1 month, 3 rooms", trade: "Physical Staging", low: 1500, high: 3500 },
-    { item: "Decluttering Occupied Room", qty: "1 photo", trade: "AI Editing", low: 10, high: 30 },
-  ],
-  scopeBasis: "Planning range based on typical per-photo virtual staging pricing reported by listing photographers and staging vendors nationally, not a fixed quote.",
-  confidence: "Medium",
 
   sections: [
     {

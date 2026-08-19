@@ -34,18 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["sketch", "walkthrough", "reality-lock", "brief"],
 
-  scopeTitle: "Sample Sketch To Render Project Cost Table",
-  scopeIntro: "Planning range for turning a hand sketch into a furnished render set for a single room, high confidence because these are software costs, not construction costs.",
-  scopeLines: [
-    { item: "Sketch To Render Conversion", qty: "1 Room", trade: "Rendering", low: 15, high: 45 },
-    { item: "Additional Style Variations", qty: "3 Variants", trade: "Rendering", low: 20, high: 60 },
-    { item: "Furniture Shopping List Export", qty: "1 LS", trade: "Sourcing", low: 0, high: 25 },
-    { item: "Walkthrough Video Add-On", qty: "1 LS", trade: "Rendering", low: 15, high: 40 },
-    { item: "Printable Client Presentation", qty: "1 LS", trade: "Presentation", low: 0, high: 20 },
-    { item: "Licensed Drawing For Permit", qty: "1 Room", trade: "Architecture", low: 800, high: 3500 },
-  ],
-  scopeBasis: "Software rendering costs are per project, licensed drawing figures shown separately as an illustrative planning range only.",
-  confidence: "High",
 
   sections: [
     {
@@ -112,7 +100,7 @@ export const page: LandingPage = {
     "/2d-to-3d-floor-plan",
     "/ai-interior-design",
     "/declutter-photo",
-    "/contractor-scope-generator",
+    "/rehab-cost-calculator",
     "/for-interior-designers",
     "/renovation-cost-estimator",
   ],

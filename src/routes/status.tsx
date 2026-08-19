@@ -6,7 +6,7 @@ import "@/styles/rd-site.css";
 
 const TITLE = "System Status | REAL DESIGNS";
 const DESC =
-  "Current availability of REAL DESIGNS design generation, estimating, presentations and sign in, plus how we communicate incidents and maintenance.";
+  "Current availability of REAL DESIGNS design generation, presentations and sign in, plus how we communicate incidents and maintenance.";
 
 export const Route = createFileRoute("/status")({
   head: () => pageHead("/status", TITLE, DESC),
@@ -19,14 +19,14 @@ function StatusPage() {
       eyebrow="Trust"
       h1="System Status"
       updated="August 10, 2026"
-      lede="All systems operational. This page is updated during any incident affecting generation, estimating or sign in."
+      lede="All systems operational. This page is updated during any incident affecting generation, presentations or sign in."
       sections={[
         {
           id: "components",
           h2: "Components",
           bullets: [
             "Design generation: Operational",
-            "Scope and budget estimating: Operational",
+            "Virtual staging & photo enhancements: Operational",
             "3D plans and walkthroughs: Operational",
             "Presentations and client approval links: Operational",
             "Sign in and account: Operational",

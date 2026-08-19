@@ -49,6 +49,11 @@ const num = (v: unknown) => (v == null ? 0 : Number(v));
 export const priceScopePreview = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => PreviewInput.parse(input))
   .handler(async ({ data }) => {
+    // Refuse before doing any pricing work: no market verified against real
+    // cost data means nothing here should be treated as a live number.
+    const { assertBudgetsAvailable } = await import("@/lib/budget.server");
+    await assertBudgetsAvailable();
+
     // Reference pricing tables are server-only: no anon/authenticated SELECT.
     // This handler reads them privileged and returns aggregated ranges only.
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

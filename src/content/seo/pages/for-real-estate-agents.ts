@@ -34,18 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["staging", "mls", "interior", "grades"],
 
-  scopeTitle: "Sample Pre-List Refresh Scope",
-  scopeIntro: "A representative light-touch refresh scope for a living room ahead of listing, sized for return on cost rather than a full renovation.",
-  scopeLines: [
-    { item: "Interior Paint, Neutral Palette", qty: "420 SF", trade: "Painting", low: 600, high: 1200 },
-    { item: "Carpet Replacement Or Deep Clean", qty: "280 SF", trade: "Flooring", low: 700, high: 2200 },
-    { item: "Light Fixture Swap", qty: "3 Fixtures", trade: "Electrical", low: 350, high: 800 },
-    { item: "Wall Patch & Touch-Up", qty: "1 Room", trade: "Drywall", low: 200, high: 450 },
-    { item: "Deep Clean & Window Wash", qty: "1 Room", trade: "Cleaning", low: 150, high: 350 },
-    { item: "Virtual Staging For MLS Photos", qty: "1 Room", trade: "Photography", low: 100, high: 300 },
-  ],
-  scopeBasis: "Ranges reflect national averages for a cosmetic pre-list refresh, intended to help sellers weigh cost against likely buyer impact, not as a contractor bid.",
-  confidence: "Medium",
 
   sections: [
     {

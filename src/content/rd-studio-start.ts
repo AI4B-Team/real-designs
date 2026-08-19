@@ -107,8 +107,6 @@ const ROOMS = [
   ROOM_OTHER,
 ];
 const STYLES = ["Warm Minimal", "Modern Farmhouse", "Coastal", "Transitional", "Investor Neutral", "Midcentury", "Japandi"];
-const BUDGETS = ["Under $5K", "Under $15K", "Under $35K", "$35K+"];
-const GOALS = ["Refresh", "Makeover", "Renovation", "Reimagine"];
 const MOODS = ["Calm", "Warm", "Bright", "Dramatic", "Natural", "Refined"];
 
 export function mountStudioStart(ctx: StudioStartCtx) {
@@ -151,7 +149,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     credits: null as any,
     goal: "Makeover",
     style: "Warm Minimal",
-    budget: "Under $15K",
     accents: "",
     notes: "",
     inputType: "Hand Sketch",
@@ -517,15 +514,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     );
   }
 
-  /* Budget is chosen before generation so the concept and its estimate agree. */
-  function budgetField() {
-    return field(
-      "Budget Target",
-      chips("budget", BUDGETS.map((b) => [b, b] as [string, string]), state.budget) +
-        '<p class="stw-help">The design is generated to fit this range, and the estimate uses the same range.</p>',
-    );
-  }
-
   function propertyField() {
     const props = (ctx.getProperties() || []).slice(0, 40);
     const opts =
@@ -641,13 +629,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         field("Project Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
         roomField("Room Or Space Type") +
         propertyField() +
-        field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">') +
-        budgetField()
+        field("Approximate Dimensions (Optional)", '<input id="stsDims" type="text" placeholder="14 ft x 18 ft" value="' + esc(state.dims) + '">')
       : field("Space Type", chips("space", [["interior", "Interior"], ["exterior", "Exterior"], ["landscape", "Garden"]], state.space)) +
         roomField("Room Or Area Type") +
         propertyField() +
-        field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="e.g. Pre Listing Refresh" value="' + esc(state.newProject) + '">') +
-        budgetField();
+        field("Project Name (Optional)", '<input id="stsPProject" type="text" placeholder="e.g. Pre Listing Refresh" value="' + esc(state.newProject) + '">');
 
     return (
       workHead(
@@ -700,7 +686,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           field("Design Style", select("stsStyle", STYLES, state.style)) +
           field("Mood", select("stsMood", ["", ...MOODS], state.mood)) +
           '<div class="stw-sep"></div>' +
-          field("Budget Range", select("stsBudget", BUDGETS, state.budget)) +
           field("Must-Have Features (Optional)", '<textarea id="stsFeatures" rows="3" placeholder="Built-in shelving, durable rug, reading corner">' + esc(state.features) + "</textarea>") +
           foot(
             "Generate Concept",
@@ -717,13 +702,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   const CREATES: Array<[string, string, string]> = [
     ["door-open", "Rooms", "Keep every space organized."],
     ["layout-grid", "Designs", "Compare versions and approvals."],
-    ["calculator", "Budget", "Track projected products and costs."],
+    ["calculator", "Budget", "Coming soon."],
     ["presentation", "Presentations", "Share polished project updates."],
   ];
 
   function propertySetup() {
     return (
-      workHead("Create A Property", "Keep every room, design, budget and presentation organized in one project.", state.newAddress.trim().length > 2 ? 2 : 1) +
+      workHead("Create A Property", "Keep every room, design and presentation organized in one project.", state.newAddress.trim().length > 2 ? 2 : 1) +
       '<div class="stw-work">' +
       panel(
         "Property Details",
@@ -1111,7 +1096,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       syncPrimary();
     });
     bindVal("stsStyle", (v) => (state.style = v));
-    bindVal("stsBudget", (v) => (state.budget = v));
     bindVal("stsMood", (v) => (state.mood = v));
     bindVal("stsInput", (v) => (state.inputType = v));
     bindVal("stsDims", (v) => (state.dims = v));
@@ -1213,7 +1197,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       const val = chip.dataset["val"]!;
       if (name === "space") state.space = val;
       if (name === "goal") state.goal = val;
-      if (name === "budget") state.budget = state.budget === val ? "" : val;
       render();
       return;
     }
@@ -1382,9 +1365,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         style.dispatchEvent(new Event("change", { bubbles: true }));
       }
     }
-    const bandIdx = BUDGETS.indexOf(state.budget);
-    const band = document.querySelector('.bchip[data-b="' + (bandIdx < 0 ? 1 : bandIdx) + '"]') as HTMLElement | null;
-    if (band) band.click();
     const notes = document.getElementById("agentNote") as HTMLTextAreaElement | null;
     if (notes && !notes.value) {
       const extra = [state.accents ? "Accent colors: " + state.accents : "", state.notes].filter(Boolean).join(". ");
@@ -1425,7 +1405,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           dimensions: state.dims || null,
           style: state.style || null,
           mood: state.mood || null,
-          budget: state.budget || null,
           features: state.features || null,
           image,
         },

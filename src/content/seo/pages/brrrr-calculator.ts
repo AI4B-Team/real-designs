@@ -27,27 +27,13 @@ export const page: LandingPage = {
   afterCaption: "Same room after a rental-grade rehab, refinished floors, paint and updated lighting.",
 
   steps: [
-    { title: "Upload The Property Photos", text: "The rehab scope is built from the actual condition of the walls, floors and fixtures instead of an assumed per square foot number." },
+    { title: "Set The Property Condition", text: "Dated, worn or distressed sets the rehab baseline instead of an assumed per square foot number." },
     { title: "Set Rehab Level & Budget Band", text: "Choose a rental-grade or retail-grade finish level so the rehab estimate matches the exit strategy, refinance and hold versus a flip and sell." },
     { title: "Compare Rehab Cost To ARV & Refinance", text: "See the rehab line items next to an ARV assumption and a 70 to 75 percent cash-out refinance number to check how much cash stays in the deal." },
   ],
 
   showcase: ["scope", "budget-mode", "arv", "grades"],
 
-  scopeTitle: "BRRRR Rehab Scope & Planning Range",
-  scopeIntro: "Line items for a moderate rental-grade rehab on a typical 3 bedroom, 2 bath single family property.",
-  scopeLines: [
-    { item: "Interior Paint, Whole House", qty: "1,400 SF", trade: "Painting", low: 2800, high: 5200 },
-    { item: "Flooring, LVP Throughout", qty: "1,200 SF", trade: "Flooring", low: 4800, high: 8400 },
-    { item: "Kitchen Refresh, Cabinets & Counters", qty: "1 kitchen", trade: "Cabinetry", low: 5500, high: 12000 },
-    { item: "Bathroom Refresh, 2 Baths", qty: "2 bathrooms", trade: "Plumbing", low: 4000, high: 9000 },
-    { item: "HVAC Service Or Replacement", qty: "1 system", trade: "HVAC", low: 2500, high: 7500 },
-    { item: "Roof Repair Or Patch", qty: "As needed", trade: "Roofing", low: 1500, high: 6500 },
-    { item: "Electrical Panel & Fixture Updates", qty: "1 panel, 8 fixtures", trade: "Electrical", low: 1800, high: 4500 },
-    { item: "Exterior Paint & Landscaping Cleanup", qty: "1 exterior", trade: "Exterior", low: 2200, high: 5800 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for rental-grade single family rehabs, not a contractor bid.",
-  confidence: "Medium",
 
   sections: [
     {
@@ -107,7 +93,7 @@ export const page: LandingPage = {
   howTo: {
     name: "How To Run BRRRR Numbers With A Rehab Scope",
     steps: [
-      { name: "Scope The Rehab From Real Photos", text: "Upload photos of the property so the rehab scope reflects actual condition, not a per square foot guess." },
+      { name: "Set The Property Condition", text: "Use the free rehab calculator to set condition and finish grade so the rehab total reflects more than a per square foot guess." },
       { name: "Set The Finish Level To Rental-Grade", text: "Choose a rental-grade budget band so the rehab estimate matches materials appropriate for a hold and rent strategy." },
       { name: "Total The Rehab Line Items", text: "Add up the scoped line items, flooring, kitchen, bathrooms, mechanicals, roof, to get a defensible rehab total." },
       { name: "Estimate The After Repair Value", text: "Compare the scoped rehab against recent comparable rental sales or refinance appraisals in the immediate area." },
@@ -117,6 +103,6 @@ export const page: LandingPage = {
   },
 
   ctaTitle: "Scope Your Rehab & Run The Numbers",
-  ctaBody: "Upload the property and get a rental-grade rehab scope you can plug straight into your BRRRR calculator.",
-  ctaLabel: "Start Rehab Scope",
+  ctaBody: "Use the free rehab and ARV calculators to build a rental-grade rehab number for your BRRRR math.",
+  ctaLabel: "Try The Free Calculators",
 };

@@ -34,19 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["mls", "exterior", "staging", "reality-lock"],
 
-  scopeTitle: "Sample Per-Photo Editing Cost Table",
-  scopeIntro: "Planning range for common exterior photo edits on a typical single family listing, medium confidence because per-photo policies vary by MLS.",
-  scopeLines: [
-    { item: "Base Exterior Photography", qty: "6 Photos", trade: "Photography", low: 80, high: 200 },
-    { item: "Sky Replacement", qty: "4 Photos", trade: "Editing", low: 20, high: 60 },
-    { item: "Vehicle & Bin Removal", qty: "3 Photos", trade: "Editing", low: 15, high: 45 },
-    { item: "Virtual Renovation Rendering", qty: "2 Photos", trade: "Rendering", low: 60, high: 180 },
-    { item: "Disclosure Labeling", qty: "9 Photos", trade: "Labeling", low: 0, high: 40 },
-    { item: "Watermark Application", qty: "9 Photos", trade: "Branding", low: 0, high: 25 },
-    { item: "Reshoot Allowance", qty: "1 Visit", trade: "Photography", low: 100, high: 250 },
-  ],
-  scopeBasis: "Typical vendor pricing for common exterior photo edits. Confirm your own MLS's current alteration policy before publishing edited images.",
-  confidence: "Medium",
 
   sections: [
     {

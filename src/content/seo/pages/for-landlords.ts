@@ -34,18 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["grades", "budget-mode", "brief", "interior"],
 
-  scopeTitle: "Sample Single Unit Turn Scope",
-  scopeIntro: "A representative scope for one bedroom and adjoining living space between tenants, sized for a small landlord doing a normal turn rather than a full renovation.",
-  scopeLines: [
-    { item: "Wall & Trim Paint, Bedroom", qty: "300 SF", trade: "Painting", low: 280, high: 550 },
-    { item: "LVP Flooring, Bedroom", qty: "150 SF", trade: "Flooring", low: 450, high: 900 },
-    { item: "Closet Door & Hardware Repair", qty: "1 Closet", trade: "Carpentry", low: 120, high: 300 },
-    { item: "Blind Replacement", qty: "2 Windows", trade: "Fixtures", low: 80, high: 180 },
-    { item: "Outlet & Switch Cover Swap", qty: "4 Points", trade: "Electrical", low: 40, high: 120 },
-    { item: "Deep Clean & Carpet Or Floor Detail", qty: "1 Room", trade: "Cleaning", low: 100, high: 220 },
-  ],
-  scopeBasis: "Ranges reflect national averages for a single room turn at durable rental grade finish, before local labor pricing is applied.",
-  confidence: "Medium",
 
   sections: [
     {

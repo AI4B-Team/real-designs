@@ -27,27 +27,13 @@ export const page: LandingPage = {
   afterCaption: "Same living room, new flooring installed with baseboards and transitions finished.",
 
   steps: [
-    { title: "Upload Your Room Photo", text: "The room dimensions and existing flooring condition anchor the square footage and demo scope so the estimate matches what a flooring contractor will actually quote." },
+    { title: "Measure Your Room", text: "Square footage and existing flooring condition anchor the demo scope so the estimate is grounded in real numbers." },
     { title: "Choose A Flooring Material", text: "Compare laminate, vinyl, hardwood and tile against your actual square footage to see the installed cost difference between materials in dollars, not just per square foot." },
     { title: "Get A Line Item Scope", text: "Export a scope with square footage, material, underlayment, transitions and baseboard reinstall broken out so a contractor can quote against a fixed list." },
   ],
 
   showcase: ["scope", "interior", "budget-mode", "shop"],
 
-  scopeTitle: "Flooring Installation Scope & Planning Range",
-  scopeIntro: "Line items for a 300 square foot living room, luxury vinyl plank at a mid-range price point.",
-  scopeLines: [
-    { item: "Demo & Haul Away, Existing Flooring", qty: "300 SF", trade: "Flooring", low: 450, high: 900 },
-    { item: "Subfloor Repair & Leveling", qty: "300 SF", trade: "Flooring", low: 300, high: 900 },
-    { item: "Luxury Vinyl Plank, Material", qty: "300 SF", trade: "Flooring", low: 900, high: 2100 },
-    { item: "Underlayment", qty: "300 SF", trade: "Flooring", low: 150, high: 400 },
-    { item: "Installation Labor", qty: "300 SF", trade: "Flooring", low: 750, high: 1500 },
-    { item: "Baseboard Removal & Reinstall", qty: "70 LF", trade: "Carpentry", low: 280, high: 700 },
-    { item: "Transition Strips & Trim", qty: "3 doorways", trade: "Flooring", low: 120, high: 300 },
-    { item: "Furniture Move & Setup", qty: "1 room", trade: "General", low: 100, high: 300 },
-  ],
-  scopeBasis: "Planning range built from typical national material and labor costs for mid-range residential flooring installation, not a contractor bid.",
-  confidence: "High",
 
   sections: [
     {
@@ -117,6 +103,6 @@ export const page: LandingPage = {
   },
 
   ctaTitle: "Get Your Flooring Installation Estimate",
-  ctaBody: "Upload your room and compare flooring materials against your actual square footage and a planning range.",
-  ctaLabel: "Start Flooring Estimate",
+  ctaBody: "Try the free rehab calculator to compare flooring materials against your square footage and a planning range.",
+  ctaLabel: "Try The Free Calculator",
 };

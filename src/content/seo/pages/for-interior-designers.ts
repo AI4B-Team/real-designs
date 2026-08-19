@@ -34,18 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["interior", "reality-lock", "shop", "sketch"],
 
-  scopeTitle: "Where This Fits In A Design Engagement",
-  scopeIntro: "A representative breakdown of a typical early-stage engagement, showing where a generated concept fits and where it stops.",
-  scopeLines: [
-    { item: "Initial Consult & Room Photography", qty: "1 Visit", trade: "Design", low: 0, high: 0 },
-    { item: "Directional Concept Generation", qty: "2-3 Concepts", trade: "Design", low: 0, high: 0 },
-    { item: "Client Alignment Meeting", qty: "1 Meeting", trade: "Design", low: 0, high: 0 },
-    { item: "Space Planning & Specification", qty: "1 Room", trade: "Design", low: 1800, high: 4500 },
-    { item: "Sourcing & Vendor Coordination", qty: "1 Room", trade: "Design", low: 1200, high: 3200 },
-    { item: "Installation Oversight", qty: "1 Room", trade: "Design", low: 800, high: 2000 },
-  ],
-  scopeBasis: "Design fee ranges reflect national averages for a single-room engagement and vary widely by market, designer experience and scope of service.",
-  confidence: "Low",
 
   sections: [
     {

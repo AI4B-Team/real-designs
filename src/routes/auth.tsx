@@ -8,7 +8,7 @@ import { track } from "@/lib/analytics";
 
 const title = "Sign In | REAL DESIGNS";
 const description =
-  "Sign in to REAL DESIGNS to save properties, priced scopes and contractor briefs to your account.";
+  "Sign in to REAL DESIGNS to save your properties, designs and presentations to your account.";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -114,13 +114,13 @@ function AuthPage() {
         <h2>
           Redesign any space with AI.
           <br />
-          See the design. Plan the cost.
+          See the design. Share it in minutes.
         </h2>
 
 
         <p className="sub">
-          Turn one photo into a photoreal redesign, a planning range, shopping list and
-          project-ready scope.
+          Turn one photo into a photoreal redesign, a shopping list and a client-ready
+          presentation.
         </p>
         <ul>
           <li>
@@ -141,7 +141,7 @@ function AuthPage() {
             <span className="n">3</span>
             <span>
               <b>Plan What Comes Next</b>
-              Create a shopping list, line-item scope and contractor brief.
+              Create a shopping list and a before-and-after presentation.
             </span>
           </li>
         </ul>
@@ -162,7 +162,7 @@ function AuthPage() {
 
           <h1>{mode === "signin" ? "Sign In" : "Create Your Account"}</h1>
           <p className="lede">
-            Pick up where you left off. Your properties, designs, budgets and project briefs stay
+            Pick up where you left off. Your properties, designs and presentations stay
             together in one workspace.
           </p>
 

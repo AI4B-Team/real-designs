@@ -96,8 +96,8 @@ const PLANS: Plan[] = [
     f: [
       "200 Credits A Month",
       "Clean HD, No Watermark",
-      "Scope & Budget From Your Photo",
       "Shopping List With Product Links",
+      "AI Style Matching & Presets",
       "Before & After Presentation",
       "Personal Use License",
     ],
@@ -113,8 +113,8 @@ const PLANS: Plan[] = [
       "2,000 Credits A Month",
       "Everything In Starter",
       "Commercial License",
-      "Contractor Brief PDF & ARV Range",
       "Batch Listing Staging",
+      "Priority Render Queue",
       "5 Team Seats",
     ],
   },
@@ -145,8 +145,8 @@ const CHOOSER = [
   {
     plan: "Pro",
     a: "Multiple Active Projects",
-    b: "Budgets, Scopes & Commercial Use",
-    c: "Best For Investors & Contractors",
+    b: "Batch Staging & Commercial Use",
+    c: "Best For Investors & Agents",
   },
   {
     plan: "Studio",
@@ -258,7 +258,7 @@ function PricingPage() {
           <div className="credit-note">
             <h3>One Balance. Every Tool.</h3>
             <p>
-              Use credits for designs, budgets, floor plans and walkthroughs. Most redesigns use one
+              Use credits for designs, floor plans and walkthroughs. Most redesigns use one
               credit. Your dashboard always shows the cost before you generate.
             </p>
             <a href="/pricing/credits" className="lnk">

@@ -34,20 +34,6 @@ export const page: LandingPage = {
 
   showcase: ["scope", "brief", "budget-mode", "shop"],
 
-  scopeTitle: "Short Term Rental Living Room Furnishing Scope",
-  scopeIntro: "Line items for furnishing a mid-size living room in a short term rental, durable mid-range finish level built for guest turnover.",
-  scopeLines: [
-    { item: "Sofa Or Sectional, Durable Fabric", qty: "1 piece", trade: "Furniture", low: 900, high: 2200 },
-    { item: "Coffee Table & Side Tables", qty: "3 pieces", trade: "Furniture", low: 300, high: 800 },
-    { item: "Media Console & TV Mount", qty: "1 piece", trade: "Furniture", low: 400, high: 1000 },
-    { item: "Area Rug, Stain Resistant", qty: "1 large rug", trade: "Textiles", low: 250, high: 700 },
-    { item: "Lighting, Lamps & Fixtures", qty: "4 fixtures", trade: "Lighting", low: 350, high: 900 },
-    { item: "Wall Art & Mirrors", qty: "6 pieces", trade: "Decor", low: 400, high: 1100 },
-    { item: "Throw Pillows, Blankets & Curtains", qty: "1 set", trade: "Textiles", low: 300, high: 750 },
-    { item: "Statement Accent Chair Or Piece", qty: "1 piece", trade: "Furniture", low: 400, high: 1200 },
-  ],
-  scopeBasis: "Planning range built from typical national retail pricing for durable, guest-ready mid-range furniture and decor, not a specific vendor quote.",
-  confidence: "Medium",
 
   sections: [
     {

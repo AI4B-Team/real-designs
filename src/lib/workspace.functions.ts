@@ -178,8 +178,9 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { supabase } = context;
+    const { checkBudgetsAvailable } = await import("@/lib/budget.server");
 
-    const [{ data: props, error: pErr }, { data: versions, error: vErr }] = await Promise.all([
+    const [{ data: props, error: pErr }, { data: versions, error: vErr }, budgetsAvailable] = await Promise.all([
       supabase.from("properties").select("id, address, created_at").order("created_at", { ascending: false }),
       supabase
         .from("versions")
@@ -191,12 +192,16 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
            scopes ( total_low, total_high, budget_fit )`,
         )
         .order("created_at", { ascending: false }),
+      checkBudgetsAvailable(),
     ]);
     if (pErr) throw new Error(pErr.message);
     if (vErr) throw new Error(vErr.message);
 
     const rows = (versions ?? []) as any[];
     const flat = rows.map((v) => {
+      // Priced totals only ever exist when budgets were available at price time
+      // (buildScope refuses otherwise), but budget_target is a raw user input
+      // that must never be surfaced as if a working budget feature produced it.
       const scope = (v.scopes ?? [])[0] ?? null;
       return {
         version_id: v.id as string,
@@ -208,7 +213,11 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
         project_id: v.rooms.projects.id as string,
         project_name: v.rooms.projects.name as string,
         grade: v.rooms.projects.finish_grade as string,
-        budget_target: v.rooms.projects.budget_target == null ? null : Number(v.rooms.projects.budget_target),
+        budget_target: budgetsAvailable
+          ? v.rooms.projects.budget_target == null
+            ? null
+            : Number(v.rooms.projects.budget_target)
+          : null,
         property_id: v.rooms.projects.properties.id as string,
         address: propLabel(v.rooms.projects.properties.address),
         total_low: scope ? Number(scope.total_low) : null,
@@ -239,7 +248,7 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
       byProject.set(k, cur);
     }
 
-    const scopedTotal = flat.reduce((s, r) => s + (r.total_high ?? 0), 0);
+    const scopedTotal = budgetsAvailable ? flat.reduce((s, r) => s + (r.total_high ?? 0), 0) : 0;
 
     return {
       counts: {
@@ -261,6 +270,8 @@ export const getPropertyTree = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { supabase } = context;
     const { withRetry } = await import("./db-retry.server");
+    const { checkBudgetsAvailable } = await import("@/lib/budget.server");
+    const budgetsAvailable = await checkBudgetsAvailable();
 
     const { data, error } = await withRetry(async () =>
       supabase
@@ -318,7 +329,7 @@ export const getPropertyTree = createServerFn({ method: "GET" })
           id: pr.id as string,
           name: pr.name as string,
           grade: pr.finish_grade as string,
-          budget_target: pr.budget_target == null ? null : Number(pr.budget_target),
+          budget_target: budgetsAvailable && pr.budget_target != null ? Number(pr.budget_target) : null,
           rooms: (pr.rooms ?? [])
             .slice()
             .sort((a: any, b: any) => String(a.created_at).localeCompare(String(b.created_at)))

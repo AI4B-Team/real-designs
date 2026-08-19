@@ -32,24 +32,7 @@ export const page: LandingPage = {
     { title: "Get ARV & Max Offer", text: "See an ARV range, projected lift, and the maximum offer the 70 percent rule supports." },
   ],
 
-  showcase: ["arv", "scope", "grades", "reality-lock", "budget-mode"],
-
-  scopeTitle: "Sample Deal Level Breakdown",
-  scopeIntro: "A distressed property purchased at $185,000 with a $38,000 rehab budget, comp ceiling at $268,000.",
-  scopeLines: [
-    { item: "Purchase Price", qty: "1 Property", trade: "Acquisition", low: 183000, high: 187000 },
-    { item: "Closing Costs, Purchase", qty: "1 LS", trade: "Acquisition", low: 3200, high: 4800 },
-    { item: "Rehab Budget", qty: "1,500 SF", trade: "Rehab", low: 34000, high: 42000 },
-    { item: "Holding Costs, 7 Months", qty: "7 Mo", trade: "Carrying", low: 8400, high: 12600 },
-    { item: "Financing Costs", qty: "1 LS", trade: "Financing", low: 5200, high: 8900 },
-    { item: "Realtor Commission At Sale", qty: "6 Pct", trade: "Selling", low: 15600, high: 16680 },
-    { item: "Closing Costs, Sale", qty: "1 LS", trade: "Selling", low: 2800, high: 4200 },
-    { item: "Contingency Reserve", qty: "10 Pct", trade: "Reserve", low: 3400, high: 4200 },
-    { item: "Projected Resale Value", qty: "1 Property", trade: "ARV", low: 252000, high: 268000 },
-    { item: "Projected Net Margin", qty: "1 Deal", trade: "Margin", low: 4200, high: 21600 },
-  ],
-  scopeBasis: "As is value plus rehab lift within condition based recoup ranges, capped by the strongest comparable sale on the street.",
-  confidence: "Medium",
+  showcase: ["arv", "scope", "grades", "budget-mode"],
 
   sections: [
     {
