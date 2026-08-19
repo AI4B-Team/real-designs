@@ -1393,6 +1393,8 @@
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 .rd-app .rv-grid.landscape .rv-addcard-b { aspect-ratio: 4 / 3; }
+.rd-app .rv-grid.square .rv-addcard-b { aspect-ratio: 1 / 1; }
+
 .rd-app .rv-addcard-b:hover { background: rgba(204,0,0,.06); border-style: solid; border-color: var(--red, #CC0000); }
 .rd-app .rv-addcard-b:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
 .rd-app .rv-addcard-b svg { width: 26px; height: 26px; color: var(--red, #CC0000); }
