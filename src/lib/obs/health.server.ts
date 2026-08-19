@@ -48,7 +48,9 @@ async function timed(
 async function pingUrl(url: string, headers: Record<string, string> = {}) {
   return timed(async () => {
     const res = await fetch(url, { method: "GET", headers });
-    if (!res.ok && res.status !== 401 && res.status !== 403) {
+    // Reachability probe: a 4xx means the provider answered (the probe path may
+    // not exist or may not be readable with this key). Only 5xx is a provider fault.
+    if (res.status >= 500) {
       throw Object.assign(new Error("bad_status"), { status: res.status });
     }
   });
