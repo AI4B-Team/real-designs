@@ -1088,38 +1088,42 @@
 }
 .rdsb-th {
   display: flex;
-  gap: 10px;
+  gap: 14px;
   flex-wrap: wrap;
   min-width: 0;
-  padding: 5px 5px 0 0;
+  overflow: visible;
+  padding: 8px 8px 0 0;
 }
 .rdsb-t {
   position: relative;
-  width: 78px;
+  width: 116px;
 }
 .rdsb-t img {
-  width: 78px;
-  height: 56px;
+  width: 116px;
+  height: 84px;
   object-fit: cover;
-  border-radius: 9px;
+  border-radius: 10px;
   display: block;
+  background: #f0f0f3;
 }
 
 .rdsb-t em {
   display: block;
+  margin-top: 4px;
   font-style: normal;
-  font-size: 0.64rem;
-  color: var(--mute-2, #6b6b74);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #17171b;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .rdsb-t button {
   position: absolute;
-  right: -4px;
-  top: -4px;
-  width: 18px;
-  height: 18px;
+  right: -8px;
+  top: -8px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border-radius: 999px;
@@ -1130,9 +1134,22 @@
   box-shadow: 0 1px 3px rgba(17, 17, 17, 0.18);
 }
 .rdsb-t button svg {
-  width: 11px;
-  height: 11px;
+  width: 14px;
+  height: 14px;
 }
+@media (max-width: 720px) {
+  .rdsb-t,
+  .rdsb-t img {
+    width: 92px;
+  }
+  .rdsb-t img {
+    height: 68px;
+  }
+  .rdsb-th {
+    gap: 12px;
+  }
+}
+
 .rdsb-cost {
   display: flex;
   align-items: center;
