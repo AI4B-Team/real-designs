@@ -615,17 +615,20 @@
 .rd-app #v-staging .rv-addcard-b { width: 100%; max-width: 100%; transition: aspect-ratio 180ms ease, height 180ms ease; }
 .rd-app #v-staging .rv-tile-th img { width: 100%; height: 100%; object-fit: cover; }
 
-.rd-app .rv-tile.rt-916 .rv-tile-th, .rd-app #v-staging .rv-addcard.rt-916 .rv-addcard-b { aspect-ratio: 9 / 16; }
-.rd-app .rv-tile.rt-169 .rv-tile-th, .rd-app #v-staging .rv-addcard.rt-169 .rv-addcard-b { aspect-ratio: 16 / 9; }
-.rd-app .rv-tile.rt-11 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-11 .rv-addcard-b  { aspect-ratio: 1 / 1; }
-.rd-app .rv-tile.rt-43 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-43 .rv-addcard-b  { aspect-ratio: 4 / 3; }
-.rd-app .rv-tile.rt-45 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-45 .rv-addcard-b  { aspect-ratio: 4 / 5; }
-.rd-app .rv-tile.rt-32 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-32 .rv-addcard-b  { aspect-ratio: 3 / 2; }
-.rd-app .rv-tile.rt-23 .rv-tile-th,  .rd-app #v-staging .rv-addcard.rt-23 .rv-addcard-b  { aspect-ratio: 2 / 3; }
-/* Original keeps the photo's own shape and never crops it. */
-.rd-app .rv-tile.rt-orig .rv-tile-th { aspect-ratio: auto; min-height: 120px; }
-.rd-app .rv-tile.rt-orig .rv-tile-th img { height: auto; object-fit: contain; }
+/* The frame aspects themselves live in rd-reveal.css (canonical builder
+   media-card frame, mirrored by src/lib/builder-card-frame.ts). Photo Design
+   only mirrors them onto its action card so it lines up with the photos. */
+.rd-app #v-staging .rv-addcard.rt-169 .rv-addcard-b,
+.rd-app #v-staging .rv-addcard.rt-43 .rv-addcard-b,
+.rd-app #v-staging .rv-addcard.rt-32 .rv-addcard-b,
 .rd-app #v-staging .rv-addcard.rt-orig .rv-addcard-b { aspect-ratio: 4 / 3; }
+.rd-app #v-staging .rv-addcard.rt-916 .rv-addcard-b,
+.rd-app #v-staging .rv-addcard.rt-45 .rv-addcard-b,
+.rd-app #v-staging .rv-addcard.rt-23 .rv-addcard-b { aspect-ratio: 3 / 4; }
+.rd-app #v-staging .rv-addcard.rt-11 .rv-addcard-b { aspect-ratio: 1 / 1; }
+/* Original keeps the photo whole inside the canonical landscape frame. */
+.rd-app .rv-tile.rt-orig .rv-tile-th img { object-fit: contain; }
+
 
 /* The action card has no room selector, so a neutral spacer keeps its frame
    aligned with the photo frames beside it. */
