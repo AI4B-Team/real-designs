@@ -227,6 +227,7 @@ import * as RDMediaLib from "@/lib/media-library";
 try {
   (window as any).rdMedia = RDMediaLib;
 } catch (_) {}
+import { normalizePlan, planName, planRank } from "@/lib/plan";
 import {
   getSubscription,
   changePlan,
@@ -8049,7 +8050,8 @@ ${picks
         toolRows.forEach((x) => x.classList.remove("on"));
         r.classList.add("on");
         const name = r.getAttribute("data-tool");
-        const plan = r.getAttribute("data-plan");
+        /* The attribute records the tier a tool needs; blank means ungated. */
+        const plan = normalizePlan(r.getAttribute("data-plan"));
         try {
           CANVAS_STYLE && CANVAS_STYLE.refresh();
         } catch (_) {}
@@ -8067,7 +8069,7 @@ ${picks
         }
         if (plan && toolInfo) {
           document.getElementById("toolInfoName").textContent =
-            name + " is on the " + (plan === "pro" ? "Pro" : "Studio") + " plan";
+            name + " is on the " + planName(plan) + " plan";
           const cst = TOOL_COST[name];
           document.getElementById("toolInfoDesc").textContent =
             (r.getAttribute("data-desc") || "") +
