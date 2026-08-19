@@ -187,7 +187,7 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
         supabase
           .from("versions")
           .select(
-            `id, created_at, status, before_path,
+            `id, created_at, status, before_path, after_path,
            rooms!inner ( id, name, room_type,
              projects!inner ( id, name, finish_grade, budget_target,
                properties!inner ( id, address ) ) ),
@@ -210,6 +210,8 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
         created_at: v.created_at as string,
         status: (v.status ?? "draft") as string,
         before_path: (v.before_path ?? null) as string | null,
+        after_path: (v.after_path ?? null) as string | null,
+
         room_name: v.rooms.name as string,
         room_type: v.rooms.room_type as string,
         project_id: v.rooms.projects.id as string,
@@ -252,14 +254,20 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
 
     const scopedTotal = budgetsAvailable ? flat.reduce((s, r) => s + (r.total_high ?? 0), 0) : 0;
 
+    /* A saved design is a version that carries a generated image. A room saved
+       from a source photo alone is a saved room, never a saved design. */
+    const generated = flat.filter((r) => !!r.after_path);
+
     return {
       counts: {
         properties: (props ?? []).length,
-        designs: flat.length,
+        designs: generated.length,
+        versions: flat.length,
         priced: flat.filter((r) => r.total_low != null).length,
-        drafts: flat.filter((r) => r.status !== "approved").length,
+        drafts: generated.filter((r) => r.status !== "approved").length,
         scopedTotal,
       },
+
       recent: flat.slice(0, 5),
       projects: Array.from(byProject.values()),
       properties: (props ?? []).map((p: any) => ({ id: p.id, address: propLabel(p.address) })),
