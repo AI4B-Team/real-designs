@@ -241,6 +241,12 @@ export function openBulkDesign(opts) {
   /* Advisory recommendations the user has explicitly accepted (styleId:space). */
   const ackUnusual = {};
   let submitted = false;
+  /* Validation stays quiet until the user has actually engaged: a required
+     field turns red once they have touched and left it empty, or once they
+     have tried to generate. Never on first open. */
+  const touched = {};
+  let attempted = false;
+
   let credits = null; // { balance } once the account answers
   const returnFocus = document.activeElement;
 
