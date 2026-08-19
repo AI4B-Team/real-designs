@@ -360,7 +360,7 @@ export function mountCanvasStyle(
     /* Only drop the selection when the catalog can actually offer a
        compatible replacement — otherwise the browser falls back to the full
        list and the user could never keep any choice. */
-    const hasCompatible = pool.some((s) =>
+    const hasCompatible = stylesForNeed(STYLES, need, c.projectType).some((s) =>
       directionCompatible(s, need, c.projectType),
     );
     if (raw && hasCompatible && !directionCompatible(raw.style, need, c.projectType)) {
