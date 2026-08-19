@@ -3236,7 +3236,9 @@ export function initApp(): () => void {
       d.className = "var on";
       d.dataset.src = src;
       if (path) d.dataset.path = path;
-      d.innerHTML = `<div style="aspect-ratio:8/5">${photo(src, label + " render")}</div><div class="vl">${label}</div>`;
+      d.innerHTML =
+        `<div style="aspect-ratio:8/5">${photo(src, label + " render")}</div>` +
+        `<div class="vl">${label}${path ? "" : ' <span class="rd-unsaved">Not Saved</span>'}</div>`;
       wrap.querySelectorAll(".var").forEach((x) => x.classList.remove("on"));
       wrap.prepend(d);
       d.addEventListener("click", () => {
@@ -3580,8 +3582,8 @@ export function initApp(): () => void {
         .map(
           (v, i) =>
             `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, v.label + " render")}</span>` +
-            `<span class="rowt"><b>${v.label}</b><span>${ago(new Date(v.at).toISOString())}</span></span>` +
-            `<span class="pill ${i === 0 ? "p-ok" : "p-gray"}">${i === 0 ? "Latest" : "Past"}</span></button>`,
+            `<span class="rowt"><b>${v.label}</b><span>${v.path ? ago(new Date(v.at).toISOString()) : "Not saved yet &middot; " + ago(new Date(v.at).toISOString())}</span></span>` +
+            `<span class="pill ${v.path ? (i === 0 ? "p-ok" : "p-gray") : "p-amb"}">${v.path ? (i === 0 ? "Latest" : "Past") : "Not Saved"}</span></button>`,
         )
         .join("");
       el.innerHTML =
