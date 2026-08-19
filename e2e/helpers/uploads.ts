@@ -41,17 +41,23 @@ export function unsupportedFile(name = "notes.txt"): string {
 }
 
 /**
- * Sets files on the first available image input, opening the uploader through
- * a file chooser when the input is hidden behind a button.
+ * Sets files on the uploader used by the active builder step. Prefers the
+ * multi-file image input rendered by Studio/Review Rooms, and falls back to a
+ * file chooser opened from an upload button.
  */
 export async function uploadPhotos(page: Page, files: string[]): Promise<void> {
-  const input = page.locator('input[type="file"]').first();
-  if ((await input.count()) > 0) {
-    await input.setInputFiles(files);
+  const multi = page.locator('input[type="file"][multiple]');
+  if ((await multi.count()) > 0) {
+    await multi.first().setInputFiles(files);
+    return;
+  }
+  const single = page.locator('input[type="file"]');
+  if ((await single.count()) > 0) {
+    await single.first().setInputFiles(files.slice(0, 1));
     return;
   }
   const trigger = page
-    .getByRole("button", { name: /upload|add photos|add more photos/i })
+    .getByRole("button", { name: /upload|add photos|add more photos|choose photos/i })
     .first();
   const chooser = page.waitForEvent("filechooser");
   await trigger.click();
