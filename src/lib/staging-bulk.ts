@@ -244,10 +244,13 @@ export function openBulkDesign(opts) {
   let credits = null; // { balance } once the account answers
   const returnFocus = document.activeElement;
 
-  let node = document.getElementById("rdsBulk");
+  /* Distinct from the page's #rdsBulk action button: reusing that id used to
+     delete "Set Design Direction" from the page the first time this opened. */
+  let fmtOpen = false;
+  let node = document.getElementById("rdsBulkModal");
   if (node) node.remove();
   node = document.createElement("div");
-  node.id = "rdsBulk";
+  node.id = "rdsBulkModal";
   node.className = "rd-app up-modal on";
   document.body.appendChild(node);
 
