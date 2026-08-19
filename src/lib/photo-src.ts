@@ -63,7 +63,14 @@ export async function photoSrc(path: string, force = false): Promise<string | nu
     }
     if (url) {
       const perm = !isStoredPhoto(path);
-      CACHE.set(path, { url, exp: perm ? Infinity : Date.now() + (TTL_SEC * 1000 - MARGIN_MS) });
+      /* Trust the signature we actually hold, not the lifetime we asked for:
+         another caller may have signed this same object for a much shorter
+         window, and caching the optimistic figure is what let a whole grid
+         expire at once and turn gray. */
+      const real = signedPhotoExpiry(path);
+      const asked = Date.now() + (TTL_SEC * 1000 - MARGIN_MS);
+      const actual = real ? Math.max(Date.now() + 30_000, real - MARGIN_MS) : asked;
+      CACHE.set(path, { url, exp: perm ? Infinity : Math.min(asked, actual) });
       log("resolved", { path, kind: kindOf(url), url: safeUrl(url), refresh: force });
     } else {
       log("resolve failed", { path, refresh: force });
