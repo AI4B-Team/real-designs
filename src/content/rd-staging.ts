@@ -2174,7 +2174,7 @@ function mountStrip() {
   const back = head.querySelector("#rdsAllRooms");
   if (back) (back as HTMLButtonElement).onclick = backToPhotos;
   paintCanvasSave();
-
+  bindCanvasRoomSync();
 
   drawStrip();
   window.addEventListener("hashchange", stripGuard);
