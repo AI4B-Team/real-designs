@@ -112,6 +112,95 @@ function howModal() {
   wrap.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = close));
 }
 
+/**
+ * Small informational popover shown wherever a user clicks a Budget entry
+ * point. It never navigates, never checks credits and never touches the plan:
+ * it only explains that Project Budget is coming and offers the waitlist.
+ */
+let openPop: HTMLElement | null = null;
+
+export function closeBudgetPopover() {
+  if (openPop) {
+    openPop.remove();
+    openPop = null;
+  }
+}
+
+export function openBudgetPopover(anchor: HTMLElement) {
+  closeBudgetPopover();
+  const pop = document.createElement("div");
+  pop.className = "bsoon-pop";
+  pop.setAttribute("role", "dialog");
+  pop.setAttribute("aria-label", BUDGET_TITLE);
+  pop.innerHTML = `
+    <button class="bsoon-x" data-x aria-label="Close"><i data-lucide="x"></i></button>
+    <div class="bsoon-h"><b>${esc(BUDGET_TITLE)}</b><span class="bsoon-badge">${esc(BUDGET_BADGE)}</span></div>
+    <p class="bsoon-d">${esc(BUDGET_DESC)}</p>
+    <p class="bsoon-n">${esc(BUDGET_DISCLOSURE)}</p>
+    <div class="bsoon-f">
+      <input type="text" data-bsoon-region placeholder="Your Market, e.g. Tampa Bay, FL" aria-label="Your Market">
+      <button class="btn btn-primary btn-xs" data-bsoon-send>${esc(BUDGET_CTA)}</button>
+    </div>
+    <p class="bsoon-note" data-bsoon-note></p>`;
+  document.body.appendChild(pop);
+  openPop = pop;
+
+  const r = anchor.getBoundingClientRect();
+  const w = 320;
+  const left = Math.min(Math.max(8, r.left), window.innerWidth - w - 8);
+  const top = Math.min(r.bottom + 8, window.innerHeight - 40);
+  pop.style.left = left + "px";
+  pop.style.top = top + "px";
+
+  try {
+    createIcons({ icons, root: pop } as any);
+  } catch (_) {}
+
+  const note = pop.querySelector("[data-bsoon-note]") as HTMLElement | null;
+  const input = pop.querySelector("[data-bsoon-region]") as HTMLInputElement | null;
+  const send = pop.querySelector("[data-bsoon-send]") as HTMLButtonElement | null;
+  if (send) {
+    send.onclick = async () => {
+      const region = input?.value?.trim() || "";
+      if (region.length < 2) {
+        toast("Add Your Market First.");
+        input?.focus();
+        return;
+      }
+      send.disabled = true;
+      try {
+        await requestBudgetMarket({ data: { region } });
+        if (note) note.textContent = `Thanks. We Will Email You When ${region} Goes Live.`;
+        if (input) input.value = "";
+      } catch (e: any) {
+        if (note) note.textContent = e?.message || "Could Not Save That Request.";
+      }
+      send.disabled = false;
+    };
+  }
+
+  const onDoc = (e: MouseEvent) => {
+    if (!pop.contains(e.target as Node) && e.target !== anchor) dismiss();
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") dismiss();
+  };
+  function dismiss() {
+    document.removeEventListener("mousedown", onDoc);
+    document.removeEventListener("keydown", onKey);
+    closeBudgetPopover();
+    try {
+      anchor.focus();
+    } catch (_) {}
+  }
+  pop.querySelectorAll("[data-x]").forEach((b: any) => (b.onclick = dismiss));
+  setTimeout(() => {
+    document.addEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+  }, 0);
+  return pop;
+}
+
 /** Render the block into a host element and wire the waitlist form. */
 export async function mountBudgetComingSoon(host: HTMLElement, context?: string) {
   const avail = await budgetAvailability();
