@@ -121,42 +121,37 @@ export const savePackage = createServerFn({ method: "POST" })
         .insert({ package_id: id, user_id: userId, kind: "created", detail: "Presentation created" });
     }
 
-    if (data.sections) {
-      await supabase.from("presentation_sections").delete().eq("package_id", id);
-      const rows = data.sections.map((s, i) => ({
-        package_id: id,
-        user_id: userId,
-        section_key: s.section_key,
-        title: s.title,
-        hidden: s.hidden ?? false,
-        sort_order: s.sort_order ?? i,
-      }));
-      if (rows.length) {
-        const { error } = await supabase.from("presentation_sections").insert(rows);
-        if (error) throw new Error(error.message);
-      }
+    // Sections and assets are replaced wholesale. That is two deletes and two
+    // inserts, so it runs inside one database routine: a failed insert rolls
+    // the deletes back instead of leaving a presentation with no content.
+    if (data.sections || data.assets) {
+      const { error } = await supabase.rpc("replace_presentation_children", {
+        _package_id: id as string,
+        _sections: data.sections
+          ? data.sections.map((s, i) => ({
+              section_key: s.section_key,
+              title: s.title,
+              hidden: s.hidden ?? false,
+              sort_order: s.sort_order ?? i,
+            }))
+          : null,
+        _assets: data.assets
+          ? data.assets.map((a, i) => ({
+              section_key: a.section_key,
+              kind: a.kind,
+              title: a.title ?? null,
+              caption: a.caption ?? null,
+              url: a.url ?? null,
+              compare_url: a.compare_url ?? null,
+              source_id: a.source_id ?? null,
+              meta: a.meta ?? {},
+              sort_order: a.sort_order ?? i,
+            }))
+          : null,
+      } as never);
+      if (error) throw new Error(error.message);
     }
 
-    if (data.assets) {
-      await supabase.from("presentation_assets").delete().eq("package_id", id);
-      const rows = data.assets.map((a, i) => ({
-        package_id: id,
-        user_id: userId,
-        section_key: a.section_key,
-        kind: a.kind,
-        title: a.title ?? null,
-        caption: a.caption ?? null,
-        url: a.url ?? null,
-        compare_url: a.compare_url ?? null,
-        source_id: a.source_id ?? null,
-        meta: a.meta ?? {},
-        sort_order: a.sort_order ?? i,
-      }));
-      if (rows.length) {
-        const { error } = await supabase.from("presentation_assets").insert(rows);
-        if (error) throw new Error(error.message);
-      }
-    }
 
     await supabase
       .from("presentation_packages")
