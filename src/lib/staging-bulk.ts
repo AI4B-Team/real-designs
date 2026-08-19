@@ -399,7 +399,7 @@ export function openBulkDesign(opts) {
               <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select>${fieldMsg("grade")}</div>
           </div>
           <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve"${form.preserve ? " checked" : ""}> Keep walls, windows, and layout exactly as they are</label>
-          <div class="rdsb-f"><label for="rdsbNotes">Shared instructions <em>Optional</em></label>
+          <div class="rdsb-f"><label for="rdsbNotes">Shared Instructions <em>Optional</em></label>
             <textarea id="rdsbNotes" rows="2" placeholder="Example: Light oak floors, warm neutral palette, no bold colors">${esc(form.notes)}</textarea></div>
 
           <div class="rdsb-groups">
