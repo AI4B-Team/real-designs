@@ -193,3 +193,62 @@ export const STATUS_LABEL: Record<ProductStatus, string> = {
   needs_replacement: "Needs Replacement",
   unavailable: "Unavailable",
 };
+
+/* ------------------------------------------------------------------ *
+ * Manually saved product links (used until a provider is connected)
+ * ------------------------------------------------------------------ */
+
+const MANUAL_KEY = "rd.manualProducts.v1";
+
+interface ManualEntry {
+  roomId: string;
+  product: NormalizedProduct;
+  savedAt: string;
+}
+
+function readManual(): ManualEntry[] {
+  try {
+    const v = JSON.parse(localStorage.getItem(MANUAL_KEY) || "[]");
+    return Array.isArray(v) ? v.filter((e) => e && e.product && !isSampleRecord(e.product)) : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeManual(list: ManualEntry[]) {
+  try {
+    localStorage.setItem(MANUAL_KEY, JSON.stringify(list));
+  } catch {
+    /* storage unavailable */
+  }
+  try {
+    window.dispatchEvent(new CustomEvent("rd:products"));
+  } catch {
+    /* no window */
+  }
+}
+
+/** Real retailer links the user saved for a room, before any provider exists. */
+export function listManualProducts(roomId: string): NormalizedProduct[] {
+  return readManual()
+    .filter((e) => e.roomId === roomId)
+    .map((e) => e.product);
+}
+
+export function saveManualProducts(roomId: string, products: NormalizedProduct[]): number {
+  const list = readManual();
+  const known = new Set(list.filter((e) => e.roomId === roomId).map((e) => e.product.productUrl));
+  let added = 0;
+  products.forEach((product) => {
+    if (isSampleRecord(product) || known.has(product.productUrl)) return;
+    known.add(product.productUrl);
+    list.push({ roomId, product, savedAt: new Date().toISOString() });
+    added++;
+  });
+  writeManual(list);
+  return added;
+}
+
+export function removeManualProduct(roomId: string, productId: string) {
+  writeManual(readManual().filter((e) => !(e.roomId === roomId && e.product.id === productId)));
+}
