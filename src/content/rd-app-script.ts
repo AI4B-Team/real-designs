@@ -3682,11 +3682,39 @@ export function initApp(): () => void {
       } catch (_) {}
     }
 
+    /* The persistent version currently shown on the canvas, and whether a save
+       is still running. Approval may only ever target a saved version. */
+    let DISPLAYED_VERSION = null;
+    let VERSION_SAVING = false;
+    window.rdDisplayedVersion = () => DISPLAYED_VERSION;
+    window.rdVersionSaving = () => VERSION_SAVING;
+
+    /** Paints "Saving…" / "Saved as Version N" on the tile for one render. */
+    function paintVersionBadge(path, text, cls) {
+      if (!path) return;
+      try {
+        const tile = document.querySelector('#vars .var[data-path="' + CSS.escape(path) + '"]');
+        const lab = tile && tile.querySelector(".vl");
+        if (!lab) return;
+        const mark = lab.querySelector(".rd-unsaved,.rd-vsave");
+        if (mark) mark.remove();
+        if (!text) return;
+        const s = document.createElement("span");
+        s.className = cls || "rd-vsave";
+        s.textContent = text;
+        lab.appendChild(document.createTextNode(" "));
+        lab.appendChild(s);
+      } catch (_) {}
+    }
+
     /** Attaches one generated image to the saved room, if there is one. */
     async function attachVersionToRoom(afterPath) {
       const roomId = STUDIO_CTX && STUDIO_CTX.roomId;
       const before = studioSourcePath();
       if (!roomId || !afterPath || !before) return null;
+      VERSION_SAVING = true;
+      paintVersionBadge(afterPath, "Saving…");
+      paintApproveBtn();
       try {
         const v = await saveStudioVersion({
           data: {
@@ -3694,16 +3722,35 @@ export function initApp(): () => void {
             before_path: before,
             after_path: afterPath,
             style: currentStyleId ? String(currentStyleId() || "") || null : null,
+            intensity: currentBandLabel ? currentBandLabel() : null,
+            grade: currentGradeLabel ? currentGradeLabel() : null,
+            settings: {
+              tool: activeToolName(),
+              notes: (document.getElementById("agentNote") || {}).value || null,
+              room_type: currentRoomType(),
+            },
           },
         });
-        if (v && v.created) {
-          window.dispatchEvent(new Event("rd:saved"));
-          window.rdRefreshOnboarding && window.rdRefreshOnboarding();
-        }
+        paintVersionBadge(afterPath, "Saved As Version " + v.version_no, "rd-vsaved");
+        if (afterPath === lastRenderPath)
+          DISPLAYED_VERSION = { id: v.id, version_no: v.version_no, path: afterPath };
+        /* The temporary draft may retire only now: durable image + version row. */
+        try {
+          await clearStudioDraft();
+        } catch (_) {}
+        window.dispatchEvent(new Event("rd:saved"));
+        window.rdRefreshOnboarding && window.rdRefreshOnboarding();
         return v;
       } catch (e) {
         console.error("[studio] version save failed", e);
+        paintVersionBadge(afterPath, "Not Saved", "rd-unsaved");
+        window.rdToast && window.rdToast("Could Not Save That Version. Use Retry Save.");
+        PENDING_VERSION = afterPath;
+        paintSaveWarn();
         return null;
+      } finally {
+        VERSION_SAVING = false;
+        paintApproveBtn();
       }
     }
 
@@ -3718,6 +3765,26 @@ export function initApp(): () => void {
       }
       if (lastRenderPath && !seen.has(lastRenderPath)) await attachVersionToRoom(lastRenderPath);
     }
+
+    /**
+     * The one lifecycle a finished render follows.
+     *
+     * With a saved room the version is written immediately; without one the
+     * Save Room dialog opens over the visible result and the version is written
+     * as soon as the room exists. Nothing is discarded on failure.
+     */
+    async function finalizeGeneratedDesign(afterPath) {
+      if (!afterPath) return null; /* upload failed: Retry Save owns this case */
+      if (STUDIO_CTX && STUDIO_CTX.roomId) return attachVersionToRoom(afterPath);
+      const saved = await openStudioSaveRoom();
+      if (!saved) {
+        window.rdToast && window.rdToast("Save This Room To Keep The Design");
+        return null;
+      }
+      return DISPLAYED_VERSION;
+    }
+    window.rdFinalizeGeneratedDesign = (p) => finalizeGeneratedDesign(p);
+
 
     async function openStudioSaveRoom() {
       const path = studioSourcePath();
