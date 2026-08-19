@@ -14,6 +14,7 @@ import { openSocialCopy } from "@/lib/rd-social-copy";
 import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voice-ui";
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
+import { photoSrc, photoSrcStale, paintPhotoEl, mountPhotoImages } from "@/lib/photo-src";
 import {
   sceneFrames,
   SE_TRANSITIONS,
@@ -4301,6 +4302,7 @@ function render() {
     S.screen === "wizard" ? wizardHtml() : S.screen === "detail" ? detailHtml() : libraryHtml();
   paint();
   paintAssetThumbs();
+  mountPhotoImages(el);
 
   if (S.screen === "wizard" && S.wizard) autosaveWizard(S.wizard);
   if (S.screen !== "wizard") stopWizardAutosave();
