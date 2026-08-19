@@ -4,15 +4,19 @@
 export const PRICING_FAQ: [string, string][] = [
   [
     "Which Plan Is Right For Me?",
-    "If you are redesigning your own home, Starter is enough. If you work on several properties and need budgets, scopes and commercial rights, choose Pro. If you present to clients with a team, choose Studio.",
+    "If you are redesigning your own home, Starter is enough. If you work on several properties and need commercial rights, choose Pro. If you present to clients with a team, choose Studio.",
   ],
   [
     "What Counts As A Credit?",
-    "A credit is the usage meter, not the product. Most redesigns use one credit. Budgets, floor plans and walkthroughs cost more, and the cost is always shown before you generate.",
+    "A credit is the usage meter, not the product. Most redesigns use one credit. Floor plans and walkthroughs cost more, and the cost is always shown before you generate.",
   ],
   [
     "Can I Buy One Project Without Subscribing?",
-    "Yes. Project packs cover a single room, a listing, a whole home or a full renovation plan as a one time purchase.",
+    "Yes. Project packs cover a single room, a listing or a whole home as a one time purchase.",
+  ],
+  [
+    "Is Budget & Scope Planning Available?",
+    "Not yet. Cost estimation and contractor scope tools are coming soon and are not part of any current plan or credit balance.",
   ],
   [
     "Can I Use The Images Commercially?",

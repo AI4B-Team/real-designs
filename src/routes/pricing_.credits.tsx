@@ -27,9 +27,10 @@ export const Route = createFileRoute("/pricing_/credits")({
 
 const COSTS: [string, string][] = [
   ["Design, restyle, virtual stage, declutter, material swap, sky swap, style transfer", "1 credit"],
-  ["Scope and budget from your photo", "3 credits"],
+  ["Before and after presentation", "1 credit"],
   ["2D to 3D floor plan", "6 credits"],
   ["Video walkthrough", "40 credits"],
+  ["Scope and budget planning (coming soon)", "Coming soon"],
 ];
 
 const TOPUPS: [string, string, string][] = [
@@ -42,7 +43,7 @@ const PACKS: [string, string, string][] = [
   ["Single Room Pack", "$12", "One room, unlimited versions, HD, 30 days"],
   ["Listing Staging Pack", "$29", "One property, all photos, disclosure labeling"],
   ["Whole Home Pack", "$39", "Every room, Design DNA, 60 days"],
-  ["Renovation Planning Pack", "$49", "Whole home plus scope, budget and contractor brief"],
+  ["Whole Home + Video Pack", "$49", "Whole home plus a video walkthrough and presentation deck"],
 ];
 
 function CreditsPage() {
@@ -56,8 +57,8 @@ function CreditsPage() {
             <span className="eyebrow">Credits</span>
             <h1>What Everything Costs.</h1>
             <p className="lede lede-wide">
-              Credits are the usage meter behind every plan. One balance covers designs, budgets,
-              floor plans and walkthroughs.
+              Credits are the usage meter behind every plan. One balance covers designs, floor plans
+              and walkthroughs.
             </p>
           </div>
 
