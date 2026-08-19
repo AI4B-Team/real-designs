@@ -890,8 +890,8 @@ function render() {
   el.innerHTML = `<section class="rds-page">
     <div class="rv-head">
       <div>
-        <h2>Review Rooms</h2>
-        <p>Confirm the room type for each photo.</p>
+        <h2>Prepare Your Photos</h2>
+        <p>Confirm room types, choose the photos you want to design, and set the output format.</p>
       </div>
       <div class="rv-head-tools">
         ${formatSelectorHtml({
