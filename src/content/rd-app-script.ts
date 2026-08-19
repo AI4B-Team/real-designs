@@ -4157,9 +4157,8 @@ function paintGenGate(){
   if(!btn) return;
   const need=styleNeedForTool(activeToolName());
   const missing=!!need&&!canvasStyleSelected();
-  btn.disabled=missing||busy;
-  btn.title=missing?('Choose A '+sectionTitle(need as any)+' First'):'';
-  btn.setAttribute('aria-disabled',missing?'true':'false');
+  if(missing){ btn.disabled=true; btn.dataset.csGate='1'; btn.title='Choose A '+sectionTitle(need as any)+' First'; btn.setAttribute('aria-disabled','true'); }
+  else if(btn.dataset.csGate==='1'){ btn.dataset.csGate=''; btn.disabled=!!busy; btn.title=''; btn.setAttribute('aria-disabled','false'); }
 }
 function promptForStyle(tool:string){
   const need=styleNeedForTool(tool);
