@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { PHOTOS } from "@/content/rd-photos";
-import type { FinishGrade, RoomKey } from "@/lib/planning-range";
+import type { FinishGrade } from "@/lib/planning-range";
 
 const BANDS = [
   { label: "Refresh", note: "Finishes and decor · under $5K", grade: "rental" as FinishGrade },
@@ -19,27 +19,6 @@ const SPACES = [
   { key: "exterior", label: "Exterior" },
   { key: "landscape", label: "Landscape" },
 ] as const;
-
-const ROOM_FOR_SPACE: Record<string, RoomKey> = {
-  interior: "living",
-  exterior: "exterior",
-  landscape: "landscape",
-};
-
-const ROOM_HINT: Record<string, RoomKey> = {
-  kitchen: "kitchen",
-  bathroom: "bathroom",
-  bath: "bathroom",
-  bedroom: "bedroom",
-  living: "living",
-  "whole home": "wholeHome",
-};
-
-function roomKeyFor(spaceType: string, roomType: string): RoomKey {
-  const hit = Object.keys(ROOM_HINT).find((k) => roomType.toLowerCase().includes(k));
-  if (hit) return ROOM_HINT[hit]!;
-  return ROOM_FOR_SPACE[spaceType] ?? "living";
-}
 
 const STEP_TEXT = [
   "Reading room geometry",

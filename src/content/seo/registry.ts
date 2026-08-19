@@ -9,7 +9,6 @@ import { page as aiBathroomDesign } from "@/content/seo/pages/ai-bathroom-design
 import { page as rehabCostCalculator } from "@/content/seo/pages/rehab-cost-calculator";
 import { page as arvCalculator } from "@/content/seo/pages/arv-calculator";
 import { page as renovationCostEstimator } from "@/content/seo/pages/renovation-cost-estimator";
-import { page as contractorScopeGenerator } from "@/content/seo/pages/contractor-scope-generator";
 import { page as kitchenRemodelCost } from "@/content/seo/pages/kitchen-remodel-cost";
 import { page as bathroomRemodelCost } from "@/content/seo/pages/bathroom-remodel-cost";
 import { page as forFlippers } from "@/content/seo/pages/ai-design-for-house-flippers";
@@ -42,7 +41,6 @@ export const LANDING_PAGES: LandingPage[] = [
   rehabCostCalculator,
   arvCalculator,
   renovationCostEstimator,
-  contractorScopeGenerator,
   kitchenRemodelCost,
   bathroomRemodelCost,
   forFlippers,

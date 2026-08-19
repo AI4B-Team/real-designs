@@ -57,17 +57,17 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
   },
   {
     id: "scope",
-    title: "Scope & Budget",
-    line: "Every design produces line items with quantities, trades and a planning range. Not a ballpark.",
+    title: "Renovation Cost Guide",
+    line: "Typical cost ranges by room, built from published unit rates, not from your photo.",
     photo: PHOTOS.kitchenAfter,
     href: "/renovation-cost-estimator",
   },
   {
     id: "budget-mode",
-    title: "Budget Mode",
-    line: "Set the number first and the design is generated to land inside it.",
+    title: "Free Rehab Calculator",
+    line: "Type a room, size and finish grade and get a planning range. No photo needed.",
     photo: PHOTOS.neutral,
-    href: "/rehab-cost-calculator",
+    href: "/free/rehab-cost-calculator",
   },
   {
     id: "shop",
@@ -75,13 +75,6 @@ export const SHOWCASE_CARDS: ShowcaseCard[] = [
     line: "Fixtures, finishes and furniture matched to real products with live pricing.",
     photo: PHOTOS.luxury,
     href: "/ai-interior-design",
-  },
-  {
-    id: "brief",
-    title: "Contractor Brief",
-    line: "A printable scope of work a trade can price without a second site visit.",
-    photo: PHOTOS.plan2d,
-    href: "/contractor-scope-generator",
   },
   {
     id: "walkthrough",

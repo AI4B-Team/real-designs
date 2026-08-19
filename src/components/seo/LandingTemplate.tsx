@@ -4,9 +4,6 @@ import { LABEL_BY_PATH } from "@/content/seo/nav";
 import type { LandingPage } from "@/content/seo/types";
 import { Builder } from "@/components/seo/Builder";
 import { SiteFooter, SiteHeader } from "@/components/seo/SiteChrome";
-import { fmt } from "@/lib/planning-range";
-import { ResultSummaryPanel } from "@/components/ResultSummaryPanel";
-import { metric } from "@/lib/result-summary";
 
 const PLANS = [
   { name: "Free", price: "$0", note: "5 credits a day, typical budget range", cta: "Start Free" },
@@ -19,8 +16,6 @@ const PLANS = [
 export function LandingTemplate({ page }: { page: LandingPage }) {
   const before = PHOTOS[page.beforePhoto];
   const after = PHOTOS[page.afterPhoto];
-  const scopeLow = page.scopeLines.reduce((s, l) => s + l.low, 0);
-  const scopeHigh = page.scopeLines.reduce((s, l) => s + l.high, 0);
   const cards = page.showcase.map((id) => CARD_BY_ID.get(id)).filter(Boolean);
 
   return (
@@ -139,51 +134,8 @@ export function LandingTemplate({ page }: { page: LandingPage }) {
         </div>
       </section>
 
-      {/* 5. BUDGET AND SCOPE */}
-      <section id="scope">
-        <div className="wrap">
-          <div className="sec-head">
-            <span className="eyebrow">Budget & Scope</span>
-            <h2>{page.scopeTitle}</h2>
-            <p className="lede">{page.scopeIntro}</p>
-          </div>
-          <div className="lp-scope card">
-            <ResultSummaryPanel
-              primaryLabel="Estimated Planning Range"
-              primaryValue={`${fmt(scopeLow)}–${fmt(scopeHigh)}`}
-              metrics={[
-                metric("Pricing", page.confidence),
-                { label: "Structure", value: "No Changes", tone: "positive" as const },
-                { label: "Basis", value: "Planning Estimate", plain: true },
-              ]}
-            />
-
-            <table className="lp-table">
-              <thead>
-                <tr>
-                  <th>Line Item</th>
-                  <th>Trade</th>
-                  <th className="mono">Qty</th>
-                  <th className="mono">Planning Range</th>
-                </tr>
-              </thead>
-              <tbody>
-                {page.scopeLines.map((l) => (
-                  <tr key={l.item}>
-                    <td>{l.item}</td>
-                    <td>{l.trade}</td>
-                    <td className="mono">{l.qty}</td>
-                    <td className="mono">
-                      {fmt(l.low)} to {fmt(l.high)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="lp-basis mono">{page.scopeBasis}</p>
-          </div>
-        </div>
-      </section>
+      {/* Photo-to-budget scope generation is paused pending verified local cost data.
+          Use /free/rehab-cost-calculator or /free/arv-calculator for a live planning range. */}
 
       {/* BODY COPY */}
       <section className="alt">
