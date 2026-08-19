@@ -1622,28 +1622,37 @@ registerCardMenu("photo", {
     const it = itemAt(key);
     if (!it) return [];
     const stored = !!it.path;
+    const hasOriginal = stored || !!it.previewUrl;
+    const hasDesign = !!it.resultPath;
+    const dl = hasDesign
+      ? {
+          action: "download",
+          label: "Download",
+          icon: "download",
+          children: [
+            { action: "download", label: "Download Original", icon: "image" },
+            { action: "downloadlatest", label: "Download Latest Design", icon: "sparkles" },
+          ],
+        }
+      : { action: "download", label: "Download", icon: "download", hidden: !hasOriginal };
     return [
+      { items: [{ action: "open", label: "Open Canvas", icon: "wand-sparkles" }] },
       {
         items: [
-          { action: "open", label: "Open Canvas", icon: "wand-sparkles" },
-          { action: "variation", label: "Create Variation", icon: "git-branch", hidden: !stored },
           { action: "duplicate", label: "Duplicate", icon: "copy", hidden: !stored },
+          { action: "replace", label: "Replace Photo", icon: "image-plus" },
+          { action: "room", label: "Change Room Type", icon: "door-open" },
+          {
+            action: "ratio",
+            label: normalizeOverride(it.ratio) ? "Override Format · " + ratioLabel(it.ratio) : "Override Format",
+            icon: "crop",
+          },
         ],
       },
       {
         items: [
-          { action: "replace", label: "Replace Photo", icon: "image-plus" },
-          { action: "room", label: "Change Room", icon: "door-open" },
-          {
-            action: "ratio",
-            label: normalizeOverride(it.ratio) ? "Override Format · " + normalizeOverride(it.ratio) : "Override Format",
-            icon: "crop",
-          },
-
-          { action: "tovideo", label: "Create Video From Photo", icon: "clapperboard", hidden: !stored },
-          { action: "versions", label: "View Versions", icon: "history", hidden: !it.resultPath && it.state !== "complete" },
-          { action: "download", label: "Download Original", icon: "download", hidden: !stored && !it.previewUrl },
-          { action: "details", label: "View Details", icon: "info" },
+          { action: "tovideo", label: "Create Video", icon: "clapperboard", hidden: !stored },
+          dl,
         ],
       },
       { items: [{ action: "removeproj", label: "Remove From Project", icon: "circle-minus" }] },
@@ -1653,6 +1662,7 @@ registerCardMenu("photo", {
       },
     ];
   },
+
   async run(action, key) {
     const it = itemAt(key);
     if (!it) return;
@@ -1691,6 +1701,13 @@ registerCardMenu("photo", {
       const url = await originalUrl(it);
       return void downloadOriginal(url, it.name || "photo.jpg");
     }
+    if (action === "downloadlatest") {
+      let url = it.resultUrl || null;
+      if (!url && it.resultPath) url = await photoSrc(it.resultPath).catch(() => null);
+      if (!url) return void cmToast("That Design Is Not Ready Yet.");
+      return void downloadOriginal(url, "design-" + (it.name || "photo.jpg"));
+    }
+
     if (action === "details") {
       const url = await originalUrl(it);
       const dims = await new Promise((res) => {

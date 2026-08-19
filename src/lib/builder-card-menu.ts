@@ -77,10 +77,13 @@ function menuHtml(groups) {
           (it) => `<button type="button" role="menuitem" class="bx-cmenu-i${it.danger ? " bad" : ""}"
         data-cmact="${esc(it.action)}"${it.disabled ? ' aria-disabled="true" disabled' : ""}${
           it.tip ? ` title="${esc(it.tip)}"` : ""
-        }${it.danger ? ' aria-describedby="bx-cmenu-warn"' : ""}>
+        }${it.children && it.children.length ? ' aria-haspopup="menu"' : ""}${
+          it.danger ? ' aria-describedby="bx-cmenu-warn"' : ""
+        }>
         <i data-lucide="${esc(it.icon || "circle")}"></i><span>${esc(it.label)}</span>${
           it.note ? `<em>${esc(it.note)}</em>` : ""
-        }</button>`,
+        }${it.children && it.children.length ? '<i class="bx-cmenu-more" data-lucide="chevron-right"></i>' : ""}</button>`,
+
         )
         .join("")}</div>`;
     })
@@ -122,17 +125,24 @@ function openMenu(btn) {
   el.className = "bx-cmenu";
   el.setAttribute("role", "menu");
   el.setAttribute("aria-label", btn.getAttribute("aria-label") || "Card options");
-  el.innerHTML = `${menuHtml(groups)}<span id="bx-cmenu-warn" class="bx-cmenu-warn">Destructive action. This cannot be undone.</span>`;
   document.body.appendChild(el);
-  paint(el);
-  place(el, btn);
+
+  /* A menu item may carry `children`; the menu then swaps to that shallow
+     submenu in place (with a Back row) instead of nesting a second popover. */
+  const render = (gs, focusFirst) => {
+    el.innerHTML = `${menuHtml(gs)}<span id="bx-cmenu-warn" class="bx-cmenu-warn">Destructive action. This cannot be undone.</span>`;
+    paint(el);
+    place(el, btn);
+    if (focusFirst !== false) {
+      const f = el.querySelector(".bx-cmenu-i:not([disabled])");
+      if (f) { try { f.focus(); } catch (_) {} }
+    }
+  };
+  render(groups);
 
   btn.setAttribute("aria-expanded", "true");
   btn.classList.add("on");
   openState = { btn, el, flow, key };
-
-  const first = el.querySelector(".bx-cmenu-i:not([disabled])");
-  if (first) { try { first.focus(); } catch (_) {} }
 
   el.addEventListener("click", (e) => {
     const it = e.target.closest("[data-cmact]");
@@ -140,9 +150,18 @@ function openMenu(btn) {
     e.preventDefault();
     e.stopPropagation();
     const action = it.getAttribute("data-cmact");
+    if (action === "__back") return void render(groups);
+    const src = itemsOf(groups).find((x) => x.action === action);
+    if (src && src.children && src.children.length) {
+      return void render([
+        { items: [{ action: "__back", label: "Back", icon: "chevron-left" }] },
+        { items: src.children },
+      ]);
+    }
     closeCardMenu(true);
     try { api.run && api.run(action, key); } catch (err) { toast(err?.message || "That did not work."); }
   });
+
 
   el.addEventListener("keydown", (e) => {
     const list = Array.from(el.querySelectorAll(".bx-cmenu-i:not([disabled])"));
