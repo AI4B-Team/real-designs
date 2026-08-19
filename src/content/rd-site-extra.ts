@@ -288,11 +288,11 @@ export function initExtra(timers: number[], lucide: any) {
   /* ---------- workflow ---------- */
   const FLOW = [
     ["image-up", "Upload", "Start with a room photo, listing image, floor plan or sketch."],
-    ["wand-2", "Redesign", "Explore budget-guided designs that preserve the real space."],
+    ["wand-2", "Redesign", "Explore design directions that preserve the real space."],
     ["sliders-horizontal", "Refine", "Keep, replace, remove and lock any object."],
-    ["calculator", "Estimate", "See line items, quantities and location-based planning ranges."],
+    ["images", "Enhance", "Clean up, brighten and sharpen every photo in the set."],
     ["shopping-bag", "Shop", "Match real products at best-price, closest-match and premium levels."],
-    ["send", "Deliver", "Generate the contractor brief, approval package and project checklist."],
+    ["send", "Deliver", "Share a client presentation, listing video and approval link."],
   ];
   const fr = $("flowRow");
   if (fr) fr.innerHTML = FLOW.map(([i, t, d], n) =>
@@ -306,7 +306,7 @@ export function initExtra(timers: number[], lucide: any) {
     { n: "Original", src: PHOTOS.wfOriginal, d: "Uploaded Aug 7", ov: "" },
     { n: "Empty", src: PHOTOS.wfEmpty, d: "Clean slate for staging", ov: `<span class="pbadge">14 objects removed</span>` },
     { n: "Designed", src: PHOTOS.wfDesigned, d: "Organic Modern direction", ov: `<span class="pbadge"><i data-lucide="lock"></i>Reality Lock On</span>` },
-    { n: "Budgeted", src: PHOTOS.wfDesigned, d: "Within target", ov: `<span class="pbadge">$11.4K&ndash;$14.9K</span>` },
+    { n: "Enhanced", src: PHOTOS.wfDesigned, d: "Light and color corrected", ov: `<span class="pbadge">Enhanced</span>` },
     {
       n: "Shopped", src: PHOTOS.wfDesigned, d: "$3,284 selected",
       ov: `<span class="pshop" style="left:24%;top:62%"></span><span class="pshop" style="left:56%;top:70%"></span>
@@ -572,10 +572,10 @@ export function initExtra(timers: number[], lucide: any) {
   type Role = [string, string, string, string, [string, string, string][], string];
   const PRO: Role[] = [
     ["Investor", PHOTOS.neutral, "Know What The Renovation Could Return Before You Commit.",
-      "Compare rental, resale and renovation scenarios for the same property, with visual concepts, planning ranges and potential value impact in one place.",
-      [["scale", "Compare Deal Scenarios", "See what Refresh, Makeover and Renovation change, and what each may cost."],
-       ["wallet", "Budget Before You Buy", "Build a property-level planning range before finalizing the deal."],
-       ["trending-up", "Plan The Exit", "Connect the approved design to rehab scope and potential ARV impact."]],
+      "Compare rental, resale and renovation directions for the same property, with photoreal concepts for every room in one place.",
+      [["scale", "Compare Deal Scenarios", "See what Refresh, Makeover and Renovation change in the same space."],
+       ["layout-dashboard", "See Every Room First", "Design the whole property before finalizing the deal."],
+       ["trending-up", "Plan The Exit", "Carry the approved design into listing photos and video."]],
       "Underwrite A Property"],
     ["Agent", PHOTOS.coastal, "Help Buyers See The Potential, And Sellers See The Strategy.",
       "Turn empty, dated or cluttered rooms into realistic listing concepts while preserving the property's actual walls, windows and layout.",
