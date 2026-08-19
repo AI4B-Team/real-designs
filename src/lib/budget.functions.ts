@@ -22,14 +22,14 @@ export const getBudgetAvailability = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async (): Promise<BudgetAvailability> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { checkBudgetsAvailable } = await import("@/lib/budget.server");
 
-    const [{ data: markets }, { count: costs }] = await Promise.all([
+    const [{ data: markets }, available] = await Promise.all([
       supabaseAdmin.from("markets").select("name, verified_at").not("verified_at", "is", null),
-      supabaseAdmin.from("unit_costs").select("id", { count: "exact", head: true }),
+      checkBudgetsAvailable(),
     ]);
 
-    const names = (markets ?? []).map((m: { name: string }) => m.name);
-    const available = names.length > 0 && (costs ?? 0) > 0;
+    const names = ((markets as { name: string }[] | null) ?? []).map((m) => m.name);
 
     return {
       available,
