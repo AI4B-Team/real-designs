@@ -2193,57 +2193,84 @@ function paintCanvasSave() {
 }
 
 /* The canvas overflow menu: anchored under its trigger, right aligned, and
-   dismissed by outside click, Escape, a route change or any chosen action. */
+   dismissed by outside click, Escape, a route change or any chosen action.
+   Every document listener is removed the moment the menu closes. */
+let closeCanvasMenu: ((focus?: boolean) => void) | null = null;
+
 function bindCanvasMenu(head, backToPhotos) {
   const trigger = head.querySelector("#rdsCanvasMore") as HTMLButtonElement | null;
   const menu = head.querySelector("#rdsCanvasMenu") as HTMLElement | null;
   if (!trigger || !menu) return;
+  const onDoc = (e) => { if (!head.contains(e.target)) close(); };
+  const onKey = (e) => { if (e.key === "Escape") close(true); };
+  const onHash = () => close();
+  const detach = () => {
+    document.removeEventListener("click", onDoc);
+    document.removeEventListener("keydown", onKey);
+    window.removeEventListener("hashchange", onHash);
+  };
   const close = (focus?: boolean) => {
+    detach();
     if (menu.hidden) return;
     menu.hidden = true;
     trigger.setAttribute("aria-expanded", "false");
     if (focus) trigger.focus();
   };
-  const onDoc = (e) => { if (!head.contains(e.target)) close(); };
-  const onKey = (e) => { if (e.key === "Escape") close(true); };
+  closeCanvasMenu = close;
   trigger.onclick = (e) => {
     e.stopPropagation();
     const open = menu.hidden;
     menu.hidden = !open;
     trigger.setAttribute("aria-expanded", open ? "true" : "false");
+    detach();
     if (open) {
       document.addEventListener("click", onDoc);
       document.addEventListener("keydown", onKey);
-      window.addEventListener("hashchange", () => close(), { once: true });
-    } else {
-      document.removeEventListener("click", onDoc);
-      document.removeEventListener("keydown", onKey);
+      window.addEventListener("hashchange", onHash);
     }
   };
   const ret = head.querySelector("#rdsClose") as HTMLButtonElement | null;
   if (ret) ret.onclick = () => { close(); backToPhotos(); };
   const reset = head.querySelector("#rdsResetDesign") as HTMLButtonElement | null;
-  if (reset) reset.onclick = () => { close(true); openResetDesign(); };
+  if (reset) reset.onclick = () => { close(true); openResetDesign(trigger); };
 }
 
 /** Reset only the photo currently on the canvas — never the whole project. */
-function openResetDesign() {
+function openResetDesign(returnFocusTo?: HTMLElement | null) {
   const host = document.querySelector(".rd-app") || document.body;
   let m = document.getElementById("rdsResetModal");
   if (m) m.remove();
   m = document.createElement("div");
   m.id = "rdsResetModal";
   m.className = "up-modal on";
-  m.innerHTML = `<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">
-    <h3>Reset This Design?</h3>
-    <p>This removes the current photo’s unsaved design settings and generated drafts. The original uploaded photo and the other photos will remain unchanged.</p>
+  m.innerHTML = `<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" aria-labelledby="rdsResetTitle" aria-describedby="rdsResetDesc">
+    <h3 id="rdsResetTitle">Reset This Design?</h3>
+    <p id="rdsResetDesc">This removes the current photo’s unsaved design settings and generated drafts. The original uploaded photo and the other photos will remain unchanged.</p>
     <div class="up-act">
       <button class="btn btn-ghost" data-close>Cancel</button>
       <button class="btn btn-danger" id="rdsResetGo"><i data-lucide="rotate-ccw"></i>Reset Design</button>
     </div></div>`;
   host.appendChild(m);
-  const shut = () => m && m.remove();
+  const focusables = () =>
+    Array.from(m!.querySelectorAll<HTMLElement>("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"));
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key === "Escape") { e.preventDefault(); shut(); return; }
+    if (e.key !== "Tab") return;
+    const f = focusables();
+    if (!f.length) return;
+    const first = f[0]!;
+    const last = f[f.length - 1]!;
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
+  const shut = () => {
+    document.removeEventListener("keydown", onKey, true);
+    m && m.remove();
+    try { returnFocusTo?.focus(); } catch (_) {}
+  };
+  document.addEventListener("keydown", onKey, true);
   m.addEventListener("click", (e: any) => { if (e.target.closest && e.target.closest("[data-close]")) shut(); });
+  try { (m.querySelector("#rdsResetGo") as HTMLElement | null)?.focus(); } catch (_) {}
   const go = m.querySelector("#rdsResetGo") as HTMLButtonElement | null;
   if (go)
     go.onclick = () => {
