@@ -536,9 +536,26 @@
 .rd-app .rv-advise { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 9px 12px; border: 1px solid var(--line, #f0f0f0); border-radius: 999px; margin: 10px 0 0; font-size: 13px; }
 .rd-app .rv-advise b { font-weight: 600; }
 .rd-app .rv-advise .icon-btn { margin-left: auto; }
-.rd-app .rv-grid.landscape .rv-tile-th { aspect-ratio: 4 / 3; }
+/* ---- Canonical builder media-card frame (Photo Design + Video Builder) ----
+   Mirrors src/lib/builder-card-frame.ts. The same photo at the same selected
+   format must render at the same width, height, crop and overlay positions in
+   both workflows, so these are the only rules allowed to set a card frame's
+   aspect. rd-staging.css must not redefine them. */
+.rd-app .rv-grid.landscape .rv-tile-th,
+.rd-app .rv-tile.rt-169 .rv-tile-th,
+.rd-app .rv-tile.rt-43 .rv-tile-th,
+.rd-app .rv-tile.rt-32 .rv-tile-th,
+.rd-app .rv-tile.rt-orig .rv-tile-th { aspect-ratio: 4 / 3; }
+.rd-app .rv-grid.portrait .rv-tile-th,
+.rd-app .rv-tile.rt-916 .rv-tile-th,
+.rd-app .rv-tile.rt-45 .rv-tile-th,
+.rd-app .rv-tile.rt-23 .rv-tile-th { aspect-ratio: 3 / 4; }
+.rd-app .rv-grid.square .rv-tile-th,
+.rd-app .rv-tile.rt-11 .rv-tile-th { aspect-ratio: 1 / 1; }
 .rd-app .rv-tile { border-radius: 12px; container-type: inline-size; }
 .rd-app .rv-tile-th { position: relative; aspect-ratio: 3 / 4; border-radius: 12px; overflow: hidden; background: #f2f2f2 center/cover no-repeat; cursor: pointer; opacity: .5; transition: opacity .12s; }
+.rd-app .rv-tile-th img { width: 100%; height: 100%; object-fit: cover; object-position: center; display: block; }
+
 .rd-app .rv-tile.on .rv-tile-th { opacity: 1; }
 .rd-app .rv-tile-th:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
 .rd-app .rv-tile-check { position: absolute; top: 10px; left: 10px; width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; border: 1.5px solid #fff; background: rgba(0,0,0,.28); }
