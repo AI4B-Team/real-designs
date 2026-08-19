@@ -8103,8 +8103,14 @@ ${picks
      */
     function paintSpaceTools() {
       const space = currentSpace();
-      toolRows.forEach((r: any) => {
+      /* Only the Studio tool list: other views keep their own rows. */
+      const rows = Array.from(document.querySelectorAll("#fTool .toolrow"));
+      rows.forEach((r: any) => {
         const nm = r.getAttribute("data-tool") || "";
+        /* A tool already gated elsewhere (Budget "Coming Soon", plan locks)
+           keeps that state and its explanation: space rules never re-enable
+           it and never overwrite its tooltip. */
+        if (r.classList.contains("is-disabled")) return;
         const support = toolSupport(nm, space);
         const label = toolLabel(nm, space);
         const desc = toolDescription(nm, space);
