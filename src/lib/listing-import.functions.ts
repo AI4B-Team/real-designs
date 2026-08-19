@@ -23,6 +23,10 @@ export const startListingImport = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
+    // Closed beta: automated listing import is held back, and hidden navigation
+    // is not protection. Refuse the action itself.
+    const { assertBetaFeature } = await import("@/lib/beta/guard.server");
+    await assertBetaFeature("listing_import", (context.claims as any)?.email ?? null);
     const { checkListingUrl, fetchListing } = await import("@/lib/listing-import.server");
     const supabase = context.supabase;
     const userId = context.userId;
@@ -176,7 +180,9 @@ export const linkListingImport = createServerFn({ method: "POST" })
 export const lookupListingByAddress = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d) => z.object({ address: z.string().min(3).max(300) }).parse(d))
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
+    const { assertBetaFeature } = await import("@/lib/beta/guard.server");
+    await assertBetaFeature("listing_import", (context.claims as any)?.email ?? null);
     const { fetchListingByAddress } = await import("@/lib/listing-import.server");
     const r = await fetchListingByAddress(data.address.trim());
     if (!r.ok)

@@ -5,6 +5,12 @@ export type FeedbackInput = {
   body: string;
   viewContext?: string | null;
   attachmentPath?: string | null;
+  /** Page the tester was on, e.g. "studio". */
+  page?: string | null;
+  /** Workflow in progress, e.g. "Photo Design". */
+  workflow?: string | null;
+  /** Safe diagnostic ID shown in the form, e.g. "RD-AB12-CD34". */
+  diagnosticId?: string | null;
 };
 
 /**
@@ -26,9 +32,13 @@ export async function submitFeedback(input: FeedbackInput): Promise<void> {
     body,
     view_context: input.viewContext ?? null,
     attachment_path: input.attachmentPath ?? null,
+    page: (input.page ?? input.viewContext ?? null)?.slice(0, 80) ?? null,
+    workflow: input.workflow?.slice(0, 80) ?? null,
+    diagnostic_id: input.diagnosticId?.slice(0, 40) ?? null,
   });
   if (error) throw new Error(error.message);
 }
+
 
 export type FeedbackRow = {
   id: string;

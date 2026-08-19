@@ -7879,3 +7879,61 @@
   gap: 9px;
   margin-left: auto;
 }
+
+/* ---------- Closed Beta ---------- */
+.rd-beta-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-right: 4px;
+}
+.rd-beta-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--red, #cc0000);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.rd-beta-fb {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink, #111);
+  border-radius: 999px;
+  height: 26px;
+  padding: 0 11px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.rd-beta-fb:hover {
+  border-color: var(--red, #cc0000);
+  color: var(--red, #cc0000);
+}
+.nav-i .rd-beta-soon {
+  margin-left: auto;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+.side.rail .nav-i .rd-beta-soon {
+  display: none;
+}
+.fb-ctx {
+  margin-top: 10px;
+  font-size: 0.73rem;
+  color: var(--muted);
+  line-height: 1.5;
+}

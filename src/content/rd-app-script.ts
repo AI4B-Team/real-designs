@@ -68,6 +68,7 @@ import { track } from "@/lib/analytics";
 import { mountFirstUse } from "@/content/rd-firstuse";
 import { mountStudioStart } from "@/content/rd-studio-start";
 import { submitFeedback } from "@/lib/feedback";
+import { initBeta, diagnosticId } from "@/lib/beta/beta-ui";
 import { polishFeedback } from "@/lib/feedback.functions";
 import { readIntegrations } from "@/lib/integrations.functions";
 import { isProductSearchConfigured } from "@/lib/product-catalog";
@@ -7274,8 +7275,32 @@ ${picks
       send.disabled = false;
       send.textContent = "Send Feedback";
       document.querySelectorAll("#fbCats .fb-cat").forEach((x) => x.classList.remove("on"));
+      const ctx = feedbackContext();
+      const ctxEl = document.getElementById("fbCtx");
+      if (ctxEl) {
+        ctxEl.textContent =
+          "Attached automatically: Page " +
+          ctx.page +
+          " \u00b7 Workflow " +
+          ctx.workflow +
+          " \u00b7 Diagnostic ID " +
+          ctx.diagnosticId;
+      }
       fbModal.classList.add("on");
       lucide.createIcons();
+    }
+    function feedbackContext() {
+      const view = ((document.querySelector(".view.on") || {}).id || "").replace(/^v-/, "") || "app";
+      const WF = {
+        studio: "Photo Design",
+        reveal: "Video Builder",
+        media: "Media",
+        props: "Properties",
+        designs: "Designs",
+        present: "Presentations",
+      };
+      const workflow = window.rdWorkflow || WF[view] || "General";
+      return { page: view, workflow: workflow, diagnosticId: diagnosticId() };
     }
     function closeFb() {
       fbModal.classList.remove("on");
@@ -7357,11 +7382,15 @@ ${picks
         (document.querySelector("#fbCats .fb-cat.on") || {}).textContent || "Something Else";
       const view = (document.querySelector(".view.on") || {}).id || "";
       try {
+        const fctx = feedbackContext();
         await submitFeedback({
           category: cat,
           body: b.value,
           viewContext: view.replace(/^v-/, ""),
           attachmentPath: fbAttachPath,
+          page: fctx.page,
+          workflow: fctx.workflow,
+          diagnosticId: fctx.diagnosticId,
         });
         document.getElementById("fbForm").hidden = true;
         document.getElementById("fbDone").hidden = false;
@@ -9691,6 +9720,12 @@ ${picks
       try {
         const { data } = await supabase.auth.getUser();
         if (data && data.user) fuUid = data.user.id;
+      } catch (_) {}
+      /* Closed beta: label the workspace and gate held-back navigation. The
+     server re-checks every held-back action, this is only the visible half. */
+      try {
+        await initBeta();
+        lucide.createIcons();
       } catch (_) {}
       try {
         /* Startup routing is only allowed to move the user while the route it was
