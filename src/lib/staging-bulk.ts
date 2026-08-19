@@ -13,7 +13,7 @@
 import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
 import { getMyCredits } from "@/lib/credits.functions";
-import { modalFooterHtml, setModalButtonLoading } from "@/lib/modal-footer";
+import { setModalButtonLoading } from "@/lib/modal-footer";
 import { effectiveRatio, normalizeOutputRatio, ratioLabel } from "@/lib/output-ratio";
 import { openUpgrade } from "@/lib/rd-upgrade";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
@@ -53,19 +53,49 @@ export function groupBySpace(items) {
   }));
 }
 
-/** Can this style legitimately drive that space, or would it be a wrong result? */
-export function styleFitsSpace(styleId, space) {
-  if (!space || space === "unassigned") return true;
+/**
+ * Three-level style guidance.
+ *
+ * "compatible"  — the style adapts cleanly to that space.
+ * "unusual"     — technically possible, just an unconventional look. Advisory
+ *                 only: the user keeps creative control.
+ * "unsupported" — the operation itself cannot run on that space (a landscaping
+ *                 style has no ground plane indoors, an empty-room staging
+ *                 style has no room to stage on a facade).
+ */
+export function styleCompatibility(styleId, space) {
+  if (!space || space === "unassigned") return "compatible";
   const rec = STYLES.find((s) => s.id === styleId);
+  if (!rec) return "compatible";
+  const types = (rec.compatibleProjectTypes || []).filter((t) => t !== "concept");
   const want = PROJECT_TYPE[space] || "interior";
-  if (!rec || !rec.compatibleProjectTypes || !rec.compatibleProjectTypes.length) return true;
-  return rec.compatibleProjectTypes.indexOf(want) !== -1;
+  if (!types.length || types.indexOf(want) !== -1) return "compatible";
+  const only = (t) => types.every((x) => x === t);
+  /* Operation-bound styles: genuinely impossible, not merely unusual. */
+  if (only("garden") && want !== "garden") return "unsupported";
+  if (only("virtual-staging") && want !== "interior") return "unsupported";
+  return "unusual";
+}
+
+/** Only a genuine technical limitation blocks a run. */
+export function styleFitsSpace(styleId, space) {
+  return styleCompatibility(styleId, space) !== "unsupported";
 }
 
 /** Styles that can carry a given space, for the per-group fallback picker. */
 export function stylesForSpace(space) {
   return STYLES.filter((s) => s.isActive !== false && styleFitsSpace(s.id, space));
 }
+
+/** Why an operation cannot run on that space, in plain terms. */
+function unsupportedNote(styleName, space) {
+  if (space === "interior")
+    return `${styleName} is a landscaping direction — it works on outdoor ground, so it cannot be applied to an indoor room. Choose an interior direction for this group.`;
+  if (space === "exterior")
+    return `${styleName} is an empty-room staging direction — there is no room to furnish on a building exterior. Choose an exterior direction for this group.`;
+  return `${styleName} cannot be applied to these photos. Choose a compatible direction for this group.`;
+}
+
 
 /** How the shared direction is described for each space type. */
 function groupNote(space) {
@@ -208,6 +238,8 @@ export function openBulkDesign(opts) {
   const items = opts.items.slice();
   const readRatio = () => normalizeOutputRatio(typeof opts.ratio === "function" ? opts.ratio() : opts.ratio);
   let allowGeneric = false;
+  /* Advisory recommendations the user has explicitly accepted (styleId:space). */
+  const ackUnusual = {};
   let submitted = false;
   let credits = null; // { balance } once the account answers
   const returnFocus = document.activeElement;
@@ -280,8 +312,8 @@ export function openBulkDesign(opts) {
     const bal = credits && !credits.unavailable ? credits.balance : null;
     const short = bal != null && cost > bal ? cost - bal : 0;
 
-    /* Spaces actually present, so the shared picker only offers looks that can
-       carry all of them (a mixed batch never starts out incompatible). */
+    /* Spaces actually present. Only a genuinely unsupported operation removes
+       a style from the shared picker — an unusual look stays available. */
     const spaces = groups.map((g) => g.space).filter((s) => s && s !== "unassigned");
     const universal = STYLES.filter(
       (s) => s.isActive !== false && spaces.every((sp) => styleFitsSpace(s.id, sp)),
@@ -290,29 +322,48 @@ export function openBulkDesign(opts) {
     /* No universal look for this mix: fall back to a style per space group. */
     const perSpaceMode = mixed && !universal.length;
 
-    /* Compatibility is only ever judged against a style the user chose. */
-    const unfit = form.styleId
-      ? groups.filter((g) => !styleFitsSpace(form.styleId, g.space) && !form.spaceStyles[g.space])
-      : [];
+    /* The style that actually drives each group. */
+    const styleFor = (g) => form.spaceStyles[g.space] || (perSpaceMode ? "" : form.styleId || "");
+    const levelFor = (g) => (styleFor(g) ? styleCompatibility(styleFor(g), g.space) : "compatible");
+    const unsupported = groups.filter((g) => levelFor(g) === "unsupported");
+    const unusual = groups.filter(
+      (g) => levelFor(g) === "unusual" && !ackUnusual[styleFor(g) + ":" + g.space],
+    );
 
     let block = "";
+    let blockField = "";
     if (!n) block = "Add at least one photo to generate a design.";
-    else if (!form.styleId && !perSpaceMode) block = "Choose a style to continue.";
-    else if (perSpaceMode && groups.some((g) => g.space !== "unassigned" && !form.spaceStyles[g.space]))
+    else if (!form.styleId && !perSpaceMode) {
+      block = "Choose a style to continue.";
+      blockField = "style";
+    } else if (perSpaceMode && groups.some((g) => g.space !== "unassigned" && !form.spaceStyles[g.space])) {
       block = "Choose a style for each group to continue.";
-    else if (!form.intensity) block = "Choose an intensity to continue.";
-    else if (!form.grade) block = "Choose a finish grade to continue.";
-    else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
-    else if (unfit.length) block = "STYLE_UNFIT";
-    else if (short) block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
+    } else if (!form.intensity) {
+      block = "Choose an intensity to continue.";
+      blockField = "intensity";
+    } else if (!form.grade) {
+      block = "Choose a finish grade to continue.";
+      blockField = "grade";
+    } else if (missing && !allowGeneric) block = "Assign a room type to every selected photo before generating.";
+    else if (unsupported.length) {
+      block = "STYLE_UNFIT";
+    } else if (unusual.length) {
+      block = "STYLE_UNUSUAL";
+    } else if (short)
+      block = `You need ${short} more credit${short === 1 ? "" : "s"} to generate ${n} design${n === 1 ? "" : "s"}.`;
 
-    /* The incompatibility is explained once, inside the group that needs it,
-       so the bar below never repeats the same sentence. */
-    const barMsg = block === "STYLE_UNFIT" ? "" : block;
+    /* Style feedback is explained once, inside the group that needs it. */
+    const barMsg = block === "STYLE_UNFIT" || block === "STYLE_UNUSUAL" || blockField ? "" : block;
     const hint =
       block === "STYLE_UNFIT"
-        ? `${styleName()} does not suit ${unfit.map((g) => g.label.toLowerCase()).join(" and ")}. Choose a compatible style for that group.`
-        : block;
+        ? `${styleName()} cannot be applied to ${unsupported.map((g) => g.label.toLowerCase()).join(" and ")} photos. Choose a compatible style for that group.`
+        : block === "STYLE_UNUSUAL"
+          ? `Review the recommendation on the ${unusual.map((g) => g.label.toLowerCase()).join(" and ")} group.`
+          : block;
+    /* One concise message, shown under the field that needs attention. */
+    const fieldMsg = (name) =>
+      blockField === name ? `<p class="rdsb-fielderr"><i data-lucide="alert-circle"></i>${esc(block)}</p>` : "";
+
 
     const sum = [
       ["Photos", String(n)],
@@ -337,14 +388,15 @@ export function openBulkDesign(opts) {
             <label for="rdsbStyle">Style</label>
             <select id="rdsbStyle">${styleOptions(form.styleId, spaces)}</select>
             ${mixed ? `<em class="rdsb-help">Adapted to each space — modern finishes indoors, modern materials and landscaping outdoors.</em>` : ""}
+            ${fieldMsg("style")}
           </div>`
           }
           ${perSpaceMode ? `<select id="rdsbStyle" class="rdsb-hidden" aria-hidden="true" tabindex="-1"><option value=""></option></select>` : ""}
           <div class="rdsb-row">
             <div class="rdsb-f"><label for="rdsbInt">Intensity</label>
-              <select id="rdsbInt">${pickOptions(["Refresh", "Makeover", "Full Remodel"], form.intensity, "Choose intensity")}</select></div>
+              <select id="rdsbInt">${pickOptions(["Refresh", "Makeover", "Full Remodel"], form.intensity, "Choose intensity")}</select>${fieldMsg("intensity")}</div>
             <div class="rdsb-f"><label for="rdsbGrade">Finish Grade</label>
-              <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select></div>
+              <select id="rdsbGrade">${pickOptions(["Rental Grade", "Retail Grade", "Luxury Grade"], form.grade, "Choose finish grade")}</select>${fieldMsg("grade")}</div>
           </div>
           <label class="rdsb-chk"><input type="checkbox" id="rdsbPreserve"${form.preserve ? " checked" : ""}> Keep walls, windows, and layout exactly as they are</label>
           <div class="rdsb-f"><label for="rdsbNotes">Shared instructions <em>Optional</em></label>
@@ -353,26 +405,41 @@ export function openBulkDesign(opts) {
           <div class="rdsb-groups">
             ${groups
               .map((g) => {
-                /* Only a style the user actually chose can be "unfit". */
-                const fits = !form.styleId || styleFitsSpace(form.styleId, g.space);
+                const level = levelFor(g);
                 const needsOwn = perSpaceMode && g.space !== "unassigned";
                 const pick = form.spaceStyles[g.space] || "";
-                const bad = g.space === "unassigned" || (!fits && !pick);
-                return `<div class="rdsb-g${bad ? " warn" : ""}">
+                const acked = !!ackUnusual[styleFor(g) + ":" + g.space];
+                const name = STYLES.find((s) => s.id === styleFor(g));
+                const label = name ? name.displayName : styleName();
+                const bad = g.space === "unassigned" || level === "unsupported";
+                const advise = level === "unusual" && !acked;
+                return `<div class="rdsb-g${bad ? " warn" : ""}${advise ? " advise" : ""}">
                 <b>${esc(g.label)} · ${g.items.length}</b>
                 <span>${esc(
                   needsOwn
                     ? `Choose the direction for these ${g.label.toLowerCase()} photos.`
-                    : fits
-                      ? groupNote(g.space)
-                      : `${styleName()} is not suited to ${g.label.toLowerCase()} photos. Choose a compatible style for this group.`,
+                    : level === "unsupported"
+                      ? unsupportedNote(label, g.space)
+                      : groupNote(g.space),
                 )}</span>
                 ${
-                  fits && !needsOwn
+                  advise
+                    ? `<div class="rdsb-advise" role="status">
+                        <p><i data-lucide="info"></i>${esc(label)} is an unconventional choice for this ${esc(g.label.toLowerCase())}, but it can still be applied.</p>
+                        <div class="rdsb-advise-a">
+                          <button type="button" class="rdsb-ab primary" data-ack="${esc(g.space)}">Use Anyway</button>
+                          <button type="button" class="rdsb-ab" data-restyle="${esc(g.space)}">Choose Another Style</button>
+                        </div>
+                      </div>`
+                    : ""
+                }
+                ${
+                  level !== "unsupported" && !needsOwn
                     ? ""
                     : `<select class="rdsb-gstyle" data-spacestyle="${esc(g.space)}" aria-label="Style for ${esc(g.label)} photos">
                         <option value="">${needsOwn ? esc(`Choose ${g.label} Style…`) : "Choose A Compatible Style…"}</option>
                         ${stylesForSpace(g.space)
+                          .filter((s) => styleCompatibility(s.id, g.space) === "compatible")
                           .map(
                             (s) =>
                               `<option value="${esc(s.id)}"${s.id === pick ? " selected" : ""}>${esc(s.displayName)}</option>`,
@@ -418,29 +485,51 @@ export function openBulkDesign(opts) {
             </div>
           </div>
         </div>
-        ${
-          barMsg
-            ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(barMsg)}</p>${
-                short ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>` : ""
-              }</div>`
-            : ""
-        }
-        ${modalFooterHtml({
-          extra: { label: "Cancel", value: "cancel" },
-          secondary: { label: "Edit Room Types", value: "edit", variant: "outline" },
-          primary: {
-            label: `Generate ${n} Design${n === 1 ? "" : "s"} · ${cost} Credit${cost === 1 ? "" : "s"}`,
-            value: "go",
-            disabled: !!block || submitted,
-            hint: hint || "",
-            loadingLabel: `Generating ${n} Design${n === 1 ? "" : "s"}…`,
-          },
-        })}
+        <div class="rdsb-foot">
+          ${
+            barMsg
+              ? `<div class="rdsb-blockbar"><p class="rdsb-block"><i data-lucide="alert-circle"></i>${esc(barMsg)}</p>${
+                  short ? `<button type="button" class="rdsb-addc" id="rdsbAdd"><i data-lucide="zap"></i>Add credits</button>` : ""
+                }</div>`
+              : ""
+          }
+          <div class="rdsb-foot-row">
+            <p class="rdsb-foot-cost">${n} photo${n === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}</p>
+            <div class="rdsb-foot-a">
+              <button type="button" class="rdm-btn rdm-ghost" data-mfa="cancel">Cancel</button>
+              <button type="button" class="rdm-btn rdm-outline" data-mfa="edit">Edit Room Types</button>
+              <button type="button" class="rdm-btn rdm-primary" data-mfa="go"${block || submitted ? ' disabled aria-disabled="true"' : ""}${hint ? ` title="${esc(hint)}"` : ""}>Generate ${n} Design${n === 1 ? "" : "s"}</button>
+            </div>
+          </div>
+        </div>
       </div>`;
     paint();
 
     node.querySelectorAll("[data-close]").forEach((b) => (b.onclick = close));
     node.querySelector('[data-mfa="cancel"]').onclick = close;
+    node.querySelectorAll("[data-ack]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          readForm();
+          const space = b.getAttribute("data-ack");
+          const id = form.spaceStyles[space] || form.styleId || "";
+          /* Acknowledged once: the same recommendation never returns. */
+          ackUnusual[id + ":" + space] = true;
+          draw();
+        }),
+    );
+    node.querySelectorAll("[data-restyle]").forEach(
+      (b) =>
+        (b.onclick = () => {
+          readForm();
+          const space = b.getAttribute("data-restyle");
+          const sel = node.querySelector(
+            form.spaceStyles[space] ? `[data-spacestyle="${space}"]` : "#rdsbStyle",
+          );
+          if (sel && sel.focus) sel.focus();
+        }),
+    );
+
     node.querySelectorAll("#rdsbStyle,#rdsbInt,#rdsbGrade,#rdsbPreserve,[data-spacestyle]").forEach(
       (el) =>
         (el.onchange = () => {
