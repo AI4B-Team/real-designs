@@ -38,6 +38,15 @@ function card(key: string, path: string, src = "") {
 beforeEach(() => {
   resolve.mockReset();
   document.body.innerHTML = "";
+  /* jsdom never actually loads an image; the probe resolves immediately. */
+  class OkImage {
+    onload: null | (() => void) = null;
+    onerror: null | (() => void) = null;
+    set src(_v: string) {
+      setTimeout(() => this.onload && this.onload(), 0);
+    }
+  }
+  (globalThis as any).Image = OkImage as any;
 });
 
 describe("photo persistence", () => {
