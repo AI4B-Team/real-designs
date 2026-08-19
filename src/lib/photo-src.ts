@@ -233,6 +233,7 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
     }
     el.style.backgroundImage = `url("${url}")`;
   }
+  el.__rdPhotoTries = 0;
   el.dataset["painted"] = "1";
   loadingOff(el);
   return true;
