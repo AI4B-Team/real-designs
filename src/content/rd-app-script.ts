@@ -3251,10 +3251,12 @@ export function initApp(): () => void {
     let PENDING_SAVE = null;
     function paintSaveWarn() {
       const w = document.getElementById("studioSaveWarn");
-      if (w) w.hidden = !PENDING_SAVE;
+      if (w) w.hidden = !(PENDING_SAVE || PENDING_VERSION);
     }
     function dropPendingSave() {
       PENDING_SAVE = null;
+      PENDING_VERSION = null;
+      DISPLAYED_VERSION = null;
       paintSaveWarn();
     }
     async function persistRender(image, label) {
@@ -3276,9 +3278,21 @@ export function initApp(): () => void {
       return null;
     }
 
+    /* Retry never regenerates and never charges again: it re-uploads the same
+       image when storage failed, or writes only the missing version row. */
     async function retryPendingSave() {
-      if (!PENDING_SAVE) return;
       const btn = document.getElementById("studioRetrySave");
+      if (!PENDING_SAVE) {
+        const path = PENDING_VERSION;
+        if (!path) return;
+        if (btn) btn.disabled = true;
+        PENDING_VERSION = null;
+        paintSaveWarn();
+        const v = await finalizeGeneratedDesign(path);
+        if (btn) btn.disabled = false;
+        if (v) window.rdToast && window.rdToast("Design Saved");
+        return;
+      }
       if (btn) btn.disabled = true;
       const { image, label } = PENDING_SAVE;
       const path = await persistRender(image, label);
@@ -3293,12 +3307,11 @@ export function initApp(): () => void {
         paintVersions();
       } catch (_) {}
       window.rdToast && window.rdToast("Design Saved");
-      try {
-        attachVersionToRoom(path);
-      } catch (_) {}
+      await finalizeGeneratedDesign(path);
       window.dispatchEvent(new Event("rd:saved"));
       window.dispatchEvent(new Event("rd:photo"));
     }
+
     try {
       const rb = document.getElementById("studioRetrySave");
       rb && rb.addEventListener("click", retryPendingSave);
