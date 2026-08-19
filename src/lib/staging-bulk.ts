@@ -300,14 +300,30 @@ export function openBulkDesign(opts) {
 
           <div class="rdsb-groups">
             ${groups
-              .map(
-                (g) => `<div class="rdsb-g${g.space === "unassigned" ? " warn" : ""}">
+              .map((g) => {
+                const fits = styleFitsSpace(form.styleId, g.space);
+                const pick = form.spaceStyles[g.space] || "";
+                const bad = g.space === "unassigned" || (!fits && !pick);
+                return `<div class="rdsb-g${bad ? " warn" : ""}">
                 <b>${esc(g.label)} · ${g.items.length}</b>
-                <span>${
-                  g.space === "unassigned"
-                    ? "These photos still need a room type before they can be designed."
-                    : "These photos share the direction, adapted to each space."
-                }</span>
+                <span>${esc(
+                  fits
+                    ? groupNote(g.space)
+                    : `${styleName()} is not suited to ${g.label.toLowerCase()} photos. Choose a compatible style for this group.`,
+                )}</span>
+                ${
+                  fits
+                    ? ""
+                    : `<select class="rdsb-gstyle" data-spacestyle="${esc(g.space)}" aria-label="Style for ${esc(g.label)} photos">
+                        <option value="">Choose A Compatible Style…</option>
+                        ${stylesForSpace(g.space)
+                          .map(
+                            (s) =>
+                              `<option value="${esc(s.id)}"${s.id === pick ? " selected" : ""}>${esc(s.displayName)}</option>`,
+                          )
+                          .join("")}
+                      </select>`
+                }
                 <div class="rdsb-th">${g.items
                   .map(
                     (it) => `<span class="rdsb-t">
@@ -317,8 +333,8 @@ export function openBulkDesign(opts) {
                       <em title="${esc(it.room || "Room type needed")}">${esc(it.room || "Room type needed")}</em></span>`,
                   )
                   .join("")}</div>
-              </div>`,
-              )
+              </div>`;
+              })
               .join("")}
           </div>
 
