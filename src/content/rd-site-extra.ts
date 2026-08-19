@@ -836,7 +836,7 @@ export function initExtra(timers: number[], lucide: any) {
     ["Decluttered", PHOTOS.before, "Boxes, laundry and personal items pulled.", "sparkles"],
     ["Empty", PHOTOS.empty, "Furniture gone, architecture untouched.", "square-dashed"],
     ["Staged", PHOTOS.after, "Restaged in the property Design DNA.", "sofa"],
-    ["Shoppable", PHOTOS.luxury, "Every piece matched and added to the budget.", "shopping-bag"],
+    ["Shoppable", PHOTOS.luxury, "Every piece matched and added to your shopping list.", "shopping-bag"],
   ];
   const et = $("estepTabs");
   function setES(i: number) {

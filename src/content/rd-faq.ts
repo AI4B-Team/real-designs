@@ -2,19 +2,19 @@
 export const FAQ: [string, string][] = [
   [
     "What Is A Credit?",
-    "One credit runs a design, restyle, virtual stage, declutter, material swap, sky swap or style transfer. A scope and budget from your photo is 3 credits, a 2D to 3D floor plan is 6 and a video walkthrough is 40. One balance, no second number to track. Credits reset monthly and never expire while your subscription is active.",
+    "One credit runs a design, restyle, virtual stage, declutter, material swap, sky swap or style transfer. A 2D to 3D floor plan is 6 credits and a video walkthrough is 40. One balance, no second number to track. Credits reset monthly and never expire while your subscription is active.",
   ],
   [
-    "How Accurate Is The Cost Estimate?",
-    "It is a planning estimate, not a construction bid. The engine reads the design it produced, converts it into line items with quantities, and prices those against labor and material rates for your market. We show it as a range with a confidence level rather than a single fake number, because anything more precise than that would be dishonest. Investors use it to underwrite and contractors use it as a starting proposal. Your subcontractor pricing is still the final word.",
+    "What Is Project Budget?",
+    "Project Budget is coming soon. It will turn an approved design into an early project budget with estimated materials and improvement categories, before you request contractor quotes. Outputs will be planning estimates only, and final scope and pricing must be confirmed by licensed contractors.",
   ],
   [
     "Will It Look Like My Actual Room?",
     "Yes. Every render is built on the photo you upload, so the walls, windows, ceiling height and camera angle stay exactly where they are. Only furniture, finishes, color and lighting change. That is the difference between this and a general purpose image generator, which will happily invent a room that does not exist.",
   ],
   [
-    "Is Budget & Scope Available Yet?",
-    "Budget & scope pricing is coming soon. We are not guessing at renovation costs, so dollar figures only turn on once verified local contractor cost data is licensed for your market. Everything else, including designs, presentations and product selections, works today.",
+    "Is Project Budget Available Today?",
+    "No. Project Budget is coming soon and is not included in any current plan or credit balance. Everything else, including designs, presentations and product selections, works today.",
   ],
   [
     "Is The Free Plan Really Usable?",
