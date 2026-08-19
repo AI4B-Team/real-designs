@@ -297,6 +297,25 @@ function openBrowser(o: BrowseOpts) {
   }, 30);
 }
 
+/**
+ * The same visual style browser, opened from outside the Canvas (the bulk
+ * Design Photos modal), filtered to the space that needs a direction. Never a
+ * second, plainer picker: one browser, one catalog.
+ */
+export function openStyleBrowser(o: {
+  projectType: string;
+  room?: string | null;
+  currentId?: string;
+  onPick: (styleId: string) => void;
+}) {
+  openBrowser({
+    need: "design",
+    ctx: { tool: "design", projectType: o.projectType, room: o.room ?? null },
+    currentId: o.currentId || "",
+    onPick: (styleId) => o.onPick(styleId),
+  });
+}
+
 /* ------------------------------------------------------------------ */
 /* setup panel section                                                 */
 /* ------------------------------------------------------------------ */

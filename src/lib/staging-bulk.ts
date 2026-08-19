@@ -20,6 +20,7 @@ import {
   normalizeOutputRatio,
   ratioLabel,
 } from "@/lib/output-ratio";
+import { openStyleBrowser } from "@/lib/canvas-style-ui";
 import { openUpgrade } from "@/lib/rd-upgrade";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
@@ -82,12 +83,15 @@ export function styleCompatibility(styleId, space) {
   if (!rec) return "compatible";
   const types = (rec.compatibleProjectTypes || []).filter((t) => t !== "concept");
   const want = PROJECT_TYPE[space] || "interior";
-  if (!types.length || types.indexOf(want) !== -1) return "compatible";
   const only = (t) => types.every((x) => x === t);
   /* Operation-bound styles: genuinely impossible, not merely unusual. */
-  if (only("garden") && want !== "garden") return "unsupported";
-  if (only("virtual-staging") && want !== "interior") return "unsupported";
-  return "unusual";
+  if (types.length && only("garden") && want !== "garden") return "unsupported";
+  if (types.length && only("virtual-staging") && want !== "interior") return "unsupported";
+  /* Advisories only exist where the catalog declares them. A style that is
+     simply catalogued for interiors still adapts to an exterior through its
+     materials and palette, so it earns no warning. */
+  if ((rec.uncommonProjectTypes || []).indexOf(want) !== -1) return "unusual";
+  return "compatible";
 }
 
 /** Only a genuine technical limitation blocks a run. */
@@ -220,7 +224,11 @@ export async function runBulkDesign(items, direction, hooks = {}) {
  */
 function styleOptions(selected, spaces) {
   const list = STYLES.filter(
-    (s) => s.isActive !== false && (!spaces || spaces.every((sp) => styleFitsSpace(s.id, sp))),
+    (s) =>
+      s.isActive !== false &&
+      /* A style chosen in the visual browser always stays listed, so reading
+         the form back can never silently drop the user's own pick. */
+      (s.id === selected || !spaces || spaces.every((sp) => styleFitsSpace(s.id, sp))),
   );
   return (
     `<option value=""${!selected ? " selected" : ""}>Choose a style</option>` +
@@ -276,6 +284,9 @@ export function openBulkDesign(opts) {
   node.id = "rdsBulkModal";
   node.className = "rd-app up-modal on";
   document.body.appendChild(node);
+  /* Only the modal body scrolls: the page behind it stays exactly where it was. */
+  const priorOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
 
   const onKey = (e) => {
     if (e.key === "Escape") {
@@ -287,6 +298,7 @@ export function openBulkDesign(opts) {
 
   const close = () => {
     document.removeEventListener("keydown", onKey, true);
+    document.body.style.overflow = priorOverflow;
     node.remove();
     /* Draft settings live in the caller's state, so closing loses nothing. */
     try {
@@ -329,8 +341,12 @@ export function openBulkDesign(opts) {
     return rec ? rec.displayName : "";
   };
 
+  /* Stable, predictable group order regardless of upload order. */
+  const GROUP_ORDER = { exterior: 0, interior: 1, landscape: 2, unassigned: 3 };
   const draw = () => {
-    const groups = groupBySpace(items);
+    const groups = groupBySpace(items).sort(
+      (a, b) => (GROUP_ORDER[a.space] ?? 9) - (GROUP_ORDER[b.space] ?? 9),
+    );
     const n = items.length;
     const cost = n * BULK_CREDIT_PER_PHOTO;
     const ratio = readRatio();
@@ -431,6 +447,12 @@ export function openBulkDesign(opts) {
       }
     </div>`;
 
+    /* Redrawing must not throw the reader back to the top of the modal. */
+    const priorScroll = (() => {
+      const b = node.querySelector(".rdsb-body");
+      return b ? b.scrollTop : 0;
+    })();
+
     node.innerHTML = `<div class="up-scrim" data-close></div>
       <div class="up-card rdsb" role="dialog" aria-modal="true" aria-labelledby="rdsbTitle">
         <div class="rdsb-head">
@@ -490,13 +512,18 @@ export function openBulkDesign(opts) {
                 ${
                   advise
                     ? `<div class="rdsb-advise" role="status">
-                        <p><i data-lucide="info"></i>${esc(label)} is an unconventional choice for this ${esc(g.label.toLowerCase())}, but it can still be applied.</p>
+                        <p><i data-lucide="info"></i>${esc(label)} is less commonly used for ${esc(g.label.toLowerCase())}s. It can still be adapted using ${esc(g.space === "landscape" ? "planting, hardscape and lighting" : "exterior materials, paint and landscaping")}.</p>
                         <div class="rdsb-advise-a">
-                          <button type="button" class="rdsb-ab primary" data-ack="${esc(g.space)}">Use Anyway</button>
-                          <button type="button" class="rdsb-ab" data-restyle="${esc(g.space)}">Choose Another Style</button>
+                          <button type="button" class="rdsb-ab" data-ack="${esc(g.space)}">Use This Style</button>
+                          <button type="button" class="rdsb-ab" data-restyle="${esc(g.space)}">View Recommended Styles</button>
                         </div>
                       </div>`
-                    : ""
+                    : acked && level === "unusual"
+                      ? `<div class="rdsb-acked" role="status">
+                        <p><i data-lucide="check-circle-2"></i>${esc(label)} confirmed for ${esc(g.label)}</p>
+                        <button type="button" class="rdsb-ab link" data-restyle="${esc(g.space)}">Change</button>
+                      </div>`
+                      : ""
                 }
                 ${
                   level !== "unsupported" && !needsOwn
@@ -559,6 +586,10 @@ export function openBulkDesign(opts) {
         </div>
       </div>`;
     paint();
+    if (priorScroll) {
+      const b = node.querySelector(".rdsb-body");
+      if (b) b.scrollTop = priorScroll;
+    }
 
     node.querySelectorAll("[data-close]").forEach((b) => (b.onclick = close));
     node.querySelector('[data-mfa="cancel"]').onclick = close;
@@ -578,10 +609,20 @@ export function openBulkDesign(opts) {
         (b.onclick = () => {
           readForm();
           const space = b.getAttribute("data-restyle");
-          const sel = node.querySelector(
-            form.spaceStyles[space] ? `[data-spacestyle="${space}"]` : "#rdsbStyle",
-          );
-          if (sel && sel.focus) sel.focus();
+          const perSpace = !!form.spaceStyles[space];
+          /* The full visual browser, filtered to this space — never a scroll
+             back up to a plain dropdown. */
+          openStyleBrowser({
+            projectType: PROJECT_TYPE[space] || "interior",
+            currentId: form.spaceStyles[space] || form.styleId || "",
+            onPick: (id) => {
+              if (perSpace) form.spaceStyles[space] = id;
+              else form.styleId = id;
+              touched["style"] = true;
+              remember();
+              draw();
+            },
+          });
         }),
     );
 

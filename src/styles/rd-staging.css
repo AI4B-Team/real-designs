@@ -765,7 +765,7 @@
   text-align: left;
   display: flex;
   flex-direction: column;
-  max-height: 85vh;
+  max-height: 88vh;
   overflow: hidden;
   padding: 24px 28px;
 }
@@ -807,9 +807,10 @@
   font-size: 0.7rem;
   font-weight: 700;
 }
+/* Photo groups grow with their content. A capped height here used to let the
+   thumbnails overflow their box and sit underneath the cost summary. */
 .rdsb-photos .rdsb-groups {
   margin: 0;
-  max-height: 260px;
 }
 
 /* One combined output + cost card. */
@@ -883,11 +884,16 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* The one scrolling region. Bottom padding keeps the final cost card fully
+   readable above the pinned footer instead of tucked behind it. */
 .rdsb-body {
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding-right: 2px;
+  padding-right: 4px;
+  padding-bottom: 8px;
+  overscroll-behavior: contain;
 }
 .rdsb .rdm-foot {
   flex: 0 0 auto;
@@ -1540,15 +1546,16 @@
 }
 
 /* Advisory (not blocking): an unusual style is still the user's call. */
+/* Advice, not an error: amber, never the red reserved for real validation. */
 .rdsb-g.advise {
-  border-color: rgba(204, 0, 0, 0.22);
+  border-color: rgba(180, 120, 10, 0.3);
 }
 .rdsb-advise {
   margin: 8px 0 6px;
   padding: 9px 11px;
   border-radius: 10px;
-  background: rgba(204, 0, 0, 0.05);
-  border: 1px solid rgba(204, 0, 0, 0.16);
+  background: rgba(214, 158, 46, 0.09);
+  border: 1px solid rgba(180, 120, 10, 0.28);
 }
 .rdsb-advise p {
   display: flex;
@@ -1562,8 +1569,47 @@
   width: 14px;
   height: 14px;
   flex: none;
-  color: #cc0000;
+  color: #a9740a;
   margin-top: 1px;
+}
+/* Confirmed once, then it stays confirmed for as long as the modal is open. */
+.rdsb-acked {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 8px 0 6px;
+  padding: 7px 11px;
+  border-radius: 10px;
+  background: #f6f6f8;
+  border: 1px solid var(--line, #e5e5ea);
+}
+.rdsb-acked p {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #35353d;
+}
+.rdsb-acked svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: #1f7a45;
+}
+.rdsb-ab.link {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #cc0000;
+  text-decoration: underline;
+}
+.rdsb-ab.link:hover {
+  background: none;
+  color: #a80000;
 }
 .rdsb-advise-a {
   display: flex;
