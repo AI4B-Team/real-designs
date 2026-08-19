@@ -15,8 +15,8 @@ export const PRICING_FAQ: [string, string][] = [
     "Yes. Project packs cover a single room, a listing or a whole home as a one time purchase.",
   ],
   [
-    "Is Budget & Scope Planning Available?",
-    "Not yet. Cost estimation and contractor scope tools are coming soon and are not part of any current plan or credit balance.",
+    "Is Project Budget Available?",
+    "No. Project Budget is coming soon and is not part of any current plan or credit balance. Outputs will be planning estimates only, confirmed by licensed contractors.",
   ],
   [
     "Can I Use The Images Commercially?",

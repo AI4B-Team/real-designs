@@ -8171,3 +8171,74 @@
   color: var(--mute);
   margin-right: 8px;
 }
+
+/* ---- Project Budget: Coming Soon popover (one neutral treatment) ---- */
+.bsoon-pop {
+  position: fixed;
+  z-index: 1200;
+  width: 320px;
+  max-width: calc(100vw - 16px);
+  background: #fff;
+  border: 1px solid var(--line, #e6e6e6);
+  border-radius: 14px;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+  padding: 14px 14px 12px;
+}
+.bsoon-pop .bsoon-x {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--mute, #777);
+  padding: 4px;
+  line-height: 0;
+}
+.bsoon-pop .bsoon-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 22px;
+}
+.bsoon-pop .bsoon-h b {
+  font-size: 0.92rem;
+}
+.bsoon-badge {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #555;
+  background: #f1f1f1;
+  border: 1px solid #e2e2e2;
+  border-radius: 999px;
+  padding: 3px 8px;
+  white-space: nowrap;
+}
+.bsoon-pop .bsoon-d {
+  margin: 8px 0 0;
+  font-size: 0.79rem;
+  color: var(--ink-2, #444);
+  line-height: 1.5;
+}
+.bsoon-pop .bsoon-n,
+.bsoon-pop .bsoon-note {
+  margin: 8px 0 0;
+  font-size: 0.7rem;
+  color: var(--mute-2, #888);
+  line-height: 1.45;
+}
+.bsoon-pop .bsoon-f {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+.bsoon-pop .bsoon-f input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line, #e2e2e2);
+  border-radius: 999px;
+  padding: 7px 11px;
+  font-size: 0.76rem;
+}

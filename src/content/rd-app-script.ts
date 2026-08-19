@@ -48,7 +48,12 @@ import {
 } from "@/lib/studio-context";
 import { mountReports } from "@/content/rd-reports";
 import { mountPropertyDetail } from "@/content/rd-property-detail";
-import { mountBudgetComingSoon, budgetAvailability, budgetsLive } from "@/lib/budget-coming-soon";
+import {
+  mountBudgetComingSoon,
+  budgetAvailability,
+  budgetsLive,
+  openBudgetPopover,
+} from "@/lib/budget-coming-soon";
 import {
   loadSampleWorkspace,
   removeSampleWorkspace,
@@ -469,6 +474,18 @@ export function initApp(): () => void {
     } catch (_) {}
 
     function go(v, fromHash) {
+      /* Project Budget is a roadmap feature: no navigation path, including a
+     bookmarked hash, may reach the unfinished Budget view. Clicking it only
+     explains what is coming. */
+      if (v === "scope" && !budgetsLive()) {
+        try {
+          const anchor =
+            (document.activeElement as HTMLElement) ||
+            (document.querySelector('.nav-i[data-v="scope"]') as HTMLElement);
+          if (anchor && anchor.getBoundingClientRect) openBudgetPopover(anchor);
+        } catch (_) {}
+        return;
+      }
       /* A stale startup callback must never drop a live Canvas back on the
      generic Studio page. */
       if (v === "studio" && !fromHash && inPhotoCanvas() && document.querySelector("#v-studio.on"))
@@ -2124,8 +2141,8 @@ export function initApp(): () => void {
         if (row && !live) {
           row.setAttribute("aria-disabled", "true");
           row.classList.add("is-disabled");
-          row.title =
-            "Budget is coming soon. Turns on once verified local contractor cost data is licensed for your market.";
+          /* Branded tooltip only: native title is stripped by the tooltip layer. */
+          row.setAttribute("data-tt", "Coming Soon \u00b7 Not Included In Any Plan Yet");
           const pill = row.querySelector(".plan-pill");
           if (pill) {
             pill.className = "pill p-gray";
@@ -8011,7 +8028,8 @@ ${picks
     };
     toolRows.forEach((r) => {
       const nm = r.getAttribute("data-tool") || "";
-      const c = TOOL_COST[nm];
+      /* Budget is Coming Soon, so it never advertises a credit price. */
+      const c = nm === "Budget" && !budgetsLive() ? 0 : TOOL_COST[nm];
       r.title =
         nm +
         (c ? " \u00b7 " + c + " credit" + (c > 1 ? "s" : "") : "") +
@@ -8248,6 +8266,11 @@ ${picks
     toolRows.forEach((r) =>
       r.addEventListener("click", () => {
         const nm0 = r.getAttribute("data-tool") || "";
+        /* Budget never selects, never checks credits and never generates. */
+        if (nm0 === "Budget" && !budgetsLive()) {
+          openBudgetPopover(r as HTMLElement);
+          return;
+        }
         const sup = toolSupport(nm0, currentSpace());
         if (!sup.ok) {
           window.rdToast && window.rdToast(sup.reason as string);
