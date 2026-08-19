@@ -2108,15 +2108,33 @@ function markCardLoading(key, state: "loading" | "failed" | "") {
   }
 }
 
+/* One open at a time: a slower earlier resolve can never overwrite the photo
+   the user has since clicked, and re-clicking the same photo does nothing. */
+const canvasOpens = createOpenStore();
+let canvasEntry: CanvasEntry | null = null;
+
+/** The context of the photo currently on the Canvas, for Back and refresh. */
+export function currentCanvasEntry(): CanvasEntry | null {
+  return canvasEntry;
+}
+
 async function openInCanvas(key) {
   const it = S.items.find((i) => i.key === key);
   if (!it) return;
+  if (isDuplicateOpen(canvasOpens, key, "loading") && canvasOpens.key === String(key)) {
+    /* Already resolving this exact photo: let that open finish. */
+  }
+  const token = beginCanvasOpen(canvasOpens, key);
 
   /* Resolve first: the Photos page stays visible until a real source exists,
      so the Canvas never opens onto an empty gray frame. */
   markCardLoading(key, "loading");
   const url = await resolveItemUrl(it);
+  /* A newer photo won this race — drop this result silently. */
+  if (!canvasOpenIsCurrent(canvasOpens, token, key)) return;
   markCardLoading(key, url ? "" : "failed");
+  /* A failed resolve is recoverable: stay on Photos, offer Retry. Never
+     redirect and never clear the stored path. */
   if (!url) return;
 
   S.current = key;
@@ -2143,6 +2161,18 @@ async function openInCanvas(key) {
       });
   } catch (_) {}
   applyRoom(it);
+  /* Everything the Canvas needs to survive a refresh or a Back trip. */
+  canvasEntry = canvasEntryFrom({
+    photoKey: key,
+    draftId: (S && S.id) || "",
+    propertyId: (S && S.propertyId) || null,
+    roomType: it.room || null,
+    sourcePath: it.path || null,
+    sourceUrl: url,
+    workflow: "photo-design",
+    returnTo: "staging",
+  });
+  try { (window as any).__rdCanvasEntry = canvasEntry; } catch (_) {}
   /* Never touch location.hash here. A raw hash write routes through the
      generic Studio branch, which re-initialises a blank session and throws
      the Canvas away. Open an explicit Photo Design Canvas context instead. */
@@ -2157,6 +2187,7 @@ async function openInCanvas(key) {
   mountStrip();
   saveDraft();
 }
+
 
 /** Mirror the reviewed room onto the existing Studio controls. */
 function applyRoom(it) {
