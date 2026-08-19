@@ -227,9 +227,14 @@ describe("signed URL lifetime", () => {
     const { photoSrc, photoSrcStale } = await load();
     await photoSrc("u/a.jpg");
     expect(photoSrcStale("u/a.jpg")).toBe(false);
-    vi.setSystemTime(new Date(Date.now() + 55 * 60 * 1000));
-    expect(photoSrcStale("u/a.jpg")).toBe(true);
-    vi.useRealTimers();
+    const real = Date.now;
+    const later = real() + 55 * 60 * 1000;
+    Date.now = () => later;
+    try {
+      expect(photoSrcStale("u/a.jpg")).toBe(true);
+    } finally {
+      Date.now = real;
+    }
   });
 
   it("keeps a background tile visible and recovers it after one refresh", async () => {
