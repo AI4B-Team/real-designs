@@ -370,13 +370,13 @@ export function openBulkDesign(opts) {
         }
         ${modalFooterHtml({
           extra: { label: "Cancel", value: "cancel" },
-          secondary: { label: "Edit rooms", value: "edit", variant: "outline" },
+          secondary: { label: "Edit Room Types", value: "edit", variant: "outline" },
           primary: {
-            label: `Generate ${n} design${n === 1 ? "" : "s"} · ${cost} credit${cost === 1 ? "" : "s"}`,
+            label: `Generate ${n} Design${n === 1 ? "" : "s"} · ${cost} Credit${cost === 1 ? "" : "s"}`,
             value: "go",
             disabled: !!block || submitted,
             hint: block || "",
-            loadingLabel: `Generating ${n} design${n === 1 ? "" : "s"}…`,
+            loadingLabel: `Generating ${n} Design${n === 1 ? "" : "s"}…`,
           },
         })}
       </div>`;
