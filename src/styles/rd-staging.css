@@ -1523,9 +1523,12 @@
 .rdsb-foot-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   flex-wrap: nowrap;
-  gap: 12px;
+  gap: 16px;
+}
+.rdsb-foot-a {
+  margin-left: auto;
 }
 
 .rdsb-foot-cost {
