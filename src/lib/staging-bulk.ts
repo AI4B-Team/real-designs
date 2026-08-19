@@ -53,6 +53,30 @@ export function groupBySpace(items) {
   }));
 }
 
+/** Can this style legitimately drive that space, or would it be a wrong result? */
+export function styleFitsSpace(styleId, space) {
+  if (!space || space === "unassigned") return true;
+  const rec = STYLES.find((s) => s.id === styleId);
+  const want = PROJECT_TYPE[space] || "interior";
+  if (!rec || !rec.compatibleProjectTypes || !rec.compatibleProjectTypes.length) return true;
+  return rec.compatibleProjectTypes.indexOf(want) !== -1;
+}
+
+/** Styles that can carry a given space, for the per-group fallback picker. */
+export function stylesForSpace(space) {
+  return STYLES.filter((s) => s.isActive !== false && styleFitsSpace(s.id, space));
+}
+
+/** How the shared direction is described for each space type. */
+function groupNote(space) {
+  if (space === "unassigned") return "These photos still need a room type before they can be designed.";
+  if (space === "exterior")
+    return "The shared direction is adapted to the exterior — materials, paint and curb appeal, not indoor furniture.";
+  if (space === "landscape")
+    return "The shared direction is adapted to the outdoor space — planting, hardscape and lighting.";
+  return "These photos share the direction, adapted to each room and its layout.";
+}
+
 /** Downscaled data URL for the render call. */
 async function toDataUrl(src, max = 1100) {
   const img = await new Promise((res, rej) => {
