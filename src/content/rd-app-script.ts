@@ -28,7 +28,15 @@ import {
   setVersionStatusBulk,
   deleteVersions,
 } from "@/lib/workspace.functions";
+import {
+  saveStudioRoom,
+  saveStudioVersion,
+  getRoomStats,
+  listRoomTargets,
+} from "@/lib/rooms.functions";
+import { openSaveRoomModal } from "@/lib/save-room";
 import { suggestDesignTitle } from "@/lib/property-address";
+
 import { supabase } from "@/integrations/supabase/client";
 import {
   uploadRoomPhoto,
@@ -2421,11 +2429,15 @@ export function initApp(): () => void {
             return out;
           },
           setContext: (c) => {
-            STUDIO_CTX = {
+            STUDIO_CTX = Object.assign(blankStudioCtx(), {
               room: (c && c.room) || null,
               address: (c && c.address) || null,
               project: (c && c.project) || null,
-            };
+              roomId: (c && c.roomId) || null,
+              propertyId: (c && c.propertyId) || null,
+              projectId: (c && c.projectId) || null,
+              sourcePath: (c && c.sourcePath) || null,
+            });
             paintStudioSub();
           },
           showAlert: (m) => showAlert(m),
@@ -2497,6 +2509,9 @@ export function initApp(): () => void {
       if (gen) gen.classList.toggle("is-disabled", STUDIO_SRC === SRC_EMPTY);
       const canvas = document.getElementById("canvas");
       if (canvas) canvas.classList.toggle("has-result", STUDIO_RESULT);
+      try {
+        paintSaveRoomBtn();
+      } catch (_) {}
       const csub = document.querySelector("#canvasCard .card-h .sub");
       if (csub) csub.textContent = canvasSubtitle();
       const s = studioStart();
@@ -2548,7 +2563,7 @@ export function initApp(): () => void {
       const o = opts || {};
       STUDIO_SRC = kind || "user_upload";
       if (kind !== "existing_design" && kind !== "existing_property")
-        STUDIO_CTX = { room: null, address: null, project: null };
+        STUDIO_CTX = blankStudioCtx();
       STUDIO_RESULT = false;
       CANVAS_PHASE = "";
       lastRender = null;
@@ -2595,6 +2610,8 @@ export function initApp(): () => void {
         STUDIO_DRAFT_PATH = null;
         const srcPath =
           o.srcPath || (typeof window !== "undefined" ? window.rdPendingPhotoPath : null) || null;
+        if (kind !== "intentional_sample" && srcPath && !/^(blob:|data:)/i.test(srcPath))
+          STUDIO_CTX.sourcePath = srcPath;
         if (kind !== "intentional_sample" && srcPath) {
           try {
             saveStudioDraft(srcPath);
@@ -2671,11 +2688,15 @@ export function initApp(): () => void {
         if (!path) return false;
         const url = await resolvePhotoUrl(path);
         if (!url) return false;
-        STUDIO_CTX = {
+        STUDIO_CTX = Object.assign(blankStudioCtx(), {
           room: (d.settings && d.settings.room) || null,
           address: d.property_address || null,
           project: d.title || null,
-        };
+          roomId: (d.settings && d.settings.roomId) || null,
+          propertyId: (d.settings && d.settings.propertyId) || null,
+          projectId: (d.settings && d.settings.projectId) || null,
+          sourcePath: path,
+        });
         setStudioSource("saved_draft", url, "Your source photo", { draftId: d.id, srcPath: path });
         STUDIO_DRAFT_ID = d.id;
         STUDIO_DRAFT_PATH = path;
@@ -2705,7 +2726,7 @@ export function initApp(): () => void {
     function clearStudioSource() {
       STUDIO_SRC = SRC_EMPTY;
       STUDIO_RESULT = false;
-      STUDIO_CTX = { room: null, address: null, project: null };
+      STUDIO_CTX = blankStudioCtx();
       lastRender = null;
       lastRenderPath = null;
       /* A discarded design must not leave an unsaved-render banner, a retry that
@@ -3271,6 +3292,9 @@ export function initApp(): () => void {
         paintVersions();
       } catch (_) {}
       window.rdToast && window.rdToast("Design Saved");
+      try {
+        attachVersionToRoom(path);
+      } catch (_) {}
       window.dispatchEvent(new Event("rd:saved"));
       window.dispatchEvent(new Event("rd:photo"));
     }
@@ -3280,6 +3304,12 @@ export function initApp(): () => void {
     } catch (_) {}
 
     function addRenderVariant(src, label, path) {
+      /* Saved room on the canvas => this render becomes one of its versions. */
+      if (path) {
+        try {
+          attachVersionToRoom(path);
+        } catch (_) {}
+      }
       /* Version History shows this render immediately, before any save. */
       try {
         SESSION_VERSIONS.unshift({
@@ -3556,11 +3586,15 @@ export function initApp(): () => void {
           go("studio");
           return;
         }
-        STUDIO_CTX = {
+        STUDIO_CTX = Object.assign(blankStudioCtx(), {
           room: r.name || null,
           address: r.address || null,
           project: r.project_name || null,
-        };
+          roomId: r.id || null,
+          propertyId: r.property_id || null,
+          projectId: r.project_id || null,
+          sourcePath: r.before_path || null,
+        });
         setStudioSource(
           "existing_design",
           beforeUrl || afterUrl,
@@ -3584,7 +3618,20 @@ export function initApp(): () => void {
       go("studio");
     }
 
-    let STUDIO_CTX = { room: null, address: null, project: null };
+    /* The Studio context always carries the persistent identifiers of the room
+       currently on the canvas, so every save updates that same record. */
+    function blankStudioCtx() {
+      return {
+        room: null,
+        address: null,
+        project: null,
+        roomId: null,
+        propertyId: null,
+        projectId: null,
+        sourcePath: null,
+      };
+    }
+    let STUDIO_CTX = blankStudioCtx();
 
     /* Renders produced in this session appear in Version History right away,
        before any save round-trip completes. */
@@ -3593,6 +3640,129 @@ export function initApp(): () => void {
       const setupRoom = ((document.getElementById("fRoom") || {}).value || "").trim();
       return (STUDIO_CTX && STUDIO_CTX.room) || setupRoom || "";
     }
+
+    /* ---------------- Saved rooms ----------------
+       A room is the durable record of the space on the canvas. It can be saved
+       before any design exists, and once it is saved every generated version is
+       attached to it automatically. */
+
+    /** The stored path of whatever is currently on the canvas, or null. */
+    function studioSourcePath() {
+      const p =
+        (STUDIO_CTX && STUDIO_CTX.sourcePath) ||
+        STUDIO_DRAFT_PATH ||
+        (typeof window !== "undefined" ? window.rdPendingPhotoPath : null) ||
+        null;
+      return p && !/^(blob:|data:|https?:)/i.test(String(p)) ? p : null;
+    }
+
+    function paintSaveRoomBtn() {
+      const b = document.getElementById("stSaveRoom");
+      if (!b) return;
+      const canSave = STUDIO_SRC !== SRC_EMPTY && !!studioSourcePath();
+      b.hidden = STUDIO_SRC === SRC_EMPTY;
+      b.disabled = !canSave;
+      const saved = !!(STUDIO_CTX && STUDIO_CTX.roomId);
+      b.innerHTML =
+        '<i data-lucide="' +
+        (saved ? "check" : "save") +
+        '"></i>' +
+        (saved ? "Room Saved" : "Save Room");
+      b.setAttribute(
+        "data-tt",
+        !canSave
+          ? "Your Photo Is Still Uploading"
+          : saved
+            ? "Update This Saved Room"
+            : "Store This Photo And Property On Your Account",
+      );
+      try {
+        lucide.createIcons();
+      } catch (_) {}
+    }
+
+    /** Attaches one generated image to the saved room, if there is one. */
+    async function attachVersionToRoom(afterPath) {
+      const roomId = STUDIO_CTX && STUDIO_CTX.roomId;
+      const before = studioSourcePath();
+      if (!roomId || !afterPath || !before) return null;
+      try {
+        const v = await saveStudioVersion({
+          data: {
+            room_id: roomId,
+            before_path: before,
+            after_path: afterPath,
+            style: currentStyleId ? String(currentStyleId() || "") || null : null,
+          },
+        });
+        if (v && v.created) {
+          window.dispatchEvent(new Event("rd:saved"));
+          window.rdRefreshOnboarding && window.rdRefreshOnboarding();
+        }
+        return v;
+      } catch (e) {
+        console.error("[studio] version save failed", e);
+        return null;
+      }
+    }
+
+    /** Saves everything already on the canvas against the room record. */
+    async function backfillRoomVersions() {
+      if (!STUDIO_CTX || !STUDIO_CTX.roomId) return;
+      const seen = new Set();
+      for (const v of SESSION_VERSIONS || []) {
+        if (!v || !v.path || seen.has(v.path)) continue;
+        seen.add(v.path);
+        await attachVersionToRoom(v.path);
+      }
+      if (lastRenderPath && !seen.has(lastRenderPath)) await attachVersionToRoom(lastRenderPath);
+    }
+
+    async function openStudioSaveRoom() {
+      const path = studioSourcePath();
+      if (!path) {
+        window.rdToast && window.rdToast("Your Photo Is Still Uploading");
+        return null;
+      }
+      const saved = await openSaveRoomModal({
+        sourcePath: path,
+        roomName: activeStudioRoom() || null,
+        roomType: activeStudioRoom() || null,
+        address: (STUDIO_CTX && STUDIO_CTX.address) || null,
+        roomId: (STUDIO_CTX && STUDIO_CTX.roomId) || null,
+        propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
+        projectId: (STUDIO_CTX && STUDIO_CTX.projectId) || null,
+      });
+      if (!saved) return null;
+      STUDIO_CTX.roomId = saved.room_id;
+      STUDIO_CTX.propertyId = saved.property_id;
+      STUDIO_CTX.projectId = saved.project_id;
+      STUDIO_CTX.room = saved.room_name;
+      STUDIO_CTX.address = saved.address;
+      STUDIO_CTX.sourcePath = saved.source_path;
+      paintSaveRoomBtn();
+      try {
+        const f = document.getElementById("fRoom");
+        if (f && saved.room_name) f.value = saved.room_name;
+      } catch (_) {}
+      /* Anything already generated belongs to this room too. */
+      await backfillRoomVersions();
+      window.rdRefreshOnboarding && window.rdRefreshOnboarding();
+      return saved;
+    }
+    window.rdStudioSaveRoom = () => openStudioSaveRoom();
+    /** Starts a clean Studio session for saving a brand new room. */
+    window.rdStudioNewRoom = () => {
+      try {
+        clearStudioSource();
+      } catch (_) {}
+      paintSaveRoomBtn();
+    };
+    try {
+      const sr = document.getElementById("stSaveRoom");
+      sr && sr.addEventListener("click", () => openStudioSaveRoom());
+      paintSaveRoomBtn();
+    } catch (_) {}
 
 
     async function paintVersions() {
@@ -9116,16 +9286,19 @@ ${picks
         return;
       }
 
-      /* already worked in this account? then there is nothing to onboard */
+      /* Completion is derived from what is actually stored on the account, not
+         from local flags: a saved room means a room record exists, and an
+         uploaded photo means a room or a design carries one. */
+      let stats = { rooms: 0, designs: 0, properties: 0 };
       try {
-        const list = await listSavedEstimates();
-        if (list && list.length) {
-          state.done = true;
-          save();
-          card.remove();
-          return;
-        }
+        stats = await getRoomStats();
       } catch (e) {}
+      if (stats.rooms > 0) {
+        state.saved = true;
+        state.photo = true;
+      }
+      if (stats.designs > 0) state.photo = true;
+      save();
       card.hidden = false;
       const dup = document.getElementById("obCard");
       if (dup) dup.remove();
@@ -9141,7 +9314,41 @@ ${picks
         }
         /* Everything left is a Studio task: upload a photo, save the room. */
         go("studio");
+        if (k === "saved") {
+          /* Save Room really saves: with a photo on the canvas open the save
+             dialog, otherwise start a clean session so one can be added. */
+          setTimeout(() => {
+            try {
+              const btn = document.getElementById("stSaveRoom");
+              if (btn && !btn.hidden && !btn.disabled) window.rdStudioSaveRoom();
+              else window.rdStudioNewRoom && window.rdStudioNewRoom();
+            } catch (_) {}
+          }, 260);
+        }
       }
+
+      /* Re-reads the account after any save so the checklist cannot drift. */
+      async function refresh() {
+        let changed = false;
+        try {
+          const st = await getRoomStats();
+          if (st.rooms > 0 && !state.saved) {
+            state.saved = true;
+            changed = true;
+          }
+          if ((st.rooms > 0 || st.designs > 0) && !state.photo) {
+            state.photo = true;
+            changed = true;
+          }
+        } catch (e) {}
+        if (changed) {
+          save();
+          render();
+        }
+      }
+      window.rdRefreshOnboarding = refresh;
+      window.addEventListener("rd:rooms", refresh);
+      window.addEventListener("rd:saved", refresh);
 
       function render() {
         /* The card is removed on dismiss/completion; late async re-renders must no-op. */

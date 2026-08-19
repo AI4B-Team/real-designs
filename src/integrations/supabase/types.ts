@@ -1726,6 +1726,8 @@ export type Database = {
           perimeter_lf: number | null
           project_id: string
           room_type: string
+          source_path: string | null
+          updated_at: string
           wall_area_sf: number | null
         }
         Insert: {
@@ -1739,6 +1741,8 @@ export type Database = {
           perimeter_lf?: number | null
           project_id: string
           room_type: string
+          source_path?: string | null
+          updated_at?: string
           wall_area_sf?: number | null
         }
         Update: {
@@ -1752,6 +1756,8 @@ export type Database = {
           perimeter_lf?: number | null
           project_id?: string
           room_type?: string
+          source_path?: string | null
+          updated_at?: string
           wall_area_sf?: number | null
         }
         Relationships: [
