@@ -33,7 +33,7 @@ const COSTS: [string, string][] = [
   ["Before and after presentation", "1 credit"],
   ["2D to 3D floor plan", "6 credits"],
   ["Video walkthrough", "40 credits"],
-  ["Scope and budget planning (coming soon)", "Coming soon"],
+  ["Project Budget", "Coming Soon"],
 ];
 
 const TOPUPS: [string, string, string][] = [
