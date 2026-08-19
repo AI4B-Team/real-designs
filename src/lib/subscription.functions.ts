@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { PLAN_TIERS, normalizePlan } from "@/lib/plan";
 
 /**
  * Plan lifecycle.
@@ -16,7 +17,9 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  * user from auth.uid(); no plan or user id is ever accepted from the client.
  */
 
-const PlanEnum = z.enum(["free", "starter", "pro", "studio"]);
+/* Normalise first: whitespace/casing/legacy names must not reach the enum, and
+   a blank value is rejected as a bug rather than parsed. */
+const PlanEnum = z.preprocess((v) => normalizePlan(v) ?? v, z.enum(PLAN_TIERS));
 
 export const MONTHLY_CREDITS: Record<string, number> = {
   free: 0,

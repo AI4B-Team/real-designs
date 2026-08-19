@@ -227,6 +227,7 @@ import * as RDMediaLib from "@/lib/media-library";
 try {
   (window as any).rdMedia = RDMediaLib;
 } catch (_) {}
+import { normalizePlan, planName, planRank } from "@/lib/plan";
 import {
   getSubscription,
   changePlan,
@@ -8049,7 +8050,8 @@ ${picks
         toolRows.forEach((x) => x.classList.remove("on"));
         r.classList.add("on");
         const name = r.getAttribute("data-tool");
-        const plan = r.getAttribute("data-plan");
+        /* The attribute records the tier a tool needs; blank means ungated. */
+        const plan = normalizePlan(r.getAttribute("data-plan"));
         try {
           CANVAS_STYLE && CANVAS_STYLE.refresh();
         } catch (_) {}
@@ -8067,7 +8069,7 @@ ${picks
         }
         if (plan && toolInfo) {
           document.getElementById("toolInfoName").textContent =
-            name + " is on the " + (plan === "pro" ? "Pro" : "Studio") + " plan";
+            name + " is on the " + planName(plan) + " plan";
           const cst = TOOL_COST[name];
           document.getElementById("toolInfoDesc").textContent =
             (r.getAttribute("data-desc") || "") +
@@ -9249,10 +9251,16 @@ ${picks
       }
     }
 
+    /* Scoped to the billing pane on purpose. A bare [data-plan] selector also
+       matched the Studio tool rows (which record the plan a tool needs), so
+       clicking Redesign posted an empty plan into the enum validator. */
     document.addEventListener("click", async (e) => {
-      const t =
-        e.target.closest && e.target.closest("[data-plan],#planCancel,#planResume,#planWithdraw");
-      if (!t || !document.getElementById("planRows")) return;
+      const rows = document.getElementById("planRows");
+      if (!rows || !e.target.closest) return;
+      const t = e.target.closest(
+        "#planRows [data-plan],#planCancel,#planResume,#planWithdraw",
+      );
+      if (!t) return;
       t.disabled = true;
       try {
         if (t.id === "planCancel" || t.id === "planResume") {
@@ -9260,12 +9268,22 @@ ${picks
         } else if (t.id === "planWithdraw") {
           await withdrawPlanRequest();
         } else {
-          const plan = t.getAttribute("data-plan");
-          if (PLAN_RANK[plan] < PLAN_RANK[(SUB && SUB.plan) || "free"] || plan === "free") {
+          const plan = normalizePlan(t.getAttribute("data-plan"));
+          if (!plan) {
+            /* Never send "" into the plan enum: that is a bug, not a user error. */
+            console.error("[billing] plan button without a valid tier", {
+              value: t.getAttribute("data-plan"),
+              currentPlan: (SUB && SUB.plan) || null,
+            });
+            window.rdToast && window.rdToast("We Couldn't Verify That Plan. Please Try Again.");
+            t.disabled = false;
+            return;
+          }
+          if (planRank(plan) < planRank((SUB && SUB.plan) || "free") || plan === "free") {
             if (
               !window.confirm(
                 "Moving to " +
-                  (PLAN_NAME[plan] || plan) +
+                  planName(plan) +
                   " takes effect now. Your remaining credits stay on the account.",
               )
             ) {
@@ -9278,10 +9296,14 @@ ${picks
         await refreshPlan();
         window.dispatchEvent(new Event("rd:credits-changed"));
       } catch (err) {
-        window.alert((err && err.message) || "That did not go through.");
+        console.error("[billing] plan change failed", err);
+        window.rdToast
+          ? window.rdToast("That Change Did Not Go Through. Please Try Again.")
+          : console.error(err);
       }
       t.disabled = false;
     });
+
 
     refreshPlan();
     window.addEventListener("rd:credits-changed", refreshPlan);
