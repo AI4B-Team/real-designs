@@ -2913,12 +2913,7 @@ export function initApp(): () => void {
         });
         track("design_rendered", { surface: "studio", room_type: currentRoomType() });
         lastRender = r.image;
-        lastRenderPath = null;
-        try {
-          lastRenderPath = await uploadRenderDataUrl(r.image);
-        } catch (e0) {
-          lastRenderPath = null;
-        }
+        lastRenderPath = await persistRender(r.image, label || "Your Render");
         cAfter.innerHTML = photo(r.image, "Redesigned space, AI render");
         addRenderVariant(
           r.image,
@@ -3171,6 +3166,53 @@ export function initApp(): () => void {
       lucide.createIcons();
     }
 
+    /* A generated image is only "saved" once it reaches durable storage. When
+       the upload fails we keep the preview, say so plainly, and offer a retry
+       that re-uploads the SAME image (no second generation, no second charge). */
+    let PENDING_SAVE = null;
+    function paintSaveWarn() {
+      const w = document.getElementById("studioSaveWarn");
+      if (w) w.hidden = !PENDING_SAVE;
+    }
+    async function persistRender(image, label) {
+      try {
+        const path = await uploadRenderDataUrl(image);
+        PENDING_SAVE = null;
+        paintSaveWarn();
+        return path;
+      } catch (err) {
+        console.error("[studio] render upload failed", err);
+        PENDING_SAVE = { image, label: label || "Your Render" };
+        paintSaveWarn();
+        window.rdToast && window.rdToast("Your Design Was Generated But Could Not Be Saved");
+        return null;
+      }
+    }
+    async function retryPendingSave() {
+      if (!PENDING_SAVE) return;
+      const btn = document.getElementById("studioRetrySave");
+      if (btn) btn.disabled = true;
+      const { image, label } = PENDING_SAVE;
+      const path = await persistRender(image, label);
+      if (btn) btn.disabled = false;
+      if (!path) return;
+      lastRenderPath = path;
+      try {
+        const v = SESSION_VERSIONS.find((x) => x && x.src === image);
+        if (v) v.path = path;
+        const tile = document.querySelector('#vars .var[data-src="' + CSS.escape(image) + '"]');
+        if (tile) tile.dataset.path = path;
+        paintVersions();
+      } catch (_) {}
+      window.rdToast && window.rdToast("Design Saved");
+      window.dispatchEvent(new Event("rd:saved"));
+      window.dispatchEvent(new Event("rd:photo"));
+    }
+    try {
+      const rb = document.getElementById("studioRetrySave");
+      rb && rb.addEventListener("click", retryPendingSave);
+    } catch (_) {}
+
     function addRenderVariant(src, label, path) {
       /* Version History shows this render immediately, before any save. */
       try {
@@ -3261,12 +3303,7 @@ export function initApp(): () => void {
           },
         });
         lastRender = r.image;
-        lastRenderPath = null;
-        try {
-          lastRenderPath = await uploadRenderDataUrl(r.image);
-        } catch (e0) {
-          lastRenderPath = null;
-        }
+        lastRenderPath = await persistRender(r.image, label || "Your Render");
         cAfter.innerHTML = photo(r.image, "Furnished 3D plan of the same room");
         addRenderVariant(r.image, "3D Plan", lastRenderPath);
         window.dispatchEvent(new Event("rd:credits-changed"));
@@ -3381,12 +3418,7 @@ export function initApp(): () => void {
           },
         });
         lastRender = r.image;
-        lastRenderPath = null;
-        try {
-          lastRenderPath = await uploadRenderDataUrl(r.image);
-        } catch (e0) {
-          lastRenderPath = null;
-        }
+        lastRenderPath = await persistRender(r.image, label || "Your Render");
         cAfter.innerHTML = photo(r.image, label + " result");
         addRenderVariant(r.image, label, lastRenderPath);
         window.dispatchEvent(new Event("rd:credits-changed"));
