@@ -5,6 +5,13 @@
  */
 import { createIcons, icons } from "lucide";
 import {
+  BUDGET_TITLE,
+  BUDGET_BADGE,
+  BUDGET_DESC,
+  BUDGET_DISCLOSURE,
+  BUDGET_CTA,
+} from "@/lib/budget-copy";
+import {
   getBudgetAvailability,
   requestBudgetMarket,
   myBudgetRequests,
