@@ -1240,41 +1240,97 @@ function openProjectRatioMore() {
 /** Per-photo override, offered from the card menu and the canvas. */
 function openRatioOverride(it) {
   if (typeof document === "undefined") return;
-  const cur = normalizeOverride(it.ratio);
-  const opts = [{ id: "", label: "Use Project Format", note: ratioLabel(S.outputRatio) }].concat(
-    OUTPUT_RATIOS.map((o) => ({ id: o.id, label: o.label, note: o.note || "" })),
+  const project = normalizeOutputRatio(S.outputRatio);
+  const initial = normalizeOverride(it.ratio) || "";
+  let pick = initial;
+  const opts = [{ id: "", label: "Use Project Format", note: "Currently " + ratioLabel(project), ratio: project }].concat(
+    OUTPUT_RATIOS.map((o) => ({ id: o.id, label: o.label, note: o.note || "Intrinsic", ratio: o.id })),
   );
+  const shape = (id) => {
+    const a = ratioAspect(id);
+    return `<span class="rdof-shape" aria-hidden="true"><span style="aspect-ratio:${a || "4 / 3"}"></span></span>`;
+  };
+  const cardHtml = (o) => {
+    const on = pick === o.id;
+    return `<button type="button" role="radio" aria-checked="${on ? "true" : "false"}" tabindex="${
+      on ? "0" : "-1"
+    }" class="rdof-card${on ? " on" : ""}" data-rdsratio="${esc(o.id)}">
+      ${shape(o.ratio)}
+      <span class="rdof-name">${esc(o.label)}</span>
+      <span class="rdof-note">${esc(o.note)}</span>
+      <i class="rdof-tick" data-lucide="check"></i>
+    </button>`;
+  };
   const wrap = document.createElement("div");
   wrap.className = "bx-cdlg";
-  wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Photo Format">
-    <h3>Photo Format</h3>
-    <p>${esc(it.name || "This Photo")}</p>
-    <div class="rv-seg wrap" style="margin:10px 0 4px">${opts
-      .map(
-        (o) => `<button type="button" class="${(cur || "") === o.id ? "on" : ""}" data-rdsratio="${o.id}">${esc(
-          o.note ? o.label + " " + o.note : o.label,
-        )}</button>`,
-      )
-      .join("")}</div>
-    ${modalFooterHtml({ primary: { label: "Done", value: "done" } })}
+  wrap.innerHTML = `<div class="bx-cdlg-in rdof-dlg" role="dialog" aria-modal="true" aria-labelledby="rdofTitle">
+    <h3 id="rdofTitle">Override Photo Format</h3>
+    <p>Use the project format or choose a different format for this photo.</p>
+    <p class="rdof-meta">${esc(roomLabel(it) || "Photo")}${it.name ? " · " + esc(it.name) : ""}</p>
+    <div class="rdof-grid" role="radiogroup" aria-label="Photo Format">${opts.map(cardHtml).join("")}</div>
+    ${modalFooterHtml({
+      extra: initial ? { label: "Reset To Project Format", value: "reset", variant: "ghost" } : null,
+      secondary: { label: "Cancel", value: "cancel" },
+      primary: { label: "Save Format", value: "save", disabled: true },
+      alignment: initial ? "between" : "end",
+    })}
   </div>`;
   document.body.appendChild(wrap);
   paint();
+  const saveBtn = wrap.querySelector('[data-mfa="save"]');
   const close = () => wrap.remove();
+  const commit = (v) => {
+    it.ratio = v ? v : null;
+    saveDraft();
+    close();
+    applyRatiosLive();
+  };
+  const syncPick = () => {
+    wrap.querySelectorAll("[data-rdsratio]").forEach((b) => {
+      const on = b.getAttribute("data-rdsratio") === pick;
+      b.classList.toggle("on", on);
+      b.setAttribute("aria-checked", on ? "true" : "false");
+      b.setAttribute("tabindex", on ? "0" : "-1");
+    });
+    if (saveBtn) {
+      const dirty = pick !== initial;
+      saveBtn.disabled = !dirty;
+      saveBtn.setAttribute("aria-disabled", dirty ? "false" : "true");
+    }
+  };
+  syncPick();
   wrap.addEventListener("click", (e) => {
     const b = e.target.closest("[data-rdsratio]");
-    if (b) {
-      const v = b.getAttribute("data-rdsratio");
-      it.ratio = v ? v : null;
-      saveDraft();
-      close();
-      applyRatiosLive();
-      return;
+    if (b) { pick = b.getAttribute("data-rdsratio"); syncPick(); return; }
+    const act = e.target.closest("[data-mfa]");
+    if (act) {
+      const v = act.getAttribute("data-mfa");
+      if (v === "save") return commit(pick);
+      if (v === "reset") return commit("");
+      return close();
     }
-    if (e.target.closest("[data-mfa]") || e.target === wrap) close();
+    /* Outside click only closes when nothing is pending. */
+    if (e.target === wrap && pick === initial) close();
   });
-  wrap.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  wrap.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") { close(); return; }
+    const cards = Array.from(wrap.querySelectorAll("[data-rdsratio]"));
+    const i = cards.indexOf(document.activeElement);
+    if (i < 0) return;
+    let next = -1;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % cards.length;
+    if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + cards.length) % cards.length;
+    if (next >= 0) {
+      e.preventDefault();
+      pick = cards[next].getAttribute("data-rdsratio");
+      syncPick();
+      cards[next].focus();
+    }
+  });
+  const first = wrap.querySelector(".rdof-card.on") || wrap.querySelector(".rdof-card");
+  if (first) first.focus();
 }
+
 
 function bindReview(el) {
   el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
