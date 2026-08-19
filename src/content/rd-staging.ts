@@ -1958,9 +1958,56 @@ function idxOf(key) {
   return designSet().findIndex((i) => i.key === key);
 }
 
+/**
+ * Resolve a photo to a currently valid URL. The storage path is the source of
+ * truth: a remembered signed URL is only reused while it is still fresh.
+ */
+export async function resolveItemUrl(it: any): Promise<string | null> {
+  if (!it) return null;
+  if (it.path) {
+    if (it.signed && !photoSrcStale(it.path)) return it.signed;
+    const url = await photoSrc(it.path);
+    if (url) {
+      it.signed = url;
+      return url;
+    }
+    return it.previewUrl || null;
+  }
+  return it.signed || it.previewUrl || null;
+}
+
+/** Loading / failure feedback on the card the user just clicked. */
+function markCardLoading(key, state: "loading" | "failed" | "") {
+  const card = document.querySelector('.rv-tile[data-k="' + key + '"]') as HTMLElement | null;
+  if (!card) return;
+  card.classList.toggle("is-loading", state === "loading");
+  card.classList.toggle("is-failed", state === "failed");
+  card.querySelector(".rv-tile-fail")?.remove();
+  if (state === "failed") {
+    card.insertAdjacentHTML(
+      "beforeend",
+      `<span class="rv-tile-fail" role="status">Image unavailable — <button type="button" data-tile-retry>Retry</button></span>`,
+    );
+    const retry = card.querySelector("[data-tile-retry]") as HTMLButtonElement | null;
+    if (retry)
+      retry.onclick = (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        void openInCanvas(key);
+      };
+  }
+}
+
 async function openInCanvas(key) {
   const it = S.items.find((i) => i.key === key);
   if (!it) return;
+
+  /* Resolve first: the Photos page stays visible until a real source exists,
+     so the Canvas never opens onto an empty gray frame. */
+  markCardLoading(key, "loading");
+  const url = await resolveItemUrl(it);
+  markCardLoading(key, url ? "" : "failed");
+  if (!url) return;
 
   S.current = key;
   rememberScroll();
@@ -1975,13 +2022,6 @@ async function openInCanvas(key) {
   } catch (_) {}
   S.lastOpened = key;
 
-  let url = it.signed || it.previewUrl;
-  if (!it.signed && it.path) {
-    try {
-      it.signed = await roomPhotoUrl(it.path);
-      url = it.signed || url;
-    } catch (_) {}
-  }
   try {
     window.rdPendingPhotoPath = it.path || null;
   } catch (_) {}
@@ -1989,6 +2029,7 @@ async function openInCanvas(key) {
     window.rdSetStudioSource &&
       window.rdSetStudioSource("user_upload", url, it.room || "Your uploaded source", {
         caption: "Set your direction, then press Generate. Nothing has been generated yet.",
+        srcPath: it.path || null,
       });
   } catch (_) {}
   applyRoom(it);
@@ -2026,6 +2067,45 @@ function applyRoom(it) {
     }
   } catch (_) {}
 }
+
+/**
+ * One shared source of truth for a photo's room, keyed by its stable id.
+ * Changing the room inside Canvas updates the header, the filmstrip label,
+ * the Photos card, the bulk grouping and the saved draft in one pass.
+ */
+export function setPhotoRoom(key: string, room: string) {
+  if (!S) return;
+  const it = S.items.find((i) => i.key === key);
+  if (!it || !room) return;
+  if (it.room === room) return;
+  it.room = room;
+  it.space = roomSpace(room);
+  try {
+    drawStrip();
+  } catch (_) {}
+  try {
+    saveDraft();
+  } catch (_) {}
+}
+
+/** Canvas room / space controls write straight back to the shared item. */
+function bindCanvasRoomSync() {
+  const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
+  if (!sel || (sel as any).__rdRoomSync) return;
+  (sel as any).__rdRoomSync = true;
+  sel.addEventListener("change", () => {
+    if (!S || !S.current) return;
+    const room = (sel.value || sel.options[sel.selectedIndex]?.text || "").trim();
+    if (!room) return;
+    setPhotoRoom(S.current, room);
+    /* Space Type follows the room, so Exterior + Kitchen can never happen. */
+    try {
+      const chip = document.querySelector('#spChips .chip[data-sp="' + roomSpace(room) + '"]') as HTMLElement | null;
+      if (chip && !chip.classList.contains("on")) chip.click();
+    } catch (_) {}
+  });
+}
+
 
 function removeStrip() {
   if (strip) strip.remove();
