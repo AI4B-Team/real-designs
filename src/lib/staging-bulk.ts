@@ -276,8 +276,8 @@ export function openBulkDesign(opts) {
     node.innerHTML = `<div class="up-scrim" data-close></div>
       <div class="up-card rdsb" role="dialog" aria-modal="true" aria-labelledby="rdsbTitle">
         <div class="rdsb-head">
-          <h3 id="rdsbTitle">Design ${n} photo${n === 1 ? "" : "s"}</h3>
-          <p>One shared direction, applied photo by photo. Each room keeps its own layout and gets furniture and finishes that suit it.</p>
+          <h3 id="rdsbTitle">Design ${n} Photo${n === 1 ? "" : "s"}</h3>
+          <p>Choose one design direction for the selected photos. We’ll adapt it to each room and space.</p>
         </div>
         <div class="rdsb-body">
           <div class="rdsb-f">
