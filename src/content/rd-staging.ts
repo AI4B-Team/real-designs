@@ -1781,16 +1781,38 @@ function startBulkDesign(list, reuseDirection) {
 function applyRoomToSelected(anchor) {
   const sel = S.items.filter((i) => i.selected);
   if (!sel.length || !anchor) return;
-  openRoomPopover(anchor, (label) => {
-    sel.forEach((i) => {
-      i.room = label;
-      i.roomSource = "manual";
-    });
-    saveDraft();
-    sel.forEach(patchCard);
-    syncSelection();
-  });
+  openRoomPopover(
+    anchor,
+    (label) => {
+      /* Several photos change at once, so the user confirms the scope first. */
+      if (
+        sel.length > 1 &&
+        !window.confirm(`Apply “${label}” to ${sel.length} selected photos?`)
+      )
+        return;
+      sel.forEach((i) => {
+        i.room = label;
+        i.roomSource = "manual";
+      });
+      saveDraft();
+      sel.forEach(patchCard);
+      syncSelection();
+      try {
+        window.rdToast &&
+          window.rdToast(
+            sel.length > 1
+              ? `${label} Applied To ${sel.length} Photos`
+              : `${label} Applied To 1 Photo`,
+          );
+      } catch (_) {}
+    },
+    null,
+    sel.length > 1
+      ? `Applies to ${sel.length} selected photos`
+      : "Applies to the selected photo",
+  );
 }
+
 
 function removeOne(key) {
   const it = S.items.find((i) => i.key === key);
