@@ -1177,7 +1177,6 @@ async function applyBudgetGating(){
     renderFaq(document.getElementById('helpQ')?.value||'');
     renderTuts();
   }catch(_){}
-  try{ window.rdBudgetShortcutLive=live; }catch(_){}
 
   return live;
 }
@@ -3317,22 +3316,22 @@ function presMessage(r,reminder){
         ? 'You had a look at the design for '+(place||what)+', so I wanted to check where you landed.'
         : 'Circling back on the design I sent for '+(place||what)+'.');
     return {subject:(n>=1?'Last Check On ':'Quick Reminder: ')+what,
-      body:'Hi '+who+',\n\n'+lead+'\n\nEverything sits on one page, the before and after, the scope and the budget range:\n\n'+url+'\n\nApprove it there when you are ready, or leave a note on any line you want changed and I will rework it.\n\nThank you'};
+      body:'Hi '+who+',\n\n'+lead+'\n\nEverything sits on one page, the before and after and the scope:\n\n'+url+'\n\nApprove it there when you are ready, or leave a note on any line you want changed and I will rework it.\n\nThank you'};
   }
   if(st==='changes'){
     return {subject:'Updated: '+what,
-      body:'Hi '+who+',\n\nI made the changes you asked for on '+(place||what)+'. Same link, updated design and budget range:\n\n'+url+'\n\nTake a look and approve it there, or tell me what to adjust next.\n\nThank you'};
+      body:'Hi '+who+',\n\nI made the changes you asked for on '+(place||what)+'. Same link, updated design:\n\n'+url+'\n\nTake a look and approve it there, or tell me what to adjust next.\n\nThank you'};
   }
   if(opened&&st!=='approved'){
     return {subject:'Following Up On '+what,
-      body:'Hi '+who+',\n\nJust checking in on the design I sent for '+(place||what)+'. Everything you need is on one page, the before and after, the scope and the budget range:\n\n'+url+'\n\nApprove it there when you are ready, or leave a note with what you want changed.\n\nThank you'};
+      body:'Hi '+who+',\n\nJust checking in on the design I sent for '+(place||what)+'. Everything you need is on one page, the before and after and the scope:\n\n'+url+'\n\nApprove it there when you are ready, or leave a note with what you want changed.\n\nThank you'};
   }
   if(st==='approved'){
     return {subject:'Approved: '+what,
       body:'Hi '+who+',\n\nThanks for approving '+(place||what)+'. Here is the page again for your records:\n\n'+url+'\n\nI will get the next steps moving and follow up with timing.\n\nThank you'};
   }
   return {subject:'Your Design Is Ready: '+what,
-    body:'Hi '+who+',\n\nHere is the design for '+(place||what)+'. One page, no login. You will see the before and after photo, what is being changed and a planning budget range:\n\n'+url+'\n\nApprove it right on the page, or leave a note with anything you want changed.\n\nThank you'};
+    body:'Hi '+who+',\n\nHere is the design for '+(place||what)+'. One page, no login. You will see the before and after photo and what is being changed:\n\n'+url+'\n\nApprove it right on the page, or leave a note with anything you want changed.\n\nThank you'};
 }
 
 
@@ -3390,7 +3389,7 @@ function presModal(){
     m=document.createElement('div'); m.id='presModal'; m.className='up-modal';
     m.innerHTML='<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true">'+
       '<h3>New Client Approval Link</h3>'+
-      '<p>Pick a saved design. The client opens a branded page with the before and after, the scope and a budget range, then approves or asks for changes. No login needed.</p>'+
+      '<p>Pick a saved design. The client opens a branded page with the before and after and the scope, then approves or asks for changes. No login needed.</p>'+
       '<div class="field"><label>Design</label><select id="plVer"></select></div>'+
       '<div class="field"><label>Title</label><input id="plTitle" type="text" placeholder="Living Room Refresh"></div>'+
       '<div class="field"><label>Client Name</label><input id="plName" type="text" placeholder="Keisha C."></div>'+
@@ -5071,7 +5070,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
 (function(){
   const SC=[
     ['Navigate',[['G then D','Dashboard'],['G then P','Properties'],['G then S','Studio'],['G then I','Designs'],
-      ['G then B','Budget'],['G then R','Reports'],['G then A','Account']]],
+      BUDGET_LIVE?['G then B','Budget']:null,['G then R','Reports'],['G then A','Account']].filter(Boolean)],
     ['Actions',[['⌘ K','Search Workspace'],['⌘ B','Collapse Or Expand Menu'],['N','New Design'],
       ['?','Keyboard Shortcuts'],['Esc','Close Menus & Dialogs']]]
   ];
@@ -5098,7 +5097,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
   document.querySelectorAll('[data-kbd]').forEach(b=>b.addEventListener('click',()=>{ open(); }));
 
   let gPending=0;
-  const GO={d:'dash',p:'props',s:'studio',i:'designs',b:'scope',r:'reports',a:'account'};
+  const GO_BASE={d:'dash',p:'props',s:'studio',i:'designs',b:'scope',r:'reports',a:'account'};
   document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){ close(); return; }
     const t=e.target;
@@ -5106,6 +5105,7 @@ if(avPhoto) avPhoto.addEventListener('change',async(e)=>{
     if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='b'){ e.preventDefault(); const tg=document.getElementById('sideToggle'); if(tg) tg.click(); return; }
     if(e.metaKey||e.ctrlKey||e.altKey) return;
     const k=e.key.toLowerCase();
+    const GO=BUDGET_LIVE?GO_BASE:Object.fromEntries(Object.entries(GO_BASE).filter(([kk])=>kk!=='b'));
     if(Date.now()<gPending&&GO[k]){ gPending=0; e.preventDefault(); go(GO[k]); return; }
     if(k==='g'){ gPending=Date.now()+1400; return; }
     gPending=0;

@@ -1919,3 +1919,10 @@
     height:100%;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;
   }
 }
+
+/* Budget usage column: hidden entirely while Budgets are gated off (Coming Soon). */
+.rd-app table.no-budgets-col th:nth-child(4),
+.rd-app table.no-budgets-col td:nth-child(4){display:none}
+
+/* Small "Coming Soon" badge used on gated rows/pills outside the nav (nav-soon covers the nav item itself). */
+.rd-app .coming-soon-badge{display:inline-flex;align-items:center;margin-left:8px;font-size:.62rem;letter-spacing:.04em;text-transform:uppercase;color:var(--mute-2);border:1px solid var(--line,#e5e5e5);border-radius:999px;padding:1px 7px}
