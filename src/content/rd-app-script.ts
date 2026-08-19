@@ -227,7 +227,13 @@ import * as RDMediaLib from "@/lib/media-library";
 try {
   (window as any).rdMedia = RDMediaLib;
 } catch (_) {}
-import { normalizePlan, planName, planRank } from "@/lib/plan";
+import {
+  normalizePlan,
+  planAllows,
+  planName,
+  planRank,
+  resolveSubscriptionPlan,
+} from "@/lib/plan";
 import {
   getSubscription,
   changePlan,
@@ -2907,12 +2913,7 @@ export function initApp(): () => void {
         });
         track("design_rendered", { surface: "studio", room_type: currentRoomType() });
         lastRender = r.image;
-        lastRenderPath = null;
-        try {
-          lastRenderPath = await uploadRenderDataUrl(r.image);
-        } catch (e0) {
-          lastRenderPath = null;
-        }
+        lastRenderPath = await persistRender(r.image, "Your Render");
         cAfter.innerHTML = photo(r.image, "Redesigned space, AI render");
         addRenderVariant(
           r.image,
@@ -3165,6 +3166,53 @@ export function initApp(): () => void {
       lucide.createIcons();
     }
 
+    /* A generated image is only "saved" once it reaches durable storage. When
+       the upload fails we keep the preview, say so plainly, and offer a retry
+       that re-uploads the SAME image (no second generation, no second charge). */
+    let PENDING_SAVE = null;
+    function paintSaveWarn() {
+      const w = document.getElementById("studioSaveWarn");
+      if (w) w.hidden = !PENDING_SAVE;
+    }
+    async function persistRender(image, label) {
+      try {
+        const path = await uploadRenderDataUrl(image);
+        PENDING_SAVE = null;
+        paintSaveWarn();
+        return path;
+      } catch (err) {
+        console.error("[studio] render upload failed", err);
+        PENDING_SAVE = { image, label: label || "Your Render" };
+        paintSaveWarn();
+        window.rdToast && window.rdToast("Your Design Was Generated But Could Not Be Saved");
+        return null;
+      }
+    }
+    async function retryPendingSave() {
+      if (!PENDING_SAVE) return;
+      const btn = document.getElementById("studioRetrySave");
+      if (btn) btn.disabled = true;
+      const { image, label } = PENDING_SAVE;
+      const path = await persistRender(image, label);
+      if (btn) btn.disabled = false;
+      if (!path) return;
+      lastRenderPath = path;
+      try {
+        const v = SESSION_VERSIONS.find((x) => x && x.src === image);
+        if (v) v.path = path;
+        const tile = document.querySelector('#vars .var[data-src="' + CSS.escape(image) + '"]');
+        if (tile) tile.dataset.path = path;
+        paintVersions();
+      } catch (_) {}
+      window.rdToast && window.rdToast("Design Saved");
+      window.dispatchEvent(new Event("rd:saved"));
+      window.dispatchEvent(new Event("rd:photo"));
+    }
+    try {
+      const rb = document.getElementById("studioRetrySave");
+      rb && rb.addEventListener("click", retryPendingSave);
+    } catch (_) {}
+
     function addRenderVariant(src, label, path) {
       /* Version History shows this render immediately, before any save. */
       try {
@@ -3255,12 +3303,7 @@ export function initApp(): () => void {
           },
         });
         lastRender = r.image;
-        lastRenderPath = null;
-        try {
-          lastRenderPath = await uploadRenderDataUrl(r.image);
-        } catch (e0) {
-          lastRenderPath = null;
-        }
+        lastRenderPath = await persistRender(r.image, "3D Plan");
         cAfter.innerHTML = photo(r.image, "Furnished 3D plan of the same room");
         addRenderVariant(r.image, "3D Plan", lastRenderPath);
         window.dispatchEvent(new Event("rd:credits-changed"));
@@ -3375,12 +3418,7 @@ export function initApp(): () => void {
           },
         });
         lastRender = r.image;
-        lastRenderPath = null;
-        try {
-          lastRenderPath = await uploadRenderDataUrl(r.image);
-        } catch (e0) {
-          lastRenderPath = null;
-        }
+        lastRenderPath = await persistRender(r.image, label || "Your Render");
         cAfter.innerHTML = photo(r.image, label + " result");
         addRenderVariant(r.image, label, lastRenderPath);
         window.dispatchEvent(new Event("rd:credits-changed"));
@@ -3408,7 +3446,7 @@ export function initApp(): () => void {
     function showToolError(msg) {
       const i = document.getElementById("toolInfo");
       if (!i) {
-        alert(msg);
+        window.rdToast && window.rdToast(msg);
         return;
       }
       document.getElementById("toolInfoName").textContent = "That Did Not Finish";
@@ -4047,7 +4085,8 @@ ${d.sample ? '<span class="pill dg-sample">Sample</span>' : ""}</div>
           await deleteVersions({ data: { version_ids: real.map((d) => d.version_id) } });
           window.dispatchEvent(new Event("rd:saved"));
         } catch (e) {
-          window.alert("Could not delete: " + (e && e.message ? e.message : "try again"));
+          console.error("[designs] bulk delete failed", e);
+          window.rdToast && window.rdToast("We Couldn't Delete Those Designs. Please Try Again.");
         }
       }
       paintDesigns();
@@ -4090,7 +4129,8 @@ ${d.sample ? '<span class="pill dg-sample">Sample</span>' : ""}</div>
           });
           window.dispatchEvent(new Event("rd:saved"));
         } catch (e) {
-          window.alert("Could not update: " + (e && e.message ? e.message : "try again"));
+          console.error("[designs] bulk status update failed", e);
+          window.rdToast && window.rdToast("We Couldn't Update Those Designs. Please Try Again.");
         }
       }
       DESIGN_SEL = [];
@@ -8045,17 +8085,41 @@ ${picks
       paintGenGate();
     } catch (_) {}
 
+    /* The Studio attribute is deliberately NOT data-plan: that name belongs to
+       the Billing plan buttons, and sharing it once let a tool click fire a
+       subscription mutation. Selecting a locked tool explains the requirement;
+       only Billing can change a plan. */
+    function requiredPlanFor(row) {
+      return normalizePlan(row && row.getAttribute("data-required-plan"));
+    }
+    function showToolGate(row, name, need) {
+      if (!toolInfo) {
+        window.rdToast && window.rdToast(name + " Is On The " + planName(need) + " Plan");
+        return;
+      }
+      document.getElementById("toolInfoName").textContent =
+        name + " is on the " + planName(need) + " plan";
+      const cst = TOOL_COST[name];
+      document.getElementById("toolInfoDesc").textContent =
+        (row.getAttribute("data-desc") || "") +
+        (cst ? " Costs " + cst + " credit" + (cst > 1 ? "s" : "") + " per run." : "") +
+        " Upgrade from Billing to unlock it.";
+      toolInfo.hidden = false;
+    }
     toolRows.forEach((r) =>
       r.addEventListener("click", () => {
         toolRows.forEach((x) => x.classList.remove("on"));
         r.classList.add("on");
         const name = r.getAttribute("data-tool");
-        /* The attribute records the tier a tool needs; blank means ungated. */
-        const plan = normalizePlan(r.getAttribute("data-plan"));
+        const need = requiredPlanFor(r);
         try {
           CANVAS_STYLE && CANVAS_STYLE.refresh();
         } catch (_) {}
         paintGenGate();
+        if (need && !planAllows(window.__rdPlan, need)) {
+          showToolGate(r, name, need);
+          return;
+        }
         if (LIVE_TOOLS[name]) {
           if (toolInfo) toolInfo.hidden = true;
           /* A style-driven tool never spends a credit before the user has chosen
@@ -8067,14 +8131,8 @@ ${picks
           LIVE_TOOLS[name]();
           return;
         }
-        if (plan && toolInfo) {
-          document.getElementById("toolInfoName").textContent =
-            name + " is on the " + planName(plan) + " plan";
-          const cst = TOOL_COST[name];
-          document.getElementById("toolInfoDesc").textContent =
-            (r.getAttribute("data-desc") || "") +
-            (cst ? " Costs " + cst + " credit" + (cst > 1 ? "s" : "") + " per run." : "");
-          toolInfo.hidden = false;
+        if (need && toolInfo) {
+          showToolGate(r, name, need);
         } else if (toolInfo) {
           toolInfo.hidden = true;
         }
@@ -9244,6 +9302,8 @@ ${picks
       if (!document.getElementById("planRows")) return;
       try {
         SUB = await getSubscription();
+        /* Feature gating elsewhere in the app reads the normalised tier. */
+        window.__rdPlan = resolveSubscriptionPlan(SUB && SUB.plan);
         paintPlan(SUB);
         paintBillingEvents();
       } catch (e) {
@@ -9258,7 +9318,7 @@ ${picks
       const rows = document.getElementById("planRows");
       if (!rows || !e.target.closest) return;
       const t = e.target.closest(
-        "#planRows [data-plan],#planCancel,#planResume,#planWithdraw",
+        "#p-billing [data-plan],#p-billing #planCancel,#p-billing #planResume,#p-billing #planWithdraw",
       );
       if (!t) return;
       t.disabled = true;
