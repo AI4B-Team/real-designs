@@ -1124,7 +1124,10 @@
    photo. One 30px white circle with a red icon straddles the gutter on the
    seam between the pair, vertically centred on the images (the thumb is 3:4,
    so its middle sits at two thirds of the card's width from the top). */
-.rd-app .rv-tile { position: relative; }
+/* Each tile is its own inline-size container so the connector's cqw offsets
+   measure the CARD width, not the whole workspace (which pushed the circles
+   hundreds of pixels down, over the footer summary bar). */
+.rd-app .rv-tile { position: relative; container-type: inline-size; container-name: rvtile; }
 .rd-app .rv-conn { position: absolute; right: calc(-1 * (var(--rv-cgap, 12px) / 2) - 15px); top: 66.6cqw;
   z-index: 20; display: grid; place-items: center;
   width: 30px; height: 30px; margin-top: -15px; padding: 0; border: 1px solid rgba(204,0,0,.28); border-radius: 999px;
