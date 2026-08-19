@@ -212,7 +212,9 @@ export const getWorkspaceSummary = createServerFn({ method: "GET" })
         before_path: (v.before_path ?? null) as string | null,
         after_path: (v.after_path ?? null) as string | null,
 
+        room_id: v.rooms.id as string,
         room_name: v.rooms.name as string,
+
         room_type: v.rooms.room_type as string,
         project_id: v.rooms.projects.id as string,
         project_name: v.rooms.projects.name as string,
