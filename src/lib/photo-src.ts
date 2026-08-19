@@ -139,10 +139,11 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
   el.dataset["photoPath"] = p;
 
   if (el instanceof HTMLImageElement) {
+    const img = el as HTMLImageElement & El;
     await new Promise<void>((done) => {
       const probe = new Image();
       probe.onload = () => {
-        if (el.__rdPhotoSeq === mine && el.isConnected) el.src = url;
+        if (img.__rdPhotoSeq === mine && img.isConnected) img.src = url;
         done();
       };
       probe.onerror = () => {
@@ -151,7 +152,7 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
       };
       probe.src = url;
     });
-    if (el.src !== url) {
+    if (img.src !== url) {
       if ((el.__rdPhotoTries || 0) < 1) {
         el.__rdPhotoTries = 1;
         return paintPhotoEl(el, p, true);
