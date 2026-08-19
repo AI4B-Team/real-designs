@@ -10814,10 +10814,10 @@ p.cmp-note {
   text-align: center;
 }
 
-/* hero: lock the slideshow column height so panels never shift between slides */
+/* hero: summary sizes from its own content so nothing escapes the card */
 .rd-site .hero-left #heroSummary {
-  min-height: 132px;
-  height: 132px;
+  min-height: 152px;
+  height: auto;
   margin-top: 12px;
 }
 .rd-site .hero-left #heroSummary .rsp {
