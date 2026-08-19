@@ -191,14 +191,14 @@ export const lookupListingByAddress = createServerFn({ method: "POST" })
         ok: false as const,
         code: r.code,
         message: r.message,
-        listing: null,
-        photos: [] as typeof r.photos,
+        listing: null as Json,
+        photos: [] as Json[],
       };
     return {
       ok: true as const,
       code: null,
       message: "",
-      listing: r.listing,
-      photos: r.photos,
+      listing: r.listing as Json,
+      photos: r.photos as Json[],
     };
   });
