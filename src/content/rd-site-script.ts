@@ -609,14 +609,30 @@ export function initSite(): () => void {
       document.getElementById("more").classList.add("open");
       document.getElementById("hint").classList.add("gone");
     }
+    /** Applies a sample selection through the one existing builder workflow. */
+    function pickSample(index) {
+      const all = document.querySelectorAll(".samp");
+      all.forEach((x) => x.classList.remove("on"));
+      const target = document.querySelector('.samp[data-s="' + index + '"]') || all[index];
+      if (target) target.classList.add("on");
+      UPLOAD = null;
+      unlock();
+    }
     document.querySelectorAll(".samp").forEach((s) =>
       s.addEventListener("click", () => {
-        document.querySelectorAll(".samp").forEach((x) => x.classList.remove("on"));
-        s.classList.add("on");
-        UPLOAD = null;
-        unlock();
+        const start = +(s.dataset.s || 0);
+        const selected = +(
+          document.querySelector(".samp.on") || { dataset: { s: 0 } }
+        ).dataset.s;
+        openSampleGallery({
+          start,
+          selected,
+          opener: s,
+          onSelect: (i) => pickSample(i),
+        });
       }),
     );
+
 
     const steps = [
       "Reading room geometry",
