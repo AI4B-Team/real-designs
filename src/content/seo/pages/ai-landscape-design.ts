@@ -43,7 +43,7 @@ export const page: LandingPage = {
     },
   ],
 
-  showcase: ["landscape", "reality-lock", "scope", "brief"],
+  showcase: ["landscape", "reality-lock", "scope", "exterior"],
 
   sections: [
     {

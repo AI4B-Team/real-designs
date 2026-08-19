@@ -43,7 +43,7 @@ export const page: LandingPage = {
     },
   ],
 
-  showcase: ["interior", "reality-lock", "shop", "declutter", "brief"],
+  showcase: ["interior", "reality-lock", "shop", "declutter", "staging"],
 
   sections: [
     {

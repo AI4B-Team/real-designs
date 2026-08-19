@@ -44,7 +44,7 @@ export const page: LandingPage = {
     },
   ],
 
-  showcase: ["scope", "budget-mode", "interior", "brief", "grades"],
+  showcase: ["scope", "budget-mode", "interior", "arv", "grades"],
 
   sections: [
     {
