@@ -258,7 +258,7 @@ export function missingRecommendation(
     show: true,
     missing: gaps,
     unselected: [],
-    title: "Recommended photo missing",
+    title: "Recommended Photo Missing:",
     message: recommendationCopy(gaps),
     kind: "missing",
     reason: "ok",
