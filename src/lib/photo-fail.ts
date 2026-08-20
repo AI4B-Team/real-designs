@@ -285,7 +285,9 @@ if (typeof document !== "undefined" && !document.__rdPhotoFail) {
     if (replace) {
       /* Builders that listen for the legacy replace event keep working; the
          shared card action is the primary path. */
-      const path = frame?.getAttribute("data-photo-path") || frame?.getAttribute("data-img") || "";
+      const src = frame?.querySelector?.("[data-photo-path],[data-img]") || frame;
+      const path =
+        src?.getAttribute?.("data-photo-path") || src?.getAttribute?.("data-img") || "";
       (frame || t).dispatchEvent(
         new CustomEvent("rd-photo-replace", { bubbles: true, detail: { path, key } }),
       );
