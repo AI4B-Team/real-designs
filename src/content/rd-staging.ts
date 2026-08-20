@@ -3044,6 +3044,8 @@ try {
     reopen: reopenStaging,
     has: hasStagingSession,
     resume: resumeStagingDraft,
+    resumeCanvas: resumeCanvasIfOpen,
+    canvasWasOpen,
     ensure: ensureStagingView,
     mount: mountStagingView,
     detach: detachStagingView,
