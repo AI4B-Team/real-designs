@@ -2017,7 +2017,17 @@ registerCardMenu("photo", {
   async run(action, key) {
     const it = itemAt(key);
     if (!it) return;
+    if (action === "retryload") {
+      if (!retryPhotoCard(key)) render();
+      return;
+    }
+    if (action === "faildetails")
+      return void detailsDialog({
+        title: "Photo Details",
+        rows: failureDetailRows({ key, name: it.name, hasMedia: !!it.path }),
+      });
     if (action === "open") return void openInCanvas(key);
+
     if (action === "duplicate") {
       duplicateItem(it);
       return cmToast("Photo Duplicated In This Project.");
