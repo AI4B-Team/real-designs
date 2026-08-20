@@ -683,6 +683,19 @@ export function initApp(): () => void {
               resumeStudioDraft(did);
             }
           } catch (_) {}
+          /* A refresh taken inside a Canvas boots to Studio. Reopen the saved
+         work instead of dropping the user on the empty start page. */
+          if (bootRoute) {
+            const tok = __navSeq;
+            void (async () => {
+              try {
+                const api = (window as any).rdStaging;
+                if (!api || !api.canvasWasOpen || !api.canvasWasOpen()) return;
+                if (!isCurrentNavigation(tok, "studio")) return;
+                await api.resumeCanvas();
+              } catch (_) {}
+            })();
+          }
         }
       }
       /* Photo staging is a normal page: mount it on entry, hand the rail back on
