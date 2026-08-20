@@ -33,7 +33,7 @@ const COPY = {
   },
   upload: {
     icon: "cloud-off",
-    title: "Photo couldn’t be uploaded",
+    title: "Photo Couldn’t Be Uploaded",
     body: "We couldn’t finish uploading this photo. The file is still on your device.",
   },
   missing: {
