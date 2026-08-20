@@ -1,0 +1,645 @@
+/* ---------------------------------------------------------------
+   REAL DESIGNS room Canvas: image-first two-column workspace.
+   Left workspace  = compact tool rail + large Canvas + version rail.
+   Right workflow  = one contextual settings panel + sticky Generate.
+   There is no third Inspector column and no permanent filmstrip.
+   --------------------------------------------------------------- */
+
+.rd-app .studio.rdw {
+  display: grid;
+  grid-template-columns: 72px minmax(640px, 1fr) minmax(360px, 0.5fr);
+  gap: 14px;
+  align-items: stretch;
+  min-height: 0;
+}
+
+@media (min-width: 1241px) {
+  .rd-app:has(#v-studio.on .studio.rdw) .main {
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .rd-app:has(#v-studio.on .studio.rdw) .content {
+    height: calc(100dvh - var(--app-header-height, 58px));
+    min-height: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .rd-app #v-studio.view.on {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+  }
+  .rd-app .studio.rdw {
+    height: 100%;
+    overflow: hidden;
+  }
+}
+
+/* ---------------- tool rail ---------------- */
+.rd-app .rdw-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 6px;
+  background: var(--card, #fff);
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 12px;
+  align-self: start;
+  position: sticky;
+  top: 0;
+  max-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.rd-app .rdw-rail .toollist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.rd-app .rdw-rail .toolrow {
+  width: 58px;
+  height: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--mute-2, #6b6b74);
+  cursor: pointer;
+  position: relative;
+}
+.rd-app .rdw-rail .toolrow b {
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1;
+  max-width: 54px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rd-app .rdw-rail .toolrow i[data-lucide],
+.rd-app .rdw-rail .toolrow svg {
+  width: 18px;
+  height: 18px;
+}
+.rd-app .rdw-rail .toolrow .plan-pill,
+.rd-app .rdw-rail .toolrow .pill {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  font-size: 0.44rem;
+  padding: 1px 3px;
+  line-height: 1.2;
+}
+.rd-app .rdw-rail .toolrow:hover {
+  background: var(--bg, #faf9f7);
+  color: var(--ink);
+}
+.rd-app .rdw-rail .toolrow.on {
+  background: rgba(204, 0, 0, 0.08);
+  border-color: rgba(204, 0, 0, 0.35);
+  color: var(--red);
+}
+.rd-app .rdw-rail .toolrow.is-disabled {
+  opacity: 0.55;
+}
+.rd-app .rdw-rail-sep {
+  height: 1px;
+  background: var(--line, #e9e6e0);
+  margin: 6px 4px;
+}
+
+/* ---------------- canvas ---------------- */
+.rd-app .rdw-main {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+.rd-app .studio.rdw #canvasCard {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.rd-app .studio.rdw #canvasCard > .card-b {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px;
+  background: #1a1a1d;
+  border-radius: 12px;
+}
+.rd-app .rdw-stage {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #141416;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.rd-app .studio.rdw #canvas {
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  aspect-ratio: auto;
+  margin: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  overflow: hidden;
+}
+.rd-app .studio.rdw #canvas img,
+.rd-app .studio.rdw #canvas .layer > * {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+}
+.rd-app .rdw-stage.zoomed #canvas img,
+.rd-app .rdw-stage.zoomed #canvas .layer > * {
+  transform: scale(var(--rdw-zoom, 1));
+  transition: transform 0.15s ease;
+}
+
+/* overlay toolbar */
+.rd-app .rdw-ov {
+  position: absolute;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+.rd-app .rdw-ov > * {
+  pointer-events: auto;
+}
+.rd-app .rdw-ov-l {
+  top: 10px;
+  left: 10px;
+}
+.rd-app .rdw-ov-r {
+  top: 10px;
+  right: 10px;
+}
+.rd-app .rdw-ov-b {
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(20, 20, 22, 0.72);
+  backdrop-filter: blur(6px);
+}
+.rd-app .rdw-ovtag,
+.rd-app .rdw-ovst {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(20, 20, 22, 0.68);
+  border-radius: 999px;
+  padding: 5px 10px;
+  backdrop-filter: blur(6px);
+}
+.rd-app .rdw-ovst {
+  color: #c9c9d1;
+  font-weight: 500;
+}
+.rd-app .rdw-ovst.ok {
+  color: #7fd39b;
+}
+.rd-app .rdw-ovst.bad {
+  color: #ff8d8d;
+}
+.rd-app .rdw-ovb {
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  background: rgba(20, 20, 22, 0.68);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+}
+.rd-app .rdw-ovb:hover {
+  background: rgba(204, 0, 0, 0.9);
+}
+.rd-app .rdw-ovb i[data-lucide],
+.rd-app .rdw-ovb svg {
+  width: 15px;
+  height: 15px;
+}
+.rd-app .rdw-cmpb {
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #d6d6de;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+.rd-app .rdw-cmpb.on {
+  background: var(--red, #c00);
+  color: #fff;
+}
+
+/* ---------------- version rail ---------------- */
+.rd-app .rdw-vers {
+  flex: none;
+  background: #202024;
+  border: 1px solid #2e2e33;
+  border-radius: 10px;
+  padding: 8px 10px 10px;
+}
+.rd-app .rdw-vers-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.rd-app .rdw-vers-h b {
+  font-size: 0.76rem;
+  color: #fff;
+}
+.rd-app .rdw-vers-n {
+  font-size: 0.7rem;
+  color: #8e8e96;
+}
+.rd-app .rdw-vers-a {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rd-app .rdw-vers-t {
+  border: 0;
+  background: transparent;
+  color: #b9b9c2;
+  font: inherit;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rd-app .studio.rdw .vars {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  margin: 0;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+.rd-app .studio.rdw .vars > * {
+  flex: 0 0 auto;
+  width: 132px;
+  height: 84px;
+}
+.rd-app .studio.rdw.vers-off .rdw-vers {
+  display: none;
+}
+.rd-app .rdw-vers-open {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #2e2e33;
+  border-radius: 999px;
+  background: #202024;
+  color: #fff;
+  font: inherit;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+.rd-app .rdw-vers-open i[data-lucide],
+.rd-app .rdw-vers-open svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------------- settings panel ---------------- */
+.rd-app .studio.rdw > .rdw-panel {
+  min-width: 360px;
+  max-width: 470px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--card, #fff);
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.rd-app .rdw-panel-h {
+  flex: none;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--line, #e9e6e0);
+}
+.rd-app .rdw-panel-t h3 {
+  font-size: 0.98rem;
+  margin: 0;
+}
+.rd-app .rdw-panel-t p {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--mute, #77767f);
+}
+.rd-app .rdw-panel-h .fb-link {
+  margin-left: auto;
+  flex: none;
+}
+.rd-app .rdw-panel-b {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 14px 20px;
+}
+.rd-app .rdw-hidden-select {
+  display: none !important;
+}
+.rd-app .rdw-hint {
+  font-size: 0.74rem;
+  color: var(--mute, #77767f);
+  margin: 0 0 8px;
+}
+.rd-app .rdw-viewall {
+  float: right;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.rd-app .chips.seg-3,
+.rd-app .chips.seg-4 {
+  display: grid;
+  gap: 6px;
+}
+.rd-app .chips.seg-3 {
+  grid-template-columns: repeat(3, 1fr);
+}
+.rd-app .chips.seg-4 {
+  grid-template-columns: repeat(4, 1fr);
+}
+.rd-app .chips.seg-3 .chip,
+.rd-app .chips.seg-4 .chip {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+/* room + style visual cards */
+.rd-app .rdw-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+}
+.rd-app .rdw-card {
+  border: 2px solid var(--line, #e9e6e0);
+  border-radius: 9px;
+  background: #fff;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  text-align: left;
+}
+.rd-app .rdw-card-th {
+  display: block;
+  height: 48px;
+  background: #f1efeb center/cover no-repeat;
+  display: grid;
+  place-items: center;
+  color: var(--mute-2, #6b6b74);
+}
+.rd-app .rdw-card-th i[data-lucide],
+.rd-app .rdw-card-th svg {
+  width: 17px;
+  height: 17px;
+}
+.rd-app .rdw-card-n {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 600;
+  padding: 5px 6px;
+  line-height: 1.15;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rd-app .rdw-card.on {
+  border-color: var(--red, #c00);
+}
+.rd-app .rdw-card.on .rdw-card-n {
+  color: var(--red, #c00);
+}
+
+/* level cards */
+.rd-app .rdw-opts {
+  display: grid;
+  gap: 6px;
+}
+.rd-app .rdw-opt {
+  display: block;
+  text-align: left;
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 9px;
+  background: #fff;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+.rd-app .rdw-opt b {
+  display: block;
+  font-size: 0.8rem;
+}
+.rd-app .rdw-opt span {
+  display: block;
+  font-size: 0.71rem;
+  color: var(--mute, #77767f);
+}
+.rd-app .rdw-opt.on {
+  border-color: var(--red, #c00);
+  background: rgba(204, 0, 0, 0.04);
+}
+.rd-app .rdw-opt.on b {
+  color: var(--red, #c00);
+}
+.rd-app .rdw-scale {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--mute, #77767f);
+  margin-top: 2px;
+}
+.rd-app .rdw-sugg {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 7px;
+}
+.rd-app .rdw-sugg button {
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.7rem;
+  color: var(--mute-2, #6b6b74);
+  padding: 4px 9px;
+  cursor: pointer;
+}
+.rd-app .rdw-sugg button:hover {
+  border-color: var(--red, #c00);
+  color: var(--red, #c00);
+}
+.rd-app .rdw-sec {
+  border-top: 1px solid var(--line, #e9e6e0);
+  padding-top: 12px;
+  margin-top: 14px;
+}
+.rd-app .rdw-sec-h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.rd-app .rdw-sec-h b {
+  font-size: 0.82rem;
+}
+.rd-app .rdw-sec-h span {
+  font-size: 0.71rem;
+  color: var(--mute, #77767f);
+}
+
+/* sticky generate footer */
+.rd-app .rdw-foot {
+  flex: none;
+  padding: 10px 14px 12px;
+  border-top: 1px solid var(--line, #e9e6e0);
+  background: var(--card, #fff);
+}
+.rd-app .rdw-need {
+  font-size: 0.74rem;
+  color: var(--mute, #77767f);
+  margin-bottom: 8px;
+}
+.rd-app .rdw-foot-r {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.rd-app .rdw-foot #genBtn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* ---------------- responsive ---------------- */
+@media (max-width: 1439px) and (min-width: 1100px) {
+  .rd-app .studio.rdw {
+    grid-template-columns: 68px minmax(560px, 1fr) 360px;
+  }
+}
+@media (max-width: 1099px) {
+  .rd-app .studio.rdw {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+  .rd-app .studio.rdw > .rdw-panel {
+    position: fixed;
+    top: var(--app-header-height, 58px);
+    right: 0;
+    bottom: 0;
+    width: min(420px, 92vw);
+    max-width: none;
+    z-index: 60;
+    border-radius: 0;
+    box-shadow: -18px 0 40px rgba(0, 0, 0, 0.14);
+    transform: translateX(102%);
+    transition: transform 0.18s ease;
+  }
+  .rd-app .studio.rdw.panel-on > .rdw-panel {
+    transform: none;
+  }
+  .rd-app .rdw-settings-b {
+    display: inline-flex !important;
+    position: fixed;
+    right: 16px;
+    bottom: 18px;
+    z-index: 55;
+    align-items: center;
+    gap: 7px;
+    border: 0;
+    border-radius: 999px;
+    background: var(--red, #c00);
+    color: #fff;
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 11px 16px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+  }
+  .rd-app .rdw-cards {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 720px) {
+  .rd-app .studio.rdw {
+    grid-template-columns: 1fr;
+  }
+  .rd-app .rdw-rail {
+    flex-direction: row;
+    position: static;
+    overflow-x: auto;
+  }
+  .rd-app .rdw-rail .toollist {
+    flex-direction: row;
+  }
+  .rd-app .rdw-rail-sep {
+    width: 1px;
+    height: auto;
+    margin: 4px 6px;
+  }
+}
+
+/* Empty Studio (no source chosen): the start card owns the view. */
+.rd-app .studio.rdw.st-empty {
+  grid-template-columns: 1fr 344px;
+}
+.rd-app .studio.rdw.st-empty .rdw-rail,
+.rd-app .studio.rdw.st-empty .rdw-vers,
+.rd-app .studio.rdw.st-empty .rdw-vers-open,
+.rd-app .studio.rdw.st-empty .rdw-foot,
+.rd-app .studio.rdw.st-empty .rdw-panel-h,
+.rd-app .studio.rdw.st-empty .rdw-settings-b {
+  display: none !important;
+}
+
+/* The old permanent room filmstrip is now an All Photos drawer. */
+.rd-app .rds-strip {
+  display: none;
+}
+.rd-app .rds-strip.rdw-open {
+  display: flex;
+  position: relative;
+  z-index: 30;
+  margin-top: 10px;
+}
