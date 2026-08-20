@@ -3038,7 +3038,17 @@ registerCardMenu("video", {
     const w = S.wizard;
     const a = cmAsset(key);
     if (!a) return;
+    if (action === "retryload") {
+      if (!retryPhotoCard(key)) render();
+      return;
+    }
+    if (action === "faildetails")
+      return void detailsDialog({
+        title: "Scene Details",
+        rows: failureDetailRows({ key, name: a.name, hasMedia: !!a.path }),
+      });
     if (action === "edit") return void cmPop(key, "look", "Open This Scene From The Grid.");
+
     if (action === "motion") return void cmPop(key, "motion");
     if (action === "vfx") return void cmPop(key, "look");
     if (action === "text") return void cmPop(key, "cap");
