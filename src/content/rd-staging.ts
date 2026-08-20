@@ -428,6 +428,7 @@ function restoreScroll() {
    session is torn down and Studio is returned to its starting page. */
 function leaveStaging() {
   hide();
+  forgetCanvasOpen();
   endBuilderHistory("design");
   if (saver) {
     void saver.flush();
@@ -658,10 +659,47 @@ export async function resumeStagingDraft(id?) {
 /** Reopen the review grid from the canvas strip. */
 export function reopenStaging() {
   if (!S || !S.items.length) return false;
+  forgetCanvasOpen();
   S.step = "review";
   show();
   restoreScroll();
   return true;
+}
+
+/* A refresh taken while the Canvas is open must land back on that photo, not
+   on the empty Studio start page. The marker records only "a canvas was open";
+   the work itself comes from the saved draft. */
+const CANVAS_OPEN_KEY = "rd_canvas_open";
+
+function rememberCanvasOpen(key) {
+  try {
+    localStorage.setItem(CANVAS_OPEN_KEY, String(key || "1"));
+  } catch (_) {}
+}
+
+function forgetCanvasOpen() {
+  try {
+    localStorage.removeItem(CANVAS_OPEN_KEY);
+  } catch (_) {}
+}
+
+export function canvasWasOpen() {
+  try {
+    return !!localStorage.getItem(CANVAS_OPEN_KEY);
+  } catch (_) {
+    return false;
+  }
+}
+
+/** Boot-time recovery: reopen the Canvas the user was last working in. */
+export async function resumeCanvasIfOpen() {
+  if (!canvasWasOpen()) return false;
+  if (hasStagingSession()) return false;
+  try {
+    return (await resumeStagingDraftResult()) === "restored";
+  } catch (_) {
+    return false;
+  }
 }
 
 export function hasStagingSession() {
@@ -2530,6 +2568,7 @@ async function openInCanvas(key) {
   if (!url) return;
 
   S.current = key;
+  rememberCanvasOpen(key);
   rememberScroll();
   hide();
 
@@ -3005,6 +3044,8 @@ try {
     reopen: reopenStaging,
     has: hasStagingSession,
     resume: resumeStagingDraft,
+    resumeCanvas: resumeCanvasIfOpen,
+    canvasWasOpen,
     ensure: ensureStagingView,
     mount: mountStagingView,
     detach: detachStagingView,
