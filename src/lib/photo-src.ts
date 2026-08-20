@@ -162,15 +162,17 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
       el.__rdPhotoTries = 1;
       return paintPhotoEl(el, p, true);
     }
-    failState(el, p);
+    /* A path that cannot be resolved at all reads as a missing source, not
+       as a transient display error. The path itself is left untouched. */
+    failState(el, p, "missing");
     return false;
   }
 
   /* The retry budget is only cleared once a frame actually paints: clearing
      it here made a URL that resolves but never loads retry forever. */
-  el.classList.remove("rd-img-fail");
-  el.querySelector(".rd-img-fail-b")?.remove();
+  clearPhotoFailure(frameOf(el));
   el.dataset["photoPath"] = p;
+
 
   if (el instanceof HTMLImageElement) {
     const img = el as HTMLImageElement & El;
