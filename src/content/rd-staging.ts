@@ -21,7 +21,15 @@ import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { mountPhotoImages, photoSrc, photoSrcStale } from "@/lib/photo-src";
-import { photoFailPanelHtml, mountRenderedFailures, syncFailures } from "@/lib/photo-fail";
+import {
+  photoFailPanelHtml,
+  mountRenderedFailures,
+  syncFailures,
+  photoFailureKind,
+  failedCardMenuGroups,
+  failureDetailRows,
+  retryPhotoCard,
+} from "@/lib/photo-fail";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
@@ -1937,6 +1945,11 @@ registerCardMenu("photo", {
     const it = itemAt(key);
     if (!it) return [];
     const stored = !!it.path;
+    /* An unavailable photo only offers the actions that do not need a usable
+       image; everything else returns automatically once it loads. */
+    if (photoFailureKind(key))
+      return failedCardMenuGroups({ flow: "photo", key, hasMedia: stored });
+
     const hasOriginal = stored || !!it.previewUrl;
     const hasDesign = !!it.resultPath;
     const dl = hasDesign
@@ -2004,7 +2017,17 @@ registerCardMenu("photo", {
   async run(action, key) {
     const it = itemAt(key);
     if (!it) return;
+    if (action === "retryload") {
+      if (!retryPhotoCard(key)) render();
+      return;
+    }
+    if (action === "faildetails")
+      return void detailsDialog({
+        title: "Photo Details",
+        rows: failureDetailRows({ key, name: it.name, hasMedia: !!it.path }),
+      });
     if (action === "open") return void openInCanvas(key);
+
     if (action === "duplicate") {
       duplicateItem(it);
       return cmToast("Photo Duplicated In This Project.");

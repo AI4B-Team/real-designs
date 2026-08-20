@@ -22,7 +22,13 @@ import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voic
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { photoSrc, photoSrcStale, paintPhotoEl, mountPhotoImages } from "@/lib/photo-src";
-import { syncFailures } from "@/lib/photo-fail";
+import {
+  syncFailures,
+  photoFailureKind,
+  failedCardMenuGroups,
+  failureDetailRows,
+  retryPhotoCard,
+} from "@/lib/photo-fail";
 import {
   sceneFrames,
   SE_TRANSITIONS,
@@ -2981,6 +2987,10 @@ registerCardMenu("video", {
     const a = cmAsset(key);
     if (!a) return [];
     const s = cmScene(key);
+    /* Failed scene photo: short, relevant menu only. */
+    if (photoFailureKind(key))
+      return failedCardMenuGroups({ flow: "video", key, hasMedia: !!a.path });
+
     return [
       {
         items: [
@@ -3028,7 +3038,17 @@ registerCardMenu("video", {
     const w = S.wizard;
     const a = cmAsset(key);
     if (!a) return;
+    if (action === "retryload") {
+      if (!retryPhotoCard(key)) render();
+      return;
+    }
+    if (action === "faildetails")
+      return void detailsDialog({
+        title: "Scene Details",
+        rows: failureDetailRows({ key, name: a.name, hasMedia: !!a.path }),
+      });
     if (action === "edit") return void cmPop(key, "look", "Open This Scene From The Grid.");
+
     if (action === "motion") return void cmPop(key, "motion");
     if (action === "vfx") return void cmPop(key, "look");
     if (action === "text") return void cmPop(key, "cap");
