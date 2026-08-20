@@ -428,6 +428,7 @@ function restoreScroll() {
    session is torn down and Studio is returned to its starting page. */
 function leaveStaging() {
   hide();
+  forgetCanvasOpen();
   endBuilderHistory("design");
   if (saver) {
     void saver.flush();
