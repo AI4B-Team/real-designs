@@ -10,7 +10,7 @@
 /* eslint-disable */
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
-import { runCardAction } from "@/lib/builder-card-menu";
+import { runCardAction, confirmDialog } from "@/lib/builder-card-menu";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(
@@ -283,6 +283,17 @@ if (typeof document !== "undefined" && !document.__rdPhotoFail) {
     const key = keyOf(t);
     const flow = flowOf(t);
     if (replace) return void runCardAction(flow, "replace", key);
-    if (remove) return void runCardAction(flow, REMOVE_ACTION[flow] || "removeproj", key);
+    if (remove) {
+      void (async () => {
+        const ok = await confirmDialog({
+          title: "Remove This Photo?",
+          body: "The card is removed from this project and the remaining cards are renumbered. The source photo stays in Media.",
+          confirmLabel: "Remove",
+          danger: true,
+        });
+        if (ok) runCardAction(flow, REMOVE_ACTION[flow] || "removeproj", key);
+      })();
+      return;
+    }
   });
 }
