@@ -21,7 +21,15 @@ import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { mountPhotoImages, photoSrc, photoSrcStale } from "@/lib/photo-src";
-import { photoFailPanelHtml, mountRenderedFailures, syncFailures } from "@/lib/photo-fail";
+import {
+  photoFailPanelHtml,
+  mountRenderedFailures,
+  syncFailures,
+  photoFailureKind,
+  failedCardMenuGroups,
+  failureDetailRows,
+  retryPhotoCard,
+} from "@/lib/photo-fail";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
