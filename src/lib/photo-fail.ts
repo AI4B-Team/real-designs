@@ -87,6 +87,34 @@ function panelHtml(kind) {
 }
 
 /**
+ * Server-rendered variant for a card whose upload failed: the builder already
+ * knows the failure at render time, so the panel ships with the card markup
+ * and only its retry handler is attached afterwards.
+ */
+export function photoFailPanelHtml(kind = "upload") {
+  return panelHtml(kind);
+}
+
+/**
+ * Attach retry handlers to panels that were rendered as part of a card.
+ * `retry(key)` must resolve truthy once the photo is usable again.
+ */
+export function mountRenderedFailures(root, retry) {
+  const host = root || document;
+  const frames = Array.from(host.querySelectorAll("[data-photo-fail]"));
+  for (const frame of frames) {
+    frame.classList.add("rd-img-fail");
+    cardOf(frame)?.classList.add("rd-fail");
+    const key = keyOf(frame);
+    if (key) FAILED.set(key, frame.getAttribute("data-photo-fail") || "upload");
+    frame.__rdFailRetry = () => retry(key, frame);
+    paint(frame);
+  }
+  syncFailures();
+}
+
+
+/**
  * Put a card into its failed state. `retry` returns true when the photo is
  * usable again; the panel is removed only then.
  */
