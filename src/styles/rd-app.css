@@ -844,7 +844,7 @@
 }
 
 /* studio */
-.rd-app .studio {
+.rd-app .studio:not(.rdw) {
   display: grid;
   grid-template-columns: 272px 1fr 292px;
   gap: 16px;
@@ -852,16 +852,16 @@
 }
 
 @media (max-width: 1240px) {
-  .rd-app .studio {
+  .rd-app .studio:not(.rdw) {
     grid-template-columns: 262px 1fr;
   }
-  .rd-app .studio .right {
+  .rd-app .studio:not(.rdw) .right {
     grid-column: 1/-1;
   }
 }
 
 @media (max-width: 860px) {
-  .rd-app .studio {
+  .rd-app .studio:not(.rdw) {
     grid-template-columns: 1fr;
   }
 }
@@ -2933,7 +2933,7 @@
   .rd-app .content {
     padding: 16px 14px;
   }
-  .rd-app .studio {
+  .rd-app .studio:not(.rdw) {
     grid-template-columns: 1fr;
   }
   .rd-app .grid > *,
@@ -4252,17 +4252,17 @@
 /* ---------- Studio source states ----------
    Studio boots empty: no sample room, no editing controls, no planning range
    until a real source (upload, saved design, property or a chosen sample). */
-.rd-app .studio.st-empty > .card:first-child {
+.rd-app .studio.st-empty:not(.rdw) > .card:first-child {
   display: none;
 }
 .rd-app .studio.st-empty {
   grid-template-columns: 1fr 344px;
 }
-.rd-app .studio.st-empty > .right {
+.rd-app .studio.st-empty:not(.rdw) > .right {
   display: block;
   grid-column: auto;
 }
-.rd-app .studio.st-empty > .right > *:not(#stStartRight) {
+.rd-app .studio.st-empty:not(.rdw) > .right > *:not(#stStartRight) {
   display: none !important;
 }
 .rd-app .studio.st-empty #canvasCard .card-h > div:last-child,
@@ -7613,12 +7613,12 @@
 }
 
 @media (min-width: 1241px) {
-  .rd-app:has(#v-studio.on .studio:not(.st-empty)) .main {
+  .rd-app:has(#v-studio.on .studio:not(.st-empty):not(.rdw)) .main {
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
   }
-  .rd-app:has(#v-studio.on .studio:not(.st-empty)) .content {
+  .rd-app:has(#v-studio.on .studio:not(.st-empty):not(.rdw)) .content {
     height: calc(100dvh - var(--app-header-height));
     min-height: 0;
     overflow: hidden;
@@ -7631,7 +7631,7 @@
     min-height: 0;
     flex: 1;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) {
     height: 100%;
     min-height: 0;
     overflow: hidden;
@@ -7639,17 +7639,17 @@
   }
 
   /* Left Setup panel: fixed heading, internal scroll */
-  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .card:first-child {
     height: 100%;
     min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .card-h {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .card:first-child > .card-h {
     flex: none;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .card-b {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .card:first-child > .card-b {
     flex: 1;
     min-height: 0;
     overflow-y: auto;
@@ -7658,13 +7658,13 @@
   }
 
   /* Center canvas column: never scrolls */
-  .rd-app #v-studio.on .studio:not(.st-empty) > div:nth-child(2) {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > div:nth-child(2) {
     height: 100%;
     min-height: 0;
     overflow: hidden;
     position: relative;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard {
     height: 100%;
     min-height: 0;
     display: flex;
@@ -7672,10 +7672,10 @@
     overflow: hidden;
     position: relative;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-h {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard > .card-h {
     flex: none;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard > .card-b {
     flex: 1;
     min-height: 0;
     display: flex;
@@ -7683,31 +7683,31 @@
     overflow: hidden;
     padding-bottom: 14px;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > * {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard > .card-b > * {
     flex: none;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > #canvas {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard > .card-b > #canvas {
     flex: 1 1 auto;
     min-height: 0;
     aspect-ratio: auto;
     margin-bottom: 12px;
     background: #efede8;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard #canvas img {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard #canvas img {
     width: 100%;
     height: 100%;
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard .vars {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard .vars {
     max-height: 96px;
     overflow-y: auto;
     overscroll-behavior: contain;
   }
 
   /* Right column: Object Controls + Version History scroll together */
-  .rd-app #v-studio.on .studio:not(.st-empty) > .right {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .right {
     height: 100%;
     min-height: 0;
     overflow-y: auto;
@@ -7724,7 +7724,7 @@
   aspect-ratio: var(--rd-canvas-ar, 16 / 9);
 }
 @media (min-width: 1100px) {
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > #canvas {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard > .card-b > #canvas {
     flex: 1 1 auto;
     min-height: 260px;
     aspect-ratio: var(--rd-canvas-ar, 16 / 9);
@@ -8248,7 +8248,7 @@
    and Object Controls never shift and the page height never grows.
    --------------------------------------------------------------- */
 @media (min-width: 1241px) {
-  .rd-app .studio > .card:first-child {
+  .rd-app .studio:not(.rdw) > .card:first-child {
     position: sticky;
     top: 12px;
     max-height: calc(100vh - var(--topbar-h, 56px) - 40px);
@@ -8256,10 +8256,10 @@
     flex-direction: column;
     min-height: 0;
   }
-  .rd-app .studio > .card:first-child > .card-h {
+  .rd-app .studio:not(.rdw) > .card:first-child > .card-h {
     flex: none;
   }
-  .rd-app .studio > .card:first-child > .card-b {
+  .rd-app .studio:not(.rdw) > .card:first-child > .card-b {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -8419,19 +8419,19 @@
    The image — not the controls — is the dominant element.
    --------------------------------------------------------------- */
 @media (min-width: 1241px) {
-  .rd-app #v-studio.on .studio:not(.st-empty) {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) {
     grid-template-columns: 316px minmax(600px, 1fr) 316px;
     gap: 14px;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty).insp-off {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw).insp-off {
     grid-template-columns: 316px minmax(600px, 1fr);
   }
-  .rd-app #v-studio.on .studio:not(.st-empty).insp-off > .right {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw).insp-off > .right {
     display: none;
   }
   /* Canvas image viewport owns every pixel below the toolbar. */
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > #canvas,
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > #canvas {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard > .card-b > #canvas,
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard > .card-b > #canvas {
     flex: 1 1 auto;
     width: 100%;
     max-width: 100%;
@@ -8442,24 +8442,24 @@
     background: #141416;
     border-radius: 10px;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard > .card-b {
     padding-bottom: 10px;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard #canvas img,
-  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard #canvas .layer > * {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard #canvas img,
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) #canvasCard #canvas .layer > * {
     width: 100%;
     height: 100%;
     object-fit: contain;
     object-position: center;
   }
   /* Inspector: one pane at a time, its own scroll, never a stack of cards. */
-  .rd-app #v-studio.on .studio:not(.st-empty) > .right {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .right {
     display: flex;
     flex-direction: column;
     min-height: 0;
     overflow: hidden;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) > .right .insp-body {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .right .insp-body {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -8520,10 +8520,10 @@
 /* Below 1440px the Inspector opens as an overlay drawer so the Canvas keeps
    its width instead of being squeezed by a third column. */
 @media (min-width: 1241px) and (max-width: 1440px) {
-  .rd-app #v-studio.on .studio:not(.st-empty) {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) {
     grid-template-columns: 300px minmax(600px, 1fr);
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) > .right {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .right {
     position: fixed;
     top: var(--app-header-height, 58px);
     right: 0;
@@ -8535,7 +8535,7 @@
     border-left: 1px solid var(--line, #e9e6e0);
     box-shadow: -18px 0 40px rgba(0, 0, 0, 0.1);
   }
-  .rd-app #v-studio.on .studio:not(.st-empty).insp-off > .right {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw).insp-off > .right {
     display: none;
   }
 }
@@ -8556,18 +8556,18 @@
    underneath the header.
    --------------------------------------------------------------- */
 @media (min-width: 1241px) {
-  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .card:first-child {
     display: flex;
     flex-direction: column;
     height: 100%;
     min-height: 0;
     overflow: visible;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .setup-head,
-  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .setup-ctx {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .card:first-child > .setup-head,
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .card:first-child > .setup-ctx {
     flex: 0 0 auto;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .setup-scroll {
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.rdw) > .card:first-child > .setup-scroll {
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -8618,7 +8618,7 @@
   width: 18px;
   height: 18px;
 }
-.rd-app #v-studio.on .studio:not(.st-empty).insp-off .insp-handle {
+.rd-app #v-studio.on .studio:not(.st-empty):not(.rdw).insp-off .insp-handle {
   display: inline-flex;
 }
 

@@ -36,6 +36,7 @@ import {
 } from "@/lib/rooms.functions";
 import { openSaveRoomModal } from "@/lib/save-room";
 import { initCanvasInspector } from "@/lib/canvas-inspector";
+import { initCanvasWorkspace } from "@/lib/canvas-workspace";
 import { suggestDesignTitle } from "@/lib/property-address";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -274,6 +275,7 @@ export function initApp(): () => void {
   if (root) root.dataset["rdInit"] = "1";
   try {
     initCanvasInspector();
+    initCanvasWorkspace();
   } catch (_) {}
   const timers: number[] = [];
   const setInterval = (fn: any, ms?: number) => {
