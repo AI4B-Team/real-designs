@@ -61,7 +61,7 @@ describe("resilient photo source", () => {
     document.body.innerHTML = `<div data-img="u/3.jpg"><span class="meta">Kitchen</span></div>`;
     const el = document.querySelector("[data-img]") as HTMLElement;
     expect(await paintPhotoEl(el)).toBe(false);
-    expect(el.textContent).toContain("Photo couldn’t be loaded");
+    expect(el.textContent).toContain("Photo Couldn’t Be Loaded");
     expect(el.querySelector(".meta")).toBeTruthy();
   });
 
