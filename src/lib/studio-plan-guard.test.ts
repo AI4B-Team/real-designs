@@ -23,7 +23,6 @@ const toolRows = Array.from(html.matchAll(/data-tool="([^"]+)"([^>]*)/g)).map((m
 const UNRESTRICTED = ["Redesign", "Virtual Stage", "Declutter", "Material Swap"];
 const RESTRICTED: Record<string, string> = {
   "Sketch To Render": "pro",
-  Budget: "pro",
   "Multi Angle": "studio",
   "Walkthrough Video": "studio",
   "2D To 3D Plan": "studio",
@@ -53,6 +52,12 @@ describe("studio tool access attributes", () => {
       const row = toolRows.find((t) => t.name === name)!;
       expect(row.attrs).toContain('data-required-plan="' + tier + '"');
     }
+  });
+
+  it("keeps Budget disabled as a Coming Soon tool", () => {
+    const row = toolRows.find((t) => t.name === "Budget")!;
+    expect(row.attrs).toContain('aria-disabled="true"');
+    expect(row.attrs).not.toContain("data-required-plan");
   });
 
   it("never emits an empty required plan", () => {
