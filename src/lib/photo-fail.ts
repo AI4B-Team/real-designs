@@ -238,7 +238,10 @@ export function clearPhotoFailure(frame) {
   frame.__rdFailRetry = null;
   const card = cardOf(frame);
   if (card && !card.querySelector(".rd-img-fail")) card.classList.remove("rd-fail");
-  if (key) FAILED.delete(key);
+  if (key) {
+    FAILED.delete(key);
+    LAST_OK.set(key, Date.now());
+  }
   syncFailures();
 }
 
