@@ -1469,17 +1469,27 @@
    exact size and swaps only the image area for a centred explanation. */
 .rd-app .rd-img-fail { position: relative; }
 .rd-app .rd-fail-p {
-  position: absolute; inset: 0; z-index: 5;
+  position: absolute; inset: 0; z-index: 5; overflow: hidden;
+  container-type: size;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 6px; padding: 14px 12px; text-align: center;
+  gap: 5px; padding: 10px; text-align: center;
   background: #fdf7f7; border-radius: inherit;
 }
 .rd-app .rd-fail-ic {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; border-radius: 999px;
-  background: rgba(204, 0, 0, 0.08); color: #cc0000; margin-bottom: 2px;
+  width: 34px; height: 34px; border-radius: 999px;
+  background: rgba(204, 0, 0, 0.08); color: #cc0000;
 }
-.rd-app .rd-fail-ic i { width: 19px; height: 19px; }
+.rd-app .rd-fail-ic i { width: 18px; height: 18px; }
+/* Small tiles drop the optional lines so the actions always stay visible. */
+@container (max-height: 190px) {
+  .rd-app .rd-fail-t { display: none; }
+}
+@container (max-height: 140px) {
+  .rd-app .rd-fail-ic { display: none; }
+  .rd-app .rd-fail-rm { display: none; }
+}
+
 .rd-app .rd-fail-p > b { font-size: 13px; line-height: 1.25; color: #1a1a1e; }
 .rd-app .rd-fail-t {
   font-size: 11.5px; line-height: 1.35; color: #6b6b73;
