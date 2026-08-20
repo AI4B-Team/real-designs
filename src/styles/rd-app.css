@@ -8411,3 +8411,153 @@
 .srm-f > input:focus,
 .srm-f > select:focus { outline: 2px solid rgba(204, 0, 0, 0.25); border-color: #cc0000; }
 .srm-err { margin: 0; color: #cc0000; font-size: 12px; font-weight: 600; }
+
+/* ---------------------------------------------------------------
+   Image-first room Canvas workspace
+   Three panels: fixed-width Setup, an expanding Canvas that owns all
+   spare width, and a compact tabbed Inspector that can be collapsed.
+   The image — not the controls — is the dominant element.
+   --------------------------------------------------------------- */
+@media (min-width: 1241px) {
+  .rd-app #v-studio.on .studio:not(.st-empty) {
+    grid-template-columns: 316px minmax(600px, 1fr) 316px;
+    gap: 14px;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty).insp-off {
+    grid-template-columns: 316px minmax(600px, 1fr);
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty).insp-off > .right {
+    display: none;
+  }
+  /* Canvas image viewport owns every pixel below the toolbar. */
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > #canvas,
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b > #canvas {
+    flex: 1 1 auto;
+    width: 100%;
+    max-width: 100%;
+    min-height: 0;
+    aspect-ratio: auto;
+    align-self: stretch;
+    margin: 0 0 8px;
+    background: #141416;
+    border-radius: 10px;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard > .card-b {
+    padding-bottom: 10px;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard #canvas img,
+  .rd-app #v-studio.on .studio:not(.st-empty) #canvasCard #canvas .layer > * {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+  /* Inspector: one pane at a time, its own scroll, never a stack of cards. */
+  .rd-app #v-studio.on .studio:not(.st-empty) > .right {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) > .right .insp-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-bottom: 18px;
+  }
+}
+.rd-app .insp-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.rd-app .insp-tabs {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+  padding: 3px;
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 999px;
+  background: #fff;
+}
+.rd-app .insp-tab {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  padding: 6px 8px;
+  font: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--mute-2, #6b6b74);
+  cursor: pointer;
+}
+.rd-app .insp-tab.on {
+  background: #16161a;
+  color: #fff;
+}
+.rd-app .insp-collapse {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+}
+.rd-app .insp-pane {
+  display: none;
+}
+.rd-app .insp-pane.on {
+  display: block;
+}
+.rd-app .insp-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.rd-app #inspToggle {
+  display: none;
+}
+.rd-app #v-studio.on .studio.insp-off #inspToggle {
+  display: inline-flex;
+}
+/* Below 1440px the Inspector opens as an overlay drawer so the Canvas keeps
+   its width instead of being squeezed by a third column. */
+@media (min-width: 1241px) and (max-width: 1440px) {
+  .rd-app #v-studio.on .studio:not(.st-empty) {
+    grid-template-columns: 300px minmax(600px, 1fr);
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) > .right {
+    position: fixed;
+    top: var(--app-header-height, 58px);
+    right: 0;
+    bottom: 0;
+    width: 340px;
+    z-index: 40;
+    padding: 14px;
+    background: var(--bg, #faf9f7);
+    border-left: 1px solid var(--line, #e9e6e0);
+    box-shadow: -18px 0 40px rgba(0, 0, 0, 0.1);
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty).insp-off > .right {
+    display: none;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty):not(.insp-off) #inspToggle {
+    display: none;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) #inspToggle {
+    display: inline-flex;
+  }
+}
+/* Compact filmstrip: fixed height, horizontal scroll only. */
+.rd-app .rds-strip {
+  flex: none;
+  margin-top: 10px;
+  padding: 6px 8px;
+}
+.rd-app .rds-strip-l {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
