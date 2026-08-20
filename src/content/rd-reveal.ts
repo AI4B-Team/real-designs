@@ -2987,6 +2987,10 @@ registerCardMenu("video", {
     const a = cmAsset(key);
     if (!a) return [];
     const s = cmScene(key);
+    /* Failed scene photo: short, relevant menu only. */
+    if (photoFailureKind(key))
+      return failedCardMenuGroups({ flow: "video", key, hasMedia: !!a.path });
+
     return [
       {
         items: [
