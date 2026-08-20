@@ -8517,12 +8517,6 @@
   flex-wrap: wrap;
   margin-top: 12px;
 }
-.rd-app #inspToggle {
-  display: none;
-}
-.rd-app #v-studio.on .studio.insp-off #inspToggle {
-  display: inline-flex;
-}
 /* Below 1440px the Inspector opens as an overlay drawer so the Canvas keeps
    its width instead of being squeezed by a third column. */
 @media (min-width: 1241px) and (max-width: 1440px) {
@@ -8544,12 +8538,6 @@
   .rd-app #v-studio.on .studio:not(.st-empty).insp-off > .right {
     display: none;
   }
-  .rd-app #v-studio.on .studio:not(.st-empty):not(.insp-off) #inspToggle {
-    display: none;
-  }
-  .rd-app #v-studio.on .studio:not(.st-empty) #inspToggle {
-    display: inline-flex;
-  }
 }
 /* Compact filmstrip: fixed height, horizontal scroll only. */
 .rd-app .rds-strip {
@@ -8560,4 +8548,205 @@
 .rd-app .rds-strip-l {
   overflow-x: auto;
   overflow-y: hidden;
+}
+
+/* ---------------------------------------------------------------
+   Setup panel: fixed header, fixed context row, one scroll region.
+   Nothing inside the scroll region is sticky, so no field can slide
+   underneath the header.
+   --------------------------------------------------------------- */
+@media (min-width: 1241px) {
+  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: visible;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .setup-head,
+  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .setup-ctx {
+    flex: 0 0 auto;
+  }
+  .rd-app #v-studio.on .studio:not(.st-empty) > .card:first-child > .setup-scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    padding-bottom: 28px;
+  }
+}
+.rd-app .setup-ctx {
+  position: static !important;
+  top: auto !important;
+  margin: 0 16px 10px !important;
+  z-index: auto !important;
+}
+.rd-app .setup-scroll > * {
+  position: static;
+}
+
+/* ---------------------------------------------------------------
+   One authoritative Inspector control pair
+   --------------------------------------------------------------- */
+.rd-app #v-studio .studio {
+  position: relative;
+}
+.rd-app .insp-handle {
+  display: none;
+  position: absolute;
+  top: 64px;
+  right: 0;
+  width: 40px;
+  height: 56px;
+  min-width: 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line, #e9e6e0);
+  border-right: 0;
+  border-radius: 12px 0 0 12px;
+  background: #fff;
+  color: var(--ink, #16161a);
+  box-shadow: -6px 0 18px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  z-index: 30;
+}
+.rd-app .insp-handle:hover {
+  color: var(--red, #cc0000);
+}
+.rd-app .insp-handle i {
+  width: 18px;
+  height: 18px;
+}
+.rd-app #v-studio.on .studio:not(.st-empty).insp-off .insp-handle {
+  display: inline-flex;
+}
+
+/* ---------------------------------------------------------------
+   Inline visual style cards in the Setup panel
+   --------------------------------------------------------------- */
+.cs-quick {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.cs-qtile {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 0;
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  overflow: hidden;
+  text-align: left;
+}
+.cs-qtile.on {
+  border-color: var(--red, #cc0000);
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.18);
+}
+.cs-qth {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 3;
+  background: #f2f1ee;
+}
+.cs-qth img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.cs-qtick {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--red, #cc0000);
+  color: #fff;
+}
+.cs-qtick i {
+  width: 13px;
+  height: 13px;
+}
+.cs-qlock {
+  position: absolute;
+  left: 5px;
+  bottom: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.68);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.cs-qlock i {
+  width: 10px;
+  height: 10px;
+}
+.cs-qn {
+  padding: 0 8px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink, #16161a);
+}
+
+/* Toolbar style chip: the actionable replacement for the old passive hint. */
+.rd-app .tb-style {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 210px;
+  padding: 4px 11px 4px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.rd-app .tb-style:hover {
+  border-color: var(--red, #cc0000);
+}
+.rd-app .tb-style-th {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+.rd-app .tb-style-th img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rd-app .tb-style[data-empty="1"] {
+  padding-left: 11px;
+  border-color: var(--red, #cc0000);
+  color: #fff;
+  background: var(--red, #cc0000);
+}
+.rd-app .tb-style[data-empty="1"] .tb-style-th {
+  display: none;
+}
+.rd-app .tb-style-n {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rd-app #canvasCard .card-h > div:last-child {
+  flex-wrap: nowrap;
 }
