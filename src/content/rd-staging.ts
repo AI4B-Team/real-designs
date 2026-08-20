@@ -2530,6 +2530,7 @@ async function openInCanvas(key) {
   if (!url) return;
 
   S.current = key;
+  rememberCanvasOpen(key);
   rememberScroll();
   hide();
 
