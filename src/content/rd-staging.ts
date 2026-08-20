@@ -21,6 +21,7 @@ import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
 import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { mountPhotoImages, photoSrc, photoSrcStale } from "@/lib/photo-src";
+import { photoFailPanelHtml, mountRenderedFailures, syncFailures } from "@/lib/photo-fail";
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
@@ -720,6 +721,22 @@ async function uploadOne(item) {
   saveDraft();
 }
 
+/**
+ * An upload failure is a different problem from a display failure: the stored
+ * asset never arrived, so the retry re-uploads the local file we still hold.
+ * Nothing about the card - room, order, selection - is touched.
+ */
+function mountUploadRetries(root) {
+  mountRenderedFailures(root, async (key) => {
+    const it = itemAt(key);
+    if (!it || !it.file) return false;
+    it.status = "uploading";
+    await uploadOne(it);
+    syncFailures();
+    return it.status === "ready";
+  });
+}
+
 /** Background room detection. Never blocks the grid, never blocks an edit. */
 async function detectRooms(list) {
   const pending = list.filter((i) => i.detect === "pending");
@@ -894,8 +911,9 @@ function cardHtml(it, seq) {
      control underneath. Clicking the photo opens it in the Design canvas. */
   const rc = tileRatioClass(it);
   const override = normalizeOverride(it.ratio);
-  return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}" data-k="${it.key}">
-    <div class="rv-tile-th" data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
+  const failed = it.status === "failed";
+  return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}${failed ? " rd-fail" : ""}" data-k="${it.key}">
+    <div class="rv-tile-th${failed ? " rd-img-fail" : ""}"${failed ? ' data-photo-fail="upload"' : ""} data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
       <img${imgAttrs(it)} alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
@@ -903,7 +921,7 @@ function cardHtml(it, seq) {
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
       ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: it.room ? it.room + " photo" : "Photo " + n })}
       ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
-      ${it.status === "failed" ? '<span class="rds-up bad"><i data-lucide="alert-triangle"></i>Upload Failed</span>' : ""}
+      ${it.status === "failed" ? photoFailPanelHtml("upload") : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
       ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
@@ -1102,6 +1120,7 @@ function render() {
   /* Card images are bound to their storage path, so an expiring signed URL is
      refreshed in place instead of leaving a blank frame behind. */
   mountPhotoImages(el);
+  mountUploadRetries(el);
 }
 
 /* Every rail step is a real destination: nothing in the rail is decorative. */
@@ -1139,6 +1158,7 @@ function patchCard(it) {
   next.innerHTML = cardHtml(it);
   el.replaceWith(next.firstElementChild);
   mountPhotoImages(wrap);
+  mountUploadRetries(wrap);
   paint();
   syncCard(it);
   patchStatus();
