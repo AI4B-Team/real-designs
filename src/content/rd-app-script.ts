@@ -689,7 +689,11 @@ export function initApp(): () => void {
             const tok = __navSeq;
             void (async () => {
               try {
-                const api = (window as any).rdStaging;
+                let api = (window as any).rdStaging;
+                for (let i = 0; !api && i < 40; i++) {
+                  await new Promise((r) => window.setTimeout(r, 50));
+                  api = (window as any).rdStaging;
+                }
                 if (!api || !api.canvasWasOpen || !api.canvasWasOpen()) return;
                 if (!isCurrentNavigation(tok, "studio")) return;
                 await api.resumeCanvas();
