@@ -33,12 +33,12 @@ export function showInspectorPane(pane: Pane) {
   const host = document.getElementById("stInspector");
   if (!host) return;
   host.querySelectorAll<HTMLElement>(".insp-tab").forEach((t) => {
-    const on = t.dataset.insp === pane;
+    const on = t.dataset["insp"] === pane;
     t.classList.toggle("on", on);
     t.setAttribute("aria-selected", on ? "true" : "false");
   });
   host.querySelectorAll<HTMLElement>(".insp-pane").forEach((p) => {
-    p.classList.toggle("on", p.dataset.pane === pane);
+    p.classList.toggle("on", p.dataset["pane"] === pane);
   });
   writePref({ pane });
 }
@@ -55,7 +55,7 @@ export function initCanvasInspector() {
   (host as any).__rdInsp = true;
 
   host.querySelectorAll<HTMLElement>(".insp-tab").forEach((t) => {
-    t.addEventListener("click", () => showInspectorPane((t.dataset.insp || "objects") as Pane));
+    t.addEventListener("click", () => showInspectorPane((t.dataset["insp"] || "objects") as Pane));
   });
   document
     .getElementById("inspCollapse")
