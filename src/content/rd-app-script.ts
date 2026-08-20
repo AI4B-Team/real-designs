@@ -8707,14 +8707,17 @@ ${picks
           showToolGate(r, name, need);
           return;
         }
+        /* Every style-driven tool, including Redesign, asks for a direction the
+       moment it is selected. Redesign has no LIVE_TOOLS entry (it renders
+       through Generate), so this check must sit outside that branch or the
+       click would appear to do nothing at all. */
+        if (styleNeedForTool(name) && !canvasStyleSelected()) {
+          if (toolInfo) toolInfo.hidden = true;
+          promptForStyle(name);
+          return;
+        }
         if (LIVE_TOOLS[name]) {
           if (toolInfo) toolInfo.hidden = true;
-          /* A style-driven tool never spends a credit before the user has chosen
-       a look: the Setup panel asks for it first. */
-          if (styleNeedForTool(name) && !canvasStyleSelected()) {
-            promptForStyle(name);
-            return;
-          }
           LIVE_TOOLS[name]();
           return;
         }
