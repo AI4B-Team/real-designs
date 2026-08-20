@@ -118,14 +118,17 @@ function loadingOn(el: El) {
   const f = frameOf(el);
   if (f.classList.contains("rd-img-fail")) return;
   f.classList.add("rd-img-load");
+  el.classList.add("rd-img-load");
 }
 function loadingOff(el: El) {
   frameOf(el).classList.remove("rd-img-load");
+  el.classList.remove("rd-img-load");
 }
 
 function failState(el: El, path: string, kind: "display" | "missing" = "display") {
   const f = frameOf(el);
   loadingOff(el);
+  el.classList.remove("rd-img-load");
   markPhotoFailure(f, {
     kind,
     retry: async () => {
@@ -224,6 +227,7 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
   el.__rdPhotoTries = 0;
   el.dataset["painted"] = "1";
   clearPhotoFailure(frameOf(el));
+  el.classList.remove("rd-img-fail");
   loadingOff(el);
   return true;
 

@@ -38,8 +38,8 @@ const COPY = {
   },
   missing: {
     icon: "image-off",
-    title: "Photo is no longer available",
-    body: "This photo may have been removed from Media. Replace it to keep this card.",
+    title: "Photo couldn’t be loaded",
+    body: "This photo may have been removed from Media. Your original may still be available.",
   },
 };
 
@@ -278,11 +278,19 @@ if (typeof document !== "undefined" && !document.__rdPhotoFail) {
       window.setTimeout(() => first?.classList.remove("rd-fail-flash"), 1400);
       return;
     }
-    const frame = t.closest(".rd-img-fail");
+    const frame = t.closest(".rd-img-fail") || t.closest(".rv-tile-th");
     if (retry) return void runRetry(frame, retry);
     const key = keyOf(t);
     const flow = flowOf(t);
-    if (replace) return void runCardAction(flow, "replace", key);
+    if (replace) {
+      /* Builders that listen for the legacy replace event keep working; the
+         shared card action is the primary path. */
+      const path = frame?.getAttribute("data-photo-path") || frame?.getAttribute("data-img") || "";
+      (frame || t).dispatchEvent(
+        new CustomEvent("rd-photo-replace", { bubbles: true, detail: { path, key } }),
+      );
+      return void runCardAction(flow, "replace", key);
+    }
     if (remove) {
       void (async () => {
         const ok = await confirmDialog({
