@@ -170,8 +170,8 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
 
   /* The retry budget is only cleared once a frame actually paints: clearing
      it here made a URL that resolves but never loads retry forever. */
-  clearPhotoFailure(frameOf(el));
   el.dataset["photoPath"] = p;
+
 
 
   if (el instanceof HTMLImageElement) {
