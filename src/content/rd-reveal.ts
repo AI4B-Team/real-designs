@@ -22,7 +22,13 @@ import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voic
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { photoSrc, photoSrcStale, paintPhotoEl, mountPhotoImages } from "@/lib/photo-src";
-import { syncFailures } from "@/lib/photo-fail";
+import {
+  syncFailures,
+  photoFailureKind,
+  failedCardMenuGroups,
+  failureDetailRows,
+  retryPhotoCard,
+} from "@/lib/photo-fail";
 import {
   sceneFrames,
   SE_TRANSITIONS,
