@@ -272,6 +272,9 @@ export function initApp(): () => void {
   const root = document.querySelector(".rd-app") as HTMLElement | null;
   if (root && root.dataset["rdInit"] === "1") return () => {};
   if (root) root.dataset["rdInit"] = "1";
+  try {
+    initCanvasInspector();
+  } catch (_) {}
   const timers: number[] = [];
   const setInterval = (fn: any, ms?: number) => {
     const id = window.setInterval(fn, ms);
