@@ -1945,6 +1945,11 @@ registerCardMenu("photo", {
     const it = itemAt(key);
     if (!it) return [];
     const stored = !!it.path;
+    /* An unavailable photo only offers the actions that do not need a usable
+       image; everything else returns automatically once it loads. */
+    if (photoFailureKind(key))
+      return failedCardMenuGroups({ flow: "photo", key, hasMedia: stored });
+
     const hasOriginal = stored || !!it.previewUrl;
     const hasDesign = !!it.resultPath;
     const dl = hasDesign
