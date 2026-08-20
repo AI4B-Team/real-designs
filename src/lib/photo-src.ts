@@ -10,6 +10,7 @@
  * (selection, room, effects, order) is never touched by any of it.
  */
 import { isStoredPhoto, resolvePhotoUrl, signedPhotoExpiry } from "@/lib/room-photos";
+import { markPhotoFailure, clearPhotoFailure } from "@/lib/photo-fail";
 
 /** Signed-URL lifetime we ask storage for, and how early we re-sign. */
 const TTL_SEC = 6 * 3600;
@@ -101,53 +102,43 @@ type El = HTMLElement & { __rdPhotoSeq?: number; __rdPhotoTries?: number };
 
 let seq = 0;
 
+/**
+ * The visible frame for an element: an <img> cannot host the failed-state
+ * panel, so its card image area is used instead.
+ */
+function frameOf(el: El): HTMLElement {
+  if (el instanceof HTMLImageElement) {
+    return (el.closest(".rv-tile-th") as HTMLElement) || (el.parentElement as HTMLElement) || el;
+  }
+  return el;
+}
+
 /** Intentional loading state while a URL is being resolved. */
 function loadingOn(el: El) {
-  if (el.classList.contains("rd-img-fail")) return;
+  const f = frameOf(el);
+  if (f.classList.contains("rd-img-fail")) return;
+  f.classList.add("rd-img-load");
   el.classList.add("rd-img-load");
 }
 function loadingOff(el: El) {
+  frameOf(el).classList.remove("rd-img-load");
   el.classList.remove("rd-img-load");
 }
 
-/**
- * Ask the surrounding builder to replace this photo. Card modules listen for
- * the event and open their own replace flow; the card itself is untouched.
- */
-function requestReplace(el: El, path: string) {
-  const card = el.closest<HTMLElement>("[data-k],[data-key],[data-asset]");
-  const key =
-    card?.getAttribute("data-k") ||
-    card?.getAttribute("data-key") ||
-    card?.getAttribute("data-asset") ||
-    "";
-  el.dispatchEvent(new CustomEvent("rd-photo-replace", { bubbles: true, detail: { path, key } }));
+function failState(el: El, path: string, kind: "display" | "missing" = "display") {
+  const f = frameOf(el);
+  loadingOff(el);
+  el.classList.remove("rd-img-load");
+  markPhotoFailure(f, {
+    kind,
+    retry: async () => {
+      el.__rdPhotoTries = 0;
+      return paintPhotoEl(el, path, true);
+    },
+  });
+  log("unavailable", { path, kind });
 }
 
-function failState(el: El, path: string) {
-  loadingOff(el);
-  el.classList.add("rd-img-fail");
-  if (!el.querySelector(".rd-img-fail-b")) {
-    el.insertAdjacentHTML(
-      "beforeend",
-      `<span class="rd-img-fail-b" role="status">Photo couldn’t be loaded · <button type="button" data-photo-retry>Retry</button> · <button type="button" data-photo-replace>Replace Photo</button></span>`,
-    );
-    el.querySelector("[data-photo-retry]")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      el.querySelector(".rd-img-fail-b")?.remove();
-      el.classList.remove("rd-img-fail");
-      el.__rdPhotoTries = 0;
-      void paintPhotoEl(el, path, true);
-    });
-    el.querySelector("[data-photo-replace]")?.addEventListener("click", (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      requestReplace(el, path);
-    });
-  }
-  log("unavailable", { path });
-}
 
 /**
  * Paint one element from a storage path. The element keeps whatever it is
@@ -174,15 +165,17 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
       el.__rdPhotoTries = 1;
       return paintPhotoEl(el, p, true);
     }
-    failState(el, p);
+    /* A path that cannot be resolved at all reads as a missing source, not
+       as a transient display error. The path itself is left untouched. */
+    failState(el, p, "missing");
     return false;
   }
 
   /* The retry budget is only cleared once a frame actually paints: clearing
      it here made a URL that resolves but never loads retry forever. */
-  el.classList.remove("rd-img-fail");
-  el.querySelector(".rd-img-fail-b")?.remove();
   el.dataset["photoPath"] = p;
+
+
 
   if (el instanceof HTMLImageElement) {
     const img = el as HTMLImageElement & El;
@@ -233,8 +226,11 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
   }
   el.__rdPhotoTries = 0;
   el.dataset["painted"] = "1";
+  clearPhotoFailure(frameOf(el));
+  el.classList.remove("rd-img-fail");
   loadingOff(el);
   return true;
+
 }
 
 /* One sweeper for the whole app: re-signs any tracked, still-mounted element
