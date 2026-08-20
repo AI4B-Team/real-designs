@@ -28,7 +28,7 @@ const paint = (root) => {
 const COPY = {
   display: {
     icon: "image-off",
-    title: "Photo couldn’t be loaded",
+    title: "Photo Couldn’t Be Loaded",
     body: "We couldn’t display this photo. Your original may still be available.",
   },
   upload: {
@@ -38,7 +38,7 @@ const COPY = {
   },
   missing: {
     icon: "image-off",
-    title: "Photo couldn’t be loaded",
+    title: "Photo Couldn’t Be Loaded",
     body: "This photo may have been removed from Media. Your original may still be available.",
   },
 };
@@ -204,7 +204,7 @@ const REMOVE_ACTION = { photo: "removeproj", video: "removevideo" };
 function noticeHtml(n) {
   return `<div class="rd-failnote" role="status">
     <i data-lucide="triangle-alert"></i>
-    <b>Some photos couldn’t be loaded</b>
+    <b>Some Photos Couldn’t Be Loaded</b>
     <em>${n} photos</em>
     <span class="rd-failnote-a">
       <button type="button" class="rd-fail-b primary" data-failall>Retry All</button>

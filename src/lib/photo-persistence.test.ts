@@ -93,7 +93,7 @@ describe("photo persistence", () => {
     const img = card("k3", "u/d.jpg");
     expect(await paintPhotoEl(img)).toBe(false);
     const tile = document.querySelector('[data-k="k3"]')!;
-    expect(tile.textContent).toContain("Photo couldn’t be loaded");
+    expect(tile.textContent).toContain("Photo Couldn’t Be Loaded");
     expect(tile.querySelector("[data-photo-retry]")).toBeTruthy();
     expect(tile.querySelector("[data-photo-replace]")).toBeTruthy();
   });
