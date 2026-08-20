@@ -101,10 +101,12 @@
 .rd-app .rdw-rail .toolrow .plan-pill,
 .rd-app .rdw-rail .toolrow .pill {
   position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 0.44rem;
+  top: 3px;
+  right: 3px;
+  font-size: 0.42rem;
+  letter-spacing: 0.02em;
   padding: 1px 3px;
+  opacity: 0.9;
   line-height: 1.2;
 }
 .rd-app .rdw-rail .toolrow:hover {

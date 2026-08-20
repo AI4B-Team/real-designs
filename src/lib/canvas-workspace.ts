@@ -117,6 +117,8 @@ export function paintRoomCards() {
         "</span></button>",
     )
     .join("");
+  const ctxRoom = document.getElementById("setupCtxRoom");
+  if (ctxRoom && active) ctxRoom.textContent = active;
   const all = document.getElementById("rdwRoomAll");
   if (all) all.textContent = roomsExpanded ? "Show Less" : "View All";
   icons();
