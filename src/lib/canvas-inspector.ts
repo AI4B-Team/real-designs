@@ -64,6 +64,22 @@ export function initCanvasInspector() {
     .getElementById("inspToggle")
     ?.addEventListener("click", () => setInspectorCollapsed(false));
 
+  /* Command/Control + Shift + I is taken by browser devtools, so the app
+     shortcut is Alt + I (documented in the control tooltips). */
+  if (!(window as any).__rdInspKeys) {
+    (window as any).__rdInspKeys = true;
+    document.addEventListener("keydown", (e: KeyboardEvent) => {
+      if (!e.altKey || e.ctrlKey || e.metaKey) return;
+      if (String(e.key).toLowerCase() !== "i") return;
+      const b = board();
+      if (!b) return;
+      const t = e.target as HTMLElement | null;
+      if (t && /^(input|textarea|select)$/i.test(t.tagName)) return;
+      e.preventDefault();
+      setInspectorCollapsed(!b.classList.contains("insp-off"));
+    });
+  }
+
   const pref = readPref();
   /* Narrow desktops start with the Canvas at full width. */
   const collapsed = pref.collapsed || window.innerWidth < 1441;
@@ -75,3 +91,4 @@ export function initCanvasInspector() {
     showInspectorPane(p);
   };
 }
+

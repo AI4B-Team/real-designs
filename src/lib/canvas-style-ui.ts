@@ -80,7 +80,96 @@ function icons(root?: Element | null) {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* quick picks                                                         */
+/* ------------------------------------------------------------------ */
+
+/** Popular styles offered inline in the Setup panel, in priority order. */
+export const QUICK_STYLE_IDS = [
+  "modern",
+  "contemporary",
+  "transitional",
+  "scandinavian",
+  "mid-century-modern",
+  "minimalist",
+  "industrial",
+  "modern-farmhouse",
+  "coastal",
+  "mediterranean",
+  "traditional",
+  "modern-luxury",
+  "japandi",
+  "bohemian",
+  "art-deco",
+  "rustic",
+];
+
+/**
+ * The six to eight popular styles shown as image cards inside the Setup
+ * panel. Only styles the current space actually supports are offered, and the
+ * active selection is always included so it can never scroll out of reach.
+ */
+export function quickStyles(pool: StyleRecord[], selectedId?: string | null, max = 6): StyleRecord[] {
+  const byId = new Map(pool.map((s) => [s.id, s]));
+  const out: StyleRecord[] = [];
+  const sel = selectedId ? byId.get(selectedId) : null;
+  if (sel) out.push(sel);
+  for (const id of QUICK_STYLE_IDS) {
+    if (out.length >= max) break;
+    const rec = byId.get(id);
+    if (rec && !out.some((s) => s.id === rec.id)) out.push(rec);
+  }
+  for (const rec of pool) {
+    if (out.length >= max) break;
+    if (!out.some((s) => s.id === rec.id)) out.push(rec);
+  }
+  return out;
+}
+
+function quickGrid(pool: StyleRecord[], selectedId: string | null): string {
+  const list = quickStyles(pool, selectedId);
+  if (!list.length) return "";
+  return (
+    '<div class="cs-quick" role="listbox" aria-label="Design Styles">' +
+    list
+      .map((s) => {
+        const plan = styleRequiredPlan(s);
+        const on = s.id === selectedId;
+        return (
+          '<button type="button" class="cs-qtile' +
+          (on ? " on" : "") +
+          '" role="option" aria-selected="' +
+          (on ? "true" : "false") +
+          '" data-quick="' +
+          esc(s.id) +
+          '" title="' +
+          esc(s.displayName) +
+          '">' +
+          '<span class="cs-qth">' +
+          (s.previewImage
+            ? '<img loading="lazy" src="' +
+              esc(s.previewImage) +
+              '" alt="' +
+              esc(s.displayName) +
+              ' example">'
+            : "") +
+          (on ? '<span class="cs-qtick"><i data-lucide="check"></i></span>' : "") +
+          (plan ? '<span class="cs-qlock"><i data-lucide="lock"></i>' + esc(plan) + "</span>" : "") +
+          "</span>" +
+          '<span class="cs-qn">' +
+          esc(s.displayName) +
+          "</span>" +
+          "</button>"
+        );
+      })
+      .join("") +
+    "</div>" +
+    '<button class="btn btn-ghost btn-sm cs-browse" type="button"><i data-lucide="layout-grid"></i>View All Styles</button>'
+  );
+}
+
 function ctxFor(need: StyleNeed, c: CanvasStyleContext): DirectionContext {
+
   return {
     need,
     draftId: c.draftId ?? null,
@@ -374,6 +463,8 @@ export function mountCanvasStyle(
     const propRec = propId ? styleById(propId) : null;
     const title = sectionTitle(need, c.projectType);
 
+    const pool = stylesForNeed(STYLES, need, c.projectType);
+
     if (!sel) {
       el.innerHTML =
         '<div class="cs-sec cs-empty-state">' +
@@ -381,13 +472,9 @@ export function mountCanvasStyle(
         esc(title) +
         '</label><span class="cs-req">Required</span></div>' +
         "<p>" +
-        esc(
-          need === "stage"
-            ? styleSectionHint(need, c.projectType)
-            : styleSectionHint(need, c.projectType),
-        ) +
+        esc(styleSectionHint(need, c.projectType)) +
         "</p>" +
-        '<button class="btn btn-primary btn-sm cs-browse" type="button"><i data-lucide="layout-grid"></i>Browse Styles</button>' +
+        quickGrid(pool, null) +
         (propRec
           ? '<button class="btn btn-ghost btn-sm cs-useprop" type="button"><i data-lucide="dna"></i>Use Property Direction &middot; ' +
             esc(propRec.displayName) +
@@ -419,8 +506,8 @@ export function mountCanvasStyle(
       esc(s.shortDescription) +
       "</em></span>" +
       "</div>" +
+      quickGrid(pool, s.id) +
       '<div class="cs-picked-act">' +
-      '<button class="btn btn-ghost btn-sm cs-browse" type="button"><i data-lucide="repeat-2"></i>Change Style</button>' +
       '<button class="fb-link cs-clear" type="button">Clear</button>' +
       "</div>" +
       (sel.scope !== "photo" && c.photoKey
@@ -429,6 +516,7 @@ export function mountCanvasStyle(
           ". Choosing a different style here only changes this photo.</p>"
         : "") +
       "</div>";
+
     icons(el);
     onChange?.(sel);
   }
@@ -467,11 +555,18 @@ export function mountCanvasStyle(
     if (!el || el.hidden) return;
     const t = e.target as HTMLElement;
     if (!t || !t.closest || !el.contains(t)) return;
+    const quick = t.closest("[data-quick]") as HTMLElement | null;
+    if (quick) {
+      e.preventDefault();
+      pick(quick.dataset["quick"] || "", false);
+      return;
+    }
     if (t.closest(".cs-browse")) {
       e.preventDefault();
       open();
       return;
     }
+
     if (t.closest(".cs-useprop")) {
       e.preventDefault();
       const need = needNow();

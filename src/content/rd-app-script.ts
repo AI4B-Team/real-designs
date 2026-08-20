@@ -8519,6 +8519,44 @@ ${picks
         el.dispatchEvent(new Event("change", { bubbles: true }));
       }
     }
+    function currentStyleSelection(): any {
+      try {
+        return (CANVAS_STYLE && CANVAS_STYLE.selection()) || null;
+      } catch (_) {
+        return null;
+      }
+    }
+    /** Toolbar style control: either the chosen style, or an actionable prompt. */
+    function paintStyleChip(sel: any, prompt: string | null) {
+      const btn = document.getElementById("genStyleBtn") as any;
+      if (!btn) return;
+      const th = document.getElementById("genStyleTh");
+      const nm = document.getElementById("genStyleN");
+      if (!sel && !prompt) {
+        btn.hidden = true;
+        return;
+      }
+      btn.hidden = false;
+      if (sel) {
+        btn.dataset.empty = "";
+        btn.title = "Change Style";
+        if (nm) nm.textContent = sel.style.displayName;
+        if (th)
+          th.innerHTML = sel.style.previewImage
+            ? '<img src="' + sel.style.previewImage + '" alt="">'
+            : "";
+      } else {
+        btn.dataset.empty = "1";
+        btn.title = prompt as string;
+        if (nm) nm.textContent = "Choose Style";
+        if (th) th.innerHTML = "";
+      }
+    }
+    document.getElementById("genStyleBtn")?.addEventListener("click", (e) => {
+      e.preventDefault();
+      promptForStyle(activeToolName());
+    });
+
     function paintGenGate() {
       const btn = document.getElementById("genBtn") as any;
       if (!btn) return;
@@ -8527,7 +8565,6 @@ ${picks
       const need = styleNeedForTool(tool);
       const support = toolSupport(tool, space);
       const missing = (!!need && !canvasStyleSelected()) || !support.ok;
-      const hint = document.getElementById("genHint");
       /* The cost chip always states the real price of this run. */
       const cost = document.getElementById("genCost");
       if (cost) cost.textContent = costLabel(toolCost(tool));
@@ -8541,12 +8578,7 @@ ${picks
             : (support.reason as string),
         );
         btn.setAttribute("aria-disabled", "true");
-        if (hint) {
-          hint.textContent = support.ok
-            ? "Choose " + sectionTitle(need as any, space) + " First"
-            : (support.reason as string);
-          (hint as any).hidden = false;
-        }
+        paintStyleChip(null, support.ok ? "Choose " + sectionTitle(need as any, space) : null);
       } else {
         if (btn.dataset.csGate === "1") {
           btn.dataset.csGate = "";
@@ -8554,7 +8586,7 @@ ${picks
           btn.removeAttribute("data-tt");
           btn.setAttribute("aria-disabled", "false");
         }
-        if (hint) (hint as any).hidden = true;
+        paintStyleChip(need ? currentStyleSelection() : null, null);
       }
     }
 
@@ -8634,12 +8666,20 @@ ${picks
         host.classList.add("cs-flash");
         setTimeout(() => host.classList.remove("cs-flash"), 1200);
       }
+      /* The visual cards live in Setup: bring the user to them instead of
+         stacking a modal on top of controls they can already see. */
+      if (!host) {
+        try {
+          CANVAS_STYLE && CANVAS_STYLE.open();
+        } catch (_) {}
+        return;
+      }
       try {
-        window.rdToast &&
-          window.rdToast("Choose A " + sectionTitle((need || "design") as any) + " First");
+        (host.querySelector(".cs-qtile") as HTMLElement | null)?.focus();
       } catch (_) {}
       try {
-        CANVAS_STYLE && CANVAS_STYLE.open();
+        window.rdToast &&
+          window.rdToast("Choose A " + sectionTitle((need || "design") as any));
       } catch (_) {}
     }
     try {
