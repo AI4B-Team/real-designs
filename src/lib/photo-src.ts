@@ -223,8 +223,10 @@ export async function paintPhotoEl(el: El, path?: string | null, force = false):
   }
   el.__rdPhotoTries = 0;
   el.dataset["painted"] = "1";
+  clearPhotoFailure(frameOf(el));
   loadingOff(el);
   return true;
+
 }
 
 /* One sweeper for the whole app: re-signs any tracked, still-mounted element
