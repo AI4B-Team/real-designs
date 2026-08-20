@@ -8670,10 +8670,13 @@
   background: var(--red, #cc0000);
   color: #fff;
 }
-.cs-qtick i {
+.cs-qtick i,
+.cs-qtick svg {
   width: 13px;
   height: 13px;
+  stroke-width: 3;
 }
+
 .cs-qlock {
   position: absolute;
   left: 5px;
