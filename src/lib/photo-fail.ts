@@ -190,11 +190,24 @@ export function syncFailures() {
   if (typeof document === "undefined") return;
   const grids = Array.from(document.querySelectorAll(".rv-grid"));
   for (const grid of grids) {
-    const tiles = Array.from(grid.children);
+    const tiles = Array.from(grid.querySelectorAll(":scope > .rv-tile"));
     tiles.forEach((t) => t.classList.remove("rd-fail-next"));
     tiles.forEach((t, i) => {
       if (t.classList.contains("rd-fail") && i > 0) tiles[i - 1].classList.add("rd-fail-next");
     });
+    /* A connector moved out of its card for a row break still belongs to that
+       card: a pair with a failed photo on either side stays hidden, and the
+       transition data behind it is left completely untouched. */
+    const off = new Set();
+    tiles.forEach((t) => {
+      if (!t.classList.contains("rd-fail") && !t.classList.contains("rd-fail-next")) return;
+      const k = t.getAttribute("data-key") || t.getAttribute("data-k") || "";
+      if (k) off.add(k);
+    });
+    grid.querySelectorAll(".rv-conn[data-key]").forEach((c) => {
+      c.classList.toggle("rd-conn-off", off.has(c.getAttribute("data-key") || ""));
+    });
+
     const n = grid.querySelectorAll(".rv-tile.rd-fail").length;
     const host = grid.parentElement;
     if (!host) continue;
