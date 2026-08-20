@@ -45,10 +45,96 @@ const COPY = {
 
 /* asset id -> failure type, for the grid notice and for debugging. */
 const FAILED = new Map();
+/* asset id -> last time the photo did load, so details can report it. */
+const LAST_OK = new Map();
 
 export function photoFailures() {
   return Array.from(FAILED.entries()).map(([key, kind]) => ({ key, kind }));
 }
+
+/** Failure type for one card key, or "" when the photo is healthy. */
+export function photoFailureKind(key) {
+  return (key && FAILED.get(key)) || "";
+}
+
+/** Note that a card key is currently displaying fine. */
+export function notePhotoLoaded(key) {
+  if (key) LAST_OK.set(key, Date.now());
+}
+
+const FAIL_LABEL = {
+  display: "Image Could Not Be Displayed",
+  upload: "Upload Did Not Finish",
+  missing: "Source Not Found In Media",
+};
+
+/**
+ * The short menu a failed card shows. Actions that need a usable image are
+ * removed outright, never listed as disabled rows.
+ */
+export function failedCardMenuGroups(opts = {}) {
+  const key = opts.key || "";
+  const kind = photoFailureKind(key) || opts.kind || "display";
+  const hasMedia = !!opts.hasMedia;
+  const removeAction = opts.removeAction || REMOVE_ACTION[opts.flow] || "removeproj";
+  const removeLabel =
+    opts.removeLabel || (removeAction === "removevideo" ? "Remove From Video" : "Remove From Project");
+  return [
+    {
+      items: [
+        {
+          action: "retryload",
+          label: kind === "upload" ? "Retry Upload" : "Retry Loading",
+          icon: "refresh-cw",
+        },
+        { action: "replace", label: "Replace Photo", icon: "image-plus" },
+        { action: "faildetails", label: "View Details", icon: "info" },
+      ],
+    },
+    { items: [{ action: removeAction, label: removeLabel, icon: "circle-minus" }] },
+    {
+      danger: true,
+      items: [
+        {
+          action: "deletemedia",
+          label: "Delete From Media",
+          icon: "trash-2",
+          danger: true,
+          hidden: !hasMedia,
+        },
+      ],
+    },
+  ];
+}
+
+/** Run the card's own retry path (fresh URL, or a re-upload) from the menu. */
+export function retryPhotoCard(key) {
+  if (typeof document === "undefined" || !key) return false;
+  const k = window.CSS?.escape ? CSS.escape(key) : key;
+  const card = document.querySelector(
+    `[data-k="${k}"],[data-key="${k}"],[data-asset="${k}"]`,
+  );
+  const btn = card?.querySelector?.("[data-photo-retry]");
+  if (!btn) return false;
+  btn.click();
+  return true;
+}
+
+/** The read-only diagnostic sheet for an unavailable photo. */
+export function failureDetailRows(opts = {}) {
+  const key = opts.key || "";
+  const kind = photoFailureKind(key) || opts.kind || "display";
+  const last = LAST_OK.get(key);
+  return [
+    ["File", opts.name || "Photo"],
+    ["Asset ID", key || "Not Assigned"],
+    ["Upload Status", kind === "upload" ? "Upload Did Not Finish" : "Uploaded"],
+    ["Failure Type", FAIL_LABEL[kind] || FAIL_LABEL.display],
+    ["Last Successful Load", last ? new Date(last).toLocaleString() : "Never In This Session"],
+    ["Source In Media", opts.hasMedia ? "Yes" : "No"],
+  ];
+}
+
 
 function cardOf(el) {
   return el && el.closest ? el.closest(".rv-tile,[data-k],[data-key]") : null;
