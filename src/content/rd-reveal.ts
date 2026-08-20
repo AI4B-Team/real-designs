@@ -22,6 +22,7 @@ import { myVoiceOption, openVoiceStudio, voiceStudioButton } from "@/lib/rd-voic
 import { supabase } from "@/integrations/supabase/client";
 import { resolvePhotoUrl, uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { photoSrc, photoSrcStale, paintPhotoEl, mountPhotoImages } from "@/lib/photo-src";
+import { syncFailures } from "@/lib/photo-fail";
 import {
   sceneFrames,
   SE_TRANSITIONS,
@@ -5442,6 +5443,7 @@ function render() {
   if (S.screen === "detail" && S.detail) mountPlayer();
   bind();
   layoutConnectors();
+  syncFailures();
 }
 
 function bind() {
