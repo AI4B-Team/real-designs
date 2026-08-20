@@ -35,6 +35,7 @@ import {
   listRoomTargets,
 } from "@/lib/rooms.functions";
 import { openSaveRoomModal } from "@/lib/save-room";
+import { initCanvasInspector } from "@/lib/canvas-inspector";
 import { suggestDesignTitle } from "@/lib/property-address";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -2800,14 +2801,18 @@ export function initApp(): () => void {
       });
       if (!ready) {
         if (sub) sub.textContent = "Analysis Pending";
+        const help = document.getElementById("lockHelp");
+        if (help) help.hidden = true;
         if (list)
           list.innerHTML =
-            '<p style="font-size:.79rem;color:var(--mute-2)">Object Controls will become available after this photo has been analyzed.</p>';
+            '<p style="font-size:.79rem;color:var(--mute-2)">Analyzing photo for object controls\u2026</p>';
         try {
           lucide.createIcons();
         } catch (_) {}
         return;
       }
+      const help = document.getElementById("lockHelp");
+      if (help) help.hidden = false;
       if (sub)
         sub.textContent = k.length
           ? `${k.length} Object${k.length > 1 ? "s" : ""} Locked`
@@ -3343,6 +3348,8 @@ export function initApp(): () => void {
         const tile = document.querySelector('#vars .var[data-src="' + CSS.escape(image) + '"]');
         if (tile) tile.dataset.path = path;
         paintVersions();
+        /* A finished render is what the user wants to inspect next. */
+        window.rdInspectorShow && window.rdInspectorShow("versions");
       } catch (_) {}
       window.rdToast && window.rdToast("Design Saved");
       await finalizeGeneratedDesign(path);
