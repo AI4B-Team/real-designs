@@ -74,18 +74,18 @@ const addClass = () => {
 };
 
 describe("photo format reshapes the review grid", () => {
-  it("defaults to landscape and switches every frame immediately", async () => {
+  it("defaults to square and switches every frame immediately", async () => {
     await openReviewWith(["a.jpg", "b.jpg", "c.jpg"]);
-    expect(tileClasses()).toEqual(["rt-169", "rt-169", "rt-169"]);
-    expect(addClass()).toBe("rt-169");
+    expect(tileClasses()).toEqual(["rt-11", "rt-11", "rt-11"]);
+    expect(addClass()).toBe("rt-11");
 
     await chooseFormat("9:16");
     expect(tileClasses()).toEqual(["rt-916", "rt-916", "rt-916"]);
     expect(addClass()).toBe("rt-916");
 
-    await chooseFormat("1:1");
-    expect(tileClasses()).toEqual(["rt-11", "rt-11", "rt-11"]);
-    expect(addClass()).toBe("rt-11");
+    await chooseFormat("16:9");
+    expect(tileClasses()).toEqual(["rt-169", "rt-169", "rt-169"]);
+    expect(addClass()).toBe("rt-169");
   });
 
   it("keeps the selected button and the card shapes in agreement", async () => {
