@@ -1511,10 +1511,9 @@
    and so does the card immediately before it in the grid. */
 .rd-app .rv-tile.rd-fail .rv-tools,
 .rd-app .rv-tile.rd-fail .rv-tools-more,
-.rd-app .rv-tile.rd-fail .rv-tr,
-.rd-app .rv-tile.rd-fail .rv-tr-conn,
-.rd-app .rv-tile.rd-fail-next .rv-tr,
-.rd-app .rv-tile.rd-fail-next .rv-tr-conn { display: none !important; }
+.rd-app .rv-tile.rd-fail .rv-conn,
+.rd-app .rv-tile.rd-fail-next .rv-conn,
+.rd-app .rv-conn.rd-conn-off { display: none !important; }
 .rd-app .rv-tile.rd-fail-flash { outline: 2px solid #cc0000; outline-offset: 2px; }
 
 /* One compact notice per grid when several photos fail at once. */
