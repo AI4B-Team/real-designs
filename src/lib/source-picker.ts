@@ -719,7 +719,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           "</div>"
         );
       return (
-        '<div class="sp-pane"><div class="sp-props" role="listbox" aria-label="Your Properties">' +
+        '<div class="sp-pane">' +
+        paneHead("Choose An Existing Property", "Reuse photos already saved to your workspace.") +
+        '<div class="sp-props" role="listbox" aria-label="Your Properties">' +
         shown.map(propCard).join("") +
         "</div>" +
         toggle +
@@ -732,6 +734,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       const ready = state.prompt.trim().length > 0 && !state.describeBusy;
       return (
         '<div class="sp-pane sp-describe">' +
+        paneHead(
+          "Create From A Description",
+          "Describe the space you want to create without uploading a photo.",
+        ) +
         '<div class="sp-composer' +
         (state.describeBusy ? " is-busy" : "") +
         '">' +
