@@ -283,6 +283,17 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     url: "",
     prompt: "",
     describeBusy: false,
+    improving: false,
+    /** Reference images attached to the description, data URLs. */
+    refs: [] as { id: string; name: string; url: string }[],
+    detailsOpen: false,
+    dRoom: "",
+    dStyle: "",
+    dMood: "",
+    dFeatures: "",
+    ratio: "16:9",
+    options: 2,
+
 
     dragging: false,
     busyLabel: "Adding Photos",
