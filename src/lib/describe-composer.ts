@@ -849,6 +849,11 @@ export function createDescribeComposer(cfg: Cfg) {
       ["strength", (v) => (state.strength = v)],
       ["space", (v) => {
         state.space = v;
+        /* An interior room or style can never survive a switch to Garden:
+           the user is asked for an applicable replacement instead. */
+        if (state.room && !areaFitsSpace(state.room, spaceKey(v))) state.room = "";
+        state.style = "";
+        state.styleId = "";
         ensureCamera();
       }],
       ["level", (v) => (state.level = v)],
