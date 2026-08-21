@@ -9212,51 +9212,51 @@
   padding: 9px 20px 9px 32px;
 }
 .sp-work-r {
-  min-height: 226px;
+  min-height: 178px;
 }
 .sp-work-stack {
-  inset: -12px 0;
+  inset: -8px 0;
 }
 .sp-work-ph1 {
-  top: 14px;
-  right: 26px;
-  width: 193px;
-  height: 130px;
+  top: 12px;
+  right: 22px;
+  width: 145px;
+  height: 98px;
 }
 .sp-work-ph2 {
-  top: 66px;
-  right: 100px;
-  width: 177px;
-  height: 121px;
+  top: 52px;
+  right: 78px;
+  width: 133px;
+  height: 91px;
 }
 .sp-work-ph3 {
-  bottom: 16px;
-  right: 42px;
-  width: 233px;
-  height: 157px;
+  bottom: 12px;
+  right: 34px;
+  width: 175px;
+  height: 118px;
 }
 .sp-work-stack.is-video .sp-work-ph1 {
-  top: 10px;
-  right: 182px;
-  width: 148px;
-  height: 99px;
+  top: 8px;
+  right: 140px;
+  width: 111px;
+  height: 74px;
 }
 .sp-work-stack.is-video .sp-work-ph2 {
-  top: 78px;
-  right: 218px;
-  width: 139px;
-  height: 94px;
+  top: 60px;
+  right: 168px;
+  width: 104px;
+  height: 71px;
 }
 .sp-work-stack.is-video .sp-work-ph3 {
-  bottom: 18px;
-  right: 196px;
-  width: 155px;
-  height: 103px;
+  bottom: 14px;
+  right: 150px;
+  width: 116px;
+  height: 77px;
 }
 .sp-work-vid {
-  right: 32px;
-  width: 193px;
-  height: 188px;
+  right: 26px;
+  width: 145px;
+  height: 141px;
 }
 
 /* contextual source-pane heading */
