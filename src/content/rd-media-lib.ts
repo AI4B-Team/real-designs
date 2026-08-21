@@ -46,6 +46,7 @@ import {
 } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
+import { openPhotoEditor as openFullPhotoEditor } from "@/lib/photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
 import { cancelJob } from "@/lib/upload-manager";
 import { openMotionClip } from "@/lib/rd-motion-clip";
@@ -945,15 +946,23 @@ function assetRow(m) {
   };
 }
 
-/** Uploads open in the photo editor; generated designs re-open in Studio. */
+/** Uploads open in the full-screen Photo Editor; designs re-open in Studio. */
 function editImage(m) {
   if (canEditImage(m)) {
-    openPhotoEditor({
-      assetId: m.refId,
-      assets: [assetRow(m)],
-      versions: [],
-      propertyLabel: m.property || "Media",
-      reload: () => load(true),
+    const siblings = filtered().filter((x) => canEditImage(x) && (x.assetPath || x.path));
+    const list = siblings.length ? siblings : [m];
+    openFullPhotoEditor({
+      startKey: m.id,
+      property: m.property || "Media",
+      photos: list.map((x) => ({
+        key: x.id,
+        name: x.title,
+        room: x.room || "Photo",
+        property: x.property || "Media",
+        path: x.assetPath || x.path,
+        src: x.thumb || "",
+      })),
+      onSaved: () => load(true),
     });
     return;
   }

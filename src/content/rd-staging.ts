@@ -32,6 +32,7 @@ import {
   bakeExifOrientation,
 } from "@/lib/photo-rotation";
 import { rejectReason } from "@/lib/upload-manager";
+import { openPhotoEditor } from "@/lib/photo-editor";
 import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { mountPhotoImages, photoSrc, photoSrcStale } from "@/lib/photo-src";
 import {
@@ -1164,6 +1165,7 @@ function cardHtml(it, seq) {
       ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
         [
+          { label: "Edit Photo", icon: "sliders-horizontal", attrs: { "data-editphoto": it.key } },
           { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
           { label: "Replace", icon: "image-plus", attrs: { "data-replace": it.key } },
           { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
@@ -1925,6 +1927,13 @@ function bindReview(el) {
       if (it) startBulkDesign([it], true);
       return;
     }
+    const edp = t.closest("[data-editphoto]");
+    if (edp) {
+      e.preventDefault();
+      e.stopPropagation();
+      openStagingPhotoEditor(edp.getAttribute("data-editphoto"));
+      return;
+    }
     const rot = t.closest("[data-rotate]");
     if (rot) {
       e.preventDefault();
@@ -2267,6 +2276,7 @@ registerCardMenu("photo", {
             disabled: !stored,
             note: stored ? "" : "Saving…",
           },
+          { action: "editphoto", label: "Edit Photo", icon: "sliders-horizontal" },
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
           { action: "rotate", label: "Rotate 90°", icon: "rotate-cw" },
           { action: "room", label: "Change Room Type", icon: "door-open" },
@@ -2322,6 +2332,7 @@ registerCardMenu("photo", {
         rows: failureDetailRows({ key, name: it.name, hasMedia: !!it.path }),
       });
     if (action === "open") return void openInCanvas(key);
+    if (action === "editphoto") return void openStagingPhotoEditor(key);
 
     if (action === "duplicate") {
       duplicateItem(it);
@@ -3326,3 +3337,34 @@ try {
     detach: detachStagingView,
   };
 } catch (_) {}
+
+
+/**
+ * Prepare Photos → the full-screen Photo Editor. The whole project travels
+ * with the photo so the filmstrip can move through the set, and a saved photo
+ * comes back onto its card without touching the original upload.
+ */
+export function openStagingPhotoEditor(key) {
+  const items = ordered();
+  if (!items.length) return;
+  openPhotoEditor({
+    startKey: key,
+    property: (S && S.propertyLabel) || "Property",
+    photos: items.map((it) => ({
+      key: it.key,
+      name: it.name,
+      room: it.room || "Photo",
+      path: it.path || "",
+      src: it.resultUrl || it.signed || it.previewUrl || "",
+      rotation: normalizeRotation(it.rotation),
+    })),
+    onSaved: ({ key: k, path, dataUrl }) => {
+      const it = S.items.find((x) => x.key === k);
+      if (!it) return;
+      it.editedPath = path;
+      it.previewUrl = dataUrl;
+      it.signed = dataUrl;
+      render();
+    },
+  });
+}

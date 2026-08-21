@@ -16,6 +16,7 @@ import "@/styles/rd-reveal.css";
 import "@/styles/rd-voice.css";
 import "@/styles/rd-present.css";
 import "@/styles/rd-staging.css";
+import "@/styles/rd-photo-editor.css";
 
 const title = "Back Office | REAL DESIGNS";
 const description =
