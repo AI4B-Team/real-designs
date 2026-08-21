@@ -9151,7 +9151,9 @@
   padding-top: 26px;
 }
 
-/* project-type cards: restrained white / red states */
+/* project-type cards: selected card gets the full red treatment
+   (light pink fill, red border, red icon chip with white icon); the
+   unselected card stays neutral white/gray. */
 .rd-app .stw-door {
   border-color: var(--line);
 }
@@ -9162,7 +9164,15 @@
   stroke: var(--mute-2);
 }
 .rd-app .stw-door.on {
-  box-shadow: none;
+  border-color: var(--red);
+  background: rgba(204, 0, 0, 0.04);
+  box-shadow: 0 0 0 1px var(--red) inset;
+}
+.rd-app .stw-door.on > i,
+.rd-app .stw-door.on > svg {
+  background: var(--red);
+  color: #fff;
+  stroke: #fff;
 }
 
 /* ---------- legacy compatibility layer ----------
@@ -9193,7 +9203,7 @@
 .rd-app .stw-door.on,
 .rd-app .stw-door.on:hover {
   border-color: var(--red);
-  background: #fff;
+  background: rgba(204, 0, 0, 0.04);
 }
 
 /* Upload workspace: a little shorter, with slightly larger artwork that sits

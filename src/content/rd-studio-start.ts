@@ -1149,7 +1149,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "</span></div>" +
       '<div id="stSource"></div>' +
       '<p class="stw-secondary stw-doorfoot">' +
-      '<button class="btn btn-ghost btn-sm stw-samplebtn" data-sts="sample">' +
+      '<button class="stw-samplelink" data-sts="sample">' +
       (state.door === "video" ? "Try A Sample Video" : "Try A Sample Space") +
       "</button></p>" +
       "</div>" +
