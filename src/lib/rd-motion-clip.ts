@@ -128,17 +128,47 @@ export function openMotionClip(item: MotionClipInput) {
     if (e.target === wrap) close();
   });
   wrap.querySelectorAll("[data-x]").forEach((b) => ((b as HTMLElement).onclick = close));
+
+  /* Simulated preview: transforms the still, spends nothing. */
+  const prevImg = wrap.querySelector("#mcPrevImg") as HTMLImageElement | null;
+  let preview: ReturnType<typeof attachMotionPreview> | null = null;
+  const syncPreview = () => {
+    if (!prevImg) return;
+    if (!preview) preview = attachMotionPreview(prevImg, state.motion, state.strength, state.seconds);
+    else preview.update(state.motion, state.strength, state.seconds);
+  };
+  void resolvePhotoUrl(path).then((u) => {
+    if (!prevImg || !u) return;
+    prevImg.src = u;
+    syncPreview();
+  });
+  (wrap.querySelector("[data-prev-replay]") as HTMLElement | null)?.addEventListener("click", () =>
+    preview?.replay(),
+  );
+
   wrap.querySelectorAll(".mc-chips").forEach((g) => {
     (g as HTMLElement).querySelectorAll("button").forEach((b) => {
       b.onclick = () => {
-        const key = (g as HTMLElement).dataset["g"] as "motion" | "aspect" | "seconds";
+        const key = (g as HTMLElement).dataset["g"] as
+          | "motion"
+          | "aspect"
+          | "seconds"
+          | "strength";
         const raw = (b as HTMLElement).dataset["v"] as string;
         (state as any)[key] = key === "seconds" ? Number(raw) : raw;
+        if (key === "motion") state.seconds = motionPreset(raw).seconds;
         (g as HTMLElement).querySelectorAll("button").forEach((x) => x.classList.remove("on"));
         b.classList.add("on");
+        if (key === "motion") {
+          wrap
+            .querySelectorAll<HTMLElement>('.mc-chips[data-g="seconds"] button')
+            .forEach((x) => x.classList.toggle("on", Number(x.dataset["v"]) === state.seconds));
+        }
+        syncPreview();
       };
     });
   });
+
   const capEl = wrap.querySelector("#mcCap") as HTMLInputElement;
   const bar = wrap.querySelector(".mc-prog") as HTMLElement;
   const fill = wrap.querySelector(".mc-prog i") as HTMLElement;
