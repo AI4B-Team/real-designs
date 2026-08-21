@@ -126,7 +126,8 @@ export function quickStyles(pool: StyleRecord[], selectedId?: string | null, max
 }
 
 function quickGrid(pool: StyleRecord[], selectedId: string | null): string {
-  const list = quickStyles(pool, selectedId);
+  /* Compact 3-column selectors: six styles read at a glance without scrolling. */
+  const list = quickStyles(pool, selectedId, 6);
   if (!list.length) return "";
   return (
     '<div class="cs-quick" role="listbox" aria-label="Design Styles">' +

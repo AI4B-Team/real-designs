@@ -455,7 +455,8 @@
 }
 .rd-app .rdw-card-th {
   position: relative;
-  height: 52px;
+  /* Room cards stay clearly smaller than the Design Style tiles. */
+  height: 42px;
   /* Skeleton tone shows while the preview decodes, never a bare beige box. */
   background:
     linear-gradient(90deg, #efece7 25%, #f6f4f1 37%, #efece7 63%) 0 0 / 400% 100%,
@@ -878,8 +879,18 @@
   text-transform: none;
   color: var(--muted, #7b756c);
 }
+.rd-app .rdw-help {
+  display: block;
+  width: 100%;
+  flex-basis: 100%;
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--muted, #7b756c);
+}
 .rd-app #rdwNoteField textarea {
-  min-height: 64px;
+  min-height: 56px;
 }
 
 /* "View All" sits beside the Design Style heading, not below the cards. */

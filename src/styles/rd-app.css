@@ -8641,8 +8641,9 @@
    --------------------------------------------------------------- */
 .cs-quick {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  /* Compact selectors, not gallery cards: three per row, ~100-120px wide. */
+  grid-template-columns: repeat(3, 1fr);
+  gap: 7px;
 }
 .cs-qtile {
   display: flex;
@@ -8664,6 +8665,8 @@
   position: relative;
   display: block;
   aspect-ratio: 4 / 3;
+  min-height: 70px;
+  max-height: 85px;
   background: #f2f1ee;
 }
 .cs-qth img {
@@ -8711,8 +8714,8 @@
   height: 10px;
 }
 .cs-qn {
-  padding: 0 8px 8px;
-  font-size: 0.72rem;
+  padding: 0 6px 6px;
+  font-size: 0.68rem;
   font-weight: 600;
   line-height: 1.25;
   color: var(--ink, #16161a);
