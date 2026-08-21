@@ -172,7 +172,7 @@ export function buildCanvasPanel() {
       lab.innerHTML =
         'Describe What You Want<span class="rdw-opt-tag">Optional</span>';
     const ta = instr.querySelector("textarea") as HTMLTextAreaElement | null;
-    if (ta) ta.placeholder = "Keep the flooring, lighten the cabinets…";
+    if (ta) ta.placeholder = "Add specific requests…";
     body.appendChild(instr);
   }
 
