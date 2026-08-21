@@ -414,7 +414,11 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     closeMoreMenu();
     const kind = act.getAttribute("data-panel-reset");
-    if (kind === "tool") {
+    if (kind === "clear") {
+      /* The Version History Clear button still owns the behaviour. */
+      byId("clearLocks")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      setTimeout(refreshVersionRail, 0);
+    } else if (kind === "tool") {
       resetCustomize();
     } else if (kind === "all") {
       resetCustomize();
