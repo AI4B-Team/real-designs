@@ -205,6 +205,8 @@ export function createDescribeComposer(cfg: Cfg) {
     /** Set by Improve Description so the rewrite is always recoverable. */
     undo: null as string | null,
     improving: false,
+    /** Inline, recoverable failure of Improve Description. */
+    impError: null as string | null,
     busy: false,
     refs: [] as DescribeRef[],
     strength: "Closely" as string,
