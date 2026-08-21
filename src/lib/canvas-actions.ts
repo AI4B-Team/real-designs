@@ -25,6 +25,7 @@ export type ResultContext = {
 
 export type ResultAction =
   | "edit"
+  | "variation"
   | "video"
   | "upscale"
   | "shop"
@@ -34,6 +35,7 @@ export type ResultAction =
 
 const BAR: { id: ResultAction; icon: string; label: string }[] = [
   { id: "edit", icon: "pencil", label: "Edit" },
+  { id: "variation", icon: "git-branch", label: "Create Variation" },
   { id: "video", icon: "clapperboard", label: "Create Video" },
   { id: "upscale", icon: "sparkles", label: "Upscale" },
   { id: "shop", icon: "shopping-bag", label: "Shop" },
@@ -103,7 +105,9 @@ export function resultBarHtml(ids: ResultAction[] = BAR.map((b) => b.id)) {
 }
 
 /** The compact bar galleries reveal on hover. */
-export function resultHoverBarHtml(ids: ResultAction[] = ["video", "edit", "download", "more"]) {
+export function resultHoverBarHtml(
+  ids: ResultAction[] = ["video", "edit", "variation", "download", "more"],
+) {
   return resultBarHtml(ids).replace('class="rda-bar"', 'class="rda-bar rda-hover"');
 }
 
@@ -271,6 +275,33 @@ function moreMenu(anchor: HTMLElement, ctx: ResultContext) {
       },
     },
     {
+      icon: "git-compare",
+      label: "Compare With Parent Version",
+      fn: () => {
+        const v = (() => {
+          try {
+            return (window as any).rdSessionVersion?.(ctx.src) || null;
+          } catch (_) {
+            return null;
+          }
+        })();
+        const base = v?.parentSrc || null;
+        const ok = base && (window as any).rdSetCompareBase?.(base);
+        if (!ok) {
+          toast("This Design Has No Parent Version Yet.");
+          return;
+        }
+        document.querySelector<HTMLElement>('#rdwCmp .rdw-cmpb[data-cmp="split"]')?.click();
+      },
+    },
+    {
+      icon: "copy-plus",
+      label: "Create Variation",
+      fn: () => {
+        void import("@/lib/variation-drawer").then((m) => m.openVariationDrawer(ctx));
+      },
+    },
+    {
       icon: "presentation",
       label: "Add To Presentation",
       fn: () => go("present"),
@@ -307,6 +338,10 @@ export function runResultAction(action: ResultAction, ctx: ResultContext, anchor
     return;
   }
   if (action === "edit") return editDesign(ctx);
+  if (action === "variation") {
+    void import("@/lib/variation-drawer").then((m) => m.openVariationDrawer(ctx));
+    return;
+  }
   if (action === "video") return startVideo(ctx);
   if (action === "shop") {
     const st = document.getElementById("stShop") as HTMLElement | null;
