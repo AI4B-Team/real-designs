@@ -6,7 +6,15 @@
  * so this module only arranges and mirrors state - it never generates.
  */
 import { ROOM_OPTIONS, roomByLabel, type RoomOption } from "@/lib/staging-rooms";
+import {
+  areaByLabel,
+  areaFitsSpace,
+  areaPreview,
+  areasForSpace,
+  type CanvasSpace,
+} from "@/lib/space-datasets";
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
+
 
 const SETTINGS_KEY = "rd_canvas_workspace";
 
