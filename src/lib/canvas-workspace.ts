@@ -151,13 +151,7 @@ export function paintRoomCards() {
   if (label && label.firstChild && label.firstChild.nodeType === 3)
     label.firstChild.nodeValue = sectionName;
   const viewAll = document.getElementById("rdwRoomAll");
-  if (viewAll)
-    viewAll.textContent =
-      space === "interior"
-        ? "View All Rooms"
-        : space === "exterior"
-          ? "View All Exterior Areas"
-          : "View All Garden Areas";
+  if (viewAll) viewAll.textContent = "View All";
 
   /* Completed selection collapses into one compact summary row. */
   if (active && !roomsExpanded) {
