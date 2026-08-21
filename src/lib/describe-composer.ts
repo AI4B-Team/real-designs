@@ -15,6 +15,14 @@
  * reads it, so there can never be two independent output selectors.
  */
 
+import { areaFitsSpace, type CanvasSpace } from "@/lib/space-datasets";
+
+/** "Interior" | "Exterior" | "Garden" → the dataset key. */
+export function spaceKey(space: string): CanvasSpace {
+  const s = String(space || "").toLowerCase();
+  return s === "exterior" || s === "garden" ? (s as CanvasSpace) : "interior";
+}
+
 export type RefKind =
   | "inspiration"
   | "property"
