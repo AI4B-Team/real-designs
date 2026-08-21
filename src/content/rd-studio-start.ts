@@ -217,6 +217,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     features: "",
     prompt: "",
     inspiration: null as File | null,
+    /** Reference images (data URLs) attached in the Describe composer. */
+    refs: [] as string[],
+    ratio: "16:9",
+    options: 1,
+
     samples: false,
     busy: false,
     property: "",
