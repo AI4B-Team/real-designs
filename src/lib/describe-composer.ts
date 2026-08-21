@@ -15,6 +15,14 @@
  * reads it, so there can never be two independent output selectors.
  */
 
+import { areaFitsSpace, type CanvasSpace } from "@/lib/space-datasets";
+
+/** "Interior" | "Exterior" | "Garden" → the dataset key. */
+export function spaceKey(space: string): CanvasSpace {
+  const s = String(space || "").toLowerCase();
+  return s === "exterior" || s === "garden" ? (s as CanvasSpace) : "interior";
+}
+
 export type RefKind =
   | "inspiration"
   | "property"
@@ -153,13 +161,13 @@ export function ratioForOrientation(orientation: string): string {
   return "16:9";
 }
 
-/** "2 images · 2 credits total" — the multiplication is never hidden. */
+/** "2 images · 2 credits" — the multiplication is never hidden. */
 export function optionTotalLabel(output: DescribeOutput, options: number): string {
   const n = Math.max(1, options);
   const noun = output === "video" ? "video" : "image";
   const credits = describeCredits(output, n);
   return (
-    n + " " + noun + (n === 1 ? "" : "s") + " · " + credits + (credits === 1 ? " credit" : " credits") + " total"
+    n + " " + noun + (n === 1 ? "" : "s") + " · " + credits + (credits === 1 ? " credit" : " credits")
   );
 }
 
@@ -197,10 +205,14 @@ export function createDescribeComposer(cfg: Cfg) {
     /** Set by Improve Description so the rewrite is always recoverable. */
     undo: null as string | null,
     improving: false,
+    /** Inline, recoverable failure of Improve Description. */
+    impError: null as string | null,
     busy: false,
     refs: [] as DescribeRef[],
     strength: "Closely" as string,
     detailsOpen: false,
+    /** Validation stays quiet until the user engages with the composer. */
+    touched: false,
     space: "Interior" as string,
     room: "",
     style: "",
@@ -424,36 +436,38 @@ export function createDescribeComposer(cfg: Cfg) {
     return "Generate";
   }
 
-  /** What still has to happen before Generate can do anything. */
+  /** What still has to happen before Generate can do anything. The details
+      are genuinely optional: only a description is required. */
   function missing(): string | null {
-    if (!state.prompt.trim() && !state.refs.length) return "Add a reference or description";
-    if (!state.prompt.trim()) return "Enter a description to continue";
-    if (!state.room.trim()) return "Choose a room or area";
-    if (!state.style.trim()) return "Choose a design style";
+    if (!state.prompt.trim()) return "Add a description to continue";
+    if (uploadsPending()) return "References are still uploading";
+    if (uploadsFailed()) return "Retry or remove the reference that failed to upload";
     return null;
   }
 
   function summary(): string {
-    const gap = missing();
-    if (gap) return gap;
-    const n = Math.max(1, state.options);
-    if (isVideo())
-      return [
-        state.room,
-        state.camera,
-        state.duration + " seconds",
-        state.orientation,
-        n + (n === 1 ? " video" : " videos"),
-      ].join(" · ");
-    return [
-      state.room,
-      state.style,
-      state.level,
-      n + (n === 1 ? " image" : " images"),
-    ].join(" · ");
+    const parts: string[] = [];
+    if (state.room) parts.push(state.room);
+    if (isVideo()) {
+      parts.push(state.camera, state.duration + " seconds", state.orientation);
+    } else {
+      if (state.style) parts.push(state.style);
+      parts.push(state.level, state.ratio);
+    }
+    return parts.join(" · ");
   }
 
-  const ready = () => !missing() && !state.busy && !uploadsPending() && !uploadsFailed();
+  /** Left-hand footer text: the blocking requirement once the user has
+      actually engaged, otherwise a quiet readiness line. Nothing shouts on
+      first paint. */
+  function footMessage(): string {
+    const gap = missing();
+    if (gap) return state.touched ? gap + "." : "";
+    return summary();
+  }
+
+  const ready = () => !missing() && !state.busy;
+
 
   /* ---------- html ---------- */
 
@@ -563,6 +577,8 @@ export function createDescribeComposer(cfg: Cfg) {
     const improveOk = state.prompt.trim().length >= IMPROVE_MIN_CHARS;
     return (
       '<div class="sp-pane sp-describe">' +
+      '<div class="sp-dhead"><h3>Describe Your Space</h3>' +
+      "<p>Describe what you want to create and optionally add reference images.</p></div>" +
       '<div class="sp-composer' +
       (state.busy ? " is-busy" : "") +
       '">' +
@@ -584,26 +600,28 @@ export function createDescribeComposer(cfg: Cfg) {
       (state.refs.length >= MAX_DESCRIBE_REFS ? " disabled" : "") +
       ' aria-haspopup="true" aria-expanded="' +
       menuOpen +
-      '" title="Attach an inspiration photo, property photo, sketch, floor plan, material or color reference"><i data-lucide="plus"></i>Add Reference</button>' +
+      '"><i data-lucide="plus"></i>Add Reference <span class="sp-opt">Optional</span></button>' +
       (menuOpen ? refMenu() : "") +
       "</div>" +
+      '<span class="sp-toolwrap' +
+      (improveOk ? "" : " is-off") +
+      '" data-sp="improvewrap" tabindex="0">' +
       '<button type="button" class="sp-tool" data-sp="improve"' +
       (improveOk && !state.improving && !state.busy ? "" : " disabled") +
-      ' title="' +
-      esc(
-        improveOk
-          ? "Expand your description into a detailed design brief. You can undo it."
-          : "Write at least a short sentence (" +
-              IMPROVE_MIN_CHARS +
-              " characters) before this can improve it.",
-      ) +
-      '">' +
+      ">" +
       (state.improving
         ? '<span class="sp-spin dark" aria-hidden="true"></span>Improving…'
         : '<i data-lucide="wand-sparkles"></i>Improve Description') +
       "</button>" +
+      (improveOk
+        ? ""
+        : '<span class="sp-tip" role="note">Write a short description first.</span>') +
+      "</span>" +
       (state.undo
-        ? '<button type="button" class="sp-tool" data-sp="undo"><i data-lucide="undo-2"></i>Undo</button>'
+        ? '<button type="button" class="sp-tool" data-sp="undo"><i data-lucide="undo-2"></i>Restore Original</button>'
+        : "") +
+      (state.impError
+        ? '<span class="sp-inline-err" role="alert">' + esc(state.impError) + "</span>"
         : "") +
       "</div>" +
       "</div>" +
@@ -621,7 +639,7 @@ export function createDescribeComposer(cfg: Cfg) {
           "</div></div>"
         : "") +
       (showStarters
-        ? '<div class="sp-try"><span class="sp-try-l">Try:</span><div class="sp-chips">' +
+        ? '<div class="sp-try"><span class="sp-try-l">Start With An Example</span><div class="sp-chips">' +
           DESCRIBE_EXAMPLES.slice(0, 5)
             .map(
               (x) =>
@@ -636,11 +654,11 @@ export function createDescribeComposer(cfg: Cfg) {
         : "") +
       '<details class="sp-details"' +
       (state.detailsOpen ? " open" : "") +
-      '><summary data-sp="details">Add Details</summary>' +
+      '><summary data-sp="details">Add Details <span class="sp-opt">Optional</span></summary>' +
       chipRow("Space", "space", DESCRIBE_SPACES, state.space) +
       '<div class="sp-dgrid">' +
-      dSelect("room", "Room Or Area", state.room, "Choose A Room Or Area") +
-      dSelect("style", "Design Style", state.style, "Choose A Design Style") +
+      dSelect("room", "Room Or Area", state.room, "Select Room Or Area") +
+      dSelect("style", "Design Style", state.style, "Select Design Style") +
       "</div>" +
       chipRow("Change Level", "level", DESCRIBE_LEVELS, state.level) +
       (video
@@ -653,23 +671,24 @@ export function createDescribeComposer(cfg: Cfg) {
           ".</p>" +
           "</div>"
         : chipRow("Aspect Ratio", "ratio", DESCRIBE_RATIOS, state.ratio)) +
-      chipRow("Options", "opt", DESCRIBE_OPTION_COUNTS, state.options) +
-      '<p class="sp-hint sp-total">' +
-      esc(optionTotalLabel(output(), state.options)) +
-      "</p>" +
+      chipRow(
+        video ? "Number Of Videos" : "Number Of Images",
+        "opt",
+        DESCRIBE_OPTION_COUNTS,
+        state.options,
+      ) +
       "</details>" +
       (uploadsFailed()
         ? '<p class="sp-warn">A reference did not finish uploading. Retry it or remove it before generating.</p>'
         : "") +
       '<div class="sp-describe-foot' +
-      (missing() ? " is-blocked" : "") +
+      (footMessage() && missing() ? " is-blocked" : "") +
       '">' +
       '<span class="sp-meta">' +
-      esc(summary()) +
+      esc(footMessage()) +
       "</span>" +
       '<span class="sp-foot-r"><span class="sp-cost">' +
-      credits() +
-      (credits() === 1 ? " Credit" : " Credits") +
+      esc(optionTotalLabel(output(), state.options)) +
       "</span>" +
       '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" aria-label="' +
       esc(actionLabel()) +
@@ -711,18 +730,11 @@ export function createDescribeComposer(cfg: Cfg) {
 
   async function submit() {
     if (state.busy) return;
+    state.touched = true;
     const prompt = state.prompt.trim();
-    if (!prompt) return;
-    if (uploadsPending()) {
-      cfg.alert("References are still uploading. They will be ready in a moment.");
-      return;
-    }
-    if (uploadsFailed()) {
-      cfg.alert("Retry or remove the reference that failed to upload.");
-      return;
-    }
     const gap = missing();
     if (gap) {
+      cfg.render();
       cfg.alert(gap + ".");
       return;
     }
@@ -776,17 +788,19 @@ export function createDescribeComposer(cfg: Cfg) {
     const prompt = state.prompt.trim();
     if (prompt.length < IMPROVE_MIN_CHARS || !cfg.onImprove) return;
     state.improving = true;
+    state.impError = null;
     cfg.render();
     try {
       const better = await cfg.onImprove(prompt);
       const text = String(better || "").trim();
       if (text) {
+        /* The original is never lost: Restore Original brings it back. */
         state.undo = prompt;
         state.prompt = text;
         saveDraft();
       }
     } catch (err: any) {
-      cfg.alert((err && err.message) || "Could not improve that description.");
+      state.impError = (err && err.message) || "Could not improve that description.";
     } finally {
       state.improving = false;
       cfg.render();
@@ -843,6 +857,11 @@ export function createDescribeComposer(cfg: Cfg) {
       ["strength", (v) => (state.strength = v)],
       ["space", (v) => {
         state.space = v;
+        /* An interior room or style can never survive a switch to Garden:
+           the user is asked for an applicable replacement instead. */
+        if (state.room && !areaFitsSpace(state.room, spaceKey(v))) state.room = "";
+        state.style = "";
+        state.styleId = "";
         ensureCamera();
       }],
       ["level", (v) => (state.level = v)],
@@ -899,6 +918,11 @@ export function createDescribeComposer(cfg: Cfg) {
       void improve();
       return true;
     }
+    if (act === "improvewrap") {
+      /* The helper text sits inside the wrapper; clicking it does nothing
+         else, but the click still belongs to the composer. */
+      return true;
+    }
     if (act === "undo") {
       if (state.undo != null) {
         state.prompt = state.undo;
@@ -937,6 +961,7 @@ export function createDescribeComposer(cfg: Cfg) {
   function onInput(name: string, value: string): boolean {
     if (name === "prompt") {
       state.prompt = value;
+      state.touched = true;
       saveDraft();
       return true;
     }
@@ -957,18 +982,23 @@ export function createDescribeComposer(cfg: Cfg) {
   function sync(root: HTMLElement | null) {
     const ta = root?.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement | null;
     if (ta) {
-      /* A compact resting height that grows with the text. */
+      /* A compact resting height that grows with the text, then scrolls. */
       ta.style.height = "auto";
-      ta.style.height = Math.min(Math.max(ta.scrollHeight, 58), 260) + "px";
+      ta.style.height = Math.min(Math.max(ta.scrollHeight, 150), 320) + "px";
     }
     const btn = root?.querySelector(".sp-create") as HTMLButtonElement | null;
     if (btn) btn.disabled = !ready();
+    const impOk = state.prompt.trim().length >= IMPROVE_MIN_CHARS;
     const imp = root?.querySelector('[data-sp="improve"]') as HTMLButtonElement | null;
-    if (imp)
-      imp.disabled =
-        state.prompt.trim().length < IMPROVE_MIN_CHARS || state.improving || state.busy;
+    if (imp) imp.disabled = !impOk || state.improving || state.busy;
+    const wrap = root?.querySelector('[data-sp="improvewrap"]') as HTMLElement | null;
+    if (wrap) wrap.classList.toggle("is-off", !impOk);
+    const foot = root?.querySelector(".sp-describe-foot") as HTMLElement | null;
+    if (foot) foot.classList.toggle("is-blocked", !!(missing() && footMessage()));
     const meta = root?.querySelector(".sp-describe-foot .sp-meta") as HTMLElement | null;
-    if (meta) meta.textContent = summary();
+    if (meta) meta.textContent = footMessage();
+    const cost = root?.querySelector(".sp-describe-foot .sp-cost") as HTMLElement | null;
+    if (cost) cost.textContent = optionTotalLabel(output(), state.options);
   }
 
   return {

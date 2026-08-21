@@ -9660,3 +9660,134 @@
   color: var(--muted, #6b6b73);
   font-size: 12.5px;
 }
+
+/* ---------------------------------------------------------------------------
+   Studio Describe refinements
+   One heading per surface, a collapsed project row, a compact composer and a
+   single generation bar. Nothing here changes the design system: same card,
+   same line, same red accent, no gradients.
+--------------------------------------------------------------------------- */
+
+/* Collapsed project-type row */
+.rd-app .stw-doorsum {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--card, #fff);
+  font-size: 0.86rem;
+  color: var(--ink, #111);
+}
+.rd-app .stw-doorsum > i,
+.rd-app .stw-doorsum > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--red, #c00);
+  stroke: currentColor;
+  flex: none;
+}
+.rd-app .stw-doorsum b {
+  font-weight: 700;
+}
+.rd-app .stw-doorchange {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--red, #c00);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Composer heading */
+.rd-app .sp-dhead {
+  margin-bottom: 10px;
+}
+.rd-app .sp-dhead h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink, #111);
+}
+.rd-app .sp-dhead p {
+  margin: 3px 0 0;
+  font-size: 0.8rem;
+  color: var(--mute-2);
+}
+
+/* Optional badges */
+.rd-app .sp-opt {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 600;
+  color: var(--mute-2);
+  text-transform: none;
+}
+
+/* Compact prompt field */
+.rd-app .sp-describe textarea {
+  min-height: 150px;
+  max-height: 320px;
+  overflow-y: auto;
+  resize: none;
+}
+
+/* Improve Description: the reason sits on the button, not in a floating tip */
+.rd-app .sp-toolwrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.rd-app .sp-toolwrap .sp-tip {
+  display: none;
+  margin-left: 8px;
+  font-size: 0.74rem;
+  color: var(--mute-2);
+  white-space: nowrap;
+}
+.rd-app .sp-toolwrap.is-off:hover .sp-tip,
+.rd-app .sp-toolwrap.is-off:focus-within .sp-tip,
+.rd-app .sp-toolwrap.is-off:focus .sp-tip {
+  display: inline;
+}
+.rd-app .sp-inline-err {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--red, #c00);
+}
+
+/* Starter examples scroll instead of wrapping into ragged rows */
+.rd-app .sp-try {
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+.rd-app .sp-try .sp-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 2px;
+}
+.rd-app .sp-try .sp-chips > .sp-chip {
+  flex: none;
+}
+.rd-app .sp-try-l {
+  flex: none;
+}
+
+/* One generation bar */
+.rd-app .sp-describe-foot .sp-cost {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--mute-2);
+}

@@ -33,18 +33,25 @@ describe("studio start source picker", () => {
       "cloud",
       "property",
       "design",
+      "describe",
       "url",
     ]);
-    /* Describe is design-only until genuine text-to-video exists. */
-    expect(CONTEXT_CONFIG.video.sources).not.toContain("describe");
   });
 
   it("uses compact tab labels with Lucide icons", () => {
     const { host } = mount("video");
     const labels = [...host.querySelectorAll(".sp-tab")].map((t) => t.textContent?.trim());
-    expect(labels).toEqual(["Upload", "Google Drive", "Property", "Designs", "Listing Link"]);
+    expect(labels).toEqual([
+      "Upload",
+      "Google Drive",
+      "Property",
+      "Designs",
+      "Describe",
+      "Listing Link",
+    ]);
     expect(SOURCE_META.describe.icon).toBe("message-square-text");
   });
+
 
   it("offers exactly one primary file-selection action in the dropzone", () => {
     const { host } = mount("design");
@@ -71,13 +78,11 @@ describe("studio start source picker", () => {
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
     const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     expect(ta).toBeTruthy();
-    expect(ta.placeholder.startsWith("Describe the room, exterior")).toBe(true);
     expect(host.textContent).toContain("Describe Your Space");
     expect(host.querySelector('[data-sp="addref"]')).toBeTruthy();
     expect(host.querySelector('[data-sp="improve"]')).toBeTruthy();
     const cta = () => host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
     expect(cta().disabled).toBe(true);
-    expect(cta().textContent).toContain("Generate");
     /* whitespace only stays disabled */
     ta.value = "   ";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
@@ -88,23 +93,36 @@ describe("studio start source picker", () => {
     cta().click();
     expect(onDescribe).toHaveBeenCalledWith(
       "A warm modern living room",
-      expect.objectContaining({ ratio: "16:9", options: 2, references: [] }),
+      expect.objectContaining({ ratio: "16:9", options: 1, references: [] }),
     );
   });
 
-  it("shows the output summary and updates it from Add Details", () => {
+  it("references stay optional and validation only asks for a description", () => {
     const { host } = mount("design");
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
-    expect(host.querySelector(".sp-meta")!.textContent).toContain("16:9");
-    expect(host.querySelector(".sp-meta")!.textContent).toContain("2 options");
-    (host.querySelector('[data-sp-ratio="1:1"]') as HTMLElement).click();
-    (host.querySelector('[data-sp-opt="1"]') as HTMLElement).click();
-    expect(host.querySelector(".sp-meta")!.textContent).toContain("1:1");
-    expect(host.querySelector(".sp-meta")!.textContent).toContain("1 option");
-    expect((host.querySelector('[data-sp="describe"]') as HTMLElement).textContent).toContain(
-      "1 Credit",
+    /* Nothing shouts on first paint. */
+    expect(host.querySelector(".sp-describe-foot .sp-meta")!.textContent).toBe("");
+    const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
+    ta.value = " ";
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+    expect(host.querySelector(".sp-describe-foot .sp-meta")!.textContent).toContain(
+      "Add a description",
     );
+    expect(host.textContent).toContain("Add Reference");
+    expect(host.querySelector('[data-sp="addref"]')!.textContent).toContain("Optional");
   });
+
+  it("shows one cost line and updates it from Add Details", () => {
+    const { host } = mount("design");
+    (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
+    const cost = () => host.querySelector(".sp-describe-foot .sp-cost")!.textContent || "";
+    expect(cost()).toContain("1 image");
+    expect(cost()).toContain("1 credit");
+    (host.querySelector('[data-sp-opt="2"]') as HTMLElement).click();
+    expect(cost()).toContain("2 images");
+    expect(cost()).toContain("2 credits");
+  });
+
 
   it("example chips fill the prompt without submitting", () => {
     const onDescribe = vi.fn();

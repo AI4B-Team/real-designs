@@ -204,6 +204,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     method: "upload" as Method,
     /** Which door the user opened on the start screen: "" (none yet) or "design". */
     door: "design" as "" | "design" | "video",
+    /** Project cards stay expanded only until a choice has been made. */
+    doorOpen: false,
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
@@ -1126,47 +1128,34 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     );
   }
 
-  /** The section heading follows the chosen source. Describe is never
-      described as adding photos. */
+  /** One heading for the whole source row. Each source names itself in its
+      own tab and pane, so the heading never repeats it — and Describe is
+      never described as adding photos. */
   function sourceHeading(tab: string): { title: string; copy: string } {
-    if (tab === "cloud")
-      return {
-        title: "Choose From Google Drive",
-        copy: "Import photos from your connected Google Drive account.",
-      };
-    if (tab === "property")
-      return {
-        title: "Choose A Property",
-        copy: "Reuse photos you have already uploaded to a property.",
-      };
-    if (tab === "design")
-      return {
-        title: "Choose Saved Designs",
-        copy: "Start from designs you have already generated.",
-      };
     if (tab === "describe")
       return {
-        title: "Describe Your Space",
-        copy: "Write what you want, add references if you have them, then generate.",
+        title: "Choose A Source",
+        copy: "Pick where your photos come from, or describe the space instead.",
       };
-    if (tab === "url")
-      return {
-        title: "Import From A Listing Link",
-        copy: "Paste a listing link to read its details. No photos are imported.",
-      };
-    if (tab === "address")
-      return { title: "Add A Property Address", copy: "File this work under a property." };
     return {
-      title: "Upload Your Photos",
+      title: "Choose A Source",
       copy:
         state.door === "video"
-          ? "Upload a complete property shoot or select photos you already have."
-          : "Upload one or more spaces or select photos you already have.",
+          ? "Upload a property shoot, import photos you already have, or paste a listing link."
+          : "Upload photos, import photos you already have, or describe the space you want.",
     };
   }
 
 
-  function chooserHtml() {
+  const DOOR_LABEL: Record<string, string> = {
+    design: "Design A Space",
+    video: "Create A Video",
+  };
+
+  /** The two project cards, or the one-line summary they collapse into once a
+      choice has been made. Nothing else on the screen is touched, so the
+      composer, its references and its draft all survive the toggle. */
+  function doorsHtml() {
     const doorCard = (id: "design" | "video", icon: string, title: string, sub: string) =>
       '<button type="button" class="stw-door' +
       (state.door === id ? " on" : "") +
@@ -1189,17 +1178,20 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "</span>" +
       "</button>";
 
+    if (state.door && !state.doorOpen)
+      return (
+        '<div class="stw-doorsum">' +
+        '<i data-lucide="' +
+        (state.door === "video" ? "clapperboard" : "wand-sparkles") +
+        '"></i>' +
+        "<span><b>Project:</b> " +
+        esc(DOOR_LABEL[state.door] || "") +
+        "</span>" +
+        '<button type="button" class="stw-doorchange" data-sts="door-change">Change</button>' +
+        "</div>"
+      );
+
     return (
-      '<div class="stw">' +
-      '<header class="stw-head">' +
-      '<div class="stw-head-l">' +
-      '<span class="stw-eyebrow">Studio</span>' +
-      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
-      "<p>Choose a project type, then add your photos.</p>" +
-      "</div></header>" +
-      '<div class="stw-rule"></div>' +
-      styleBanner() +
-      '<div class="stw-doorwrap">' +
       '<div class="stw-doors" role="radiogroup" aria-label="Project type">' +
       doorCard(
         "design",
@@ -1213,7 +1205,24 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         "Create A Video",
         "Turn property photos into a polished listing video.",
       ) +
-      "</div></div>" +
+      "</div>"
+    );
+  }
+
+  function chooserHtml() {
+    return (
+      '<div class="stw">' +
+      '<header class="stw-head">' +
+      '<div class="stw-head-l">' +
+      '<span class="stw-eyebrow">Studio</span>' +
+      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
+      "<p>Choose a project type, then add your photos.</p>" +
+      "</div></header>" +
+      '<div class="stw-rule"></div>' +
+      styleBanner() +
+      '<div class="stw-doorwrap">' +
+      doorsHtml() +
+      "</div>" +
       '<div class="stw-source"><div class="stw-sec-h"><h3 id="stwSourceH">' +
       sourceHeading(state.sourceTab).title +
       "</h3><span id=\"stwSourceS\">" +
@@ -1263,6 +1272,24 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     mountPicker();
     hydrateRecent();
   }
+
+  /** Repaints only the project-type row. The source picker is deliberately
+      left mounted so a draft description and its references survive. */
+  function renderDoors() {
+    const wrap = host?.querySelector(".stw-doorwrap") as HTMLElement | null;
+    if (!wrap) {
+      render();
+      return;
+    }
+    wrap.innerHTML = doorsHtml();
+    try {
+      lucide.createIcons();
+    } catch {
+      /* icons are cosmetic */
+    }
+  }
+
+
 
   /** Every stored photo of one property: saved rooms first, then the
       property's uploaded media assets (upload-only properties have no rooms,
@@ -1739,14 +1766,22 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       render();
       return;
     }
-    if (k === "door-design") {
-      state.door = "design";
-      render();
+    if (k === "door-change") {
+      /* Only the project row is repainted: everything already typed or
+         attached in the composer stays exactly where it is. */
+      state.doorOpen = true;
+      renderDoors();
       return;
     }
-    if (k === "door-video") {
-      ctx.track("studio_start_method", { method: "video" });
-      state.door = "video";
+    if (k === "door-design" || k === "door-video") {
+      const next = k === "door-video" ? "video" : "design";
+      state.doorOpen = false;
+      if (state.door === next) {
+        renderDoors();
+        return;
+      }
+      if (next === "video") ctx.track("studio_start_method", { method: "video" });
+      state.door = next;
       render();
       return;
     }
