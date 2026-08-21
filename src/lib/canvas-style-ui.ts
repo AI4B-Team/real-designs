@@ -33,7 +33,6 @@ import {
   type ResolvedDirection,
   type StyleNeed,
 } from "@/lib/canvas-style";
-import { styleSectionHint } from "@/lib/space-tools";
 
 export type CanvasStyleContext = {
   tool: string;
