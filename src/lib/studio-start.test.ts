@@ -10,6 +10,10 @@ import { describe, it, expect, vi } from "vitest";
 import { mountSourcePicker, CONTEXT_CONFIG, SOURCE_META } from "@/lib/source-picker";
 
 function mount(context: "design" | "video", opts: Record<string, unknown> = {}) {
+  /* Each mount is a fresh session: drafts must not leak between tests. */
+  try {
+    localStorage.clear();
+  } catch (_) {}
   const host = document.createElement("div");
   document.body.appendChild(host);
   const picker = mountSourcePicker(host, {
