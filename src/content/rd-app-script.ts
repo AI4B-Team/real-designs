@@ -2072,6 +2072,11 @@ export function initApp(): () => void {
             0,
           ),
         );
+      /* A zero is not information: the badge only appears once there is work. */
+      [cp, cd].forEach((c) => {
+        if (c) c.hidden = !(Number(c.textContent) > 0);
+      });
+
       paintTree();
       paintDesigns();
       updateSearchMeta();
@@ -2120,19 +2125,26 @@ export function initApp(): () => void {
       if (grid) grid.hidden = !!gated;
       host.hidden = !gated;
     }
-    /* Sidebar tells the same truth before the click. */
-    (async function budgetNavPill() {
+    /* A feature nobody can use yet leaves the primary navigation entirely: the
+   sidebar never advertises development status. The route stays reachable. */
+    function setNavAvailable(view, available) {
+      const b = document.querySelector('.nav-i[data-v="' + view + '"]');
+      if (!b) return;
+      if (available) b.removeAttribute("data-unavailable");
+      else b.setAttribute("data-unavailable", "1");
+      b.querySelectorAll(".nav-soon").forEach((s) => s.remove());
+      try {
+        progressiveNav();
+      } catch (_) {}
+    }
+    (async function budgetNavGate() {
       try {
         const a = await budgetAvailability();
-        if (a.available) return;
-        const b = document.querySelector('.nav-i[data-v="scope"]');
-        if (!b || b.querySelector(".nav-soon")) return;
-        const s = document.createElement("span");
-        s.className = "nav-soon";
-        s.textContent = "Coming Soon";
-        b.appendChild(s);
+        setNavAvailable("scope", !!a.available);
       } catch (_) {}
     })();
+
+
 
     /* Single runtime switch for every other Budget surface in the shell. Static
    markup always ships in the "coming soon" shape; this turns pieces back on
@@ -2170,18 +2182,17 @@ export function initApp(): () => void {
       try {
         const row = document.getElementById("toolrowBudget");
         if (row && !live) {
+          /* Not a development badge in the tool rail: the tool simply is not
+             offered until budgets are live. */
+          row.hidden = true;
           row.setAttribute("aria-disabled", "true");
           row.classList.add("is-disabled");
-          /* Branded tooltip only: native title is stripped by the tooltip layer. */
-          row.setAttribute("data-tt", "Coming Soon \u00b7 Not Included In Any Plan Yet");
-          const pill = row.querySelector(".plan-pill");
-          if (pill) {
-            pill.className = "pill p-gray";
-            pill.textContent = "Coming Soon";
-          }
           delete TOOL_COST["Budget"];
+        } else if (row) {
+          row.hidden = false;
         }
       } catch (_) {}
+
 
       /* team: permission copy + usage column */
       try {
@@ -2235,9 +2246,19 @@ export function initApp(): () => void {
       };
       document.querySelectorAll(".nav-i").forEach((b) => {
         const v = b.dataset.v;
+        /* Not usable yet: hidden regardless of workspace progress. */
+        if (b.hasAttribute("data-unavailable")) {
+          b.hidden = true;
+          return;
+        }
         if (!(v in rule)) return;
         const show = rule[v] || b.classList.contains("on");
         b.hidden = !show;
+      });
+      /* Counts are live workspace information, never a zero-state badge. */
+      document.querySelectorAll(".nav-i .cnt").forEach((c) => {
+        const n = Number((c.textContent || "").trim());
+        c.hidden = !(n > 0);
       });
       /* Group headers with nothing left under them should not linger. */
       document.querySelectorAll(".side-nav .nav-group").forEach((g) => {
@@ -2252,26 +2273,20 @@ export function initApp(): () => void {
         g.hidden = !any;
       });
     }
-    /* Honest module labels: read from the live integration status, never typed in. */
-    (async function moduleStatusPills() {
+    /* Modules that only hold sample or manual data stay out of the primary
+   navigation until they do real work — no development-status badges. */
+    (async function moduleNavGate() {
       try {
         const r = await readIntegrations();
         const byKey = {};
         (r.items || []).forEach((i) => {
           byKey[i.key] = i;
         });
-        const mark = (view, label) => {
-          const b = document.querySelector('.nav-i[data-v="' + view + '"]');
-          if (!b || b.querySelector(".nav-soon")) return;
-          const s = document.createElement("span");
-          s.className = "nav-soon";
-          s.textContent = label;
-          b.appendChild(s);
-        };
-        if (byKey["products"] && !byKey["products"].connected) mark("products", "Sample Data");
-        if (byKey["listing"] && !byKey["listing"].connected) mark("listings", "Manual Only");
+        if (byKey["products"]) setNavAvailable("products", !!byKey["products"].connected);
+        if (byKey["listing"]) setNavAvailable("listings", !!byKey["listing"].connected);
       } catch (_) {}
     })();
+
 
     /* The home chooser is gone: Home renders the dashboard, and the two doors
    live in the sidebar under Create. */
@@ -9950,31 +9965,29 @@ ${picks
         const title = box && box.querySelector(".lab span");
         const gc = document.getElementById("genCost");
         if (gc && !gc.textContent) gc.textContent = "1 Credit";
+        /* One compact block: what you have, how much is left, one action. */
         if (c.plan === "free") {
-          if (title) title.textContent = "Free Designs Today";
+          if (title) title.textContent = "Free Designs";
           const left = Math.max(0, Math.min(5, c.remainingToday ?? 5));
-          lab.textContent = left + " / 5 Left";
+          lab.textContent = left + " Of 5 Left";
           if (bar) {
             bar.style.width = (left / 5) * 100 + "%";
             bar.className = left <= 1 ? "low" : "";
           }
           if (foot)
             foot.innerHTML =
-              '<span>Free Plan</span><b class="cred-up" role="button" tabindex="0">Upgrade For Credits</b>';
+              '<span></span><b class="cred-up" role="button" tabindex="0">Upgrade</b>';
         } else {
-          if (title) title.textContent = "Credit Balance";
+          if (title) title.textContent = (PLAN_NAME[c.plan] || c.plan) + " Credits";
           lab.textContent = c.balance.toLocaleString();
           if (bar) {
             const pctLeft = Math.min(100, (c.balance / (PLAN_CAP[c.plan] || 2000)) * 100);
             bar.style.width = pctLeft + "%";
             bar.className = pctLeft <= 10 ? "low" : "";
           }
-          if (foot)
-            foot.innerHTML =
-              "<span>" +
-              (PLAN_NAME[c.plan] || c.plan) +
-              " Plan</span><b>1 Design &bull; 3 Budget &bull; 40 Video</b>";
+          if (foot) foot.innerHTML = "";
         }
+
         if (box && !box.dataset.wired) {
           box.dataset.wired = "1";
           box.addEventListener("click", (e) => {

@@ -111,19 +111,24 @@ export const QUICK_STYLE_IDS = [
 export function quickStyles(pool: StyleRecord[], selectedId?: string | null, max = 4): StyleRecord[] {
   const byId = new Map(pool.map((s) => [s.id, s]));
   const out: StyleRecord[] = [];
-  const sel = selectedId ? byId.get(selectedId) : null;
-  if (sel) out.push(sel);
-  for (const id of QUICK_STYLE_IDS) {
-    if (out.length >= max) break;
-    const rec = byId.get(id);
-    if (rec && !out.some((s) => s.id === rec.id)) out.push(rec);
-  }
-  for (const rec of pool) {
-    if (out.length >= max) break;
-    if (!out.some((s) => s.id === rec.id)) out.push(rec);
-  }
+  /* Two catalog rows can share a display name (a renamed alias, an admin
+     override): the grid dedupes on the label as well so a style can never
+     appear twice. */
+  const seen = new Set<string>();
+  const take = (rec: StyleRecord | null | undefined) => {
+    if (!rec || out.length >= max) return;
+    const key = rec.displayName.trim().toLowerCase();
+    if (seen.has(rec.id) || seen.has(key)) return;
+    seen.add(rec.id);
+    seen.add(key);
+    out.push(rec);
+  };
+  if (selectedId) take(byId.get(selectedId));
+  for (const id of QUICK_STYLE_IDS) take(byId.get(id));
+  for (const rec of pool) take(rec);
   return out;
 }
+
 
 function quickGrid(pool: StyleRecord[], selectedId: string | null): string {
   /* Compact 3-column selectors: six styles read at a glance without scrolling. */
