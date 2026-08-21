@@ -2182,18 +2182,17 @@ export function initApp(): () => void {
       try {
         const row = document.getElementById("toolrowBudget");
         if (row && !live) {
+          /* Not a development badge in the tool rail: the tool simply is not
+             offered until budgets are live. */
+          row.hidden = true;
           row.setAttribute("aria-disabled", "true");
           row.classList.add("is-disabled");
-          /* Branded tooltip only: native title is stripped by the tooltip layer. */
-          row.setAttribute("data-tt", "Coming Soon \u00b7 Not Included In Any Plan Yet");
-          const pill = row.querySelector(".plan-pill");
-          if (pill) {
-            pill.className = "pill p-gray";
-            pill.textContent = "Coming Soon";
-          }
           delete TOOL_COST["Budget"];
+        } else if (row) {
+          row.hidden = false;
         }
       } catch (_) {}
+
 
       /* team: permission copy + usage column */
       try {
