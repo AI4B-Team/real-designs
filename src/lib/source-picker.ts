@@ -14,6 +14,8 @@ import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { MAX_FILE_MB, rejectReason } from "@/lib/upload-manager";
 import { splitAddressLines, photoCountLabel, type ProjectAddress } from "@/lib/property-address";
+import { createDescribeComposer, type DescribeDetails } from "@/lib/describe-composer";
+
 
 export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design" | "describe";
 export type PickerContext = "design" | "video" | "property-media" | "batch";
