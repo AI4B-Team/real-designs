@@ -328,6 +328,48 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (files.length) intake(files);
   });
 
+  /* Reference images for the Describe composer never enter the upload
+     pipeline: they are inspiration for the model, not project photos. */
+  const refInput = document.createElement("input");
+  refInput.type = "file";
+  refInput.hidden = true;
+  refInput.accept = "image/*";
+  refInput.multiple = true;
+  host.appendChild(refInput);
+  refInput.addEventListener("change", async () => {
+    const files = Array.from(refInput.files || []);
+    refInput.value = "";
+    await addReferences(files);
+  });
+
+  async function addReferences(files: File[]) {
+    const room = MAX_DESCRIBE_REFS - state.refs.length;
+    if (room <= 0) {
+      alert("You can attach up to " + MAX_DESCRIBE_REFS + " reference images.");
+      return;
+    }
+    for (const file of files.slice(0, room)) {
+      try {
+        const url = await readDataUrl(file);
+        state.refs.push({ id: "r" + Date.now() + Math.random().toString(36).slice(2, 6), name: file.name, url });
+      } catch (_) {
+        alert(file.name + ": This Reference Could Not Be Added.");
+      }
+    }
+    render();
+  }
+
+  function readDataUrl(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result || ""));
+      fr.onerror = () => reject(new Error("read failed"));
+      fr.readAsDataURL(file);
+    });
+  }
+
+
+
   /** One size limit, one measurement pass, one error message, every source. */
   async function intake(raw: File[]) {
     const files: File[] = [];
