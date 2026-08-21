@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { Fragment, memo } from "react";
 
 import { CreditSummary } from "./CreditSummary";
 import { NAV_GROUPS } from "./nav-items";
@@ -35,12 +35,8 @@ export const Sidebar = memo(function Sidebar() {
       </div>
       <nav className="side-nav">
         {NAV_GROUPS.map((group, gi) => (
-          <>
-            {group.title ? (
-              <div className="nav-group" key={group.title}>
-                {group.title}
-              </div>
-            ) : null}
+          <Fragment key={group.title || "primary"}>
+            {group.title ? <div className="nav-group">{group.title}</div> : null}
             {group.items.map((item, i) => (
               <button
                 key={item.view}
@@ -57,7 +53,7 @@ export const Sidebar = memo(function Sidebar() {
                 ) : null}
               </button>
             ))}
-          </>
+          </Fragment>
         ))}
       </nav>
       <div className="side-foot">
