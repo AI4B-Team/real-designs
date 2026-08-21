@@ -472,10 +472,8 @@ export function mountCanvasStyle(
         '<div class="cs-sec cs-empty-state">' +
         '<div class="cs-sec-h"><label>' +
         esc(title) +
-        '</label><span class="cs-req">Required</span></div>' +
-        "<p>" +
-        esc(styleSectionHint(need, c.projectType)) +
-        "</p>" +
+        "</label></div>" +
+
         quickGrid(pool, null) +
         (propRec
           ? '<button class="btn btn-ghost btn-sm cs-useprop" type="button"><i data-lucide="dna"></i>Use Property Direction &middot; ' +
