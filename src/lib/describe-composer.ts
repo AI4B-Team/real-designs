@@ -725,18 +725,11 @@ export function createDescribeComposer(cfg: Cfg) {
 
   async function submit() {
     if (state.busy) return;
+    state.touched = true;
     const prompt = state.prompt.trim();
-    if (!prompt) return;
-    if (uploadsPending()) {
-      cfg.alert("References are still uploading. They will be ready in a moment.");
-      return;
-    }
-    if (uploadsFailed()) {
-      cfg.alert("Retry or remove the reference that failed to upload.");
-      return;
-    }
     const gap = missing();
     if (gap) {
+      cfg.render();
       cfg.alert(gap + ".");
       return;
     }
