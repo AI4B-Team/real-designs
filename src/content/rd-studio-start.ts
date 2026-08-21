@@ -1121,6 +1121,46 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     );
   }
 
+  /** The section heading follows the chosen source. Describe is never
+      described as adding photos. */
+  function sourceHeading(tab: string): { title: string; copy: string } {
+    if (tab === "cloud")
+      return {
+        title: "Choose From Google Drive",
+        copy: "Import photos from your connected Google Drive account.",
+      };
+    if (tab === "property")
+      return {
+        title: "Choose A Property",
+        copy: "Reuse photos you have already uploaded to a property.",
+      };
+    if (tab === "design")
+      return {
+        title: "Choose Saved Designs",
+        copy: "Start from designs you have already generated.",
+      };
+    if (tab === "describe")
+      return {
+        title: "Describe Your Space",
+        copy: "Write what you want, add references if you have them, then generate.",
+      };
+    if (tab === "url")
+      return {
+        title: "Import From A Listing Link",
+        copy: "Paste a listing link to read its details. No photos are imported.",
+      };
+    if (tab === "address")
+      return { title: "Add A Property Address", copy: "File this work under a property." };
+    return {
+      title: "Upload Your Photos",
+      copy:
+        state.door === "video"
+          ? "Upload a complete property shoot or select photos you already have."
+          : "Upload one or more spaces or select photos you already have.",
+    };
+  }
+
+
   function chooserHtml() {
     const doorCard = (id: "design" | "video", icon: string, title: string, sub: string) =>
       '<button type="button" class="stw-door' +
