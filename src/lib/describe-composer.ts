@@ -153,13 +153,13 @@ export function ratioForOrientation(orientation: string): string {
   return "16:9";
 }
 
-/** "2 images · 2 credits total" — the multiplication is never hidden. */
+/** "2 images · 2 credits" — the multiplication is never hidden. */
 export function optionTotalLabel(output: DescribeOutput, options: number): string {
   const n = Math.max(1, options);
   const noun = output === "video" ? "video" : "image";
   const credits = describeCredits(output, n);
   return (
-    n + " " + noun + (n === 1 ? "" : "s") + " · " + credits + (credits === 1 ? " credit" : " credits") + " total"
+    n + " " + noun + (n === 1 ? "" : "s") + " · " + credits + (credits === 1 ? " credit" : " credits")
   );
 }
 
