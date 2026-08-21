@@ -2,9 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { absoluteUrl } from "@/lib/site";
 
-import { PrototypeSurface } from "@/components/PrototypeSurface";
-import { html } from "@/content/rd-app-html";
-import { initApp } from "@/content/rd-app-script";
+import { AppShell } from "@/features/app-shell/AppShell";
+import { LegacyOverlays, LegacyRuntime, LegacyViews } from "@/features/legacy/LegacyPrototypeView";
 import "@/styles/rd-app.css";
 import "@/styles/rd-canvas.css";
 import "@/styles/rd-explore.css";
@@ -39,5 +38,13 @@ export const Route = createFileRoute("/_authenticated/app")({
 });
 
 function BackOfficePage() {
-  return <PrototypeSurface className="rd-app" html={html} init={initApp} />;
+  return (
+    <div className="rd-app">
+      <AppShell>
+        <LegacyViews />
+      </AppShell>
+      <LegacyOverlays />
+      <LegacyRuntime />
+    </div>
+  );
 }
