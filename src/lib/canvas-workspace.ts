@@ -341,7 +341,7 @@ export function initCanvasWorkspace() {
   if (strength) strength.value = String(s.strength);
   b.classList.toggle("vers-off", !s.versionsOpen);
   const versToggle = document.getElementById("rdwVersToggle");
-  if (versToggle) versToggle.textContent = s.versionsOpen ? "Hide" : "Show";
+  if (versToggle) versToggle.setAttribute("aria-expanded", s.versionsOpen ? "true" : "false");
   const versOpen = document.getElementById("rdwVersOpen") as HTMLElement | null;
   if (versOpen) versOpen.hidden = s.versionsOpen;
 
@@ -456,7 +456,7 @@ export function initCanvasWorkspace() {
       const open = b.classList.contains("vers-off");
       b.classList.toggle("vers-off", !open);
       save({ versionsOpen: open });
-      if (versToggle) versToggle.textContent = open ? "Hide" : "Show";
+      if (versToggle) versToggle.setAttribute("aria-expanded", open ? "true" : "false");
       if (versOpen) versOpen.hidden = open;
       return;
     }

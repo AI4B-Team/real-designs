@@ -29,14 +29,14 @@ function on(sel: string): string {
 
 /** One line describing every optional setting's current value. */
 export function customizeSummary(): string {
-  const level = on("#rdwLevel .rdw-opt b") || on("#rdwLevel .rdw-opt") || "Restyle";
-  const lock = on("#rdwLock .chip") || "Balanced";
+  const level = on("#rdwLevel .rdw-opt b") || on("#rdwLevel .rdw-opt") || "Balanced";
+  const lock = (on("#rdwLock .chip") || "Balanced").toLowerCase();
   const grade = on("#gradeChips .chip") || "Retail Grade";
   const opts = on("#rdwOpts .chip") || "1";
   const n = Number(opts) || 1;
   return [
-    level + " Changes",
-    "Reality Lock " + lock,
+    level,
+    "Reality Lock " + (lock === "off" ? "Off" : "On"),
     grade,
     n + (n === 1 ? " Option" : " Options"),
   ].join(" · ");
@@ -44,7 +44,7 @@ export function customizeSummary(): string {
 
 function levelName(): string {
   const b = document.querySelector("#rdwLevel .rdw-opt.on b") as HTMLElement | null;
-  return b?.textContent?.trim() || "Restyle";
+  return b?.textContent?.trim() || "Balanced";
 }
 
 type CanvasState = {
@@ -89,9 +89,9 @@ export function generationSummary(): { line1: string; line2: string; missing: st
   const needRoom = !st.selectedRoomType;
   const needStyle = st.needsStyle && !st.selectedStyleId;
   const missing: string[] = [];
-  if (needRoom && needStyle) missing.push("Choose A Room And Style To Continue");
-  else if (needRoom) missing.push("Choose A Room To Continue");
-  else if (needStyle) missing.push("Choose A Style To Continue");
+  if (needRoom && needStyle) missing.push("Choose A Room And Design Style");
+  else if (needRoom) missing.push("Choose A Room");
+  else if (needStyle) missing.push("Choose A Design Style");
   return {
     line1: [st.selectedRoomType, st.selectedStyleName, levelName()].filter(Boolean).join(" · "),
     line2: customizeSummary(),
@@ -131,7 +131,19 @@ function fieldByLabel(text: string): HTMLElement | null {
   return (hit?.parentElement as HTMLElement) || null;
 }
 
+/** An empty Version History stays one quiet row instead of a big empty box. */
+export function refreshVersionRail() {
+  const vers = byId("rdwVers");
+  const list = byId("vars");
+  if (!vers || !list) return;
+  const n = list.querySelectorAll(":scope > *").length;
+  vers.classList.toggle("rdw-vers-empty", n === 0);
+  const count = byId("rdwVersN");
+  if (count) count.textContent = n === 0 ? "No versions yet" : n === 1 ? "1 version" : n + " versions";
+}
+
 let built = false;
+
 
 export function buildCanvasPanel() {
   const body = byId("rdwPanelBody");
@@ -172,7 +184,7 @@ export function buildCanvasPanel() {
       lab.innerHTML =
         'Describe What You Want<span class="rdw-opt-tag">Optional</span>';
     const ta = instr.querySelector("textarea") as HTMLTextAreaElement | null;
-    if (ta) ta.placeholder = "Add specific requests…";
+    if (ta) ta.placeholder = "Keep the flooring, lighten the cabinets, and add an island.";
     body.appendChild(instr);
   }
 
@@ -199,6 +211,17 @@ export function buildCanvasPanel() {
   }
   custBody.appendChild(caps);
   moveInto(custBody, ["rdwLevelField", "rdwLockField", "rdwStrengthField"]);
+  /* One advanced strength control: "Change Level" replaces the old Redesign
+     Level wording so it no longer reads like a second style choice. */
+  const lvlField = byId("rdwLevelField");
+  const lvlLab = lvlField?.querySelector("label") as HTMLElement | null;
+  if (lvlLab) lvlLab.textContent = "Change Level";
+  const LVL_NAME: Record<string, string> = { "0": "Subtle", "1": "Balanced", "3": "Bold" };
+  document.querySelectorAll<HTMLElement>("#rdwLevel .rdw-opt").forEach((opt) => {
+    const b = opt.querySelector("b");
+    const name = LVL_NAME[opt.getAttribute("data-b") || ""];
+    if (b && name) b.textContent = name;
+  });
   const grade = fieldByLabel("Finish Grade");
   if (grade) custBody.appendChild(grade);
   moveInto(custBody, ["rdwOptField", "rdwObjSec"]);
@@ -216,6 +239,33 @@ export function buildCanvasPanel() {
   const details = byId("rdwDetails");
   if (details) details.classList.add("rdw-details-quiet");
 
+  /* 2b. Version History keeps one job: listing versions. Clear Canvas moves to
+     the settings menu, and the Hide link becomes a chevron. */
+  const clearBtn = byId("clearLocks");
+  if (clearBtn) clearBtn.hidden = true;
+  const versT = byId("rdwVersToggle");
+  if (versT) {
+    versT.classList.add("rdw-vers-chev");
+    versT.setAttribute("aria-label", "Toggle Version History");
+    versT.innerHTML = '<i data-lucide="chevron-down"></i>';
+  }
+  refreshVersionRail();
+  /* A finished generation opens the rail so the new version is visible. */
+  const varsHost = byId("vars");
+  if (varsHost) {
+    new MutationObserver(() => {
+      const had = varsHost.querySelectorAll(":scope > *").length > 0;
+      const board = document.querySelector(".studio.rdw") as HTMLElement | null;
+      if (had && board?.classList.contains("vers-off")) {
+        board.classList.remove("vers-off");
+        byId("rdwVersToggle")?.setAttribute("aria-expanded", "true");
+        const open = byId("rdwVersOpen");
+        if (open) open.hidden = true;
+      }
+      refreshVersionRail();
+    }).observe(varsHost, { childList: true });
+  }
+
   /* 3. Generation summary and the settings overflow live in the sticky
      footer, next to the single primary action. */
   const sum = document.createElement("div");
@@ -231,6 +281,7 @@ export function buildCanvasPanel() {
         'aria-haspopup="true" aria-expanded="false" data-tt="Settings" aria-label="Settings">' +
         '<i data-lucide="more-vertical"></i></button>' +
         '<div class="rdw-more-m" id="rdwMoreMenu" hidden>' +
+        '<button type="button" class="acct-i" data-panel-reset="clear">Clear Canvas</button>' +
         '<button type="button" class="acct-i" data-panel-reset="tool">Reset This Tool</button>' +
         '<button type="button" class="acct-i" data-panel-reset="all">Reset All Settings</button>' +
         '<button type="button" class="acct-i" data-panel-reset="over">Start Over</button>' +
@@ -308,6 +359,7 @@ export function refreshCanvasPanel() {
         '<button type="button" class="fb-link" data-edit-customize>Edit</button></div>';
     icons();
   }
+  refreshVersionRail();
 }
 
 document.addEventListener("click", (e) => {
@@ -377,7 +429,11 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     closeMoreMenu();
     const kind = act.getAttribute("data-panel-reset");
-    if (kind === "tool") {
+    if (kind === "clear") {
+      /* The Version History Clear button still owns the behaviour. */
+      byId("clearLocks")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+      setTimeout(refreshVersionRail, 0);
+    } else if (kind === "tool") {
       resetCustomize();
     } else if (kind === "all") {
       resetCustomize();
