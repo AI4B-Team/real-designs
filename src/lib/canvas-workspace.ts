@@ -155,23 +155,11 @@ export function paintRoomCards() {
   const viewAll = document.getElementById("rdwRoomAll");
   if (viewAll) viewAll.textContent = "View All";
 
-  /* Completed selection collapses into one compact summary row. */
-  if (active && !roomsExpanded) {
-    if (label) label.hidden = true;
-    host.innerHTML =
-      '<div class="rdw-sum"><span><b>' +
-      esc(sectionName) +
-      "</b> &middot; " +
-      esc(active) +
-
-      '</span><button type="button" class="fb-link" data-room-change>Change</button></div>';
-    ensureNotEmpty(host, "empty", "This Space");
-    const ctxRoomA = document.getElementById("setupCtxRoom");
-    if (ctxRoomA) ctxRoomA.textContent = active;
-    icons();
-    return;
-  }
+  /* The visual selector always stays on screen: a chosen room is simply the
+     card that reads as selected, never a text summary the user must reopen. */
+  void roomsExpanded;
   if (label) label.hidden = false;
+
 
   const shown = inlineAreas(space, active);
   host.innerHTML = shown
