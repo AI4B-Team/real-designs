@@ -291,6 +291,21 @@ document.addEventListener("click", (e) => {
   }
 });
 
+/* A disabled Generate swallows clicks, so listen on the way down and point at
+   whatever is still missing. */
+document.addEventListener(
+  "pointerdown",
+  (e) => {
+    const t = e.target as HTMLElement;
+    if (!t || !t.closest) return;
+    const btn = t.closest("#genBtn") as HTMLButtonElement | null;
+    if (!btn) return;
+    if (generationSummary().missing.length) flashMissing();
+  },
+  true,
+);
+
+
 /* ------------------------------------------------- settings overflow menu */
 
 function closeMoreMenu() {
