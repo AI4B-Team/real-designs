@@ -8753,3 +8753,37 @@
 .rd-app #canvasCard .card-h > div:last-child {
   flex-wrap: nowrap;
 }
+
+/* Collapsed sidebar: icons must sit dead-centre in their (red-ringed) button.
+   The label text was still taking layout width and shoving the glyph out of
+   the box, so it is fully removed while the rail is minimised. */
+.rd-app .app.sidemin .side .nav-i {
+  display: grid !important;
+  place-items: center !important;
+  gap: 0 !important;
+  width: 44px !important;
+  height: 40px !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+  overflow: hidden;
+  text-align: center !important;
+}
+.rd-app .app.sidemin .side .nav-i > svg,
+.rd-app .app.sidemin .side .nav-i > i {
+  grid-area: 1 / 1;
+  width: 17px !important;
+  height: 17px !important;
+}
+.rd-app .app.sidemin .side .nav-i .cnt,
+.rd-app .app.sidemin .side .nav-i .nav-soon,
+.rd-app .app.sidemin .side .nav-i .rd-beta-soon {
+  display: none !important;
+}
+.rd-app .app.sidemin .side .nav-i .dotn {
+  position: absolute;
+  top: 5px;
+  right: 7px;
+  margin: 0;
+}
