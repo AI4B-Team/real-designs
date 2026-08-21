@@ -223,13 +223,8 @@ export function styleCompatible(
 /* ------------------------------------------------------------------ */
 
 /** No pricing or budget promises: Budget is Coming Soon. */
-export function instructionPlaceholder(space: SpaceType | string): string {
-  const sp = normalizeSpace(space as string);
-  if (sp === "exterior")
-    return "Keep the roofline and windows, update the paint, improve the entry, and add low-maintenance landscaping.";
-  if (sp === "garden")
-    return "Keep the existing trees, add layered planting, pathway lighting, and a small seating area.";
-  return "Keep the flooring and fireplace, update the cabinets, and use warmer neutral finishes.";
+export function instructionPlaceholder(_space: SpaceType | string): string {
+  return "Add specific requests…";
 }
 
 /** Space-specific instruction the model must receive. */
