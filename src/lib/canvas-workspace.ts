@@ -456,7 +456,7 @@ export function initCanvasWorkspace() {
       const open = b.classList.contains("vers-off");
       b.classList.toggle("vers-off", !open);
       save({ versionsOpen: open });
-      if (versToggle) versToggle.textContent = open ? "Hide" : "Show";
+      if (versToggle) versToggle.setAttribute("aria-expanded", open ? "true" : "false");
       if (versOpen) versOpen.hidden = open;
       return;
     }
