@@ -1663,6 +1663,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
     else if (k === "describe") await submitDescribe();
+    else if (k === "addref") refInput.click();
+    else if (k === "improve") await improveDescription();
+    else if (k === "details") state.detailsOpen = !state.detailsOpen;
+
     else if (k === "cloudgo") importCloud(field("cloud")?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();
