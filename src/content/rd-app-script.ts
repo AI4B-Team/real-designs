@@ -2999,39 +2999,57 @@ export function initApp(): () => void {
         }, 320);
       };
       try {
-        const image = await toDataUrl(srcImg.src, 1100);
+        const image = await toDataUrl((VAR && VAR.src) || srcImg.src, 1100);
         const band = document.querySelector(".bchip.on"),
           grade = document.querySelector("#gradeChips .chip.on");
         const groups = { keep: [], replace: [], remove: [] };
         Object.keys(locks).forEach((o) => {
           (groups[locks[o]] || groups.keep).push(o);
         });
+        if (VAR && Array.isArray(VAR.keep)) {
+          VAR.keep.forEach((k) => {
+            if (k && groups.keep.indexOf(k) < 0) groups.keep.push(k);
+          });
+        }
+        const varNotes = VAR
+          ? [VAR.prompt, (document.getElementById("agentNote") || {}).value || null]
+              .filter(Boolean)
+              .join(" ")
+          : (document.getElementById("agentNote") || {}).value || null;
         const r = await renderDesign({
           data: {
             image,
-            room_type: currentRoomType(),
-            direction: (document.getElementById("fStyle") || {}).value || "Warm Minimal",
+            room_type: (VAR && VAR.room) || currentRoomType(),
+            direction:
+              (VAR && VAR.styleName) ||
+              (document.getElementById("fStyle") || {}).value ||
+              "Warm Minimal",
             style_id: currentStyleId(),
             project_type: currentProjectType(),
             tool: activeToolName(),
             preserve_architecture: true,
-            intensity: band ? band.querySelector("b").textContent : "Makeover",
+            intensity: (VAR && VAR.intensity) || (band ? band.querySelector("b").textContent : "Makeover"),
             grade: grade ? grade.textContent : "Retail Grade",
-            notes: (document.getElementById("agentNote") || {}).value || null,
+            notes: varNotes || null,
             keep: groups.keep,
             replace: groups.replace,
             remove: groups.remove,
+            variation_of: (VAR && VAR.parentPath) || null,
           },
         });
         track("design_rendered", { surface: "studio", room_type: currentRoomType() });
         lastRender = r.image;
         lastRenderPath = await persistRender(r.image, "Your Render");
         cAfter.innerHTML = photo(r.image, "Redesigned space, AI render");
+        if (VAR) (window as any).__rdVariationMeta = VAR;
         addRenderVariant(
           r.image,
-          (document.getElementById("fStyle") || {}).value || "Your Render",
+          (VAR && VAR.styleName) ||
+            (document.getElementById("fStyle") || {}).value ||
+            "Your Render",
           lastRenderPath,
         );
+
         setCanvasPhase("");
         markStudioResult();
         finalizeGeneratedDesign(lastRenderPath);
