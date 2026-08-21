@@ -620,6 +620,9 @@ export function createDescribeComposer(cfg: Cfg) {
       (state.undo
         ? '<button type="button" class="sp-tool" data-sp="undo"><i data-lucide="undo-2"></i>Restore Original</button>'
         : "") +
+      (state.impError
+        ? '<span class="sp-inline-err" role="alert">' + esc(state.impError) + "</span>"
+        : "") +
       "</div>" +
       "</div>" +
       (state.refs.length
