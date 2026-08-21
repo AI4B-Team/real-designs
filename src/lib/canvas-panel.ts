@@ -199,6 +199,17 @@ export function buildCanvasPanel() {
   }
   custBody.appendChild(caps);
   moveInto(custBody, ["rdwLevelField", "rdwLockField", "rdwStrengthField"]);
+  /* One advanced strength control: "Change Level" replaces the old Redesign
+     Level wording so it no longer reads like a second style choice. */
+  const lvlField = byId("rdwLevelField");
+  const lvlLab = lvlField?.querySelector("label") as HTMLElement | null;
+  if (lvlLab) lvlLab.textContent = "Change Level";
+  const LVL_NAME: Record<string, string> = { "0": "Subtle", "1": "Balanced", "3": "Bold" };
+  document.querySelectorAll<HTMLElement>("#rdwLevel .rdw-opt").forEach((opt) => {
+    const b = opt.querySelector("b");
+    const name = LVL_NAME[opt.getAttribute("data-b") || ""];
+    if (b && name) b.textContent = name;
+  });
   const grade = fieldByLabel("Finish Grade");
   if (grade) custBody.appendChild(grade);
   moveInto(custBody, ["rdwOptField", "rdwObjSec"]);
