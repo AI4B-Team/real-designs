@@ -2120,19 +2120,26 @@ export function initApp(): () => void {
       if (grid) grid.hidden = !!gated;
       host.hidden = !gated;
     }
-    /* Sidebar tells the same truth before the click. */
-    (async function budgetNavPill() {
+    /* A feature nobody can use yet leaves the primary navigation entirely: the
+   sidebar never advertises development status. The route stays reachable. */
+    function setNavAvailable(view, available) {
+      const b = document.querySelector('.nav-i[data-v="' + view + '"]');
+      if (!b) return;
+      if (available) b.removeAttribute("data-unavailable");
+      else b.setAttribute("data-unavailable", "1");
+      b.querySelectorAll(".nav-soon").forEach((s) => s.remove());
+      try {
+        progressiveNav();
+      } catch (_) {}
+    }
+    (async function budgetNavGate() {
       try {
         const a = await budgetAvailability();
-        if (a.available) return;
-        const b = document.querySelector('.nav-i[data-v="scope"]');
-        if (!b || b.querySelector(".nav-soon")) return;
-        const s = document.createElement("span");
-        s.className = "nav-soon";
-        s.textContent = "Coming Soon";
-        b.appendChild(s);
+        setNavAvailable("scope", !!a.available);
       } catch (_) {}
     })();
+
+
 
     /* Single runtime switch for every other Budget surface in the shell. Static
    markup always ships in the "coming soon" shape; this turns pieces back on
