@@ -15,6 +15,7 @@ import {
 } from "@/lib/space-datasets";
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
 import { capabilitiesFor } from "@/lib/canvas-capabilities";
+import { openAreaPicker } from "@/lib/room-picker-modal";
 import { ensureNotEmpty } from "@/lib/route-states";
 
 
@@ -354,13 +355,26 @@ export function initCanvasWorkspace() {
     const room = t.closest("[data-room]") as HTMLElement | null;
     if (room && room.closest("#rdwRooms")) {
       e.preventDefault();
+      roomsExpanded = false;
       pickRoom(room.dataset["room"] || "");
+      return;
+    }
+    if (t.closest("[data-room-change]")) {
+      e.preventDefault();
+      setRoomsExpanded(true);
       return;
     }
     if (t.closest("#rdwRoomAll")) {
       e.preventDefault();
-      roomsExpanded = !roomsExpanded;
-      paintRoomCards();
+      const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
+      openAreaPicker({
+        space: currentSpace() as CanvasSpace,
+        current: sel?.value || null,
+        onApply: (label) => {
+          roomsExpanded = false;
+          pickRoom(label);
+        },
+      });
       return;
     }
     const lvl = t.closest("#rdwLevel .rdw-opt") as HTMLElement | null;
