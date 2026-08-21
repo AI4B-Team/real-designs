@@ -622,7 +622,7 @@ export function createDescribeComposer(cfg: Cfg) {
           "</div></div>"
         : "") +
       (showStarters
-        ? '<div class="sp-try"><span class="sp-try-l">Try:</span><div class="sp-chips">' +
+        ? '<div class="sp-try"><span class="sp-try-l">Start With An Example</span><div class="sp-chips">' +
           DESCRIBE_EXAMPLES.slice(0, 5)
             .map(
               (x) =>
@@ -637,11 +637,11 @@ export function createDescribeComposer(cfg: Cfg) {
         : "") +
       '<details class="sp-details"' +
       (state.detailsOpen ? " open" : "") +
-      '><summary data-sp="details">Add Details</summary>' +
+      '><summary data-sp="details">Add Details <span class="sp-opt">Optional</span></summary>' +
       chipRow("Space", "space", DESCRIBE_SPACES, state.space) +
       '<div class="sp-dgrid">' +
-      dSelect("room", "Room Or Area", state.room, "Choose A Room Or Area") +
-      dSelect("style", "Design Style", state.style, "Choose A Design Style") +
+      dSelect("room", "Room Or Area", state.room, "Select Room Or Area") +
+      dSelect("style", "Design Style", state.style, "Select Design Style") +
       "</div>" +
       chipRow("Change Level", "level", DESCRIBE_LEVELS, state.level) +
       (video
@@ -654,23 +654,24 @@ export function createDescribeComposer(cfg: Cfg) {
           ".</p>" +
           "</div>"
         : chipRow("Aspect Ratio", "ratio", DESCRIBE_RATIOS, state.ratio)) +
-      chipRow("Options", "opt", DESCRIBE_OPTION_COUNTS, state.options) +
-      '<p class="sp-hint sp-total">' +
-      esc(optionTotalLabel(output(), state.options)) +
-      "</p>" +
+      chipRow(
+        video ? "Number Of Videos" : "Number Of Images",
+        "opt",
+        DESCRIBE_OPTION_COUNTS,
+        state.options,
+      ) +
       "</details>" +
       (uploadsFailed()
         ? '<p class="sp-warn">A reference did not finish uploading. Retry it or remove it before generating.</p>'
         : "") +
       '<div class="sp-describe-foot' +
-      (missing() ? " is-blocked" : "") +
+      (footMessage() && missing() ? " is-blocked" : "") +
       '">' +
       '<span class="sp-meta">' +
-      esc(summary()) +
+      esc(footMessage()) +
       "</span>" +
       '<span class="sp-foot-r"><span class="sp-cost">' +
-      credits() +
-      (credits() === 1 ? " Credit" : " Credits") +
+      esc(optionTotalLabel(output(), state.options)) +
       "</span>" +
       '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" aria-label="' +
       esc(actionLabel()) +
