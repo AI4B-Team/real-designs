@@ -1342,6 +1342,22 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     picker = mountSourcePicker(slot, {
       context: isVideo ? "video" : "design",
       hero: () => uploadHero(isVideo),
+      /* The project-type card is the only output-type authority. */
+      output: () => (isVideo ? "video" : "image"),
+      initialTab: (CONTEXT_CONFIG[isVideo ? "video" : "design"].sources.includes(
+        state.sourceTab as any,
+      )
+        ? state.sourceTab
+        : "upload") as any,
+      onTab: (tab: string) => {
+        state.sourceTab = tab;
+        const h = sourceHeading(tab);
+        const t = document.getElementById("stwSourceH");
+        const s = document.getElementById("stwSourceS");
+        if (t) t.textContent = h.title;
+        if (s) s.textContent = h.copy;
+      },
+
       /* Local escape: the shell helper is not always initialized this early. */
       esc: escLocal,
       lucide,
