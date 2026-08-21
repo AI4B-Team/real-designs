@@ -9566,3 +9566,14 @@
   border-radius: 14px;
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
 }
+.rd-app .sp-pane-h {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.rd-app .sp-pane-h span {
+  color: var(--muted, #6b6b73);
+  font-size: 12.5px;
+}
