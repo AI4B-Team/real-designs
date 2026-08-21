@@ -970,18 +970,23 @@ export function createDescribeComposer(cfg: Cfg) {
   function sync(root: HTMLElement | null) {
     const ta = root?.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement | null;
     if (ta) {
-      /* A compact resting height that grows with the text. */
+      /* A compact resting height that grows with the text, then scrolls. */
       ta.style.height = "auto";
-      ta.style.height = Math.min(Math.max(ta.scrollHeight, 58), 260) + "px";
+      ta.style.height = Math.min(Math.max(ta.scrollHeight, 150), 320) + "px";
     }
     const btn = root?.querySelector(".sp-create") as HTMLButtonElement | null;
     if (btn) btn.disabled = !ready();
+    const impOk = state.prompt.trim().length >= IMPROVE_MIN_CHARS;
     const imp = root?.querySelector('[data-sp="improve"]') as HTMLButtonElement | null;
-    if (imp)
-      imp.disabled =
-        state.prompt.trim().length < IMPROVE_MIN_CHARS || state.improving || state.busy;
+    if (imp) imp.disabled = !impOk || state.improving || state.busy;
+    const wrap = root?.querySelector('[data-sp="improvewrap"]') as HTMLElement | null;
+    if (wrap) wrap.classList.toggle("is-off", !impOk);
+    const foot = root?.querySelector(".sp-describe-foot") as HTMLElement | null;
+    if (foot) foot.classList.toggle("is-blocked", !!(missing() && footMessage()));
     const meta = root?.querySelector(".sp-describe-foot .sp-meta") as HTMLElement | null;
-    if (meta) meta.textContent = summary();
+    if (meta) meta.textContent = footMessage();
+    const cost = root?.querySelector(".sp-describe-foot .sp-cost") as HTMLElement | null;
+    if (cost) cost.textContent = optionTotalLabel(output(), state.options);
   }
 
   return {
