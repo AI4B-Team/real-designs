@@ -47,22 +47,71 @@ function levelName(): string {
   return b?.textContent?.trim() || "Restyle";
 }
 
-/** The compact recap shown directly above the sticky footer. */
-export function generationSummary(): { line1: string; line2: string; missing: string[] } {
+type CanvasState = {
+  selectedRoomType: string;
+  needsStyle: boolean;
+  selectedStyleId: string;
+  selectedStyleName: string;
+};
+
+/** One authoritative read of the panel selection, never scraped from card text. */
+export function canvasState(): CanvasState {
+  const read = (window as any).__rdCanvasState;
+  if (typeof read === "function") {
+    try {
+      const s = read() || {};
+      return {
+        selectedRoomType: String(s.selectedRoomType || "").trim(),
+        needsStyle: !!s.needsStyle,
+        selectedStyleId: String(s.selectedStyleId || "").trim(),
+        selectedStyleName: String(s.selectedStyleName || "").trim(),
+      };
+    } catch (_) {
+      /* fall through to the DOM read below */
+    }
+  }
   const room = (byId("fRoom") as HTMLSelectElement | null)?.value || "";
-  const styleName =
+  const field = byId("canvasStyleField") as HTMLElement | null;
+  const name =
     (document.querySelector("#canvasStyleField .cs-picked-t b") as HTMLElement | null)?.textContent?.trim() ||
     "";
-  const missing: string[] = [];
-  if (!room) missing.push("Choose A Room Type");
-  if (!styleName && !(byId("canvasStyleField") as HTMLElement | null)?.hidden)
-    missing.push("Choose A Design Style");
   return {
-    line1: [room, styleName, levelName()].filter(Boolean).join(" · "),
+    selectedRoomType: room.trim(),
+    needsStyle: !!field && !field.hidden,
+    selectedStyleId: name,
+    selectedStyleName: name,
+  };
+}
+
+/** The compact recap shown directly above the sticky footer. */
+export function generationSummary(): { line1: string; line2: string; missing: string[] } {
+  const st = canvasState();
+  const needRoom = !st.selectedRoomType;
+  const needStyle = st.needsStyle && !st.selectedStyleId;
+  const missing: string[] = [];
+  if (needRoom && needStyle) missing.push("Choose A Room And Style To Continue");
+  else if (needRoom) missing.push("Choose A Room To Continue");
+  else if (needStyle) missing.push("Choose A Style To Continue");
+  return {
+    line1: [st.selectedRoomType, st.selectedStyleName, levelName()].filter(Boolean).join(" · "),
     line2: customizeSummary(),
     missing,
   };
 }
+
+/** Briefly highlight whatever is still missing when Generate is pressed. */
+export function flashMissing() {
+  const st = canvasState();
+  const flash = (el: HTMLElement | null) => {
+    if (!el) return;
+    el.classList.add("cs-flash");
+    el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    setTimeout(() => el.classList.remove("cs-flash"), 1200);
+  };
+  if (!st.selectedRoomType) flash(byId("rdwRoomField"));
+  if (st.needsStyle && !st.selectedStyleId) flash(byId("canvasStyleField"));
+}
+
 
 /* --------------------------------------------------------- restructure */
 
@@ -241,6 +290,21 @@ document.addEventListener("click", (e) => {
     byId("rdwCustomize")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 });
+
+/* A disabled Generate swallows clicks, so listen on the way down and point at
+   whatever is still missing. */
+document.addEventListener(
+  "pointerdown",
+  (e) => {
+    const t = e.target as HTMLElement;
+    if (!t || !t.closest) return;
+    const btn = t.closest("#genBtn") as HTMLButtonElement | null;
+    if (!btn) return;
+    if (generationSummary().missing.length) flashMissing();
+  },
+  true,
+);
+
 
 /* ------------------------------------------------- settings overflow menu */
 
