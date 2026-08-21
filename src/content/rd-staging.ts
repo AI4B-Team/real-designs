@@ -965,6 +965,36 @@ function imgAttrs(it) {
   return src + bound;
 }
 
+/**
+ * The upload lifecycle of one card, independent of any design work on it.
+ * Every newly added photo shows exactly one accurate state, and a failure is
+ * always recoverable from the card itself.
+ */
+function uploadState(it) {
+  if (!it) return null;
+  if (it.status === "failed")
+    return { id: "failed", label: "Upload Failed", icon: "triangle-alert", cls: "bad" };
+  if (it.status === "uploading")
+    return { id: "uploading", label: "Uploading…", icon: "loader", cls: "busy" };
+  if (!it.path && !it.previewUrl && !it.file)
+    return { id: "missing", label: "Missing Source", icon: "image-off", cls: "bad" };
+  if (it.detect === "pending" || it.detect === "running")
+    return { id: "processing", label: "Processing…", icon: "loader", cls: "busy" };
+  return { id: "ready", label: "Ready", icon: "check", cls: "ok" };
+}
+
+/* Ready is the quiet default: only a state worth acting on shows a chip. */
+function uploadChipHtml(it) {
+  const st = uploadState(it);
+  if (!st || st.id === "ready" || st.id === "failed") return "";
+  return `<span class="rds-up ${st.cls}"><i data-lucide="${st.icon}"></i>${st.label}</span>`;
+}
+
+/** Photos that still block Continue, named so the user knows which ones. */
+function blockingUploads() {
+  return S.items.filter((i) => i.selected && i.status === "uploading");
+}
+
 function cardHtml(it, seq) {
   const st = stateOf(it);
   const ws = workState(it);
@@ -979,22 +1009,23 @@ function cardHtml(it, seq) {
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}${failed ? " rd-fail" : ""}" data-k="${it.key}">
     <div class="rv-tile-th${failed ? " rd-img-fail" : ""}"${failed ? ' data-photo-fail="upload"' : ""} data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
-      <img${imgAttrs(it)} alt="${esc(it.name)}" loading="lazy">
+      <img${imgAttrs(it)} data-rot="${normalizeRotation(it.rotation)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
       ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: it.room ? it.room + " photo" : "Photo " + n })}
-      ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
+      ${uploadChipHtml(it)}
       ${it.status === "failed" ? photoFailPanelHtml("upload") : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
       ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
         [
-          { label: "Design", icon: "wand-sparkles", attrs: { "data-open": it.key } },
+          { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
+          { label: "Replace", icon: "image-plus", attrs: { "data-replace": it.key } },
+          { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
           it.state === "failed"
             ? { label: "Retry", icon: "rotate-ccw", attrs: { "data-retry": it.key } }
             : null,
-          { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
         ],
         { label: "Photo Actions" },
       )}
