@@ -1145,7 +1145,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   }
 
 
-  function chooserHtml() {
+  const DOOR_LABEL: Record<string, string> = {
+    design: "Design A Space",
+    video: "Create A Video",
+  };
+
+  /** The two project cards, or the one-line summary they collapse into once a
+      choice has been made. Nothing else on the screen is touched, so the
+      composer, its references and its draft all survive the toggle. */
+  function doorsHtml() {
     const doorCard = (id: "design" | "video", icon: string, title: string, sub: string) =>
       '<button type="button" class="stw-door' +
       (state.door === id ? " on" : "") +
@@ -1168,17 +1176,20 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "</span>" +
       "</button>";
 
+    if (state.door && !state.doorOpen)
+      return (
+        '<div class="stw-doorsum">' +
+        '<i data-lucide="' +
+        (state.door === "video" ? "clapperboard" : "wand-sparkles") +
+        '"></i>' +
+        "<span><b>Project:</b> " +
+        esc(DOOR_LABEL[state.door] || "") +
+        "</span>" +
+        '<button type="button" class="stw-doorchange" data-sts="door-change">Change</button>' +
+        "</div>"
+      );
+
     return (
-      '<div class="stw">' +
-      '<header class="stw-head">' +
-      '<div class="stw-head-l">' +
-      '<span class="stw-eyebrow">Studio</span>' +
-      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
-      "<p>Choose a project type, then add your photos.</p>" +
-      "</div></header>" +
-      '<div class="stw-rule"></div>' +
-      styleBanner() +
-      '<div class="stw-doorwrap">' +
       '<div class="stw-doors" role="radiogroup" aria-label="Project type">' +
       doorCard(
         "design",
@@ -1192,7 +1203,24 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         "Create A Video",
         "Turn property photos into a polished listing video.",
       ) +
-      "</div></div>" +
+      "</div>"
+    );
+  }
+
+  function chooserHtml() {
+    return (
+      '<div class="stw">' +
+      '<header class="stw-head">' +
+      '<div class="stw-head-l">' +
+      '<span class="stw-eyebrow">Studio</span>' +
+      '<div class="stw-title"><h2>What Would You Like To Create?</h2></div>' +
+      "<p>Choose a project type, then add your photos.</p>" +
+      "</div></header>" +
+      '<div class="stw-rule"></div>' +
+      styleBanner() +
+      '<div class="stw-doorwrap">' +
+      doorsHtml() +
+      "</div>" +
       '<div class="stw-source"><div class="stw-sec-h"><h3 id="stwSourceH">' +
       sourceHeading(state.sourceTab).title +
       "</h3><span id=\"stwSourceS\">" +
