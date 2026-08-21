@@ -507,25 +507,36 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           "</div>"
         );
       }
-      return (
-        '<div class="sp-drop' +
-        (state.dragging ? " over" : "") +
-        '" data-sp-drop="1" role="button" tabindex="0" ' +
-        'aria-label="Add photos: drop them here or choose files">' +
-        '<i data-lucide="upload-cloud"></i>' +
-        "<b>" +
-        (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") +
-        "</b>" +
-        '<span class="sp-hint">Drag and drop, or</span>' +
-        '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Choose Photos</button>' +
-        '<span class="sp-hint">' +
-        esc(cfg.acceptHint) +
-        " \u00b7 " +
-        MAX_MB +
-        "MB each</span>" +
-        "</div>"
-      );
+      const hero = (() => {
+        try {
+          return opts.hero?.() || null;
+        } catch (_) {
+          return null;
+        }
+      })();
+      if (!hero) {
+        return (
+          '<div class="sp-drop' +
+          (state.dragging ? " over" : "") +
+          '" data-sp-drop="1" role="button" tabindex="0" ' +
+          'aria-label="Add photos: drop them here or choose files">' +
+          '<i data-lucide="upload-cloud"></i>' +
+          "<b>" +
+          (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") +
+          "</b>" +
+          '<span class="sp-hint">Drag and drop, or</span>' +
+          '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Choose Photos</button>' +
+          '<span class="sp-hint">' +
+          esc(cfg.acceptHint) +
+          " \u00b7 " +
+          MAX_MB +
+          "MB each</span>" +
+          "</div>"
+        );
+      }
+      return workspace(hero);
     }
+
     if (state.tab === "cloud") {
       return (
         '<div class="sp-pane">' +
