@@ -9966,31 +9966,29 @@ ${picks
         const title = box && box.querySelector(".lab span");
         const gc = document.getElementById("genCost");
         if (gc && !gc.textContent) gc.textContent = "1 Credit";
+        /* One compact block: what you have, how much is left, one action. */
         if (c.plan === "free") {
-          if (title) title.textContent = "Free Designs Today";
+          if (title) title.textContent = "Free Designs";
           const left = Math.max(0, Math.min(5, c.remainingToday ?? 5));
-          lab.textContent = left + " / 5 Left";
+          lab.textContent = left + " Of 5 Left";
           if (bar) {
             bar.style.width = (left / 5) * 100 + "%";
             bar.className = left <= 1 ? "low" : "";
           }
           if (foot)
             foot.innerHTML =
-              '<span>Free Plan</span><b class="cred-up" role="button" tabindex="0">Upgrade For Credits</b>';
+              '<span></span><b class="cred-up" role="button" tabindex="0">Upgrade</b>';
         } else {
-          if (title) title.textContent = "Credit Balance";
+          if (title) title.textContent = (PLAN_NAME[c.plan] || c.plan) + " Credits";
           lab.textContent = c.balance.toLocaleString();
           if (bar) {
             const pctLeft = Math.min(100, (c.balance / (PLAN_CAP[c.plan] || 2000)) * 100);
             bar.style.width = pctLeft + "%";
             bar.className = pctLeft <= 10 ? "low" : "";
           }
-          if (foot)
-            foot.innerHTML =
-              "<span>" +
-              (PLAN_NAME[c.plan] || c.plan) +
-              " Plan</span><b>1 Design &bull; 3 Budget &bull; 40 Video</b>";
+          if (foot) foot.innerHTML = "";
         }
+
         if (box && !box.dataset.wired) {
           box.dataset.wired = "1";
           box.addEventListener("click", (e) => {
