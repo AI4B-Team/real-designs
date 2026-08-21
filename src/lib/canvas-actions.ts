@@ -148,7 +148,7 @@ async function saveAs(src: string, px: number, name: string) {
 /* popovers                                                            */
 /* ------------------------------------------------------------------ */
 
-type PopItem = { icon: string; label: string; note?: string; fn: () => void };
+type PopItem = { icon: string; label: string; note?: string | undefined; fn: () => void };
 
 let openPop: HTMLElement | null = null;
 
@@ -216,7 +216,7 @@ function startVideo(ctx: ResultContext) {
   }
   const r = startVideoFromCanvas(
     {
-      path: ctx.path,
+      path: ctx.path || null,
       name: ctx.room || null,
       room: ctx.room || null,
       versionId: ctx.id || null,
