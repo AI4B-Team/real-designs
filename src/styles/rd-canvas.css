@@ -1033,3 +1033,102 @@
 .rda-pop i { width: 16px; height: 16px; margin-top: 2px; color: var(--mute, #6b6b70); }
 .rda-pop b { display: block; font-size: 0.82rem; font-weight: 600; }
 .rda-pop em { display: block; font-style: normal; font-size: 0.72rem; color: var(--mute-2, #8a8a90); margin-top: 2px; }
+
+/* ---------------------------------------------------------------
+   Compact selectors: image region and label region stay separate
+   --------------------------------------------------------------- */
+/* Room / area cards: dominant image, one-line label on white below it. */
+.rd-app .rdw-card {
+  display: flex;
+  flex-direction: column;
+  border-width: 2px;
+  border-color: var(--line, #e9e6e0);
+}
+.rd-app .rdw-card-th {
+  flex: 0 0 auto;
+  height: 76px;
+  border-radius: 0;
+}
+.rd-app .rdw-card-n {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 6px;
+  background: #fff;
+  text-align: center;
+  font-size: 0.64rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Selected thumbnail: 2px red border + check, image stays readable. */
+.rd-app .rdw-card.on {
+  border-color: var(--red, #cc0000);
+}
+.rd-app .rdw-card.on .rdw-card-n {
+  color: var(--red, #cc0000);
+}
+
+/* Design / Exterior / Landscape style tiles: same two-region structure. */
+.rd-app .cs-qtile {
+  gap: 0;
+  border-width: 2px;
+  border-color: var(--line, #e9e6e0);
+}
+.rd-app .cs-qth {
+  flex: 0 0 auto;
+  aspect-ratio: auto;
+  height: 80px;
+  min-height: 80px;
+  max-height: 80px;
+}
+.rd-app .cs-qn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  padding: 4px 6px;
+  background: #fff;
+  text-align: center;
+  font-size: 0.66rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rd-app .cs-qtile.on {
+  border-color: var(--red, #cc0000);
+  box-shadow: none;
+}
+.rd-app .cs-qtile.on .cs-qn {
+  color: var(--red, #cc0000);
+}
+
+/* Space mode pills: selected = black fill, white icon/text, red accent ring. */
+.rd-app #spChips .chip.on {
+  background: #101014;
+  border-color: var(--red, #cc0000);
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.22);
+}
+.rd-app #spChips .chip.on i[data-lucide],
+.rd-app #spChips .chip.on svg {
+  color: #fff;
+  stroke: currentColor;
+}
+
+/* Left tool rail selected state uses the same black + red language. */
+.rd-app .rdw-rail .toolrow.on {
+  background: #101014;
+  border-color: var(--red, #cc0000);
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.22);
+}
+.rd-app .rdw-rail .toolrow.on b,
+.rd-app .rdw-rail .toolrow.on i[data-lucide],
+.rd-app .rdw-rail .toolrow.on svg {
+  color: #fff;
+}
