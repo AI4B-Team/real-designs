@@ -783,17 +783,19 @@ export function createDescribeComposer(cfg: Cfg) {
     const prompt = state.prompt.trim();
     if (prompt.length < IMPROVE_MIN_CHARS || !cfg.onImprove) return;
     state.improving = true;
+    state.impError = null;
     cfg.render();
     try {
       const better = await cfg.onImprove(prompt);
       const text = String(better || "").trim();
       if (text) {
+        /* The original is never lost: Restore Original brings it back. */
         state.undo = prompt;
         state.prompt = text;
         saveDraft();
       }
     } catch (err: any) {
-      cfg.alert((err && err.message) || "Could not improve that description.");
+      state.impError = (err && err.message) || "Could not improve that description.";
     } finally {
       state.improving = false;
       cfg.render();
