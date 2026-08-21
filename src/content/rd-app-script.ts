@@ -2965,6 +2965,10 @@ export function initApp(): () => void {
         return;
       }
       if (!ensureCredits(1, "A Design Render")) return;
+      /* A variation branches from the selected design instead of the source
+         photo: same room, same property, new child version. */
+      const VAR = (window as any).__rdPendingVariation || null;
+      (window as any).__rdPendingVariation = null;
       busy = true;
       setCanvasPhase("generating");
       const btn = document.getElementById("genBtn");
