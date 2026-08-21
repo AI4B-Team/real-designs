@@ -1365,6 +1365,7 @@ function render() {
   mountUploadRetries(el);
   mountRotations(el);
   mountFloatingAdd(el);
+  closeAddSourcePopover();
 }
 
 /* Every rail step is a real destination: nothing in the rail is decorative. */
@@ -1435,6 +1436,9 @@ function syncSelection() {
   if (!S || !wrap) return;
   S.items.forEach(syncCard);
   const sel = selectedCount();
+  const bar = wrap.querySelector("#rdsBulkBar");
+  /* Bulk actions belong to a selection: with nothing selected the row goes. */
+  if (bar) bar.hidden = sel < 1;
   const set = wrap.querySelector("#rdsSetRoom");
   if (set) {
     /* The label carries its own scope: bulk edits always show the count. */
@@ -2136,15 +2140,17 @@ async function removeAll() {
   render();
 }
 
-function removeOne(key) {
+async function removeOne(key) {
   const it = S.items.find((i) => i.key === key);
   if (!it) return;
-  if (
-    !window.confirm(
-      "Remove “" + it.name + "” from this project? The original photo stays in your library.",
-    )
-  )
-    return;
+  const ok = await confirmDialog({
+    title: "Remove This Photo?",
+    body:
+      "“" + (it.name || "Photo") + "” leaves this project. The original stays in your library.",
+    confirmLabel: "Remove",
+    danger: true,
+  });
+  if (!ok) return;
   try {
     URL.revokeObjectURL(it.previewUrl);
   } catch (_) {}
@@ -2492,6 +2498,21 @@ function startDesigning() {
   const sel = ordered().filter((i) => i.selected);
   if (!sel.length) {
     window.alert("Select at least one photo to design.");
+    return;
+  }
+  /* A photo mid-upload has no stored source to design from yet. */
+  const pending = blockingUploads();
+  if (pending.length) {
+    cmToast(
+      pending.length === 1
+        ? "One photo is still uploading. It will be ready in a moment."
+        : pending.length + " photos are still uploading. They will be ready in a moment.",
+    );
+    return;
+  }
+  const failed = sel.filter((i) => i.status === "failed");
+  if (failed.length) {
+    cmToast("Retry or remove the photos that failed to upload first.");
     return;
   }
   /* stateOf() returns null once a room is settled, so read it defensively and
