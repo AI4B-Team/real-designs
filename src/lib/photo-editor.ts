@@ -248,7 +248,7 @@ export async function openPhotoEditor(opts: {
 
   /* -------------------------------------------------------- state helpers */
 
-  const cur = () => photos[index];
+  const cur = (): EditorPhoto => photos[index] as EditorPhoto;
   function st(key = cur().key): PhotoState {
     let s = states.get(key);
     if (!s) {
@@ -500,11 +500,12 @@ export async function openPhotoEditor(opts: {
     const handle = (e.target as HTMLElement).getAttribute("data-h");
     const img = $("#rdpeImg") as HTMLImageElement;
     const r = img.getBoundingClientRect();
-    const start = { x: e.clientX, y: e.clientY, ...s.crop };
+    const c0 = s.crop;
+    const start = { px: e.clientX, py: e.clientY, x: c0.x, y: c0.y, w: c0.w, h: c0.h, ratio: c0.ratio };
     push();
     const move = (ev: PointerEvent) => {
-      const dx = (ev.clientX - start.x) / r.width;
-      const dy = (ev.clientY - start.y) / r.height;
+      const dx = (ev.clientX - start.px) / r.width;
+      const dy = (ev.clientY - start.py) / r.height;
       const c = { ...start } as any;
       if (!handle) {
         c.x = Math.min(1 - start.w, Math.max(0, start.x + dx));
@@ -727,9 +728,9 @@ export async function openPhotoEditor(opts: {
     const t = e.target as HTMLInputElement;
     const s = st();
     if (t.hasAttribute("data-adj")) {
-      if (!t.dataset.pushed) {
+      if (!t.dataset['pushed']) {
         push();
-        t.dataset.pushed = "1";
+        t.dataset['pushed'] = "1";
       }
       s.adj[t.getAttribute("data-adj") as string] = n(t.value);
       s.dirty = true;
@@ -739,9 +740,9 @@ export async function openPhotoEditor(opts: {
       img.style.filter = filterString(s.adj);
     }
     if (t.hasAttribute("data-straighten")) {
-      if (!t.dataset.pushed) {
+      if (!t.dataset['pushed']) {
         push();
-        t.dataset.pushed = "1";
+        t.dataset['pushed'] = "1";
       }
       s.straighten = n(t.value);
       s.dirty = true;
@@ -754,7 +755,7 @@ export async function openPhotoEditor(opts: {
 
   host.addEventListener("change", (e) => {
     const t = e.target as HTMLInputElement;
-    if (t.dataset) delete t.dataset.pushed;
+    if (t.dataset) delete t.dataset['pushed'];
     if (t.tagName === "INPUT") paint();
   });
 
