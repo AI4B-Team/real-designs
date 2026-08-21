@@ -1598,7 +1598,29 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
       return;
     }
+    const refx = t.closest("[data-sp-refx]") as HTMLElement | null;
+    if (refx) {
+      const id = refx.dataset["spRefx"];
+      state.refs = state.refs.filter((r) => r.id !== id);
+      render();
+      return;
+    }
+    const ratio = t.closest("[data-sp-ratio]") as HTMLElement | null;
+    if (ratio) {
+      state.ratio = ratio.dataset["spRatio"] || state.ratio;
+      state.detailsOpen = true;
+      render();
+      return;
+    }
+    const optn = t.closest("[data-sp-opt]") as HTMLElement | null;
+    if (optn) {
+      state.options = Number(optn.dataset["spOpt"]) || 1;
+      state.detailsOpen = true;
+      render();
+      return;
+    }
     const ex = t.closest("[data-sp-ex]") as HTMLElement | null;
+
     if (ex) {
       /* Examples fill the prompt; the user still presses Create. */
       state.prompt = ex.dataset["spEx"] || "";
