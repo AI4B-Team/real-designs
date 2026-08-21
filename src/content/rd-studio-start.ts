@@ -11,6 +11,8 @@
  */
 
 import { renderConcept } from "@/lib/concept-render.functions";
+import { improveDescription } from "@/lib/prompt-improve.functions";
+
 import {
   detectSource,
   SOURCE_LABELS,
