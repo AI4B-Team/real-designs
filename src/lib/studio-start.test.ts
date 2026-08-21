@@ -120,14 +120,14 @@ describe("studio start source picker", () => {
     ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, bubbles: true }));
     await Promise.resolve();
     const cta = host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
-    expect(cta.textContent).toContain("Creating");
+    expect(cta.textContent).toContain("Generating");
     expect(cta.disabled).toBe(true);
     cta.click();
     expect(onDescribe).toHaveBeenCalledTimes(1);
     release();
     await new Promise((r) => setTimeout(r, 0));
     expect((host.querySelector('[data-sp="describe"]') as HTMLButtonElement).textContent).toContain(
-      "Create",
+      "Generate",
     );
   });
 
