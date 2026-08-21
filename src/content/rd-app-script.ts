@@ -3394,6 +3394,8 @@ export function initApp(): () => void {
          reopening a saved version never writes a duplicate version row. */
 
       /* Version History shows this render immediately, before any save. */
+      const vmeta = (window as any).__rdVariationMeta || null;
+      (window as any).__rdVariationMeta = null;
       try {
         SESSION_VERSIONS.unshift({
           src,
@@ -3402,10 +3404,18 @@ export function initApp(): () => void {
           style: ((document.getElementById("fStyle") || {}).value || "").trim() || null,
           at: Date.now(),
           room: activeStudioRoom(),
+          /* Branching metadata: a variation always names its parent version. */
+          parentAt: vmeta ? vmeta.parentAt || null : null,
+          parentSrc: vmeta ? vmeta.parentSrc || vmeta.src || null : null,
+          parentPath: vmeta ? vmeta.parentPath || null : null,
+          variationStrength: vmeta ? vmeta.strength || null : null,
+          variationPrompt: vmeta ? vmeta.prompt || null : null,
+          variationLocks: vmeta && Array.isArray(vmeta.keep) ? vmeta.keep.slice() : null,
         });
 
         paintVersions();
       } catch (_) {}
+
       const wrap = document.getElementById("vars");
       if (!wrap) return;
       const d = document.createElement("div");
