@@ -10365,9 +10365,13 @@ ${picks
             data: { version_id: room.version_id, status: approved ? "draft" : "approved" },
           });
           await reloadTree();
+          stApprove.dataset.approved = approved ? "" : "1";
           stApprove.innerHTML =
             '<i data-lucide="check"></i>' +
-            (approved ? "Approve Latest Version" : "v" + (room.version_no || 1) + " Approved");
+            (approved
+              ? "Approve Version " + (room.version_no || 1)
+              : "Version " + (room.version_no || 1) + " Approved");
+
 
           lucide.createIcons();
           try {
