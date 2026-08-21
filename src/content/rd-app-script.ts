@@ -117,6 +117,7 @@ import {
 } from "@/lib/space-tools";
 import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
 import { setHandoff } from "@/lib/handoff";
+import { startVideoFromCanvas } from "@/lib/video-handoff";
 import { openStagingReview } from "@/content/rd-staging";
 import { openVideoWorkflow } from "@/content/rd-media-lib";
 
@@ -2380,6 +2381,43 @@ export function initApp(): () => void {
             return url || URL.createObjectURL(f);
           },
           setSource: (kind, src, alt, opts) => setStudioSource(kind, src, alt, opts),
+          /* References are inspiration, not project photos, but they must be
+             durable before the model is asked to look at them. */
+          uploadReference: async (f) => {
+            const path = await uploadRoomPhoto(f);
+            const url = await roomPhotoUrl(path);
+            return url || URL.createObjectURL(f);
+          },
+          /* A described video renders its key frame first, then hands the saved
+             image to the Video builder with the chosen camera move. */
+          startVideoFromConcept: (o) => {
+            if (!lastRenderPath) {
+              showAlert("That Concept Has Not Finished Saving Yet.");
+              return;
+            }
+            const r = startVideoFromCanvas(
+              {
+                path: lastRenderPath,
+                name: "Concept",
+                room: (STUDIO_CTX && STUDIO_CTX.room) || null,
+                propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
+                propertyAddress: (STUDIO_CTX && STUDIO_CTX.address) || null,
+              },
+              "studio",
+            );
+            if (!r.ok) {
+              showAlert(r.reason);
+              return;
+            }
+            try {
+              window.rdVideoIntent = {
+                camera: o.camera || r.motion,
+                duration: o.duration,
+                orientation: o.orientation,
+              };
+            } catch (_) {}
+            go("v-video");
+          },
           showConcept: async (image, label, prompt) => {
             setStudioSource("user_upload", image, "Design concept", {
               caption:
