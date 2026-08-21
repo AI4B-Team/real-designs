@@ -880,6 +880,8 @@
   color: var(--muted, #7b756c);
 }
 .rd-app .rdw-help {
+  display: block;
+  width: 100%;
   flex-basis: 100%;
   font-size: 0.68rem;
   font-weight: 500;
