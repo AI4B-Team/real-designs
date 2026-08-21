@@ -227,6 +227,18 @@ export function buildCanvasPanel() {
   const details = byId("rdwDetails");
   if (details) details.classList.add("rdw-details-quiet");
 
+  /* 2b. Version History keeps one job: listing versions. Clear Canvas moves to
+     the settings menu, and the Hide link becomes a chevron. */
+  const clearBtn = byId("clearLocks");
+  if (clearBtn) clearBtn.hidden = true;
+  const versT = byId("rdwVersToggle");
+  if (versT) {
+    versT.classList.add("rdw-vers-chev");
+    versT.setAttribute("aria-label", "Toggle Version History");
+    versT.innerHTML = '<i data-lucide="chevron-down"></i>';
+  }
+  refreshVersionRail();
+
   /* 3. Generation summary and the settings overflow live in the sticky
      footer, next to the single primary action. */
   const sum = document.createElement("div");
@@ -242,6 +254,7 @@ export function buildCanvasPanel() {
         'aria-haspopup="true" aria-expanded="false" data-tt="Settings" aria-label="Settings">' +
         '<i data-lucide="more-vertical"></i></button>' +
         '<div class="rdw-more-m" id="rdwMoreMenu" hidden>' +
+        '<button type="button" class="acct-i" data-panel-reset="clear">Clear Canvas</button>' +
         '<button type="button" class="acct-i" data-panel-reset="tool">Reset This Tool</button>' +
         '<button type="button" class="acct-i" data-panel-reset="all">Reset All Settings</button>' +
         '<button type="button" class="acct-i" data-panel-reset="over">Start Over</button>' +
