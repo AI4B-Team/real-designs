@@ -344,6 +344,9 @@ export function refreshCanvasPanel() {
         '<button type="button" class="fb-link" data-edit-customize>Edit</button></div>';
     icons();
   }
+  refreshVersionRail();
+  if (false) {
+  }
 }
 
 document.addEventListener("click", (e) => {
