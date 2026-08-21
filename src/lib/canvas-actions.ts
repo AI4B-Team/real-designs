@@ -255,8 +255,6 @@ function editDesign(ctx: ResultContext) {
     note?.focus();
     return;
   }
-  const r = startVideoFromCanvas; // keep the import graph honest; unused here
-  void r;
   toast("Open This Design In Studio To Keep Editing.");
   go("studio");
 }
