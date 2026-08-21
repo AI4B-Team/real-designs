@@ -143,10 +143,40 @@ export function buildCanvasPanel() {
      repeats it. Header, description, breadcrumb and the persistent Reset link
      all leave the top of the panel. */
   document.getElementById("rdwPanel")?.classList.add("rdw-panel-quiet");
+  /* The space control opens the panel as a compact icon row: the three
+     choices read faster than a label plus three words. */
   const spaceLabel = document.querySelector("#rdwSpaceField > label") as HTMLElement | null;
-  if (spaceLabel) spaceLabel.textContent = "Choose A Space";
+  if (spaceLabel) spaceLabel.hidden = true;
+  byId("rdwSpaceField")?.classList.add("rdw-space-icons");
+  const SPACE_ICON: Record<string, string> = {
+    interior: "sofa",
+    exterior: "home",
+    landscape: "trees",
+  };
+  document.querySelectorAll<HTMLElement>("#spChips .chip").forEach((chip) => {
+    const key = chip.getAttribute("data-sp") || "";
+    if (chip.querySelector("i")) return;
+    chip.insertAdjacentHTML(
+      "afterbegin",
+      '<i data-lucide="' + (SPACE_ICON[key] || "square") + '"></i>',
+    );
+  });
 
-  /* 1. Customize: every optional control, collapsed by default. */
+  /* 1. "Describe What You Want" stays in the main flow: it is the one free
+     text people reach for, so it never hides under Customize. */
+  const instr = fieldByLabel("Additional Instructions");
+  if (instr) {
+    instr.id = "rdwNoteField";
+    const lab = instr.querySelector("label") as HTMLElement | null;
+    if (lab)
+      lab.innerHTML =
+        'Describe What You Want<span class="rdw-opt-tag">Optional</span>';
+    const ta = instr.querySelector("textarea") as HTMLTextAreaElement | null;
+    if (ta) ta.placeholder = "Keep the flooring, lighten the cabinets…";
+    body.appendChild(instr);
+  }
+
+  /* 2. Customize: every remaining optional control, collapsed by default. */
   const cust = document.createElement("div");
   cust.className = "rdw-cust";
   cust.id = "rdwCustomize";
@@ -171,8 +201,6 @@ export function buildCanvasPanel() {
   moveInto(custBody, ["rdwLevelField", "rdwLockField", "rdwStrengthField"]);
   const grade = fieldByLabel("Finish Grade");
   if (grade) custBody.appendChild(grade);
-  const instr = fieldByLabel("Additional Instructions");
-  if (instr) custBody.appendChild(instr);
   moveInto(custBody, ["rdwOptField", "rdwObjSec"]);
 
   /* 2. Result actions leave the settings flow for their own bar. */
