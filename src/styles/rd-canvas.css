@@ -454,18 +454,61 @@
   text-align: left;
 }
 .rd-app .rdw-card-th {
-  display: block;
-  height: 48px;
-  background: #f1efeb center/cover no-repeat;
+  position: relative;
+  height: 52px;
+  /* Skeleton tone shows while the preview decodes, never a bare beige box. */
+  background:
+    linear-gradient(90deg, #efece7 25%, #f6f4f1 37%, #efece7 63%) 0 0 / 400% 100%,
+    #f1efeb;
+  animation: rdw-shim 1.4s ease infinite;
   display: grid;
   place-items: center;
   color: var(--mute-2, #6b6b74);
+  overflow: hidden;
 }
-.rd-app .rdw-card-th i[data-lucide],
-.rd-app .rdw-card-th svg {
+.rd-app .rdw-card.has-img .rdw-card-th {
+  animation: none;
+}
+@keyframes rdw-shim {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+.rd-app .rdw-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rd-app .rdw-card-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--red, #c00);
+  color: #fff;
+  display: none;
+  place-items: center;
+}
+.rd-app .rdw-card.on .rdw-card-check {
+  display: grid;
+}
+.rd-app .rdw-card-check i[data-lucide],
+.rd-app .rdw-card-check svg {
+  width: 11px;
+  height: 11px;
+}
+.rd-app .rdw-card-th > i[data-lucide],
+.rd-app .rdw-card-th > svg {
   width: 17px;
   height: 17px;
 }
+
 .rd-app .rdw-card-n {
   display: block;
   font-size: 0.66rem;
