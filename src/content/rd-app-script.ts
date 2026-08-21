@@ -3377,9 +3377,11 @@ export function initApp(): () => void {
           src,
           path: path || null,
           label: label || "Your Render",
+          style: ((document.getElementById("fStyle") || {}).value || "").trim() || null,
           at: Date.now(),
           room: activeStudioRoom(),
         });
+
         paintVersions();
       } catch (_) {}
       const wrap = document.getElementById("vars");
