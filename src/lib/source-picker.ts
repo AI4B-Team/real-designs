@@ -601,7 +601,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '</span><span class="sp-work-dot">\u2022</span><span>Up to ' +
       MAX_MB +
       "MB each</span>" +
-      (hero.isUser ? '<span class="sp-work-mine">Your Photos</span>' : "") +
+      /* The footer states file rules only: no "Your Photos" label before the
+         card has actually taken any uploads. */
+
       "</div>" +
       '<div class="sp-work-over"><i data-lucide="upload-cloud"></i><b>Drop Photos To Upload</b></div>' +
       "</div>"

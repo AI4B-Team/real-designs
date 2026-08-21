@@ -9185,3 +9185,85 @@
 .rd-app .rdw-rail .toolrow[hidden] {
   display: none !important;
 }
+
+/* ---------- Studio start cleanup pass ----------
+   Only the chosen project type carries the red treatment; the other card stays
+   white and neutral so the active choice reads instantly. */
+.rd-app .stw-door:hover {
+  border-color: #b9b9c0;
+  transform: none;
+}
+.rd-app .stw-door.on,
+.rd-app .stw-door.on:hover {
+  border-color: var(--red);
+  background: rgba(204, 0, 0, 0.05);
+}
+.rd-app .stw-door.on > i,
+.rd-app .stw-door.on > svg {
+  background: var(--red);
+  color: #fff;
+  stroke: #fff;
+}
+
+/* Upload workspace: a little shorter, with slightly larger artwork that sits
+   inside the card instead of hugging its right edge. */
+.sp-work-main {
+  gap: 14px;
+  padding: 20px 34px 20px 32px;
+}
+.sp-work-cta {
+  margin-top: 14px;
+}
+.sp-work-imp {
+  margin-top: 16px;
+}
+.sp-work-f {
+  padding: 9px 20px 9px 32px;
+}
+.sp-work-r {
+  min-height: 226px;
+}
+.sp-work-stack {
+  inset: -12px 0;
+}
+.sp-work-ph1 {
+  top: 14px;
+  right: 26px;
+  width: 193px;
+  height: 130px;
+}
+.sp-work-ph2 {
+  top: 66px;
+  right: 100px;
+  width: 177px;
+  height: 121px;
+}
+.sp-work-ph3 {
+  bottom: 16px;
+  right: 42px;
+  width: 233px;
+  height: 157px;
+}
+.sp-work-stack.is-video .sp-work-ph1 {
+  top: 10px;
+  right: 182px;
+  width: 148px;
+  height: 99px;
+}
+.sp-work-stack.is-video .sp-work-ph2 {
+  top: 78px;
+  right: 218px;
+  width: 139px;
+  height: 94px;
+}
+.sp-work-stack.is-video .sp-work-ph3 {
+  bottom: 18px;
+  right: 196px;
+  width: 155px;
+  height: 103px;
+}
+.sp-work-vid {
+  right: 32px;
+  width: 193px;
+  height: 188px;
+}
