@@ -190,7 +190,7 @@ export function styleSectionLabel(
   }
   if (sp === "exterior") return "Exterior Style";
   if (sp === "garden") return "Landscape Style";
-  return "Design Direction";
+  return "Design Style";
 }
 
 /** Prompt shown above the style browser for this space. */
