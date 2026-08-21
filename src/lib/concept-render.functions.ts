@@ -45,15 +45,20 @@ function buildPrompt(d: z.infer<typeof Input>): string {
       `Furnishing and finish budget: ${d.budget}. Choose finishes that are realistic at that level.`,
     );
   if (d.features) lines.push(`Must-have features: ${d.features}.`);
-  if (d.image)
+  if (d.image || (d.images && d.images.length))
     lines.push(
-      "Use the attached image only as stylistic inspiration, not as the architecture to reproduce.",
+      "Use the attached images only as stylistic inspiration, not as the architecture to reproduce.",
+    );
+  if (d.aspect_ratio)
+    lines.push(
+      `Output framing: return the image with a ${d.aspect_ratio} aspect ratio, composed naturally without stretching.`,
     );
   lines.push(
     "Photorealistic architectural photography, natural light, believable materials and proportions. No text, no watermarks, no labels, no people.",
   );
   return lines.join("\n");
 }
+
 
 export const renderConcept = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
