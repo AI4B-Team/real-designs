@@ -10,6 +10,10 @@ import { describe, it, expect, vi } from "vitest";
 import { mountSourcePicker, CONTEXT_CONFIG, SOURCE_META } from "@/lib/source-picker";
 
 function mount(context: "design" | "video", opts: Record<string, unknown> = {}) {
+  /* Each mount is a fresh session: drafts must not leak between tests. */
+  try {
+    localStorage.clear();
+  } catch (_) {}
   const host = document.createElement("div");
   document.body.appendChild(host);
   const picker = mountSourcePicker(host, {
@@ -67,7 +71,7 @@ describe("studio start source picker", () => {
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
     const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     expect(ta).toBeTruthy();
-    expect(ta.placeholder.startsWith("Describe what you want to create")).toBe(true);
+    expect(ta.placeholder.startsWith("Describe the room, exterior")).toBe(true);
     expect(host.textContent).toContain("Describe Your Space");
     expect(host.querySelector('[data-sp="addref"]')).toBeTruthy();
     expect(host.querySelector('[data-sp="improve"]')).toBeTruthy();
@@ -106,10 +110,10 @@ describe("studio start source picker", () => {
     const onDescribe = vi.fn();
     const { host } = mount("design", { onDescribe });
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
-    const chip = host.querySelector('[data-sp-ex="Resort Backyard"]') as HTMLElement;
+    const chip = host.querySelector('[data-sp-ex="Resort-Style Backyard"]') as HTMLElement;
     chip.click();
     expect((host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement).value).toBe(
-      "Resort Backyard",
+      "Resort-Style Backyard",
     );
     expect(onDescribe).not.toHaveBeenCalled();
   });

@@ -40,6 +40,14 @@ export type StudioStartCtx = {
   track: (event: string, props?: Record<string, unknown>) => void;
   /** Persists an uploaded file and returns a displayable URL. */
   uploadPhoto: (file: File) => Promise<string>;
+  /** Persists a Describe reference image and returns a durable URL. */
+  uploadReference?: (file: File) => Promise<string>;
+  /** Sends the finished concept to the Video builder with a camera move. */
+  startVideoFromConcept?: (opts: {
+    camera: string;
+    duration: number;
+    orientation: string;
+  }) => void | Promise<void>;
   /** Loads a real source into the Studio canvas. */
   setSource: (kind: string, src: string, alt: string, opts?: any) => void;
   /** Places a finished concept image on the canvas as a result. */
@@ -221,8 +229,17 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     inspiration: null as File | null,
     /** Reference images (data URLs) attached in the Describe composer. */
     refs: [] as string[],
+    /** How closely the references should be followed. */
+    refStrength: "balanced",
     ratio: "16:9",
     options: 1,
+    /** What the description should produce: a design image or a listing video. */
+    output: "image" as "image" | "video",
+    camera: "slow-push-in",
+    duration: 5,
+    orientation: "16:9",
+    /** How far the redesign should move from the source. */
+    level: "balanced",
 
     samples: false,
     busy: false,
@@ -1285,6 +1302,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       esc: escLocal,
       lucide,
       showAlert: ctx.showAlert,
+      /* References go to durable storage before anything is generated. */
+      ...(ctx.uploadReference ? { uploadReference: ctx.uploadReference } : {}),
       properties: () =>
         (ctx.getProperties ? ctx.getProperties() : []).map((p) => {
           const photos = coverOrder(photosOfProperty(p));
@@ -1362,8 +1381,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.method = "describe";
         if (details) {
           state.refs = details.references || [];
+          state.refStrength = details.referenceStrength || state.refStrength;
           state.ratio = details.ratio || state.ratio;
           state.options = details.options || 1;
+          state.output = details.output || "image";
+          state.camera = details.camera || state.camera;
+          state.duration = details.duration || state.duration;
+          state.orientation = details.orientation || state.orientation;
+          state.level = details.level || state.level;
+          if (details.space) state.space = details.space.toLowerCase();
           if (details.room) state.room = details.room;
           if (details.style) state.style = details.style;
           if (details.mood) state.mood = details.mood;
@@ -1800,7 +1826,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
             features: state.features || null,
             image,
             images: state.refs.length ? state.refs : null,
-            aspect_ratio: state.ratio || null,
+            aspect_ratio: (state.output === "video" ? state.orientation : state.ratio) || null,
           },
         });
         ctx.track("concept_generated", { space: state.space });
@@ -1809,6 +1835,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           count > 1 ? "Concept " + (i + 1) : "Concept",
           state.prompt.trim(),
         );
+      }
+      /* A video request renders its key frame first, then opens the builder. */
+      if (state.output === "video" && ctx.startVideoFromConcept) {
+        await ctx.startVideoFromConcept({
+          camera: state.camera,
+          duration: state.duration,
+          orientation: state.orientation,
+        });
       }
     } catch (err: any) {
       if (isPlanBlocked(err)) openUpgrade(err);
