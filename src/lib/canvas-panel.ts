@@ -29,14 +29,14 @@ function on(sel: string): string {
 
 /** One line describing every optional setting's current value. */
 export function customizeSummary(): string {
-  const level = on("#rdwLevel .rdw-opt b") || on("#rdwLevel .rdw-opt") || "Restyle";
-  const lock = on("#rdwLock .chip") || "Balanced";
+  const level = on("#rdwLevel .rdw-opt b") || on("#rdwLevel .rdw-opt") || "Balanced";
+  const lock = (on("#rdwLock .chip") || "Balanced").toLowerCase();
   const grade = on("#gradeChips .chip") || "Retail Grade";
   const opts = on("#rdwOpts .chip") || "1";
   const n = Number(opts) || 1;
   return [
-    level + " Changes",
-    "Reality Lock " + lock,
+    level,
+    "Reality Lock " + (lock === "off" ? "Off" : "On"),
     grade,
     n + (n === 1 ? " Option" : " Options"),
   ].join(" · ");
@@ -44,7 +44,7 @@ export function customizeSummary(): string {
 
 function levelName(): string {
   const b = document.querySelector("#rdwLevel .rdw-opt.on b") as HTMLElement | null;
-  return b?.textContent?.trim() || "Restyle";
+  return b?.textContent?.trim() || "Balanced";
 }
 
 type CanvasState = {
