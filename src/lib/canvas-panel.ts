@@ -345,8 +345,6 @@ export function refreshCanvasPanel() {
     icons();
   }
   refreshVersionRail();
-  if (false) {
-  }
 }
 
 document.addEventListener("click", (e) => {
