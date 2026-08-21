@@ -1942,6 +1942,39 @@ function applyRoomToSelected(anchor) {
 }
 
 
+/**
+ * Rotation is metadata, never a re-upload: the card turns instantly and the
+ * angle is baked in only when pixels leave (download, design, export).
+ */
+function rotateItem(it) {
+  if (!it) return;
+  it.rotation = nextRotation(it.rotation);
+  patchCard(it);
+  saveDraft();
+}
+
+/** Remove every photo, once, behind an explicit confirmation. */
+async function removeAll() {
+  if (!S || !S.items.length) return;
+  const n = S.items.length;
+  const ok = await confirmDialog({
+    title: "Remove All Photos?",
+    body: `This clears all ${n} photo${n === 1 ? "" : "s"} from this project. The originals stay in your library.`,
+    confirmLabel: "Remove All",
+    danger: true,
+  });
+  if (!ok) return;
+  S.items.forEach((i) => {
+    try {
+      URL.revokeObjectURL(i.previewUrl);
+    } catch (_) {}
+  });
+  S.items = [];
+  S.step = "add";
+  saveDraft();
+  render();
+}
+
 function removeOne(key) {
   const it = S.items.find((i) => i.key === key);
   if (!it) return;
@@ -2068,6 +2101,7 @@ registerCardMenu("photo", {
             note: stored ? "" : "Saving…",
           },
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
+          { action: "rotate", label: "Rotate 90°", icon: "rotate-cw" },
           { action: "room", label: "Change Room Type", icon: "door-open" },
           {
             action: "ratio",
@@ -2088,6 +2122,7 @@ registerCardMenu("photo", {
             note: stored ? "" : "Saving…",
           },
           dl,
+          { action: "details", label: "Photo Details", icon: "info" },
         ],
       },
       { items: [{ action: "removeproj", label: "Remove From Project", icon: "circle-minus" }] },
@@ -2134,6 +2169,7 @@ registerCardMenu("photo", {
       cmToast("New Variation Added. Your Saved Versions Are Untouched.");
       return void openInCanvas(clone.key);
     }
+    if (action === "rotate") return void rotateItem(it);
     if (action === "ratio") return void openRatioOverride(it);
     if (action === "room") {
       const btn = document.querySelector(
@@ -2164,7 +2200,9 @@ registerCardMenu("photo", {
     }
     if (action === "download") {
       const url = await originalUrl(it);
-      return void downloadOriginal(url, it.name || "photo.jpg");
+      /* What is on screen is what lands on disk: rotation is baked on export. */
+      const out = url ? await rotatedBlobUrl(url, it.rotation).catch(() => url) : url;
+      return void downloadOriginal(out, it.name || "photo.jpg");
     }
     if (action === "downloadlatest") {
       let url = it.resultUrl || null;
