@@ -8931,7 +8931,7 @@
 }
 .sp-work-ph1 {
   top: 16px;
-  right: -14px;
+  right: 6px;
   width: 172px;
   height: 116px;
 }
@@ -8944,7 +8944,7 @@
 }
 .sp-work-ph3 {
   bottom: 18px;
-  right: -4px;
+  right: 20px;
   width: 208px;
   height: 140px;
   z-index: 3;
@@ -8957,25 +8957,25 @@
 /* video variant: photos flowing into a listing video frame */
 .sp-work-stack.is-video .sp-work-ph1 {
   top: 10px;
-  right: 132px;
+  right: 158px;
   width: 132px;
   height: 88px;
 }
 .sp-work-stack.is-video .sp-work-ph2 {
   top: 74px;
-  right: 168px;
+  right: 194px;
   width: 124px;
   height: 84px;
 }
 .sp-work-stack.is-video .sp-work-ph3 {
   bottom: 20px;
-  right: 146px;
+  right: 172px;
   width: 138px;
   height: 92px;
 }
 .sp-work-vid {
   position: absolute;
-  right: -10px;
+  right: 14px;
   top: 50%;
   transform: translateY(-50%) rotate(-2deg);
   margin: 0;
