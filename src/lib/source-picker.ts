@@ -1513,11 +1513,37 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     state.describeBusy = true;
     render();
     try {
-      await opts.onDescribe?.(prompt);
+      await opts.onDescribe?.(prompt, {
+        references: state.refs.map((r) => r.url),
+        room: state.dRoom.trim(),
+        style: state.dStyle.trim(),
+        mood: state.dMood.trim(),
+        features: state.dFeatures.trim(),
+        ratio: state.ratio,
+        options: state.options,
+      });
     } catch (err: any) {
       alert((err && err.message) || "Could not create that concept.");
     } finally {
       state.describeBusy = false;
+      render();
+    }
+  }
+
+  /** Rewrites the description with the host's AI helper, in place. */
+  async function improveDescription() {
+    if (state.improving || state.describeBusy) return;
+    const prompt = state.prompt.trim();
+    if (!prompt || !opts.onImprove) return;
+    state.improving = true;
+    render();
+    try {
+      const better = await opts.onImprove(prompt);
+      if (better && String(better).trim()) state.prompt = String(better).trim();
+    } catch (err: any) {
+      alert((err && err.message) || "Could not improve that description.");
+    } finally {
+      state.improving = false;
       render();
     }
   }
@@ -1527,11 +1553,16 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const f = fieldName(t);
     if (f === "addr") state.address = t.value;
     if (f === "url") state.url = t.value;
+    if (f === "dRoom") state.dRoom = t.value;
+    if (f === "dStyle") state.dStyle = t.value;
+    if (f === "dMood") state.dMood = t.value;
+    if (f === "dFeatures") state.dFeatures = t.value;
     if (f === "prompt") {
       state.prompt = t.value;
       syncComposer();
     }
   }
+
 
   async function onClick(e: Event) {
     const t = e.target as HTMLElement;
