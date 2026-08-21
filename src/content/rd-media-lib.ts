@@ -46,6 +46,7 @@ import {
 } from "@/lib/reveal.functions";
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
+import { openPhotoEditor as openFullPhotoEditor } from "@/lib/photo-editor";
 import { openPropertyUpload } from "@/content/rd-propmedia";
 import { cancelJob } from "@/lib/upload-manager";
 import { openMotionClip } from "@/lib/rd-motion-clip";
