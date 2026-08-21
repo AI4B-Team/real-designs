@@ -238,7 +238,13 @@ export function buildCanvasPanel() {
     vers.parentElement.insertBefore(bar, vers);
   }
   const details = byId("rdwDetails");
-  if (details) details.classList.add("rdw-details-quiet");
+  if (details) {
+    details.classList.add("rdw-details-quiet");
+    /* "This Design" is an extra hierarchy level nobody needs. */
+    const h = details.querySelector(".rdw-sec-h") as HTMLElement | null;
+    if (h) h.hidden = true;
+  }
+
 
   /* 2b. Version History keeps one job: listing versions. Clear Canvas moves to
      the settings menu, and the Hide link becomes a chevron. */
