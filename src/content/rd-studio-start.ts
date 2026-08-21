@@ -1164,13 +1164,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         "Turn property photos into a polished listing video.",
       ) +
       "</div></div>" +
-      '<div class="stw-source"><div class="stw-sec-h"><h3>' +
-      "Add Your Photos" +
-      "</h3><span>" +
-      (state.door === "video"
-        ? "Upload a complete property shoot or select photos you already have."
-        : "Upload one or more spaces or select photos you already have.") +
+      '<div class="stw-source"><div class="stw-sec-h"><h3 id="stwSourceH">' +
+      sourceHeading(state.sourceTab).title +
+      "</h3><span id=\"stwSourceS\">" +
+      sourceHeading(state.sourceTab).copy +
       "</span></div>" +
+
       '<div id="stSource"></div>' +
       '<p class="stw-secondary stw-doorfoot">' +
       '<button class="stw-samplelink" data-sts="sample">' +
