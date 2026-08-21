@@ -32,7 +32,8 @@
 .lv-back:hover {
   color: var(--ink);
 }
-.lv-back i {
+.lv-back i,
+.lv-back svg {
   width: 14px;
   height: 14px;
 }
@@ -184,7 +185,8 @@
 .lv-cbtn:hover {
   border-color: var(--ink);
 }
-.lv-cbtn i {
+.lv-cbtn i,
+.lv-cbtn svg {
   width: 14px;
   height: 14px;
 }
@@ -417,7 +419,8 @@
   width: 26px;
   height: 26px;
 }
-.icon-btn.xs i {
+.icon-btn.xs i,
+.icon-btn.xs svg {
   width: 13px;
   height: 13px;
 }

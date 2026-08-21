@@ -1477,7 +1477,8 @@
   border-radius: 8px;
   color: var(--mute-2, #8a867d);
 }
-.shop-noimgtile i {
+.shop-noimgtile i,
+.shop-noimgtile svg {
   width: 22px;
   height: 22px;
 }
@@ -1523,7 +1524,8 @@
   cursor: pointer;
   color: var(--ink, #1b1a18);
 }
-.shop-bm i {
+.shop-bm i,
+.shop-bm svg {
   width: 15px;
   height: 15px;
 }
@@ -1563,7 +1565,8 @@
   cursor: pointer;
   color: var(--ink, #1b1a18);
 }
-.shop-adv-t i {
+.shop-adv-t i,
+.shop-adv-t svg {
   width: 15px;
   height: 15px;
   transition: 0.15s;

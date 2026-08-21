@@ -1116,7 +1116,8 @@
   margin: 12px auto 0;
 }
 
-.rd-app .bar i {
+.rd-app .bar i,
+.rd-app .bar svg {
   display: block;
   height: 100%;
   width: 0;
@@ -2624,7 +2625,8 @@
   color: var(--red);
   font-weight: 500;
 }
-.rd-app .toolinfo-link i {
+.rd-app .toolinfo-link i,
+.rd-app .toolinfo-link svg {
   width: 13px;
   height: 13px;
 }
@@ -3162,7 +3164,8 @@
   overflow: hidden;
   margin: 2px 0 14px;
 }
-.rd-app .onb-bar i {
+.rd-app .onb-bar i,
+.rd-app .onb-bar svg {
   display: block;
   height: 100%;
   width: 0;
@@ -3198,7 +3201,8 @@
   border-color: #0a7b3e;
   color: #0a7b3e;
 }
-.rd-app .onb-ic i {
+.rd-app .onb-ic i,
+.rd-app .onb-ic svg {
   width: 15px;
   height: 15px;
 }
@@ -3485,7 +3489,8 @@
   width: 34px;
   height: 34px;
 }
-.rd-app .app.sidemin .rd-mark i {
+.rd-app .app.sidemin .rd-mark i,
+.rd-app .app.sidemin .rd-mark svg {
   border: 0;
   padding: 0;
   width: 100%;
@@ -3902,7 +3907,8 @@
   color: var(--ok);
   border-color: var(--ok-tint);
 }
-.rd-app .fu-rail-i.done .fu-rail-n i {
+.rd-app .fu-rail-i.done .fu-rail-n i,
+.rd-app .fu-rail-i.done .fu-rail-n svg {
   width: 12px;
   height: 12px;
 }
@@ -4427,7 +4433,8 @@
 .rd-app .sts-link:hover {
   color: var(--red);
 }
-.rd-app .sts-link i {
+.rd-app .sts-link i,
+.rd-app .sts-link svg {
   width: 14px;
   height: 14px;
 }
@@ -4550,7 +4557,8 @@
   color: var(--mute);
   border-bottom: 2px solid transparent;
 }
-.rd-app .sts-tab i {
+.rd-app .sts-tab i,
+.rd-app .sts-tab svg {
   width: 16px;
   height: 16px;
 }
@@ -4754,7 +4762,8 @@
   border-color: rgba(20, 17, 15, 0.34);
   color: var(--red);
 }
-.rd-app .stw-back i {
+.rd-app .stw-back i,
+.rd-app .stw-back svg {
   width: 14px;
   height: 14px;
 }
@@ -4886,7 +4895,8 @@
   font-weight: 700;
   color: var(--red);
 }
-.rd-app .stw-tile-act i {
+.rd-app .stw-tile-act i,
+.rd-app .stw-tile-act svg {
   width: 14px;
   height: 14px;
   transition: transform 0.14s ease;
@@ -5112,7 +5122,8 @@
 .rd-app .stw-link:hover {
   color: var(--red);
 }
-.rd-app .stw-link i {
+.rd-app .stw-link i,
+.rd-app .stw-link svg {
   width: 14px;
   height: 14px;
 }
@@ -5381,7 +5392,8 @@
 .rv-music .btn {
   white-space: nowrap;
 }
-.rv-music-play i {
+.rv-music-play i,
+.rv-music-play svg {
   width: 15px;
   height: 15px;
 }
@@ -5667,7 +5679,8 @@
   overflow: hidden;
   margin: 6px 0 12px;
 }
-.rd-app .mc-prog i {
+.rd-app .mc-prog i,
+.rd-app .mc-prog svg {
   display: block;
   height: 100%;
   width: 0;
@@ -6645,7 +6658,8 @@
   align-items: center;
   gap: 7px;
 }
-.rd-app .sp-create i {
+.rd-app .sp-create i,
+.rd-app .sp-create svg {
   width: 15px;
   height: 15px;
 }
@@ -7575,7 +7589,8 @@
   background: #fdf1f1;
   color: #a11;
 }
-.rd-app .wt-check i {
+.rd-app .wt-check i,
+.rd-app .wt-check svg {
   width: 16px;
   height: 16px;
 }
@@ -7837,7 +7852,6 @@
   background: rgba(204, 0, 0, 0.06);
 }
 
-
 /* Budget usage column: hidden entirely while Budgets are gated off (Coming Soon). */
 .rd-app table.no-budgets-col th:nth-child(4),
 .rd-app table.no-budgets-col td:nth-child(4) {
@@ -7865,7 +7879,9 @@
   outline-offset: 6px;
   border-radius: 12px;
 }
-#genStyleBtn { display: none !important; }
+#genStyleBtn {
+  display: none !important;
+}
 
 .cs-sec {
   display: flex;
@@ -8084,7 +8100,8 @@
   align-items: center;
   justify-content: center;
 }
-.cs-tick i {
+.cs-tick i,
+.cs-tick svg {
   width: 14px;
   height: 14px;
 }
@@ -8102,7 +8119,8 @@
   border-radius: 999px;
   padding: 3px 8px;
 }
-.cs-lock i {
+.cs-lock i,
+.cs-lock svg {
   width: 12px;
   height: 12px;
 }
@@ -8270,7 +8288,6 @@
   color: #1f6b35;
 }
 
-
 /* ---------------------------------------------------------------
    Space-aware Studio Setup panel
    The Setup card owns its own scroll: the card header and the compact
@@ -8425,10 +8442,17 @@
   font-size: 0.76rem;
 }
 
-
 /* ---- Save Room dialog ---- */
-.srm-body { display: grid; gap: 12px; }
-.srm-f { display: grid; gap: 6px; font: 600 12px/1.2 var(--ui, inherit); color: var(--ink, #111); }
+.srm-body {
+  display: grid;
+  gap: 12px;
+}
+.srm-f {
+  display: grid;
+  gap: 6px;
+  font: 600 12px/1.2 var(--ui, inherit);
+  color: var(--ink, #111);
+}
 .srm-f > input,
 .srm-f > select {
   width: 100%;
@@ -8440,8 +8464,16 @@
   color: var(--ink, #111);
 }
 .srm-f > input:focus,
-.srm-f > select:focus { outline: 2px solid rgba(204, 0, 0, 0.25); border-color: #cc0000; }
-.srm-err { margin: 0; color: #cc0000; font-size: 12px; font-weight: 600; }
+.srm-f > select:focus {
+  outline: 2px solid rgba(204, 0, 0, 0.25);
+  border-color: #cc0000;
+}
+.srm-err {
+  margin: 0;
+  color: #cc0000;
+  font-size: 12px;
+  font-weight: 600;
+}
 
 /* ---------------------------------------------------------------
    Image-first room Canvas workspace
@@ -8645,7 +8677,8 @@
 .rd-app .insp-handle:hover {
   color: var(--red, #cc0000);
 }
-.rd-app .insp-handle i {
+.rd-app .insp-handle i,
+.rd-app .insp-handle svg {
   width: 18px;
   height: 18px;
 }
@@ -8726,7 +8759,8 @@
   font-weight: 700;
   letter-spacing: 0.04em;
 }
-.cs-qlock i {
+.cs-qlock i,
+.cs-qlock svg {
   width: 10px;
   height: 10px;
 }

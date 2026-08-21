@@ -116,7 +116,8 @@
   border-radius: 999px;
   white-space: nowrap;
 }
-.pk-step i {
+.pk-step i,
+.pk-step svg {
   width: 14px;
   height: 14px;
 }

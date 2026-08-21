@@ -272,7 +272,8 @@
   will-change: transform; animation: rvPushIn 5s ease-in-out infinite alternate; }
 .rd-app .rv-pop-live { position: absolute; left: 10px; bottom: 10px; display: inline-flex; align-items: center; gap: 6px;
   background: rgba(0,0,0,.62); color: #fff; font-size: 11px; font-weight: 600; padding: 4px 9px; border-radius: 999px; }
-.rd-app .rv-pop-live i { width: 6px; height: 6px; border-radius: 50%; background: var(--red, #CC0000); animation: rvBlink 1.4s ease-in-out infinite; }
+.rd-app .rv-pop-live i,
+.rd-app .rv-pop-live svg { width: 6px; height: 6px; border-radius: 50%; background: var(--red, #CC0000); animation: rvBlink 1.4s ease-in-out infinite; }
 @keyframes rvBlink { 0%, 100% { opacity: 1; } 50% { opacity: .25; } }
 .rd-app .rv-pop-clip.m-auto, .rd-app .rv-pop-clip.m-push { animation-name: rvPushIn; }
 .rd-app .rv-pop-clip.m-pull { animation-name: rvPullOut; }
@@ -461,7 +462,8 @@
 .rd-app .rv-tog-row em { font-style: normal; font-size: .72rem; color: var(--mute-2); }
 .rd-app .rv-switch { position: relative; width: 40px; height: 22px; flex: 0 0 auto; }
 .rd-app .rv-switch input { position: absolute; inset: 0; opacity: 0; margin: 0; cursor: pointer; }
-.rd-app .rv-switch i { display: block; width: 40px; height: 22px; border-radius: 999px; background: #dcdcdc; transition: background .15s; }
+.rd-app .rv-switch i,
+.rd-app .rv-switch svg { display: block; width: 40px; height: 22px; border-radius: 999px; background: #dcdcdc; transition: background .15s; }
 .rd-app .rv-switch i::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: transform .15s; }
 .rd-app .rv-switch input:checked + i { background: var(--red, #c00); }
 .rd-app .rv-switch input:checked + i::after { transform: translateX(18px); }
@@ -834,7 +836,8 @@
 .rv-adv-d{border-top:1px dashed var(--line);padding-top:8px}
 .rv-adv-d > summary{cursor:pointer;font-size:12px;opacity:.8}
 .rv-kitface{display:flex;align-items:center;gap:10px;font-size:12px}
-.rv-sw{display:inline-flex;gap:4px}.rv-sw i{width:14px;height:14px;border-radius:4px;display:inline-block}
+.rv-sw{display:inline-flex;gap:4px}.rv-sw i,
+.rv-sw svg {width:14px;height:14px;border-radius:4px;display:inline-block}
 
 @media (max-width:1200px){
   .rv-layout.rv-editor{grid-template-columns:165px minmax(0,1fr)}
@@ -846,7 +849,8 @@
 }
 
 .rv-organizing{display:flex;align-items:center;gap:8px;padding:6px 10px;margin-bottom:8px;font-size:12px;opacity:.75}
-.rv-organizing i{width:14px;height:14px;animation:rv-spin 1s linear infinite}
+.rv-organizing i,
+.rv-organizing svg {width:14px;height:14px;animation:rv-spin 1s linear infinite}
 @keyframes rv-spin{to{transform:rotate(360deg)}}
 
 /* ---------- Effects modal: Looks / Effects, category rail, preview ---------- */
@@ -1028,7 +1032,8 @@
 /* ---------- Scene state badges ---------- */
 .rv-badges{position:absolute;left:8px;bottom:8px;display:flex;gap:4px;z-index:3}
 .rv-badges .rv-badge{display:grid;place-items:center;width:22px;height:22px;border-radius:999px;background:rgba(17,17,17,.78);color:#fff;font-style:normal}
-.rv-badges .rv-badge i{width:12px;height:12px}
+.rv-badges .rv-badge i,
+.rv-badges .rv-badge svg {width:12px;height:12px}
 .rv-badges .rv-badge.ai{background:var(--rd-red,#c00)}
 .rv-badges .rv-badge.bad{background:#8a1c1c}
 .rv-badges .rv-badge.busy{background:#333}
@@ -1059,7 +1064,8 @@
 .an-card{position:relative}
 .an-card .an-rec{position:absolute;top:6px;left:6px;font-size:10px;background:#111;color:#fff;border-radius:999px;padding:2px 7px}
 .an-card .an-warn{position:absolute;top:6px;right:6px;color:#a35a00}
-.an-card .an-warn i{width:14px;height:14px}
+.an-card .an-warn i,
+.an-card .an-warn svg {width:14px;height:14px}
 .an-card.warn{border-color:#e8d3ae}
 .an-swap{font-size:12px;color:var(--rd-ink-2,#555)}
 .an-empty{font-size:13px;color:#777;padding:12px}
@@ -1139,7 +1145,8 @@
 
 /* Property context on every editing step. */
 .rv-head-addr{display:flex;align-items:center;gap:6px;margin-top:6px;color:var(--muted);font-size:12.5px}
-.rv-head-addr i{width:14px;height:14px}
+.rv-head-addr i,
+.rv-head-addr svg {width:14px;height:14px}
 .rv-head-addr .fb-link{display:inline-flex;align-items:center;gap:6px}
 
 /* The preview frame follows the chosen output format instead of sitting in a
@@ -1237,7 +1244,8 @@
 .rd-app .se-wrap { display: grid; gap: 14px; }
 .rd-app .se-lede { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4b4b4b; margin: 0; }
 .rd-app .se-info { border: 0; background: none; padding: 0; line-height: 0; color: #8a8a8a; cursor: help; }
-.rd-app .se-info i { width: 15px; height: 15px; }
+.rd-app .se-info i,
+.rd-app .se-info svg { width: 15px; height: 15px; }
 .rd-app .se-frames { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 20px; align-items: center; }
 .rd-app .se-slot { display: grid; gap: 6px; border: 1px solid #e6e6e6; border-radius: 14px; padding: 10px; background: #fff; }
 .rd-app .se-slot.on { border-color: #d0d0d0; }
@@ -1247,7 +1255,8 @@
 .rd-app .se-slot-h b { font-size: 11.5px; letter-spacing: .04em; text-transform: uppercase; color: #6b6b6b; }
 .rd-app .se-th { position: relative; aspect-ratio: 16/10; max-height: 250px; border-radius: 10px;
   background: #f4f4f4 center/cover no-repeat; display: grid; place-items: center; gap: 4px; color: #8a8a8a; overflow: hidden; }
-.rd-app .se-th i { width: 20px; height: 20px; }
+.rd-app .se-th i,
+.rd-app .se-th svg { width: 20px; height: 20px; }
 .rd-app .se-th em { font-style: normal; font-size: 11.5px; }
 .rd-app .se-th .rv-noimg-i { display: none; }
 /* The broken state only shows once the painter could not resolve the source. */
@@ -1493,7 +1502,8 @@
   width: 34px; height: 34px; border-radius: 999px;
   background: rgba(204, 0, 0, 0.08); color: #cc0000;
 }
-.rd-app .rd-fail-ic i { width: 18px; height: 18px; }
+.rd-app .rd-fail-ic i,
+.rd-app .rd-fail-ic svg { width: 18px; height: 18px; }
 /* Small tiles drop the optional lines so the actions always stay visible. */
 @container (max-height: 190px) {
   .rd-app .rd-fail-t { display: none; }
@@ -1520,7 +1530,8 @@
 }
 .rd-app .rd-fail-b.primary { background: #cc0000; border-color: #cc0000; color: #fff; }
 .rd-app .rd-fail-b[disabled] { opacity: 0.55; cursor: default; }
-.rd-app .rd-fail-b i { width: 13px; height: 13px; }
+.rd-app .rd-fail-b i,
+.rd-app .rd-fail-b svg { width: 13px; height: 13px; }
 .rd-app .rd-fail-b.busy i { animation: rdSpin 0.9s linear infinite; }
 @keyframes rdSpin { to { transform: rotate(360deg); } }
 .rd-app .rd-fail-rm {
