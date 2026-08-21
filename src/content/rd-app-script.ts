@@ -4000,18 +4000,33 @@ export function initApp(): () => void {
             return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>Version ${v.version_no || 1}</b><span>${v.room_name} &middot; ${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
           })
           .join("");
+      /* Approve always names the version actually on the canvas. */
+      const setApproveLabel = (no) => {
+        const ap = document.getElementById("stApprove");
+        if (ap && !ap.dataset.approved)
+          ap.innerHTML = '<i data-lucide="check"></i>Approve Version ' + no;
+        try {
+          lucide.createIcons();
+        } catch (_) {}
+      };
+      if (session.length) setApproveLabel(savedCount + session.length);
+      else if (list.length) setApproveLabel(list[0].version_no || 1);
+
       el.querySelectorAll(".ver-row").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const v = session[+btn.dataset.vi];
+          const i = +btn.dataset.vi;
+          const v = session[i];
           if (!v || !cAfter) return;
           el.querySelectorAll(".ver-row").forEach((x) => x.classList.remove("on"));
           btn.classList.add("on");
-          cAfter.innerHTML = photo(v.src, v.label + " render");
+          cAfter.innerHTML = photo(v.src, "Version " + (savedCount + (session.length - i)));
           lastRender = v.src;
           lastRenderPath = v.path || null;
+          setApproveLabel(savedCount + (session.length - i));
         });
       });
     }
+
 
 
     paintVersions();
