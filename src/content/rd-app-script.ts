@@ -2072,6 +2072,11 @@ export function initApp(): () => void {
             0,
           ),
         );
+      /* A zero is not information: the badge only appears once there is work. */
+      [cp, cd].forEach((c) => {
+        if (c) c.hidden = !(Number(c.textContent) > 0);
+      });
+
       paintTree();
       paintDesigns();
       updateSearchMeta();
