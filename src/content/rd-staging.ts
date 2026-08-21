@@ -2712,7 +2712,7 @@ function mountStrip() {
   head.id = "rdsCanvasHead";
   head.className = "rds-chead";
   head.innerHTML = `<div class="rds-chead-l">
-      <button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>Back to All Photos</button>
+      <button class="rds-chead-b" id="rdsAllRooms"><i data-lucide="chevron-left"></i>Back To Photos</button>
     </div>
     <span class="rds-chead-div" aria-hidden="true"></span>
     <div class="rds-chead-c">
