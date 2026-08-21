@@ -33,18 +33,25 @@ describe("studio start source picker", () => {
       "cloud",
       "property",
       "design",
+      "describe",
       "url",
     ]);
-    /* Describe is design-only until genuine text-to-video exists. */
-    expect(CONTEXT_CONFIG.video.sources).not.toContain("describe");
   });
 
   it("uses compact tab labels with Lucide icons", () => {
     const { host } = mount("video");
     const labels = [...host.querySelectorAll(".sp-tab")].map((t) => t.textContent?.trim());
-    expect(labels).toEqual(["Upload", "Google Drive", "Property", "Designs", "Listing Link"]);
+    expect(labels).toEqual([
+      "Upload",
+      "Google Drive",
+      "Property",
+      "Designs",
+      "Describe",
+      "Listing Link",
+    ]);
     expect(SOURCE_META.describe.icon).toBe("message-square-text");
   });
+
 
   it("offers exactly one primary file-selection action in the dropzone", () => {
     const { host } = mount("design");
