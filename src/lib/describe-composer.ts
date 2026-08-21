@@ -424,36 +424,38 @@ export function createDescribeComposer(cfg: Cfg) {
     return "Generate";
   }
 
-  /** What still has to happen before Generate can do anything. */
+  /** What still has to happen before Generate can do anything. The details
+      are genuinely optional: only a description is required. */
   function missing(): string | null {
-    if (!state.prompt.trim() && !state.refs.length) return "Add a reference or description";
-    if (!state.prompt.trim()) return "Enter a description to continue";
-    if (!state.room.trim()) return "Choose a room or area";
-    if (!state.style.trim()) return "Choose a design style";
+    if (!state.prompt.trim()) return "Add a description to continue";
+    if (uploadsPending()) return "References are still uploading";
+    if (uploadsFailed()) return "Retry or remove the reference that failed to upload";
     return null;
   }
 
   function summary(): string {
-    const gap = missing();
-    if (gap) return gap;
-    const n = Math.max(1, state.options);
-    if (isVideo())
-      return [
-        state.room,
-        state.camera,
-        state.duration + " seconds",
-        state.orientation,
-        n + (n === 1 ? " video" : " videos"),
-      ].join(" · ");
-    return [
-      state.room,
-      state.style,
-      state.level,
-      n + (n === 1 ? " image" : " images"),
-    ].join(" · ");
+    const parts: string[] = [];
+    if (state.room) parts.push(state.room);
+    if (isVideo()) {
+      parts.push(state.camera, state.duration + " seconds", state.orientation);
+    } else {
+      if (state.style) parts.push(state.style);
+      parts.push(state.level, state.ratio);
+    }
+    return parts.join(" · ");
   }
 
-  const ready = () => !missing() && !state.busy && !uploadsPending() && !uploadsFailed();
+  /** Left-hand footer text: the blocking requirement once the user has
+      actually engaged, otherwise a quiet readiness line. Nothing shouts on
+      first paint. */
+  function footMessage(): string {
+    const gap = missing();
+    if (gap) return state.touched ? gap + "." : "";
+    return summary();
+  }
+
+  const ready = () => !missing() && !state.busy;
+
 
   /* ---------- html ---------- */
 
