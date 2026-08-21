@@ -74,6 +74,9 @@ export const renderConcept = createServerFn({ method: "POST" })
     try {
       const content: any[] = [{ type: "text", text: buildPrompt(data) }];
       if (data.image) content.push({ type: "image_url", image_url: { url: data.image } });
+      for (const ref of data.images || [])
+        content.push({ type: "image_url", image_url: { url: ref } });
+
 
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
