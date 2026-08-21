@@ -90,6 +90,7 @@ body.rdpe-open {
 }
 
 .rdpe .btn {
+  white-space: nowrap;
   display: inline-flex;
   align-items: center;
   gap: 7px;
