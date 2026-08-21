@@ -6631,8 +6631,9 @@
 }
 .rd-app .sp-describe textarea {
   width: 100%;
-  min-height: 82px;
+  min-height: 58px;
   max-height: 260px;
+
   padding: 0;
   border: 0;
   background: transparent;
