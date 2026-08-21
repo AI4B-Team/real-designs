@@ -1692,6 +1692,10 @@ function bindReview(el) {
         openProjectRatioMore();
         return;
       }
+      if (act === "delall") {
+        removeAll();
+        return;
+      }
     }),
   );
   bindRatioControls(el);
@@ -1699,9 +1703,12 @@ function bindReview(el) {
 
   /* Add Photos stays on this page: the picker adds straight into the grid. */
   const file = el.querySelector("#rdsFile");
-  el.querySelector("#rdsMore").onclick = () => file && file.click();
+  pickFiles = () => file && file.click();
   const addCard = el.querySelector("#rdsAddCard");
-  if (addCard) addCard.onclick = () => file && file.click();
+  if (addCard) addCard.onclick = () => openAddSources(addCard);
+  const floatAdd = el.querySelector("#rdsFloatAdd");
+  if (floatAdd) floatAdd.onclick = () => openAddSources(floatAdd);
+  bindAddDrop(el.querySelector(".rv-addcard"));
   if (file) {
     file.onchange = async () => {
       const raw = Array.from(file.files || []);
@@ -1772,6 +1779,20 @@ function bindReview(el) {
       e.stopPropagation();
       const it = S.items.find((i) => i.key === retry.getAttribute("data-retry"));
       if (it) startBulkDesign([it], true);
+      return;
+    }
+    const rot = t.closest("[data-rotate]");
+    if (rot) {
+      e.preventDefault();
+      e.stopPropagation();
+      rotateItem(S.items.find((i) => i.key === rot.getAttribute("data-rotate")));
+      return;
+    }
+    const rep = t.closest("[data-replace]");
+    if (rep) {
+      e.preventDefault();
+      e.stopPropagation();
+      runCardAction("photo", "replace", rep.getAttribute("data-replace"));
       return;
     }
     const del = t.closest("[data-del]");
