@@ -235,6 +235,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     options: 1,
     /** What the description should produce: a design image or a listing video. */
     output: "image" as "image" | "video",
+    /** Which backend the last describe request belongs to. */
+    job: "image" as "image" | "listing-video" | "ai-video",
+    /** The source tab currently open in the picker, for the section heading. */
+    sourceTab: "upload" as string,
+
     camera: "slow-push-in",
     duration: 5,
     orientation: "16:9",
