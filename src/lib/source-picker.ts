@@ -1502,8 +1502,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       ta.style.height = "auto";
       ta.style.height = Math.min(ta.scrollHeight, 260) + "px";
     }
+    const ready = state.prompt.trim().length > 0;
     const btn = body?.querySelector(".sp-create") as HTMLButtonElement | null;
-    if (btn) btn.disabled = !(state.prompt.trim().length > 0) || state.describeBusy;
+    if (btn) btn.disabled = !ready || state.describeBusy;
+    const imp = body?.querySelector('[data-sp="improve"]') as HTMLButtonElement | null;
+    if (imp) imp.disabled = !ready || state.improving || state.describeBusy;
+
   }
 
   async function submitDescribe() {
