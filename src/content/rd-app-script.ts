@@ -4003,12 +4003,19 @@ export function initApp(): () => void {
       /* A version is numbered, never named after the tool that made it. The
          tool and style are secondary metadata under the number. */
       const savedCount = list.length;
+      const numberOf = (v) => savedCount + (session.length - session.indexOf(v));
       const sessionHTML = session
         .map((v, i) => {
           const no = savedCount + (session.length - i);
           const meta = [v.label, v.style].filter(Boolean).join(" \u00b7 ");
           const when = ago(new Date(v.at).toISOString());
-          const sub = v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026";
+          /* A variation reads as a child of the version it branched from. */
+          const parent = v.parentAt
+            ? session.find((x) => x && x.at === v.parentAt) ||
+              session.find((x) => x && v.parentSrc && x.src === v.parentSrc)
+            : null;
+          const from = parent ? " &middot; From V" + numberOf(parent) : v.parentAt ? " &middot; Variation" : "";
+          const sub = (v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026") + from;
           return (
             `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, "Version " + no)}</span>` +
             `<span class="rowt"><b>Version ${no}</b><span>${sub}</span></span>` +
@@ -4016,6 +4023,7 @@ export function initApp(): () => void {
           );
         })
         .join("");
+
 
       el.innerHTML =
         sessionHTML +
