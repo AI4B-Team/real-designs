@@ -157,7 +157,23 @@ export type PickerDesign = {
   versionId?: string | null;
 };
 
+/** One photo in the upload-card stack: a bundled example or a stored path. */
+export type HeroPhoto = { src?: string; path?: string; alt: string };
+
+/** Context-aware copy and photography for the upload workspace card. */
+export type PickerHero = {
+  variant?: "design" | "video";
+  title: string;
+  copy: string;
+  /** Back, middle then front. Three photos read best. */
+  stack: HeroPhoto[];
+  /** True once the stack shows the user's own photos, not examples. */
+  isUser?: boolean;
+};
+
 export type PickerOptions = {
+  /** Turns the plain dropzone into the two-column upload workspace card. */
+  hero?: () => PickerHero | null;
   context: PickerContext;
   esc: (s: string) => string;
   lucide?: { createIcons: (o?: any) => void };
@@ -490,6 +506,108 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
+  /** The stacked-photo composition on the right of the upload card. */
+  function heroStack(hero: PickerHero) {
+    const rot = ["7deg", "2deg", "-6deg"];
+    const cards = hero.stack.slice(0, 3);
+    return (
+      '<div class="sp-work-stack' +
+      (hero.variant === "video" ? " is-video" : "") +
+      '" aria-hidden="true">' +
+      cards
+        .map((ph, i) => {
+          const inner = ph.path
+            ? '<span class="sp-th is-load" data-sp-thumb="' +
+              esc(ph.path) +
+              '" data-sp-thumb-alt="' +
+              esc(ph.alt) +
+              '"></span>'
+            : '<img src="' + esc(ph.src || "") + '" alt="" loading="lazy" decoding="async">';
+          return (
+            '<figure class="sp-work-ph sp-work-ph' +
+            (i + 1) +
+            '" style="--rot:' +
+            rot[i] +
+            '">' +
+            inner +
+            "</figure>"
+          );
+        })
+        .join("") +
+      (hero.variant === "video"
+        ? '<figure class="sp-work-vid">' +
+          (cards[2]?.path
+            ? '<span class="sp-th is-load" data-sp-thumb="' + esc(cards[2].path) + '"></span>'
+            : '<img src="' + esc(cards[2]?.src || cards[0]?.src || "") + '" alt="" loading="lazy">') +
+          '<span class="sp-work-play"><i data-lucide="play"></i></span>' +
+          '<figcaption><i data-lucide="clapperboard"></i>Listing Video</figcaption>' +
+          "</figure>"
+        : "") +
+      "</div>"
+    );
+  }
+
+  /** Compact secondary import methods, drawn from the real sources only. */
+  function heroImports() {
+    const others = cfg.sources.filter((s) => s !== "upload");
+    if (!others.length) return "";
+    return (
+      '<div class="sp-work-imp"><span class="sp-work-impl">Import From</span><div>' +
+      others
+        .map((s) => {
+          const m = SOURCE_META[s];
+          const label = s === "cloud" ? "Google Drive" : m.label;
+          return (
+            '<button type="button" class="sp-work-src" data-sp-tab="' +
+            s +
+            '" title="' +
+            esc(m.desc) +
+            '">' +
+            (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
+            esc(label) +
+            "</button>"
+          );
+        })
+        .join("") +
+      "</div></div>"
+    );
+  }
+
+  function workspace(hero: PickerHero) {
+    return (
+      '<div class="sp-work' +
+      (state.dragging ? " over" : "") +
+      (hero.isUser ? " is-mine" : "") +
+      '" data-sp-drop="1" role="button" tabindex="0" ' +
+      'aria-label="Add photos: drop them on this card or choose files">' +
+      '<div class="sp-work-main">' +
+      '<div class="sp-work-l">' +
+      "<h4>" +
+      esc(hero.title) +
+      "</h4>" +
+      "<p>" +
+      esc(hero.copy) +
+      "</p>" +
+      '<button type="button" class="btn btn-dark sp-work-cta" data-sp="browse">' +
+      '<i data-lucide="folder-open"></i>Choose Photos</button>' +
+      heroImports() +
+      "</div>" +
+      '<div class="sp-work-r">' +
+      heroStack(hero) +
+      "</div>" +
+      "</div>" +
+      '<div class="sp-work-f"><span>' +
+      esc(cfg.acceptHint.split(", ").join(" \u00b7 ")) +
+      '</span><span class="sp-work-dot">\u2022</span><span>Up to ' +
+      MAX_MB +
+      "MB each</span>" +
+      (hero.isUser ? '<span class="sp-work-mine">Your Photos</span>' : "") +
+      "</div>" +
+      '<div class="sp-work-over"><i data-lucide="upload-cloud"></i><b>Drop Photos To Upload</b></div>' +
+      "</div>"
+    );
+  }
+
   function panel() {
     if (state.tab === "upload") {
       if (state.busy) {
@@ -507,25 +625,36 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           "</div>"
         );
       }
-      return (
-        '<div class="sp-drop' +
-        (state.dragging ? " over" : "") +
-        '" data-sp-drop="1" role="button" tabindex="0" ' +
-        'aria-label="Add photos: drop them here or choose files">' +
-        '<i data-lucide="upload-cloud"></i>' +
-        "<b>" +
-        (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") +
-        "</b>" +
-        '<span class="sp-hint">Drag and drop, or</span>' +
-        '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Choose Photos</button>' +
-        '<span class="sp-hint">' +
-        esc(cfg.acceptHint) +
-        " \u00b7 " +
-        MAX_MB +
-        "MB each</span>" +
-        "</div>"
-      );
+      const hero = (() => {
+        try {
+          return opts.hero?.() || null;
+        } catch (_) {
+          return null;
+        }
+      })();
+      if (!hero) {
+        return (
+          '<div class="sp-drop' +
+          (state.dragging ? " over" : "") +
+          '" data-sp-drop="1" role="button" tabindex="0" ' +
+          'aria-label="Add photos: drop them here or choose files">' +
+          '<i data-lucide="upload-cloud"></i>' +
+          "<b>" +
+          (cfg.multiple ? "Drop Photos Here" : "Drop A Photo, Sketch Or Plan") +
+          "</b>" +
+          '<span class="sp-hint">Drag and drop, or</span>' +
+          '<button type="button" class="btn btn-dark btn-sm" data-sp="browse">Choose Photos</button>' +
+          '<span class="sp-hint">' +
+          esc(cfg.acceptHint) +
+          " \u00b7 " +
+          MAX_MB +
+          "MB each</span>" +
+          "</div>"
+        );
+      }
+      return workspace(hero);
     }
+
     if (state.tab === "cloud") {
       return (
         '<div class="sp-pane">' +
@@ -1157,7 +1286,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       /* icons are cosmetic */
     }
     if (state.tab === "describe") syncComposer();
-    if (state.tab === "property" || state.tab === "design") hydrateThumbs();
+    if (state.tab === "property" || state.tab === "design" || state.tab === "upload")
+      hydrateThumbs();
     if (state.tab === "design" && state.designState === "idle") loadDesigns();
   }
 
