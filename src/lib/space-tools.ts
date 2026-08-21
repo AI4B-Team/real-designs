@@ -224,7 +224,7 @@ export function styleCompatible(
 
 /** No pricing or budget promises: Budget is Coming Soon. */
 export function instructionPlaceholder(_space: SpaceType | string): string {
-  return "Add specific requests…";
+  return "Keep the flooring, lighten the cabinets, and add an island.";
 }
 
 /** Space-specific instruction the model must receive. */

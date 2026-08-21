@@ -250,6 +250,21 @@ export function buildCanvasPanel() {
     versT.innerHTML = '<i data-lucide="chevron-down"></i>';
   }
   refreshVersionRail();
+  /* A finished generation opens the rail so the new version is visible. */
+  const varsHost = byId("vars");
+  if (varsHost) {
+    new MutationObserver(() => {
+      const had = varsHost.querySelectorAll(":scope > *").length > 0;
+      const board = document.querySelector(".studio.rdw") as HTMLElement | null;
+      if (had && board?.classList.contains("vers-off")) {
+        board.classList.remove("vers-off");
+        byId("rdwVersToggle")?.setAttribute("aria-expanded", "true");
+        const open = byId("rdwVersOpen");
+        if (open) open.hidden = true;
+      }
+      refreshVersionRail();
+    }).observe(varsHost, { childList: true });
+  }
 
   /* 3. Generation summary and the settings overflow live in the sticky
      footer, next to the single primary action. */
