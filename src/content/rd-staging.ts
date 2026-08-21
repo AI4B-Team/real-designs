@@ -18,6 +18,19 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
+import {
+  openAddSourcePopover,
+  closeAddSourcePopover,
+  openSourceModal,
+  sourceTabFor,
+} from "@/lib/add-source-popover";
+import {
+  normalizeRotation,
+  nextRotation,
+  mountRotations,
+  rotatedBlobUrl,
+  bakeExifOrientation,
+} from "@/lib/photo-rotation";
 import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { mountPhotoImages, photoSrc, photoSrcStale } from "@/lib/photo-src";
@@ -98,7 +111,7 @@ import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
 import { PHOTO_RAIL, backFromPhotoStep, normalizePhotoStep } from "@/lib/builder-nav";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
-import { listMediaProperties } from "@/lib/property-media.functions";
+import { listMediaProperties, listMediaAssets } from "@/lib/property-media.functions";
 import {
   saveProjectDraft as _saveProjectDraft,
   listProjectDrafts as _listProjectDrafts,
@@ -178,6 +191,9 @@ function mkItem(file) {
     ratio: null,
     /* The ratio a finished design was actually rendered at. */
     resultRatio: null,
+    /* Non-destructive orientation, in degrees clockwise. */
+    rotation: 0,
+    addedAt: Date.now(),
   };
 }
 
@@ -256,6 +272,7 @@ function draftPayload() {
           error: i.err || "",
           ratio: normalizeOverride(i.ratio),
           result_ratio: i.resultRatio || null,
+          rotation: normalizeRotation(i.rotation),
         };
         return m;
       }, {}),
@@ -579,6 +596,7 @@ function hydrate(draft) {
       resultUrl: null,
       ratio: normalizeOverride(saved.ratio),
       resultRatio: saved.result_ratio || null,
+      rotation: normalizeRotation(saved.rotation),
       err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
     };
   });
