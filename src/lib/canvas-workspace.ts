@@ -352,6 +352,8 @@ export function initCanvasWorkspace() {
   paintRoomCards();
   paintPanelHeader();
   refreshCanvasPanel();
+  /* A finished render is actionable where it is shown. */
+  mountStudioResultActions();
 
   b.addEventListener("click", (e) => {
     const t = e.target as HTMLElement;
