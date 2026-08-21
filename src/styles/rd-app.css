@@ -7844,11 +7844,14 @@
 }
 
 /* ---------- canvas style selection ---------- */
-#canvasStyleField.cs-flash {
+#canvasStyleField.cs-flash,
+#rdwRoomField.cs-flash {
   outline: 2px solid var(--red);
   outline-offset: 6px;
   border-radius: 12px;
 }
+#genStyleBtn { display: none !important; }
+
 .cs-sec {
   display: flex;
   flex-direction: column;
