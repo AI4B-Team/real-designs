@@ -469,6 +469,7 @@ function card(m) {
         ${S.selMode ? `<button class="ml-ob${sel ? " on" : ""}" data-pick="${m.id}" aria-label="Select"><i data-lucide="${sel ? "check" : "square"}"></i></button>` : ""}
         <button class="ml-ob${isFav(m.id) ? " fav" : ""}" data-fav="${m.id}" aria-label="Favorite"><i data-lucide="heart"></i></button>
       </div>
+      ${hoverBar(m, g, proc)}
     </div>
     <div class="ml-body">
       <div class="ml-t"><b>${esc(m.title)}</b><span class="pill st-${m.status}">${STATUS_LABEL[m.status] || m.status}</span></div>
@@ -477,6 +478,25 @@ function card(m) {
       <div class="ml-acts">${actions(m, g)}</div>
     </div>
   </div>`;
+}
+
+/**
+ * Galleries reveal the same next steps on hover that Studio floats over a
+ * result, so a finished design is actionable wherever it is seen.
+ */
+function hoverBar(m, g, proc) {
+  if (proc || m.status === "failed" || m.draft || !m.path) return "";
+  const acts = [];
+  if (videoReady(m)) acts.push(["video", "clapperboard", "Create Video"]);
+  if (canEditImage(m) || g === "images") acts.push(["edit", "pencil", "Edit"]);
+  acts.push(["dl", "download", "Download"]);
+  acts.push(["more", "ellipsis", "More"]);
+  return `<div class="rda-bar rda-hover">${acts
+    .map(
+      ([k, icon, label]) =>
+        `<button type="button" class="rda-b" data-hov="${k}" data-hid="${esc(m.id)}" title="${esc(label)}" aria-label="${esc(label)}"><i data-lucide="${icon}"></i><span>${esc(label)}</span></button>`,
+    )
+    .join("")}</div>`;
 }
 
 /* ---------------- action model ---------------- */
@@ -887,6 +907,21 @@ function wireCards(grid, list) {
   grid
     .querySelectorAll("[data-cont]")
     .forEach((b) => (b.onclick = () => continueProject(find(b.dataset.cont))));
+  /* The hover bar never invents behaviour: each button runs the workflow the
+     card's own action row already runs. */
+  grid.querySelectorAll("[data-hov]").forEach(
+    (b) =>
+      (b.onclick = (ev) => {
+        ev.stopPropagation();
+        const m = find(b.dataset.hid);
+        if (!m) return;
+        const k = b.dataset.hov;
+        if (k === "video") return videoFrom([m]);
+        if (k === "edit") return canEditImage(m) ? editImage(m) : designFrom([m]);
+        if (k === "dl") return download(m);
+        popMenu(b, moreItems(m));
+      }),
+  );
 }
 
 /* ---------------- workflow bridges ---------------- */
