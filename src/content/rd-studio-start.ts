@@ -11,6 +11,8 @@
  */
 
 import { renderConcept } from "@/lib/concept-render.functions";
+import { improveDescription } from "@/lib/prompt-improve.functions";
+
 import {
   detectSource,
   SOURCE_LABELS,
@@ -217,6 +219,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     features: "",
     prompt: "",
     inspiration: null as File | null,
+    /** Reference images (data URLs) attached in the Describe composer. */
+    refs: [] as string[],
+    ratio: "16:9",
+    options: 1,
+
     samples: false,
     busy: false,
     property: "",
@@ -1350,9 +1357,18 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.address = address;
         openSetup("property");
       },
-      onDescribe: async (prompt) => {
+      onDescribe: async (prompt, details) => {
         if (prompt) state.prompt = prompt;
         state.method = "describe";
+        if (details) {
+          state.refs = details.references || [];
+          state.ratio = details.ratio || state.ratio;
+          state.options = details.options || 1;
+          if (details.room) state.room = details.room;
+          if (details.style) state.style = details.style;
+          if (details.mood) state.mood = details.mood;
+          if (details.features) state.features = details.features;
+        }
         /* Very short ideas go to the detailed setup; anything usable renders now. */
         if (state.prompt.trim().length < 12) {
           openSetup("describe");
@@ -1360,6 +1376,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         }
         await generateConcept();
       },
+      onImprove: async (prompt: string) => {
+        const r = await improveDescription({ data: { prompt, space: state.space || null } });
+        return r.prompt;
+      },
+
 
       onSample: () => {
         if (isVideo) {
@@ -1765,20 +1786,30 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
     try {
       const image = state.inspiration ? await ctx.fileToDataUrl(state.inspiration) : null;
-      const r = await renderConcept({
-        data: {
-          prompt: state.prompt.trim(),
-          space: state.space,
-          room: roomValue(),
-          dimensions: state.dims || null,
-          style: state.style || null,
-          mood: state.mood || null,
-          features: state.features || null,
-          image,
-        },
-      });
-      ctx.track("concept_generated", { space: state.space });
-      await ctx.showConcept(r.image, "Concept", state.prompt.trim());
+      /* Each option is its own render and its own credit, shown as a version. */
+      const count = Math.max(1, Math.min(4, state.options || 1));
+      for (let i = 0; i < count; i++) {
+        const r = await renderConcept({
+          data: {
+            prompt: state.prompt.trim(),
+            space: state.space,
+            room: roomValue(),
+            dimensions: state.dims || null,
+            style: state.style || null,
+            mood: state.mood || null,
+            features: state.features || null,
+            image,
+            images: state.refs.length ? state.refs : null,
+            aspect_ratio: state.ratio || null,
+          },
+        });
+        ctx.track("concept_generated", { space: state.space });
+        await ctx.showConcept(
+          r.image,
+          count > 1 ? "Concept " + (i + 1) : "Concept",
+          state.prompt.trim(),
+        );
+      }
     } catch (err: any) {
       if (isPlanBlocked(err)) openUpgrade(err);
       else
@@ -1793,6 +1824,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       syncPrimary();
     }
   }
+
 
   function primaryAction() {
     if (state.method === "describe") {

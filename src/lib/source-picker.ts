@@ -211,18 +211,33 @@ export type PickerOptions = {
   /** Called when the user chooses a finished design. */
   onDesign?: (id: string) => void;
   /** Called when the user writes an idea instead of adding photos. */
-  onDescribe?: (prompt?: string) => void | Promise<void>;
+  onDescribe?: (prompt?: string, details?: DescribeDetails) => void | Promise<void>;
+  /** Optional AI rewrite of the description. Returns the improved text. */
+  onImprove?: (prompt: string) => Promise<string | void> | string | void;
   /** Optional "Try A Sample Space" affordance under the dropzone. */
   onSample?: () => void;
   showAlert?: (msg: string) => void;
 };
 
+/** Everything the Describe composer collects alongside the prompt. */
+export type DescribeDetails = {
+  /** Reference images as data URLs, styling inspiration only. */
+  references: string[];
+  room: string;
+  style: string;
+  mood: string;
+  features: string;
+  ratio: string;
+  options: number;
+};
+
+export const DESCRIBE_RATIOS = ["16:9", "1:1", "9:16", "4:5"] as const;
+export const DESCRIBE_OPTION_COUNTS = [1, 2, 4] as const;
+export const MAX_DESCRIBE_REFS = 3;
+
 /** Quiet starting points under the describe composer. */
-export const DESCRIBE_EXAMPLES: string[] = [
-  "Warm Modern Living Room",
-  "Luxury Primary Bathroom",
-  "Coastal Backyard",
-];
+export const DESCRIBE_EXAMPLES: string[] = ["Modern Kitchen", "Luxury Exterior", "Resort Backyard"];
+
 
 const esc0 = (v: string) =>
   String(v == null ? "" : v).replace(
@@ -268,6 +283,17 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     url: "",
     prompt: "",
     describeBusy: false,
+    improving: false,
+    /** Reference images attached to the description, data URLs. */
+    refs: [] as { id: string; name: string; url: string }[],
+    detailsOpen: false,
+    dRoom: "",
+    dStyle: "",
+    dMood: "",
+    dFeatures: "",
+    ratio: "16:9",
+    options: 2,
+
 
     dragging: false,
     busyLabel: "Adding Photos",
@@ -301,6 +327,48 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     input.value = "";
     if (files.length) intake(files);
   });
+
+  /* Reference images for the Describe composer never enter the upload
+     pipeline: they are inspiration for the model, not project photos. */
+  const refInput = document.createElement("input");
+  refInput.type = "file";
+  refInput.hidden = true;
+  refInput.accept = "image/*";
+  refInput.multiple = true;
+  host.appendChild(refInput);
+  refInput.addEventListener("change", async () => {
+    const files = Array.from(refInput.files || []);
+    refInput.value = "";
+    await addReferences(files);
+  });
+
+  async function addReferences(files: File[]) {
+    const room = MAX_DESCRIBE_REFS - state.refs.length;
+    if (room <= 0) {
+      alert("You can attach up to " + MAX_DESCRIBE_REFS + " reference images.");
+      return;
+    }
+    for (const file of files.slice(0, room)) {
+      try {
+        const url = await readDataUrl(file);
+        state.refs.push({ id: "r" + Date.now() + Math.random().toString(36).slice(2, 6), name: file.name, url });
+      } catch (_) {
+        alert(file.name + ": This Reference Could Not Be Added.");
+      }
+    }
+    render();
+  }
+
+  function readDataUrl(file: File) {
+    return new Promise<string>((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(String(fr.result || ""));
+      fr.onerror = () => reject(new Error("read failed"));
+      fr.readAsDataURL(file);
+    });
+  }
+
+
 
   /** One size limit, one measurement pass, one error message, every source. */
   async function intake(raw: File[]) {
@@ -732,35 +800,63 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
     if (state.tab === "describe") {
       const ready = state.prompt.trim().length > 0 && !state.describeBusy;
+      const detailField = (name: string, label: string, value: string, ph: string) =>
+        '<label class="sp-dfield"><span>' +
+        esc(label) +
+        '</span><input type="text" data-sp-f="' +
+        name +
+        '" value="' +
+        esc(value) +
+        '" placeholder="' +
+        esc(ph) +
+        '"></label>';
       return (
         '<div class="sp-pane sp-describe">' +
         paneHead(
-          "Create From A Description",
+          "Describe Your Space",
           "Describe the space you want to create without uploading a photo.",
         ) +
         '<div class="sp-composer' +
         (state.describeBusy ? " is-busy" : "") +
         '">' +
+        (state.refs.length
+          ? '<div class="sp-refs" aria-label="Reference Images">' +
+            state.refs
+              .map(
+                (r) =>
+                  '<span class="sp-ref"><img src="' +
+                  esc(r.url) +
+                  '" alt="' +
+                  esc(r.name) +
+                  '"><button type="button" class="sp-ref-x" data-sp-refx="' +
+                  esc(r.id) +
+                  '" aria-label="Remove Reference"><i data-lucide="x"></i></button></span>',
+              )
+              .join("") +
+            "</div>"
+          : "") +
         '<textarea data-sp-f="prompt" id="' +
         pid("spPrompt") +
-        '" aria-label="Describe the space you want to create" ' +
+        '" aria-label="Describe what you want to create" ' +
         (state.describeBusy ? "disabled " : "") +
-        'placeholder="Describe the space you want to create. Include the room, style, colors, materials and anything you want included.">' +
+        'placeholder="Describe what you want to create…">' +
         esc(state.prompt) +
         "</textarea>" +
-        '<div class="sp-composer-a">' +
-        '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" ' +
-        'aria-label="Create an AI concept from your description"' +
-        (ready ? "" : " disabled") +
+        '<p class="sp-hint">Example: Create a warm contemporary kitchen with a large island, light oak cabinets and soft white counters.</p>' +
+        '<div class="sp-composer-t">' +
+        '<button type="button" class="sp-tool" data-sp="addref"' +
+        (state.refs.length >= MAX_DESCRIBE_REFS ? " disabled" : "") +
+        '><i data-lucide="plus"></i>Add Reference</button>' +
+        '<button type="button" class="sp-tool" data-sp="improve"' +
+        (ready && !state.improving ? "" : " disabled") +
         ">" +
-        (state.describeBusy
-          ? '<span class="sp-spin" aria-hidden="true"></span>Creating…'
-          : '<i data-lucide="sparkles"></i>Create <em><span aria-hidden="true">·</span> 1 Credit</em>') +
+        (state.improving
+          ? '<span class="sp-spin dark" aria-hidden="true"></span>Improving…'
+          : '<i data-lucide="sparkles"></i>Improve Description') +
         "</button>" +
         "</div>" +
         "</div>" +
-        '<p class="sp-note">Be specific for better results.</p>' +
-        '<div class="sp-chips">' +
+        '<div class="sp-try"><span class="sp-try-l">Try:</span><div class="sp-chips">' +
         DESCRIBE_EXAMPLES.map(
           (x) =>
             '<button type="button" class="sp-chip" data-sp-ex="' +
@@ -769,10 +865,68 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             esc(x) +
             "</button>",
         ).join("") +
+        "</div></div>" +
+        '<details class="sp-details"' +
+        (state.detailsOpen ? " open" : "") +
+        '><summary data-sp="details">Add Details</summary>' +
+        '<div class="sp-dgrid">' +
+        detailField("dRoom", "Room Or Area", state.dRoom, "Kitchen") +
+        detailField("dStyle", "Style", state.dStyle, "Contemporary") +
+        detailField("dMood", "Mood", state.dMood, "Warm and calm") +
+        detailField("dFeatures", "Must-Haves", state.dFeatures, "Large island, oak cabinets") +
+        "</div>" +
+        '<div class="sp-dopts"><span class="sp-dopt-l">Aspect Ratio</span><div class="sp-chips">' +
+        DESCRIBE_RATIOS.map(
+          (r) =>
+            '<button type="button" class="sp-chip' +
+            (state.ratio === r ? " on" : "") +
+            '" data-sp-ratio="' +
+            r +
+            '" aria-pressed="' +
+            (state.ratio === r) +
+            '">' +
+            r +
+            "</button>",
+        ).join("") +
+        "</div></div>" +
+        '<div class="sp-dopts"><span class="sp-dopt-l">Options</span><div class="sp-chips">' +
+        DESCRIBE_OPTION_COUNTS.map(
+          (n) =>
+            '<button type="button" class="sp-chip' +
+            (state.options === n ? " on" : "") +
+            '" data-sp-opt="' +
+            n +
+            '" aria-pressed="' +
+            (state.options === n) +
+            '">' +
+            n +
+            "</button>",
+        ).join("") +
+        "</div></div>" +
+        "</details>" +
+        '<div class="sp-describe-foot">' +
+        '<span class="sp-meta">Image <span aria-hidden="true">·</span> ' +
+        esc(state.ratio) +
+        " <span aria-hidden=\"true\">·</span> " +
+        state.options +
+        (state.options === 1 ? " option" : " options") +
+        "</span>" +
+        '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" ' +
+        'aria-label="Generate a design from your description"' +
+        (ready ? "" : " disabled") +
+        ">" +
+        (state.describeBusy
+          ? '<span class="sp-spin" aria-hidden="true"></span>Generating…'
+          : '<i data-lucide="sparkles"></i>Generate <em><span aria-hidden="true">·</span> ' +
+            state.options +
+            (state.options === 1 ? " Credit" : " Credits") +
+            "</em>") +
+        "</button>" +
         "</div>" +
         "</div>"
       );
     }
+
 
     if (state.tab === "design") return designPanel();
     return "";
@@ -1348,8 +1502,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       ta.style.height = "auto";
       ta.style.height = Math.min(ta.scrollHeight, 260) + "px";
     }
+    const ready = state.prompt.trim().length > 0;
     const btn = body?.querySelector(".sp-create") as HTMLButtonElement | null;
-    if (btn) btn.disabled = !(state.prompt.trim().length > 0) || state.describeBusy;
+    if (btn) btn.disabled = !ready || state.describeBusy;
+    const imp = body?.querySelector('[data-sp="improve"]') as HTMLButtonElement | null;
+    if (imp) imp.disabled = !ready || state.improving || state.describeBusy;
+
   }
 
   async function submitDescribe() {
@@ -1359,11 +1517,37 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     state.describeBusy = true;
     render();
     try {
-      await opts.onDescribe?.(prompt);
+      await opts.onDescribe?.(prompt, {
+        references: state.refs.map((r) => r.url),
+        room: state.dRoom.trim(),
+        style: state.dStyle.trim(),
+        mood: state.dMood.trim(),
+        features: state.dFeatures.trim(),
+        ratio: state.ratio,
+        options: state.options,
+      });
     } catch (err: any) {
       alert((err && err.message) || "Could not create that concept.");
     } finally {
       state.describeBusy = false;
+      render();
+    }
+  }
+
+  /** Rewrites the description with the host's AI helper, in place. */
+  async function improveDescription() {
+    if (state.improving || state.describeBusy) return;
+    const prompt = state.prompt.trim();
+    if (!prompt || !opts.onImprove) return;
+    state.improving = true;
+    render();
+    try {
+      const better = await opts.onImprove(prompt);
+      if (better && String(better).trim()) state.prompt = String(better).trim();
+    } catch (err: any) {
+      alert((err && err.message) || "Could not improve that description.");
+    } finally {
+      state.improving = false;
       render();
     }
   }
@@ -1373,11 +1557,16 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const f = fieldName(t);
     if (f === "addr") state.address = t.value;
     if (f === "url") state.url = t.value;
+    if (f === "dRoom") state.dRoom = t.value;
+    if (f === "dStyle") state.dStyle = t.value;
+    if (f === "dMood") state.dMood = t.value;
+    if (f === "dFeatures") state.dFeatures = t.value;
     if (f === "prompt") {
       state.prompt = t.value;
       syncComposer();
     }
   }
+
 
   async function onClick(e: Event) {
     const t = e.target as HTMLElement;
@@ -1409,7 +1598,29 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
       return;
     }
+    const refx = t.closest("[data-sp-refx]") as HTMLElement | null;
+    if (refx) {
+      const id = refx.dataset["spRefx"];
+      state.refs = state.refs.filter((r) => r.id !== id);
+      render();
+      return;
+    }
+    const ratio = t.closest("[data-sp-ratio]") as HTMLElement | null;
+    if (ratio) {
+      state.ratio = ratio.dataset["spRatio"] || state.ratio;
+      state.detailsOpen = true;
+      render();
+      return;
+    }
+    const optn = t.closest("[data-sp-opt]") as HTMLElement | null;
+    if (optn) {
+      state.options = Number(optn.dataset["spOpt"]) || 1;
+      state.detailsOpen = true;
+      render();
+      return;
+    }
     const ex = t.closest("[data-sp-ex]") as HTMLElement | null;
+
     if (ex) {
       /* Examples fill the prompt; the user still presses Create. */
       state.prompt = ex.dataset["spEx"] || "";
@@ -1452,6 +1663,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
     else if (k === "describe") await submitDescribe();
+    else if (k === "addref") refInput.click();
+    else if (k === "improve") await improveDescription();
+    else if (k === "details") state.detailsOpen = !state.detailsOpen;
+
     else if (k === "cloudgo") importCloud(field("cloud")?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "urlgo") readListingUrl();

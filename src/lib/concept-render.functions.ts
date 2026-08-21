@@ -23,7 +23,12 @@ const Input = z.object({
   features: z.string().max(400).nullable().optional(),
   /** Optional inspiration image as a data URL. */
   image: z.string().min(16).max(9_000_000).nullable().optional(),
+  /** Extra reference images as data URLs, inspiration only. */
+  images: z.array(z.string().min(16).max(9_000_000)).max(3).nullable().optional(),
+  /** Output framing for the concept. */
+  aspect_ratio: z.string().max(8).nullable().optional(),
 });
+
 
 const MODEL = "google/gemini-2.5-flash-image";
 
@@ -40,15 +45,20 @@ function buildPrompt(d: z.infer<typeof Input>): string {
       `Furnishing and finish budget: ${d.budget}. Choose finishes that are realistic at that level.`,
     );
   if (d.features) lines.push(`Must-have features: ${d.features}.`);
-  if (d.image)
+  if (d.image || (d.images && d.images.length))
     lines.push(
-      "Use the attached image only as stylistic inspiration, not as the architecture to reproduce.",
+      "Use the attached images only as stylistic inspiration, not as the architecture to reproduce.",
+    );
+  if (d.aspect_ratio)
+    lines.push(
+      `Output framing: return the image with a ${d.aspect_ratio} aspect ratio, composed naturally without stretching.`,
     );
   lines.push(
     "Photorealistic architectural photography, natural light, believable materials and proportions. No text, no watermarks, no labels, no people.",
   );
   return lines.join("\n");
 }
+
 
 export const renderConcept = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -64,6 +74,9 @@ export const renderConcept = createServerFn({ method: "POST" })
     try {
       const content: any[] = [{ type: "text", text: buildPrompt(data) }];
       if (data.image) content.push({ type: "image_url", image_url: { url: data.image } });
+      for (const ref of data.images || [])
+        content.push({ type: "image_url", image_url: { url: ref } });
+
 
       const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
