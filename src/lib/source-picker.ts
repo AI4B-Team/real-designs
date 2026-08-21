@@ -315,16 +315,19 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const refInput = document.createElement("input");
   refInput.type = "file";
   refInput.hidden = true;
-  refInput.accept = "image/*";
+  refInput.accept = "image/*,application/pdf,.pdf";
   refInput.multiple = true;
   host.appendChild(refInput);
   let refReplaceId: string | undefined;
+  let refKind: RefKind | undefined;
   refInput.addEventListener("change", async () => {
     const files = Array.from(refInput.files || []);
     refInput.value = "";
     const replace = refReplaceId;
+    const kind = refKind;
     refReplaceId = undefined;
-    if (files.length) await describe.addReferences(files, replace);
+    refKind = undefined;
+    if (files.length) await describe.addReferences(files, replace, kind);
   });
 
   const describe = createDescribeComposer({
@@ -332,16 +335,33 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     alert,
     render: () => render(),
     draftKey: "rd.describe." + opts.context,
+    /* The project-type card owns the output type; the composer only reads it. */
+    output: () => (opts.output ? opts.output() : opts.context === "video" ? "video" : "image"),
     onDescribe: (prompt, details) => opts.onDescribe?.(prompt, details),
     onImprove: (prompt) => opts.onImprove?.(prompt),
     ...(opts.uploadReference ? { uploadReference: opts.uploadReference } : {}),
+    openRoomPicker: (space, current, apply) =>
+      openAreaPicker({
+        space: (String(space || "interior").toLowerCase() as any) || "interior",
+        current,
+        onApply: apply,
+      }),
+    openStylePicker: (space, room, currentId, apply) =>
+      openStyleBrowser({
+        projectType: String(space || "interior").toLowerCase(),
+        room: room || null,
+        currentId,
+        onPick: (styleId) => apply(styleId, styleById(styleId)?.name || styleId),
+      }),
   });
 
-  function pickReference(replaceId?: string) {
+  function pickReference(replaceId?: string, kind?: RefKind) {
     refReplaceId = replaceId;
+    refKind = kind;
     refInput.multiple = !replaceId;
     refInput.click();
   }
+
 
 
 
