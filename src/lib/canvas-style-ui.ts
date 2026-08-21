@@ -162,8 +162,7 @@ function quickGrid(pool: StyleRecord[], selectedId: string | null): string {
         );
       })
       .join("") +
-    "</div>" +
-    '<button class="btn btn-ghost btn-sm cs-browse" type="button"><i data-lucide="layout-grid"></i>View All Styles</button>'
+    "</div>"
   );
 }
 
