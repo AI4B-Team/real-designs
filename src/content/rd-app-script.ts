@@ -8554,36 +8554,32 @@ ${picks
         return null;
       }
     }
-    /** Toolbar style control: either the chosen style, or an actionable prompt. */
-    function paintStyleChip(sel: any, prompt: string | null) {
+    /**
+     * The footer style chip is retired: style is chosen from the visual cards
+     * or View All Styles, and the footer keeps a single primary action.
+     */
+    function paintStyleChip(_sel: any, _prompt: string | null) {
       const btn = document.getElementById("genStyleBtn") as any;
-      if (!btn) return;
-      const th = document.getElementById("genStyleTh");
-      const nm = document.getElementById("genStyleN");
-      if (!sel && !prompt) {
-        btn.hidden = true;
-        return;
-      }
-      btn.hidden = false;
-      if (sel) {
-        btn.dataset.empty = "";
-        btn.title = "Change Style";
-        if (nm) nm.textContent = sel.style.displayName;
-        if (th)
-          th.innerHTML = sel.style.previewImage
-            ? '<img src="' + sel.style.previewImage + '" alt="">'
-            : "";
-      } else {
-        btn.dataset.empty = "1";
-        btn.title = prompt as string;
-        if (nm) nm.textContent = "Choose Style";
-        if (th) th.innerHTML = "";
-      }
+      if (btn) btn.hidden = true;
     }
-    document.getElementById("genStyleBtn")?.addEventListener("click", (e) => {
-      e.preventDefault();
-      promptForStyle(activeToolName());
-    });
+
+    /**
+     * One authoritative read of what the panel has actually selected. Every
+     * summary, warning and payload reads this instead of scraping card text.
+     */
+    (window as any).__rdCanvasState = () => {
+      const tool = activeToolName();
+      const need = styleNeedForTool(tool);
+      const sel = need ? currentStyleSelection() : null;
+      const roomEl = document.getElementById("fRoom") as any;
+      return {
+        selectedRoomType: ((roomEl && roomEl.value) || "").trim(),
+        needsStyle: !!need,
+        selectedStyleId: (sel && sel.styleId) || "",
+        selectedStyleName: (sel && sel.style && sel.style.displayName) || "",
+      };
+    };
+
 
     function paintGenGate() {
       const btn = document.getElementById("genBtn") as any;
