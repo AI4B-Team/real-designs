@@ -9193,20 +9193,14 @@
 .rd-app .stw-door.on,
 .rd-app .stw-door.on:hover {
   border-color: var(--red);
-  background: rgba(204, 0, 0, 0.05);
-}
-.rd-app .stw-door.on > i,
-.rd-app .stw-door.on > svg {
-  background: var(--red);
-  color: #fff;
-  stroke: #fff;
+  background: #fff;
 }
 
 /* Upload workspace: a little shorter, with slightly larger artwork that sits
    inside the card instead of hugging its right edge. */
 .sp-work-main {
   gap: 14px;
-  padding: 20px 34px 20px 32px;
+  padding: 18px 30px 18px 32px;
 }
 .sp-work-cta {
   margin-top: 14px;
