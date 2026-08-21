@@ -14,7 +14,16 @@ import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { MAX_FILE_MB, rejectReason } from "@/lib/upload-manager";
 import { splitAddressLines, photoCountLabel, type ProjectAddress } from "@/lib/property-address";
-import { createDescribeComposer, type DescribeDetails } from "@/lib/describe-composer";
+import {
+  createDescribeComposer,
+  type DescribeDetails,
+  type DescribeOutput,
+  type RefKind,
+} from "@/lib/describe-composer";
+import { openAreaPicker } from "@/lib/room-picker-modal";
+import { openStyleBrowser } from "@/lib/canvas-style-ui";
+import { styleById } from "@/lib/style-catalog";
+
 
 
 export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design" | "describe";
