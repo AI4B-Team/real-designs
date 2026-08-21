@@ -76,7 +76,8 @@ export type StudioStartCtx = {
   fileToDataUrl: (file: File) => Promise<string>;
 };
 
-import { mountSourcePicker, type PickerDesign } from "@/lib/source-picker";
+import { mountSourcePicker, type PickerDesign, type PickerHero } from "@/lib/source-picker";
+import { PHOTOS } from "@/content/rd-photos";
 import { cleanAddressText } from "@/lib/property-address";
 import { openStagingReview } from "@/content/rd-staging";
 
@@ -1228,6 +1229,40 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     return [list[hit]!, ...list.filter((_, i) => i !== hit)];
   }
 
+  /** Copy and photography for the upload workspace card. The example stack
+      becomes the user's own photos as soon as the workspace has three. */
+  function uploadHero(isVideo: boolean): PickerHero {
+    const mine: string[] = [];
+    for (const p of ctx.getProperties ? ctx.getProperties() : []) {
+      for (const ph of photosOfProperty(p)) {
+        if (ph.path && !mine.includes(ph.path)) mine.push(ph.path);
+        if (mine.length >= 3) break;
+      }
+      if (mine.length >= 3) break;
+    }
+    const isUser = mine.length >= 3 && !!ctx.resolvePhoto;
+    const examples = isVideo
+      ? [
+          { src: PHOTOS.yardAfter, alt: "Backyard" },
+          { src: PHOTOS.exteriorAfter, alt: "Home exterior" },
+          { src: PHOTOS.after, alt: "Living room" },
+        ]
+      : [
+          { src: PHOTOS.yardAfter, alt: "Landscaped yard" },
+          { src: PHOTOS.exteriorAfter, alt: "Home exterior" },
+          { src: PHOTOS.kitchen, alt: "Kitchen interior" },
+        ];
+    return {
+      variant: isVideo ? "video" : "design",
+      title: isVideo ? "Add Your Property Photos" : "Add Your Space Photos",
+      copy: isVideo
+        ? "Upload the photos you want to turn into a listing video."
+        : "Upload one or more spaces you want to redesign, stage, or plan.",
+      stack: isUser ? mine.slice(0, 3).map((path) => ({ path, alt: "Your photo" })) : examples,
+      isUser,
+    };
+  }
+
   /** The one shared source picker, configured for the design context. */
   let picker: { destroy: () => void } | null = null;
   function mountPicker() {
@@ -1238,6 +1273,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     const isVideo = state.door === "video";
     picker = mountSourcePicker(slot, {
       context: isVideo ? "video" : "design",
+      hero: () => uploadHero(isVideo),
       /* Local escape: the shell helper is not always initialized this early. */
       esc: escLocal,
       lucide,
