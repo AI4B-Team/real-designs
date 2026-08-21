@@ -8776,20 +8776,16 @@ ${picks
           showToolGate(r, name, need);
           return;
         }
-        /* Every style-driven tool, including Redesign, asks for a direction the
-       moment it is selected. Redesign has no LIVE_TOOLS entry (it renders
-       through Generate), so this check must sit outside that branch or the
-       click would appear to do nothing at all. */
+        /* Selecting a tool NEVER generates and NEVER spends a credit. It only
+           activates the tool, opens its settings and, when the tool needs a
+           direction, points at the style cards. Generation happens exclusively
+           from the confirm button in the panel footer. */
         if (styleNeedForTool(name) && !canvasStyleSelected()) {
           if (toolInfo) toolInfo.hidden = true;
           promptForStyle(name);
           return;
         }
-        if (LIVE_TOOLS[name]) {
-          if (toolInfo) toolInfo.hidden = true;
-          LIVE_TOOLS[name]();
-          return;
-        }
+
         if (need && toolInfo) {
           showToolGate(r, name, need);
         } else if (toolInfo) {
