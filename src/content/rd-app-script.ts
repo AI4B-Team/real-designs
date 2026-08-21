@@ -2410,13 +2410,24 @@ export function initApp(): () => void {
               return;
             }
             try {
-              window.rdVideoIntent = {
-                camera: o.camera || r.motion,
-                duration: o.duration,
-                orientation: o.orientation,
-              };
+              window.__rdAllowReveal && window.__rdAllowReveal();
             } catch (_) {}
-            go("v-video");
+            openVideoWorkflow({
+              from: "studio",
+              propertyId: r.handoff.propertyId,
+              propertyAddress: r.handoff.propertyAddress,
+              motion: o.camera || r.motion,
+              duration: o.duration,
+              orientation: o.orientation,
+              assets: r.handoff.assets.map((a, i) => ({
+                id: a.id,
+                storage_path: a.path,
+                file_name: a.name,
+                original_filename: a.name,
+                room_group: a.room || a.name,
+                sort_order: i,
+              })),
+            });
           },
           showConcept: async (image, label, prompt) => {
             setStudioSource("user_upload", image, "Design concept", {
