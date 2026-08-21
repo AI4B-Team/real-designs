@@ -86,7 +86,12 @@ export type StudioStartCtx = {
   fileToDataUrl: (file: File) => Promise<string>;
 };
 
-import { mountSourcePicker, type PickerDesign, type PickerHero } from "@/lib/source-picker";
+import {
+  mountSourcePicker,
+  CONTEXT_CONFIG,
+  type PickerDesign,
+  type PickerHero,
+} from "@/lib/source-picker";
 import { PHOTOS } from "@/content/rd-photos";
 import { cleanAddressText } from "@/lib/property-address";
 import { openStagingReview } from "@/content/rd-staging";

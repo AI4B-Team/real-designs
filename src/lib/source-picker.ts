@@ -98,7 +98,7 @@ export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "property", "design", "url"],
+    sources: ["upload", "cloud", "property", "design", "describe", "url"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
