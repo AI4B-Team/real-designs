@@ -455,7 +455,8 @@
 }
 .rd-app .rdw-card-th {
   position: relative;
-  height: 52px;
+  /* Room cards stay clearly smaller than the Design Style tiles. */
+  height: 42px;
   /* Skeleton tone shows while the preview decodes, never a bare beige box. */
   background:
     linear-gradient(90deg, #efece7 25%, #f6f4f1 37%, #efece7 63%) 0 0 / 400% 100%,
