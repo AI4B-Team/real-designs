@@ -35,7 +35,7 @@ export type ResultAction =
 
 const BAR: { id: ResultAction; icon: string; label: string }[] = [
   { id: "edit", icon: "pencil", label: "Edit" },
-  { id: "variation", icon: "git-branch", label: "Create Variation" },
+  { id: "variation", icon: "git-branch", label: "Variation" },
   { id: "video", icon: "clapperboard", label: "Create Video" },
   { id: "upscale", icon: "sparkles", label: "Upscale" },
   { id: "shop", icon: "shopping-bag", label: "Shop" },
