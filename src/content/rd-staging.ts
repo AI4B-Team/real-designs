@@ -1058,10 +1058,11 @@ function cardHtml(it, seq) {
    picker, and it always stays the final grid item. */
 function addCardHtml() {
   return `<div class="rv-addcard ${ratioClass(S && S.outputRatio)}">
-    <button type="button" class="rv-addcard-b" id="rdsAddCard" aria-label="Add More Photos">
+    <button type="button" class="rv-addcard-b" id="rdsAddCard" aria-label="Add More Photos"
+      aria-haspopup="menu" aria-expanded="false">
       <i data-lucide="image-plus"></i>
       <b>Add More Photos</b>
-      <em>Upload, Import, or Use Media</em>
+      <em>Click To Choose A Source, Or Drop Photos Here</em>
       <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
     </button>
     <div class="rv-addcard-pad" aria-hidden="true"></div>
@@ -1160,14 +1161,14 @@ function render() {
           more: { label: "More Ratios", value: "__more" },
           customLabel: ratioLabel(S.outputRatio),
         })}
-        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
         <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
           <div class="rv-more-m">
             <button data-act="moreratios">More Ratios</button>
             <button data-act="all">Select All</button>
-            <button data-act="none">Clear Selection</button>
+            <button data-act="none">Deselect All</button>
             <button data-act="del">Remove Selected</button>
+            <button data-act="delall" class="danger">Remove All Photos…</button>
             <button id="rdsClose">Save &amp; Exit</button>
             <button id="rdsStartOver">Start Over</button>
           </div>
@@ -1180,13 +1181,14 @@ function render() {
         <div class="rv-utility">
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
-          <div class="rv-utility-a">
+          <div class="rv-utility-a" id="rdsBulkBar"${sel > 0 ? "" : ' hidden'}>
             <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Set Design Direction · ${sel}</button>
             <button class="btn btn-ghost btn-sm" id="rdsSetRoom"${sel > 0 ? "" : " disabled"} title="${sel > 1 ? `Applies one room type to all ${sel} selected photos` : "Sets the room type for the selected photo"}"><i data-lucide="tag"></i>Set Room Type${sel > 1 ? ` · ${sel}` : ""}</button>
+            <button class="btn btn-ghost btn-sm" data-act="none" id="rdsDeselect">${all ? "Deselect All" : "Deselect"}</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
               <div class="rv-more-m">
                 <button data-act="all">Select All</button>
-                <button data-act="none">Clear Selection</button>
+                <button data-act="none">Deselect All</button>
                 <button data-act="room">Apply Room Type</button>
                 <button data-act="del">Remove Selected</button>
               </div>
@@ -1194,6 +1196,7 @@ function render() {
           </div>
         </div>
         ${gridHtml()}
+        <button type="button" class="rds-floatadd" id="rdsFloatAdd" hidden aria-haspopup="menu" aria-expanded="false"><i data-lucide="plus"></i>Add Photos</button>
         <div class="rv-gridfoot">
           <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "photo" : "photos"} selected</span></div>
           <div class="rv-gridfoot-a">
@@ -1216,6 +1219,8 @@ function render() {
      refreshed in place instead of leaving a blank frame behind. */
   mountPhotoImages(el);
   mountUploadRetries(el);
+  mountRotations(el);
+  mountFloatingAdd(el);
 }
 
 /* Every rail step is a real destination: nothing in the rail is decorative. */
@@ -1254,6 +1259,7 @@ function patchCard(it) {
   el.replaceWith(next.firstElementChild);
   mountPhotoImages(wrap);
   mountUploadRetries(wrap);
+  mountRotations(wrap);
   paint();
   syncCard(it);
   patchStatus();
