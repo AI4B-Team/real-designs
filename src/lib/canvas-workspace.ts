@@ -201,7 +201,43 @@ export function paintPanelHeader() {
   if (lvl) lvl.hidden = !levelOnly;
   const lock = document.getElementById("rdwLockField");
   if (lock) lock.hidden = tool === "Sketch To Render" || tool === "2D To 3D Plan";
+  paintCapabilities(tool);
 }
+
+/**
+ * Specialized features live inside their parent tool, never as separate
+ * destinations. Choosing one only prepares the instruction — it never starts
+ * a generation and never spends credits.
+ */
+function paintCapabilities(tool: string) {
+  const desc = document.getElementById("rdwToolDesc");
+  if (!desc || !desc.parentElement) return;
+  let host = document.getElementById("rdwCaps");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "rdwCaps";
+    host.className = "rdw-caps";
+    desc.parentElement.insertBefore(host, desc.nextSibling);
+  }
+  const caps = capabilitiesFor(tool);
+  host.hidden = !caps.length;
+  host.innerHTML = caps
+    .map(
+      (c) =>
+        '<button type="button" class="rdw-cap" data-cap="' +
+        esc(c.id) +
+        '" title="' +
+        esc(c.blurb) +
+        '"><i data-lucide="' +
+        esc(c.icon) +
+        '"></i>' +
+        esc(c.label) +
+        "</button>",
+    )
+    .join("");
+  icons();
+}
+
 
 /* ------------------------------------------------------------------ */
 /* canvas overlay                                                      */
