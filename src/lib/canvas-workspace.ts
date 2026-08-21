@@ -19,6 +19,7 @@ import { openAreaPicker } from "@/lib/room-picker-modal";
 import { buildCanvasPanel, refreshCanvasPanel } from "@/lib/canvas-panel";
 import { ensureNotEmpty } from "@/lib/route-states";
 import { initAutoRoom, markManualRoom } from "@/lib/canvas-autoroom";
+import { mountStudioResultActions } from "@/lib/canvas-actions";
 
 
 const SETTINGS_KEY = "rd_canvas_workspace";
