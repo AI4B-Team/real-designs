@@ -14,27 +14,48 @@
 }
 
 @media (min-width: 1241px) {
-  .rd-app:has(#v-studio.on .studio.rdw) .main {
+  /* The fixed-viewport Canvas layout applies only when the real Canvas editor
+     is open: not while the Studio chooser (.sts-choosing) or the empty state
+     is showing, or the landing page cannot scroll. */
+  .rd-app:has(#v-studio.on:not(.sts-choosing) .studio.rdw:not(.st-empty)) .main {
     height: 100dvh;
     min-height: 0;
     overflow: hidden;
   }
-  .rd-app:has(#v-studio.on .studio.rdw) .content {
+  .rd-app:has(#v-studio.on:not(.sts-choosing) .studio.rdw:not(.st-empty)) .content {
     height: calc(100dvh - var(--app-header-height, 58px));
     min-height: 0;
     overflow: hidden;
     display: flex;
     flex-direction: column;
   }
-  .rd-app #v-studio.view.on {
+  .rd-app #v-studio.view.on:not(.sts-choosing) {
     display: flex;
     flex-direction: column;
     min-height: 0;
     flex: 1;
   }
-  .rd-app .studio.rdw {
+  .rd-app #v-studio.on:not(.sts-choosing) .studio.rdw:not(.st-empty) {
     height: 100%;
     overflow: hidden;
+  }
+
+  /* Chooser: normal document scrolling, no nested scrollbar. */
+  .rd-app:has(#v-studio.on.sts-choosing) .main {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+  .rd-app:has(#v-studio.on.sts-choosing) .content {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+    display: block;
+  }
+  .rd-app #v-studio.on.sts-choosing {
+    display: block;
+    min-height: auto;
+    overflow: visible;
   }
 }
 
