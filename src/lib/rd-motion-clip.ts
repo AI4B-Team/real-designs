@@ -12,17 +12,17 @@ import { resolvePhotoUrl } from "@/lib/room-photos";
 import { saveVideo, startRender, finishVariant, setVideoStatus } from "@/lib/reveal.functions";
 import { renderReveal } from "@/lib/reveal-render";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+import {
+  MOTION_STRENGTHS,
+  defaultMotionFor,
+  motionPreset,
+  motionsForSpace,
+  type MotionStrength,
+} from "@/lib/video-motion-presets";
+import { PREVIEW_DISCLAIMER, attachMotionPreview } from "@/lib/video-motion-preview";
 
 const BUCKET = "reveal-videos";
 
-const MOTIONS: Array<[string, string]> = [
-  ["push", "Push In"],
-  ["pull", "Pull Out"],
-  ["pan_left", "Pan Left"],
-  ["pan_right", "Pan Right"],
-  ["orbit_left", "Orbit Left"],
-  ["orbit_right", "Orbit Right"],
-];
 const FORMATS: Array<[string, string]> = [
   ["9:16", "Vertical 9:16"],
   ["1:1", "Square 1:1"],
@@ -34,6 +34,7 @@ const LENGTHS: Array<[number, string]> = [
   [5, "5s"],
   [8, "8s"],
 ];
+
 
 function esc(s: any) {
   return String(s ?? "").replace(
