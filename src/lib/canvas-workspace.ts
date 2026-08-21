@@ -153,11 +153,10 @@ export function paintRoomCards() {
         const rec = list.find((r) => r.id === id);
         card?.classList.remove("has-img");
         card?.classList.add("img-failed");
-        im.replaceWith(
-          Object.assign(document.createElement("i"), {
-            dataset: { lucide: rec?.icon || "image-off" },
-          } as any),
-        );
+        const glyph = document.createElement("i");
+        glyph.setAttribute("data-lucide", rec?.icon || "image-off");
+        im.replaceWith(glyph);
+
         icons();
       },
       { once: true },
