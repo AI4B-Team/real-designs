@@ -1748,14 +1748,22 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       render();
       return;
     }
-    if (k === "door-design") {
-      state.door = "design";
-      render();
+    if (k === "door-change") {
+      /* Only the project row is repainted: everything already typed or
+         attached in the composer stays exactly where it is. */
+      state.doorOpen = true;
+      renderDoors();
       return;
     }
-    if (k === "door-video") {
-      ctx.track("studio_start_method", { method: "video" });
-      state.door = "video";
+    if (k === "door-design" || k === "door-video") {
+      const next = k === "door-video" ? "video" : "design";
+      state.doorOpen = false;
+      if (state.door === next) {
+        renderDoors();
+        return;
+      }
+      if (next === "video") ctx.track("studio_start_method", { method: "video" });
+      state.door = next;
       render();
       return;
     }
