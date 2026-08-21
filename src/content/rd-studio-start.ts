@@ -221,8 +221,17 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     inspiration: null as File | null,
     /** Reference images (data URLs) attached in the Describe composer. */
     refs: [] as string[],
+    /** How closely the references should be followed. */
+    refStrength: "balanced",
     ratio: "16:9",
     options: 1,
+    /** What the description should produce: a design image or a listing video. */
+    output: "image" as "image" | "video",
+    camera: "slow-push-in",
+    duration: 5,
+    orientation: "16:9",
+    /** How far the redesign should move from the source. */
+    level: "balanced",
 
     samples: false,
     busy: false,
