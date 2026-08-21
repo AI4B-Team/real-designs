@@ -2965,6 +2965,10 @@ export function initApp(): () => void {
         return;
       }
       if (!ensureCredits(1, "A Design Render")) return;
+      /* A variation branches from the selected design instead of the source
+         photo: same room, same property, new child version. */
+      const VAR = (window as any).__rdPendingVariation || null;
+      (window as any).__rdPendingVariation = null;
       busy = true;
       setCanvasPhase("generating");
       const btn = document.getElementById("genBtn");
@@ -2995,39 +2999,57 @@ export function initApp(): () => void {
         }, 320);
       };
       try {
-        const image = await toDataUrl(srcImg.src, 1100);
+        const image = await toDataUrl((VAR && VAR.src) || srcImg.src, 1100);
         const band = document.querySelector(".bchip.on"),
           grade = document.querySelector("#gradeChips .chip.on");
         const groups = { keep: [], replace: [], remove: [] };
         Object.keys(locks).forEach((o) => {
           (groups[locks[o]] || groups.keep).push(o);
         });
+        if (VAR && Array.isArray(VAR.keep)) {
+          VAR.keep.forEach((k) => {
+            if (k && groups.keep.indexOf(k) < 0) groups.keep.push(k);
+          });
+        }
+        const varNotes = VAR
+          ? [VAR.prompt, (document.getElementById("agentNote") || {}).value || null]
+              .filter(Boolean)
+              .join(" ")
+          : (document.getElementById("agentNote") || {}).value || null;
         const r = await renderDesign({
           data: {
             image,
-            room_type: currentRoomType(),
-            direction: (document.getElementById("fStyle") || {}).value || "Warm Minimal",
+            room_type: (VAR && VAR.room) || currentRoomType(),
+            direction:
+              (VAR && VAR.styleName) ||
+              (document.getElementById("fStyle") || {}).value ||
+              "Warm Minimal",
             style_id: currentStyleId(),
             project_type: currentProjectType(),
             tool: activeToolName(),
             preserve_architecture: true,
-            intensity: band ? band.querySelector("b").textContent : "Makeover",
+            intensity: (VAR && VAR.intensity) || (band ? band.querySelector("b").textContent : "Makeover"),
             grade: grade ? grade.textContent : "Retail Grade",
-            notes: (document.getElementById("agentNote") || {}).value || null,
+            notes: varNotes || null,
             keep: groups.keep,
             replace: groups.replace,
             remove: groups.remove,
+            variation_of: (VAR && VAR.parentPath) || null,
           },
         });
         track("design_rendered", { surface: "studio", room_type: currentRoomType() });
         lastRender = r.image;
         lastRenderPath = await persistRender(r.image, "Your Render");
         cAfter.innerHTML = photo(r.image, "Redesigned space, AI render");
+        if (VAR) (window as any).__rdVariationMeta = VAR;
         addRenderVariant(
           r.image,
-          (document.getElementById("fStyle") || {}).value || "Your Render",
+          (VAR && VAR.styleName) ||
+            (document.getElementById("fStyle") || {}).value ||
+            "Your Render",
           lastRenderPath,
         );
+
         setCanvasPhase("");
         markStudioResult();
         finalizeGeneratedDesign(lastRenderPath);
@@ -3372,6 +3394,8 @@ export function initApp(): () => void {
          reopening a saved version never writes a duplicate version row. */
 
       /* Version History shows this render immediately, before any save. */
+      const vmeta = (window as any).__rdVariationMeta || null;
+      (window as any).__rdVariationMeta = null;
       try {
         SESSION_VERSIONS.unshift({
           src,
@@ -3380,10 +3404,18 @@ export function initApp(): () => void {
           style: ((document.getElementById("fStyle") || {}).value || "").trim() || null,
           at: Date.now(),
           room: activeStudioRoom(),
+          /* Branching metadata: a variation always names its parent version. */
+          parentAt: vmeta ? vmeta.parentAt || null : null,
+          parentSrc: vmeta ? vmeta.parentSrc || vmeta.src || null : null,
+          parentPath: vmeta ? vmeta.parentPath || null : null,
+          variationStrength: vmeta ? vmeta.strength || null : null,
+          variationPrompt: vmeta ? vmeta.prompt || null : null,
+          variationLocks: vmeta && Array.isArray(vmeta.keep) ? vmeta.keep.slice() : null,
         });
 
         paintVersions();
       } catch (_) {}
+
       const wrap = document.getElementById("vars");
       if (!wrap) return;
       const d = document.createElement("div");
@@ -3745,6 +3777,21 @@ export function initApp(): () => void {
     }
 
     window.rdDisplayedVersion = () => DISPLAYED_VERSION;
+    /* The variation drawer reads the branch record of whatever is on screen. */
+    window.rdSessionVersion = (src) =>
+      (SESSION_VERSIONS || []).find((v) => v && src && v.src === src) || null;
+    window.rdSessionVersions = () => (SESSION_VERSIONS || []).slice();
+    window.rdStudioSourceImage = () => {
+      const i = document.querySelector("#cBefore img");
+      return (i && i.src) || null;
+    };
+    /* Compare against a chosen base (parent version or the original photo). */
+    window.rdSetCompareBase = (src) => {
+      const b = document.getElementById("cBefore");
+      if (!b || !src) return false;
+      b.innerHTML = photo(src, "Comparison base");
+      return true;
+    };
     window.rdVersionSaving = () => VERSION_SAVING;
 
 
@@ -3971,12 +4018,19 @@ export function initApp(): () => void {
       /* A version is numbered, never named after the tool that made it. The
          tool and style are secondary metadata under the number. */
       const savedCount = list.length;
+      const numberOf = (v) => savedCount + (session.length - session.indexOf(v));
       const sessionHTML = session
         .map((v, i) => {
           const no = savedCount + (session.length - i);
           const meta = [v.label, v.style].filter(Boolean).join(" \u00b7 ");
           const when = ago(new Date(v.at).toISOString());
-          const sub = v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026";
+          /* A variation reads as a child of the version it branched from. */
+          const parent = v.parentAt
+            ? session.find((x) => x && x.at === v.parentAt) ||
+              session.find((x) => x && v.parentSrc && x.src === v.parentSrc)
+            : null;
+          const from = parent ? " &middot; From V" + numberOf(parent) : v.parentAt ? " &middot; Variation" : "";
+          const sub = (v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026") + from;
           return (
             `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, "Version " + no)}</span>` +
             `<span class="rowt"><b>Version ${no}</b><span>${sub}</span></span>` +
@@ -3984,6 +4038,7 @@ export function initApp(): () => void {
           );
         })
         .join("");
+
 
       el.innerHTML =
         sessionHTML +
