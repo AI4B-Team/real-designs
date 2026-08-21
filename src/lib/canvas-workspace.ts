@@ -14,6 +14,8 @@ import {
   type CanvasSpace,
 } from "@/lib/space-datasets";
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
+import { capabilitiesFor } from "@/lib/canvas-capabilities";
+import { ensureNotEmpty } from "@/lib/route-states";
 
 
 const SETTINGS_KEY = "rd_canvas_workspace";
@@ -162,6 +164,7 @@ export function paintRoomCards() {
       { once: true },
     );
   });
+  ensureNotEmpty(host, "empty", "This Space");
   const ctxRoom = document.getElementById("setupCtxRoom");
 
   if (ctxRoom && active) ctxRoom.textContent = active;
@@ -201,7 +204,43 @@ export function paintPanelHeader() {
   if (lvl) lvl.hidden = !levelOnly;
   const lock = document.getElementById("rdwLockField");
   if (lock) lock.hidden = tool === "Sketch To Render" || tool === "2D To 3D Plan";
+  paintCapabilities(tool);
 }
+
+/**
+ * Specialized features live inside their parent tool, never as separate
+ * destinations. Choosing one only prepares the instruction — it never starts
+ * a generation and never spends credits.
+ */
+function paintCapabilities(tool: string) {
+  const desc = document.getElementById("rdwToolDesc");
+  if (!desc || !desc.parentElement) return;
+  let host = document.getElementById("rdwCaps");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "rdwCaps";
+    host.className = "rdw-caps";
+    desc.parentElement.insertBefore(host, desc.nextSibling);
+  }
+  const caps = capabilitiesFor(tool);
+  host.hidden = !caps.length;
+  host.innerHTML = caps
+    .map(
+      (c) =>
+        '<button type="button" class="rdw-cap" data-cap="' +
+        esc(c.id) +
+        '" title="' +
+        esc(c.blurb) +
+        '"><i data-lucide="' +
+        esc(c.icon) +
+        '"></i>' +
+        esc(c.label) +
+        "</button>",
+    )
+    .join("");
+  icons();
+}
+
 
 /* ------------------------------------------------------------------ */
 /* canvas overlay                                                      */
@@ -286,6 +325,21 @@ export function initCanvasWorkspace() {
     if (opt) {
       setOn("#rdwOpts .chip", (el) => el === opt);
       save({ options: Number(opt.dataset["n"]) || 1 });
+      return;
+    }
+    const cap = t.closest("#rdwCaps .rdw-cap") as HTMLElement | null;
+    if (cap) {
+      e.preventDefault();
+      cap.parentElement
+        ?.querySelectorAll(".rdw-cap")
+        .forEach((x) => x.classList.toggle("on", x === cap));
+      const note = document.getElementById("agentNote") as HTMLTextAreaElement | null;
+      if (note) {
+        const label = cap.textContent?.trim() || "";
+        note.value = note.value ? note.value.replace(/\s*$/, " ") + label : label;
+        note.dispatchEvent(new Event("input", { bubbles: true }));
+        note.focus();
+      }
       return;
     }
     const sugg = t.closest("#rdwSugg button") as HTMLElement | null;
