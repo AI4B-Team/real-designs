@@ -16,6 +16,7 @@ import {
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
 import { capabilitiesFor } from "@/lib/canvas-capabilities";
 import { openAreaPicker } from "@/lib/room-picker-modal";
+import { buildCanvasPanel, refreshCanvasPanel } from "@/lib/canvas-panel";
 import { ensureNotEmpty } from "@/lib/route-states";
 
 
@@ -345,8 +346,10 @@ export function initCanvasWorkspace() {
   const versOpen = document.getElementById("rdwVersOpen") as HTMLElement | null;
   if (versOpen) versOpen.hidden = s.versionsOpen;
 
+  buildCanvasPanel();
   paintRoomCards();
   paintPanelHeader();
+  refreshCanvasPanel();
 
   b.addEventListener("click", (e) => {
     const t = e.target as HTMLElement;
