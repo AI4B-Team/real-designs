@@ -9116,3 +9116,12 @@
 .rd-app .stw-door.on {
   box-shadow: none;
 }
+
+/* ---------- legacy compatibility layer ----------
+   Wrappers used by src/features/legacy to inject not-yet-migrated prototype
+   markup. They must not create a layout box, so `.content` keeps addressing
+   the views directly while the migration is in progress. */
+.rd-app .rd-legacy,
+.rd-app .rd-legacy-overlays {
+  display: contents;
+}
