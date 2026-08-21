@@ -5,7 +5,7 @@
  * Every generation control the app script already owns keeps its original id,
  * so this module only arranges and mirrors state - it never generates.
  */
-import { ROOM_OPTIONS, roomByLabel, type RoomOption } from "@/lib/staging-rooms";
+import { ROOM_OPTIONS, type RoomOption } from "@/lib/staging-rooms";
 import {
   areaByLabel,
   areaFitsSpace,
