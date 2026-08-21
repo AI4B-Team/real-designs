@@ -18,6 +18,7 @@ import { capabilitiesFor } from "@/lib/canvas-capabilities";
 import { openAreaPicker } from "@/lib/room-picker-modal";
 import { buildCanvasPanel, refreshCanvasPanel } from "@/lib/canvas-panel";
 import { ensureNotEmpty } from "@/lib/route-states";
+import { initAutoRoom, markManualRoom } from "@/lib/canvas-autoroom";
 
 
 const SETTINGS_KEY = "rd_canvas_workspace";
@@ -346,6 +347,7 @@ export function initCanvasWorkspace() {
   if (versOpen) versOpen.hidden = s.versionsOpen;
 
   buildCanvasPanel();
+  initAutoRoom();
   paintRoomCards();
   paintPanelHeader();
   refreshCanvasPanel();
@@ -358,6 +360,8 @@ export function initCanvasWorkspace() {
     if (room && room.closest("#rdwRooms")) {
       e.preventDefault();
       roomsExpanded = false;
+      /* A hand-picked room is final: detection never overwrites it. */
+      markManualRoom();
       pickRoom(room.dataset["room"] || "");
       return;
     }
@@ -374,6 +378,7 @@ export function initCanvasWorkspace() {
         current: sel?.value || null,
         onApply: (label) => {
           roomsExpanded = false;
+          markManualRoom();
           pickRoom(label);
         },
       });
