@@ -162,8 +162,7 @@ function quickGrid(pool: StyleRecord[], selectedId: string | null): string {
         );
       })
       .join("") +
-    "</div>" +
-    '<button class="btn btn-ghost btn-sm cs-browse" type="button"><i data-lucide="layout-grid"></i>View All Styles</button>'
+    "</div>"
   );
 }
 
@@ -471,7 +470,7 @@ export function mountCanvasStyle(
         '<div class="cs-sec cs-empty-state">' +
         '<div class="cs-sec-h"><label>' +
         esc(title) +
-        "</label></div>" +
+        '</label><button type="button" class="fb-link cs-browse">View All</button></div>' +
 
         quickGrid(pool, null) +
         (propRec
@@ -518,7 +517,7 @@ export function mountCanvasStyle(
       '<div class="cs-sec">' +
       '<div class="cs-sec-h"><label>' +
       esc(title) +
-      '</label><span class="cs-scope">' +
+      '</label><button type="button" class="fb-link cs-browse">View All</button><span class="cs-scope">' +
       esc(scopeLabel(sel.scope)) +
       "</span></div>" +
       '<div class="cs-picked">' +
