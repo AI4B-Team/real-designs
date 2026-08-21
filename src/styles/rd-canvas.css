@@ -1310,11 +1310,13 @@
 }
 .rd-app .cs-qn {
   flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  /* block, not flex: text-overflow: ellipsis is ignored on a flex container,
+     so long names like "Mid-Century Modern" were hard-clipped mid-letter. */
+  display: block;
+  width: 100%;
+  min-width: 0;
   min-height: 30px;
-  padding: 4px 6px;
+  padding: 8px 6px;
   background: #fff;
   text-align: center;
   font-size: 0.66rem;
