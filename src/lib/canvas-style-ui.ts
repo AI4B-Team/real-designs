@@ -517,7 +517,7 @@ export function mountCanvasStyle(
       '<div class="cs-sec">' +
       '<div class="cs-sec-h"><label>' +
       esc(title) +
-      '</label><span class="cs-scope">' +
+      '</label><button type="button" class="fb-link cs-browse">View All</button><span class="cs-scope">' +
       esc(scopeLabel(sel.scope)) +
       "</span></div>" +
       '<div class="cs-picked">' +
