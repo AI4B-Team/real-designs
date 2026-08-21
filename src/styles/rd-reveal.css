@@ -1568,3 +1568,36 @@
 @media (max-width: 720px) {
   .rd-app .rv-head > .rv-head-tools { padding-right: 0; }
 }
+
+/* ---- Motion clip: simulated preview -------------------------------- */
+.rd-app .mc-prev {
+  margin: 0 0 14px;
+  border: 1px solid var(--line, #e6e3dd);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #12100f;
+}
+.rd-app .mc-prev-vp {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+.rd-app .mc-prev-vp img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rd-app .mc-prev-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 10px;
+  background: #fff;
+  border-top: 1px solid var(--line, #e6e3dd);
+  font-size: 12px;
+  color: var(--mute-2, #6b6b74);
+}

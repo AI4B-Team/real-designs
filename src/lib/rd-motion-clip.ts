@@ -23,6 +23,21 @@ import { PREVIEW_DISCLAIMER, attachMotionPreview } from "@/lib/video-motion-prev
 
 const BUCKET = "reveal-videos";
 
+/** The browser renderer speaks a smaller camera vocabulary than the presets. */
+const RENDER_MOTION: Record<string, string> = {
+  zoom_in: "push",
+  dolly_in: "push",
+  walkthrough: "push",
+  reveal: "push",
+  zoom_out: "pull",
+  dolly_out: "pull",
+  tilt_up: "push",
+  tilt_down: "pull",
+  drift: "push",
+  static: "push",
+};
+const renderMotion = (id: string) => RENDER_MOTION[id] || id;
+
 const FORMATS: Array<[string, string]> = [
   ["9:16", "Vertical 9:16"],
   ["1:1", "Square 1:1"],
@@ -48,6 +63,7 @@ export type MotionClipInput = {
   path?: string | null;
   propertyLabel?: string | null;
   room?: string | null;
+  space?: string | null;
   onDone?: () => void;
   toast?: (msg: string) => void;
 };
@@ -115,8 +131,10 @@ export function openMotionClip(item: MotionClipInput) {
     createIcons({ icons, root: wrap } as any);
   } catch (_) {}
 
+  let preview: ReturnType<typeof attachMotionPreview> | null = null;
   const close = () => {
     if (state.busy) return;
+    preview?.destroy();
     wrap.remove();
     document.removeEventListener("keydown", onKey);
   };
@@ -131,7 +149,6 @@ export function openMotionClip(item: MotionClipInput) {
 
   /* Simulated preview: transforms the still, spends nothing. */
   const prevImg = wrap.querySelector("#mcPrevImg") as HTMLImageElement | null;
-  let preview: ReturnType<typeof attachMotionPreview> | null = null;
   const syncPreview = () => {
     if (!prevImg) return;
     if (!preview) preview = attachMotionPreview(prevImg, state.motion, state.strength, state.seconds);
@@ -197,7 +214,7 @@ export function openMotionClip(item: MotionClipInput) {
             formats: [state.aspect],
             length_preset: "quick",
             transition: "clean",
-            motion: state.motion,
+            motion: renderMotion(state.motion),
             property_label: item.propertyLabel || null,
             branding: {},
             disclosure: {},
@@ -210,7 +227,7 @@ export function openMotionClip(item: MotionClipInput) {
               sequence: 0,
               scene_type: "design",
               duration: state.seconds,
-              motion: state.motion,
+              motion: renderMotion(state.motion),
               transition: "clean",
               caption: caption || null,
               crop_data: {},
@@ -237,7 +254,7 @@ export function openMotionClip(item: MotionClipInput) {
             room_name: item.room || null,
             scene_type: "design",
             duration: state.seconds,
-            motion: state.motion,
+            motion: renderMotion(state.motion),
             transition: "clean",
             caption: caption || null,
             motion_level: "standard",
