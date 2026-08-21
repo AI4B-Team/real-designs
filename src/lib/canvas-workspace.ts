@@ -14,6 +14,8 @@ import {
   type CanvasSpace,
 } from "@/lib/space-datasets";
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
+import { capabilitiesFor } from "@/lib/canvas-capabilities";
+import { ensureNotEmpty } from "@/lib/route-states";
 
 
 const SETTINGS_KEY = "rd_canvas_workspace";
@@ -162,6 +164,7 @@ export function paintRoomCards() {
       { once: true },
     );
   });
+  ensureNotEmpty(host, "empty", "This Space");
   const ctxRoom = document.getElementById("setupCtxRoom");
 
   if (ctxRoom && active) ctxRoom.textContent = active;
@@ -322,6 +325,21 @@ export function initCanvasWorkspace() {
     if (opt) {
       setOn("#rdwOpts .chip", (el) => el === opt);
       save({ options: Number(opt.dataset["n"]) || 1 });
+      return;
+    }
+    const cap = t.closest("#rdwCaps .rdw-cap") as HTMLElement | null;
+    if (cap) {
+      e.preventDefault();
+      cap.parentElement
+        ?.querySelectorAll(".rdw-cap")
+        .forEach((x) => x.classList.toggle("on", x === cap));
+      const note = document.getElementById("agentNote") as HTMLTextAreaElement | null;
+      if (note) {
+        const label = cap.textContent?.trim() || "";
+        note.value = note.value ? note.value.replace(/\s*$/, " ") + label : label;
+        note.dispatchEvent(new Event("input", { bubbles: true }));
+        note.focus();
+      }
       return;
     }
     const sugg = t.closest("#rdwSugg button") as HTMLElement | null;

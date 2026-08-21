@@ -716,3 +716,75 @@
   z-index: 30;
   margin-top: 10px;
 }
+
+/* ---- Consolidated tool capabilities -------------------------------- */
+.rd-app .rdw-caps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 2px;
+}
+.rd-app .rdw-cap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line, #e6e3dd);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--ink, #1a1a1a);
+  cursor: pointer;
+}
+.rd-app .rdw-cap i {
+  width: 14px;
+  height: 14px;
+}
+.rd-app .rdw-cap:hover {
+  border-color: var(--red, #c00);
+  color: var(--red, #c00);
+}
+.rd-app .rdw-cap.on {
+  border-color: var(--red, #c00);
+  background: rgba(204, 0, 0, 0.06);
+  color: var(--red, #c00);
+}
+
+/* ---- Never an empty content area ----------------------------------- */
+.rd-app .rd-state {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 18px 14px;
+  text-align: center;
+  color: var(--mute-2, #6b6b74);
+}
+.rd-app .rd-state h4 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--ink, #1a1a1a);
+}
+.rd-app .rd-state p {
+  margin: 0;
+  font-size: 12px;
+  max-width: 34ch;
+}
+.rd-app .rd-state-a {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.rd-app .rd-skel {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+}
+.rd-app .rd-skel-row {
+  height: 44px;
+  border-radius: 10px;
+  background:
+    linear-gradient(90deg, #efece7 25%, #f6f4f1 37%, #efece7 63%) 0 0 / 400% 100%;
+  animation: rdw-shim 1.4s ease infinite;
+}
