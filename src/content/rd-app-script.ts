@@ -3968,14 +3968,23 @@ export function initApp(): () => void {
         if (s < 172800) return Math.round(s / 3600) + "h ago";
         return Math.round(s / 86400) + "d ago";
       };
+      /* A version is numbered, never named after the tool that made it. The
+         tool and style are secondary metadata under the number. */
+      const savedCount = list.length;
       const sessionHTML = session
-        .map(
-          (v, i) =>
-            `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, v.label + " render")}</span>` +
-            `<span class="rowt"><b>${v.label}</b><span>${v.path ? ago(new Date(v.at).toISOString()) : "Not saved yet &middot; " + ago(new Date(v.at).toISOString())}</span></span>` +
-            `<span class="pill ${v.path ? (i === 0 ? "p-ok" : "p-gray") : "p-amb"}">${v.path ? (i === 0 ? "Latest" : "Past") : "Not Saved"}</span></button>`,
-        )
+        .map((v, i) => {
+          const no = savedCount + (session.length - i);
+          const meta = [v.label, v.style].filter(Boolean).join(" \u00b7 ");
+          const when = ago(new Date(v.at).toISOString());
+          const sub = v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026";
+          return (
+            `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, "Version " + no)}</span>` +
+            `<span class="rowt"><b>Version ${no}</b><span>${sub}</span></span>` +
+            `<span class="pill ${v.path ? (i === 0 ? "p-ok" : "p-gray") : "p-amb"}">${v.path ? (i === 0 ? "Latest" : "Past") : "Saving"}</span></button>`
+          );
+        })
         .join("");
+
       el.innerHTML =
         sessionHTML +
         list
