@@ -956,6 +956,7 @@ export function createDescribeComposer(cfg: Cfg) {
   function onInput(name: string, value: string): boolean {
     if (name === "prompt") {
       state.prompt = value;
+      state.touched = true;
       saveDraft();
       return true;
     }
