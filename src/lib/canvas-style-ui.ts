@@ -470,7 +470,7 @@ export function mountCanvasStyle(
         '<div class="cs-sec cs-empty-state">' +
         '<div class="cs-sec-h"><label>' +
         esc(title) +
-        "</label></div>" +
+        '</label><button type="button" class="fb-link cs-browse">View All</button></div>' +
 
         quickGrid(pool, null) +
         (propRec
