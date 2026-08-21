@@ -911,6 +911,11 @@ export function createDescribeComposer(cfg: Cfg) {
       void improve();
       return true;
     }
+    if (act === "improvewrap") {
+      /* The helper text sits inside the wrapper; clicking it does nothing
+         else, but the click still belongs to the composer. */
+      return true;
+    }
     if (act === "undo") {
       if (state.undo != null) {
         state.prompt = state.undo;
