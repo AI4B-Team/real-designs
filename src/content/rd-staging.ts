@@ -724,6 +724,142 @@ export function hasStagingSession() {
   return !!(S && S.items.length);
 }
 
+/* ---------------------------------------------------------- adding photos
+   One entry point, four sources. The Add More card is the anchor; the header
+   only grows a floating button once that card scrolls out of sight. */
+
+let pickFiles = () => {};
+let mediaCache = null;
+
+async function loadMediaProperties() {
+  if (mediaCache) return mediaCache;
+  const props = await listMediaProperties().catch(() => []);
+  mediaCache = props || [];
+  return mediaCache;
+}
+
+/** Stored photos of one property, in the shape addExisting expects. */
+async function propertyPhotos(id) {
+  const res = await listMediaAssets({ data: { property_id: id || null } }).catch(() => null);
+  const assets = (res && res.assets) || [];
+  return assets
+    .filter((a) => a && a.storage_path)
+    .map((a) => ({
+      path: a.storage_path,
+      name: a.file_name || a.title || "Photo",
+      room: a.room_type || "",
+      roomSource: a.room_type ? "library" : "none",
+    }));
+}
+
+function pickerCommon() {
+  return {
+    context: "photo",
+    esc,
+    lucide: { createIcons: () => paint() },
+    properties: async () => {
+      const props = await loadMediaProperties();
+      return props.map((p) => ({
+        id: p.id || p.address,
+        address: p.address,
+        count: Number(p.asset_count || 0),
+      }));
+    },
+    resolvePhoto: (path) => roomPhotoUrl(path),
+    loadPropertyPhotos: async (p) => propertyPhotos(p.id),
+    onPropertyPhotos: async (p, photos) => {
+      const list = (photos || []).filter((x) => x && x.path);
+      if (!list.length) return void cmToast("That Property Has No Photos Yet.");
+      addExisting(list);
+    },
+    showAlert: (m) => cmToast(m),
+  };
+}
+
+/** The anchored menu, and what each source does once chosen. */
+function openAddSources(anchor) {
+  openAddSourcePopover(anchor, {
+    paint,
+    sources: ["computer", "cloud", "property", "media"],
+    onSelect: (id) => {
+      if (id === "computer") return pickFiles();
+      const tab = sourceTabFor(id) || "upload";
+      openSourceModal({
+        title:
+          id === "cloud" ? "Import From Google Drive" : id === "media" ? "Add From Media" : "Add From A Property",
+        paint,
+        picker: {
+          ...pickerCommon(),
+          initialTab: tab,
+          onPick: async (picked) => {
+            const files = (picked || []).map((x) => x.file).filter(Boolean);
+            if (files.length) addFiles(files);
+          },
+        },
+      });
+    },
+  });
+}
+
+/** Dropping photos onto the Add More card is the same intake as the dialog. */
+function bindAddDrop(card) {
+  if (!card || card.__rdsDrop) return;
+  card.__rdsDrop = true;
+  const stop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  card.addEventListener("dragover", (e) => {
+    stop(e);
+    card.classList.add("drop");
+  });
+  card.addEventListener("dragleave", () => card.classList.remove("drop"));
+  card.addEventListener("drop", async (e) => {
+    stop(e);
+    card.classList.remove("drop");
+    const raw = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
+    const ok = await validateFiles(raw);
+    if (ok.length) addFiles(ok);
+  });
+}
+
+/** Shared validation, so drops and dialogs reject the same files. */
+async function validateFiles(raw) {
+  const out = [];
+  for (const f of raw) {
+    try {
+      const norm = await normalizeImageFile(f);
+      const why = typeof rejectReason === "function" ? rejectReason(norm) : null;
+      if (why) {
+        cmToast(norm.name + ": " + why);
+        continue;
+      }
+      out.push(await bakeExifOrientation(norm));
+    } catch (error) {
+      cmToast(error instanceof Error ? error.message : f.name + ": This Photo Could Not Be Added.");
+    }
+  }
+  return out;
+}
+
+/* The floating control is a fallback, not a second toolbar: it appears only
+   while the Add More card is off screen. */
+function mountFloatingAdd(el) {
+  const card = el.querySelector(".rv-addcard");
+  const btn = el.querySelector("#rdsFloatAdd");
+  if (!card || !btn || typeof IntersectionObserver === "undefined") return;
+  if (el.__rdsFloatObs) el.__rdsFloatObs.disconnect();
+  const obs = new IntersectionObserver(
+    (entries) => {
+      const vis = entries.some((x) => x.isIntersecting);
+      btn.hidden = vis;
+    },
+    { root: null, threshold: 0.05 },
+  );
+  obs.observe(card);
+  el.__rdsFloatObs = obs;
+}
+
 /* ------------------------------------------------------- intake and async */
 
 function addFiles(files) {
@@ -732,6 +868,7 @@ function addFiles(files) {
   /* The grid appears before a single byte is uploaded. */
   S.step = "review";
   render();
+  scrollToItem(fresh[0]);
   fresh.forEach(uploadOne);
   detectRooms(fresh);
   saveDraft();
@@ -754,12 +891,19 @@ function addExisting(photos) {
     detect: "done",
     selected: true,
     done: false,
+    rotation: 0,
+    addedAt: Date.now(),
   }));
   const have = new Set(S.items.map((i) => i.path).filter(Boolean));
   const add = fresh.filter((i) => !have.has(i.path));
+  if (!add.length) {
+    cmToast("Those Photos Are Already In This Project.");
+    return;
+  }
   S.items = S.items.concat(add);
   S.step = "review";
   render();
+  scrollToItem(add[0]);
   add.forEach(async (it) => {
     try {
       it.signed = await roomPhotoUrl(it.path);
@@ -1250,6 +1394,17 @@ function bindRail(el) {
   );
 }
 
+/** New photos land where the user can see them, never below the fold. */
+function scrollToItem(it) {
+  if (!it || !wrap || typeof requestAnimationFrame === "undefined") return;
+  requestAnimationFrame(() => {
+    const card = wrap.querySelector('.rv-tile[data-k="' + it.key + '"]');
+    try {
+      card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (_) {}
+  });
+}
+
 function patchCard(it) {
   if (!wrap || !S || S.step !== "review") return;
   const el = wrap.querySelector('.rv-tile[data-k="' + it.key + '"]');
@@ -1715,22 +1870,7 @@ function bindReview(el) {
       file.value = "";
       /* Same validation the Studio picker applies: unsupported or oversized
          files never reach the grid. */
-      const picked = [];
-      for (const f of raw) {
-        try {
-          const norm = await normalizeImageFile(f);
-          const why = typeof rejectReason === "function" ? rejectReason(norm) : null;
-          if (why) {
-            alert(norm.name + ": " + why);
-            continue;
-          }
-          picked.push(norm);
-        } catch (error) {
-          alert(
-            error instanceof Error ? error.message : f.name + ": This Photo Could Not Be Added.",
-          );
-        }
-      }
+      const picked = await validateFiles(raw);
       if (picked.length) addFiles(picked);
     };
   }
