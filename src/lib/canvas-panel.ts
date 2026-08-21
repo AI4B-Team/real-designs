@@ -146,7 +146,7 @@ export function buildCanvasPanel() {
     }
   })();
   setCustomizeOpen(openSaved);
-  toggle?.addEventListener("click", () => setCustomizeOpen(custBody.hidden));
+  toggle?.addEventListener("click", () => setCustomizeOpen(!!custBody.hidden));
 
   /* Any change to a customization keeps both summaries honest. */
   body.addEventListener("click", () => setTimeout(refreshCanvasPanel, 0));
