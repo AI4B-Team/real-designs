@@ -94,30 +94,69 @@ export function paintRoomCards() {
   const host = document.getElementById("rdwRooms");
   const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
   if (!host || !sel) return;
-  const list = roomsForSpace(currentSpace());
+  const space = currentSpace() as CanvasSpace;
+  const list = areasForSpace(space);
+  /* A selection from another space is never carried over. */
+  if (sel.value && !areaFitsSpace(sel.value, space)) {
+    sel.value = "";
+  }
   const shown = roomsExpanded ? list : list.slice(0, 8);
-  const active = roomByLabel(sel.value)?.label || "";
+  const active = areaByLabel(sel.value)?.label || "";
   if (active && !shown.some((r) => r.label === active)) {
     const rec = list.find((r) => r.label === active);
     if (rec) shown.unshift(rec);
   }
   host.innerHTML = shown
-    .map(
-      (r) =>
+    .map((r) => {
+      const img = areaPreview(r.id);
+      const thumb = img
+        ? '<img class="rdw-card-img" src="' +
+          esc(img) +
+          '" alt="' +
+          esc(r.label) +
+          '" loading="lazy" decoding="async">'
+        : '<i data-lucide="' + esc(r.icon) + '"></i>';
+      return (
         '<button type="button" class="rdw-card' +
         (r.label === active ? " on" : "") +
+        (img ? " has-img" : "") +
         '" data-room="' +
         esc(r.label) +
+        '" data-room-id="' +
+        esc(r.id) +
         '" title="' +
         esc(r.label) +
-        '"><span class="rdw-card-th"><i data-lucide="' +
-        esc(r.icon) +
-        '"></i></span><span class="rdw-card-n">' +
+        '"><span class="rdw-card-th">' +
+        thumb +
+        '<span class="rdw-card-check"><i data-lucide="check"></i></span></span><span class="rdw-card-n">' +
         esc(r.label) +
-        "</span></button>",
-    )
+        "</span></button>"
+      );
+    })
     .join("");
+  /* A preview that cannot load never leaves an empty rectangle: the card falls
+     back to its icon and offers a retry on the next repaint. */
+  host.querySelectorAll<HTMLImageElement>("img.rdw-card-img").forEach((im) => {
+    im.addEventListener(
+      "error",
+      () => {
+        const card = im.closest(".rdw-card") as HTMLElement | null;
+        const id = card?.dataset["roomId"] || "";
+        const rec = list.find((r) => r.id === id);
+        card?.classList.remove("has-img");
+        card?.classList.add("img-failed");
+        im.replaceWith(
+          Object.assign(document.createElement("i"), {
+            dataset: { lucide: rec?.icon || "image-off" },
+          } as any),
+        );
+        icons();
+      },
+      { once: true },
+    );
+  });
   const ctxRoom = document.getElementById("setupCtxRoom");
+
   if (ctxRoom && active) ctxRoom.textContent = active;
   const all = document.getElementById("rdwRoomAll");
   if (all) all.textContent = roomsExpanded ? "Show Less" : "View All";
