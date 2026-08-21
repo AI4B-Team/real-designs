@@ -887,3 +887,49 @@
   margin-left: auto;
   white-space: nowrap;
 }
+
+/* ---------------- calmer canvas overlays ---------------- */
+/* The version label and its status dot repeated what the panel already says. */
+.rd-app .rdw-ov-l {
+  display: none;
+}
+/* Viewer controls stay out of the way until the canvas is hovered; Fullscreen
+   is always reachable. */
+.rd-app .rdw-ov-r .rdw-ovb {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.rd-app .rdw-stage:hover .rdw-ov-r .rdw-ovb,
+.rd-app .rdw-ov-r .rdw-ovb:focus-visible,
+.rd-app .rdw-ov-r #rdwFull {
+  opacity: 1;
+}
+
+/* ---------------- version rail, quieter ---------------- */
+.rd-app .rdw-vers-chev {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 999px;
+}
+.rd-app .rdw-vers-chev svg,
+.rd-app .rdw-vers-chev i[data-lucide] {
+  width: 15px;
+  height: 15px;
+}
+.rd-app .studio.rdw.vers-off .rdw-vers-chev svg {
+  transform: rotate(-90deg);
+}
+.rd-app .rdw-vers.rdw-vers-empty {
+  padding: 6px 10px;
+}
+.rd-app .rdw-vers.rdw-vers-empty .rdw-vers-h {
+  margin-bottom: 0;
+}
+.rd-app .rdw-vers.rdw-vers-empty .vars,
+.rd-app .rdw-vers.rdw-vers-empty .rdw-verlist {
+  display: none;
+}
