@@ -18,6 +18,19 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
+import {
+  openAddSourcePopover,
+  closeAddSourcePopover,
+  openSourceModal,
+  sourceTabFor,
+} from "@/lib/add-source-popover";
+import {
+  normalizeRotation,
+  nextRotation,
+  mountRotations,
+  rotatedBlobUrl,
+  bakeExifOrientation,
+} from "@/lib/photo-rotation";
 import { rejectReason } from "@/lib/upload-manager";
 import { uploadRoomPhoto, roomPhotoUrl, deleteRoomPhoto } from "@/lib/room-photos";
 import { mountPhotoImages, photoSrc, photoSrcStale } from "@/lib/photo-src";
@@ -98,7 +111,7 @@ import { durableStep, navigateTo, restoreStep } from "@/lib/builder-step";
 import { PHOTO_RAIL, backFromPhotoStep, normalizePhotoStep } from "@/lib/builder-nav";
 import { matchPropertyAddress } from "@/lib/property-address.functions";
 import { suggestAddresses } from "@/lib/property-address.functions";
-import { listMediaProperties } from "@/lib/property-media.functions";
+import { listMediaProperties, listMediaAssets } from "@/lib/property-media.functions";
 import {
   saveProjectDraft as _saveProjectDraft,
   listProjectDrafts as _listProjectDrafts,
@@ -178,6 +191,9 @@ function mkItem(file) {
     ratio: null,
     /* The ratio a finished design was actually rendered at. */
     resultRatio: null,
+    /* Non-destructive orientation, in degrees clockwise. */
+    rotation: 0,
+    addedAt: Date.now(),
   };
 }
 
@@ -256,6 +272,7 @@ function draftPayload() {
           error: i.err || "",
           ratio: normalizeOverride(i.ratio),
           result_ratio: i.resultRatio || null,
+          rotation: normalizeRotation(i.rotation),
         };
         return m;
       }, {}),
@@ -579,6 +596,7 @@ function hydrate(draft) {
       resultUrl: null,
       ratio: normalizeOverride(saved.ratio),
       resultRatio: saved.result_ratio || null,
+      rotation: normalizeRotation(saved.rotation),
       err: saved.state === "generating" ? "That render was interrupted." : saved.error || "",
     };
   });
@@ -706,6 +724,142 @@ export function hasStagingSession() {
   return !!(S && S.items.length);
 }
 
+/* ---------------------------------------------------------- adding photos
+   One entry point, four sources. The Add More card is the anchor; the header
+   only grows a floating button once that card scrolls out of sight. */
+
+let pickFiles = () => {};
+let mediaCache = null;
+
+async function loadMediaProperties() {
+  if (mediaCache) return mediaCache;
+  const props = await listMediaProperties().catch(() => []);
+  mediaCache = props || [];
+  return mediaCache;
+}
+
+/** Stored photos of one property, in the shape addExisting expects. */
+async function propertyPhotos(id) {
+  const res = await listMediaAssets({ data: { property_id: id || null } }).catch(() => null);
+  const assets = (res && res.assets) || [];
+  return assets
+    .filter((a) => a && a.storage_path)
+    .map((a) => ({
+      path: a.storage_path,
+      name: a.file_name || a.title || "Photo",
+      room: a.room_type || "",
+      roomSource: a.room_type ? "library" : "none",
+    }));
+}
+
+function pickerCommon() {
+  return {
+    context: "photo",
+    esc,
+    lucide: { createIcons: () => paint() },
+    properties: async () => {
+      const props = await loadMediaProperties();
+      return props.map((p) => ({
+        id: p.id || p.address,
+        address: p.address,
+        count: Number(p.asset_count || 0),
+      }));
+    },
+    resolvePhoto: (path) => roomPhotoUrl(path),
+    loadPropertyPhotos: async (p) => propertyPhotos(p.id),
+    onPropertyPhotos: async (p, photos) => {
+      const list = (photos || []).filter((x) => x && x.path);
+      if (!list.length) return void cmToast("That Property Has No Photos Yet.");
+      addExisting(list);
+    },
+    showAlert: (m) => cmToast(m),
+  };
+}
+
+/** The anchored menu, and what each source does once chosen. */
+function openAddSources(anchor) {
+  openAddSourcePopover(anchor, {
+    paint,
+    sources: ["computer", "cloud", "property", "media"],
+    onSelect: (id) => {
+      if (id === "computer") return pickFiles();
+      const tab = sourceTabFor(id) || "upload";
+      openSourceModal({
+        title:
+          id === "cloud" ? "Import From Google Drive" : id === "media" ? "Add From Media" : "Add From A Property",
+        paint,
+        picker: {
+          ...pickerCommon(),
+          initialTab: tab,
+          onPick: async (picked) => {
+            const files = (picked || []).map((x) => x.file).filter(Boolean);
+            if (files.length) addFiles(files);
+          },
+        },
+      });
+    },
+  });
+}
+
+/** Dropping photos onto the Add More card is the same intake as the dialog. */
+function bindAddDrop(card) {
+  if (!card || card.__rdsDrop) return;
+  card.__rdsDrop = true;
+  const stop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  card.addEventListener("dragover", (e) => {
+    stop(e);
+    card.classList.add("drop");
+  });
+  card.addEventListener("dragleave", () => card.classList.remove("drop"));
+  card.addEventListener("drop", async (e) => {
+    stop(e);
+    card.classList.remove("drop");
+    const raw = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
+    const ok = await validateFiles(raw);
+    if (ok.length) addFiles(ok);
+  });
+}
+
+/** Shared validation, so drops and dialogs reject the same files. */
+async function validateFiles(raw) {
+  const out = [];
+  for (const f of raw) {
+    try {
+      const norm = await normalizeImageFile(f);
+      const why = typeof rejectReason === "function" ? rejectReason(norm) : null;
+      if (why) {
+        cmToast(norm.name + ": " + why);
+        continue;
+      }
+      out.push(await bakeExifOrientation(norm));
+    } catch (error) {
+      cmToast(error instanceof Error ? error.message : f.name + ": This Photo Could Not Be Added.");
+    }
+  }
+  return out;
+}
+
+/* The floating control is a fallback, not a second toolbar: it appears only
+   while the Add More card is off screen. */
+function mountFloatingAdd(el) {
+  const card = el.querySelector(".rv-addcard");
+  const btn = el.querySelector("#rdsFloatAdd");
+  if (!card || !btn || typeof IntersectionObserver === "undefined") return;
+  if (el.__rdsFloatObs) el.__rdsFloatObs.disconnect();
+  const obs = new IntersectionObserver(
+    (entries) => {
+      const vis = entries.some((x) => x.isIntersecting);
+      btn.hidden = vis;
+    },
+    { root: null, threshold: 0.05 },
+  );
+  obs.observe(card);
+  el.__rdsFloatObs = obs;
+}
+
 /* ------------------------------------------------------- intake and async */
 
 function addFiles(files) {
@@ -714,6 +868,7 @@ function addFiles(files) {
   /* The grid appears before a single byte is uploaded. */
   S.step = "review";
   render();
+  scrollToItem(fresh[0]);
   fresh.forEach(uploadOne);
   detectRooms(fresh);
   saveDraft();
@@ -736,12 +891,19 @@ function addExisting(photos) {
     detect: "done",
     selected: true,
     done: false,
+    rotation: 0,
+    addedAt: Date.now(),
   }));
   const have = new Set(S.items.map((i) => i.path).filter(Boolean));
   const add = fresh.filter((i) => !have.has(i.path));
+  if (!add.length) {
+    cmToast("Those Photos Are Already In This Project.");
+    return;
+  }
   S.items = S.items.concat(add);
   S.step = "review";
   render();
+  scrollToItem(add[0]);
   add.forEach(async (it) => {
     try {
       it.signed = await roomPhotoUrl(it.path);
@@ -947,6 +1109,36 @@ function imgAttrs(it) {
   return src + bound;
 }
 
+/**
+ * The upload lifecycle of one card, independent of any design work on it.
+ * Every newly added photo shows exactly one accurate state, and a failure is
+ * always recoverable from the card itself.
+ */
+function uploadState(it) {
+  if (!it) return null;
+  if (it.status === "failed")
+    return { id: "failed", label: "Upload Failed", icon: "triangle-alert", cls: "bad" };
+  if (it.status === "uploading")
+    return { id: "uploading", label: "Uploading…", icon: "loader", cls: "busy" };
+  if (!it.path && !it.previewUrl && !it.file)
+    return { id: "missing", label: "Missing Source", icon: "image-off", cls: "bad" };
+  if (it.detect === "pending" || it.detect === "running")
+    return { id: "processing", label: "Processing…", icon: "loader", cls: "busy" };
+  return { id: "ready", label: "Ready", icon: "check", cls: "ok" };
+}
+
+/* Ready is the quiet default: only a state worth acting on shows a chip. */
+function uploadChipHtml(it) {
+  const st = uploadState(it);
+  if (!st || st.id === "ready" || st.id === "failed") return "";
+  return `<span class="rds-up ${st.cls}"><i data-lucide="${st.icon}"></i>${st.label}</span>`;
+}
+
+/** Photos that still block Continue, named so the user knows which ones. */
+function blockingUploads() {
+  return S.items.filter((i) => i.selected && i.status === "uploading");
+}
+
 function cardHtml(it, seq) {
   const st = stateOf(it);
   const ws = workState(it);
@@ -961,22 +1153,23 @@ function cardHtml(it, seq) {
   return `<div class="rv-tile ${rc} ${it.selected ? "on" : ""}${ws ? " ws-" + ws.cls : ""}${failed ? " rd-fail" : ""}" data-k="${it.key}">
     <div class="rv-tile-th${failed ? " rd-img-fail" : ""}"${failed ? ' data-photo-fail="upload"' : ""} data-open="${it.key}" role="button" tabindex="0" aria-label="Photo ${n}: open ${esc(it.name)} in the design canvas">
 
-      <img${imgAttrs(it)} alt="${esc(it.name)}" loading="lazy">
+      <img${imgAttrs(it)} data-rot="${normalizeRotation(it.rotation)}" alt="${esc(it.name)}" loading="lazy">
       <span class="rv-tile-check" role="checkbox" tabindex="0" aria-checked="${it.selected ? "true" : "false"}" aria-label="Design ${esc(it.name)}" data-sel="${it.key}"><i data-lucide="check"></i></span>
       ${sceneNumberHtml(n)}
       ${cardStatusHtml({ flow: "photo", key: it.key, noun: "design settings", features: designFeatures(it) })}
       ${cardMenuButtonHtml({ flow: "photo", key: it.key, label: it.room ? it.room + " photo" : "Photo " + n })}
-      ${it.status === "uploading" ? '<span class="rds-up"><i data-lucide="loader"></i>Uploading</span>' : ""}
+      ${uploadChipHtml(it)}
       ${it.status === "failed" ? photoFailPanelHtml("upload") : ""}
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
       ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
         [
-          { label: "Design", icon: "wand-sparkles", attrs: { "data-open": it.key } },
+          { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
+          { label: "Replace", icon: "image-plus", attrs: { "data-replace": it.key } },
+          { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
           it.state === "failed"
             ? { label: "Retry", icon: "rotate-ccw", attrs: { "data-retry": it.key } }
             : null,
-          { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
         ],
         { label: "Photo Actions" },
       )}
@@ -1009,10 +1202,11 @@ function cardHtml(it, seq) {
    picker, and it always stays the final grid item. */
 function addCardHtml() {
   return `<div class="rv-addcard ${ratioClass(S && S.outputRatio)}">
-    <button type="button" class="rv-addcard-b" id="rdsAddCard" aria-label="Add More Photos">
+    <button type="button" class="rv-addcard-b" id="rdsAddCard" aria-label="Add More Photos"
+      aria-haspopup="menu" aria-expanded="false">
       <i data-lucide="image-plus"></i>
       <b>Add More Photos</b>
-      <em>Upload, Import, or Use Media</em>
+      <em>Click To Choose A Source, Or Drop Photos Here</em>
       <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
     </button>
     <div class="rv-addcard-pad" aria-hidden="true"></div>
@@ -1111,14 +1305,14 @@ function render() {
           more: { label: "More Ratios", value: "__more" },
           customLabel: ratioLabel(S.outputRatio),
         })}
-        <button class="btn btn-ghost btn-sm" id="rdsMore"><i data-lucide="plus"></i>Add Photos</button>
         <input type="file" id="rdsFile" accept="image/png,image/jpeg,image/webp,image/heic,image/heif,.heic,.heif" multiple hidden>
         <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
           <div class="rv-more-m">
             <button data-act="moreratios">More Ratios</button>
             <button data-act="all">Select All</button>
-            <button data-act="none">Clear Selection</button>
+            <button data-act="none">Deselect All</button>
             <button data-act="del">Remove Selected</button>
+            <button data-act="delall" class="danger">Remove All Photos…</button>
             <button id="rdsClose">Save &amp; Exit</button>
             <button id="rdsStartOver">Start Over</button>
           </div>
@@ -1131,13 +1325,14 @@ function render() {
         <div class="rv-utility">
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
-          <div class="rv-utility-a">
+          <div class="rv-utility-a" id="rdsBulkBar"${sel > 0 ? "" : ' hidden'}>
             <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Set Design Direction · ${sel}</button>
             <button class="btn btn-ghost btn-sm" id="rdsSetRoom"${sel > 0 ? "" : " disabled"} title="${sel > 1 ? `Applies one room type to all ${sel} selected photos` : "Sets the room type for the selected photo"}"><i data-lucide="tag"></i>Set Room Type${sel > 1 ? ` · ${sel}` : ""}</button>
+            <button class="btn btn-ghost btn-sm" data-act="none" id="rdsDeselect">${all ? "Deselect All" : "Deselect"}</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
               <div class="rv-more-m">
                 <button data-act="all">Select All</button>
-                <button data-act="none">Clear Selection</button>
+                <button data-act="none">Deselect All</button>
                 <button data-act="room">Apply Room Type</button>
                 <button data-act="del">Remove Selected</button>
               </div>
@@ -1145,6 +1340,7 @@ function render() {
           </div>
         </div>
         ${gridHtml()}
+        <button type="button" class="rds-floatadd" id="rdsFloatAdd" hidden aria-haspopup="menu" aria-expanded="false"><i data-lucide="plus"></i>Add Photos</button>
         <div class="rv-gridfoot">
           <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "photo" : "photos"} selected</span></div>
           <div class="rv-gridfoot-a">
@@ -1167,6 +1363,9 @@ function render() {
      refreshed in place instead of leaving a blank frame behind. */
   mountPhotoImages(el);
   mountUploadRetries(el);
+  mountRotations(el);
+  mountFloatingAdd(el);
+  closeAddSourcePopover();
 }
 
 /* Every rail step is a real destination: nothing in the rail is decorative. */
@@ -1196,6 +1395,17 @@ function bindRail(el) {
   );
 }
 
+/** New photos land where the user can see them, never below the fold. */
+function scrollToItem(it) {
+  if (!it || !wrap || typeof requestAnimationFrame === "undefined") return;
+  requestAnimationFrame(() => {
+    const card = wrap.querySelector('.rv-tile[data-k="' + it.key + '"]');
+    try {
+      card?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    } catch (_) {}
+  });
+}
+
 function patchCard(it) {
   if (!wrap || !S || S.step !== "review") return;
   const el = wrap.querySelector('.rv-tile[data-k="' + it.key + '"]');
@@ -1205,6 +1415,7 @@ function patchCard(it) {
   el.replaceWith(next.firstElementChild);
   mountPhotoImages(wrap);
   mountUploadRetries(wrap);
+  mountRotations(wrap);
   paint();
   syncCard(it);
   patchStatus();
@@ -1225,6 +1436,9 @@ function syncSelection() {
   if (!S || !wrap) return;
   S.items.forEach(syncCard);
   const sel = selectedCount();
+  const bar = wrap.querySelector("#rdsBulkBar");
+  /* Bulk actions belong to a selection: with nothing selected the row goes. */
+  if (bar) bar.hidden = sel < 1;
   const set = wrap.querySelector("#rdsSetRoom");
   if (set) {
     /* The label carries its own scope: bulk edits always show the count. */
@@ -1637,6 +1851,10 @@ function bindReview(el) {
         openProjectRatioMore();
         return;
       }
+      if (act === "delall") {
+        removeAll();
+        return;
+      }
     }),
   );
   bindRatioControls(el);
@@ -1644,31 +1862,19 @@ function bindReview(el) {
 
   /* Add Photos stays on this page: the picker adds straight into the grid. */
   const file = el.querySelector("#rdsFile");
-  el.querySelector("#rdsMore").onclick = () => file && file.click();
+  pickFiles = () => file && file.click();
   const addCard = el.querySelector("#rdsAddCard");
-  if (addCard) addCard.onclick = () => file && file.click();
+  if (addCard) addCard.onclick = () => openAddSources(addCard);
+  const floatAdd = el.querySelector("#rdsFloatAdd");
+  if (floatAdd) floatAdd.onclick = () => openAddSources(floatAdd);
+  bindAddDrop(el.querySelector(".rv-addcard"));
   if (file) {
     file.onchange = async () => {
       const raw = Array.from(file.files || []);
       file.value = "";
       /* Same validation the Studio picker applies: unsupported or oversized
          files never reach the grid. */
-      const picked = [];
-      for (const f of raw) {
-        try {
-          const norm = await normalizeImageFile(f);
-          const why = typeof rejectReason === "function" ? rejectReason(norm) : null;
-          if (why) {
-            alert(norm.name + ": " + why);
-            continue;
-          }
-          picked.push(norm);
-        } catch (error) {
-          alert(
-            error instanceof Error ? error.message : f.name + ": This Photo Could Not Be Added.",
-          );
-        }
-      }
+      const picked = await validateFiles(raw);
       if (picked.length) addFiles(picked);
     };
   }
@@ -1717,6 +1923,20 @@ function bindReview(el) {
       e.stopPropagation();
       const it = S.items.find((i) => i.key === retry.getAttribute("data-retry"));
       if (it) startBulkDesign([it], true);
+      return;
+    }
+    const rot = t.closest("[data-rotate]");
+    if (rot) {
+      e.preventDefault();
+      e.stopPropagation();
+      rotateItem(S.items.find((i) => i.key === rot.getAttribute("data-rotate")));
+      return;
+    }
+    const rep = t.closest("[data-replace]");
+    if (rep) {
+      e.preventDefault();
+      e.stopPropagation();
+      runCardAction("photo", "replace", rep.getAttribute("data-replace"));
       return;
     }
     const del = t.closest("[data-del]");
@@ -1887,15 +2107,50 @@ function applyRoomToSelected(anchor) {
 }
 
 
-function removeOne(key) {
+/**
+ * Rotation is metadata, never a re-upload: the card turns instantly and the
+ * angle is baked in only when pixels leave (download, design, export).
+ */
+function rotateItem(it) {
+  if (!it) return;
+  it.rotation = nextRotation(it.rotation);
+  patchCard(it);
+  saveDraft();
+}
+
+/** Remove every photo, once, behind an explicit confirmation. */
+async function removeAll() {
+  if (!S || !S.items.length) return;
+  const n = S.items.length;
+  const ok = await confirmDialog({
+    title: "Remove All Photos?",
+    body: `This clears all ${n} photo${n === 1 ? "" : "s"} from this project. The originals stay in your library.`,
+    confirmLabel: "Remove All",
+    danger: true,
+  });
+  if (!ok) return;
+  S.items.forEach((i) => {
+    try {
+      URL.revokeObjectURL(i.previewUrl);
+    } catch (_) {}
+  });
+  S.items = [];
+  S.step = "add";
+  saveDraft();
+  render();
+}
+
+async function removeOne(key) {
   const it = S.items.find((i) => i.key === key);
   if (!it) return;
-  if (
-    !window.confirm(
-      "Remove “" + it.name + "” from this project? The original photo stays in your library.",
-    )
-  )
-    return;
+  const ok = await confirmDialog({
+    title: "Remove This Photo?",
+    body:
+      "“" + (it.name || "Photo") + "” leaves this project. The original stays in your library.",
+    confirmLabel: "Remove",
+    danger: true,
+  });
+  if (!ok) return;
   try {
     URL.revokeObjectURL(it.previewUrl);
   } catch (_) {}
@@ -2013,6 +2268,7 @@ registerCardMenu("photo", {
             note: stored ? "" : "Saving…",
           },
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
+          { action: "rotate", label: "Rotate 90°", icon: "rotate-cw" },
           { action: "room", label: "Change Room Type", icon: "door-open" },
           {
             action: "ratio",
@@ -2033,6 +2289,7 @@ registerCardMenu("photo", {
             note: stored ? "" : "Saving…",
           },
           dl,
+          { action: "details", label: "Photo Details", icon: "info" },
         ],
       },
       { items: [{ action: "removeproj", label: "Remove From Project", icon: "circle-minus" }] },
@@ -2079,6 +2336,7 @@ registerCardMenu("photo", {
       cmToast("New Variation Added. Your Saved Versions Are Untouched.");
       return void openInCanvas(clone.key);
     }
+    if (action === "rotate") return void rotateItem(it);
     if (action === "ratio") return void openRatioOverride(it);
     if (action === "room") {
       const btn = document.querySelector(
@@ -2109,7 +2367,9 @@ registerCardMenu("photo", {
     }
     if (action === "download") {
       const url = await originalUrl(it);
-      return void downloadOriginal(url, it.name || "photo.jpg");
+      /* What is on screen is what lands on disk: rotation is baked on export. */
+      const out = url ? await rotatedBlobUrl(url, it.rotation).catch(() => url) : url;
+      return void downloadOriginal(out, it.name || "photo.jpg");
     }
     if (action === "downloadlatest") {
       let url = it.resultUrl || null;
@@ -2238,6 +2498,21 @@ function startDesigning() {
   const sel = ordered().filter((i) => i.selected);
   if (!sel.length) {
     window.alert("Select at least one photo to design.");
+    return;
+  }
+  /* A photo mid-upload has no stored source to design from yet. */
+  const pending = blockingUploads();
+  if (pending.length) {
+    cmToast(
+      pending.length === 1
+        ? "One photo is still uploading. It will be ready in a moment."
+        : pending.length + " photos are still uploading. They will be ready in a moment.",
+    );
+    return;
+  }
+  const failed = sel.filter((i) => i.status === "failed");
+  if (failed.length) {
+    cmToast("Retry or remove the photos that failed to upload first.");
     return;
   }
   /* stateOf() returns null once a room is settled, so read it defensively and

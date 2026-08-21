@@ -1958,3 +1958,111 @@
 .rdof-card.on .rdof-tick {
   opacity: 1;
 }
+
+/* ------------------------------------------------- add photos: source menu
+   The Add More card opens a small anchored menu instead of a second toolbar,
+   and only grows a floating twin when it scrolls out of view. */
+.rds-srcpop {
+  position: fixed;
+  z-index: 1200;
+  min-width: 216px;
+  padding: 6px;
+  border: 1px solid var(--line, #e6e6e6);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.16);
+  display: grid;
+  gap: 2px;
+}
+.rds-srcpop-i {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--ink, #111);
+  cursor: pointer;
+  text-align: left;
+}
+.rds-srcpop-i:hover,
+.rds-srcpop-i:focus-visible {
+  background: #f4f4f5;
+  outline: none;
+}
+.rds-srcpop-i i,
+.rds-srcpop-i svg {
+  width: 17px;
+  height: 17px;
+  color: var(--red, #c00);
+  stroke: currentColor;
+}
+
+.rds-srcmodal {
+  position: fixed;
+  inset: 0;
+  z-index: 1300;
+  background: rgba(17, 17, 17, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.rds-srcmodal-in {
+  width: min(880px, 100%);
+  max-height: 86vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.28);
+}
+.rds-srcmodal-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line, #eee);
+}
+.rds-srcmodal-h h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.rds-srcmodal-b {
+  padding: 16px 18px 20px;
+}
+
+.rd-app #v-staging .rv-addcard.drop .rv-addcard-b {
+  border-color: var(--red, #c00);
+  background: #fff5f5;
+}
+.rds-floatadd {
+  position: sticky;
+  bottom: 18px;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--line, #e6e6e6);
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.14);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  z-index: 5;
+}
+.rds-floatadd[hidden] {
+  display: none;
+}
+.rds-floatadd i,
+.rds-floatadd svg {
+  width: 16px;
+  height: 16px;
+  color: var(--red, #c00);
+  stroke: currentColor;
+}
