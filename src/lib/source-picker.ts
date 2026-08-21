@@ -800,35 +800,63 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
     if (state.tab === "describe") {
       const ready = state.prompt.trim().length > 0 && !state.describeBusy;
+      const detailField = (name: string, label: string, value: string, ph: string) =>
+        '<label class="sp-dfield"><span>' +
+        esc(label) +
+        '</span><input type="text" data-sp-f="' +
+        name +
+        '" value="' +
+        esc(value) +
+        '" placeholder="' +
+        esc(ph) +
+        '"></label>';
       return (
         '<div class="sp-pane sp-describe">' +
         paneHead(
-          "Create From A Description",
+          "Describe Your Space",
           "Describe the space you want to create without uploading a photo.",
         ) +
         '<div class="sp-composer' +
         (state.describeBusy ? " is-busy" : "") +
         '">' +
+        (state.refs.length
+          ? '<div class="sp-refs" aria-label="Reference Images">' +
+            state.refs
+              .map(
+                (r) =>
+                  '<span class="sp-ref"><img src="' +
+                  esc(r.url) +
+                  '" alt="' +
+                  esc(r.name) +
+                  '"><button type="button" class="sp-ref-x" data-sp-refx="' +
+                  esc(r.id) +
+                  '" aria-label="Remove Reference"><i data-lucide="x"></i></button></span>',
+              )
+              .join("") +
+            "</div>"
+          : "") +
         '<textarea data-sp-f="prompt" id="' +
         pid("spPrompt") +
-        '" aria-label="Describe the space you want to create" ' +
+        '" aria-label="Describe what you want to create" ' +
         (state.describeBusy ? "disabled " : "") +
-        'placeholder="Describe the space you want to create. Include the room, style, colors, materials and anything you want included.">' +
+        'placeholder="Describe what you want to create…">' +
         esc(state.prompt) +
         "</textarea>" +
-        '<div class="sp-composer-a">' +
-        '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" ' +
-        'aria-label="Create an AI concept from your description"' +
-        (ready ? "" : " disabled") +
+        '<p class="sp-hint">Example: Create a warm contemporary kitchen with a large island, light oak cabinets and soft white counters.</p>' +
+        '<div class="sp-composer-t">' +
+        '<button type="button" class="sp-tool" data-sp="addref"' +
+        (state.refs.length >= MAX_DESCRIBE_REFS ? " disabled" : "") +
+        '><i data-lucide="plus"></i>Add Reference</button>' +
+        '<button type="button" class="sp-tool" data-sp="improve"' +
+        (ready && !state.improving ? "" : " disabled") +
         ">" +
-        (state.describeBusy
-          ? '<span class="sp-spin" aria-hidden="true"></span>Creating…'
-          : '<i data-lucide="sparkles"></i>Create <em><span aria-hidden="true">·</span> 1 Credit</em>') +
+        (state.improving
+          ? '<span class="sp-spin dark" aria-hidden="true"></span>Improving…'
+          : '<i data-lucide="sparkles"></i>Improve Description') +
         "</button>" +
         "</div>" +
         "</div>" +
-        '<p class="sp-note">Be specific for better results.</p>' +
-        '<div class="sp-chips">' +
+        '<div class="sp-try"><span class="sp-try-l">Try:</span><div class="sp-chips">' +
         DESCRIBE_EXAMPLES.map(
           (x) =>
             '<button type="button" class="sp-chip" data-sp-ex="' +
@@ -837,10 +865,68 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             esc(x) +
             "</button>",
         ).join("") +
+        "</div></div>" +
+        '<details class="sp-details"' +
+        (state.detailsOpen ? " open" : "") +
+        '><summary data-sp="details">Add Details</summary>' +
+        '<div class="sp-dgrid">' +
+        detailField("dRoom", "Room Or Area", state.dRoom, "Kitchen") +
+        detailField("dStyle", "Style", state.dStyle, "Contemporary") +
+        detailField("dMood", "Mood", state.dMood, "Warm and calm") +
+        detailField("dFeatures", "Must-Haves", state.dFeatures, "Large island, oak cabinets") +
+        "</div>" +
+        '<div class="sp-dopts"><span class="sp-dopt-l">Aspect Ratio</span><div class="sp-chips">' +
+        DESCRIBE_RATIOS.map(
+          (r) =>
+            '<button type="button" class="sp-chip' +
+            (state.ratio === r ? " on" : "") +
+            '" data-sp-ratio="' +
+            r +
+            '" aria-pressed="' +
+            (state.ratio === r) +
+            '">' +
+            r +
+            "</button>",
+        ).join("") +
+        "</div></div>" +
+        '<div class="sp-dopts"><span class="sp-dopt-l">Options</span><div class="sp-chips">' +
+        DESCRIBE_OPTION_COUNTS.map(
+          (n) =>
+            '<button type="button" class="sp-chip' +
+            (state.options === n ? " on" : "") +
+            '" data-sp-opt="' +
+            n +
+            '" aria-pressed="' +
+            (state.options === n) +
+            '">' +
+            n +
+            "</button>",
+        ).join("") +
+        "</div></div>" +
+        "</details>" +
+        '<div class="sp-describe-foot">' +
+        '<span class="sp-meta">Image <span aria-hidden="true">·</span> ' +
+        esc(state.ratio) +
+        " <span aria-hidden=\"true\">·</span> " +
+        state.options +
+        (state.options === 1 ? " option" : " options") +
+        "</span>" +
+        '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" ' +
+        'aria-label="Generate a design from your description"' +
+        (ready ? "" : " disabled") +
+        ">" +
+        (state.describeBusy
+          ? '<span class="sp-spin" aria-hidden="true"></span>Generating…'
+          : '<i data-lucide="sparkles"></i>Generate <em><span aria-hidden="true">·</span> ' +
+            state.options +
+            (state.options === 1 ? " Credit" : " Credits") +
+            "</em>") +
+        "</button>" +
         "</div>" +
         "</div>"
       );
     }
+
 
     if (state.tab === "design") return designPanel();
     return "";
