@@ -9176,3 +9176,12 @@
 .rd-app .rd-legacy-overlays {
   display: contents;
 }
+
+/* Hidden nav rows, zero-count badges and gated tools must actually disappear,
+   even though their base rules set a display value. */
+.rd-app .side-nav .nav-i[hidden],
+.rd-app .side-nav .nav-group[hidden],
+.rd-app .nav-i .cnt[hidden],
+.rd-app .rdw-rail .toolrow[hidden] {
+  display: none !important;
+}
