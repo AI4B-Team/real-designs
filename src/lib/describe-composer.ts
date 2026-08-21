@@ -201,6 +201,8 @@ export function createDescribeComposer(cfg: Cfg) {
     refs: [] as DescribeRef[],
     strength: "Closely" as string,
     detailsOpen: false,
+    /** Validation stays quiet until the user engages with the composer. */
+    touched: false,
     space: "Interior" as string,
     room: "",
     style: "",
