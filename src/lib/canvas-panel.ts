@@ -29,7 +29,9 @@ function on(sel: string): string {
 
 /** One line describing every optional setting's current value. */
 export function customizeSummary(): string {
-  const level = on("#rdwLevel .rdw-opt b") || on("#rdwLevel .rdw-opt") || "Balanced";
+  /* Read the bold label of the selected option — `on()` would append `.on`
+     to the trailing `b`, which never matches and leaks the description text. */
+  const level = levelName();
   const lock = (on("#rdwLock .chip") || "Balanced").toLowerCase();
   const grade = on("#gradeChips .chip") || "Retail Grade";
   const opts = on("#rdwOpts .chip") || "1";
