@@ -89,9 +89,9 @@ export function generationSummary(): { line1: string; line2: string; missing: st
   const needRoom = !st.selectedRoomType;
   const needStyle = st.needsStyle && !st.selectedStyleId;
   const missing: string[] = [];
-  if (needRoom && needStyle) missing.push("Choose A Room And Style To Continue");
-  else if (needRoom) missing.push("Choose A Room To Continue");
-  else if (needStyle) missing.push("Choose A Style To Continue");
+  if (needRoom && needStyle) missing.push("Choose A Room And Design Style");
+  else if (needRoom) missing.push("Choose A Room");
+  else if (needStyle) missing.push("Choose A Design Style");
   return {
     line1: [st.selectedRoomType, st.selectedStyleName, levelName()].filter(Boolean).join(" · "),
     line2: customizeSummary(),
