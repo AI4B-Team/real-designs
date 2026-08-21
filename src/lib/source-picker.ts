@@ -32,9 +32,9 @@ export const SOURCE_META: Record<
   },
   cloud: {
     icon: "cloud",
-    label: "Cloud",
-    tab: "Cloud",
-    desc: "Paste a Google Drive or Dropbox share link.",
+    label: "Google Drive",
+    tab: "Google Drive",
+    desc: "Import photos from your Google Drive.",
   },
   address: {
     icon: "map-pin",
@@ -42,7 +42,12 @@ export const SOURCE_META: Record<
     tab: "Address",
     desc: "Fills in address and listing details.",
   },
-  url: { icon: "link", label: "Listing URL", tab: "Import", desc: "Reads listing text, no media." },
+  url: {
+    icon: "link",
+    label: "Listing Link",
+    tab: "Listing Link",
+    desc: "Zillow, Realtor.com, supported MLS or a public listing gallery URL.",
+  },
   property: {
     icon: "home",
     label: "Existing Property",
@@ -82,7 +87,7 @@ export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "property", "design"],
+    sources: ["upload", "cloud", "property", "design", "url"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
@@ -547,32 +552,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
-  /** Compact secondary import methods, drawn from the real sources only. */
-  function heroImports() {
-    const others = cfg.sources.filter((s) => s !== "upload");
-    if (!others.length) return "";
-    return (
-      '<div class="sp-work-imp"><span class="sp-work-impl">Import From</span><div>' +
-      others
-        .map((s) => {
-          const m = SOURCE_META[s];
-          const label = s === "cloud" ? "Google Drive" : m.label;
-          return (
-            '<button type="button" class="sp-work-src" data-sp-tab="' +
-            s +
-            '" title="' +
-            esc(m.desc) +
-            '">' +
-            (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
-            esc(label) +
-            "</button>"
-          );
-        })
-        .join("") +
-      "</div></div>"
-    );
-  }
-
   function workspace(hero: PickerHero) {
     return (
       '<div class="sp-work' +
@@ -590,7 +569,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       "</p>" +
       '<button type="button" class="btn btn-dark sp-work-cta" data-sp="browse">' +
       '<i data-lucide="folder-open"></i>Choose Photos</button>' +
-      heroImports() +
       "</div>" +
       '<div class="sp-work-r">' +
       heroStack(hero) +
@@ -608,6 +586,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '<div class="sp-work-over"><i data-lucide="upload-cloud"></i><b>Drop Photos To Upload</b></div>' +
       "</div>"
     );
+  }
+
+  /** One contextual heading per source, so the card explains itself. */
+  function paneHead(title: string, copy: string) {
+    return '<div class="sp-panehead"><h4>' + esc(title) + "</h4><p>" + esc(copy) + "</p></div>";
   }
 
   function panel() {
@@ -660,6 +643,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (state.tab === "cloud") {
       return (
         '<div class="sp-pane">' +
+        paneHead(
+          "Import From Google Drive",
+          "Choose photos from your connected Google Drive account.",
+        ) +
         '<div class="sp-cloudrow"><span>' +
         DRIVE_ICON +
         "Google Drive</span><span>" +
@@ -669,7 +656,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         pid("spCloud") +
         '" placeholder="https://drive.google.com/file/d/..."></label>' +
         '<button type="button" class="btn btn-primary btn-sm" data-sp="cloudgo">' +
-        (state.busy ? "Importing" : "Import Photos") +
+        (state.busy ? "Importing" : "Browse Google Drive") +
         "</button>" +
         '<p class="sp-note">The link must be shared publicly so we can read it.</p>' +
         "</div>"
@@ -694,6 +681,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (state.tab === "url") {
       return (
         '<div class="sp-pane">' +
+        paneHead(
+          "Import From A Listing Link",
+          "Paste a Zillow, Realtor.com, supported MLS or public property gallery link.",
+        ) +
         '<label class="sp-f">Listing Link<input type="text" data-sp-f="url" id="' +
         pid("spUrl") +
         '" placeholder="https://www.zillow.com/homedetails/..." value="' +
@@ -728,7 +719,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           "</div>"
         );
       return (
-        '<div class="sp-pane"><div class="sp-props" role="listbox" aria-label="Your Properties">' +
+        '<div class="sp-pane">' +
+        paneHead("Choose An Existing Property", "Reuse photos already saved to your workspace.") +
+        '<div class="sp-props" role="listbox" aria-label="Your Properties">' +
         shown.map(propCard).join("") +
         "</div>" +
         toggle +
@@ -741,6 +734,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       const ready = state.prompt.trim().length > 0 && !state.describeBusy;
       return (
         '<div class="sp-pane sp-describe">' +
+        paneHead(
+          "Create From A Description",
+          "Describe the space you want to create without uploading a photo.",
+        ) +
         '<div class="sp-composer' +
         (state.describeBusy ? " is-busy" : "") +
         '">' +

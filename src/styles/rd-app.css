@@ -364,8 +364,8 @@
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 10px;
+  padding: 9px 10px;
+  margin-bottom: 8px;
 }
 
 .rd-app .credit-box .lab {
@@ -4910,6 +4910,9 @@
   color: var(--mute);
   text-align: left;
 }
+.rd-app .stw-samplebtn {
+  font-size: 0.83rem;
+}
 .rd-app .stw-samplelink {
   background: none;
   border: 0;
@@ -6517,9 +6520,9 @@
   align-items: flex-start;
   justify-content: center;
   gap: 7px;
-  min-height: 136px;
+  min-height: 112px;
   text-align: left;
-  padding: 16px 46px 16px 18px;
+  padding: 14px 46px 14px 18px;
   border: 1.5px solid #c9c9cf;
   border-radius: 12px;
   background: var(--card);
@@ -6535,14 +6538,8 @@
 }
 .rd-app .stw-door.on {
   border-color: var(--red);
-  background: rgba(204, 0, 0, 0.045);
+  background: #fff;
   box-shadow: 0 0 0 1px var(--red) inset;
-}
-.rd-app .stw-door.on > i,
-.rd-app .stw-door.on > svg {
-  background: var(--red);
-  color: #fff;
-  stroke: #fff;
 }
 .rd-app .stw-door:focus-visible {
   outline: 2px solid var(--red);
@@ -8879,7 +8876,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
   align-items: center;
   gap: 18px;
-  padding: 30px 26px 30px 32px;
+  padding: 22px 24px 22px 30px;
 }
 .sp-work-l h4 {
   margin: 0;
@@ -8947,7 +8944,7 @@
 /* stacked property photography */
 .sp-work-r {
   position: relative;
-  min-height: 232px;
+  min-height: 186px;
   align-self: stretch;
 }
 .sp-work-stack {
@@ -8981,23 +8978,23 @@
   background: #ece9e4;
 }
 .sp-work-ph1 {
-  top: 16px;
-  right: 6px;
-  width: 172px;
-  height: 116px;
+  top: 12px;
+  right: 10px;
+  width: 132px;
+  height: 90px;
 }
 .sp-work-ph2 {
-  top: 62px;
-  right: 78px;
-  width: 158px;
-  height: 108px;
+  top: 50px;
+  right: 68px;
+  width: 122px;
+  height: 84px;
   z-index: 2;
 }
 .sp-work-ph3 {
-  bottom: 18px;
-  right: 20px;
-  width: 208px;
-  height: 140px;
+  bottom: 14px;
+  right: 22px;
+  width: 160px;
+  height: 108px;
   z-index: 3;
 }
 .sp-work.over .sp-work-ph {
@@ -9196,20 +9193,14 @@
 .rd-app .stw-door.on,
 .rd-app .stw-door.on:hover {
   border-color: var(--red);
-  background: rgba(204, 0, 0, 0.05);
-}
-.rd-app .stw-door.on > i,
-.rd-app .stw-door.on > svg {
-  background: var(--red);
-  color: #fff;
-  stroke: #fff;
+  background: #fff;
 }
 
 /* Upload workspace: a little shorter, with slightly larger artwork that sits
    inside the card instead of hugging its right edge. */
 .sp-work-main {
   gap: 14px;
-  padding: 20px 34px 20px 32px;
+  padding: 18px 30px 18px 32px;
 }
 .sp-work-cta {
   margin-top: 14px;
@@ -9221,49 +9212,64 @@
   padding: 9px 20px 9px 32px;
 }
 .sp-work-r {
-  min-height: 226px;
+  min-height: 178px;
 }
 .sp-work-stack {
-  inset: -12px 0;
+  inset: -8px 0;
 }
 .sp-work-ph1 {
-  top: 14px;
-  right: 26px;
-  width: 193px;
-  height: 130px;
+  top: 12px;
+  right: 22px;
+  width: 145px;
+  height: 98px;
 }
 .sp-work-ph2 {
-  top: 66px;
-  right: 100px;
-  width: 177px;
-  height: 121px;
+  top: 52px;
+  right: 78px;
+  width: 133px;
+  height: 91px;
 }
 .sp-work-ph3 {
-  bottom: 16px;
-  right: 42px;
-  width: 233px;
-  height: 157px;
+  bottom: 12px;
+  right: 34px;
+  width: 175px;
+  height: 118px;
 }
 .sp-work-stack.is-video .sp-work-ph1 {
-  top: 10px;
-  right: 182px;
-  width: 148px;
-  height: 99px;
+  top: 8px;
+  right: 140px;
+  width: 111px;
+  height: 74px;
 }
 .sp-work-stack.is-video .sp-work-ph2 {
-  top: 78px;
-  right: 218px;
-  width: 139px;
-  height: 94px;
+  top: 60px;
+  right: 168px;
+  width: 104px;
+  height: 71px;
 }
 .sp-work-stack.is-video .sp-work-ph3 {
-  bottom: 18px;
-  right: 196px;
-  width: 155px;
-  height: 103px;
+  bottom: 14px;
+  right: 150px;
+  width: 116px;
+  height: 77px;
 }
 .sp-work-vid {
-  right: 32px;
-  width: 193px;
-  height: 188px;
+  right: 26px;
+  width: 145px;
+  height: 141px;
+}
+
+/* contextual source-pane heading */
+.sp-panehead {
+  margin: 0 0 12px;
+}
+.sp-panehead h4 {
+  margin: 0;
+  font-size: 1.02rem;
+  letter-spacing: -0.01em;
+}
+.sp-panehead p {
+  margin: 4px 0 0;
+  font-size: 0.83rem;
+  color: var(--mute-2);
 }
