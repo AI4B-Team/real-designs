@@ -805,6 +805,60 @@ export type Database = {
         }
         Relationships: []
       }
+      photo_edits: {
+        Row: {
+          adjustments: Json
+          ai_ops: Json
+          asset_key: string
+          created_at: string
+          crop: Json | null
+          edited_path: string | null
+          flip_h: boolean
+          id: string
+          is_copy: boolean
+          label: string | null
+          revision: number
+          rotation: number
+          source_path: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adjustments?: Json
+          ai_ops?: Json
+          asset_key: string
+          created_at?: string
+          crop?: Json | null
+          edited_path?: string | null
+          flip_h?: boolean
+          id?: string
+          is_copy?: boolean
+          label?: string | null
+          revision?: number
+          rotation?: number
+          source_path: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          adjustments?: Json
+          ai_ops?: Json
+          asset_key?: string
+          created_at?: string
+          crop?: Json | null
+          edited_path?: string | null
+          flip_h?: boolean
+          id?: string
+          is_copy?: boolean
+          label?: string | null
+          revision?: number
+          rotation?: number
+          source_path?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       plan_requests: {
         Row: {
           created_at: string
