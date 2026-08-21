@@ -59,37 +59,57 @@
   flex-direction: column;
   gap: 4px;
 }
-.rd-app .rdw-rail .toolrow {
+.rd-app .rdw-rail .toolrow,
+.rd-app .rdw-rail .toolrow.on,
+.rd-app .rdw-rail .toolrow.off,
+.rd-app .rdw-rail .toolrow.is-disabled {
+  box-sizing: border-box;
   width: 74px;
-  height: 56px;
+  min-width: 74px;
+  min-height: 56px;
+  height: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
-  padding: 0;
+  gap: 4px;
+  padding: 8px 6px;
+  margin: 0;
   border: 1px solid transparent;
   border-radius: 10px;
   background: transparent;
   color: var(--mute-2, #6b6b74);
+  text-align: center;
   cursor: pointer;
   position: relative;
+  overflow: hidden;
 }
-.rd-app .rdw-rail .toolrow b {
+.rd-app .rdw-rail .toolrow b,
+.rd-app .rdw-rail .toolrow.on b {
+  flex: 0 0 auto;
+  display: block;
+  width: 100%;
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.01em;
-  line-height: 1;
-  max-width: 70px;
+  line-height: 1.15;
+  text-align: center;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .rd-app .rdw-rail .toolrow i[data-lucide],
-.rd-app .rdw-rail .toolrow svg {
+.rd-app .rdw-rail .toolrow svg,
+.rd-app .rdw-rail .toolrow.on i[data-lucide],
+.rd-app .rdw-rail .toolrow.on svg {
+  flex: 0 0 auto;
+  display: block;
   width: 18px;
   height: 18px;
+  margin: 0;
 }
+
 .rd-app .rdw-rail #toolrowBudget .pill {
   font-size: 0;
   width: 7px;
@@ -434,18 +454,61 @@
   text-align: left;
 }
 .rd-app .rdw-card-th {
-  display: block;
-  height: 48px;
-  background: #f1efeb center/cover no-repeat;
+  position: relative;
+  height: 52px;
+  /* Skeleton tone shows while the preview decodes, never a bare beige box. */
+  background:
+    linear-gradient(90deg, #efece7 25%, #f6f4f1 37%, #efece7 63%) 0 0 / 400% 100%,
+    #f1efeb;
+  animation: rdw-shim 1.4s ease infinite;
   display: grid;
   place-items: center;
   color: var(--mute-2, #6b6b74);
+  overflow: hidden;
 }
-.rd-app .rdw-card-th i[data-lucide],
-.rd-app .rdw-card-th svg {
+.rd-app .rdw-card.has-img .rdw-card-th {
+  animation: none;
+}
+@keyframes rdw-shim {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+.rd-app .rdw-card-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rd-app .rdw-card-check {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: var(--red, #c00);
+  color: #fff;
+  display: none;
+  place-items: center;
+}
+.rd-app .rdw-card.on .rdw-card-check {
+  display: grid;
+}
+.rd-app .rdw-card-check i[data-lucide],
+.rd-app .rdw-card-check svg {
+  width: 11px;
+  height: 11px;
+}
+.rd-app .rdw-card-th > i[data-lucide],
+.rd-app .rdw-card-th > svg {
   width: 17px;
   height: 17px;
 }
+
 .rd-app .rdw-card-n {
   display: block;
   font-size: 0.66rem;

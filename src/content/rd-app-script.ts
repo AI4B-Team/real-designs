@@ -3377,9 +3377,11 @@ export function initApp(): () => void {
           src,
           path: path || null,
           label: label || "Your Render",
+          style: ((document.getElementById("fStyle") || {}).value || "").trim() || null,
           at: Date.now(),
           room: activeStudioRoom(),
         });
+
         paintVersions();
       } catch (_) {}
       const wrap = document.getElementById("vars");
@@ -3966,14 +3968,23 @@ export function initApp(): () => void {
         if (s < 172800) return Math.round(s / 3600) + "h ago";
         return Math.round(s / 86400) + "d ago";
       };
+      /* A version is numbered, never named after the tool that made it. The
+         tool and style are secondary metadata under the number. */
+      const savedCount = list.length;
       const sessionHTML = session
-        .map(
-          (v, i) =>
-            `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, v.label + " render")}</span>` +
-            `<span class="rowt"><b>${v.label}</b><span>${v.path ? ago(new Date(v.at).toISOString()) : "Not saved yet &middot; " + ago(new Date(v.at).toISOString())}</span></span>` +
-            `<span class="pill ${v.path ? (i === 0 ? "p-ok" : "p-gray") : "p-amb"}">${v.path ? (i === 0 ? "Latest" : "Past") : "Not Saved"}</span></button>`,
-        )
+        .map((v, i) => {
+          const no = savedCount + (session.length - i);
+          const meta = [v.label, v.style].filter(Boolean).join(" \u00b7 ");
+          const when = ago(new Date(v.at).toISOString());
+          const sub = v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026";
+          return (
+            `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, "Version " + no)}</span>` +
+            `<span class="rowt"><b>Version ${no}</b><span>${sub}</span></span>` +
+            `<span class="pill ${v.path ? (i === 0 ? "p-ok" : "p-gray") : "p-amb"}">${v.path ? (i === 0 ? "Latest" : "Past") : "Saving"}</span></button>`
+          );
+        })
         .join("");
+
       el.innerHTML =
         sessionHTML +
         list
@@ -3986,21 +3997,36 @@ export function initApp(): () => void {
                   : ["p-gray", !session.length && i === 0 ? "Latest" : "Past"];
             const lab =
               (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
-            return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v.room_name} v${v.version_no || 1}</b><span>${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
+            return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>Version ${v.version_no || 1}</b><span>${v.room_name} &middot; ${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
           })
           .join("");
+      /* Approve always names the version actually on the canvas. */
+      const setApproveLabel = (no) => {
+        const ap = document.getElementById("stApprove");
+        if (ap && !ap.dataset.approved)
+          ap.innerHTML = '<i data-lucide="check"></i>Approve Version ' + no;
+        try {
+          lucide.createIcons();
+        } catch (_) {}
+      };
+      if (session.length) setApproveLabel(savedCount + session.length);
+      else if (list.length) setApproveLabel(list[0].version_no || 1);
+
       el.querySelectorAll(".ver-row").forEach((btn) => {
         btn.addEventListener("click", () => {
-          const v = session[+btn.dataset.vi];
+          const i = +btn.dataset.vi;
+          const v = session[i];
           if (!v || !cAfter) return;
           el.querySelectorAll(".ver-row").forEach((x) => x.classList.remove("on"));
           btn.classList.add("on");
-          cAfter.innerHTML = photo(v.src, v.label + " render");
+          cAfter.innerHTML = photo(v.src, "Version " + (savedCount + (session.length - i)));
           lastRender = v.src;
           lastRenderPath = v.path || null;
+          setApproveLabel(savedCount + (session.length - i));
         });
       });
     }
+
 
 
     paintVersions();
@@ -8570,6 +8596,20 @@ ${picks
       /* The cost chip always states the real price of this run. */
       const cost = document.getElementById("genCost");
       if (cost) cost.textContent = costLabel(toolCost(tool));
+      /* The confirm button always states what this exact click will do. */
+      const CONFIRM_LABEL = {
+        Redesign: "Generate Design",
+        "Virtual Stage": "Stage Room",
+        Declutter: "Declutter Room",
+        "Material Swap": "Apply Material",
+        "Sketch To Render": "Render Sketch",
+        "Multi Angle": "Generate Angles",
+        "Walkthrough Video": "Render Walkthrough",
+        "2D To 3D Plan": "Generate 3D Plan",
+      };
+      const genLabel = document.getElementById("genLabel");
+      if (genLabel) genLabel.textContent = CONFIRM_LABEL[tool] || "Generate Design";
+
       if (missing) {
         btn.disabled = true;
         btn.dataset.csGate = "1";
@@ -8776,20 +8816,16 @@ ${picks
           showToolGate(r, name, need);
           return;
         }
-        /* Every style-driven tool, including Redesign, asks for a direction the
-       moment it is selected. Redesign has no LIVE_TOOLS entry (it renders
-       through Generate), so this check must sit outside that branch or the
-       click would appear to do nothing at all. */
+        /* Selecting a tool NEVER generates and NEVER spends a credit. It only
+           activates the tool, opens its settings and, when the tool needs a
+           direction, points at the style cards. Generation happens exclusively
+           from the confirm button in the panel footer. */
         if (styleNeedForTool(name) && !canvasStyleSelected()) {
           if (toolInfo) toolInfo.hidden = true;
           promptForStyle(name);
           return;
         }
-        if (LIVE_TOOLS[name]) {
-          if (toolInfo) toolInfo.hidden = true;
-          LIVE_TOOLS[name]();
-          return;
-        }
+
         if (need && toolInfo) {
           showToolGate(r, name, need);
         } else if (toolInfo) {
@@ -10329,9 +10365,13 @@ ${picks
             data: { version_id: room.version_id, status: approved ? "draft" : "approved" },
           });
           await reloadTree();
+          stApprove.dataset.approved = approved ? "" : "1";
           stApprove.innerHTML =
             '<i data-lucide="check"></i>' +
-            (approved ? "Approve Latest Version" : "v" + (room.version_no || 1) + " Approved");
+            (approved
+              ? "Approve Version " + (room.version_no || 1)
+              : "Version " + (room.version_no || 1) + " Approved");
+
 
           lucide.createIcons();
           try {
