@@ -328,37 +328,31 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   refInput.accept = "image/*";
   refInput.multiple = true;
   host.appendChild(refInput);
+  let refReplaceId: string | undefined;
   refInput.addEventListener("change", async () => {
     const files = Array.from(refInput.files || []);
     refInput.value = "";
-    await addReferences(files);
+    const replace = refReplaceId;
+    refReplaceId = undefined;
+    if (files.length) await describe.addReferences(files, replace);
   });
 
-  async function addReferences(files: File[]) {
-    const room = MAX_DESCRIBE_REFS - state.refs.length;
-    if (room <= 0) {
-      alert("You can attach up to " + MAX_DESCRIBE_REFS + " reference images.");
-      return;
-    }
-    for (const file of files.slice(0, room)) {
-      try {
-        const url = await readDataUrl(file);
-        state.refs.push({ id: "r" + Date.now() + Math.random().toString(36).slice(2, 6), name: file.name, url });
-      } catch (_) {
-        alert(file.name + ": This Reference Could Not Be Added.");
-      }
-    }
-    render();
+  const describe = createDescribeComposer({
+    esc: (s: string) => esc(s),
+    alert,
+    render: () => render(),
+    draftKey: "rd.describe." + opts.context,
+    onDescribe: (prompt, details) => opts.onDescribe?.(prompt, details),
+    onImprove: (prompt) => opts.onImprove?.(prompt),
+    ...(opts.uploadReference ? { uploadReference: opts.uploadReference } : {}),
+  });
+
+  function pickReference(replaceId?: string) {
+    refReplaceId = replaceId;
+    refInput.multiple = !replaceId;
+    refInput.click();
   }
 
-  function readDataUrl(file: File) {
-    return new Promise<string>((resolve, reject) => {
-      const fr = new FileReader();
-      fr.onload = () => resolve(String(fr.result || ""));
-      fr.onerror = () => reject(new Error("read failed"));
-      fr.readAsDataURL(file);
-    });
-  }
 
 
 
