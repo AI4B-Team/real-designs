@@ -450,7 +450,6 @@
   border-bottom: 1px solid var(--line, #e6e6ea);
 }
 .rds-pop-s {
-
   display: flex;
   align-items: center;
   gap: 7px;

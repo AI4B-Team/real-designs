@@ -197,7 +197,8 @@
   position: relative;
   vertical-align: middle;
 }
-.pmu-info i {
+.pmu-info i,
+.pmu-info svg {
   width: 14px;
   height: 14px;
 }
@@ -253,6 +254,7 @@
   color: var(--muted, #6b6b73);
 }
 .pmu-s i,
+.pmu-s svg,
 .pmu-drop i {
   width: 16px;
   height: 16px;
@@ -270,7 +272,8 @@
   border-color: #cc0000;
   background: #fff5f5;
 }
-.pmu-drop i {
+.pmu-drop i,
+.pmu-drop svg {
   width: 26px;
   height: 26px;
   color: #cc0000;
@@ -308,7 +311,8 @@
   color: #b45309;
   padding: 3px 0;
 }
-.pmu-badrow i {
+.pmu-badrow i,
+.pmu-badrow svg {
   width: 13px;
   height: 13px;
 }

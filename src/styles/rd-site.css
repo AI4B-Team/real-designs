@@ -662,7 +662,8 @@
   margin-bottom: 7px;
 }
 
-.rd-site .step-lab i {
+.rd-site .step-lab i,
+.rd-site .step-lab svg {
   width: 15px;
   height: 15px;
   border-radius: 50%;
@@ -950,7 +951,8 @@
   margin: 14px auto 0;
 }
 
-.rd-site .bar i {
+.rd-site .bar i,
+.rd-site .bar svg {
   display: block;
   height: 100%;
   width: 0;
@@ -2171,7 +2173,8 @@
   color: var(--mute);
   transition: 0.16s;
 }
-.rd-site .dtab i {
+.rd-site .dtab i,
+.rd-site .dtab svg {
   width: 14px;
   height: 14px;
 }
@@ -2256,7 +2259,8 @@
   align-items: center;
   gap: 7px;
 }
-.rd-site .hs i {
+.rd-site .hs i,
+.rd-site .hs svg {
   width: 11px;
   height: 11px;
   border-radius: 50%;
@@ -2419,7 +2423,8 @@
   place-items: center;
   margin-bottom: 12px;
 }
-.rd-site .fic i {
+.rd-site .fic i,
+.rd-site .fic svg {
   width: 17px;
   height: 17px;
   color: var(--red);
@@ -2476,7 +2481,8 @@
   align-self: center;
   margin-top: 14px;
 }
-.rd-site .parrow i {
+.rd-site .parrow i,
+.rd-site .parrow svg {
   width: 16px;
   height: 16px;
   color: var(--line-2);
@@ -2496,7 +2502,8 @@
   border-radius: 2px;
   overflow: hidden;
 }
-.rd-site .flow-line i {
+.rd-site .flow-line i,
+.rd-site .flow-line svg {
   display: block;
   height: 100%;
   width: 0;
@@ -2538,11 +2545,13 @@
 .rd-site .fstep.on .fic {
   background: rgba(204, 0, 0, 0.1);
 }
-.rd-site .fstep.on .fic i {
+.rd-site .fstep.on .fic i,
+.rd-site .fstep.on .fic svg {
   color: var(--red);
 }
 
-.rd-site .fstep.on .fic i {
+.rd-site .fstep.on .fic i,
+.rd-site .fstep.on .fic svg {
   color: var(--red);
 }
 
@@ -2637,7 +2646,8 @@
   font-size: 8px;
   font-weight: 600;
 }
-.rd-site .pnode .pim .pov.cost i {
+.rd-site .pnode .pim .pov.cost i,
+.rd-site .pnode .pim .pov.cost svg {
   display: block;
   width: auto;
   height: auto;
@@ -2654,7 +2664,8 @@
   background: #1b7f4b;
   color: #fff;
 }
-.rd-site .pnode .pim .pov.appr i {
+.rd-site .pnode .pim .pov.appr i,
+.rd-site .pnode .pim .pov.appr svg {
   color: #fff;
 }
 .rd-site .pnode .pim .pav {
@@ -2802,7 +2813,8 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
   transition: 0.2s;
 }
-.rd-site .hdot i {
+.rd-site .hdot i,
+.rd-site .hdot svg {
   width: 9px;
   height: 9px;
   border-radius: 50%;
@@ -2812,7 +2824,8 @@
 .rd-site .hdot.keep {
   border-color: var(--ok);
 }
-.rd-site .hdot.keep i {
+.rd-site .hdot.keep i,
+.rd-site .hdot.keep svg {
   width: 13px;
   height: 13px;
   border-radius: 0;
@@ -2822,7 +2835,8 @@
 .rd-site .hdot.rep {
   border-color: var(--red);
 }
-.rd-site .hdot.rep i {
+.rd-site .hdot.rep i,
+.rd-site .hdot.rep svg {
   width: 13px;
   height: 13px;
   border-radius: 0;
@@ -2832,7 +2846,8 @@
 .rd-site .hdot.rm {
   border-color: var(--mute);
 }
-.rd-site .hdot.rm i {
+.rd-site .hdot.rm i,
+.rd-site .hdot.rm svg {
   width: 13px;
   height: 13px;
   border-radius: 0;
@@ -2916,7 +2931,8 @@
   color: #fff;
   border: 1px solid transparent;
 }
-.rd-site .hot-acts button i {
+.rd-site .hot-acts button i,
+.rd-site .hot-acts button svg {
   width: 12px;
   height: 12px;
 }
@@ -2940,7 +2956,8 @@
   font-size: 0.76rem;
   line-height: 1.35;
 }
-.rd-site .hot-prompt i {
+.rd-site .hot-prompt i,
+.rd-site .hot-prompt svg {
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
@@ -2968,7 +2985,8 @@
   opacity: 1;
   transform: none;
 }
-.rd-site .hot-mem i {
+.rd-site .hot-mem i,
+.rd-site .hot-mem svg {
   width: 12px;
   height: 12px;
 }
@@ -3081,7 +3099,8 @@
   padding: 16px 18px;
   border-bottom: 1px solid var(--line);
 }
-.rd-site .lock-head > i {
+.rd-site .lock-head > i,
+.rd-site .lock-head > svg {
   width: 18px;
   height: 18px;
   color: var(--red);
@@ -3205,7 +3224,8 @@
   background: var(--paper);
   color: var(--mute);
 }
-.rd-site .estep i {
+.rd-site .estep i,
+.rd-site .estep svg {
   width: 14px;
   height: 14px;
 }
@@ -3316,7 +3336,8 @@
   gap: 5px;
   margin-left: auto;
 }
-.rd-site .dna-sw i {
+.rd-site .dna-sw i,
+.rd-site .dna-sw svg {
   width: 20px;
   height: 20px;
   border-radius: 4px;
@@ -3462,7 +3483,8 @@
   place-items: center;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
 }
-.rd-site .pplay i {
+.rd-site .pplay i,
+.rd-site .pplay svg {
   width: 19px;
   height: 19px;
   color: var(--red);
@@ -3674,7 +3696,8 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.rd-site .pv-disc i {
+.rd-site .pv-disc i,
+.rd-site .pv-disc svg {
   width: 13px;
   height: 13px;
   color: var(--ok, #0f7b4f);
@@ -3708,7 +3731,8 @@
   font-size: 0.72rem;
   font-weight: 500;
 }
-.rd-site .pv-pin i {
+.rd-site .pv-pin i,
+.rd-site .pv-pin svg {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -3770,7 +3794,8 @@
   font-size: 0.82rem;
   color: var(--mute);
 }
-.rd-site .pv-note i {
+.rd-site .pv-note i,
+.rd-site .pv-note svg {
   width: 15px;
   height: 15px;
   color: var(--red);
@@ -3821,7 +3846,8 @@
   color: var(--mute-2);
   margin-right: 2px;
 }
-.rd-site .pv-sw i {
+.rd-site .pv-sw i,
+.rd-site .pv-sw svg {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -3880,7 +3906,8 @@
   background: var(--paper);
   padding: 14px 16px;
 }
-.rd-site .pmini i {
+.rd-site .pmini i,
+.rd-site .pmini svg {
   width: 18px;
   height: 18px;
   color: var(--red);
@@ -3906,7 +3933,8 @@
   font-weight: 600;
   color: var(--red);
 }
-.rd-site .pro-cta i {
+.rd-site .pro-cta i,
+.rd-site .pro-cta svg {
   width: 17px;
   height: 17px;
   transition: 0.18s;
@@ -3924,7 +3952,8 @@
   border-radius: var(--r);
   background: var(--paper);
 }
-.rd-site .cred-band i {
+.rd-site .cred-band i,
+.rd-site .cred-band svg {
   width: 20px;
   height: 20px;
   color: var(--red);
@@ -4078,7 +4107,8 @@
   top: 13px;
   left: 13px;
 }
-.rd-site .lock-pill i {
+.rd-site .lock-pill i,
+.rd-site .lock-pill svg {
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -4454,7 +4484,8 @@
   color: #fff;
   border-color: var(--ink);
 }
-.rd-site .gal-chips .gc i {
+.rd-site .gal-chips .gc i,
+.rd-site .gal-chips .gc svg {
   width: 12px;
   height: 12px;
 }
@@ -4477,7 +4508,8 @@
 .rd-site .gal-strength .gstr:first-child {
   border-left: 0;
 }
-.rd-site .gal-strength .gstr i {
+.rd-site .gal-strength .gstr i,
+.rd-site .gal-strength .gstr svg {
   width: 16px;
   height: 16px;
   flex: none;
@@ -4649,7 +4681,8 @@
   padding: 5px 11px;
   border-radius: 999px;
 }
-.rd-site .rec-timer i {
+.rd-site .rec-timer i,
+.rd-site .rec-timer svg {
   width: 7px;
   height: 7px;
   border-radius: 50%;
@@ -4676,7 +4709,8 @@
   background: rgba(255, 255, 255, 0.28);
   z-index: 9;
 }
-.rd-site .tour-prog i {
+.rd-site .tour-prog i,
+.rd-site .tour-prog svg {
   display: block;
   height: 100%;
   width: 0;
@@ -4898,7 +4932,8 @@
   align-items: center;
   justify-content: center;
 }
-.rd-site .cm.ok i {
+.rd-site .cm.ok i,
+.rd-site .cm.ok svg {
   width: 18px;
   height: 18px;
   color: var(--ink);
@@ -5241,7 +5276,8 @@
   border-radius: 999px;
   padding: 8px 15px;
 }
-.rd-site .p3-src i {
+.rd-site .p3-src i,
+.rd-site .p3-src svg {
   width: 15px;
   height: 15px;
   color: var(--red);
@@ -5376,7 +5412,8 @@
   animation: rdCam 1.8s ease-out infinite;
   z-index: 2;
 }
-.rd-site .p3cam i {
+.rd-site .p3cam i,
+.rd-site .p3cam svg {
   width: 15px;
   height: 15px;
   color: #fff;
@@ -5436,7 +5473,8 @@
   width: 22px;
   height: 22px;
 }
-.rd-site .p3-thumb .p3cam i {
+.rd-site .p3-thumb .p3cam i,
+.rd-site .p3-thumb .p3cam svg {
   width: 11px;
   height: 11px;
 }
@@ -5862,7 +5900,8 @@
   display: flex;
   gap: 5px;
 }
-.rd-site .ui-dna i {
+.rd-site .ui-dna i,
+.rd-site .ui-dna svg {
   width: 17px;
   height: 17px;
   border-radius: 50%;
@@ -5992,7 +6031,8 @@
   background: var(--red);
   color: #fff;
 }
-.rd-site .ui-abtn i {
+.rd-site .ui-abtn i,
+.rd-site .ui-abtn svg {
   border: 1px solid var(--line);
   color: var(--mute);
 }
@@ -6628,7 +6668,8 @@
   text-overflow: ellipsis;
   color: #fff;
 }
-.rd-site .sc-row i {
+.rd-site .sc-row i,
+.rd-site .sc-row svg {
   color: rgba(255, 255, 255, 0.45);
   font-style: normal;
   font-size: 0.5rem;
@@ -7097,7 +7138,8 @@
   border-radius: 999px;
   padding: 4px 9px;
 }
-.rd-site .sc-rec i {
+.rd-site .sc-rec i,
+.rd-site .sc-rec svg {
   width: 7px;
   height: 7px;
   border-radius: 999px;
@@ -7272,7 +7314,8 @@
   overflow: hidden;
   margin: 8px 0 7px;
 }
-.rd-site .found-bar i {
+.rd-site .found-bar i,
+.rd-site .found-bar svg {
   display: block;
   height: 100%;
   width: 0;
@@ -8181,7 +8224,8 @@
 .rd-site .umodal-x:hover {
   background: var(--alt, #f5f3f0);
 }
-.rd-site .umodal-x i {
+.rd-site .umodal-x i,
+.rd-site .umodal-x svg {
   width: 16px;
   height: 16px;
 }
@@ -8215,7 +8259,8 @@
   border-color: var(--red, #c00);
   background: rgba(204, 0, 0, 0.04);
 }
-.rd-site .umodal-drop i {
+.rd-site .umodal-drop i,
+.rd-site .umodal-drop svg {
   width: 26px;
   height: 26px;
   color: var(--red, #c00);
@@ -8851,7 +8896,8 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
   color: var(--ink);
 }
-.rd-site .gen-gate i {
+.rd-site .gen-gate i,
+.rd-site .gen-gate svg {
   width: 20px;
   height: 20px;
   color: var(--red);
@@ -9042,7 +9088,8 @@
   gap: 5px;
   margin-top: 9px;
 }
-.rd-site .spec-sw i {
+.rd-site .spec-sw i,
+.rd-site .spec-sw svg {
   width: 20px;
   height: 20px;
   border-radius: 4px;
@@ -9489,7 +9536,8 @@
   gap: 9px;
   margin-top: 16px;
 }
-.rd-site .dnax-sw i {
+.rd-site .dnax-sw i,
+.rd-site .dnax-sw svg {
   width: 39px;
   height: 39px;
   border-radius: 8px;
@@ -9821,7 +9869,8 @@
   background: var(--red);
   color: #fff;
 }
-.cm.us i {
+.cm.us i,
+.cm.us svg {
   width: 15px;
   height: 15px;
   stroke-width: 3;
@@ -9836,7 +9885,8 @@
   color: #9a6a12;
   font-size: 0.76rem;
 }
-.cm.lim i {
+.cm.lim i,
+.cm.lim svg {
   width: 13px;
   height: 13px;
 }
@@ -10175,7 +10225,8 @@ p.cmp-note {
   color: var(--red);
   border-color: var(--red);
 }
-.rd-site .price-more i {
+.rd-site .price-more i,
+.rd-site .price-more svg {
   width: 15px;
   height: 15px;
 }
@@ -10194,7 +10245,8 @@ p.cmp-note {
   color: #fff;
   text-decoration: underline;
 }
-.rd-site .annbar i {
+.rd-site .annbar i,
+.rd-site .annbar svg {
   width: 14px;
   height: 14px;
 }
@@ -10418,7 +10470,8 @@ p.cmp-note {
   border-radius: 12px;
   background: var(--white);
 }
-.rd-site .bfd-proof li i {
+.rd-site .bfd-proof li i,
+.rd-site .bfd-proof li svg {
   flex: 0 0 26px;
   width: 26px;
   height: 26px;
@@ -10989,7 +11042,8 @@ p.cmp-note {
   border-bottom: 1px solid var(--line);
   background: #fbfaf8;
 }
-.rd-site .bfp-mock-bar i {
+.rd-site .bfp-mock-bar i,
+.rd-site .bfp-mock-bar svg {
   width: 7px;
   height: 7px;
   border-radius: 999px;

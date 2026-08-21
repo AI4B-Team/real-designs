@@ -349,7 +349,8 @@
   display: inline-flex;
   gap: 4px;
 }
-.rd-app .xp-sw i {
+.rd-app .xp-sw i,
+.rd-app .xp-sw svg {
   width: 14px;
   height: 14px;
   border-radius: 999px;
@@ -547,7 +548,8 @@
   gap: 6px;
   flex-wrap: wrap;
 }
-.rd-app .xp-pal i {
+.rd-app .xp-pal i,
+.rd-app .xp-pal svg {
   width: 34px;
   height: 34px;
   border-radius: 8px;
@@ -838,7 +840,8 @@
   font-weight: 600;
   color: var(--ink);
 }
-.rd-app .xp-quiz-opt span i {
+.rd-app .xp-quiz-opt span i,
+.rd-app .xp-quiz-opt span svg {
   width: 14px;
   height: 14px;
   color: var(--red);
@@ -883,7 +886,8 @@
   align-items: center;
   gap: 4px;
 }
-.rd-app .xp-quiz-nav .fb-link i {
+.rd-app .xp-quiz-nav .fb-link i,
+.rd-app .xp-quiz-nav .fb-link svg {
   width: 14px;
   height: 14px;
 }
