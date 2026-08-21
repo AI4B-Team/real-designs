@@ -1355,9 +1355,18 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.address = address;
         openSetup("property");
       },
-      onDescribe: async (prompt) => {
+      onDescribe: async (prompt, details) => {
         if (prompt) state.prompt = prompt;
         state.method = "describe";
+        if (details) {
+          state.refs = details.references || [];
+          state.ratio = details.ratio || state.ratio;
+          state.options = details.options || 1;
+          if (details.room) state.room = details.room;
+          if (details.style) state.style = details.style;
+          if (details.mood) state.mood = details.mood;
+          if (details.features) state.features = details.features;
+        }
         /* Very short ideas go to the detailed setup; anything usable renders now. */
         if (state.prompt.trim().length < 12) {
           openSetup("describe");
@@ -1365,6 +1374,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         }
         await generateConcept();
       },
+      onImprove: async (prompt: string) => {
+        const r = await improveDescription({ data: { prompt, space: state.space || null } });
+        return r.prompt;
+      },
+
 
       onSample: () => {
         if (isVideo) {
