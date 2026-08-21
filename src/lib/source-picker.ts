@@ -211,18 +211,33 @@ export type PickerOptions = {
   /** Called when the user chooses a finished design. */
   onDesign?: (id: string) => void;
   /** Called when the user writes an idea instead of adding photos. */
-  onDescribe?: (prompt?: string) => void | Promise<void>;
+  onDescribe?: (prompt?: string, details?: DescribeDetails) => void | Promise<void>;
+  /** Optional AI rewrite of the description. Returns the improved text. */
+  onImprove?: (prompt: string) => Promise<string | void> | string | void;
   /** Optional "Try A Sample Space" affordance under the dropzone. */
   onSample?: () => void;
   showAlert?: (msg: string) => void;
 };
 
+/** Everything the Describe composer collects alongside the prompt. */
+export type DescribeDetails = {
+  /** Reference images as data URLs, styling inspiration only. */
+  references: string[];
+  room: string;
+  style: string;
+  mood: string;
+  features: string;
+  ratio: string;
+  options: number;
+};
+
+export const DESCRIBE_RATIOS = ["16:9", "1:1", "9:16", "4:5"] as const;
+export const DESCRIBE_OPTION_COUNTS = [1, 2, 4] as const;
+export const MAX_DESCRIBE_REFS = 3;
+
 /** Quiet starting points under the describe composer. */
-export const DESCRIBE_EXAMPLES: string[] = [
-  "Warm Modern Living Room",
-  "Luxury Primary Bathroom",
-  "Coastal Backyard",
-];
+export const DESCRIBE_EXAMPLES: string[] = ["Modern Kitchen", "Luxury Exterior", "Resort Backyard"];
+
 
 const esc0 = (v: string) =>
   String(v == null ? "" : v).replace(
