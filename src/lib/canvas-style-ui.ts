@@ -490,22 +490,11 @@ export function mountCanvasStyle(
          full grid only comes back when the user asks to change it. */
       el.innerHTML =
         '<div class="cs-sec cs-done">' +
-        '<div class="cs-sec-h"><label>' +
+        '<div class="rdw-sum"><span><b>' +
         esc(title) +
-        '</label><span class="cs-scope">' +
-        esc(scopeLabel(sel.scope)) +
-        "</span></div>" +
-        '<div class="cs-picked">' +
-        '<span class="cs-picked-th">' +
-        (s.previewImage
-          ? '<img src="' + esc(s.previewImage) + '" alt="' + esc(s.displayName) + ' example">'
-          : "") +
-        "</span>" +
-        '<span class="cs-picked-t"><b>' +
+        "</b> &middot; " +
         esc(s.displayName) +
-        "</b><em>" +
-        esc(s.shortDescription) +
-        "</em></span>" +
+        "</span>" +
         '<button class="fb-link cs-change" type="button">Change</button>' +
         "</div>" +
         "</div>";
