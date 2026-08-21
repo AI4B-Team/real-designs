@@ -275,18 +275,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     note: "",
     address: "",
     url: "",
-    prompt: "",
-    describeBusy: false,
-    improving: false,
-    /** Reference images attached to the description, data URLs. */
-    refs: [] as { id: string; name: string; url: string }[],
-    detailsOpen: false,
-    dRoom: "",
-    dStyle: "",
-    dMood: "",
-    dFeatures: "",
-    ratio: "16:9",
-    options: 2,
 
 
     dragging: false,
@@ -1283,6 +1271,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       host.appendChild(body);
       body.addEventListener("click", onClick);
       body.addEventListener("input", onInput);
+      body.addEventListener("change", onChange);
       body.addEventListener("keydown", onKey);
       wireDrag(body);
     }
@@ -1300,7 +1289,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     } catch (_) {
       /* icons are cosmetic */
     }
-    if (state.tab === "describe") syncComposer();
+    if (state.tab === "describe") describe.sync(body);
     if (state.tab === "property" || state.tab === "design" || state.tab === "upload")
       hydrateThumbs();
     if (state.tab === "design" && state.designState === "idle") loadDesigns();
@@ -1339,7 +1328,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       /* Enter still writes a new line; only the shortcut submits. */
       if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        submitDescribe();
+        void describe.submit();
       }
       return;
     }
@@ -1357,76 +1346,16 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     input.click();
   }
 
-  /** Grows the composer with the text and keeps the submit state honest. */
-  function syncComposer() {
-    const ta = field("prompt") as HTMLTextAreaElement | null;
-    if (ta) {
-      ta.style.height = "auto";
-      ta.style.height = Math.min(ta.scrollHeight, 260) + "px";
-    }
-    const ready = state.prompt.trim().length > 0;
-    const btn = body?.querySelector(".sp-create") as HTMLButtonElement | null;
-    if (btn) btn.disabled = !ready || state.describeBusy;
-    const imp = body?.querySelector('[data-sp="improve"]') as HTMLButtonElement | null;
-    if (imp) imp.disabled = !ready || state.improving || state.describeBusy;
-
-  }
-
-  async function submitDescribe() {
-    if (state.describeBusy) return;
-    const prompt = state.prompt.trim();
-    if (!prompt) return;
-    state.describeBusy = true;
-    render();
-    try {
-      await opts.onDescribe?.(prompt, {
-        references: state.refs.map((r) => r.url),
-        room: state.dRoom.trim(),
-        style: state.dStyle.trim(),
-        mood: state.dMood.trim(),
-        features: state.dFeatures.trim(),
-        ratio: state.ratio,
-        options: state.options,
-      });
-    } catch (err: any) {
-      alert((err && err.message) || "Could not create that concept.");
-    } finally {
-      state.describeBusy = false;
-      render();
-    }
-  }
-
-  /** Rewrites the description with the host's AI helper, in place. */
-  async function improveDescription() {
-    if (state.improving || state.describeBusy) return;
-    const prompt = state.prompt.trim();
-    if (!prompt || !opts.onImprove) return;
-    state.improving = true;
-    render();
-    try {
-      const better = await opts.onImprove(prompt);
-      if (better && String(better).trim()) state.prompt = String(better).trim();
-    } catch (err: any) {
-      alert((err && err.message) || "Could not improve that description.");
-    } finally {
-      state.improving = false;
-      render();
-    }
-  }
-
   function onInput(e: Event) {
     const t = e.target as HTMLInputElement;
     const f = fieldName(t);
     if (f === "addr") state.address = t.value;
     if (f === "url") state.url = t.value;
-    if (f === "dRoom") state.dRoom = t.value;
-    if (f === "dStyle") state.dStyle = t.value;
-    if (f === "dMood") state.dMood = t.value;
-    if (f === "dFeatures") state.dFeatures = t.value;
-    if (f === "prompt") {
-      state.prompt = t.value;
-      syncComposer();
-    }
+    if (describe.onInput(f, t.value) && f === "prompt") describe.sync(body);
+  }
+
+  function onChange(e: Event) {
+    describe.onChange(e.target as HTMLElement);
   }
 
 
@@ -1460,40 +1389,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
       return;
     }
-    const refx = t.closest("[data-sp-refx]") as HTMLElement | null;
-    if (refx) {
-      const id = refx.dataset["spRefx"];
-      state.refs = state.refs.filter((r) => r.id !== id);
-      render();
-      return;
-    }
-    const ratio = t.closest("[data-sp-ratio]") as HTMLElement | null;
-    if (ratio) {
-      state.ratio = ratio.dataset["spRatio"] || state.ratio;
-      state.detailsOpen = true;
-      render();
-      return;
-    }
-    const optn = t.closest("[data-sp-opt]") as HTMLElement | null;
-    if (optn) {
-      state.options = Number(optn.dataset["spOpt"]) || 1;
-      state.detailsOpen = true;
-      render();
-      return;
-    }
-    const ex = t.closest("[data-sp-ex]") as HTMLElement | null;
-
-    if (ex) {
-      /* Examples fill the prompt; the user still presses Create. */
-      state.prompt = ex.dataset["spEx"] || "";
-      render();
-      const ta = field("prompt") as HTMLTextAreaElement | null;
-      if (ta) {
-        ta.focus();
-        ta.setSelectionRange(ta.value.length, ta.value.length);
-      }
-      return;
-    }
+    if (state.tab === "describe" && describe.onClick(t, pickReference)) return;
     const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
     if (dsn) {
       const id = dsn.dataset["spDesign"]!;
@@ -1524,10 +1420,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const k = act.dataset["sp"];
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
-    else if (k === "describe") await submitDescribe();
-    else if (k === "addref") refInput.click();
-    else if (k === "improve") await improveDescription();
-    else if (k === "details") state.detailsOpen = !state.detailsOpen;
 
     else if (k === "cloudgo") importCloud(field("cloud")?.value || "");
     else if (k === "addrgo") lookupAddress();
