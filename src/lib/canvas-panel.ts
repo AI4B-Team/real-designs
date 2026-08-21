@@ -90,19 +90,35 @@ export function buildCanvasPanel() {
   if (!body || built) return;
   built = true;
 
+  /* 0. The left tool rail already names the active tool: the panel never
+     repeats it. Header, description, breadcrumb and the persistent Reset link
+     all leave the top of the panel. */
+  document.getElementById("rdwPanel")?.classList.add("rdw-panel-quiet");
+  const spaceLabel = document.querySelector("#rdwSpaceField > label") as HTMLElement | null;
+  if (spaceLabel) spaceLabel.textContent = "Choose A Space";
+
   /* 1. Customize: every optional control, collapsed by default. */
   const cust = document.createElement("div");
   cust.className = "rdw-cust";
   cust.id = "rdwCustomize";
   cust.innerHTML =
     '<button type="button" class="rdw-cust-h" id="rdwCustToggle" aria-expanded="false">' +
-    '<span class="rdw-cust-t"><b>Customize</b><em>Fine-tune how much changes and what should stay.</em>' +
+    '<span class="rdw-cust-t"><b>Customize</b>' +
     '<span class="rdw-cust-s" id="rdwCustSum"></span></span>' +
     '<i data-lucide="chevron-down"></i></button>' +
     '<div class="rdw-cust-b" id="rdwCustBody" hidden></div>';
   body.appendChild(cust);
 
   const custBody = byId("rdwCustBody") as HTMLElement;
+  /* Tool-specific advanced controls live under Customize too. */
+  let caps = byId("rdwCaps");
+  if (!caps) {
+    caps = document.createElement("div");
+    caps.id = "rdwCaps";
+    caps.className = "rdw-caps";
+    caps.hidden = true;
+  }
+  custBody.appendChild(caps);
   moveInto(custBody, ["rdwLevelField", "rdwLockField", "rdwStrengthField"]);
   const grade = fieldByLabel("Finish Grade");
   if (grade) custBody.appendChild(grade);
@@ -123,11 +139,30 @@ export function buildCanvasPanel() {
   const details = byId("rdwDetails");
   if (details) details.classList.add("rdw-details-quiet");
 
-  /* 3. Generation summary sits just above the sticky footer. */
+  /* 3. Generation summary and the settings overflow live in the sticky
+     footer, next to the single primary action. */
   const sum = document.createElement("div");
   sum.className = "rdw-gsum";
   sum.id = "rdwGenSum";
-  body.appendChild(sum);
+  if (foot) {
+    const row = document.createElement("div");
+    row.className = "rdw-foot-top";
+    row.appendChild(sum);
+    row.insertAdjacentHTML(
+      "beforeend",
+      '<div class="rdw-more-wrap"><button type="button" class="rdw-more" id="rdwMore" ' +
+        'aria-haspopup="true" aria-expanded="false" data-tt="Settings" aria-label="Settings">' +
+        '<i data-lucide="more-vertical"></i></button>' +
+        '<div class="rdw-more-m" id="rdwMoreMenu" hidden>' +
+        '<button type="button" class="acct-i" data-panel-reset="tool">Reset This Tool</button>' +
+        '<button type="button" class="acct-i" data-panel-reset="all">Reset All Settings</button>' +
+        '<button type="button" class="acct-i" data-panel-reset="over">Start Over</button>' +
+        "</div></div>",
+    );
+    foot.insertBefore(row, foot.firstChild);
+  } else {
+    body.appendChild(sum);
+  }
 
   /* 4. One primary action: the duplicate style button leaves the footer. */
   const styleBtn = byId("genStyleBtn");
@@ -136,6 +171,7 @@ export function buildCanvasPanel() {
     styleBtn.setAttribute("data-retired", "1");
   }
   if (foot) foot.classList.add("rdw-foot-simple");
+
 
   const toggle = byId("rdwCustToggle");
   const openSaved = (() => {
@@ -204,4 +240,70 @@ document.addEventListener("click", (e) => {
     setCustomizeOpen(true);
     byId("rdwCustomize")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
+});
+
+/* ------------------------------------------------- settings overflow menu */
+
+function closeMoreMenu() {
+  const m = byId("rdwMoreMenu");
+  if (m) m.hidden = true;
+  byId("rdwMore")?.setAttribute("aria-expanded", "false");
+}
+
+function clickAll(sel: string) {
+  document.querySelectorAll<HTMLElement>(sel).forEach((el) => el.click());
+}
+
+/** Puts every optional control back to the value it ships with. */
+function resetCustomize() {
+  const first = (id: string) =>
+    (document.querySelector(id + " .chip, " + id + " .rdw-opt") as HTMLElement | null);
+  document.querySelector("#rdwLevel .rdw-opt[data-b='1']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  document.querySelector("#rdwLock .chip[data-lock='balanced']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  document.querySelector("#gradeChips .chip[data-g='retail']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  document.querySelector("#rdwOpts .chip[data-n='1']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  const note = byId("agentNote") as HTMLTextAreaElement | null;
+  if (note) note.value = "";
+  void first;
+  refreshCanvasPanel();
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target as HTMLElement;
+  if (!t || !t.closest) return;
+  if (t.closest("#rdwMore")) {
+    e.preventDefault();
+    const m = byId("rdwMoreMenu");
+    if (!m) return;
+    const open = !!m.hidden;
+    m.hidden = !open;
+    byId("rdwMore")?.setAttribute("aria-expanded", open ? "true" : "false");
+    return;
+  }
+  const act = t.closest("[data-panel-reset]") as HTMLElement | null;
+  if (act) {
+    e.preventDefault();
+    closeMoreMenu();
+    const kind = act.getAttribute("data-panel-reset");
+    if (kind === "tool") {
+      resetCustomize();
+    } else if (kind === "all") {
+      resetCustomize();
+      document.querySelector("#canvasStyleField .cs-clear")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
+    } else if (kind === "over") {
+      const ok = window.confirm(
+        "Start Over clears the photos and settings in this workspace. Saved designs stay in Version History. Continue?",
+      );
+      if (!ok) return;
+      resetCustomize();
+      clickAll("#clearLocks");
+      document.dispatchEvent(new CustomEvent("rd:canvas-start-over"));
+      const go = (window as any).__rdGo;
+      if (typeof go === "function") go("studio");
+    }
+    return;
+  }
+  if (!t.closest("#rdwMoreMenu")) closeMoreMenu();
 });

@@ -146,6 +146,10 @@ export function paintRoomCards() {
   }
   const active = areaByLabel(sel.value)?.label || "";
   const label = field?.querySelector("label") as HTMLElement | null;
+  const sectionName =
+    space === "interior" ? "Room" : space === "exterior" ? "Exterior Area" : "Garden Area";
+  if (label && label.firstChild && label.firstChild.nodeType === 3)
+    label.firstChild.nodeValue = sectionName;
   const viewAll = document.getElementById("rdwRoomAll");
   if (viewAll)
     viewAll.textContent =
@@ -160,9 +164,10 @@ export function paintRoomCards() {
     if (label) label.hidden = true;
     host.innerHTML =
       '<div class="rdw-sum"><span><b>' +
-      esc(space === "interior" ? "Room" : "Area") +
+      esc(sectionName) +
       "</b> &middot; " +
       esc(active) +
+
       '</span><button type="button" class="fb-link" data-room-change>Change</button></div>';
     ensureNotEmpty(host, "empty", "This Space");
     const ctxRoomA = document.getElementById("setupCtxRoom");
