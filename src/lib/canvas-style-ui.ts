@@ -105,11 +105,11 @@ export const QUICK_STYLE_IDS = [
 ];
 
 /**
- * The six to eight popular styles shown as image cards inside the Setup
+ * The four popular styles shown as image cards inside the Setup
  * panel. Only styles the current space actually supports are offered, and the
  * active selection is always included so it can never scroll out of reach.
  */
-export function quickStyles(pool: StyleRecord[], selectedId?: string | null, max = 6): StyleRecord[] {
+export function quickStyles(pool: StyleRecord[], selectedId?: string | null, max = 4): StyleRecord[] {
   const byId = new Map(pool.map((s) => [s.id, s]));
   const out: StyleRecord[] = [];
   const sel = selectedId ? byId.get(selectedId) : null;
@@ -431,6 +431,8 @@ export function mountCanvasStyle(
     return style ? { ...hit, style } : null;
   }
 
+  let expanded = false;
+
   function paint() {
     const el = host();
     if (!el) return;
@@ -487,6 +489,34 @@ export function mountCanvasStyle(
     }
 
     const s = sel.style;
+    if (!expanded) {
+      /* Once a style is chosen the section collapses to a summary card: the
+         full grid only comes back when the user asks to change it. */
+      el.innerHTML =
+        '<div class="cs-sec cs-done">' +
+        '<div class="cs-sec-h"><label>' +
+        esc(title) +
+        '</label><span class="cs-scope">' +
+        esc(scopeLabel(sel.scope)) +
+        "</span></div>" +
+        '<div class="cs-picked">' +
+        '<span class="cs-picked-th">' +
+        (s.previewImage
+          ? '<img src="' + esc(s.previewImage) + '" alt="' + esc(s.displayName) + ' example">'
+          : "") +
+        "</span>" +
+        '<span class="cs-picked-t"><b>' +
+        esc(s.displayName) +
+        "</b><em>" +
+        esc(s.shortDescription) +
+        "</em></span>" +
+        '<button class="fb-link cs-change" type="button">Change</button>' +
+        "</div>" +
+        "</div>";
+      icons(el);
+      onChange?.(sel);
+      return;
+    }
     el.innerHTML =
       '<div class="cs-sec">' +
       '<div class="cs-sec-h"><label>' +
@@ -535,6 +565,7 @@ export function mountCanvasStyle(
       store = setDirection(store, "project", dctx, styleId);
     }
     saveDirections(store);
+    expanded = false;
     paint();
     try {
       window.dispatchEvent(new CustomEvent("rd:canvas-style", { detail: { need, styleId } }));
@@ -561,6 +592,12 @@ export function mountCanvasStyle(
       pick(quick.dataset["quick"] || "", false);
       return;
     }
+    if (t.closest(".cs-change")) {
+      e.preventDefault();
+      expanded = true;
+      paint();
+      return;
+    }
     if (t.closest(".cs-browse")) {
       e.preventDefault();
       open();
@@ -581,6 +618,7 @@ export function mountCanvasStyle(
       store = clearDirection(store, "photo", dctx);
       store = clearDirection(store, "project", dctx);
       saveDirections(store);
+      expanded = true;
       paint();
     }
   });

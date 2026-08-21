@@ -9,7 +9,7 @@ const pool = stylesForNeed(STYLES, "design", "interior");
 describe("quickStyles", () => {
   it("offers six popular interior styles with preview images", () => {
     const list = quickStyles(pool, null);
-    expect(list).toHaveLength(6);
+    expect(list).toHaveLength(4);
     list.forEach((s) => {
       expect(s.displayName.length).toBeGreaterThan(0);
       expect(s.previewImage).toBeTruthy();
@@ -23,7 +23,7 @@ describe("quickStyles", () => {
     const target = pool[pool.length - 1]!;
     const list = quickStyles(pool, target.id);
     expect(list[0]?.id).toBe(target.id);
-    expect(list).toHaveLength(6);
+    expect(list).toHaveLength(4);
   });
 
   it("names only styles that exist in the catalog", () => {

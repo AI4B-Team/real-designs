@@ -15,6 +15,8 @@ import {
 } from "@/lib/space-datasets";
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
 import { capabilitiesFor } from "@/lib/canvas-capabilities";
+import { openAreaPicker } from "@/lib/room-picker-modal";
+import { buildCanvasPanel, refreshCanvasPanel } from "@/lib/canvas-panel";
 import { ensureNotEmpty } from "@/lib/route-states";
 
 
@@ -98,11 +100,43 @@ function currentTool(): string {
 /* room cards                                                          */
 /* ------------------------------------------------------------------ */
 
+/** The four choices offered inline for each space. */
+const POPULAR: Record<CanvasSpace, string[]> = {
+  interior: ["Living Room", "Kitchen", "Bedroom", "Bathroom"],
+  exterior: ["Front Of House", "Back Of House", "Side Of House", "Porch"],
+  garden: ["Front Yard", "Backyard", "Patio", "Pool Area"],
+};
+
+/** Open once a choice exists: the section otherwise shows a summary row. */
 let roomsExpanded = false;
+
+export function setRoomsExpanded(open: boolean) {
+  roomsExpanded = open;
+  paintRoomCards();
+}
+
+/** Four inline cards: the current choice first, then popular ones. */
+export function inlineAreas(space: CanvasSpace, active: string) {
+  const list = areasForSpace(space);
+  const out: typeof list = [];
+  const cur = list.find((r) => r.label === active);
+  if (cur) out.push(cur);
+  for (const label of POPULAR[space] || []) {
+    if (out.length >= 4) break;
+    const rec = list.find((r) => r.label === label);
+    if (rec && !out.some((x) => x.id === rec.id)) out.push(rec);
+  }
+  for (const rec of list) {
+    if (out.length >= 4) break;
+    if (!out.some((x) => x.id === rec.id)) out.push(rec);
+  }
+  return out;
+}
 
 export function paintRoomCards() {
   const host = document.getElementById("rdwRooms");
   const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
+  const field = document.getElementById("rdwRoomField");
   if (!host || !sel) return;
   const space = currentSpace() as CanvasSpace;
   const list = areasForSpace(space);
@@ -110,12 +144,35 @@ export function paintRoomCards() {
   if (sel.value && !areaFitsSpace(sel.value, space)) {
     sel.value = "";
   }
-  const shown = roomsExpanded ? list : list.slice(0, 8);
   const active = areaByLabel(sel.value)?.label || "";
-  if (active && !shown.some((r) => r.label === active)) {
-    const rec = list.find((r) => r.label === active);
-    if (rec) shown.unshift(rec);
+  const label = field?.querySelector("label") as HTMLElement | null;
+  const viewAll = document.getElementById("rdwRoomAll");
+  if (viewAll)
+    viewAll.textContent =
+      space === "interior"
+        ? "View All Rooms"
+        : space === "exterior"
+          ? "View All Exterior Areas"
+          : "View All Garden Areas";
+
+  /* Completed selection collapses into one compact summary row. */
+  if (active && !roomsExpanded) {
+    if (label) label.hidden = true;
+    host.innerHTML =
+      '<div class="rdw-sum"><span><b>' +
+      esc(space === "interior" ? "Room" : "Area") +
+      "</b> &middot; " +
+      esc(active) +
+      '</span><button type="button" class="fb-link" data-room-change>Change</button></div>';
+    ensureNotEmpty(host, "empty", "This Space");
+    const ctxRoomA = document.getElementById("setupCtxRoom");
+    if (ctxRoomA) ctxRoomA.textContent = active;
+    icons();
+    return;
   }
+  if (label) label.hidden = false;
+
+  const shown = inlineAreas(space, active);
   host.innerHTML = shown
     .map((r) => {
       const img = areaPreview(r.id);
@@ -168,10 +225,9 @@ export function paintRoomCards() {
   const ctxRoom = document.getElementById("setupCtxRoom");
 
   if (ctxRoom && active) ctxRoom.textContent = active;
-  const all = document.getElementById("rdwRoomAll");
-  if (all) all.textContent = roomsExpanded ? "Show Less" : "View All";
   icons();
 }
+
 
 /** Keeps the select (the source of truth for the app script) in sync. */
 function pickRoom(label: string) {
@@ -290,8 +346,10 @@ export function initCanvasWorkspace() {
   const versOpen = document.getElementById("rdwVersOpen") as HTMLElement | null;
   if (versOpen) versOpen.hidden = s.versionsOpen;
 
+  buildCanvasPanel();
   paintRoomCards();
   paintPanelHeader();
+  refreshCanvasPanel();
 
   b.addEventListener("click", (e) => {
     const t = e.target as HTMLElement;
@@ -300,13 +358,26 @@ export function initCanvasWorkspace() {
     const room = t.closest("[data-room]") as HTMLElement | null;
     if (room && room.closest("#rdwRooms")) {
       e.preventDefault();
+      roomsExpanded = false;
       pickRoom(room.dataset["room"] || "");
+      return;
+    }
+    if (t.closest("[data-room-change]")) {
+      e.preventDefault();
+      setRoomsExpanded(true);
       return;
     }
     if (t.closest("#rdwRoomAll")) {
       e.preventDefault();
-      roomsExpanded = !roomsExpanded;
-      paintRoomCards();
+      const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
+      openAreaPicker({
+        space: currentSpace() as CanvasSpace,
+        current: sel?.value || null,
+        onApply: (label) => {
+          roomsExpanded = false;
+          pickRoom(label);
+        },
+      });
       return;
     }
     const lvl = t.closest("#rdwLevel .rdw-opt") as HTMLElement | null;

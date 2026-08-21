@@ -788,3 +788,36 @@
     linear-gradient(90deg, #efece7 25%, #f6f4f1 37%, #efece7 63%) 0 0 / 400% 100%;
   animation: rdw-shim 1.4s ease infinite;
 }
+
+
+/* ---------- Progressive disclosure in the settings panel ---------- */
+.rdw-sum{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff;font-size:13px}
+.rdw-sum b{font-weight:700}
+.rdw-cust{border:1px solid var(--line);border-radius:14px;background:#fff;margin-top:14px;overflow:hidden}
+.rdw-cust-h{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  padding:12px 14px;background:none;border:0;cursor:pointer;text-align:left}
+.rdw-cust-t{display:block;min-width:0}
+.rdw-cust-t b{display:block;font-size:13px;font-weight:700}
+.rdw-cust-t em{display:block;font-style:normal;font-size:12px;color:var(--muted);margin-top:2px}
+.rdw-cust-s{display:block;font-size:12px;color:var(--muted);margin-top:6px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rdw-cust-h i{flex:0 0 auto;transition:transform .18s ease}
+.rdw-cust-h.on i{transform:rotate(180deg)}
+.rdw-cust-b{padding:2px 14px 14px;display:grid;gap:14px;border-top:1px solid var(--line)}
+.rdw-gsum{margin-top:14px;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fafafa}
+.rdw-gsum-l1{font-size:13px;font-weight:700}
+.rdw-gsum-l2{display:flex;align-items:center;gap:8px;justify-content:space-between;
+  font-size:12px;color:var(--muted);margin-top:4px}
+.rdw-gsum-need{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#8a5a00}
+.rdw-gsum-need i{width:15px;height:15px}
+.rdw-resbar{display:flex;justify-content:flex-end;margin:0 0 10px}
+.rdw-details-quiet .insp-actions{margin:0}
+/* Collapsed style summary card */
+.cs-picked{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:#fff}
+.cs-picked-th{flex:0 0 auto;width:46px;height:46px;border-radius:9px;overflow:hidden;background:#f2f2f2;display:block}
+.cs-picked-th img{width:100%;height:100%;object-fit:cover;display:block}
+.cs-picked-t{min-width:0;flex:1 1 auto}
+.cs-picked-t b{display:block;font-size:13px;font-weight:700}
+.cs-picked-t em{display:block;font-style:normal;font-size:12px;color:var(--muted);
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
