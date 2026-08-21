@@ -9,6 +9,10 @@
  * storage before generation, the draft survives a refresh, a failed generation
  * keeps the text and the references, and a retry reuses the same request id so
  * it can never be charged twice.
+ *
+ * The output type is NOT chosen here. The project-type card above the picker
+ * (Design A Space / Create A Video) is the single authority; the composer only
+ * reads it, so there can never be two independent output selectors.
  */
 
 export type RefKind =
@@ -43,6 +47,10 @@ export type DescribeRef = {
 
 export type DescribeOutput = "image" | "video";
 
+/** Which backend the generation belongs to. A written idea is never billed or
+    routed as a property listing video. */
+export type DescribeJob = "image" | "listing-video" | "ai-video";
+
 /** Everything the composer collects alongside the description. */
 export type DescribeDetails = {
   /** Durable reference URLs when storage is wired, local data URLs otherwise. */
@@ -50,13 +58,17 @@ export type DescribeDetails = {
   referenceKinds: RefKind[];
   /** How closely the result should follow the references. */
   referenceStrength: string;
-  space: string;
-  room: string;
-  style: string;
-  /** Subtle, Balanced or Bold. */
-  level: string;
-  ratio: string;
-  options: number;
+
+  /* The authoritative field names. */
+  selectedSpace: string;
+  selectedRoomType: string;
+  selectedStyleId: string;
+  changeLevel: string;
+  aspectRatio: string;
+  optionCount: number;
+
+  /** image · listing-video · ai-video. Decides backend and credit price. */
+  job: DescribeJob;
   output: DescribeOutput;
   camera: string;
   duration: number;
@@ -64,7 +76,14 @@ export type DescribeDetails = {
   credits: number;
   /** Stable across retries so the same work is never charged twice. */
   requestId: string;
+
   /* Kept for hosts that still read the old field names. */
+  space: string;
+  room: string;
+  style: string;
+  level: string;
+  ratio: string;
+  options: number;
   mood: string;
   features: string;
 };
@@ -82,6 +101,25 @@ export const DESCRIBE_CAMERAS = [
   "Drone-Style Rise",
   "Golden Hour Reveal",
 ] as const;
+
+/** A camera move has to be possible in the space. A drone rise inside a
+    kitchen, or an exterior orbit around a living room, is never offered. */
+export const CAMERAS_BY_SPACE: Record<string, string[]> = {
+  Interior: ["Slow Push In", "Gentle Pan", "Walk Through"],
+  Exterior: ["Gentle Pan", "Orbit Exterior", "Drone-Style Rise", "Golden Hour Reveal"],
+  Garden: [
+    "Slow Push In",
+    "Gentle Pan",
+    "Walk Through",
+    "Drone-Style Rise",
+    "Golden Hour Reveal",
+  ],
+};
+
+export function camerasForSpace(space: string): string[] {
+  return CAMERAS_BY_SPACE[space] || CAMERAS_BY_SPACE["Interior"]!;
+}
+
 export const DESCRIBE_DURATIONS = [5, 10, 15] as const;
 export const DESCRIBE_ORIENTATIONS = ["Landscape", "Portrait", "Square"] as const;
 export const MAX_DESCRIBE_REFS = 6;
@@ -93,11 +131,13 @@ export const DESCRIBE_EXAMPLES: string[] = [
   "Contemporary Exterior",
   "Resort-Style Backyard",
   "Warm Primary Bedroom",
-  "Create From A Floor Plan",
 ];
 
 export const DESCRIBE_PLACEHOLDER =
   "Describe the room, exterior or outdoor space you want to create. Include the style, materials, colors and important features.";
+
+/** Enough text to be worth rewriting. Below this, Improve stays disabled. */
+export const IMPROVE_MIN_CHARS = 12;
 
 /** One image credit per option; a video is the heavier job. */
 export const IMAGE_CREDITS = 1;
@@ -113,6 +153,16 @@ export function ratioForOrientation(orientation: string): string {
   return "16:9";
 }
 
+/** "2 images · 2 credits total" — the multiplication is never hidden. */
+export function optionTotalLabel(output: DescribeOutput, options: number): string {
+  const n = Math.max(1, options);
+  const noun = output === "video" ? "video" : "image";
+  const credits = describeCredits(output, n);
+  return (
+    n + " " + noun + (n === 1 ? "" : "s") + " · " + credits + (credits === 1 ? " credit" : " credits") + " total"
+  );
+}
+
 type Cfg = {
   esc: (s: string) => string;
   alert: (msg: string) => void;
@@ -120,10 +170,21 @@ type Cfg = {
   render: () => void;
   /** Namespaced storage key so Design and Video keep separate drafts. */
   draftKey: string;
+  /** The authoritative output type, owned by the project-type card. */
+  output: () => DescribeOutput;
   onDescribe?: (prompt: string, details: DescribeDetails) => void | Promise<void>;
   onImprove?: (prompt: string) => Promise<string | void> | string | void;
   /** Uploads a reference to durable storage and returns its URL. */
   uploadReference?: (file: File) => Promise<string>;
+  /** Opens the existing visual, searchable room / area picker. */
+  openRoomPicker?: (space: string, current: string, apply: (label: string) => void) => void;
+  /** Opens the existing visual, searchable style browser. */
+  openStylePicker?: (
+    space: string,
+    room: string,
+    currentId: string,
+    apply: (styleId: string, label: string) => void,
+  ) => void;
 };
 
 const rid = (p: string) => p + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
@@ -143,10 +204,10 @@ export function createDescribeComposer(cfg: Cfg) {
     space: "Interior" as string,
     room: "",
     style: "",
+    styleId: "",
     level: "Balanced" as string,
     ratio: "16:9",
-    options: 2,
-    output: "image" as DescribeOutput,
+    options: 1,
     camera: "Slow Push In",
     duration: 10,
     orientation: "Landscape",
@@ -154,6 +215,9 @@ export function createDescribeComposer(cfg: Cfg) {
     /** Reused by a retry so a failed generation cannot double-charge. */
     requestId: rid("req_"),
   };
+
+  const output = (): DescribeOutput => (cfg.output() === "video" ? "video" : "image");
+  const isVideo = () => output() === "video";
 
   /* ---------- draft persistence ---------- */
 
@@ -177,10 +241,10 @@ export function createDescribeComposer(cfg: Cfg) {
           space: state.space,
           room: state.room,
           style: state.style,
+          styleId: state.styleId,
           level: state.level,
           ratio: state.ratio,
           options: state.options,
-          output: state.output,
           camera: state.camera,
           duration: state.duration,
           orientation: state.orientation,
@@ -208,13 +272,13 @@ export function createDescribeComposer(cfg: Cfg) {
         "space",
         "room",
         "style",
+        "styleId",
         "level",
         "ratio",
         "camera",
         "orientation",
       ] as const)
         if (typeof d?.[k] === "string") (state as any)[k] = d[k];
-      if (d?.output === "video" || d?.output === "image") state.output = d.output;
       if (Number(d?.options)) state.options = Number(d.options);
       if (Number(d?.duration)) state.duration = Number(d.duration);
       if (Array.isArray(d?.refs))
@@ -236,6 +300,13 @@ export function createDescribeComposer(cfg: Cfg) {
   }
 
   loadDraft();
+  ensureCamera();
+
+  /** Keeps the camera move possible in the currently selected space. */
+  function ensureCamera() {
+    const list = camerasForSpace(state.space);
+    if (!list.includes(state.camera)) state.camera = list[0]!;
+  }
 
   /* ---------- references ---------- */
 
@@ -248,7 +319,7 @@ export function createDescribeComposer(cfg: Cfg) {
     });
   }
 
-  async function addReferences(files: File[], replaceId?: string) {
+  async function addReferences(files: File[], replaceId?: string, kind?: RefKind) {
     const room = replaceId ? 1 : MAX_DESCRIBE_REFS - state.refs.length;
     if (room <= 0) {
       cfg.alert("You can attach up to " + MAX_DESCRIBE_REFS + " references.");
@@ -266,7 +337,7 @@ export function createDescribeComposer(cfg: Cfg) {
         id: replaceId || rid("r_"),
         name: file.name,
         url,
-        kind: guessKind(file.name),
+        kind: kind || guessKind(file.name),
         status: cfg.uploadReference ? "uploading" : "ready",
         progress: cfg.uploadReference ? 10 : 100,
         file,
@@ -274,7 +345,7 @@ export function createDescribeComposer(cfg: Cfg) {
       if (replaceId) {
         const i = state.refs.findIndex((r) => r.id === replaceId);
         if (i > -1) {
-          ref.kind = state.refs[i]!.kind;
+          if (!kind) ref.kind = state.refs[i]!.kind;
           state.refs[i] = ref;
         } else state.refs.push(ref);
       } else state.refs.push(ref);
@@ -337,23 +408,52 @@ export function createDescribeComposer(cfg: Cfg) {
 
   /* ---------- derived ---------- */
 
-  const credits = () => describeCredits(state.output, state.options);
+  const credits = () => describeCredits(output(), state.options);
 
-  function summary(): string {
-    const kind = state.output === "video" ? "Video" : "Image";
-    const shape = state.output === "video" ? ratioForOrientation(state.orientation) : state.ratio;
-    const opts = state.options + (state.options === 1 ? " option" : " options");
-    return (
-      kind +
-      " · " +
-      shape +
-      (state.output === "video" ? " · " + state.duration + "s" : "") +
-      " · " +
-      opts
-    );
+  /** A written idea is an AI video; a video built from the property's own
+      photos is a listing video. They are different backends and prices. */
+  function job(): DescribeJob {
+    if (!isVideo()) return "image";
+    return state.refs.some((r) => r.kind === "property") ? "listing-video" : "ai-video";
   }
 
-  const ready = () => state.prompt.trim().length > 0 && !state.busy && !uploadsPending();
+  function actionLabel(): string {
+    const j = job();
+    if (j === "listing-video") return "Create Listing Video";
+    if (j === "ai-video") return "Generate AI Video";
+    return "Generate";
+  }
+
+  /** What still has to happen before Generate can do anything. */
+  function missing(): string | null {
+    if (!state.prompt.trim() && !state.refs.length) return "Add a reference or description";
+    if (!state.prompt.trim()) return "Enter a description to continue";
+    if (!state.room.trim()) return "Choose a room or area";
+    if (!state.style.trim()) return "Choose a design style";
+    return null;
+  }
+
+  function summary(): string {
+    const gap = missing();
+    if (gap) return gap;
+    const n = Math.max(1, state.options);
+    if (isVideo())
+      return [
+        state.room,
+        state.camera,
+        state.duration + " seconds",
+        state.orientation,
+        n + (n === 1 ? " video" : " videos"),
+      ].join(" · ");
+    return [
+      state.room,
+      state.style,
+      state.level,
+      n + (n === 1 ? " image" : " images"),
+    ].join(" · ");
+  }
+
+  const ready = () => !missing() && !state.busy && !uploadsPending() && !uploadsFailed();
 
   /* ---------- html ---------- */
 
@@ -439,11 +539,30 @@ export function createDescribeComposer(cfg: Cfg) {
     );
   }
 
+  /** The Add Reference menu doubles as the only place a floor plan is added. */
+  function refMenu(): string {
+    return (
+      '<div class="sp-refmenu" role="menu">' +
+      REF_KINDS.map(
+        (k) =>
+          '<button type="button" role="menuitem" data-sp-refkindpick="' +
+          k.id +
+          '">' +
+          esc(k.label) +
+          "</button>",
+      ).join("") +
+      "</div>"
+    );
+  }
+
+  let menuOpen = false;
+
   function html(): string {
     const showStarters = state.prompt.trim().length === 0;
+    const video = isVideo();
+    const improveOk = state.prompt.trim().length >= IMPROVE_MIN_CHARS;
     return (
       '<div class="sp-pane sp-describe">' +
-      '<div class="sp-pane-h"><b>Describe Your Space</b><span>Write what you want, add references if you have them, then generate.</span></div>' +
       '<div class="sp-composer' +
       (state.busy ? " is-busy" : "") +
       '">' +
@@ -460,12 +579,25 @@ export function createDescribeComposer(cfg: Cfg) {
       esc(state.prompt) +
       "</textarea>" +
       '<div class="sp-composer-t">' +
+      '<div class="sp-refwrap">' +
       '<button type="button" class="sp-tool" data-sp="addref"' +
       (state.refs.length >= MAX_DESCRIBE_REFS ? " disabled" : "") +
-      ' title="Attach an inspiration photo, property photo, sketch, floor plan, material or color reference"><i data-lucide="plus"></i>Add Reference</button>' +
+      ' aria-haspopup="true" aria-expanded="' +
+      menuOpen +
+      '" title="Attach an inspiration photo, property photo, sketch, floor plan, material or color reference"><i data-lucide="plus"></i>Add Reference</button>' +
+      (menuOpen ? refMenu() : "") +
+      "</div>" +
       '<button type="button" class="sp-tool" data-sp="improve"' +
-      (state.prompt.trim() && !state.improving && !state.busy ? "" : " disabled") +
-      ' title="Expand your description into a detailed design brief. You can undo it.">' +
+      (improveOk && !state.improving && !state.busy ? "" : " disabled") +
+      ' title="' +
+      esc(
+        improveOk
+          ? "Expand your description into a detailed design brief. You can undo it."
+          : "Write at least a short sentence (" +
+              IMPROVE_MIN_CHARS +
+              " characters) before this can improve it.",
+      ) +
+      '">' +
       (state.improving
         ? '<span class="sp-spin dark" aria-hidden="true"></span>Improving…'
         : '<i data-lucide="wand-sparkles"></i>Improve Description') +
@@ -490,58 +622,66 @@ export function createDescribeComposer(cfg: Cfg) {
         : "") +
       (showStarters
         ? '<div class="sp-try"><span class="sp-try-l">Try:</span><div class="sp-chips">' +
-          DESCRIBE_EXAMPLES.map(
-            (x) =>
-              '<button type="button" class="sp-chip" data-sp-ex="' +
-              esc(x) +
-              '">' +
-              esc(x) +
-              "</button>",
-          ).join("") +
+          DESCRIBE_EXAMPLES.slice(0, 5)
+            .map(
+              (x) =>
+                '<button type="button" class="sp-chip" data-sp-ex="' +
+                esc(x) +
+                '">' +
+                esc(x) +
+                "</button>",
+            )
+            .join("") +
           "</div></div>"
-        : "") +
-      '<div class="sp-outrow"><span class="sp-dopt-l">Output</span><div class="sp-chips">' +
-      chip("Image", "out", "image", state.output === "image") +
-      chip("Video", "out", "video", state.output === "video") +
-      "</div></div>" +
-      (state.output === "video"
-        ? '<div class="sp-video">' +
-          chipRow("Camera Movement", "cam", DESCRIBE_CAMERAS, state.camera) +
-          chipRow("Duration", "dur", DESCRIBE_DURATIONS, state.duration, "s") +
-          chipRow("Orientation", "orient", DESCRIBE_ORIENTATIONS, state.orientation) +
-          "</div>"
         : "") +
       '<details class="sp-details"' +
       (state.detailsOpen ? " open" : "") +
       '><summary data-sp="details">Add Details</summary>' +
       chipRow("Space", "space", DESCRIBE_SPACES, state.space) +
       '<div class="sp-dgrid">' +
-      dField("dRoom", "Room Or Area", state.room, "Kitchen") +
-      dField("dStyle", "Design Style", state.style, "Contemporary") +
+      dSelect("room", "Room Or Area", state.room, "Choose A Room Or Area") +
+      dSelect("style", "Design Style", state.style, "Choose A Design Style") +
       "</div>" +
       chipRow("Change Level", "level", DESCRIBE_LEVELS, state.level) +
-      (state.output === "image" ? chipRow("Aspect Ratio", "ratio", DESCRIBE_RATIOS, state.ratio) : "") +
+      (video
+        ? '<div class="sp-video">' +
+          chipRow("Camera Movement", "cam", camerasForSpace(state.space), state.camera) +
+          chipRow("Duration", "dur", DESCRIBE_DURATIONS, state.duration, "s") +
+          chipRow("Orientation", "orient", DESCRIBE_ORIENTATIONS, state.orientation) +
+          '<p class="sp-hint">Orientation sets the video shape: ' +
+          esc(ratioForOrientation(state.orientation)) +
+          ".</p>" +
+          "</div>"
+        : chipRow("Aspect Ratio", "ratio", DESCRIBE_RATIOS, state.ratio)) +
       chipRow("Options", "opt", DESCRIBE_OPTION_COUNTS, state.options) +
+      '<p class="sp-hint sp-total">' +
+      esc(optionTotalLabel(output(), state.options)) +
+      "</p>" +
       "</details>" +
       (uploadsFailed()
         ? '<p class="sp-warn">A reference did not finish uploading. Retry it or remove it before generating.</p>'
         : "") +
-      '<div class="sp-describe-foot">' +
+      '<div class="sp-describe-foot' +
+      (missing() ? " is-blocked" : "") +
+      '">' +
       '<span class="sp-meta">' +
       esc(summary()) +
       "</span>" +
-      '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" aria-label="Generate from your description"' +
+      '<span class="sp-foot-r"><span class="sp-cost">' +
+      credits() +
+      (credits() === 1 ? " Credit" : " Credits") +
+      "</span>" +
+      '<button type="button" class="btn btn-primary btn-sm sp-create" data-sp="describe" aria-label="' +
+      esc(actionLabel()) +
+      '"' +
       (ready() ? "" : " disabled") +
       ">" +
       (state.busy
         ? '<span class="sp-spin" aria-hidden="true"></span>Generating…'
         : uploadsPending()
           ? '<span class="sp-spin" aria-hidden="true"></span>Uploading References…'
-          : '<i data-lucide="sparkles"></i>Generate <em>· ' +
-            credits() +
-            (credits() === 1 ? " Credit" : " Credits") +
-            "</em>") +
-      "</button>" +
+          : '<i data-lucide="sparkles"></i>' + esc(actionLabel())) +
+      "</button></span>" +
       "</div>" +
       (state.preview
         ? '<div class="sp-lightbox" data-sp="closepreview"><img src="' +
@@ -552,17 +692,18 @@ export function createDescribeComposer(cfg: Cfg) {
     );
   }
 
-  function dField(name: string, label: string, value: string, ph: string) {
+  /** A real selector, not a text field: it opens the visual picker. */
+  function dSelect(name: string, label: string, value: string, ph: string) {
     return (
-      '<label class="sp-dfield"><span>' +
+      '<div class="sp-dfield"><span>' +
       esc(label) +
-      '</span><input type="text" data-sp-f="' +
+      '</span><button type="button" class="sp-dpick' +
+      (value ? " has" : "") +
+      '" data-sp="pick' +
       name +
-      '" value="' +
-      esc(value) +
-      '" placeholder="' +
-      esc(ph) +
-      '"></label>'
+      '" aria-haspopup="dialog"><span>' +
+      esc(value || ph) +
+      '</span><i data-lucide="chevron-down"></i></button></div>'
     );
   }
 
@@ -580,25 +721,40 @@ export function createDescribeComposer(cfg: Cfg) {
       cfg.alert("Retry or remove the reference that failed to upload.");
       return;
     }
+    const gap = missing();
+    if (gap) {
+      cfg.alert(gap + ".");
+      return;
+    }
     state.busy = true;
     cfg.render();
+    const ratio = isVideo() ? ratioForOrientation(state.orientation) : state.ratio;
     try {
+      /* Nothing is charged here: credits are taken only when the server
+         accepts the job, and a retry reuses the same request id. */
       await cfg.onDescribe?.(prompt, {
         references: state.refs.map((r) => r.remoteUrl || r.url),
         referenceKinds: state.refs.map((r) => r.kind),
         referenceStrength: state.strength,
-        space: state.space,
-        room: state.room.trim(),
-        style: state.style.trim(),
-        level: state.level,
-        ratio: state.output === "video" ? ratioForOrientation(state.orientation) : state.ratio,
-        options: state.options,
-        output: state.output,
+        selectedSpace: state.space,
+        selectedRoomType: state.room.trim(),
+        selectedStyleId: state.styleId || state.style.trim(),
+        changeLevel: state.level,
+        aspectRatio: ratio,
+        optionCount: state.options,
+        job: job(),
+        output: output(),
         camera: state.camera,
         duration: state.duration,
         orientation: state.orientation,
         credits: credits(),
         requestId: state.requestId,
+        space: state.space,
+        room: state.room.trim(),
+        style: state.style.trim(),
+        level: state.level,
+        ratio,
+        options: state.options,
         mood: "",
         features: "",
       });
@@ -606,7 +762,8 @@ export function createDescribeComposer(cfg: Cfg) {
       state.requestId = rid("req_");
       saveDraft();
     } catch (err: any) {
-      /* The description and references are deliberately left untouched. */
+      /* The description and references are deliberately left untouched, and
+         the request id is kept so a retry can never be charged twice. */
       cfg.alert((err && err.message) || "Could not create that. Your description was kept.");
     } finally {
       state.busy = false;
@@ -617,7 +774,7 @@ export function createDescribeComposer(cfg: Cfg) {
   async function improve() {
     if (state.improving || state.busy) return;
     const prompt = state.prompt.trim();
-    if (!prompt || !cfg.onImprove) return;
+    if (prompt.length < IMPROVE_MIN_CHARS || !cfg.onImprove) return;
     state.improving = true;
     cfg.render();
     try {
@@ -637,12 +794,19 @@ export function createDescribeComposer(cfg: Cfg) {
   }
 
   /** Returns true when the click belonged to the composer. */
-  function onClick(t: HTMLElement, pick: (replaceId?: string) => void): boolean {
+  function onClick(t: HTMLElement, pick: (replaceId?: string, kind?: RefKind) => void): boolean {
     const hit = (attr: string) =>
       (t.closest("[data-sp-" + attr + "]") as HTMLElement | null)?.dataset?.[
         "sp" + attr.charAt(0).toUpperCase() + attr.slice(1)
       ];
 
+    const refKindPick = hit("refkindpick");
+    if (refKindPick) {
+      menuOpen = false;
+      pick(undefined, refKindPick as RefKind);
+      cfg.render();
+      return true;
+    }
     const refx = hit("refx");
     if (refx) {
       state.refs = state.refs.filter((r) => r.id !== refx);
@@ -677,20 +841,22 @@ export function createDescribeComposer(cfg: Cfg) {
     }
     const set: [string, (v: string) => void][] = [
       ["strength", (v) => (state.strength = v)],
-      ["space", (v) => (state.space = v)],
+      ["space", (v) => {
+        state.space = v;
+        ensureCamera();
+      }],
       ["level", (v) => (state.level = v)],
       ["ratio", (v) => (state.ratio = v)],
       ["opt", (v) => (state.options = Number(v) || 1)],
       ["cam", (v) => (state.camera = v)],
       ["dur", (v) => (state.duration = Number(v) || 10)],
       ["orient", (v) => (state.orientation = v)],
-      ["out", (v) => (state.output = v === "video" ? "video" : "image")],
     ];
     for (const [attr, apply] of set) {
       const v = hit(attr);
       if (v != null) {
         apply(v);
-        if (attr !== "out") state.detailsOpen = state.detailsOpen || isDetail(attr);
+        state.detailsOpen = state.detailsOpen || isDetail(attr);
         saveDraft();
         cfg.render();
         return true;
@@ -702,7 +868,31 @@ export function createDescribeComposer(cfg: Cfg) {
       return true;
     }
     if (act === "addref") {
-      pick();
+      menuOpen = !menuOpen;
+      cfg.render();
+      return true;
+    }
+    if (act === "pickroom") {
+      state.detailsOpen = true;
+      if (cfg.openRoomPicker)
+        cfg.openRoomPicker(state.space, state.room, (label) => {
+          state.room = label;
+          saveDraft();
+          cfg.render();
+        });
+      else cfg.alert("The room library is not available here yet.");
+      return true;
+    }
+    if (act === "pickstyle") {
+      state.detailsOpen = true;
+      if (cfg.openStylePicker)
+        cfg.openStylePicker(state.space, state.room, state.styleId, (id, label) => {
+          state.styleId = id;
+          state.style = label || id;
+          saveDraft();
+          cfg.render();
+        });
+      else cfg.alert("The style library is not available here yet.");
       return true;
     }
     if (act === "improve") {
@@ -727,26 +917,26 @@ export function createDescribeComposer(cfg: Cfg) {
       cfg.render();
       return true;
     }
+    if (menuOpen) {
+      menuOpen = false;
+      cfg.render();
+    }
     return false;
   }
 
   const isDetail = (attr: string) =>
-    attr === "space" || attr === "level" || attr === "ratio" || attr === "opt";
+    attr === "space" ||
+    attr === "level" ||
+    attr === "ratio" ||
+    attr === "opt" ||
+    attr === "cam" ||
+    attr === "dur" ||
+    attr === "orient";
 
   /** Returns true when the input belonged to the composer. */
   function onInput(name: string, value: string): boolean {
     if (name === "prompt") {
       state.prompt = value;
-      saveDraft();
-      return true;
-    }
-    if (name === "dRoom") {
-      state.room = value;
-      saveDraft();
-      return true;
-    }
-    if (name === "dStyle") {
-      state.style = value;
       saveDraft();
       return true;
     }
@@ -759,6 +949,7 @@ export function createDescribeComposer(cfg: Cfg) {
     const ref = state.refs.find((r) => r.id === id);
     if (ref) ref.kind = (t as HTMLSelectElement).value as RefKind;
     saveDraft();
+    cfg.render();
     return true;
   }
 
@@ -766,13 +957,18 @@ export function createDescribeComposer(cfg: Cfg) {
   function sync(root: HTMLElement | null) {
     const ta = root?.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement | null;
     if (ta) {
+      /* A compact resting height that grows with the text. */
       ta.style.height = "auto";
-      ta.style.height = Math.min(ta.scrollHeight, 280) + "px";
+      ta.style.height = Math.min(Math.max(ta.scrollHeight, 58), 260) + "px";
     }
     const btn = root?.querySelector(".sp-create") as HTMLButtonElement | null;
     if (btn) btn.disabled = !ready();
     const imp = root?.querySelector('[data-sp="improve"]') as HTMLButtonElement | null;
-    if (imp) imp.disabled = !state.prompt.trim() || state.improving || state.busy;
+    if (imp)
+      imp.disabled =
+        state.prompt.trim().length < IMPROVE_MIN_CHARS || state.improving || state.busy;
+    const meta = root?.querySelector(".sp-describe-foot .sp-meta") as HTMLElement | null;
+    if (meta) meta.textContent = summary();
   }
 
   return {
@@ -787,5 +983,8 @@ export function createDescribeComposer(cfg: Cfg) {
     addReferences,
     credits,
     summary,
+    missing,
+    actionLabel,
+    job,
   };
 }

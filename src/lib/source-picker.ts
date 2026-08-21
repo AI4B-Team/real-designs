@@ -14,7 +14,16 @@ import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { MAX_FILE_MB, rejectReason } from "@/lib/upload-manager";
 import { splitAddressLines, photoCountLabel, type ProjectAddress } from "@/lib/property-address";
-import { createDescribeComposer, type DescribeDetails } from "@/lib/describe-composer";
+import {
+  createDescribeComposer,
+  type DescribeDetails,
+  type DescribeOutput,
+  type RefKind,
+} from "@/lib/describe-composer";
+import { openAreaPicker } from "@/lib/room-picker-modal";
+import { openStyleBrowser } from "@/lib/canvas-style-ui";
+import { styleById } from "@/lib/style-catalog";
+
 
 
 export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design" | "describe";
@@ -89,7 +98,7 @@ export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "property", "design", "url"],
+    sources: ["upload", "cloud", "property", "design", "describe", "url"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
@@ -200,6 +209,8 @@ export type PickerOptions = {
   loadDesigns?: () => Promise<PickerDesign[]>;
   /** Called with the finished designs the user selected, in order. */
   onDesigns?: (designs: PickerDesign[]) => void | Promise<void>;
+  /** The authoritative output type, owned by the project-type card above. */
+  output?: () => DescribeOutput;
   /** Which source opens first, so a host can remember the tab across renders. */
   initialTab?: SourceId;
   onTab?: (tab: SourceId) => void;
@@ -315,16 +326,19 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const refInput = document.createElement("input");
   refInput.type = "file";
   refInput.hidden = true;
-  refInput.accept = "image/*";
+  refInput.accept = "image/*,application/pdf,.pdf";
   refInput.multiple = true;
   host.appendChild(refInput);
   let refReplaceId: string | undefined;
+  let refKind: RefKind | undefined;
   refInput.addEventListener("change", async () => {
     const files = Array.from(refInput.files || []);
     refInput.value = "";
     const replace = refReplaceId;
+    const kind = refKind;
     refReplaceId = undefined;
-    if (files.length) await describe.addReferences(files, replace);
+    refKind = undefined;
+    if (files.length) await describe.addReferences(files, replace, kind);
   });
 
   const describe = createDescribeComposer({
@@ -332,16 +346,33 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     alert,
     render: () => render(),
     draftKey: "rd.describe." + opts.context,
+    /* The project-type card owns the output type; the composer only reads it. */
+    output: () => (opts.output ? opts.output() : opts.context === "video" ? "video" : "image"),
     onDescribe: (prompt, details) => opts.onDescribe?.(prompt, details),
     onImprove: (prompt) => opts.onImprove?.(prompt),
     ...(opts.uploadReference ? { uploadReference: opts.uploadReference } : {}),
+    openRoomPicker: (space, current, apply) =>
+      openAreaPicker({
+        space: (String(space || "interior").toLowerCase() as any) || "interior",
+        current,
+        onApply: apply,
+      }),
+    openStylePicker: (space, room, currentId, apply) =>
+      openStyleBrowser({
+        projectType: String(space || "interior").toLowerCase(),
+        room: room || null,
+        currentId,
+        onPick: (styleId) => apply(styleId, styleById(styleId)?.displayName || styleId),
+      }),
   });
 
-  function pickReference(replaceId?: string) {
+  function pickReference(replaceId?: string, kind?: RefKind) {
     refReplaceId = replaceId;
+    refKind = kind;
     refInput.multiple = !replaceId;
     refInput.click();
   }
+
 
 
 

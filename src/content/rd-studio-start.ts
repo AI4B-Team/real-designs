@@ -86,7 +86,12 @@ export type StudioStartCtx = {
   fileToDataUrl: (file: File) => Promise<string>;
 };
 
-import { mountSourcePicker, type PickerDesign, type PickerHero } from "@/lib/source-picker";
+import {
+  mountSourcePicker,
+  CONTEXT_CONFIG,
+  type PickerDesign,
+  type PickerHero,
+} from "@/lib/source-picker";
 import { PHOTOS } from "@/content/rd-photos";
 import { cleanAddressText } from "@/lib/property-address";
 import { openStagingReview } from "@/content/rd-staging";
@@ -235,6 +240,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     options: 1,
     /** What the description should produce: a design image or a listing video. */
     output: "image" as "image" | "video",
+    /** Which backend the last describe request belongs to. */
+    job: "image" as "image" | "listing-video" | "ai-video",
+    /** The source tab currently open in the picker, for the section heading. */
+    sourceTab: "upload" as string,
+
     camera: "slow-push-in",
     duration: 5,
     orientation: "16:9",
@@ -1116,6 +1126,46 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     );
   }
 
+  /** The section heading follows the chosen source. Describe is never
+      described as adding photos. */
+  function sourceHeading(tab: string): { title: string; copy: string } {
+    if (tab === "cloud")
+      return {
+        title: "Choose From Google Drive",
+        copy: "Import photos from your connected Google Drive account.",
+      };
+    if (tab === "property")
+      return {
+        title: "Choose A Property",
+        copy: "Reuse photos you have already uploaded to a property.",
+      };
+    if (tab === "design")
+      return {
+        title: "Choose Saved Designs",
+        copy: "Start from designs you have already generated.",
+      };
+    if (tab === "describe")
+      return {
+        title: "Describe Your Space",
+        copy: "Write what you want, add references if you have them, then generate.",
+      };
+    if (tab === "url")
+      return {
+        title: "Import From A Listing Link",
+        copy: "Paste a listing link to read its details. No photos are imported.",
+      };
+    if (tab === "address")
+      return { title: "Add A Property Address", copy: "File this work under a property." };
+    return {
+      title: "Upload Your Photos",
+      copy:
+        state.door === "video"
+          ? "Upload a complete property shoot or select photos you already have."
+          : "Upload one or more spaces or select photos you already have.",
+    };
+  }
+
+
   function chooserHtml() {
     const doorCard = (id: "design" | "video", icon: string, title: string, sub: string) =>
       '<button type="button" class="stw-door' +
@@ -1164,13 +1214,12 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         "Turn property photos into a polished listing video.",
       ) +
       "</div></div>" +
-      '<div class="stw-source"><div class="stw-sec-h"><h3>' +
-      "Add Your Photos" +
-      "</h3><span>" +
-      (state.door === "video"
-        ? "Upload a complete property shoot or select photos you already have."
-        : "Upload one or more spaces or select photos you already have.") +
+      '<div class="stw-source"><div class="stw-sec-h"><h3 id="stwSourceH">' +
+      sourceHeading(state.sourceTab).title +
+      "</h3><span id=\"stwSourceS\">" +
+      sourceHeading(state.sourceTab).copy +
       "</span></div>" +
+
       '<div id="stSource"></div>' +
       '<p class="stw-secondary stw-doorfoot">' +
       '<button class="stw-samplelink" data-sts="sample">' +
@@ -1298,6 +1347,22 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     picker = mountSourcePicker(slot, {
       context: isVideo ? "video" : "design",
       hero: () => uploadHero(isVideo),
+      /* The project-type card is the only output-type authority. */
+      output: () => (isVideo ? "video" : "image"),
+      initialTab: (CONTEXT_CONFIG[isVideo ? "video" : "design"].sources.includes(
+        state.sourceTab as any,
+      )
+        ? state.sourceTab
+        : "upload") as any,
+      onTab: (tab: string) => {
+        state.sourceTab = tab;
+        const h = sourceHeading(tab);
+        const t = document.getElementById("stwSourceH");
+        const s = document.getElementById("stwSourceS");
+        if (t) t.textContent = h.title;
+        if (s) s.textContent = h.copy;
+      },
+
       /* Local escape: the shell helper is not always initialized this early. */
       esc: escLocal,
       lucide,
@@ -1382,18 +1447,34 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         if (details) {
           state.refs = details.references || [];
           state.refStrength = details.referenceStrength || state.refStrength;
-          state.ratio = details.ratio || state.ratio;
-          state.options = details.options || 1;
+          state.ratio = details.aspectRatio || details.ratio || state.ratio;
+          state.options = details.optionCount || details.options || 1;
           state.output = details.output || "image";
+          state.job = details.job || (state.output === "video" ? "ai-video" : "image");
           state.camera = details.camera || state.camera;
           state.duration = details.duration || state.duration;
           state.orientation = details.orientation || state.orientation;
-          state.level = details.level || state.level;
-          if (details.space) state.space = details.space.toLowerCase();
-          if (details.room) state.room = details.room;
-          if (details.style) state.style = details.style;
+          state.level = details.changeLevel || details.level || state.level;
+          if (details.selectedSpace) state.space = details.selectedSpace.toLowerCase();
+          if (details.selectedRoomType) state.room = details.selectedRoomType;
+          if (details.selectedStyleId) state.style = details.selectedStyleId;
           if (details.mood) state.mood = details.mood;
           if (details.features) state.features = details.features;
+        }
+        /* A video built from the property's own photos is a listing video and
+           goes to the listing builder, never to text-to-video. */
+        if (state.job === "listing-video" && state.refs.length) {
+          try {
+            (window as any).rdListingVideo?.({
+              from: "studio",
+              sourceType: "describe",
+              paths: state.refs,
+              prompt: state.prompt.trim(),
+            });
+            return;
+          } catch (_) {
+            /* fall through to the concept path */
+          }
         }
         /* Very short ideas go to the detailed setup; anything usable renders now. */
         if (state.prompt.trim().length < 12) {
@@ -1401,6 +1482,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           return;
         }
         await generateConcept();
+
       },
       onImprove: async (prompt: string) => {
         const r = await improveDescription({ data: { prompt, space: state.space || null } });
