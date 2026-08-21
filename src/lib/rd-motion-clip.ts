@@ -61,8 +61,11 @@ export function openMotionClip(item: MotionClipInput) {
     return;
   }
 
+  const space = String((item as any).space || "interior");
+  const presets = motionsForSpace(space);
   const state = {
-    motion: "push",
+    motion: defaultMotionFor(space),
+    strength: "standard" as MotionStrength,
     aspect: "9:16",
     seconds: 5,
     caption: item.room || "",
@@ -77,8 +80,16 @@ export function openMotionClip(item: MotionClipInput) {
     <h3 style="margin:0 0 4px">Create Motion Clip</h3>
     <p class="mono" style="margin:0 0 14px;color:var(--mute-2)">${esc(item.title || "Photo")} &middot; 40 Credits</p>
 
+    <div class="mc-prev"><div class="mc-prev-vp"><img id="mcPrevImg" alt="Motion preview"></div>
+      <div class="mc-prev-bar"><span class="mono">${PREVIEW_DISCLAIMER}</span>
+        <button type="button" class="fb-link" data-prev-replay>Replay</button></div></div>
+
     <div class="mc-f"><label>Camera Move</label><div class="mc-chips" data-g="motion">
-      ${MOTIONS.map(([v, l]) => `<button type="button" data-v="${v}" class="${v === state.motion ? "on" : ""}">${l}</button>`).join("")}
+      ${presets.map((m) => `<button type="button" data-v="${m.id}" title="${esc(m.blurb)}" class="${m.id === state.motion ? "on" : ""}">${esc(m.label)}</button>`).join("")}
+    </div></div>
+
+    <div class="mc-f"><label>Motion Strength</label><div class="mc-chips" data-g="strength">
+      ${MOTION_STRENGTHS.map((s) => `<button type="button" data-v="${s.id}" class="${s.id === state.strength ? "on" : ""}">${s.label}</button>`).join("")}
     </div></div>
 
     <div class="mc-f"><label>Format</label><div class="mc-chips" data-g="aspect">
@@ -91,6 +102,7 @@ export function openMotionClip(item: MotionClipInput) {
 
     <div class="mc-f"><label for="mcCap">Caption <span class="mono" style="color:var(--mute-2)">Optional</span></label>
       <input id="mcCap" type="text" maxlength="60" placeholder="Living Room" value="${esc(state.caption)}"></div>
+
 
     <div class="mc-prog" hidden><i></i></div>
     <div class="mc-actions">
