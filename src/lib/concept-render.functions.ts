@@ -23,7 +23,12 @@ const Input = z.object({
   features: z.string().max(400).nullable().optional(),
   /** Optional inspiration image as a data URL. */
   image: z.string().min(16).max(9_000_000).nullable().optional(),
+  /** Extra reference images as data URLs, inspiration only. */
+  images: z.array(z.string().min(16).max(9_000_000)).max(3).nullable().optional(),
+  /** Output framing for the concept. */
+  aspect_ratio: z.string().max(8).nullable().optional(),
 });
+
 
 const MODEL = "google/gemini-2.5-flash-image";
 
