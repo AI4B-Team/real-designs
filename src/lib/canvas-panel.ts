@@ -131,7 +131,19 @@ function fieldByLabel(text: string): HTMLElement | null {
   return (hit?.parentElement as HTMLElement) || null;
 }
 
+/** An empty Version History stays one quiet row instead of a big empty box. */
+export function refreshVersionRail() {
+  const vers = byId("rdwVers");
+  const list = byId("vars");
+  if (!vers || !list) return;
+  const n = list.querySelectorAll(":scope > *").length;
+  vers.classList.toggle("rdw-vers-empty", n === 0);
+  const count = byId("rdwVersN");
+  if (count) count.textContent = n === 0 ? "No versions yet" : n === 1 ? "1 version" : n + " versions";
+}
+
 let built = false;
+
 
 export function buildCanvasPanel() {
   const body = byId("rdwPanelBody");
