@@ -2242,9 +2242,19 @@ export function initApp(): () => void {
       };
       document.querySelectorAll(".nav-i").forEach((b) => {
         const v = b.dataset.v;
+        /* Not usable yet: hidden regardless of workspace progress. */
+        if (b.hasAttribute("data-unavailable")) {
+          b.hidden = true;
+          return;
+        }
         if (!(v in rule)) return;
         const show = rule[v] || b.classList.contains("on");
         b.hidden = !show;
+      });
+      /* Counts are live workspace information, never a zero-state badge. */
+      document.querySelectorAll(".nav-i .cnt").forEach((c) => {
+        const n = Number((c.textContent || "").trim());
+        c.hidden = !(n > 0);
       });
       /* Group headers with nothing left under them should not linger. */
       document.querySelectorAll(".side-nav .nav-group").forEach((g) => {
@@ -2259,26 +2269,20 @@ export function initApp(): () => void {
         g.hidden = !any;
       });
     }
-    /* Honest module labels: read from the live integration status, never typed in. */
-    (async function moduleStatusPills() {
+    /* Modules that only hold sample or manual data stay out of the primary
+   navigation until they do real work — no development-status badges. */
+    (async function moduleNavGate() {
       try {
         const r = await readIntegrations();
         const byKey = {};
         (r.items || []).forEach((i) => {
           byKey[i.key] = i;
         });
-        const mark = (view, label) => {
-          const b = document.querySelector('.nav-i[data-v="' + view + '"]');
-          if (!b || b.querySelector(".nav-soon")) return;
-          const s = document.createElement("span");
-          s.className = "nav-soon";
-          s.textContent = label;
-          b.appendChild(s);
-        };
-        if (byKey["products"] && !byKey["products"].connected) mark("products", "Sample Data");
-        if (byKey["listing"] && !byKey["listing"].connected) mark("listings", "Manual Only");
+        if (byKey["products"]) setNavAvailable("products", !!byKey["products"].connected);
+        if (byKey["listing"]) setNavAvailable("listings", !!byKey["listing"].connected);
       } catch (_) {}
     })();
+
 
     /* The home chooser is gone: Home renders the dashboard, and the two doors
    live in the sidebar under Create. */
