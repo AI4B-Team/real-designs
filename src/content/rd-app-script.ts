@@ -8570,6 +8570,20 @@ ${picks
       /* The cost chip always states the real price of this run. */
       const cost = document.getElementById("genCost");
       if (cost) cost.textContent = costLabel(toolCost(tool));
+      /* The confirm button always states what this exact click will do. */
+      const CONFIRM_LABEL = {
+        Redesign: "Generate Design",
+        "Virtual Stage": "Stage Room",
+        Declutter: "Declutter Room",
+        "Material Swap": "Apply Material",
+        "Sketch To Render": "Render Sketch",
+        "Multi Angle": "Generate Angles",
+        "Walkthrough Video": "Render Walkthrough",
+        "2D To 3D Plan": "Generate 3D Plan",
+      };
+      const genLabel = document.getElementById("genLabel");
+      if (genLabel) genLabel.textContent = CONFIRM_LABEL[tool] || "Generate Design";
+
       if (missing) {
         btn.disabled = true;
         btn.dataset.csGate = "1";
