@@ -838,7 +838,8 @@
   font-weight: 600;
   color: var(--ink);
 }
-.rd-app .xp-quiz-opt span i {
+.rd-app .xp-quiz-opt span i,
+.rd-app .xp-quiz-opt span svg {
   width: 14px;
   height: 14px;
   color: var(--red);

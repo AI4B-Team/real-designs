@@ -1030,7 +1030,8 @@
   cursor: pointer;
 }
 .rda-pop button:hover { background: var(--tint, #f5f5f6); }
-.rda-pop i { width: 16px; height: 16px; margin-top: 2px; color: var(--mute, #6b6b70); }
+.rda-pop i,
+.rda-pop svg { width: 16px; height: 16px; margin-top: 2px; color: var(--mute, #6b6b70); }
 .rda-pop b { display: block; font-size: 0.82rem; font-weight: 600; }
 .rda-pop em { display: block; font-style: normal; font-size: 0.72rem; color: var(--mute-2, #8a8a90); margin-top: 2px; }
 

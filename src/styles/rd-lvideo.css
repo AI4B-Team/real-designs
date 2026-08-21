@@ -71,7 +71,8 @@
   background: #fff;
   padding: 0 13px;
 }
-.lv-input i {
+.lv-input i,
+.lv-input svg {
   width: 15px;
   height: 15px;
   color: var(--mute-2);
@@ -103,7 +104,8 @@
 .lv-match:hover {
   border-color: var(--ink);
 }
-.lv-match i {
+.lv-match i,
+.lv-match svg {
   width: 15px;
   height: 15px;
   color: var(--mute-2);
@@ -137,7 +139,8 @@
   border-color: var(--red, #c00);
   background: #fffafa;
 }
-.lv-drop i {
+.lv-drop i,
+.lv-drop svg {
   width: 26px;
   height: 26px;
   color: var(--mute-2);
@@ -220,7 +223,8 @@
   align-items: center;
   gap: 10px;
 }
-.lv-ctx i {
+.lv-ctx i,
+.lv-ctx svg {
   width: 15px;
   height: 15px;
   color: var(--red, #c00);

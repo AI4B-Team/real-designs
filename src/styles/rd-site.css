@@ -662,7 +662,8 @@
   margin-bottom: 7px;
 }
 
-.rd-site .step-lab i {
+.rd-site .step-lab i,
+.rd-site .step-lab svg {
   width: 15px;
   height: 15px;
   border-radius: 50%;
@@ -2419,7 +2420,8 @@
   place-items: center;
   margin-bottom: 12px;
 }
-.rd-site .fic i {
+.rd-site .fic i,
+.rd-site .fic svg {
   width: 17px;
   height: 17px;
   color: var(--red);
@@ -2476,7 +2478,8 @@
   align-self: center;
   margin-top: 14px;
 }
-.rd-site .parrow i {
+.rd-site .parrow i,
+.rd-site .parrow svg {
   width: 16px;
   height: 16px;
   color: var(--line-2);
@@ -2538,11 +2541,13 @@
 .rd-site .fstep.on .fic {
   background: rgba(204, 0, 0, 0.1);
 }
-.rd-site .fstep.on .fic i {
+.rd-site .fstep.on .fic i,
+.rd-site .fstep.on .fic svg {
   color: var(--red);
 }
 
-.rd-site .fstep.on .fic i {
+.rd-site .fstep.on .fic i,
+.rd-site .fstep.on .fic svg {
   color: var(--red);
 }
 
@@ -2637,7 +2642,8 @@
   font-size: 8px;
   font-weight: 600;
 }
-.rd-site .pnode .pim .pov.cost i {
+.rd-site .pnode .pim .pov.cost i,
+.rd-site .pnode .pim .pov.cost svg {
   display: block;
   width: auto;
   height: auto;
@@ -2654,7 +2660,8 @@
   background: #1b7f4b;
   color: #fff;
 }
-.rd-site .pnode .pim .pov.appr i {
+.rd-site .pnode .pim .pov.appr i,
+.rd-site .pnode .pim .pov.appr svg {
   color: #fff;
 }
 .rd-site .pnode .pim .pav {
@@ -2812,7 +2819,8 @@
 .rd-site .hdot.keep {
   border-color: var(--ok);
 }
-.rd-site .hdot.keep i {
+.rd-site .hdot.keep i,
+.rd-site .hdot.keep svg {
   width: 13px;
   height: 13px;
   border-radius: 0;
@@ -2822,7 +2830,8 @@
 .rd-site .hdot.rep {
   border-color: var(--red);
 }
-.rd-site .hdot.rep i {
+.rd-site .hdot.rep i,
+.rd-site .hdot.rep svg {
   width: 13px;
   height: 13px;
   border-radius: 0;
@@ -2832,7 +2841,8 @@
 .rd-site .hdot.rm {
   border-color: var(--mute);
 }
-.rd-site .hdot.rm i {
+.rd-site .hdot.rm i,
+.rd-site .hdot.rm svg {
   width: 13px;
   height: 13px;
   border-radius: 0;
@@ -2940,7 +2950,8 @@
   font-size: 0.76rem;
   line-height: 1.35;
 }
-.rd-site .hot-prompt i {
+.rd-site .hot-prompt i,
+.rd-site .hot-prompt svg {
   width: 14px;
   height: 14px;
   flex: 0 0 auto;
@@ -3081,7 +3092,8 @@
   padding: 16px 18px;
   border-bottom: 1px solid var(--line);
 }
-.rd-site .lock-head > i {
+.rd-site .lock-head > i,
+.rd-site .lock-head > svg {
   width: 18px;
   height: 18px;
   color: var(--red);
@@ -3462,7 +3474,8 @@
   place-items: center;
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
 }
-.rd-site .pplay i {
+.rd-site .pplay i,
+.rd-site .pplay svg {
   width: 19px;
   height: 19px;
   color: var(--red);
@@ -3674,7 +3687,8 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.rd-site .pv-disc i {
+.rd-site .pv-disc i,
+.rd-site .pv-disc svg {
   width: 13px;
   height: 13px;
   color: var(--ok, #0f7b4f);
@@ -3708,7 +3722,8 @@
   font-size: 0.72rem;
   font-weight: 500;
 }
-.rd-site .pv-pin i {
+.rd-site .pv-pin i,
+.rd-site .pv-pin svg {
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -3770,7 +3785,8 @@
   font-size: 0.82rem;
   color: var(--mute);
 }
-.rd-site .pv-note i {
+.rd-site .pv-note i,
+.rd-site .pv-note svg {
   width: 15px;
   height: 15px;
   color: var(--red);
@@ -3880,7 +3896,8 @@
   background: var(--paper);
   padding: 14px 16px;
 }
-.rd-site .pmini i {
+.rd-site .pmini i,
+.rd-site .pmini svg {
   width: 18px;
   height: 18px;
   color: var(--red);
@@ -3924,7 +3941,8 @@
   border-radius: var(--r);
   background: var(--paper);
 }
-.rd-site .cred-band i {
+.rd-site .cred-band i,
+.rd-site .cred-band svg {
   width: 20px;
   height: 20px;
   color: var(--red);
@@ -4477,7 +4495,8 @@
 .rd-site .gal-strength .gstr:first-child {
   border-left: 0;
 }
-.rd-site .gal-strength .gstr i {
+.rd-site .gal-strength .gstr i,
+.rd-site .gal-strength .gstr svg {
   width: 16px;
   height: 16px;
   flex: none;
@@ -4898,7 +4917,8 @@
   align-items: center;
   justify-content: center;
 }
-.rd-site .cm.ok i {
+.rd-site .cm.ok i,
+.rd-site .cm.ok svg {
   width: 18px;
   height: 18px;
   color: var(--ink);
@@ -5241,7 +5261,8 @@
   border-radius: 999px;
   padding: 8px 15px;
 }
-.rd-site .p3-src i {
+.rd-site .p3-src i,
+.rd-site .p3-src svg {
   width: 15px;
   height: 15px;
   color: var(--red);
@@ -5376,7 +5397,8 @@
   animation: rdCam 1.8s ease-out infinite;
   z-index: 2;
 }
-.rd-site .p3cam i {
+.rd-site .p3cam i,
+.rd-site .p3cam svg {
   width: 15px;
   height: 15px;
   color: #fff;
@@ -5992,7 +6014,8 @@
   background: var(--red);
   color: #fff;
 }
-.rd-site .ui-abtn i {
+.rd-site .ui-abtn i,
+.rd-site .ui-abtn svg {
   border: 1px solid var(--line);
   color: var(--mute);
 }
@@ -6628,7 +6651,8 @@
   text-overflow: ellipsis;
   color: #fff;
 }
-.rd-site .sc-row i {
+.rd-site .sc-row i,
+.rd-site .sc-row svg {
   color: rgba(255, 255, 255, 0.45);
   font-style: normal;
   font-size: 0.5rem;
@@ -8215,7 +8239,8 @@
   border-color: var(--red, #c00);
   background: rgba(204, 0, 0, 0.04);
 }
-.rd-site .umodal-drop i {
+.rd-site .umodal-drop i,
+.rd-site .umodal-drop svg {
   width: 26px;
   height: 26px;
   color: var(--red, #c00);
@@ -8851,7 +8876,8 @@
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.18);
   color: var(--ink);
 }
-.rd-site .gen-gate i {
+.rd-site .gen-gate i,
+.rd-site .gen-gate svg {
   width: 20px;
   height: 20px;
   color: var(--red);
@@ -10418,7 +10444,8 @@ p.cmp-note {
   border-radius: 12px;
   background: var(--white);
 }
-.rd-site .bfd-proof li i {
+.rd-site .bfd-proof li i,
+.rd-site .bfd-proof li svg {
   flex: 0 0 26px;
   width: 26px;
   height: 26px;

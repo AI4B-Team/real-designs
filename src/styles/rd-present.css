@@ -40,7 +40,8 @@
   justify-items: center;
   gap: 8px;
 }
-.pk-empty i {
+.pk-empty i,
+.pk-empty svg {
   width: 26px;
   height: 26px;
   color: #cc0000;
@@ -234,7 +235,8 @@
   height: 100%;
   object-fit: cover;
 }
-.pk-thumb i {
+.pk-thumb i,
+.pk-thumb svg {
   color: #9a9a9a;
 }
 .pk-thumb em {
@@ -249,7 +251,8 @@
   display: grid;
   place-items: center;
 }
-.pk-thumb em i {
+.pk-thumb em i,
+.pk-thumb em svg {
   width: 13px;
   height: 13px;
   color: #fff;
@@ -333,7 +336,8 @@
   padding: 7px 0;
   border-bottom: 1px solid #f2f2f2;
 }
-.pk-act i {
+.pk-act i,
+.pk-act svg {
   width: 15px;
   height: 15px;
   color: #cc0000;

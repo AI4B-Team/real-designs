@@ -123,7 +123,8 @@
 .rd-app .rv-sc { flex: 0 0 auto; width: 132px; border: 1px solid var(--line, #eee); border-radius: 10px; padding: 8px; background: #fff; }
 .rd-app .rv-sc .rv-a-th { width: 100%; height: 74px; margin: 6px 0; }
 .rd-app .rv-sc b { display: block; font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.rd-app .rv-sc i { font-style: normal; font-size: 11px; color: #7a7a7a; }
+.rd-app .rv-sc i,
+.rd-app .rv-sc svg { font-style: normal; font-size: 11px; color: #7a7a7a; }
 
 .rd-app .rv-fail { border: 1px solid #f2c2c2; background: #fdf3f3; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
 .rd-app .rv-fail b { display: block; font-size: 13px; font-weight: 800; }
@@ -228,7 +229,8 @@
   border: 1px solid var(--line, #e6e6e6); border-radius: 12px; padding: 8px; }
 .rd-app .rv-cand .rv-a-th { width: 88px; height: 62px; border-radius: 8px; background-size: cover; background-position: center; background-color: #f2f2f2; display: block; }
 .rd-app .rv-cand span { display: block; font-size: 13px; }
-.rd-app .rv-cand i { display: block; font-size: 11.5px; color: #6b6b6b; font-style: normal; }
+.rd-app .rv-cand i,
+.rd-app .rv-cand svg { display: block; font-size: 11.5px; color: #6b6b6b; font-style: normal; }
 
 .rd-app .rv-seg.wrap { flex-wrap: wrap; }
 .rd-app .rv-bulk { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 14px 0 10px; }
@@ -259,7 +261,8 @@
   text-align: left; background: #fff; border: 1px solid var(--line, #e6e6e6); border-radius: 10px; padding: 9px 12px; font-size: 13px; cursor: pointer; }
 .rd-app .rv-pop-row:hover { background: #f6f6f6; }
 .rd-app .rv-pop-row.on { border-color: var(--red, #CC0000); color: var(--red, #CC0000); font-weight: 600; }
-.rd-app .rv-pop-row i { font-style: normal; font-size: 11.5px; color: #6b6b6b; }
+.rd-app .rv-pop-row i,
+.rd-app .rv-pop-row svg { font-style: normal; font-size: 11.5px; color: #6b6b6b; }
 .rd-app .rv-pop-sep { height: 1px; background: var(--line, #e6e6e6); margin: 6px 0; }
 .rd-app .rv-pop-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11.5px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: #6b6b6b; }
 .rd-app .rv-pop-h i { font-style: normal; text-transform: none; letter-spacing: 0; font-weight: 600; }
@@ -347,7 +350,8 @@
 .rd-app .rv-meta { font-size: 11.5px; color: #6b6b6b; }
 .rd-app .rv-vars { display: grid; gap: 4px; }
 .rd-app .rv-vars div { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: 12px; }
-.rd-app .rv-vars i { font-style: normal; color: #6b6b6b; }
+.rd-app .rv-vars i,
+.rd-app .rv-vars svg { font-style: normal; color: #6b6b6b; }
 .rd-app .rv-cost { font-size: 16px; font-weight: 700; }
 .rd-app .rv-cta { width: 100%; justify-content: center; }
 
@@ -501,11 +505,13 @@
 .rd-app .rv-pop-auto span { display: grid; gap: 2px; }
 .rd-app .rv-pop-auto b { font-size: 13.5px; }
 .rd-app .rv-pop-auto em { font-style: normal; font-size: 11.5px; color: #6b6b6b; }
-.rd-app .rv-pop-auto i { width: 16px; height: 16px; color: #b9b9b9; }
+.rd-app .rv-pop-auto i,
+.rd-app .rv-pop-auto svg { width: 16px; height: 16px; color: #b9b9b9; }
 .rd-app .rv-pop-auto:hover { border-color: #111; }
 .rd-app .rv-pop-auto.on { border-color: var(--red, #CC0000); box-shadow: inset 0 0 0 1px var(--red, #CC0000); }
 .rd-app .rv-pop-auto.on b { color: var(--red, #CC0000); }
-.rd-app .rv-pop-auto.on i { color: var(--red, #CC0000); }
+.rd-app .rv-pop-auto.on i,
+.rd-app .rv-pop-auto.on svg { color: var(--red, #CC0000); }
 
 /* ---------- Builder left section rail ---------- */
 .rv-layout.rv-railed{display:grid;grid-template-columns:165px minmax(0,1fr);gap:20px}
@@ -644,13 +650,15 @@
   border: 1px solid var(--line); border-radius: 10px; background: #fff;
   padding: 8px 12px; margin: 0 0 12px; font-size: .82rem;
 }
-.rd-app .rv-notice > i { width: 15px; height: 15px; color: var(--red, #c00); }
+.rd-app .rv-notice > i,
+.rd-app .rv-notice > svg { width: 15px; height: 15px; color: var(--red, #c00); }
 .rd-app .rv-notice > span { flex: 1; }
 
 .rd-app .rv-added {
   display: inline-flex; align-items: center; gap: 7px; font-size: .84rem; color: var(--mute);
 }
-.rd-app .rv-added i { width: 14px; height: 14px; color: var(--red, #c00); }
+.rd-app .rv-added i,
+.rd-app .rv-added svg { width: 14px; height: 14px; color: var(--red, #c00); }
 .rd-app .rv-prep { display: grid; gap: 6px; }
 .rd-app .rv-prep-r { display: flex; align-items: center; gap: 10px; font-size: .78rem; color: var(--mute-2); }
 .rd-app .rv-prep-bar { flex: 1; height: 4px; border-radius: 999px; background: var(--line); overflow: hidden; }
@@ -660,7 +668,8 @@
   display: flex; align-items: center; gap: 10px; font-size: .78rem;
   border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; background: #fff;
 }
-.rd-app .rv-fail-r i { width: 14px; height: 14px; color: var(--red, #c00); }
+.rd-app .rv-fail-r i,
+.rd-app .rv-fail-r svg { width: 14px; height: 14px; color: var(--red, #c00); }
 .rd-app .rv-fail-r span { font-weight: 600; }
 .rd-app .rv-fail-r em { flex: 1; font-style: normal; color: var(--mute-2); }
 
@@ -911,7 +920,8 @@
 .rd-app .rv-headmore { align-self: center; margin-left: 4px; }
 .rd-app .rd-addr-bar { display: flex; align-items: center; gap: 8px; margin-right: auto; min-width: 220px; flex: 0 1 380px; }
 .rd-app .rd-addr-in { position: relative; display: flex; align-items: center; width: 100%; }
-.rd-app .rd-addr-in i { position: absolute; left: 10px; width: 15px; height: 15px; color: var(--muted); pointer-events: none; }
+.rd-app .rd-addr-in i,
+.rd-app .rd-addr-in svg { position: absolute; left: 10px; width: 15px; height: 15px; color: var(--muted); pointer-events: none; }
 .rd-app .rd-addr-in input {
   width: 100%; padding: 8px 12px 8px 30px; border: 1px solid var(--line); border-radius: 999px;
   background: var(--card); color: var(--ink); font-size: 13px;
@@ -925,7 +935,8 @@
   display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
   margin: 10px 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font-size: 13px;
 }
-.rd-app .rd-addr-match i { width: 16px; height: 16px; color: var(--brand); }
+.rd-app .rd-addr-match i,
+.rd-app .rd-addr-match svg { width: 16px; height: 16px; color: var(--brand); }
 @media (max-width: 1040px) {
   .rd-app .rv-head-tools .rd-addr-bar { flex: 1 1 100%; order: -1; margin-bottom: 8px; }
 }
@@ -1092,7 +1103,8 @@
 .rv-sum{display:flex;flex-direction:column;gap:2px}
 .rv-sum-row{display:grid;grid-template-columns:18px 1fr auto;align-items:center;gap:10px;padding:9px 4px;border-bottom:1px solid var(--rd-line,#eee)}
 .rv-sum-row:last-child{border-bottom:0}
-.rv-sum-row i{width:16px;height:16px;color:#666}
+.rv-sum-row i,
+.rv-sum-row svg {width:16px;height:16px;color:#666}
 .rv-sum-row span b{display:block;font-size:12.5px}
 .rv-sum-row span em{display:block;font-style:normal;font-size:12px;color:#666;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:34ch}
 .rv-sum-a{display:flex;gap:10px}
@@ -1113,7 +1125,8 @@
 .rv-se-pick span{display:block;aspect-ratio:16/10;background:#eee center/cover no-repeat}
 .rv-se-pick.on{border-color:var(--rd-accent,#c00)}
 .rv-se-pick.dim{opacity:.45}
-.rv-se-pick i{position:absolute;top:4px;right:4px;width:14px;height:14px;padding:2px;border-radius:999px;background:var(--rd-accent,#c00);color:#fff}
+.rv-se-pick i,
+.rv-se-pick svg {position:absolute;top:4px;right:4px;width:14px;height:14px;padding:2px;border-radius:999px;background:var(--rd-accent,#c00);color:#fff}
 .rv-se-trans{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
 .rv-se-tr{text-align:left;padding:9px 11px;border:1px solid var(--rd-line,#e4e4e4);border-radius:10px;background:#fff;cursor:pointer}
 .rv-se-tr b{display:block;font-size:12.5px}
@@ -1532,7 +1545,8 @@
   margin: 0 0 12px; padding: 10px 14px; border-radius: 12px;
   border: 1px solid #f0d6d6; background: #fdf7f7;
 }
-.rd-app .rd-failnote i { width: 16px; height: 16px; color: #cc0000; }
+.rd-app .rd-failnote i,
+.rd-app .rd-failnote svg { width: 16px; height: 16px; color: #cc0000; }
 .rd-app .rd-failnote b { font-size: 13px; }
 .rd-app .rd-failnote em { font-style: normal; font-size: 12px; color: #6b6b73; }
 .rd-app .rd-failnote-a { display: flex; gap: 6px; margin-left: auto; }

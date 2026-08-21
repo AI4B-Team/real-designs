@@ -270,7 +270,8 @@
   border-color: #cc0000;
   background: #fff5f5;
 }
-.pmu-drop i {
+.pmu-drop i,
+.pmu-drop svg {
   width: 26px;
   height: 26px;
   color: #cc0000;
