@@ -241,3 +241,69 @@ document.addEventListener("click", (e) => {
     byId("rdwCustomize")?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
 });
+
+/* ------------------------------------------------- settings overflow menu */
+
+function closeMoreMenu() {
+  const m = byId("rdwMoreMenu");
+  if (m) m.hidden = true;
+  byId("rdwMore")?.setAttribute("aria-expanded", "false");
+}
+
+function clickAll(sel: string) {
+  document.querySelectorAll<HTMLElement>(sel).forEach((el) => el.click());
+}
+
+/** Puts every optional control back to the value it ships with. */
+function resetCustomize() {
+  const first = (id: string) =>
+    (document.querySelector(id + " .chip, " + id + " .rdw-opt") as HTMLElement | null);
+  document.querySelector("#rdwLevel .rdw-opt[data-b='1']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  document.querySelector("#rdwLock .chip[data-lock='balanced']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  document.querySelector("#gradeChips .chip[data-g='retail']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  document.querySelector("#rdwOpts .chip[data-n='1']")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+  const note = byId("agentNote") as HTMLTextAreaElement | null;
+  if (note) note.value = "";
+  void first;
+  refreshCanvasPanel();
+}
+
+document.addEventListener("click", (e) => {
+  const t = e.target as HTMLElement;
+  if (!t || !t.closest) return;
+  if (t.closest("#rdwMore")) {
+    e.preventDefault();
+    const m = byId("rdwMoreMenu");
+    if (!m) return;
+    const open = !!m.hidden;
+    m.hidden = !open;
+    byId("rdwMore")?.setAttribute("aria-expanded", open ? "true" : "false");
+    return;
+  }
+  const act = t.closest("[data-panel-reset]") as HTMLElement | null;
+  if (act) {
+    e.preventDefault();
+    closeMoreMenu();
+    const kind = act.getAttribute("data-panel-reset");
+    if (kind === "tool") {
+      resetCustomize();
+    } else if (kind === "all") {
+      resetCustomize();
+      document.querySelector("#canvasStyleField .cs-clear")?.dispatchEvent(
+        new MouseEvent("click", { bubbles: true }),
+      );
+    } else if (kind === "over") {
+      const ok = window.confirm(
+        "Start Over clears the photos and settings in this workspace. Saved designs stay in Version History. Continue?",
+      );
+      if (!ok) return;
+      resetCustomize();
+      clickAll("#clearLocks");
+      document.dispatchEvent(new CustomEvent("rd:canvas-start-over"));
+      const go = (window as any).__rdGo;
+      if (typeof go === "function") go("studio");
+    }
+    return;
+  }
+  if (!t.closest("#rdwMoreMenu")) closeMoreMenu();
+});
