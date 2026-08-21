@@ -8888,7 +8888,7 @@
 }
 .sp-work-l p {
   margin: 7px 0 0;
-  max-width: 34ch;
+  white-space: nowrap;
   font-size: 0.86rem;
   color: var(--mute-2);
 }
