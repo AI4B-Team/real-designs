@@ -174,17 +174,18 @@ export function buildCanvasPanel() {
     );
   });
 
-  /* 1. "Describe What You Want" stays in the main flow: it is the one free
-     text people reach for, so it never hides under Customize. */
+  /* 1. Additional Instructions stays in the main flow, directly under Design
+     Style: it is the one free text people reach for, and it is optional. */
   const instr = fieldByLabel("Additional Instructions");
   if (instr) {
     instr.id = "rdwNoteField";
     const lab = instr.querySelector("label") as HTMLElement | null;
     if (lab)
       lab.innerHTML =
-        'Describe What You Want<span class="rdw-opt-tag">Optional</span>';
+        'Additional Instructions<span class="rdw-opt-tag">Optional</span>' +
+        '<span class="rdw-help">Tell AI anything else you want changed</span>';
     const ta = instr.querySelector("textarea") as HTMLTextAreaElement | null;
-    if (ta) ta.placeholder = "Keep the flooring, lighten the cabinets, and add an island.";
+    if (ta) ta.placeholder = "Keep the flooring, lighten the cabinets, and add an island...";
     body.appendChild(instr);
   }
 
