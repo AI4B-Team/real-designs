@@ -40,6 +40,14 @@ export type StudioStartCtx = {
   track: (event: string, props?: Record<string, unknown>) => void;
   /** Persists an uploaded file and returns a displayable URL. */
   uploadPhoto: (file: File) => Promise<string>;
+  /** Persists a Describe reference image and returns a durable URL. */
+  uploadReference?: (file: File) => Promise<string>;
+  /** Sends the finished concept to the Video builder with a camera move. */
+  startVideoFromConcept?: (opts: {
+    camera: string;
+    duration: number;
+    orientation: string;
+  }) => void | Promise<void>;
   /** Loads a real source into the Studio canvas. */
   setSource: (kind: string, src: string, alt: string, opts?: any) => void;
   /** Places a finished concept image on the canvas as a result. */
