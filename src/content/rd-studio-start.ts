@@ -1285,6 +1285,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       esc: escLocal,
       lucide,
       showAlert: ctx.showAlert,
+      /* References go to durable storage before anything is generated. */
+      ...(ctx.uploadReference ? { uploadReference: ctx.uploadReference } : {}),
       properties: () =>
         (ctx.getProperties ? ctx.getProperties() : []).map((p) => {
           const photos = coverOrder(photosOfProperty(p));
@@ -1362,8 +1364,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         state.method = "describe";
         if (details) {
           state.refs = details.references || [];
+          state.refStrength = details.referenceStrength || state.refStrength;
           state.ratio = details.ratio || state.ratio;
           state.options = details.options || 1;
+          state.output = details.output || "image";
+          state.camera = details.camera || state.camera;
+          state.duration = details.duration || state.duration;
+          state.orientation = details.orientation || state.orientation;
+          state.level = details.level || state.level;
+          if (details.space) state.space = details.space.toLowerCase();
           if (details.room) state.room = details.room;
           if (details.style) state.style = details.style;
           if (details.mood) state.mood = details.mood;
