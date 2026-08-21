@@ -3777,6 +3777,21 @@ export function initApp(): () => void {
     }
 
     window.rdDisplayedVersion = () => DISPLAYED_VERSION;
+    /* The variation drawer reads the branch record of whatever is on screen. */
+    window.rdSessionVersion = (src) =>
+      (SESSION_VERSIONS || []).find((v) => v && src && v.src === src) || null;
+    window.rdSessionVersions = () => (SESSION_VERSIONS || []).slice();
+    window.rdStudioSourceImage = () => {
+      const i = document.querySelector("#cBefore img");
+      return (i && i.src) || null;
+    };
+    /* Compare against a chosen base (parent version or the original photo). */
+    window.rdSetCompareBase = (src) => {
+      const b = document.getElementById("cBefore");
+      if (!b || !src) return false;
+      b.innerHTML = photo(src, "Comparison base");
+      return true;
+    };
     window.rdVersionSaving = () => VERSION_SAVING;
 
 
