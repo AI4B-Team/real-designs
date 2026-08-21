@@ -1826,7 +1826,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
             features: state.features || null,
             image,
             images: state.refs.length ? state.refs : null,
-            aspect_ratio: state.ratio || null,
+            aspect_ratio: (state.output === "video" ? state.orientation : state.ratio) || null,
           },
         });
         ctx.track("concept_generated", { space: state.space });
@@ -1835,6 +1835,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           count > 1 ? "Concept " + (i + 1) : "Concept",
           state.prompt.trim(),
         );
+      }
+      /* A video request renders its key frame first, then opens the builder. */
+      if (state.output === "video" && ctx.startVideoFromConcept) {
+        await ctx.startVideoFromConcept({
+          camera: state.camera,
+          duration: state.duration,
+          orientation: state.orientation,
+        });
       }
     } catch (err: any) {
       if (isPlanBlocked(err)) openUpgrade(err);
