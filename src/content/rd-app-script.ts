@@ -3997,7 +3997,7 @@ export function initApp(): () => void {
                   : ["p-gray", !session.length && i === 0 ? "Latest" : "Past"];
             const lab =
               (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
-            return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>${v.room_name} v${v.version_no || 1}</b><span>${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
+            return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>Version ${v.version_no || 1}</b><span>${v.room_name} &middot; ${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
           })
           .join("");
       el.querySelectorAll(".ver-row").forEach((btn) => {
