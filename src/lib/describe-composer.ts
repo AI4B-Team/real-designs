@@ -563,6 +563,8 @@ export function createDescribeComposer(cfg: Cfg) {
     const improveOk = state.prompt.trim().length >= IMPROVE_MIN_CHARS;
     return (
       '<div class="sp-pane sp-describe">' +
+      '<div class="sp-dhead"><h3>Describe Your Space</h3>' +
+      "<p>Describe what you want to create and optionally add reference images.</p></div>" +
       '<div class="sp-composer' +
       (state.busy ? " is-busy" : "") +
       '">' +
@@ -584,26 +586,25 @@ export function createDescribeComposer(cfg: Cfg) {
       (state.refs.length >= MAX_DESCRIBE_REFS ? " disabled" : "") +
       ' aria-haspopup="true" aria-expanded="' +
       menuOpen +
-      '" title="Attach an inspiration photo, property photo, sketch, floor plan, material or color reference"><i data-lucide="plus"></i>Add Reference</button>' +
+      '"><i data-lucide="plus"></i>Add Reference <span class="sp-opt">Optional</span></button>' +
       (menuOpen ? refMenu() : "") +
       "</div>" +
+      '<span class="sp-toolwrap' +
+      (improveOk ? "" : " is-off") +
+      '" data-sp="improvewrap" tabindex="0">' +
       '<button type="button" class="sp-tool" data-sp="improve"' +
       (improveOk && !state.improving && !state.busy ? "" : " disabled") +
-      ' title="' +
-      esc(
-        improveOk
-          ? "Expand your description into a detailed design brief. You can undo it."
-          : "Write at least a short sentence (" +
-              IMPROVE_MIN_CHARS +
-              " characters) before this can improve it.",
-      ) +
-      '">' +
+      ">" +
       (state.improving
         ? '<span class="sp-spin dark" aria-hidden="true"></span>Improving…'
         : '<i data-lucide="wand-sparkles"></i>Improve Description') +
       "</button>" +
+      (improveOk
+        ? ""
+        : '<span class="sp-tip" role="note">Write a short description first.</span>') +
+      "</span>" +
       (state.undo
-        ? '<button type="button" class="sp-tool" data-sp="undo"><i data-lucide="undo-2"></i>Undo</button>'
+        ? '<button type="button" class="sp-tool" data-sp="undo"><i data-lucide="undo-2"></i>Restore Original</button>'
         : "") +
       "</div>" +
       "</div>" +
