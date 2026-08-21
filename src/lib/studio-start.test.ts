@@ -55,16 +55,19 @@ describe("studio start source picker", () => {
     expect(click).toHaveBeenCalled();
   });
 
-  it("Describe is one composer with a disabled-until-valid Create action", () => {
+  it("Describe is one composer with a disabled-until-valid Generate action", () => {
     const onDescribe = vi.fn();
     const { host } = mount("design", { onDescribe });
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
     const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     expect(ta).toBeTruthy();
-    expect(ta.placeholder.startsWith("Describe the space you want to create")).toBe(true);
+    expect(ta.placeholder.startsWith("Describe what you want to create")).toBe(true);
+    expect(host.textContent).toContain("Describe Your Space");
+    expect(host.querySelector('[data-sp="addref"]')).toBeTruthy();
+    expect(host.querySelector('[data-sp="improve"]')).toBeTruthy();
     const cta = () => host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
     expect(cta().disabled).toBe(true);
-    expect(cta().textContent).toContain("Create");
+    expect(cta().textContent).toContain("Generate");
     /* whitespace only stays disabled */
     ta.value = "   ";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
@@ -73,20 +76,38 @@ describe("studio start source picker", () => {
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     expect(cta().disabled).toBe(false);
     cta().click();
-    expect(onDescribe).toHaveBeenCalledWith("A warm modern living room");
+    expect(onDescribe).toHaveBeenCalledWith(
+      "A warm modern living room",
+      expect.objectContaining({ ratio: "16:9", options: 2, references: [] }),
+    );
+  });
+
+  it("shows the output summary and updates it from Add Details", () => {
+    const { host } = mount("design");
+    (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
+    expect(host.querySelector(".sp-meta")!.textContent).toContain("16:9");
+    expect(host.querySelector(".sp-meta")!.textContent).toContain("2 options");
+    (host.querySelector('[data-sp-ratio="1:1"]') as HTMLElement).click();
+    (host.querySelector('[data-sp-opt="1"]') as HTMLElement).click();
+    expect(host.querySelector(".sp-meta")!.textContent).toContain("1:1");
+    expect(host.querySelector(".sp-meta")!.textContent).toContain("1 option");
+    expect((host.querySelector('[data-sp="describe"]') as HTMLElement).textContent).toContain(
+      "1 Credit",
+    );
   });
 
   it("example chips fill the prompt without submitting", () => {
     const onDescribe = vi.fn();
     const { host } = mount("design", { onDescribe });
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
-    const chip = host.querySelector('[data-sp-ex="Coastal Backyard"]') as HTMLElement;
+    const chip = host.querySelector('[data-sp-ex="Resort Backyard"]') as HTMLElement;
     chip.click();
     expect((host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement).value).toBe(
-      "Coastal Backyard",
+      "Resort Backyard",
     );
     expect(onDescribe).not.toHaveBeenCalled();
   });
+
 
   it("Cmd/Ctrl+Enter submits and duplicate submits are ignored while busy", async () => {
     let release: () => void = () => {};
