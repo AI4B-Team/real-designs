@@ -209,6 +209,8 @@ export type PickerOptions = {
   loadDesigns?: () => Promise<PickerDesign[]>;
   /** Called with the finished designs the user selected, in order. */
   onDesigns?: (designs: PickerDesign[]) => void | Promise<void>;
+  /** The authoritative output type, owned by the project-type card above. */
+  output?: () => DescribeOutput;
   /** Which source opens first, so a host can remember the tab across renders. */
   initialTab?: SourceId;
   onTab?: (tab: SourceId) => void;
@@ -360,7 +362,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         projectType: String(space || "interior").toLowerCase(),
         room: room || null,
         currentId,
-        onPick: (styleId) => apply(styleId, styleById(styleId)?.name || styleId),
+        onPick: (styleId) => apply(styleId, styleById(styleId)?.displayName || styleId),
       }),
   });
 
