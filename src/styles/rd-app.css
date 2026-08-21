@@ -8828,7 +8828,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
   align-items: center;
   gap: 18px;
-  padding: 30px 0 30px 32px;
+  padding: 30px 26px 30px 32px;
 }
 .sp-work-l h4 {
   margin: 0;
