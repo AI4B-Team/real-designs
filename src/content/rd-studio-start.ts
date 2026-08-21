@@ -1273,6 +1273,24 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     hydrateRecent();
   }
 
+  /** Repaints only the project-type row. The source picker is deliberately
+      left mounted so a draft description and its references survive. */
+  function renderDoors() {
+    const wrap = host?.querySelector(".stw-doorwrap") as HTMLElement | null;
+    if (!wrap) {
+      render();
+      return;
+    }
+    wrap.innerHTML = doorsHtml();
+    try {
+      lucide.createIcons();
+    } catch {
+      /* icons are cosmetic */
+    }
+  }
+
+
+
   /** Every stored photo of one property: saved rooms first, then the
       property's uploaded media assets (upload-only properties have no rooms,
       which is why their cards used to render empty). */
