@@ -86,7 +86,7 @@ describe("advanced markup", () => {
     const manifest = markupExportManifest(doc, "image");
     expect(manifest.is_survey).toBe(false);
     expect(manifest.editable_document).toBeTruthy();
-    expect(manifest.warnings.join(" ")).toMatch(/not a legal|approximate/i);
+    expect(manifest.warnings.join(" ")).toMatch(/not a survey/i);
   });
 
   it("never accepts parcel geometry without provider provenance", () => {
