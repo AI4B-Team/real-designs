@@ -12,6 +12,7 @@
  */
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
+import { providerAvailable } from "@/lib/provider-import";
 
 export type AddSourceId = "computer" | "drive" | "dropbox";
 
@@ -29,12 +30,11 @@ export type AddSourceCardOptions = {
 /** Every mounted card, so only one can ever be expanded. */
 const MOUNTED = new Set<HTMLElement>();
 
-const CLOUD_ENABLED = { drive: true, dropbox: true };
-
-/** Dropbox ships only when its import path is real; never a dead button. */
+/** A provider button ships only when its import path is real. */
 export function cloudSourceEnabled(id: "drive" | "dropbox"): boolean {
-  return !!CLOUD_ENABLED[id];
+  return providerAvailable(id);
 }
+
 
 /**
  * Card markup. `ratio` is the grid's aspect-ratio class so the action card is
