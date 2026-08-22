@@ -10589,11 +10589,19 @@
   .spd-grid {
     grid-template-columns: minmax(0, 1fr);
   }
+  .spd-lhead {
+    display: none;
+  }
   .spd-row {
     grid-template-columns: 28px 56px minmax(0, 1fr) auto;
   }
-  .spd-row .spd-rm:nth-of-type(n + 2) {
+  .spd-row .spd-rsub,
+  .spd-row .spd-rm {
     display: none;
+  }
+  .spd-rth {
+    width: 56px;
+    height: 44px;
   }
 }
 
