@@ -71,10 +71,7 @@ const esc = (s: unknown): string =>
 
 function icons(root?: Element | null) {
   try {
-    createIcons({ icons: lucideIcons, ...({
-      attrs: {},
-      ...(root ? { nameAttr: "data-lucide" } : {}),
-    });
+    createIcons({ icons: lucideIcons, ...(root ? { root } : {}) } as never);
   } catch (_) {
     /* icons are cosmetic */
   }
