@@ -1090,30 +1090,61 @@ function isDesignDraft(m) {
   return m && m.type === "generated_video" && m.status === "draft";
 }
 
-/** Reopen a durable draft in the builder that owns it. */
-function continueProject(m) {
-  if (!m) return;
-  if (!m.draft) return openVideo(m);
-  if (m.draftType === "photo_staging") {
-    const st = (window as any).rdStaging;
-    if (st && st.resume) {
-      st.resume(m.draftId).then((ok) => {
-        if (!ok) toast("That project could not be reopened. Its photos may have been removed.");
-      });
-      return;
-    }
-    S.go("staging");
-    return;
-  }
-  if (m.draftType === "photo_redesign") {
+/**
+ * Reopen a durable draft in the workflow that owns it.
+ *
+ * The envelope is written before navigating and only marked consumed once the
+ * destination restored the project, so a refresh mid-handoff still lands in
+ * the same place. Failure is reported to the caller, never swallowed.
+ */
+async function continueProject(m, onFail?) {
+  if (!m) return false;
+  const fail = (id) => {
     try {
-      (window as any).__rdStudioDraft = m.draftId;
+      console.warn("[rd] continue editing failed", id);
     } catch (_) {}
-    S.go("studio");
-    return;
-  }
-  openVideo(m);
+    if (onFail) onFail(id);
+    else toast("This project couldn't be reopened.");
+    return false;
+  };
+  let restored = false;
+  const out = await beginResume({
+    input: resumeInputForMedia(m),
+    navigate: (view, ctx) => {
+      if (view === "staging") {
+        const st = (window as any).rdStaging;
+        if (st && st.resume && ctx.projectDraftId) {
+          st.resume(ctx.projectDraftId).then((ok) => {
+            if (ok) markResumeConsumed(ctx.diagnosticId);
+            else fail(ctx.diagnosticId);
+          });
+          restored = true;
+          return;
+        }
+        S.go("staging");
+        return;
+      }
+      if (view === "lvideo") {
+        openVideo(m);
+        markResumeConsumed(ctx.diagnosticId);
+        restored = true;
+        return;
+      }
+      if (view === "media") {
+        editImage(m);
+        markResumeConsumed(ctx.diagnosticId);
+        restored = true;
+        return;
+      }
+      /* Studio restores from the envelope and consumes it once it is on screen. */
+      S.go("studio");
+      restored = true;
+    },
+  });
+  if (!out.ok) return fail(out.diagnosticId);
+  return restored;
 }
+
 
 function openVideo(m, tab) {
   try {
