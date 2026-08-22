@@ -332,7 +332,9 @@ export function compactSummary(s: SettingsState): string {
   const parts: string[] = [];
   if (s.roomLabel) parts.push(s.roomLabel);
   if (s.styleLabel) parts.push(s.styleLabel);
-  parts.push(s.options + (s.options === 1 ? " image" : " images"));
+  parts.push(s.level, s.ratio);
+  const mood = moodLabel(s.moodId);
+  if (s.moodId && s.moodId !== DEFAULT_MOOD_ID && mood !== "Auto") parts.push(mood);
   return parts.filter(Boolean).join(" \u00b7 ");
 }
 
@@ -342,8 +344,9 @@ export function compactSummary(s: SettingsState): string {
  */
 export function nextRequirement(s: SettingsState): string | null {
   if (!s.prompt.trim() && !s.refCount) return "Add a description or reference image.";
-  if (!s.roomId) return "Select a room or area.";
-  if (!s.styleId) return "Select a design style.";
+  if (!s.roomId && !s.styleId) return "Select a room and design style";
+  if (!s.roomId) return "Select a room or area";
+  if (!s.styleId) return "Select a design style";
   return null;
 }
 
