@@ -1,10 +1,14 @@
 import { memo } from "react";
 
+import { isFeatureVisible } from "./feature-availability";
+import { ShellIcon } from "./ShellIcon";
+
 const LINKS: Array<{ goto: string; label: string; icon: string }> = [
   { goto: "account", label: "Account", icon: "user-round" },
   { goto: "team", label: "Team", icon: "users" },
   { goto: "billing", label: "Billing", icon: "credit-card" },
-  { goto: "api", label: "API & White Label", icon: "key-round" },
+  /* API & White Label is `hidden` in the feature registry — an account menu
+     entry for a surface that does not exist yet is worse than no entry. */
 ];
 
 /**
@@ -32,24 +36,26 @@ export const AccountMenu = memo(function AccountMenu() {
             <span />
           </div>
         </div>
-        <button className="btn btn-primary btn-block" data-goto="billing">
-          <i data-lucide="zap" />
-          Upgrade
-        </button>
+        {isFeatureVisible("checkout") ? (
+          <button className="btn btn-primary btn-block" data-goto="billing">
+            <ShellIcon name="zap" />
+            Upgrade
+          </button>
+        ) : null}
         <button className="btn btn-ghost btn-block" style={{ marginTop: 8 }} data-goto="team">
-          <i data-lucide="user-plus" />
+          <ShellIcon name="user-plus" />
           Invite Members
         </button>
         <div className="acct-sep" />
         {LINKS.map((l) => (
           <button className="acct-i" data-goto={l.goto} key={l.goto}>
-            <i data-lucide={l.icon} />
+            <ShellIcon name={l.icon} />
             {l.label}
-            <i className="chev" data-lucide="chevron-right" />
+            <ShellIcon name="chevron-right" className="chev" />
           </button>
         ))}
         <button className="btn btn-logout btn-block" style={{ marginTop: 10 }}>
-          <i data-lucide="log-out" />
+          <ShellIcon name="log-out" />
           Log Out
         </button>
         <div className="acct-foot">

@@ -1,6 +1,7 @@
 import { Fragment, memo } from "react";
 
 import { CreditSummary } from "./CreditSummary";
+import { ShellIcon } from "./ShellIcon";
 import { NAV_GROUPS } from "./nav-items";
 
 /**
@@ -22,7 +23,7 @@ export const Sidebar = memo(function Sidebar() {
           aria-label="Collapse menu"
           title="Collapse menu"
         >
-          <i data-lucide="chevrons-left" />
+          <ShellIcon name="chevrons-left" />
         </button>
         <div className="logo">
           <span className="rd-mark" aria-label="REAL DESIGNS">
@@ -45,7 +46,7 @@ export const Sidebar = memo(function Sidebar() {
                 data-v={item.view}
               >
                 <span className="nav-ico">
-                  <i data-lucide={item.icon} />
+                  <ShellIcon name={item.icon} />
                 </span>
                 <span className="nav-t">{item.label}</span>
                 {item.countId ? (

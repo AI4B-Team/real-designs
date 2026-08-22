@@ -85,6 +85,11 @@ function toast(msg: string) {
   }
 }
 
+/**
+ * Navigation never advertises development status. A feature that cannot do
+ * real work has no row at all; everything still listed is genuinely usable, so
+ * no "Coming Soon" pill is ever appended to the sidebar.
+ */
 function labelNav() {
   const features = state ?? fallback();
   for (const f of Object.values(features)) {
@@ -92,15 +97,16 @@ function labelNav() {
     const btn = document.querySelector<HTMLElement>(`.nav-i[data-v="${f.view}"]`);
     if (!btn) continue;
     btn.querySelector(".rd-beta-soon")?.remove();
-    btn.dataset["rdUnavailable"] = f.available ? "" : f.key;
-    if (f.available) continue;
-    /* Another system (Budget gating, integration state) may already label this
-       row. One row states its status once — never "Coming Soon Coming Soon". */
-    if (btn.querySelector(".nav-soon")) continue;
-    const pill = document.createElement("span");
-    pill.className = "rd-beta-soon";
-    pill.textContent = "Coming Soon";
-    btn.appendChild(pill);
+    btn.querySelector(".nav-soon")?.remove();
+    if (f.available) {
+      btn.removeAttribute("data-unavailable");
+      delete btn.dataset["rdUnavailable"];
+      btn.hidden = false;
+      continue;
+    }
+    btn.dataset["rdUnavailable"] = f.key;
+    btn.setAttribute("data-unavailable", "1");
+    btn.hidden = true;
   }
 }
 

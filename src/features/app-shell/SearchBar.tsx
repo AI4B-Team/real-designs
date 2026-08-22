@@ -1,5 +1,7 @@
 import { memo } from "react";
 
+import { ShellIcon } from "./ShellIcon";
+
 import { SEARCH_SCOPES } from "./nav-items";
 
 /**
@@ -12,7 +14,7 @@ export const SearchBar = memo(function SearchBar() {
   return (
     <div className="search-wrap">
       <div className="search">
-        <i data-lucide="search" />
+        <ShellIcon name="search" />
         <input type="text" placeholder="Search properties, rooms, designs" />
         <button
           className="search-caret"
@@ -21,14 +23,14 @@ export const SearchBar = memo(function SearchBar() {
           aria-haspopup="true"
           aria-expanded="false"
         >
-          <i data-lucide="chevron-down" />
+          <ShellIcon name="chevron-down" />
         </button>
       </div>
       <div className="search-menu" id="schMenu">
         <div className="acct-group">Search In</div>
         {SEARCH_SCOPES.map((s) => (
           <button className="acct-i" data-scope={s.scope} key={s.scope}>
-            <i data-lucide={s.icon} />
+            <ShellIcon name={s.icon} />
             {s.label}
             <span className="mv">{s.meta}</span>
           </button>

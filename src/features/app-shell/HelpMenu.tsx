@@ -1,5 +1,7 @@
 import { memo } from "react";
 
+import { ShellIcon } from "./ShellIcon";
+
 /** Help dropdown: help center, product tour, tutorials, shortcuts, feedback. */
 export const HelpMenu = memo(function HelpMenu() {
   return (
@@ -11,27 +13,27 @@ export const HelpMenu = memo(function HelpMenu() {
         aria-haspopup="true"
         aria-expanded="false"
       >
-        <i data-lucide="circle-help" />
+        <ShellIcon name="circle-help" />
       </button>
       <div className="help-menu" id="helpMenu">
         <button className="acct-i" data-goto="help">
-          <i data-lucide="life-buoy" />
+          <ShellIcon name="life-buoy" />
           Help
         </button>
         <button className="acct-i" id="tourBtn">
-          <i data-lucide="play-circle" />
+          <ShellIcon name="play-circle" />
           Tour
         </button>
         <button className="acct-i" data-goto="tutorials">
-          <i data-lucide="book-open" />
+          <ShellIcon name="book-open" />
           Tutorials
         </button>
         <button className="acct-i" data-kbd="1">
-          <i data-lucide="command" />
+          <ShellIcon name="command" />
           Shortcuts
         </button>
         <button className="acct-i" id="fbBtn">
-          <i data-lucide="message-square-plus" />
+          <ShellIcon name="message-square-plus" />
           Feedback
         </button>
       </div>
