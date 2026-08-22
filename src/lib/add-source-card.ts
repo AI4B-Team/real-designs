@@ -40,7 +40,12 @@ export function cloudSourceEnabled(id: "drive" | "dropbox"): boolean {
  * Card markup. `ratio` is the grid's aspect-ratio class so the action card is
  * exactly the same shape as the photo cards beside it.
  */
-export function addSourceCardHtml(opts: { id: string; ratio?: string } ): string {
+export function addSourceCardHtml(opts: {
+  id: string;
+  ratio?: string;
+  /** Reserves the photo cards' footer row so the frames stay aligned. */
+  pad?: boolean;
+}): string {
   const id = opts.id;
   const panelId = id + "Sources";
   const cloud = (
@@ -70,6 +75,7 @@ export function addSourceCardHtml(opts: { id: string; ratio?: string } ): string
         ${cloud("dropbox", "Dropbox", DROPBOX_ICON)}
       </div>
     </div>
+    ${opts.pad ? '<div class="rv-addcard-pad" aria-hidden="true"></div>' : ""}
     <p class="rv-addcard-live" role="status" aria-live="polite" hidden></p>
   </div>`;
 }

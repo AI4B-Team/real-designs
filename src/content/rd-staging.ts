@@ -1177,7 +1177,7 @@ function cardHtml(it, seq) {
    selector, no menu, no credits — it only opens the existing Add Photos
    picker, and it always stays the final grid item. */
 function addCardHtml() {
-  return addSourceCardHtml({ id: "rdsAddCard", ratio: ratioClass(S && S.outputRatio) });
+  return addSourceCardHtml({ id: "rdsAddCard", ratio: ratioClass(S && S.outputRatio), pad: true });
 }
 
 function gridHtml() {
