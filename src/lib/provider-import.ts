@@ -1,30 +1,29 @@
 /**
  * One shared cloud-import service for Google Drive and Dropbox.
  *
- * Every entry point in the app (Studio, Prepare Your Photos, Photo Design,
- * Video Builder, Media, Canvas, Replace Photo, Add More Photos) calls
- * `importFromProvider` and receives real `File` objects, which each host then
- * puts through its own durable upload pipeline. There is no second provider
- * modal anywhere else.
+ * Every entry point in the app calls `importFromProvider` and receives real
+ * `File` objects, which each host then puts through its own durable upload
+ * pipeline.
  *
- * Nothing here fakes a connection. When a provider SDK is configured we run the
- * real authorization and the real picker. When it is not, we fall back to the
- * genuinely working share-link import (server side, allowlisted hosts only) —
- * never a blank shell, never a fake success.
+ * Nothing here fakes a connection and nothing here is a second source picker.
+ * A Google Drive modal contains only the Google Drive workflow; a Dropbox
+ * modal contains only the Dropbox workflow. When a provider is not configured
+ * there is no modal at all — the button is honestly disabled and the host
+ * shows the "isn't available yet" message.
  */
 
 import "@/styles/rd-provider-import.css";
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
 
 export type ProviderId = "drive" | "dropbox";
-export type ProviderMode = "picker" | "link";
 
 export type ProviderConfig = {
   id: ProviderId;
   label: string;
   icon: string;
-  mode: ProviderMode;
-  /** Config values missing for the real SDK picker (empty when mode is picker). */
+  /** True only when every key the real SDK flow needs is present. */
+  configured: boolean;
+  /** Config values missing for the real SDK picker. */
   missing: string[];
 };
 
@@ -43,13 +42,18 @@ export type ImportOptions = {
     | "canvas-room";
   /** Repaint hook so hosts can refresh Lucide icons. */
   paint?: () => void;
+  /** Called instead of opening anything when the provider is not configured. */
+  onUnavailable?: (message: string) => void;
 };
 
 const OK_EXT = ["jpg", "jpeg", "png", "webp", "heic", "heif"];
 const OK_MIME = ["image/jpeg", "image/png", "image/webp", "image/heic", "image/heif"];
+const FILE_NOTE = "Supported photos: JPG, PNG, WEBP and HEIC.";
 
 function env(name: string): string {
   try {
+    const override = (globalThis as any).__RD_PROVIDER_ENV?.[name];
+    if (override) return String(override).trim();
     return String((import.meta as any).env?.[name] || "").trim();
   } catch {
     return "";
@@ -64,7 +68,7 @@ export function providerConfig(id: ProviderId): ProviderConfig {
       id,
       label: "Dropbox",
       icon: DROPBOX_ICON,
-      mode: key ? "picker" : "link",
+      configured: !!key,
       missing: key ? [] : ["VITE_DROPBOX_APP_KEY"],
     };
   }
@@ -77,15 +81,19 @@ export function providerConfig(id: ProviderId): ProviderConfig {
     id,
     label: "Google Drive",
     icon: DRIVE_ICON,
-    mode: missing.length ? "link" : "picker",
+    configured: missing.length === 0,
     missing,
   };
 }
 
-/** Drive and Dropbox always have a working path, so no button is ever dead. */
+/** A provider button is only real when its authorization flow is configured. */
 export function providerAvailable(id: ProviderId): boolean {
-  const c = providerConfig(id);
-  return c.mode === "picker" || c.mode === "link";
+  return providerConfig(id).configured;
+}
+
+/** The honest message shown when a provider has no working integration. */
+export function providerUnavailableMessage(id: ProviderId): string {
+  return `${providerConfig(id).label} isn't available yet. Choose photos from your computer.`;
 }
 
 /* ------------------------------------------------------------------ modal */
@@ -123,7 +131,7 @@ export function openProviderModal(cfg: ProviderConfig, paint?: () => void): Moda
   const root = document.createElement("div");
   root.className = "rdpi-back";
   const titleId = "rdpi-title-" + Math.random().toString(36).slice(2, 8);
-  root.innerHTML = `<div class="rdpi" role="dialog" aria-modal="true" aria-labelledby="${titleId}">
+  root.innerHTML = `<div class="rdpi" role="dialog" aria-modal="true" aria-labelledby="${titleId}" data-provider="${cfg.id}">
     <div class="rdpi-h">
       <span class="rdpi-logo">${cfg.icon}</span>
       <h3 id="${titleId}">Import From ${esc(cfg.label)}</h3>
@@ -215,15 +223,17 @@ function showState(m: Modal, label: string, note = "") {
   m.body.innerHTML =
     `<div class="rdpi-state"><span class="rdpi-spin"></span><span>${esc(label)}</span></div>` +
     (note ? `<p>${esc(note)}</p>` : "");
+  m.footer.innerHTML = `<button type="button" class="rdpi-btn" data-rdpi-close>Cancel</button>`;
 }
 
 function showError(m: Modal, message: string, retry: () => void, opts: ImportOptions) {
   if (!m.isOpen()) return;
+  m.setLocked(false);
   m.body.innerHTML = `<p class="rdpi-err">${esc(message)}</p>
     <p>Your photos, room types and design settings are untouched.</p>`;
   m.footer.innerHTML = `<button type="button" class="rdpi-btn rdpi-alt" data-rdpi-computer>Choose From Computer</button>
     <button type="button" class="rdpi-btn" data-rdpi-close>Cancel</button>
-    <button type="button" class="rdpi-btn primary" data-rdpi-retry>Retry</button>`;
+    <button type="button" class="rdpi-btn primary" data-rdpi-retry>Try Again</button>`;
   m.footer.querySelector("[data-rdpi-retry]")?.addEventListener("click", () => retry());
   m.footer.querySelector("[data-rdpi-computer]")?.addEventListener("click", () => {
     m.close();
@@ -261,72 +271,6 @@ function loadScript(src: string, attrs: Record<string, string> = {}): Promise<vo
   });
 }
 
-function dataUrlToFile(data: string, name: string, type: string): File {
-  const bin = atob(data);
-  const arr = new Uint8Array(bin.length);
-  for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-  return new File([arr], name, { type });
-}
-
-/* ------------------------------------------------------- share-link mode */
-
-async function linkImport(m: Modal, cfg: ProviderConfig, opts: ImportOptions) {
-  if (!m.isOpen()) return;
-  const hint =
-    cfg.id === "dropbox"
-      ? "Copy a Dropbox share link for each photo (Share → Copy link) and paste them below, one per line."
-      : "In Google Drive choose Share → Copy link for each photo (set to “Anyone with the link”) and paste them below, one per line.";
-  m.body.innerHTML = `<p>${esc(hint)}</p>
-    <textarea data-rdpi-links aria-label="${esc(cfg.label)} Share Links" placeholder="https://..."></textarea>`;
-  m.footer.innerHTML = `<button type="button" class="rdpi-btn rdpi-alt" data-rdpi-computer>Choose From Computer</button>
-    <button type="button" class="rdpi-btn" data-rdpi-close>Cancel</button>
-    <button type="button" class="rdpi-btn primary" data-rdpi-go>Import Photos</button>`;
-  const area = m.body.querySelector<HTMLTextAreaElement>("[data-rdpi-links]");
-  area?.focus();
-  m.footer.querySelector("[data-rdpi-computer]")?.addEventListener("click", () => {
-    m.close();
-    void opts.onComputer?.();
-  });
-
-  const go = m.footer.querySelector<HTMLButtonElement>("[data-rdpi-go]");
-  go?.addEventListener("click", async () => {
-    const urls = (area?.value || "")
-      .split(/[\s,]+/)
-      .map((u) => u.trim())
-      .filter(Boolean)
-      .slice(0, 20);
-    if (!urls.length) {
-      area?.focus();
-      return;
-    }
-    go.disabled = true;
-    showState(m, `Importing ${urls.length === 1 ? "1 Photo" : urls.length + " Photos"}…`);
-    try {
-      const { importCloudPhotos } = await import("@/lib/cloud-import.functions");
-      const res: any = await importCloudPhotos({ data: { urls } });
-      const files = (res?.files || []).map((f: any) => dataUrlToFile(f.data, f.name, f.type));
-      if (!files.length) {
-        showError(
-          m,
-          res?.errors?.[0]?.message ||
-            "Nothing could be read from those links. Check that they are shared publicly.",
-          () => void linkImport(m, cfg, opts),
-          opts,
-        );
-        return;
-      }
-      await finish(m, files, opts);
-    } catch {
-      showError(
-        m,
-        "Those links could not be read. Please try again.",
-        () => void linkImport(m, cfg, opts),
-        opts,
-      );
-    }
-  });
-}
-
 /** Hands the imported files to the host, then closes. */
 async function finish(m: Modal, files: File[], opts: ImportOptions) {
   m.setLocked(true);
@@ -339,30 +283,82 @@ async function finish(m: Modal, files: File[], opts: ImportOptions) {
   }
 }
 
+/* ---------------------------------------------------------- shared states */
+
+/** Disconnected: one primary connect action, one cancel. Nothing else. */
+function showDisconnected(m: Modal, cfg: ProviderConfig, connect: () => void) {
+  if (!m.isOpen()) return;
+  m.body.innerHTML = `<div class="rdpi-hero"><span class="rdpi-hero-logo">${cfg.icon}</span>
+      <p>Connect ${esc(cfg.label)} to choose photos from your account.</p></div>
+    <p class="rdpi-note">${esc(FILE_NOTE)}</p>`;
+  m.footer.innerHTML = `<button type="button" class="rdpi-btn" data-rdpi-close>Cancel</button>
+    <button type="button" class="rdpi-btn primary" data-rdpi-connect>Connect ${esc(cfg.label)}</button>`;
+  const go = m.footer.querySelector<HTMLElement>("[data-rdpi-connect]");
+  go?.addEventListener("click", () => connect());
+  go?.focus();
+}
+
+/** Connected: account identity, one primary choose action, switch account. */
+function showConnected(
+  m: Modal,
+  cfg: ProviderConfig,
+  account: string,
+  choose: () => void,
+  again: () => void,
+) {
+  if (!m.isOpen()) return;
+  m.body.innerHTML = `<div class="rdpi-acct"><span class="rdpi-acct-logo">${cfg.icon}</span>
+      <span class="rdpi-acct-t"><b>Connected</b><span>${esc(account)}</span></span></div>
+    <p class="rdpi-note">${esc(FILE_NOTE)}</p>`;
+  m.footer.innerHTML = `<button type="button" class="rdpi-link rdpi-alt" data-rdpi-switch>Switch Account</button>
+    <button type="button" class="rdpi-btn" data-rdpi-close>Cancel</button>
+    <button type="button" class="rdpi-btn primary" data-rdpi-choose>Choose Photos</button>`;
+  m.footer.querySelector("[data-rdpi-switch]")?.addEventListener("click", () => again());
+  const go = m.footer.querySelector<HTMLElement>("[data-rdpi-choose]");
+  go?.addEventListener("click", () => choose());
+  go?.focus();
+}
+
 /* -------------------------------------------------------- Google Picker */
 
-async function drivePicker(m: Modal, opts: ImportOptions) {
+async function driveToken(prompt: boolean): Promise<string> {
   const clientId = env("VITE_GOOGLE_PICKER_CLIENT_ID");
-  const apiKey = env("VITE_GOOGLE_PICKER_API_KEY");
-  const appId = env("VITE_GOOGLE_PICKER_APP_ID");
-  showState(m, "Connecting To Google Drive…");
   await loadScript("https://accounts.google.com/gsi/client");
-  await loadScript("https://apis.google.com/js/api.js");
   const g = (window as any).google;
-  const gapi = (window as any).gapi;
-  if (!g?.accounts?.oauth2 || !gapi) throw new Error("sdk");
-
-  const token: string = await new Promise((resolve, reject) => {
+  if (!g?.accounts?.oauth2) throw new Error("sdk");
+  return await new Promise<string>((resolve, reject) => {
     const client = g.accounts.oauth2.initTokenClient({
       client_id: clientId,
-      scope: "https://www.googleapis.com/auth/drive.readonly",
-      callback: (r: any) => (r?.access_token ? resolve(r.access_token) : reject(new Error("auth"))),
-      error_callback: () => reject(new Error("auth")),
+      scope:
+        "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.email",
+      prompt: prompt ? "consent select_account" : "",
+      callback: (r: any) =>
+        r?.access_token ? resolve(r.access_token) : reject(new Error("canceled")),
+      error_callback: () => reject(new Error("canceled")),
     });
     client.requestAccessToken();
   });
+}
 
+async function driveAccount(token: string): Promise<string> {
+  try {
+    const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const json: any = res.ok ? await res.json() : null;
+    return String(json?.email || json?.name || "Your Google Account");
+  } catch {
+    return "Your Google Account";
+  }
+}
+
+async function drivePick(m: Modal, token: string, opts: ImportOptions) {
+  const apiKey = env("VITE_GOOGLE_PICKER_API_KEY");
+  const appId = env("VITE_GOOGLE_PICKER_APP_ID");
   showState(m, "Opening Google Drive…");
+  await loadScript("https://apis.google.com/js/api.js");
+  const gapi = (window as any).gapi;
+  if (!gapi) throw new Error("sdk");
   await new Promise<void>((resolve) => gapi.load("picker", () => resolve()));
   const picker = (window as any).google.picker;
 
@@ -405,9 +401,39 @@ async function drivePicker(m: Modal, opts: ImportOptions) {
   await finish(m, files, opts);
 }
 
+async function driveFlow(m: Modal, cfg: ProviderConfig, opts: ImportOptions) {
+  const connect = (prompt: boolean) => {
+    showState(m, "Connecting To Google Drive…");
+    void (async () => {
+      try {
+        const token = await driveToken(prompt);
+        const account = await driveAccount(token);
+        showConnected(
+          m,
+          cfg,
+          account,
+          () => {
+            void (async () => {
+              try {
+                await drivePick(m, token, opts);
+              } catch (e) {
+                fail(m, cfg, e, () => connect(false), opts);
+              }
+            })();
+          },
+          () => connect(true),
+        );
+      } catch (e) {
+        fail(m, cfg, e, () => connect(true), opts);
+      }
+    })();
+  };
+  showDisconnected(m, cfg, () => connect(false));
+}
+
 /* ------------------------------------------------------- Dropbox Chooser */
 
-async function dropboxChooser(m: Modal, opts: ImportOptions) {
+async function dropboxPick(m: Modal, opts: ImportOptions) {
   const appKey = env("VITE_DROPBOX_APP_KEY");
   showState(m, "Connecting To Dropbox…");
   await loadScript("https://www.dropbox.com/static/api/2/dropins.js", {
@@ -418,14 +444,18 @@ async function dropboxChooser(m: Modal, opts: ImportOptions) {
   if (!Dropbox?.choose) throw new Error("sdk");
 
   showState(m, "Opening Dropbox…");
-  const picked: any[] = await new Promise((resolve) => {
-    Dropbox.choose({
-      linkType: "direct",
-      multiselect: true,
-      extensions: OK_EXT.map((e) => "." + e),
-      success: (sel: any[]) => resolve(sel || []),
-      cancel: () => resolve([]),
-    });
+  const picked: any[] = await new Promise((resolve, reject) => {
+    try {
+      Dropbox.choose({
+        linkType: "direct",
+        multiselect: true,
+        extensions: OK_EXT.map((e) => "." + e),
+        success: (sel: any[]) => resolve(sel || []),
+        cancel: () => resolve([]),
+      });
+    } catch {
+      reject(new Error("sdk"));
+    }
   });
   if (!picked.length) {
     m.close();
@@ -433,7 +463,6 @@ async function dropboxChooser(m: Modal, opts: ImportOptions) {
   }
 
   const files: File[] = [];
-  const fallback: string[] = [];
   for (let i = 0; i < picked.length; i++) {
     const item = picked[i];
     showState(m, `Importing ${i + 1} Of ${picked.length}…`);
@@ -441,64 +470,77 @@ async function dropboxChooser(m: Modal, opts: ImportOptions) {
       const res = await fetch(item.link);
       if (!res.ok) throw new Error("fetch");
       const blob = await res.blob();
-      files.push(new File([blob], String(item.name || "dropbox.jpg"), {
-        type: blob.type || "image/jpeg",
-      }));
+      files.push(
+        new File([blob], String(item.name || "dropbox.jpg"), {
+          type: blob.type || "image/jpeg",
+        }),
+      );
     } catch {
-      /* Expiring preview links are never stored: re-fetch server side instead. */
-      fallback.push(String(item.link));
+      /* one unreadable file must not abort the rest of the import */
     }
-  }
-  if (fallback.length) {
-    const { importCloudPhotos } = await import("@/lib/cloud-import.functions");
-    const res: any = await importCloudPhotos({ data: { urls: fallback.slice(0, 20) } });
-    (res?.files || []).forEach((f: any) => files.push(dataUrlToFile(f.data, f.name, f.type)));
   }
   if (!files.length) throw new Error("import");
   await finish(m, files, opts);
 }
 
+function dropboxFlow(m: Modal, cfg: ProviderConfig, opts: ImportOptions) {
+  const connect = () => {
+    void (async () => {
+      try {
+        await dropboxPick(m, opts);
+      } catch (e) {
+        fail(m, cfg, e, connect, opts);
+      }
+    })();
+  };
+  showDisconnected(m, cfg, connect);
+}
+
 /* ------------------------------------------------------------ entry point */
+
+function fail(
+  m: Modal,
+  cfg: ProviderConfig,
+  error: unknown,
+  retry: () => void,
+  opts: ImportOptions,
+) {
+  const code = (error as Error)?.message;
+  const why =
+    code === "canceled"
+      ? "Connection was canceled."
+      : code === "import"
+        ? `Those photos could not be read from ${cfg.label}. Please try again.`
+        : `${cfg.label} could not be opened. Please try again, or choose photos from your computer.`;
+  showError(m, why, retry, opts);
+}
 
 let RUNNING = false;
 
 /**
- * The single import entry point. Opens the modal only with meaningful content,
- * and always leaves the page unlocked — success, cancel or failure.
+ * The single import entry point. Opens one provider-specific modal, or nothing
+ * at all when the integration is not configured. Always leaves the page
+ * unlocked — success, cancel or failure.
  */
-export async function importFromProvider(id: ProviderId, opts: ImportOptions): Promise<void> {
-  if (RUNNING) return;
-  RUNNING = true;
+export async function importFromProvider(id: ProviderId, opts: ImportOptions): Promise<boolean> {
+  if (RUNNING) return false;
   const cfg = providerConfig(id);
+  if (!cfg.configured) {
+    opts.onUnavailable?.(providerUnavailableMessage(id));
+    return false;
+  }
+  RUNNING = true;
   const m = openProviderModal(cfg, opts.paint);
-  m.footer.innerHTML = `<button type="button" class="rdpi-btn" data-rdpi-close>Cancel</button>`;
   try {
-    const run = async () => {
-      if (cfg.mode === "picker") {
-        if (id === "drive") await drivePicker(m, opts);
-        else await dropboxChooser(m, opts);
-      } else {
-        await linkImport(m, cfg, opts);
-      }
-    };
-    try {
-      await run();
-    } catch (error) {
-      const why =
-        (error as Error)?.message === "auth"
-          ? `${cfg.label} did not finish authorizing. Please try again.`
-          : `${cfg.label} could not be opened. Please try again, or choose photos from your computer.`;
-      showError(m, why, () => void importRetry(id, opts), opts);
-    }
+    if (id === "drive") await driveFlow(m, cfg, opts);
+    else dropboxFlow(m, cfg, opts);
+  } catch (e) {
+    fail(m, cfg, e, () => void importFromProvider(id, opts), opts);
   } finally {
     RUNNING = false;
     /* A crash before any state rendered must never leave a blank overlay. */
     if (m.isOpen() && !m.body.textContent?.trim()) m.close();
     opts.paint?.();
   }
-}
-
-function importRetry(id: ProviderId, opts: ImportOptions) {
-  closeProviderModal();
-  void importFromProvider(id, opts);
+  return true;
 }

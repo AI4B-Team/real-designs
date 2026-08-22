@@ -12,7 +12,7 @@
 }
 
 .rdpi {
-  width: min(520px, 100%);
+  width: min(560px, 100%);
   max-height: min(86vh, 720px);
   display: flex;
   flex-direction: column;
@@ -79,12 +79,89 @@
 }
 
 .rdpi-b {
-  padding: 18px;
+  padding: 26px 28px;
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  min-height: 132px;
+  gap: 14px;
+}
+
+.rdpi-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rdpi-hero-logo,
+.rdpi-acct-logo {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.rdpi-hero-logo svg,
+.rdpi-acct-logo svg {
+  width: 22px;
+  height: 22px;
+}
+
+.rdpi-hero p {
+  font-size: 14.5px;
+  color: #111;
+  font-weight: 600;
+}
+
+.rdpi-acct {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.rdpi-acct-t {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.rdpi-acct-t b {
+  font-size: 14px;
+}
+
+.rdpi-acct-t span {
+  font-size: 13px;
+  color: #6a6a6a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rdpi-note {
+  font-size: 12.5px;
+  color: #767676;
+}
+
+.rdpi-link {
+  flex: 0 0 auto;
+  height: 40px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #111;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: underline;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.rdpi-link:hover {
+  color: #cc0000;
 }
 
 .rdpi-b p {
@@ -128,25 +205,12 @@
   font-size: 13.5px;
 }
 
-.rdpi-b textarea {
-  width: 100%;
-  min-height: 92px;
-  resize: vertical;
-  padding: 10px 12px;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  font: inherit;
-  font-size: 13.5px;
-  color: #111;
-  background: #fff;
-}
-
 .rdpi-f {
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  padding: 14px 18px;
+  padding: 14px 24px;
   border-top: 1px solid #eee;
   background: #fafafa;
 }

@@ -12,7 +12,7 @@
  */
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
-import { providerAvailable } from "@/lib/provider-import";
+import { providerAvailable, providerUnavailableMessage } from "@/lib/provider-import";
 
 export type AddSourceId = "computer" | "drive" | "dropbox";
 
@@ -30,7 +30,7 @@ export type AddSourceCardOptions = {
 /** Every mounted card, so only one can ever be expanded. */
 const MOUNTED = new Set<HTMLElement>();
 
-/** A provider button ships only when its import path is real. */
+/** A provider button only really works when its authorization flow is configured. */
 export function cloudSourceEnabled(id: "drive" | "dropbox"): boolean {
   return providerAvailable(id);
 }
@@ -48,17 +48,14 @@ export function addSourceCardHtml(opts: {
 }): string {
   const id = opts.id;
   const panelId = id + "Sources";
-  const cloud = (
-    key: "drive" | "dropbox",
-    label: string,
-    icon: string,
-  ) =>
-    cloudSourceEnabled(key)
-      ? `<button type="button" class="rv-addsrc rv-addsrc-${key}" data-addsrc="${key}" tabindex="-1">
+  const cloud = (key: "drive" | "dropbox", label: string, icon: string) => {
+    const off = !cloudSourceEnabled(key);
+    return `<button type="button" class="rv-addsrc rv-addsrc-${key}" data-addsrc="${key}"
+        ${off ? 'data-unavail="1" aria-disabled="true"' : ""}>
         <span class="rv-addsrc-i">${icon}</span><span class="rv-addsrc-l">${label}</span>
         <span class="rv-addsrc-sp" hidden aria-hidden="true"></span>
-      </button>`
-      : "";
+      </button>`;
+  };
   return `<div class="rv-addcard ${opts.ratio || ""}" data-addcard="${id}">
     <div class="rv-addcard-b" id="${id}">
       <button type="button" class="rv-addcard-face" data-addface
@@ -67,14 +64,15 @@ export function addSourceCardHtml(opts: {
         <b>Add More Photos</b>
       </button>
       <div class="rv-addcard-src" id="${panelId}" role="group" aria-label="Add Photos From" hidden>
-        <button type="button" class="rv-addsrc-back" data-addback tabindex="-1"
+        <button type="button" class="rv-addsrc-back" data-addback
           aria-label="Back To Add More Photos"><i data-lucide="x"></i></button>
-        <button type="button" class="rv-addsrc rv-addsrc-computer" data-addsrc="computer" tabindex="-1">
+        <button type="button" class="rv-addsrc rv-addsrc-computer" data-addsrc="computer">
           <span class="rv-addsrc-i"><i data-lucide="monitor-up"></i></span><span class="rv-addsrc-l">Computer</span>
           <span class="rv-addsrc-sp" hidden aria-hidden="true"></span>
         </button>
         ${cloud("drive", "Google Drive", DRIVE_ICON)}
         ${cloud("dropbox", "Dropbox", DROPBOX_ICON)}
+        <p class="rv-addcard-note" data-addnote hidden></p>
       </div>
 
     </div>
@@ -123,7 +121,6 @@ export function mountAddSourceCard(
   const face = card.querySelector<HTMLElement>("[data-addface]");
   const live = card.querySelector<HTMLElement>(".rv-addcard-live");
   const buttons = () => Array.from(card.querySelectorAll<HTMLElement>("[data-addsrc]"));
-  let hoverTimer: any = null;
   let locked = false;
 
   const say = (msg: string) => {
@@ -137,9 +134,19 @@ export function mountAddSourceCard(
     expand(card);
     opts.paint?.();
   };
+  const note = card.querySelector<HTMLElement>("[data-addnote]");
+  const setNote = (msg: string) => {
+    if (!note) return;
+    note.hidden = !msg;
+    note.textContent = msg;
+  };
+  /* Set while we hand focus back to the face after an explicit close, so the
+     returning focus event cannot immediately re-expand the card. */
+  let refocusing = false;
   const close = () => {
     locked = false;
-    clearTimeout(hoverTimer);
+    refocusing = true;
+    setNote("");
     collapse(card);
   };
 
@@ -161,15 +168,33 @@ export function mountAddSourceCard(
   });
 
 
-  /* Hover only previews; it may never steal a locked-open card away. */
-  card.addEventListener("mouseenter", () => {
+  /* Instant hover: no timer, no hover intent, no deferred mount. The choices
+     are already in the DOM, so this is a single class toggle. */
+  const enter = () => {
+    if (!isAddSourceCardOpen(card)) open(false);
+  };
+  card.addEventListener("pointerenter", enter);
+  card.addEventListener("mouseenter", enter);
+  /* pointerleave fires only when the pointer leaves the whole card, so moving
+     from the face onto a source button can never collapse it. */
+  card.addEventListener("pointerleave", (e) => {
     if (locked) return;
-    clearTimeout(hoverTimer);
-    hoverTimer = setTimeout(() => open(false), 260);
+    if (card.contains((e as PointerEvent).relatedTarget as Node)) return;
+    collapse(card);
   });
-  card.addEventListener("mouseleave", () => {
-    clearTimeout(hoverTimer);
-    if (!locked) collapse(card);
+  /* Keyboard focus expands immediately too. */
+  card.addEventListener("focusin", () => {
+    if (refocusing) {
+      refocusing = false;
+      return;
+    }
+    open(false);
+  });
+  card.addEventListener("focusout", (e) => {
+    if (locked) return;
+    const next = (e as FocusEvent).relatedTarget as Node | null;
+    if (next && card.contains(next)) return;
+    collapse(card);
   });
 
   card.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -195,6 +220,14 @@ export function mountAddSourceCard(
     e.preventDefault();
     if (btn.hasAttribute("data-busy")) return;
     const id = btn.getAttribute("data-addsrc") as AddSourceId;
+    if (btn.hasAttribute("data-unavail")) {
+      locked = true;
+      const msg = providerUnavailableMessage(id as "drive" | "dropbox");
+      setNote(msg);
+      say(msg);
+      return;
+    }
+    setNote("");
     btn.setAttribute("data-busy", "1");
     const sp = btn.querySelector<HTMLElement>(".rv-addsrc-sp");
     if (sp) sp.hidden = false;

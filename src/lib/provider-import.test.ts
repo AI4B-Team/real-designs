@@ -1,19 +1,27 @@
 // @vitest-environment jsdom
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   closeProviderModal,
   importFromProvider,
   isSupportedPhotoName,
   providerAvailable,
   providerConfig,
+  providerUnavailableMessage,
 } from "@/lib/provider-import";
 
 const modal = () => document.querySelector<HTMLElement>(".rdpi-back");
 const body = () => document.querySelector<HTMLElement>(".rdpi-b");
 
+function configure() {
+  (globalThis as any).__RD_PROVIDER_ENV = {
+    VITE_GOOGLE_PICKER_CLIENT_ID: "cid",
+    VITE_GOOGLE_PICKER_API_KEY: "key",
+    VITE_DROPBOX_APP_KEY: "dbx",
+  };
+}
+
 async function open(id: "drive" | "dropbox" = "drive", opts: any = {}) {
-  const p = importFromProvider(id, { onFiles: () => {}, ...opts });
-  await p;
+  await importFromProvider(id, { onFiles: () => {}, ...opts });
   return modal()!;
 }
 
@@ -23,14 +31,22 @@ describe("provider import", () => {
     document.body.innerHTML = "";
     document.body.style.overflow = "";
   });
+  afterEach(() => {
+    delete (globalThis as any).__RD_PROVIDER_ENV;
+    vi.unstubAllEnvs();
+  });
 
-  it("reports an honest mode for each provider", () => {
-    /* Without SDK keys the real, working share-link import is the path. */
-    expect(providerConfig("drive").mode).toBe("link");
+  it("is honestly unavailable when the integration is not configured", async () => {
+    expect(providerConfig("drive").configured).toBe(false);
     expect(providerConfig("drive").missing.length).toBeGreaterThan(0);
-    expect(providerConfig("dropbox").label).toBe("Dropbox");
-    expect(providerAvailable("drive")).toBe(true);
-    expect(providerAvailable("dropbox")).toBe(true);
+    expect(providerAvailable("dropbox")).toBe(false);
+    expect(providerUnavailableMessage("drive")).toContain("isn't available yet");
+
+    const onUnavailable = vi.fn();
+    const opened = await importFromProvider("drive", { onFiles: () => {}, onUnavailable });
+    expect(opened).toBe(false);
+    expect(modal()).toBeNull();
+    expect(onUnavailable).toHaveBeenCalledTimes(1);
   });
 
   it("only accepts supported photo types", () => {
@@ -40,17 +56,28 @@ describe("provider import", () => {
     expect(isSupportedPhotoName("noext", "image/png")).toBe(true);
   });
 
-  it("never opens an empty modal", async () => {
+  it("opens a provider-only modal with no source navigation", async () => {
+    configure();
     const m = await open("drive");
     expect(m).toBeTruthy();
-    expect(body()!.textContent!.trim().length).toBeGreaterThan(20);
-    expect(m.querySelector("[data-rdpi-close]")).toBeTruthy();
+    expect(body()!.textContent).toContain("Connect Google Drive to choose photos");
+    expect(m.textContent).not.toContain("Dropbox");
+    expect(m.textContent).not.toContain("Describe");
+    expect(m.textContent).not.toContain("Link");
+    expect(m.querySelector("[data-rdpi-links]")).toBeNull();
+    expect(m.querySelector("[data-rdpi-connect]")!.textContent).toContain("Connect Google Drive");
     expect(m.querySelector(".rdpi")!.getAttribute("role")).toBe("dialog");
-    expect(m.querySelector(".rdpi")!.getAttribute("aria-modal")).toBe("true");
-    expect(m.querySelector(".rdpi")!.getAttribute("aria-labelledby")).toBeTruthy();
+  });
+
+  it("gives Dropbox its own modal", async () => {
+    configure();
+    const m = await open("dropbox");
+    expect(body()!.textContent).toContain("Connect Dropbox to choose photos");
+    expect(m.textContent).not.toContain("Google Drive");
   });
 
   it("closes with the close button and restores scrolling and focus", async () => {
+    configure();
     const trigger = document.createElement("button");
     document.body.appendChild(trigger);
     trigger.focus();
@@ -63,6 +90,7 @@ describe("provider import", () => {
   });
 
   it("closes on Escape and on backdrop click", async () => {
+    configure();
     await open("drive");
     document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     expect(modal()).toBeNull();
@@ -73,37 +101,29 @@ describe("provider import", () => {
   });
 
   it("cancel closes the dialog", async () => {
+    configure();
     const m = await open("drive");
-    const cancel = Array.from(m.querySelectorAll<HTMLElement>("[data-rdpi-close]")).pop()!;
-    cancel.click();
-    expect(modal()).toBeNull();
-  });
-
-  it("offers a computer fallback that closes the overlay", async () => {
-    const onComputer = vi.fn();
-    const m = await open("dropbox", { onComputer });
-    m.querySelector<HTMLElement>("[data-rdpi-computer]")!.click();
-    expect(onComputer).toHaveBeenCalledTimes(1);
+    Array.from(m.querySelectorAll<HTMLElement>("[data-rdpi-close]")).pop()!.click();
     expect(modal()).toBeNull();
   });
 
   it("does not stack overlays when the button is clicked twice", async () => {
+    configure();
     await open("drive");
     await importFromProvider("drive", { onFiles: () => {} });
     expect(document.querySelectorAll(".rdpi-back").length).toBe(1);
   });
 
-  it("keeps the page usable after a failed import", async () => {
-    const m = await open("drive");
-    const area = m.querySelector<HTMLTextAreaElement>("[data-rdpi-links]")!;
-    area.value = "https://drive.google.com/file/d/abcdefghijkl/view";
-    m.querySelector<HTMLElement>("[data-rdpi-go]")!.click();
-    await new Promise((r) => setTimeout(r, 0));
-    /* The server call fails in tests: an error state, never a blank panel. */
+  it("connects for real and keeps every exit working", async () => {
+    configure();
+    const m = await open("drive", { onComputer: vi.fn() });
+    m.querySelector<HTMLElement>("[data-rdpi-connect]")!.click();
     await vi.waitFor(() => {
-      expect(body()!.textContent!.trim().length).toBeGreaterThan(10);
+      expect(body()!.textContent).toContain("Connecting To Google Drive");
     });
-    closeProviderModal();
+    /* Nothing is ever reported as connected before authorization returns. */
+    expect(m.textContent).not.toContain("Choose Photos");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     expect(modal()).toBeNull();
     expect(document.body.style.overflow).toBe("");
   });

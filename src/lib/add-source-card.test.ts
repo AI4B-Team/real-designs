@@ -51,12 +51,24 @@ describe("Add More Photos card", () => {
     expect(isAddSourceCardOpen(card)).toBe(false);
   });
 
-  it("sends cloud choices to the import pipeline", async () => {
+  it("is honest when a cloud provider is not configured", async () => {
     const onCloud = vi.fn();
     const card = mount({ onComputer: () => {}, onCloud });
-    card.querySelector<HTMLElement>('[data-addsrc="drive"]')!.click();
+    const drive = card.querySelector<HTMLElement>('[data-addsrc="drive"]')!;
+    expect(drive.getAttribute("aria-disabled")).toBe("true");
+    drive.click();
     await Promise.resolve();
-    expect(onCloud).toHaveBeenCalledWith("drive");
+    expect(onCloud).not.toHaveBeenCalled();
+    const note = card.querySelector<HTMLElement>("[data-addnote]")!;
+    expect(note.hidden).toBe(false);
+    expect(note.textContent).toContain("Google Drive isn't available yet");
+  });
+
+  it("expands instantly on pointerenter with no timer", () => {
+    const card = mount({ onComputer: () => {} });
+    card.dispatchEvent(new Event("pointerenter", { bubbles: false }));
+    expect(isAddSourceCardOpen(card)).toBe(true);
+    expect(card.querySelector<HTMLElement>(".rv-addcard-src")!.hidden).toBe(false);
   });
 
   it("does not render a separate popover or modal element", () => {
@@ -89,6 +101,6 @@ describe("Add More Photos expanded controls", () => {
     expect(rule).toContain("gap: 10px");
     expect(rule).toContain("height: 44px");
     /* A fixed icon box means different logo widths never shift the label. */
-    expect(css).toContain(".rd-app .rv-addsrc-i { display: inline-flex; width: 20px");
+    expect(css).toContain(".rd-app .rv-addsrc-i { display: inline-flex; width: 22px");
   });
 });
