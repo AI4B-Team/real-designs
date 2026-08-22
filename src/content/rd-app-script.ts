@@ -10009,7 +10009,7 @@ ${picks
       "Walkthrough Video": runWalkthrough,
       "Virtual Stage": () => runStageFlow(),
       Declutter: () => runDeclutterFlow(),
-      "Material Swap": () => runRoomToolFlow("materials", "Material Swap", true),
+      "Material Swap": () => runMaterialsFlow(),
       "Sketch To Render": () => runRoomToolFlow("sketch", "Sketch To Render", false),
       "Multi Angle": () => runRoomToolFlow("angle", "Multi Angle", true),
     };
