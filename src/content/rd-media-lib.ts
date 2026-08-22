@@ -322,7 +322,12 @@ async function load(quiet) {
     S.loading = true;
     render();
   }
+  /* Hearts come from the account, so they are correct on first paint. */
   try {
+    await bootFavorites();
+  } catch (_) {}
+  try {
+
     S.items = await loadMediaLibrary();
   } catch (_) {
     S.items = [];
