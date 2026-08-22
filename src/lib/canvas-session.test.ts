@@ -28,8 +28,10 @@ describe("canvas session", () => {
     const s = two();
     expect(CS.statusLine(s)).toBe("Generating concept 1 of 2\u2026");
     CS.markImage(s, 0, "a.png");
-    expect(CS.statusLine(s)).toBe("Generating concept 2 of 2\u2026");
+    expect(CS.statusLine(s)).toBe("Saving concept 1 of 2\u2026");
     CS.markSaved(s, 0, { path: "p0" });
+    CS.markGenerating(s, 1);
+    expect(CS.statusLine(s)).toBe("Generating concept 2 of 2\u2026");
     CS.markImage(s, 1, "b.png");
     expect(CS.statusLine(s)).toBe("Saving concept 2 of 2\u2026");
     CS.markSaved(s, 1, { path: "p1" });
