@@ -67,6 +67,9 @@ export type StudioStartCtx = {
   /** Initializes the result workspace once for a whole Describe batch. */
   beginConceptBatch?: (info: {
     room?: string | null;
+    roomSource?: "selected" | "inferred" | "unknown";
+    /** How many outputs were requested: that many slots appear immediately. */
+    count?: number;
     ratio?: string | null;
     mode?: string;
     summary?: string | null;
@@ -76,8 +79,16 @@ export type StudioStartCtx = {
   addConcept?: (
     image: string,
     label: string,
-    opts?: { prompt?: string; mode?: string; summary?: string | null; saveDraft?: boolean },
+    opts?: {
+      prompt?: string;
+      mode?: string;
+      summary?: string | null;
+      saveDraft?: boolean;
+      index?: number;
+      total?: number;
+    },
   ) => Promise<{ path: string | null; versionId: string | null } | null | undefined>;
+
   /** One honest progress/state line over the canvas. */
   setCanvasStatus?: (text: string) => void;
   /** Reports a partial batch and offers a retry for the missing option only. */
