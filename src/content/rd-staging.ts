@@ -540,9 +540,25 @@ function bindStartOver(el) {
 export function openStagingReview(seed = {}) {
   const files = (seed.files || []).filter(Boolean);
   const existing = (seed.photos || []).filter((p) => p && p.path);
+  /* A new batch coming from Studio, Media or a property always starts its own
+     session. Without this, a session left behind by a navigation that skipped
+     the explicit exit would silently keep its old photos and the new upload
+     would land in a grid full of someone else's rooms. */
+  const view = document.getElementById("v-staging");
+  const onScreen = !!view?.classList.contains("on");
+  const orphaned = !view; /* the builder's DOM is gone: the session is stale */
+  if (S && !seed.append && (orphaned || ((files.length || existing.length) && !onScreen))) {
+    S.items.forEach((i) => {
+      try {
+        URL.revokeObjectURL(i.previewUrl);
+      } catch (_) {}
+    });
+    S = null;
+  }
   if (!S) S = newSession(seed);
   if (seed.address) S.address = seed.address;
   if (seed.propertyId) S.propertyId = seed.propertyId;
+
   if (files.length) {
     addFiles(files);
   } else if (existing.length) {
