@@ -3287,7 +3287,7 @@ function leaveBuilder(w) {
   S.screen = "library";
   S.wizard = null;
   render();
-  resetStudioSurface();
+  resetStudioSurface({ force: true });
   goTo("studio");
 }
 

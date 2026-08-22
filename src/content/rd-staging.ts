@@ -444,7 +444,7 @@ function restoreScroll() {
 
 /* Leaving the builder never loses work: the draft is flushed first, then the
    session is torn down and Studio is returned to its starting page. */
-function leaveStaging() {
+function leaveStaging(opts?: { force?: boolean }) {
   hide();
   forgetCanvasOpen();
   endBuilderHistory("design");
@@ -461,10 +461,12 @@ function leaveStaging() {
     });
   S = null;
   removeStrip();
-  resetStudioSurface();
-  try {
-    window.__rdGo && window.__rdGo("studio");
-  } catch (_) {}
+  /* Only an explicit exit may clear the Canvas and navigate away. */
+  const cleared = resetStudioSurface({ force: opts?.force !== false });
+  if (cleared)
+    try {
+      window.__rdGo && window.__rdGo("studio");
+    } catch (_) {}
 }
 
 let exiting = false;
@@ -1267,7 +1269,7 @@ function render() {
      when the project holds no photos at all). */
   if (S.step === "add") {
     if (!S.items.length) {
-      leaveStaging();
+      leaveStaging({ force: false });
       return;
     }
     S.step = "review";
