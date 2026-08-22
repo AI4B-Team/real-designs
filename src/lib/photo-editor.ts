@@ -13,6 +13,7 @@
 
 import { createIcons, icons } from "lucide";
 import { rdToast } from "@/lib/rd-toast";
+import { applyCanvasBadge, resolveCanvasBadge, showCompareControl } from "@/lib/canvas-badge";
 import { confirmDialog } from "@/lib/builder-card-menu";
 import { roomPhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPhotoEdits, savePhotoEdit, resetPhotoEdit } from "@/lib/photo-edits.functions";
@@ -262,6 +263,7 @@ export async function openPhotoEditor(opts: {
   let cropMode = false;
   let aiPreview: { op: string; label: string; image: string } | null = null;
   let aiBusy = "";
+  let saveFailed = false;
 
   const embedded = !!opts.mount;
   const host = document.createElement("div");
@@ -405,12 +407,27 @@ export async function openPhotoEditor(opts: {
     $("#rdpeSaveCopy").toggleAttribute("disabled", !hasEdits(s) || s.saving);
     $("#rdpeReset").toggleAttribute("disabled", !hasEdits(s));
     $("#rdpeSave").textContent = s.saving ? "Saving…" : primarySaveLabel({ mode: modeFor(p) });
+    const edited = hasEdits(s) || !!aiPreview;
     const hold = $("#rdpeHold") as HTMLButtonElement;
     if (hold) {
-      const on = compareEnabled(hasEdits(s) || !!aiPreview);
+      /* Nothing to compare against until an edit exists: the control hides
+         rather than sitting there disabled. */
+      const on = compareEnabled(edited) && showCompareControl(edited);
+      hold.hidden = !on;
       hold.toggleAttribute("disabled", !on);
-      hold.title = on ? "Hold To Compare With The Editor Original" : "Make An Adjustment To Compare";
+      hold.title = "Hold To Compare With The Editor Original";
     }
+    /* The badge names the image on screen, never the selected tool. */
+    applyCanvasBadge(
+      host.querySelector(".rdpe-badge"),
+      resolveCanvasBadge({
+        comparing,
+        saving: s.saving,
+        saveFailed,
+        hasEdits: edited,
+        generated: modeFor(p) === "generated",
+      }),
+    );
     const prov = $("#rdpeProv");
     if (prov) {
       const line = modeFor(p) === "generated" ? editedFromLabel(p.versionNumber ?? null) : null;
@@ -680,6 +697,7 @@ export async function openPhotoEditor(opts: {
     const s = st();
     if (s.saving) return;
     s.saving = true;
+    saveFailed = false;
     paint();
     try {
       const dataUrl = await renderPhoto(s);
@@ -720,6 +738,7 @@ export async function openPhotoEditor(opts: {
       }
       opts.onSaved?.({ key: p.key, path, dataUrl, copy: asCopy, useEdited });
     } catch (err: any) {
+      saveFailed = true;
       rdToast(err?.message || "That Photo Could Not Be Saved.", "error");
     } finally {
       s.saving = false;
