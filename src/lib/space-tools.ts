@@ -36,6 +36,7 @@ export const TOOL_CREDITS: Record<string, number> = {
   "Sketch To Render": 1,
   Budget: 3,
   "Multi Angle": 1,
+  Animate: 40,
   "Walkthrough Video": 40,
   "2D To 3D Plan": 6,
 };
@@ -80,6 +81,10 @@ const BASE: Record<string, ToolCopy> = {
   "Multi Angle": {
     label: "Angles",
     desc: "Regenerates the same design from additional camera positions.",
+  },
+  Animate: {
+    label: "Animate",
+    desc: "Turns the image on the canvas into a short cinematic motion clip.",
   },
   "Walkthrough Video": {
     label: "Video",

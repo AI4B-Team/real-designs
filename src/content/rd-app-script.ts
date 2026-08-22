@@ -11,7 +11,31 @@ import { estimateDimensions } from "@/lib/dimensions.functions";
 import { renderDesign } from "@/lib/design-render.functions";
 import { renderPlan3d } from "@/lib/plan3d.functions";
 import { runRoomTool } from "@/lib/room-tools.functions";
-import { startWalkthrough, pollWalkthrough } from "@/lib/walkthrough.functions";
+import {
+  startMotionClip,
+  pollMotionClip,
+  listMotionClips,
+  updateMotionClip,
+  deleteMotionClip,
+  checkMotionClip,
+} from "@/lib/animate.functions";
+import {
+  mountAnimatePanel,
+  setAnimatePanelVisible,
+  setAnimateSources,
+  setAnimateJobs,
+  animateBrief,
+  animateCredits,
+  animateSettings,
+  applyAnimateSettings,
+} from "@/lib/animate-controls";
+import {
+  TOOL_PROMISE as ANIMATE_PROMISE,
+  idempotencyKey as animateKey,
+  isActive as clipActive,
+  reducedMotion,
+  statusLine as clipStatusLine,
+} from "@/lib/animate-brief";
 import { getMyCredits, listCreditHistory } from "@/lib/credits.functions";
 import {
   saveEstimate,
@@ -4245,51 +4269,272 @@ export function initApp(): () => void {
       }
     }
 
-    async function runWalkthrough() {
-      if (busy) return;
+    /* ---------- Animate: one image, one short motion clip ----------
+       This is not the Property Video builder. It animates the picture on the
+       canvas, and every job is durable server-side so a refresh can never
+       orphan a paid render. */
+
+    let CLIP_JOBS = [];
+    let CLIP_TIMER = null;
+    let CLIP_OPENED = {};
+
+    function ensureAnimatePanel() {
+      try {
+        mountAnimatePanel({
+          onChange: () => paintGenGate(),
+          onOpenJob: (id) => {
+            const j = CLIP_JOBS.find((x) => x.id === id);
+            if (j) clipModal(j);
+          },
+          onRetry: (id) => retryClip(id),
+        });
+        syncAnimateSources();
+      } catch (_) {}
+    }
+
+    /** Every source the user may animate, each one already persisted. */
+    function syncAnimateSources() {
+      const list = [];
+      const current = lastRenderPath || studioSourcePath();
+      const verTag = document.getElementById("rdwVerTag");
+      const currentLabel = (verTag && verTag.textContent && verTag.textContent.trim()) || "Current Version";
+      list.push({
+        kind: "current",
+        path: current || null,
+        label: currentLabel,
+        thumbUrl: lastRender || studioSrc("after") || studioSrc("before") || null,
+      });
+      const original = studioSourcePath();
+      if (original)
+        list.push({
+          kind: "original",
+          path: original,
+          label: "Original Photo",
+          thumbUrl: studioSrc("before"),
+        });
+      if (lastRenderPath && lastRenderPath !== original)
+        list.push({
+          kind: "version",
+          path: lastRenderPath,
+          label: currentLabel,
+          thumbUrl: lastRender,
+        });
+      try {
+        const angles = (ANGLE_STATE && ANGLE_STATE.results) || [];
+        const members = angles
+          .filter((a) => a && a.path)
+          .map((a) => ({ path: a.path, label: a.label || "Angle" }));
+        if (members.length)
+          list.push({
+            kind: "angle_set",
+            path: members[0].path,
+            label: "Saved Angle Set",
+            thumbUrl: angles[0].image || null,
+            members,
+          });
+      } catch (_) {}
+      try {
+        setAnimateSources(list, original || null);
+      } catch (_) {}
+    }
+
+    /** A clip only ever runs from a saved image, so save one if needed. */
+    async function ensureClipSourcePersisted() {
+      if (lastRenderPath || studioSourcePath()) {
+        syncAnimateSources();
+        return true;
+      }
+      const src = lastRender || studioSrc("after") || studioSrc("before");
+      if (!src) return false;
+      try {
+        const data = await toDataUrl(src, 1600);
+        lastRenderPath = await uploadRenderDataUrl(data);
+        syncAnimateSources();
+        return true;
+      } catch (_) {
+        return false;
+      }
+    }
+
+    async function runAnimateFlow() {
+      if (busy || GEN_GUARD.busy) return;
       if (!window.rdStudioHasSource()) {
         needSourceModal();
         return;
       }
-      if (!ensureCredits(40, "A Walkthrough Video")) return;
-      busy = true;
-      const ui = toolOverlay([
-        "Locking the finished render",
-        "Queuing the camera move",
-        "Rendering the walkthrough",
-      ]);
+      ensureAnimatePanel();
+      const saved = await ensureClipSourcePersisted();
+      if (!saved) {
+        showAlert("Save This Image First, Then Animate It.");
+        return;
+      }
+      const brief = animateBrief();
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" \u00b7 "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "A Motion Clip")) return;
+      if (!GEN_GUARD.begin()) return;
+
+      let started = 0;
       try {
-        const image = await toDataUrl(lastRender || studioSrc("after"), 1100);
-        const job = await startWalkthrough({
-          data: {
-            image,
-            room_type: currentRoomType(),
-            direction: (document.getElementById("fStyle") || {}).value || "Warm Minimal",
-          },
-        });
-        window.dispatchEvent(new Event("rd:credits-changed"));
-        ui.say("Rendering the walkthrough, this takes a minute or two");
-        let url = null;
-        for (let i = 0; i < 50; i++) {
-          await new Promise((res) => setTimeout(res, 6000));
-          const s = await pollWalkthrough({ data: { id: job.id } });
-          if (s.progress) ui.at(Math.max(20, s.progress));
-          if (s.status === "completed" && s.url) {
-            url = s.url;
-            break;
-          }
+        for (const job of brief.jobs) {
+          const key = animateKey(brief.payload, job.source_path);
+          const out = await startMotionClip({
+            data: {
+              title: job.label + " \u00b7 " + (currentRoomType() || "Design"),
+              idempotency_key: key,
+              payload: { ...brief.payload, source_path: job.source_path },
+              source_path: job.source_path,
+              frame_path: job.frame_path || null,
+              property_id: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
+            },
+          });
+          if (!out.reused) started += 1;
+          upsertClip(out.job);
         }
-        ui.done();
-        if (!url) throw new Error("The video is taking longer than usual. Check back in a moment.");
-        videoModal(url);
+        window.dispatchEvent(new Event("rd:credits-changed"));
+        try {
+          rdToast(
+            started === 0
+              ? "That Clip Is Already Rendering"
+              : started === 1
+                ? "Rendering Your Clip. You Can Leave This Page."
+                : started + " Clips Are Rendering. You Can Leave This Page.",
+          );
+        } catch (_) {}
+        pumpClips();
       } catch (e) {
-        ui.done();
         if (!creditGate(e))
-          showToolError("Could not render the walkthrough. " + ((e && e.message) || ""));
+          showToolError("Could not start this clip. " + ((e && e.message) || ""));
       } finally {
-        busy = false;
+        GEN_GUARD.end();
       }
     }
+
+    function upsertClip(job) {
+      if (!job) return;
+      const i = CLIP_JOBS.findIndex((x) => x.id === job.id);
+      if (i >= 0) CLIP_JOBS[i] = { ...CLIP_JOBS[i], ...job };
+      else CLIP_JOBS.unshift(job);
+      try {
+        setAnimateJobs(CLIP_JOBS);
+      } catch (_) {}
+    }
+
+    /** Polls only what the provider is actually working on. */
+    function pumpClips() {
+      if (CLIP_TIMER) return;
+      const tick = async () => {
+        const active = CLIP_JOBS.filter((j) => clipActive(j));
+        if (!active.length) {
+          clearInterval(CLIP_TIMER);
+          CLIP_TIMER = null;
+          return;
+        }
+        for (const j of active) {
+          try {
+            const out = await pollMotionClip({ data: { id: j.id } });
+            const before = j.status;
+            upsertClip(out.job);
+            if (before !== "completed" && out.job.status === "completed") {
+              window.dispatchEvent(new Event("rd:media-change"));
+              if (!CLIP_OPENED[out.job.id]) {
+                CLIP_OPENED[out.job.id] = true;
+                clipModal(out.job);
+                checkClipQuality(out.job);
+              }
+            }
+            if (out.job.status === "failed") {
+              window.dispatchEvent(new Event("rd:credits-changed"));
+            }
+          } catch (_) {
+            /* a failed poll is retried on the next tick */
+          }
+        }
+      };
+      CLIP_TIMER = setInterval(tick, 7000);
+      tick();
+    }
+
+    /** Reads the last frame back and flags a clip whose room drifted. */
+    async function checkClipQuality(job) {
+      try {
+        if (!job.url) return;
+        const video = document.createElement("video");
+        video.crossOrigin = "anonymous";
+        video.muted = true;
+        video.src = job.url;
+        await new Promise((res, rej) => {
+          video.onloadeddata = res;
+          video.onerror = rej;
+        });
+        video.currentTime = Math.max(0, (video.duration || 8) - 0.15);
+        await new Promise((res) => {
+          video.onseeked = res;
+          setTimeout(res, 2500);
+        });
+        const c = document.createElement("canvas");
+        c.width = Math.min(900, video.videoWidth || 900);
+        c.height = Math.round((c.width / (video.videoWidth || 16)) * (video.videoHeight || 9));
+        c.getContext("2d").drawImage(video, 0, 0, c.width, c.height);
+        const frame = c.toDataURL("image/jpeg", 0.7);
+        const out = await checkMotionClip({ data: { id: job.id, end_frame: frame } });
+        upsertClip({ ...job, check: out.check });
+        if (out.check && out.check.morphing) paintClipWarning(job.id, out.check);
+      } catch (_) {
+        /* the check is advisory; a clip is never blocked by it */
+      }
+    }
+
+    function paintClipWarning(id, check) {
+      const m = document.getElementById("clipModal");
+      if (!m || m.dataset.clip !== id) return;
+      const host = m.querySelector("#clipWarn");
+      if (!host) return;
+      host.hidden = false;
+      host.innerHTML =
+        "<b>This Clip Drifts</b><br>" +
+        (check.issues || []).map((x) => "\u00b7 " + x).join("<br>") +
+        "<br>" +
+        (check.advice || "");
+    }
+
+    /** Retry the same source with half the camera travel. */
+    function retryClip(id) {
+      const j = CLIP_JOBS.find((x) => x.id === id);
+      if (!j) return;
+      const p = j.payload || {};
+      applyAnimateSettings(
+        reducedMotion({
+          ...animateSettings(),
+          motionId: p.motion || animateSettings().motionId,
+          seconds: p.seconds || animateSettings().seconds,
+          aspect: p.aspect || animateSettings().aspect,
+          strength: typeof p.strength === "number" ? p.strength : animateSettings().strength,
+          speed: typeof p.speed === "number" ? p.speed : animateSettings().speed,
+        }),
+      );
+      runAnimateFlow();
+    }
+
+    /** Restores every clip after a refresh, including ones still rendering. */
+    async function refreshClips() {
+      try {
+        const out = await listMotionClips({ data: { limit: 12 } });
+        CLIP_JOBS = out.jobs || [];
+        (CLIP_JOBS || []).forEach((j) => {
+          if (j.status === "completed") CLIP_OPENED[j.id] = true;
+        });
+        setAnimateJobs(CLIP_JOBS);
+        if (CLIP_JOBS.some((j) => clipActive(j))) pumpClips();
+      } catch (_) {}
+    }
+    window.rdRefreshClips = refreshClips;
+    /* A refresh must never orphan a paid render. */
+    setTimeout(() => refreshClips(), 1500);
 
     const ROOM_TOOL_STEPS = {
       stage: [
@@ -5678,30 +5923,154 @@ export function initApp(): () => void {
       i.hidden = false;
     }
 
-    function videoModal(url) {
-      let m = document.getElementById("vidModal");
+    /** Everything a finished clip can do, in one place. */
+    function clipModal(job) {
+      let m = document.getElementById("clipModal");
       if (!m) {
         m = document.createElement("div");
-        m.id = "vidModal";
+        m.id = "clipModal";
         m.className = "up-modal";
         m.innerHTML =
-          '<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" style="width:min(720px,calc(100vw - 32px))">' +
-          "<h3>Walkthrough Video</h3><p>Eight seconds, dolly in, built from your finished render.</p>" +
-          '<video id="vidPlayer" controls playsinline style="width:100%;border-radius:12px;background:#111"></video>' +
-          '<a class="btn btn-primary btn-block" id="vidDl" style="margin-top:12px" download="walkthrough.mp4"><i data-lucide="download"></i>Download MP4</a>' +
-          '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
+          '<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" style="width:min(760px,calc(100vw - 32px))">' +
+          '<h3 id="clipTitle">Motion Clip</h3><p id="clipSub" class="mono"></p>' +
+          '<video id="clipPlayer" controls playsinline style="width:100%;border-radius:12px;background:#111"></video>' +
+          '<div class="rd-anim-warn" id="clipWarn" hidden></div>' +
+          '<div class="rd-anim-actions">' +
+          '<a class="btn btn-primary" id="clipDl" download="motion-clip.mp4"><i data-lucide="download"></i>Download MP4</a>' +
+          '<button class="btn btn-dark" data-clip="video"><i data-lucide="clapperboard"></i>Use In Property Video</button>' +
+          '<button class="btn btn-ghost" data-clip="rename"><i data-lucide="pencil"></i>Rename</button>' +
+          '<button class="btn btn-ghost" data-clip="duplicate"><i data-lucide="copy"></i>Duplicate</button>' +
+          '<button class="btn btn-ghost" data-clip="regen"><i data-lucide="refresh-cw"></i>Regenerate</button>' +
+          '<button class="btn btn-ghost" data-clip="reduce"><i data-lucide="gauge"></i>Reduced Motion Retry</button>' +
+          '<button class="btn btn-ghost" data-clip="present"><i data-lucide="presentation"></i>Add To Presentation</button>' +
+          '<button class="btn btn-ghost" data-clip="share"><i data-lucide="link"></i>Copy Share Link</button>' +
+          '<button class="btn btn-ghost" data-clip="source"><i data-lucide="image"></i>View Source Version</button>' +
+          '<button class="btn btn-ghost" data-clip="delete"><i data-lucide="trash-2"></i>Delete</button>' +
+          "</div>" +
+          '<button class="btn btn-ghost btn-block" style="margin-top:10px" data-close>Close</button></div>';
         (document.querySelector(".rd-app") || document.body).appendChild(m);
         m.addEventListener("click", (e) => {
-          if (e.target.hasAttribute && e.target.hasAttribute("data-close")) {
+          const t = e.target;
+          if (t.hasAttribute && t.hasAttribute("data-close")) {
             m.classList.remove("on");
-            m.querySelector("#vidPlayer").pause();
+            const p = m.querySelector("#clipPlayer");
+            if (p) p.pause();
+            return;
           }
+          const act = t.closest && t.closest("[data-clip]");
+          if (act) clipAction(act.getAttribute("data-clip"), m.dataset.clip);
         });
       }
-      m.querySelector("#vidPlayer").src = url;
-      m.querySelector("#vidDl").href = url;
+      m.dataset.clip = job.id;
+      m.querySelector("#clipTitle").textContent = job.title || "Motion Clip";
+      const p = job.payload || {};
+      m.querySelector("#clipSub").textContent = [
+        (p.motion_label || "Motion") + " \u00b7 " + (p.seconds || 8) + "s \u00b7 " + (p.aspect || "16:9"),
+        "From " + (job.source_label || "your design"),
+        clipStatusLine(job),
+      ].join("  \u00b7  ");
+      const player = m.querySelector("#clipPlayer");
+      player.src = job.url || "";
+      m.querySelector("#clipDl").href = job.url || "#";
+      m.querySelector("#clipDl").setAttribute(
+        "download",
+        (job.title || "motion-clip").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".mp4",
+      );
+      const warn = m.querySelector("#clipWarn");
+      warn.hidden = true;
+      if (job.check && job.check.morphing) paintClipWarning(job.id, job.check);
       m.classList.add("on");
-      lucide.createIcons();
+      try {
+        lucide.createIcons();
+      } catch (_) {}
+    }
+
+    async function clipAction(action, id) {
+      const job = CLIP_JOBS.find((x) => x.id === id);
+      if (!job) return;
+      const modal = document.getElementById("clipModal");
+      try {
+        if (action === "rename") {
+          const name = window.prompt("Name This Clip", job.title || "Motion Clip");
+          if (!name) return;
+          await updateMotionClip({ data: { id: job.id, title: name.trim().slice(0, 90) } });
+          upsertClip({ ...job, title: name.trim().slice(0, 90) });
+          clipModal({ ...job, title: name.trim().slice(0, 90) });
+          window.dispatchEvent(new Event("rd:media-change"));
+          return;
+        }
+        if (action === "delete") {
+          await deleteMotionClip({ data: { id: job.id } });
+          CLIP_JOBS = CLIP_JOBS.filter((x) => x.id !== job.id);
+          setAnimateJobs(CLIP_JOBS);
+          window.dispatchEvent(new Event("rd:media-change"));
+          if (modal) modal.classList.remove("on");
+          rdToast("Clip Deleted");
+          return;
+        }
+        if (action === "duplicate" || action === "regen" || action === "reduce") {
+          const p = job.payload || {};
+          const base = {
+            ...animateSettings(),
+            motionId: p.motion || animateSettings().motionId,
+            seconds: p.seconds || animateSettings().seconds,
+            aspect: p.aspect || animateSettings().aspect,
+            strength: typeof p.strength === "number" ? p.strength : animateSettings().strength,
+            speed: typeof p.speed === "number" ? p.speed : animateSettings().speed,
+          };
+          applyAnimateSettings(action === "reduce" ? reducedMotion(base) : base);
+          if (modal) modal.classList.remove("on");
+          runAnimateFlow();
+          return;
+        }
+        if (action === "video") {
+          if (!job.output_path) {
+            showAlert("This Clip Is Still Saving.");
+            return;
+          }
+          const out = startVideoBuilder({
+            origin: "studio",
+            propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
+            propertyAddress: (STUDIO_CTX && STUDIO_CTX.address) || null,
+            assets: [
+              {
+                storagePath: job.output_path,
+                fileName: job.title || "Motion Clip",
+                roomName: currentRoomType() || null,
+                sourceType: "generated-version",
+              },
+            ],
+          });
+          if (out && out.ok === false)
+            showAlert(out.reason || "That clip could not be sent to Property Video.");
+          else if (modal) modal.classList.remove("on");
+          return;
+        }
+        if (action === "present") {
+          if (modal) modal.classList.remove("on");
+          go("present");
+          rdToast("Add This Clip To A Presentation From Here");
+          return;
+        }
+        if (action === "share") {
+          if (!job.url) return;
+          await navigator.clipboard.writeText(job.url);
+          rdToast("Link Copied. It Expires In One Hour.");
+          return;
+        }
+        if (action === "source") {
+          const url = await resolvePhotoUrl(job.source_path);
+          if (!url) {
+            showAlert("That Source Image Is No Longer Available.");
+            return;
+          }
+          if (modal) modal.classList.remove("on");
+          lastRender = url;
+          cAfter.innerHTML = photo(url, job.source_label || "Source version");
+        }
+      } catch (e) {
+        showAlert((e && e.message) || "That action could not be completed.");
+      }
     }
 
     async function openInStudio(r) {
@@ -10678,7 +11047,7 @@ ${picks
     const toolInfo = document.getElementById("toolInfo");
     const LIVE_TOOLS = {
       "2D To 3D Plan": run3dPlan,
-      "Walkthrough Video": runWalkthrough,
+      Animate: runAnimateFlow,
       "Virtual Stage": () => runStageFlow(),
       Declutter: () => runDeclutterFlow(),
       "Material Swap": () => runMaterialsFlow(),
@@ -10693,7 +11062,7 @@ ${picks
       "Sketch To Render": 1,
       Budget: 3,
       "Multi Angle": 1,
-      "Walkthrough Video": 40,
+      Animate: 40,
       "2D To 3D Plan": 6,
     };
     toolRows.forEach((r) => {
@@ -10818,6 +11187,12 @@ ${picks
             price = angleCredits(readAngleResults());
           } catch (_) {}
         }
+        /* Animate prices every clip in the set. */
+        if (tool === "Animate") {
+          try {
+            price = animateCredits();
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
@@ -10846,6 +11221,12 @@ ${picks
         ensureAnglesPanel();
         setAnglesPanelVisible(tool === "Multi Angle");
       } catch (_) {}
+      /* The motion controls belong to Animate alone. */
+      try {
+        ensureAnimatePanel();
+        setAnimatePanelVisible(tool === "Animate");
+        if (tool === "Animate") syncAnimateSources();
+      } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
         Redesign: "Generate Design",
@@ -10854,7 +11235,7 @@ ${picks
         "Material Swap": "Apply Material",
         "Sketch To Render": "Render Sketch",
         "Multi Angle": "Generate Angles",
-        "Walkthrough Video": "Render Walkthrough",
+        Animate: "Create Motion Clip",
         "2D To 3D Plan": "Generate 3D Plan",
       };
       const genLabel = document.getElementById("genLabel");
