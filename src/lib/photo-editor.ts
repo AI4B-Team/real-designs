@@ -68,9 +68,40 @@ import {
   type AdjustmentBundle,
 } from "@/lib/photo-editor-presets";
 import {
-  PRIVACY_TARGETS,
-  privacyInstruction,
-} from "@/lib/photo-editor-context";
+  BLUR_TYPES,
+  BRUSH_MAX,
+  BRUSH_MIN,
+  DEFAULT_PRIVACY_SETTINGS,
+  PRIVACY_CATEGORIES,
+  bakeFromState,
+  batchBlocked,
+  blurTypeNote,
+  brushFraction,
+  categoryLabel,
+  clampPrivacySettings,
+  deselectAll,
+  exportWarning,
+  hasPrivacySelection,
+  privacyMetadata,
+  safeDetections,
+  selectAll,
+  selectGroup,
+  type PrivacyDetection,
+  type PrivacyMetadata,
+  type PrivacySettings,
+} from "@/lib/privacy-blur";
+import {
+  bindStrokePainting,
+  clearStrokes,
+  createMaskState,
+  paintFromState,
+  paintMaskLayer,
+  redoStroke,
+  toggleSelectedRegion,
+  undoStroke,
+  type MaskState,
+} from "@/lib/mask-engine";
+import { scanPrivacy } from "@/lib/privacy.functions";
 import { chipList, chipValues, formDialog } from "@/lib/photo-editor-dialogs";
 import {
   type PhotoStats,
@@ -464,7 +495,24 @@ export async function openPhotoEditor(opts: {
   /* Detail and lens run as a real pixel pass; the preview shows that pass. */
   let detailPreview: { key: string; url: string } | null = null;
   let detailPending = "";
-  let privacyTargets: string[] = ["faces", "plates"];
+  /* Privacy Blur. Local, deterministic and free: the scan only locates
+     sensitive content, the pixels are baked here in the browser. */
+  type PrivacyEdit = {
+    open: boolean;
+    mask: MaskState;
+    detections: PrivacyDetection[];
+    settings: PrivacySettings;
+    tool: "brush" | "erase";
+    showMask: boolean;
+    scanning: boolean;
+    scanned: boolean;
+    scanError: string | null;
+    baking: boolean;
+  };
+  const privacies = new Map<string, PrivacyEdit>();
+  const privacyMeta = new Map<string, PrivacyMetadata>();
+  let privacyPreview: string | null = null;
+  let privacyTimer: ReturnType<typeof setTimeout> | null = null;
   let clipboard: AdjustmentBundle | null = null;
 
   const embedded = !!opts.mount;
