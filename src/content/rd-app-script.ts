@@ -3283,9 +3283,9 @@ export function initApp(): () => void {
     /* object locks */
     let mode = "keep";
     const locks = {};
-    document.querySelectorAll("[data-mode]").forEach((b) =>
+    document.querySelectorAll(".chip[data-mode]").forEach((b) =>
       b.addEventListener("click", () => {
-        document.querySelectorAll("[data-mode]").forEach((x) => x.classList.remove("on"));
+        document.querySelectorAll(".chip[data-mode]").forEach((x) => x.classList.remove("on"));
         b.classList.add("on");
         mode = b.dataset.mode;
       }),
@@ -3295,7 +3295,7 @@ export function initApp(): () => void {
       const sub = document.getElementById("lockCount");
       const list = document.getElementById("lockList");
       const ready = objectControlsReady();
-      document.querySelectorAll("[data-mode]").forEach((b) => {
+      document.querySelectorAll(".chip[data-mode]").forEach((b) => {
         b.disabled = !ready;
         b.classList.toggle("is-disabled", !ready);
       });
@@ -3655,7 +3655,7 @@ export function initApp(): () => void {
       document.querySelectorAll(".hot").forEach((h) => (h.className = "hot"));
       mode = "keep";
       document
-        .querySelectorAll("[data-mode]")
+        .querySelectorAll(".chip[data-mode]")
         .forEach((x) => x.classList.toggle("on", x.dataset.mode === "keep"));
       const note = document.getElementById("agentNote");
       if (note) note.value = "";
