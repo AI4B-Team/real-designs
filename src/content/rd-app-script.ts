@@ -52,6 +52,7 @@ import {
 } from "@/lib/concept-batch";
 import { suggestDesignTitle } from "@/lib/property-address";
 import * as OS from "@/lib/canvas-session";
+import * as CR from "@/lib/canvas-result";
 
 
 import { supabase } from "@/integrations/supabase/client";
@@ -3773,6 +3774,10 @@ export function initApp(): () => void {
     /* The persistent version currently shown on the canvas, and whether a save
        is still running. Approval may only ever target a saved version. */
     let DISPLAYED_VERSION = null;
+    /** The one authoritative active-result record. See src/lib/canvas-result.ts */
+    let ACTIVE_RESULT = null;
+    /** Room-scoped Version History rows, exactly as the server returned them. */
+    let HISTORY_VERSIONS = [];
     let VERSION_SAVING = false;
     /** A render that reached storage but whose version row still has to be written. */
     let PENDING_VERSION = null;
@@ -3785,6 +3790,8 @@ export function initApp(): () => void {
       PENDING_SAVE = null;
       PENDING_VERSION = null;
       DISPLAYED_VERSION = null;
+      ACTIVE_RESULT = null;
+      HISTORY_VERSIONS = [];
       paintSaveWarn();
     }
     async function persistRender(image, label) {
@@ -4280,20 +4287,31 @@ export function initApp(): () => void {
     function paintApproveBtn() {
       const b = document.getElementById("stApprove");
       if (!b) return;
-      const unsaved = VERSION_SAVING || (!!lastRenderPath && !DISPLAYED_VERSION) || !!PENDING_VERSION;
-      b.disabled = !!VERSION_SAVING;
-      b.setAttribute(
-        "data-tt",
-        VERSION_SAVING
-          ? "This Design Is Still Saving"
-          : unsaved
-            ? "Save This Version Before Approving"
-            : DISPLAYED_VERSION
-              ? "Approve Version " + DISPLAYED_VERSION.version_no
-              : "Approve The Latest Saved Version",
-      );
+      /* Label and tooltip are produced together, so they can never disagree. */
+      const st = CR.approveState(ACTIVE_RESULT, {
+        saving: !!VERSION_SAVING || !!PENDING_VERSION,
+        approved: !!b.dataset.approved,
+      });
+      b.disabled = !st.enabled;
+      b.setAttribute("data-tt", st.tooltip);
+      b.innerHTML = '<i data-lucide="check"></i>' + st.label;
+      try {
+        lucide.createIcons();
+      } catch (_) {}
     }
     window.rdPaintApproveBtn = paintApproveBtn;
+
+    /** The one authoritative description of what the Canvas is showing. */
+    function setActiveResult(r) {
+      ACTIVE_RESULT = r || null;
+      DISPLAYED_VERSION =
+        r && r.kind === "persistent-version" && r.versionNo
+          ? { id: r.versionId, version_no: r.versionNo, path: r.resultPath }
+          : null;
+      paintApproveBtn();
+      return ACTIVE_RESULT;
+    }
+    window.rdActiveCanvasResult = () => ACTIVE_RESULT;
 
 
     /** Paints "Saving…" / "Saved as Version N" on the tile for one render. */
@@ -4339,8 +4357,21 @@ export function initApp(): () => void {
           },
         });
         paintVersionBadge(afterPath, "Saved As Version " + v.version_no, "rd-vsaved");
+        /* The server assigned this number inside this room: it is now the
+           authoritative active result. */
         if (afterPath === lastRenderPath)
-          DISPLAYED_VERSION = { id: v.id, version_no: v.version_no, path: afterPath };
+          setActiveResult(
+            CR.versionResult(
+              {
+                id: v.id,
+                room_id: roomId,
+                version_no: v.version_no,
+                before_path: before,
+                after_path: afterPath,
+              },
+              { roomId },
+            ),
+          );
         /* The temporary draft may retire only now: durable image + version row. */
         try {
           await clearStudioDraft();
@@ -4466,43 +4497,58 @@ export function initApp(): () => void {
     } catch (_) {}
 
 
+    /**
+     * Version History for exactly one room.
+     *
+     * History is fetched with the active room id — never a room name — and any
+     * row the server returns for another room is quarantined. Persistent rows
+     * keep the server's `version_no`; anything still in flight is a numbered
+     * concept and is never called a version.
+     */
     async function paintVersions() {
       const el = document.getElementById("verList");
       if (!el) return;
       const sub = document.querySelector("#v-studio .right .card:last-child .card-h .sub");
       if (!el.innerHTML.trim()) el.innerHTML = skList(3);
-      let list = [];
       try {
-        list = await listSavedEstimates();
-      } catch (e) {
-        list = [];
+        SAVED_EST = await listSavedEstimates();
+      } catch (_) {
+        SAVED_EST = SAVED_EST || [];
       }
-      SAVED_EST = list;
       updateSearchMeta();
-      /* only the active room's real versions, never an unrelated project's history.
-     The room comes from the opened design when there is one, otherwise from the
-     Setup room selector, so a design started from an upload still shows history. */
-      const setupRoom = ((document.getElementById("fRoom") || {}).value || "").trim();
-      const activeRoom = (STUDIO_CTX && STUDIO_CTX.room) || setupRoom || "";
-      const norm = (s) =>
-        String(s || "")
-          .trim()
-          .toLowerCase();
-      if (activeRoom) list = list.filter((v) => norm(v.room_name) === norm(activeRoom));
-      else list = [];
-      if (sub) sub.textContent = activeRoom || "This Design";
 
-      list = list.slice(0, 6);
-      const norm2 = norm;
-      const session = SESSION_VERSIONS.filter(
-        (v) => !activeRoom || !v.room || norm2(v.room) === norm2(activeRoom),
-      ).slice(0, 6);
-      if (!list.length && !session.length) {
+      const roomId = (STUDIO_CTX && STUDIO_CTX.roomId) || null;
+      let rows = [];
+      if (roomId) {
+        try {
+          rows = await listRoomVersions({ data: { room_id: roomId } });
+        } catch (_) {
+          rows = [];
+        }
+      }
+      const versions = CR.roomVersions(rows, roomId);
+      HISTORY_VERSIONS = versions;
+
+      /* Concepts of this session that have no version row yet, oldest first so
+         Concept 1 always reads before Concept 2. */
+      const savedPaths = new Set(versions.map((v) => v.after_path).filter(Boolean));
+      const concepts = (SESSION_VERSIONS || [])
+        .filter((v) => v && (!v.path || !savedPaths.has(v.path)))
+        .slice()
+        .sort((a, b) => (a.at || 0) - (b.at || 0));
+
+      if (sub) sub.textContent = CR.historyHeading(versions.length, versions.length);
+      const countEl = document.getElementById("rdwVersN");
+      if (countEl && !OUTPUTS) countEl.textContent = CR.historyHeading(versions.length, versions.length);
+
+      if (!versions.length && !concepts.length) {
         el.innerHTML =
           '<div style="padding:6px 0"><b style="font-size:.85rem">No Versions Yet</b>' +
           '<p style="font-size:.78rem;color:var(--mute-2);margin-top:4px">Your generated and approved versions will appear here.</p></div>';
+        paintApproveBtn();
         return;
       }
+
       const ago = (iso) => {
         const s = (Date.now() - new Date(iso).getTime()) / 1000;
         if (s < 90) return "just now";
@@ -4510,69 +4556,89 @@ export function initApp(): () => void {
         if (s < 172800) return Math.round(s / 3600) + "h ago";
         return Math.round(s / 86400) + "d ago";
       };
-      /* A version is numbered, never named after the tool that made it. The
-         tool and style are secondary metadata under the number. */
-      const savedCount = list.length;
-      const numberOf = (v) => savedCount + (session.length - session.indexOf(v));
-      const sessionHTML = session
+
+      const conceptHTML = concepts
         .map((v, i) => {
-          const no = savedCount + (session.length - i);
+          const name = concepts.length > 1 ? "Concept " + (i + 1) : "Concept";
           const meta = [v.label, v.style].filter(Boolean).join(" \u00b7 ");
           const when = ago(new Date(v.at).toISOString());
-          /* A variation reads as a child of the version it branched from. */
-          const parent = v.parentAt
-            ? session.find((x) => x && x.at === v.parentAt) ||
-              session.find((x) => x && v.parentSrc && x.src === v.parentSrc)
-            : null;
-          const from = parent ? " &middot; From V" + numberOf(parent) : v.parentAt ? " &middot; Variation" : "";
-          const sub = (v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026") + from;
+          const line = v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026";
           return (
-            `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, "Version " + no)}</span>` +
-            `<span class="rowt"><b>Version ${no}</b><span>${sub}</span></span>` +
-            `<span class="pill ${v.path ? (i === 0 ? "p-ok" : "p-gray") : "p-amb"}">${v.path ? (i === 0 ? "Latest" : "Past") : "Saving"}</span></button>`
+            `<button type="button" class="ver-row" data-kind="concept" data-vi="${i}">` +
+            `<span class="ver-th">${photo(v.src, name)}</span>` +
+            `<span class="rowt"><b>${name}</b><span>${line}</span></span>` +
+            `<span class="pill ${v.path ? "p-gray" : "p-amb"}">${v.path ? "Not Saved" : "Saving"}</span></button>`
           );
         })
         .join("");
 
+      const versionHTML = versions
+        .map((v, i) => {
+          const st =
+            v.status === "approved"
+              ? ["p-ok", "Live"]
+              : v.status === "review"
+                ? ["p-amb", "Review"]
+                : ["p-gray", i === 0 ? "Latest" : "Past"];
+          const lab = (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
+          return (
+            `<button type="button" class="ver-row" data-kind="version" data-vid="${esc(v.id)}">` +
+            `<span class="rowt"><b>Version ${v.version_no}</b><span>${esc(v.style || lab)} &middot; ${ago(v.created_at)}</span></span>` +
+            `<span class="pill ${st[0]}">${st[1]}</span></button>`
+          );
+        })
+        .join("");
 
-      el.innerHTML =
-        sessionHTML +
-        list
-          .map((v, i) => {
-            const st =
-              v.status === "approved"
-                ? ["p-ok", "Live"]
-                : v.status === "review"
-                  ? ["p-amb", "Review"]
-                  : ["p-gray", !session.length && i === 0 ? "Latest" : "Past"];
-            const lab =
-              (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
-            return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>Version ${v.version_no || 1}</b><span>${v.room_name} &middot; ${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
-          })
-          .join("");
-      /* Approve always names the version actually on the canvas. */
-      const setApproveLabel = (no) => {
-        const ap = document.getElementById("stApprove");
-        if (ap && !ap.dataset.approved)
-          ap.innerHTML = '<i data-lucide="check"></i>Approve Version ' + no;
-        try {
-          lucide.createIcons();
-        } catch (_) {}
-      };
-      if (session.length) setApproveLabel(savedCount + session.length);
-      else if (list.length) setApproveLabel(list[0].version_no || 1);
+      el.innerHTML = conceptHTML + versionHTML;
 
-      el.querySelectorAll(".ver-row").forEach((btn) => {
+      /* Nothing chosen yet: the canvas shows the newest saved version. */
+      if (!ACTIVE_RESULT && versions.length) setActiveResult(CR.versionResult(versions[0]));
+      paintApproveBtn();
+
+      el.querySelectorAll('.ver-row[data-kind="concept"]').forEach((btn) => {
         btn.addEventListener("click", () => {
-          const i = +btn.dataset.vi;
-          const v = session[i];
+          const v = concepts[+btn.dataset.vi];
           if (!v || !cAfter) return;
           el.querySelectorAll(".ver-row").forEach((x) => x.classList.remove("on"));
           btn.classList.add("on");
-          cAfter.innerHTML = photo(v.src, "Version " + (savedCount + (session.length - i)));
+          const name = concepts.length > 1 ? "Concept " + (+btn.dataset.vi + 1) : "Concept";
+          cAfter.innerHTML = photo(v.src, name);
           lastRender = v.src;
           lastRenderPath = v.path || null;
-          setApproveLabel(savedCount + (session.length - i));
+          setActiveResult(
+            CR.conceptResult({
+              roomId,
+              outputId: v.src,
+              index: +btn.dataset.vi,
+              total: concepts.length,
+              resultPath: v.path || null,
+              status: v.path ? "ready" : "saving",
+            }),
+          );
+        });
+      });
+
+      el.querySelectorAll('.ver-row[data-kind="version"]').forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const row = versions.find((v) => String(v.id) === btn.dataset.vid);
+          if (!row || !cAfter) return;
+          el.querySelectorAll(".ver-row").forEach((x) => x.classList.remove("on"));
+          btn.classList.add("on");
+          /* The persistent version becomes the active result before the image
+             loads, so approval can never target the previous one. */
+          setActiveResult(CR.versionResult(row));
+          lastRenderPath = row.after_path || null;
+          try {
+            const url = row.after_path ? await resolvePhotoUrl(row.after_path) : null;
+            if (url) {
+              cAfter.innerHTML = photo(url, "Version " + row.version_no);
+              lastRender = url;
+            }
+            if (row.before_path) {
+              const b = await resolvePhotoUrl(row.before_path);
+              if (b && cBefore) cBefore.innerHTML = photo(b, "Original photo");
+            }
+          } catch (_) {}
         });
       });
     }
@@ -5906,10 +5972,14 @@ ${picks
 
     let scopeItems = SCOPE_ITEMS.slice();
 
+    /* The room type is whatever the session actually generated, not a hardcoded
+       default: a Kitchen result is never filed as a Living Room. */
     function currentRoomType() {
       const el = document.getElementById("svType");
       const v = el && el.value ? el.value.trim() : "";
-      return v || "living room";
+      const session = OUTPUTS && OUTPUTS.roomTypeName ? String(OUTPUTS.roomTypeName).trim() : "";
+      const ctx = STUDIO_CTX && STUDIO_CTX.room ? String(STUDIO_CTX.room).trim() : "";
+      return session || v || ctx || "";
     }
 
     function studioSrc(which) {
@@ -10891,21 +10961,22 @@ ${picks
     const stApprove = document.getElementById("stApprove");
     if (stApprove)
       stApprove.addEventListener("click", async () => {
-        /* Approval always targets the version actually on the canvas; only when
-           nothing was generated this session does it fall back to the latest. */
+        /* Approval only ever targets the authoritative active result: the
+           persistent version currently on the canvas, never a guessed number. */
         if (window.rdVersionSaving && window.rdVersionSaving()) {
           showAlert("That design is still saving. Try again in a moment.");
           return;
         }
-        const shown = window.rdDisplayedVersion && window.rdDisplayedVersion();
-        const room = shown
-          ? { version_id: shown.id, version_no: shown.version_no, status: "draft" }
-          : latestRoom();
+        const active = (window.rdActiveCanvasResult && window.rdActiveCanvasResult()) || null;
+        const room =
+          active && active.kind === "persistent-version" && active.versionId
+            ? { version_id: active.versionId, version_no: active.versionNo, status: "draft" }
+            : null;
         if (!room) {
-          showAlert("Save a room first. Approval applies to a saved version.");
+          showAlert("Save this design first. Approval applies to a saved version.");
           return;
         }
-        const approved = room.status === "approved";
+        const approved = !!stApprove.dataset.approved;
         stApprove.disabled = true;
         try {
           await setVersionStatus({
@@ -10913,14 +10984,7 @@ ${picks
           });
           await reloadTree();
           stApprove.dataset.approved = approved ? "" : "1";
-          stApprove.innerHTML =
-            '<i data-lucide="check"></i>' +
-            (approved
-              ? "Approve Version " + (room.version_no || 1)
-              : "Version " + (room.version_no || 1) + " Approved");
-
-
-          lucide.createIcons();
+          window.rdPaintApproveBtn && window.rdPaintApproveBtn();
           try {
             window.dispatchEvent(new CustomEvent("rd:saved"));
           } catch (e) {}
