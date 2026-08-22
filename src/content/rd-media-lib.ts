@@ -690,6 +690,14 @@ function moreItems(m, opts = {} as any) {
     });
   if (canEditImage(m))
     out.push({
+      group: "Manage",
+      icon: "rotate-ccw",
+      label: "Restore Original",
+      fn: () => restoreOriginal(m),
+    });
+
+  if (canEditImage(m))
+    out.push({
       group: "Create",
       icon: "wand-2",
       label: "Redesign In A Style",
