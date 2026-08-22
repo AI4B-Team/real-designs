@@ -64,9 +64,9 @@ describe("advanced markup", () => {
       scale: cal(),
       layers: [{ ...createLayer("renovation", [{ x: 0.4, y: 0.4 }]), meta: emptyCallout("renovation") }],
     };
-    const back = parseMarkup(serializeMarkup(doc));
-    expect(back?.scale?.unitsPerPixel).toBeCloseTo(doc.scale.unitsPerPixel);
-    expect(back?.layers[0]?.meta?.kind).toBe("renovation");
+    const back = parseMarkup(serializeMarkup(doc), "a1");
+    expect(back.scale?.unitsPerPixel).toBeCloseTo(doc.scale.unitsPerPixel);
+    expect(back.layers[0]?.meta?.kind).toBe("renovation");
   });
 
   it("exports only the layers a scope export is allowed to show", () => {
