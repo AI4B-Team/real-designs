@@ -50,7 +50,64 @@ import {
   type SurfaceDetection,
 } from "@/lib/materials-brief";
 
+import {
+  hoverSurface,
+  mountSurfaceOverlay,
+  resetSurfaceOverlay,
+  setSurfaceOverlayData,
+  setSurfaceOverlayVisible,
+  type DetectedSurface,
+  type SurfaceCategory,
+} from "@/lib/surface-overlay";
+
 const byId = (id: string) => document.getElementById(id);
+
+/* One canonical vocabulary: the catalog's surface kinds map to the shared
+   overlay categories, so the image, the rows and the brief agree. */
+const CATEGORY: Record<string, SurfaceCategory> = {
+  flooring: "floor",
+  wall_paint: "wall",
+  wall_tile: "tile",
+  backsplash: "backsplash",
+  countertop: "countertop",
+  cabinetry: "cabinet",
+  island: "cabinet",
+  ceiling: "ceiling",
+  trim_doors: "trim",
+  fireplace: "wall",
+  siding: "siding",
+  roofing: "roof",
+  exterior_trim: "trim",
+  front_door: "door",
+  paving: "paving",
+  decking: "paving",
+  fencing: "other",
+  gravel_bed: "lawn",
+};
+
+/** The detections rendered as canonical surface records for the overlay. */
+export function canonicalSurfaces(): DetectedSurface[] {
+  return state.detections.map((d) => ({
+    id: d.id,
+    label: d.label,
+    category: CATEGORY[d.kind] || "other",
+    currentMaterial: d.current,
+    confidence: d.confidence,
+    ...(d.polygon ? { polygon: d.polygon } : {}),
+    box: d.box,
+    ...(d.centroid ? { centroid: d.centroid } : {}),
+    selected: d.id === state.surfaceId,
+  }));
+}
+
+/** Pushes the current selection onto the photo. */
+function paintOverlay() {
+  try {
+    setSurfaceOverlayData(canonicalSurfaces());
+  } catch (_) {
+    /* the overlay is a view of state, never its owner */
+  }
+}
 
 function icons() {
   try {
@@ -126,6 +183,9 @@ export function resetMaterials() {
   state.patternId = null;
   state.scaleId = null;
   state.mask = emptyMask();
+  try {
+    resetSurfaceOverlay();
+  } catch (_) {}
   paintSurfaces();
   paintMaterials();
   paintMask();
@@ -148,6 +208,7 @@ export function setMaterialsDetections(detections: SurfaceDetection[], room: Roo
   paintSurfaces();
   paintMaterials();
   paintMask();
+  paintOverlay();
   change();
 }
 
@@ -236,6 +297,12 @@ export function mountMaterialsPanel(opts?: { onChange?: () => void; onDetect?: (
   else body.appendChild(sec);
 
   wire(sec);
+  try {
+    mountSurfaceOverlay({
+      onHover: (id) => highlightRow(id),
+      onSelect: (id) => selectSurface(id),
+    });
+  } catch (_) {}
   paintManualSurfaces();
   paintSurfaces();
   paintMaterials();
@@ -247,10 +314,23 @@ export function mountMaterialsPanel(opts?: { onChange?: () => void; onDetect?: (
 export function setMaterialsPanelVisible(on: boolean) {
   const sec = byId("rdMatSec");
   if (sec) sec.hidden = !on;
+  try {
+    setSurfaceOverlayVisible(on);
+    if (on) paintOverlay();
+  } catch (_) {}
   if (on) {
     paintMask();
     paintSummary();
   }
+}
+
+/** Image hover reaching the inspector: one row lights up, nothing scrolls away. */
+function highlightRow(id: string | null) {
+  const host = byId("rdMatList");
+  if (!host) return;
+  host.querySelectorAll<HTMLElement>("[data-surface]").forEach((row) => {
+    row.classList.toggle("is-hot", !!id && row.getAttribute("data-surface") === id);
+  });
 }
 
 function selectSurface(id: string | null, repaint = true) {
@@ -262,6 +342,7 @@ function selectSurface(id: string | null, repaint = true) {
     paintSurfaces();
     paintMaterials();
     paintMask();
+    paintOverlay();
     change();
   }
 }
@@ -274,6 +355,7 @@ function selectKind(kind: SurfaceKindId) {
   paintSurfaces();
   paintMaterials();
   paintMask();
+  paintOverlay();
   change();
 }
 
@@ -372,6 +454,13 @@ function wire(sec: HTMLElement) {
       return;
     }
   });
+
+  /* Row hover previews that surface's mask and label on the image. */
+  sec.addEventListener("pointerover", (e) => {
+    const row = (e.target as HTMLElement)?.closest?.("[data-surface]") as HTMLElement | null;
+    if (row) hoverSurface(row.getAttribute("data-surface"), "panel");
+  });
+  sec.addEventListener("pointerleave", () => hoverSurface(null, "panel"));
 
   sec.addEventListener("input", (e) => {
     const t = e.target as HTMLElement;

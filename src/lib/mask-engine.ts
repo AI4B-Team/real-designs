@@ -271,9 +271,14 @@ export function paintFromLegacy<K extends string>(input: {
   feather?: number;
   opacity?: number;
 }): MaskPaint {
+  const copy = (r: Region): Region => ({
+    label: r.label,
+    box: { ...r.box },
+    ...(r.polygon ? { polygon: r.polygon.map((p) => ({ ...p })) } : {}),
+  });
   return {
-    edit: input.edit.map((r) => ({ label: r.label, box: { ...r.box } })),
-    protect: input.protect.map((r) => ({ label: r.label, box: { ...r.box } })),
+    edit: input.edit.map(copy),
+    protect: input.protect.map(copy),
     editStrokes: input.strokes.filter((s) => input.intent(s.kind) === "include").map((s) => ({ x: s.x, y: s.y, r: s.r })),
     protectStrokes: input.strokes.filter((s) => input.intent(s.kind) === "exclude").map((s) => ({ x: s.x, y: s.y, r: s.r })),
     feather: Math.max(0, Number(input.feather) || 0),
@@ -312,6 +317,9 @@ type Ctx2D = {
   strokeRect: (x: number, y: number, w: number, h: number) => void;
   beginPath: () => void;
   arc: (x: number, y: number, r: number, a: number, b: number) => void;
+  moveTo?: (x: number, y: number) => void;
+  lineTo?: (x: number, y: number) => void;
+  closePath?: () => void;
   fill: () => void;
   stroke: () => void;
   fillStyle: unknown;
@@ -339,17 +347,35 @@ export function paintMaskLayer(
   }
   if (style === "overlay" && paint.opacity <= 0) return;
 
+  /* One shape painter: the real outline when we have one, the box otherwise. */
+  const trace = (r: Region): boolean => {
+    const poly = r.polygon;
+    if (!poly || poly.length < 3 || !ctx.moveTo || !ctx.lineTo || !ctx.closePath) return false;
+    ctx.beginPath();
+    poly.forEach((p, i) => (i === 0 ? ctx.moveTo!(p.x * W, p.y * H) : ctx.lineTo!(p.x * W, p.y * H)));
+    ctx.closePath();
+    return true;
+  };
+  const fillRegion = (r: Region) => {
+    if (trace(r)) ctx.fill();
+    else ctx.fillRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
+  };
+  const strokeRegion = (r: Region) => {
+    if (trace(r)) ctx.stroke();
+    else ctx.strokeRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
+  };
+
   const editFill =
     style === "binary" ? "#ffffff" : style === "review" ? "rgba(255,0,170,0.72)" : MASK_EDIT_FILL;
   const protectFill = "#000000";
 
   paint.edit.forEach((r) => {
     ctx.fillStyle = editFill;
-    ctx.fillRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
+    fillRegion(r);
     if (style === "overlay") {
       ctx.strokeStyle = MASK_EDIT_LINE;
       ctx.lineWidth = 2;
-      ctx.strokeRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
+      strokeRegion(r);
     }
   });
 
@@ -364,12 +390,12 @@ export function paintMaskLayer(
   paint.protect.forEach((r) => {
     if (style === "binary") {
       ctx.fillStyle = protectFill;
-      ctx.fillRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
+      fillRegion(r);
       return;
     }
     ctx.strokeStyle = style === "review" ? "rgba(0,220,130,0.95)" : MASK_PROTECT_LINE;
     ctx.lineWidth = style === "review" ? line : 2;
-    ctx.strokeRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
+    strokeRegion(r);
   });
 
   paint.protectStrokes.forEach((s) => {

@@ -75,7 +75,8 @@ export const DETECT_PROMPT =
   "You are inspecting one real estate photograph to list the replaceable surfaces in it. Answer only with JSON.\n" +
   'Return: {"room_type": string, "summary": string, "lighting": string, "other_surfaces": string[], ' +
   '"surfaces": [{"id": string, "label": string, "kind": string, "current_material": string, ' +
-  '"box": {"x": number, "y": number, "w": number, "h": number}, "confidence": 0..1}]}.\n' +
+  '"box": {"x": number, "y": number, "w": number, "h": number}, ' +
+  '"polygon": [{"x": number, "y": number}], "confidence": 0..1}]}.\n' +
   "kind must be one of: " +
   SURFACE_KINDS.map((s) => s.id).join(", ") +
   ".\n" +
@@ -87,6 +88,9 @@ export const DETECT_PROMPT =
   "lighting: one sentence about the direction, quality and colour of the light, so a replacement material can " +
   "be lit the same way.\n" +
   "other_surfaces: short descriptions of every other visible finish that must not change.\n" +
+  "polygon traces the actual visible outline of that surface in the photograph as 4 to 24 normalized 0..1 " +
+  "points in order around its edge, following perspective and stopping at anything that sits on top of it " +
+  "(furniture, rugs, appliances, cabinets). Never return a plain rectangle when the true shape is not one.\n" +
   "Only list surfaces that are genuinely visible. Never invent a surface.";
 
 export async function detectSurfaceList(image: string, apiKey: string) {
