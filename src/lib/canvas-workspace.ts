@@ -141,6 +141,56 @@ function editorMountHost(): HTMLElement | null {
   return board();
 }
 
+/* ------------------------------------------------------------------ */
+/* one permanent Canvas: the chrome below the image never unmounts      */
+/* ------------------------------------------------------------------ */
+
+function canvasBody(): HTMLElement | null {
+  return document.querySelector("#canvasCard > .card-b");
+}
+
+/** Nodes borrowed from the Canvas card while the editor owns the column. */
+let borrowed: HTMLElement[] = [];
+/** The Canvas overlay cluster (fit, zoom, full screen) while it is on loan. */
+let overlay: HTMLElement | null = null;
+
+/**
+ * The Canvas is one stage in every tool. The editor column reproduces the card
+ * exactly and takes the *same* chrome nodes (save warning, result actions,
+ * Version History) below its stage, so the reserved height - and therefore the
+ * image rectangle - is byte for byte the same as in Redesign. Nothing is
+ * recreated, so no state is lost when the tool changes.
+ */
+function borrowCanvasChrome(main: HTMLElement) {
+  const body = canvasBody();
+  if (!body || borrowed.length) return;
+  Array.from(body.children).forEach((el) => {
+    if (el.classList.contains("rdw-stage")) return;
+    borrowed.push(el as HTMLElement);
+  });
+  borrowed.forEach((el) => main.appendChild(el));
+  /* Fit, zoom and full screen are Canvas controls, not tool controls: the same
+     overlay cluster rides along so it never appears or disappears. */
+  const ov = document.querySelector<HTMLElement>("#rdwStage > .rdw-ov-r");
+  const stage = main.querySelector<HTMLElement>(".rdpe-stage");
+  if (ov && stage) {
+    overlay = ov;
+    stage.appendChild(ov);
+  }
+}
+
+/** Puts the borrowed chrome back in its original order under the stage. */
+function returnCanvasChrome() {
+  const body = canvasBody();
+  if (body) borrowed.forEach((el) => body.appendChild(el));
+  borrowed = [];
+  const stage = document.getElementById("rdwStage");
+  if (overlay && stage) stage.appendChild(overlay);
+  overlay = null;
+}
+
+
+
 /** The generation tool that was selected before Edit took over the rail. */
 let toolBeforeEdit = "";
 
@@ -181,9 +231,12 @@ export function setCanvasTool(tool: "edit-photo" | null) {
 
 /** Closes the embedded editor and restores the normal Canvas stage. */
 export function closeCanvasPhotoEditor() {
+  returnCanvasChrome();
   void import("@/lib/photo-editor").then((m) => m.closePhotoEditor());
   setCanvasTool(null);
+  applyZoom();
 }
+
 
 /** Mounts the ONE shared editor inside the Canvas on the visible image. */
 async function openCanvasPhotoEditor(): Promise<void> {
@@ -225,7 +278,13 @@ async function openCanvasPhotoEditor(): Promise<void> {
       },
     ],
   });
+  /* The permanent Canvas chrome moves with the column, so the stage keeps the
+     exact same height and the image never shifts. */
+  const main = document.querySelector<HTMLElement>(".rdpe-embed .rdpe-main");
+  if (main) borrowCanvasChrome(main);
+  applyZoom();
 }
+
 
 
 /* ------------------------------------------------------------------ */
@@ -445,12 +504,25 @@ function paintCapabilities(tool: string) {
 
 let zoom = 1;
 
-function applyZoom() {
-  const stage = document.getElementById("rdwStage");
-  if (!stage) return;
-  stage.style.setProperty("--rdw-zoom", String(zoom));
-  stage.classList.toggle("zoomed", zoom !== 1);
+/** The image viewport currently on screen: Redesign stage or editor stage. */
+function activeStage(): HTMLElement | null {
+  const editing = board()?.classList.contains("editing-photo");
+  return (
+    (editing ? document.querySelector<HTMLElement>(".rdpe-embed .rdpe-stage") : null) ||
+    document.getElementById("rdwStage")
+  );
 }
+
+/** Zoom is Canvas state, not tool state: it survives every tool change. */
+function applyZoom() {
+  document
+    .querySelectorAll<HTMLElement>("#rdwStage, .rdpe-embed .rdpe-stage")
+    .forEach((stage) => {
+      stage.style.setProperty("--rdw-zoom", String(zoom));
+      stage.classList.toggle("zoomed", zoom !== 1);
+    });
+}
+
 
 function setCompare(mode: string) {
   const rng = document.getElementById("cRng") as HTMLInputElement | null;
@@ -595,7 +667,8 @@ export function initCanvasWorkspace() {
       return;
     }
     if (t.closest("#rdwFull")) {
-      const stage = document.getElementById("rdwStage");
+      const stage = activeStage();
+
       try {
         if (document.fullscreenElement) void document.exitFullscreen();
         else void stage?.requestFullscreen();
@@ -644,7 +717,12 @@ export function initCanvasWorkspace() {
     }
   });
 
-  document.addEventListener("rdpe:closed", () => setCanvasTool(null));
+  /* Reclaim the permanent Canvas chrome before the editor host is removed. */
+  document.addEventListener("rdpe:closing", () => returnCanvasChrome());
+  document.addEventListener("rdpe:closed", () => {
+    setCanvasTool(null);
+    applyZoom();
+  });
 
   document.getElementById("rdwSettingsBtn")?.addEventListener("click", () => {
     b.classList.toggle("panel-on");
