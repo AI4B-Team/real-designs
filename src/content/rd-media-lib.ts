@@ -1563,7 +1563,7 @@ async function openDetail(m, opts) {
       <div class="ml-dr-hb">${canRename(m) ? `<button class="icon-btn" data-ren aria-label="Rename" title="Rename"><i data-lucide="type"></i></button>` : ""}
       <button class="icon-btn" data-close aria-label="Close"><i data-lucide="x"></i></button></div></div>
     <div class="ml-dr-b">
-      <div class="ml-dr-prev">${
+      <div class="ml-dr-prev"><button class="ml-ob ml-dr-fav${isFav(m.id) ? " fav" : ""}" data-fav-dr aria-pressed="${isFav(m.id)}" aria-label="${isFav(m.id) ? "Remove From Favorites" : "Add To Favorites"}" title="${isFav(m.id) ? "Remove From Favorites" : "Add To Favorites"}"><i data-lucide="heart"></i></button>${
         compare
           ? `<div class="ml-cmp"><figure><img src="${srcUrl}" alt="Source photo"><figcaption>Source</figcaption></figure><figure><img src="${url}" alt="${esc(m.title)}"><figcaption>Result</figcaption></figure></div>`
           : g === "videos" && m.assetPath && url
@@ -1579,7 +1579,7 @@ async function openDetail(m, opts) {
           : ""
       }
       ${
-        m.draft
+        m.draft && !m.path
           ? `<div class="ml-dr-note"><i data-lucide="pencil-ruler"></i><div><b>Unfinished Project</b><span>Saved at the ${esc(stepLabel(m.builderStep))} step. Pick up where you left off.</span></div></div>`
           : ""
       }
