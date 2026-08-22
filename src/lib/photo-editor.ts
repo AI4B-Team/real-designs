@@ -228,6 +228,9 @@ export async function openPhotoEditor(opts: {
   startKey?: string;
   property?: string;
   editorMode?: EditorMode;
+  /* Where closing returns the user. The editor is one screen reached from
+     several places, so the close control has to name the way back. */
+  returnDestination?: ReturnDestination;
   onSaved?: (r: {
     key: string;
     path: string;
@@ -236,6 +239,7 @@ export async function openPhotoEditor(opts: {
     useEdited?: boolean;
   }) => void;
 }): Promise<void> {
+
   const photos = (opts.photos || []).filter((p) => p && p.key);
   if (!photos.length) return void rdToast("There Are No Photos To Edit.", "error");
 
