@@ -2247,23 +2247,131 @@ export async function openPhotoEditor(opts: {
     }
   }
 
-  async function pasteAdjustments() {
-    if (!clipboard) return;
-    const root = await formDialog({
-      title: "Paste Adjustments",
-      body: `<p class="rdpe-hint">Light, Colour And Detail Are Always Pasted. Choose What Else To Bring Over.</p>
-        <label class="rdpe-dlg-c"><input type="checkbox" data-x="geo" /> Rotation, Straighten And Perspective</label>
-        <label class="rdpe-dlg-c"><input type="checkbox" data-x="crop" /> Crop</label>`,
-      confirmLabel: "Paste",
+  /* ------------------------------------------------- copy / paste / batch */
+
+  /** Copy never carries masks, crop position or AI results. */
+  function copyCurrentAdjustments() {
+    const s = st();
+    const p = cur();
+    clipboard = bundleOf(s);
+    copied = copyAdjustments({
+      key: p.key,
+      label: p.room || p.name || "Photo",
+      adj: s.adj,
+      look: null,
+      rotation: s.rotation,
+      flipH: s.flipH,
+      flipV: s.flipV,
+      straighten: s.straighten,
+      vertical: s.vertical,
+      horizontal: s.horizontal,
+      crop: s.crop,
+      aiOps: s.aiOps,
     });
-    if (!root) return;
-    applyBundle(
-      clipboard,
-      !!(root.querySelector('[data-x="geo"]') as HTMLInputElement)?.checked,
-      !!(root.querySelector('[data-x="crop"]') as HTMLInputElement)?.checked,
-    );
-    rdToast("Adjustments Pasted.");
+    paintPanel();
+    rdToast("Adjustments Copied. Masks, Crop Position And AI Changes Stay With Their Own Photo.");
   }
+
+  /** Merge a paste result into one photo state. */
+  function mergePaste(target: PhotoState, out: ReturnType<typeof applyCopied>) {
+    target.adj = { ...out.adj };
+    target.rotation = out.rotation;
+    target.flipH = out.flipH;
+    target.flipV = out.flipV;
+    target.straighten = out.straighten;
+    target.vertical = out.vertical;
+    target.horizontal = out.horizontal;
+    if (out.cropRatio && target.crop) target.crop = { ...target.crop, ratio: out.cropRatio };
+    target.dirty = true;
+  }
+
+  function snapshotBefore(s: PhotoState) {
+    return {
+      adj: { ...s.adj },
+      look: null,
+      rotation: s.rotation,
+      flipH: s.flipH,
+      flipV: s.flipV,
+      straighten: s.straighten,
+      vertical: s.vertical,
+      horizontal: s.horizontal,
+      cropRatio: s.crop?.ratio ?? null,
+      clipped: [] as string[],
+    };
+  }
+
+  /** Straight paste: the default categories, onto this photograph. */
+  function pasteAdjustments() {
+    if (!copied) return;
+    push();
+    const s = st();
+    mergePaste(s, applyCopied(s as any, copied, defaultPasteCategories(), "replace"));
+    paint();
+    void refreshStats();
+    rdToast("Light, Colour And Detail Pasted.");
+  }
+
+  function categoryChecklist(): string {
+    return PASTE_CATEGORIES.map(
+      (c) =>
+        `<label class="rdpe-dlg-c"><input type="checkbox" data-cat="${c.id}" ${
+          c.default ? "checked" : ""
+        } /> <b>${esc(c.label)}</b><em>${esc(c.hint)}</em></label>`,
+    ).join("");
+  }
+
+  function pickedCategories(root: HTMLElement): PasteCategory[] {
+    return Array.from(root.querySelectorAll<HTMLInputElement>("[data-cat]"))
+      .filter((i) => i.checked)
+      .map((i) => i.getAttribute("data-cat") as PasteCategory);
+  }
+
+  /** Selective paste: the user chooses exactly which categories transfer. */
+  async function pasteSelected() {
+    if (!copied) return;
+    const others = photos.filter((x) => x.key !== cur().key);
+    const root = await formDialog({
+      title: "Paste Selected Adjustments",
+      body: `<p class="rdpe-hint">From <b>${esc(copied.sourceLabel)}</b> &middot; ${
+        1 + others.length
+      } Photo${others.length ? "s Available" : ""} In This Property.</p>
+        <div class="rdpe-batch-cats">${categoryChecklist()}</div>
+        <label class="rdpe-dlg-c"><input type="checkbox" data-x="others" /> Also Apply To Other Selected Photos Below</label>
+        ${others.length ? chipList(others.map((x, i) => ({ id: x.key, label: x.room || x.name || `Photo ${i + 2}` }))) : ""}
+        <button type="button" class="rdpe-act" data-x="preview"><i data-lucide="eye"></i>Preview First Photo</button>`,
+      confirmLabel: "Apply To Selected",
+      cancelLabel: "Cancel",
+      onInput: (dlg) => {
+        const prev = dlg.querySelector('[data-x="preview"]') as HTMLButtonElement | null;
+        if (prev && !prev.dataset["bound"]) {
+          prev.dataset["bound"] = "1";
+          prev.onclick = () => {
+            const out = applyCopied(st() as any, copied!, pickedCategories(dlg), "replace");
+            previewAdj = out.adj;
+            const img = $("#rdpeImg") as HTMLElement | null;
+            if (img) img.style.filter = filterString(previewAdj);
+            rdToast("Previewing The Selected Categories.");
+          };
+        }
+      },
+    });
+    previewAdj = null;
+    paint();
+    if (!root) return;
+    const cats = pickedCategories(root);
+    if (!cats.length) return void rdToast("Nothing Was Selected To Paste.");
+    const alsoOthers = !!(root.querySelector('[data-x="others"]') as HTMLInputElement)?.checked;
+    const targets = [cur().key, ...(alsoOthers ? chipValues(root) : [])];
+    push();
+    for (const key of new Set(targets)) {
+      const target = states.get(key) || st(key);
+      mergePaste(target, applyCopied(target as any, copied, cats, "replace"));
+    }
+    paint();
+    void refreshStats();
+    rdToast(`Adjustments Pasted Into ${new Set(targets).size} Photo${targets.length === 1 ? "" : "s"}.`);
+  }
+
 
   async function savePresetFlow() {
     const root = await formDialog({
