@@ -11,6 +11,7 @@
  * as state, rendered on demand, and persisted through `photo_edits`.
  */
 
+import { createIcons, icons } from "lucide";
 import { rdToast } from "@/lib/rd-toast";
 import { confirmDialog } from "@/lib/builder-card-menu";
 import { roomPhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
@@ -432,7 +433,11 @@ export async function openPhotoEditor(opts: {
       .join("");
 
     paintPanel();
-    (window as any).lucide?.createIcons?.({ nameAttr: "data-lucide" });
+    try {
+      createIcons({ icons, nameAttr: "data-lucide", root: host as any });
+    } catch {
+      /* noop */
+    }
   }
 
   function sliderRow(a: (typeof ADJUSTMENTS)[number], v: number) {
