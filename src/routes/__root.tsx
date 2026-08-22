@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { initAnalytics, trackPageview } from "../lib/analytics";
 import {
+  chunkSignature,
   shouldRecoverFromChunkError,
   clearChunkRecovery,
   currentBuildId,
