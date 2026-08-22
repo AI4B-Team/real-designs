@@ -145,12 +145,27 @@
 }
 
 .rd-app .rdset-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in oklab, #c00 10%, transparent);
+  color: var(--rd-red, #c00);
   font-size: 11px;
-  color: var(--rd-muted, #6b7280);
+  font-weight: 600;
+}
+
+.rd-app .rdset-note i {
+  width: 12px;
+  height: 12px;
 }
 
 .rd-app .rdset-all {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
   border: 0;
   background: transparent;
   color: var(--rd-red, #c00);
@@ -159,19 +174,30 @@
   cursor: pointer;
 }
 
+.rd-app .rdset-all i {
+  width: 13px;
+  height: 13px;
+}
+
 .rd-app .rdset-seg {
-  display: inline-flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   border: 1px solid var(--rd-line, #e5e5e5);
   border-radius: 999px;
   overflow: hidden;
+  background: var(--rd-soft, #f4f4f5);
+  padding: 3px;
+  gap: 3px;
 }
 
 .rd-app .rdset-segb {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 14px;
+  padding: 8px 14px;
   border: 0;
+  border-radius: 999px;
   background: transparent;
   font-size: 12px;
   font-weight: 600;
@@ -188,14 +214,21 @@
   color: #fff;
 }
 
+.rd-app .rdset-row.is-wanted {
+  outline: 2px solid color-mix(in oklab, #c00 45%, transparent);
+  outline-offset: 6px;
+  border-radius: 12px;
+}
+
 .rd-app .rdset-cards {
   display: grid;
   align-items: start;
   align-content: start;
   grid-auto-rows: max-content;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
 }
+
 
 .rd-app .rdset-cards.is-browse {
   display: flex;
