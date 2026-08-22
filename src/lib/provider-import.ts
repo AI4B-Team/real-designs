@@ -564,3 +564,21 @@ export async function importFromProvider(id: ProviderId, opts: ImportOptions): P
   }
   return true;
 }
+
+/* ------------------------------------------------------- canonical ids */
+
+/** Stable, provider-specific values used by hosts and persisted state. The
+    "Cloud" tab is only a visual grouping: these never collapse into one id. */
+export type CloudProvider = "google-drive" | "dropbox";
+
+export const CLOUD_PROVIDERS: CloudProvider[] = ["google-drive", "dropbox"];
+
+/** Maps a canonical cloud provider id onto the internal adapter id. */
+export function toProviderId(p: CloudProvider): ProviderId {
+  return p === "google-drive" ? "drive" : "dropbox";
+}
+
+/** True when that provider's real SDK flow has every key it needs. */
+export function cloudProviderAvailable(p: CloudProvider): boolean {
+  return providerAvailable(toProviderId(p));
+}

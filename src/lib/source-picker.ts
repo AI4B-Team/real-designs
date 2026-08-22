@@ -11,6 +11,12 @@
  */
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
+import {
+  cloudProviderAvailable,
+  importFromProvider,
+  toProviderId,
+  type CloudProvider,
+} from "@/lib/provider-import";
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { MAX_FILE_MB, rejectReason } from "@/lib/upload-manager";
 import { splitAddressLines, photoCountLabel, type ProjectAddress } from "@/lib/property-address";
@@ -672,6 +678,76 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   /** One contextual heading per source, so the card explains itself. */
   function paneHead(title: string, copy: string) {
     return '<div class="sp-panehead"><h4>' + esc(title) + "</h4><p>" + esc(copy) + "</p></div>";
+  }
+
+  /* ---------- cloud ---------- */
+
+  const CLOUD_META: Record<CloudProvider, { label: string; icon: string }> = {
+    "google-drive": { label: "Google Drive", icon: DRIVE_ICON },
+    dropbox: { label: "Dropbox", icon: DROPBOX_ICON },
+  };
+
+  /** The honest, contextual warning that sits directly under the heading. */
+  function cloudWarning() {
+    const drive = cloudProviderAvailable("google-drive");
+    const drop = cloudProviderAvailable("dropbox");
+    if (drive && drop) return "";
+    const msg =
+      !drive && !drop
+        ? "Cloud imports aren't available yet. You can still upload photos from your computer."
+        : !drive
+          ? "Google Drive isn't available yet. Dropbox or computer upload can still be used."
+          : "Dropbox isn't available yet. Google Drive or computer upload can still be used.";
+    return (
+      '<div class="sp-cloud-warn" role="status"><i data-lucide="info"></i>' +
+      "<p>" +
+      esc(msg) +
+      '</p><button type="button" class="sp-link" data-sp="browse">Choose From Computer</button>' +
+      "</div>"
+    );
+  }
+
+  function cloudCard(p: CloudProvider) {
+    const meta = CLOUD_META[p];
+    const ok = cloudProviderAvailable(p);
+    return (
+      '<div class="sp-cloud-card' +
+      (ok ? "" : " is-off") +
+      '"><span class="sp-cloud-logo">' +
+      meta.icon +
+      '</span><span class="sp-cloud-t"><b>' +
+      esc(meta.label) +
+      "</b><span>" +
+      (ok ? "Not connected" : "Not available yet") +
+      '</span></span><span class="sp-cloud-a">' +
+      '<button type="button" class="btn btn-dark btn-sm" data-sp-cloud="' +
+      p +
+      '">Connect</button>' +
+      "</span></div>"
+    );
+  }
+
+  function cloudPanel() {
+    return (
+      '<div class="sp-pane sp-cloud">' +
+      paneHead("Import From Cloud", "Connect a cloud account to choose photos.") +
+      cloudWarning() +
+      '<div class="sp-cloud-grid">' +
+      cloudCard("google-drive") +
+      cloudCard("dropbox") +
+      "</div>" +
+      "</div>"
+    );
+  }
+
+  async function startCloudImport(p: CloudProvider) {
+    await importFromProvider(toProviderId(p), {
+      destination: "studio-project",
+      onComputer: () => input.click(),
+      onFiles: async (files: File[]) => {
+        await intake(files);
+      },
+    });
   }
 
   function panel() {
