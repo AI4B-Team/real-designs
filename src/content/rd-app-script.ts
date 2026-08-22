@@ -39,6 +39,7 @@ import { initCanvasInspector } from "@/lib/canvas-inspector";
 import { initCanvasWorkspace, paintPanelHeader } from "@/lib/canvas-workspace";
 import { setConceptSummary } from "@/lib/canvas-panel";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
+import { isFavorite } from "@/lib/favorites";
 import {
   makeBatch,
   markGenerating,
