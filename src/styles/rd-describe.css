@@ -192,6 +192,7 @@
   display: grid;
   align-items: start;
   align-content: start;
+  grid-auto-rows: max-content;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
