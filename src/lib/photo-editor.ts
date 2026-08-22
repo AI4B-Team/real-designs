@@ -658,6 +658,11 @@ export async function openPhotoEditor(opts: {
           edited_path: path,
           label: p.room || p.name || null,
           as_copy: asCopy,
+          editor_mode: modeFor(p),
+          asset_id: p.assetId || p.key,
+          property_id: p.propertyId || null,
+          room_id: p.roomId || null,
+          parent_version_id: p.versionId || p.parentVersionId || null,
         },
       });
       s.dirty = false;
@@ -774,6 +779,10 @@ export async function openPhotoEditor(opts: {
     if (act === "save") return void save(false);
     if (act === "savecopy") return void save(true);
     if (act === "reset") return void resetPhoto();
+    if (act === "panel") {
+      host.classList.toggle("rdpe-panel-off");
+      return void paintCropBox();
+    }
     if (act === "aiapply") return applyAi();
     if (act === "aicancel") {
       aiPreview = null;
@@ -883,10 +892,35 @@ export async function openPhotoEditor(opts: {
   window.addEventListener("keyup", onKeyUp);
   const onResize = () => paintCropBox();
   window.addEventListener("resize", onResize);
+
+  /* Double-click a slider to return it to neutral. */
+  host.addEventListener("dblclick", (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t?.tagName !== "INPUT") return;
+    push();
+    if (t.hasAttribute("data-adj")) st().adj[t.getAttribute("data-adj") as string] = 0;
+    if (t.hasAttribute("data-straighten")) st().straighten = 0;
+    paint();
+  });
+
+  /* The footer wraps on the panel's own width, so the primary action is never
+     pushed past the edge of the viewport. */
+  const panelEl = $("#rdpePanel");
+  const applyFooter = (w: number) => {
+    host.classList.toggle("rdpe-footer-stack", footerLayout(w) === "stack");
+  };
+  applyFooter(panelEl?.getBoundingClientRect().width || 360);
+  const ro =
+    typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver((entries) => applyFooter(entries[0]?.contentRect.width || 360))
+      : null;
+  if (ro && panelEl) ro.observe(panelEl);
+
   (host as any).__teardown = () => {
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("keyup", onKeyUp);
     window.removeEventListener("resize", onResize);
+    ro?.disconnect();
   };
 
   /* -------------------------------------------------------------- start */
