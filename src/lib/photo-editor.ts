@@ -142,6 +142,25 @@ import {
 import { flattenMarkup } from "@/lib/markup-render";
 import { attachMarkupEditor, type MarkupEditor, type MarkupMode } from "@/lib/markup-editor";
 import { listMarkups, saveMarkup } from "@/lib/markup.functions";
+import {
+  CALLOUT_TYPES,
+  MEASURED_TYPES,
+  canMeasure,
+  layerMeasurement,
+  refreshMeasurements,
+} from "@/lib/markup";
+import {
+  BUDGET_CATEGORIES,
+  PRIORITIES,
+  SURFACES,
+  calloutComplete,
+  calloutDetails,
+  emptyCallout,
+  type CalloutMeta,
+} from "@/lib/markup-callouts";
+import { PERSPECTIVE_WARNING, NO_SCALE_MESSAGE, type ImagePerspective, type MeasureUnit } from "@/lib/markup-measure";
+import { PARCEL_WARNING, confidenceLabel, createOverlay, defaultAlignment, requiresManualAlignment } from "@/lib/parcel";
+import { lookupParcel, parcelProviderStatus, saveParcelAlignment } from "@/lib/parcel.functions";
 import { chipList, chipValues, formDialog } from "@/lib/photo-editor-dialogs";
 import {
   type PhotoStats,
