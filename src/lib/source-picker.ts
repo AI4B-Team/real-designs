@@ -583,7 +583,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             '" title="' +
             esc(m.desc) +
             '">' +
-            (s === "cloud" ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
+            (false ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
             esc(m.tab) +
             "</button>"
           );
