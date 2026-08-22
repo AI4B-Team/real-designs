@@ -13,6 +13,23 @@
  * selection, so the brief refuses to run without one.
  */
 
+import {
+  MAX_STROKES,
+  buildRegions,
+  emptyMask as coreEmptyMask,
+  pushStroke as corePushStroke,
+  redoStroke as coreRedoStroke,
+  undoStroke as coreUndoStroke,
+  growMask,
+  invertMask,
+  padBox,
+  setFeather,
+  summarizeRegions,
+  type MaskState as CoreMaskState,
+  type MaskStroke,
+  type SelectionIntent,
+} from "@/lib/selection-mask";
+
 export const TOOL_NAME = "Object Edit";
 
 export const TOOL_PROMISE =
