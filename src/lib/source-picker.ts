@@ -1166,6 +1166,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const render = (list: PickerDesign[]) =>
       state.mediaView === "list"
         ? '<div class="spd-list" role="group" aria-label="Your media">' +
+          listHead() +
           list.map(designRow).join("") +
           "</div>"
         : '<div class="spd-grid" role="group" aria-label="Your media">' +
