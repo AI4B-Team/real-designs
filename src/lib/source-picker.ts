@@ -267,7 +267,9 @@ const esc0 = (v: string) =>
 let pickerSeq = 0;
 
 export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
-  const cfg = CONTEXT_CONFIG[opts.context];
+  /* An unknown context must never blank the picker: fall back to the design
+     configuration instead of throwing on `cfg.sources`. */
+  const cfg = CONTEXT_CONFIG[opts.context] || CONTEXT_CONFIG.design;
   /* Several pickers can live in the DOM at once (Studio, Video, Listings).
      Element ids must stay unique per instance, and every lookup must be
      scoped to this picker, or a hidden picker answers for the visible one. */

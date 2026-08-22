@@ -1977,3 +1977,10 @@
   color: var(--red, #c00);
   stroke: currentColor;
 }
+
+.rds-srcmodal-err {
+  margin: 0;
+  padding: 12px 0;
+  font: 600 13px "DM Sans", system-ui, sans-serif;
+  color: #a11;
+}
