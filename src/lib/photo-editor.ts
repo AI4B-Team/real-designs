@@ -69,11 +69,17 @@ type Adj = Record<string, number>;
 
 type Crop = { x: number; y: number; w: number; h: number; ratio: string } | null;
 
+type AutoState = { strength: Strength; values: Adj } | null;
+
 type PhotoState = {
   adj: Adj;
   rotation: number;
   straighten: number;
+  /** Keystone correction, in degrees. Perspective, not a canvas resize. */
+  vertical: number;
+  horizontal: number;
   flipH: boolean;
+  flipV: boolean;
   crop: Crop;
   aiOps: string[];
   base: string | null; // current image (original or AI result)
@@ -83,6 +89,9 @@ type PhotoState = {
   saving: boolean;
   history: string[];
   future: string[];
+  /** Applied Auto Enhance, and the adjustments it was layered on top of. */
+  auto: AutoState;
+  autoBase: Adj | null;
 };
 
 const ADJUSTMENTS = [
@@ -94,38 +103,37 @@ const ADJUSTMENTS = [
   { group: "light", key: "blacks", label: "Blacks", min: -100, max: 100 },
   { group: "color", key: "temperature", label: "Temperature", min: -100, max: 100 },
   { group: "color", key: "tint", label: "Tint", min: -100, max: 100 },
-  { group: "color", key: "saturation", label: "Saturation", min: -100, max: 100 },
   { group: "color", key: "vibrance", label: "Vibrance", min: -100, max: 100 },
+  { group: "color", key: "saturation", label: "Saturation", min: -100, max: 100 },
   { group: "detail", key: "sharpen", label: "Sharpen", min: 0, max: 100 },
-  { group: "detail", key: "denoise", label: "Noise Reduction", min: 0, max: 100 },
+  { group: "detail", key: "denoise", label: "Denoise", min: 0, max: 100 },
 ] as const;
 
 const RATIOS: { id: string; label: string; v: number | null }[] = [
   { id: "original", label: "Original", v: null },
+  { id: "free", label: "Free", v: null },
   { id: "1:1", label: "1:1", v: 1 },
   { id: "4:3", label: "4:3", v: 4 / 3 },
   { id: "3:2", label: "3:2", v: 3 / 2 },
   { id: "16:9", label: "16:9", v: 16 / 9 },
-  { id: "4:5", label: "4:5", v: 4 / 5 },
   { id: "9:16", label: "9:16", v: 9 / 16 },
 ];
 
-const AUTO_ENHANCE: Adj = {
-  exposure: 8,
-  contrast: 12,
-  shadows: 14,
-  highlights: -10,
-  saturation: 8,
-  vibrance: 10,
-  sharpen: 20,
-};
+const GEOMETRY = [
+  { key: "straighten", label: "Straighten", min: -15, max: 15, step: 0.5 },
+  { key: "vertical", label: "Vertical Correction", min: -12, max: 12, step: 0.5 },
+  { key: "horizontal", label: "Horizontal Correction", min: -12, max: 12, step: 0.5 },
+] as const;
 
 function blankState(): PhotoState {
   return {
     adj: {},
     rotation: 0,
     straighten: 0,
+    vertical: 0,
+    horizontal: 0,
     flipH: false,
+    flipV: false,
     crop: null,
     aiOps: [],
     base: null,
@@ -135,6 +143,8 @@ function blankState(): PhotoState {
     saving: false,
     history: [],
     future: [],
+    auto: null,
+    autoBase: null,
   };
 }
 
