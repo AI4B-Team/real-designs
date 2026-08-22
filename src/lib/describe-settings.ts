@@ -327,6 +327,15 @@ export function advancedSummary(s: SettingsState): string {
   return parts.join(" \u00b7 ");
 }
 
+/** "Kitchen · Modern Luxury · 1 image" — what the footer shows when ready. */
+export function compactSummary(s: SettingsState): string {
+  const parts: string[] = [];
+  if (s.roomLabel) parts.push(s.roomLabel);
+  if (s.styleLabel) parts.push(s.styleLabel);
+  parts.push(s.options + (s.options === 1 ? " image" : " images"));
+  return parts.filter(Boolean).join(" \u00b7 ");
+}
+
 /**
  * One specific instruction at a time, in the order the user works. Generate is
  * never silently disabled and never shows a generic red error.
@@ -337,6 +346,15 @@ export function nextRequirement(s: SettingsState): string | null {
   if (!s.styleId) return "Select a design style.";
   return null;
 }
+
+/** Which section the blocking requirement lives in, so it can be reached. */
+export function nextRequirementTarget(s: SettingsState): "prompt" | "room" | "style" | null {
+  if (!s.prompt.trim() && !s.refCount) return "prompt";
+  if (!s.roomId) return "room";
+  if (!s.styleId) return "style";
+  return null;
+}
+
 
 /** Selections that stop making sense after a space change. */
 export function incompatibleAfterSpace(
