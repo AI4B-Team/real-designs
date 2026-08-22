@@ -1576,3 +1576,43 @@ body.rdpe-open {
   border-color: var(--brand);
   box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.14);
 }
+
+/* ---------------------------------------------- batch edit & paste dialogs */
+.rdpe-batch-cats,
+.rdpe-batch-modes {
+  display: grid;
+  gap: 6px;
+  margin: 6px 0 10px;
+}
+.rdpe-dlg-c em {
+  display: block;
+  margin-left: 24px;
+  font-style: normal;
+  font-size: 12px;
+  color: var(--rd-muted, #6b6c73);
+}
+.rdpe-mixrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0 10px;
+}
+.rdpe-mix {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid #e3e3e6;
+  border-radius: 999px;
+  font-size: 12px;
+  text-transform: capitalize;
+  background: #fff;
+}
+.rdpe-mix b {
+  font-family: "DM Mono", ui-monospace, monospace;
+  font-weight: 500;
+}
+.rdpe-mix.is-mixed {
+  border-color: #cc0000;
+  color: #cc0000;
+}
