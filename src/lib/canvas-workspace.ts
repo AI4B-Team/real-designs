@@ -248,7 +248,11 @@ export function paintPanelHeader() {
   const lvl = document.getElementById("rdwLevelField");
   if (lvl) lvl.hidden = !levelOnly;
   const lock = document.getElementById("rdwLockField");
-  if (lock) lock.hidden = tool === "Sketch To Render" || tool === "2D To 3D Plan";
+  /* Reality Lock only means something when the result is anchored to a real
+     photo. A text concept has no geometry to hold, so the control is hidden. */
+  const mode = (document.getElementById("canvas") as HTMLElement | null)?.dataset["mode"] || "";
+  const noGeometry = mode === "concept-only" || mode === "reference-guided";
+  if (lock) lock.hidden = noGeometry || tool === "Sketch To Render" || tool === "2D To 3D Plan";
   paintCapabilities(tool);
 }
 
