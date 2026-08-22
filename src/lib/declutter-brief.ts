@@ -382,14 +382,10 @@ export { strokeCoversBox, boxSentence };
  * from a rendered mask overlay plus explicit normalized coordinates. The user
  * is told this before paying; the mask is never collected and then ignored.
  */
-export const MASK_SUPPORT = {
-  native: false,
-  label: "Mask-Guided",
-  note:
-    "This provider does not accept a separate mask layer, so your selection is sent as a rendered mask " +
-    "overlay with exact coordinates and hard instructions to edit only those regions. Precision is very " +
-    "good but not pixel-exact — check the result and use a tighter mask if anything else moved.",
-} as const;
+export const MASK_SUPPORT = maskSupport(
+  "your selection",
+  "check the result and use a tighter mask if anything else moved.",
+);
 
 /* ---------------------------------------------------------------- costs */
 
