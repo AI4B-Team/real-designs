@@ -140,15 +140,23 @@ export function openVariationDrawer(ctx: VariationSource) {
     esc([room, styleName].filter(Boolean).join(" \u00b7 ")) +
     "</span></div>" +
     '<section class="rdvar-s"><label>Quick Changes</label><div class="rdvar-chips" data-q>' +
-    QUICK.map(
-      (q) =>
-        '<button type="button" class="rdvar-chip" data-q="' +
-        q.id +
-        '">' +
-        esc(q.label) +
-        "</button>",
-    ).join("") +
-    "</div></section>" +
+    QUICK.filter((q) => q.primary)
+      .map(
+        (q) =>
+          '<button type="button" class="rdvar-chip" data-q="' + q.id + '">' + esc(q.label) + "</button>",
+      )
+      .join("") +
+    "</div>" +
+    '<details class="rdvar-more"><summary>More Ideas</summary><div class="rdvar-chips" data-q>' +
+    QUICK.filter((q) => !q.primary)
+      .map(
+        (q) =>
+          '<button type="button" class="rdvar-chip" data-q="' + q.id + '">' + esc(q.label) + "</button>",
+      )
+      .join("") +
+    "</div></details></section>" +
+    '<section class="rdvar-s"><label>Describe Changes <span class="rdvar-opt">Optional</span></label>' +
+    '<textarea data-note-in rows="4" placeholder="Make the cabinets lighter, use warmer flooring, and simplify the furniture..."></textarea></section>' +
     '<section class="rdvar-s"><label>Design Style</label>' +
     '<div class="rdvar-style"><b data-style>' +
     esc(styleName) +
@@ -167,13 +175,13 @@ export function openVariationDrawer(ctx: VariationSource) {
     '</div><em class="rdvar-note" data-note>' +
     esc(STRENGTH[1]!.prompt) +
     "</em></section>" +
-    '<section class="rdvar-s"><label>What Should Change? <span class="rdvar-opt">Optional</span></label>' +
-    '<textarea data-note-in rows="3" placeholder="Make the cabinets lighter, use warmer flooring, and simplify the furniture..."></textarea></section>' +
-    '<section class="rdvar-s"><label>Keep These <span class="rdvar-opt">Optional</span></label><div class="rdvar-chips" data-l>' +
+    '<section class="rdvar-s"><details class="rdvar-more"><summary>Preserve <span class="rdvar-opt">Optional</span></summary>' +
+    '<div class="rdvar-chips" data-l>' +
     LOCKS.map(
       (l) => '<button type="button" class="rdvar-chip" data-l="' + esc(l) + '">' + esc(l) + "</button>",
     ).join("") +
-    "</div></section>" +
+    "</div></details></section>" +
+
     "</div>" +
     '<footer class="rdvar-f"><button type="button" class="btn ghost" data-vx="close">Cancel</button>' +
     '<button type="button" class="btn primary" data-vx="go"><i data-lucide="git-branch"></i>Create Variation \u00b7 1 Credit</button></footer>' +
