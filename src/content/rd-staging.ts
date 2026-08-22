@@ -48,7 +48,23 @@ import {
   roomSpace,
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
-import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
+import { runBulkDesign } from "@/lib/staging-bulk";
+import {
+  canEnterDesign,
+  canEnterReview,
+  creditCost,
+  normalizeDesignModel,
+  pruneIncompatible,
+  reviewBlockers,
+  toDirection,
+} from "@/lib/staging-design";
+import {
+  bindDesignStep,
+  bindReviewStep,
+  designStepHtml,
+  reviewStepHtml,
+} from "@/lib/staging-design-ui";
+import { getMyCredits } from "@/lib/credits.functions";
 import { openAddressModal } from "@/lib/address-modal";
 import { openRoomAreaPicker } from "@/lib/room-area-picker";
 import {
