@@ -2106,9 +2106,12 @@ function applyRoomToSelected(anchor) {
  * Rotation is metadata, never a re-upload: the card turns instantly and the
  * angle is baked in only when pixels leave (download, design, export).
  */
-function rotateItem(it) {
+function rotateItem(it, dir) {
   if (!it) return;
-  it.rotation = nextRotation(it.rotation);
+  it.rotation =
+    dir === "left"
+      ? nextRotation(nextRotation(nextRotation(it.rotation)))
+      : nextRotation(it.rotation);
   patchCard(it);
   saveDraft();
 }
