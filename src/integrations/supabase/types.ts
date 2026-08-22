@@ -682,6 +682,78 @@ export type Database = {
         }
         Relationships: []
       }
+      motion_clip_jobs: {
+        Row: {
+          charged: boolean
+          created_at: string
+          credits: number
+          error: string | null
+          id: string
+          idempotency_key: string
+          output_path: string | null
+          payload: Json
+          progress: number
+          provider_job_id: string | null
+          quality_check: Json | null
+          refunded: boolean
+          source_kind: string | null
+          source_label: string | null
+          source_path: string | null
+          status: string
+          thumbnail_path: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          video_project_id: string | null
+        }
+        Insert: {
+          charged?: boolean
+          created_at?: string
+          credits?: number
+          error?: string | null
+          id?: string
+          idempotency_key: string
+          output_path?: string | null
+          payload?: Json
+          progress?: number
+          provider_job_id?: string | null
+          quality_check?: Json | null
+          refunded?: boolean
+          source_kind?: string | null
+          source_label?: string | null
+          source_path?: string | null
+          status?: string
+          thumbnail_path?: string | null
+          title?: string
+          updated_at?: string
+          user_id: string
+          video_project_id?: string | null
+        }
+        Update: {
+          charged?: boolean
+          created_at?: string
+          credits?: number
+          error?: string | null
+          id?: string
+          idempotency_key?: string
+          output_path?: string | null
+          payload?: Json
+          progress?: number
+          provider_job_id?: string | null
+          quality_check?: Json | null
+          refunded?: boolean
+          source_kind?: string | null
+          source_label?: string | null
+          source_path?: string | null
+          status?: string
+          thumbnail_path?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          video_project_id?: string | null
+        }
+        Relationships: []
+      }
       ops_error_events: {
         Row: {
           code: string
