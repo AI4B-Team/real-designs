@@ -872,3 +872,46 @@ body.rdpe-open {
   width: 32px;
   height: 32px;
 }
+
+/* ------------------------------------------------------------------ */
+/* Embedded inspector follows the Redesign panel exactly.              */
+/* The standalone editor's responsive rules (floating/absolute panel)  */
+/* must never apply inside the Designer, or the inspector overlays the */
+/* one permanent Canvas and the photo appears narrower than in         */
+/* Redesign. The Canvas geometry is owned by rd-canvas.css alone.      */
+/* ------------------------------------------------------------------ */
+.rd-app .studio.rdw .rdpe-embed .rdpe-grip,
+.rd-app .studio.rdw .rdpe-embed .rdpe-paneltoggle {
+  display: none !important;
+}
+
+@media (max-width: 1200px) {
+  .rd-app .studio.rdw .rdpe-embed .rdpe-panel {
+    position: static;
+    inset: auto;
+    width: auto;
+    z-index: auto;
+    box-shadow: none;
+  }
+}
+
+/* Below the Designer's own breakpoint the inspector becomes the same
+   off-canvas drawer as the Redesign panel, toggled by .panel-on. */
+@media (max-width: 1099px) {
+  .rd-app .studio.rdw .rdpe-embed .rdpe-panel {
+    position: fixed;
+    top: var(--app-header-height, 58px);
+    right: 0;
+    bottom: 0;
+    width: min(420px, 92vw);
+    max-width: none;
+    z-index: 60;
+    border-radius: 0;
+    box-shadow: -18px 0 40px rgba(0, 0, 0, 0.14);
+    transform: translateX(102%);
+    transition: transform 0.18s ease;
+  }
+  .rd-app .studio.rdw.panel-on .rdpe-embed .rdpe-panel {
+    transform: none;
+  }
+}
