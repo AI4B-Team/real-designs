@@ -2964,7 +2964,6 @@ function mountStrip() {
       <div class="rds-cmenu-wrap">
         <button class="rds-chead-i" id="rdsCanvasMore" title="More Options" aria-label="More Options" aria-haspopup="menu" aria-expanded="false"><i data-lucide="ellipsis-vertical"></i></button>
         <div class="rds-cmenu" id="rdsCanvasMenu" role="menu" hidden>
-          <button role="menuitem" id="rdsClose"><i data-lucide="arrow-left"></i>Return to Photos</button>
           <button role="menuitem" class="danger" id="rdsResetDesign"><i data-lucide="rotate-ccw"></i>Reset This Design…</button>
         </div>
       </div>
@@ -3064,12 +3063,6 @@ function bindCanvasMenu(head, backToPhotos) {
       window.addEventListener("hashchange", onHash);
     }
   };
-  const ret = head.querySelector("#rdsClose") as HTMLButtonElement | null;
-  if (ret)
-    ret.onclick = () => {
-      close();
-      backToPhotos();
-    };
   const reset = head.querySelector("#rdsResetDesign") as HTMLButtonElement | null;
   if (reset)
     reset.onclick = () => {
