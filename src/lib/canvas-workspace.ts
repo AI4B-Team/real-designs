@@ -20,6 +20,7 @@ import { buildCanvasPanel, refreshCanvasPanel } from "@/lib/canvas-panel";
 import { ensureNotEmpty } from "@/lib/route-states";
 import { initAutoRoom, markManualRoom } from "@/lib/canvas-autoroom";
 import { mountStudioResultActions } from "@/lib/canvas-actions";
+import { editorEntry, type ActiveImage } from "@/lib/active-image";
 
 
 const SETTINGS_KEY = "rd_canvas_workspace";

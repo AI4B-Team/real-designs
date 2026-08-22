@@ -32,6 +32,8 @@ import {
 
 /* ------------------------------------------------------------------ model */
 
+import { returnLabel, type ReturnDestination } from "@/lib/active-image";
+
 export type EditorPhoto = {
   key: string;
   name?: string;
