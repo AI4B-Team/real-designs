@@ -44,8 +44,10 @@ export const Sidebar = memo(function Sidebar() {
                 className={gi === 0 && i === 0 ? "nav-i on" : "nav-i"}
                 data-v={item.view}
               >
-                <i data-lucide={item.icon} />
-                {item.label}
+                <span className="nav-ico">
+                  <i data-lucide={item.icon} />
+                </span>
+                <span className="nav-t">{item.label}</span>
                 {item.countId ? (
                   <span className="cnt" id={item.countId}>
                     0

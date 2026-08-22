@@ -184,8 +184,11 @@
   position: relative;
 }
 .rd-app .app.sidemin .side-nav {
-  padding: 12px 8px;
+  padding: 12px 6px;
   overflow: visible;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .rd-app .app.sidemin .nav-group {
   font-size: 0;
@@ -198,10 +201,9 @@
   margin-top: 0;
 }
 .rd-app .app.sidemin .nav-i {
-  font-size: 0;
   gap: 0;
   justify-content: center;
-  padding: 9px 0;
+  padding: 0;
 }
 .rd-app .app.sidemin .nav-i .cnt {
   display: none;
@@ -332,6 +334,17 @@
   width: 16px;
   height: 16px;
   flex: none;
+}
+
+.rd-app .nav-i .nav-ico {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  margin: 0;
+  padding: 0;
 }
 
 .rd-app .nav-i .cnt {
@@ -9110,39 +9123,87 @@
   flex-wrap: nowrap;
 }
 
-/* Collapsed sidebar: icons must sit dead-centre in their (red-ringed) button.
-   The label text was still taking layout width and shoving the glyph out of
-   the box, so it is fully removed while the rail is minimised. */
+/* ---------- Collapsed left rail: one shared, perfectly centred item ----------
+   Every collapsed nav button is the same fixed square, the icon lives in a
+   fixed 24px wrapper, and the label is removed from layout (not just hidden)
+   so the active black/red box and its glyph always share one centreline. */
 .rd-app .app.sidemin .side .nav-i {
-  display: grid !important;
-  place-items: center !important;
-  gap: 0 !important;
-  width: 44px !important;
-  height: 40px !important;
-  margin: 0 auto !important;
+  box-sizing: border-box !important;
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 52px !important;
+  height: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
+  flex: none !important;
+  margin: 2px auto !important;
   padding: 0 !important;
-  font-size: 0 !important;
-  line-height: 0 !important;
-  overflow: hidden;
+  gap: 0 !important;
+  border-radius: 12px !important;
   text-align: center !important;
+  overflow: visible;
 }
+.rd-app .app.sidemin .side .nav-i .nav-ico {
+  box-sizing: border-box;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 24px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+.rd-app .app.sidemin .side .nav-i .nav-ico > svg,
+.rd-app .app.sidemin .side .nav-i .nav-ico > i,
 .rd-app .app.sidemin .side .nav-i > svg,
 .rd-app .app.sidemin .side .nav-i > i {
-  grid-area: 1 / 1;
-  width: 17px !important;
-  height: 17px !important;
+  display: block !important;
+  width: 22px !important;
+  height: 22px !important;
+  margin: 0 !important;
+  flex: none !important;
+  transform: none !important;
 }
+.rd-app .app.sidemin .side .nav-i .nav-t,
 .rd-app .app.sidemin .side .nav-i .cnt,
 .rd-app .app.sidemin .side .nav-i .nav-soon,
 .rd-app .app.sidemin .side .nav-i .rd-beta-soon {
   display: none !important;
 }
+/* selection changes paint only — never geometry */
+.rd-app .app.sidemin .side .nav-i.on {
+  background: var(--ink);
+  color: #fff;
+  box-shadow: 0 0 0 2px var(--red);
+}
+.rd-app .app.sidemin .side .nav-i:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 2px;
+}
 .rd-app .app.sidemin .side .nav-i .dotn {
   position: absolute;
-  top: 5px;
-  right: 7px;
+  top: 8px;
+  right: 8px;
   margin: 0;
 }
+/* one shared centreline for logo, toggle and dividers */
+.rd-app .app.sidemin .side-top,
+.rd-app .app.sidemin .side-nav {
+  align-items: center;
+}
+.rd-app .app.sidemin .side-top .logo,
+.rd-app .app.sidemin .side-toggle {
+  margin-inline: auto;
+}
+.rd-app .app.sidemin .nav-group {
+  width: 32px;
+  margin: 10px auto !important;
+}
+
 
 /* ---------- Studio upload workspace card ---------- */
 .sp-work {
