@@ -4386,15 +4386,22 @@ export function initApp(): () => void {
 
 
     async function openStudioSaveRoom() {
-      const path = studioSourcePath();
+      /* A described concept has no source photo: its first durable image is
+         the room's source, so saving never waits on an upload that will not
+         happen. */
+      const slotPath = OUTPUTS ? (OS.persistableSlots(OUTPUTS)[0] || {}).path || null : null;
+      const path = studioSourcePath() || slotPath;
       if (!path) {
-        window.rdToast && window.rdToast("Your Photo Is Still Uploading");
+        const gate = OUTPUTS ? OS.saveRoomState(OUTPUTS) : null;
+        window.rdToast && window.rdToast(gate ? gate.tooltip : "Your Photo Is Still Uploading");
         return null;
       }
+      const roomType = (OUTPUTS && OUTPUTS.roomType) || activeStudioRoom() || null;
       const saved = await openSaveRoomModal({
         sourcePath: path,
-        roomName: activeStudioRoom() || null,
-        roomType: activeStudioRoom() || null,
+        roomName: roomType,
+        roomType,
+
         address: (STUDIO_CTX && STUDIO_CTX.address) || null,
         roomId: (STUDIO_CTX && STUDIO_CTX.roomId) || null,
         propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
