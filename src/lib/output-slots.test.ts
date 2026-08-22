@@ -152,3 +152,76 @@ describe("output slots", () => {
     expect(activeSummary(restored)).toBe("Concept 2 of 2");
   });
 });
+
+describe("multi-output canvas contract", () => {
+  it("creates every requested slot immediately, in numerical order", () => {
+    const set = createOutputSet({ count: 2, roomType: "Kitchen", roomSource: "inferred" });
+    expect(set.slots.length).toBe(2);
+    expect(orderedSlots(set).map((s) => s.outputIndex)).toEqual([0, 1]);
+    expect(slotBadge(set, slotAt(set, 0)!)).toBe("Generating");
+    expect(slotBadge(set, slotAt(set, 1)!)).toBe("Queued");
+    expect(set.roomType).toBe("Kitchen");
+  });
+
+  it("keeps order when the second concept finishes first", () => {
+    const set = createOutputSet({ count: 2 });
+    markImage(set, 1, "b");
+    markSaved(set, 1, { path: "p1" });
+    markImage(set, 0, "a");
+    markSaved(set, 0, { path: "p0" });
+    expect(persistableSlots(set).map((s) => s.path)).toEqual(["p0", "p1"]);
+    expect(orderedSlots(set).map((s) => s.image)).toEqual(["a", "b"]);
+  });
+
+  it("never says a concept is uploading", () => {
+    const set = createOutputSet({ count: 2 });
+    const lines = [statusLine(set)];
+    markImage(set, 0, "a");
+    lines.push(statusLine(set));
+    markSaved(set, 0, { path: "p" });
+    lines.push(statusLine(set), saveRoomState(set).label, saveRoomState(set).tooltip);
+    lines.forEach((l) => expect(l.toLowerCase()).not.toContain("upload"));
+    expect(lines[0]).toContain("Generating concept 1 of 2");
+  });
+
+  it("gates Save Room until durable saves finish, then enables it", () => {
+    const set = createOutputSet({ count: 2 });
+    expect(saveRoomState(set).enabled).toBe(false);
+    markImage(set, 0, "a");
+    expect(saveRoomState(set).enabled).toBe(false);
+    markSaved(set, 0, { path: "p0" });
+    markImage(set, 1, "b");
+    expect(saveRoomState(set).enabled).toBe(false);
+    markSaved(set, 1, { path: "p1" });
+    expect(saveRoomState(set).enabled).toBe(true);
+    expect(historyCount(set)).toBe("2 concepts · 2 saved");
+  });
+
+  it("enables Save Room when one output failed but another saved", () => {
+    const set = createOutputSet({ count: 2 });
+    markImage(set, 0, "a");
+    markSaved(set, 0, { path: "p0" });
+    markFailed(set, 1, "Generation failed");
+    expect(saveRoomState(set).enabled).toBe(true);
+    expect(historyCount(set)).toBe("2 concepts · 1 saved · 1 failed");
+    expect(statusLine(set)).toContain("retry");
+  });
+
+  it("keeps the active concept addressed by id", () => {
+    const set = createOutputSet({ count: 2 });
+    markImage(set, 0, "a");
+    markImage(set, 1, "b");
+    setActive(set, slotAt(set, 1)!.outputId);
+    expect(activeSlot(set)!.outputIndex).toBe(1);
+    expect(activeSummary(set)).toBe("Concept 2 of 2");
+    markSaved(set, 0, { path: "p0" });
+    expect(activeSlot(set)!.outputIndex).toBe(1);
+  });
+
+  it("a failure never discards an image that already exists", () => {
+    const set = createOutputSet({ count: 1 });
+    markImage(set, 0, "a");
+    markFailed(set, 0, "Could not save that concept");
+    expect(slotAt(set, 0)!.image).toBe("a");
+  });
+});
