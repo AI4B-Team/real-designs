@@ -23,7 +23,11 @@ export const Sidebar = memo(function Sidebar() {
           aria-label="Collapse menu"
           title="Collapse menu"
         >
-          <ShellIcon name="chevrons-left" />
+          {/* Both glyphs are rendered once and swapped by CSS on `.sidemin`.
+              The legacy rail controller must never rewrite this button's
+              innerHTML: React owns it, and a rewrite duplicated the chevron. */}
+          <ShellIcon name="chevrons-left" className="tog-open" />
+          <ShellIcon name="chevrons-right" className="tog-closed" />
         </button>
         <div className="logo">
           <span className="rd-mark" aria-label="REAL DESIGNS">

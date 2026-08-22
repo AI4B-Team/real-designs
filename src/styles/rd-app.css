@@ -10756,3 +10756,10 @@
 .sp-cloud-t b { font-size: .92rem; }
 .sp-cloud-t span { font-size: .78rem; color: var(--mute-2, #767676); }
 .sp-cloud-a { flex: 0 0 auto; }
+
+
+/* Sidebar collapse chevron: one button, two React-rendered glyphs, swapped by
+   state so no script has to rewrite the button's markup. */
+.rd-app .side-toggle .tog-closed { display: none; }
+.rd-app .app.sidemin .side-toggle .tog-open { display: none; }
+.rd-app .app.sidemin .side-toggle .tog-closed { display: block; }

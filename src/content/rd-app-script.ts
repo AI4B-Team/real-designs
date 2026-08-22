@@ -10276,10 +10276,8 @@ ${picks
           tog.setAttribute("data-tt", "Collapse Menu");
         }
         tog.removeAttribute("title");
-        tog.innerHTML = '<i data-lucide="' + (min ? "chevrons-right" : "chevrons-left") + '"></i>';
-        try {
-          lucide.createIcons();
-        } catch (_) {}
+        /* The chevron is React-owned markup swapped by CSS on `.sidemin`;
+           rewriting innerHTML here duplicated the icon after hydration. */
       }
 
       let min = false;
