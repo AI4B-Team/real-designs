@@ -23,6 +23,10 @@ export type ResultContext = {
   propertyId?: string | null;
   propertyAddress?: string | null;
   origin?: "studio" | "media" | "designs" | "property";
+  /** Operations behind this render, used to classify the export. */
+  operations?: string[];
+  /** Version identifier written into the export audit trail. */
+  versionId?: string | null;
 };
 
 export type ResultAction =
@@ -426,7 +430,32 @@ export function runResultAction(action: ResultAction, ctx: ResultContext, anchor
     return;
   }
   if (action === "estimate") return go("scope");
-  if (action === "upscale" || action === "download") {
+  if (action === "download") {
+    /* Every download leaves through the shared Disclosure & Watermark sheet. */
+    void import("@/lib/disclosure-export").then((m) =>
+      m.openDisclosureExport({
+        items: [
+          {
+            id: ctx.id || ctx.path || "design",
+            name: [ctx.propertyAddress, ctx.room].filter(Boolean).join(" ") || "design",
+            src: ctx.src,
+            operations: ctx.operations?.length
+              ? ctx.operations
+              : ctx.origin === "media"
+                ? []
+                : ["redesign"],
+            assetId: ctx.path || ctx.id || null,
+            versionId: ctx.versionId ?? null,
+          },
+        ],
+        purpose: "listing",
+        scope: "current-photo",
+        title: "Download Design",
+      }),
+    );
+    return;
+  }
+  if (action === "upscale") {
     const items: PopItem[] = Object.entries(SIZES).map(([k, s]) => ({
       icon: "image-down",
       label: s.label,

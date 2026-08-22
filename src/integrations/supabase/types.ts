@@ -487,6 +487,51 @@ export type Database = {
           },
         ]
       }
+      export_audits: {
+        Row: {
+          asset_id: string | null
+          classification: string
+          created_at: string
+          disclosure_id: string
+          disclosure_text: string | null
+          export_preset: string
+          exported_at: string
+          file_name: string | null
+          id: string
+          scope: string
+          user_id: string
+          version_id: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          classification: string
+          created_at?: string
+          disclosure_id: string
+          disclosure_text?: string | null
+          export_preset: string
+          exported_at?: string
+          file_name?: string | null
+          id?: string
+          scope: string
+          user_id: string
+          version_id?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          classification?: string
+          created_at?: string
+          disclosure_id?: string
+          disclosure_text?: string | null
+          export_preset?: string
+          exported_at?: string
+          file_name?: string | null
+          id?: string
+          scope?: string
+          user_id?: string
+          version_id?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           app_version: string | null
