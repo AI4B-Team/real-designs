@@ -27,6 +27,17 @@ import {
   type MaterialOption,
   type SurfaceKindId,
 } from "@/lib/materials-catalog";
+import {
+  buildRegions,
+  emptyMask as coreEmptyMask,
+  pushStroke as corePushStroke,
+  redoStroke as coreRedoStroke,
+  undoStroke as coreUndoStroke,
+  maskSupport,
+  type MaskState as CoreMaskState,
+  type MaskStroke as CoreMaskStroke,
+  type SelectionIntent,
+} from "@/lib/selection-mask";
 
 /* ----------------------------------------------------------------- boxes */
 
@@ -157,35 +168,35 @@ export function normalizeRoomRead(raw: unknown): RoomRead {
 
 /* ------------------------------------------------------------------ mask */
 
+/*
+ * Materials does not own a mask engine. Selection geometry, brush history,
+ * edge expansion and region maths come from @/lib/selection-mask, the same
+ * foundation Object Edit and Declutter stand on; only the vocabulary here is
+ * material-specific.
+ */
+
 export type StrokeKind = "include" | "exclude";
-export type MaskStroke = { x: number; y: number; r: number; kind: StrokeKind };
-export type MaskState = { strokes: MaskStroke[]; redo: MaskStroke[] };
+export type MaskStroke = CoreMaskStroke<StrokeKind>;
+export type MaskState = CoreMaskState<StrokeKind>;
+
+export function strokeIntent(kind: StrokeKind): SelectionIntent {
+  return kind === "include" ? "include" : "exclude";
+}
 
 export function emptyMask(): MaskState {
-  return { strokes: [], redo: [] };
+  return coreEmptyMask<StrokeKind>();
 }
 
 export function pushStroke(mask: MaskState, stroke: MaskStroke): MaskState {
-  return {
-    strokes: mask.strokes.concat([
-      { x: clamp01(stroke.x), y: clamp01(stroke.y), r: Math.max(0.005, clamp01(stroke.r)), kind: stroke.kind },
-    ]),
-    redo: [],
-  };
+  return corePushStroke(mask, stroke);
 }
 
 export function undoStroke(mask: MaskState): MaskState {
-  if (!mask.strokes.length) return mask;
-  const strokes = mask.strokes.slice();
-  const last = strokes.pop() as MaskStroke;
-  return { strokes, redo: mask.redo.concat([last]) };
+  return coreUndoStroke(mask);
 }
 
 export function redoStroke(mask: MaskState): MaskState {
-  if (!mask.redo.length) return mask;
-  const redo = mask.redo.slice();
-  const back = redo.pop() as MaskStroke;
-  return { strokes: mask.strokes.concat([back]), redo };
+  return coreRedoStroke(mask);
 }
 
 /** What the overlay paints and what the prompt describes. */
@@ -199,18 +210,22 @@ export function maskRegions(
   strokes: MaskStroke[];
   hasTarget: boolean;
 } {
-  const target = selected ? [{ label: selected.label, box: selected.box }] : [];
-  const keep = others
-    .filter((o) => !selected || o.id !== selected.id)
-    .map((o) => ({ label: o.label, box: o.box }));
-  const strokes = mask.strokes.slice();
+  const regions = buildRegions<StrokeKind>({
+    selected: selected ? [{ label: selected.label, box: selected.box }] : [],
+    protectedRegions: others
+      .filter((o) => !selected || o.id !== selected.id)
+      .map((o) => ({ label: o.label, box: o.box })),
+    mask,
+    intent: strokeIntent,
+  });
   return {
-    target,
-    keep,
-    strokes,
-    hasTarget: target.length > 0 || strokes.some((s) => s.kind === "include"),
+    target: regions.edit,
+    keep: regions.protect,
+    strokes: regions.strokes,
+    hasTarget: regions.hasEdit,
   };
 }
+
 
 /* ---------------------------------------------------------------- costs */
 
@@ -235,14 +250,10 @@ export function materialsCostSentence(results: number): string {
 
 /* ---------------------------------------------------------- mask support */
 
-export const MASK_SUPPORT = {
-  native: false,
-  label: "Mask-Guided",
-  note:
-    "This provider does not accept a separate mask layer, so the surface you selected is sent as a rendered " +
-    "mask overlay with exact coordinates and hard instructions to repaint only that surface. Precision is very " +
-    "good but not pixel-exact — check the edges and refine the mask if the material bled anywhere.",
-} as const;
+export const MASK_SUPPORT = maskSupport(
+  "the surface you selected",
+  "check the edges and refine the mask if the material bled anywhere.",
+);
 
 /* ------------------------------------------------------- classification */
 
@@ -675,6 +686,7 @@ export function restoreFromMeta(meta: unknown): {
     surfaceKind: kind,
     detections,
     mask: {
+      ...emptyMask(),
       strokes: strokes.map((raw) => {
         const s = (raw || {}) as Record<string, unknown>;
         return {

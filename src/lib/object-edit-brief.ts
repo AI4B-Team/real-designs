@@ -13,6 +13,23 @@
  * selection, so the brief refuses to run without one.
  */
 
+import {
+  MAX_STROKES,
+  buildRegions,
+  emptyMask as coreEmptyMask,
+  pushStroke as corePushStroke,
+  redoStroke as coreRedoStroke,
+  undoStroke as coreUndoStroke,
+  growMask,
+  invertMask,
+  padBox,
+  setFeather,
+  summarizeRegions,
+  type MaskState as CoreMaskState,
+  type MaskStroke,
+  type SelectionIntent,
+} from "@/lib/selection-mask";
+
 export const TOOL_NAME = "Object Edit";
 
 export const TOOL_PROMISE =
@@ -247,69 +264,39 @@ export function matchingTargets(detections: Detection[], target: Detection | nul
 
 /* --------------------------------------------------------------- masks */
 
+/*
+ * Selection geometry lives in @/lib/selection-mask, the one mask foundation
+ * shared with Materials and Declutter. Object Edit only supplies its own
+ * vocabulary and its own idea of what counts as a target.
+ */
+
 export type StrokeKind = "add" | "erase" | "protect";
 
-export type Stroke = { x: number; y: number; r: number; kind: StrokeKind };
+export type Stroke = MaskStroke<StrokeKind>;
 
-export type MaskState = {
-  strokes: Stroke[];
-  redo: Stroke[];
-  /** Positive grows the edit mask, negative contracts it, in image fraction. */
-  grow: number;
-  /** Soft edge in image fraction. */
-  feather: number;
-  invert: boolean;
-};
+export type MaskState = CoreMaskState<StrokeKind>;
 
-export const MAX_STROKES = 400;
+export { MAX_STROKES, padBox, growMask, setFeather, invertMask };
+
+/** Erase and Protect both mean "do not touch here". */
+export function strokeIntent(kind: StrokeKind): SelectionIntent {
+  return kind === "add" ? "include" : "exclude";
+}
 
 export function emptyMask(): MaskState {
-  return { strokes: [], redo: [], grow: 0, feather: 0.01, invert: false };
+  return coreEmptyMask<StrokeKind>();
 }
 
 export function pushStroke(mask: MaskState, stroke: Stroke): MaskState {
-  return {
-    ...mask,
-    strokes: mask.strokes.concat([{ ...stroke, r: Math.max(0.005, Math.min(0.4, stroke.r)) }]).slice(-MAX_STROKES),
-    redo: [],
-  };
+  return corePushStroke(mask, stroke);
 }
 
 export function undoStroke(mask: MaskState): MaskState {
-  if (!mask.strokes.length) return mask;
-  const strokes = mask.strokes.slice();
-  const last = strokes.pop() as Stroke;
-  return { ...mask, strokes, redo: mask.redo.concat([last]) };
+  return coreUndoStroke(mask);
 }
 
 export function redoStroke(mask: MaskState): MaskState {
-  if (!mask.redo.length) return mask;
-  const redo = mask.redo.slice();
-  const back = redo.pop() as Stroke;
-  return { ...mask, strokes: mask.strokes.concat([back]), redo };
-}
-
-export function growMask(mask: MaskState, delta: number): MaskState {
-  return { ...mask, grow: Math.max(-0.08, Math.min(0.08, Number((mask.grow + delta).toFixed(4)))) };
-}
-
-export function setFeather(mask: MaskState, value: number): MaskState {
-  return { ...mask, feather: Math.max(0, Math.min(0.06, value)) };
-}
-
-export function invertMask(mask: MaskState): MaskState {
-  return { ...mask, invert: !mask.invert };
-}
-
-export function padBox(box: Box, pad: number): Box {
-  const x = Math.max(0, Math.min(1, box.x - pad));
-  const y = Math.max(0, Math.min(1, box.y - pad));
-  return {
-    x,
-    y,
-    w: Math.max(0.005, Math.min(1 - x, box.w + pad * 2)),
-    h: Math.max(0.005, Math.min(1 - y, box.h + pad * 2)),
-  };
+  return coreRedoStroke(mask);
 }
 
 export type MaskRegions = {
@@ -319,20 +306,20 @@ export type MaskRegions = {
 };
 
 /**
- * The exact geometry the backend receives. Expand and contract are applied
- * here, so what the overlay draws and what the server is told are the same
- * numbers.
+ * The exact geometry the backend receives. Expand, contract and inversion are
+ * applied by the shared engine, so what the overlay draws and what the server
+ * is told are the same numbers.
  */
 export function maskRegions(detections: Detection[], mask: MaskState): MaskRegions {
-  const selected = detections.filter((d) => d.selected);
-  const protectedOnes = detections.filter((d) => !d.selected && d.protectedItem);
-  const edit = selected.map((d) => ({ label: d.label, box: padBox(d.box, mask.grow) }));
-  const protect = protectedOnes.map((d) => ({ label: d.label, box: d.box }));
-  return {
-    edit: mask.invert ? protect.map((p) => ({ ...p })) : edit,
-    protect: mask.invert ? edit.map((e) => ({ ...e })) : protect,
-    strokes: mask.strokes.slice(),
-  };
+  const regions = buildRegions<StrokeKind>({
+    selected: detections.filter((d) => d.selected).map((d) => ({ label: d.label, box: d.box })),
+    protectedRegions: detections
+      .filter((d) => !d.selected && d.protectedItem)
+      .map((d) => ({ label: d.label, box: d.box })),
+    mask,
+    intent: strokeIntent,
+  });
+  return { edit: regions.edit, protect: regions.protect, strokes: regions.strokes };
 }
 
 /** A brush stroke counts: a mask can exist with no detected object at all. */
@@ -343,19 +330,9 @@ export function hasMask(detections: Detection[], mask: MaskState): boolean {
 
 export function maskSummary(detections: Detection[], mask: MaskState): string {
   const regions = maskRegions(detections, mask);
-  const brushed = mask.strokes.filter((s) => s.kind === "add").length;
-  const protectStrokes = mask.strokes.filter((s) => s.kind === "protect").length;
-  const bits: string[] = [];
-  if (regions.edit.length) bits.push(regions.edit.map((r) => r.label).join(", "));
-  if (brushed) bits.push(brushed + " brushed " + (brushed === 1 ? "area" : "areas"));
-  if (!bits.length) return "Nothing selected yet";
-  const extra: string[] = [];
-  if (regions.protect.length || protectStrokes)
-    extra.push(regions.protect.length + protectStrokes + " protected");
-  if (mask.invert) extra.push("inverted");
-  if (mask.grow) extra.push((mask.grow > 0 ? "expanded" : "contracted") + " edge");
-  return bits.join(" · ") + (extra.length ? " (" + extra.join(", ") + ")" : "");
+  return summarizeRegions({ ...regions, hasEdit: regions.edit.length > 0 }, mask, strokeIntent);
 }
+
 
 /* -------------------------------------------------------------- payload */
 

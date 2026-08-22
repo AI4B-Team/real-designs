@@ -622,7 +622,7 @@ export function readMaterialsSettings() {
     surfaceId: state.surfaceId,
     surfaceKind: state.surfaceKind,
     detections: materialsDetections(),
-    mask: { strokes: state.mask.strokes.slice(), redo: state.mask.redo.slice() },
+    mask: { ...state.mask, strokes: state.mask.strokes.slice(), redo: state.mask.redo.slice() },
     materialId: state.materialId,
     finishId: state.finishId,
     colorId: state.colorId,
