@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.lock_team_invite_grants() FROM anon, authenticated, PUBLIC;
