@@ -365,6 +365,14 @@ export function runResultAction(action: ResultAction, ctx: ResultContext, anchor
     toast("Generate A Design First.");
     return;
   }
+  /* Diagnostics: which action ran, from which surface, against which record. */
+  const canon = CANON[action];
+  if (canon)
+    recordImageAction(canon, ctx.origin === "media" ? "media-card" : "canvas", {
+      propertyId: ctx.propertyId ?? null,
+      roomId: ctx.id ?? null,
+      resultPath: ctx.path ?? null,
+    });
   if (action === "edit") return editDesign(ctx);
   if (action === "variation") {
     void import("@/lib/variation-drawer").then((m) => m.openVariationDrawer(ctx));
