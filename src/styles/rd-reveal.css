@@ -1392,25 +1392,65 @@
   padding:11px 12px 11px 18px;font:500 13.5px 'DM Sans',system-ui,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,.28)}
 .bx-undo button{background:rgba(255,255,255,.14);color:#fff;border:0;border-radius:999px;padding:7px 14px;cursor:pointer;font:600 13px 'DM Sans',system-ui,sans-serif}
 
-/* ---- Add More Photos action card (Photo Design + Video Builder) ---- */
-.rd-app .rv-grid .rv-addcard { min-width: 0; max-width: 100%; box-sizing: border-box; display: flex; }
+/* ---- Add More Photos action card (Photo Design + Video Builder) ----
+   Quiet by default, exactly the photo cards' box, and its source list lives
+   inside that box: expanding never resizes the tile or reflows the grid. */
+.rd-app .rv-grid .rv-addcard { min-width: 0; max-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
 .rd-app .rv-addcard-b {
-  width: 100%; min-width: 0; aspect-ratio: 3 / 4; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 14px;
-  background: #fcfcfc; border: 1.5px dashed var(--red, #CC0000); border-radius: 12px;
-  cursor: pointer; color: var(--ink, #111); transition: border-color .12s, background .12s;
+  position: relative; width: 100%; min-width: 0; aspect-ratio: 3 / 4; overflow: hidden;
+  background: #fcfcfc; border: 1px dashed var(--line-2, #d8d8d8); border-radius: 12px;
+  color: var(--ink, #111); transition: border-color .12s, background .12s;
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 .rd-app .rv-grid.landscape .rv-addcard-b { aspect-ratio: 4 / 3; }
 .rd-app .rv-grid.square .rv-addcard-b { aspect-ratio: 1 / 1; }
+.rd-app .rv-addcard:hover .rv-addcard-b,
+.rd-app .rv-addcard.open .rv-addcard-b { border-color: #bdbdbd; background: #fff; }
+.rd-app .rv-addcard.drop .rv-addcard-b { border: 1.5px dashed var(--red, #CC0000); background: rgba(204,0,0,.05); }
 
-.rd-app .rv-addcard-b:hover { background: rgba(204,0,0,.06); border-style: solid; border-color: var(--red, #CC0000); }
-.rd-app .rv-addcard-b:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 2px; }
-.rd-app .rv-addcard-b svg { width: 26px; height: 26px; color: var(--red, #CC0000); }
-.rd-app .rv-addcard-b b { font-size: 13.5px; font-weight: 600; }
-.rd-app .rv-addcard-b em { font-style: normal; font-size: 11.5px; color: var(--mute-2, #767676); line-height: 1.35; white-space: nowrap; }
-.rd-app .rv-addcard-b .rv-addcard-types { font-size: 10px; font-weight: 600; letter-spacing: .04em; color: var(--mute-3, #9a9a9a); font-family: 'DM Mono', monospace; text-transform: uppercase; }
-.rd-app .rv-addcard-b[disabled] { opacity: .55; cursor: not-allowed; }
+.rd-app .rv-addcard-face {
+  position: absolute; inset: 0; width: 100%; height: 100%; display: flex;
+  flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: transparent; border: 0; cursor: pointer; padding: 12px; text-align: center;
+  color: inherit; font-family: inherit; transition: opacity .12s ease;
+}
+.rd-app .rv-addcard-face svg { width: 22px; height: 22px; color: var(--mute-2, #767676); }
+.rd-app .rv-addcard-face b { font-size: 13px; font-weight: 600; line-height: 1.2; }
+.rd-app .rv-addcard-face:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: -3px; border-radius: 12px; }
+.rd-app .rv-addcard.open .rv-addcard-face { opacity: 0; pointer-events: none; }
+
+.rd-app .rv-addcard-src {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: stretch; justify-content: center; gap: 6px; padding: 10px;
+}
+.rd-app .rv-addsrc {
+  display: flex; align-items: center; gap: 8px; min-width: 0; width: 100%;
+  height: 36px; padding: 0 10px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--line, #e6e6e6); background: #fff; color: #111;
+  font: 600 12.5px 'DM Sans', system-ui, sans-serif; text-align: left;
+  transition: border-color .12s, background .12s;
+}
+.rd-app .rv-addsrc:hover { border-color: #111; background: #fafafa; }
+.rd-app .rv-addsrc:focus-visible { outline: 2px solid var(--red, #CC0000); outline-offset: 1px; }
+.rd-app .rv-addsrc-i { display: inline-flex; width: 18px; height: 18px; flex: 0 0 18px; align-items: center; justify-content: center; }
+.rd-app .rv-addsrc-i svg { width: 18px; height: 18px; }
+.rd-app .rv-addsrc-computer .rv-addsrc-i svg { color: #111; }
+.rd-app .rv-addsrc-l { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rd-app .rv-addsrc[data-busy] { opacity: .7; pointer-events: none; }
+.rd-app .rv-addsrc-sp {
+  margin-left: auto; width: 13px; height: 13px; flex: 0 0 13px; border-radius: 50%;
+  border: 2px solid rgba(0,0,0,.16); border-top-color: var(--red, #CC0000);
+  animation: rv-addspin .7s linear infinite;
+}
+@keyframes rv-addspin { to { transform: rotate(360deg); } }
+.rd-app .rv-addcard-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+
+/* Very small tiles drop the labels rather than let text escape the card. */
+@container (max-width: 150px) {
+  .rd-app .rv-addsrc-l { display: none; }
+  .rd-app .rv-addsrc { justify-content: center; }
+}
+
 
 /* ---- Video ending control on the final actual scene ---- */
 .rd-app .rv-end {
