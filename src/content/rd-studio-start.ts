@@ -1610,25 +1610,34 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         ? {
             loadDesigns: () => ctx.getFinishedDesigns!(),
             onDesigns: (designs: PickerDesign[]) => {
-              /* Finished designs become the video's scenes, in pick order. */
-              try {
-                (window as any).rdListingVideo?.({
-                  from: "studio",
-                  sourceType: "design",
-                  propertyLabel: designs[0]?.address || "",
-                  paths: designs.map((d) => d.path),
-                  designs: designs.map((d) => ({
-                    id: d.id,
-                    path: d.path,
-                    beforePath: d.beforePath || null,
-                    room: d.room || "",
+              /* Finished designs become the video's scenes, in pick order,
+                 through the canonical handoff — never thumbnail URLs. */
+              const res = startVideoBuilder(
+                {
+                  origin: "designs",
+                  propertyId: designs[0]?.propertyId || null,
+                  projectId: designs[0]?.projectId || null,
+                  propertyAddress: designs[0]?.address || null,
+                  assets: designs.map((d, i) => ({
+                    assetId: d.id,
                     versionId: d.versionId || null,
+                    storagePath: d.path,
+                    fileName: (d.room || "design") + ".jpg",
+                    roomId: d.id,
+                    roomName: d.room || null,
+                    propertyId: d.propertyId || null,
+                    projectId: d.projectId || null,
+                    sortOrder: i,
+                    sourceType: "generated-version",
                   })),
-                });
-              } catch (_) {
-                ctx.go("studio");
+                },
+                { from: "studio", sourceType: "design" },
+              );
+              if (!res.ok) {
+                ctx.showAlert?.(res.reason || "Couldn't Send These Designs To Video Builder.");
               }
             },
+
           }
         : {}),
     });
