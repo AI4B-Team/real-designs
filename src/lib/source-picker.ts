@@ -1572,7 +1572,28 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return;
     }
     if (state.tab === "describe" && describe.onClick(t, pickReference)) return;
+    /* Retrying one broken thumbnail must never touch the selection. */
+    const tretry = t.closest("[data-sp-thumb-retry]") as HTMLElement | null;
+    if (tretry) {
+      const holder = tretry.closest("[data-sp-thumb]") as HTMLElement | null;
+      if (holder) {
+        holder.dataset["spThumbDone"] = "";
+        holder.classList.remove("is-fail");
+        holder.classList.add("is-load");
+        holder.innerHTML = "";
+        hydrateThumbs();
+      }
+      return;
+    }
+    /* Preview is a separate control: it opens the modal, never toggles. */
+    const peye = t.closest("[data-sp-preview]") as HTMLElement | null;
+    if (peye) {
+      state.designPreview = peye.dataset["spPreview"] || null;
+      render();
+      return;
+    }
     const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
+
     if (dsn) {
       const id = dsn.dataset["spDesign"]!;
       if (opts.onDesigns || opts.loadDesigns) {
