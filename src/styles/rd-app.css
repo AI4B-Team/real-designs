@@ -324,10 +324,10 @@
 }
 
 .rd-app .nav-i.on {
-  background: var(--ink);
-  color: #fff;
+  background: var(--paper);
+  color: var(--ink);
   font-weight: 700;
-  box-shadow: 0 0 0 2px var(--red);
+  box-shadow: inset 3px 0 0 var(--red);
 }
 
 .rd-app .nav-i svg {

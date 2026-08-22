@@ -19,7 +19,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Create",
     items: [
-      { view: "studio", label: "Studio", icon: "wand-2" },
+      { view: "studio", label: "Studio", icon: "panels-top-left" },
       { view: "explore", label: "Explore", icon: "compass" },
     ],
   },
