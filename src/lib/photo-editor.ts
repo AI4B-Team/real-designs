@@ -52,6 +52,7 @@ import {
   wheelScale,
   zoomTo,
 } from "./crop-frame";
+import { saveBatch } from "@/lib/batch-edit.functions";
 import {
   APPLY_MODES,
   PASTE_CATEGORIES,
@@ -2473,27 +2474,25 @@ export async function openPhotoEditor(opts: {
     const saveAll = !!(root.querySelector('[data-x="saveall"]') as HTMLInputElement)?.checked;
 
     let batch = newBatch({
-      operation: "adjustments",
-      generative: false,
+      kind: "adjustments",
+      sourceKey: copied!.sourceKey,
+      settings: { categories: cats, mode, source: copied!.sourceLabel },
       photos: keys.map((k) => {
         const i = photos.findIndex((x) => x.key === k);
         return { key: k, label: photoLabel(photos[i] as EditorPhoto, i) };
       }),
-      copied: copied!,
-      categories: cats,
-      mode,
     });
     const clipped: string[] = [];
     for (const key of keys) {
       const target = states.get(key) || st(key);
-      batch = markPhoto(batch, key, "running", { before: snapshotBefore(target) });
+      batch = markPhoto(batch, key, { status: "running", before: snapshotBefore(target) } as any);
       try {
         const out = applyCopied(target as any, copied!, cats, mode);
         mergePaste(target, out);
         clipped.push(...out.clipped);
-        batch = markPhoto(batch, key, "done");
+        batch = markPhoto(batch, key, { status: "done" });
       } catch (err: any) {
-        batch = markPhoto(batch, key, "failed", { error: err?.message || "Could Not Apply" });
+        batch = markPhoto(batch, key, { status: "failed", error: err?.message || "Could Not Apply" });
       }
     }
     lastBatch = batch;
@@ -2523,7 +2522,7 @@ export async function openPhotoEditor(opts: {
         s.dirty = false;
         ok++;
       } catch (err: any) {
-        lastBatch = markPhoto(batch, item.key, "failed", { error: err?.message || "Save Failed" });
+        lastBatch = markPhoto(batch, item.key, { status: "failed", error: err?.message || "Save Failed" });
       }
     }
     if (lastBatch) saveBatchLocal(lastBatch);
@@ -2536,11 +2535,10 @@ export async function openPhotoEditor(opts: {
       await saveBatch({
         data: {
           batch_id: batch.id,
-          operation: batch.operation,
-          generative: batch.generative,
-          status: batchProgress(batch).failed ? "partial" : "complete",
+          kind: batch.kind,
+          settings: batch.settings,
+          source_key: batch.sourceKey,
           photos: batch.photos,
-          settings: { categories: batch.categories, mode: batch.mode },
         },
       });
     } catch {
@@ -2580,9 +2578,9 @@ export async function openPhotoEditor(opts: {
           .map(
             (r) =>
               `<label class="rdpe-dlg-c"><input type="checkbox" data-rec="${esc(r.key)}" ${
-                r.skipped ? "" : "checked"
-              } ${r.skipped ? "disabled" : ""} /> <b>${esc(r.label)}</b><em>${esc(
-                r.summary,
+                r.approved ? "checked" : ""
+              } ${r.approved ? "" : "disabled"} /> <b>${esc(r.label)}</b><em>${esc(
+                r.summary || "Already Well Exposed. Nothing Recommended.",
               )}</em></label>`,
           )
           .join("")}`,
@@ -2596,25 +2594,22 @@ export async function openPhotoEditor(opts: {
     if (!picked.length) return;
 
     let batch = newBatch({
-      operation: "auto-enhance",
-      generative: false,
+      kind: "auto-enhance",
+      settings: { strength: autoStrength },
       photos: picked.map((k) => ({
         key: k,
         label: recs.find((r) => r.key === k)?.label || "Photo",
       })),
-      copied: null,
-      categories: ["light", "color", "detail"],
-      mode: "replace",
     });
     for (const key of picked) {
       const target = states.get(key) || st(key);
       const rec = recs.find((r) => r.key === key);
       if (!rec) continue;
-      batch = markPhoto(batch, key, "running", { before: snapshotBefore(target) });
+      batch = markPhoto(batch, key, { status: "running", before: snapshotBefore(target) } as any);
       target.adj = { ...target.adj, ...rec.adj };
-      target.auto = true;
+      target.auto = { strength: autoStrength, values: { ...rec.adj } };
       target.dirty = true;
-      batch = markPhoto(batch, key, "done");
+      batch = markPhoto(batch, key, { status: "done" });
     }
     lastBatch = batch;
     saveBatchLocal(batch);
@@ -2634,7 +2629,7 @@ export async function openPhotoEditor(opts: {
       body: `<p class="rdpe-hint">${changed.length} Photograph${
         changed.length === 1 ? " Was" : "s Were"
       } Changed By The Last Batch. Undo Returns Them To Their Previous Settings.</p>
-        ${chipList(changed.map((c) => ({ id: c.key, label: c.label })), changed.map((c) => c.key))}`,
+        ${chipList(changed.map((c) => ({ id: c.key, label: c.label, on: true })))}`,
       confirmLabel: "Undo Selected",
       cancelLabel: "Keep Changes",
     });
