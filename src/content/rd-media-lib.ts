@@ -22,6 +22,7 @@ import {
 } from "@/lib/property-media.functions";
 import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
+import { startVideoBuilder } from "@/lib/video-handoff";
 import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
 import { openAddressModal } from "@/lib/address-modal";
@@ -307,7 +308,7 @@ function bind(view) {
 }
 
 /** Open the canonical listing-video workflow (same one Studio and Properties open). */
-export function openVideoWorkflow(seed = {}) {
+export function openVideoWorkflow(seed: any = {}) {
   const open = (window as any).rdListingVideo;
   if (typeof open === "function") {
     open({ from: "media", ...seed });
@@ -1023,23 +1024,25 @@ function videoFrom(items) {
     toast("Select At Least One Ready Image To Create A Video.");
     return;
   }
-  try {
-    (window as any).__rdAllowReveal && (window as any).__rdAllowReveal();
-  } catch (_) {}
   const h = publishHandoff("video", usable);
-  openVideoWorkflow({
-    from: "media",
-    propertyId: (h && h.propertyId) || null,
-    propertyAddress: (h && h.propertyAddress) || null,
+  const withProp = usable.find((m) => m.propertyId) || usable[0] || {};
+  const r = startVideoBuilder({
+    origin: "media",
+    propertyId: (h && h.propertyId) || withProp.propertyId || null,
+    propertyAddress: (h && h.propertyAddress) || withProp.address || withProp.property || null,
     assets: usable.map((x, i) => ({
-      id: x.refId || x.id,
-      storage_path: x.assetPath || x.path,
-      file_name: x.title,
-      original_filename: x.title,
-      room_group: x.room || x.title,
-      sort_order: i,
+      assetId: x.refId || x.id,
+      mediaId: x.id,
+      versionId: x.versionId || null,
+      storagePath: x.assetPath || x.path,
+      fileName: x.title,
+      roomName: x.room && x.room !== "Needs Review" ? x.room : null,
+      propertyId: x.propertyId || null,
+      sortOrder: i,
+      sourceType: x.versionId ? "generated-version" : "media-asset",
     })),
   });
+  if (!r.ok) toast(r.reason);
 }
 
 /** Apply one style to many uploaded photos at once, one credit each. */
