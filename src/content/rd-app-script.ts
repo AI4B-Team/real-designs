@@ -4197,27 +4197,35 @@ export function initApp(): () => void {
     function paintSaveRoomBtn() {
       const b = document.getElementById("stSaveRoom");
       if (!b) return;
-      const canSave = STUDIO_SRC !== SRC_EMPTY && !!studioSourcePath();
-      b.hidden = STUDIO_SRC === SRC_EMPTY;
-      b.disabled = !canSave;
       const saved = !!(STUDIO_CTX && STUDIO_CTX.roomId);
+      /* Concepts have no source photo, so the room becomes savable the moment
+         the first durable concept lands: no refresh, no upload wording. */
+      const gate = OUTPUTS ? OS.saveRoomState(OUTPUTS) : null;
+      const canSave = gate
+        ? gate.enabled
+        : STUDIO_SRC !== SRC_EMPTY && !!studioSourcePath();
+      b.hidden = STUDIO_SRC === SRC_EMPTY && !OUTPUTS;
+      b.disabled = !canSave;
+      const label = saved ? "Room Saved" : gate ? gate.label : "Save Room";
       b.innerHTML =
-        '<i data-lucide="' +
-        (saved ? "check" : "save") +
-        '"></i>' +
-        (saved ? "Room Saved" : "Save Room");
+        '<i data-lucide="' + (saved ? "check" : "save") + '"></i>' + label;
       b.setAttribute(
         "data-tt",
         !canSave
-          ? "Your Photo Is Still Uploading"
+          ? gate
+            ? gate.hint
+            : "Your Photo Is Still Uploading"
           : saved
             ? "Update This Saved Room"
-            : "Store This Photo And Property On Your Account",
+            : gate
+              ? "Save These Concepts To Your Account"
+              : "Store This Photo And Property On Your Account",
       );
       try {
         lucide.createIcons();
       } catch (_) {}
     }
+
 
     window.rdDisplayedVersion = () => DISPLAYED_VERSION;
     /* The variation drawer reads the branch record of whatever is on screen. */
