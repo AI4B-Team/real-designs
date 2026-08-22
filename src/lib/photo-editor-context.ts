@@ -173,17 +173,17 @@ export function defaultGenerationSource(mode: EditorMode): "edited" | "original"
 export type PanelSection = { id: string; label: string; icon: string; long: boolean };
 
 export const PANEL_SECTIONS: PanelSection[] = [
-  { id: "light", label: "Light", icon: "sun", long: true },
-  { id: "color", label: "Color", icon: "palette", long: true },
+  { id: "auto", label: "Auto Enhance", icon: "wand-sparkles", long: false },
+  { id: "light", label: "Light & Color", icon: "sun", long: true },
   { id: "detail", label: "Detail", icon: "focus", long: true },
-  { id: "crop", label: "Crop & Rotate", icon: "crop", long: true },
-  { id: "enhance", label: "Photo Enhancements", icon: "sparkles", long: false },
-  { id: "generative", label: "Generative Edits", icon: "wand", long: false },
+  { id: "crop", label: "Crop & Geometry", icon: "crop", long: true },
+  { id: "ai", label: "AI Enhancements", icon: "sparkles", long: false },
+  { id: "continue", label: "Continue With", icon: "arrow-right-circle", long: false },
 ];
 
-/** Only one long section is expanded when the editor opens. */
+/** Only Auto Enhance is expanded when the editor opens. */
 export function defaultOpenSections(): string[] {
-  return ["light"];
+  return ["auto"];
 }
 
 /** Hold To Compare only means something once something changed. */
