@@ -10440,16 +10440,16 @@
 .spd-row {
   display: grid;
   grid-template-columns:
-    28px 72px minmax(0, 1.5fr) minmax(0, 1.3fr)
-    minmax(0, 84px) minmax(0, 108px) minmax(0, 96px) minmax(0, 104px);
+    40px 112px minmax(120px, 1fr) minmax(120px, 0.8fr)
+    120px 120px 110px 48px;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 .spd-lhead {
   position: sticky;
   top: 0;
   z-index: 2;
-  padding: 0 12px 6px;
+  padding: 4px 16px 8px;
   background: #fff;
   font-size: 0.72rem;
   font-weight: 700;
@@ -10462,9 +10462,15 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.spd-hcheck {
+  position: static;
+  cursor: pointer;
+}
 .spd-row {
   position: relative;
-  padding: 8px 12px;
+  min-height: 92px;
+  max-height: 112px;
+  padding: 12px 16px;
   border: 2px solid var(--line);
   border-radius: 12px;
   background: #fff;
@@ -10485,8 +10491,9 @@
 .spd-rth {
   position: relative;
   display: block;
-  width: 72px;
-  height: 54px;
+  width: 112px;
+  height: 72px;
+  border: 1px solid var(--line);
   flex: 0 0 auto;
   border-radius: 8px;
   overflow: hidden;
@@ -10546,6 +10553,72 @@
   justify-self: end;
   white-space: nowrap;
 }
+.spd-rver {
+  color: var(--red) !important;
+  font-weight: 600;
+}
+.spd-rmenu {
+  position: relative;
+  justify-self: end;
+}
+.spd-rmore {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--mute-2);
+  cursor: pointer;
+}
+.spd-rmore:hover {
+  border-color: var(--line);
+  color: var(--ink);
+}
+.spd-rmore i {
+  width: 17px;
+  height: 17px;
+}
+.spd-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  min-width: 168px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.14);
+}
+.spd-menu button {
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  text-align: left;
+  font-size: 0.84rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+.spd-menu button:hover {
+  background: var(--bg);
+}
+.spd-row.is-skel {
+  cursor: default;
+}
+.spd-row.is-skel .spd-rth,
+.spd-row.is-skel .spd-sk {
+  background: var(--bg);
+  border-radius: 8px;
+}
+.spd-row.is-skel .spd-sk {
+  display: block;
+  height: 12px;
+}
 
 /* grouping */
 .spd-groups {
@@ -10586,6 +10659,29 @@
   font-size: 0.82rem;
   color: var(--ink);
 }
+/* Progressive column shedding: dates first, then property/room. */
+@media (max-width: 1180px) {
+  .spd-lhead,
+  .spd-row {
+    grid-template-columns:
+      40px 112px minmax(120px, 1fr) minmax(120px, 0.8fr)
+      120px 110px 48px;
+  }
+  .spd-lhead span:nth-of-type(5),
+  .spd-row .spd-rm.is-date {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .spd-lhead,
+  .spd-row {
+    grid-template-columns: 40px 112px minmax(120px, 1fr) 120px 110px 48px;
+  }
+  .spd-lhead span:nth-of-type(3),
+  .spd-row .spd-rsub {
+    display: none;
+  }
+}
 @media (max-width: 640px) {
   .spd-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -10594,15 +10690,15 @@
     display: none;
   }
   .spd-row {
-    grid-template-columns: 28px 56px minmax(0, 1fr) auto;
+    grid-template-columns: 32px 88px minmax(0, 1fr) 44px;
   }
   .spd-row .spd-rsub,
   .spd-row .spd-rm {
     display: none;
   }
   .spd-rth {
-    width: 56px;
-    height: 44px;
+    width: 88px;
+    height: 60px;
   }
 }
 

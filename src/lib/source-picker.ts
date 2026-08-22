@@ -342,6 +342,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     designPreview: null as string | null,
     /** Id currently dragged in the selected-order row. */
     designDrag: null as string | null,
+    /** Id of the list row whose overflow menu is open. */
+    mediaMenu: null as string | null,
     /** Media filters: type, property, room and free text. */
     mediaType: "all" as "all" | "photos" | "designs" | "favorites",
     mediaProperty: "all",
@@ -983,6 +985,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       .sort(sortMedia);
   }
 
+  /** True when every item passing the current filters is already selected. */
+  function allVisibleSelected() {
+    const vis = visibleMedia();
+    return vis.length > 0 && vis.every((d) => state.designSel.includes(d.id));
+  }
+
   const time = (d: PickerDesign) => {
     const t = Date.parse(String(d.createdAt || ""));
     return isNaN(t) ? 0 : t;
@@ -1098,13 +1106,15 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           ])
         : "") +
       '<div class="spd-bar-r">' +
-      '<button type="button" class="sp-link" data-sp="mall">Select All Visible</button>' +
+      '<button type="button" class="sp-link" data-sp="mall">' +
+      (allVisibleSelected() ? "Deselect All Visible" : "Select All Visible") +
+      "</button>" +
       (n
         ? '<button type="button" class="sp-link" data-sp="dclear">Deselect All</button>'
         : "") +
       '<span class="spd-count" aria-live="polite">' +
-      (n ? n + " selected" : "None selected") +
-      "</span>" +
+      n +
+      " selected</span>" +
       '<div class="spd-views" role="group" aria-label="View">' +
       viewBtn("grid", "layout-grid", "Grid View") +
       viewBtn("list", "list", "List View") +
@@ -1114,6 +1124,24 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   function designPanel() {
     if (state.designState === "loading" || state.designState === "idle") {
+      if (state.mediaView === "list") {
+        return designShell(
+          '<div class="spd-list" aria-busy="true" aria-live="polite" aria-label="Loading your media">' +
+            Array.from({ length: 5 })
+              .map(
+                () =>
+                  '<div class="spd-row is-skel"><span class="spd-check"></span>' +
+                  '<span class="spd-rth"></span>' +
+                  '<span class="spd-rn"><i class="spd-sk"></i><i class="spd-sk"></i></span>' +
+                  '<span class="spd-rn"><i class="spd-sk"></i></span>' +
+                  '<span class="spd-rm"><i class="spd-sk"></i></span>' +
+                  '<span class="spd-rm is-date"><i class="spd-sk"></i></span>' +
+                  '<span class="spd-rm"><i class="spd-sk"></i></span><span></span></div>',
+              )
+              .join("") +
+            "</div>",
+        );
+      }
       return designShell(
         '<div class="spd-grid" aria-busy="true" aria-live="polite" aria-label="Loading your media">' +
           Array.from({ length: 4 })
@@ -1351,21 +1379,37 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /** Column headers so the rows read as a table, not a stack of strips. */
   function listHead() {
-    const cols = [
-      "",
-      "",
-      "Photo",
-      "Property / Room",
-      "Type",
-      "Updated",
-      "Status",
-      "",
-    ];
+    const vis = visibleMedia();
+    const allOn = vis.length > 0 && vis.every((d) => state.designSel.includes(d.id));
+    const cols = ["Photo", "Details", "Property / Room", "Type", "Updated", "Status", ""];
     return (
-      '<div class="spd-lhead" aria-hidden="true">' +
+      '<div class="spd-lhead">' +
+      '<button type="button" class="spd-check spd-hcheck' +
+      (allOn ? " on" : "") +
+      '" data-sp="mall" role="checkbox" aria-checked="' +
+      (allOn ? "true" : "false") +
+      '" title="' +
+      (allOn ? "Deselect All Visible" : "Select All Visible") +
+      '" aria-label="' +
+      (allOn ? "Deselect All Visible" : "Select All Visible") +
+      '">' +
+      (allOn ? '<i data-lucide="check"></i>' : "") +
+      "</button>" +
       cols.map((c) => "<span>" + esc(c) + "</span>").join("") +
       "</div>"
     );
+  }
+
+  /** The single classification badge shown in the Type column. */
+  function mediaKind(d: PickerDesign) {
+    return isDesign(d) ? "Generated Design" : "Property Photo";
+  }
+
+  /** The one status that matters most for this item. */
+  function mediaStatus(d: PickerDesign) {
+    const l = designLines(d);
+    if (l.status) return l.status;
+    return isDesign(d) ? "Generated" : "Original";
   }
 
   function designRow(d: PickerDesign) {
@@ -1373,8 +1417,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const on = i > -1;
     const l = designLines(d);
     const created = designDate(d.createdAt);
-    const kind = isDesign(d) ? "Design" : "Photo";
     const room = d.room || (isDesign(d) ? "Design" : "Photo");
+    const title = mediaTitle(d);
+    const sub = l.two || (isDesign(d) ? "Generated Design" : "Original Photo");
+    const versions = d.versionNo && d.versionNo > 1 ? d.versionNo + " versions" : "";
+    const status = mediaStatus(d);
+    const open = state.mediaMenu === d.id;
     return (
       '<div class="spd-row' +
       (on ? " is-sel" : "") +
@@ -1387,34 +1435,59 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '">' +
       checkMark(on, i) +
       thumbSpan(d, "spd-rth") +
-      '<span class="spd-rn"><b>' +
-      esc(mediaTitle(d)) +
-      "</b><span>" +
-      esc(l.two || kind) +
-      "</span></span>" +
+      '<span class="spd-rn"><b title="' +
+      esc(title) +
+      '">' +
+      esc(title) +
+      '</b><span title="' +
+      esc(sub) +
+      '">' +
+      esc(sub) +
+      "</span>" +
+      (versions ? '<span class="spd-rver">' + esc(versions) + "</span>" : "") +
+      "</span>" +
       '<span class="spd-rn spd-rsub"><b>' +
       esc(l.three || "Unassigned") +
       "</b><span>" +
-      esc(room) +
+      esc(d.room ? room : "No room selected") +
       "</span></span>" +
       '<span class="spd-rm"><span class="spd-rtag">' +
-      esc(kind) +
+      esc(mediaKind(d)) +
       "</span></span>" +
-      '<span class="spd-rm">' +
+      '<span class="spd-rm is-date">' +
       esc(created || "\u2014") +
       "</span>" +
-      '<span class="spd-rm">' +
-      (l.status
-        ? '<span class="spd-rstate' +
-          (/approved/i.test(l.status) ? " is-ok" : "") +
-          '">' +
-          esc(l.status) +
-          "</span>"
-        : "\u2014") +
-      "</span>" +
-      '<button type="button" class="sp-link spd-rv" data-sp-preview="' +
+      '<span class="spd-rm"><span class="spd-rstate' +
+      (/approved/i.test(status) ? " is-ok" : "") +
+      '">' +
+      esc(status) +
+      "</span></span>" +
+      '<span class="spd-rmenu">' +
+      '<button type="button" class="spd-rmore" data-sp-menu="' +
       esc(d.id) +
-      '">View Details</button>' +
+      '" aria-haspopup="menu" aria-expanded="' +
+      (open ? "true" : "false") +
+      '" title="More Actions" aria-label="' +
+      esc("More actions: " + title) +
+      '"><i data-lucide="more-vertical"></i></button>' +
+      (open
+        ? '<span class="spd-menu" role="menu">' +
+          '<button type="button" role="menuitem" data-sp-preview="' +
+          esc(d.id) +
+          '">Preview</button>' +
+          '<button type="button" role="menuitem" data-sp-design="' +
+          esc(d.id) +
+          '">' +
+          (on ? "Deselect" : "Select") +
+          "</button>" +
+          (versions
+            ? '<button type="button" role="menuitem" data-sp-preview="' +
+              esc(d.id) +
+              '">View Versions</button>'
+            : "") +
+          "</span>"
+        : "") +
+      "</span>" +
       "</div>"
     );
   }
@@ -2050,6 +2123,15 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       }
       return;
     }
+    /* Row overflow menu: opens one menu at a time, closes on any other click. */
+    const mmenu = t.closest("[data-sp-menu]") as HTMLElement | null;
+    if (mmenu) {
+      const id = mmenu.dataset["spMenu"] || null;
+      state.mediaMenu = state.mediaMenu === id ? null : id;
+      render();
+      return;
+    }
+    if (state.mediaMenu) state.mediaMenu = null;
     /* Preview is a separate control: it opens the modal, never toggles. */
     const peye = t.closest("[data-sp-preview]") as HTMLElement | null;
     if (peye) {
@@ -2122,7 +2204,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       opts.onSample ? opts.onSample() : (state.tab = "upload");
       render();
     } else if (k === "mall") {
-      for (const d of visibleMedia()) if (!state.designSel.includes(d.id)) state.designSel.push(d.id);
+      const vis = visibleMedia();
+      if (allVisibleSelected()) {
+        const ids = new Set(vis.map((d) => d.id));
+        state.designSel = state.designSel.filter((id) => !ids.has(id));
+      } else {
+        for (const d of vis) if (!state.designSel.includes(d.id)) state.designSel.push(d.id);
+      }
       render();
     } else if (k === "mreset") {
       state.mediaType = "all";
