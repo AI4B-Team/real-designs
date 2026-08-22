@@ -25,13 +25,13 @@ const photos = [
 
 describe("multi-photo design model", () => {
   it("groups mixed spaces so one style is never forced across them", () => {
-    const groups = designGroups(photos);
+    const groups = designGroups(photos) as any[];
     expect(groups.map((g) => g.space)).toEqual(["interior", "exterior"]);
     expect(groups[0].items).toHaveLength(2);
   });
 
   it("blocks the next step until every group has a style", () => {
-    const model = newDesignModel();
+    const model = newDesignModel() as any;
     expect(designBlockers(photos, model).length).toBeGreaterThan(0);
     model.styleBySpace.interior = interiorStyle.id;
     model.styleBySpace.exterior = exteriorStyle.id;
@@ -40,15 +40,15 @@ describe("multi-photo design model", () => {
   });
 
   it("lets one photo override its group style", () => {
-    const model = newDesignModel();
+    const model = newDesignModel() as any;
     model.styleBySpace.interior = interiorStyle.id;
-    model.overrides.b = STYLES.filter((s) => s.compatibleProjectTypes.includes("interior"))[1].id;
+    model.overrides.b = (STYLES.filter((s) => s.compatibleProjectTypes.includes("interior"))[1] as any).id;
     expect(effectiveStyleId(model, photos[0])).toBe(interiorStyle.id);
     expect(effectiveStyleId(model, photos[1])).toBe(model.overrides.b);
   });
 
   it("clears only the choice a room-type change made impossible", () => {
-    const model = newDesignModel();
+    const model = newDesignModel() as any;
     model.styleBySpace.interior = interiorStyle.id;
     model.notes = "Warm oak floors";
     model.direction = "renovation";
@@ -59,7 +59,7 @@ describe("multi-photo design model", () => {
     );
     if (!gardenOnly) return;
     model.styleBySpace.exterior = gardenOnly.id;
-    const out = pruneIncompatible(model, photos);
+    const out = pruneIncompatible(model, photos) as any;
     expect(out.model.styleBySpace.exterior).toBeUndefined();
     expect(out.model.styleBySpace.interior).toBe(interiorStyle.id);
     expect(out.model.notes).toBe("Warm oak floors");
@@ -69,7 +69,7 @@ describe("multi-photo design model", () => {
 
   it("charges one credit per photo and explains a short balance", () => {
     expect(creditCost(photos)).toBe(3);
-    const model = newDesignModel();
+    const model = newDesignModel() as any;
     model.styleBySpace.interior = interiorStyle.id;
     model.styleBySpace.exterior = exteriorStyle.id;
     expect(reviewBlockers({ items: photos, model, balance: 10 })).toEqual([]);
@@ -84,8 +84,8 @@ describe("multi-photo design model", () => {
       direction: "refresh",
       grade: "premium",
       preserve: false,
-    });
-    const dir = toDirection(model, photos, "1:1");
+    }) as any;
+    const dir = toDirection(model, photos, "1:1") as any;
     expect(dir.styleBySpace.interior.id).toBe(interiorStyle.id);
     expect(dir.styleByPhoto.b.id).toBe(exteriorStyle.id);
     expect(dir.intensity).toBe("Refresh");
