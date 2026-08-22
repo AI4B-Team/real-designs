@@ -53,6 +53,8 @@ import { openMotionClip } from "@/lib/rd-motion-clip";
 import { openSocialCopy } from "@/lib/rd-social-copy";
 import { openBulkRestyle } from "@/lib/rd-bulk-restyle";
 import { isPlanBlocked, openUpgrade as openUpgradeFlow } from "@/lib/rd-upgrade";
+import { isFavorite, toggleFavorite, favoriteToast } from "@/lib/favorites";
+import { bootFavorites } from "@/lib/favorites-boot";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(
