@@ -467,6 +467,12 @@ export function initCanvasWorkspace() {
       }
       return;
     }
+    /* Photo finishing, not generation: the editor opens on exactly the image
+       the canvas is showing and never starts a redesign or spends a credit. */
+    if (t.closest("#rdwEditPhotoTool")) {
+      void openCanvasPhotoEditor();
+      return;
+    }
     if (t.closest("#rdwObjTool")) {
       const sec = document.getElementById("rdwObjSec");
       const btn = document.getElementById("rdwObjTool");
@@ -477,7 +483,8 @@ export function initCanvasWorkspace() {
       }
       return;
     }
-    if (t.closest("#fTool .toolrow") || t.closest("#spChips .chip")) {
+    if (t.closest("#fTool .toolrow:not(.rdw-phototool)") || t.closest("#spChips .chip")) {
+
       /* the app script owns the state change; repaint after it settles */
       setTimeout(() => {
         paintPanelHeader();
