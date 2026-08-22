@@ -141,6 +141,42 @@ function editorMountHost(): HTMLElement | null {
   return board();
 }
 
+/* ------------------------------------------------------------------ */
+/* one permanent Canvas: the chrome below the image never unmounts      */
+/* ------------------------------------------------------------------ */
+
+function canvasBody(): HTMLElement | null {
+  return document.querySelector("#canvasCard > .card-b");
+}
+
+/** Nodes borrowed from the Canvas card while the editor owns the column. */
+let borrowed: HTMLElement[] = [];
+
+/**
+ * The Canvas is one stage in every tool. The editor column reproduces the card
+ * exactly and takes the *same* chrome nodes (save warning, result actions,
+ * Version History) below its stage, so the reserved height - and therefore the
+ * image rectangle - is byte for byte the same as in Redesign. Nothing is
+ * recreated, so no state is lost when the tool changes.
+ */
+function borrowCanvasChrome(main: HTMLElement) {
+  const body = canvasBody();
+  if (!body || borrowed.length) return;
+  Array.from(body.children).forEach((el) => {
+    if (el.classList.contains("rdw-stage")) return;
+    borrowed.push(el as HTMLElement);
+  });
+  borrowed.forEach((el) => main.appendChild(el));
+}
+
+/** Puts the borrowed chrome back in its original order under the stage. */
+function returnCanvasChrome() {
+  const body = canvasBody();
+  if (body) borrowed.forEach((el) => body.appendChild(el));
+  borrowed = [];
+}
+
+
 /** The generation tool that was selected before Edit took over the rail. */
 let toolBeforeEdit = "";
 
