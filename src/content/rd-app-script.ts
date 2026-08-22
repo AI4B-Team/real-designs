@@ -4533,6 +4533,8 @@ export function initApp(): () => void {
       } catch (_) {}
     }
     window.rdRefreshClips = refreshClips;
+    /* A refresh must never orphan a paid render. */
+    setTimeout(() => refreshClips(), 1500);
 
     const ROOM_TOOL_STEPS = {
       stage: [
