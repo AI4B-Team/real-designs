@@ -122,9 +122,11 @@
   line-height: 1.15;
   text-align: center;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Primary tool names are never truncated: they wrap instead. */
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .rd-app .rdw-rail .toolrow i[data-lucide],
 .rd-app .rdw-rail .toolrow svg,
