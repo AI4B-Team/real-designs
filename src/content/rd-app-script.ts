@@ -4466,43 +4466,58 @@ export function initApp(): () => void {
     } catch (_) {}
 
 
+    /**
+     * Version History for exactly one room.
+     *
+     * History is fetched with the active room id — never a room name — and any
+     * row the server returns for another room is quarantined. Persistent rows
+     * keep the server's `version_no`; anything still in flight is a numbered
+     * concept and is never called a version.
+     */
     async function paintVersions() {
       const el = document.getElementById("verList");
       if (!el) return;
       const sub = document.querySelector("#v-studio .right .card:last-child .card-h .sub");
       if (!el.innerHTML.trim()) el.innerHTML = skList(3);
-      let list = [];
       try {
-        list = await listSavedEstimates();
-      } catch (e) {
-        list = [];
+        SAVED_EST = await listSavedEstimates();
+      } catch (_) {
+        SAVED_EST = SAVED_EST || [];
       }
-      SAVED_EST = list;
       updateSearchMeta();
-      /* only the active room's real versions, never an unrelated project's history.
-     The room comes from the opened design when there is one, otherwise from the
-     Setup room selector, so a design started from an upload still shows history. */
-      const setupRoom = ((document.getElementById("fRoom") || {}).value || "").trim();
-      const activeRoom = (STUDIO_CTX && STUDIO_CTX.room) || setupRoom || "";
-      const norm = (s) =>
-        String(s || "")
-          .trim()
-          .toLowerCase();
-      if (activeRoom) list = list.filter((v) => norm(v.room_name) === norm(activeRoom));
-      else list = [];
-      if (sub) sub.textContent = activeRoom || "This Design";
 
-      list = list.slice(0, 6);
-      const norm2 = norm;
-      const session = SESSION_VERSIONS.filter(
-        (v) => !activeRoom || !v.room || norm2(v.room) === norm2(activeRoom),
-      ).slice(0, 6);
-      if (!list.length && !session.length) {
+      const roomId = (STUDIO_CTX && STUDIO_CTX.roomId) || null;
+      let rows = [];
+      if (roomId) {
+        try {
+          rows = await listRoomVersions({ data: { room_id: roomId } });
+        } catch (_) {
+          rows = [];
+        }
+      }
+      const versions = CR.roomVersions(rows, roomId);
+      HISTORY_VERSIONS = versions;
+
+      /* Concepts of this session that have no version row yet, oldest first so
+         Concept 1 always reads before Concept 2. */
+      const savedPaths = new Set(versions.map((v) => v.after_path).filter(Boolean));
+      const concepts = (SESSION_VERSIONS || [])
+        .filter((v) => v && (!v.path || !savedPaths.has(v.path)))
+        .slice()
+        .sort((a, b) => (a.at || 0) - (b.at || 0));
+
+      if (sub) sub.textContent = CR.historyHeading(versions.length, versions.length);
+      const countEl = document.getElementById("rdwVersN");
+      if (countEl && !OUTPUTS) countEl.textContent = CR.historyHeading(versions.length, versions.length);
+
+      if (!versions.length && !concepts.length) {
         el.innerHTML =
           '<div style="padding:6px 0"><b style="font-size:.85rem">No Versions Yet</b>' +
           '<p style="font-size:.78rem;color:var(--mute-2);margin-top:4px">Your generated and approved versions will appear here.</p></div>';
+        paintApproveBtn();
         return;
       }
+
       const ago = (iso) => {
         const s = (Date.now() - new Date(iso).getTime()) / 1000;
         if (s < 90) return "just now";
@@ -4510,69 +4525,89 @@ export function initApp(): () => void {
         if (s < 172800) return Math.round(s / 3600) + "h ago";
         return Math.round(s / 86400) + "d ago";
       };
-      /* A version is numbered, never named after the tool that made it. The
-         tool and style are secondary metadata under the number. */
-      const savedCount = list.length;
-      const numberOf = (v) => savedCount + (session.length - session.indexOf(v));
-      const sessionHTML = session
+
+      const conceptHTML = concepts
         .map((v, i) => {
-          const no = savedCount + (session.length - i);
+          const name = concepts.length > 1 ? "Concept " + (i + 1) : "Concept";
           const meta = [v.label, v.style].filter(Boolean).join(" \u00b7 ");
           const when = ago(new Date(v.at).toISOString());
-          /* A variation reads as a child of the version it branched from. */
-          const parent = v.parentAt
-            ? session.find((x) => x && x.at === v.parentAt) ||
-              session.find((x) => x && v.parentSrc && x.src === v.parentSrc)
-            : null;
-          const from = parent ? " &middot; From V" + numberOf(parent) : v.parentAt ? " &middot; Variation" : "";
-          const sub = (v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026") + from;
+          const line = v.path ? meta + " &middot; " + when : meta + " &middot; Saving\u2026";
           return (
-            `<button type="button" class="ver-row" data-vi="${i}"><span class="ver-th">${photo(v.src, "Version " + no)}</span>` +
-            `<span class="rowt"><b>Version ${no}</b><span>${sub}</span></span>` +
-            `<span class="pill ${v.path ? (i === 0 ? "p-ok" : "p-gray") : "p-amb"}">${v.path ? (i === 0 ? "Latest" : "Past") : "Saving"}</span></button>`
+            `<button type="button" class="ver-row" data-kind="concept" data-vi="${i}">` +
+            `<span class="ver-th">${photo(v.src, name)}</span>` +
+            `<span class="rowt"><b>${name}</b><span>${line}</span></span>` +
+            `<span class="pill ${v.path ? "p-gray" : "p-amb"}">${v.path ? "Not Saved" : "Saving"}</span></button>`
           );
         })
         .join("");
 
+      const versionHTML = versions
+        .map((v, i) => {
+          const st =
+            v.status === "approved"
+              ? ["p-ok", "Live"]
+              : v.status === "review"
+                ? ["p-amb", "Review"]
+                : ["p-gray", i === 0 ? "Latest" : "Past"];
+          const lab = (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
+          return (
+            `<button type="button" class="ver-row" data-kind="version" data-vid="${esc(v.id)}">` +
+            `<span class="rowt"><b>Version ${v.version_no}</b><span>${esc(v.style || lab)} &middot; ${ago(v.created_at)}</span></span>` +
+            `<span class="pill ${st[0]}">${st[1]}</span></button>`
+          );
+        })
+        .join("");
 
-      el.innerHTML =
-        sessionHTML +
-        list
-          .map((v, i) => {
-            const st =
-              v.status === "approved"
-                ? ["p-ok", "Live"]
-                : v.status === "review"
-                  ? ["p-amb", "Review"]
-                  : ["p-gray", !session.length && i === 0 ? "Latest" : "Past"];
-            const lab =
-              (v.status || "draft").charAt(0).toUpperCase() + (v.status || "draft").slice(1);
-            return `<div class="rowi" style="padding:9px 0"><div class="rowt"><b>Version ${v.version_no || 1}</b><span>${v.room_name} &middot; ${lab} &middot; ${ago(v.created_at)}</span></div><span class="pill ${st[0]}">${st[1]}</span></div>`;
-          })
-          .join("");
-      /* Approve always names the version actually on the canvas. */
-      const setApproveLabel = (no) => {
-        const ap = document.getElementById("stApprove");
-        if (ap && !ap.dataset.approved)
-          ap.innerHTML = '<i data-lucide="check"></i>Approve Version ' + no;
-        try {
-          lucide.createIcons();
-        } catch (_) {}
-      };
-      if (session.length) setApproveLabel(savedCount + session.length);
-      else if (list.length) setApproveLabel(list[0].version_no || 1);
+      el.innerHTML = conceptHTML + versionHTML;
 
-      el.querySelectorAll(".ver-row").forEach((btn) => {
+      /* Nothing chosen yet: the canvas shows the newest saved version. */
+      if (!ACTIVE_RESULT && versions.length) setActiveResult(CR.versionResult(versions[0]));
+      paintApproveBtn();
+
+      el.querySelectorAll('.ver-row[data-kind="concept"]').forEach((btn) => {
         btn.addEventListener("click", () => {
-          const i = +btn.dataset.vi;
-          const v = session[i];
+          const v = concepts[+btn.dataset.vi];
           if (!v || !cAfter) return;
           el.querySelectorAll(".ver-row").forEach((x) => x.classList.remove("on"));
           btn.classList.add("on");
-          cAfter.innerHTML = photo(v.src, "Version " + (savedCount + (session.length - i)));
+          const name = concepts.length > 1 ? "Concept " + (+btn.dataset.vi + 1) : "Concept";
+          cAfter.innerHTML = photo(v.src, name);
           lastRender = v.src;
           lastRenderPath = v.path || null;
-          setApproveLabel(savedCount + (session.length - i));
+          setActiveResult(
+            CR.conceptResult({
+              roomId,
+              outputId: v.src,
+              index: +btn.dataset.vi,
+              total: concepts.length,
+              resultPath: v.path || null,
+              status: v.path ? "ready" : "saving",
+            }),
+          );
+        });
+      });
+
+      el.querySelectorAll('.ver-row[data-kind="version"]').forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const row = versions.find((v) => String(v.id) === btn.dataset.vid);
+          if (!row || !cAfter) return;
+          el.querySelectorAll(".ver-row").forEach((x) => x.classList.remove("on"));
+          btn.classList.add("on");
+          /* The persistent version becomes the active result before the image
+             loads, so approval can never target the previous one. */
+          setActiveResult(CR.versionResult(row));
+          lastRenderPath = row.after_path || null;
+          try {
+            const url = row.after_path ? await resolvePhotoUrl(row.after_path) : null;
+            if (url) {
+              cAfter.innerHTML = photo(url, "Version " + row.version_no);
+              lastRender = url;
+            }
+            if (row.before_path) {
+              const b = await resolvePhotoUrl(row.before_path);
+              if (b && cBefore) cBefore.innerHTML = photo(b, "Original photo");
+            }
+          } catch (_) {}
         });
       });
     }
