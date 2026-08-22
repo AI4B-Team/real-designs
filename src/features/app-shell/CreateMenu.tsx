@@ -1,5 +1,7 @@
 import { memo } from "react";
 
+import { ShellIcon } from "./ShellIcon";
+
 /** Primary "Create" split button and its Design / Video menu. */
 export const CreateMenu = memo(function CreateMenu() {
   return (
@@ -10,17 +12,17 @@ export const CreateMenu = memo(function CreateMenu() {
         aria-haspopup="true"
         aria-expanded="false"
       >
-        <i data-lucide="plus" />
+        <ShellIcon name="plus" />
         Create
-        <i className="chev" data-lucide="chevron-down" />
+        <ShellIcon className="chev" name="chevron-down" />
       </button>
       <div className="help-menu" id="createMenu">
         <button className="acct-i" data-create="design">
-          <i data-lucide="wand-sparkles" />
+          <ShellIcon name="wand-sparkles" />
           Design
         </button>
         <button className="acct-i" data-create="video">
-          <i data-lucide="clapperboard" />
+          <ShellIcon name="clapperboard" />
           Video
         </button>
       </div>

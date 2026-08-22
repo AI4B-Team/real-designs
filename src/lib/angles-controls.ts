@@ -108,15 +108,23 @@ export function angleSourceKind(): AngleSourceId {
   return state.sourceKind;
 }
 
+/**
+ * Sets the source kind, and only tells the host something changed when
+ * something actually did. Callers repaint the whole settings panel on change,
+ * and that repaint calls back in here — an unconditional notify turns the pair
+ * into infinite recursion that freezes the app before any icon renders.
+ */
 export function setAngleSourceKind(id: AngleSourceId, signals: ContinuitySignalId[] = []) {
-  state.sourceKind = angleSource(id).id;
-  signals.forEach((s) => {
-    if (continuitySignal(s) && !state.signals.includes(s)) state.signals.push(s);
-  });
+  const next = angleSource(id).id;
+  const added = signals.filter((s) => continuitySignal(s) && !state.signals.includes(s));
+  const dirty = next !== state.sourceKind || added.length > 0;
+  state.sourceKind = next;
+  added.forEach((s) => state.signals.push(s));
   paintSource();
   paintSignals();
-  change();
+  if (dirty) change();
 }
+
 
 export function setAngleReading(on: boolean, error?: string | null) {
   state.reading = on;

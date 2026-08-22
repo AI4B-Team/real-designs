@@ -35,11 +35,13 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     title: "Plan",
     items: [
-      { view: "scope", label: "Budget", icon: "calculator" },
+      /* Budget is `hidden` in the feature registry: no sidebar entry, no
+         search scope, no dashboard card until verified cost data exists. */
       { view: "products", label: "Products", icon: "shopping-bag" },
       { view: "reports", label: "Reports", icon: "bar-chart-3" },
     ],
   },
+
   {
     title: "Share",
     items: [{ view: "present", label: "Presentations", icon: "presentation" }],

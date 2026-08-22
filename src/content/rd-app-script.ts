@@ -736,12 +736,10 @@ export function initApp(): () => void {
      bookmarked hash, may reach the unfinished Budget view. Clicking it only
      explains what is coming. */
       if (v === "scope" && !budgetsLive()) {
-        try {
-          const anchor =
-            (document.activeElement as HTMLElement) ||
-            (document.querySelector('.nav-i[data-v="scope"]') as HTMLElement);
-          if (anchor && anchor.getBoundingClientRect) openBudgetPopover(anchor);
-        } catch (_) {}
+        /* Budget has no entry point anywhere in the shell, so the only way to
+           arrive here is a stale bookmark: send it to the dashboard instead of
+           rendering an unfinished view. */
+        if (v !== "dash") go("dash", fromHash);
         return;
       }
       /* A stale startup callback must never drop a live Canvas back on the
@@ -2005,20 +2003,25 @@ export function initApp(): () => void {
       setKpi(
         0,
         String(s.counts.designs),
-        s.counts.designs ? s.counts.priced + " Priced With A Budget" : "Save A Room To Get Started",
+        s.counts.designs ? "Across Your Properties" : "Save A Room To Get Started",
       );
       setKpi(
         1,
         String(s.counts.properties),
         s.counts.properties ? "Saved To Your Account" : "No Properties Yet",
       );
-      setKpi(
-        2,
-        s.counts.scopedTotal ? kfmt(s.counts.scopedTotal) : "Coming Soon",
-        s.counts.scopedTotal
-          ? s.counts.priced + " Priced " + (s.counts.priced === 1 ? "Room" : "Rooms")
-          : "Verified Local Cost Data Coming Soon",
-      );
+      /* The budget KPI is a budget surface: while budgets are hidden the card
+         is removed, never filled with a "Coming Soon" placeholder number. */
+      if (s.counts.scopedTotal) {
+        setKpi(
+          2,
+          kfmt(s.counts.scopedTotal),
+          s.counts.priced + " Priced " + (s.counts.priced === 1 ? "Room" : "Rooms"),
+        );
+      } else {
+        const bk = document.getElementById("kpiBudget");
+        if (bk) bk.hidden = true;
+      }
       setKpi(
         3,
         String(s.counts.drafts),
@@ -2407,12 +2410,8 @@ export function initApp(): () => void {
         progressiveNav();
       } catch (_) {}
     }
-    (async function budgetNavGate() {
-      try {
-        const a = await budgetAvailability();
-        setNavAvailable("scope", !!a.available);
-      } catch (_) {}
-    })();
+    /* Budget has no sidebar entry to gate: the registry keeps it out of the
+   navigation model entirely, and go() redirects any stale #v-scope link. */
 
 
 
@@ -2503,29 +2502,13 @@ export function initApp(): () => void {
       } catch (_) {}
     });
 
+    /* Navigation is a policy, never a count. An empty workspace still shows
+   every shipped feature, so the sidebar can never rearrange itself under the
+   user as data loads. Only features the registry marks unavailable are hidden,
+   and that is known before first paint. */
     function progressiveNav() {
-      const { props, designs } = workspaceCounts();
-      const rule = {
-        designs: designs > 0,
-        scope: designs > 0,
-        products: designs > 0,
-        media: props > 0,
-        listings: props > 0,
-        present: props > 0,
-        reports: designs >= 3,
-      };
       document.querySelectorAll(".nav-i").forEach((b) => {
-        const v = b.dataset.v;
-        /* Not usable yet: hidden regardless of workspace progress. */
-        if (b.hasAttribute("data-unavailable")) {
-          b.hidden = true;
-          return;
-        }
-        if (!(v in rule)) return;
-        /* Until the workspace has actually been read, show everything. A failed
-           or pending request must never look like a missing feature. */
-        const show = !WORKSPACE_LOADED || rule[v] || b.classList.contains("on");
-        b.hidden = !show;
+        b.hidden = b.hasAttribute("data-unavailable");
       });
       /* Counts are live workspace information, never a zero-state badge. */
       document.querySelectorAll(".nav-i .cnt").forEach((c) => {
@@ -2554,8 +2537,10 @@ export function initApp(): () => void {
         (r.items || []).forEach((i) => {
           byKey[i.key] = i;
         });
-        if (byKey["products"]) setNavAvailable("products", !!byKey["products"].connected);
-        if (byKey["listing"]) setNavAvailable("listings", !!byKey["listing"].connected);
+        /* Products and Batch ship today; an unconnected retailer or listing
+           feed disables the actions inside those views, it does not remove the
+           destination from the sidebar. */
+        void byKey;
       } catch (_) {}
     })();
 
@@ -6030,15 +6015,26 @@ export function initApp(): () => void {
 
     let ANGLE_STATE = { results: [] as any[], payload: null as any, source: null as any };
 
+    let ANGLES_SYNCING = false;
+
     function ensureAnglesPanel() {
       try {
         mountAnglesPanel({
           onChange: () => paintGenGate(),
           onRead: () => readRoomForAngles(true),
         });
-        syncAngleSource();
+        /* The panel repaint calls back into the gate, which calls back here.
+           One sync at a time, so that handshake can never recurse. */
+        if (ANGLES_SYNCING) return;
+        ANGLES_SYNCING = true;
+        try {
+          syncAngleSource();
+        } finally {
+          ANGLES_SYNCING = false;
+        }
       } catch (_) {}
     }
+
 
     /**
      * Angles are only as honest as their source. A generated, staged or
@@ -10285,10 +10281,8 @@ ${picks
           tog.setAttribute("data-tt", "Collapse Menu");
         }
         tog.removeAttribute("title");
-        tog.innerHTML = '<i data-lucide="' + (min ? "chevrons-right" : "chevrons-left") + '"></i>';
-        try {
-          lucide.createIcons();
-        } catch (_) {}
+        /* The chevron is React-owned markup swapped by CSS on `.sidemin`;
+           rewriting innerHTML here duplicated the icon after hydration. */
       }
 
       let min = false;
@@ -11639,9 +11633,25 @@ ${picks
     };
 
 
+    /* Every tool panel notifies the gate when its state changes, and the gate
+       in turn re-mounts and syncs those panels. Painting is not re-entrant:
+       a nested call would be an infinite handshake, so it is dropped. */
+    let GEN_GATE_PAINTING = false;
+
     function paintGenGate() {
       const btn = document.getElementById("genBtn") as any;
       if (!btn) return;
+      if (GEN_GATE_PAINTING) return;
+      GEN_GATE_PAINTING = true;
+      try {
+        paintGenGateOnce(btn);
+      } finally {
+        GEN_GATE_PAINTING = false;
+      }
+    }
+
+    function paintGenGateOnce(btn) {
+
       const tool = activeToolName();
       const space = currentSpace();
       const need = styleNeedForTool(tool);

@@ -1,5 +1,7 @@
 import { memo } from "react";
 
+import { ShellIcon } from "./ShellIcon";
+
 /**
  * Notifications bell and dropdown.
  *
@@ -16,7 +18,7 @@ export const NotificationsMenu = memo(function NotificationsMenu() {
         aria-haspopup="true"
         aria-expanded="false"
       >
-        <i data-lucide="bell" />
+        <ShellIcon name="bell" />
         <span className="bdg" id="notifDot" />
       </button>
       <div className="notif-menu" id="notifMenu">
@@ -40,7 +42,7 @@ export const NotificationsMenu = memo(function NotificationsMenu() {
         <div className="notif-list" id="notifList" />
         <div className="notif-foot">
           <button className="acct-i" data-goto="notifications">
-            <i data-lucide="inbox" />
+            <ShellIcon name="inbox" />
             View All Notifications
           </button>
         </div>

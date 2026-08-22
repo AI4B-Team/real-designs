@@ -82,7 +82,8 @@ export const FEATURES: FeatureDef[] = [
     name: "Automated Listing Import",
     inBeta: false,
     offMode: "coming_soon",
-    view: "listings",
+    /* No `view`: Batch itself ships. Only automated import inside it is held
+       back, so the destination must stay in the sidebar unlabelled. */
     reason: "Automated listing import is not reliable enough for beta. Upload photos instead.",
   },
   {
@@ -104,7 +105,8 @@ export const FEATURES: FeatureDef[] = [
     name: "Retailer Product Matching",
     inBeta: false,
     offMode: "coming_soon",
-    view: "products",
+    /* No `view`: Products ships with manually saved products; only automatic
+       retailer matching is off, and that is gated inside the view. */
     reason: "Automatic retailer matching is off. You can still save your own products.",
   },
   {
