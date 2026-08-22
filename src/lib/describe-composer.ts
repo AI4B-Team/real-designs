@@ -654,16 +654,17 @@ export function createDescribeComposer(cfg: Cfg) {
   }
 
   function roomCards(): string {
-    const cards = DS.quickAreas(state.space, state.roomId);
+    const inferred = DS.inferAreaFromPrompt(state.prompt, state.space);
+    const cards = DS.quickAreas(state.space, state.roomId, 4, { inferredId: inferred?.id ?? null });
     const label = DS.spaceKeyOf(state.space) === "interior" ? "Room Or Area" : "Area";
     return (
-      '<div class="rdset-row"><header class="rdset-h"><span class="rdset-l">' +
+      '<div class="rdset-row" data-sp-sec="room"><header class="rdset-h"><span class="rdset-l">' +
       esc(label) +
       "</span>" +
       (state.roomDetected && state.room
-        ? '<span class="rdset-note">Detected From Your Description</span>'
+        ? '<span class="rdset-note"><i data-lucide="sparkles"></i>From Your Description</span>'
         : "") +
-      '<button type="button" class="rdset-all" data-sp="allroom">View All</button></header>' +
+      '<button type="button" class="rdset-all" data-sp="allroom">View All<i data-lucide="chevron-right"></i></button></header>' +
       '<div class="rdset-cards" role="listbox" aria-label="' +
       esc(label) +
       '">' +
@@ -695,10 +696,14 @@ export function createDescribeComposer(cfg: Cfg) {
   }
 
   function styleCards(): string {
-    const cards = DS.quickStyleCards(state.space, state.styleId);
+    const inferred = DS.inferStyleFromPrompt(state.prompt, state.space);
+    const cards = DS.quickStyleCards(state.space, state.styleId, 4, inferred?.id ?? null);
     return (
-      '<div class="rdset-row"><header class="rdset-h"><span class="rdset-l">Design Style</span>' +
-      '<button type="button" class="rdset-all" data-sp="allstyle">View All</button></header>' +
+      '<div class="rdset-row" data-sp-sec="style"><header class="rdset-h"><span class="rdset-l">Design Style</span>' +
+      (state.styleDetected && state.style
+        ? '<span class="rdset-note"><i data-lucide="sparkles"></i>From Your Description</span>'
+        : "") +
+      '<button type="button" class="rdset-all" data-sp="allstyle">View All<i data-lucide="chevron-right"></i></button></header>' +
       '<div class="rdset-cards is-style" role="listbox" aria-label="Design Style">' +
       cards
         .map((st) => {
@@ -727,6 +732,7 @@ export function createDescribeComposer(cfg: Cfg) {
       "</div></div>"
     );
   }
+
 
   function advanced(): string {
     const video = isVideo();
