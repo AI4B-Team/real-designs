@@ -1147,7 +1147,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           Array.from({ length: 4 })
             .map(
               () =>
-                '<div class="spd-card is-skel"><span class="spd-th"></span><span class="spd-body"><i></i><i></i></span></div>',
+                '<div class="spd-card is-skel"><span class="spd-th"></span><span class="spd-body"><i></i><i></i><i></i></span></div>',
             )
             .join("") +
           "</div>",
@@ -1371,8 +1371,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '<span class="spd-body"><b>' +
       esc(mediaTitle(d)) +
       "</b>" +
-      (showAddr && l.three ? '<span class="spd-addr">' + esc(l.three) + "</span>" : "") +
-      (l.two ? "<span>" + esc(l.two) + "</span>" : "") +
+      '<span class="spd-addr">' + esc(showAddr && l.three ? l.three : "") + "</span>" +
+      "<span>" + esc(l.two || "") + "</span>" +
       "</span></div>"
     );
   }
