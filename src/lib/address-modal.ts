@@ -8,6 +8,7 @@
    Project Title is deliberately absent: an address never rewrites a title. */
 
 import {
+import "@/styles/rd-modal.css";
   addressesMatch,
   buildAddress,
   cleanAddressText,
@@ -83,7 +84,7 @@ export function openAddressModal(opts: AddressModalOptions) {
 
   const previouslyFocused = document.activeElement as HTMLElement | null;
   const host = document.createElement("div");
-  host.className = "rd-app addrm";
+  host.className = "rd-modal addrm";
   host.innerHTML = `<div class="addrm-bg" data-x></div>
     <div class="addrm-w" role="dialog" aria-modal="true" aria-labelledby="addrmTitle">
       <header class="addrm-h">
