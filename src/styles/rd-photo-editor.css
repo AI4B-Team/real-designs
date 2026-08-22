@@ -770,7 +770,10 @@ body.rdpe-open {
 .rd-app .rdw-stage > img.rdw-editimg {
   width: 100%;
   height: 100%;
-  object-fit: contain;
+  /* Match the permanent Canvas image exactly. Redesign's source/result layers
+     fill this viewport with cover; using contain here introduced side gutters
+     and made the photo visibly narrower as soon as Edit was selected. */
+  object-fit: cover;
   object-position: center;
   border-radius: 10px;
   box-shadow: none;
@@ -899,6 +902,10 @@ body.rdpe-open {
    off-canvas drawer as the Redesign panel, toggled by .panel-on. */
 @media (max-width: 1099px) {
   .rd-app .studio.rdw .rdpe-embed .rdpe-panel {
+    /* The responsive Designer has only rail + Canvas columns. Keep the fixed
+       drawer assigned to the Canvas column so it cannot create an implicit
+       third grid track before fixed positioning is resolved. */
+    grid-column: 2;
     position: fixed;
     top: var(--app-header-height, 58px);
     right: 0;
