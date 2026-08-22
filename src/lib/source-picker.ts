@@ -1349,11 +1349,32 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
+  /** Column headers so the rows read as a table, not a stack of strips. */
+  function listHead() {
+    const cols = [
+      "",
+      "",
+      "Photo",
+      "Property / Room",
+      "Type",
+      "Updated",
+      "Status",
+      "",
+    ];
+    return (
+      '<div class="spd-lhead" aria-hidden="true">' +
+      cols.map((c) => "<span>" + esc(c) + "</span>").join("") +
+      "</div>"
+    );
+  }
+
   function designRow(d: PickerDesign) {
     const i = state.designSel.indexOf(d.id);
     const on = i > -1;
     const l = designLines(d);
     const created = designDate(d.createdAt);
+    const kind = isDesign(d) ? "Design" : "Photo";
+    const room = d.room || (isDesign(d) ? "Design" : "Photo");
     return (
       '<div class="spd-row' +
       (on ? " is-sel" : "") +
@@ -1368,17 +1389,28 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       thumbSpan(d, "spd-rth") +
       '<span class="spd-rn"><b>' +
       esc(mediaTitle(d)) +
-      "</b>" +
-      (l.three ? "<span>" + esc(l.three) + "</span>" : "") +
-      "</span>" +
-      '<span class="spd-rm">' +
-      esc(mediaBadge(d)) +
-      "</span>" +
-      '<span class="spd-rm">' +
-      esc(l.two || "\u2014") +
-      "</span>" +
+      "</b><span>" +
+      esc(l.two || kind) +
+      "</span></span>" +
+      '<span class="spd-rn spd-rsub"><b>' +
+      esc(l.three || "Unassigned") +
+      "</b><span>" +
+      esc(room) +
+      "</span></span>" +
+      '<span class="spd-rm"><span class="spd-rtag">' +
+      esc(kind) +
+      "</span></span>" +
       '<span class="spd-rm">' +
       esc(created || "\u2014") +
+      "</span>" +
+      '<span class="spd-rm">' +
+      (l.status
+        ? '<span class="spd-rstate' +
+          (/approved/i.test(l.status) ? " is-ok" : "") +
+          '">' +
+          esc(l.status) +
+          "</span>"
+        : "\u2014") +
       "</span>" +
       '<button type="button" class="sp-link spd-rv" data-sp-preview="' +
       esc(d.id) +
