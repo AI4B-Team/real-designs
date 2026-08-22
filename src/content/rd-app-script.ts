@@ -2065,8 +2065,13 @@ export function initApp(): () => void {
       if (!document.getElementById("tree")) return;
       try {
         PROP_TREE = await getPropertyTree();
+        WORKSPACE_LOADED = true;
       } catch (e) {
+        /* A failed read is not "this workspace is empty": keep navigation intact
+           and report the failure instead of silently degrading the sidebar. */
         PROP_TREE = [];
+        WORKSPACE_LOADED = false;
+        reportModuleFailure("Workspace load", e);
       }
       if (SEL.p >= PROP_TREE.length) SEL = { p: 0, pr: 0 };
       const cp = document.getElementById("cntProps"),
