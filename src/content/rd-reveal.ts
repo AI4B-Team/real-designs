@@ -2115,7 +2115,7 @@ function roomCell(a) {
     icon: roomIcon(unknown ? "" : label),
     unknown,
     manual: !!a.roomManual,
-    expanded: S.wizard?.roomPick?.key === a.key,
+    expanded: false,
     variant: "inline",
     className: "rv-room",
   });
