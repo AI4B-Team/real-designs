@@ -958,9 +958,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       value: string,
       options: Array<[string, string]>,
     ) =>
-      '<label class="spd-fsel"><span>' +
-      esc(label) +
-      "</span><select data-sp-f=\"" +
+      '<select class="spd-sel" data-sp-f="' +
       name +
       '" aria-label="' +
       esc(label) +
@@ -977,7 +975,22 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             "</option>",
         )
         .join("") +
-      "</select></label>";
+      "</select>";
+    const n = state.designSel.length;
+    const viewBtn = (id: "grid" | "list", icon: string, label: string) =>
+      '<button type="button" class="spd-vb' +
+      (state.mediaView === id ? " on" : "") +
+      '" data-sp-view="' +
+      id +
+      '" aria-pressed="' +
+      (state.mediaView === id ? "true" : "false") +
+      '" title="' +
+      esc(label) +
+      '" aria-label="' +
+      esc(label) +
+      '"><i data-lucide="' +
+      icon +
+      '"></i></button>';
     return (
       '<div class="spd-filters">' +
       '<div class="spd-chips" role="group" aria-label="Media type">' +
@@ -994,7 +1007,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           "</button>",
       ).join("") +
       "</div>" +
-      '<div class="spd-frow">' +
+      '<div class="spd-bar">' +
       '<label class="sp-f sp-search spd-fq"><span><i data-lucide="search"></i>' +
       '<input type="search" data-sp-f="mq" placeholder="Search media" aria-label="Search media" value="' +
       esc(state.mediaQuery) +
@@ -1003,17 +1016,40 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         "mprop",
         "Property",
         state.mediaProperty,
-        [["all", "All properties"] as [string, string]].concat(Array.from(props.entries())),
+        [["all", "All Properties"] as [string, string]].concat(Array.from(props.entries())),
       ) +
       select(
         "mroom",
         "Room",
         state.mediaRoom,
-        [["all", "All rooms"] as [string, string]].concat(
+        [["all", "All Rooms"] as [string, string]].concat(
           Array.from(rooms).map((r) => [r, r] as [string, string]),
         ),
       ) +
-      "</div></div>"
+      select("msort", "Sort", state.mediaSort, [
+        ["newest", "Newest First"],
+        ["oldest", "Oldest First"],
+        ["room", "Room A\u2013Z"],
+        ["property", "Property A\u2013Z"],
+      ]) +
+      (state.mediaProperty === "all"
+        ? select("mgroup", "Grouping", state.mediaGroup ? "group" : "none", [
+            ["none", "No Grouping"],
+            ["group", "Group By Property"],
+          ])
+        : "") +
+      '<div class="spd-bar-r">' +
+      '<button type="button" class="sp-link" data-sp="mall">Select All Visible</button>' +
+      (n
+        ? '<button type="button" class="sp-link" data-sp="dclear">Deselect All</button>'
+        : "") +
+      '<span class="spd-count" aria-live="polite">' +
+      (n ? n + " selected" : "None selected") +
+      "</span>" +
+      '<div class="spd-views" role="group" aria-label="View">' +
+      viewBtn("grid", "layout-grid", "Grid View") +
+      viewBtn("list", "list", "List View") +
+      "</div></div></div></div>"
     );
   }
 
@@ -1057,13 +1093,50 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       mediaFilters() +
         designOrderRow() +
         (shown.length
-          ? '<div class="spd-grid" role="group" aria-label="Your media">' +
-            shown.map(designCard).join("") +
-            "</div>"
+          ? mediaResults(shown)
           : '<div class="spd-empty"><i data-lucide="search-x"></i><b>No media matches these filters</b>' +
-            '<span class="spd-empty-a"><button type="button" class="btn btn-ghost btn-sm" data-sp="mreset">Clear filters</button></span></div>') +
+            '<span class="spd-empty-a"><button type="button" class="btn btn-ghost btn-sm" data-sp="mreset">Clear Filters</button>' +
+            '<button type="button" class="btn btn-primary btn-sm" data-sp="dupload">Upload Photos</button></span></div>') +
         designFooter() +
         designPreviewModal(),
+    );
+  }
+
+  /** One authoritative list, rendered either as a grid or as compact rows. */
+  function mediaResults(shown: PickerDesign[]) {
+    const render = (list: PickerDesign[]) =>
+      state.mediaView === "list"
+        ? '<div class="spd-list" role="group" aria-label="Your media">' +
+          list.map(designRow).join("") +
+          "</div>"
+        : '<div class="spd-grid" role="group" aria-label="Your media">' +
+          list.map(designCard).join("") +
+          "</div>";
+    if (!state.mediaGroup || state.mediaProperty !== "all") return render(shown);
+    const groups = new Map<string, PickerDesign[]>();
+    for (const d of shown) {
+      const key = String(d.address || "Unassigned Photos");
+      const arr = groups.get(key);
+      if (arr) arr.push(d);
+      else groups.set(key, [d]);
+    }
+    return (
+      '<div class="spd-groups">' +
+      Array.from(groups.entries())
+        .map(
+          ([addr, list]) =>
+            '<section class="spd-group"><header class="spd-group-h"><b>' +
+            esc(addr) +
+            "</b><span>" +
+            list.length +
+            " item" +
+            (list.length === 1 ? "" : "s") +
+            "</span></header>" +
+            render(list) +
+            "</section>",
+        )
+        .join("") +
+      "</div>"
     );
   }
 
