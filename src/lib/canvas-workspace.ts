@@ -167,6 +167,14 @@ function borrowCanvasChrome(main: HTMLElement) {
     borrowed.push(el as HTMLElement);
   });
   borrowed.forEach((el) => main.appendChild(el));
+  /* Fit, zoom and full screen are Canvas controls, not tool controls: the same
+     overlay cluster rides along so it never appears or disappears. */
+  const ov = document.querySelector<HTMLElement>("#rdwStage > .rdw-ov-r");
+  const stage = main.querySelector<HTMLElement>(".rdpe-stage");
+  if (ov && stage) {
+    overlay = ov;
+    stage.appendChild(ov);
+  }
 }
 
 /** Puts the borrowed chrome back in its original order under the stage. */
@@ -174,7 +182,11 @@ function returnCanvasChrome() {
   const body = canvasBody();
   if (body) borrowed.forEach((el) => body.appendChild(el));
   borrowed = [];
+  const stage = document.getElementById("rdwStage");
+  if (overlay && stage) stage.appendChild(overlay);
+  overlay = null;
 }
+
 
 
 /** The generation tool that was selected before Edit took over the rail. */
