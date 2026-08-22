@@ -3,6 +3,12 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { buildStylePayload, providerStyleName, type ProjectType } from "@/lib/style-catalog";
 import { spacePromptIntro, spacePromptRules } from "@/lib/space-tools";
+import {
+  intensityById,
+  intensityRule,
+  lockedElements,
+  sanitizeUnlocked,
+} from "@/lib/redesign-brief";
 
 /**
  * Real redesign rendering.
@@ -25,6 +31,10 @@ const Input = z.object({
   replace: z.array(z.string().max(40)).max(20).default([]),
   remove: z.array(z.string().max(40)).max(20).default([]),
   style_id: z.string().max(80).nullable().optional(),
+  /* Canonical intensity id: refresh | makeover | renovation | reimagine. */
+  intensity_id: z.string().max(30).nullable().optional(),
+  /* Reality Lock elements the user explicitly unlocked. */
+  unlocked: z.array(z.string().max(30)).max(20).default([]),
   /* Internal tool identifier, e.g. "Redesign" or "Virtual Stage". */
   tool: z.string().max(40).default("Redesign"),
   project_type: z
@@ -54,8 +64,19 @@ function buildPrompt(d: z.infer<typeof Input>): string {
     `Style definition: ${style.stylePrompt}.`,
     `Avoid: ${style.styleNegativePrompt}.`,
     ...spacePromptRules(d.project_type),
-    "Hard rules: keep the exact same camera angle, focal length, perspective, room proportions, window and door positions, ceiling height and natural light direction. This is a redesign of a real space, not a new room. Do not move or resize architecture. Do not add rooms, windows or walls. Photorealistic result, no text, no watermarks, no labels.",
+    intensityRule(d.intensity_id || d.intensity),
+    "Reality Lock — preserve exactly: " +
+      lockedElements(d.unlocked)
+        .map((e) => e.label.toLowerCase())
+        .join(", ") +
+      ". This is a redesign of a real, photographed space, not a new room. Do not move or resize architecture, do not add rooms and do not invent an unrelated space.",
+    "Output quality: photorealistic, natural light behaviour, realistic scale, coherent shadows and plausible materials. No people unless requested. No text, logos, labels or watermarks. No impossible furniture placement.",
   ];
+  const unlocked = sanitizeUnlocked(d.unlocked);
+  if (unlocked.length)
+    lines.push(
+      `The owner explicitly unlocked these elements, so you may change them if the design calls for it: ${unlocked.join(", ")}. Everything else stays exactly as photographed.`,
+    );
   if (d.keep.length) lines.push(`Keep these existing objects unchanged: ${d.keep.join(", ")}.`);
   if (d.replace.length)
     lines.push(
@@ -64,14 +85,6 @@ function buildPrompt(d: z.infer<typeof Input>): string {
   if (d.remove.length)
     lines.push(
       `Remove these objects entirely and fill the space naturally: ${d.remove.join(", ")}.`,
-    );
-  if (d.intensity.toLowerCase().includes("refresh"))
-    lines.push(
-      "Refresh intensity: cosmetic only — paint, textiles, decor and lighting fixtures. Keep flooring, cabinetry and fixtures in place.",
-    );
-  if (d.intensity.toLowerCase().includes("full"))
-    lines.push(
-      "Full remodel intensity: finishes, cabinetry, flooring and fixtures may all change, but the structural shell stays identical.",
     );
   if (d.aspect_ratio && d.aspect_ratio !== "original")
     lines.push(
@@ -92,6 +105,7 @@ export const renderDesign = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured.");
 
+    const unlocked = sanitizeUnlocked(data.unlocked);
     const { charge, refund, chargeErrorMessage } = await import("@/lib/credits.server");
     const charged = await charge(context.userId, "design", `Design render, ${data.direction}`);
     if (!charged.ok) throw new Error(chargeErrorMessage(charged));
@@ -128,6 +142,8 @@ export const renderDesign = createServerFn({ method: "POST" })
 
       return {
         image: url,
+        intensity: intensityById(data.intensity_id || data.intensity).id,
+        unlocked,
         balance: charged.balance,
         remainingToday: charged.remainingToday ?? null,
         charged: charged.charged,

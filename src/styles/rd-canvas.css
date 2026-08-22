@@ -1829,3 +1829,149 @@
   color: #ff6b6b;
   border-color: rgba(255, 107, 107, 0.45);
 }
+
+
+/* ---------- Redesign brief: reality lock, item entry, review modal ---------- */
+.rd-app .rdw-lock-adv {
+  margin-top: 8px;
+}
+.rd-app #rdwLockAdvToggle {
+  font-size: 0.74rem;
+  color: var(--red, #c00);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  font-weight: 600;
+}
+.rd-app .rdw-lock-list {
+  display: grid;
+  gap: 2px;
+  margin-top: 8px;
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 10px;
+  padding: 6px 8px;
+  background: #fff;
+}
+.rd-app .rdw-lock-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  padding: 5px 0;
+  min-height: 30px;
+}
+.rd-app .rdw-lock-row span {
+  flex: 1;
+}
+.rd-app .rdw-lock-row em {
+  font-style: normal;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--mute-2, #8b8a92);
+}
+.rd-app .rdw-lock-row.is-fixed {
+  opacity: 0.62;
+}
+.rd-app .rdw-item-entry {
+  margin-top: 10px;
+}
+.rd-app .rdw-item-row {
+  display: flex;
+  gap: 6px;
+}
+.rd-app .rdw-item-row input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 9px;
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 0.78rem;
+}
+.rd-app .rdw-item-row input:focus {
+  outline: none;
+  border-color: var(--red, #c00);
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.12);
+}
+.rd-app .rdw-drift {
+  position: absolute;
+  left: 12px;
+  bottom: 56px;
+  z-index: 6;
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  max-width: 420px;
+  background: #fff;
+  border: 1px solid #f0c9c9;
+  border-left: 3px solid var(--red, #c00);
+  border-radius: 10px;
+  padding: 9px 11px;
+  font-size: 0.76rem;
+  line-height: 1.4;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+.rd-app .rdw-drift i {
+  width: 15px;
+  height: 15px;
+  color: var(--red, #c00);
+  flex: none;
+  margin-top: 1px;
+}
+.rd-app .rd-brief .up-card {
+  max-width: 520px;
+}
+.rd-app .rd-brief-sub {
+  font-size: 0.8rem;
+  color: var(--mute, #77767f);
+  margin: 0 0 12px;
+}
+.rd-app .rd-brief-list {
+  border: 1px solid var(--line, #e9e6e0);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.rd-app .rd-brief-row {
+  display: flex;
+  gap: 12px;
+  padding: 9px 12px;
+  font-size: 0.81rem;
+  border-bottom: 1px solid var(--line, #e9e6e0);
+}
+.rd-app .rd-brief-row:last-child {
+  border-bottom: 0;
+}
+.rd-app .rd-brief-row .k {
+  width: 132px;
+  flex: none;
+  color: var(--mute, #77767f);
+}
+.rd-app .rd-brief-row .v {
+  flex: 1;
+  font-weight: 500;
+}
+.rd-app .rd-brief-warn {
+  margin-top: 12px;
+  border: 1px solid #f0c9c9;
+  background: rgba(204, 0, 0, 0.04);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.79rem;
+}
+.rd-app .rd-brief-warn b {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--red, #c00);
+}
+.rd-app .rd-brief-warn ul {
+  margin: 0;
+  padding-left: 16px;
+}
+.rd-app .rd-brief-note,
+.rd-app .rd-brief-bal {
+  font-size: 0.74rem;
+  color: var(--mute, #77767f);
+  margin: 12px 0 0;
+}

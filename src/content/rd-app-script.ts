@@ -38,6 +38,21 @@ import { openSaveRoomModal } from "@/lib/save-room";
 import { initCanvasInspector } from "@/lib/canvas-inspector";
 import { initCanvasWorkspace, paintPanelHeader } from "@/lib/canvas-workspace";
 import { setConceptSummary } from "@/lib/canvas-panel";
+import {
+  buildBrief,
+  briefKey,
+  itemGroups,
+  SubmitGuard,
+  persistRetryPlan,
+} from "@/lib/redesign-brief";
+import {
+  upgradeIntensityControl,
+  upgradeRealityLock,
+  readIntensity,
+  readUnlocked,
+  mountItemTextEntry,
+  openBriefReview,
+} from "@/lib/redesign-controls";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
@@ -3438,6 +3453,30 @@ export function initApp(): () => void {
     } catch (_) {}
     paintStudioState();
 
+    /* Real intensity levels, Reality Lock unlock toggles and text entry for
+       keep / replace / remove. Each one is read by the brief below. */
+    try {
+      upgradeIntensityControl();
+      upgradeRealityLock(currentProjectType());
+      mountItemTextEntry(
+        () => {
+          const m = {};
+          Object.keys(locks).forEach((k) => (m[k.toLowerCase()] = { label: k, state: locks[k], source: "manual" }));
+          return m;
+        },
+        (next) => {
+          Object.keys(locks).forEach((k) => delete locks[k]);
+          Object.values(next).forEach((i) => {
+            locks[i.label] = i.state;
+          });
+        },
+        () => drawLocks(),
+      );
+      document.querySelectorAll("#spChips .chip").forEach((c) =>
+        c.addEventListener("click", () => upgradeRealityLock(currentProjectType())),
+      );
+    } catch (_) {}
+
     const gsteps = [
       "Reading room geometry",
       "Applying object locks",
@@ -3449,116 +3488,140 @@ export function initApp(): () => void {
     let busy = false,
       lastRender = null,
       lastRenderPath = null;
-    document.getElementById("genBtn").addEventListener("click", async () => {
-      if (busy) return;
+    /* One guard decides whether a click may start work, so a double click,
+       a repeated key or a re-entrant handler all collapse into one job. */
+    const GEN_GUARD = new SubmitGuard();
+    /* A completed, already paid for image whose upload failed. Retry reuses
+       it instead of paying for a second render. */
+    let pendingPersist = null;
+
+    function currentItems() {
+      const items = {};
+      Object.keys(locks).forEach((k) => {
+        items[String(k).toLowerCase()] = { label: k, state: locks[k], source: "manual" };
+      });
+      return items;
+    }
+
+    function currentBrief(VAR) {
       const srcImg = document.querySelector("#cBefore img");
-      if (STUDIO_SRC === SRC_EMPTY || !srcImg || !srcImg.src) {
-        needSourceModal();
-        return;
-      } // never spends a credit
-      const gTool = activeToolName();
-      if (styleNeedForTool(gTool) && !canvasStyleSelected()) {
-        promptForStyle(gTool);
-        return;
-      }
-      if (LIVE_TOOLS[gTool]) {
-        LIVE_TOOLS[gTool]();
-        return;
-      }
-      if (!ensureCredits(1, "A Design Render")) return;
-      /* A variation branches from the selected design instead of the source
-         photo: same room, same property, new child version. */
-      const VAR = (window as any).__rdPendingVariation || null;
-      (window as any).__rdPendingVariation = null;
+      const gradeEl = document.querySelector("#gradeChips .chip.on");
+      const note = ((document.getElementById("agentNote") || {}).value || "").trim();
+      const notes = VAR ? [VAR.prompt, note].filter(Boolean).join(" ") : note;
+      const pt = currentProjectType();
+      const tool = activeToolName();
+      return buildBrief({
+        tool,
+        projectType: pt === "exterior" ? "exterior" : pt === "garden" ? "garden" : "interior",
+        roomType: (VAR && VAR.room) || currentRoomType() || null,
+        styleId: currentStyleId(),
+        styleName:
+          (VAR && VAR.styleName) ||
+          ((document.querySelector("#canvasStyleField .rdw-sum span") || {}).textContent || "")
+            .split("\u00b7")
+            .pop()
+            .trim() ||
+          currentStyleId(),
+        intensity: (VAR && VAR.intensity) || readIntensity(),
+        grade: gradeEl ? gradeEl.textContent.trim() : "Retail Grade",
+        items: currentItems(),
+        notes: notes || null,
+        unlocked: readUnlocked(),
+        aspectRatio: "original",
+        credits: toolCost(tool),
+        hasSource: !!(srcImg && srcImg.src) && STUDIO_SRC !== SRC_EMPTY,
+        requiresStyle: !!styleNeedForTool(tool),
+      });
+    }
+
+    /* Genuine job state: each phase is set when that phase actually starts.
+       Nothing ever reports completion before the request has returned. */
+    function genPhase(pct, label) {
+      const bar = document.getElementById("cBar"),
+        st = document.getElementById("cStep");
+      if (bar) bar.style.width = pct + "%";
+      if (st) st.textContent = label;
+    }
+
+    async function runGeneration(brief, VAR) {
+      const srcImg = document.querySelector("#cBefore img");
       busy = true;
       setCanvasPhase("generating");
       const btn = document.getElementById("genBtn");
       btn.disabled = true;
-      const ov = document.getElementById("cGen"),
-        bar = document.getElementById("cBar"),
-        st = document.getElementById("cStep");
+      const ov = document.getElementById("cGen");
       ov.classList.add("on");
-      bar.style.width = "0%";
-      st.textContent = gsteps[0];
-      let p = 0,
-        i = 0;
-      const t = setInterval(() => {
-        p = Math.min(p + Math.random() * 7 + 2, 94);
-        bar.style.width = p + "%";
-        if (p > (i + 1) * (94 / gsteps.length) && i < gsteps.length - 1) {
-          i++;
-          st.textContent = gsteps[i];
-        }
-      }, 240);
+      genPhase(8, "Preparing your photo");
       const finish = () => {
-        clearInterval(t);
-        bar.style.width = "100%";
         setTimeout(() => {
           ov.classList.remove("on");
           busy = false;
           btn.disabled = false;
-        }, 320);
+          GEN_GUARD.end();
+        }, 240);
       };
+      const key = briefKey(brief);
       try {
-        const image = await toDataUrl((VAR && VAR.src) || srcImg.src, 1100);
-        const band = document.querySelector(".bchip.on"),
-          grade = document.querySelector("#gradeChips .chip.on");
-        const groups = { keep: [], replace: [], remove: [] };
-        Object.keys(locks).forEach((o) => {
-          (groups[locks[o]] || groups.keep).push(o);
-        });
-        if (VAR && Array.isArray(VAR.keep)) {
-          VAR.keep.forEach((k) => {
-            if (k && groups.keep.indexOf(k) < 0) groups.keep.push(k);
-          });
-        }
-        const varNotes = VAR
-          ? [VAR.prompt, (document.getElementById("agentNote") || {}).value || null]
-              .filter(Boolean)
-              .join(" ")
-          : (document.getElementById("agentNote") || {}).value || null;
-        const r = await renderDesign({
-          data: {
-            image,
-            room_type: (VAR && VAR.room) || currentRoomType(),
-            direction:
-              (VAR && VAR.styleName) ||
-              (document.getElementById("fStyle") || {}).value ||
-              "Warm Minimal",
-            style_id: currentStyleId(),
-            project_type: currentProjectType(),
-            tool: activeToolName(),
-            preserve_architecture: true,
-            intensity: (VAR && VAR.intensity) || (band ? band.querySelector("b").textContent : "Makeover"),
-            grade: grade ? grade.textContent : "Retail Grade",
-            notes: varNotes || null,
-            keep: groups.keep,
-            replace: groups.replace,
-            remove: groups.remove,
-            variation_of: (VAR && VAR.parentPath) || null,
-          },
-        });
-        track("design_rendered", { surface: "studio", room_type: currentRoomType() });
-        lastRender = r.image;
-        lastRenderPath = await persistRender(r.image, "Your Render");
-        cAfter.innerHTML = photo(r.image, "Redesigned space, AI render");
-        if (VAR) (window as any).__rdVariationMeta = VAR;
-        addRenderVariant(
-          r.image,
-          (VAR && VAR.styleName) ||
-            (document.getElementById("fStyle") || {}).value ||
-            "Your Render",
-          lastRenderPath,
+        /* Reuse a paid for image whose upload failed: never charge twice. */
+        const plan = persistRetryPlan(
+          pendingPersist && pendingPersist.briefKey === key ? pendingPersist : null,
         );
+        let image = plan.image;
+        if (plan.action === "generate") {
+          /* Keep as much of the source resolution as the provider accepts. */
+          const source = await toDataUrl((VAR && VAR.src) || srcImg.src, 1600);
+          genPhase(35, "Generating the redesign");
+          const r = await renderDesign({
+            data: {
+              image: source,
+              room_type: brief.payload.room_type,
+              direction: brief.payload.direction,
+              style_id: brief.payload.style_id,
+              project_type: brief.payload.project_type,
+              tool: brief.payload.tool,
+              preserve_architecture: true,
+              intensity: brief.payload.intensity,
+              intensity_id: brief.payload.intensity_id,
+              grade: brief.payload.grade,
+              notes: brief.payload.notes,
+              keep: brief.payload.keep,
+              replace: brief.payload.replace,
+              remove: brief.payload.remove,
+              unlocked: brief.payload.unlocked,
+              aspect_ratio: brief.payload.aspect_ratio,
+              variation_of: (VAR && VAR.parentPath) || null,
+            },
+          });
+          image = r.image;
+          track("design_rendered", { surface: "studio", room_type: brief.payload.room_type });
+        } else {
+          genPhase(70, "Saving your version");
+        }
+        lastRender = image;
+        cAfter.innerHTML = photo(image, "Redesigned space, AI render");
+        genPhase(80, "Saving your version");
+        try {
+          lastRenderPath = await persistRender(image, "Your Render");
+          pendingPersist = null;
+        } catch (persistErr) {
+          /* The render is paid for and on screen: hold it for a free retry. */
+          pendingPersist = { image, briefKey: key, attempts: (pendingPersist?.attempts || 0) + 1 };
+          throw persistErr;
+        }
+        if (VAR) window.__rdVariationMeta = VAR;
+        addRenderVariant(image, brief.payload.direction || "Your Render", lastRenderPath);
 
         setCanvasPhase("");
         markStudioResult();
         finalizeGeneratedDesign(lastRenderPath);
 
-
-        paintStudioSummary(currentBand());
+        paintStudioSummary({
+          name: brief.intensity.label,
+          scope: brief.intensity.allows.slice(0, 3).join(", "),
+        });
         window.dispatchEvent(new Event("rd:credits-changed"));
         window.dispatchEvent(new Event("rd:photo"));
+        genPhase(100, "Done");
         finish();
         cRng.value = 100;
         setC(100);
@@ -3576,9 +3639,49 @@ export function initApp(): () => void {
         setCanvasPhase("error");
         if (!creditGate(e))
           showAlert(
-            "Could not render this design. " + ((e && e.message) || "Try again in a moment."),
+            (pendingPersist ? "Your design was generated but could not be saved. Retry is free. " : "Could not render this design. ") +
+              ((e && e.message) || "Try again in a moment."),
           );
       }
+    }
+
+    document.getElementById("genBtn").addEventListener("click", async () => {
+      if (busy || GEN_GUARD.busy) return;
+      const srcImg = document.querySelector("#cBefore img");
+      if (STUDIO_SRC === SRC_EMPTY || !srcImg || !srcImg.src) {
+        needSourceModal();
+        return;
+      } // never spends a credit
+      const gTool = activeToolName();
+      if (styleNeedForTool(gTool) && !canvasStyleSelected()) {
+        promptForStyle(gTool);
+        return;
+      }
+      if (LIVE_TOOLS[gTool]) {
+        LIVE_TOOLS[gTool]();
+        return;
+      }
+      const VAR = window.__rdPendingVariation || null;
+      const brief = currentBrief(VAR);
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" · "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "A Design Render")) return;
+      /* Explicit confirmation of the exact brief and the exact cost. */
+      const answer = await openBriefReview(brief, {
+        costLabel: costLabel(brief.credits),
+        balanceNote:
+          CREDITS && CREDITS.plan !== "free" && typeof CREDITS.balance === "number"
+            ? "Balance after this render: " + Math.max(0, CREDITS.balance - brief.credits) + " credits."
+            : null,
+      });
+      if (answer !== "confirm") return;
+      if (busy || !GEN_GUARD.begin()) return;
+      window.__rdPendingVariation = null;
+      await runGeneration(brief, VAR);
     });
 
     /** Clear now means: start a brand new design, back to the welcome state. */
