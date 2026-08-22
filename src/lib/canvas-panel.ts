@@ -85,8 +85,27 @@ export function canvasState(): CanvasState {
   };
 }
 
+/* A text-generated concept has no photo settings, so the panel must not
+   recite Canvas defaults (room, Reality Lock, grade) that never applied to
+   it. While a concept is on the canvas this summary replaces the recap. */
+let CONCEPT_SUMMARY: string | null = null;
+
+export function setConceptSummary(text: string | null) {
+  CONCEPT_SUMMARY = text && text.trim() ? text.trim() : null;
+  try {
+    refreshCanvasPanel();
+  } catch (_) {
+    /* the panel may not be mounted yet */
+  }
+}
+
+export function conceptSummaryText(): string | null {
+  return CONCEPT_SUMMARY;
+}
+
 /** The compact recap shown directly above the sticky footer. */
 export function generationSummary(): { line1: string; line2: string; missing: string[] } {
+  if (CONCEPT_SUMMARY) return { line1: CONCEPT_SUMMARY, line2: "", missing: [] };
   const st = canvasState();
   const needRoom = !st.selectedRoomType;
   const needStyle = st.needsStyle && !st.selectedStyleId;
@@ -351,7 +370,7 @@ export function refreshCanvasPanel() {
   const custSum = byId("rdwCustSum");
   const b = byId("rdwCustBody");
   if (custSum) {
-    custSum.textContent = customizeSummary();
+    custSum.textContent = CONCEPT_SUMMARY || customizeSummary();
     custSum.hidden = !b?.hidden;
   }
   const host = byId("rdwGenSum");

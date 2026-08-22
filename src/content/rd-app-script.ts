@@ -36,7 +36,19 @@ import {
 } from "@/lib/rooms.functions";
 import { openSaveRoomModal } from "@/lib/save-room";
 import { initCanvasInspector } from "@/lib/canvas-inspector";
-import { initCanvasWorkspace } from "@/lib/canvas-workspace";
+import { initCanvasWorkspace, paintPanelHeader } from "@/lib/canvas-workspace";
+import { setConceptSummary } from "@/lib/canvas-panel";
+import {
+  makeBatch,
+  markGenerating,
+  addResult,
+  failResult,
+  batchStatus,
+  conceptSummary,
+  canvasModeFor,
+  overlayPlan,
+  progressLabel,
+} from "@/lib/concept-batch";
 import { suggestDesignTitle } from "@/lib/property-address";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -2355,6 +2367,42 @@ export function initApp(): () => void {
     }
 
 
+    /**
+     * The Canvas has one result mode at a time, and every overlay follows from
+     * it. A concept has no source layer, so there is nothing to compare, no
+     * Reality Lock to claim and no permanent editing toolbar over the image.
+     */
+    let CANVAS_MODE = "photo-redesign";
+    function applyCanvasMode(mode) {
+      CANVAS_MODE = String(mode || "photo-redesign");
+      const plan = overlayPlan(CANVAS_MODE as any);
+      const cv = document.getElementById("canvas");
+      const stage = document.getElementById("rdwStage");
+      if (cv) cv.dataset.mode = CANVAS_MODE;
+      if (stage) stage.dataset.mode = CANVAS_MODE;
+      const cmp = document.getElementById("rdwCmp");
+      if (cmp && !plan.compare) cmp.hidden = true;
+      if (!plan.compare) {
+        try {
+          cAfter.style.clipPath = "none";
+        } catch (_) {}
+      } else {
+        try {
+          setC((document.getElementById("cRng") || { value: 50 }).value || 50);
+        } catch (_) {}
+      }
+      const tag = document.getElementById("rdwVerTag");
+      if (tag && !plan.compare && STUDIO_RESULT) tag.textContent = plan.resultLabel;
+      try {
+        paintPanelHeader();
+      } catch (_) {}
+      return plan;
+    }
+    try {
+      (window as any).rdCanvasMode = () => CANVAS_MODE;
+      (window as any).rdApplyCanvasMode = (m) => applyCanvasMode(m);
+    } catch (_) {}
+
     function setC(v) {
       cAfter.style.clipPath = `inset(0 0 0 ${v}%)`;
       cHnd.style.left = v + "%";
@@ -2373,6 +2421,123 @@ export function initApp(): () => void {
 
     /* The single Studio start experience: in-canvas empty state plus the compact
    "Start With" panel on the right. Mounted lazily so the Studio markup exists. */
+    /* One described request is ONE batch. The workspace is initialized once,
+       then every option is appended: a later concept can never erase an
+       earlier one, and each keeps its own durable path and version row. */
+    function beginConceptBatch(info) {
+      const i = info || {};
+      STUDIO_SRC = "user_upload";
+      STUDIO_CTX = blankStudioCtx();
+      if (i.room) STUDIO_CTX.room = i.room;
+      STUDIO_RESULT = false;
+      CANVAS_PHASE = "generating";
+      lastRender = null;
+      lastRenderPath = null;
+      dropPendingSave();
+      try {
+        SESSION_VERSIONS.length = 0;
+      } catch (_) {}
+      /* No source photo exists, so nothing is faked into the Before layer and
+         the two layers can never hold the same asset. */
+      if (cBefore) cBefore.innerHTML = "";
+      if (cAfter) cAfter.innerHTML = "";
+      const vars = document.getElementById("vars");
+      if (vars) vars.innerHTML = "";
+      try {
+        Object.keys(locks).forEach((k) => delete locks[k]);
+      } catch (_) {}
+      sourceCaption(false);
+      setCanvasRatio(i.ratio, null);
+      applyCanvasMode(i.mode || "concept-only");
+      try {
+        setConceptSummary(i.summary || null);
+      } catch (_) {}
+      paintStudioState();
+      paintStudioSub();
+      paintVersions();
+    }
+
+    /* A partial batch is never reported as done: the surviving image stays on
+       the canvas and only the missing option can be retried. */
+    function showConceptPartial(message, onRetry) {
+      const existing = document.getElementById("conceptPartial");
+      if (!message) {
+        if (existing) existing.remove();
+        return;
+      }
+      const host = document.querySelector("#canvasCard .card-b");
+      let el = existing;
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "conceptPartial";
+        el.className = "rd-savewarn";
+        if (host) host.insertBefore(el, document.getElementById("rdwVers"));
+      }
+      el.innerHTML = "";
+      const txt = document.createElement("div");
+      const b = document.createElement("b");
+      b.textContent = message;
+      txt.appendChild(b);
+      el.appendChild(txt);
+      if (onRetry) {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-dark btn-xs";
+        btn.textContent = "Retry Missing Image";
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            await onRetry();
+          } finally {
+            btn.disabled = false;
+          }
+        });
+        el.appendChild(btn);
+      }
+    }
+
+    /** Appends one finished option. Never resets the workspace. */
+    async function addConcept(image, label, opts) {
+      const o = opts || {};
+      if (cAfter) cAfter.innerHTML = photo(image, (label || "Concept") + " design");
+      let path = null;
+      try {
+        path = await uploadRenderDataUrl(image);
+      } catch (_) {
+        path = null;
+      }
+      lastRender = image;
+      lastRenderPath = path;
+      addRenderVariant(image, label || "Concept", path);
+      markStudioResult();
+      applyCanvasMode(o.mode || "concept-only");
+      try {
+        setConceptSummary(o.summary || null);
+      } catch (_) {}
+      let version = null;
+      try {
+        version = await finalizeGeneratedDesign(path);
+      } catch (_) {
+        version = null;
+      }
+      if (path && o.saveDraft !== false) {
+        STUDIO_DRAFT_ID = null;
+        STUDIO_DRAFT_PATH = null;
+        try {
+          await saveStudioDraft(path, { prompt: o.prompt || null, concept: true });
+        } catch (_) {}
+      }
+      try {
+        window.dispatchEvent(new Event("rd:photo"));
+      } catch (_) {}
+      try {
+        window.dispatchEvent(new Event("rd:credits-changed"));
+      } catch (_) {}
+      return {
+        path,
+        versionId: version ? String((version as any).id || (version as any).version_id || "") || null : null,
+      };
+    }
+
     let STUDIO_START = null;
     function studioStart() {
       if (STUDIO_START) return STUDIO_START;
@@ -2440,38 +2605,16 @@ export function initApp(): () => void {
               })),
             });
           },
+          beginConceptBatch: (info) => beginConceptBatch(info),
+          addConcept: (image, label, opts) => addConcept(image, label, opts),
+          conceptPartial: (message, onRetry) => showConceptPartial(message, onRetry),
+          setCanvasStatus: (text) => {
+            const st = document.getElementById("rdwVerState");
+            if (st) st.textContent = text || "";
+          },
           showConcept: async (image, label, prompt) => {
-            setStudioSource("user_upload", image, "Design concept", {
-              caption:
-                "Concept design. Attach a real photo, sketch or plan for a true-to-space result.",
-            });
-            cAfter.innerHTML = photo(image, (label || "Concept") + " design");
-            /* A concept is real work: store it privately so it lands in Media. */
-            let path = null;
-            try {
-              path = await uploadRenderDataUrl(image);
-            } catch (_) {
-              path = null;
-            }
-            lastRender = image;
-            lastRenderPath = path;
-            addRenderVariant(image, label || "Concept", path);
-            markStudioResult();
-            finalizeGeneratedDesign(path);
-
-            if (path) {
-              STUDIO_DRAFT_ID = null;
-              STUDIO_DRAFT_PATH = null;
-              try {
-                await saveStudioDraft(path, { prompt: prompt || null, concept: true });
-              } catch (_) {}
-            }
-            try {
-              window.dispatchEvent(new Event("rd:photo"));
-            } catch (_) {}
-            try {
-              window.dispatchEvent(new Event("rd:credits-changed"));
-            } catch (_) {}
+            beginConceptBatch({ prompt, mode: "concept-only" });
+            await addConcept(image, label || "Concept", { prompt });
           },
 
           getProperties: () => {
@@ -2720,6 +2863,7 @@ export function initApp(): () => void {
 
       if (cBefore && src) cBefore.innerHTML = photo(src, alt || "Your source photo");
       setCanvasRatio(o.ratio, src);
+      applyCanvasMode("photo-redesign");
 
       if (cAfter) cAfter.innerHTML = "";
       const vars = document.getElementById("vars");
