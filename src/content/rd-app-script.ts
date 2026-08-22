@@ -53,6 +53,20 @@ import {
   mountItemTextEntry,
   openBriefReview,
 } from "@/lib/redesign-controls";
+import { buildStageBrief, buildRuns, variationCost } from "@/lib/stage-brief";
+import {
+  mountStagePanel,
+  setStagePanelVisible,
+  refreshStageRoom,
+  readStageSettings,
+  setStageAnalysis,
+  setStageAnalyzing,
+  stageAnalysis,
+  resetStageAnalysis,
+  openStageBriefReview,
+  showStageQuality,
+} from "@/lib/stage-controls";
+import { analyzeStageRoom, renderStaging, checkStagedResult } from "@/lib/stage.functions";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
@@ -4250,6 +4264,190 @@ export function initApp(): () => void {
       }
     }
 
+    /* ---------- Virtual Stage: the full staging workflow ---------- */
+
+    /** The Stage panel only exists once the Canvas body exists. */
+    function ensureStagePanel() {
+      try {
+        mountStagePanel({ onChange: () => paintGenGate(), onAnalyze: () => analyzeForStaging(true) });
+      } catch (_) {}
+    }
+
+    /**
+     * Room understanding. Free, and always finished before a brief can be
+     * confirmed, because every placement rule depends on what is really there.
+     */
+    async function analyzeForStaging(force) {
+      const srcImg = document.querySelector("#cBefore img");
+      if (!srcImg || !srcImg.src) return null;
+      if (!force && stageAnalysis()) return stageAnalysis();
+      ensureStagePanel();
+      setStageAnalyzing(true);
+      try {
+        const image = await toDataUrl(srcImg.src, 1100);
+        const r = await analyzeStageRoom({ data: { image } });
+        setStageAnalysis(r.analysis);
+        return r.analysis;
+      } catch (e) {
+        setStageAnalyzing(false, (e && e.message) || "The photo could not be analyzed.");
+        return null;
+      }
+    }
+
+    /** A new source photo invalidates everything the old one was understood as. */
+    window.addEventListener("rd:photo", () => {
+      try {
+        resetStageAnalysis();
+      } catch (_) {}
+    });
+
+    async function runStageFlow() {
+      if (busy || GEN_GUARD.busy) return;
+      const srcImg = document.querySelector("#cBefore img");
+      if (STUDIO_SRC === SRC_EMPTY || !srcImg || !srcImg.src) {
+        needSourceModal();
+        return;
+      }
+      ensureStagePanel();
+      /* Understanding first: staging never runs on an unread photo. */
+      const analysis = await analyzeForStaging(false);
+      if (!analysis) {
+        showAlert(
+          "This photo could not be analyzed, so staging is not available for it yet. Try Analyze Photo again, or use a clearer, better lit shot of the room.",
+        );
+        return;
+      }
+
+      const s = readStageSettings();
+      const gradeEl = document.querySelector("#gradeChips .chip.on");
+      const sel = currentStyleSelection();
+      const pt = currentProjectType();
+      const brief = buildStageBrief({
+        ...s,
+        roomType: currentRoomType() || null,
+        projectType: pt === "exterior" ? "exterior" : pt === "garden" ? "garden" : "interior",
+        styleId: currentStyleId(),
+        styleName: (sel && sel.style && sel.style.displayName) || null,
+        grade: gradeEl ? gradeEl.textContent.trim() : "Retail Grade",
+        notes: ((document.getElementById("agentNote") || {}).value || "").trim() || null,
+        hasSource: true,
+      });
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" \u00b7 "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "Virtual Staging")) return;
+
+      const answer = await openStageBriefReview(brief, {
+        costLabel: costLabel(brief.credits),
+        balanceNote:
+          CREDITS && CREDITS.plan !== "free" && typeof CREDITS.balance === "number"
+            ? "Balance after this run: " +
+              Math.max(0, CREDITS.balance - brief.credits) +
+              " credits."
+            : null,
+      });
+      if (answer !== "confirm") return;
+      if (busy || !GEN_GUARD.begin()) return;
+      await runStaging(brief, srcImg);
+    }
+
+    async function runStaging(brief, srcImg) {
+      busy = true;
+      setCanvasPhase("generating");
+      const btn = document.getElementById("genBtn");
+      if (btn) btn.disabled = true;
+      const ov = document.getElementById("cGen");
+      if (ov) ov.classList.add("on");
+      genPhase(8, "Preparing your photo");
+      const finish = () => {
+        setTimeout(() => {
+          if (ov) ov.classList.remove("on");
+          busy = false;
+          if (btn) btn.disabled = false;
+          GEN_GUARD.end();
+        }, 240);
+      };
+      try {
+        const source = await toDataUrl(srcImg.src, 1600);
+        genPhase(30, brief.runs.length > 1 ? "Staging " + brief.runs.length + " options" : "Staging the room");
+        const r = await renderStaging({
+          data: { image: source, payload: brief.payload, runs: brief.runs },
+        });
+        const made = r.results.filter((x) => x.image);
+        const failed = r.results.filter((x) => !x.image);
+        if (!made.length) throw new Error(failed[0]?.error || "Staging did not produce an image.");
+
+        genPhase(75, "Saving your " + (made.length > 1 ? "results" : "result"));
+        let firstPath = null;
+        for (const res of made) {
+          const label = "Virtually Staged \u00b7 " + res.label;
+          let path = null;
+          try {
+            path = await persistRender(res.image, label);
+          } catch (_) {
+            /* The image is paid for and on screen even if the upload failed. */
+          }
+          if (!firstPath) {
+            firstPath = path;
+            lastRender = res.image;
+            lastRenderPath = path;
+            cAfter.innerHTML = photo(res.image, "Virtually staged room, AI render");
+          }
+          addRenderVariant(res.image, label, path);
+        }
+        window.__rdStageMeta = { classification: r.classification, mode: r.mode };
+
+        setCanvasPhase("");
+        markStudioResult();
+        finalizeGeneratedDesign(lastRenderPath);
+        paintStudioSummary({
+          name: "Virtually Staged",
+          scope: brief.runs.map((x) => x.label).join(", "),
+        });
+        window.dispatchEvent(new Event("rd:credits-changed"));
+        window.dispatchEvent(new Event("rd:photo"));
+        genPhase(100, "Done");
+        finish();
+        cRng.value = 100;
+        setC(100);
+        setTimeout(() => {
+          let v = 100;
+          const b2 = setInterval(() => {
+            v -= 2.6;
+            cRng.value = v;
+            setC(v);
+            if (v <= 44) clearInterval(b2);
+          }, 20);
+        }, 600);
+
+        if (failed.length)
+          showAlert(
+            failed.length +
+              " of " +
+              brief.runs.length +
+              " staging options did not finish. You were only charged for the images you received.",
+          );
+
+        /* Free quality pass: reported honestly, never hidden, never blocking. */
+        try {
+          const q = await checkStagedResult({
+            data: { before: await toDataUrl(srcImg.src, 900), after: await toDataUrl(lastRender, 900) },
+          });
+          showStageQuality(q.report, { onRegenerate: () => runStageFlow() });
+        } catch (_) {}
+      } catch (e) {
+        finish();
+        setCanvasPhase("error");
+        if (!creditGate(e))
+          showAlert("Could not stage this room. " + ((e && e.message) || "Try again in a moment."));
+      }
+    }
+
+
+
     function showToolError(msg) {
       const i = document.getElementById("toolInfo");
       if (!i) {
@@ -4797,6 +4995,10 @@ export function initApp(): () => void {
     window.addEventListener("rd:saved", paintVersions);
     document.getElementById("fRoom")?.addEventListener("change", () => {
       paintVersions();
+      /* Bed sizes, seat counts and category lists all follow the room type. */
+      try {
+        refreshStageRoom();
+      } catch (_) {}
     });
 
     /* ---------- designs: real saved versions plus sample gallery ---------- */
@@ -9255,7 +9457,7 @@ ${picks
     const LIVE_TOOLS = {
       "2D To 3D Plan": run3dPlan,
       "Walkthrough Video": runWalkthrough,
-      "Virtual Stage": () => runRoomToolFlow("stage", "Virtual Stage", false),
+      "Virtual Stage": () => runStageFlow(),
       Declutter: () => runRoomToolFlow("declutter", "Declutter", false),
       "Material Swap": () => runRoomToolFlow("materials", "Material Swap", true),
       "Sketch To Render": () => runRoomToolFlow("sketch", "Sketch To Render", false),
@@ -9364,7 +9566,22 @@ ${picks
       const missing = (!!need && !canvasStyleSelected()) || !support.ok;
       /* The cost chip always states the real price of this run. */
       const cost = document.getElementById("genCost");
-      if (cost) cost.textContent = costLabel(toolCost(tool));
+      /* Staging prices every requested result, so its chip is not the flat
+         one credit tool price. */
+      if (cost) {
+        let price = toolCost(tool);
+        if (tool === "Virtual Stage") {
+          try {
+            price = variationCost(buildRuns(readStageSettings().extras));
+          } catch (_) {}
+        }
+        cost.textContent = costLabel(price);
+      }
+      /* The staging controls belong to the Stage tool alone. */
+      try {
+        ensureStagePanel();
+        setStagePanelVisible(tool === "Virtual Stage");
+      } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
         Redesign: "Generate Design",
