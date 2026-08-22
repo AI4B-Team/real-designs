@@ -1900,6 +1900,19 @@ export async function openPhotoEditor(opts: {
   });
   $("#rdpeCropBox").addEventListener("pointerdown", (e) => dragCrop(e as PointerEvent));
 
+  /* Wheel and trackpad pinch zoom the crop, but only while cropping — the
+     inspector keeps its own scrolling. React's passive onWheel cannot
+     preventDefault, so this is a native non-passive listener. */
+  const stageEl = $("#rdpeStage");
+  const onWheel = (ev: WheelEvent) => {
+    if (!cropMode || !cropView) return;
+    ev.preventDefault();
+    setCropZoom(wheelScale(cropView, ev.deltaY, ev.deltaMode));
+    paintPanel();
+  };
+  stageEl?.addEventListener("wheel", onWheel, { passive: false });
+
+
   const onKey = (e: KeyboardEvent) => {
     if ((e.target as HTMLElement)?.tagName === "INPUT" && e.key !== "Escape") return;
     if (e.key === "Escape") return void close();
