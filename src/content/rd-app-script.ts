@@ -10841,6 +10841,11 @@ ${picks
         ensureSketchPanel();
         setSketchPanelVisible(tool === "Sketch To Render");
       } catch (_) {}
+      /* The camera and continuity controls belong to Angles alone. */
+      try {
+        ensureAnglesPanel();
+        setAnglesPanelVisible(tool === "Multi Angle");
+      } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
         Redesign: "Generate Design",
