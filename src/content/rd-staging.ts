@@ -795,20 +795,19 @@ function pickerCommon() {
  * the one existing import pipeline, which downloads each photo into REAL
  * DESIGNS storage — a share URL is never kept as the canonical image path.
  */
-function openCloudImport(provider) {
-  openSourceModal({
-    title: provider === "dropbox" ? "Import From Dropbox" : "Import From Google Drive",
+async function openCloudImport(provider) {
+  const { importFromProvider } = await import("@/lib/provider-import");
+  await importFromProvider(provider, {
+    destination: "studio-project",
     paint,
-    picker: {
-      ...pickerCommon(),
-      initialTab: "cloud",
-      onPick: async (picked) => {
-        const files = (picked || []).map((x) => x.file).filter(Boolean);
-        if (files.length) addFiles(files);
-      },
+    onComputer: () => pickFiles(),
+    onFiles: async (files) => {
+      const ok = await validateFiles(files);
+      if (ok.length) addFiles(ok);
     },
   });
 }
+
 
 /** Shared validation, so drops and dialogs reject the same files. */
 async function validateFiles(raw) {
