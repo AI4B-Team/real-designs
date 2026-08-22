@@ -138,7 +138,7 @@ import {
   declutterDetections,
   hasDeclutterDetections,
   loadDeclutterState,
-  buildMaskOverlay,
+  buildDeclutterMaskAssets,
   openDeclutterReview,
   showDeclutterQuality,
   openRestorePicker,
@@ -166,7 +166,7 @@ import {
   hasObjectDetections,
   presetObjectEdit,
   rememberObjectEdit,
-  buildObjectOverlay,
+  buildObjectMaskAssets,
   openObjectReview,
   showObjectPreservation,
 } from "@/lib/object-edit-controls";
@@ -189,7 +189,7 @@ import {
   materialsDetections,
   hasMaterialsDetections,
   loadMaterialsState,
-  buildMaterialsOverlay,
+  buildMaterialsMaskAssets,
   openMaterialsReview,
   showMaterialsQuality,
 } from "@/lib/materials-controls";
@@ -5146,7 +5146,9 @@ export function initApp(): () => void {
       if (!ensureCredits(brief.credits, "Declutter")) return;
 
       const source = await toDataUrl(srcImg.src, 1600);
-      const overlay = await buildMaskOverlay(source, s.detections, s.mask);
+      const assets = await buildDeclutterMaskAssets(source, s.detections, s.mask);
+      const overlay = assets.overlay;
+      const mask = assets.mask;
       const answer = await openDeclutterReview(brief, {
         costLabel: costLabel(brief.credits),
         sourceLabel: studioSourceLabel(),
@@ -5158,7 +5160,7 @@ export function initApp(): () => void {
       });
       if (answer !== "confirm") return;
       if (busy || !GEN_GUARD.begin()) return;
-      await runDecluttering(brief, source, overlay, s);
+      await runDecluttering(brief, source, overlay, mask, s);
     }
 
     /** The exact source version this cleanup was generated from. */
@@ -5170,7 +5172,7 @@ export function initApp(): () => void {
       return "The photo currently on the canvas";
     }
 
-    async function runDecluttering(brief, source, overlay, settings) {
+    async function runDecluttering(brief, source, overlay, mask, settings) {
       busy = true;
       setCanvasPhase("generating");
       const btn = document.getElementById("genBtn");
@@ -5195,6 +5197,7 @@ export function initApp(): () => void {
           data: {
             image: source,
             overlay,
+            mask,
             confirm: settings.emptyConfirm || null,
             payload: brief.payload,
             runs: brief.runs,
@@ -5384,7 +5387,9 @@ export function initApp(): () => void {
       if (!ensureCredits(brief.credits, "Object Edit")) return;
 
       const source = await toDataUrl(srcImg.src, 1600);
-      const overlay = await buildObjectOverlay(source, objectDetections(), objectMask());
+      const assets = await buildObjectMaskAssets(source, objectDetections(), objectMask());
+      const overlay = assets.overlay;
+      const mask = assets.mask;
       const answer = await openObjectReview(brief, {
         costLabel: costLabel(brief.credits),
         sourceLabel: studioSourceLabel(),
@@ -5396,10 +5401,10 @@ export function initApp(): () => void {
       });
       if (answer !== "confirm") return;
       if (busy || !GEN_GUARD.begin()) return;
-      await runObjectEdit(brief, source, overlay);
+      await runObjectEdit(brief, source, overlay, mask);
     }
 
-    async function runObjectEdit(brief, source, overlay) {
+    async function runObjectEdit(brief, source, overlay, mask) {
       busy = true;
       setCanvasPhase("generating");
       const btn = document.getElementById("genBtn");
@@ -5418,7 +5423,7 @@ export function initApp(): () => void {
       try {
         genPhase(34, brief.actionLabel + " on " + brief.targetLabel);
         const r = await renderObjectEditResult({
-          data: { image: source, overlay, payload: brief.payload },
+          data: { image: source, overlay, mask, payload: brief.payload },
         });
 
         genPhase(74, "Saving your result");
@@ -5531,9 +5536,16 @@ export function initApp(): () => void {
             roomRead: null,
           });
           if (!brief.valid) throw new Error(brief.missing.join(" \u00b7 "));
-          const overlay = await buildMaskOverlay(image, detections, { strokes: [], redo: [] });
+          const batchAssets = await buildDeclutterMaskAssets(image, detections, { strokes: [], redo: [] });
           const r = await renderDeclutter({
-            data: { image, overlay, confirm: null, payload: brief.payload, runs: brief.runs },
+            data: {
+              image,
+              overlay: batchAssets.overlay,
+              mask: batchAssets.mask,
+              confirm: null,
+              payload: brief.payload,
+              runs: brief.runs,
+            },
           });
           const made = r.results.find((x) => x.image);
           if (!made) throw new Error(r.results[0]?.error || "That photo did not finish.");
@@ -5627,7 +5639,9 @@ export function initApp(): () => void {
       if (!ensureCredits(brief.credits, "Material Swap")) return;
 
       const source = await toDataUrl(srcImg.src, 1600);
-      const overlay = await buildMaterialsOverlay(source, s.detections, s.surfaceId, s.mask);
+      const assets = await buildMaterialsMaskAssets(source, s.detections, s.surfaceId, s.mask);
+      const overlay = assets.overlay;
+      const mask = assets.mask;
       const answer = await openMaterialsReview(brief, {
         costLabel: costLabel(brief.credits),
         sourceLabel: studioSourceLabel(),
@@ -5639,10 +5653,10 @@ export function initApp(): () => void {
       });
       if (answer !== "confirm") return;
       if (busy || !GEN_GUARD.begin()) return;
-      await runMaterialSwapping(brief, source, overlay, s);
+      await runMaterialSwapping(brief, source, overlay, mask, s);
     }
 
-    async function runMaterialSwapping(brief, source, overlay, settings) {
+    async function runMaterialSwapping(brief, source, overlay, mask, settings) {
       busy = true;
       setCanvasPhase("generating");
       const btn = document.getElementById("genBtn");
@@ -5666,7 +5680,7 @@ export function initApp(): () => void {
             : "Applying " + brief.payload.material_name,
         );
         const r = await renderMaterials({
-          data: { image: source, overlay, payload: brief.payload, runs: brief.runs },
+          data: { image: source, overlay, mask, payload: brief.payload, runs: brief.runs },
         });
         const made = r.results.filter((x) => x.image);
         const failed = r.results.filter((x) => !x.image);

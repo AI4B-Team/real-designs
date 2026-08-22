@@ -13,6 +13,13 @@
 
 import { createIcons, icons as lucideIcons } from "lucide";
 import {
+  bindMaskPainting,
+  paintFromLegacy,
+  paintMaskLayer,
+  renderMaskAssets,
+  type MaskAssets,
+} from "@/lib/mask-engine";
+import {
   CLUTTER_CATEGORIES,
   DECLUTTER_MODES,
   EMPTY_ROOM_CONFIRM,
@@ -27,6 +34,7 @@ import {
   pushStroke,
   redoStroke,
   restoreItem,
+  strokeIntent,
   undoStroke,
   type DeclutterBrief,
   type DeclutterModeId,
@@ -365,36 +373,18 @@ function wire(sec: HTMLElement) {
     if (t.id === "rdDeclConfirm") change();
   });
 
-  /* brush painting on the mask canvas */
+  /* brush painting on the mask canvas — the shared engine owns the behaviour */
   const wrap = byId("rdDeclCanvasWrap");
   if (wrap) {
-    const paintAt = (ev: PointerEvent) => {
-      const rect = wrap.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      state.mask = pushStroke(state.mask, {
-        x: (ev.clientX - rect.left) / rect.width,
-        y: (ev.clientY - rect.top) / rect.height,
-        r: state.brushSize,
-        kind: state.brush,
-      });
-      paintMask();
-    };
-    wrap.addEventListener("pointerdown", (ev) => {
-      state.painting = true;
-      (ev.target as HTMLElement).setPointerCapture?.((ev as PointerEvent).pointerId);
-      paintAt(ev as PointerEvent);
-      ev.preventDefault();
+    bindMaskPainting<StrokeKind>(wrap, {
+      brush: () => state.brush,
+      size: () => state.brushSize,
+      onDab: (dab) => {
+        state.mask = pushStroke(state.mask, dab);
+      },
+      onPaint: paintMask,
+      onDone: change,
     });
-    wrap.addEventListener("pointermove", (ev) => {
-      if (state.painting) paintAt(ev as PointerEvent);
-    });
-    const stop = () => {
-      if (!state.painting) return;
-      state.painting = false;
-      change();
-    };
-    wrap.addEventListener("pointerup", stop);
-    wrap.addEventListener("pointerleave", stop);
   }
 }
 
@@ -488,28 +478,20 @@ function paintMask() {
   const H = canvas.height;
   ctx.clearRect(0, 0, W, H);
 
-  state.detections
-    .filter((d) => d.decision === "remove")
-    .forEach((d) => {
-      ctx.fillStyle = "rgba(255,0,170,0.34)";
-      ctx.strokeStyle = "rgba(255,0,170,0.95)";
-      ctx.lineWidth = 2;
-      ctx.fillRect(d.box.x * W, d.box.y * H, d.box.w * W, d.box.h * H);
-      ctx.strokeRect(d.box.x * W, d.box.y * H, d.box.w * W, d.box.h * H);
-    });
-  state.detections
-    .filter((d) => d.decision === "keep" && d.protectedItem)
-    .forEach((d) => {
-      ctx.strokeStyle = "rgba(0,200,120,0.9)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(d.box.x * W, d.box.y * H, d.box.w * W, d.box.h * H);
-    });
-  state.mask.strokes.forEach((s) => {
-    ctx.beginPath();
-    ctx.arc(s.x * W, s.y * H, s.r * Math.min(W, H), 0, Math.PI * 2);
-    ctx.fillStyle = s.kind === "remove" ? "rgba(255,0,170,0.38)" : "rgba(0,200,120,0.32)";
-    ctx.fill();
-  });
+  const regions = maskRegions(state.detections, state.mask);
+  paintMaskLayer(
+    ctx,
+    W,
+    H,
+    paintFromLegacy<StrokeKind>({
+      edit: regions.remove,
+      protect: regions.keep,
+      strokes: state.mask.strokes,
+      intent: strokeIntent,
+      feather: state.mask.feather,
+    }),
+    "overlay",
+  );
 
   const undo = byId("rdDeclUndo") as HTMLButtonElement | null;
   const redo = byId("rdDeclRedo") as HTMLButtonElement | null;
@@ -580,65 +562,21 @@ export function loadDeclutterState(input: {
  * regions filled magenta and protected regions outlined green. The mask the
  * user painted is the mask that is sent — nothing is discarded here.
  */
-export function buildMaskOverlay(
+export function buildDeclutterMaskAssets(
   src: string,
   detections: Detection[],
   mask: MaskState,
   maxW = 1600,
-): Promise<string | null> {
-  return new Promise((resolve) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        try {
-          const scale = Math.min(1, maxW / (img.naturalWidth || maxW));
-          const W = Math.max(16, Math.round((img.naturalWidth || maxW) * scale));
-          const H = Math.max(16, Math.round((img.naturalHeight || maxW) * scale));
-          const c = document.createElement("canvas");
-          c.width = W;
-          c.height = H;
-          const ctx = c.getContext("2d");
-          if (!ctx) return resolve(null);
-          ctx.drawImage(img, 0, 0, W, H);
-          const regions = maskRegions(detections, mask);
-          regions.remove.forEach((r) => {
-            ctx.fillStyle = "rgba(255,0,170,0.72)";
-            ctx.fillRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
-          });
-          mask.strokes
-            .filter((s) => s.kind === "remove")
-            .forEach((s) => {
-              ctx.beginPath();
-              ctx.arc(s.x * W, s.y * H, s.r * Math.min(W, H), 0, Math.PI * 2);
-              ctx.fillStyle = "rgba(255,0,170,0.72)";
-              ctx.fill();
-            });
-          regions.keep.forEach((r) => {
-            ctx.strokeStyle = "rgba(0,220,130,0.95)";
-            ctx.lineWidth = Math.max(2, Math.round(W / 320));
-            ctx.strokeRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
-          });
-          mask.strokes
-            .filter((s) => s.kind === "keep")
-            .forEach((s) => {
-              ctx.beginPath();
-              ctx.arc(s.x * W, s.y * H, s.r * Math.min(W, H), 0, Math.PI * 2);
-              ctx.strokeStyle = "rgba(0,220,130,0.95)";
-              ctx.lineWidth = Math.max(2, Math.round(W / 320));
-              ctx.stroke();
-            });
-          resolve(c.toDataURL("image/jpeg", 0.9));
-        } catch (_) {
-          resolve(null);
-        }
-      };
-      img.onerror = () => resolve(null);
-      img.src = src;
-    } catch (_) {
-      resolve(null);
-    }
+): Promise<MaskAssets> {
+  const regions = maskRegions(detections, mask);
+  const paint = paintFromLegacy<StrokeKind>({
+    edit: regions.remove,
+    protect: regions.keep,
+    strokes: mask.strokes,
+    intent: strokeIntent,
+    feather: mask.feather,
   });
+  return renderMaskAssets(src, paint, { overlayMaxW: maxW });
 }
 
 /* --------------------------------------------------------- brief review */

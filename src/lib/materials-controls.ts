@@ -26,12 +26,20 @@ import {
   type SurfaceKindId,
 } from "@/lib/materials-catalog";
 import {
+  bindMaskPainting,
+  paintFromLegacy,
+  paintMaskLayer,
+  renderMaskAssets,
+  type MaskAssets,
+} from "@/lib/mask-engine";
+import {
   GROUT_OPTIONS,
   MASK_SUPPORT,
   emptyMask,
   maskRegions,
   materialsCostSentence,
   pushStroke,
+  strokeIntent,
   redoStroke,
   undoStroke,
   type MaskState,
@@ -370,35 +378,18 @@ function wire(sec: HTMLElement) {
     if (t.id === "rdMatBrushSize") state.brushSize = Number((t as HTMLInputElement).value) / 100;
   });
 
+  /* brush painting on the mask canvas — the shared engine owns the behaviour */
   const wrap = byId("rdMatCanvasWrap");
   if (wrap) {
-    const paintAt = (ev: PointerEvent) => {
-      const rect = wrap.getBoundingClientRect();
-      if (!rect.width || !rect.height) return;
-      state.mask = pushStroke(state.mask, {
-        x: (ev.clientX - rect.left) / rect.width,
-        y: (ev.clientY - rect.top) / rect.height,
-        r: state.brushSize,
-        kind: state.brush,
-      });
-      paintMask();
-    };
-    wrap.addEventListener("pointerdown", (ev) => {
-      state.painting = true;
-      (ev.target as HTMLElement).setPointerCapture?.((ev as PointerEvent).pointerId);
-      paintAt(ev as PointerEvent);
-      ev.preventDefault();
+    bindMaskPainting<StrokeKind>(wrap, {
+      brush: () => state.brush,
+      size: () => state.brushSize,
+      onDab: (dab) => {
+        state.mask = pushStroke(state.mask, dab);
+      },
+      onPaint: paintMask,
+      onDone: change,
     });
-    wrap.addEventListener("pointermove", (ev) => {
-      if (state.painting) paintAt(ev as PointerEvent);
-    });
-    const stop = () => {
-      if (!state.painting) return;
-      state.painting = false;
-      change();
-    };
-    wrap.addEventListener("pointerup", stop);
-    wrap.addEventListener("pointerleave", stop);
   }
 }
 
@@ -578,26 +569,20 @@ function paintMask() {
   ctx.clearRect(0, 0, W, H);
 
   const sel = state.detections.find((d) => d.id === state.surfaceId) || null;
-  if (sel) {
-    ctx.fillStyle = "rgba(255,0,170,0.30)";
-    ctx.strokeStyle = "rgba(255,0,170,0.95)";
-    ctx.lineWidth = 2;
-    ctx.fillRect(sel.box.x * W, sel.box.y * H, sel.box.w * W, sel.box.h * H);
-    ctx.strokeRect(sel.box.x * W, sel.box.y * H, sel.box.w * W, sel.box.h * H);
-  }
-  state.detections
-    .filter((d) => !sel || d.id !== sel.id)
-    .forEach((d) => {
-      ctx.strokeStyle = "rgba(0,200,120,0.85)";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(d.box.x * W, d.box.y * H, d.box.w * W, d.box.h * H);
-    });
-  state.mask.strokes.forEach((s) => {
-    ctx.beginPath();
-    ctx.arc(s.x * W, s.y * H, s.r * Math.min(W, H), 0, Math.PI * 2);
-    ctx.fillStyle = s.kind === "include" ? "rgba(255,0,170,0.34)" : "rgba(0,200,120,0.30)";
-    ctx.fill();
-  });
+  const regions = maskRegions(sel, state.detections, state.mask);
+  paintMaskLayer(
+    ctx,
+    W,
+    H,
+    paintFromLegacy<StrokeKind>({
+      edit: regions.target,
+      protect: regions.keep,
+      strokes: state.mask.strokes,
+      intent: strokeIntent,
+      feather: state.mask.feather,
+    }),
+    "overlay",
+  );
 
   const undo = byId("rdMatUndo") as HTMLButtonElement | null;
   const redo = byId("rdMatRedo") as HTMLButtonElement | null;
@@ -670,67 +655,23 @@ export function loadMaterialsState(input: {
  * Renders the mask the backend receives: the source photograph with the target
  * surface filled magenta and every protected surface outlined green.
  */
-export function buildMaterialsOverlay(
+export function buildMaterialsMaskAssets(
   src: string,
   detections: SurfaceDetection[],
   selectedId: string | null,
   mask: MaskState,
   maxW = 1600,
-): Promise<string | null> {
-  return new Promise((resolve) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = "anonymous";
-      img.onload = () => {
-        try {
-          const scale = Math.min(1, maxW / (img.naturalWidth || maxW));
-          const W = Math.max(16, Math.round((img.naturalWidth || maxW) * scale));
-          const H = Math.max(16, Math.round((img.naturalHeight || maxW) * scale));
-          const c = document.createElement("canvas");
-          c.width = W;
-          c.height = H;
-          const ctx = c.getContext("2d");
-          if (!ctx) return resolve(null);
-          ctx.drawImage(img, 0, 0, W, H);
-          const sel = detections.find((d) => d.id === selectedId) || null;
-          const regions = maskRegions(sel, detections, mask);
-          regions.target.forEach((r) => {
-            ctx.fillStyle = "rgba(255,0,170,0.66)";
-            ctx.fillRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
-          });
-          mask.strokes
-            .filter((s) => s.kind === "include")
-            .forEach((s) => {
-              ctx.beginPath();
-              ctx.arc(s.x * W, s.y * H, s.r * Math.min(W, H), 0, Math.PI * 2);
-              ctx.fillStyle = "rgba(255,0,170,0.66)";
-              ctx.fill();
-            });
-          regions.keep.forEach((r) => {
-            ctx.strokeStyle = "rgba(0,220,130,0.95)";
-            ctx.lineWidth = Math.max(2, Math.round(W / 320));
-            ctx.strokeRect(r.box.x * W, r.box.y * H, r.box.w * W, r.box.h * H);
-          });
-          mask.strokes
-            .filter((s) => s.kind === "exclude")
-            .forEach((s) => {
-              ctx.beginPath();
-              ctx.arc(s.x * W, s.y * H, s.r * Math.min(W, H), 0, Math.PI * 2);
-              ctx.strokeStyle = "rgba(0,220,130,0.95)";
-              ctx.lineWidth = Math.max(2, Math.round(W / 320));
-              ctx.stroke();
-            });
-          resolve(c.toDataURL("image/jpeg", 0.9));
-        } catch (_) {
-          resolve(null);
-        }
-      };
-      img.onerror = () => resolve(null);
-      img.src = src;
-    } catch (_) {
-      resolve(null);
-    }
+): Promise<MaskAssets> {
+  const sel = detections.find((d) => d.id === selectedId) || null;
+  const regions = maskRegions(sel, detections, mask);
+  const paint = paintFromLegacy<StrokeKind>({
+    edit: regions.target,
+    protect: regions.keep,
+    strokes: mask.strokes,
+    intent: strokeIntent,
+    feather: mask.feather,
   });
+  return renderMaskAssets(src, paint, { overlayMaxW: maxW });
 }
 
 /* --------------------------------------------------------- brief review */

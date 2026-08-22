@@ -14,6 +14,7 @@ import {
   type DeclutterPayload,
   type DeclutterRun,
 } from "@/lib/declutter-brief";
+import { maskContent } from "@/lib/mask-content.server";
 
 const GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const VISION_MODEL = "google/gemini-3.7-flash";
@@ -108,13 +109,10 @@ export async function renderDecluttered(
   prompt: string,
   image: string,
   overlay: string | null,
+  mask: string | null,
   apiKey: string,
 ): Promise<string> {
-  const content: unknown[] = [
-    { type: "text", text: prompt },
-    { type: "image_url", image_url: { url: image } },
-  ];
-  if (overlay) content.push({ type: "image_url", image_url: { url: overlay } });
+  const content = maskContent(prompt, image, overlay, mask);
   const res = await fetch(GATEWAY, {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },

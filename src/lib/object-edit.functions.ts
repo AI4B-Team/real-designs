@@ -65,6 +65,8 @@ const RenderInput = z.object({
   image: z.string().min(16),
   /** The rendered mask overlay: magenta is editable, green is protected. */
   overlay: z.string().min(16).nullable().default(null),
+  /** The full-resolution binary mask: white is editable, black is protected. */
+  mask: z.string().min(16).nullable().default(null),
   payload: PayloadShape,
 });
 
@@ -113,6 +115,7 @@ export const renderObjectEditResult = createServerFn({ method: "POST" })
         buildObjectEditPrompt(data.payload as any),
         data.image,
         data.overlay,
+        data.mask,
         apiKey,
       );
       return {
