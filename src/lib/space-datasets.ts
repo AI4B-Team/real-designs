@@ -38,6 +38,18 @@ export const interiorRoomTypes: AreaOption[] = roomsForSpace("interior").map(toA
 export const exteriorAreaTypes: AreaOption[] = roomsForSpace("exterior").map(toArea);
 export const gardenAreaTypes: AreaOption[] = roomsForSpace("garden").map(toArea);
 
+/** The room pre-selected when a space has no hand-picked or detected room yet. */
+export const DEFAULT_ROOM: Record<RoomSpace, string> = {
+  interior: "Living Room",
+  exterior: "Front Exterior",
+  garden: "Front Garden",
+};
+
+/** The default room label for a space, or "" when none is defined. */
+export function defaultRoomForSpace(space: RoomSpace): string {
+  return DEFAULT_ROOM[space] || "";
+}
+
 /** The complete, authoritative list of choices for one space. */
 export function areasForSpace(space: CanvasSpace): AreaOption[] {
   return roomsForSpace(space).map(toArea);
