@@ -27,7 +27,7 @@ function mount(context: "design" | "video", opts: Record<string, unknown> = {}) 
 
 describe("studio start source picker", () => {
   it("shows only the sources each creation mode supports", () => {
-    const sources = ["upload", "cloud", "property", "media", "describe"];
+    const sources = ["upload", "drive", "dropbox", "property", "media", "describe"];
     expect(CONTEXT_CONFIG.design.sources).toEqual(sources);
     expect(CONTEXT_CONFIG.video.sources).toEqual(sources);
   });
@@ -38,6 +38,7 @@ describe("studio start source picker", () => {
     expect(labels).toEqual([
       "Upload",
       "Google Drive",
+      "Dropbox",
       "Property",
       "Media",
       "Describe",
@@ -193,8 +194,8 @@ describe("studio start source picker", () => {
   it("marks the active tab with an accessible pressed state", () => {
     const { host } = mount("design");
     expect(host.querySelector('[data-sp-tab="upload"]')!.getAttribute("aria-pressed")).toBe("true");
-    (host.querySelector('[data-sp-tab="cloud"]') as HTMLElement).click();
-    expect(host.querySelector('[data-sp-tab="cloud"]')!.getAttribute("aria-pressed")).toBe("true");
+    (host.querySelector('[data-sp-tab="media"]') as HTMLElement).click();
+    expect(host.querySelector('[data-sp-tab="media"]')!.getAttribute("aria-pressed")).toBe("true");
     expect(host.querySelector('[data-sp-tab="upload"]')!.getAttribute("aria-pressed")).toBe(
       "false",
     );
