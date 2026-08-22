@@ -1652,3 +1652,13 @@
 .rdvar-more[open] > summary::after {
   transform: rotate(-135deg);
 }
+
+/* A concept has no source photo: nothing on the stage may promise a comparison. */
+#canvas[data-mode="concept-only"] .ctag,
+#canvas[data-mode="concept-only"] .hnd,
+#canvas[data-mode="concept-only"] .rng-abs,
+#canvas[data-mode="reference-guided"] .ctag,
+#canvas[data-mode="reference-guided"] .hnd,
+#canvas[data-mode="reference-guided"] .rng-abs {
+  display: none !important;
+}
