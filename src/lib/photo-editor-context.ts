@@ -83,18 +83,17 @@ export type EnhancementDef = {
   requiresTarget?: boolean;
 };
 
+/**
+ * AI Enhancements. Real-estate specific, credit-bearing, never automatic.
+ * Auto Enhance is NOT here: it is an ordinary, free, local photo adjustment.
+ * Object removal is NOT here either — Object Edit owns the one implementation.
+ */
 const PHOTO_ENHANCEMENTS: EnhancementDef[] = [
-  { op: "auto_enhance", label: "Auto Enhance", icon: "wand-sparkles", credits: 1 },
   { op: "window_balance", label: "Window Balance", icon: "panel-top", credits: 1 },
   { op: "sky", label: "Sky Replacement", icon: "cloud-sun", credits: 1 },
   { op: "lawn", label: "Lawn Enhancement", icon: "trees", credits: 1 },
   { op: "dusk", label: "Day To Dusk", icon: "moon", credits: 1 },
   { op: "privacy_blur", label: "Privacy Blur", icon: "shield", credits: 1, requiresTarget: true },
-];
-
-const GENERATIVE_EDITS: EnhancementDef[] = [
-  { op: "object_removal", label: "Object Removal", icon: "eraser", credits: 1, requiresTarget: true },
-  { op: "declutter", label: "Declutter", icon: "sparkles", credits: 1, requiresTarget: true },
 ];
 
 /** Photo Enhancements available for this photograph. Context aware. */
@@ -107,10 +106,30 @@ export function photoEnhancements(traits: PhotoTraits): EnhancementDef[] {
   });
 }
 
-/** Generative Edits — scene-altering, always confirmed, always a new version. */
-export function generativeEdits(): EnhancementDef[] {
-  return GENERATIVE_EDITS;
+/* ------------------------------------------------------------- handoffs */
+
+export type ContinueTool = {
+  /** Rail tool name, or "object" for the Object Edit rail button. */
+  tool: string;
+  label: string;
+  icon: string;
+  blurb: string;
+};
+
+/**
+ * Edit Photo never re-implements a rail tool. It hands the active asset over
+ * to the canonical one, with nothing generated and no credit spent.
+ */
+export function continueWithTools(): ContinueTool[] {
+  return [
+    { tool: "Redesign", label: "Redesign", icon: "wand-sparkles", blurb: "Create a new design while preserving the room's structure." },
+    { tool: "Virtual Stage", label: "Stage", icon: "sofa", blurb: "Add furniture and décor to an empty or furnished room." },
+    { tool: "Declutter", label: "Declutter", icon: "eraser", blurb: "Remove unwanted furniture and visual clutter." },
+    { tool: "Material Swap", label: "Materials", icon: "paintbrush", blurb: "Change floors, walls, counters, cabinets, and finishes." },
+    { tool: "object", label: "Object Edit", icon: "mouse-pointer-square-dashed", blurb: "Select, remove, replace, or modify a specific object." },
+  ];
 }
+
 
 export function enhancementByOp(op: string): EnhancementDef | undefined {
   return [...PHOTO_ENHANCEMENTS, ...GENERATIVE_EDITS].find((e) => e.op === op);
