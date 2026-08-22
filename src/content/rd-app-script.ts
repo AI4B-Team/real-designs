@@ -94,6 +94,7 @@ import {
 import { detectClutter, renderDeclutter, checkDeclutteredResult } from "@/lib/declutter.functions";
 import {
   buildMaterialsBrief,
+  materialsCredits,
   materialsMeta,
   restoreFromMeta as restoreFromMaterialsMeta,
 } from "@/lib/materials-brief";
@@ -114,7 +115,6 @@ import {
   showMaterialsQuality,
 } from "@/lib/materials-controls";
 import { detectSurfaces, renderMaterials, checkMaterialResult } from "@/lib/materials.functions";
-import { materialsCredits } from "@/lib/materials-brief";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
