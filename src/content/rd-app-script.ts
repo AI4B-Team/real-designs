@@ -2421,6 +2421,85 @@ export function initApp(): () => void {
 
     /* The single Studio start experience: in-canvas empty state plus the compact
    "Start With" panel on the right. Mounted lazily so the Studio markup exists. */
+    /* One described request is ONE batch. The workspace is initialized once,
+       then every option is appended: a later concept can never erase an
+       earlier one, and each keeps its own durable path and version row. */
+    function beginConceptBatch(info) {
+      const i = info || {};
+      STUDIO_SRC = "user_upload";
+      STUDIO_CTX = blankStudioCtx();
+      if (i.room) STUDIO_CTX.room = i.room;
+      STUDIO_RESULT = false;
+      CANVAS_PHASE = "generating";
+      lastRender = null;
+      lastRenderPath = null;
+      dropPendingSave();
+      try {
+        SESSION_VERSIONS.length = 0;
+      } catch (_) {}
+      /* No source photo exists, so nothing is faked into the Before layer and
+         the two layers can never hold the same asset. */
+      if (cBefore) cBefore.innerHTML = "";
+      if (cAfter) cAfter.innerHTML = "";
+      const vars = document.getElementById("vars");
+      if (vars) vars.innerHTML = "";
+      try {
+        Object.keys(locks).forEach((k) => delete locks[k]);
+      } catch (_) {}
+      sourceCaption(false);
+      setCanvasRatio(i.ratio, null);
+      applyCanvasMode(i.mode || "concept-only");
+      try {
+        setConceptSummary(i.summary || null);
+      } catch (_) {}
+      paintStudioState();
+      paintStudioSub();
+      paintVersions();
+    }
+
+    /** Appends one finished option. Never resets the workspace. */
+    async function addConcept(image, label, opts) {
+      const o = opts || {};
+      if (cAfter) cAfter.innerHTML = photo(image, (label || "Concept") + " design");
+      let path = null;
+      try {
+        path = await uploadRenderDataUrl(image);
+      } catch (_) {
+        path = null;
+      }
+      lastRender = image;
+      lastRenderPath = path;
+      addRenderVariant(image, label || "Concept", path);
+      markStudioResult();
+      applyCanvasMode(o.mode || "concept-only");
+      try {
+        setConceptSummary(o.summary || null);
+      } catch (_) {}
+      let version = null;
+      try {
+        version = await finalizeGeneratedDesign(path);
+      } catch (_) {
+        version = null;
+      }
+      if (path && o.saveDraft !== false) {
+        STUDIO_DRAFT_ID = null;
+        STUDIO_DRAFT_PATH = null;
+        try {
+          await saveStudioDraft(path, { prompt: o.prompt || null, concept: true });
+        } catch (_) {}
+      }
+      try {
+        window.dispatchEvent(new Event("rd:photo"));
+      } catch (_) {}
+      try {
+        window.dispatchEvent(new Event("rd:credits-changed"));
+      } catch (_) {}
+      return {
+        path,
+        versionId: version ? String((version as any).id || (version as any).version_id || "") || null : null,
+      };
+    }
+
     let STUDIO_START = null;
     function studioStart() {
       if (STUDIO_START) return STUDIO_START;
@@ -2488,89 +2567,15 @@ export function initApp(): () => void {
               })),
             });
           },
-          /* One described request is ONE batch. The workspace is initialized
-             once, then every option is appended: a later concept can never
-             erase an earlier one, and each keeps its own durable path and
-             version row. */
-          beginConceptBatch: (info) => {
-            const i = info || {};
-            STUDIO_SRC = "user_upload";
-            STUDIO_CTX = blankStudioCtx();
-            if (i.room) STUDIO_CTX.room = i.room;
-            STUDIO_RESULT = false;
-            CANVAS_PHASE = "generating";
-            lastRender = null;
-            lastRenderPath = null;
-            dropPendingSave();
-            try {
-              SESSION_VERSIONS.length = 0;
-            } catch (_) {}
-            /* No source photo exists, so nothing is faked into the Before
-               layer and the two layers can never hold the same asset. */
-            if (cBefore) cBefore.innerHTML = "";
-            if (cAfter) cAfter.innerHTML = "";
-            const vars = document.getElementById("vars");
-            if (vars) vars.innerHTML = "";
-            Object.keys(locks).forEach((k) => delete locks[k]);
-            sourceCaption(false);
-            setCanvasRatio(i.ratio, null);
-            applyCanvasMode(i.mode || "concept-only");
-            try {
-              setConceptSummary(i.summary || null);
-            } catch (_) {}
-            paintStudioState();
-            paintStudioSub();
-            paintVersions();
-          },
-
-          /** Appends one finished option. Never resets the workspace. */
-          addConcept: async (image, label, opts) => {
-            const o = opts || {};
-            if (cAfter) cAfter.innerHTML = photo(image, (label || "Concept") + " design");
-            let path = null;
-            try {
-              path = await uploadRenderDataUrl(image);
-            } catch (_) {
-              path = null;
-            }
-            lastRender = image;
-            lastRenderPath = path;
-            addRenderVariant(image, label || "Concept", path);
-            markStudioResult();
-            applyCanvasMode(o.mode || "concept-only");
-            try {
-              setConceptSummary(o.summary || null);
-            } catch (_) {}
-            const version = await finalizeGeneratedDesign(path);
-            if (path && o.first !== false) {
-              STUDIO_DRAFT_ID = null;
-              STUDIO_DRAFT_PATH = null;
-              try {
-                await saveStudioDraft(path, { prompt: o.prompt || null, concept: true });
-              } catch (_) {}
-            }
-            try {
-              window.dispatchEvent(new Event("rd:photo"));
-            } catch (_) {}
-            try {
-              window.dispatchEvent(new Event("rd:credits-changed"));
-            } catch (_) {}
-            return {
-              path,
-              versionId: version && (version.id || version.version_id) ? String(version.id || version.version_id) : null,
-            };
-          },
-
+          beginConceptBatch: (info) => beginConceptBatch(info),
+          addConcept: (image, label, opts) => addConcept(image, label, opts),
           setCanvasStatus: (text) => {
             const st = document.getElementById("rdwVerState");
             if (st) st.textContent = text || "";
           },
-
           showConcept: async (image, label, prompt) => {
-            const s2 = studioStart();
-            void s2;
-            (window as any).__rdBeginConcept?.();
-            return null;
+            beginConceptBatch({ prompt, mode: "concept-only" });
+            await addConcept(image, label || "Concept", { prompt });
           },
 
           getProperties: () => {
