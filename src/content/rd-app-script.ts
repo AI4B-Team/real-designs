@@ -281,6 +281,8 @@ export function initApp(): () => void {
      here, at the top, rather than further down where a `let` would still be in
      its temporal dead zone and throw a ReferenceError that blanked the view. */
   let STUDIO_CTX: any = blankStudioCtx();
+  /* False until the property tree has actually been read once. */
+  let WORKSPACE_LOADED = false;
   try {
     initCanvasInspector();
     initCanvasWorkspace();
