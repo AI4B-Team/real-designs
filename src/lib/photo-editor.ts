@@ -1219,12 +1219,30 @@ export async function openPhotoEditor(opts: {
     if (go1) return void go(Number(go1.getAttribute("data-go")));
     const ratio = t.closest("[data-ratio]");
     if (ratio) return setRatio(ratio.getAttribute("data-ratio") as string);
+    const strength = t.closest("[data-auto-strength]");
+    if (strength) {
+      autoStrength = strength.getAttribute("data-auto-strength") as Strength;
+      paintPanel();
+      /* Changing strength while a result is on screen re-derives it in place. */
+      if (autoPreview) return void runAutoEnhance(false);
+      if (st().auto) return void runAutoEnhance(true);
+      return;
+    }
     const rst = t.closest("[data-reset-adj]");
     if (rst) {
       push();
       st().adj[rst.getAttribute("data-reset-adj") as string] = 0;
+      paint();
+      return refreshStats();
+    }
+    const rgeo = t.closest("[data-reset-geo]");
+    if (rgeo) {
+      push();
+      (st() as any)[rgeo.getAttribute("data-reset-geo") as string] = 0;
       return paint();
     }
+    const cont = t.closest("[data-continue]");
+    if (cont) return void continueWith(cont.getAttribute("data-continue") as string);
     const ai = t.closest("[data-ai]");
     if (ai) return void runAi(ai.getAttribute("data-ai") as string);
     const act = t.closest("[data-act]")?.getAttribute("data-act");
