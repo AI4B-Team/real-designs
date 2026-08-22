@@ -12,6 +12,8 @@ import {
   statusLine,
   historyCount,
   slotLabel,
+  slotAt,
+  slotBadge,
   saveRoomState,
   persistableSlots,
 } from "@/lib/output-slots";
