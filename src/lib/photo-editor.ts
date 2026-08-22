@@ -680,12 +680,12 @@ export async function openPhotoEditor(opts: {
       /* A prepared source photo asks which image generation should consume. */
       let useEdited = defaultGenerationSource(modeFor(p)) === "edited";
       if (!asCopy && modeFor(p) === "source") {
-        useEdited = await confirmDialog({
+        useEdited = !!(await confirmDialog({
           title: "Use This Edit For Generation?",
           body: "The Original Upload Is Kept Either Way.",
           confirmLabel: "Use Edited Photo",
           cancelLabel: "Keep Original As Source",
-        });
+        }));
       }
       opts.onSaved?.({ key: p.key, path, dataUrl, copy: asCopy, useEdited });
     } catch (err: any) {
