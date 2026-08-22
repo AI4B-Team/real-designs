@@ -69,3 +69,14 @@ describe("handoff persistence", () => {
     expect(r.ok).toBe(true);
   });
 });
+
+describe("idempotency", () => {
+  it("builds the same key for the same selection", async () => {
+    const { handoffIdempotencyKey } = await import("./video-handoff");
+    const a = handoffIdempotencyKey({ origin: "media", assets: [{ path: "a/1.jpg" }] });
+    const b = handoffIdempotencyKey({ origin: "media", assets: [{ storage_path: "a/1.jpg" }] });
+    const c = handoffIdempotencyKey({ origin: "media", assets: [{ path: "a/2.jpg" }] });
+    expect(a).toBe(b);
+    expect(a).not.toBe(c);
+  });
+});
