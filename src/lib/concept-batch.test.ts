@@ -41,7 +41,7 @@ describe("concept batch", () => {
     const b = makeBatch({ ...base, requestedCount: 2 });
     addResult(b, 0, { image: "img-1", durablePath: "p/1", versionId: "v1" });
     addResult(b, 1, { image: "img-2", durablePath: "p/2", versionId: "v2" });
-    const ok = succeeded(b);
+    const ok = succeeded(b) as any[];
     expect(ok).toHaveLength(2);
     expect(ok[0].image).not.toBe(ok[1].image);
     expect(ok[0].durablePath).not.toBe(ok[1].durablePath);
@@ -52,9 +52,9 @@ describe("concept batch", () => {
     const b = makeBatch({ ...base, requestedCount: 2 });
     addResult(b, 0, { image: "img-1" });
     markGenerating(b, 1);
-    expect(b.results[0].image).toBe("img-1");
+    expect((b.results as any[])[0].image).toBe("img-1");
     addResult(b, 1, { image: "img-2" });
-    expect(b.results[0].image).toBe("img-1");
+    expect((b.results as any[])[0].image).toBe("img-1");
     expect(succeeded(b)).toHaveLength(2);
   });
 
@@ -79,7 +79,7 @@ describe("concept batch", () => {
     /* Retry only touches the failed slot. */
     markGenerating(b, 1);
     addResult(b, 1, { image: "img-2", versionId: "v2" });
-    expect(b.results[0].versionId).toBe("v1");
+    expect((b.results as any[])[0].versionId).toBe("v1");
     expect(succeeded(b)).toHaveLength(2);
     expect(batchStatus(b).creditsUsed).toBe(2);
   });
@@ -88,8 +88,8 @@ describe("concept batch", () => {
     const b = makeBatch(base);
     addResult(b, 0, { image: "img-1" });
     failResult(b, 0, "late error");
-    expect(b.results[0].status).toBe("done");
-    expect(b.results[0].image).toBe("img-1");
+    expect((b.results as any[])[0].status).toBe("done");
+    expect((b.results as any[])[0].image).toBe("img-1");
   });
 
   it("requested count matches created versions and credit usage", () => {
