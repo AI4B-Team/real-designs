@@ -2016,7 +2016,11 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
     ctx.conceptPartial?.(
       status.complete ? null : status.message + ".",
-      status.complete ? undefined : () => runConceptOptions(batch, inspiration),
+      status.complete
+        ? undefined
+        : async () => {
+            await runConceptOptions(batch, inspiration);
+          },
     );
     return status;
   }
