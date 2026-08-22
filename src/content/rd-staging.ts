@@ -1151,16 +1151,13 @@ function cardHtml(it, seq) {
         failed
           ? []
           : [
-              /* The primary per-photo action: open this exact photo in the room
-                 Canvas, where every design tool lives. The wand means "design"
-                 everywhere in the product and is never reused for editing. */
-              { label: "Open Canvas", icon: "wand-sparkles", hot: true, attrs: { "data-canvas": it.key } },
-              { label: "Edit Photo", icon: "sliders-horizontal", attrs: { "data-editphoto": it.key } },
-              { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
-              { label: "Replace Photo", icon: "image-plus", attrs: { "data-replace": it.key } },
-              { label: "Remove Photo", icon: "trash-2", attrs: { "data-del": it.key } },
+              /* One primary per-photo action. "Design" opens this exact photo in
+                 the room Canvas, where every design and photo tool lives; asset
+                 management stays in the three-dot menu so the card never looks
+                 like a miniature editor. */
+              { label: "Design", icon: "wand-sparkles", hot: true, attrs: { "data-canvas": it.key } },
             ],
-        { label: "Photo Actions" },
+        { label: "Design" },
       )}
 
     </div>
