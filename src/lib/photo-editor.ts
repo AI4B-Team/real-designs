@@ -21,16 +21,24 @@ import { runPhotoEdit } from "@/lib/photo-edit.functions";
 import {
   type EditorMode,
   compareEnabled,
+  continueWithTools,
   defaultGenerationSource,
   defaultOpenSections,
   detectPhotoTraits,
   editedFromLabel,
   enhancementByOp,
   footerLayout,
-  generativeEdits,
   photoEnhancements,
   primarySaveLabel,
 } from "@/lib/photo-editor-context";
+import {
+  type PhotoStats,
+  type Strength,
+  STRENGTHS,
+  analyzeImageData,
+  autoEnhanceAdjustments,
+  clippingWarning,
+} from "@/lib/photo-auto-enhance";
 
 /* ------------------------------------------------------------------ model */
 
