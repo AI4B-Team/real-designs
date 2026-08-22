@@ -313,6 +313,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     designs: [] as PickerDesign[],
     designState: "idle" as "idle" | "loading" | "ready" | "error",
     designSel: [] as string[],
+    /** Id of the design open in the larger preview modal. */
+    designPreview: null as string | null,
+    /** Id currently dragged in the selected-order row. */
+    designDrag: null as string | null,
+
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
   };
