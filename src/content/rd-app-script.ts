@@ -3827,7 +3827,7 @@ export function initApp(): () => void {
       rb && rb.addEventListener("click", retryPendingSave);
     } catch (_) {}
 
-    function addRenderVariant(src, label, path) {
+    function addRenderVariant(src, label, path, opts) {
       /* Persisting a render is the caller's job (finalizeGeneratedDesign), so
          reopening a saved version never writes a duplicate version row. */
 
@@ -3854,8 +3854,12 @@ export function initApp(): () => void {
         paintVersions();
       } catch (_) {}
 
+      /* A multi-output batch owns its own numbered tiles: this must not add a
+         competing thumbnail on top of them. */
+      if (opts && opts.silent) return;
       const wrap = document.getElementById("vars");
       if (!wrap) return;
+
       const d = document.createElement("div");
       d.className = "var on";
       d.dataset.src = src;
