@@ -96,7 +96,6 @@ const PHOTO_ENHANCEMENTS: EnhancementDef[] = [
   { op: "reflection", label: "Reflection Removal", icon: "sparkle", credits: 1, requiresTarget: true },
   { op: "tv_off", label: "TV Screen Cleanup", icon: "tv", credits: 1, requiresTarget: true },
   { op: "fireplace", label: "Fireplace Enhancement", icon: "flame", credits: 1, requiresTarget: true },
-  { op: "privacy_blur", label: "Privacy Blur", icon: "shield", credits: 1, requiresTarget: true },
 ];
 
 /** What Privacy Blur is allowed to obscure. Manual is always available. */

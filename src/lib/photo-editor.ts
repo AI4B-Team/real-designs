@@ -1919,6 +1919,20 @@ export async function openPhotoEditor(opts: {
   async function download(preview = false) {
     const s0 = st();
     const p = cur();
+    /* Never let a photo leave with sensitive content the user hasn't handled. */
+    const privWarn = exportWarning(pv().mask, pv().detections);
+    if (privWarn) {
+      const go = await confirmDialog({
+        title: "Unblurred Sensitive Areas",
+        body: `${privWarn} They Will Be Visible In The Downloaded File.`,
+        confirmLabel: "Download Anyway",
+        cancelLabel: "Back To Privacy Blur",
+      });
+      if (!go) {
+        pv().open = true;
+        return paintPanel();
+      }
+    }
     const cls = classifyEdits({
       aiOps: s0.aiOps,
       hasAdjustments: Object.values(s0.adj || {}).some((v) => Number(v) !== 0) || !!s0.crop,
