@@ -11,6 +11,7 @@
  */
 
 import { renderConcept } from "@/lib/concept-render.functions";
+import { confirmDialog } from "@/lib/builder-card-menu";
 import { improveDescription } from "@/lib/prompt-improve.functions";
 
 import {
@@ -233,8 +234,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     method: "upload" as Method,
     /** Which door the user opened on the start screen: "" (none yet) or "design". */
     door: "design" as "" | "design" | "video",
-    /** Project cards stay expanded only until a choice has been made. */
-    doorOpen: false,
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
@@ -1181,9 +1180,35 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     video: "Create A Video",
   };
 
-  /** The two project cards, or the one-line summary they collapse into once a
-      choice has been made. Nothing else on the screen is touched, so the
-      composer, its references and its draft all survive the toggle. */
+  /** Human-readable list of inputs the other project type cannot reuse. */
+  function pendingWork(): string[] {
+    const out: string[] = [];
+    if (state.file || state.filePreview) out.push("the photo you added");
+    if (String(state.prompt || "").trim()) out.push("your description");
+    if (state.refs.length) out.push("your reference images");
+    if (state.inspiration) out.push("your inspiration image");
+    if (String(state.notes || "").trim()) out.push("your notes");
+    return out;
+  }
+
+  /** Drops only the inputs that cannot cross project types. */
+  function clearIncompatibleWork() {
+    state.file = null;
+    state.fileName = "";
+    state.filePreview = "";
+    state.detected = null;
+    state.detecting = false;
+    state.prompt = "";
+    state.refs = [];
+    state.inspiration = null;
+    state.notes = "";
+    state.flags = [];
+    state.flagsDismissed = false;
+  }
+
+  /** The two project cards. They always stay full size and side by side: the
+      selected one only changes color, border and checkmark, so choosing a
+      project type never moves anything below it. */
   function doorsHtml() {
     const doorCard = (id: "design" | "video", icon: string, title: string, sub: string) =>
       '<button type="button" class="stw-door' +
@@ -1207,18 +1232,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "</span>" +
       "</button>";
 
-    if (state.door && !state.doorOpen)
-      return (
-        '<div class="stw-doorsum">' +
-        '<i data-lucide="' +
-        (state.door === "video" ? "clapperboard" : "wand-sparkles") +
-        '"></i>' +
-        "<span><b>Project:</b> " +
-        esc(DOOR_LABEL[state.door] || "") +
-        "</span>" +
-        '<button type="button" class="stw-doorchange" data-sts="door-change">Change</button>' +
-        "</div>"
-      );
+
 
     return (
       '<div class="stw-doors" role="radiogroup" aria-label="Project type">' +
@@ -1799,25 +1813,43 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       render();
       return;
     }
-    if (k === "door-change") {
-      /* Only the project row is repainted: everything already typed or
-         attached in the composer stays exactly where it is. */
-      state.doorOpen = true;
-      renderDoors();
-      return;
-    }
     if (k === "door-design" || k === "door-video") {
       const next = k === "door-video" ? "video" : "design";
-      state.doorOpen = false;
       if (state.door === next) {
         renderDoors();
         return;
       }
-      if (next === "video") ctx.track("studio_start_method", { method: "video" });
-      state.door = next;
-      render();
+      const pending = pendingWork();
+      const apply = () => {
+        if (pending.length) clearIncompatibleWork();
+        if (next === "video") ctx.track("studio_start_method", { method: "video" });
+        state.door = next;
+        render();
+      };
+      if (!pending.length) {
+        apply();
+        return;
+      }
+      /* Switching project type throws away inputs the other workflow cannot
+         use, so the user is told exactly what disappears before it does. */
+      void confirmDialog({
+        title: "Switch To " + (DOOR_LABEL[next] || "") + "?",
+        body:
+          "Your current " +
+          (DOOR_LABEL[state.door] || "project") +
+          " inputs can't carry over to " +
+          (DOOR_LABEL[next] || "the other project type") +
+          ".",
+        notes: ["This clears: " + pending.join(", ") + "."],
+        cancelLabel: "Cancel",
+        confirmLabel: "Switch Project Type",
+        danger: true,
+      }).then((ok: unknown) => {
+        if (ok) apply();
+      });
       return;
     }
+
     if (k === "video-open") {
       try {
         (window as any).rdListingVideo?.({ from: "studio" });
