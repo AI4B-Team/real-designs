@@ -1933,61 +1933,36 @@ export async function openPhotoEditor(opts: {
         return paintPanel();
       }
     }
-    const cls = classifyEdits({
-      aiOps: s0.aiOps,
-      hasAdjustments: Object.values(s0.adj || {}).some((v) => Number(v) !== 0) || !!s0.crop,
-    });
+    const hasAdjustments =
+      Object.values(s0.adj || {}).some((v) => Number(v) !== 0) || !!s0.crop || !!s0.rotation;
     const cropArea = s0.crop ? Math.max(0, s0.crop.w) * Math.max(0, s0.crop.h) : null;
     const review = qualityReview({ stats, adj: s0.adj, cropArea });
-    const root = await formDialog({
-      title: "Download Photo",
-      body: `
-        <p class="rdpe-hint">This Downloads Exactly What Is On Screen Now${
-          s0.dirty ? ", Including Unsaved Edits" : ""
-        }.</p>
-        <label class="rdpe-dlg-l">Export Preset</label>
-        <select class="rdpe-dlg-s" data-x="preset">${EXPORT_PRESETS.map(
-          (e) => `<option value="${e.id}">${esc(e.label)} — ${esc(e.note)}</option>`,
-        ).join("")}</select>
-        <label class="rdpe-dlg-l">Quality <span data-x="qv">90</span></label>
-        <input class="rdpe-dlg-r" type="range" min="60" max="100" value="90" data-x="quality" />
-        ${
-          disclosureText(cls)
-            ? `<label class="rdpe-dlg-c"><input type="checkbox" data-x="disclose" ${
-                cls === "Enhanced" ? "" : "checked"
-              } /> Add “${esc(disclosureText(cls))}” Disclosure Overlay</label>`
-            : ""
-        }
-        ${
-          review.length
-            ? `<ul class="rdpe-review">${review
-                .map((r) => `<li class="rdpe-review-${r.level}">${esc(r.message)}</li>`)
-                .join("")}</ul>`
-            : `<p class="rdpe-hint">Quality Review Found No Problems.</p>`
-        }`,
-      confirmLabel: "Download",
-      onInput: (w) => {
-        const q = w.querySelector('[data-x="quality"]') as HTMLInputElement | null;
-        const out = w.querySelector('[data-x="qv"]');
-        if (q && out) out.textContent = q.value;
-      },
-    });
-    if (!root) return;
-    const presetId = (root.querySelector('[data-x="preset"]') as HTMLSelectElement)?.value || "full";
-    const ex = exportPreset(presetId);
-    const q = Number((root.querySelector('[data-x="quality"]') as HTMLInputElement)?.value || 90) / 100;
-    const disclose = (root.querySelector('[data-x="disclose"]') as HTMLInputElement | null)?.checked;
     try {
-      const url = await renderPhoto(s0, {
-        maxEdge: ex.maxEdge,
-        quality: q,
-        disclosure: disclose ? disclosureText(cls) : null,
+      /* The clean master leaves the editor untouched; the disclosure is baked
+         only into the exported copy by the shared export system. */
+      const clean = await renderPhoto(s0, { quality: 0.96 });
+      const ok = await openDisclosureExport({
+        items: [
+          {
+            id: p.key,
+            name: p.room || p.name || "photo",
+            src: clean,
+            operations: [
+              ...s0.aiOps,
+              ...(hasAdjustments ? ["adjust"] : []),
+              ...(s0.crop ? ["crop"] : []),
+            ],
+            hasAdjustments,
+            assetId: p.assetId || p.key || null,
+            versionId: p.versionId || null,
+          },
+        ],
+        purpose: "listing",
+        scope: "current-photo",
+        title: "Download Photo",
+        notes: review.map((r) => r.message),
       });
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = exportFileName(p.room || p.name || "photo", ex.id, null);
-      a.click();
-      if (preview) rdToast("Preview Downloaded.");
+      if (ok && preview) rdToast("Preview Downloaded.");
     } catch (err: any) {
       rdToast(err?.message || "That Photo Could Not Be Downloaded.", "error");
     }
