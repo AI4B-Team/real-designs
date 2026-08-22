@@ -41,6 +41,23 @@ const SaveInput = z.object({
       flip_v: z.boolean().default(false),
     })
     .default({ straighten: 0, vertical: 0, horizontal: 0, flip_v: false }),
+  /* Privacy Blur provenance: categories and settings only, never content. */
+  privacy: z
+    .object({
+      op: z.literal("privacy_blur"),
+      source_version: z.string().max(200).nullable().optional(),
+      categories: z.array(z.string().max(24)).max(12).default([]),
+      detections: z.number().int().min(0).max(200).default(0),
+      manual_strokes: z.number().int().min(0).max(1000).default(0),
+      blur_type: z.enum(["gaussian", "pixelate", "redact"]),
+      strength: z.number().min(0).max(100),
+      feather: z.number().min(0).max(100),
+      result_path: z.string().max(400).nullable().optional(),
+      modification_class: z.string().max(40).default("Digitally Altered"),
+      credits: z.number().int().min(0).max(0).default(0),
+    })
+    .nullable()
+    .optional(),
   /* Disclosure classification written alongside the saved pixels. */
   modification_class: z.string().max(40).nullable().optional(),
   ai_ops: z.array(z.string().max(60)).max(30).default([]),
@@ -95,6 +112,7 @@ export const savePhotoEdit = createServerFn({ method: "POST" })
       flip_h: data.flip_h,
       geometry: data.geometry,
       modification_class: data.modification_class ?? null,
+      privacy: data.privacy ?? null,
       ai_ops: data.ai_ops,
       edited_path: data.edited_path ?? null,
       label: data.label ?? null,
