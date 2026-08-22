@@ -2252,7 +2252,7 @@ registerCardMenu("photo", {
         }
       : { action: "download", label: "Download", icon: "download", hidden: !hasOriginal };
     return [
-      { items: [{ action: "open", label: "Open Canvas", icon: "wand-sparkles" }] },
+      { items: [{ action: "open", label: "Design", icon: "wand-sparkles" }] },
       {
         items: [
           {
@@ -2262,9 +2262,9 @@ registerCardMenu("photo", {
             disabled: !stored,
             note: stored ? "" : "Saving…",
           },
-          { action: "editphoto", label: "Edit Photo", icon: "sliders-horizontal" },
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
-          { action: "rotate", label: "Rotate 90°", icon: "rotate-cw" },
+          { action: "rotateleft", label: "Rotate Left", icon: "rotate-ccw" },
+          { action: "rotate", label: "Rotate Right", icon: "rotate-cw" },
           { action: "room", label: "Change Room Type", icon: "door-open" },
           {
             action: "ratio",
