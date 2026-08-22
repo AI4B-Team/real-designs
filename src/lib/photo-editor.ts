@@ -1211,6 +1211,26 @@ export async function openPhotoEditor(opts: {
     closePhotoEditor();
   }
 
+  /**
+   * Hand the current photo to another Canvas tool. Editing edits are saved
+   * first, the tool is only selected, and nothing generates until the user
+   * reviews the settings and presses Generate there.
+   */
+  async function continueWith(tool: string) {
+    if ((await guardUnsaved(`Continuing In ${tool === "object" ? "Object Edit" : tool}`)) === "stay") return;
+    const target =
+      tool === "object"
+        ? document.getElementById("rdwObjTool")
+        : document.querySelector<HTMLElement>(`#fTool .toolrow[data-tool="${tool}"]`);
+    if (!target) {
+      rdToast("That Tool Is Not Available Here.", "error");
+      return;
+    }
+    const { closeCanvasPhotoEditor } = await import("@/lib/canvas-workspace");
+    closeCanvasPhotoEditor();
+    target.click();
+  }
+
   /* ------------------------------------------------------------- events */
 
   host.addEventListener("click", (e) => {
