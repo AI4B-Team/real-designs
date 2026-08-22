@@ -1,3 +1,4 @@
+import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * The one action bar for a generated design result.
  *
@@ -80,7 +81,7 @@ const esc = (s: unknown) =>
 
 function icons() {
   try {
-    (window as any).lucide?.createIcons({});
+    createIcons({ icons: lucideIcons });
   } catch (_) {
     /* icons are cosmetic */
   }

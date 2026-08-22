@@ -10,11 +10,15 @@
 
 const CUSTOMIZE_KEY = "rd_canvas_customize_open";
 
+import { createIcons, icons as lucideIcons } from "lucide";
+
 const byId = (id: string) => document.getElementById(id);
 
+/** Render any pending <i data-lucide> nodes. The app never sets window.lucide,
+    so the library is imported directly instead of read off the global. */
 function icons() {
   try {
-    (window as any).lucide?.createIcons({});
+    createIcons({ icons: lucideIcons });
   } catch (_) {
     /* icons are cosmetic */
   }
@@ -180,11 +184,7 @@ export function refreshVersionRail() {
       '<i data-lucide="layers"></i>Versions' +
       (n > 0 ? '<span class="rdw-vers-badge">' + n + "</span>" : "");
     open.setAttribute("aria-label", n > 0 ? "Show Version History, " + n + " versions" : "Show Version History");
-    try {
-      (window as any).lucide?.createIcons();
-    } catch (_) {
-      /* icons are decorative */
-    }
+    icons();
   }
 }
 
