@@ -158,6 +158,10 @@ export function openAddressModal(opts: AddressModalOptions) {
     if (!document.body.contains(host)) return;
     if (e.key === "Escape") {
       e.preventDefault();
+      /* The keystroke belongs to the modal alone: the drawer underneath must
+         stay open when the modal closes. */
+      e.stopPropagation();
+      (e as any).stopImmediatePropagation?.();
       close(true);
       return;
     }
