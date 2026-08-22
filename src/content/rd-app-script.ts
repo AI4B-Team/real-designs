@@ -11185,6 +11185,12 @@ ${picks
             price = angleCredits(readAngleResults());
           } catch (_) {}
         }
+        /* Animate prices every clip in the set. */
+        if (tool === "Animate") {
+          try {
+            price = animateCredits();
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
@@ -11212,6 +11218,12 @@ ${picks
       try {
         ensureAnglesPanel();
         setAnglesPanelVisible(tool === "Multi Angle");
+      } catch (_) {}
+      /* The motion controls belong to Animate alone. */
+      try {
+        ensureAnimatePanel();
+        setAnimatePanelVisible(tool === "Animate");
+        if (tool === "Animate") syncAnimateSources();
       } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
