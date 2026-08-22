@@ -1277,17 +1277,30 @@ export function createDescribeComposer(cfg: Cfg) {
       state.touched = true;
       /* A room named in the description selects itself, visibly, and the
          user can still override it by clicking another card. */
+      let changed = false;
       if (!state.roomId || state.roomDetected) {
         const found = DS.inferAreaFromPrompt(value, state.space);
         if (found && found.id !== state.roomId) {
           state.roomId = found.id;
           state.room = found.label;
           state.roomDetected = true;
-          cfg.render();
+          changed = true;
         }
       }
+      /* Same for a style the user names, e.g. "modern luxury kitchen". */
+      if (!state.styleId || state.styleDetected) {
+        const st = DS.inferStyleFromPrompt(value, state.space);
+        if (st && st.id !== state.styleId) {
+          state.styleId = st.id;
+          state.style = st.displayName;
+          state.styleDetected = true;
+          changed = true;
+        }
+      }
+      if (changed) cfg.render();
       saveDraft();
       return true;
+
     }
     if (name === "browseq") {
       state.browseQuery = value;
