@@ -1197,6 +1197,7 @@ export async function openPhotoEditor(opts: {
     s.flipH = false;
     s.flipV = false;
     cropMode = false;
+    cropView = null;
     paint();
     paintCropBox();
   }
@@ -1658,6 +1659,7 @@ export async function openPhotoEditor(opts: {
     if ((await guardUnsaved("Moving To Another Photo")) === "stay") return;
     aiPreview = null;
     cropMode = false;
+    cropView = null;
     index = i;
     await ensureSource(cur());
     paint();
@@ -2068,8 +2070,10 @@ function embeddedShellHtml(label: string): string {
       <div class="rdpe-stage" id="rdpeStage">
         <img id="rdpeImg" alt="Photo being edited" data-hold>
         <div class="rdpe-cropbox" id="rdpeCropBox" style="display:none">
+          <span class="rdpe-cropgrid" aria-hidden="true"></span>
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
+        <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <span class="rdpe-badge">Original</span>
       </div>
       <div class="rdpe-underbar">
@@ -2119,8 +2123,10 @@ function shellHtml(back: string): string {
         <button type="button" class="rdpe-nav l" data-act="prev" aria-label="Previous Photo"><i data-lucide="chevron-left"></i></button>
         <img id="rdpeImg" alt="Photo being edited" data-hold>
         <div class="rdpe-cropbox" id="rdpeCropBox" style="display:none">
+          <span class="rdpe-cropgrid" aria-hidden="true"></span>
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
+        <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <button type="button" class="rdpe-nav r" data-act="next" aria-label="Next Photo"><i data-lucide="chevron-right"></i></button>
         <span class="rdpe-badge">Original</span>
       </div>
