@@ -1,3 +1,4 @@
+import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * CatalogPickerModal — one shell for every "browse a finite catalog and pick
  * something" modal in the app: rooms and areas, design styles, media,
@@ -65,7 +66,7 @@ const esc = (s: unknown) =>
 
 function paintIcons(root: HTMLElement) {
   try {
-    (window as any).lucide?.createIcons({ root });
+    createIcons({ icons: lucideIcons, root });
   } catch (_) {
     /* icons are cosmetic */
   }

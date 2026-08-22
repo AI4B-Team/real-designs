@@ -1,3 +1,4 @@
+import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * Canvas style selection UI: the Setup panel section plus the Browse Styles
  * modal. Reads the shared catalog so Explore, the bulk Design Photos modal and
@@ -70,7 +71,7 @@ const esc = (s: unknown): string =>
 
 function icons(root?: Element | null) {
   try {
-    (window as any).lucide?.createIcons({
+    createIcons({ icons: lucideIcons, ...({
       attrs: {},
       ...(root ? { nameAttr: "data-lucide" } : {}),
     });

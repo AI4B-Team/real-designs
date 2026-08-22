@@ -1,3 +1,4 @@
+import { createIcons, icons as lucideIcons } from "lucide";
 /* Voice Studio — record or upload a voice sample, profile it, and narrate every
    video in that voice. Shared by the design-video and listing-video builders. */
 
@@ -105,7 +106,7 @@ export function openVoiceStudio(onDone?: (p: VoiceProfile | null) => void) {
 
   function paint() {
     try {
-      (window as any).lucide?.createIcons?.();
+      createIcons({ icons: lucideIcons });
     } catch (_) {
       /* noop */
     }
