@@ -2715,18 +2715,8 @@ function endingControlHtml(w, s) {
 
 /** The permanent action card that closes every card grid. */
 function addCardHtml(id) {
-  return `<div class="rv-addcard">
-    <button type="button" class="rv-addcard-b" id="${id}" aria-label="Add More Photos">
-      <i data-lucide="image-plus"></i>
-      <b>Add More Photos</b>
-      <em>Upload, Import, or Use Media</em>
-      <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
-    </button>
-  </div>`;
-}
-
-/**
- * A transition connects Scene A to Scene B, so its trigger sits in the gutter
+  return addSourceCardHtml({ id });
+} transition connects Scene A to Scene B, so its trigger sits in the gutter
  * on the seam between the two cards — never as a badge over a photo. One 24px
  * circular connector, quiet for Auto, marked with a small red dot once the
  * user picks something. The last card of a visual row keeps its connector
@@ -5969,7 +5959,6 @@ function bind() {
     });
     /* Header and notice shortcuts both reopen the picker step without losing work. */
     on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
-    on("#rvGridAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
     on("#rvEmptyAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
     on("#rvEmptyProp", "click", () => openSourcePicker("property"));
     on("#rvEmptyDesigns", "click", () => openSourcePicker("designs"));

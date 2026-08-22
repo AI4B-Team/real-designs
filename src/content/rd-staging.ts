@@ -786,34 +786,11 @@ function openCloudImport(provider) {
     picker: {
       ...pickerCommon(),
       initialTab: "cloud",
-      sources: ["cloud"],
       onPick: async (picked) => {
         const files = (picked || []).map((x) => x.file).filter(Boolean);
         if (files.length) addFiles(files);
       },
     },
-  });
-}
-
-/** Dropping photos onto the Add More card is the same intake as the dialog. */
-function bindAddDrop(card) {
-  if (!card || card.__rdsDrop) return;
-  card.__rdsDrop = true;
-  const stop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-  card.addEventListener("dragover", (e) => {
-    stop(e);
-    card.classList.add("drop");
-  });
-  card.addEventListener("dragleave", () => card.classList.remove("drop"));
-  card.addEventListener("drop", async (e) => {
-    stop(e);
-    card.classList.remove("drop");
-    const raw = Array.from((e.dataTransfer && e.dataTransfer.files) || []);
-    const ok = await validateFiles(raw);
-    if (ok.length) addFiles(ok);
   });
 }
 
