@@ -338,7 +338,7 @@ export async function openPhotoEditor(opts: {
     const p = cur();
     const s = st();
     const stage = $("#rdpeImg") as HTMLImageElement;
-    const src = comparing ? s.original : s.base || s.original;
+    const src = comparing ? s.entry || s.original : s.base || s.original;
     if (stage && src && stage.getAttribute("src") !== src) stage.setAttribute("src", src);
     if (stage) {
       const preview = aiPreview && !comparing ? aiPreview.image : null;
@@ -362,7 +362,19 @@ export async function openPhotoEditor(opts: {
     $("#rdpeSave").toggleAttribute("disabled", !s.dirty || s.saving);
     $("#rdpeSaveCopy").toggleAttribute("disabled", !hasEdits(s) || s.saving);
     $("#rdpeReset").toggleAttribute("disabled", !hasEdits(s));
-    $("#rdpeSave").textContent = s.saving ? "Saving…" : "Save Changes";
+    $("#rdpeSave").textContent = s.saving ? "Saving…" : primarySaveLabel({ mode: modeFor(p) });
+    const hold = $("#rdpeHold") as HTMLButtonElement;
+    if (hold) {
+      const on = compareEnabled(hasEdits(s) || !!aiPreview);
+      hold.toggleAttribute("disabled", !on);
+      hold.title = on ? "Hold To Compare With The Editor Original" : "Make An Adjustment To Compare";
+    }
+    const prov = $("#rdpeProv");
+    if (prov) {
+      const line = modeFor(p) === "generated" ? editedFromLabel(p.versionNumber ?? null) : null;
+      prov.textContent = line || "";
+      prov.classList.toggle("on", !!line);
+    }
     host.classList.toggle("rdpe-crop", cropMode);
     host.classList.toggle("rdpe-compare", comparing);
 
@@ -385,8 +397,11 @@ export async function openPhotoEditor(opts: {
   function sliderRow(a: (typeof ADJUSTMENTS)[number], v: number) {
     return `<label class="rdpe-slider">
       <span>${a.label}</span>
-      <input type="range" min="${a.min}" max="${a.max}" step="1" value="${v}" data-adj="${a.key}">
+      <input type="range" min="${a.min}" max="${a.max}" step="1" value="${v}" data-adj="${a.key}"
+        aria-label="${a.label}" title="Double-Click To Reset">
       <b class="rdpe-num">${v > 0 && a.min < 0 ? "+" : ""}${v}</b>
+      <button type="button" class="rdpe-rst" data-reset-adj="${a.key}" aria-label="Reset ${a.label}"
+        ${v === 0 ? "hidden" : ""}><i data-lucide="rotate-ccw"></i></button>
     </label>`;
   }
 
@@ -397,9 +412,24 @@ export async function openPhotoEditor(opts: {
         .map((a) => sliderRow(a, n(s.adj[a.key], 0)))
         .join("");
 
+    const traits = detectPhotoTraits(cur());
+    const ops = photoEnhancements(traits);
+    const gens = generativeEdits();
+    const opBtn = (o: { op: string; label: string; icon: string; credits: number }) =>
+      `<button type="button" class="rdpe-aiop ${s.aiOps.includes(o.op) ? "on" : ""} ${
+        aiBusy === o.op ? "busy" : ""
+      }" data-ai="${o.op}" ${aiBusy ? "disabled" : ""}>
+        <i data-lucide="${o.icon}"></i><span>${o.label}</span>
+        ${
+          aiBusy === o.op
+            ? '<em class="rdpe-run">Working…</em>'
+            : `<em class="rdpe-cost">${o.credits} Credit${o.credits === 1 ? "" : "s"}</em>`
+        }
+      </button>`;
+
     $("#rdpePanelBody").innerHTML = `
       <button type="button" class="rdpe-auto" data-act="auto"><i data-lucide="wand-sparkles"></i>
-        <span><b>Auto Enhance</b><em>One-Click Exposure, Contrast And Color</em></span></button>
+        <span><b>Quick Enhance</b><em>One-Click Exposure, Contrast And Color — No Credits</em></span></button>
 
       ${section("light", "Light", "sun", g("light"))}
       ${section("color", "Color", "palette", g("color"))}
@@ -421,33 +451,32 @@ export async function openPhotoEditor(opts: {
           <button type="button" class="rdpe-ib ${cropMode ? "on" : ""}" data-act="cropmode" title="Adjust Crop"><i data-lucide="crop"></i></button>
         </div>
         <label class="rdpe-slider"><span>Straighten</span>
-          <input type="range" min="-15" max="15" step="0.5" value="${s.straighten}" data-straighten>
+          <input type="range" min="-15" max="15" step="0.5" value="${s.straighten}" data-straighten aria-label="Straighten">
           <b class="rdpe-num">${s.straighten}°</b></label>`,
       )}
       ${section(
-        "ai",
-        "AI Enhancements",
+        "enhance",
+        "Photo Enhancements",
         "sparkles",
-        `<p class="rdpe-note">These Improve The Real Photograph. They Never Restage Or Redesign The Space.</p>
-         <div class="rdpe-ai">${AI_OPS.map(
-           (o) =>
-             `<button type="button" class="rdpe-aiop ${s.aiOps.includes(o.op) ? "on" : ""} ${
-               aiBusy === o.op ? "busy" : ""
-             }" data-ai="${o.op}" ${aiBusy ? "disabled" : ""}>
-               <i data-lucide="${o.icon}"></i><span>${o.label}</span>
-               ${aiBusy === o.op ? '<em class="rdpe-run">Working…</em>' : '<em class="rdpe-cost">1 Credit</em>'}
-             </button>`,
-         ).join("")}</div>
-         ${
-           aiPreview
-             ? `<div class="rdpe-aipreview"><b>${esc(aiPreview.label)} Preview</b>
-                 <div class="rdpe-aibtns">
-                   <button type="button" class="btn btn-primary btn-sm" data-act="aiapply">Apply</button>
-                   <button type="button" class="btn btn-ghost btn-sm" data-act="aicancel">Discard</button>
-                 </div></div>`
-             : ""
-         }`,
-      )}`;
+        `<p class="rdpe-note">These Correct The Photograph. They Never Restage Or Redesign The Space.</p>
+         <div class="rdpe-ai">${ops.map(opBtn).join("")}</div>`,
+      )}
+      ${section(
+        "generative",
+        "Generative Edits",
+        "wand",
+        `<p class="rdpe-note">These Change What Is In The Scene. You Mark The Target And Confirm The Credit Cost First.</p>
+         <div class="rdpe-ai">${gens.map(opBtn).join("")}</div>`,
+      )}
+      ${
+        aiPreview
+          ? `<div class="rdpe-aipreview"><b>${esc(aiPreview.label)} Preview</b>
+              <div class="rdpe-aibtns">
+                <button type="button" class="btn btn-primary btn-sm" data-act="aiapply">Apply</button>
+                <button type="button" class="btn btn-ghost btn-sm" data-act="aicancel">Discard</button>
+              </div></div>`
+          : ""
+      }`;
   }
 
   function section(id: string, label: string, icon: string, body: string) {
@@ -457,7 +486,7 @@ export async function openPhotoEditor(opts: {
       <div class="rdpe-secb">${body}</div>
     </details>`;
   }
-  const OPEN = new Set<string>(["light"]);
+  const OPEN = new Set<string>(defaultOpenSections());
 
   /* ---------------------------------------------------------------- crop */
 
