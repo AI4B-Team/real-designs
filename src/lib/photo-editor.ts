@@ -317,6 +317,7 @@ export async function openPhotoEditor(opts: {
     s.history.push(snapshot(s));
     if (s.history.length > 40) s.history.shift();
     s.future = [];
+    saveFailed = false;
     s.dirty = true;
   }
 
@@ -336,6 +337,7 @@ export async function openPhotoEditor(opts: {
     if (!s.history.length) return;
     s.future.push(snapshot(s));
     restore(s, s.history.pop() as string);
+    saveFailed = false;
     s.dirty = true;
     paint();
   }
@@ -345,6 +347,7 @@ export async function openPhotoEditor(opts: {
     if (!s.future.length) return;
     s.history.push(snapshot(s));
     restore(s, s.future.pop() as string);
+    saveFailed = false;
     s.dirty = true;
     paint();
   }
@@ -624,7 +627,8 @@ export async function openPhotoEditor(opts: {
         }
       }
       s.crop = { x: c.x, y: c.y, w: c.w, h: c.h, ratio: handle ? "free" : start.ratio };
-      s.dirty = true;
+      saveFailed = false;
+    s.dirty = true;
       paintCropBox();
     };
     const up = () => {
@@ -890,7 +894,8 @@ export async function openPhotoEditor(opts: {
         t.dataset['pushed'] = "1";
       }
       s.adj[t.getAttribute("data-adj") as string] = n(t.value);
-      s.dirty = true;
+      saveFailed = false;
+    s.dirty = true;
       const out = t.parentElement?.querySelector(".rdpe-num");
       if (out) out.textContent = `${n(t.value) > 0 ? "+" : ""}${t.value}`;
       const img = $("#rdpeImg") as HTMLImageElement;
@@ -902,7 +907,8 @@ export async function openPhotoEditor(opts: {
         t.dataset['pushed'] = "1";
       }
       s.straighten = n(t.value);
-      s.dirty = true;
+      saveFailed = false;
+    s.dirty = true;
       const img = $("#rdpeImg") as HTMLImageElement;
       img.style.transform = `rotate(${s.rotation + s.straighten}deg) scaleX(${s.flipH ? -1 : 1})`;
       const out = t.parentElement?.querySelector(".rdpe-num");
