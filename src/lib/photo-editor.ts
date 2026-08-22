@@ -1972,6 +1972,8 @@ export async function openPhotoEditor(opts: {
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("keyup", onKeyUp);
     window.removeEventListener("resize", onResize);
+    stageEl?.removeEventListener("wheel", onWheel);
+    stageRo?.disconnect();
     ro?.disconnect();
   };
 
