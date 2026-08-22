@@ -1382,11 +1382,6 @@ export async function openPhotoEditor(opts: {
     if (t.tagName === "INPUT") paint();
   });
 
-  host.addEventListener("change", (e) => {
-    const t = e.target as HTMLInputElement;
-    if (t.dataset) delete t.dataset['pushed'];
-    if (t.tagName === "INPUT") paint();
-  });
 
   host.addEventListener("toggle", (e) => {
     const d = e.target as HTMLDetailsElement;
