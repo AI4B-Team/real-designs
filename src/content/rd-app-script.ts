@@ -3773,6 +3773,10 @@ export function initApp(): () => void {
     /* The persistent version currently shown on the canvas, and whether a save
        is still running. Approval may only ever target a saved version. */
     let DISPLAYED_VERSION = null;
+    /** The one authoritative active-result record. See src/lib/canvas-result.ts */
+    let ACTIVE_RESULT = null;
+    /** Room-scoped Version History rows, exactly as the server returned them. */
+    let HISTORY_VERSIONS = [];
     let VERSION_SAVING = false;
     /** A render that reached storage but whose version row still has to be written. */
     let PENDING_VERSION = null;
@@ -3785,6 +3789,8 @@ export function initApp(): () => void {
       PENDING_SAVE = null;
       PENDING_VERSION = null;
       DISPLAYED_VERSION = null;
+      ACTIVE_RESULT = null;
+      HISTORY_VERSIONS = [];
       paintSaveWarn();
     }
     async function persistRender(image, label) {
