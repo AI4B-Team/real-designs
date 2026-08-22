@@ -1398,6 +1398,7 @@
 .rd-app .rv-grid .rv-addcard { min-width: 0; max-width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
 .rd-app .rv-addcard-b {
   position: relative; width: 100%; min-width: 0; aspect-ratio: 3 / 4; overflow: hidden;
+  container-type: inline-size;
   background: #fcfcfc; border: 1px dashed var(--line-2, #d8d8d8); border-radius: 12px;
   color: var(--ink, #111); transition: border-color .12s, background .12s;
   font-family: 'DM Sans', system-ui, sans-serif;
