@@ -71,14 +71,14 @@ describe("video design source picker", () => {
     expect(cont(host).disabled).toBe(true);
     card(host, "a").click();
     await tick();
-    expect(cont(host).textContent).toContain("Continue with 1 design");
+    expect(cont(host).textContent).toContain("Continue With 1 design");
     card(host, "b").click();
     await tick();
-    expect(cont(host).textContent).toContain("Continue with 2 designs");
+    expect(cont(host).textContent).toContain("Continue With 2 designs");
     /* Deselecting must walk the count back down. */
     card(host, "b").click();
     await tick();
-    expect(cont(host).textContent).toContain("Continue with 1 design");
+    expect(cont(host).textContent).toContain("Continue With 1 design");
   });
 
   it("numbers the selection and keeps the image uncovered", async () => {
