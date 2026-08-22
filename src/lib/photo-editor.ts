@@ -1040,7 +1040,7 @@ function embeddedShellHtml(label: string): string {
 
     <aside class="rdpe-panel" id="rdpePanel">
       <header class="rdpe-panelh">
-        <div class="rdpe-ctxl"><b>Edit Photo</b><span class="rdpe-ctxtag" id="rdpeCrumb">${esc(label)}</span></div>
+        <div class="rdpe-ctxl"><b>Edit</b><span class="rdpe-ctxtag" id="rdpeCrumb">${esc(label)}</span></div>
         <div class="rdpe-topr">
           <button type="button" class="rdpe-ib" id="rdpeUndo" data-act="undo" title="Undo" aria-label="Undo"><i data-lucide="undo-2"></i></button>
           <button type="button" class="rdpe-ib" id="rdpeRedo" data-act="redo" title="Redo" aria-label="Redo"><i data-lucide="redo-2"></i></button>
