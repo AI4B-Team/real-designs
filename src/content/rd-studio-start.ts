@@ -2012,7 +2012,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     for (const slot of batch.results) {
       if (slot.status === "done") continue; // never redo paid work
       markGenerating(batch, slot.index);
-      ctx.setCanvasStatus?.(progressLabel("creating", slot.index, total));
+      /* The canvas owns the status line: it reads the real slot lifecycle
+         (generating / saving / saved) instead of a second, competing pill. */
       try {
         const r = await renderConcept({
           data: {
@@ -2029,12 +2030,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           },
         });
         ctx.track("concept_generated", { space: batch.space, option: slot.index + 1 });
-        ctx.setCanvasStatus?.(progressLabel("saving", slot.index, total));
         const saved = await ctx.addConcept?.(r.image, slot.label, {
           prompt: batch.prompt,
           mode,
           summary: conceptSummary(batch, slot.index),
           saveDraft: slot.index === 0,
+          index: slot.index,
+          total,
         });
         addResult(batch, slot.index, {
           image: r.image,
@@ -2044,14 +2046,19 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       } catch (err: any) {
         if (isPlanBlocked(err)) {
           failResult(batch, slot.index, "Plan limit reached");
+          (window as any).rdConceptSlotFailed?.(slot.index, "Plan limit reached");
           openUpgrade(err);
           break;
         }
         failResult(batch, slot.index, (err && err.message) || "Generation failed");
+        (window as any).rdConceptSlotFailed?.(
+          slot.index,
+          (err && err.message) || "Generation failed",
+        );
       }
     }
     const status = batchStatus(batch);
-    ctx.setCanvasStatus?.(status.complete ? status.message : "");
+
     if (status.created === 0) {
       ctx.conceptPartial?.(null);
       ctx.showAlert("Could not create that concept. Your description was kept.");
