@@ -35,7 +35,6 @@ import {
   batchStatus,
   conceptSummary,
   canvasModeFor,
-  progressLabel,
   type ConceptBatch,
 } from "@/lib/concept-batch";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
@@ -67,6 +66,9 @@ export type StudioStartCtx = {
   /** Initializes the result workspace once for a whole Describe batch. */
   beginConceptBatch?: (info: {
     room?: string | null;
+    roomSource?: "selected" | "inferred" | "unknown";
+    /** How many outputs were requested: that many slots appear immediately. */
+    count?: number;
     ratio?: string | null;
     mode?: string;
     summary?: string | null;
@@ -76,8 +78,16 @@ export type StudioStartCtx = {
   addConcept?: (
     image: string,
     label: string,
-    opts?: { prompt?: string; mode?: string; summary?: string | null; saveDraft?: boolean },
+    opts?: {
+      prompt?: string;
+      mode?: string;
+      summary?: string | null;
+      saveDraft?: boolean;
+      index?: number;
+      total?: number;
+    },
   ) => Promise<{ path: string | null; versionId: string | null } | null | undefined>;
+
   /** One honest progress/state line over the canvas. */
   setCanvasStatus?: (text: string) => void;
   /** Reports a partial batch and offers a retry for the missing option only. */
@@ -2001,7 +2011,8 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     for (const slot of batch.results) {
       if (slot.status === "done") continue; // never redo paid work
       markGenerating(batch, slot.index);
-      ctx.setCanvasStatus?.(progressLabel("creating", slot.index, total));
+      /* The canvas owns the status line: it reads the real slot lifecycle
+         (generating / saving / saved) instead of a second, competing pill. */
       try {
         const r = await renderConcept({
           data: {
@@ -2018,12 +2029,13 @@ export function mountStudioStart(ctx: StudioStartCtx) {
           },
         });
         ctx.track("concept_generated", { space: batch.space, option: slot.index + 1 });
-        ctx.setCanvasStatus?.(progressLabel("saving", slot.index, total));
         const saved = await ctx.addConcept?.(r.image, slot.label, {
           prompt: batch.prompt,
           mode,
           summary: conceptSummary(batch, slot.index),
           saveDraft: slot.index === 0,
+          index: slot.index,
+          total,
         });
         addResult(batch, slot.index, {
           image: r.image,
@@ -2033,14 +2045,19 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       } catch (err: any) {
         if (isPlanBlocked(err)) {
           failResult(batch, slot.index, "Plan limit reached");
+          (window as any).rdConceptSlotFailed?.(slot.index, "Plan limit reached");
           openUpgrade(err);
           break;
         }
         failResult(batch, slot.index, (err && err.message) || "Generation failed");
+        (window as any).rdConceptSlotFailed?.(
+          slot.index,
+          (err && err.message) || "Generation failed",
+        );
       }
     }
     const status = batchStatus(batch);
-    ctx.setCanvasStatus?.(status.complete ? status.message : "");
+
     if (status.created === 0) {
       ctx.conceptPartial?.(null);
       ctx.showAlert("Could not create that concept. Your description was kept.");
@@ -2087,11 +2104,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       } catch (_) {}
       ctx.beginConceptBatch?.({
         room: batch.room,
+        roomSource: batch.roomSource,
+        count: batch.requestedCount,
         ratio: batch.aspectRatio,
         mode: canvasModeFor({ hasReferences: state.refs.length > 0 }),
         summary: conceptSummary(batch, 0),
         prompt: batch.prompt,
       });
+
       const status = await runConceptOptions(batch, inspiration);
       /* A video request renders its key frame first, then opens the builder. */
       if (status.created > 0 && state.output === "video" && ctx.startVideoFromConcept) {

@@ -137,3 +137,25 @@
   opacity: 0.45;
   cursor: not-allowed;
 }
+
+/* One field, one border. The wrapper owns the outline; the control inside is
+   flat, so no modal field can ever render a box inside a box. */
+.rd-modal .rd-field,
+.rd-modal .srm-f > .rd-field {
+  border: 1px solid var(--line, #e5e7eb);
+  border-radius: 10px;
+  background: #fff;
+}
+.rd-modal .rd-field:focus-within {
+  border-color: #cc0000;
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.16);
+}
+.rd-modal .rd-field > input,
+.rd-modal .rd-field > select,
+.rd-modal .rd-field > textarea {
+  border: 0 !important;
+  outline: 0 !important;
+  box-shadow: none !important;
+  background: transparent;
+  width: 100%;
+}

@@ -1662,3 +1662,44 @@
 #canvas[data-mode="reference-guided"] .rng-abs {
   display: none !important;
 }
+
+/* Exactly one status line, inline in the Version History header: status can
+   never stack over the thumbnails or the action row. */
+.rd-app .rdw-outstatus {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  font: 600 11px/1 var(--ui, inherit);
+  color: #6b7280;
+}
+.rd-app .rdw-outretry {
+  border: 1px solid var(--line, #e5e7eb);
+  background: #fff;
+  border-radius: 999px;
+  padding: 3px 9px;
+  font: 700 11px/1 var(--ui, inherit);
+  color: #cc0000;
+  cursor: pointer;
+}
+/* A slot that has no image yet still holds its place and its number. */
+.rd-app .studio.rdw .vars .var[data-output-id] {
+  position: relative;
+}
+.rd-app .var-skel {
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #f1f2f4, #e7e9ec, #f1f2f4);
+  background-size: 200% 100%;
+  animation: rdSkel 1.2s linear infinite;
+}
+@keyframes rdSkel {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.rd-app .rd-vsave {
+  font-weight: 700;
+  font-size: 10px;
+  color: #6b7280;
+}

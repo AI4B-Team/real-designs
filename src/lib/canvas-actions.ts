@@ -405,45 +405,57 @@ function studioContext(): ResultContext | null {
   };
 }
 
+/** Editing actions live behind one button, never on top of the image. */
+const EDIT_MENU: ResultAction[] = ["edit", "variation", "video", "upscale", "shop", "estimate"];
+
 /**
- * Attach the floating toolbar to the Studio canvas. It appears only once a
- * result is on screen and disappears while a generation is running, so it can
- * never act on an image the user is not looking at.
+ * Studio result actions.
+ *
+ * The image itself stays clean: no permanent toolbar covers the design. Every
+ * editing action lives in one "Edit" button in the action row below the canvas,
+ * which opens a popover with the same workflows in the same order.
  */
 export function mountStudioResultActions() {
   const stage = document.getElementById("rdwStage");
   if (!stage || (stage as any).__rda) return;
   (stage as any).__rda = true;
 
-  const bar = document.createElement("div");
-  bar.className = "rda-wrap";
-  bar.hidden = true;
-  bar.innerHTML = resultBarHtml();
-  stage.appendChild(bar);
-  icons();
+  const mountBtn = (): HTMLElement | null => {
+    const row = document.querySelector<HTMLElement>(".rdw-resbar");
+    if (!row) return null;
+    let b = row.querySelector<HTMLElement>('[data-rda="editmenu"]');
+    if (!b) {
+      b = document.createElement("button");
+      b.setAttribute("type", "button");
+      b.className = "btn btn-ghost btn-sm";
+      b.dataset["rda"] = "editmenu";
+      b.innerHTML = '<i data-lucide="pencil"></i>Edit';
+      row.insertBefore(b, row.firstChild);
+      b.addEventListener("click", (e) => {
+        e.preventDefault();
+        const ctx = studioContext();
+        if (!ctx) return;
+        pop(
+          b as HTMLElement,
+          BAR.filter((x) => EDIT_MENU.includes(x.id)).map((x) => ({
+            icon: x.icon,
+            label: x.label,
+            fn: () => runResultAction(x.id, ctx, b as HTMLElement),
+          })),
+        );
+      });
+      icons();
+    }
+    return b;
+  };
 
   const sync = () => {
     const ctx = studioContext();
     const busy = document.getElementById("cGen")?.classList.contains("on");
-    bar.hidden = !ctx || !!busy;
-    if (!ctx) return;
-    const vid = bar.querySelector<HTMLElement>('[data-rda="video"]');
-    if (vid) {
-      const blocked = !!videoHandoffIssue({ path: ctx.path || "" });
-      vid.classList.toggle("is-off", blocked);
-      vid.title = blocked ? "Save This Design To Create A Video" : "Create Video";
-    }
+    const b = mountBtn();
+    if (b) b.hidden = !ctx || !!busy;
     icons();
   };
-
-  bar.addEventListener("click", (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>("[data-rda]");
-    if (!b) return;
-    e.preventDefault();
-    const ctx = studioContext();
-    if (!ctx) return;
-    runResultAction(b.dataset["rda"] as ResultAction, ctx, b);
-  });
 
   const after = document.getElementById("cAfter");
   const gen = document.getElementById("cGen");
@@ -454,3 +466,4 @@ export function mountStudioResultActions() {
   window.addEventListener("rd:saved", sync);
   sync();
 }
+

@@ -78,8 +78,9 @@ export function openSaveRoomModal(opts: SaveRoomOptions): Promise<SaveRoomResult
     wrap.innerHTML = `
       <div class="rd-modal-card" role="dialog" aria-modal="true" aria-label="Save Room" style="max-width:520px">
         <button class="rd-modal-x" data-x aria-label="Close"><i data-lucide="x"></i></button>
-        <h3 style="margin:0 0 4px">Save Room</h3>
-        <p class="sub" style="margin:0 0 14px">Store This Photo And Its Property On Your Account. Designs You Generate Later Are Kept With This Room.</p>
+        <h3 style="margin:0 0 4px">Save room</h3>
+        <p class="sub" style="margin:0 0 14px">Save this room and its designs to your account.</p>
+
         <div class="srm-body">
           <label class="srm-f">Property
             <select data-prop><option value="">Loading Your Properties…</option></select>

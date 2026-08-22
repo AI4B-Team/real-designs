@@ -51,6 +51,8 @@ import {
   progressLabel,
 } from "@/lib/concept-batch";
 import { suggestDesignTitle } from "@/lib/property-address";
+import * as OS from "@/lib/output-slots";
+
 
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -2436,9 +2438,118 @@ export function initApp(): () => void {
 
     /* The single Studio start experience: in-canvas empty state plus the compact
    "Start With" panel on the right. Mounted lazily so the Studio markup exists. */
-    /* One described request is ONE batch. The workspace is initialized once,
-       then every option is appended: a later concept can never erase an
-       earlier one, and each keeps its own durable path and version row. */
+    /* One described request is ONE batch with one slot per requested output.
+       Every slot exists before the first pixel arrives, keeps its number for
+       life, and carries its own status. A later concept can never overwrite,
+       reorder or hide an earlier one. */
+    let OUTPUTS = null;
+    window.rdOutputs = () => OUTPUTS;
+    window.rdOutputsLabel = (set) => OS.historyCount(set);
+
+    /** The one inline status line, inside the Version History header. */
+    function outputStatusEl() {
+      const head = document.querySelector("#rdwVers .rdw-vers-h");
+      if (!head) return null;
+      let el = document.getElementById("rdwOutStatus");
+      if (!el) {
+        el = document.createElement("span");
+        el.id = "rdwOutStatus";
+        el.className = "rdw-outstatus";
+        const n = document.getElementById("rdwVersN");
+        if (n && n.parentElement === head) head.insertBefore(el, n.nextSibling);
+        else head.appendChild(el);
+      }
+      return el;
+    }
+
+    /** Writes exactly one status message. Nothing ever stacks. */
+    function setOutputStatus(text, retry) {
+      const el = outputStatusEl();
+      if (!el) return;
+      el.innerHTML = "";
+      if (!text) {
+        el.hidden = true;
+        return;
+      }
+      el.hidden = false;
+      const b = document.createElement("span");
+      b.textContent = text;
+      el.appendChild(b);
+      if (retry) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "rdw-outretry";
+        btn.textContent = "Retry";
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            await retry();
+          } finally {
+            btn.disabled = false;
+          }
+        });
+        el.appendChild(btn);
+      }
+    }
+
+    /** Repaints slot tiles, the status line and every dependent control. */
+    function paintOutputs() {
+      if (!OUTPUTS) return;
+      const wrap = document.getElementById("vars");
+      if (wrap) {
+        OS.orderedSlots(OUTPUTS).forEach((s) => {
+          let tile = wrap.querySelector('[data-output-id="' + CSS.escape(s.outputId) + '"]');
+          if (!tile) {
+            tile = document.createElement("div");
+            tile.className = "var";
+            tile.dataset.outputId = s.outputId;
+            tile.addEventListener("click", () => selectOutput(s.outputId));
+            wrap.appendChild(tile);
+          }
+          if (s.path) tile.dataset.path = s.path;
+          if (s.image) tile.dataset.src = s.image;
+          tile.classList.toggle("on", OUTPUTS.activeOutputId === s.outputId);
+          tile.setAttribute("aria-selected", OUTPUTS.activeOutputId === s.outputId ? "true" : "false");
+          const label = OS.slotLabel(OUTPUTS, s);
+          const badge = OS.slotBadge(OUTPUTS, s);
+          tile.innerHTML =
+            '<div style="aspect-ratio:8/5">' +
+            (s.image
+              ? photo(s.image, label)
+              : '<div class="var-skel" aria-hidden="true"></div>') +
+            "</div>" +
+            '<div class="vl">' +
+            label +
+            ' <span class="rd-vsave">' +
+            badge +
+            "</span></div>";
+        });
+      }
+      setOutputStatus(OS.statusLine(OUTPUTS), null);
+      const count = document.getElementById("rdwVersN");
+      if (count) count.textContent = OS.historyCount(OUTPUTS);
+      try {
+        setConceptSummary(CONCEPT_SUMMARY_BASE
+          ? CONCEPT_SUMMARY_BASE + " \u00b7 " + OS.activeSummary(OUTPUTS)
+          : OS.activeSummary(OUTPUTS));
+      } catch (_) {}
+      paintSaveRoomBtn();
+    }
+    let CONCEPT_SUMMARY_BASE = null;
+
+    /** Canvas, thumbnail and summary always move together, by id. */
+    function selectOutput(outputId) {
+      if (!OUTPUTS) return;
+      const s = OS.slotById(OUTPUTS, outputId);
+      if (!s || !s.image) return;
+      OS.setActive(OUTPUTS, outputId);
+      if (cAfter) cAfter.innerHTML = photo(s.image, OS.slotLabel(OUTPUTS, s));
+      lastRender = s.image;
+      lastRenderPath = s.path || null;
+      paintOutputs();
+    }
+    window.rdSelectOutput = (id) => selectOutput(id);
+
     function beginConceptBatch(info) {
       const i = info || {};
       STUDIO_SRC = "user_upload";
@@ -2464,75 +2575,125 @@ export function initApp(): () => void {
       sourceCaption(false);
       setCanvasRatio(i.ratio, null);
       applyCanvasMode(i.mode || "concept-only");
-      try {
-        setConceptSummary(i.summary || null);
-      } catch (_) {}
+      /* One authoritative room type: whatever the request was made with is
+         what the panel, the version record and Save Room all use. */
+      CONCEPT_SUMMARY_BASE = i.summary || null;
+      OUTPUTS = OS.createOutputSet({
+        count: i.count || 1,
+        kind: "concept",
+        roomType: i.room || null,
+        roomSource: i.roomSource || (i.room ? "selected" : "unknown"),
+      });
+      applyRoomTypeEverywhere(i.room || null);
+      paintOutputs();
       paintStudioState();
       paintStudioSub();
       paintVersions();
     }
 
-    /* A partial batch is never reported as done: the surviving image stays on
-       the canvas and only the missing option can be retried. */
+    /** Keeps every room-type surface on the same value. */
+    function applyRoomTypeEverywhere(room) {
+      if (!room) return;
+      if (STUDIO_CTX) STUDIO_CTX.room = room;
+      const set = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const has = Array.from(el.options || []).some(
+          (o) => String(o.value).toLowerCase() === String(room).toLowerCase(),
+        );
+        if (has) {
+          el.value = Array.from(el.options).find(
+            (o) => String(o.value).toLowerCase() === String(room).toLowerCase(),
+          ).value;
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (el.tagName === "INPUT") {
+          el.value = room;
+        }
+      };
+      set("fRoom");
+      set("svType");
+    }
+    window.rdApplyRoomType = (r) => applyRoomTypeEverywhere(r);
+
+
+
+
+    /* A partial batch is never reported as done, and it never adds a second
+       pill: the one inline status line carries the message and the retry. */
     function showConceptPartial(message, onRetry) {
-      const existing = document.getElementById("conceptPartial");
+      const legacy = document.getElementById("conceptPartial");
+      if (legacy) legacy.remove();
       if (!message) {
-        if (existing) existing.remove();
+        if (OUTPUTS) setOutputStatus(OS.statusLine(OUTPUTS), null);
         return;
       }
-      const host = document.querySelector("#canvasCard .card-b");
-      let el = existing;
-      if (!el) {
-        el = document.createElement("div");
-        el.id = "conceptPartial";
-        el.className = "rd-savewarn";
-        if (host) host.insertBefore(el, document.getElementById("rdwVers"));
-      }
-      el.innerHTML = "";
-      const txt = document.createElement("div");
-      const b = document.createElement("b");
-      b.textContent = message;
-      txt.appendChild(b);
-      el.appendChild(txt);
-      if (onRetry) {
-        const btn = document.createElement("button");
-        btn.className = "btn btn-dark btn-xs";
-        btn.textContent = "Retry Missing Image";
-        btn.addEventListener("click", async () => {
-          btn.disabled = true;
-          try {
-            await onRetry();
-          } finally {
-            btn.disabled = false;
-          }
-        });
-        el.appendChild(btn);
-      }
+      setOutputStatus(message, onRetry || null);
     }
 
-    /** Appends one finished option. Never resets the workspace. */
+    /** A slot that never produced an image keeps its place and its reason. */
+    window.rdConceptSlotFailed = (index, message) => {
+      if (!OUTPUTS) return;
+      OS.markFailed(OUTPUTS, index, message || "Generation failed");
+      paintOutputs();
+    };
+
+    /** Appends one finished option into its own slot. Never resets anything. */
     async function addConcept(image, label, opts) {
       const o = opts || {};
-      if (cAfter) cAfter.innerHTML = photo(image, (label || "Concept") + " design");
+      const idx = typeof o.index === "number" ? o.index : 0;
+      const slot = OUTPUTS ? OS.slotAt(OUTPUTS, idx) : null;
+      if (OUTPUTS && slot) {
+        OS.markImage(OUTPUTS, idx, image);
+        /* The canvas follows the active output, which is still concept 1 while
+           concept 2 is saving: a later result never steals the view. */
+        const active = OS.activeSlot(OUTPUTS);
+        if (cAfter && active && active.outputId === slot.outputId)
+          cAfter.innerHTML = photo(image, OS.slotLabel(OUTPUTS, slot));
+        paintOutputs();
+      } else if (cAfter) {
+        cAfter.innerHTML = photo(image, (label || "Concept") + " design");
+      }
       let path = null;
       try {
         path = await uploadRenderDataUrl(image);
       } catch (_) {
         path = null;
       }
-      lastRender = image;
-      lastRenderPath = path;
-      addRenderVariant(image, label || "Concept", path);
+      const active = OUTPUTS ? OS.activeSlot(OUTPUTS) : null;
+      if (!OUTPUTS || !slot || (active && active.outputId === slot.outputId)) {
+        lastRender = image;
+        lastRenderPath = path;
+      }
+      addRenderVariant(image, label || "Concept", path, { silent: !!slot });
       markStudioResult();
       applyCanvasMode(o.mode || "concept-only");
-      try {
-        setConceptSummary(o.summary || null);
-      } catch (_) {}
+      if (!slot) {
+        try {
+          setConceptSummary(o.summary || null);
+        } catch (_) {}
+      }
       let version = null;
+      /* With a saved room every concept becomes a version immediately. Without
+         one, nothing is lost: the durable image is kept and Save Room attaches
+         every concept at once. The dialog never interrupts the batch. */
       try {
-        version = await finalizeGeneratedDesign(path);
+        version =
+          STUDIO_CTX && STUDIO_CTX.roomId
+            ? await attachVersionToRoom(path)
+            : slot
+              ? null
+              : await finalizeGeneratedDesign(path);
       } catch (_) {
         version = null;
+      }
+      if (OUTPUTS && slot) {
+        if (path)
+          OS.markSaved(OUTPUTS, idx, {
+            path,
+            versionId: version ? String(version.id || "") || null : null,
+          });
+        else OS.markFailed(OUTPUTS, idx, "Could not save that concept");
+        paintOutputs();
       }
       if (path && o.saveDraft !== false) {
         STUDIO_DRAFT_ID = null;
@@ -2552,6 +2713,7 @@ export function initApp(): () => void {
         versionId: version ? String((version as any).id || (version as any).version_id || "") || null : null,
       };
     }
+
 
     let STUDIO_START = null;
     function studioStart() {
@@ -3666,7 +3828,7 @@ export function initApp(): () => void {
       rb && rb.addEventListener("click", retryPendingSave);
     } catch (_) {}
 
-    function addRenderVariant(src, label, path) {
+    function addRenderVariant(src, label, path, opts) {
       /* Persisting a render is the caller's job (finalizeGeneratedDesign), so
          reopening a saved version never writes a duplicate version row. */
 
@@ -3693,8 +3855,12 @@ export function initApp(): () => void {
         paintVersions();
       } catch (_) {}
 
+      /* A multi-output batch owns its own numbered tiles: this must not add a
+         competing thumbnail on top of them. */
+      if (opts && opts.silent) return;
       const wrap = document.getElementById("vars");
       if (!wrap) return;
+
       const d = document.createElement("div");
       d.className = "var on";
       d.dataset.src = src;
@@ -4032,27 +4198,35 @@ export function initApp(): () => void {
     function paintSaveRoomBtn() {
       const b = document.getElementById("stSaveRoom");
       if (!b) return;
-      const canSave = STUDIO_SRC !== SRC_EMPTY && !!studioSourcePath();
-      b.hidden = STUDIO_SRC === SRC_EMPTY;
-      b.disabled = !canSave;
       const saved = !!(STUDIO_CTX && STUDIO_CTX.roomId);
+      /* Concepts have no source photo, so the room becomes savable the moment
+         the first durable concept lands: no refresh, no upload wording. */
+      const gate = OUTPUTS ? OS.saveRoomState(OUTPUTS, { roomSaved: saved }) : null;
+      const canSave = gate
+        ? gate.enabled
+        : STUDIO_SRC !== SRC_EMPTY && !!studioSourcePath();
+      b.hidden = STUDIO_SRC === SRC_EMPTY && !OUTPUTS;
+      b.disabled = !canSave;
+      const label = saved ? "Room Saved" : gate ? gate.label : "Save Room";
       b.innerHTML =
-        '<i data-lucide="' +
-        (saved ? "check" : "save") +
-        '"></i>' +
-        (saved ? "Room Saved" : "Save Room");
+        '<i data-lucide="' + (saved ? "check" : "save") + '"></i>' + label;
       b.setAttribute(
         "data-tt",
         !canSave
-          ? "Your Photo Is Still Uploading"
+          ? gate
+            ? gate.tooltip
+            : "Your Photo Is Still Uploading"
           : saved
             ? "Update This Saved Room"
-            : "Store This Photo And Property On Your Account",
+            : gate
+              ? "Save These Concepts To Your Account"
+              : "Store This Photo And Property On Your Account",
       );
       try {
         lucide.createIcons();
       } catch (_) {}
     }
+
 
     window.rdDisplayedVersion = () => DISPLAYED_VERSION;
     /* The variation drawer reads the branch record of whatever is on screen. */
@@ -4172,6 +4346,17 @@ export function initApp(): () => void {
     async function backfillRoomVersions() {
       if (!STUDIO_CTX || !STUDIO_CTX.roomId) return;
       const seen = new Set();
+      /* Concepts attach in slot order, so the room keeps Concept 1 before
+         Concept 2 no matter which one finished first. */
+      if (OUTPUTS) {
+        for (const s of OS.persistableSlots(OUTPUTS)) {
+          if (seen.has(s.path)) continue;
+          seen.add(s.path);
+          const v = await attachVersionToRoom(s.path);
+          if (v) OS.markSaved(OUTPUTS, s.outputIndex, { path: s.path, versionId: String(v.id || "") });
+        }
+        paintOutputs();
+      }
       for (const v of SESSION_VERSIONS || []) {
         if (!v || !v.path || seen.has(v.path)) continue;
         seen.add(v.path);
@@ -4179,6 +4364,7 @@ export function initApp(): () => void {
       }
       if (lastRenderPath && !seen.has(lastRenderPath)) await attachVersionToRoom(lastRenderPath);
     }
+
 
     /**
      * The one lifecycle a finished render follows.
@@ -4201,15 +4387,22 @@ export function initApp(): () => void {
 
 
     async function openStudioSaveRoom() {
-      const path = studioSourcePath();
+      /* A described concept has no source photo: its first durable image is
+         the room's source, so saving never waits on an upload that will not
+         happen. */
+      const slotPath = OUTPUTS ? (OS.persistableSlots(OUTPUTS)[0] || {}).path || null : null;
+      const path = studioSourcePath() || slotPath;
       if (!path) {
-        window.rdToast && window.rdToast("Your Photo Is Still Uploading");
+        const gate = OUTPUTS ? OS.saveRoomState(OUTPUTS) : null;
+        window.rdToast && window.rdToast(gate ? gate.tooltip : "Your Photo Is Still Uploading");
         return null;
       }
+      const roomType = (OUTPUTS && OUTPUTS.roomType) || activeStudioRoom() || null;
       const saved = await openSaveRoomModal({
         sourcePath: path,
-        roomName: activeStudioRoom() || null,
-        roomType: activeStudioRoom() || null,
+        roomName: roomType,
+        roomType,
+
         address: (STUDIO_CTX && STUDIO_CTX.address) || null,
         roomId: (STUDIO_CTX && STUDIO_CTX.roomId) || null,
         propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
