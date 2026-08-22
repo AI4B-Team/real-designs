@@ -6847,57 +6847,30 @@ function bind() {
       render();
     });
 
-    /* room type selector */
+    /* Room type: the one shared Room / Area picker, never a local modal. */
     on("[data-roompick]", "click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      w.roomPick = { key: e.currentTarget.dataset.roompick };
-      w.roomPickQ = "";
-      render();
-    });
-    const closeRoom = () => {
-      w.roomPick = null;
-      w.roomPickQ = "";
-      render();
-    };
-    on("#rvRoomX", "click", closeRoom);
-    on("#rvRoomWrap", "mousedown", (e) => {
-      if (e.target.id === "rvRoomWrap") closeRoom();
-    });
-    const roomQ = el.querySelector("#rvRoomQ");
-    if (roomQ) {
-      roomQ.focus();
-      const caret = roomQ.value.length;
-      try {
-        roomQ.setSelectionRange(caret, caret);
-      } catch (_) {}
-      roomQ.addEventListener("input", () => {
-        w.roomPickQ = roomQ.value;
-        render();
+      const opener = e.currentTarget;
+      const key = opener.dataset.roompick;
+      const a = (w.available || []).find((x) => x.key === key);
+      const current = a && a.room && a.room !== UNSORTED ? a.room : "";
+      openRoomAreaPicker({
+        space: current ? catalogRoomSpace(current) : "interior",
+        currentLabel: current,
+        mode: "video",
+        allowCustom: true,
+        allowUnassigned: true,
+        allowNeedsReview: true,
+        opener,
+        onApply: (sel) => {
+          if (!key) return;
+          setRoomLabel(key, sel.label, true);
+          render();
+        },
       });
-      roomQ.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-          e.preventDefault();
-          closeRoom();
-        }
-        if (e.key === "Enter") {
-          e.preventDefault();
-          const first = el.querySelector(".rv-roomopt");
-          if (first) first.click();
-        }
-      });
-    }
-    on("[data-roomset]", "click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const key = w.roomPick?.key;
-      const val = String(e.currentTarget.dataset.roomset || "")
-        .trim()
-        .slice(0, 60);
-      if (!key || !val) return closeRoom();
-      setRoomLabel(key, val, true);
-      closeRoom();
     });
+
 
     const fixAll = el.querySelector("#rvFixAll");
     if (fixAll)
