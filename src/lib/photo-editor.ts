@@ -1827,7 +1827,8 @@ export async function openPhotoEditor(opts: {
       saveFailed = false;
       s.dirty = true;
       const img = $("#rdpeImg") as HTMLImageElement;
-      img.style.transform = transformString(s);
+      paintStageTransform();
+      if (cropView) syncCrop();
       const out = t.parentElement?.querySelector(".rdpe-num");
       if (out) out.textContent = `${n(t.value) > 0 ? "+" : ""}${t.value}°`;
     }
