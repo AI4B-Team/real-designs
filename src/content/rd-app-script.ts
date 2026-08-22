@@ -4989,8 +4989,249 @@ export function initApp(): () => void {
       return true;
     };
 
+    /* ---------- Sketch To Render: follow the drawing, never invent it ---------- */
 
+    function ensureSketchPanel() {
+      try {
+        mountSketchPanel({
+          onChange: () => paintGenGate(),
+          onClassify: () => readSketchSource(true),
+          onDetect: () => detectSketchForCanvas(true),
+        });
+      } catch (_) {}
+    }
 
+    /** Free read of what the upload actually is. Nothing renders without it. */
+    async function readSketchSource(force) {
+      const srcImg = document.querySelector("#cBefore img");
+      if (!srcImg || !srcImg.src) return null;
+      if (!force && sketchClassification()) return sketchClassification();
+      ensureSketchPanel();
+      setSketchClassifying(true);
+      try {
+        const image = await toDataUrl(srcImg.src, 1400);
+        const r = await classifySketch({ data: { image } });
+        setSketchClassification(r.classification);
+        paintGenGate();
+        return r.classification;
+      } catch (e) {
+        setSketchClassifying(
+          false,
+          (e && e.message) ||
+            "This drawing could not be read. Confirm the drawing type yourself before rendering.",
+        );
+        return null;
+      }
+    }
+
+    /** Free geometry trace. The user reviews and corrects it before any charge. */
+    async function detectSketchForCanvas(force) {
+      const srcImg = document.querySelector("#cBefore img");
+      if (!srcImg || !srcImg.src) return null;
+      if (!force && hasSketchGeometry()) return sketchGeometry();
+      ensureSketchPanel();
+      setSketchDetecting(true);
+      try {
+        const image = await toDataUrl(srcImg.src, 1400);
+        const r = await detectSketchPlan({ data: { image } });
+        setSketchGeometry(r.geometry);
+        paintGenGate();
+        return r.geometry;
+      } catch (e) {
+        setSketchDetecting(
+          false,
+          (e && e.message) ||
+            "The geometry could not be traced. Add the walls, rooms and openings yourself before rendering.",
+        );
+        return null;
+      }
+    }
+
+    window.addEventListener("rd:photo", () => {
+      try {
+        if (activeToolName() !== "Sketch To Render") resetSketch();
+      } catch (_) {}
+    });
+
+    async function runSketchFlow() {
+      if (busy || GEN_GUARD.busy) return;
+      const srcImg = document.querySelector("#cBefore img");
+      if (STUDIO_SRC === SRC_EMPTY || !srcImg || !srcImg.src) {
+        needSourceModal();
+        return;
+      }
+      ensureSketchPanel();
+      /* Classification and geometry are both free, and both must exist before
+         a single credit can be spent on a render. */
+      if (!sketchClassification()) await readSketchSource(false);
+      const cls = sketchClassification();
+      if (cls && !cls.supported) {
+        showAlert(rejectionMessage(cls) || "This upload cannot be rendered as a drawing.");
+        return;
+      }
+      if (!hasSketchGeometry()) await detectSketchForCanvas(false);
+
+      const s = readSketchSettings();
+      const sel = currentStyleSelection();
+      const brief = buildSketchBrief({
+        ...s,
+        roomType: currentRoomType() || null,
+        styleId: (sel && sel.styleId) || null,
+        styleName: (sel && sel.style && sel.style.displayName) || null,
+        notes: ((document.getElementById("agentNote") || {}).value || "").trim() || null,
+        hasSource: true,
+      });
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" \u00b7 "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "Sketch To Render")) return;
+
+      const answer = await openSketchBriefReview(brief, {
+        costLabel: costLabel(brief.credits),
+        balanceNote:
+          CREDITS && CREDITS.plan !== "free" && typeof CREDITS.balance === "number"
+            ? "Balance after this run: " + Math.max(0, CREDITS.balance - brief.credits) + " credits."
+            : null,
+      });
+      if (answer !== "confirm") return;
+      if (busy || !GEN_GUARD.begin()) return;
+      await runSketchRender(brief, s);
+    }
+
+    async function runSketchRender(brief, settings) {
+      busy = true;
+      setCanvasPhase("generating");
+      const btn = document.getElementById("genBtn");
+      if (btn) btn.disabled = true;
+      const ov = document.getElementById("cGen");
+      if (ov) ov.classList.add("on");
+      genPhase(8, "Locking the drawn geometry");
+      const finish = () => {
+        setTimeout(() => {
+          if (ov) ov.classList.remove("on");
+          busy = false;
+          if (btn) btn.disabled = false;
+          GEN_GUARD.end();
+        }, 240);
+      };
+      try {
+        const srcImg = document.querySelector("#cBefore img");
+        const source = await toDataUrl(srcImg.src, 1600);
+        genPhase(
+          34,
+          brief.runs.length > 1
+            ? "Rendering " + brief.runs.length + " views"
+            : "Rendering " + brief.payload.source_label,
+        );
+        /* Earlier views of this scene are reused as the material reference so
+           a second view of the same room is not a different room. */
+        const r = await renderSketch({
+          data: {
+            image: source,
+            reference: (window.__rdSketchScenes || {})[brief.payload.scene_id] || null,
+            payload: brief.payload,
+            runs: brief.runs,
+          },
+        });
+        const made = r.results.filter((x) => x.image);
+        const failed = r.results.filter((x) => !x.image);
+        if (!made.length) throw new Error(failed[0]?.error || "The render did not produce an image.");
+
+        genPhase(74, "Saving your " + (made.length > 1 ? "views" : "render"));
+        window.__rdSketchScenes = window.__rdSketchScenes || {};
+        if (!window.__rdSketchScenes[brief.payload.scene_id])
+          window.__rdSketchScenes[brief.payload.scene_id] = made[0].image;
+
+        let firstPath = null;
+        for (const res of made) {
+          const label = brief.payload.mode_label + " \u00b7 " + res.label;
+          /* Every saved render carries the geometry it followed, the camera it
+             used and its scene, so a later view can match it exactly. */
+          window.__rdVersionExtras = sketchMeta({
+            payload: brief.payload,
+            settings,
+            sourceVersion: studioSourcePath() || null,
+            run: res.label,
+            model: r.model,
+          });
+          let path = null;
+          try {
+            path = await persistRender(res.image, label);
+          } catch (_) {
+            /* The render is paid for and on screen even if the upload failed. */
+          }
+          if (!firstPath) {
+            firstPath = path;
+            lastRender = res.image;
+            lastRenderPath = path;
+            cAfter.innerHTML = photo(res.image, brief.payload.mode_label + ", concept render");
+          }
+          addRenderVariant(res.image, label, path);
+        }
+        noteSketchView(
+          brief.payload.mode_label,
+          brief.payload.mode,
+          activeSketchCamera(),
+        );
+        window.__rdSketchMeta = {
+          classification: r.classification,
+          disclaimer: r.disclaimer,
+          mode: brief.payload.mode_label,
+          scene: brief.payload.scene_id,
+        };
+
+        setCanvasPhase("");
+        markStudioResult();
+        await finalizeGeneratedDesign(lastRenderPath);
+        window.__rdVersionExtras = null;
+        paintStudioSummary({
+          name: brief.payload.mode_label,
+          scope: brief.payload.source_label,
+        });
+        window.dispatchEvent(new Event("rd:credits-changed"));
+        genPhase(100, "Done");
+        finish();
+        cRng.value = 100;
+        setC(100);
+
+        if (failed.length)
+          showAlert(
+            failed.length +
+              " of " +
+              r.results.length +
+              " views did not finish, and those credits were refunded. " +
+              (failed[0]?.error || ""),
+          );
+
+        /* Free, honest comparison of the render against the drawing. */
+        try {
+          const q = await checkSketchDrift({
+            data: { drawing: source, render: made[0].image, payload: brief.payload },
+          });
+          showSketchDrift(q.report, { onRegenerate: () => runSketchFlow() });
+        } catch (_) {
+          /* the drift check is advisory, never a reason to lose the render */
+        }
+      } catch (e) {
+        window.__rdVersionExtras = null;
+        setCanvasPhase("");
+        finish();
+        if (!creditGate(e))
+          showAlert("Could not render this drawing. " + ((e && e.message) || "Try again in a moment."));
+      }
+    }
+
+    /** Reopens a saved render with its geometry, camera and scene intact. */
+    window.rdRestoreSketch = (meta) => {
+      const st = restoreFromSketchMeta(meta);
+      if (!st) return false;
+      ensureSketchPanel();
+      loadSketchState(st);
+      return true;
+    };
 
 
 
