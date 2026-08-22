@@ -1678,9 +1678,12 @@ export async function openPhotoEditor(opts: {
     return `
       <div class="rdpe-actions">
         <button type="button" class="rdpe-act" data-act="copyadj"><i data-lucide="copy"></i>Copy Adjustments</button>
-        <button type="button" class="rdpe-act" data-act="pasteadj" ${clipboard ? "" : "disabled"}><i data-lucide="clipboard-paste"></i>Paste Adjustments</button>
+        <button type="button" class="rdpe-act" data-act="pasteadj" ${copied ? "" : "disabled"}><i data-lucide="clipboard-paste"></i>Paste Adjustments</button>
+        <button type="button" class="rdpe-act" data-act="pastesel" ${copied ? "" : "disabled"}><i data-lucide="list-checks"></i>Paste Selected…</button>
         <button type="button" class="rdpe-act" data-act="savepreset"><i data-lucide="bookmark-plus"></i>Save Preset</button>
-        <button type="button" class="rdpe-act" data-act="batch" ${photos.length > 1 ? "" : "disabled"}><i data-lucide="images"></i>Apply To Other Photos</button>
+        <button type="button" class="rdpe-act" data-act="batch" ${photos.length > 1 ? "" : "disabled"}><i data-lucide="images"></i>Batch Edit…</button>
+        <button type="button" class="rdpe-act" data-act="batchauto" ${photos.length > 1 ? "" : "disabled"}><i data-lucide="wand-sparkles"></i>Auto Enhance Photos…</button>
+        ${lastBatch && changedPhotos(lastBatch).length ? `<button type="button" class="rdpe-act" data-act="batchundo"><i data-lucide="undo-2"></i>Undo Last Batch</button>` : ""}
       </div>
       ${
         saved.length
@@ -2815,12 +2818,11 @@ export async function openPhotoEditor(opts: {
     if (act === "autoundo") return undoAuto();
     if (act === "resetgeo") return resetGeometry();
     if (act === "retrysave") return void save(false);
-    if (act === "copyadj") {
-      clipboard = bundleOf(s);
-      paintPanel();
-      return void rdToast("Adjustments Copied.");
-    }
-    if (act === "pasteadj") return void pasteAdjustments();
+    if (act === "copyadj") return copyCurrentAdjustments();
+    if (act === "pasteadj") return pasteAdjustments();
+    if (act === "pastesel") return void pasteSelected();
+    if (act === "batchauto") return void batchAutoEnhanceFlow();
+    if (act === "batchundo") return void undoBatchFlow();
     if (act === "savepreset") return void savePresetFlow();
     if (act === "batch") return void batchApply();
     if (act === "rotl" || act === "rotr") {
