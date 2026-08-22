@@ -520,24 +520,19 @@ function paintCapabilities(tool: string) {
 
 let zoom = 1;
 
-/** The image viewport currently on screen: Redesign stage or editor stage. */
+/** There is only ever one image viewport, in every tool. */
 function activeStage(): HTMLElement | null {
-  const editing = board()?.classList.contains("editing-photo");
-  return (
-    (editing ? document.querySelector<HTMLElement>(".rdpe-embed .rdpe-stage") : null) ||
-    document.getElementById("rdwStage")
-  );
+  return document.getElementById("rdwStage");
 }
 
 /** Zoom is Canvas state, not tool state: it survives every tool change. */
 function applyZoom() {
-  document
-    .querySelectorAll<HTMLElement>("#rdwStage, .rdpe-embed .rdpe-stage")
-    .forEach((stage) => {
-      stage.style.setProperty("--rdw-zoom", String(zoom));
-      stage.classList.toggle("zoomed", zoom !== 1);
-    });
+  const stage = activeStage();
+  if (!stage) return;
+  stage.style.setProperty("--rdw-zoom", String(zoom));
+  stage.classList.toggle("zoomed", zoom !== 1);
 }
+
 
 
 function setCompare(mode: string) {
