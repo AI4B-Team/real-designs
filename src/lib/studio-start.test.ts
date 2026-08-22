@@ -27,7 +27,7 @@ function mount(context: "design" | "video", opts: Record<string, unknown> = {}) 
 
 describe("studio start source picker", () => {
   it("shows only the sources each creation mode supports", () => {
-    const sources = ["upload", "drive", "dropbox", "property", "media", "describe"];
+    const sources = ["upload", "cloud", "property", "media", "describe"];
     expect(CONTEXT_CONFIG.design.sources).toEqual(sources);
     expect(CONTEXT_CONFIG.video.sources).toEqual(sources);
   });
@@ -37,8 +37,7 @@ describe("studio start source picker", () => {
     const labels = [...host.querySelectorAll(".sp-tab")].map((t) => t.textContent?.trim());
     expect(labels).toEqual([
       "Upload",
-      "Google Drive",
-      "Dropbox",
+      "Cloud",
       "Property",
       "Media",
       "Describe",
