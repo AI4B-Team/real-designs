@@ -277,9 +277,53 @@ function editDesign(ctx: ResultContext) {
   go("studio");
 }
 
+/** Pixel retouching on the result. The stored render is never written over. */
+async function retouchPhoto(ctx: ResultContext) {
+  const src = ctx.path || ctx.src;
+  if (!src) return toast("Save This Design Before Retouching It.");
+  const { openPhotoEditor } = await import("@/lib/photo-editor");
+  await openPhotoEditor({
+    photos: [
+      {
+        key: ctx.id || ctx.path || ctx.src,
+        name: ctx.room || "Design",
+        room: ctx.room || "Design",
+        property: ctx.propertyAddress || "",
+        path: ctx.path || "",
+        src: ctx.src,
+      },
+    ],
+    startKey: ctx.id || ctx.path || ctx.src,
+  });
+}
+
+async function restoreOriginalPhoto(ctx: ResultContext) {
+  const key = ctx.id || ctx.path || ctx.src;
+  if (!key) return toast("There Is Nothing To Restore Yet.");
+  try {
+    const { resetPhotoEdit } = await import("@/lib/photo-edits.functions");
+    await resetPhotoEdit({ data: { asset_key: key } });
+    toast("Original Restored. Reopen The Image To See It.");
+  } catch (err: any) {
+    toast(err?.message || "That Image Could Not Be Restored.");
+  }
+}
+
+
 function moreMenu(anchor: HTMLElement, ctx: ResultContext) {
   const items: PopItem[] = [
     {
+      icon: "sliders-horizontal",
+      label: "Retouch Photo",
+      fn: () => void retouchPhoto(ctx),
+    },
+    {
+      icon: "rotate-ccw",
+      label: "Restore Original",
+      fn: () => void restoreOriginalPhoto(ctx),
+    },
+    {
+
       icon: "columns-2",
       label: "Compare With Original",
       fn: () => {

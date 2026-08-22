@@ -49,6 +49,9 @@ import {
 import { openVideoDetail, continueDesignVideo } from "@/content/rd-reveal";
 import { openPhotoEditor } from "@/content/rd-photo-editor";
 import { openPhotoEditor as openFullPhotoEditor } from "@/lib/photo-editor";
+import { resetPhotoEdit } from "@/lib/photo-edits.functions";
+import { confirmDialog } from "@/lib/builder-card-menu";
+
 import { openPropertyUpload } from "@/content/rd-propmedia";
 import { cancelJob } from "@/lib/upload-manager";
 import { openMotionClip } from "@/lib/rd-motion-clip";
@@ -519,8 +522,15 @@ function hoverBar(m, g, proc) {
 
 const READY = (m) => ["ready", "shared", "draft"].includes(m.status);
 const videoReady = (m) => READY(m) && !m.draft && typeGroup(m.type) !== "videos" && !!m.path;
+/* Pixel editing is available on any finished still image, uploaded or
+   generated. Edits never write over the stored source, so this is safe. */
 const canEditImage = (m) =>
-  m.type === "uploaded_image" && !m.job && !m.draft && !!m.refId && READY(m);
+  (m.type === "uploaded_image" || m.type === "generated_image") &&
+  !m.job &&
+  !m.draft &&
+  !!m.refId &&
+  READY(m);
+
 const selectedItems = () => S.items.filter((m) => S.sel.has(m.id));
 
 const planBlocked = (m) => isPlanBlocked((m && m.error) || "");
@@ -681,6 +691,14 @@ function moreItems(m, opts = {} as any) {
       label: "Edit Image",
       fn: () => editImage(m),
     });
+  if (canEditImage(m))
+    out.push({
+      group: "Manage",
+      icon: "rotate-ccw",
+      label: "Restore Original",
+      fn: () => restoreOriginal(m),
+    });
+
   if (canEditImage(m))
     out.push({
       group: "Create",
@@ -964,7 +982,31 @@ function assetRow(m) {
   };
 }
 
-/** Uploads open in the full-screen Photo Editor; designs re-open in Studio. */
+/**
+ * Restores the photo as it was uploaded or generated.
+ *
+ * Only the edit record is removed: the stored original was never written over,
+ * so this always has something to come back to.
+ */
+async function restoreOriginal(m) {
+  const ok = await confirmDialog({
+    title: "Restore The Original?",
+    body: "Every Adjustment, Crop And AI Enhancement Is Removed And The Original Photograph Comes Back. Saved Copies Are Kept.",
+    confirmLabel: "Restore Original",
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await resetPhotoEdit({ data: { asset_key: m.id } });
+    toast("Original Restored.");
+    await load(true);
+  } catch (err) {
+    toast((err && err.message) || "That Photo Could Not Be Restored.");
+  }
+}
+
+/** Every finished still image edits in place; designs also stay editable. */
+
 function editImage(m) {
   if (canEditImage(m)) {
     const siblings = filtered().filter((x) => canEditImage(x) && (x.assetPath || x.path));
