@@ -991,6 +991,54 @@ export type Database = {
         }
         Relationships: []
       }
+      photo_markups: {
+        Row: {
+          asset_key: string
+          created_at: string
+          document: Json
+          id: string
+          layer_count: number
+          property_id: string | null
+          requires_warning: boolean
+          room_id: string | null
+          source_path: string | null
+          updated_at: string
+          user_id: string
+          version_id: string | null
+          visible_disclosure: boolean
+        }
+        Insert: {
+          asset_key: string
+          created_at?: string
+          document?: Json
+          id?: string
+          layer_count?: number
+          property_id?: string | null
+          requires_warning?: boolean
+          room_id?: string | null
+          source_path?: string | null
+          updated_at?: string
+          user_id: string
+          version_id?: string | null
+          visible_disclosure?: boolean
+        }
+        Update: {
+          asset_key?: string
+          created_at?: string
+          document?: Json
+          id?: string
+          layer_count?: number
+          property_id?: string | null
+          requires_warning?: boolean
+          room_id?: string | null
+          source_path?: string | null
+          updated_at?: string
+          user_id?: string
+          version_id?: string | null
+          visible_disclosure?: boolean
+        }
+        Relationships: []
+      }
       plan_requests: {
         Row: {
           created_at: string
