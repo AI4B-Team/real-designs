@@ -5972,10 +5972,14 @@ ${picks
 
     let scopeItems = SCOPE_ITEMS.slice();
 
+    /* The room type is whatever the session actually generated, not a hardcoded
+       default: a Kitchen result is never filed as a Living Room. */
     function currentRoomType() {
       const el = document.getElementById("svType");
       const v = el && el.value ? el.value.trim() : "";
-      return v || "living room";
+      const session = OUTPUTS && OUTPUTS.roomTypeName ? String(OUTPUTS.roomTypeName).trim() : "";
+      const ctx = STUDIO_CTX && STUDIO_CTX.room ? String(STUDIO_CTX.room).trim() : "";
+      return session || v || ctx || "";
     }
 
     function studioSrc(which) {
