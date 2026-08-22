@@ -247,7 +247,6 @@ export function paintRoomCards() {
   if (!host || !sel) return;
   const space = currentSpace() as CanvasSpace;
   const list = areasForSpace(space);
-  const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
   /* A selection from another space is never carried over. */
   if (sel.value && !areaFitsSpace(sel.value, space)) {
     sel.value = "";
