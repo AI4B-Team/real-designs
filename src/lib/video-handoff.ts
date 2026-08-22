@@ -11,6 +11,7 @@
  * boot or a refresh mid-handoff cannot silently drop the selection.
  */
 import { defaultMotionFor } from "@/lib/video-motion-presets";
+import { logVideoEvent } from "@/lib/video-upload-intake";
 
 export type VideoHandoffSourceType =
   | "source-photo"
@@ -342,16 +343,52 @@ export function videoBuilderSeed(handoff: VideoBuilderHandoff, extra: Record<str
  * Publish and open in one call. Every "Create Video" button should use this so
  * no surface can invent its own payload again.
  */
+let lastKey = "";
+let lastAt = 0;
+
+/** Repeated clicks on the same selection must not create a second draft. */
+export function handoffIdempotencyKey(input: VideoHandoffInput): string {
+  const paths = normalizeVideoAssets(input.assets)
+    .map((a) => a.storagePath)
+    .join(",");
+  return `${input.origin || "app"}:${input.propertyId || ""}:${input.roomId || ""}:${paths}`;
+}
+
 export function startVideoBuilder(
   input: VideoHandoffInput,
   extra: Record<string, any> = {},
 ): VideoHandoffResult {
+  const key = handoffIdempotencyKey(input);
+  const now = Date.now();
+  if (key === lastKey && now - lastAt < 2000) {
+    const live = peekVideoHandoff();
+    if (live) {
+      logVideoEvent("video_handoff_duplicate_ignored", { origin: input.origin, key });
+      return { ok: true, handoff: live, motion: live.recommendedMotion || "" };
+    }
+  }
   const handoff = publishVideoHandoff(input);
-  if (!handoff)
+  if (!handoff) {
+    logVideoEvent("video_handoff_publish_failed", {
+      operation: "startVideoBuilder",
+      origin: input.origin || "app",
+      assetCount: (input.assets || []).length,
+    });
     return {
       ok: false,
-      reason: "Select At Least One Saved Photo To Create A Video.",
+      reason: "Couldn't Send These Photos To Video Builder.",
     };
+  }
+  lastKey = key;
+  lastAt = now;
+  logVideoEvent("video_handoff_published", {
+    operation: "startVideoBuilder",
+    origin: handoff.origin,
+    handoffId: handoff.handoffId,
+    videoDraftId: handoff.videoDraftId,
+    assetCount: handoff.assets.length,
+    assetIds: handoff.assets.map((a) => a.assetId || a.mediaId || a.versionId).filter(Boolean),
+  });
   openVideoBuilder(handoff, extra);
   return { ok: true, handoff, motion: handoff.recommendedMotion || defaultMotionFor("interior") };
 }
@@ -360,10 +397,28 @@ export function startVideoBuilder(
 export function openVideoBuilder(handoff: VideoBuilderHandoff, extra: Record<string, any> = {}) {
   try {
     (window as any).__rdAllowReveal && (window as any).__rdAllowReveal();
-  } catch {
-    /* reveal gate is optional */
+  } catch (err) {
+    logVideoEvent("video_handoff_gate_failed", {
+      operation: "openVideoBuilder",
+      handoffId: handoff.handoffId,
+      message: String(err),
+    });
   }
   void import("@/content/rd-media-lib")
     .then((m) => m.openVideoWorkflow(videoBuilderSeed(handoff, extra)))
-    .catch(() => {});
+    .catch((err) => {
+      logVideoEvent("video_handoff_navigation_failed", {
+        operation: "openVideoBuilder",
+        origin: handoff.origin,
+        handoffId: handoff.handoffId,
+        videoDraftId: handoff.videoDraftId,
+        assetCount: handoff.assets.length,
+        message: String(err),
+      });
+      try {
+        (window as any).rdToast?.("Couldn't Open The Video Builder. Please Try Again.");
+      } catch {
+        /* toast is best effort */
+      }
+    });
 }

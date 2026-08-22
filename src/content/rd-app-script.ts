@@ -135,6 +135,7 @@ import {
 import { downloadPdf, imageForPdf } from "@/lib/pdf-download";
 import { setHandoff } from "@/lib/handoff";
 import { startVideoBuilder } from "@/lib/video-handoff";
+import { logVideoEvent } from "@/lib/video-upload-intake";
 import { openStagingReview } from "@/content/rd-staging";
 import { openVideoWorkflow } from "@/content/rd-media-lib";
 
@@ -889,7 +890,17 @@ export function initApp(): () => void {
                 ? "design"
                 : s.sourceType || "address";
           createVideoFrom({ ...s, files, sourceType });
-        } catch (_) {}
+        } catch (err) {
+          logVideoEvent("video_entry_failed", {
+            operation: "rdListingVideo",
+            origin: (seed && seed.from) || "unknown",
+            handoffId: seed?.handoff?.handoffId || null,
+            videoDraftId: seed?.videoDraftId || null,
+            assetCount: (seed?.assets || []).length,
+            message: String(err),
+          });
+          showAlert("Couldn't Send These Photos To Video Builder.");
+        }
       };
     } catch (_) {}
     document.querySelectorAll("[data-lvideo]").forEach((b) =>
