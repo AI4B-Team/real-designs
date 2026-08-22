@@ -3105,3 +3105,95 @@
   font-size: 0.78rem;
   color: var(--mute-2);
 }
+
+/* ---------------------------------------------------------------------
+   Linked surface selection: the shapes drawn over the photo are the same
+   geometry the mask engine sends to generation, so hovering, selecting and
+   rendering can never disagree.
+   --------------------------------------------------------------------- */
+.rd-app #cBefore {
+  position: relative;
+}
+.rd-app .rd-so {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+}
+.rd-app .rd-so.is-on {
+  pointer-events: auto;
+}
+.rd-app .rd-so-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.rd-app .rd-so-shape {
+  fill: rgba(255, 255, 255, 0);
+  stroke: rgba(255, 255, 255, 0);
+  stroke-width: 0.5;
+  cursor: pointer;
+  transition:
+    fill 0.16s ease,
+    stroke 0.16s ease;
+}
+.rd-app .rd-so-shape.is-hot {
+  fill: rgba(204, 0, 0, 0.22);
+  stroke: rgba(255, 255, 255, 0.9);
+}
+.rd-app .rd-so-shape.is-sel {
+  fill: rgba(204, 0, 0, 0.3);
+  stroke: #cc0000;
+  stroke-width: 0.7;
+}
+/* The mask announces itself once, then stays still. */
+.rd-app .rd-so-shape.is-new {
+  animation: rdSurfIn 0.7s ease-out 1;
+}
+@keyframes rdSurfIn {
+  0% {
+    fill-opacity: 0;
+  }
+  35% {
+    fill-opacity: 2.2;
+  }
+  100% {
+    fill-opacity: 1;
+  }
+}
+.rd-app .rd-so-tag {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  flex-direction: column;
+  gap: 1px;
+  max-width: 64%;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(20, 18, 15, 0.82);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.rd-app .rd-so-tag.is-sel {
+  background: #cc0000;
+}
+.rd-app .rd-so-tag em {
+  font-style: normal;
+  font-weight: 500;
+  opacity: 0.82;
+  font-size: 0.66rem;
+}
+.rd-app .rd-decl-row.is-hot {
+  border-color: #cc0000;
+  background: rgba(204, 0, 0, 0.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rd-app .rd-so-shape.is-new {
+    animation: none;
+  }
+}
