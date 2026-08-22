@@ -2102,6 +2102,51 @@ export async function openPhotoEditor(opts: {
 
   /* ---------------------------------------------------------------- save */
 
+  /**
+   * Render one photograph and write a durable edited version for it. Shared by
+   * the single Save button and by Batch Edit, so a batch produces exactly the
+   * same kind of version a manual save does — one per photograph.
+   */
+  async function savePhotoState(
+    p: EditorPhoto,
+    s: PhotoState,
+    asCopy: boolean,
+  ): Promise<{ path: string; dataUrl: string; row: any }> {
+    const dataUrl = await renderPhoto(s);
+    const path = await uploadRenderDataUrl(dataUrl);
+    const row = await savePhotoEdit({
+      data: {
+        asset_key: p.key,
+        source_path: p.path || p.src || p.key,
+        adjustments: s.adj,
+        crop: s.crop,
+        rotation: s.rotation,
+        flip_h: s.flipH,
+        geometry: {
+          straighten: s.straighten || 0,
+          vertical: s.vertical || 0,
+          horizontal: s.horizontal || 0,
+          flip_v: !!s.flipV,
+        },
+        modification_class: classifyEdits({
+          aiOps: s.aiOps,
+          hasAdjustments:
+            Object.values(s.adj || {}).some((v) => Number(v) !== 0) || !!s.crop || !!s.rotation,
+        }),
+        ai_ops: s.aiOps,
+        ...(privacyMeta.get(p.key)
+          ? { privacy: { ...privacyMeta.get(p.key)!, result_path: path } }
+          : {}),
+        edited_path: path,
+        label: p.room || p.name || null,
+        as_copy: asCopy,
+        editor_mode: modeFor(p),
+        parent_asset_key: p.versionId || p.parentVersionId || p.assetId || null,
+      },
+    });
+    return { path, dataUrl, row };
+  }
+
   async function save(asCopy: boolean) {
     const p = cur();
     const s = st();
@@ -2110,40 +2155,10 @@ export async function openPhotoEditor(opts: {
     saveFailed = false;
     paint();
     try {
-      const dataUrl = await renderPhoto(s);
-      const path = await uploadRenderDataUrl(dataUrl);
-      await savePhotoEdit({
-        data: {
-          asset_key: p.key,
-          source_path: p.path || p.src || p.key,
-          adjustments: s.adj,
-          crop: s.crop,
-          rotation: s.rotation,
-          flip_h: s.flipH,
-          geometry: {
-            straighten: s.straighten || 0,
-            vertical: s.vertical || 0,
-            horizontal: s.horizontal || 0,
-            flip_v: !!s.flipV,
-          },
-          modification_class: classifyEdits({
-            aiOps: s.aiOps,
-            hasAdjustments:
-              Object.values(s.adj || {}).some((v) => Number(v) !== 0) || !!s.crop || !!s.rotation,
-          }),
-          ai_ops: s.aiOps,
-          ...(privacyMeta.get(p.key)
-            ? { privacy: { ...privacyMeta.get(p.key)!, result_path: path } }
-            : {}),
-          edited_path: path,
-          label: p.room || p.name || null,
-          as_copy: asCopy,
-          editor_mode: modeFor(p),
-          parent_asset_key: p.versionId || p.parentVersionId || p.assetId || null,
-        },
-      });
+      const { path, dataUrl } = await savePhotoState(p, s, asCopy);
       await persistMarkup();
       s.dirty = false;
+
       rdToast(
         asCopy
           ? "Saved As A Copy."
