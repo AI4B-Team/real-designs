@@ -1,5 +1,8 @@
 /**
- * Bulk design for the Photo Staging grid.
+ * Bulk design engine for the Photo Design workflow.
+ *
+ * Setup lives in the inline Design and Review steps (see staging-design.ts):
+ * this module only runs the batch.
  *
  * A bulk run is one shared direction applied to several photos. It is NOT a
  * single render copied across rooms: every photo is its own render, with its
@@ -10,23 +13,12 @@
  */
 /* eslint-disable */
 // @ts-nocheck
-import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
 import { effectiveRatio } from "@/lib/output-ratio";
 import { uploadRenderDataUrl, roomPhotoUrl } from "@/lib/room-photos";
 import { roomSpace } from "@/lib/staging-rooms";
 import { STYLES } from "@/lib/style-catalog";
 
-const esc = (s) =>
-  String(s == null ? "" : s).replace(
-    /[&<>"]/g,
-    (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
-  );
-const paint = () => {
-  try {
-    createIcons({ icons });
-  } catch (_) {}
-};
 
 const SPACE_LABEL = {
   interior: "Interior",
