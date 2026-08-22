@@ -19,6 +19,7 @@ import { runPhotoEdit } from "@/lib/photo-edit.functions";
 import {
   type EditorMode,
   compareEnabled,
+  defaultGenerationSource,
   defaultOpenSections,
   detectPhotoTraits,
   editedFromLabel,
@@ -227,7 +228,13 @@ export async function openPhotoEditor(opts: {
   startKey?: string;
   property?: string;
   editorMode?: EditorMode;
-  onSaved?: (r: { key: string; path: string; dataUrl: string; copy: boolean }) => void;
+  onSaved?: (r: {
+    key: string;
+    path: string;
+    dataUrl: string;
+    copy: boolean;
+    useEdited?: boolean;
+  }) => void;
 }): Promise<void> {
   const photos = (opts.photos || []).filter((p) => p && p.key);
   if (!photos.length) return void rdToast("There Are No Photos To Edit.", "error");
@@ -663,8 +670,24 @@ export async function openPhotoEditor(opts: {
         },
       });
       s.dirty = false;
-      rdToast(asCopy ? "Saved As A Copy." : "Photo Saved.");
-      opts.onSaved?.({ key: p.key, path, dataUrl, copy: asCopy });
+      rdToast(
+        asCopy
+          ? "Saved As A Copy."
+          : modeFor(p) === "generated"
+            ? "Saved As A New Version."
+            : "Photo Saved.",
+      );
+      /* A prepared source photo asks which image generation should consume. */
+      let useEdited = defaultGenerationSource(modeFor(p)) === "edited";
+      if (!asCopy && modeFor(p) === "source") {
+        useEdited = await confirmDialog({
+          title: "Use This Edit For Generation?",
+          body: "The Original Upload Is Kept Either Way.",
+          confirmLabel: "Use Edited Photo",
+          cancelLabel: "Keep Original As Source",
+        });
+      }
+      opts.onSaved?.({ key: p.key, path, dataUrl, copy: asCopy, useEdited });
     } catch (err: any) {
       rdToast(err?.message || "That Photo Could Not Be Saved.", "error");
     } finally {
