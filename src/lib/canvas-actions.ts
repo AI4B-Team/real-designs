@@ -313,6 +313,17 @@ async function restoreOriginalPhoto(ctx: ResultContext) {
 function moreMenu(anchor: HTMLElement, ctx: ResultContext) {
   const items: PopItem[] = [
     {
+      icon: "sliders-horizontal",
+      label: "Retouch Photo",
+      fn: () => void retouchPhoto(ctx),
+    },
+    {
+      icon: "rotate-ccw",
+      label: "Restore Original",
+      fn: () => void restoreOriginalPhoto(ctx),
+    },
+    {
+
       icon: "columns-2",
       label: "Compare With Original",
       fn: () => {
