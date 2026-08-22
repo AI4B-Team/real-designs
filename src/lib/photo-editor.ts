@@ -914,7 +914,6 @@ export async function openPhotoEditor(opts: {
   }
 
   /** A preview overlays the filter only — the stored adjustments never move. */
-  let previewAdj: Adj | null = null;
   function applyPreviewFilter() {
     const img = $("#rdpeImg") as HTMLImageElement;
     if (img && previewAdj) img.style.filter = filterString(previewAdj);
