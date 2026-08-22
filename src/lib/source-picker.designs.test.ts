@@ -37,7 +37,7 @@ function mount(onDesigns = vi.fn()) {
   document.body.appendChild(host);
   mountSourcePicker(host, {
     context: "video",
-    initialTab: "design",
+    initialTab: "media",
     onFiles: async () => {},
     loadDesigns: async () => DESIGNS,
     onDesigns,
@@ -129,13 +129,13 @@ describe("video design source picker", () => {
     document.body.appendChild(host);
     mountSourcePicker(host, {
       context: "video",
-      initialTab: "design",
+      initialTab: "media",
       onFiles: async () => {},
       loadDesigns: async () => [],
       onDesigns: vi.fn(),
     } as any);
     await tick();
-    expect(host.textContent).toContain("No saved designs yet");
-    expect(host.querySelector('[data-sp="ddesign"]')).not.toBeNull();
+    expect(host.textContent).toContain("No media yet");
+    expect(host.querySelector('[data-sp="dupload"]')).not.toBeNull();
   });
 });
