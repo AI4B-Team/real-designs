@@ -300,7 +300,11 @@ export function duplicateLayer(layers: MarkupLayer[], id: string): MarkupLayer[]
     id: uid(),
     name: `${src.name} Copy`,
     locked: false,
-    number: src.shape === "marker" ? nextMarkerNumber(layers) : src.number,
+    ...(src.shape === "marker"
+      ? { number: nextMarkerNumber(layers) }
+      : src.number !== undefined
+        ? { number: src.number }
+        : {}),
     points: src.points.map((p) => clampPoint({ x: p.x + 0.02, y: p.y + 0.02 })),
   };
   const next = layers.slice();
