@@ -7,7 +7,7 @@
 
 .rd-app .studio.rdw {
   display: grid;
-  grid-template-columns: 88px minmax(620px, 1fr) minmax(360px, 0.5fr);
+  grid-template-columns: 112px minmax(560px, 1fr) minmax(360px, 0.5fr);
   gap: 14px;
   align-items: stretch;
   min-height: 0;
@@ -64,7 +64,9 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 6px;
+  min-height: 0;
+  /* Floorplan and the last separator must always scroll fully into view. */
+  padding: 8px 6px 26px;
   background: var(--card, #fff);
   border: 1px solid var(--line, #e9e6e0);
   border-radius: 12px;
@@ -85,10 +87,14 @@
 .rd-app .rdw-rail .toolrow.off,
 .rd-app .rdw-rail .toolrow.is-disabled {
   box-sizing: border-box;
-  width: 74px;
-  min-width: 74px;
-  min-height: 56px;
+  /* Every tool button keeps the same geometry, selected or not, so the rail
+     never shifts and labels are never clipped. */
+  width: 96px;
+  min-width: 96px;
+  min-height: 62px;
   height: auto;
+  /* Room reserved for the PRO / STUDIO badge so labels never sit under it. */
+  padding-top: 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,9 +122,11 @@
   line-height: 1.15;
   text-align: center;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* Primary tool names are never truncated: they wrap instead. */
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 .rd-app .rdw-rail .toolrow i[data-lucide],
 .rd-app .rdw-rail .toolrow svg,
@@ -658,12 +666,12 @@
 /* ---------------- responsive ---------------- */
 @media (max-width: 1439px) and (min-width: 1100px) {
   .rd-app .studio.rdw {
-    grid-template-columns: 84px minmax(540px, 1fr) 360px;
+    grid-template-columns: 112px minmax(480px, 1fr) 360px;
   }
 }
 @media (max-width: 1099px) {
   .rd-app .studio.rdw {
-    grid-template-columns: 84px minmax(0, 1fr);
+    grid-template-columns: 112px minmax(0, 1fr);
   }
   .rd-app .studio.rdw > .rdw-panel {
     position: fixed;

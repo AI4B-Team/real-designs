@@ -9315,7 +9315,10 @@ ${picks
         const label = toolLabel(nm, space);
         const desc = toolDescription(nm, space);
         const b = r.querySelector("b");
-        if (b) b.textContent = label;
+        /* The narrow rail always shows the short, stable tool name. Space
+           scope ("Exterior Styling") belongs to the right inspector, never to
+           a 112px column where it would truncate. */
+        if (b && !b.dataset.railLabel) b.dataset.railLabel = b.textContent || "";
         r.setAttribute("data-desc", desc);
         r.disabled = !support.ok;
         r.classList.toggle("off", !support.ok);
@@ -9330,7 +9333,9 @@ ${picks
         r.removeAttribute("title");
         if (!support.ok) r.classList.remove("on");
       });
-      if (!document.querySelector("#fTool .toolrow.on")) {
+      /* While Edit owns the Designer, no generation tool may look selected. */
+      const editingPhoto = !!document.querySelector(".studio.rdw.editing-photo");
+      if (!editingPhoto && !document.querySelector("#fTool .toolrow.on")) {
         const fb = document.querySelector(
           '#fTool .toolrow[data-tool="' + fallbackTool(space) + '"]',
         ) as any;

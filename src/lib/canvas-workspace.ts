@@ -141,15 +141,42 @@ function editorMountHost(): HTMLElement | null {
   return board();
 }
 
-/** Edit Photo is Canvas state, never navigation. */
+/** The generation tool that was selected before Edit took over the rail. */
+let toolBeforeEdit = "";
+
+/**
+ * Edit Photo is Canvas state, never navigation. Exactly one Designer tool is
+ * selected at a time: turning Edit on clears every generation tool, turning it
+ * off restores the one that was selected before.
+ */
 export function setCanvasTool(tool: "edit-photo" | null) {
   const b = board();
   const btn = document.getElementById("rdwEditPhotoTool");
   const on = tool === "edit-photo";
+  const rows = Array.from(
+    document.querySelectorAll<HTMLElement>("#fTool .toolrow:not(.rdw-phototool)"),
+  );
+  if (on) {
+    const prev = rows.find((r) => r.classList.contains("on"));
+    if (prev) toolBeforeEdit = prev.dataset["tool"] || "";
+    rows.forEach((r) => {
+      r.classList.remove("on");
+      r.setAttribute("aria-pressed", "false");
+    });
+  } else if (!rows.some((r) => r.classList.contains("on"))) {
+    const back =
+      rows.find((r) => r.dataset["tool"] === toolBeforeEdit) ||
+      rows.find((r) => r.dataset["tool"] === "Redesign") ||
+      rows[0];
+    back?.classList.add("on");
+    back?.setAttribute("aria-pressed", "true");
+  }
+  rows.forEach((r) => r.setAttribute("aria-pressed", r.classList.contains("on") ? "true" : "false"));
   b?.classList.toggle("editing-photo", on);
-  if (b) b.dataset["activeTool"] = on ? "edit-photo" : "";
+  if (b) b.dataset["activeTool"] = on ? "edit-photo" : toolBeforeEdit || "redesign";
   btn?.classList.toggle("on", on);
   btn?.setAttribute("aria-pressed", on ? "true" : "false");
+  paintPanelHeader();
 }
 
 /** Closes the embedded editor and restores the normal Canvas stage. */
