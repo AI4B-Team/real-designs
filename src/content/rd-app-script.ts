@@ -2583,7 +2583,19 @@ export function initApp(): () => void {
         kind: "concept",
         roomType: i.room || null,
         roomSource: i.roomSource || (i.room ? "selected" : "unknown"),
+        spaceType: i.space || "interior",
+        activeTool: i.tool || "describe",
+        styleId: i.styleId || null,
+        styleName: i.style || null,
+        changeLevel: i.changeLevel || "balanced",
+        finishGrade: i.finishGrade || null,
+        prompt: i.prompt || "",
+        roomId: (STUDIO_CTX && STUDIO_CTX.roomId) || null,
+        propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
+        projectId: (STUDIO_CTX && STUDIO_CTX.projectId) || null,
+        sourceStoragePath: studioSourcePath(),
       });
+      window.rdCanvasSession = () => OUTPUTS;
       applyRoomTypeEverywhere(i.room || null);
       paintOutputs();
       paintStudioState();
@@ -2594,6 +2606,7 @@ export function initApp(): () => void {
     /** Keeps every room-type surface on the same value. */
     function applyRoomTypeEverywhere(room) {
       if (!room) return;
+      if (OUTPUTS) OS.setRoomType(OUTPUTS, room);
       if (STUDIO_CTX) STUDIO_CTX.room = room;
       const set = (id) => {
         const el = document.getElementById(id);
@@ -2631,6 +2644,12 @@ export function initApp(): () => void {
     }
 
     /** A slot that never produced an image keeps its place and its reason. */
+    window.rdConceptSlotGenerating = (index) => {
+      if (!OUTPUTS) return;
+      OS.markGenerating(OUTPUTS, index);
+      paintOutputs();
+    };
+
     window.rdConceptSlotFailed = (index, message) => {
       if (!OUTPUTS) return;
       OS.markFailed(OUTPUTS, index, message || "Generation failed");
@@ -4398,6 +4417,7 @@ export function initApp(): () => void {
         return null;
       }
       const roomType = (OUTPUTS && OUTPUTS.roomTypeName) || activeStudioRoom() || null;
+      if (OUTPUTS) OS.setRoomSave(OUTPUTS, "saving");
       const saved = await openSaveRoomModal({
         sourcePath: path,
         roomName: roomType,
@@ -4408,7 +4428,11 @@ export function initApp(): () => void {
         propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
         projectId: (STUDIO_CTX && STUDIO_CTX.projectId) || null,
       });
-      if (!saved) return null;
+      if (!saved) {
+        if (OUTPUTS) OS.setRoomSave(OUTPUTS, "unsaved");
+        return null;
+      }
+      if (OUTPUTS) OS.setRoomSave(OUTPUTS, "saved", saved.room_id);
       STUDIO_CTX.roomId = saved.room_id;
       STUDIO_CTX.propertyId = saved.property_id;
       STUDIO_CTX.projectId = saved.project_id;
