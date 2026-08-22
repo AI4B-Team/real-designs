@@ -59,7 +59,7 @@ describe("handoff persistence", () => {
     expect(seed.assets).toHaveLength(1);
     expect(seed.propertyId).toBe("p1");
     expect(seed.propertyAddress).toBe("12 Main St");
-    expect(seed["duration"]).toBe(8);
+    expect((seed as Record<string, any>)["duration"]).toBe(8);
   });
 
   it("rejects an unsaved canvas result", () => {
