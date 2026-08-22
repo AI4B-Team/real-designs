@@ -1267,11 +1267,10 @@ export async function openPhotoEditor(opts: {
       aiPreview = null;
       return paint();
     }
-    if (act === "auto") {
-      push();
-      s.adj = { ...s.adj, ...AUTO_ENHANCE };
-      return paint();
-    }
+    if (act === "autopreview") return void runAutoEnhance(false);
+    if (act === "autoapply") return void runAutoEnhance(true);
+    if (act === "autoundo") return undoAuto();
+    if (act === "resetgeo") return resetGeometry();
     if (act === "rotl" || act === "rotr") {
       push();
       s.rotation = (((s.rotation + (act === "rotr" ? 90 : -90)) % 360) + 360) % 360;
@@ -1282,8 +1281,27 @@ export async function openPhotoEditor(opts: {
       s.flipH = !s.flipH;
       return paint();
     }
+    if (act === "flipv") {
+      push();
+      s.flipV = !s.flipV;
+      return paint();
+    }
+    if (act === "cropapply") {
+      cropMode = false;
+      cropBackup = null;
+      paint();
+      return paintCropBox();
+    }
+    if (act === "cropcancel") {
+      s.crop = cropBackup;
+      cropBackup = null;
+      cropMode = false;
+      paint();
+      return paintCropBox();
+    }
     if (act === "cropmode") {
       cropMode = !cropMode;
+      cropBackup = cropMode ? (s.crop ? { ...s.crop } : null) : null;
       if (cropMode && !s.crop) return setRatio("1:1");
       paint();
       return paintCropBox();
