@@ -142,6 +142,7 @@ import {
 import { flattenMarkup } from "@/lib/markup-render";
 import { attachMarkupEditor, type MarkupEditor, type MarkupMode } from "@/lib/markup-editor";
 import { listMarkups, saveMarkup } from "@/lib/markup.functions";
+import type { MarkupLayer } from "@/lib/markup";
 import {
   CALLOUT_TYPES,
   MEASURED_TYPES,
@@ -1150,7 +1151,7 @@ export async function openPhotoEditor(opts: {
   }
 
   function calloutCard(layer: MarkupLayer): string {
-    const kind = CALLOUT_TYPES[layer.type];
+    const kind = CALLOUT_TYPES[layer.type as keyof typeof CALLOUT_TYPES];
     if (!kind) return "";
     const meta = (layer.meta && layer.meta.kind === kind ? layer.meta : emptyCallout(kind)) as CalloutMeta;
     const field = (name: string, label: string, value: string, ph = "") =>
