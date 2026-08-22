@@ -922,6 +922,57 @@ export type Database = {
         }
         Relationships: []
       }
+      photo_batches: {
+        Row: {
+          batch_id: string
+          completed: boolean
+          created_at: string
+          failure_count: number
+          id: string
+          kind: string
+          photo_count: number
+          photos: Json
+          property_id: string | null
+          settings: Json
+          source_key: string | null
+          success_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          batch_id: string
+          completed?: boolean
+          created_at?: string
+          failure_count?: number
+          id?: string
+          kind: string
+          photo_count?: number
+          photos?: Json
+          property_id?: string | null
+          settings?: Json
+          source_key?: string | null
+          success_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          batch_id?: string
+          completed?: boolean
+          created_at?: string
+          failure_count?: number
+          id?: string
+          kind?: string
+          photo_count?: number
+          photos?: Json
+          property_id?: string | null
+          settings?: Json
+          source_key?: string | null
+          success_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       photo_edits: {
         Row: {
           adjustments: Json
