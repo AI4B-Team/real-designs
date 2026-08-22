@@ -1789,16 +1789,20 @@ export async function openPhotoEditor(opts: {
       s.crop = cropBackup;
       cropBackup = null;
       cropMode = false;
+      cropView = null;
       paint();
       return paintCropBox();
     }
+    if (act === "cropreset") return resetCropPosition();
     if (act === "cropmode") {
       cropMode = !cropMode;
       cropBackup = cropMode ? (s.crop ? { ...s.crop } : null) : null;
-      if (cropMode && !s.crop) return setRatio("1:1");
+      if (cropMode) return setRatio(s.crop?.ratio || "1:1");
+      cropView = null;
       paint();
       return paintCropBox();
     }
+
   });
 
   host.addEventListener("input", (e) => {
