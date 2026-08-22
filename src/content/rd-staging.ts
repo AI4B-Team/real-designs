@@ -2971,10 +2971,21 @@ function mountStrip() {
   if (view && board) view.insertBefore(head, board);
 
   strip = document.createElement("div");
-  strip.className = "rds-strip";
-  if (view && board && board.nextSibling) view.insertBefore(strip, board.nextSibling);
+  strip.className = "rds-strip rds-film";
+  /* The filmstrip lives INSIDE the Canvas workspace: directly under the image
+     viewport and directly above the permanent bottom action bar (Version
+     History / Save Room), which it never replaces. */
+  const cardBody = document.querySelector(
+    "#v-studio .canvas-card > .card-b",
+  ) as HTMLElement | null;
+  const bottomBar = document.getElementById("rdwVers");
+  if (cardBody && bottomBar && bottomBar.parentElement === cardBody) {
+    cardBody.insertBefore(strip, bottomBar);
+  } else if (cardBody) cardBody.appendChild(strip);
+  else if (view && board && board.nextSibling) view.insertBefore(strip, board.nextSibling);
   else if (view) view.appendChild(strip);
   else document.body.appendChild(strip);
+
 
   /* Autosave already persists every edit, so the menu only navigates. */
   const backToPhotos = () => {
@@ -3186,7 +3197,27 @@ function roomLabel(it) {
   return r || "Unassigned Room";
 }
 
+/* The Property Photos filmstrip is persistent inside the Canvas workspace and
+   remembers whether the user left it open. */
+const FILM_KEY = "rd.canvas.filmstrip";
+
+function filmstripOpen() {
+  try {
+    return localStorage.getItem(FILM_KEY) !== "0";
+  } catch (_) {
+    return true;
+  }
+}
+
+function setFilmstripOpen(open) {
+  try {
+    localStorage.setItem(FILM_KEY, open ? "1" : "0");
+  } catch (_) {}
+  drawStrip();
+}
+
 function drawStrip() {
+
   if (!strip || !S) return;
   const list = designSet();
   const i = list.findIndex((x) => x.key === S.current);
@@ -3197,25 +3228,42 @@ function drawStrip() {
   const pos = document.getElementById("rdsCanvasPos");
   if (pos) pos.textContent = cur && list.length > 1 ? `Photo ${i + 1} of ${list.length}` : "";
 
-  strip.innerHTML = `<button class="rds-strip-i" id="rdsPrev" aria-label="Previous room" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
-    <div class="rds-strip-l">${list
-      .map((x) => {
-        const ws = workState(x);
-        return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
+  const open = filmstripOpen();
+  strip.classList.toggle("collapsed", !open);
+  strip.innerHTML = `<div class="rds-film-h">
+      <button class="rds-film-t" id="rdsFilmToggle" type="button" aria-expanded="${open ? "true" : "false"}" aria-controls="rdsFilmBody">
+        <i data-lucide="${open ? "chevron-down" : "chevron-right"}"></i>
+        <b>Property Photos</b>
+        <span class="rds-film-n">${list.length}</span>
+      </button>
+      <span class="rds-film-cur">${cur ? esc(roomLabel(cur)) : ""}${list.length > 1 && i >= 0 ? ` &middot; ${i + 1} Of ${list.length}` : ""}</span>
+      <div class="rds-film-a">
+        <button class="rds-strip-i" id="rdsPrev" aria-label="Previous Photo" ${i <= 0 ? "disabled" : ""}><i data-lucide="chevron-left"></i></button>
+        <button class="rds-strip-i" id="rdsNext" aria-label="Next Photo" ${i < 0 || i >= list.length - 1 ? "disabled" : ""}><i data-lucide="chevron-right"></i></button>
+        ${cur && cur.done && nxt ? `<button class="rds-strip-n" id="rdsNextRoom">Next Room<i data-lucide="arrow-right"></i></button>` : ""}
+        <button class="rds-strip-i" id="rdsStripX" aria-label="Close the photo set"><i data-lucide="x"></i></button>
+      </div>
+    </div>
+    <div class="rds-film-b" id="rdsFilmBody"${open ? "" : " hidden"}>
+      <div class="rds-strip-l">${list
+        .map((x) => {
+          const ws = workState(x);
+          return `<button class="rds-strip-t${x.key === S.current ? " on" : ""}${ws ? " ws-" + ws.cls : ""}" data-go="${x.key}" title="${esc(x.room || x.name)}">
             <img${imgAttrs(x)} alt="${esc(x.name)}">
             ${ws ? `<i data-lucide="${ws.icon}"></i>` : ""}
             <em>${esc(roomLabel(x))}</em></button>`;
-      })
-      .join("")}</div>
-    <button class="rds-strip-i" id="rdsNext" aria-label="Next room" ${i < 0 || i >= list.length - 1 ? "disabled" : ""}><i data-lucide="chevron-right"></i></button>
-    ${cur && cur.done && nxt ? `<button class="rds-strip-n" id="rdsNextRoom">Next Room<i data-lucide="arrow-right"></i></button>` : ""}
-    <button class="rds-strip-i" id="rdsStripX" aria-label="Close the photo set"><i data-lucide="x"></i></button>`;
+        })
+        .join("")}</div>
+    </div>`;
 
   paint();
   /* Thumbnails follow their storage path, so an expired signed URL re-signs
      in place instead of leaving blank frames in the filmstrip. */
   mountPhotoImages(strip);
+  const toggle = strip.querySelector("#rdsFilmToggle") as HTMLButtonElement | null;
+  if (toggle) toggle.onclick = () => setFilmstripOpen(!filmstripOpen());
   strip.querySelector("#rdsStripX").onclick = exitAll;
+
   const step = (dir) => {
     markCurrentDone();
     const l = designSet();
