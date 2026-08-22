@@ -274,6 +274,8 @@ function draftPayload() {
     settings: {
       current: S.current || null,
       direction: S.direction || null,
+      /* Style choices are part of the draft, so Design survives a refresh. */
+      design: S.design || S.bulkSettings || null,
       output_ratio: normalizeOutputRatio(S.outputRatio),
       rooms: S.items.reduce((m, i) => {
         m[i.key] = {
@@ -2677,10 +2679,10 @@ function startDesigning() {
     return;
   }
   saveDraft();
-  /* Continue advances the bulk workflow: it opens the shared design-direction
-     interface for every selected photo. It never routes into the single-photo
-     Studio canvas — that is an explicit per-result action. */
-  startBulkDesign(sel);
+  /* Continue advances to the Design page for every selected photo. It never
+     routes into the single-photo Studio canvas — that is an explicit
+     per-result action. */
+  goStep("design");
 }
 
 /* ------------------------------------------------------ property address
