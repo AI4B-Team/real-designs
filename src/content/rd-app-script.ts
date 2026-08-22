@@ -2457,6 +2457,44 @@ export function initApp(): () => void {
       paintVersions();
     }
 
+    /* A partial batch is never reported as done: the surviving image stays on
+       the canvas and only the missing option can be retried. */
+    function showConceptPartial(message, onRetry) {
+      const existing = document.getElementById("conceptPartial");
+      if (!message) {
+        if (existing) existing.remove();
+        return;
+      }
+      const host = document.querySelector("#canvasCard .card-b");
+      let el = existing;
+      if (!el) {
+        el = document.createElement("div");
+        el.id = "conceptPartial";
+        el.className = "rd-savewarn";
+        if (host) host.insertBefore(el, document.getElementById("rdwVers"));
+      }
+      el.innerHTML = "";
+      const txt = document.createElement("div");
+      const b = document.createElement("b");
+      b.textContent = message;
+      txt.appendChild(b);
+      el.appendChild(txt);
+      if (onRetry) {
+        const btn = document.createElement("button");
+        btn.className = "btn btn-dark btn-xs";
+        btn.textContent = "Retry Missing Image";
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            await onRetry();
+          } finally {
+            btn.disabled = false;
+          }
+        });
+        el.appendChild(btn);
+      }
+    }
+
     /** Appends one finished option. Never resets the workspace. */
     async function addConcept(image, label, opts) {
       const o = opts || {};
@@ -2569,6 +2607,7 @@ export function initApp(): () => void {
           },
           beginConceptBatch: (info) => beginConceptBatch(info),
           addConcept: (image, label, opts) => addConcept(image, label, opts),
+          conceptPartial: (message, onRetry) => showConceptPartial(message, onRetry),
           setCanvasStatus: (text) => {
             const st = document.getElementById("rdwVerState");
             if (st) st.textContent = text || "";
