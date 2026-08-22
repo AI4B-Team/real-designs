@@ -11701,6 +11701,11 @@ ${picks
         ensureSketchPanel();
         setSketchPanelVisible(tool === "Sketch To Render");
       } catch (_) {}
+      /* The plan interpretation controls belong to the Floorplan tool alone. */
+      try {
+        ensureFloorplanPanel();
+        setFloorplanPanelVisible(tool === "2D To 3D Plan");
+      } catch (_) {}
       /* The camera and continuity controls belong to Angles alone. */
       try {
         ensureAnglesPanel();
