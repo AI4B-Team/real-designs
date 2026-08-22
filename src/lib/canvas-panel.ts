@@ -225,13 +225,16 @@ export function buildCanvasPanel() {
   const instr = fieldByLabel("Additional Instructions");
   if (instr) {
     instr.id = "rdwNoteField";
+    instr.classList.add("rdw-note-field");
     const lab = instr.querySelector("label") as HTMLElement | null;
     if (lab)
       lab.innerHTML =
-        'Additional Instructions<span class="rdw-opt-tag">Optional</span>' +
-        '<span class="rdw-help">Tell AI anything else you want changed</span>';
+        '<span class="rdw-note-row"><span class="rdw-note-title">Additional instructions</span>' +
+        '<span class="rdw-opt-tag">Optional</span></span>' +
+        '<span class="rdw-help">Tell AI anything else you want changed.</span>';
     const ta = instr.querySelector("textarea") as HTMLTextAreaElement | null;
-    if (ta) ta.placeholder = "Keep the flooring, lighten the cabinets, and add an island...";
+    if (ta)
+      ta.placeholder = "Example: Keep the flooring, lighten the cabinets, and add an island.";
     body.appendChild(instr);
   }
 

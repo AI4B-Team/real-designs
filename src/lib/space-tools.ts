@@ -226,10 +226,10 @@ export function styleCompatible(
 export function instructionPlaceholder(space: SpaceType | string): string {
   const sp = normalizeSpace(space as string);
   if (sp === "exterior")
-    return "Keep the roofline and windows, update the paint, and add low-maintenance landscaping.";
+    return "Example: Keep the roofline and windows, update the paint, and add low-maintenance landscaping.";
   if (sp === "garden")
-    return "Keep the existing trees, add layered planting, pathway lighting, and a seating area.";
-  return "Keep the flooring, lighten the cabinets, and add an island.";
+    return "Example: Keep the existing trees, add layered planting, pathway lighting, and a seating area.";
+  return "Example: Keep the flooring, lighten the cabinets, and add an island.";
 }
 
 /** Space-specific instruction the model must receive. */
