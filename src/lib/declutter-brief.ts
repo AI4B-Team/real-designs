@@ -290,41 +290,36 @@ export function applyModeSelection(
 
 /* ---------------------------------------------------------------- masks */
 
+/*
+ * Declutter shares the one mask foundation in @/lib/selection-mask with Object
+ * Edit and Materials. Only the vocabulary — Remove and Keep — belongs here.
+ */
+
 export type StrokeKind = "remove" | "keep";
 
 /** One brush dab, normalized to the source frame. */
-export type MaskStroke = { x: number; y: number; r: number; kind: StrokeKind };
+export type MaskStroke = CoreMaskStroke<StrokeKind>;
 
-export type MaskState = {
-  strokes: MaskStroke[];
-  /** Strokes popped by Undo, ready for Redo. */
-  redo: MaskStroke[];
-};
+export type MaskState = CoreMaskState<StrokeKind>;
+
+export function strokeIntent(kind: StrokeKind): SelectionIntent {
+  return kind === "remove" ? "include" : "exclude";
+}
 
 export function emptyMask(): MaskState {
-  return { strokes: [], redo: [] };
+  return coreEmptyMask<StrokeKind>();
 }
 
 export function pushStroke(mask: MaskState, stroke: MaskStroke): MaskState {
-  return {
-    strokes: mask.strokes.concat([
-      { x: clamp01(stroke.x), y: clamp01(stroke.y), r: Math.max(0.005, clamp01(stroke.r)), kind: stroke.kind },
-    ]),
-    redo: [],
-  };
+  return corePushStroke(mask, stroke);
 }
 
 export function undoStroke(mask: MaskState): MaskState {
-  if (!mask.strokes.length) return mask;
-  const strokes = mask.strokes.slice(0, -1);
-  const last = mask.strokes[mask.strokes.length - 1]!;
-  return { strokes, redo: mask.redo.concat([last]) };
+  return coreUndoStroke(mask);
 }
 
 export function redoStroke(mask: MaskState): MaskState {
-  if (!mask.redo.length) return mask;
-  const last = mask.redo[mask.redo.length - 1]!;
-  return { strokes: mask.strokes.concat([last]), redo: mask.redo.slice(0, -1) };
+  return coreRedoStroke(mask);
 }
 
 export type MaskRegions = {
@@ -339,37 +334,30 @@ export type MaskRegions = {
  * The regions that reach the backend.
  *
  * Keep always wins: a region the user protected is subtracted from the removal
- * list even when the same object was detected as clutter.
+ * list even when the same object was detected as clutter. That subtraction is
+ * done by the shared engine, so it behaves identically in every tool.
  */
 export function maskRegions(detections: Detection[], mask: MaskState): MaskRegions {
-  const keep = detections.filter((d) => d.decision === "keep").map((d) => ({ label: d.label, box: d.box }));
-  const keepStrokes = mask.strokes.filter((s) => s.kind === "keep");
-  const remove = detections
-    .filter((d) => d.decision === "remove")
-    .filter((d) => !keepStrokes.some((s) => strokeCoversBox(s, d.box)))
-    .map((d) => ({ label: d.label, box: d.box }));
-  const strokes = mask.strokes.slice();
+  const regions = buildRegions<StrokeKind>({
+    selected: detections
+      .filter((d) => d.decision === "remove")
+      .map((d) => ({ label: d.label, box: d.box })),
+    protectedRegions: detections
+      .filter((d) => d.decision === "keep")
+      .map((d) => ({ label: d.label, box: d.box })),
+    mask,
+    intent: strokeIntent,
+  });
   return {
-    remove,
-    keep,
-    strokes,
-    hasRemoval: remove.length > 0 || strokes.some((s) => s.kind === "remove"),
+    remove: regions.edit,
+    keep: regions.protect,
+    strokes: regions.strokes,
+    hasRemoval: regions.hasEdit,
   };
 }
 
-/** True when a protective dab sits inside a detected object's box. */
-export function strokeCoversBox(stroke: MaskStroke, box: Box): boolean {
-  const cx = box.x + box.w / 2;
-  const cy = box.y + box.h / 2;
-  const dx = Math.abs(stroke.x - cx);
-  const dy = Math.abs(stroke.y - cy);
-  return dx <= box.w / 2 + stroke.r && dy <= box.h / 2 + stroke.r;
-}
+export { strokeCoversBox, boxSentence };
 
-export function boxSentence(box: Box): string {
-  const pc = (n: number) => Math.round(n * 100) + "%";
-  return pc(box.x) + "," + pc(box.y) + " to " + pc(box.x + box.w) + "," + pc(box.y + box.h);
-}
 
 /* --------------------------------------------------- provider capability */
 
