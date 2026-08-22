@@ -398,3 +398,50 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* advanced settings row reads as one control */
+.rd-app .rdset-adv {
+  border: 1px solid var(--rd-line, #e5e5e5);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.rd-app .rdset-adv > summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  list-style: none;
+}
+
+.rd-app .rdset-adv > summary::-webkit-details-marker {
+  display: none;
+}
+
+.rd-app .rdset-adv > summary::after {
+  content: "";
+  margin-left: auto;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--rd-muted, #6b7280);
+  border-bottom: 2px solid var(--rd-muted, #6b7280);
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+}
+
+.rd-app .rdset-adv[open] > summary::after {
+  transform: rotate(-135deg);
+}
+
+/* footer: summary when ready, one tappable instruction when not */
+.rd-app .sp-describe-foot .sp-meta-fix {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: var(--rd-red, #c00);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
