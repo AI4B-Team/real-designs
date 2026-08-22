@@ -20,6 +20,8 @@ import {
   type MarkupLayer,
   type Point,
 } from "@/lib/markup";
+import { PARCEL_WARNING, type ParcelOverlay } from "@/lib/parcel";
+import { calloutLabel } from "@/lib/markup-callouts";
 
 export type DrawOptions = {
   /** Draw vertex handles and the draft rubber band: editor only. */
@@ -29,7 +31,25 @@ export type DrawOptions = {
   draft?: { type: string; points: Point[]; pointer?: Point | null; color?: string } | null;
   /** Burn "Approximate Boundary" into the frame. */
   visibleDisclosure?: boolean;
+  /** Paint only these layers (export subsets). Defaults to every visible layer. */
+  layers?: MarkupLayer[] | null;
+  /** Paint the parcel overlay and its warning. */
+  parcel?: ParcelOverlay | null;
+  /** Live calibration line being drawn, in normalized points. */
+  calibration?: { points: Point[]; pointer?: Point | null; label?: string } | null;
 };
+
+/**
+ * The words a layer shows. A measured layer prints its calculated value beside
+ * its name, and a structured callout renders from its record — never from a
+ * second, separately typed string that could drift away from the data.
+ */
+export function layerText(layer: MarkupLayer): string {
+  const base = layer.meta ? calloutLabel(layer.meta, layer.label) : layer.label;
+  const measured = layer.measurementText || "";
+  if (measured && base) return `${base} · ${measured}`;
+  return measured || base;
+}
 
 function rgba(hex: string, alpha: number): string {
   const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
@@ -70,7 +90,8 @@ export function drawLabel(
   W: number,
   H: number,
 ): { x: number; y: number; w: number; h: number } | null {
-  const text = layer.shape === "marker" ? `${layer.number ?? 1}${layer.label ? ` · ${layer.label}` : ""}` : layer.label;
+  const own = layerText(layer);
+  const text = layer.shape === "marker" ? `${layer.number ?? 1}${own ? ` · ${own}` : ""}` : own;
   if (!text) return null;
   const fs = scaledFontSize(layer.style.fontSize, W);
   ctx.font = `600 ${fs}px "DM Sans", system-ui, sans-serif`;
@@ -180,9 +201,10 @@ function drawOne(
   ctx.save();
   if (layer.shape === "marker") {
     /* The number is already inside the pin; only the short label sits beside it. */
-    if (layer.label) {
+    const own = layerText(layer);
+    if (own) {
       const chip = { ...layer, number: undefined as unknown as number };
-      drawLabel(ctx, { ...chip, label: layer.label, labelOffset: layer.labelOffset ?? { x: 0.035, y: 0 } }, W, H);
+      drawLabel(ctx, { ...chip, label: own, meta: null, measurementText: null, labelOffset: layer.labelOffset ?? { x: 0.035, y: 0 } }, W, H);
     }
   } else {
     drawLabel(ctx, layer, W, H);
@@ -215,7 +237,35 @@ export function drawMarkup(
   H: number,
   o: DrawOptions = {},
 ): void {
-  for (const layer of visibleLayers(doc)) drawOne(ctx, layer, W, H, o);
+  const parcel = o.parcel ?? doc.parcel ?? null;
+  if (parcel) drawParcel(ctx, parcel, W, H);
+
+  const set = o.layers ?? visibleLayers(doc);
+  for (const layer of set) drawOne(ctx, layer, W, H, o);
+
+  if (o.calibration && o.calibration.points.length) {
+    const live = o.calibration.pointer
+      ? [...o.calibration.points, o.calibration.pointer]
+      : o.calibration.points;
+    ctx.save();
+    ctx.strokeStyle = "#0EA5E9";
+    ctx.lineWidth = scaledStroke(3, W);
+    ctx.setLineDash([W * 0.01, W * 0.007]);
+    path(ctx, live, W, H, false);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    live.forEach((pt) => {
+      const q = toPixels(pt, W, H);
+      ctx.beginPath();
+      ctx.arc(q.x, q.y, Math.max(4, W * 0.006), 0, Math.PI * 2);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.fill();
+      ctx.strokeStyle = "#0EA5E9";
+      ctx.lineWidth = Math.max(1, W * 0.002);
+      ctx.stroke();
+    });
+    ctx.restore();
+  }
 
   if (o.draft && o.draft.points.length) {
     const color = o.draft.color || "#CC0000";
@@ -261,6 +311,53 @@ export function drawMarkup(
   }
 }
 
+/**
+ * The parcel overlay. It is drawn as a translucent, dashed polygon with its
+ * provider named on the frame, so nobody mistakes a relayed GIS shape aligned
+ * by eye for a surveyed line.
+ */
+export function drawParcel(
+  ctx: CanvasRenderingContext2D,
+  overlay: ParcelOverlay,
+  W: number,
+  H: number,
+): void {
+  const pts = overlay.points || [];
+  if (pts.length < 3) return;
+  const alpha = Math.max(0, Math.min(1, overlay.alignment?.opacity ?? 0.55));
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  path(ctx, pts, W, H, true);
+  ctx.fillStyle = "rgba(14,165,233,.18)";
+  ctx.fill();
+  ctx.strokeStyle = "#0EA5E9";
+  ctx.lineWidth = scaledStroke(3, W);
+  ctx.setLineDash([W * 0.014, W * 0.008]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  const fs = scaledFontSize(13, W);
+  const text = `Parcel Overlay · ${overlay.record.provider} · Approximate`;
+  ctx.font = `600 ${fs}px "DM Sans", system-ui, sans-serif`;
+  const tw = ctx.measureText(text).width;
+  const pad = Math.round(fs * 0.5);
+  const box = clampLabelBox(
+    { x: W * 0.02, y: H - fs * 2.6, w: tw + pad * 2, h: fs * 1.9 },
+    W,
+    H,
+    Math.round(W * 0.01),
+  );
+  ctx.fillStyle = "rgba(10,10,10,.72)";
+  ctx.fillRect(box.x, box.y, box.w, box.h);
+  ctx.fillStyle = "#FFFFFF";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, box.x + pad, box.y + box.h / 2);
+  ctx.restore();
+}
+
+export { PARCEL_WARNING };
+
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((res, rej) => {
     const img = new Image();
@@ -278,9 +375,11 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 export async function flattenMarkup(
   src: string,
   doc: MarkupDoc,
-  opts: { quality?: number } = {},
+  opts: { quality?: number; layers?: MarkupLayer[] | null; parcel?: ParcelOverlay | null } = {},
 ): Promise<string> {
-  if (!doc.layers.some((l) => l.visible)) return src;
+  const set = opts.layers ?? visibleLayers(doc);
+  const parcel = opts.parcel ?? doc.parcel ?? null;
+  if (!set.length && !parcel && !doc.visibleDisclosure) return src;
   const img = await loadImage(src);
   const cv = document.createElement("canvas");
   cv.width = img.naturalWidth || img.width;
@@ -288,7 +387,7 @@ export async function flattenMarkup(
   const ctx = cv.getContext("2d");
   if (!ctx) return src;
   ctx.drawImage(img, 0, 0, cv.width, cv.height);
-  drawMarkup(ctx, doc, cv.width, cv.height);
+  drawMarkup(ctx, doc, cv.width, cv.height, { layers: set, parcel });
   return cv.toDataURL("image/jpeg", opts.quality ?? 0.94);
 }
 
