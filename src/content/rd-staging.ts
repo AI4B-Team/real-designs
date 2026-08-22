@@ -18,7 +18,6 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
-import { openSourceModal } from "@/lib/add-source-popover";
 import { addSourceCardHtml, mountAddSourceCard } from "@/lib/add-source-card";
 import {
   normalizeRotation,
