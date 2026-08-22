@@ -1124,6 +1124,24 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   function designPanel() {
     if (state.designState === "loading" || state.designState === "idle") {
+      if (state.mediaView === "list") {
+        return designShell(
+          '<div class="spd-list" aria-busy="true" aria-live="polite" aria-label="Loading your media">' +
+            Array.from({ length: 5 })
+              .map(
+                () =>
+                  '<div class="spd-row is-skel"><span class="spd-check"></span>' +
+                  '<span class="spd-rth"></span>' +
+                  '<span class="spd-rn"><i class="spd-sk"></i><i class="spd-sk"></i></span>' +
+                  '<span class="spd-rn"><i class="spd-sk"></i></span>' +
+                  '<span class="spd-rm"><i class="spd-sk"></i></span>' +
+                  '<span class="spd-rm is-date"><i class="spd-sk"></i></span>' +
+                  '<span class="spd-rm"><i class="spd-sk"></i></span><span></span></div>',
+              )
+              .join("") +
+            "</div>",
+        );
+      }
       return designShell(
         '<div class="spd-grid" aria-busy="true" aria-live="polite" aria-label="Loading your media">' +
           Array.from({ length: 4 })
@@ -1436,7 +1454,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '<span class="spd-rm"><span class="spd-rtag">' +
       esc(mediaKind(d)) +
       "</span></span>" +
-      '<span class="spd-rm">' +
+      '<span class="spd-rm is-date">' +
       esc(created || "\u2014") +
       "</span>" +
       '<span class="spd-rm"><span class="spd-rstate' +
