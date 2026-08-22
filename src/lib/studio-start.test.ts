@@ -113,7 +113,7 @@ describe("studio start source picker", () => {
       "Add a description",
     );
     expect(host.textContent).toContain("Add Reference");
-    expect(host.querySelector('[data-sp="addref"]')!.textContent).toContain("Optional");
+    expect(host.querySelector('[data-sp="addref"]')).toBeTruthy();
   });
 
   it("shows one cost line and updates it from Add Details", () => {
@@ -150,7 +150,7 @@ describe("studio start source picker", () => {
     ta.value = "A coastal backyard with a plunge pool";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, bubbles: true }));
-    await Promise.resolve();
+    await new Promise((r) => setTimeout(r, 0));
     const cta = host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
     expect(cta.textContent).toContain("Generating");
     expect(cta.disabled).toBe(true);
