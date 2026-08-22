@@ -337,7 +337,10 @@ export function initCanvasWorkspace() {
   const versToggle = document.getElementById("rdwVersToggle");
   if (versToggle) versToggle.setAttribute("aria-expanded", s.versionsOpen ? "true" : "false");
   const versOpen = document.getElementById("rdwVersOpen") as HTMLElement | null;
-  if (versOpen) versOpen.hidden = s.versionsOpen;
+  if (versOpen) {
+    versOpen.hidden = s.versionsOpen;
+    versOpen.setAttribute("aria-expanded", s.versionsOpen ? "true" : "false");
+  }
 
   buildCanvasPanel();
   initAutoRoom();
@@ -457,7 +460,10 @@ export function initCanvasWorkspace() {
       b.classList.toggle("vers-off", !open);
       save({ versionsOpen: open });
       if (versToggle) versToggle.setAttribute("aria-expanded", open ? "true" : "false");
-      if (versOpen) versOpen.hidden = open;
+      if (versOpen) {
+        versOpen.hidden = open;
+        versOpen.setAttribute("aria-expanded", open ? "true" : "false");
+      }
       return;
     }
     if (t.closest("#rdwObjTool")) {

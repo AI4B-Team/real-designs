@@ -161,6 +161,19 @@ export function refreshVersionRail() {
   vers.classList.toggle("rdw-vers-empty", n === 0);
   const count = byId("rdwVersN");
   if (count) count.textContent = n === 0 ? "No versions yet" : n === 1 ? "1 version" : n + " versions";
+  /* The collapsed control carries the same count as a compact badge. */
+  const open = byId("rdwVersOpen");
+  if (open) {
+    open.innerHTML =
+      '<i data-lucide="layers"></i>Versions' +
+      (n > 0 ? '<span class="rdw-vers-badge">' + n + "</span>" : "");
+    open.setAttribute("aria-label", n > 0 ? "Show Version History, " + n + " versions" : "Show Version History");
+    try {
+      (window as any).lucide?.createIcons();
+    } catch (_) {
+      /* icons are decorative */
+    }
+  }
 }
 
 let built = false;
@@ -257,6 +270,16 @@ export function buildCanvasPanel() {
     bar.id = "rdwResBar";
     bar.appendChild(actions);
     vers.parentElement.insertBefore(bar, vers);
+    /* Collapsed Version History has exactly one control, and it lives with the
+       other result actions instead of floating alone in the corner. It keeps
+       the original element, so it keeps the original click handler. */
+    const open = byId("rdwVersOpen");
+    if (open) {
+      open.className = "btn btn-ghost btn-xs rdw-vers-open";
+      open.setAttribute("aria-controls", "rdwVers");
+      open.setAttribute("aria-expanded", "false");
+      actions.insertBefore(open, byId("stShop") || actions.firstChild);
+    }
   }
   const details = byId("rdwDetails");
   if (details) {
