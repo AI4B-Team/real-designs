@@ -45,6 +45,7 @@ import {
   createCrop,
   cropRect,
   focalOf,
+  minCoverScale,
   refit,
   resizeFrame,
   wheelScale,
