@@ -143,8 +143,11 @@
 .rd-app .rdset-l {
   font-size: 12px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--rd-muted, #6b7280);
 }
+
 
 .rd-app .rdset-note {
   display: inline-flex;
