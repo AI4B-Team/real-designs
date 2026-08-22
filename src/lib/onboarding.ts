@@ -12,7 +12,7 @@ export type StartIntent = {
   /** interior | exterior | landscape */
   space?: string | undefined;
   room?: string | undefined;
-  /** Design Direction name to preselect. */
+  /** Design Style name to preselect. */
   direction?: string | undefined;
   /** Sample space key when the CTA was "Try A Sample Space". */
   sample?: string | undefined;
