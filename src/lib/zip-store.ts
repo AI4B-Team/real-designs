@@ -13,16 +13,16 @@ const TABLE = (() => {
   return t;
 })();
 
-export function crc32(bytes: Uint8Array): number {
+export function crc32(bytes: Uint8Array<ArrayBuffer>): number {
   let c = 0xffffffff;
   for (let i = 0; i < bytes.length; i++) c = (TABLE[(c ^ (bytes[i] as number)) & 0xff] as number) ^ (c >>> 8);
   return (c ^ 0xffffffff) >>> 0;
 }
 
-export type ZipEntry = { name: string; bytes: Uint8Array };
+export type ZipEntry = { name: string; bytes: Uint8Array<ArrayBuffer> };
 
 /** Decode a `data:` URL body into bytes. */
-export function dataUrlToBytes(dataUrl: string): Uint8Array {
+export function dataUrlToBytes(dataUrl: string): Uint8Array<ArrayBuffer> {
   const body = String(dataUrl).split(",")[1] || "";
   const bin = atob(body);
   const out = new Uint8Array(bin.length);
@@ -40,12 +40,12 @@ function dosTime(d: Date): { time: number; date: number } {
 export function buildZip(entries: ZipEntry[], at: Date = new Date()): Blob {
   const enc = new TextEncoder();
   const { time, date } = dosTime(at);
-  const chunks: Uint8Array[] = [];
-  const central: Uint8Array[] = [];
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  const central: Uint8Array<ArrayBuffer>[] = [];
   let offset = 0;
 
   for (const e of entries) {
-    const name = enc.encode(e.name);
+    const name = enc.encode(e.name) as Uint8Array<ArrayBuffer>;
     const crc = crc32(e.bytes);
     const local = new Uint8Array(30 + name.length);
     const lv = new DataView(local.buffer);
