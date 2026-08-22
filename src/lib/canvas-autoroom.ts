@@ -30,6 +30,15 @@ function roomSelect(): HTMLSelectElement | null {
   return document.getElementById("fRoom") as HTMLSelectElement | null;
 }
 
+/** True when the current selection is only the space's soft default (Front
+    Exterior for exterior, etc.) — not a hand-picked or detected room. Photo
+    detection is allowed to replace a soft default, but never a real choice. */
+function isDefaultPick(): boolean {
+  const v = (roomSelect()?.value || "").trim();
+  if (!v) return false;
+  return v === defaultRoomForSpace(roomSpace(v));
+}
+
 function sourceImage(): HTMLImageElement | null {
   return document.querySelector("#cBefore img") as HTMLImageElement | null;
 }
