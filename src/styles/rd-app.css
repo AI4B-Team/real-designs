@@ -9695,47 +9695,12 @@
 
 /* ---------------------------------------------------------------------------
    Studio Describe refinements
-   One heading per surface, a collapsed project row, a compact composer and a
-   single generation bar. Nothing here changes the design system: same card,
-   same line, same red accent, no gradients.
+   One heading per surface, a compact composer and a single generation bar.
+   Nothing here changes the design system: same card, same line, same red
+   accent, no gradients.
 --------------------------------------------------------------------------- */
 
-/* Collapsed project-type row */
-.rd-app .stw-doorsum {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  background: var(--card, #fff);
-  font-size: 0.86rem;
-  color: var(--ink, #111);
-}
-.rd-app .stw-doorsum > i,
-.rd-app .stw-doorsum > svg {
-  width: 16px;
-  height: 16px;
-  color: var(--red, #c00);
-  stroke: currentColor;
-  flex: none;
-}
-.rd-app .stw-doorsum b {
-  font-weight: 700;
-}
-.rd-app .stw-doorchange {
-  margin-left: auto;
-  border: 0;
-  background: none;
-  padding: 0;
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--red, #c00);
-  cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
+
 
 /* Composer heading */
 .rd-app .sp-dhead {
