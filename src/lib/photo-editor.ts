@@ -346,6 +346,7 @@ export async function openPhotoEditor(opts: {
   let cropBackup: Crop = null;
   let stats: PhotoStats | null = null;
   let sourceStats: { src: string; stats: PhotoStats } | null = null;
+  let previewAdj: Adj | null = null;
   let aiPreview: { op: string; label: string; image: string } | null = null;
   let aiBusy = "";
   let saveFailed = false;
