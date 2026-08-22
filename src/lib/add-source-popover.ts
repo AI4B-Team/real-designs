@@ -122,43 +122,61 @@ export function openSourceModal(opts) {
     <div class="rds-srcmodal-b"></div>
   </div>`;
   document.body.appendChild(wrap);
+  let picker = null;
   const close = () => {
     try {
       picker?.destroy?.();
     } catch (_) {}
     wrap.remove();
   };
-  const slot = wrap.querySelector(".rds-srcmodal-b");
-  const picker = mountSourcePicker(slot, {
-    ...opts.picker,
-    onPick: async (picked) => {
-      close();
-      await opts.picker?.onPick?.(picked);
-    },
-    ...(opts.picker?.onPropertyPhotos
-      ? {
-          onPropertyPhotos: async (p, photos) => {
-            close();
-            await opts.picker.onPropertyPhotos(p, photos);
-          },
-        }
-      : {}),
-    ...(opts.picker?.onDesigns
-      ? {
-          onDesigns: async (designs) => {
-            close();
-            await opts.picker.onDesigns(designs);
-          },
-        }
-      : {}),
-  });
-  opts.paint?.();
+  /* Wire the exits first: a picker that fails to mount must still leave a
+     modal the user can close. */
   wrap.addEventListener("click", (e) => {
-    if (e.target === wrap || e.target.closest("[data-close]")) close();
+    if (e.target === wrap || (e.target.closest && e.target.closest("[data-close]"))) close();
   });
   wrap.addEventListener("keydown", (e) => {
     if (e.key === "Escape") close();
   });
+  const onKey = (e) => {
+    if (e.key === "Escape") {
+      close();
+      document.removeEventListener("keydown", onKey);
+    }
+  };
+  document.addEventListener("keydown", onKey);
+
+  const slot = wrap.querySelector(".rds-srcmodal-b");
+  try {
+    picker = mountSourcePicker(slot, {
+      ...opts.picker,
+      onPick: async (picked) => {
+        close();
+        await opts.picker?.onPick?.(picked);
+      },
+      ...(opts.picker?.onPropertyPhotos
+        ? {
+            onPropertyPhotos: async (p, photos) => {
+              close();
+              await opts.picker.onPropertyPhotos(p, photos);
+            },
+          }
+        : {}),
+      ...(opts.picker?.onDesigns
+        ? {
+            onDesigns: async (designs) => {
+              close();
+              await opts.picker.onDesigns(designs);
+            },
+          }
+        : {}),
+    });
+  } catch (error) {
+    console.error("[REAL DESIGNS] source picker failed to mount", error);
+    slot.innerHTML =
+      '<p class="rds-srcmodal-err">This Importer Could Not Open. Please Try Again.</p>';
+  }
+  opts.paint?.();
   wrap.querySelector("[data-close]")?.focus();
   return { close };
 }
+
