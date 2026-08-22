@@ -28,15 +28,19 @@ import { styleById } from "@/lib/style-catalog";
 
 export type SourceId =
   | "upload"
-  | "drive"
-  | "dropbox"
+  | "cloud"
   | "address"
   | "property"
   | "media"
   | "describe";
 
 /** Sources that used to exist. Persisted tab state is remapped, never shown. */
-const LEGACY_SOURCE: Record<string, SourceId> = { url: "upload", design: "media", cloud: "upload" };
+const LEGACY_SOURCE: Record<string, SourceId> = {
+  url: "upload",
+  design: "media",
+  drive: "cloud",
+  dropbox: "cloud",
+};
 export const normalizeSource = (id: string | null | undefined): SourceId =>
   (LEGACY_SOURCE[String(id || "")] || id || "upload") as SourceId;
 export type PickerContext = "design" | "video" | "property-media" | "batch";
@@ -53,17 +57,11 @@ export const SOURCE_META: Record<
     tab: "Upload",
     desc: "Drag and drop or browse.",
   },
-  drive: {
-    icon: "hard-drive",
-    label: "Google Drive",
-    tab: "Google Drive",
-    desc: "Choose photos from Google Drive.",
-  },
-  dropbox: {
-    icon: "package",
-    label: "Dropbox",
-    tab: "Dropbox",
-    desc: "Choose photos from Dropbox.",
+  cloud: {
+    icon: "cloud",
+    label: "Cloud",
+    tab: "Cloud",
+    desc: "Import photos from Google Drive or Dropbox.",
   },
   address: {
     icon: "map-pin",
@@ -103,26 +101,26 @@ const IMAGE_ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.heif";
 
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
-    sources: ["upload", "drive", "dropbox", "property", "media", "describe"],
+    sources: ["upload", "cloud", "property", "media", "describe"],
     /* Many photos are handed to the staging review grid, never dropped. */
     multiple: true,
     accept: IMAGE_ACCEPT + ",application/pdf,.pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "drive", "dropbox", "property", "media", "describe"],
+    sources: ["upload", "cloud", "property", "media", "describe"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   "property-media": {
-    sources: ["upload", "drive", "dropbox", "address"],
+    sources: ["upload", "cloud", "address"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   batch: {
-    sources: ["upload", "drive", "dropbox", "address", "property"],
+    sources: ["upload", "cloud", "address", "property"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
@@ -584,11 +582,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             '" title="' +
             esc(m.desc) +
             '">' +
-            (s === "drive"
-              ? DRIVE_ICON
-              : s === "dropbox"
-                ? DROPBOX_ICON
-                : '<i data-lucide="' + m.icon + '"></i>') +
+            '<i data-lucide="' + m.icon + '"></i>' +
             esc(m.tab) +
             "</button>"
           );
@@ -775,6 +769,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         "</div>"
       );
     }
+
+    if (state.tab === "cloud") return cloudPanel();
 
     if (state.tab === "describe") return describe.html();
 
@@ -1895,21 +1891,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const tab = t.closest("[data-sp-tab]") as HTMLElement | null;
     if (tab) {
       const next = tab.dataset["spTab"] as SourceId;
-      if (next === "drive" || next === "dropbox") {
-        const { importFromProvider } = await import("@/lib/provider-import");
-        await importFromProvider(next, {
-          destination: "studio-project",
-          onComputer: () => input.click(),
-          onUnavailable: (msg: string) => {
-            state.note = msg;
-            render();
-          },
-          onFiles: async (files: File[]) => {
-            await intake(files);
-          },
-        });
-        return;
-      }
       if (next !== state.tab) {
         /* Changing source starts a clean selection. */
         state.propSel = null;
@@ -1920,6 +1901,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       state.note = "";
       opts.onTab?.(state.tab);
       render();
+      return;
+    }
+    const cloudBtn = t.closest("[data-sp-cloud]") as HTMLElement | null;
+    if (cloudBtn) {
+      await startCloudImport(cloudBtn.dataset["spCloud"] as CloudProvider);
       return;
     }
     const mtype = t.closest("[data-sp-mtype]") as HTMLElement | null;
