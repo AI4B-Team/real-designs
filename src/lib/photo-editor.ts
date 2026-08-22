@@ -1442,7 +1442,7 @@ export async function openPhotoEditor(opts: {
       });
       const a = document.createElement("a");
       a.href = url;
-      a.download = exportFileName(p.room || p.name || "photo", ex.id, p.version ?? null);
+      a.download = exportFileName(p.room || p.name || "photo", ex.id, null);
       a.click();
       if (preview) rdToast("Preview Downloaded.");
     } catch (err: any) {
