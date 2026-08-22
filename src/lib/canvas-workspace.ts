@@ -261,7 +261,13 @@ async function openCanvasPhotoEditor(): Promise<void> {
       },
     ],
   });
+  /* The permanent Canvas chrome moves with the column, so the stage keeps the
+     exact same height and the image never shifts. */
+  const main = document.querySelector<HTMLElement>(".rdpe-embed .rdpe-main");
+  if (main) borrowCanvasChrome(main);
+  applyZoom();
 }
+
 
 
 /* ------------------------------------------------------------------ */
