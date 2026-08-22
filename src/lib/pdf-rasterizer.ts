@@ -101,6 +101,6 @@ export async function rasterizeFirstPage(
   input: File | Blob | ArrayBuffer | string,
   maxEdge?: number,
 ): Promise<string> {
-  const pages = await rasterizePdf(input, { maxPages: 1, maxEdge });
+  const pages = await rasterizePdf(input, maxEdge ? { maxPages: 1, maxEdge } : { maxPages: 1 });
   return pages[0]!.dataUrl;
 }
