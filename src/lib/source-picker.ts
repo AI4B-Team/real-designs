@@ -1458,6 +1458,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       body.addEventListener("change", onChange);
       body.addEventListener("keydown", onKey);
       wireDrag(body);
+      wireOrderDrag(body);
+
     }
     /* A host helper that fails must never leave an empty picker behind. */
     try {
