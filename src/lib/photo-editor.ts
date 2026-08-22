@@ -443,6 +443,10 @@ export async function openPhotoEditor(opts: {
   let aiPreview: { op: string; label: string; image: string } | null = null;
   let aiBusy = "";
   let saveFailed = false;
+  /* Detail and lens run as a real pixel pass; the preview shows that pass. */
+  let detailPreview: { key: string; url: string } | null = null;
+  let detailPending = "";
+  let privacyTargets: string[] = ["faces", "plates"];
 
   const embedded = !!opts.mount;
   const host = document.createElement("div");
@@ -488,10 +492,15 @@ export async function openPhotoEditor(opts: {
       adj: s.adj,
       rotation: s.rotation,
       straighten: s.straighten,
+      vertical: s.vertical,
+      horizontal: s.horizontal,
       flipH: s.flipH,
+      flipV: s.flipV,
       crop: s.crop,
       aiOps: s.aiOps,
       base: s.base,
+      auto: s.auto,
+      autoBase: s.autoBase,
     });
   }
 
@@ -509,10 +518,15 @@ export async function openPhotoEditor(opts: {
     s.adj = o.adj || {};
     s.rotation = o.rotation || 0;
     s.straighten = o.straighten || 0;
+    s.vertical = o.vertical || 0;
+    s.horizontal = o.horizontal || 0;
     s.flipH = !!o.flipH;
+    s.flipV = !!o.flipV;
     s.crop = o.crop || null;
     s.aiOps = o.aiOps || [];
     s.base = o.base ?? s.base;
+    s.auto = o.auto ?? null;
+    s.autoBase = o.autoBase ?? null;
   }
 
   function undo() {
@@ -560,11 +574,36 @@ export async function openPhotoEditor(opts: {
 
   /* ------------------------------------------------------------- painting */
 
+  function previewKey(s: PhotoState): string | null {
+    const base = s.base || s.original;
+    if (!base || !needsPixelPass(detailOf(s.adj))) return null;
+    return detailKey(base, detailOf(s.adj));
+  }
+
+  /** Keep the on-screen photo in step with the detail pass, off the main path. */
+  function syncDetail(s: PhotoState) {
+    const key = previewKey(s);
+    if (!key || detailPreview?.key === key || detailPending === key) return;
+    detailPending = key;
+    void detailedSource((s.base || s.original) as string, s.adj, 1400).then((url) => {
+      detailPending = "";
+      detailPreview = { key, url };
+      paint();
+    });
+  }
+
   function paint() {
     const p = cur();
     const s = st();
     const stage = $("#rdpeImg") as HTMLImageElement;
-    const src = comparing ? s.entry || s.original : s.base || s.original;
+    const dk = comparing ? null : previewKey(s);
+    if (!comparing) syncDetail(s);
+    const src =
+      dk && detailPreview?.key === dk
+        ? detailPreview.url
+        : comparing
+          ? s.entry || s.original
+          : s.base || s.original;
     if (stage && src && stage.getAttribute("src") !== src) stage.setAttribute("src", src);
     if (stage) {
       const preview = aiPreview && !comparing ? aiPreview.image : null;
@@ -764,12 +803,23 @@ export async function openPhotoEditor(opts: {
         `<p class="rdpe-sub">Crop Ratio<span class="rdpe-subv">${esc(
           RATIOS.find((r) => r.id === (s.crop?.ratio || "original"))?.label || "Original",
         )}</span></p>
-        <div class="rdpe-ratios">${RATIOS.map(
-          (r) =>
-            `<button type="button" class="rdpe-chip ${
-              (s.crop?.ratio || "original") === r.id ? "on" : ""
-            }" data-ratio="${r.id}">${r.label}</button>`,
-        ).join("")}</div>
+        <div class="rdpe-ratios">${RATIOS.filter((r) => r.group === "basic")
+          .map(
+            (r) =>
+              `<button type="button" class="rdpe-chip ${
+                (s.crop?.ratio || "original") === r.id ? "on" : ""
+              }" data-ratio="${r.id}">${r.label}</button>`,
+          )
+          .join("")}</div>
+        <p class="rdpe-sub">MLS Presets</p>
+        <div class="rdpe-ratios">${RATIOS.filter((r) => r.group === "mls")
+          .map(
+            (r) =>
+              `<button type="button" class="rdpe-chip ${
+                (s.crop?.ratio || "original") === r.id ? "on" : ""
+              }" data-ratio="${r.id}" title="${esc(r.note || "")}">${r.label}</button>`,
+          )
+          .join("")}</div>
         ${
           cropMode
             ? `<div class="rdpe-autobtns">
@@ -799,6 +849,8 @@ export async function openPhotoEditor(opts: {
             attr: "data-reset-geo",
           }),
         ).join("")}
+        <p class="rdpe-sub">Lens</p>
+        ${adjRows("lens")}
         <button type="button" class="rdpe-reset rdpe-resetgeo" data-act="resetgeo" ${
           hasGeometry(s) ? "" : "disabled"
         }><i data-lucide="rotate-ccw"></i><span>Reset Geometry</span></button>`,
@@ -814,6 +866,13 @@ export async function openPhotoEditor(opts: {
            <i data-lucide="mouse-pointer-square-dashed"></i>
            <span><b>Continue In Object Edit</b><em>Select, remove, replace, or modify a specific object.</em></span>
            <i data-lucide="arrow-right"></i></button>`,
+      )}
+
+      ${section(
+        "presets",
+        "Presets & Batch",
+        "layers",
+        presetsCard(),
       )}
 
       ${section(
