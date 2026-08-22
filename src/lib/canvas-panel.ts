@@ -278,7 +278,7 @@ export function buildCanvasPanel() {
       open.className = "btn btn-ghost btn-xs rdw-vers-open";
       open.setAttribute("aria-controls", "rdwVers");
       open.setAttribute("aria-expanded", "false");
-      actions.insertBefore(open, actions.firstChild);
+      actions.insertBefore(open, byId("stShop") || actions.firstChild);
     }
   }
   const details = byId("rdwDetails");
