@@ -170,7 +170,7 @@ import {
   resetAlignment,
   reproject,
 } from "@/lib/parcel";
-import { lookupParcel, parcelProviderStatus, saveParcelAlignment } from "@/lib/parcel.functions";
+import { lookupParcel, saveParcelAlignment } from "@/lib/parcel.functions";
 import { chipList, chipValues, formDialog } from "@/lib/photo-editor-dialogs";
 import {
   type PhotoStats,
@@ -1026,7 +1026,9 @@ export async function openPhotoEditor(opts: {
   }
 
   function setMarkupDoc(doc: MarkupDoc) {
-    markupDocs.set(cur().key, doc);
+    /* Every stored measurement is recomputed from the shapes themselves, so a
+       moved vertex can never leave a stale number painted on the photo. */
+    markupDocs.set(cur().key, doc.scale ? refreshMeasurements(doc) : doc);
     st().dirty = true;
     saveFailed = false;
   }
