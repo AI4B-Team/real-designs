@@ -1,3 +1,4 @@
+import "@/styles/rd-modal.css";
 /* Property Address editor.
    A polished, framework-free application modal used everywhere an address is
    added, changed or cleared. It replaces the native window.prompt: it offers
@@ -8,7 +9,6 @@
    Project Title is deliberately absent: an address never rewrites a title. */
 
 import {
-import "@/styles/rd-modal.css";
   addressesMatch,
   buildAddress,
   cleanAddressText,
