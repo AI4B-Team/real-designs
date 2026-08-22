@@ -274,6 +274,12 @@ export function initApp(): () => void {
   const root = document.querySelector(".rd-app") as HTMLElement | null;
   if (root && root.dataset["rdInit"] === "1") return () => {};
   if (root) root.dataset["rdInit"] = "1";
+  /* Studio can be painted while initApp is still executing its body (a boot
+     route of #v-studio calls go() long before the bottom of this function is
+     reached). Anything Studio touches on that path must therefore be declared
+     here, at the top, rather than further down where a `let` would still be in
+     its temporal dead zone and throw a ReferenceError that blanked the view. */
+  let STUDIO_CTX: any = blankStudioCtx();
   try {
     initCanvasInspector();
     initCanvasWorkspace();
