@@ -113,7 +113,7 @@ export async function detectRoomFromSource() {
     if (!guess || guess.confidence < ACCEPT_CONFIDENCE) return;
     const room = roomFromCategory(guess.label);
     if (!room) return;
-    if (manual || (roomSelect()?.value || "").trim()) return;
+    if (manual || ((roomSelect()?.value || "").trim() && !isDefaultPick())) return;
     applyRoom(room.label);
   } catch (_) {
     /* the user can always pick a room manually */
