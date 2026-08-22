@@ -73,7 +73,10 @@
   text-decoration: none;
 }
 
-.rd-modal button {
+/* The generic reset only targets plain .btn controls. The .rdm-* modal action
+   system (modal-footer.ts) carries its own background/color and must never be
+   stripped, or the primary action loses its red and white text. */
+.rd-modal button:not(.rdm-btn) {
   font-family: inherit;
   cursor: pointer;
   border: none;
