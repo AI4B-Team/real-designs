@@ -57,6 +57,7 @@ import {
   PRIVACY_TARGETS,
   privacyInstruction,
 } from "@/lib/photo-editor-context";
+import { chipList, chipValues, formDialog } from "@/lib/photo-editor-dialogs";
 import {
   type PhotoStats,
   type Strength,
@@ -447,6 +448,7 @@ export async function openPhotoEditor(opts: {
   let detailPreview: { key: string; url: string } | null = null;
   let detailPending = "";
   let privacyTargets: string[] = ["faces", "plates"];
+  let clipboard: AdjustmentBundle | null = null;
 
   const embedded = !!opts.mount;
   const host = document.createElement("div");
@@ -907,6 +909,68 @@ export async function openPhotoEditor(opts: {
     drawHistogram();
   }
 
+  /* --------------------------------------------- adjustments & presets */
+
+  function bundleOf(s: PhotoState): AdjustmentBundle {
+    return {
+      adj: { ...s.adj },
+      straighten: s.straighten || 0,
+      vertical: s.vertical || 0,
+      horizontal: s.horizontal || 0,
+      flipH: !!s.flipH,
+      flipV: !!s.flipV,
+      rotation: s.rotation || 0,
+      crop: s.crop || null,
+    };
+  }
+
+  function applyBundle(bundle: AdjustmentBundle, includeGeometry: boolean, includeCrop: boolean) {
+    push();
+    const s = st();
+    const merged = mergeBundle(
+      {
+        adj: s.adj,
+        straighten: s.straighten,
+        vertical: s.vertical,
+        horizontal: s.horizontal,
+        flipH: s.flipH,
+        flipV: s.flipV,
+        rotation: s.rotation,
+        crop: s.crop,
+      },
+      bundle,
+      { includeGeometry, includeCrop },
+    ) as any;
+    Object.assign(s, merged);
+    paint();
+    void refreshStats();
+  }
+
+  function presetsCard() {
+    const saved = listPresets();
+    return `
+      <div class="rdpe-actions">
+        <button type="button" class="rdpe-act" data-act="copyadj"><i data-lucide="copy"></i>Copy Adjustments</button>
+        <button type="button" class="rdpe-act" data-act="pasteadj" ${clipboard ? "" : "disabled"}><i data-lucide="clipboard-paste"></i>Paste Adjustments</button>
+        <button type="button" class="rdpe-act" data-act="savepreset"><i data-lucide="bookmark-plus"></i>Save Preset</button>
+        <button type="button" class="rdpe-act" data-act="batch" ${photos.length > 1 ? "" : "disabled"}><i data-lucide="images"></i>Apply To Other Photos</button>
+      </div>
+      ${
+        saved.length
+          ? `<div class="rdpe-presets">${saved
+              .map(
+                (r) =>
+                  `<div class="rdpe-preset"><button type="button" class="rdpe-chip" data-preset="${esc(r.id)}">${esc(
+                    r.name,
+                  )}</button><button type="button" class="rdpe-x" data-preset-del="${esc(
+                    r.id,
+                  )}" aria-label="Delete ${esc(r.name)}"><i data-lucide="x"></i></button></div>`,
+              )
+              .join("")}</div>`
+          : `<p class="rdpe-hint">Save The Current Light, Colour And Detail Settings To Reuse Them On Another Photograph.</p>`
+      }`;
+  }
+
   function section(id: string, label: string, icon: string, body: string) {
     const open = OPEN.has(id) ? " open" : "";
     return `<details class="rdpe-sec" data-sec="${id}"${open}>
@@ -1201,6 +1265,22 @@ export async function openPhotoEditor(opts: {
       confirmLabel: `Use ${meta.credits} Credit${meta.credits === 1 ? "" : "s"}`,
     });
     if (!ok) return;
+    /* Privacy Blur never guesses: the operator names what may be obscured. */
+    let instruction = "";
+    if (op === "privacy_blur") {
+      const root = await formDialog({
+        title: "Privacy Blur Targets",
+        body: `<p class="rdpe-hint">Only The Targets You Select Are Obscured. Everything Else Is Left Untouched.</p>${chipList(
+          PRIVACY_TARGETS.map((t) => ({ ...t, on: privacyTargets.includes(t.id) })),
+        )}`,
+        confirmLabel: "Continue",
+      });
+      if (!root) return;
+      const picked = chipValues(root);
+      if (!picked.length) return void rdToast("Select At Least One Privacy Target.", "error");
+      privacyTargets = picked;
+      instruction = privacyInstruction(picked);
+    }
     aiBusy = op;
     paint();
     try {
@@ -1212,6 +1292,7 @@ export async function openPhotoEditor(opts: {
           image,
           room: cur().room || "Living Room",
           direction: "Warm Minimal",
+          ...(instruction ? { instruction } : {}),
         },
       });
       aiPreview = { op, label: meta.label, image: res.image };
@@ -1259,6 +1340,17 @@ export async function openPhotoEditor(opts: {
           crop: s.crop,
           rotation: s.rotation,
           flip_h: s.flipH,
+          geometry: {
+            straighten: s.straighten || 0,
+            vertical: s.vertical || 0,
+            horizontal: s.horizontal || 0,
+            flip_v: !!s.flipV,
+          },
+          modification_class: classifyEdits({
+            aiOps: s.aiOps,
+            hasAdjustments:
+              Object.values(s.adj || {}).some((v) => Number(v) !== 0) || !!s.crop || !!s.rotation,
+          }),
           ai_ops: s.aiOps,
           edited_path: path,
           label: p.room || p.name || null,
@@ -1297,23 +1389,123 @@ export async function openPhotoEditor(opts: {
 
   async function download(preview = false) {
     const s0 = st();
-    if (!preview && s0.dirty) {
-      const ok = await confirmDialog({
-        title: "Download Preview?",
-        body: "This Photo Has Unsaved Edits. Downloading The Preview Does Not Save Them To Your Library.",
-        confirmLabel: "Download Preview",
-      });
-      if (!ok) return;
-    }
+    const p = cur();
+    const cls = classifyEdits({
+      aiOps: s0.aiOps,
+      hasAdjustments: Object.values(s0.adj || {}).some((v) => Number(v) !== 0) || !!s0.crop,
+    });
+    const cropArea = s0.crop ? Math.max(0, s0.crop.w) * Math.max(0, s0.crop.h) : null;
+    const review = qualityReview({ stats, adj: s0.adj, cropArea });
+    const root = await formDialog({
+      title: "Download Photo",
+      body: `
+        <p class="rdpe-hint">This Downloads Exactly What Is On Screen Now${
+          s0.dirty ? ", Including Unsaved Edits" : ""
+        }.</p>
+        <label class="rdpe-dlg-l">Export Preset</label>
+        <select class="rdpe-dlg-s" data-x="preset">${EXPORT_PRESETS.map(
+          (e) => `<option value="${e.id}">${esc(e.label)} — ${esc(e.note)}</option>`,
+        ).join("")}</select>
+        <label class="rdpe-dlg-l">Quality <span data-x="qv">90</span></label>
+        <input class="rdpe-dlg-r" type="range" min="60" max="100" value="90" data-x="quality" />
+        ${
+          disclosureText(cls)
+            ? `<label class="rdpe-dlg-c"><input type="checkbox" data-x="disclose" ${
+                cls === "Enhanced" ? "" : "checked"
+              } /> Add “${esc(disclosureText(cls))}” Disclosure Overlay</label>`
+            : ""
+        }
+        ${
+          review.length
+            ? `<ul class="rdpe-review">${review
+                .map((r) => `<li class="rdpe-review-${r.level}">${esc(r.message)}</li>`)
+                .join("")}</ul>`
+            : `<p class="rdpe-hint">Quality Review Found No Problems.</p>`
+        }`,
+      confirmLabel: "Download",
+      onInput: (w) => {
+        const q = w.querySelector('[data-x="quality"]') as HTMLInputElement | null;
+        const out = w.querySelector('[data-x="qv"]');
+        if (q && out) out.textContent = q.value;
+      },
+    });
+    if (!root) return;
+    const presetId = (root.querySelector('[data-x="preset"]') as HTMLSelectElement)?.value || "full";
+    const ex = exportPreset(presetId);
+    const q = Number((root.querySelector('[data-x="quality"]') as HTMLInputElement)?.value || 90) / 100;
+    const disclose = (root.querySelector('[data-x="disclose"]') as HTMLInputElement | null)?.checked;
     try {
-      const url = preview || s0.dirty ? await renderPhoto(s0) : s0.base || s0.original || (await renderPhoto(s0));
+      const url = await renderPhoto(s0, {
+        maxEdge: ex.maxEdge,
+        quality: q,
+        disclosure: disclose ? disclosureText(cls) : null,
+      });
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${(cur().room || cur().name || "photo").replace(/\s+/g, "-").toLowerCase()}.jpg`;
+      a.download = exportFileName(p.room || p.name || "photo", ex.id, p.version ?? null);
       a.click();
+      if (preview) rdToast("Preview Downloaded.");
     } catch (err: any) {
       rdToast(err?.message || "That Photo Could Not Be Downloaded.", "error");
     }
+  }
+
+  async function pasteAdjustments() {
+    if (!clipboard) return;
+    const root = await formDialog({
+      title: "Paste Adjustments",
+      body: `<p class="rdpe-hint">Light, Colour And Detail Are Always Pasted. Choose What Else To Bring Over.</p>
+        <label class="rdpe-dlg-c"><input type="checkbox" data-x="geo" /> Rotation, Straighten And Perspective</label>
+        <label class="rdpe-dlg-c"><input type="checkbox" data-x="crop" /> Crop</label>`,
+      confirmLabel: "Paste",
+    });
+    if (!root) return;
+    applyBundle(
+      clipboard,
+      !!(root.querySelector('[data-x="geo"]') as HTMLInputElement)?.checked,
+      !!(root.querySelector('[data-x="crop"]') as HTMLInputElement)?.checked,
+    );
+    rdToast("Adjustments Pasted.");
+  }
+
+  async function savePresetFlow() {
+    const root = await formDialog({
+      title: "Save Preset",
+      body: `<label class="rdpe-dlg-l">Preset Name</label>
+        <input class="rdpe-dlg-i" data-x="name" maxlength="40" placeholder="Bright Interior" />`,
+      confirmLabel: "Save Preset",
+    });
+    if (!root) return;
+    const name = (root.querySelector('[data-x="name"]') as HTMLInputElement)?.value || "";
+    savePreset(name, bundleOf(st()));
+    paintPanel();
+    rdToast("Preset Saved.");
+  }
+
+  /** Batch editing: push the current adjustments onto other photographs. */
+  async function batchApply() {
+    const here = cur();
+    const others = photos.filter((x) => x.key !== here.key);
+    if (!others.length) return;
+    const root = await formDialog({
+      title: "Apply To Other Photos",
+      body: `<p class="rdpe-hint">Selected Photographs Receive The Current Light, Colour And Detail Settings. Nothing Is Saved Until You Save Each Photo.</p>${chipList(
+        others.map((x, i) => ({ id: x.key, label: x.room || x.name || `Photo ${i + 2}` })),
+      )}`,
+      confirmLabel: "Apply Adjustments",
+    });
+    if (!root) return;
+    const picked = chipValues(root);
+    if (!picked.length) return;
+    const bundle = bundleOf(st());
+    for (const key of picked) {
+      const target = states.get(key) || null;
+      if (!target) continue;
+      target.adj = { ...bundle.adj };
+      target.dirty = true;
+    }
+    paint();
+    rdToast(`Adjustments Applied To ${picked.length} Photo${picked.length === 1 ? "" : "s"}.`);
   }
 
   async function resetPhoto() {
@@ -1423,6 +1615,20 @@ export async function openPhotoEditor(opts: {
     if (cont) return void continueWith(cont.getAttribute("data-continue") as string);
     const ai = t.closest("[data-ai]");
     if (ai) return void runAi(ai.getAttribute("data-ai") as string);
+    const pdel = t.closest("[data-preset-del]");
+    if (pdel) {
+      removePreset(pdel.getAttribute("data-preset-del") as string);
+      return paintPanel();
+    }
+    const pset = t.closest("[data-preset]");
+    if (pset) {
+      const found = listPresets().find((r) => r.id === pset.getAttribute("data-preset"));
+      if (found) {
+        applyBundle(found.bundle, false, false);
+        rdToast(`Preset “${found.name}” Applied.`);
+      }
+      return;
+    }
     const act = t.closest("[data-act]")?.getAttribute("data-act");
     if (!act) return;
     const s = st();
@@ -1449,6 +1655,15 @@ export async function openPhotoEditor(opts: {
     if (act === "autoapply") return void runAutoEnhance(true);
     if (act === "autoundo") return undoAuto();
     if (act === "resetgeo") return resetGeometry();
+    if (act === "retrysave") return void save(false);
+    if (act === "copyadj") {
+      clipboard = bundleOf(s);
+      paintPanel();
+      return void rdToast("Adjustments Copied.");
+    }
+    if (act === "pasteadj") return void pasteAdjustments();
+    if (act === "savepreset") return void savePresetFlow();
+    if (act === "batch") return void batchApply();
     if (act === "rotl" || act === "rotr") {
       push();
       s.rotation = (((s.rotation + (act === "rotr" ? 90 : -90)) % 360) + 360) % 360;
