@@ -2011,6 +2011,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     for (const slot of batch.results) {
       if (slot.status === "done") continue; // never redo paid work
       markGenerating(batch, slot.index);
+      (window as any).rdConceptSlotGenerating?.(slot.index);
       /* The canvas owns the status line: it reads the real slot lifecycle
          (generating / saving / saved) instead of a second, competing pill. */
       try {
