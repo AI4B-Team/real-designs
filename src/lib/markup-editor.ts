@@ -256,10 +256,7 @@ export function attachMarkupEditor(host: HTMLElement, api: MarkupEditorApi): Mar
         if (drag!.kind === "label")
           return {
             ...l,
-            labelOffset: clampPoint({
-              x: 0.5 + (p.x - drag!.start.x) + (l.labelOffset?.x ?? 0),
-              y: 0.5 + (p.y - drag!.start.y) + (l.labelOffset?.y ?? 0),
-            }) && {
+            labelOffset: {
               x: (l.labelOffset?.x ?? 0) + (p.x - drag!.start.x),
               y: (l.labelOffset?.y ?? 0) + (p.y - drag!.start.y),
             },
