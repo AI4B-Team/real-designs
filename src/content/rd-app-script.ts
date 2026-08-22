@@ -2847,27 +2847,56 @@ export function initApp(): () => void {
           },
           resolvePhoto: (p) => resolvePhotoUrl(p),
           /* Only finished work: a real generated image, never a sample or draft. */
+          /* The one Media library: generated designs and the original
+             property photos they came from, newest first. */
           getFinishedDesigns: async () => {
             const out = [];
+            const fav = (kind, id) => {
+              try {
+                return id ? isFavorite({ kind, id: String(id) }) : false;
+              } catch (_) {
+                return false;
+              }
+            };
             (PROP_TREE || []).forEach((p) =>
               (p.projects || []).forEach((pr) =>
                 (pr.rooms || []).forEach((r) => {
-                  if (!r.after_path) return;
                   if (r.status === "archived") return;
-                  out.push({
-                    id: String(r.id),
-                    path: r.after_path,
-                    beforePath: r.before_path || null,
+                  const base = {
                     room: r.name || pr.name || "Design",
                     address: p.address || null,
                     propertyId: p.id || null,
                     createdAt: r.created_at || null,
-                    versionId: r.version_id || null,
-                    style: r.style || null,
-                    versionNo: r.version_no || null,
-                    status: r.status || null,
                     projectId: pr.id || null,
-                  });
+                    roomId: String(r.id),
+                  };
+                  if (r.after_path)
+                    out.push({
+                      ...base,
+                      id: String(r.id),
+                      assetId: String(r.id),
+                      path: r.after_path,
+                      beforePath: r.before_path || null,
+                      versionId: r.version_id || null,
+                      style: r.style || null,
+                      versionNo: r.version_no || null,
+                      status: r.status || null,
+                      assetType: "design",
+                      favorite: fav("version", r.version_id) || fav("design", r.id),
+                    });
+                  if (r.before_path)
+                    out.push({
+                      ...base,
+                      id: "photo-" + String(r.id),
+                      assetId: String(r.id),
+                      path: r.before_path,
+                      versionId: null,
+                      style: null,
+                      versionNo: null,
+                      status: null,
+                      assetType: "photo",
+                      favorite: fav("media", r.id),
+                    });
                 }),
               ),
             );
