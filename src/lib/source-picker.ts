@@ -47,10 +47,10 @@ export const SOURCE_META: Record<
     desc: "Drag and drop or browse.",
   },
   cloud: {
-    icon: "cloud",
-    label: "Google Drive",
-    tab: "Google Drive",
-    desc: "Import photos from your Google Drive.",
+    icon: "link",
+    label: "Import From Link",
+    tab: "Import From Link",
+    desc: "Paste public photo links to import.",
   },
   address: {
     icon: "map-pin",
@@ -726,19 +726,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return (
         '<div class="sp-pane">' +
         paneHead(
-          "Import From Google Drive",
-          "Choose photos from your connected Google Drive account.",
+          "Import From Link",
+          "Paste public photo links, one per line.",
         ) +
-        '<div class="sp-cloudrow"><span>' +
-        DRIVE_ICON +
-        "Google Drive</span><span>" +
-        DROPBOX_ICON +
-        "Dropbox</span></div>" +
         '<label class="sp-f">Public Share Link<input type="text" data-sp-f="cloud" id="' +
         pid("spCloud") +
         '" placeholder="https://drive.google.com/file/d/..."></label>' +
         '<button type="button" class="btn btn-primary btn-sm" data-sp="cloudgo">' +
-        (state.busy ? "Importing" : "Browse Google Drive") +
+        (state.busy ? "Importing" : "Import Photos") +
         "</button>" +
         '<p class="sp-note">The link must be shared publicly so we can read it.</p>' +
         "</div>"
