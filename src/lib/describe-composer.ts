@@ -508,7 +508,7 @@ export function createDescribeComposer(cfg: Cfg) {
       first paint. */
   function footMessage(): string {
     const gap = missing();
-    if (gap) return state.touched ? gap + "." : "";
+    if (gap) return state.touched ? gap : "";
     return summary();
   }
 
@@ -655,13 +655,13 @@ export function createDescribeComposer(cfg: Cfg) {
 
   function roomCards(): string {
     const cards = DS.quickAreas(state.space, state.roomId);
-    const label = DS.spaceKeyOf(state.space) === "interior" ? "Room or area" : "Area";
+    const label = DS.spaceKeyOf(state.space) === "interior" ? "Room Or Area" : "Area";
     return (
       '<div class="rdset-row"><header class="rdset-h"><span class="rdset-l">' +
       esc(label) +
       "</span>" +
       (state.roomDetected && state.room
-        ? '<span class="rdset-note">Detected from your description</span>'
+        ? '<span class="rdset-note">Detected From Your Description</span>'
         : "") +
       '<button type="button" class="rdset-all" data-sp="allroom">View All</button></header>' +
       '<div class="rdset-cards" role="listbox" aria-label="' +
@@ -697,7 +697,7 @@ export function createDescribeComposer(cfg: Cfg) {
   function styleCards(): string {
     const cards = DS.quickStyleCards(state.space, state.styleId);
     return (
-      '<div class="rdset-row"><header class="rdset-h"><span class="rdset-l">Design style</span>' +
+      '<div class="rdset-row"><header class="rdset-h"><span class="rdset-l">Design Style</span>' +
       '<button type="button" class="rdset-all" data-sp="allstyle">View All</button></header>' +
       '<div class="rdset-cards is-style" role="listbox" aria-label="Design Style">' +
       cards
@@ -733,7 +733,7 @@ export function createDescribeComposer(cfg: Cfg) {
     return (
       '<details class="sp-details rdset-adv"' +
       (state.advOpen ? " open" : "") +
-      '><summary data-sp="details">Advanced settings <span class="rdset-sum">' +
+      '><summary data-sp="details">Advanced Settings <span class="rdset-sum">' +
       esc(DS.advancedSummary(settingsState())) +
       "</span></summary>" +
       chipRow("Change Level", "level", DESCRIBE_LEVELS, state.level) +
@@ -750,7 +750,7 @@ export function createDescribeComposer(cfg: Cfg) {
         DESCRIBE_OPTION_COUNTS,
         state.options,
       ) +
-      '<div class="sp-dopts"><span class="sp-dopt-l">Mood and lighting</span><div class="sp-chips">' +
+      '<div class="sp-dopts"><span class="sp-dopt-l">Mood And Lighting</span><div class="sp-chips">' +
       DS.moodsForSpace(state.space)
         .map(
           (m) =>
@@ -834,7 +834,7 @@ export function createDescribeComposer(cfg: Cfg) {
     const gap = missing();
     return (
       '<div class="sp-pane sp-describe">' +
-      '<div class="sp-dhead"><h3>Describe your space</h3>' +
+      '<div class="sp-dhead"><h3>Describe Your Space</h3>' +
       "<p>Describe what you want to create and optionally add reference images.</p></div>" +
       '<div class="sp-composer' +
       (state.busy ? " is-busy" : "") +
@@ -1317,7 +1317,8 @@ export function createDescribeComposer(cfg: Cfg) {
       search.setSelectionRange(n, n);
     }
     const btn = root?.querySelector(".sp-create") as HTMLButtonElement | null;
-    if (btn) btn.disabled = !ready();
+    /* Generate is never silently disabled: clicking it says what is missing. */
+    if (btn) btn.disabled = state.busy;
     const impOk = state.prompt.trim().length >= IMPROVE_MIN_CHARS;
     const imp = root?.querySelector('[data-sp="improve"]') as HTMLButtonElement | null;
     if (imp) imp.disabled = !impOk || state.improving || state.busy;
