@@ -1711,3 +1711,12 @@
   font-size: 10px;
   color: #6b7280;
 }
+
+/* Photo finishing sits in the same rail as the design tools but is visibly a
+   different kind of action: no credit price, no generation. */
+.rdw-rail-sep{height:1px;background:var(--line);margin:8px 6px;}
+.toolrow.rdw-phototool{color:var(--ink);}
+.toolrow.rdw-phototool i{color:var(--muted);}
+.rdpe-back{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--line);
+  background:transparent;color:inherit;border-radius:999px;cursor:pointer;font:inherit;font-size:13px;}
+.rdpe-back:hover{background:rgba(255,255,255,.08);}

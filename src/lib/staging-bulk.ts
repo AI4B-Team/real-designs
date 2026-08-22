@@ -277,7 +277,7 @@ export function openBulkDesign(opts) {
   const returnFocus = document.activeElement;
 
   /* Distinct from the page's #rdsBulk action button: reusing that id used to
-     delete "Set Design Direction" from the page the first time this opened. */
+     delete "Set Design Style" from the page the first time this opened. */
   let fmtOpen = false;
   let node = document.getElementById("rdsBulkModal");
   if (node) node.remove();

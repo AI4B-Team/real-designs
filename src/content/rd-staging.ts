@@ -1165,17 +1165,21 @@ function cardHtml(it, seq) {
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
       ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
-        [
-          { label: "Edit Photo", icon: "sliders-horizontal", attrs: { "data-editphoto": it.key } },
-          { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
-          { label: "Replace", icon: "image-plus", attrs: { "data-replace": it.key } },
-          { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
-          it.state === "failed"
-            ? { label: "Retry", icon: "rotate-ccw", attrs: { "data-retry": it.key } }
-            : null,
-        ],
+        failed
+          ? []
+          : [
+              /* The primary per-photo action: open this exact photo in the room
+                 Canvas, where every design tool lives. The wand means "design"
+                 everywhere in the product and is never reused for editing. */
+              { label: "Open Canvas", icon: "wand-sparkles", hot: true, attrs: { "data-canvas": it.key } },
+              { label: "Edit Photo", icon: "sliders-horizontal", attrs: { "data-editphoto": it.key } },
+              { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
+              { label: "Replace Photo", icon: "image-plus", attrs: { "data-replace": it.key } },
+              { label: "Remove Photo", icon: "trash-2", attrs: { "data-del": it.key } },
+            ],
         { label: "Photo Actions" },
       )}
+
     </div>
 
     <div class="rv-tile-foot">
@@ -1329,7 +1333,7 @@ function render() {
           <label class="rv-selall"><input type="checkbox" id="rdsSelAll" ${all ? "checked" : ""}><b id="rdsSelCount">${sel} of ${S.items.length} selected</b></label>
           <div class="rv-utility-m">${addressBarHtml(S, PROPS || [], "rdsAddr")}</div>
           <div class="rv-utility-a" id="rdsBulkBar"${sel > 0 ? "" : ' hidden'}>
-            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Set Design Direction · ${sel}</button>
+            <button class="btn btn-primary btn-sm" id="rdsBulk"${sel > 0 ? "" : " disabled"}><i data-lucide="wand-sparkles"></i>Set Design Style · ${sel}</button>
             <button class="btn btn-ghost btn-sm" id="rdsSetRoom"${sel > 0 ? "" : " disabled"} title="${sel > 1 ? `Applies one room type to all ${sel} selected photos` : "Sets the room type for the selected photo"}"><i data-lucide="tag"></i>Set Room Type${sel > 1 ? ` · ${sel}` : ""}</button>
             <button class="btn btn-ghost btn-sm" data-act="none" id="rdsDeselect">${all ? "Deselect All" : "Deselect"}</button>
             <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
@@ -1348,7 +1352,7 @@ function render() {
           <div class="rv-count"><span id="rdsFootCount">${sel} ${sel === 1 ? "photo" : "photos"} selected</span></div>
           <div class="rv-gridfoot-a">
             <button class="btn btn-ghost" id="rdsBack">Back</button>
-            <button class="btn btn-primary" id="rdsGo">Next: Design Direction</button>
+            <button class="btn btn-primary" id="rdsGo">Next: Design Style</button>
           </div>
         </div>
       </div>
@@ -1458,7 +1462,7 @@ function syncSelection() {
   if (bulk) {
     bulk.disabled = sel < 1 || S.busy;
     const lab = bulk.lastChild;
-    if (lab && lab.nodeType === 3) lab.textContent = `Set Design Direction · ${sel}`;
+    if (lab && lab.nodeType === 3) lab.textContent = `Set Design Style · ${sel}`;
   }
   const count = wrap.querySelector("#rdsSelCount");
   if (count) count.textContent = `${sel} of ${S.items.length} selected`;
@@ -1928,7 +1932,16 @@ function bindReview(el) {
       if (it) startBulkDesign([it], true);
       return;
     }
+    /* The wand is the primary card action: open this photo in the Canvas. */
+    const canv = t.closest("[data-canvas]");
+    if (canv) {
+      e.preventDefault();
+      e.stopPropagation();
+      openInCanvas(canv.getAttribute("data-canvas"));
+      return;
+    }
     const edp = t.closest("[data-editphoto]");
+
     if (edp) {
       e.preventDefault();
       e.stopPropagation();

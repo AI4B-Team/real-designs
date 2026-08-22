@@ -20,6 +20,7 @@ import { buildCanvasPanel, refreshCanvasPanel } from "@/lib/canvas-panel";
 import { ensureNotEmpty } from "@/lib/route-states";
 import { initAutoRoom, markManualRoom } from "@/lib/canvas-autoroom";
 import { mountStudioResultActions } from "@/lib/canvas-actions";
+import { editorEntry, type ActiveImage } from "@/lib/active-image";
 
 
 const SETTINGS_KEY = "rd_canvas_workspace";
@@ -97,6 +98,71 @@ function currentTool(): string {
   const on = document.querySelector("#fTool .toolrow.on") as HTMLElement | null;
   return on?.dataset["tool"] || "Redesign";
 }
+
+/**
+ * The image the Canvas is showing right now, described with the shared active
+ * image contract. Never the latest room, the newest Media asset or a global
+ * `lastRender` — only what the version model says is active.
+ */
+function canvasActiveImage(): ActiveImage | null {
+  const w = window as any;
+  const r = (typeof w.rdActiveCanvasResult === "function" && w.rdActiveCanvasResult()) || null;
+  const entry = w.__rdCanvasEntry || {};
+  const sourcePath = r?.sourcePath || entry.sourcePath || w.rdPendingPhotoPath || null;
+  const versionPath = r?.resultPath || null;
+  const versionId = r?.versionId || null;
+  if (!sourcePath && !versionPath) return null;
+  return {
+    assetId: versionId || entry.photoKey || sourcePath || "",
+    assetType: versionId ? "generated_image" : "uploaded_image",
+    sourceAssetId: entry.photoKey || sourcePath || null,
+    activeSourcePath: sourcePath,
+    activeVersionId: versionId,
+    activeVersionPath: versionPath,
+    roomId: r?.roomId || entry.roomId || null,
+    propertyId: entry.propertyId || null,
+    draftId: entry.draftId || null,
+    returnDestination: "canvas",
+    editedSource: !!entry.editedSourcePath,
+  };
+}
+
+/** Opens the ONE shared full-screen editor on the visible canvas image. */
+async function openCanvasPhotoEditor(): Promise<void> {
+  const active = canvasActiveImage();
+  if (!active) {
+    (window as any).rdToast?.("Open A Photo On The Canvas First.");
+    return;
+  }
+  const e = editorEntry(active);
+  const [{ openPhotoEditor }] = await Promise.all([import("@/lib/photo-editor")]);
+  const room =
+    (document.getElementById("fRoom") as HTMLSelectElement | null)?.value || "Photo";
+  await openPhotoEditor({
+    editorMode: e.editorMode,
+    returnDestination: "canvas",
+    startKey: e.assetId,
+    photos: [
+      {
+        key: e.assetId,
+        name: room,
+        room,
+        space: currentSpace(),
+        assetId: e.assetId,
+        assetType: e.assetType,
+        storagePath: e.storagePath,
+        path: e.storagePath,
+        src: "",
+        ...(e.propertyId ? { propertyId: e.propertyId } : {}),
+        ...(e.roomId ? { roomId: e.roomId } : {}),
+        ...(e.versionId ? { versionId: e.versionId } : {}),
+        ...(e.parentVersionId ? { parentVersionId: e.parentVersionId } : {}),
+        editorMode: e.editorMode,
+      },
+    ],
+  });
+}
+
 
 /* ------------------------------------------------------------------ */
 /* room cards                                                          */
@@ -467,6 +533,12 @@ export function initCanvasWorkspace() {
       }
       return;
     }
+    /* Photo finishing, not generation: the editor opens on exactly the image
+       the canvas is showing and never starts a redesign or spends a credit. */
+    if (t.closest("#rdwEditPhotoTool")) {
+      void openCanvasPhotoEditor();
+      return;
+    }
     if (t.closest("#rdwObjTool")) {
       const sec = document.getElementById("rdwObjSec");
       const btn = document.getElementById("rdwObjTool");
@@ -477,7 +549,8 @@ export function initCanvasWorkspace() {
       }
       return;
     }
-    if (t.closest("#fTool .toolrow") || t.closest("#spChips .chip")) {
+    if (t.closest("#fTool .toolrow:not(.rdw-phototool)") || t.closest("#spChips .chip")) {
+
       /* the app script owns the state change; repaint after it settles */
       setTimeout(() => {
         paintPanelHeader();
