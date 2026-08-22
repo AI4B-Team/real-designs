@@ -8,7 +8,10 @@ body.rdpe-open {
 
 .rdpe {
   position: fixed;
-  inset: 0;
+  inset: var(--actual-top-offset, 0) 0 0 0;
+  height: calc(100dvh - var(--actual-top-offset, 0px));
+  max-width: 100vw;
+  overflow: hidden;
   z-index: 4000;
   display: flex;
   flex-direction: column;
@@ -128,10 +131,59 @@ body.rdpe-open {
 }
 
 .rdpe-body {
+  position: relative;
   flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-columns: minmax(0, 1fr) clamp(360px, 26vw, 420px);
+  overflow: hidden;
+}
+.rdpe.rdpe-panel-off .rdpe-body {
+  grid-template-columns: minmax(0, 1fr) 0;
+}
+.rdpe.rdpe-panel-off .rdpe-panel {
+  display: none;
+}
+
+/* Collapse handle lives outside the panel body, so it can never sit on top of
+   a control or the action footer. */
+.rdpe-grip {
+  position: absolute;
+  top: 50%;
+  right: clamp(360px, 26vw, 420px);
+  transform: translateY(-50%);
+  z-index: 3;
+  width: 18px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #232427;
+  border-right: 0;
+  border-radius: 8px 0 0 8px;
+  background: #17181c;
+  color: #a5a6ab;
+  cursor: pointer;
+}
+.rdpe.rdpe-panel-off .rdpe-grip {
+  right: 0;
+}
+.rdpe.rdpe-panel-off .rdpe-grip i {
+  transform: rotate(180deg);
+}
+.rdpe-prov {
+  font-size: 12px;
+  color: #a5a6ab;
+  display: none;
+}
+.rdpe-prov.on {
+  display: inline;
+}
+.rdpe-dlprev {
+  display: none;
+}
+.rdpe-paneltoggle {
+  display: none;
 }
 
 .rdpe-main {
@@ -339,8 +391,12 @@ body.rdpe-open {
 }
 .rdpe-panelb {
   flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
-  padding: 12px;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* Everything must be able to scroll clear above the sticky footer. */
+  padding: 12px 12px 28px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -538,27 +594,126 @@ body.rdpe-open {
 
 .rdpe-panelf {
   flex: 0 0 auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 11px 12px;
+  padding: 11px 12px calc(11px + env(safe-area-inset-bottom, 0px));
   border-top: 1px solid #232427;
   background: #101115;
 }
-.rdpe-fr {
+.rdpe-fr1 {
   display: flex;
+  align-items: center;
   gap: 8px;
+  min-width: 0;
+}
+.rdpe-panelf .btn {
+  white-space: nowrap;
+}
+.rdpe-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #a5a6ab;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.rdpe-reset:hover:not([disabled]) {
+  color: #fff;
+  background: #1c1d22;
+}
+.rdpe-reset[disabled] {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.rdpe-reset i {
+  width: 15px;
+  height: 15px;
 }
 
-@media (max-width: 1000px) {
+/* Narrow panel: two rows, primary action full width on its own line. */
+.rdpe.rdpe-footer-stack .rdpe-panelf {
+  flex-direction: column;
+  align-items: stretch;
+}
+.rdpe.rdpe-footer-stack .rdpe-fr1 {
+  justify-content: space-between;
+}
+.rdpe.rdpe-footer-stack .rdpe-panelf > .btn-primary {
+  width: 100%;
+  justify-content: center;
+}
+
+.rdpe-rst {
+  border: 0;
+  background: transparent;
+  color: #7c7d84;
+  cursor: pointer;
+  padding: 2px;
+  line-height: 0;
+}
+.rdpe-rst:hover {
+  color: #fff;
+}
+.rdpe-rst i {
+  width: 13px;
+  height: 13px;
+}
+
+.rdpe-udlg {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* Below ~1200px the panel floats over the image instead of squeezing it. */
+@media (max-width: 1200px) {
   .rdpe-body {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto;
+  }
+  .rdpe-paneltoggle {
+    display: inline-grid;
   }
   .rdpe-panel {
-    border-left: 0;
-    border-top: 1px solid #232427;
-    max-height: 46vh;
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(400px, 88vw);
+    z-index: 4;
+    box-shadow: -18px 0 40px rgb(0 0 0 / 45%);
+  }
+  .rdpe-grip {
+    right: min(400px, 88vw);
+  }
+}
+
+/* Below ~800px it becomes a full-height sheet; Save stays visible. */
+@media (max-width: 800px) {
+  .rdpe-panel {
+    width: 100%;
+    box-shadow: none;
+  }
+  .rdpe-grip {
+    display: none;
+  }
+  .rdpe-strip {
+    display: none;
+  }
+  .rdpe-dlprev {
+    display: none;
+  }
+  .rdpe-slider input[type="range"] {
+    max-width: 100%;
   }
 }
