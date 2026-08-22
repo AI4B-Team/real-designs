@@ -1181,9 +1181,9 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     video: "Create A Video",
   };
 
-  /** The two project cards, or the one-line summary they collapse into once a
-      choice has been made. Nothing else on the screen is touched, so the
-      composer, its references and its draft all survive the toggle. */
+  /** The two project cards. They always stay full size and side by side: the
+      selected one only changes color, border and checkmark, so choosing a
+      project type never moves anything below it. */
   function doorsHtml() {
     const doorCard = (id: "design" | "video", icon: string, title: string, sub: string) =>
       '<button type="button" class="stw-door' +
@@ -1207,18 +1207,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       "</span>" +
       "</button>";
 
-    if (state.door && !state.doorOpen)
-      return (
-        '<div class="stw-doorsum">' +
-        '<i data-lucide="' +
-        (state.door === "video" ? "clapperboard" : "wand-sparkles") +
-        '"></i>' +
-        "<span><b>Project:</b> " +
-        esc(DOOR_LABEL[state.door] || "") +
-        "</span>" +
-        '<button type="button" class="stw-doorchange" data-sts="door-change">Change</button>' +
-        "</div>"
-      );
+
 
     return (
       '<div class="stw-doors" role="radiogroup" aria-label="Project type">' +
