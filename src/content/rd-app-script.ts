@@ -2438,41 +2438,120 @@ export function initApp(): () => void {
 
     /* The single Studio start experience: in-canvas empty state plus the compact
    "Start With" panel on the right. Mounted lazily so the Studio markup exists. */
-    /* One described request is ONE batch. The workspace is initialized once,
-       then every option is appended: a later concept can never erase an
-       earlier one, and each keeps its own durable path and version row. */
+    /* One described request is ONE batch with one slot per requested output.
+       Every slot exists before the first pixel arrives, keeps its number for
+       life, and carries its own status. A later concept can never overwrite,
+       reorder or hide an earlier one. */
+    let OUTPUTS = null;
+    window.rdOutputs = () => OUTPUTS;
+
+    /** The one inline status line, inside the Version History header. */
+    function outputStatusEl() {
+      const head = document.querySelector("#rdwVers .rdw-vers-h");
+      if (!head) return null;
+      let el = document.getElementById("rdwOutStatus");
+      if (!el) {
+        el = document.createElement("span");
+        el.id = "rdwOutStatus";
+        el.className = "rdw-outstatus";
+        const n = document.getElementById("rdwVersN");
+        if (n && n.parentElement === head) head.insertBefore(el, n.nextSibling);
+        else head.appendChild(el);
+      }
+      return el;
+    }
+
+    /** Writes exactly one status message. Nothing ever stacks. */
+    function setOutputStatus(text, retry) {
+      const el = outputStatusEl();
+      if (!el) return;
+      el.innerHTML = "";
+      if (!text) {
+        el.hidden = true;
+        return;
+      }
+      el.hidden = false;
+      const b = document.createElement("span");
+      b.textContent = text;
+      el.appendChild(b);
+      if (retry) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "rdw-outretry";
+        btn.textContent = "Retry";
+        btn.addEventListener("click", async () => {
+          btn.disabled = true;
+          try {
+            await retry();
+          } finally {
+            btn.disabled = false;
+          }
+        });
+        el.appendChild(btn);
+      }
+    }
+
+    /** Repaints slot tiles, the status line and every dependent control. */
+    function paintOutputs() {
+      if (!OUTPUTS) return;
+      const wrap = document.getElementById("vars");
+      if (wrap) {
+        OS.orderedSlots(OUTPUTS).forEach((s) => {
+          let tile = wrap.querySelector('[data-output-id="' + CSS.escape(s.outputId) + '"]');
+          if (!tile) {
+            tile = document.createElement("div");
+            tile.className = "var";
+            tile.dataset.outputId = s.outputId;
+            tile.addEventListener("click", () => selectOutput(s.outputId));
+            wrap.appendChild(tile);
+          }
+          if (s.path) tile.dataset.path = s.path;
+          if (s.image) tile.dataset.src = s.image;
+          tile.classList.toggle("on", OUTPUTS.activeOutputId === s.outputId);
+          tile.setAttribute("aria-selected", OUTPUTS.activeOutputId === s.outputId ? "true" : "false");
+          const label = OS.slotLabel(OUTPUTS, s);
+          const badge = OS.slotBadge(OUTPUTS, s);
+          tile.innerHTML =
+            '<div style="aspect-ratio:8/5">' +
+            (s.image
+              ? photo(s.image, label)
+              : '<div class="var-skel" aria-hidden="true"></div>') +
+            "</div>" +
+            '<div class="vl">' +
+            label +
+            ' <span class="rd-vsave">' +
+            badge +
+            "</span></div>";
+        });
+      }
+      setOutputStatus(OS.statusLine(OUTPUTS), null);
+      const count = document.getElementById("rdwVersN");
+      if (count) count.textContent = OS.historyCount(OUTPUTS);
+      try {
+        setConceptSummary(CONCEPT_SUMMARY_BASE
+          ? CONCEPT_SUMMARY_BASE + " \u00b7 " + OS.activeSummary(OUTPUTS)
+          : OS.activeSummary(OUTPUTS));
+      } catch (_) {}
+      paintSaveRoomBtn();
+    }
+    let CONCEPT_SUMMARY_BASE = null;
+
+    /** Canvas, thumbnail and summary always move together, by id. */
+    function selectOutput(outputId) {
+      if (!OUTPUTS) return;
+      const s = OS.slotById(OUTPUTS, outputId);
+      if (!s || !s.image) return;
+      OS.setActive(OUTPUTS, outputId);
+      if (cAfter) cAfter.innerHTML = photo(s.image, OS.slotLabel(OUTPUTS, s));
+      lastRender = s.image;
+      lastRenderPath = s.path || null;
+      paintOutputs();
+    }
+    window.rdSelectOutput = (id) => selectOutput(id);
+
     function beginConceptBatch(info) {
       const i = info || {};
-      STUDIO_SRC = "user_upload";
-      STUDIO_CTX = blankStudioCtx();
-      if (i.room) STUDIO_CTX.room = i.room;
-      STUDIO_RESULT = false;
-      CANVAS_PHASE = "generating";
-      lastRender = null;
-      lastRenderPath = null;
-      dropPendingSave();
-      try {
-        SESSION_VERSIONS.length = 0;
-      } catch (_) {}
-      /* No source photo exists, so nothing is faked into the Before layer and
-         the two layers can never hold the same asset. */
-      if (cBefore) cBefore.innerHTML = "";
-      if (cAfter) cAfter.innerHTML = "";
-      const vars = document.getElementById("vars");
-      if (vars) vars.innerHTML = "";
-      try {
-        Object.keys(locks).forEach((k) => delete locks[k]);
-      } catch (_) {}
-      sourceCaption(false);
-      setCanvasRatio(i.ratio, null);
-      applyCanvasMode(i.mode || "concept-only");
-      try {
-        setConceptSummary(i.summary || null);
-      } catch (_) {}
-      paintStudioState();
-      paintStudioSub();
-      paintVersions();
-    }
+
 
     /* A partial batch is never reported as done: the surviving image stays on
        the canvas and only the missing option can be retried. */
