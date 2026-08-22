@@ -10440,10 +10440,10 @@
 .spd-row {
   display: grid;
   grid-template-columns:
-    28px 72px minmax(0, 1.5fr) minmax(0, 1.3fr)
-    minmax(0, 84px) minmax(0, 108px) minmax(0, 96px) minmax(0, 104px);
+    40px 112px minmax(120px, 1fr) minmax(120px, 0.8fr)
+    120px 120px 110px 48px;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 .spd-lhead {
   position: sticky;
