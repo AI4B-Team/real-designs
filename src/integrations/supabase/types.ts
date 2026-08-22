@@ -815,9 +815,11 @@ export type Database = {
           edited_path: string | null
           editor_mode: string
           flip_h: boolean
+          geometry: Json
           id: string
           is_copy: boolean
           label: string | null
+          modification_class: string | null
           parent_asset_key: string | null
           revision: number
           rotation: number
@@ -834,9 +836,11 @@ export type Database = {
           edited_path?: string | null
           editor_mode?: string
           flip_h?: boolean
+          geometry?: Json
           id?: string
           is_copy?: boolean
           label?: string | null
+          modification_class?: string | null
           parent_asset_key?: string | null
           revision?: number
           rotation?: number
@@ -853,9 +857,11 @@ export type Database = {
           edited_path?: string | null
           editor_mode?: string
           flip_h?: boolean
+          geometry?: Json
           id?: string
           is_copy?: boolean
           label?: string | null
+          modification_class?: string | null
           parent_asset_key?: string | null
           revision?: number
           rotation?: number
