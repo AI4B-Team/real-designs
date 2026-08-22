@@ -1281,7 +1281,16 @@ function render() {
     },
   });
 
+  /* Design and Review are real pages in the same builder, not modals: the
+     rail, the header and the page chrome stay put and only the work area
+     changes, so Back and Edit never lose the draft. */
+  if (S.step === "design" || S.step === "final") {
+    renderDesignFlow(el);
+    return;
+  }
+
   const sel = selectedCount();
+
   const all = S.items.length > 0 && sel === S.items.length;
   el.innerHTML = `<section class="rds-page">
     <div class="rv-head">
