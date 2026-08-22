@@ -2084,18 +2084,14 @@ export function initApp(): () => void {
         if (c) c.hidden = !(Number(c.textContent) > 0);
       });
 
-      paintTree();
-      paintDesigns();
-      updateSearchMeta();
-      try {
-        paintBatch();
-      } catch (_) {}
-      try {
-        progressiveNav();
-      } catch (_) {}
-      try {
-        paintHome();
-      } catch (_) {}
+      /* Each painter is independent: one broken module must never stop the
+         rest of the workspace from mounting, and every failure is reported. */
+      runModule("paintTree", paintTree);
+      runModule("paintDesigns", paintDesigns);
+      runModule("updateSearchMeta", updateSearchMeta);
+      runModule("paintBatch", paintBatch);
+      runModule("progressiveNav", progressiveNav);
+      runModule("paintHome", paintHome);
     }
     loadProperties();
     window.addEventListener("rd:saved", loadProperties);
