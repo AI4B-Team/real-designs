@@ -34,6 +34,10 @@ import {
   redoStroke as coreRedoStroke,
   undoStroke as coreUndoStroke,
   maskSupport,
+  normalizePolygon,
+  polygonBox,
+  polygonCentroid,
+  type Point,
   type MaskState as CoreMaskState,
   type MaskStroke as CoreMaskStroke,
   type SelectionIntent,
@@ -81,6 +85,10 @@ export type SurfaceDetection = {
   confidence: number;
   /** Rough share of the frame, 0..1, used to warn about tiny selections. */
   area: number;
+  /** The real outline of the surface when the detector traced one. */
+  polygon?: Point[];
+  /** Where the on-image label sits. */
+  centroid?: Point;
 };
 
 export type RoomRead = {
@@ -140,12 +148,18 @@ export function normalizeSurfaces(raw: unknown): SurfaceDetection[] {
     const e = (entry || {}) as Record<string, unknown>;
     const kind = kindFrom(e["kind"]) || kindFrom(e["label"]);
     if (!kind) return;
-    const box = normBox(e["box"]);
+    const polygon = normalizePolygon(e["polygon"] ?? e["outline"] ?? e["points"]);
+    const box = polygon ? polygonBox(polygon) : normBox(e["box"]);
+    const centroid = polygon
+      ? polygonCentroid(polygon)
+      : { x: box.x + box.w / 2, y: box.y + box.h / 2 };
     out.push({
       id: String(e["id"] || "s" + (i + 1)),
       label: String(e["label"] || surfaceLabel(kind)).slice(0, 60),
       kind,
       box,
+      ...(polygon ? { polygon } : {}),
+      centroid,
       current: String(e["current_material"] || e["material"] || "").slice(0, 80) || "unknown",
       confidence: Math.max(0, Math.min(1, Number(e["confidence"]) || 0.6)),
       area: box.w * box.h,
@@ -210,11 +224,14 @@ export function maskRegions(
   strokes: MaskStroke[];
   hasTarget: boolean;
 } {
+  const shape = (d: SurfaceDetection) => ({
+    label: d.label,
+    box: d.box,
+    ...(d.polygon ? { polygon: d.polygon } : {}),
+  });
   const regions = buildRegions<StrokeKind>({
-    selected: selected ? [{ label: selected.label, box: selected.box }] : [],
-    protectedRegions: others
-      .filter((o) => !selected || o.id !== selected.id)
-      .map((o) => ({ label: o.label, box: o.box })),
+    selected: selected ? [shape(selected)] : [],
+    protectedRegions: others.filter((o) => !selected || o.id !== selected.id).map(shape),
     mask,
     intent: strokeIntent,
   });
