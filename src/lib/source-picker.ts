@@ -1523,12 +1523,63 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       selectProperty(card.dataset["spProp"]!);
       return;
     }
+    const dcard = t.closest?.("[data-sp-design]") as HTMLElement | null;
+    if (dcard) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      if (t.closest("button")) return;
+      e.preventDefault();
+      const id = dcard.dataset["spDesign"]!;
+      const at = state.designSel.indexOf(id);
+      if (at > -1) state.designSel.splice(at, 1);
+      else state.designSel.push(id);
+      render();
+      return;
+    }
     if (!t.closest?.("[data-sp-drop]")) return;
     if (t.closest("button")) return;
     if (e.key !== "Enter" && e.key !== " ") return;
     e.preventDefault();
     input.click();
   }
+
+  /** Drag-to-reorder inside the selected-order row. */
+  function wireOrderDrag(el: HTMLElement) {
+    el.addEventListener("dragstart", (ev: any) => {
+      const chip = ev.target?.closest?.("[data-sp-order]") as HTMLElement | null;
+      if (!chip) return;
+      state.designDrag = chip.dataset["spOrder"] || null;
+      try {
+        ev.dataTransfer.effectAllowed = "move";
+        ev.dataTransfer.setData("text/plain", state.designDrag || "");
+      } catch (_) {}
+    });
+    el.addEventListener("dragover", (ev: any) => {
+      if (!state.designDrag) return;
+      if (!ev.target?.closest?.("[data-sp-order]")) return;
+      ev.preventDefault();
+    });
+    el.addEventListener("drop", (ev: any) => {
+      const chip = ev.target?.closest?.("[data-sp-order]") as HTMLElement | null;
+      const from = state.designDrag;
+      state.designDrag = null;
+      if (!chip || !from) return;
+      ev.preventDefault();
+      const to = chip.dataset["spOrder"];
+      if (!to || to === from) return;
+      const order = state.designSel.slice();
+      const i = order.indexOf(from);
+      const j = order.indexOf(to);
+      if (i < 0 || j < 0) return;
+      order.splice(i, 1);
+      order.splice(j, 0, from);
+      state.designSel = order;
+      render();
+    });
+    el.addEventListener("dragend", () => {
+      state.designDrag = null;
+    });
+  }
+
 
   function onInput(e: Event) {
     const t = e.target as HTMLInputElement;
