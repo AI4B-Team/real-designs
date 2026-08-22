@@ -40,12 +40,12 @@ function toast(msg: string) {
 }
 
 /** Shortcuts that shape the prompt. None of them are required. */
-const QUICK: { id: string; label: string; prompt: string }[] = [
-  { id: "similar", label: "Keep It Similar", prompt: "Keep the overall look and make a fresh take on it." },
-  { id: "style", label: "Change Style", prompt: "Shift the design language to a clearly different style." },
-  { id: "colors", label: "Change Colors", prompt: "Use a different colour palette." },
-  { id: "materials", label: "Change Materials", prompt: "Swap the main materials and finishes." },
-  { id: "furniture", label: "Change Furniture", prompt: "Replace the furniture with different pieces." },
+const QUICK: { id: string; label: string; prompt: string; primary?: boolean }[] = [
+  { primary: true, id: "similar", label: "Keep It Similar", prompt: "Keep the overall look and make a fresh take on it." },
+  { primary: true, id: "style", label: "Change Style", prompt: "Shift the design language to a clearly different style." },
+  { primary: true, id: "colors", label: "Change Colors", prompt: "Use a different colour palette." },
+  { primary: true, id: "materials", label: "Change Materials", prompt: "Swap the main materials and finishes." },
+  { primary: true, id: "furniture", label: "Change Furniture", prompt: "Replace the furniture with different pieces." },
   { id: "luxury", label: "More Luxury", prompt: "Make it feel more high end and luxurious." },
   { id: "affordable", label: "More Affordable", prompt: "Use more affordable, budget friendly finishes." },
   { id: "minimal", label: "More Minimal", prompt: "Simplify and declutter the design." },

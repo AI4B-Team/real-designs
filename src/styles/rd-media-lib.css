@@ -1306,3 +1306,19 @@
     min-height: 44px;
   }
 }
+
+/* Drawer favourite sits in one place: top-right of the preview. */
+.ml-dr-prev {
+  position: relative;
+}
+.ml-dr-fav {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  z-index: 2;
+}
+.ml-dr-errb {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}

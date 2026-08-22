@@ -1621,3 +1621,34 @@
   gap: 8px;
   z-index: 6;
 }
+
+/* Variation drawer: progressive disclosure sections. */
+.rdvar-more {
+  margin-top: 8px;
+}
+.rdvar-more > summary {
+  cursor: pointer;
+  list-style: none;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #374151;
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.rdvar-more > summary::-webkit-details-marker {
+  display: none;
+}
+.rdvar-more > summary::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-right: 2px solid #9ca3af;
+  border-bottom: 2px solid #9ca3af;
+  transform: rotate(45deg);
+  margin-left: auto;
+}
+.rdvar-more[open] > summary::after {
+  transform: rotate(-135deg);
+}
