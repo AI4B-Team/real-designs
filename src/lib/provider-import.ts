@@ -52,6 +52,8 @@ const FILE_NOTE = "Supported photos: JPG, PNG, WEBP and HEIC.";
 
 function env(name: string): string {
   try {
+    const override = (globalThis as any).__RD_PROVIDER_ENV?.[name];
+    if (override) return String(override).trim();
     return String((import.meta as any).env?.[name] || "").trim();
   } catch {
     return "";

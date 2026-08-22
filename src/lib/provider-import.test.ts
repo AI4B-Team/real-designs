@@ -13,9 +13,11 @@ const modal = () => document.querySelector<HTMLElement>(".rdpi-back");
 const body = () => document.querySelector<HTMLElement>(".rdpi-b");
 
 function configure() {
-  vi.stubEnv("VITE_GOOGLE_PICKER_CLIENT_ID", "cid");
-  vi.stubEnv("VITE_GOOGLE_PICKER_API_KEY", "key");
-  vi.stubEnv("VITE_DROPBOX_APP_KEY", "dbx");
+  (globalThis as any).__RD_PROVIDER_ENV = {
+    VITE_GOOGLE_PICKER_CLIENT_ID: "cid",
+    VITE_GOOGLE_PICKER_API_KEY: "key",
+    VITE_DROPBOX_APP_KEY: "dbx",
+  };
 }
 
 async function open(id: "drive" | "dropbox" = "drive", opts: any = {}) {
@@ -29,7 +31,10 @@ describe("provider import", () => {
     document.body.innerHTML = "";
     document.body.style.overflow = "";
   });
-  afterEach(() => vi.unstubAllEnvs());
+  afterEach(() => {
+    delete (globalThis as any).__RD_PROVIDER_ENV;
+    vi.unstubAllEnvs();
+  });
 
   it("is honestly unavailable when the integration is not configured", async () => {
     expect(providerConfig("drive").configured).toBe(false);
