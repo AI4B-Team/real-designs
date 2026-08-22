@@ -99,6 +99,7 @@ describe("studio start source picker", () => {
       (host.querySelector("[data-sp-style]") as HTMLElement).click();
     };
     pick();
+    console.log("META", host.querySelector(".sp-describe-foot .sp-meta")?.textContent, host.querySelectorAll("[data-sp-room]").length, host.querySelectorAll("[data-sp-style]").length);
     cta().click();
     expect(onDescribe).toHaveBeenCalledWith(
       "A warm modern living room",
