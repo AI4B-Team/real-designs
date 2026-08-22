@@ -127,20 +127,65 @@ function canvasActiveImage(): ActiveImage | null {
   };
 }
 
-/** Opens the ONE shared full-screen editor on the visible canvas image. */
+/* ------------------------------------------------------------------ */
+/* Edit Photo as a Canvas tool                                         */
+/* ------------------------------------------------------------------ */
+
+/** Where the embedded editor mounts: inside the dark Canvas wrapper. */
+function editorMountHost(): HTMLElement | null {
+  const card = document.querySelector("#canvasCard .card-b") as HTMLElement | null;
+  if (!card) return null;
+  let host = document.getElementById("rdwEditMount");
+  if (!host) {
+    host = document.createElement("div");
+    host.id = "rdwEditMount";
+    host.className = "rdw-editmount";
+    card.insertBefore(host, card.firstChild);
+  }
+  return host;
+}
+
+/** Edit Photo is Canvas state, never navigation. */
+export function setCanvasTool(tool: "edit-photo" | null) {
+  const b = board();
+  const btn = document.getElementById("rdwEditPhotoTool");
+  const stage = document.getElementById("rdwStage");
+  const on = tool === "edit-photo";
+  b?.classList.toggle("editing-photo", on);
+  if (b) b.dataset["activeTool"] = on ? "edit-photo" : "";
+  btn?.classList.toggle("on", on);
+  btn?.setAttribute("aria-pressed", on ? "true" : "false");
+  if (stage) stage.hidden = on;
+  const mount = document.getElementById("rdwEditMount");
+  if (mount) mount.hidden = !on;
+}
+
+/** Closes the embedded editor and restores the normal Canvas stage. */
+export function closeCanvasPhotoEditor() {
+  void import("@/lib/photo-editor").then((m) => m.closePhotoEditor());
+  setCanvasTool(null);
+}
+
+/** Mounts the ONE shared editor inside the Canvas on the visible image. */
 async function openCanvasPhotoEditor(): Promise<void> {
   const active = canvasActiveImage();
   if (!active) {
     (window as any).rdToast?.("Open A Photo On The Canvas First.");
     return;
   }
+  const mount = editorMountHost();
+  if (!mount) return;
   const e = editorEntry(active);
   const [{ openPhotoEditor }] = await Promise.all([import("@/lib/photo-editor")]);
+  const versionTag = document.getElementById("rdwVerTag")?.textContent?.trim();
+  setCanvasTool("edit-photo");
   const room =
     (document.getElementById("fRoom") as HTMLSelectElement | null)?.value || "Photo";
   await openPhotoEditor({
     editorMode: e.editorMode,
     returnDestination: "canvas",
+    mount,
+    contextLabel: versionTag || "Source Photo",
     startKey: e.assetId,
     photos: [
       {
@@ -536,7 +581,8 @@ export function initCanvasWorkspace() {
     /* Photo finishing, not generation: the editor opens on exactly the image
        the canvas is showing and never starts a redesign or spends a credit. */
     if (t.closest("#rdwEditPhotoTool")) {
-      void openCanvasPhotoEditor();
+      if (b.classList.contains("editing-photo")) closeCanvasPhotoEditor();
+      else void openCanvasPhotoEditor();
       return;
     }
     if (t.closest("#rdwObjTool")) {
@@ -550,6 +596,8 @@ export function initCanvasWorkspace() {
       return;
     }
     if (t.closest("#fTool .toolrow:not(.rdw-phototool)") || t.closest("#spChips .chip")) {
+      /* Switching tools is a Canvas state change, never navigation. */
+      if (b.classList.contains("editing-photo")) closeCanvasPhotoEditor();
 
       /* the app script owns the state change; repaint after it settles */
       setTimeout(() => {
@@ -558,6 +606,8 @@ export function initCanvasWorkspace() {
       }, 0);
     }
   });
+
+  document.addEventListener("rdpe:closed", () => setCanvasTool(null));
 
   document.getElementById("rdwSettingsBtn")?.addEventListener("click", () => {
     b.classList.toggle("panel-on");
