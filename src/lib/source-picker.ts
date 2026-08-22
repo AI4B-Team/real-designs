@@ -330,6 +330,19 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     mediaProperty: "all",
     mediaRoom: "all",
     mediaQuery: "",
+    /** Sort order, optional property grouping and the grid/list view. */
+    mediaSort: "newest" as "newest" | "oldest" | "room" | "property",
+    mediaGroup: false,
+    mediaView: (() => {
+      try {
+        const v = localStorage.getItem("rd.media.view");
+        return v === "list" ? "list" : "grid";
+      } catch (_) {
+        return "grid";
+      }
+    })() as "grid" | "list",
+    /** Anchor for shift-click range selection. */
+    mediaAnchor: null as string | null,
 
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
@@ -874,6 +887,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
+  /** Shift-click: everything between the anchor and the clicked card. */
+  function selectRange(from: string, to: string) {
+    const list = visibleMedia().map((d) => d.id);
+    const a = list.indexOf(from);
+    const b = list.indexOf(to);
+    if (a < 0 || b < 0) return;
+    const [lo, hi] = a <= b ? [a, b] : [b, a];
+    for (const id of list.slice(lo, hi + 1))
+      if (!state.designSel.includes(id)) state.designSel.push(id);
+    state.mediaAnchor = to;
+  }
+
   /** Selected media, in the order they were picked. */
   function selectedDesigns() {
     const byId = new Map(state.designs.map((d) => [d.id, d]));
@@ -906,13 +931,29 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       )
         return false;
       return true;
-    });
+    })
+      .slice()
+      .sort(sortMedia);
+  }
+
+  const time = (d: PickerDesign) => {
+    const t = Date.parse(String(d.createdAt || ""));
+    return isNaN(t) ? 0 : t;
+  };
+
+  function sortMedia(a: PickerDesign, b: PickerDesign) {
+    if (state.mediaSort === "oldest") return time(a) - time(b);
+    if (state.mediaSort === "room")
+      return String(a.room || "").localeCompare(String(b.room || ""));
+    if (state.mediaSort === "property")
+      return String(a.address || "").localeCompare(String(b.address || ""));
+    return time(b) - time(a);
   }
 
   const MEDIA_TYPES: Array<[typeof state.mediaType, string]> = [
-    ["all", "All media"],
-    ["photos", "Property photos"],
-    ["designs", "Generated designs"],
+    ["all", "All"],
+    ["photos", "Property Photos"],
+    ["designs", "Generated Designs"],
     ["favorites", "Favorites"],
   ];
 
@@ -929,9 +970,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       value: string,
       options: Array<[string, string]>,
     ) =>
-      '<label class="spd-fsel"><span>' +
-      esc(label) +
-      "</span><select data-sp-f=\"" +
+      '<select class="spd-sel" data-sp-f="' +
       name +
       '" aria-label="' +
       esc(label) +
@@ -948,7 +987,22 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             "</option>",
         )
         .join("") +
-      "</select></label>";
+      "</select>";
+    const n = state.designSel.length;
+    const viewBtn = (id: "grid" | "list", icon: string, label: string) =>
+      '<button type="button" class="spd-vb' +
+      (state.mediaView === id ? " on" : "") +
+      '" data-sp-view="' +
+      id +
+      '" aria-pressed="' +
+      (state.mediaView === id ? "true" : "false") +
+      '" title="' +
+      esc(label) +
+      '" aria-label="' +
+      esc(label) +
+      '"><i data-lucide="' +
+      icon +
+      '"></i></button>';
     return (
       '<div class="spd-filters">' +
       '<div class="spd-chips" role="group" aria-label="Media type">' +
@@ -965,7 +1019,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           "</button>",
       ).join("") +
       "</div>" +
-      '<div class="spd-frow">' +
+      '<div class="spd-bar">' +
       '<label class="sp-f sp-search spd-fq"><span><i data-lucide="search"></i>' +
       '<input type="search" data-sp-f="mq" placeholder="Search media" aria-label="Search media" value="' +
       esc(state.mediaQuery) +
@@ -974,17 +1028,40 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         "mprop",
         "Property",
         state.mediaProperty,
-        [["all", "All properties"] as [string, string]].concat(Array.from(props.entries())),
+        [["all", "All Properties"] as [string, string]].concat(Array.from(props.entries())),
       ) +
       select(
         "mroom",
         "Room",
         state.mediaRoom,
-        [["all", "All rooms"] as [string, string]].concat(
+        [["all", "All Rooms"] as [string, string]].concat(
           Array.from(rooms).map((r) => [r, r] as [string, string]),
         ),
       ) +
-      "</div></div>"
+      select("msort", "Sort", state.mediaSort, [
+        ["newest", "Newest First"],
+        ["oldest", "Oldest First"],
+        ["room", "Room A\u2013Z"],
+        ["property", "Property A\u2013Z"],
+      ]) +
+      (state.mediaProperty === "all"
+        ? select("mgroup", "Grouping", state.mediaGroup ? "group" : "none", [
+            ["none", "No Grouping"],
+            ["group", "Group By Property"],
+          ])
+        : "") +
+      '<div class="spd-bar-r">' +
+      '<button type="button" class="sp-link" data-sp="mall">Select All Visible</button>' +
+      (n
+        ? '<button type="button" class="sp-link" data-sp="dclear">Deselect All</button>'
+        : "") +
+      '<span class="spd-count" aria-live="polite">' +
+      (n ? n + " selected" : "None selected") +
+      "</span>" +
+      '<div class="spd-views" role="group" aria-label="View">' +
+      viewBtn("grid", "layout-grid", "Grid View") +
+      viewBtn("list", "list", "List View") +
+      "</div></div></div></div>"
     );
   }
 
@@ -1028,13 +1105,50 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       mediaFilters() +
         designOrderRow() +
         (shown.length
-          ? '<div class="spd-grid" role="group" aria-label="Your media">' +
-            shown.map(designCard).join("") +
-            "</div>"
+          ? mediaResults(shown)
           : '<div class="spd-empty"><i data-lucide="search-x"></i><b>No media matches these filters</b>' +
-            '<span class="spd-empty-a"><button type="button" class="btn btn-ghost btn-sm" data-sp="mreset">Clear filters</button></span></div>') +
+            '<span class="spd-empty-a"><button type="button" class="btn btn-ghost btn-sm" data-sp="mreset">Clear Filters</button>' +
+            '<button type="button" class="btn btn-primary btn-sm" data-sp="dupload">Upload Photos</button></span></div>') +
         designFooter() +
         designPreviewModal(),
+    );
+  }
+
+  /** One authoritative list, rendered either as a grid or as compact rows. */
+  function mediaResults(shown: PickerDesign[]) {
+    const render = (list: PickerDesign[]) =>
+      state.mediaView === "list"
+        ? '<div class="spd-list" role="group" aria-label="Your media">' +
+          list.map(designRow).join("") +
+          "</div>"
+        : '<div class="spd-grid" role="group" aria-label="Your media">' +
+          list.map(designCard).join("") +
+          "</div>";
+    if (!state.mediaGroup || state.mediaProperty !== "all") return render(shown);
+    const groups = new Map<string, PickerDesign[]>();
+    for (const d of shown) {
+      const key = String(d.address || "Unassigned Photos");
+      const arr = groups.get(key);
+      if (arr) arr.push(d);
+      else groups.set(key, [d]);
+    }
+    return (
+      '<div class="spd-groups">' +
+      Array.from(groups.entries())
+        .map(
+          ([addr, list]) =>
+            '<section class="spd-group"><header class="spd-group-h"><b>' +
+            esc(addr) +
+            "</b><span>" +
+            list.length +
+            " item" +
+            (list.length === 1 ? "" : "s") +
+            "</span></header>" +
+            render(list) +
+            "</section>",
+        )
+        .join("") +
+      "</div>"
     );
   }
 
@@ -1071,13 +1185,20 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const designs = picked.filter(isDesign).length;
     const noun = !designs ? "photo" : designs === n ? "design" : "item";
     const plural = (k: number) => k + " " + noun + (k === 1 ? "" : "s");
-    const label = state.adding ? "Preparing\u2026" : "Continue with " + plural(n);
+    const label = state.adding
+      ? "Preparing\u2026"
+      : n
+        ? "Continue With " + plural(n)
+        : "Continue";
     return (
       '<div class="spd-foot">' +
       '<span class="spd-foot-l">' +
       (n
-        ? plural(n) + " selected \u00b7 " + n + " scene" + (n === 1 ? "" : "s")
-        : "Nothing selected yet") +
+        ? "<b>" +
+          plural(n) +
+          " selected</b>" +
+          '<button type="button" class="sp-link" data-sp="dclear">Clear Selection</button>'
+        : "") +
       "</span>" +
       '<span class="spd-foot-a">' +
       (n
@@ -1092,7 +1213,10 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   }
 
   function designLines(d: PickerDesign) {
-    const two = [d.style || "", d.versionNo ? "Version " + d.versionNo : ""].filter(Boolean);
+    const style = String(d.style || "")
+      .replace(/[-_]+/g, " ")
+      .replace(/\b\w/g, (m) => m.toUpperCase());
+    const two = [style, d.versionNo ? "Version " + d.versionNo : ""].filter(Boolean);
     const status =
       d.status && /approved|draft/i.test(d.status)
         ? d.status.charAt(0).toUpperCase() + d.status.slice(1).toLowerCase()
@@ -1100,10 +1224,54 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return { two: two.join(" \u00b7 "), three: d.address || "", status };
   }
 
+  /** One small badge carries type and status together. */
+  function mediaBadge(d: PickerDesign) {
+    const l = designLines(d);
+    if (!isDesign(d)) return "Source";
+    return l.status ? "Design \u00b7 " + l.status : "Design";
+  }
+
+  function mediaTitle(d: PickerDesign) {
+    return d.room || (isDesign(d) ? "Design" : "Photo");
+  }
+
+  function cardLabel(d: PickerDesign) {
+    const l = designLines(d);
+    return (
+      mediaTitle(d) + (l.three ? ", " + l.three : "") + (l.two ? ", " + l.two : "")
+    );
+  }
+
+  function thumbSpan(d: PickerDesign, cls: string) {
+    return (
+      '<span class="' +
+      cls +
+      '" data-sp-thumb="' +
+      esc(d.path) +
+      '" data-sp-thumb-id="' +
+      esc(d.id) +
+      '" data-sp-thumb-alt="' +
+      esc(mediaTitle(d)) +
+      '"></span>'
+    );
+  }
+
+  function checkMark(on: boolean, i: number) {
+    return (
+      '<span class="spd-check' +
+      (on ? " on" : "") +
+      '" aria-hidden="true">' +
+      (on ? '<i data-lucide="check"></i><em class="spd-n">' + (i + 1) + "</em>" : "") +
+      "</span>"
+    );
+  }
+
   function designCard(d: PickerDesign) {
     const i = state.designSel.indexOf(d.id);
     const on = i > -1;
     const l = designLines(d);
+    /* The property address is redundant inside a grouped section. */
+    const showAddr = !(state.mediaGroup && state.mediaProperty === "all");
     return (
       '<div class="spd-card' +
       (on ? " is-sel" : "") +
@@ -1112,35 +1280,62 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '" tabindex="0" role="checkbox" aria-checked="' +
       (on ? "true" : "false") +
       '" aria-label="' +
-      esc((d.room || "Design") + (l.two ? ", " + l.two : "") + (l.three ? ", " + l.three : "")) +
+      esc(cardLabel(d)) +
       '">' +
-      '<span class="spd-th" data-sp-thumb="' +
-      esc(d.path) +
-      '" data-sp-thumb-id="' +
-      esc(d.id) +
-      '" data-sp-thumb-alt="' +
-      esc(d.room || "Design") +
-      '"></span>' +
+      thumbSpan(d, "spd-th") +
       '<button type="button" class="spd-eye" data-sp-preview="' +
       esc(d.id) +
-      '" title="Preview design" aria-label="' +
-      esc("Preview design: " + (d.room || "Design")) +
+      '" title="View details" aria-label="' +
+      esc("View details: " + mediaTitle(d)) +
       '"><i data-lucide="eye"></i></button>' +
-      '<span class="spd-check' +
-      (on ? " on" : "") +
-      '" aria-hidden="true">' +
-      (on ? '<i data-lucide="check"></i><em class="spd-n">' + (i + 1) + "</em>" : "") +
+      checkMark(on, i) +
+      '<span class="spd-badge">' +
+      esc(mediaBadge(d)) +
       "</span>" +
       '<span class="spd-body"><b>' +
-      esc(d.room || "Design") +
+      esc(mediaTitle(d)) +
       "</b>" +
+      (showAddr && l.three ? '<span class="spd-addr">' + esc(l.three) + "</span>" : "") +
       (l.two ? "<span>" + esc(l.two) + "</span>" : "") +
-      (l.three ? '<span class="spd-addr">' + esc(l.three) + "</span>" : "") +
-      (l.status ? '<span class="spd-status">' + esc(l.status) + "</span>" : "") +
-      '<span class="spd-kind">' +
-      (isDesign(d) ? "Generated design" : "Property photo") +
-      "</span>" +
       "</span></div>"
+    );
+  }
+
+  function designRow(d: PickerDesign) {
+    const i = state.designSel.indexOf(d.id);
+    const on = i > -1;
+    const l = designLines(d);
+    const created = designDate(d.createdAt);
+    return (
+      '<div class="spd-row' +
+      (on ? " is-sel" : "") +
+      '" data-sp-design="' +
+      esc(d.id) +
+      '" tabindex="0" role="checkbox" aria-checked="' +
+      (on ? "true" : "false") +
+      '" aria-label="' +
+      esc(cardLabel(d)) +
+      '">' +
+      checkMark(on, i) +
+      thumbSpan(d, "spd-rth") +
+      '<span class="spd-rn"><b>' +
+      esc(mediaTitle(d)) +
+      "</b>" +
+      (l.three ? "<span>" + esc(l.three) + "</span>" : "") +
+      "</span>" +
+      '<span class="spd-rm">' +
+      esc(mediaBadge(d)) +
+      "</span>" +
+      '<span class="spd-rm">' +
+      esc(l.two || "\u2014") +
+      "</span>" +
+      '<span class="spd-rm">' +
+      esc(created || "\u2014") +
+      "</span>" +
+      '<button type="button" class="sp-link spd-rv" data-sp-preview="' +
+      esc(d.id) +
+      '">View Details</button>' +
+      "</div>"
     );
   }
 
@@ -1686,9 +1881,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   function onChange(e: Event) {
     const t = e.target as HTMLSelectElement;
     const f = fieldName(t);
-    if (f === "mprop" || f === "mroom") {
+    if (f === "mprop" || f === "mroom" || f === "msort" || f === "mgroup") {
       if (f === "mprop") state.mediaProperty = t.value;
-      else state.mediaRoom = t.value;
+      else if (f === "mroom") state.mediaRoom = t.value;
+      else if (f === "msort") state.mediaSort = t.value as typeof state.mediaSort;
+      else state.mediaGroup = t.value === "group";
       render();
       return;
     }
@@ -1775,14 +1972,29 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
       return;
     }
+    const mview = t.closest("[data-sp-view]") as HTMLElement | null;
+    if (mview) {
+      state.mediaView = (mview.dataset["spView"] as "grid" | "list") || "grid";
+      try {
+        localStorage.setItem("rd.media.view", state.mediaView);
+      } catch (_) {}
+      render();
+      return;
+    }
     const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
 
     if (dsn) {
       const id = dsn.dataset["spDesign"]!;
       if (opts.onDesigns || opts.loadDesigns) {
+        if ((e as MouseEvent).shiftKey && state.mediaAnchor) {
+          selectRange(state.mediaAnchor, id);
+          render();
+          return;
+        }
         const i = state.designSel.indexOf(id);
         if (i > -1) state.designSel.splice(i, 1);
         else state.designSel.push(id);
+        state.mediaAnchor = id;
         render();
         return;
       }
@@ -1824,6 +2036,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
     } else if (k === "ddesign") {
       opts.onSample ? opts.onSample() : (state.tab = "upload");
+      render();
+    } else if (k === "mall") {
+      for (const d of visibleMedia()) if (!state.designSel.includes(d.id)) state.designSel.push(d.id);
       render();
     } else if (k === "mreset") {
       state.mediaType = "all";
