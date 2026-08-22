@@ -68,10 +68,12 @@ describe("Add More Photos card", () => {
     expect(onCloud).toHaveBeenCalledTimes(2);
   });
 
-  it("labels an unconfigured provider Coming Soon instead of fading it out", () => {
+  it("keeps an unconfigured provider readable, with no Coming Soon badge", () => {
     const card = mount();
     const drive = card.querySelector<HTMLElement>('[data-addsrc="drive"]')!;
-    expect(drive.textContent).toContain("Coming Soon");
+    expect(drive.textContent).toContain("Google Drive");
+    expect(drive.textContent).not.toContain("Coming Soon");
+    expect(card.querySelector(".rv-addsrc-soon")).toBeNull();
   });
 
   it("has no X close icon and no invisible close hit area", () => {

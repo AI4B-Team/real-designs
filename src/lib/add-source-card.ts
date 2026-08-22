@@ -52,10 +52,13 @@ export function addSourceCardHtml(opts: {
      integration is not configured the click opens an honest explanation with a
      "Choose From Computer" way out — never a dead, faded control. */
   const cloud = (key: "drive" | "dropbox", label: string, icon: string) => {
-    const soon = !cloudSourceEnabled(key);
-    return `<button type="button" class="rv-addsrc rv-addsrc-${key}" data-addsrc="${key}"${soon ? ' data-soon="1"' : ""}>
+    /* The card is too small for badges: no "Coming Soon" chip, no truncated
+       provider name. An unconfigured provider still reads normally and its
+       click opens the honest explanation modal. */
+    return `<button type="button" class="rv-addsrc rv-addsrc-${key}" data-addsrc="${key}"${
+      cloudSourceEnabled(key) ? "" : ' data-unconfigured="1"'
+    }>
         <span class="rv-addsrc-i">${icon}</span><span class="rv-addsrc-l">${label}</span>
-        ${soon ? '<span class="rv-addsrc-soon">Coming Soon</span>' : ""}
         <span class="rv-addsrc-sp" hidden aria-hidden="true"></span>
       </button>`;
   };
