@@ -1023,37 +1023,30 @@ export function closePhotoEditor() {
  */
 function embeddedShellHtml(label: string): string {
   return `
-  <header class="rdpe-top rdpe-ctx">
-    <div class="rdpe-ctxl"><b>Edit Photo</b><span class="rdpe-ctxtag" id="rdpeCrumb">${esc(label)}</span></div>
-    <div class="rdpe-topr">
-      <button type="button" class="rdpe-ib" id="rdpeUndo" data-act="undo" title="Undo" aria-label="Undo"><i data-lucide="undo-2"></i></button>
-      <button type="button" class="rdpe-ib" id="rdpeRedo" data-act="redo" title="Redo" aria-label="Redo"><i data-lucide="redo-2"></i></button>
-      <button type="button" class="rdpe-ib" data-act="download" title="Download" aria-label="Download"><i data-lucide="download"></i></button>
-      <button type="button" class="rdpe-ib rdpe-paneltoggle" data-act="panel" title="Show Or Hide Settings" aria-label="Show Or Hide Settings"><i data-lucide="sliders-horizontal"></i></button>
-    </div>
-  </header>
-
   <div class="rdpe-body">
     <section class="rdpe-main">
       <div class="rdpe-stage" id="rdpeStage">
-        <button type="button" class="rdpe-nav l" data-act="prev" aria-label="Previous Photo"><i data-lucide="chevron-left"></i></button>
         <img id="rdpeImg" alt="Photo being edited" data-hold>
         <div class="rdpe-cropbox" id="rdpeCropBox" style="display:none">
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
-        <button type="button" class="rdpe-nav r" data-act="next" aria-label="Next Photo"><i data-lucide="chevron-right"></i></button>
         <span class="rdpe-badge">Original</span>
       </div>
       <div class="rdpe-underbar">
         <button type="button" class="rdpe-hold" id="rdpeHold" data-hold><i data-lucide="eye"></i>Hold To Compare</button>
         <span class="rdpe-prov" id="rdpeProv"></span>
       </div>
-      <div class="rdpe-strip" id="rdpeStrip"></div>
     </section>
 
-    <button type="button" class="rdpe-grip" data-act="panel" aria-label="Collapse Settings Panel"><i data-lucide="chevron-right"></i></button>
-
     <aside class="rdpe-panel" id="rdpePanel">
+      <header class="rdpe-panelh">
+        <div class="rdpe-ctxl"><b>Edit Photo</b><span class="rdpe-ctxtag" id="rdpeCrumb">${esc(label)}</span></div>
+        <div class="rdpe-topr">
+          <button type="button" class="rdpe-ib" id="rdpeUndo" data-act="undo" title="Undo" aria-label="Undo"><i data-lucide="undo-2"></i></button>
+          <button type="button" class="rdpe-ib" id="rdpeRedo" data-act="redo" title="Redo" aria-label="Redo"><i data-lucide="redo-2"></i></button>
+          <button type="button" class="rdpe-ib" data-act="download" title="Download" aria-label="Download"><i data-lucide="download"></i></button>
+        </div>
+      </header>
       <div class="rdpe-panelb" id="rdpePanelBody"></div>
       <footer class="rdpe-panelf" id="rdpeFooter">
         <div class="rdpe-fr1">
