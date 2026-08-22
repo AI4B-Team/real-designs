@@ -171,7 +171,7 @@ describe("prompt", () => {
   });
 
   it("states the camera and refuses invented text on the image", () => {
-    expect(text).toMatch(/facing east/i);
+    expect(text).toMatch(/facing right/i);
     expect(text).toMatch(/never add dimension lines/i);
   });
 

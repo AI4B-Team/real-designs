@@ -399,11 +399,11 @@ export type DimensionEntry = {
 
 /** Honest: dimensions exist only when detected on the drawing or typed in. */
 export function dimensionsKnown(g: SketchGeometry, entered: DimensionEntry[]): boolean {
-  return entered.length > 0 || g.items.some((i) => i.kind === "dimension" && !!i.dimension);
+  return entered.length > 0 || g.items.some((i) => !!i.dimension);
 }
 
 export function dimensionStatement(g: SketchGeometry, entered: DimensionEntry[]): string {
-  const read = g.items.filter((i) => i.kind === "dimension" && i.dimension);
+  const read = g.items.filter((i) => !!i.dimension);
   if (!read.length && !entered.length)
     return "No dimensions were detected and none were entered, so proportions are interpreted from the drawing only.";
   const parts: string[] = [];
