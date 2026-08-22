@@ -81,12 +81,12 @@ describe("photo editor context", () => {
     expect(compareEnabled(true)).toBe(true);
   });
 
-  it("opens exactly one long section by default", () => {
-    expect(defaultOpenSections()).toEqual(["light"]);
+  it("opens only Auto Enhance by default", () => {
+    expect(defaultOpenSections()).toEqual(["auto"]);
   });
 
   it("knows the cost of every operation it can run", () => {
-    expect(enhancementByOp("declutter")?.credits).toBe(1);
+    expect(enhancementByOp("dusk")?.credits).toBe(1);
     expect(enhancementByOp("nope")).toBeUndefined();
   });
 });
