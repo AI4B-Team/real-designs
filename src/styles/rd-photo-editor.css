@@ -1070,7 +1070,7 @@ body.rdpe-open {
 
 .rdpe-cont {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 10px;
   width: 100%;
   padding: 10px 12px;
@@ -1091,6 +1091,7 @@ body.rdpe-open {
 .rdpe-cont > svg:first-child {
   width: 17px;
   height: 17px;
+  margin-top: 1px;
   flex: 0 0 auto;
   color: #cc0000;
   stroke: currentColor;
@@ -1114,6 +1115,7 @@ body.rdpe-open {
 .rdpe-cont > svg:last-child {
   width: 15px;
   height: 15px;
+  margin-top: 1px;
   flex: 0 0 auto;
   color: #9a9ba1;
   stroke: currentColor;
