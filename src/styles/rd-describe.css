@@ -198,10 +198,23 @@
 }
 
 .rd-app .rdset-cards.is-browse {
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
   max-height: 52vh;
   overflow-y: auto;
   padding-right: 4px;
+}
+
+.rd-app .rdset-cards.is-browse > .rdset-card {
+  flex: 0 0 calc(25% - 8px);
+  align-self: flex-start;
+}
+
+@media (max-width: 760px) {
+  .rd-app .rdset-cards.is-browse > .rdset-card {
+    flex-basis: calc(50% - 6px);
+  }
 }
 
 .rd-app .rdset-card {
