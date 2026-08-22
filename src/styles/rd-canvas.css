@@ -1548,3 +1548,53 @@
   width: 15px;
   height: 15px;
 }
+
+/* ------------------------------------------------------------------
+   Canvas result modes.
+
+   A text-generated concept is not a before/after redesign: there is no
+   source layer, so the comparison affordances are not merely hidden, they
+   do not exist. One overlay cluster stays top-right, and the compact edit
+   action sits bottom-centre with clear separation from the image edges.
+------------------------------------------------------------------ */
+.canvas[data-mode="concept-only"] .ctag,
+.canvas[data-mode="concept-only"] .hnd,
+.canvas[data-mode="concept-only"] .rng-abs,
+.canvas[data-mode="reference-guided"] .ctag,
+.canvas[data-mode="reference-guided"] .hnd,
+.canvas[data-mode="reference-guided"] .rng-abs {
+  display: none !important;
+}
+
+.canvas[data-mode="concept-only"] #cAfter,
+.canvas[data-mode="reference-guided"] #cAfter {
+  clip-path: none !important;
+}
+
+.canvas[data-mode="concept-only"] #cAfter img,
+.canvas[data-mode="reference-guided"] #cAfter img {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  margin: auto;
+}
+
+/* One toolbar at a time: the full editing bar belongs to a photo redesign. */
+.rdw-stage[data-mode="concept-only"] #rdwCmp,
+.rdw-stage[data-mode="reference-guided"] #rdwCmp {
+  display: none !important;
+}
+
+.rdw-stage .rdw-ov-r {
+  gap: 8px;
+}
+
+.rdw-conceptbar {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  z-index: 6;
+}
