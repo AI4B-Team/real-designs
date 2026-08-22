@@ -190,6 +190,8 @@
 
 .rd-app .rdset-cards {
   display: grid;
+  align-items: start;
+  align-content: start;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 8px;
 }
@@ -214,19 +216,29 @@
   cursor: pointer;
 }
 
-.rd-app .rdset-card img,
-.rd-app .rdset-card .rdset-ph {
+.rd-app .rdset-card img {
   display: block;
   width: 100%;
   height: 68px;
   object-fit: cover;
   background: var(--rd-soft, #f4f4f5);
+}
+
+.rd-app .rdset-cards.is-browse .rdset-card img {
+  height: 96px;
+}
+
+.rd-app .rdset-card .rdset-ph {
   display: grid;
   place-items: center;
+  width: 100%;
+  height: 68px;
+  background: var(--rd-soft, #f4f4f5);
 }
 
 .rd-app .rdset-cn {
-  padding: 0 8px;
+  display: block;
+  padding: 4px 8px 0;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.25;
