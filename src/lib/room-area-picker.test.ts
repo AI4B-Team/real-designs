@@ -183,7 +183,8 @@ describe("catalog picker shell", () => {
       ],
       onApply,
     });
-    cards().forEach((c) => c.click());
+    cardFor("A").click();
+    cardFor("B").click();
     apply().click();
     expect(onApply.mock.calls[0]![0]).toEqual(["a", "b"]);
   });
