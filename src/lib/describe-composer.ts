@@ -1173,6 +1173,8 @@ export function createDescribeComposer(cfg: Cfg) {
         setTimeout(() => sec?.classList.remove("is-wanted"), 1600);
       }
       return true;
+    }
+
 
     if (act === "addref") {
       menuOpen = !menuOpen;
