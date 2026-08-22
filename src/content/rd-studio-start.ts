@@ -26,6 +26,17 @@ import {
   applyStudioStyleToControls,
   type StudioStyleChoice,
 } from "@/lib/studio-style";
+import {
+  makeBatch,
+  markGenerating,
+  addResult,
+  failResult,
+  batchStatus,
+  conceptSummary,
+  canvasModeFor,
+  progressLabel,
+  type ConceptBatch,
+} from "@/lib/concept-batch";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { getMyCredits } from "@/lib/credits.functions";
@@ -52,6 +63,24 @@ export type StudioStartCtx = {
   setSource: (kind: string, src: string, alt: string, opts?: any) => void;
   /** Places a finished concept image on the canvas as a result. */
   showConcept: (image: string, label: string, prompt?: string) => Promise<void> | void;
+  /** Initializes the result workspace once for a whole Describe batch. */
+  beginConceptBatch?: (info: {
+    room?: string | null;
+    ratio?: string | null;
+    mode?: string;
+    summary?: string | null;
+    prompt?: string;
+  }) => void;
+  /** Appends one generated option without disturbing the others. */
+  addConcept?: (
+    image: string,
+    label: string,
+    opts?: { prompt?: string; mode?: string; summary?: string | null; saveDraft?: boolean },
+  ) => Promise<{ path: string | null; versionId: string | null } | null | undefined>;
+  /** One honest progress/state line over the canvas. */
+  setCanvasStatus?: (text: string) => void;
+  /** Reports a partial batch and offers a retry for the missing option only. */
+  conceptPartial?: (message: string | null, onRetry?: () => void | Promise<void>) => void;
   /** Property tree already loaded by the app shell. */
   getProperties: () => Array<{
     address: string;
@@ -1923,6 +1952,75 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     ctx.track("sample_selected", { sample: key });
   }
 
+  /**
+   * One described request is ONE batch.
+   *
+   * Every requested option gets its own slot, its own render, its own durable
+   * upload and its own version row. The canvas workspace is initialized once
+   * and results are appended, so option 2 can never erase option 1, and a
+   * partial batch is reported as partial with a retry for the missing option
+   * only — the successful image is never regenerated or charged again.
+   */
+  let CONCEPT_BATCH: ConceptBatch | null = null;
+
+  async function runConceptOptions(batch: ConceptBatch, inspiration: string | null) {
+    const total = batch.requestedCount;
+    const mode = canvasModeFor({ hasReferences: state.refs.length > 0 });
+    for (const slot of batch.results) {
+      if (slot.status === "done") continue; // never redo paid work
+      markGenerating(batch, slot.index);
+      ctx.setCanvasStatus?.(progressLabel("creating", slot.index, total));
+      try {
+        const r = await renderConcept({
+          data: {
+            prompt: batch.prompt,
+            space: batch.space,
+            room: batch.room || "",
+            dimensions: state.dims || null,
+            style: batch.styleName || state.style || null,
+            mood: state.mood || null,
+            features: state.features || null,
+            image: inspiration,
+            images: state.refs.length ? state.refs : null,
+            aspect_ratio: batch.aspectRatio,
+          },
+        });
+        ctx.track("concept_generated", { space: batch.space, option: slot.index + 1 });
+        ctx.setCanvasStatus?.(progressLabel("saving", slot.index, total));
+        const saved = await ctx.addConcept?.(r.image, slot.label, {
+          prompt: batch.prompt,
+          mode,
+          summary: conceptSummary(batch, slot.index),
+          saveDraft: slot.index === 0,
+        });
+        addResult(batch, slot.index, {
+          image: r.image,
+          durablePath: (saved && saved.path) || null,
+          versionId: (saved && saved.versionId) || null,
+        });
+      } catch (err: any) {
+        if (isPlanBlocked(err)) {
+          failResult(batch, slot.index, "Plan limit reached");
+          openUpgrade(err);
+          break;
+        }
+        failResult(batch, slot.index, (err && err.message) || "Generation failed");
+      }
+    }
+    const status = batchStatus(batch);
+    ctx.setCanvasStatus?.(status.complete ? status.message : "");
+    if (status.created === 0) {
+      ctx.conceptPartial?.(null);
+      ctx.showAlert("Could not create that concept. Your description was kept.");
+      return status;
+    }
+    ctx.conceptPartial?.(
+      status.complete ? null : status.message + ".",
+      status.complete ? undefined : () => runConceptOptions(batch, inspiration),
+    );
+    return status;
+  }
+
   async function generateConcept() {
     if (state.prompt.trim().length < 12) return;
     state.busy = true;
@@ -1932,33 +2030,35 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       btn.textContent = "Generating Concept…";
     }
     try {
-      const image = state.inspiration ? await ctx.fileToDataUrl(state.inspiration) : null;
-      /* Each option is its own render and its own credit, shown as a version. */
-      const count = Math.max(1, Math.min(4, state.options || 1));
-      for (let i = 0; i < count; i++) {
-        const r = await renderConcept({
-          data: {
-            prompt: state.prompt.trim(),
-            space: state.space,
-            room: roomValue(),
-            dimensions: state.dims || null,
-            style: state.style || null,
-            mood: state.mood || null,
-            features: state.features || null,
-            image,
-            images: state.refs.length ? state.refs : null,
-            aspect_ratio: (state.output === "video" ? state.orientation : state.ratio) || null,
-          },
-        });
-        ctx.track("concept_generated", { space: state.space });
-        await ctx.showConcept(
-          r.image,
-          count > 1 ? "Concept " + (i + 1) : "Concept",
-          state.prompt.trim(),
-        );
-      }
+      const inspiration = state.inspiration ? await ctx.fileToDataUrl(state.inspiration) : null;
+      const ratio = (state.output === "video" ? state.orientation : state.ratio) || null;
+      const batch = makeBatch({
+        prompt: state.prompt.trim(),
+        requestedCount: state.options || 1,
+        space: state.space,
+        /* Room is either the user's explicit choice or read from the words
+           they wrote. It is never quietly defaulted to a Canvas room. */
+        room: roomValue() || null,
+        styleId: state.style || null,
+        styleName: state.style || null,
+        changeLevel: state.level || "Balanced",
+        aspectRatio: ratio,
+        referenceIds: state.refs,
+      });
+      CONCEPT_BATCH = batch;
+      try {
+        (window as any).__rdConceptBatch = batch;
+      } catch (_) {}
+      ctx.beginConceptBatch?.({
+        room: batch.room,
+        ratio: batch.aspectRatio,
+        mode: canvasModeFor({ hasReferences: state.refs.length > 0 }),
+        summary: conceptSummary(batch, 0),
+        prompt: batch.prompt,
+      });
+      const status = await runConceptOptions(batch, inspiration);
       /* A video request renders its key frame first, then opens the builder. */
-      if (state.output === "video" && ctx.startVideoFromConcept) {
+      if (status.created > 0 && state.output === "video" && ctx.startVideoFromConcept) {
         await ctx.startVideoFromConcept({
           camera: state.camera,
           duration: state.duration,
@@ -1980,6 +2080,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     }
   }
 
+  void CONCEPT_BATCH;
 
   function primaryAction() {
     if (state.method === "describe") {
