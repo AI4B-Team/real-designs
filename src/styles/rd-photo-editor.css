@@ -732,29 +732,71 @@ body.rdpe-open {
 /* editor only fills the dark Canvas wrapper.                           */
 /* ------------------------------------------------------------------ */
 
-.rdw-editmount {
-  display: block;
-  border-radius: 14px;
-  overflow: hidden;
+/* The editor spans the Designer grid: stage in the middle Canvas column,
+   inspector in the right panel column. Nothing nests inside the viewport. */
+.rd-app .studio.rdw > .rdpe.rdpe-embed,
+.rd-app .studio.rdw > .rdpe.rdpe-embed > .rdpe-body {
+  display: contents;
 }
-.rdw-editmount[hidden] {
+
+.rd-app .studio.rdw.editing-photo > .rdw-main,
+.rd-app .studio.rdw.editing-photo > #rdwPanel {
   display: none;
 }
 
-.rdpe.rdpe-embed {
-  position: relative;
-  inset: auto;
-  z-index: 1;
-  height: clamp(420px, calc(100dvh - 260px), 760px);
-  max-width: 100%;
+.rd-app .studio.rdw .rdpe-embed .rdpe-main {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
   border-radius: 14px;
-  border: 1px solid #e6e6e8;
+  overflow: hidden;
+  background: #14151a;
+}
+.rd-app .studio.rdw .rdpe-embed .rdpe-stage {
+  padding: 14px;
+  background: #14151a;
+}
+.rd-app .studio.rdw .rdpe-embed .rdpe-stage img {
+  max-width: 100%;
+  max-height: 100%;
+  box-shadow: none;
+  border-radius: 8px;
+}
+.rd-app .studio.rdw .rdpe-embed .rdpe-underbar {
+  background: #14151a;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+}
+.rd-app .studio.rdw .rdpe-embed .rdpe-hold {
+  background: rgb(255 255 255 / 8%);
+  border-color: rgb(255 255 255 / 14%);
+  color: #f4f4f5;
 }
 
-/* Compact contextual toolbar, not a page header. */
-.rdpe.rdpe-embed .rdpe-ctx {
-  height: 48px;
+.rd-app .studio.rdw .rdpe-embed .rdpe-panel {
+  grid-column: 3;
+  grid-row: 1;
+  min-width: 0;
+  min-height: 0;
+  border: 1px solid #e6e6e8;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.rdpe .rdpe-panelh {
+  display: flex;
+  align-items: center;
   gap: 10px;
+  padding: 12px 13px;
+  border-bottom: 1px solid #e6e6e8;
+  flex: 0 0 auto;
+}
+.rdpe .rdpe-panelh .rdpe-topr {
+  margin-left: auto;
+}
+
+.rdpe.rdpe-embed .rdpe-ib {
+  width: 32px;
+  height: 32px;
 }
 .rdpe .rdpe-ctxl {
   display: flex;
