@@ -132,7 +132,7 @@ export function continueWithTools(): ContinueTool[] {
 
 
 export function enhancementByOp(op: string): EnhancementDef | undefined {
-  return [...PHOTO_ENHANCEMENTS, ...GENERATIVE_EDITS].find((e) => e.op === op);
+  return PHOTO_ENHANCEMENTS.find((e) => e.op === op);
 }
 
 /* ----------------------------------------------------------------- footer */
