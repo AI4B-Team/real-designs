@@ -540,6 +540,8 @@ export function initApp(): () => void {
         } catch (_) {}
       }
       beginNavigation(v);
+      /* Every route change invalidates callbacks issued by the previous one. */
+      RDNAV.bumpNavToken();
       /* Any route that is not the Studio view ends the Canvas context. */
       if (v !== "studio" && inPhotoCanvas()) STUDIO_MODE = GENERIC_STUDIO;
       const acctAlias = ACCT_ALIAS[v] ? v : "";
