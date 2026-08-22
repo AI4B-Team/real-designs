@@ -3308,10 +3308,16 @@ export function openStagingPhotoEditor(key) {
   openPhotoEditor({
     startKey: key,
     property: (S && S.propertyLabel) || "Property",
+    editorMode: "source",
     photos: items.map((it) => ({
       key: it.key,
       name: it.name,
       room: it.room || "Photo",
+      space: it.space || "",
+      assetId: it.key,
+      assetType: "uploaded_image",
+      storagePath: it.path || "",
+      editorMode: "source",
       path: it.path || "",
       src: it.resultUrl || it.signed || it.previewUrl || "",
       rotation: normalizeRotation(it.rotation),
