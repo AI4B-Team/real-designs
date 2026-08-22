@@ -940,6 +940,8 @@ function shellHtml(): string {
       <button type="button" class="rdpe-ib" id="rdpeUndo" data-act="undo" title="Undo"><i data-lucide="undo-2"></i></button>
       <button type="button" class="rdpe-ib" id="rdpeRedo" data-act="redo" title="Redo"><i data-lucide="redo-2"></i></button>
       <button type="button" class="btn btn-ghost btn-sm" data-act="download"><i data-lucide="download"></i>Download</button>
+      <button type="button" class="btn btn-ghost btn-sm rdpe-dlprev" data-act="downloadpreview">Download Preview</button>
+      <button type="button" class="rdpe-ib rdpe-paneltoggle" data-act="panel" aria-label="Show Or Hide Settings"><i data-lucide="sliders-horizontal"></i></button>
     </div>
   </header>
 
@@ -955,20 +957,58 @@ function shellHtml(): string {
         <span class="rdpe-badge">Original</span>
       </div>
       <div class="rdpe-underbar">
-        <button type="button" class="rdpe-hold" data-hold><i data-lucide="eye"></i>Hold To Compare</button>
+        <button type="button" class="rdpe-hold" id="rdpeHold" data-hold><i data-lucide="eye"></i>Hold To Compare</button>
+        <span class="rdpe-prov" id="rdpeProv"></span>
       </div>
       <div class="rdpe-strip" id="rdpeStrip"></div>
     </section>
 
-    <aside class="rdpe-panel">
+    <button type="button" class="rdpe-grip" data-act="panel" aria-label="Collapse Settings Panel"><i data-lucide="chevron-right"></i></button>
+
+    <aside class="rdpe-panel" id="rdpePanel">
       <div class="rdpe-panelb" id="rdpePanelBody"></div>
-      <footer class="rdpe-panelf">
-        <button type="button" class="btn btn-ghost btn-sm" id="rdpeReset" data-act="reset">Reset Photo</button>
-        <div class="rdpe-fr">
+      <footer class="rdpe-panelf" id="rdpeFooter">
+        <div class="rdpe-fr1">
+          <button type="button" class="rdpe-reset" id="rdpeReset" data-act="reset" title="Reset Photo">
+            <i data-lucide="rotate-ccw"></i><span>Reset</span></button>
           <button type="button" class="btn btn-ghost btn-sm" id="rdpeSaveCopy" data-act="savecopy">Save As Copy</button>
-          <button type="button" class="btn btn-primary btn-sm" id="rdpeSave" data-act="save">Save Changes</button>
         </div>
+        <button type="button" class="btn btn-primary btn-sm" id="rdpeSave" data-act="save">Save Changes</button>
       </footer>
     </aside>
   </div>`;
+}
+
+/**
+ * The unsaved-work guard. Three deliberate outcomes, rendered in the product's
+ * own dialog language — never the browser's confirm().
+ */
+function unsavedDialog(reason: string): Promise<"continue" | "discard" | "save"> {
+  return new Promise((resolve) => {
+    const wrap = document.createElement("div");
+    wrap.className = "bx-cdlg rdpe-unsaved";
+    wrap.innerHTML = `<div class="bx-cdlg-in" role="dialog" aria-modal="true" aria-label="Unsaved Changes">
+      <h3>Unsaved Changes</h3>
+      <p>${esc(reason)} Discards Edits That Have Not Been Saved Yet.</p>
+      <div class="rdpe-udlg">
+        <button type="button" class="btn btn-ghost btn-sm" data-u="continue">Continue Editing</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-u="discard">Discard Changes</button>
+        <button type="button" class="btn btn-primary btn-sm" data-u="save">Save</button>
+      </div>
+    </div>`;
+    document.body.appendChild(wrap);
+    const done = (v: "continue" | "discard" | "save") => {
+      wrap.remove();
+      resolve(v);
+    };
+    wrap.addEventListener("click", (e) => {
+      const b = (e.target as HTMLElement).closest("[data-u]");
+      if (b) return done(b.getAttribute("data-u") as any);
+      if (e.target === wrap) done("continue");
+    });
+    wrap.addEventListener("keydown", (e) => {
+      if ((e as KeyboardEvent).key === "Escape") done("continue");
+    });
+    (wrap.querySelector('[data-u="continue"]') as HTMLElement)?.focus();
+  });
 }
