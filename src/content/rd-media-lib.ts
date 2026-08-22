@@ -55,6 +55,8 @@ import { openBulkRestyle } from "@/lib/rd-bulk-restyle";
 import { isPlanBlocked, openUpgrade as openUpgradeFlow } from "@/lib/rd-upgrade";
 import { isFavorite, toggleFavorite, favoriteToast } from "@/lib/favorites";
 import { bootFavorites } from "@/lib/favorites-boot";
+import { beginResume, markResumeConsumed } from "@/lib/resume";
+import { resumeInputForMedia } from "@/lib/media-resume";
 
 const esc = (s) =>
   String(s == null ? "" : s).replace(
@@ -1673,10 +1675,20 @@ async function openDetail(m, opts) {
     closeDrawer();
     videoFrom([m]);
   });
-  bind("[data-cont]", () => {
-    closeDrawer();
-    continueProject(m);
+  bind("[data-cont]", async (ev) => {
+    const btn = ev && ev.currentTarget;
+    if (btn) btn.disabled = true;
+    /* The drawer stays open until the destination really has the project. */
+    const ok = await continueProject(m, (id) => showResumeError(d, m, id));
+    if (btn) btn.disabled = false;
+    if (ok) closeDrawer();
   });
+  const favBtn = d.querySelector("[data-fav-dr]") as any;
+  if (favBtn)
+    favBtn.onclick = async () => {
+      await toggleFav(m.id);
+      openDetail(m);
+    };
   bind("[data-editvid]", () => {
     closeDrawer();
     openVideo(m, "video");
@@ -1699,6 +1711,31 @@ async function openDetail(m, opts) {
   );
   const first = d.querySelector(".ml-dr-a button, .ml-dr-h .icon-btn") as any;
   first && first.focus();
+}
+
+/** A failed reopen never closes the drawer and never uses a browser alert. */
+function showResumeError(d, m, diagnosticId) {
+  const body = d.querySelector(".ml-dr-b");
+  if (!body) return;
+  let box = d.querySelector(".ml-dr-resume-err") as any;
+  if (!box) {
+    box = document.createElement("div");
+    box.className = "ml-dr-note bad ml-dr-resume-err";
+    body.insertBefore(box, body.firstChild);
+  }
+  box.innerHTML = `<i data-lucide="alert-triangle"></i><div><b>This project couldn\u2019t be reopened.</b>
+    <span>Reference ${esc(String(diagnosticId || "").slice(0, 12))}</span>
+    <div class="ml-dr-errb"><button class="btn btn-primary btn-xs" data-resume-retry>Retry</button>
+      <button class="btn btn-ghost btn-xs" data-resume-details>View Details</button></div></div>`;
+  paint();
+  const retry = box.querySelector("[data-resume-retry]") as any;
+  if (retry) retry.onclick = () => continueProject(m, (id) => showResumeError(d, m, id));
+  const det = box.querySelector("[data-resume-details]") as any;
+  if (det)
+    det.onclick = () => {
+      box.remove();
+      openDetail(m);
+    };
 }
 
 /** A clean address, or an honest "Unassigned" — never a raw record id. */
