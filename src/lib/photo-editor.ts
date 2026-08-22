@@ -734,6 +734,39 @@ export async function openPhotoEditor(opts: {
     wrap.style.top = `${ir.top - sr.top}px`;
     wrap.style.width = `${ir.width}px`;
     wrap.style.height = `${ir.height}px`;
+    if (!wrap.dataset['bound']) {
+      wrap.dataset['bound'] = "1";
+      bindStrokePainting(wrap, {
+        enabled: () => privacyActive(),
+        mode: () => (pv().tool === "erase" ? "erase" : "add"),
+        size: () => brushFraction(pv().settings.brush, Math.min(wrap.clientWidth, wrap.clientHeight)),
+        feather: () => pv().settings.feather / 100,
+        onChange: (next) => {
+          const v = pv();
+          v.mask = next(v.mask);
+          syncPrivacyOverlay();
+        },
+        onDone: () => privacyChanged(),
+      });
+      /* The cursor shows the true brush diameter on the photograph. */
+      wrap.addEventListener("pointermove", (ev) => {
+        const dot = $("#rdpeBrushDot") as HTMLElement;
+        if (!dot) return;
+        const r = wrap.getBoundingClientRect();
+        const size =
+          brushFraction(pv().settings.brush, Math.min(wrap.clientWidth, wrap.clientHeight)) *
+          Math.min(r.width, r.height);
+        dot.hidden = false;
+        dot.style.width = `${size}px`;
+        dot.style.height = `${size}px`;
+        dot.style.left = `${(ev as PointerEvent).clientX - r.left}px`;
+        dot.style.top = `${(ev as PointerEvent).clientY - r.top}px`;
+      });
+      wrap.addEventListener("pointerleave", () => {
+        const dot = $("#rdpeBrushDot") as HTMLElement;
+        if (dot) dot.hidden = true;
+      });
+    }
     const cv = $("#rdpePrivCv") as HTMLCanvasElement;
     if (!cv) return;
     const W = Math.max(2, Math.round(ir.width));
@@ -1756,6 +1789,11 @@ export async function openPhotoEditor(opts: {
 
   async function runAi(op: string) {
     if (aiBusy) return;
+    /* Privacy Blur is a local, free tool — it never reaches the credit path. */
+    if (op === "privacy_blur") {
+      pv().open = true;
+      return paintPanel();
+    }
     const meta = enhancementByOp(op);
     if (!meta) return;
     /* Nothing that spends a credit or rewrites the scene runs from one click. */
@@ -1768,22 +1806,7 @@ export async function openPhotoEditor(opts: {
       confirmLabel: `Use ${meta.credits} Credit${meta.credits === 1 ? "" : "s"}`,
     });
     if (!ok) return;
-    /* Privacy Blur never guesses: the operator names what may be obscured. */
     let instruction = "";
-    if (op === "privacy_blur") {
-      const root = await formDialog({
-        title: "Privacy Blur Targets",
-        body: `<p class="rdpe-hint">Only The Targets You Select Are Obscured. Everything Else Is Left Untouched.</p>${chipList(
-          PRIVACY_TARGETS.map((t) => ({ ...t, on: privacyTargets.includes(t.id) })),
-        )}`,
-        confirmLabel: "Continue",
-      });
-      if (!root) return;
-      const picked = chipValues(root);
-      if (!picked.length) return void rdToast("Select At Least One Privacy Target.", "error");
-      privacyTargets = picked;
-      instruction = privacyInstruction(picked);
-    }
     aiBusy = op;
     paint();
     try {
@@ -2159,6 +2182,10 @@ export async function openPhotoEditor(opts: {
       return paint();
     }
     if (act === "autopreview") return void runAutoEnhance(false);
+    if (act === "privacy") {
+      pv().open = true;
+      return paintPanel();
+    }
     if (act === "autoapply") return void runAutoEnhance(true);
     if (act === "autoundo") return undoAuto();
     if (act === "resetgeo") return resetGeometry();
@@ -2212,6 +2239,65 @@ export async function openPhotoEditor(opts: {
 
   });
 
+  /* Privacy Blur controls. Everything here is local and costs nothing. */
+  host.addEventListener("click", (e) => {
+    const el = (e.target as HTMLElement).closest("[data-priv],[data-privgroup],[data-privdet],[data-privtype]") as HTMLElement | null;
+    if (!el) return;
+    const v = pv();
+    const det = el.getAttribute("data-privdet");
+    if (det) {
+      v.mask = toggleSelectedRegion(v.mask, det);
+      return privacyChanged();
+    }
+    const group = el.getAttribute("data-privgroup");
+    if (group) {
+      v.mask = selectGroup(v.mask, v.detections, group);
+      return privacyChanged();
+    }
+    const type = el.getAttribute("data-privtype");
+    if (type) {
+      v.settings = clampPrivacySettings({ ...v.settings, type: type as PrivacySettings["type"] });
+      return privacyChanged();
+    }
+    const act = el.getAttribute("data-priv");
+    if (act === "scan") {
+      v.open = true;
+      return void runPrivacyScan();
+    }
+    if (act === "manual") {
+      v.open = true;
+      return privacyChanged();
+    }
+    if (act === "batch") return void batchPrivacy();
+    if (act === "brush" || act === "erase") {
+      v.tool = act;
+      return paintPanel();
+    }
+    if (act === "showmask") {
+      v.showMask = !v.showMask;
+      return privacyChanged();
+    }
+    if (act === "undo") {
+      v.mask = undoStroke(v.mask);
+      return privacyChanged();
+    }
+    if (act === "redo") {
+      v.mask = redoStroke(v.mask);
+      return privacyChanged();
+    }
+    if (act === "clear") {
+      v.mask = clearStrokes(v.mask);
+      return privacyChanged();
+    }
+    if (act === "none") {
+      v.mask = deselectAll(v.mask);
+      return privacyChanged();
+    }
+    if (act === "reset") return resetPrivacy();
+    if (act === "cancel") return cancelPrivacy();
+    if (act === "done") return void commitPrivacy();
+  });
+
   host.addEventListener("input", (e) => {
     const t = e.target as HTMLInputElement;
     const s = st();
@@ -2219,6 +2305,16 @@ export async function openPhotoEditor(opts: {
       setCropZoom(n(t.value, 100) / 100);
       const out = t.parentElement?.querySelector(".rdpe-num");
       if (out && cropView) out.textContent = `${Math.round(cropView.scale * 100)}%`;
+      return;
+    }
+    if (t.hasAttribute("data-privset")) {
+      const key = t.getAttribute("data-privset") as keyof PrivacySettings;
+      const v = pv();
+      v.settings = clampPrivacySettings({ ...v.settings, [key]: n(t.value) });
+      const out = t.parentElement?.querySelector(".rdpe-num");
+      if (out) out.textContent = `${n(t.value)}${key === "brush" ? "px" : ""}`;
+      refreshPrivacyPreview();
+      syncPrivacyOverlay();
       return;
     }
     if (t.hasAttribute("data-adj")) {
