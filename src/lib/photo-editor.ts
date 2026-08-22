@@ -745,6 +745,11 @@ export async function openPhotoEditor(opts: {
               </div></div>`
           : ""
       }`;
+    try {
+      createIcons({ icons, nameAttr: "data-lucide", root: $("#rdpePanelBody") as any });
+    } catch {
+      /* noop */
+    }
     drawHistogram();
   }
 
