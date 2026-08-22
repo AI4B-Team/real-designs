@@ -5133,7 +5133,7 @@ export function initApp(): () => void {
       await runSketchRender(brief, s);
     }
 
-    async function runSketchRender(brief, settings) {
+    async function runSketchRender(brief) {
       busy = true;
       setCanvasPhase("generating");
       const btn = document.getElementById("genBtn");
@@ -5184,7 +5184,6 @@ export function initApp(): () => void {
              used and its scene, so a later view can match it exactly. */
           window.__rdVersionExtras = sketchMeta({
             payload: brief.payload,
-            settings,
             sourceVersion: studioSourcePath() || null,
             run: res.label,
             model: r.model,
