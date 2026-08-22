@@ -445,6 +445,10 @@
   padding: 4px 0 16px;
 }
 
+.rd-app .rdset-advb[hidden] {
+  display: none;
+}
+
 .rd-app .rdset-advb .sp-dopts {
   display: grid;
   grid-template-columns: 150px minmax(0, 1fr);
