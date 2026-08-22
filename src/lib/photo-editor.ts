@@ -68,9 +68,40 @@ import {
   type AdjustmentBundle,
 } from "@/lib/photo-editor-presets";
 import {
-  PRIVACY_TARGETS,
-  privacyInstruction,
-} from "@/lib/photo-editor-context";
+  BLUR_TYPES,
+  BRUSH_MAX,
+  BRUSH_MIN,
+  DEFAULT_PRIVACY_SETTINGS,
+  PRIVACY_CATEGORIES,
+  bakeFromState,
+  batchBlocked,
+  blurTypeNote,
+  brushFraction,
+  categoryLabel,
+  clampPrivacySettings,
+  deselectAll,
+  exportWarning,
+  hasPrivacySelection,
+  privacyMetadata,
+  safeDetections,
+  selectAll,
+  selectGroup,
+  type PrivacyDetection,
+  type PrivacyMetadata,
+  type PrivacySettings,
+} from "@/lib/privacy-blur";
+import {
+  bindStrokePainting,
+  clearStrokes,
+  createMaskState,
+  paintFromState,
+  paintMaskLayer,
+  redoStroke,
+  toggleSelectedRegion,
+  undoStroke,
+  type MaskState,
+} from "@/lib/mask-engine";
+import { scanPrivacy } from "@/lib/privacy.functions";
 import { chipList, chipValues, formDialog } from "@/lib/photo-editor-dialogs";
 import {
   type PhotoStats,
@@ -464,7 +495,24 @@ export async function openPhotoEditor(opts: {
   /* Detail and lens run as a real pixel pass; the preview shows that pass. */
   let detailPreview: { key: string; url: string } | null = null;
   let detailPending = "";
-  let privacyTargets: string[] = ["faces", "plates"];
+  /* Privacy Blur. Local, deterministic and free: the scan only locates
+     sensitive content, the pixels are baked here in the browser. */
+  type PrivacyEdit = {
+    open: boolean;
+    mask: MaskState;
+    detections: PrivacyDetection[];
+    settings: PrivacySettings;
+    tool: "brush" | "erase";
+    showMask: boolean;
+    scanning: boolean;
+    scanned: boolean;
+    scanError: string | null;
+    baking: boolean;
+  };
+  const privacies = new Map<string, PrivacyEdit>();
+  const privacyMeta = new Map<string, PrivacyMetadata>();
+  let privacyPreview: string | null = null;
+  let privacyTimer: ReturnType<typeof setTimeout> | null = null;
   let clipboard: AdjustmentBundle | null = null;
 
   const embedded = !!opts.mount;
@@ -611,6 +659,365 @@ export async function openPhotoEditor(opts: {
     });
   }
 
+
+  /* ------------------------------------------------------------- privacy */
+
+  function pv(key = cur().key): PrivacyEdit {
+    let v = privacies.get(key);
+    if (!v) {
+      v = {
+        open: false,
+        mask: createMaskState({ assetId: key }),
+        detections: [],
+        settings: { ...DEFAULT_PRIVACY_SETTINGS },
+        tool: "brush",
+        showMask: true,
+        scanning: false,
+        scanned: false,
+        scanError: null,
+        baking: false,
+      };
+      privacies.set(key, v);
+    }
+    return v;
+  }
+
+  /** The image Privacy Blur reads from and bakes into. Never the original file. */
+  const privacySource = (s: PhotoState) => (s.base || s.original) as string;
+
+  function privacyActive(): boolean {
+    const v = pv();
+    return v.open && !cropMode;
+  }
+
+  /** Debounced live preview. The preview and the saved file share one baker. */
+  function refreshPrivacyPreview(immediate = false) {
+    if (privacyTimer) clearTimeout(privacyTimer);
+    const run = async () => {
+      const v = pv();
+      const s = st();
+      if (!v.open || !hasPrivacySelection(v.mask, v.detections)) {
+        privacyPreview = null;
+        paint();
+        return;
+      }
+      const out = await bakeFromState(privacySource(s), v.mask, v.detections, v.settings, {
+        maxEdge: 1600,
+        quality: 0.9,
+      });
+      privacyPreview = out;
+      paint();
+    };
+    if (immediate) void run();
+    else privacyTimer = setTimeout(run, 160);
+  }
+
+  function privacyChanged() {
+    refreshPrivacyPreview();
+    paintPanel();
+    syncPrivacyOverlay();
+  }
+
+  /** Keeps the mask canvas exactly over the photograph through zoom and pan. */
+  function syncPrivacyOverlay() {
+    const wrap = $("#rdpePriv") as HTMLElement;
+    if (!wrap) return;
+    const on = privacyActive();
+    wrap.hidden = !on;
+    if (!on) return;
+    const img = $("#rdpeImg") as HTMLImageElement;
+    const stage = $("#rdpeStage") as HTMLElement;
+    if (!img || !stage) return;
+    const ir = img.getBoundingClientRect();
+    const sr = stage.getBoundingClientRect();
+    wrap.style.left = `${ir.left - sr.left}px`;
+    wrap.style.top = `${ir.top - sr.top}px`;
+    wrap.style.width = `${ir.width}px`;
+    wrap.style.height = `${ir.height}px`;
+    if (!wrap.dataset['bound']) {
+      wrap.dataset['bound'] = "1";
+      bindStrokePainting(wrap, {
+        enabled: () => privacyActive(),
+        mode: () => (pv().tool === "erase" ? "erase" : "add"),
+        size: () => brushFraction(pv().settings.brush, Math.min(wrap.clientWidth, wrap.clientHeight)),
+        feather: () => pv().settings.feather / 100,
+        onChange: (next) => {
+          const v = pv();
+          v.mask = next(v.mask);
+          syncPrivacyOverlay();
+        },
+        onDone: () => privacyChanged(),
+      });
+      /* The cursor shows the true brush diameter on the photograph. */
+      wrap.addEventListener("pointermove", (ev) => {
+        const dot = $("#rdpeBrushDot") as HTMLElement;
+        if (!dot) return;
+        const r = wrap.getBoundingClientRect();
+        const size =
+          brushFraction(pv().settings.brush, Math.min(wrap.clientWidth, wrap.clientHeight)) *
+          Math.min(r.width, r.height);
+        dot.hidden = false;
+        dot.style.width = `${size}px`;
+        dot.style.height = `${size}px`;
+        dot.style.left = `${(ev as PointerEvent).clientX - r.left}px`;
+        dot.style.top = `${(ev as PointerEvent).clientY - r.top}px`;
+      });
+      wrap.addEventListener("pointerleave", () => {
+        const dot = $("#rdpeBrushDot") as HTMLElement;
+        if (dot) dot.hidden = true;
+      });
+    }
+    const cv = $("#rdpePrivCv") as HTMLCanvasElement;
+    if (!cv) return;
+    const W = Math.max(2, Math.round(ir.width));
+    const H = Math.max(2, Math.round(ir.height));
+    if (cv.width !== W || cv.height !== H) {
+      cv.width = W;
+      cv.height = H;
+    }
+    const ctx = cv.getContext("2d");
+    if (!ctx) return;
+    ctx.clearRect(0, 0, W, H);
+    const v = pv();
+    if (v.showMask) {
+      paintMaskLayer(ctx, W, H, paintFromState(v.mask, v.detections), "overlay");
+      /* Detected boundaries stay visible whether or not they are selected. */
+      const on2 = new Set(v.mask.selectedRegions);
+      v.detections.forEach((d) => {
+        if (!d.box) return;
+        ctx.strokeStyle = on2.has(d.id) ? "rgba(204,0,0,.95)" : "rgba(255,255,255,.75)";
+        ctx.setLineDash(on2.has(d.id) ? [] : [5, 4]);
+        ctx.lineWidth = 2;
+        ctx.strokeRect(d.box.x * W, d.box.y * H, d.box.w * W, d.box.h * H);
+      });
+      ctx.setLineDash([]);
+    }
+  }
+
+  async function runPrivacyScan() {
+    const v = pv();
+    if (v.scanning) return;
+    v.scanning = true;
+    v.scanError = null;
+    paintPanel();
+    try {
+      const image = await renderPhoto(st());
+      const res: any = await scanPrivacy({ data: { image } });
+      v.detections = safeDetections((res?.detections || []) as PrivacyDetection[]);
+      v.scanned = true;
+      v.scanError = res?.error || null;
+      if (v.detections.length) {
+        v.mask = selectAll(v.mask, v.detections);
+        rdToast(`${v.detections.length} Sensitive Area${v.detections.length === 1 ? "" : "s"} Found. Review Before Applying.`);
+      } else {
+        rdToast("Nothing Sensitive Was Detected. Use Manual Blur If Needed.");
+      }
+    } catch (err: any) {
+      v.scanError = err?.message || "The Scan Failed. Manual Blur Still Works.";
+    } finally {
+      v.scanning = false;
+      privacyChanged();
+    }
+  }
+
+  /** Done bakes the blur into this session's pixels as an unsaved edit. */
+  async function commitPrivacy() {
+    const v = pv();
+    const s = st();
+    const p = cur();
+    if (!hasPrivacySelection(v.mask, v.detections)) {
+      return void rdToast("Select Or Paint An Area To Blur First.", "error");
+    }
+    v.baking = true;
+    paintPanel();
+    try {
+      const baked = await bakeFromState(privacySource(s), v.mask, v.detections, v.settings, {
+        quality: 0.95,
+      });
+      if (!baked) throw new Error("The blur could not be applied.");
+      push();
+      s.base = baked;
+      if (!s.aiOps.includes("privacy_blur")) s.aiOps = [...s.aiOps, "privacy_blur"];
+      s.dirty = true;
+      saveFailed = false;
+      privacyMeta.set(p.key, privacyMetadata({
+        state: v.mask,
+        detections: v.detections,
+        settings: v.settings,
+        sourceVersion: p.versionId || p.assetId || null,
+      }));
+      v.open = false;
+      v.mask = clearStrokes({ ...v.mask, selectedRegions: [] });
+      v.detections = [];
+      v.scanned = false;
+      privacyPreview = null;
+      rdToast("Privacy Blur Applied. Save It As A Version To Keep It.");
+    } catch (err: any) {
+      rdToast(err?.message || "The Blur Could Not Be Applied.", "error");
+    } finally {
+      v.baking = false;
+      paint();
+    }
+  }
+
+  function resetPrivacy() {
+    const v = pv();
+    v.mask = clearStrokes({ ...v.mask, selectedRegions: [] });
+    v.settings = { ...DEFAULT_PRIVACY_SETTINGS };
+    privacyPreview = null;
+    privacyChanged();
+  }
+
+  function cancelPrivacy() {
+    const v = pv();
+    v.open = false;
+    v.mask = clearStrokes({ ...v.mask, selectedRegions: [] });
+    v.detections = [];
+    v.scanned = false;
+    v.scanError = null;
+    privacyPreview = null;
+    paint();
+  }
+
+  /** Property-wide review. Nothing is ever blurred and saved without approval. */
+  async function batchPrivacy() {
+    const others = photos.filter((ph) => ph.key !== cur().key);
+    if (!others.length) return void rdToast("There Is Only One Photo Open.", "error");
+    const root = await formDialog({
+      title: "Batch Privacy Review",
+      body: `<p class="rdpe-hint">Each Photo Is Scanned And Opened For Your Review. Nothing Is Blurred Or Saved Until You Approve It Photo By Photo.</p>${chipList(
+        others.map((ph, i) => ({ id: ph.key, label: ph.room || ph.name || `Photo ${i + 2}`, on: true })),
+      )}`,
+      confirmLabel: "Scan Selected Photos",
+    });
+    if (!root) return;
+    const picked = chipValues(root);
+    if (!picked.length) return;
+    let found = 0;
+    for (const key of picked) {
+      const target = photos.find((ph) => ph.key === key);
+      if (!target) continue;
+      try {
+        const res: any = await scanPrivacy({ data: { image: st(key).base || st(key).original } });
+        const dets = safeDetections((res?.detections || []) as PrivacyDetection[]);
+        const v = pv(key);
+        v.detections = dets;
+        v.scanned = true;
+        v.mask = dets.length ? selectAll(v.mask, dets) : v.mask;
+        if (dets.length) found += 1;
+      } catch (_) {
+        /* A failed scan simply leaves that photo to manual review. */
+      }
+    }
+    const pending = batchBlocked(
+      picked.map((k) => ({
+        key: k,
+        label: k,
+        detections: pv(k).detections,
+        reviewed: false,
+        approved: false,
+      })),
+    );
+    rdToast(
+      found
+        ? `${found} Photo${found === 1 ? "" : "s"} Need Review. Open Each One And Apply Privacy Blur. ${pending} Awaiting Approval.`
+        : "No Sensitive Content Was Detected In The Selected Photos.",
+    );
+    paintPanel();
+  }
+
+  function privacyCard(): string {
+    const v = pv();
+    const s = st();
+    const warn = exportWarning(v.mask, v.detections);
+    const groups = [
+      { id: "faces", label: "Select All Faces" },
+      { id: "plates", label: "Select All Plates" },
+      { id: "screens", label: "Select All Screens" },
+      { id: "documents", label: "Select All Documents" },
+    ];
+    if (!v.open) {
+      return `<p class="rdpe-note">Find Or Paint Sensitive Details And Blur Them Into A New Version. Runs On This Device — No Credit Is Ever Charged.</p>
+        <div class="rdpe-autobtns">
+          <button type="button" class="btn btn-primary btn-sm" data-priv="scan"><i data-lucide="scan-search"></i>Scan Photo</button>
+          <button type="button" class="btn btn-ghost btn-sm" data-priv="manual"><i data-lucide="brush"></i>Manual Blur</button>
+        </div>
+        ${s.aiOps.includes("privacy_blur") ? '<p class="rdpe-hint">Privacy Blur Is Applied To The Image On Screen.</p>' : ""}
+        <button type="button" class="rdpe-linkbtn" data-priv="batch">Batch Privacy Review…</button>`;
+    }
+    const sel = new Set(v.mask.selectedRegions);
+    return `
+      <div class="rdpe-autobtns">
+        <button type="button" class="btn btn-ghost btn-sm ${v.scanning ? "busy" : ""}" data-priv="scan" ${
+          v.scanning ? "disabled" : ""
+        }><i data-lucide="scan-search"></i>${v.scanning ? "Scanning…" : v.scanned ? "Scan Again" : "Scan Photo"}</button>
+        <button type="button" class="rdpe-linkbtn" data-priv="batch">Batch Review…</button>
+      </div>
+      ${v.scanError ? `<p class="rdpe-clip">${esc(v.scanError)}</p>` : ""}
+      ${
+        v.detections.length
+          ? `<p class="rdpe-sub">Detected<span class="rdpe-subv">${sel.size} Of ${v.detections.length} Selected</span></p>
+             <div class="rdpe-ratios">${groups
+               .map((g) => `<button type="button" class="rdpe-chip" data-privgroup="${g.id}">${g.label}</button>`)
+               .join("")}
+               <button type="button" class="rdpe-chip" data-priv="none">Deselect All</button></div>
+             <div class="rdpe-privlist">${v.detections
+               .map(
+                 (d) => `<button type="button" class="rdpe-privitem ${sel.has(d.id) ? "on" : ""}" data-privdet="${esc(d.id)}">
+                   <i data-lucide="${sel.has(d.id) ? "check-square" : "square"}"></i>
+                   <span>${esc(categoryLabel(d.category))}</span>
+                   <em>${Math.round((d.confidence || 0) * 100)}%</em></button>`,
+               )
+               .join("")}</div>`
+          : v.scanned
+            ? '<p class="rdpe-hint">Nothing Was Detected. Paint The Areas You Want Obscured.</p>'
+            : ""
+      }
+      <p class="rdpe-sub">Blur Type<span class="rdpe-subv">${esc(
+        BLUR_TYPES.find((b) => b.id === v.settings.type)?.label || "",
+      )}</span></p>
+      <div class="rdpe-ratios">${BLUR_TYPES.map(
+        (b) => `<button type="button" class="rdpe-chip ${v.settings.type === b.id ? "on" : ""}" data-privtype="${b.id}">${b.label}</button>`,
+      ).join("")}</div>
+      <p class="rdpe-hint">${esc(blurTypeNote(v.settings.type))}</p>
+
+      <p class="rdpe-sub">Brush</p>
+      <div class="rdpe-rotrow">
+        <button type="button" class="rdpe-ib ${v.tool === "brush" ? "on" : ""}" data-priv="brush" title="Blur Brush" aria-label="Blur Brush"><i data-lucide="brush"></i></button>
+        <button type="button" class="rdpe-ib ${v.tool === "erase" ? "on" : ""}" data-priv="erase" title="Eraser" aria-label="Eraser"><i data-lucide="eraser"></i></button>
+        <button type="button" class="rdpe-ib ${v.showMask ? "on" : ""}" data-priv="showmask" title="Show Or Hide Mask" aria-label="Show Or Hide Mask"><i data-lucide="${
+          v.showMask ? "eye" : "eye-off"
+        }"></i></button>
+        <button type="button" class="rdpe-ib" data-priv="undo" title="Undo Stroke" aria-label="Undo Stroke" ${
+          v.mask.strokes.length ? "" : "disabled"
+        }><i data-lucide="undo-2"></i></button>
+        <button type="button" class="rdpe-ib" data-priv="redo" title="Redo Stroke" aria-label="Redo Stroke" ${
+          v.mask.redo.length ? "" : "disabled"
+        }><i data-lucide="redo-2"></i></button>
+        <button type="button" class="rdpe-ib" data-priv="clear" title="Clear Mask" aria-label="Clear Mask"><i data-lucide="trash-2"></i></button>
+      </div>
+      ${privSlider("brush", "Brush Size", v.settings.brush, BRUSH_MIN, BRUSH_MAX, "px")}
+      ${privSlider("strength", "Blur Strength", v.settings.strength, 1, 100, "")}
+      ${privSlider("feather", "Feather", v.settings.feather, 0, 100, "")}
+      ${warn ? `<p class="rdpe-clip">${esc(warn)}</p>` : ""}
+      <div class="rdpe-autobtns">
+        <button type="button" class="btn btn-primary btn-sm" data-priv="done" ${v.baking ? "disabled" : ""}>${
+          v.baking ? "Applying…" : "Done"
+        }</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-priv="reset">Reset</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-priv="cancel">Cancel</button>
+      </div>
+      <p class="rdpe-hint">0 Credits. Hold To Compare Reveals The Unblurred Photo While Held.</p>`;
+  }
+
+  function privSlider(key: string, label: string, v: number, min: number, max: number, suffix: string): string {
+    return `<div class="rdpe-row">
+      <label>${label}</label>
+      <input type="range" data-privset="${key}" min="${min}" max="${max}" step="1" value="${v}" aria-label="${label}">
+      <span class="rdpe-num">${v}${suffix}</span>
+    </div>`;
+  }
+
   function paint() {
     const p = cur();
     const s = st();
@@ -625,12 +1032,14 @@ export async function openPhotoEditor(opts: {
           : s.base || s.original;
     if (stage && src && stage.getAttribute("src") !== src) stage.setAttribute("src", src);
     if (stage) {
-      const preview = aiPreview && !comparing ? aiPreview.image : null;
+      /* Privacy Blur preview shows real baked pixels, never a CSS filter. */
+      const preview = comparing ? null : privacyPreview || (aiPreview ? aiPreview.image : null);
       if (preview && stage.getAttribute("src") !== preview) stage.setAttribute("src", preview);
       /* An Auto Enhance preview is a filter overlay only: the stored
          adjustments stay exactly where the user left them. */
       stage.style.filter = comparing ? "none" : filterString(previewAdj || s.adj);
       paintStageTransform();
+      syncPrivacyOverlay();
     }
 
     if (embedded) {
@@ -656,7 +1065,7 @@ export async function openPhotoEditor(opts: {
       : saveFailed
         ? "Retry Save"
         : primarySaveLabel({ mode: modeFor(p) });
-    const edited = hasEdits(s) || !!aiPreview;
+    const edited = hasEdits(s) || !!aiPreview || !!privacyPreview;
     const hold = $("#rdpeHold") as HTMLButtonElement;
     if (hold) {
       /* Nothing to compare against until an edit exists: the control hides
@@ -907,6 +1316,8 @@ export async function openPhotoEditor(opts: {
            <span><b>Continue In Object Edit</b><em>Select, remove, replace, or modify a specific object.</em></span>
            <i data-lucide="arrow-right"></i></button>`,
       )}
+
+      ${section("privacy", "Privacy", "shield", privacyCard())}
 
       ${section(
         "presets",
@@ -1378,6 +1789,11 @@ export async function openPhotoEditor(opts: {
 
   async function runAi(op: string) {
     if (aiBusy) return;
+    /* Privacy Blur is a local, free tool — it never reaches the credit path. */
+    if (op === "privacy_blur") {
+      pv().open = true;
+      return paintPanel();
+    }
     const meta = enhancementByOp(op);
     if (!meta) return;
     /* Nothing that spends a credit or rewrites the scene runs from one click. */
@@ -1390,22 +1806,7 @@ export async function openPhotoEditor(opts: {
       confirmLabel: `Use ${meta.credits} Credit${meta.credits === 1 ? "" : "s"}`,
     });
     if (!ok) return;
-    /* Privacy Blur never guesses: the operator names what may be obscured. */
     let instruction = "";
-    if (op === "privacy_blur") {
-      const root = await formDialog({
-        title: "Privacy Blur Targets",
-        body: `<p class="rdpe-hint">Only The Targets You Select Are Obscured. Everything Else Is Left Untouched.</p>${chipList(
-          PRIVACY_TARGETS.map((t) => ({ ...t, on: privacyTargets.includes(t.id) })),
-        )}`,
-        confirmLabel: "Continue",
-      });
-      if (!root) return;
-      const picked = chipValues(root);
-      if (!picked.length) return void rdToast("Select At Least One Privacy Target.", "error");
-      privacyTargets = picked;
-      instruction = privacyInstruction(picked);
-    }
     aiBusy = op;
     paint();
     try {
@@ -1477,6 +1878,9 @@ export async function openPhotoEditor(opts: {
               Object.values(s.adj || {}).some((v) => Number(v) !== 0) || !!s.crop || !!s.rotation,
           }),
           ai_ops: s.aiOps,
+          ...(privacyMeta.get(p.key)
+            ? { privacy: { ...privacyMeta.get(p.key)!, result_path: path } }
+            : {}),
           edited_path: path,
           label: p.room || p.name || null,
           as_copy: asCopy,
@@ -1515,6 +1919,20 @@ export async function openPhotoEditor(opts: {
   async function download(preview = false) {
     const s0 = st();
     const p = cur();
+    /* Never let a photo leave with sensitive content the user hasn't handled. */
+    const privWarn = exportWarning(pv().mask, pv().detections);
+    if (privWarn) {
+      const go = await confirmDialog({
+        title: "Unblurred Sensitive Areas",
+        body: `${privWarn} They Will Be Visible In The Downloaded File.`,
+        confirmLabel: "Download Anyway",
+        cancelLabel: "Back To Privacy Blur",
+      });
+      if (!go) {
+        pv().open = true;
+        return paintPanel();
+      }
+    }
     const cls = classifyEdits({
       aiOps: s0.aiOps,
       hasAdjustments: Object.values(s0.adj || {}).some((v) => Number(v) !== 0) || !!s0.crop,
@@ -1778,6 +2196,10 @@ export async function openPhotoEditor(opts: {
       return paint();
     }
     if (act === "autopreview") return void runAutoEnhance(false);
+    if (act === "privacy") {
+      pv().open = true;
+      return paintPanel();
+    }
     if (act === "autoapply") return void runAutoEnhance(true);
     if (act === "autoundo") return undoAuto();
     if (act === "resetgeo") return resetGeometry();
@@ -1831,6 +2253,65 @@ export async function openPhotoEditor(opts: {
 
   });
 
+  /* Privacy Blur controls. Everything here is local and costs nothing. */
+  host.addEventListener("click", (e) => {
+    const el = (e.target as HTMLElement).closest("[data-priv],[data-privgroup],[data-privdet],[data-privtype]") as HTMLElement | null;
+    if (!el) return;
+    const v = pv();
+    const det = el.getAttribute("data-privdet");
+    if (det) {
+      v.mask = toggleSelectedRegion(v.mask, det);
+      return privacyChanged();
+    }
+    const group = el.getAttribute("data-privgroup");
+    if (group) {
+      v.mask = selectGroup(v.mask, v.detections, group);
+      return privacyChanged();
+    }
+    const type = el.getAttribute("data-privtype");
+    if (type) {
+      v.settings = clampPrivacySettings({ ...v.settings, type: type as PrivacySettings["type"] });
+      return privacyChanged();
+    }
+    const act = el.getAttribute("data-priv");
+    if (act === "scan") {
+      v.open = true;
+      return void runPrivacyScan();
+    }
+    if (act === "manual") {
+      v.open = true;
+      return privacyChanged();
+    }
+    if (act === "batch") return void batchPrivacy();
+    if (act === "brush" || act === "erase") {
+      v.tool = act;
+      return paintPanel();
+    }
+    if (act === "showmask") {
+      v.showMask = !v.showMask;
+      return privacyChanged();
+    }
+    if (act === "undo") {
+      v.mask = undoStroke(v.mask);
+      return privacyChanged();
+    }
+    if (act === "redo") {
+      v.mask = redoStroke(v.mask);
+      return privacyChanged();
+    }
+    if (act === "clear") {
+      v.mask = clearStrokes(v.mask);
+      return privacyChanged();
+    }
+    if (act === "none") {
+      v.mask = deselectAll(v.mask);
+      return privacyChanged();
+    }
+    if (act === "reset") return resetPrivacy();
+    if (act === "cancel") return cancelPrivacy();
+    if (act === "done") return void commitPrivacy();
+  });
+
   host.addEventListener("input", (e) => {
     const t = e.target as HTMLInputElement;
     const s = st();
@@ -1838,6 +2319,16 @@ export async function openPhotoEditor(opts: {
       setCropZoom(n(t.value, 100) / 100);
       const out = t.parentElement?.querySelector(".rdpe-num");
       if (out && cropView) out.textContent = `${Math.round(cropView.scale * 100)}%`;
+      return;
+    }
+    if (t.hasAttribute("data-privset")) {
+      const key = t.getAttribute("data-privset") as keyof PrivacySettings;
+      const v = pv();
+      v.settings = clampPrivacySettings({ ...v.settings, [key]: n(t.value) });
+      const out = t.parentElement?.querySelector(".rdpe-num");
+      if (out) out.textContent = `${n(t.value)}${key === "brush" ? "px" : ""}`;
+      refreshPrivacyPreview();
+      syncPrivacyOverlay();
       return;
     }
     if (t.hasAttribute("data-adj")) {
@@ -2075,6 +2566,7 @@ function embeddedShellHtml(label: string): string {
           <span class="rdpe-cropgrid" aria-hidden="true"></span>
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
+        <div class="rdpe-priv" id="rdpePriv" hidden><canvas id="rdpePrivCv"></canvas><span class="rdpe-brushdot" id="rdpeBrushDot" hidden></span></div>
         <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <span class="rdpe-badge">Original</span>
       </div>
@@ -2128,6 +2620,7 @@ function shellHtml(back: string): string {
           <span class="rdpe-cropgrid" aria-hidden="true"></span>
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
+        <div class="rdpe-priv" id="rdpePriv" hidden><canvas id="rdpePrivCv"></canvas><span class="rdpe-brushdot" id="rdpeBrushDot" hidden></span></div>
         <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <button type="button" class="rdpe-nav r" data-act="next" aria-label="Next Photo"><i data-lucide="chevron-right"></i></button>
         <span class="rdpe-badge">Original</span>

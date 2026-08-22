@@ -893,6 +893,7 @@ export type Database = {
           label: string | null
           modification_class: string | null
           parent_asset_key: string | null
+          privacy: Json | null
           revision: number
           rotation: number
           source_path: string
@@ -914,6 +915,7 @@ export type Database = {
           label?: string | null
           modification_class?: string | null
           parent_asset_key?: string | null
+          privacy?: Json | null
           revision?: number
           rotation?: number
           source_path: string
@@ -935,6 +937,7 @@ export type Database = {
           label?: string | null
           modification_class?: string | null
           parent_asset_key?: string | null
+          privacy?: Json | null
           revision?: number
           rotation?: number
           source_path?: string
