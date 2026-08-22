@@ -53,6 +53,27 @@ import {
   zoomTo,
 } from "./crop-frame";
 import {
+  APPLY_MODES,
+  PASTE_CATEGORIES,
+  type ApplyMode,
+  type BatchRecord,
+  type CopiedAdjustments,
+  type PasteCategory,
+  applyCopied,
+  batchAutoEnhance,
+  batchProgress,
+  changedPhotos,
+  clippingNotice,
+  copyAdjustments,
+  defaultPasteCategories,
+  latestUnfinishedBatch,
+  markPhoto,
+  markUndone,
+  mixedValues,
+  newBatch,
+  saveBatchLocal,
+} from "@/lib/batch-edit";
+import {
   CROP_PRESETS,
   classifyEdits,
   cropPreset,
@@ -532,6 +553,8 @@ export async function openPhotoEditor(opts: {
   let privacyPreview: string | null = null;
   let privacyTimer: ReturnType<typeof setTimeout> | null = null;
   let clipboard: AdjustmentBundle | null = null;
+  let copied: CopiedAdjustments | null = null;
+  let lastBatch: BatchRecord | null = null;
   /* Property Markup. Vector layers drawn over the photograph: they never touch
      the source pixels, and only an export flattens them in. */
   const markupDocs = new Map<string, MarkupDoc>();
@@ -2347,7 +2370,7 @@ export async function openPhotoEditor(opts: {
           prev.dataset["bound"] = "1";
           prev.onclick = () => {
             const out = applyCopied(st() as any, copied!, pickedCategories(dlg), "replace");
-            previewAdj = out.adj;
+            previewAdj = out.adj as Adj;
             const img = $("#rdpeImg") as HTMLElement | null;
             if (img) img.style.filter = filterString(previewAdj);
             rdToast("Previewing The Selected Categories.");
