@@ -205,28 +205,28 @@ export const MOODS: Mood[] = [
   { id: "auto", label: "Auto", icon: "sparkles", spaces: ["interior", "exterior", "garden"] },
   {
     id: "natural-daylight",
-    label: "Natural Daylight",
+    label: "Natural daylight",
     icon: "sun",
     spaces: ["interior", "exterior", "garden"],
   },
-  { id: "bright-airy", label: "Bright & Airy", icon: "sun-medium", spaces: ["interior"] },
-  { id: "warm-cozy", label: "Warm & Cozy", icon: "flame", spaces: ["interior"] },
+  { id: "bright-airy", label: "Bright & airy", icon: "sun-medium", spaces: ["interior"] },
+  { id: "warm-cozy", label: "Warm & cozy", icon: "flame", spaces: ["interior"] },
   { id: "moody", label: "Moody", icon: "cloud-moon", spaces: ["interior", "exterior"] },
   {
     id: "golden-hour",
-    label: "Golden Hour",
+    label: "Golden hour",
     icon: "sunset",
     spaces: ["exterior", "garden", "interior"],
   },
   {
     id: "evening-ambience",
-    label: "Evening Ambience",
+    label: "Evening ambience",
     icon: "moon",
     spaces: ["exterior", "garden", "interior"],
   },
 ];
 
-export const DEFAULT_MOOD_ID = "natural-daylight";
+export const DEFAULT_MOOD_ID = "auto";
 
 export function moodsForSpace(space: string): Mood[] {
   const sp = spaceKeyOf(space);
