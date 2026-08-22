@@ -1382,7 +1382,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const f = fieldName(t);
     if (f === "addr") state.address = t.value;
     if (f === "url") state.url = t.value;
-    if (describe.onInput(f, t.value) && f === "prompt") describe.sync(body);
+    if (describe.onInput(f, t.value) && (f === "prompt" || f === "browseq")) describe.sync(body);
   }
 
   function onChange(e: Event) {

@@ -1309,6 +1309,13 @@ export function createDescribeComposer(cfg: Cfg) {
       count.textContent = state.prompt.length + " / " + DS.PROMPT_LIMIT;
     }
     bindRefDrag(root);
+    /* The browser re-renders as the user types, so the caret goes back. */
+    const search = root?.querySelector(".rdset-search") as HTMLInputElement | null;
+    if (search && document.activeElement !== search) {
+      search.focus();
+      const n = search.value.length;
+      search.setSelectionRange(n, n);
+    }
     const btn = root?.querySelector(".sp-create") as HTMLButtonElement | null;
     if (btn) btn.disabled = !ready();
     const impOk = state.prompt.trim().length >= IMPROVE_MIN_CHARS;
