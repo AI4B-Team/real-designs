@@ -2617,67 +2617,82 @@ export function initApp(): () => void {
 
 
 
-    /* A partial batch is never reported as done: the surviving image stays on
-       the canvas and only the missing option can be retried. */
+    /* A partial batch is never reported as done, and it never adds a second
+       pill: the one inline status line carries the message and the retry. */
     function showConceptPartial(message, onRetry) {
-      const existing = document.getElementById("conceptPartial");
+      const legacy = document.getElementById("conceptPartial");
+      if (legacy) legacy.remove();
       if (!message) {
-        if (existing) existing.remove();
+        if (OUTPUTS) setOutputStatus(OS.statusLine(OUTPUTS), null);
         return;
       }
-      const host = document.querySelector("#canvasCard .card-b");
-      let el = existing;
-      if (!el) {
-        el = document.createElement("div");
-        el.id = "conceptPartial";
-        el.className = "rd-savewarn";
-        if (host) host.insertBefore(el, document.getElementById("rdwVers"));
-      }
-      el.innerHTML = "";
-      const txt = document.createElement("div");
-      const b = document.createElement("b");
-      b.textContent = message;
-      txt.appendChild(b);
-      el.appendChild(txt);
-      if (onRetry) {
-        const btn = document.createElement("button");
-        btn.className = "btn btn-dark btn-xs";
-        btn.textContent = "Retry Missing Image";
-        btn.addEventListener("click", async () => {
-          btn.disabled = true;
-          try {
-            await onRetry();
-          } finally {
-            btn.disabled = false;
-          }
-        });
-        el.appendChild(btn);
-      }
+      setOutputStatus(message, onRetry || null);
     }
 
-    /** Appends one finished option. Never resets the workspace. */
+    /** A slot that never produced an image keeps its place and its reason. */
+    window.rdConceptSlotFailed = (index, message) => {
+      if (!OUTPUTS) return;
+      OS.markFailed(OUTPUTS, index, message || "Generation failed");
+      paintOutputs();
+    };
+
+    /** Appends one finished option into its own slot. Never resets anything. */
     async function addConcept(image, label, opts) {
       const o = opts || {};
-      if (cAfter) cAfter.innerHTML = photo(image, (label || "Concept") + " design");
+      const idx = typeof o.index === "number" ? o.index : 0;
+      const slot = OUTPUTS ? OS.slotAt(OUTPUTS, idx) : null;
+      if (OUTPUTS && slot) {
+        OS.markImage(OUTPUTS, idx, image);
+        /* The canvas follows the active output, which is still concept 1 while
+           concept 2 is saving: a later result never steals the view. */
+        const active = OS.activeSlot(OUTPUTS);
+        if (cAfter && active && active.outputId === slot.outputId)
+          cAfter.innerHTML = photo(image, OS.slotLabel(OUTPUTS, slot));
+        paintOutputs();
+      } else if (cAfter) {
+        cAfter.innerHTML = photo(image, (label || "Concept") + " design");
+      }
       let path = null;
       try {
         path = await uploadRenderDataUrl(image);
       } catch (_) {
         path = null;
       }
-      lastRender = image;
-      lastRenderPath = path;
-      addRenderVariant(image, label || "Concept", path);
+      const active = OUTPUTS ? OS.activeSlot(OUTPUTS) : null;
+      if (!OUTPUTS || !slot || (active && active.outputId === slot.outputId)) {
+        lastRender = image;
+        lastRenderPath = path;
+      }
+      addRenderVariant(image, label || "Concept", path, { silent: !!slot });
       markStudioResult();
       applyCanvasMode(o.mode || "concept-only");
-      try {
-        setConceptSummary(o.summary || null);
-      } catch (_) {}
+      if (!slot) {
+        try {
+          setConceptSummary(o.summary || null);
+        } catch (_) {}
+      }
       let version = null;
+      /* With a saved room every concept becomes a version immediately. Without
+         one, nothing is lost: the durable image is kept and Save Room attaches
+         every concept at once. The dialog never interrupts the batch. */
       try {
-        version = await finalizeGeneratedDesign(path);
+        version =
+          STUDIO_CTX && STUDIO_CTX.roomId
+            ? await attachVersionToRoom(path)
+            : slot
+              ? null
+              : await finalizeGeneratedDesign(path);
       } catch (_) {
         version = null;
+      }
+      if (OUTPUTS && slot) {
+        if (path)
+          OS.markSaved(OUTPUTS, idx, {
+            path,
+            versionId: version ? String(version.id || "") || null : null,
+          });
+        else OS.markFailed(OUTPUTS, idx, "Could not save that concept");
+        paintOutputs();
       }
       if (path && o.saveDraft !== false) {
         STUDIO_DRAFT_ID = null;
@@ -2697,6 +2712,7 @@ export function initApp(): () => void {
         versionId: version ? String((version as any).id || (version as any).version_id || "") || null : null,
       };
     }
+
 
     let STUDIO_START = null;
     function studioStart() {
