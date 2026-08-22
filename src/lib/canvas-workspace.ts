@@ -653,7 +653,8 @@ export function initCanvasWorkspace() {
       return;
     }
     if (t.closest("#rdwFull")) {
-      const stage = document.getElementById("rdwStage");
+      const stage = activeStage();
+
       try {
         if (document.fullscreenElement) void document.exitFullscreen();
         else void stage?.requestFullscreen();
