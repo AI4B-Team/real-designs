@@ -55,6 +55,8 @@ export type DisclosureExportOptions = {
   purpose?: ExportPurpose;
   scope?: ExportScope;
   title?: string;
+  /** Quality-review lines shown above the controls. */
+  notes?: string[];
   /** Called with the exported files instead of downloading them. */
   onExported?: (files: { name: string; dataUrl: string }[]) => void;
 };
@@ -130,6 +132,7 @@ export async function openDisclosureExport(opts: DisclosureExportOptions): Promi
 
   const body = `
     <p class="rdpe-hint">${esc(scopeLabel)} · ${items.length} File${items.length === 1 ? "" : "s"} · Classified As <strong>${esc(firstClass)}</strong>${items.length > 1 ? " And Others" : ""}.</p>
+    ${(opts.notes || []).length ? `<ul class="rdpe-review">${(opts.notes || []).map((n) => `<li class="rdpe-review-warn">${esc(n)}</li>`).join("")}</ul>` : ""}
     <div class="rdde-prev"><img data-x="preview" alt="Disclosure Preview" /></div>
     <p class="rdpe-hint" data-x="warn"></p>
     <label class="rdpe-dlg-l">Disclosure</label>
