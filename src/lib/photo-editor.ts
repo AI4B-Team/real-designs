@@ -32,6 +32,33 @@ import {
   primarySaveLabel,
 } from "@/lib/photo-editor-context";
 import {
+  applyDetailPass,
+  detailKey,
+  detailOf,
+  needsPixelPass,
+} from "@/lib/photo-pixels";
+import {
+  CROP_PRESETS,
+  EXPORT_PRESETS,
+  classifyEdits,
+  cropPreset,
+  deletePreset as removePreset,
+  disclosureText,
+  exportFileName,
+  exportPreset,
+  exportSize,
+  listPresets,
+  mergeBundle,
+  qualityReview,
+  savePreset,
+  type AdjustmentBundle,
+} from "@/lib/photo-editor-presets";
+import {
+  PRIVACY_TARGETS,
+  privacyInstruction,
+} from "@/lib/photo-editor-context";
+import { chipList, chipValues, formDialog } from "@/lib/photo-editor-dialogs";
+import {
   type PhotoStats,
   type Strength,
   STRENGTHS,
@@ -107,17 +134,12 @@ const ADJUSTMENTS = [
   { group: "color", key: "saturation", label: "Saturation", min: -100, max: 100 },
   { group: "detail", key: "sharpen", label: "Sharpen", min: 0, max: 100 },
   { group: "detail", key: "denoise", label: "Denoise", min: 0, max: 100 },
+  { group: "detail", key: "clarity", label: "Clarity", min: -100, max: 100 },
+  { group: "detail", key: "dehaze", label: "Dehaze", min: -100, max: 100 },
+  { group: "lens", key: "lens", label: "Lens Correction", min: -100, max: 100 },
 ] as const;
 
-const RATIOS: { id: string; label: string; v: number | null }[] = [
-  { id: "original", label: "Original", v: null },
-  { id: "free", label: "Free", v: null },
-  { id: "1:1", label: "1:1", v: 1 },
-  { id: "4:3", label: "4:3", v: 4 / 3 },
-  { id: "3:2", label: "3:2", v: 3 / 2 },
-  { id: "16:9", label: "16:9", v: 16 / 9 },
-  { id: "9:16", label: "9:16", v: 9 / 16 },
-];
+const RATIOS = CROP_PRESETS;
 
 const GEOMETRY = [
   { key: "straighten", label: "Straighten", min: -15, max: 15, step: 0.5 },
@@ -176,7 +198,6 @@ export function filterString(adj: Adj): string {
   if (warm) parts.push(`sepia(${Math.min(0.5, Math.abs(warm) * 0.35).toFixed(3)})`);
   if (warm < 0) parts.push(`hue-rotate(${(warm * 22).toFixed(1)}deg)`);
   if (a("tint")) parts.push(`hue-rotate(${(a("tint") / 8).toFixed(1)}deg)`);
-  if (a("denoise")) parts.push(`blur(${(a("denoise") / 140).toFixed(2)}px)`);
   return parts.join(" ");
 }
 
@@ -263,11 +284,55 @@ function drawKeystone(
   }
 }
 
+/* ------------------------------------------------------- detail pipeline */
+
+const detailCache = new Map<string, string>();
+
+/**
+ * Detail and lens correction are real pixel work, so they run once here and
+ * feed BOTH the live preview and the saved render. Nothing in the inspector is
+ * a CSS-only illusion that vanishes from the exported file.
+ */
+export async function detailedSource(src: string, adj: Adj, maxEdge = 0): Promise<string> {
+  const d = detailOf(adj);
+  if (!needsPixelPass(d)) return src;
+  const key = `${maxEdge}|${detailKey(src, d)}`;
+  const hit = detailCache.get(key);
+  if (hit) return hit;
+  try {
+    const img = await loadImage(src);
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+    if (maxEdge && Math.max(w, h) > maxEdge) {
+      const k = maxEdge / Math.max(w, h);
+      w = Math.max(1, Math.round(w * k));
+      h = Math.max(1, Math.round(h * k));
+    }
+    const cv = document.createElement("canvas");
+    cv.width = w;
+    cv.height = h;
+    const c = cv.getContext("2d", { willReadFrequently: true });
+    if (!c) return src;
+    c.drawImage(img, 0, 0, w, h);
+    const id = c.getImageData(0, 0, w, h);
+    applyDetailPass({ data: id.data, width: w, height: h }, d);
+    c.putImageData(id, 0, 0);
+    const out = cv.toDataURL("image/jpeg", 0.95);
+    detailCache.set(key, out);
+    if (detailCache.size > 10) detailCache.delete(detailCache.keys().next().value as string);
+    return out;
+  } catch {
+    return src;
+  }
+}
+
+export type ExportOptions = { maxEdge?: number; quality?: number; disclosure?: string | null };
+
 /** Flatten the current state into a JPEG data URL. */
-export async function renderPhoto(st: PhotoState): Promise<string> {
+export async function renderPhoto(st: PhotoState, ex: ExportOptions = {}): Promise<string> {
   const src = st.base || st.original;
   if (!src) throw new Error("Nothing to render.");
-  const img = await loadImage(src);
+  const img = await loadImage(await detailedSource(src, st.adj));
   const quarter = ((st.rotation % 360) + 360) % 360;
   const swap = quarter === 90 || quarter === 270;
   const iw = img.naturalWidth;
@@ -298,7 +363,36 @@ export async function renderPhoto(st: PhotoState): Promise<string> {
     cut.getContext("2d")?.drawImage(stage, cx, cy, cw, ch, 0, 0, cw, ch);
     out = cut;
   }
-  return out.toDataURL("image/jpeg", 0.94);
+
+  /* Export sizing, then the disclosure caption, so the caption is never
+     resampled into mush. */
+  const size = exportSize(out.width, out.height, ex.maxEdge || 0);
+  if (size.w !== out.width || size.h !== out.height) {
+    const scaled = document.createElement("canvas");
+    scaled.width = size.w;
+    scaled.height = size.h;
+    const sc = scaled.getContext("2d");
+    if (sc) {
+      sc.imageSmoothingQuality = "high";
+      sc.drawImage(out, 0, 0, size.w, size.h);
+      out = scaled;
+    }
+  }
+  if (ex.disclosure) {
+    const c2 = out.getContext("2d");
+    if (c2) {
+      const pad = Math.round(out.width * 0.02);
+      const fs = Math.max(12, Math.round(out.width * 0.026));
+      c2.font = `600 ${fs}px "DM Sans", system-ui, sans-serif`;
+      const tw = c2.measureText(ex.disclosure).width;
+      c2.fillStyle = "rgba(0,0,0,.62)";
+      c2.fillRect(pad, out.height - pad - fs * 1.9, tw + fs, fs * 1.9);
+      c2.fillStyle = "#fff";
+      c2.textBaseline = "middle";
+      c2.fillText(ex.disclosure, pad + fs / 2, out.height - pad - fs * 0.95);
+    }
+  }
+  return out.toDataURL("image/jpeg", ex.quality ?? 0.94);
 }
 
 /* ------------------------------------------------------------------- view */
@@ -350,6 +444,11 @@ export async function openPhotoEditor(opts: {
   let aiPreview: { op: string; label: string; image: string } | null = null;
   let aiBusy = "";
   let saveFailed = false;
+  /* Detail and lens run as a real pixel pass; the preview shows that pass. */
+  let detailPreview: { key: string; url: string } | null = null;
+  let detailPending = "";
+  let privacyTargets: string[] = ["faces", "plates"];
+  let clipboard: AdjustmentBundle | null = null;
 
   const embedded = !!opts.mount;
   const host = document.createElement("div");
@@ -395,10 +494,15 @@ export async function openPhotoEditor(opts: {
       adj: s.adj,
       rotation: s.rotation,
       straighten: s.straighten,
+      vertical: s.vertical,
+      horizontal: s.horizontal,
       flipH: s.flipH,
+      flipV: s.flipV,
       crop: s.crop,
       aiOps: s.aiOps,
       base: s.base,
+      auto: s.auto,
+      autoBase: s.autoBase,
     });
   }
 
@@ -416,10 +520,15 @@ export async function openPhotoEditor(opts: {
     s.adj = o.adj || {};
     s.rotation = o.rotation || 0;
     s.straighten = o.straighten || 0;
+    s.vertical = o.vertical || 0;
+    s.horizontal = o.horizontal || 0;
     s.flipH = !!o.flipH;
+    s.flipV = !!o.flipV;
     s.crop = o.crop || null;
     s.aiOps = o.aiOps || [];
     s.base = o.base ?? s.base;
+    s.auto = o.auto ?? null;
+    s.autoBase = o.autoBase ?? null;
   }
 
   function undo() {
@@ -467,11 +576,36 @@ export async function openPhotoEditor(opts: {
 
   /* ------------------------------------------------------------- painting */
 
+  function previewKey(s: PhotoState): string | null {
+    const base = s.base || s.original;
+    if (!base || !needsPixelPass(detailOf(s.adj))) return null;
+    return detailKey(base, detailOf(s.adj));
+  }
+
+  /** Keep the on-screen photo in step with the detail pass, off the main path. */
+  function syncDetail(s: PhotoState) {
+    const key = previewKey(s);
+    if (!key || detailPreview?.key === key || detailPending === key) return;
+    detailPending = key;
+    void detailedSource((s.base || s.original) as string, s.adj, 1400).then((url) => {
+      detailPending = "";
+      detailPreview = { key, url };
+      paint();
+    });
+  }
+
   function paint() {
     const p = cur();
     const s = st();
     const stage = $("#rdpeImg") as HTMLImageElement;
-    const src = comparing ? s.entry || s.original : s.base || s.original;
+    const dk = comparing ? null : previewKey(s);
+    if (!comparing) syncDetail(s);
+    const src =
+      dk && detailPreview?.key === dk
+        ? detailPreview.url
+        : comparing
+          ? s.entry || s.original
+          : s.base || s.original;
     if (stage && src && stage.getAttribute("src") !== src) stage.setAttribute("src", src);
     if (stage) {
       const preview = aiPreview && !comparing ? aiPreview.image : null;
@@ -496,10 +630,15 @@ export async function openPhotoEditor(opts: {
 
     $("#rdpeUndo").toggleAttribute("disabled", !s.history.length);
     $("#rdpeRedo").toggleAttribute("disabled", !s.future.length);
-    $("#rdpeSave").toggleAttribute("disabled", !s.dirty || s.saving);
+    /* A failed save stays actionable: the primary button becomes the retry. */
+    $("#rdpeSave").toggleAttribute("disabled", (!s.dirty && !saveFailed) || s.saving);
     $("#rdpeSaveCopy").toggleAttribute("disabled", !hasEdits(s) || s.saving);
     $("#rdpeReset").toggleAttribute("disabled", !hasEdits(s));
-    $("#rdpeSave").textContent = s.saving ? "Saving…" : primarySaveLabel({ mode: modeFor(p) });
+    $("#rdpeSave").textContent = s.saving
+      ? "Saving…"
+      : saveFailed
+        ? "Retry Save"
+        : primarySaveLabel({ mode: modeFor(p) });
     const edited = hasEdits(s) || !!aiPreview;
     const hold = $("#rdpeHold") as HTMLButtonElement;
     if (hold) {
@@ -671,12 +810,23 @@ export async function openPhotoEditor(opts: {
         `<p class="rdpe-sub">Crop Ratio<span class="rdpe-subv">${esc(
           RATIOS.find((r) => r.id === (s.crop?.ratio || "original"))?.label || "Original",
         )}</span></p>
-        <div class="rdpe-ratios">${RATIOS.map(
-          (r) =>
-            `<button type="button" class="rdpe-chip ${
-              (s.crop?.ratio || "original") === r.id ? "on" : ""
-            }" data-ratio="${r.id}">${r.label}</button>`,
-        ).join("")}</div>
+        <div class="rdpe-ratios">${RATIOS.filter((r) => r.group === "basic")
+          .map(
+            (r) =>
+              `<button type="button" class="rdpe-chip ${
+                (s.crop?.ratio || "original") === r.id ? "on" : ""
+              }" data-ratio="${r.id}">${r.label}</button>`,
+          )
+          .join("")}</div>
+        <p class="rdpe-sub">MLS Presets</p>
+        <div class="rdpe-ratios">${RATIOS.filter((r) => r.group === "mls")
+          .map(
+            (r) =>
+              `<button type="button" class="rdpe-chip ${
+                (s.crop?.ratio || "original") === r.id ? "on" : ""
+              }" data-ratio="${r.id}" title="${esc(r.note || "")}">${r.label}</button>`,
+          )
+          .join("")}</div>
         ${
           cropMode
             ? `<div class="rdpe-autobtns">
@@ -706,6 +856,8 @@ export async function openPhotoEditor(opts: {
             attr: "data-reset-geo",
           }),
         ).join("")}
+        <p class="rdpe-sub">Lens</p>
+        ${adjRows("lens")}
         <button type="button" class="rdpe-reset rdpe-resetgeo" data-act="resetgeo" ${
           hasGeometry(s) ? "" : "disabled"
         }><i data-lucide="rotate-ccw"></i><span>Reset Geometry</span></button>`,
@@ -721,6 +873,13 @@ export async function openPhotoEditor(opts: {
            <i data-lucide="mouse-pointer-square-dashed"></i>
            <span><b>Continue In Object Edit</b><em>Select, remove, replace, or modify a specific object.</em></span>
            <i data-lucide="arrow-right"></i></button>`,
+      )}
+
+      ${section(
+        "presets",
+        "Presets & Batch",
+        "layers",
+        presetsCard(),
       )}
 
       ${section(
@@ -753,6 +912,68 @@ export async function openPhotoEditor(opts: {
       /* noop */
     }
     drawHistogram();
+  }
+
+  /* --------------------------------------------- adjustments & presets */
+
+  function bundleOf(s: PhotoState): AdjustmentBundle {
+    return {
+      adj: { ...s.adj },
+      straighten: s.straighten || 0,
+      vertical: s.vertical || 0,
+      horizontal: s.horizontal || 0,
+      flipH: !!s.flipH,
+      flipV: !!s.flipV,
+      rotation: s.rotation || 0,
+      crop: s.crop || null,
+    };
+  }
+
+  function applyBundle(bundle: AdjustmentBundle, includeGeometry: boolean, includeCrop: boolean) {
+    push();
+    const s = st();
+    const merged = mergeBundle(
+      {
+        adj: s.adj,
+        straighten: s.straighten,
+        vertical: s.vertical,
+        horizontal: s.horizontal,
+        flipH: s.flipH,
+        flipV: s.flipV,
+        rotation: s.rotation,
+        crop: s.crop,
+      },
+      bundle,
+      { includeGeometry, includeCrop },
+    ) as any;
+    Object.assign(s, merged);
+    paint();
+    void refreshStats();
+  }
+
+  function presetsCard() {
+    const saved = listPresets();
+    return `
+      <div class="rdpe-actions">
+        <button type="button" class="rdpe-act" data-act="copyadj"><i data-lucide="copy"></i>Copy Adjustments</button>
+        <button type="button" class="rdpe-act" data-act="pasteadj" ${clipboard ? "" : "disabled"}><i data-lucide="clipboard-paste"></i>Paste Adjustments</button>
+        <button type="button" class="rdpe-act" data-act="savepreset"><i data-lucide="bookmark-plus"></i>Save Preset</button>
+        <button type="button" class="rdpe-act" data-act="batch" ${photos.length > 1 ? "" : "disabled"}><i data-lucide="images"></i>Apply To Other Photos</button>
+      </div>
+      ${
+        saved.length
+          ? `<div class="rdpe-presets">${saved
+              .map(
+                (r) =>
+                  `<div class="rdpe-preset"><button type="button" class="rdpe-chip" data-preset="${esc(r.id)}">${esc(
+                    r.name,
+                  )}</button><button type="button" class="rdpe-x" data-preset-del="${esc(
+                    r.id,
+                  )}" aria-label="Delete ${esc(r.name)}"><i data-lucide="x"></i></button></div>`,
+              )
+              .join("")}</div>`
+          : `<p class="rdpe-hint">Save The Current Light, Colour And Detail Settings To Reuse Them On Another Photograph.</p>`
+      }`;
   }
 
   function section(id: string, label: string, icon: string, body: string) {
@@ -1049,6 +1270,22 @@ export async function openPhotoEditor(opts: {
       confirmLabel: `Use ${meta.credits} Credit${meta.credits === 1 ? "" : "s"}`,
     });
     if (!ok) return;
+    /* Privacy Blur never guesses: the operator names what may be obscured. */
+    let instruction = "";
+    if (op === "privacy_blur") {
+      const root = await formDialog({
+        title: "Privacy Blur Targets",
+        body: `<p class="rdpe-hint">Only The Targets You Select Are Obscured. Everything Else Is Left Untouched.</p>${chipList(
+          PRIVACY_TARGETS.map((t) => ({ ...t, on: privacyTargets.includes(t.id) })),
+        )}`,
+        confirmLabel: "Continue",
+      });
+      if (!root) return;
+      const picked = chipValues(root);
+      if (!picked.length) return void rdToast("Select At Least One Privacy Target.", "error");
+      privacyTargets = picked;
+      instruction = privacyInstruction(picked);
+    }
     aiBusy = op;
     paint();
     try {
@@ -1060,6 +1297,7 @@ export async function openPhotoEditor(opts: {
           image,
           room: cur().room || "Living Room",
           direction: "Warm Minimal",
+          ...(instruction ? { instruction } : {}),
         },
       });
       aiPreview = { op, label: meta.label, image: res.image };
@@ -1107,6 +1345,17 @@ export async function openPhotoEditor(opts: {
           crop: s.crop,
           rotation: s.rotation,
           flip_h: s.flipH,
+          geometry: {
+            straighten: s.straighten || 0,
+            vertical: s.vertical || 0,
+            horizontal: s.horizontal || 0,
+            flip_v: !!s.flipV,
+          },
+          modification_class: classifyEdits({
+            aiOps: s.aiOps,
+            hasAdjustments:
+              Object.values(s.adj || {}).some((v) => Number(v) !== 0) || !!s.crop || !!s.rotation,
+          }),
           ai_ops: s.aiOps,
           edited_path: path,
           label: p.room || p.name || null,
@@ -1145,23 +1394,123 @@ export async function openPhotoEditor(opts: {
 
   async function download(preview = false) {
     const s0 = st();
-    if (!preview && s0.dirty) {
-      const ok = await confirmDialog({
-        title: "Download Preview?",
-        body: "This Photo Has Unsaved Edits. Downloading The Preview Does Not Save Them To Your Library.",
-        confirmLabel: "Download Preview",
-      });
-      if (!ok) return;
-    }
+    const p = cur();
+    const cls = classifyEdits({
+      aiOps: s0.aiOps,
+      hasAdjustments: Object.values(s0.adj || {}).some((v) => Number(v) !== 0) || !!s0.crop,
+    });
+    const cropArea = s0.crop ? Math.max(0, s0.crop.w) * Math.max(0, s0.crop.h) : null;
+    const review = qualityReview({ stats, adj: s0.adj, cropArea });
+    const root = await formDialog({
+      title: "Download Photo",
+      body: `
+        <p class="rdpe-hint">This Downloads Exactly What Is On Screen Now${
+          s0.dirty ? ", Including Unsaved Edits" : ""
+        }.</p>
+        <label class="rdpe-dlg-l">Export Preset</label>
+        <select class="rdpe-dlg-s" data-x="preset">${EXPORT_PRESETS.map(
+          (e) => `<option value="${e.id}">${esc(e.label)} — ${esc(e.note)}</option>`,
+        ).join("")}</select>
+        <label class="rdpe-dlg-l">Quality <span data-x="qv">90</span></label>
+        <input class="rdpe-dlg-r" type="range" min="60" max="100" value="90" data-x="quality" />
+        ${
+          disclosureText(cls)
+            ? `<label class="rdpe-dlg-c"><input type="checkbox" data-x="disclose" ${
+                cls === "Enhanced" ? "" : "checked"
+              } /> Add “${esc(disclosureText(cls))}” Disclosure Overlay</label>`
+            : ""
+        }
+        ${
+          review.length
+            ? `<ul class="rdpe-review">${review
+                .map((r) => `<li class="rdpe-review-${r.level}">${esc(r.message)}</li>`)
+                .join("")}</ul>`
+            : `<p class="rdpe-hint">Quality Review Found No Problems.</p>`
+        }`,
+      confirmLabel: "Download",
+      onInput: (w) => {
+        const q = w.querySelector('[data-x="quality"]') as HTMLInputElement | null;
+        const out = w.querySelector('[data-x="qv"]');
+        if (q && out) out.textContent = q.value;
+      },
+    });
+    if (!root) return;
+    const presetId = (root.querySelector('[data-x="preset"]') as HTMLSelectElement)?.value || "full";
+    const ex = exportPreset(presetId);
+    const q = Number((root.querySelector('[data-x="quality"]') as HTMLInputElement)?.value || 90) / 100;
+    const disclose = (root.querySelector('[data-x="disclose"]') as HTMLInputElement | null)?.checked;
     try {
-      const url = preview || s0.dirty ? await renderPhoto(s0) : s0.base || s0.original || (await renderPhoto(s0));
+      const url = await renderPhoto(s0, {
+        maxEdge: ex.maxEdge,
+        quality: q,
+        disclosure: disclose ? disclosureText(cls) : null,
+      });
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${(cur().room || cur().name || "photo").replace(/\s+/g, "-").toLowerCase()}.jpg`;
+      a.download = exportFileName(p.room || p.name || "photo", ex.id, null);
       a.click();
+      if (preview) rdToast("Preview Downloaded.");
     } catch (err: any) {
       rdToast(err?.message || "That Photo Could Not Be Downloaded.", "error");
     }
+  }
+
+  async function pasteAdjustments() {
+    if (!clipboard) return;
+    const root = await formDialog({
+      title: "Paste Adjustments",
+      body: `<p class="rdpe-hint">Light, Colour And Detail Are Always Pasted. Choose What Else To Bring Over.</p>
+        <label class="rdpe-dlg-c"><input type="checkbox" data-x="geo" /> Rotation, Straighten And Perspective</label>
+        <label class="rdpe-dlg-c"><input type="checkbox" data-x="crop" /> Crop</label>`,
+      confirmLabel: "Paste",
+    });
+    if (!root) return;
+    applyBundle(
+      clipboard,
+      !!(root.querySelector('[data-x="geo"]') as HTMLInputElement)?.checked,
+      !!(root.querySelector('[data-x="crop"]') as HTMLInputElement)?.checked,
+    );
+    rdToast("Adjustments Pasted.");
+  }
+
+  async function savePresetFlow() {
+    const root = await formDialog({
+      title: "Save Preset",
+      body: `<label class="rdpe-dlg-l">Preset Name</label>
+        <input class="rdpe-dlg-i" data-x="name" maxlength="40" placeholder="Bright Interior" />`,
+      confirmLabel: "Save Preset",
+    });
+    if (!root) return;
+    const name = (root.querySelector('[data-x="name"]') as HTMLInputElement)?.value || "";
+    savePreset(name, bundleOf(st()));
+    paintPanel();
+    rdToast("Preset Saved.");
+  }
+
+  /** Batch editing: push the current adjustments onto other photographs. */
+  async function batchApply() {
+    const here = cur();
+    const others = photos.filter((x) => x.key !== here.key);
+    if (!others.length) return;
+    const root = await formDialog({
+      title: "Apply To Other Photos",
+      body: `<p class="rdpe-hint">Selected Photographs Receive The Current Light, Colour And Detail Settings. Nothing Is Saved Until You Save Each Photo.</p>${chipList(
+        others.map((x, i) => ({ id: x.key, label: x.room || x.name || `Photo ${i + 2}` })),
+      )}`,
+      confirmLabel: "Apply Adjustments",
+    });
+    if (!root) return;
+    const picked = chipValues(root);
+    if (!picked.length) return;
+    const bundle = bundleOf(st());
+    for (const key of picked) {
+      const target = states.get(key) || null;
+      if (!target) continue;
+      target.adj = { ...bundle.adj };
+      target.dirty = true;
+    }
+    paint();
+    rdToast(`Adjustments Applied To ${picked.length} Photo${picked.length === 1 ? "" : "s"}.`);
   }
 
   async function resetPhoto() {
@@ -1271,6 +1620,20 @@ export async function openPhotoEditor(opts: {
     if (cont) return void continueWith(cont.getAttribute("data-continue") as string);
     const ai = t.closest("[data-ai]");
     if (ai) return void runAi(ai.getAttribute("data-ai") as string);
+    const pdel = t.closest("[data-preset-del]");
+    if (pdel) {
+      removePreset(pdel.getAttribute("data-preset-del") as string);
+      return paintPanel();
+    }
+    const pset = t.closest("[data-preset]");
+    if (pset) {
+      const found = listPresets().find((r) => r.id === pset.getAttribute("data-preset"));
+      if (found) {
+        applyBundle(found.bundle, false, false);
+        rdToast(`Preset “${found.name}” Applied.`);
+      }
+      return;
+    }
     const act = t.closest("[data-act]")?.getAttribute("data-act");
     if (!act) return;
     const s = st();
@@ -1297,6 +1660,15 @@ export async function openPhotoEditor(opts: {
     if (act === "autoapply") return void runAutoEnhance(true);
     if (act === "autoundo") return undoAuto();
     if (act === "resetgeo") return resetGeometry();
+    if (act === "retrysave") return void save(false);
+    if (act === "copyadj") {
+      clipboard = bundleOf(s);
+      paintPanel();
+      return void rdToast("Adjustments Copied.");
+    }
+    if (act === "pasteadj") return void pasteAdjustments();
+    if (act === "savepreset") return void savePresetFlow();
+    if (act === "batch") return void batchApply();
     if (act === "rotl" || act === "rotr") {
       push();
       s.rotation = (((s.rotation + (act === "rotr" ? 90 : -90)) % 360) + 360) % 360;
@@ -1498,6 +1870,11 @@ export async function openPhotoEditor(opts: {
         s.crop = row.crop || null;
         s.rotation = n(row.rotation, 0);
         s.flipH = !!row.flip_h;
+        const g = row.geometry || {};
+        s.straighten = n(g.straighten, 0);
+        s.vertical = n(g.vertical, 0);
+        s.horizontal = n(g.horizontal, 0);
+        s.flipV = !!g.flip_v;
         s.aiOps = row.ai_ops || [];
         if (row.edited_path && row.ai_ops?.length) {
           const url = await roomPhotoUrl(row.edited_path, 3600);
