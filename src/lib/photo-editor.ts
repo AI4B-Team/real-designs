@@ -1009,10 +1009,13 @@ export async function openPhotoEditor(opts: {
         askLabel: async (suggestion) => {
           const out = await formDialog({
             title: "Add Label",
-            fields: [{ key: "text", label: "Label Text", value: suggestion, placeholder: "Parking" }],
+            body: `<div class="rdpe-row"><label>Label Text</label>
+              <input type="text" class="rdpe-text" id="rdpeMkLabel" value="${esc(suggestion)}" placeholder="Parking" aria-label="Label Text"></div>`,
             confirmLabel: "Add Label",
           });
-          return out ? String(out['text'] || suggestion) : null;
+          if (!out) return null;
+          const field = out.querySelector("#rdpeMkLabel") as HTMLInputElement | null;
+          return (field?.value || suggestion).trim() || suggestion;
         },
       });
     }
