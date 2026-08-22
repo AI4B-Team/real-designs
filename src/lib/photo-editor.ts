@@ -605,8 +605,7 @@ export async function openPhotoEditor(opts: {
           ? "Previewing. Apply To Keep It."
           : "";
     return `<div class="rdpe-autocard">
-      <div class="rdpe-autohead"><i data-lucide="wand-sparkles"></i>
-        <span><b>Auto Enhance</b><em>Automatically balance lighting, color, and detail.</em></span></div>
+      <p class="rdpe-note">Automatically balance lighting, color, and detail.</p>
       <div class="rdpe-ratios" role="group" aria-label="Auto Enhance Strength">${chips}</div>
       ${status ? `<p class="rdpe-note rdpe-autostate">${status}</p>` : ""}
       <div class="rdpe-autobtns">
