@@ -757,6 +757,191 @@ export async function openPhotoEditor(opts: {
   }
   const OPEN = new Set<string>(defaultOpenSections());
 
+  /* ------------------------------------------------- analysis & histogram */
+
+  /** Downsample the given image (optionally through a filter) and measure it. */
+  async function measure(src: string, adj: Adj | null): Promise<PhotoStats | null> {
+    try {
+      const img = await loadImage(src);
+      const w = 180;
+      const h = Math.max(1, Math.round((img.naturalHeight / img.naturalWidth) * w)) || 120;
+      const cv = document.createElement("canvas");
+      cv.width = w;
+      cv.height = h;
+      const c = cv.getContext("2d", { willReadFrequently: true });
+      if (!c) return null;
+      if (adj) (c as any).filter = filterString(adj);
+      c.drawImage(img, 0, 0, w, h);
+      return analyzeImageData(c.getImageData(0, 0, w, h).data);
+    } catch {
+      return null;
+    }
+  }
+
+  /** Measure the untouched image once per source: keeps Auto Enhance idempotent. */
+  async function baseStats(): Promise<PhotoStats | null> {
+    const s = st();
+    const src = s.base || s.original;
+    if (!src) return null;
+    if (sourceStats?.src === src) return sourceStats.stats;
+    const measured = await measure(src, null);
+    if (measured) sourceStats = { src, stats: measured };
+    return measured;
+  }
+
+  function drawHistogram() {
+    const cv = host.querySelector("#rdpeHistCanvas") as HTMLCanvasElement | null;
+    if (!cv || !stats) return;
+    const c = cv.getContext("2d");
+    if (!c) return;
+    c.clearRect(0, 0, cv.width, cv.height);
+    c.fillStyle = "#ececed";
+    c.fillRect(0, 0, cv.width, cv.height);
+    c.fillStyle = "#4a4b52";
+    stats.histogram.forEach((v, i) => {
+      const bh = Math.round(Math.sqrt(v) * cv.height);
+      c.fillRect(i, cv.height - bh, 1, bh);
+    });
+    if (stats.clippedShadows > 0.02) {
+      c.fillStyle = "rgba(204,0,0,.35)";
+      c.fillRect(0, 0, 4, cv.height);
+    }
+    if (stats.clippedHighlights > 0.02) {
+      c.fillStyle = "rgba(204,0,0,.35)";
+      c.fillRect(cv.width - 4, 0, 4, cv.height);
+    }
+  }
+
+  let statsTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Recompute the histogram from what is actually on screen. Never edits. */
+  function refreshStats(immediate = false) {
+    if (statsTimer) clearTimeout(statsTimer);
+    const run = async () => {
+      const s = st();
+      const src = (aiPreview?.image || s.base || s.original) as string | null;
+      if (!src) return;
+      stats = await measure(src, s.adj);
+      const warn = clippingWarning(stats);
+      const box = host.querySelector(".rdpe-histb");
+      const line = box?.querySelector(".rdpe-clip");
+      if (box) {
+        if (warn && !line) {
+          const p = document.createElement("p");
+          p.className = "rdpe-clip";
+          p.textContent = warn;
+          box.appendChild(p);
+        } else if (warn && line) line.textContent = warn;
+        else line?.remove();
+      }
+      drawHistogram();
+    };
+    if (immediate) void run();
+    else statsTimer = setTimeout(run, 180);
+  }
+
+  /* ----------------------------------------------------------- auto enhance */
+
+  /** Compute the correction for the current photo at the current strength. */
+  async function computeAuto(): Promise<Adj | null> {
+    autoBusy = true;
+    paintPanel();
+    try {
+      const measured = await baseStats();
+      if (!measured) return null;
+      return autoEnhanceAdjustments(measured, autoStrength);
+    } finally {
+      autoBusy = false;
+    }
+  }
+
+  /**
+   * Auto Enhance is layered on the adjustments the user made themselves, so
+   * running it twice (or at another strength) replaces its own contribution
+   * instead of stacking on top of it.
+   */
+  function layerAuto(values: Adj) {
+    const s = st();
+    const base = s.autoBase ?? { ...s.adj };
+    s.autoBase = base;
+    s.adj = { ...base };
+    for (const [k, v] of Object.entries(values)) {
+      s.adj[k] = Math.round(clampAdj(k, n(base[k], 0) + v) * 10) / 10;
+    }
+  }
+
+  function clampAdj(key: string, v: number): number {
+    const def = ADJUSTMENTS.find((a) => a.key === key);
+    return Math.max(def?.min ?? -100, Math.min(def?.max ?? 100, v));
+  }
+
+  async function runAutoEnhance(apply: boolean) {
+    const values = await computeAuto();
+    if (!values) {
+      rdToast("That Photo Could Not Be Analyzed.", "error");
+      return paintPanel();
+    }
+    const s = st();
+    if (apply) {
+      push();
+      layerAuto(values);
+      s.auto = { strength: autoStrength, values };
+      autoPreview = false;
+      rdToast("Auto Enhance Applied.");
+    } else {
+      /* Preview leaves the saved state alone: nothing is pushed to history. */
+      const before = { ...s.adj };
+      layerAuto(values);
+      autoPreview = true;
+      const preview = { ...s.adj };
+      s.adj = before;
+      s.autoBase = s.auto ? s.autoBase : null;
+      previewAdj = preview;
+      applyPreviewFilter();
+      paintPanel();
+      refreshStats();
+      return;
+    }
+    previewAdj = null;
+    paint();
+    refreshStats();
+  }
+
+  /** A preview overlays the filter only — the stored adjustments never move. */
+  let previewAdj: Adj | null = null;
+  function applyPreviewFilter() {
+    const img = $("#rdpeImg") as HTMLImageElement;
+    if (img && previewAdj) img.style.filter = filterString(previewAdj);
+  }
+
+  function undoAuto() {
+    const s = st();
+    if (!s.auto) return;
+    push();
+    s.adj = { ...(s.autoBase || {}) };
+    s.auto = null;
+    s.autoBase = null;
+    autoPreview = false;
+    previewAdj = null;
+    paint();
+    refreshStats();
+  }
+
+  function resetGeometry() {
+    const s = st();
+    push();
+    s.crop = null;
+    s.rotation = 0;
+    s.straighten = 0;
+    s.vertical = 0;
+    s.horizontal = 0;
+    s.flipH = false;
+    s.flipV = false;
+    cropMode = false;
+    paint();
+    paintCropBox();
+  }
+
+
   /* ---------------------------------------------------------------- crop */
 
   function setRatio(id: string) {
