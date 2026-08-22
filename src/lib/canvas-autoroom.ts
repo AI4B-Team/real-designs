@@ -95,8 +95,10 @@ export async function detectRoomFromSource() {
   if (manual || running) return;
   const sel = roomSelect();
   if (!sel) return;
-  /* Anything already known — carried over or previously detected — wins. */
-  if ((sel.value || "").trim()) return;
+  /* Anything already known — carried over or previously detected — wins,
+     except a soft space default (e.g. Front Exterior) which detection may
+     replace with the room it actually sees in the photo. */
+  if ((sel.value || "").trim() && !isDefaultPick()) return;
   const img = sourceImage();
   const src = img?.currentSrc || img?.src || "";
   if (!src || src === lastSrc) return;
