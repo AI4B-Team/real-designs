@@ -1165,17 +1165,21 @@ function cardHtml(it, seq) {
       ${it.state === "generating" ? '<span class="rds-run"><i data-lucide="loader"></i>Generating</span>' : ""}
       ${override ? `<span class="rv-tile-fmt" title="Custom format: ${esc(ratioLabel(override))}"><i data-lucide="crop"></i>${esc(ratioLabel(override))}</span>` : ""}
       ${imageToolbarHtml(
-        [
-          { label: "Edit Photo", icon: "sliders-horizontal", attrs: { "data-editphoto": it.key } },
-          { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
-          { label: "Replace", icon: "image-plus", attrs: { "data-replace": it.key } },
-          { label: "Remove", icon: "trash-2", attrs: { "data-del": it.key } },
-          it.state === "failed"
-            ? { label: "Retry", icon: "rotate-ccw", attrs: { "data-retry": it.key } }
-            : null,
-        ],
+        failed
+          ? []
+          : [
+              /* The primary per-photo action: open this exact photo in the room
+                 Canvas, where every design tool lives. The wand means "design"
+                 everywhere in the product and is never reused for editing. */
+              { label: "Open Canvas", icon: "wand-sparkles", hot: true, attrs: { "data-canvas": it.key } },
+              { label: "Edit Photo", icon: "sliders-horizontal", attrs: { "data-editphoto": it.key } },
+              { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
+              { label: "Replace Photo", icon: "image-plus", attrs: { "data-replace": it.key } },
+              { label: "Remove Photo", icon: "trash-2", attrs: { "data-del": it.key } },
+            ],
         { label: "Photo Actions" },
       )}
+
     </div>
 
     <div class="rv-tile-foot">
