@@ -475,7 +475,9 @@ export async function openPhotoEditor(opts: {
     if (stage) {
       const preview = aiPreview && !comparing ? aiPreview.image : null;
       if (preview && stage.getAttribute("src") !== preview) stage.setAttribute("src", preview);
-      stage.style.filter = comparing ? "none" : filterString(s.adj);
+      /* An Auto Enhance preview is a filter overlay only: the stored
+         adjustments stay exactly where the user left them. */
+      stage.style.filter = comparing ? "none" : filterString(previewAdj || s.adj);
       stage.style.transform = comparing ? "none" : transformString(s);
     }
 
