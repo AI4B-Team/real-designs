@@ -37,7 +37,7 @@ function roomSelect(): HTMLSelectElement | null {
 function isDefaultPick(): boolean {
   const v = (roomSelect()?.value || "").trim();
   if (!v) return false;
-  return v === defaultRoomForSpace(roomSpace(v));
+  return v === defaultRoomForSpace(normalizeSpace(roomSpace(v)));
 }
 
 function sourceImage(): HTMLImageElement | null {
