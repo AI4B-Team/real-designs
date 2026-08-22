@@ -32,6 +32,17 @@ const SaveInput = z.object({
   crop: Crop,
   rotation: z.number().int().default(0),
   flip_h: z.boolean().default(false),
+  /* Full non-destructive geometry: straighten, keystone and both flips. */
+  geometry: z
+    .object({
+      straighten: z.number().default(0),
+      vertical: z.number().default(0),
+      horizontal: z.number().default(0),
+      flip_v: z.boolean().default(false),
+    })
+    .default({ straighten: 0, vertical: 0, horizontal: 0, flip_v: false }),
+  /* Disclosure classification written alongside the saved pixels. */
+  modification_class: z.string().max(40).nullable().optional(),
   ai_ops: z.array(z.string().max(60)).max(30).default([]),
   edited_path: z.string().max(400).nullable().optional(),
   label: z.string().max(200).nullable().optional(),
@@ -82,6 +93,8 @@ export const savePhotoEdit = createServerFn({ method: "POST" })
       crop: data.crop ?? null,
       rotation: data.rotation,
       flip_h: data.flip_h,
+      geometry: data.geometry,
+      modification_class: data.modification_class ?? null,
       ai_ops: data.ai_ops,
       edited_path: data.edited_path ?? null,
       label: data.label ?? null,
