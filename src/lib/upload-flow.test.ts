@@ -226,7 +226,8 @@ describe("photo staging: add photos -> review rooms", () => {
     await openStaging();
     await pick([jpeg("only.jpg")]);
     expect(stagingHost().textContent).toContain("Prepare Your Photos");
-    expect(stagingHost().querySelector("#rdsMore")).toBeTruthy();
+    /* The add-more affordance is the permanent card at the end of the grid. */
+    expect(stagingHost().querySelector("#rdsAddCard")).toBeTruthy();
     expect(stagingHost().querySelectorAll(".rv-tile")).toHaveLength(1);
   });
 

@@ -248,6 +248,7 @@ import {
 } from "@/content/rd-reveal";
 import { openPropertyUpload, mountUploadDock } from "@/content/rd-propmedia";
 import { mountSourcePicker } from "@/lib/source-picker";
+import { runModule, reportModuleFailure } from "@/lib/module-guard";
 import { mountMediaLibrary } from "@/content/rd-media-lib";
 import { mountCrm } from "@/content/rd-crm";
 import * as RDMediaLib from "@/lib/media-library";
@@ -274,6 +275,14 @@ export function initApp(): () => void {
   const root = document.querySelector(".rd-app") as HTMLElement | null;
   if (root && root.dataset["rdInit"] === "1") return () => {};
   if (root) root.dataset["rdInit"] = "1";
+  /* Studio can be painted while initApp is still executing its body (a boot
+     route of #v-studio calls go() long before the bottom of this function is
+     reached). Anything Studio touches on that path must therefore be declared
+     here, at the top, rather than further down where a `let` would still be in
+     its temporal dead zone and throw a ReferenceError that blanked the view. */
+  let STUDIO_CTX: any = null;
+  /* False until the property tree has actually been read once. */
+  let WORKSPACE_LOADED = false;
   try {
     initCanvasInspector();
     initCanvasWorkspace();
@@ -2058,8 +2067,13 @@ export function initApp(): () => void {
       if (!document.getElementById("tree")) return;
       try {
         PROP_TREE = await getPropertyTree();
+        WORKSPACE_LOADED = true;
       } catch (e) {
+        /* A failed read is not "this workspace is empty": keep navigation intact
+           and report the failure instead of silently degrading the sidebar. */
         PROP_TREE = [];
+        WORKSPACE_LOADED = false;
+        reportModuleFailure("Workspace load", e);
       }
       if (SEL.p >= PROP_TREE.length) SEL = { p: 0, pr: 0 };
       const cp = document.getElementById("cntProps"),
@@ -2078,18 +2092,13 @@ export function initApp(): () => void {
         if (c) c.hidden = !(Number(c.textContent) > 0);
       });
 
-      paintTree();
-      paintDesigns();
-      updateSearchMeta();
-      try {
-        paintBatch();
-      } catch (_) {}
-      try {
-        progressiveNav();
-      } catch (_) {}
-      try {
-        paintHome();
-      } catch (_) {}
+      /* Each painter is independent: one broken module must never stop the
+         rest of the workspace from mounting, and every failure is reported. */
+      runModule("Property tree", () => paintTree());
+      runModule("Designs", () => paintDesigns());
+      runModule("Search metadata", () => updateSearchMeta());
+      runModule("Batch", () => paintBatch());
+      runModule("Sidebar navigation", () => progressiveNav());
     }
     loadProperties();
     window.addEventListener("rd:saved", loadProperties);
@@ -2253,7 +2262,9 @@ export function initApp(): () => void {
           return;
         }
         if (!(v in rule)) return;
-        const show = rule[v] || b.classList.contains("on");
+        /* Until the workspace has actually been read, show everything. A failed
+           or pending request must never look like a missing feature. */
+        const show = !WORKSPACE_LOADED || rule[v] || b.classList.contains("on");
         b.hidden = !show;
       });
       /* Counts are live workspace information, never a zero-state badge. */
@@ -2539,9 +2550,52 @@ export function initApp(): () => void {
             }),
         });
       } catch (e) {
+        /* A failed mount must never leave a blank white workspace: report the
+           real exception and paint a recovery card the user can act on. */
         STUDIO_START = null;
+        const failure = reportModuleFailure("Studio start", e);
+        renderStudioRecovery(failure.id, e);
       }
       return STUDIO_START;
+    }
+    /**
+     * Visible, actionable failure state for Studio. Blank white content is never
+     * an acceptable outcome: the user gets an explanation, a diagnostic id and a
+     * way back into the product.
+     */
+    function renderStudioRecovery(id, err) {
+      const view = document.getElementById("v-studio");
+      if (!view) return;
+      view.querySelector(".st-recover")?.remove();
+      const box = document.createElement("div");
+      box.className = "st-recover";
+      const detail = err && err.message ? String(err.message) : "Unknown error";
+      box.innerHTML = `
+        <h3>Studio Could Not Start</h3>
+        <p>Something in this workspace failed to load. Your work is safe.<br>
+        <code>${esc(id)} \u00b7 ${esc(detail)}</code></p>
+        <div class="st-recover-acts">
+          <button class="btn primary" data-st-recover="retry">Try Again</button>
+          <button class="btn" data-st-recover="dash">Go To Dashboard</button>
+        </div>`;
+      box.addEventListener("click", (e) => {
+        const t = (e.target as HTMLElement).closest("[data-st-recover]") as HTMLElement | null;
+        if (!t) return;
+        if (t.dataset["stRecover"] === "dash") {
+          location.hash = "#v-dash";
+          box.remove();
+          return;
+        }
+        box.remove();
+        STUDIO_START = null;
+        studioStart();
+        try {
+          paintStudioState();
+        } catch (_) {
+          /* paintStudioState reports through runModule below on the next pass. */
+        }
+      });
+      view.appendChild(box);
     }
     /* The source chooser belongs to a generic Studio session only. */
     window.rdStudioStart = (method) => {
@@ -3790,7 +3844,8 @@ export function initApp(): () => void {
         sourcePath: null,
       };
     }
-    let STUDIO_CTX = blankStudioCtx();
+    /* Declared at the top of initApp; only reset here if nothing has claimed it. */
+    if (!STUDIO_CTX) STUDIO_CTX = blankStudioCtx();
 
     /* Renders produced in this session appear in Version History right away,
        before any save round-trip completes. */
@@ -6365,11 +6420,14 @@ ${picks
       setTimeout(() => row.classList.remove("rd-flash"), 2400);
     }
 
-    const esc = (s) =>
-      String(s == null ? "" : s).replace(
+    /* A function declaration, not a const: Studio renders while initApp is still
+       running, so this has to be callable before this line is reached. */
+    function esc(s) {
+      return String(s == null ? "" : s).replace(
         /[&<>"]/g,
         (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
       );
+    }
     const presMoney = (n) => "$" + Math.round(n || 0).toLocaleString("en-US");
 
     /* ---------- reports ---------- */
