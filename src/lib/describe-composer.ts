@@ -512,8 +512,9 @@ export function createDescribeComposer(cfg: Cfg) {
   function footMessage(): string {
     const gap = missing();
     if (gap) return state.touched ? gap : "";
-    return summary();
+    return isVideo() ? summary() : DS.compactSummary(settingsState());
   }
+
 
   const ready = () => !missing() && !state.busy;
 
