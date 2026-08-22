@@ -11,6 +11,7 @@
  */
 
 import { renderConcept } from "@/lib/concept-render.functions";
+import { confirmDialog } from "@/lib/builder-card-menu";
 import { improveDescription } from "@/lib/prompt-improve.functions";
 
 import {
@@ -233,8 +234,6 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     method: "upload" as Method,
     /** Which door the user opened on the start screen: "" (none yet) or "design". */
     door: "design" as "" | "design" | "video",
-    /** Project cards stay expanded only until a choice has been made. */
-    doorOpen: false,
     /** Chosen file, not uploaded yet. */
     file: null as File | null,
     fileName: "",
@@ -1181,6 +1180,32 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     video: "Create A Video",
   };
 
+  /** Human-readable list of inputs the other project type cannot reuse. */
+  function pendingWork(): string[] {
+    const out: string[] = [];
+    if (state.file || state.filePreview) out.push("the photo you added");
+    if (String(state.prompt || "").trim()) out.push("your description");
+    if (state.refs.length) out.push("your reference images");
+    if (state.inspiration) out.push("your inspiration image");
+    if (String(state.notes || "").trim()) out.push("your notes");
+    return out;
+  }
+
+  /** Drops only the inputs that cannot cross project types. */
+  function clearIncompatibleWork() {
+    state.file = null;
+    state.fileName = "";
+    state.filePreview = "";
+    state.detected = null;
+    state.detecting = false;
+    state.prompt = "";
+    state.refs = [];
+    state.inspiration = null;
+    state.notes = "";
+    state.flags = [];
+    state.flagsDismissed = false;
+  }
+
   /** The two project cards. They always stay full size and side by side: the
       selected one only changes color, border and checkmark, so choosing a
       project type never moves anything below it. */
@@ -1819,7 +1844,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         cancelLabel: "Cancel",
         confirmLabel: "Switch Project Type",
         danger: true,
-      }).then((ok) => {
+      }).then((ok: unknown) => {
         if (ok) apply();
       });
       return;
