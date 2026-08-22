@@ -280,7 +280,7 @@ export function initApp(): () => void {
      reached). Anything Studio touches on that path must therefore be declared
      here, at the top, rather than further down where a `let` would still be in
      its temporal dead zone and throw a ReferenceError that blanked the view. */
-  let STUDIO_CTX: any = blankStudioCtx();
+  let STUDIO_CTX: any = null;
   /* False until the property tree has actually been read once. */
   let WORKSPACE_LOADED = false;
   try {
