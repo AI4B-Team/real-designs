@@ -226,6 +226,7 @@ export async function openPhotoEditor(opts: {
   photos: EditorPhoto[];
   startKey?: string;
   property?: string;
+  editorMode?: EditorMode;
   onSaved?: (r: { key: string; path: string; dataUrl: string; copy: boolean }) => void;
 }): Promise<void> {
   const photos = (opts.photos || []).filter((p) => p && p.key);
@@ -319,16 +320,24 @@ export async function openPhotoEditor(opts: {
 
   /* --------------------------------------------------------------- source */
 
+  /** Which context this photograph is being edited in. */
+  function modeFor(p: EditorPhoto): EditorMode {
+    return (p.editorMode || opts.editorMode || (p.assetType === "generated_image" ? "generated" : "source")) as EditorMode;
+  }
+
   async function ensureSource(p: EditorPhoto) {
     const s = st(p.key);
     if (s.original) return;
-    const src = p.src || (p.path ? await roomPhotoUrl(p.path, 3600) : null);
+    const src =
+      p.src || ((p.path || p.storagePath) ? await roomPhotoUrl((p.path || p.storagePath) as string, 3600) : null);
     if (!src) {
       rdToast("That Photo Could Not Be Opened.", "error");
       return;
     }
     s.original = src;
     if (!s.base) s.base = src;
+    /* Hold To Compare is always "editor original vs current edit". */
+    if (!s.entry) s.entry = s.base;
     paint();
   }
 
@@ -576,8 +585,18 @@ export async function openPhotoEditor(opts: {
 
   async function runAi(op: string) {
     if (aiBusy) return;
-    const meta = AI_OPS.find((o) => o.op === op);
+    const meta = enhancementByOp(op);
     if (!meta) return;
+    /* Nothing that spends a credit or rewrites the scene runs from one click. */
+    const ok = await confirmDialog({
+      title: meta.requiresTarget ? `Confirm ${meta.label}` : `Run ${meta.label}?`,
+      body: meta.requiresTarget
+        ? `${meta.label} Works On The Area Currently In View. Confirm The Target Before It Runs. Your Current Image Is Kept If Anything Fails.`
+        : `${meta.label} Runs On The Server And Returns A Preview You Can Apply Or Discard.`,
+      notes: [`Cost: ${meta.credits} Credit${meta.credits === 1 ? "" : "s"}.`],
+      confirmLabel: `Use ${meta.credits} Credit${meta.credits === 1 ? "" : "s"}`,
+    });
+    if (!ok) return;
     aiBusy = op;
     paint();
     try {
@@ -652,9 +671,18 @@ export async function openPhotoEditor(opts: {
     }
   }
 
-  async function download() {
+  async function download(preview = false) {
+    const s0 = st();
+    if (!preview && s0.dirty) {
+      const ok = await confirmDialog({
+        title: "Download Preview?",
+        body: "This Photo Has Unsaved Edits. Downloading The Preview Does Not Save Them To Your Library.",
+        confirmLabel: "Download Preview",
+      });
+      if (!ok) return;
+    }
     try {
-      const url = await renderPhoto(st());
+      const url = preview || s0.dirty ? await renderPhoto(s0) : s0.base || s0.original || (await renderPhoto(s0));
       const a = document.createElement("a");
       a.href = url;
       a.download = `${(cur().room || cur().name || "photo").replace(/\s+/g, "-").toLowerCase()}.jpg`;
@@ -675,7 +703,7 @@ export async function openPhotoEditor(opts: {
     const p = cur();
     const s = st();
     const original = s.original;
-    states.set(p.key, { ...blankState(), original, base: original });
+    states.set(p.key, { ...blankState(), original, base: s.entry || original, entry: s.entry || original });
     try {
       await resetPhotoEdit({ data: { asset_key: p.key } });
     } catch {
@@ -689,6 +717,7 @@ export async function openPhotoEditor(opts: {
 
   async function go(i: number) {
     if (i < 0 || i >= photos.length || i === index) return;
+    if ((await guardUnsaved("Moving To Another Photo")) === "stay") return;
     aiPreview = null;
     cropMode = false;
     index = i;
@@ -697,17 +726,22 @@ export async function openPhotoEditor(opts: {
     paintCropBox();
   }
 
-  async function close() {
-    const unsaved = [...states.values()].some((s) => s.dirty);
-    if (unsaved) {
-      const ok = await confirmDialog({
-        title: "Leave Without Saving?",
-        body: "Some Photos Have Unsaved Changes. Closing The Editor Discards Them.",
-        confirmLabel: "Discard Changes",
-        danger: true,
-      });
-      if (!ok) return;
+  /** In-app three-way guard. Never the browser's confirm dialog. */
+  async function guardUnsaved(reason: string): Promise<"stay" | "go"> {
+    const unsaved = [...states.values()].some((x) => x.dirty);
+    if (!unsaved) return "go";
+    const choice = await unsavedDialog(reason);
+    if (choice === "continue") return "stay";
+    if (choice === "save") {
+      await save(false);
+      return st().dirty ? "stay" : "go";
     }
+    for (const [, x] of states) x.dirty = false;
+    return "go";
+  }
+
+  async function close() {
+    if ((await guardUnsaved("Closing The Editor")) === "stay") return;
     closePhotoEditor();
   }
 
@@ -719,6 +753,12 @@ export async function openPhotoEditor(opts: {
     if (go1) return void go(Number(go1.getAttribute("data-go")));
     const ratio = t.closest("[data-ratio]");
     if (ratio) return setRatio(ratio.getAttribute("data-ratio") as string);
+    const rst = t.closest("[data-reset-adj]");
+    if (rst) {
+      push();
+      st().adj[rst.getAttribute("data-reset-adj") as string] = 0;
+      return paint();
+    }
     const ai = t.closest("[data-ai]");
     if (ai) return void runAi(ai.getAttribute("data-ai") as string);
     const act = t.closest("[data-act]")?.getAttribute("data-act");
@@ -729,7 +769,8 @@ export async function openPhotoEditor(opts: {
     if (act === "next") return void go(index + 1);
     if (act === "undo") return undo();
     if (act === "redo") return redo();
-    if (act === "download") return void download();
+    if (act === "download") return void download(false);
+    if (act === "downloadpreview") return void download(true);
     if (act === "save") return void save(false);
     if (act === "savecopy") return void save(true);
     if (act === "reset") return void resetPhoto();
@@ -806,6 +847,7 @@ export async function openPhotoEditor(opts: {
   // Hold To Compare: pointer hold on the button or on the photo, plus the \ key.
   const holdOn = () => {
     if (comparing) return;
+    if (!compareEnabled(hasEdits(st()) || !!aiPreview)) return;
     comparing = true;
     paint();
   };
@@ -818,6 +860,8 @@ export async function openPhotoEditor(opts: {
     el.addEventListener("pointerdown", holdOn);
     el.addEventListener("pointerup", holdOff);
     el.addEventListener("pointerleave", holdOff);
+    el.addEventListener("pointercancel", holdOff);
+    el.addEventListener("blur", holdOff);
   });
   $("#rdpeCropBox").addEventListener("pointerdown", (e) => dragCrop(e as PointerEvent));
 
