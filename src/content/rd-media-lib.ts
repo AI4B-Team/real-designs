@@ -23,6 +23,7 @@ import {
 import { assignMediaToProperty } from "@/lib/media-assign.functions";
 import { addressDisplay } from "@/lib/property-address";
 import { startVideoBuilder } from "@/lib/video-handoff";
+import { logVideoEvent } from "@/lib/video-upload-intake";
 import { setHandoff } from "@/lib/handoff";
 import { openStagingReview } from "@/content/rd-staging";
 import { openAddressModal } from "@/lib/address-modal";
@@ -317,7 +318,17 @@ export function openVideoWorkflow(seed: any = {}) {
   try {
     (window as any).__rdNewVideo && (window as any).__rdNewVideo();
     (window as any).__rdGo && (window as any).__rdGo("lvideo");
-  } catch (_) {}
+  } catch (err) {
+    logVideoEvent("video_handoff_open_failed", {
+      operation: "openVideoWorkflow",
+      origin: seed.from || "media",
+      handoffId: seed.handoff?.handoffId || null,
+      videoDraftId: seed.videoDraftId || null,
+      assetCount: (seed.assets || []).length,
+      message: String(err),
+    });
+    toast("Couldn't Open The Video Builder. Please Try Again.");
+  }
 }
 
 async function load(quiet) {

@@ -82,7 +82,11 @@ import {
   logVideoEvent,
 } from "@/lib/video-upload-intake";
 import { normalizeImageFile } from "@/lib/source-picker";
-import { normalizeVideoAssets, consumeVideoHandoff } from "@/lib/video-handoff";
+import {
+  normalizeVideoAssets,
+  peekVideoHandoff,
+  clearVideoHandoff,
+} from "@/lib/video-handoff";
 import {
   cardMenuButtonHtml,
   registerCardMenu,
@@ -3261,7 +3265,7 @@ function stepSelect() {
     <label class="rv-selall"><input type="checkbox" id="rvSelAll" ${all ? "checked" : ""}><b>${selectedCount} of ${totalCount} selected</b></label>
     <div class="rv-utility-m">${addressBarHtml(w, S.tree || [], "rvAddrBar")}</div>
     <div class="rv-utility-a">
-      <button class="btn btn-ghost btn-sm" id="rvAuto"><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
+      <button class="btn btn-ghost btn-sm" id="rvAuto" ${totalCount ? "" : "disabled"}><i data-lucide="wand-sparkles"></i>Auto Arrange</button>
       <details class="rv-more"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
         <div class="rv-more-m">
           <button id="rvRecommend">Select Recommended</button>
@@ -3276,10 +3280,14 @@ function stepSelect() {
   </div>
 
   <div class="rv-grid ${orient}">${grid}${totalCount ? addCardHtml("rvGridAdd") : ""}</div>
-  ${!totalCount && !organizing ? `<div class="rv-empty"><i data-lucide="images"></i><h3>No Photos In This Video Yet</h3><p>Add photos to begin building your scenes.</p><div class="rv-empty-a"><button class="btn btn-primary" id="rvEmptyAdd"><i data-lucide="plus"></i>Add Photos</button></div></div>` : ""}
+  ${!totalCount && !organizing ? emptyStateHtml(w) : ""}
   <div class="rv-gridfoot">
     <div class="rv-count">
-      <span>${w.scenes.length} ${w.scenes.length === 1 ? "scene" : "scenes"} · ${total} sec · ${creditTotal()} credits</span>
+      <span>${
+        w.scenes.length
+          ? `${w.scenes.length} ${w.scenes.length === 1 ? "scene" : "scenes"} · ${total} sec · ${creditTotal()} credits`
+          : "0 scenes"
+      }</span>
       ${imm > 4 ? `<div class="rv-note sm">Immersive movement is on for ${imm} scenes, ${imm * IMMERSIVE_CREDITS_PER_SCENE} extra credits.</div>` : ""}
     </div>
     <div class="rv-gridfoot-a">
@@ -3287,6 +3295,52 @@ function stepSelect() {
       <button class="btn btn-primary" id="rvNext" ${stepReady() ? "" : `disabled title="${esc(why)}"`}>Continue</button>
     </div>
   </div>`;
+}
+
+/**
+ * Two different nothings. A video started from Global Create is legitimately
+ * empty and gets the onboarding copy; a contextual Create Video that arrived
+ * with no usable photo is a failure and says so, with a way back.
+ */
+function emptyStateHtml(w: any) {
+  if (w.handoffFailed) {
+    const from = w.handoffFailed.origin || "the previous page";
+    return `<div class="rv-empty rv-empty-err"><i data-lucide="triangle-alert"></i>
+      <h3>We Couldn't Bring Over The Selected Photo</h3>
+      <p>Nothing was lost — the photos are still on ${esc(labelForOrigin(from))}.${
+        w.handoffFailed.diagnosticId
+          ? ` Reference ${esc(w.handoffFailed.diagnosticId)}.`
+          : ""
+      }</p>
+      <div class="rv-empty-a">
+        <button class="btn btn-primary" id="rvHandoffRetry"><i data-lucide="rotate-ccw"></i>Retry Handoff</button>
+        <button class="btn btn-ghost" id="rvHandoffBack"><i data-lucide="arrow-left"></i>Return To Source</button>
+        <button class="btn btn-ghost" id="rvEmptyAdd"><i data-lucide="plus"></i>Add Photos Manually</button>
+      </div></div>`;
+  }
+  return `<div class="rv-empty"><i data-lucide="images"></i>
+    <h3>Add Photos To Your Video</h3>
+    <p>Choose property photos, saved designs, or upload new photos.</p>
+    <div class="rv-empty-a">
+      <button class="btn btn-primary" id="rvEmptyAdd"><i data-lucide="plus"></i>Add Photos</button>
+      <button class="btn btn-ghost" id="rvEmptyProp"><i data-lucide="home"></i>Select Property</button>
+      <button class="btn btn-ghost" id="rvEmptyDesigns"><i data-lucide="wand-sparkles"></i>Select Designs</button>
+    </div></div>`;
+}
+
+function labelForOrigin(origin: string) {
+  const map: Record<string, string> = {
+    canvas: "Studio",
+    studio: "Studio",
+    media: "Media",
+    designs: "Designs",
+    property: "the property page",
+    "photo-design": "Photo Design",
+    explore: "Explore",
+    presentation: "the presentation",
+    batch: "the property page",
+  };
+  return map[origin] || "the previous page";
 }
 
 /* ---------- leaving and deleting a draft ----------
@@ -5958,6 +6012,19 @@ function bind() {
     on("#rvHeadAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
     on("#rvGridAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
     on("#rvEmptyAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
+    on("#rvEmptyProp", "click", () => openSourcePicker("property"));
+    on("#rvEmptyDesigns", "click", () => openSourcePicker("designs"));
+    on("#rvHandoffRetry", "click", () => retryHandoff());
+    on("#rvHandoffBack", "click", () => {
+      const origin = S.wizard?.handoffFailed?.origin;
+      const screen =
+        origin === "media" ? "media" : origin === "property" || origin === "batch" ? "properties" : "studio";
+      try {
+        (window as any).__rdGo?.(screen);
+      } catch (err) {
+        logVideoEvent("video_handoff_return_failed", { origin, message: String(err) });
+      }
+    });
     on("#rvNoticeAdd", "click", () => el.querySelector("#rvHeadFile")?.click());
     on("#rvHeadFile", "change", (e) => {
       const files = Array.from(e.currentTarget.files || []);
@@ -7848,6 +7915,71 @@ function renderTour(wrap, done, i = 0) {
 }
 
 /* ======================= PUBLIC API ======================= */
+const CONTEXTUAL_ORIGINS = new Set([
+  "canvas",
+  "media",
+  "designs",
+  "property",
+  "photo-design",
+  "explore",
+  "presentation",
+  "batch",
+]);
+
+/** Retire the handoff only after its photos are really on screen. */
+function settleHandoff(w: any, origin: string | null) {
+  if ((w.scenes || []).length || (w.available || []).length) {
+    w.handoffFailed = null;
+    clearVideoHandoff();
+    logVideoEvent("video_handoff_consumed", {
+      origin,
+      handoffId: w.handoffId,
+      videoDraftId: w.videoDraftId,
+      sceneCount: (w.scenes || []).length,
+      assetCount: (w.available || []).length,
+    });
+    return;
+  }
+  failHandoff(w, origin, null);
+}
+
+/** A contextual Create Video that arrived empty is an error, not a new project. */
+function failHandoff(w: any, origin: string | null, err: unknown) {
+  if (!origin || !CONTEXTUAL_ORIGINS.has(origin)) return;
+  const diagnosticId = (w.handoffId || "").slice(0, 8) || String(Date.now().toString(36));
+  w.handoffFailed = { origin, diagnosticId };
+  logVideoEvent("video_handoff_hydration_failed", {
+    operation: "startWizard",
+    origin,
+    handoffId: w.handoffId,
+    videoDraftId: w.videoDraftId,
+    assetCount: (w.available || []).length,
+    diagnosticId,
+    message: err ? String(err) : "no assets hydrated",
+  });
+}
+
+/** Re-run the same handoff; it was never discarded. */
+function retryHandoff() {
+  const w = S.wizard || {};
+  const stored = peekVideoHandoff();
+  if (!stored) {
+    toast("Those Photos Are No Longer Available. Return To The Source And Try Again.");
+    return;
+  }
+  startWizard({ handoff: stored, from: stored.origin, videoDraftId: stored.videoDraftId });
+  void w;
+}
+
+/** Open the shared photo source picker on a given tab. */
+function openSourcePicker(tab: string) {
+  const w = S.wizard;
+  if (!w) return;
+  w.sourceType = tab;
+  w.step = 1;
+  render();
+}
+
 export function startWizard(seed = {}) {
   revokeUploadUrls(S.wizard);
   /* A surface may publish the handoff and navigate without threading the
@@ -7860,7 +7992,9 @@ export function startWizard(seed = {}) {
     Array.from(s.files || []).length ||
     (Array.isArray(s.paths) && s.paths.length) ||
     (Array.isArray(s.designs) && s.designs.length);
-  const stored = hasInline ? null : consumeVideoHandoff();
+  /* Peek, never consume: the handoff is only retired once photos are on
+     screen, so a failed hydration stays retryable and a refresh recovers. */
+  const stored = hasInline ? null : peekVideoHandoff();
   const w = newWizard(stored ? { ...s, handoff: stored, from: s.from || stored.origin } : s);
   S.wizard = w;
   S.screen = "wizard";
@@ -7907,7 +8041,15 @@ export function startWizard(seed = {}) {
     (w.seedPhotos || []).length ||
     (w.seedDesigns || []).length
   ) {
-    loadWizardAssets().then(render);
+    loadWizardAssets()
+      .then(() => {
+        settleHandoff(w, seed.from || stored?.origin || null);
+        render();
+      })
+      .catch((err) => {
+        failHandoff(w, seed.from || stored?.origin || null, err);
+        render();
+      });
     render();
   } else {
     render();
