@@ -147,6 +147,33 @@ import {
   renderSketch,
   checkSketchDrift,
 } from "@/lib/sketch.functions";
+import {
+  buildAngleBrief,
+  angleCredits,
+  angleMeta,
+  summarizeConsistency,
+  failedResults,
+  restoreFromAngleMeta,
+  type AngleResult,
+} from "@/lib/angles-brief";
+import {
+  mountAnglesPanel,
+  setAnglesPanelVisible,
+  readAngleSettings,
+  readAngleResults,
+  setAngleContinuity,
+  setAngleReading,
+  angleContinuity,
+  setAngleSourceKind,
+  noteAngleSignal,
+  resetAngles,
+  loadAngleState,
+  openAngleBriefReview,
+  openAngleContactSheet,
+  showAngleQa,
+  setAngleResults,
+} from "@/lib/angles-controls";
+import { readAngleRoom, renderAngleSet, scoreAngleView } from "@/lib/angles.functions";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
