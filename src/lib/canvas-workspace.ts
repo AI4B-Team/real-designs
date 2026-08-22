@@ -151,6 +151,8 @@ function canvasBody(): HTMLElement | null {
 
 /** Nodes borrowed from the Canvas card while the editor owns the column. */
 let borrowed: HTMLElement[] = [];
+/** The Canvas overlay cluster (fit, zoom, full screen) while it is on loan. */
+let overlay: HTMLElement | null = null;
 
 /**
  * The Canvas is one stage in every tool. The editor column reproduces the card
