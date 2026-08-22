@@ -1370,6 +1370,144 @@ function render() {
   mountFloatingAdd(el);
 }
 
+/* ------------------------------------------------- design + review pages
+   The multi-photo workflow is Photos -> Design -> Review. Each one is a full
+   page inside the same builder shell, so choices persist, Back always works
+   and nothing is charged before the Review step. */
+
+/** The one design model for this project, restored from the draft. */
+function designModel() {
+  if (!S.design) S.design = normalizeDesignModel(S.bulkSettings);
+  return S.design;
+}
+
+/** The photos the design applies to: the current selection. */
+function designSelection() {
+  const sel = ordered().filter((i) => i.selected && i.status !== "uploading");
+  return sel.length ? sel : ordered().filter((i) => i.status !== "uploading");
+}
+
+function persistDesign() {
+  S.bulkSettings = designModel();
+  saveDraft();
+}
+
+/** Move between builder steps, keeping the rail, the draft and history in sync. */
+function goStep(step) {
+  S.step = step;
+  saveDraft();
+  render();
+}
+
+function designHeadHtml(title, sub) {
+  return `<div class="rv-head">
+      <div>
+        <h2>${title}</h2>
+        <p>${sub}</p>
+      </div>
+      <div class="rv-head-tools">
+        <details class="rv-more rv-headmore"><summary class="icon-btn sm" aria-label="More"><i data-lucide="ellipsis"></i></summary>
+          <div class="rv-more-m">
+            <button id="rdsClose">Save &amp; Exit</button>
+          </div>
+        </details>
+      </div>
+    </div>`;
+}
+
+function renderDesignFlow(el) {
+  const items = designSelection();
+  /* A room-type change can invalidate a style. Only the impossible choice is
+     dropped, and the user is told exactly what to pick again. */
+  const pruned = pruneIncompatible(designModel(), items);
+  S.design = pruned.model;
+  const review = S.step === "final";
+  const model = S.design;
+  const body = review
+    ? reviewStepHtml({
+        items,
+        model,
+        address: S.address || "",
+        ratioLabel: ratioLabel(S.outputRatio),
+        blockers: reviewBlockers({
+          items,
+          model,
+          balance: typeof S.creditBalance === "number" ? S.creditBalance : null,
+          uploading: S.items.some((i) => i.status === "uploading"),
+        }),
+      })
+    : designStepHtml({ items, model });
+
+  el.innerHTML = `<section class="rds-page">
+    ${designHeadHtml(
+      review ? "Review and Generate" : "Choose a Design Style",
+      review
+        ? "Confirm the photos, styles and credit cost before anything is generated."
+        : "Pick one style for everything, or a different style per space.",
+    )}
+    <div class="rv-layout rv-railed">
+      ${stepRailHtml(review ? "final" : "design")}
+      <div class="rv-wiz bx-work">
+        ${pruned.cleared.length ? `<div class="rdd-notice"><i data-lucide="alert-circle"></i><span>${pruned.cleared.join(" ")}</span></div>` : ""}
+        ${body}
+      </div>
+    </div>
+  </section>`;
+
+  paint();
+  el.querySelectorAll("#rdsClose").forEach((b) => (b.onclick = exitAll));
+  bindRail(el);
+  railForStep();
+  mountPhotoImages(el);
+
+  if (review) {
+    void loadCreditBalance();
+    bindReviewStep(el, {
+      onEditPhotos: () => goStep("review"),
+      onEditDesign: () => goStep("design"),
+      onGenerate: () => {
+        persistDesign();
+        goStep("review");
+        runBatch(items, toDirection(S.design, items, normalizeOutputRatio(S.outputRatio)));
+      },
+    });
+    return;
+  }
+
+  bindDesignStep(el, {
+    items,
+    model,
+    onChange: () => {
+      persistDesign();
+      render();
+    },
+    /* Typing must not re-render the page under the cursor. */
+    onNotes: () => persistDesign(),
+    onBack: () => goStep("review"),
+    onNext: () => {
+      persistDesign();
+      goStep("final");
+    },
+  });
+}
+
+/** The balance is only needed to explain a disabled Generate button. */
+async function loadCreditBalance() {
+  if (S.creditLoading) return;
+  S.creditLoading = true;
+  try {
+    const c = await getMyCredits();
+    const next = c && typeof c.balance === "number" ? c.balance : null;
+    if (S && next !== S.creditBalance) {
+      S.creditBalance = next;
+      if (S.step === "final") render();
+    }
+  } catch (_) {
+  } finally {
+    if (S) S.creditLoading = false;
+  }
+}
+
 /* Every rail step is a real destination: nothing in the rail is decorative. */
 function bindRail(el) {
   el.querySelectorAll("[data-step]").forEach((b) =>
@@ -1377,18 +1515,21 @@ function bindRail(el) {
       const k = b.getAttribute("data-step");
       if (k === S.step && k !== "design") return;
       if (k === "design") {
-        /* The Design step is the bulk direction interface for the current
-           selection, not the single-photo canvas. */
-        const sel = ordered().filter((i) => i.selected);
-        startBulkDesign(sel.length ? sel : designSet());
+        /* Design is a page, not a modal, and it is only reachable once every
+           selected photo is uploaded and has a room type. */
+        if (!canEnterDesign(S.items)) {
+          startDesigning();
+          return;
+        }
+        goStep("design");
         return;
       }
       if (k === "final") {
-        /* Finished designs live in Media, where they can be shared and reused. */
-        saveDraft();
-        try {
-          window.__rdGo && window.__rdGo("media");
-        } catch (_) {}
+        if (!canEnterReview(S.items, designModel())) {
+          cmToast("Choose a design style for every space first.");
+          return;
+        }
+        goStep("final");
         return;
       }
       S.step = k;
@@ -2075,25 +2216,10 @@ function startBulkDesign(list, reuseDirection) {
     runBatch(items, S.direction);
     return;
   }
-  openBulkDesign({
-    items,
-    /* Read live, so the confirmation summary always shows what will render. */
-    ratio: () => normalizeOutputRatio(S.outputRatio),
-    /* Only what the user chose in this project, never a demo default. */
-    settings: S.bulkSettings || null,
-    onSettingsChange: (s) => {
-      S.bulkSettings = s;
-    },
-    onEdit: () => {
-      S.step = "review";
-      render();
-    },
-    /* Inline three-option format control inside the modal — no stacked modal. */
-    onRatioChange: (id) => {
-      void setProjectRatio(id);
-    },
-    onStart: (batch, direction) => runBatch(batch, direction),
-  });
+  /* Setting a style is a step, never a modal: go to the Design page with the
+     current selection. */
+  items.forEach((i) => (i.selected = true));
+  goStep("design");
 }
 
 function applyRoomToSelected(anchor) {
