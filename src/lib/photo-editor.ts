@@ -1929,8 +1929,21 @@ export async function openPhotoEditor(opts: {
   };
   window.addEventListener("keydown", onKey);
   window.addEventListener("keyup", onKeyUp);
-  const onResize = () => paintCropBox();
+  /* The frame is recomputed whenever the viewport can have changed: window
+     resize, browser zoom, or the inspector changing the stage's width. */
+  const onResize = () => {
+    if (cropMode && cropView) {
+      const base = baseBox();
+      const view = viewBox();
+      cropView = refit(cropView, cropView.ratio === "free" ? 0 : ratioAspect(cropView.ratio, base), base, view);
+      syncCrop(false);
+    } else paintCropBox();
+  };
   window.addEventListener("resize", onResize);
+  const stageRo =
+    typeof ResizeObserver !== "undefined" && stageEl ? new ResizeObserver(() => onResize()) : null;
+  if (stageRo && stageEl) stageRo.observe(stageEl);
+
 
   /* Double-click a slider to return it to neutral. */
   host.addEventListener("dblclick", (e) => {
