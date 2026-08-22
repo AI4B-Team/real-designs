@@ -851,8 +851,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       (extra ? " " + extra : "") +
       '">' +
       '<div class="spd-head">' +
-      '<div class="spd-head-t"><b>Select designs</b>' +
-      "<span>Choose the saved designs you want to use as video scenes.</span></div>" +
+      '<div class="spd-head-t"><b>Select media</b>' +
+      "<span>" +
+      esc(
+        cfg.multiple && opts.context === "video"
+          ? "Choose the photos and designs you want as video scenes."
+          : "Choose a property photo or a design you already generated.",
+      ) +
+      "</span></div>" +
       designHeadActions() +
       "</div>" +
       inner +
@@ -871,7 +877,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
-  /** Selected designs, in the order they were picked. */
+  /** Selected media, in the order they were picked. */
   function selectedDesigns() {
     const byId = new Map(state.designs.map((d) => [d.id, d]));
     const seen = new Set<string>();
@@ -885,10 +891,110 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return out;
   }
 
+  const isDesign = (d: PickerDesign) => (d.assetType || "design") === "design";
+
+  /** The media list after the type, property, room and search filters. */
+  function visibleMedia(): PickerDesign[] {
+    const q = state.mediaQuery.trim().toLowerCase();
+    return state.designs.filter((d) => {
+      if (state.mediaType === "designs" && !isDesign(d)) return false;
+      if (state.mediaType === "photos" && isDesign(d)) return false;
+      if (state.mediaType === "favorites" && !d.favorite) return false;
+      if (state.mediaProperty !== "all" && String(d.propertyId || "") !== state.mediaProperty)
+        return false;
+      if (state.mediaRoom !== "all" && String(d.room || "") !== state.mediaRoom) return false;
+      if (
+        q &&
+        ![d.room, d.style, d.address].some((v) => String(v || "").toLowerCase().includes(q))
+      )
+        return false;
+      return true;
+    });
+  }
+
+  const MEDIA_TYPES: Array<[typeof state.mediaType, string]> = [
+    ["all", "All media"],
+    ["photos", "Property photos"],
+    ["designs", "Generated designs"],
+    ["favorites", "Favorites"],
+  ];
+
+  function mediaFilters() {
+    const props = new Map<string, string>();
+    const rooms = new Set<string>();
+    for (const d of state.designs) {
+      if (d.propertyId) props.set(String(d.propertyId), String(d.address || "Property"));
+      if (d.room) rooms.add(String(d.room));
+    }
+    const select = (
+      name: string,
+      label: string,
+      value: string,
+      options: Array<[string, string]>,
+    ) =>
+      '<label class="spd-fsel"><span>' +
+      esc(label) +
+      "</span><select data-sp-f=\"" +
+      name +
+      '" aria-label="' +
+      esc(label) +
+      '">' +
+      options
+        .map(
+          ([v, t]) =>
+            '<option value="' +
+            esc(v) +
+            '"' +
+            (v === value ? " selected" : "") +
+            ">" +
+            esc(t) +
+            "</option>",
+        )
+        .join("") +
+      "</select></label>";
+    return (
+      '<div class="spd-filters">' +
+      '<div class="spd-chips" role="group" aria-label="Media type">' +
+      MEDIA_TYPES.map(
+        ([id, label]) =>
+          '<button type="button" class="spd-chip-f' +
+          (state.mediaType === id ? " on" : "") +
+          '" data-sp-mtype="' +
+          id +
+          '" aria-pressed="' +
+          (state.mediaType === id ? "true" : "false") +
+          '">' +
+          esc(label) +
+          "</button>",
+      ).join("") +
+      "</div>" +
+      '<div class="spd-frow">' +
+      '<label class="sp-f sp-search spd-fq"><span><i data-lucide="search"></i>' +
+      '<input type="search" data-sp-f="mq" placeholder="Search media" aria-label="Search media" value="' +
+      esc(state.mediaQuery) +
+      '"></span></label>' +
+      select(
+        "mprop",
+        "Property",
+        state.mediaProperty,
+        [["all", "All properties"] as [string, string]].concat(Array.from(props.entries())),
+      ) +
+      select(
+        "mroom",
+        "Room",
+        state.mediaRoom,
+        [["all", "All rooms"] as [string, string]].concat(
+          Array.from(rooms).map((r) => [r, r] as [string, string]),
+        ),
+      ) +
+      "</div></div>"
+    );
+  }
+
   function designPanel() {
     if (state.designState === "loading" || state.designState === "idle") {
       return designShell(
-        '<div class="spd-grid" aria-busy="true" aria-live="polite" aria-label="Loading your saved designs">' +
+        '<div class="spd-grid" aria-busy="true" aria-live="polite" aria-label="Loading your media">' +
           Array.from({ length: 4 })
             .map(
               () =>
@@ -902,7 +1008,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return designShell(
         '<div class="spd-empty" role="alert">' +
           '<i data-lucide="triangle-alert"></i>' +
-          "<b>We couldn\u2019t load your designs</b>" +
+          "<b>We couldn\u2019t load your media</b>" +
           "<span>Something went wrong reading your library.</span>" +
           '<span class="spd-empty-a"><button type="button" class="btn btn-primary btn-sm" data-sp="dretry">Retry</button></span>' +
           "</div>",
@@ -912,23 +1018,29 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return designShell(
         '<div class="spd-empty">' +
           '<i data-lucide="images"></i>' +
-          "<b>No saved designs yet</b>" +
-          "<span>Create a design first or choose another photo source.</span>" +
+          "<b>No media yet</b>" +
+          "<span>Upload photos or open a property to start building your library.</span>" +
           '<span class="spd-empty-a">' +
-          '<button type="button" class="btn btn-primary btn-sm" data-sp="ddesign">Design a space</button>' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-sp="dupload">Upload photos</button>' +
+          '<button type="button" class="btn btn-primary btn-sm" data-sp="dupload">Upload photos</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" data-sp="dproperty">Choose a property</button>' +
           "</span></div>",
       );
     }
+    const shown = visibleMedia();
     return designShell(
-      designOrderRow() +
-        '<div class="spd-grid" role="group" aria-label="Your saved designs">' +
-        state.designs.map(designCard).join("") +
-        "</div>" +
+      mediaFilters() +
+        designOrderRow() +
+        (shown.length
+          ? '<div class="spd-grid" role="group" aria-label="Your media">' +
+            shown.map(designCard).join("") +
+            "</div>"
+          : '<div class="spd-empty"><i data-lucide="search-x"></i><b>No media matches these filters</b>' +
+            '<span class="spd-empty-a"><button type="button" class="btn btn-ghost btn-sm" data-sp="mreset">Clear filters</button></span></div>') +
         designFooter() +
         designPreviewModal(),
     );
   }
+
 
   function designOrderRow() {
     const picked = selectedDesigns();
