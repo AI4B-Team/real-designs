@@ -53,6 +53,20 @@ import {
   mountItemTextEntry,
   openBriefReview,
 } from "@/lib/redesign-controls";
+import { buildStageBrief, buildRuns, variationCost } from "@/lib/stage-brief";
+import {
+  mountStagePanel,
+  setStagePanelVisible,
+  refreshStageRoom,
+  readStageSettings,
+  setStageAnalysis,
+  setStageAnalyzing,
+  stageAnalysis,
+  resetStageAnalysis,
+  openStageBriefReview,
+  showStageQuality,
+} from "@/lib/stage-controls";
+import { analyzeStageRoom, renderStaging, checkStagedResult } from "@/lib/stage.functions";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
