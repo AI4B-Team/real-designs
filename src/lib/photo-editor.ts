@@ -38,6 +38,19 @@ import {
   needsPixelPass,
 } from "@/lib/photo-pixels";
 import {
+  type Box as CropBox,
+  type CropState,
+  MAX_CROP_ZOOM,
+  clampOffset,
+  createCrop,
+  cropRect,
+  focalOf,
+  refit,
+  resizeFrame,
+  wheelScale,
+  zoomTo,
+} from "./crop-frame";
+import {
   CROP_PRESETS,
   EXPORT_PRESETS,
   classifyEdits,
