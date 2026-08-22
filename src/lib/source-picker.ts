@@ -1173,13 +1173,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const designs = picked.filter(isDesign).length;
     const noun = !designs ? "photo" : designs === n ? "design" : "item";
     const plural = (k: number) => k + " " + noun + (k === 1 ? "" : "s");
-    const label = state.adding ? "Preparing\u2026" : "Continue with " + plural(n);
+    const label = state.adding
+      ? "Preparing\u2026"
+      : "Continue With " + (n ? plural(n) : plural(0));
     return (
       '<div class="spd-foot">' +
       '<span class="spd-foot-l">' +
       (n
-        ? plural(n) + " selected \u00b7 " + n + " scene" + (n === 1 ? "" : "s")
-        : "Nothing selected yet") +
+        ? "<b>" +
+          plural(n) +
+          " selected</b>" +
+          '<button type="button" class="sp-link" data-sp="dclear">Clear Selection</button>'
+        : "") +
       "</span>" +
       '<span class="spd-foot-a">' +
       (n
@@ -1202,10 +1207,54 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return { two: two.join(" \u00b7 "), three: d.address || "", status };
   }
 
+  /** One small badge carries type and status together. */
+  function mediaBadge(d: PickerDesign) {
+    const l = designLines(d);
+    if (!isDesign(d)) return "Source";
+    return l.status ? "Design \u00b7 " + l.status : "Design";
+  }
+
+  function mediaTitle(d: PickerDesign) {
+    return d.room || (isDesign(d) ? "Design" : "Photo");
+  }
+
+  function cardLabel(d: PickerDesign) {
+    const l = designLines(d);
+    return (
+      mediaTitle(d) + (l.three ? ", " + l.three : "") + (l.two ? ", " + l.two : "")
+    );
+  }
+
+  function thumbSpan(d: PickerDesign, cls: string) {
+    return (
+      '<span class="' +
+      cls +
+      '" data-sp-thumb="' +
+      esc(d.path) +
+      '" data-sp-thumb-id="' +
+      esc(d.id) +
+      '" data-sp-thumb-alt="' +
+      esc(mediaTitle(d)) +
+      '"></span>'
+    );
+  }
+
+  function checkMark(on: boolean, i: number) {
+    return (
+      '<span class="spd-check' +
+      (on ? " on" : "") +
+      '" aria-hidden="true">' +
+      (on ? '<i data-lucide="check"></i><em class="spd-n">' + (i + 1) + "</em>" : "") +
+      "</span>"
+    );
+  }
+
   function designCard(d: PickerDesign) {
     const i = state.designSel.indexOf(d.id);
     const on = i > -1;
     const l = designLines(d);
+    /* The property address is redundant inside a grouped section. */
+    const showAddr = !(state.mediaGroup && state.mediaProperty === "all");
     return (
       '<div class="spd-card' +
       (on ? " is-sel" : "") +
@@ -1214,35 +1263,62 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '" tabindex="0" role="checkbox" aria-checked="' +
       (on ? "true" : "false") +
       '" aria-label="' +
-      esc((d.room || "Design") + (l.two ? ", " + l.two : "") + (l.three ? ", " + l.three : "")) +
+      esc(cardLabel(d)) +
       '">' +
-      '<span class="spd-th" data-sp-thumb="' +
-      esc(d.path) +
-      '" data-sp-thumb-id="' +
-      esc(d.id) +
-      '" data-sp-thumb-alt="' +
-      esc(d.room || "Design") +
-      '"></span>' +
+      thumbSpan(d, "spd-th") +
       '<button type="button" class="spd-eye" data-sp-preview="' +
       esc(d.id) +
-      '" title="Preview design" aria-label="' +
-      esc("Preview design: " + (d.room || "Design")) +
+      '" title="View details" aria-label="' +
+      esc("View details: " + mediaTitle(d)) +
       '"><i data-lucide="eye"></i></button>' +
-      '<span class="spd-check' +
-      (on ? " on" : "") +
-      '" aria-hidden="true">' +
-      (on ? '<i data-lucide="check"></i><em class="spd-n">' + (i + 1) + "</em>" : "") +
+      checkMark(on, i) +
+      '<span class="spd-badge">' +
+      esc(mediaBadge(d)) +
       "</span>" +
       '<span class="spd-body"><b>' +
-      esc(d.room || "Design") +
+      esc(mediaTitle(d)) +
       "</b>" +
+      (showAddr && l.three ? '<span class="spd-addr">' + esc(l.three) + "</span>" : "") +
       (l.two ? "<span>" + esc(l.two) + "</span>" : "") +
-      (l.three ? '<span class="spd-addr">' + esc(l.three) + "</span>" : "") +
-      (l.status ? '<span class="spd-status">' + esc(l.status) + "</span>" : "") +
-      '<span class="spd-kind">' +
-      (isDesign(d) ? "Generated design" : "Property photo") +
-      "</span>" +
       "</span></div>"
+    );
+  }
+
+  function designRow(d: PickerDesign) {
+    const i = state.designSel.indexOf(d.id);
+    const on = i > -1;
+    const l = designLines(d);
+    const created = designDate(d.createdAt);
+    return (
+      '<div class="spd-row' +
+      (on ? " is-sel" : "") +
+      '" data-sp-design="' +
+      esc(d.id) +
+      '" tabindex="0" role="checkbox" aria-checked="' +
+      (on ? "true" : "false") +
+      '" aria-label="' +
+      esc(cardLabel(d)) +
+      '">' +
+      checkMark(on, i) +
+      thumbSpan(d, "spd-rth") +
+      '<span class="spd-rn"><b>' +
+      esc(mediaTitle(d)) +
+      "</b>" +
+      (l.three ? "<span>" + esc(l.three) + "</span>" : "") +
+      "</span>" +
+      '<span class="spd-rm">' +
+      esc(mediaBadge(d)) +
+      "</span>" +
+      '<span class="spd-rm">' +
+      esc(l.two || "\u2014") +
+      "</span>" +
+      '<span class="spd-rm">' +
+      esc(created || "\u2014") +
+      "</span>" +
+      '<button type="button" class="sp-link spd-rv" data-sp-preview="' +
+      esc(d.id) +
+      '">View Details</button>' +
+      "</div>"
     );
   }
 
