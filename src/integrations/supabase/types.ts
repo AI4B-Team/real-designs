@@ -922,6 +922,81 @@ export type Database = {
         }
         Relationships: []
       }
+      parcel_imports: {
+        Row: {
+          address: string
+          aligned_at: string | null
+          alignment: Json | null
+          asset_key: string | null
+          audit: Json
+          confidence: string
+          created_at: string
+          error: string | null
+          export_history: Json
+          geometry: Json | null
+          georeference: Json | null
+          id: string
+          jurisdiction: string | null
+          license: string | null
+          parcel_id: string | null
+          property_id: string | null
+          provider: string
+          retrieved_at: string | null
+          status: string
+          updated_at: string
+          user_id: string
+          warning_accepted: boolean
+        }
+        Insert: {
+          address: string
+          aligned_at?: string | null
+          alignment?: Json | null
+          asset_key?: string | null
+          audit?: Json
+          confidence?: string
+          created_at?: string
+          error?: string | null
+          export_history?: Json
+          geometry?: Json | null
+          georeference?: Json | null
+          id?: string
+          jurisdiction?: string | null
+          license?: string | null
+          parcel_id?: string | null
+          property_id?: string | null
+          provider: string
+          retrieved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+          warning_accepted?: boolean
+        }
+        Update: {
+          address?: string
+          aligned_at?: string | null
+          alignment?: Json | null
+          asset_key?: string | null
+          audit?: Json
+          confidence?: string
+          created_at?: string
+          error?: string | null
+          export_history?: Json
+          geometry?: Json | null
+          georeference?: Json | null
+          id?: string
+          jurisdiction?: string | null
+          license?: string | null
+          parcel_id?: string | null
+          property_id?: string | null
+          provider?: string
+          retrieved_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+          warning_accepted?: boolean
+        }
+        Relationships: []
+      }
       photo_batches: {
         Row: {
           batch_id: string

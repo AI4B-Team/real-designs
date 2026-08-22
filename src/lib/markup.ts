@@ -14,6 +14,12 @@
  * model, not a decoration a screen may choose to skip.
  */
 
+import type { CalloutKind, CalloutMeta } from "@/lib/markup-callouts";
+import type { ScaleCalibration } from "@/lib/markup-measure";
+import type { ParcelAuditEvent, ParcelOverlay } from "@/lib/parcel";
+import { PARCEL_WARNING, parcelProvenance } from "@/lib/parcel";
+import { measureShape, scaleMetadata } from "@/lib/markup-measure";
+
 /* ------------------------------------------------------------------ model */
 
 export type MarkupTypeId =
@@ -30,7 +36,17 @@ export type MarkupTypeId =
   | "line"
   | "arrow"
   | "label"
-  | "marker";
+  | "marker"
+  /* Advanced markup. */
+  | "distance"
+  | "area_label"
+  | "callout"
+  | "renovation"
+  | "product"
+  | "material"
+  | "before_after"
+  | "work_zone"
+  | "scope_ref";
 
 /** How a type is drawn. Geometry, not vocabulary. */
 export type MarkupShape = "polygon" | "line" | "arrow" | "label" | "marker";
@@ -73,6 +89,10 @@ export type MarkupLayer = {
   style: MarkupStyle;
   visible: boolean;
   locked: boolean;
+  /** Structured payload for renovation, product, material and scope callouts. */
+  meta?: CalloutMeta | null;
+  /** Last calculated measurement text, kept for exports and reports. */
+  measurementText?: string | null;
 };
 
 export type MarkupDoc = {
@@ -84,6 +104,12 @@ export type MarkupDoc = {
   layers: MarkupLayer[];
   /** Burn "Approximate Boundary" into exports as a visible disclosure. */
   visibleDisclosure: boolean;
+  /** Scale calibration. Without it, no measurement is ever produced. */
+  scale?: ScaleCalibration | null;
+  /** Optional provider-supplied parcel overlay. Never image-recognised. */
+  parcel?: ParcelOverlay | null;
+  /** Provenance trail for the parcel overlay and its exports. */
+  parcelAudit?: ParcelAuditEvent[];
 };
 
 /* ------------------------------------------------------------------ types */
@@ -115,7 +141,30 @@ export const MARKUP_TYPES: MarkupTypeSpec[] = [
   { id: "arrow", label: "Arrow", shape: "arrow", icon: "move-up-right", color: "#CC0000", warns: false },
   { id: "label", label: "Label", shape: "label", icon: "type", color: "#111827", warns: false, suggestion: "Custom text" },
   { id: "marker", label: "Numbered Marker", shape: "marker", icon: "circle-dot", color: "#CC0000", warns: false },
+  /* Advanced markup. Each one stays structured and editable: the drawn label
+     is only a rendering of the record kept on the layer. */
+  { id: "distance", label: "Distance Line", shape: "line", icon: "ruler", color: "#CC0000", warns: true, suggestion: "Approximate Distance" },
+  { id: "area_label", label: "Area Label", shape: "label", icon: "scan", color: "#0F766E", warns: true, suggestion: "Approximate Area" },
+  { id: "callout", label: "Measurement Callout", shape: "arrow", icon: "ruler-dimension-line", color: "#CC0000", warns: true, suggestion: "Approximate" },
+  { id: "renovation", label: "Renovation Note", shape: "marker", icon: "hammer", color: "#B45309", warns: false },
+  { id: "product", label: "Product Callout", shape: "marker", icon: "shopping-bag", color: "#7C3AED", warns: false },
+  { id: "material", label: "Material Callout", shape: "marker", icon: "layers", color: "#0891B2", warns: false },
+  { id: "before_after", label: "Before / After Note", shape: "label", icon: "arrow-left-right", color: "#111827", warns: false, suggestion: "Before / After" },
+  { id: "work_zone", label: "Proposed Work Zone", shape: "polygon", icon: "construction", color: "#EA580C", warns: false, suggestion: "Proposed Work" },
+  { id: "scope_ref", label: "Contractor Scope Reference", shape: "marker", icon: "clipboard-list", color: "#334155", warns: false },
 ];
+
+/** Advanced markup that carries a structured record rather than plain text. */
+export const CALLOUT_TYPES: Partial<Record<MarkupTypeId, CalloutKind>> = {
+  renovation: "renovation",
+  product: "product",
+  material: "material",
+  before_after: "before_after",
+  scope_ref: "scope",
+};
+
+/** Markup whose label is a calculated measurement. */
+export const MEASURED_TYPES: MarkupTypeId[] = ["distance", "area_label", "callout", "measurement"];
 
 export function markupType(id: MarkupTypeId): MarkupTypeSpec {
   return MARKUP_TYPES.find((t) => t.id === id) || (MARKUP_TYPES[MARKUP_TYPES.length - 1] as MarkupTypeSpec);
@@ -223,7 +272,16 @@ export function nextMarkerNumber(layers: MarkupLayer[]): number {
 }
 
 export function emptyDoc(assetId: string, sourceVersionId: string | null = null): MarkupDoc {
-  return { version: 1, assetId, sourceVersionId, layers: [], visibleDisclosure: false };
+  return {
+    version: 1,
+    assetId,
+    sourceVersionId,
+    layers: [],
+    visibleDisclosure: false,
+    scale: null,
+    parcel: null,
+    parcelAudit: [],
+  };
 }
 
 /* ------------------------------------------------------------- drawing ops */
@@ -496,10 +554,15 @@ export function serializeMarkup(doc: MarkupDoc): MarkupDoc {
     assetId: doc.assetId,
     sourceVersionId: doc.sourceVersionId ?? null,
     visibleDisclosure: !!doc.visibleDisclosure,
+    scale: doc.scale ?? null,
+    parcel: doc.parcel ?? null,
+    parcelAudit: doc.parcelAudit ?? [],
     layers: doc.layers.map((l) => ({
       ...l,
       points: l.points.map(clampPoint),
       style: { ...l.style },
+      meta: l.meta ? { ...l.meta } : null,
+      measurementText: l.measurementText ?? null,
     })),
   };
 }
@@ -536,6 +599,9 @@ export function parseMarkup(raw: unknown, assetId: string): MarkupDoc {
     assetId: doc.assetId || assetId,
     sourceVersionId: doc.sourceVersionId ?? null,
     visibleDisclosure: !!doc.visibleDisclosure,
+    scale: (doc as any).scale ?? null,
+    parcel: (doc as any).parcel ?? null,
+    parcelAudit: Array.isArray((doc as any).parcelAudit) ? (doc as any).parcelAudit : [],
     layers,
   };
 }
@@ -569,5 +635,108 @@ export function markupMetadata(doc: MarkupDoc) {
     visible_disclosure: doc.visibleDisclosure ? MARKUP_DISCLOSURE_TEXT : null,
     source_version: doc.sourceVersionId ?? null,
     credits: MARKUP_CREDITS,
+    scale: scaleMetadata(doc.scale),
+    parcel: doc.parcel ? parcelProvenance(doc.parcel, doc.parcelAudit || []) : null,
+    parcel_warning: doc.parcel ? PARCEL_WARNING : null,
+    callouts: layers
+      .filter((l) => !!l.meta)
+      .map((l) => ({ id: l.id, type: l.type, meta: l.meta })),
+    is_survey: false as const,
+  };
+}
+
+/* ------------------------------------------------- measurement & callouts */
+
+/**
+ * The measurement for one layer, or the reason there is none. A measured layer
+ * without calibration returns a message, never a number.
+ */
+export function layerMeasurement(layer: MarkupLayer, doc: MarkupDoc) {
+  if (!MEASURED_TYPES.includes(layer.type)) return null;
+  return measureShape(layer.points, layer.closed, doc.scale);
+}
+
+/** Refresh the stored measurement text on every measured layer. */
+export function refreshMeasurements(doc: MarkupDoc): MarkupDoc {
+  return {
+    ...doc,
+    layers: doc.layers.map((l) => {
+      if (!MEASURED_TYPES.includes(l.type)) return l;
+      const out = measureShape(l.points, l.closed, doc.scale);
+      const first = out.measurements[0];
+      return { ...l, measurementText: first ? first.text : null };
+    }),
+  };
+}
+
+/** Is this layer allowed to display a number yet? */
+export function canMeasure(doc: MarkupDoc): boolean {
+  return !!doc.scale && Number.isFinite(doc.scale.unitsPerPixel) && doc.scale.unitsPerPixel > 0;
+}
+
+/* ------------------------------------------------------------- export set */
+
+export type MarkupExportKind =
+  | "clean"
+  | "image"
+  | "shared_page"
+  | "pdf_report"
+  | "presentation"
+  | "contractor_scope";
+
+export const MARKUP_EXPORTS: { id: MarkupExportKind; label: string; hint: string }[] = [
+  { id: "clean", label: "Clean Image", hint: "The photograph with no markup at all." },
+  { id: "image", label: "Image With Markup", hint: "Flattened picture with the layers you choose." },
+  { id: "shared_page", label: "Interactive Shared Page", hint: "A link where layers can be toggled." },
+  { id: "pdf_report", label: "PDF Property Markup Report", hint: "Every callout, measurement and warning." },
+  { id: "presentation", label: "Presentation Slide", hint: "Sends the marked image to a presentation." },
+  { id: "contractor_scope", label: "Contractor Scope Export", hint: "Renovation and scope callouts only." },
+];
+
+/**
+ * Which layers a given export actually paints. Layer visibility is the control:
+ * a hidden layer never reaches an export, and a clean export paints none.
+ */
+export function exportLayers(
+  doc: MarkupDoc,
+  kind: MarkupExportKind,
+  selectedIds?: string[] | null,
+): MarkupLayer[] {
+  if (kind === "clean") return [];
+  const chosen = selectedIds && selectedIds.length ? new Set(selectedIds) : null;
+  let layers = doc.layers.filter((l) => l.visible && (!chosen || chosen.has(l.id)));
+  if (kind === "contractor_scope") {
+    layers = layers.filter((l) => l.type === "renovation" || l.type === "scope_ref" || l.type === "work_zone");
+  }
+  return layers;
+}
+
+/**
+ * The manifest written beside a flattened export. Vectors are flattened into
+ * pixels only for the static file; this block keeps the document editable and
+ * carries every warning the picture itself cannot state.
+ */
+export function markupExportManifest(
+  doc: MarkupDoc,
+  kind: MarkupExportKind,
+  selectedIds?: string[] | null,
+) {
+  const layers = exportLayers(doc, kind, selectedIds);
+  const parcelVisible = kind !== "clean" && !!doc.parcel;
+  const warnings = [
+    warningRequired(layers, false) ? MARKUP_WARNING : null,
+    parcelVisible ? PARCEL_WARNING : null,
+  ].filter(Boolean) as string[];
+  return {
+    export_kind: kind,
+    exported_at: new Date().toISOString(),
+    layer_ids: layers.map((l) => l.id),
+    layer_count: layers.length,
+    flattened: kind === "image" || kind === "presentation",
+    /* The editable document always survives the flattening. */
+    editable_document: serializeMarkup(doc),
+    warnings,
+    parcel_overlay_visible: parcelVisible,
+    ...markupMetadata({ ...doc, layers }),
   };
 }

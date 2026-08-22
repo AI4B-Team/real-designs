@@ -142,6 +142,35 @@ import {
 import { flattenMarkup } from "@/lib/markup-render";
 import { attachMarkupEditor, type MarkupEditor, type MarkupMode } from "@/lib/markup-editor";
 import { listMarkups, saveMarkup } from "@/lib/markup.functions";
+import type { MarkupLayer } from "@/lib/markup";
+import {
+  CALLOUT_TYPES,
+  MEASURED_TYPES,
+  canMeasure,
+  layerMeasurement,
+  refreshMeasurements,
+} from "@/lib/markup";
+import {
+  BUDGET_CATEGORIES,
+  PRIORITIES,
+  SURFACES,
+  calloutComplete,
+  calloutDetails,
+  emptyCallout,
+  type CalloutMeta,
+} from "@/lib/markup-callouts";
+import { PERSPECTIVE_WARNING, NO_SCALE_MESSAGE, type ImagePerspective, type MeasureUnit } from "@/lib/markup-measure";
+import {
+  PARCEL_WARNING,
+  auditEvent,
+  buildOverlay,
+  confidenceLabel,
+  confirmAlignment,
+  requiresManualAlignment,
+  resetAlignment,
+  reproject,
+} from "@/lib/parcel";
+import { lookupParcel, saveParcelAlignment } from "@/lib/parcel.functions";
 import { chipList, chipValues, formDialog } from "@/lib/photo-editor-dialogs";
 import {
   type PhotoStats,
@@ -564,6 +593,10 @@ export async function openPhotoEditor(opts: {
   let markupActiveType: MarkupTypeId = "boundary";
   let markupSelected: string | null = null;
   let markupCtl: MarkupEditor | null = null;
+  /* A refused calibration or a failed parcel lookup is shown, never swallowed. */
+  let markupNotice = "";
+  let parcelImportId: string | null = null;
+  let parcelBusy = false;
 
   const embedded = !!opts.mount;
   const host = document.createElement("div");
@@ -993,7 +1026,9 @@ export async function openPhotoEditor(opts: {
   }
 
   function setMarkupDoc(doc: MarkupDoc) {
-    markupDocs.set(cur().key, doc);
+    /* Every stored measurement is recomputed from the shapes themselves, so a
+       moved vertex can never leave a stale number painted on the photo. */
+    markupDocs.set(cur().key, doc.scale ? refreshMeasurements(doc) : doc);
     st().dirty = true;
     saveFailed = false;
   }
@@ -1033,6 +1068,18 @@ export async function openPhotoEditor(opts: {
           markupSelected = id;
         },
         onChange: () => paintPanel(),
+        imageSize: () => {
+          const img = $("#rdpeImg") as HTMLImageElement | null;
+          return {
+            width: img?.naturalWidth || 1600,
+            height: img?.naturalHeight || 1200,
+          };
+        },
+        notify: (message) => {
+          markupNotice = message;
+          paintPanel();
+        },
+        askScale: async (pixels) => askScaleLength(pixels),
         askLabel: async (suggestion) => {
           const out = await formDialog({
             title: "Add Label",
@@ -1051,6 +1098,260 @@ export async function openPhotoEditor(opts: {
 
   function selectedLayer() {
     return mk().layers.find((l) => l.id === markupSelected) || null;
+  }
+
+
+  /* ------------------------------------------- scale, measurement, parcel */
+
+  async function askScaleLength(pixels: number): Promise<{ length: number; unit: MeasureUnit } | null> {
+    const root = await formDialog({
+      title: "Set Scale",
+      body: `<p class="rdpe-note">You Drew A Reference Line ${Math.round(pixels)} Pixels Long. Enter What That Distance Really Measures — A Garage Door, A Driveway Width Or A Known Lot Line.</p>
+        <div class="rdpe-row"><label>Real Length</label>
+          <input type="number" min="0.1" step="0.1" class="rdpe-text" id="rdpeScaleLen" value="10" aria-label="Real Length"></div>
+        <div class="rdpe-row"><label>Units</label>
+          <select class="rdpe-text" id="rdpeScaleUnit" aria-label="Units">
+            <option value="ft">Feet</option><option value="m">Metres</option>
+          </select></div>`,
+      confirmLabel: "Set Scale",
+    });
+    if (!root) return null;
+    const length = Number((root.querySelector("#rdpeScaleLen") as HTMLInputElement | null)?.value || 0);
+    const unit = ((root.querySelector("#rdpeScaleUnit") as HTMLSelectElement | null)?.value || "ft") as MeasureUnit;
+    if (!Number.isFinite(length) || length <= 0) return null;
+    return { length, unit };
+  }
+
+  function scaleCard(doc: MarkupDoc): string {
+    const cal = doc.scale;
+    const layer = selectedLayer();
+    const measured = layer && MEASURED_TYPES.includes(layer.type) ? layerMeasurement(layer, doc) : null;
+    return `
+      <p class="rdpe-sub">Scale<span class="rdpe-subv">${cal ? `1 px ≈ ${cal.unitsPerPixel.toFixed(4)} ${cal.unit}` : "Not Calibrated"}</span></p>
+      <p class="rdpe-hint">${cal ? "Measurements Are Approximate And Depend On This Calibration." : esc(NO_SCALE_MESSAGE)}</p>
+      <div class="rdpe-autobtns">
+        <button type="button" class="btn btn-ghost btn-sm ${markupMode === "calibrate" ? "on" : ""}" data-mk="calibrate"><i data-lucide="ruler"></i>${cal ? "Recalibrate Scale" : "Calibrate Scale"}</button>
+        ${cal ? `<button type="button" class="btn btn-ghost btn-sm" data-mk="clearscale">Clear Scale</button>` : ""}
+      </div>
+      <div class="rdpe-row"><label>Camera Position</label>
+        <select class="rdpe-text" data-mkpersp aria-label="Camera Position">
+          ${(["unknown", "aerial", "elevated", "ground"] as ImagePerspective[])
+            .map(
+              (v) =>
+                `<option value="${v}" ${cal?.perspective === v ? "selected" : ""}>${v === "unknown" ? "Not Stated" : v[0]!.toUpperCase() + v.slice(1)}</option>`,
+            )
+            .join("")}
+        </select></div>
+      ${cal?.perspective === "ground" ? `<p class="rdpe-clip">${esc(PERSPECTIVE_WARNING)}</p>` : ""}
+      ${
+        measured
+          ? measured.measurements.length
+            ? `<p class="rdpe-sub">Selected Measurement<span class="rdpe-subv">${esc(measured.measurements.map((m) => m.text).join(" · "))}</span></p>`
+            : `<p class="rdpe-hint">${esc(measured.message || NO_SCALE_MESSAGE)}</p>`
+          : ""
+      }`;
+  }
+
+  function calloutCard(layer: MarkupLayer): string {
+    const kind = CALLOUT_TYPES[layer.type as keyof typeof CALLOUT_TYPES];
+    if (!kind) return "";
+    const meta = (layer.meta && layer.meta.kind === kind ? layer.meta : emptyCallout(kind)) as CalloutMeta;
+    const field = (name: string, label: string, value: string, ph = "") =>
+      `<div class="rdpe-row"><label>${esc(label)}</label>
+        <input type="text" class="rdpe-text" data-mkmeta="${esc(layer.id)}:${name}" value="${esc(value)}" placeholder="${esc(ph)}" aria-label="${esc(label)}"></div>`;
+    const select = (name: string, label: string, value: string, options: string[]) =>
+      `<div class="rdpe-row"><label>${esc(label)}</label>
+        <select class="rdpe-text" data-mkmeta="${esc(layer.id)}:${name}" aria-label="${esc(label)}">
+          ${options.map((o) => `<option value="${esc(o)}" ${o === value ? "selected" : ""}>${esc(o)}</option>`).join("")}
+        </select></div>`;
+    let body = "";
+    if (meta.kind === "renovation") {
+      body =
+        field("existingCondition", "Existing Condition", meta.existingCondition, "Worn Carpet") +
+        field("proposedChange", "Proposed Change", meta.proposedChange, "Engineered Oak Flooring") +
+        `<div class="rdpe-row"><label>Priority</label>
+          <select class="rdpe-text" data-mkmeta="${esc(layer.id)}:priority" aria-label="Priority">
+            ${PRIORITIES.map((pr) => `<option value="${pr.id}" ${meta.priority === pr.id ? "selected" : ""}>${esc(pr.label)}</option>`).join("")}
+          </select></div>` +
+        select("budgetCategory", "Budget Category", meta.budgetCategory, BUDGET_CATEGORIES) +
+        field("scopeReference", "Scope Reference", meta.scopeReference, "SOW-04");
+    } else if (meta.kind === "product") {
+      body =
+        field("productName", "Product", meta.productName, "Pendant Light") +
+        field("retailer", "Retailer", meta.retailer || "") +
+        `<div class="rdpe-row"><label>Price</label>
+          <input type="number" min="0" step="1" class="rdpe-text" data-mkmeta="${esc(layer.id)}:price" value="${meta.price ?? ""}" aria-label="Price"></div>` +
+        field("url", "Product Link", meta.url || "", "https://");
+    } else if (meta.kind === "material") {
+      body =
+        select("surface", "Surface", meta.surface, SURFACES) +
+        field("material", "Material", meta.material, "Honed Quartz") +
+        field("color", "Colour", meta.color || "") +
+        field("finish", "Finish", meta.finish || "");
+    } else if (meta.kind === "before_after") {
+      body = field("before", "Before", meta.before) + field("after", "After", meta.after);
+    } else {
+      body =
+        field("scopeReference", "Scope Reference", meta.scopeReference, "SOW-04") +
+        field("trade", "Trade", meta.trade || "", "Electrical") +
+        field("notes", "Notes", meta.notes || "");
+    }
+    return `<p class="rdpe-sub">Callout Details<span class="rdpe-subv">${calloutComplete(meta) ? `${calloutDetails(meta).length} Fields` : "Empty"}</span></p>
+      ${body}
+      <p class="rdpe-hint">These Fields Stay Structured, So The Same Callout Feeds The Report, The Scope Export And The Presentation.</p>`;
+  }
+
+  function parcelCard(doc: MarkupDoc): string {
+    const parcel = doc.parcel;
+    if (!parcel) {
+      return `<p class="rdpe-sub">Parcel Boundary</p>
+        <p class="rdpe-hint">Import An Official Parcel Boundary From A Connected Data Provider. Boundaries Are Never Detected From The Photograph.</p>
+        <div class="rdpe-autobtns">
+          <button type="button" class="btn btn-ghost btn-sm" data-mk="parcelimport" ${parcelBusy ? "disabled" : ""}><i data-lucide="land-plot"></i>${parcelBusy ? "Retrieving…" : "Import Parcel Boundary"}</button>
+        </div>`;
+    }
+    const needsAlign = requiresManualAlignment(parcel);
+    return `<p class="rdpe-sub">Parcel Boundary<span class="rdpe-subv">${esc(confidenceLabel(parcel.confidence))}</span></p>
+      <p class="rdpe-hint">${esc(parcel.record.provider)} · Parcel ${esc(parcel.record.parcelId)} · Retrieved ${esc(new Date(parcel.record.retrievedAt).toLocaleDateString())}${parcel.record.jurisdiction ? ` · ${esc(parcel.record.jurisdiction)}` : ""}</p>
+      <p class="rdpe-clip">${esc(PARCEL_WARNING)}</p>
+      <label class="rdpe-check"><input type="checkbox" data-mk="parcelwarn" ${parcel.warningAccepted ? "checked" : ""}> I Understand This Overlay Is Not A Survey</label>
+      ${needsAlign ? `<p class="rdpe-hint">This Photograph Is Not Georeferenced, So The Boundary Must Be Aligned By Hand Before It Can Be Used.</p>` : ""}
+      <div class="rdpe-rotrow">
+        <button type="button" class="rdpe-ib ${markupMode === "parcel" ? "on" : ""}" data-mk="parcel" title="Align Parcel" aria-label="Align Parcel"><i data-lucide="move"></i></button>
+        <button type="button" class="rdpe-ib" data-mkparcel="rotl" title="Rotate Left" aria-label="Rotate Left"><i data-lucide="rotate-ccw"></i></button>
+        <button type="button" class="rdpe-ib" data-mkparcel="rotr" title="Rotate Right" aria-label="Rotate Right"><i data-lucide="rotate-cw"></i></button>
+        <button type="button" class="rdpe-ib" data-mkparcel="bigger" title="Scale Up" aria-label="Scale Up"><i data-lucide="maximize-2"></i></button>
+        <button type="button" class="rdpe-ib" data-mkparcel="smaller" title="Scale Down" aria-label="Scale Down"><i data-lucide="minimize-2"></i></button>
+        <button type="button" class="rdpe-ib" data-mkparcel="reset" title="Reset Alignment" aria-label="Reset Alignment"><i data-lucide="undo-2"></i></button>
+        <button type="button" class="rdpe-ib" data-mkparcel="remove" title="Remove Overlay" aria-label="Remove Overlay"><i data-lucide="trash-2"></i></button>
+      </div>
+      <div class="rdpe-row"><label>Overlay Opacity</label>
+        <input type="range" min="10" max="100" value="${Math.round((parcel.alignment.opacity ?? 0.55) * 100)}" data-mkparcelop aria-label="Overlay Opacity"></div>
+      <div class="rdpe-autobtns">
+        <button type="button" class="btn btn-ghost btn-sm" data-mkparcel="confirm">${parcel.alignedAt ? "Alignment Confirmed" : "Confirm Alignment"}</button>
+      </div>`;
+  }
+
+
+  /** Persist the parcel alignment and its audit trail. */
+  async function syncParcelRecord(confirmed = false) {
+    const doc = mk();
+    markupChanged();
+    if (!doc.parcel || !parcelImportId) return;
+    try {
+      await saveParcelAlignment({
+        data: {
+          import_id: parcelImportId,
+          alignment: doc.parcel.alignment as any,
+          confidence: doc.parcel.confidence,
+          warning_accepted: doc.parcel.warningAccepted,
+          confirmed,
+          audit: (doc.parcelAudit || []) as any,
+        },
+      });
+    } catch {
+      /* Alignment is kept locally with the markup; a sync failure is not fatal. */
+    }
+  }
+
+  async function importParcelFlow() {
+    const root = await formDialog({
+      title: "Import Parcel Boundary",
+      body: `<p class="rdpe-note">Parcel Geometry Comes Only From A Connected Parcel Or GIS Data Provider. Nothing Is Detected From The Photograph, And No Boundary Is Estimated.</p>
+        <div class="rdpe-row"><label>Property Address</label>
+          <input type="text" class="rdpe-text" id="rdpeParcelAddr" placeholder="120 Ocean Drive, Miami Beach FL" aria-label="Property Address"></div>
+        <div class="rdpe-row"><label>Parcel ID (Optional)</label>
+          <input type="text" class="rdpe-text" id="rdpeParcelId" placeholder="02-3234-019-0010" aria-label="Parcel ID"></div>`,
+      confirmLabel: "Retrieve Boundary",
+    });
+    if (!root) return;
+    const address = (root.querySelector("#rdpeParcelAddr") as HTMLInputElement | null)?.value.trim() || "";
+    const parcelId = (root.querySelector("#rdpeParcelId") as HTMLInputElement | null)?.value.trim() || "";
+    if (address.length < 4) {
+      markupNotice = "Enter The Property Address To Retrieve A Parcel Boundary.";
+      return paintPanel();
+    }
+    parcelBusy = true;
+    markupNotice = "";
+    paintPanel();
+    try {
+      const res = await lookupParcel({ data: { address, parcel_id: parcelId || null, asset_key: cur().key } });
+      if (!res.ok) {
+        markupNotice = res.error;
+        return;
+      }
+      parcelImportId = res.import_id ?? null;
+      const overlay = buildOverlay(res.record, res.georeference ?? { kind: "none" });
+      const doc = mk();
+      setMarkupDoc({
+        ...doc,
+        parcel: overlay,
+        parcelAudit: [
+          ...(doc.parcelAudit || []),
+          auditEvent("import", { provider: res.record.provider, parcel_id: res.record.parcelId }),
+        ],
+      });
+      markupMode = requiresManualAlignment(overlay) ? "parcel" : markupMode;
+      markupNotice = requiresManualAlignment(overlay)
+        ? "This Photograph Is Not Georeferenced. Align The Boundary By Hand, Then Confirm It."
+        : "";
+    } catch {
+      markupNotice = "The Parcel Boundary Could Not Be Retrieved. Draw The Boundary Manually Instead.";
+    } finally {
+      parcelBusy = false;
+      markupChanged();
+    }
+  }
+
+  function parcelAction(op: string) {
+    const doc = mk();
+    const parcel = doc.parcel;
+    if (!parcel) return;
+    if (op === "remove") {
+      setMarkupDoc({
+        ...doc,
+        parcel: null,
+        parcelAudit: [...(doc.parcelAudit || []), auditEvent("remove")],
+      });
+      parcelImportId = null;
+      if (markupMode === "parcel") markupMode = "draw";
+      return markupChanged();
+    }
+    if (op === "reset") {
+      setMarkupDoc({
+        ...doc,
+        parcel: reproject(parcel, resetAlignment(parcel.alignment)),
+        parcelAudit: [...(doc.parcelAudit || []), auditEvent("reset")],
+      });
+      return void syncParcelRecord();
+    }
+    if (op === "confirm") {
+      if (!parcel.warningAccepted) {
+        markupNotice = "Confirm You Understand This Overlay Is Not A Survey Before Using It.";
+        return paintPanel();
+      }
+      setMarkupDoc({
+        ...doc,
+        parcel: confirmAlignment(parcel),
+        parcelAudit: [...(doc.parcelAudit || []), auditEvent("confirm", { confidence: parcel.confidence })],
+      });
+      markupNotice = "";
+      return void syncParcelRecord(true);
+    }
+    const deltas: Record<string, Parameters<NonNullable<typeof markupCtl>["adjustParcel"]>[0]> = {
+      rotl: { rotation: -2 },
+      rotr: { rotation: 2 },
+      bigger: { scale: 1.02 },
+      smaller: { scale: 1 / 1.02 },
+    };
+    const delta = deltas[op];
+    if (!delta) return;
+    markupCtl?.adjustParcel(delta);
+    setMarkupDoc({
+      ...mk(),
+      parcelAudit: [...(mk().parcelAudit || []), auditEvent("align", delta as any)],
+    });
+    markupChanged();
   }
 
   function markupCard(): string {
@@ -1072,6 +1373,7 @@ export async function openPhotoEditor(opts: {
       <div class="rdpe-rotrow">
         <button type="button" class="rdpe-ib ${markupMode === "draw" ? "on" : ""}" data-mk="draw" title="Draw" aria-label="Draw"><i data-lucide="pen-tool"></i></button>
         <button type="button" class="rdpe-ib ${markupMode === "navigate" ? "on" : ""}" data-mk="navigate" title="Navigate Image" aria-label="Navigate Image"><i data-lucide="hand"></i></button>
+        <button type="button" class="rdpe-ib ${markupMode === "calibrate" ? "on" : ""}" data-mk="calibrate" title="Calibrate Scale" aria-label="Calibrate Scale"><i data-lucide="ruler"></i></button>
         <button type="button" class="rdpe-ib" data-mk="undo" title="Undo" aria-label="Undo" ${markupCtl?.canUndo() ? "" : "disabled"}><i data-lucide="undo-2"></i></button>
         <button type="button" class="rdpe-ib" data-mk="redo" title="Redo" aria-label="Redo" ${markupCtl?.canRedo() ? "" : "disabled"}><i data-lucide="redo-2"></i></button>
         <button type="button" class="rdpe-ib" data-mk="clear" title="Clear All Markup" aria-label="Clear All Markup" ${doc.layers.length ? "" : "disabled"}><i data-lucide="trash-2"></i></button>
@@ -1079,8 +1381,13 @@ export async function openPhotoEditor(opts: {
       <p class="rdpe-hint">${
         markupMode === "draw"
           ? "Click To Place Points. Click The First Point Or Press Enter To Close A Shape. Escape Cancels, Backspace Removes The Last Point."
-          : "Drawing Is Paused So You Can Zoom And Pan The Photograph."
+          : markupMode === "calibrate"
+            ? "Click The Two Ends Of A Known Dimension, Then Enter Its Real Length."
+            : markupMode === "parcel"
+              ? "Drag The Parcel Overlay To Place It. Arrow Keys Nudge, Shift Nudges Further."
+              : "Drawing Is Paused So You Can Zoom And Pan The Photograph."
       }</p>
+      ${markupNotice ? `<p class="rdpe-clip">${esc(markupNotice)}</p>` : ""}
 
       <p class="rdpe-sub">Markup Type<span class="rdpe-subv">${esc(markupTypeSpec(markupActiveType).label)}</span></p>
       <div class="rdpe-ratios">${MARKUP_TYPES.map(
@@ -1149,6 +1456,10 @@ export async function openPhotoEditor(opts: {
              </div>`
           : ""
       }
+
+      ${layer ? calloutCard(layer) : ""}
+      ${scaleCard(doc)}
+      ${parcelCard(doc)}
 
       <label class="rdpe-check"><input type="checkbox" data-mk="disclosure" ${doc.visibleDisclosure ? "checked" : ""}> Show “Approximate Boundary” On The Image</label>
       ${warn ? `<p class="rdpe-clip">${esc(MARKUP_WARNING)}</p>` : ""}
@@ -2939,9 +3250,14 @@ export async function openPhotoEditor(opts: {
         });
       return markupChanged();
     }
+    const mparcel = el.getAttribute("data-mkparcel");
+    if (mparcel) return void parcelAction(mparcel);
+
     const mact = el.getAttribute("data-mk");
-    if (mact === "draw" || mact === "navigate") {
+    if (mact === "draw" || mact === "navigate" || mact === "calibrate" || mact === "parcel") {
+      markupNotice = "";
       markupMode = mact;
+      markupCtl?.cancelCalibration();
       markupCtl?.cancelDraft();
       return markupChanged();
     }
@@ -2953,6 +3269,12 @@ export async function openPhotoEditor(opts: {
       markupCtl?.redo();
       return markupChanged();
     }
+    if (mact === "clearscale") {
+      setMarkupDoc(refreshMeasurements({ ...mk(), scale: null }));
+      markupNotice = "";
+      return markupChanged();
+    }
+    if (mact === "parcelimport") return void importParcelFlow();
     if (mact === "clear") {
       markupCtl?.cancelDraft();
       setMarkupDoc({ ...mk(), layers: [] });
@@ -3027,6 +3349,48 @@ export async function openPhotoEditor(opts: {
       setMarkupDoc({ ...mk(), layers: updateLayer(mk().layers, t.getAttribute("data-mklabel") as string, { label: t.value }) });
       syncMarkupOverlay();
       return;
+    }
+    if (t.hasAttribute("data-mkmeta")) {
+      const [id, field] = (t.getAttribute("data-mkmeta") as string).split(":") as [string, string];
+      const doc = mk();
+      const target = doc.layers.find((l) => l.id === id);
+      const kind = target ? CALLOUT_TYPES[target.type as keyof typeof CALLOUT_TYPES] : null;
+      if (!target || !kind) return;
+      const base = (target.meta && target.meta.kind === kind ? target.meta : emptyCallout(kind)) as CalloutMeta;
+      const value = t.type === "number" ? (t.value === "" ? null : Number(t.value)) : t.value;
+      setMarkupDoc({
+        ...doc,
+        layers: updateLayer(doc.layers, id, { meta: { ...base, [field]: value } as CalloutMeta }),
+      });
+      syncMarkupOverlay();
+      return;
+    }
+    if (t.hasAttribute("data-mkpersp")) {
+      const doc = mk();
+      if (!doc.scale) return;
+      setMarkupDoc({ ...doc, scale: { ...doc.scale, perspective: t.value as ImagePerspective } });
+      paintPanel();
+      return;
+    }
+    if (t.hasAttribute("data-mkparcelop")) {
+      const doc = mk();
+      if (!doc.parcel) return;
+      setMarkupDoc({
+        ...doc,
+        parcel: reproject(doc.parcel, { ...doc.parcel.alignment, opacity: n(t.value, 55) / 100 }),
+      });
+      syncMarkupOverlay();
+      return;
+    }
+    if (t.getAttribute("data-mk") === "parcelwarn") {
+      const doc = mk();
+      if (!doc.parcel) return;
+      setMarkupDoc({
+        ...doc,
+        parcel: { ...doc.parcel, warningAccepted: t.checked },
+        parcelAudit: [...(doc.parcelAudit || []), auditEvent("warning_accepted", { accepted: t.checked })],
+      });
+      return void syncParcelRecord();
     }
     if (t.getAttribute("data-mk") === "disclosure") {
       setMarkupDoc({ ...mk(), visibleDisclosure: t.checked });
