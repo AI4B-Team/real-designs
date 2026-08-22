@@ -2506,16 +2506,16 @@ export function initApp(): () => void {
             tile.addEventListener("click", () => selectOutput(s.outputId));
             wrap.appendChild(tile);
           }
-          if (s.path) tile.dataset.path = s.path;
-          if (s.image) tile.dataset.src = s.image;
+          if (s.resultStoragePath) tile.dataset.path = s.resultStoragePath;
+          if (s.displayUrl) tile.dataset.src = s.displayUrl;
           tile.classList.toggle("on", OUTPUTS.activeOutputId === s.outputId);
           tile.setAttribute("aria-selected", OUTPUTS.activeOutputId === s.outputId ? "true" : "false");
           const label = OS.outputLabel(OUTPUTS, s);
           const badge = OS.outputBadge(OUTPUTS, s);
           tile.innerHTML =
             '<div style="aspect-ratio:8/5">' +
-            (s.image
-              ? photo(s.image, label)
+            (s.displayUrl
+              ? photo(s.displayUrl, label)
               : '<div class="var-skel" aria-hidden="true"></div>') +
             "</div>" +
             '<div class="vl">' +
@@ -2541,11 +2541,11 @@ export function initApp(): () => void {
     function selectOutput(outputId) {
       if (!OUTPUTS) return;
       const s = OS.outputById(OUTPUTS, outputId);
-      if (!s || !s.image) return;
+      if (!s || !s.displayUrl) return;
       OS.setActive(OUTPUTS, outputId);
-      if (cAfter) cAfter.innerHTML = photo(s.image, OS.outputLabel(OUTPUTS, s));
-      lastRender = s.image;
-      lastRenderPath = s.path || null;
+      if (cAfter) cAfter.innerHTML = photo(s.displayUrl, OS.outputLabel(OUTPUTS, s));
+      lastRender = s.displayUrl;
+      lastRenderPath = s.resultStoragePath || null;
       paintOutputs();
     }
     window.rdSelectOutput = (id) => selectOutput(id);
@@ -4350,10 +4350,10 @@ export function initApp(): () => void {
          Concept 2 no matter which one finished first. */
       if (OUTPUTS) {
         for (const s of OS.persistableOutputs(OUTPUTS)) {
-          if (seen.has(s.path)) continue;
-          seen.add(s.path);
-          const v = await attachVersionToRoom(s.path);
-          if (v) OS.markSaved(OUTPUTS, s.outputIndex, { path: s.path, versionId: String(v.id || "") });
+          if (seen.has(s.resultStoragePath)) continue;
+          seen.add(s.resultStoragePath);
+          const v = await attachVersionToRoom(s.resultStoragePath);
+          if (v) OS.markSaved(OUTPUTS, s.outputIndex, { path: s.resultStoragePath, versionId: String(v.id || "") });
         }
         paintOutputs();
       }
@@ -4390,7 +4390,7 @@ export function initApp(): () => void {
       /* A described concept has no source photo: its first durable image is
          the room's source, so saving never waits on an upload that will not
          happen. */
-      const slotPath = OUTPUTS ? (OS.persistableOutputs(OUTPUTS)[0] || {}).path || null : null;
+      const slotPath = OUTPUTS ? (OS.persistableOutputs(OUTPUTS)[0] || {}).resultStoragePath || null : null;
       const path = studioSourcePath() || slotPath;
       if (!path) {
         const gate = OUTPUTS ? OS.saveRoomState(OUTPUTS) : null;
