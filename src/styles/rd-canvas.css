@@ -367,20 +367,28 @@
 .rd-app .studio.rdw.vers-off .rdw-vers {
   display: none;
 }
-.rd-app .rdw-vers-open {
-  align-self: flex-start;
+/* Collapsed Version History rides in the result action row, so it matches the
+   other actions exactly: same height, radius, icon size and spacing. */
+.rd-app .rdw-resbar .rdw-vers-open {
+  order: -1;
+}
+.rd-app .rdw-vers-open[hidden] {
+  display: none !important;
+}
+.rd-app .rdw-vers-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  border: 1px solid #2e2e33;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 5px;
+  margin-left: 2px;
   border-radius: 999px;
-  background: #202024;
+  background: var(--red, #c00);
   color: #fff;
-  font: inherit;
-  font-size: 0.74rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  cursor: pointer;
+  font-family: "DM Mono", monospace;
+  font-size: 0.66rem;
+  line-height: 1;
 }
 .rd-app .rdw-vers-open i[data-lucide],
 .rd-app .rdw-vers-open svg {
@@ -919,6 +927,20 @@
   display: flex;
   justify-content: flex-end;
   margin: 0 0 10px;
+}
+/* One responsive action group: right aligned on wide screens, wrapping into
+   clean rows when narrow, never scrolling sideways. */
+.rdw-resbar .insp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+}
+.rdw-resbar .insp-actions > .btn {
+  flex: 0 0 auto;
 }
 .rdw-details-quiet .insp-actions {
   margin: 0;
