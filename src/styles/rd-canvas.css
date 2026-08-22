@@ -1083,32 +1083,75 @@
   flex: 0 0 auto;
 }
 
-/* Free text stays in the main flow, clearly marked as optional. */
+/* Additional instructions: a compact, optional free-text field. Sentence-case
+   title on one line, muted helper below, then a short textarea. The label keeps
+   none of the wide uppercase tracking the other field labels use. */
 .rd-app #rdwNoteField > label {
+  display: block;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 1rem;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ink);
+  margin-bottom: 0;
+}
+.rd-app #rdwNoteField .rdw-note-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
-.rd-app .rdw-opt-tag {
+.rd-app #rdwNoteField .rdw-note-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.2;
+}
+.rd-app #rdwNoteField .rdw-opt-tag {
+  flex: 0 0 auto;
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   text-transform: none;
   color: var(--muted, #7b756c);
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--line, #eceae5);
 }
-.rd-app .rdw-help {
+.rd-app #rdwNoteField .rdw-help {
   display: block;
-  width: 100%;
-  flex-basis: 100%;
-  font-size: 0.68rem;
-  font-weight: 500;
+  margin-top: 3px;
+  font-size: 13px;
+  font-weight: 400;
   text-transform: none;
   letter-spacing: 0;
   color: var(--muted, #7b756c);
+  line-height: 1.35;
 }
 .rd-app #rdwNoteField textarea {
-  min-height: 56px;
+  margin-top: 11px;
+  width: 100%;
+  height: 106px;
+  min-height: 100px;
+  max-height: 240px;
+  padding: 14px 16px;
+  border: 1px solid var(--line, #d9d6cf);
+  border-radius: 11px;
+  font-family: inherit;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--ink);
+  background: #fff;
+  resize: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.rd-app #rdwNoteField textarea::placeholder {
+  color: var(--muted, #a8a39b);
+}
+.rd-app #rdwNoteField textarea:focus {
+  outline: none;
+  border-color: #cc0000;
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.14);
 }
 
 /* "View All" sits beside the Design Style heading, not below the cards. */
