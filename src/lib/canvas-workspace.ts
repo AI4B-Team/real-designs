@@ -247,11 +247,28 @@ export function paintRoomCards() {
   if (!host || !sel) return;
   const space = currentSpace() as CanvasSpace;
   const list = areasForSpace(space);
+  const sel = document.getElementById("fRoom") as HTMLSelectElement | null;
   /* A selection from another space is never carried over. */
   if (sel.value && !areaFitsSpace(sel.value, space)) {
     sel.value = "";
   }
-  const active = areaByLabel(sel.value)?.label || "";
+  /* When nothing is chosen for this space, pre-select the default area so the
+     panel always shows a sensible first option (Front Exterior for exterior
+     photos, etc.). This is a soft default: photo detection may still replace
+     it, and a manual pick is always final. */
+  if (sel && !(sel.value || "").trim()) {
+    const def = defaultRoomForSpace(space);
+    if (def) {
+      if (!Array.from(sel.options).some((o) => o.value === def || o.text === def)) {
+        const opt = document.createElement("option");
+        opt.value = def;
+        opt.textContent = def;
+        sel.appendChild(opt);
+      }
+      sel.value = def;
+    }
+  }
+  const active = areaByLabel(sel?.value || "")?.label || "";
   const label = field?.querySelector("label") as HTMLElement | null;
   const sectionName =
     space === "interior" ? "Room" : space === "exterior" ? "Exterior Area" : "Garden Area";
