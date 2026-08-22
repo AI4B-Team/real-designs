@@ -1151,16 +1151,13 @@ function cardHtml(it, seq) {
         failed
           ? []
           : [
-              /* The primary per-photo action: open this exact photo in the room
-                 Canvas, where every design tool lives. The wand means "design"
-                 everywhere in the product and is never reused for editing. */
-              { label: "Open Canvas", icon: "wand-sparkles", hot: true, attrs: { "data-canvas": it.key } },
-              { label: "Edit Photo", icon: "sliders-horizontal", attrs: { "data-editphoto": it.key } },
-              { label: "Rotate 90°", icon: "rotate-cw", attrs: { "data-rotate": it.key } },
-              { label: "Replace Photo", icon: "image-plus", attrs: { "data-replace": it.key } },
-              { label: "Remove Photo", icon: "trash-2", attrs: { "data-del": it.key } },
+              /* One primary per-photo action. "Design" opens this exact photo in
+                 the room Canvas, where every design and photo tool lives; asset
+                 management stays in the three-dot menu so the card never looks
+                 like a miniature editor. */
+              { label: "Design", icon: "wand-sparkles", hot: true, attrs: { "data-canvas": it.key } },
             ],
-        { label: "Photo Actions" },
+        { label: "Design" },
       )}
 
     </div>
@@ -2109,9 +2106,12 @@ function applyRoomToSelected(anchor) {
  * Rotation is metadata, never a re-upload: the card turns instantly and the
  * angle is baked in only when pixels leave (download, design, export).
  */
-function rotateItem(it) {
+function rotateItem(it, dir) {
   if (!it) return;
-  it.rotation = nextRotation(it.rotation);
+  it.rotation =
+    dir === "left"
+      ? nextRotation(nextRotation(nextRotation(it.rotation)))
+      : nextRotation(it.rotation);
   patchCard(it);
   saveDraft();
 }
@@ -2255,7 +2255,7 @@ registerCardMenu("photo", {
         }
       : { action: "download", label: "Download", icon: "download", hidden: !hasOriginal };
     return [
-      { items: [{ action: "open", label: "Open Canvas", icon: "wand-sparkles" }] },
+      { items: [{ action: "open", label: "Design", icon: "wand-sparkles" }] },
       {
         items: [
           {
@@ -2265,9 +2265,9 @@ registerCardMenu("photo", {
             disabled: !stored,
             note: stored ? "" : "Saving…",
           },
-          { action: "editphoto", label: "Edit Photo", icon: "sliders-horizontal" },
           { action: "replace", label: "Replace Photo", icon: "image-plus" },
-          { action: "rotate", label: "Rotate 90°", icon: "rotate-cw" },
+          { action: "rotateleft", label: "Rotate Left", icon: "rotate-ccw" },
+          { action: "rotate", label: "Rotate Right", icon: "rotate-cw" },
           { action: "room", label: "Change Room Type", icon: "door-open" },
           {
             action: "ratio",
@@ -2336,7 +2336,8 @@ registerCardMenu("photo", {
       cmToast("New Variation Added. Your Saved Versions Are Untouched.");
       return void openInCanvas(clone.key);
     }
-    if (action === "rotate") return void rotateItem(it);
+    if (action === "rotate") return void rotateItem(it, "right");
+    if (action === "rotateleft") return void rotateItem(it, "left");
     if (action === "ratio") return void openRatioOverride(it);
     if (action === "room") {
       const btn = document.querySelector(

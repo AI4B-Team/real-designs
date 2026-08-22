@@ -125,8 +125,14 @@ export function imageToolbarHtml(actions = [], opts = {}) {
       return `<button type="button" class="rv-tool${a.hot ? " hot" : ""}"${attrs} aria-label="${esc(a.label)}"><i data-lucide="${esc(a.icon)}"></i><em>${esc(a.label)}</em></button>`;
     })
     .join("");
-  return `<div class="rv-tools" role="toolbar" aria-label="${esc(opts.label || "Photo actions")}">${buttons}</div>
-    <button type="button" class="rv-tools-more" data-toolsmore="1" aria-label="${esc(opts.label || "Photo actions")}" title="${esc(opts.label || "Photo actions")}"><i data-lucide="ellipsis"></i></button>`;
+  /* A single-action toolbar needs no overflow affordance: the lone button is
+     already the whole control, and a second ellipsis would duplicate the
+     card's three-dot menu. */
+  const more =
+    items.length > 1
+      ? `\n    <button type="button" class="rv-tools-more" data-toolsmore="1" aria-label="${esc(opts.label || "Photo actions")}" title="${esc(opts.label || "Photo actions")}"><i data-lucide="ellipsis"></i></button>`
+      : "";
+  return `<div class="rv-tools${items.length === 1 ? " one" : ""}" role="toolbar" aria-label="${esc(opts.label || "Photo actions")}">${buttons}</div>${more}`;
 }
 
 /* Escape inside the toolbar hands focus back to the photo card it belongs to,
