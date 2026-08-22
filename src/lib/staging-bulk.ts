@@ -1,4 +1,3 @@
-import "@/styles/rd-modal.css";
 /**
  * Bulk design for the Photo Staging grid.
  *
@@ -11,6 +10,7 @@ import "@/styles/rd-modal.css";
  */
 /* eslint-disable */
 // @ts-nocheck
+import "@/styles/rd-modal.css";
 import { createIcons, icons } from "lucide";
 import { renderDesign } from "@/lib/design-render.functions";
 import { getMyCredits } from "@/lib/credits.functions";
