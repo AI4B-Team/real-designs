@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   compareEnabled,
+  continueWithTools,
   defaultGenerationSource,
   defaultOpenSections,
   detectPhotoTraits,
   editedFromLabel,
   enhancementByOp,
   footerLayout,
-  generativeEdits,
   photoEnhancements,
   primarySaveLabel,
   PANEL_SECTIONS,
@@ -34,24 +34,23 @@ describe("photo editor context", () => {
     expect(ops).not.toContain("window_balance");
   });
 
-  it("keeps generative edits behind an explicit target confirmation with a cost", () => {
-    for (const e of generativeEdits()) {
-      expect(e.requiresTarget).toBe(true);
-      expect(e.credits).toBeGreaterThan(0);
-    }
-    expect(generativeEdits().map((e) => e.op)).toEqual(["object_removal", "declutter"]);
+  it("hands scene-changing work to the canonical rail tools", () => {
+    const tools = continueWithTools().map((t) => t.tool);
+    expect(tools).toEqual(["Redesign", "Virtual Stage", "Declutter", "Material Swap", "object"]);
+    for (const t of continueWithTools()) expect(t.blurb.length).toBeGreaterThan(10);
   });
 
-  it("does not duplicate Auto Enhance outside Quick Enhance", () => {
+  it("keeps Auto Enhance out of the credit-bearing AI section", () => {
     const enhance = photoEnhancements(detectPhotoTraits({ room: "Living Room" }));
-    expect(enhance.filter((e) => e.op === "auto_enhance")).toHaveLength(1);
+    expect(enhance.some((e) => e.op === "auto_enhance")).toBe(false);
+    expect(enhance.every((e) => e.credits > 0)).toBe(true);
     expect(PANEL_SECTIONS.map((s) => s.id)).toEqual([
+      "auto",
       "light",
-      "color",
       "detail",
       "crop",
-      "enhance",
-      "generative",
+      "ai",
+      "continue",
     ]);
   });
 
