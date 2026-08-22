@@ -52,6 +52,7 @@ import {
 } from "@/lib/concept-batch";
 import { suggestDesignTitle } from "@/lib/property-address";
 import * as OS from "@/lib/canvas-session";
+import * as CR from "@/lib/canvas-result";
 
 
 import { supabase } from "@/integrations/supabase/client";
