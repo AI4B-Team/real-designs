@@ -1230,6 +1230,128 @@ export async function openPhotoEditor(opts: {
       </div>`;
   }
 
+
+  /** Persist the parcel alignment and its audit trail. */
+  async function syncParcelRecord(confirmed = false) {
+    const doc = mk();
+    markupChanged();
+    if (!doc.parcel || !parcelImportId) return;
+    try {
+      await saveParcelAlignment({
+        data: {
+          import_id: parcelImportId,
+          alignment: doc.parcel.alignment as any,
+          confidence: doc.parcel.confidence,
+          warning_accepted: doc.parcel.warningAccepted,
+          confirmed,
+          audit: (doc.parcelAudit || []) as any,
+        },
+      });
+    } catch {
+      /* Alignment is kept locally with the markup; a sync failure is not fatal. */
+    }
+  }
+
+  async function importParcelFlow() {
+    const root = await formDialog({
+      title: "Import Parcel Boundary",
+      body: `<p class="rdpe-note">Parcel Geometry Comes Only From A Connected Parcel Or GIS Data Provider. Nothing Is Detected From The Photograph, And No Boundary Is Estimated.</p>
+        <div class="rdpe-row"><label>Property Address</label>
+          <input type="text" class="rdpe-text" id="rdpeParcelAddr" placeholder="120 Ocean Drive, Miami Beach FL" aria-label="Property Address"></div>
+        <div class="rdpe-row"><label>Parcel ID (Optional)</label>
+          <input type="text" class="rdpe-text" id="rdpeParcelId" placeholder="02-3234-019-0010" aria-label="Parcel ID"></div>`,
+      confirmLabel: "Retrieve Boundary",
+    });
+    if (!root) return;
+    const address = (root.querySelector("#rdpeParcelAddr") as HTMLInputElement | null)?.value.trim() || "";
+    const parcelId = (root.querySelector("#rdpeParcelId") as HTMLInputElement | null)?.value.trim() || "";
+    if (address.length < 4) {
+      markupNotice = "Enter The Property Address To Retrieve A Parcel Boundary.";
+      return paintPanel();
+    }
+    parcelBusy = true;
+    markupNotice = "";
+    paintPanel();
+    try {
+      const res = await lookupParcel({ data: { address, parcel_id: parcelId || null, asset_key: cur().key } });
+      if (!res.ok) {
+        markupNotice = res.error;
+        return;
+      }
+      parcelImportId = res.import_id ?? null;
+      const overlay = buildOverlay(res.record, res.georeference ?? { kind: "none" });
+      const doc = mk();
+      setMarkupDoc({
+        ...doc,
+        parcel: overlay,
+        parcelAudit: [
+          ...(doc.parcelAudit || []),
+          auditEvent("import", { provider: res.record.provider, parcel_id: res.record.parcelId }),
+        ],
+      });
+      markupMode = requiresManualAlignment(overlay) ? "parcel" : markupMode;
+      markupNotice = requiresManualAlignment(overlay)
+        ? "This Photograph Is Not Georeferenced. Align The Boundary By Hand, Then Confirm It."
+        : "";
+    } catch {
+      markupNotice = "The Parcel Boundary Could Not Be Retrieved. Draw The Boundary Manually Instead.";
+    } finally {
+      parcelBusy = false;
+      markupChanged();
+    }
+  }
+
+  function parcelAction(op: string) {
+    const doc = mk();
+    const parcel = doc.parcel;
+    if (!parcel) return;
+    if (op === "remove") {
+      setMarkupDoc({
+        ...doc,
+        parcel: null,
+        parcelAudit: [...(doc.parcelAudit || []), auditEvent("remove")],
+      });
+      parcelImportId = null;
+      if (markupMode === "parcel") markupMode = "draw";
+      return markupChanged();
+    }
+    if (op === "reset") {
+      setMarkupDoc({
+        ...doc,
+        parcel: reproject(parcel, resetAlignment(parcel.alignment)),
+        parcelAudit: [...(doc.parcelAudit || []), auditEvent("reset")],
+      });
+      return void syncParcelRecord();
+    }
+    if (op === "confirm") {
+      if (!parcel.warningAccepted) {
+        markupNotice = "Confirm You Understand This Overlay Is Not A Survey Before Using It.";
+        return paintPanel();
+      }
+      setMarkupDoc({
+        ...doc,
+        parcel: confirmAlignment(parcel),
+        parcelAudit: [...(doc.parcelAudit || []), auditEvent("confirm", { confidence: parcel.confidence })],
+      });
+      markupNotice = "";
+      return void syncParcelRecord(true);
+    }
+    const deltas: Record<string, Parameters<NonNullable<typeof markupCtl>["adjustParcel"]>[0]> = {
+      rotl: { rotation: -2 },
+      rotr: { rotation: 2 },
+      bigger: { scale: 1.02 },
+      smaller: { scale: 1 / 1.02 },
+    };
+    const delta = deltas[op];
+    if (!delta) return;
+    markupCtl?.adjustParcel(delta);
+    setMarkupDoc({
+      ...mk(),
+      parcelAudit: [...(mk().parcelAudit || []), auditEvent("align", delta as any)],
+    });
+    markupChanged();
+  }
+
   function markupCard(): string {
     const doc = mk();
     if (!markupOpen) {
@@ -3126,9 +3248,14 @@ export async function openPhotoEditor(opts: {
         });
       return markupChanged();
     }
+    const mparcel = el.getAttribute("data-mkparcel");
+    if (mparcel) return void parcelAction(mparcel);
+
     const mact = el.getAttribute("data-mk");
-    if (mact === "draw" || mact === "navigate") {
+    if (mact === "draw" || mact === "navigate" || mact === "calibrate" || mact === "parcel") {
+      markupNotice = "";
       markupMode = mact;
+      markupCtl?.cancelCalibration();
       markupCtl?.cancelDraft();
       return markupChanged();
     }
@@ -3140,6 +3267,12 @@ export async function openPhotoEditor(opts: {
       markupCtl?.redo();
       return markupChanged();
     }
+    if (mact === "clearscale") {
+      setMarkupDoc(refreshMeasurements({ ...mk(), scale: null }));
+      markupNotice = "";
+      return markupChanged();
+    }
+    if (mact === "parcelimport") return void importParcelFlow();
     if (mact === "clear") {
       markupCtl?.cancelDraft();
       setMarkupDoc({ ...mk(), layers: [] });
@@ -3214,6 +3347,48 @@ export async function openPhotoEditor(opts: {
       setMarkupDoc({ ...mk(), layers: updateLayer(mk().layers, t.getAttribute("data-mklabel") as string, { label: t.value }) });
       syncMarkupOverlay();
       return;
+    }
+    if (t.hasAttribute("data-mkmeta")) {
+      const [id, field] = (t.getAttribute("data-mkmeta") as string).split(":") as [string, string];
+      const doc = mk();
+      const target = doc.layers.find((l) => l.id === id);
+      const kind = target ? CALLOUT_TYPES[target.type as keyof typeof CALLOUT_TYPES] : null;
+      if (!target || !kind) return;
+      const base = (target.meta && target.meta.kind === kind ? target.meta : emptyCallout(kind)) as CalloutMeta;
+      const value = t.type === "number" ? (t.value === "" ? null : Number(t.value)) : t.value;
+      setMarkupDoc({
+        ...doc,
+        layers: updateLayer(doc.layers, id, { meta: { ...base, [field]: value } as CalloutMeta }),
+      });
+      syncMarkupOverlay();
+      return;
+    }
+    if (t.hasAttribute("data-mkpersp")) {
+      const doc = mk();
+      if (!doc.scale) return;
+      setMarkupDoc({ ...doc, scale: { ...doc.scale, perspective: t.value as ImagePerspective } });
+      paintPanel();
+      return;
+    }
+    if (t.hasAttribute("data-mkparcelop")) {
+      const doc = mk();
+      if (!doc.parcel) return;
+      setMarkupDoc({
+        ...doc,
+        parcel: reproject(doc.parcel, { ...doc.parcel.alignment, opacity: n(t.value, 55) / 100 }),
+      });
+      syncMarkupOverlay();
+      return;
+    }
+    if (t.getAttribute("data-mk") === "parcelwarn") {
+      const doc = mk();
+      if (!doc.parcel) return;
+      setMarkupDoc({
+        ...doc,
+        parcel: { ...doc.parcel, warningAccepted: t.checked },
+        parcelAudit: [...(doc.parcelAudit || []), auditEvent("warning_accepted", { accepted: t.checked })],
+      });
+      return void syncParcelRecord();
     }
     if (t.getAttribute("data-mk") === "disclosure") {
       setMarkupDoc({ ...mk(), visibleDisclosure: t.checked });
