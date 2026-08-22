@@ -544,8 +544,10 @@ export function openStagingReview(seed = {}) {
      session. Without this, a session left behind by a navigation that skipped
      the explicit exit would silently keep its old photos and the new upload
      would land in a grid full of someone else's rooms. */
-  const onScreen = !!document.getElementById("v-staging")?.classList.contains("on");
-  if (S && (files.length || existing.length) && !onScreen && !seed.append) {
+  const view = document.getElementById("v-staging");
+  const onScreen = !!view?.classList.contains("on");
+  const orphaned = !view; /* the builder's DOM is gone: the session is stale */
+  if (S && !seed.append && (orphaned || ((files.length || existing.length) && !onScreen))) {
     S.items.forEach((i) => {
       try {
         URL.revokeObjectURL(i.previewUrl);
