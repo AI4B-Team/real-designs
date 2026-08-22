@@ -451,6 +451,9 @@ export async function openPhotoEditor(opts: {
   let autoBusy = false;
   let autoPreview = false;
   let cropBackup: Crop = null;
+  /* The crop frame is stationary; this is the photograph's placement behind it. */
+  let cropView: CropState | null = null;
+  let cropHinted = false;
   let stats: PhotoStats | null = null;
   let sourceStats: { src: string; stats: PhotoStats } | null = null;
   let previewAdj: Adj | null = null;
