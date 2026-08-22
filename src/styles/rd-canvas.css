@@ -1720,3 +1720,17 @@
 .rdpe-back{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--line);
   background:transparent;color:inherit;border-radius:999px;cursor:pointer;font:inherit;font-size:13px;}
 .rdpe-back:hover{background:rgba(255,255,255,.08);}
+
+/* The source photo is never dimmed while the user is still choosing settings:
+   "Choose A Design Style" disables the Generate button only. Nothing may fade,
+   filter or blend the Canvas stage or its image viewport. */
+.rd-app .rdw-stage,
+.rd-app .rdw-stage.is-disabled,
+.rd-app .rdw-stage #canvas,
+.rd-app .rdw-stage #canvas.is-disabled,
+.rd-app .rdw-stage #canvas img {
+  opacity: 1;
+  filter: none;
+  mix-blend-mode: normal;
+  cursor: auto;
+}
