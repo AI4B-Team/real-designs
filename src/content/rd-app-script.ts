@@ -4345,6 +4345,17 @@ export function initApp(): () => void {
     async function backfillRoomVersions() {
       if (!STUDIO_CTX || !STUDIO_CTX.roomId) return;
       const seen = new Set();
+      /* Concepts attach in slot order, so the room keeps Concept 1 before
+         Concept 2 no matter which one finished first. */
+      if (OUTPUTS) {
+        for (const s of OS.persistableSlots(OUTPUTS)) {
+          if (seen.has(s.path)) continue;
+          seen.add(s.path);
+          const v = await attachVersionToRoom(s.path);
+          if (v) OS.markSaved(OUTPUTS, s.outputIndex, { path: s.path, versionId: String(v.id || "") });
+        }
+        paintOutputs();
+      }
       for (const v of SESSION_VERSIONS || []) {
         if (!v || !v.path || seen.has(v.path)) continue;
         seen.add(v.path);
@@ -4352,6 +4363,7 @@ export function initApp(): () => void {
       }
       if (lastRenderPath && !seen.has(lastRenderPath)) await attachVersionToRoom(lastRenderPath);
     }
+
 
     /**
      * The one lifecycle a finished render follows.
