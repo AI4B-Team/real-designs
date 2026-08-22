@@ -3796,7 +3796,8 @@ export function initApp(): () => void {
         sourcePath: null,
       };
     }
-    let STUDIO_CTX = blankStudioCtx();
+    /* Declared at the top of initApp; only reset here if nothing has claimed it. */
+    if (!STUDIO_CTX) STUDIO_CTX = blankStudioCtx();
 
     /* Renders produced in this session appear in Version History right away,
        before any save round-trip completes. */
