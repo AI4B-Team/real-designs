@@ -279,16 +279,47 @@ body.rdpe-open {
 
 .rdpe-cropbox {
   position: absolute;
-  border: 1px solid rgb(255 255 255 / 90%);
+  z-index: 5;
+  border: 1px solid rgb(255 255 255 / 95%);
+  outline: 1px solid rgb(0 0 0 / 35%);
   box-shadow: 0 0 0 9999px rgb(0 0 0 / 45%);
-  cursor: move;
+  cursor: grab;
+  touch-action: none;
+}
+.rdpe-cropbox:active {
+  cursor: grabbing;
+}
+/* The photograph is dragged behind the frame, so it must not intercept. */
+.rdpe-stage.rdpe-cropping img {
+  pointer-events: none;
+}
+.rdpe-cropgrid {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.12s linear;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, transparent calc(33.333% - 0.5px), rgb(255 255 255 / 55%) calc(33.333% - 0.5px), rgb(255 255 255 / 55%) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)),
+    linear-gradient(to right, transparent calc(66.666% - 0.5px), rgb(255 255 255 / 55%) calc(66.666% - 0.5px), rgb(255 255 255 / 55%) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(33.333% - 0.5px), rgb(255 255 255 / 55%) calc(33.333% - 0.5px), rgb(255 255 255 / 55%) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(66.666% - 0.5px), rgb(255 255 255 / 55%) calc(66.666% - 0.5px), rgb(255 255 255 / 55%) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px));
+}
+.rdpe-cropbox.acting .rdpe-cropgrid {
+  opacity: 1;
 }
 .rdpe-cropbox i {
   position: absolute;
   width: 12px;
   height: 12px;
   background: #fff;
+  border: 1px solid rgb(0 0 0 / 35%);
   border-radius: 2px;
+  display: none;
+}
+/* Handles belong to Free crops only; fixed ratios are repositioned, not resized. */
+.rdpe-cropbox.free i {
+  display: block;
 }
 .rdpe-cropbox i[data-h="nw"] {
   left: -6px;
@@ -310,6 +341,59 @@ body.rdpe-open {
   bottom: -6px;
   cursor: nwse-resize;
 }
+
+.rdpe-crophint {
+  position: absolute;
+  z-index: 7;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgb(15 15 15 / 82%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.rdpe-crophint[hidden] {
+  display: none;
+}
+
+.rdpe-zoomrow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 10px;
+  align-items: center;
+  margin: 10px 0 2px;
+}
+.rdpe-zoomhead {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-weight: 600;
+  color: #3f4046;
+}
+.rdpe-zoomrow input[type="range"] {
+  width: 100%;
+  min-height: 28px;
+}
+.rdpe-linkbtn {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: #cc0000;
+  cursor: pointer;
+}
+.rdpe-linkbtn:hover {
+  text-decoration: underline;
+}
+
 
 .rdpe-underbar {
   display: flex;

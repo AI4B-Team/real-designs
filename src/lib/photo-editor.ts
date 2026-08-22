@@ -38,6 +38,20 @@ import {
   needsPixelPass,
 } from "@/lib/photo-pixels";
 import {
+  type Box as CropBox,
+  type CropState,
+  MAX_CROP_ZOOM,
+  clampOffset,
+  createCrop,
+  cropRect,
+  focalOf,
+  minCoverScale,
+  refit,
+  resizeFrame,
+  wheelScale,
+  zoomTo,
+} from "./crop-frame";
+import {
   CROP_PRESETS,
   EXPORT_PRESETS,
   classifyEdits,
@@ -438,6 +452,9 @@ export async function openPhotoEditor(opts: {
   let autoBusy = false;
   let autoPreview = false;
   let cropBackup: Crop = null;
+  /* The crop frame is stationary; this is the photograph's placement behind it. */
+  let cropView: CropState | null = null;
+  let cropHinted = false;
   let stats: PhotoStats | null = null;
   let sourceStats: { src: string; stats: PhotoStats } | null = null;
   let previewAdj: Adj | null = null;
@@ -613,7 +630,7 @@ export async function openPhotoEditor(opts: {
       /* An Auto Enhance preview is a filter overlay only: the stored
          adjustments stay exactly where the user left them. */
       stage.style.filter = comparing ? "none" : filterString(previewAdj || s.adj);
-      stage.style.transform = comparing ? "none" : transformString(s);
+      paintStageTransform();
     }
 
     if (embedded) {
@@ -828,6 +845,21 @@ export async function openPhotoEditor(opts: {
           )
           .join("")}</div>
         ${
+          cropMode && cropView
+            ? `<div class="rdpe-zoomrow">
+                <div class="rdpe-zoomhead">
+                  <span>Crop Zoom</span>
+                  <button type="button" class="rdpe-linkbtn" data-act="cropreset">Reset Position</button>
+                </div>
+                <input type="range" data-cropzoom min="${(cropMinScale() * 100).toFixed(0)}"
+                  max="${(MAX_CROP_ZOOM * 100).toFixed(0)}" step="1"
+                  value="${(cropView.scale * 100).toFixed(0)}" aria-label="Crop Zoom">
+                <span class="rdpe-num">${Math.round(cropView.scale * 100)}%</span>
+              </div>
+              <p class="rdpe-hint">Drag The Photo To Reposition It Inside The Crop.</p>`
+            : ""
+        }
+        ${
           cropMode
             ? `<div class="rdpe-autobtns">
                 <button type="button" class="btn btn-primary btn-sm" data-act="cropapply">Apply Crop</button>
@@ -835,6 +867,7 @@ export async function openPhotoEditor(opts: {
                </div>`
             : ""
         }
+
         <p class="rdpe-sub">Rotate And Flip</p>
         <div class="rdpe-rotrow">
           <button type="button" class="rdpe-ib" data-act="rotl" title="Rotate Left" aria-label="Rotate Left"><i data-lucide="rotate-ccw"></i></button>
@@ -1164,6 +1197,7 @@ export async function openPhotoEditor(opts: {
     s.flipH = false;
     s.flipV = false;
     cropMode = false;
+    cropView = null;
     paint();
     paintCropBox();
   }
@@ -1171,88 +1205,174 @@ export async function openPhotoEditor(opts: {
 
   /* ---------------------------------------------------------------- crop */
 
+  /* The frame is stationary; the photograph is dragged behind it. Everything
+     the interaction needs is derived from the viewport, the image's layout box
+     and the crop state — never from the live (already transformed) rect. */
+
+  /** The smallest zoom at which the photograph still covers the frame. */
+  function cropMinScale(): number {
+    return cropView ? minCoverScale(cropView.frame, baseBox()) : 1;
+  }
+
+  function viewBox(): CropBox {
+    const stageEl = $("#rdpeStage");
+    const r = stageEl?.getBoundingClientRect();
+    return { w: Math.max(1, r?.width || 1), h: Math.max(1, r?.height || 1) };
+  }
+
+  /** The image's untransformed layout box, with quarter rotations swapped. */
+  function baseBox(): CropBox {
+    const img = $("#rdpeImg") as HTMLImageElement;
+    const s = st();
+    const w = Math.max(1, img?.offsetWidth || 1);
+    const h = Math.max(1, img?.offsetHeight || 1);
+    const quarter = ((s.rotation % 360) + 360) % 360;
+    return quarter === 90 || quarter === 270 ? { w: h, h: w } : { w, h };
+  }
+
+  function ratioAspect(id: string, base: CropBox): number {
+    if (id === "original" || id === "free") return base.w / base.h;
+    return cropPreset(id)?.v || base.w / base.h;
+  }
+
+  function syncCrop(record = true) {
+    const s = st();
+    if (!cropView) return;
+    const base = baseBox();
+    const view = viewBox();
+    const o = clampOffset(cropView, base, view);
+    cropView = { ...cropView, ...o, ...focalOf({ ...cropView, ...o }, base, view) };
+    if (record) {
+      const rect = cropRect(cropView, base, view);
+      s.crop = { ...rect, ratio: cropView.ratio };
+      saveFailed = false;
+      s.dirty = true;
+    }
+    paintCropBox();
+    paintStageTransform();
+  }
+
+  /** The image transform while cropping: the base geometry, then the pan/zoom. */
+  function paintStageTransform() {
+    const img = $("#rdpeImg") as HTMLImageElement;
+    if (!img) return;
+    const s = st();
+    if (comparing) {
+      img.style.transform = "none";
+      return;
+    }
+    const pan =
+      cropMode && cropView
+        ? `translate(${cropView.offsetX.toFixed(2)}px, ${cropView.offsetY.toFixed(2)}px) scale(${cropView.scale.toFixed(4)}) `
+        : "";
+    img.style.transform = `${pan}${transformString(s)}`;
+  }
+
   function setRatio(id: string) {
     const s = st();
     push();
-    if (id === "original") {
+    if (id === "original" && !cropMode) {
       s.crop = null;
-      cropMode = false;
-    } else {
-      const r = RATIOS.find((x) => x.id === id);
-      const stageImg = $("#rdpeImg") as HTMLImageElement;
-      const iw = stageImg?.naturalWidth || 4;
-      const ih = stageImg?.naturalHeight || 3;
-      const target = r?.v || iw / ih;
-      let w = 1;
-      let h = 1;
-      if (iw / ih > target) w = (target * ih) / iw;
-      else h = iw / target / ih;
-      s.crop = { x: (1 - w) / 2, y: (1 - h) / 2, w, h, ratio: id };
-      cropMode = true;
+      cropView = null;
+      paint();
+      return paintCropBox();
     }
+    cropMode = true;
+    const base = baseBox();
+    const view = viewBox();
+    const focal = cropView ? { focalX: cropView.focalX, focalY: cropView.focalY } : undefined;
+    cropView = createCrop(id, ratioAspect(id, base), base, view, focal);
+    cropHinted = false;
+    syncCrop();
     paint();
-    paintCropBox();
+  }
+
+  function resetCropPosition() {
+    if (!cropView) return;
+    const base = baseBox();
+    const view = viewBox();
+    cropView = createCrop(cropView.ratio, ratioAspect(cropView.ratio, base), base, view);
+    syncCrop();
+    paint();
+  }
+
+  function setCropZoom(v: number) {
+    if (!cropView) return;
+    cropView = zoomTo(cropView, baseBox(), viewBox(), v);
+    syncCrop();
   }
 
   function paintCropBox() {
     const box = $("#rdpeCropBox");
-    const s = st();
+    const stage = $("#rdpeStage");
     if (!box) return;
-    if (!s.crop || !cropMode) {
+    stage?.classList.toggle("rdpe-cropping", !!(cropMode && cropView));
+    if (!cropMode || !cropView) {
       box.style.display = "none";
+      box.classList.remove("acting");
+      const hint = $("#rdpeCropHint");
+      if (hint) hint.hidden = true;
       return;
     }
-    const img = $("#rdpeImg") as HTMLImageElement;
-    const r = img.getBoundingClientRect();
-    const wrap = $("#rdpeStage").getBoundingClientRect();
     box.style.display = "block";
-    box.style.left = `${r.left - wrap.left + s.crop.x * r.width}px`;
-    box.style.top = `${r.top - wrap.top + s.crop.y * r.height}px`;
-    box.style.width = `${s.crop.w * r.width}px`;
-    box.style.height = `${s.crop.h * r.height}px`;
+    box.style.left = `${cropView.frame.x}px`;
+    box.style.top = `${cropView.frame.y}px`;
+    box.style.width = `${cropView.frame.width}px`;
+    box.style.height = `${cropView.frame.height}px`;
+    box.classList.toggle("free", cropView.ratio === "free");
+    const hint = $("#rdpeCropHint");
+    if (hint) hint.hidden = cropHinted;
   }
 
+  /** Drag inside the frame moves the photograph; a handle resizes the frame. */
   function dragCrop(e: PointerEvent) {
-    const s = st();
-    if (!s.crop || !cropMode) return;
+    if (!cropMode || !cropView) return;
     const handle = (e.target as HTMLElement).getAttribute("data-h");
-    const img = $("#rdpeImg") as HTMLImageElement;
-    const r = img.getBoundingClientRect();
-    const c0 = s.crop;
-    const start = { px: e.clientX, py: e.clientY, x: c0.x, y: c0.y, w: c0.w, h: c0.h, ratio: c0.ratio };
+    if (handle && cropView.ratio !== "free") return;
+    e.preventDefault();
+    const box = $("#rdpeCropBox");
+    const base = baseBox();
+    const view = viewBox();
+    const start = { px: e.clientX, py: e.clientY, ...cropView };
+    let moved = false;
     push();
+    try {
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    } catch {
+      /* pointer capture is a nicety, not a requirement */
+    }
+    box?.classList.add("acting");
     const move = (ev: PointerEvent) => {
-      const dx = (ev.clientX - start.px) / r.width;
-      const dy = (ev.clientY - start.py) / r.height;
-      const c = { ...start } as any;
-      if (!handle) {
-        c.x = Math.min(1 - start.w, Math.max(0, start.x + dx));
-        c.y = Math.min(1 - start.h, Math.max(0, start.y + dy));
+      if (!cropView) return;
+      const dx = ev.clientX - start.px;
+      const dy = ev.clientY - start.py;
+      if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
+      if (handle) {
+        cropView = { ...cropView, frame: resizeFrame(start.frame, handle, dx, dy, view) };
+        cropView = refit(cropView, 0, base, view);
       } else {
-        if (handle.includes("e")) c.w = Math.min(1 - start.x, Math.max(0.06, start.w + dx));
-        if (handle.includes("s")) c.h = Math.min(1 - start.y, Math.max(0.06, start.h + dy));
-        if (handle.includes("w")) {
-          c.x = Math.min(start.x + start.w - 0.06, Math.max(0, start.x + dx));
-          c.w = start.w + (start.x - c.x);
-        }
-        if (handle.includes("n")) {
-          c.y = Math.min(start.y + start.h - 0.06, Math.max(0, start.y + dy));
-          c.h = start.h + (start.y - c.y);
-        }
+        cropView = { ...cropView, offsetX: start.offsetX + dx, offsetY: start.offsetY + dy };
       }
-      s.crop = { x: c.x, y: c.y, w: c.w, h: c.h, ratio: handle ? "free" : start.ratio };
-      saveFailed = false;
-    s.dirty = true;
-      paintCropBox();
+      syncCrop();
     };
-    const up = () => {
+    const up = (ev: PointerEvent) => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      try {
+        (ev.target as HTMLElement).releasePointerCapture?.(ev.pointerId);
+      } catch {
+        /* noop */
+      }
+      box?.classList.remove("acting");
+      if (moved && !handle) cropHinted = true;
       paint();
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
   }
+
 
   /* ------------------------------------------------------------ AI edits */
 
@@ -1541,6 +1661,7 @@ export async function openPhotoEditor(opts: {
     if ((await guardUnsaved("Moving To Another Photo")) === "stay") return;
     aiPreview = null;
     cropMode = false;
+    cropView = null;
     index = i;
     await ensureSource(cur());
     paint();
@@ -1694,21 +1815,31 @@ export async function openPhotoEditor(opts: {
       s.crop = cropBackup;
       cropBackup = null;
       cropMode = false;
+      cropView = null;
       paint();
       return paintCropBox();
     }
+    if (act === "cropreset") return resetCropPosition();
     if (act === "cropmode") {
       cropMode = !cropMode;
       cropBackup = cropMode ? (s.crop ? { ...s.crop } : null) : null;
-      if (cropMode && !s.crop) return setRatio("1:1");
+      if (cropMode) return setRatio(s.crop?.ratio || "1:1");
+      cropView = null;
       paint();
       return paintCropBox();
     }
+
   });
 
   host.addEventListener("input", (e) => {
     const t = e.target as HTMLInputElement;
     const s = st();
+    if (t.hasAttribute("data-cropzoom")) {
+      setCropZoom(n(t.value, 100) / 100);
+      const out = t.parentElement?.querySelector(".rdpe-num");
+      if (out && cropView) out.textContent = `${Math.round(cropView.scale * 100)}%`;
+      return;
+    }
     if (t.hasAttribute("data-adj")) {
       if (!t.dataset['pushed']) {
         push();
@@ -1731,8 +1862,8 @@ export async function openPhotoEditor(opts: {
       (s as any)[t.getAttribute("data-geo") as string] = n(t.value);
       saveFailed = false;
       s.dirty = true;
-      const img = $("#rdpeImg") as HTMLImageElement;
-      img.style.transform = transformString(s);
+      paintStageTransform();
+      if (cropView) syncCrop();
       const out = t.parentElement?.querySelector(".rdpe-num");
       if (out) out.textContent = `${n(t.value) > 0 ? "+" : ""}${t.value}°`;
     }
@@ -1801,6 +1932,19 @@ export async function openPhotoEditor(opts: {
   });
   $("#rdpeCropBox").addEventListener("pointerdown", (e) => dragCrop(e as PointerEvent));
 
+  /* Wheel and trackpad pinch zoom the crop, but only while cropping — the
+     inspector keeps its own scrolling. React's passive onWheel cannot
+     preventDefault, so this is a native non-passive listener. */
+  const stageEl = $("#rdpeStage");
+  const onWheel = (ev: WheelEvent) => {
+    if (!cropMode || !cropView) return;
+    ev.preventDefault();
+    setCropZoom(wheelScale(cropView, ev.deltaY, ev.deltaMode));
+    paintPanel();
+  };
+  stageEl?.addEventListener("wheel", onWheel, { passive: false });
+
+
   const onKey = (e: KeyboardEvent) => {
     if ((e.target as HTMLElement)?.tagName === "INPUT" && e.key !== "Escape") return;
     if (e.key === "Escape") return void close();
@@ -1817,8 +1961,21 @@ export async function openPhotoEditor(opts: {
   };
   window.addEventListener("keydown", onKey);
   window.addEventListener("keyup", onKeyUp);
-  const onResize = () => paintCropBox();
+  /* The frame is recomputed whenever the viewport can have changed: window
+     resize, browser zoom, or the inspector changing the stage's width. */
+  const onResize = () => {
+    if (cropMode && cropView) {
+      const base = baseBox();
+      const view = viewBox();
+      cropView = refit(cropView, cropView.ratio === "free" ? 0 : ratioAspect(cropView.ratio, base), base, view);
+      syncCrop(false);
+    } else paintCropBox();
+  };
   window.addEventListener("resize", onResize);
+  const stageRo =
+    typeof ResizeObserver !== "undefined" && stageEl ? new ResizeObserver(() => onResize()) : null;
+  if (stageRo && stageEl) stageRo.observe(stageEl);
+
 
   /* Double-click a slider to return it to neutral. */
   host.addEventListener("dblclick", (e) => {
@@ -1847,6 +2004,8 @@ export async function openPhotoEditor(opts: {
     window.removeEventListener("keydown", onKey);
     window.removeEventListener("keyup", onKeyUp);
     window.removeEventListener("resize", onResize);
+    stageEl?.removeEventListener("wheel", onWheel);
+    stageRo?.disconnect();
     ro?.disconnect();
   };
 
@@ -1913,8 +2072,10 @@ function embeddedShellHtml(label: string): string {
       <div class="rdpe-stage" id="rdpeStage">
         <img id="rdpeImg" alt="Photo being edited" data-hold>
         <div class="rdpe-cropbox" id="rdpeCropBox" style="display:none">
+          <span class="rdpe-cropgrid" aria-hidden="true"></span>
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
+        <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <span class="rdpe-badge">Original</span>
       </div>
       <div class="rdpe-underbar">
@@ -1964,8 +2125,10 @@ function shellHtml(back: string): string {
         <button type="button" class="rdpe-nav l" data-act="prev" aria-label="Previous Photo"><i data-lucide="chevron-left"></i></button>
         <img id="rdpeImg" alt="Photo being edited" data-hold>
         <div class="rdpe-cropbox" id="rdpeCropBox" style="display:none">
+          <span class="rdpe-cropgrid" aria-hidden="true"></span>
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
+        <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <button type="button" class="rdpe-nav r" data-act="next" aria-label="Next Photo"><i data-lucide="chevron-right"></i></button>
         <span class="rdpe-badge">Original</span>
       </div>
