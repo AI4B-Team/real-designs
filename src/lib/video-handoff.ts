@@ -102,7 +102,7 @@ function pick(src: LooseVideoAsset, keys: string[]): any {
 }
 
 function sourceTypeOf(src: LooseVideoAsset): VideoHandoffSourceType {
-  const raw = String(src.sourceType || src.source_type || "");
+  const raw = String(src["sourceType"] || src["source_type"] || "");
   if (
     raw === "source-photo" ||
     raw === "generated-version" ||
@@ -155,10 +155,10 @@ export function normalizeVideoAssets(
       roomName: roomName ? String(roomName) : null,
       propertyId: pick(raw, ["propertyId", "property_id"]) || fallback.propertyId || null,
       projectId: pick(raw, ["projectId", "project_id"]) || fallback.projectId || null,
-      sortOrder: Number.isFinite(raw.sortOrder)
-        ? Number(raw.sortOrder)
-        : Number.isFinite(raw.sort_order)
-          ? Number(raw.sort_order)
+      sortOrder: Number.isFinite(raw["sortOrder"])
+        ? Number(raw["sortOrder"])
+        : Number.isFinite(raw["sort_order"])
+          ? Number(raw["sort_order"])
           : i,
       sourceType: sourceTypeOf(raw),
     });

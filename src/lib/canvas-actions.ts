@@ -6,7 +6,7 @@
  * next steps in the same order, and each step reuses the workflow that already
  * exists instead of inventing a second one.
  */
-import { startVideoFromCanvas, videoHandoffIssue } from "@/lib/video-handoff";
+import { startVideoBuilder, videoHandoffIssue } from "@/lib/video-handoff";
 import { IMAGE_ACTIONS, recordImageAction, type ImageActionId } from "@/lib/image-actions";
 
 export type ResultContext = {
@@ -245,37 +245,23 @@ function startVideo(ctx: ResultContext) {
     toast(issue);
     return;
   }
-  const r = startVideoFromCanvas(
-    {
-      path: ctx.path || null,
-      name: ctx.room || null,
-      room: ctx.room || null,
-      versionId: ctx.id || null,
-      propertyId: ctx.propertyId || null,
-      propertyAddress: ctx.propertyAddress || null,
-    },
-    ctx.origin === "studio" ? "studio" : "media",
-  );
-  if (!r.ok) {
-    toast(r.reason);
-    return;
-  }
-  void import("@/content/rd-media-lib").then((m) =>
-    m.openVideoWorkflow({
-      from: ctx.origin || "studio",
-      propertyId: r.handoff.propertyId,
-      propertyAddress: r.handoff.propertyAddress,
-      motion: r.motion,
-      assets: r.handoff.assets.map((a, i) => ({
-        id: a.id,
-        storage_path: a.path,
-        file_name: a.name,
-        original_filename: a.name,
-        room_group: a.room || a.name,
-        sort_order: i,
-      })),
-    }),
-  );
+  /* One canonical handoff: publish the selection, then open the builder. */
+  const r = startVideoBuilder({
+    origin: ctx.origin === "studio" ? "canvas" : "media",
+    propertyId: ctx.propertyId || null,
+    propertyAddress: ctx.propertyAddress || null,
+    assets: [
+      {
+        storagePath: ctx.path || "",
+        fileName: ctx.room || "Design",
+        roomName: ctx.room || null,
+        versionId: ctx.id || null,
+        propertyId: ctx.propertyId || null,
+        sourceType: "generated-version",
+      },
+    ],
+  });
+  if (!r.ok) toast(r.reason);
 }
 
 function editDesign(ctx: ResultContext) {
