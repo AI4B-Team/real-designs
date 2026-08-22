@@ -601,6 +601,9 @@ function hydrate(draft) {
     .sort((a, b) => order.indexOf(a.key) - order.indexOf(b.key));
   const rooms = (draft.settings && draft.settings.rooms) || {};
   S.direction = (draft.settings && draft.settings.direction) || null;
+  /* Restore the style choices so Design reopens exactly as it was left. */
+  S.design = normalizeDesignModel(draft.settings && draft.settings.design);
+  S.bulkSettings = S.design;
   S.outputRatio = normalizeOutputRatio(draft.settings && draft.settings.output_ratio);
   S.items = assets.map((a) => {
     const saved = rooms[a.key] || {};
