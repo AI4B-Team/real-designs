@@ -469,9 +469,7 @@ export async function openPhotoEditor(opts: {
       const preview = aiPreview && !comparing ? aiPreview.image : null;
       if (preview && stage.getAttribute("src") !== preview) stage.setAttribute("src", preview);
       stage.style.filter = comparing ? "none" : filterString(s.adj);
-      stage.style.transform = comparing
-        ? "none"
-        : `rotate(${s.rotation + s.straighten}deg) scaleX(${s.flipH ? -1 : 1})`;
+      stage.style.transform = comparing ? "none" : transformString(s);
     }
 
     if (embedded) {
