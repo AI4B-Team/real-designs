@@ -90,11 +90,37 @@ export type EnhancementDef = {
  */
 const PHOTO_ENHANCEMENTS: EnhancementDef[] = [
   { op: "window_balance", label: "Window Balance", icon: "panel-top", credits: 1 },
-  { op: "sky", label: "Sky Replacement", icon: "cloud-sun", credits: 1 },
+  { op: "sky", label: "Sky Enhancement", icon: "cloud-sun", credits: 1 },
   { op: "lawn", label: "Lawn Enhancement", icon: "trees", credits: 1 },
   { op: "dusk", label: "Day To Dusk", icon: "moon", credits: 1 },
+  { op: "reflection", label: "Reflection Removal", icon: "sparkle", credits: 1, requiresTarget: true },
+  { op: "tv_off", label: "TV Screen Cleanup", icon: "tv", credits: 1, requiresTarget: true },
+  { op: "fireplace", label: "Fireplace Enhancement", icon: "flame", credits: 1, requiresTarget: true },
   { op: "privacy_blur", label: "Privacy Blur", icon: "shield", credits: 1, requiresTarget: true },
 ];
+
+/** What Privacy Blur is allowed to obscure. Manual is always available. */
+export const PRIVACY_TARGETS: { id: string; label: string; icon: string }[] = [
+  { id: "faces", label: "Faces", icon: "user-round" },
+  { id: "plates", label: "License Plates", icon: "car" },
+  { id: "documents", label: "Documents", icon: "file-text" },
+  { id: "screens", label: "Screens", icon: "monitor" },
+  { id: "manual", label: "Manual Area", icon: "square-dashed" },
+];
+
+/** Instruction sent to the server for the chosen Privacy Blur targets. */
+export function privacyInstruction(targets: string[]): string {
+  const picked = PRIVACY_TARGETS.filter((t) => targets.includes(t.id) && t.id !== "manual").map((t) =>
+    t.label.toLowerCase(),
+  );
+  const manual = targets.includes("manual");
+  const parts: string[] = [];
+  if (picked.length) parts.push(`Obscure only: ${picked.join(", ")}.`);
+  if (manual) parts.push("Obscure the area the user marked on the photograph.");
+  if (!parts.length) parts.push("Obscure personally identifying details only.");
+  parts.push("Do not alter the room, furniture, finishes or any other part of the photograph.");
+  return parts.join(" ");
+}
 
 /** Photo Enhancements available for this photograph. Context aware. */
 export function photoEnhancements(traits: PhotoTraits): EnhancementDef[] {
@@ -102,9 +128,11 @@ export function photoEnhancements(traits: PhotoTraits): EnhancementDef[] {
     if (e.op === "lawn") return !traits.interior;
     if (e.op === "sky") return traits.hasSky;
     if (e.op === "window_balance") return traits.hasWindows;
+    if (e.op === "fireplace" || e.op === "tv_off" || e.op === "reflection") return traits.interior;
     return true;
   });
 }
+
 
 /* ------------------------------------------------------------- handoffs */
 
