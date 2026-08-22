@@ -65,26 +65,20 @@ const paint = () => {
   } catch (_) {}
 };
 
-const FAV_KEY = "rd.media.favs.v1";
-const readFavs = () => {
-  try {
-    const v = JSON.parse(localStorage.getItem(FAV_KEY) || "[]");
-    return Array.isArray(v) ? v : [];
-  } catch (_) {
-    return [];
+/* Favorites live on the user's account, so the heart is the same on every
+   surface and survives a refresh, a new device and a new sign-in. */
+const isFav = (id) => isFavorite({ kind: "media", id: String(id) });
+async function toggleFav(id) {
+  const res = await toggleFavorite({ kind: "media", id: String(id) });
+  render();
+  if (!res.ok) {
+    toast("Favorite Could Not Be Saved. Tap To Retry.");
+    return res;
   }
-};
-let FAVS = readFavs();
-const isFav = (id) => FAVS.indexOf(String(id)) > -1;
-function toggleFav(id) {
-  const s = String(id);
-  const i = FAVS.indexOf(s);
-  if (i > -1) FAVS.splice(i, 1);
-  else FAVS.push(s);
-  try {
-    localStorage.setItem(FAV_KEY, JSON.stringify(FAVS));
-  } catch (_) {}
+  toast(favoriteToast(res.favorite));
+  return res;
 }
+
 
 const S = {
   items: [],
