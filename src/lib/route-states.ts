@@ -1,3 +1,4 @@
+import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * Never render an empty page.
  *
@@ -124,7 +125,7 @@ export function ensureNotEmpty(host: HTMLElement | null, state: SurfaceState = "
   if (host.textContent && host.textContent.trim()) return;
   host.innerHTML = stateHtml(state, subject);
   try {
-    (window as any).lucide?.createIcons({});
+    createIcons({ icons: lucideIcons });
   } catch (_) {
     /* icons are cosmetic */
   }

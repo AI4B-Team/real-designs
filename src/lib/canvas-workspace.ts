@@ -1,3 +1,4 @@
+import { createIcons, icons as lucideIcons } from "lucide";
 /**
  * Room Canvas workspace wiring: the compact tool rail, the contextual
  * settings panel, the canvas overlay controls and the version rail.
@@ -80,7 +81,7 @@ const esc = (s: unknown) =>
 
 function icons() {
   try {
-    (window as any).lucide?.createIcons({});
+    createIcons({ icons: lucideIcons });
   } catch (_) {
     /* icons are cosmetic */
   }
