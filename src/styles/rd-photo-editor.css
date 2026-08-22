@@ -725,3 +725,55 @@ body.rdpe-open {
     max-width: 100%;
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Edit Photo as a tool inside the Design Canvas                        */
+/* Both rails, the app header and the Canvas header stay mounted: the   */
+/* editor only fills the dark Canvas wrapper.                           */
+/* ------------------------------------------------------------------ */
+
+.rdw-editmount {
+  display: block;
+  border-radius: 14px;
+  overflow: hidden;
+}
+.rdw-editmount[hidden] {
+  display: none;
+}
+
+.rdpe.rdpe-embed {
+  position: relative;
+  inset: auto;
+  z-index: 1;
+  height: clamp(420px, calc(100dvh - 260px), 760px);
+  max-width: 100%;
+  border-radius: 14px;
+  border: 1px solid #e6e6e8;
+}
+
+/* Compact contextual toolbar, not a page header. */
+.rdpe.rdpe-embed .rdpe-ctx {
+  height: 48px;
+  gap: 10px;
+}
+.rdpe .rdpe-ctxl {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+.rdpe .rdpe-ctxl b {
+  font-size: 14px;
+  font-weight: 700;
+}
+.rdpe .rdpe-ctxtag {
+  font-size: 12px;
+  color: #5f6067;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rdpe.rdpe-embed .rdpe-ib {
+  width: 32px;
+  height: 32px;
+}
