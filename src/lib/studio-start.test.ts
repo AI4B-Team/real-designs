@@ -82,18 +82,22 @@ describe("studio start source picker", () => {
     expect(host.querySelector('[data-sp="addref"]')).toBeTruthy();
     expect(host.querySelector('[data-sp="improve"]')).toBeTruthy();
     const cta = () => host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
-    expect(cta().disabled).toBe(true);
-    /* whitespace only stays disabled */
+    /* Generate stays clickable and explains what is missing instead of going dead. */
+    cta().click();
+    expect(onDescribe).not.toHaveBeenCalled();
+    expect(host.querySelector(".sp-describe-foot .sp-meta")!.textContent).toContain(
+      "Add a description",
+    );
     ta.value = "   ";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
-    expect(cta().disabled).toBe(true);
+    cta().click();
+    expect(onDescribe).not.toHaveBeenCalled();
     ta.value = "A warm modern living room";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
-    expect(cta().disabled).toBe(false);
     cta().click();
     expect(onDescribe).toHaveBeenCalledWith(
       "A warm modern living room",
-      expect.objectContaining({ ratio: "16:9", options: 1, references: [] }),
+      expect.objectContaining({ aspectRatio: "16:9", optionCount: 1, references: [] }),
     );
   });
 
