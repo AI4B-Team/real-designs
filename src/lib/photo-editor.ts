@@ -180,15 +180,34 @@ export function filterString(adj: Adj): string {
   return parts.join(" ");
 }
 
-function hasEdits(st: PhotoState): boolean {
+function hasGeometry(st: PhotoState): boolean {
   return (
-    Object.values(st.adj).some((v) => n(v) !== 0) ||
     st.rotation !== 0 ||
     st.straighten !== 0 ||
+    st.vertical !== 0 ||
+    st.horizontal !== 0 ||
     st.flipH ||
-    !!st.crop ||
-    st.aiOps.length > 0
+    st.flipV ||
+    !!st.crop
   );
+}
+
+function hasEdits(st: PhotoState): boolean {
+  return (
+    Object.values(st.adj).some((v) => n(v) !== 0) || hasGeometry(st) || st.aiOps.length > 0
+  );
+}
+
+/** CSS transform for the stage image: rotation, flips and keystone. */
+export function transformString(st: PhotoState): string {
+  const parts = [`rotate(${st.rotation + st.straighten}deg)`];
+  if (st.vertical || st.horizontal) {
+    parts.unshift("perspective(1400px)");
+    if (st.vertical) parts.push(`rotateX(${(-st.vertical).toFixed(2)}deg)`);
+    if (st.horizontal) parts.push(`rotateY(${st.horizontal.toFixed(2)}deg)`);
+  }
+  parts.push(`scaleX(${st.flipH ? -1 : 1})`, `scaleY(${st.flipV ? -1 : 1})`);
+  return parts.join(" ");
 }
 
 /* -------------------------------------------------------------- rendering */
@@ -201,6 +220,47 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = () => rej(new Error("That photo could not be loaded."));
     img.src = src;
   });
+}
+
+/**
+ * Keystone correction. A 2D context has no true perspective transform, so the
+ * image is drawn as a stack of slices whose width tapers — visually identical
+ * to the CSS preview at the small angles this control allows.
+ */
+function drawKeystone(
+  c: CanvasRenderingContext2D,
+  img: CanvasImageSource,
+  iw: number,
+  ih: number,
+  vertical: number,
+  horizontal: number,
+) {
+  if (!vertical && !horizontal) {
+    c.drawImage(img, -iw / 2, -ih / 2, iw, ih);
+    return;
+  }
+  const kv = vertical * 0.012;
+  const kh = horizontal * 0.012;
+  const steps = 240;
+  if (vertical) {
+    for (let i = 0; i < steps; i += 1) {
+      const t = i / steps;
+      const sy = (ih * i) / steps;
+      const sh = ih / steps + 1;
+      const scale = 1 + kv * (1 - 2 * t);
+      const w = iw * scale;
+      c.drawImage(img as any, 0, sy, iw, sh, -w / 2, -ih / 2 + sy, w, sh);
+    }
+    return;
+  }
+  for (let i = 0; i < steps; i += 1) {
+    const t = i / steps;
+    const sx = (iw * i) / steps;
+    const sw = iw / steps + 1;
+    const scale = 1 + kh * (1 - 2 * t);
+    const h = ih * scale;
+    c.drawImage(img as any, sx, 0, sw, ih, -iw / 2 + sx, -h / 2, sw, h);
+  }
 }
 
 /** Flatten the current state into a JPEG data URL. */
@@ -221,9 +281,9 @@ export async function renderPhoto(st: PhotoState): Promise<string> {
   c.save();
   c.translate(stage.width / 2, stage.height / 2);
   c.rotate(((quarter + st.straighten) * Math.PI) / 180);
-  if (st.flipH) c.scale(-1, 1);
+  if (st.flipH || st.flipV) c.scale(st.flipH ? -1 : 1, st.flipV ? -1 : 1);
   (c as any).filter = filterString(st.adj);
-  c.drawImage(img, -iw / 2, -ih / 2, iw, ih);
+  drawKeystone(c, img, iw, ih, st.vertical, st.horizontal);
   c.restore();
 
   let out = stage;
