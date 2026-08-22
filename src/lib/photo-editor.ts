@@ -992,7 +992,7 @@ export async function openPhotoEditor(opts: {
           v.mask.strokes.length ? "" : "disabled"
         }><i data-lucide="undo-2"></i></button>
         <button type="button" class="rdpe-ib" data-priv="redo" title="Redo Stroke" aria-label="Redo Stroke" ${
-          v.mask.redoStack.length ? "" : "disabled"
+          v.mask.redo.length ? "" : "disabled"
         }><i data-lucide="redo-2"></i></button>
         <button type="button" class="rdpe-ib" data-priv="clear" title="Clear Mask" aria-label="Clear Mask"><i data-lucide="trash-2"></i></button>
       </div>
