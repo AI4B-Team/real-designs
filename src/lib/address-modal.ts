@@ -350,7 +350,7 @@ export function openAddressModal(opts: AddressModalOptions) {
       saveBtn.innerHTML = `<i data-lucide="check"></i>Saved`;
       paint(saveBtn);
       setTimeout(() => {
-        if (!document.body.contains(host)) return;
+        if (typeof document === "undefined" || !document.body.contains(host)) return;
         close(false);
         opts.onDone?.(res);
       }, 500);
