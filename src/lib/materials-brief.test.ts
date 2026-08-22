@@ -37,7 +37,7 @@ function settings(over: Partial<MaterialsSettings> = {}): MaterialsSettings & { 
     surfaceId: "s1",
     surfaceKind: "flooring",
     detections: [floor, wall],
-    mask: { strokes: [], redo: [] },
+    mask: emptyMask(),
     materialId: "white_oak",
     finishId: "matte",
     colorId: "natural",
