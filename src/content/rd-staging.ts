@@ -1932,7 +1932,16 @@ function bindReview(el) {
       if (it) startBulkDesign([it], true);
       return;
     }
+    /* The wand is the primary card action: open this photo in the Canvas. */
+    const canv = t.closest("[data-canvas]");
+    if (canv) {
+      e.preventDefault();
+      e.stopPropagation();
+      openInCanvas(canv.getAttribute("data-canvas"));
+      return;
+    }
     const edp = t.closest("[data-editphoto]");
+
     if (edp) {
       e.preventDefault();
       e.stopPropagation();
