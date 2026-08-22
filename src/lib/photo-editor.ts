@@ -339,6 +339,13 @@ export async function openPhotoEditor(opts: {
   );
   let comparing = false;
   let cropMode = false;
+  /* Auto Enhance and the live histogram. Neither ever runs on open. */
+  let autoStrength: Strength = "balanced";
+  let autoBusy = false;
+  let autoPreview = false;
+  let cropBackup: Crop = null;
+  let stats: PhotoStats | null = null;
+  let sourceStats: { src: string; stats: PhotoStats } | null = null;
   let aiPreview: { op: string; label: string; image: string } | null = null;
   let aiBusy = "";
   let saveFailed = false;
