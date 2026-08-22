@@ -1,0 +1,332 @@
+/* Describe composer: compact prompt editor + visual Design Settings. */
+
+.rd-app .sp-describe .sp-composer {
+  display: block;
+  padding: 12px 12px 8px;
+}
+
+.rd-app .sp-describe .sp-composer textarea {
+  min-height: 96px;
+  max-height: 220px;
+  overflow-y: auto;
+  resize: none;
+}
+
+/* reference thumbnails live inside the editor */
+.rd-app .sp-describe .sp-refs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+
+.rd-app .sp-describe .sp-ref {
+  position: relative;
+  width: 72px;
+  margin: 0;
+  border: 1px solid var(--rd-line, #e5e5e5);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--rd-surface, #fff);
+  cursor: grab;
+}
+
+.rd-app .sp-describe .sp-ref img {
+  display: block;
+  width: 100%;
+  height: 56px;
+  object-fit: cover;
+}
+
+.rd-app .sp-describe .sp-ref figcaption {
+  padding: 2px;
+}
+
+.rd-app .sp-describe .sp-ref .sp-ref-k {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-size: 10px;
+  color: var(--rd-muted, #6b7280);
+}
+
+.rd-app .sp-describe .sp-ref-x {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.55);
+  color: #fff;
+  cursor: pointer;
+}
+
+.rd-app .sp-describe .sp-ref-x i {
+  width: 11px;
+  height: 11px;
+}
+
+.rd-app .sp-describe .sp-ref-fail {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+}
+
+.rd-app .sp-describe .sp-ref-fail button {
+  flex: 1;
+  border: 1px solid var(--rd-line, #e5e5e5);
+  border-radius: 6px;
+  background: transparent;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.rd-app .sp-describe .sp-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--rd-muted, #6b7280);
+}
+
+/* improve description before / after */
+.rd-app .sp-improve-prev {
+  margin-top: 10px;
+  padding: 12px;
+  border: 1px solid var(--rd-line, #e5e5e5);
+  border-radius: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.rd-app .sp-improve-prev p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.rd-app .sp-improve-a {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* design settings */
+.rd-app .rdset {
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
+}
+
+.rd-app .rdset-t {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.rd-app .rdset-row {
+  display: grid;
+  gap: 8px;
+}
+
+.rd-app .rdset-h {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rd-app .rdset-l {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--rd-muted, #6b7280);
+}
+
+.rd-app .rdset-note {
+  font-size: 11px;
+  color: var(--rd-muted, #6b7280);
+}
+
+.rd-app .rdset-all {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--rd-red, #c00);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rd-app .rdset-seg {
+  display: inline-flex;
+  border: 1px solid var(--rd-line, #e5e5e5);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.rd-app .rdset-segb {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.rd-app .rdset-segb i {
+  width: 14px;
+  height: 14px;
+}
+
+.rd-app .rdset-segb.on {
+  background: var(--rd-red, #c00);
+  color: #fff;
+}
+
+.rd-app .rdset-cards {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.rd-app .rdset-cards.is-browse {
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.rd-app .rdset-card {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 0 0 6px;
+  border: 1px solid var(--rd-line, #e5e5e5);
+  border-radius: 12px;
+  background: var(--rd-surface, #fff);
+  overflow: hidden;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rd-app .rdset-card img,
+.rd-app .rdset-card .rdset-ph {
+  display: block;
+  width: 100%;
+  height: 68px;
+  object-fit: cover;
+  background: var(--rd-soft, #f4f4f5);
+  display: grid;
+  place-items: center;
+}
+
+.rd-app .rdset-cn {
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.rd-app .rdset-cd {
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--rd-muted, #6b7280);
+}
+
+.rd-app .rdset-card.on {
+  border-color: var(--rd-red, #c00);
+  box-shadow: 0 0 0 2px color-mix(in oklab, #c00 22%, transparent);
+}
+
+.rd-app .rdset-ck {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--rd-red, #c00);
+  color: #fff;
+}
+
+.rd-app .rdset-ck i {
+  width: 12px;
+  height: 12px;
+}
+
+.rd-app .rdset-adv > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rd-app .rdset-sum {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--rd-muted, #6b7280);
+}
+
+/* view all browser */
+.rd-app .rdset-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.45);
+  padding: 20px;
+}
+
+.rd-app .rdset-modal-c {
+  width: min(880px, 100%);
+  max-height: 82vh;
+  overflow: hidden;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: var(--rd-surface, #fff);
+}
+
+.rd-app .rdset-modal-c header {
+  display: flex;
+  align-items: center;
+}
+
+.rd-app .rdset-modal-c h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.rd-app .rdset-x {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.rd-app .rdset-search {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--rd-line, #e5e5e5);
+  border-radius: 999px;
+  font-size: 13px;
+}
+
+.rd-app .rdset-empty {
+  font-size: 13px;
+  color: var(--rd-muted, #6b7280);
+}
+
+@media (max-width: 760px) {
+  .rd-app .rdset-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
