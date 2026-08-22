@@ -1207,6 +1207,11 @@ export async function openPhotoEditor(opts: {
      the interaction needs is derived from the viewport, the image's layout box
      and the crop state — never from the live (already transformed) rect. */
 
+  /** The smallest zoom at which the photograph still covers the frame. */
+  function cropMinScale(): number {
+    return cropView ? minCoverScale(cropView.frame, baseBox()) : 1;
+  }
+
   function viewBox(): CropBox {
     const stageEl = $("#rdpeStage");
     const r = stageEl?.getBoundingClientRect();
