@@ -98,10 +98,17 @@ export type RevealBrand = {
 };
 
 import { createMusicTrack } from "@/lib/rd-music";
+import {
+  disclosureOption,
+  videoDisclosurePlan,
+  type VideoPlacement,
+} from "@/lib/disclosure";
 
 export type RevealOptions = {
   aspect: "9:16" | "16:9" | "1:1" | "4:5";
   versionType: "branded" | "clean" | "disclosure";
+  /** Persistent caption, or opening and closing cards. */
+  disclosurePlacement?: VideoPlacement;
   brand?: RevealBrand | null;
   title?: string | null;
   subtitle?: string | null;
@@ -160,12 +167,14 @@ export function browserRenderSupport(): { ok: boolean; reason: string } {
   return { ok: true, reason: "" };
 }
 
+/* Wording comes from the canonical Disclosure & Watermark system so a video
+   never says something different from the photograph it was built from. */
 export const DISCLOSURE_LABEL: Record<string, string> = {
-  staged: "Virtually Staged",
-  proposed: "Proposed Design",
-  concept: "Conceptual Rendering",
-  altered: "Digitally Altered",
-  ai: "AI-Generated Concept",
+  staged: disclosureOption("staged").text,
+  proposed: disclosureOption("proposed").text,
+  concept: disclosureOption("concept").text,
+  altered: disclosureOption("altered").text,
+  ai: disclosureOption("concept").text,
 };
 
 const SIZES: Record<RevealOptions["aspect"], [number, number]> = {
@@ -1195,10 +1204,15 @@ export async function renderReveal(
       const a = Math.min(1, local / 350) * Math.min(1, (durations[idx]! - local) / 350);
       sceneLabels(c, W, H, scene.labels ?? [], a);
     }
-    if (showDisclosure && scene.disclosure_type) {
+    /* Placement honours the required on-screen duration either way. */
+    const tGlobal = (starts[idx] ?? 0) + local;
+    const discOn = disclosureWindows.some(
+      (w) => tGlobal >= w.start * 1000 && tGlobal <= w.end * 1000,
+    );
+    if (showDisclosure && discOn && scene.disclosure_type) {
       disclosureNote(c, W, H, DISCLOSURE_LABEL[scene.disclosure_type] ?? "Digitally Altered", 1);
     }
-    if (showDisclosure && clips[idx]) {
+    if (showDisclosure && discOn && clips[idx]) {
       c.save();
       c.globalAlpha = 0.9;
       pill(
