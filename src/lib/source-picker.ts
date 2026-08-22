@@ -919,13 +919,29 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       )
         return false;
       return true;
-    });
+    })
+      .slice()
+      .sort(sortMedia);
+  }
+
+  const time = (d: PickerDesign) => {
+    const t = Date.parse(String(d.createdAt || ""));
+    return isNaN(t) ? 0 : t;
+  };
+
+  function sortMedia(a: PickerDesign, b: PickerDesign) {
+    if (state.mediaSort === "oldest") return time(a) - time(b);
+    if (state.mediaSort === "room")
+      return String(a.room || "").localeCompare(String(b.room || ""));
+    if (state.mediaSort === "property")
+      return String(a.address || "").localeCompare(String(b.address || ""));
+    return time(b) - time(a);
   }
 
   const MEDIA_TYPES: Array<[typeof state.mediaType, string]> = [
-    ["all", "All media"],
-    ["photos", "Property photos"],
-    ["designs", "Generated designs"],
+    ["all", "All"],
+    ["photos", "Property Photos"],
+    ["designs", "Generated Designs"],
     ["favorites", "Favorites"],
   ];
 
