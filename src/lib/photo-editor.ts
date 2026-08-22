@@ -1343,20 +1343,43 @@ export async function openPhotoEditor(opts: {
       if (out) out.textContent = `${n(t.value) > 0 ? "+" : ""}${t.value}`;
       const img = $("#rdpeImg") as HTMLImageElement;
       img.style.filter = filterString(s.adj);
+      refreshStats();
     }
-    if (t.hasAttribute("data-straighten")) {
+    if (t.hasAttribute("data-geo")) {
       if (!t.dataset['pushed']) {
         push();
         t.dataset['pushed'] = "1";
       }
-      s.straighten = n(t.value);
+      (s as any)[t.getAttribute("data-geo") as string] = n(t.value);
       saveFailed = false;
-    s.dirty = true;
+      s.dirty = true;
       const img = $("#rdpeImg") as HTMLImageElement;
-      img.style.transform = `rotate(${s.rotation + s.straighten}deg) scaleX(${s.flipH ? -1 : 1})`;
+      img.style.transform = transformString(s);
       const out = t.parentElement?.querySelector(".rdpe-num");
-      if (out) out.textContent = `${t.value}°`;
+      if (out) out.textContent = `${n(t.value) > 0 ? "+" : ""}${t.value}°`;
     }
+  });
+
+  /* Double-click a slider to return that single control to zero. */
+  host.addEventListener("dblclick", (e) => {
+    const t = e.target as HTMLInputElement;
+    const s = st();
+    if (t.hasAttribute("data-adj")) {
+      push();
+      s.adj[t.getAttribute("data-adj") as string] = 0;
+      paint();
+      refreshStats();
+    } else if (t.hasAttribute("data-geo")) {
+      push();
+      (s as any)[t.getAttribute("data-geo") as string] = 0;
+      paint();
+    }
+  });
+
+  host.addEventListener("change", (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.dataset) delete t.dataset['pushed'];
+    if (t.tagName === "INPUT") paint();
   });
 
   host.addEventListener("change", (e) => {
