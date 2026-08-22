@@ -2261,7 +2261,9 @@ export function initApp(): () => void {
           return;
         }
         if (!(v in rule)) return;
-        const show = rule[v] || b.classList.contains("on");
+        /* Until the workspace has actually been read, show everything. A failed
+           or pending request must never look like a missing feature. */
+        const show = !WORKSPACE_LOADED || rule[v] || b.classList.contains("on");
         b.hidden = !show;
       });
       /* Counts are live workspace information, never a zero-state badge. */
