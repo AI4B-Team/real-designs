@@ -2425,7 +2425,13 @@ export function initApp(): () => void {
         } catch (_) {}
       }
       const tag = document.getElementById("rdwVerTag");
-      if (tag && !plan.compare && STUDIO_RESULT) tag.textContent = plan.resultLabel;
+      /* The badge describes the image on screen: a finished render reads
+         "Generated", the untouched upload reads "Original". */
+      if (tag && !plan.compare) {
+        tag.textContent = STUDIO_RESULT ? "Generated" : "Original";
+        tag.setAttribute("data-badge", STUDIO_RESULT ? "generated" : "original");
+        tag.classList.remove("is-error");
+      }
       try {
         paintPanelHeader();
       } catch (_) {}

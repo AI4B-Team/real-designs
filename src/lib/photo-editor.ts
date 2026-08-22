@@ -13,6 +13,7 @@
 
 import { createIcons, icons } from "lucide";
 import { rdToast } from "@/lib/rd-toast";
+import { applyCanvasBadge, resolveCanvasBadge, showCompareControl } from "@/lib/canvas-badge";
 import { confirmDialog } from "@/lib/builder-card-menu";
 import { roomPhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPhotoEdits, savePhotoEdit, resetPhotoEdit } from "@/lib/photo-edits.functions";
@@ -262,6 +263,7 @@ export async function openPhotoEditor(opts: {
   let cropMode = false;
   let aiPreview: { op: string; label: string; image: string } | null = null;
   let aiBusy = "";
+  let saveFailed = false;
 
   const embedded = !!opts.mount;
   const host = document.createElement("div");
@@ -315,6 +317,7 @@ export async function openPhotoEditor(opts: {
     s.history.push(snapshot(s));
     if (s.history.length > 40) s.history.shift();
     s.future = [];
+    saveFailed = false;
     s.dirty = true;
   }
 
@@ -334,6 +337,7 @@ export async function openPhotoEditor(opts: {
     if (!s.history.length) return;
     s.future.push(snapshot(s));
     restore(s, s.history.pop() as string);
+    saveFailed = false;
     s.dirty = true;
     paint();
   }
@@ -343,6 +347,7 @@ export async function openPhotoEditor(opts: {
     if (!s.future.length) return;
     s.history.push(snapshot(s));
     restore(s, s.future.pop() as string);
+    saveFailed = false;
     s.dirty = true;
     paint();
   }
@@ -405,12 +410,27 @@ export async function openPhotoEditor(opts: {
     $("#rdpeSaveCopy").toggleAttribute("disabled", !hasEdits(s) || s.saving);
     $("#rdpeReset").toggleAttribute("disabled", !hasEdits(s));
     $("#rdpeSave").textContent = s.saving ? "Saving…" : primarySaveLabel({ mode: modeFor(p) });
+    const edited = hasEdits(s) || !!aiPreview;
     const hold = $("#rdpeHold") as HTMLButtonElement;
     if (hold) {
-      const on = compareEnabled(hasEdits(s) || !!aiPreview);
+      /* Nothing to compare against until an edit exists: the control hides
+         rather than sitting there disabled. */
+      const on = compareEnabled(edited) && showCompareControl(edited);
+      hold.hidden = !on;
       hold.toggleAttribute("disabled", !on);
-      hold.title = on ? "Hold To Compare With The Editor Original" : "Make An Adjustment To Compare";
+      hold.title = "Hold To Compare With The Editor Original";
     }
+    /* The badge names the image on screen, never the selected tool. */
+    applyCanvasBadge(
+      host.querySelector(".rdpe-badge"),
+      resolveCanvasBadge({
+        comparing,
+        saving: s.saving,
+        saveFailed,
+        hasEdits: edited,
+        generated: modeFor(p) === "generated",
+      }),
+    );
     const prov = $("#rdpeProv");
     if (prov) {
       const line = modeFor(p) === "generated" ? editedFromLabel(p.versionNumber ?? null) : null;
@@ -607,7 +627,8 @@ export async function openPhotoEditor(opts: {
         }
       }
       s.crop = { x: c.x, y: c.y, w: c.w, h: c.h, ratio: handle ? "free" : start.ratio };
-      s.dirty = true;
+      saveFailed = false;
+    s.dirty = true;
       paintCropBox();
     };
     const up = () => {
@@ -680,6 +701,7 @@ export async function openPhotoEditor(opts: {
     const s = st();
     if (s.saving) return;
     s.saving = true;
+    saveFailed = false;
     paint();
     try {
       const dataUrl = await renderPhoto(s);
@@ -720,6 +742,7 @@ export async function openPhotoEditor(opts: {
       }
       opts.onSaved?.({ key: p.key, path, dataUrl, copy: asCopy, useEdited });
     } catch (err: any) {
+      saveFailed = true;
       rdToast(err?.message || "That Photo Could Not Be Saved.", "error");
     } finally {
       s.saving = false;
@@ -871,7 +894,8 @@ export async function openPhotoEditor(opts: {
         t.dataset['pushed'] = "1";
       }
       s.adj[t.getAttribute("data-adj") as string] = n(t.value);
-      s.dirty = true;
+      saveFailed = false;
+    s.dirty = true;
       const out = t.parentElement?.querySelector(".rdpe-num");
       if (out) out.textContent = `${n(t.value) > 0 ? "+" : ""}${t.value}`;
       const img = $("#rdpeImg") as HTMLImageElement;
@@ -883,7 +907,8 @@ export async function openPhotoEditor(opts: {
         t.dataset['pushed'] = "1";
       }
       s.straighten = n(t.value);
-      s.dirty = true;
+      saveFailed = false;
+    s.dirty = true;
       const img = $("#rdpeImg") as HTMLImageElement;
       img.style.transform = `rotate(${s.rotation + s.straighten}deg) scaleX(${s.flipH ? -1 : 1})`;
       const out = t.parentElement?.querySelector(".rdpe-num");
