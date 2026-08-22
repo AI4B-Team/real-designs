@@ -1640,12 +1640,27 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       state.tab = "property";
       opts.onTab?.(state.tab);
       render();
+    } else if (k === "ddesign") {
+      opts.onSample ? opts.onSample() : (state.tab = "upload");
+      render();
+    } else if (k === "dclear") {
+      state.designSel = [];
+      render();
+    } else if (k === "dpclose") {
+      state.designPreview = null;
+      render();
+    } else if (k === "dptoggle") {
+      const id = state.designPreview;
+      if (!id) return;
+      const at = state.designSel.indexOf(id);
+      if (at > -1) state.designSel.splice(at, 1);
+      else state.designSel.push(id);
+      render();
     } else if (k === "dcontinue") {
       if (state.adding) return;
-      const byId = new Map(state.designs.map((d) => [d.id, d]));
-      const ids = [...new Set(state.designSel)];
-      const picked = ids.map((id) => byId.get(id)).filter(Boolean) as PickerDesign[];
+      const picked = selectedDesigns();
       if (!picked.length) return;
+
       state.adding = true;
       render();
       try {
