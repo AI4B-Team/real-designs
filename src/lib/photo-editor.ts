@@ -582,6 +582,9 @@ export async function openPhotoEditor(opts: {
     document.body.classList.add("rdpe-open");
   }
   HOST = host;
+  /* A batch survives a refresh: restore the last unfinished one so its undo
+     and its per-photo progress are still available. */
+  lastBatch = latestUnfinishedBatch();
 
 
   /* Some nodes (the image, the crop box, the badge, Hold To Compare) are
