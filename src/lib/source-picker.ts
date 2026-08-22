@@ -171,7 +171,15 @@ export type PickerDesign = {
   propertyId?: string | null;
   createdAt?: string | null;
   versionId?: string | null;
+  /** Style used for the render, when the version recorded one. */
+  style?: string | null;
+  /** Version number of the saved render. */
+  versionNo?: number | null;
+  /** Version status, e.g. "draft" or "approved". */
+  status?: string | null;
+  projectId?: string | null;
 };
+
 
 /** One photo in the upload-card stack: a bundled example or a stored path. */
 export type HeroPhoto = { src?: string; path?: string; alt: string };
