@@ -54,13 +54,9 @@ import {
 } from "./crop-frame";
 import {
   CROP_PRESETS,
-  EXPORT_PRESETS,
   classifyEdits,
   cropPreset,
   deletePreset as removePreset,
-  disclosureText,
-  exportFileName,
-  exportPreset,
   exportSize,
   listPresets,
   mergeBundle,
