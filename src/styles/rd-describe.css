@@ -266,30 +266,37 @@
 .rd-app .rdset-card img {
   display: block;
   width: 100%;
-  height: 68px;
+  aspect-ratio: 16 / 10;
+  height: auto;
   object-fit: cover;
   background: var(--rd-soft, #f4f4f5);
+  transition: transform 0.25s ease;
+}
+
+.rd-app .rdset-card:hover img {
+  transform: scale(1.03);
 }
 
 .rd-app .rdset-cards.is-browse .rdset-card img {
-  height: 96px;
+  aspect-ratio: 4 / 3;
 }
 
 .rd-app .rdset-card .rdset-ph {
   display: grid;
   place-items: center;
   width: 100%;
-  height: 68px;
+  aspect-ratio: 16 / 10;
   background: var(--rd-soft, #f4f4f5);
 }
 
 .rd-app .rdset-cn {
   display: block;
-  padding: 4px 8px 0;
+  padding: 6px 8px 0;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.25;
 }
+
 
 .rd-app .rdset-cd {
   padding: 0 8px;
