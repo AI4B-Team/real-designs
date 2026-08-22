@@ -869,3 +869,34 @@ select:not([multiple]) {
   background: rgba(17, 17, 17, 0.06);
   color: #141414;
 }
+
+/* ------------------------------------------------------------------
+   Modal footer safety net.
+   Footers are wrapping flex rows that also hold long status text
+   (credit counts, hints). Without an explicit floor, the action pills
+   get squeezed narrower than their label and the text spills over the
+   rounded edge. Buttons keep their intrinsic width; the prose shrinks.
+   ------------------------------------------------------------------ */
+:where(
+  .rv-modal-f,
+  .rdm-foot,
+  .cs-foot,
+  .pk-foot,
+  .sv-foot,
+  .vs-foot,
+  .stw-foot,
+  .spd-foot,
+  .rdsg-foot,
+  .rv-foot,
+  .an-foot,
+  .an-confirm,
+  .an-confirm-a
+)
+  > :where(button, a.btn, .btn, .rdm-btn) {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  min-width: max-content;
+}
+:where(.rv-modal-f, .rdm-foot, .an-foot) > :where(span, p, div:not(.btn)) {
+  min-width: 0;
+}
