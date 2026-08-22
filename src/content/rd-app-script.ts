@@ -51,7 +51,7 @@ import {
   progressLabel,
 } from "@/lib/concept-batch";
 import { suggestDesignTitle } from "@/lib/property-address";
-import * as OS from "@/lib/output-slots";
+import * as OS from "@/lib/canvas-session";
 
 
 import { supabase } from "@/integrations/supabase/client";
@@ -2497,7 +2497,7 @@ export function initApp(): () => void {
       if (!OUTPUTS) return;
       const wrap = document.getElementById("vars");
       if (wrap) {
-        OS.orderedSlots(OUTPUTS).forEach((s) => {
+        OS.orderedOutputs(OUTPUTS).forEach((s) => {
           let tile = wrap.querySelector('[data-output-id="' + CSS.escape(s.outputId) + '"]');
           if (!tile) {
             tile = document.createElement("div");
@@ -2510,8 +2510,8 @@ export function initApp(): () => void {
           if (s.image) tile.dataset.src = s.image;
           tile.classList.toggle("on", OUTPUTS.activeOutputId === s.outputId);
           tile.setAttribute("aria-selected", OUTPUTS.activeOutputId === s.outputId ? "true" : "false");
-          const label = OS.slotLabel(OUTPUTS, s);
-          const badge = OS.slotBadge(OUTPUTS, s);
+          const label = OS.outputLabel(OUTPUTS, s);
+          const badge = OS.outputBadge(OUTPUTS, s);
           tile.innerHTML =
             '<div style="aspect-ratio:8/5">' +
             (s.image
@@ -2540,10 +2540,10 @@ export function initApp(): () => void {
     /** Canvas, thumbnail and summary always move together, by id. */
     function selectOutput(outputId) {
       if (!OUTPUTS) return;
-      const s = OS.slotById(OUTPUTS, outputId);
+      const s = OS.outputById(OUTPUTS, outputId);
       if (!s || !s.image) return;
       OS.setActive(OUTPUTS, outputId);
-      if (cAfter) cAfter.innerHTML = photo(s.image, OS.slotLabel(OUTPUTS, s));
+      if (cAfter) cAfter.innerHTML = photo(s.image, OS.outputLabel(OUTPUTS, s));
       lastRender = s.image;
       lastRenderPath = s.path || null;
       paintOutputs();
@@ -2578,7 +2578,7 @@ export function initApp(): () => void {
       /* One authoritative room type: whatever the request was made with is
          what the panel, the version record and Save Room all use. */
       CONCEPT_SUMMARY_BASE = i.summary || null;
-      OUTPUTS = OS.createOutputSet({
+      OUTPUTS = OS.createSession({
         count: i.count || 1,
         kind: "concept",
         roomType: i.room || null,
@@ -2641,14 +2641,14 @@ export function initApp(): () => void {
     async function addConcept(image, label, opts) {
       const o = opts || {};
       const idx = typeof o.index === "number" ? o.index : 0;
-      const slot = OUTPUTS ? OS.slotAt(OUTPUTS, idx) : null;
+      const slot = OUTPUTS ? OS.outputAt(OUTPUTS, idx) : null;
       if (OUTPUTS && slot) {
         OS.markImage(OUTPUTS, idx, image);
         /* The canvas follows the active output, which is still concept 1 while
            concept 2 is saving: a later result never steals the view. */
-        const active = OS.activeSlot(OUTPUTS);
+        const active = OS.activeOutput(OUTPUTS);
         if (cAfter && active && active.outputId === slot.outputId)
-          cAfter.innerHTML = photo(image, OS.slotLabel(OUTPUTS, slot));
+          cAfter.innerHTML = photo(image, OS.outputLabel(OUTPUTS, slot));
         paintOutputs();
       } else if (cAfter) {
         cAfter.innerHTML = photo(image, (label || "Concept") + " design");
@@ -2659,7 +2659,7 @@ export function initApp(): () => void {
       } catch (_) {
         path = null;
       }
-      const active = OUTPUTS ? OS.activeSlot(OUTPUTS) : null;
+      const active = OUTPUTS ? OS.activeOutput(OUTPUTS) : null;
       if (!OUTPUTS || !slot || (active && active.outputId === slot.outputId)) {
         lastRender = image;
         lastRenderPath = path;
@@ -4349,7 +4349,7 @@ export function initApp(): () => void {
       /* Concepts attach in slot order, so the room keeps Concept 1 before
          Concept 2 no matter which one finished first. */
       if (OUTPUTS) {
-        for (const s of OS.persistableSlots(OUTPUTS)) {
+        for (const s of OS.persistableOutputs(OUTPUTS)) {
           if (seen.has(s.path)) continue;
           seen.add(s.path);
           const v = await attachVersionToRoom(s.path);
@@ -4390,14 +4390,14 @@ export function initApp(): () => void {
       /* A described concept has no source photo: its first durable image is
          the room's source, so saving never waits on an upload that will not
          happen. */
-      const slotPath = OUTPUTS ? (OS.persistableSlots(OUTPUTS)[0] || {}).path || null : null;
+      const slotPath = OUTPUTS ? (OS.persistableOutputs(OUTPUTS)[0] || {}).path || null : null;
       const path = studioSourcePath() || slotPath;
       if (!path) {
         const gate = OUTPUTS ? OS.saveRoomState(OUTPUTS) : null;
         window.rdToast && window.rdToast(gate ? gate.tooltip : "Your Photo Is Still Uploading");
         return null;
       }
-      const roomType = (OUTPUTS && OUTPUTS.roomType) || activeStudioRoom() || null;
+      const roomType = (OUTPUTS && OUTPUTS.roomTypeName) || activeStudioRoom() || null;
       const saved = await openSaveRoomModal({
         sourcePath: path,
         roomName: roomType,
