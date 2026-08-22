@@ -3197,7 +3197,27 @@ function roomLabel(it) {
   return r || "Unassigned Room";
 }
 
+/* The Property Photos filmstrip is persistent inside the Canvas workspace and
+   remembers whether the user left it open. */
+const FILM_KEY = "rd.canvas.filmstrip";
+
+function filmstripOpen() {
+  try {
+    return localStorage.getItem(FILM_KEY) !== "0";
+  } catch (_) {
+    return true;
+  }
+}
+
+function setFilmstripOpen(open) {
+  try {
+    localStorage.setItem(FILM_KEY, open ? "1" : "0");
+  } catch (_) {}
+  drawStrip();
+}
+
 function drawStrip() {
+
   if (!strip || !S) return;
   const list = designSet();
   const i = list.findIndex((x) => x.key === S.current);
