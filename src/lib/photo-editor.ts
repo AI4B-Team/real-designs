@@ -659,10 +659,7 @@ export async function openPhotoEditor(opts: {
           label: p.room || p.name || null,
           as_copy: asCopy,
           editor_mode: modeFor(p),
-          asset_id: p.assetId || p.key,
-          property_id: p.propertyId || null,
-          room_id: p.roomId || null,
-          parent_version_id: p.versionId || p.parentVersionId || null,
+          parent_asset_key: p.versionId || p.parentVersionId || p.assetId || null,
         },
       });
       s.dirty = false;

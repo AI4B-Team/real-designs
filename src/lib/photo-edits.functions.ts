@@ -36,6 +36,9 @@ const SaveInput = z.object({
   edited_path: z.string().max(400).nullable().optional(),
   label: z.string().max(200).nullable().optional(),
   as_copy: z.boolean().default(false),
+  /* Shared editor entry contract. */
+  editor_mode: z.enum(["source", "generated", "media"]).default("source"),
+  parent_asset_key: z.string().max(200).nullable().optional(),
 });
 
 export const listPhotoEdits = createServerFn({ method: "POST" })
@@ -69,7 +72,11 @@ export const savePhotoEdit = createServerFn({ method: "POST" })
 
     const base = {
       user_id: userId,
-      asset_key: data.as_copy ? `${data.asset_key}:copy:${crypto.randomUUID()}` : data.asset_key,
+      asset_key:
+        data.as_copy || data.editor_mode === "generated"
+          ? `${data.asset_key}:${data.as_copy ? "copy" : "v"}:${crypto.randomUUID()}`
+          : data.asset_key,
+      
       source_path: data.source_path,
       adjustments: data.adjustments,
       crop: data.crop ?? null,
@@ -79,10 +86,15 @@ export const savePhotoEdit = createServerFn({ method: "POST" })
       edited_path: data.edited_path ?? null,
       label: data.label ?? null,
       is_copy: data.as_copy,
+      editor_mode: data.editor_mode,
+      parent_asset_key: data.parent_asset_key ?? (data.editor_mode === "generated" ? data.asset_key : null),
       updated_at: new Date().toISOString(),
     };
 
-    if (data.as_copy) {
+    /* A generated design that already exists as a persistent version is never
+       written over: finishing edits always land as a child version. */
+    const asChild = data.as_copy || data.editor_mode === "generated";
+    if (asChild) {
       const { data: row, error } = await supabase
         .from("photo_edits")
         .insert(base as any)
