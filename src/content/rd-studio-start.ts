@@ -130,6 +130,7 @@ export type StudioStartCtx = {
 
 import {
   mountSourcePicker,
+  normalizeSource,
   CONTEXT_CONFIG,
   type PickerDesign,
   type PickerHero,
@@ -1138,7 +1139,7 @@ export function mountStudioStart(ctx: StudioStartCtx) {
     if (!list.length) return "";
     /* While the user is actively picking video source designs, this strip
        must not compete with the selection above it. */
-    const quiet = state.sourceTab === "design";
+    const quiet = state.sourceTab === "media";
     if (quiet)
       return (
         '<details class="stw-recent is-quiet">' +
@@ -1184,15 +1185,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   function sourceHeading(tab: string): { title: string; copy: string } {
     if (tab === "describe")
       return {
-        title: "Choose A Source",
+        title: "Choose a Source",
         copy: "Pick where your photos come from, or describe the space instead.",
       };
     return {
-      title: "Choose A Source",
+      title: "Choose a Source",
       copy:
         state.door === "video"
-          ? "Upload a property shoot, import photos you already have, or paste a listing link."
-          : "Upload photos, import photos you already have, or describe the space you want.",
+          ? "Upload a property shoot or choose photos and designs you already have."
+          : "Upload photos, choose existing media, or describe the space you want.",
     };
   }
 
@@ -1445,11 +1446,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       hero: () => uploadHero(isVideo),
       /* The project-type card is the only output-type authority. */
       output: () => (isVideo ? "video" : "image"),
-      initialTab: (CONTEXT_CONFIG[isVideo ? "video" : "design"].sources.includes(
-        state.sourceTab as any,
-      )
-        ? state.sourceTab
-        : "upload") as any,
+      /* Removed sources (listing link, designs) never come back through
+         persisted tab state: they are remapped to a live source. */
+      initialTab: (() => {
+        const want = normalizeSource(state.sourceTab as any);
+        return (
+          CONTEXT_CONFIG[isVideo ? "video" : "design"].sources.includes(want) ? want : "upload"
+        ) as any;
+      })(),
       onTab: (tab: string) => {
         state.sourceTab = tab;
         const h = sourceHeading(tab);
@@ -1608,38 +1612,57 @@ export function mountStudioStart(ctx: StudioStartCtx) {
         render();
       },
 
-      ...(isVideo && ctx.getFinishedDesigns
+      ...(ctx.getFinishedDesigns
         ? {
             loadDesigns: () => ctx.getFinishedDesigns!(),
-            onDesigns: (designs: PickerDesign[]) => {
-              /* Finished designs become the video's scenes, in pick order,
+            onDesigns: (media: PickerDesign[]) => {
+              if (!media.length) return;
+              if (!isVideo) {
+                /* Design a Space: the chosen media opens in Review Rooms with
+                   its property, room and version relationships intact. */
+                openStagingReview({
+                  photos: media.map((d) => ({
+                    path: d.path,
+                    name: (d.room || "Design") + ".jpg",
+                    room: d.room || "",
+                    versionId: d.versionId || null,
+                    propertyId: d.propertyId || null,
+                    roomId: d.roomId || null,
+                  })) as any,
+                  address: media[0]?.address || "",
+                });
+                return;
+              }
+              /* Selected media becomes the video's scenes, in pick order,
                  through the canonical handoff — never thumbnail URLs. */
               const res = startVideoBuilder(
                 {
-                  origin: "designs",
-                  propertyId: designs[0]?.propertyId || null,
-                  projectId: designs[0]?.projectId || null,
-                  propertyAddress: designs[0]?.address || null,
-                  assets: designs.map((d, i) => ({
-                    assetId: d.id,
+                  origin: "media",
+                  propertyId: media[0]?.propertyId || null,
+                  projectId: media[0]?.projectId || null,
+                  propertyAddress: media[0]?.address || null,
+                  assets: media.map((d, i) => ({
+                    assetId: d.assetId || d.id,
                     versionId: d.versionId || null,
                     storagePath: d.path,
-                    fileName: (d.room || "design") + ".jpg",
-                    roomId: d.id,
+                    fileName: (d.room || "media") + ".jpg",
+                    roomId: d.roomId || d.id,
                     roomName: d.room || null,
                     propertyId: d.propertyId || null,
                     projectId: d.projectId || null,
                     sortOrder: i,
-                    sourceType: "generated-version",
+                    sourceType:
+                      (d.assetType || "design") === "design"
+                        ? "generated-version"
+                        : "media-asset",
                   })),
                 },
-                { from: "studio", sourceType: "design" },
+                { from: "studio", sourceType: "media" },
               );
               if (!res.ok) {
-                ctx.showAlert?.(res.reason || "Couldn't Send These Designs To Video Builder.");
+                ctx.showAlert?.(res.reason || "Couldn't Send This Media To Video Builder.");
               }
             },
-
           }
         : {}),
     });

@@ -6,8 +6,8 @@
  * sources appear, which file types are accepted and whether one or many images
  * can be chosen is configured per context, never re-implemented.
  *
- * Listing URLs are read as text only. No media is ever imported from a public
- * listing page, in any context.
+ * There is no listing-link source: reading a public listing page yields text
+ * only, never its photos, so Studio does not offer it as a photo source.
  */
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
@@ -26,7 +26,12 @@ import { styleById } from "@/lib/style-catalog";
 
 
 
-export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design" | "describe";
+export type SourceId = "upload" | "cloud" | "address" | "property" | "media" | "describe";
+
+/** Sources that used to exist. Persisted tab state is remapped, never shown. */
+const LEGACY_SOURCE: Record<string, SourceId> = { url: "upload", design: "media" };
+export const normalizeSource = (id: string | null | undefined): SourceId =>
+  (LEGACY_SOURCE[String(id || "")] || id || "upload") as SourceId;
 export type PickerContext = "design" | "video" | "property-media" | "batch";
 
 export type PickedFile = { file: File; flags: string[] };
@@ -53,23 +58,17 @@ export const SOURCE_META: Record<
     tab: "Address",
     desc: "Fills in address and listing details.",
   },
-  url: {
-    icon: "link",
-    label: "Listing Link",
-    tab: "Listing Link",
-    desc: "Zillow, Realtor.com, supported MLS or a public listing gallery URL.",
-  },
   property: {
     icon: "home",
-    label: "Existing Property",
+    label: "Property",
     tab: "Property",
-    desc: "Reuse photos already uploaded.",
+    desc: "Open one saved property and choose its photos.",
   },
-  design: {
+  media: {
     icon: "images",
-    label: "Designs",
-    tab: "Designs",
-    desc: "Start from designs you have already generated.",
+    label: "Media",
+    tab: "Media",
+    desc: "Browse photos and generated designs across your workspace.",
   },
   describe: {
     icon: "message-square-text",
@@ -91,14 +90,14 @@ const IMAGE_ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.heif";
 
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
-    sources: ["upload", "cloud", "property", "describe"],
+    sources: ["upload", "cloud", "property", "media", "describe"],
     /* Many photos are handed to the staging review grid, never dropped. */
     multiple: true,
     accept: IMAGE_ACCEPT + ",application/pdf,.pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "property", "design", "describe", "url"],
+    sources: ["upload", "cloud", "property", "media", "describe"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
@@ -178,6 +177,13 @@ export type PickerDesign = {
   /** Version status, e.g. "draft" or "approved". */
   status?: string | null;
   projectId?: string | null;
+  /** Durable asset id, when the item is a stored media asset. */
+  assetId?: string | null;
+  /** Room record the asset belongs to. */
+  roomId?: string | null;
+  /** "design" for generated renders, "photo" for original property photos. */
+  assetType?: "design" | "photo";
+  favorite?: boolean;
 };
 
 
@@ -211,9 +217,9 @@ export type PickerOptions = {
   /** Called with the photos the user confirmed for a property. */
   onPropertyPhotos?: (p: PickerProperty, photos: PickerPhoto[]) => void | Promise<void>;
 
-  /** Finished designs, for the design source (legacy synchronous list). */
+  /** Media items, for the Media source (legacy synchronous list). */
   designs?: () => Array<{ id: string; label: string; sub?: string; badge?: string }>;
-  /** Finished designs read from the database, for the design source. */
+  /** Media read from the database (photos and generated designs). */
   loadDesigns?: () => Promise<PickerDesign[]>;
   /** Called with the finished designs the user selected, in order. */
   onDesigns?: (designs: PickerDesign[]) => void | Promise<void>;
@@ -287,13 +293,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const alert = opts.showAlert || ((m: string) => console.warn(m));
 
   const state = {
-    tab: (opts.initialTab && cfg.sources.includes(opts.initialTab)
-      ? opts.initialTab
-      : cfg.sources[0]) as SourceId,
+    tab: (() => {
+      const want = normalizeSource(opts.initialTab);
+      return (cfg.sources.includes(want) ? want : cfg.sources[0]) as SourceId;
+    })(),
     busy: false,
     note: "",
     address: "",
-    url: "",
 
 
     dragging: false,
@@ -317,6 +323,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     designPreview: null as string | null,
     /** Id currently dragged in the selected-order row. */
     designDrag: null as string | null,
+    /** Media filters: type, property, room and free text. */
+    mediaType: "all" as "all" | "photos" | "designs" | "favorites",
+    mediaProperty: "all",
+    mediaRoom: "all",
+    mediaQuery: "",
 
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
@@ -539,27 +550,8 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     render();
   }
 
-  async function readListingUrl() {
-    const v = state.url.trim();
-    if (v.length < 8) return;
-    state.busy = true;
-    state.note = "";
-    render();
-    try {
-      const { startListingImport } = await import("@/lib/listing-import.functions");
-      const r: any = await startListingImport({ data: { url: v } });
-      const addr = r?.import?.address || r?.import?.raw_address || "";
-      if (addr) opts.onProperty?.(addr);
-      state.note =
-        (r?.message || (addr ? "Listing Read: " + addr + "." : "Listing Read.")) +
-        " Listing Links Are Read As Text Only. No Photos Are Imported From A Public Listing Page.";
-    } catch (_) {
-      state.note =
-        "That Link Could Not Be Read. Listing Links Are Read As Text Only, So Upload The Photos Below.";
-    }
-    state.busy = false;
-    render();
-  }
+
+
 
   /* ---------- markup ---------- */
 
@@ -766,25 +758,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         "</div>"
       );
     }
-    if (state.tab === "url") {
-      return (
-        '<div class="sp-pane">' +
-        paneHead(
-          "Import From A Listing Link",
-          "Paste a Zillow, Realtor.com, supported MLS or public property gallery link.",
-        ) +
-        '<label class="sp-f">Listing Link<input type="text" data-sp-f="url" id="' +
-        pid("spUrl") +
-        '" placeholder="https://www.zillow.com/homedetails/..." value="' +
-        esc(state.url) +
-        '"></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' +
-        (state.busy ? "Reading Link" : "Import Listing Details") +
-        "</button>" +
-        '<p class="sp-note">Listing links are read as text only. No photos or media are imported from a public listing page.</p>' +
-        "</div>"
-      );
-    }
     if (state.tab === "property") {
       const list = properties();
       if (!list.length)
@@ -822,7 +795,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
 
 
-    if (state.tab === "design") return designPanel();
+    if (state.tab === "media") return designPanel();
     return "";
   }
 
@@ -878,8 +851,14 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       (extra ? " " + extra : "") +
       '">' +
       '<div class="spd-head">' +
-      '<div class="spd-head-t"><b>Select designs</b>' +
-      "<span>Choose the saved designs you want to use as video scenes.</span></div>" +
+      '<div class="spd-head-t"><b>Select media</b>' +
+      "<span>" +
+      esc(
+        cfg.multiple && opts.context === "video"
+          ? "Choose the photos and designs you want as video scenes."
+          : "Choose a property photo or a design you already generated.",
+      ) +
+      "</span></div>" +
       designHeadActions() +
       "</div>" +
       inner +
@@ -898,7 +877,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
-  /** Selected designs, in the order they were picked. */
+  /** Selected media, in the order they were picked. */
   function selectedDesigns() {
     const byId = new Map(state.designs.map((d) => [d.id, d]));
     const seen = new Set<string>();
@@ -912,10 +891,110 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     return out;
   }
 
+  const isDesign = (d: PickerDesign) => (d.assetType || "design") === "design";
+
+  /** The media list after the type, property, room and search filters. */
+  function visibleMedia(): PickerDesign[] {
+    const q = state.mediaQuery.trim().toLowerCase();
+    return state.designs.filter((d) => {
+      if (state.mediaType === "designs" && !isDesign(d)) return false;
+      if (state.mediaType === "photos" && isDesign(d)) return false;
+      if (state.mediaType === "favorites" && !d.favorite) return false;
+      if (state.mediaProperty !== "all" && String(d.propertyId || "") !== state.mediaProperty)
+        return false;
+      if (state.mediaRoom !== "all" && String(d.room || "") !== state.mediaRoom) return false;
+      if (
+        q &&
+        ![d.room, d.style, d.address].some((v) => String(v || "").toLowerCase().includes(q))
+      )
+        return false;
+      return true;
+    });
+  }
+
+  const MEDIA_TYPES: Array<[typeof state.mediaType, string]> = [
+    ["all", "All media"],
+    ["photos", "Property photos"],
+    ["designs", "Generated designs"],
+    ["favorites", "Favorites"],
+  ];
+
+  function mediaFilters() {
+    const props = new Map<string, string>();
+    const rooms = new Set<string>();
+    for (const d of state.designs) {
+      if (d.propertyId) props.set(String(d.propertyId), String(d.address || "Property"));
+      if (d.room) rooms.add(String(d.room));
+    }
+    const select = (
+      name: string,
+      label: string,
+      value: string,
+      options: Array<[string, string]>,
+    ) =>
+      '<label class="spd-fsel"><span>' +
+      esc(label) +
+      "</span><select data-sp-f=\"" +
+      name +
+      '" aria-label="' +
+      esc(label) +
+      '">' +
+      options
+        .map(
+          ([v, t]) =>
+            '<option value="' +
+            esc(v) +
+            '"' +
+            (v === value ? " selected" : "") +
+            ">" +
+            esc(t) +
+            "</option>",
+        )
+        .join("") +
+      "</select></label>";
+    return (
+      '<div class="spd-filters">' +
+      '<div class="spd-chips" role="group" aria-label="Media type">' +
+      MEDIA_TYPES.map(
+        ([id, label]) =>
+          '<button type="button" class="spd-chip-f' +
+          (state.mediaType === id ? " on" : "") +
+          '" data-sp-mtype="' +
+          id +
+          '" aria-pressed="' +
+          (state.mediaType === id ? "true" : "false") +
+          '">' +
+          esc(label) +
+          "</button>",
+      ).join("") +
+      "</div>" +
+      '<div class="spd-frow">' +
+      '<label class="sp-f sp-search spd-fq"><span><i data-lucide="search"></i>' +
+      '<input type="search" data-sp-f="mq" placeholder="Search media" aria-label="Search media" value="' +
+      esc(state.mediaQuery) +
+      '"></span></label>' +
+      select(
+        "mprop",
+        "Property",
+        state.mediaProperty,
+        [["all", "All properties"] as [string, string]].concat(Array.from(props.entries())),
+      ) +
+      select(
+        "mroom",
+        "Room",
+        state.mediaRoom,
+        [["all", "All rooms"] as [string, string]].concat(
+          Array.from(rooms).map((r) => [r, r] as [string, string]),
+        ),
+      ) +
+      "</div></div>"
+    );
+  }
+
   function designPanel() {
     if (state.designState === "loading" || state.designState === "idle") {
       return designShell(
-        '<div class="spd-grid" aria-busy="true" aria-live="polite" aria-label="Loading your saved designs">' +
+        '<div class="spd-grid" aria-busy="true" aria-live="polite" aria-label="Loading your media">' +
           Array.from({ length: 4 })
             .map(
               () =>
@@ -929,7 +1008,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return designShell(
         '<div class="spd-empty" role="alert">' +
           '<i data-lucide="triangle-alert"></i>' +
-          "<b>We couldn\u2019t load your designs</b>" +
+          "<b>We couldn\u2019t load your media</b>" +
           "<span>Something went wrong reading your library.</span>" +
           '<span class="spd-empty-a"><button type="button" class="btn btn-primary btn-sm" data-sp="dretry">Retry</button></span>' +
           "</div>",
@@ -939,23 +1018,29 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return designShell(
         '<div class="spd-empty">' +
           '<i data-lucide="images"></i>' +
-          "<b>No saved designs yet</b>" +
-          "<span>Create a design first or choose another photo source.</span>" +
+          "<b>No media yet</b>" +
+          "<span>Upload photos or open a property to start building your library.</span>" +
           '<span class="spd-empty-a">' +
-          '<button type="button" class="btn btn-primary btn-sm" data-sp="ddesign">Design a space</button>' +
-          '<button type="button" class="btn btn-ghost btn-sm" data-sp="dupload">Upload photos</button>' +
+          '<button type="button" class="btn btn-primary btn-sm" data-sp="dupload">Upload photos</button>' +
+          '<button type="button" class="btn btn-ghost btn-sm" data-sp="dproperty">Choose a property</button>' +
           "</span></div>",
       );
     }
+    const shown = visibleMedia();
     return designShell(
-      designOrderRow() +
-        '<div class="spd-grid" role="group" aria-label="Your saved designs">' +
-        state.designs.map(designCard).join("") +
-        "</div>" +
+      mediaFilters() +
+        designOrderRow() +
+        (shown.length
+          ? '<div class="spd-grid" role="group" aria-label="Your media">' +
+            shown.map(designCard).join("") +
+            "</div>"
+          : '<div class="spd-empty"><i data-lucide="search-x"></i><b>No media matches these filters</b>' +
+            '<span class="spd-empty-a"><button type="button" class="btn btn-ghost btn-sm" data-sp="mreset">Clear filters</button></span></div>') +
         designFooter() +
         designPreviewModal(),
     );
   }
+
 
   function designOrderRow() {
     const picked = selectedDesigns();
@@ -984,16 +1069,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   }
 
   function designFooter() {
-    const n = state.designSel.length;
-    const label = state.adding
-      ? "Preparing video\u2026"
-      : "Continue with " + (n || 0) + " design" + (n === 1 ? "" : "s");
+    const picked = selectedDesigns();
+    const n = picked.length;
+    const designs = picked.filter(isDesign).length;
+    const noun = !designs ? "photo" : designs === n ? "design" : "item";
+    const plural = (k: number) => k + " " + noun + (k === 1 ? "" : "s");
+    const label = state.adding ? "Preparing\u2026" : "Continue with " + plural(n);
     return (
       '<div class="spd-foot">' +
       '<span class="spd-foot-l">' +
       (n
-        ? n + " design" + (n === 1 ? "" : "s") + " selected \u00b7 " + n + " scenes"
-        : "No designs selected") +
+        ? plural(n) + " selected \u00b7 " + n + " scene" + (n === 1 ? "" : "s")
+        : "Nothing selected yet") +
       "</span>" +
       '<span class="spd-foot-a">' +
       (n
@@ -1053,6 +1140,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       (l.two ? "<span>" + esc(l.two) + "</span>" : "") +
       (l.three ? '<span class="spd-addr">' + esc(l.three) + "</span>" : "") +
       (l.status ? '<span class="spd-status">' + esc(l.status) + "</span>" : "") +
+      '<span class="spd-kind">' +
+      (isDesign(d) ? "Generated design" : "Property photo") +
+      "</span>" +
       "</span></div>"
     );
   }
@@ -1476,9 +1566,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       /* icons are cosmetic */
     }
     if (state.tab === "describe") describe.sync(body);
-    if (state.tab === "property" || state.tab === "design" || state.tab === "upload")
+    if (state.tab === "property" || state.tab === "media" || state.tab === "upload")
       hydrateThumbs();
-    if (state.tab === "design" && state.designState === "idle") loadDesigns();
+    if (state.tab === "media" && state.designState === "idle") loadDesigns();
   }
 
   function wireDrag(el: HTMLElement) {
@@ -1587,12 +1677,47 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const t = e.target as HTMLInputElement;
     const f = fieldName(t);
     if (f === "addr") state.address = t.value;
-    if (f === "url") state.url = t.value;
+    if (f === "mq") {
+      state.mediaQuery = t.value;
+      const grid = body?.querySelector(".spd-grid, .spd-empty");
+      if (grid) renderMediaGrid();
+      return;
+    }
     if (describe.onInput(f, t.value) && (f === "prompt" || f === "browseq")) describe.sync(body);
   }
 
   function onChange(e: Event) {
-    describe.onChange(e.target as HTMLElement);
+    const t = e.target as HTMLSelectElement;
+    const f = fieldName(t);
+    if (f === "mprop" || f === "mroom") {
+      if (f === "mprop") state.mediaProperty = t.value;
+      else state.mediaRoom = t.value;
+      render();
+      return;
+    }
+    describe.onChange(t as unknown as HTMLElement);
+  }
+
+  /** Re-renders only the media results, so typing never loses input focus. */
+  function renderMediaGrid() {
+    if (!body) return;
+    const host2 = body.querySelector(".spd") as HTMLElement | null;
+    if (!host2) return;
+    const old = host2.querySelector(".spd-grid, .spd-empty:not([role=alert])") as HTMLElement | null;
+    if (!old) return;
+    const shown = visibleMedia();
+    const wrap = document.createElement("div");
+    wrap.innerHTML = shown.length
+      ? '<div class="spd-grid" role="group" aria-label="Your media">' +
+        shown.map(designCard).join("") +
+        "</div>"
+      : '<div class="spd-empty"><i data-lucide="search-x"></i><b>No media matches these filters</b>' +
+        '<span class="spd-empty-a"><button type="button" class="btn btn-ghost btn-sm" data-sp="mreset">Clear filters</button></span></div>';
+    old.replaceWith(wrap.firstElementChild!);
+    try {
+      opts.lucide?.createIcons();
+    } catch (_) {}
+    hydrateThumbs();
   }
 
 
@@ -1610,6 +1735,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       state.tab = next;
       state.note = "";
       opts.onTab?.(state.tab);
+      render();
+      return;
+    }
+    const mtype = t.closest("[data-sp-mtype]") as HTMLElement | null;
+    if (mtype) {
+      state.mediaType = mtype.dataset["spMtype"] as typeof state.mediaType;
       render();
       return;
     }
@@ -1681,7 +1812,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
     else if (k === "cloudgo") importCloud(field("cloud")?.value || "");
     else if (k === "addrgo") lookupAddress();
-    else if (k === "urlgo") readListingUrl();
     else if (k === "emptytoggle") {
       state.showEmpty = !state.showEmpty;
       render();
@@ -1697,6 +1827,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
     } else if (k === "ddesign") {
       opts.onSample ? opts.onSample() : (state.tab = "upload");
+      render();
+    } else if (k === "mreset") {
+      state.mediaType = "all";
+      state.mediaProperty = "all";
+      state.mediaRoom = "all";
+      state.mediaQuery = "";
       render();
     } else if (k === "dclear") {
       state.designSel = [];
