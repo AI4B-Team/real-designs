@@ -56,6 +56,8 @@ const RenderInput = z.object({
   image: z.string().min(16),
   /** The rendered mask overlay; the removal regions are magenta. */
   overlay: z.string().min(16).nullable().default(null),
+  /** The full-resolution binary mask: white is editable, black is protected. */
+  mask: z.string().min(16).nullable().default(null),
   /** Typed word that unlocks the destructive Empty Room mode. */
   confirm: z.string().max(20).nullable().default(null),
   payload: PayloadShape,
@@ -130,6 +132,7 @@ export const renderDeclutter = createServerFn({ method: "POST" })
           buildDeclutterPrompt(data.payload as any, run.directive ? run : null),
           data.image,
           data.overlay,
+          data.mask,
           apiKey,
         );
         results.push({ id: run.id, label: run.label, image, error: null });

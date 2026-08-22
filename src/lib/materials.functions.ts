@@ -68,6 +68,8 @@ const RenderInput = z.object({
   image: z.string().min(16),
   /** The rendered mask overlay; the target surface is magenta. */
   overlay: z.string().min(16).nullable().default(null),
+  /** The full-resolution binary mask: white is editable, black is protected. */
+  mask: z.string().min(16).nullable().default(null),
   payload: PayloadShape,
   runs: z
     .array(
@@ -131,6 +133,7 @@ export const renderMaterials = createServerFn({ method: "POST" })
           buildMaterialsPrompt(data.payload as any, run.directive ? run : null),
           data.image,
           data.overlay,
+          data.mask,
           apiKey,
         );
         results.push({ id: run.id, label: run.label, image, error: null });
