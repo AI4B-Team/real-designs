@@ -6372,11 +6372,14 @@ ${picks
       setTimeout(() => row.classList.remove("rd-flash"), 2400);
     }
 
-    const esc = (s) =>
-      String(s == null ? "" : s).replace(
+    /* A function declaration, not a const: Studio renders while initApp is still
+       running, so this has to be callable before this line is reached. */
+    function esc(s) {
+      return String(s == null ? "" : s).replace(
         /[&<>"]/g,
         (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c],
       );
+    }
     const presMoney = (n) => "$" + Math.round(n || 0).toLocaleString("en-US");
 
     /* ---------- reports ---------- */
