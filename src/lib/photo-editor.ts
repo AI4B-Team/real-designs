@@ -1035,12 +1035,16 @@ export async function openPhotoEditor(opts: {
 
 export function closePhotoEditor() {
   if (!HOST) return;
+  /* Anything the Canvas lent to the editor column is reclaimed before the
+     host is removed, so the permanent Canvas chrome is never destroyed. */
+  document.dispatchEvent(new CustomEvent("rdpe:closing"));
   (HOST as any).__teardown?.();
   HOST.remove();
   HOST = null;
   document.body.classList.remove("rdpe-open");
   document.dispatchEvent(new CustomEvent("rdpe:closed"));
 }
+
 
 /**
  * The editor as a Canvas tool: no page header, no "Return To Canvas", no
