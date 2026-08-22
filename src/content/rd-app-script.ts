@@ -38,6 +38,7 @@ import { openSaveRoomModal } from "@/lib/save-room";
 import { initCanvasInspector } from "@/lib/canvas-inspector";
 import { initCanvasWorkspace, paintPanelHeader } from "@/lib/canvas-workspace";
 import { setConceptSummary } from "@/lib/canvas-panel";
+import { peekResume, markResumeConsumed } from "@/lib/resume";
 import {
   makeBatch,
   markGenerating,
@@ -703,12 +704,26 @@ export function initApp(): () => void {
           paintStudioState();
         } catch (_) {}
         if (!inPhotoCanvas()) {
-          /* Media hands a draft id over the window so Studio reopens the real work. */
+          /* Media publishes a durable resume envelope; Studio restores from it
+             and only marks it consumed once the draft is really on screen, so a
+             refresh mid-handoff still reopens the same project. */
           try {
-            const did = (window as any).__rdStudioDraft;
+            const rctx = peekResume("photo_redesign") || peekResume("concept");
+            const did = rctx?.projectDraftId || (window as any).__rdStudioDraft;
+            (window as any).__rdStudioDraft = null;
             if (did) {
-              (window as any).__rdStudioDraft = null;
-              resumeStudioDraft(did);
+              void (async () => {
+                const ok = await resumeStudioDraft(did);
+                if (ok) markResumeConsumed(rctx?.diagnosticId);
+                else if (rctx) {
+                  try {
+                    console.warn("[rd] resume failed", rctx.diagnosticId);
+                  } catch (_) {}
+                  window.dispatchEvent(
+                    new CustomEvent("rd:resume-failed", { detail: { id: rctx.diagnosticId } }),
+                  );
+                }
+              })();
             }
           } catch (_) {}
           /* A refresh taken inside a Canvas boots to Studio. Reopen the saved
