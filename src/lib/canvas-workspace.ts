@@ -131,33 +131,24 @@ function canvasActiveImage(): ActiveImage | null {
 /* Edit Photo as a Canvas tool                                         */
 /* ------------------------------------------------------------------ */
 
-/** Where the embedded editor mounts: inside the dark Canvas wrapper. */
+/**
+ * Where the editor mounts: as a direct child of the Designer grid, so its
+ * stage takes the middle Canvas column and its inspector takes the right
+ * panel column. The editor is never nested inside the image viewport.
+ */
 function editorMountHost(): HTMLElement | null {
-  const card = document.querySelector("#canvasCard .card-b") as HTMLElement | null;
-  if (!card) return null;
-  let host = document.getElementById("rdwEditMount");
-  if (!host) {
-    host = document.createElement("div");
-    host.id = "rdwEditMount";
-    host.className = "rdw-editmount";
-    card.insertBefore(host, card.firstChild);
-  }
-  return host;
+  return board();
 }
 
 /** Edit Photo is Canvas state, never navigation. */
 export function setCanvasTool(tool: "edit-photo" | null) {
   const b = board();
   const btn = document.getElementById("rdwEditPhotoTool");
-  const stage = document.getElementById("rdwStage");
   const on = tool === "edit-photo";
   b?.classList.toggle("editing-photo", on);
   if (b) b.dataset["activeTool"] = on ? "edit-photo" : "";
   btn?.classList.toggle("on", on);
   btn?.setAttribute("aria-pressed", on ? "true" : "false");
-  if (stage) stage.hidden = on;
-  const mount = document.getElementById("rdwEditMount");
-  if (mount) mount.hidden = !on;
 }
 
 /** Closes the embedded editor and restores the normal Canvas stage. */
