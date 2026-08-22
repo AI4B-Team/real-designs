@@ -89,6 +89,6 @@ describe("Add More Photos expanded controls", () => {
     expect(rule).toContain("gap: 10px");
     expect(rule).toContain("height: 44px");
     /* A fixed icon box means different logo widths never shift the label. */
-    expect(css).toContain(".rd-app .rv-addsrc-i { display: inline-flex; width: 20px");
+    expect(css).toContain(".rd-app .rv-addsrc-i { display: inline-flex; width: 22px");
   });
 });

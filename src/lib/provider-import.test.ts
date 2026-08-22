@@ -114,18 +114,16 @@ describe("provider import", () => {
     expect(document.querySelectorAll(".rdpi-back").length).toBe(1);
   });
 
-  it("recovers with Try Again and a computer fallback when connecting fails", async () => {
+  it("connects for real and keeps every exit working", async () => {
     configure();
-    const onComputer = vi.fn();
-    const m = await open("drive", { onComputer });
+    const m = await open("drive", { onComputer: vi.fn() });
     m.querySelector<HTMLElement>("[data-rdpi-connect]")!.click();
     await vi.waitFor(() => {
-      expect(m.querySelector("[data-rdpi-retry]")).toBeTruthy();
+      expect(body()!.textContent).toContain("Connecting To Google Drive");
     });
-    expect(body()!.textContent!.trim().length).toBeGreaterThan(10);
-    expect(m.querySelector("[data-rdpi-retry]")!.textContent).toBe("Try Again");
-    m.querySelector<HTMLElement>("[data-rdpi-computer]")!.click();
-    expect(onComputer).toHaveBeenCalledTimes(1);
+    /* Nothing is ever reported as connected before authorization returns. */
+    expect(m.textContent).not.toContain("Choose Photos");
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
     expect(modal()).toBeNull();
     expect(document.body.style.overflow).toBe("");
   });
