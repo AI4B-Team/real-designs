@@ -479,8 +479,8 @@ export function buildAnimateBrief(input: {
     prompt: animatePrompt(s, s.clipKind),
     negative_prompt: negativePrompt({
       motionId: s.motionId,
-      allowPeople: s.allowPeople,
-      extra: s.negative,
+      allowPeople: !!s.allowPeople,
+      extra: s.negative ?? null,
     }),
     end_card: !!s.endCard,
     disclosure: !!s.disclosure,
