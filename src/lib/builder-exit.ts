@@ -15,11 +15,23 @@ export const EXIT_LABELS = {
   confirm: "Start Over",
 };
 
-/** Return Studio to its initial, unselected state before a new project. */
-export function resetStudioSurface() {
+/**
+ * Return Studio to its initial, unselected state before a new project.
+ *
+ * A reset is destructive: it throws away the photo, the result and the room
+ * context on the Canvas. It therefore only runs on an explicit user exit
+ * (`force`). Housekeeping paths — an empty legacy step, a builder unmounting
+ * itself — must never bounce a live Canvas session back to the start page.
+ */
+export function resetStudioSurface(opts?: { force?: boolean }) {
   try {
-    (window as any).rdClearStudioSource && (window as any).rdClearStudioSource();
-  } catch (_) {}
+    const w = window as any;
+    if (!opts?.force && w.rdStudioHasSource && w.rdStudioHasSource()) return false;
+    w.rdClearStudioSource && w.rdClearStudioSource();
+    return true;
+  } catch (_) {
+    return false;
+  }
 }
 
 /** Navigate to the main Studio starting page, on the canonical route. */
