@@ -1,0 +1,1 @@
+ALTER TABLE public.photo_edits ADD COLUMN IF NOT EXISTS privacy jsonb;
