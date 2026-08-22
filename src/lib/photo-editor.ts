@@ -16,6 +16,18 @@ import { confirmDialog } from "@/lib/builder-card-menu";
 import { roomPhotoUrl, uploadRenderDataUrl } from "@/lib/room-photos";
 import { listPhotoEdits, savePhotoEdit, resetPhotoEdit } from "@/lib/photo-edits.functions";
 import { runPhotoEdit } from "@/lib/photo-edit.functions";
+import {
+  type EditorMode,
+  compareEnabled,
+  defaultOpenSections,
+  detectPhotoTraits,
+  editedFromLabel,
+  enhancementByOp,
+  footerLayout,
+  generativeEdits,
+  photoEnhancements,
+  primarySaveLabel,
+} from "@/lib/photo-editor-context";
 
 /* ------------------------------------------------------------------ model */
 
@@ -27,6 +39,17 @@ export type EditorPhoto = {
   path?: string;
   property?: string;
   rotation?: number;
+  /* Shared entry contract — every "Edit Photo" surface passes the durable ids. */
+  assetId?: string;
+  assetType?: string;
+  storagePath?: string;
+  propertyId?: string;
+  roomId?: string;
+  versionId?: string;
+  parentVersionId?: string;
+  versionNumber?: number;
+  space?: string;
+  editorMode?: EditorMode;
 };
 
 type Adj = Record<string, number>;
@@ -41,7 +64,8 @@ type PhotoState = {
   crop: Crop;
   aiOps: string[];
   base: string | null; // current image (original or AI result)
-  original: string | null; // untouched source, for Hold To Compare
+  original: string | null; // untouched source in storage — never overwritten
+  entry: string | null; // the image as it looked when the editor opened
   dirty: boolean;
   saving: boolean;
   history: string[];
@@ -61,23 +85,6 @@ const ADJUSTMENTS = [
   { group: "color", key: "vibrance", label: "Vibrance", min: -100, max: 100 },
   { group: "detail", key: "sharpen", label: "Sharpen", min: 0, max: 100 },
   { group: "detail", key: "denoise", label: "Noise Reduction", min: 0, max: 100 },
-] as const;
-
-const AI_OPS = [
-  { op: "auto_enhance", label: "Auto Enhance", icon: "wand-sparkles" },
-  { op: "window_balance", label: "Window Balance", icon: "panel-top" },
-  { op: "sky", label: "Sky Replacement", icon: "cloud-sun" },
-  { op: "lawn", label: "Lawn Enhancement", icon: "trees" },
-  { op: "dusk", label: "Day To Dusk", icon: "moon" },
-  { op: "object_removal", label: "Object Removal", icon: "eraser" },
-  { op: "declutter", label: "Declutter", icon: "sparkles" },
-  { op: "privacy_blur", label: "Privacy Blur", icon: "shield" },
-  { op: "reflection", label: "Remove Camera Reflection", icon: "camera-off" },
-  { op: "tv_off", label: "Turn Off TV", icon: "tv-minimal" },
-  { op: "fireplace", label: "Add Fire To Fireplace", icon: "flame" },
-  { op: "perspective", label: "Perspective Correction", icon: "ruler" },
-  { op: "white_balance", label: "White-Balance Correction", icon: "thermometer" },
-  { op: "lens", label: "Lens Correction", icon: "aperture" },
 ] as const;
 
 const RATIOS: { id: string; label: string; v: number | null }[] = [
@@ -110,6 +117,7 @@ function blankState(): PhotoState {
     aiOps: [],
     base: null,
     original: null,
+    entry: null,
     dirty: false,
     saving: false,
     history: [],
