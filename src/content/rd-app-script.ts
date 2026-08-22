@@ -2355,6 +2355,42 @@ export function initApp(): () => void {
     }
 
 
+    /**
+     * The Canvas has one result mode at a time, and every overlay follows from
+     * it. A concept has no source layer, so there is nothing to compare, no
+     * Reality Lock to claim and no permanent editing toolbar over the image.
+     */
+    let CANVAS_MODE = "photo-redesign";
+    function applyCanvasMode(mode) {
+      CANVAS_MODE = String(mode || "photo-redesign");
+      const plan = overlayPlan(CANVAS_MODE as any);
+      const cv = document.getElementById("canvas");
+      const stage = document.getElementById("rdwStage");
+      if (cv) cv.dataset.mode = CANVAS_MODE;
+      if (stage) stage.dataset.mode = CANVAS_MODE;
+      const cmp = document.getElementById("rdwCmp");
+      if (cmp && !plan.compare) cmp.hidden = true;
+      if (!plan.compare) {
+        try {
+          cAfter.style.clipPath = "none";
+        } catch (_) {}
+      } else {
+        try {
+          setC((document.getElementById("cRng") || { value: 50 }).value || 50);
+        } catch (_) {}
+      }
+      const tag = document.getElementById("rdwVerTag");
+      if (tag && !plan.compare && STUDIO_RESULT) tag.textContent = plan.resultLabel;
+      try {
+        paintPanelHeader();
+      } catch (_) {}
+      return plan;
+    }
+    try {
+      (window as any).rdCanvasMode = () => CANVAS_MODE;
+      (window as any).rdApplyCanvasMode = (m) => applyCanvasMode(m);
+    } catch (_) {}
+
     function setC(v) {
       cAfter.style.clipPath = `inset(0 0 0 ${v}%)`;
       cHnd.style.left = v + "%";
@@ -2720,6 +2756,7 @@ export function initApp(): () => void {
 
       if (cBefore && src) cBefore.innerHTML = photo(src, alt || "Your source photo");
       setCanvasRatio(o.ratio, src);
+      applyCanvasMode("photo-redesign");
 
       if (cAfter) cAfter.innerHTML = "";
       const vars = document.getElementById("vars");
