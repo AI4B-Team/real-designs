@@ -2550,6 +2550,45 @@ export function initApp(): () => void {
       }
       return STUDIO_START;
     }
+    /**
+     * Visible, actionable failure state for Studio. Blank white content is never
+     * an acceptable outcome: the user gets an explanation, a diagnostic id and a
+     * way back into the product.
+     */
+    function renderStudioRecovery(id, err) {
+      const view = document.getElementById("v-studio");
+      if (!view) return;
+      view.querySelector(".st-recover")?.remove();
+      const box = document.createElement("div");
+      box.className = "st-recover";
+      const detail = err && err.message ? String(err.message) : "Unknown error";
+      box.innerHTML = `
+        <h3>Studio Could Not Start</h3>
+        <p>Something in this workspace failed to load. Your work is safe.<br>
+        <code>${esc(id)} \u00b7 ${esc(detail)}</code></p>
+        <div class="st-recover-acts">
+          <button class="btn primary" data-st-recover="retry">Try Again</button>
+          <button class="btn" data-st-recover="dash">Go To Dashboard</button>
+        </div>`;
+      box.addEventListener("click", (e) => {
+        const t = (e.target as HTMLElement).closest("[data-st-recover]") as HTMLElement | null;
+        if (!t) return;
+        if (t.dataset["stRecover"] === "dash") {
+          location.hash = "#v-dash";
+          box.remove();
+          return;
+        }
+        box.remove();
+        STUDIO_START = null;
+        studioStart();
+        try {
+          paintStudioState();
+        } catch (_) {
+          /* paintStudioState reports through runModule below on the next pass. */
+        }
+      });
+      view.appendChild(box);
+    }
     /* The source chooser belongs to a generic Studio session only. */
     window.rdStudioStart = (method) => {
       if (inPhotoCanvas()) return;
