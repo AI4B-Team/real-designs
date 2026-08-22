@@ -27,15 +27,9 @@ function mount(context: "design" | "video", opts: Record<string, unknown> = {}) 
 
 describe("studio start source picker", () => {
   it("shows only the sources each creation mode supports", () => {
-    expect(CONTEXT_CONFIG.design.sources).toEqual(["upload", "cloud", "property", "describe"]);
-    expect(CONTEXT_CONFIG.video.sources).toEqual([
-      "upload",
-      "cloud",
-      "property",
-      "design",
-      "describe",
-      "url",
-    ]);
+    const sources = ["upload", "cloud", "property", "media", "describe"];
+    expect(CONTEXT_CONFIG.design.sources).toEqual(sources);
+    expect(CONTEXT_CONFIG.video.sources).toEqual(sources);
   });
 
   it("uses compact tab labels with Lucide icons", () => {
@@ -45,9 +39,8 @@ describe("studio start source picker", () => {
       "Upload",
       "Google Drive",
       "Property",
-      "Designs",
+      "Media",
       "Describe",
-      "Listing Link",
     ]);
     expect(SOURCE_META.describe.icon).toBe("message-square-text");
   });
