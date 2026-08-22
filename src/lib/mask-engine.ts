@@ -610,3 +610,60 @@ export function bindMaskPainting<K extends string>(wrap: HTMLElement, opts: Pain
   wrap.addEventListener("pointerup", stop);
   wrap.addEventListener("pointerleave", stop);
 }
+
+/**
+ * Canonical stroke painting for tools that own a full `MaskState` (rather than
+ * the legacy dab list): press begins a stroke, drag extends it, release
+ * commits. Still one brush implementation — this is the same surface contract
+ * as `bindMaskPainting`, expressed in the engine's own stroke model.
+ */
+export type StrokeSurfaceOpts = {
+  /** Whether painting is currently allowed (a tool may be closed or busy). */
+  enabled?: () => boolean;
+  mode: () => BrushMode;
+  /** Brush diameter as a fraction of the short edge. */
+  size: () => number;
+  feather?: () => number;
+  /** Called with the next state after each pointer event. */
+  onChange: (next: (state: MaskState) => MaskState) => void;
+  onDone?: () => void;
+};
+
+export function bindStrokePainting(wrap: HTMLElement, opts: StrokeSurfaceOpts) {
+  let painting = false;
+  const at = (ev: PointerEvent): NormalizedPoint | null => {
+    const rect = wrap.getBoundingClientRect();
+    if (!rect.width || !rect.height) return null;
+    return { x: (ev.clientX - rect.left) / rect.width, y: (ev.clientY - rect.top) / rect.height };
+  };
+  wrap.addEventListener("pointerdown", (ev) => {
+    if (opts.enabled && !opts.enabled()) return;
+    const p = at(ev);
+    if (!p) return;
+    painting = true;
+    try {
+      (ev.target as HTMLElement).setPointerCapture?.(ev.pointerId);
+    } catch (_) {
+      /* pointer capture is a nicety */
+    }
+    const feather = opts.feather ? opts.feather() : undefined;
+    opts.onChange((state) =>
+      beginStroke(state, opts.mode(), p, { size: opts.size(), ...(feather === undefined ? {} : { feather }) }),
+    );
+    ev.preventDefault();
+  });
+  wrap.addEventListener("pointermove", (ev) => {
+    if (!painting) return;
+    const p = at(ev);
+    if (!p) return;
+    opts.onChange((state) => extendStroke(state, p));
+  });
+  const stop = () => {
+    if (!painting) return;
+    painting = false;
+    opts.onDone?.();
+  };
+  wrap.addEventListener("pointerup", stop);
+  wrap.addEventListener("pointerleave", stop);
+  wrap.addEventListener("pointercancel", stop);
+}
