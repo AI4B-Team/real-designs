@@ -2542,7 +2542,11 @@ export function initApp(): () => void {
             }),
         });
       } catch (e) {
+        /* A failed mount must never leave a blank white workspace: report the
+           real exception and paint a recovery card the user can act on. */
         STUDIO_START = null;
+        const failure = reportModuleFailure("Studio start", e);
+        renderStudioRecovery(failure.id, e);
       }
       return STUDIO_START;
     }
