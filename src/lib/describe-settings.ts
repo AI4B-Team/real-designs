@@ -35,16 +35,65 @@ export function spaceKeyOf(space: string): CanvasSpace {
 /* room / area                                                         */
 /* ------------------------------------------------------------------ */
 
-/** The four cards shown inline; the active choice is always included. */
-export function quickAreas(space: string, selectedId?: string | null, max = 4): AreaOption[] {
-  const all = areasForSpace(spaceKeyOf(space));
-  const out: AreaOption[] = [];
-  const sel = all.find((a) => a.id === selectedId);
-  if (sel) out.push(sel);
-  for (const a of all) {
-    if (out.length >= max) break;
-    if (a.id !== sel?.id && a.id.indexOf("other") === -1) out.push(a);
+/** Room types people actually ask for first, per space. */
+const COMMON_AREA_IDS: Record<CanvasSpace, string[]> = {
+  interior: ["i-kitchen", "i-living-room", "i-bedroom", "i-bathroom", "i-dining-room"],
+  exterior: ["e-front-of-house", "e-back-of-house"],
+  garden: ["g-backyard", "g-front-yard", "g-pool-area"],
+};
+
+const RECENT_KEY = "rd.describe.recentRooms";
+
+/** Rooms the user picked before, most recent first. */
+export function recentAreaIds(): string[] {
+  try {
+    if (typeof localStorage === "undefined") return [];
+    const raw = JSON.parse(localStorage.getItem(RECENT_KEY) || "[]");
+    return Array.isArray(raw) ? raw.filter((x) => typeof x === "string").slice(0, 8) : [];
+  } catch (_) {
+    return [];
   }
+}
+
+export function rememberArea(id: string) {
+  if (!id) return;
+  try {
+    if (typeof localStorage === "undefined") return;
+    const next = [id, ...recentAreaIds().filter((x) => x !== id)].slice(0, 8);
+    localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+  } catch (_) {
+    /* storage is a nicety here, never a requirement */
+  }
+}
+
+/**
+ * The four cards shown inline, ranked so the room the user actually named
+ * comes first: prompt-inferred, then recent picks, then common rooms, then
+ * whatever is left. Family Room and Great Room stay under View all.
+ */
+export function quickAreas(
+  space: string,
+  selectedId?: string | null,
+  max = 4,
+  opts: { inferredId?: string | null; recents?: string[] } = {},
+): AreaOption[] {
+  const key = spaceKeyOf(space);
+  const all = areasForSpace(key).filter((a) => a.id.indexOf("other") === -1);
+  const byId = new Map(all.map((a) => [a.id, a]));
+  const out: AreaOption[] = [];
+  const seen = new Set<string>();
+  const take = (id?: string | null) => {
+    if (!id || out.length >= max || seen.has(id)) return;
+    const rec = byId.get(id);
+    if (!rec) return;
+    seen.add(id);
+    out.push(rec);
+  };
+  take(selectedId);
+  take(opts.inferredId);
+  for (const id of opts.recents ?? recentAreaIds()) take(id);
+  for (const id of COMMON_AREA_IDS[key] || []) take(id);
+  for (const a of all) take(a.id);
   return out.slice(0, max);
 }
 
@@ -57,6 +106,7 @@ export function searchAreas(space: string, q: string): AreaOption[] {
   const all = areasForSpace(spaceKeyOf(space));
   return term ? all.filter((a) => a.label.toLowerCase().includes(term)) : all;
 }
+
 
 /** Room type inferred from what the user actually wrote. */
 export function inferAreaFromPrompt(prompt: string, space: string): AreaOption | null {
@@ -99,8 +149,13 @@ export function stylePool(space: string): StyleRecord[] {
 
 const PREFERRED_STYLE_IDS = ["modern", "contemporary", "transitional", "warm-minimal"];
 
-/** The four style cards; the active selection is always among them. */
-export function quickStyleCards(space: string, selectedId?: string | null, max = 4): StyleRecord[] {
+/** The four style cards; the active and the inferred style are always shown. */
+export function quickStyleCards(
+  space: string,
+  selectedId?: string | null,
+  max = 4,
+  inferredId?: string | null,
+): StyleRecord[] {
   const pool = stylePool(space);
   const byId = new Map(pool.map((s) => [s.id, s]));
   const out: StyleRecord[] = [];
@@ -111,10 +166,28 @@ export function quickStyleCards(space: string, selectedId?: string | null, max =
     out.push(rec);
   };
   if (selectedId) take(byId.get(selectedId));
+  if (inferredId) take(byId.get(inferredId));
   for (const id of PREFERRED_STYLE_IDS) take(byId.get(id));
   for (const rec of pool) take(rec);
   return out;
 }
+
+/** Design style named in the description: "modern luxury kitchen" → Modern Luxury. */
+export function inferStyleFromPrompt(prompt: string, space: string): StyleRecord | null {
+  const text = String(prompt || "").toLowerCase();
+  if (!text.trim()) return null;
+  const pool = stylePool(space);
+  const candidates: { rec: StyleRecord; name: string }[] = [];
+  for (const rec of pool) {
+    candidates.push({ rec, name: rec.displayName.toLowerCase() });
+    for (const a of rec.aliases || []) candidates.push({ rec, name: String(a).toLowerCase() });
+  }
+  /* Longest name first so "Modern Luxury" beats "Modern". */
+  candidates.sort((a, b) => b.name.length - a.name.length);
+  for (const c of candidates) if (c.name && text.includes(c.name)) return c.rec;
+  return null;
+}
+
 
 export function styleImage(rec: StyleRecord, space: string): string {
   const sp = spaceKeyOf(space);
@@ -173,8 +246,9 @@ export function ensureMood(id: string, space: string): string {
 /* prompt editor                                                       */
 /* ------------------------------------------------------------------ */
 
-export const PROMPT_MIN_H = 96;
-export const PROMPT_MAX_H = 220;
+export const PROMPT_MIN_H = 144;
+export const PROMPT_MAX_H = 320;
+
 export const PROMPT_LIMIT = 1200;
 /** Character count only appears when the limit is genuinely close. */
 export const PROMPT_COUNT_FROM = PROMPT_LIMIT - 200;
@@ -253,6 +327,15 @@ export function advancedSummary(s: SettingsState): string {
   return parts.join(" \u00b7 ");
 }
 
+/** "Kitchen · Modern Luxury · 1 image" — what the footer shows when ready. */
+export function compactSummary(s: SettingsState): string {
+  const parts: string[] = [];
+  if (s.roomLabel) parts.push(s.roomLabel);
+  if (s.styleLabel) parts.push(s.styleLabel);
+  parts.push(s.options + (s.options === 1 ? " image" : " images"));
+  return parts.filter(Boolean).join(" \u00b7 ");
+}
+
 /**
  * One specific instruction at a time, in the order the user works. Generate is
  * never silently disabled and never shows a generic red error.
@@ -263,6 +346,15 @@ export function nextRequirement(s: SettingsState): string | null {
   if (!s.styleId) return "Select a design style.";
   return null;
 }
+
+/** Which section the blocking requirement lives in, so it can be reached. */
+export function nextRequirementTarget(s: SettingsState): "prompt" | "room" | "style" | null {
+  if (!s.prompt.trim() && !s.refCount) return "prompt";
+  if (!s.roomId) return "room";
+  if (!s.styleId) return "style";
+  return null;
+}
+
 
 /** Selections that stop making sense after a space change. */
 export function incompatibleAfterSpace(

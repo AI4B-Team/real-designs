@@ -237,6 +237,9 @@ export function createDescribeComposer(cfg: Cfg) {
     roomId: "" as string,
     /** True when the room came from the description, not from a click. */
     roomDetected: false,
+    /** True when the style came from the description, not from a click. */
+    styleDetected: false,
+
     moodId: DS.DEFAULT_MOOD_ID,
     advOpen: false,
     /** "room" | "style" | null — the searchable View All browser. */
@@ -509,8 +512,9 @@ export function createDescribeComposer(cfg: Cfg) {
   function footMessage(): string {
     const gap = missing();
     if (gap) return state.touched ? gap : "";
-    return summary();
+    return isVideo() ? summary() : DS.compactSummary(settingsState());
   }
+
 
   const ready = () => !missing() && !state.busy;
 
@@ -654,16 +658,17 @@ export function createDescribeComposer(cfg: Cfg) {
   }
 
   function roomCards(): string {
-    const cards = DS.quickAreas(state.space, state.roomId);
+    const inferred = DS.inferAreaFromPrompt(state.prompt, state.space);
+    const cards = DS.quickAreas(state.space, state.roomId, 4, { inferredId: inferred?.id ?? null });
     const label = DS.spaceKeyOf(state.space) === "interior" ? "Room Or Area" : "Area";
     return (
-      '<div class="rdset-row"><header class="rdset-h"><span class="rdset-l">' +
+      '<div class="rdset-row" data-sp-sec="room"><header class="rdset-h"><span class="rdset-l">' +
       esc(label) +
       "</span>" +
       (state.roomDetected && state.room
-        ? '<span class="rdset-note">Detected From Your Description</span>'
+        ? '<span class="rdset-note"><i data-lucide="sparkles"></i>From Your Description</span>'
         : "") +
-      '<button type="button" class="rdset-all" data-sp="allroom">View All</button></header>' +
+      '<button type="button" class="rdset-all" data-sp="allroom">View All<i data-lucide="chevron-right"></i></button></header>' +
       '<div class="rdset-cards" role="listbox" aria-label="' +
       esc(label) +
       '">' +
@@ -695,10 +700,14 @@ export function createDescribeComposer(cfg: Cfg) {
   }
 
   function styleCards(): string {
-    const cards = DS.quickStyleCards(state.space, state.styleId);
+    const inferred = DS.inferStyleFromPrompt(state.prompt, state.space);
+    const cards = DS.quickStyleCards(state.space, state.styleId, 4, inferred?.id ?? null);
     return (
-      '<div class="rdset-row"><header class="rdset-h"><span class="rdset-l">Design Style</span>' +
-      '<button type="button" class="rdset-all" data-sp="allstyle">View All</button></header>' +
+      '<div class="rdset-row" data-sp-sec="style"><header class="rdset-h"><span class="rdset-l">Design Style</span>' +
+      (state.styleDetected && state.style
+        ? '<span class="rdset-note"><i data-lucide="sparkles"></i>From Your Description</span>'
+        : "") +
+      '<button type="button" class="rdset-all" data-sp="allstyle">View All<i data-lucide="chevron-right"></i></button></header>' +
       '<div class="rdset-cards is-style" role="listbox" aria-label="Design Style">' +
       cards
         .map((st) => {
@@ -727,6 +736,7 @@ export function createDescribeComposer(cfg: Cfg) {
       "</div></div>"
     );
   }
+
 
   function advanced(): string {
     const video = isVideo();
@@ -926,9 +936,12 @@ export function createDescribeComposer(cfg: Cfg) {
       '<div class="sp-describe-foot' +
       (gap && state.touched ? " is-blocked" : "") +
       '">' +
-      '<span class="sp-meta">' +
-      esc(gap && state.touched ? gap : DS.generationSummary(st)) +
-      "</span>" +
+      (gap && state.touched
+        ? '<button type="button" class="sp-meta sp-meta-fix" data-sp="fix">' +
+          esc(gap) +
+          "</button>"
+        : '<span class="sp-meta">' + esc(DS.compactSummary(st)) + "</span>") +
+
       '<span class="sp-foot-r"><span class="sp-cost">' +
       esc(optionTotalLabel(output(), state.options)) +
       "</span>" +
@@ -1089,6 +1102,7 @@ export function createDescribeComposer(cfg: Cfg) {
           state.roomId = a.id;
           state.room = a.label;
           state.roomDetected = false;
+          DS.rememberArea(a.id);
         }
         state.browse = null;
       }],
@@ -1097,9 +1111,11 @@ export function createDescribeComposer(cfg: Cfg) {
         if (rec) {
           state.styleId = rec.id;
           state.style = rec.displayName;
+          state.styleDetected = false;
         }
         state.browse = null;
       }],
+
       ["space", (v) => {
         const lost = DS.incompatibleAfterSpace(
           { roomLabel: state.room, styleId: state.styleId },
@@ -1116,6 +1132,8 @@ export function createDescribeComposer(cfg: Cfg) {
         }
         state.style = "";
         state.styleId = "";
+        state.styleDetected = false;
+
         ensureCamera();
       }],
       ["level", (v) => (state.level = v)],
@@ -1140,6 +1158,24 @@ export function createDescribeComposer(cfg: Cfg) {
       void submit();
       return true;
     }
+    if (act === "fix") {
+      /* The footer message is the way back to whatever is still missing. */
+      const target = DS.nextRequirementTarget(settingsState());
+      const root = t.closest(".sp-describe") as HTMLElement | null;
+      if (target === "prompt") {
+        const ta = root?.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement | null;
+        ta?.scrollIntoView({ behavior: "smooth", block: "center" });
+        ta?.focus();
+      } else if (target) {
+        const sec = root?.querySelector('[data-sp-sec="' + target + '"]') as HTMLElement | null;
+        sec?.scrollIntoView({ behavior: "smooth", block: "center" });
+        sec?.classList.add("is-wanted");
+        setTimeout(() => sec?.classList.remove("is-wanted"), 1600);
+      }
+      return true;
+    }
+
+
     if (act === "addref") {
       menuOpen = !menuOpen;
       cfg.render();
@@ -1241,17 +1277,30 @@ export function createDescribeComposer(cfg: Cfg) {
       state.touched = true;
       /* A room named in the description selects itself, visibly, and the
          user can still override it by clicking another card. */
+      let changed = false;
       if (!state.roomId || state.roomDetected) {
         const found = DS.inferAreaFromPrompt(value, state.space);
         if (found && found.id !== state.roomId) {
           state.roomId = found.id;
           state.room = found.label;
           state.roomDetected = true;
-          cfg.render();
+          changed = true;
         }
       }
+      /* Same for a style the user names, e.g. "modern luxury kitchen". */
+      if (!state.styleId || state.styleDetected) {
+        const st = DS.inferStyleFromPrompt(value, state.space);
+        if (st && st.id !== state.styleId) {
+          state.styleId = st.id;
+          state.style = st.displayName;
+          state.styleDetected = true;
+          changed = true;
+        }
+      }
+      if (changed) cfg.render();
       saveDraft();
       return true;
+
     }
     if (name === "browseq") {
       state.browseQuery = value;
