@@ -2677,6 +2677,96 @@
 .rd-sketch .rd-sketch-cam button.x svg { width: 13px; height: 13px; }
 .rd-sketch .rd-sketch-range { width: 100%; margin: 2px 0 10px; }
 
+/* ---------------------------------------------------------------
+   Floorplan: interpretation review, level switching, camera placing
+   --------------------------------------------------------------- */
+.rd-plan .rd-plan-groups { display: grid; gap: 10px; margin-top: 8px; }
+.rd-plan .rd-plan-gh {
+  display: block; font-size: 11px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 4px;
+}
+.rd-plan .rd-plan-group { display: grid; gap: 4px; }
+.rd-plan .rd-plan-el {
+  display: flex; align-items: center; width: 100%;
+  border: 1px solid var(--line); border-radius: 10px; background: #fff; overflow: hidden;
+}
+.rd-plan .rd-plan-el > button {
+  display: flex; align-items: center; gap: 8px; flex: 1 1 auto; min-width: 0;
+  padding: 7px 10px; border: 0; background: none; font: inherit; color: inherit;
+  text-align: left; cursor: pointer;
+}
+.rd-plan .rd-plan-el b {
+  font-size: 12.5px; font-weight: 600; flex: 1 1 auto;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.rd-plan .rd-plan-el em {
+  font-style: normal; font-size: 11px; color: var(--muted); flex: 0 0 auto;
+}
+.rd-plan .rd-plan-el em.dim { font-family: var(--mono, ui-monospace, monospace); }
+.rd-plan .rd-plan-el .x {
+  border: 0; background: none; padding: 6px 9px; color: var(--muted); cursor: pointer;
+}
+.rd-plan .rd-plan-el .x svg { width: 13px; height: 13px; }
+.rd-plan .rd-plan-el.low { border-color: #e8b23a; }
+.rd-plan .rd-plan-el.off { opacity: .45; text-decoration: line-through; }
+.rd-plan .rd-plan-warns {
+  margin: 6px 0 0; padding-left: 16px; font-size: 12px; color: var(--muted);
+}
+.rd-plan .rd-plan-conf {
+  display: grid; gap: 2px; margin: 8px 0; padding: 9px 11px;
+  border: 1px solid var(--line); border-left-width: 3px; border-radius: 10px; background: #fff;
+}
+.rd-plan .rd-plan-conf b { font-size: 12.5px; }
+.rd-plan .rd-plan-conf span { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.rd-plan .rd-plan-conf.is-high { border-left-color: #2e9c6a; }
+.rd-plan .rd-plan-conf.is-medium { border-left-color: #e8b23a; }
+.rd-plan .rd-plan-conf.is-low { border-left-color: var(--brand, #c00); }
+.rd-plan .rd-plan-addgeo {
+  display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap;
+}
+.rd-plan .rd-plan-addgeo input,
+.rd-plan .rd-plan-addgeo select {
+  flex: 1 1 110px; min-width: 0; padding: 7px 9px; font: inherit; font-size: 12.5px;
+  border: 1px solid var(--line); border-radius: 9px; background: #fff;
+}
+.rd-plan .rd-plan-addgeo input[type="number"] { flex: 0 0 78px; }
+.rd-plan .rd-plan-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.rd-plan .rd-plan-units { display: flex; gap: 6px; margin-bottom: 8px; }
+.rd-plan .rd-plan-dims { display: flex; flex-wrap: wrap; gap: 6px; }
+.rd-plan .rd-plan-map {
+  position: relative; width: 100%; aspect-ratio: 4 / 3; margin: 8px 0;
+  border: 1px solid var(--line); border-radius: 12px; overflow: hidden;
+  background: #f7f7f8 center / contain no-repeat;
+}
+.rd-plan .rd-plan-map.placing { cursor: crosshair; border-color: var(--brand, #c00); }
+.rd-plan .rd-plan-pin {
+  position: absolute; width: 18px; height: 18px; margin: -9px 0 0 -9px;
+  border-radius: 50%; background: #fff; border: 2px solid var(--ink, #111);
+  display: grid; place-items: center;
+}
+.rd-plan .rd-plan-pin.on { border-color: var(--brand, #c00); }
+.rd-plan .rd-plan-pin i {
+  position: absolute; width: 0; height: 0; top: -14px;
+  border-left: 5px solid transparent; border-right: 5px solid transparent;
+  border-bottom: 14px solid currentColor; color: var(--ink, #111);
+  transform-origin: 50% 21px; transform: rotate(var(--rd-cam-dir, 0deg));
+}
+.rd-plan .rd-plan-pin.on i { color: var(--brand, #c00); }
+.rd-plan .rd-plan-cams { display: flex; flex-wrap: wrap; gap: 6px; }
+.rd-plan .rd-plan-cam {
+  display: inline-flex; align-items: center; border: 1px solid var(--line);
+  border-radius: 999px; overflow: hidden; background: #fff;
+}
+.rd-plan .rd-plan-cam.on { border-color: var(--brand, #c00); }
+.rd-plan .rd-plan-cam button {
+  border: 0; background: none; font: inherit; font-size: 12px; padding: 5px 10px; cursor: pointer;
+}
+.rd-plan .rd-plan-cam button.x { padding: 5px 8px 5px 0; color: var(--muted); }
+.rd-plan .rd-plan-cam button.x svg { width: 13px; height: 13px; }
+.rd-plan .rd-plan-range { width: 100%; margin: 2px 0 10px; }
+
+
+
 /* ---------------------------------------------------------------- angles */
 
 .rd-app .rd-angle-grid {

@@ -9,7 +9,37 @@ import { priceScopePreview } from "@/lib/estimator-preview.functions";
 import { detectChanges } from "@/lib/change-detect.functions";
 import { estimateDimensions } from "@/lib/dimensions.functions";
 import { renderDesign } from "@/lib/design-render.functions";
-import { renderPlan3d } from "@/lib/plan3d.functions";
+import {
+  classifyFloorplan,
+  detectFloorplan,
+  renderFloorplan,
+  checkFloorplanDrift,
+} from "@/lib/floorplan.functions";
+import {
+  buildFloorplanBrief,
+  floorplanCredits,
+  floorplanMeta,
+  outputType as floorplanOutputType,
+  rejectionMessage as floorplanRejection,
+  restoreFromMeta as restoreFromFloorplanMeta,
+} from "@/lib/floorplan-brief";
+import {
+  mountFloorplanPanel,
+  setFloorplanPanelVisible,
+  readFloorplanSettings,
+  setFloorplanClassification,
+  setFloorplanClassifying,
+  floorplanClassification,
+  setFloorplanGeometry,
+  setFloorplanDetecting,
+  floorplanGeometry,
+  hasFloorplanGeometry,
+  resetFloorplan,
+  loadFloorplanState,
+  interpretedPlan,
+  openFloorplanBriefReview,
+  showFloorplanDrift,
+} from "@/lib/floorplan-controls";
 import { runRoomTool } from "@/lib/room-tools.functions";
 import {
   startMotionClip,
@@ -4255,44 +4285,269 @@ export function initApp(): () => void {
       };
     }
 
-    async function run3dPlan() {
-      if (busy) return;
-      if (!window.rdStudioHasSource()) {
+    /* ---------- Floorplan: respect the supplied plan, never redraw it ----------
+       Reading the plan and reviewing the interpretation are free. Credits are
+       only spent once the user has accepted what was read, and any view that
+       fails is refunded. Everything produced is labelled a concept. */
+
+    function ensureFloorplanPanel() {
+      try {
+        mountFloorplanPanel({
+          onChange: () => paintGenGate(),
+          onClassify: () => readFloorplanSource(true),
+          onDetect: () => detectFloorplanForCanvas(true),
+          readStyle: () => {
+            const sel = currentStyleSelection();
+            return {
+              id: (sel && sel.styleId) || null,
+              name: (sel && sel.style && sel.style.displayName) || null,
+            };
+          },
+        });
+      } catch (_) {}
+    }
+
+    /** A PDF upload becomes a picture before anything can read it. */
+    async function resolvePlanSource() {
+      const srcImg = document.querySelector("#cBefore img");
+      const raw = (srcImg && srcImg.src) || "";
+      if (!raw) return null;
+      const isPdfSrc = /^data:application\/pdf/i.test(raw) || /\.pdf(\?|#|$)/i.test(raw);
+      if (!isPdfSrc) return toDataUrl(raw, 1600);
+      const { rasterizeFirstPage } = await import("@/lib/pdf-rasterizer");
+      const png = await rasterizeFirstPage(raw, 2048);
+      /* Swap the rasterized page onto the canvas so what is reviewed is what
+         was read, and later steps never touch the PDF again. */
+      try {
+        cBefore.innerHTML = photo(png, "Uploaded floor plan, first page");
+      } catch (_) {}
+      return png;
+    }
+
+    /** Free read of whether this upload is a floor plan at all. */
+    async function readFloorplanSource(force) {
+      if (!force && floorplanClassification()) return floorplanClassification();
+      ensureFloorplanPanel();
+      setFloorplanClassifying(true);
+      try {
+        const image = await resolvePlanSource();
+        if (!image) {
+          setFloorplanClassifying(false);
+          return null;
+        }
+        const r = await classifyFloorplan({ data: { image } });
+        setFloorplanClassification(r.classification);
+        paintGenGate();
+        return r.classification;
+      } catch (e) {
+        setFloorplanClassifying(
+          false,
+          (e && e.message) ||
+            "This plan could not be read. Confirm the plan type yourself before generating.",
+        );
+        return null;
+      }
+    }
+
+    /** Free geometry read. The user corrects and accepts it before any charge. */
+    async function detectFloorplanForCanvas(force) {
+      if (!force && hasFloorplanGeometry()) return floorplanGeometry();
+      ensureFloorplanPanel();
+      setFloorplanDetecting(true);
+      try {
+        const image = await resolvePlanSource();
+        if (!image) {
+          setFloorplanDetecting(false);
+          return null;
+        }
+        const r = await detectFloorplan({ data: { image } });
+        setFloorplanGeometry(r.geometry);
+        paintGenGate();
+        return r.geometry;
+      } catch (e) {
+        setFloorplanDetecting(
+          false,
+          (e && e.message) ||
+            "The plan geometry could not be read. Add the rooms and walls yourself before generating.",
+        );
+        return null;
+      }
+    }
+
+    window.addEventListener("rd:photo", () => {
+      try {
+        if (activeToolName() !== "2D To 3D Plan") resetFloorplan();
+      } catch (_) {}
+    });
+
+    async function runFloorplanFlow() {
+      if (busy || GEN_GUARD.busy) return;
+      const srcImg = document.querySelector("#cBefore img");
+      if (STUDIO_SRC === SRC_EMPTY || !srcImg || !srcImg.src) {
         needSourceModal();
         return;
       }
-      if (!ensureCredits(6, "A 3D Plan")) return;
+      ensureFloorplanPanel();
+      if (!floorplanClassification()) await readFloorplanSource(false);
+      const cls = floorplanClassification();
+      if (cls && !cls.supported) {
+        showAlert(floorplanRejection(cls) || "This upload cannot be converted into a 3D plan.");
+        return;
+      }
+      if (!hasFloorplanGeometry()) await detectFloorplanForCanvas(false);
+
+      const s = readFloorplanSettings();
+      const brief = buildFloorplanBrief(s);
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" \u00b7 "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "A 3D Plan")) return;
+
+      const answer = await openFloorplanBriefReview(brief, {
+        costLabel: costLabel(brief.credits),
+        balanceNote:
+          CREDITS && CREDITS.plan !== "free" && typeof CREDITS.balance === "number"
+            ? "Balance after this run: " + Math.max(0, CREDITS.balance - brief.credits) + " credits."
+            : null,
+      });
+      if (answer !== "confirm") return;
+      if (busy || !GEN_GUARD.begin()) return;
+      await runFloorplanRender(brief);
+    }
+
+    async function runFloorplanRender(brief) {
       busy = true;
-      const ui = toolOverlay([
-        "Reading the room geometry",
-        "Building the floor plate",
-        "Placing the furniture",
-        "Rendering the 3D plan",
-      ]);
+      setCanvasPhase("generating");
+      const btn = document.getElementById("genBtn");
+      if (btn) btn.disabled = true;
+      const ov = document.getElementById("cGen");
+      if (ov) ov.classList.add("on");
+      genPhase(8, "Locking the plan geometry");
+      const finish = () => {
+        setTimeout(() => {
+          if (ov) ov.classList.remove("on");
+          busy = false;
+          if (btn) btn.disabled = false;
+          GEN_GUARD.end();
+        }, 240);
+      };
       try {
-        const image = await toDataUrl(lastRender || studioSrc("after"), 1100);
-        const r = await renderPlan3d({
+        const source = await resolvePlanSource();
+        genPhase(
+          34,
+          brief.runs.length > 1
+            ? "Building " + brief.runs.length + " views"
+            : "Building the " + brief.payload.output_label.toLowerCase(),
+        );
+        /* Earlier views of this plan are reused as the finish reference so a
+           second view of the same level is not a different building. */
+        const r = await renderFloorplan({
           data: {
-            image,
-            room_type: currentRoomType(),
-            direction: (document.getElementById("fStyle") || {}).value || "Warm Minimal",
-            floor_area_sf: parseFloat((document.getElementById("scFloor") || {}).value) || null,
+            image: source,
+            reference: (window.__rdPlanScenes || {})[brief.payload.plan_id] || null,
+            payload: brief.payload,
+            runs: brief.runs,
           },
         });
-        lastRender = r.image;
-        lastRenderPath = await persistRender(r.image, "3D Plan");
-        cAfter.innerHTML = photo(r.image, "Furnished 3D plan of the same room");
-        addRenderVariant(r.image, "3D Plan", lastRenderPath);
+        const made = r.results.filter((x) => x.image);
+        const failed = r.results.filter((x) => !x.image);
+        if (!made.length) throw new Error(failed[0]?.error || "The render did not produce an image.");
+
+        genPhase(74, "Saving your " + (made.length > 1 ? "views" : "concept"));
+        window.__rdPlanScenes = window.__rdPlanScenes || {};
+        if (!window.__rdPlanScenes[brief.payload.plan_id])
+          window.__rdPlanScenes[brief.payload.plan_id] = made[0].image;
+
+        const plan = interpretedPlan();
+        for (const res of made) {
+          const label =
+            brief.payload.output_label +
+            (brief.runs.length > 1 || res.roomId ? " \u00b7 " + res.label : "");
+          /* Every saved view carries the plan it followed, the level it shows
+             and the interpretation it was built from. */
+          window.__rdVersionExtras = floorplanMeta({
+            payload: brief.payload,
+            sourceVersion: studioSourcePath() || null,
+            run: res.label,
+            roomLabel: res.roomId ? res.label : null,
+            model: r.model,
+            planData: plan,
+          });
+          let path = null;
+          try {
+            path = await persistRender(res.image, label);
+          } catch (_) {
+            /* The view is paid for and on screen even if the upload failed. */
+          }
+          if (!lastRenderPath || res === made[0]) {
+            lastRender = res.image;
+            lastRenderPath = path;
+            cAfter.innerHTML = photo(
+              res.image,
+              brief.payload.output_label + ", concept visualization from your floor plan",
+            );
+          }
+          addRenderVariant(res.image, label, path);
+        }
+        window.__rdPlanMeta = {
+          classification: r.classification,
+          disclaimer: r.disclaimer,
+          output: brief.payload.output_label,
+          plan: brief.payload.plan_id,
+        };
+
+        setCanvasPhase("");
+        markStudioResult();
+        await finalizeGeneratedDesign(lastRenderPath);
+        window.__rdVersionExtras = null;
+        paintStudioSummary({
+          name: brief.payload.output_label,
+          scope: brief.payload.floor_label,
+        });
         window.dispatchEvent(new Event("rd:credits-changed"));
-        ui.done();
+        genPhase(100, "Done");
+        finish();
+        cRng.value = 100;
+        setC(100);
+
+        if (failed.length)
+          showAlert(
+            failed.length +
+              " of " +
+              r.results.length +
+              " views did not finish, and those credits were refunded. " +
+              (failed[0]?.error || ""),
+          );
+
+        /* Free, honest comparison of the concept against the plan. */
+        try {
+          const q = await checkFloorplanDrift({
+            data: { plan: source, render: made[0].image, payload: brief.payload },
+          });
+          showFloorplanDrift(q.report, { onRegenerate: () => runFloorplanFlow() });
+        } catch (_) {
+          /* the drift check is advisory, never a reason to lose the view */
+        }
       } catch (e) {
-        ui.done();
+        window.__rdVersionExtras = null;
+        setCanvasPhase("");
+        finish();
         if (!creditGate(e))
-          showToolError("Could not build the 3D plan. " + ((e && e.message) || ""));
-      } finally {
-        busy = false;
+          showAlert("Could not build the 3D plan. " + ((e && e.message) || "Try again in a moment."));
       }
     }
+
+    /** Reopens a saved 3D plan with its interpretation intact. */
+    window.rdRestoreFloorplan = (meta) => {
+      const st = restoreFromFloorplanMeta(meta);
+      if (!st) return false;
+      ensureFloorplanPanel();
+      loadFloorplanState(st);
+      return true;
+    };
 
     /* ---------- Animate: one image, one short motion clip ----------
        This is not the Property Video builder. It animates the picture on the
@@ -11267,7 +11522,7 @@ ${picks
     const toolRows = Array.from(document.querySelectorAll(".toolrow:not(.rdw-phototool)"));
     const toolInfo = document.getElementById("toolInfo");
     const LIVE_TOOLS = {
-      "2D To 3D Plan": run3dPlan,
+      "2D To 3D Plan": () => runFloorplanFlow(),
       Animate: runAnimateFlow,
       "Virtual Stage": () => runStageFlow(),
       Declutter: () => runDeclutterFlow(),
@@ -11416,6 +11671,15 @@ ${picks
             price = animateCredits();
           } catch (_) {}
         }
+        /* A 3D plan prices every view: room sets cost one view per room. */
+        if (tool === "2D To 3D Plan") {
+          try {
+            const s = readFloorplanSettings();
+            price = floorplanCredits(
+              floorplanOutputType(s.output).needsRooms ? Math.max(1, s.roomIds.length) : 1,
+            );
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
@@ -11445,6 +11709,11 @@ ${picks
       try {
         ensureSketchPanel();
         setSketchPanelVisible(tool === "Sketch To Render");
+      } catch (_) {}
+      /* The plan interpretation controls belong to the Floorplan tool alone. */
+      try {
+        ensureFloorplanPanel();
+        setFloorplanPanelVisible(tool === "2D To 3D Plan");
       } catch (_) {}
       /* The camera and continuity controls belong to Angles alone. */
       try {
