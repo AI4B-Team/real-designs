@@ -15,6 +15,7 @@
 import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { ACCEPT_CONFIDENCE } from "@/lib/photo-classify";
 import { roomFromCategory, roomSpace } from "@/lib/staging-rooms";
+import { normalizeSpace } from "@/lib/space-tools";
 import { defaultRoomForSpace } from "@/lib/space-datasets";
 
 let manual = false;
