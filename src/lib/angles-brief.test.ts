@@ -174,7 +174,7 @@ describe("consistency scoring", () => {
       { id: "b", label: "B" },
     );
     const report = summarizeConsistency([good, bad], INFERENCE_DISCLOSURE);
-    expect(report.failing).toEqual([]);
+    expect(report.failing).toEqual(["b"]);
     expect(bad.score).toBe(64);
     const worse = normalizeConsistency(
       {
