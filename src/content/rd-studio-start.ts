@@ -1788,25 +1788,43 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       render();
       return;
     }
-    if (k === "door-change") {
-      /* Only the project row is repainted: everything already typed or
-         attached in the composer stays exactly where it is. */
-      state.doorOpen = true;
-      renderDoors();
-      return;
-    }
     if (k === "door-design" || k === "door-video") {
       const next = k === "door-video" ? "video" : "design";
-      state.doorOpen = false;
       if (state.door === next) {
         renderDoors();
         return;
       }
-      if (next === "video") ctx.track("studio_start_method", { method: "video" });
-      state.door = next;
-      render();
+      const pending = pendingWork();
+      const apply = () => {
+        if (pending.length) clearIncompatibleWork();
+        if (next === "video") ctx.track("studio_start_method", { method: "video" });
+        state.door = next;
+        render();
+      };
+      if (!pending.length) {
+        apply();
+        return;
+      }
+      /* Switching project type throws away inputs the other workflow cannot
+         use, so the user is told exactly what disappears before it does. */
+      void confirmDialog({
+        title: "Switch To " + (DOOR_LABEL[next] || "") + "?",
+        body:
+          "Your current " +
+          (DOOR_LABEL[state.door] || "project") +
+          " inputs can't carry over to " +
+          (DOOR_LABEL[next] || "the other project type") +
+          ".",
+        notes: ["This clears: " + pending.join(", ") + "."],
+        cancelLabel: "Cancel",
+        confirmLabel: "Switch Project Type",
+        danger: true,
+      }).then((ok) => {
+        if (ok) apply();
+      });
       return;
     }
+
     if (k === "video-open") {
       try {
         (window as any).rdListingVideo?.({ from: "studio" });
