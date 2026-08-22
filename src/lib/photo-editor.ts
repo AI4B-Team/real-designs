@@ -999,12 +999,14 @@ export async function openPhotoEditor(opts: {
           : s.base || s.original;
     if (stage && src && stage.getAttribute("src") !== src) stage.setAttribute("src", src);
     if (stage) {
-      const preview = aiPreview && !comparing ? aiPreview.image : null;
+      /* Privacy Blur preview shows real baked pixels, never a CSS filter. */
+      const preview = comparing ? null : privacyPreview || (aiPreview ? aiPreview.image : null);
       if (preview && stage.getAttribute("src") !== preview) stage.setAttribute("src", preview);
       /* An Auto Enhance preview is a filter overlay only: the stored
          adjustments stay exactly where the user left them. */
       stage.style.filter = comparing ? "none" : filterString(previewAdj || s.adj);
       paintStageTransform();
+      syncPrivacyOverlay();
     }
 
     if (embedded) {
@@ -1030,7 +1032,7 @@ export async function openPhotoEditor(opts: {
       : saveFailed
         ? "Retry Save"
         : primarySaveLabel({ mode: modeFor(p) });
-    const edited = hasEdits(s) || !!aiPreview;
+    const edited = hasEdits(s) || !!aiPreview || !!privacyPreview;
     const hold = $("#rdpeHold") as HTMLButtonElement;
     if (hold) {
       /* Nothing to compare against until an edit exists: the control hides
@@ -1281,6 +1283,8 @@ export async function openPhotoEditor(opts: {
            <span><b>Continue In Object Edit</b><em>Select, remove, replace, or modify a specific object.</em></span>
            <i data-lucide="arrow-right"></i></button>`,
       )}
+
+      ${section("privacy", "Privacy", "shield", privacyCard())}
 
       ${section(
         "presets",
@@ -1851,6 +1855,9 @@ export async function openPhotoEditor(opts: {
               Object.values(s.adj || {}).some((v) => Number(v) !== 0) || !!s.crop || !!s.rotation,
           }),
           ai_ops: s.aiOps,
+          ...(privacyMeta.get(p.key)
+            ? { privacy: { ...privacyMeta.get(p.key)!, result_path: path } }
+            : {}),
           edited_path: path,
           label: p.room || p.name || null,
           as_copy: asCopy,
@@ -2449,6 +2456,7 @@ function embeddedShellHtml(label: string): string {
           <span class="rdpe-cropgrid" aria-hidden="true"></span>
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
+        <div class="rdpe-priv" id="rdpePriv" hidden><canvas id="rdpePrivCv"></canvas><span class="rdpe-brushdot" id="rdpeBrushDot" hidden></span></div>
         <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <span class="rdpe-badge">Original</span>
       </div>
@@ -2502,6 +2510,7 @@ function shellHtml(back: string): string {
           <span class="rdpe-cropgrid" aria-hidden="true"></span>
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
+        <div class="rdpe-priv" id="rdpePriv" hidden><canvas id="rdpePrivCv"></canvas><span class="rdpe-brushdot" id="rdpeBrushDot" hidden></span></div>
         <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <button type="button" class="rdpe-nav r" data-act="next" aria-label="Next Photo"><i data-lucide="chevron-right"></i></button>
         <span class="rdpe-badge">Original</span>
