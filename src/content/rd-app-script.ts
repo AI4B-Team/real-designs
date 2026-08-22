@@ -5921,30 +5921,154 @@ export function initApp(): () => void {
       i.hidden = false;
     }
 
-    function videoModal(url) {
-      let m = document.getElementById("vidModal");
+    /** Everything a finished clip can do, in one place. */
+    function clipModal(job) {
+      let m = document.getElementById("clipModal");
       if (!m) {
         m = document.createElement("div");
-        m.id = "vidModal";
+        m.id = "clipModal";
         m.className = "up-modal";
         m.innerHTML =
-          '<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" style="width:min(720px,calc(100vw - 32px))">' +
-          "<h3>Walkthrough Video</h3><p>Eight seconds, dolly in, built from your finished render.</p>" +
-          '<video id="vidPlayer" controls playsinline style="width:100%;border-radius:12px;background:#111"></video>' +
-          '<a class="btn btn-primary btn-block" id="vidDl" style="margin-top:12px" download="walkthrough.mp4"><i data-lucide="download"></i>Download MP4</a>' +
-          '<button class="btn btn-ghost btn-block" style="margin-top:8px" data-close>Close</button></div>';
+          '<div class="up-scrim" data-close></div><div class="up-card" role="dialog" aria-modal="true" style="width:min(760px,calc(100vw - 32px))">' +
+          '<h3 id="clipTitle">Motion Clip</h3><p id="clipSub" class="mono"></p>' +
+          '<video id="clipPlayer" controls playsinline style="width:100%;border-radius:12px;background:#111"></video>' +
+          '<div class="rd-anim-warn" id="clipWarn" hidden></div>' +
+          '<div class="rd-anim-actions">' +
+          '<a class="btn btn-primary" id="clipDl" download="motion-clip.mp4"><i data-lucide="download"></i>Download MP4</a>' +
+          '<button class="btn btn-dark" data-clip="video"><i data-lucide="clapperboard"></i>Use In Property Video</button>' +
+          '<button class="btn btn-ghost" data-clip="rename"><i data-lucide="pencil"></i>Rename</button>' +
+          '<button class="btn btn-ghost" data-clip="duplicate"><i data-lucide="copy"></i>Duplicate</button>' +
+          '<button class="btn btn-ghost" data-clip="regen"><i data-lucide="refresh-cw"></i>Regenerate</button>' +
+          '<button class="btn btn-ghost" data-clip="reduce"><i data-lucide="gauge"></i>Reduced Motion Retry</button>' +
+          '<button class="btn btn-ghost" data-clip="present"><i data-lucide="presentation"></i>Add To Presentation</button>' +
+          '<button class="btn btn-ghost" data-clip="share"><i data-lucide="link"></i>Copy Share Link</button>' +
+          '<button class="btn btn-ghost" data-clip="source"><i data-lucide="image"></i>View Source Version</button>' +
+          '<button class="btn btn-ghost" data-clip="delete"><i data-lucide="trash-2"></i>Delete</button>' +
+          "</div>" +
+          '<button class="btn btn-ghost btn-block" style="margin-top:10px" data-close>Close</button></div>';
         (document.querySelector(".rd-app") || document.body).appendChild(m);
         m.addEventListener("click", (e) => {
-          if (e.target.hasAttribute && e.target.hasAttribute("data-close")) {
+          const t = e.target;
+          if (t.hasAttribute && t.hasAttribute("data-close")) {
             m.classList.remove("on");
-            m.querySelector("#vidPlayer").pause();
+            const p = m.querySelector("#clipPlayer");
+            if (p) p.pause();
+            return;
           }
+          const act = t.closest && t.closest("[data-clip]");
+          if (act) clipAction(act.getAttribute("data-clip"), m.dataset.clip);
         });
       }
-      m.querySelector("#vidPlayer").src = url;
-      m.querySelector("#vidDl").href = url;
+      m.dataset.clip = job.id;
+      m.querySelector("#clipTitle").textContent = job.title || "Motion Clip";
+      const p = job.payload || {};
+      m.querySelector("#clipSub").textContent = [
+        (p.motion_label || "Motion") + " \u00b7 " + (p.seconds || 8) + "s \u00b7 " + (p.aspect || "16:9"),
+        "From " + (job.source_label || "your design"),
+        clipStatusLine(job),
+      ].join("  \u00b7  ");
+      const player = m.querySelector("#clipPlayer");
+      player.src = job.url || "";
+      m.querySelector("#clipDl").href = job.url || "#";
+      m.querySelector("#clipDl").setAttribute(
+        "download",
+        (job.title || "motion-clip").replace(/[^a-z0-9]+/gi, "-").toLowerCase() + ".mp4",
+      );
+      const warn = m.querySelector("#clipWarn");
+      warn.hidden = true;
+      if (job.check && job.check.morphing) paintClipWarning(job.id, job.check);
       m.classList.add("on");
-      lucide.createIcons();
+      try {
+        lucide.createIcons();
+      } catch (_) {}
+    }
+
+    async function clipAction(action, id) {
+      const job = CLIP_JOBS.find((x) => x.id === id);
+      if (!job) return;
+      const modal = document.getElementById("clipModal");
+      try {
+        if (action === "rename") {
+          const name = window.prompt("Name This Clip", job.title || "Motion Clip");
+          if (!name) return;
+          await updateMotionClip({ data: { id: job.id, title: name.trim().slice(0, 90) } });
+          upsertClip({ ...job, title: name.trim().slice(0, 90) });
+          clipModal({ ...job, title: name.trim().slice(0, 90) });
+          window.dispatchEvent(new Event("rd:media-change"));
+          return;
+        }
+        if (action === "delete") {
+          await deleteMotionClip({ data: { id: job.id } });
+          CLIP_JOBS = CLIP_JOBS.filter((x) => x.id !== job.id);
+          setAnimateJobs(CLIP_JOBS);
+          window.dispatchEvent(new Event("rd:media-change"));
+          if (modal) modal.classList.remove("on");
+          rdToast("Clip Deleted");
+          return;
+        }
+        if (action === "duplicate" || action === "regen" || action === "reduce") {
+          const p = job.payload || {};
+          const base = {
+            ...animateSettings(),
+            motionId: p.motion || animateSettings().motionId,
+            seconds: p.seconds || animateSettings().seconds,
+            aspect: p.aspect || animateSettings().aspect,
+            strength: typeof p.strength === "number" ? p.strength : animateSettings().strength,
+            speed: typeof p.speed === "number" ? p.speed : animateSettings().speed,
+          };
+          applyAnimateSettings(action === "reduce" ? reducedMotion(base) : base);
+          if (modal) modal.classList.remove("on");
+          runAnimateFlow();
+          return;
+        }
+        if (action === "video") {
+          if (!job.output_path) {
+            showAlert("This Clip Is Still Saving.");
+            return;
+          }
+          const out = startVideoBuilder({
+            origin: "studio",
+            propertyId: (STUDIO_CTX && STUDIO_CTX.propertyId) || null,
+            propertyAddress: (STUDIO_CTX && STUDIO_CTX.address) || null,
+            assets: [
+              {
+                storagePath: job.output_path,
+                fileName: job.title || "Motion Clip",
+                roomName: currentRoomType() || null,
+                sourceType: "generated-version",
+              },
+            ],
+          });
+          if (out && out.ok === false)
+            showAlert(out.reason || "That clip could not be sent to Property Video.");
+          else if (modal) modal.classList.remove("on");
+          return;
+        }
+        if (action === "present") {
+          if (modal) modal.classList.remove("on");
+          go("present");
+          rdToast("Add This Clip To A Presentation From Here");
+          return;
+        }
+        if (action === "share") {
+          if (!job.url) return;
+          await navigator.clipboard.writeText(job.url);
+          rdToast("Link Copied. It Expires In One Hour.");
+          return;
+        }
+        if (action === "source") {
+          const url = await resolvePhotoUrl(job.source_path);
+          if (!url) {
+            showAlert("That Source Image Is No Longer Available.");
+            return;
+          }
+          if (modal) modal.classList.remove("on");
+          lastRender = url;
+          cAfter.innerHTML = photo(url, job.source_label || "Source version");
+        }
+      } catch (e) {
+        showAlert((e && e.message) || "That action could not be completed.");
+      }
     }
 
     async function openInStudio(r) {
@@ -10921,7 +11045,7 @@ ${picks
     const toolInfo = document.getElementById("toolInfo");
     const LIVE_TOOLS = {
       "2D To 3D Plan": run3dPlan,
-      "Walkthrough Video": runWalkthrough,
+      Animate: runAnimateFlow,
       "Virtual Stage": () => runStageFlow(),
       Declutter: () => runDeclutterFlow(),
       "Material Swap": () => runMaterialsFlow(),
@@ -10936,7 +11060,7 @@ ${picks
       "Sketch To Render": 1,
       Budget: 3,
       "Multi Angle": 1,
-      "Walkthrough Video": 40,
+      Animate: 40,
       "2D To 3D Plan": 6,
     };
     toolRows.forEach((r) => {
@@ -11097,7 +11221,7 @@ ${picks
         "Material Swap": "Apply Material",
         "Sketch To Render": "Render Sketch",
         "Multi Angle": "Generate Angles",
-        "Walkthrough Video": "Render Walkthrough",
+        Animate: "Create Motion Clip",
         "2D To 3D Plan": "Generate 3D Plan",
       };
       const genLabel = document.getElementById("genLabel");
