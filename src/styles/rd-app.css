@@ -355,7 +355,7 @@
 }
 
 .rd-app .nav-i.on .cnt {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--mute-2);
 }
 
 .rd-app .nav-i .dotn {
