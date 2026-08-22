@@ -717,7 +717,12 @@ export function initCanvasWorkspace() {
     }
   });
 
-  document.addEventListener("rdpe:closed", () => setCanvasTool(null));
+  /* Reclaim the permanent Canvas chrome before the editor host is removed. */
+  document.addEventListener("rdpe:closing", () => returnCanvasChrome());
+  document.addEventListener("rdpe:closed", () => {
+    setCanvasTool(null);
+    applyZoom();
+  });
 
   document.getElementById("rdwSettingsBtn")?.addEventListener("click", () => {
     b.classList.toggle("panel-on");
