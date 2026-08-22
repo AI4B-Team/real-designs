@@ -728,25 +728,8 @@
 
 
 
-/* Room type under each photo. The control itself is the shared .bx-room
-   selector defined in rd-staging.css; only its searchable sheet lives here. */
-.rd-app .rv-roomsheet { width: min(420px, 94vw); }
-.rd-app .rv-roomsearch { display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-bottom: 1px solid var(--line, #f0f0f0); }
-.rd-app .rv-roomsearch svg { width: 15px; height: 15px; color: var(--mute-2, #8a8a8a); }
-.rd-app .rv-roomsearch input { flex: 1; min-width: 0; border: 0; outline: 0; font: inherit; font-size: .88rem; background: transparent; }
-.rd-app .rv-roomlist { max-height: 46vh; overflow: auto; padding: 6px; }
-.rd-app .rv-roomfoot { display: flex; gap: 6px; padding: 8px; border-top: 1px solid var(--line, #f0f0f0); }
-.rd-app .rv-roomfoot .rv-roomopt { flex: 1; }
-.rd-app .rv-roomopt {
-  display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
-  border: 0; background: transparent; border-radius: 8px; padding: 8px 10px;
-  font: inherit; font-size: .85rem; cursor: pointer;
-}
-.rd-app .rv-roomopt:hover { background: #f6f6f6; }
-.rd-app .rv-roomopt.on { background: #f2f2f4; font-weight: 700; }
-.rd-app .rv-roomopt svg { width: 15px; height: 15px; flex: 0 0 auto; color: var(--mute-2, #8a8a8a); }
-.rd-app .rv-roomopt em[data-lucide] { margin-left: auto; }
-.rd-app .rv-roomopt.custom { color: var(--red, #CC0000); font-weight: 700; }
+/* Room type under each photo uses the shared .bx-room control; the room
+   list itself is the shared catalog picker in rd-app.css. */
 .rd-app .rv-tile.drag { opacity: .45; }
 .rd-app .rv-gridfoot .rv-count > span { font-size: .84rem; color: var(--mute); font-family: inherit; }
 

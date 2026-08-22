@@ -10124,3 +10124,69 @@
   display: flex;
   justify-content: flex-end;
 }
+
+/* ---------- Shared catalog picker (rooms, styles, media, properties) ----- */
+.cs-modal .cs-card { max-height: calc(100vh - 48px); }
+.cs-tile.on { background: #fdf2f2; border-width: 2px; padding: 5px; }
+.cs-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); align-content: start; }
+.cs-extras {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 0 20px 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.cs-extra {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cs-extra .cs-th { display: none; }
+.cs-extra.on { border-color: var(--red); background: #fdf2f2; color: var(--red); }
+.cs-custom .cs-th {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--red);
+  background: #fdf2f2;
+  color: var(--red);
+}
+@media (max-width: 1100px) { .cs-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .cs-modal .cs-card { width: 100vw; max-width: none; height: 100dvh; max-height: 100dvh; border-radius: 0; }
+  .cs-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cs-head, .cs-filters, .cs-foot { position: sticky; background: var(--card, #fff); z-index: 2; }
+  .cs-head, .cs-filters { top: 0; }
+  .cs-foot { bottom: 0; }
+  .cs-foot .btn, .cs-tile { min-height: 44px; }
+}
+
+/* Save Room: room type combobox plus the shared "View all" picker. */
+.srm-row { display: flex; gap: 8px; align-items: center; }
+.srm-row > select { flex: 1; min-width: 0; }
+.srm-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.srm-all i, .srm-all svg { width: 14px; height: 14px; }
