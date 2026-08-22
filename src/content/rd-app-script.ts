@@ -115,6 +115,38 @@ import {
   showMaterialsQuality,
 } from "@/lib/materials-controls";
 import { detectSurfaces, renderMaterials, checkMaterialResult } from "@/lib/materials.functions";
+import {
+  buildSketchBrief,
+  sketchCredits,
+  sketchMeta,
+  rejectionMessage,
+  restoreFromMeta as restoreFromSketchMeta,
+} from "@/lib/sketch-brief";
+import {
+  mountSketchPanel,
+  setSketchPanelVisible,
+  readSketchSettings,
+  readSketchResults,
+  setSketchClassification,
+  setSketchClassifying,
+  sketchClassification,
+  setSketchGeometry,
+  setSketchDetecting,
+  sketchGeometry,
+  hasSketchGeometry,
+  resetSketch,
+  loadSketchState,
+  noteSketchView,
+  activeSketchCamera,
+  openSketchBriefReview,
+  showSketchDrift,
+} from "@/lib/sketch-controls";
+import {
+  classifySketch,
+  detectSketchPlan,
+  renderSketch,
+  checkSketchDrift,
+} from "@/lib/sketch.functions";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
@@ -10251,7 +10283,7 @@ ${picks
       "Virtual Stage": () => runStageFlow(),
       Declutter: () => runDeclutterFlow(),
       "Material Swap": () => runMaterialsFlow(),
-      "Sketch To Render": () => runRoomToolFlow("sketch", "Sketch To Render", false),
+      "Sketch To Render": () => runSketchFlow(),
       "Multi Angle": () => runRoomToolFlow("angle", "Multi Angle", true),
     };
     const TOOL_COST = {
@@ -10376,6 +10408,11 @@ ${picks
             price = materialsCredits(readMaterialsResults());
           } catch (_) {}
         }
+        if (tool === "Sketch To Render") {
+          try {
+            price = sketchCredits(readSketchResults());
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
@@ -10393,6 +10430,11 @@ ${picks
         ensureMaterialsPanel();
         setMaterialsSpace(space);
         setMaterialsPanelVisible(tool === "Material Swap");
+      } catch (_) {}
+      /* The drawing, geometry and camera controls belong to Sketch alone. */
+      try {
+        ensureSketchPanel();
+        setSketchPanelVisible(tool === "Sketch To Render");
       } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
