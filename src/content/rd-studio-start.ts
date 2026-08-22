@@ -2105,11 +2105,14 @@ export function mountStudioStart(ctx: StudioStartCtx) {
       } catch (_) {}
       ctx.beginConceptBatch?.({
         room: batch.room,
+        roomSource: batch.roomSource,
+        count: batch.requestedCount,
         ratio: batch.aspectRatio,
         mode: canvasModeFor({ hasReferences: state.refs.length > 0 }),
         summary: conceptSummary(batch, 0),
         prompt: batch.prompt,
       });
+
       const status = await runConceptOptions(batch, inspiration);
       /* A video request renders its key frame first, then opens the builder. */
       if (status.created > 0 && state.output === "video" && ctx.startVideoFromConcept) {
