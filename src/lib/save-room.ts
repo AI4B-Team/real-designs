@@ -11,7 +11,8 @@
  */
 import { createIcons, icons } from "lucide";
 import { modalFooterHtml, setModalButtonLoading } from "@/lib/modal-footer";
-import { ROOM_OPTIONS, ROOM_GROUP_ORDER, roomByLabel } from "@/lib/staging-rooms";
+import { ROOM_OPTIONS, ROOM_GROUP_ORDER, roomByLabel, roomSpace } from "@/lib/staging-rooms";
+import { openRoomAreaPicker } from "@/lib/room-area-picker";
 import { saveStudioRoom, listRoomTargets } from "@/lib/rooms.functions";
 
 export type SaveRoomResult = {
@@ -91,8 +92,11 @@ export function openSaveRoomModal(opts: SaveRoomOptions): Promise<SaveRoomResult
           <label class="srm-f">Room Name
             <input type="text" data-name maxlength="120" placeholder="Front Living Room" value="${esc(opts.roomName || "")}">
           </label>
-          <label class="srm-f">Room Type
-            <select data-type>${roomTypeOptions(suggestedType)}</select>
+          <label class="srm-f">Room type
+            <span class="srm-row">
+              <select data-type>${roomTypeOptions(suggestedType)}</select>
+              <button type="button" class="srm-all" data-type-all>View all<i data-lucide="chevron-right"></i></button>
+            </span>
           </label>
           <p class="srm-err" data-err hidden></p>
         </div>
@@ -133,6 +137,27 @@ export function openSaveRoomModal(opts: SaveRoomOptions): Promise<SaveRoomResult
     });
     wrap.querySelectorAll("[data-x],[data-mfa='cancel']").forEach((b: any) => {
       b.onclick = () => close(null);
+    });
+
+    /* "View all" opens the one shared Room / Area picker, same catalog, same ids. */
+    const typeAll = wrap.querySelector("[data-type-all]") as HTMLButtonElement | null;
+    typeAll?.addEventListener("click", () => {
+      const current = typeSel.value;
+      openRoomAreaPicker({
+        space: roomSpace(current) === "landscape" ? "garden" : roomSpace(current),
+        currentLabel: current,
+        mode: "save-room",
+        opener: typeAll,
+        onApply: (sel) => {
+          if (!Array.from(typeSel.options).some((op) => op.value === sel.label)) {
+            const op = document.createElement("option");
+            op.value = sel.label;
+            op.textContent = sel.label;
+            typeSel.appendChild(op);
+          }
+          typeSel.value = sel.label;
+        },
+      });
     });
 
     const showErr = (msg: string) => {
