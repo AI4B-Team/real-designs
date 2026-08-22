@@ -9141,7 +9141,7 @@ ${picks
     renderNotifs();
 
     /* ---------- studio: tool rows with plan badges ---------- */
-    const toolRows = Array.from(document.querySelectorAll(".toolrow"));
+    const toolRows = Array.from(document.querySelectorAll(".toolrow:not(.rdw-phototool)"));
     const toolInfo = document.getElementById("toolInfo");
     const LIVE_TOOLS = {
       "2D To 3D Plan": run3dPlan,
@@ -9304,7 +9304,7 @@ ${picks
     function paintSpaceTools() {
       const space = currentSpace();
       /* Only the Studio tool list: other views keep their own rows. */
-      const rows = Array.from(document.querySelectorAll("#fTool .toolrow"));
+      const rows = Array.from(document.querySelectorAll("#fTool .toolrow:not(.rdw-phototool)"));
       rows.forEach((r: any) => {
         const nm = r.getAttribute("data-tool") || "";
         /* A tool already gated elsewhere (Budget "Coming Soon", plan locks)
