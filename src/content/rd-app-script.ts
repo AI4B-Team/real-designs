@@ -4213,7 +4213,7 @@ export function initApp(): () => void {
         "data-tt",
         !canSave
           ? gate
-            ? gate.hint
+            ? gate.tooltip
             : "Your Photo Is Still Uploading"
           : saved
             ? "Update This Saved Room"
