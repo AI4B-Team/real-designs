@@ -1826,7 +1826,6 @@ export async function openPhotoEditor(opts: {
       (s as any)[t.getAttribute("data-geo") as string] = n(t.value);
       saveFailed = false;
       s.dirty = true;
-      const img = $("#rdpeImg") as HTMLImageElement;
       paintStageTransform();
       if (cropView) syncCrop();
       const out = t.parentElement?.querySelector(".rdpe-num");
