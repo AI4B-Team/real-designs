@@ -284,6 +284,8 @@ export function createDescribeComposer(cfg: Cfg) {
           room: state.room,
           roomId: state.roomId,
           moodId: state.moodId,
+          roomDetected: state.roomDetected,
+          styleDetected: state.styleDetected,
           style: state.style,
           styleId: state.styleId,
           level: state.level,
@@ -318,6 +320,8 @@ export function createDescribeComposer(cfg: Cfg) {
       if (!raw) return;
       const d = JSON.parse(raw) as any;
       if (typeof d?.prompt === "string") state.prompt = d.prompt;
+      if (typeof d?.roomDetected === "boolean") state.roomDetected = d.roomDetected;
+      if (typeof d?.styleDetected === "boolean") state.styleDetected = d.styleDetected;
       for (const k of [
         "strength",
         "space",
@@ -358,6 +362,26 @@ export function createDescribeComposer(cfg: Cfg) {
   ensureCamera();
   state.moodId = DS.ensureMood(state.moodId, state.space);
   if (state.room && !state.roomId) state.roomId = areaByLabel(state.room)?.id || "";
+  /* A restored or preset description still selects the room and style it
+     names, so Generate is never blocked by an invisible requirement. */
+  if (state.prompt.trim()) {
+    if (!state.roomId) {
+      const a = DS.inferAreaFromPrompt(state.prompt, state.space);
+      if (a) {
+        state.roomId = a.id;
+        state.room = a.label;
+        state.roomDetected = true;
+      }
+    }
+    if (!state.styleId) {
+      const st = DS.inferStyleFromPrompt(state.prompt, state.space);
+      if (st) {
+        state.styleId = st.id;
+        state.style = st.displayName;
+        state.styleDetected = true;
+      }
+    }
+  }
 
   /** Keeps the camera move possible in the currently selected space. */
   function ensureCamera() {
@@ -511,7 +535,7 @@ export function createDescribeComposer(cfg: Cfg) {
       first paint. */
   function footMessage(): string {
     const gap = missing();
-    if (gap) return state.touched ? gap : "";
+    if (gap) return gap;
     return isVideo() ? summary() : DS.compactSummary(settingsState());
   }
 
@@ -666,7 +690,7 @@ export function createDescribeComposer(cfg: Cfg) {
       esc(label) +
       "</span>" +
       (state.roomDetected && state.room
-        ? '<span class="rdset-note"><i data-lucide="sparkles"></i>From Your Description</span>'
+        ? '<span class="rdset-note"><i data-lucide="sparkles"></i>Detected from description</span>'
         : "") +
       '<button type="button" class="rdset-all" data-sp="allroom">View All<i data-lucide="chevron-right"></i></button></header>' +
       '<div class="rdset-cards" role="listbox" aria-label="' +
@@ -705,7 +729,7 @@ export function createDescribeComposer(cfg: Cfg) {
     return (
       '<div class="rdset-row" data-sp-sec="style"><header class="rdset-h"><span class="rdset-l">Design Style</span>' +
       (state.styleDetected && state.style
-        ? '<span class="rdset-note"><i data-lucide="sparkles"></i>From Your Description</span>'
+        ? '<span class="rdset-note"><i data-lucide="sparkles"></i>Detected from description</span>'
         : "") +
       '<button type="button" class="rdset-all" data-sp="allstyle">View All<i data-lucide="chevron-right"></i></button></header>' +
       '<div class="rdset-cards is-style" role="listbox" aria-label="Design Style">' +
@@ -741,26 +765,33 @@ export function createDescribeComposer(cfg: Cfg) {
   function advanced(): string {
     const video = isVideo();
     return (
-      '<details class="sp-details rdset-adv"' +
-      (state.advOpen ? " open" : "") +
-      '><summary data-sp="details">Advanced Settings <span class="rdset-sum">' +
+      '<div class="rdset-adv' +
+      (state.advOpen ? " is-open" : "") +
+      '"><button type="button" class="rdset-advh" data-sp="details" aria-expanded="' +
+      (state.advOpen ? "true" : "false") +
+      '"><span class="rdset-advt">Advanced settings</span><span class="rdset-sum">' +
       esc(DS.advancedSummary(settingsState())) +
-      "</span></summary>" +
-      chipRow("Change Level", "level", DESCRIBE_LEVELS, state.level) +
+      '</span><i data-lucide="' +
+      (state.advOpen ? "chevron-up" : "chevron-down") +
+      '"></i></button>' +
+      '<div class="rdset-advb"' +
+      (state.advOpen ? "" : " hidden") +
+      ">" +
+      chipRow("Change level", "level", DESCRIBE_LEVELS, state.level) +
       (video
         ? '<div class="sp-video">' +
-          chipRow("Camera Movement", "cam", camerasForSpace(state.space), state.camera) +
+          chipRow("Camera movement", "cam", camerasForSpace(state.space), state.camera) +
           chipRow("Duration", "dur", DESCRIBE_DURATIONS, state.duration, "s") +
           chipRow("Orientation", "orient", DESCRIBE_ORIENTATIONS, state.orientation) +
           "</div>"
-        : chipRow("Aspect Ratio", "ratio", DESCRIBE_RATIOS, state.ratio)) +
+        : chipRow("Aspect ratio", "ratio", DESCRIBE_RATIOS, state.ratio)) +
       chipRow(
-        video ? "Number Of Videos" : "Number Of Images",
+        video ? "Number of videos" : "Number of images",
         "opt",
         DESCRIBE_OPTION_COUNTS,
         state.options,
       ) +
-      '<div class="sp-dopts"><span class="sp-dopt-l">Mood And Lighting</span><div class="sp-chips">' +
+      '<div class="sp-dopts rdset-moods"><span class="sp-dopt-l">Mood and lighting</span><div class="sp-chips">' +
       DS.moodsForSpace(state.space)
         .map(
           (m) =>
@@ -772,13 +803,13 @@ export function createDescribeComposer(cfg: Cfg) {
             (state.moodId === m.id) +
             '"><i data-lucide="' +
             m.icon +
-            '"></i>' +
+            '"></i><span>' +
             esc(m.label) +
-            "</button>",
+            "</span></button>",
         )
         .join("") +
       "</div></div>" +
-      "</details>"
+      "</div></div>"
     );
   }
 
@@ -934,9 +965,9 @@ export function createDescribeComposer(cfg: Cfg) {
         ? '<p class="sp-warn">A reference did not finish uploading. Retry it or remove it before generating.</p>'
         : "") +
       '<div class="sp-describe-foot' +
-      (gap && state.touched ? " is-blocked" : "") +
+      (gap ? " is-blocked" : "") +
       '">' +
-      (gap && state.touched
+      (gap
         ? '<button type="button" class="sp-meta sp-meta-fix" data-sp="fix">' +
           esc(gap) +
           "</button>"
@@ -1247,8 +1278,10 @@ export function createDescribeComposer(cfg: Cfg) {
     if (act === "details") {
       state.detailsOpen = !state.detailsOpen;
       state.advOpen = !state.advOpen;
+      cfg.render();
       return true;
     }
+
     if (act === "closepreview") {
       state.preview = null;
       cfg.render();

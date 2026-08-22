@@ -42,8 +42,16 @@ describe("describe design settings", () => {
       options: 1,
       moodId: DS.DEFAULT_MOOD_ID,
     };
-    expect(DS.compactSummary(s)).toBe("Kitchen \u00b7 Modern Luxury \u00b7 1 image");
+    expect(DS.compactSummary(s)).toBe("Kitchen \u00b7 Modern Luxury \u00b7 Balanced \u00b7 16:9");
+    expect(DS.compactSummary({ ...s, moodId: "natural-daylight" })).toBe(
+      "Kitchen \u00b7 Modern Luxury \u00b7 Balanced \u00b7 16:9 \u00b7 Natural daylight",
+    );
     expect(DS.nextRequirement(s)).toBeNull();
+    expect(DS.nextRequirement({ ...s, roomId: null, styleId: null })).toBe(
+      "Select a room and design style",
+    );
+    expect(DS.DEFAULT_MOOD_ID).toBe("auto");
+    expect(DS.moodLabel("natural-daylight")).toBe("Natural daylight");
     expect(DS.nextRequirementTarget({ ...s, styleId: null })).toBe("style");
   });
 

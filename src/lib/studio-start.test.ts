@@ -102,8 +102,10 @@ describe("studio start source picker", () => {
   it("references stay optional and validation only asks for a description", () => {
     const { host } = mount("design");
     (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
-    /* Nothing shouts on first paint. */
-    expect(host.querySelector(".sp-describe-foot .sp-meta")!.textContent).toBe("");
+    /* The footer always states the one thing still missing. */
+    expect(host.querySelector(".sp-describe-foot .sp-meta")!.textContent).toContain(
+      "Add a description",
+    );
     const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     ta.value = " ";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
@@ -170,6 +172,29 @@ describe("studio start source picker", () => {
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     expect(onDescribe).not.toHaveBeenCalled();
+  });
+
+  it("advanced settings header toggles with a lucide chevron and keeps moods uniform", () => {
+    const { host } = mount("design");
+    (host.querySelector('[data-sp-tab="describe"]') as HTMLElement).click();
+    const head = () => host.querySelector(".rdset-advh") as HTMLElement;
+    expect(head().getAttribute("aria-expanded")).toBe("false");
+    expect(head().querySelector('[data-lucide="chevron-down"]')).toBeTruthy();
+    expect(host.textContent).toContain("Advanced settings");
+    head().click();
+    expect(head().getAttribute("aria-expanded")).toBe("true");
+    expect(head().querySelector('[data-lucide="chevron-up"]')).toBeTruthy();
+    const body = host.querySelector(".rdset-advb") as HTMLElement;
+    expect(body.textContent).toContain("Number of images");
+    expect(body.textContent).toContain("Mood and lighting");
+    const moods = Array.from(body.querySelectorAll("[data-sp-mood]"));
+    expect(moods.length).toBeGreaterThan(3);
+    for (const m of moods) expect(m.querySelector("i[data-lucide]")).toBeTruthy();
+    /* Auto is the default and stays selected until the user picks another. */
+    const auto = body.querySelector('[data-sp-mood="auto"]') as HTMLElement;
+    expect(auto.getAttribute("aria-pressed")).toBe("true");
+    (body.querySelector('[data-sp-mood="natural-daylight"]') as HTMLElement).click();
+    expect(host.textContent).toContain("Natural daylight");
   });
 
   it("marks the active tab with an accessible pressed state", () => {
