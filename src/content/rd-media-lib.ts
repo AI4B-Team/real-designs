@@ -746,6 +746,9 @@ try {
       closePop();
       return;
     }
+    /* A dialog layered over the drawer owns Escape: closing it must return the
+       user to the same open drawer, not dismiss both. */
+    if (document.querySelector(".rd-modal-root, .rd-modal")) return;
     const d = document.getElementById("mlDrawer");
     if (d && !d.hidden) closeDrawer();
   });
