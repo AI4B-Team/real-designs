@@ -1158,6 +1158,22 @@ export function createDescribeComposer(cfg: Cfg) {
       void submit();
       return true;
     }
+    if (act === "fix") {
+      /* The footer message is the way back to whatever is still missing. */
+      const target = DS.nextRequirementTarget(settingsState());
+      const root = t.closest(".sp-describe") as HTMLElement | null;
+      if (target === "prompt") {
+        const ta = root?.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement | null;
+        ta?.scrollIntoView({ behavior: "smooth", block: "center" });
+        ta?.focus();
+      } else if (target) {
+        const sec = root?.querySelector('[data-sp-sec="' + target + '"]') as HTMLElement | null;
+        sec?.scrollIntoView({ behavior: "smooth", block: "center" });
+        sec?.classList.add("is-wanted");
+        setTimeout(() => sec?.classList.remove("is-wanted"), 1600);
+      }
+      return true;
+
     if (act === "addref") {
       menuOpen = !menuOpen;
       cfg.render();
