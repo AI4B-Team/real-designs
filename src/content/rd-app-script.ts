@@ -53,6 +53,7 @@ import {
 import { suggestDesignTitle } from "@/lib/property-address";
 import * as OS from "@/lib/canvas-session";
 import * as CR from "@/lib/canvas-result";
+import * as RDNAV from "@/lib/studio-nav";
 
 
 import { supabase } from "@/integrations/supabase/client";
@@ -539,6 +540,8 @@ export function initApp(): () => void {
         } catch (_) {}
       }
       beginNavigation(v);
+      /* Every route change invalidates callbacks issued by the previous one. */
+      RDNAV.bumpNavToken();
       /* Any route that is not the Studio view ends the Canvas context. */
       if (v !== "studio" && inPhotoCanvas()) STUDIO_MODE = GENERIC_STUDIO;
       const acctAlias = ACCT_ALIAS[v] ? v : "";
@@ -4147,7 +4150,10 @@ export function initApp(): () => void {
         const beforeUrl = r.before_path ? await resolvePhotoUrl(r.before_path) : null;
         const afterUrl = r.after_path ? await resolvePhotoUrl(r.after_path) : null;
         if (!beforeUrl && !afterUrl) {
-          go("studio");
+          /* A photo that will not resolve is a recoverable problem, not a
+             reason to throw away an open Canvas. */
+          RDNAV.goStudio({ reason: "recovery" });
+          toast("That Design Could Not Be Opened. Try Again.");
           return;
         }
         STUDIO_CTX = Object.assign(blankStudioCtx(), {
@@ -11081,9 +11087,8 @@ ${picks
       window.rdHandoffPending = true;
       if (Date.now() - (h.ts || 0) > 1000 * 60 * 60 * 24 * 7) return; // stale, ignore
 
-      try {
-        go("studio");
-      } catch (e) {}
+      /* A handoff saved days ago must never interrupt live work. */
+      if (!RDNAV.goStudio({ reason: "handoff" }).navigated) return;
       setStudioSource("website_handoff", h.photo, "The space you uploaded on the website", {
         caption: "Choose what you want to create, then generate your first version.",
       });
