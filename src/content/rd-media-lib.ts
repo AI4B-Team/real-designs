@@ -979,7 +979,31 @@ function assetRow(m) {
   };
 }
 
-/** Uploads open in the full-screen Photo Editor; designs re-open in Studio. */
+/**
+ * Restores the photo as it was uploaded or generated.
+ *
+ * Only the edit record is removed: the stored original was never written over,
+ * so this always has something to come back to.
+ */
+async function restoreOriginal(m) {
+  const ok = await confirmDialog({
+    title: "Restore The Original?",
+    body: "Every Adjustment, Crop And AI Enhancement Is Removed And The Original Photograph Comes Back. Saved Copies Are Kept.",
+    confirmLabel: "Restore Original",
+    danger: true,
+  });
+  if (!ok) return;
+  try {
+    await resetPhotoEdit({ data: { asset_key: m.id } });
+    toast("Original Restored.");
+    await load(true);
+  } catch (err) {
+    toast((err && err.message) || "That Photo Could Not Be Restored.");
+  }
+}
+
+/** Every finished still image edits in place; designs also stay editable. */
+
 function editImage(m) {
   if (canEditImage(m)) {
     const siblings = filtered().filter((x) => canEditImage(x) && (x.assetPath || x.path));
