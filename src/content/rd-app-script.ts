@@ -2551,6 +2551,70 @@ export function initApp(): () => void {
 
     function beginConceptBatch(info) {
       const i = info || {};
+      STUDIO_SRC = "user_upload";
+      STUDIO_CTX = blankStudioCtx();
+      if (i.room) STUDIO_CTX.room = i.room;
+      STUDIO_RESULT = false;
+      CANVAS_PHASE = "generating";
+      lastRender = null;
+      lastRenderPath = null;
+      dropPendingSave();
+      try {
+        SESSION_VERSIONS.length = 0;
+      } catch (_) {}
+      /* No source photo exists, so nothing is faked into the Before layer and
+         the two layers can never hold the same asset. */
+      if (cBefore) cBefore.innerHTML = "";
+      if (cAfter) cAfter.innerHTML = "";
+      const vars = document.getElementById("vars");
+      if (vars) vars.innerHTML = "";
+      try {
+        Object.keys(locks).forEach((k) => delete locks[k]);
+      } catch (_) {}
+      sourceCaption(false);
+      setCanvasRatio(i.ratio, null);
+      applyCanvasMode(i.mode || "concept-only");
+      /* One authoritative room type: whatever the request was made with is
+         what the panel, the version record and Save Room all use. */
+      CONCEPT_SUMMARY_BASE = i.summary || null;
+      OUTPUTS = OS.createOutputSet({
+        count: i.count || 1,
+        kind: "concept",
+        roomType: i.room || null,
+        roomSource: i.roomSource || (i.room ? "selected" : "unknown"),
+      });
+      applyRoomTypeEverywhere(i.room || null);
+      paintOutputs();
+      paintStudioState();
+      paintStudioSub();
+      paintVersions();
+    }
+
+    /** Keeps every room-type surface on the same value. */
+    function applyRoomTypeEverywhere(room) {
+      if (!room) return;
+      if (STUDIO_CTX) STUDIO_CTX.room = room;
+      const set = (id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const has = Array.from(el.options || []).some(
+          (o) => String(o.value).toLowerCase() === String(room).toLowerCase(),
+        );
+        if (has) {
+          el.value = Array.from(el.options).find(
+            (o) => String(o.value).toLowerCase() === String(room).toLowerCase(),
+          ).value;
+          el.dispatchEvent(new Event("change", { bubbles: true }));
+        } else if (el.tagName === "INPUT") {
+          el.value = room;
+        }
+      };
+      set("fRoom");
+      set("svType");
+    }
+    window.rdApplyRoomType = (r) => applyRoomTypeEverywhere(r);
+
+
 
 
     /* A partial batch is never reported as done: the surviving image stays on
