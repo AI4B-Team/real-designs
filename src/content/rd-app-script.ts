@@ -10130,6 +10130,11 @@ ${picks
             price = declutterCredits(readDeclutterResults());
           } catch (_) {}
         }
+        if (tool === "Material Swap") {
+          try {
+            price = materialsCredits(readMaterialsResults());
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
@@ -10141,6 +10146,12 @@ ${picks
       try {
         ensureDeclutterPanel();
         setDeclutterPanelVisible(tool === "Declutter");
+      } catch (_) {}
+      /* The surface and material controls belong to Materials alone. */
+      try {
+        ensureMaterialsPanel();
+        setMaterialsSpace(space);
+        setMaterialsPanelVisible(tool === "Material Swap");
       } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
