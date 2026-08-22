@@ -1132,6 +1132,8 @@ export function createDescribeComposer(cfg: Cfg) {
         }
         state.style = "";
         state.styleId = "";
+        state.styleDetected = false;
+
         ensureCamera();
       }],
       ["level", (v) => (state.level = v)],
