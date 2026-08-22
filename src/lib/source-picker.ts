@@ -887,6 +887,18 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     );
   }
 
+  /** Shift-click: everything between the anchor and the clicked card. */
+  function selectRange(from: string, to: string) {
+    const list = visibleMedia().map((d) => d.id);
+    const a = list.indexOf(from);
+    const b = list.indexOf(to);
+    if (a < 0 || b < 0) return;
+    const [lo, hi] = a <= b ? [a, b] : [b, a];
+    for (const id of list.slice(lo, hi + 1))
+      if (!state.designSel.includes(id)) state.designSel.push(id);
+    state.mediaAnchor = to;
+  }
+
   /** Selected media, in the order they were picked. */
   function selectedDesigns() {
     const byId = new Map(state.designs.map((d) => [d.id, d]));
@@ -1864,9 +1876,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   function onChange(e: Event) {
     const t = e.target as HTMLSelectElement;
     const f = fieldName(t);
-    if (f === "mprop" || f === "mroom") {
+    if (f === "mprop" || f === "mroom" || f === "msort" || f === "mgroup") {
       if (f === "mprop") state.mediaProperty = t.value;
-      else state.mediaRoom = t.value;
+      else if (f === "mroom") state.mediaRoom = t.value;
+      else if (f === "msort") state.mediaSort = t.value as typeof state.mediaSort;
+      else state.mediaGroup = t.value === "group";
       render();
       return;
     }
@@ -1953,14 +1967,29 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
       return;
     }
+    const mview = t.closest("[data-sp-view]") as HTMLElement | null;
+    if (mview) {
+      state.mediaView = (mview.dataset["spView"] as "grid" | "list") || "grid";
+      try {
+        localStorage.setItem("rd.media.view", state.mediaView);
+      } catch (_) {}
+      render();
+      return;
+    }
     const dsn = t.closest("[data-sp-design]") as HTMLElement | null;
 
     if (dsn) {
       const id = dsn.dataset["spDesign"]!;
       if (opts.onDesigns || opts.loadDesigns) {
+        if ((e as MouseEvent).shiftKey && state.mediaAnchor) {
+          selectRange(state.mediaAnchor, id);
+          render();
+          return;
+        }
         const i = state.designSel.indexOf(id);
         if (i > -1) state.designSel.splice(i, 1);
         else state.designSel.push(id);
+        state.mediaAnchor = id;
         render();
         return;
       }
@@ -2002,6 +2031,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       render();
     } else if (k === "ddesign") {
       opts.onSample ? opts.onSample() : (state.tab = "upload");
+      render();
+    } else if (k === "mall") {
+      for (const d of visibleMedia()) if (!state.designSel.includes(d.id)) state.designSel.push(d.id);
       render();
     } else if (k === "mreset") {
       state.mediaType = "all";
