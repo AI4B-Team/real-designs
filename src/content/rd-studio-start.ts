@@ -1184,15 +1184,15 @@ export function mountStudioStart(ctx: StudioStartCtx) {
   function sourceHeading(tab: string): { title: string; copy: string } {
     if (tab === "describe")
       return {
-        title: "Choose A Source",
+        title: "Choose a Source",
         copy: "Pick where your photos come from, or describe the space instead.",
       };
     return {
-      title: "Choose A Source",
+      title: "Choose a Source",
       copy:
         state.door === "video"
-          ? "Upload a property shoot, import photos you already have, or paste a listing link."
-          : "Upload photos, import photos you already have, or describe the space you want.",
+          ? "Upload a property shoot or choose photos and designs you already have."
+          : "Upload photos, choose existing media, or describe the space you want.",
     };
   }
 
