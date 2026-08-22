@@ -935,9 +935,12 @@ export function createDescribeComposer(cfg: Cfg) {
       '<div class="sp-describe-foot' +
       (gap && state.touched ? " is-blocked" : "") +
       '">' +
-      '<span class="sp-meta">' +
-      esc(gap && state.touched ? gap : DS.generationSummary(st)) +
-      "</span>" +
+      (gap && state.touched
+        ? '<button type="button" class="sp-meta sp-meta-fix" data-sp="fix">' +
+          esc(gap) +
+          "</button>"
+        : '<span class="sp-meta">' + esc(DS.compactSummary(st)) + "</span>") +
+
       '<span class="sp-foot-r"><span class="sp-cost">' +
       esc(optionTotalLabel(output(), state.options)) +
       "</span>" +
