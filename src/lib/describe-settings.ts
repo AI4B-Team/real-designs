@@ -246,8 +246,9 @@ export function ensureMood(id: string, space: string): string {
 /* prompt editor                                                       */
 /* ------------------------------------------------------------------ */
 
-export const PROMPT_MIN_H = 96;
-export const PROMPT_MAX_H = 220;
+export const PROMPT_MIN_H = 144;
+export const PROMPT_MAX_H = 320;
+
 export const PROMPT_LIMIT = 1200;
 /** Character count only appears when the limit is genuinely close. */
 export const PROMPT_COUNT_FROM = PROMPT_LIMIT - 200;
