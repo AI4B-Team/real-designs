@@ -32,6 +32,32 @@ import {
   primarySaveLabel,
 } from "@/lib/photo-editor-context";
 import {
+  applyDetailPass,
+  detailKey,
+  detailOf,
+  needsPixelPass,
+} from "@/lib/photo-pixels";
+import {
+  CROP_PRESETS,
+  EXPORT_PRESETS,
+  classifyEdits,
+  cropPreset,
+  deletePreset as removePreset,
+  disclosureText,
+  exportFileName,
+  exportPreset,
+  exportSize,
+  listPresets,
+  mergeBundle,
+  qualityReview,
+  savePreset,
+  type AdjustmentBundle,
+} from "@/lib/photo-editor-presets";
+import {
+  PRIVACY_TARGETS,
+  privacyInstruction,
+} from "@/lib/photo-editor-context";
+import {
   type PhotoStats,
   type Strength,
   STRENGTHS,
@@ -107,17 +133,12 @@ const ADJUSTMENTS = [
   { group: "color", key: "saturation", label: "Saturation", min: -100, max: 100 },
   { group: "detail", key: "sharpen", label: "Sharpen", min: 0, max: 100 },
   { group: "detail", key: "denoise", label: "Denoise", min: 0, max: 100 },
+  { group: "detail", key: "clarity", label: "Clarity", min: -100, max: 100 },
+  { group: "detail", key: "dehaze", label: "Dehaze", min: -100, max: 100 },
+  { group: "lens", key: "lens", label: "Lens Correction", min: -100, max: 100 },
 ] as const;
 
-const RATIOS: { id: string; label: string; v: number | null }[] = [
-  { id: "original", label: "Original", v: null },
-  { id: "free", label: "Free", v: null },
-  { id: "1:1", label: "1:1", v: 1 },
-  { id: "4:3", label: "4:3", v: 4 / 3 },
-  { id: "3:2", label: "3:2", v: 3 / 2 },
-  { id: "16:9", label: "16:9", v: 16 / 9 },
-  { id: "9:16", label: "9:16", v: 9 / 16 },
-];
+const RATIOS = CROP_PRESETS;
 
 const GEOMETRY = [
   { key: "straighten", label: "Straighten", min: -15, max: 15, step: 0.5 },
@@ -176,7 +197,6 @@ export function filterString(adj: Adj): string {
   if (warm) parts.push(`sepia(${Math.min(0.5, Math.abs(warm) * 0.35).toFixed(3)})`);
   if (warm < 0) parts.push(`hue-rotate(${(warm * 22).toFixed(1)}deg)`);
   if (a("tint")) parts.push(`hue-rotate(${(a("tint") / 8).toFixed(1)}deg)`);
-  if (a("denoise")) parts.push(`blur(${(a("denoise") / 140).toFixed(2)}px)`);
   return parts.join(" ");
 }
 
@@ -263,11 +283,55 @@ function drawKeystone(
   }
 }
 
+/* ------------------------------------------------------- detail pipeline */
+
+const detailCache = new Map<string, string>();
+
+/**
+ * Detail and lens correction are real pixel work, so they run once here and
+ * feed BOTH the live preview and the saved render. Nothing in the inspector is
+ * a CSS-only illusion that vanishes from the exported file.
+ */
+export async function detailedSource(src: string, adj: Adj, maxEdge = 0): Promise<string> {
+  const d = detailOf(adj);
+  if (!needsPixelPass(d)) return src;
+  const key = `${maxEdge}|${detailKey(src, d)}`;
+  const hit = detailCache.get(key);
+  if (hit) return hit;
+  try {
+    const img = await loadImage(src);
+    let w = img.naturalWidth;
+    let h = img.naturalHeight;
+    if (maxEdge && Math.max(w, h) > maxEdge) {
+      const k = maxEdge / Math.max(w, h);
+      w = Math.max(1, Math.round(w * k));
+      h = Math.max(1, Math.round(h * k));
+    }
+    const cv = document.createElement("canvas");
+    cv.width = w;
+    cv.height = h;
+    const c = cv.getContext("2d", { willReadFrequently: true });
+    if (!c) return src;
+    c.drawImage(img, 0, 0, w, h);
+    const id = c.getImageData(0, 0, w, h);
+    applyDetailPass({ data: id.data, width: w, height: h }, d);
+    c.putImageData(id, 0, 0);
+    const out = cv.toDataURL("image/jpeg", 0.95);
+    detailCache.set(key, out);
+    if (detailCache.size > 10) detailCache.delete(detailCache.keys().next().value as string);
+    return out;
+  } catch {
+    return src;
+  }
+}
+
+export type ExportOptions = { maxEdge?: number; quality?: number; disclosure?: string | null };
+
 /** Flatten the current state into a JPEG data URL. */
-export async function renderPhoto(st: PhotoState): Promise<string> {
+export async function renderPhoto(st: PhotoState, ex: ExportOptions = {}): Promise<string> {
   const src = st.base || st.original;
   if (!src) throw new Error("Nothing to render.");
-  const img = await loadImage(src);
+  const img = await loadImage(await detailedSource(src, st.adj));
   const quarter = ((st.rotation % 360) + 360) % 360;
   const swap = quarter === 90 || quarter === 270;
   const iw = img.naturalWidth;
@@ -298,7 +362,36 @@ export async function renderPhoto(st: PhotoState): Promise<string> {
     cut.getContext("2d")?.drawImage(stage, cx, cy, cw, ch, 0, 0, cw, ch);
     out = cut;
   }
-  return out.toDataURL("image/jpeg", 0.94);
+
+  /* Export sizing, then the disclosure caption, so the caption is never
+     resampled into mush. */
+  const size = exportSize(out.width, out.height, ex.maxEdge || 0);
+  if (size.w !== out.width || size.h !== out.height) {
+    const scaled = document.createElement("canvas");
+    scaled.width = size.w;
+    scaled.height = size.h;
+    const sc = scaled.getContext("2d");
+    if (sc) {
+      sc.imageSmoothingQuality = "high";
+      sc.drawImage(out, 0, 0, size.w, size.h);
+      out = scaled;
+    }
+  }
+  if (ex.disclosure) {
+    const c2 = out.getContext("2d");
+    if (c2) {
+      const pad = Math.round(out.width * 0.02);
+      const fs = Math.max(12, Math.round(out.width * 0.026));
+      c2.font = `600 ${fs}px "DM Sans", system-ui, sans-serif`;
+      const tw = c2.measureText(ex.disclosure).width;
+      c2.fillStyle = "rgba(0,0,0,.62)";
+      c2.fillRect(pad, out.height - pad - fs * 1.9, tw + fs, fs * 1.9);
+      c2.fillStyle = "#fff";
+      c2.textBaseline = "middle";
+      c2.fillText(ex.disclosure, pad + fs / 2, out.height - pad - fs * 0.95);
+    }
+  }
+  return out.toDataURL("image/jpeg", ex.quality ?? 0.94);
 }
 
 /* ------------------------------------------------------------------- view */
