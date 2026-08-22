@@ -233,6 +233,12 @@ export async function openPhotoEditor(opts: {
   /* Where closing returns the user. The editor is one screen reached from
      several places, so the close control has to name the way back. */
   returnDestination?: ReturnDestination;
+  /* When present the editor is a tool inside the Design Canvas: it mounts in
+     the given host, keeps both rails and the Canvas headers on screen, and
+     never renders a page-level header or a "Return To Canvas" control. */
+  mount?: HTMLElement | null;
+  /* Label of the image the Canvas is showing, e.g. "Source Photo". */
+  contextLabel?: string;
   onSaved?: (r: {
     key: string;
     path: string;
@@ -256,15 +262,24 @@ export async function openPhotoEditor(opts: {
   let aiPreview: { op: string; label: string; image: string } | null = null;
   let aiBusy = "";
 
+  const embedded = !!opts.mount;
   const host = document.createElement("div");
-  host.className = "rdpe";
-  host.setAttribute("role", "dialog");
-  host.setAttribute("aria-modal", "true");
+  host.className = embedded ? "rdpe rdpe-embed" : "rdpe";
+  if (!embedded) {
+    host.setAttribute("role", "dialog");
+    host.setAttribute("aria-modal", "true");
+  }
   host.setAttribute("aria-label", "Photo Editor");
-  host.innerHTML = shellHtml(returnLabel(opts.returnDestination));
-  document.body.appendChild(host);
-  document.body.classList.add("rdpe-open");
+  host.innerHTML = embedded
+    ? embeddedShellHtml(opts.contextLabel || "Source Photo")
+    : shellHtml(returnLabel(opts.returnDestination));
+  if (embedded) opts.mount!.appendChild(host);
+  else {
+    document.body.appendChild(host);
+    document.body.classList.add("rdpe-open");
+  }
   HOST = host;
+
 
   const $ = <T extends HTMLElement = HTMLElement>(sel: string) => host.querySelector(sel) as T;
 
