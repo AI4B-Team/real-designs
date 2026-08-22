@@ -420,7 +420,8 @@ export async function openPhotoEditor(opts: {
     host.classList.toggle("rdpe-crop", cropMode);
     host.classList.toggle("rdpe-compare", comparing);
 
-    $("#rdpeStrip").innerHTML = photos
+    const strip = $("#rdpeStrip");
+    if (strip) strip.innerHTML = photos
       .map((ph, i) => {
         const ps = states.get(ph.key);
         const badge = ps?.dirty ? "unsaved" : ps && hasEdits(ps) ? "edited" : "";
