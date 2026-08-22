@@ -237,6 +237,9 @@ export function createDescribeComposer(cfg: Cfg) {
     roomId: "" as string,
     /** True when the room came from the description, not from a click. */
     roomDetected: false,
+    /** True when the style came from the description, not from a click. */
+    styleDetected: false,
+
     moodId: DS.DEFAULT_MOOD_ID,
     advOpen: false,
     /** "room" | "style" | null — the searchable View All browser. */
