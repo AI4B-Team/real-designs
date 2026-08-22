@@ -1100,13 +1100,15 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
           ])
         : "") +
       '<div class="spd-bar-r">' +
-      '<button type="button" class="sp-link" data-sp="mall">Select All Visible</button>' +
+      '<button type="button" class="sp-link" data-sp="mall">' +
+      (allVisibleSelected() ? "Deselect All Visible" : "Select All Visible") +
+      "</button>" +
       (n
         ? '<button type="button" class="sp-link" data-sp="dclear">Deselect All</button>'
         : "") +
       '<span class="spd-count" aria-live="polite">' +
-      (n ? n + " selected" : "None selected") +
-      "</span>" +
+      n +
+      " selected</span>" +
       '<div class="spd-views" role="group" aria-label="View">' +
       viewBtn("grid", "layout-grid", "Grid View") +
       viewBtn("list", "list", "List View") +
