@@ -660,11 +660,11 @@ function paintAction() {
                     '<option value="' +
                     m.id +
                     '" data-prompt="' +
-                    esc((m as any).prompt || "") +
+                    esc(m.spec || "") +
                     '"' +
                     (state.settings.materialId === m.id ? " selected" : "") +
                     ">" +
-                    esc(m.label) +
+                    esc(m.name) +
                     "</option>",
                 )
                 .join("") +
