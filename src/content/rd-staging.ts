@@ -18,12 +18,8 @@
 // @ts-nocheck
 import { createIcons, icons } from "lucide";
 import { mountSourcePicker, normalizeImageFile } from "@/lib/source-picker";
-import {
-  openAddSourcePopover,
-  closeAddSourcePopover,
-  openSourceModal,
-  sourceTabFor,
-} from "@/lib/add-source-popover";
+import { openSourceModal } from "@/lib/add-source-popover";
+import { addSourceCardHtml, mountAddSourceCard } from "@/lib/add-source-card";
 import {
   normalizeRotation,
   nextRotation,
@@ -778,27 +774,23 @@ function pickerCommon() {
   };
 }
 
-/** The anchored menu, and what each source does once chosen. */
-function openAddSources(anchor) {
-  openAddSourcePopover(anchor, {
+/**
+ * Cloud import for the compact Add More card. Google Drive and Dropbox reuse
+ * the one existing import pipeline, which downloads each photo into REAL
+ * DESIGNS storage — a share URL is never kept as the canonical image path.
+ */
+function openCloudImport(provider) {
+  openSourceModal({
+    title: provider === "dropbox" ? "Import From Dropbox" : "Import From Google Drive",
     paint,
-    sources: ["computer", "cloud", "property", "media"],
-    onSelect: (id) => {
-      if (id === "computer") return pickFiles();
-      const tab = sourceTabFor(id) || "upload";
-      openSourceModal({
-        title:
-          id === "cloud" ? "Import From Google Drive" : id === "media" ? "Add From Media" : "Add From A Property",
-        paint,
-        picker: {
-          ...pickerCommon(),
-          initialTab: tab,
-          onPick: async (picked) => {
-            const files = (picked || []).map((x) => x.file).filter(Boolean);
-            if (files.length) addFiles(files);
-          },
-        },
-      });
+    picker: {
+      ...pickerCommon(),
+      initialTab: "cloud",
+      sources: ["cloud"],
+      onPick: async (picked) => {
+        const files = (picked || []).map((x) => x.file).filter(Boolean);
+        if (files.length) addFiles(files);
+      },
     },
   });
 }
@@ -1208,16 +1200,7 @@ function cardHtml(it, seq) {
    selector, no menu, no credits — it only opens the existing Add Photos
    picker, and it always stays the final grid item. */
 function addCardHtml() {
-  return `<div class="rv-addcard ${ratioClass(S && S.outputRatio)}">
-    <button type="button" class="rv-addcard-b" id="rdsAddCard" aria-label="Add More Photos"
-      aria-haspopup="menu" aria-expanded="false">
-      <i data-lucide="image-plus"></i>
-      <b>Add More Photos</b>
-      <em>Click To Choose A Source, Or Drop Photos Here</em>
-      <small class="rv-addcard-types">JPG · PNG · WebP · HEIC</small>
-    </button>
-    <div class="rv-addcard-pad" aria-hidden="true"></div>
-  </div>`;
+  return addSourceCardHtml({ id: "rdsAddCard", ratio: ratioClass(S && S.outputRatio) });
 }
 
 function gridHtml() {
@@ -1372,7 +1355,6 @@ function render() {
   mountUploadRetries(el);
   mountRotations(el);
   mountFloatingAdd(el);
-  closeAddSourcePopover();
 }
 
 /* Every rail step is a real destination: nothing in the rail is decorative. */
@@ -1870,11 +1852,18 @@ function bindReview(el) {
   /* Add Photos stays on this page: the picker adds straight into the grid. */
   const file = el.querySelector("#rdsFile");
   pickFiles = () => file && file.click();
-  const addCard = el.querySelector("#rdsAddCard");
-  if (addCard) addCard.onclick = () => openAddSources(addCard);
+  mountAddSourceCard(el.querySelector(".rv-addcard"), {
+    paint,
+    onComputer: () => pickFiles(),
+    onCloud: (provider) => openCloudImport(provider),
+    onDrop: async (raw) => {
+      const ok = await validateFiles(raw);
+      if (ok.length) addFiles(ok);
+    },
+  });
   const floatAdd = el.querySelector("#rdsFloatAdd");
-  if (floatAdd) floatAdd.onclick = () => openAddSources(floatAdd);
-  bindAddDrop(el.querySelector(".rv-addcard"));
+  /* The floating fallback only ever means "from the computer". */
+  if (floatAdd) floatAdd.onclick = () => pickFiles();
   if (file) {
     file.onchange = async () => {
       const raw = Array.from(file.files || []);
