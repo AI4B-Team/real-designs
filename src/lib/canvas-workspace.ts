@@ -248,7 +248,7 @@ export function setCanvasTool(tool: "edit-photo" | null) {
 
 /** Closes the embedded editor and restores the normal Canvas stage. */
 export function closeCanvasPhotoEditor() {
-  returnCanvasChrome();
+  releaseEditorStage();
   void import("@/lib/photo-editor").then((m) => m.closePhotoEditor());
   setCanvasTool(null);
   applyZoom();
@@ -295,10 +295,9 @@ async function openCanvasPhotoEditor(): Promise<void> {
       },
     ],
   });
-  /* The permanent Canvas chrome moves with the column, so the stage keeps the
-     exact same height and the image never shifts. */
-  const main = document.querySelector<HTMLElement>(".rdpe-embed .rdpe-main");
-  if (main) borrowCanvasChrome(main);
+  /* The editor paints into the permanent Canvas stage, so the image keeps the
+     exact same rectangle it had in Redesign. */
+  adoptEditorStage();
   applyZoom();
 }
 
@@ -735,7 +734,7 @@ export function initCanvasWorkspace() {
   });
 
   /* Reclaim the permanent Canvas chrome before the editor host is removed. */
-  document.addEventListener("rdpe:closing", () => returnCanvasChrome());
+  document.addEventListener("rdpe:closing", () => releaseEditorStage());
   document.addEventListener("rdpe:closed", () => {
     setCanvasTool(null);
     applyZoom();
