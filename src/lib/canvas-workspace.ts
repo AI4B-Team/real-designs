@@ -145,49 +145,66 @@ function editorMountHost(): HTMLElement | null {
 /* one permanent Canvas: the chrome below the image never unmounts      */
 /* ------------------------------------------------------------------ */
 
-function canvasBody(): HTMLElement | null {
-  return document.querySelector("#canvasCard > .card-b");
-}
-
-/** Nodes borrowed from the Canvas card while the editor owns the column. */
-let borrowed: HTMLElement[] = [];
-/** The Canvas overlay cluster (fit, zoom, full screen) while it is on loan. */
-let overlay: HTMLElement | null = null;
-
 /**
- * The Canvas is one stage in every tool. The editor column reproduces the card
- * exactly and takes the *same* chrome nodes (save warning, result actions,
- * Version History) below its stage, so the reserved height - and therefore the
- * image rectangle - is byte for byte the same as in Redesign. Nothing is
- * recreated, so no state is lost when the tool changes.
+ * ONE permanent Canvas. The Redesign card, its stage, its overlays and its
+ * bottom bar stay mounted in every tool. Edit does not build a second
+ * viewport: the editor's image, crop box and badge are adopted *into* the
+ * existing `#rdwStage`, so top, left, width, height, padding, radius,
+ * object-fit and zoom are literally the same element geometry as Redesign.
  */
-function borrowCanvasChrome(main: HTMLElement) {
-  const body = canvasBody();
-  if (!body || borrowed.length) return;
-  Array.from(body.children).forEach((el) => {
-    if (el.classList.contains("rdw-stage")) return;
-    borrowed.push(el as HTMLElement);
-  });
-  borrowed.forEach((el) => main.appendChild(el));
-  /* Fit, zoom and full screen are Canvas controls, not tool controls: the same
-     overlay cluster rides along so it never appears or disappears. */
-  const ov = document.querySelector<HTMLElement>("#rdwStage > .rdw-ov-r");
-  const stage = main.querySelector<HTMLElement>(".rdpe-stage");
-  if (ov && stage) {
-    overlay = ov;
-    stage.appendChild(ov);
+let adopted: {
+  img?: HTMLElement;
+  crop?: HTMLElement;
+  badge?: HTMLElement;
+  hold?: HTMLElement;
+} = {};
+
+function adoptEditorStage() {
+  const stage = document.getElementById("rdwStage");
+  const canvas = document.getElementById("canvas");
+  const img = document.getElementById("rdpeImg");
+  if (!stage || !img) return;
+  const crop = document.getElementById("rdpeCropBox");
+  const badge = document.querySelector<HTMLElement>(".rdpe-embed .rdpe-badge");
+  const hold = document.getElementById("rdpeHold");
+  const slot = document.getElementById("rdwCompareSlot");
+
+  if (canvas) canvas.hidden = true;
+  stage.classList.add("rdw-editing");
+  img.classList.add("rdw-editimg");
+  stage.appendChild(img);
+  adopted.img = img;
+  if (crop) {
+    stage.appendChild(crop);
+    adopted.crop = crop;
+  }
+  if (badge) {
+    stage.appendChild(badge);
+    adopted.badge = badge;
+  }
+  /* Hold To Compare lives in the permanent bottom bar, centred between
+     Version History and the tool actions. It is never placed on the photo. */
+  if (hold && slot) {
+    slot.appendChild(hold);
+    adopted.hold = hold;
   }
 }
 
-/** Puts the borrowed chrome back in its original order under the stage. */
-function returnCanvasChrome() {
-  const body = canvasBody();
-  if (body) borrowed.forEach((el) => body.appendChild(el));
-  borrowed = [];
-  const stage = document.getElementById("rdwStage");
-  if (overlay && stage) stage.appendChild(overlay);
-  overlay = null;
+/** Returns the adopted nodes so the editor host can be torn down cleanly. */
+function releaseEditorStage() {
+  const back = document.querySelector<HTMLElement>(".rdpe-embed .rdpe-stage");
+  const bar = document.querySelector<HTMLElement>(".rdpe-embed .rdpe-underbar");
+  [adopted.img, adopted.crop, adopted.badge].forEach((el) => {
+    if (el && back) back.appendChild(el);
+  });
+  adopted.img?.classList.remove("rdw-editimg");
+  if (adopted.hold && bar) bar.appendChild(adopted.hold);
+  const canvas = document.getElementById("canvas");
+  if (canvas) canvas.hidden = false;
+  document.getElementById("rdwStage")?.classList.remove("rdw-editing");
+  adopted = {};
 }
+
 
 
 
@@ -231,7 +248,7 @@ export function setCanvasTool(tool: "edit-photo" | null) {
 
 /** Closes the embedded editor and restores the normal Canvas stage. */
 export function closeCanvasPhotoEditor() {
-  returnCanvasChrome();
+  releaseEditorStage();
   void import("@/lib/photo-editor").then((m) => m.closePhotoEditor());
   setCanvasTool(null);
   applyZoom();
@@ -278,10 +295,9 @@ async function openCanvasPhotoEditor(): Promise<void> {
       },
     ],
   });
-  /* The permanent Canvas chrome moves with the column, so the stage keeps the
-     exact same height and the image never shifts. */
-  const main = document.querySelector<HTMLElement>(".rdpe-embed .rdpe-main");
-  if (main) borrowCanvasChrome(main);
+  /* The editor paints into the permanent Canvas stage, so the image keeps the
+     exact same rectangle it had in Redesign. */
+  adoptEditorStage();
   applyZoom();
 }
 
@@ -504,24 +520,19 @@ function paintCapabilities(tool: string) {
 
 let zoom = 1;
 
-/** The image viewport currently on screen: Redesign stage or editor stage. */
+/** There is only ever one image viewport, in every tool. */
 function activeStage(): HTMLElement | null {
-  const editing = board()?.classList.contains("editing-photo");
-  return (
-    (editing ? document.querySelector<HTMLElement>(".rdpe-embed .rdpe-stage") : null) ||
-    document.getElementById("rdwStage")
-  );
+  return document.getElementById("rdwStage");
 }
 
 /** Zoom is Canvas state, not tool state: it survives every tool change. */
 function applyZoom() {
-  document
-    .querySelectorAll<HTMLElement>("#rdwStage, .rdpe-embed .rdpe-stage")
-    .forEach((stage) => {
-      stage.style.setProperty("--rdw-zoom", String(zoom));
-      stage.classList.toggle("zoomed", zoom !== 1);
-    });
+  const stage = activeStage();
+  if (!stage) return;
+  stage.style.setProperty("--rdw-zoom", String(zoom));
+  stage.classList.toggle("zoomed", zoom !== 1);
 }
+
 
 
 function setCompare(mode: string) {
@@ -718,7 +729,7 @@ export function initCanvasWorkspace() {
   });
 
   /* Reclaim the permanent Canvas chrome before the editor host is removed. */
-  document.addEventListener("rdpe:closing", () => returnCanvasChrome());
+  document.addEventListener("rdpe:closing", () => releaseEditorStage());
   document.addEventListener("rdpe:closed", () => {
     setCanvasTool(null);
     applyZoom();
