@@ -11,6 +11,7 @@ import {
   areaFitsSpace,
   areaPreview,
   areasForSpace,
+  defaultRoomForSpace,
   type CanvasSpace,
 } from "@/lib/space-datasets";
 import { normalizeSpace, toolDescription, toolLabel } from "@/lib/space-tools";
