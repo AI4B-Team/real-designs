@@ -632,6 +632,7 @@ export type SketchPayload = {
   source_kind: SketchKindId;
   source_label: string;
   mode: RenderModeId;
+  mode_label: string;
   mode_rule: string;
   room_type: string | null;
   style_id: string | null;
@@ -808,6 +809,7 @@ export function buildSketchBrief(input: SketchSettings): SketchBrief {
     source_kind: kind.id,
     source_label: kind.label,
     mode: mode.id,
+    mode_label: mode.label,
     mode_rule: mode.rule,
     room_type: input.roomType || null,
     style_id: input.styleId || null,

@@ -60,6 +60,7 @@ const PayloadShape = z.object({
   source_kind: z.string().max(40),
   source_label: z.string().max(60),
   mode: z.string().max(40),
+  mode_label: z.string().max(60),
   mode_rule: z.string().max(600),
   room_type: z.string().max(60).nullable(),
   style_id: z.string().max(80).nullable(),
