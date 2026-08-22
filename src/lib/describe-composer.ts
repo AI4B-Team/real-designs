@@ -1102,6 +1102,7 @@ export function createDescribeComposer(cfg: Cfg) {
           state.roomId = a.id;
           state.room = a.label;
           state.roomDetected = false;
+          DS.rememberArea(a.id);
         }
         state.browse = null;
       }],
@@ -1110,9 +1111,11 @@ export function createDescribeComposer(cfg: Cfg) {
         if (rec) {
           state.styleId = rec.id;
           state.style = rec.displayName;
+          state.styleDetected = false;
         }
         state.browse = null;
       }],
+
       ["space", (v) => {
         const lost = DS.incompatibleAfterSpace(
           { roomLabel: state.room, styleId: state.styleId },
