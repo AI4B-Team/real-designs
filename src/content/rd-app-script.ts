@@ -4280,20 +4280,31 @@ export function initApp(): () => void {
     function paintApproveBtn() {
       const b = document.getElementById("stApprove");
       if (!b) return;
-      const unsaved = VERSION_SAVING || (!!lastRenderPath && !DISPLAYED_VERSION) || !!PENDING_VERSION;
-      b.disabled = !!VERSION_SAVING;
-      b.setAttribute(
-        "data-tt",
-        VERSION_SAVING
-          ? "This Design Is Still Saving"
-          : unsaved
-            ? "Save This Version Before Approving"
-            : DISPLAYED_VERSION
-              ? "Approve Version " + DISPLAYED_VERSION.version_no
-              : "Approve The Latest Saved Version",
-      );
+      /* Label and tooltip are produced together, so they can never disagree. */
+      const st = CR.approveState(ACTIVE_RESULT, {
+        saving: !!VERSION_SAVING || !!PENDING_VERSION,
+        approved: !!b.dataset.approved,
+      });
+      b.disabled = !st.enabled;
+      b.setAttribute("data-tt", st.tooltip);
+      b.innerHTML = '<i data-lucide="check"></i>' + st.label;
+      try {
+        lucide.createIcons();
+      } catch (_) {}
     }
     window.rdPaintApproveBtn = paintApproveBtn;
+
+    /** The one authoritative description of what the Canvas is showing. */
+    function setActiveResult(r) {
+      ACTIVE_RESULT = r || null;
+      DISPLAYED_VERSION =
+        r && r.kind === "persistent-version" && r.versionNo
+          ? { id: r.versionId, version_no: r.versionNo, path: r.resultPath }
+          : null;
+      paintApproveBtn();
+      return ACTIVE_RESULT;
+    }
+    window.rdActiveCanvasResult = () => ACTIVE_RESULT;
 
 
     /** Paints "Saving…" / "Saved as Version N" on the tile for one render. */
