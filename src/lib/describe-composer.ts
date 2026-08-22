@@ -1278,8 +1278,10 @@ export function createDescribeComposer(cfg: Cfg) {
     if (act === "details") {
       state.detailsOpen = !state.detailsOpen;
       state.advOpen = !state.advOpen;
+      cfg.render();
       return true;
     }
+
     if (act === "closepreview") {
       state.preview = null;
       cfg.render();
