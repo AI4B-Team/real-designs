@@ -1353,21 +1353,37 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
   /** Column headers so the rows read as a table, not a stack of strips. */
   function listHead() {
-    const cols = [
-      "",
-      "",
-      "Photo",
-      "Property / Room",
-      "Type",
-      "Updated",
-      "Status",
-      "",
-    ];
+    const vis = visibleMedia();
+    const allOn = vis.length > 0 && vis.every((d) => state.designSel.includes(d.id));
+    const cols = ["Photo", "Details", "Property / Room", "Type", "Updated", "Status", ""];
     return (
-      '<div class="spd-lhead" aria-hidden="true">' +
+      '<div class="spd-lhead">' +
+      '<button type="button" class="spd-check spd-hcheck' +
+      (allOn ? " on" : "") +
+      '" data-sp="mall" role="checkbox" aria-checked="' +
+      (allOn ? "true" : "false") +
+      '" title="' +
+      (allOn ? "Deselect All Visible" : "Select All Visible") +
+      '" aria-label="' +
+      (allOn ? "Deselect All Visible" : "Select All Visible") +
+      '">' +
+      (allOn ? '<i data-lucide="check"></i>' : "") +
+      "</button>" +
       cols.map((c) => "<span>" + esc(c) + "</span>").join("") +
       "</div>"
     );
+  }
+
+  /** The single classification badge shown in the Type column. */
+  function mediaKind(d: PickerDesign) {
+    return isDesign(d) ? "Generated Design" : "Property Photo";
+  }
+
+  /** The one status that matters most for this item. */
+  function mediaStatus(d: PickerDesign) {
+    const l = designLines(d);
+    if (l.status) return l.status;
+    return isDesign(d) ? "Generated" : "Original";
   }
 
   function designRow(d: PickerDesign) {
@@ -1375,8 +1391,12 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const on = i > -1;
     const l = designLines(d);
     const created = designDate(d.createdAt);
-    const kind = isDesign(d) ? "Design" : "Photo";
     const room = d.room || (isDesign(d) ? "Design" : "Photo");
+    const title = mediaTitle(d);
+    const sub = l.two || (isDesign(d) ? "Generated Design" : "Original Photo");
+    const versions = d.versionNo && d.versionNo > 1 ? d.versionNo + " versions" : "";
+    const status = mediaStatus(d);
+    const open = state.mediaMenu === d.id;
     return (
       '<div class="spd-row' +
       (on ? " is-sel" : "") +
@@ -1389,34 +1409,59 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       '">' +
       checkMark(on, i) +
       thumbSpan(d, "spd-rth") +
-      '<span class="spd-rn"><b>' +
-      esc(mediaTitle(d)) +
-      "</b><span>" +
-      esc(l.two || kind) +
-      "</span></span>" +
+      '<span class="spd-rn"><b title="' +
+      esc(title) +
+      '">' +
+      esc(title) +
+      '</b><span title="' +
+      esc(sub) +
+      '">' +
+      esc(sub) +
+      "</span>" +
+      (versions ? '<span class="spd-rver">' + esc(versions) + "</span>" : "") +
+      "</span>" +
       '<span class="spd-rn spd-rsub"><b>' +
       esc(l.three || "Unassigned") +
       "</b><span>" +
-      esc(room) +
+      esc(d.room ? room : "No room selected") +
       "</span></span>" +
       '<span class="spd-rm"><span class="spd-rtag">' +
-      esc(kind) +
+      esc(mediaKind(d)) +
       "</span></span>" +
       '<span class="spd-rm">' +
       esc(created || "\u2014") +
       "</span>" +
-      '<span class="spd-rm">' +
-      (l.status
-        ? '<span class="spd-rstate' +
-          (/approved/i.test(l.status) ? " is-ok" : "") +
-          '">' +
-          esc(l.status) +
-          "</span>"
-        : "\u2014") +
-      "</span>" +
-      '<button type="button" class="sp-link spd-rv" data-sp-preview="' +
+      '<span class="spd-rm"><span class="spd-rstate' +
+      (/approved/i.test(status) ? " is-ok" : "") +
+      '">' +
+      esc(status) +
+      "</span></span>" +
+      '<span class="spd-rmenu">' +
+      '<button type="button" class="spd-rmore" data-sp-menu="' +
       esc(d.id) +
-      '">View Details</button>' +
+      '" aria-haspopup="menu" aria-expanded="' +
+      (open ? "true" : "false") +
+      '" title="More Actions" aria-label="' +
+      esc("More actions: " + title) +
+      '"><i data-lucide="more-vertical"></i></button>' +
+      (open
+        ? '<span class="spd-menu" role="menu">' +
+          '<button type="button" role="menuitem" data-sp-preview="' +
+          esc(d.id) +
+          '">Preview</button>' +
+          '<button type="button" role="menuitem" data-sp-design="' +
+          esc(d.id) +
+          '">' +
+          (on ? "Deselect" : "Select") +
+          "</button>" +
+          (versions
+            ? '<button type="button" role="menuitem" data-sp-preview="' +
+              esc(d.id) +
+              '">View Versions</button>'
+            : "") +
+          "</span>"
+        : "") +
+      "</span>" +
       "</div>"
     );
   }
