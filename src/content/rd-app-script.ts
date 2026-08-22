@@ -11671,6 +11671,15 @@ ${picks
             price = animateCredits();
           } catch (_) {}
         }
+        /* A 3D plan prices every view: room sets cost one view per room. */
+        if (tool === "2D To 3D Plan") {
+          try {
+            const s = readFloorplanSettings();
+            price = floorplanCredits(
+              floorplanOutputType(s.output).needsRooms ? Math.max(1, s.roomIds.length) : 1,
+            );
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
