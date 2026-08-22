@@ -37,7 +37,9 @@ import {
   canvasModeFor,
   type ConceptBatch,
 } from "@/lib/concept-batch";
+import { startVideoBuilder } from "@/lib/video-handoff";
 import { isPlanBlocked, openUpgrade } from "@/lib/rd-upgrade";
+
 import { measureImage, classify, FLAG_LABEL } from "@/lib/media-analysis";
 import { getMyCredits } from "@/lib/credits.functions";
 
