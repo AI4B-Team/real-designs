@@ -629,7 +629,7 @@ export async function openPhotoEditor(opts: {
       /* An Auto Enhance preview is a filter overlay only: the stored
          adjustments stay exactly where the user left them. */
       stage.style.filter = comparing ? "none" : filterString(previewAdj || s.adj);
-      stage.style.transform = comparing ? "none" : transformString(s);
+      paintStageTransform();
     }
 
     if (embedded) {
