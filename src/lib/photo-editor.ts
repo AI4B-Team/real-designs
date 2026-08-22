@@ -953,6 +953,228 @@ export async function openPhotoEditor(opts: {
     paintPanel();
   }
 
+
+  /* -------------------------------------------------------------- markup */
+
+  function mk(key = cur().key): MarkupDoc {
+    let d = markupDocs.get(key);
+    if (!d) {
+      const p = photos.find((x) => x.key === key);
+      d = emptyDoc(key, p?.versionId || null);
+      markupDocs.set(key, d);
+    }
+    return d;
+  }
+
+  function setMarkupDoc(doc: MarkupDoc) {
+    markupDocs.set(cur().key, doc);
+    st().dirty = true;
+    saveFailed = false;
+  }
+
+  const markupActive = () => markupOpen && !cropMode && !pv().open;
+
+  function markupChanged() {
+    paintPanel();
+    syncMarkupOverlay();
+  }
+
+  /** Keeps the vector overlay welded to the photograph through zoom and pan. */
+  function syncMarkupOverlay() {
+    const wrap = $("#rdpeMk") as HTMLElement;
+    if (!wrap) return;
+    const on = markupActive();
+    wrap.hidden = !on;
+    wrap.classList.toggle("draw", on && markupMode === "draw");
+    if (!on) return;
+    const img = $("#rdpeImg") as HTMLImageElement;
+    const stage = $("#rdpeStage") as HTMLElement;
+    if (!img || !stage) return;
+    const ir = img.getBoundingClientRect();
+    const sr = stage.getBoundingClientRect();
+    wrap.style.left = `${ir.left - sr.left}px`;
+    wrap.style.top = `${ir.top - sr.top}px`;
+    wrap.style.width = `${ir.width}px`;
+    wrap.style.height = `${ir.height}px`;
+    if (!markupCtl) {
+      markupCtl = attachMarkupEditor(wrap, {
+        doc: () => mk(),
+        setDoc: (doc) => setMarkupDoc(doc),
+        mode: () => markupMode,
+        activeType: () => markupActiveType,
+        selected: () => markupSelected,
+        select: (id) => {
+          markupSelected = id;
+        },
+        onChange: () => paintPanel(),
+        askLabel: async (suggestion) => {
+          const out = await formDialog({
+            title: "Add Label",
+            fields: [{ key: "text", label: "Label Text", value: suggestion, placeholder: "Parking" }],
+            confirmLabel: "Add Label",
+          });
+          return out ? String(out['text'] || suggestion) : null;
+        },
+      });
+    }
+    markupCtl.repaint();
+  }
+
+  function selectedLayer() {
+    return mk().layers.find((l) => l.id === markupSelected) || null;
+  }
+
+  function markupCard(): string {
+    const doc = mk();
+    if (!markupOpen) {
+      return `<p class="rdpe-note">Outline Boundaries, Parking, Access Paths, Footprints And Proposed Improvements Over This Photograph. Drawn Lines Are Visual References Only — Never Verified Legal Boundaries.</p>
+        <div class="rdpe-autobtns">
+          <button type="button" class="btn btn-primary btn-sm" data-act="markup"><i data-lucide="pen-tool"></i>Add Markup</button>
+        </div>
+        ${
+          doc.layers.length
+            ? `<p class="rdpe-hint">${doc.layers.length} Markup Layer${doc.layers.length === 1 ? "" : "s"} Saved On This Photo.</p>`
+            : ""
+        }`;
+    }
+    const layer = selectedLayer();
+    const warn = warningRequired(doc.layers);
+    return `
+      <div class="rdpe-rotrow">
+        <button type="button" class="rdpe-ib ${markupMode === "draw" ? "on" : ""}" data-mk="draw" title="Draw" aria-label="Draw"><i data-lucide="pen-tool"></i></button>
+        <button type="button" class="rdpe-ib ${markupMode === "navigate" ? "on" : ""}" data-mk="navigate" title="Navigate Image" aria-label="Navigate Image"><i data-lucide="hand"></i></button>
+        <button type="button" class="rdpe-ib" data-mk="undo" title="Undo" aria-label="Undo" ${markupCtl?.canUndo() ? "" : "disabled"}><i data-lucide="undo-2"></i></button>
+        <button type="button" class="rdpe-ib" data-mk="redo" title="Redo" aria-label="Redo" ${markupCtl?.canRedo() ? "" : "disabled"}><i data-lucide="redo-2"></i></button>
+        <button type="button" class="rdpe-ib" data-mk="clear" title="Clear All Markup" aria-label="Clear All Markup" ${doc.layers.length ? "" : "disabled"}><i data-lucide="trash-2"></i></button>
+      </div>
+      <p class="rdpe-hint">${
+        markupMode === "draw"
+          ? "Click To Place Points. Click The First Point Or Press Enter To Close A Shape. Escape Cancels, Backspace Removes The Last Point."
+          : "Drawing Is Paused So You Can Zoom And Pan The Photograph."
+      }</p>
+
+      <p class="rdpe-sub">Markup Type<span class="rdpe-subv">${esc(markupTypeSpec(markupActiveType).label)}</span></p>
+      <div class="rdpe-ratios">${MARKUP_TYPES.map(
+        (t) => `<button type="button" class="rdpe-chip ${markupActiveType === t.id ? "on" : ""}" data-mktype="${t.id}">${esc(t.label)}</button>`,
+      ).join("")}</div>
+
+      ${
+        doc.layers.length
+          ? `<p class="rdpe-sub">Layers<span class="rdpe-subv">${doc.layers.length}</span></p>
+             <div class="rdpe-privlist">${doc.layers
+               .slice()
+               .reverse()
+               .map(
+                 (l) => `<div class="rdpe-mkrow ${l.id === markupSelected ? "on" : ""}">
+                   <button type="button" class="rdpe-mkname" data-mkpick="${esc(l.id)}" title="${esc(markupTypeSpec(l.type).label)}">
+                     <span class="rdpe-mkdot" style="background:${esc(l.style.stroke)}"></span>
+                     <span>${esc(l.label || l.name)}</span>
+                   </button>
+                   <button type="button" class="rdpe-ib sm" data-mklayer="visible:${esc(l.id)}" title="Show Or Hide" aria-label="Show Or Hide"><i data-lucide="${l.visible ? "eye" : "eye-off"}"></i></button>
+                   <button type="button" class="rdpe-ib sm ${l.locked ? "on" : ""}" data-mklayer="lock:${esc(l.id)}" title="Lock" aria-label="Lock"><i data-lucide="${l.locked ? "lock" : "unlock"}"></i></button>
+                   <button type="button" class="rdpe-ib sm" data-mklayer="up:${esc(l.id)}" title="Bring Forward" aria-label="Bring Forward"><i data-lucide="chevron-up"></i></button>
+                   <button type="button" class="rdpe-ib sm" data-mklayer="down:${esc(l.id)}" title="Send Backward" aria-label="Send Backward"><i data-lucide="chevron-down"></i></button>
+                   <button type="button" class="rdpe-ib sm" data-mklayer="copy:${esc(l.id)}" title="Duplicate" aria-label="Duplicate"><i data-lucide="copy"></i></button>
+                   <button type="button" class="rdpe-ib sm" data-mklayer="del:${esc(l.id)}" title="Delete" aria-label="Delete"><i data-lucide="trash-2"></i></button>
+                 </div>`,
+               )
+               .join("")}</div>`
+          : `<p class="rdpe-hint">No Markup Yet. Pick A Type And Start Drawing On The Photograph.</p>`
+      }
+
+      ${
+        layer
+          ? `<p class="rdpe-sub">Selected<span class="rdpe-subv">${esc(markupTypeSpec(layer.type).label)}</span></p>
+             <div class="rdpe-row">
+               <label>Label</label>
+               <input type="text" class="rdpe-text" data-mklabel="${esc(layer.id)}" value="${esc(layer.label)}" placeholder="Parking" aria-label="Layer Label">
+             </div>
+             <div class="rdpe-ratios">${LABEL_SUGGESTIONS.map(
+               (t) => `<button type="button" class="rdpe-chip" data-mksugg="${esc(t)}">${esc(t)}</button>`,
+             ).join("")}</div>
+             <p class="rdpe-sub">Colour</p>
+             <div class="rdpe-ratios">${MARKUP_COLORS.map(
+               (c) =>
+                 `<button type="button" class="rdpe-swatch ${layer.style.stroke.toLowerCase() === c.toLowerCase() ? "on" : ""}" data-mkcolor="${c}" style="background:${c}" title="${c}" aria-label="Colour ${c}"></button>`,
+             ).join("")}</div>
+             <p class="rdpe-sub">Line Style</p>
+             <div class="rdpe-ratios">${["solid", "dashed", "dotted"]
+               .map(
+                 (d) => `<button type="button" class="rdpe-chip ${layer.style.dash === d ? "on" : ""}" data-mkdash="${d}">${d[0]!.toUpperCase()}${d.slice(1)}</button>`,
+               )
+               .join("")}</div>
+             ${mkSlider(layer.id, "strokeWidth", "Line Weight", layer.style.strokeWidth, 1, 12)}
+             ${
+               layer.shape === "polygon"
+                 ? mkSlider(layer.id, "fillOpacity", "Fill Opacity", Math.round(layer.style.fillOpacity * 100), 0, 80, "%")
+                 : ""
+             }
+             ${mkSlider(layer.id, "fontSize", "Label Size", layer.style.fontSize, 10, 40)}
+             <div class="rdpe-rotrow">
+               <button type="button" class="rdpe-ib ${layer.style.labelBackground ? "on" : ""}" data-mklayer="labelbg:${esc(layer.id)}" title="Label Background" aria-label="Label Background"><i data-lucide="square"></i></button>
+               ${
+                 layer.shape === "arrow"
+                   ? `<button type="button" class="rdpe-ib ${layer.style.arrowHead === "both" ? "on" : ""}" data-mklayer="arrow:${esc(layer.id)}" title="Arrowheads" aria-label="Arrowheads"><i data-lucide="move-horizontal"></i></button>`
+                   : ""
+               }
+             </div>`
+          : ""
+      }
+
+      <label class="rdpe-check"><input type="checkbox" data-mk="disclosure" ${doc.visibleDisclosure ? "checked" : ""}> Show “Approximate Boundary” On The Image</label>
+      ${warn ? `<p class="rdpe-clip">${esc(MARKUP_WARNING)}</p>` : ""}
+      <div class="rdpe-autobtns">
+        <button type="button" class="btn btn-primary btn-sm" data-mk="done">Done</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-mk="cancel">Hide Markup</button>
+      </div>
+      <p class="rdpe-hint">0 Credits. Markup Is Kept As Editable Shapes And Only Flattened Into Downloads.</p>`;
+  }
+
+  function mkSlider(id: string, key: string, label: string, v: number, min: number, max: number, suffix = ""): string {
+    return `<div class="rdpe-row">
+      <label>${label}</label>
+      <input type="range" data-mkset="${key}" data-mkid="${esc(id)}" min="${min}" max="${max}" step="1" value="${v}" aria-label="${label}">
+      <span class="rdpe-num">${v}${suffix}</span>
+    </div>`;
+  }
+
+  /** Reopen the shapes exactly as they were drawn, never as flat pixels. */
+  async function loadMarkups() {
+    try {
+      const rows = (await listMarkups({ data: { keys: photos.map((p) => p.key).slice(0, 300) } })) as any[];
+      let changed = false;
+      for (const row of rows || []) {
+        if (!row?.asset_key) continue;
+        const doc = parseMarkup(row.document, row.asset_key);
+        if (doc.layers.length) {
+          markupDocs.set(row.asset_key, doc);
+          changed = true;
+        }
+      }
+      if (changed) paintPanel();
+    } catch {
+      /* Markup simply starts empty when the store is unreachable. */
+    }
+  }
+
+  async function persistMarkup() {
+    const p = cur();
+    const doc = markupDocs.get(p.key);
+    if (!doc) return;
+    try {
+      await saveMarkup({
+        data: {
+          asset_key: p.key,
+          source_path: p.path || p.src || p.key,
+          version_id: p.versionId || null,
+          document: doc as any,
+        },
+      });
+    } catch {
+      /* A markup save failure must never block the photo save itself. */
+    }
+  }
+
   function privacyCard(): string {
     const v = pv();
     const s = st();
@@ -1067,6 +1289,7 @@ export async function openPhotoEditor(opts: {
       stage.style.filter = comparing ? "none" : filterString(previewAdj || s.adj);
       paintStageTransform();
       syncPrivacyOverlay();
+      syncMarkupOverlay();
     }
 
     if (embedded) {
