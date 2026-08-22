@@ -8705,13 +8705,18 @@ ${picks
     ];
     let bandOn = "makeover";
     function paintBands() {
-      document.getElementById("bandList").innerHTML = bands
+      /* The Budget/Scope view can be stripped at render time by the feature
+         gate, so every DOM read here must tolerate a missing host. */
+      const bandList = document.getElementById("bandList");
+      if (!bandList) return;
+      bandList.innerHTML = bands
         .map(
           ([k, n, d]) => `
 <button class="rowi band-row${k === bandOn ? " on" : ""}" data-band="${k}"><div class="rowt"><b>${n}</b><span>${d}</span></div>
 <div style="text-align:right">${k === bandOn ? '<span class="pill p-ink">Selected</span>' : '<span class="pill p-gray">Price It</span>'}</div></button>`,
         )
         .join("");
+
       document.querySelectorAll("#bandList .band-row").forEach((b) =>
         b.addEventListener("click", async () => {
           const k = b.getAttribute("data-band");
