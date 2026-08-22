@@ -10659,6 +10659,29 @@
   font-size: 0.82rem;
   color: var(--ink);
 }
+/* Progressive column shedding: dates first, then property/room. */
+@media (max-width: 1180px) {
+  .spd-lhead,
+  .spd-row {
+    grid-template-columns:
+      40px 112px minmax(120px, 1fr) minmax(120px, 0.8fr)
+      120px 110px 48px;
+  }
+  .spd-lhead span:nth-of-type(5),
+  .spd-row .spd-rm.is-date {
+    display: none;
+  }
+}
+@media (max-width: 900px) {
+  .spd-lhead,
+  .spd-row {
+    grid-template-columns: 40px 112px minmax(120px, 1fr) 120px 110px 48px;
+  }
+  .spd-lhead span:nth-of-type(3),
+  .spd-row .spd-rsub {
+    display: none;
+  }
+}
 @media (max-width: 640px) {
   .spd-grid {
     grid-template-columns: minmax(0, 1fr);
@@ -10667,15 +10690,15 @@
     display: none;
   }
   .spd-row {
-    grid-template-columns: 28px 56px minmax(0, 1fr) auto;
+    grid-template-columns: 32px 88px minmax(0, 1fr) 44px;
   }
   .spd-row .spd-rsub,
   .spd-row .spd-rm {
     display: none;
   }
   .spd-rth {
-    width: 56px;
-    height: 44px;
+    width: 88px;
+    height: 60px;
   }
 }
 
