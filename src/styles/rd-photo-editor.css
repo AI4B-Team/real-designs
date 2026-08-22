@@ -450,19 +450,28 @@ body.rdpe-open {
   color: #5f6067;
 }
 
+/* Flex children must never be squeezed: without this the collapsed section
+   headers shrink and clip their own label/icon when the list overflows. */
+.rdpe-panelb > * {
+  flex: 0 0 auto;
+  min-height: auto;
+}
+
 .rdpe-sec {
   border: 1px solid #e6e6e8;
   border-radius: 12px;
   background: #f6f6f7;
-  overflow: hidden;
+  overflow: visible;
 }
 .rdpe-sec > summary {
   display: flex;
   align-items: center;
   gap: 9px;
+  min-height: 44px;
   padding: 11px 13px;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.3;
   cursor: pointer;
   list-style: none;
 }
@@ -473,6 +482,7 @@ body.rdpe-open {
 .rdpe-sec > summary svg {
   width: 16px;
   height: 16px;
+  flex: 0 0 auto;
   color: #4a4b52;
   stroke: currentColor;
 }
@@ -487,8 +497,13 @@ body.rdpe-open {
   padding: 4px 13px 14px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  overflow: visible;
 }
+.rdpe-secb > * {
+  flex: 0 0 auto;
+}
+
 
 .rdpe-slider {
   display: grid;
