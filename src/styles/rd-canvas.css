@@ -2552,3 +2552,60 @@
   font-size: 0.7rem;
   color: var(--mute, #77767f);
 }
+
+/* ------------------------------------------------------------ Materials */
+/* The Materials panel reuses the Declutter block chrome and adds a swatch
+   catalog: one card per legitimate material for the selected surface. */
+.rd-app .rd-mat-grid {
+  display: grid;
+  gap: 12px;
+}
+.rd-app .rd-mat-group {
+  display: grid;
+  gap: 6px;
+}
+.rd-app .rd-mat-fam {
+  font-family: "DM Mono", monospace;
+  font-size: 0.6rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--mute-2, #9a99a3);
+}
+.rd-app .rd-mat-card {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 10px;
+  align-items: center;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid var(--line, #e8e6ef);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+}
+.rd-app .rd-mat-card:hover {
+  border-color: #cfcdda;
+}
+.rd-app .rd-mat-card.on {
+  border-color: var(--red, #c00);
+  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.13);
+}
+.rd-app .rd-mat-sw {
+  grid-row: 1 / span 2;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+.rd-app .rd-mat-card b {
+  font-size: 0.82rem;
+  line-height: 1.2;
+}
+.rd-app .rd-mat-card em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--mute, #77767f);
+  line-height: 1.35;
+}
