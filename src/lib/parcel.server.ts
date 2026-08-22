@@ -1,4 +1,4 @@
-import type { LngLat, ParcelRecord } from "@/lib/parcel";
+import type { ImageGeoreference, ParcelRecord } from "@/lib/parcel";
 import { validateParcelResponse } from "@/lib/parcel";
 
 /**
@@ -22,8 +22,8 @@ export type ParcelFetchResult =
   | {
       ok: true;
       record: ParcelRecord;
-      /** Image georeference, when the provider returns one. */
-      georeference: { bounds: [LngLat, LngLat] } | null;
+      /** Ground bounds, when the provider states what ground the tile covers. */
+      georeference: ImageGeoreference | null;
     }
   | { ok: false; error: string };
 
@@ -61,7 +61,15 @@ export async function fetchParcel(input: {
     };
   }
 
-  const parsed = validateParcelResponse(payload, providerName());
+  const parsed = validateParcelResponse(payload);
   if (!parsed.ok) return { ok: false, error: parsed.error };
-  return { ok: true, record: parsed.record, georeference: parsed.georeference };
+  return { ok: true, record: parsed.record, georeference: readBounds(payload) };
+}
+
+/** A provider may state the ground bounds of an aerial tile; nothing is inferred. */
+function readBounds(payload: any): ImageGeoreference | null {
+  const b = payload?.bounds ?? payload?.image_bounds;
+  const n = Number(b?.north), s = Number(b?.south), e = Number(b?.east), w = Number(b?.west);
+  if (![n, s, e, w].every(Number.isFinite) || n <= s) return null;
+  return { kind: "map_bounds", bounds: { north: n, south: s, east: e, west: w } };
 }
