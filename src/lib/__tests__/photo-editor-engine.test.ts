@@ -50,18 +50,16 @@ describe("photo-pixels", () => {
     });
   });
 
-  it("changes real pixels for sharpen, denoise, dehaze and lens", () => {
-    for (const run of [
-      (p: Pixels) => applySharpen(p, 60),
-      (p: Pixels) => applyDenoise(p, 60),
-      (p: Pixels) => applyDehaze(p, 60),
-      (p: Pixels) => applyLens(p, 60),
-    ]) {
-      const p = ramp();
-      const before = Array.from(p.data);
-      run(p);
-      expect(Array.from(p.data)).not.toEqual(before);
-    }
+  it.each([
+    ["sharpen", (p: Pixels) => applySharpen(p, 60)],
+    ["denoise", (p: Pixels) => applyDenoise(p, 60)],
+    ["dehaze", (p: Pixels) => applyDehaze(p, 60)],
+    ["lens", (p: Pixels) => applyLens(p, 60)],
+  ])("changes real pixels for %s", (_name, run) => {
+    const p = ramp(32, 32);
+    const before = Array.from(p.data);
+    (run as (x: Pixels) => void)(p);
+    expect(Array.from(p.data)).not.toEqual(before);
   });
 
   it("is a no-op at zero, so an untouched control never alters the file", () => {
