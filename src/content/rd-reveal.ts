@@ -82,6 +82,7 @@ import {
   logVideoEvent,
 } from "@/lib/video-upload-intake";
 import { normalizeImageFile } from "@/lib/source-picker";
+import { normalizeVideoAssets, consumeVideoHandoff } from "@/lib/video-handoff";
 import {
   cardMenuButtonHtml,
   registerCardMenu,
@@ -764,20 +765,65 @@ function seededUploads(files, out = {}) {
 function newWizard(seed = {}) {
   const seedOut = { fails: [], pending: [] };
   const uploads = seededUploads(seed.files, seedOut);
+  /* The canonical image-to-video handoff. Every Create Video button publishes
+     `assets`; the builder must consume them or it opens empty. */
+  const handoff = seed.handoff || null;
+  const handoffAssets = normalizeVideoAssets(
+    (Array.isArray(seed.assets) && seed.assets.length ? seed.assets : handoff?.assets) || [],
+  );
+  const handoffDesigns = handoffAssets.filter((a) => a.sourceType === "generated-version");
+  const handoffPhotos = handoffAssets.filter((a) => a.sourceType !== "generated-version");
+  const handoffPaths = handoffAssets.map((a) => a.storagePath);
+  const handoffPropertyId = seed.propertyId || handoff?.propertyId || handoffAssets[0]?.propertyId;
+  const handoffAddress = seed.propertyAddress || handoff?.propertyAddress || null;
   return {
+    handoffId: handoff?.handoffId || null,
+    videoDraftId: seed.videoDraftId || handoff?.videoDraftId || null,
     /* Photos always win: a wizard holding uploads never opens on Add Photos. */
     step: initialWizardStep(seed, uploads),
     uploadFails: seedOut.fails,
     seedPending: seedOut.pending,
     sourceType: uploads.length
       ? "upload"
-      : seed.sourceType || (seed.versionId ? "design" : seed.propertyId ? "property" : ""),
-    propertyId: seed.propertyId || null,
-    propertyLabel: seed.propertyLabel || null,
+      : seed.sourceType ||
+        (handoffDesigns.length
+          ? "design"
+          : handoffAssets.length
+            ? "handoff"
+            : seed.versionId
+              ? "design"
+              : handoffPropertyId
+                ? "property"
+                : ""),
+    propertyId: handoffPropertyId || null,
+    propertyLabel: seed.propertyLabel || handoffAddress || null,
     /* Only these stored photos should be selected once assets load. */
-    seedPaths: Array.isArray(seed.paths) && seed.paths.length ? seed.paths.slice() : null,
+    seedPaths:
+      Array.isArray(seed.paths) && seed.paths.length
+        ? seed.paths.slice()
+        : handoffPaths.length
+          ? handoffPaths
+          : null,
     /* Finished designs handed over from Studio, used as scenes directly. */
-    seedDesigns: Array.isArray(seed.designs) && seed.designs.length ? seed.designs.slice() : null,
+    seedDesigns:
+      Array.isArray(seed.designs) && seed.designs.length
+        ? seed.designs.slice()
+        : handoffDesigns.length
+          ? handoffDesigns.map((a) => ({
+              id: a.versionId || a.assetId || a.mediaId,
+              path: a.storagePath,
+              room: a.roomName,
+              versionId: a.versionId,
+            }))
+          : null,
+    /* Saved photos handed over from Media, Properties, Explore and batch. */
+    seedPhotos: handoffPhotos.length
+      ? handoffPhotos.map((a) => ({
+          id: a.assetId || a.mediaId || a.storagePath,
+          path: a.storagePath,
+          room: a.roomName,
+        }))
+      : null,
     versionId: seed.versionId || null,
     title: seed.title || "",
     videoType: seed.videoType || "property_tour",
@@ -822,7 +868,8 @@ function newWizard(seed = {}) {
     address:
       seed.address ||
       seed.listingAddress ||
-      (seed.propertyId || seed.versionId ? seed.propertyLabel || "" : ""),
+      handoffAddress ||
+      (handoffPropertyId || seed.versionId ? seed.propertyLabel || "" : ""),
     addressSource:
       seed.addressSource ||
       (seed.listingAddress || seed.from === "listing"
@@ -7803,7 +7850,18 @@ function renderTour(wrap, done, i = 0) {
 /* ======================= PUBLIC API ======================= */
 export function startWizard(seed = {}) {
   revokeUploadUrls(S.wizard);
-  const w = newWizard(seed);
+  /* A surface may publish the handoff and navigate without threading the
+     payload through every call. Pick it up here so the selection survives the
+     navigation — and is applied exactly once. */
+  const s = seed || {};
+  const hasInline =
+    (Array.isArray(s.assets) && s.assets.length) ||
+    s.handoff ||
+    Array.from(s.files || []).length ||
+    (Array.isArray(s.paths) && s.paths.length) ||
+    (Array.isArray(s.designs) && s.designs.length);
+  const stored = hasInline ? null : consumeVideoHandoff();
+  const w = newWizard(stored ? { ...s, handoff: stored, from: s.from || stored.origin } : s);
   S.wizard = w;
   S.screen = "wizard";
   sceneClips.onChange = () => {
@@ -7843,7 +7901,12 @@ export function startWizard(seed = {}) {
     }).catch(() => {});
     classifyUploads().catch(() => {});
     drainSeedPending(w);
-  } else if (w.propertyId || w.versionId) {
+  } else if (
+    w.propertyId ||
+    w.versionId ||
+    (w.seedPhotos || []).length ||
+    (w.seedDesigns || []).length
+  ) {
     loadWizardAssets().then(render);
     render();
   } else {
