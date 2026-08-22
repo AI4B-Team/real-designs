@@ -14,6 +14,12 @@
  * model, not a decoration a screen may choose to skip.
  */
 
+import type { CalloutKind, CalloutMeta } from "@/lib/markup-callouts";
+import type { ScaleCalibration } from "@/lib/markup-measure";
+import type { ParcelAuditEvent, ParcelOverlay } from "@/lib/parcel";
+import { PARCEL_WARNING, parcelProvenance } from "@/lib/parcel";
+import { measureShape, scaleMetadata } from "@/lib/markup-measure";
+
 /* ------------------------------------------------------------------ model */
 
 export type MarkupTypeId =
@@ -30,7 +36,17 @@ export type MarkupTypeId =
   | "line"
   | "arrow"
   | "label"
-  | "marker";
+  | "marker"
+  /* Advanced markup. */
+  | "distance"
+  | "area_label"
+  | "callout"
+  | "renovation"
+  | "product"
+  | "material"
+  | "before_after"
+  | "work_zone"
+  | "scope_ref";
 
 /** How a type is drawn. Geometry, not vocabulary. */
 export type MarkupShape = "polygon" | "line" | "arrow" | "label" | "marker";
@@ -73,6 +89,10 @@ export type MarkupLayer = {
   style: MarkupStyle;
   visible: boolean;
   locked: boolean;
+  /** Structured payload for renovation, product, material and scope callouts. */
+  meta?: CalloutMeta | null;
+  /** Last calculated measurement text, kept for exports and reports. */
+  measurementText?: string | null;
 };
 
 export type MarkupDoc = {
@@ -84,6 +104,12 @@ export type MarkupDoc = {
   layers: MarkupLayer[];
   /** Burn "Approximate Boundary" into exports as a visible disclosure. */
   visibleDisclosure: boolean;
+  /** Scale calibration. Without it, no measurement is ever produced. */
+  scale?: ScaleCalibration | null;
+  /** Optional provider-supplied parcel overlay. Never image-recognised. */
+  parcel?: ParcelOverlay | null;
+  /** Provenance trail for the parcel overlay and its exports. */
+  parcelAudit?: ParcelAuditEvent[];
 };
 
 /* ------------------------------------------------------------------ types */
@@ -115,7 +141,30 @@ export const MARKUP_TYPES: MarkupTypeSpec[] = [
   { id: "arrow", label: "Arrow", shape: "arrow", icon: "move-up-right", color: "#CC0000", warns: false },
   { id: "label", label: "Label", shape: "label", icon: "type", color: "#111827", warns: false, suggestion: "Custom text" },
   { id: "marker", label: "Numbered Marker", shape: "marker", icon: "circle-dot", color: "#CC0000", warns: false },
+  /* Advanced markup. Each one stays structured and editable: the drawn label
+     is only a rendering of the record kept on the layer. */
+  { id: "distance", label: "Distance Line", shape: "line", icon: "ruler", color: "#CC0000", warns: true, suggestion: "Approximate Distance" },
+  { id: "area_label", label: "Area Label", shape: "label", icon: "scan", color: "#0F766E", warns: true, suggestion: "Approximate Area" },
+  { id: "callout", label: "Measurement Callout", shape: "arrow", icon: "ruler-dimension-line", color: "#CC0000", warns: true, suggestion: "Approximate" },
+  { id: "renovation", label: "Renovation Note", shape: "marker", icon: "hammer", color: "#B45309", warns: false },
+  { id: "product", label: "Product Callout", shape: "marker", icon: "shopping-bag", color: "#7C3AED", warns: false },
+  { id: "material", label: "Material Callout", shape: "marker", icon: "layers", color: "#0891B2", warns: false },
+  { id: "before_after", label: "Before / After Note", shape: "label", icon: "arrow-left-right", color: "#111827", warns: false, suggestion: "Before / After" },
+  { id: "work_zone", label: "Proposed Work Zone", shape: "polygon", icon: "construction", color: "#EA580C", warns: false, suggestion: "Proposed Work" },
+  { id: "scope_ref", label: "Contractor Scope Reference", shape: "marker", icon: "clipboard-list", color: "#334155", warns: false },
 ];
+
+/** Advanced markup that carries a structured record rather than plain text. */
+export const CALLOUT_TYPES: Partial<Record<MarkupTypeId, CalloutKind>> = {
+  renovation: "renovation",
+  product: "product",
+  material: "material",
+  before_after: "before_after",
+  scope_ref: "scope",
+};
+
+/** Markup whose label is a calculated measurement. */
+export const MEASURED_TYPES: MarkupTypeId[] = ["distance", "area_label", "callout", "measurement"];
 
 export function markupType(id: MarkupTypeId): MarkupTypeSpec {
   return MARKUP_TYPES.find((t) => t.id === id) || (MARKUP_TYPES[MARKUP_TYPES.length - 1] as MarkupTypeSpec);
@@ -223,7 +272,16 @@ export function nextMarkerNumber(layers: MarkupLayer[]): number {
 }
 
 export function emptyDoc(assetId: string, sourceVersionId: string | null = null): MarkupDoc {
-  return { version: 1, assetId, sourceVersionId, layers: [], visibleDisclosure: false };
+  return {
+    version: 1,
+    assetId,
+    sourceVersionId,
+    layers: [],
+    visibleDisclosure: false,
+    scale: null,
+    parcel: null,
+    parcelAudit: [],
+  };
 }
 
 /* ------------------------------------------------------------- drawing ops */
@@ -496,10 +554,15 @@ export function serializeMarkup(doc: MarkupDoc): MarkupDoc {
     assetId: doc.assetId,
     sourceVersionId: doc.sourceVersionId ?? null,
     visibleDisclosure: !!doc.visibleDisclosure,
+    scale: doc.scale ?? null,
+    parcel: doc.parcel ?? null,
+    parcelAudit: doc.parcelAudit ?? [],
     layers: doc.layers.map((l) => ({
       ...l,
       points: l.points.map(clampPoint),
       style: { ...l.style },
+      meta: l.meta ? { ...l.meta } : null,
+      measurementText: l.measurementText ?? null,
     })),
   };
 }
@@ -536,6 +599,9 @@ export function parseMarkup(raw: unknown, assetId: string): MarkupDoc {
     assetId: doc.assetId || assetId,
     sourceVersionId: doc.sourceVersionId ?? null,
     visibleDisclosure: !!doc.visibleDisclosure,
+    scale: (doc as any).scale ?? null,
+    parcel: (doc as any).parcel ?? null,
+    parcelAudit: Array.isArray((doc as any).parcelAudit) ? (doc as any).parcelAudit : [],
     layers,
   };
 }
