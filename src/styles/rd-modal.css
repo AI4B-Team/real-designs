@@ -39,8 +39,27 @@
 .rd-modal,
 .rd-modal * {
   box-sizing: border-box;
+}
+
+/* Only typographic elements are flattened. Zeroing padding on every node used
+   to erase the modal's own layout padding, which collapsed headers, bodies and
+   footers into one another. */
+.rd-modal h1,
+.rd-modal h2,
+.rd-modal h3,
+.rd-modal h4,
+.rd-modal p,
+.rd-modal ul,
+.rd-modal ol,
+.rd-modal figure,
+.rd-modal blockquote {
   margin: 0;
   padding: 0;
+}
+
+.rd-modal ul,
+.rd-modal ol {
+  list-style: none;
 }
 
 .rd-modal img,
@@ -62,11 +81,14 @@
   color: inherit;
 }
 
-.rd-modal *:focus-visible {
+/* Focus rings live on the field wrapper for text controls, so the control
+   itself never draws a second rectangle inside the first. */
+.rd-modal *:focus-visible:not(input):not(textarea):not(select) {
   outline: 2px solid var(--red);
   outline-offset: 2px;
   border-radius: 4px;
 }
+
 
 .rd-modal h1,
 .rd-modal h2,
@@ -158,4 +180,93 @@
   box-shadow: none !important;
   background: transparent;
   width: 100%;
+}
+
+/* ---------------------------------------------- Property Address modal
+   One field, one border. The wrapper owns the border, radius and focus
+   ring; the control inside stays completely flat. */
+.rd-modal.addrm {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+}
+
+.rd-modal.addrm .addrm-bg {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.42);
+}
+
+.rd-modal.addrm .addrm-h {
+  padding: 18px 18px 6px;
+}
+
+.rd-modal.addrm .addrm-b {
+  padding: 10px 18px 4px;
+}
+
+.rd-modal.addrm .addrm-a {
+  padding: 14px 18px 18px;
+}
+
+.rd-modal.addrm .addrm-x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  color: #4b5563;
+}
+
+.rd-modal.addrm .addrm-x svg {
+  width: 18px;
+  height: 18px;
+}
+
+.addrm .addrm-in {
+  border: 1px solid var(--line-2, #d6d6d6);
+  border-radius: 10px;
+  box-shadow: none;
+  padding: 0 10px;
+}
+
+.addrm .addrm-in:focus-within {
+  border-color: #cc0000;
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.14);
+}
+
+.addrm .addrm-in.bad {
+  border-color: #cc0000;
+  box-shadow: none;
+}
+
+.addrm .addrm-in.bad:focus-within {
+  box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.14);
+}
+
+.addrm .addrm-in input,
+.addrm .addrm-in input:focus,
+.addrm .addrm-in input:focus-visible,
+.addrm .addrm-in input:invalid,
+.addrm .addrm-in input:-webkit-autofill {
+  border: 0;
+  outline: 0;
+  box-shadow: none;
+  border-radius: 10px;
+  background: transparent;
+  height: 42px;
+  min-width: 0;
+  flex: 1;
+  font: inherit;
+  color: inherit;
+}
+
+/* Icons sit outside the text flow and must not change the field height. */
+.addrm .addrm-in > svg,
+.addrm .addrm-in > i,
+.addrm .addrm-in .addrm-clear {
+  flex: none;
 }

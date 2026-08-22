@@ -1,4 +1,6 @@
 import "@/styles/rd-modal.css";
+
+import { createIcons, icons } from "lucide";
 /* Property Address editor.
    A polished, framework-free application modal used everywhere an address is
    added, changed or cleared. It replaces the native window.prompt: it offers
@@ -56,11 +58,7 @@ const esc = (s: unknown) =>
 
 function paint(root: ParentNode) {
   try {
-    (window as any).lucide?.createIcons({
-      attrs: { "stroke-width": 1.75 },
-      nameAttr: "data-lucide",
-      root,
-    });
+    createIcons({ icons, attrs: { "stroke-width": 1.75 }, root } as any);
   } catch (_) {}
 }
 
@@ -82,9 +80,19 @@ export function openAddressModal(opts: AddressModalOptions) {
     error: "",
   };
 
+  /* One modal at a time: opening again never stacks a second root. */
+  document.querySelectorAll(".rd-modal-root.addrm").forEach((el) => el.remove());
+
   const previouslyFocused = document.activeElement as HTMLElement | null;
+  /* The page behind stays mounted and visible; only its scroll is frozen, and
+     the exact offset is restored on close. */
+  const scrollX = window.scrollX;
+  const scrollY = window.scrollY;
+  const prevOverflow = document.body.style.overflow;
+  document.body.style.overflow = "hidden";
   const host = document.createElement("div");
-  host.className = "rd-modal addrm";
+  host.className = "rd-modal rd-modal-root addrm";
+
   host.innerHTML = `<div class="addrm-bg" data-x></div>
     <div class="addrm-w" role="dialog" aria-modal="true" aria-labelledby="addrmTitle">
       <header class="addrm-h">
@@ -137,16 +145,23 @@ export function openAddressModal(opts: AddressModalOptions) {
   function close(cancelled: boolean) {
     document.removeEventListener("keydown", onKey, true);
     host.remove();
+    document.body.style.overflow = prevOverflow;
+    window.scrollTo(scrollX, scrollY);
     try {
-      previouslyFocused?.focus();
+      previouslyFocused?.focus({ preventScroll: true } as any);
     } catch (_) {}
     if (cancelled) opts.onCancel?.();
   }
+
 
   function onKey(e: KeyboardEvent) {
     if (!document.body.contains(host)) return;
     if (e.key === "Escape") {
       e.preventDefault();
+      /* The keystroke belongs to the modal alone: the drawer underneath must
+         stay open when the modal closes. */
+      e.stopPropagation();
+      (e as any).stopImmediatePropagation?.();
       close(true);
       return;
     }
@@ -290,6 +305,11 @@ export function openAddressModal(opts: AddressModalOptions) {
   function setMsg(text: string, kind = "") {
     msg.textContent = text;
     msg.className = "addrm-msg" + (kind ? " " + kind : "");
+    /* The red field border is an error signal, never a focus signal. */
+    (host.querySelector(".addrm-in") as HTMLElement | null)?.classList.toggle(
+      "bad",
+      kind === "bad",
+    );
   }
 
   function result(): AddressModalResult {
