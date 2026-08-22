@@ -107,7 +107,6 @@ import {
   bringForward,
   duplicateLayer,
   emptyDoc,
-  markupMetadata,
   markupType as markupTypeSpec,
   parseMarkup,
   removeLayer,
@@ -2842,6 +2841,7 @@ export async function openPhotoEditor(opts: {
   await ensureSource(cur());
   paint();
   void hydrate();
+  void loadMarkups();
 
   async function hydrate() {
     try {
