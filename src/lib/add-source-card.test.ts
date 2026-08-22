@@ -51,17 +51,81 @@ describe("Add More Photos card", () => {
     expect(isAddSourceCardOpen(card)).toBe(false);
   });
 
-  it("is honest when a cloud provider is not configured", async () => {
+  it("keeps Google Drive and Dropbox clickable and never disabled", async () => {
     const onCloud = vi.fn();
     const card = mount({ onComputer: () => {}, onCloud });
+    for (const id of ["drive", "dropbox"] as const) {
+      const btn = card.querySelector<HTMLElement>(`[data-addsrc="${id}"]`)!;
+      expect(btn.tagName).toBe("BUTTON");
+      expect(btn.getAttribute("type")).toBe("button");
+      expect(btn.hasAttribute("disabled")).toBe(false);
+      expect(btn.getAttribute("aria-disabled")).toBeNull();
+      btn.click();
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(onCloud).toHaveBeenCalledWith(id);
+    }
+    expect(onCloud).toHaveBeenCalledTimes(2);
+  });
+
+  it("labels an unconfigured provider Coming Soon instead of fading it out", () => {
+    const card = mount();
     const drive = card.querySelector<HTMLElement>('[data-addsrc="drive"]')!;
-    expect(drive.getAttribute("aria-disabled")).toBe("true");
-    drive.click();
+    expect(drive.textContent).toContain("Coming Soon");
+  });
+
+  it("has no X close icon and no invisible close hit area", () => {
+    const card = mount();
+    expect(card.querySelector("[data-addback]")).toBeNull();
+    expect(card.querySelector('[data-lucide="x"]')).toBeNull();
+    expect(card.querySelectorAll("button").length).toBe(4);
+  });
+
+  it("collapses only when the pointer leaves the whole card", () => {
+    const card = mount();
+    card.dispatchEvent(new Event("pointerenter"));
+    expect(isAddSourceCardOpen(card)).toBe(true);
+    const drive = card.querySelector<HTMLElement>('[data-addsrc="drive"]')!;
+    const ev: any = new Event("pointerleave", { bubbles: false });
+    ev.relatedTarget = drive;
+    card.dispatchEvent(ev);
+    expect(isAddSourceCardOpen(card)).toBe(true);
+    const out: any = new Event("pointerleave", { bubbles: false });
+    out.relatedTarget = document.body;
+    card.dispatchEvent(out);
+    expect(isAddSourceCardOpen(card)).toBe(false);
+  });
+
+  it("reveals and preserves the choices for keyboard focus", () => {
+    const card = mount();
+    card.querySelector<HTMLElement>('[data-addsrc="computer"]')!.dispatchEvent(
+      new FocusEvent("focusin", { bubbles: true }),
+    );
+    expect(isAddSourceCardOpen(card)).toBe(true);
+    const stay: any = new FocusEvent("focusout", { bubbles: true });
+    Object.defineProperty(stay, "relatedTarget", {
+      value: card.querySelector('[data-addsrc="dropbox"]'),
+    });
+    card.dispatchEvent(stay);
+    expect(isAddSourceCardOpen(card)).toBe(true);
+    const away: any = new FocusEvent("focusout", { bubbles: true });
+    Object.defineProperty(away, "relatedTarget", { value: document.body });
+    card.dispatchEvent(away);
+    expect(isAddSourceCardOpen(card)).toBe(false);
+  });
+
+  it("taps open on touch and runs the chosen source once", async () => {
+    const onComputer = vi.fn();
+    const card = mount({ onComputer });
+    card.dispatchEvent(new Event("pointerenter"));
+    const btn = card.querySelector<HTMLElement>('[data-addsrc="computer"]')!;
+    btn.click();
+    btn.click();
     await Promise.resolve();
-    expect(onCloud).not.toHaveBeenCalled();
-    const note = card.querySelector<HTMLElement>("[data-addnote]")!;
-    expect(note.hidden).toBe(false);
-    expect(note.textContent).toContain("Google Drive isn't available yet");
+    await Promise.resolve();
+    expect(onComputer).toHaveBeenCalledTimes(1);
+    document.dispatchEvent(new MouseEvent("mousedown", { bubbles: true }));
+    expect(isAddSourceCardOpen(card)).toBe(false);
   });
 
   it("expands instantly on pointerenter with no timer", () => {
@@ -79,15 +143,14 @@ describe("Add More Photos card", () => {
 });
 
 describe("Add More Photos expanded controls", () => {
-  it("offers a back control that returns to the collapsed card", () => {
+  it("closes from the face control without any X icon", () => {
     document.body.innerHTML = addSourceCardHtml({ id: "addB" });
     const card = document.querySelector(".rv-addcard") as HTMLElement;
     mountAddSourceCard(card, { onComputer: () => {} });
-    card.querySelector<HTMLElement>("[data-addface]")!.click();
+    const face = card.querySelector<HTMLElement>("[data-addface]")!;
+    face.click();
     expect(isAddSourceCardOpen(card)).toBe(true);
-    const back = card.querySelector<HTMLElement>("[data-addback]")!;
-    expect(back.getAttribute("aria-label")).toBe("Back To Add More Photos");
-    back.click();
+    face.click();
     expect(isAddSourceCardOpen(card)).toBe(false);
   });
 

@@ -12,7 +12,7 @@
  */
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
-import { providerAvailable, providerUnavailableMessage } from "@/lib/provider-import";
+import { providerAvailable } from "@/lib/provider-import";
 
 export type AddSourceId = "computer" | "drive" | "dropbox";
 
@@ -48,11 +48,14 @@ export function addSourceCardHtml(opts: {
 }): string {
   const id = opts.id;
   const panelId = id + "Sources";
+  /* Provider buttons are always real buttons and always clickable. When the
+     integration is not configured the click opens an honest explanation with a
+     "Choose From Computer" way out — never a dead, faded control. */
   const cloud = (key: "drive" | "dropbox", label: string, icon: string) => {
-    const off = !cloudSourceEnabled(key);
-    return `<button type="button" class="rv-addsrc rv-addsrc-${key}" data-addsrc="${key}"
-        ${off ? 'data-unavail="1" aria-disabled="true"' : ""}>
+    const soon = !cloudSourceEnabled(key);
+    return `<button type="button" class="rv-addsrc rv-addsrc-${key}" data-addsrc="${key}"${soon ? ' data-soon="1"' : ""}>
         <span class="rv-addsrc-i">${icon}</span><span class="rv-addsrc-l">${label}</span>
+        ${soon ? '<span class="rv-addsrc-soon">Coming Soon</span>' : ""}
         <span class="rv-addsrc-sp" hidden aria-hidden="true"></span>
       </button>`;
   };
@@ -64,8 +67,6 @@ export function addSourceCardHtml(opts: {
         <b>Add More Photos</b>
       </button>
       <div class="rv-addcard-src" id="${panelId}" role="group" aria-label="Add Photos From" hidden>
-        <button type="button" class="rv-addsrc-back" data-addback
-          aria-label="Back To Add More Photos"><i data-lucide="x"></i></button>
         <button type="button" class="rv-addsrc rv-addsrc-computer" data-addsrc="computer">
           <span class="rv-addsrc-i"><i data-lucide="monitor-up"></i></span><span class="rv-addsrc-l">Computer</span>
           <span class="rv-addsrc-sp" hidden aria-hidden="true"></span>
@@ -159,15 +160,6 @@ export function mountAddSourceCard(
     buttons()[0]?.focus();
   });
 
-  /* Back control returns to the collapsed card without leaving the tile. */
-  card.querySelector<HTMLElement>("[data-addback]")?.addEventListener("click", (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    close();
-    face?.focus();
-  });
-
-
   /* Instant hover: no timer, no hover intent, no deferred mount. The choices
      are already in the DOM, so this is a single class toggle. */
   const enter = () => {
@@ -219,15 +211,11 @@ export function mountAddSourceCard(
     if (!btn || !card.contains(btn)) return;
     e.preventDefault();
     if (btn.hasAttribute("data-busy")) return;
+    e.stopPropagation();
     const id = btn.getAttribute("data-addsrc") as AddSourceId;
-    if (btn.hasAttribute("data-unavail")) {
-      locked = true;
-      const msg = providerUnavailableMessage(id as "drive" | "dropbox");
-      setNote(msg);
-      say(msg);
-      return;
-    }
     setNote("");
+    /* The card stays open until the chosen flow has actually been launched. */
+    locked = true;
     btn.setAttribute("data-busy", "1");
     const sp = btn.querySelector<HTMLElement>(".rv-addsrc-sp");
     if (sp) sp.hidden = false;

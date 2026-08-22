@@ -128,3 +128,21 @@ describe("provider import", () => {
     expect(document.body.style.overflow).toBe("");
   });
 });
+
+describe("Unconfigured provider", () => {
+  it("opens an honest explanation with a Choose From Computer way out", async () => {
+    const { importFromProvider } = await import("@/lib/provider-import");
+    const onComputer = vi.fn();
+    const ok = await importFromProvider("drive", { onFiles: () => {}, onComputer });
+    expect(ok).toBe(true);
+    const modal = document.querySelector(".rdpi") as HTMLElement;
+    expect(modal).not.toBeNull();
+    /* Never a blank overlay. */
+    expect(modal.textContent).toContain("Google Drive isn't connected yet");
+    const alt = modal.querySelector<HTMLElement>("[data-rdpi-computer]")!;
+    expect(alt.textContent).toContain("Choose From Computer");
+    alt.click();
+    expect(onComputer).toHaveBeenCalledTimes(1);
+    expect(document.querySelector(".rdpi")).toBeNull();
+  });
+});
