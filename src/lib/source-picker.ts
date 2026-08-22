@@ -6,8 +6,8 @@
  * sources appear, which file types are accepted and whether one or many images
  * can be chosen is configured per context, never re-implemented.
  *
- * Listing URLs are read as text only. No media is ever imported from a public
- * listing page, in any context.
+ * There is no listing-link source: reading a public listing page yields text
+ * only, never its photos, so Studio does not offer it as a photo source.
  */
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
@@ -26,7 +26,12 @@ import { styleById } from "@/lib/style-catalog";
 
 
 
-export type SourceId = "upload" | "cloud" | "address" | "url" | "property" | "design" | "describe";
+export type SourceId = "upload" | "cloud" | "address" | "property" | "media" | "describe";
+
+/** Sources that used to exist. Persisted tab state is remapped, never shown. */
+const LEGACY_SOURCE: Record<string, SourceId> = { url: "upload", design: "media" };
+export const normalizeSource = (id: string | null | undefined): SourceId =>
+  (LEGACY_SOURCE[String(id || "")] || id || "upload") as SourceId;
 export type PickerContext = "design" | "video" | "property-media" | "batch";
 
 export type PickedFile = { file: File; flags: string[] };
@@ -53,23 +58,17 @@ export const SOURCE_META: Record<
     tab: "Address",
     desc: "Fills in address and listing details.",
   },
-  url: {
-    icon: "link",
-    label: "Listing Link",
-    tab: "Listing Link",
-    desc: "Zillow, Realtor.com, supported MLS or a public listing gallery URL.",
-  },
   property: {
     icon: "home",
-    label: "Existing Property",
+    label: "Property",
     tab: "Property",
-    desc: "Reuse photos already uploaded.",
+    desc: "Open one saved property and choose its photos.",
   },
-  design: {
+  media: {
     icon: "images",
-    label: "Designs",
-    tab: "Designs",
-    desc: "Start from designs you have already generated.",
+    label: "Media",
+    tab: "Media",
+    desc: "Browse photos and generated designs across your workspace.",
   },
   describe: {
     icon: "message-square-text",
@@ -91,14 +90,14 @@ const IMAGE_ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.heif";
 
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
-    sources: ["upload", "cloud", "property", "describe"],
+    sources: ["upload", "cloud", "property", "media", "describe"],
     /* Many photos are handed to the staging review grid, never dropped. */
     multiple: true,
     accept: IMAGE_ACCEPT + ",application/pdf,.pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "property", "design", "describe", "url"],
+    sources: ["upload", "cloud", "property", "media", "describe"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
@@ -178,6 +177,13 @@ export type PickerDesign = {
   /** Version status, e.g. "draft" or "approved". */
   status?: string | null;
   projectId?: string | null;
+  /** Durable asset id, when the item is a stored media asset. */
+  assetId?: string | null;
+  /** Room record the asset belongs to. */
+  roomId?: string | null;
+  /** "design" for generated renders, "photo" for original property photos. */
+  assetType?: "design" | "photo";
+  favorite?: boolean;
 };
 
 
@@ -211,9 +217,9 @@ export type PickerOptions = {
   /** Called with the photos the user confirmed for a property. */
   onPropertyPhotos?: (p: PickerProperty, photos: PickerPhoto[]) => void | Promise<void>;
 
-  /** Finished designs, for the design source (legacy synchronous list). */
+  /** Media items, for the Media source (legacy synchronous list). */
   designs?: () => Array<{ id: string; label: string; sub?: string; badge?: string }>;
-  /** Finished designs read from the database, for the design source. */
+  /** Media read from the database (photos and generated designs). */
   loadDesigns?: () => Promise<PickerDesign[]>;
   /** Called with the finished designs the user selected, in order. */
   onDesigns?: (designs: PickerDesign[]) => void | Promise<void>;
@@ -287,13 +293,13 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
   const alert = opts.showAlert || ((m: string) => console.warn(m));
 
   const state = {
-    tab: (opts.initialTab && cfg.sources.includes(opts.initialTab)
-      ? opts.initialTab
-      : cfg.sources[0]) as SourceId,
+    tab: (() => {
+      const want = normalizeSource(opts.initialTab);
+      return (cfg.sources.includes(want) ? want : cfg.sources[0]) as SourceId;
+    })(),
     busy: false,
     note: "",
     address: "",
-    url: "",
 
 
     dragging: false,
@@ -317,6 +323,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     designPreview: null as string | null,
     /** Id currently dragged in the selected-order row. */
     designDrag: null as string | null,
+    /** Media filters: type, property, room and free text. */
+    mediaType: "all" as "all" | "photos" | "designs" | "favorites",
+    mediaProperty: "all",
+    mediaRoom: "all",
+    mediaQuery: "",
 
     /** Many photos landed in a single-image context: let the user choose one. */
     choose: [] as PickedFile[],
@@ -766,25 +777,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
         "</div>"
       );
     }
-    if (state.tab === "url") {
-      return (
-        '<div class="sp-pane">' +
-        paneHead(
-          "Import From A Listing Link",
-          "Paste a Zillow, Realtor.com, supported MLS or public property gallery link.",
-        ) +
-        '<label class="sp-f">Listing Link<input type="text" data-sp-f="url" id="' +
-        pid("spUrl") +
-        '" placeholder="https://www.zillow.com/homedetails/..." value="' +
-        esc(state.url) +
-        '"></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="urlgo">' +
-        (state.busy ? "Reading Link" : "Import Listing Details") +
-        "</button>" +
-        '<p class="sp-note">Listing links are read as text only. No photos or media are imported from a public listing page.</p>' +
-        "</div>"
-      );
-    }
     if (state.tab === "property") {
       const list = properties();
       if (!list.length)
@@ -822,7 +814,7 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
 
 
-    if (state.tab === "design") return designPanel();
+    if (state.tab === "media") return designPanel();
     return "";
   }
 
@@ -1476,9 +1468,9 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       /* icons are cosmetic */
     }
     if (state.tab === "describe") describe.sync(body);
-    if (state.tab === "property" || state.tab === "design" || state.tab === "upload")
+    if (state.tab === "property" || state.tab === "media" || state.tab === "upload")
       hydrateThumbs();
-    if (state.tab === "design" && state.designState === "idle") loadDesigns();
+    if (state.tab === "media" && state.designState === "idle") loadDesigns();
   }
 
   function wireDrag(el: HTMLElement) {
@@ -1587,7 +1579,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const t = e.target as HTMLInputElement;
     const f = fieldName(t);
     if (f === "addr") state.address = t.value;
-    if (f === "url") state.url = t.value;
     if (describe.onInput(f, t.value) && (f === "prompt" || f === "browseq")) describe.sync(body);
   }
 
@@ -1681,7 +1672,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
 
     else if (k === "cloudgo") importCloud(field("cloud")?.value || "");
     else if (k === "addrgo") lookupAddress();
-    else if (k === "urlgo") readListingUrl();
     else if (k === "emptytoggle") {
       state.showEmpty = !state.showEmpty;
       render();
