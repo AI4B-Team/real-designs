@@ -10077,6 +10077,7 @@
 }
 .spd-status {
   align-self: flex-start;
+  justify-self: start;
   margin-top: 3px;
   font-size: 0.64rem;
   font-weight: 700;
@@ -10097,6 +10098,7 @@
 }
 .spd-card.is-skel .spd-body i {
   display: block;
+  align-self: center;
   height: 9px;
   border-radius: 5px;
 }
