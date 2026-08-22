@@ -284,7 +284,11 @@ export async function openPhotoEditor(opts: {
   HOST = host;
 
 
-  const $ = <T extends HTMLElement = HTMLElement>(sel: string) => host.querySelector(sel) as T;
+  /* Some nodes (the image, the crop box, the badge, Hold To Compare) are
+     adopted by the permanent Canvas while Edit is the active tool, so they can
+     live outside the editor host. Lookups fall back to the document. */
+  const $ = <T extends HTMLElement = HTMLElement>(sel: string) =>
+    (host.querySelector(sel) || document.querySelector(sel)) as T;
 
   /* -------------------------------------------------------- state helpers */
 
@@ -422,7 +426,7 @@ export async function openPhotoEditor(opts: {
     }
     /* The badge names the image on screen, never the selected tool. */
     applyCanvasBadge(
-      host.querySelector(".rdpe-badge"),
+      host.querySelector(".rdpe-badge") || document.querySelector(".rdpe-badge"),
       resolveCanvasBadge({
         comparing,
         saving: s.saving,
@@ -947,6 +951,18 @@ export async function openPhotoEditor(opts: {
     el.addEventListener("pointerleave", holdOff);
     el.addEventListener("pointercancel", holdOff);
     el.addEventListener("blur", holdOff);
+    /* Keyboard parity: hold Space or Enter to see the original. */
+    el.addEventListener("keydown", (ev) => {
+      const k = (ev as KeyboardEvent).key;
+      if (k === " " || k === "Enter") {
+        ev.preventDefault();
+        holdOn();
+      }
+    });
+    el.addEventListener("keyup", (ev) => {
+      const k = (ev as KeyboardEvent).key;
+      if (k === " " || k === "Enter") holdOff();
+    });
   });
   $("#rdpeCropBox").addEventListener("pointerdown", (e) => dragCrop(e as PointerEvent));
 
