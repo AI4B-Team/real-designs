@@ -2094,12 +2094,11 @@ export function initApp(): () => void {
 
       /* Each painter is independent: one broken module must never stop the
          rest of the workspace from mounting, and every failure is reported. */
-      runModule("paintTree", paintTree);
-      runModule("paintDesigns", paintDesigns);
-      runModule("updateSearchMeta", updateSearchMeta);
-      runModule("paintBatch", paintBatch);
-      runModule("progressiveNav", progressiveNav);
-      runModule("paintHome", paintHome);
+      runModule("Property tree", () => paintTree());
+      runModule("Designs", () => paintDesigns());
+      runModule("Search metadata", () => updateSearchMeta());
+      runModule("Batch", () => paintBatch());
+      runModule("Sidebar navigation", () => progressiveNav());
     }
     loadProperties();
     window.addEventListener("rd:saved", loadProperties);
