@@ -1830,6 +1830,12 @@ export async function openPhotoEditor(opts: {
   host.addEventListener("input", (e) => {
     const t = e.target as HTMLInputElement;
     const s = st();
+    if (t.hasAttribute("data-cropzoom")) {
+      setCropZoom(n(t.value, 100) / 100);
+      const out = t.parentElement?.querySelector(".rdpe-num");
+      if (out && cropView) out.textContent = `${Math.round(cropView.scale * 100)}%`;
+      return;
+    }
     if (t.hasAttribute("data-adj")) {
       if (!t.dataset['pushed']) {
         push();
