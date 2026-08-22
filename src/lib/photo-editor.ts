@@ -99,6 +99,28 @@ import {
   type MaskState,
 } from "@/lib/mask-engine";
 import { scanPrivacy } from "@/lib/privacy.functions";
+import {
+  LABEL_SUGGESTIONS,
+  MARKUP_COLORS,
+  MARKUP_TYPES,
+  MARKUP_WARNING,
+  bringForward,
+  duplicateLayer,
+  emptyDoc,
+  markupMetadata,
+  markupType as markupTypeSpec,
+  parseMarkup,
+  removeLayer,
+  sendBackward,
+  updateLayer,
+  updateStyle,
+  warningRequired,
+  type MarkupDoc,
+  type MarkupTypeId,
+} from "@/lib/markup";
+import { flattenMarkup } from "@/lib/markup-render";
+import { attachMarkupEditor, type MarkupEditor, type MarkupMode } from "@/lib/markup-editor";
+import { listMarkups, saveMarkup } from "@/lib/markup.functions";
 import { chipList, chipValues, formDialog } from "@/lib/photo-editor-dialogs";
 import {
   type PhotoStats,
@@ -511,6 +533,14 @@ export async function openPhotoEditor(opts: {
   let privacyPreview: string | null = null;
   let privacyTimer: ReturnType<typeof setTimeout> | null = null;
   let clipboard: AdjustmentBundle | null = null;
+  /* Property Markup. Vector layers drawn over the photograph: they never touch
+     the source pixels, and only an export flattens them in. */
+  const markupDocs = new Map<string, MarkupDoc>();
+  let markupOpen = false;
+  let markupMode: MarkupMode = "draw";
+  let markupActiveType: MarkupTypeId = "boundary";
+  let markupSelected: string | null = null;
+  let markupCtl: MarkupEditor | null = null;
 
   const embedded = !!opts.mount;
   const host = document.createElement("div");
@@ -1315,6 +1345,8 @@ export async function openPhotoEditor(opts: {
       )}
 
       ${section("privacy", "Privacy", "shield", privacyCard())}
+
+      ${section("markup", "Markup", "pen-tool", markupCard())}
 
       ${section(
         "presets",
@@ -2172,6 +2204,10 @@ export async function openPhotoEditor(opts: {
       pv().open = true;
       return paintPanel();
     }
+    if (act === "markup") {
+      markupOpen = true;
+      return markupChanged();
+    }
     if (act === "autoapply") return void runAutoEnhance(true);
     if (act === "autoundo") return undoAuto();
     if (act === "resetgeo") return resetGeometry();
@@ -2539,6 +2575,7 @@ function embeddedShellHtml(label: string): string {
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
         <div class="rdpe-priv" id="rdpePriv" hidden><canvas id="rdpePrivCv"></canvas><span class="rdpe-brushdot" id="rdpeBrushDot" hidden></span></div>
+        <div class="rdpe-mk" id="rdpeMk" hidden><canvas id="rdpeMkCv"></canvas></div>
         <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <span class="rdpe-badge">Original</span>
       </div>
@@ -2593,6 +2630,7 @@ function shellHtml(back: string): string {
           <i data-h="nw"></i><i data-h="ne"></i><i data-h="sw"></i><i data-h="se"></i>
         </div>
         <div class="rdpe-priv" id="rdpePriv" hidden><canvas id="rdpePrivCv"></canvas><span class="rdpe-brushdot" id="rdpeBrushDot" hidden></span></div>
+        <div class="rdpe-mk" id="rdpeMk" hidden><canvas id="rdpeMkCv"></canvas></div>
         <p class="rdpe-crophint" id="rdpeCropHint" hidden>Drag The Photo To Reposition It Inside The Crop.</p>
         <button type="button" class="rdpe-nav r" data-act="next" aria-label="Next Photo"><i data-lucide="chevron-right"></i></button>
         <span class="rdpe-badge">Original</span>
