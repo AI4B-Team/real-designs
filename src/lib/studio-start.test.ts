@@ -94,6 +94,11 @@ describe("studio start source picker", () => {
     expect(onDescribe).not.toHaveBeenCalled();
     ta.value = "A warm modern living room";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
+    const pick = () => {
+      (host.querySelector("[data-sp-room]") as HTMLElement).click();
+      (host.querySelector("[data-sp-style]") as HTMLElement).click();
+    };
+    pick();
     cta().click();
     expect(onDescribe).toHaveBeenCalledWith(
       "A warm modern living room",
@@ -149,6 +154,8 @@ describe("studio start source picker", () => {
     const ta = host.querySelector('[data-sp-f="prompt"]') as HTMLTextAreaElement;
     ta.value = "A coastal backyard with a plunge pool";
     ta.dispatchEvent(new Event("input", { bubbles: true }));
+    (host.querySelector("[data-sp-room]") as HTMLElement).click();
+    (host.querySelector("[data-sp-style]") as HTMLElement).click();
     ta.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", metaKey: true, bubbles: true }));
     await new Promise((r) => setTimeout(r, 0));
     const cta = host.querySelector('[data-sp="describe"]') as HTMLButtonElement;
