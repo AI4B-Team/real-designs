@@ -82,7 +82,11 @@ import {
   logVideoEvent,
 } from "@/lib/video-upload-intake";
 import { normalizeImageFile } from "@/lib/source-picker";
-import { normalizeVideoAssets, consumeVideoHandoff } from "@/lib/video-handoff";
+import {
+  normalizeVideoAssets,
+  peekVideoHandoff,
+  clearVideoHandoff,
+} from "@/lib/video-handoff";
 import {
   cardMenuButtonHtml,
   registerCardMenu,
@@ -7911,6 +7915,71 @@ function renderTour(wrap, done, i = 0) {
 }
 
 /* ======================= PUBLIC API ======================= */
+const CONTEXTUAL_ORIGINS = new Set([
+  "canvas",
+  "media",
+  "designs",
+  "property",
+  "photo-design",
+  "explore",
+  "presentation",
+  "batch",
+]);
+
+/** Retire the handoff only after its photos are really on screen. */
+function settleHandoff(w: any, origin: string | null) {
+  if ((w.scenes || []).length || (w.available || []).length) {
+    w.handoffFailed = null;
+    clearVideoHandoff();
+    logVideoEvent("video_handoff_consumed", {
+      origin,
+      handoffId: w.handoffId,
+      videoDraftId: w.videoDraftId,
+      sceneCount: (w.scenes || []).length,
+      assetCount: (w.available || []).length,
+    });
+    return;
+  }
+  failHandoff(w, origin, null);
+}
+
+/** A contextual Create Video that arrived empty is an error, not a new project. */
+function failHandoff(w: any, origin: string | null, err: unknown) {
+  if (!origin || !CONTEXTUAL_ORIGINS.has(origin)) return;
+  const diagnosticId = (w.handoffId || "").slice(0, 8) || String(Date.now().toString(36));
+  w.handoffFailed = { origin, diagnosticId };
+  logVideoEvent("video_handoff_hydration_failed", {
+    operation: "startWizard",
+    origin,
+    handoffId: w.handoffId,
+    videoDraftId: w.videoDraftId,
+    assetCount: (w.available || []).length,
+    diagnosticId,
+    message: err ? String(err) : "no assets hydrated",
+  });
+}
+
+/** Re-run the same handoff; it was never discarded. */
+function retryHandoff() {
+  const w = S.wizard || {};
+  const stored = peekVideoHandoff();
+  if (!stored) {
+    toast("Those Photos Are No Longer Available. Return To The Source And Try Again.");
+    return;
+  }
+  startWizard({ handoff: stored, from: stored.origin, videoDraftId: stored.videoDraftId });
+  void w;
+}
+
+/** Open the shared photo source picker on a given tab. */
+function openSourcePicker(tab: string) {
+  const w = S.wizard;
+  if (!w) return;
+  w.sourceType = tab;
+  w.step = 1;
+  render();
+}
+
 export function startWizard(seed = {}) {
   revokeUploadUrls(S.wizard);
   /* A surface may publish the handoff and navigate without threading the
@@ -7923,7 +7992,9 @@ export function startWizard(seed = {}) {
     Array.from(s.files || []).length ||
     (Array.isArray(s.paths) && s.paths.length) ||
     (Array.isArray(s.designs) && s.designs.length);
-  const stored = hasInline ? null : consumeVideoHandoff();
+  /* Peek, never consume: the handoff is only retired once photos are on
+     screen, so a failed hydration stays retryable and a refresh recovers. */
+  const stored = hasInline ? null : peekVideoHandoff();
   const w = newWizard(stored ? { ...s, handoff: stored, from: s.from || stored.origin } : s);
   S.wizard = w;
   S.screen = "wizard";
@@ -7970,7 +8041,15 @@ export function startWizard(seed = {}) {
     (w.seedPhotos || []).length ||
     (w.seedDesigns || []).length
   ) {
-    loadWizardAssets().then(render);
+    loadWizardAssets()
+      .then(() => {
+        settleHandoff(w, seed.from || stored?.origin || null);
+        render();
+      })
+      .catch((err) => {
+        failHandoff(w, seed.from || stored?.origin || null, err);
+        render();
+      });
     render();
   } else {
     render();
