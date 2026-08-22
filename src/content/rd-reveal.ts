@@ -5968,12 +5968,27 @@ function bind() {
     mountAddSourceCard(el.querySelector(".rv-grid .rv-addcard"), {
       paint,
       onComputer: () => el.querySelector("#rvHeadFile")?.click(),
+      onCloud: async (provider) => {
+        const { importFromProvider } = await import("@/lib/provider-import");
+        await importFromProvider(provider, {
+          destination: "video-draft",
+          paint,
+          onComputer: () => el.querySelector("#rvHeadFile")?.click(),
+          onFiles: async (files) => {
+            await addUploads(files).catch(() => {
+              w.uploadError = "Those photos could not be added. Please try again.";
+              render();
+            });
+          },
+        });
+      },
       onDrop: (files) =>
         addUploads(files).catch(() => {
           w.uploadError = "Those photos could not be added. Please try again.";
           render();
         }),
     });
+
     on("#rvEmptyProp", "click", () => openSourcePicker("property"));
     on("#rvEmptyDesigns", "click", () => openSourcePicker("designs"));
     on("#rvHandoffRetry", "click", () => retryHandoff());

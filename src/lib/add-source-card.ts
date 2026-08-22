@@ -12,6 +12,7 @@
  */
 
 import { DRIVE_ICON, DROPBOX_ICON } from "@/lib/brand-icons";
+import { providerAvailable } from "@/lib/provider-import";
 
 export type AddSourceId = "computer" | "drive" | "dropbox";
 
@@ -29,12 +30,11 @@ export type AddSourceCardOptions = {
 /** Every mounted card, so only one can ever be expanded. */
 const MOUNTED = new Set<HTMLElement>();
 
-const CLOUD_ENABLED = { drive: true, dropbox: true };
-
-/** Dropbox ships only when its import path is real; never a dead button. */
+/** A provider button ships only when its import path is real. */
 export function cloudSourceEnabled(id: "drive" | "dropbox"): boolean {
-  return !!CLOUD_ENABLED[id];
+  return providerAvailable(id);
 }
+
 
 /**
  * Card markup. `ratio` is the grid's aspect-ratio class so the action card is
@@ -67,6 +67,8 @@ export function addSourceCardHtml(opts: {
         <b>Add More Photos</b>
       </button>
       <div class="rv-addcard-src" id="${panelId}" role="group" aria-label="Add Photos From" hidden>
+        <button type="button" class="rv-addsrc-back" data-addback tabindex="-1"
+          aria-label="Back To Add More Photos"><i data-lucide="x"></i></button>
         <button type="button" class="rv-addsrc rv-addsrc-computer" data-addsrc="computer" tabindex="-1">
           <span class="rv-addsrc-i"><i data-lucide="monitor-up"></i></span><span class="rv-addsrc-l">Computer</span>
           <span class="rv-addsrc-sp" hidden aria-hidden="true"></span>
@@ -74,6 +76,7 @@ export function addSourceCardHtml(opts: {
         ${cloud("drive", "Google Drive", DRIVE_ICON)}
         ${cloud("dropbox", "Dropbox", DROPBOX_ICON)}
       </div>
+
     </div>
     ${opts.pad ? '<div class="rv-addcard-pad" aria-hidden="true"></div>' : ""}
     <p class="rv-addcard-live" role="status" aria-live="polite" hidden></p>
@@ -148,6 +151,15 @@ export function mountAddSourceCard(
     open(true);
     buttons()[0]?.focus();
   });
+
+  /* Back control returns to the collapsed card without leaving the tile. */
+  card.querySelector<HTMLElement>("[data-addback]")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    close();
+    face?.focus();
+  });
+
 
   /* Hover only previews; it may never steal a locked-open card away. */
   card.addEventListener("mouseenter", () => {
