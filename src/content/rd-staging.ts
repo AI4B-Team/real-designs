@@ -48,15 +48,14 @@ import { classifyPhotoRooms } from "@/lib/photo-classify.functions";
 import { thumbDataUrl, ACCEPT_CONFIDENCE, REVIEW_CONFIDENCE } from "@/lib/photo-classify";
 import {
   ROOM_OPTIONS,
-  groupRooms,
   roomFromCategory,
   roomIcon,
   roomSpace,
-  searchRooms,
 } from "@/lib/staging-rooms";
 import { DraftAutosaver, newDraftId, migrateLegacyStagingDraft } from "@/lib/project-draft";
 import { openBulkDesign, runBulkDesign } from "@/lib/staging-bulk";
 import { openAddressModal } from "@/lib/address-modal";
+import { openRoomAreaPicker } from "@/lib/room-area-picker";
 import {
   builderRailHtml,
   roomSelectHtml,
@@ -2688,7 +2687,7 @@ function openRoomPopover(anchor, onPick, key, scopeHint) {
     }
   };
   openRoomAreaPicker({
-    space: current ? roomSpaceOf(current) : "interior",
+    space: current ? roomSpace(current) : "interior",
     currentLabel: current,
     mode: "photo-design",
     allowCustom: true,
