@@ -67,7 +67,7 @@ const BASE: Record<string, ToolCopy> = {
   },
   "Material Swap": {
     label: "Materials",
-    desc: "Swaps a single finish, such as flooring, counters or siding color.",
+    desc: "Replaces one selected surface with a new material and preserves everything else.",
   },
   "Sketch To Render": {
     label: "Sketch",
@@ -105,7 +105,7 @@ const OVERRIDES: Record<SpaceType, Record<string, Partial<ToolCopy>>> = {
     },
     "Material Swap": {
       label: "Materials",
-      desc: "Swaps a single exterior finish, such as siding, roofing, paint or driveway paving.",
+      desc: "Replaces one exterior surface, such as siding, roofing or paving, and preserves the rest.",
     },
     "Sketch To Render": { desc: "Turns an elevation sketch or plan into a rendered exterior." },
   },
@@ -121,7 +121,7 @@ const OVERRIDES: Record<SpaceType, Record<string, Partial<ToolCopy>>> = {
     },
     "Material Swap": {
       label: "Materials",
-      desc: "Swaps a single outdoor material, such as paving, decking, gravel or fencing.",
+      desc: "Replaces one outdoor surface, such as paving, decking or fencing, and preserves the rest.",
     },
     "Sketch To Render": { desc: "Turns a landscape sketch or site plan into a rendered yard." },
   },

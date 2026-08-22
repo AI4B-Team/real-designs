@@ -92,6 +92,29 @@ import {
   onDeclutterBatch,
 } from "@/lib/declutter-controls";
 import { detectClutter, renderDeclutter, checkDeclutteredResult } from "@/lib/declutter.functions";
+import {
+  buildMaterialsBrief,
+  materialsCredits,
+  materialsMeta,
+  restoreFromMeta as restoreFromMaterialsMeta,
+} from "@/lib/materials-brief";
+import {
+  mountMaterialsPanel,
+  setMaterialsPanelVisible,
+  setMaterialsSpace,
+  readMaterialsSettings,
+  readMaterialsResults,
+  setMaterialsDetections,
+  setMaterialsDetecting,
+  resetMaterials,
+  materialsDetections,
+  hasMaterialsDetections,
+  loadMaterialsState,
+  buildMaterialsOverlay,
+  openMaterialsReview,
+  showMaterialsQuality,
+} from "@/lib/materials-controls";
+import { detectSurfaces, renderMaterials, checkMaterialResult } from "@/lib/materials.functions";
 import { peekResume, markResumeConsumed } from "@/lib/resume";
 import { isFavorite } from "@/lib/favorites";
 import {
@@ -4758,6 +4781,215 @@ export function initApp(): () => void {
       loadDeclutterState(st);
       return true;
     };
+
+    /* ---------- Materials: one real surface, one replacement finish ---------- */
+
+    function ensureMaterialsPanel() {
+      try {
+        mountMaterialsPanel({
+          onChange: () => paintGenGate(),
+          onDetect: () => detectForMaterials(true),
+        });
+        setMaterialsSpace(currentSpace());
+      } catch (_) {}
+    }
+
+    async function detectForMaterials(force) {
+      const srcImg = document.querySelector("#cBefore img");
+      if (!srcImg || !srcImg.src) return null;
+      if (!force && hasMaterialsDetections()) return materialsDetections();
+      ensureMaterialsPanel();
+      setMaterialsDetecting(true);
+      try {
+        const image = await toDataUrl(srcImg.src, 1100);
+        const r = await detectSurfaces({ data: { image } });
+        setMaterialsDetections(r.surfaces, r.room);
+        return r.surfaces;
+      } catch (e) {
+        setMaterialsDetecting(
+          false,
+          (e && e.message) ||
+            "The photo could not be read. Pick the surface yourself and brush its exact area instead.",
+        );
+        return null;
+      }
+    }
+
+    window.addEventListener("rd:photo", () => {
+      try {
+        if (activeToolName() !== "Material Swap") resetMaterials();
+      } catch (_) {}
+    });
+
+    async function runMaterialsFlow() {
+      if (busy || GEN_GUARD.busy) return;
+      const srcImg = document.querySelector("#cBefore img");
+      if (STUDIO_SRC === SRC_EMPTY || !srcImg || !srcImg.src) {
+        needSourceModal();
+        return;
+      }
+      ensureMaterialsPanel();
+      if (!hasMaterialsDetections()) await detectForMaterials(false);
+
+      const s = readMaterialsSettings();
+      const brief = buildMaterialsBrief({
+        ...s,
+        roomType: currentRoomType() || null,
+        notes: ((document.getElementById("agentNote") || {}).value || "").trim() || null,
+        hasSource: true,
+      });
+      if (!brief.valid) {
+        try {
+          rdToast(brief.missing.join(" \u00b7 "));
+        } catch (_) {}
+        return;
+      }
+      if (!ensureCredits(brief.credits, "Material Swap")) return;
+
+      const source = await toDataUrl(srcImg.src, 1600);
+      const overlay = await buildMaterialsOverlay(source, s.detections, s.surfaceId, s.mask);
+      const answer = await openMaterialsReview(brief, {
+        costLabel: costLabel(brief.credits),
+        sourceLabel: studioSourceLabel(),
+        overlay,
+        balanceNote:
+          CREDITS && CREDITS.plan !== "free" && typeof CREDITS.balance === "number"
+            ? "Balance after this run: " + Math.max(0, CREDITS.balance - brief.credits) + " credits."
+            : null,
+      });
+      if (answer !== "confirm") return;
+      if (busy || !GEN_GUARD.begin()) return;
+      await runMaterialSwapping(brief, source, overlay, s);
+    }
+
+    async function runMaterialSwapping(brief, source, overlay, settings) {
+      busy = true;
+      setCanvasPhase("generating");
+      const btn = document.getElementById("genBtn");
+      if (btn) btn.disabled = true;
+      const ov = document.getElementById("cGen");
+      if (ov) ov.classList.add("on");
+      genPhase(8, "Locking the surface mask");
+      const finish = () => {
+        setTimeout(() => {
+          if (ov) ov.classList.remove("on");
+          busy = false;
+          if (btn) btn.disabled = false;
+          GEN_GUARD.end();
+        }, 240);
+      };
+      try {
+        genPhase(
+          34,
+          brief.runs.length > 1
+            ? "Rendering " + brief.runs.length + " options"
+            : "Applying " + brief.payload.material_name,
+        );
+        const r = await renderMaterials({
+          data: { image: source, overlay, payload: brief.payload, runs: brief.runs },
+        });
+        const made = r.results.filter((x) => x.image);
+        const failed = r.results.filter((x) => !x.image);
+        if (!made.length) throw new Error(failed[0]?.error || "The material swap did not produce an image.");
+
+        genPhase(74, "Saving your " + (made.length > 1 ? "options" : "result"));
+        let firstPath = null;
+        for (const res of made) {
+          const label =
+            brief.payload.material_name + " \u00b7 " + brief.payload.surface_label + " \u00b7 " + res.label;
+          /* Every accepted result carries its surface, its mask and its exact
+             specification so the swap can be reopened, compared or re-run. */
+          window.__rdVersionExtras = materialsMeta({
+            payload: brief.payload,
+            settings,
+            sourceVersion: studioSourcePath() || null,
+            run: res.label,
+            model: r.model,
+          });
+          let path = null;
+          try {
+            path = await persistRender(res.image, label);
+          } catch (_) {
+            /* The image is paid for and on screen even if the upload failed. */
+          }
+          if (!firstPath) {
+            firstPath = path;
+            lastRender = res.image;
+            lastRenderPath = path;
+            cAfter.innerHTML = photo(res.image, brief.payload.material_name + " applied, AI render");
+          }
+          addRenderVariant(res.image, label, path);
+        }
+        window.__rdMaterialsMeta = {
+          classification: r.classification,
+          disclosure: r.disclosure,
+          surface: brief.payload.surface_label,
+          material: brief.payload.material_name,
+        };
+
+        setCanvasPhase("");
+        markStudioResult();
+        await finalizeGeneratedDesign(lastRenderPath);
+        window.__rdVersionExtras = null;
+        paintStudioSummary({
+          name: brief.payload.material_name,
+          scope: brief.payload.surface_label,
+        });
+        window.dispatchEvent(new Event("rd:credits-changed"));
+        genPhase(100, "Done");
+        finish();
+        cRng.value = 100;
+        setC(100);
+        setTimeout(() => {
+          let v = 100;
+          const b2 = setInterval(() => {
+            v -= 2.6;
+            cRng.value = v;
+            setC(v);
+            if (v <= 44) clearInterval(b2);
+          }, 20);
+        }, 600);
+
+        if (failed.length)
+          showAlert(
+            failed.length +
+              " of " +
+              r.results.length +
+              " options did not finish, and those credits were refunded. " +
+              (failed[0]?.error || ""),
+          );
+
+        /* Free inspection of what actually changed. */
+        try {
+          const q = await checkMaterialResult({ data: { before: source, after: made[0].image } });
+          showMaterialsQuality(q.report, {
+            onRegenerate: () => runMaterialsFlow(),
+            onTryAnother: () => runMaterialsFlow(),
+          });
+        } catch (_) {
+          /* the checks are advisory, never a reason to lose the result */
+        }
+      } catch (e) {
+        window.__rdVersionExtras = null;
+        setCanvasPhase("");
+        finish();
+        if (!creditGate(e))
+          showAlert(
+            "Could not apply that material. " + ((e && e.message) || "Try again in a moment."),
+          );
+      }
+    }
+
+    /** Reopens a saved swap with its surface, mask and specification intact. */
+    window.rdRestoreMaterials = (meta) => {
+      const st = restoreFromMaterialsMeta(meta);
+      if (!st) return false;
+      ensureMaterialsPanel();
+      loadMaterialsState(st);
+      return true;
+    };
+
+
 
 
 
@@ -9777,7 +10009,7 @@ ${picks
       "Walkthrough Video": runWalkthrough,
       "Virtual Stage": () => runStageFlow(),
       Declutter: () => runDeclutterFlow(),
-      "Material Swap": () => runRoomToolFlow("materials", "Material Swap", true),
+      "Material Swap": () => runMaterialsFlow(),
       "Sketch To Render": () => runRoomToolFlow("sketch", "Sketch To Render", false),
       "Multi Angle": () => runRoomToolFlow("angle", "Multi Angle", true),
     };
@@ -9898,6 +10130,11 @@ ${picks
             price = declutterCredits(readDeclutterResults());
           } catch (_) {}
         }
+        if (tool === "Material Swap") {
+          try {
+            price = materialsCredits(readMaterialsResults());
+          } catch (_) {}
+        }
         cost.textContent = costLabel(price);
       }
       /* The staging controls belong to the Stage tool alone. */
@@ -9909,6 +10146,12 @@ ${picks
       try {
         ensureDeclutterPanel();
         setDeclutterPanelVisible(tool === "Declutter");
+      } catch (_) {}
+      /* The surface and material controls belong to Materials alone. */
+      try {
+        ensureMaterialsPanel();
+        setMaterialsSpace(space);
+        setMaterialsPanelVisible(tool === "Material Swap");
       } catch (_) {}
       /* The confirm button always states what this exact click will do. */
       const CONFIRM_LABEL = {
