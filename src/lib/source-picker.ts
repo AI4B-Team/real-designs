@@ -26,10 +26,17 @@ import { styleById } from "@/lib/style-catalog";
 
 
 
-export type SourceId = "upload" | "cloud" | "address" | "property" | "media" | "describe";
+export type SourceId =
+  | "upload"
+  | "drive"
+  | "dropbox"
+  | "address"
+  | "property"
+  | "media"
+  | "describe";
 
 /** Sources that used to exist. Persisted tab state is remapped, never shown. */
-const LEGACY_SOURCE: Record<string, SourceId> = { url: "upload", design: "media" };
+const LEGACY_SOURCE: Record<string, SourceId> = { url: "upload", design: "media", cloud: "upload" };
 export const normalizeSource = (id: string | null | undefined): SourceId =>
   (LEGACY_SOURCE[String(id || "")] || id || "upload") as SourceId;
 export type PickerContext = "design" | "video" | "property-media" | "batch";
@@ -46,11 +53,17 @@ export const SOURCE_META: Record<
     tab: "Upload",
     desc: "Drag and drop or browse.",
   },
-  cloud: {
-    icon: "link",
-    label: "Import From Link",
-    tab: "Import From Link",
-    desc: "Paste public photo links to import.",
+  drive: {
+    icon: "hard-drive",
+    label: "Google Drive",
+    tab: "Google Drive",
+    desc: "Choose photos from Google Drive.",
+  },
+  dropbox: {
+    icon: "package",
+    label: "Dropbox",
+    tab: "Dropbox",
+    desc: "Choose photos from Dropbox.",
   },
   address: {
     icon: "map-pin",
@@ -90,26 +103,26 @@ const IMAGE_ACCEPT = ".jpg,.jpeg,.png,.webp,.heic,.heif";
 
 export const CONTEXT_CONFIG: Record<PickerContext, ContextConfig> = {
   design: {
-    sources: ["upload", "cloud", "property", "media", "describe"],
+    sources: ["upload", "drive", "dropbox", "property", "media", "describe"],
     /* Many photos are handed to the staging review grid, never dropped. */
     multiple: true,
     accept: IMAGE_ACCEPT + ",application/pdf,.pdf",
     acceptHint: "JPG, PNG, HEIC, WEBP, PDF",
   },
   video: {
-    sources: ["upload", "cloud", "property", "media", "describe"],
+    sources: ["upload", "drive", "dropbox", "property", "media", "describe"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   "property-media": {
-    sources: ["upload", "cloud", "address"],
+    sources: ["upload", "drive", "dropbox", "address"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
   },
   batch: {
-    sources: ["upload", "cloud", "address", "property"],
+    sources: ["upload", "drive", "dropbox", "address", "property"],
     multiple: true,
     accept: IMAGE_ACCEPT,
     acceptHint: "JPG, PNG, HEIC, WEBP",
@@ -497,31 +510,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     }
   }
 
-  async function importCloud(raw: string) {
-    const urls = raw
-      .split(/[\s,]+/)
-      .map((u) => u.trim())
-      .filter(Boolean);
-    if (!urls.length) return;
-    state.busy = true;
-    state.note = "";
-    render();
-    try {
-      const { importCloudPhotos } = await import("@/lib/cloud-import.functions");
-      const res = await importCloudPhotos({ data: { urls: urls.slice(0, 20) } });
-      const files = (res.files || []).map((f: any) => dataUrlToFile(f.data, f.name, f.type));
-      if (res.errors?.length)
-        state.note = res.errors[0]?.message || "Some Links Could Not Be Read.";
-      if (files.length) await intake(files);
-      else if (!state.note)
-        state.note = "Nothing Could Be Read From That Link. Upload The Photos Instead.";
-    } catch (_) {
-      state.note = "That Link Could Not Be Read. Upload The Photos Instead.";
-    }
-    state.busy = false;
-    render();
-  }
-
   async function lookupAddress() {
     const v = state.address.trim();
     if (v.length < 3) return;
@@ -596,7 +584,11 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
             '" title="' +
             esc(m.desc) +
             '">' +
-            (false ? DRIVE_ICON : '<i data-lucide="' + m.icon + '"></i>') +
+            (s === "drive"
+              ? DRIVE_ICON
+              : s === "dropbox"
+                ? DROPBOX_ICON
+                : '<i data-lucide="' + m.icon + '"></i>') +
             esc(m.tab) +
             "</button>"
           );
@@ -735,23 +727,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
       return workspace(hero);
     }
 
-    if (state.tab === "cloud") {
-      return (
-        '<div class="sp-pane">' +
-        paneHead(
-          "Import From Link",
-          "Paste public photo links, one per line.",
-        ) +
-        '<label class="sp-f">Public Share Link<input type="text" data-sp-f="cloud" id="' +
-        pid("spCloud") +
-        '" placeholder="https://drive.google.com/file/d/..."></label>' +
-        '<button type="button" class="btn btn-primary btn-sm" data-sp="cloudgo">' +
-        (state.busy ? "Importing" : "Import Photos") +
-        "</button>" +
-        '<p class="sp-note">The link must be shared publicly so we can read it.</p>' +
-        "</div>"
-      );
-    }
     if (state.tab === "address") {
       return (
         '<div class="sp-pane">' +
@@ -1920,6 +1895,21 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     const tab = t.closest("[data-sp-tab]") as HTMLElement | null;
     if (tab) {
       const next = tab.dataset["spTab"] as SourceId;
+      if (next === "drive" || next === "dropbox") {
+        const { importFromProvider } = await import("@/lib/provider-import");
+        await importFromProvider(next, {
+          destination: "studio-project",
+          onComputer: () => input.click(),
+          onUnavailable: (msg: string) => {
+            state.note = msg;
+            render();
+          },
+          onFiles: async (files: File[]) => {
+            await intake(files);
+          },
+        });
+        return;
+      }
       if (next !== state.tab) {
         /* Changing source starts a clean selection. */
         state.propSel = null;
@@ -2019,7 +2009,6 @@ export function mountSourcePicker(host: HTMLElement, opts: PickerOptions) {
     if (k === "browse") input.click();
     else if (k === "sample") opts.onSample?.();
 
-    else if (k === "cloudgo") importCloud(field("cloud")?.value || "");
     else if (k === "addrgo") lookupAddress();
     else if (k === "emptytoggle") {
       state.showEmpty = !state.showEmpty;
