@@ -24,7 +24,7 @@ const UNRESTRICTED = ["Redesign", "Virtual Stage", "Declutter", "Material Swap"]
 const RESTRICTED: Record<string, string> = {
   "Sketch To Render": "pro",
   "Multi Angle": "studio",
-  "Walkthrough Video": "studio",
+  "Animate": "studio",
   "2D To 3D Plan": "studio",
 };
 
